@@ -132,6 +132,10 @@ const normalizeHotelCalendarLocale = (locale: string | null | undefined) => {
     return "pt-BR";
   }
 
+  if (normalized === "ja" || normalized.startsWith("ja-")) {
+    return "ja-JP";
+  }
+
   return "en-US";
 };
 
@@ -362,8 +366,13 @@ export function HotelSearchBar({
     );
     const roomLabel = t(normalizedRooms === 1 ? "roomSingular" : "roomPlural");
 
-    const separator =
-      locale?.trim().replace("_", "-").toLowerCase() === "zh-cn" ? "，" : ", ";
+    const normalizedLocale = locale?.trim().replace("_", "-").toLowerCase();
+
+    if (normalizedLocale === "ja" || normalizedLocale?.startsWith("ja-")) {
+      return `${guestLabel}${normalizedGuests}名、${normalizedRooms}${roomLabel}`;
+    }
+
+    const separator = normalizedLocale === "zh-cn" ? "，" : ", ";
 
     return `${normalizedGuests} ${guestLabel}${separator}${normalizedRooms} ${
       roomLabel

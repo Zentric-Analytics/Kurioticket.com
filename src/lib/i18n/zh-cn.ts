@@ -956,6 +956,7 @@ export const translations: TranslationDictionary = {
   "hotelInspirationCategory.Family trips": "家庭旅行",
   "hotelInspirationCategory.Relaxed stays": "轻松住宿",
   "hotelInspirationCategory.Weekend ideas": "周末灵感",
+  hotelInspirationCategories: "酒店灵感分类",
   "hotelTrustCompareBody": "继续之前，在一个地方查看来自旅行服务商的酒店选项。",
   "hotelTrustReviewTitle": "查看住宿详情",
   "hotelTrustReviewBody": "选择前查看日期、住客、客房、价格背景和住宿信息。",
