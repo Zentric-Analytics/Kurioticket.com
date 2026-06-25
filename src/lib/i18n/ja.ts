@@ -381,6 +381,35 @@ export const translations: TranslationDictionary = {
   supportFaqWhyRedirectedQuestion: "なぜ別のプロバイダーに移動したのですか？",
   supportFaqWhyRedirectedAnswer:
     "Kurioticket は旅行検索・比較プラットフォームであり、一部の結果では、予約、支払い、プロバイダー固有のサポートを完了するため信頼できるプロバイダーへ移動します。",
+  aboutPageEyebrow: "Kurioticket について",
+  aboutPageTitle: "私たちについて",
+  aboutPageIntroPrimary:
+    "Kurioticket は、旅行者が航空券、ホテル、レンタカー、旅行のお得情報を検索・比較・発見できる旅行検索・比較プラットフォームです。",
+  aboutPageIntroSecondary:
+    "私たちは、利用可能な選択肢と提供元の情報をひとつの分かりやすい場所にまとめ、旅行者が自分の旅に合う提供元へ進む前に比較検討できるようにすることを目指しています。",
+  aboutPagePlanningCardHeading: "実用的な旅行計画ツール",
+  aboutPagePlanningCardBody:
+    "Kurioticket は、旅行者が役立つ情報をもとに旅行オプションを検討できるよう支援します。空き状況、価格、規則、最終的な予約手順は提供元によって異なる場合があるため、決定前に提供元のページをよく確認してください。",
+  howItWorksEyebrow: "Kurioticket の仕組み",
+  howItWorksTitle: "Kurioticket の仕組み",
+  howItWorksIntro:
+    "Kurioticket は、旅行者が検索から比較へ進み、選択したオファーの提供元へ移動できるようサポートします。",
+  howItWorksFlowHeading: "基本の流れ",
+  "howItWorks.steps.search.title": "旅行オプションを検索",
+  "howItWorks.steps.search.description":
+    "旅行の詳細を入力して、利用可能な航空券、ホテル、レンタカー、旅行のお得情報を探します。",
+  "howItWorks.steps.compare.title": "利用可能な結果を比較",
+  "howItWorks.steps.compare.description":
+    "表示された選択肢、価格、スケジュール、提供元の詳細、その他の旅行情報を確認します。",
+  "howItWorks.steps.choose.title": "オファーを選択",
+  "howItWorks.steps.choose.description":
+    "利用可能な詳細を確認したうえで、予定に最も合う選択肢を選びます。",
+  "howItWorks.steps.continue.title": "提供元で続行",
+  "howItWorks.steps.continue.description":
+    "リダイレクト後は、提供元のウェブサイトで最終的な詳細を確認し、必要な予約手続きを完了します。",
+  "howItWorks.providerWebsites.title": "提供元のウェブサイト",
+  "howItWorks.providerWebsites.description":
+    "一部の予約は、Kurioticket から提供元のウェブサイトへ移動した後に完了する場合があります。購入を完了する前に、最終的な空き状況、価格、条件、支払い手順、予約詳細を提供元のページで確認してください。",
   footerContactUs: "お問い合わせ",
   footerCustomerSupport: "カスタマーサポート",
   footerServiceGuarantee: "サービス保証",
