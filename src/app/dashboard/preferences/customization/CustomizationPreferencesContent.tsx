@@ -6,43 +6,107 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 const selectSections = [
   {
     titleKey: "accountDashboard.preferences.customization.languageRegion.title",
-    descriptionKey: "accountDashboard.preferences.customization.languageRegion.description",
+    descriptionKey:
+      "accountDashboard.preferences.customization.languageRegion.description",
     fields: [
       {
         id: "preferred-language",
-        labelKey: "accountDashboard.preferences.customization.preferredLanguage",
-        placeholderKey: "accountDashboard.preferences.customization.selectPreferredLanguage",
+        labelKey:
+          "accountDashboard.preferences.customization.preferredLanguage",
+        placeholderKey:
+          "accountDashboard.preferences.customization.selectPreferredLanguage",
         options: [
-          { value: "English", labelKey: "accountDashboard.preferences.customization.language.english" },
-          { value: "Spanish", labelKey: "accountDashboard.preferences.customization.language.spanish" },
-          { value: "French", labelKey: "accountDashboard.preferences.customization.language.french" },
-          { value: "German", labelKey: "accountDashboard.preferences.customization.language.german" },
-          { value: "Portuguese", labelKey: "accountDashboard.preferences.customization.language.portuguese" },
-          { value: "Dutch", labelKey: "accountDashboard.preferences.customization.language.dutch" },
+          {
+            value: "English",
+            labelKey:
+              "accountDashboard.preferences.customization.language.english",
+          },
+          {
+            value: "Spanish",
+            labelKey:
+              "accountDashboard.preferences.customization.language.spanish",
+          },
+          {
+            value: "French",
+            labelKey:
+              "accountDashboard.preferences.customization.language.french",
+          },
+          {
+            value: "German",
+            labelKey:
+              "accountDashboard.preferences.customization.language.german",
+          },
+          {
+            value: "Portuguese",
+            labelKey:
+              "accountDashboard.preferences.customization.language.portuguese",
+          },
+          {
+            value: "Dutch",
+            labelKey:
+              "accountDashboard.preferences.customization.language.dutch",
+          },
         ],
       },
       {
         id: "currency",
         labelKey: "accountDashboard.preferences.customization.currency",
-        placeholderKey: "accountDashboard.preferences.customization.selectCurrency",
+        placeholderKey:
+          "accountDashboard.preferences.customization.selectCurrency",
         options: [
-          { value: "USD", labelKey: "accountDashboard.preferences.customization.currency.usd" },
-          { value: "EUR", labelKey: "accountDashboard.preferences.customization.currency.eur" },
-          { value: "GBP", labelKey: "accountDashboard.preferences.customization.currency.gbp" },
-          { value: "CAD", labelKey: "accountDashboard.preferences.customization.currency.cad" },
-          { value: "AUD", labelKey: "accountDashboard.preferences.customization.currency.aud" },
+          {
+            value: "USD",
+            labelKey: "accountDashboard.preferences.customization.currency.usd",
+          },
+          {
+            value: "EUR",
+            labelKey: "accountDashboard.preferences.customization.currency.eur",
+          },
+          {
+            value: "GBP",
+            labelKey: "accountDashboard.preferences.customization.currency.gbp",
+          },
+          {
+            value: "CAD",
+            labelKey: "accountDashboard.preferences.customization.currency.cad",
+          },
+          {
+            value: "AUD",
+            labelKey: "accountDashboard.preferences.customization.currency.aud",
+          },
         ],
       },
       {
         id: "region",
         labelKey: "accountDashboard.preferences.customization.region",
-        placeholderKey: "accountDashboard.preferences.customization.selectRegion",
+        placeholderKey:
+          "accountDashboard.preferences.customization.selectRegion",
         options: [
-          { value: "United States", labelKey: "accountDashboard.preferences.customization.region.unitedStates" },
-          { value: "Canada", labelKey: "accountDashboard.preferences.customization.region.canada" },
-          { value: "United Kingdom", labelKey: "accountDashboard.preferences.customization.region.unitedKingdom" },
-          { value: "Europe", labelKey: "accountDashboard.preferences.customization.region.europe" },
-          { value: "Australia", labelKey: "accountDashboard.preferences.customization.region.australia" },
+          {
+            value: "United States",
+            labelKey:
+              "accountDashboard.preferences.customization.region.unitedStates",
+          },
+          {
+            value: "Canada",
+            labelKey:
+              "accountDashboard.preferences.customization.region.canada",
+          },
+          {
+            value: "United Kingdom",
+            labelKey:
+              "accountDashboard.preferences.customization.region.unitedKingdom",
+          },
+          {
+            value: "Europe",
+            labelKey:
+              "accountDashboard.preferences.customization.region.europe",
+          },
+          {
+            value: "Australia",
+            labelKey:
+              "accountDashboard.preferences.customization.region.australia",
+          },
         ],
       },
     ],
@@ -51,21 +115,47 @@ const selectSections = [
 
 const toggleSections = [
   {
-    titleKey: "accountDashboard.preferences.customization.personalization.title",
-    descriptionKey: "accountDashboard.preferences.customization.personalization.description",
+    titleKey:
+      "accountDashboard.preferences.customization.personalization.title",
+    descriptionKey:
+      "accountDashboard.preferences.customization.personalization.description",
     fields: [
-      { id: "personalize-searches", labelKey: "accountDashboard.preferences.customization.personalizeSearches" },
-      { id: "personalized-travel-deals", labelKey: "accountDashboard.preferences.customization.personalizedTravelDeals" },
-      { id: "remember-recent-searches", labelKey: "accountDashboard.preferences.customization.rememberRecentSearches" },
+      {
+        id: "personalize-searches",
+        labelKey:
+          "accountDashboard.preferences.customization.personalizeSearches",
+      },
+      {
+        id: "personalized-travel-deals",
+        labelKey:
+          "accountDashboard.preferences.customization.personalizedTravelDeals",
+      },
+      {
+        id: "remember-recent-searches",
+        labelKey:
+          "accountDashboard.preferences.customization.rememberRecentSearches",
+      },
     ],
   },
   {
-    titleKey: "accountDashboard.preferences.customization.communicationStyle.title",
-    descriptionKey: "accountDashboard.preferences.customization.communicationStyle.description",
+    titleKey:
+      "accountDashboard.preferences.customization.communicationStyle.title",
+    descriptionKey:
+      "accountDashboard.preferences.customization.communicationStyle.description",
     fields: [
-      { id: "email-updates", labelKey: "accountDashboard.preferences.customization.emailUpdates" },
-      { id: "price-alert-emails", labelKey: "accountDashboard.preferences.customization.priceAlertEmails" },
-      { id: "travel-inspiration-emails", labelKey: "accountDashboard.preferences.customization.travelInspirationEmails" },
+      {
+        id: "email-updates",
+        labelKey: "accountDashboard.preferences.customization.emailUpdates",
+      },
+      {
+        id: "price-alert-emails",
+        labelKey: "accountDashboard.preferences.customization.priceAlertEmails",
+      },
+      {
+        id: "travel-inspiration-emails",
+        labelKey:
+          "accountDashboard.preferences.customization.travelInspirationEmails",
+      },
     ],
   },
 ];
@@ -90,12 +180,17 @@ function PreferenceSection({
       aria-labelledby={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`}
     >
       <div>
-        <h2 id={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`} className="text-lg font-semibold leading-7 text-slate-900">
+        <h2
+          id={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`}
+          className="text-lg font-semibold leading-7 text-slate-900"
+        >
           {title}
         </h2>
         <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
       </div>
-      <div className="mt-5 grid w-full gap-4 sm:max-w-lg sm:gap-5">{children}</div>
+      <div className="mt-5 grid w-full gap-4 sm:max-w-lg sm:gap-5">
+        {children}
+      </div>
     </section>
   );
 }
@@ -105,11 +200,11 @@ export function CustomizationPreferencesContent() {
 
   return (
     <main className="flex-1 bg-[#f3f7fc] pb-10 pt-0">
+      <div className="page-shell min-w-0">
+        <AccountBackLink />
+      </div>
       <header className="bg-[#4338CA] text-start">
         <div className="mx-auto min-w-0 max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
-          <div className="[&_a]:text-white [&_a]:focus-visible:ring-white">
-            <AccountBackLink />
-          </div>
           <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-[2rem]">
             {t["accountDashboard.preferences.customization.title"]}
           </h1>
@@ -122,13 +217,26 @@ export function CustomizationPreferencesContent() {
       <div className="mx-auto -mt-6 min-w-0 max-w-6xl space-y-6 px-4 pb-6 pt-0 sm:-mt-8 sm:px-6 sm:pb-8 lg:px-8">
         <form className="w-full space-y-6" action="#">
           {selectSections.map((section) => (
-            <PreferenceSection key={section.titleKey} title={t[section.titleKey]} description={t[section.descriptionKey]} blendWithFormArea>
+            <PreferenceSection
+              key={section.titleKey}
+              title={t[section.titleKey]}
+              description={t[section.descriptionKey]}
+              blendWithFormArea
+            >
               {section.fields.map((field) => (
                 <div key={field.id} className="min-w-0 space-y-2">
-                  <label htmlFor={field.id} className="block text-sm font-medium leading-5 text-slate-700">
+                  <label
+                    htmlFor={field.id}
+                    className="block text-sm font-medium leading-5 text-slate-700"
+                  >
                     {t[field.labelKey]}
                   </label>
-                  <select id={field.id} name={field.id} defaultValue="" className={fieldClassName}>
+                  <select
+                    id={field.id}
+                    name={field.id}
+                    defaultValue=""
+                    className={fieldClassName}
+                  >
                     <option value="" disabled>
                       {t[field.placeholderKey]}
                     </option>
@@ -144,7 +252,11 @@ export function CustomizationPreferencesContent() {
           ))}
 
           {toggleSections.map((section) => (
-            <PreferenceSection key={section.titleKey} title={t[section.titleKey]} description={t[section.descriptionKey]}>
+            <PreferenceSection
+              key={section.titleKey}
+              title={t[section.titleKey]}
+              description={t[section.descriptionKey]}
+            >
               {section.fields.map((field) => (
                 <label
                   key={field.id}
@@ -152,7 +264,12 @@ export function CustomizationPreferencesContent() {
                   className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium leading-5 text-slate-700 transition hover:border-slate-300"
                 >
                   <span>{t[field.labelKey]}</span>
-                  <input id={field.id} name={field.id} type="checkbox" className="h-5 w-5 rounded border-slate-300 text-blue-700 focus:ring-violet-500" />
+                  <input
+                    id={field.id}
+                    name={field.id}
+                    type="checkbox"
+                    className="h-5 w-5 rounded border-slate-300 text-blue-700 focus:ring-violet-500"
+                  />
                 </label>
               ))}
             </PreferenceSection>

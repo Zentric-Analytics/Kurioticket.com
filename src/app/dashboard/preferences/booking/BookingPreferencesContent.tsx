@@ -16,7 +16,8 @@ const textFieldSections = [
       {
         id: "secondary-airports",
         labelKey: "accountDashboard.preferences.booking.secondaryAirports",
-        placeholderKey: "accountDashboard.preferences.booking.addAlternativeAirports",
+        placeholderKey:
+          "accountDashboard.preferences.booking.addAlternativeAirports",
       },
     ],
   },
@@ -43,12 +44,14 @@ const textFieldSections = [
       {
         id: "preferred-hotel-chains",
         labelKey: "accountDashboard.preferences.booking.preferredHotelChains",
-        placeholderKey: "accountDashboard.preferences.booking.searchHotelChains",
+        placeholderKey:
+          "accountDashboard.preferences.booking.searchHotelChains",
       },
       {
         id: "avoid-hotel-chains",
         labelKey: "accountDashboard.preferences.booking.avoidHotelChains",
-        placeholderKey: "accountDashboard.preferences.booking.searchHotelChains",
+        placeholderKey:
+          "accountDashboard.preferences.booking.searchHotelChains",
       },
     ],
   },
@@ -74,12 +77,17 @@ function PreferenceSection({
       aria-labelledby={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`}
     >
       <div>
-        <h2 id={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`} className="text-lg font-semibold leading-7 text-slate-900">
+        <h2
+          id={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`}
+          className="text-lg font-semibold leading-7 text-slate-900"
+        >
           {title}
         </h2>
         <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
       </div>
-      <div className="mt-5 grid w-full gap-4 sm:max-w-lg sm:gap-5">{children}</div>
+      <div className="mt-5 grid w-full gap-4 sm:max-w-lg sm:gap-5">
+        {children}
+      </div>
     </section>
   );
 }
@@ -89,11 +97,11 @@ export function BookingPreferencesContent() {
 
   return (
     <main className="flex-1 bg-[#f3f7fc] pb-10 pt-0">
+      <div className="page-shell min-w-0">
+        <AccountBackLink />
+      </div>
       <header className="bg-[#4338CA] text-start">
         <div className="mx-auto min-w-0 max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
-          <div className="[&_a]:text-white [&_a]:focus-visible:ring-white">
-            <AccountBackLink />
-          </div>
           <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-[2rem]">
             {t["accountDashboard.preferences.booking.title"]}
           </h1>
@@ -110,14 +118,26 @@ export function BookingPreferencesContent() {
               key={section.titleKey}
               title={t[section.titleKey]}
               description={t[section.descriptionKey]}
-              blendWithFormArea={section.titleKey === "accountDashboard.preferences.booking.airports.title"}
+              blendWithFormArea={
+                section.titleKey ===
+                "accountDashboard.preferences.booking.airports.title"
+              }
             >
               {section.fields.map((field) => (
                 <div key={field.id} className="min-w-0 space-y-2">
-                  <label htmlFor={field.id} className="block text-sm font-medium leading-5 text-slate-700">
+                  <label
+                    htmlFor={field.id}
+                    className="block text-sm font-medium leading-5 text-slate-700"
+                  >
                     {t[field.labelKey]}
                   </label>
-                  <input id={field.id} name={field.id} type="search" placeholder={t[field.placeholderKey]} className={fieldClassName} />
+                  <input
+                    id={field.id}
+                    name={field.id}
+                    type="search"
+                    placeholder={t[field.placeholderKey]}
+                    className={fieldClassName}
+                  />
                 </div>
               ))}
             </PreferenceSection>

@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
+import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
 import { DashboardOverview } from "@/components/dashboard/DashboardGrid";
 import { authOptions } from "@/lib/auth";
 
@@ -31,7 +32,15 @@ export default async function DashboardPage() {
     <>
       <AppHeader />
       <main className="flex-1 bg-[#f3f7fc] pb-10 pt-0">
-        <DashboardOverview initials={initials} displayName={displayName} userEmail={userEmail} userName={userName} />
+        <div className="page-shell min-w-0">
+          <AccountBackLink />
+          <DashboardOverview
+            initials={initials}
+            displayName={displayName}
+            userEmail={userEmail}
+            userName={userName}
+          />
+        </div>
       </main>
       <Footer />
     </>

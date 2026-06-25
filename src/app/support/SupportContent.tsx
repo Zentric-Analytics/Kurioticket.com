@@ -59,7 +59,6 @@ export function SupportContent({
   const content = (
     <>
       <section className="max-w-3xl">
-        {dashboardFlow ? <AccountBackLink /> : null}
         {dashboardFlow ? null : (
           <p className="text-sm font-semibold text-teal-dark">
             {t("supportEyebrow")}
@@ -82,10 +81,22 @@ export function SupportContent({
             <HelpCircle size={22} />
           </div>
           <div>
-            <h2 className={dashboardFlow ? "text-lg font-semibold text-slate-900" : "text-xl font-bold text-navy"}>
+            <h2
+              className={
+                dashboardFlow
+                  ? "text-lg font-semibold text-slate-900"
+                  : "text-xl font-bold text-navy"
+              }
+            >
               {t("supportBeforeContactHeading")}
             </h2>
-            <p className={dashboardFlow ? "mt-2 text-sm leading-6 text-slate-600 sm:text-base sm:leading-7" : "mt-2 text-sm leading-6 text-muted sm:text-base"}>
+            <p
+              className={
+                dashboardFlow
+                  ? "mt-2 text-sm leading-6 text-slate-600 sm:text-base sm:leading-7"
+                  : "mt-2 text-sm leading-6 text-muted sm:text-base"
+              }
+            >
               {beforeContactDescription}
             </p>
           </div>
@@ -152,7 +163,10 @@ export function SupportContent({
         }
       >
         {dashboardFlow ? (
-          <div className="page-shell min-w-0 pt-3 sm:pt-6">{content}</div>
+          <div className="page-shell min-w-0 pt-3 sm:pt-6">
+            <AccountBackLink />
+            {content}
+          </div>
         ) : (
           content
         )}

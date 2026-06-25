@@ -16,7 +16,6 @@ import {
   UserRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
 import { LinkButton } from "@/components/ui/Button";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -37,33 +36,64 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
   {
     titleKey: "accountDashboard.hub.manageAccount",
     rows: [
-      { labelKey: "accountDashboard.hub.personalDetails", href: "/dashboard", icon: UserRound },
-      { labelKey: "accountDashboard.hub.securitySettings", href: "/dashboard/security", icon: ShieldCheck },
+      {
+        labelKey: "accountDashboard.hub.personalDetails",
+        href: "/dashboard",
+        icon: UserRound,
+      },
+      {
+        labelKey: "accountDashboard.hub.securitySettings",
+        href: "/dashboard/security",
+        icon: ShieldCheck,
+      },
     ],
   },
   {
     titleKey: "accountDashboard.hub.travelActivity",
     rows: [
-      { labelKey: "accountDashboard.hub.myTrips", href: "/dashboard/trips", icon: BriefcaseBusiness },
-      { labelKey: "accountDashboard.hub.savedTrips", href: "/saved?from=account", icon: Bookmark },
-      { labelKey: "accountDashboard.hub.priceAlerts", href: "/dashboard/alerts", icon: Bell },
+      {
+        labelKey: "accountDashboard.hub.myTrips",
+        href: "/dashboard/trips",
+        icon: BriefcaseBusiness,
+      },
+      {
+        labelKey: "accountDashboard.hub.savedTrips",
+        href: "/saved?from=account",
+        icon: Bookmark,
+      },
+      {
+        labelKey: "accountDashboard.hub.priceAlerts",
+        href: "/dashboard/alerts",
+        icon: Bell,
+      },
     ],
   },
   {
     titleKey: "accountDashboard.hub.preferences",
     rows: [
-      { labelKey: "accountDashboard.hub.emailPreferences", href: "/dashboard/preferences/customization", icon: Mail },
-      { labelKey: "accountDashboard.hub.travelPreferences", href: "/dashboard/preferences/booking", icon: Settings },
+      {
+        labelKey: "accountDashboard.hub.emailPreferences",
+        href: "/dashboard/preferences/customization",
+        icon: Mail,
+      },
+      {
+        labelKey: "accountDashboard.hub.travelPreferences",
+        href: "/dashboard/preferences/booking",
+        icon: Settings,
+      },
     ],
   },
   {
     titleKey: "accountDashboard.hub.helpAndSupport",
     rows: [
-      { labelKey: "accountDashboard.hub.contactSupport", href: "/dashboard/support", icon: Headphones },
+      {
+        labelKey: "accountDashboard.hub.contactSupport",
+        href: "/dashboard/support",
+        icon: Headphones,
+      },
     ],
   },
 ];
-
 
 type DashboardOverviewProps = {
   initials: string;
@@ -115,10 +145,12 @@ function formatAccountWelcome(template: string, name: string) {
   return template.replace("{name}", name);
 }
 
-
 function SavedEmptyStateIllustration() {
   return (
-    <div className="relative mx-auto h-48 w-full max-w-[24rem] overflow-hidden sm:h-52" aria-hidden="true">
+    <div
+      className="relative mx-auto h-48 w-full max-w-[24rem] overflow-hidden sm:h-52"
+      aria-hidden="true"
+    >
       <div className="absolute start-1/2 top-5 h-36 w-36 -translate-x-1/2 rounded-full bg-teal/10" />
       <div className="absolute bottom-4 start-1/2 h-8 w-[19rem] -translate-x-1/2 rounded-[100%] bg-navy/5 blur-sm" />
       <svg
@@ -136,39 +168,98 @@ function SavedEmptyStateIllustration() {
           strokeDasharray="8 12"
         />
         <path d="M48 80l118-34 8 96-118 34-8-96Z" className="fill-white" />
-        <path d="M166 46l78 28 8 96-78-28-8-96Z" className="fill-surface-muted" />
+        <path
+          d="M166 46l78 28 8 96-78-28-8-96Z"
+          className="fill-surface-muted"
+        />
         <path d="M244 74l92-28 8 96-92 28-8-96Z" className="fill-white" />
-        <path d="M48 80l118-34 78 28 92-28 8 96-92 28-78-28-118 34-8-96Z" stroke="currentColor" className="text-navy/20" strokeWidth="3" strokeLinejoin="round" />
-        <path d="M132 57l9 97M213 63l9 96M278 64l8 96" stroke="currentColor" className="text-navy/10" strokeWidth="3" />
-        <path d="M108 116c18-21 49-27 74-13 21 11 29 33 50 39 16 4 31-2 46-15" stroke="currentColor" className="text-teal" strokeWidth="5" strokeLinecap="round" strokeDasharray="1 11" />
+        <path
+          d="M48 80l118-34 78 28 92-28 8 96-92 28-78-28-118 34-8-96Z"
+          stroke="currentColor"
+          className="text-navy/20"
+          strokeWidth="3"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M132 57l9 97M213 63l9 96M278 64l8 96"
+          stroke="currentColor"
+          className="text-navy/10"
+          strokeWidth="3"
+        />
+        <path
+          d="M108 116c18-21 49-27 74-13 21 11 29 33 50 39 16 4 31-2 46-15"
+          stroke="currentColor"
+          className="text-teal"
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeDasharray="1 11"
+        />
         <g className="drop-shadow-sm">
-          <path d="M117 54c-18 0-33 14-33 32 0 26 33 59 33 59s33-33 33-59c0-18-15-32-33-32Z" className="fill-teal" />
-          <path d="M117 99c7-5 18-14 18-24 0-7-5-12-12-12-3 0-5 1-6 3-2-2-4-3-7-3-7 0-12 5-12 12 0 10 12 19 19 24Z" className="fill-white" />
+          <path
+            d="M117 54c-18 0-33 14-33 32 0 26 33 59 33 59s33-33 33-59c0-18-15-32-33-32Z"
+            className="fill-teal"
+          />
+          <path
+            d="M117 99c7-5 18-14 18-24 0-7-5-12-12-12-3 0-5 1-6 3-2-2-4-3-7-3-7 0-12 5-12 12 0 10 12 19 19 24Z"
+            className="fill-white"
+          />
         </g>
         <g className="drop-shadow-sm">
-          <rect x="237" y="34" width="54" height="68" rx="16" className="fill-navy" />
+          <rect
+            x="237"
+            y="34"
+            width="54"
+            height="68"
+            rx="16"
+            className="fill-navy"
+          />
           <path d="M252 34h24v37l-12-7-12 7V34Z" className="fill-blue" />
-          <path d="M254 81h21" stroke="white" strokeWidth="4" strokeLinecap="round" opacity=".75" />
+          <path
+            d="M254 81h21"
+            stroke="white"
+            strokeWidth="4"
+            strokeLinecap="round"
+            opacity=".75"
+          />
         </g>
-        <path d="M290 108l35 10-22 9-6 21-13-31-24-9 30 0Z" className="fill-blue" />
-        <path d="M290 108l35 10-22 9-6 21-13-31-24-9 30 0Z" stroke="white" strokeWidth="3" strokeLinejoin="round" />
+        <path
+          d="M290 108l35 10-22 9-6 21-13-31-24-9 30 0Z"
+          className="fill-blue"
+        />
+        <path
+          d="M290 108l35 10-22 9-6 21-13-31-24-9 30 0Z"
+          stroke="white"
+          strokeWidth="3"
+          strokeLinejoin="round"
+        />
       </svg>
     </div>
   );
 }
 
-
-export function AccountSectionHeader({ title, description, titleId }: { title: string; description: string; titleId?: string }) {
+export function AccountSectionHeader({
+  title,
+  description,
+  titleId,
+}: {
+  title: string;
+  description: string;
+  titleId?: string;
+}) {
   return (
     <div className="px-1 pb-2 text-start sm:px-2 sm:pb-3">
-      <h1 id={titleId} className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
+      <h1
+        id={titleId}
+        className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]"
+      >
         {title}
       </h1>
-      <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">{description}</p>
+      <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+        {description}
+      </p>
     </div>
   );
 }
-
 
 function AccountDashboardRow({ row }: { row: AccountDashboardRowItem }) {
   const { t } = useLocale();
@@ -179,16 +270,28 @@ function AccountDashboardRow({ row }: { row: AccountDashboardRowItem }) {
       href={row.href}
       className="focus-ring group/row flex min-h-12 items-center gap-3 border-t border-slate-100 px-5 py-2 text-start transition duration-150 hover:bg-slate-50 focus-visible:relative focus-visible:z-10 sm:min-h-[52px]"
     >
-      <RowIcon className="size-[18px] shrink-0 text-blue-600" strokeWidth={2} aria-hidden="true" />
+      <RowIcon
+        className="size-[18px] shrink-0 text-blue-600"
+        strokeWidth={2}
+        aria-hidden="true"
+      />
       <span className="min-w-0 flex-1 text-sm font-medium leading-5 text-slate-800">
         {t[row.labelKey]}
       </span>
-      <ChevronRight className="size-[18px] shrink-0 text-slate-400 transition group-hover/row:translate-x-0.5" strokeWidth={2} aria-hidden="true" />
+      <ChevronRight
+        className="size-[18px] shrink-0 text-slate-400 transition group-hover/row:translate-x-0.5"
+        strokeWidth={2}
+        aria-hidden="true"
+      />
     </Link>
   );
 }
 
-function AccountDashboardPanel({ panel }: { panel: AccountDashboardPanelItem }) {
+function AccountDashboardPanel({
+  panel,
+}: {
+  panel: AccountDashboardPanelItem;
+}) {
   const { t } = useLocale();
   const title = t[panel.titleKey];
 
@@ -198,7 +301,10 @@ function AccountDashboardPanel({ panel }: { panel: AccountDashboardPanelItem }) 
       aria-labelledby={`account-panel-${panel.titleKey.replace(/[^a-z0-9]+/g, "-")}`}
     >
       <div className="px-5 pb-3.5 pt-[18px]">
-        <h2 id={`account-panel-${panel.titleKey.replace(/[^a-z0-9]+/g, "-")}`} className="text-lg font-semibold leading-6 text-slate-900">
+        <h2
+          id={`account-panel-${panel.titleKey.replace(/[^a-z0-9]+/g, "-")}`}
+          className="text-lg font-semibold leading-6 text-slate-900"
+        >
           {title}
         </h2>
       </div>
@@ -214,32 +320,57 @@ function AccountDashboardPanel({ panel }: { panel: AccountDashboardPanelItem }) 
   );
 }
 
-export function AccountMenuPage({ initials, displayName, userEmail }: Pick<DashboardOverviewProps, "initials" | "displayName" | "userEmail">) {
+export function AccountMenuPage({
+  initials,
+  displayName,
+  userEmail,
+}: Pick<DashboardOverviewProps, "initials" | "displayName" | "userEmail">) {
   const { t } = useLocale();
 
   return (
     <section className="overflow-x-hidden" aria-labelledby="account-title">
       <div className="px-4 pb-8 pt-8 sm:px-6 sm:pb-10 sm:pt-10 lg:px-8 lg:pb-11 lg:pt-12">
         <div className="mx-auto max-w-[1120px] space-y-5">
-          <header className="rounded-2xl border border-slate-200/80 bg-white p-[18px] text-start shadow-sm sm:p-6" aria-label={t["accountDashboard.hub.title"]}>
+          <header
+            className="rounded-2xl border border-slate-200/80 bg-white p-[18px] text-start shadow-sm sm:p-6"
+            aria-label={t["accountDashboard.hub.title"]}
+          >
             <div className="flex min-w-0 items-center gap-3.5 sm:gap-5">
               <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-purple-700 text-lg font-bold uppercase tracking-[-0.02em] text-white shadow-sm ring-1 ring-blue-200/70 sm:size-16 sm:text-xl">
                 {initials}
               </div>
               <div className="min-w-0 flex-1">
-                <h1 id="account-title" className="text-xl font-bold leading-7 tracking-[-0.03em] text-slate-950 [overflow-wrap:anywhere] sm:truncate sm:text-3xl sm:leading-tight sm:tracking-[-0.035em]">
-                  {formatAccountWelcome(t["accountDashboard.overview.welcome"], displayName)} 👋
+                <h1
+                  id="account-title"
+                  className="text-xl font-bold leading-7 tracking-[-0.03em] text-slate-950 [overflow-wrap:anywhere] sm:truncate sm:text-3xl sm:leading-tight sm:tracking-[-0.035em]"
+                >
+                  {formatAccountWelcome(
+                    t["accountDashboard.overview.welcome"],
+                    displayName,
+                  )}{" "}
+                  👋
                 </h1>
-                {userEmail ? <p className="mt-0.5 truncate text-sm leading-5 text-slate-500 sm:mt-1 sm:text-sm sm:text-slate-600">{userEmail}</p> : null}
+                {userEmail ? (
+                  <p className="mt-0.5 truncate text-sm leading-5 text-slate-500 sm:mt-1 sm:text-sm sm:text-slate-600">
+                    {userEmail}
+                  </p>
+                ) : null}
                 <p className="mt-1.5 max-w-2xl text-sm leading-5 text-slate-600 sm:mt-2 sm:text-base sm:leading-6">
-                  <span className="sm:hidden">{t["accountDashboard.hub.mobileDescription"]}</span>
-                  <span className="hidden sm:inline">{t["accountDashboard.hub.description"]}</span>
+                  <span className="sm:hidden">
+                    {t["accountDashboard.hub.mobileDescription"]}
+                  </span>
+                  <span className="hidden sm:inline">
+                    {t["accountDashboard.hub.description"]}
+                  </span>
                 </p>
               </div>
             </div>
           </header>
 
-          <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="grid gap-4 md:grid-cols-2 lg:gap-5">
+          <nav
+            aria-label={t["accountDashboard.mobile.manageAccount"]}
+            className="grid gap-4 md:grid-cols-2 lg:gap-5"
+          >
             {accountDashboardPanels.map((panel) => (
               <AccountDashboardPanel key={panel.titleKey} panel={panel} />
             ))}
@@ -250,29 +381,57 @@ export function AccountMenuPage({ initials, displayName, userEmail }: Pick<Dashb
   );
 }
 
-
 const genderOptions = [
   { value: "Male", labelKey: "accountDashboard.personalDetails.gender.male" },
-  { value: "Female", labelKey: "accountDashboard.personalDetails.gender.female" },
-  { value: "I prefer not to say", labelKey: "accountDashboard.personalDetails.gender.preferNotToSay" },
+  {
+    value: "Female",
+    labelKey: "accountDashboard.personalDetails.gender.female",
+  },
+  {
+    value: "I prefer not to say",
+    labelKey: "accountDashboard.personalDetails.gender.preferNotToSay",
+  },
 ];
 const dateOfBirthMonthOptions = [
-  { value: "January", labelKey: "accountDashboard.personalDetails.month.january" },
-  { value: "February", labelKey: "accountDashboard.personalDetails.month.february" },
+  {
+    value: "January",
+    labelKey: "accountDashboard.personalDetails.month.january",
+  },
+  {
+    value: "February",
+    labelKey: "accountDashboard.personalDetails.month.february",
+  },
   { value: "March", labelKey: "accountDashboard.personalDetails.month.march" },
   { value: "April", labelKey: "accountDashboard.personalDetails.month.april" },
   { value: "May", labelKey: "accountDashboard.personalDetails.month.may" },
   { value: "June", labelKey: "accountDashboard.personalDetails.month.june" },
   { value: "July", labelKey: "accountDashboard.personalDetails.month.july" },
-  { value: "August", labelKey: "accountDashboard.personalDetails.month.august" },
-  { value: "September", labelKey: "accountDashboard.personalDetails.month.september" },
-  { value: "October", labelKey: "accountDashboard.personalDetails.month.october" },
-  { value: "November", labelKey: "accountDashboard.personalDetails.month.november" },
-  { value: "December", labelKey: "accountDashboard.personalDetails.month.december" },
+  {
+    value: "August",
+    labelKey: "accountDashboard.personalDetails.month.august",
+  },
+  {
+    value: "September",
+    labelKey: "accountDashboard.personalDetails.month.september",
+  },
+  {
+    value: "October",
+    labelKey: "accountDashboard.personalDetails.month.october",
+  },
+  {
+    value: "November",
+    labelKey: "accountDashboard.personalDetails.month.november",
+  },
+  {
+    value: "December",
+    labelKey: "accountDashboard.personalDetails.month.december",
+  },
 ];
 const dateOfBirthMonths = dateOfBirthMonthOptions.map((month) => month.value);
 
-const dateOfBirthDays = Array.from({ length: 31 }, (_, index) => String(index + 1).padStart(2, "0"));
+const dateOfBirthDays = Array.from({ length: 31 }, (_, index) =>
+  String(index + 1).padStart(2, "0"),
+);
 
 const minDateOfBirthYear = 1900;
 const currentDateOfBirthYear = new Date().getFullYear();
@@ -283,8 +442,16 @@ const dateOfBirthYears = Array.from(
 
 function getPersonalDetailRows(t: TranslationDictionary): PersonalDetailRow[] {
   return [
-    { key: "name", label: t["accountDashboard.personalDetails.name"], fallback: t["accountDashboard.personalDetails.addName"] },
-    { key: "displayName", label: t["accountDashboard.personalDetails.displayName"], fallback: t["accountDashboard.personalDetails.chooseDisplayName"] },
+    {
+      key: "name",
+      label: t["accountDashboard.personalDetails.name"],
+      fallback: t["accountDashboard.personalDetails.addName"],
+    },
+    {
+      key: "displayName",
+      label: t["accountDashboard.personalDetails.displayName"],
+      fallback: t["accountDashboard.personalDetails.chooseDisplayName"],
+    },
     {
       key: "email",
       label: t["accountDashboard.personalDetails.emailAddress"],
@@ -298,19 +465,39 @@ function getPersonalDetailRows(t: TranslationDictionary): PersonalDetailRow[] {
       fallback: t["accountDashboard.personalDetails.addPhoneNumber"],
       inputType: "tel",
     },
-    { key: "dateOfBirth", label: t["accountDashboard.personalDetails.dateOfBirth"], fallback: t["accountDashboard.personalDetails.addDateOfBirth"] },
+    {
+      key: "dateOfBirth",
+      label: t["accountDashboard.personalDetails.dateOfBirth"],
+      fallback: t["accountDashboard.personalDetails.addDateOfBirth"],
+    },
     {
       key: "gender",
       label: t["accountDashboard.personalDetails.gender"],
       fallback: t["accountDashboard.personalDetails.addGender"],
-      options: genderOptions.map((option) => ({ value: option.value, label: t[option.labelKey] })),
+      options: genderOptions.map((option) => ({
+        value: option.value,
+        label: t[option.labelKey],
+      })),
     },
-    { key: "nationality", label: t["accountDashboard.personalDetails.nationality"], fallback: t["accountDashboard.personalDetails.addNationality"] },
-    { key: "address", label: t["accountDashboard.personalDetails.address"], fallback: t["accountDashboard.personalDetails.addAddress"], multiline: true },
+    {
+      key: "nationality",
+      label: t["accountDashboard.personalDetails.nationality"],
+      fallback: t["accountDashboard.personalDetails.addNationality"],
+    },
+    {
+      key: "address",
+      label: t["accountDashboard.personalDetails.address"],
+      fallback: t["accountDashboard.personalDetails.addAddress"],
+      multiline: true,
+    },
   ];
 }
 
-function getPersonalDetailsInitialValues({ displayName, userEmail, userName }: DashboardOverviewProps): PersonalDetailsDraft {
+function getPersonalDetailsInitialValues({
+  displayName,
+  userEmail,
+  userName,
+}: DashboardOverviewProps): PersonalDetailsDraft {
   const trimmedName = userName?.trim() ?? "";
   const trimmedDisplayName = trimmedName ? displayName.trim() : "";
 
@@ -326,11 +513,28 @@ function getPersonalDetailsInitialValues({ displayName, userEmail, userName }: D
   };
 }
 
-function DetailValue({ value, fallback, helper }: { value: string; fallback: string; helper?: string }) {
+function DetailValue({
+  value,
+  fallback,
+  helper,
+}: {
+  value: string;
+  fallback: string;
+  helper?: string;
+}) {
   return (
     <div className="min-w-0 space-y-0.5 text-start">
-      <p className={cn("break-words text-sm font-medium leading-6 text-slate-700", !value && "text-slate-500")}>{value || fallback}</p>
-      {helper ? <p className="max-w-lg text-sm leading-6 text-slate-500">{helper}</p> : null}
+      <p
+        className={cn(
+          "break-words text-sm font-medium leading-6 text-slate-700",
+          !value && "text-slate-500",
+        )}
+      >
+        {value || fallback}
+      </p>
+      {helper ? (
+        <p className="max-w-lg text-sm leading-6 text-slate-500">{helper}</p>
+      ) : null}
     </div>
   );
 }
@@ -370,13 +574,25 @@ function parseDateOfBirthParts(value: string) {
   };
 }
 
-function formatDateOfBirthParts(parts: { day: string; month: string; year: string }) {
+function formatDateOfBirthParts(parts: {
+  day: string;
+  month: string;
+  year: string;
+}) {
   const normalizedDay = parts.day ? parts.day.padStart(2, "0") : "";
 
   return [normalizedDay, parts.month, parts.year].filter(Boolean).join(" ");
 }
 
-function DateOfBirthInput({ value, onChange, className }: { value: string; onChange: (value: string) => void; className: string }) {
+function DateOfBirthInput({
+  value,
+  onChange,
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  className: string;
+}) {
   const { t } = useLocale();
   const [parts, setParts] = useState(() => parseDateOfBirthParts(value));
 
@@ -392,7 +608,12 @@ function DateOfBirthInput({ value, onChange, className }: { value: string; onCha
 
   return (
     <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)_minmax(0,1fr)]">
-      <select className={className} value={parts.day} onChange={(event) => updatePart("day", event.target.value)} aria-label={t["accountDashboard.personalDetails.dateOfBirthDay"]}>
+      <select
+        className={className}
+        value={parts.day}
+        onChange={(event) => updatePart("day", event.target.value)}
+        aria-label={t["accountDashboard.personalDetails.dateOfBirthDay"]}
+      >
         <option value="" disabled hidden>
           DD
         </option>
@@ -402,7 +623,12 @@ function DateOfBirthInput({ value, onChange, className }: { value: string; onCha
           </option>
         ))}
       </select>
-      <select className={className} value={parts.month} onChange={(event) => updatePart("month", event.target.value)} aria-label={t["accountDashboard.personalDetails.dateOfBirthMonth"]}>
+      <select
+        className={className}
+        value={parts.month}
+        onChange={(event) => updatePart("month", event.target.value)}
+        aria-label={t["accountDashboard.personalDetails.dateOfBirthMonth"]}
+      >
         <option value="" disabled hidden>
           {t["accountDashboard.personalDetails.monthPlaceholder"]}
         </option>
@@ -412,7 +638,12 @@ function DateOfBirthInput({ value, onChange, className }: { value: string; onCha
           </option>
         ))}
       </select>
-      <select className={className} value={parts.year} onChange={(event) => updatePart("year", event.target.value)} aria-label={t["accountDashboard.personalDetails.dateOfBirthYear"]}>
+      <select
+        className={className}
+        value={parts.year}
+        onChange={(event) => updatePart("year", event.target.value)}
+        aria-label={t["accountDashboard.personalDetails.dateOfBirthYear"]}
+      >
         <option value="" disabled hidden>
           YYYY
         </option>
@@ -426,23 +657,48 @@ function DateOfBirthInput({ value, onChange, className }: { value: string; onCha
   );
 }
 
-function DetailInput({ row, value, onChange }: { row: PersonalDetailRow; value: string; onChange: (key: keyof PersonalDetailsDraft, value: string) => void }) {
+function DetailInput({
+  row,
+  value,
+  onChange,
+}: {
+  row: PersonalDetailRow;
+  value: string;
+  onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
+}) {
   const baseClassName = cn(
     "w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-[15px] font-medium text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 sm:py-2.5 sm:text-sm",
-    row.readOnly && "cursor-not-allowed bg-slate-50 text-slate-500 focus:border-slate-200 focus:ring-0",
+    row.readOnly &&
+      "cursor-not-allowed bg-slate-50 text-slate-500 focus:border-slate-200 focus:ring-0",
   );
 
-  const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    event: ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
     onChange(row.key, event.target.value);
   };
 
   if (row.key === "dateOfBirth") {
-    return <DateOfBirthInput value={value} onChange={(nextValue) => onChange(row.key, nextValue)} className={baseClassName} />;
+    return (
+      <DateOfBirthInput
+        value={value}
+        onChange={(nextValue) => onChange(row.key, nextValue)}
+        className={baseClassName}
+      />
+    );
   }
 
   if (row.options) {
     return (
-      <select className={baseClassName} value={value} onChange={handleChange} disabled={row.readOnly} aria-label={row.label}>
+      <select
+        className={baseClassName}
+        value={value}
+        onChange={handleChange}
+        disabled={row.readOnly}
+        aria-label={row.label}
+      >
         <option value="" disabled hidden>
           {row.fallback}
         </option>
@@ -512,15 +768,32 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
           const editValue = draft[row.key];
 
           return (
-            <div key={row.key} className="grid min-w-0 gap-1 border-t border-slate-200 px-5 py-4 first:border-t-0 sm:min-h-16 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center sm:gap-6 sm:px-6 sm:py-3">
-              <div className="text-sm font-medium leading-5 text-slate-700 sm:text-slate-800">{row.label}</div>
+            <div
+              key={row.key}
+              className="grid min-w-0 gap-1 border-t border-slate-200 px-5 py-4 first:border-t-0 sm:min-h-16 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center sm:gap-6 sm:px-6 sm:py-3"
+            >
+              <div className="text-sm font-medium leading-5 text-slate-700 sm:text-slate-800">
+                {row.label}
+              </div>
               {isEditing ? (
                 <div className="min-w-0 space-y-1.5">
-                  <DetailInput row={row} value={editValue} onChange={updateDraft} />
-                  {row.helper ? <p className="text-sm leading-6 text-slate-500">{row.helper}</p> : null}
+                  <DetailInput
+                    row={row}
+                    value={editValue}
+                    onChange={updateDraft}
+                  />
+                  {row.helper ? (
+                    <p className="text-sm leading-6 text-slate-500">
+                      {row.helper}
+                    </p>
+                  ) : null}
                 </div>
               ) : (
-                <DetailValue value={readOnlyValue} fallback={row.fallback} helper={row.helper} />
+                <DetailValue
+                  value={readOnlyValue}
+                  fallback={row.fallback}
+                  helper={row.helper}
+                />
               )}
             </div>
           );
@@ -530,7 +803,9 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       <div className="border-t border-slate-200 px-5 py-4 sm:px-6">
         {isEditing ? (
           <div className="space-y-4">
-            <p className="text-sm leading-6 text-slate-500">{t["accountDashboard.personalDetails.editingComingSoon"]}</p>
+            <p className="text-sm leading-6 text-slate-500">
+              {t["accountDashboard.personalDetails.editingComingSoon"]}
+            </p>
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
               <button
                 type="button"
@@ -572,12 +847,25 @@ function ListRow({ title, body, href, icon: Icon, status }: ListRowProps) {
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <h3 className="min-w-0 break-words text-base font-semibold text-slate-900">{title}</h3>
-          {status ? <span className="break-words rounded-full bg-surface-muted px-2.5 py-1 text-xs font-semibold text-muted">{status}</span> : null}
+          <h3 className="min-w-0 break-words text-base font-semibold text-slate-900">
+            {title}
+          </h3>
+          {status ? (
+            <span className="break-words rounded-full bg-surface-muted px-2.5 py-1 text-xs font-semibold text-muted">
+              {status}
+            </span>
+          ) : null}
         </div>
-        <p className="mt-1 break-words text-sm leading-6 text-slate-600">{body}</p>
+        <p className="mt-1 break-words text-sm leading-6 text-slate-600">
+          {body}
+        </p>
       </div>
-      {href ? <ChevronRight className="mt-2 size-4 shrink-0 text-teal-dark" aria-hidden="true" /> : null}
+      {href ? (
+        <ChevronRight
+          className="mt-2 size-4 shrink-0 text-teal-dark"
+          aria-hidden="true"
+        />
+      ) : null}
     </div>
   );
 
@@ -592,29 +880,45 @@ function ListRow({ title, body, href, icon: Icon, status }: ListRowProps) {
   );
 }
 
-export function DashboardOverview({ initials, displayName, userEmail, userName }: DashboardOverviewProps) {
+export function DashboardOverview({
+  initials,
+  displayName,
+  userEmail,
+  userName,
+}: DashboardOverviewProps) {
   const { t } = useLocale();
 
   return (
     <div className="mx-auto min-w-0 max-w-[60rem] space-y-5 px-4 py-6 sm:px-6 sm:py-8 lg:px-6 lg:py-10">
-      <div>
-        <AccountBackLink />
-        <AccountSectionHeader title={t["accountDashboard.personalDetails.title"]} description={t["accountDashboard.personalDetails.subtitle"]} titleId="dashboard-title" />
-      </div>
-      <PersonalDetailsSection initials={initials} displayName={displayName} userEmail={userEmail} userName={userName} />
+      <AccountSectionHeader
+        title={t["accountDashboard.personalDetails.title"]}
+        description={t["accountDashboard.personalDetails.subtitle"]}
+        titleId="dashboard-title"
+      />
+      <PersonalDetailsSection
+        initials={initials}
+        displayName={displayName}
+        userEmail={userEmail}
+        userName={userName}
+      />
     </div>
   );
 }
-
 
 export function SavedDashboardPage() {
   const { t } = useLocale();
 
   return (
-    <section className="mx-auto min-w-0 max-w-[72rem] bg-white pb-12 pt-3 sm:pt-6" aria-labelledby="saved-dashboard-title">
+    <section
+      className="mx-auto min-w-0 max-w-[72rem] bg-white pb-12 pt-3 sm:pt-6"
+      aria-labelledby="saved-dashboard-title"
+    >
       <div className="flex min-w-0 items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 id="saved-dashboard-title" className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
+          <h1
+            id="saved-dashboard-title"
+            className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]"
+          >
             {t["accountDashboard.saved.title"]}
           </h1>
         </div>
@@ -648,8 +952,15 @@ export function PreferencesDashboardPage() {
   const { t } = useLocale();
 
   return (
-    <section aria-labelledby="preferences-title" className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]">
-      <AccountSectionHeader title={t["accountDashboard.preferences.title"]} description={t["accountDashboard.preferences.description"]} titleId="preferences-title" />
+    <section
+      aria-labelledby="preferences-title"
+      className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]"
+    >
+      <AccountSectionHeader
+        title={t["accountDashboard.preferences.title"]}
+        description={t["accountDashboard.preferences.description"]}
+        titleId="preferences-title"
+      />
       <div className="grid gap-3">
         <ListRow
           title={t["accountDashboard.preferences.personalDetails.title"]}
@@ -680,11 +991,20 @@ export function PreferencesDashboardPage() {
   );
 }
 
-function SecuritySettingRow({ title, body, action, danger = false, onAction, statusId }: SecuritySettingRowProps) {
+function SecuritySettingRow({
+  title,
+  body,
+  action,
+  danger = false,
+  onAction,
+  statusId,
+}: SecuritySettingRowProps) {
   return (
     <div className="flex min-w-0 flex-col gap-4 px-5 py-5 sm:min-h-[5.25rem] sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6 sm:py-4">
       <div className="min-w-0 sm:pe-4">
-        <h2 className="text-base font-semibold leading-6 text-slate-900">{title}</h2>
+        <h2 className="text-base font-semibold leading-6 text-slate-900">
+          {title}
+        </h2>
         <p className="mt-1 text-sm leading-6 text-slate-600">{body}</p>
       </div>
       <button
@@ -714,11 +1034,15 @@ export function SecurityDashboardPage() {
   };
 
   return (
-    <section aria-labelledby="security-title" className="mx-auto min-w-0 max-w-[60rem] space-y-5 px-4 pt-6 sm:px-6 sm:pt-8 lg:px-6 lg:pt-10">
-      <div>
-        <AccountBackLink />
-        <AccountSectionHeader title={t["accountDashboard.security.title"]} description={t["accountDashboard.security.description"]} titleId="security-title" />
-      </div>
+    <section
+      aria-labelledby="security-title"
+      className="mx-auto min-w-0 max-w-[60rem] space-y-5 px-4 pt-6 sm:px-6 sm:pt-8 lg:px-6 lg:pt-10"
+    >
+      <AccountSectionHeader
+        title={t["accountDashboard.security.title"]}
+        description={t["accountDashboard.security.description"]}
+        titleId="security-title"
+      />
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_18px_45px_-38px_rgba(15,23,42,0.55)]">
         <div className="divide-y divide-slate-200">
           <SecuritySettingRow
@@ -771,8 +1095,15 @@ export function SupportDashboardPage() {
   const { t } = useLocale();
 
   return (
-    <section aria-labelledby="support-title" className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]">
-      <AccountSectionHeader title={t["accountDashboard.support.title"]} description={t["accountDashboard.support.description"]} titleId="support-title" />
+    <section
+      aria-labelledby="support-title"
+      className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]"
+    >
+      <AccountSectionHeader
+        title={t["accountDashboard.support.title"]}
+        description={t["accountDashboard.support.description"]}
+        titleId="support-title"
+      />
       <div className="grid gap-3">
         <ListRow
           title={t["accountDashboard.support.helpCenter.title"]}
