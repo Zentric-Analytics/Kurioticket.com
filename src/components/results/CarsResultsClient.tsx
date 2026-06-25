@@ -335,10 +335,17 @@ const getCuratedLocationLabel = (location: string, t: (key: string) => string) =
 const getDriverAgeOptionLabel = (
   age: string,
   t: (key: string) => string,
-) =>
-  age === defaultDriverAge
-    ? t("carsResults.anyDriverAgeRange")
-    : `${age} ${t("carsResults.yearsOld")}`;
+) => {
+  if (age === defaultDriverAge) {
+    return t("carsResults.anyDriverAgeRange");
+  }
+
+  const yearsOldLabel = t("carsResults.yearsOld");
+
+  return yearsOldLabel.length === 1
+    ? `${age}${yearsOldLabel}`
+    : `${age} ${yearsOldLabel}`;
+};
 
 const fieldShellClass =
   "relative min-h-[50px] rounded-xl border border-slate-300 bg-white px-3 py-1 transition-[min-height,padding,border-color,box-shadow] duration-200 hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0";
