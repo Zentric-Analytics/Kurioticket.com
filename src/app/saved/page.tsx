@@ -1,4 +1,4 @@
-import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
+import { AccountDetailShell } from "@/components/dashboard/AccountDetailShell";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { SavedTripsAndRecentSearches } from "@/components/saved/SavedTripsAndRecentSearches";
@@ -9,7 +9,10 @@ type SavedPageProps = {
 
 export default async function SavedPage({ searchParams }: SavedPageProps) {
   const resolvedSearchParams = await searchParams;
-  const showAccountLink = resolvedSearchParams?.from === "account";
+  const fromParam = resolvedSearchParams?.from;
+  const showAccountLink = Array.isArray(fromParam)
+    ? fromParam.includes("account")
+    : fromParam === "account";
 
   return (
     <>
@@ -18,11 +21,12 @@ export default async function SavedPage({ searchParams }: SavedPageProps) {
       </div>
       <main className="flex-1 bg-[#f3f7fc] pb-16 lg:pb-20">
         {showAccountLink ? (
-          <div className="page-shell min-w-0">
-            <AccountBackLink />
-          </div>
-        ) : null}
-        <SavedTripsAndRecentSearches />
+          <AccountDetailShell>
+            <SavedTripsAndRecentSearches />
+          </AccountDetailShell>
+        ) : (
+          <SavedTripsAndRecentSearches />
+        )}
       </main>
       <Footer />
     </>

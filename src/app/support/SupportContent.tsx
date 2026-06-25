@@ -1,7 +1,7 @@
 "use client";
 
 import { HelpCircle } from "lucide-react";
-import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
+import { AccountDetailShell } from "@/components/dashboard/AccountDetailShell";
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -163,10 +163,9 @@ export function SupportContent({
         }
       >
         {dashboardFlow ? (
-          <div className="page-shell min-w-0 pt-3 sm:pt-6">
-            <AccountBackLink />
+          <AccountDetailShell>
             {content}
-          </div>
+          </AccountDetailShell>
         ) : (
           content
         )}
