@@ -127,6 +127,10 @@ const normalizeHomepageCalendarLocale = (
     return "ar";
   }
 
+  if (normalized === "ja" || normalized.startsWith("ja-")) {
+    return "ja-JP";
+  }
+
   if (
     normalized === "zh" ||
     normalized === "zh-cn" ||
@@ -1547,24 +1551,37 @@ export function SearchTabs({
         : t.economy || "Economy";
 
   const travelerSummary = useMemo(() => {
+    const isJapanese = (locale ?? activeLocale).toLowerCase().startsWith("ja");
+    const separator = isJapanese ? "、" : ", ";
+    const formatTravelerPart = (
+      count: number,
+      singularLabel: string,
+      pluralLabel: string,
+    ) => isJapanese
+      ? `${singularLabel}${count}名`
+      : `${count} ${count === 1 ? singularLabel : pluralLabel}`;
     const parts: string[] = [];
 
     if (adultCount > 0) {
-      parts.push(`${adultCount} ${adultCount === 1 ? t.adultSingular || "adult" : t.adultPlural || "adults"}`);
+      parts.push(formatTravelerPart(adultCount, t.adultSingular || "adult", t.adultPlural || "adults"));
     }
     if (childCount > 0) {
-      parts.push(`${childCount} ${childCount === 1 ? t.childSingular || "child" : t.childPlural || "children"}`);
+      parts.push(formatTravelerPart(childCount, t.childSingular || "child", t.childPlural || "children"));
     }
     if (infantCount > 0) {
-      parts.push(`${infantCount} ${infantCount === 1 ? t.infantSingular || "infant" : t.infantPlural || "infants"}`);
+      parts.push(formatTravelerPart(infantCount, t.infantSingular || "infant", t.infantPlural || "infants"));
     }
 
     const baseSummary =
       parts.length > 0
-        ? parts.join(", ")
-        : `${travelerCount} ${travelerCount === 1 ? t.travelerSingular || "traveler" : t.travelerPlural || t.travelers || "travelers"}`;
-    return `${baseSummary}, ${cabinClassLabel}`;
-  }, [adultCount, childCount, infantCount, travelerCount, cabinClassLabel, t]);
+        ? parts.join(separator)
+        : formatTravelerPart(
+            travelerCount,
+            t.travelerSingular || "traveler",
+            t.travelerPlural || t.travelers || "travelers",
+          );
+    return `${baseSummary}${separator}${cabinClassLabel}`;
+  }, [activeLocale, adultCount, childCount, infantCount, travelerCount, cabinClassLabel, locale, t]);
 
   const onKeyNav = (
     event: ReactKeyboardEvent<HTMLInputElement>,
@@ -2544,7 +2561,7 @@ export function SearchTabs({
   );
 
   const passengerRows = [
-    { key: "adults", label: translate("adults") || "Adults", subtitle: "18+", count: draftAdultCount, min: 1 },
+    { key: "adults", label: translate("adults") || "Adults", subtitle: translate("adultAgeRange") || "18+", count: draftAdultCount, min: 1 },
     { key: "children", label: translate("children") || "Children", subtitle: translate("childAgeRange") || "Ages 2–17", count: draftChildCount, min: 0 },
     { key: "infants", label: translate("infants") || "Infants", subtitle: translate("under2") || "Under 2", count: draftInfantCount, min: 0 },
   ];
