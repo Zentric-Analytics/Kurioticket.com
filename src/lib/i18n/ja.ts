@@ -514,7 +514,6 @@ export const translations: TranslationDictionary = {
   reviewBeforeBooking: "予約前に確認してください",
   flightLeg: "フライト区間",
   outbound: "往路",
-  return: "復路",
   layover: "乗り継ぎ",
   moreCount: "ほか{{count}}件",
 
