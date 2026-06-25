@@ -398,6 +398,8 @@ export const translations: TranslationDictionary = {
   "hotelResults.budgetPrice": "预算 / 价格",
   "hotelResults.totalUpTo": "总价最高",
   "hotelResults.starRating": "星级评分",
+  "hotelResults.fromRating": "从",
+  "hotelResults.starsAndUp": "{{rating}}+ 星级",
   "carsResults.edit": "编辑",
   "carsResults.editSearch": "编辑搜索",
   "carsResults.editCarSearch": "编辑租车搜索",

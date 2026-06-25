@@ -1345,7 +1345,7 @@ function HotelFilters({
         <FilterSection title={t("hotelResults.starRating")}>
           <label className="block">
             <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
-              {t("fromPrice")} {" "}
+              {t("hotelResults.fromRating")} {" "}
               <span className="font-mono text-indigo-950">{minRating}+</span>
             </span>
             <input
