@@ -94,7 +94,7 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
       },
       {
         labelKey: "accountDashboard.hub.faq",
-        href: "/faq",
+        href: "/faq?from=account",
         icon: CircleHelp,
       },
     ],
