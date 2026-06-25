@@ -497,13 +497,20 @@ export function AppHeader({
     );
   }, [navItems]);
 
-  const visibleMobilePrimaryNavItems = useMemo(
-    () => mobilePrimaryNavItems,
+  const visibleMobilePrimaryNavItems = useMemo(() => {
+    if (shouldHideDesktopTravelNavLinks) {
+      return [];
+    }
+
+    return mobilePrimaryNavItems;
     // hideMobileSecondaryNavLinks is retained for the current header API even though
     // mobile secondary links now live in the overlay drawer instead of this rail.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [hideMobileSecondaryNavLinks, mobilePrimaryNavItems],
-  );
+  }, [
+    hideMobileSecondaryNavLinks,
+    mobilePrimaryNavItems,
+    shouldHideDesktopTravelNavLinks,
+  ]);
 
   const mobileTravelDrawerHrefs = useMemo(
     () => new Set(["/flights", "/hotels", "/cars", "/deals"]),
@@ -1108,40 +1115,42 @@ export function AppHeader({
             </nav>
           ) : null}
 
-          <nav className="md:hidden" aria-label="Primary">
-            <div className="pb-1 pt-2.5">
-              <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {visibleMobilePrimaryNavItems.map((item) => {
-                  const Icon = item.icon;
-                  const active = isNavItemActive(item.href);
+          {visibleMobilePrimaryNavItems.length > 0 ? (
+            <nav className="md:hidden" aria-label="Primary">
+              <div className="pb-1 pt-2.5">
+                <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {visibleMobilePrimaryNavItems.map((item) => {
+                    const Icon = item.icon;
+                    const active = isNavItemActive(item.href);
 
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={(event) =>
-                        handleRouteLinkClick(event, item.href)
-                      }
-                      className={`inline-flex min-h-10 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-full border px-3.5 py-2 text-[15px] font-black leading-none tracking-[-0.01em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
-                        active
-                          ? "border-white/55 bg-white/90 text-indigo-700 shadow-[0_4px_10px_rgba(49,46,129,0.12)]"
-                          : "border-white/10 bg-transparent text-indigo-50/95 hover:border-white/25 hover:bg-white/10 hover:text-white"
-                      }`}
-                    >
-                      {Icon ? (
-                        <Icon
-                          size={18}
-                          className="shrink-0"
-                          aria-hidden="true"
-                        />
-                      ) : null}
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={(event) =>
+                          handleRouteLinkClick(event, item.href)
+                        }
+                        className={`inline-flex min-h-10 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-full border px-3.5 py-2 text-[15px] font-black leading-none tracking-[-0.01em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
+                          active
+                            ? "border-white/55 bg-white/90 text-indigo-700 shadow-[0_4px_10px_rgba(49,46,129,0.12)]"
+                            : "border-white/10 bg-transparent text-indigo-50/95 hover:border-white/25 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        {Icon ? (
+                          <Icon
+                            size={18}
+                            className="shrink-0"
+                            aria-hidden="true"
+                          />
+                        ) : null}
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          </nav>
+            </nav>
+          ) : null}
         </div>
 
         {mobileMenuOpen && typeof document !== "undefined"
