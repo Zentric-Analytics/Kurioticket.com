@@ -113,12 +113,16 @@ export const translations: TranslationDictionary = {
     "Start een zoekopdracht voor een economy-auto",
   "carsTripStyle.economy.ariaLabel":
     "Start een zoekopdracht voor een economy-auto met ophalen in het stadscentrum",
+  "carsTripStyle.economy.imageAlt":
+    "Compacte stadsauto’s tussen gebouwen in het centrum",
   "carsTripStyle.suv.title": "SUV’s",
   "carsTripStyle.suv.subtitle":
     "Ruimte voor gezinsreizen, bagage en langere ritten",
   "carsTripStyle.suv.cta": "Open een zoekopdracht voor een SUV-huurauto",
   "carsTripStyle.suv.ariaLabel":
     "Open een zoekopdracht voor een SUV-huurauto met ophalen op de luchthaven",
+  "carsTripStyle.suv.imageAlt":
+    "SUV op een open weg bij bergen",
   "carsTripStyle.luxury.title": "Luxe auto’s",
   "carsTripStyle.luxury.subtitle":
     "Premium zoekcontext voor zakelijke of speciale reizen",
@@ -126,12 +130,16 @@ export const translations: TranslationDictionary = {
     "Plan een zoekopdracht voor een luxe auto",
   "carsTripStyle.luxury.ariaLabel":
     "Plan een zoekopdracht voor een luxe auto met ophalen bij het hotelgebied",
+  "carsTripStyle.luxury.imageAlt":
+    "Premium auto geparkeerd bij een elegant modern gebouw",
   "carsTripStyle.van.title": "Busjes",
   "carsTripStyle.van.subtitle":
     "Zoekcontext voor groepsreizen en gezinsbagage",
   "carsTripStyle.van.cta": "Zoek busjes voor groepsreizen",
   "carsTripStyle.van.ariaLabel":
     "Zoek busjes voor groepsreizen met ophalen op de luchthaven",
+  "carsTripStyle.van.imageAlt":
+    "Personenbusje op een lichte panoramische weg",
   "carsTrust.0.title": "Gemaakt voor complete reizen",
   "carsTrust.0.description":
     "Plan vluchten, verblijven en vervoer over land in één Kurioticket-flow.",
@@ -146,24 +154,44 @@ export const translations: TranslationDictionary = {
     "Begin vanaf belangrijke aankomstpunten op luchthavens",
   "carsPickup.Airport.ariaLabel":
     "Open autoresultaten voor ophalen op de luchthaven",
+  "carsPickup.Airport.imageAlt":
+    "Vliegtuig geparkeerd bij een luchthavenpoort bij zonsondergang",
   "carsPickup.City center.title": "Ophalen in het stadscentrum",
   "carsPickup.City center.subtitle":
     "Haal op in de buurt van hotels in het centrum en zakelijke wijken",
   "carsPickup.City center.ariaLabel":
     "Open autoresultaten voor ophalen in het stadscentrum",
+  "carsPickup.City center.imageAlt":
+    "Auto’s rijden door een stadsstraat tussen hoge gebouwen",
   "carsPickup.Train station.title": "Ophalen bij treinstations",
   "carsPickup.Train station.subtitle":
     "Vervolg je reis na aankomst met de trein",
   "carsPickup.Train station.ariaLabel":
     "Open autoresultaten voor ophalen bij het treinstation",
+  "carsPickup.Train station.imageAlt":
+    "Treinperron met sporen die naar een stadsstation leiden",
   "carsPickup.Hotel area.title": "Ophalen bij hotelgebieden",
   "carsPickup.Hotel area.subtitle":
     "Plan het ophalen van een auto in de buurt van je verblijf",
   "carsPickup.Hotel area.ariaLabel":
     "Open autoresultaten voor ophalen bij het hotelgebied",
+  "carsPickup.Hotel area.imageAlt":
+    "Hotelgevel met palmbomen en een oprijlaan",
   carsPickupPointsTitle: "Begin met populaire ophaalpunten voor auto’s",
   carsPickupPointsBody:
     "Kies een ophaalstijl en we openen de autoresultatenpagina met de zoekgegevens klaar.",
+  "carsSearch.chooseRentalDatesAria":
+    "Kies ophaal- en terugbrengdatums voor de huurauto",
+  "carsSearch.rentalDatePickerAria": "Datumkiezer voor huurauto",
+  "carsSearch.chooseRentalDates": "Kies huurdatums",
+  "carsSearch.choosePickupReturnTimesAria":
+    "Kies ophaal- en terugbrengtijden",
+  "carsSearch.pickupReturnTimeSelectorAria":
+    "Kiezer voor ophaal- en terugbrengtijd",
+  "carsSearch.pickupTimeLabel": "Ophaaltijd",
+  "carsSearch.returnTimeLabel": "Terugbrengtijd",
+  carsSearchPreparing: "Autozoekopdracht wordt voorbereid...",
+  searchingCars: "Auto’s zoeken...",
   done: "Gereed",
   clear: "Wissen",
   next: "Volgende",
