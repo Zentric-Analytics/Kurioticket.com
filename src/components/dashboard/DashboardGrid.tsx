@@ -902,7 +902,7 @@ export function DashboardOverview({
   const { t } = useLocale();
 
   return (
-    <div className="ms-[4.875rem] min-w-0 max-w-[60rem] space-y-5 pb-6 pt-0 sm:pb-8 lg:pb-10">
+    <div className="min-w-0 max-w-[60rem] space-y-5 pb-6 pt-0 sm:pb-8 lg:ms-[4.875rem] lg:pb-10">
       <AccountSectionHeader
         title={t["accountDashboard.personalDetails.title"]}
         description={t["accountDashboard.personalDetails.subtitle"]}
@@ -1050,7 +1050,7 @@ export function SecurityDashboardPage() {
   return (
     <section
       aria-labelledby="security-title"
-      className="ms-[4.875rem] min-w-0 max-w-[60rem] space-y-5 pt-0"
+      className="min-w-0 max-w-[60rem] space-y-5 pt-0 lg:ms-[4.875rem]"
     >
       <AccountSectionHeader
         title={t["accountDashboard.security.title"]}
