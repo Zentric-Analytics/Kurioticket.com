@@ -210,7 +210,14 @@ const clampCount = (value: number, minimum: number, maximum: number) => {
 };
 
 const formatDealsCountLabel = (count: number, label: string, locale: string) => {
-  if (locale.toLowerCase().startsWith("ar") && count === 1) {
+  const normalizedLocale = locale.toLowerCase();
+
+  if (normalizedLocale.startsWith("ja")) {
+    if (label === "旅行者") return `旅行者${count}名`;
+    if (label === "室") return `${count}室`;
+  }
+
+  if (normalizedLocale.startsWith("ar") && count === 1) {
     return `${label} واحد`;
   }
 
