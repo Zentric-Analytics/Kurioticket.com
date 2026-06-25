@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ChangeEvent } from "react";
+import { useMemo, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import {
   Bell,
@@ -19,6 +19,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { LinkButton } from "@/components/ui/Button";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { supportedRegions } from "@/lib/region/supportedRegions";
 import { cn } from "@/lib/utils";
 import type { TranslationDictionary } from "@/lib/i18n/types";
 
@@ -394,6 +395,130 @@ export function AccountMenuPage({
   );
 }
 
+
+const priorityCountryCodes = [
+  "NG",
+  "GH",
+  "ZA",
+  "KE",
+  "US",
+  "CA",
+  "GB",
+  "AE",
+  "IN",
+  "FR",
+  "DE",
+  "NL",
+  "IT",
+  "ES",
+  "BR",
+  "JP",
+  "CN",
+  "AU",
+] as const;
+
+const countryCallingCodeByIsoCode: Record<string, string> = {
+  AE: "+971",
+  AU: "+61",
+  BR: "+55",
+  CA: "+1",
+  CN: "+86",
+  DE: "+49",
+  ES: "+34",
+  FR: "+33",
+  GB: "+44",
+  GH: "+233",
+  IN: "+91",
+  IT: "+39",
+  JP: "+81",
+  KE: "+254",
+  NG: "+234",
+  NL: "+31",
+  US: "+1",
+  ZA: "+27",
+};
+
+type CountryProfileOption = {
+  countryName: string;
+  nationality: string;
+  isoCode: string;
+  flag: string;
+  dialCode?: string;
+};
+
+const nationalityLabelByIsoCode: Record<string, string> = {
+  AE: "Emirati",
+  AU: "Australian",
+  BR: "Brazilian",
+  CA: "Canadian",
+  CN: "Chinese",
+  DE: "German",
+  ES: "Spanish",
+  FR: "French",
+  GB: "British",
+  GH: "Ghanaian",
+  IN: "Indian",
+  IT: "Italian",
+  JP: "Japanese",
+  KE: "Kenyan",
+  NG: "Nigerian",
+  NL: "Dutch",
+  US: "American",
+  ZA: "South African",
+};
+
+function getFlagEmoji(countryCode: string) {
+  const normalizedCode = countryCode.trim().toUpperCase();
+
+  if (!/^[A-Z]{2}$/.test(normalizedCode)) return "🌐";
+
+  return [...normalizedCode]
+    .map((character) =>
+      String.fromCodePoint(127397 + character.charCodeAt(0)),
+    )
+    .join("");
+}
+
+function sortCountryProfileOptions(
+  left: CountryProfileOption,
+  right: CountryProfileOption,
+) {
+  const leftPriority = priorityCountryCodes.indexOf(
+    left.isoCode as (typeof priorityCountryCodes)[number],
+  );
+  const rightPriority = priorityCountryCodes.indexOf(
+    right.isoCode as (typeof priorityCountryCodes)[number],
+  );
+
+  if (leftPriority !== -1 || rightPriority !== -1) {
+    if (leftPriority === -1) return 1;
+    if (rightPriority === -1) return -1;
+    return leftPriority - rightPriority;
+  }
+
+  return left.countryName.localeCompare(right.countryName);
+}
+
+const countryProfileOptions: CountryProfileOption[] = supportedRegions
+  .filter((region) => /^[A-Z]{2}$/.test(region.code))
+  .map((region) => ({
+    countryName: region.country,
+    nationality: nationalityLabelByIsoCode[region.code] ?? region.country,
+    isoCode: region.code,
+    flag: getFlagEmoji(region.code),
+    dialCode: countryCallingCodeByIsoCode[region.code],
+  }))
+  .sort(sortCountryProfileOptions);
+
+const countryCallingCodeOptions = countryProfileOptions.filter(
+  (option): option is CountryProfileOption & { dialCode: string } =>
+    Boolean(option.dialCode),
+);
+
+const defaultCountryCallingCodeOption =
+  countryCallingCodeOptions.find((option) => option.isoCode === "NG") ??
+  countryCallingCodeOptions[0];
+
 const genderOptions = [
   { value: "Male", labelKey: "accountDashboard.personalDetails.gender.male" },
   {
@@ -670,6 +795,121 @@ function DateOfBirthInput({
   );
 }
 
+function parsePhoneDraftValue(value: string) {
+  const trimmedValue = value.trim();
+  const matchedOption = [...countryCallingCodeOptions]
+    .sort((left, right) => right.dialCode.length - left.dialCode.length)
+    .find(
+      (option) =>
+        trimmedValue === option.dialCode ||
+        trimmedValue.startsWith(`${option.dialCode} `),
+    );
+
+  if (!matchedOption) {
+    return {
+      countryCode: defaultCountryCallingCodeOption.isoCode,
+      localNumber: trimmedValue.replace(/^\+\d+\s*/, ""),
+    };
+  }
+
+  return {
+    countryCode: matchedOption.isoCode,
+    localNumber: trimmedValue.slice(matchedOption.dialCode.length).trimStart(),
+  };
+}
+
+function formatPhoneDraftValue(countryCode: string, localNumber: string) {
+  const selectedOption =
+    countryCallingCodeOptions.find((option) => option.isoCode === countryCode) ??
+    defaultCountryCallingCodeOption;
+  const trimmedLocalNumber = localNumber.trimStart();
+
+  return [selectedOption.dialCode, trimmedLocalNumber].filter(Boolean).join(" ");
+}
+
+function PhoneNumberInput({
+  value,
+  onChange,
+  className,
+  label,
+  fallback,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  className: string;
+  label: string;
+  fallback: string;
+}) {
+  const parsedValue = useMemo(() => parsePhoneDraftValue(value), [value]);
+
+  const handleCountryChange = (nextCountryCode: string) => {
+    onChange(formatPhoneDraftValue(nextCountryCode, parsedValue.localNumber));
+  };
+
+  const handleLocalNumberChange = (nextLocalNumber: string) => {
+    onChange(formatPhoneDraftValue(parsedValue.countryCode, nextLocalNumber));
+  };
+
+  return (
+    <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(8.75rem,0.72fr)_minmax(0,1fr)]">
+      <select
+        className={className}
+        value={parsedValue.countryCode}
+        onChange={(event) => handleCountryChange(event.target.value)}
+        aria-label={`${label} country calling code`}
+      >
+        {countryCallingCodeOptions.map((option) => (
+          <option key={option.isoCode} value={option.isoCode}>
+            {option.flag} {option.isoCode} {option.dialCode}
+          </option>
+        ))}
+      </select>
+      <input
+        className={className}
+        type="tel"
+        value={parsedValue.localNumber}
+        onChange={(event) => handleLocalNumberChange(event.target.value)}
+        placeholder={fallback}
+        aria-label={label}
+        inputMode="tel"
+        autoComplete="tel-national"
+      />
+    </div>
+  );
+}
+
+function NationalityInput({
+  value,
+  onChange,
+  className,
+  label,
+  fallback,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  className: string;
+  label: string;
+  fallback: string;
+}) {
+  return (
+    <select
+      className={className}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      aria-label={label}
+    >
+      <option value="" disabled hidden>
+        {fallback}
+      </option>
+      {countryProfileOptions.map((option) => (
+        <option key={option.isoCode} value={option.nationality}>
+          {option.flag} {option.nationality} · {option.countryName}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 function DetailInput({
   row,
   value,
@@ -699,6 +939,30 @@ function DetailInput({
         value={value}
         onChange={(nextValue) => onChange(row.key, nextValue)}
         className={baseClassName}
+      />
+    );
+  }
+
+  if (row.key === "phone") {
+    return (
+      <PhoneNumberInput
+        value={value}
+        onChange={(nextValue) => onChange(row.key, nextValue)}
+        className={baseClassName}
+        label={row.label}
+        fallback={row.fallback}
+      />
+    );
+  }
+
+  if (row.key === "nationality") {
+    return (
+      <NationalityInput
+        value={value}
+        onChange={(nextValue) => onChange(row.key, nextValue)}
+        className={baseClassName}
+        label={row.label}
+        fallback={row.fallback}
       />
     );
   }
