@@ -26,10 +26,10 @@ export function FaqContent({ showAccountLink }: FaqContentProps) {
             {showAccountLink ? <AccountBackLink /> : null}
 
             <div className="max-w-3xl">
-              <h1 className="text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">
+              <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
                 {t("faqHeading")}
               </h1>
-              <p className="mt-4 text-base leading-7 text-slate-600 sm:text-lg">
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
                 {t("faqIntro")}
               </p>
             </div>
