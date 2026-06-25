@@ -1233,6 +1233,15 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.ng-los-cpt.title": "Küstenabenteuer in Kapstadt",
   "homeDiscoveryRoute.ng-los-cpt.routeNote":
     "Malerische Südafrika-Route mit Stränden, Bergen und Weinbergen.",
+  "homeDiscoveryRoute.ng-los-nrt.title": "Tokio-Langstrecken-Städtetrip",
+  "homeDiscoveryRoute.ng-los-nrt.routeNote":
+    "Wichtiges Asien-Gateway mit Neonvierteln und effizientem Bahnverkehr.",
+  "homeDiscoveryRoute.ng-abv-mad.title": "Tapas- und Kunsttrip nach Madrid",
+  "homeDiscoveryRoute.ng-abv-mad.routeNote":
+    "Europäische Citybreak-Route für Museen, Boulevards und späte Abendessen.",
+  "homeDiscoveryRoute.ng-abv-rob.title": "Regionaler Strandtrip nach Monrovia",
+  "homeDiscoveryRoute.ng-abv-rob.routeNote":
+    "Westafrikanische Städtereise mit Atlantikstränden und lokalen Märkten.",
   "homeDiscoveryRoute.fallback-yyz-cun.title": "Winterauszeit in Cancún",
   "homeDiscoveryRoute.fallback-yyz-cun.routeNote":
     "Zuverlässige Freizeitroute mit Nonstop-Optionen in der Hochsaison.",

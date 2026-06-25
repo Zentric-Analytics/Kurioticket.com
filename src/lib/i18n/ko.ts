@@ -201,6 +201,28 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.ng-los-add.routeNote": "식문화와 환승이 편리한 동아프리카 허브입니다.",
   "homeDiscoveryRoute.ng-abv-fco.title": "로마 명소 여행",
   "homeDiscoveryRoute.ng-abv-fco.routeNote": "유적, 광장, 여유로운 저녁을 즐기는 유럽 노선입니다.",
+  "homeDiscoveryRoute.ng-los-nrt.title": "도쿄 장거리 도시 여행",
+  "homeDiscoveryRoute.ng-los-nrt.routeNote":
+    "네온 거리와 편리한 철도 이동을 갖춘 아시아 관문입니다.",
+  "homeDiscoveryRoute.ng-abv-mad.title": "마드리드 타파스와 예술 여행",
+  "homeDiscoveryRoute.ng-abv-mad.routeNote":
+    "박물관, 대로, 늦은 저녁을 즐기는 유럽 도시 여행 노선입니다.",
+  "homeDiscoveryRoute.ng-los-cpt.title": "케이프타운 해안 여행",
+  "homeDiscoveryRoute.ng-los-cpt.routeNote":
+    "해변, 산, 포도원이 있는 남아공 경관 노선입니다.",
+  "homeDiscoveryRoute.ng-abv-rob.title": "몬로비아 해변 지역 여행",
+  "homeDiscoveryRoute.ng-abv-rob.routeNote":
+    "대서양 해변과 현지 시장을 즐기는 서아프리카 도시 여행입니다.",
+  homeNewsletterTitle: "모든 여행 특가를 먼저 받아보세요",
+  homeNewsletterBody: "엄선된 항공권과 호텔 업데이트를 매주 받아보세요.",
+  homeNewsletterPlaceholder: "이메일을 입력하세요",
+  homeSubscribe: "구독하기",
+  homeSubscribing: "구독 중…",
+  homeNewsletterThanks: "감사합니다! 여행 특가 소식을 계속 알려드리겠습니다.",
+  homeNewsletterInvalidEmail: "유효한 이메일 주소를 입력하세요.",
+  homeNewsletterUnableSubscribe: "지금은 구독할 수 없습니다.",
+  homeNewsletterTryAgain: "지금은 구독할 수 없습니다. 잠시 후 다시 시도해 주세요.",
+  homeEmailAddress: "이메일 주소",
   homeNewsletterConsent:
     "구독하면 Kurioticket 업데이트 수신에 동의하는 것입니다. 언제든지 구독을 취소할 수 있습니다.",
   homePreviousDestinations: "이전 목적지",
@@ -249,4 +271,34 @@ export const translations: TranslationDictionary = {
   supportFaqSearchQuestion: "검색 및 결과 도움말",
   supportFaqSearchAnswer:
     "항공권 또는 호텔 검색이 작동하지 않거나, 결과가 로드되지 않거나, 필터가 혼란스럽거나, 가격과 제공업체가 예상대로 표시되지 않을 때 Kurioticket이 도와드릴 수 있습니다.",
+  supportFaqSavedTripsQuestion: "저장한 여행 및 알림",
+  supportFaqSavedTripsAnswer:
+    "Kurioticket은 저장한 여행, 최근 검색, 가격 알림, 알림 문제, 계정에 연결된 여행 도구를 도와드릴 수 있습니다.",
+  supportFaqAlreadyBookedQuestion: "이미 제공업체에서 예약하셨나요?",
+  supportFaqAlreadyBookedAnswer:
+    "항공사, 호텔, 여행사 또는 외부 제공업체에서 예약을 완료했다면 예약 변경, 환불, 취소, 체크인, 탑승, 영수증, 여행 문서는 해당 제공업체가 담당합니다.",
+  supportFaqWhyRedirectedQuestion: "왜 다른 제공업체로 이동했나요?",
+  supportFaqWhyRedirectedAnswer:
+    "Kurioticket은 여행 검색 및 비교 플랫폼이며, 일부 결과는 예약, 결제, 제공업체별 지원을 완료하는 신뢰할 수 있는 제공업체로 이동합니다.",
+  supportFaqRedirectQuestion: "예약/제공업체 이동 도움말",
+  supportFaqRedirectAnswer:
+    "파트너 또는 제공업체로의 이동이 실패하거나 잘못된 페이지가 열리거나 선택한 여행 또는 검색 정보가 유지되지 않을 때 Kurioticket이 도와드릴 수 있습니다.",
+  supportFaqChangeBookingQuestion: "Kurioticket이 내 예약을 변경할 수 있나요?",
+  supportFaqChangeBookingAnswer:
+    "Kurioticket은 직접 예약이 지원되고 Kurioticket을 통해 직접 진행된 예약에 대해서만 도와드릴 수 있습니다. 외부 제공업체에서 완료한 예약은 해당 제공업체에 직접 문의하세요.",
+  footerDiscover: "둘러보기",
+  destinations: "목적지",
+  footerSavedRecent: "저장 및 최근 항목",
+  footerContactUs: "문의하기",
+  footerCustomerSupport: "고객 지원",
+  footerServiceGuarantee: "서비스 보장",
+  footerMoreServiceInfo: "추가 서비스 정보",
+  footerTermsSettings: "약관 및 설정",
+  footerPrivacyPolicy: "개인정보 처리방침",
+  footerTermsOfService: "서비스 약관",
+  footerCookiePolicy: "쿠키 정책",
+  legalCenter: "법률 센터",
+  footerAboutKurioticket: "Kurioticket 소개",
+  footerAboutUs: "회사 소개",
+  footerHowItWorks: "Kurioticket 작동 방식",
 };
