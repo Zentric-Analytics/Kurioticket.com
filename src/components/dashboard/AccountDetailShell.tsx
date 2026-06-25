@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
+import { AccountBackLinkRow } from "@/components/dashboard/AccountBackLinkRow";
 
 export function AccountDetailShell({
   children,
@@ -13,7 +13,7 @@ export function AccountDetailShell({
 }) {
   return (
     <div className={`page-shell min-w-0 ${className}`}>
-      {showAccountLink ? <AccountBackLink /> : null}
+      {showAccountLink ? <AccountBackLinkRow /> : null}
       {children}
     </div>
   );
