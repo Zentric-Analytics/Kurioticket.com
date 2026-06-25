@@ -879,6 +879,7 @@ export const translations: TranslationDictionary = {
   chooseGuestsAndRooms: "Elegir huéspedes y habitaciones",
   guestsAndRooms: "Huéspedes y habitaciones",
   adults: "Adultos",
+  adultAgeRange: "18 años o más",
   children: "Niños",
   infants: "Bebés",
   petFriendly: "Acepta mascotas",

@@ -827,6 +827,7 @@ export const translations: TranslationDictionary = {
   passengers: "المسافرون",
   guests: "الضيوف",
   adults: "البالغون",
+  adultAgeRange: "18 سنة فأكثر",
   children: "الأطفال",
   infants: "الرضّع",
   rooms: "الغرف",
