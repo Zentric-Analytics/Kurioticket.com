@@ -629,7 +629,7 @@ export function SavedTripsAndRecentSearches() {
           </div>
 
           {savedTrips.length === 0 ? (
-            <div className="flex min-h-[34rem] items-start justify-center rounded-2xl border border-slate-200/80 bg-white px-3 pb-10 pt-16 shadow-sm sm:min-h-[38rem] sm:pt-16 lg:min-h-[40rem] lg:pt-20">
+            <div className="flex min-h-[28rem] items-start justify-center px-3 pb-10 pt-12 sm:min-h-[32rem] sm:pt-14 lg:min-h-[34rem] lg:pt-16">
               <div className="mx-auto flex w-full max-w-xl flex-col items-center text-center">
                 <h2 className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-[1.6rem]">
                   {t("savedTripsEmptyTitle")}
