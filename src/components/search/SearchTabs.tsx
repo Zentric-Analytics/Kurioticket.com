@@ -1223,9 +1223,12 @@ export function SearchTabs({
     .toLowerCase();
   const isArabicLocale = normalizedSummaryLocale?.startsWith("ar");
   const isSimplifiedChineseLocale = normalizedSummaryLocale === "zh-cn";
+  const isJapaneseLocale = normalizedSummaryLocale === "ja";
   const summarySeparator = isSimplifiedChineseLocale ? "，" : ", ";
   const hotelGuestsRoomsSummary = isArabicLocale
     ? `${Number(guests) === 1 ? `${translate("guestSingular")} واحد` : `${guests} ${translate("guestPlural")}`}، ${Number(rooms) === 1 ? `${translate("roomSingular")} واحدة` : `${rooms} ${translate("roomPlural")}`}`
+    : isJapaneseLocale
+      ? `${translate("guestSingular") || "宿泊者"}${guests}名、${rooms}${translate("roomSingular") || "室"}`
     : `${guests} ${
         Number(guests) === 1
           ? translate("guestSingular") || "guest"
