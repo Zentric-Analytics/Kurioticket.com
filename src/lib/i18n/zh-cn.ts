@@ -98,6 +98,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.travelPreferences": "预订偏好",
   "accountDashboard.hub.helpAndSupport": "帮助与支持",
   "accountDashboard.hub.contactSupport": "联系支持",
+  "accountDashboard.hub.faq": "常见问题",
 
   "accountDashboard.trips.title": "我的行程",
   "accountDashboard.trips.findReservation": "查找预订",

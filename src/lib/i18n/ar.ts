@@ -74,6 +74,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.travelPreferences": "تفضيلات الحجز",
   "accountDashboard.hub.helpAndSupport": "المساعدة والدعم",
   "accountDashboard.hub.contactSupport": "التواصل مع الدعم",
+  "accountDashboard.hub.faq": "الأسئلة الشائعة",
   "accountDashboard.trips.title": "رحلاتي",
   "accountDashboard.trips.findReservation": "البحث عن حجز",
   "accountDashboard.trips.current.empty.title": "إلى أين بعد ذلك؟",
