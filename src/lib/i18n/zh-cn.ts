@@ -10,6 +10,8 @@ export const translations: TranslationDictionary = {
   websiteLanguageDescription: "选择 Kurioticket 使用的语言。",
   currentLanguage: "当前语言：{{language}}",
   languageSearchLabel: "搜索语言",
+  languagePreparingNotice:
+    "更多语言正在准备中。不可用选项暂时不会翻译网站。",
   languageSearchPlaceholder: "搜索语言或地区",
   languageOptionsLabel: "语言选项",
   selectLanguageOption: "选择{{language}}",
@@ -581,6 +583,7 @@ export const translations: TranslationDictionary = {
   countryCurrencyDescription:
     "选择用于显示价格的国家/地区和货币。机场建议会使用你检测到的位置。",
   searchCountryOrCurrency: "搜索国家/地区或货币",
+  countryCurrencyAllCountriesAndCurrencies: "所有国家/地区和货币",
   countryCurrencyPopularCountryAndCurrency: "热门国家/地区和货币",
   countryCurrencyOptionCountSingular: "{{count}} 个选项",
   countryCurrencyOptionCountPlural: "{{count}} 个选项",

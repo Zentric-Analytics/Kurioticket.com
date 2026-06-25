@@ -582,15 +582,38 @@ export const translations: TranslationDictionary = {
   noLanguagesFound: "言語が見つかりません",
   websiteLanguageTitle: "ウェブサイトの言語を選択",
   websiteLanguageDescription:
-    "English (United States) is the default website language. Kurioticket only changes language after you choose an available option.",
+    "英語（アメリカ合衆国）は既定のウェブサイト言語です。Kurioticket は、利用可能なオプションを選択した後にのみ言語を変更します。",
   currentLanguage: "現在の言語: {{language}}",
   languagePreparingNotice:
-    "More languages are being prepared. Unavailable options do not translate the site yet.",
+    "さらに多くの言語を準備中です。利用できないオプションでは、まだサイトは翻訳されません。",
   languageSearchLabel: "言語を検索",
   languageSearchPlaceholder: "English、Español、Français、Deutsch を検索...",
   languageOptionsLabel: "言語オプション",
   selectLanguageOption: "{{language}}を選択",
-  languagePreparingAria: "{{language}} translations are being prepared",
+  languagePreparingAria: "{{language}}の翻訳を準備中です",
+
+  languageUnavailableMessage:
+    "{{language}}はまだ利用できません。利用可能な言語を選択してください。",
+  globalLanguage: "グローバル言語",
+  closeLanguageSelector: "言語セレクターを閉じる",
+  preparing: "準備中",
+  login: "ログイン",
+  signUp: "登録",
+  countryAndCurrency: "国と通貨",
+  openCountryCurrencySelector:
+    "国と通貨のセレクターを開く、現在の選択 {{code}}、{{currency}}",
+  chooseCountryAndCurrency: "国と通貨を選択",
+  countryCurrencyDescription:
+    "表示価格に使用する国と通貨を選択します。空港候補には検出された現在地が使用されます。",
+  closeCountryCurrencySelector: "国と通貨のセレクターを閉じる",
+  searchCountryOrCurrency: "国または通貨を検索",
+  countryCurrencyAllCountriesAndCurrencies: "すべての国と通貨",
+  countryCurrencyPopularCountryAndCurrency: "人気の国と通貨",
+  countryCurrencyOptionCountSingular: "{{count}}件の選択肢",
+  countryCurrencyOptionCountPlural: "{{count}}件の選択肢",
+  selectCountryCurrencyOption: "{{country}}、{{code}}、{{currency}}を選択",
+  noCountriesOrCurrenciesFound: "国または通貨が見つかりません",
+  showMoreResults: "さらに結果を表示",
 
   legalCenter: "法律センター",
   "legalCenter.heroLabel": "法的情報",
