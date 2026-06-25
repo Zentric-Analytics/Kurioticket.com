@@ -110,7 +110,8 @@ export function FlightDetailsClient({ id }: { id: string }) {
             {t.flightQuoteUnavailable || "Flight quote unavailable"}
           </h1>
           <p className="mt-2 text-muted">
-            {unavailableBodyMessage || "Please search again for current prices."}
+            {unavailableBodyMessage ||
+              "Please search again for current prices."}
           </p>
         </Card>
       </main>
@@ -162,8 +163,10 @@ export function FlightDetailsClient({ id }: { id: string }) {
                     stopSingularLabel={t.stopSingular || "stop"}
                     stopPluralLabel={t.stopPlural || "stops"}
                     stopDualLabel={t.stopDual}
+                    stopCountTemplate={t.stopCount}
                     layoverInLabel={t.layoverIn || "Layover in"}
                     layoverConnectorLabel={t.layoverConnector}
+                    layoverTemplate={t.layoverTemplate}
                     connectionLabels={buildConnectionLabels(t)}
                     locale={locale}
                   />
@@ -329,8 +332,10 @@ function SelectedFlightSummary({
   stopSingularLabel,
   stopPluralLabel,
   stopDualLabel,
+  stopCountTemplate,
   layoverInLabel,
   layoverConnectorLabel,
+  layoverTemplate,
   connectionLabels,
   locale,
 }: {
@@ -349,8 +354,10 @@ function SelectedFlightSummary({
   stopSingularLabel: string;
   stopPluralLabel: string;
   stopDualLabel?: string;
+  stopCountTemplate?: string;
   layoverInLabel: string;
   layoverConnectorLabel?: string;
+  layoverTemplate?: string;
   connectionLabels: ConnectionLabels;
   locale: string;
 }) {
@@ -387,8 +394,10 @@ function SelectedFlightSummary({
               stopSingularLabel={stopSingularLabel}
               stopPluralLabel={stopPluralLabel}
               stopDualLabel={stopDualLabel}
+              stopCountTemplate={stopCountTemplate}
               layoverInLabel={layoverInLabel}
               layoverConnectorLabel={layoverConnectorLabel}
+              layoverTemplate={layoverTemplate}
               connectionLabels={connectionLabels}
               locale={locale}
             />
@@ -969,9 +978,20 @@ function buildRouteHeading(
     "destination",
   );
 
-  return `${localizeRouteEndpointDisplayName(originDisplayName, t)} ${
-    t.flightRouteConnector || "to"
-  } ${localizeRouteEndpointDisplayName(destinationDisplayName, t)}`;
+  const origin = localizeRouteEndpointDisplayName(originDisplayName, t);
+  const destination = localizeRouteEndpointDisplayName(
+    destinationDisplayName,
+    t,
+  );
+
+  if (t.flightRouteTemplate) {
+    return formatTranslationTemplate(t.flightRouteTemplate, {
+      origin,
+      destination,
+    });
+  }
+
+  return `${origin} ${t.flightRouteConnector || "to"} ${destination}`;
 }
 
 function localizeRouteEndpointDisplayName(
@@ -1365,8 +1385,10 @@ function CompactLegSection({
   stopSingularLabel,
   stopPluralLabel,
   stopDualLabel,
+  stopCountTemplate,
   layoverInLabel,
   layoverConnectorLabel,
+  layoverTemplate,
   connectionLabels,
   locale,
 }: {
@@ -1384,8 +1406,10 @@ function CompactLegSection({
   stopSingularLabel: string;
   stopPluralLabel: string;
   stopDualLabel?: string;
+  stopCountTemplate?: string;
   layoverInLabel: string;
   layoverConnectorLabel?: string;
+  layoverTemplate?: string;
   connectionLabels: ConnectionLabels;
   locale: string;
 }) {
@@ -1483,6 +1507,7 @@ function CompactLegSection({
               stopSingular: stopSingularLabel,
               stopPlural: stopPluralLabel,
               stopDual: stopDualLabel,
+              stopCount: stopCountTemplate,
             })}
             locale={locale}
           />
@@ -1520,6 +1545,7 @@ function CompactLegSection({
                         layover={leg.layovers[segmentIndex]}
                         layoverInLabel={layoverInLabel}
                         layoverConnectorLabel={layoverConnectorLabel}
+                        layoverTemplate={layoverTemplate}
                         connectionLabels={connectionLabels}
                       />
                     ) : null}
@@ -1634,20 +1660,30 @@ function LayoverSeparator({
   layover,
   layoverInLabel,
   layoverConnectorLabel,
+  layoverTemplate,
   connectionLabels,
 }: {
   layover: FlightLeg["layovers"][number];
   layoverInLabel: string;
   layoverConnectorLabel?: string;
+  layoverTemplate?: string;
   connectionLabels: ConnectionLabels;
 }) {
   const connectionLabel = getConnectionLabel(layover.quality, connectionLabels);
 
+  const label = layoverTemplate
+    ? formatTranslationTemplate(layoverTemplate, {
+        airport: layover.airport,
+        duration: layover.duration,
+        connection: connectionLabel,
+      })
+    : `${layoverInLabel} ${layover.airport}${
+        layoverConnectorLabel ? ` ${layoverConnectorLabel}` : ""
+      } · ${layover.duration}${connectionLabel ? ` · ${connectionLabel}` : ""}`;
+
   return (
     <div className="py-2 text-xs font-medium leading-4 text-slate-500">
-      {layoverInLabel} {layover.airport}
-      {layoverConnectorLabel ? ` ${layoverConnectorLabel}` : ""} · {layover.duration}
-      {connectionLabel ? ` · ${connectionLabel}` : ""}
+      {label}
     </div>
   );
 }
@@ -1807,7 +1843,9 @@ function localizeIncludedBaggageValue(
         count === 1
           ? labels.carryOnSingularIncluded
           : labels.carryOnPluralIncluded;
-      return `${count} ${label}`;
+      return label.includes("{{count}}")
+        ? formatTranslationTemplate(label, { count: String(count) })
+        : `${count} ${label}`;
     }
 
     const checkedBagMatch = part.match(/^(\d+)\s+checked bags? included$/i);
@@ -1817,7 +1855,9 @@ function localizeIncludedBaggageValue(
         count === 1
           ? labels.checkedBagSingularIncluded
           : labels.checkedBagPluralIncluded;
-      return `${count} ${label}`;
+      return label.includes("{{count}}")
+        ? formatTranslationTemplate(label, { count: String(count) })
+        : `${count} ${label}`;
     }
 
     return part;
@@ -1951,9 +1991,15 @@ function formatStops(
     stopSingular: string;
     stopPlural: string;
     stopDual?: string;
+    stopCount?: string;
   } = { nonstop: "Nonstop", stopSingular: "stop", stopPlural: "stops" },
 ) {
   if (stops === 0) return labels.nonstop;
+  if (labels.stopCount) {
+    return formatTranslationTemplate(labels.stopCount, {
+      count: String(stops),
+    });
+  }
   if (stops === 2 && labels.stopDual) return labels.stopDual;
   return `${stops} ${stops > 1 ? labels.stopPlural : labels.stopSingular}`;
 }
