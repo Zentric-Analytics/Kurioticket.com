@@ -36,7 +36,7 @@ export function FaqContent({ showAccountLink }: FaqContentProps) {
 
             <section
               aria-labelledby="faq-list-heading"
-              className="mt-10 max-w-3xl rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7"
+              className="mt-10 max-w-6xl"
             >
               <h2
                 id="faq-list-heading"
@@ -45,9 +45,12 @@ export function FaqContent({ showAccountLink }: FaqContentProps) {
                 {t("faqGeneralQuestions")}
               </h2>
 
-              <div className="mt-5 divide-y divide-slate-200">
+              <div className="mt-5 grid gap-x-8 gap-y-0 md:grid-cols-2">
                 {faqItems.map((item) => (
-                  <details key={item.question} className="group py-4">
+                  <details
+                    key={item.question}
+                    className="group border-b border-slate-200 py-4"
+                  >
                     <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-sm font-semibold leading-6 text-slate-950 marker:hidden sm:text-base">
                       <span>{item.question}</span>
                       <span
