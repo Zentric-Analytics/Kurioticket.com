@@ -51,11 +51,16 @@ export const translations: TranslationDictionary = {
   "homePopularDestinationCity.london": "런던",
   "homePopularDestinationCity.johannesburg": "요하네스버그",
   "homePopularDestinationCity.accra": "아크라",
+  "homePopularDestinationCity.nairobi": "나이로비",
+  "homePopularDestinationCity.istanbul": "이스탄불",
+  "homePopularDestinationCity.paris": "파리",
   "homePopularDestinationCountry.unitedArabEmirates": "아랍에미리트",
   "homePopularDestinationCountry.unitedKingdom": "영국",
   "homePopularDestinationCountry.southAfrica": "남아프리카공화국",
   "homePopularDestinationCountry.ghana": "가나",
-  homeExploreFares: "운임 보기",
+  "homePopularDestinationCountry.kenya": "케냐",
+  "homePopularDestinationCountry.turkiye": "튀르키예",
+  "homePopularDestinationCountry.france": "프랑스",
   roundTrip: "왕복",
   oneWay: "편도",
   origin: "출발지",
@@ -118,6 +123,26 @@ export const translations: TranslationDictionary = {
   homeDiscoveryTripOneWay: "편도",
   homeDiscoveryCabinEconomy: "이코노미",
   homeDiscoveryTravelerCountOne: "여행자 1명",
+  homeTrustTitle: "여행자들이 Kurioticket에서 비교하는 이유",
+  homeTrustSubtitle:
+    "Kurioticket은 제공업체의 상품을 명확하게 비교한 뒤, 제공업체 사이트에서 예약을 완료할 수 있도록 도와줍니다.",
+  homeTrustCompareTitle: "제공업체 상품 비교",
+  homeTrustCompareBody:
+    "여러 여행 제공업체의 항공권과 호텔 옵션을 한곳에서 확인하세요.",
+  homeTrustPricingTitle: "투명한 가격 정보",
+  homeTrustPricingBody:
+    "계속 진행하기 전에 가격, 노선 또는 숙박 상세 정보와 주요 조건을 확인하세요.",
+  homeTrustHandoffTitle: "안전한 제공업체 이동",
+  homeTrustHandoffBody:
+    "상품을 선택하면 제공업체로 이동하여 안전하게 예약을 완료합니다.",
+  homePromoFlightsTitle: "주요 항공사의 항공권 특가",
+  homePromoFlightsBody:
+    "기간 한정 운임을 확인하고 옵션을 즉시 비교하세요.",
+  homePromoFlightsCta: "항공권 특가 보기",
+  homePromoHotelsTitle: "전 세계 호텔 할인",
+  homePromoHotelsBody:
+    "부티크 호텔부터 글로벌 체인까지 투명한 가격으로 숙소를 살펴보세요.",
+  homePromoHotelsCta: "호텔 특가 보기",
   homeCompareOptions: "옵션 비교",
   "homeDiscoveryRoute.ng-los-lhr.title": "런던 출장과 주말 여행",
   "homeDiscoveryRoute.ng-los-lhr.routeNote": "출장과 여가 일정을 함께 계획하기 좋은 운항 빈도가 높은 장거리 노선입니다.",
@@ -143,4 +168,46 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.ng-los-add.routeNote": "성장하는 미식과 문화 장면을 만날 수 있는 주요 환승 거점 노선입니다.",
   "homeDiscoveryRoute.ng-abv-fco.title": "로마 명소 여행",
   "homeDiscoveryRoute.ng-abv-fco.routeNote": "유적, 광장, 여유로운 저녁을 즐기기 좋은 클래식 유럽 노선입니다.",
+  homeNewsletterConsent:
+    "구독하면 Kurioticket 업데이트 수신에 동의하는 것입니다. 언제든지 구독을 취소할 수 있습니다.",
+  homePreviousDestinations: "이전 목적지",
+  homeNextDestinations: "다음 목적지",
+  homeRemoveFromSavedRoutes: "저장한 노선에서 제거",
+  homeSaveRoute: "노선 저장",
+  homeSaveDestination: "{{destination}} 저장",
+  homeCheckingProviderRoutePricing: "제공업체 기반 노선 가격 확인 중",
+  homePricesUpdateWithProviderResults: "제공업체 결과에 따라 가격이 업데이트됩니다",
+  homeExploreFares: "운임 보기",
+  displayEstimateFinalProviderMayDiffer:
+    "표시된 예상가이며, 최종 제공업체 가격은 다를 수 있습니다.",
+  finalPriceConfirmedByProvider: "최종 가격은 제공업체에서 확인됩니다.",
+  destinationImageFallback: "목적지",
+  faqHeading: "자주 묻는 질문",
+  faqIntro:
+    "신뢰할 수 있는 제공업체에서 예약하기 전에 Kurioticket이 항공권, 호텔, 여행 옵션 비교를 어떻게 돕는지 알아보세요.",
+  faqViewAll: "전체 FAQ 보기",
+  faqQuestionFindOptions: "Kurioticket은 항공권과 호텔 옵션을 어떻게 찾나요?",
+  faqAnswerFindOptions:
+    "Kurioticket은 여행 제공업체의 실시간 상품을 검색해 한곳에 모아, 선택하기 전에 가격, 노선, 숙소, 세부 정보를 비교할 수 있도록 합니다.",
+  faqQuestionSellDirectly: "Kurioticket은 항공권이나 호텔 객실을 직접 판매하나요?",
+  faqAnswerSellDirectly:
+    "Kurioticket은 여행 옵션을 비교하도록 돕습니다. 상품을 선택하면 선택한 제공업체로 이동하여 세부 정보를 확인하고 해당 제공업체 사이트에서 예약을 완료합니다.",
+  faqQuestionPriceChanges: "상품을 클릭한 후 가격이 바뀔 수 있는 이유는 무엇인가요?",
+  faqAnswerPriceChanges:
+    "항공사, 호텔, 여행 제공업체가 재고를 자주 업데이트하므로 가격과 이용 가능 여부는 실시간으로 바뀔 수 있습니다. 예약 전에 제공업체 결제 페이지에서 최종 가격을 꼭 확인하세요.",
+  faqQuestionCompareProviders: "같은 여행에 대해 여러 제공업체를 비교할 수 있나요?",
+  faqAnswerCompareProviders:
+    "네. Kurioticket은 옵션을 나란히 비교해 가격, 시간, 노선 정보, 호텔 정보, 전체 가치를 평가할 수 있도록 설계되었습니다.",
+  faqQuestionSecureBooking: "예약을 안전하게 완료하려면 어떻게 해야 하나요?",
+  faqAnswerSecureBooking:
+    "예약과 결제는 제공업체의 결제 절차에서 완료됩니다. 확정하기 전에 제공업체의 약관, 취소 정책, 최종 가격을 항상 확인하세요.",
+  faqQuestionPreferences: "통화와 언어 환경설정을 지정할 수 있나요?",
+  faqAnswerPreferences:
+    "네. Kurioticket에서는 표시 국가/통화 환경설정을 지정할 수 있으며, 언어 선택기에서 사용 가능한 웹사이트 언어를 선택할 수 있습니다.",
+  faqQuestionLiveCached: "검색 결과는 실시간인가요, 캐시된 결과인가요?",
+  faqAnswerLiveCached:
+    "Kurioticket은 이용 가능 여부와 가격 변동에 따라 새로고침될 수 있는 제공업체 검색 결과를 사용합니다. 현재 옵션을 보여주는 데 도움이 되지만, 최종 이용 가능 여부는 제공업체에서 확인됩니다.",
+  faqQuestionManageChanges: "변경이나 취소는 어디에서 관리하나요?",
+  faqAnswerManageChanges:
+    "여행 변경, 취소, 환불, 예약 지원은 보통 예약을 완료한 제공업체에서 처리합니다. 서비스 요청에는 해당 제공업체의 확인 정보를 사용하세요.",
 };
