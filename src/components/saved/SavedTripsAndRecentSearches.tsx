@@ -601,8 +601,8 @@ export function SavedTripsAndRecentSearches() {
 
   return (
     <div className="px-4 pb-8 pt-8 sm:px-6 sm:pb-10 sm:pt-10 lg:px-8 lg:pb-11 lg:pt-12">
-      <div className="mx-auto min-w-0 max-w-[72rem] space-y-5">
-        <section className="rounded-2xl border border-slate-200/80 bg-white p-[18px] text-start shadow-sm sm:p-6">
+      <div className="mx-auto min-w-0 max-w-[72rem] space-y-8 text-start">
+        <section className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1
@@ -629,7 +629,7 @@ export function SavedTripsAndRecentSearches() {
           </div>
 
           {savedTrips.length === 0 ? (
-            <div className="flex min-h-[34rem] items-start justify-center px-3 pb-10 pt-16 sm:min-h-[38rem] sm:pt-16 lg:min-h-[40rem] lg:pt-20">
+            <div className="flex min-h-[34rem] items-start justify-center rounded-2xl border border-slate-200/80 bg-white px-3 pb-10 pt-16 shadow-sm sm:min-h-[38rem] sm:pt-16 lg:min-h-[40rem] lg:pt-20">
               <div className="mx-auto flex w-full max-w-xl flex-col items-center text-center">
                 <h2 className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-[1.6rem]">
                   {t("savedTripsEmptyTitle")}
@@ -650,7 +650,7 @@ export function SavedTripsAndRecentSearches() {
               </div>
             </div>
           ) : (
-            <div className="grid gap-4 pt-2 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
               {savedTrips.map((trip) => {
                 const fare = savedTripFares[trip.id];
                 const hasProviderFare = hasFreshProviderFare(fare, trip);
@@ -748,7 +748,7 @@ export function SavedTripsAndRecentSearches() {
         </section>
 
         {recentSearches.length > 0 ? (
-          <section className="rounded-2xl border border-slate-200/80 bg-white p-[18px] text-start shadow-sm sm:p-6">
+          <section className="space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold tracking-tight text-slate-900">
