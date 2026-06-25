@@ -2744,6 +2744,7 @@ export const translations: TranslationDictionary = {
   "hotelResults.totalUpTo": "Total up to",
   "hotelResults.popularFilters": "Popular filters",
   "hotelResults.starRating": "Star rating",
+  "hotelResults.fromRating": "From",
   "hotelResults.locationArea": "Location / Area",
   "hotelResults.propertyType": "Property type",
   "hotelResults.roomType": "Room type",

@@ -951,6 +951,14 @@ export const translations: TranslationDictionary = {
   "deals.destination.rome.city": "ローマ",
   "deals.destination.rome.country": "イタリア",
 
+  "hotelResults.liveSearchUnavailable": "ホテルのライブ検索は一時的に利用できません。しばらくしてからもう一度お試しください。",
+  "hotelResults.filterBy": "絞り込み",
+  "hotelResults.budgetPrice": "予算 / 料金",
+  "hotelResults.totalUpTo": "合計上限",
+  "hotelResults.starRating": "星評価",
+  "hotelResults.fromRating": "以上",
+  "hotelResults.starsAndUp": "{{rating}}+ 星以上",
+
   "legal.index.heroLabel": "法的情報",
   "legal.index.heroTitle": "法律センター",
   "legal.index.developerNote": "これらの法的文書の草案はスタートアップ段階の仮文書であり、大規模な一般公開前に有資格の法律専門家による確認が必要です。",
