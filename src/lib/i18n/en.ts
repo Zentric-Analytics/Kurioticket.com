@@ -2207,7 +2207,7 @@ export const translations: TranslationDictionary = {
   footerCookies: "Cookies",
   flightDetailsLoading: "Loading flight details...",
   flightQuoteUnavailable: "Flight quote unavailable",
-  flightSearchAgainCurrentPrices: "Please search again for current prices.",
+  flightSearchAgainCurrentPrices: "This flight quote is no longer available. Please search again for current prices.",
   flightDetailsProviderDisclaimer:
     "Final price, availability, booking, and fare rules are confirmed by the provider.",
   selectedFlights: "Selected Flights",

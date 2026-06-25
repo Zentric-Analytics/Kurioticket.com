@@ -2098,7 +2098,7 @@ export const translations: TranslationDictionary = {
   flightCardProviderHandoff: "Endgültiger Preis, Verfügbarkeit, Buchung und Tarifregeln werden vom Anbieter bestätigt.",
   flightCardProviderHandoffConverted: "Endgültiger Preis, Verfügbarkeit, Buchung und Tarifregeln werden vom Anbieter bestätigt. Die endgültige Anbieterwährung kann von Ihrer gewählten Anzeigewährung abweichen.",
   flightDetailsLoading: "Flugdetails werden geladen...",
-  flightSearchAgainCurrentPrices: "Bitte suchen Sie erneut nach aktuellen Preisen.",
+  flightSearchAgainCurrentPrices: "Dieses Flugangebot ist nicht mehr verfügbar. Bitte suchen Sie erneut nach aktuellen Preisen.",
   flightDetailsProviderDisclaimer:
     "Endpreis, Verfügbarkeit, Buchung und Tarifregeln werden vom Anbieter bestätigt.",
   selectedFlightItinerary: "Ausgewählte Flugroute",

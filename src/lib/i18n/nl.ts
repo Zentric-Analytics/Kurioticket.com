@@ -597,7 +597,7 @@ export const translations: TranslationDictionary = {
   flightDetailsLoading: "Vluchtgegevens laden...",
   flightQuoteUnavailable: "Vluchtprijs niet beschikbaar",
   flightSearchAgainCurrentPrices:
-    "Deze vluchtprijs is niet langer beschikbaar. Zoek opnieuw voor actuele prijzen.",
+    "Deze vluchtprijs is niet meer beschikbaar. Zoek opnieuw voor actuele prijzen.",
   flightDetailsProviderDisclaimer:
     "Definitieve prijs, beschikbaarheid, boeking en tariefregels worden bevestigd door de provider.",
   selectedFlights: "Geselecteerde vluchten",

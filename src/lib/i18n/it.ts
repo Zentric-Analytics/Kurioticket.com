@@ -1583,7 +1583,7 @@ export const translations: TranslationDictionary = {
   flightDetailsLoading: "Caricamento dettagli del volo...",
   flightQuoteUnavailable: "Preventivo del volo non disponibile",
   flightSearchAgainCurrentPrices:
-    "Cerca di nuovo per visualizzare i prezzi attuali.",
+    "Questo preventivo del volo non è più disponibile. Cerca di nuovo per vedere i prezzi aggiornati.",
   flightDetailsProviderDisclaimer:
     "Prezzo finale, disponibilità, prenotazione e regole tariffarie sono confermati dal fornitore.",
   selectedFlights: "Voli selezionati",
