@@ -913,6 +913,7 @@ export const translations: TranslationDictionary = {
   guests: "Gasten",
   rooms: "Kamers",
   adults: "Volwassenen",
+  adultAgeRange: "18 jaar en ouder",
   children: "Kinderen",
   infants: "Baby’s",
   cabinClass: "Cabineklasse",

@@ -865,6 +865,7 @@ export const translations: TranslationDictionary = {
   chooseGuestsAndRooms: "选择住客和房间",
   guestsAndRooms: "住客和房间",
   adults: "成人",
+  adultAgeRange: "18 岁以上",
   children: "儿童",
   economy: "经济舱",
   premiumEconomy: "高级经济舱",

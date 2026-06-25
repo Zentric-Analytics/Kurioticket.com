@@ -1199,7 +1199,7 @@ function DiscoverySuggestionCard({
           <p
             className={`font-semibold uppercase tracking-[0.08em] text-slate-500 ${compact ? "text-[11px]" : "text-[11px] md:text-xs"}`}
           >
-            {t("oneWay")} · {t("economy")} · 1 {t("travelerSingular")}
+            {t("oneWay")} · {t("economy")} · {t("homeDiscoveryTravelerCountOne")}
           </p>
         </div>
       </div>
