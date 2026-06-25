@@ -383,6 +383,7 @@ export const translations: TranslationDictionary = {
   "destinations.tag.foodMarketNights": "夜市美食",
   "destinations.tag.historicStreets": "历史街巷",
   "destinations.tag.designWeekend": "设计周末",
+  "destinations.tag.desertDrama": "沙漠奇景",
   "destinations.city.london": "伦敦",
   "destinations.city.paris": "巴黎",
   "destinations.city.rome": "罗马",
