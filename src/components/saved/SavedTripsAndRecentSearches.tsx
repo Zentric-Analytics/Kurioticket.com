@@ -421,7 +421,13 @@ function buildSavedTripHref(trip: ResolvedSavedTrip, fare?: SavedTripFare) {
   };
 }
 
-export function SavedTripsAndRecentSearches() {
+type SavedTripsAndRecentSearchesProps = {
+  showAccountLink?: boolean;
+};
+
+export function SavedTripsAndRecentSearches({
+  showAccountLink = false,
+}: SavedTripsAndRecentSearchesProps) {
   const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const dateLocale = getSavedTripsDateLocale(locale);
@@ -599,6 +605,16 @@ export function SavedTripsAndRecentSearches() {
   return (
     <div className="px-4 pb-8 pt-8 sm:px-6 sm:pb-10 sm:pt-10 lg:px-8 lg:pb-11 lg:pt-12">
       <div className="mx-auto min-w-0 max-w-[72rem] space-y-5">
+        {showAccountLink ? (
+          <Link
+            href="/dashboard/account"
+            className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          >
+            <span aria-hidden="true">‹</span>
+            <span>My Account</span>
+          </Link>
+        ) : null}
+
         <section className="rounded-2xl border border-slate-200/80 bg-white p-[18px] text-start shadow-sm sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>

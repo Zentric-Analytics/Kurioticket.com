@@ -44,7 +44,7 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
     titleKey: "accountDashboard.hub.travelActivity",
     rows: [
       { labelKey: "accountDashboard.hub.myTrips", href: "/dashboard/trips", icon: BriefcaseBusiness },
-      { labelKey: "accountDashboard.hub.savedTrips", href: "/saved", icon: Bookmark },
+      { labelKey: "accountDashboard.hub.savedTrips", href: "/saved?from=account", icon: Bookmark },
       { labelKey: "accountDashboard.hub.priceAlerts", href: "/dashboard/alerts", icon: Bell },
     ],
   },
