@@ -119,6 +119,10 @@ function getDistanceDisplay(distanceFromCenter?: string) {
 function translateKnownHotelLabel(value: string, t: (key: string) => string) {
   const normalized = normalizeWhitespace(value).toLocaleLowerCase();
 
+  if (/^double business$/.test(normalized)) {
+    return t("hotelResults.filter.doubleBusiness");
+  }
+
   if (/^bed and breakfast$/.test(normalized)) {
     return t("hotelResults.filter.bedAndBreakfast");
   }
@@ -129,6 +133,22 @@ function translateKnownHotelLabel(value: string, t: (key: string) => string) {
 
   if (/^double room$/.test(normalized)) {
     return t("hotelResults.filter.doubleRoom");
+  }
+
+  if (/^deluxe king room$/.test(normalized)) {
+    return t("hotelResults.filter.deluxeKingRoom");
+  }
+
+  if (/^luxury king$/.test(normalized)) {
+    return t("hotelResults.filter.luxuryKing");
+  }
+
+  if (/^single standard$/.test(normalized)) {
+    return t("hotelResults.filter.singleStandard");
+  }
+
+  if (/^superior room$/.test(normalized)) {
+    return t("hotelResults.filter.superiorRoom");
   }
 
   return value;
