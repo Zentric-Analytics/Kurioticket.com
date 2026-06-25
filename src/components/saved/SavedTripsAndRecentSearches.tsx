@@ -666,25 +666,25 @@ export function SavedTripsAndRecentSearches() {
                       onClick={() => handleUnsaveTrip(trip.id)}
                       aria-label={t("savedTripsRemoveSavedTrip")}
                       aria-pressed
-                      className="focus-ring absolute end-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-rose-200/90 bg-rose-500/95 text-white shadow-sm shadow-rose-900/20 transition hover:bg-rose-500"
+                      className="focus-ring absolute end-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-rose-200/90 bg-rose-500/95 text-white shadow-sm shadow-rose-900/20 transition hover:bg-rose-500"
                     >
-                      <Heart className="h-6 w-6 fill-current" />
+                      <Heart className="h-5 w-5 fill-current" />
                     </button>
 
                     {trip.image ? (
                       <img
                         src={trip.image}
                         alt={trip.imageAlt ?? trip.title}
-                        className="h-48 w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                        className="h-36 w-full object-cover transition duration-500 group-hover:scale-[1.03] sm:h-40"
                         loading="lazy"
                       />
                     ) : (
-                      <div className="flex h-48 w-full items-center justify-center bg-gradient-to-br from-violet-100 via-fuchsia-50 to-cyan-50 text-sm font-semibold uppercase tracking-[0.14em] text-slate-600">
+                      <div className="flex h-36 w-full items-center justify-center bg-gradient-to-br from-violet-100 via-fuchsia-50 to-cyan-50 text-sm font-semibold uppercase tracking-[0.14em] text-slate-600 sm:h-40">
                         {t("savedTripFallbackTitle")}
                       </div>
                     )}
 
-                    <div className="space-y-3 p-5">
+                    <div className="space-y-2.5 p-4">
                       <h3 className="pe-12 text-lg font-semibold leading-tight tracking-tight text-slate-900">
                         {trip.title}
                       </h3>
@@ -730,7 +730,7 @@ export function SavedTripsAndRecentSearches() {
                           </div>
                           <Link
                             href={tripHref}
-                            className="inline-flex min-h-11 items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-900"
+                            className="inline-flex min-h-9 items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-900"
                           >
                             {hasProviderFare
                               ? t("savedTripsViewFare")
