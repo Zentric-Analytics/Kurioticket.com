@@ -141,7 +141,7 @@ export function PriceAlertsContent({
   }, []);
 
   return (
-    <main className="flex-1 bg-white pb-10 pt-0 sm:pt-5 lg:pt-5">
+    <main className="flex-1 bg-white pb-10 pt-0">
       <AccountDetailShell showAccountLink={showAccountLink}>
         <div className="mx-auto min-w-0 max-w-6xl px-4 pt-3 pb-8 sm:px-6 sm:pt-6 lg:px-8">
           <header className="px-1 pb-5 text-start sm:px-2 sm:pb-6">
