@@ -2299,7 +2299,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.travelPreferences": "Preferenze di prenotazione",
   "accountDashboard.hub.helpAndSupport": "Aiuto e supporto",
   "accountDashboard.hub.contactSupport": "Contatta il supporto",
-  "accountDashboard.hub.faq": "FAQ",
+  "accountDashboard.hub.faq": "Domande frequenti",
   "accountDashboard.hub.serviceGuarantee": "Garanzia del servizio",
   "accountDashboard.hub.infoTitle": "Tutto in un unico posto",
   "accountDashboard.hub.infoBody": "Accesso rapido ad account, viaggi, preferenze e supporto.",
