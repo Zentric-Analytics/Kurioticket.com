@@ -2253,7 +2253,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.travelPreferences": "Buchungseinstellungen",
   "accountDashboard.hub.helpAndSupport": "Hilfe und Support",
   "accountDashboard.hub.contactSupport": "Support kontaktieren",
-  "accountDashboard.hub.faq": "FAQ",
+  "accountDashboard.hub.faq": "Häufige Fragen",
   "accountDashboard.hub.serviceGuarantee": "Servicegarantie",
   "hotelResults.filter.doubleBusiness": "Business-Doppelzimmer",
   "hotelResults.filter.bedAndBreakfast": "Übernachtung mit Frühstück",
