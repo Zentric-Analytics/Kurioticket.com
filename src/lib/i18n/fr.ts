@@ -1199,6 +1199,19 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.ng-los-add.routeNote": "Grand point de correspondance avec des scènes culinaires et culturelles en plein essor.",
   "homeDiscoveryRoute.ng-abv-fco.title": "Échappée monuments à Rome",
   "homeDiscoveryRoute.ng-abv-fco.routeNote": "Classique européen pour les ruines, les places et les soirées détendues.",
+  "homeDiscoveryRoute.ng-los-nrt.title":
+    "Virée urbaine long-courrier à Tokyo",
+  "homeDiscoveryRoute.ng-los-nrt.routeNote":
+    "Grande porte d’entrée asiatique avec quartiers néon et transports ferroviaires efficaces.",
+  "homeDiscoveryRoute.ng-abv-mad.title": "Madrid tapas et art",
+  "homeDiscoveryRoute.ng-abv-mad.routeNote":
+    "Itinéraire de city break européen pour les musées, les boulevards et les dîners tardifs.",
+  "homeDiscoveryRoute.ng-los-cpt.title": "Aventure côtière au Cap",
+  "homeDiscoveryRoute.ng-los-cpt.routeNote":
+    "Route panoramique d’Afrique du Sud avec plages, montagnes et vignobles.",
+  "homeDiscoveryRoute.ng-abv-rob.title": "Séjour régional en bord de mer à Monrovia",
+  "homeDiscoveryRoute.ng-abv-rob.routeNote":
+    "City break ouest-africain avec plages atlantiques et marchés locaux.",
   homeCompareOptions: "Comparer les options",
   displayEstimateFinalProviderMayDiffer:
     "Estimation affichée ; le prix final du fournisseur peut différer.",
