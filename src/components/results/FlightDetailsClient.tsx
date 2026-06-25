@@ -95,12 +95,10 @@ export function FlightDetailsClient({ id }: { id: string }) {
     );
   }
 
-  const shouldLocalizeUnavailableMessage =
-    ["nl", "pt-br"].includes(locale) &&
-    error === FLIGHT_QUOTE_UNAVAILABLE_MESSAGE;
-  const unavailableBodyMessage = shouldLocalizeUnavailableMessage
-    ? t.flightSearchAgainCurrentPrices
-    : error || t.flightSearchAgainCurrentPrices;
+  const unavailableBodyMessage =
+    error === FLIGHT_QUOTE_UNAVAILABLE_MESSAGE
+      ? t.flightSearchAgainCurrentPrices
+      : error || t.flightSearchAgainCurrentPrices;
 
   if (error || !flight) {
     return (

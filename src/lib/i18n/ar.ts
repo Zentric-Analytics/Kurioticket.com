@@ -3,6 +3,9 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  flightQuoteUnavailable: "عرض سعر الرحلة غير متاح",
+  flightSearchAgainCurrentPrices:
+    "لم يعد عرض سعر هذه الرحلة متاحًا. يُرجى البحث مرة أخرى للاطلاع على الأسعار الحالية.",
   explore: "استكشاف",
   multiCity: "مدن متعددة",
   homePreviousDestinations: "الوجهات السابقة",

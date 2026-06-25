@@ -830,7 +830,7 @@ export const translations: TranslationDictionary = {
   flightCardProviderHandoffConverted:
     "Preço final, disponibilidade, reserva e regras da tarifa são confirmados pelo provedor. A moeda final do provedor pode ser diferente da moeda de exibição selecionada.",
   flightDetailsLoading: "Carregando detalhes do voo...",
-  flightQuoteUnavailable: "Cotação do voo indisponível",
+  flightQuoteUnavailable: "Cotação de voo indisponível",
   flightSearchAgainCurrentPrices:
     "Esta cotação de voo não está mais disponível. Pesquise novamente para ver os preços atuais.",
   flightDetailsProviderDisclaimer:
