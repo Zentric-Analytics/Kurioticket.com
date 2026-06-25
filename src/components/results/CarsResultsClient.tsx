@@ -180,6 +180,10 @@ const getCarsResultsIntlLocale = (locale: string) => {
     return "ja-JP";
   }
 
+  if (normalizedLocale.startsWith("ko")) {
+    return "ko-KR";
+  }
+
   if (normalizedLocale.startsWith("ar")) {
     return "ar-u-nu-latn";
   }
