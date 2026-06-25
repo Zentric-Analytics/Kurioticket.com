@@ -154,13 +154,13 @@ export function PriceAlertsContent({
           </header>
           <div
             ref={sortDropdownRef}
-            className="relative flex items-center gap-3 border-b border-slate-200 pb-4 sm:justify-between"
+            className="relative flex items-center gap-2 border-b border-slate-200 pb-4 sm:gap-3 sm:justify-between"
           >
             <div
-              className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto pb-1 sm:justify-between sm:overflow-visible sm:pb-0"
+              className="flex min-w-0 flex-1 items-center justify-between gap-1.5 pb-1 sm:gap-3 sm:overflow-visible sm:pb-0"
               aria-label={t["accountDashboard.priceAlerts.filtersAriaLabel"]}
             >
-              <div className="flex shrink-0 gap-2">
+              <div className="flex min-w-0 shrink-0 gap-1 sm:gap-2">
                 {tabs.map((tab) => {
                   const isSelected = selectedTab === tab.id;
 
@@ -168,7 +168,7 @@ export function PriceAlertsContent({
                     <button
                       key={tab.id}
                       type="button"
-                      className={`focus-ring inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-semibold transition ${
+                      className={`focus-ring inline-flex min-h-10 shrink-0 items-center gap-1 rounded-full px-2 text-xs font-semibold transition sm:min-h-11 sm:gap-2 sm:px-4 sm:text-sm ${
                         isSelected
                           ? "bg-violet-100 text-indigo-700"
                           : "text-slate-600 hover:bg-white hover:text-indigo-700"
@@ -177,7 +177,10 @@ export function PriceAlertsContent({
                       onClick={() => setSelectedTab(tab.id)}
                     >
                       {isSelected && (
-                        <Bell className="h-4 w-4" aria-hidden="true" />
+                        <Bell
+                          className="h-3.5 w-3.5 sm:h-4 sm:w-4"
+                          aria-hidden="true"
+                        />
                       )}
                       {`${t[tab.labelKey]} (${tab.count})`}
                     </button>
@@ -187,12 +190,21 @@ export function PriceAlertsContent({
 
               <button
                 type="button"
-                className="focus-ring inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700 sm:min-h-12 sm:gap-3 sm:rounded-xl sm:px-4"
+                className="focus-ring inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-full border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700 sm:min-h-12 sm:gap-3 sm:rounded-xl sm:px-4 sm:text-sm"
                 aria-expanded={isSortOpen}
                 aria-haspopup="listbox"
                 onClick={() => setIsSortOpen((current) => !current)}
               >
-                <span>
+                <span className="sm:hidden">
+                  {
+                    t[
+                      sortOptions.find((option) => option.id === selectedSort)
+                        ?.labelKey ?? sortOptions[0].labelKey
+                    ]
+                  }{" "}
+                  <span aria-hidden="true">▼</span>
+                </span>
+                <span className="hidden sm:inline">
                   {t["accountDashboard.priceAlerts.sort.label"]}:{" "}
                   {
                     t[
@@ -202,7 +214,9 @@ export function PriceAlertsContent({
                   }
                 </span>
                 <ChevronDown
-                  className={`h-4 w-4 transition ${isSortOpen ? "rotate-180" : ""}`}
+                  className={`hidden h-4 w-4 transition sm:block ${
+                    isSortOpen ? "rotate-180" : ""
+                  }`}
                   aria-hidden="true"
                 />
               </button>
@@ -239,7 +253,7 @@ export function PriceAlertsContent({
 
           <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
             <section
-              className="rounded-2xl border border-slate-200 bg-white px-5 py-12 text-center shadow-sm sm:px-8 sm:py-16 lg:min-h-[34rem] lg:py-20"
+              className="px-2 py-10 text-center sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-white sm:px-8 sm:py-16 sm:shadow-sm lg:min-h-[34rem] lg:py-20"
               aria-labelledby="empty-alerts-title"
             >
               <EmptyStateIllustration />
