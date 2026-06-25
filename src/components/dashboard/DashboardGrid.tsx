@@ -247,13 +247,20 @@ export function AccountSectionHeader({
   title,
   description,
   titleId,
+  flushStart = false,
 }: {
   title: string;
   description: string;
   titleId?: string;
+  flushStart?: boolean;
 }) {
   return (
-    <div className="px-1 pb-2 text-start sm:px-2 sm:pb-3">
+    <div
+      className={cn(
+        "pb-2 text-start sm:pb-3",
+        flushStart ? "px-0" : "px-1 sm:px-2",
+      )}
+    >
       <h1
         id={titleId}
         className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]"
@@ -895,11 +902,12 @@ export function DashboardOverview({
   const { t } = useLocale();
 
   return (
-    <div className="min-w-0 max-w-[60rem] space-y-5 pb-6 pt-0 sm:pb-8 lg:pb-10">
+    <div className="ms-[4.875rem] min-w-0 max-w-[60rem] space-y-5 pb-6 pt-0 sm:pb-8 lg:pb-10">
       <AccountSectionHeader
         title={t["accountDashboard.personalDetails.title"]}
         description={t["accountDashboard.personalDetails.subtitle"]}
         titleId="dashboard-title"
+        flushStart
       />
       <PersonalDetailsSection
         initials={initials}
@@ -1042,12 +1050,13 @@ export function SecurityDashboardPage() {
   return (
     <section
       aria-labelledby="security-title"
-      className="min-w-0 max-w-[60rem] space-y-5 pt-0"
+      className="ms-[4.875rem] min-w-0 max-w-[60rem] space-y-5 pt-0"
     >
       <AccountSectionHeader
         title={t["accountDashboard.security.title"]}
         description={t["accountDashboard.security.description"]}
         titleId="security-title"
+        flushStart
       />
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_18px_45px_-38px_rgba(15,23,42,0.55)]">
         <div className="divide-y divide-slate-200">
