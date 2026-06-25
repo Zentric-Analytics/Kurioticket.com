@@ -873,6 +873,7 @@ export const translations: TranslationDictionary = {
   chooseGuestsAndRooms: "Choose guests and rooms",
   guestsAndRooms: "Guests and rooms",
   adults: "Adults",
+  adultAgeRange: "18+",
   children: "Children",
   petFriendly: "Pet-friendly",
   onlyShowPetFriendlyStays: "Only show stays that allow pets",

@@ -91,6 +91,10 @@ const normalizeFlightsCalendarLocale = (locale: string | null | undefined) => {
     return "ar";
   }
 
+  if (normalized === "ja" || normalized.startsWith("ja-")) {
+    return "ja-JP";
+  }
+
   if (
     normalized === "zh" ||
     normalized === "zh-cn" ||
@@ -383,22 +387,38 @@ export function StandaloneFlightSearchForm({
         : t("economy");
   const travelerCount = adultCount + childCount + infantCount;
   const travelerSummary = useMemo(() => {
-    const listSeparator = locale === "zh-cn" ? "，" : ", ";
+    const isJapanese = locale.toLowerCase().startsWith("ja");
+    const listSeparator = isJapanese ? "、" : locale === "zh-cn" ? "，" : ", ";
+    const formatTravelerPart = (
+      count: number,
+      singularLabel: string,
+      pluralLabel: string,
+    ) => isJapanese
+      ? `${singularLabel}${count}名`
+      : `${count} ${count === 1 ? singularLabel : pluralLabel}`;
     const parts: string[] = [];
     if (adultCount > 0)
       parts.push(
-        `${adultCount} ${adultCount === 1 ? t("adultSingular") : t("adultPlural")}`,
+        formatTravelerPart(adultCount, t("adultSingular"), t("adultPlural")),
       );
     if (childCount > 0)
       parts.push(
-        `${childCount} ${childCount === 1 ? t("childSingular") : t("childPlural")}`,
+        formatTravelerPart(childCount, t("childSingular"), t("childPlural")),
       );
     if (infantCount > 0)
       parts.push(
-        `${infantCount} ${infantCount === 1 ? t("infantSingular") : t("infantPlural")}`,
+        formatTravelerPart(infantCount, t("infantSingular"), t("infantPlural")),
       );
 
-    return `${parts.length ? parts.join(listSeparator) : `${travelerCount} ${travelerCount === 1 ? t("travelerSingular") : t("travelerPlural")}`}${listSeparator}${cabinClassLabel}`;
+    const baseSummary = parts.length
+      ? parts.join(listSeparator)
+      : formatTravelerPart(
+          travelerCount,
+          t("travelerSingular"),
+          t("travelerPlural"),
+        );
+
+    return `${baseSummary}${listSeparator}${cabinClassLabel}`;
   }, [adultCount, cabinClassLabel, childCount, infantCount, locale, travelerCount, t]);
 
   const buildPlacesUrl = useCallback(
@@ -1245,7 +1265,7 @@ export function StandaloneFlightSearchForm({
       {
         key: "adults",
         label: t("adults") || "Adults",
-        subtitle: "18+",
+        subtitle: t("adultAgeRange") || "18+",
         count: draftAdultCount,
         min: 1,
       },
