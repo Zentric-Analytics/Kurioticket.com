@@ -690,7 +690,7 @@ function DateOfBirthInput({
   };
 
   return (
-    <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)_minmax(0,1fr)]">
+    <div className="grid min-w-0 grid-cols-[minmax(0,0.8fr)_minmax(0,1.5fr)_minmax(0,1fr)] gap-2 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)_minmax(0,1fr)]">
       <select
         className={className}
         value={parts.day}
@@ -872,7 +872,7 @@ function StructuredAddressInput({
         aria-label="Address"
         autoComplete="address-line1"
       />
-      <div className="grid min-w-0 gap-2 sm:grid-cols-2">
+      <div className="grid min-w-0 grid-cols-2 gap-2">
         <input
           className={className}
           value={parts.city}
@@ -950,7 +950,7 @@ function PhoneNumberInput({
   };
 
   return (
-    <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(7.5rem,9rem)_minmax(0,1fr)]">
+    <div className="grid min-w-0 grid-cols-[minmax(5.75rem,6.75rem)_minmax(0,1fr)] gap-2 sm:grid-cols-[minmax(7.5rem,9rem)_minmax(0,1fr)]">
       <select
         className={className}
         value={parsedValue.countryCode}
