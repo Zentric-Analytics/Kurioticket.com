@@ -1487,6 +1487,7 @@ export const translations: TranslationDictionary = {
   "carsSearch.pickupTimeLabel": "Abholzeit",
   "carsSearch.returnTimeLabel": "Rückgabezeit",
   carsSearchPreparing: "Mietwagensuche wird vorbereitet...",
+  searchingCars: "Mietwagen werden gesucht...",
   "carsResults.resultsLabel": "Mietwagen-Ergebnisse",
   "carsResults.resultsFor": "Mietwagen-Ergebnisse für {location}",
   "carsResults.carResultsAria": "Mietwagen-Ergebnisse",
