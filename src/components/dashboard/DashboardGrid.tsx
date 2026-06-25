@@ -395,28 +395,6 @@ export function AccountMenuPage({
   );
 }
 
-
-const priorityCountryCodes = [
-  "NG",
-  "GH",
-  "ZA",
-  "KE",
-  "US",
-  "CA",
-  "GB",
-  "AE",
-  "IN",
-  "FR",
-  "DE",
-  "NL",
-  "IT",
-  "ES",
-  "BR",
-  "JP",
-  "CN",
-  "AU",
-] as const;
-
 const countryCallingCodeByIsoCode: Record<string, string> = {
   AE: "+971",
   AU: "+61",
@@ -461,19 +439,6 @@ function sortCountryProfileOptions(
   left: CountryProfileOption,
   right: CountryProfileOption,
 ) {
-  const leftPriority = priorityCountryCodes.indexOf(
-    left.isoCode as (typeof priorityCountryCodes)[number],
-  );
-  const rightPriority = priorityCountryCodes.indexOf(
-    right.isoCode as (typeof priorityCountryCodes)[number],
-  );
-
-  if (leftPriority !== -1 || rightPriority !== -1) {
-    if (leftPriority === -1) return 1;
-    if (rightPriority === -1) return -1;
-    return leftPriority - rightPriority;
-  }
-
   return left.countryName.localeCompare(right.countryName);
 }
 
