@@ -544,7 +544,7 @@ export const translations: TranslationDictionary = {
   homePopularDestinations: "人気の目的地",
   travelDates: "旅行日",
   departure: "出発日",
-  return: "帰着日",
+  returnDate: "帰着日",
   chooseTravelDates: "旅行日を選択",
   cityOrAirport: "都市または空港",
   hotelSearchTravelDatesLabel: "旅行日",
