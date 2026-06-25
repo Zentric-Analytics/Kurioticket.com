@@ -440,31 +440,9 @@ const countryCallingCodeByIsoCode: Record<string, string> = {
 
 type CountryProfileOption = {
   countryName: string;
-  nationality: string;
   isoCode: string;
   flag: string;
   dialCode?: string;
-};
-
-const nationalityLabelByIsoCode: Record<string, string> = {
-  AE: "Emirati",
-  AU: "Australian",
-  BR: "Brazilian",
-  CA: "Canadian",
-  CN: "Chinese",
-  DE: "German",
-  ES: "Spanish",
-  FR: "French",
-  GB: "British",
-  GH: "Ghanaian",
-  IN: "Indian",
-  IT: "Italian",
-  JP: "Japanese",
-  KE: "Kenyan",
-  NG: "Nigerian",
-  NL: "Dutch",
-  US: "American",
-  ZA: "South African",
 };
 
 function getFlagEmoji(countryCode: string) {
@@ -503,7 +481,6 @@ const countryProfileOptions: CountryProfileOption[] = supportedRegions
   .filter((region) => /^[A-Z]{2}$/.test(region.code))
   .map((region) => ({
     countryName: region.country,
-    nationality: nationalityLabelByIsoCode[region.code] ?? region.country,
     isoCode: region.code,
     flag: getFlagEmoji(region.code),
     dialCode: countryCallingCodeByIsoCode[region.code],
@@ -801,18 +778,14 @@ function DateOfBirthInput({
 
 type StructuredAddressParts = {
   addressLine1: string;
-  addressLine2: string;
   city: string;
-  region: string;
   postalCode: string;
   countryCode: string;
 };
 
 const emptyStructuredAddress: StructuredAddressParts = {
   addressLine1: "",
-  addressLine2: "",
   city: "",
-  region: "",
   postalCode: "",
   countryCode: "",
 };
@@ -832,9 +805,7 @@ function parseStructuredAddressDraft(value: string): StructuredAddressParts {
 
       return {
         addressLine1: parsedValue.addressLine1 ?? "",
-        addressLine2: parsedValue.addressLine2 ?? "",
         city: parsedValue.city ?? "",
-        region: parsedValue.region ?? "",
         postalCode: parsedValue.postalCode ?? "",
         countryCode: parsedValue.countryCode ?? "",
       };
@@ -843,7 +814,7 @@ function parseStructuredAddressDraft(value: string): StructuredAddressParts {
     }
   }
 
-  const [addressLine1 = "", addressLine2 = "", cityRegionPostal = "", country = ""] =
+  const [addressLine1 = "", cityPostal = "", country = ""] =
     trimmedValue.split(/\r?\n/).map((line) => line.trim());
   const countryOption = countryProfileOptions.find(
     (option) =>
@@ -854,8 +825,7 @@ function parseStructuredAddressDraft(value: string): StructuredAddressParts {
   return {
     ...emptyStructuredAddress,
     addressLine1,
-    addressLine2,
-    city: cityRegionPostal,
+    city: cityPostal,
     countryCode: countryOption?.isoCode ?? "",
   };
 }
@@ -863,9 +833,7 @@ function parseStructuredAddressDraft(value: string): StructuredAddressParts {
 function serializeStructuredAddressDraft(parts: StructuredAddressParts) {
   const normalizedParts = {
     addressLine1: parts.addressLine1.trimStart(),
-    addressLine2: parts.addressLine2.trimStart(),
     city: parts.city.trimStart(),
-    region: parts.region.trimStart(),
     postalCode: parts.postalCode.trimStart(),
     countryCode: parts.countryCode,
   };
@@ -885,19 +853,10 @@ function formatStructuredAddressForDisplay(value: string) {
   const countryOption = countryProfileOptions.find(
     (option) => option.isoCode === parts.countryCode,
   );
-  const localityLine = [parts.city, parts.region, parts.postalCode]
-    .filter(Boolean)
-    .join(", ");
-  const countryLine = countryOption
-    ? `${countryOption.flag} ${countryOption.countryName}`
-    : parts.countryCode;
+  const localityLine = [parts.city, parts.postalCode].filter(Boolean).join(", ");
+  const countryLine = countryOption ? countryOption.countryName : parts.countryCode;
 
-  return [
-    parts.addressLine1,
-    parts.addressLine2,
-    localityLine,
-    countryLine,
-  ]
+  return [parts.addressLine1, localityLine, countryLine]
     .filter(Boolean)
     .join("\n");
 }
@@ -924,48 +883,6 @@ function StructuredAddressInput({
 
   return (
     <div className="grid min-w-0 gap-2">
-      <input
-        className={className}
-        value={parts.addressLine1}
-        onChange={(event) => updatePart("addressLine1", event.target.value)}
-        placeholder="Address line 1"
-        aria-label="Address line 1"
-        autoComplete="address-line1"
-      />
-      <input
-        className={className}
-        value={parts.addressLine2}
-        onChange={(event) => updatePart("addressLine2", event.target.value)}
-        placeholder="Address line 2 / apartment / suite / unit (optional)"
-        aria-label="Address line 2, apartment, suite, or unit"
-        autoComplete="address-line2"
-      />
-      <div className="grid min-w-0 gap-2 sm:grid-cols-3">
-        <input
-          className={className}
-          value={parts.city}
-          onChange={(event) => updatePart("city", event.target.value)}
-          placeholder="City or town"
-          aria-label="City or town"
-          autoComplete="address-level2"
-        />
-        <input
-          className={className}
-          value={parts.region}
-          onChange={(event) => updatePart("region", event.target.value)}
-          placeholder="State / province / region"
-          aria-label="State, province, or region"
-          autoComplete="address-level1"
-        />
-        <input
-          className={className}
-          value={parts.postalCode}
-          onChange={(event) => updatePart("postalCode", event.target.value)}
-          placeholder="Postal code"
-          aria-label="Postal code"
-          autoComplete="postal-code"
-        />
-      </div>
       <select
         className={className}
         value={parts.countryCode}
@@ -974,14 +891,40 @@ function StructuredAddressInput({
         autoComplete="country"
       >
         <option value="" disabled hidden>
-          Country / Region
+          Country/region
         </option>
         {countryProfileOptions.map((option) => (
           <option key={option.isoCode} value={option.isoCode}>
-            {option.flag} {option.countryName}
+            {option.countryName}
           </option>
         ))}
       </select>
+      <input
+        className={className}
+        value={parts.addressLine1}
+        onChange={(event) => updatePart("addressLine1", event.target.value)}
+        placeholder="Address"
+        aria-label="Address"
+        autoComplete="address-line1"
+      />
+      <div className="grid min-w-0 gap-2 sm:grid-cols-2">
+        <input
+          className={className}
+          value={parts.city}
+          onChange={(event) => updatePart("city", event.target.value)}
+          placeholder="Town/city"
+          aria-label="Town or city"
+          autoComplete="address-level2"
+        />
+        <input
+          className={className}
+          value={parts.postalCode}
+          onChange={(event) => updatePart("postalCode", event.target.value)}
+          placeholder="Postcode"
+          aria-label="Postcode"
+          autoComplete="postal-code"
+        />
+      </div>
     </div>
   );
 }
@@ -1042,7 +985,7 @@ function PhoneNumberInput({
   };
 
   return (
-    <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(8.75rem,0.72fr)_minmax(0,1fr)]">
+    <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(7.5rem,9rem)_minmax(0,1fr)]">
       <select
         className={className}
         value={parsedValue.countryCode}
@@ -1093,8 +1036,8 @@ function NationalityInput({
         {fallback}
       </option>
       {countryProfileOptions.map((option) => (
-        <option key={option.isoCode} value={option.nationality}>
-          {option.flag} {option.nationality} · {option.countryName}
+        <option key={option.isoCode} value={option.countryName}>
+          {option.countryName}
         </option>
       ))}
     </select>
