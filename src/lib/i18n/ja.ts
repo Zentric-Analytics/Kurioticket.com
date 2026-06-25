@@ -4,6 +4,34 @@ import type { TranslationDictionary } from "./types";
 export const translations: TranslationDictionary = {
   ...en,
 
+  signupPageTitle: "アカウントを作成",
+  signupFullNameLabel: "氏名",
+  signupEmailLabel: "メールアドレス",
+  signupPasswordLabel: "パスワード",
+  signupAgreementBeforeTerms:
+    "アカウントを作成すると、",
+  signupTermsLink: "利用規約",
+  signupAgreementBetweenLinks: "、",
+  signupPrivacyPolicyLink: "プライバシーポリシー",
+  signupAgreementAfterPrivacy:
+    "、パートナーリダイレクトに関する開示に同意したものとみなされます。",
+  signupSubmit: "登録",
+  signupGoogle: "Google で続行",
+  signupAlreadyHaveAccount: "すでにアカウントをお持ちですか？",
+  signupLoginLink: "ログイン",
+  loginPageTitle: "ログイン",
+  loginPageSubtitle:
+    "検索を保存し、アラートを管理して、旅行ダッシュボードにアクセスできます。",
+  loginCodeSent: "確認コードをメールに送信しました。",
+  loginCodeInstructions:
+    "{{email}} に送信された6桁のコードを入力してください。コードは{{minutes}}分後に期限切れになります。",
+  loginVerificationCodeLabel: "確認コード",
+  loginVerifyLogin: "ログインを確認",
+  loginResendIn: "{{seconds}}秒後に再送信",
+  loginUseDifferentDetails: "別の情報を使用",
+  loginSignupPrompt: "Kurioticket は初めてですか？",
+  loginCreateAccount: "アカウントを作成",
+
   flights: "航空券",
   hotels: "ホテル",
   cars: "レンタカー",
