@@ -5,42 +5,8 @@ import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { getGeneralFaqs } from "@/content/faqs";
 import { translations as enTranslations } from "@/lib/i18n/en";
-
-const faqItems = [
-  {
-    question: "faqQuestionFindOptions",
-    answer: "faqAnswerFindOptions",
-  },
-  {
-    question: "faqQuestionSellDirectly",
-    answer: "faqAnswerSellDirectly",
-  },
-  {
-    question: "faqQuestionPriceChanges",
-    answer: "faqAnswerPriceChanges",
-  },
-  {
-    question: "faqQuestionCompareProviders",
-    answer: "faqAnswerCompareProviders",
-  },
-  {
-    question: "faqQuestionSecureBooking",
-    answer: "faqAnswerSecureBooking",
-  },
-  {
-    question: "faqQuestionPreferences",
-    answer: "faqAnswerPreferences",
-  },
-  {
-    question: "faqQuestionLiveCached",
-    answer: "faqAnswerLiveCached",
-  },
-  {
-    question: "faqQuestionManageChanges",
-    answer: "faqAnswerManageChanges",
-  },
-];
 
 type FaqContentProps = {
   showAccountLink: boolean;
@@ -49,6 +15,7 @@ type FaqContentProps = {
 export function FaqContent({ showAccountLink }: FaqContentProps) {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const faqItems = getGeneralFaqs(t);
 
   return (
     <>
@@ -67,17 +34,6 @@ export function FaqContent({ showAccountLink }: FaqContentProps) {
               </p>
             </div>
 
-            <div className="mt-8 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-5 text-sm font-medium leading-6 text-slate-700 sm:p-6 sm:text-base">
-              {t("faqNeedMoreHelpPrefix")} {" "}
-              <Link
-                href="/dashboard/support"
-                className="font-bold text-indigo-700 underline-offset-4 hover:text-indigo-900 hover:underline"
-              >
-                {t("faqSupportPage")}
-              </Link>{" "}
-              {t("faqNeedMoreHelpSuffix")}
-            </div>
-
             <section
               aria-labelledby="faq-list-heading"
               className="mt-10 max-w-3xl rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7"
@@ -93,7 +49,7 @@ export function FaqContent({ showAccountLink }: FaqContentProps) {
                 {faqItems.map((item) => (
                   <details key={item.question} className="group py-4">
                     <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-sm font-semibold leading-6 text-slate-950 marker:hidden sm:text-base">
-                      <span>{t(item.question)}</span>
+                      <span>{item.question}</span>
                       <span
                         aria-hidden="true"
                         className="mt-0.5 text-base leading-none text-slate-500 transition-transform duration-200 group-open:rotate-45"
@@ -102,12 +58,23 @@ export function FaqContent({ showAccountLink }: FaqContentProps) {
                       </span>
                     </summary>
                     <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
-                      {t(item.answer)}
+                      {item.answer}
                     </p>
                   </details>
                 ))}
               </div>
             </section>
+
+            <div className="mt-8 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-5 text-sm font-medium leading-6 text-slate-700 sm:p-6 sm:text-base">
+              {t("faqNeedMoreHelpPrefix")} {" "}
+              <Link
+                href="/dashboard/support"
+                className="font-bold text-indigo-700 underline-offset-4 hover:text-indigo-900 hover:underline"
+              >
+                {t("faqSupportPage")}
+              </Link>{" "}
+              {t("faqNeedMoreHelpSuffix")}
+            </div>
           </div>
         </section>
       </main>
