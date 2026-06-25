@@ -1554,15 +1554,19 @@ export function SearchTabs({
         : t.economy || "Economy";
 
   const travelerSummary = useMemo(() => {
-    const isJapanese = (locale ?? activeLocale).toLowerCase().startsWith("ja");
+    const normalizedLocale = (locale ?? activeLocale).toLowerCase();
+    const isJapanese = normalizedLocale.startsWith("ja");
+    const isKorean = normalizedLocale.startsWith("ko");
     const separator = isJapanese ? "、" : ", ";
     const formatTravelerPart = (
       count: number,
       singularLabel: string,
       pluralLabel: string,
-    ) => isJapanese
-      ? `${singularLabel}${count}名`
-      : `${count} ${count === 1 ? singularLabel : pluralLabel}`;
+    ) => {
+      if (isJapanese) return `${singularLabel}${count}名`;
+      if (isKorean) return `${singularLabel} ${count}명`;
+      return `${count} ${count === 1 ? singularLabel : pluralLabel}`;
+    };
     const parts: string[] = [];
 
     if (adultCount > 0) {
