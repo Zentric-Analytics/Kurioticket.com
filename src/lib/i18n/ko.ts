@@ -417,6 +417,129 @@ export const translations: TranslationDictionary = {
   faqQuestionManageChanges: "변경이나 취소는 어디에서 관리하나요?",
   faqAnswerManageChanges:
     "여행 변경, 취소, 환불, 예약 지원은 보통 예약을 완료한 제공업체에서 처리합니다. 서비스 요청에는 해당 제공업체의 확인 정보를 사용하세요.",
+  moreServiceInfoEyebrow: "플랫폼 정보",
+  moreServiceInfoTitle: "추가 서비스 정보",
+  moreServiceInfoDescription:
+    "Kurioticket이 여러 제공업체의 여행 옵션을 한곳에서 검색, 비교, 저장, 정리하도록 어떻게 돕는지 알아보세요.",
+  moreServiceInfoContextTitle: "맥락을 바탕으로 계획하기",
+  moreServiceInfoContextSubtitle: "검색 결과부터 제공업체 이동까지",
+  moreServiceInfoContextCompare: "여러 여행 제공업체의 옵션을 비교하세요.",
+  moreServiceInfoContextSave: "로그인하면 여행, 알림, 환경설정을 저장할 수 있습니다.",
+  moreServiceInfoContextContinue: "외부에서 예약하기 전에 제공업체 세부 정보를 확인하세요.",
+  moreServiceInfoHowHeading: "Kurioticket 작동 방식",
+  moreServiceInfoHowDescription:
+    "이 서비스 정보는 여행 검색 전, 중, 후에 Kurioticket이 어떤 역할을 하는지 설명합니다.",
+  moreServiceInfoHowBadge: "여행 계획 기본 사항",
+  moreServiceInfoStepSearchTitle: "여러 제공업체 검색",
+  moreServiceInfoStepSearchSummary:
+    "각 제공업체를 따로 열지 않고 한곳에서 여러 제공업체의 여행 옵션을 검색하세요.",
+  moreServiceInfoStepSearchDetails:
+    "Kurioticket은 이용 가능한 항공권, 호텔, 노선, 여행 결과 정보를 하나의 검색 경험으로 모아 여행자가 더 효율적으로 옵션을 검토할 수 있도록 합니다.",
+  moreServiceInfoStepCompareTitle: "여행 옵션 비교",
+  moreServiceInfoStepCompareSummary:
+    "여행에 맞는 선택을 하기 전에 가격, 노선, 호텔, 일정, 이용 가능한 여행 옵션을 비교하세요.",
+  moreServiceInfoStepCompareDetails:
+    "결과에는 제공업체로 계속 이동하기 전에 옵션을 평가하는 데 도움이 되는 제공업체 세부 정보, 시간, 목적지 정보 및 기타 여행 데이터가 포함될 수 있습니다.",
+  moreServiceInfoStepSaveTitle: "여행 및 알림 저장",
+  moreServiceInfoStepSaveSummary:
+    "계정을 만들어 여행 계획과 연결된 여행, 노선 추적, 여행 알림을 저장하고 관리하세요.",
+  moreServiceInfoStepSaveDetails:
+    "저장한 여행, 최근 검색, 알림은 검토 중인 옵션으로 더 쉽게 돌아가고 관련 여행 계획 정보를 정리하는 데 도움이 됩니다.",
+  moreServiceInfoStepRedirectsTitle: "제공업체 이동 안내",
+  moreServiceInfoStepRedirectsSummary:
+    "상품을 선택하면 예약, 결제, 확인 및 이행을 완료하기 위해 여행 제공업체로 이동할 수 있습니다.",
+  moreServiceInfoStepRedirectsDetails:
+    "이동된 상품의 최종 가격, 이용 가능 여부, 규정, 결제 단계, 영수증, 예약 변경, 취소 및 여행 문서는 제공업체 페이지에서 처리됩니다.",
+  moreServiceInfoStepAccountTitle: "계정 및 여행 도구",
+  moreServiceInfoStepAccountSummary:
+    "계정 도구를 사용해 저장한 검색, 여행, 알림, 환경설정을 하나의 Kurioticket 작업 공간에서 정리하세요.",
+  moreServiceInfoStepAccountDetails:
+    "이 도구들은 Kurioticket에서의 여행 계획을 지원하며, 외부에서 예약을 완료한 경우 제공업체별 예약 관리는 해당 제공업체에 남아 있습니다.",
+  moreServiceInfoFaqHeading: "자주 묻는 질문",
+  moreServiceInfoFaqDescription:
+    "여행 검색, 제공업체 이동, 저장한 여행, 계정 도구에 대한 간단한 답변입니다.",
+  moreServiceInfoFaqWhatQuestion: "Kurioticket이란 무엇인가요?",
+  moreServiceInfoFaqWhatAnswer:
+    "Kurioticket은 여러 제공업체의 여행 옵션을 찾고, 비교하고, 저장하고, 정리할 수 있는 여행 검색 및 비교 플랫폼입니다.",
+  moreServiceInfoFaqSearchQuestion: "여행 검색은 어떻게 작동하나요?",
+  moreServiceInfoFaqSearchAnswer:
+    "여행 세부 정보를 입력하면 Kurioticket이 선택지를 비교하는 데 도움이 될 수 있는 이용 가능한 여행 옵션과 제공업체 정보를 표시합니다.",
+  moreServiceInfoFaqRedirectQuestion: "왜 다른 제공업체로 이동하나요?",
+  moreServiceInfoFaqRedirectAnswer:
+    "일부 상품은 외부 제공업체 사이트에서 완료됩니다. 제공업체가 최종 예약 단계, 결제, 확인 및 이행을 처리합니다.",
+  moreServiceInfoFaqPaymentsQuestion: "Kurioticket이 결제를 처리하나요?",
+  moreServiceInfoFaqPaymentsAnswer:
+    "제공업체로 이동하는 상품의 경우 Kurioticket은 결제를 처리하지 않습니다. 제공업체 페이지에서 직접 결제를 검토하고 완료하세요.",
+  moreServiceInfoFaqSaveQuestion: "여행과 알림을 저장할 수 있나요?",
+  moreServiceInfoFaqSaveAnswer:
+    "네. 계정 도구를 사용하면 여행을 저장하고, 노선을 추적하고, 알림을 관리하며, 검토 중인 여행 옵션으로 돌아갈 수 있습니다.",
+  moreServiceInfoFaqAccountQuestion: "계정이 필요한가요?",
+  moreServiceInfoFaqAccountAnswer:
+    "모든 계정 도구 없이도 검색 정보를 둘러볼 수 있지만, 여행, 알림, 환경설정을 저장하려면 로그인이 필요할 수 있습니다.",
+  moreServiceInfoFaqSupportQuestion: "지원팀에 어떻게 문의하나요?",
+  moreServiceInfoFaqSupportAnswer:
+    "고객 지원 페이지를 이용하고 계정 이메일, 진행하려던 작업, 노선, 호텔 또는 제공업체 세부 정보를 함께 알려주세요.",
+  moreServiceInfoHelpTitle: "도움이 필요하신가요?",
+  moreServiceInfoHelpDescription:
+    "계정, 저장한 여행, 알림 또는 제공업체 이동에 대해 궁금한 점이 있으신가요?",
+  moreServiceInfoSupportCta: "고객 지원에 문의하기",
+  serviceGuaranteeEyebrow: "Kurioticket 서비스 약속",
+  serviceGuaranteeTitle: "서비스 보장",
+  serviceGuaranteeDescription:
+    "Kurioticket이 어떻게 작동하는지, 플랫폼 이용 시 무엇을 기대할 수 있는지 여행자가 이해할 수 있도록 돕고자 합니다.",
+  serviceGuaranteeFaqHeading: "자주 묻는 질문",
+  serviceGuaranteeFaqDescription:
+    "이 답변은 여행 검색 및 비교 플랫폼으로서 Kurioticket의 역할을 설명합니다.",
+  serviceGuaranteeFaqWhatGuaranteeQuestion: "Kurioticket은 무엇을 보장하나요?",
+  serviceGuaranteeFaqWhatGuaranteeAnswer:
+    "Kurioticket은 여행자가 여행 옵션을 명확하게 비교할 수 있도록 설계되었습니다. 신뢰할 수 있는 플랫폼 경험, 투명한 검색 정보, 제공업체 예약 페이지로 이어지는 명확한 경로를 제공하는 것을 목표로 합니다.",
+  serviceGuaranteeFaqResultsDisplayedQuestion: "여행 결과는 어떻게 표시되나요?",
+  serviceGuaranteeFaqResultsDisplayedAnswer:
+    "결과는 노선, 날짜, 가격, 이용 가능한 경우 제공업체 세부 정보 등 여행 제공업체에서 제공되는 정보를 사용해 표시됩니다.",
+  serviceGuaranteeFaqRedirectedQuestion: "왜 다른 제공업체로 이동하나요?",
+  serviceGuaranteeFaqRedirectedAnswer:
+    "일부 결과는 외부 제공업체 사이트에서 완료됩니다. 해당 옵션을 선택하면 Kurioticket은 제공업체가 예약, 결제, 여행별 서비스를 처리할 수 있도록 이동시킵니다.",
+  serviceGuaranteeFaqBookDirectlyQuestion: "Kurioticket에서 직접 예약하나요?",
+  serviceGuaranteeFaqBookDirectlyAnswer:
+    "Kurioticket은 주로 여행 검색 및 비교 플랫폼입니다. 결과가 제공업체로 이동하는 경우 예약은 Kurioticket이 아니라 해당 제공업체에서 완료됩니다.",
+  serviceGuaranteeFaqPricesGuaranteedQuestion: "가격은 항상 보장되나요?",
+  serviceGuaranteeFaqPricesGuaranteedAnswer:
+    "아니요. 가격은 제공업체 이용 가능 여부, 세금, 수수료, 통화, 시점에 따라 변경될 수 있습니다. 예약하기 전에 제공업체 페이지에서 최종 가격을 항상 확인하세요.",
+  serviceGuaranteeFaqChooseProvidersQuestion: "Kurioticket은 제공업체를 어떻게 선택하나요?",
+  serviceGuaranteeFaqChooseProvidersAnswer:
+    "Kurioticket은 관련 검색 결과를 제공할 수 있는 여행 제공업체 및 데이터 소스와 협력합니다. 이용 가능 여부, 가격, 표시되는 옵션은 노선, 목적지, 제공업체 범위에 따라 달라질 수 있습니다.",
+  serviceGuaranteeFaqEncounterIssueQuestion: "문제가 발생하면 어떻게 해야 하나요?",
+  serviceGuaranteeFaqEncounterIssueAnswer:
+    "문제가 검색, 계정 접근, 저장한 여행, 알림 또는 Kurioticket에서의 이동과 관련된 경우 Kurioticket 지원팀에 문의하세요. 이미 제공업체에서 예약했다면 예약 변경, 환불, 취소 또는 여행 문서는 해당 제공업체에 문의하세요.",
+  serviceGuaranteeFaqContactSupportQuestion: "지원팀에 어떻게 문의할 수 있나요?",
+  serviceGuaranteeFaqContactSupportAnswer:
+    "고객 지원 페이지를 이용하고 계정 이메일, 진행하려던 작업, 문제 검토에 도움이 될 수 있는 노선, 호텔 또는 제공업체 세부 정보를 함께 알려주세요.",
+  serviceGuaranteeHelpCardTitle: "계정 또는 검색에 도움이 필요하신가요?",
+  serviceGuaranteeSupportCta: "고객 지원에 문의하기",
+  supportEyebrow: "Kurioticket 헬프 데스크",
+  supportTitle: "고객 지원",
+  supportBeforeContactHeading: "문의하기 전에",
+  supportBeforeContactDescription:
+    "Kurioticket 계정 이메일, 진행하려던 작업, 관련 노선 또는 호텔, 이동된 제공업체 페이지를 함께 알려주세요. 전체 결제 카드 번호나 민감한 여행 문서 번호는 보내지 마세요.",
+  supportBeforeContactDashboardDescription:
+    "Kurioticket 계정 이메일, 도움이 필요한 내용, 문제를 이해하는 데 도움이 되는 예약 또는 노선 세부 정보를 포함해 주세요.",
+  supportTicketHeading: "지원 티켓 만들기",
+  supportFormEmailLabel: "이메일",
+  supportFormSubjectLabel: "제목",
+  supportFormCategoryLabel: "카테고리",
+  supportCategorySearchHelp: "검색 도움말",
+  supportCategoryPriceAlerts: "가격 알림",
+  supportCategoryPartnerRedirect: "파트너 이동",
+  supportCategoryAccountHelp: "계정 도움말",
+  supportFormMessageLabel: "무엇을 도와드릴까요?",
+  supportFormMessagePlaceholder:
+    "노선, 호텔, 알림 또는 계정 관련 내용을 알려주세요.",
+  supportFormSubmit: "요청 보내기",
+  supportFormSending: "보내는 중...",
+  supportFormSuccessPrefix: "티켓",
+  supportFormSuccessSuffix: "이 열렸습니다.",
+  supportFormErrorFallback: "티켓을 열 수 없습니다.",
+  supportFaqHeading: "자주 묻는 질문",
   supportFaqAccountQuestion: "계정 및 로그인 도움말",
   supportFaqAccountAnswer:
     "Kurioticket은 계정 접근, 로그인 문제, 가입 문제, 프로필 접근, 계정 관련 플랫폼 문제를 도와드릴 수 있습니다.",
