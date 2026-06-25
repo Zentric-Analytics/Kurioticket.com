@@ -2207,6 +2207,8 @@ export const translations: TranslationDictionary = {
   supportBeforeContactHeading: "Prima di contattarci",
   supportBeforeContactDescription:
     "Includi l’email del tuo account Kurioticket, cosa stavi cercando di fare, la tratta o l’hotel se pertinente e l’eventuale pagina del fornitore a cui sei stato reindirizzato. Non inviare numeri completi di carte di pagamento o documenti di viaggio sensibili.",
+  supportBeforeContactDashboardDescription:
+    "Includi l’e-mail del tuo account Kurioticket, ciò per cui hai bisogno di aiuto e qualsiasi dettaglio di prenotazione o rotta che possa aiutarci a capire il problema.",
   supportTicketHeading: "Crea una richiesta di supporto",
   supportFormEmailLabel: "E-mail",
   supportFormSubjectLabel: "Oggetto",

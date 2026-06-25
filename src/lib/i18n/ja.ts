@@ -120,6 +120,139 @@ export const translations: TranslationDictionary = {
   faqQuestionManageChanges: "変更やキャンセルはどこで管理しますか？",
   faqAnswerManageChanges:
     "旅行の変更、キャンセル、返金、予約サポートは通常、予約を完了したプロバイダーが対応します。サービス依頼には、そのプロバイダーからの確認情報をご利用ください。",
+  moreServiceInfoEyebrow: "プラットフォーム情報",
+  moreServiceInfoTitle: "サービスに関する詳細情報",
+  moreServiceInfoDescription:
+    "Kurioticket が複数のプロバイダーの旅行オプションを一か所で検索、比較、保存、整理できるようにする仕組みをご確認ください。",
+  moreServiceInfoContextTitle: "情報を踏まえて計画",
+  moreServiceInfoContextSubtitle: "検索結果からプロバイダーへの移動まで",
+  moreServiceInfoContextCompare:
+    "複数の旅行プロバイダーの選択肢を比較できます。",
+  moreServiceInfoContextSave:
+    "ログインすると、旅行、アラート、設定を保存できます。",
+  moreServiceInfoContextContinue:
+    "外部で予約する前に、プロバイダーの詳細を確認できます。",
+  moreServiceInfoHowHeading: "Kurioticket の仕組み",
+  moreServiceInfoHowDescription:
+    "これらのサービス詳細では、旅行検索の前後および検索中における Kurioticket の役割を説明します。",
+  moreServiceInfoHowBadge: "旅行計画の基本",
+  moreServiceInfoStepSearchTitle: "複数のプロバイダーを検索",
+  moreServiceInfoStepSearchSummary:
+    "各プロバイダーを個別に開く代わりに、一か所から複数プロバイダーの旅行オプションを検索できます。",
+  moreServiceInfoStepSearchDetails:
+    "Kurioticket は、利用可能な航空券、ホテル、ルート、旅行検索結果の情報をひとつの検索体験にまとめ、旅行者がより効率的に選択肢を確認できるようにします。",
+  moreServiceInfoStepCompareTitle: "旅行オプションを比較",
+  moreServiceInfoStepCompareSummary:
+    "旅行に合うものを選ぶ前に、料金、ルート、ホテル、スケジュール、利用可能な旅行オプションを比較できます。",
+  moreServiceInfoStepCompareDetails:
+    "検索結果には、プロバイダー情報、時間、目的地情報、その他の旅行データが含まれる場合があり、プロバイダーへ進む前に選択肢を検討するのに役立ちます。",
+  moreServiceInfoStepSaveTitle: "旅行とアラートを保存",
+  moreServiceInfoStepSaveSummary:
+    "アカウントを作成すると、旅行を保存し、ルートを追跡し、旅行計画に関連するアラートを管理できます。",
+  moreServiceInfoStepSaveDetails:
+    "保存済み旅行、最近の検索、アラートにより、検討中の選択肢へ戻りやすくなり、関連する旅行計画情報を整理できます。",
+  moreServiceInfoStepRedirectsTitle: "プロバイダーへの移動について",
+  moreServiceInfoStepRedirectsSummary:
+    "オファーを選択すると、予約、支払い、確認、手配を完了するために旅行プロバイダーへ移動する場合があります。",
+  moreServiceInfoStepRedirectsDetails:
+    "移動先のプロバイダーページでは、最終料金、空き状況、規則、支払い手順、領収書、予約変更、キャンセル、旅行書類などが処理されます。",
+  moreServiceInfoStepAccountTitle: "アカウントと旅行ツール",
+  moreServiceInfoStepAccountSummary:
+    "アカウントツールを使うと、保存した検索、旅行、アラート、設定を Kurioticket のワークスペースで整理できます。",
+  moreServiceInfoStepAccountDetails:
+    "これらのツールは Kurioticket 上での旅行計画をサポートしますが、外部で完了した予約のプロバイダー固有の管理は、そのプロバイダー側で行われます。",
+  moreServiceInfoFaqHeading: "よくある質問",
+  moreServiceInfoFaqDescription:
+    "旅行検索、プロバイダーへの移動、保存済み旅行、アカウントツールに関する短い回答です。",
+  moreServiceInfoFaqWhatQuestion: "Kurioticket とは何ですか？",
+  moreServiceInfoFaqWhatAnswer:
+    "Kurioticket は、複数のプロバイダーの旅行オプションを検索、比較、保存、整理するための旅行検索・比較プラットフォームです。",
+  moreServiceInfoFaqSearchQuestion: "旅行検索はどのように機能しますか？",
+  moreServiceInfoFaqSearchAnswer:
+    "旅行の詳細を入力すると、Kurioticket は比較に役立つ利用可能な旅行オプションとプロバイダー情報を表示します。",
+  moreServiceInfoFaqRedirectQuestion:
+    "なぜ別のプロバイダーに移動するのですか？",
+  moreServiceInfoFaqRedirectAnswer:
+    "一部のオファーは外部プロバイダーのサイトで完了します。最終的な予約手順、支払い、確認、手配はプロバイダーが処理します。",
+  moreServiceInfoFaqPaymentsQuestion: "Kurioticket は支払いを処理しますか？",
+  moreServiceInfoFaqPaymentsAnswer:
+    "プロバイダーへ移動するオファーについて、Kurioticket は支払いを処理しません。プロバイダーページで内容を確認し、直接支払いを完了してください。",
+  moreServiceInfoFaqSaveQuestion: "旅行やアラートを保存できますか？",
+  moreServiceInfoFaqSaveAnswer:
+    "はい。アカウントツールを使うと、旅行の保存、ルートの追跡、アラートの管理、検討中の旅行オプションへの再アクセスができます。",
+  moreServiceInfoFaqAccountQuestion: "アカウントは必要ですか？",
+  moreServiceInfoFaqAccountAnswer:
+    "検索情報は一部のアカウントツールなしでも閲覧できますが、旅行、アラート、設定を保存するにはログインが必要になる場合があります。",
+  moreServiceInfoFaqSupportQuestion: "サポートにはどう連絡できますか？",
+  moreServiceInfoFaqSupportAnswer:
+    "カスタマーサポートページから、アカウントのメールアドレス、行おうとしていた内容、ルート、ホテル、プロバイダー情報を含めて送信してください。",
+  moreServiceInfoHelpTitle: "お困りですか？",
+  moreServiceInfoHelpDescription:
+    "アカウント、保存済み旅行、アラート、プロバイダーへの移動についてご不明点がありますか？",
+  moreServiceInfoSupportCta: "カスタマーサポートに連絡",
+  serviceGuaranteeEyebrow: "Kurioticket のサービス方針",
+  serviceGuaranteeTitle: "サービス保証",
+  serviceGuaranteeDescription:
+    "旅行者が Kurioticket の仕組みと、このプラットフォームで期待できることを理解できるようにします。",
+  serviceGuaranteeFaqHeading: "よくある質問",
+  serviceGuaranteeFaqDescription:
+    "これらの回答では、旅行検索・比較プラットフォームとしての Kurioticket の役割を説明します。",
+  serviceGuaranteeFaqWhatGuaranteeQuestion: "Kurioticket は何を保証しますか？",
+  serviceGuaranteeFaqWhatGuaranteeAnswer:
+    "Kurioticket は、旅行者が旅行オプションをわかりやすく比較できるように設計されています。信頼できるプラットフォーム体験、透明性のある検索情報、プロバイダーの予約ページへの明確な導線を提供することを目指しています。",
+  serviceGuaranteeFaqResultsDisplayedQuestion:
+    "旅行検索結果はどのように表示されますか？",
+  serviceGuaranteeFaqResultsDisplayedAnswer:
+    "検索結果は、利用可能な場合、ルート、日付、料金、プロバイダー情報など、旅行プロバイダーから提供される情報に基づいて表示されます。",
+  serviceGuaranteeFaqRedirectedQuestion:
+    "なぜ別のプロバイダーに移動するのですか？",
+  serviceGuaranteeFaqRedirectedAnswer:
+    "一部の検索結果は外部プロバイダーのサイトで完了します。そのようなオプションを選ぶと、予約、支払い、旅行ごとのサービスをプロバイダーが処理できるよう、Kurioticket から移動します。",
+  serviceGuaranteeFaqBookDirectlyQuestion:
+    "Kurioticket で直接予約しますか？",
+  serviceGuaranteeFaqBookDirectlyAnswer:
+    "Kurioticket は主に旅行検索・比較プラットフォームです。検索結果からプロバイダーへ移動する場合、予約は Kurioticket ではなくそのプロバイダーで完了します。",
+  serviceGuaranteeFaqPricesGuaranteedQuestion: "料金は常に保証されますか？",
+  serviceGuaranteeFaqPricesGuaranteedAnswer:
+    "いいえ。料金はプロバイダーの空き状況、税金、手数料、通貨、タイミングによって変わることがあります。予約前に必ずプロバイダーページで最終料金を確認してください。",
+  serviceGuaranteeFaqChooseProvidersQuestion:
+    "Kurioticket はどのようにプロバイダーを選びますか？",
+  serviceGuaranteeFaqChooseProvidersAnswer:
+    "Kurioticket は、関連性の高い検索結果を提供できる旅行プロバイダーやデータソースと連携しています。空き状況、料金、表示される選択肢は、ルート、目的地、プロバイダーの対応範囲によって異なる場合があります。",
+  serviceGuaranteeFaqEncounterIssueQuestion:
+    "問題が発生した場合はどうすればよいですか？",
+  serviceGuaranteeFaqEncounterIssueAnswer:
+    "検索、アカウントアクセス、保存済み旅行、アラート、または Kurioticket からのリダイレクトに関する問題は、Kurioticket サポートにお問い合わせください。すでにプロバイダーで予約済みの場合、予約変更、返金、キャンセル、旅行書類についてはそのプロバイダーにお問い合わせください。",
+  serviceGuaranteeFaqContactSupportQuestion:
+    "サポートにはどう連絡できますか？",
+  serviceGuaranteeFaqContactSupportAnswer:
+    "カスタマーサポートページから、アカウントのメールアドレス、行おうとしていた内容、問題確認に役立つルート、ホテル、プロバイダー情報を含めて送信してください。",
+  serviceGuaranteeHelpCardTitle: "アカウントや検索でお困りですか？",
+  serviceGuaranteeSupportCta: "カスタマーサポートに連絡",
+  supportEyebrow: "Kurioticket ヘルプデスク",
+  supportTitle: "カスタマーサポート",
+  supportBeforeContactHeading: "お問い合わせの前に",
+  supportBeforeContactDescription:
+    "Kurioticket アカウントのメールアドレス、行おうとしていた内容、該当する場合はルートやホテル情報、リダイレクト先のプロバイダーページを含めてください。カード番号の全桁や機密性の高い旅行書類番号は送信しないでください。",
+  supportBeforeContactDashboardDescription:
+    "Kurioticket アカウントのメールアドレス、サポートが必要な内容、問題の把握に役立つ予約やルートの詳細を含めてください。",
+  supportTicketHeading: "サポートチケットを作成",
+  supportFormEmailLabel: "メールアドレス",
+  supportFormSubjectLabel: "件名",
+  supportFormCategoryLabel: "カテゴリー",
+  supportCategorySearchHelp: "検索ヘルプ",
+  supportCategoryPriceAlerts: "料金アラート",
+  supportCategoryPartnerRedirect: "プロバイダーへの移動",
+  supportCategoryAccountHelp: "アカウントヘルプ",
+  supportFormMessageLabel: "どのようなことでお困りですか？",
+  supportFormMessagePlaceholder:
+    "ルート、ホテル、アラート、またはアカウントに関する状況を共有してください。",
+  supportFormSubmit: "リクエストを送信",
+  supportFormSending: "送信中…",
+  supportFormSuccessPrefix: "チケット",
+  supportFormSuccessSuffix: "を作成しました。",
+  supportFormErrorFallback: "チケットを作成できませんでした。",
+  supportFaqHeading: "よくある質問",
   supportFaqAccountQuestion: "アカウントとログインのヘルプ",
   supportFaqAccountAnswer:
     "Kurioticket は、アカウントアクセス、ログインの問題、登録の問題、プロフィールアクセス、アカウント関連のプラットフォーム問題をサポートできます。",

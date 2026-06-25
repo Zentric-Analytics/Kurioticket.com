@@ -2181,6 +2181,8 @@ export const translations: TranslationDictionary = {
   supportBeforeContactHeading: "Bevor Sie uns kontaktieren",
   supportBeforeContactDescription:
     "Geben Sie die E-Mail-Adresse Ihres Kurioticket-Kontos an, was Sie tun wollten, gegebenenfalls die Route oder das Hotel sowie die Anbieter-Seite, zu der Sie weitergeleitet wurden. Bitte senden Sie keine vollständigen Zahlungskartennummern oder sensiblen Reisedokumentnummern.",
+  supportBeforeContactDashboardDescription:
+    "Geben Sie die E-Mail-Adresse Ihres Kurioticket-Kontos, wobei Sie Hilfe benötigen, sowie Buchungs- oder Routendetails an, die uns helfen, das Problem zu verstehen.",
   supportTicketHeading: "Support-Ticket erstellen",
   supportFormEmailLabel: "E-Mail",
   supportFormSubjectLabel: "Betreff",
@@ -2194,7 +2196,7 @@ export const translations: TranslationDictionary = {
     "Teilen Sie uns die Route, das Hotel, die Benachrichtigung oder den Kontokontext mit.",
   supportFormSubmit: "Anfrage senden",
   supportFormSending: "Wird gesendet …",
-  supportFormSuccessPrefix: "Ticket",
+  supportFormSuccessPrefix: "Anfrage",
   supportFormSuccessSuffix: "geöffnet.",
   supportFormErrorFallback:
     "Ihre Support-Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
