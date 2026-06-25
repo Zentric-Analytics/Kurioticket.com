@@ -109,7 +109,13 @@ function EmptyStateIllustration() {
   );
 }
 
-export function PriceAlertsContent() {
+type PriceAlertsContentProps = {
+  showAccountLink?: boolean;
+};
+
+export function PriceAlertsContent({
+  showAccountLink = false,
+}: PriceAlertsContentProps) {
   const { t } = useLocale();
   const [selectedTab, setSelectedTab] = useState<(typeof tabs)[number]["id"]>(
     tabs[0].id,
@@ -136,7 +142,7 @@ export function PriceAlertsContent() {
 
   return (
     <main className="flex-1 bg-white pb-10 pt-0 sm:pt-5 lg:pt-5">
-      <AccountDetailShell>
+      <AccountDetailShell showAccountLink={showAccountLink}>
         <div className="mx-auto min-w-0 max-w-6xl px-4 pt-3 pb-8 sm:px-6 sm:pt-6 lg:px-8">
           <header className="px-1 pb-5 text-start sm:px-2 sm:pb-6">
             <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
