@@ -18,6 +18,7 @@ import { translations as nlTranslations } from "@/lib/i18n/nl";
 import { translations as arTranslations } from "@/lib/i18n/ar";
 import { translations as zhCnTranslations } from "@/lib/i18n/zh-cn";
 import { translations as jaTranslations } from "@/lib/i18n/ja";
+import { translations as koTranslations } from "@/lib/i18n/ko";
 import { availableLocaleOptions, getTranslations } from "@/lib/i18n";
 import { getCountryDisplayNameForLocale } from "@/lib/region/countryDisplayNames";
 import { supportedRegions } from "@/lib/region/supportedRegions";
@@ -36,6 +37,7 @@ test("global language catalog renders", () => {
   assert.ok(languageOptions.some((o) => o.locale === "ar" && o.direction === "rtl"));
   assert.ok(languageOptions.some((o) => o.code === "zh-cn" && o.locale === "zh-CN" && o.nativeLabel === "中文" && o.direction === "ltr" && o.status === "available"));
   assert.ok(languageOptions.some((o) => o.code === "ja" && o.locale === "ja" && o.nativeLabel === "日本語" && o.direction === "ltr" && o.status === "available"));
+  assert.ok(languageOptions.some((o) => o.code === "ko" && o.locale === "ko" && o.nativeLabel === "한국어" && o.label === "Korean" && o.countryCode === "KR" && o.direction === "ltr" && o.status === "available"));
 });
 
 test("search filters by native label and canonical locale", () => {
@@ -48,7 +50,7 @@ test("search filters by native label and canonical locale", () => {
   assert.ok(filtered.some((o) => o.code === "pt-br"));
 });
 
-test("selected available Spanish, French, German, Italian, Dutch, Portuguese, Chinese, Japanese, and Arabic locales persist and update document language", () => {
+test("selected available Spanish, French, German, Italian, Dutch, Portuguese, Chinese, Japanese, Korean, and Arabic locales persist and update document language", () => {
   const store = new Map<string, string>();
   const windowMock: WindowLike = {
     localStorage: {
@@ -115,6 +117,16 @@ test("selected available Spanish, French, German, Italian, Dutch, Portuguese, Ch
   assert.equal(documentMock.documentElement.lang, "ja");
   assert.equal(documentMock.documentElement.dir, "ltr");
 
+  setLanguageInStorage("ko");
+  assert.equal(getLanguageFromStorage(), "ko");
+  assert.equal(documentMock.documentElement.lang, "ko");
+  assert.equal(documentMock.documentElement.dir, "ltr");
+
+  setLanguageInStorage("ko-KR");
+  assert.equal(getLanguageFromStorage(), "ko");
+  assert.equal(documentMock.documentElement.lang, "ko");
+  assert.equal(documentMock.documentElement.dir, "ltr");
+
   setLanguageInStorage("ar");
   assert.equal(getLanguageFromStorage(), "ar");
   assert.equal(documentMock.documentElement.lang, "ar");
@@ -137,7 +149,7 @@ test("remaining preparing locales are not persisted as selected", () => {
   };
   Object.defineProperty(globalThis, "window", { value: windowMock, configurable: true });
 
-  setLanguageInStorage("ko-KR");
+  setLanguageInStorage("hi-IN");
   assert.equal(getLanguageFromStorage(), "en-us");
 });
 
@@ -153,7 +165,7 @@ test("unknown locales fallback to english", () => {
   assert.equal(normalizeLanguage("xx-yy"), "en-us");
 });
 
-test("German, Italian, Dutch, Portuguese, Chinese, and Japanese shorthand locales normalize to available options", () => {
+test("German, Italian, Dutch, Portuguese, Chinese, Japanese, and Korean shorthand locales normalize to available options", () => {
   assert.equal(normalizeLanguage("de"), "de-de");
   assert.equal(normalizeLanguage("it"), "it-it");
   assert.equal(normalizeLanguage("it-IT"), "it-it");
@@ -170,9 +182,12 @@ test("German, Italian, Dutch, Portuguese, Chinese, and Japanese shorthand locale
   assert.equal(normalizeLanguage("zh-CN"), "zh-cn");
   assert.equal(normalizeLanguage("ja"), "ja");
   assert.equal(normalizeLanguage("ja-JP"), "ja");
+  assert.equal(normalizeLanguage("ko"), "ko");
+  assert.equal(normalizeLanguage("ko-KR"), "ko");
+  assert.equal(normalizeLanguage("ko-kr"), "ko");
 });
 
-test("available locale options keep Dutch, Portuguese, Chinese, Japanese, and Arabic available and other preparing locales unavailable", () => {
+test("available locale options keep Dutch, Portuguese, Chinese, Japanese, Korean, and Arabic available and other preparing locales unavailable", () => {
   assert.ok(availableLocaleOptions.some((option) => option.code === "pt-br"));
   assert.ok(availableLocaleOptions.some((option) => option.code === "nl"));
   assert.ok(languageOptions.filter((option) => option.status !== "available").every((option) => option.code !== "pt-br"));
@@ -181,12 +196,14 @@ test("available locale options keep Dutch, Portuguese, Chinese, Japanese, and Ar
   assert.ok(languageOptions.filter((option) => option.status !== "available").every((option) => option.code !== "zh-cn"));
   assert.ok(availableLocaleOptions.some((option) => option.code === "ja" && option.direction === "ltr" && option.nativeLabel === "日本語"));
   assert.ok(languageOptions.filter((option) => option.status !== "available").every((option) => option.code !== "ja"));
+  assert.ok(availableLocaleOptions.some((option) => option.code === "ko" && option.direction === "ltr" && option.nativeLabel === "한국어" && option.label === "Korean" && option.countryCode === "KR"));
+  assert.ok(languageOptions.filter((option) => option.status !== "available").every((option) => option.code !== "ko"));
   assert.ok(availableLocaleOptions.filter((option) => option.code !== "ar" && option.status === "available").every((option) => option.direction === "ltr"));
   assert.ok(availableLocaleOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
   assert.ok(languageOptions.filter((option) => option.status !== "available").every((option) => option.code !== "ar"));
 });
 
-test("Dutch, Portuguese, and Japanese dictionaries resolve through getTranslations", () => {
+test("Dutch, Portuguese, Japanese, and Korean dictionaries resolve through getTranslations", () => {
   assert.equal(getTranslations("nl").currentLanguage, "Huidige taal: {{language}}");
   assert.equal(getTranslations("nl-NL").globalLanguage, "GLOBALE TAAL");
   assert.equal(nlTranslations.websiteLanguageTitle, "Kies de taal van de site");
@@ -197,9 +214,12 @@ test("Dutch, Portuguese, and Japanese dictionaries resolve through getTranslatio
   assert.equal(getTranslations("ja").currentLanguage, "現在の言語: {{language}}");
   assert.equal(getTranslations("ja-JP").languageSearchLabel, "言語を検索");
   assert.equal(jaTranslations.websiteLanguageTitle, "ウェブサイトの言語を選択");
+  assert.equal(getTranslations("ko").currentLanguage, "현재 언어: {{language}}");
+  assert.equal(getTranslations("ko-KR").languageSearchLabel, "언어 검색");
+  assert.equal(koTranslations.websiteLanguageTitle, "웹사이트 언어 선택");
 });
 
-test("Spanish, French, German, Italian, Dutch, Portuguese, Chinese, Japanese, and Arabic dictionary shapes match English dictionary shape", () => {
+test("Spanish, French, German, Italian, Dutch, Portuguese, Chinese, Japanese, Korean, and Arabic dictionary shapes match English dictionary shape", () => {
   const englishKeys = Object.keys(enTranslations).sort();
   assert.deepEqual(
     englishKeys.filter((key) => !(key in esTranslations)),
@@ -237,6 +257,10 @@ test("Spanish, French, German, Italian, Dutch, Portuguese, Chinese, Japanese, an
     englishKeys.filter((key) => !(key in jaTranslations)),
     []
   );
+  assert.deepEqual(
+    englishKeys.filter((key) => !(key in koTranslations)),
+    []
+  );
   assert.equal(esTranslations.flights, "Vuelos");
   assert.equal(esTranslations.search, "Buscar");
   assert.equal(deTranslations.flights, "Flüge");
@@ -252,6 +276,7 @@ test("Spanish, French, German, Italian, Dutch, Portuguese, Chinese, Japanese, an
   assert.equal(getTranslations("zh-CN").currentLanguage, "当前语言：{{language}}");
   assert.equal(getTranslations("zh").websiteLanguageTitle, "选择网站语言");
   assert.equal(getTranslations("ja").websiteLanguageTitle, "ウェブサイトの言語を選択");
+  assert.equal(getTranslations("ko").websiteLanguageTitle, "웹사이트 언어 선택");
 });
 
 
@@ -355,7 +380,7 @@ test("active locale dictionaries do not keep audited cross-language UI fallbacks
 
 
 test("country and currency selector country names resolve for every active locale", () => {
-  const activeLocales = ["en-us", "ar", "nl", "es-es", "fr", "de-de", "it-it", "pt-br", "zh-cn", "ja"];
+  const activeLocales = ["en-us", "ar", "nl", "es-es", "fr", "de-de", "it-it", "pt-br", "zh-cn", "ja", "ko"];
 
   assert.equal(supportedRegions.length, 250);
 
