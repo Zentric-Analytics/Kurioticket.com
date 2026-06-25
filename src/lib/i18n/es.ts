@@ -2813,6 +2813,7 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.deluxeKingRoom": "Habitación deluxe con cama king",
   "hotelResults.filter.luxuryKing": "King de lujo",
   "hotelResults.filter.singleStandard": "Individual estándar",
+  "hotelResults.filter.superiorDoubleRoom": "Habitación doble superior",
   "hotelResults.filter.superiorRoom": "Habitación superior",
   searchRentalCars: "Buscar autos de alquiler",
   "accountDashboard.hub.title": "Mi cuenta",

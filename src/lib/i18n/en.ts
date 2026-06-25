@@ -2810,6 +2810,7 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.deluxeKingRoom": "Deluxe King Room",
   "hotelResults.filter.luxuryKing": "Luxury King",
   "hotelResults.filter.singleStandard": "Single Standard",
+  "hotelResults.filter.superiorDoubleRoom": "Superior Double Room",
   "hotelResults.filter.superiorRoom": "Superior Room",
   searchRentalCars: "Search rental cars",
 };

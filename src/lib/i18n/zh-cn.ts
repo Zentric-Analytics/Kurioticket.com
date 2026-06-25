@@ -1607,5 +1607,6 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.deluxeKingRoom": "豪华特大床房",
   "hotelResults.filter.luxuryKing": "豪华特大床",
   "hotelResults.filter.singleStandard": "标准单人间",
+  "hotelResults.filter.superiorDoubleRoom": "高级双人间",
   "hotelResults.filter.superiorRoom": "高级房",
 };
