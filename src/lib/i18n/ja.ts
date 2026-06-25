@@ -19,6 +19,11 @@ export const translations: TranslationDictionary = {
   signupGoogle: "Google で続行",
   signupAlreadyHaveAccount: "すでにアカウントをお持ちですか？",
   signupLoginLink: "ログイン",
+  loginPageTitle: "ログイン",
+  loginPageSubtitle:
+    "検索を保存し、アラートを管理して、旅行ダッシュボードにアクセスできます。",
+  loginSignupPrompt: "Kurioticket は初めてですか？",
+  loginCreateAccount: "アカウントを作成",
   loginCodeSent: "確認コードをメールに送信しました。",
   loginCodeInstructions:
     "{{email}} に送信された6桁のコードを入力してください。コードは{{minutes}}分後に期限切れになります。",
