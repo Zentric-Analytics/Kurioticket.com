@@ -3,6 +3,7 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  multiCity: "Várias cidades",
   "recentSearches.title": "Buscas recentes",
   "recentSearches.subtitle": "Rotas rápidas das suas buscas mais recentes.",
   "recentSearches.clearAll": "Limpar tudo",

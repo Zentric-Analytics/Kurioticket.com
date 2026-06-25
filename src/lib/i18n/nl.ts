@@ -3,6 +3,15 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  homeHeroImageAlt: "Luxe tropisch resort aan kalm water",
+  homeSaveDestination: "{{city}} bewaren",
+  homeNewsletterInvalidEmail: "Voer een geldig e-mailadres in.",
+  homeNewsletterUnableSubscribe: "Aanmelden lukt nu niet.",
+  homeNewsletterTryAgain: "We konden je nu niet aanmelden. Probeer het binnenkort opnieuw.",
+  homeRemoveFromSavedRoutes: "Verwijderen uit bewaarde routes",
+  homeSaveRoute: "Route bewaren",
+  homeCheckingProviderRoutePricing: "Providergebaseerde routeprijs controleren",
+  homePricesUpdateWithProviderResults: "Prijzen worden bijgewerkt met providerresultaten",
   "recentSearches.title": "Recente zoekopdrachten",
   "recentSearches.subtitle": "Snelle routes op basis van je laatste zoekopdrachten.",
   "recentSearches.clearAll": "Alles wissen",

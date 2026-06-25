@@ -3,6 +3,9 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  explore: "探索",
+  signIn: "登录",
+  multiCity: "多城市",
   websiteLanguageTitle: "选择网站语言",
   websiteLanguageDescription: "选择 Kurioticket 使用的语言。",
   currentLanguage: "当前语言：{{language}}",
