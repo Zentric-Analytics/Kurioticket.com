@@ -600,7 +600,7 @@ export function SavedTripsAndRecentSearches() {
     );
 
   return (
-    <div className="px-4 pb-8 pt-8 sm:px-6 sm:pb-10 sm:pt-10 lg:px-8 lg:pb-11 lg:pt-12">
+    <div className="px-4 pb-8 pt-6 sm:px-6 sm:pb-10 sm:pt-10 lg:px-8 lg:pb-11 lg:pt-12">
       <div className="mx-auto min-w-0 max-w-[72rem] space-y-8 text-start">
         <section className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -629,7 +629,7 @@ export function SavedTripsAndRecentSearches() {
           </div>
 
           {savedTrips.length === 0 ? (
-            <div className="flex min-h-[28rem] items-start justify-center px-3 pb-10 pt-12 sm:min-h-[32rem] sm:pt-14 lg:min-h-[34rem] lg:pt-16">
+            <div className="flex min-h-[22rem] items-start justify-center px-3 pb-10 pt-6 sm:min-h-[32rem] sm:pt-14 lg:min-h-[34rem] lg:pt-16">
               <div className="mx-auto flex w-full max-w-xl flex-col items-center text-center">
                 <h2 className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-[1.6rem]">
                   {t("savedTripsEmptyTitle")}
