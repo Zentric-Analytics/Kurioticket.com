@@ -157,16 +157,11 @@ export const translations: TranslationDictionary = {
   fromPlaceholder: "出発地は？",
   toPlaceholder: "目的地は？",
   signIn: "ログイン",
-  loginPageTitle: "ログイン",
-  loginPageSubtitle:
-    "検索を保存し、アラートを管理して、旅行ダッシュボードにアクセスできます。",
   loginEmailLabel: "メールアドレス",
   loginPasswordLabel: "パスワード",
   loginForgotPassword: "パスワードをお忘れですか？",
   loginSubmit: "ログイン",
   loginGoogle: "Google で続行",
-  loginSignupPrompt: "Kurioticket は初めてですか？",
-  loginCreateAccount: "アカウントを作成",
   forgotPasswordTitle: "パスワードをリセット",
   forgotPasswordSubtitle:
     "メールアドレスを入力すると、パスワードをリセットするための手順をお送りします。",
