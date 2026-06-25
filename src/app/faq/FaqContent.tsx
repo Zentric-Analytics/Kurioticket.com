@@ -24,12 +24,16 @@ export function FaqContent({ showAccountLink }: FaqContentProps) {
         <section className="page-shell pb-12 pt-3 sm:pt-6 lg:pb-16">
           <div className="mx-auto max-w-[72rem]">
             {showAccountLink ? (
-              <div className="mb-4 [&>a]:mb-0">
+              <div className="mb-5 [&>a]:mb-0">
                 <AccountBackLink />
               </div>
             ) : null}
 
-            <div className="max-w-3xl">
+            <div
+              className={
+                showAccountLink ? "max-w-3xl pt-1 sm:pt-2" : "max-w-3xl"
+              }
+            >
               <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
                 {t("faqHeading")}
               </h1>
