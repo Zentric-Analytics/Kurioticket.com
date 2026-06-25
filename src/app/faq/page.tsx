@@ -11,7 +11,7 @@ export default function FaqPage() {
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   return (
     <>
-      <AppHeader showAccountBackLink />
+      <AppHeader />
       <main className="flex-1 bg-gradient-to-b from-[#f8f7ff] via-white to-white pb-10 pt-0 sm:pt-5 lg:pt-5">
         <section className="page-shell pb-12 pt-3 sm:pt-6 lg:pb-16">
           <div className="mx-auto max-w-[72rem]">

@@ -73,9 +73,6 @@ function SavedHeartIcon({
 
 type AppHeaderProps = {
   hideMobileSecondaryNavLinks?: boolean;
-  showAccountBackLink?: boolean;
-  accountBackHref?: string;
-  accountBackLabel?: string;
 };
 
 const signedInAccountMenuItems = [
@@ -140,9 +137,6 @@ const mobileInfoLegalMenuItems = [
 
 export function AppHeader({
   hideMobileSecondaryNavLinks = false,
-  showAccountBackLink = false,
-  accountBackHref = "/dashboard/account",
-  accountBackLabel = "My Account",
 }: AppHeaderProps = {}) {
   const { data: session } = useSession();
 
@@ -1070,21 +1064,6 @@ export function AppHeader({
 
           <nav className="hidden md:block" aria-label="Primary">
             <div className="relative flex min-h-[44px] items-center justify-start pt-1.5 md:ps-[8.5rem] lg:ps-[9.75rem] xl:ps-[10.5rem]">
-              {showAccountBackLink ? (
-                <Link
-                  href={accountBackHref}
-                  onClick={(event) =>
-                    handleRouteLinkClick(event, accountBackHref)
-                  }
-                  className="absolute start-0 top-1/2 inline-flex -translate-y-1/2 items-center gap-1.5 rounded-md text-sm font-semibold text-white/90 transition hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
-                >
-                  <span className="text-lg leading-none" aria-hidden="true">
-                    ‹
-                  </span>
-                  <span>{accountBackLabel}</span>
-                </Link>
-              ) : null}
-
               <div className="flex min-w-0 items-center justify-start gap-3 whitespace-nowrap lg:gap-4">
                 {desktopPrimaryNavItems.map((item) => {
                   const Icon = item.icon;
@@ -1152,22 +1131,6 @@ export function AppHeader({
               </div>
             </div>
 
-            {showAccountBackLink ? (
-              <div className="pb-1 pt-0.5">
-                <Link
-                  href={accountBackHref}
-                  onClick={(event) =>
-                    handleRouteLinkClick(event, accountBackHref)
-                  }
-                  className="inline-flex min-h-7 items-center gap-1.5 rounded-md text-sm font-semibold text-white/90 transition hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
-                >
-                  <span className="text-lg leading-none" aria-hidden="true">
-                    ‹
-                  </span>
-                  <span>{accountBackLabel}</span>
-                </Link>
-              </div>
-            ) : null}
           </nav>
         </div>
 

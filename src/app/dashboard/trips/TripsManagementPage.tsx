@@ -1,5 +1,6 @@
 "use client";
 
+import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
@@ -91,14 +92,16 @@ export function TripsManagementPage() {
 
   return (
     <section aria-labelledby="trips-title" className="mx-auto min-w-0 max-w-[72rem] space-y-10 bg-white pb-12 pt-3 sm:pt-6 lg:space-y-12 lg:pb-16">
-      <div className="flex min-w-0 items-start justify-between gap-4">
-        <div className="min-w-0">
-          <h1 id="trips-title" className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
-            {t("accountDashboard.trips.title")}
-          </h1>
-        </div>
-        <div className="relative flex w-fit shrink-0 justify-end pt-1">
-          <button
+      <div>
+        <AccountBackLink />
+        <div className="flex min-w-0 items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h1 id="trips-title" className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
+              {t("accountDashboard.trips.title")}
+            </h1>
+          </div>
+          <div className="relative flex w-fit shrink-0 justify-end pt-1">
+            <button
             ref={lookupTriggerRef}
             type="button"
             onClick={() => {
@@ -162,6 +165,7 @@ export function TripsManagementPage() {
             </div>
           ) : null}
         </div>
+      </div>
       </div>
 
       <EmptyStateRow className="pt-3 sm:pt-8 lg:pt-12" illustration={<CurrentTripsIllustration ariaLabel={t("accountDashboard.trips.illustration.currentAriaLabel")} />} title={t("accountDashboard.trips.current.empty.title")} body={t("accountDashboard.trips.current.empty.body")} titleId="current-trips-panel-title" />

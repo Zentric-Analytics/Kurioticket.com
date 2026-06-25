@@ -16,6 +16,7 @@ import {
   UserRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
 import { LinkButton } from "@/components/ui/Button";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -596,7 +597,10 @@ export function DashboardOverview({ initials, displayName, userEmail, userName }
 
   return (
     <div className="mx-auto min-w-0 max-w-[60rem] space-y-5 px-4 py-6 sm:px-6 sm:py-8 lg:px-6 lg:py-10">
-      <AccountSectionHeader title={t["accountDashboard.personalDetails.title"]} description={t["accountDashboard.personalDetails.subtitle"]} titleId="dashboard-title" />
+      <div>
+        <AccountBackLink />
+        <AccountSectionHeader title={t["accountDashboard.personalDetails.title"]} description={t["accountDashboard.personalDetails.subtitle"]} titleId="dashboard-title" />
+      </div>
       <PersonalDetailsSection initials={initials} displayName={displayName} userEmail={userEmail} userName={userName} />
     </div>
   );
@@ -711,7 +715,10 @@ export function SecurityDashboardPage() {
 
   return (
     <section aria-labelledby="security-title" className="mx-auto min-w-0 max-w-[60rem] space-y-5 px-4 pt-6 sm:px-6 sm:pt-8 lg:px-6 lg:pt-10">
-      <AccountSectionHeader title={t["accountDashboard.security.title"]} description={t["accountDashboard.security.description"]} titleId="security-title" />
+      <div>
+        <AccountBackLink />
+        <AccountSectionHeader title={t["accountDashboard.security.title"]} description={t["accountDashboard.security.description"]} titleId="security-title" />
+      </div>
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_18px_45px_-38px_rgba(15,23,42,0.55)]">
         <div className="divide-y divide-slate-200">
           <SecuritySettingRow
