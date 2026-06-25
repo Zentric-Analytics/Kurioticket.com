@@ -3,6 +3,17 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  explore: "استكشاف",
+  multiCity: "مدن متعددة",
+  homePreviousDestinations: "الوجهات السابقة",
+  homeNewsletterInvalidEmail: "أدخل عنوان بريد إلكتروني صالحًا.",
+  homeNewsletterUnableSubscribe: "يتعذر الاشتراك الآن.",
+  homeNewsletterTryAgain: "تعذر الاشتراك الآن. يُرجى المحاولة مرة أخرى قريبًا.",
+  homeSubscribing: "جارٍ الاشتراك…",
+  homeRemoveFromSavedRoutes: "إزالة من المسارات المحفوظة",
+  homeSaveRoute: "حفظ المسار",
+  homeCheckingProviderRoutePricing: "جارٍ التحقق من أسعار المسار المدعومة من المزوّد",
+  homePricesUpdateWithProviderResults: "تتحدث الأسعار مع نتائج المزوّد",
   flights: "رحلات الطيران",
   hotels: "الفنادق",
   cars: "السيارات",
