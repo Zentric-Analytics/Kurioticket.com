@@ -13,7 +13,7 @@ import {
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { createPortal } from "react-dom";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
   Bed,
@@ -147,6 +147,7 @@ export function AppHeader({
   const { locale, setLocale, t, locales } = useLocale();
 
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { start: startRouteProgress } = useRouteProgress();
 
@@ -458,7 +459,21 @@ export function AppHeader({
     return pathname === href;
   };
 
+  const shouldHideDesktopTravelNavLinks = useMemo(() => {
+    if (pathname.startsWith("/dashboard")) {
+      return true;
+    }
+
+    const isAccountSource = searchParams?.get("from") === "account";
+
+    return (pathname === "/saved" || pathname === "/faq") && isAccountSource;
+  }, [pathname, searchParams]);
+
   const desktopPrimaryNavItems = useMemo(() => {
+    if (shouldHideDesktopTravelNavLinks) {
+      return [];
+    }
+
     const desktopPrimaryHrefs = new Set([
       "/flights",
       "/hotels",
@@ -467,7 +482,7 @@ export function AppHeader({
     ]);
 
     return navItems.filter((item) => desktopPrimaryHrefs.has(item.href));
-  }, [navItems]);
+  }, [navItems, shouldHideDesktopTravelNavLinks]);
 
   const mobilePrimaryNavItems = useMemo(() => {
     const mobilePrimaryHrefs = new Set([
@@ -1056,40 +1071,42 @@ export function AppHeader({
               : null}
           </div>
 
-          <nav className="hidden md:block" aria-label="Primary">
-            <div className="relative flex min-h-[44px] items-center justify-start pt-1.5 md:ps-[8.5rem] lg:ps-[9.75rem] xl:ps-[10.5rem]">
-              <div className="flex min-w-0 items-center justify-start gap-3 whitespace-nowrap lg:gap-4">
-                {desktopPrimaryNavItems.map((item) => {
-                  const Icon = item.icon;
-                  const active = isNavItemActive(item.href);
+          {desktopPrimaryNavItems.length > 0 ? (
+            <nav className="hidden md:block" aria-label="Primary">
+              <div className="relative flex min-h-[44px] items-center justify-start pt-1.5 md:ps-[8.5rem] lg:ps-[9.75rem] xl:ps-[10.5rem]">
+                <div className="flex min-w-0 items-center justify-start gap-3 whitespace-nowrap lg:gap-4">
+                  {desktopPrimaryNavItems.map((item) => {
+                    const Icon = item.icon;
+                    const active = isNavItemActive(item.href);
 
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={(event) =>
-                        handleRouteLinkClick(event, item.href)
-                      }
-                      className={`inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-[15px] font-semibold leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 lg:px-5 ${
-                        active
-                          ? "border-white/90 bg-white text-indigo-700 shadow-[0_6px_16px_rgba(49,46,129,0.16)]"
-                          : "border-white/10 bg-transparent text-indigo-50/95 hover:border-white/30 hover:bg-white/10 hover:text-white"
-                      }`}
-                    >
-                      {Icon ? (
-                        <Icon
-                          size={17}
-                          className="shrink-0"
-                          aria-hidden="true"
-                        />
-                      ) : null}
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={(event) =>
+                          handleRouteLinkClick(event, item.href)
+                        }
+                        className={`inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-[15px] font-semibold leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 lg:px-5 ${
+                          active
+                            ? "border-white/90 bg-white text-indigo-700 shadow-[0_6px_16px_rgba(49,46,129,0.16)]"
+                            : "border-white/10 bg-transparent text-indigo-50/95 hover:border-white/30 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        {Icon ? (
+                          <Icon
+                            size={17}
+                            className="shrink-0"
+                            aria-hidden="true"
+                          />
+                        ) : null}
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          </nav>
+            </nav>
+          ) : null}
 
           <nav className="md:hidden" aria-label="Primary">
             <div className="pb-1 pt-2.5">
@@ -1124,7 +1141,6 @@ export function AppHeader({
                 })}
               </div>
             </div>
-
           </nav>
         </div>
 
