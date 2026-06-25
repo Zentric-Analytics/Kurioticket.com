@@ -749,11 +749,11 @@ export function AppHeader({
                         className="absolute end-0 top-[calc(100%+0.5rem)] z-50 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl ring-1 ring-slate-950/5"
                       >
                         <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-3">
-                          <p className="truncate text-sm font-black text-slate-950">
+                          <p className="truncate text-sm font-semibold text-slate-900">
                             {session?.user?.name || accountDisplayName}
                           </p>
                           {session?.user?.email ? (
-                            <p className="truncate text-xs font-semibold text-slate-500">
+                            <p className="truncate text-xs font-normal text-slate-500">
                               {session.user.email}
                             </p>
                           ) : null}
@@ -780,7 +780,7 @@ export function AppHeader({
                                 </span>
 
                                 <span className="min-w-0 flex-1">
-                                  <span className="block break-words text-sm font-bold text-slate-950">
+                                  <span className="block break-words text-sm font-semibold text-slate-800">
                                     {item.label}
                                   </span>
                                 </span>
@@ -796,7 +796,7 @@ export function AppHeader({
                             onClick={handleSignOut}
                             disabled={isSigningOut}
                             aria-busy={isSigningOut}
-                            className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-start text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
+                            className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-start text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
                           >
                             <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
                               <LogOut size={17} aria-hidden="true" />
