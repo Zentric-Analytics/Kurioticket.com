@@ -714,6 +714,7 @@ export const translations: TranslationDictionary = {
   "homePopularDestinationCity.capeTown": "ケープタウン",
   "homePopularDestinationCity.doha": "ドーハ",
   "homePopularDestinationCity.dubai": "ドバイ",
+  "homePopularDestinationCity.istanbul": "イスタンブール",
   "homePopularDestinationCity.johannesburg": "ヨハネスブルグ",
   "homePopularDestinationCity.london": "ロンドン",
   "homePopularDestinationCity.madrid": "マドリード",
