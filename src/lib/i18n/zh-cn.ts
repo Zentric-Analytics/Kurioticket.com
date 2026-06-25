@@ -783,6 +783,8 @@ export const translations: TranslationDictionary = {
   savedTripsRoomCountOther: "{{count}} 间客房",
   savedTripsCabinEconomy: "经济舱",
   savedTripsCabinPremiumEconomy: "高级经济舱",
+  savedTripsCabinBusiness: "商务舱",
+  savedTripsCabinFirst: "头等舱",
   origin: "出发地",
   destination: "目的地",
   departureDate: "出发日期",
