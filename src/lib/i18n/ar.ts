@@ -1143,6 +1143,12 @@ export const translations: TranslationDictionary = {
   supportBeforeContactHeading: "قبل التواصل معنا",
   supportBeforeContactDescription:
     "يرجى تضمين البريد الإلكتروني المرتبط بحسابك في Kurioticket، وما كنت تحاول القيام به، والمسار أو الفندق إن كان ذلك مناسبًا، وأي صفحة مزوّد تمت إعادة توجيهك إليها. يرجى عدم إرسال أرقام بطاقات الدفع الكاملة أو أرقام مستندات السفر الحساسة.",
+  supportBeforeContactDashboardDescription:
+    "اذكر بريد حساب Kurioticket وما تحتاج إلى مساعدة بشأنه وأي تفاصيل حجز أو مسار تساعدنا على فهم المشكلة.",
+  supportFormSending: "جارٍ الإرسال...",
+  supportFormSuccessPrefix: "التذكرة",
+  supportFormSuccessSuffix: "تم فتحها.",
+  supportFormErrorFallback: "تعذر فتح التذكرة.",
   supportTicketHeading: "إنشاء تذكرة دعم",
   supportFormEmailLabel: "البريد الإلكتروني",
   supportFormSubjectLabel: "الموضوع",

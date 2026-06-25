@@ -2138,6 +2138,8 @@ export const translations: TranslationDictionary = {
   supportBeforeContactHeading: "Antes de contactarnos",
   supportBeforeContactDescription:
     "Incluye el correo electrónico de tu cuenta de Kurioticket, lo que intentabas hacer, la ruta o el hotel si corresponde, y cualquier página de proveedor a la que fuiste redirigido. No envíes números completos de tarjetas de pago ni números sensibles de documentos de viaje.",
+  supportBeforeContactDashboardDescription:
+    "Incluye el correo de tu cuenta de Kurioticket, con qué necesitas ayuda y cualquier detalle de reserva o ruta que nos ayude a entender el problema.",
   supportTicketHeading: "Crear un ticket de soporte",
   supportFormEmailLabel: "Correo electrónico",
   supportFormSubjectLabel: "Asunto",
@@ -2151,7 +2153,7 @@ export const translations: TranslationDictionary = {
     "Comparte la ruta, el hotel, la alerta o el contexto de tu cuenta.",
   supportFormSubmit: "Enviar solicitud",
   supportFormSending: "Enviando...",
-  supportFormSuccessPrefix: "Ticket",
+  supportFormSuccessPrefix: "Solicitud",
   supportFormSuccessSuffix: "abierto.",
   supportFormErrorFallback: "No se pudo abrir el ticket.",
   supportFaqHeading: "Preguntas frecuentes",

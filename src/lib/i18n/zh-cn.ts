@@ -167,6 +167,114 @@ export const translations: TranslationDictionary = {
   "accountDashboard.security.action.deleteAccount": "删除账户",
 
 
+
+  moreServiceInfoEyebrow: "平台信息",
+  moreServiceInfoTitle: "更多服务信息",
+  moreServiceInfoDescription:
+    "了解 Kurioticket 如何帮助旅行者在一处搜索、比较、保存和整理来自多个服务提供商的旅行选项。",
+  moreServiceInfoContextTitle: "结合背景规划",
+  moreServiceInfoContextSubtitle: "从搜索结果到服务提供商跳转",
+  moreServiceInfoContextCompare: "比较多个旅行服务提供商的选项。",
+  moreServiceInfoContextSave: "登录后保存行程、提醒和偏好设置。",
+  moreServiceInfoContextContinue: "在外部预订前继续查看服务提供商详情。",
+  moreServiceInfoHowHeading: "Kurioticket 如何运作",
+  moreServiceInfoHowDescription:
+    "这些服务详情说明 Kurioticket 在旅行搜索前、搜索中和搜索后的角色。",
+  moreServiceInfoHowBadge: "旅行规划基础",
+  moreServiceInfoStepSearchTitle: "搜索多个服务提供商",
+  moreServiceInfoStepSearchSummary:
+    "无需分别打开每个服务提供商，即可从一处搜索不同提供商的旅行选项。",
+  moreServiceInfoStepSearchDetails:
+    "Kurioticket 将可用的航班、酒店、路线和旅行结果信息整合到一个搜索体验中，帮助旅行者更高效地查看选项。",
+  moreServiceInfoStepCompareTitle: "比较旅行选项",
+  moreServiceInfoStepCompareSummary:
+    "在决定适合行程的选项前，比较价格、路线、酒店、时刻表和可用旅行选项。",
+  moreServiceInfoStepCompareDetails:
+    "结果可能包括服务提供商详情、时间、目的地信息和其他行程数据，帮助你在继续前往提供商之前评估选项。",
+  moreServiceInfoStepSaveTitle: "保存行程和提醒",
+  moreServiceInfoStepSaveSummary:
+    "创建账户以保存行程、跟踪路线，并管理与你旅行规划相关的旅行提醒。",
+  moreServiceInfoStepSaveDetails:
+    "已保存行程、最近搜索和提醒可让你更轻松地回到正在考虑的选项，并整理相关旅行规划详情。",
+  moreServiceInfoStepRedirectsTitle: "服务提供商跳转说明",
+  moreServiceInfoStepRedirectsSummary:
+    "选择优惠时，你可能会被跳转至旅行服务提供商，以完成预订、付款、确认和履约。",
+  moreServiceInfoStepRedirectsDetails:
+    "对于跳转的优惠，最终价格、可用性、规则、付款步骤、收据、预订变更、取消和旅行文件均在服务提供商页面处理。",
+  moreServiceInfoStepAccountTitle: "账户和旅行工具",
+  moreServiceInfoStepAccountSummary:
+    "使用账户工具在一个 Kurioticket 工作区整理已保存搜索、行程、提醒和偏好设置。",
+  moreServiceInfoStepAccountDetails:
+    "这些工具支持你在 Kurioticket 上进行旅行规划；当预订在外部完成时，提供商特定的预订管理仍由该提供商负责。",
+  moreServiceInfoFaqHeading: "常见问题",
+  moreServiceInfoFaqDescription:
+    "关于旅行搜索、服务提供商跳转、已保存行程和账户工具的简短回答。",
+  moreServiceInfoFaqWhatQuestion: "Kurioticket 是什么？",
+  moreServiceInfoFaqWhatAnswer:
+    "Kurioticket 是一个旅行搜索和比较平台，用于查找、比较、保存和整理来自多个服务提供商的旅行选项。",
+  moreServiceInfoFaqSearchQuestion: "旅行搜索如何运作？",
+  moreServiceInfoFaqSearchAnswer:
+    "你输入行程详情后，Kurioticket 会显示可用旅行选项和服务提供商信息，帮助你比较选择。",
+  moreServiceInfoFaqRedirectQuestion: "为什么我会被跳转到其他服务提供商？",
+  moreServiceInfoFaqRedirectAnswer:
+    "部分优惠在外部服务提供商网站完成。提供商负责最终预订步骤、付款、确认和履约。",
+  moreServiceInfoFaqPaymentsQuestion: "Kurioticket 处理付款吗？",
+  moreServiceInfoFaqPaymentsAnswer:
+    "对于跳转至服务提供商的优惠，Kurioticket 不处理付款。请直接在提供商页面查看并完成付款。",
+  moreServiceInfoFaqSaveQuestion: "我可以保存行程和提醒吗？",
+  moreServiceInfoFaqSaveAnswer:
+    "可以。账户工具可以帮助你保存行程、跟踪路线、管理提醒，并返回正在考虑的旅行选项。",
+  moreServiceInfoFaqAccountQuestion: "是否需要账户？",
+  moreServiceInfoFaqAccountAnswer:
+    "你可以在不使用所有账户工具的情况下浏览搜索信息，但保存行程、提醒和偏好设置可能需要登录。",
+  moreServiceInfoFaqSupportQuestion: "如何联系支持？",
+  moreServiceInfoFaqSupportAnswer:
+    "请使用客户支持页面，并包含你的账户邮箱、你尝试执行的操作，以及任何路线、酒店或服务提供商详情。",
+  moreServiceInfoHelpTitle: "需要帮助？",
+  moreServiceInfoHelpDescription:
+    "关于你的账户、已保存行程、提醒或服务提供商跳转有问题？",
+  moreServiceInfoSupportCta: "联系客户支持",
+  serviceGuaranteeEyebrow: "Kurioticket 服务承诺",
+  serviceGuaranteeTitle: "服务保证",
+  serviceGuaranteeDescription:
+    "我们希望旅行者了解 Kurioticket 的运作方式，以及使用我们平台时可以期待什么。",
+  serviceGuaranteeFaqHeading: "常见问题",
+  serviceGuaranteeFaqDescription:
+    "这些回答说明 Kurioticket 作为旅行搜索和比较平台的角色。",
+  serviceGuaranteeFaqWhatGuaranteeQuestion: "Kurioticket 保证什么？",
+  serviceGuaranteeFaqWhatGuaranteeAnswer:
+    "Kurioticket 旨在帮助旅行者清晰比较旅行选项。我们致力于提供可靠的平台体验、透明的搜索信息，以及通往服务提供商预订页面的清晰路径。",
+  serviceGuaranteeFaqResultsDisplayedQuestion: "旅行结果如何显示？",
+  serviceGuaranteeFaqResultsDisplayedAnswer:
+    "结果使用旅行服务提供商提供的信息显示，包括可用的路线、日期、价格和提供商详情。",
+  serviceGuaranteeFaqRedirectedQuestion: "为什么我会被跳转到其他服务提供商？",
+  serviceGuaranteeFaqRedirectedAnswer:
+    "部分结果在外部服务提供商网站完成。选择这些选项时，Kurioticket 会将你跳转过去，以便提供商处理预订、付款和特定行程服务。",
+  serviceGuaranteeFaqBookDirectlyQuestion: "我是在 Kurioticket 直接预订吗？",
+  serviceGuaranteeFaqBookDirectlyAnswer:
+    "Kurioticket 主要是旅行搜索和比较平台。如果结果跳转到服务提供商，预订将在该提供商处完成，而不是在 Kurioticket 上完成。",
+  serviceGuaranteeFaqPricesGuaranteedQuestion: "价格总是有保证吗？",
+  serviceGuaranteeFaqPricesGuaranteedAnswer:
+    "不是。价格可能会因服务提供商可用性、税费、费用、货币和时间而变化。预订前请始终在提供商页面查看最终价格。",
+  serviceGuaranteeFaqChooseProvidersQuestion: "Kurioticket 如何选择服务提供商？",
+  serviceGuaranteeFaqChooseProvidersAnswer:
+    "Kurioticket 与能够提供相关搜索结果的旅行服务提供商和数据来源合作。可用性、价格和显示选项可能因路线、目的地和提供商覆盖范围而异。",
+  serviceGuaranteeFaqEncounterIssueQuestion: "如果遇到问题该怎么办？",
+  serviceGuaranteeFaqEncounterIssueAnswer:
+    "如果问题与搜索、账户访问、已保存行程、提醒或来自 Kurioticket 的跳转有关，请联系 Kurioticket 支持。如果你已通过服务提供商预订，请联系该提供商处理预订变更、退款、取消或旅行文件。",
+  serviceGuaranteeFaqContactSupportQuestion: "如何联系支持？",
+  serviceGuaranteeFaqContactSupportAnswer:
+    "请使用客户支持页面，并包含你的账户邮箱、你尝试执行的操作，以及可能帮助我们查看问题的路线、酒店或服务提供商详情。",
+  serviceGuaranteeHelpCardTitle: "账户或搜索需要帮助？",
+  serviceGuaranteeSupportCta: "联系客户支持",
+  supportEyebrow: "Kurioticket 帮助台",
+  supportBeforeContactDescription:
+    "请包含你的 Kurioticket 账户邮箱、你尝试执行的操作、相关路线或酒店信息（如适用），以及你被跳转到的任何服务提供商页面。请不要发送完整的支付卡号或敏感旅行证件号码。",
+  supportFormSending: "正在发送...",
+  supportFormSuccessPrefix: "工单",
+  supportFormSuccessSuffix: "已创建。",
+  supportFormErrorFallback: "无法创建工单。",
+  supportFaqHeading: "常见问题",
   supportTitle: "客户支持",
   supportBeforeContactHeading: "联系我们之前",
   supportBeforeContactDashboardDescription:

@@ -1678,6 +1678,12 @@ export const translations: TranslationDictionary = {
   supportBeforeContactHeading: "Voordat je contact met ons opneemt",
   supportBeforeContactDescription:
     "Vermeld het e-mailadres van je Kurioticket-account, wat je probeerde te doen, de route of het hotel als dat relevant is, en de providerpagina waarnaar je bent doorgestuurd. Stuur geen volledige betaalkaartnummers of gevoelige reisdocumentnummers.",
+  supportBeforeContactDashboardDescription:
+    "Vermeld het e-mailadres van je Kurioticket-account, waar je hulp bij nodig hebt en eventuele boekings- of routedetails die ons helpen het probleem te begrijpen.",
+  supportFormSending: "Verzenden...",
+  supportFormSuccessPrefix: "Supportticket",
+  supportFormSuccessSuffix: "geopend.",
+  supportFormErrorFallback: "Kan het ticket niet openen.",
   supportTicketHeading: "Maak een supportticket aan",
   supportFormEmailLabel: "E-mail",
   supportFormSubjectLabel: "Onderwerp",
