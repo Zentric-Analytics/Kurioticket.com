@@ -32,7 +32,6 @@ import {
   Plane,
   Scale,
   Search,
-  Settings,
   ShieldCheck,
   Tag,
   UserCircle,
@@ -90,11 +89,6 @@ const signedInAccountMenuItems = [
     href: "/dashboard/alerts",
     labelKey: "accountMenu.priceAlerts.label",
     icon: Tag,
-  },
-  {
-    href: "/dashboard/account",
-    labelKey: "accountMenu.accountSettings.label",
-    icon: Settings,
   },
 ];
 
