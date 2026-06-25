@@ -425,7 +425,10 @@ export const translations: TranslationDictionary = {
     "オファーを選ぶと、予約を安全に完了するためプロバイダーへ移動します。",
   homePopularDestinations: "人気の目的地",
   travelDates: "旅行日",
+  departure: "出発日",
+  return: "帰着日",
   chooseTravelDates: "旅行日を選択",
+  cityOrAirport: "都市または空港",
   hotelSearchTravelDatesLabel: "旅行日",
   hotelSearchDatePlaceholder: "チェックイン — チェックアウト",
   hotelSearchGuestsLabel: "宿泊者",
@@ -468,6 +471,78 @@ export const translations: TranslationDictionary = {
   economy: "エコノミー",
   business: "ビジネス",
   first: "ファースト",
+  flightLandingHeroTitle: "次のお得な航空券をかんたんに見つけよう",
+  flightLandingHeroSubtitle:
+    "ルートを検索し、日程を比較して、次の旅に合う航空券を探せます。",
+  flightLandingHeroImageAlt: "明るい雲の上を飛ぶ飛行機の翼",
+  flightLandingFeatureSearchReadyTitle: "すぐ検索できるルート",
+  flightLandingFeatureSearchReadyBody:
+    "航空券プロバイダーに結果をリクエストする前に、実際の旅行条件を入力できます。",
+  flightLandingFeatureCompareTitle: "条件を見ながら比較",
+  flightLandingFeatureCompareBody:
+    "日程、旅行者数、座席クラス、所要時間、乗り継ぎ、ルート詳細を見ながら選択肢を比較できます。",
+  flightLandingFeatureProviderTitle: "提供元で確認",
+  flightLandingFeatureProviderBody:
+    "予約前に、最終的な空席状況、価格、規則を必ず提供元で確認してください。",
+  flightLandingStartThisSearch: "この検索を開始",
+  flightLandingRouteIdeasTitle: "自由な旅のためのルートアイデア",
+  flightLandingRouteIdeasBody:
+    "ルートアイデアを見てから、日程と旅行者を入力して実際の検索を開始し、利用可能な航空券を比較できます。",
+  flightLandingRouteConnector: "から",
+  flightLandingRouteAriaLabel: "{{origin}}から{{destination}}への航空券を検索",
+  discoverDestinationsFromRegion: "あなたの地域から行ける目的地を見つけよう",
+  discoverDestinationsFromRegionBody:
+    "厳選されたルートを確認し、安心して次の旅を始めましょう。",
+  beachVacations: "ビーチ休暇",
+  beachVacationsBody:
+    "日差しのある海岸、島のリゾート、暖かなビーチ目的地への航空ルートを探せます。",
+  flightBookingFaqs: "航空券予約のよくある質問",
+  flightBookingFaqIntro:
+    "提供元へ進む前に、航空券検索でよくある確認事項をチェックしましょう。",
+  flightFaqBestTimeQuestion: "航空券を予約するのに最適な時期はいつですか？",
+  flightFaqBestTimeAnswer:
+    "航空券の価格は、ルート、季節、需要、空席状況によって変わります。複数の日程を比較し、可能であれば近隣の空港も確認し、運賃を選ぶ前に旅程全体を見直すと役立ちます。",
+  flightFaqBeforeBookingQuestion: "予約前に何を確認すべきですか？",
+  flightFaqBeforeBookingAnswer:
+    "提供元で予約を完了する前に、出発・到着時刻、総所要時間、乗り継ぎ、手荷物ルール、座席指定オプション、キャンセル条件、航空券の変更規定を確認してください。",
+  flightFaqFlexibleFareQuestion: "柔軟な運賃とは何ですか？",
+  flightFaqFlexibleFareAnswer:
+    "柔軟な運賃は、基本運賃より少ない制限で変更やキャンセルができる場合がありますが、正確な規則は航空会社や予約プロバイダーによって異なります。購入前に必ず運賃条件を確認してください。",
+  flightFaqNonstopQuestion: "直行便は常に良い選択ですか？",
+  flightFaqNonstopAnswer:
+    "必ずしもそうではありません。直行便は時間を節約できますが、経由便には別の出発時刻、到着時間帯、運賃オプションがある場合があります。総所要時間、乗り継ぎ時間、利便性を比較して判断してください。",
+  flightFaqBaggageQuestion: "手荷物ルールはどのように決まりますか？",
+  flightFaqBaggageAnswer:
+    "手荷物許容量は、航空会社、ルート、座席クラス、運賃タイプ、提供元によって異なります。予約前に、機内持ち込み手荷物、受託手荷物、身の回り品が含まれているか確認してください。",
+  flightFaqChangeCancelQuestion: "航空券の変更やキャンセルはできますか？",
+  flightFaqChangeCancelAnswer:
+    "変更やキャンセルの可否は、運賃規則と提供元のポリシーによって異なります。払い戻し不可の航空券や手数料が発生する航空券もあるため、予約前に条件を慎重に確認してください。",
+  flightFaqInternationalQuestion: "国際線について何を知っておくべきですか？",
+  flightFaqInternationalAnswer:
+    "国際線では、予約前にパスポートの有効期限、ビザ要件、乗り継ぎ規則、手荷物ポリシー、目的地の入国要件を確認してください。",
+  "flightLandingCity.Abuja": "アブジャ",
+  "flightLandingCity.Accra": "アクラ",
+  "flightLandingCity.Addis Ababa": "アディスアベバ",
+  "flightLandingCity.Cairo": "カイロ",
+  "flightLandingCity.Cancun": "カンクン",
+  "flightLandingCity.Cape Town": "ケープタウン",
+  "flightLandingCity.Doha": "ドーハ",
+  "flightLandingCity.Dubai": "ドバイ",
+  "flightLandingCity.Honolulu": "ホノルル",
+  "flightLandingCity.Istanbul": "イスタンブール",
+  "flightLandingCity.Johannesburg": "ヨハネスブルグ",
+  "flightLandingCity.Kigali": "キガリ",
+  "flightLandingCity.Lagos": "ラゴス",
+  "flightLandingCity.London": "ロンドン",
+  "flightLandingCity.Mexico City": "メキシコシティ",
+  "flightLandingCity.Nairobi": "ナイロビ",
+  "flightLandingCity.Paris": "パリ",
+  "flightLandingCity.Puerto Vallarta": "プエルトバジャルタ",
+  "flightLandingCity.Rome": "ローマ",
+  "flightLandingCity.San Diego": "サンディエゴ",
+  "flightLandingCity.Sydney": "シドニー",
+  "flightLandingCity.Toronto": "トロント",
+  "flightLandingCity.Vancouver": "バンクーバー",
   "homePopularDestinationCity.accra": "アクラ",
   "homePopularDestinationCity.addisAbaba": "アディスアベバ",
   "homePopularDestinationCity.cairo": "カイロ",
@@ -524,6 +599,21 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.ng-abv-mad.routeNote": "美術館、大通り、遅めのディナーを楽しむヨーロッパ都市休暇ルート。",
   "homeDiscoveryRoute.ng-los-cpt.title": "ケープタウン海岸アドベンチャー",
   "homeDiscoveryRoute.ng-los-cpt.routeNote": "ビーチ、山、ワイナリーを楽しめる南アフリカの絶景ルート。",
+  "homeDiscoveryRoute.ca-yyz-cun.title": "カンクン冬のリゾート旅",
+  "homeDiscoveryRoute.ca-yyz-cun.routeNote":
+    "暖かな季節の休暇に便利な、ピークシーズンの直行便もある定番リゾートルート。",
+  "homeDiscoveryRoute.ca-yeg-pvr.title": "プエルトバジャルタのビーチ旅",
+  "homeDiscoveryRoute.ca-yeg-pvr.routeNote":
+    "太平洋のビーチと旧市街の魅力を楽しめる冬の陽光ルート。",
+  "homeDiscoveryRoute.ca-yyz-hnl.title": "ホノルル長距離アイランド休暇",
+  "homeDiscoveryRoute.ca-yyz-hnl.routeNote":
+    "ビーチ、サーフィン、島のハイキングを楽しむプレミアムなレジャールート。",
+  "homeDiscoveryRoute.ca-yyz-san.title": "サンディエゴの太陽とサーフ旅",
+  "homeDiscoveryRoute.ca-yyz-san.routeNote":
+    "ビーチ、公園、港の景色を楽しめる安定した越境ルート。",
+  "homeDiscoveryRoute.ca-yvr-syd.title": "シドニー太平洋横断アドベンチャー",
+  "homeDiscoveryRoute.ca-yvr-syd.routeNote":
+    "港の名所や海辺の郊外を楽しむ長距離人気ルート。",
   "homeDiscoveryRoute.ng-abv-rob.title": "モンロビア海辺のリージョナル旅",
   "homeDiscoveryRoute.ng-abv-rob.routeNote": "大西洋のビーチとローカルマーケットを楽しむ西アフリカの都市休暇。",
   homePromoFlightsTitle: "主要航空会社のお得な航空券",
