@@ -92,7 +92,7 @@ const signedInAccountMenuItems = [
     icon: Tag,
   },
   {
-    href: "/dashboard/settings",
+    href: "/dashboard/account",
     labelKey: "accountMenu.accountSettings.label",
     icon: Settings,
   },
