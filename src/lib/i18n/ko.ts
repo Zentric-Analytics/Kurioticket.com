@@ -846,4 +846,9 @@ export const translations: TranslationDictionary = {
   footerAboutKurioticket: "Kurioticket 소개",
   footerAboutUs: "회사 소개",
   footerHowItWorks: "Kurioticket 작동 방식",
+  footerConfidenceTagline: "항공권, 호텔, 여행 특가를 안심하고 검색하세요.",
+  footerAllRightsReserved: "모든 권리 보유.",
+  footerPrivacy: "개인정보",
+  footerTerms: "약관",
+  footerCookies: "쿠키",
 };
