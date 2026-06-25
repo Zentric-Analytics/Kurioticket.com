@@ -10,7 +10,29 @@ export const translations: TranslationDictionary = {
   languagePreparingNotice:
     "더 많은 언어를 준비 중입니다. 사용할 수 없는 옵션은 아직 사이트를 번역하지 않습니다.",
   languageSearchLabel: "언어 검색",
+  languageSearchPlaceholder: "English, Español, Français, Deutsch 검색...",
+  languageOptionsLabel: "언어 옵션",
+  selectLanguageOption: "{{language}} 선택",
+  languagePreparingAria: "{{language}} 번역을 준비 중입니다",
+  languageUnavailableMessage:
+    "{{language}}은(는) 아직 사용할 수 없습니다. 번역 지원을 확대하고 있습니다.",
+  closeLanguageSelector: "언어 선택기 닫기",
+  preparing: "준비 중",
   globalLanguage: "글로벌 언어",
+  countryAndCurrency: "국가 및 통화",
+  openCountryCurrencySelector:
+    "국가 및 통화 선택기 열기, 현재 선택 {{code}}, {{currency}}",
+  chooseCountryAndCurrency: "국가 및 통화 선택",
+  countryCurrencyDescription:
+    "표시 가격에 사용할 국가와 통화를 선택하세요. 공항 추천은 감지된 위치를 사용합니다.",
+  closeCountryCurrencySelector: "국가 및 통화 선택기 닫기",
+  searchCountryOrCurrency: "국가 또는 통화 검색",
+  countryCurrencyAllCountriesAndCurrencies: "전체 국가 및 통화",
+  countryCurrencyPopularCountryAndCurrency: "인기 국가 및 통화",
+  countryCurrencyOptionCountSingular: "{{count}}개 옵션",
+  countryCurrencyOptionCountPlural: "{{count}}개 옵션",
+  selectCountryCurrencyOption: "{{country}}, {{code}}, {{currency}} 선택",
+  noCountriesOrCurrenciesFound: "국가 또는 통화를 찾을 수 없습니다",
 
   flights: "항공권",
   hotels: "호텔",

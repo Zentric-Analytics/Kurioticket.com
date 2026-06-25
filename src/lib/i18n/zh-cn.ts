@@ -17,6 +17,7 @@ export const translations: TranslationDictionary = {
   selectLanguageOption: "选择{{language}}",
   globalLanguage: "全球语言",
   closeLanguageSelector: "关闭语言选择器",
+  preparing: "准备中",
 
   "legal.index.heroLabel": "法律文档系统",
   "legal.index.heroTitle": "法律中心",
