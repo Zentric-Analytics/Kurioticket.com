@@ -2085,5 +2085,6 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.deluxeKingRoom": "Deluxe kamer met kingsize bed",
   "hotelResults.filter.luxuryKing": "Luxe kingsize kamer",
   "hotelResults.filter.singleStandard": "Standaard eenpersoonskamer",
+  "hotelResults.filter.superiorDoubleRoom": "Superior tweepersoonskamer",
   "hotelResults.filter.superiorRoom": "Superior kamer",
 };

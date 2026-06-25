@@ -1327,6 +1327,7 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.deluxeKingRoom": "デラックスキングルーム",
   "hotelResults.filter.luxuryKing": "ラグジュアリーキング",
   "hotelResults.filter.singleStandard": "スタンダードシングル",
+  "hotelResults.filter.superiorDoubleRoom": "スーペリアダブルルーム",
   "hotelResults.filter.superiorRoom": "スーペリアルーム",
 
   "accountMenu.eyebrow": "KURIOTICKETアカウント",

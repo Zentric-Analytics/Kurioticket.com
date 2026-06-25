@@ -1525,5 +1525,6 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.deluxeKingRoom": "غرفة ديلوكس بسرير كينغ",
   "hotelResults.filter.luxuryKing": "غرفة فاخرة بسرير كينغ",
   "hotelResults.filter.singleStandard": "غرفة مفردة عادية",
+  "hotelResults.filter.superiorDoubleRoom": "غرفة سوبيريور مزدوجة",
   "hotelResults.filter.superiorRoom": "غرفة سوبيريور",
 };
