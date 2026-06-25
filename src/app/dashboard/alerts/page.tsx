@@ -6,11 +6,21 @@ export const metadata = {
   title: "Kurioticket",
 };
 
-export default function AlertsPage() {
+type AlertsPageProps = {
+  searchParams?: Promise<{ from?: string | string[] }>;
+};
+
+export default async function AlertsPage({ searchParams }: AlertsPageProps) {
+  const resolvedSearchParams = await searchParams;
+  const fromParam = resolvedSearchParams?.from;
+  const showAccountLink = Array.isArray(fromParam)
+    ? fromParam.includes("account")
+    : fromParam === "account";
+
   return (
     <>
       <AppHeader />
-      <PriceAlertsContent />
+      <PriceAlertsContent showAccountLink={showAccountLink} />
       <Footer />
     </>
   );

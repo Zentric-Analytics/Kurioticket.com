@@ -63,7 +63,7 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
       },
       {
         labelKey: "accountDashboard.hub.priceAlerts",
-        href: "/dashboard/alerts",
+        href: "/dashboard/alerts?from=account",
         icon: Bell,
       },
     ],
