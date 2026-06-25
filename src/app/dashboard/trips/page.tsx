@@ -11,7 +11,7 @@ export default function TripsPage() {
   return (
     <>
       <AppHeader />
-      <main className="flex-1 bg-white pb-10 pt-0 sm:pt-5 lg:pt-5">
+      <main className="flex-1 bg-white pb-10 pt-0">
         <AccountDetailShell>
           <TripsManagementPage />
         </AccountDetailShell>

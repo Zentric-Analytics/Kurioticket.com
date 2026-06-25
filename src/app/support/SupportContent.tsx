@@ -158,7 +158,7 @@ export function SupportContent({
       <main
         className={
           dashboardFlow
-            ? "flex-1 bg-white pb-10 pt-0 sm:pt-5 lg:pt-5"
+            ? "flex-1 bg-white pb-10 pt-0"
             : "page-shell flex-1 pb-10 pt-8 sm:pt-10 lg:pt-12"
         }
       >

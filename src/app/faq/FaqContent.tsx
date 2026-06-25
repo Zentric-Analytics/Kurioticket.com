@@ -75,7 +75,13 @@ export function FaqContent({ showAccountLink }: FaqContentProps) {
   return (
     <>
       <AppHeader />
-      <main className="flex-1 bg-gradient-to-b from-[#f8f7ff] via-white to-white pb-10 pt-0 sm:pt-5 lg:pt-5">
+      <main
+        className={
+          showAccountLink
+            ? "flex-1 bg-gradient-to-b from-[#f8f7ff] via-white to-white pb-10 pt-0"
+            : "flex-1 bg-gradient-to-b from-[#f8f7ff] via-white to-white pb-10 pt-0 sm:pt-5 lg:pt-5"
+        }
+      >
         {showAccountLink ? (
           <AccountDetailShell className="pb-12 lg:pb-16">
             {content}
