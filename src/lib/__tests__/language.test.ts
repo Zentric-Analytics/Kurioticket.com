@@ -51,6 +51,48 @@ test("global language catalog renders", () => {
 });
 
 
+test("Hindi signed-in account dropdown labels do not fall back to English", () => {
+  const hi = getTranslations("hi");
+
+  assert.equal(hi["accountMenu.myAccount.label"], "मेरा खाता");
+  assert.equal(hi["accountMenu.savedTrips.label"], "सहेजी गई यात्राएँ");
+  assert.equal(hi["accountMenu.priceAlerts.label"], "मूल्य अलर्ट");
+  assert.equal(hi.logout, "लॉग आउट");
+  assert.notEqual(hi["accountMenu.myAccount.label"], enTranslations["accountMenu.myAccount.label"]);
+  assert.notEqual(hi["accountMenu.savedTrips.label"], enTranslations["accountMenu.savedTrips.label"]);
+  assert.notEqual(hi["accountMenu.priceAlerts.label"], enTranslations["accountMenu.priceAlerts.label"]);
+  assert.notEqual(hi.logout, enTranslations.logout);
+
+  const appHeaderSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
+
+  assert.ok(
+    appHeaderSource.includes('labelKey: "accountMenu.myAccount.label"') &&
+      appHeaderSource.includes('labelKey: "accountMenu.savedTrips.label"') &&
+      appHeaderSource.includes('labelKey: "accountMenu.priceAlerts.label"'),
+    "Signed-in account dropdown menu items should continue to use account menu i18n keys.",
+  );
+  assert.ok(
+    appHeaderSource.includes("session?.user?.name || accountDisplayName") &&
+      appHeaderSource.includes("session.user.email") &&
+      appHeaderSource.includes("session?.user?.email"),
+    "Signed-in account dropdown should keep user name and email display dynamic.",
+  );
+  assert.ok(
+    appHeaderSource.includes('href: "/dashboard/account"') &&
+      appHeaderSource.includes('href: "/saved"') &&
+      appHeaderSource.includes('href: "/dashboard/alerts"') &&
+      appHeaderSource.includes("onClick={handleSignOut}"),
+    "Signed-in account dropdown should keep menu routes and logout action wired unchanged.",
+  );
+  assert.ok(
+    !appHeaderSource.includes('>My account<') &&
+      !appHeaderSource.includes('>Saved trips<') &&
+      !appHeaderSource.includes('>Price alerts<') &&
+      !appHeaderSource.includes('>Logout<'),
+    "Signed-in account dropdown should not hard-code screenshot-visible English labels.",
+  );
+});
+
 test("Korean flight traveler selector uses localized infant-on-lap copy", () => {
   const ko = getTranslations("ko");
 
