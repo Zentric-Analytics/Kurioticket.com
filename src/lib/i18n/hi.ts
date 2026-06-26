@@ -219,6 +219,12 @@ export const translations: TranslationDictionary = {
   faqHeading: "अक्सर पूछे जाने वाले प्रश्न",
   faqIntro:
     "जानें कि विश्वसनीय प्रदाताओं के साथ बुकिंग से पहले Kurioticket उड़ानों, होटलों और यात्रा विकल्पों की तुलना करने में कैसे मदद करता है।",
+  faqViewAll: "सभी FAQ देखें",
+  faqHelpCenter: "सहायता केंद्र",
+  faqGeneralQuestions: "सामान्य प्रश्न",
+  faqNeedMoreHelpPrefix: "और सहायता चाहिए? सेवा और संपर्क विकल्पों के लिए",
+  faqSupportPage: "सहायता पेज",
+  faqNeedMoreHelpSuffix: "पर जाएँ।",
   faqQuestionFindOptions: "Kurioticket उड़ान और होटल विकल्प कैसे ढूँढता है?",
   faqAnswerFindOptions:
     "Kurioticket यात्रा प्रदाताओं के लाइव ऑफ़र खोजता है और विकल्पों को एक जगह लाता है, ताकि आप चुनने से पहले कीमतों, मार्गों, ठहरावों और विवरणों की तुलना कर सकें।",
