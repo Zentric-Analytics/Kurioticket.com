@@ -27,7 +27,7 @@ import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { Button } from "@/components/ui/Button";
-import { type AirportOption, formatAirportLabel, getLocalizedCityName } from "@/data/airports";
+import { type AirportOption, formatAirportLabel, getLocalizedAirportCountryName, getLocalizedCityName } from "@/data/airports";
 import {
   applyDefaultOrigin,
   canApplyDefaultOrigin,
@@ -1032,7 +1032,7 @@ export function StandaloneFlightSearchForm({
                     </span>
                     <span className="mt-1 block truncate text-sm font-medium leading-5 text-slate-500">
                       {option.airport}
-                      {option.country ? ` · ${option.country}` : ""}
+                      {option.country ? ` · ${getLocalizedAirportCountryName(option, locale)}` : ""}
                     </span>
                   </span>
                   <span className="shrink-0 ps-2 text-end text-sm font-extrabold tracking-[0.12em] text-slate-700">
@@ -1102,7 +1102,7 @@ export function StandaloneFlightSearchForm({
                   </span>
                   <span className="mt-0.5 block truncate text-xs font-normal leading-5 text-slate-500">
                     {option.airport}
-                    {option.country ? ` · ${option.country}` : ""}
+                    {option.country ? ` · ${getLocalizedAirportCountryName(option, locale)}` : ""}
                   </span>
                 </span>
                 <span className="shrink-0 ps-3 text-end text-sm font-medium tracking-[0.08em] text-slate-600">

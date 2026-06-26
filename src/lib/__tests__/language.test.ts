@@ -871,7 +871,7 @@ test("airport picker heading is localized for all active locales", () => {
   assert.equal(zhCnTranslations.airportsAndCities, "机场和城市");
   assert.equal(jaTranslations.airportsAndCities, "空港と都市");
   assert.equal(koTranslations.airportsAndCities, "공항 및 도시");
-  assert.equal(typeof hiTranslations.airportsAndCities, "string");
+  assert.equal(hiTranslations.airportsAndCities, "हवाई अड्डे और शहर");
 });
 
 test("active account trips and price alerts copy is localized", () => {

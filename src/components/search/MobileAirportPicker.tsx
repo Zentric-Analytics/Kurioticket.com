@@ -4,7 +4,7 @@ import { useEffect, useRef, type RefObject } from "react";
 
 import { X } from "lucide-react";
 
-import { getLocalizedCityName, type AirportOption } from "@/data/airports";
+import { getLocalizedAirportCountryName, getLocalizedCityName, type AirportOption } from "@/data/airports";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { cn } from "@/lib/utils";
 
@@ -160,7 +160,7 @@ export function MobileAirportPicker({
                     </span>
                     {option.country ? (
                       <span className="mt-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        {option.country}
+                        {getLocalizedAirportCountryName(option, locale)}
                       </span>
                     ) : null}
                   </span>

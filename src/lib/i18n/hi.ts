@@ -162,6 +162,7 @@ export const translations: TranslationDictionary = {
   beachVacationsBody:
     "धूप भरे तटों, द्वीपों और गर्म मौसम वाले समुद्र तट गंतव्यों के लिए उड़ान मार्ग देखें।",
   cityOrAirport: "शहर या हवाई अड्डा",
+  airportsAndCities: "हवाई अड्डे और शहर",
   searchFlights: "उड़ानें खोजें",
   economy: "इकॉनमी",
   adultSingular: "वयस्क",

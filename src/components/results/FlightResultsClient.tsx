@@ -31,7 +31,7 @@ import { FlightCardSkeleton } from "@/components/ui/Skeleton";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
-import { airports, getLocalizedCityName, type AirportOption } from "@/data/airports";
+import { airports, getLocalizedAirportCountryName, getLocalizedCityName, type AirportOption } from "@/data/airports";
 import {
   getHomeDiscoveryByRegion,
   homeDiscoveryByRegion,
@@ -5289,7 +5289,7 @@ function SuggestionList({
             </p>
             <p className="text-[11px] leading-4 text-slate-600">
               {item.airport}
-              {item.country ? ` · ${item.country}` : ""}
+              {item.country ? ` · ${getLocalizedAirportCountryName(item, locale)}` : ""}
             </p>
           </button>
         ))
