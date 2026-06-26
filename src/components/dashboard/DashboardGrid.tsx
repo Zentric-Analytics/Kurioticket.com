@@ -790,17 +790,21 @@ function DateOfBirthInput({
 }
 
 type StructuredAddressParts = {
-  addressLine1: string;
-  city: string;
-  postalCode: string;
   countryCode: string;
+  addressLine1: string;
+  apartmentOrSuite: string;
+  city: string;
+  stateOrRegion: string;
+  postalCode: string;
 };
 
 const emptyStructuredAddress: StructuredAddressParts = {
-  addressLine1: "",
-  city: "",
-  postalCode: "",
   countryCode: "",
+  addressLine1: "",
+  apartmentOrSuite: "",
+  city: "",
+  stateOrRegion: "",
+  postalCode: "",
 };
 
 const structuredAddressPrefix = "kt-address-v1:";
@@ -817,40 +821,53 @@ function parseStructuredAddressDraft(value: string): StructuredAddressParts {
       ) as Partial<StructuredAddressParts>;
 
       return {
-        addressLine1: parsedValue.addressLine1 ?? "",
-        city: parsedValue.city ?? "",
-        postalCode: parsedValue.postalCode ?? "",
         countryCode: parsedValue.countryCode ?? "",
+        addressLine1:
+          parsedValue.addressLine1 ??
+          (parsedValue as { streetAddress?: string }).streetAddress ??
+          "",
+        apartmentOrSuite: parsedValue.apartmentOrSuite ?? "",
+        city: parsedValue.city ?? "",
+        stateOrRegion: parsedValue.stateOrRegion ?? "",
+        postalCode: parsedValue.postalCode ?? "",
       };
     } catch {
       return emptyStructuredAddress;
     }
   }
 
-  const [addressLine1 = "", cityPostal = "", country = ""] = trimmedValue
-    .split(/\r?\n/)
-    .map((line) => line.trim());
+  const [
+    addressLine1 = "",
+    cityPostal = "",
+    postalOrCountry = "",
+    country = "",
+  ] = trimmedValue.split(/\r?\n/).map((line) => line.trim());
+  const countryValue = country || postalOrCountry;
   const countryOption = personalDetailsCountryOptions.find(
     (option) =>
-      option.country.toLowerCase() === country.toLowerCase() ||
-      getFriendlyCountryLabel(option).toLowerCase() === country.toLowerCase() ||
-      option.code.toLowerCase() === country.toLowerCase(),
+      option.country.toLowerCase() === countryValue.toLowerCase() ||
+      getFriendlyCountryLabel(option).toLowerCase() ===
+        countryValue.toLowerCase() ||
+      option.code.toLowerCase() === countryValue.toLowerCase(),
   );
 
   return {
     ...emptyStructuredAddress,
     addressLine1,
     city: cityPostal,
+    postalCode: country ? postalOrCountry : "",
     countryCode: countryOption?.code ?? "",
   };
 }
 
 function serializeStructuredAddressDraft(parts: StructuredAddressParts) {
   const normalizedParts = {
-    addressLine1: parts.addressLine1.trimStart(),
-    city: parts.city.trimStart(),
-    postalCode: parts.postalCode.trimStart(),
     countryCode: parts.countryCode,
+    addressLine1: parts.addressLine1.trimStart(),
+    apartmentOrSuite: parts.apartmentOrSuite.trimStart(),
+    city: parts.city.trimStart(),
+    stateOrRegion: parts.stateOrRegion.trimStart(),
+    postalCode: parts.postalCode.trimStart(),
   };
   const hasAddressValue = Object.values(normalizedParts).some(Boolean);
 
@@ -868,14 +885,20 @@ function formatStructuredAddressForDisplay(value: string) {
   const countryOption = personalDetailsCountryOptions.find(
     (option) => option.code === parts.countryCode,
   );
-  const localityLine = [parts.city, parts.postalCode]
+  const localityLine = [parts.city, parts.stateOrRegion]
     .filter(Boolean)
     .join(", ");
   const countryLine = countryOption
     ? getFriendlyCountryLabel(countryOption)
     : parts.countryCode;
 
-  return [parts.addressLine1, localityLine, countryLine]
+  return [
+    parts.addressLine1,
+    parts.apartmentOrSuite,
+    localityLine,
+    parts.postalCode,
+    countryLine,
+  ]
     .filter(Boolean)
     .join("\n");
 }
@@ -925,25 +948,45 @@ function StructuredAddressInput({
         className={className}
         value={parts.addressLine1}
         onChange={(event) => updatePart("addressLine1", event.target.value)}
-        placeholder="Address"
-        aria-label="Address"
+        placeholder="Street address"
+        aria-label="Street address"
         autoComplete="address-line1"
       />
-      <div className="grid min-w-0 grid-cols-2 gap-2">
+      <input
+        className={className}
+        value={parts.apartmentOrSuite}
+        onChange={(event) =>
+          updatePart("apartmentOrSuite", event.target.value)
+        }
+        placeholder="Apartment, suite, unit, building (optional)"
+        aria-label="Apartment, suite, unit, building (optional)"
+        autoComplete="address-line2"
+      />
+      <div className="grid min-w-0 gap-2 sm:grid-cols-2">
         <input
           className={className}
           value={parts.city}
           onChange={(event) => updatePart("city", event.target.value)}
-          placeholder="Town/city"
-          aria-label="Town or city"
+          placeholder="Town / City"
+          aria-label="Town / City"
           autoComplete="address-level2"
         />
         <input
           className={className}
+          value={parts.stateOrRegion}
+          onChange={(event) => updatePart("stateOrRegion", event.target.value)}
+          placeholder="State / Province / Region"
+          aria-label="State / Province / Region"
+          autoComplete="address-level1"
+        />
+      </div>
+      <div className="grid min-w-0 gap-2 sm:grid-cols-2">
+        <input
+          className={className}
           value={parts.postalCode}
           onChange={(event) => updatePart("postalCode", event.target.value)}
-          placeholder="Postcode"
-          aria-label="Postcode"
+          placeholder="Postcode / ZIP code"
+          aria-label="Postcode / ZIP code"
           autoComplete="postal-code"
         />
       </div>
