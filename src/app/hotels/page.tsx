@@ -37,8 +37,6 @@ type HotelDestinationCard = {
 
 const hotelsHeroImage =
   "/images/premium/hotels/kurioticket-hotels-hero-bellboy-guest-arrival-lobby-001.jpg";
-const hotelsHeroImageAlt =
-  "Hotel bellboy welcoming a guest with luggage in a premium lobby";
 
 const hotelDestinationCards: HotelDestinationCard[] = [
   {
@@ -475,7 +473,7 @@ export default function HotelsSearchPage() {
           <div className="absolute inset-0 overflow-hidden">
             <Image
               src={hotelsHeroImage}
-              alt={hotelsHeroImageAlt}
+              alt={t("hotelsHeroImageAlt")}
               fill
               priority
               sizes="100vw"

@@ -2829,4 +2829,16 @@ export const translations: TranslationDictionary = {
   "flightLandingImageAlt.Johannesburg skyline at golden hour": "Johannesburg skyline at golden hour",
   "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza": "Cairo skyline with the Pyramids of Giza",
   "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands": "Addis Ababa cityscape in the Ethiopian highlands",
+
+  // Hotels landing static render-path localization coverage.
+  "hotelsHeroImageAlt": "Hotel bellboy welcoming a guest with luggage in a premium lobby",
+  "hotelDestination.Rome.imageAlt": "The Colosseum in Rome beneath a clear blue sky",
+  "hotelDestination.Dubai.imageAlt": "Dubai skyline with the Burj Khalifa rising above skyscrapers",
+  "hotelDestination.Singapore.imageAlt": "Marina Bay skyline in Singapore at dusk",
+  "hotelDestination.Barcelona.imageAlt": "Barcelona cityscape with Sagrada Familia in daylight",
+  "hotelDestination.Toronto.imageAlt": "Toronto skyline with the CN Tower beside Lake Ontario",
+  "hotelDestination.Amsterdam.imageAlt": "Amsterdam canal houses and bridge along the water",
+  "hotelDestination.Bangkok.imageAlt": "Bangkok city skyline and Chao Phraya river at sunset",
+  "hotelDestination.Cancun.imageAlt": "Cancun beach with white sand and turquoise water",
+  "hotelDestination.Istanbul.imageAlt": "Istanbul waterfront with domes and minarets at golden hour",
 };

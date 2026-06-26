@@ -2346,4 +2346,20 @@ flightLandingRouteAriaLabel:
   "flightLandingImageAlt.Johannesburg skyline at golden hour": "Silhouette de Johannesbourg à l’heure dorée",
   "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza": "Silhouette du Caire avec les pyramides de Gizeh",
   "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands": "Paysage urbain d’Addis-Abeba dans les hauts plateaux éthiopiens",
+
+  // Hotels landing static render-path localization coverage.
+  "hotelsHeroImageAlt": "Bagagiste d’hôtel accueillant un client avec des bagages dans un hall premium",
+  "hotelDestination.London.imageAlt": "Tower Bridge et la Tamise à Londres sous un ciel bleu",
+  "hotelDestination.Paris.imageAlt": "Tour Eiffel et Seine à Paris à l’heure dorée",
+  "hotelDestination.Rome.imageAlt": "Le Colisée à Rome sous un ciel bleu dégagé",
+  "hotelDestination.Dubai.imageAlt": "Skyline de Dubaï avec le Burj Khalifa dominant les gratte-ciel",
+  "hotelDestination.Singapore.imageAlt": "Skyline de Marina Bay à Singapour au crépuscule",
+  "hotelDestination.Barcelona.imageAlt": "Vue urbaine de Barcelone avec la Sagrada Família en journée",
+  "hotelDestination.Toronto.imageAlt": "Skyline de Toronto avec la tour CN au bord du lac Ontario",
+  "hotelDestination.Amsterdam.imageAlt": "Maisons de canal et pont d’Amsterdam au bord de l’eau",
+  "hotelDestination.Bangkok.imageAlt": "Skyline de Bangkok et fleuve Chao Phraya au coucher du soleil",
+  "hotelDestination.Cancun.imageAlt": "Plage de Cancún avec sable blanc et eau turquoise",
+  "hotelDestination.Istanbul.imageAlt": "Front de mer d’Istanbul avec dômes et minarets à l’heure dorée",
+  "hotelDestination.Tokyo.imageAlt": "Skyline de Tokyo avec de nombreux immeubles de grande hauteur en journée",
+  "hotelDestination.New York.imageAlt": "Skyline de New York avec le One World Trade Center et le front de mer",
 };
