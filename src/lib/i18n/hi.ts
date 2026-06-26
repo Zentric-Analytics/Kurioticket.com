@@ -10,6 +10,10 @@ export const translations: TranslationDictionary = {
   destinations: "गंतव्य",
   login: "लॉग इन",
   signUp: "साइन अप",
+  logout: "लॉग आउट",
+  "accountMenu.myAccount.label": "मेरा खाता",
+  "accountMenu.savedTrips.label": "सहेजी गई यात्राएँ",
+  "accountMenu.priceAlerts.label": "मूल्य अलर्ट",
   countryAndCurrency: "देश और मुद्रा",
   openCountryCurrencySelector:
     "देश और मुद्रा चयनकर्ता खोलें, वर्तमान चयन {{code}}, {{currency}}",
