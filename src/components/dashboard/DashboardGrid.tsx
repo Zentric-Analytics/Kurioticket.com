@@ -948,6 +948,14 @@ function StructuredAddressInput({
       </select>
       <input
         className={cn(className, fullWidthOnMobileClassName)}
+        value={parts.stateOrRegion}
+        onChange={(event) => updatePart("stateOrRegion", event.target.value)}
+        placeholder="State / Province / Region"
+        aria-label="State / Province / Region"
+        autoComplete="address-level1"
+      />
+      <input
+        className={cn(className, fullWidthOnMobileClassName)}
         value={parts.addressLine1}
         onChange={(event) => updatePart("addressLine1", event.target.value)}
         placeholder="Street address"
@@ -974,14 +982,6 @@ function StructuredAddressInput({
       />
       <input
         className={className}
-        value={parts.stateOrRegion}
-        onChange={(event) => updatePart("stateOrRegion", event.target.value)}
-        placeholder="State / Province / Region"
-        aria-label="State / Province / Region"
-        autoComplete="address-level1"
-      />
-      <input
-        className={cn(className, fullWidthOnMobileClassName)}
         value={parts.postalCode}
         onChange={(event) => updatePart("postalCode", event.target.value)}
         placeholder="Postcode / ZIP code"
@@ -1286,7 +1286,10 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
           return (
             <div
               key={row.key}
-              className="grid min-w-0 gap-1 border-t border-slate-200 px-5 py-4 first:border-t-0 sm:min-h-16 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center sm:gap-6 sm:px-6 sm:py-3"
+              className={cn(
+                "grid min-w-0 gap-1 border-t border-slate-200 px-5 py-4 first:border-t-0 sm:min-h-16 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center sm:gap-6 sm:px-6 sm:py-3",
+                row.key === "address" ? "pt-5 sm:pt-5" : null,
+              )}
             >
               <div className="text-sm font-medium leading-5 text-slate-700 sm:text-slate-800">
                 {row.label}
