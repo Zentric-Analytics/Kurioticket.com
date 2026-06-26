@@ -1507,3 +1507,69 @@ test("Hindi flights flow copy uses localized labels without mutating dynamic fli
   assert.equal(hi.layoverSummaryTemplate.replace("{{airport}}", "DOH").replace("{{duration}}", "7h 35m"), "लेओवर: DOH 7h 35m");
   assert.equal(hi.providerComparisonIntro.includes("Kurioticket"), true);
 });
+
+test("Hindi cars flow copy uses localized labels without mutating dynamic values", () => {
+  const hi = getTranslations("hi");
+
+  const expectedHindiCarsLabels: Record<string, string> = {
+    searchRentalCarsEveryPartTrip: "अपनी यात्रा के हर हिस्से के लिए रेंटल कार खोजें",
+    exploreCarsByTripStyle: "यात्रा शैली के अनुसार रेंटल कारें देखें",
+    carsTripStyleBody: "कार का प्रकार चुनें और हम खोज संदर्भ के साथ परिणाम खोलेंगे।",
+    "carsTrust.0.title": "पूरी यात्राओं के लिए बनाया गया",
+    "carsTrust.0.description": "एक ही Kurioticket प्रवाह में उड़ानें, ठहराव और ज़मीनी परिवहन की योजना बनाएँ।",
+    "carsPickupPointsTitle": "लोकप्रिय कार पिकअप स्थानों से शुरू करें",
+    "carsPickupPointsBody": "पिकअप शैली चुनें और हम खोज विवरणों के साथ कार परिणाम पेज खोलेंगे।",
+    "carsSearch.pickupLocationLabel": "पिकअप स्थान",
+    "carsSearch.pickupLocationPlaceholder": "हवाई अड्डा, शहर या पता",
+    "carsSearch.returnToSameLocation": "उसी स्थान पर वापसी",
+    "carsSearch.differentReturnLocation": "अलग वापसी स्थान",
+    "carsSearch.rentalDatesLabel": "रेंटल तिथियाँ",
+    "carsSearch.rentalDatePlaceholder": "पिकअप तिथि — वापसी तिथि",
+    "carsSearch.pickupReturnTimeLabel": "पिकअप / वापसी समय",
+    "carsSearch.driverAgeLabel": "ड्राइवर की उम्र",
+    "carsSearch.driverAgeAnyAge": "कोई भी उम्र",
+    "carsSearch.chooseRentalDates": "रेंटल तिथियाँ चुनें",
+    "carsSearch.previousMonthShort": "पिछला",
+    "carsSearch.nextMonthShort": "अगला",
+    "carsResults.searchCars": "कारें खोजें",
+    "carsResults.pickupLocation": "पिकअप स्थान",
+    "carsResults.returnLocation": "वापसी स्थान",
+    "carsResults.sameAsPickup": "पिकअप जैसा ही",
+    "carsResults.selectPickupThenReturn": "पहले पिकअप चुनें, फिर वापसी",
+    "carsResults.anyDriverAgeRange": "कोई भी ड्राइवर उम्र 18–70",
+    "carsResults.emptyInventory": "इस खोज के लिए लाइव कार इन्वेंटरी अभी दिखाने के लिए उपलब्ध नहीं है। ऊपर खोज विवरण अपडेट करें या बाद में फिर जाँचें।",
+    "carsResults.filterBy": "फ़िल्टर करें",
+    "carsResults.vehicleType": "वाहन प्रकार",
+    "carsResults.smallCars": "छोटी कारें",
+    "carsResults.mediumCars": "मध्यम कारें",
+    "carsResults.suvs": "एसयूवी",
+    "carsResults.transmission": "ट्रांसमिशन",
+    "carsResults.automatic": "ऑटोमैटिक",
+    "carsResults.manual": "मैनुअल",
+    "carsResults.seats4Plus": "4+ सीटें",
+    "carsResults.bags2Plus": "2+ बैग",
+    "carsResults.unlimitedMileage": "असीमित माइलेज",
+    "carsResults.freeCancellation": "मुफ़्त रद्दीकरण",
+    "carsResults.payAtPickup": "पिकअप पर भुगतान करें",
+    "carsResults.shuttlePickup": "शटल पिकअप",
+    "carsResults.cityLocation": "शहर स्थान",
+    "carsResults.edit": "संपादित करें",
+  };
+
+  for (const [key, value] of Object.entries(expectedHindiCarsLabels)) {
+    assert.equal(hi[key], value, `${key} should be localized for Hindi cars flow`);
+    assert.notEqual(hi[key], enTranslations[key], `${key} should not fall back to English in Hindi`);
+  }
+
+  assert.equal(
+    hi["carsSearch.pickupReturnTimeSummary"].replace("{pickupTime}", "10:00").replace("{returnTime}", "10:00"),
+    "10:00 पिकअप — 10:00 वापसी",
+  );
+  assert.equal(hi["carsResults.resultsFor"].replace("{location}", hi["carsResults.pickupLocationNeeded"]), "पिकअप स्थान आवश्यक के लिए कार परिणाम");
+  assert.equal(hi["carsResults.resultsFor"].replace("{location}", "lagos"), "lagos के लिए कार परिणाम");
+  assert.equal(new Intl.DateTimeFormat("hi-IN", { month: "long", year: "numeric" }).format(new Date(2026, 5, 1)), "जून 2026");
+  assert.deepEqual(
+    Array.from({ length: 7 }, (_, day) => new Intl.DateTimeFormat("hi-IN", { weekday: "short" }).format(new Date(2024, 0, 7 + day))),
+    ["रवि", "सोम", "मंगल", "बुध", "गुरु", "शुक्र", "शनि"],
+  );
+});

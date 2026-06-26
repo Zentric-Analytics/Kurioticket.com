@@ -56,6 +56,16 @@ import {
   type CarPickupCard,
 } from "@/data/carsLandingContent";
 
+const getCarsIntlLocale = (locale: string) => {
+  const normalizedLocale = locale.toLowerCase();
+
+  if (normalizedLocale.startsWith("hi")) {
+    return "hi-IN";
+  }
+
+  return locale;
+};
+
 const formatCarDisplayDate = (isoDate: string, locale: string) => {
   if (!isoDate) {
     return "";
@@ -849,9 +859,10 @@ function RentalDatesField({
   wrapRef: RefObject<HTMLDivElement | null>;
 }) {
   const { locale, t } = useCarsLandingTranslations();
-  const weekdays = useMemo(() => formatCarWeekdays(locale), [locale]);
-  const pickupDisplay = formatCarDisplayDate(pickupDate, locale);
-  const dropoffDisplay = formatCarDisplayDate(dropoffDate, locale);
+  const intlLocale = getCarsIntlLocale(locale);
+  const weekdays = useMemo(() => formatCarWeekdays(intlLocale), [intlLocale]);
+  const pickupDisplay = formatCarDisplayDate(pickupDate, intlLocale);
+  const dropoffDisplay = formatCarDisplayDate(dropoffDate, intlLocale);
   const pickupParsed = parseIsoDate(pickupDate);
   const dropoffParsed = parseIsoDate(dropoffDate);
   const dateSummary = pickupDisplay
@@ -916,7 +927,7 @@ function RentalDatesField({
               return (
                 <div key={monthOffset}>
                   <p className="mb-1.5 text-center text-sm font-semibold text-slate-800">
-                    {monthDate.toLocaleDateString(locale, {
+                    {monthDate.toLocaleDateString(intlLocale, {
                       month: "long",
                       year: "numeric",
                     })}
@@ -958,7 +969,7 @@ function RentalDatesField({
                         <button
                           key={iso}
                           type="button"
-                          aria-label={`${t("carsSearch.selectDateAriaPrefix")} ${formatCarFullDate(day, locale)}${
+                          aria-label={`${t("carsSearch.selectDateAriaPrefix")} ${formatCarFullDate(day, intlLocale)}${
                             isBeforePickup
                               ? `; ${t("carsSearch.startsNewPickupDate")}`
                               : ""

@@ -184,6 +184,10 @@ const getCarsResultsIntlLocale = (locale: string) => {
     return "ko-KR";
   }
 
+  if (normalizedLocale.startsWith("hi")) {
+    return "hi-IN";
+  }
+
   if (normalizedLocale.startsWith("ar")) {
     return "ar-u-nu-latn";
   }
