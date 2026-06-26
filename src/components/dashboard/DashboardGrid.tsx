@@ -30,6 +30,8 @@ import { personalDetailsCountryOptions } from "@/lib/region/supportedRegions";
 import { cn } from "@/lib/utils";
 import type { TranslationDictionary } from "@/lib/i18n/types";
 
+const RawImage = "img";
+
 type AccountDashboardRowItem = {
   labelKey: string;
   href: string;
@@ -440,18 +442,40 @@ const countryCallingCodeByIsoCode: Record<string, string> = {
 type CountryProfileOption = {
   countryName: string;
   isoCode: string;
-  flag: string;
   dialCode?: string;
 };
 
-function getFlagEmoji(countryCode: string) {
-  const normalizedCode = countryCode.trim().toUpperCase();
+function getFlagImageUrl(countryCode: string) {
+  return `https://flagcdn.com/${countryCode.toLowerCase()}.svg`;
+}
 
-  if (!/^[A-Z]{2}$/.test(normalizedCode)) return "🌐";
-
-  return [...normalizedCode]
-    .map((character) => String.fromCodePoint(127397 + character.charCodeAt(0)))
-    .join("");
+function CountryFlagIcon({
+  countryName,
+  isoCode,
+  className,
+}: {
+  countryName: string;
+  isoCode: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100",
+        className,
+      )}
+    >
+      <RawImage
+        src={getFlagImageUrl(isoCode)}
+        alt={`${countryName} flag`}
+        width={20}
+        height={20}
+        className="h-full w-full object-cover"
+        loading="lazy"
+        decoding="async"
+      />
+    </span>
+  );
 }
 
 function sortCountryProfileOptions(
@@ -465,7 +489,6 @@ const countryProfileOptions: CountryProfileOption[] = personalDetailsCountryOpti
   .map((region) => ({
     countryName: getFriendlyCountryLabel(region),
     isoCode: region.code,
-    flag: getFlagEmoji(region.code),
     dialCode: countryCallingCodeByIsoCode[region.code],
   }))
   .sort(sortCountryProfileOptions);
@@ -1167,13 +1190,25 @@ function PhoneNumberInput({
         value={parsedValue.countryCode}
         onChange={handleCountryChange}
         ariaLabel={`${label} country calling code`}
-        placeholder={defaultCountryCallingCodeOption?.flag ?? "🌐"}
+        placeholder="Flag"
         options={countryCallingCodeOptions.map((option) => ({
           value: option.isoCode,
-          label: `${option.flag} ${option.countryName}`,
+          label: option.countryName,
           description: option.dialCode,
         }))}
-        renderButtonLabel={(option) => option.label.split(" ")[0]}
+        renderButtonLabel={(option) => (
+          <CountryFlagIcon
+            countryName={option.label}
+            isoCode={option.value}
+            className="h-[20px] w-[20px]"
+          />
+        )}
+        renderOptionLabel={(option) => (
+          <span className="flex min-w-0 items-center gap-2">
+            <CountryFlagIcon countryName={option.label} isoCode={option.value} />
+            <span className="min-w-0 truncate">{option.label}</span>
+          </span>
+        )}
         dropdownClassName="min-w-64 max-w-[min(20rem,calc(100vw-2rem))]"
         hideChevron
       />
