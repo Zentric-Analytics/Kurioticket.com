@@ -632,6 +632,19 @@ test("active account trips and price alerts copy is localized", () => {
     "accountDashboard.trips.illustration.currentAriaLabel",
     "accountDashboard.trips.illustration.historyAriaLabel",
     "accountDashboard.trips.illustration.cancelledAriaLabel",
+    "accountDashboard.trips.lookup.title",
+    "accountDashboard.trips.lookup.body",
+    "accountDashboard.trips.lookup.closeAriaLabel",
+    "accountDashboard.trips.lookup.reservationCode",
+    "accountDashboard.trips.lookup.emailAddress",
+    "accountDashboard.trips.lookup.submit",
+    "accountDashboard.trips.lookup.unavailable",
+    "accountDashboard.trips.lookup.reservationCodeRequired",
+    "accountDashboard.trips.lookup.emailRequired",
+    "accountDashboard.trips.lookup.invalidEmail",
+    "accountDashboard.trips.lookup.loading",
+    "accountDashboard.trips.lookup.notFoundTitle",
+    "accountDashboard.trips.lookup.notFoundDescription",
   ];
 
   for (const [locale, translations] of Object.entries(activeLocaleTranslations)) {
@@ -659,6 +672,24 @@ test("active account trips and price alerts copy is localized", () => {
   assert.equal(koTranslations["accountDashboard.hub.title"], "내 계정");
   assert.equal(koTranslations["accountDashboard.trips.title"], "내 여행");
   assert.equal(koTranslations["accountDashboard.trips.findReservation"], "예약 찾기");
+  assert.equal(koTranslations["accountDashboard.trips.lookup.title"], "예약 정보 입력");
+  assert.equal(
+    koTranslations["accountDashboard.trips.lookup.body"],
+    "예약을 찾고 관리하려면 예약 코드와 이메일 주소를 입력하세요.",
+  );
+  assert.equal(koTranslations["accountDashboard.trips.lookup.closeAriaLabel"], "닫기");
+  assert.equal(koTranslations["accountDashboard.trips.lookup.reservationCode"], "예약 코드");
+  assert.equal(koTranslations["accountDashboard.trips.lookup.emailAddress"], "이메일 주소");
+  assert.equal(koTranslations["accountDashboard.trips.lookup.submit"], "예약 찾기");
+  assert.equal(koTranslations["accountDashboard.trips.lookup.reservationCodeRequired"], "예약 코드를 입력하세요.");
+  assert.equal(koTranslations["accountDashboard.trips.lookup.emailRequired"], "이메일 주소를 입력하세요.");
+  assert.equal(koTranslations["accountDashboard.trips.lookup.invalidEmail"], "유효한 이메일 주소를 입력하세요.");
+  assert.equal(koTranslations["accountDashboard.trips.lookup.loading"], "예약을 찾는 중...");
+  assert.equal(koTranslations["accountDashboard.trips.lookup.notFoundTitle"], "예약을 찾을 수 없습니다.");
+  assert.equal(
+    koTranslations["accountDashboard.trips.lookup.notFoundDescription"],
+    "입력한 정보와 일치하는 예약을 찾을 수 없습니다.",
+  );
   assert.equal(koTranslations["accountDashboard.trips.current.empty.title"], "다음 여행지는 어디인가요?");
   assert.equal(
     koTranslations["accountDashboard.trips.current.empty.body"],

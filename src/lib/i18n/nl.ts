@@ -1803,6 +1803,12 @@ flightLandingRouteAriaLabel: "Vluchten zoeken van {{origin}} naar {{destination}
   "accountDashboard.nav.priceAlerts": "Prijsalerts",
   "accountDashboard.trips.title": "Mijn reizen",
   "accountDashboard.trips.findReservation": "Reservering zoeken",
+  "accountDashboard.trips.lookup.notFoundDescription": "We konden geen reservering vinden met deze gegevens.",
+  "accountDashboard.trips.lookup.notFoundTitle": "Reservering niet gevonden",
+  "accountDashboard.trips.lookup.loading": "Reservering zoeken...",
+  "accountDashboard.trips.lookup.invalidEmail": "Voer een geldig e-mailadres in",
+  "accountDashboard.trips.lookup.emailRequired": "E-mailadres is verplicht",
+  "accountDashboard.trips.lookup.reservationCodeRequired": "Reserveringscode is verplicht",
   "accountDashboard.trips.current.empty.title": "Waarheen nu?",
   "accountDashboard.trips.current.empty.body":
     "Je bent nog geen reizen begonnen. Wanneer je een reservering maakt, verschijnt die hier.",
@@ -2004,7 +2010,7 @@ flightLandingRouteAriaLabel: "Vluchten zoeken van {{origin}} naar {{destination}
   "accountDashboard.trips.lookup.title": "Voer boekingsgegevens in",
   "accountDashboard.trips.lookup.body":
     "Voer je reserveringscode en e-mailadres in om je boeking te vinden en te beheren.",
-  "accountDashboard.trips.lookup.closeAriaLabel": "Reservering zoeken sluiten",
+  "accountDashboard.trips.lookup.closeAriaLabel": "Sluiten",
   "accountDashboard.trips.lookup.reservationCode": "Reserveringscode",
   "accountDashboard.trips.lookup.emailAddress": "E-mailadres",
   "accountDashboard.trips.lookup.submit": "Reservering zoeken",
