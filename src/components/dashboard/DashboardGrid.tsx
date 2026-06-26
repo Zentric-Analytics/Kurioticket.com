@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import Link from "next/link";
 import {
   Bell,
@@ -622,6 +622,144 @@ function DetailValue({
   );
 }
 
+type CompactSelectOption = {
+  value: string;
+  label: string;
+  description?: string;
+};
+
+function CompactSelect({
+  value,
+  options,
+  onChange,
+  placeholder,
+  ariaLabel,
+  className,
+  renderButtonLabel,
+  renderOptionLabel,
+  dropdownClassName,
+  hideChevron = false,
+}: {
+  value: string;
+  options: CompactSelectOption[];
+  onChange: (value: string) => void;
+  placeholder: string;
+  ariaLabel: string;
+  className: string;
+  renderButtonLabel?: (option: CompactSelectOption) => ReactNode;
+  renderOptionLabel?: (option: CompactSelectOption) => ReactNode;
+  dropdownClassName?: string;
+  hideChevron?: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const selectedOption = options.find((option) => option.value === value);
+  const listboxId = `${ariaLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-listbox`;
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
+
+  return (
+    <div ref={containerRef} className="relative min-w-0">
+      <button
+        type="button"
+        className={cn(
+          className,
+          "flex items-center justify-between gap-3 text-start",
+          !selectedOption && "text-slate-400",
+        )}
+        onClick={() => setIsOpen((current) => !current)}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            setIsOpen(true);
+          }
+        }}
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-controls={listboxId}
+      >
+        <span className="min-w-0 flex-1 truncate">
+          {selectedOption
+            ? renderButtonLabel?.(selectedOption) ?? selectedOption.label
+            : placeholder}
+        </span>
+        {hideChevron ? null : (
+          <span
+            className={cn(
+              "shrink-0 text-xs text-slate-400 transition",
+              isOpen && "rotate-180",
+            )}
+            aria-hidden="true"
+          >
+            ▾
+          </span>
+        )}
+      </button>
+
+      {isOpen ? (
+        <div
+          id={listboxId}
+          role="listbox"
+          aria-label={ariaLabel}
+          className={cn(
+            "absolute inset-x-0 top-full z-40 mt-1 max-h-60 overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg",
+            dropdownClassName,
+          )}
+        >
+          {options.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              role="option"
+              aria-selected={option.value === value}
+              className={cn(
+                "flex w-full min-w-0 items-center gap-2 px-3.5 py-2 text-start text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:bg-slate-50 focus:outline-none",
+                option.value === value && "bg-violet-50 text-slate-950",
+              )}
+              onClick={() => {
+                onChange(option.value);
+                setIsOpen(false);
+              }}
+            >
+              <span className="min-w-0 flex-1 truncate">
+                {renderOptionLabel?.(option) ?? option.label}
+              </span>
+              {option.description ? (
+                <span className="shrink-0 text-xs font-semibold text-slate-500">
+                  {option.description}
+                </span>
+              ) : null}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function normalizeDateOfBirthDay(day: string) {
   const normalizedDay = day.padStart(2, "0");
 
@@ -848,22 +986,17 @@ function StructuredAddressInput({
 
   return (
     <div className="grid min-w-0 gap-2">
-      <select
+      <CompactSelect
         className={className}
         value={parts.countryCode}
-        onChange={(event) => updatePart("countryCode", event.target.value)}
-        aria-label="Country or region"
-        autoComplete="country"
-      >
-        <option value="" disabled hidden>
-          Country/region
-        </option>
-        {countryProfileOptions.map((option) => (
-          <option key={option.isoCode} value={option.isoCode}>
-            {option.countryName}
-          </option>
-        ))}
-      </select>
+        onChange={(nextValue) => updatePart("countryCode", nextValue)}
+        ariaLabel="Country or region"
+        placeholder="Country/region"
+        options={countryProfileOptions.map((option) => ({
+          value: option.isoCode,
+          label: option.countryName,
+        }))}
+      />
       <input
         className={className}
         value={parts.addressLine1}
@@ -953,29 +1086,24 @@ function PhoneNumberInput({
 
   return (
     <div className="grid min-w-0 grid-cols-[minmax(3.25rem,3.75rem)_minmax(0,1fr)] gap-2 sm:grid-cols-[minmax(3.5rem,4rem)_minmax(0,1fr)]">
-      <div className="relative min-w-0 overflow-hidden rounded-xl">
-        <select
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-          value={parsedValue.countryCode}
-          onChange={(event) => handleCountryChange(event.target.value)}
-          aria-label={`${label} country calling code`}
-        >
-          {countryCallingCodeOptions.map((option) => (
-            <option key={option.isoCode} value={option.isoCode}>
-              {option.flag} {option.countryName} ({option.isoCode})
-            </option>
-          ))}
-        </select>
-        <div
-          className={cn(
-            className,
-            "pointer-events-none flex items-center justify-center px-2 text-lg leading-none sm:text-base",
-          )}
-          aria-hidden="true"
-        >
-          <span className="truncate">{selectedOption.flag}</span>
-        </div>
-      </div>
+      <CompactSelect
+        className={cn(
+          className,
+          "justify-center px-2 text-center text-lg leading-none sm:text-base",
+        )}
+        value={parsedValue.countryCode}
+        onChange={handleCountryChange}
+        ariaLabel={`${label} country calling code`}
+        placeholder={defaultCountryCallingCodeOption.flag}
+        options={countryCallingCodeOptions.map((option) => ({
+          value: option.isoCode,
+          label: `${option.flag} ${option.countryName}`,
+          description: option.dialCode,
+        }))}
+        renderButtonLabel={(option) => option.label.split(" ")[0]}
+        dropdownClassName="min-w-64 max-w-[min(20rem,calc(100vw-2rem))]"
+        hideChevron
+      />
       <div
         className={cn(
           className,
@@ -1013,21 +1141,17 @@ function NationalityInput({
   fallback: string;
 }) {
   return (
-    <select
+    <CompactSelect
       className={className}
       value={value}
-      onChange={(event) => onChange(event.target.value)}
-      aria-label={label}
-    >
-      <option value="" disabled hidden>
-        {fallback}
-      </option>
-      {countryProfileOptions.map((option) => (
-        <option key={option.isoCode} value={option.countryName}>
-          {option.countryName}
-        </option>
-      ))}
-    </select>
+      onChange={onChange}
+      ariaLabel={label}
+      placeholder={fallback}
+      options={countryProfileOptions.map((option) => ({
+        value: option.countryName,
+        label: option.countryName,
+      }))}
+    />
   );
 }
 
@@ -1099,22 +1223,14 @@ function DetailInput({
 
   if (row.options) {
     return (
-      <select
+      <CompactSelect
         className={baseClassName}
         value={value}
-        onChange={handleChange}
-        disabled={row.readOnly}
-        aria-label={row.label}
-      >
-        <option value="" disabled hidden>
-          {row.fallback}
-        </option>
-        {row.options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+        onChange={(nextValue) => onChange(row.key, nextValue)}
+        ariaLabel={row.label}
+        placeholder={row.fallback}
+        options={row.options}
+      />
     );
   }
 
@@ -1166,7 +1282,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
 
   return (
     <section
-      className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+      className="rounded-xl border border-slate-200 bg-white shadow-sm"
       aria-labelledby="dashboard-title"
     >
       <div>
