@@ -31,6 +31,41 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.helpAndSupport": "सहायता और समर्थन",
   "accountDashboard.hub.contactSupport": "सहायता से संपर्क करें",
   "accountDashboard.hub.faq": "अक्सर पूछे जाने वाले प्रश्न",
+  "accountDashboard.personalDetails.title": "व्यक्तिगत विवरण",
+  "accountDashboard.personalDetails.subtitle":
+    "अपनी जानकारी अपडेट करें और Kurioticket में उसका उपयोग कैसे होता है, इसे प्रबंधित करें।",
+  "accountDashboard.personalDetails.name": "नाम",
+  "accountDashboard.personalDetails.displayName": "प्रदर्शित नाम",
+  "accountDashboard.personalDetails.emailAddress": "ईमेल पता",
+  "accountDashboard.personalDetails.phoneNumber": "फ़ोन नंबर",
+  "accountDashboard.personalDetails.dateOfBirth": "जन्म तिथि",
+  "accountDashboard.personalDetails.gender": "लिंग",
+  "accountDashboard.personalDetails.nationality": "राष्ट्रीयता",
+  "accountDashboard.personalDetails.address": "पता",
+  "accountDashboard.personalDetails.addPhoneNumber": "अपना फ़ोन नंबर जोड़ें",
+  "accountDashboard.personalDetails.addDateOfBirth": "अपनी जन्म तिथि जोड़ें",
+  "accountDashboard.personalDetails.addGender": "अपना लिंग जोड़ें",
+  "accountDashboard.personalDetails.addNationality": "अपनी राष्ट्रीयता जोड़ें",
+  "accountDashboard.personalDetails.addAddress": "अपना पता जोड़ें",
+  "accountDashboard.personalDetails.edit": "संपादित करें",
+  "accountDashboard.security.title": "सुरक्षा सेटिंग्स",
+  "accountDashboard.security.description":
+    "अपना पासवर्ड अपडेट करें और खाते की सुरक्षा प्रबंधित करें।",
+  "accountDashboard.security.passkeys.title": "पासकी",
+  "accountDashboard.security.passkeys.description":
+    "पासवर्ड याद रखने की आवश्यकता के बिना सुरक्षित रूप से साइन इन करें।",
+  "accountDashboard.security.twoFactor.title": "दो-कारक प्रमाणीकरण",
+  "accountDashboard.security.twoFactor.description":
+    "अपने खाते में सुरक्षा की एक अतिरिक्त परत जोड़ें।",
+  "accountDashboard.security.activeSessions.title": "सक्रिय सत्र",
+  "accountDashboard.security.activeSessions.description":
+    "देखें कि आपका खाता कहाँ साइन इन है और अन्य डिवाइसों से साइन आउट करें।",
+  "accountDashboard.security.deleteAccount.title": "खाता हटाएँ",
+  "accountDashboard.security.deleteAccount.description":
+    "अपना Kurioticket खाता स्थायी रूप से हटाएँ।",
+  "accountDashboard.security.action.setUp": "सेट अप करें",
+  "accountDashboard.security.action.manage": "प्रबंधित करें",
+  "accountDashboard.security.action.deleteAccount": "खाता हटाएँ",
   countryAndCurrency: "देश और मुद्रा",
   openCountryCurrencySelector:
     "देश और मुद्रा चयनकर्ता खोलें, वर्तमान चयन {{code}}, {{currency}}",
