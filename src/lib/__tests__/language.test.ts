@@ -534,6 +534,12 @@ test("Hindi flights landing static render path resolves screenshot-visible copy"
   assert.equal(hiTranslations.flightLandingRouteTemplate.replace("{{origin}}", hiTranslations["flightLandingCity.Lagos"]).replace("{{destination}}", hiTranslations["flightLandingCity.London"]), "लागोस से लंदन");
   assert.equal(hiTranslations["homeDiscoveryRoute.ng-los-lhr.title"], "लंदन बिज़नेस और वीकेंड मिश्रण");
   assert.equal(hiTranslations["homeDiscoveryRoute.ng-los-lhr.routeNote"], "काम की यात्राओं और अतिरिक्त अवकाश योजनाओं के लिए लोकप्रिय लंबी दूरी का मार्ग।");
+  assert.equal(hiTranslations["homeDiscoveryRoute.ng-los-nrt.title"], "टोक्यो लंबी दूरी शहर की धड़कन");
+  assert.equal(hiTranslations["homeDiscoveryRoute.ng-los-nrt.routeNote"], "नियॉन इलाकों और कुशल रेल ट्रांज़िट वाला प्रमुख एशिया गेटवे।");
+  assert.equal(hiTranslations["homeDiscoveryRoute.ng-abv-mad.title"], "मैड्रिड तपस और कला यात्रा");
+  assert.equal(hiTranslations["homeDiscoveryRoute.ng-abv-mad.routeNote"], "संग्रहालयों, बुलेवार्ड्स और देर रात के भोजन के लिए यूरोप सिटी ब्रेक मार्ग।");
+  assert.equal(hiTranslations["homeDiscoveryRoute.ng-abv-rob.title"], "मोनरोविया क्षेत्रीय समुद्री यात्रा");
+  assert.equal(hiTranslations["homeDiscoveryRoute.ng-abv-rob.routeNote"], "अटलांटिक समुद्र तटों और स्थानीय बाज़ारों वाला पश्चिम अफ्रीकी सिटी ब्रेक।");
   assert.equal(hiTranslations["flightLandingCity.Johannesburg"], "जोहान्सबर्ग");
   assert.equal(hiTranslations["flightLandingImageAlt.Johannesburg skyline at golden hour"], "गोल्डन आवर में जोहान्सबर्ग स्काईलाइन");
   assert.equal(hiTranslations.flightLandingRouteAriaLabel.includes("{{origin}}"), true);
@@ -552,6 +558,7 @@ test("active locale auth verification copy is localized without English fallback
     zhCnTranslations,
     jaTranslations,
     koTranslations,
+    hiTranslations,
   ];
   const verificationKeys = [
     "loginCodeSent",
@@ -583,6 +590,22 @@ test("active locale auth verification copy is localized without English fallback
   assert.equal(koTranslations.loginVerifyLogin, "로그인 인증");
   assert.equal(koTranslations.loginResendIn, "{{seconds}}초 후 재전송");
   assert.equal(koTranslations.loginUseDifferentDetails, "다른 정보 사용");
+
+  assert.equal(hiTranslations.loginPageTitle, "लॉग इन करें");
+  assert.equal(hiTranslations.loginPageSubtitle, "खोजें सहेजें, अलर्ट प्रबंधित करें और अपना यात्रा डैशबोर्ड खोलें।");
+  assert.equal(hiTranslations.loginForgotPassword, "पासवर्ड भूल गए?");
+  assert.equal(hiTranslations.loginGoogle, "Google के साथ जारी रखें");
+  assert.equal(hiTranslations.forgotPasswordTitle, "अपना पासवर्ड रीसेट करें");
+  assert.equal(hiTranslations.forgotPasswordSubmit, "रीसेट लिंक भेजें");
+  assert.equal(hiTranslations.signupPageTitle, "अपना खाता बनाएँ");
+  assert.equal(hiTranslations.signupFullNameLabel, "पूरा नाम");
+  assert.equal(hiTranslations.signupSubmit, "साइन अप करें");
+  assert.equal(hiTranslations.loginCodeSent, "हमने आपके ईमेल पर सत्यापन कोड भेजा है।");
+  assert.equal(hiTranslations.loginCodeInstructions, "{{email}} पर भेजा गया 6 अंकों का कोड दर्ज करें। कोड {{minutes}} मिनट बाद समाप्त हो जाते हैं।");
+  assert.equal(hiTranslations.loginVerificationCodeLabel, "सत्यापन कोड");
+  assert.equal(hiTranslations.loginVerifyLogin, "लॉगिन सत्यापित करें");
+  assert.equal(hiTranslations.loginResendIn, "{{seconds}} सेकंड में फिर भेजें");
+  assert.equal(hiTranslations.loginUseDifferentDetails, "अलग विवरण इस्तेमाल करें");
 });
 
 
