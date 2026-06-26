@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ReactNode,
+} from "react";
 import Link from "next/link";
 import {
   Bell,
@@ -19,7 +26,10 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { LinkButton } from "@/components/ui/Button";
 import { useLocale } from "@/components/layout/LocaleProvider";
-import { supportedRegions } from "@/lib/region/supportedRegions";
+import {
+  personalDetailsCountryOptions,
+  supportedRegions,
+} from "@/lib/region/supportedRegions";
 import { cn } from "@/lib/utils";
 import type { TranslationDictionary } from "@/lib/i18n/types";
 
@@ -429,9 +439,7 @@ function getFlagEmoji(countryCode: string) {
   if (!/^[A-Z]{2}$/.test(normalizedCode)) return "🌐";
 
   return [...normalizedCode]
-    .map((character) =>
-      String.fromCodePoint(127397 + character.charCodeAt(0)),
-    )
+    .map((character) => String.fromCodePoint(127397 + character.charCodeAt(0)))
     .join("");
 }
 
@@ -451,6 +459,20 @@ const countryProfileOptions: CountryProfileOption[] = supportedRegions
     dialCode: countryCallingCodeByIsoCode[region.code],
   }))
   .sort(sortCountryProfileOptions);
+
+const personalDetailsDropdownOptions = personalDetailsCountryOptions.map(
+  (region) => ({
+    value: region.code,
+    label: region.country,
+  }),
+);
+
+const nationalityDropdownOptions = personalDetailsCountryOptions.map(
+  (region) => ({
+    value: region.country,
+    label: region.country,
+  }),
+);
 
 const countryCallingCodeOptions = countryProfileOptions.filter(
   (option): option is CountryProfileOption & { dialCode: string } =>
@@ -691,7 +713,11 @@ function CompactSelect({
         )}
         onClick={() => setIsOpen((current) => !current)}
         onKeyDown={(event) => {
-          if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+          if (
+            event.key === "ArrowDown" ||
+            event.key === "Enter" ||
+            event.key === " "
+          ) {
             event.preventDefault();
             setIsOpen(true);
           }
@@ -703,7 +729,7 @@ function CompactSelect({
       >
         <span className="min-w-0 flex-1 truncate">
           {selectedOption
-            ? renderButtonLabel?.(selectedOption) ?? selectedOption.label
+            ? (renderButtonLabel?.(selectedOption) ?? selectedOption.label)
             : placeholder}
         </span>
         {hideChevron ? null : (
@@ -878,7 +904,6 @@ function DateOfBirthInput({
   );
 }
 
-
 type StructuredAddressParts = {
   addressLine1: string;
   city: string;
@@ -917,19 +942,20 @@ function parseStructuredAddressDraft(value: string): StructuredAddressParts {
     }
   }
 
-  const [addressLine1 = "", cityPostal = "", country = ""] =
-    trimmedValue.split(/\r?\n/).map((line) => line.trim());
-  const countryOption = countryProfileOptions.find(
+  const [addressLine1 = "", cityPostal = "", country = ""] = trimmedValue
+    .split(/\r?\n/)
+    .map((line) => line.trim());
+  const countryOption = personalDetailsCountryOptions.find(
     (option) =>
-      option.countryName.toLowerCase() === country.toLowerCase() ||
-      option.isoCode.toLowerCase() === country.toLowerCase(),
+      option.country.toLowerCase() === country.toLowerCase() ||
+      option.code.toLowerCase() === country.toLowerCase(),
   );
 
   return {
     ...emptyStructuredAddress,
     addressLine1,
     city: cityPostal,
-    countryCode: countryOption?.isoCode ?? "",
+    countryCode: countryOption?.code ?? "",
   };
 }
 
@@ -953,11 +979,13 @@ function formatStructuredAddressForDisplay(value: string) {
   }
 
   const parts = parseStructuredAddressDraft(value);
-  const countryOption = countryProfileOptions.find(
-    (option) => option.isoCode === parts.countryCode,
+  const countryOption = personalDetailsCountryOptions.find(
+    (option) => option.code === parts.countryCode,
   );
-  const localityLine = [parts.city, parts.postalCode].filter(Boolean).join(", ");
-  const countryLine = countryOption ? countryOption.countryName : parts.countryCode;
+  const localityLine = [parts.city, parts.postalCode]
+    .filter(Boolean)
+    .join(", ");
+  const countryLine = countryOption ? countryOption.country : parts.countryCode;
 
   return [parts.addressLine1, localityLine, countryLine]
     .filter(Boolean)
@@ -975,7 +1003,10 @@ function StructuredAddressInput({
 }) {
   const parts = useMemo(() => parseStructuredAddressDraft(value), [value]);
 
-  const updatePart = (part: keyof StructuredAddressParts, nextValue: string) => {
+  const updatePart = (
+    part: keyof StructuredAddressParts,
+    nextValue: string,
+  ) => {
     onChange(
       serializeStructuredAddressDraft({
         ...parts,
@@ -992,10 +1023,7 @@ function StructuredAddressInput({
         onChange={(nextValue) => updatePart("countryCode", nextValue)}
         ariaLabel="Country or region"
         placeholder="Country/region"
-        options={countryProfileOptions.map((option) => ({
-          value: option.isoCode,
-          label: option.countryName,
-        }))}
+        options={personalDetailsDropdownOptions}
       />
       <input
         className={className}
@@ -1052,11 +1080,14 @@ function parsePhoneDraftValue(value: string) {
 
 function formatPhoneDraftValue(countryCode: string, localNumber: string) {
   const selectedOption =
-    countryCallingCodeOptions.find((option) => option.isoCode === countryCode) ??
-    defaultCountryCallingCodeOption;
+    countryCallingCodeOptions.find(
+      (option) => option.isoCode === countryCode,
+    ) ?? defaultCountryCallingCodeOption;
   const trimmedLocalNumber = localNumber.trimStart();
 
-  return [selectedOption.dialCode, trimmedLocalNumber].filter(Boolean).join(" ");
+  return [selectedOption.dialCode, trimmedLocalNumber]
+    .filter(Boolean)
+    .join(" ");
 }
 
 function PhoneNumberInput({
@@ -1147,10 +1178,7 @@ function NationalityInput({
       onChange={onChange}
       ariaLabel={label}
       placeholder={fallback}
-      options={countryProfileOptions.map((option) => ({
-        value: option.countryName,
-        label: option.countryName,
-      }))}
+      options={nationalityDropdownOptions}
     />
   );
 }
