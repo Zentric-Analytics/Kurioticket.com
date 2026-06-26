@@ -1020,6 +1020,39 @@ export const translations: TranslationDictionary = {
     "노선 아이디어를 둘러본 뒤 날짜와 여행자를 입력해 실제 검색을 시작하고 이용 가능한 항공편을 비교하세요.",
   flightLandingRouteConnector: "에서",
   flightLandingRouteAriaLabel: "{{origin}}에서 {{destination}}까지 항공편 검색",
+  tripType: "여행 유형",
+  beachVacations: "해변 휴가",
+  beachVacationsBody:
+    "햇살 가득한 해안, 섬 여행지, 따뜻한 휴양지로 가는 항공 노선을 살펴보세요.",
+  "flightLandingCity.Cancun": "칸쿤",
+  "flightLandingCity.Puerto Vallarta": "푸에르토바야르타",
+  "flightLandingCity.Honolulu": "호놀룰루",
+  "flightLandingCity.San Diego": "샌디에이고",
+  "flightLandingCity.Sydney": "시드니",
+  "flightLandingCity.Toronto": "토론토",
+  "flightLandingCity.Edmonton": "에드먼턴",
+  "flightLandingCity.Vancouver": "밴쿠버",
+  "flightLandingImageAlt.Puerto Vallarta coastline and old town":
+    "푸에르토바야르타 해안선과 구시가지",
+  "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water":
+    "다이아몬드 헤드와 맑고 푸른 바다가 보이는 호놀룰루 와이키키 해변",
+  "flightLandingImageAlt.San Diego bay skyline and marina":
+    "샌디에이고 베이 스카이라인과 마리나",
+  "homeDiscoveryRoute.ca-yyz-cun.title": "칸쿤 겨울 휴양",
+  "homeDiscoveryRoute.ca-yyz-cun.routeNote":
+    "성수기에 직항 옵션이 있는 안정적인 휴양 노선입니다.",
+  "homeDiscoveryRoute.ca-yeg-pvr.title": "푸에르토바야르타 해변 여행",
+  "homeDiscoveryRoute.ca-yeg-pvr.routeNote":
+    "태평양 해변과 구시가지의 매력을 즐길 수 있는 겨울 휴양 노선입니다.",
+  "homeDiscoveryRoute.ca-yyz-hnl.title": "호놀룰루 장거리 섬 휴가",
+  "homeDiscoveryRoute.ca-yyz-hnl.routeNote":
+    "해변, 서핑, 섬 문화를 즐기기 좋은 장거리 휴양 노선입니다.",
+  "homeDiscoveryRoute.ca-yyz-san.title": "샌디에이고 해변과 서핑 여행",
+  "homeDiscoveryRoute.ca-yyz-san.routeNote":
+    "해변 공원과 항구 전망을 즐기기 좋은 국경 도시 노선입니다.",
+  "homeDiscoveryRoute.ca-yvr-syd.title": "시드니 태평양 횡단 여행",
+  "homeDiscoveryRoute.ca-yvr-syd.routeNote":
+    "항구 명소와 해변 교외를 둘러보기 좋은 장거리 여행 노선입니다.",
   discoverDestinationsFromRegion: "내 지역 출발 목적지 둘러보기",
   discoverDestinationsFromRegionBody:
     "엄선된 노선을 살펴보고 다음 여행을 자신 있게 시작하세요.",
