@@ -520,7 +520,7 @@ test("Spanish, French, German, Italian, Dutch, Portuguese, Chinese, Japanese, Ko
 });
 
 test("Hindi flights landing static render path resolves screenshot-visible copy", () => {
-  assert.equal(hiTranslations.flightLandingHeroTitle, "अपनी अगली किफायती उड़ान आसानी से खोजें।");
+  assert.equal(hiTranslations.flightLandingHeroTitle, "अपनी अगली उपयोगी उड़ान आसानी से खोजें।");
   assert.equal(hiTranslations.roundTrip, "आना-जाना");
   assert.equal(hiTranslations.oneWay, "एकतरफ़ा");
   assert.equal(hiTranslations.origin, "प्रस्थान");
@@ -1240,4 +1240,69 @@ test("active account trips and price alerts copy is localized", () => {
     koTranslations["accountDashboard.priceAlerts.features.management.body"],
     "언제든지 알림을 일시 중지하거나 삭제할 수 있습니다.",
   );
+});
+
+test("Hindi flights flow copy uses localized labels without mutating dynamic flight values", () => {
+  const hi = getTranslations("hi");
+
+  const expectedHindiFlightLabels: Record<string, string> = {
+    flightLandingHeroTitle: "अपनी अगली उपयोगी उड़ान आसानी से खोजें।",
+    flightLandingFeatureSearchReadyTitle: "खोज के लिए तैयार मार्ग",
+    cheapest: "सबसे सस्ता",
+    best: "सर्वश्रेष्ठ",
+    quickest: "सबसे तेज़",
+    departs: "प्रस्थान {{time}}",
+    resultsFound: "{{count}} परिणाम मिले",
+    flightOption: "उड़ान विकल्प",
+    outbound: "प्रस्थान",
+    return: "वापसी",
+    oneStop: "1 स्टॉप",
+    stopCount: "{{count}} स्टॉप",
+    layoverSummaryTemplate: "लेओवर: {{airport}} {{duration}}",
+    moreCount: "{{count}} और",
+    estimatedPrice: "अनुमानित कीमत",
+    providerPrice: "प्रदाता कीमत",
+    viewFlight: "उड़ान देखें",
+    baggage: "बैगेज",
+    carryOnIncluded: "कैरी-ऑन शामिल",
+    seatSelection: "सीट चयन",
+    providerRulesApply: "प्रदाता नियम लागू होते हैं",
+    cabin: "केबिन",
+    fareRules: "किराया नियम",
+    reviewBeforeBooking: "बुकिंग से पहले समीक्षा करें",
+    filterBy: "फ़िल्टर करें",
+    price: "कीमत",
+    times: "समय",
+    takeoff: "टेकऑफ़",
+    landing: "लैंडिंग",
+    takeoffTimeFromOrigin: "प्रस्थान स्थान से टेकऑफ़ समय",
+    duration: "अवधि",
+    totalTripTime: "कुल यात्रा समय",
+    stops: "स्टॉप",
+    optionsFound: "{{count}} विकल्प मिले",
+    airports: "हवाई अड्डे",
+    amenities: "सुविधाएँ",
+    baggageIncluded: "बैगेज शामिल",
+    flexibleRefundable: "लचीला/रिफंड योग्य",
+    selectedFlights: "चुनी गई उड़ानें",
+    flightRouteTemplate: "{{origin}} से {{destination}}",
+    layoverTemplate: "{{airport}} में लेओवर · {{duration}} · {{connection}}",
+    longConnection: "लंबा कनेक्शन",
+    estimateShownProviderPrice: "अनुमान दिखाया गया। प्रदाता कीमत:",
+    continueToProvider: "प्रदाता पर जारी रखें",
+    compareMoreProviders: "और प्रदाताओं की तुलना करें",
+    providerComparisonIntro: "Kurioticket अलग-अलग प्रदाताओं से तुलना कर सकता है।",
+    noAdditionalLiveProviderOptions:
+      "इस उड़ान के लिए अभी कोई अतिरिक्त लाइव प्रदाता विकल्प उपलब्ध नहीं हैं।",
+  };
+
+  for (const [key, value] of Object.entries(expectedHindiFlightLabels)) {
+    assert.equal(hi[key], value, `${key} should be localized for Hindi flights flow`);
+    assert.notEqual(hi[key], enTranslations[key], `${key} should not fall back to English in Hindi`);
+  }
+
+  assert.equal(hi.flightRouteTemplate.replace("{{origin}}", "लागोस").replace("{{destination}}", "लॉस एंजेलिस"), "लागोस से लॉस एंजेलिस");
+  assert.equal(hi.departs.replace("{{time}}", "2:45 PM"), "प्रस्थान 2:45 PM");
+  assert.equal(hi.layoverSummaryTemplate.replace("{{airport}}", "DOH").replace("{{duration}}", "7h 35m"), "लेओवर: DOH 7h 35m");
+  assert.equal(hi.providerComparisonIntro.includes("Kurioticket"), true);
 });
