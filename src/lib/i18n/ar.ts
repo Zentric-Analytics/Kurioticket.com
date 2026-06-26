@@ -1530,4 +1530,7 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.singleStandard": "غرفة مفردة عادية",
   "hotelResults.filter.superiorDoubleRoom": "غرفة سوبيريور مزدوجة",
   "hotelResults.filter.superiorRoom": "غرفة سوبيريور",
+  "flightLandingImageAlt.Johannesburg skyline at golden hour": "أفق جوهانسبرغ عند الساعة الذهبية",
+  "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza": "أفق القاهرة مع أهرامات الجيزة",
+  "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands": "مشهد مدينة أديس أبابا في المرتفعات الإثيوبية",
 };

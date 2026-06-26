@@ -3162,4 +3162,7 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.singleStandard": "Quarto individual standard",
   "hotelResults.filter.superiorDoubleRoom": "Quarto duplo superior",
   "hotelResults.filter.superiorRoom": "Quarto superior",
+  "flightLandingImageAlt.Johannesburg skyline at golden hour": "Horizonte de Joanesburgo na hora dourada",
+  "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza": "Horizonte do Cairo com as Pirâmides de Gizé",
+  "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands": "Paisagem urbana de Adis Abeba nas terras altas etíopes",
 };

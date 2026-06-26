@@ -95,6 +95,10 @@ const normalizeFlightsCalendarLocale = (locale: string | null | undefined) => {
     return "ja-JP";
   }
 
+  if (normalized === "ko" || normalized.startsWith("ko-")) {
+    return "ko-KR";
+  }
+
   if (
     normalized === "zh" ||
     normalized === "zh-cn" ||

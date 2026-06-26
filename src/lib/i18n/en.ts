@@ -2816,4 +2816,7 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.superiorDoubleRoom": "Superior Double Room",
   "hotelResults.filter.superiorRoom": "Superior Room",
   searchRentalCars: "Search rental cars",
+  "flightLandingImageAlt.Johannesburg skyline at golden hour": "Johannesburg skyline at golden hour",
+  "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza": "Cairo skyline with the Pyramids of Giza",
+  "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands": "Addis Ababa cityscape in the Ethiopian highlands",
 };

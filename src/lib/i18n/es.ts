@@ -2838,4 +2838,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.contactSupport": "Contactar soporte",
   "accountDashboard.hub.faq": "Preguntas frecuentes",
   "accountDashboard.hub.serviceGuarantee": "Garantía de servicio",
+  "flightLandingImageAlt.Johannesburg skyline at golden hour": "Horizonte de Johannesburgo durante la hora dorada",
+  "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza": "Horizonte de El Cairo con las pirámides de Guiza",
+  "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands": "Paisaje urbano de Addis Abeba en las tierras altas etíopes",
 };

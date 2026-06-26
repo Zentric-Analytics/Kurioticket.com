@@ -1478,4 +1478,7 @@ export const translations: TranslationDictionary = {
 
   logout: "ログアウト",
   signingOut: "ログアウト中…",
+  "flightLandingImageAlt.Johannesburg skyline at golden hour": "ゴールデンアワーのヨハネスブルグのスカイライン",
+  "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza": "ギザのピラミッドを望むカイロのスカイライン",
+  "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands": "エチオピア高原にあるアディスアベバの街並み",
 };

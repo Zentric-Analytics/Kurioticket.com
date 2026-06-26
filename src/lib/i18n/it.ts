@@ -2314,4 +2314,9 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.singleStandard": "Camera singola standard",
   "hotelResults.filter.superiorDoubleRoom": "Camera doppia superior",
   "hotelResults.filter.superiorRoom": "Camera superior",
+  "flightLandingCity.Cairo": "Il Cairo",
+  "flightLandingCity.Addis Ababa": "Addis Abeba",
+  "flightLandingImageAlt.Johannesburg skyline at golden hour": "Skyline di Johannesburg all’ora dorata",
+  "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza": "Skyline del Cairo con le piramidi di Giza",
+  "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands": "Paesaggio urbano di Addis Abeba sugli altopiani etiopi",
 };
