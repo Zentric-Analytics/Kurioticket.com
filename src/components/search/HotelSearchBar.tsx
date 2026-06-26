@@ -98,6 +98,10 @@ const normalizeHotelCalendarLocale = (locale: string | null | undefined) => {
     return "ar";
   }
 
+  if (normalized === "hi" || normalized.startsWith("hi-")) {
+    return "hi-IN";
+  }
+
   if (
     normalized === "zh" ||
     normalized === "zh-cn" ||
