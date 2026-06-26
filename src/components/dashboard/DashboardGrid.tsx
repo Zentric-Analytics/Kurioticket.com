@@ -1416,7 +1416,7 @@ function SecuritySettingRow({
         onClick={onAction}
         aria-describedby={statusId}
         className={cn(
-          "focus-ring inline-flex min-h-10 w-fit max-w-full shrink-0 cursor-pointer items-center justify-center rounded-lg border bg-white px-4 py-2 text-center text-sm font-semibold leading-5 transition self-start sm:w-auto sm:self-center",
+          "focus-ring inline-flex min-h-10 w-fit max-w-full shrink-0 cursor-pointer items-center justify-center rounded-lg border bg-white px-4 py-2 text-center text-sm font-semibold leading-5 transition self-end sm:w-auto sm:self-center",
           danger
             ? "border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50"
             : "border-blue-200 text-blue-700 hover:border-blue-300 hover:bg-blue-50",
