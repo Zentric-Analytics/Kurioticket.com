@@ -354,6 +354,77 @@ test("active locale auth verification copy is localized without English fallback
 });
 
 
+test("active account FAQ translations cover all visible FAQ page strings", () => {
+  const activeLocaleTranslations = {
+    "en-us": enTranslations,
+    ar: arTranslations,
+    nl: nlTranslations,
+    "es-es": esTranslations,
+    fr: frTranslations,
+    "de-de": deTranslations,
+    "it-it": itTranslations,
+    "pt-br": ptBrTranslations,
+    "zh-cn": zhCnTranslations,
+    ja: jaTranslations,
+    ko: koTranslations,
+  };
+  const accountFaqKeys = [
+    "accountDashboard.hub.title",
+    "faqHeading",
+    "faqIntro",
+    "faqGeneralQuestions",
+    "faqNeedMoreHelpPrefix",
+    "faqSupportPage",
+    "faqNeedMoreHelpSuffix",
+    "faqQuestionFindOptions",
+    "faqAnswerFindOptions",
+    "faqQuestionSellDirectly",
+    "faqAnswerSellDirectly",
+    "faqQuestionPriceChanges",
+    "faqAnswerPriceChanges",
+    "faqQuestionCompareProviders",
+    "faqAnswerCompareProviders",
+    "faqQuestionSecureBooking",
+    "faqAnswerSecureBooking",
+    "faqQuestionPreferences",
+    "faqAnswerPreferences",
+    "faqQuestionLiveCached",
+    "faqAnswerLiveCached",
+    "faqQuestionManageChanges",
+    "faqAnswerManageChanges",
+  ];
+
+  for (const [locale, translations] of Object.entries(activeLocaleTranslations)) {
+    for (const key of accountFaqKeys) {
+      assert.equal(typeof translations[key], "string", `${locale} should define ${key}`);
+      assert.notEqual(translations[key], "", `${locale} should not leave ${key} empty`);
+    }
+  }
+
+  const screenshotVisibleKeys = [
+    "faqHeading",
+    "faqGeneralQuestions",
+    "faqQuestionFindOptions",
+    "faqQuestionSellDirectly",
+    "faqQuestionPriceChanges",
+    "faqQuestionCompareProviders",
+    "faqQuestionSecureBooking",
+    "faqQuestionPreferences",
+  ];
+
+  for (const [locale, translations] of Object.entries(activeLocaleTranslations)) {
+    if (locale === "en-us") continue;
+    for (const key of screenshotVisibleKeys) {
+      assert.notEqual(translations[key], enTranslations[key], `${locale} should localize ${key}`);
+    }
+  }
+
+  assert.equal(koTranslations["accountDashboard.hub.title"], "내 계정");
+  assert.equal(koTranslations.faqHeading, "자주 묻는 질문");
+  assert.equal(koTranslations.faqGeneralQuestions, "일반 질문");
+});
+
+
 test("active locale dictionaries do not keep audited cross-language UI fallbacks", () => {
   const auditedValuesByLocale = {
     english: {
