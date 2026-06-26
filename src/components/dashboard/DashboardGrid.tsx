@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ChangeEvent,
-  type ReactNode,
-} from "react";
+import { useMemo, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import {
   Bell,
@@ -471,7 +464,7 @@ function CountryFlagIcon({
         alt={`${countryName} flag`}
         width={20}
         height={20}
-        className="h-full w-full object-cover"
+        className="h-full w-full object-contain"
         loading="lazy"
         decoding="async"
       />
@@ -673,167 +666,6 @@ function DetailValue({
       </p>
       {helper ? (
         <p className="max-w-lg text-sm leading-6 text-slate-500">{helper}</p>
-      ) : null}
-    </div>
-  );
-}
-
-type CompactSelectOption = {
-  value: string;
-  label: string;
-  description?: string;
-};
-
-function CompactSelect({
-  value,
-  options,
-  onChange,
-  placeholder,
-  ariaLabel,
-  className,
-  renderButtonLabel,
-  renderOptionLabel,
-  dropdownClassName,
-  hideChevron = false,
-}: {
-  value: string;
-  options: CompactSelectOption[];
-  onChange: (value: string) => void;
-  placeholder: string;
-  ariaLabel: string;
-  className: string;
-  renderButtonLabel?: (option: CompactSelectOption) => ReactNode;
-  renderOptionLabel?: (option: CompactSelectOption) => ReactNode;
-  dropdownClassName?: string;
-  hideChevron?: boolean;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const listboxRef = useRef<HTMLDivElement>(null);
-  const selectedOption = options.find((option) => option.value === value);
-  const listboxId = `${ariaLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-listbox`;
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    requestAnimationFrame(() => {
-      if (!listboxRef.current) return;
-
-      const selectedElement = selectedOption
-        ? listboxRef.current.querySelector<HTMLElement>(
-            `[data-option-value="${CSS.escape(selectedOption.value)}"]`,
-          )
-        : null;
-
-      if (selectedElement) {
-        selectedElement.scrollIntoView({ block: "nearest" });
-      } else {
-        listboxRef.current.scrollTop = 0;
-      }
-    });
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isOpen, selectedOption]);
-
-  return (
-    <div ref={containerRef} className="relative min-w-0">
-      <button
-        type="button"
-        className={cn(
-          className,
-          "flex items-center justify-between gap-3 text-start",
-          !selectedOption && "text-slate-400",
-        )}
-        onClick={() => setIsOpen((current) => !current)}
-        onKeyDown={(event) => {
-          if (
-            event.key === "ArrowDown" ||
-            event.key === "Enter" ||
-            event.key === " "
-          ) {
-            event.preventDefault();
-            setIsOpen(true);
-          }
-        }}
-        aria-label={ariaLabel}
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-        aria-controls={listboxId}
-      >
-        <span className="min-w-0 flex-1 truncate">
-          {selectedOption
-            ? (renderButtonLabel?.(selectedOption) ?? selectedOption.label)
-            : placeholder}
-        </span>
-        {hideChevron ? null : (
-          <span
-            className={cn(
-              "shrink-0 text-xs text-slate-400 transition",
-              isOpen && "rotate-180",
-            )}
-            aria-hidden="true"
-          >
-            ▾
-          </span>
-        )}
-      </button>
-
-      {isOpen ? (
-        <div
-          ref={listboxRef}
-          id={listboxId}
-          role="listbox"
-          aria-label={ariaLabel}
-          className={cn(
-            "absolute inset-x-0 top-full z-40 mt-1 max-h-60 overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg",
-            dropdownClassName,
-          )}
-        >
-          {options.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              role="option"
-              data-option-value={option.value}
-              aria-selected={option.value === value}
-              className={cn(
-                "flex w-full min-w-0 items-center gap-2 px-3.5 py-2 text-start text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:bg-slate-50 focus:outline-none",
-                option.value === value && "bg-violet-50 text-slate-950",
-              )}
-              onClick={() => {
-                onChange(option.value);
-                setIsOpen(false);
-              }}
-            >
-              <span className="min-w-0 flex-1 truncate">
-                {renderOptionLabel?.(option) ?? option.label}
-              </span>
-              {option.description ? (
-                <span className="shrink-0 text-xs font-semibold text-slate-500">
-                  {option.description}
-                </span>
-              ) : null}
-            </button>
-          ))}
-        </div>
       ) : null}
     </div>
   );
@@ -1183,42 +1015,35 @@ function PhoneNumberInput({
 
   return (
     <div className="flex min-w-0 items-center gap-2">
-      <CompactSelect
-        className={cn(
-          className,
-          "h-12 w-24 shrink-0 justify-center px-3 text-center sm:w-24",
-        )}
-        value={parsedValue.countryCode}
-        onChange={handleCountryChange}
-        ariaLabel={`${label} country calling code`}
-        placeholder="Flag"
-        options={countryCallingCodeOptions.map((option) => ({
-          value: option.isoCode,
-          label: option.countryName,
-          description: option.dialCode,
-        }))}
-        renderButtonLabel={(option) => (
-          <span className="flex items-center justify-center gap-2">
-            <CountryFlagIcon
-              countryName={option.label}
-              isoCode={option.value}
-              className="h-6 w-8 rounded-sm shadow-sm"
-            />
-            <ChevronDown
-              className="h-4 w-4 shrink-0 text-slate-500"
-              aria-hidden="true"
-            />
-          </span>
-        )}
-        renderOptionLabel={(option) => (
-          <span className="flex min-w-0 items-center gap-2">
-            <CountryFlagIcon countryName={option.label} isoCode={option.value} />
-            <span className="min-w-0 truncate">{option.label}</span>
-          </span>
-        )}
-        dropdownClassName="min-w-64 max-w-[min(20rem,calc(100vw-2rem))]"
-        hideChevron
-      />
+      <div className="group relative h-12 w-20 shrink-0">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none flex h-full w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 shadow-sm transition group-focus-within:border-violet-400 group-focus-within:ring-4 group-focus-within:ring-violet-100"
+        >
+          <CountryFlagIcon
+            countryName={selectedOption.countryName}
+            isoCode={selectedOption.isoCode}
+            className="h-6 w-6 rounded-full bg-white"
+          />
+          <ChevronDown
+            className="h-4 w-4 shrink-0 text-slate-500"
+            aria-hidden="true"
+          />
+        </div>
+
+        <select
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          value={parsedValue.countryCode}
+          onChange={(event) => handleCountryChange(event.target.value)}
+          aria-label={`${label} country calling code`}
+        >
+          {countryCallingCodeOptions.map((option) => (
+            <option key={option.isoCode} value={option.isoCode}>
+              {option.countryName} {option.dialCode}
+            </option>
+          ))}
+        </select>
+      </div>
       <div
         className={cn(
           className,
