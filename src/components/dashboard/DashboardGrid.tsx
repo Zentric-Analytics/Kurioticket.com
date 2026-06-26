@@ -1049,14 +1049,22 @@ function StructuredAddressInput({
 
   return (
     <div className="grid min-w-0 gap-2">
-      <CompactSelect
+      <select
         className={className}
         value={parts.countryCode}
-        onChange={(nextValue) => updatePart("countryCode", nextValue)}
-        ariaLabel="Country or region"
-        placeholder="Country/region"
-        options={personalDetailsDropdownOptions}
-      />
+        onChange={(event) => updatePart("countryCode", event.target.value)}
+        aria-label="Country or region"
+        autoComplete="country"
+      >
+        <option value="" disabled hidden>
+          Country/region
+        </option>
+        {personalDetailsDropdownOptions.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
       <input
         className={className}
         value={parts.addressLine1}
@@ -1206,14 +1214,22 @@ function NationalityInput({
   fallback: string;
 }) {
   return (
-    <CompactSelect
+    <select
       className={className}
       value={value}
-      onChange={onChange}
-      ariaLabel={label}
-      placeholder={fallback}
-      options={nationalityDropdownOptions}
-    />
+      onChange={(event) => onChange(event.target.value)}
+      aria-label={label}
+      autoComplete="country-name"
+    >
+      <option value="" disabled hidden>
+        {fallback}
+      </option>
+      {nationalityDropdownOptions.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
   );
 }
 
@@ -1285,14 +1301,21 @@ function DetailInput({
 
   if (row.options) {
     return (
-      <CompactSelect
+      <select
         className={baseClassName}
         value={value}
-        onChange={(nextValue) => onChange(row.key, nextValue)}
-        ariaLabel={row.label}
-        placeholder={row.fallback}
-        options={row.options}
-      />
+        onChange={handleChange}
+        aria-label={row.label}
+      >
+        <option value="" disabled hidden>
+          {row.fallback}
+        </option>
+        {row.options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
     );
   }
 
