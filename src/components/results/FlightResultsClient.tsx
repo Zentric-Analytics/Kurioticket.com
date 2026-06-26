@@ -1905,7 +1905,9 @@ export function FlightResultsClient() {
     return {
       primary,
       context,
-      departure: `${t("departs")} ${departure}`,
+      departure: t("departs").includes("{{time}}")
+        ? t("departs").replace("{{time}}", departure)
+        : `${t("departs")} ${departure}`,
     };
   };
 
