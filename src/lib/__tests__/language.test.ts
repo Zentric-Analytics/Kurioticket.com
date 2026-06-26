@@ -609,6 +609,40 @@ test("active locale auth verification copy is localized without English fallback
 });
 
 
+test("Hindi About page screenshot-visible copy resolves without English fallback", () => {
+  const hi = getTranslations("hi");
+
+  assert.equal(hi.aboutPageEyebrow, "Kurioticket के बारे में");
+  assert.equal(hi.aboutPageTitle, "हमारे बारे में");
+  assert.equal(
+    hi.aboutPageIntroPrimary,
+    "Kurioticket एक यात्रा खोज और तुलना प्लेटफ़ॉर्म है, जो यात्रियों को उड़ानें, होटल, कारें और यात्रा डील्स खोजने, तुलना करने और ढूँढने में मदद करता है।",
+  );
+  assert.equal(
+    hi.aboutPageIntroSecondary,
+    "हमारा लक्ष्य उपलब्ध विकल्पों और प्रदाता जानकारी को एक सरल जगह पर लाकर यात्रा योजना को अधिक स्पष्ट बनाना है, ताकि यात्री अपनी यात्रा के लिए उपयुक्त प्रदाता के साथ आगे बढ़ने से पहले विकल्पों की समीक्षा कर सकें।",
+  );
+  assert.equal(hi.aboutPagePlanningCardHeading, "एक व्यावहारिक यात्रा योजना टूल");
+  assert.equal(
+    hi.aboutPagePlanningCardBody,
+    "Kurioticket उपयोगी संदर्भ के साथ यात्रियों को यात्रा विकल्पों का मूल्यांकन करने में मदद करने पर केंद्रित है। उपलब्धता, कीमतें, नियम और अंतिम बुकिंग चरण प्रदाता के अनुसार बदल सकते हैं, इसलिए यात्रियों को निर्णय लेने से पहले प्रदाता पेज को ध्यान से देखना चाहिए।",
+  );
+
+  const aboutPageSource = readFileSync("src/components/about/AboutPageContent.tsx", "utf8");
+  for (const key of [
+    "aboutPageEyebrow",
+    "aboutPageTitle",
+    "aboutPageIntroPrimary",
+    "aboutPageIntroSecondary",
+    "aboutPagePlanningCardHeading",
+    "aboutPagePlanningCardBody",
+  ]) {
+    assert.ok(aboutPageSource.includes(key), `About page render path should resolve ${key} through i18n.`);
+    assert.notEqual(hi[key], enTranslations[key], `Hindi should localize ${key}`);
+  }
+});
+
+
 test("active account FAQ translations cover all visible FAQ page strings", () => {
   const activeLocaleTranslations = {
     "en-us": enTranslations,
