@@ -339,6 +339,27 @@ test("Spanish, French, German, Italian, Dutch, Portuguese, Chinese, Japanese, Ko
   assert.equal(getTranslations("hi").websiteLanguageTitle, "साइट की भाषा चुनें");
 });
 
+test("Hindi flights landing static render path resolves screenshot-visible copy", () => {
+  assert.equal(hiTranslations.flightLandingHeroTitle, "अपनी अगली किफायती उड़ान आसानी से खोजें।");
+  assert.equal(hiTranslations.roundTrip, "आना-जाना");
+  assert.equal(hiTranslations.oneWay, "एकतरफ़ा");
+  assert.equal(hiTranslations.origin, "प्रस्थान");
+  assert.equal(hiTranslations.destination, "गंतव्य");
+  assert.equal(hiTranslations.travelDates, "यात्रा तिथियाँ");
+  assert.equal(hiTranslations.travelers, "यात्री");
+  assert.equal(hiTranslations.cityOrAirport, "शहर या हवाई अड्डा");
+  assert.equal(hiTranslations.searchFlights, "उड़ानें खोजें");
+  assert.equal(hiTranslations.adultSingular, "वयस्क");
+  assert.equal(hiTranslations.economy, "इकॉनमी");
+  assert.equal(hiTranslations.flightLandingRouteTemplate.replace("{{origin}}", hiTranslations["flightLandingCity.Lagos"]).replace("{{destination}}", hiTranslations["flightLandingCity.London"]), "लागोस से लंदन");
+  assert.equal(hiTranslations["homeDiscoveryRoute.ng-los-lhr.title"], "लंदन बिज़नेस और वीकेंड मिश्रण");
+  assert.equal(hiTranslations["homeDiscoveryRoute.ng-los-lhr.routeNote"], "काम की यात्राओं और अतिरिक्त अवकाश योजनाओं के लिए लोकप्रिय लंबी दूरी का मार्ग।");
+  assert.equal(hiTranslations["flightLandingCity.Johannesburg"], "जोहान्सबर्ग");
+  assert.equal(hiTranslations["flightLandingImageAlt.Johannesburg skyline at golden hour"], "गोल्डन आवर में जोहान्सबर्ग स्काईलाइन");
+  assert.equal(hiTranslations.flightLandingRouteAriaLabel.includes("{{origin}}"), true);
+  assert.equal(hiTranslations.flightLandingRouteAriaLabel.includes("{{destination}}"), true);
+});
+
 test("active locale auth verification copy is localized without English fallback", () => {
   const activeNonEnglishTranslations = [
     esTranslations,
