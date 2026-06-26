@@ -20,6 +20,7 @@ import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { ExchangeRates } from "@/lib/currency/exchangeRates";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { translations as enTranslations } from "@/lib/i18n/en";
 
 const FLIGHT_QUOTE_UNAVAILABLE_MESSAGE =
   "This flight quote is no longer available. Please search again for current prices.";
@@ -157,9 +158,9 @@ export function FlightDetailsClient({ id }: { id: string }) {
                     returnLabel={t.return || "Return"}
                     itineraryLabel={t.itinerary || "Itinerary"}
                     legLabel={t.leg || "Leg"}
-                    nonstopLabel={t.nonstop || "Nonstop"}
-                    stopSingularLabel={t.stopSingular || "stop"}
-                    stopPluralLabel={t.stopPlural || "stops"}
+                    nonstopLabel={t.nonstop || enTranslations.nonstop}
+                    stopSingularLabel={t.stopSingular || enTranslations.stopSingular}
+                    stopPluralLabel={t.stopPlural || enTranslations.stopPlural}
                     stopDualLabel={t.stopDual}
                     stopCountTemplate={t.stopCount}
                     layoverInLabel={t.layoverIn || "Layover in"}
@@ -246,7 +247,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                         <div className="mx-auto flex w-full max-w-[20rem] flex-col items-stretch gap-2 text-center sm:max-w-[320px] md:max-w-[15rem] lg:max-w-[15.5rem]">
                           <div className="w-full rounded-md border border-slate-200 bg-slate-50/70 px-3 py-2.5 text-center shadow-sm sm:px-3 sm:py-2">
                             <p className="text-[10px] font-semibold uppercase leading-3 tracking-wide text-slate-500">
-                              {t.fromPrice || "From"}
+                              {t.fromPrice || enTranslations.fromPrice}
                             </p>
                             <div
                               className="whitespace-nowrap text-center text-[1.125rem] font-medium leading-5 tracking-tight text-slate-900 sm:text-[1.2rem] sm:leading-6 lg:font-semibold"
@@ -258,7 +259,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                             {displayPrice.isConvertedEstimate ? (
                               <p className="mx-auto mt-1 max-w-[17rem] text-center text-[11px] font-medium leading-[0.95rem] text-slate-600 sm:mt-0.5">
                                 {t.estimateShownProviderPrice ||
-                                  "Estimate shown. Provider price:"}{" "}
+                                  enTranslations.estimateShownProviderPrice}{" "}
                                 {displayPrice.providerFormatted}.
                               </p>
                             ) : null}
@@ -290,16 +291,16 @@ export function FlightDetailsClient({ id }: { id: string }) {
                     compareMoreProviders: t.compareMoreProviders,
                     providerComparisonIntro:
                       t.providerComparisonIntro ||
-                      "Kurioticket can compare from different providers.",
+                      enTranslations.providerComparisonIntro,
                     noAdditionalLiveProviderOptions:
                       t.noAdditionalLiveProviderOptions ||
-                      "No additional live provider options are available for this flight right now.",
+                      enTranslations.noAdditionalLiveProviderOptions,
                     continueToProvider: t.continueToProvider,
                     confirmedByProvider:
-                      t.confirmedByProvider || "Confirmed by provider",
-                    nonstop: t.nonstop || "Nonstop",
-                    stopSingular: t.stopSingular || "stop",
-                    stopPlural: t.stopPlural || "stops",
+                      t.confirmedByProvider || enTranslations.confirmedByProvider,
+                    nonstop: t.nonstop || enTranslations.nonstop,
+                    stopSingular: t.stopSingular || enTranslations.stopSingular,
+                    stopPlural: t.stopPlural || enTranslations.stopPlural,
                     stopDual: t.stopDual,
                     providedBy: t.providedBy || "Provided by",
                     ...buildLocalizedDisplayLabels(t),
@@ -1701,7 +1702,7 @@ function buildHeroDetails(
       label: t.baggage || "Baggage",
       value: formatBaggageValue(
         flight.baggageInfo,
-        t.confirmedByProvider || "Confirmed by provider",
+        t.confirmedByProvider || enTranslations.confirmedByProvider,
         buildLocalizedDisplayLabels(t),
       ),
       icon: Luggage,
@@ -1710,7 +1711,7 @@ function buildHeroDetails(
       label: t.cabin || "Cabin",
       value: formatCabinClass(
         flight.cabinClass,
-        t.confirmedByProvider || "Confirmed by provider",
+        t.confirmedByProvider || enTranslations.confirmedByProvider,
         buildLocalizedDisplayLabels(t),
       ),
       icon: Armchair,
@@ -1719,7 +1720,7 @@ function buildHeroDetails(
       label: t.seatSelection || "Seat selection",
       value: formatSeatSelectionValue(
         flight,
-        t.providerRulesApply || "Provider rules apply",
+        t.providerRulesApply || enTranslations.providerRulesApply,
       ),
       icon: Settings,
     },
@@ -1727,7 +1728,7 @@ function buildHeroDetails(
       label: t.fareRules || "Fare rules",
       value: formatFareRulesValue(
         flight,
-        t.reviewBeforeBooking || "Review before booking",
+        t.reviewBeforeBooking || enTranslations.reviewBeforeBooking,
         t,
       ),
       icon: ShieldCheck,
@@ -1774,16 +1775,16 @@ function buildLocalizedDisplayLabels(
   t: Record<string, string>,
 ): LocalizedDisplayLabels {
   return {
-    cabinEconomy: t.economy || "Economy",
-    cabinPremiumEconomy: t.premiumEconomy || "Premium economy",
-    cabinBusiness: t.selectedFlightCabinBusiness || t.business || "Business",
-    cabinFirst: t.first || "First",
-    carryOnSingularIncluded: t.carryOnSingularIncluded || "carry-on included",
-    carryOnPluralIncluded: t.carryOnPluralIncluded || "carry-ons included",
+    cabinEconomy: t.economy || enTranslations.economy,
+    cabinPremiumEconomy: t.premiumEconomy || enTranslations.premiumEconomy,
+    cabinBusiness: t.selectedFlightCabinBusiness || t.business || enTranslations.business,
+    cabinFirst: t.first || enTranslations.first,
+    carryOnSingularIncluded: t.carryOnSingularIncluded || enTranslations.carryOnSingularIncluded,
+    carryOnPluralIncluded: t.carryOnPluralIncluded || enTranslations.carryOnPluralIncluded,
     checkedBagSingularIncluded:
-      t.checkedBagSingularIncluded || "checked bag included",
+      t.checkedBagSingularIncluded || enTranslations.checkedBagSingularIncluded,
     checkedBagPluralIncluded:
-      t.checkedBagPluralIncluded || "checked bags included",
+      t.checkedBagPluralIncluded || enTranslations.checkedBagPluralIncluded,
     includedBaggagePrefix: t.includedBaggagePrefix,
     baggageListSeparator: t.baggageListSeparator,
   };
@@ -1791,7 +1792,7 @@ function buildLocalizedDisplayLabels(
 
 function formatCabinClass(
   value?: string,
-  fallback = "Confirmed by provider",
+  fallback = enTranslations.confirmedByProvider,
   labels?: LocalizedDisplayLabels,
 ) {
   if (!value) return fallback;
@@ -1811,7 +1812,7 @@ function formatCabinClass(
 
 function formatBaggageValue(
   value?: string,
-  fallback = "Confirmed by provider",
+  fallback = enTranslations.confirmedByProvider,
   labels?: LocalizedDisplayLabels,
 ) {
   if (
@@ -1869,7 +1870,7 @@ function localizeIncludedBaggageValue(
 
 function formatSeatSelectionValue(
   flight: PublicFlightResult,
-  fallback = "Provider rules apply",
+  fallback = enTranslations.providerRulesApply,
 ) {
   return (
     getOptionalStringField(flight, [
@@ -1883,7 +1884,7 @@ function formatSeatSelectionValue(
 
 function formatFareRulesValue(
   flight: PublicFlightResult,
-  fallback = "Review before booking",
+  fallback = enTranslations.reviewBeforeBooking,
   t: Record<string, string> = {},
 ) {
   const fareRules = getOptionalStringField(flight, [
@@ -1990,7 +1991,7 @@ function formatStops(
     stopPlural: string;
     stopDual?: string;
     stopCount?: string;
-  } = { nonstop: "Nonstop", stopSingular: "stop", stopPlural: "stops" },
+  } = { nonstop: enTranslations.nonstop, stopSingular: enTranslations.stopSingular, stopPlural: enTranslations.stopPlural },
 ) {
   if (stops === 0) return labels.nonstop;
   if (labels.stopCount) {
