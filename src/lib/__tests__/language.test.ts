@@ -848,6 +848,55 @@ test("active locale dictionaries do not keep audited cross-language UI fallbacks
 });
 
 
+
+
+test("Hindi hotels flow copy is localized without English fallback", () => {
+  const expectedHindiHotelStrings = {
+    clearAll: "सब साफ़ करें",
+    hotelsHeroEyebrow: "प्रीमियम ठहराव, स्पष्ट तुलना",
+    hotelsHeroTitle: "ऐसा ठहराव खोजें जो यात्रा की सही शुरुआत करे।",
+    hotelsHeroSubtitle:
+      "शहर में आरामदायक आगमन से लेकर आसान रिसॉर्ट ठहराव तक, होटल एक ही जगह तुलना करें।",
+    hotelSearchIntroLabel: "होटल विकल्पों की तुलना करें",
+    hotelSearchDestinationLabel: "गंतव्य",
+    hotelSearchDestinationPlaceholder: "शहर, क्षेत्र या प्रसिद्ध स्थल",
+    hotelSearchDatePlaceholder: "चेक-इन — चेक-आउट",
+    exploreHotelStaysByDestination: "गंतव्य के अनुसार होटल ठहराव देखें",
+    featuredHotelDestinations: "चुनिंदा होटल गंतव्य",
+    "hotelDestination.Tokyo.title": "जापान",
+    "hotelDestination.Tokyo.subtitle": "टोक्यो ठहराव",
+    "hotelDestination.London.title": "यूनाइटेड किंगडम",
+    "hotelDestination.London.subtitle": "लंदन ठहराव",
+    "hotelDestination.Paris.title": "फ्रांस",
+    "hotelDestination.Paris.subtitle": "पेरिस ठहराव",
+    "hotelDestination.New York.title": "संयुक्त राज्य",
+    "hotelDestination.New York.subtitle": "न्यूयॉर्क ठहराव",
+    "hotelResults.liveSearchUnavailable": "लाइव होटल खोज अस्थायी रूप से उपलब्ध नहीं है। कृपया थोड़ी देर बाद फिर कोशिश करें।",
+    "hotelResults.filterBy": "फ़िल्टर करें",
+    "hotelResults.budgetPrice": "बजट / कीमत",
+    "hotelResults.totalUpTo": "कुल सीमा",
+    "hotelResults.starRating": "स्टार रेटिंग",
+    "hotelResults.fromRating": "से",
+  };
+
+  for (const [key, value] of Object.entries(expectedHindiHotelStrings)) {
+    assert.equal(hiTranslations[key], value, `hi ${key} should use the audited Hindi hotels copy`);
+    assert.notEqual(hiTranslations[key], enTranslations[key], `hi ${key} should not fall back to English`);
+  }
+
+  assert.equal(new Intl.DateTimeFormat("hi-IN", { month: "long", year: "numeric" }).format(new Date(2026, 5, 1)), "जून 2026");
+  assert.deepEqual(
+    Array.from({ length: 7 }, (_, day) =>
+      new Intl.DateTimeFormat("hi-IN", { weekday: "short" }).format(new Date(2024, 0, 7 + day)),
+    ),
+    ["रवि", "सोम", "मंगल", "बुध", "गुरु", "शुक्र", "शनि"],
+  );
+  assert.equal(
+    `${new Intl.DateTimeFormat("hi-IN", { month: "short", day: "numeric" }).format(new Date(2026, 5, 27))} — ${new Intl.DateTimeFormat("hi-IN", { month: "short", day: "numeric" }).format(new Date(2026, 5, 30))}`,
+    "27 जून — 30 जून",
+  );
+});
+
 test("Hindi homepage search support newsletter and footer strings are localized", () => {
   const expectedHindiHomepageStrings = {
     fromPlaceholder: "कहाँ से?",
