@@ -931,15 +931,17 @@ function PhoneNumberInput({
   onChange,
   className,
   label,
-  fallback,
 }: {
   value: string;
   onChange: (value: string) => void;
   className: string;
   label: string;
-  fallback: string;
 }) {
   const parsedValue = useMemo(() => parsePhoneDraftValue(value), [value]);
+  const selectedOption =
+    countryCallingCodeOptions.find(
+      (option) => option.isoCode === parsedValue.countryCode,
+    ) ?? defaultCountryCallingCodeOption;
 
   const handleCountryChange = (nextCountryCode: string) => {
     onChange(formatPhoneDraftValue(nextCountryCode, parsedValue.localNumber));
@@ -950,7 +952,7 @@ function PhoneNumberInput({
   };
 
   return (
-    <div className="grid min-w-0 grid-cols-[minmax(5.75rem,6.75rem)_minmax(0,1fr)] gap-2 sm:grid-cols-[minmax(7.5rem,9rem)_minmax(0,1fr)]">
+    <div className="grid min-w-0 grid-cols-[minmax(4.75rem,5.5rem)_minmax(0,1fr)] gap-2 sm:grid-cols-[minmax(5.25rem,6rem)_minmax(0,1fr)]">
       <select
         className={className}
         value={parsedValue.countryCode}
@@ -959,20 +961,29 @@ function PhoneNumberInput({
       >
         {countryCallingCodeOptions.map((option) => (
           <option key={option.isoCode} value={option.isoCode}>
-            {option.flag} {option.isoCode} {option.dialCode}
+            {option.flag} {option.isoCode}
           </option>
         ))}
       </select>
-      <input
-        className={className}
-        type="tel"
-        value={parsedValue.localNumber}
-        onChange={(event) => handleLocalNumberChange(event.target.value)}
-        placeholder={fallback}
-        aria-label={label}
-        inputMode="tel"
-        autoComplete="tel-national"
-      />
+      <div
+        className={cn(
+          className,
+          "flex min-w-0 items-center gap-2 overflow-hidden px-3.5",
+        )}
+      >
+        <span className="shrink-0 whitespace-nowrap text-slate-900">
+          {selectedOption.dialCode}
+        </span>
+        <input
+          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-[15px] font-medium text-slate-900 outline-none sm:text-sm"
+          type="tel"
+          value={parsedValue.localNumber}
+          onChange={(event) => handleLocalNumberChange(event.target.value)}
+          aria-label={label}
+          inputMode="tel"
+          autoComplete="tel-national"
+        />
+      </div>
     </div>
   );
 }
@@ -1049,7 +1060,6 @@ function DetailInput({
         onChange={(nextValue) => onChange(row.key, nextValue)}
         className={baseClassName}
         label={row.label}
-        fallback={row.fallback}
       />
     );
   }
