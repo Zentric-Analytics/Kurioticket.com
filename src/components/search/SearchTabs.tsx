@@ -45,6 +45,7 @@ import {
 } from "@/lib/recent-searches";
 import {
   formatAirportLabel,
+  getLocalizedAirportCountryName,
   getLocalizedCityName,
   type AirportOption,
 } from "@/data/airports";
@@ -2369,7 +2370,7 @@ export function SearchTabs({
                 {getLocalizedCityName(option.city, locale)}
               </span>
               <span className="mt-0.5 block truncate text-xs font-normal leading-5 text-slate-500">
-                {option.airport}{option.country ? ` · ${option.country}` : ""}
+                {option.airport}{option.country ? ` · ${getLocalizedAirportCountryName(option, locale)}` : ""}
               </span>
             </span>
             <span className="shrink-0 ps-3 text-end text-sm font-medium tracking-[0.08em] text-slate-600">
