@@ -1142,7 +1142,7 @@ function NationalityInput({
 }
 
 function getPersonalDetailEditWidthClass(key: keyof PersonalDetailsDraft) {
-  if (key === "address" || key === "email") {
+  if (key === "address") {
     return "w-full max-w-[760px]";
   }
 
