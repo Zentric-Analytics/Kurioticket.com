@@ -403,7 +403,7 @@ const normalizeAirportDisplayLocale = (locale: string | null | undefined): Airpo
 
 type LocalizedCityNames = Record<AirportDisplayLocale, string>;
 
-const cityDisplayNames: Record<string, LocalizedCityNames> = {
+const cityDisplayNameOverrides: Record<string, LocalizedCityNames> = {
   "Abuja": { "en-us": "Abuja", ar: "أبوجا", nl: "Abuja", "es-es": "Abuya", fr: "Abuja", "de-de": "Abuja", "it-it": "Abuja", "pt-br": "Abuja", "zh-cn": "阿布贾", ja: "アブジャ", ko: "아부자" },
   "Accra": { "en-us": "Accra", ar: "أكرا", nl: "Accra", "es-es": "Acra", fr: "Accra", "de-de": "Accra", "it-it": "Accra", "pt-br": "Acra", "zh-cn": "阿克拉", ja: "アクラ", ko: "아크라" },
   "Addis Ababa": { "en-us": "Addis Ababa", ar: "أديس أبابا", nl: "Addis Abeba", "es-es": "Adís Abeba", fr: "Addis-Abeba", "de-de": "Addis Abeba", "it-it": "Addis Abeba", "pt-br": "Adis Abeba", "zh-cn": "亚的斯亚贝巴", ja: "アディスアベバ", ko: "아디스아바바" },
@@ -450,6 +450,27 @@ const cityDisplayNames: Record<string, LocalizedCityNames> = {
   "Venice": { "en-us": "Venice", ar: "البندقية", nl: "Venetië", "es-es": "Venecia", fr: "Venise", "de-de": "Venedig", "it-it": "Venezia", "pt-br": "Veneza", "zh-cn": "威尼斯", ja: "ヴェネツィア", ko: "베네치아" },
   "Zurich": { "en-us": "Zurich", ar: "زيورخ", nl: "Zürich", "es-es": "Zúrich", fr: "Zurich", "de-de": "Zürich", "it-it": "Zurigo", "pt-br": "Zurique", "zh-cn": "苏黎世", ja: "チューリッヒ", ko: "취리히" },
 };
+
+const createIdentityLocalizedCityNames = (city: string): LocalizedCityNames => ({
+  "en-us": city,
+  ar: city,
+  nl: city,
+  "es-es": city,
+  fr: city,
+  "de-de": city,
+  "it-it": city,
+  "pt-br": city,
+  "zh-cn": city,
+  ja: city,
+  ko: city,
+});
+
+export const cityDisplayNames: Record<string, LocalizedCityNames> = Object.fromEntries(
+  [...new Set([...airports.map((airport) => airport.city), ...Object.keys(cityDisplayNameOverrides)])].map((city) => [
+    city,
+    { ...createIdentityLocalizedCityNames(city), ...cityDisplayNameOverrides[city] },
+  ]),
+) as Record<string, LocalizedCityNames>;
 
 export function getAirportCityLocalizationCoverage() {
   const uniqueCities = new Set(airports.map((airport) => airport.city));

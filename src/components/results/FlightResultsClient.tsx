@@ -31,7 +31,7 @@ import { FlightCardSkeleton } from "@/components/ui/Skeleton";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
-import { airports, type AirportOption } from "@/data/airports";
+import { airports, getLocalizedCityName, type AirportOption } from "@/data/airports";
 import {
   getHomeDiscoveryByRegion,
   homeDiscoveryByRegion,
@@ -2677,6 +2677,7 @@ export function FlightResultsClient() {
                         id="flight-airport-suggestions"
                         position={dropdownPosition}
                         suggestions={resolvedOriginSuggestions}
+                        locale={locale}
                         onSelect={(value) => {
                           setOriginInput(value);
                           setOriginCode(value);
@@ -2763,6 +2764,7 @@ export function FlightResultsClient() {
                         id="flight-airport-suggestions"
                         position={dropdownPosition}
                         suggestions={resolvedDestinationSuggestions}
+                        locale={locale}
                         onSelect={(value) => {
                           setDestinationInput(value);
                           setDestinationCode(value);
@@ -3674,6 +3676,7 @@ export function FlightResultsClient() {
                       id="flight-airport-suggestions"
                       alignToField
                       suggestions={resolvedOriginSuggestions}
+                      locale={locale}
                       onSelect={(value) => {
                         markExpandedSearchInteraction();
                         setOriginInput(value);
@@ -3773,6 +3776,7 @@ export function FlightResultsClient() {
                       id="flight-airport-suggestions"
                       alignToField
                       suggestions={resolvedDestinationSuggestions}
+                      locale={locale}
                       onSelect={(value) => {
                         markExpandedSearchInteraction();
                         setDestinationInput(value);
@@ -5237,12 +5241,14 @@ function SuggestionList({
   onSelect,
   position,
   alignToField = false,
+  locale,
 }: {
   id: string;
   suggestions: AirportOption[];
   onSelect: (value: string) => void;
   position?: { top: number; left: number; width: number };
   alignToField?: boolean;
+  locale?: string | null;
 }) {
   return (
     <div
@@ -5279,7 +5285,7 @@ function SuggestionList({
             className="block w-full px-3 py-1.5 text-start transition-colors hover:bg-slate-50"
           >
             <p className="text-[13px] font-medium text-slate-900">
-              {item.city} ({item.code})
+              {getLocalizedCityName(item.city, locale)} ({item.code})
             </p>
             <p className="text-[11px] leading-4 text-slate-600">
               {item.airport}
