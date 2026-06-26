@@ -45,6 +45,7 @@ import {
 } from "@/lib/recent-searches";
 import {
   formatAirportLabel,
+  getLocalizedCityName,
   type AirportOption,
 } from "@/data/airports";
 import { getHomeDiscoveryByRegion, homeDiscoveryByRegion } from "@/data/homeDiscovery";
@@ -941,7 +942,7 @@ export function SearchTabs({
 
         const payload = (await response.json()) as PlacesApiResponse;
         const defaultAirport = payload.defaultOriginAirport ?? null;
-        setFromState((current) => applyDefaultOrigin(current, defaultAirport));
+        setFromState((current) => applyDefaultOrigin(current, defaultAirport, locale));
         if (Array.isArray(payload.suggestions)) {
           setFromLiveSuggestions(
             dedupeSuggestions(payload.suggestions)
@@ -957,7 +958,7 @@ export function SearchTabs({
     void loadDefaultOrigin();
 
     return () => controller.abort();
-  }, [buildPlacesUrl, fromState]);
+  }, [buildPlacesUrl, fromState, locale]);
 
   useEffect(() => {
     const query = from.trim();
@@ -1654,13 +1655,14 @@ export function SearchTabs({
       if (isFrom) {
         setFromState((current) => markOriginManualInput(
           current,
-          formatAirportLabel(list[active]),
+          formatAirportLabel(list[active], locale),
           list[active].code
         ));
       } else {
         setTo(
           formatAirportLabel(
-            list[active]
+            list[active],
+            locale
           )
         );
         setToCode(
@@ -2290,7 +2292,7 @@ export function SearchTabs({
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-base font-extrabold leading-5 tracking-tight text-slate-950">
-                      {option.city}
+                      {getLocalizedCityName(option.city, locale)}
                     </span>
                     <span className="mt-1 block truncate text-sm font-medium leading-5 text-slate-500">
                       {option.airport}
@@ -2360,7 +2362,7 @@ export function SearchTabs({
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-medium leading-5 tracking-tight text-slate-900">
-                {option.city}
+                {getLocalizedCityName(option.city, locale)}
               </span>
               <span className="mt-0.5 block truncate text-xs font-normal leading-5 text-slate-500">
                 {option.airport}{option.country ? ` · ${option.country}` : ""}
@@ -3007,7 +3009,7 @@ export function SearchTabs({
                   onSelect: (option) => {
                     setFromState((current) => markOriginManualInput(
                       current,
-                      formatAirportLabel(option),
+                      formatAirportLabel(option, locale),
                       option.code
                     ));
                     setFromOpen(false);
@@ -3106,7 +3108,7 @@ export function SearchTabs({
                   isLoading: isToLoadingVisible,
                   sectionLabel: translate("airportsAndCities"),
                   onSelect: (option) => {
-                    setTo(formatAirportLabel(option));
+                    setTo(formatAirportLabel(option, locale));
                     setToCode(option.code);
                     setToOpen(false);
                   },
@@ -3347,7 +3349,7 @@ export function SearchTabs({
               setFromHighlight(0);
             },
             onSelect: (option) => {
-              setFromState((current) => markOriginManualInput(current, formatAirportLabel(option), option.code));
+              setFromState((current) => markOriginManualInput(current, formatAirportLabel(option, locale), option.code));
               setActiveMobileAirportPicker(null);
             },
             onClose: () => setActiveMobileAirportPicker(null),
@@ -3378,7 +3380,7 @@ export function SearchTabs({
               setToHighlight(0);
             },
             onSelect: (option) => {
-              setTo(formatAirportLabel(option));
+              setTo(formatAirportLabel(option, locale));
               setToCode(option.code);
               setActiveMobileAirportPicker(null);
             },
