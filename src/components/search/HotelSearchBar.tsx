@@ -136,6 +136,10 @@ const normalizeHotelCalendarLocale = (locale: string | null | undefined) => {
     return "ja-JP";
   }
 
+  if (normalized === "ko" || normalized.startsWith("ko-")) {
+    return "ko-KR";
+  }
+
   return "en-US";
 };
 
@@ -370,6 +374,10 @@ export function HotelSearchBar({
 
     if (normalizedLocale === "ja" || normalizedLocale?.startsWith("ja-")) {
       return `${guestLabel}${normalizedGuests}名、${normalizedRooms}${roomLabel}`;
+    }
+
+    if (normalizedLocale === "ko" || normalizedLocale?.startsWith("ko-")) {
+      return `${guestLabel} ${normalizedGuests}명, ${roomLabel} ${normalizedRooms}개`;
     }
 
     const separator = normalizedLocale === "zh-cn" ? "，" : ", ";
