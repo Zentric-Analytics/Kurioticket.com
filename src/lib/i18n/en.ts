@@ -2827,6 +2827,7 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.kingBed": "King Bed",
   "hotelResults.filter.doubleBusiness": "Double Business",
   "hotelResults.filter.deluxeKingRoom": "Deluxe King Room",
+  "hotelResults.filter.classicRoom": "Classic Room",
   "hotelResults.filter.luxuryKing": "Luxury King",
   "hotelResults.filter.singleStandard": "Single Standard",
   "hotelResults.filter.superiorDoubleRoom": "Superior Double Room",
