@@ -64,7 +64,7 @@ test("European locale city labels cover common differing names", () => {
   assert.equal(formatLocalizedAirportLabel({ city: "Los Angeles", code: "LAX", locale: "es-es" }), "Los Ángeles (LAX)");
 });
 
-test("airport city localization coverage reports bounded fallback instead of enforcing complete coverage", () => {
+test("airport city localization coverage is complete for every active locale", () => {
   const report = getAirportCityLocalizationCoverage();
   const uniqueCities = new Set(airports.map((airport) => airport.city));
 
@@ -72,9 +72,21 @@ test("airport city localization coverage reports bounded fallback instead of enf
   assert.equal(report.length, 11);
   for (const localeReport of report) {
     assert.equal(localeReport.total, uniqueCities.size);
-    assert.equal(localeReport.localized, 36);
-    assert.equal(localeReport.fallback, 198);
-    assert.ok(localeReport.missing.length <= 50);
+    assert.equal(localeReport.localized, uniqueCities.size);
+    assert.equal(localeReport.fallback, 0);
+    assert.deepEqual(localeReport.missing, []);
+  }
+});
+
+test("localized airport labels preserve airport codes for every airport and active locale", () => {
+  const report = getAirportCityLocalizationCoverage();
+
+  for (const localeReport of report) {
+    for (const airport of airports) {
+      const label = formatAirportLabel(airport, localeReport.locale);
+      assert.match(label, new RegExp(`\\(${airport.code}\\)$`));
+      assert.equal(airport.code, airport.code.toUpperCase());
+    }
   }
 });
 
