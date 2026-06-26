@@ -727,6 +727,66 @@ test("active locale dictionaries do not keep audited cross-language UI fallbacks
 });
 
 
+test("Hindi homepage search support newsletter and footer strings are localized", () => {
+  const expectedHindiHomepageStrings = {
+    fromPlaceholder: "कहाँ से?",
+    cityOrHotel: "शहर या होटल",
+    hotelSearchTravelDatesLabel: "यात्रा तिथियाँ",
+    hotelSearchDatePlaceholder: "चेक-इन — चेक-आउट",
+    hotelSearchGuestsLabel: "मेहमान",
+    guestSingular: "मेहमान",
+    guestPlural: "मेहमान",
+    roomSingular: "कमरा",
+    roomPlural: "कमरे",
+    stayDetails: "ठहराव विवरण",
+    guestsAndRooms: "मेहमान और कमरे",
+    hotelAdultHelper: "मेहमान 18+",
+    hotelChildrenHelper: "उम्र 0–17",
+    hotelRoomsHelper: "6 कमरों तक",
+    petFriendly: "पालतू-मैत्रीपूर्ण",
+    onlyShowPetFriendlyStays: "केवल वे ठहराव दिखाएँ जहाँ पालतू जानवरों की अनुमति है",
+    homeNewsletterTitle: "हर यात्रा डील से आगे रहें",
+    homeNewsletterBody: "चुनी हुई उड़ान और होटल अपडेट हर सप्ताह पाएँ।",
+    homeNewsletterPlaceholder: "अपना ईमेल दर्ज करें",
+    homeSubscribe: "सदस्यता लें",
+    homeNewsletterConsent:
+      "सदस्यता लेकर, आप Kurioticket अपडेट प्राप्त करने के लिए सहमत होते हैं। आप कभी भी सदस्यता समाप्त कर सकते हैं।",
+    supportFaqAccountQuestion: "खाता और साइन-इन सहायता",
+    supportFaqSearchQuestion: "खोज और परिणाम सहायता",
+    supportFaqSavedTripsQuestion: "सहेजी गई यात्राएँ और अलर्ट",
+    supportFaqRedirectQuestion: "बुकिंग/प्रदाता रीडायरेक्ट सहायता",
+    supportFaqAlreadyBookedQuestion: "क्या आपने पहले ही किसी प्रदाता के साथ बुकिंग कर ली है?",
+    supportFaqChangeBookingQuestion: "क्या Kurioticket मेरी बुकिंग बदल सकता है?",
+    supportFaqWhyRedirectedQuestion: "मुझे किसी दूसरे प्रदाता के पास क्यों भेजा गया?",
+    footerContactUs: "संपर्क करें",
+    footerCustomerSupport: "ग्राहक सहायता",
+    footerServiceGuarantee: "सेवा गारंटी",
+    footerMoreServiceInfo: "अधिक सेवा जानकारी",
+    footerDiscover: "खोजें",
+    footerSavedRecent: "सहेजे गए और हाल के",
+    footerTermsSettings: "शर्तें और सेटिंग्स",
+    footerPrivacyPolicy: "गोपनीयता नीति",
+    footerTermsOfService: "सेवा की शर्तें",
+    footerCookiePolicy: "कुकी नीति",
+    footerAboutKurioticket: "Kurioticket के बारे में",
+    footerAboutUs: "हमारे बारे में",
+    footerHowItWorks: "Kurioticket कैसे काम करता है",
+    footerConfidenceTagline: "उड़ानें, होटल और यात्रा डील्स आत्मविश्वास के साथ खोजें।",
+    footerAllRightsReserved: "सर्वाधिकार सुरक्षित।",
+    footerPrivacy: "गोपनीयता",
+    footerTerms: "शर्तें",
+    footerCookies: "कुकीज़",
+  };
+
+  for (const [key, value] of Object.entries(expectedHindiHomepageStrings)) {
+    assert.equal(hiTranslations[key], value, `hi ${key} should use the audited Hindi copy`);
+    assert.notEqual(hiTranslations[key], enTranslations[key], `hi ${key} should not fall back to English`);
+  }
+
+  assert.equal(getTranslations("hi").fromPlaceholder, "कहाँ से?");
+  assert.equal(getTranslations("hi").cityOrHotel, "शहर या होटल");
+});
+
 test("country and currency selector country names resolve for every active locale", () => {
   const activeLocales = ["en-us", "ar", "nl", "es-es", "fr", "de-de", "it-it", "pt-br", "zh-cn", "ja", "ko"];
 
