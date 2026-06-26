@@ -844,6 +844,53 @@ test("Hindi homepage search support newsletter and footer strings are localized"
   assert.equal(getTranslations("hi").cityOrHotel, "शहर या होटल");
 });
 
+
+test("Hindi service and support page strings are localized", () => {
+  const expectedHindiServiceSupportStrings = {
+    supportEyebrow: "Kurioticket सहायता डेस्क",
+    supportTitle: "ग्राहक सहायता",
+    supportBeforeContactHeading: "हमसे संपर्क करने से पहले",
+    supportTicketHeading: "सहायता टिकट बनाएँ",
+    supportFormEmailLabel: "ईमेल",
+    supportFormSubjectLabel: "विषय",
+    supportFormCategoryLabel: "श्रेणी",
+    supportCategoryPriceAlerts: "कीमत अलर्ट",
+    supportFormMessageLabel: "हम कैसे मदद कर सकते हैं?",
+    supportFormMessagePlaceholder: "मार्ग, होटल, अलर्ट या खाते से जुड़ा संदर्भ साझा करें।",
+    supportFormSubmit: "अनुरोध भेजें",
+    supportFaqHeading: "अक्सर पूछे जाने वाले प्रश्न",
+    serviceGuaranteeEyebrow: "Kurioticket सेवा प्रतिबद्धता",
+    serviceGuaranteeTitle: "सेवा गारंटी",
+    serviceGuaranteeFaqHeading: "अक्सर पूछे जाने वाले प्रश्न",
+    serviceGuaranteeFaqWhatGuaranteeQuestion: "Kurioticket क्या गारंटी देता है?",
+    serviceGuaranteeFaqRedirectedQuestion: "मुझे किसी दूसरे प्रदाता के पास क्यों भेजा जाता है?",
+    serviceGuaranteeHelpCardTitle: "अपने खाते या खोज में मदद चाहिए?",
+    moreServiceInfoEyebrow: "प्लेटफ़ॉर्म जानकारी",
+    moreServiceInfoTitle: "अधिक सेवा जानकारी",
+    moreServiceInfoContextTitle: "संदर्भ के साथ योजना बनाएँ",
+    moreServiceInfoContextSubtitle: "खोज परिणामों से प्रदाता रीडायरेक्ट तक",
+    moreServiceInfoHowHeading: "Kurioticket कैसे काम करता है",
+    moreServiceInfoHowBadge: "यात्रा योजना की मूल बातें",
+    moreServiceInfoStepSearchTitle: "कई प्रदाताओं में खोजें",
+    moreServiceInfoStepCompareTitle: "यात्रा विकल्पों की तुलना करें",
+    moreServiceInfoStepSaveTitle: "यात्राएँ और अलर्ट सहेजें",
+    moreServiceInfoStepRedirectsTitle: "प्रदाता रीडायरेक्ट समझाया गया",
+    moreServiceInfoStepAccountTitle: "खाता और यात्रा टूल",
+    moreServiceInfoFaqHeading: "अक्सर पूछे जाने वाले प्रश्न",
+    moreServiceInfoFaqPaymentsQuestion: "क्या Kurioticket भुगतान संसाधित करता है?",
+    moreServiceInfoSupportCta: "ग्राहक सहायता से संपर्क करें",
+  };
+
+  for (const [key, value] of Object.entries(expectedHindiServiceSupportStrings)) {
+    assert.equal(hiTranslations[key], value, `hi ${key} should use the audited Hindi copy`);
+    assert.notEqual(hiTranslations[key], enTranslations[key], `hi ${key} should not fall back to English`);
+  }
+
+  assert.equal(getTranslations("hi").supportTitle, "ग्राहक सहायता");
+  assert.equal(getTranslations("hi").serviceGuaranteeTitle, "सेवा गारंटी");
+  assert.equal(getTranslations("hi").moreServiceInfoTitle, "अधिक सेवा जानकारी");
+});
+
 test("country and currency selector country names resolve for every active locale", () => {
   const activeLocales = ["en-us", "ar", "nl", "es-es", "fr", "de-de", "it-it", "pt-br", "zh-cn", "ja", "ko"];
 
