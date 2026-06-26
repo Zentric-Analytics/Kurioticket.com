@@ -714,6 +714,15 @@ export const translations: TranslationDictionary = {
   footerTermsOfService: "सेवा की शर्तें",
   footerCookiePolicy: "कुकी नीति",
   legalCenter: "कानूनी केंद्र",
+  aboutPageEyebrow: "Kurioticket के बारे में",
+  aboutPageTitle: "हमारे बारे में",
+  aboutPageIntroPrimary:
+    "Kurioticket एक यात्रा खोज और तुलना प्लेटफ़ॉर्म है, जो यात्रियों को उड़ानें, होटल, कारें और यात्रा डील्स खोजने, तुलना करने और ढूँढने में मदद करता है।",
+  aboutPageIntroSecondary:
+    "हमारा लक्ष्य उपलब्ध विकल्पों और प्रदाता जानकारी को एक सरल जगह पर लाकर यात्रा योजना को अधिक स्पष्ट बनाना है, ताकि यात्री अपनी यात्रा के लिए उपयुक्त प्रदाता के साथ आगे बढ़ने से पहले विकल्पों की समीक्षा कर सकें।",
+  aboutPagePlanningCardHeading: "एक व्यावहारिक यात्रा योजना टूल",
+  aboutPagePlanningCardBody:
+    "Kurioticket उपयोगी संदर्भ के साथ यात्रियों को यात्रा विकल्पों का मूल्यांकन करने में मदद करने पर केंद्रित है। उपलब्धता, कीमतें, नियम और अंतिम बुकिंग चरण प्रदाता के अनुसार बदल सकते हैं, इसलिए यात्रियों को निर्णय लेने से पहले प्रदाता पेज को ध्यान से देखना चाहिए।",
   footerAboutKurioticket: "Kurioticket के बारे में",
   footerAboutUs: "हमारे बारे में",
   howItWorksEyebrow: "Kurioticket कैसे काम करता है",
