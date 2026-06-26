@@ -974,6 +974,33 @@ test("active account FAQ translations cover all visible FAQ page strings", () =>
 
 
 
+test("Hindi account dashboard overview copy resolves without English fallback", () => {
+  const hi = getTranslations("hi");
+
+  assert.equal(hi["accountDashboard.overview.welcome"], "वापसी पर स्वागत है, {name}");
+  assert.equal(
+    hi["accountDashboard.hub.description"],
+    "अपनी यात्राएँ, सहेजे गए आइटम, प्राथमिकताएँ और खाता सेटिंग्स एक ही जगह प्रबंधित करें।",
+  );
+  assert.equal(hi["accountDashboard.hub.manageAccount"], "खाता प्रबंधित करें");
+  assert.equal(hi["accountDashboard.hub.travelActivity"], "यात्रा गतिविधि");
+  assert.equal(hi["accountDashboard.hub.preferences"], "प्राथमिकताएँ");
+  assert.equal(hi["accountDashboard.hub.helpAndSupport"], "सहायता और समर्थन");
+  assert.equal(hi["accountDashboard.hub.personalDetails"], "व्यक्तिगत विवरण");
+  assert.equal(hi["accountDashboard.hub.securitySettings"], "सुरक्षा सेटिंग्स");
+  assert.equal(hi["accountDashboard.hub.myTrips"], "मेरी यात्राएँ");
+  assert.equal(hi["accountDashboard.hub.savedTrips"], "सहेजी गई यात्राएँ");
+  assert.equal(hi["accountDashboard.hub.priceAlerts"], "मूल्य अलर्ट");
+  assert.equal(hi["accountDashboard.hub.emailPreferences"], "कस्टमाइज़ेशन प्राथमिकताएँ");
+  assert.equal(hi["accountDashboard.hub.travelPreferences"], "बुकिंग प्राथमिकताएँ");
+  assert.equal(hi["accountDashboard.hub.contactSupport"], "सहायता से संपर्क करें");
+  assert.equal(hi["accountDashboard.hub.faq"], "अक्सर पूछे जाने वाले प्रश्न");
+
+  assert.equal(hi["accountDashboard.overview.welcome"].includes("{name}"), true);
+  assert.equal(hi["accountDashboard.overview.welcome"].includes("developer"), false);
+  assert.equal(hi["accountDashboard.overview.welcome"].includes("developer2@zentricresearch.com"), false);
+});
+
 test("Hindi destinations and saved trips screenshot-visible copy resolves without English fallback", () => {
   const hi = getTranslations("hi");
 
