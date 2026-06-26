@@ -464,6 +464,7 @@ export const translations: TranslationDictionary = {
   stopCount: "乗り継ぎ{{count}}回",
   stops: "乗り継ぎ",
   airlines: "航空会社",
+  airportsAndCities: "空港と都市",
   airports: "空港",
   times: "時刻",
   flightQuality: "フライト品質",

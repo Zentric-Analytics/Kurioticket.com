@@ -4,7 +4,7 @@ import { useEffect, useRef, type RefObject } from "react";
 
 import { X } from "lucide-react";
 
-import { type AirportOption } from "@/data/airports";
+import { getLocalizedCityName, type AirportOption } from "@/data/airports";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +30,7 @@ type MobileAirportPickerProps = {
   isLoading: boolean;
   launcherRef?: RefObject<HTMLElement | null>;
   labels: MobileAirportPickerLabels;
+  locale?: string | null;
   onChange: (value: string) => void;
   onClear: () => void;
   onSelect: (option: AirportOption) => void;
@@ -45,6 +46,7 @@ export function MobileAirportPicker({
   isLoading,
   launcherRef,
   labels,
+  locale,
   onChange,
   onClear,
   onSelect,
@@ -151,7 +153,7 @@ export function MobileAirportPicker({
                 <span className="flex items-start justify-between gap-3">
                   <span className="min-w-0">
                     <span className="block text-base font-extrabold leading-5 text-slate-950">
-                      {option.city}
+                      {getLocalizedCityName(option.city, locale)}
                     </span>
                     <span className="mt-1 block text-sm font-medium leading-5 text-slate-600">
                       {option.airport}

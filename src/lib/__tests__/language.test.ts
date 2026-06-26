@@ -449,3 +449,17 @@ test("country and currency selector uses localized display names without changin
     assert.equal(getCountryDisplayNameForLocale(code, "pt-br", option.country), expected.pt);
   }
 });
+
+test("airport picker heading is localized for all active locales", () => {
+  assert.equal(enTranslations.airportsAndCities, "AIRPORTS AND CITIES");
+  assert.equal(arTranslations.airportsAndCities, "المطارات والمدن");
+  assert.equal(nlTranslations.airportsAndCities, "LUCHTHAVENS EN STEDEN");
+  assert.equal(esTranslations.airportsAndCities, "AEROPUERTOS Y CIUDADES");
+  assert.equal(frTranslations.airportsAndCities, "AÉROPORTS ET VILLES");
+  assert.equal(deTranslations.airportsAndCities, "FLUGHÄFEN UND STÄDTE");
+  assert.equal(itTranslations.airportsAndCities, "AEROPORTI E CITTÀ");
+  assert.equal(ptBrTranslations.airportsAndCities, "AEROPORTOS E CIDADES");
+  assert.equal(zhCnTranslations.airportsAndCities, "机场和城市");
+  assert.equal(jaTranslations.airportsAndCities, "空港と都市");
+  assert.equal(koTranslations.airportsAndCities, "공항 및 도시");
+});

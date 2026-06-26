@@ -4027,6 +4027,7 @@ export function FlightResultsClient() {
             isLoading={originSuggestionsLoading}
             launcherRef={mobileOriginLauncherRef}
             labels={airportPickerLabels}
+            locale={locale}
             onChange={(nextValue) => {
               setOriginInput(nextValue);
               setOriginCode("");
@@ -4057,6 +4058,7 @@ export function FlightResultsClient() {
             isLoading={destinationSuggestionsLoading}
             launcherRef={mobileDestinationLauncherRef}
             labels={airportPickerLabels}
+            locale={locale}
             onChange={(nextValue) => {
               setDestinationInput(nextValue);
               setDestinationCode("");

@@ -422,7 +422,12 @@ const cityDisplayNames: Record<string, LocalizedCityNames> = {
   "Istanbul": { "en-us": "Istanbul", ar: "إسطنبول", nl: "Istanboel", "es-es": "Estambul", fr: "Istanbul", "de-de": "Istanbul", "it-it": "Istanbul", "pt-br": "Istambul", "zh-cn": "伊斯坦布尔", ja: "イスタンブール", ko: "이스탄불" },
   "Johannesburg": { "en-us": "Johannesburg", ar: "جوهانسبرغ", nl: "Johannesburg", "es-es": "Johannesburgo", fr: "Johannesburg", "de-de": "Johannesburg", "it-it": "Johannesburg", "pt-br": "Joanesburgo", "zh-cn": "约翰内斯堡", ja: "ヨハネスブルグ", ko: "요하네스버그" },
   "Kigali": { "en-us": "Kigali", ar: "كيغالي", nl: "Kigali", "es-es": "Kigali", fr: "Kigali", "de-de": "Kigali", "it-it": "Kigali", "pt-br": "Kigali", "zh-cn": "基加利", ja: "キガリ", ko: "키갈리" },
+  "La Paz": { "en-us": "La Paz", ar: "لاباز", nl: "La Paz", "es-es": "La Paz", fr: "La Paz", "de-de": "La Paz", "it-it": "La Paz", "pt-br": "La Paz", "zh-cn": "拉巴斯", ja: "ラパス", ko: "라파스" },
+  "Lae": { "en-us": "Lae", ar: "لاي", nl: "Lae", "es-es": "Lae", fr: "Lae", "de-de": "Lae", "it-it": "Lae", "pt-br": "Lae", "zh-cn": "莱城", ja: "ラエ", ko: "라에" },
+  "Lansing": { "en-us": "Lansing", ar: "لانسنغ", nl: "Lansing", "es-es": "Lansing", fr: "Lansing", "de-de": "Lansing", "it-it": "Lansing", "pt-br": "Lansing", "zh-cn": "兰辛", ja: "ランシング", ko: "랜싱" },
+  "Lawton": { "en-us": "Lawton", ar: "لوتون", nl: "Lawton", "es-es": "Lawton", fr: "Lawton", "de-de": "Lawton", "it-it": "Lawton", "pt-br": "Lawton", "zh-cn": "劳顿", ja: "ロートン", ko: "로턴" },
   "Lagos": { "en-us": "Lagos", ar: "لاغوس", nl: "Lagos", "es-es": "Lagos", fr: "Lagos", "de-de": "Lagos", "it-it": "Lagos", "pt-br": "Lagos", "zh-cn": "拉各斯", ja: "ラゴス", ko: "라고스" },
+  "Luanda": { "en-us": "Luanda", ar: "لواندا", nl: "Luanda", "es-es": "Luanda", fr: "Luanda", "de-de": "Luanda", "it-it": "Luanda", "pt-br": "Luanda", "zh-cn": "罗安达", ja: "ルアンダ", ko: "루안다" },
   "Las Vegas": { "en-us": "Las Vegas", ar: "لاس فيغاس", nl: "Las Vegas", "es-es": "Las Vegas", fr: "Las Vegas", "de-de": "Las Vegas", "it-it": "Las Vegas", "pt-br": "Las Vegas", "zh-cn": "拉斯维加斯", ja: "ラスベガス", ko: "라스베이거스" },
   "Lisbon": { "en-us": "Lisbon", ar: "لشبونة", nl: "Lissabon", "es-es": "Lisboa", fr: "Lisbonne", "de-de": "Lissabon", "it-it": "Lisbona", "pt-br": "Lisboa", "zh-cn": "里斯本", ja: "リスボン", ko: "리스본" },
   "London": { "en-us": "London", ar: "لندن", nl: "Londen", "es-es": "Londres", fr: "Londres", "de-de": "London", "it-it": "Londra", "pt-br": "Londres", "zh-cn": "伦敦", ja: "ロンドン", ko: "런던" },
@@ -445,6 +450,20 @@ const cityDisplayNames: Record<string, LocalizedCityNames> = {
   "Venice": { "en-us": "Venice", ar: "البندقية", nl: "Venetië", "es-es": "Venecia", fr: "Venise", "de-de": "Venedig", "it-it": "Venezia", "pt-br": "Veneza", "zh-cn": "威尼斯", ja: "ヴェネツィア", ko: "베네치아" },
   "Zurich": { "en-us": "Zurich", ar: "زيورخ", nl: "Zürich", "es-es": "Zúrich", fr: "Zurich", "de-de": "Zürich", "it-it": "Zurigo", "pt-br": "Zurique", "zh-cn": "苏黎世", ja: "チューリッヒ", ko: "취리히" },
 };
+
+export function getAirportCityLocalizationCoverage() {
+  const uniqueCities = new Set(airports.map((airport) => airport.city));
+  return [...activeAirportDisplayLocales].map((locale) => {
+    const missing = [...uniqueCities].filter((city) => !cityDisplayNames[city]?.[locale]);
+    return {
+      locale,
+      total: uniqueCities.size,
+      localized: uniqueCities.size - missing.length,
+      fallback: missing.length,
+      missing: missing.slice(0, 50),
+    };
+  });
+}
 
 export function getLocalizedCityName(city: string, locale?: string | null) {
   const displayLocale = normalizeAirportDisplayLocale(locale);

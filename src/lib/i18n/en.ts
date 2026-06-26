@@ -2506,7 +2506,7 @@ export const translations: TranslationDictionary = {
   travelerPlural: "travelers",
   cabinClass: "Cabin class",
   nearYou: "Near you",
-  airportsAndCities: "Airports and cities",
+  airportsAndCities: "AIRPORTS AND CITIES",
   searchAirportsAndCities: "Search airports and cities",
   searchAirportsOrCities: "Search airports or cities",
   cityAirportOrCode: "City, airport, or code",

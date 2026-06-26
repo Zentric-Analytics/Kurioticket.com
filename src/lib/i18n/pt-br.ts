@@ -789,6 +789,7 @@ export const translations: TranslationDictionary = {
   stopCount: "{{count}} escalas",
   stops: "Escalas",
   airlines: "Companhias aéreas",
+  airportsAndCities: "AEROPORTOS E CIDADES",
   airports: "Aeroportos",
   times: "Horários",
   flightQuality: "Qualidade do voo",
