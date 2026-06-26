@@ -58,6 +58,11 @@ import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { cn, formatTime } from "@/lib/utils";
 import { translations as enTranslations } from "@/lib/i18n/en";
+import {
+  formatFlightsDateSummary,
+  formatFlightsMonthHeading,
+  normalizeFlightsCalendarLocale,
+} from "@/lib/flights/dateFormatting";
 
 const resultStackClass = "w-full max-w-[680px] lg:ms-4 xl:ms-6";
 const desktopFilterStickyTopClass =
@@ -98,63 +103,7 @@ const normalizeCabinClassValue = (
 ): CabinClassValue =>
   value === "business" || value === "first" ? value : "economy";
 
-const normalizeFlightResultsCalendarLocale = (
-  locale: string | null | undefined,
-) => {
-  const normalized =
-    locale?.trim().replace("_", "-").toLowerCase() ?? "";
-
-  if (normalized === "fr" || normalized.startsWith("fr-")) {
-    return "fr-FR";
-  }
-
-  if (normalized === "es" || normalized.startsWith("es-")) {
-    return "es-ES";
-  }
-
-  if (normalized === "de" || normalized.startsWith("de-")) {
-    return "de-DE";
-  }
-
-  if (normalized === "it" || normalized.startsWith("it-")) {
-    return "it-IT";
-  }
-
-  if (normalized === "nl" || normalized.startsWith("nl-")) {
-    return "nl-NL";
-  }
-
-  if (normalized === "pt" || normalized === "pt-br") {
-    return "pt-BR";
-  }
-
-  if (normalized === "pt-pt") {
-    return "pt-PT";
-  }
-
-  if (normalized === "ar" || normalized.startsWith("ar-")) {
-    return "ar";
-  }
-
-  if (
-    normalized === "zh" ||
-    normalized === "zh-cn" ||
-    normalized === "zh-hans" ||
-    normalized.startsWith("zh-hans-")
-  ) {
-    return "zh-CN";
-  }
-
-  if (normalized === "ja" || normalized.startsWith("ja-")) {
-    return "ja-JP";
-  }
-
-  if (normalized === "ko" || normalized.startsWith("ko-")) {
-    return "ko-KR";
-  }
-
-  return "en-US";
-};
+const normalizeFlightResultsCalendarLocale = normalizeFlightsCalendarLocale;
 
 function getFlightFaqItems(t: (key: string) => string): Array<{ question: string; answer: string }> {
   return [
@@ -4487,7 +4436,7 @@ function formatDateLabel(value: string, locale = "en-US"): string {
 
   if (Number.isNaN(date.getTime())) return value;
 
-  return new Intl.DateTimeFormat(locale, {
+  return new Intl.DateTimeFormat(normalizeFlightResultsCalendarLocale(locale), {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -4501,10 +4450,7 @@ function formatCompactDateLabel(value: string, locale = "en-US"): string {
 
   if (Number.isNaN(date.getTime())) return value;
 
-  return new Intl.DateTimeFormat(locale, {
-    day: "2-digit",
-    month: "short",
-  }).format(date);
+  return formatFlightsDateSummary(date, null, locale);
 }
 
 function parseDateValue(value: string): Date | null {
@@ -4856,10 +4802,7 @@ function DatePickerPopover({
   const renderMonth = (renderedMonth: Date) => (
     <div className="min-w-0">
       <p className="mb-2 text-center text-sm font-bold text-slate-900">
-        {new Intl.DateTimeFormat(calendarLocale, {
-          month: "long",
-          year: "numeric",
-        }).format(renderedMonth)}
+        {formatFlightsMonthHeading(renderedMonth, calendarLocale)}
       </p>
 
       <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
