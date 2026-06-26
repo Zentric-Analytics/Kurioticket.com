@@ -1005,6 +1005,143 @@ test("Hindi account dashboard overview copy resolves without English fallback", 
   assert.equal(hi["accountDashboard.overview.welcome"].includes("developer2@zentricresearch.com"), false);
 });
 
+
+test("Hindi account preferences actual render-path copy resolves without English fallback", () => {
+  const hi = getTranslations("hi");
+  const customizationSource = readFileSync(
+    "src/app/dashboard/preferences/customization/CustomizationPreferencesContent.tsx",
+    "utf8",
+  );
+  const bookingSource = readFileSync(
+    "src/app/dashboard/preferences/booking/BookingPreferencesContent.tsx",
+    "utf8",
+  );
+
+  const expectedCustomizationCopy = {
+    "accountDashboard.preferences.customization.title": "कस्टमाइज़ेशन प्राथमिकताएँ",
+    "accountDashboard.preferences.customization.description": "चुनें कि Kurioticket आपके अनुभव को कैसे वैयक्तिकृत करे।",
+    "accountDashboard.preferences.customization.languageRegion.title": "भाषा और क्षेत्र",
+    "accountDashboard.preferences.customization.languageRegion.description": "अपनी डिफ़ॉल्ट भाषा, मुद्रा और क्षेत्र सेट करें।",
+    "accountDashboard.preferences.customization.preferredLanguage": "पसंदीदा भाषा",
+    "accountDashboard.preferences.customization.selectPreferredLanguage": "पसंदीदा भाषा चुनें",
+    "accountDashboard.preferences.customization.currency": "मुद्रा",
+    "accountDashboard.preferences.customization.selectCurrency": "मुद्रा चुनें",
+    "accountDashboard.preferences.customization.region": "क्षेत्र",
+    "accountDashboard.preferences.customization.selectRegion": "क्षेत्र चुनें",
+    "accountDashboard.preferences.customization.personalization.title": "वैयक्तिकरण",
+    "accountDashboard.preferences.customization.personalization.description": "नियंत्रित करें कि Kurioticket आपकी सिफ़ारिशों को कैसे वैयक्तिकृत करे।",
+    "accountDashboard.preferences.customization.personalizeSearches": "मेरी खोजों का उपयोग सिफ़ारिशों को वैयक्तिकृत करने के लिए करें",
+    "accountDashboard.preferences.customization.personalizedTravelDeals": "वैयक्तिकृत यात्रा डील्स दिखाएँ",
+    "accountDashboard.preferences.customization.rememberRecentSearches": "मेरी हाल की खोजें याद रखें",
+    "accountDashboard.preferences.customization.communicationStyle.title": "संचार शैली",
+    "accountDashboard.preferences.customization.communicationStyle.description": "चुनें कि आप Kurioticket से किस तरह संवाद पाना चाहते हैं।",
+    "accountDashboard.preferences.customization.emailUpdates": "ईमेल अपडेट",
+    "accountDashboard.preferences.customization.priceAlertEmails": "मूल्य अलर्ट ईमेल",
+    "accountDashboard.preferences.customization.travelInspirationEmails": "यात्रा प्रेरणा ईमेल",
+  } as const;
+
+  const expectedBookingCopy = {
+    "accountDashboard.preferences.booking.title": "बुकिंग प्राथमिकताएँ",
+    "accountDashboard.preferences.booking.description": "तेज़ और अधिक प्रासंगिक बुकिंग के लिए अपनी डिफ़ॉल्ट यात्रा प्राथमिकताएँ सेट करें।",
+    "accountDashboard.preferences.booking.airports.title": "हवाई अड्डे",
+    "accountDashboard.preferences.booking.airports.description": "वे हवाई अड्डे चुनें जहाँ से आप उड़ान भरना पसंद करते हैं।",
+    "accountDashboard.preferences.booking.homeAirport": "मुख्य हवाई अड्डा",
+    "accountDashboard.preferences.booking.searchAirport": "हवाई अड्डा खोजें",
+    "accountDashboard.preferences.booking.secondaryAirports": "द्वितीयक हवाई अड्डे",
+    "accountDashboard.preferences.booking.addAlternativeAirports": "वैकल्पिक हवाई अड्डे जोड़ें",
+    "accountDashboard.preferences.booking.airlines.title": "एयरलाइंस",
+    "accountDashboard.preferences.booking.airlines.description": "वे एयरलाइंस चुनें जिन्हें आप पसंद करते हैं या जिनसे बचना चाहते हैं।",
+    "accountDashboard.preferences.booking.preferredAirlines": "पसंदीदा एयरलाइंस",
+    "accountDashboard.preferences.booking.searchAirlines": "एयरलाइंस खोजें",
+    "accountDashboard.preferences.booking.avoidAirlines": "इन एयरलाइंस से बचें",
+    "accountDashboard.preferences.booking.stays.title": "ठहराव",
+    "accountDashboard.preferences.booking.stays.description": "होटल बुकिंग के लिए आवास प्राथमिकताएँ सेट करें।",
+    "accountDashboard.preferences.booking.preferredHotelChains": "पसंदीदा होटल चेन",
+    "accountDashboard.preferences.booking.searchHotelChains": "होटल चेन खोजें",
+    "accountDashboard.preferences.booking.avoidHotelChains": "इन होटल चेन से बचें",
+  } as const;
+
+  const sharedCopy = {
+    "accountDashboard.preferences.cancel": "रद्द करें",
+    "accountDashboard.preferences.savePreferences": "प्राथमिकताएँ सहेजें",
+  } as const;
+
+  for (const [key, value] of Object.entries(expectedCustomizationCopy)) {
+    assert.ok(customizationSource.includes(key), `Customization page should use actual i18n key ${key}.`);
+    assert.equal(hi[key], value);
+    assert.notEqual(hi[key], enTranslations[key]);
+  }
+
+  for (const [key, value] of Object.entries(expectedBookingCopy)) {
+    assert.ok(bookingSource.includes(key), `Booking page should use actual i18n key ${key}.`);
+    assert.equal(hi[key], value);
+    assert.notEqual(hi[key], enTranslations[key]);
+  }
+
+  for (const [key, value] of Object.entries(sharedCopy)) {
+    assert.ok(customizationSource.includes(key), `Customization page should use shared action key ${key}.`);
+    assert.ok(bookingSource.includes(key), `Booking page should use shared action key ${key}.`);
+    assert.equal(hi[key], value);
+    assert.notEqual(hi[key], enTranslations[key]);
+  }
+
+  const screenshotVisibleEnglishFallbacks = [
+    "Customization preferences",
+    "Choose how Kurioticket personalizes your experience.",
+    "Language and region",
+    "Set your default language, currency, and region.",
+    "Preferred language",
+    "Select preferred language",
+    "Currency",
+    "Select currency",
+    "Region",
+    "Select region",
+    "Personalization",
+    "Control how Kurioticket personalizes your recommendations.",
+    "Use my searches to personalize recommendations",
+    "Show personalized travel deals",
+    "Remember my recent searches",
+    "Communication style",
+    "Choose how you want Kurioticket to communicate with you.",
+    "Email updates",
+    "Price alert emails",
+    "Travel inspiration emails",
+    "Booking preferences",
+    "Set your default travel preferences for faster and more relevant bookings.",
+    "Airports",
+    "Choose the airports you prefer to fly from.",
+    "Home airport",
+    "Search airport",
+    "Secondary airports",
+    "Add alternative airports",
+    "Airlines",
+    "Choose airlines you prefer or want to avoid.",
+    "Preferred airlines",
+    "Search airlines",
+    "Avoid airlines",
+    "Stays",
+    "Set accommodation preferences for hotel bookings.",
+    "Preferred hotel chains",
+    "Search hotel chains",
+    "Avoid hotel chains",
+    "Cancel",
+    "Save preferences",
+  ];
+
+  const activeHindiRenderValues = [
+    ...Object.keys(expectedCustomizationCopy),
+    ...Object.keys(expectedBookingCopy),
+    ...Object.keys(sharedCopy),
+  ].map((key) => hi[key]);
+
+  for (const englishFallback of screenshotVisibleEnglishFallbacks) {
+    assert.ok(
+      !activeHindiRenderValues.includes(englishFallback),
+      `Hindi account preferences render-path values should not fall back to English: ${englishFallback}`,
+    );
+  }
+});
+
 test("Hindi account personal details and security settings copy resolves without English fallback", () => {
   const hi = getTranslations("hi");
 
