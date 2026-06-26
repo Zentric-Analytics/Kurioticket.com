@@ -1413,8 +1413,8 @@ function SecuritySettingRow({
   statusId,
 }: SecuritySettingRowProps) {
   return (
-    <div className="flex min-w-0 flex-col gap-3 px-4 py-4 sm:min-h-[5.25rem] sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6 sm:py-4">
-      <div className="min-w-0 sm:pe-4">
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 max-[22rem]:grid-cols-1 max-[22rem]:justify-items-end sm:min-h-[5.25rem] sm:gap-6 sm:px-6 sm:py-4">
+      <div className="min-w-0 max-[22rem]:w-full sm:pe-4">
         <h2 className="text-base font-semibold leading-6 text-slate-900">
           {title}
         </h2>
@@ -1427,7 +1427,7 @@ function SecuritySettingRow({
         onClick={onAction}
         aria-describedby={statusId}
         className={cn(
-          "focus-ring inline-flex min-h-10 w-fit max-w-full shrink-0 cursor-pointer items-center justify-center rounded-lg border bg-white px-4 py-2 text-center text-sm font-semibold leading-5 transition self-end sm:w-auto sm:self-center",
+          "focus-ring inline-flex min-h-10 w-fit max-w-full shrink-0 cursor-pointer items-center justify-center rounded-lg border bg-white px-4 py-2 text-center text-sm font-semibold leading-5 transition",
           danger
             ? "border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50"
             : "border-blue-200 text-blue-700 hover:border-blue-300 hover:bg-blue-50",
