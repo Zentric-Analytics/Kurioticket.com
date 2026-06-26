@@ -308,6 +308,51 @@ test("Spanish, French, German, Italian, Dutch, Portuguese, Chinese, Japanese, Ko
   assert.equal(getTranslations("ko").websiteLanguageTitle, "웹사이트 언어 선택");
 });
 
+test("active locale auth verification copy is localized without English fallback", () => {
+  const activeNonEnglishTranslations = [
+    esTranslations,
+    deTranslations,
+    frTranslations,
+    itTranslations,
+    ptBrTranslations,
+    nlTranslations,
+    arTranslations,
+    zhCnTranslations,
+    jaTranslations,
+    koTranslations,
+  ];
+  const verificationKeys = [
+    "loginCodeSent",
+    "loginCodeInstructions",
+    "loginVerificationCodeLabel",
+    "loginVerifyLogin",
+    "loginResendIn",
+    "loginResendCode",
+    "loginUseDifferentDetails",
+    "loginEnterCode",
+    "loginCodeFailed",
+    "loginSendingCode",
+    "loginVerifying",
+    "loginResendSuccess",
+  ];
+
+  for (const translations of activeNonEnglishTranslations) {
+    for (const key of verificationKeys) {
+      assert.notEqual(translations[key], enTranslations[key], key);
+    }
+  }
+
+  assert.equal(koTranslations.loginCodeSent, "인증 코드를 이메일로 보냈습니다.");
+  assert.equal(
+    koTranslations.loginCodeInstructions,
+    "{{email}}로 전송된 6자리 코드를 입력하세요. 코드는 {{minutes}}분 후 만료됩니다."
+  );
+  assert.equal(koTranslations.loginVerificationCodeLabel, "인증 코드");
+  assert.equal(koTranslations.loginVerifyLogin, "로그인 인증");
+  assert.equal(koTranslations.loginResendIn, "{{seconds}}초 후 재전송");
+  assert.equal(koTranslations.loginUseDifferentDetails, "다른 정보 사용");
+});
+
 
 test("active locale dictionaries do not keep audited cross-language UI fallbacks", () => {
   const auditedValuesByLocale = {
