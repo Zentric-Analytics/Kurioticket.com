@@ -34,6 +34,7 @@ export const translations: TranslationDictionary = {
   search: "खोजें",
   roundTrip: "आना-जाना",
   oneWay: "एकतरफ़ा",
+  tripType: "यात्रा प्रकार",
   homeHeroTitle: "एक आसान खोज में यात्रा विकल्पों की तुलना करें",
   homeHeroSubtitle:
     "विश्वसनीय यात्रा प्रदाताओं को खोजें, कीमतों की साफ़ तुलना करें, और अपनी यात्रा के लिए सही विकल्प चुनें।",
@@ -386,6 +387,15 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.ca-yeg-pvr.title": "पुएर्तो वाल्यार्ता बीच गेटअवे",
   "homeDiscoveryRoute.ca-yeg-pvr.routeNote":
     "प्रशांत समुद्र तटों और पुराने शहर के आकर्षण वाला विंटर सन मार्ग।",
+  "homeDiscoveryRoute.ca-yyz-hnl.title": "होनोलूलू लंबी दूरी द्वीप यात्रा",
+  "homeDiscoveryRoute.ca-yyz-hnl.routeNote":
+    "समुद्र तटों, सर्फ़िंग और द्वीपीय हाइक के लिए प्रीमियम अवकाश विकल्प।",
+  "homeDiscoveryRoute.ca-yyz-san.title": "सैन डिएगो धूप और सर्फ़ यात्रा",
+  "homeDiscoveryRoute.ca-yyz-san.routeNote":
+    "समुद्र तटों, पार्कों और बंदरगाह नज़ारों के लिए भरोसेमंद सीमा-पार मार्ग।",
+  "homeDiscoveryRoute.ca-yvr-syd.title": "सिडनी ट्रांसपैसिफ़िक रोमांच",
+  "homeDiscoveryRoute.ca-yvr-syd.routeNote":
+    "बंदरगाह स्थलों और समुद्र-किनारे उपनगरों के लिए लोकप्रिय लंबी दूरी विकल्प।",
   "flightLandingCity.Lagos": "लागोस",
   "flightLandingCity.London": "लंदन",
   "flightLandingCity.Dubai": "दुबई",
@@ -405,6 +415,10 @@ export const translations: TranslationDictionary = {
   "flightLandingCity.Cancun": "कैनकन",
   "flightLandingCity.Edmonton": "एडमंटन",
   "flightLandingCity.Puerto Vallarta": "पुएर्तो वाल्यार्ता",
+  "flightLandingCity.Honolulu": "होनोलूलू",
+  "flightLandingCity.San Diego": "सैन डिएगो",
+  "flightLandingCity.Vancouver": "वैंकूवर",
+  "flightLandingCity.Sydney": "सिडनी",
   "flightLandingImageAlt.Johannesburg skyline at golden hour":
     "गोल्डन आवर में जोहान्सबर्ग स्काईलाइन",
   "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza":
@@ -413,6 +427,35 @@ export const translations: TranslationDictionary = {
     "इथियोपियाई हाइलैंड्स में अदीस अबाबा का शहर दृश्य",
   "flightLandingImageAlt.Puerto Vallarta coastline and old town":
     "पुएर्तो वाल्यार्ता का समुद्र तट और पुराना शहर",
+  "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water":
+    "डायमंड हेड और चमकदार नीले पानी वाला होनोलूलू वाइकिकी बीच",
+  "flightLandingImageAlt.San Diego bay skyline and marina":
+    "सैन डिएगो खाड़ी का स्काईलाइन और मरीना",
+  flightBookingFaqs: "उड़ान बुकिंग से जुड़े अक्सर पूछे जाने वाले प्रश्न",
+  flightBookingFaqIntro:
+    "प्रदाता के साथ आगे बढ़ने से पहले सामान्य उड़ान-खोज विवरणों की समीक्षा करें।",
+  flightFaqBestTimeQuestion: "उड़ान बुक करने का सबसे अच्छा समय कब है?",
+  flightFaqBestTimeAnswer:
+    "उड़ान की कीमतें मार्ग, मौसम, माँग और उपलब्धता के आधार पर बदल सकती हैं। आम तौर पर कई तिथियों की तुलना करना, संभव हो तो आस-पास के हवाई अड्डे देखना, और किराया चुनने से पहले पूरा यात्रा कार्यक्रम जाँचना उपयोगी होता है।",
+  flightFaqBeforeBookingQuestion: "बुकिंग से पहले मुझे क्या जाँचना चाहिए?",
+  flightFaqBeforeBookingAnswer:
+    "प्रदाता के साथ बुकिंग पूरी करने से पहले प्रस्थान और आगमन समय, कुल यात्रा समय, ठहराव, बैगेज नियम, सीट चयन विकल्प, रद्दीकरण शर्तें और टिकट बदलाव नीति देखें।",
+  flightFaqFlexibleFareQuestion: "लचीला किराया क्या होता है?",
+  flightFaqFlexibleFareAnswer:
+    "लचीला किराया बेसिक किराए की तुलना में कम प्रतिबंधों के साथ बदलाव या रद्दीकरण की अनुमति दे सकता है, लेकिन सटीक नियम एयरलाइन या बुकिंग प्रदाता पर निर्भर करते हैं। खरीदारी से पहले हमेशा किराया शर्तें देखें।",
+  flightFaqNonstopQuestion: "क्या नॉनस्टॉप उड़ानें हमेशा बेहतर होती हैं?",
+  flightFaqNonstopAnswer:
+    "हमेशा नहीं। नॉनस्टॉप उड़ानें समय बचा सकती हैं, जबकि एक-स्टॉप मार्ग अलग प्रस्थान समय, आगमन समय या किराया विकल्प दे सकते हैं। निर्णय लेने से पहले कुल यात्रा समय, लेओवर अवधि और सुविधा की तुलना करें।",
+  flightFaqBaggageQuestion: "बैगेज नियम कैसे काम करते हैं?",
+  flightFaqBaggageAnswer:
+    "बैगेज अनुमति एयरलाइन, मार्ग, केबिन, किराया प्रकार और प्रदाता के अनुसार बदल सकती है। बुकिंग से पहले देखें कि कैरी-ऑन, चेक्ड बैग और निजी सामान शामिल हैं या नहीं।",
+  flightFaqChangeCancelQuestion: "क्या मैं अपना टिकट बदल या रद्द कर सकता हूँ?",
+  flightFaqChangeCancelAnswer:
+    "बदलाव और रद्दीकरण विकल्प किराया नियमों और प्रदाता नीतियों पर निर्भर करते हैं। कुछ टिकट नॉन-रिफंडेबल हो सकते हैं या उनमें शुल्क शामिल हो सकता है, इसलिए बुकिंग से पहले शर्तों को ध्यान से देखें।",
+  flightFaqInternationalQuestion:
+    "अंतरराष्ट्रीय उड़ानों के बारे में मुझे क्या पता होना चाहिए?",
+  flightFaqInternationalAnswer:
+    "अंतरराष्ट्रीय यात्रा के लिए बुकिंग से पहले पासपोर्ट वैधता, वीज़ा आवश्यकताएँ, ट्रांज़िट नियम, बैगेज नीतियाँ और गंतव्य की आगमन आवश्यकताएँ देखें।",
 
   // Hindi flights results, filters, and selected-flight detail localization.
   flightDetailsLoading: "उड़ान विवरण लोड हो रहे हैं...",

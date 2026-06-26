@@ -290,6 +290,7 @@ test("Hindi homepage and primary search UI copy resolves without English fallbac
     ],
     ["roundTrip", "आना-जाना"],
     ["oneWay", "एकतरफ़ा"],
+    ["tripType", "यात्रा प्रकार"],
     ["origin", "प्रस्थान"],
     ["destination", "गंतव्य"],
     ["travelDates", "यात्रा तिथियाँ"],
@@ -416,6 +417,48 @@ test("Hindi homepage and primary search UI copy resolves without English fallbac
       "homeDiscoveryRoute.ng-abv-fco.routeNote",
       "खंडहरों, पियाज़ा और सुकूनभरी शामों के लिए यूरोपीय क्लासिक।",
     ],
+    ["homeDiscoveryRoute.ca-yyz-hnl.title", "होनोलूलू लंबी दूरी द्वीप यात्रा"],
+    [
+      "homeDiscoveryRoute.ca-yyz-hnl.routeNote",
+      "समुद्र तटों, सर्फ़िंग और द्वीपीय हाइक के लिए प्रीमियम अवकाश विकल्प।",
+    ],
+    ["homeDiscoveryRoute.ca-yyz-san.title", "सैन डिएगो धूप और सर्फ़ यात्रा"],
+    [
+      "homeDiscoveryRoute.ca-yyz-san.routeNote",
+      "समुद्र तटों, पार्कों और बंदरगाह नज़ारों के लिए भरोसेमंद सीमा-पार मार्ग।",
+    ],
+    ["homeDiscoveryRoute.ca-yvr-syd.title", "सिडनी ट्रांसपैसिफ़िक रोमांच"],
+    [
+      "homeDiscoveryRoute.ca-yvr-syd.routeNote",
+      "बंदरगाह स्थलों और समुद्र-किनारे उपनगरों के लिए लोकप्रिय लंबी दूरी विकल्प।",
+    ],
+    ["flightLandingCity.Honolulu", "होनोलूलू"],
+    ["flightLandingCity.San Diego", "सैन डिएगो"],
+    ["flightLandingCity.Vancouver", "वैंकूवर"],
+    ["flightLandingCity.Sydney", "सिडनी"],
+    [
+      "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water",
+      "डायमंड हेड और चमकदार नीले पानी वाला होनोलूलू वाइकिकी बीच",
+    ],
+    [
+      "flightLandingImageAlt.San Diego bay skyline and marina",
+      "सैन डिएगो खाड़ी का स्काईलाइन और मरीना",
+    ],
+    ["flightBookingFaqs", "उड़ान बुकिंग से जुड़े अक्सर पूछे जाने वाले प्रश्न"],
+    [
+      "flightBookingFaqIntro",
+      "प्रदाता के साथ आगे बढ़ने से पहले सामान्य उड़ान-खोज विवरणों की समीक्षा करें।",
+    ],
+    ["flightFaqBestTimeQuestion", "उड़ान बुक करने का सबसे अच्छा समय कब है?"],
+    ["flightFaqBeforeBookingQuestion", "बुकिंग से पहले मुझे क्या जाँचना चाहिए?"],
+    ["flightFaqFlexibleFareQuestion", "लचीला किराया क्या होता है?"],
+    ["flightFaqNonstopQuestion", "क्या नॉनस्टॉप उड़ानें हमेशा बेहतर होती हैं?"],
+    ["flightFaqBaggageQuestion", "बैगेज नियम कैसे काम करते हैं?"],
+    ["flightFaqChangeCancelQuestion", "क्या मैं अपना टिकट बदल या रद्द कर सकता हूँ?"],
+    [
+      "flightFaqInternationalQuestion",
+      "अंतरराष्ट्रीय उड़ानों के बारे में मुझे क्या पता होना चाहिए?",
+    ],
   ];
 
   for (const [key, expected] of auditedHindiHomepageKeys) {
@@ -540,8 +583,41 @@ test("Hindi flights landing static render path resolves screenshot-visible copy"
   assert.equal(hiTranslations["homeDiscoveryRoute.ng-abv-mad.routeNote"], "संग्रहालयों, बुलेवार्ड्स और देर रात के भोजन के लिए यूरोप सिटी ब्रेक मार्ग।");
   assert.equal(hiTranslations["homeDiscoveryRoute.ng-abv-rob.title"], "मोनरोविया क्षेत्रीय समुद्री यात्रा");
   assert.equal(hiTranslations["homeDiscoveryRoute.ng-abv-rob.routeNote"], "अटलांटिक समुद्र तटों और स्थानीय बाज़ारों वाला पश्चिम अफ्रीकी सिटी ब्रेक।");
+  assert.equal(hiTranslations.tripType, "यात्रा प्रकार");
+  assert.equal(hiTranslations["homeDiscoveryRoute.ca-yyz-hnl.title"], "होनोलूलू लंबी दूरी द्वीप यात्रा");
+  assert.equal(hiTranslations["homeDiscoveryRoute.ca-yyz-hnl.routeNote"], "समुद्र तटों, सर्फ़िंग और द्वीपीय हाइक के लिए प्रीमियम अवकाश विकल्प।");
+  assert.equal(hiTranslations["homeDiscoveryRoute.ca-yyz-san.title"], "सैन डिएगो धूप और सर्फ़ यात्रा");
+  assert.equal(hiTranslations["homeDiscoveryRoute.ca-yyz-san.routeNote"], "समुद्र तटों, पार्कों और बंदरगाह नज़ारों के लिए भरोसेमंद सीमा-पार मार्ग।");
+  assert.equal(hiTranslations["homeDiscoveryRoute.ca-yvr-syd.title"], "सिडनी ट्रांसपैसिफ़िक रोमांच");
+  assert.equal(hiTranslations["homeDiscoveryRoute.ca-yvr-syd.routeNote"], "बंदरगाह स्थलों और समुद्र-किनारे उपनगरों के लिए लोकप्रिय लंबी दूरी विकल्प।");
+  assert.equal(hiTranslations["flightLandingCity.Honolulu"], "होनोलूलू");
+  assert.equal(hiTranslations["flightLandingCity.San Diego"], "सैन डिएगो");
+  assert.equal(hiTranslations["flightLandingCity.Vancouver"], "वैंकूवर");
+  assert.equal(hiTranslations["flightLandingCity.Sydney"], "सिडनी");
   assert.equal(hiTranslations["flightLandingCity.Johannesburg"], "जोहान्सबर्ग");
   assert.equal(hiTranslations["flightLandingImageAlt.Johannesburg skyline at golden hour"], "गोल्डन आवर में जोहान्सबर्ग स्काईलाइन");
+  assert.equal(hiTranslations["flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water"], "डायमंड हेड और चमकदार नीले पानी वाला होनोलूलू वाइकिकी बीच");
+  assert.equal(hiTranslations["flightLandingImageAlt.San Diego bay skyline and marina"], "सैन डिएगो खाड़ी का स्काईलाइन और मरीना");
+  assert.equal(hiTranslations.flightBookingFaqs, "उड़ान बुकिंग से जुड़े अक्सर पूछे जाने वाले प्रश्न");
+  assert.equal(hiTranslations.flightBookingFaqIntro, "प्रदाता के साथ आगे बढ़ने से पहले सामान्य उड़ान-खोज विवरणों की समीक्षा करें।");
+  assert.equal(hiTranslations.flightFaqBestTimeQuestion, "उड़ान बुक करने का सबसे अच्छा समय कब है?");
+  assert.equal(hiTranslations.flightFaqBeforeBookingQuestion, "बुकिंग से पहले मुझे क्या जाँचना चाहिए?");
+  assert.equal(hiTranslations.flightFaqFlexibleFareQuestion, "लचीला किराया क्या होता है?");
+  assert.equal(hiTranslations.flightFaqNonstopQuestion, "क्या नॉनस्टॉप उड़ानें हमेशा बेहतर होती हैं?");
+  assert.equal(hiTranslations.flightFaqBaggageQuestion, "बैगेज नियम कैसे काम करते हैं?");
+  assert.equal(hiTranslations.flightFaqChangeCancelQuestion, "क्या मैं अपना टिकट बदल या रद्द कर सकता हूँ?");
+  assert.equal(hiTranslations.flightFaqInternationalQuestion, "अंतरराष्ट्रीय उड़ानों के बारे में मुझे क्या पता होना चाहिए?");
+  assert.equal(
+    new Intl.DateTimeFormat("hi-IN", { month: "long", year: "numeric" }).format(new Date(2026, 5, 1)),
+    "जून 2026",
+  );
+  assert.equal(
+    `${new Intl.DateTimeFormat("hi-IN", { month: "short", day: "numeric" }).format(new Date(2026, 5, 27))} — ${new Intl.DateTimeFormat("hi-IN", { month: "short", day: "numeric" }).format(new Date(2026, 5, 30))}`,
+    "27 जून — 30 जून",
+  );
+  const standaloneFlightSearchSource = readFileSync("src/components/search/StandaloneFlightSearchForm.tsx", "utf8");
+  assert.ok(standaloneFlightSearchSource.includes('return "hi-IN";'));
+  assert.ok(standaloneFlightSearchSource.includes("localizeCalendarLabels ? locale : \"en-us\""));
   assert.equal(hiTranslations.flightLandingRouteAriaLabel.includes("{{origin}}"), true);
   assert.equal(hiTranslations.flightLandingRouteAriaLabel.includes("{{destination}}"), true);
 });
