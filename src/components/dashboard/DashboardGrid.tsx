@@ -1207,29 +1207,29 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
             <p className="text-sm leading-6 text-slate-500">
               {t["accountDashboard.personalDetails.editingComingSoon"]}
             </p>
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <div className="flex flex-row justify-end gap-2">
               <button
                 type="button"
                 onClick={handleCancel}
-                className="focus-ring inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                className="focus-ring inline-flex min-h-10 w-fit min-w-[7rem] items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
                 {t["accountDashboard.personalDetails.cancel"]}
               </button>
               <button
                 type="button"
                 disabled
-                className="inline-flex min-h-10 cursor-not-allowed items-center justify-center rounded-lg bg-slate-200 px-4 text-sm font-semibold text-slate-500"
+                className="inline-flex min-h-10 w-fit min-w-[7rem] cursor-not-allowed items-center justify-center rounded-lg bg-slate-200 px-4 text-sm font-semibold text-slate-500"
               >
                 {t["accountDashboard.personalDetails.saveChanges"]}
               </button>
             </div>
           </div>
         ) : (
-          <div className="flex justify-stretch sm:justify-end">
+          <div className="flex justify-end">
             <button
               type="button"
               onClick={handleEdit}
-              className="focus-ring inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-blue-700 bg-white px-4 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 sm:w-auto"
+              className="focus-ring inline-flex min-h-10 w-fit min-w-[7rem] items-center justify-center rounded-lg border border-blue-700 bg-white px-4 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
             >
               {t["accountDashboard.personalDetails.edit"]}
             </button>
