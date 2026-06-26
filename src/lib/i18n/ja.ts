@@ -1488,7 +1488,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.featuresAriaLabel": "価格アラート機能",
   "accountDashboard.priceAlerts.filtersAriaLabel": "価格アラートフィルター",
   "accountDashboard.priceAlerts.features.monitoring.title": "リアルタイム監視",
-  "accountDashboard.priceAlerts.features.monitoring.body": "アラートが有効な間、プロバイダー提供の結果を監視します。",
+  "accountDashboard.priceAlerts.features.monitoring.body": "価格を監視し、アラートがトリガーされたらお知らせします。",
   "accountDashboard.priceAlerts.features.email.title": "メール通知",
   "accountDashboard.priceAlerts.features.email.body": "運賃が変わったら通知を受け取ります。",
   "accountDashboard.priceAlerts.features.trends.title": "価格トレンド",
@@ -1533,4 +1533,8 @@ export const translations: TranslationDictionary = {
   "hotelInspirationBadge.City exploring": "街歩き",
   "hotelInspirationBadge.City adventure": "都市の冒険",
   "hotelInspirationBadge.Slow city days": "ゆったり過ごす街時間",
+  "accountDashboard.trips.history.filtersAriaLabel": "旅行履歴フィルター",
+  "accountDashboard.trips.illustration.currentAriaLabel": "旅行のイラスト",
+  "accountDashboard.trips.illustration.historyAriaLabel": "旅行履歴のイラスト",
+  "accountDashboard.trips.illustration.cancelledAriaLabel": "キャンセル済み旅行のイラスト",
 };

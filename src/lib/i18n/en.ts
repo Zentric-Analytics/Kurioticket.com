@@ -242,7 +242,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.sort.oldest": "Oldest",
   "accountDashboard.priceAlerts.sort.routeAz": "Route A-Z",
   "accountDashboard.priceAlerts.features.monitoring.title": "Real-time monitoring",
-  "accountDashboard.priceAlerts.features.monitoring.body": "We monitor provider-backed results when alerts are active.",
+  "accountDashboard.priceAlerts.features.monitoring.body": "We monitor prices and let you know when alerts are triggered.",
   "accountDashboard.priceAlerts.features.email.title": "Email notifications",
   "accountDashboard.priceAlerts.features.email.body": "Get notified when fares change.",
   "accountDashboard.priceAlerts.features.trends.title": "Price trends",
