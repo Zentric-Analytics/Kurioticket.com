@@ -128,6 +128,10 @@ const normalizeHomepageCalendarLocale = (
     return "ar";
   }
 
+  if (normalized === "hi" || normalized.startsWith("hi-")) {
+    return "hi-IN";
+  }
+
   if (normalized === "ja" || normalized.startsWith("ja-")) {
     return "ja-JP";
   }
