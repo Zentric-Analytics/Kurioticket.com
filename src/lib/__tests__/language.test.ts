@@ -1108,3 +1108,74 @@ test("active account trips and price alerts copy is localized", () => {
     "언제든지 알림을 일시 중지하거나 삭제할 수 있습니다.",
   );
 });
+
+test("Hindi destinations and saved/recent pages resolve screenshot-visible copy without English fallback", () => {
+  const destinationKeys = [
+    "destinationsHeroBadge",
+    "destinationsHeroTitle",
+    "destinationsHeroSubtitle",
+    "destinations.card.subtitle",
+    "destinations.region.europe",
+    "destinations.region.northAmerica",
+    "destinations.region.asia",
+    "destinations.region.africa",
+    "destinations.region.middleEast",
+    "destinations.region.europe.summary",
+    "destinations.tag.iconicSkyline",
+    "destinations.tag.landmarkEscape",
+    "destinations.tag.cultureCapital",
+    "destinations.tag.goldenHourViews",
+    "destinations.tag.coastalEnergy",
+    "destinations.tag.foodMarketNights",
+    "destinations.tag.historicStreets",
+    "destinations.tag.designWeekend",
+    "destinations.city.london",
+    "destinations.city.paris",
+    "destinations.city.rome",
+    "destinations.city.barcelona",
+    "destinations.city.amsterdam",
+    "destinations.city.lisbon",
+    "destinations.city.prague",
+    "destinations.city.athens",
+    "destinations.country.unitedKingdom",
+    "destinations.country.france",
+    "destinations.country.italy",
+    "destinations.country.spain",
+    "destinations.country.netherlands",
+    "destinations.country.portugal",
+    "destinations.country.czechia",
+    "destinations.country.greece",
+  ];
+
+  const savedRecentKeys = [
+    "savedTripsPageTitle",
+    "savedTripsPageSubtitle",
+    "savedTripsEmptyTitle",
+    "savedTripsEmptyDescription",
+    "savedTripsExploreDestinations",
+    "savedTripsRecentSearchesTitle",
+    "savedTripsRecentSearchesSubtitle",
+    "savedTripsClearAllRecent",
+    "savedTripsTypeFlight",
+    "savedTripsTravelerCountOne",
+    "savedTripsCabinEconomy",
+    "savedTripsSearchedDate",
+    "savedTripsRepeatSearch",
+  ];
+
+  for (const key of [...destinationKeys, ...savedRecentKeys]) {
+    assert.equal(typeof hiTranslations[key], "string", `hi should define ${key}`);
+    assert.notEqual(hiTranslations[key], enTranslations[key], `hi should localize ${key}`);
+  }
+
+  assert.equal(hiTranslations.destinationsHeroBadge, "गंतव्य खोज");
+  assert.equal(hiTranslations["destinations.region.europe"], "यूरोप");
+  assert.equal(hiTranslations["destinations.country.unitedKingdom"], "यूनाइटेड किंगडम");
+  assert.equal(hiTranslations["destinations.tag.iconicSkyline"], "प्रसिद्ध क्षितिज");
+  assert.equal(hiTranslations["destinations.city.london"], "लंदन");
+  assert.equal(hiTranslations.savedTripsPageTitle, "सहेजी गई यात्राएँ");
+  assert.equal(hiTranslations.savedTripsTypeFlight, "उड़ान");
+  assert.equal(hiTranslations.savedTripsTravelerCountOne, "1 यात्री");
+  assert.equal(hiTranslations.savedTripsCabinEconomy, "इकॉनमी");
+  assert.equal(hiTranslations.savedTripsSearchedDate, "खोजा गया {{date}}");
+});

@@ -140,6 +140,9 @@ const getSavedTripsDateLocale = (locale: string) => {
   if (normalizedLocale === "ko" || normalizedLocale.startsWith("ko")) {
     return "ko-KR";
   }
+  if (normalizedLocale === "hi" || normalizedLocale.startsWith("hi")) {
+    return "hi-IN";
+  }
 
   return "en-US";
 };
