@@ -1677,6 +1677,61 @@ test("active account trips and price alerts copy is localized", () => {
     koTranslations["accountDashboard.priceAlerts.features.management.body"],
     "언제든지 알림을 일시 중지하거나 삭제할 수 있습니다.",
   );
+
+  assert.equal(hiTranslations["accountDashboard.trips.title"], "मेरी यात्राएँ");
+  assert.equal(hiTranslations["accountDashboard.trips.findReservation"], "आरक्षण खोजें");
+  assert.equal(hiTranslations["accountDashboard.trips.current.empty.title"], "अब अगला कहाँ?");
+  assert.equal(
+    hiTranslations["accountDashboard.trips.current.empty.body"],
+    "आपने अभी कोई यात्रा शुरू नहीं की है। जब आप आरक्षण करेंगे, वह यहाँ दिखाई देगा।",
+  );
+  assert.equal(hiTranslations["accountDashboard.trips.history.tabs.past"], "पिछली");
+  assert.equal(hiTranslations["accountDashboard.trips.history.tabs.cancelled"], "रद्द की गई");
+  assert.equal(hiTranslations["accountDashboard.trips.history.empty.past.title"], "अपनी यात्राएँ याद रखें");
+  assert.equal(
+    hiTranslations["accountDashboard.trips.history.empty.past.body"],
+    "यात्रा पूरी होने के बाद आपकी पूरी की गई यात्राएँ यहाँ दिखाई देंगी।",
+  );
+  assert.equal(hiTranslations["accountDashboard.trips.history.empty.cancelled.title"], "योजनाएँ बदल गईं?");
+  assert.equal(
+    hiTranslations["accountDashboard.trips.history.empty.cancelled.body"],
+    "आपके रद्द किए गए आरक्षण संदर्भ के लिए यहाँ दिखाई देंगे।",
+  );
+  assert.equal(hiTranslations["accountDashboard.priceAlerts.title"], "मूल्य अलर्ट");
+  assert.equal(
+    hiTranslations["accountDashboard.priceAlerts.description"],
+    "कीमतों पर नज़र रखें और किराए बदलने पर सूचना पाएँ।",
+  );
+  assert.equal(hiTranslations["accountDashboard.priceAlerts.tabs.active"], "सक्रिय");
+  assert.equal(hiTranslations["accountDashboard.priceAlerts.tabs.expired"], "समाप्त");
+  assert.equal(hiTranslations["accountDashboard.priceAlerts.tabs.all"], "सभी");
+  assert.equal(hiTranslations["accountDashboard.priceAlerts.sort.label"], "क्रमबद्ध करें");
+  assert.equal(hiTranslations["accountDashboard.priceAlerts.sort.newest"], "नवीनतम");
+  assert.equal(hiTranslations["accountDashboard.priceAlerts.sort.oldest"], "सबसे पुराने");
+  assert.equal(hiTranslations["accountDashboard.priceAlerts.sort.routeAz"], "मार्ग A-Z");
+  assert.equal(hiTranslations["accountDashboard.priceAlerts.empty.title"], "अभी कोई मूल्य अलर्ट नहीं है।");
+  assert.equal(
+    hiTranslations["accountDashboard.priceAlerts.empty.body"],
+    "किराए में बदलाव पर नज़र रखने और सूचना पाने के लिए उड़ान खोज से अलर्ट बनाएँ।",
+  );
+  assert.equal(hiTranslations["accountDashboard.priceAlerts.cta.flights"], "उड़ानें खोजें");
+  assert.equal(hiTranslations["accountDashboard.priceAlerts.features.monitoring.title"], "रीयल-टाइम निगरानी");
+  assert.equal(
+    hiTranslations["accountDashboard.priceAlerts.features.monitoring.body"],
+    "हम कीमतों की निगरानी करते हैं और अलर्ट ट्रिगर होने पर आपको बताते हैं।",
+  );
+  assert.equal(hiTranslations["accountDashboard.priceAlerts.features.email.title"], "ईमेल सूचनाएँ");
+  assert.equal(hiTranslations["accountDashboard.priceAlerts.features.email.body"], "किराए बदलने पर सूचना पाएँ।");
+  assert.equal(hiTranslations["accountDashboard.priceAlerts.features.trends.title"], "मूल्य रुझान");
+  assert.equal(
+    hiTranslations["accountDashboard.priceAlerts.features.trends.body"],
+    "देखें कि ट्रैक किए गए किराए समय के साथ कैसे बदलते हैं।",
+  );
+  assert.equal(hiTranslations["accountDashboard.priceAlerts.features.management.title"], "आसान प्रबंधन");
+  assert.equal(
+    hiTranslations["accountDashboard.priceAlerts.features.management.body"],
+    "कभी भी अलर्ट रोकें या हटाएँ।",
+  );
 });
 
 test("Hindi flights flow copy uses localized labels without mutating dynamic flight values", () => {
