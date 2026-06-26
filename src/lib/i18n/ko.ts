@@ -1065,6 +1065,29 @@ export const translations: TranslationDictionary = {
   "flightLandingCity.New York": "뉴욕",
   "flightLandingCity.Singapore": "싱가포르",
   flightLandingRouteAriaLabel: "{{origin}}에서 {{destination}}까지 항공편 검색",
+  flightBookingFaqs: "항공권 예약 FAQ",
+  flightBookingFaqIntro: "제공업체로 이동하기 전에 일반적인 항공권 검색 정보를 확인하세요.",
+  flightFaqBestTimeQuestion: "항공권은 언제 예약하는 것이 가장 좋나요?",
+  flightFaqBestTimeAnswer:
+    "항공권 가격은 노선, 시즌, 수요, 좌석 상황에 따라 달라질 수 있습니다. 요금을 선택하기 전에 여러 날짜를 비교하고, 가능하다면 인근 공항도 확인하며, 전체 여정을 검토하는 것이 좋습니다.",
+  flightFaqBeforeBookingQuestion: "예약하기 전에 무엇을 확인해야 하나요?",
+  flightFaqBeforeBookingAnswer:
+    "제공업체에서 예약을 완료하기 전에 출발 및 도착 시간, 총 이동 시간, 경유지, 수하물 규정, 좌석 선택 옵션, 취소 조건, 항공권 변경 정책을 확인하세요.",
+  flightFaqFlexibleFareQuestion: "유연한 운임이란 무엇인가요?",
+  flightFaqFlexibleFareAnswer:
+    "유연한 운임은 기본 운임보다 변경이나 취소 제한이 적을 수 있지만, 정확한 규정은 항공사나 예약 제공업체에 따라 다릅니다. 구매하기 전에 항상 운임 조건을 확인하세요.",
+  flightFaqNonstopQuestion: "직항 항공편이 항상 더 좋은가요?",
+  flightFaqNonstopAnswer:
+    "항상 그렇지는 않습니다. 직항 항공편은 시간을 절약할 수 있지만, 경유 노선은 더 다양한 출발 시간, 도착 시간대, 운임 옵션을 제공할 수 있습니다. 결정하기 전에 총 이동 시간, 경유 시간, 편의성을 비교하세요.",
+  flightFaqBaggageQuestion: "수하물 규정은 어떻게 적용되나요?",
+  flightFaqBaggageAnswer:
+    "수하물 허용량은 항공사, 노선, 좌석 등급, 운임 유형, 제공업체에 따라 달라질 수 있습니다. 예약하기 전에 기내 수하물, 위탁 수하물, 개인 소지품이 포함되는지 확인하세요.",
+  flightFaqChangeCancelQuestion: "항공권을 변경하거나 취소할 수 있나요?",
+  flightFaqChangeCancelAnswer:
+    "변경 및 취소 가능 여부는 운임 규정과 제공업체 정책에 따라 다릅니다. 일부 항공권은 환불이 불가능하거나 수수료가 부과될 수 있으므로 예약 전에 조건을 꼼꼼히 확인하세요.",
+  flightFaqInternationalQuestion: "국제선 항공편에 대해 무엇을 알아야 하나요?",
+  flightFaqInternationalAnswer:
+    "국제선 항공편은 여권, 비자, 환승, 입국 요건이 여행자와 목적지에 따라 다를 수 있습니다. 예약 전에 정부 및 제공업체 안내를 확인하세요.",
   tripType: "여행 유형",
   beachVacations: "해변 휴가",
   beachVacationsBody:
