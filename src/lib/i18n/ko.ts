@@ -857,6 +857,11 @@ export const translations: TranslationDictionary = {
   faqIntro:
     "신뢰할 수 있는 제공업체에서 예약하기 전에 Kurioticket이 항공권, 호텔, 여행 옵션 비교를 어떻게 돕는지 알아보세요.",
   faqViewAll: "전체 FAQ 보기",
+  faqHelpCenter: "도움말 센터",
+  faqGeneralQuestions: "일반 질문",
+  faqNeedMoreHelpPrefix: "도움이 더 필요하신가요?",
+  faqSupportPage: "지원 페이지",
+  faqNeedMoreHelpSuffix: "에서 서비스 및 문의 옵션을 확인하세요.",
   faqQuestionFindOptions: "Kurioticket은 항공권과 호텔 옵션을 어떻게 찾나요?",
   faqAnswerFindOptions:
     "Kurioticket은 여행 제공업체의 실시간 상품을 검색해 한곳에 모아, 선택하기 전에 가격, 노선, 숙소, 세부 정보를 비교할 수 있도록 합니다.",
