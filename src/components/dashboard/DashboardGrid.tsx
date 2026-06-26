@@ -1056,15 +1056,15 @@ function PhoneNumberInput({
 
   return (
     <div className="flex min-w-0 items-center gap-2">
-      <div className="group relative h-11 w-20 shrink-0">
+      <div className="group relative h-10 w-[4.5rem] shrink-0">
         <div
           aria-hidden="true"
-          className="pointer-events-none flex h-full w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 shadow-sm transition group-focus-within:border-violet-400 group-focus-within:ring-4 group-focus-within:ring-violet-100"
+          className="pointer-events-none flex h-full w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 shadow-sm transition group-focus-within:border-violet-400 group-focus-within:ring-4 group-focus-within:ring-violet-100"
         >
           <CountryFlagIcon
             countryName={selectedOption.countryName}
             isoCode={selectedOption.isoCode}
-            className="h-6 w-6 rounded-full bg-white"
+            className="h-5 w-5 rounded-full bg-white"
           />
           <ChevronDown
             className="h-4 w-4 shrink-0 text-slate-500"
@@ -1088,14 +1088,14 @@ function PhoneNumberInput({
       <div
         className={cn(
           className,
-          "flex min-w-0 items-center gap-2 overflow-hidden px-3",
+          "flex min-w-0 items-center gap-2 overflow-hidden px-3 py-1.5",
         )}
       >
         <span className="shrink-0 whitespace-nowrap text-slate-900">
           {selectedOption.dialCode}
         </span>
         <input
-          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-[15px] font-medium text-slate-900 outline-none sm:text-sm"
+          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-[14px] font-medium leading-5 text-slate-900 outline-none"
           type="tel"
           value={parsedValue.localNumber}
           onChange={(event) => handleLocalNumberChange(event.target.value)}
@@ -1151,7 +1151,7 @@ function DetailInput({
   onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
 }) {
   const baseClassName = cn(
-    "h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium leading-5 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100",
+    "h-10 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[14px] font-medium leading-5 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100",
     row.readOnly &&
       "cursor-not-allowed bg-slate-50 text-slate-500 focus:border-slate-200 focus:ring-0",
   );
@@ -1287,13 +1287,13 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
             <div
               key={row.key}
               className={cn(
-                "grid min-w-0 gap-1 border-t border-slate-200 px-5 first:border-t-0 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center sm:gap-6 sm:px-6",
+                "grid min-w-0 gap-0.5 border-t border-slate-200 px-5 first:border-t-0 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center sm:gap-4 sm:px-6",
                 isEditing
-                  ? "py-3 sm:min-h-[60px] sm:py-2.5"
+                  ? "py-2.5 sm:min-h-[52px] sm:py-2"
                   : "py-4 sm:min-h-16 sm:py-3",
                 row.key === "address"
                   ? isEditing
-                    ? "pt-3 sm:pt-2.5"
+                    ? "pt-2.5 sm:pt-2"
                     : "pt-5 sm:pt-5"
                   : null,
               )}
@@ -1302,7 +1302,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
                 {row.label}
               </div>
               {isEditing ? (
-                <div className="min-w-0 space-y-1.5">
+                <div className="min-w-0 space-y-1">
                   <DetailInput
                     row={row}
                     value={editValue}
