@@ -568,6 +568,26 @@ export const translations: TranslationDictionary = {
   legalCenter: "कानूनी केंद्र",
   footerAboutKurioticket: "Kurioticket के बारे में",
   footerAboutUs: "हमारे बारे में",
+  howItWorksEyebrow: "Kurioticket कैसे काम करता है",
+  howItWorksTitle: "Kurioticket कैसे काम करता है",
+  howItWorksIntro:
+    "Kurioticket यात्रियों को खोज से तुलना तक और फिर ऑफ़र चुनने पर प्रदाता तक आगे बढ़ने में मदद करता है।",
+  howItWorksFlowHeading: "बुनियादी प्रक्रिया",
+  "howItWorks.steps.search.title": "यात्रा विकल्प खोजें",
+  "howItWorks.steps.search.description":
+    "उपलब्ध उड़ानों, होटलों, कारों या यात्रा डील्स को देखने के लिए अपनी यात्रा जानकारी दर्ज करें।",
+  "howItWorks.steps.compare.title": "उपलब्ध परिणामों की तुलना करें",
+  "howItWorks.steps.compare.description":
+    "दिखाए जाने पर उपलब्ध विकल्पों, कीमतों, समय-सारिणियों, प्रदाता विवरण और अन्य यात्रा जानकारी की समीक्षा करें।",
+  "howItWorks.steps.choose.title": "एक ऑफ़र चुनें",
+  "howItWorks.steps.choose.description":
+    "उपलब्ध विवरणों की समीक्षा करने के बाद वह विकल्प चुनें जो आपकी योजना से सबसे अच्छा मेल खाता हो।",
+  "howItWorks.steps.continue.title": "प्रदाता के साथ आगे बढ़ें",
+  "howItWorks.steps.continue.description":
+    "रीडायरेक्ट होने पर अंतिम विवरण देखने और बुकिंग के चरण पूरे करने के लिए प्रदाता वेबसाइट पर आगे बढ़ें।",
+  "howItWorks.providerWebsites.title": "प्रदाता वेबसाइटें",
+  "howItWorks.providerWebsites.description":
+    "Kurioticket द्वारा आपको रीडायरेक्ट करने के बाद कुछ बुकिंग प्रदाता वेबसाइटों पर पूरी हो सकती हैं। खरीदारी पूरी करने से पहले अंतिम उपलब्धता, कीमत, शर्तें, भुगतान चरण और बुकिंग विवरण प्रदाता पेज पर जाँचें।",
   footerHowItWorks: "Kurioticket कैसे काम करता है",
   footerConfidenceTagline: "उड़ानें, होटल और यात्रा डील्स आत्मविश्वास के साथ खोजें।",
   footerAllRightsReserved: "सर्वाधिकार सुरक्षित।",
