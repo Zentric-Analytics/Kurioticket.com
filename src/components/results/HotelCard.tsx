@@ -139,6 +139,10 @@ function translateKnownHotelLabel(value: string, t: (key: string) => string) {
     return t("hotelResults.filter.deluxeKingRoom");
   }
 
+  if (/^classic room$/.test(normalized)) {
+    return t("hotelResults.filter.classicRoom");
+  }
+
   if (/^luxury king$/.test(normalized)) {
     return t("hotelResults.filter.luxuryKing");
   }
