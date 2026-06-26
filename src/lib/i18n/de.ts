@@ -623,6 +623,11 @@ export const translations: TranslationDictionary = {
   "destinations.country.unitedArabEmirates": "Vereinigte Arabische Emirate",
   "destinations.country.turkey": "Türkei",
   "destinations.country.qatar": "Katar",
+  "destinations.country.mexico": "Mexiko",
+  "destinations.country.australia": "Australien",
+  "destinations.country.rwanda": "Ruanda",
+  "destinations.country.egypt": "Ägypten",
+  "destinations.country.ethiopia": "Äthiopien",
   "destinations.country.oman": "Oman",
   "destinations.country.saudiArabia": "Saudi-Arabien",
 
@@ -1152,8 +1157,20 @@ export const translations: TranslationDictionary = {
   flightLandingRouteIdeasTitle: "Routenideen für flexible Reisen",
   flightLandingRouteIdeasBody:
     "Durchstöbern Sie Routenideen und starten Sie dann eine echte Suche mit Reisedaten und Reisenden, bevor Sie verfügbare Flüge vergleichen.",
+  flightLandingRouteTemplate: "{{origin}} nach {{destination}}",
   flightLandingRouteConnector: "nach",
-  flightLandingRouteAriaLabel:
+    "flightLandingCity.Abuja": "Abuja",
+  "flightLandingCity.Puerto Vallarta": "Puerto Vallarta",
+  "flightLandingCity.Honolulu": "Honolulu",
+  "flightLandingCity.San Diego": "San Diego",
+  "flightLandingCity.Sydney": "Sydney",
+  "flightLandingCity.Tokyo": "Tokio",
+  "flightLandingCity.New York": "New York",
+  "flightLandingCity.Singapore": "Singapur",
+  "flightLandingCity.Toronto": "Toronto",
+  "flightLandingCity.Edmonton": "Edmonton",
+  "flightLandingCity.Vancouver": "Vancouver",
+flightLandingRouteAriaLabel:
     "Flüge von {{origin}} nach {{destination}} suchen",
   beachVacations: "Strandurlaub",
   beachVacationsBody:
