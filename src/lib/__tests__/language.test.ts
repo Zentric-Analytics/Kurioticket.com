@@ -844,6 +844,71 @@ test("Hindi homepage search support newsletter and footer strings are localized"
   assert.equal(getTranslations("hi").cityOrHotel, "शहर या होटल");
 });
 
+test("Hindi legal center and policy document strings are localized", () => {
+  const expectedHindiLegalStrings = {
+    "legal.lastUpdated": "अंतिम अपडेट",
+    "legal.print": "प्रिंट करें",
+    "legal.tableOfContents": "विषय सूची",
+    "legal.terms.title": "सेवा की शर्तें",
+    "legal.terms.summary":
+      "Kurioticket खोज, खातों, डैशबोर्ड, सहेजे गए यात्रा टूल और पार्टनर रीडायरेक्ट के उपयोग के नियम।",
+    "legal.terms.tableOfContents": "विषय सूची",
+    "legal.terms.sections.overview.title": "अवलोकन",
+    "legal.terms.sections.accounts.title": "खाते",
+    "legal.terms.sections.acceptable-use.title": "स्वीकार्य उपयोग",
+    "legal.terms.sections.partner-services.title": "पार्टनर सेवाएँ",
+    "legal.terms.developerNote":
+      "ये कानूनी मसौदे स्टार्टअप प्लेसहोल्डर हैं और बड़े पैमाने पर सार्वजनिक लॉन्च से पहले योग्य कानूनी सलाहकार द्वारा समीक्षा किए जाने चाहिए।",
+    "legal.privacy.title": "गोपनीयता नीति",
+    "legal.privacy.summary":
+      "Kurioticket LLC (“Kurioticket,” “हम,” “हमें,” या “हमारा”) खाता, खोज, अलर्ट, सहायता और ईमेल डेटा कैसे एकत्र, उपयोग, संग्रहीत और सुरक्षित करता है।",
+    "legal.privacy.tableOfContents": "विषय सूची",
+    "legal.privacy.sections.data-we-collect.title": "हम जो डेटा एकत्र करते हैं",
+    "legal.privacy.sections.vendors.title": "सेवा प्रदाता",
+    "legal.privacy.sections.choices.title": "आपके विकल्प",
+    "legal.cookiePolicy.title": "कुकी नीति",
+    "legal.cookiePolicy.summary":
+      "Kurioticket प्रमाणीकरण, सुरक्षा, पसंदों, एनालिटिक्स और प्रदर्शन के लिए कुकीज़ और समान तकनीकों का उपयोग कैसे करता है।",
+    "legal.cookiePolicy.tableOfContents": "विषय सूची",
+    "legal.cookiePolicy.sections.use.title": "कुकीज़ का उपयोग कैसे किया जाता है",
+    "legal.cookiePolicy.sections.third-parties.title": "तृतीय-पक्ष तकनीकें",
+    "legal.cookiePolicy.sections.controls.title": "नियंत्रण",
+    "legalCenter.heroLabel": "कानूनी जानकारी",
+    "legalCenter.heroTitle": "कानूनी केंद्र",
+    "legalCenter.heroDescription":
+      "Kurioticket के उपयोग से संबंधित महत्वपूर्ण कानूनी और नीति जानकारी देखें।",
+    "legalCenter.resourcesHeading": "कानूनी संसाधन",
+    "legalCenter.resourcesDescription":
+      "Kurioticket की कानूनी शर्तों और डेटा प्रक्रियाओं के बारे में अधिक जानने के लिए नीचे एक नीति चुनें।",
+    "legalCenter.policiesBadge": "नीतियाँ",
+    "legalCenter.privacyPolicy.title": "गोपनीयता नीति",
+    "legalCenter.privacyPolicy.cta": "गोपनीयता नीति देखें",
+    "legalCenter.termsOfService.title": "सेवा की शर्तें",
+    "legalCenter.termsOfService.cta": "सेवा की शर्तें देखें",
+    "legalCenter.cookiePolicy.title": "कुकी नीति",
+    "legalCenter.cookiePolicy.cta": "कुकी नीति देखें",
+    "legalCenter.additionalResourcesTitle": "अतिरिक्त कानूनी संसाधन",
+    "legalCenter.additionalResourcesDescription":
+      "Kurioticket के बढ़ने के साथ अतिरिक्त कानूनी संसाधन जोड़े जा सकते हैं।",
+  };
+
+  for (const [key, value] of Object.entries(expectedHindiLegalStrings)) {
+    assert.equal(hiTranslations[key], value, `hi ${key} should use the audited Hindi legal copy`);
+    assert.notEqual(hiTranslations[key], enTranslations[key], `hi ${key} should not fall back to English`);
+    assert.equal(getTranslations("hi")[key], value, `resolved hi ${key} should use Hindi`);
+  }
+
+  const legalViewerSource = readFileSync("src/components/legal/LegalViewer.tsx", "utf8");
+  const legalCenterSource = readFileSync("src/app/legal-center/LegalCenterContent.tsx", "utf8");
+
+  assert.ok(legalViewerSource.includes("legalDocumentTranslationNamespaces"));
+  assert.ok(legalViewerSource.includes("window.print()"));
+  assert.ok(legalViewerSource.includes("href={`#${section.id}`}"));
+  assert.ok(legalCenterSource.includes('href: "/legal/privacy-policy"'));
+  assert.ok(legalCenterSource.includes('href: "/legal/terms-of-service"'));
+  assert.ok(legalCenterSource.includes('href: "/legal/cookie-policy"'));
+});
+
 
 test("Hindi service and support page strings are localized", () => {
   const expectedHindiServiceSupportStrings = {
