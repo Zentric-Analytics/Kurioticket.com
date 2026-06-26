@@ -952,19 +952,30 @@ function PhoneNumberInput({
   };
 
   return (
-    <div className="grid min-w-0 grid-cols-[minmax(4.75rem,5.5rem)_minmax(0,1fr)] gap-2 sm:grid-cols-[minmax(5.25rem,6rem)_minmax(0,1fr)]">
-      <select
-        className={className}
-        value={parsedValue.countryCode}
-        onChange={(event) => handleCountryChange(event.target.value)}
-        aria-label={`${label} country calling code`}
-      >
-        {countryCallingCodeOptions.map((option) => (
-          <option key={option.isoCode} value={option.isoCode}>
-            {option.flag} {option.isoCode}
-          </option>
-        ))}
-      </select>
+    <div className="grid min-w-0 grid-cols-[minmax(3.25rem,3.75rem)_minmax(0,1fr)] gap-2 sm:grid-cols-[minmax(3.5rem,4rem)_minmax(0,1fr)]">
+      <div className="relative min-w-0 overflow-hidden rounded-xl">
+        <select
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          value={parsedValue.countryCode}
+          onChange={(event) => handleCountryChange(event.target.value)}
+          aria-label={`${label} country calling code`}
+        >
+          {countryCallingCodeOptions.map((option) => (
+            <option key={option.isoCode} value={option.isoCode}>
+              {option.flag} {option.countryName} ({option.isoCode})
+            </option>
+          ))}
+        </select>
+        <div
+          className={cn(
+            className,
+            "pointer-events-none flex items-center justify-center px-2 text-lg leading-none sm:text-base",
+          )}
+          aria-hidden="true"
+        >
+          <span className="truncate">{selectedOption.flag}</span>
+        </div>
+      </div>
       <div
         className={cn(
           className,
