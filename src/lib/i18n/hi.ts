@@ -31,6 +31,100 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.helpAndSupport": "सहायता और समर्थन",
   "accountDashboard.hub.contactSupport": "सहायता से संपर्क करें",
   "accountDashboard.hub.faq": "अक्सर पूछे जाने वाले प्रश्न",
+  "accountDashboard.trips.title": "मेरी यात्राएँ",
+  "accountDashboard.trips.subtitle": "अपनी यात्राएँ एक ही जगह देखें और प्रबंधित करें।",
+  "accountDashboard.trips.findReservation": "आरक्षण खोजें",
+  "accountDashboard.trips.lookup.title": "आरक्षण विवरण दर्ज करें",
+  "accountDashboard.trips.lookup.body":
+    "अपना आरक्षण खोजने और प्रबंधित करने के लिए अपना आरक्षण कोड और ईमेल पता दर्ज करें।",
+  "accountDashboard.trips.lookup.closeAriaLabel": "बंद करें",
+  "accountDashboard.trips.lookup.reservationCode": "आरक्षण कोड",
+  "accountDashboard.trips.lookup.emailAddress": "ईमेल पता",
+  "accountDashboard.trips.lookup.submit": "आरक्षण खोजें",
+  "accountDashboard.trips.lookup.unavailable": "आरक्षण खोज अभी उपलब्ध नहीं है।",
+  "accountDashboard.trips.lookup.reservationCodeRequired":
+    "आरक्षण कोड आवश्यक है",
+  "accountDashboard.trips.lookup.emailRequired": "ईमेल पता आवश्यक है",
+  "accountDashboard.trips.lookup.invalidEmail": "मान्य ईमेल पता दर्ज करें",
+  "accountDashboard.trips.lookup.loading": "आरक्षण खोजा जा रहा है...",
+  "accountDashboard.trips.lookup.notFoundTitle": "आरक्षण नहीं मिला",
+  "accountDashboard.trips.lookup.notFoundDescription":
+    "हमें इन विवरणों से कोई आरक्षण नहीं मिला।",
+  "accountDashboard.trips.current.empty.title": "अब अगला कहाँ?",
+  "accountDashboard.trips.current.empty.body":
+    "आपने अभी कोई यात्रा शुरू नहीं की है। जब आप आरक्षण करेंगे, वह यहाँ दिखाई देगा।",
+  "accountDashboard.trips.history.title": "यात्रा इतिहास",
+  "accountDashboard.trips.history.filtersAriaLabel": "यात्रा इतिहास फ़िल्टर",
+  "accountDashboard.trips.history.tabs.active": "सक्रिय",
+  "accountDashboard.trips.history.tabs.past": "पिछली",
+  "accountDashboard.trips.history.tabs.cancelled": "रद्द की गई",
+  "accountDashboard.trips.history.empty.active.title": "कोई सक्रिय यात्रा नहीं",
+  "accountDashboard.trips.history.empty.past.title": "अपनी यात्राएँ याद रखें",
+  "accountDashboard.trips.history.empty.past.body":
+    "यात्रा पूरी होने के बाद आपकी पूरी की गई यात्राएँ यहाँ दिखाई देंगी।",
+  "accountDashboard.trips.history.empty.cancelled.title": "योजनाएँ बदल गईं?",
+  "accountDashboard.trips.history.empty.cancelled.body":
+    "आपके रद्द किए गए आरक्षण संदर्भ के लिए यहाँ दिखाई देंगे।",
+  "accountDashboard.trips.illustration.currentAriaLabel": "यात्रा चित्रण",
+  "accountDashboard.trips.illustration.historyAriaLabel":
+    "यात्रा इतिहास चित्रण",
+  "accountDashboard.trips.illustration.cancelledAriaLabel":
+    "रद्द यात्रा चित्रण",
+  "accountDashboard.priceAlerts.eyebrow": "खाता टूल",
+  "accountDashboard.priceAlerts.title": "मूल्य अलर्ट",
+  "accountDashboard.priceAlerts.description":
+    "कीमतों पर नज़र रखें और किराए बदलने पर सूचना पाएँ।",
+  "accountDashboard.priceAlerts.empty.title": "अभी कोई मूल्य अलर्ट नहीं है।",
+  "accountDashboard.priceAlerts.empty.body":
+    "किराए में बदलाव पर नज़र रखने और सूचना पाने के लिए उड़ान खोज से अलर्ट बनाएँ।",
+  "accountDashboard.priceAlerts.guidance.flight.title": "उड़ान से शुरू करें",
+  "accountDashboard.priceAlerts.guidance.flight.body":
+    "यात्राएँ या मार्ग सहेजने से पहले प्रदाता-समर्थित उड़ान विकल्पों की तुलना करें।",
+  "accountDashboard.priceAlerts.guidance.stays.title": "ठहरावों की समीक्षा करें",
+  "accountDashboard.priceAlerts.guidance.stays.body":
+    "अपनी योजनाओं में कुछ जोड़ने से पहले वर्तमान प्रदाता विवरणों वाले होटल खोजें।",
+  "accountDashboard.priceAlerts.guidance.organized.title":
+    "योजना को व्यवस्थित रखें",
+  "accountDashboard.priceAlerts.guidance.organized.body":
+    "आपका खाता काल्पनिक गतिविधि या स्थिर कीमतों के बिना सहेजे गए यात्रा रिकॉर्ड दिखाता है।",
+  "accountDashboard.priceAlerts.cta.flights": "उड़ानें खोजें",
+  "accountDashboard.priceAlerts.cta.hotels": "होटल खोजें",
+  "accountDashboard.priceAlerts.cta.cars": "कारें खोजें",
+  "accountDashboard.priceAlerts.filtersAriaLabel": "मूल्य अलर्ट फ़िल्टर",
+  "accountDashboard.priceAlerts.featuresAriaLabel": "मूल्य अलर्ट सुविधाएँ",
+  "accountDashboard.priceAlerts.tabs.active": "सक्रिय",
+  "accountDashboard.priceAlerts.tabs.expired": "समाप्त",
+  "accountDashboard.priceAlerts.tabs.all": "सभी",
+  "accountDashboard.priceAlerts.sort.label": "क्रमबद्ध करें",
+  "accountDashboard.priceAlerts.sort.ariaLabel": "मूल्य अलर्ट क्रमबद्ध करें",
+  "accountDashboard.priceAlerts.sort.newest": "नवीनतम",
+  "accountDashboard.priceAlerts.sort.oldest": "सबसे पुराने",
+  "accountDashboard.priceAlerts.sort.routeAz": "मार्ग A-Z",
+  "accountDashboard.priceAlerts.features.monitoring.title":
+    "रीयल-टाइम निगरानी",
+  "accountDashboard.priceAlerts.features.monitoring.body":
+    "हम कीमतों की निगरानी करते हैं और अलर्ट ट्रिगर होने पर आपको बताते हैं।",
+  "accountDashboard.priceAlerts.features.email.title": "ईमेल सूचनाएँ",
+  "accountDashboard.priceAlerts.features.email.body":
+    "किराए बदलने पर सूचना पाएँ।",
+  "accountDashboard.priceAlerts.features.trends.title": "मूल्य रुझान",
+  "accountDashboard.priceAlerts.features.trends.body":
+    "देखें कि ट्रैक किए गए किराए समय के साथ कैसे बदलते हैं।",
+  "accountDashboard.priceAlerts.features.management.title": "आसान प्रबंधन",
+  "accountDashboard.priceAlerts.features.management.body":
+    "कभी भी अलर्ट रोकें या हटाएँ।",
+  "accountDashboard.priceAlerts.error.title":
+    "हम आपके अलर्ट लोड नहीं कर सके। कृपया फिर से कोशिश करें।",
+  "accountDashboard.priceAlerts.error.body":
+    "आपके खाते के विवरण सुरक्षित रहते हैं। पेज रीफ़्रेश करें या अपने डैशबोर्ड पर लौटें।",
+  "accountDashboard.priceAlerts.error.cta": "डैशबोर्ड पर लौटें",
+  "accountDashboard.priceAlerts.alertType.flight": "उड़ान",
+  "accountDashboard.priceAlerts.alertType.hotel": "होटल",
+  "accountDashboard.priceAlerts.alert.targetPrice": "लक्षित मूल्य",
+  "accountDashboard.priceAlerts.alert.noTargetPrice":
+    "कोई लक्षित मूल्य सहेजा नहीं गया",
+  "accountDashboard.priceAlerts.alert.created": "बनाया गया",
+  "accountDashboard.priceAlerts.alert.updated": "अपडेट किया गया",
   "accountDashboard.personalDetails.title": "व्यक्तिगत विवरण",
   "accountDashboard.personalDetails.subtitle":
     "अपनी जानकारी अपडेट करें और Kurioticket में उसका उपयोग कैसे होता है, इसे प्रबंधित करें।",
