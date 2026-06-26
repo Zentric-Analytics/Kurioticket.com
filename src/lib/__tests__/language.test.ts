@@ -454,6 +454,48 @@ test("Hindi country and currency modal copy resolves without English fallback", 
   }
 });
 
+
+test("Hindi hotels landing lower sections resolve without English fallback", () => {
+  const hi = getTranslations("hi");
+  const auditedHindiHotelsLandingKeys: Array<[string, string]> = [
+    ["findStaysEveryKindTrip", "हर तरह की यात्रा के लिए ठहराव खोजें"],
+    [
+      "hotelInspirationBody",
+      "आपके मन में जिस तरह का ठहराव है, उसके अनुसार गंतव्य विचार देखें।",
+    ],
+    ["hotelInspirationCategory.Beach", "बीच"],
+    ["hotelInspirationCategory.City breaks", "सिटी ब्रेक"],
+    ["hotelInspirationCategory.Family trips", "परिवार यात्राएँ"],
+    ["hotelInspirationCategory.Relaxed stays", "आरामदायक ठहराव"],
+    ["hotelInspirationCategory.Weekend ideas", "वीकेंड विचार"],
+    ["hotelInspirationBadge.Coastal stays", "तटीय ठहराव"],
+    ["hotelInspirationBadge.City coast", "शहर का तट"],
+    ["hotelInspirationBadge.Waterfront stays", "वॉटरफ़्रंट ठहराव"],
+    ["hotelTrustReviewTitle", "ठहराव विवरण की समीक्षा करें"],
+    [
+      "hotelTrustReviewBody",
+      "चुनने से पहले तारीखें, मेहमान, कमरे, कीमत संदर्भ और ठहराव जानकारी जाँचें।",
+    ],
+    ["hotelTrustProviderTitle", "प्रदाता के साथ आगे बढ़ें"],
+    [
+      "hotelTrustProviderBody",
+      "जब आप कोई विकल्प चुनते हैं, तो अंतिम कीमत, उपलब्धता, शुल्क और रद्दीकरण नियमों की पुष्टि के लिए प्रदाता के साथ आगे बढ़ें।",
+    ],
+    ["exploreStaysWorldwide", "दुनिया भर में ठहराव देखें"],
+  ];
+
+  for (const [key, expected] of auditedHindiHotelsLandingKeys) {
+    assert.equal(hi[key], expected, key);
+    assert.notEqual(hi[key], enTranslations[key], key);
+  }
+
+  assert.equal(hi.hotelsHeroTitle, "ऐसा ठहराव खोजें जो यात्रा की सही शुरुआत करे।");
+  assert.equal(hi.hotelSearchIntroLabel, "होटल विकल्पों की तुलना करें");
+  assert.equal(hi.hotelSearchDatePlaceholder, "चेक-इन — चेक-आउट");
+  assert.equal(hi.guestSingular, "मेहमान");
+  assert.equal(hi.roomPlural, "कमरे");
+});
+
 test("Spanish, French, German, Italian, Dutch, Portuguese, Chinese, Japanese, Korean, Hindi, and Arabic dictionary shapes match English dictionary shape", () => {
   const englishKeys = Object.keys(enTranslations).sort();
   assert.deepEqual(
