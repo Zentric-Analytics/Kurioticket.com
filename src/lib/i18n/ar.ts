@@ -1553,4 +1553,20 @@ export const translations: TranslationDictionary = {
   "flightLandingImageAlt.Johannesburg skyline at golden hour": "أفق جوهانسبرغ عند الساعة الذهبية",
   "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza": "أفق القاهرة مع أهرامات الجيزة",
   "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands": "مشهد مدينة أديس أبابا في المرتفعات الإثيوبية",
+
+  // Hotels landing static render-path localization coverage.
+  "hotelsHeroImageAlt": "جرس فندق يرحب بضيف مع أمتعة في ردهة فاخرة",
+  "hotelDestination.London.imageAlt": "جسر تاور ونهر التايمز في لندن تحت سماء زرقاء",
+  "hotelDestination.Paris.imageAlt": "برج إيفل ونهر السين في باريس وقت الساعة الذهبية",
+  "hotelDestination.Rome.imageAlt": "الكولوسيوم في روما تحت سماء زرقاء صافية",
+  "hotelDestination.Dubai.imageAlt": "أفق دبي مع برج خليفة مرتفعاً فوق ناطحات السحاب",
+  "hotelDestination.Singapore.imageAlt": "أفق مارينا باي في سنغافورة عند الغسق",
+  "hotelDestination.Barcelona.imageAlt": "مشهد مدينة برشلونة مع ساغرادا فاميليا في ضوء النهار",
+  "hotelDestination.Toronto.imageAlt": "أفق تورونتو مع برج CN بجانب بحيرة أونتاريو",
+  "hotelDestination.Amsterdam.imageAlt": "منازل قنوات أمستردام وجسر بمحاذاة الماء",
+  "hotelDestination.Bangkok.imageAlt": "أفق مدينة بانكوك ونهر تشاو فرايا عند الغروب",
+  "hotelDestination.Cancun.imageAlt": "شاطئ كانكون برمال بيضاء ومياه فيروزية",
+  "hotelDestination.Istanbul.imageAlt": "واجهة إسطنبول البحرية مع قباب ومآذن وقت الساعة الذهبية",
+  "hotelDestination.Tokyo.imageAlt": "أفق طوكيو بمبانٍ شاهقة كثيفة في ضوء النهار",
+  "hotelDestination.New York.imageAlt": "أفق مدينة نيويورك مع مركز التجارة العالمي ون والواجهة البحرية",
 };

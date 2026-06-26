@@ -2322,4 +2322,20 @@ flightLandingRouteAriaLabel:
   "flightLandingImageAlt.Johannesburg skyline at golden hour": "Skyline von Johannesburg zur goldenen Stunde",
   "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza": "Skyline von Kairo mit den Pyramiden von Gizeh",
   "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands": "Stadtbild von Addis Abeba im äthiopischen Hochland",
+
+  // Hotels landing static render-path localization coverage.
+  "hotelsHeroImageAlt": "Hotelpage begrüßt einen Gast mit Gepäck in einer Premium-Lobby",
+  "hotelDestination.London.imageAlt": "Tower Bridge und Themse in London unter blauem Himmel",
+  "hotelDestination.Paris.imageAlt": "Eiffelturm und Seine in Paris zur goldenen Stunde",
+  "hotelDestination.Rome.imageAlt": "Das Kolosseum in Rom unter klarem blauem Himmel",
+  "hotelDestination.Dubai.imageAlt": "Skyline von Dubai mit dem Burj Khalifa über den Wolkenkratzern",
+  "hotelDestination.Singapore.imageAlt": "Marina-Bay-Skyline in Singapur in der Abenddämmerung",
+  "hotelDestination.Barcelona.imageAlt": "Stadtansicht von Barcelona mit der Sagrada Família bei Tageslicht",
+  "hotelDestination.Toronto.imageAlt": "Skyline von Toronto mit dem CN Tower am Ontariosee",
+  "hotelDestination.Amsterdam.imageAlt": "Amsterdamer Grachtenhäuser und Brücke am Wasser",
+  "hotelDestination.Bangkok.imageAlt": "Skyline von Bangkok und Chao-Phraya-Fluss bei Sonnenuntergang",
+  "hotelDestination.Cancun.imageAlt": "Strand von Cancún mit weißem Sand und türkisfarbenem Wasser",
+  "hotelDestination.Istanbul.imageAlt": "Ufer von Istanbul mit Kuppeln und Minaretten zur goldenen Stunde",
+  "hotelDestination.Tokyo.imageAlt": "Skyline von Tokio mit dichter Hochhausbebauung bei Tageslicht",
+  "hotelDestination.New York.imageAlt": "Skyline von New York City mit One World Trade Center und Waterfront",
 };

@@ -2101,4 +2101,20 @@ flightLandingRouteAriaLabel: "Vluchten zoeken van {{origin}} naar {{destination}
   "hotelResults.filter.singleStandard": "Standaard eenpersoonskamer",
   "hotelResults.filter.superiorDoubleRoom": "Superior tweepersoonskamer",
   "hotelResults.filter.superiorRoom": "Superior kamer",
+
+  // Hotels landing static render-path localization coverage.
+  "hotelsHeroImageAlt": "Hotel piccolo verwelkomt een gast met bagage in een premium lobby",
+  "hotelDestination.London.imageAlt": "Tower Bridge en de Theems in Londen onder een blauwe lucht",
+  "hotelDestination.Paris.imageAlt": "Eiffeltoren en de Seine in Parijs tijdens het gouden uur",
+  "hotelDestination.Rome.imageAlt": "Het Colosseum in Rome onder een helderblauwe lucht",
+  "hotelDestination.Dubai.imageAlt": "Skyline van Dubai met de Burj Khalifa boven wolkenkrabbers",
+  "hotelDestination.Singapore.imageAlt": "Marina Bay-skyline in Singapore bij schemering",
+  "hotelDestination.Barcelona.imageAlt": "Stadsgezicht van Barcelona met de Sagrada Família bij daglicht",
+  "hotelDestination.Toronto.imageAlt": "Skyline van Toronto met de CN Tower naast Lake Ontario",
+  "hotelDestination.Amsterdam.imageAlt": "Amsterdamse grachtenpanden en brug langs het water",
+  "hotelDestination.Bangkok.imageAlt": "Skyline van Bangkok en de Chao Phraya-rivier bij zonsondergang",
+  "hotelDestination.Cancun.imageAlt": "Strand van Cancun met wit zand en turquoise water",
+  "hotelDestination.Istanbul.imageAlt": "Waterfront van Istanbul met koepels en minaretten tijdens het gouden uur",
+  "hotelDestination.Tokyo.imageAlt": "Skyline van Tokyo met dicht opeengepakte hoogbouw bij daglicht",
+  "hotelDestination.New York.imageAlt": "Skyline van New York City met One World Trade Center en waterfront",
 };

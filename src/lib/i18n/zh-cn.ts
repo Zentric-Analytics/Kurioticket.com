@@ -1627,4 +1627,20 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.singleStandard": "标准单人间",
   "hotelResults.filter.superiorDoubleRoom": "高级双人间",
   "hotelResults.filter.superiorRoom": "高级房",
+
+  // Hotels landing static render-path localization coverage.
+  "hotelsHeroImageAlt": "酒店行李员在高级大堂迎接携带行李的住客",
+  "hotelDestination.London.imageAlt": "蓝天下伦敦塔桥和泰晤士河",
+  "hotelDestination.Paris.imageAlt": "金色时刻的巴黎埃菲尔铁塔和塞纳河",
+  "hotelDestination.Rome.imageAlt": "晴朗蓝天下的罗马斗兽场",
+  "hotelDestination.Dubai.imageAlt": "迪拜天际线，哈利法塔高耸于摩天楼之上",
+  "hotelDestination.Singapore.imageAlt": "黄昏时的新加坡滨海湾天际线",
+  "hotelDestination.Barcelona.imageAlt": "白天可见圣家堂的巴塞罗那城市景观",
+  "hotelDestination.Toronto.imageAlt": "安大略湖畔带有加拿大国家电视塔的多伦多天际线",
+  "hotelDestination.Amsterdam.imageAlt": "阿姆斯特丹水边的运河房屋和桥梁",
+  "hotelDestination.Bangkok.imageAlt": "日落时的曼谷城市天际线和湄南河",
+  "hotelDestination.Cancun.imageAlt": "坎昆海滩，白沙与碧蓝海水",
+  "hotelDestination.Istanbul.imageAlt": "金色时刻带有穹顶和尖塔的伊斯坦布尔海滨",
+  "hotelDestination.Tokyo.imageAlt": "白天高楼密集的东京天际线",
+  "hotelDestination.New York.imageAlt": "纽约市天际线，包含世界贸易中心一号楼和滨水区",
 };

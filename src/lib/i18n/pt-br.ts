@@ -3175,4 +3175,20 @@ export const translations: TranslationDictionary = {
   "flightLandingImageAlt.Johannesburg skyline at golden hour": "Horizonte de Joanesburgo na hora dourada",
   "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza": "Horizonte do Cairo com as Pirâmides de Gizé",
   "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands": "Paisagem urbana de Adis Abeba nas terras altas etíopes",
+
+  // Hotels landing static render-path localization coverage.
+  "hotelsHeroImageAlt": "Mensageiro de hotel recebendo um hóspede com bagagem em um lobby premium",
+  "hotelDestination.London.imageAlt": "Tower Bridge e o rio Tâmisa em Londres sob céu azul",
+  "hotelDestination.Paris.imageAlt": "Torre Eiffel e rio Sena em Paris na hora dourada",
+  "hotelDestination.Rome.imageAlt": "O Coliseu em Roma sob um céu azul claro",
+  "hotelDestination.Dubai.imageAlt": "Horizonte de Dubai com o Burj Khalifa acima dos arranha-céus",
+  "hotelDestination.Singapore.imageAlt": "Horizonte da Marina Bay em Singapura ao anoitecer",
+  "hotelDestination.Barcelona.imageAlt": "Paisagem urbana de Barcelona com a Sagrada Família à luz do dia",
+  "hotelDestination.Toronto.imageAlt": "Horizonte de Toronto com a CN Tower ao lado do Lago Ontário",
+  "hotelDestination.Amsterdam.imageAlt": "Casas de canal e ponte de Amsterdã junto à água",
+  "hotelDestination.Bangkok.imageAlt": "Horizonte de Bangkok e rio Chao Phraya ao pôr do sol",
+  "hotelDestination.Cancun.imageAlt": "Praia de Cancún com areia branca e água turquesa",
+  "hotelDestination.Istanbul.imageAlt": "Orla de Istambul com cúpulas e minaretes na hora dourada",
+  "hotelDestination.Tokyo.imageAlt": "Horizonte de Tóquio com prédios altos densos à luz do dia",
+  "hotelDestination.New York.imageAlt": "Horizonte de Nova York com o One World Trade Center e a orla",
 };
