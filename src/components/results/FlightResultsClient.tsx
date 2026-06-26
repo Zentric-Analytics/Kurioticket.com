@@ -38,7 +38,11 @@ import {
   type HomeDiscoveryItem,
 } from "@/data/homeDiscovery";
 import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
-import { translateHomeDiscoveryCopy } from "@/lib/i18n/homeDiscovery";
+import {
+  formatHomeDiscoveryRoute,
+  translateHomeDiscoveryCity,
+  translateHomeDiscoveryCopy,
+} from "@/lib/i18n/homeDiscovery";
 import {
   clearRecentSearches,
   readRecentSearches,
@@ -535,6 +539,16 @@ function SavedRouteCard({
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const copy = translateHomeDiscoveryCopy(dictionary, item);
+  const originCity = translateHomeDiscoveryCity(dictionary, item.originCity);
+  const destinationCity = translateHomeDiscoveryCity(
+    dictionary,
+    item.destinationCity,
+  );
+  const routeLabel = formatHomeDiscoveryRoute(
+    dictionary,
+    originCity,
+    destinationCity,
+  );
 
   return (
     <article className="group relative min-w-[250px] snap-start overflow-hidden rounded-[1.45rem] border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-xl sm:min-w-[280px] md:min-w-0">
@@ -562,7 +576,7 @@ function SavedRouteCard({
             {copy.title}
           </h3>
           <p className="mt-1 text-sm font-semibold text-slate-500">
-            {item.originCity} {t("to").toLowerCase()} {item.destinationCity}
+            {routeLabel}
           </p>
           <p className="mt-2 line-clamp-2 flex-1 text-sm leading-6 text-slate-600">
             {copy.routeNote}
@@ -3011,10 +3025,17 @@ export function FlightResultsClient() {
                         </div>
                         <div className="bg-white px-4 py-3.5 sm:px-5 sm:py-4">
                           <h3 className="line-clamp-1 text-base font-semibold leading-tight text-slate-900 sm:text-lg">
-                            {item.destinationCity}
+                            {translateHomeDiscoveryCity(
+                              dictionary,
+                              item.destinationCity,
+                            )}
                           </h3>
                           <p className="mt-1 line-clamp-1 text-sm font-medium leading-5 text-slate-600">
-                            {item.originCity} → {item.destinationCity}
+                            {formatHomeDiscoveryRoute(
+                              dictionary,
+                              translateHomeDiscoveryCity(dictionary, item.originCity),
+                              translateHomeDiscoveryCity(dictionary, item.destinationCity),
+                            )}
                           </p>
                         </div>
                       </article>
@@ -3062,7 +3083,11 @@ export function FlightResultsClient() {
                             </div>
                             <div className="min-w-0">
                               <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-900 sm:text-base sm:leading-6">
-                                {item.originCity} → {item.destinationCity}
+                                {formatHomeDiscoveryRoute(
+                                  dictionary,
+                                  translateHomeDiscoveryCity(dictionary, item.originCity),
+                                  translateHomeDiscoveryCity(dictionary, item.destinationCity),
+                                )}
                               </h3>
                               <p className="mt-1 text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
                                 {item.originCode} → {item.destinationCode}
@@ -3117,7 +3142,10 @@ export function FlightResultsClient() {
                             </div>
                             <div className="bg-white px-4 py-3.5">
                               <h3 className="line-clamp-2 text-base font-semibold leading-snug text-slate-900 sm:line-clamp-1">
-                                {item.destinationCity}
+                                {translateHomeDiscoveryCity(
+                                  dictionary,
+                                  item.destinationCity,
+                                )}
                               </h3>
                               <p className="mt-1 line-clamp-1 text-sm font-medium leading-5 text-slate-600">
                                 {item.originCode} → {item.destinationCode}

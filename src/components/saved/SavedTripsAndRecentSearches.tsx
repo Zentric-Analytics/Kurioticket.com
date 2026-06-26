@@ -16,7 +16,10 @@ import {
   type RecentSearchEntry,
 } from "@/lib/recent-searches";
 import { translations as enTranslations } from "@/lib/i18n/en";
-import { translateHomeDiscoveryCopy } from "@/lib/i18n/homeDiscovery";
+import {
+  translateHomeDiscoveryCity,
+  translateHomeDiscoveryCopy,
+} from "@/lib/i18n/homeDiscovery";
 import { readSavedTripIds, writeSavedTripIds } from "@/lib/saved-trips-local";
 import {
   getHomeDiscoveryByRegion,
@@ -105,7 +108,7 @@ const resolveSavedTrip = (
   return {
     id,
     title: translateHomeDiscoveryCopy(dictionary, matched).title,
-    route: `${matched.originCity} (${matched.originCode}) → ${matched.destinationCity} (${matched.destinationCode})`,
+    route: `${translateHomeDiscoveryCity(dictionary, matched.originCity)} (${matched.originCode}) → ${translateHomeDiscoveryCity(dictionary, matched.destinationCity)} (${matched.destinationCode})`,
     note: translateHomeDiscoveryCopy(dictionary, matched).routeNote,
     image: matched.image,
     imageAlt: matched.imageAlt,

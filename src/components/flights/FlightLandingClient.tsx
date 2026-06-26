@@ -15,6 +15,7 @@ import {
 } from "@/data/homeDiscovery";
 import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
 import { translations as enTranslations } from "@/lib/i18n/en";
+import { formatHomeDiscoveryRoute } from "@/lib/i18n/homeDiscovery";
 
 const allDiscoveryItems = [
   ...Object.values(homeDiscoveryByRegion).flat(),
@@ -289,18 +290,10 @@ function getDiscoveryTranslation(
   return t(`${keyPrefix}.${value}`) || value;
 }
 
-function getRouteText(
-  item: HomeDiscoveryItem,
-  t: (key: string) => string,
-  isArabic = false,
-) {
+function getRouteText(item: HomeDiscoveryItem, t: (key: string) => string) {
   return {
-    title: isArabic
-      ? `رحلة من ${item.originCity} إلى ${item.destinationCity}`
-      : t(`homeDiscoveryRoute.${item.id}.title`) || item.title,
-    routeNote: isArabic
-      ? "مسار جاهز للبحث يتيح مقارنة التواريخ وخيارات الرحلات قبل المتابعة مع المزوّد."
-      : t(`homeDiscoveryRoute.${item.id}.routeNote`) || item.routeNote,
+    title: t(`homeDiscoveryRoute.${item.id}.title`) || item.title,
+    routeNote: t(`homeDiscoveryRoute.${item.id}.routeNote`) || item.routeNote,
     originCity: getDiscoveryTranslation(
       "flightLandingCity",
       item.originCity,
@@ -323,15 +316,17 @@ function RouteCard({
   item,
   priority = false,
   t,
-  isArabic = false,
 }: {
   item: HomeDiscoveryItem;
   priority?: boolean;
   t: (key: string) => string;
-  isArabic?: boolean;
 }) {
-  const routeText = getRouteText(item, t, isArabic);
-  const routeConnector = t("flightLandingRouteConnector");
+  const routeText = getRouteText(item, t);
+  const routeLabel = formatHomeDiscoveryRoute(
+    { flightLandingRouteTemplate: t("flightLandingRouteTemplate") },
+    routeText.originCity,
+    routeText.destinationCity,
+  );
 
   return (
     <Link
@@ -357,7 +352,7 @@ function RouteCard({
             {routeText.title}
           </h3>
           <p className="mt-1 text-sm font-medium text-slate-700">
-            {routeText.originCity} {routeConnector} {routeText.destinationCity}
+            {routeLabel}
           </p>
           <p className="mt-1 text-xs font-medium text-slate-500">
             {item.originCode} → {item.destinationCode}
@@ -376,7 +371,7 @@ function RouteCard({
 }
 
 export function FlightLandingClient() {
-  const { locale, t: dictionary } = useLocale();
+  const { t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
 
@@ -522,13 +517,7 @@ export function FlightLandingClient() {
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {discoveryCards.map((item, index) => (
-              <RouteCard
-                key={item.id}
-                item={item}
-                priority={index < 2}
-                t={t}
-                isArabic={locale === "ar"}
-              />
+              <RouteCard key={item.id} item={item} priority={index < 2} t={t} />
             ))}
           </div>
         </div>
@@ -593,7 +582,7 @@ export function FlightLandingClient() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {routeInspirationCards.map((item) => {
-                const routeText = getRouteText(item, t, locale === "ar");
+                const routeText = getRouteText(item, t);
 
                 return (
                   <Link
@@ -642,12 +631,7 @@ export function FlightLandingClient() {
             </div>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {beachVacationCards.map((item) => (
-                <RouteCard
-                  key={item.id}
-                  item={item}
-                  t={t}
-                  isArabic={locale === "ar"}
-                />
+                <RouteCard key={item.id} item={item} t={t} />
               ))}
             </div>
           </div>
