@@ -369,7 +369,13 @@ function formatLayoverText(leg: FlightLeg, t: (key: string) => string) {
     leg.layovers.length > 1
       ? ` +${t("moreCount").replace("{{count}}", String(leg.layovers.length - 1))}`
       : "";
-  return `${t("layover")}: ${firstConnection}${extraConnections}`;
+  const summaryTemplate = t("layoverSummaryTemplate");
+  const baseText = summaryTemplate
+    ? summaryTemplate
+        .replace("{{airport}}", firstLayover.airport)
+        .replace("{{duration}}", firstLayover.duration)
+    : `${t("layover")}: ${firstConnection}`;
+  return `${baseText}${extraConnections}`;
 }
 
 function isProviderReviewCopy(value: string) {
