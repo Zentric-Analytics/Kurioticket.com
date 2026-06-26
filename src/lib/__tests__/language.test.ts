@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 import {
   applyLanguageToDocument,
@@ -38,6 +39,34 @@ test("global language catalog renders", () => {
   assert.ok(languageOptions.some((o) => o.code === "zh-cn" && o.locale === "zh-CN" && o.nativeLabel === "中文" && o.direction === "ltr" && o.status === "available"));
   assert.ok(languageOptions.some((o) => o.code === "ja" && o.locale === "ja" && o.nativeLabel === "日本語" && o.direction === "ltr" && o.status === "available"));
   assert.ok(languageOptions.some((o) => o.code === "ko" && o.locale === "ko" && o.nativeLabel === "한국어" && o.label === "Korean" && o.countryCode === "KR" && o.direction === "ltr" && o.status === "available"));
+});
+
+
+test("Korean flight traveler selector uses localized infant-on-lap copy", () => {
+  const ko = getTranslations("ko");
+
+  const englishInfantsOnLap = ["Infants", "on lap"].join(" ");
+
+  assert.equal(ko.infantsOnLap, "무릎 위 유아");
+  assert.equal(enTranslations.infantsOnLap, englishInfantsOnLap);
+  assert.notEqual(ko.infantsOnLap, enTranslations.infantsOnLap);
+
+  const flightTravelerSelectorSources = [
+    "src/components/search/StandaloneFlightSearchForm.tsx",
+    "src/components/search/SearchTabs.tsx",
+    "src/components/results/FlightResultsClient.tsx",
+  ].map((filePath) => readFileSync(filePath, "utf8"));
+
+  assert.ok(
+    flightTravelerSelectorSources.every((source) => source.includes("infantsOnLap")),
+    "Each Flights traveler selector render path should resolve the infant-on-lap label from i18n keys.",
+  );
+  assert.ok(
+    flightTravelerSelectorSources.every(
+      (source) => !source.includes(`>${englishInfantsOnLap}<`) && !source.includes(`{"${englishInfantsOnLap}"}`),
+    ),
+    "Flights traveler selector render paths should not hard-code active Korean-visible English copy.",
+  );
 });
 
 test("search filters by native label and canonical locale", () => {

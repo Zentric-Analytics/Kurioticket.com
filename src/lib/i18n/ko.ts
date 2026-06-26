@@ -471,6 +471,7 @@ export const translations: TranslationDictionary = {
   children: "어린이",
   childAgeRange: "2~17세",
   infants: "유아",
+  infantsOnLap: "무릎 위 유아",
   under2: "2세 미만",
   passengers: "승객",
   cabinClass: "좌석 등급",

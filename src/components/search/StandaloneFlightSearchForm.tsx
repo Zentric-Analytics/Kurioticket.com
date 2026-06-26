@@ -1278,7 +1278,7 @@ export function StandaloneFlightSearchForm({
       },
       {
         key: "infants",
-        label: t("infants") || "Infants",
+        label: t("infantsOnLap") || t("infants") || enTranslations.infantsOnLap,
         subtitle: t("under2") || "Under 2",
         count: draftInfantCount,
         min: 0,
