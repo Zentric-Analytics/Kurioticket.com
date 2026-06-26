@@ -36,11 +36,12 @@ export const canApplyDefaultOrigin = (state: OriginFieldState) =>
 export const applyDefaultOrigin = (
   state: OriginFieldState,
   airport: AirportOption | null | undefined,
+  locale?: string | null,
 ): OriginFieldState => {
   if (!airport || !canApplyDefaultOrigin(state)) return state;
 
   return {
-    input: formatAirportLabel(airport),
+    input: formatAirportLabel(airport, locale),
     code: airport.code,
     source: "maxmind-default",
     userInteracted: false,

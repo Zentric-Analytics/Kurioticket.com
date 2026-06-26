@@ -27,7 +27,7 @@ import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { Button } from "@/components/ui/Button";
-import { type AirportOption, formatAirportLabel } from "@/data/airports";
+import { type AirportOption, formatAirportLabel, getLocalizedCityName } from "@/data/airports";
 import {
   applyDefaultOrigin,
   canApplyDefaultOrigin,
@@ -484,7 +484,7 @@ export function StandaloneFlightSearchForm({
         const payload = (await response.json()) as PlacesApiResponse;
         const defaultAirport = payload.defaultOriginAirport ?? null;
         setOriginState((current) =>
-          applyDefaultOrigin(current, defaultAirport),
+          applyDefaultOrigin(current, defaultAirport, locale),
         );
         if (Array.isArray(payload.suggestions)) {
           setOriginSuggestions(
@@ -501,7 +501,7 @@ export function StandaloneFlightSearchForm({
     void loadDefaultOrigin();
 
     return () => controller.abort();
-  }, [buildPlacesUrl, originState]);
+  }, [buildPlacesUrl, locale, originState]);
 
   useAirportSuggestions({
     query: origin,
@@ -714,11 +714,11 @@ export function StandaloneFlightSearchForm({
   const selectAirport = (field: AirportField, option: AirportOption) => {
     if (field === "origin") {
       setOriginState((current) =>
-        markOriginManualInput(current, formatAirportLabel(option), option.code),
+        markOriginManualInput(current, formatAirportLabel(option, locale), option.code),
       );
       setOriginOpen(false);
     } else {
-      setDestination(formatAirportLabel(option));
+      setDestination(formatAirportLabel(option, locale));
       setDestinationCode(option.code);
       setDestinationOpen(false);
     }
@@ -1024,7 +1024,7 @@ export function StandaloneFlightSearchForm({
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-base font-extrabold leading-5 tracking-tight text-slate-950">
-                      {option.city}
+                      {getLocalizedCityName(option.city, locale)}
                     </span>
                     <span className="mt-1 block truncate text-sm font-medium leading-5 text-slate-500">
                       {option.airport}
@@ -1094,7 +1094,7 @@ export function StandaloneFlightSearchForm({
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium leading-5 tracking-tight text-slate-900">
-                    {option.city}
+                    {getLocalizedCityName(option.city, locale)}
                   </span>
                   <span className="mt-0.5 block truncate text-xs font-normal leading-5 text-slate-500">
                     {option.airport}
