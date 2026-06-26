@@ -926,10 +926,12 @@ function StructuredAddressInput({
     );
   };
 
+  const fullWidthOnMobileClassName = "min-[420px]:col-span-2 sm:col-span-1";
+
   return (
-    <div className="grid min-w-0 gap-2">
+    <div className="grid min-w-0 grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:grid-cols-2">
       <select
-        className={className}
+        className={cn(className, fullWidthOnMobileClassName)}
         value={parts.countryCode}
         onChange={(event) => updatePart("countryCode", event.target.value)}
         aria-label="Country or region"
@@ -945,7 +947,7 @@ function StructuredAddressInput({
         ))}
       </select>
       <input
-        className={className}
+        className={cn(className, fullWidthOnMobileClassName)}
         value={parts.addressLine1}
         onChange={(event) => updatePart("addressLine1", event.target.value)}
         placeholder="Street address"
@@ -953,7 +955,7 @@ function StructuredAddressInput({
         autoComplete="address-line1"
       />
       <input
-        className={className}
+        className={cn(className, fullWidthOnMobileClassName)}
         value={parts.apartmentOrSuite}
         onChange={(event) =>
           updatePart("apartmentOrSuite", event.target.value)
@@ -962,34 +964,30 @@ function StructuredAddressInput({
         aria-label="Apartment, suite, unit, building (optional)"
         autoComplete="address-line2"
       />
-      <div className="grid min-w-0 gap-2 sm:grid-cols-2">
-        <input
-          className={className}
-          value={parts.city}
-          onChange={(event) => updatePart("city", event.target.value)}
-          placeholder="Town / City"
-          aria-label="Town / City"
-          autoComplete="address-level2"
-        />
-        <input
-          className={className}
-          value={parts.stateOrRegion}
-          onChange={(event) => updatePart("stateOrRegion", event.target.value)}
-          placeholder="State / Province / Region"
-          aria-label="State / Province / Region"
-          autoComplete="address-level1"
-        />
-      </div>
-      <div className="grid min-w-0 gap-2 sm:grid-cols-2">
-        <input
-          className={className}
-          value={parts.postalCode}
-          onChange={(event) => updatePart("postalCode", event.target.value)}
-          placeholder="Postcode / ZIP code"
-          aria-label="Postcode / ZIP code"
-          autoComplete="postal-code"
-        />
-      </div>
+      <input
+        className={className}
+        value={parts.city}
+        onChange={(event) => updatePart("city", event.target.value)}
+        placeholder="Town / City"
+        aria-label="Town / City"
+        autoComplete="address-level2"
+      />
+      <input
+        className={className}
+        value={parts.stateOrRegion}
+        onChange={(event) => updatePart("stateOrRegion", event.target.value)}
+        placeholder="State / Province / Region"
+        aria-label="State / Province / Region"
+        autoComplete="address-level1"
+      />
+      <input
+        className={cn(className, fullWidthOnMobileClassName)}
+        value={parts.postalCode}
+        onChange={(event) => updatePart("postalCode", event.target.value)}
+        placeholder="Postcode / ZIP code"
+        aria-label="Postcode / ZIP code"
+        autoComplete="postal-code"
+      />
     </div>
   );
 }
