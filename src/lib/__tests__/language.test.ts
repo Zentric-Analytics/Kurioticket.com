@@ -424,6 +424,36 @@ test("Hindi homepage and primary search UI copy resolves without English fallbac
   }
 });
 
+test("Hindi country and currency modal copy resolves without English fallback", () => {
+  const hi = getTranslations("hi");
+  const auditedHindiCountryCurrencyKeys: Array<[string, string]> = [
+    ["countryAndCurrency", "देश और मुद्रा"],
+    [
+      "openCountryCurrencySelector",
+      "देश और मुद्रा चयनकर्ता खोलें, वर्तमान चयन {{code}}, {{currency}}",
+    ],
+    ["chooseCountryAndCurrency", "देश और मुद्रा चुनें"],
+    [
+      "countryCurrencyDescription",
+      "कीमतें दिखाने के लिए इस्तेमाल होने वाला देश और मुद्रा चुनें। हवाई अड्डे के सुझाव आपके पहचाने गए स्थान का उपयोग करते हैं।",
+    ],
+    ["closeCountryCurrencySelector", "देश और मुद्रा चयनकर्ता बंद करें"],
+    ["searchCountryOrCurrency", "देश या मुद्रा खोजें"],
+    ["countryCurrencyAllCountriesAndCurrencies", "सभी देश और मुद्राएँ"],
+    ["countryCurrencyPopularCountryAndCurrency", "लोकप्रिय देश और मुद्रा"],
+    ["countryCurrencyOptionCountSingular", "{{count}} विकल्प"],
+    ["countryCurrencyOptionCountPlural", "{{count}} विकल्प"],
+    ["selectCountryCurrencyOption", "{{country}}, {{code}}, {{currency}} चुनें"],
+    ["noCountriesOrCurrenciesFound", "कोई देश या मुद्रा नहीं मिली"],
+    ["showMoreResults", "और परिणाम दिखाएँ"],
+  ];
+
+  for (const [key, expected] of auditedHindiCountryCurrencyKeys) {
+    assert.equal(hi[key], expected, key);
+    assert.notEqual(hi[key], enTranslations[key], key);
+  }
+});
+
 test("Spanish, French, German, Italian, Dutch, Portuguese, Chinese, Japanese, Korean, Hindi, and Arabic dictionary shapes match English dictionary shape", () => {
   const englishKeys = Object.keys(enTranslations).sort();
   assert.deepEqual(
