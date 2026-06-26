@@ -136,6 +136,10 @@ const normalizeHotelCalendarLocale = (locale: string | null | undefined) => {
     return "ja-JP";
   }
 
+  if (normalized === "ko" || normalized.startsWith("ko-")) {
+    return "ko-KR";
+  }
+
   return "en-US";
 };
 
