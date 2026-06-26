@@ -84,6 +84,82 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.infoTitle": "모든 것을 한곳에서",
   "accountDashboard.hub.infoBody": "계정, 여행, 환경설정, 지원에 빠르게 접근하세요.",
 
+  "accountDashboard.priceAlerts.cta.flights": "항공권 검색",
+
+  "accountDashboard.priceAlerts.featuresAriaLabel": "가격 알림 기능",
+
+  "accountDashboard.priceAlerts.sort.ariaLabel": "가격 알림 정렬",
+
+  "accountDashboard.priceAlerts.filtersAriaLabel": "가격 알림 필터",
+
+  "accountDashboard.priceAlerts.features.management.body": "언제든지 알림을 일시 중지하거나 삭제할 수 있습니다.",
+
+  "accountDashboard.priceAlerts.features.management.title": "간편한 관리",
+
+  "accountDashboard.priceAlerts.features.trends.body": "추적 중인 요금이 시간에 따라 어떻게 변하는지 확인하세요.",
+
+  "accountDashboard.priceAlerts.features.trends.title": "가격 추세",
+
+  "accountDashboard.priceAlerts.features.email.body": "요금이 변경되면 알림을 받으세요.",
+
+  "accountDashboard.priceAlerts.features.email.title": "이메일 알림",
+
+  "accountDashboard.priceAlerts.features.monitoring.body": "가격을 모니터링하고 알림 조건이 충족되면 알려드립니다.",
+
+  "accountDashboard.priceAlerts.features.monitoring.title": "실시간 모니터링",
+
+  "accountDashboard.priceAlerts.empty.body": "항공권 검색에서 알림을 만들어 요금 변동을 추적하고 알림을 받으세요.",
+
+  "accountDashboard.priceAlerts.empty.title": "아직 가격 알림이 없습니다.",
+
+  "accountDashboard.priceAlerts.sort.routeAz": "노선 A-Z",
+
+  "accountDashboard.priceAlerts.sort.oldest": "오래된순",
+
+  "accountDashboard.priceAlerts.sort.newest": "최신순",
+
+  "accountDashboard.priceAlerts.sort.label": "정렬 기준",
+
+  "accountDashboard.priceAlerts.tabs.all": "전체",
+
+  "accountDashboard.priceAlerts.tabs.expired": "만료됨",
+
+  "accountDashboard.priceAlerts.tabs.active": "활성",
+
+  "accountDashboard.priceAlerts.description": "요금을 추적하고 가격이 변경되면 알림을 받으세요.",
+
+  "accountDashboard.priceAlerts.title": "가격 알림",
+
+  "accountDashboard.trips.illustration.cancelledAriaLabel": "취소된 여행 일러스트",
+
+  "accountDashboard.trips.illustration.historyAriaLabel": "여행 기록 일러스트",
+
+  "accountDashboard.trips.illustration.currentAriaLabel": "여행 일러스트",
+
+  "accountDashboard.trips.history.filtersAriaLabel": "여행 기록 필터",
+
+  "accountDashboard.trips.history.empty.cancelled.body": "취소된 예약은 참고용으로 여기에 표시됩니다.",
+
+  "accountDashboard.trips.history.empty.cancelled.title": "계획이 변경되었나요?",
+
+  "accountDashboard.trips.history.empty.past.body": "여행이 완료되면 여기에 표시됩니다.",
+
+  "accountDashboard.trips.history.empty.past.title": "여행 기록을 확인하세요",
+
+  "accountDashboard.trips.history.tabs.cancelled": "취소됨",
+
+  "accountDashboard.trips.history.tabs.past": "지난 여행",
+
+  "accountDashboard.trips.history.tabs.active": "활성",
+
+  "accountDashboard.trips.current.empty.body": "아직 시작한 여행이 없습니다. 예약을 하면 여기에 표시됩니다.",
+
+  "accountDashboard.trips.current.empty.title": "다음 여행지는 어디인가요?",
+
+  "accountDashboard.trips.findReservation": "예약 찾기",
+
+  "accountDashboard.trips.title": "내 여행",
+
   "accountDashboard.preferences.customization.title": "맞춤 설정 환경설정",
   "accountDashboard.preferences.customization.description": "Kurioticket이 내 경험을 맞춤 설정하는 방식을 선택하세요.",
   "accountDashboard.preferences.customization.languageRegion.title": "언어 및 지역",

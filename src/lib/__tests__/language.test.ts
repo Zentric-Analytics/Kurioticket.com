@@ -579,3 +579,132 @@ test("airport picker heading is localized for all active locales", () => {
   assert.equal(jaTranslations.airportsAndCities, "空港と都市");
   assert.equal(koTranslations.airportsAndCities, "공항 및 도시");
 });
+
+test("active account trips and price alerts copy is localized", () => {
+  const activeLocaleTranslations = {
+    "en-us": enTranslations,
+    ar: arTranslations,
+    nl: nlTranslations,
+    "es-es": esTranslations,
+    fr: frTranslations,
+    "de-de": deTranslations,
+    "it-it": itTranslations,
+    "pt-br": ptBrTranslations,
+    "zh-cn": zhCnTranslations,
+    ja: jaTranslations,
+    ko: koTranslations,
+  };
+
+  const travelActivityKeys = [
+    "accountDashboard.trips.title",
+    "accountDashboard.trips.findReservation",
+    "accountDashboard.trips.current.empty.title",
+    "accountDashboard.trips.current.empty.body",
+    "accountDashboard.trips.history.tabs.past",
+    "accountDashboard.trips.history.tabs.cancelled",
+    "accountDashboard.trips.history.empty.past.title",
+    "accountDashboard.trips.history.empty.past.body",
+    "accountDashboard.trips.history.empty.cancelled.title",
+    "accountDashboard.trips.history.empty.cancelled.body",
+    "accountDashboard.priceAlerts.title",
+    "accountDashboard.priceAlerts.description",
+    "accountDashboard.priceAlerts.tabs.active",
+    "accountDashboard.priceAlerts.tabs.expired",
+    "accountDashboard.priceAlerts.tabs.all",
+    "accountDashboard.priceAlerts.sort.label",
+    "accountDashboard.priceAlerts.sort.newest",
+    "accountDashboard.priceAlerts.sort.oldest",
+    "accountDashboard.priceAlerts.sort.routeAz",
+    "accountDashboard.priceAlerts.empty.title",
+    "accountDashboard.priceAlerts.empty.body",
+    "accountDashboard.priceAlerts.features.monitoring.title",
+    "accountDashboard.priceAlerts.features.monitoring.body",
+    "accountDashboard.priceAlerts.features.email.title",
+    "accountDashboard.priceAlerts.features.email.body",
+    "accountDashboard.priceAlerts.features.trends.title",
+    "accountDashboard.priceAlerts.features.trends.body",
+    "accountDashboard.priceAlerts.features.management.title",
+    "accountDashboard.priceAlerts.features.management.body",
+    "accountDashboard.priceAlerts.filtersAriaLabel",
+    "accountDashboard.priceAlerts.sort.ariaLabel",
+    "accountDashboard.priceAlerts.featuresAriaLabel",
+    "accountDashboard.trips.history.filtersAriaLabel",
+    "accountDashboard.trips.illustration.currentAriaLabel",
+    "accountDashboard.trips.illustration.historyAriaLabel",
+    "accountDashboard.trips.illustration.cancelledAriaLabel",
+  ];
+
+  for (const [locale, translations] of Object.entries(activeLocaleTranslations)) {
+    for (const key of travelActivityKeys) {
+      assert.equal(typeof translations[key], "string", `${locale} should define ${key}`);
+      assert.notEqual(translations[key], "", `${locale} should not leave ${key} empty`);
+    }
+  }
+
+  const screenshotVisibleKeys = travelActivityKeys.filter(
+    (key) =>
+      !key.endsWith("AriaLabel") &&
+      key !== "accountDashboard.priceAlerts.featuresAriaLabel" &&
+      key !== "accountDashboard.trips.history.tabs.active",
+  );
+
+  for (const [locale, translations] of Object.entries(activeLocaleTranslations)) {
+    if (locale === "en-us") continue;
+
+    for (const key of screenshotVisibleKeys) {
+      assert.notEqual(translations[key], enTranslations[key], `${locale} should localize ${key}`);
+    }
+  }
+
+  assert.equal(koTranslations["accountDashboard.hub.title"], "내 계정");
+  assert.equal(koTranslations["accountDashboard.trips.title"], "내 여행");
+  assert.equal(koTranslations["accountDashboard.trips.findReservation"], "예약 찾기");
+  assert.equal(koTranslations["accountDashboard.trips.current.empty.title"], "다음 여행지는 어디인가요?");
+  assert.equal(
+    koTranslations["accountDashboard.trips.current.empty.body"],
+    "아직 시작한 여행이 없습니다. 예약을 하면 여기에 표시됩니다.",
+  );
+  assert.equal(koTranslations["accountDashboard.trips.history.tabs.past"], "지난 여행");
+  assert.equal(koTranslations["accountDashboard.trips.history.tabs.cancelled"], "취소됨");
+  assert.equal(koTranslations["accountDashboard.trips.history.empty.past.title"], "여행 기록을 확인하세요");
+  assert.equal(koTranslations["accountDashboard.trips.history.empty.past.body"], "여행이 완료되면 여기에 표시됩니다.");
+  assert.equal(koTranslations["accountDashboard.trips.history.empty.cancelled.title"], "계획이 변경되었나요?");
+  assert.equal(
+    koTranslations["accountDashboard.trips.history.empty.cancelled.body"],
+    "취소된 예약은 참고용으로 여기에 표시됩니다.",
+  );
+  assert.equal(koTranslations["accountDashboard.priceAlerts.title"], "가격 알림");
+  assert.equal(
+    koTranslations["accountDashboard.priceAlerts.description"],
+    "요금을 추적하고 가격이 변경되면 알림을 받으세요.",
+  );
+  assert.equal(koTranslations["accountDashboard.priceAlerts.tabs.active"], "활성");
+  assert.equal(koTranslations["accountDashboard.priceAlerts.tabs.expired"], "만료됨");
+  assert.equal(koTranslations["accountDashboard.priceAlerts.tabs.all"], "전체");
+  assert.equal(koTranslations["accountDashboard.priceAlerts.sort.label"], "정렬 기준");
+  assert.equal(koTranslations["accountDashboard.priceAlerts.sort.newest"], "최신순");
+  assert.equal(koTranslations["accountDashboard.priceAlerts.sort.oldest"], "오래된순");
+  assert.equal(koTranslations["accountDashboard.priceAlerts.sort.routeAz"], "노선 A-Z");
+  assert.equal(koTranslations["accountDashboard.priceAlerts.empty.title"], "아직 가격 알림이 없습니다.");
+  assert.equal(
+    koTranslations["accountDashboard.priceAlerts.empty.body"],
+    "항공권 검색에서 알림을 만들어 요금 변동을 추적하고 알림을 받으세요.",
+  );
+  assert.equal(koTranslations["accountDashboard.priceAlerts.features.monitoring.title"], "실시간 모니터링");
+  assert.equal(
+    koTranslations["accountDashboard.priceAlerts.features.monitoring.body"],
+    "가격을 모니터링하고 알림 조건이 충족되면 알려드립니다.",
+  );
+  assert.equal(koTranslations["accountDashboard.priceAlerts.features.email.title"], "이메일 알림");
+  assert.equal(koTranslations["accountDashboard.priceAlerts.features.email.body"], "요금이 변경되면 알림을 받으세요.");
+  assert.equal(koTranslations["accountDashboard.priceAlerts.features.trends.title"], "가격 추세");
+  assert.equal(
+    koTranslations["accountDashboard.priceAlerts.features.trends.body"],
+    "추적 중인 요금이 시간에 따라 어떻게 변하는지 확인하세요.",
+  );
+  assert.equal(koTranslations["accountDashboard.priceAlerts.features.management.title"], "간편한 관리");
+  assert.equal(
+    koTranslations["accountDashboard.priceAlerts.features.management.body"],
+    "언제든지 알림을 일시 중지하거나 삭제할 수 있습니다.",
+  );
+});

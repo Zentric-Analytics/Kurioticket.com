@@ -330,7 +330,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.sort.oldest": "Plus anciens",
   "accountDashboard.priceAlerts.sort.routeAz": "Itinéraire A-Z",
   "accountDashboard.priceAlerts.features.monitoring.title": "Suivi en temps réel",
-  "accountDashboard.priceAlerts.features.monitoring.body": "Nous suivons les résultats fournis par les prestataires lorsque les alertes sont actives.",
+  "accountDashboard.priceAlerts.features.monitoring.body": "Nous surveillons les prix et vous prévenons lorsque les alertes se déclenchent.",
   "accountDashboard.priceAlerts.features.email.title": "Notifications par e-mail",
   "accountDashboard.priceAlerts.features.email.body": "Recevez une notification lorsque les tarifs changent.",
   "accountDashboard.priceAlerts.features.trends.title": "Tendances des prix",
