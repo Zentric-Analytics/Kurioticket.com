@@ -681,6 +681,40 @@ test("active account FAQ translations cover all visible FAQ page strings", () =>
 });
 
 
+
+test("Hindi destinations and saved trips screenshot-visible copy resolves without English fallback", () => {
+  const hi = getTranslations("hi");
+
+  assert.equal(hi.destinationsHeroBadge, "गंतव्य खोज");
+  assert.equal(hi.destinationsHeroTitle, "आप आगे कहाँ जाना चाहते हैं?");
+  assert.equal(hi.destinationsHeroSubtitle, "चुने हुए शहरों के नज़ारे देखें, उड़ानों की तुलना करें और मिनटों में यात्रा डील्स पाएँ।");
+  assert.equal(hi["destinations.region.europe"], "यूरोप");
+  assert.equal(hi["destinations.region.europe.summary"], "प्रसिद्ध शहरों, रोमांटिक नहरों, डिज़ाइन राजधानियों और सदाबहार भोजन-संस्कृति वीकेंड्स का चुना हुआ संग्रह।");
+  assert.equal(hi["destinations.country.unitedKingdom"], "यूनाइटेड किंगडम");
+  assert.equal(hi["destinations.tag.iconicSkyline"], "प्रसिद्ध क्षितिज");
+  assert.equal(hi["destinations.city.london"], "लंदन");
+  assert.equal(hi["destinations.card.subtitle"], "सुंदर नज़ारे, उड़ानें, होटल और डील्स");
+
+  assert.equal(hi.savedTripsPageTitle, "सहेजी गई यात्राएँ");
+  assert.equal(hi.savedTripsPageSubtitle, "आपकी चुनी हुई यात्राएँ और ट्रेंडिंग मार्ग।");
+  assert.equal(hi.savedTripsEmptyTitle, "अपने पसंदीदा गंतव्य सहेजें");
+  assert.equal(hi.savedTripsExploreDestinations, "गंतव्य देखें");
+  assert.equal(hi.savedTripsRecentSearchesTitle, "हाल की खोजें");
+  assert.equal(hi.savedTripsClearAllRecent, "सभी हाल की खोजें साफ़ करें");
+  assert.equal(hi.savedTripsTypeFlight, "उड़ान");
+  assert.equal(hi.savedTripsTravelerCountOne, "1 यात्री");
+  assert.equal(hi.savedTripsCabinEconomy, "इकॉनमी");
+  assert.equal(hi.savedTripsSearchedDate, "खोजा गया {{date}}");
+  assert.equal(hi.savedTripsRepeatSearch, "खोज दोहराएँ");
+
+  assert.equal(
+    new Intl.DateTimeFormat("hi-IN", { month: "short", day: "numeric", year: "numeric" }).format(
+      new Date("2026-06-25T00:00:00"),
+    ),
+    "25 जून 2026",
+  );
+});
+
 test("active locale dictionaries do not keep audited cross-language UI fallbacks", () => {
   const auditedValuesByLocale = {
     english: {
