@@ -926,12 +926,12 @@ function StructuredAddressInput({
     );
   };
 
-  const fullWidthOnMobileClassName = "min-[420px]:col-span-2 sm:col-span-1";
+  const fullAddressRowClassName = "sm:col-span-2";
 
   return (
-    <div className="grid min-w-0 grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:grid-cols-2">
+    <div className="grid w-full max-w-[720px] min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
       <select
-        className={cn(className, fullWidthOnMobileClassName)}
+        className={cn(className, fullAddressRowClassName)}
         value={parts.countryCode}
         onChange={(event) => updatePart("countryCode", event.target.value)}
         aria-label="Country or region"
@@ -947,15 +947,7 @@ function StructuredAddressInput({
         ))}
       </select>
       <input
-        className={cn(className, fullWidthOnMobileClassName)}
-        value={parts.stateOrRegion}
-        onChange={(event) => updatePart("stateOrRegion", event.target.value)}
-        placeholder="State / Province / Region"
-        aria-label="State / Province / Region"
-        autoComplete="address-level1"
-      />
-      <input
-        className={cn(className, fullWidthOnMobileClassName)}
+        className={cn(className, fullAddressRowClassName)}
         value={parts.addressLine1}
         onChange={(event) => updatePart("addressLine1", event.target.value)}
         placeholder="Street address"
@@ -963,7 +955,7 @@ function StructuredAddressInput({
         autoComplete="address-line1"
       />
       <input
-        className={cn(className, fullWidthOnMobileClassName)}
+        className={className}
         value={parts.apartmentOrSuite}
         onChange={(event) =>
           updatePart("apartmentOrSuite", event.target.value)
@@ -979,6 +971,14 @@ function StructuredAddressInput({
         placeholder="Town / City"
         aria-label="Town / City"
         autoComplete="address-level2"
+      />
+      <input
+        className={className}
+        value={parts.stateOrRegion}
+        onChange={(event) => updatePart("stateOrRegion", event.target.value)}
+        placeholder="State / Province / Region"
+        aria-label="State / Province / Region"
+        autoComplete="address-level1"
       />
       <input
         className={className}
@@ -1142,7 +1142,11 @@ function NationalityInput({
 }
 
 function getPersonalDetailEditWidthClass(key: keyof PersonalDetailsDraft) {
-  if (key === "address" || key === "email") {
+  if (key === "address") {
+    return "w-full max-w-[720px]";
+  }
+
+  if (key === "email") {
     return "w-full max-w-[760px]";
   }
 
