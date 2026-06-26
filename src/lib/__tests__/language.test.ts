@@ -24,6 +24,12 @@ import { translations as hiTranslations } from "@/lib/i18n/hi";
 import { availableLocaleOptions, getTranslations } from "@/lib/i18n";
 import { getCountryDisplayNameForLocale } from "@/lib/region/countryDisplayNames";
 import { supportedRegions } from "@/lib/region/supportedRegions";
+import {
+  formatFlightsDateSummary,
+  formatFlightsMonthHeading,
+  formatFlightsWeekdays,
+  normalizeFlightsCalendarLocale,
+} from "@/lib/flights/dateFormatting";
 
 type StorageLike = { getItem: (k: string) => string | null; setItem: (k: string, v: string) => void };
 type WindowLike = { localStorage: StorageLike; dispatchEvent: (event: Event) => boolean };
@@ -643,6 +649,24 @@ test("Spanish, French, German, Italian, Dutch, Portuguese, Chinese, Japanese, Ko
   assert.equal(getTranslations("hi").websiteLanguageTitle, "साइट की भाषा चुनें");
 });
 
+test("Flights datepicker formatter normalizes Hindi locale for generated display dates", () => {
+  for (const locale of ["hi", "hi-IN", "hi-in"]) {
+    assert.equal(normalizeFlightsCalendarLocale(locale), "hi-IN");
+    assert.equal(formatFlightsMonthHeading(new Date(2026, 5, 1), locale), "जून 2026");
+    assert.equal(formatFlightsMonthHeading(new Date(2026, 6, 1), locale), "जुलाई 2026");
+    assert.equal(
+      formatFlightsDateSummary(new Date(2026, 5, 27), new Date(2026, 5, 30), locale),
+      "27 जून — 30 जून",
+    );
+  }
+
+  assert.deepEqual(formatFlightsWeekdays("hi-IN"), ["रवि", "सोम", "मंगल", "बुध", "गुरु", "शुक्र", "शनि"]);
+  assert.equal(hiTranslations.previousMonthShort, "पिछला");
+  assert.equal(hiTranslations.nextMonthShort, "अगला");
+  assert.equal(hiTranslations.clear, "साफ़ करें");
+  assert.equal(hiTranslations.done, "हो गया");
+});
+
 test("Hindi flights landing static render path resolves screenshot-visible copy", () => {
   assert.equal(hiTranslations.flightLandingHeroTitle, "अपनी अगली उपयोगी उड़ान आसानी से खोजें।");
   assert.equal(hiTranslations.roundTrip, "आना-जाना");
@@ -697,8 +721,10 @@ test("Hindi flights landing static render path resolves screenshot-visible copy"
     "27 जून — 30 जून",
   );
   const standaloneFlightSearchSource = readFileSync("src/components/search/StandaloneFlightSearchForm.tsx", "utf8");
-  assert.ok(standaloneFlightSearchSource.includes('return "hi-IN";'));
+  const flightDateFormattingSource = readFileSync("src/lib/flights/dateFormatting.ts", "utf8");
+  assert.ok(flightDateFormattingSource.includes('return "hi-IN";'));
   assert.ok(standaloneFlightSearchSource.includes("localizeCalendarLabels ? locale : \"en-us\""));
+  assert.ok(standaloneFlightSearchSource.includes("localizeCalendarLabels = true"));
   assert.equal(hiTranslations.flightLandingRouteAriaLabel.includes("{{origin}}"), true);
   assert.equal(hiTranslations.flightLandingRouteAriaLabel.includes("{{destination}}"), true);
 });
