@@ -13,6 +13,7 @@ import {
   Bell,
   Bookmark,
   BriefcaseBusiness,
+  ChevronDown,
   ChevronRight,
   CircleHelp,
   Headphones,
@@ -1181,11 +1182,11 @@ function PhoneNumberInput({
   };
 
   return (
-    <div className="grid min-w-0 grid-cols-[minmax(3.25rem,3.75rem)_minmax(0,1fr)] gap-2 sm:grid-cols-[minmax(3.5rem,4rem)_minmax(0,1fr)]">
+    <div className="flex min-w-0 items-center gap-2">
       <CompactSelect
         className={cn(
           className,
-          "justify-center px-2 text-center text-lg leading-none sm:text-base",
+          "h-12 w-24 shrink-0 justify-center px-3 text-center sm:w-24",
         )}
         value={parsedValue.countryCode}
         onChange={handleCountryChange}
@@ -1197,11 +1198,17 @@ function PhoneNumberInput({
           description: option.dialCode,
         }))}
         renderButtonLabel={(option) => (
-          <CountryFlagIcon
-            countryName={option.label}
-            isoCode={option.value}
-            className="h-[20px] w-[20px]"
-          />
+          <span className="flex items-center justify-center gap-2">
+            <CountryFlagIcon
+              countryName={option.label}
+              isoCode={option.value}
+              className="h-6 w-8 rounded-sm shadow-sm"
+            />
+            <ChevronDown
+              className="h-4 w-4 shrink-0 text-slate-500"
+              aria-hidden="true"
+            />
+          </span>
         )}
         renderOptionLabel={(option) => (
           <span className="flex min-w-0 items-center gap-2">
