@@ -467,6 +467,45 @@ test("Hindi homepage and primary search UI copy resolves without English fallbac
   }
 });
 
+test("Hindi Deals page copy resolves without English fallback", () => {
+  const hi = getTranslations("hi");
+  const auditedHindiDealsKeys: Array<[string, string]> = [
+    ["deals.heroTitle", "अपनी अगली यात्रा के लिए ट्रैवल डील्स खोजें"],
+    ["deals.heroSubtitle", "उड़ानें, ठहराव और कारें एक ही जगह साथ में खोजें।"],
+    ["deals.originLabel", "कहाँ से?"],
+    ["deals.destinationLabel", "कहाँ तक?"],
+    ["deals.datesLabel", "यात्रा तिथियाँ"],
+    ["deals.travelersRoomsLabel", "यात्री / कमरे"],
+    ["deals.originPlaceholder", "शहर या हवाई अड्डा"],
+    ["deals.destinationPlaceholder", "शहर, हवाई अड्डा या क्षेत्र"],
+    ["deals.dateFlightPlaceholder", "प्रस्थान — वापसी"],
+    ["deals.travelerSingular", "यात्री"],
+    ["deals.roomSingular", "कमरा"],
+    ["deals.destinationIdeasTitle", "डील खोज शुरू करने के लिए स्थान"],
+    [
+      "deals.destinationIdeasSubtitle",
+      "एक गंतव्य विचार चुनें, फिर आगे बढ़ने पर प्रदाता परिणामों की तुलना करें।",
+    ],
+    ["deals.destination.tokyo.city", "टोक्यो"],
+    ["deals.destination.tokyo.country", "जापान"],
+    ["deals.destination.london.city", "लंदन"],
+    ["deals.destination.london.country", "यूनाइटेड किंगडम"],
+    ["deals.destination.paris.city", "पेरिस"],
+    ["deals.destination.paris.country", "फ्रांस"],
+    ["deals.destination.dubai.city", "दुबई"],
+    ["deals.destination.dubai.country", "संयुक्त अरब अमीरात"],
+    ["deals.destination.cancun.city", "कैनकुन"],
+    ["deals.destination.cancun.country", "मेक्सिको"],
+    ["deals.destination.rome.city", "रोम"],
+    ["deals.destination.rome.country", "इटली"],
+  ];
+
+  for (const [key, expected] of auditedHindiDealsKeys) {
+    assert.equal(hi[key], expected, key);
+    assert.notEqual(hi[key], enTranslations[key], key);
+  }
+});
+
 test("Hindi country and currency modal copy resolves without English fallback", () => {
   const hi = getTranslations("hi");
   const auditedHindiCountryCurrencyKeys: Array<[string, string]> = [
