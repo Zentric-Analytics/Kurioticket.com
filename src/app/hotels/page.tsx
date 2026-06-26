@@ -397,6 +397,10 @@ export default function HotelsSearchPage() {
       dictionary[`hotelDestination.${card.destinationQuery}.subtitle`] ??
       enTranslations[`hotelDestination.${card.destinationQuery}.subtitle`] ??
       card.subtitle,
+    imageAlt:
+      dictionary[`hotelDestination.${card.destinationQuery}.imageAlt`] ??
+      enTranslations[`hotelDestination.${card.destinationQuery}.imageAlt`] ??
+      card.imageAlt,
     linkLabel:
       dictionary[`hotelDestination.${card.destinationQuery}.linkLabel`] ??
       enTranslations[`hotelDestination.${card.destinationQuery}.linkLabel`] ??
