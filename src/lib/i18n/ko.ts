@@ -157,6 +157,19 @@ export const translations: TranslationDictionary = {
   "accountDashboard.trips.current.empty.title": "다음 여행지는 어디인가요?",
 
   "accountDashboard.trips.findReservation": "예약 찾기",
+  "accountDashboard.trips.lookup.notFoundDescription": "입력한 정보와 일치하는 예약을 찾을 수 없습니다.",
+  "accountDashboard.trips.lookup.notFoundTitle": "예약을 찾을 수 없습니다.",
+  "accountDashboard.trips.lookup.loading": "예약을 찾는 중...",
+  "accountDashboard.trips.lookup.invalidEmail": "유효한 이메일 주소를 입력하세요.",
+  "accountDashboard.trips.lookup.emailRequired": "이메일 주소를 입력하세요.",
+  "accountDashboard.trips.lookup.reservationCodeRequired": "예약 코드를 입력하세요.",
+  "accountDashboard.trips.lookup.unavailable": "예약 조회는 아직 사용할 수 없습니다.",
+  "accountDashboard.trips.lookup.submit": "예약 찾기",
+  "accountDashboard.trips.lookup.emailAddress": "이메일 주소",
+  "accountDashboard.trips.lookup.reservationCode": "예약 코드",
+  "accountDashboard.trips.lookup.closeAriaLabel": "닫기",
+  "accountDashboard.trips.lookup.body": "예약을 찾고 관리하려면 예약 코드와 이메일 주소를 입력하세요.",
+  "accountDashboard.trips.lookup.title": "예약 정보 입력",
 
   "accountDashboard.trips.title": "내 여행",
 

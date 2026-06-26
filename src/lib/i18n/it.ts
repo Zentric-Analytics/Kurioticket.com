@@ -423,11 +423,16 @@ export const translations: TranslationDictionary = {
   "accountDashboard.trips.subtitle":
     "Visualizza e gestisci i tuoi viaggi in un unico posto.",
   "accountDashboard.trips.findReservation": "Trova una prenotazione",
+  "accountDashboard.trips.lookup.notFoundDescription": "Non abbiamo trovato una prenotazione con questi dettagli.",
+  "accountDashboard.trips.lookup.notFoundTitle": "Prenotazione non trovata",
+  "accountDashboard.trips.lookup.loading": "Ricerca della prenotazione...",
+  "accountDashboard.trips.lookup.invalidEmail": "Inserisci un indirizzo e-mail valido",
+  "accountDashboard.trips.lookup.emailRequired": "L’indirizzo e-mail è obbligatorio",
+  "accountDashboard.trips.lookup.reservationCodeRequired": "Il codice di prenotazione è obbligatorio",
   "accountDashboard.trips.lookup.title": "Inserisci i dettagli della prenotazione",
   "accountDashboard.trips.lookup.body":
     "Inserisci il codice di prenotazione e l’indirizzo e-mail per trovare e gestire la tua prenotazione.",
-  "accountDashboard.trips.lookup.closeAriaLabel":
-    "Chiudi la ricerca della prenotazione",
+  "accountDashboard.trips.lookup.closeAriaLabel": "Chiudi",
   "accountDashboard.trips.lookup.reservationCode": "Codice di prenotazione",
   "accountDashboard.trips.lookup.emailAddress": "Indirizzo e-mail",
   "accountDashboard.trips.lookup.submit": "Trova prenotazione",
