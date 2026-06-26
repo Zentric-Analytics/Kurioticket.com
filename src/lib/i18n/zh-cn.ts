@@ -89,6 +89,7 @@ export const translations: TranslationDictionary = {
 
   "accountDashboard.overview.welcome": "欢迎回来，{name}",
   "accountDashboard.hub.description": "在一个地方管理你的行程、已保存项目、偏好设置和账户设置。",
+  "accountDashboard.hub.mobileDescription": "管理你的行程、已保存项目和偏好设置。",
   "accountDashboard.hub.manageAccount": "管理账户",
   "accountDashboard.hub.personalDetails": "个人资料",
   "accountDashboard.hub.securitySettings": "安全设置",

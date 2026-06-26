@@ -24,6 +24,7 @@ export const translations: TranslationDictionary = {
   saved: "المحفوظات",
 
   "accountDashboard.overview.welcome": "مرحبًا بعودتك، {name}",
+  "accountDashboard.hub.title": "حسابي",
   "accountDashboard.hub.description": "أدر رحلاتك والعناصر المحفوظة والتفضيلات وإعدادات الحساب في مكان واحد.",
   "accountDashboard.hub.mobileDescription": "أدر رحلاتك والعناصر المحفوظة والتفضيلات.",
   "accountDashboard.mobile.manageAccount": "إدارة الحساب",
