@@ -323,6 +323,135 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.ng-abv-rob.title": "मोनरोविया क्षेत्रीय समुद्री यात्रा",
   "homeDiscoveryRoute.ng-abv-rob.routeNote":
     "अटलांटिक समुद्र तटों और स्थानीय बाज़ारों वाला पश्चिम अफ्रीकी सिटी ब्रेक।",
+
+  // Hindi service/support page overrides.
+  supportEyebrow: "Kurioticket सहायता डेस्क",
+  supportTitle: "ग्राहक सहायता",
+  supportBeforeContactHeading: "हमसे संपर्क करने से पहले",
+  supportBeforeContactDescription:
+    "अपने Kurioticket खाते वाला ईमेल, आप क्या करने की कोशिश कर रहे थे, संबंधित मार्ग या होटल, और जिस प्रदाता पेज पर आपको भेजा गया था उसकी जानकारी शामिल करें। कृपया पूरा भुगतान कार्ड नंबर या संवेदनशील यात्रा दस्तावेज़ नंबर न भेजें।",
+  supportBeforeContactDashboardDescription:
+    "अपने Kurioticket खाते वाला ईमेल, आप क्या करने की कोशिश कर रहे थे, संबंधित मार्ग या होटल, और जिस प्रदाता पेज पर आपको भेजा गया था उसकी जानकारी शामिल करें। कृपया पूरा भुगतान कार्ड नंबर या संवेदनशील यात्रा दस्तावेज़ नंबर न भेजें।",
+  supportTicketHeading: "सहायता टिकट बनाएँ",
+  supportFormEmailLabel: "ईमेल",
+  supportFormSubjectLabel: "विषय",
+  supportFormCategoryLabel: "श्रेणी",
+  supportCategorySearchHelp: "खोज सहायता",
+  supportCategoryPriceAlerts: "कीमत अलर्ट",
+  supportCategoryPartnerRedirect: "पार्टनर रीडायरेक्ट",
+  supportCategoryAccountHelp: "खाता सहायता",
+  supportFormMessageLabel: "हम कैसे मदद कर सकते हैं?",
+  supportFormMessagePlaceholder:
+    "मार्ग, होटल, अलर्ट या खाते से जुड़ा संदर्भ साझा करें।",
+  supportFormSubmit: "अनुरोध भेजें",
+  supportFormSending: "भेजा जा रहा है...",
+  supportFormSuccessPrefix: "सहायता टिकट",
+  supportFormSuccessSuffix: "खोला गया।",
+  supportFormErrorFallback: "टिकट नहीं खोला जा सका।",
+  supportFaqHeading: "अक्सर पूछे जाने वाले प्रश्न",
+
+  serviceGuaranteeEyebrow: "Kurioticket सेवा प्रतिबद्धता",
+  serviceGuaranteeTitle: "सेवा गारंटी",
+  serviceGuaranteeDescription:
+    "हम चाहते हैं कि यात्री समझें कि Kurioticket कैसे काम करता है और हमारे प्लेटफ़ॉर्म का उपयोग करते समय वे क्या उम्मीद कर सकते हैं।",
+  serviceGuaranteeFaqHeading: "अक्सर पूछे जाने वाले प्रश्न",
+  serviceGuaranteeFaqDescription:
+    "ये उत्तर यात्रा खोज और तुलना प्लेटफ़ॉर्म के रूप में Kurioticket की भूमिका समझाते हैं।",
+  serviceGuaranteeFaqWhatGuaranteeQuestion: "Kurioticket क्या गारंटी देता है?",
+  serviceGuaranteeFaqWhatGuaranteeAnswer:
+    "Kurioticket यात्रियों को यात्रा विकल्पों की स्पष्ट तुलना करने में मदद करने के लिए बनाया गया है। हमारा लक्ष्य भरोसेमंद प्लेटफ़ॉर्म अनुभव, पारदर्शी खोज जानकारी और प्रदाता बुकिंग पेजों तक स्पष्ट रास्ते उपलब्ध कराना है।",
+  serviceGuaranteeFaqResultsDisplayedQuestion: "यात्रा परिणाम कैसे दिखाए जाते हैं?",
+  serviceGuaranteeFaqResultsDisplayedAnswer:
+    "परिणाम यात्रा प्रदाताओं से उपलब्ध जानकारी के आधार पर दिखाए जाते हैं, जिसमें उपलब्ध होने पर मार्ग, तारीखें, कीमतें और प्रदाता विवरण शामिल होते हैं।",
+  serviceGuaranteeFaqRedirectedQuestion: "मुझे किसी दूसरे प्रदाता के पास क्यों भेजा जाता है?",
+  serviceGuaranteeFaqRedirectedAnswer:
+    "कुछ परिणाम बाहरी प्रदाता साइट पर पूरे होते हैं। जब आप उन विकल्पों में से कोई चुनते हैं, तो Kurioticket आपको वहाँ भेजता है ताकि प्रदाता बुकिंग, भुगतान और यात्रा-विशिष्ट सेवा संभाल सके।",
+  serviceGuaranteeFaqBookDirectlyQuestion: "क्या मैं सीधे Kurioticket पर बुक करता हूँ?",
+  serviceGuaranteeFaqBookDirectlyAnswer:
+    "Kurioticket मुख्य रूप से यात्रा खोज और तुलना प्लेटफ़ॉर्म है। यदि कोई परिणाम आपको किसी प्रदाता पर भेजता है, तो बुकिंग Kurioticket पर नहीं बल्कि उसी प्रदाता के साथ पूरी होती है।",
+  serviceGuaranteeFaqPricesGuaranteedQuestion: "क्या कीमतें हमेशा गारंटीड होती हैं?",
+  serviceGuaranteeFaqPricesGuaranteedAnswer:
+    "नहीं। कीमतें प्रदाता उपलब्धता, करों, शुल्कों, मुद्रा और समय के आधार पर बदल सकती हैं। बुकिंग से पहले प्रदाता पेज पर अंतिम कीमत हमेशा जाँचें।",
+  serviceGuaranteeFaqChooseProvidersQuestion: "Kurioticket प्रदाताओं का चयन कैसे करता है?",
+  serviceGuaranteeFaqChooseProvidersAnswer:
+    "Kurioticket उन यात्रा प्रदाताओं और डेटा स्रोतों के साथ काम करता है जो प्रासंगिक खोज परिणाम दे सकते हैं। उपलब्धता, कीमतें और दिखाए गए विकल्प मार्ग, गंतव्य और प्रदाता कवरेज के अनुसार बदल सकते हैं।",
+  serviceGuaranteeFaqEncounterIssueQuestion: "अगर मुझे कोई समस्या आती है तो मुझे क्या करना चाहिए?",
+  serviceGuaranteeFaqEncounterIssueAnswer:
+    "यदि समस्या खोज, खाते की पहुँच, सहेजी गई यात्राओं, अलर्ट या Kurioticket से रीडायरेक्ट से जुड़ी है, तो Kurioticket सहायता से संपर्क करें। यदि आपने पहले ही किसी प्रदाता के साथ बुकिंग कर ली है, तो बुकिंग बदलाव, रिफंड, रद्दीकरण या यात्रा दस्तावेज़ों के लिए उसी प्रदाता से संपर्क करें।",
+  serviceGuaranteeFaqContactSupportQuestion: "मैं सहायता से कैसे संपर्क कर सकता हूँ?",
+  serviceGuaranteeFaqContactSupportAnswer:
+    "ग्राहक सहायता पेज का उपयोग करें और अपने खाते का ईमेल, आप क्या करने की कोशिश कर रहे थे, और कोई भी मार्ग, होटल या प्रदाता विवरण शामिल करें जो हमें समस्या की समीक्षा करने में मदद कर सके।",
+  serviceGuaranteeHelpCardTitle: "अपने खाते या खोज में मदद चाहिए?",
+  serviceGuaranteeSupportCta: "ग्राहक सहायता से संपर्क करें",
+
+  moreServiceInfoEyebrow: "प्लेटफ़ॉर्म जानकारी",
+  moreServiceInfoTitle: "अधिक सेवा जानकारी",
+  moreServiceInfoDescription:
+    "जानें कि Kurioticket यात्रियों को एक ही जगह पर कई प्रदाताओं के यात्रा विकल्प खोजने, तुलना करने, सहेजने और व्यवस्थित करने में कैसे मदद करता है।",
+  moreServiceInfoContextTitle: "संदर्भ के साथ योजना बनाएँ",
+  moreServiceInfoContextSubtitle: "खोज परिणामों से प्रदाता रीडायरेक्ट तक",
+  moreServiceInfoContextCompare: "कई यात्रा प्रदाताओं के विकल्पों की तुलना करें।",
+  moreServiceInfoContextSave: "साइन इन होने पर यात्राएँ, अलर्ट और पसंदें सहेजें।",
+  moreServiceInfoContextContinue:
+    "बाहरी बुकिंग से पहले प्रदाता विवरण के साथ आगे बढ़ें।",
+  moreServiceInfoHowHeading: "Kurioticket कैसे काम करता है",
+  moreServiceInfoHowDescription:
+    "ये सेवा विवरण यात्रा खोज से पहले, दौरान और बाद में Kurioticket की भूमिका समझाते हैं।",
+  moreServiceInfoHowBadge: "यात्रा योजना की मूल बातें",
+  moreServiceInfoStepSearchTitle: "कई प्रदाताओं में खोजें",
+  moreServiceInfoStepSearchSummary:
+    "हर प्रदाता को अलग-अलग खोलने के बजाय एक ही जगह से अलग-अलग प्रदाताओं के यात्रा विकल्प खोजें।",
+  moreServiceInfoStepSearchDetails:
+    "Kurioticket उपलब्ध उड़ान, होटल, मार्ग और यात्रा परिणाम जानकारी को एक खोज अनुभव में लाता है ताकि यात्री विकल्पों की अधिक आसानी से समीक्षा कर सकें।",
+  moreServiceInfoStepCompareTitle: "यात्रा विकल्पों की तुलना करें",
+  moreServiceInfoStepCompareSummary:
+    "अपनी यात्रा के लिए क्या उपयुक्त है यह तय करने से पहले कीमतों, मार्गों, होटलों, समय-सारिणियों और उपलब्ध यात्रा विकल्पों की तुलना करें।",
+  moreServiceInfoStepCompareDetails:
+    "परिणामों में प्रदाता विवरण, समय, गंतव्य जानकारी और अन्य यात्रा डेटा शामिल हो सकते हैं, जो प्रदाता पर आगे बढ़ने से पहले विकल्प का मूल्यांकन करने में मदद करते हैं।",
+  moreServiceInfoStepSaveTitle: "यात्राएँ और अलर्ट सहेजें",
+  moreServiceInfoStepSaveSummary:
+    "अपनी यात्रा योजना से जुड़े ट्रिप सहेजने, मार्ग ट्रैक करने और यात्रा अलर्ट प्रबंधित करने के लिए खाता बनाएँ।",
+  moreServiceInfoStepSaveDetails:
+    "सहेजी गई यात्राएँ, हाल की खोजें और अलर्ट उन विकल्पों पर लौटना आसान बनाते हैं जिन पर आप विचार कर रहे हैं और संबंधित यात्रा योजना विवरण व्यवस्थित रखते हैं।",
+  moreServiceInfoStepRedirectsTitle: "प्रदाता रीडायरेक्ट समझाया गया",
+  moreServiceInfoStepRedirectsSummary:
+    "जब आप कोई ऑफ़र चुनते हैं, तो बुकिंग, भुगतान, पुष्टि और पूर्ति पूरी करने के लिए आपको किसी यात्रा प्रदाता पर भेजा जा सकता है।",
+  moreServiceInfoStepRedirectsDetails:
+    "रीडायरेक्ट किए गए ऑफ़रों के लिए अंतिम कीमतें, उपलब्धता, नियम, भुगतान चरण, रसीदें, बुकिंग बदलाव, रद्दीकरण और यात्रा दस्तावेज़ प्रदाता पेज पर संभाले जाते हैं।",
+  moreServiceInfoStepAccountTitle: "खाता और यात्रा टूल",
+  moreServiceInfoStepAccountSummary:
+    "एक ही Kurioticket कार्यक्षेत्र में सहेजी गई खोजों, यात्राओं, अलर्ट और पसंदों को व्यवस्थित करने के लिए खाता टूल का उपयोग करें।",
+  moreServiceInfoStepAccountDetails:
+    "खाता क्षेत्र में सहेजी गई वस्तुओं पर लौटने, पसंदों को अपडेट करने और यात्रा योजना गतिविधि को व्यवस्थित रखने में मदद करने वाले टूल शामिल हो सकते हैं।",
+  moreServiceInfoFaqHeading: "अक्सर पूछे जाने वाले प्रश्न",
+  moreServiceInfoFaqDescription:
+    "यात्रा खोज, प्रदाता रीडायरेक्ट, सहेजी गई यात्राओं और खाता टूल के बारे में संक्षिप्त उत्तर।",
+  moreServiceInfoFaqWhatQuestion: "Kurioticket क्या है?",
+  moreServiceInfoFaqWhatAnswer:
+    "Kurioticket एक यात्रा खोज और तुलना प्लेटफ़ॉर्म है जो यात्रियों को कई प्रदाताओं के विकल्प एक जगह देखने में मदद करता है।",
+  moreServiceInfoFaqSearchQuestion: "यात्रा खोज कैसे काम करती है?",
+  moreServiceInfoFaqSearchAnswer:
+    "आप यात्रा विवरण दर्ज करते हैं, और Kurioticket उपलब्ध प्रदाता जानकारी दिखाता है ताकि आप आगे बढ़ने से पहले विकल्पों की समीक्षा कर सकें।",
+  moreServiceInfoFaqRedirectQuestion: "मुझे किसी दूसरे प्रदाता के पास क्यों भेजा जाता है?",
+  moreServiceInfoFaqRedirectAnswer:
+    "कुछ विकल्प बाहरी प्रदाता की वेबसाइट पर पूरे होते हैं। यदि आप उनमें से कोई चुनते हैं, तो प्रदाता बुकिंग, भुगतान और यात्रा-विशिष्ट सेवा संभालता है।",
+  moreServiceInfoFaqPaymentsQuestion: "क्या Kurioticket भुगतान संसाधित करता है?",
+  moreServiceInfoFaqPaymentsAnswer:
+    "रीडायरेक्ट किए गए प्रदाता ऑफ़रों के लिए, Kurioticket भुगतान संसाधित नहीं करता। भुगतान की समीक्षा और पूरा करना सीधे प्रदाता पेज पर करें।",
+  moreServiceInfoFaqSaveQuestion: "क्या मैं यात्राएँ और अलर्ट सहेज सकता हूँ?",
+  moreServiceInfoFaqSaveAnswer:
+    "हाँ। साइन इन होने पर आप अपनी योजना पर लौटने के लिए यात्राएँ, हाल की खोजें और अलर्ट सहेज सकते हैं।",
+  moreServiceInfoFaqAccountQuestion: "क्या खाता आवश्यक है?",
+  moreServiceInfoFaqAccountAnswer:
+    "यात्रा विकल्प खोजने के लिए खाता आवश्यक नहीं है, लेकिन सहेजी गई यात्राओं, अलर्ट, पसंदों और खाता टूल के लिए खाता आवश्यक है।",
+  moreServiceInfoFaqSupportQuestion: "मैं सहायता से कैसे संपर्क करूँ?",
+  moreServiceInfoFaqSupportAnswer:
+    "ग्राहक सहायता पेज का उपयोग करें और अपना खाता ईमेल, आप क्या करने की कोशिश कर रहे थे, और संबंधित मार्ग, होटल या प्रदाता विवरण शामिल करें।",
+  moreServiceInfoHelpTitle: "मदद चाहिए?",
+  moreServiceInfoHelpDescription:
+    "आपके खाते, सहेजी गई यात्राओं, अलर्ट या प्रदाता रीडायरेक्ट के बारे में प्रश्न हैं?",
+  moreServiceInfoSupportCta: "ग्राहक सहायता से संपर्क करें",
+
   // Hindi homepage search, support, newsletter, and footer overrides.
   fromPlaceholder: "कहाँ से?",
   cityOrHotel: "शहर या होटल",
