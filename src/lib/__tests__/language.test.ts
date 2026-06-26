@@ -667,6 +667,39 @@ test("Flights datepicker formatter normalizes Hindi locale for generated display
   assert.equal(hiTranslations.done, "हो गया");
 });
 
+
+test("all flight datepicker render paths use shared Hindi date formatting", () => {
+  const sharedFormatterSource = readFileSync("src/lib/flights/dateFormatting.ts", "utf8");
+  const homepageSearchSource = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
+  const standaloneFlightSearchSource = readFileSync("src/components/search/StandaloneFlightSearchForm.tsx", "utf8");
+  const resultsSearchSource = readFileSync("src/components/results/FlightResultsClient.tsx", "utf8");
+  const landingSource = readFileSync("src/components/flights/FlightLandingClient.tsx", "utf8");
+
+  assert.equal(formatFlightsMonthHeading(new Date(2026, 5, 1), "hi"), "जून 2026");
+  assert.equal(formatFlightsMonthHeading(new Date(2026, 6, 1), "hi-IN"), "जुलाई 2026");
+  assert.equal(
+    formatFlightsDateSummary(new Date(2026, 5, 27), new Date(2026, 5, 30), "hi-in"),
+    "27 जून — 30 जून",
+  );
+
+  assert.ok(sharedFormatterSource.includes('normalized === "hi" || normalized === "hi-in" || normalized.startsWith("hi-")'));
+
+  for (const [label, source] of [
+    ["global/header and homepage SearchTabs", homepageSearchSource],
+    ["standalone /flights form", standaloneFlightSearchSource],
+    ["results edit/search datepicker", resultsSearchSource],
+  ] as const) {
+    assert.ok(source.includes("normalizeFlightsCalendarLocale"), `${label} should normalize through the shared flight locale helper`);
+    assert.ok(source.includes("formatFlightsMonthHeading"), `${label} should render month headings through the shared flight formatter`);
+    assert.ok(source.includes("formatFlightsDateSummary"), `${label} should render selected date summaries through the shared flight formatter`);
+  }
+
+  assert.ok(homepageSearchSource.includes("FlightMobilePickerShell"), "global/header SearchTabs mobile flight datepicker path should remain covered");
+  assert.ok(standaloneFlightSearchSource.includes("FlightMobilePickerShell"), "standalone mobile flight datepicker path should remain covered");
+  assert.ok(landingSource.includes("<StandaloneFlightSearchForm localizeCalendarLabels />"));
+});
+
+
 test("Hindi flights landing static render path resolves screenshot-visible copy", () => {
   assert.equal(hiTranslations.flightLandingHeroTitle, "अपनी अगली उपयोगी उड़ान आसानी से खोजें।");
   assert.equal(hiTranslations.roundTrip, "आना-जाना");

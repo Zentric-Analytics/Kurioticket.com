@@ -26,7 +26,12 @@ import {
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
-import { formatFlightsWeekdays, normalizeFlightsCalendarLocale } from "@/lib/flights/dateFormatting";
+import {
+  formatFlightsDateSummary,
+  formatFlightsMonthHeading,
+  formatFlightsWeekdays,
+  normalizeFlightsCalendarLocale,
+} from "@/lib/flights/dateFormatting";
 import { Button } from "@/components/ui/Button";
 import { type AirportOption, formatAirportLabel, getLocalizedAirportCountryName, getLocalizedCityName } from "@/data/airports";
 import {
@@ -181,28 +186,12 @@ export function StandaloneFlightSearchForm({
       normalizeFlightsCalendarLocale(localizeCalendarLabels ? locale : "en-us"),
     [localizeCalendarLabels, locale],
   );
-  const monthYearFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(calendarLocale, {
-        month: "long",
-        year: "numeric",
-      }),
-    [calendarLocale],
-  );
   const accessibleDateFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(calendarLocale, {
         month: "long",
         day: "numeric",
         year: "numeric",
-      }),
-    [calendarLocale],
-  );
-  const shortDateFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(calendarLocale, {
-        month: "short",
-        day: "numeric",
       }),
     [calendarLocale],
   );
@@ -309,17 +298,17 @@ export function StandaloneFlightSearchForm({
 
   const dateSummary = useMemo(() => {
     const departureSummary = departureParsed
-      ? shortDateFormatter.format(departureParsed)
+      ? formatFlightsDateSummary(departureParsed, null, calendarLocale)
       : "";
     const returnSummary = returnParsed
-      ? shortDateFormatter.format(returnParsed)
+      ? formatFlightsDateSummary(returnParsed, null, calendarLocale)
       : "";
 
     if (!departureSummary) return t("travelDates");
     if (tripType === "round-trip" && returnSummary)
       return `${departureSummary} — ${returnSummary}`;
     return departureSummary;
-  }, [departureParsed, returnParsed, shortDateFormatter, tripType, t]);
+  }, [calendarLocale, departureParsed, returnParsed, tripType, t]);
 
   const cabinClassLabel =
     cabinClass === "business"
@@ -1062,7 +1051,7 @@ export function StandaloneFlightSearchForm({
       return (
         <section
           key={monthKey}
-          aria-label={monthYearFormatter.format(monthDate)}
+          aria-label={formatFlightsMonthHeading(monthDate, calendarLocale)}
           className={cn("min-w-0", compact ? "space-y-2.5" : "")}
         >
           <h3
@@ -1072,7 +1061,7 @@ export function StandaloneFlightSearchForm({
                 : "mb-2.5 text-center text-sm font-medium tracking-tight text-slate-900",
             )}
           >
-            {monthYearFormatter.format(monthDate)}
+            {formatFlightsMonthHeading(monthDate, calendarLocale)}
           </h3>
           <div
             className={cn(

@@ -57,6 +57,11 @@ import {
   markOriginManualInput,
   type OriginFieldState,
 } from "@/lib/flights/defaultOrigin";
+import {
+  formatFlightsDateSummary,
+  formatFlightsMonthHeading,
+  normalizeFlightsCalendarLocale,
+} from "@/lib/flights/dateFormatting";
 
 type TabMode =
   | "flights"
@@ -77,82 +82,7 @@ type SearchTabsProps = {
   locale?: string;
 };
 
-const normalizeHomepageCalendarLocale = (
-  locale: string | null | undefined
-) => {
-  const normalized =
-    locale?.trim().replace("_", "-").toLowerCase() ?? "";
-
-  if (
-    normalized === "fr" ||
-    normalized.startsWith("fr-")
-  ) {
-    return "fr-FR";
-  }
-
-  if (
-    normalized === "es" ||
-    normalized.startsWith("es-")
-  ) {
-    return "es-ES";
-  }
-
-  if (
-    normalized === "de" ||
-    normalized.startsWith("de-")
-  ) {
-    return "de-DE";
-  }
-
-  if (
-    normalized === "it" ||
-    normalized.startsWith("it-")
-  ) {
-    return "it-IT";
-  }
-
-  if (
-    normalized === "nl" ||
-    normalized.startsWith("nl-")
-  ) {
-    return "nl-NL";
-  }
-
-  if (
-    normalized === "pt" ||
-    normalized.startsWith("pt-")
-  ) {
-    return "pt-BR";
-  }
-
-  if (normalized === "ar" || normalized.startsWith("ar-")) {
-    return "ar";
-  }
-
-  if (normalized === "hi" || normalized.startsWith("hi-")) {
-    return "hi-IN";
-  }
-
-  if (normalized === "ja" || normalized.startsWith("ja-")) {
-    return "ja-JP";
-  }
-
-  if (normalized === "ko" || normalized.startsWith("ko-")) {
-    return "ko-KR";
-  }
-
-  if (
-    normalized === "zh" ||
-    normalized === "zh-cn" ||
-    normalized.startsWith("zh-cn-") ||
-    normalized === "zh-hans" ||
-    normalized.startsWith("zh-hans-")
-  ) {
-    return "zh-CN";
-  }
-
-  return "en-US";
-};
+const normalizeHomepageCalendarLocale = normalizeFlightsCalendarLocale;
 
 type PlacesApiResponse = {
   suggestions?: AirportOption[];
@@ -164,23 +94,6 @@ type PlacesApiResponse = {
 type LocationApiResponse = {
   source?: "ipinfo-lite" | "fallback";
   countryCode?: string | null;
-};
-
-const formatCalendarHeading = (
-  formatter: Intl.DateTimeFormat,
-  date: Date,
-  calendarLocale: string
-) => {
-  const formatted = formatter.format(date);
-
-  if (calendarLocale !== "fr-FR") {
-    return formatted;
-  }
-
-  return (
-    formatted.charAt(0).toLocaleUpperCase("fr-FR") +
-    formatted.slice(1)
-  );
 };
 
 const formatCalendarWeekday = (
@@ -457,28 +370,12 @@ export function SearchTabs({
     () => normalizeHomepageCalendarLocale(locale ?? activeLocale),
     [activeLocale, locale]
   );
-  const monthYearFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(calendarLocale, {
-        month: "long",
-        year: "numeric",
-      }),
-    [calendarLocale]
-  );
   const accessibleDateFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(calendarLocale, {
         month: "long",
         day: "numeric",
         year: "numeric",
-      }),
-    [calendarLocale]
-  );
-  const shortDateFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(calendarLocale, {
-        month: "short",
-        day: "numeric",
       }),
     [calendarLocale]
   );
@@ -1284,8 +1181,8 @@ export function SearchTabs({
       return "";
     }
 
-    return shortDateFormatter.format(parsedDate);
-  }, [shortDateFormatter]);
+    return formatFlightsDateSummary(parsedDate, null, calendarLocale);
+  }, [calendarLocale]);
 
   const dateSummary = useMemo(
     () => {
@@ -1974,19 +1871,11 @@ export function SearchTabs({
           return (
             <section
               key={monthKey}
-              aria-label={formatCalendarHeading(
-                monthYearFormatter,
-                monthDate,
-                calendarLocale
-              )}
+              aria-label={formatFlightsMonthHeading(monthDate, calendarLocale)}
               className="space-y-2.5"
             >
               <h3 className="text-start text-[17px] font-bold tracking-tight text-slate-950">
-                {formatCalendarHeading(
-                  monthYearFormatter,
-                  monthDate,
-                  calendarLocale
-                )}
+                {formatFlightsMonthHeading(monthDate, calendarLocale)}
               </h3>
               <div className="grid grid-cols-7 text-center text-[12px] font-semibold tracking-[0.08em] text-slate-500">
                 {weekdays.map((weekday) => (
@@ -2071,19 +1960,11 @@ export function SearchTabs({
           return (
             <section
               key={monthKey}
-              aria-label={formatCalendarHeading(
-                monthYearFormatter,
-                monthDate,
-                calendarLocale
-              )}
+              aria-label={formatFlightsMonthHeading(monthDate, calendarLocale)}
               className="space-y-2.5"
             >
               <h3 className="text-start text-[17px] font-bold tracking-tight text-slate-950">
-                {formatCalendarHeading(
-                  monthYearFormatter,
-                  monthDate,
-                  calendarLocale
-                )}
+                {formatFlightsMonthHeading(monthDate, calendarLocale)}
               </h3>
               <div className="grid grid-cols-7 text-center text-[12px] font-semibold tracking-[0.08em] text-slate-500">
                 {weekdays.map((weekday) => (
@@ -2400,19 +2281,11 @@ export function SearchTabs({
 
     return (
       <section
-        aria-label={formatCalendarHeading(
-          monthYearFormatter,
-          monthDate,
-          calendarLocale
-        )}
+        aria-label={formatFlightsMonthHeading(monthDate, calendarLocale)}
         className="min-w-0"
       >
         <h3 className="mb-2.5 text-center text-sm font-medium tracking-tight text-slate-900">
-          {formatCalendarHeading(
-            monthYearFormatter,
-            monthDate,
-            calendarLocale
-          )}
+          {formatFlightsMonthHeading(monthDate, calendarLocale)}
         </h3>
         <div className="mb-1.5 grid grid-cols-7 text-center text-[10px] font-medium tracking-[0.09em] text-slate-500">
           {weekdays.map((weekday) => (

@@ -22,16 +22,25 @@ export const normalizeFlightsCalendarLocale = (locale: string | null | undefined
   return "en-US";
 };
 
-export const formatFlightsWeekdays = (locale: string) =>
-  Array.from({ length: 7 }, (_, day) =>
-    new Intl.DateTimeFormat(locale, { weekday: "short" }).format(new Date(2024, 0, 7 + day)),
-  );
+const capitalizeFrenchCalendarLabel = (value: string) =>
+  value.charAt(0).toLocaleUpperCase("fr-FR") + value.slice(1);
 
-export const formatFlightsMonthHeading = (date: Date, locale: string | null | undefined) =>
-  new Intl.DateTimeFormat(normalizeFlightsCalendarLocale(locale), {
+export const formatFlightsWeekdays = (locale: string | null | undefined) => {
+  const normalizedLocale = normalizeFlightsCalendarLocale(locale);
+  return Array.from({ length: 7 }, (_, day) =>
+    new Intl.DateTimeFormat(normalizedLocale, { weekday: "short" }).format(new Date(2024, 0, 7 + day)),
+  );
+};
+
+export const formatFlightsMonthHeading = (date: Date, locale: string | null | undefined) => {
+  const normalizedLocale = normalizeFlightsCalendarLocale(locale);
+  const formatted = new Intl.DateTimeFormat(normalizedLocale, {
     month: "long",
     year: "numeric",
   }).format(date);
+
+  return normalizedLocale === "fr-FR" ? capitalizeFrenchCalendarLabel(formatted) : formatted;
+};
 
 export const formatFlightsDateSummary = (
   departureDate: Date,
