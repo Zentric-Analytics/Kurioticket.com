@@ -1197,6 +1197,7 @@ export const translations: TranslationDictionary = {
   twoPlusStops: "경유 2회 이상",
   stops: "경유",
   airlines: "항공사",
+  airportsAndCities: "공항 및 도시",
   airports: "공항",
   times: "시간",
   flightQuality: "항공편 품질",

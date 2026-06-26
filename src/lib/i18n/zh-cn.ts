@@ -1372,6 +1372,7 @@ export const translations: TranslationDictionary = {
   stopCount: "{{count}} 次经停",
   stops: "经停",
   airlines: "航空公司",
+  airportsAndCities: "机场和城市",
   airports: "机场",
   times: "时间",
   flightQuality: "航班品质",

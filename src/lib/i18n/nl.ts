@@ -687,6 +687,7 @@ export const translations: TranslationDictionary = {
   stopCount: "{{count}} stops",
   stops: "Stops",
   airlines: "Luchtvaartmaatschappijen",
+  airportsAndCities: "LUCHTHAVENS EN STEDEN",
   airports: "Luchthavens",
   times: "Tijden",
   flightQuality: "Vluchtkwaliteit",

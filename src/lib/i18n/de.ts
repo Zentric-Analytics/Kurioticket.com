@@ -788,7 +788,7 @@ export const translations: TranslationDictionary = {
   travelerPlural: "Reisende",
   cabinClass: "Kabinenklasse",
   nearYou: "In Ihrer Nähe",
-  airportsAndCities: "Flughäfen und Städte",
+  airportsAndCities: "FLUGHÄFEN UND STÄDTE",
   searchAirportsAndCities: "Flughäfen und Städte suchen",
   searchAirportsOrCities: "Flughäfen oder Städte suchen",
   cityAirportOrCode: "Stadt, Flughafen oder Code",

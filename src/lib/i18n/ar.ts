@@ -958,6 +958,7 @@ export const translations: TranslationDictionary = {
   stopCount: "{{count}} توقفات",
   stops: "التوقفات",
   airlines: "شركات الطيران",
+  airportsAndCities: "المطارات والمدن",
   airports: "المطارات",
   times: "الأوقات",
   flightQuality: "جودة الرحلة",

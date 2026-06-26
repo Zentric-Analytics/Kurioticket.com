@@ -1330,7 +1330,7 @@ flightLandingRouteAriaLabel:
   travelerPlural: "voyageurs",
   cabinClass: "Classe de cabine",
   nearYou: "Près de vous",
-  airportsAndCities: "Aéroports et villes",
+  airportsAndCities: "AÉROPORTS ET VILLES",
   searchAirportsAndCities: "Rechercher des aéroports et des villes",
   searchAirportsOrCities: "Rechercher des aéroports ou des villes",
   cityAirportOrCode: "Ville, aéroport ou code",
