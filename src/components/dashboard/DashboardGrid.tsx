@@ -1141,6 +1141,18 @@ function NationalityInput({
   );
 }
 
+function getPersonalDetailEditWidthClass(key: keyof PersonalDetailsDraft) {
+  if (key === "address" || key === "email") {
+    return "w-full max-w-[760px]";
+  }
+
+  if (key === "dateOfBirth") {
+    return "w-full max-w-md";
+  }
+
+  return "w-full max-w-xl";
+}
+
 function DetailInput({
   row,
   value,
@@ -1302,7 +1314,12 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
                 {row.label}
               </div>
               {isEditing ? (
-                <div className="min-w-0 space-y-1">
+                <div
+                  className={cn(
+                    "min-w-0 space-y-1",
+                    getPersonalDetailEditWidthClass(row.key),
+                  )}
+                >
                   <DetailInput
                     row={row}
                     value={editValue}
