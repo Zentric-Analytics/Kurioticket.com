@@ -26,6 +26,7 @@ import {
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
+import { formatFlightsWeekdays, normalizeFlightsCalendarLocale } from "@/lib/flights/dateFormatting";
 import { Button } from "@/components/ui/Button";
 import { type AirportOption, formatAirportLabel, getLocalizedAirportCountryName, getLocalizedCityName } from "@/data/airports";
 import {
@@ -55,73 +56,6 @@ type MonthCell = {
   date: Date;
   isCurrentMonth: boolean;
 };
-
-const normalizeFlightsCalendarLocale = (locale: string | null | undefined) => {
-  const normalized = locale?.trim().replace("_", "-").toLowerCase() ?? "";
-
-  if (normalized === "fr" || normalized.startsWith("fr-")) {
-    return "fr-FR";
-  }
-
-  if (normalized === "es" || normalized.startsWith("es-")) {
-    return "es-ES";
-  }
-
-  if (normalized === "de" || normalized.startsWith("de-")) {
-    return "de-DE";
-  }
-
-  if (normalized === "it" || normalized.startsWith("it-")) {
-    return "it-IT";
-  }
-
-  if (normalized === "nl" || normalized.startsWith("nl-")) {
-    return "nl-NL";
-  }
-
-  if (
-    normalized === "pt" ||
-    normalized === "pt-br" ||
-    normalized.startsWith("pt-")
-  ) {
-    return "pt-BR";
-  }
-
-  if (normalized === "ar" || normalized.startsWith("ar-")) {
-    return "ar";
-  }
-
-  if (normalized === "hi" || normalized.startsWith("hi-")) {
-    return "hi-IN";
-  }
-
-  if (normalized === "ja" || normalized.startsWith("ja-")) {
-    return "ja-JP";
-  }
-
-  if (normalized === "ko" || normalized.startsWith("ko-")) {
-    return "ko-KR";
-  }
-
-  if (
-    normalized === "zh" ||
-    normalized === "zh-cn" ||
-    normalized.startsWith("zh-cn-") ||
-    normalized === "zh-hans" ||
-    normalized.startsWith("zh-hans-")
-  ) {
-    return "zh-CN";
-  }
-
-  return "en-US";
-};
-
-const formatFlightsWeekdays = (locale: string) =>
-  Array.from({ length: 7 }, (_, day) =>
-    new Intl.DateTimeFormat(locale, { weekday: "short" }).format(
-      new Date(2024, 0, 7 + day),
-    ),
-  );
 
 const searchFieldShellClassName =
   "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:border-e sm:border-slate-200 sm:bg-transparent sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-slate-300 sm:focus-within:border-indigo-500 sm:focus-within:bg-indigo-50/55 sm:focus-within:ring-1 sm:focus-within:ring-inset sm:focus-within:ring-indigo-300/80 lg:flex lg:flex-col lg:justify-center";
@@ -220,7 +154,7 @@ type StandaloneFlightSearchFormProps = {
 };
 
 export function StandaloneFlightSearchForm({
-  localizeCalendarLabels = false,
+  localizeCalendarLabels = true,
 }: StandaloneFlightSearchFormProps = {}) {
   const { t: dictionary, locale } = useLocale();
   const t = useCallback(
