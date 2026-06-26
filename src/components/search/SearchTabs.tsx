@@ -2577,7 +2577,7 @@ export function SearchTabs({
   const passengerRows = [
     { key: "adults", label: translate("adults") || "Adults", subtitle: translate("adultAgeRange") || "18+", count: draftAdultCount, min: 1 },
     { key: "children", label: translate("children") || "Children", subtitle: translate("childAgeRange") || "Ages 2–17", count: draftChildCount, min: 0 },
-    { key: "infants", label: translate("infants") || "Infants", subtitle: translate("under2") || "Under 2", count: draftInfantCount, min: 0 },
+    { key: "infants", label: translate("infantsOnLap") || translate("infants") || enTranslations.infantsOnLap, subtitle: translate("under2") || "Under 2", count: draftInfantCount, min: 0 },
   ];
   const cabinOptions = [
     ["economy", translate("economy") || "Economy"],
