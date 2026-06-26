@@ -486,6 +486,12 @@ export const translations: TranslationDictionary = {
   guests: "투숙객",
   rooms: "객실",
   stayDetails: "숙박 정보",
+  hotelsHeroEyebrow: "프리미엄 숙소를 명확하게 비교",
+  hotelsHeroTitle: "여행을 제대로 시작할 숙소를 찾아보세요.",
+  hotelsHeroSubtitle:
+    "세련된 도심 숙소부터 편안한 리조트 휴식까지, 호텔을 한곳에서 비교하세요.",
+  hotelSearchDestinationLabel: "목적지",
+  hotelSearchDestinationPlaceholder: "도시, 지역 또는 랜드마크",
   hotelSearchTravelDatesLabel: "여행 날짜",
   hotelSearchDatePlaceholder: "체크인 — 체크아웃",
   hotelSearchGuestsLabel: "투숙객",
