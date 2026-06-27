@@ -1827,6 +1827,33 @@ test("Turkish Flights landing hero and standalone search form resolve without En
     search: "Ara",
     searchFlights: "Uçuş ara",
     searchingFlights: "Uçuşlar aranıyor…",
+    beachVacations: "Plaj tatilleri",
+    beachVacationsBody:
+      "Güneşli kıyılara, ada kaçamaklarına ve sıcak havalı plaj destinasyonlarına giden uçuş rotalarını keşfedin.",
+    flightLandingStartThisSearch: "Bu aramayı başlat",
+    flightLandingRouteIdeasTitle: "Esnek seyahatler için rota fikirleri",
+    flightLandingRouteIdeasBody:
+      "Rota fikirlerine göz atın, ardından mevcut uçuşları karşılaştırmadan önce tarihler ve yolcularla gerçek bir arama başlatın.",
+    flightLandingRouteTemplate: "{{origin}} - {{destination}}",
+    flightLandingRouteAriaLabel: "{{origin}} kalkışlı {{destination}} varışlı uçuşları ara",
+    "homeDiscoveryRoute.ca-yyz-cun.title": "Cancun kış kaçamağı",
+    "homeDiscoveryRoute.ca-yyz-cun.routeNote":
+      "Yoğun sezonda aktarmasız seçenekler sunan güvenilir tatil rotası.",
+    "homeDiscoveryRoute.ca-yeg-pvr.title": "Puerto Vallarta plaj kaçamağı",
+    "homeDiscoveryRoute.ca-yeg-pvr.routeNote":
+      "Pasifik plajları ve eski şehir atmosferiyle kış güneşi rotası.",
+    "homeDiscoveryRoute.ca-yyz-hnl.title": "Honolulu uzun mesafe ada molası",
+    "homeDiscoveryRoute.ca-yyz-hnl.routeNote":
+      "Plajlar, sörf ve ada yürüyüşleri için premium tatil seçeneği.",
+    "homeDiscoveryRoute.ca-yyz-san.title": "San Diego güneş ve sörf seyahati",
+    "homeDiscoveryRoute.ca-yyz-san.routeNote":
+      "Plajlar, parklar ve liman manzaraları için güvenilir sınır ötesi rota.",
+    "flightLandingImageAlt.Puerto Vallarta coastline and old town":
+      "Puerto Vallarta kıyı şeridi ve eski şehir",
+    "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water":
+      "Diamond Head ve parlak mavi sularıyla Honolulu Waikiki plajı",
+    "flightLandingImageAlt.San Diego bay skyline and marina":
+      "San Diego körfezi silüeti ve marina",
   };
 
   for (const [key, value] of Object.entries(expectedTurkishFlightsLandingStrings)) {

@@ -257,6 +257,93 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.ng-abv-rob.title": "Monrovia bölgesel sahil seyahati",
   "homeDiscoveryRoute.ng-abv-rob.routeNote":
     "Atlantik plajları ve yerel pazarlarıyla Batı Afrika şehir molası.",
+  "homeDiscoveryRoute.ca-yyz-yvr.title": "Vancouver batı yakası şehir seyahati",
+  "homeDiscoveryRoute.ca-yyz-yvr.routeNote":
+    "Dağ manzaraları ve şehir lezzet noktaları için kıyıdan kıyıya favori rota.",
+  "homeDiscoveryRoute.ca-yul-cdg.title": "Paris transatlantik klasiği",
+  "homeDiscoveryRoute.ca-yul-cdg.routeNote":
+    "Kısa Avrupa kaçamakları için güçlü gece uçuşu seçenekleri.",
+  "homeDiscoveryRoute.ca-yvr-lax.title": "Los Angeles güneş rotası",
+  "homeDiscoveryRoute.ca-yvr-lax.routeNote":
+    "Plajlar, eğlence ve kısa molalar için batı yakası favorisi.",
+  "homeDiscoveryRoute.ca-yyz-cun.title": "Cancun kış kaçamağı",
+  "homeDiscoveryRoute.ca-yyz-cun.routeNote":
+    "Yoğun sezonda aktarmasız seçenekler sunan güvenilir tatil rotası.",
+  "homeDiscoveryRoute.ca-yyc-yhz.title": "Halifax liman hafta sonu",
+  "homeDiscoveryRoute.ca-yyc-yhz.routeNote":
+    "Deniz ürünleri, sahil yürüyüşleri ve tarih için ülke çapında kaçamak.",
+  "homeDiscoveryRoute.ca-yul-lhr.title": "Londra şehir ve tiyatro seyahati",
+  "homeDiscoveryRoute.ca-yul-lhr.routeNote":
+    "Güçlü premium ve ekonomi kapsamıyla yıl boyu uzun mesafe rotası.",
+  "homeDiscoveryRoute.ca-yvr-sfo.title": "San Francisco teknoloji ve lezzet rotası",
+  "homeDiscoveryRoute.ca-yvr-sfo.routeNote":
+    "Konferanslar ve şehir hafta sonları için kısa batı yakası koridoru.",
+  "homeDiscoveryRoute.ca-yyz-mco.title": "Orlando aile parkları rotası",
+  "homeDiscoveryRoute.ca-yyz-mco.routeNote":
+    "Tema parkları ve okul tatilleri için düzenli aile talebi.",
+  "homeDiscoveryRoute.ca-yeg-pvr.title": "Puerto Vallarta plaj kaçamağı",
+  "homeDiscoveryRoute.ca-yeg-pvr.routeNote":
+    "Pasifik plajları ve eski şehir atmosferiyle kış güneşi rotası.",
+  "homeDiscoveryRoute.ca-yyz-hnl.title": "Honolulu uzun mesafe ada molası",
+  "homeDiscoveryRoute.ca-yyz-hnl.routeNote":
+    "Plajlar, sörf ve ada yürüyüşleri için premium tatil seçeneği.",
+  "homeDiscoveryRoute.ca-yvr-nrt.title": "Tokyo Pasifik geçidi",
+  "homeDiscoveryRoute.ca-yvr-nrt.routeNote":
+    "Yemek sahneleri ve şehir keşfi için güçlü Pasifik aşırı talep.",
+  "homeDiscoveryRoute.ca-yhz-yyt.title": "St. John's Atlantik kıyısı kaçamağı",
+  "homeDiscoveryRoute.ca-yhz-yyt.routeNote":
+    "Renkli sıra evler ve kıyı patikaları için kısa doğu uçuşu.",
+  "homeDiscoveryRoute.ca-yyz-san.title": "San Diego güneş ve sörf seyahati",
+  "homeDiscoveryRoute.ca-yyz-san.routeNote":
+    "Plajlar, parklar ve liman manzaraları için güvenilir sınır ötesi rota.",
+  "homeDiscoveryRoute.ca-yul-ber.title": "Berlin kültür şehir molası",
+  "homeDiscoveryRoute.ca-yul-ber.routeNote":
+    "Galeriler, tarih semtleri ve gece hayatı için Avrupa şehir rotası.",
+  "homeDiscoveryRoute.ca-yyc-yyj.title": "Victoria liman hafta sonu",
+  "homeDiscoveryRoute.ca-yyc-yyj.routeNote":
+    "Bahçeler, liman yürüyüşleri ve çay evleri için batı yakası kısa molası.",
+  "homeDiscoveryRoute.ca-yvr-syd.title": "Sydney Pasifik aşırı macerası",
+  "homeDiscoveryRoute.ca-yvr-syd.routeNote":
+    "Liman simgeleri ve sahil banliyöleri için uzun mesafe favorisi.",
+  "homeDiscoveryRoute.us-jfk-mia.title": "Miami plaj hafta sonu",
+  "homeDiscoveryRoute.us-jfk-mia.routeNote":
+    "Sıcak hava kaçamakları için yüksek frekanslı aktarmasız rota.",
+  "homeDiscoveryRoute.us-ord-las.title": "Las Vegas eğlence rotası",
+  "homeDiscoveryRoute.us-ord-las.routeNote":
+    "Etkinlikler, gösteriler ve esnek hafta sonu uçuşları için popüler.",
+  "homeDiscoveryRoute.us-lax-sfo.title": "San Francisco hızlı koridoru",
+  "homeDiscoveryRoute.us-lax-sfo.routeNote":
+    "Sık günlük seferlerle kısa mesafeli iş favorisi.",
+  "homeDiscoveryRoute.us-atl-mco.title": "Orlando aile kaçamağı",
+  "homeDiscoveryRoute.us-atl-mco.routeNote":
+    "Aile dostu saat seçenekleriyle tema parkı rotası.",
+  "homeDiscoveryRoute.us-dfw-sea.title": "Seattle kahve ve doğa seyahati",
+  "homeDiscoveryRoute.us-dfw-sea.routeNote":
+    "Şehir lezzetleri ve Pasifik Kuzeybatı günübirlik gezileri için harika.",
+  "homeDiscoveryRoute.us-mia-cun.title": "Cancun kısa tatil uçuşu",
+  "homeDiscoveryRoute.us-mia-cun.routeNote":
+    "Plaj resortları ve uzun hafta sonları için hızlı uluslararası rota.",
+  "homeDiscoveryRoute.us-ord-pdx.title": "Portland lezzet ve orman hafta sonu",
+  "homeDiscoveryRoute.us-ord-pdx.routeNote":
+    "Kahve kavurucuları, parklar ve yakındaki şelaleler için Pasifik Kuzeybatı şehir molası.",
+  "homeDiscoveryRoute.us-sea-hnl.title": "Honolulu tropik molası",
+  "homeDiscoveryRoute.us-sea-hnl.routeNote":
+    "Plajlar, sörf ve volkan manzaraları için doğrudan ada kaçamağı.",
+  "homeDiscoveryRoute.us-bos-sju.title": "San Juan Karayip uzun hafta sonu",
+  "homeDiscoveryRoute.us-bos-sju.routeNote":
+    "Tarihi eski şehir ve plajlarla sıcak havalı ABD bölgesi rotası.",
+  "homeDiscoveryRoute.us-den-phx.title": "Phoenix çöl güneşi seyahati",
+  "homeDiscoveryRoute.us-den-phx.routeNote":
+    "Golf hafta sonları ve Sonora çölü yürüyüşleri için kısa batı rotası.",
+  "homeDiscoveryRoute.us-iad-bna.title": "Nashville müzik şehri kaçamağı",
+  "homeDiscoveryRoute.us-iad-bna.routeNote":
+    "Canlı müzik, yemek ve festivaller için yüksek talep gören iç hat rotası.",
+  "homeDiscoveryRoute.us-lax-yvr.title": "Vancouver dağ ve şehir kaçamağı",
+  "homeDiscoveryRoute.us-lax-yvr.routeNote":
+    "Liman manzaraları, deniz ürünleri ve yakındaki dağ patikaları için kolay sınır ötesi rota.",
+  "homeDiscoveryRoute.us-phl-san.title": "San Diego kıyı molası",
+  "homeDiscoveryRoute.us-phl-san.routeNote":
+    "Plajlar, liman turları ve ılıman hava ile kıyıdan kıyıya kaçamak.",
   homeTrustTitle: "Gezginler neden Kurioticket'te karşılaştırır",
   homeTrustSubtitle:
     "Kurioticket sağlayıcı tekliflerini net şekilde karşılaştırmanıza, ardından rezervasyonu sağlayıcının sitesinde tamamlamanıza yardımcı olur.",
@@ -283,11 +370,59 @@ export const translations: TranslationDictionary = {
   flightLandingFeatureProviderBody:
     "Rezervasyondan önce son uygunluğu, fiyatı ve kuralları her zaman sağlayıcıyla doğrulayın.",
   flightLandingStartThisSearch: "Bu aramayı başlat",
+  beachVacations: "Plaj tatilleri",
+  beachVacationsBody:
+    "Güneşli kıyılara, ada kaçamaklarına ve sıcak havalı plaj destinasyonlarına giden uçuş rotalarını keşfedin.",
   flightLandingRouteIdeasTitle: "Esnek seyahatler için rota fikirleri",
   flightLandingRouteIdeasBody:
     "Rota fikirlerine göz atın, ardından mevcut uçuşları karşılaştırmadan önce tarihler ve yolcularla gerçek bir arama başlatın.",
   flightLandingRouteTemplate: "{{origin}} - {{destination}}",
   flightLandingRouteConnector: "-",
+  "flightLandingCity.Anchorage": "Anchorage",
+  "flightLandingCity.Atlanta": "Atlanta",
+  "flightLandingCity.Austin": "Austin",
+  "flightLandingCity.Boston": "Boston",
+  "flightLandingCity.Cancun": "Cancun",
+  "flightLandingCity.Chicago": "Chicago",
+  "flightLandingCity.Dallas": "Dallas",
+  "flightLandingCity.Denver": "Denver",
+  "flightLandingCity.Detroit": "Detroit",
+  "flightLandingCity.Edmonton": "Edmonton",
+  "flightLandingCity.Halifax": "Halifax",
+  "flightLandingCity.Honolulu": "Honolulu",
+  "flightLandingCity.Las Vegas": "Las Vegas",
+  "flightLandingCity.Los Angeles": "Los Angeles",
+  "flightLandingCity.Miami": "Miami",
+  "flightLandingCity.Montreal": "Montreal",
+  "flightLandingCity.New Orleans": "New Orleans",
+  "flightLandingCity.New York": "New York",
+  "flightLandingCity.Orlando": "Orlando",
+  "flightLandingCity.Philadelphia": "Philadelphia",
+  "flightLandingCity.Portland": "Portland",
+  "flightLandingCity.Phoenix": "Phoenix",
+  "flightLandingCity.Puerto Vallarta": "Puerto Vallarta",
+  "flightLandingCity.San Diego": "San Diego",
+  "flightLandingCity.San Francisco": "San Francisco",
+  "flightLandingCity.San Juan": "San Juan",
+  "flightLandingCity.Seattle": "Seattle",
+  "flightLandingCity.St. John's": "St. John's",
+  "flightLandingCity.Tokyo": "Tokyo",
+  "flightLandingCity.Toronto": "Toronto",
+  "flightLandingCity.Vancouver": "Vancouver",
+  "flightLandingImageAlt.Puerto Vallarta coastline and old town":
+    "Puerto Vallarta kıyı şeridi ve eski şehir",
+  "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water":
+    "Diamond Head ve parlak mavi sularıyla Honolulu Waikiki plajı",
+  "flightLandingImageAlt.San Diego bay skyline and marina":
+    "San Diego körfezi silüeti ve marina",
+  "flightLandingImageAlt.Cancun beach resort with thatched umbrellas and turquoise Caribbean water":
+    "Hasır şemsiyeler ve turkuaz Karayip sularıyla Cancun plaj resortu",
+  "flightLandingImageAlt.Bright Cancun shoreline with turquoise waves and beach umbrellas":
+    "Turkuaz dalgalar ve plaj şemsiyeleriyle parlak Cancun kıyısı",
+  "flightLandingImageAlt.Sunny Oahu beach with palms and clear Pacific water near Honolulu":
+    "Honolulu yakınında palmiyeler ve berrak Pasifik suyuyla güneşli Oahu plajı",
+  "flightLandingImageAlt.San Diego waterfront skyline and marina on a sunny day":
+    "Güneşli bir günde San Diego sahil silüeti ve marina",
   flightLandingRouteAriaLabel: "{{origin}} kalkışlı {{destination}} varışlı uçuşları ara",
   discoverDestinationsFromRegion: "Bölgenizden destinasyonları keşfedin",
   discoverDestinationsFromRegionBody:
