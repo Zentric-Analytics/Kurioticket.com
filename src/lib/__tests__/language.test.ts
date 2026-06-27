@@ -3334,3 +3334,99 @@ test("Turkish cars calendar locale normalizes to tr-TR for generated datepicker 
     ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"],
   );
 });
+
+test("Turkish cars results render path copy resolves without English fallback", () => {
+  const tr = getTranslations("tr");
+  const auditedTurkishCarsResultsKeys: Array<[string, string]> = [
+    ["carsResults.resultsLabel", "Araç sonuçları"],
+    ["carsResults.resultsFor", "{location} için araç sonuçları"],
+    ["carsResults.filterBy", "Filtrele"],
+    ["carsResults.searchCars", "Araç ara"],
+    ["carsResults.pickupLocation", "ALIŞ KONUMU"],
+    ["carsResults.returnLocation", "İADE KONUMU"],
+    ["carsResults.pickupLocationNeeded", "Alış konumu gerekli"],
+    ["carsResults.sameAsPickup", "Alış konumuyla aynı"],
+    ["carsResults.selectPickupThenReturn", "Önce alış, sonra iade tarihini seçin"],
+    ["carsResults.rentalDates", "KİRALAMA TARİHLERİ"],
+    ["carsResults.pickupReturnTime", "ALIŞ / İADE SAATİ"],
+    ["carsResults.driverAge", "SÜRÜCÜ YAŞI"],
+    ["carsResults.anyDriverAgeRange", "Her sürücü yaşı 18–70"],
+    ["carsResults.emptyInventory", "Bu arama için canlı araç envanteri henüz gösterilemiyor. Yukarıdaki arama bilgilerini güncelleyin veya daha sonra tekrar kontrol edin."],
+    ["carsResults.bags", "Bagaj"],
+    ["carsResults.bags2Plus", "2+ bagaj"],
+    ["carsResults.bags3Plus", "3+ bagaj"],
+    ["carsResults.bags4Plus", "4+ bagaj"],
+    ["carsResults.fuelPolicy", "Yakıt politikası"],
+    ["carsResults.mileagePolicy", "Kilometre politikası"],
+    ["carsResults.unlimitedMileage", "Sınırsız kilometre"],
+    ["carsResults.limitedMileage", "Sınırlı kilometre"],
+    ["carsResults.cancellation", "İptal"],
+    ["carsResults.freeCancellation", "Ücretsiz iptal"],
+    ["carsResults.payAtPickup", "Alışta öde"],
+    ["carsResults.shuttlePickup", "Servisle alış"],
+    ["carsResults.cityLocation", "Şehir içi konum"],
+  ];
+
+  for (const [key, expected] of auditedTurkishCarsResultsKeys) {
+    assert.equal(tr[key], expected, `${key} should resolve to Turkish`);
+    assert.notEqual(tr[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  assert.equal(
+    tr["carsResults.resultsFor"].replace("{location}", tr["carsResults.pickupLocationNeeded"]),
+    "Alış konumu gerekli için araç sonuçları",
+  );
+  assert.equal(
+    tr["carsResults.resultsFor"].replace("{location}", "lagos"),
+    "lagos için araç sonuçları",
+  );
+
+  const carsResultsSource = readFileSync("src/components/results/CarsResultsClient.tsx", "utf8");
+  for (const key of [
+    "carsResults.pickupLocation",
+    "carsResults.returnLocation",
+    "carsResults.rentalDates",
+    "carsResults.pickupReturnTime",
+    "carsResults.driverAge",
+    "carsResults.searchCars",
+    "carsResults.emptyInventory",
+    "carsResults.filterBy",
+  ]) {
+    assert.ok(carsResultsSource.includes(`t("${key}")`), `Cars results render path should resolve ${key} through i18n`);
+  }
+  assert.ok(
+    carsResultsSource.includes('action="/cars/results"') &&
+      carsResultsSource.includes('name="pickupLocation"') &&
+      carsResultsSource.includes('name="dropoffLocation"') &&
+      carsResultsSource.includes('name="pickupDate"') &&
+      carsResultsSource.includes('name="driverAge"') &&
+      carsResultsSource.includes('value={pickupLocation}') &&
+      carsResultsSource.includes('value={driverAge}'),
+    "Cars results search form should keep raw search/query values when submitting.",
+  );
+});
+
+test("Turkish cars results datepicker locale normalizes to tr-TR", () => {
+  const carsResultsSource = readFileSync("src/components/results/CarsResultsClient.tsx", "utf8");
+
+  assert.ok(
+    carsResultsSource.includes('normalizedLocale.startsWith("tr")') && carsResultsSource.includes('return "tr-TR"'),
+    "Cars results datepicker locale helper should normalize Turkish locales to tr-TR.",
+  );
+  assert.ok(
+    carsResultsSource.includes('["de", "es", "fr", "ja", "nl", "pt", "tr"]'),
+    "Cars results time summaries should use 24-hour formatting for Turkish without changing raw time values.",
+  );
+  assert.equal(
+    new Intl.DateTimeFormat("tr-TR", { month: "long", year: "numeric" }).format(new Date(2026, 5, 1)),
+    "Haziran 2026",
+  );
+  assert.equal(
+    new Intl.DateTimeFormat("tr-TR", { month: "long", year: "numeric" }).format(new Date(2026, 6, 1)),
+    "Temmuz 2026",
+  );
+  assert.deepEqual(
+    Array.from({ length: 7 }, (_, day) => new Intl.DateTimeFormat("tr-TR", { weekday: "short" }).format(new Date(2024, 0, 7 + day))),
+    ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"],
+  );
+});
