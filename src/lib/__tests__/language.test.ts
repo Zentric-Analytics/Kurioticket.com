@@ -2942,3 +2942,61 @@ test("Hindi cars flow copy uses localized labels without mutating dynamic values
     ["रवि", "सोम", "मंगल", "बुध", "गुरु", "शुक्र", "शनि"],
   );
 });
+
+test("Turkish hotels landing render path copy resolves without English fallback", () => {
+  const tr = getTranslations("tr");
+  const auditedTurkishHotelLandingKeys: Array<[string, string]> = [
+    ["hotelSearchDestinationLabel", "VARIŞ"],
+    ["hotelSearchDestinationPlaceholder", "Şehir, bölge veya simge yapı"],
+    ["hotelSearchTravelDatesLabel", "Seyahat tarihleri"],
+    ["hotelSearchDatePlaceholder", "Giriş — Çıkış"],
+    ["hotelSearchGuestsLabel", "Misafirler"],
+    ["exploreHotelStaysByDestination", "Destinasyona göre otel konaklamalarını keşfedin"],
+    ["featuredHotelDestinations", "Öne çıkan otel destinasyonları"],
+    ["findStaysEveryKindTrip", "Her tür seyahat için konaklama bulun"],
+    ["hotelInspirationBody", "Aklınızdaki konaklama türüne göre destinasyon fikirlerine göz atın."],
+    ["hotelInspirationCategory.Beach", "Plaj"],
+    ["hotelInspirationCategory.City breaks", "Şehir kaçamakları"],
+    ["hotelInspirationCategory.Family trips", "Aile seyahatleri"],
+    ["hotelInspirationCategory.Relaxed stays", "Rahat konaklamalar"],
+    ["hotelInspirationCategory.Weekend ideas", "Hafta sonu fikirleri"],
+    ["hotelInspirationBadge.Coastal stays", "Kıyı konaklamaları"],
+    ["hotelInspirationBadge.City coast", "Şehir kıyısı"],
+    ["hotelInspirationBadge.Waterfront stays", "Sahil konaklamaları"],
+    ["hotelDestination.Tokyo.title", "Japonya"],
+    ["hotelDestination.Tokyo.subtitle", "Tokyo konaklamaları"],
+    ["hotelDestination.London.title", "Birleşik Krallık"],
+    ["hotelDestination.London.subtitle", "Londra konaklamaları"],
+    ["hotelDestination.Paris.title", "Fransa"],
+    ["hotelDestination.Paris.subtitle", "Paris konaklamaları"],
+    ["hotelDestination.New York.title", "Amerika Birleşik Devletleri"],
+    ["hotelDestination.New York.subtitle", "New York konaklamaları"],
+    ["hotelDestination.Cancun.title", "Meksika"],
+    ["hotelDestination.Barcelona.title", "İspanya"],
+    ["hotelDestination.Dubai.title", "Birleşik Arap Emirlikleri"],
+    ["exploreStaysWorldwide", "Dünya genelinde konaklamaları keşfedin"],
+    ["hotelTrustReviewTitle", "Konaklama detaylarını inceleyin"],
+  ];
+
+  for (const [key, expected] of auditedTurkishHotelLandingKeys) {
+    assert.equal(tr[key], expected, `${key} should resolve to Turkish`);
+    assert.notEqual(tr[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+});
+
+test("Turkish hotel calendar locale normalizes to tr-TR for generated month headings", async () => {
+  const { normalizeHotelCalendarLocale } = await import("@/lib/hotelsDateFormatting");
+
+  for (const locale of ["tr", "tr-TR", "tr-tr"]) {
+    const normalized = normalizeHotelCalendarLocale(locale);
+    assert.equal(normalized, "tr-TR");
+    assert.equal(
+      new Intl.DateTimeFormat(normalized, { month: "long", year: "numeric" }).format(new Date(2026, 5, 1)),
+      "Haziran 2026",
+    );
+    assert.equal(
+      new Intl.DateTimeFormat(normalized, { month: "long", year: "numeric" }).format(new Date(2026, 6, 1)),
+      "Temmuz 2026",
+    );
+  }
+});
