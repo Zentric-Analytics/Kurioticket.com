@@ -1951,6 +1951,61 @@ test("Turkish homepage popovers and discovery route cards resolve screenshot-vis
   assert.equal(`${tr.oneWay.toLocaleUpperCase("tr-TR")} · ${tr.economy.toLocaleUpperCase("tr-TR")} · ${tr.homeDiscoveryTravelerCountOne}`, "TEK YÖN · EKONOMİ · 1 YOLCU");
 });
 
+test("Turkish About page screenshot-visible copy resolves without English fallback", () => {
+  const tr = getTranslations("tr");
+  const expectedTurkishAboutStrings = {
+    aboutPageEyebrow: "Kurioticket Hakkında",
+    aboutPageTitle: "Hakkımızda",
+    aboutPageIntroPrimary:
+      "Kurioticket, yolcuların uçuşları, otelleri, araçları ve seyahat fırsatlarını aramasına, karşılaştırmasına ve keşfetmesine yardımcı olan bir seyahat arama ve karşılaştırma platformudur.",
+    aboutPageIntroSecondary:
+      "Amacımız, mevcut seçenekleri ve sağlayıcı bilgilerini tek ve sade bir yerde sunarak seyahat planlamasını daha anlaşılır hale getirmektir; böylece yolcular, seyahatlerine uygun sağlayıcıyla devam etmeden önce seçenekleri inceleyebilir.",
+    aboutPagePlanningCardHeading: "Pratik bir seyahat planlama aracı",
+    aboutPagePlanningCardBody:
+      "Kurioticket, yolcuların seyahat seçeneklerini yararlı bağlamla değerlendirmesine yardımcı olmaya odaklanır. Müsaitlik, fiyatlar, kurallar ve son rezervasyon adımları sağlayıcıya göre değişebilir; bu nedenle yolcular karar vermeden önce sağlayıcı sayfasını dikkatle incelemelidir.",
+  };
+
+  const aboutPageSource = readFileSync("src/components/about/AboutPageContent.tsx", "utf8");
+  for (const [key, value] of Object.entries(expectedTurkishAboutStrings)) {
+    assert.equal(tr[key], value, `tr ${key} should use Turkish copy`);
+    assert.notEqual(tr[key], enTranslations[key], `tr ${key} should not fall back to English`);
+    assert.ok(aboutPageSource.includes(key), `About page render path should resolve ${key} through i18n.`);
+  }
+});
+
+test("Turkish How Kurioticket Works page strings are localized", () => {
+  const tr = getTranslations("tr");
+  const expectedTurkishHowItWorksStrings = {
+    howItWorksEyebrow: "Kurioticket nasıl çalışır",
+    howItWorksTitle: "Kurioticket Nasıl Çalışır",
+    howItWorksIntro:
+      "Kurioticket, yolcuların aramadan karşılaştırmaya, ardından bir teklif seçildiğinde sağlayıcıya geçmesine yardımcı olur.",
+    howItWorksFlowHeading: "Temel akış",
+    "howItWorks.steps.search.title": "Seyahat seçeneklerini arayın",
+    "howItWorks.steps.search.description":
+      "Mevcut uçuşları, otelleri, araçları veya seyahat fırsatlarını görmek için seyahat bilgilerinizi girin.",
+    "howItWorks.steps.compare.title": "Mevcut sonuçları karşılaştırın",
+    "howItWorks.steps.compare.description":
+      "Gösterildiğinde mevcut seçenekleri, fiyatları, saatleri, sağlayıcı ayrıntılarını ve diğer seyahat bilgilerini inceleyin.",
+    "howItWorks.steps.choose.title": "Bir teklif seçin",
+    "howItWorks.steps.choose.description":
+      "Mevcut ayrıntıları inceledikten sonra planlarınıza en uygun seçeneği seçin.",
+    "howItWorks.steps.continue.title": "Sağlayıcıyla devam edin",
+    "howItWorks.steps.continue.description":
+      "Yönlendirildiğinizde son ayrıntıları incelemek ve rezervasyon adımlarını tamamlamak için sağlayıcının web sitesinde devam edin.",
+    "howItWorks.providerWebsites.title": "Sağlayıcı web siteleri",
+    "howItWorks.providerWebsites.description":
+      "Bazı rezervasyonlar, Kurioticket sizi yönlendirdikten sonra sağlayıcı web sitelerinde tamamlanabilir. Satın alma işlemini tamamlamadan önce nihai müsaitlik, fiyatlandırma, şartlar, ödeme adımları ve rezervasyon ayrıntıları için sağlayıcı sayfasını inceleyin.",
+  };
+
+  const howItWorksSource = readFileSync("src/app/how-it-works/HowItWorksContent.tsx", "utf8");
+  for (const [key, value] of Object.entries(expectedTurkishHowItWorksStrings)) {
+    assert.equal(tr[key], value, `tr ${key} should use Turkish copy`);
+    assert.notEqual(tr[key], enTranslations[key], `tr ${key} should not fall back to English`);
+    assert.ok(howItWorksSource.includes(key), `How-it-works render path should resolve ${key} through i18n.`);
+  }
+});
+
 test("Hindi How Kurioticket Works page strings are localized", () => {
   const expectedHindiHowItWorksStrings = {
     howItWorksEyebrow: "Kurioticket कैसे काम करता है",

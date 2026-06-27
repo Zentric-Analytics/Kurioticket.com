@@ -505,6 +505,35 @@ export const translations: TranslationDictionary = {
   supportFaqWhyRedirectedQuestion: "Neden başka bir sağlayıcıya gönderildim?",
   supportFaqWhyRedirectedAnswer:
     "Kurioticket bir seyahat arama ve karşılaştırma platformudur; bazı sonuçlar rezervasyonu, ödemeyi ve sağlayıcıya özel desteği tamamlayacağınız güvenilir sağlayıcılara yönlendirir.",
+  aboutPageEyebrow: "Kurioticket Hakkında",
+  aboutPageTitle: "Hakkımızda",
+  aboutPageIntroPrimary:
+    "Kurioticket, yolcuların uçuşları, otelleri, araçları ve seyahat fırsatlarını aramasına, karşılaştırmasına ve keşfetmesine yardımcı olan bir seyahat arama ve karşılaştırma platformudur.",
+  aboutPageIntroSecondary:
+    "Amacımız, mevcut seçenekleri ve sağlayıcı bilgilerini tek ve sade bir yerde sunarak seyahat planlamasını daha anlaşılır hale getirmektir; böylece yolcular, seyahatlerine uygun sağlayıcıyla devam etmeden önce seçenekleri inceleyebilir.",
+  aboutPagePlanningCardHeading: "Pratik bir seyahat planlama aracı",
+  aboutPagePlanningCardBody:
+    "Kurioticket, yolcuların seyahat seçeneklerini yararlı bağlamla değerlendirmesine yardımcı olmaya odaklanır. Müsaitlik, fiyatlar, kurallar ve son rezervasyon adımları sağlayıcıya göre değişebilir; bu nedenle yolcular karar vermeden önce sağlayıcı sayfasını dikkatle incelemelidir.",
+  howItWorksEyebrow: "Kurioticket nasıl çalışır",
+  howItWorksTitle: "Kurioticket Nasıl Çalışır",
+  howItWorksIntro:
+    "Kurioticket, yolcuların aramadan karşılaştırmaya, ardından bir teklif seçildiğinde sağlayıcıya geçmesine yardımcı olur.",
+  howItWorksFlowHeading: "Temel akış",
+  "howItWorks.steps.search.title": "Seyahat seçeneklerini arayın",
+  "howItWorks.steps.search.description":
+    "Mevcut uçuşları, otelleri, araçları veya seyahat fırsatlarını görmek için seyahat bilgilerinizi girin.",
+  "howItWorks.steps.compare.title": "Mevcut sonuçları karşılaştırın",
+  "howItWorks.steps.compare.description":
+    "Gösterildiğinde mevcut seçenekleri, fiyatları, saatleri, sağlayıcı ayrıntılarını ve diğer seyahat bilgilerini inceleyin.",
+  "howItWorks.steps.choose.title": "Bir teklif seçin",
+  "howItWorks.steps.choose.description":
+    "Mevcut ayrıntıları inceledikten sonra planlarınıza en uygun seçeneği seçin.",
+  "howItWorks.steps.continue.title": "Sağlayıcıyla devam edin",
+  "howItWorks.steps.continue.description":
+    "Yönlendirildiğinizde son ayrıntıları incelemek ve rezervasyon adımlarını tamamlamak için sağlayıcının web sitesinde devam edin.",
+  "howItWorks.providerWebsites.title": "Sağlayıcı web siteleri",
+  "howItWorks.providerWebsites.description":
+    "Bazı rezervasyonlar, Kurioticket sizi yönlendirdikten sonra sağlayıcı web sitelerinde tamamlanabilir. Satın alma işlemini tamamlamadan önce nihai müsaitlik, fiyatlandırma, şartlar, ödeme adımları ve rezervasyon ayrıntıları için sağlayıcı sayfasını inceleyin.",
   footerContactUs: "Bize Ulaşın",
   footerCustomerSupport: "Müşteri desteği",
   footerServiceGuarantee: "Hizmet Garantisi",
