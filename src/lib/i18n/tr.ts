@@ -424,6 +424,30 @@ export const translations: TranslationDictionary = {
   "flightLandingImageAlt.San Diego waterfront skyline and marina on a sunny day":
     "Güneşli bir günde San Diego sahil silüeti ve marina",
   flightLandingRouteAriaLabel: "{{origin}} kalkışlı {{destination}} varışlı uçuşları ara",
+  flightBookingFaqs: "Uçuş rezervasyonu hakkında sık sorulan sorular",
+  flightBookingFaqIntro:
+    "Bir sağlayıcıyla devam etmeden önce yaygın uçuş arama ayrıntılarını gözden geçirin.",
+  flightFaqBestTimeQuestion: "Uçuş rezervasyonu yapmak için en iyi zaman ne zamandır?",
+  flightFaqBestTimeAnswer:
+    "Uçuş fiyatları rota, sezon, talep ve müsaitliğe göre değişebilir. Genellikle birkaç tarihi karşılaştırmak, mümkünse yakındaki havalimanlarını kontrol etmek ve bir ücret seçmeden önce tüm seyahat planını gözden geçirmek faydalıdır.",
+  flightFaqBeforeBookingQuestion: "Rezervasyon yapmadan önce neleri kontrol etmeliyim?",
+  flightFaqBeforeBookingAnswer:
+    "Sağlayıcıyla rezervasyonunuzu tamamlamadan önce kalkış ve varış saatlerini, toplam seyahat süresini, aktarmaları, bagaj kurallarını, koltuk seçimi seçeneklerini, iptal şartlarını ve bilet değişiklik politikasını inceleyin.",
+  flightFaqFlexibleFareQuestion: "Esnek ücret nedir?",
+  flightFaqFlexibleFareAnswer:
+    "Esnek ücret, temel bir ücrete göre daha az kısıtlamayla değişiklik veya iptale izin verebilir; ancak kesin kurallar havayoluna ya da rezervasyon sağlayıcısına bağlıdır. Satın almadan önce ücret koşullarını her zaman inceleyin.",
+  flightFaqNonstopQuestion: "Aktarmasız uçuşlar her zaman daha mı iyidir?",
+  flightFaqNonstopAnswer:
+    "Her zaman değil. Aktarmasız uçuşlar zaman kazandırabilir; tek aktarmalı rotalar ise farklı kalkış saatleri, varış aralıkları veya ücret seçenekleri sunabilir. Karar vermeden önce toplam seyahat süresini, aktarma süresini ve rahatlığı karşılaştırın.",
+  flightFaqBaggageQuestion: "Bagaj kuralları nasıl işler?",
+  flightFaqBaggageAnswer:
+    "Bagaj hakkı havayoluna, rotaya, kabine, ücret türüne ve sağlayıcıya göre değişebilir. Rezervasyon yapmadan önce el bagajı, kayıtlı bagaj ve kişisel eşyaların dahil olup olmadığını kontrol edin.",
+  flightFaqChangeCancelQuestion: "Biletimi değiştirebilir veya iptal edebilir miyim?",
+  flightFaqChangeCancelAnswer:
+    "Değişiklik ve iptal seçenekleri ücret kurallarına ve sağlayıcı politikalarına bağlıdır. Bazı biletler iadesiz olabilir veya ücret içerebilir; bu nedenle rezervasyon yapmadan önce şartları dikkatle inceleyin.",
+  flightFaqInternationalQuestion: "Dış hat uçuşları hakkında ne bilmeliyim?",
+  flightFaqInternationalAnswer:
+    "Dış hat seyahatlerinde rezervasyon yapmadan önce pasaport geçerliliğini, vize gerekliliklerini, transit kurallarını, bagaj politikalarını ve varış noktanızın giriş gerekliliklerini inceleyin.",
   discoverDestinationsFromRegion: "Bölgenizden destinasyonları keşfedin",
   discoverDestinationsFromRegionBody:
     "Seçilmiş rotaları keşfedin ve bir sonraki seyahatinize güvenle başlayın.",
