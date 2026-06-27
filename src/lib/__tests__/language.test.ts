@@ -343,10 +343,10 @@ test("Dutch, Portuguese, Japanese, Korean, Hindi, and Turkish dictionaries resol
   assert.equal(getTranslations("hi").currentLanguage, "वर्तमान भाषा: {{language}}");
   assert.equal(getTranslations("hi-IN").languageSearchLabel, "भाषाएँ खोजें");
   assert.equal(hiTranslations.websiteLanguageTitle, "साइट की भाषा चुनें");
-  assert.equal(getTranslations("tr").websiteLanguageTitle, enTranslations.websiteLanguageTitle);
-  assert.equal(getTranslations("tr-TR").languageSearchLabel, enTranslations.languageSearchLabel);
-  assert.equal(getTranslations("tr-tr").currentLanguage, enTranslations.currentLanguage);
-  assert.equal(trTranslations.websiteLanguageTitle, enTranslations.websiteLanguageTitle);
+  assert.equal(getTranslations("tr").websiteLanguageTitle, "Web sitesi dilinizi seçin");
+  assert.equal(getTranslations("tr-TR").languageSearchLabel, "Dil ara");
+  assert.equal(getTranslations("tr-tr").currentLanguage, "Geçerli dil: {{language}}");
+  assert.equal(trTranslations.websiteLanguageTitle, "Web sitesi dilinizi seçin");
 });
 
 test("Hindi homepage and primary search UI copy resolves without English fallback", () => {
@@ -1551,6 +1551,73 @@ test("Turkish homepage header search popular destinations and footer strings are
 
   assert.equal(getTranslations("tr-TR").homeHeroTitle, expectedTurkishHomepageStrings.homeHeroTitle);
   assert.equal(getTranslations("tr-tr").footerContactUs, expectedTurkishHomepageStrings.footerContactUs);
+});
+
+test("Turkish global modals and auth pages resolve screenshot-visible copy", () => {
+  const tr = getTranslations("tr");
+
+  const expectedTurkishGlobalAuthStrings: Record<string, string> = {
+    chooseCountryAndCurrency: "Ülke ve para birimini seçin",
+    countryCurrencyDescription:
+      "Fiyatları görüntülemek için kullanılan ülke ve para birimini seçin. Havalimanı önerileri algılanan konumunuzu kullanır.",
+    searchCountryOrCurrency: "Ülke veya para birimi ara",
+    countryCurrencyPopularCountryAndCurrency: "POPÜLER ÜLKE VE PARA BİRİMİ",
+    countryCurrencyAllCountriesAndCurrencies: "TÜM ÜLKELER VE PARA BİRİMLERİ",
+    countryCurrencyOptionCountPlural: "{{count}} seçenek",
+    showMoreResults: "Daha fazla sonuç göster",
+    globalLanguage: "GENEL DİL",
+    websiteLanguageTitle: "Web sitesi dilinizi seçin",
+    websiteLanguageDescription:
+      "İngilizce (Amerika Birleşik Devletleri) varsayılan web sitesi dilidir. Kurioticket dili yalnızca kullanılabilir bir seçenek seçtikten sonra değiştirir.",
+    currentLanguage: "Geçerli dil: {{language}}",
+    languagePreparingNotice:
+      "Daha fazla dil hazırlanıyor. Kullanılamayan seçenekler siteyi henüz çevirmiyor.",
+    languageSearchLabel: "Dil ara",
+    languageSearchPlaceholder: "English, Español, Français, Deutsch ara...",
+    loginPageTitle: "Giriş yap",
+    loginPageSubtitle:
+      "Aramalarınızı kaydedin, uyarıları yönetin ve seyahat panelinize erişin.",
+    loginEmailLabel: "E-posta",
+    loginPasswordLabel: "Şifre",
+    loginForgotPassword: "Şifrenizi mi unuttunuz?",
+    loginGoogle: "Google ile devam et",
+    loginSignupPrompt: "Kurioticket'te yeni misiniz?",
+    loginCreateAccount: "Hesap oluştur",
+    forgotPasswordTitle: "Şifrenizi sıfırlayın",
+    forgotPasswordSubtitle:
+      "E-postanızı girin; şifrenizi sıfırlamak için talimatları göndereceğiz.",
+    forgotPasswordEmailPlaceholder: "you@example.com",
+    forgotPasswordSubmit: "Sıfırlama bağlantısı gönder",
+    forgotPasswordRemember: "Şifrenizi hatırlıyor musunuz?",
+    forgotPasswordLoginLink: "Giriş yap",
+    loginCodeSent: "E-postanıza bir doğrulama kodu gönderdik.",
+    loginCodeInstructions:
+      "{{email}} adresine gönderilen 6 haneli kodu girin. Kodlar {{minutes}} dakika sonra sona erer.",
+    loginVerificationCodeLabel: "Doğrulama kodu",
+    loginVerifyLogin: "Girişi doğrula",
+    loginResendIn: "{{seconds}} sn içinde yeniden gönder",
+    loginUseDifferentDetails: "Farklı bilgiler kullan",
+    signupPageTitle: "Hesabınızı oluşturun",
+    signupFullNameLabel: "Ad soyad",
+    signupAgreementBeforeTerms: "Hesap oluşturarak ",
+    signupTermsLink: "Şartlar",
+    signupPrivacyPolicyLink: "Gizlilik Politikası",
+    signupAgreementAfterPrivacy:
+      " ve iş ortağı yönlendirme açıklamalarını kabul etmiş olursunuz.",
+    signupSubmit: "Kaydol",
+    signupAlreadyHaveAccount: "Zaten hesabınız var mı?",
+  };
+
+  for (const [key, value] of Object.entries(expectedTurkishGlobalAuthStrings)) {
+    assert.equal(tr[key], value, `tr ${key} should use Turkish copy`);
+    if (value !== enTranslations[key]) {
+      assert.notEqual(tr[key], enTranslations[key], `tr ${key} should not fall back to English`);
+    }
+  }
+
+  assert.ok(tr.loginCodeInstructions.includes("{{email}}"));
+  assert.ok(tr.loginCodeInstructions.includes("{{minutes}}"));
+  assert.ok(tr.loginResendIn.includes("{{seconds}}"));
 });
 
 test("Turkish homepage popovers and discovery route cards resolve screenshot-visible copy", () => {
