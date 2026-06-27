@@ -63,6 +63,10 @@ const getCarsIntlLocale = (locale: string) => {
     return "hi-IN";
   }
 
+  if (normalizedLocale.startsWith("tr")) {
+    return "tr-TR";
+  }
+
   return locale;
 };
 
