@@ -26,6 +26,10 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import { useRegion } from "@/components/region/RegionProvider";
+import {
+  getLocalizedHotelDestinationCityName,
+  getLocalizedHotelDestinationDetail,
+} from "@/data/hotelDestinations";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
 import { cn } from "@/lib/utils";
@@ -1136,9 +1140,15 @@ export function HotelSearchBar({
                   ) : visibleDestinationSuggestions.length ? (
                     visibleDestinationSuggestions.map((suggestion, index) => {
                       const isActive = destinationHighlight === index;
-                      const detail = [suggestion.region, suggestion.country]
-                        .filter(Boolean)
-                        .join(", ");
+                      const detail = getLocalizedHotelDestinationDetail(
+                        suggestion,
+                        locale,
+                      );
+                      const localizedName =
+                        getLocalizedHotelDestinationCityName(
+                          suggestion.name,
+                          locale,
+                        );
 
                       return (
                         <button
@@ -1159,7 +1169,7 @@ export function HotelSearchBar({
                         >
                           <span className="min-w-0">
                             <span className="block truncate text-sm font-semibold text-slate-950">
-                              {suggestion.name}
+                              {localizedName}
                             </span>
                             <span className="mt-0.5 block truncate text-xs font-medium text-slate-600">
                               {detail || suggestion.country}

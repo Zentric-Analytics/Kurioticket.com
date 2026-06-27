@@ -3276,7 +3276,7 @@ export function SearchTabs({
             <div className={hotelGridClassName}>
               <div className={cn("relative rounded-xl border border-slate-300 bg-white lg:rounded-s-xl", hotelJoinedFieldClassName)}>
                 <label className={hotelFieldLabelClassName}>
-                  {t.destination || "Destination"}
+                  {t.hotelSearchDestinationLabel || t.destination || "Destination"}
                 </label>
                 <button
                   ref={hotelDestinationMobileLauncherRef}

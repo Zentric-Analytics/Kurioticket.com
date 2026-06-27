@@ -945,6 +945,10 @@ export const translations: TranslationDictionary = {
   hotelsHeroSubtitle:
     "Vergelijk hotels op één plek, van stijlvolle citytrips tot ontspannen resortverblijven.",
   hotelSearchDestinationLabel: "BESTEMMING",
+  "hotelDestinationKind.city": "Stad",
+  "hotelDestinationKind.district": "Gebied",
+  "hotelDestinationKind.landmark": "Bezienswaardigheid",
+  "hotelDestinationKind.airport-area": "Luchthavengebied",
   hotelSearchDestinationPlaceholder: "Stad, buurt of bezienswaardigheid",
   searchCityAreaLandmark: "Zoek naar een stad, gebied of bezienswaardigheid.",
   cityOrHotel: "Stad of hotel",

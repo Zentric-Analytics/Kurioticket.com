@@ -782,6 +782,10 @@ export const translations: TranslationDictionary = {
   hotelsHeroSubtitle:
     "세련된 도심 숙소부터 편안한 리조트 휴식까지, 호텔을 한곳에서 비교하세요.",
   hotelSearchDestinationLabel: "목적지",
+  "hotelDestinationKind.city": "도시",
+  "hotelDestinationKind.district": "지역",
+  "hotelDestinationKind.landmark": "랜드마크",
+  "hotelDestinationKind.airport-area": "공항 지역",
   hotelSearchDestinationPlaceholder: "도시, 지역 또는 랜드마크",
   hotelSearchTravelDatesLabel: "여행 날짜",
   hotelSearchDatePlaceholder: "체크인 — 체크아웃",
