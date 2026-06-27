@@ -1553,6 +1553,96 @@ test("Turkish homepage header search popular destinations and footer strings are
   assert.equal(getTranslations("tr-tr").footerContactUs, expectedTurkishHomepageStrings.footerContactUs);
 });
 
+test("Turkish homepage popovers and discovery route cards resolve screenshot-visible copy", () => {
+  const tr = getTranslations("tr");
+
+  const expectedTurkishPopoverAndRouteStrings: Record<string, string> = {
+    chooseTravelDates: "Seyahat tarihlerini seçin",
+    previousMonthShort: "Önceki",
+    nextMonthShort: "Sonraki",
+    clear: "Temizle",
+    done: "Tamam",
+    weekdaySun: "Paz",
+    weekdayMon: "Pzt",
+    weekdayTue: "Sal",
+    weekdayWed: "Çar",
+    weekdayThu: "Per",
+    weekdayFri: "Cum",
+    weekdaySat: "Cmt",
+    passengers: "Yolcular",
+    adults: "Yetişkinler",
+    adultAgeRange: "18+",
+    children: "Çocuklar",
+    childAgeRange: "2–17 yaş",
+    infantsOnLap: "Kucakta bebekler",
+    under2: "2 yaş altı",
+    cabinClass: "Kabin sınıfı",
+    economy: "Ekonomi",
+    business: "Business",
+    first: "First",
+    homeDiscoveryTitle: "Bir sonraki maceranızı burada keşfedin",
+    homeDiscoverySubtitle:
+      "Akıllı rota fikirlerini, esnek ücretleri ve bölgeniz için seçilen destinasyonları karşılaştırın.",
+    homeDiscoveryRouteIdeaBadge: "ROTA FİKRİ",
+    homeDiscoveryTravelerCountOne: "1 YOLCU",
+    homeCompareOptions: "Seçenekleri karşılaştır",
+    destinationImageFallback: "DESTİNASYON",
+    "homeDiscoveryRoute.ng-los-lhr.title": "Londra iş ve hafta sonu karışımı",
+    "homeDiscoveryRoute.ng-los-lhr.routeNote":
+      "İş seyahatleri ve tatil eklemeleri için yüksek frekanslı uzun mesafe rota.",
+    "homeDiscoveryRoute.ng-los-dxb.title": "Dubai alışveriş molası",
+    "homeDiscoveryRoute.ng-los-dxb.routeNote":
+      "Alışveriş molaları, aile seyahatleri ve devam bağlantıları için popüler.",
+    "homeDiscoveryRoute.ng-abv-acc.title": "Akra hızlı bölgesel seyahati",
+    "homeDiscoveryRoute.ng-abv-acc.routeNote":
+      "Şehirler arası pratik erişim sunan kısa mesafeli bölgesel rota.",
+    "homeDiscoveryRoute.ng-los-nbo.title": "Nairobi safari geçidi",
+    "homeDiscoveryRoute.ng-los-nbo.routeNote":
+      "İş merkezleri ve safari uzatmaları için Doğu Afrika erişimi.",
+    "homeDiscoveryRoute.ng-abv-jnb.title": "Johannesburg şehir kaçamağı",
+    "homeDiscoveryRoute.ng-abv-jnb.routeNote":
+      "Toplantılar ve şehir deneyimleri için güneye güçlü bağlantı.",
+    "homeDiscoveryRoute.ng-los-ist.title": "İstanbul bağlantı rotası",
+    "homeDiscoveryRoute.ng-los-ist.routeNote":
+      "Canlı bir şehir molasıyla Avrupa bağlantıları için güçlü bir merkez.",
+    "homeDiscoveryRoute.ng-abv-cdg.title": "Paris stil kaçamağı",
+    "homeDiscoveryRoute.ng-abv-cdg.routeNote":
+      "Moda, müzeler ve yemek deneyimleri için klasik Avrupa rotası.",
+    "homeDiscoveryRoute.ng-los-doh.title": "Doha premium transit",
+    "homeDiscoveryRoute.ng-los-doh.routeNote":
+      "Sorunsuz devam eden küresel bağlantılarla konfor odaklı rota.",
+    "homeDiscoveryRoute.ng-los-kig.title": "Kigali temiz şehir hafta sonu",
+    "homeDiscoveryRoute.ng-los-kig.routeNote":
+      "Yeşil tepeleri ve kolay şehir içi ulaşımıyla yükselen bölgesel merkez.",
+    "homeDiscoveryRoute.ng-abv-cai.title": "Kahire miras molası",
+    "homeDiscoveryRoute.ng-abv-cai.routeNote":
+      "Nil tarihi turları ve hareketli eski şehir pazarları için geçit.",
+    "homeDiscoveryRoute.ng-los-add.title": "Addis Ababa Doğu Afrika bağlantısı",
+    "homeDiscoveryRoute.ng-los-add.routeNote":
+      "Gelişen yeme-içme ve kültür ortamıyla önemli bir aktarma noktası.",
+    "homeDiscoveryRoute.ng-abv-fco.title": "Roma simge yapı geçidi",
+    "homeDiscoveryRoute.ng-abv-fco.routeNote":
+      "Harabeler, meydanlar ve sakin akşam atmosferi için Avrupa klasiği.",
+  };
+
+  for (const [key, value] of Object.entries(expectedTurkishPopoverAndRouteStrings)) {
+    assert.equal(tr[key], value, `tr ${key} should use Turkish copy`);
+    if (value !== enTranslations[key]) {
+      assert.notEqual(tr[key], enTranslations[key], `tr ${key} should not fall back to English`);
+    }
+  }
+
+  for (const locale of ["tr", "tr-TR", "tr-tr"]) {
+    assert.equal(normalizeFlightsCalendarLocale(locale), "tr-TR");
+    assert.equal(formatFlightsMonthHeading(new Date(2026, 5, 1), locale), "Haziran 2026");
+    assert.equal(formatFlightsMonthHeading(new Date(2026, 6, 1), locale), "Temmuz 2026");
+    assert.equal(formatFlightsDateSummary(new Date(2026, 5, 27), new Date(2026, 5, 30), locale), "27 Haz — 30 Haz");
+  }
+
+  assert.deepEqual(formatFlightsWeekdays("tr-TR"), ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"]);
+  assert.equal(`${tr.oneWay.toLocaleUpperCase("tr-TR")} · ${tr.economy.toLocaleUpperCase("tr-TR")} · ${tr.homeDiscoveryTravelerCountOne}`, "TEK YÖN · EKONOMİ · 1 YOLCU");
+});
+
 test("Hindi How Kurioticket Works page strings are localized", () => {
   const expectedHindiHowItWorksStrings = {
     howItWorksEyebrow: "Kurioticket कैसे काम करता है",
