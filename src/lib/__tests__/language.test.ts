@@ -546,6 +546,109 @@ test("Hindi homepage and primary search UI copy resolves without English fallbac
   }
 });
 
+test("Turkish Deals page copy resolves without English fallback", () => {
+  const tr = getTranslations("tr");
+  const auditedTurkishDealsKeys: Array<[string, string]> = [
+    ["deals.heroTitle", "Bir sonraki seyahatiniz için fırsatları bulun"],
+    ["deals.heroSubtitle", "Uçuşları, konaklamaları ve araçları tek yerde birlikte arayın."],
+    ["deals.packageLegend", "Paket türünü seçin"],
+    ["deals.package.hotelFlight", "Otel + Uçuş"],
+    ["deals.package.hotelFlightCar", "Otel + Uçuş + Araç"],
+    ["deals.package.flightCar", "Uçuş + Araç"],
+    ["deals.package.hotelCar", "Otel + Araç"],
+    ["deals.originLabel", "NEREDEN?"],
+    ["deals.destinationLabel", "NEREYE?"],
+    ["deals.datesLabel", "SEYAHAT TARİHLERİ"],
+    ["deals.travelersRoomsLabel", "YOLCULAR / ODALAR"],
+    ["deals.travelersCarsLabel", "YOLCULAR / ARAÇLAR"],
+    ["deals.travelersCabinLabel", "YOLCULAR / KABİN"],
+    ["deals.travelersDetailsLabel", "YOLCULAR / DETAYLAR"],
+    ["deals.travelersRoomsCarLabel", "YOLCULAR / ODALAR / ARAÇ"],
+    ["deals.originPlaceholder", "Şehir veya havalimanı"],
+    ["deals.destinationPlaceholder", "Şehir, havalimanı veya bölge"],
+    ["deals.dateFlightPlaceholder", "Gidiş — Dönüş"],
+    ["deals.dateHotelPlaceholder", "Giriş — Çıkış"],
+    ["deals.dateDialog", "Seyahat tarihlerini seçin"],
+    ["deals.departDate", "Gidiş"],
+    ["deals.returnDate", "Dönüş"],
+    ["deals.travelerSingular", "yolcu"],
+    ["deals.travelerPlural", "yolcu"],
+    ["deals.roomSingular", "oda"],
+    ["deals.roomPlural", "oda"],
+    ["deals.driverAge", "Sürücü yaşı"],
+    ["deals.cabinClass", "Kabin sınıfı"],
+    ["deals.cabin.economy", "Ekonomi"],
+    ["deals.cabin.business", "Business sınıfı"],
+    ["deals.cabin.first", "First sınıfı"],
+    ["deals.clearOrigin", "Çıkış noktasını temizle"],
+    ["deals.clearDestination", "Destinasyonu temizle"],
+    ["deals.previous", "Önceki"],
+    ["deals.next", "Sonraki"],
+    ["deals.weekday.sun", "Paz"],
+    ["deals.weekday.mon", "Pzt"],
+    ["deals.weekday.tue", "Sal"],
+    ["deals.weekday.wed", "Çar"],
+    ["deals.weekday.thu", "Per"],
+    ["deals.weekday.fri", "Cum"],
+    ["deals.weekday.sat", "Cmt"],
+    ["deals.selectDateAriaPrefix", "Seç"],
+    ["deals.error.origin", "Çıkış şehri veya havalimanı girin."],
+    ["deals.error.destination", "Bir destinasyon girin."],
+    ["deals.error.startDate", "Başlangıç tarihi seçin."],
+    ["deals.error.endDate", "Bitiş tarihi seçin."],
+    ["deals.error.dateOrder", "Bitiş tarihi başlangıç tarihinden sonra olmalıdır."],
+    ["deals.error.adults", "En az bir yetişkin gereklidir."],
+    ["deals.error.children", "Çocuk sayısı sıfırın altında olamaz."],
+    ["deals.error.rooms", "En az bir oda gereklidir."],
+    ["deals.error.guests", "En az bir misafir gereklidir."],
+    ["deals.destinationIdeasTitle", "Fırsat aramanıza başlayabileceğiniz yerler"],
+    [
+      "deals.destinationIdeasSubtitle",
+      "Bir destinasyon fikri seçin, devam ettiğinizde sağlayıcı sonuçlarını karşılaştırın.",
+    ],
+    ["deals.destinationCardAriaPrefix", "Seyahat fikri ara:"],
+    ["deals.destination.tokyo.city", "Tokyo"],
+    ["deals.destination.tokyo.country", "Japonya"],
+    ["deals.destination.london.city", "Londra"],
+    ["deals.destination.london.country", "Birleşik Krallık"],
+    ["deals.destination.paris.city", "Paris"],
+    ["deals.destination.paris.country", "Fransa"],
+    ["deals.destination.dubai.city", "Dubai"],
+    ["deals.destination.dubai.country", "Birleşik Arap Emirlikleri"],
+    ["deals.destination.cancun.city", "Cancun"],
+    ["deals.destination.cancun.country", "Meksika"],
+    ["deals.destination.rome.city", "Roma"],
+    ["deals.destination.rome.country", "İtalya"],
+  ];
+
+  for (const [key, expected] of auditedTurkishDealsKeys) {
+    assert.equal(tr[key], expected, key);
+    if (expected !== enTranslations[key]) {
+      assert.notEqual(tr[key], enTranslations[key], key);
+    }
+  }
+
+  const dealsPageSource = readFileSync("src/app/deals/page.tsx", "utf8");
+  for (const packageValue of [
+    'value: "hotel-flight"',
+    'value: "hotel-flight-car"',
+    'value: "flight-car"',
+    'value: "hotel-car"',
+    'tripType: "round-trip"',
+    'infants: "0"',
+    'destinationQuery: "Tokyo"',
+    'destinationQuery: "London"',
+    'destinationQuery: "Paris"',
+    'destinationQuery: "Dubai"',
+    'destinationQuery: "Cancun"',
+    'destinationQuery: "Rome"',
+    '`/flights/results?${params.toString()}`',
+    '`/hotels/results?${params.toString()}`',
+  ]) {
+    assert.ok(dealsPageSource.includes(packageValue), packageValue);
+  }
+});
+
 test("Hindi Deals page copy resolves without English fallback", () => {
   const hi = getTranslations("hi");
   const auditedHindiDealsKeys: Array<[string, string]> = [
