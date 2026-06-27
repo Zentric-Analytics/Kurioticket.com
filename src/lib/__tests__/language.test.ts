@@ -1544,6 +1544,92 @@ test("Hindi account preferences actual render-path copy resolves without English
   }
 });
 
+test("Turkish account personal details and security settings copy resolves without English fallback", () => {
+  const tr = getTranslations("tr");
+
+  const expectedTurkishAccountCopy = {
+    "accountDashboard.personalDetails.title": "Kişisel bilgiler",
+    "accountDashboard.personalDetails.subtitle":
+      "Bilgilerinizi güncelleyin ve Kurioticket genelinde nasıl kullanıldığını yönetin.",
+    "accountDashboard.personalDetails.name": "Ad",
+    "accountDashboard.personalDetails.displayName": "Görünen ad",
+    "accountDashboard.personalDetails.emailAddress": "E-posta adresi",
+    "accountDashboard.personalDetails.phoneNumber": "Telefon numarası",
+    "accountDashboard.personalDetails.dateOfBirth": "Doğum tarihi",
+    "accountDashboard.personalDetails.gender": "Cinsiyet",
+    "accountDashboard.personalDetails.nationality": "Uyruk",
+    "accountDashboard.personalDetails.address": "Adres",
+    "accountDashboard.personalDetails.addPhoneNumber": "Telefon numaranızı ekleyin",
+    "accountDashboard.personalDetails.addDateOfBirth": "Doğum tarihinizi ekleyin",
+    "accountDashboard.personalDetails.addGender": "Cinsiyetinizi ekleyin",
+    "accountDashboard.personalDetails.addNationality": "Uyruğunuzu ekleyin",
+    "accountDashboard.personalDetails.addAddress": "Adresinizi ekleyin",
+    "accountDashboard.personalDetails.edit": "Düzenle",
+    "accountDashboard.security.title": "Güvenlik ayarları",
+    "accountDashboard.security.description":
+      "Şifrenizi güncelleyin ve hesap güvenliğinizi yönetin.",
+    "accountDashboard.security.passkeys.title": "Geçiş anahtarları",
+    "accountDashboard.security.passkeys.description":
+      "Şifre hatırlamanıza gerek kalmadan güvenli şekilde oturum açın.",
+    "accountDashboard.security.twoFactor.title": "İki faktörlü kimlik doğrulama",
+    "accountDashboard.security.twoFactor.description":
+      "Hesabınıza ek bir güvenlik katmanı ekleyin.",
+    "accountDashboard.security.activeSessions.title": "Aktif oturumlar",
+    "accountDashboard.security.activeSessions.description":
+      "Hesabınızın nerelerde açık olduğunu inceleyin ve diğer cihazlardan çıkış yapın.",
+    "accountDashboard.security.deleteAccount.title": "Hesabı sil",
+    "accountDashboard.security.deleteAccount.description":
+      "Kurioticket hesabınızı kalıcı olarak silin.",
+    "accountDashboard.security.action.setUp": "Kur",
+    "accountDashboard.security.action.manage": "Yönet",
+    "accountDashboard.security.action.deleteAccount": "Hesabı sil",
+  } as const;
+
+  for (const [key, value] of Object.entries(expectedTurkishAccountCopy)) {
+    assert.equal(tr[key], value);
+    assert.notEqual(tr[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  assert.equal(tr["accountDashboard.hub.title"], "Hesabım");
+  assert.equal(tr["accountDashboard.personalDetails.title"].includes("developer"), false);
+  assert.equal(tr["accountDashboard.security.deleteAccount.description"].includes("Kurioticket"), true);
+
+  const dashboardSource = readFileSync("src/components/dashboard/DashboardGrid.tsx", "utf8");
+  const dashboardPageSource = readFileSync("src/app/dashboard/page.tsx", "utf8");
+  const securityPageSource = readFileSync("src/app/dashboard/security/page.tsx", "utf8");
+
+  assert.ok(
+    dashboardSource.includes('title={t["accountDashboard.personalDetails.title"]}') &&
+      dashboardSource.includes('description={t["accountDashboard.personalDetails.subtitle"]}') &&
+      dashboardSource.includes('label: t["accountDashboard.personalDetails.name"]') &&
+      dashboardSource.includes('fallback: t["accountDashboard.personalDetails.addPhoneNumber"]') &&
+      dashboardSource.includes('{t["accountDashboard.personalDetails.edit"]}'),
+    "Personal details page should continue using account personal-details i18n keys.",
+  );
+  assert.ok(
+    dashboardSource.includes('title={t["accountDashboard.security.title"]}') &&
+      dashboardSource.includes('description={t["accountDashboard.security.description"]}') &&
+      dashboardSource.includes('title={t["accountDashboard.security.passkeys.title"]}') &&
+      dashboardSource.includes('action={t["accountDashboard.security.action.deleteAccount"]}') &&
+      dashboardSource.includes('setActionMessage(t["accountDashboard.security.action.unavailable"])'),
+    "Security settings page should continue using account security i18n keys and unchanged unavailable action handling.",
+  );
+  assert.ok(
+    dashboardSource.includes("const initialValues = getPersonalDetailsInitialValues(props)") &&
+      dashboardSource.includes("userEmail?.trim()") &&
+      dashboardSource.includes("userName?.trim()") &&
+      dashboardPageSource.includes("const userName = session?.user?.name?.trim()") &&
+      dashboardPageSource.includes("const userEmail = session?.user?.email?.trim()"),
+    "Personal details should keep user/session/profile values dynamic.",
+  );
+  assert.ok(
+    dashboardPageSource.includes("<DashboardOverview") &&
+      securityPageSource.includes("<SecurityDashboardPage />") &&
+      !dashboardSource.includes('href="/dashboard/personal-details"'),
+    "Account dashboard routes and render entry points should remain unchanged.",
+  );
+});
+
 test("Hindi account personal details and security settings copy resolves without English fallback", () => {
   const hi = getTranslations("hi");
 
