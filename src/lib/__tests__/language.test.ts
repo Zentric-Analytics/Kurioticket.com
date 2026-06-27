@@ -1854,6 +1854,30 @@ test("Turkish Flights landing hero and standalone search form resolve without En
       "Diamond Head ve parlak mavi sularıyla Honolulu Waikiki plajı",
     "flightLandingImageAlt.San Diego bay skyline and marina":
       "San Diego körfezi silüeti ve marina",
+    flightBookingFaqs: "Uçuş rezervasyonu hakkında sık sorulan sorular",
+    flightBookingFaqIntro:
+      "Bir sağlayıcıyla devam etmeden önce yaygın uçuş arama ayrıntılarını gözden geçirin.",
+    flightFaqBestTimeQuestion: "Uçuş rezervasyonu yapmak için en iyi zaman ne zamandır?",
+    flightFaqBestTimeAnswer:
+      "Uçuş fiyatları rota, sezon, talep ve müsaitliğe göre değişebilir. Genellikle birkaç tarihi karşılaştırmak, mümkünse yakındaki havalimanlarını kontrol etmek ve bir ücret seçmeden önce tüm seyahat planını gözden geçirmek faydalıdır.",
+    flightFaqBeforeBookingQuestion: "Rezervasyon yapmadan önce neleri kontrol etmeliyim?",
+    flightFaqBeforeBookingAnswer:
+      "Sağlayıcıyla rezervasyonunuzu tamamlamadan önce kalkış ve varış saatlerini, toplam seyahat süresini, aktarmaları, bagaj kurallarını, koltuk seçimi seçeneklerini, iptal şartlarını ve bilet değişiklik politikasını inceleyin.",
+    flightFaqFlexibleFareQuestion: "Esnek ücret nedir?",
+    flightFaqFlexibleFareAnswer:
+      "Esnek ücret, temel bir ücrete göre daha az kısıtlamayla değişiklik veya iptale izin verebilir; ancak kesin kurallar havayoluna ya da rezervasyon sağlayıcısına bağlıdır. Satın almadan önce ücret koşullarını her zaman inceleyin.",
+    flightFaqNonstopQuestion: "Aktarmasız uçuşlar her zaman daha mı iyidir?",
+    flightFaqNonstopAnswer:
+      "Her zaman değil. Aktarmasız uçuşlar zaman kazandırabilir; tek aktarmalı rotalar ise farklı kalkış saatleri, varış aralıkları veya ücret seçenekleri sunabilir. Karar vermeden önce toplam seyahat süresini, aktarma süresini ve rahatlığı karşılaştırın.",
+    flightFaqBaggageQuestion: "Bagaj kuralları nasıl işler?",
+    flightFaqBaggageAnswer:
+      "Bagaj hakkı havayoluna, rotaya, kabine, ücret türüne ve sağlayıcıya göre değişebilir. Rezervasyon yapmadan önce el bagajı, kayıtlı bagaj ve kişisel eşyaların dahil olup olmadığını kontrol edin.",
+    flightFaqChangeCancelQuestion: "Biletimi değiştirebilir veya iptal edebilir miyim?",
+    flightFaqChangeCancelAnswer:
+      "Değişiklik ve iptal seçenekleri ücret kurallarına ve sağlayıcı politikalarına bağlıdır. Bazı biletler iadesiz olabilir veya ücret içerebilir; bu nedenle rezervasyon yapmadan önce şartları dikkatle inceleyin.",
+    flightFaqInternationalQuestion: "Dış hat uçuşları hakkında ne bilmeliyim?",
+    flightFaqInternationalAnswer:
+      "Dış hat seyahatlerinde rezervasyon yapmadan önce pasaport geçerliliğini, vize gerekliliklerini, transit kurallarını, bagaj politikalarını ve varış noktanızın giriş gerekliliklerini inceleyin.",
   };
 
   for (const [key, value] of Object.entries(expectedTurkishFlightsLandingStrings)) {
@@ -1864,6 +1888,32 @@ test("Turkish Flights landing hero and standalone search form resolve without En
   assert.equal(`${tr.adultSingular === "yetişkin" ? "1" : ""} ${tr.adultSingular}, ${tr.economy}`, "1 yetişkin, Ekonomi");
   assert.equal(getTranslations("tr-TR").flightLandingHeroTitle, expectedTurkishFlightsLandingStrings.flightLandingHeroTitle);
   assert.equal(getTranslations("tr-tr").searchFlights, expectedTurkishFlightsLandingStrings.searchFlights);
+  assert.equal(getTranslations("tr-TR").flightBookingFaqs, expectedTurkishFlightsLandingStrings.flightBookingFaqs);
+  assert.equal(getTranslations("tr-tr").flightFaqInternationalAnswer, expectedTurkishFlightsLandingStrings.flightFaqInternationalAnswer);
+
+  const flightLandingClientSource = readFileSync("src/components/flights/FlightLandingClient.tsx", "utf8");
+
+  assert.ok(flightLandingClientSource.includes('t("flightBookingFaqs")'));
+  assert.ok(flightLandingClientSource.includes('t("flightBookingFaqIntro")'));
+  assert.ok(flightLandingClientSource.includes('items={getFlightFaqItems(t)}'));
+  for (const key of [
+    "flightFaqBestTimeQuestion",
+    "flightFaqBestTimeAnswer",
+    "flightFaqBeforeBookingQuestion",
+    "flightFaqBeforeBookingAnswer",
+    "flightFaqFlexibleFareQuestion",
+    "flightFaqFlexibleFareAnswer",
+    "flightFaqNonstopQuestion",
+    "flightFaqNonstopAnswer",
+    "flightFaqBaggageQuestion",
+    "flightFaqBaggageAnswer",
+    "flightFaqChangeCancelQuestion",
+    "flightFaqChangeCancelAnswer",
+    "flightFaqInternationalQuestion",
+    "flightFaqInternationalAnswer",
+  ]) {
+    assert.ok(flightLandingClientSource.includes(`t("${key}")`), `/flights FAQ should resolve ${key} through i18n`);
+  }
 });
 
 test("Turkish global modals and auth pages resolve screenshot-visible copy", () => {
