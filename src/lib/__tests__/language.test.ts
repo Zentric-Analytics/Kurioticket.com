@@ -1967,6 +1967,159 @@ test("Hindi service and support page strings are localized", () => {
   assert.equal(getTranslations("hi").moreServiceInfoTitle, "अधिक सेवा जानकारी");
 });
 
+
+test("Turkish service and support page strings are localized", () => {
+  const expectedTurkishServiceSupportStrings = {
+    supportEyebrow: "Kurioticket yardım masası",
+    supportTitle: "Müşteri desteği",
+    supportBeforeContactHeading: "Bizimle iletişime geçmeden önce",
+    supportBeforeContactDescription:
+      "Kurioticket hesabınızdaki e-postayı, ne yapmaya çalıştığınızı, ilgiliyse rotayı veya oteli ve yönlendirildiğiniz sağlayıcı sayfasını ekleyin. Lütfen tam ödeme kartı numaralarını veya hassas seyahat belgesi numaralarını göndermeyin.",
+    supportTicketHeading: "Destek talebi oluşturun",
+    supportFormEmailLabel: "E-posta",
+    supportFormSubjectLabel: "Konu",
+    supportFormCategoryLabel: "Kategori",
+    supportCategoryPriceAlerts: "Fiyat uyarıları",
+    supportFormMessageLabel: "Nasıl yardımcı olabiliriz?",
+    supportFormMessagePlaceholder: "Rota, otel, uyarı veya hesap bağlamını paylaşın.",
+    supportFormSubmit: "Talep gönder",
+    supportFaqHeading: "Sıkça sorulan sorular",
+    supportFaqAccountQuestion: "Hesap ve oturum açma yardımı",
+    supportFaqAccountAnswer:
+      "Kurioticket hesap erişimi, oturum açma sorunları, kayıt sorunları, profil erişimi ve hesapla ilgili platform problemlerinde yardımcı olabilir.",
+    supportFaqSearchQuestion: "Arama ve sonuçlar yardımı",
+    supportFaqSearchAnswer:
+      "Kurioticket; uçuş veya otel araması çalışmadığında, sonuçlar yüklenmediğinde, filtreler kafa karıştırdığında ya da fiyatlar ve sağlayıcılar beklendiği gibi görünmediğinde yardımcı olabilir.",
+    supportFaqSavedTripsQuestion: "Kaydedilen seyahatler ve uyarılar",
+    supportFaqSavedTripsAnswer:
+      "Kurioticket kaydedilen seyahatler, son aramalar, fiyat uyarıları, bildirim sorunları ve hesaba bağlı seyahat araçları konusunda yardımcı olabilir.",
+    supportFaqRedirectQuestion: "Rezervasyon/sağlayıcı yönlendirme yardımı",
+    supportFaqRedirectAnswer:
+      "Kurioticket, bir iş ortağına veya sağlayıcıya yönlendirme başarısız olursa, yanlış sayfayı açarsa ya da seçilen seyahat veya arama ayrıntılarını korumazsa yardımcı olabilir.",
+    supportFaqAlreadyBookedQuestion: "Zaten bir sağlayıcıyla rezervasyon yaptınız mı?",
+    supportFaqAlreadyBookedAnswer:
+      "Rezervasyonunuz bir hava yolu, otel, seyahat acentesi veya harici sağlayıcıyla tamamlandıysa rezervasyon değişiklikleri, iadeler, iptaller, check-in, biniş, makbuzlar ve seyahat belgelerinden o sağlayıcı sorumludur.",
+    supportFaqChangeBookingQuestion: "Kurioticket rezervasyonumu değiştirebilir mi?",
+    supportFaqChangeBookingAnswer:
+      "Kurioticket yalnızca doğrudan rezervasyon desteklendiği zaman ve destekleniyorsa Kurioticket üzerinden doğrudan yapılan rezervasyonlarda yardımcı olabilir. Harici sağlayıcılarla tamamlanan rezervasyonlar için doğrudan o sağlayıcıyla iletişime geçin.",
+    supportFaqWhyRedirectedQuestion: "Neden başka bir sağlayıcıya gönderildim?",
+    supportFaqWhyRedirectedAnswer:
+      "Kurioticket bir seyahat arama ve karşılaştırma platformudur; bazı sonuçlar rezervasyonu, ödemeyi ve sağlayıcıya özel desteği tamamlayacağınız güvenilir sağlayıcılara yönlendirir.",
+    serviceGuaranteeEyebrow: "Kurioticket hizmet taahhüdü",
+    serviceGuaranteeTitle: "Hizmet garantisi",
+    serviceGuaranteeDescription:
+      "Yolcuların Kurioticket'in nasıl çalıştığını ve platformumuzu kullanırken neler bekleyebileceklerini anlamasını istiyoruz.",
+    serviceGuaranteeFaqHeading: "Sıkça sorulan sorular",
+    serviceGuaranteeFaqDescription:
+      "Bu yanıtlar Kurioticket'in bir seyahat arama ve karşılaştırma platformu olarak rolünü açıklar.",
+    serviceGuaranteeFaqWhatGuaranteeQuestion: "Kurioticket neyi garanti eder?",
+    serviceGuaranteeFaqWhatGuaranteeAnswer:
+      "Kurioticket, yolcuların seyahat seçeneklerini net bir şekilde karşılaştırmasına yardımcı olmak için tasarlanmıştır. Güvenilir bir platform deneyimi, şeffaf arama bilgileri ve sağlayıcı rezervasyon sayfalarına açık geçiş yolları sunmayı hedefleriz.",
+    serviceGuaranteeFaqResultsDisplayedQuestion: "Seyahat sonuçları nasıl gösterilir?",
+    serviceGuaranteeFaqResultsDisplayedAnswer:
+      "Sonuçlar; mevcut olduğunda rotalar, tarihler, fiyatlar ve sağlayıcı ayrıntıları dahil olmak üzere seyahat sağlayıcılarından alınabilen bilgilerle gösterilir.",
+    serviceGuaranteeFaqRedirectedQuestion: "Neden başka bir sağlayıcıya yönlendiriliyorum?",
+    serviceGuaranteeFaqRedirectedAnswer:
+      "Bazı sonuçlar harici bir sağlayıcı sitesinde tamamlanır. Bu seçeneklerden birini seçtiğinizde Kurioticket, rezervasyon, ödeme ve seyahate özel hizmeti sağlayıcının yönetebilmesi için sizi yönlendirir.",
+    serviceGuaranteeFaqBookDirectlyQuestion: "Doğrudan Kurioticket üzerinden mi rezervasyon yaparım?",
+    serviceGuaranteeFaqBookDirectlyAnswer:
+      "Kurioticket öncelikle bir seyahat arama ve karşılaştırma platformudur. Bir sonuç sağlayıcıya yönlendiriyorsa rezervasyon Kurioticket yerine o sağlayıcıyla tamamlanır.",
+    serviceGuaranteeFaqPricesGuaranteedQuestion: "Fiyatlar her zaman garanti edilir mi?",
+    serviceGuaranteeFaqPricesGuaranteedAnswer:
+      "Hayır. Fiyatlar sağlayıcı müsaitliği, vergiler, ücretler, para birimi ve zamanlamaya göre değişebilir. Rezervasyondan önce nihai fiyatı her zaman sağlayıcı sayfasında inceleyin.",
+    serviceGuaranteeFaqChooseProvidersQuestion: "Kurioticket sağlayıcıları nasıl seçer?",
+    serviceGuaranteeFaqChooseProvidersAnswer:
+      "Kurioticket, ilgili arama sonuçlarını sağlayabilen seyahat sağlayıcıları ve veri kaynaklarıyla çalışır. Müsaitlik, fiyatlandırma ve gösterilen seçenekler rota, varış noktası ve sağlayıcı kapsamına göre değişebilir.",
+    serviceGuaranteeFaqEncounterIssueQuestion: "Bir sorunla karşılaşırsam ne yapmalıyım?",
+    serviceGuaranteeFaqEncounterIssueAnswer:
+      "Sorun arama, hesap erişimi, kaydedilen seyahatler, uyarılar veya Kurioticket üzerinden yapılan bir yönlendirmeyle ilgiliyse Kurioticket destek ekibiyle iletişime geçin. Bir sağlayıcıyla zaten rezervasyon yaptıysanız rezervasyon değişiklikleri, iadeler, iptaller veya seyahat belgeleri için o sağlayıcıyla iletişime geçin.",
+    serviceGuaranteeFaqContactSupportQuestion: "Destekle nasıl iletişime geçebilirim?",
+    serviceGuaranteeFaqContactSupportAnswer:
+      "Müşteri Destek sayfasını kullanın ve sorunu incelememize yardımcı olabilecek hesap e-postanızı, ne yapmaya çalıştığınızı ve rota, otel veya sağlayıcı ayrıntılarını ekleyin.",
+    serviceGuaranteeHelpCardTitle: "Hesabınız veya aramanızla ilgili yardıma mı ihtiyacınız var?",
+    serviceGuaranteeSupportCta: "Müşteri Desteği ile iletişime geçin",
+    moreServiceInfoEyebrow: "Platform bilgileri",
+    moreServiceInfoTitle: "Daha fazla hizmet bilgisi",
+    moreServiceInfoDescription:
+      "Kurioticket'in yolcuların tek bir yerde birden fazla sağlayıcıdan seyahat seçeneklerini aramasına, karşılaştırmasına, kaydetmesine ve düzenlemesine nasıl yardımcı olduğunu öğrenin.",
+    moreServiceInfoContextTitle: "Bağlamla planlayın",
+    moreServiceInfoContextSubtitle: "Arama sonuçlarından sağlayıcı yönlendirmelerine",
+    moreServiceInfoContextCompare: "Birden fazla seyahat sağlayıcısından seçenekleri karşılaştırın.",
+    moreServiceInfoContextSave: "Oturum açtığınızda seyahatleri, uyarıları ve tercihleri kaydedin.",
+    moreServiceInfoContextContinue: "Harici rezervasyondan önce sağlayıcı ayrıntılarıyla devam edin.",
+    moreServiceInfoHowHeading: "Kurioticket nasıl çalışır",
+    moreServiceInfoHowDescription:
+      "Bu hizmet ayrıntıları, bir seyahat aramasından önce, arama sırasında ve sonrasında Kurioticket'in rolünü açıklar.",
+    moreServiceInfoHowBadge: "SEYAHAT PLANLAMA TEMELLERİ",
+    moreServiceInfoStepSearchTitle: "Birden fazla sağlayıcıda arayın",
+    moreServiceInfoStepSearchSummary:
+      "Her sağlayıcıyı ayrı ayrı açmak yerine farklı sağlayıcılardaki seyahat seçeneklerini tek bir yerden arayın.",
+    moreServiceInfoStepSearchDetails:
+      "Kurioticket, mevcut uçuş, otel, rota ve seyahat sonucu bilgilerini tek bir arama deneyiminde bir araya getirerek yolcuların seçenekleri daha verimli incelemesine yardımcı olur.",
+    moreServiceInfoStepCompareTitle: "Seyahat seçeneklerini karşılaştırın",
+    moreServiceInfoStepCompareSummary:
+      "Seyahatinize neyin uygun olduğuna karar vermeden önce fiyatları, rotaları, otelleri, saatleri ve mevcut seyahat seçeneklerini karşılaştırın.",
+    moreServiceInfoStepCompareDetails:
+      "Sonuçlar, sağlayıcıya geçmeden önce seçeneği değerlendirmenize yardımcı olan sağlayıcı ayrıntıları, zamanlama, varış noktası bilgileri ve diğer seyahat verilerini içerebilir.",
+    moreServiceInfoStepSaveTitle: "Seyahatleri ve uyarıları kaydedin",
+    moreServiceInfoStepSaveSummary:
+      "Seyahat planlamanızla bağlantılı seyahatleri kaydetmek, rotaları takip etmek ve seyahat uyarılarını yönetmek için bir hesap oluşturun.",
+    moreServiceInfoStepSaveDetails:
+      "Kaydedilen seyahatler, son aramalar ve uyarılar, değerlendirdiğiniz seçeneklere geri dönmeyi ve ilgili seyahat planlama ayrıntılarını düzenli tutmayı kolaylaştırır.",
+    moreServiceInfoStepRedirectsTitle: "Sağlayıcı yönlendirmeleri açıklandı",
+    moreServiceInfoStepRedirectsSummary:
+      "Bir teklifi seçtiğinizde rezervasyon, ödeme, onay ve hizmetin tamamlanması için bir seyahat sağlayıcısına yönlendirilebilirsiniz.",
+    moreServiceInfoStepRedirectsDetails:
+      "Sağlayıcı sayfası; yönlendirilen teklifler için nihai fiyatların, müsaitliğin, kuralların, ödeme adımlarının, makbuzların, rezervasyon değişikliklerinin, iptallerin ve seyahat belgelerinin yönetildiği yerdir.",
+    moreServiceInfoStepAccountTitle: "Hesap ve seyahat araçları",
+    moreServiceInfoStepAccountSummary:
+      "Kaydedilen aramaları, seyahatleri, uyarıları ve tercihleri tek bir Kurioticket çalışma alanında düzenlemek için hesap araçlarını kullanın.",
+    moreServiceInfoStepAccountDetails:
+      "Bu araçlar Kurioticket üzerinde seyahat planlamasını destekler; harici olarak tamamlanan rezervasyonlarda sağlayıcıya özel rezervasyon yönetimi ise sağlayıcıda kalır.",
+    moreServiceInfoFaqHeading: "Sıkça sorulan sorular",
+    moreServiceInfoFaqDescription:
+      "Seyahat araması, sağlayıcı yönlendirmeleri, kaydedilen seyahatler ve hesap araçları hakkında kısa yanıtlar.",
+    moreServiceInfoFaqWhatQuestion: "Kurioticket nedir?",
+    moreServiceInfoFaqWhatAnswer:
+      "Kurioticket, birden fazla sağlayıcıdan seyahat seçeneklerini bulmak, karşılaştırmak, kaydetmek ve düzenlemek için kullanılan bir seyahat arama ve karşılaştırma platformudur.",
+    moreServiceInfoFaqSearchQuestion: "Seyahat araması nasıl çalışır?",
+    moreServiceInfoFaqSearchAnswer:
+      "Seyahat ayrıntılarını girersiniz; Kurioticket de seçenekleri karşılaştırmanıza yardımcı olabilecek mevcut seyahat seçeneklerini ve sağlayıcı bilgilerini gösterir.",
+    moreServiceInfoFaqRedirectQuestion: "Neden başka bir sağlayıcıya yönlendiriliyorum?",
+    moreServiceInfoFaqRedirectAnswer:
+      "Bazı teklifler harici sağlayıcı sitelerinde tamamlanır. Sağlayıcı nihai rezervasyon adımlarını, ödemeyi, onayı ve hizmetin tamamlanmasını yönetir.",
+    moreServiceInfoFaqPaymentsQuestion: "Kurioticket ödemeleri işler mi?",
+    moreServiceInfoFaqPaymentsAnswer:
+      "Sağlayıcıya yönlendirilen teklifler için Kurioticket ödeme işlemez. Ödemeyi doğrudan sağlayıcı sayfasında inceleyip tamamlayın.",
+    moreServiceInfoFaqSaveQuestion: "Seyahatleri ve uyarıları kaydedebilir miyim?",
+    moreServiceInfoFaqSaveAnswer:
+      "Evet. Hesap araçları seyahatleri kaydetmenize, rotaları takip etmenize, uyarıları yönetmenize ve değerlendirdiğiniz seyahat seçeneklerine geri dönmenize yardımcı olabilir.",
+    moreServiceInfoFaqAccountQuestion: "Hesap gerekli mi?",
+    moreServiceInfoFaqAccountAnswer:
+      "Arama bilgilerine tüm hesap araçları olmadan göz atabilirsiniz; ancak seyahatleri, uyarıları ve tercihleri kaydetmek oturum açmayı gerektirebilir.",
+    moreServiceInfoFaqSupportQuestion: "Destekle nasıl iletişime geçerim?",
+    moreServiceInfoFaqSupportAnswer:
+      "Müşteri Destek sayfasını kullanın ve hesap e-postanızı, ne yapmaya çalıştığınızı ve rota, otel veya sağlayıcı ayrıntılarını ekleyin.",
+    moreServiceInfoHelpTitle: "Yardıma mı ihtiyacınız var?",
+    moreServiceInfoHelpDescription:
+      "Hesabınız, kaydedilen seyahatleriniz, uyarılarınız veya sağlayıcı yönlendirmeleriniz hakkında sorularınız mı var?",
+    moreServiceInfoSupportCta: "Müşteri Desteği ile iletişime geçin",
+  };
+
+  for (const [key, value] of Object.entries(expectedTurkishServiceSupportStrings)) {
+    assert.equal(trTranslations[key], value, `tr ${key} should use the audited Turkish copy`);
+    assert.notEqual(trTranslations[key], enTranslations[key], `tr ${key} should not fall back to English`);
+    assert.equal(getTranslations("tr")[key], value, `resolved tr ${key} should use Turkish`);
+  }
+
+  const brandKeys = Object.keys(expectedTurkishServiceSupportStrings).filter((key) =>
+    enTranslations[key]?.includes("Kurioticket"),
+  );
+  assert.ok(brandKeys.every((key) => trTranslations[key]?.includes("Kurioticket")));
+  assert.ok(languageOptions.some((option) => option.code === "tr" && option.direction === "ltr"));
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+});
+
 test("country and currency selector country names resolve for every active locale", () => {
   const activeLocales = ["en-us", "ar", "nl", "es-es", "fr", "de-de", "it-it", "pt-br", "zh-cn", "ja", "ko"];
 
