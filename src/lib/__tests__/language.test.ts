@@ -851,6 +851,70 @@ test("Turkish hotel datepicker formatter normalizes locale for generated display
   assert.equal(trTranslations.done, "Tamam");
 });
 
+test("Turkish lower homepage FAQ and newsletter copy do not fall back to English", () => {
+  const tr = getTranslations("tr");
+
+  const expectedTurkishLowerHomepageCopy: Record<string, string> = {
+    faqQuestionSecureBooking: "Rezervasyonumu güvenli şekilde nasıl tamamlarım?",
+    faqAnswerSecureBooking:
+      "Rezervasyon ve ödeme sağlayıcının ödeme akışında tamamlanır. Onaylamadan önce sağlayıcının şartlarını, iptal politikasını ve son fiyatı her zaman incelemelisiniz.",
+    faqQuestionPreferences: "Para birimi ve dil tercihlerini ayarlayabilir miyim?",
+    faqAnswerPreferences:
+      "Evet. Kurioticket, görüntülenen ülke/para birimi tercihlerini ayarlamanıza olanak tanır ve dil seçiciden kullanılabilir herhangi bir web sitesi dilini seçebilirsiniz.",
+    faqQuestionLiveCached: "Arama sonuçları canlı mı yoksa önbelleğe alınmış mı?",
+    faqAnswerLiveCached:
+      "Kurioticket, müsaitlik ve fiyatlar değiştikçe yenilenebilen sağlayıcı arama sonuçlarını kullanır. Bu, güncel seçenekleri göstermeye yardımcı olur; ancak nihai müsaitlik sağlayıcı tarafından onaylanır.",
+    faqQuestionManageChanges: "Değişiklikleri veya iptalleri nereden yönetirim?",
+    faqAnswerManageChanges:
+      "Seyahat değişiklikleri, iptaller, iadeler ve rezervasyon desteği genellikle rezervasyonun tamamlandığı sağlayıcı tarafından ele alınır. Hizmet talepleri için o sağlayıcıdan gelen onay bilgilerini kullanın.",
+    supportFaqAccountQuestion: "Hesap ve oturum açma yardımı",
+    supportFaqAccountAnswer:
+      "Kurioticket hesap erişimi, oturum açma sorunları, kaydolma sorunları, profil erişimi ve hesapla ilgili platform sorunlarında yardımcı olabilir.",
+    supportFaqSearchQuestion: "Arama ve sonuç yardımı",
+    supportFaqSearchAnswer:
+      "Uçuş veya otel araması çalışmadığında, sonuçlar yüklenmediğinde, filtreler kafa karıştırıcı olduğunda ya da fiyatlar ve sağlayıcılar beklendiği gibi görüntülenmediğinde Kurioticket yardımcı olabilir.",
+    supportFaqSavedTripsQuestion: "Kaydedilen seyahatler ve uyarılar",
+    supportFaqSavedTripsAnswer:
+      "Kurioticket kaydedilen seyahatler, son aramalar, fiyat uyarıları, bildirim sorunları ve hesaba bağlı seyahat araçları konusunda yardımcı olabilir.",
+    supportFaqRedirectQuestion: "Rezervasyon/sağlayıcı yönlendirme yardımı",
+    supportFaqRedirectAnswer:
+      "Bir iş ortağına veya sağlayıcıya yönlendirme başarısız olursa, yanlış sayfayı açarsa ya da seçilen seyahat veya arama detaylarını korumazsa Kurioticket yardımcı olabilir.",
+    supportFaqAlreadyBookedQuestion: "Zaten bir sağlayıcıyla rezervasyon yaptınız mı?",
+    supportFaqAlreadyBookedAnswer:
+      "Rezervasyonunuz bir hava yolu, otel, seyahat acentesi veya harici sağlayıcıyla tamamlandıysa; rezervasyon değişiklikleri, iadeler, iptaller, check-in, biniş, makbuzlar ve seyahat belgelerinden o sağlayıcı sorumludur.",
+    supportFaqChangeBookingQuestion: "Kurioticket rezervasyonumu değiştirebilir mi?",
+    supportFaqChangeBookingAnswer:
+      "Kurioticket yalnızca doğrudan Kurioticket üzerinden yapılan rezervasyonlarda, doğrudan rezervasyon destekleniyorsa yardımcı olabilir. Harici sağlayıcılarla tamamlanan rezervasyonlar için doğrudan o sağlayıcıyla iletişime geçin.",
+    supportFaqWhyRedirectedQuestion: "Neden başka bir sağlayıcıya yönlendirildim?",
+    supportFaqWhyRedirectedAnswer:
+      "Kurioticket bir seyahat arama ve karşılaştırma platformudur; bazı sonuçlar rezervasyon, ödeme ve sağlayıcıya özel desteği tamamlayacağınız güvenilir sağlayıcılara yönlendirir.",
+    homeNewsletterTitle: "Her seyahat fırsatından haberdar olun",
+    homeNewsletterBody: "Seçilmiş uçuş ve otel güncellemelerini haftalık olarak alın.",
+    homeNewsletterPlaceholder: "E-postanızı girin",
+    homeSubscribe: "Abone ol",
+    homeNewsletterConsent:
+      "Abone olarak Kurioticket güncellemelerini almayı kabul edersiniz. İstediğiniz zaman abonelikten çıkabilirsiniz.",
+    homeNewsletterThanks: "Teşekkürler! Sizi seyahat fırsatlarından haberdar edeceğiz.",
+    homeEmailAddress: "E-posta adresi",
+    homeNewsletterInvalidEmail: "Geçerli bir e-posta adresi girin.",
+    homeNewsletterUnableSubscribe: "Şu anda abone olunamıyor.",
+    homeNewsletterTryAgain:
+      "Şu anda sizi abone yapamadık. Lütfen kısa süre sonra tekrar deneyin.",
+    homeSubscribing: "Abone olunuyor…",
+  };
+
+  for (const [key, expected] of Object.entries(expectedTurkishLowerHomepageCopy)) {
+    assert.equal(tr[key], expected, key);
+    assert.notEqual(tr[key], enTranslations[key], key);
+  }
+
+  assert.ok(tr.supportFaqAccountAnswer.includes("Kurioticket"));
+  assert.ok(tr.supportFaqChangeBookingQuestion.includes("Kurioticket"));
+  assert.ok(tr.homeNewsletterConsent.includes("Kurioticket"));
+  assert.ok(languageOptions.some((option) => option.code === "tr" && option.direction === "ltr"));
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+});
+
 
 test("all flight datepicker render paths use shared Hindi date formatting", () => {
   const sharedFormatterSource = readFileSync("src/lib/flights/dateFormatting.ts", "utf8");
