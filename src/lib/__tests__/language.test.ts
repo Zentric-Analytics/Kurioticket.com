@@ -2105,6 +2105,82 @@ test("Hindi legal center and policy document strings are localized", () => {
   assert.ok(legalCenterSource.includes('href: "/legal/cookie-policy"'));
 });
 
+test("Turkish legal center and policy document strings are localized", () => {
+  const expectedTurkishLegalStrings = {
+    "legal.lastUpdated": "Son güncelleme",
+    "legal.print": "Yazdır",
+    "legal.tableOfContents": "İÇİNDEKİLER",
+    "legal.privacy.title": "Gizlilik Politikası",
+    "legal.privacy.summary":
+      "Kurioticket LLC’nin (“Kurioticket,” “we,” “us,” veya “our”) hesap, arama, uyarı, destek ve e-posta verilerini nasıl topladığını, kullandığını, sakladığını ve koruduğunu açıklar.",
+    "legal.privacy.tableOfContents": "İÇİNDEKİLER",
+    "legal.privacy.sections.data-we-collect.title": "Topladığımız Veriler",
+    "legal.privacy.sections.data-we-collect.paragraph1":
+      "Ad, e-posta, karma hâle getirilmiş parola, kimlik doğrulama sağlayıcısı tanımlayıcıları ve isteğe bağlı seyahat tercihleri gibi hesap verilerini toplarız. Kayıt sırasında pasaport verisi, resmi kimlik veya ev adresi istemeyiz.",
+    "legal.privacy.sections.data-we-collect.paragraph2":
+      "Aramalar, kaydedilen uçuşlar, kaydedilen oteller, kaydedilen aramalar, fiyat uyarıları, yönlendirmeler, destek talepleri, bildirimler, analiz olayları ve özellik kullanımı gibi ürün verilerini toplarız.",
+    "legal.privacy.sections.vendors.title": "Hizmet Sağlayıcıları",
+    "legal.privacy.sections.vendors.paragraph1":
+      "Hizmetlerimizi işletmek, iletişim göndermek, platformu korumak, performansı ölçmek ve ürün işlevselliğini desteklemek için üçüncü taraf hizmet sağlayıcıları kullanabiliriz.",
+    "legal.privacy.sections.vendors.paragraph2":
+      "Kurioticket, seyahat rezervasyonları için kredi kartı numaralarını istemez veya saklamaz. Kurioticket pasaport verilerini saklamaz.",
+    "legal.privacy.sections.choices.title": "Seçimleriniz",
+    "legal.privacy.sections.choices.paragraph1":
+      "Bildirim tercihlerinizi güncelleyebilir, hesap silme talebinde bulunabilir ve geçerli gizlilik yasalarının gerektirdiği durumlarda erişim veya düzeltme talep edebilirsiniz.",
+    "legal.privacy.sections.choices.paragraph2":
+      "Yalnızca ürün işletimi, güvenlik, destek, analiz, uyumluluk veya meşru iş ihtiyaçları için yararlı olan verileri saklarız.",
+    "legal.privacy.developerNote":
+      "Bu yasal taslaklar başlangıç aşaması için yer tutucu metinlerdir ve geniş ölçekli herkese açık lansmandan önce nitelikli hukuk danışmanları tarafından incelenmelidir.",
+    "legal.terms.title": "Hizmet Şartları",
+    "legal.terms.summary":
+      "Kurioticket araması, hesapları, panoları, kaydedilen seyahat araçları ve iş ortağı yönlendirmelerinin kullanımına ilişkin kurallar.",
+    "legal.terms.tableOfContents": "İÇİNDEKİLER",
+    "legal.terms.sections.overview.title": "Genel Bakış",
+    "legal.terms.sections.accounts.title": "Hesaplar",
+    "legal.terms.sections.acceptable-use.title": "Kabul Edilebilir Kullanım",
+    "legal.terms.sections.partner-services.title": "İş Ortağı Hizmetleri",
+    "legal.terms.developerNote":
+      "Bu yasal taslaklar başlangıç aşaması için yer tutucu metinlerdir ve geniş ölçekli herkese açık lansmandan önce nitelikli hukuk danışmanları tarafından incelenmelidir.",
+    "legal.cookiePolicy.title": "Çerez Politikası",
+    "legal.cookiePolicy.summary":
+      "Kurioticket’in kimlik doğrulama, güvenlik, tercihler, analiz ve performans için çerezleri ve benzer teknolojileri nasıl kullandığını açıklar.",
+    "legal.cookiePolicy.tableOfContents": "İÇİNDEKİLER",
+    "legal.cookiePolicy.sections.use.title": "Çerezler Nasıl Kullanılır",
+    "legal.cookiePolicy.sections.third-parties.title": "Üçüncü Taraf Teknolojileri",
+    "legal.cookiePolicy.sections.controls.title": "Kontroller",
+    "legal.cookiePolicy.developerNote":
+      "Bu yasal taslaklar başlangıç aşaması için yer tutucu metinlerdir ve geniş ölçekli herkese açık lansmandan önce nitelikli hukuk danışmanları tarafından incelenmelidir.",
+    "legalCenter.heroLabel": "Yasal Bilgiler",
+    "legalCenter.heroTitle": "Hukuk Merkezi",
+    "legalCenter.heroDescription":
+      "Kurioticket kullanımına ilişkin önemli yasal ve politika bilgilerine erişin.",
+    "legalCenter.resourcesHeading": "Yasal kaynaklar",
+    "legalCenter.resourcesDescription":
+      "Kurioticket’in yasal şartları ve veri uygulamaları hakkında daha fazla bilgi almak için aşağıdan bir politika seçin.",
+    "legalCenter.policiesBadge": "POLİTİKALAR",
+    "legalCenter.privacyPolicy.title": "Gizlilik Politikası",
+    "legalCenter.privacyPolicy.cta": "Gizlilik Politikasını görüntüle",
+    "legalCenter.termsOfService.title": "Hizmet Şartları",
+    "legalCenter.termsOfService.cta": "Hizmet Şartlarını görüntüle",
+    "legalCenter.cookiePolicy.title": "Çerez Politikası",
+    "legalCenter.cookiePolicy.cta": "Çerez Politikasını görüntüle",
+    "legalCenter.additionalResourcesTitle": "Ek yasal kaynaklar",
+    "legalCenter.additionalResourcesDescription":
+      "Kurioticket büyüdükçe ek yasal kaynaklar eklenebilir.",
+  };
+
+  for (const [key, value] of Object.entries(expectedTurkishLegalStrings)) {
+    assert.equal(trTranslations[key], value, `tr ${key} should use the audited Turkish legal copy`);
+    assert.notEqual(trTranslations[key], enTranslations[key], `tr ${key} should not fall back to English`);
+    assert.equal(getTranslations("tr")[key], value, `resolved tr ${key} should use Turkish`);
+  }
+
+  assert.equal(getTranslations("tr")["legal.print"], "Yazdır");
+  assert.equal(getTranslations("tr")["legal.privacy.tableOfContents"], "İÇİNDEKİLER");
+  assert.equal(getTranslations("tr")["legal.terms.tableOfContents"], "İÇİNDEKİLER");
+  assert.equal(getTranslations("tr")["legal.cookiePolicy.tableOfContents"], "İÇİNDEKİLER");
+});
+
 
 test("Hindi service and support page strings are localized", () => {
   const expectedHindiServiceSupportStrings = {
