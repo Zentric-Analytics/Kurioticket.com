@@ -2939,6 +2939,7 @@ test("active account trips and price alerts copy is localized", () => {
     ja: jaTranslations,
     ko: koTranslations,
     hi: hiTranslations,
+    tr: trTranslations,
   };
 
   const travelActivityKeys = [
@@ -3014,6 +3015,79 @@ test("active account trips and price alerts copy is localized", () => {
       assert.notEqual(translations[key], enTranslations[key], `${locale} should localize ${key}`);
     }
   }
+
+  assert.equal(trTranslations["accountDashboard.trips.title"], "Seyahatlerim");
+  assert.equal(trTranslations["accountDashboard.trips.findReservation"], "Rezervasyon bul");
+  assert.equal(trTranslations["accountDashboard.trips.current.empty.title"], "Sırada nereye?");
+  assert.equal(
+    trTranslations["accountDashboard.trips.current.empty.body"],
+    "Henüz bir seyahate başlamadınız. Rezervasyon yaptığınızda burada görünecek.",
+  );
+  assert.equal(trTranslations["accountDashboard.trips.history.tabs.past"], "Geçmiş");
+  assert.equal(trTranslations["accountDashboard.trips.history.tabs.cancelled"], "İptal edilenler");
+  assert.equal(trTranslations["accountDashboard.trips.history.empty.past.title"], "Yolculuklarınızı hatırlayın");
+  assert.equal(
+    trTranslations["accountDashboard.trips.history.empty.past.body"],
+    "Tamamlanan seyahatleriniz seyahatinizden sonra burada görünecek.",
+  );
+  assert.equal(trTranslations["accountDashboard.trips.history.empty.cancelled.title"], "Planlar değişti mi?");
+  assert.equal(
+    trTranslations["accountDashboard.trips.history.empty.cancelled.body"],
+    "İptal edilen rezervasyonlarınız referans için burada görünecek.",
+  );
+  assert.equal(trTranslations["accountDashboard.priceAlerts.title"], "Fiyat uyarıları");
+  assert.equal(
+    trTranslations["accountDashboard.priceAlerts.description"],
+    "Fiyatları takip edin ve ücretler değiştiğinde bildirim alın.",
+  );
+  assert.equal(trTranslations["accountDashboard.priceAlerts.tabs.active"], "Aktif");
+  assert.equal(trTranslations["accountDashboard.priceAlerts.tabs.expired"], "Süresi dolan");
+  assert.equal(trTranslations["accountDashboard.priceAlerts.tabs.all"], "Tümü");
+  assert.equal(trTranslations["accountDashboard.priceAlerts.sort.label"], "Sırala");
+  assert.equal(trTranslations["accountDashboard.priceAlerts.sort.newest"], "En yeni");
+  assert.equal(trTranslations["accountDashboard.priceAlerts.sort.oldest"], "En eski");
+  assert.equal(trTranslations["accountDashboard.priceAlerts.sort.routeAz"], "Rota A-Z");
+  assert.equal(trTranslations["accountDashboard.priceAlerts.empty.title"], "Henüz fiyat uyarısı yok.");
+  assert.equal(
+    trTranslations["accountDashboard.priceAlerts.empty.body"],
+    "Ücret değişikliklerini takip etmek ve bildirim almak için bir uçuş aramasından uyarı oluşturun.",
+  );
+  assert.equal(trTranslations["accountDashboard.priceAlerts.cta.flights"], "Uçuş ara");
+  assert.equal(trTranslations["accountDashboard.priceAlerts.features.monitoring.title"], "Gerçek zamanlı takip");
+  assert.equal(
+    trTranslations["accountDashboard.priceAlerts.features.monitoring.body"],
+    "Fiyatları takip eder ve uyarılar tetiklendiğinde sizi bilgilendiririz.",
+  );
+  assert.equal(trTranslations["accountDashboard.priceAlerts.features.email.title"], "E-posta bildirimleri");
+  assert.equal(trTranslations["accountDashboard.priceAlerts.features.email.body"], "Ücretler değiştiğinde bildirim alın.");
+  assert.equal(trTranslations["accountDashboard.priceAlerts.features.trends.title"], "Fiyat trendleri");
+  assert.equal(
+    trTranslations["accountDashboard.priceAlerts.features.trends.body"],
+    "Takip edilen ücretlerin zaman içinde nasıl değiştiğini görün.",
+  );
+  assert.equal(trTranslations["accountDashboard.priceAlerts.features.management.title"], "Kolay yönetim");
+  assert.equal(
+    trTranslations["accountDashboard.priceAlerts.features.management.body"],
+    "Uyarıları istediğiniz zaman duraklatın veya kaldırın.",
+  );
+
+  const tripsManagementSource = readFileSync("src/app/dashboard/trips/TripsManagementPage.tsx", "utf8");
+  assert.ok(tripsManagementSource.includes('type TripHistoryTab = "past" | "cancelled"'));
+  assert.ok(tripsManagementSource.includes('{ id: "active", labelKey: "accountDashboard.trips.history.tabs.active" }'));
+  assert.ok(tripsManagementSource.includes('setLookupMessage(t("accountDashboard.trips.lookup.unavailable"))'));
+  assert.ok(!tripsManagementSource.includes('>My Trips<'));
+  assert.ok(!tripsManagementSource.includes('>Find a reservation<'));
+
+  const priceAlertsSource = readFileSync("src/app/dashboard/alerts/PriceAlertsContent.tsx", "utf8");
+  assert.ok(priceAlertsSource.includes('id: "active"') && priceAlertsSource.includes('count: 0'));
+  assert.ok(priceAlertsSource.includes('id: "expired"') && priceAlertsSource.includes('count: 0'));
+  assert.ok(priceAlertsSource.includes('{ id: "newest", labelKey: "accountDashboard.priceAlerts.sort.newest" }'));
+  assert.ok(priceAlertsSource.includes('{ id: "oldest", labelKey: "accountDashboard.priceAlerts.sort.oldest" }'));
+  assert.ok(priceAlertsSource.includes('{ id: "routeAz", labelKey: "accountDashboard.priceAlerts.sort.routeAz" }'));
+  assert.ok(priceAlertsSource.includes('href="/flights"'));
+  assert.ok(priceAlertsSource.includes('{`${t[tab.labelKey]} (${tab.count})`}'));
+  assert.ok(!priceAlertsSource.includes('>Price alerts<'));
+  assert.ok(!priceAlertsSource.includes('>Search flights<'));
 
   assert.equal(koTranslations["accountDashboard.hub.title"], "내 계정");
   assert.equal(koTranslations["accountDashboard.trips.title"], "내 여행");
