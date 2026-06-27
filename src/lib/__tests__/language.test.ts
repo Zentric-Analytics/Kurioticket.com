@@ -1544,6 +1544,101 @@ test("Hindi account preferences actual render-path copy resolves without English
   }
 });
 
+test("Turkish account preferences actual render-path copy resolves without English fallback", () => {
+  const tr = getTranslations("tr");
+  const customizationSource = readFileSync(
+    "src/app/dashboard/preferences/customization/CustomizationPreferencesContent.tsx",
+    "utf8",
+  );
+  const bookingSource = readFileSync(
+    "src/app/dashboard/preferences/booking/BookingPreferencesContent.tsx",
+    "utf8",
+  );
+
+  const expectedCustomizationCopy = {
+    "accountDashboard.preferences.customization.title": "Özelleştirme tercihleri",
+    "accountDashboard.preferences.customization.description": "Kurioticket’in deneyiminizi nasıl kişiselleştireceğini seçin.",
+    "accountDashboard.preferences.customization.languageRegion.title": "Dil ve bölge",
+    "accountDashboard.preferences.customization.languageRegion.description": "Varsayılan dilinizi, para biriminizi ve bölgenizi ayarlayın.",
+    "accountDashboard.preferences.customization.preferredLanguage": "Tercih edilen dil",
+    "accountDashboard.preferences.customization.selectPreferredLanguage": "Tercih edilen dili seçin",
+    "accountDashboard.preferences.customization.currency": "Para birimi",
+    "accountDashboard.preferences.customization.selectCurrency": "Para birimi seçin",
+    "accountDashboard.preferences.customization.region": "Bölge",
+    "accountDashboard.preferences.customization.selectRegion": "Bölge seçin",
+    "accountDashboard.preferences.customization.personalization.title": "Kişiselleştirme",
+    "accountDashboard.preferences.customization.personalization.description": "Kurioticket’in önerilerinizi nasıl kişiselleştireceğini kontrol edin.",
+    "accountDashboard.preferences.customization.personalizeSearches": "Önerileri kişiselleştirmek için aramalarımı kullan",
+    "accountDashboard.preferences.customization.personalizedTravelDeals": "Kişiselleştirilmiş seyahat fırsatlarını göster",
+    "accountDashboard.preferences.customization.rememberRecentSearches": "Son aramalarımı hatırla",
+    "accountDashboard.preferences.customization.communicationStyle.title": "İletişim tarzı",
+    "accountDashboard.preferences.customization.communicationStyle.description": "Kurioticket’in sizinle nasıl iletişim kurmasını istediğinizi seçin.",
+    "accountDashboard.preferences.customization.emailUpdates": "E-posta güncellemeleri",
+    "accountDashboard.preferences.customization.priceAlertEmails": "Fiyat uyarısı e-postaları",
+    "accountDashboard.preferences.customization.travelInspirationEmails": "Seyahat ilhamı e-postaları",
+  } as const;
+
+  const expectedBookingCopy = {
+    "accountDashboard.preferences.booking.title": "Rezervasyon tercihleri",
+    "accountDashboard.preferences.booking.description": "Daha hızlı ve daha alakalı rezervasyonlar için varsayılan seyahat tercihlerinizi ayarlayın.",
+    "accountDashboard.preferences.booking.airports.title": "Havalimanları",
+    "accountDashboard.preferences.booking.airports.description": "Uçmayı tercih ettiğiniz havalimanlarını seçin.",
+    "accountDashboard.preferences.booking.homeAirport": "Ana havalimanı",
+    "accountDashboard.preferences.booking.searchAirport": "Havalimanı ara",
+    "accountDashboard.preferences.booking.secondaryAirports": "İkincil havalimanları",
+    "accountDashboard.preferences.booking.addAlternativeAirports": "Alternatif havalimanları ekle",
+    "accountDashboard.preferences.booking.airlines.title": "Havayolları",
+    "accountDashboard.preferences.booking.airlines.description": "Tercih ettiğiniz veya kaçınmak istediğiniz havayollarını seçin.",
+    "accountDashboard.preferences.booking.preferredAirlines": "Tercih edilen havayolları",
+    "accountDashboard.preferences.booking.searchAirlines": "Havayolu ara",
+    "accountDashboard.preferences.booking.avoidAirlines": "Kaçınılacak havayolları",
+    "accountDashboard.preferences.booking.stays.title": "Konaklamalar",
+    "accountDashboard.preferences.booking.stays.description": "Otel rezervasyonları için konaklama tercihlerinizi ayarlayın.",
+    "accountDashboard.preferences.booking.preferredHotelChains": "Tercih edilen otel zincirleri",
+    "accountDashboard.preferences.booking.searchHotelChains": "Otel zinciri ara",
+    "accountDashboard.preferences.booking.avoidHotelChains": "Kaçınılacak otel zincirleri",
+  } as const;
+
+  const sharedCopy = {
+    "accountDashboard.preferences.cancel": "İptal",
+    "accountDashboard.preferences.savePreferences": "Tercihleri kaydet",
+  } as const;
+
+  for (const [key, value] of Object.entries(expectedCustomizationCopy)) {
+    assert.ok(customizationSource.includes(key), `Customization page should use actual i18n key ${key}.`);
+    assert.equal(tr[key], value);
+    assert.notEqual(tr[key], enTranslations[key]);
+  }
+
+  for (const [key, value] of Object.entries(expectedBookingCopy)) {
+    assert.ok(bookingSource.includes(key), `Booking page should use actual i18n key ${key}.`);
+    assert.equal(tr[key], value);
+    assert.notEqual(tr[key], enTranslations[key]);
+  }
+
+  for (const [key, value] of Object.entries(sharedCopy)) {
+    assert.ok(customizationSource.includes(key), `Customization page should use shared action key ${key}.`);
+    assert.ok(bookingSource.includes(key), `Booking page should use shared action key ${key}.`);
+    assert.equal(tr[key], value);
+    assert.notEqual(tr[key], enTranslations[key]);
+  }
+
+  assert.ok(customizationSource.includes('value: "English"'));
+  assert.ok(customizationSource.includes('value: "USD"'));
+  assert.ok(customizationSource.includes('value: "United States"'));
+  assert.ok(customizationSource.includes('id: "preferred-language"'));
+  assert.ok(customizationSource.includes('name={field.id}'));
+  assert.ok(customizationSource.includes('type="checkbox"'));
+  assert.ok(customizationSource.includes('type="button"'));
+  assert.ok(bookingSource.includes('id: "home-airport"'));
+  assert.ok(bookingSource.includes('id: "preferred-airlines"'));
+  assert.ok(bookingSource.includes('name={field.id}'));
+  assert.ok(bookingSource.includes('type="search"'));
+  assert.ok(bookingSource.includes('type="button"'));
+  assert.ok(languageOptions.some((option) => option.code === "tr" && option.direction === "ltr"));
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+});
+
 test("Turkish account personal details and security settings copy resolves without English fallback", () => {
   const tr = getTranslations("tr");
 
