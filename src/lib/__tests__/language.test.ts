@@ -1428,6 +1428,72 @@ test("Hindi destinations and saved trips screenshot-visible copy resolves withou
   );
 });
 
+test("Turkish destinations and saved trips screenshot-visible copy resolves without English fallback", () => {
+  const tr = getTranslations("tr");
+
+  const auditedTurkishKeys: Array<[string, string]> = [
+    ["destinationsHeroBadge", "DESTİNASYON KEŞFİ"],
+    ["destinationsHeroTitle", "Sırada nereye gitmek istersiniz?"],
+    [
+      "destinationsHeroSubtitle",
+      "Özenle seçilmiş şehir manzaralarına göz atın, uçuşları karşılaştırın ve dakikalar içinde seyahat fırsatları bulun.",
+    ],
+    ["destinations.region.europe", "Avrupa"],
+    ["destinations.region.northAmerica", "Kuzey Amerika"],
+    ["destinations.region.asia", "Asya"],
+    ["destinations.region.africa", "Afrika"],
+    ["destinations.region.middleEast", "Orta Doğu"],
+    [
+      "destinations.region.europe.summary",
+      "Simgesel şehirler, romantik kanallar, tasarım başkentleri ve zamansız yeme-içme ile kültür hafta sonları için seçilmiş bir liste.",
+    ],
+    ["destinations.country.unitedKingdom", "Birleşik Krallık"],
+    ["destinations.country.unitedStates", "Amerika Birleşik Devletleri"],
+    ["destinations.country.unitedArabEmirates", "Birleşik Arap Emirlikleri"],
+    ["destinations.tag.iconicSkyline", "İkonik silüet"],
+    ["destinations.tag.desertDrama", "Çöl manzarası"],
+    ["destinations.city.london", "Londra"],
+    ["destinations.city.copenhagen", "Kopenhag"],
+    ["destinations.city.abuDhabi", "Abu Dabi"],
+    ["destinations.card.subtitle", "Canlı manzaralar, uçuşlar, oteller ve fırsatlar"],
+    ["destinationsImageAltSuffix", "seyahat fotoğrafı"],
+    ["destinationsCardAriaLabel", "{destination} için uçuş ara"],
+    ["savedTripsPageTitle", "Kaydedilen geziler"],
+    ["savedTripsPageSubtitle", "Seçtiğiniz rotalar ve öne çıkan güzergâhlar."],
+    ["savedTripsEmptyTitle", "Sevdiğiniz destinasyonları kaydedin"],
+    [
+      "savedTripsEmptyDescription",
+      "Kişisel listenizi oluşturmak ve bir sonraki maceranızı tek tık uzağınızda tutmak için herhangi bir rotadaki kalp simgesine dokunun.",
+    ],
+    ["savedTripsExploreDestinations", "Destinasyonları keşfet"],
+    ["savedTripsRecentSearchesTitle", "Son aramalar"],
+    [
+      "savedTripsRecentSearchesSubtitle",
+      "Kaldığınız yerden devam edin ve tek dokunuşla yeniden arayın.",
+    ],
+    ["savedTripsClearAllRecent", "Tüm son aramaları temizle"],
+    ["savedTripsTypeFlight", "UÇUŞ"],
+    ["savedTripsSearchedDate", "ARANDI {{date}}"],
+    ["savedTripsRepeatSearch", "Aramayı tekrarla"],
+    ["savedTripsTravelerCountOne", "1 yolcu"],
+    ["savedTripsTravelerCountOther", "{{count}} yolcu"],
+    ["savedTripsCabinEconomy", "Ekonomi"],
+    ["savedTripsCabinPremiumEconomy", "Premium ekonomi"],
+  ];
+
+  for (const [key, expected] of auditedTurkishKeys) {
+    assert.equal(tr[key], expected);
+    assert.notEqual(tr[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  assert.equal(
+    new Intl.DateTimeFormat("tr-TR", { month: "short", day: "numeric", year: "numeric" }).format(
+      new Date("2026-06-26T00:00:00"),
+    ),
+    "26 Haz 2026",
+  );
+});
+
 test("active locale dictionaries do not keep audited cross-language UI fallbacks", () => {
   const auditedValuesByLocale = {
     english: {
