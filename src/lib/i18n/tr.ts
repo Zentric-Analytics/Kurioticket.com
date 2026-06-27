@@ -1315,6 +1315,11 @@ export const translations: TranslationDictionary = {
   faqHeading: "Sıkça sorulan sorular",
   faqIntro:
     "Kurioticket'in güvenilir sağlayıcılarla rezervasyon yapmadan önce uçuşları, otelleri ve seyahat seçeneklerini karşılaştırmanıza nasıl yardımcı olduğunu öğrenin.",
+  faqGeneralQuestions: "Genel sorular",
+  faqNeedMoreHelpPrefix:
+    "Daha fazla yardıma mı ihtiyacınız var? Hizmet ve iletişim seçenekleri için",
+  faqSupportPage: "destek sayfasını",
+  faqNeedMoreHelpSuffix: "ziyaret edin.",
   faqQuestionFindOptions:
     "Kurioticket uçuş ve otel seçeneklerini nasıl bulur?",
   faqAnswerFindOptions:

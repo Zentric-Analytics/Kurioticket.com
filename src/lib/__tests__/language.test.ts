@@ -1266,6 +1266,7 @@ test("active account FAQ translations cover all visible FAQ page strings", () =>
     ja: jaTranslations,
     ko: koTranslations,
     hi: hiTranslations,
+    tr: trTranslations,
   };
   const accountFaqKeys = [
     "accountDashboard.hub.title",
@@ -1321,6 +1322,49 @@ test("active account FAQ translations cover all visible FAQ page strings", () =>
   assert.equal(koTranslations["accountDashboard.hub.title"], "내 계정");
   assert.equal(koTranslations.faqHeading, "자주 묻는 질문");
   assert.equal(koTranslations.faqGeneralQuestions, "일반 질문");
+  assert.equal(trTranslations["accountDashboard.hub.title"], "Hesabım");
+  assert.equal(trTranslations.faqHeading, "Sıkça sorulan sorular");
+  assert.equal(trTranslations.faqGeneralQuestions, "Genel sorular");
+});
+
+test("Turkish account FAQ support CTA resolves through localized segmented keys", () => {
+  const tr = getTranslations("tr");
+
+  assert.equal(tr.faqGeneralQuestions, "Genel sorular");
+  assert.equal(
+    tr.faqNeedMoreHelpPrefix,
+    "Daha fazla yardıma mı ihtiyacınız var? Hizmet ve iletişim seçenekleri için",
+  );
+  assert.equal(tr.faqSupportPage, "destek sayfasını");
+  assert.equal(tr.faqNeedMoreHelpSuffix, "ziyaret edin.");
+  assert.equal(
+    `${tr.faqNeedMoreHelpPrefix} ${tr.faqSupportPage} ${tr.faqNeedMoreHelpSuffix}`,
+    "Daha fazla yardıma mı ihtiyacınız var? Hizmet ve iletişim seçenekleri için destek sayfasını ziyaret edin.",
+  );
+
+  for (const key of [
+    "faqGeneralQuestions",
+    "faqNeedMoreHelpPrefix",
+    "faqSupportPage",
+    "faqNeedMoreHelpSuffix",
+  ]) {
+    assert.notEqual(tr[key], enTranslations[key], key);
+  }
+
+  const faqContentSource = readFileSync("src/app/faq/FaqContent.tsx", "utf8");
+  const faqSource = readFileSync("src/content/faqs.ts", "utf8");
+
+  assert.ok(faqContentSource.includes('t("faqGeneralQuestions")'), "Account FAQ heading should use i18n.");
+  assert.ok(faqContentSource.includes('t("faqNeedMoreHelpPrefix")'), "Account FAQ CTA prefix should use i18n.");
+  assert.ok(faqContentSource.includes('t("faqSupportPage")'), "Account FAQ CTA link should use i18n.");
+  assert.ok(faqContentSource.includes('t("faqNeedMoreHelpSuffix")'), "Account FAQ CTA suffix should use i18n.");
+  assert.ok(faqContentSource.includes('href="/dashboard/support"'), "Account FAQ support route should remain unchanged.");
+  assert.ok(faqContentSource.includes("faqItems.map((item) =>"), "Account FAQ order should still come from getGeneralFaqs without reordering.");
+  assert.ok(faqContentSource.includes("<details"), "Account FAQ accordion behavior should remain native details elements.");
+  assert.ok(faqContentSource.includes("<summary"), "Account FAQ accordion summaries should remain unchanged.");
+  assert.ok(faqSource.includes("faqItemKeys.reduce<FaqItem[]>") && faqSource.includes("seenQuestions"), "FAQ item ordering and duplicate-question handling should remain centralized.");
+  assert.ok(languageOptions.some((option) => option.code === "tr" && option.direction === "ltr"));
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
 });
 
 
