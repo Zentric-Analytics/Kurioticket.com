@@ -1483,6 +1483,76 @@ test("Hindi homepage search support newsletter and footer strings are localized"
   assert.equal(getTranslations("hi").cityOrHotel, "शहर या होटल");
 });
 
+
+test("Turkish homepage header search popular destinations and footer strings are localized", () => {
+  const tr = getTranslations("tr");
+
+  const expectedTurkishHomepageStrings = {
+    flights: "Uçuşlar",
+    hotels: "Oteller",
+    cars: "Arabalar",
+    deals: "Fırsatlar",
+    destinations: "Destinasyonlar",
+    login: "Giriş yap",
+    signUp: "Kaydol",
+    homeHeroTitle: "Seyahat seçeneklerini tek bir basit aramada karşılaştırın",
+    homeHeroSubtitle:
+      "Güvenilir seyahat sağlayıcılarında arama yapın, fiyatları net şekilde karşılaştırın ve seyahatinize en uygun seçeneği seçin.",
+    homePopularDestinations: "Popüler destinasyonlar",
+    homeExploreFares: "Ücretleri keşfet",
+    "homePopularDestinationCity.dubai": "Dubai",
+    "homePopularDestinationCity.london": "Londra",
+    "homePopularDestinationCity.johannesburg": "Johannesburg",
+    "homePopularDestinationCity.accra": "Akra",
+    "homePopularDestinationCountry.unitedArabEmirates": "Birleşik Arap Emirlikleri",
+    "homePopularDestinationCountry.unitedKingdom": "Birleşik Krallık",
+    "homePopularDestinationCountry.southAfrica": "Güney Afrika",
+    "homePopularDestinationCountry.ghana": "Gana",
+    origin: "Kalkış",
+    destination: "Varış",
+    departureDate: "Seyahat tarihleri",
+    travelDates: "Seyahat tarihleri",
+    travelers: "Yolcular",
+    roundTrip: "Gidiş-dönüş",
+    oneWay: "Tek yön",
+    toPlaceholder: "Nereye?",
+    adultSingular: "yetişkin",
+    adultPlural: "yetişkin",
+    economy: "Ekonomi",
+    search: "Ara",
+    footerContactUs: "Bize Ulaşın",
+    footerCustomerSupport: "Müşteri desteği",
+    footerServiceGuarantee: "Hizmet Garantisi",
+    footerMoreServiceInfo: "Daha Fazla Hizmet Bilgisi",
+    footerDiscover: "Keşfet",
+    footerSavedRecent: "Kaydedilenler ve son aramalar",
+    footerTermsSettings: "Şartlar ve Ayarlar",
+    footerPrivacyPolicy: "Gizlilik Politikası",
+    footerTermsOfService: "Hizmet Şartları",
+    footerCookiePolicy: "Çerez Politikası",
+    legalCenter: "Hukuk Merkezi",
+    footerAboutKurioticket: "Kurioticket Hakkında",
+    footerAboutUs: "Hakkımızda",
+    footerHowItWorks: "Kurioticket Nasıl Çalışır",
+    footerConfidenceTagline:
+      "Uçuşları, otelleri ve seyahat fırsatlarını güvenle arayın.",
+    footerAllRightsReserved: "Tüm hakları saklıdır.",
+    footerPrivacy: "Gizlilik",
+    footerTerms: "Şartlar",
+    footerCookies: "Çerezler",
+  };
+
+  for (const [key, value] of Object.entries(expectedTurkishHomepageStrings)) {
+    assert.equal(tr[key], value, `tr ${key} should use the audited Turkish copy`);
+    if (value !== enTranslations[key]) {
+      assert.notEqual(tr[key], enTranslations[key], `tr ${key} should not fall back to English`);
+    }
+  }
+
+  assert.equal(getTranslations("tr-TR").homeHeroTitle, expectedTurkishHomepageStrings.homeHeroTitle);
+  assert.equal(getTranslations("tr-tr").footerContactUs, expectedTurkishHomepageStrings.footerContactUs);
+});
+
 test("Hindi How Kurioticket Works page strings are localized", () => {
   const expectedHindiHowItWorksStrings = {
     howItWorksEyebrow: "Kurioticket कैसे काम करता है",
