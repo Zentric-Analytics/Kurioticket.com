@@ -1141,20 +1141,28 @@ function NationalityInput({
   );
 }
 
-function getPersonalDetailEditWidthClass(key: keyof PersonalDetailsDraft) {
-  if (key === "address") {
-    return "w-full max-w-[720px]";
-  }
-
-  if (key === "email") {
-    return "w-full max-w-[760px]";
-  }
-
-  if (key === "dateOfBirth") {
-    return "w-full max-w-md";
-  }
-
-  return "w-full max-w-xl";
+function PersonalDetailsEditField({
+  row,
+  value,
+  onChange,
+}: {
+  row: PersonalDetailRow;
+  value: string;
+  onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
+}) {
+  return (
+    <label className="block min-w-0 space-y-1.5">
+      <span className="block text-sm font-medium leading-5 text-slate-800">
+        {row.label}
+      </span>
+      <DetailInput row={row} value={value} onChange={onChange} />
+      {row.helper ? (
+        <span className="block text-sm leading-6 text-slate-500">
+          {row.helper}
+        </span>
+      ) : null}
+    </label>
+  );
 }
 
 function DetailInput({
@@ -1289,53 +1297,85 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     setDraft((current) => ({ ...current, [key]: value }));
   };
 
+  const personalDetailRowByKey = new Map(
+    personalDetailRows.map((row) => [row.key, row]),
+  );
+  const getPersonalDetailRow = (key: keyof PersonalDetailsDraft) => {
+    const row = personalDetailRowByKey.get(key);
+
+    if (!row) {
+      throw new Error(`Missing personal details row for ${key}`);
+    }
+
+    return row;
+  };
+  const renderEditField = (
+    key: keyof PersonalDetailsDraft,
+    className?: string,
+  ) => {
+    const row = getPersonalDetailRow(key);
+
+    return (
+      <div className={cn("min-w-0", className)}>
+        <PersonalDetailsEditField
+          row={row}
+          value={draft[key]}
+          onChange={updateDraft}
+        />
+      </div>
+    );
+  };
+
   return (
     <section
       className="rounded-xl border border-slate-200 bg-white shadow-sm"
       aria-labelledby="dashboard-title"
     >
-      <div>
-        {personalDetailRows.map((row) => {
-          const readOnlyValue = initialValues[row.key];
-          const editValue = draft[row.key];
+      {isEditing ? (
+        <div className="border-t border-slate-200 px-5 py-5 first:border-t-0 sm:px-6">
+          <div className="w-full max-w-3xl space-y-5">
+            <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
+              {renderEditField("name")}
+              {renderEditField("displayName")}
+              {renderEditField("email", "sm:col-span-2")}
+              {renderEditField("phone")}
+              {renderEditField("dateOfBirth")}
+              {renderEditField("gender")}
+              {renderEditField("nationality")}
+            </div>
 
-          return (
-            <div
-              key={row.key}
-              className={cn(
-                "grid min-w-0 gap-0.5 border-t border-slate-200 px-5 first:border-t-0 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center sm:gap-4 sm:px-6",
-                isEditing
-                  ? "py-2.5 sm:min-h-[52px] sm:py-2"
-                  : "py-4 sm:min-h-16 sm:py-3",
-                row.key === "address"
-                  ? isEditing
-                    ? "pt-2.5 sm:pt-2"
-                    : "pt-5 sm:pt-5"
-                  : null,
-              )}
-            >
-              <div className="text-sm font-medium leading-5 text-slate-700 sm:text-slate-800">
-                {row.label}
+            <div className="space-y-3 border-t border-slate-100 pt-5">
+              <div>
+                <h3 className="text-sm font-semibold leading-5 text-slate-900">
+                  {getPersonalDetailRow("address").label}
+                </h3>
               </div>
-              {isEditing ? (
-                <div
-                  className={cn(
-                    "min-w-0 space-y-1",
-                    getPersonalDetailEditWidthClass(row.key),
-                  )}
-                >
-                  <DetailInput
-                    row={row}
-                    value={editValue}
-                    onChange={updateDraft}
-                  />
-                  {row.helper ? (
-                    <p className="text-sm leading-6 text-slate-500">
-                      {row.helper}
-                    </p>
-                  ) : null}
+              <div className="w-full max-w-[720px]">
+                <DetailInput
+                  row={getPersonalDetailRow("address")}
+                  value={draft.address}
+                  onChange={updateDraft}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div>
+          {personalDetailRows.map((row) => {
+            const readOnlyValue = initialValues[row.key];
+
+            return (
+              <div
+                key={row.key}
+                className={cn(
+                  "grid min-w-0 gap-0.5 border-t border-slate-200 px-5 py-4 first:border-t-0 sm:min-h-16 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center sm:gap-4 sm:px-6 sm:py-3",
+                  row.key === "address" && "pt-5 sm:pt-5",
+                )}
+              >
+                <div className="text-sm font-medium leading-5 text-slate-700 sm:text-slate-800">
+                  {row.label}
                 </div>
-              ) : (
                 <DetailValue
                   value={
                     row.key === "address"
@@ -1346,11 +1386,11 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
                   helper={row.helper}
                   preserveLines={row.key === "address"}
                 />
-              )}
-            </div>
-          );
-        })}
-      </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <div className="border-t border-slate-200 px-5 py-4 sm:px-6">
         {isEditing ? (
