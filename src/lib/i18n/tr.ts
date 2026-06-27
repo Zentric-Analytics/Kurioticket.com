@@ -336,6 +336,8 @@ export const translations: TranslationDictionary = {
   cityOrAirport: "Şehir veya havalimanı",
   startTypingCityOrAirport: "Önerileri görmek için şehir veya havalimanı adı yazmaya başlayın.",
   searchAirportsAndCities: "Havalimanları ve şehirlerde ara",
+  nearYou: "YAKININIZDA",
+  airportsAndCities: "HAVALİMANLARI VE ŞEHİRLER",
   searchAirportsOrCities: "Havalimanı veya şehir ara",
   searchingAirportsAndCities: "Havalimanları ve şehirler aranıyor…",
   noMatchingAirportsOrCities: "Eşleşen havalimanı veya şehir yok",

@@ -32,6 +32,8 @@ test("formatLocalizedAirportLabel uses natural active-locale city names", () => 
   assert.equal(formatLocalizedAirportLabel({ city: "Dubai", code: "DXB", locale: "fr" }), "Dubaï (DXB)");
   assert.equal(formatLocalizedAirportLabel({ city: "Los Angeles", code: "LAX", locale: "ko" }), "로스앤젤레스 (LAX)");
   assert.equal(formatLocalizedAirportLabel({ city: "Dubai", code: "DXB", locale: "hi" }), "दुबई (DXB)");
+  assert.equal(formatLocalizedAirportLabel({ city: "London", code: "LHR", locale: "tr" }), "Londra (LHR)");
+  assert.equal(formatLocalizedAirportLabel({ city: "Istanbul", code: "IST", locale: "tr" }), "İstanbul (IST)");
 });
 
 test("L airport city labels localize across core Asian and Arabic locales while preserving codes", () => {
@@ -47,6 +49,7 @@ test("L airport city labels localize across core Asian and Arabic locales while 
 
   for (const [city, code, expected] of koreanCases) {
     assert.equal(formatLocalizedAirportLabel({ city, code, locale: "ko" }), expected);
+    assert.equal(formatLocalizedAirportLabel({ city, code, locale: "tr" }).endsWith(`(${code})`), true);
     assert.equal(code, code.toUpperCase());
   }
 
@@ -73,13 +76,36 @@ test("airport city localization coverage is complete for every active locale", (
   const uniqueCities = new Set(airports.map((airport) => airport.city));
 
   assert.equal(uniqueCities.size, 234);
-  assert.equal(report.length, 12);
+  assert.equal(report.length, 13);
   for (const localeReport of report) {
     assert.equal(localeReport.total, uniqueCities.size);
     assert.equal(localeReport.localized, uniqueCities.size);
     assert.equal(localeReport.fallback, 0);
     assert.deepEqual(localeReport.missing, []);
   }
+});
+
+test("Turkish airport city and country display labels localize without changing codes", () => {
+  const turkishCases = [
+    ["Lagos", "LOS", "Lagos (LOS)"],
+    ["Los Angeles", "LAX", "Los Angeles (LAX)"],
+    ["London", "LHR", "Londra (LHR)"],
+    ["Istanbul", "IST", "İstanbul (IST)"],
+    ["Rome", "FCO", "Roma (FCO)"],
+    ["Accra", "ACC", "Akra (ACC)"],
+    ["Cairo", "CAI", "Kahire (CAI)"],
+    ["Lisbon", "LIS", "Lizbon (LIS)"],
+    ["Barcelona", "BCN", "Barselona (BCN)"],
+    ["Singapore", "SIN", "Singapur (SIN)"],
+  ] as const;
+
+  for (const [city, code, expected] of turkishCases) {
+    assert.equal(formatLocalizedAirportLabel({ city, code, locale: "tr" }), expected);
+    assert.equal(code, code.toUpperCase());
+  }
+
+  assert.equal(getLocalizedAirportCountryName({ country: "Nigeria", countryCode: "NG" }, "tr"), "Nijerya");
+  assert.equal(getLocalizedAirportCountryName({ country: "United States", countryCode: "US" }, "tr"), "Amerika Birleşik Devletleri");
 });
 
 test("Hindi airport city and country display labels localize without changing codes", () => {
@@ -108,7 +134,7 @@ test("airport country localization coverage is complete for every active locale"
   const report = getAirportCountryLocalizationCoverage();
   const uniqueCountryCodes = new Set(airports.map((airport) => airport.countryCode).filter(Boolean));
 
-  assert.equal(report.length, 12);
+  assert.equal(report.length, 13);
   for (const localeReport of report) {
     assert.equal(localeReport.total, uniqueCountryCodes.size);
     assert.equal(localeReport.localized, uniqueCountryCodes.size);
@@ -132,5 +158,7 @@ test("localized airport labels preserve airport codes for every airport and acti
 
 test("unknown city names fall back without changing the airport code", () => {
   assert.equal(getLocalizedCityName("Provider City", "ko"), "Provider City");
+  assert.equal(getLocalizedCityName("Provider City", "tr"), "Provider City");
   assert.equal(formatLocalizedAirportLabel({ city: "Provider City", code: "ZZZ", locale: "ko" }), "Provider City (ZZZ)");
+  assert.equal(formatLocalizedAirportLabel({ city: "Provider City", code: "ZZZ", locale: "tr" }), "Provider City (ZZZ)");
 });
