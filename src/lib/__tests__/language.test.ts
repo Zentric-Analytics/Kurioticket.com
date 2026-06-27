@@ -2481,6 +2481,10 @@ test("airport picker heading is localized for all active locales", () => {
   assert.equal(jaTranslations.airportsAndCities, "空港と都市");
   assert.equal(koTranslations.airportsAndCities, "공항 및 도시");
   assert.equal(hiTranslations.airportsAndCities, "हवाई अड्डे और शहर");
+  assert.equal(trTranslations.airportsAndCities, "HAVALİMANLARI VE ŞEHİRLER");
+  assert.notEqual(trTranslations.airportsAndCities, enTranslations.airportsAndCities);
+  assert.equal(trTranslations.nearYou, "YAKININIZDA");
+  assert.notEqual(trTranslations.nearYou, enTranslations.nearYou);
 });
 
 test("active account trips and price alerts copy is localized", () => {
