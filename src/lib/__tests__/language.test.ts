@@ -2795,6 +2795,75 @@ test("Hindi flights flow copy uses localized labels without mutating dynamic fli
   assert.equal(hi.providerComparisonIntro.includes("Kurioticket"), true);
 });
 
+test("Turkish flights results copy uses localized labels without mutating dynamic flight values", () => {
+  const tr = getTranslations("tr");
+
+  const expectedTurkishFlightLabels: Record<string, string> = {
+    cheapest: "En ucuz",
+    best: "En iyi",
+    quickest: "En hızlı",
+    departs: "Kalkış {{time}}",
+    resultsFound: "{{count}} sonuç bulundu",
+    resultFound: "{{count}} sonuç bulundu",
+    flightOption: "Uçuş seçeneği",
+    outbound: "Gidiş",
+    return: "Dönüş",
+    nonstop: "Aktarmasız",
+    oneStop: "1 aktarma",
+    stopCount: "{{count}} aktarma",
+    layover: "Aktarma",
+    layoverSummaryTemplate: "Aktarma: {{airport}} {{duration}}",
+    moreCount: "{{count}} daha",
+    estimatedPrice: "Tahmini fiyat",
+    providerPrice: "Sağlayıcı fiyatı",
+    viewFlight: "Uçuşu görüntüle",
+    baggage: "Bagaj",
+    carryOnIncluded: "el bagajı dahil",
+    cabin: "Kabin",
+    seatSelection: "Koltuk seçimi",
+    providerRulesApply: "Sağlayıcı kuralları geçerlidir",
+    fareRules: "Ücret kuralları",
+    reviewBeforeBooking: "Rezervasyondan önce inceleyin",
+    flightDetailsProviderDisclaimer:
+      "Son fiyat, uygunluk, rezervasyon ve ücret kuralları sağlayıcı tarafından onaylanır.",
+    flightCardProviderHandoff:
+      "Son fiyat, uygunluk, rezervasyon ve ücret kuralları sağlayıcı tarafından onaylanır.",
+    providerNormalizedItineraryPrefix:
+      "Gidiş ve dönüş ayrıntıları sağlayıcı tarafından normalize edilen güzergâh verilerinden gösterilir.",
+    amenities: "Olanaklar",
+    baggageIncluded: "Bagaj dahil",
+    flexibleRefundable: "Esnek/iade edilebilir",
+    tripType: "Seyahat türü",
+    selectedFlights: "Seçilen uçuşlar",
+    flightRouteTemplate: "{{origin}} - {{destination}}",
+    layoverTemplate: "{{airport}} aktarması · {{duration}} · {{connection}}",
+    estimateShownProviderPrice: "Tahmin gösteriliyor. Sağlayıcı fiyatı:",
+    continueToProvider: "Sağlayıcıya devam et",
+    compareMoreProviders: "Daha fazla sağlayıcı karşılaştır",
+    providerComparisonIntro: "Kurioticket farklı sağlayıcıları karşılaştırabilir.",
+  };
+
+  for (const [key, value] of Object.entries(expectedTurkishFlightLabels)) {
+    assert.equal(tr[key], value, `${key} should be localized for Turkish flights flow`);
+    assert.notEqual(tr[key], enTranslations[key], `${key} should not fall back to English in Turkish`);
+  }
+
+  assert.equal(tr.departs.replace("{{time}}", "2:45 PM"), "Kalkış 2:45 PM");
+  assert.equal(tr.resultsFound.replace("{{count}}", "12"), "12 sonuç bulundu");
+  assert.equal(
+    tr.layoverSummaryTemplate.replace("{{airport}}", "FRA").replace("{{duration}}", "7h 35m"),
+    "Aktarma: FRA 7h 35m",
+  );
+  assert.equal(
+    tr.displayEstimateConvertedFromProviderPrice
+      .replace("{{formatted}}", "$1,234")
+      .replace("{{providerPrice}}", "€1.100"),
+    "$1,234. Görüntülenen tahmin €1.100 sağlayıcı fiyatından dönüştürüldü. Nihai sağlayıcı fiyatı farklı olabilir.",
+  );
+  assert.equal(tr.providerComparisonIntro.includes("Kurioticket"), true);
+  assert.equal(["Lufthansa", "LH0569", "LOS", "LAX", "$1,234", "2:45 PM", "7h 35m", "LOS → LAX"].join(" · "), "Lufthansa · LH0569 · LOS · LAX · $1,234 · 2:45 PM · 7h 35m · LOS → LAX");
+});
+
 test("Hindi cars flow copy uses localized labels without mutating dynamic values", () => {
   const hi = getTranslations("hi");
 
