@@ -6,6 +6,10 @@ import { X } from "lucide-react";
 
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
+import {
+  getLocalizedHotelDestinationCityName,
+  getLocalizedHotelDestinationDetail,
+} from "@/data/hotelDestinations";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 
@@ -72,7 +76,7 @@ export function HotelDestinationMobilePicker({
   onClose,
   onClear,
 }: HotelDestinationMobilePickerProps) {
-  const { t: dictionary } = useLocale();
+  const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const getDestinationKindLabel = (kind: HotelDestinationSuggestion["kind"]) =>
     t(hotelDestinationKindTranslationKeys[kind]) ||
@@ -292,9 +296,14 @@ export function HotelDestinationMobilePicker({
           ) : visibleSuggestions.length ? (
             <div className="divide-y divide-slate-100">
               {visibleSuggestions.map((suggestion, index) => {
-                const detail = [suggestion.region, suggestion.country]
-                  .filter(Boolean)
-                  .join(", ");
+                const detail = getLocalizedHotelDestinationDetail(
+                  suggestion,
+                  locale,
+                );
+                const localizedName = getLocalizedHotelDestinationCityName(
+                  suggestion.name,
+                  locale,
+                );
 
                 return (
                   <button
@@ -308,7 +317,7 @@ export function HotelDestinationMobilePicker({
                   >
                     <span className="min-w-0">
                       <span className="block truncate text-base font-black text-slate-950">
-                        {suggestion.name}
+                        {localizedName}
                       </span>
                       <span className="mt-0.5 block truncate text-sm font-medium text-slate-500">
                         {detail || suggestion.country}
