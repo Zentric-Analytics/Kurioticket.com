@@ -93,6 +93,30 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.ng-abv-fco.title": "Roma simge yapı geçidi",
   "homeDiscoveryRoute.ng-abv-fco.routeNote":
     "Harabeler, meydanlar ve sakin akşam atmosferi için Avrupa klasiği.",
+  "homeDiscoveryRoute.ng-los-nrt.title": "Tokyo uzun mesafe şehir ritmi",
+  "homeDiscoveryRoute.ng-los-nrt.routeNote":
+    "Neon semtleri ve verimli raylı ulaşımıyla önemli Asya geçidi.",
+  "homeDiscoveryRoute.ng-abv-mad.title": "Madrid tapas ve sanat rotası",
+  "homeDiscoveryRoute.ng-abv-mad.routeNote":
+    "Müzeler, bulvarlar ve geç akşam yemekleri için Avrupa şehir molası rotası.",
+  "homeDiscoveryRoute.ng-los-cpt.title": "Cape Town kıyı macerası",
+  "homeDiscoveryRoute.ng-los-cpt.routeNote":
+    "Plajları, dağları ve bağlarıyla manzaralı Güney Afrika rotası.",
+  "homeDiscoveryRoute.ng-abv-rob.title": "Monrovia bölgesel sahil seyahati",
+  "homeDiscoveryRoute.ng-abv-rob.routeNote":
+    "Atlantik plajları ve yerel pazarlarıyla Batı Afrika şehir molası.",
+  homeTrustTitle: "Gezginler neden Kurioticket'te karşılaştırır",
+  homeTrustSubtitle:
+    "Kurioticket sağlayıcı tekliflerini net şekilde karşılaştırmanıza, ardından rezervasyonu sağlayıcının sitesinde tamamlamanıza yardımcı olur.",
+  homeTrustCompareTitle: "Sağlayıcı tekliflerini karşılaştırın",
+  homeTrustCompareBody:
+    "Birden fazla seyahat sağlayıcısından uçuş ve otel seçeneklerini tek yerde görüntüleyin.",
+  homeTrustPricingTitle: "Şeffaf fiyat bağlamı",
+  homeTrustPricingBody:
+    "Devam etmeden önce fiyatı, rota veya konaklama detaylarını ve önemli şartları inceleyin.",
+  homeTrustHandoffTitle: "Güvenli sağlayıcı yönlendirmesi",
+  homeTrustHandoffBody:
+    "Bir teklif seçtiğinizde, rezervasyonu güvenle tamamlamak için sağlayıcıya devam edersiniz.",
   "homePopularDestinationCity.accra": "Akra",
   "homePopularDestinationCity.dubai": "Dubai",
   "homePopularDestinationCity.johannesburg": "Johannesburg",
@@ -105,7 +129,27 @@ export const translations: TranslationDictionary = {
   destination: "Varış",
   departureDate: "Seyahat tarihleri",
   travelDates: "Seyahat tarihleri",
+  cityOrHotel: "Şehir veya otel",
+  hotelSearchDestinationPlaceholder: "Şehir, bölge veya simge yapı",
+  hotelSearchTravelDatesLabel: "Seyahat tarihleri",
+  hotelSearchDatePlaceholder: "Giriş — Çıkış",
+  hotelSearchGuestsLabel: "Misafirler",
+  stayDetails: "Konaklama detayları",
+  chooseGuestsAndRooms: "Misafirleri ve odaları seçin",
+  guestsAndRooms: "Misafirler ve odalar",
   travelers: "Yolcular",
+  guests: "Misafirler",
+  guestSingular: "misafir",
+  guestPlural: "misafir",
+  rooms: "Odalar",
+  roomSingular: "oda",
+  roomPlural: "oda",
+  hotelAdultHelper: "18+ misafir",
+  hotelChildrenHelper: "0–17 yaş",
+  hotelRoomsHelper: "En fazla 6 oda",
+  petFriendly: "Evcil hayvan dostu",
+  onlyShowPetFriendlyStays:
+    "Yalnızca evcil hayvana izin veren konaklamaları göster",
   roundTrip: "Gidiş-dönüş",
   oneWay: "Tek yön",
   fromPlaceholder: "Nereden?",
@@ -185,4 +229,31 @@ export const translations: TranslationDictionary = {
   footerPrivacy: "Gizlilik",
   footerTerms: "Şartlar",
   footerCookies: "Çerezler",
+  homePromoFlightsTitle: "En iyi hava yollarından uçuş fırsatları",
+  homePromoFlightsBody:
+    "Sınırlı süreli ücretleri keşfedin ve seçenekleri anında karşılaştırın.",
+  homePromoFlightsCta: "Uçuş fırsatlarını keşfet",
+  homePromoHotelsTitle: "Dünya çapında otel tasarrufları",
+  homePromoHotelsBody:
+    "Butik otellerden global zincirlere kadar konaklamaları fiyat şeffaflığıyla inceleyin.",
+  homePromoHotelsCta: "Otel fırsatlarını keşfet",
+  faqHeading: "Sıkça sorulan sorular",
+  faqIntro:
+    "Kurioticket'in güvenilir sağlayıcılarla rezervasyon yapmadan önce uçuşları, otelleri ve seyahat seçeneklerini karşılaştırmanıza nasıl yardımcı olduğunu öğrenin.",
+  faqQuestionFindOptions:
+    "Kurioticket uçuş ve otel seçeneklerini nasıl bulur?",
+  faqAnswerFindOptions:
+    "Kurioticket, seyahat sağlayıcılarının canlı tekliflerini arar ve seçenekleri tek yerde toplar; böylece seçmeden önce fiyatları, rotaları, konaklamaları ve detayları karşılaştırabilirsiniz.",
+  faqQuestionSellDirectly:
+    "Kurioticket doğrudan bilet veya otel odası satar mı?",
+  faqAnswerSellDirectly:
+    "Kurioticket seyahat seçeneklerini karşılaştırmanıza yardımcı olur. Bir teklif seçtiğinizde detayları incelemek ve rezervasyonu sağlayıcının sitesinde tamamlamak için seçilen sağlayıcıya yönlendirilirsiniz.",
+  faqQuestionPriceChanges:
+    "Bir teklife tıkladıktan sonra fiyatlar neden değişebilir?",
+  faqAnswerPriceChanges:
+    "Hava yolları, oteller ve seyahat sağlayıcıları envanteri sık sık güncellediği için fiyatlar ve müsaitlik gerçek zamanlı değişebilir. Rezervasyon yapmadan önce sağlayıcının ödeme sayfasındaki son fiyatı her zaman inceleyin.",
+  faqQuestionCompareProviders:
+    "Aynı seyahat için birden fazla sağlayıcıyı karşılaştırabilir miyim?",
+  faqAnswerCompareProviders:
+    "Evet. Kurioticket seçenekleri yan yana karşılaştırmanıza yardımcı olacak şekilde tasarlanmıştır; böylece fiyatı, zamanı, rota detaylarını, otel detaylarını ve genel değeri değerlendirebilirsiniz.",
 };

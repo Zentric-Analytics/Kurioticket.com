@@ -740,6 +740,117 @@ test("Flights datepicker formatter normalizes Hindi locale for generated display
   assert.equal(hiTranslations.done, "हो गया");
 });
 
+test("Turkish homepage hotel search and lower homepage copy resolve without English fallback", () => {
+  const tr = getTranslations("tr");
+  const auditedTurkishHomepageKeys: Array<[string, string]> = [
+    ["cityOrHotel", "Şehir veya otel"],
+    ["hotelSearchTravelDatesLabel", "Seyahat tarihleri"],
+    ["hotelSearchDatePlaceholder", "Giriş — Çıkış"],
+    ["hotelSearchGuestsLabel", "Misafirler"],
+    ["stayDetails", "Konaklama detayları"],
+    ["guestsAndRooms", "Misafirler ve odalar"],
+    ["hotelAdultHelper", "18+ misafir"],
+    ["hotelChildrenHelper", "0–17 yaş"],
+    ["rooms", "Odalar"],
+    ["hotelRoomsHelper", "En fazla 6 oda"],
+    ["petFriendly", "Evcil hayvan dostu"],
+    [
+      "onlyShowPetFriendlyStays",
+      "Yalnızca evcil hayvana izin veren konaklamaları göster",
+    ],
+    ["guestSingular", "misafir"],
+    ["guestPlural", "misafir"],
+    ["roomSingular", "oda"],
+    ["roomPlural", "oda"],
+    ["homeDiscoveryRoute.ng-los-nrt.title", "Tokyo uzun mesafe şehir ritmi"],
+    [
+      "homeDiscoveryRoute.ng-los-nrt.routeNote",
+      "Neon semtleri ve verimli raylı ulaşımıyla önemli Asya geçidi.",
+    ],
+    ["homeDiscoveryRoute.ng-abv-mad.title", "Madrid tapas ve sanat rotası"],
+    [
+      "homeDiscoveryRoute.ng-abv-mad.routeNote",
+      "Müzeler, bulvarlar ve geç akşam yemekleri için Avrupa şehir molası rotası.",
+    ],
+    ["homeDiscoveryRoute.ng-los-cpt.title", "Cape Town kıyı macerası"],
+    [
+      "homeDiscoveryRoute.ng-los-cpt.routeNote",
+      "Plajları, dağları ve bağlarıyla manzaralı Güney Afrika rotası.",
+    ],
+    ["homeDiscoveryRoute.ng-abv-rob.title", "Monrovia bölgesel sahil seyahati"],
+    [
+      "homeDiscoveryRoute.ng-abv-rob.routeNote",
+      "Atlantik plajları ve yerel pazarlarıyla Batı Afrika şehir molası.",
+    ],
+    ["homeTrustTitle", "Gezginler neden Kurioticket'te karşılaştırır"],
+    [
+      "homeTrustSubtitle",
+      "Kurioticket sağlayıcı tekliflerini net şekilde karşılaştırmanıza, ardından rezervasyonu sağlayıcının sitesinde tamamlamanıza yardımcı olur.",
+    ],
+    ["homeTrustCompareTitle", "Sağlayıcı tekliflerini karşılaştırın"],
+    [
+      "homeTrustCompareBody",
+      "Birden fazla seyahat sağlayıcısından uçuş ve otel seçeneklerini tek yerde görüntüleyin.",
+    ],
+    ["homeTrustPricingTitle", "Şeffaf fiyat bağlamı"],
+    [
+      "homeTrustPricingBody",
+      "Devam etmeden önce fiyatı, rota veya konaklama detaylarını ve önemli şartları inceleyin.",
+    ],
+    ["homeTrustHandoffTitle", "Güvenli sağlayıcı yönlendirmesi"],
+    [
+      "homeTrustHandoffBody",
+      "Bir teklif seçtiğinizde, rezervasyonu güvenle tamamlamak için sağlayıcıya devam edersiniz.",
+    ],
+    ["homePromoFlightsTitle", "En iyi hava yollarından uçuş fırsatları"],
+    [
+      "homePromoFlightsBody",
+      "Sınırlı süreli ücretleri keşfedin ve seçenekleri anında karşılaştırın.",
+    ],
+    ["homePromoFlightsCta", "Uçuş fırsatlarını keşfet"],
+    ["homePromoHotelsTitle", "Dünya çapında otel tasarrufları"],
+    [
+      "homePromoHotelsBody",
+      "Butik otellerden global zincirlere kadar konaklamaları fiyat şeffaflığıyla inceleyin.",
+    ],
+    ["homePromoHotelsCta", "Otel fırsatlarını keşfet"],
+    ["faqHeading", "Sıkça sorulan sorular"],
+    [
+      "faqIntro",
+      "Kurioticket'in güvenilir sağlayıcılarla rezervasyon yapmadan önce uçuşları, otelleri ve seyahat seçeneklerini karşılaştırmanıza nasıl yardımcı olduğunu öğrenin.",
+    ],
+    ["faqQuestionFindOptions", "Kurioticket uçuş ve otel seçeneklerini nasıl bulur?"],
+    ["faqQuestionSellDirectly", "Kurioticket doğrudan bilet veya otel odası satar mı?"],
+    ["faqQuestionPriceChanges", "Bir teklife tıkladıktan sonra fiyatlar neden değişebilir?"],
+    ["faqQuestionCompareProviders", "Aynı seyahat için birden fazla sağlayıcıyı karşılaştırabilir miyim?"],
+  ];
+
+  for (const [key, expected] of auditedTurkishHomepageKeys) {
+    assert.equal(tr[key], expected, key);
+    assert.notEqual(tr[key], enTranslations[key], key);
+  }
+
+  assert.equal(`${1} ${tr.guestSingular}, ${1} ${tr.roomSingular}`, "1 misafir, 1 oda");
+  assert.equal(`{{count}} ${tr.guestPlural}`, "{{count}} misafir");
+  assert.equal(`{{count}} ${tr.roomPlural}`, "{{count}} oda");
+});
+
+test("Turkish hotel datepicker formatter normalizes locale for generated display dates", () => {
+  for (const locale of ["tr", "tr-TR", "tr-tr"]) {
+    assert.equal(normalizeFlightsCalendarLocale(locale), "tr-TR");
+    assert.equal(formatFlightsMonthHeading(new Date(2026, 5, 1), locale), "Haziran 2026");
+    assert.equal(formatFlightsMonthHeading(new Date(2026, 6, 1), locale), "Temmuz 2026");
+  }
+
+  assert.deepEqual(formatFlightsWeekdays("tr-TR"), ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"]);
+  assert.equal(trTranslations.travelDates, "Seyahat tarihleri");
+  assert.equal(trTranslations.chooseTravelDates, "Seyahat tarihlerini seçin");
+  assert.equal(trTranslations.previousMonthShort, "Önceki");
+  assert.equal(trTranslations.nextMonthShort, "Sonraki");
+  assert.equal(trTranslations.clear, "Temizle");
+  assert.equal(trTranslations.done, "Tamam");
+});
+
 
 test("all flight datepicker render paths use shared Hindi date formatting", () => {
   const sharedFormatterSource = readFileSync("src/lib/flights/dateFormatting.ts", "utf8");
