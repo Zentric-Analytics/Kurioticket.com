@@ -1794,6 +1794,51 @@ test("Turkish homepage header search popular destinations and footer strings are
   assert.equal(getTranslations("tr-tr").footerContactUs, expectedTurkishHomepageStrings.footerContactUs);
 });
 
+test("Turkish Flights landing hero and standalone search form resolve without English fallback", () => {
+  const tr = getTranslations("tr");
+
+  const expectedTurkishFlightsLandingStrings: Record<string, string> = {
+    flightLandingHeroTitle: "Bir sonraki uygun fiyatlı uçuşunuzu kolayca bulun.",
+    flightLandingHeroSubtitle:
+      "Bir sonraki yolculuğunuz için rotaları arayın, tarihleri karşılaştırın ve uçuş seçeneklerini keşfedin.",
+    roundTrip: "Gidiş-dönüş",
+    oneWay: "Tek yön",
+    origin: "Kalkış",
+    destination: "Varış",
+    travelDates: "Seyahat tarihleri",
+    cityOrAirport: "Şehir veya havalimanı",
+    travelers: "Yolcular",
+    adultSingular: "yetişkin",
+    adultPlural: "yetişkin",
+    childSingular: "çocuk",
+    childPlural: "çocuk",
+    infantSingular: "bebek",
+    infantPlural: "bebek",
+    travelerSingular: "yolcu",
+    travelerPlural: "yolcu",
+    economy: "Ekonomi",
+    passengers: "Yolcular",
+    cabinClass: "Kabin sınıfı",
+    chooseTravelDates: "Seyahat tarihlerini seçin",
+    clear: "Temizle",
+    done: "Tamam",
+    previousMonthShort: "Önceki",
+    nextMonthShort: "Sonraki",
+    search: "Ara",
+    searchFlights: "Uçuş ara",
+    searchingFlights: "Uçuşlar aranıyor…",
+  };
+
+  for (const [key, value] of Object.entries(expectedTurkishFlightsLandingStrings)) {
+    assert.equal(tr[key], value, `tr ${key} should use Flights landing Turkish copy`);
+    assert.notEqual(tr[key], enTranslations[key], `tr ${key} should not fall back to English`);
+  }
+
+  assert.equal(`${tr.adultSingular === "yetişkin" ? "1" : ""} ${tr.adultSingular}, ${tr.economy}`, "1 yetişkin, Ekonomi");
+  assert.equal(getTranslations("tr-TR").flightLandingHeroTitle, expectedTurkishFlightsLandingStrings.flightLandingHeroTitle);
+  assert.equal(getTranslations("tr-tr").searchFlights, expectedTurkishFlightsLandingStrings.searchFlights);
+});
+
 test("Turkish global modals and auth pages resolve screenshot-visible copy", () => {
   const tr = getTranslations("tr");
 
