@@ -462,9 +462,9 @@ function CountryFlagIcon({
       <RawImage
         src={getFlagImageUrl(isoCode)}
         alt={`${countryName} flag`}
-        width={20}
-        height={20}
-        className="h-full w-full object-contain"
+        width={36}
+        height={36}
+        className="h-full w-full object-cover"
         loading="lazy"
         decoding="async"
       />
@@ -1056,15 +1056,15 @@ function PhoneNumberInput({
 
   return (
     <div className="flex min-w-0 items-center gap-2">
-      <div className="group relative h-10 w-[4.5rem] shrink-0">
+      <div className="group relative h-10 w-20 shrink-0">
         <div
           aria-hidden="true"
-          className="pointer-events-none flex h-full w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 shadow-sm transition group-focus-within:border-violet-400 group-focus-within:ring-4 group-focus-within:ring-violet-100"
+          className="pointer-events-none flex h-full w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-2 shadow-sm transition group-focus-within:border-violet-400 group-focus-within:ring-4 group-focus-within:ring-violet-100"
         >
           <CountryFlagIcon
             countryName={selectedOption.countryName}
             isoCode={selectedOption.isoCode}
-            className="h-5 w-5 rounded-full bg-white"
+            className="h-8 w-8 rounded-full bg-white"
           />
           <ChevronDown
             className="h-4 w-4 shrink-0 text-slate-500"
