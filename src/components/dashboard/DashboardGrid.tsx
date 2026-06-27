@@ -1333,7 +1333,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     >
       {isEditing ? (
         <div className="border-t border-slate-200 px-5 py-5 first:border-t-0 sm:px-6">
-          <div className="w-full max-w-3xl space-y-5">
+          <div className="w-full max-w-[720px] space-y-5">
             <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
               {renderEditField("name")}
               {renderEditField("displayName")}
@@ -1344,7 +1344,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
               {renderEditField("nationality")}
             </div>
 
-            <div className="space-y-3 border-t border-slate-100 pt-5">
+            <div className="space-y-3 border-t border-slate-100 pt-7">
               <div>
                 <h3 className="text-sm font-semibold leading-5 text-slate-900">
                   {getPersonalDetailRow("address").label}
