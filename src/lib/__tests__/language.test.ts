@@ -54,6 +54,48 @@ test("global language catalog renders", () => {
 });
 
 
+test("Turkish signed-in account dropdown labels do not fall back to English", () => {
+  const tr = getTranslations("tr");
+
+  assert.equal(tr["accountMenu.myAccount.label"], "Hesabım");
+  assert.equal(tr["accountMenu.savedTrips.label"], "Kaydedilen seyahatler");
+  assert.equal(tr["accountMenu.priceAlerts.label"], "Fiyat uyarıları");
+  assert.equal(tr.logout, "Çıkış yap");
+  assert.notEqual(tr["accountMenu.myAccount.label"], enTranslations["accountMenu.myAccount.label"]);
+  assert.notEqual(tr["accountMenu.savedTrips.label"], enTranslations["accountMenu.savedTrips.label"]);
+  assert.notEqual(tr["accountMenu.priceAlerts.label"], enTranslations["accountMenu.priceAlerts.label"]);
+  assert.notEqual(tr.logout, enTranslations.logout);
+
+  const appHeaderSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
+
+  assert.ok(
+    appHeaderSource.includes('labelKey: "accountMenu.myAccount.label"') &&
+      appHeaderSource.includes('labelKey: "accountMenu.savedTrips.label"') &&
+      appHeaderSource.includes('labelKey: "accountMenu.priceAlerts.label"'),
+    "Signed-in account dropdown menu items should continue to use account menu i18n keys.",
+  );
+  assert.ok(
+    appHeaderSource.includes("session?.user?.name || accountDisplayName") &&
+      appHeaderSource.includes("session.user.email") &&
+      appHeaderSource.includes("session?.user?.email"),
+    "Signed-in account dropdown should keep user name and email display dynamic.",
+  );
+  assert.ok(
+    appHeaderSource.includes('href: "/dashboard/account"') &&
+      appHeaderSource.includes('href: "/saved"') &&
+      appHeaderSource.includes('href: "/dashboard/alerts"') &&
+      appHeaderSource.includes("onClick={handleSignOut}"),
+    "Signed-in account dropdown should keep menu routes and logout action wired unchanged.",
+  );
+  assert.ok(
+    !appHeaderSource.includes('>My account<') &&
+      !appHeaderSource.includes('>Saved trips<') &&
+      !appHeaderSource.includes('>Price alerts<') &&
+      !appHeaderSource.includes('>Logout<'),
+    "Signed-in account dropdown should not hard-code screenshot-visible English labels.",
+  );
+});
+
 test("Hindi signed-in account dropdown labels do not fall back to English", () => {
   const hi = getTranslations("hi");
 
@@ -1282,6 +1324,61 @@ test("active account FAQ translations cover all visible FAQ page strings", () =>
 });
 
 
+
+test("Turkish account dashboard overview copy resolves without English fallback", () => {
+  const tr = getTranslations("tr");
+
+  assert.equal(tr["accountDashboard.overview.welcome"], "Tekrar hoş geldiniz, {name}");
+  assert.equal(
+    tr["accountDashboard.hub.description"],
+    "Seyahatlerinizi, kaydedilen öğelerinizi, tercihlerinizi ve hesap ayarlarınızı tek bir yerden yönetin.",
+  );
+  assert.equal(tr["accountDashboard.hub.manageAccount"], "Hesabı yönet");
+  assert.equal(tr["accountDashboard.hub.travelActivity"], "Seyahat etkinliği");
+  assert.equal(tr["accountDashboard.hub.preferences"], "Tercihler");
+  assert.equal(tr["accountDashboard.hub.helpAndSupport"], "Yardım ve destek");
+  assert.equal(tr["accountDashboard.hub.personalDetails"], "Kişisel bilgiler");
+  assert.equal(tr["accountDashboard.hub.securitySettings"], "Güvenlik ayarları");
+  assert.equal(tr["accountDashboard.hub.myTrips"], "Seyahatlerim");
+  assert.equal(tr["accountDashboard.hub.savedTrips"], "Kaydedilen seyahatler");
+  assert.equal(tr["accountDashboard.hub.priceAlerts"], "Fiyat uyarıları");
+  assert.equal(tr["accountDashboard.hub.emailPreferences"], "Özelleştirme tercihleri");
+  assert.equal(tr["accountDashboard.hub.travelPreferences"], "Rezervasyon tercihleri");
+  assert.equal(tr["accountDashboard.hub.contactSupport"], "Destekle iletişime geç");
+  assert.equal(tr["accountDashboard.hub.faq"], "SSS");
+
+  assert.equal(tr["accountDashboard.overview.welcome"].includes("{name}"), true);
+  assert.equal(tr["accountDashboard.overview.welcome"].includes("developer"), false);
+  assert.equal(tr["accountDashboard.overview.welcome"].includes("developer2@zentricresearch.com"), false);
+
+  const dashboardSource = readFileSync("src/components/dashboard/DashboardGrid.tsx", "utf8");
+  const dashboardPageSource = readFileSync("src/app/dashboard/page.tsx", "utf8");
+
+  assert.ok(
+    dashboardSource.includes('t["accountDashboard.overview.welcome"]') &&
+      dashboardSource.includes("formatAccountWelcome(") &&
+      dashboardPageSource.includes('const displayName = firstName || "traveler"'),
+    "Dashboard welcome should continue using the i18n template with a dynamic display name.",
+  );
+  assert.ok(
+    dashboardSource.includes("{initials}") &&
+      dashboardSource.includes("{userEmail}") &&
+      dashboardPageSource.includes("const initials = getInitials(userName, userEmail)"),
+    "Dashboard overview should keep user email and avatar initials dynamic.",
+  );
+  assert.ok(
+    dashboardSource.includes('href: "/dashboard"') &&
+      dashboardSource.includes('href: "/dashboard/security"') &&
+      dashboardSource.includes('href: "/dashboard/trips"') &&
+      dashboardSource.includes('href: "/saved?from=account"') &&
+      dashboardSource.includes('href: "/dashboard/alerts?from=account"') &&
+      dashboardSource.includes('href: "/dashboard/preferences/customization"') &&
+      dashboardSource.includes('href: "/dashboard/preferences/booking"') &&
+      dashboardSource.includes('href: "/dashboard/support"') &&
+      dashboardSource.includes('href: "/faq?from=account"'),
+    "Dashboard overview routes should remain unchanged.",
+  );
+});
 
 test("Hindi account dashboard overview copy resolves without English fallback", () => {
   const hi = getTranslations("hi");
