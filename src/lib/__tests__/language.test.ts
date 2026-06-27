@@ -2996,6 +2996,12 @@ test("Hindi cars flow copy uses localized labels without mutating dynamic values
 test("Turkish hotels landing render path copy resolves without English fallback", () => {
   const tr = getTranslations("tr");
   const auditedTurkishHotelLandingKeys: Array<[string, string]> = [
+    ["hotelsHeroEyebrow", "PREMİUM KONAKLAMALAR, NET KARŞILAŞTIRMA"],
+    ["hotelsHeroTitle", "Seyahatinize doğru başlayan konaklamayı bulun."],
+    [
+      "hotelsHeroSubtitle",
+      "Şık şehir konaklamalarından rahat resort kaçamaklarına kadar otelleri tek yerde karşılaştırın.",
+    ],
     ["hotelSearchDestinationLabel", "VARIŞ"],
     ["hotelSearchDestinationPlaceholder", "Şehir, bölge veya simge yapı"],
     ["hotelSearchTravelDatesLabel", "Seyahat tarihleri"],
@@ -3032,6 +3038,21 @@ test("Turkish hotels landing render path copy resolves without English fallback"
     assert.equal(tr[key], expected, `${key} should resolve to Turkish`);
     assert.notEqual(tr[key], enTranslations[key], `${key} should not fall back to English`);
   }
+
+  const hotelsPageSource = readFileSync("src/app/hotels/page.tsx", "utf8");
+
+  for (const key of ["hotelsHeroEyebrow", "hotelsHeroTitle", "hotelsHeroSubtitle"]) {
+    assert.ok(
+      hotelsPageSource.includes(`t("${key}")`),
+      `Hotels hero render path should resolve ${key} through i18n`,
+    );
+  }
+  assert.ok(
+    !hotelsPageSource.includes("PREMIUM STAYS, CLEARLY COMPARED") &&
+      !hotelsPageSource.includes("Find the stay that starts the trip right.") &&
+      !hotelsPageSource.includes("Compare hotels in one place, from polished city arrivals to easy resort escapes."),
+    "Hotels hero render path should not hard-code screenshot-visible English copy.",
+  );
 });
 
 test("Turkish hotel calendar locale normalizes to tr-TR for generated month headings", async () => {

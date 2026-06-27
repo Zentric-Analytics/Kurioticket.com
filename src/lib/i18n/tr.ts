@@ -464,6 +464,10 @@ export const translations: TranslationDictionary = {
   departureDate: "Seyahat tarihleri",
   travelDates: "Seyahat tarihleri",
   cityOrHotel: "Şehir veya otel",
+  hotelsHeroEyebrow: "PREMİUM KONAKLAMALAR, NET KARŞILAŞTIRMA",
+  hotelsHeroTitle: "Seyahatinize doğru başlayan konaklamayı bulun.",
+  hotelsHeroSubtitle:
+    "Şık şehir konaklamalarından rahat resort kaçamaklarına kadar otelleri tek yerde karşılaştırın.",
   hotelSearchDestinationPlaceholder: "Şehir, bölge veya simge yapı",
   hotelSearchDestinationLabel: "VARIŞ",
   "hotelDestinationKind.city": "Şehir",
