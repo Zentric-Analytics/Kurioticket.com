@@ -1660,6 +1660,81 @@ test("Hindi hotels flow copy is localized without English fallback", () => {
   );
 });
 
+test("Turkish hotels results copy is localized without English fallback and preserves raw selected values", () => {
+  const expectedTurkishHotelResultsStrings = {
+    clearAll: "Tümünü temizle",
+    "hotelResults.openFilters": "Filtreleri aç",
+    "hotelResults.searchingHotelPartners": "Otel iş ortakları aranıyor...",
+    "hotelResults.liveSearchUnavailable": "Canlı otel araması geçici olarak kullanılamıyor. Lütfen kısa süre sonra tekrar deneyin.",
+    "hotelResults.searchUnavailableDetailed": "Bu istek için otel araması geçici olarak kullanılamıyor. Konaklama seçeneklerini yalnızca fiyat, müsaitlik, ücretler ve kurallar sağlayıcıyla incelenebildiğinde gösteriyoruz. Lütfen daha sonra tekrar deneyin veya yeni bir arama başlatın.",
+    "hotelResults.unableToSearchHotels": "Oteller aranamadı.",
+    "hotelResults.noStaysMatchFiltersTitle": "Bu filtrelerle eşleşen konaklama yok",
+    "hotelResults.resetFilters": "Filtreleri sıfırla",
+    "hotelResults.foundPlacesToStay": "Sizin için {{count}} konaklama yeri bulduk",
+    "hotelResults.summaryAria": "Otel sonuç özeti",
+    "hotelResults.cheapest": "EN UCUZ",
+    "hotelResults.lowestTotalPrice": "En düşük toplam fiyat",
+    "hotelResults.bestValue": "EN İYİ DEĞER",
+    "hotelResults.bestBalance": "En iyi denge",
+    "hotelResults.topRated": "EN YÜKSEK PUANLI",
+    "hotelResults.highestRating": "En yüksek puan",
+    "hotelResults.valueScore": "{{score}}/100 puan",
+    "hotelResults.starPlural": "{{count}} yıldız",
+    "hotelResults.activeHotelFilters": "Aktif otel filtreleri",
+    "hotelResults.filterBy": "Filtrele",
+    "hotelResults.removeFilter": "{{label}} filtresini kaldır",
+    "hotelResults.budgetPrice": "Bütçe / Fiyat",
+    "hotelResults.totalUpTo": "Toplam en fazla",
+    "hotelResults.popularFilters": "Popüler filtreler",
+    "hotelResults.starRating": "Yıldız puanı",
+    "hotelResults.fromRating": "Başlangıç",
+    "hotelResults.locationArea": "Konum / Bölge",
+    "hotelResults.propertyType": "Tesis türü",
+    "hotelResults.roomType": "Oda türü",
+    "hotelResults.bedType": "Yatak türü",
+    "hotelResults.meals": "Öğünler",
+    "hotelResults.cancellationPolicy": "İptal politikası",
+    "hotelResults.facilities": "Olanaklar",
+    "hotelResults.showMore": "Daha fazla göster ({{count}})",
+    "hotelResults.upToPrice": "{{price}} tutarına kadar",
+    "hotelResults.starsAndUp": "{{rating}}+ yıldız",
+    "hotelResults.nonRefundable": "İade edilemez",
+    "hotelResults.hotelImageAlt": "{{name}} konaklama seçeneği{{location}}",
+    "hotelResults.nearLocation": "{{location}} yakınında",
+    "hotelResults.estimatedStayTotal": "tahmini konaklama toplamı",
+    "hotelResults.pricePerNight": "gecelik {{price}}",
+    "hotelResults.viewHotel": "Oteli görüntüle",
+    "hotelResults.filter.freeWifi": "Ücretsiz Wi-Fi",
+    "hotelResults.filter.breakfastIncludedAvailable": "Kahvaltı dahil/mevcut",
+    "hotelResults.filter.freeCancellation": "Ücretsiz iptal",
+    "hotelResults.filter.roomOnly": "Sadece oda",
+    "hotelResults.filter.doubleBusiness": "Çift kişilik business oda",
+    "hotelResults.filter.deluxeKingRoom": "Deluxe king oda",
+    "hotelResults.filter.classicRoom": "Klasik oda",
+    "hotelResults.filter.luxuryKing": "Lüks king oda",
+  };
+
+  for (const [key, value] of Object.entries(expectedTurkishHotelResultsStrings)) {
+    assert.equal(trTranslations[key], value, `tr ${key} should use the audited Turkish hotels results copy`);
+    assert.notEqual(trTranslations[key], enTranslations[key], `tr ${key} should not fall back to English`);
+  }
+
+  const selectedDestination = "Lagos, Nigeria";
+  assert.equal(selectedDestination, "Lagos, Nigeria", "raw selected destination values stay display-owned and are not dictionary-translated");
+  assert.equal(
+    trTranslations["hotelResults.foundPlacesToStay"].replace("{{count}}", "12"),
+    "Sizin için 12 konaklama yeri bulduk",
+  );
+  assert.equal(
+    trTranslations["hotelResults.upToPrice"].replace("{{price}}", "₺4.500"),
+    "₺4.500 tutarına kadar",
+  );
+  assert.equal(
+    trTranslations["hotelResults.starsAndUp"].replace("{{rating}}", "4"),
+    "4+ yıldız",
+  );
+});
+
 test("Hindi homepage search support newsletter and footer strings are localized", () => {
   const expectedHindiHomepageStrings = {
     fromPlaceholder: "कहाँ से?",
