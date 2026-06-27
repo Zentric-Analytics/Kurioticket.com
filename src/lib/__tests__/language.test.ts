@@ -869,25 +869,25 @@ test("Turkish lower homepage FAQ and newsletter copy do not fall back to English
       "Seyahat değişiklikleri, iptaller, iadeler ve rezervasyon desteği genellikle rezervasyonun tamamlandığı sağlayıcı tarafından ele alınır. Hizmet talepleri için o sağlayıcıdan gelen onay bilgilerini kullanın.",
     supportFaqAccountQuestion: "Hesap ve oturum açma yardımı",
     supportFaqAccountAnswer:
-      "Kurioticket hesap erişimi, oturum açma sorunları, kaydolma sorunları, profil erişimi ve hesapla ilgili platform sorunlarında yardımcı olabilir.",
-    supportFaqSearchQuestion: "Arama ve sonuç yardımı",
+      "Kurioticket hesap erişimi, oturum açma sorunları, kayıt sorunları, profil erişimi ve hesapla ilgili platform problemlerinde yardımcı olabilir.",
+    supportFaqSearchQuestion: "Arama ve sonuçlar yardımı",
     supportFaqSearchAnswer:
-      "Uçuş veya otel araması çalışmadığında, sonuçlar yüklenmediğinde, filtreler kafa karıştırıcı olduğunda ya da fiyatlar ve sağlayıcılar beklendiği gibi görüntülenmediğinde Kurioticket yardımcı olabilir.",
+      "Kurioticket; uçuş veya otel araması çalışmadığında, sonuçlar yüklenmediğinde, filtreler kafa karıştırdığında ya da fiyatlar ve sağlayıcılar beklendiği gibi görünmediğinde yardımcı olabilir.",
     supportFaqSavedTripsQuestion: "Kaydedilen seyahatler ve uyarılar",
     supportFaqSavedTripsAnswer:
       "Kurioticket kaydedilen seyahatler, son aramalar, fiyat uyarıları, bildirim sorunları ve hesaba bağlı seyahat araçları konusunda yardımcı olabilir.",
     supportFaqRedirectQuestion: "Rezervasyon/sağlayıcı yönlendirme yardımı",
     supportFaqRedirectAnswer:
-      "Bir iş ortağına veya sağlayıcıya yönlendirme başarısız olursa, yanlış sayfayı açarsa ya da seçilen seyahat veya arama detaylarını korumazsa Kurioticket yardımcı olabilir.",
+      "Kurioticket, bir iş ortağına veya sağlayıcıya yönlendirme başarısız olursa, yanlış sayfayı açarsa ya da seçilen seyahat veya arama ayrıntılarını korumazsa yardımcı olabilir.",
     supportFaqAlreadyBookedQuestion: "Zaten bir sağlayıcıyla rezervasyon yaptınız mı?",
     supportFaqAlreadyBookedAnswer:
-      "Rezervasyonunuz bir hava yolu, otel, seyahat acentesi veya harici sağlayıcıyla tamamlandıysa; rezervasyon değişiklikleri, iadeler, iptaller, check-in, biniş, makbuzlar ve seyahat belgelerinden o sağlayıcı sorumludur.",
+      "Rezervasyonunuz bir hava yolu, otel, seyahat acentesi veya harici sağlayıcıyla tamamlandıysa rezervasyon değişiklikleri, iadeler, iptaller, check-in, biniş, makbuzlar ve seyahat belgelerinden o sağlayıcı sorumludur.",
     supportFaqChangeBookingQuestion: "Kurioticket rezervasyonumu değiştirebilir mi?",
     supportFaqChangeBookingAnswer:
-      "Kurioticket yalnızca doğrudan Kurioticket üzerinden yapılan rezervasyonlarda, doğrudan rezervasyon destekleniyorsa yardımcı olabilir. Harici sağlayıcılarla tamamlanan rezervasyonlar için doğrudan o sağlayıcıyla iletişime geçin.",
-    supportFaqWhyRedirectedQuestion: "Neden başka bir sağlayıcıya yönlendirildim?",
+      "Kurioticket yalnızca doğrudan rezervasyon desteklendiği zaman ve destekleniyorsa Kurioticket üzerinden doğrudan yapılan rezervasyonlarda yardımcı olabilir. Harici sağlayıcılarla tamamlanan rezervasyonlar için doğrudan o sağlayıcıyla iletişime geçin.",
+    supportFaqWhyRedirectedQuestion: "Neden başka bir sağlayıcıya gönderildim?",
     supportFaqWhyRedirectedAnswer:
-      "Kurioticket bir seyahat arama ve karşılaştırma platformudur; bazı sonuçlar rezervasyon, ödeme ve sağlayıcıya özel desteği tamamlayacağınız güvenilir sağlayıcılara yönlendirir.",
+      "Kurioticket bir seyahat arama ve karşılaştırma platformudur; bazı sonuçlar rezervasyonu, ödemeyi ve sağlayıcıya özel desteği tamamlayacağınız güvenilir sağlayıcılara yönlendirir.",
     homeNewsletterTitle: "Her seyahat fırsatından haberdar olun",
     homeNewsletterBody: "Seçilmiş uçuş ve otel güncellemelerini haftalık olarak alın.",
     homeNewsletterPlaceholder: "E-postanızı girin",
