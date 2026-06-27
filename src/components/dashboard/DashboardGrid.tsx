@@ -1040,18 +1040,24 @@ function PhoneNumberInput({
   className: string;
   label: string;
 }) {
+  const [selectedPhoneCountryCode, setSelectedPhoneCountryCode] = useState(
+    () => parsePhoneDraftValue(value).countryCode,
+  );
   const parsedValue = useMemo(() => parsePhoneDraftValue(value), [value]);
   const selectedOption =
     countryCallingCodeOptions.find(
-      (option) => option.isoCode === parsedValue.countryCode,
+      (option) => option.isoCode === selectedPhoneCountryCode,
     ) ?? defaultCountryCallingCodeOption;
+  const selectedCountryCode =
+    selectedOption?.isoCode ?? defaultCountryCallingCodeOption?.isoCode ?? "";
 
   const handleCountryChange = (nextCountryCode: string) => {
+    setSelectedPhoneCountryCode(nextCountryCode);
     onChange(formatPhoneDraftValue(nextCountryCode, parsedValue.localNumber));
   };
 
   const handleLocalNumberChange = (nextLocalNumber: string) => {
-    onChange(formatPhoneDraftValue(parsedValue.countryCode, nextLocalNumber));
+    onChange(formatPhoneDraftValue(selectedCountryCode, nextLocalNumber));
   };
 
   return (
@@ -1074,7 +1080,7 @@ function PhoneNumberInput({
 
         <select
           className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-          value={parsedValue.countryCode}
+          value={selectedCountryCode}
           onChange={(event) => handleCountryChange(event.target.value)}
           aria-label={`${label} country calling code`}
         >
