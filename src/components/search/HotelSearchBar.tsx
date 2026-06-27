@@ -27,6 +27,7 @@ import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinati
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import { useRegion } from "@/components/region/RegionProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
+import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
 import { cn } from "@/lib/utils";
 
 const parseIsoDate = (value: string) => {
@@ -89,62 +90,6 @@ const buildMonthCells = (monthDate: Date): MonthCell[] => {
       isCurrentMonth: date.getMonth() === monthDate.getMonth(),
     };
   });
-};
-
-const normalizeHotelCalendarLocale = (locale: string | null | undefined) => {
-  const normalized = locale?.trim().replace("_", "-").toLowerCase() ?? "";
-
-  if (normalized === "ar" || normalized.startsWith("ar-")) {
-    return "ar";
-  }
-
-  if (normalized === "hi" || normalized.startsWith("hi-")) {
-    return "hi-IN";
-  }
-
-  if (
-    normalized === "zh" ||
-    normalized === "zh-cn" ||
-    normalized.startsWith("zh-cn-") ||
-    normalized === "zh-hans" ||
-    normalized.startsWith("zh-hans-")
-  ) {
-    return "zh-CN";
-  }
-
-  if (normalized === "fr" || normalized.startsWith("fr-")) {
-    return "fr-FR";
-  }
-
-  if (normalized === "es" || normalized.startsWith("es-")) {
-    return "es-ES";
-  }
-
-  if (normalized === "de" || normalized.startsWith("de-")) {
-    return "de-DE";
-  }
-
-  if (normalized === "it" || normalized.startsWith("it-")) {
-    return "it-IT";
-  }
-
-  if (normalized === "nl" || normalized.startsWith("nl-")) {
-    return "nl-NL";
-  }
-
-  if (normalized === "pt" || normalized.startsWith("pt-")) {
-    return "pt-BR";
-  }
-
-  if (normalized === "ja" || normalized.startsWith("ja-")) {
-    return "ja-JP";
-  }
-
-  if (normalized === "ko" || normalized.startsWith("ko-")) {
-    return "ko-KR";
-  }
-
-  return "en-US";
 };
 
 const formatWeekdays = (locale: string) =>
