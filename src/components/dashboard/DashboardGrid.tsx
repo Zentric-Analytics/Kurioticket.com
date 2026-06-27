@@ -114,7 +114,6 @@ type DashboardOverviewProps = {
 
 type PersonalDetailsDraft = {
   name: string;
-  displayName: string;
   email: string;
   phone: string;
   dateOfBirth: string;
@@ -577,11 +576,6 @@ function getPersonalDetailRows(t: TranslationDictionary): PersonalDetailRow[] {
       fallback: t["accountDashboard.personalDetails.addName"],
     },
     {
-      key: "displayName",
-      label: t["accountDashboard.personalDetails.displayName"],
-      fallback: t["accountDashboard.personalDetails.chooseDisplayName"],
-    },
-    {
       key: "email",
       label: t["accountDashboard.personalDetails.emailAddress"],
       fallback: t["accountDashboard.personalDetails.addEmailAddress"],
@@ -623,16 +617,13 @@ function getPersonalDetailRows(t: TranslationDictionary): PersonalDetailRow[] {
 }
 
 function getPersonalDetailsInitialValues({
-  displayName,
   userEmail,
   userName,
 }: DashboardOverviewProps): PersonalDetailsDraft {
   const trimmedName = userName?.trim() ?? "";
-  const trimmedDisplayName = trimmedName ? displayName.trim() : "";
 
   return {
     name: trimmedName,
-    displayName: trimmedDisplayName,
     email: userEmail?.trim() ?? "",
     phone: "",
     dateOfBirth: "",
@@ -926,12 +917,10 @@ function StructuredAddressInput({
     );
   };
 
-  const fullAddressRowClassName = "sm:col-span-2";
-
   return (
-    <div className="grid w-full max-w-[720px] min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
+    <div className="grid w-full min-w-0 grid-cols-1 gap-3">
       <select
-        className={cn(className, fullAddressRowClassName)}
+        className={className}
         value={parts.countryCode}
         onChange={(event) => updatePart("countryCode", event.target.value)}
         aria-label="Country or region"
@@ -947,7 +936,7 @@ function StructuredAddressInput({
         ))}
       </select>
       <input
-        className={cn(className, fullAddressRowClassName)}
+        className={className}
         value={parts.addressLine1}
         onChange={(event) => updatePart("addressLine1", event.target.value)}
         placeholder="Street address"
@@ -1339,30 +1328,14 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     >
       {isEditing ? (
         <div className="border-t border-slate-200 px-5 py-5 first:border-t-0 sm:px-6">
-          <div className="w-full max-w-[720px] space-y-5">
-            <div className="grid min-w-0 grid-cols-1 gap-4">
-              {renderEditField("name", "w-full sm:max-w-[360px]")}
-              {renderEditField("email", "w-full sm:max-w-[420px]")}
-              {renderEditField("phone", "w-full sm:max-w-[420px]")}
-              {renderEditField("dateOfBirth", "w-full sm:max-w-[520px]")}
-              {renderEditField("gender", "w-full sm:max-w-[360px]")}
-              {renderEditField("nationality", "w-full sm:max-w-[360px]")}
-            </div>
-
-            <div className="space-y-3 border-t border-slate-100 pt-5">
-              <div>
-                <h3 className="text-sm font-semibold leading-5 text-slate-900">
-                  {getPersonalDetailRow("address").label}
-                </h3>
-              </div>
-              <div className="w-full max-w-[720px]">
-                <DetailInput
-                  row={getPersonalDetailRow("address")}
-                  value={draft.address}
-                  onChange={updateDraft}
-                />
-              </div>
-            </div>
+          <div className="w-full max-w-[640px] space-y-4">
+            {renderEditField("name")}
+            {renderEditField("email")}
+            {renderEditField("phone")}
+            {renderEditField("dateOfBirth")}
+            {renderEditField("gender")}
+            {renderEditField("nationality")}
+            {renderEditField("address")}
           </div>
         </div>
       ) : (
