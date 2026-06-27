@@ -3146,3 +3146,88 @@ test("Turkish hotel calendar locale normalizes to tr-TR for generated month head
     );
   }
 });
+
+test("Turkish cars landing render path copy resolves without English fallback", () => {
+  const tr = getTranslations("tr");
+  const auditedTurkishCarsLandingKeys: Array<[string, string]> = [
+    ["searchRentalCarsEveryPartTrip", "Seyahatinizin her bölümü için kiralık araç arayın"],
+    ["carsSearch.pickupLocationLabel", "Alış konumu"],
+    ["carsSearch.pickupLocationPlaceholder", "Havalimanı, şehir veya adres"],
+    ["carsSearch.returnLocationPlaceholder", "İade şehri, havalimanı veya adres"],
+    ["carsSearch.returnToSameLocation", "Aynı konuma iade et"],
+    ["carsSearch.differentReturnLocation", "Farklı iade konumu"],
+    ["carsSearch.rentalDatesLabel", "Kiralama tarihleri"],
+    ["carsSearch.rentalDatePlaceholder", "Alış tarihi — İade tarihi"],
+    ["carsSearch.pickupReturnTimeLabel", "Alış / iade saati"],
+    ["carsSearch.pickupReturnTimeSummary", "{pickupTime} alış — {returnTime} iade"],
+    ["carsSearch.driverAgeLabel", "Sürücü yaşı"],
+    ["carsSearch.driverAgeAnyAge", "Her yaş"],
+    ["carsSearch.chooseRentalDates", "Kiralama tarihlerini seçin"],
+    ["carsSearch.previousMonthShort", "Önceki"],
+    ["carsSearch.nextMonthShort", "Sonraki"],
+    ["exploreCarsByTripStyle", "Seyahat tarzına göre kiralık araçları keşfedin"],
+    ["carsTripStyleBody", "Bir araç türü seçin; arama bilgileri hazır şekilde sonuçları açalım."],
+    ["carsTripStyle.economy.title", "Ekonomi araçlar"],
+    ["carsTripStyle.economy.subtitle", "Uygun fiyatlı şehir ve tek kişilik seyahat aramaları"],
+    ["carsTripStyle.economy.cta", "Ekonomi araç araması başlat"],
+    ["carsTrust.0.title", "Eksiksiz seyahatler için tasarlandı"],
+    ["carsTrust.0.description", "Uçuşları, konaklamaları ve kara ulaşımını tek bir Kurioticket akışında planlayın."],
+    ["carsTrust.1.title", "Önce alış detayları"],
+    ["carsTrust.2.title", "Net kiralama incelemesi"],
+    ["carsPickupPointsTitle", "Popüler araç alış noktalarıyla başlayın"],
+    ["carsPickupPointsBody", "Bir alış tarzı seçin; arama detayları hazır şekilde araç sonuçları sayfasını açalım."],
+    ["carsPickup.Airport.title", "Havalimanı alışları"],
+    ["carsPickup.City center.title", "Şehir merkezi alışları"],
+    ["carsPickup.Train station.title", "Tren istasyonu alışları"],
+    ["carsPickup.Hotel area.title", "Otel bölgesi alışları"],
+    ["carsFaq.heading", "Araçlar hakkında sık sorulan sorular"],
+  ];
+
+  for (const [key, expected] of auditedTurkishCarsLandingKeys) {
+    assert.equal(tr[key], expected, `${key} should resolve to Turkish`);
+    assert.notEqual(tr[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  assert.equal(
+    tr["carsSearch.pickupReturnTimeSummary"].replace("{pickupTime}", "10:00").replace("{returnTime}", "10:00"),
+    "10:00 alış — 10:00 iade",
+  );
+
+  const carsPageSource = readFileSync("src/app/cars/page.tsx", "utf8");
+  for (const key of ["searchRentalCarsEveryPartTrip", "carsSearch.pickupLocationLabel", "carsSearch.chooseRentalDates", "exploreCarsByTripStyle", "carsPickupPointsTitle"]) {
+    assert.ok(carsPageSource.includes(`t("${key}")`), `Cars landing render path should resolve ${key} through i18n`);
+  }
+  assert.ok(
+    carsPageSource.includes("buildCarResultsHref") &&
+      carsPageSource.includes("pickupLocation: card.pickupLocation") &&
+      carsPageSource.includes("vehicleType: card.vehicleType"),
+    "Cars landing cards should keep raw pickup/search/query values when building result links.",
+  );
+  assert.ok(
+    !carsPageSource.includes("Search rental cars for every part of your trip") &&
+      !carsPageSource.includes("Explore rental cars by trip style") &&
+      !carsPageSource.includes("Start with popular car pickup points"),
+    "Cars landing render path should not hard-code screenshot-visible English copy.",
+  );
+});
+
+test("Turkish cars calendar locale normalizes to tr-TR for generated datepicker labels", () => {
+  const carsPageSource = readFileSync("src/app/cars/page.tsx", "utf8");
+
+  assert.ok(
+    carsPageSource.includes('normalizedLocale.startsWith("tr")') && carsPageSource.includes('return "tr-TR"'),
+    "Cars datepicker locale helper should normalize Turkish locales to tr-TR.",
+  );
+  assert.equal(
+    new Intl.DateTimeFormat("tr-TR", { month: "long", year: "numeric" }).format(new Date(2026, 5, 1)),
+    "Haziran 2026",
+  );
+  assert.equal(
+    new Intl.DateTimeFormat("tr-TR", { month: "long", year: "numeric" }).format(new Date(2026, 6, 1)),
+    "Temmuz 2026",
+  );
+  assert.deepEqual(
+    Array.from({ length: 7 }, (_, day) => new Intl.DateTimeFormat("tr-TR", { weekday: "short" }).format(new Date(2024, 0, 7 + day))),
+    ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"],
+  );
+});
