@@ -24,11 +24,8 @@ function getInitials(name?: string | null, email?: string | null) {
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
-  const userName = session?.user?.name?.trim();
+  const sessionUserName = session?.user?.name?.trim();
   const userEmail = session?.user?.email?.trim();
-  const firstName = userName?.split(/\s+/).filter(Boolean)[0];
-  const displayName = firstName || "traveler";
-  const initials = getInitials(userName, userEmail);
   const db = getOptionalPrisma();
   const storedProfile =
     session?.user?.id && db
@@ -45,6 +42,11 @@ export default async function DashboardPage() {
         })
       : null;
   const userProfile = serializeUserProfile(storedProfile);
+  const savedProfileName = userProfile.fullName.trim();
+  const userName = savedProfileName || sessionUserName;
+  const firstName = userName?.split(/\s+/).filter(Boolean)[0];
+  const displayName = firstName || "traveler";
+  const initials = getInitials(userName, userEmail);
 
   return (
     <>

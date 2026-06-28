@@ -3,6 +3,7 @@ import { AccountMenuPage } from "@/components/dashboard/DashboardGrid";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { authOptions } from "@/lib/auth";
+import { getOptionalPrisma } from "@/lib/prisma";
 
 export const metadata = {
   title: "My Account",
@@ -38,8 +39,17 @@ function getSafeDisplayName(name?: string | null, email?: string | null) {
 
 export default async function AccountPage() {
   const session = await getServerSession(authOptions);
-  const userName = session?.user?.name?.trim();
+  const sessionUserName = session?.user?.name?.trim();
   const userEmail = session?.user?.email?.trim();
+  const db = getOptionalPrisma();
+  const storedProfile =
+    session?.user?.id && db
+      ? await db.userProfile.findUnique({
+          where: { userId: session.user.id },
+          select: { fullName: true },
+        })
+      : null;
+  const userName = storedProfile?.fullName?.trim() || sessionUserName;
   const displayName = getSafeDisplayName(userName, userEmail);
   const initials = getInitials(userName, userEmail);
   return (

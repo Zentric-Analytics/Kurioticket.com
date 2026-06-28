@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ChangeEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Bell,
   Bookmark,
@@ -1276,6 +1277,7 @@ function DetailInput({
 
 function PersonalDetailsSection(props: DashboardOverviewProps) {
   const { t } = useLocale();
+  const router = useRouter();
   const initialValues = getPersonalDetailsInitialValues(props);
   const [savedValues, setSavedValues] =
     useState<PersonalDetailsDraft>(initialValues);
@@ -1345,6 +1347,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
         t["accountDashboard.personalDetails.saveSuccess"] ||
           "Personal details saved.",
       );
+      router.refresh();
     } catch (error) {
       setErrorMessage(
         error instanceof Error
