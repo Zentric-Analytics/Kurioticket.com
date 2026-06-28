@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 
@@ -39,9 +39,16 @@ export function SignupForm({
   const [isPending, startTransition] =
     useTransition();
 
+  const submittingRef = useRef(false);
+
   async function submit(
     formData: FormData,
   ) {
+    if (submittingRef.current) {
+      return;
+    }
+
+    submittingRef.current = true;
     setLoading(true);
     setError(null);
     setMessage(null);
@@ -64,6 +71,7 @@ export function SignupForm({
       signupSchema.safeParse(input);
 
     if (!parsed.success) {
+      submittingRef.current = false;
       setLoading(false);
 
       setError({
@@ -79,26 +87,40 @@ export function SignupForm({
     const { email, password } =
       parsed.data;
 
-    const response = await fetch(
-      "/api/auth/signup",
-      {
-        method: "POST",
+    let response: Response;
 
-        headers: {
-          "Content-Type":
-            "application/json",
+    try {
+      response = await fetch(
+        "/api/auth/signup",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify(
+            parsed.data,
+          ),
         },
+      );
+    } catch (error) {
+      console.error("[signup:request-failed]", error);
+      submittingRef.current = false;
+      setLoading(false);
+      setError({
+        key: "signupErrorUnableCreate",
+      });
 
-        body: JSON.stringify(
-          parsed.data,
-        ),
-      },
-    );
+      return;
+    }
 
     const data =
       await response.json();
 
     if (!response.ok) {
+      submittingRef.current = false;
       setLoading(false);
 
       setError({
@@ -119,8 +141,6 @@ export function SignupForm({
           "/onboarding",
       });
 
-    setLoading(false);
-
     // Preserve backend verification flow
     if (
       signInResult?.error ===
@@ -140,6 +160,9 @@ export function SignupForm({
     }
 
     if (!signInResult?.ok) {
+      submittingRef.current = false;
+      setLoading(false);
+
       setError({
         key: "signupAutomaticLoginFailed",
       });
@@ -228,7 +251,7 @@ export function SignupForm({
           </p>
         ) : null}
 
-        <Button disabled={loading || isPending}>
+        <Button type="submit" disabled={loading || isPending}>
           {loading || isPending
             ? t.signupCreatingAccount
             : t.signupSubmit}
