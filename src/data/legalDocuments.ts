@@ -1,13 +1,28 @@
 import type { LegalDocument } from "@/lib/types";
 import { translations as enTranslations } from "@/lib/i18n/en";
+import {
+  getCaliforniaSellerOfTravelNotice,
+  getCompanyContactSummary,
+  getProviderBoundarySummary,
+  legalProfile,
+} from "@/data/legalProfile";
 
 const lastUpdated = "May 11, 2026";
+
+const formatLegalProfileDate = (date: string) =>
+  new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "2-digit",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${date}T00:00:00Z`));
 
 export const legalDocuments: LegalDocument[] = [
   {
     slug: "terms-of-service",
     title: "Terms of Service",
-    summary: "Rules for using Kurioticket search, accounts, dashboards, saved travel tools, and partner redirects.",
+    summary:
+      "Rules for using Kurioticket search, accounts, dashboards, saved travel tools, and partner redirects.",
     lastUpdated,
     sections: [
       {
@@ -79,7 +94,8 @@ export const legalDocuments: LegalDocument[] = [
   {
     slug: "cookie-policy",
     title: "Cookie Policy",
-    summary: "How Kurioticket uses cookies and similar technologies for authentication, security, preferences, analytics, and performance.",
+    summary:
+      "How Kurioticket uses cookies and similar technologies for authentication, security, preferences, analytics, and performance.",
     lastUpdated,
     sections: [
       {
@@ -108,9 +124,43 @@ export const legalDocuments: LegalDocument[] = [
     ],
   },
   {
+    slug: "privacy-choices",
+    title: "Privacy Choices",
+    summary:
+      "How users can make privacy and account requests or manage available account and alert choices.",
+    lastUpdated,
+    sections: [
+      {
+        id: "requests",
+        title: "Privacy Requests",
+        paragraphs: [
+          `You can contact ${legalProfile.contact.privacyEmail} for privacy requests, including requests to access, correct, delete, or ask questions about account or personal data.`,
+          "Kurioticket may need to verify your identity and account relationship before completing certain requests, and some information may be retained where required or permitted by law, security needs, fraud prevention, or dispute handling.",
+        ],
+      },
+      {
+        id: "account-alerts",
+        title: "Account and Alert Choices",
+        paragraphs: [
+          "Where account settings are available, you can manage account details, saved travel preferences, and alerts through those settings.",
+          "You may unsubscribe from marketing emails or adjust alert preferences using available unsubscribe links, account settings, or by contacting support for help with preferences.",
+        ],
+      },
+      {
+        id: "tracking",
+        title: "Advertising and Analytics Choices",
+        paragraphs: [
+          "Kurioticket does not currently use active ads or third-party analytics tracking tools.",
+          "If Kurioticket adds ads or analytics later, Kurioticket should update its policies and offer applicable choices where required by law.",
+        ],
+      },
+    ],
+  },
+  {
     slug: "affiliate-disclosure",
     title: "Affiliate Disclosure",
-    summary: "How Kurioticket may earn commissions when users click or book through trusted partners.",
+    summary:
+      "How Kurioticket may earn commissions when users click or book through trusted partners.",
     lastUpdated,
     sections: [
       {
@@ -133,7 +183,8 @@ export const legalDocuments: LegalDocument[] = [
   {
     slug: "refund-booking-disclaimer",
     title: "Refund & External Provider Disclaimer",
-    summary: "Clarifies that purchases, ticketing, refunds, cancellations, and payment for travel inventory happen outside Kurioticket.",
+    summary:
+      "Clarifies that purchases, ticketing, refunds, cancellations, and payment for travel inventory happen outside Kurioticket.",
     lastUpdated,
     sections: [
       {
@@ -155,54 +206,10 @@ export const legalDocuments: LegalDocument[] = [
     ],
   },
   {
-    slug: "acceptable-use-policy",
-    title: "Acceptable Use Policy",
-    summary: "Behavior rules for safe, fair, lawful use of Kurioticket systems.",
-    lastUpdated,
-    sections: [
-      {
-        id: "prohibited",
-        title: "Prohibited Conduct",
-        paragraphs: [
-          "You may not scrape Kurioticket, scrape airline websites through Kurioticket, attack provider APIs, automate abusive searches, create fraudulent accounts, test stolen cards, spam support, or interfere with platform reliability.",
-          "You may not use Kurioticket to facilitate unlawful travel activity, harassment, fraud, abuse, or unauthorized access.",
-        ],
-      },
-      {
-        id: "enforcement",
-        title: "Enforcement",
-        paragraphs: [
-          "We may throttle, suspend, remove, or block access when needed to protect users, partners, providers, service security, and platform operations.",
-        ],
-      },
-    ],
-  },
-  {
-    slug: "data-deletion-policy",
-    title: "Data Deletion Policy",
-    summary: "How users may request account deletion and what data may need to be retained.",
-    lastUpdated,
-    sections: [
-      {
-        id: "request",
-        title: "Deletion Requests",
-        paragraphs: [
-          "You may request account deletion from account settings or support. We will process deletion requests consistent with applicable law, identity verification needs, fraud prevention, legal obligations, and security requirements.",
-        ],
-      },
-      {
-        id: "retention",
-        title: "Retained Records",
-        paragraphs: [
-          "Some records may be retained for legitimate business, security, analytics, legal, abuse prevention, or dispute-resolution purposes. We minimize retained personal data where practical.",
-        ],
-      },
-    ],
-  },
-  {
     slug: "price-availability-disclaimer",
     title: "Price & Availability Disclaimer",
-    summary: "Explains why travel prices, fare rules, room rates, and availability can change.",
+    summary:
+      "Explains why travel prices, fare rules, room rates, and availability can change.",
     lastUpdated,
     sections: [
       {
@@ -225,7 +232,8 @@ export const legalDocuments: LegalDocument[] = [
   {
     slug: "partner-redirect-disclaimer",
     title: "Partner Redirect Disclaimer",
-    summary: "What happens when Kurioticket redirects users to airlines, hotels, affiliate partners, or travel providers.",
+    summary:
+      "What happens when Kurioticket redirects users to airlines, hotels, affiliate partners, or travel providers.",
     lastUpdated,
     sections: [
       {
@@ -241,6 +249,177 @@ export const legalDocuments: LegalDocument[] = [
         title: "External Terms",
         paragraphs: [
           "External partner sites are governed by their own terms, privacy policies, refund policies, cookies, accessibility practices, and customer support processes.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "california-seller-of-travel-notice",
+    title: "California Seller of Travel Notice",
+    summary:
+      "California Seller of Travel registration notice and provider-payment boundaries for Kurioticket.",
+    lastUpdated,
+    sections: [
+      {
+        id: "registration",
+        title: "Registration Information",
+        paragraphs: [
+          `${legalProfile.californiaSellerOfTravel.registeredLegalName} is registered as a California Seller of Travel under Registration No. ${legalProfile.californiaSellerOfTravel.registrationNumber}.`,
+          `Registration valid from ${formatLegalProfileDate(legalProfile.californiaSellerOfTravel.validFrom)}. Registration expires ${formatLegalProfileDate(legalProfile.californiaSellerOfTravel.expires)}.`,
+          getCaliforniaSellerOfTravelNotice(),
+        ],
+      },
+      {
+        id: "platform-model",
+        title: "Search-and-Redirect Model",
+        paragraphs: [
+          `Kurioticket operates as a ${legalProfile.businessModel.platformDescription.toLowerCase()} Users can search and compare travel options for ${legalProfile.productScope.join(", ")} and may be redirected to external providers to continue booking or purchase steps.`,
+          getProviderBoundarySummary(),
+        ],
+      },
+      {
+        id: "external-providers",
+        title: "External Provider Responsibilities",
+        paragraphs: [
+          `External providers handle ${legalProfile.supportBoundary.externalProvidersHandle.join(", ")}. Review the external provider's terms, policies, prices, and confirmations before completing any travel purchase.`,
+        ],
+      },
+      {
+        id: "contact",
+        title: "Contact",
+        paragraphs: [getCompanyContactSummary()],
+      },
+    ],
+  },
+  {
+    slug: "legal-notice-company-information",
+    title: "Legal Notice & Company Information",
+    summary:
+      "Public company, contact, product scope, business model, and legal registration information for Kurioticket.",
+    lastUpdated,
+    sections: [
+      {
+        id: "company",
+        title: "Company Information",
+        paragraphs: [
+          getCompanyContactSummary(),
+          `Product scope: ${legalProfile.productScope.join(", ")}.`,
+        ],
+      },
+      {
+        id: "business-model",
+        title: "Business Model",
+        paragraphs: [
+          `Kurioticket is a ${legalProfile.businessModel.platformDescription.toLowerCase()} It helps users search and compare travel options and redirect to external providers.`,
+          getProviderBoundarySummary(),
+        ],
+      },
+      {
+        id: "registration-reference",
+        title: "California Seller of Travel Reference",
+        paragraphs: [getCaliforniaSellerOfTravelNotice()],
+      },
+    ],
+  },
+  {
+    slug: "acceptable-use-policy",
+    title: "Acceptable Use Policy",
+    summary:
+      "Behavior rules for safe, fair, lawful use of Kurioticket systems.",
+    lastUpdated,
+    sections: [
+      {
+        id: "prohibited",
+        title: "Prohibited Conduct",
+        paragraphs: [
+          "You may not scrape Kurioticket, scrape airline websites through Kurioticket, attack provider APIs, automate abusive searches, create fraudulent accounts, test stolen cards, spam support, or interfere with platform reliability.",
+          "You may not use Kurioticket to facilitate unlawful travel activity, harassment, fraud, abuse, or unauthorized access.",
+        ],
+      },
+      {
+        id: "enforcement",
+        title: "Enforcement",
+        paragraphs: [
+          "We may throttle, suspend, remove, or block access when needed to protect users, partners, providers, service security, and platform operations.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "data-deletion-policy",
+    title: "Data Deletion Policy",
+    summary:
+      "How users may request account deletion and what data may need to be retained.",
+    lastUpdated,
+    sections: [
+      {
+        id: "request",
+        title: "Deletion Requests",
+        paragraphs: [
+          "You may request account deletion from account settings or support. We will process deletion requests consistent with applicable law, identity verification needs, fraud prevention, legal obligations, and security requirements.",
+        ],
+      },
+      {
+        id: "retention",
+        title: "Retained Records",
+        paragraphs: [
+          "Some records may be retained for legitimate business, security, analytics, legal, abuse prevention, or dispute-resolution purposes. We minimize retained personal data where practical.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "security-statement",
+    title: "Security Statement",
+    summary:
+      "High-level user-facing security practices and reporting contacts for Kurioticket.",
+    lastUpdated,
+    sections: [
+      {
+        id: "account-security",
+        title: "Account Security",
+        paragraphs: [
+          "Kurioticket uses account sign-in, session protection, and access controls to support safer account experiences.",
+          "You are responsible for protecting your password, using a secure email account, and signing out of shared devices.",
+        ],
+      },
+      {
+        id: "provider-boundaries",
+        title: "Provider and Support Boundaries",
+        paragraphs: [
+          getProviderBoundarySummary(),
+          "Before entering payment or traveler information on an external provider page, verify that you are on the expected provider website and review that provider's terms, privacy policy, and security practices.",
+        ],
+      },
+      {
+        id: "reporting",
+        title: "Reporting Security Concerns",
+        paragraphs: [
+          `Please report security concerns to ${legalProfile.contact.legalEmail} or ${legalProfile.contact.supportEmail}. Do not include passwords, full payment card details, or other highly sensitive information in ordinary support messages.`,
+        ],
+      },
+    ],
+  },
+  {
+    slug: "accessibility-statement",
+    title: "Accessibility Statement",
+    summary:
+      "Kurioticket's accessibility goals and support contact for accessibility issues.",
+    lastUpdated,
+    sections: [
+      {
+        id: "commitment",
+        title: "Accessibility Commitment",
+        paragraphs: [
+          "Kurioticket aims to provide accessible travel search, account, dashboard, and support experiences for users.",
+          "We work to improve usability as the service evolves, but this statement does not claim a specific accessibility certification or verified conformance level.",
+        ],
+      },
+      {
+        id: "contact",
+        title: "Accessibility Support",
+        paragraphs: [
+          `If you experience an accessibility issue, contact ${legalProfile.contact.supportEmail} with the page, feature, assistive technology or browser involved, and a description of the problem so we can review it.`,
         ],
       },
     ],
