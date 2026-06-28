@@ -11,6 +11,7 @@ import {
 } from "react";
 
 import { signOut, useSession } from "next-auth/react";
+import { revokeCurrentSessionRecord } from "@/lib/currentSessionRevocation";
 import Link from "next/link";
 import { createPortal } from "react-dom";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -677,6 +678,7 @@ export function AppHeader({
     setMobileMenuOpen(false);
 
     try {
+      await revokeCurrentSessionRecord();
       await signOut({ redirect: false, callbackUrl: "/" });
       window.location.assign("/");
     } catch {

@@ -213,6 +213,35 @@ export async function touchUserSessionActivity({
   return activity.id;
 }
 
+export async function revokeCurrentUserSessionActivity({
+  userId,
+  request,
+}: {
+  userId: string;
+  request: RequestLike;
+}) {
+  const sessionTokenHash = await getSessionTokenHash(request);
+
+  if (!sessionTokenHash) {
+    return { revoked: false, currentActivityId: null };
+  }
+
+  const updated = await getPrisma().userSessionActivity.updateMany({
+    where: { userId, sessionTokenHash, revokedAt: null },
+    data: { revokedAt: new Date() },
+  });
+
+  const currentActivity = await getPrisma().userSessionActivity.findUnique({
+    where: { userId_sessionTokenHash: { userId, sessionTokenHash } },
+    select: { id: true },
+  });
+
+  return {
+    revoked: updated.count > 0,
+    currentActivityId: currentActivity?.id || null,
+  };
+}
+
 export async function listUserSessionActivities({
   userId,
   request,
@@ -223,7 +252,7 @@ export async function listUserSessionActivities({
   const currentActivityId = await touchUserSessionActivity({ userId, request });
 
   const sessions = await getPrisma().userSessionActivity.findMany({
-    where: { userId },
+    where: { userId, revokedAt: null },
     orderBy: { lastSeenAt: "desc" },
     take: RECENT_SESSION_LIMIT,
     select: {
@@ -236,7 +265,6 @@ export async function listUserSessionActivities({
       lastSeenAt: true,
       createdAt: true,
       revokedAt: true,
-      sessionTokenHash: true,
       userAgent: true,
     },
   });
@@ -244,9 +272,7 @@ export async function listUserSessionActivities({
   const dedupedSessions = Array.from(
     sessions
       .reduce((uniqueSessions, session) => {
-        const key =
-          session.sessionTokenHash ||
-          `${session.userAgent || "unknown"}:${session.browser}:${session.os}:${session.maskedIp || "unknown"}`;
+        const key = `${session.userAgent || "unknown"}:${session.deviceLabel}:${session.browser}:${session.os}:${session.maskedIp || "unknown"}`;
         const existing = uniqueSessions.get(key);
 
         if (

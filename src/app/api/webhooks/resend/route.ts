@@ -25,24 +25,33 @@ export async function POST(request: NextRequest) {
 
   if (!webhookSecret && strictWebhookVerification) {
     console.error("[resend:webhook:missing-secret]");
-    return new NextResponse("Webhook secret is not configured.", { status: 503 });
+    return new NextResponse("Webhook secret is not configured.", {
+      status: 503,
+    });
   }
 
   let event: ResendWebhookEvent;
 
   try {
-    event = webhookSecret ? await verifyResendWebhook(payload, request, webhookSecret) : JSON.parse(payload);
+    event = webhookSecret
+      ? await verifyResendWebhook(payload, request, webhookSecret)
+      : JSON.parse(payload);
   } catch (error) {
     console.error("[resend:webhook:invalid]", error);
     return new NextResponse("Invalid webhook", { status: 400 });
   }
 
   const eventType = typeof event.type === "string" ? event.type : "unknown";
-  const createdAt = typeof event.created_at === "string" ? new Date(event.created_at) : null;
+  const createdAt =
+    typeof event.created_at === "string" ? new Date(event.created_at) : null;
   const data = event.data || {};
-  const providerMessageId = typeof data.email_id === "string" ? data.email_id : undefined;
+  const providerMessageId =
+    typeof data.email_id === "string" ? data.email_id : undefined;
   const providerEventId = request.headers.get("svix-id") || undefined;
-  const toEmail = Array.isArray(data.to) && typeof data.to[0] === "string" ? data.to[0] : undefined;
+  const toEmail =
+    Array.isArray(data.to) && typeof data.to[0] === "string"
+      ? data.to[0]
+      : undefined;
 
   try {
     await recordProviderEmailEvent({
@@ -50,7 +59,10 @@ export async function POST(request: NextRequest) {
       providerMessageId,
       type: eventType,
       payload: event as Record<string, unknown>,
-      occurredAt: createdAt && !Number.isNaN(createdAt.getTime()) ? createdAt : undefined,
+      occurredAt:
+        createdAt && !Number.isNaN(createdAt.getTime())
+          ? createdAt
+          : undefined,
       toEmail,
     });
   } catch (error) {
@@ -61,8 +73,14 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-async function verifyResendWebhook(payload: string, request: NextRequest, webhookSecret: string) {
-  const resend = new Resend(process.env.RESEND_API_KEY || "re_webhook_verification_only");
+async function verifyResendWebhook(
+  payload: string,
+  request: NextRequest,
+  webhookSecret: string
+) {
+  const resend = new Resend(
+    process.env.RESEND_API_KEY || "re_webhook_verification_only"
+  );
 
   const verifiedPayload = await Promise.resolve(
     resend.webhooks.verify({
@@ -73,7 +91,7 @@ async function verifyResendWebhook(payload: string, request: NextRequest, webhoo
         signature: request.headers.get("svix-signature") || "",
       },
       webhookSecret,
-    }),
+    })
   );
 
   return verifiedPayload as unknown as ResendWebhookEvent;
