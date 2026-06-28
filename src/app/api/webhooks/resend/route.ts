@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 async function verifyResendWebhook(payload: string, request: NextRequest, webhookSecret: string) {
   const resend = new Resend(process.env.RESEND_API_KEY || "re_webhook_verification_only");
 
-  return (await Promise.resolve(
+  const verifiedPayload = await Promise.resolve(
     resend.webhooks.verify({
       payload,
       headers: {
@@ -74,5 +74,7 @@ async function verifyResendWebhook(payload: string, request: NextRequest, webhoo
       },
       webhookSecret,
     }),
-  )) as ResendWebhookEvent;
+  );
+
+  return verifiedPayload as unknown as ResendWebhookEvent;
 }
