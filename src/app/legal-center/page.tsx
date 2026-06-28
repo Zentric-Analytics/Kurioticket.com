@@ -1,9 +1,9 @@
-import { LegalCenterContent } from "./LegalCenterContent";
+import { redirect } from "next/navigation";
 
 export const metadata = {
-  title: "Legal Center",
+  title: "Legal Center | Kurioticket",
 };
 
 export default function LegalCenterPage() {
-  return <LegalCenterContent />;
+  redirect("/legal");
 }
