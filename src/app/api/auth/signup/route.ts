@@ -19,6 +19,7 @@ import {
 } from "@/services/authService";
 
 import {
+  EmailVerificationCooldownError,
   EmailVerificationError,
   sendEmailVerificationCode,
 } from "@/services/emailVerificationService";
@@ -70,6 +71,7 @@ export async function POST(request: Request) {
       email: parsed.data.email,
       name: parsed.data.name,
       action: "signup",
+      enforceCooldown: true,
     });
 
     return NextResponse.json(
@@ -100,11 +102,32 @@ export async function POST(request: Request) {
     }
 
     if (error instanceof DuplicateEmailError) {
+      const duplicateSignupResponse =
+        await getDuplicateSignupResponse(parsed.data.email);
+
+      if (duplicateSignupResponse) {
+        return duplicateSignupResponse;
+      }
+
       return NextResponse.json(
         {
           error: "An account with this email already exists.",
         },
         { status: 409 }
+      );
+    }
+
+    if (error instanceof EmailVerificationCooldownError) {
+      return NextResponse.json(
+        {
+          error: "Too many signup attempts. Please wait and try again.",
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(error.retryAfterSeconds),
+          },
+        }
       );
     }
 
@@ -190,5 +213,52 @@ function isMissingMigrationError(error: unknown) {
 
   return /table .* does not exist|relation .* does not exist|database .* does not exist/i.test(
     message
+  );
+}
+
+async function getDuplicateSignupResponse(emailInput: string) {
+  const email = emailInput.toLowerCase().trim();
+  const duplicateSignupWindowMs = 60 * 1000;
+  const duplicateSignupWindowStart = new Date(
+    Date.now() - duplicateSignupWindowMs
+  );
+
+  const existingUser = await getPrisma().user.findUnique({
+    where: {
+      email,
+    },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      emailVerified: true,
+      passwordHash: true,
+      createdAt: true,
+    },
+  });
+
+  if (
+    !existingUser ||
+    existingUser.emailVerified ||
+    !existingUser.passwordHash ||
+    existingUser.createdAt < duplicateSignupWindowStart
+  ) {
+    return null;
+  }
+
+  console.info("[signup:duplicate-unverified-continue]", {
+    email,
+    userId: existingUser.id,
+  });
+
+  return NextResponse.json(
+    {
+      user: {
+        id: existingUser.id,
+        email: existingUser.email,
+        name: existingUser.name,
+      },
+    },
+    { status: 200 }
   );
 }
