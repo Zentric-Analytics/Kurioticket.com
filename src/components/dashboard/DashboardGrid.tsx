@@ -345,7 +345,6 @@ export function AccountMenuPage({
   userEmail,
 }: Pick<DashboardOverviewProps, "initials" | "displayName" | "userEmail">) {
   const { t } = useLocale();
-
   return (
     <section className="overflow-x-hidden" aria-labelledby="account-title">
       <div className="px-4 pb-8 pt-8 sm:px-6 sm:pb-10 sm:pt-10 lg:px-8 lg:pb-11 lg:pt-12">
@@ -621,13 +620,10 @@ function getPersonalDetailRows(t: TranslationDictionary): PersonalDetailRow[] {
 
 function getPersonalDetailsInitialValues({
   userEmail,
-  userName,
   userProfile,
 }: DashboardOverviewProps): PersonalDetailsDraft {
-  const trimmedName = userProfile?.fullName?.trim() || userName?.trim() || "";
-
   return {
-    name: trimmedName,
+    name: userProfile?.fullName?.trim() ?? "",
     email: userEmail?.trim() ?? "",
     phone: userProfile?.phoneNumber ?? "",
     dateOfBirth: userProfile?.dateOfBirth ?? "",
@@ -1277,12 +1273,12 @@ function DetailInput({
 function PersonalDetailsSection(props: DashboardOverviewProps) {
   const { t } = useLocale();
   const router = useRouter();
-  const initialValues = getPersonalDetailsInitialValues(props);
-  const [savedValues, setSavedValues] =
-    useState<PersonalDetailsDraft>(initialValues);
+  const [savedValues, setSavedValues] = useState<PersonalDetailsDraft>(() =>
+    getPersonalDetailsInitialValues(props),
+  );
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [draft, setDraft] = useState<PersonalDetailsDraft>(initialValues);
+  const [draft, setDraft] = useState<PersonalDetailsDraft>(savedValues);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const personalDetailRows = getPersonalDetailRows(t);
@@ -1618,6 +1614,15 @@ export function DashboardOverview({
   userProfile,
 }: DashboardOverviewProps) {
   const { t } = useLocale();
+  const personalDetailsKey = [
+    userEmail ?? "",
+    userProfile?.fullName ?? "",
+    userProfile?.phoneNumber ?? "",
+    userProfile?.dateOfBirth ?? "",
+    userProfile?.gender ?? "",
+    userProfile?.nationality ?? "",
+    userProfile?.address ?? "",
+  ].join("|");
 
   return (
     <div className="min-w-0 max-w-[60rem] space-y-5 pb-6 pt-0 sm:pb-8 lg:ms-[4.875rem] lg:pb-10">
@@ -1628,6 +1633,7 @@ export function DashboardOverview({
         flushStart
       />
       <PersonalDetailsSection
+        key={personalDetailsKey}
         initials={initials}
         displayName={displayName}
         userEmail={userEmail}
