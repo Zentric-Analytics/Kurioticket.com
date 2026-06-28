@@ -739,7 +739,7 @@ function DateOfBirthInput({
   };
 
   return (
-    <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)_minmax(0,1fr)]">
+    <div className="grid min-w-0 grid-cols-1 gap-2 sm:max-w-xl sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)_minmax(0,1fr)]">
       <select
         className={className}
         value={parts.day}
@@ -927,7 +927,7 @@ function StructuredAddressInput({
   };
 
   return (
-    <div className="grid w-full min-w-0 grid-cols-1 gap-3 sm:grid-cols-6">
+    <div className="grid w-full min-w-0 grid-cols-1 gap-3 sm:max-w-2xl sm:grid-cols-6">
       <select
         className={cn(className, "sm:col-span-6")}
         value={parts.countryCode}
@@ -1059,16 +1059,16 @@ function PhoneNumberInput({
   };
 
   return (
-    <div className="flex min-w-0 items-center gap-2">
-      <div className="group relative h-10 w-20 shrink-0">
+    <div className="flex w-full min-w-0 items-center gap-2 sm:max-w-xl">
+      <div className="group relative h-10 w-[72px] shrink-0 sm:h-11 sm:w-20">
         <div
           aria-hidden="true"
-          className="pointer-events-none flex h-full w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-2 shadow-sm transition group-focus-within:border-violet-400 group-focus-within:ring-4 group-focus-within:ring-violet-100"
+          className="pointer-events-none flex h-full w-full items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2 transition group-focus-within:border-violet-500 group-focus-within:ring-2 group-focus-within:ring-violet-100"
         >
           <CountryFlagIcon
             countryName={selectedOption.countryName}
             isoCode={selectedOption.isoCode}
-            className="h-8 w-8 rounded-full bg-white"
+            className="h-6 w-6 rounded-full bg-white sm:h-7 sm:w-7"
           />
           <ChevronDown
             className="h-4 w-4 shrink-0 text-slate-500"
@@ -1092,14 +1092,14 @@ function PhoneNumberInput({
       <div
         className={cn(
           className,
-          "flex min-w-0 items-center gap-2 overflow-hidden px-3 py-1.5",
+          "flex min-w-0 items-center gap-2 overflow-hidden",
         )}
       >
         <span className="shrink-0 whitespace-nowrap text-slate-900">
           {selectedOption.dialCode}
         </span>
         <input
-          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-base font-medium leading-5 text-slate-900 outline-none sm:text-[14px]"
+          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-base font-medium leading-5 text-slate-900 outline-none sm:text-sm"
           type="tel"
           value={parsedValue.localNumber}
           onChange={(event) => handleLocalNumberChange(event.target.value)}
@@ -1145,7 +1145,7 @@ function NationalityInput({
   );
 }
 
-function PersonalDetailsEditCard({
+function PersonalDetailsEditRow({
   row,
   value,
   onChange,
@@ -1155,18 +1155,18 @@ function PersonalDetailsEditCard({
   onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm shadow-slate-900/[0.02] sm:p-5">
-      <label className="block min-w-0 space-y-2">
-        <span className="block text-sm font-semibold leading-5 text-slate-900">
-          {row.label}
-        </span>
+    <div className="grid grid-cols-1 gap-2 border-b border-slate-200 py-5 last:border-b-0 sm:grid-cols-[220px_minmax(0,1fr)] sm:gap-6">
+      <div className="pt-0.5 text-sm font-semibold leading-5 text-slate-900 sm:pt-2.5">
+        {row.label}
+      </div>
+      <div className="min-w-0">
         <DetailInput row={row} value={value} onChange={onChange} />
         {row.helper ? (
-          <span className="block text-sm leading-6 text-slate-500">
+          <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
             {row.helper}
-          </span>
+          </p>
         ) : null}
-      </label>
+      </div>
     </div>
   );
 }
@@ -1181,9 +1181,9 @@ function DetailInput({
   onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
 }) {
   const baseClassName = cn(
-    "h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-base font-medium leading-5 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-violet-500 focus:bg-white focus:ring-4 focus:ring-violet-100 sm:text-[14px]",
+    "h-10 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-base font-medium leading-5 text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 sm:h-11 sm:max-w-xl sm:text-sm",
     row.readOnly &&
-      "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500 hover:border-slate-200 focus:border-slate-200 focus:bg-slate-100 focus:ring-0",
+      "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-200 focus:border-slate-200 focus:ring-0",
   );
 
   const handleChange = (
@@ -1391,7 +1391,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     const row = getPersonalDetailRow(key);
 
     return (
-      <PersonalDetailsEditCard
+      <PersonalDetailsEditRow
         key={row.key}
         row={row}
         value={draft[key]}
@@ -1407,9 +1407,9 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     return (
       <div
         key={row.key}
-        className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm shadow-slate-900/[0.02] sm:p-5"
+        className="grid grid-cols-1 gap-2 border-b border-slate-200 py-5 last:border-b-0 sm:grid-cols-[220px_minmax(0,1fr)] sm:gap-6"
       >
-        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <div className="text-sm font-semibold leading-5 text-slate-900 sm:pt-0.5">
           {row.label}
         </div>
         <DetailValue
@@ -1431,7 +1431,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
       aria-labelledby="dashboard-title"
     >
-      <div className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white px-5 py-4 sm:px-6">
+      <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
         <p className="text-sm text-slate-600">
           {t["accountDashboard.personalDetails.description"] ||
             "Manage the information Kurioticket uses for your account."}
@@ -1454,16 +1454,16 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       ) : null}
 
       {isEditing ? (
-        <div className="grid grid-cols-1 gap-3 px-5 py-6 sm:gap-4 sm:px-6">
+        <div className="px-5 sm:px-6">
           {personalDetailsFieldOrder.map((key) => renderEditField(key))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3 px-5 py-6 sm:gap-4 sm:px-6">
+        <div className="px-5 sm:px-6">
           {personalDetailsFieldOrder.map((key) => renderReadOnlyRow(key))}
         </div>
       )}
 
-      <div className="border-t border-slate-200 bg-slate-50/80 px-5 py-4 sm:px-6">
+      <div className="border-t border-slate-200 bg-slate-50/60 px-5 py-4 sm:px-6">
         {isEditing ? (
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button
