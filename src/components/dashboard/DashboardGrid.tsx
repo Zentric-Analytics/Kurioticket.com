@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -1731,17 +1731,161 @@ function SecuritySettingRow({
 export function SecurityDashboardPage() {
   const { t } = useLocale();
   const [actionMessage, setActionMessage] = useState("");
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [deleteRequestSaving, setDeleteRequestSaving] = useState(false);
+  const [securityEmailAlerts, setSecurityEmailAlerts] = useState(true);
+  const [preferencesLoading, setPreferencesLoading] = useState(true);
+  const [preferencesSaving, setPreferencesSaving] = useState(false);
   const securityActionStatusId = "security-action-status";
   const tx = (key: string, fallback: string) => t[key] || fallback;
 
-  const handleUnavailableSecurityAction = () => {
-    setActionMessage(
-      tx(
-        "accountDashboard.security.action.unavailable",
-        "This security action is not available yet.",
-      ),
-    );
+  useEffect(() => {
+    let active = true;
+
+    async function loadSecurityPreferences() {
+      try {
+        const response = await fetch("/api/account/security/preferences", {
+          method: "GET",
+          credentials: "same-origin",
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!active) return;
+
+        if (response.ok) {
+          setSecurityEmailAlerts(Boolean(data.preferences?.securityEmailAlerts));
+        } else {
+          setActionMessage(data.error || "Unable to load security preferences.");
+        }
+      } catch {
+        if (active) setActionMessage("Unable to load security preferences.");
+      } finally {
+        if (active) setPreferencesLoading(false);
+      }
+    }
+
+    loadSecurityPreferences();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handlePasswordFieldChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setPasswordForm((current) => ({ ...current, [name]: value }));
   };
+
+  const handlePasswordSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setActionMessage("");
+
+    if (!passwordForm.currentPassword) {
+      setActionMessage("Current password is required.");
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 8) {
+      setActionMessage("New password must be at least 8 characters.");
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setActionMessage("Confirm password must match the new password.");
+      return;
+    }
+
+    if (passwordForm.currentPassword === passwordForm.newPassword) {
+      setActionMessage("Choose a new password that is different from your current password.");
+      return;
+    }
+
+    setPasswordSaving(true);
+
+    try {
+      const response = await fetch("/api/account/security/password", {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(passwordForm),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setActionMessage(data.error || "Unable to update password.");
+        return;
+      }
+
+      setPasswordModalOpen(false);
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setActionMessage("Password updated successfully. Use the new password next time you sign in.");
+    } catch {
+      setActionMessage("Unable to update password.");
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
+
+  const handleSecurityAlertsToggle = async (enabled: boolean) => {
+    setPreferencesSaving(true);
+    setActionMessage("");
+
+    try {
+      const response = await fetch("/api/account/security/preferences", {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ securityEmailAlerts: enabled }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setActionMessage(data.error || "Unable to save security preferences.");
+        return;
+      }
+
+      setSecurityEmailAlerts(Boolean(data.preferences?.securityEmailAlerts));
+      setActionMessage(enabled ? "Email security alerts are on." : "Email security alerts are off.");
+    } catch {
+      setActionMessage("Unable to save security preferences.");
+    } finally {
+      setPreferencesSaving(false);
+    }
+  };
+
+  const handleDeletionRequest = async () => {
+    setDeleteRequestSaving(true);
+    setActionMessage("");
+
+    try {
+      const response = await fetch("/api/account/security/deletion-request", {
+        method: "POST",
+        credentials: "same-origin",
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setActionMessage(data.error || "Unable to request account deletion.");
+        return;
+      }
+
+      setDeleteModalOpen(false);
+      setActionMessage("Account deletion request received. Support will review it before any account data is removed.");
+    } catch {
+      setActionMessage("Unable to request account deletion.");
+    } finally {
+      setDeleteRequestSaving(false);
+    }
+  };
+
+  const comingSoonStatus = tx("accountDashboard.security.status.comingSoon", "Coming soon");
 
   return (
     <section
@@ -1761,77 +1905,63 @@ export function SecurityDashboardPage() {
         <div className="px-5 sm:px-6">
           <SecuritySettingRow
             title={tx("accountDashboard.security.password.title", "Password")}
-            body={tx(
-              "accountDashboard.security.password.description",
-              "Update the password used to sign in to your Kurioticket account.",
-            )}
-            action={tx(
-              "accountDashboard.security.action.changePassword",
-              "Change password",
-            )}
-            onAction={handleUnavailableSecurityAction}
+            body={tx("accountDashboard.security.password.description", "Update the password used to sign in to your Kurioticket account.")}
+            action={tx("accountDashboard.security.action.changePassword", "Change password")}
+            onAction={() => setPasswordModalOpen(true)}
             statusId={securityActionStatusId}
           />
           <SecuritySettingRow
-            title={tx(
-              "accountDashboard.security.twoFactor.title",
-              "Two-factor authentication",
-            )}
-            body={tx(
-              "accountDashboard.security.twoFactor.description",
-              "Add an extra layer of security to your account.",
-            )}
-            status={tx(
-              "accountDashboard.security.status.notEnabled",
-              "Not enabled",
-            )}
-            action={tx("accountDashboard.security.action.setUp", "Set up")}
-            onAction={handleUnavailableSecurityAction}
+            title={tx("accountDashboard.security.twoFactor.title", "Two-factor authentication")}
+            body={tx("accountDashboard.security.twoFactor.description", "Two-factor authentication is not available yet. We will add a verified setup flow before enabling it.")}
+            status={comingSoonStatus}
+            onAction={() => undefined}
             statusId={securityActionStatusId}
           />
           <SecuritySettingRow
             title={tx("accountDashboard.security.passkeys.title", "Passkeys")}
-            body={tx(
-              "accountDashboard.security.passkeys.description",
-              "Use a secure passkey to sign in without a password.",
-            )}
-            status={tx(
-              "accountDashboard.security.status.notSetUp",
-              "Not set up",
-            )}
-            action={tx("accountDashboard.security.action.setUp", "Set up")}
-            onAction={handleUnavailableSecurityAction}
+            body={tx("accountDashboard.security.passkeys.description", "Passkeys are not available yet. Password and OAuth sign-in remain supported.")}
+            status={comingSoonStatus}
+            onAction={() => undefined}
             statusId={securityActionStatusId}
           />
           <SecuritySettingRow
-            title={tx(
-              "accountDashboard.security.activeSessions.title",
-              "Active sessions",
-            )}
-            body={tx(
-              "accountDashboard.security.activeSessions.description",
-              "Review where your account is signed in.",
-            )}
-            action={tx("accountDashboard.security.action.manage", "Manage")}
-            onAction={handleUnavailableSecurityAction}
+            title={tx("accountDashboard.security.activeSessions.title", "Active sessions")}
+            body={tx("accountDashboard.security.activeSessions.description", "Active session management is not available yet for JWT sessions.")}
+            status={tx("accountDashboard.security.status.notAvailableYet", "Not available yet")}
+            onAction={() => undefined}
             statusId={securityActionStatusId}
           />
-          <SecuritySettingRow
-            title={tx(
-              "accountDashboard.security.notifications.title",
-              "Security notifications",
-            )}
-            body={tx(
-              "accountDashboard.security.notifications.description",
-              "Get notified about important account security activity.",
-            )}
-            status={tx(
-              "accountDashboard.security.status.emailAlerts",
-              "Email alerts",
-            )}
-            onAction={handleUnavailableSecurityAction}
-            statusId={securityActionStatusId}
-          />
+          <div className="grid min-w-0 grid-cols-1 gap-3 border-b border-slate-200 py-5 last:border-b-0 sm:grid-cols-[220px_minmax(0,1fr)] sm:gap-6 sm:py-5">
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold leading-6 text-slate-900">
+                {tx("accountDashboard.security.notifications.title", "Security notifications")}
+              </h2>
+            </div>
+            <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+              <div className="min-w-0">
+                <p className="max-w-2xl text-sm leading-6 text-slate-600">
+                  {tx("accountDashboard.security.notifications.description", "Get notified about important account security activity.")}
+                </p>
+                <p className="mt-2 inline-flex w-fit rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold leading-4 text-slate-700">
+                  {securityEmailAlerts ? "Email alerts on" : "Email alerts off"}
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={securityEmailAlerts}
+                disabled={preferencesLoading || preferencesSaving}
+                onClick={() => handleSecurityAlertsToggle(!securityEmailAlerts)}
+                className={cn(
+                  "focus-ring inline-flex min-h-10 w-full items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition sm:w-auto",
+                  securityEmailAlerts ? "bg-blue-600 text-white hover:bg-blue-700" : "border border-slate-300 bg-white text-slate-800 hover:bg-slate-50",
+                  preferencesLoading || preferencesSaving ? "cursor-not-allowed opacity-60" : "cursor-pointer",
+                )}
+              >
+                {preferencesSaving ? "Saving…" : securityEmailAlerts ? "Turn off" : "Turn on"}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
       <div className="overflow-hidden rounded-2xl border border-red-200 bg-white shadow-sm">
@@ -1842,35 +1972,54 @@ export function SecurityDashboardPage() {
         </div>
         <div className="px-5 sm:px-6">
           <SecuritySettingRow
-            title={tx(
-              "accountDashboard.security.deleteAccount.title",
-              "Delete account",
-            )}
-            body={tx(
-              "accountDashboard.security.deleteAccount.description",
-              "Permanently delete your Kurioticket account and saved account data.",
-            )}
-            action={tx(
-              "accountDashboard.security.action.deleteAccount",
-              "Delete account",
-            )}
-            onAction={handleUnavailableSecurityAction}
+            title={tx("accountDashboard.security.deleteAccount.title", "Delete account")}
+            body={tx("accountDashboard.security.deleteAccount.description", "Request permanent account deletion. Support review is required before any account records are removed.")}
+            action={tx("accountDashboard.security.action.deleteAccount", "Delete account")}
+            onAction={() => setDeleteModalOpen(true)}
             statusId={securityActionStatusId}
             danger
           />
         </div>
       </div>
-      <p
-        id={securityActionStatusId}
-        role="status"
-        aria-live="polite"
-        className={cn(
-          "px-1 text-sm font-medium leading-5 text-slate-600 sm:px-2",
-          actionMessage ? "" : "sr-only",
-        )}
-      >
-        {actionMessage}
-      </p>
+      <p id={securityActionStatusId} role="status" aria-live="polite" className={cn("px-1 text-sm font-medium leading-5 text-slate-600 sm:px-2", actionMessage ? "" : "sr-only")}>{actionMessage}</p>
+
+      {passwordModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="change-password-title">
+          <form onSubmit={handlePasswordSubmit} className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h2 id="change-password-title" className="text-xl font-semibold text-slate-950">Change password</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Enter your current password and choose a new password with at least 8 characters. OAuth-only accounts should use password reset to create a password.</p>
+            <div className="mt-5 space-y-4">
+              {[
+                ["currentPassword", "Current password"],
+                ["newPassword", "New password"],
+                ["confirmPassword", "Confirm new password"],
+              ].map(([name, label]) => (
+                <label key={name} className="block text-sm font-medium text-slate-800">
+                  {label}
+                  <input name={name} type="password" value={passwordForm[name as keyof typeof passwordForm]} onChange={handlePasswordFieldChange} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" autoComplete={name === "currentPassword" ? "current-password" : "new-password"} />
+                </label>
+              ))}
+            </div>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={() => setPasswordModalOpen(false)} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button>
+              <button type="submit" disabled={passwordSaving} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{passwordSaving ? "Saving…" : "Save password"}</button>
+            </div>
+          </form>
+        </div>
+      ) : null}
+
+      {deleteModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h2 id="delete-account-title" className="text-xl font-semibold text-slate-950">Request account deletion</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Account deletion is permanent and may affect saved trips, alerts, support history, and travel records. Kurioticket will not delete your account instantly from this page; support must review the request first.</p>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={() => setDeleteModalOpen(false)} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button>
+              <button type="button" disabled={deleteRequestSaving} onClick={handleDeletionRequest} className="focus-ring rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{deleteRequestSaving ? "Requesting…" : "Request deletion"}</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
