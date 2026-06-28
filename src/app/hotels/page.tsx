@@ -517,12 +517,12 @@ export default function HotelsSearchPage() {
                 fill
                 priority
                 sizes="100vw"
-                className="object-cover object-[50%_46%] brightness-[1.14] saturate-[1.08]"
+                className="object-cover object-[50%_46%] brightness-[1.2] saturate-[1.1] contrast-[1.01]"
               />
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-950/42 via-slate-950/10 to-slate-950/0" />
-              <div className="absolute inset-y-0 left-0 w-[68%] bg-gradient-to-r from-slate-950/64 via-slate-950/24 to-transparent" />
-              <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-slate-950/30 via-slate-950/8 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-slate-950/58 via-slate-950/16 to-transparent" />
+              <div className="absolute inset-y-0 left-0 w-[58%] bg-gradient-to-r from-slate-950/56 via-slate-950/20 to-transparent" />
+              <div className="absolute left-0 top-0 h-[66%] w-[62%] bg-[radial-gradient(ellipse_at_22%_26%,rgba(15,23,42,0.42),rgba(15,23,42,0.18)_42%,transparent_72%)]" />
+              <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-slate-950/18 via-slate-950/4 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-slate-950/34 via-slate-950/8 to-transparent" />
             </div>
 
             <div className="page-shell relative z-10 flex min-h-[35rem] flex-col items-start pb-36 pt-14 lg:min-h-[39rem] lg:pb-40 lg:pt-16">
@@ -544,7 +544,7 @@ export default function HotelsSearchPage() {
                 <HotelSearchBar
                   introLabel={hotelSearchIntroLabel}
                   desktopIdentityLabel={t("hotels")}
-                  className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.75rem] [&>form>div]:!border-white/80 [&>form>div]:!bg-white/[0.97] [&>form>div]:!p-4 [&>form>div]:!shadow-[0_34px_86px_-30px_rgba(15,23,42,0.62)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] lg:[&>form>div]:!rounded-[2rem] lg:[&>form>div]:!p-5 lg:[&>form>div>div]:!grid-cols-[minmax(0,2.1fr)_minmax(0,1.45fr)_minmax(0,1.18fr)_142px] lg:[&>form>div>div>*]:!min-h-[68px] lg:[&>form>div>div>div:last-child>button]:!min-h-[68px]"
+                  className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.75rem] [&>form>div]:!border-white/80 [&>form>div]:!bg-white/[0.97] [&>form>div]:!p-4 [&>form>div]:!shadow-[0_34px_86px_-30px_rgba(15,23,42,0.62)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] lg:[&>form>div]:!rounded-[2rem] lg:[&>form>div]:!p-5 lg:[&>form>div>div:last-child]:!grid-cols-[minmax(0,2.1fr)_minmax(0,1.45fr)_minmax(0,1.18fr)_142px] lg:[&>form>div>div:last-child>*]:!min-h-[68px] lg:[&>form>div>div:last-child>div:last-child>button]:!min-h-[68px]"
                 />
               </div>
             </div>
