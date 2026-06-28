@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
 import type { Adapter } from "next-auth/adapters";
@@ -475,6 +476,10 @@ export const authOptions: NextAuthOptions =
         token,
         user,
       }) {
+        if (!token.sessionActivityId) {
+          token.sessionActivityId = randomUUID();
+        }
+
         if (user) {
           const authUser =
             user as typeof user &
