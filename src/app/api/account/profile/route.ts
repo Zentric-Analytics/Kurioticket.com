@@ -18,7 +18,10 @@ export async function GET() {
   const userId = await getAuthenticatedUserId();
 
   if (!userId) {
-    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    return NextResponse.json(
+      { error: "Authentication required." },
+      { status: 401 },
+    );
   }
 
   try {
@@ -37,7 +40,11 @@ export async function GET() {
     return NextResponse.json({ profile: serializeUserProfile(profile) });
   } catch (error) {
     console.error("[account-profile:get]", error);
-    return NextResponse.json({ error: "Unable to load profile details." }, { status: 500 });
+
+    return NextResponse.json(
+      { error: "Unable to load profile details." },
+      { status: 500 },
+    );
   }
 }
 
@@ -45,17 +52,24 @@ export async function PATCH(request: Request) {
   const userId = await getAuthenticatedUserId();
 
   if (!userId) {
-    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    return NextResponse.json(
+      { error: "Authentication required." },
+      { status: 401 },
+    );
   }
 
   try {
     const payload = userProfileSchema.parse(await request.json());
     const fullNameWasSubmitted = Object.hasOwn(payload, "fullName");
     const prisma = getPrisma();
+
     const profile = await prisma.$transaction(async (tx) => {
       const savedProfile = await tx.userProfile.upsert({
         where: { userId },
-        create: { userId, ...payload },
+        create: {
+          userId,
+          ...payload,
+        },
         update: payload,
         select: {
           fullName: true,
@@ -70,8 +84,12 @@ export async function PATCH(request: Request) {
       if (fullNameWasSubmitted) {
         await tx.user.update({
           where: { id: userId },
-          data: { name: payload.fullName ?? null },
-          select: { id: true },
+          data: {
+            name: payload.fullName ?? null,
+          },
+          select: {
+            id: true,
+          },
         });
       }
 
@@ -81,10 +99,17 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ profile: serializeUserProfile(profile) });
   } catch (error) {
     if (error instanceof ZodError) {
-      return NextResponse.json({ error: "Please check the profile details and try again." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Please check the profile details and try again." },
+        { status: 400 },
+      );
     }
 
     console.error("[account-profile:patch]", error);
-    return NextResponse.json({ error: "Unable to save profile details." }, { status: 500 });
+
+    return NextResponse.json(
+      { error: "Unable to save profile details." },
+      { status: 500 },
+    );
   }
 }
