@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 
@@ -18,222 +18,84 @@ type MessageState = {
   key: string;
 };
 
-export function SignupForm({
-  googleEnabled = false,
-}: SignupFormProps) {
+export function SignupForm({ googleEnabled = false }: SignupFormProps) {
   const { t } = useLocale();
 
   useEffect(() => {
     document.title = `${t.signupPageTitle} | Kurioticket`;
   }, [t.signupPageTitle]);
 
-  const [error, setError] =
-    useState<MessageState | null>(null);
+  const [error, setError] = useState<MessageState | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<MessageState | null>(null);
+  const [isPending, startTransition] = useTransition();
 
-  const [loading, setLoading] =
-    useState(false);
-
-  const [message, setMessage] =
-    useState<MessageState | null>(null);
-
-  const [isPending, startTransition] =
-    useTransition();
-
-  const submittingRef = useRef(false);
-
-  async function submit(
-    formData: FormData,
-  ) {
-    if (submittingRef.current) {
-      return;
-    }
-
-    submittingRef.current = true;
+  async function submit(formData: FormData) {
     setLoading(true);
     setError(null);
     setMessage(null);
 
     const input = {
-      name: String(
-        formData.get("name") || "",
-      ),
-
-      email: String(
-        formData.get("email") || "",
-      ),
-
-      password: String(
-        formData.get("password") || "",
-      ),
+      name: String(formData.get("name") || ""),
+      email: String(formData.get("email") || ""),
+      password: String(formData.get("password") || ""),
     };
 
-    const parsed =
-      signupSchema.safeParse(input);
+    const parsed = signupSchema.safeParse(input);
 
     if (!parsed.success) {
-      submittingRef.current = false;
       setLoading(false);
-
-      setError({
-        key: getPublicSignupValidationErrorKey(
-          parsed.error.flatten()
-            .fieldErrors,
-        ),
-      });
-
+      setError({ key: getPublicSignupValidationErrorKey(parsed.error.flatten().fieldErrors) });
       return;
     }
 
-    const { email, password } =
-      parsed.data;
-
-    let response: Response;
-
-    try {
-      response = await fetch(
-        "/api/auth/signup",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-
-          body: JSON.stringify(
-            parsed.data,
-          ),
-        },
-      );
-    } catch (error) {
-      console.error("[signup:request-failed]", error);
-      submittingRef.current = false;
-      setLoading(false);
-      setError({
-        key: "signupErrorUnableCreate",
-      });
-
-      return;
-    }
-
-    const data =
-      await response.json();
-
-    if (!response.ok) {
-      submittingRef.current = false;
-      setLoading(false);
-
-      setError({
-        key: getSignupErrorKey(
-          data.error,
-        ),
-      });
-
-      return;
-    }
-
-    const signInResult =
-      await signIn("credentials", {
-        redirect: false,
-        email,
-        password,
-        callbackUrl:
-          "/onboarding",
-      });
-
-    // Preserve backend verification flow
-    if (
-      signInResult?.error ===
-      "EmailVerificationRequired"
-    ) {
-      setMessage({
-        key: "signupVerificationRequiredRedirecting",
-      });
-
-      startTransition(() => {
-        window.location.href = `/auth/verify-email?email=${encodeURIComponent(
-          email,
-        )}`;
-      });
-
-      return;
-    }
-
-    if (!signInResult?.ok) {
-      submittingRef.current = false;
-      setLoading(false);
-
-      setError({
-        key: "signupAutomaticLoginFailed",
-      });
-
-      return;
-    }
-
-    setMessage({
-      key: "signupAccountCreatedRedirecting",
+    const { email } = parsed.data;
+    const response = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(parsed.data),
     });
 
+    const data = await response.json();
+
+    if (!response.ok) {
+      setLoading(false);
+      setError({ key: getSignupErrorKey(data.error) });
+      return;
+    }
+
+    setLoading(false);
+    setMessage({ key: "signupVerificationRequiredRedirecting" });
+
     startTransition(() => {
-      window.location.href =
-        signInResult.url ||
-        "/onboarding";
+      window.location.href = `/auth/verify-email?email=${encodeURIComponent(email)}`;
     });
   }
 
   return (
     <Card className="mx-auto w-full max-w-md p-5">
-      <h1 className="break-words text-2xl font-bold text-navy">
-        {t.signupPageTitle}
-      </h1>
+      <h1 className="break-words text-2xl font-bold text-navy">{t.signupPageTitle}</h1>
 
-      <form
-        action={submit}
-        className="mt-5 grid gap-4"
-      >
+      <form action={submit} className="mt-5 grid gap-4">
         <Field label={t.signupFullNameLabel}>
-          <Input
-            name="name"
-            autoComplete="name"
-            required
-            disabled={loading || isPending}
-          />
+          <Input name="name" autoComplete="name" required disabled={loading || isPending} />
         </Field>
 
         <Field label={t.signupEmailLabel}>
-          <Input
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            disabled={loading || isPending}
-          />
+          <Input name="email" type="email" autoComplete="email" required disabled={loading || isPending} />
         </Field>
 
         <Field label={t.signupPasswordLabel}>
-          <Input
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            minLength={8}
-            required
-            disabled={loading || isPending}
-          />
+          <Input name="password" type="password" autoComplete="new-password" minLength={8} required disabled={loading || isPending} />
         </Field>
 
         <p className="break-words text-xs leading-5 text-muted">
           {t.signupAgreementBeforeTerms}
-          <Link
-            className="font-semibold text-teal-dark"
-            href="/legal/terms-of-service"
-          >
+          <Link className="font-semibold text-teal-dark" href="/legal/terms-of-service">
             {t.signupTermsLink}
           </Link>
           {t.signupAgreementBetweenLinks}
-          <Link
-            className="font-semibold text-teal-dark"
-            href="/legal/privacy-policy"
-          >
+          <Link className="font-semibold text-teal-dark" href="/legal/privacy-policy">
             {t.signupPrivacyPolicyLink}
           </Link>
           {t.signupAgreementAfterPrivacy}
@@ -251,34 +113,18 @@ export function SignupForm({
           </p>
         ) : null}
 
-        <Button type="submit" disabled={loading || isPending}>
-          {loading || isPending
-            ? t.signupCreatingAccount
-            : t.signupSubmit}
-        </Button>
+        <Button disabled={loading || isPending}>{loading || isPending ? t.signupCreatingAccount : t.signupSubmit}</Button>
       </form>
 
       {googleEnabled ? (
-        <Button
-          variant="secondary"
-          className="mt-3 w-full"
-          onClick={() =>
-            signIn("google", {
-              callbackUrl:
-                "/onboarding",
-            })
-          }
-        >
+        <Button variant="secondary" className="mt-3 w-full" onClick={() => signIn("google", { callbackUrl: "/onboarding" })}>
           {t.signupGoogle}
         </Button>
       ) : null}
 
       <p className="mt-4 break-words text-sm text-muted">
         {t.signupAlreadyHaveAccount}{" "}
-        <Link
-          className="font-semibold text-teal-dark"
-          href="/auth/signin"
-        >
+        <Link className="font-semibold text-teal-dark" href="/auth/signin">
           {t.signupLoginLink}
         </Link>
       </p>
@@ -286,38 +132,14 @@ export function SignupForm({
   );
 }
 
-function formatTranslation(
-  translations: Record<string, string>,
-  message: MessageState,
-) {
+function formatTranslation(translations: Record<string, string>, message: MessageState) {
   return translations[message.key] ?? message.key;
 }
 
-function getPublicSignupValidationErrorKey(
-  fieldErrors: Record<
-    string,
-    string[] | undefined
-  >,
-) {
-  if (
-    fieldErrors.name?.length
-  ) {
-    return "signupErrorFullNameRequired";
-  }
-
-  if (
-    fieldErrors.email?.length
-  ) {
-    return "signupErrorInvalidEmail";
-  }
-
-  if (
-    fieldErrors.password
-      ?.length
-  ) {
-    return "signupErrorPasswordRequirements";
-  }
-
+function getPublicSignupValidationErrorKey(fieldErrors: Record<string, string[] | undefined>) {
+  if (fieldErrors.name?.length) return "signupErrorFullNameRequired";
+  if (fieldErrors.email?.length) return "signupErrorInvalidEmail";
+  if (fieldErrors.password?.length) return "signupErrorPasswordRequirements";
   return "signupErrorUnableCreate";
 }
 
