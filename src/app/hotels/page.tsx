@@ -469,7 +469,7 @@ export default function HotelsSearchPage() {
     <>
       <AppHeader />
       <main className="relative isolate flex-1 overflow-x-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16">
-        <section className="relative z-20 isolate overflow-visible bg-slate-950">
+        <section className="relative z-20 isolate min-h-[21rem] overflow-visible bg-slate-950 sm:hidden">
           <div className="absolute inset-0 overflow-hidden">
             <Image
               src={hotelsHeroImage}
@@ -477,37 +477,80 @@ export default function HotelsSearchPage() {
               fill
               priority
               sizes="100vw"
-              className="object-cover object-[50%_44%] brightness-[1.06] saturate-[1.06] sm:object-[50%_46%]"
+              className="object-cover object-[52%_42%] brightness-[1.05] saturate-[1.06]"
             />
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-950/48 via-slate-950/16 to-transparent" />
-            <div className="absolute inset-y-0 left-0 w-[74%] bg-gradient-to-r from-slate-950/66 via-slate-950/28 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-slate-950/58 via-slate-950/18 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-950/70 via-slate-950/30 to-slate-950/8" />
+            <div className="absolute inset-y-0 left-0 w-[92%] bg-gradient-to-r from-slate-950/76 via-slate-950/38 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-950/84 via-slate-950/30 to-transparent" />
           </div>
 
-          <div className="page-shell relative z-10 flex min-h-[46rem] flex-col justify-between gap-12 pb-10 pt-14 sm:min-h-[44rem] sm:gap-14 sm:pb-12 sm:pt-16 lg:min-h-[45rem] lg:gap-16 lg:pb-16 lg:pt-[4.5rem]">
-            <div className="max-w-2xl text-white">
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/75">
+          <div className="page-shell relative z-10 flex min-h-[21rem] items-start pt-12">
+            <div className="max-w-[22.5rem] text-white">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-white/75">
                 {t("hotelsHeroEyebrow")}
               </p>
-              <h1 className="mt-3 text-[2.35rem] font-semibold leading-[1.02] tracking-[-0.035em] text-white drop-shadow-[0_3px_18px_rgba(15,23,42,0.62)] sm:text-[3rem] lg:text-[3.6rem]">
+              <h1 className="mt-3 text-[clamp(1.72rem,7.35vw,2.12rem)] font-semibold leading-[1.05] tracking-[-0.032em] text-white text-balance drop-shadow-[0_3px_16px_rgba(2,6,23,0.72)]">
                 {t("hotelsHeroTitle")}
               </h1>
-              <p className="mt-4 max-w-xl text-base font-semibold leading-7 text-white/90 drop-shadow-[0_2px_12px_rgba(15,23,42,0.62)] sm:text-lg">
+              <p className="mt-3 max-w-[21rem] text-sm font-semibold leading-[1.55] text-white/90 text-balance drop-shadow-[0_2px_10px_rgba(2,6,23,0.68)]">
                 {t("hotelsHeroSubtitle")}
               </p>
             </div>
+          </div>
 
-            <div className="relative z-20 w-full max-w-6xl self-center">
+          <div className="page-shell absolute inset-x-0 bottom-[-28rem] z-30">
+            <div className="mx-auto max-w-6xl">
               <HotelSearchBar
                 introLabel={hotelSearchIntroLabel}
-                className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.75rem] [&>form>div]:!border-white/75 [&>form>div]:!bg-white/95 [&>form>div]:!p-3 [&>form>div]:!shadow-[0_32px_78px_-30px_rgba(15,23,42,0.66)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] sm:[&>form>div]:!p-3.5 lg:[&>form>div]:!rounded-[2rem] lg:[&>form>div]:!p-4 lg:[&>form>div>div]:!grid-cols-[minmax(0,2.1fr)_minmax(0,1.45fr)_minmax(0,1.18fr)_132px] lg:[&>form>div>div>*]:!min-h-[62px] lg:[&>form>div>div>div:last-child>button]:!min-h-[62px]"
+                className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.5rem] [&>form>div]:!border-white/80 [&>form>div]:!bg-white/95 [&>form>div]:!p-3 [&>form>div]:!shadow-[0_28px_70px_-28px_rgba(15,23,42,0.58)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06]"
               />
             </div>
           </div>
-
         </section>
 
-        <div className="page-shell relative z-0 mx-auto mt-16 max-w-6xl space-y-11 sm:mt-20 md:space-y-14 lg:mt-24">
+        <section className="relative z-20 hidden overflow-visible pb-28 sm:block lg:pb-32">
+          <div className="relative isolate min-h-[35rem] bg-slate-950 lg:min-h-[39rem]">
+            <div className="absolute inset-0 overflow-hidden">
+              <Image
+                src={hotelsHeroImage}
+                alt={t("hotelsHeroImageAlt")}
+                fill
+                priority
+                sizes="100vw"
+                className="object-cover object-[50%_46%] brightness-[1.06] saturate-[1.06]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-950/58 via-slate-950/18 to-slate-950/5" />
+              <div className="absolute inset-y-0 left-0 w-[76%] bg-gradient-to-r from-slate-950/70 via-slate-950/30 to-transparent" />
+              <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-slate-950/42 via-slate-950/12 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-slate-950/72 via-slate-950/24 to-transparent" />
+            </div>
+
+            <div className="page-shell relative z-10 flex min-h-[35rem] flex-col items-start pb-36 pt-16 lg:min-h-[39rem] lg:pb-40 lg:pt-[4.5rem]">
+              <div className="max-w-3xl text-white">
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/75">
+                  {t("hotelsHeroEyebrow")}
+                </p>
+                <h1 className="mt-3 text-[3rem] font-semibold leading-[1.02] tracking-[-0.04em] text-white drop-shadow-[0_3px_18px_rgba(15,23,42,0.62)] lg:text-[3.6rem]">
+                  {t("hotelsHeroTitle")}
+                </h1>
+                <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-white/90 drop-shadow-[0_2px_12px_rgba(15,23,42,0.62)] lg:text-lg lg:leading-8">
+                  {t("hotelsHeroSubtitle")}
+                </p>
+              </div>
+            </div>
+
+            <div className="page-shell absolute inset-x-0 bottom-[-52px] z-30 lg:bottom-[-56px]">
+              <div className="mx-auto max-w-6xl">
+                <HotelSearchBar
+                  introLabel={hotelSearchIntroLabel}
+                  className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.75rem] [&>form>div]:!border-white/75 [&>form>div]:!bg-white/95 [&>form>div]:!p-3.5 [&>form>div]:!shadow-[0_32px_78px_-30px_rgba(15,23,42,0.66)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] lg:[&>form>div]:!rounded-[2rem] lg:[&>form>div]:!p-4 lg:[&>form>div>div]:!grid-cols-[minmax(0,2.1fr)_minmax(0,1.45fr)_minmax(0,1.18fr)_132px] lg:[&>form>div>div>*]:!min-h-[62px] lg:[&>form>div>div>div:last-child>button]:!min-h-[62px]"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="page-shell relative z-0 mx-auto mt-0 max-w-6xl space-y-11 pt-[30rem] sm:mt-20 sm:pt-0 md:space-y-14 lg:mt-24">
           <section
             className="mt-10 space-y-4 sm:mt-12 lg:mt-14"
             aria-labelledby="hotel-destinations-heading"
