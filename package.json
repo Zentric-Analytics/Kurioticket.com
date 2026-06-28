@@ -15,7 +15,7 @@
     "db:studio": "prisma studio",
     "security:secrets": "node scripts/verify-no-secrets.mjs",
     "postinstall": "prisma generate",
-    "db:deploy:render": "prisma generate && prisma migrate deploy",
+    "db:deploy:render": "node scripts/deploy-render-migrations.mjs",
     "check:conflicts": "node scripts/check-conflicts.mjs",
     "prebuild": "npm run check:conflicts",
     "check:homepage-destination-prices": "node scripts/check-homepage-destination-prices.mjs",
