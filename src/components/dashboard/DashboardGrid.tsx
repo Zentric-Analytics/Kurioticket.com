@@ -28,6 +28,32 @@ import type { UserProfileResponse } from "@/lib/userProfile";
 
 const RawImage = "img";
 
+type AccountSessionActivity = {
+  id: string;
+  deviceLabel: string;
+  browser: string;
+  os: string;
+  maskedIp: string | null;
+  locationLabel: string | null;
+  lastSeenAt: string;
+  createdAt: string;
+  revokedAt: string | null;
+  isCurrent: boolean;
+};
+
+function formatSessionTime(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Recently";
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
 type AccountDashboardRowItem = {
   labelKey: string;
   href: string;
@@ -1743,6 +1769,13 @@ export function SecurityDashboardPage() {
   const [securityEmailAlerts, setSecurityEmailAlerts] = useState(true);
   const [preferencesLoading, setPreferencesLoading] = useState(true);
   const [preferencesSaving, setPreferencesSaving] = useState(false);
+  const [sessionsModalOpen, setSessionsModalOpen] = useState(false);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [sessions, setSessions] = useState<AccountSessionActivity[]>([]);
+  const [sessionNotice, setSessionNotice] = useState(
+    "Tracked from sign-ins and security page access. JWT sessions remain valid until they expire or you sign out.",
+  );
+  const [removingSessionId, setRemovingSessionId] = useState<string | null>(null);
   const securityActionStatusId = "security-action-status";
   const tx = (key: string, fallback: string) => t[key] || fallback;
 
@@ -1830,6 +1863,65 @@ export function SecurityDashboardPage() {
       setActionMessage("Unable to update password.");
     } finally {
       setPasswordSaving(false);
+    }
+  };
+
+  const loadSessionActivities = async () => {
+    setSessionsLoading(true);
+    setActionMessage("");
+
+    try {
+      const response = await fetch("/api/account/security/sessions", {
+        method: "GET",
+        credentials: "same-origin",
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setActionMessage(data.error || "Unable to load active sessions.");
+        return;
+      }
+
+      setSessions(Array.isArray(data.sessions) ? data.sessions : []);
+      if (data.notice) {
+        setSessionNotice(String(data.notice));
+      }
+    } catch {
+      setActionMessage("Unable to load active sessions.");
+    } finally {
+      setSessionsLoading(false);
+    }
+  };
+
+  const handleOpenSessions = () => {
+    setSessionsModalOpen(true);
+    void loadSessionActivities();
+  };
+
+  const handleRemoveSessionRecord = async (sessionId: string) => {
+    setRemovingSessionId(sessionId);
+    setActionMessage("");
+
+    try {
+      const response = await fetch("/api/account/security/sessions/revoke", {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setActionMessage(data.error || "Unable to remove device record.");
+        return;
+      }
+
+      setActionMessage("Device record marked as signed out. Existing JWTs are not forcibly invalidated.");
+      await loadSessionActivities();
+    } catch {
+      setActionMessage("Unable to remove device record.");
+    } finally {
+      setRemovingSessionId(null);
     }
   };
 
@@ -1926,9 +2018,10 @@ export function SecurityDashboardPage() {
           />
           <SecuritySettingRow
             title={tx("accountDashboard.security.activeSessions.title", "Active sessions")}
-            body={tx("accountDashboard.security.activeSessions.description", "Active session management is not available yet for JWT sessions.")}
-            status={tx("accountDashboard.security.status.notAvailableYet", "Not available yet")}
-            onAction={() => undefined}
+            body={tx("accountDashboard.security.activeSessions.description", "Review recent devices tracked for your account. Because sign-in uses JWT sessions, removing a record does not instantly invalidate an issued token.")}
+            status={sessions.some((session) => session.isCurrent) ? "This device tracked" : "Tracking enabled"}
+            action={tx("accountDashboard.security.action.manageSessions", "Manage sessions")}
+            onAction={handleOpenSessions}
             statusId={securityActionStatusId}
           />
           <div className="grid min-w-0 grid-cols-1 gap-3 border-b border-slate-200 py-5 last:border-b-0 sm:grid-cols-[220px_minmax(0,1fr)] sm:gap-6 sm:py-5">
@@ -1982,6 +2075,61 @@ export function SecurityDashboardPage() {
         </div>
       </div>
       <p id={securityActionStatusId} role="status" aria-live="polite" className={cn("px-1 text-sm font-medium leading-5 text-slate-600 sm:px-2", actionMessage ? "" : "sr-only")}>{actionMessage}</p>
+
+      {sessionsModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="active-sessions-title">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-xl sm:p-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 id="active-sessions-title" className="text-xl font-semibold text-slate-950">Active sessions</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{sessionNotice}</p>
+              </div>
+              <button type="button" onClick={loadSessionActivities} disabled={sessionsLoading} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60">
+                {sessionsLoading ? "Refreshing…" : "Refresh"}
+              </button>
+            </div>
+            <div className="mt-5 space-y-3">
+              {sessionsLoading && sessions.length === 0 ? (
+                <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Loading tracked sessions…</p>
+              ) : sessions.length ? (
+                sessions.map((session) => (
+                  <div key={session.id} className="min-w-0 rounded-xl border border-slate-200 p-4">
+                    <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="break-words text-sm font-semibold text-slate-950">
+                            {session.isCurrent ? "This device" : session.deviceLabel}
+                          </p>
+                          {session.isCurrent ? <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">Current</span> : null}
+                          {session.revokedAt ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">Marked signed out</span> : null}
+                        </div>
+                        <p className="mt-1 break-words text-sm text-slate-600">{session.browser} on {session.os}</p>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">Last active {formatSessionTime(session.lastSeenAt)}</p>
+                        <p className="text-xs leading-5 text-slate-500">IP network {session.maskedIp || "not available"}</p>
+                      </div>
+                      {!session.isCurrent && !session.revokedAt ? (
+                        <button
+                          type="button"
+                          disabled={removingSessionId === session.id}
+                          onClick={() => void handleRemoveSessionRecord(session.id)}
+                          className="focus-ring inline-flex min-h-10 w-full shrink-0 items-center justify-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-60 sm:w-auto"
+                        >
+                          {removingSessionId === session.id ? "Removing…" : "Remove device record"}
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">No tracked sessions are available yet. Refresh this page after signing in to record this device.</p>
+              )}
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button type="button" onClick={() => setSessionsModalOpen(false)} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Done</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {passwordModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="change-password-title">
