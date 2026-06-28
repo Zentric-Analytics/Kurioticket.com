@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
   let event: ResendWebhookEvent;
 
   try {
-    event = webhookSecret ? verifyResendWebhook(payload, request, webhookSecret) : JSON.parse(payload);
+    event = webhookSecret ? await verifyResendWebhook(payload, request, webhookSecret) : JSON.parse(payload);
   } catch (error) {
     console.error("[resend:webhook:invalid]", error);
     return new NextResponse("Invalid webhook", { status: 400 });
@@ -61,16 +61,18 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-function verifyResendWebhook(payload: string, request: NextRequest, webhookSecret: string) {
+async function verifyResendWebhook(payload: string, request: NextRequest, webhookSecret: string) {
   const resend = new Resend(process.env.RESEND_API_KEY || "re_webhook_verification_only");
 
-  return resend.webhooks.verify({
-    payload,
-    headers: {
-      id: request.headers.get("svix-id") || "",
-      timestamp: request.headers.get("svix-timestamp") || "",
-      signature: request.headers.get("svix-signature") || "",
-    },
-    webhookSecret,
-  }) as ResendWebhookEvent;
+  return (await Promise.resolve(
+    resend.webhooks.verify({
+      payload,
+      headers: {
+        id: request.headers.get("svix-id") || "",
+        timestamp: request.headers.get("svix-timestamp") || "",
+        signature: request.headers.get("svix-signature") || "",
+      },
+      webhookSecret,
+    }),
+  )) as ResendWebhookEvent;
 }
