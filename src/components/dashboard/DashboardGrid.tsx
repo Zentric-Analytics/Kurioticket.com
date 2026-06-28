@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useMemo, useState, type ChangeEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Bell,
   Bookmark,
@@ -23,6 +24,7 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { personalDetailsCountryOptions } from "@/lib/region/supportedRegions";
 import { cn } from "@/lib/utils";
 import type { TranslationDictionary } from "@/lib/i18n/types";
+import type { UserProfileResponse } from "@/lib/userProfile";
 
 const RawImage = "img";
 
@@ -110,6 +112,7 @@ type DashboardOverviewProps = {
   displayName: string;
   userEmail?: string | null;
   userName?: string | null;
+  userProfile?: UserProfileResponse;
 };
 
 type PersonalDetailsDraft = {
@@ -619,17 +622,18 @@ function getPersonalDetailRows(t: TranslationDictionary): PersonalDetailRow[] {
 function getPersonalDetailsInitialValues({
   userEmail,
   userName,
+  userProfile,
 }: DashboardOverviewProps): PersonalDetailsDraft {
-  const trimmedName = userName?.trim() ?? "";
+  const trimmedName = userProfile?.fullName?.trim() || userName?.trim() || "";
 
   return {
     name: trimmedName,
     email: userEmail?.trim() ?? "",
-    phone: "",
-    dateOfBirth: "",
-    gender: "",
-    nationality: "",
-    address: "",
+    phone: userProfile?.phoneNumber ?? "",
+    dateOfBirth: userProfile?.dateOfBirth ?? "",
+    gender: userProfile?.gender ?? "",
+    nationality: userProfile?.nationality ?? "",
+    address: userProfile?.address ?? "",
   };
 }
 
@@ -1272,101 +1276,85 @@ function DetailInput({
 
 function PersonalDetailsSection(props: DashboardOverviewProps) {
   const { t } = useLocale();
-  const fallbackValues = getPersonalDetailsInitialValues(props);
-  const [savedValues, setSavedValues] = useState<PersonalDetailsDraft>(fallbackValues);
+  const router = useRouter();
+  const initialValues = getPersonalDetailsInitialValues(props);
+  const [savedValues, setSavedValues] =
+    useState<PersonalDetailsDraft>(initialValues);
   const [isEditing, setIsEditing] = useState(false);
-  const [draft, setDraft] = useState<PersonalDetailsDraft>(fallbackValues);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [statusMessage, setStatusMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [draft, setDraft] = useState<PersonalDetailsDraft>(initialValues);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const personalDetailRows = getPersonalDetailRows(t);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadProfile() {
-      setIsLoadingProfile(true);
-      setErrorMessage("");
-
-      try {
-        const response = await fetch("/api/account/profile", { cache: "no-store" });
-        const payload = (await response.json()) as {
-          profile?: PersonalDetailsDraft;
-          error?: string;
-        };
-
-        if (!response.ok || !payload.profile) {
-          throw new Error(payload.error || "Unable to load profile details.");
-        }
-
-        if (isMounted) {
-          setSavedValues(payload.profile);
-          setDraft(payload.profile);
-        }
-      } catch (error) {
-        if (isMounted) {
-          setErrorMessage(error instanceof Error ? error.message : "Unable to load profile details.");
-        }
-      } finally {
-        if (isMounted) setIsLoadingProfile(false);
-      }
-    }
-
-    void loadProfile();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   const handleEdit = () => {
     setDraft(savedValues);
-    setStatusMessage("");
-    setErrorMessage("");
+    setStatusMessage(null);
+    setErrorMessage(null);
     setIsEditing(true);
   };
 
   const handleCancel = () => {
     setDraft(savedValues);
     setIsEditing(false);
-    setStatusMessage("");
-    setErrorMessage("");
+    setErrorMessage(null);
   };
 
   const handleSave = async () => {
     setIsSaving(true);
-    setStatusMessage("");
-    setErrorMessage("");
+    setStatusMessage(null);
+    setErrorMessage(null);
 
     try {
       const response = await fetch("/api/account/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          name: draft.name,
-          phone: draft.phone,
+          fullName: draft.name,
+          phoneNumber: draft.phone,
           dateOfBirth: draft.dateOfBirth,
           gender: draft.gender,
           nationality: draft.nationality,
           address: draft.address,
         }),
       });
-      const payload = (await response.json()) as {
-        profile?: PersonalDetailsDraft;
-        error?: string;
-      };
 
-      if (!response.ok || !payload.profile) {
-        throw new Error(payload.error || "Unable to save profile details.");
+      const data = (await response.json().catch(() => null)) as {
+        error?: string;
+        profile?: UserProfileResponse;
+      } | null;
+
+      if (!response.ok || !data?.profile) {
+        throw new Error(data?.error || "Unable to save profile details.");
       }
 
-      setSavedValues(payload.profile);
-      setDraft(payload.profile);
+      const nextSavedValues: PersonalDetailsDraft = {
+        name: data.profile.fullName,
+        email: savedValues.email,
+        phone: data.profile.phoneNumber,
+        dateOfBirth: data.profile.dateOfBirth,
+        gender: data.profile.gender,
+        nationality: data.profile.nationality,
+        address: data.profile.address,
+      };
+
+      setSavedValues(nextSavedValues);
+      setDraft(nextSavedValues);
       setIsEditing(false);
-      setStatusMessage(t["accountDashboard.personalDetails.saved"] || "Your personal details have been saved.");
+      setStatusMessage(
+        t["accountDashboard.personalDetails.saveSuccess"] ||
+          "Personal details saved.",
+      );
+      router.refresh();
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Unable to save profile details.");
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : t["accountDashboard.personalDetails.saveError"] ||
+              "Unable to save profile details.",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -1380,6 +1368,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
   const personalDetailRowByKey = new Map(
     personalDetailRows.map((row) => [row.key, row]),
   );
+
   const getPersonalDetailRow = (key: keyof PersonalDetailsDraft) => {
     const row = personalDetailRowByKey.get(key);
 
@@ -1389,6 +1378,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
 
     return row;
   };
+
   const renderEditField = (
     key: keyof PersonalDetailsDraft,
     className?: string,
@@ -1436,15 +1426,21 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     >
       <div className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white px-5 py-4 sm:px-6">
         <p className="text-sm text-slate-600">
-          {isLoadingProfile
-            ? t["accountDashboard.personalDetails.loading"] || "Loading your saved profile details…"
-            : t["accountDashboard.personalDetails.description"] || "Manage the information Kurioticket uses for your account."}
+          {t["accountDashboard.personalDetails.description"] ||
+            "Manage the information Kurioticket uses for your account."}
         </p>
       </div>
 
       {statusMessage || errorMessage ? (
         <div className="px-5 pt-4 sm:px-6" role="status" aria-live="polite">
-          <p className={cn("rounded-xl px-4 py-3 text-sm font-medium", errorMessage ? "border border-red-200 bg-red-50 text-red-700" : "border border-emerald-200 bg-emerald-50 text-emerald-700")}>
+          <p
+            className={cn(
+              "rounded-xl px-4 py-3 text-sm font-medium",
+              errorMessage
+                ? "border border-red-200 bg-red-50 text-red-700"
+                : "border border-emerald-200 bg-emerald-50 text-emerald-700",
+            )}
+          >
             {errorMessage || statusMessage}
           </p>
         </div>
@@ -1453,52 +1449,82 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       {isEditing ? (
         <div className="space-y-8 px-5 py-6 sm:px-6">
           <div className="space-y-4">
-            <h3 className="text-base font-semibold text-slate-900">{t["accountDashboard.personalDetails.section.basicInformation"] || "Basic information"}</h3>
+            <h3 className="text-base font-semibold text-slate-900">
+              {t["accountDashboard.personalDetails.section.basicInformation"] ||
+                "Basic information"}
+            </h3>
             <div className="grid gap-4 md:grid-cols-2">
               {renderEditField("name")}
               {renderEditField("email")}
             </div>
           </div>
+
           <div className="space-y-4 border-t border-slate-200 pt-6">
-            <h3 className="text-base font-semibold text-slate-900">{t["accountDashboard.personalDetails.section.contactInformation"] || "Contact information"}</h3>
+            <h3 className="text-base font-semibold text-slate-900">
+              {t["accountDashboard.personalDetails.section.contactInformation"] ||
+                "Contact information"}
+            </h3>
             <div className="max-w-md">{renderEditField("phone")}</div>
           </div>
+
           <div className="space-y-4 border-t border-slate-200 pt-6">
-            <h3 className="text-base font-semibold text-slate-900">{t["accountDashboard.personalDetails.section.personalInformation"] || "Personal information"}</h3>
+            <h3 className="text-base font-semibold text-slate-900">
+              {t["accountDashboard.personalDetails.section.personalInformation"] ||
+                "Personal information"}
+            </h3>
             <div className="grid gap-4 md:grid-cols-2">
               {renderEditField("dateOfBirth")}
               {renderEditField("gender")}
               {renderEditField("nationality")}
             </div>
           </div>
+
           <div className="space-y-4 border-t border-slate-200 pt-6">
-            <h3 className="text-base font-semibold text-slate-900">{t["accountDashboard.personalDetails.section.address"] || "Address"}</h3>
+            <h3 className="text-base font-semibold text-slate-900">
+              {t["accountDashboard.personalDetails.section.address"] ||
+                "Address"}
+            </h3>
             {renderEditField("address")}
           </div>
         </div>
       ) : (
         <div className="space-y-8 px-5 py-6 sm:px-6">
           <div className="space-y-4">
-            <h3 className="text-base font-semibold text-slate-900">{t["accountDashboard.personalDetails.section.basicInformation"] || "Basic information"}</h3>
+            <h3 className="text-base font-semibold text-slate-900">
+              {t["accountDashboard.personalDetails.section.basicInformation"] ||
+                "Basic information"}
+            </h3>
             <div className="grid gap-4 md:grid-cols-2">
               {renderReadOnlyRow("name")}
               {renderReadOnlyRow("email")}
             </div>
           </div>
+
           <div className="space-y-4 border-t border-slate-200 pt-6">
-            <h3 className="text-base font-semibold text-slate-900">{t["accountDashboard.personalDetails.section.contactInformation"] || "Contact information"}</h3>
+            <h3 className="text-base font-semibold text-slate-900">
+              {t["accountDashboard.personalDetails.section.contactInformation"] ||
+                "Contact information"}
+            </h3>
             <div className="max-w-md">{renderReadOnlyRow("phone")}</div>
           </div>
+
           <div className="space-y-4 border-t border-slate-200 pt-6">
-            <h3 className="text-base font-semibold text-slate-900">{t["accountDashboard.personalDetails.section.personalInformation"] || "Personal information"}</h3>
+            <h3 className="text-base font-semibold text-slate-900">
+              {t["accountDashboard.personalDetails.section.personalInformation"] ||
+                "Personal information"}
+            </h3>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {renderReadOnlyRow("dateOfBirth")}
               {renderReadOnlyRow("gender")}
               {renderReadOnlyRow("nationality")}
             </div>
           </div>
+
           <div className="space-y-4 border-t border-slate-200 pt-6">
-            <h3 className="text-base font-semibold text-slate-900">{t["accountDashboard.personalDetails.section.address"] || "Address"}</h3>
+            <h3 className="text-base font-semibold text-slate-900">
+              {t["accountDashboard.personalDetails.section.address"] ||
+                "Address"}
+            </h3>
             {renderReadOnlyRow("address")}
           </div>
         </div>
@@ -1531,8 +1557,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
             <button
               type="button"
               onClick={handleEdit}
-              disabled={isLoadingProfile}
-              className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-blue-700 bg-white px-5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+              className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-blue-700 bg-white px-5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 sm:w-auto"
             >
               {t["accountDashboard.personalDetails.edit"]}
             </button>
@@ -1542,6 +1567,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     </section>
   );
 }
+
 
 function ListRow({ title, body, href, icon: Icon, status }: ListRowProps) {
   const row = (
@@ -1589,6 +1615,7 @@ export function DashboardOverview({
   displayName,
   userEmail,
   userName,
+  userProfile,
 }: DashboardOverviewProps) {
   const { t } = useLocale();
 
@@ -1605,10 +1632,12 @@ export function DashboardOverview({
         displayName={displayName}
         userEmail={userEmail}
         userName={userName}
+        userProfile={userProfile}
       />
     </div>
   );
 }
+
 
 export function SavedDashboardPage() {
   const { t } = useLocale();

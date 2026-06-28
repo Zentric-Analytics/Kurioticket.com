@@ -4,6 +4,8 @@ import { Footer } from "@/components/layout/Footer";
 import { AccountDetailShell } from "@/components/dashboard/AccountDetailShell";
 import { DashboardOverview } from "@/components/dashboard/DashboardGrid";
 import { authOptions } from "@/lib/auth";
+import { getOptionalPrisma } from "@/lib/prisma";
+import { serializeUserProfile } from "@/lib/userProfile";
 
 export const metadata = {
   title: "Personal details",
@@ -22,8 +24,26 @@ function getInitials(name?: string | null, email?: string | null) {
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
-  const userName = session?.user?.name?.trim();
+  const sessionUserName = session?.user?.name?.trim();
   const userEmail = session?.user?.email?.trim();
+  const db = getOptionalPrisma();
+  const storedProfile =
+    session?.user?.id && db
+      ? await db.userProfile.findUnique({
+          where: { userId: session.user.id },
+          select: {
+            fullName: true,
+            phoneNumber: true,
+            dateOfBirth: true,
+            gender: true,
+            nationality: true,
+            address: true,
+          },
+        })
+      : null;
+  const userProfile = serializeUserProfile(storedProfile);
+  const savedProfileName = userProfile.fullName.trim();
+  const userName = savedProfileName || sessionUserName;
   const firstName = userName?.split(/\s+/).filter(Boolean)[0];
   const displayName = firstName || "traveler";
   const initials = getInitials(userName, userEmail);
@@ -38,6 +58,7 @@ export default async function DashboardPage() {
             displayName={displayName}
             userEmail={userEmail}
             userName={userName}
+            userProfile={userProfile}
           />
         </AccountDetailShell>
       </main>
