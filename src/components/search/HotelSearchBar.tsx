@@ -1038,12 +1038,12 @@ export function HotelSearchBar({
           {!compact && desktopIdentityLabel ? (
             <div className="hidden items-center px-1 pb-2 sm:flex lg:pb-2.5">
               <span
-                className="inline-flex items-center gap-2 rounded-lg bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-navy shadow-sm ring-1 ring-indigo-100/80"
+                className="inline-flex items-center gap-2 rounded-lg bg-indigo-50 px-3.5 py-1.5 text-[0.925rem] font-semibold text-navy shadow-sm ring-1 ring-indigo-100/80"
               >
                 <BedDouble
                   aria-hidden="true"
-                  className="h-4 w-4 text-indigo-700"
-                  strokeWidth={2.1}
+                  className="h-[1.125rem] w-[1.125rem] text-indigo-700"
+                  strokeWidth={2.15}
                 />
                 {hotelSearchIdentityLabel}
               </span>

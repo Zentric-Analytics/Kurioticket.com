@@ -530,7 +530,7 @@ export default function HotelsSearchPage() {
                 <p className="sr-only">
                   {t("hotelsHeroEyebrow")}
                 </p>
-                <h1 className="text-[3rem] font-semibold leading-[1.02] tracking-[-0.04em] text-white drop-shadow-[0_3px_18px_rgba(15,23,42,0.62)] lg:text-[3.6rem]">
+                <h1 className="text-[3rem] font-semibold leading-[1.04] tracking-[-0.038em] text-white drop-shadow-[0_3px_18px_rgba(15,23,42,0.62)] lg:text-[3.32rem]">
                   {t("hotelsHeroTitle")}
                 </h1>
                 <p className="mt-4 max-w-xl text-base font-semibold leading-7 text-white/90 drop-shadow-[0_2px_12px_rgba(15,23,42,0.62)] lg:text-lg lg:leading-8">
