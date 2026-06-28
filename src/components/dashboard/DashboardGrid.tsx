@@ -147,7 +147,8 @@ type ListRowProps = {
 type SecuritySettingRowProps = {
   title: string;
   body: string;
-  action: string;
+  action?: string;
+  status?: string;
   danger?: boolean;
   onAction: () => void;
   statusId?: string;
@@ -1672,33 +1673,57 @@ function SecuritySettingRow({
   title,
   body,
   action,
+  status,
   danger = false,
   onAction,
   statusId,
 }: SecuritySettingRowProps) {
   return (
-    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 max-[22rem]:grid-cols-1 max-[22rem]:justify-items-end sm:min-h-[5.25rem] sm:gap-6 sm:px-6 sm:py-4">
-      <div className="min-w-0 max-[22rem]:w-full sm:pe-4">
+    <div className="grid min-w-0 grid-cols-1 gap-3 border-b border-slate-200 py-5 last:border-b-0 sm:grid-cols-[220px_minmax(0,1fr)] sm:gap-6 sm:py-5">
+      <div className="min-w-0">
         <h2 className="text-base font-semibold leading-6 text-slate-900">
           {title}
         </h2>
-        <p className="mt-1 text-sm leading-5 text-slate-600 sm:leading-6">
-          {body}
-        </p>
       </div>
-      <button
-        type="button"
-        onClick={onAction}
-        aria-describedby={statusId}
-        className={cn(
-          "focus-ring inline-flex min-h-10 w-fit max-w-full shrink-0 cursor-pointer items-center justify-center rounded-lg border bg-white px-4 py-2 text-center text-sm font-semibold leading-5 transition",
-          danger
-            ? "border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50"
-            : "border-blue-200 text-blue-700 hover:border-blue-300 hover:bg-blue-50",
-        )}
-      >
-        {action}
-      </button>
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+        <div className="min-w-0">
+          <p
+            className={cn(
+              "max-w-2xl text-sm leading-6",
+              danger ? "text-red-700" : "text-slate-600",
+            )}
+          >
+            {body}
+          </p>
+          {status ? (
+            <p
+              className={cn(
+                "mt-2 inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-semibold leading-4",
+                danger
+                  ? "bg-red-50 text-red-700"
+                  : "bg-slate-100 text-slate-700",
+              )}
+            >
+              {status}
+            </p>
+          ) : null}
+        </div>
+        {action ? (
+          <button
+            type="button"
+            onClick={onAction}
+            aria-describedby={statusId}
+            className={cn(
+              "focus-ring inline-flex min-h-10 w-full max-w-full shrink-0 cursor-pointer items-center justify-center rounded-lg border bg-white px-4 py-2 text-center text-sm font-semibold leading-5 transition sm:w-auto",
+              danger
+                ? "border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50"
+                : "border-slate-300 text-slate-800 hover:border-slate-400 hover:bg-slate-50",
+            )}
+          >
+            {action}
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -1707,9 +1732,15 @@ export function SecurityDashboardPage() {
   const { t } = useLocale();
   const [actionMessage, setActionMessage] = useState("");
   const securityActionStatusId = "security-action-status";
+  const tx = (key: string, fallback: string) => t[key] || fallback;
 
   const handleUnavailableSecurityAction = () => {
-    setActionMessage(t["accountDashboard.security.action.unavailable"]);
+    setActionMessage(
+      tx(
+        "accountDashboard.security.action.unavailable",
+        "This security action is not available yet.",
+      ),
+    );
   };
 
   return (
@@ -1718,38 +1749,111 @@ export function SecurityDashboardPage() {
       className="min-w-0 max-w-[60rem] space-y-5 pt-0 lg:ms-[4.875rem]"
     >
       <AccountSectionHeader
-        title={t["accountDashboard.security.title"]}
-        description={t["accountDashboard.security.description"]}
+        title={tx("accountDashboard.security.title", "Security settings")}
+        description={tx(
+          "accountDashboard.security.description",
+          "Manage sign-in and account security for your Kurioticket account.",
+        )}
         titleId="security-title"
         flushStart
       />
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_18px_45px_-38px_rgba(15,23,42,0.55)]">
-        <div className="divide-y divide-slate-200">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="px-5 sm:px-6">
           <SecuritySettingRow
-            title={t["accountDashboard.security.passkeys.title"]}
-            body={t["accountDashboard.security.passkeys.description"]}
-            action={t["accountDashboard.security.action.setUp"]}
+            title={tx("accountDashboard.security.password.title", "Password")}
+            body={tx(
+              "accountDashboard.security.password.description",
+              "Update the password used to sign in to your Kurioticket account.",
+            )}
+            action={tx(
+              "accountDashboard.security.action.changePassword",
+              "Change password",
+            )}
             onAction={handleUnavailableSecurityAction}
             statusId={securityActionStatusId}
           />
           <SecuritySettingRow
-            title={t["accountDashboard.security.twoFactor.title"]}
-            body={t["accountDashboard.security.twoFactor.description"]}
-            action={t["accountDashboard.security.action.setUp"]}
+            title={tx(
+              "accountDashboard.security.twoFactor.title",
+              "Two-factor authentication",
+            )}
+            body={tx(
+              "accountDashboard.security.twoFactor.description",
+              "Add an extra layer of security to your account.",
+            )}
+            status={tx(
+              "accountDashboard.security.status.notEnabled",
+              "Not enabled",
+            )}
+            action={tx("accountDashboard.security.action.setUp", "Set up")}
             onAction={handleUnavailableSecurityAction}
             statusId={securityActionStatusId}
           />
           <SecuritySettingRow
-            title={t["accountDashboard.security.activeSessions.title"]}
-            body={t["accountDashboard.security.activeSessions.description"]}
-            action={t["accountDashboard.security.action.manage"]}
+            title={tx("accountDashboard.security.passkeys.title", "Passkeys")}
+            body={tx(
+              "accountDashboard.security.passkeys.description",
+              "Use a secure passkey to sign in without a password.",
+            )}
+            status={tx(
+              "accountDashboard.security.status.notSetUp",
+              "Not set up",
+            )}
+            action={tx("accountDashboard.security.action.setUp", "Set up")}
             onAction={handleUnavailableSecurityAction}
             statusId={securityActionStatusId}
           />
           <SecuritySettingRow
-            title={t["accountDashboard.security.deleteAccount.title"]}
-            body={t["accountDashboard.security.deleteAccount.description"]}
-            action={t["accountDashboard.security.action.deleteAccount"]}
+            title={tx(
+              "accountDashboard.security.activeSessions.title",
+              "Active sessions",
+            )}
+            body={tx(
+              "accountDashboard.security.activeSessions.description",
+              "Review where your account is signed in.",
+            )}
+            action={tx("accountDashboard.security.action.manage", "Manage")}
+            onAction={handleUnavailableSecurityAction}
+            statusId={securityActionStatusId}
+          />
+          <SecuritySettingRow
+            title={tx(
+              "accountDashboard.security.notifications.title",
+              "Security notifications",
+            )}
+            body={tx(
+              "accountDashboard.security.notifications.description",
+              "Get notified about important account security activity.",
+            )}
+            status={tx(
+              "accountDashboard.security.status.emailAlerts",
+              "Email alerts",
+            )}
+            onAction={handleUnavailableSecurityAction}
+            statusId={securityActionStatusId}
+          />
+        </div>
+      </div>
+      <div className="overflow-hidden rounded-2xl border border-red-200 bg-white shadow-sm">
+        <div className="border-b border-red-100 bg-red-50/60 px-5 py-4 sm:px-6">
+          <p className="text-sm font-semibold leading-5 text-red-700">
+            {tx("accountDashboard.security.dangerZone.title", "Danger zone")}
+          </p>
+        </div>
+        <div className="px-5 sm:px-6">
+          <SecuritySettingRow
+            title={tx(
+              "accountDashboard.security.deleteAccount.title",
+              "Delete account",
+            )}
+            body={tx(
+              "accountDashboard.security.deleteAccount.description",
+              "Permanently delete your Kurioticket account and saved account data.",
+            )}
+            action={tx(
+              "accountDashboard.security.action.deleteAccount",
+              "Delete account",
+            )}
             onAction={handleUnavailableSecurityAction}
             statusId={securityActionStatusId}
             danger

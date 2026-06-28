@@ -392,19 +392,30 @@ export const translations: TranslationDictionary = {
   "accountDashboard.security.eyebrow": "SECURITY",
   "accountDashboard.security.title": "Security settings",
   "accountDashboard.security.description":
-    "Update your password and manage account security.",
+    "Manage sign-in and account security for your Kurioticket account.",
+  "accountDashboard.security.password.title": "Password",
+  "accountDashboard.security.password.description":
+    "Update the password used to sign in to your Kurioticket account.",
   "accountDashboard.security.passkeys.title": "Passkeys",
   "accountDashboard.security.passkeys.description":
-    "Sign in securely without needing to remember a password.",
+    "Use a secure passkey to sign in without a password.",
   "accountDashboard.security.twoFactor.title": "Two-factor authentication",
   "accountDashboard.security.twoFactor.description":
     "Add an extra layer of security to your account.",
   "accountDashboard.security.activeSessions.title": "Active sessions",
   "accountDashboard.security.activeSessions.description":
-    "Review where your account is signed in and sign out from other devices.",
+    "Review where your account is signed in.",
+  "accountDashboard.security.notifications.title": "Security notifications",
+  "accountDashboard.security.notifications.description":
+    "Get notified about important account security activity.",
+  "accountDashboard.security.status.notEnabled": "Not enabled",
+  "accountDashboard.security.status.notSetUp": "Not set up",
+  "accountDashboard.security.status.emailAlerts": "Email alerts",
+  "accountDashboard.security.dangerZone.title": "Danger zone",
   "accountDashboard.security.deleteAccount.title": "Delete account",
   "accountDashboard.security.deleteAccount.description":
-    "Permanently delete your Kurioticket account.",
+    "Permanently delete your Kurioticket account and saved account data.",
+  "accountDashboard.security.action.changePassword": "Change password",
   "accountDashboard.security.action.setUp": "Set up",
   "accountDashboard.security.action.manage": "Manage",
   "accountDashboard.security.action.deleteAccount": "Delete account",
