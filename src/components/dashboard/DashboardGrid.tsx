@@ -559,6 +559,16 @@ const dateOfBirthMonthOptions = [
 ];
 const dateOfBirthMonths = dateOfBirthMonthOptions.map((month) => month.value);
 
+const personalDetailsFieldOrder: Array<keyof PersonalDetailsDraft> = [
+  "name",
+  "email",
+  "phone",
+  "dateOfBirth",
+  "gender",
+  "nationality",
+  "address",
+];
+
 const dateOfBirthDays = Array.from({ length: 31 }, (_, index) =>
   String(index + 1).padStart(2, "0"),
 );
@@ -729,7 +739,7 @@ function DateOfBirthInput({
   };
 
   return (
-    <div className="grid min-w-0 grid-cols-[minmax(0,0.8fr)_minmax(0,1.5fr)_minmax(0,1fr)] gap-2 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)_minmax(0,1fr)]">
+    <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)_minmax(0,1fr)]">
       <select
         className={className}
         value={parts.day}
@@ -1089,7 +1099,7 @@ function PhoneNumberInput({
           {selectedOption.dialCode}
         </span>
         <input
-          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-[14px] font-medium leading-5 text-slate-900 outline-none"
+          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-base font-medium leading-5 text-slate-900 outline-none sm:text-[14px]"
           type="tel"
           value={parsedValue.localNumber}
           onChange={(event) => handleLocalNumberChange(event.target.value)}
@@ -1135,7 +1145,7 @@ function NationalityInput({
   );
 }
 
-function PersonalDetailsEditField({
+function PersonalDetailsEditCard({
   row,
   value,
   onChange,
@@ -1145,17 +1155,19 @@ function PersonalDetailsEditField({
   onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
 }) {
   return (
-    <label className="block min-w-0 space-y-1.5">
-      <span className="block text-sm font-medium leading-5 text-slate-800">
-        {row.label}
-      </span>
-      <DetailInput row={row} value={value} onChange={onChange} />
-      {row.helper ? (
-        <span className="block text-sm leading-6 text-slate-500">
-          {row.helper}
+    <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm shadow-slate-900/[0.02] sm:p-5">
+      <label className="block min-w-0 space-y-2">
+        <span className="block text-sm font-semibold leading-5 text-slate-900">
+          {row.label}
         </span>
-      ) : null}
-    </label>
+        <DetailInput row={row} value={value} onChange={onChange} />
+        {row.helper ? (
+          <span className="block text-sm leading-6 text-slate-500">
+            {row.helper}
+          </span>
+        ) : null}
+      </label>
+    </div>
   );
 }
 
@@ -1169,7 +1181,7 @@ function DetailInput({
   onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
 }) {
   const baseClassName = cn(
-    "h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-[14px] font-medium leading-5 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-violet-500 focus:bg-white focus:ring-4 focus:ring-violet-100",
+    "h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-base font-medium leading-5 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-violet-500 focus:bg-white focus:ring-4 focus:ring-violet-100 sm:text-[14px]",
     row.readOnly &&
       "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500 hover:border-slate-200 focus:border-slate-200 focus:bg-slate-100 focus:ring-0",
   );
@@ -1375,20 +1387,16 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     return row;
   };
 
-  const renderEditField = (
-    key: keyof PersonalDetailsDraft,
-    className?: string,
-  ) => {
+  const renderEditField = (key: keyof PersonalDetailsDraft) => {
     const row = getPersonalDetailRow(key);
 
     return (
-      <div className={cn("min-w-0", className)}>
-        <PersonalDetailsEditField
-          row={row}
-          value={draft[key]}
-          onChange={updateDraft}
-        />
-      </div>
+      <PersonalDetailsEditCard
+        key={row.key}
+        row={row}
+        value={draft[key]}
+        onChange={updateDraft}
+      />
     );
   };
 
@@ -1397,8 +1405,11 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     const readOnlyValue = savedValues[row.key];
 
     return (
-      <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <div
+        key={row.key}
+        className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm shadow-slate-900/[0.02] sm:p-5"
+      >
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
           {row.label}
         </div>
         <DetailValue
@@ -1443,86 +1454,12 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       ) : null}
 
       {isEditing ? (
-        <div className="space-y-8 px-5 py-6 sm:px-6">
-          <div className="space-y-4">
-            <h3 className="text-base font-semibold text-slate-900">
-              {t["accountDashboard.personalDetails.section.basicInformation"] ||
-                "Basic information"}
-            </h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              {renderEditField("name")}
-              {renderEditField("email")}
-            </div>
-          </div>
-
-          <div className="space-y-4 border-t border-slate-200 pt-6">
-            <h3 className="text-base font-semibold text-slate-900">
-              {t["accountDashboard.personalDetails.section.contactInformation"] ||
-                "Contact information"}
-            </h3>
-            <div className="max-w-md">{renderEditField("phone")}</div>
-          </div>
-
-          <div className="space-y-4 border-t border-slate-200 pt-6">
-            <h3 className="text-base font-semibold text-slate-900">
-              {t["accountDashboard.personalDetails.section.personalInformation"] ||
-                "Personal information"}
-            </h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              {renderEditField("dateOfBirth")}
-              {renderEditField("gender")}
-              {renderEditField("nationality")}
-            </div>
-          </div>
-
-          <div className="space-y-4 border-t border-slate-200 pt-6">
-            <h3 className="text-base font-semibold text-slate-900">
-              {t["accountDashboard.personalDetails.section.address"] ||
-                "Address"}
-            </h3>
-            {renderEditField("address")}
-          </div>
+        <div className="grid grid-cols-1 gap-3 px-5 py-6 sm:gap-4 sm:px-6">
+          {personalDetailsFieldOrder.map((key) => renderEditField(key))}
         </div>
       ) : (
-        <div className="space-y-8 px-5 py-6 sm:px-6">
-          <div className="space-y-4">
-            <h3 className="text-base font-semibold text-slate-900">
-              {t["accountDashboard.personalDetails.section.basicInformation"] ||
-                "Basic information"}
-            </h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              {renderReadOnlyRow("name")}
-              {renderReadOnlyRow("email")}
-            </div>
-          </div>
-
-          <div className="space-y-4 border-t border-slate-200 pt-6">
-            <h3 className="text-base font-semibold text-slate-900">
-              {t["accountDashboard.personalDetails.section.contactInformation"] ||
-                "Contact information"}
-            </h3>
-            <div className="max-w-md">{renderReadOnlyRow("phone")}</div>
-          </div>
-
-          <div className="space-y-4 border-t border-slate-200 pt-6">
-            <h3 className="text-base font-semibold text-slate-900">
-              {t["accountDashboard.personalDetails.section.personalInformation"] ||
-                "Personal information"}
-            </h3>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {renderReadOnlyRow("dateOfBirth")}
-              {renderReadOnlyRow("gender")}
-              {renderReadOnlyRow("nationality")}
-            </div>
-          </div>
-
-          <div className="space-y-4 border-t border-slate-200 pt-6">
-            <h3 className="text-base font-semibold text-slate-900">
-              {t["accountDashboard.personalDetails.section.address"] ||
-                "Address"}
-            </h3>
-            {renderReadOnlyRow("address")}
-          </div>
+        <div className="grid grid-cols-1 gap-3 px-5 py-6 sm:gap-4 sm:px-6">
+          {personalDetailsFieldOrder.map((key) => renderReadOnlyRow(key))}
         </div>
       )}
 
