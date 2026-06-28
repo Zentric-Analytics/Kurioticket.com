@@ -398,23 +398,25 @@ export const translations: TranslationDictionary = {
     "Update the password used to sign in to your Kurioticket account.",
   "accountDashboard.security.passkeys.title": "Passkeys",
   "accountDashboard.security.passkeys.description":
-    "Use a secure passkey to sign in without a password.",
+    "Passkeys are not available yet. Password and OAuth sign-in remain supported.",
   "accountDashboard.security.twoFactor.title": "Two-factor authentication",
   "accountDashboard.security.twoFactor.description":
-    "Add an extra layer of security to your account.",
+    "Two-factor authentication is not available yet. We will add a verified setup flow before enabling it.",
   "accountDashboard.security.activeSessions.title": "Active sessions",
   "accountDashboard.security.activeSessions.description":
-    "Review where your account is signed in.",
+    "Active session management is not available yet for JWT sessions.",
   "accountDashboard.security.notifications.title": "Security notifications",
   "accountDashboard.security.notifications.description":
     "Get notified about important account security activity.",
   "accountDashboard.security.status.notEnabled": "Not enabled",
   "accountDashboard.security.status.notSetUp": "Not set up",
   "accountDashboard.security.status.emailAlerts": "Email alerts",
+  "accountDashboard.security.status.comingSoon": "Coming soon",
+  "accountDashboard.security.status.notAvailableYet": "Not available yet",
   "accountDashboard.security.dangerZone.title": "Danger zone",
   "accountDashboard.security.deleteAccount.title": "Delete account",
   "accountDashboard.security.deleteAccount.description":
-    "Permanently delete your Kurioticket account and saved account data.",
+    "Request permanent account deletion. Support review is required before any account records are removed.",
   "accountDashboard.security.action.changePassword": "Change password",
   "accountDashboard.security.action.setUp": "Set up",
   "accountDashboard.security.action.manage": "Manage",
