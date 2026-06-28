@@ -50,18 +50,32 @@ export async function PATCH(request: Request) {
 
   try {
     const payload = userProfileSchema.parse(await request.json());
-    const profile = await getPrisma().userProfile.upsert({
-      where: { userId },
-      create: { userId, ...payload },
-      update: payload,
-      select: {
-        fullName: true,
-        phoneNumber: true,
-        dateOfBirth: true,
-        gender: true,
-        nationality: true,
-        address: true,
-      },
+    const fullNameWasSubmitted = Object.hasOwn(payload, "fullName");
+    const prisma = getPrisma();
+    const profile = await prisma.$transaction(async (tx) => {
+      const savedProfile = await tx.userProfile.upsert({
+        where: { userId },
+        create: { userId, ...payload },
+        update: payload,
+        select: {
+          fullName: true,
+          phoneNumber: true,
+          dateOfBirth: true,
+          gender: true,
+          nationality: true,
+          address: true,
+        },
+      });
+
+      if (fullNameWasSubmitted) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { name: payload.fullName ?? null },
+          select: { id: true },
+        });
+      }
+
+      return savedProfile;
     });
 
     return NextResponse.json({ profile: serializeUserProfile(profile) });
