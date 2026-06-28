@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import {
   Bell,
@@ -717,7 +717,7 @@ function DateOfBirthInput({
   className: string;
 }) {
   const { t } = useLocale();
-  const [parts, setParts] = useState(() => parseDateOfBirthParts(value));
+  const parts = parseDateOfBirthParts(value);
 
   const updatePart = (part: keyof typeof parts, nextValue: string) => {
     const nextParts = {
@@ -725,7 +725,6 @@ function DateOfBirthInput({
       [part]: nextValue,
     };
 
-    setParts(nextParts);
     onChange(formatDateOfBirthParts(nextParts));
   };
 
@@ -918,9 +917,9 @@ function StructuredAddressInput({
   };
 
   return (
-    <div className="grid w-full min-w-0 grid-cols-1 gap-3">
+    <div className="grid w-full min-w-0 grid-cols-1 gap-3 sm:grid-cols-6">
       <select
-        className={className}
+        className={cn(className, "sm:col-span-6")}
         value={parts.countryCode}
         onChange={(event) => updatePart("countryCode", event.target.value)}
         aria-label="Country or region"
@@ -936,7 +935,7 @@ function StructuredAddressInput({
         ))}
       </select>
       <input
-        className={className}
+        className={cn(className, "sm:col-span-6")}
         value={parts.addressLine1}
         onChange={(event) => updatePart("addressLine1", event.target.value)}
         placeholder="Street address"
@@ -944,7 +943,7 @@ function StructuredAddressInput({
         autoComplete="address-line1"
       />
       <input
-        className={className}
+        className={cn(className, "sm:col-span-3")}
         value={parts.apartmentOrSuite}
         onChange={(event) =>
           updatePart("apartmentOrSuite", event.target.value)
@@ -954,7 +953,7 @@ function StructuredAddressInput({
         autoComplete="address-line2"
       />
       <input
-        className={className}
+        className={cn(className, "sm:col-span-2")}
         value={parts.city}
         onChange={(event) => updatePart("city", event.target.value)}
         placeholder="Town / City"
@@ -962,7 +961,7 @@ function StructuredAddressInput({
         autoComplete="address-level2"
       />
       <input
-        className={className}
+        className={cn(className, "sm:col-span-2")}
         value={parts.stateOrRegion}
         onChange={(event) => updatePart("stateOrRegion", event.target.value)}
         placeholder="State / Province / Region"
@@ -970,7 +969,7 @@ function StructuredAddressInput({
         autoComplete="address-level1"
       />
       <input
-        className={className}
+        className={cn(className, "sm:col-span-2")}
         value={parts.postalCode}
         onChange={(event) => updatePart("postalCode", event.target.value)}
         placeholder="Postcode / ZIP code"
@@ -1170,9 +1169,9 @@ function DetailInput({
   onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
 }) {
   const baseClassName = cn(
-    "h-10 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[14px] font-medium leading-5 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100",
+    "h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-[14px] font-medium leading-5 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-violet-500 focus:bg-white focus:ring-4 focus:ring-violet-100",
     row.readOnly &&
-      "cursor-not-allowed bg-slate-50 text-slate-500 focus:border-slate-200 focus:ring-0",
+      "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500 hover:border-slate-200 focus:border-slate-200 focus:bg-slate-100 focus:ring-0",
   );
 
   const handleChange = (
@@ -1273,22 +1272,108 @@ function DetailInput({
 
 function PersonalDetailsSection(props: DashboardOverviewProps) {
   const { t } = useLocale();
-  const initialValues = getPersonalDetailsInitialValues(props);
+  const fallbackValues = getPersonalDetailsInitialValues(props);
+  const [savedValues, setSavedValues] = useState<PersonalDetailsDraft>(fallbackValues);
   const [isEditing, setIsEditing] = useState(false);
-  const [draft, setDraft] = useState<PersonalDetailsDraft>(initialValues);
+  const [draft, setDraft] = useState<PersonalDetailsDraft>(fallbackValues);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const personalDetailRows = getPersonalDetailRows(t);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadProfile() {
+      setIsLoadingProfile(true);
+      setErrorMessage("");
+
+      try {
+        const response = await fetch("/api/account/profile", { cache: "no-store" });
+        const payload = (await response.json()) as {
+          profile?: PersonalDetailsDraft;
+          error?: string;
+        };
+
+        if (!response.ok || !payload.profile) {
+          throw new Error(payload.error || "Unable to load profile details.");
+        }
+
+        if (isMounted) {
+          setSavedValues(payload.profile);
+          setDraft(payload.profile);
+        }
+      } catch (error) {
+        if (isMounted) {
+          setErrorMessage(error instanceof Error ? error.message : "Unable to load profile details.");
+        }
+      } finally {
+        if (isMounted) setIsLoadingProfile(false);
+      }
+    }
+
+    void loadProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const handleEdit = () => {
-    setDraft(initialValues);
+    setDraft(savedValues);
+    setStatusMessage("");
+    setErrorMessage("");
     setIsEditing(true);
   };
 
   const handleCancel = () => {
-    setDraft(initialValues);
+    setDraft(savedValues);
     setIsEditing(false);
+    setStatusMessage("");
+    setErrorMessage("");
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setStatusMessage("");
+    setErrorMessage("");
+
+    try {
+      const response = await fetch("/api/account/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: draft.name,
+          phone: draft.phone,
+          dateOfBirth: draft.dateOfBirth,
+          gender: draft.gender,
+          nationality: draft.nationality,
+          address: draft.address,
+        }),
+      });
+      const payload = (await response.json()) as {
+        profile?: PersonalDetailsDraft;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.profile) {
+        throw new Error(payload.error || "Unable to save profile details.");
+      }
+
+      setSavedValues(payload.profile);
+      setDraft(payload.profile);
+      setIsEditing(false);
+      setStatusMessage(t["accountDashboard.personalDetails.saved"] || "Your personal details have been saved.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Unable to save profile details.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const updateDraft = (key: keyof PersonalDetailsDraft, value: string) => {
+    if (key === "email") return;
     setDraft((current) => ({ ...current, [key]: value }));
   };
 
@@ -1321,84 +1406,133 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     );
   };
 
+  const renderReadOnlyRow = (key: keyof PersonalDetailsDraft) => {
+    const row = getPersonalDetailRow(key);
+    const readOnlyValue = savedValues[row.key];
+
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          {row.label}
+        </div>
+        <DetailValue
+          value={
+            row.key === "address"
+              ? formatStructuredAddressForDisplay(readOnlyValue)
+              : readOnlyValue
+          }
+          fallback={row.fallback}
+          helper={row.helper}
+          preserveLines={row.key === "address"}
+        />
+      </div>
+    );
+  };
+
   return (
     <section
-      className="rounded-xl border border-slate-200 bg-white shadow-sm"
+      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
       aria-labelledby="dashboard-title"
     >
+      <div className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white px-5 py-4 sm:px-6">
+        <p className="text-sm text-slate-600">
+          {isLoadingProfile
+            ? t["accountDashboard.personalDetails.loading"] || "Loading your saved profile details…"
+            : t["accountDashboard.personalDetails.description"] || "Manage the information Kurioticket uses for your account."}
+        </p>
+      </div>
+
+      {statusMessage || errorMessage ? (
+        <div className="px-5 pt-4 sm:px-6" role="status" aria-live="polite">
+          <p className={cn("rounded-xl px-4 py-3 text-sm font-medium", errorMessage ? "border border-red-200 bg-red-50 text-red-700" : "border border-emerald-200 bg-emerald-50 text-emerald-700")}>
+            {errorMessage || statusMessage}
+          </p>
+        </div>
+      ) : null}
+
       {isEditing ? (
-        <div className="border-t border-slate-200 px-5 py-5 first:border-t-0 sm:px-6">
-          <div className="w-full max-w-[640px] space-y-4">
-            {renderEditField("name")}
-            {renderEditField("email")}
-            {renderEditField("phone")}
-            {renderEditField("dateOfBirth")}
-            {renderEditField("gender")}
-            {renderEditField("nationality")}
+        <div className="space-y-8 px-5 py-6 sm:px-6">
+          <div className="space-y-4">
+            <h3 className="text-base font-semibold text-slate-900">{t["accountDashboard.personalDetails.section.basicInformation"] || "Basic information"}</h3>
+            <div className="grid gap-4 md:grid-cols-2">
+              {renderEditField("name")}
+              {renderEditField("email")}
+            </div>
+          </div>
+          <div className="space-y-4 border-t border-slate-200 pt-6">
+            <h3 className="text-base font-semibold text-slate-900">{t["accountDashboard.personalDetails.section.contactInformation"] || "Contact information"}</h3>
+            <div className="max-w-md">{renderEditField("phone")}</div>
+          </div>
+          <div className="space-y-4 border-t border-slate-200 pt-6">
+            <h3 className="text-base font-semibold text-slate-900">{t["accountDashboard.personalDetails.section.personalInformation"] || "Personal information"}</h3>
+            <div className="grid gap-4 md:grid-cols-2">
+              {renderEditField("dateOfBirth")}
+              {renderEditField("gender")}
+              {renderEditField("nationality")}
+            </div>
+          </div>
+          <div className="space-y-4 border-t border-slate-200 pt-6">
+            <h3 className="text-base font-semibold text-slate-900">{t["accountDashboard.personalDetails.section.address"] || "Address"}</h3>
             {renderEditField("address")}
           </div>
         </div>
       ) : (
-        <div>
-          {personalDetailRows.map((row) => {
-            const readOnlyValue = initialValues[row.key];
-
-            return (
-              <div
-                key={row.key}
-                className={cn(
-                  "grid min-w-0 gap-0.5 border-t border-slate-200 px-5 py-4 first:border-t-0 sm:min-h-16 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center sm:gap-4 sm:px-6 sm:py-3",
-                  row.key === "address" && "pt-5 sm:pt-5",
-                )}
-              >
-                <div className="text-sm font-medium leading-5 text-slate-700 sm:text-slate-800">
-                  {row.label}
-                </div>
-                <DetailValue
-                  value={
-                    row.key === "address"
-                      ? formatStructuredAddressForDisplay(readOnlyValue)
-                      : readOnlyValue
-                  }
-                  fallback={row.fallback}
-                  helper={row.helper}
-                  preserveLines={row.key === "address"}
-                />
-              </div>
-            );
-          })}
+        <div className="space-y-8 px-5 py-6 sm:px-6">
+          <div className="space-y-4">
+            <h3 className="text-base font-semibold text-slate-900">{t["accountDashboard.personalDetails.section.basicInformation"] || "Basic information"}</h3>
+            <div className="grid gap-4 md:grid-cols-2">
+              {renderReadOnlyRow("name")}
+              {renderReadOnlyRow("email")}
+            </div>
+          </div>
+          <div className="space-y-4 border-t border-slate-200 pt-6">
+            <h3 className="text-base font-semibold text-slate-900">{t["accountDashboard.personalDetails.section.contactInformation"] || "Contact information"}</h3>
+            <div className="max-w-md">{renderReadOnlyRow("phone")}</div>
+          </div>
+          <div className="space-y-4 border-t border-slate-200 pt-6">
+            <h3 className="text-base font-semibold text-slate-900">{t["accountDashboard.personalDetails.section.personalInformation"] || "Personal information"}</h3>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {renderReadOnlyRow("dateOfBirth")}
+              {renderReadOnlyRow("gender")}
+              {renderReadOnlyRow("nationality")}
+            </div>
+          </div>
+          <div className="space-y-4 border-t border-slate-200 pt-6">
+            <h3 className="text-base font-semibold text-slate-900">{t["accountDashboard.personalDetails.section.address"] || "Address"}</h3>
+            {renderReadOnlyRow("address")}
+          </div>
         </div>
       )}
 
-      <div className="border-t border-slate-200 px-5 py-4 sm:px-6">
+      <div className="border-t border-slate-200 bg-slate-50/80 px-5 py-4 sm:px-6">
         {isEditing ? (
-          <div className="space-y-4">
-            <p className="text-sm leading-6 text-slate-500">
-              {t["accountDashboard.personalDetails.editingComingSoon"]}
-            </p>
-            <div className="flex flex-row justify-end gap-2">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="focus-ring inline-flex min-h-10 w-auto min-w-[7rem] shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-              >
-                {t["accountDashboard.personalDetails.cancel"]}
-              </button>
-              <button
-                type="button"
-                disabled
-                className="inline-flex min-h-10 w-auto min-w-[7rem] shrink-0 cursor-not-allowed items-center justify-center rounded-lg bg-slate-200 px-4 text-sm font-semibold text-slate-500"
-              >
-                {t["accountDashboard.personalDetails.saveChanges"]}
-              </button>
-            </div>
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={isSaving}
+              className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            >
+              {t["accountDashboard.personalDetails.cancel"]}
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={isSaving}
+              className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-300 sm:w-auto"
+            >
+              {isSaving
+                ? t["accountDashboard.personalDetails.saving"] || "Saving…"
+                : t["accountDashboard.personalDetails.saveChanges"]}
+            </button>
           </div>
         ) : (
           <div className="flex justify-end">
             <button
               type="button"
               onClick={handleEdit}
-              className="focus-ring inline-flex min-h-10 w-auto min-w-[7rem] shrink-0 items-center justify-center rounded-lg border border-blue-700 bg-white px-4 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
+              disabled={isLoadingProfile}
+              className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-blue-700 bg-white px-5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
             >
               {t["accountDashboard.personalDetails.edit"]}
             </button>

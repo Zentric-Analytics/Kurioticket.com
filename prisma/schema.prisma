@@ -137,6 +137,7 @@ model User {
   apiEvents               AnalyticsEvent[]
   notifications           Notification[]
   travelPreferences       TravelPreferences?
+  profile                 UserProfile?
   watchlistItems          TravelWatchlist[]
   savedTrips              SavedTrip[]
 
@@ -449,6 +450,19 @@ model Notification {
   @@index([type])
   @@index([readAt])
   @@index([createdAt])
+}
+
+model UserProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  phone            String?
+  dateOfBirth      String?
+  gender           String?
+  nationality      String?
+  address          String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model TravelPreferences {
