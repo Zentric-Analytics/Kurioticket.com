@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { getOptionalPrisma } from "@/lib/prisma";
 
 export type EmailDeliveryStatus =
@@ -23,6 +24,7 @@ export type EmailTemplateKey =
   | "admin_test";
 
 type JsonMetadata = Record<string, unknown>;
+type EmailDeliveryRow = { id: string; status: EmailDeliveryStatus };
 
 const terminalStatusRank: Record<EmailDeliveryStatus, number> = {
   QUEUED: 0,
@@ -73,39 +75,34 @@ export async function createEmailDeliveryRecord(input: {
   metadata?: JsonMetadata;
 }) {
   return withEmailDeliveryDb(async (db) => {
-    const baseData = {
-      toEmail: input.toEmail.toLowerCase().trim(),
-      fromEmail: input.fromEmail,
-      subject: input.subject,
-      template: input.template,
-      idempotencyKey: input.idempotencyKey || undefined,
-      status: "QUEUED" as const,
-      metadata: (input.metadata || {}) as never,
-    };
+    const id = randomUUID();
+    const toEmail = input.toEmail.toLowerCase().trim();
+    const metadata = JSON.stringify(input.metadata || {});
 
     if (input.idempotencyKey) {
-      const delivery = await db.emailDelivery.upsert({
-        where: { idempotencyKey: input.idempotencyKey },
-        create: baseData,
-        update: {
-          toEmail: baseData.toEmail,
-          fromEmail: baseData.fromEmail,
-          subject: baseData.subject,
-          template: baseData.template,
-          metadata: baseData.metadata,
-        },
-        select: { id: true },
-      });
+      const rows = await db.$queryRaw<EmailDeliveryRow[]>`
+        INSERT INTO email_deliveries (id, to_email, from_email, subject, template, idempotency_key, status, metadata)
+        VALUES (${id}, ${toEmail}, ${input.fromEmail}, ${input.subject}, ${input.template}, ${input.idempotencyKey}, 'QUEUED', ${metadata}::jsonb)
+        ON CONFLICT (idempotency_key) DO UPDATE SET
+          to_email = EXCLUDED.to_email,
+          from_email = EXCLUDED.from_email,
+          subject = EXCLUDED.subject,
+          template = EXCLUDED.template,
+          metadata = EXCLUDED.metadata,
+          updated_at = NOW()
+        RETURNING id, status
+      `;
 
-      return delivery.id;
+      return rows[0]?.id || null;
     }
 
-    const delivery = await db.emailDelivery.create({
-      data: baseData,
-      select: { id: true },
-    });
+    const rows = await db.$queryRaw<EmailDeliveryRow[]>`
+      INSERT INTO email_deliveries (id, to_email, from_email, subject, template, status, metadata)
+      VALUES (${id}, ${toEmail}, ${input.fromEmail}, ${input.subject}, ${input.template}, 'QUEUED', ${metadata}::jsonb)
+      RETURNING id, status
+    `;
 
-    return delivery.id;
+    return rows[0]?.id || null;
   }, null);
 }
 
@@ -116,18 +113,17 @@ export async function markEmailDeliverySent(input: {
   if (!input.deliveryId) return;
 
   await withEmailDeliveryDb(async (db) => {
-    await db.emailDelivery.update({
-      where: { id: input.deliveryId },
-      data: {
-        providerMessageId: input.providerMessageId || undefined,
-        status: "SENT",
-        attempts: { increment: 1 },
-        sentAt: new Date(),
-        lastError: null,
-        lastErrorStatus: null,
-      },
-      select: { id: true },
-    });
+    await db.$executeRaw`
+      UPDATE email_deliveries
+      SET provider_message_id = ${input.providerMessageId || null},
+          status = 'SENT',
+          attempts = attempts + 1,
+          sent_at = NOW(),
+          last_error = NULL,
+          last_error_status = NULL,
+          updated_at = NOW()
+      WHERE id = ${input.deliveryId}
+    `;
   });
 }
 
@@ -139,16 +135,15 @@ export async function markEmailDeliveryFailed(input: {
   if (!input.deliveryId) return;
 
   await withEmailDeliveryDb(async (db) => {
-    await db.emailDelivery.update({
-      where: { id: input.deliveryId },
-      data: {
-        status: "FAILED",
-        attempts: { increment: 1 },
-        lastError: input.message.slice(0, 1000),
-        lastErrorStatus: input.statusCode || null,
-      },
-      select: { id: true },
-    });
+    await db.$executeRaw`
+      UPDATE email_deliveries
+      SET status = 'FAILED',
+          attempts = attempts + 1,
+          last_error = ${input.message.slice(0, 1000)},
+          last_error_status = ${input.statusCode || null},
+          updated_at = NOW()
+      WHERE id = ${input.deliveryId}
+    `;
   });
 }
 
@@ -162,92 +157,104 @@ export async function recordProviderEmailEvent(input: {
 }) {
   await withEmailDeliveryDb(async (db) => {
     if (input.providerEventId) {
-      const existing = await db.emailEvent.findUnique({
-        where: { providerEventId: input.providerEventId },
-        select: { id: true },
-      });
+      const existing = await db.$queryRaw<{ id: string }[]>`
+        SELECT id FROM email_events WHERE provider_event_id = ${input.providerEventId} LIMIT 1
+      `;
 
-      if (existing) return;
+      if (existing.length) return;
     }
 
     const delivery = input.providerMessageId
-      ? await db.emailDelivery.findUnique({
-          where: { providerMessageId: input.providerMessageId },
-          select: { id: true, status: true },
-        })
+      ? (
+          await db.$queryRaw<EmailDeliveryRow[]>`
+            SELECT id, status FROM email_deliveries WHERE provider_message_id = ${input.providerMessageId} LIMIT 1
+          `
+        )[0]
       : null;
 
-    await db.emailEvent.create({
-      data: {
-        deliveryId: delivery?.id,
-        providerEventId: input.providerEventId || undefined,
-        providerMessageId: input.providerMessageId || undefined,
-        type: input.type,
-        payload: input.payload as never,
-        occurredAt: input.occurredAt || undefined,
-      },
-      select: { id: true },
-    });
+    await db.$executeRaw`
+      INSERT INTO email_events (id, delivery_id, provider_event_id, provider_message_id, type, payload, occurred_at)
+      VALUES (
+        ${randomUUID()},
+        ${delivery?.id || null},
+        ${input.providerEventId || null},
+        ${input.providerMessageId || null},
+        ${input.type},
+        ${JSON.stringify(input.payload)}::jsonb,
+        ${input.occurredAt || null}
+      )
+    `;
 
     const nextStatus = mapResendEventToStatus(input.type);
-    if (delivery && nextStatus && shouldApplyStatus(delivery.status as EmailDeliveryStatus, nextStatus)) {
-      await db.emailDelivery.update({
-        where: { id: delivery.id },
-        data: {
-          status: nextStatus,
-          ...getTimestampUpdate(nextStatus),
-        },
-        select: { id: true },
-      });
+    if (delivery && nextStatus && shouldApplyStatus(delivery.status, nextStatus)) {
+      await updateDeliveryStatus(db, delivery.id, nextStatus);
     }
 
     if (input.toEmail && ["email.bounced", "email.complained", "email.suppressed"].includes(input.type)) {
-      await db.emailSuppression.upsert({
-        where: { email: input.toEmail.toLowerCase().trim() },
-        create: {
-          email: input.toEmail.toLowerCase().trim(),
-          reason: input.type,
-          providerMessageId: input.providerMessageId || undefined,
-          lastEventType: input.type,
-        },
-        update: {
-          reason: input.type,
-          providerMessageId: input.providerMessageId || undefined,
-          lastEventType: input.type,
-        },
-        select: { id: true },
-      });
+      await db.$executeRaw`
+        INSERT INTO email_suppressions (id, email, reason, provider_message_id, last_event_type)
+        VALUES (${randomUUID()}, ${input.toEmail.toLowerCase().trim()}, ${input.type}, ${input.providerMessageId || null}, ${input.type})
+        ON CONFLICT (email) DO UPDATE SET
+          reason = EXCLUDED.reason,
+          provider_message_id = EXCLUDED.provider_message_id,
+          last_event_type = EXCLUDED.last_event_type,
+          updated_at = NOW()
+      `;
     }
   });
 }
 
 export async function getEmailDeliveryHealthSnapshot() {
   return withEmailDeliveryDb(async (db) => {
-    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const [last24Hours, failures, delayed, suppressed, latest] = await Promise.all([
-      db.emailDelivery.count({ where: { createdAt: { gte: since } } }),
-      db.emailDelivery.count({ where: { createdAt: { gte: since }, status: { in: ["FAILED", "BOUNCED", "COMPLAINED", "SUPPRESSED"] } } }),
-      db.emailDelivery.count({ where: { createdAt: { gte: since }, status: "DELIVERY_DELAYED" } }),
-      db.emailSuppression.count(),
-      db.emailDelivery.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 10,
-        select: {
-          id: true,
-          template: true,
-          toEmail: true,
-          subject: true,
-          status: true,
-          providerMessageId: true,
-          lastError: true,
-          createdAt: true,
-          sentAt: true,
-          deliveredAt: true,
-        },
-      }),
-    ]);
+    const [summary] = await db.$queryRaw<{
+      last_24_hours: bigint;
+      failures: bigint;
+      delayed: bigint;
+      suppressed: bigint;
+    }[]>`
+      SELECT
+        (SELECT COUNT(*) FROM email_deliveries WHERE created_at >= NOW() - INTERVAL '24 hours') AS last_24_hours,
+        (SELECT COUNT(*) FROM email_deliveries WHERE created_at >= NOW() - INTERVAL '24 hours' AND status IN ('FAILED', 'BOUNCED', 'COMPLAINED', 'SUPPRESSED')) AS failures,
+        (SELECT COUNT(*) FROM email_deliveries WHERE created_at >= NOW() - INTERVAL '24 hours' AND status = 'DELIVERY_DELAYED') AS delayed,
+        (SELECT COUNT(*) FROM email_suppressions) AS suppressed
+    `;
 
-    return { last24Hours, failures, delayed, suppressed, latest };
+    const latest = await db.$queryRaw<Array<{
+      id: string;
+      template: string;
+      to_email: string;
+      subject: string;
+      status: EmailDeliveryStatus;
+      provider_message_id: string | null;
+      last_error: string | null;
+      created_at: Date;
+      sent_at: Date | null;
+      delivered_at: Date | null;
+    }>>`
+      SELECT id, template, to_email, subject, status, provider_message_id, last_error, created_at, sent_at, delivered_at
+      FROM email_deliveries
+      ORDER BY created_at DESC
+      LIMIT 10
+    `;
+
+    return {
+      last24Hours: Number(summary?.last_24_hours || 0),
+      failures: Number(summary?.failures || 0),
+      delayed: Number(summary?.delayed || 0),
+      suppressed: Number(summary?.suppressed || 0),
+      latest: latest.map((row) => ({
+        id: row.id,
+        template: row.template,
+        toEmail: maskEmail(row.to_email),
+        subject: row.subject,
+        status: row.status,
+        providerMessageId: row.provider_message_id,
+        lastError: row.last_error,
+        createdAt: row.created_at,
+        sentAt: row.sent_at,
+        deliveredAt: row.delivered_at,
+      })),
+    };
   }, {
     last24Hours: 0,
     failures: 0,
@@ -286,24 +293,53 @@ function shouldApplyStatus(current: EmailDeliveryStatus, next: EmailDeliveryStat
   return terminalStatusRank[next] >= terminalStatusRank[current];
 }
 
-function getTimestampUpdate(status: EmailDeliveryStatus) {
+async function updateDeliveryStatus(
+  db: NonNullable<ReturnType<typeof getOptionalPrisma>>,
+  deliveryId: string,
+  status: EmailDeliveryStatus,
+) {
+  const timestampColumn = getTimestampColumn(status);
+  if (timestampColumn) {
+    await db.$executeRawUnsafe(
+      `UPDATE email_deliveries SET status = $1, ${timestampColumn} = NOW(), updated_at = NOW() WHERE id = $2`,
+      status,
+      deliveryId,
+    );
+    return;
+  }
+
+  await db.$executeRaw`
+    UPDATE email_deliveries SET status = ${status}, updated_at = NOW() WHERE id = ${deliveryId}
+  `;
+}
+
+function getTimestampColumn(status: EmailDeliveryStatus) {
   switch (status) {
     case "DELIVERED":
-      return { deliveredAt: new Date() };
+      return "delivered_at";
     case "BOUNCED":
-      return { bouncedAt: new Date() };
+      return "bounced_at";
     case "COMPLAINED":
-      return { complainedAt: new Date() };
+      return "complained_at";
     case "OPENED":
-      return { openedAt: new Date() };
+      return "opened_at";
     case "CLICKED":
-      return { clickedAt: new Date() };
+      return "clicked_at";
     default:
-      return {};
+      return "";
   }
 }
 
-async function withEmailDeliveryDb<T>(task: (db: NonNullable<ReturnType<typeof getOptionalPrisma>>) => Promise<T>, fallback?: T) {
+function maskEmail(email: string) {
+  const [local, domain] = email.split("@");
+  if (!local || !domain) return "hidden";
+  return `${local.slice(0, 2)}***@${domain}`;
+}
+
+async function withEmailDeliveryDb<T>(
+  task: (db: NonNullable<ReturnType<typeof getOptionalPrisma>>) => Promise<T>,
+  fallback?: T,
+) {
   const db = getOptionalPrisma();
   if (!db) return fallback as T;
 
