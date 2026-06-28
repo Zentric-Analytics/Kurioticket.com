@@ -11,6 +11,7 @@ import {
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
+  BedDouble,
   Calendar,
   ChevronDown,
   Minus,
@@ -184,6 +185,7 @@ export type HotelSearchBarProps = {
   initialRooms?: string | number;
   initialSort?: string | null;
   introLabel?: string;
+  desktopIdentityLabel?: string;
   errorRole?: "alert" | "status";
   compact?: boolean;
   mobileLayout?: "default" | "controls" | "drawer";
@@ -203,6 +205,7 @@ export function HotelSearchBar({
   initialRooms = "1",
   initialSort = null,
   introLabel,
+  desktopIdentityLabel,
   errorRole,
   compact = false,
   mobileLayout = "default",
@@ -337,6 +340,7 @@ export function HotelSearchBar({
   }, [locale, rooms, t, totalHotelGuests]);
 
   const hotelSearchIntroLabel = introLabel ?? t("hotelSearchIntroLabel");
+  const hotelSearchIdentityLabel = desktopIdentityLabel ?? t("hotels");
 
   const mobileSearchSummary = useMemo(() => {
     const trimmedDestination = destination.trim() || t("destination");
@@ -1031,6 +1035,24 @@ export function HotelSearchBar({
               : "rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
           )}
         >
+          {!compact && desktopIdentityLabel ? (
+            <div className="hidden items-center gap-2.5 px-2.5 pb-3 pt-1 sm:flex lg:px-3 lg:pb-3.5">
+              <span
+                aria-hidden="true"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100"
+              >
+                <BedDouble className="h-[18px] w-[18px]" strokeWidth={2.2} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-bold tracking-[-0.01em] text-slate-950">
+                  {hotelSearchIdentityLabel}
+                </p>
+                <p className="text-xs font-semibold text-slate-500">
+                  {hotelSearchIntroLabel}
+                </p>
+              </div>
+            </div>
+          ) : null}
           <div
             className={cn(
               "grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:gap-0",
