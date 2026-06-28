@@ -74,5 +74,5 @@ async function verifyResendWebhook(payload: string, request: NextRequest, webhoo
       },
       webhookSecret,
     }),
-  )) as ResendWebhookEvent;
+  )) as unknown as ResendWebhookEvent;
 }
