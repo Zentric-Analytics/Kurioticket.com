@@ -23,6 +23,7 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { personalDetailsCountryOptions } from "@/lib/region/supportedRegions";
 import { cn } from "@/lib/utils";
 import type { TranslationDictionary } from "@/lib/i18n/types";
+import type { UserProfileResponse } from "@/lib/userProfile";
 
 const RawImage = "img";
 
@@ -110,6 +111,7 @@ type DashboardOverviewProps = {
   displayName: string;
   userEmail?: string | null;
   userName?: string | null;
+  userProfile?: UserProfileResponse;
 };
 
 type PersonalDetailsDraft = {
@@ -619,17 +621,18 @@ function getPersonalDetailRows(t: TranslationDictionary): PersonalDetailRow[] {
 function getPersonalDetailsInitialValues({
   userEmail,
   userName,
+  userProfile,
 }: DashboardOverviewProps): PersonalDetailsDraft {
-  const trimmedName = userName?.trim() ?? "";
+  const trimmedName = userProfile?.fullName?.trim() || userName?.trim() || "";
 
   return {
     name: trimmedName,
     email: userEmail?.trim() ?? "",
-    phone: "",
-    dateOfBirth: "",
-    gender: "",
-    nationality: "",
-    address: "",
+    phone: userProfile?.phoneNumber ?? "",
+    dateOfBirth: userProfile?.dateOfBirth ?? "",
+    gender: userProfile?.gender ?? "",
+    nationality: userProfile?.nationality ?? "",
+    address: userProfile?.address ?? "",
   };
 }
 
@@ -1274,18 +1277,84 @@ function DetailInput({
 function PersonalDetailsSection(props: DashboardOverviewProps) {
   const { t } = useLocale();
   const initialValues = getPersonalDetailsInitialValues(props);
+  const [savedValues, setSavedValues] =
+    useState<PersonalDetailsDraft>(initialValues);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [draft, setDraft] = useState<PersonalDetailsDraft>(initialValues);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const personalDetailRows = getPersonalDetailRows(t);
 
   const handleEdit = () => {
-    setDraft(initialValues);
+    setDraft(savedValues);
+    setStatusMessage(null);
+    setErrorMessage(null);
     setIsEditing(true);
   };
 
   const handleCancel = () => {
-    setDraft(initialValues);
+    setDraft(savedValues);
     setIsEditing(false);
+    setErrorMessage(null);
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setStatusMessage(null);
+    setErrorMessage(null);
+
+    try {
+      const response = await fetch("/api/account/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fullName: draft.name,
+          phoneNumber: draft.phone,
+          dateOfBirth: draft.dateOfBirth,
+          gender: draft.gender,
+          nationality: draft.nationality,
+          address: draft.address,
+        }),
+      });
+      const data = (await response.json().catch(() => null)) as {
+        error?: string;
+        profile?: UserProfileResponse;
+      } | null;
+
+      if (!response.ok || !data?.profile) {
+        throw new Error(data?.error || "Unable to save profile details.");
+      }
+
+      const nextSavedValues: PersonalDetailsDraft = {
+        name: data.profile.fullName,
+        email: savedValues.email,
+        phone: data.profile.phoneNumber,
+        dateOfBirth: data.profile.dateOfBirth,
+        gender: data.profile.gender,
+        nationality: data.profile.nationality,
+        address: data.profile.address,
+      };
+
+      setSavedValues(nextSavedValues);
+      setDraft(nextSavedValues);
+      setIsEditing(false);
+      setStatusMessage(
+        t["accountDashboard.personalDetails.saveSuccess"] ||
+          "Personal details saved.",
+      );
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : t["accountDashboard.personalDetails.saveError"] ||
+              "Unable to save profile details.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const updateDraft = (key: keyof PersonalDetailsDraft, value: string) => {
@@ -1341,7 +1410,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       ) : (
         <div>
           {personalDetailRows.map((row) => {
-            const readOnlyValue = initialValues[row.key];
+            const readOnlyValue = savedValues[row.key];
 
             return (
               <div
@@ -1373,35 +1442,48 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       <div className="border-t border-slate-200 px-5 py-4 sm:px-6">
         {isEditing ? (
           <div className="space-y-4">
-            <p className="text-sm leading-6 text-slate-500">
-              {t["accountDashboard.personalDetails.editingComingSoon"]}
-            </p>
+            {errorMessage ? (
+              <p role="alert" className="text-sm leading-6 text-red-600">
+                {errorMessage}
+              </p>
+            ) : null}
             <div className="flex flex-row justify-end gap-2">
               <button
                 type="button"
                 onClick={handleCancel}
-                className="focus-ring inline-flex min-h-10 w-auto min-w-[7rem] shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                disabled={isSaving}
+                className="focus-ring inline-flex min-h-10 w-auto min-w-[7rem] shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {t["accountDashboard.personalDetails.cancel"]}
               </button>
               <button
                 type="button"
-                disabled
-                className="inline-flex min-h-10 w-auto min-w-[7rem] shrink-0 cursor-not-allowed items-center justify-center rounded-lg bg-slate-200 px-4 text-sm font-semibold text-slate-500"
+                onClick={handleSave}
+                disabled={isSaving}
+                className="focus-ring inline-flex min-h-10 w-auto min-w-[7rem] shrink-0 items-center justify-center rounded-lg bg-blue-700 px-4 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
               >
-                {t["accountDashboard.personalDetails.saveChanges"]}
+                {isSaving
+                  ? t["accountDashboard.personalDetails.saving"] || "Saving..."
+                  : t["accountDashboard.personalDetails.saveChanges"]}
               </button>
             </div>
           </div>
         ) : (
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={handleEdit}
-              className="focus-ring inline-flex min-h-10 w-auto min-w-[7rem] shrink-0 items-center justify-center rounded-lg border border-blue-700 bg-white px-4 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
-            >
-              {t["accountDashboard.personalDetails.edit"]}
-            </button>
+          <div className="space-y-3">
+            {statusMessage ? (
+              <p role="status" className="text-sm leading-6 text-teal-dark">
+                {statusMessage}
+              </p>
+            ) : null}
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={handleEdit}
+                className="focus-ring inline-flex min-h-10 w-auto min-w-[7rem] shrink-0 items-center justify-center rounded-lg border border-blue-700 bg-white px-4 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
+              >
+                {t["accountDashboard.personalDetails.edit"]}
+              </button>
+            </div>
           </div>
         )}
       </div>
