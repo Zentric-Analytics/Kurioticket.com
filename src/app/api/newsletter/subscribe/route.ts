@@ -243,7 +243,7 @@ async function sendWelcomeEmail(input: {
   try {
     await sendTransactionalEmail({
       to: input.email,
-      subject: "You’re subscribed to Kurioticket updates",
+      subject: "You're subscribed to Kurioticket updates",
       html: newsletterWelcomeEmail({
         preferencesUrl: input.preferencesUrl,
       }),
@@ -373,8 +373,8 @@ export async function POST(request: NextRequest) {
       {
         ok: true,
         message: existing?.status === "SUBSCRIBED"
-          ? "You’re already subscribed to Kurioticket updates."
-          : "Thanks! You’re subscribed to Kurioticket updates.",
+          ? "You're already subscribed to Kurioticket updates."
+          : "Thanks! You're subscribed to Kurioticket updates.",
         status: "SUBSCRIBED",
         email,
       },
@@ -383,7 +383,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("[newsletter:subscribe-failed]", error);
     return jsonResponse(
-      { ok: false, message: "We couldn’t subscribe you right now. Please try again soon." },
+      { ok: false, message: "We couldn't subscribe you right now. Please try again soon." },
       500,
     );
   }
