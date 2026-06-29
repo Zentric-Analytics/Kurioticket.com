@@ -1903,10 +1903,12 @@ export function SecurityDashboardPage() {
     if (response.ok) setPasskeys(Array.isArray(data.passkeys) ? data.passkeys : []);
   };
   const requestPasskeyReauth = async () => {
-    const secret = window.prompt("For your security, enter your authenticator/recovery code. If you do not use an authenticator app, enter your current password.");
+    const sendResponse = await fetch("/api/account/security/passkeys/reauth", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "send-email-code" }) });
+    const sendData = await sendResponse.json().catch(() => ({}));
+    if (!sendResponse.ok) throw new Error(sendData.error || "Unable to send a confirmation code.");
+    const secret = window.prompt("Enter the 6-digit code we sent to your account email. If authenticator-app 2FA is enabled, you can enter that code instead.");
     if (!secret) throw new Error("Verification is required before managing passkeys.");
-    const looksLikeCode = /^[A-Z0-9-]{6,32}$/i.test(secret.trim()) && !secret.includes(" ");
-    const response = await fetch("/api/account/security/passkeys/reauth", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(looksLikeCode ? { code: secret } : { password: secret }) });
+    const response = await fetch("/api/account/security/passkeys/reauth", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "verify", code: secret.trim() }) });
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.reauthToken) throw new Error(data.error || "Unable to verify that request.");
     return String(data.reauthToken);
@@ -1919,8 +1921,7 @@ export function SecurityDashboardPage() {
   };
   const handleAddPasskey = async () => {
     if (!window.PublicKeyCredential || !navigator.credentials) { setActionMessage("Passkeys are not supported on this browser. Use password sign-in instead."); return; }
-    if (!window.confirm(["Set up a passkey", "", "Passkeys let you sign in to Kurioticket using Face ID, fingerprint, Windows Hello, your device screen lock, password manager, or security key.", "", "Kurioticket never receives your fingerprint, face, device PIN, or private key.", "", "Keep your password, authenticator app, or recovery codes available as backup."].join("\n"))) return;
-    setPasskeySaving(true); setActionMessage("");
+    setPasskeySaving(true); setActionMessage("We’ll confirm your email before opening your device security prompt.");
     try {
       const reauthToken = await requestPasskeyReauth();
       const optionsResponse = await fetch("/api/account/security/passkeys/register/options", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reauthToken }) });
@@ -2253,9 +2254,9 @@ export function SecurityDashboardPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="passkeys-title">
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-xl sm:p-6">
             <h2 id="passkeys-title" className="text-xl font-semibold text-slate-950">Manage passkeys</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Sign in with your face, fingerprint, screen lock, password manager, or security key. Kurioticket never receives your fingerprint, face, device PIN, or private key. Passkey sign-in is strong sign-in and does not require an authenticator code again by default; password sign-in still requires TOTP when enabled.</p>
+            <div className="mt-2 space-y-2 text-sm leading-6 text-slate-600"><p className="font-semibold text-slate-900">Set up a passkey</p><p>Use Face ID, fingerprint, Windows Hello, your phone screen lock, password manager, or security key to sign in faster and more securely.</p><p>Kurioticket never receives your fingerprint, face, device PIN, or private key.</p><p>Passkeys are separate from authenticator-app 2FA. Password sign-in may still ask for your authenticator code. Before adding or removing a passkey, we’ll send a confirmation code to your account email; authenticator-app codes can also confirm removal or setup when enabled.</p></div>
             <button type="button" onClick={handleAddPasskey} disabled={passkeySaving} className="focus-ring mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{passkeySaving ? "Working…" : passkeys.length ? "Add another passkey" : "Set up passkey"}</button>
-            <div className="mt-5 space-y-3">{passkeys.length ? passkeys.map((passkey) => <div key={passkey.id} className="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold text-slate-950">{passkey.name || "Passkey"}</p><p className="text-sm text-slate-600">Created {formatSessionTime(passkey.createdAt)} · Last used {passkey.lastUsedAt ? formatSessionTime(passkey.lastUsedAt) : "never"} · {passkey.backedUp ? "Synced passkey" : passkey.deviceType || "Device or security key"}</p></div><div className="flex gap-2"><button type="button" onClick={() => void handleRenamePasskey(passkey.id, passkey.name)} disabled={passkeySaving} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60">Rename</button><button type="button" onClick={() => void handleRemovePasskey(passkey.id)} disabled={passkeySaving} className="focus-ring rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-60">Remove</button></div></div>) : <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">No passkeys yet.</p>}</div>
+            <div className="mt-5 space-y-3">{passkeys.length ? passkeys.map((passkey) => <div key={passkey.id} className="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold text-slate-950">{passkey.name || "Passkey"}</p><p className="text-sm text-slate-600">Created {formatSessionTime(passkey.createdAt)} · Last used {passkey.lastUsedAt ? formatSessionTime(passkey.lastUsedAt) : "never"} · {passkey.label || (passkey.backedUp ? "Synced passkey" : passkey.deviceType || "Device or security key")}</p></div><div className="flex gap-2"><button type="button" onClick={() => void handleRenamePasskey(passkey.id, passkey.name)} disabled={passkeySaving} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60">Rename</button><button type="button" onClick={() => void handleRemovePasskey(passkey.id)} disabled={passkeySaving} className="focus-ring rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-60">Remove</button></div></div>) : <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">No passkeys yet.</p>}</div>
             <div className="mt-6 flex justify-end"><button type="button" onClick={() => setPasskeysModalOpen(false)} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Done</button></div>
           </div>
         </div>
