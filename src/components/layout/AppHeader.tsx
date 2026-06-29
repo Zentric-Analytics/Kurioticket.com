@@ -1127,8 +1127,18 @@ export function AppHeader({
 
           {visibleMobilePrimaryNavItems.length > 0 ? (
             <nav className="md:hidden" aria-label="Primary">
-              <div className="pb-1 pt-2.5">
-                <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div
+                className={
+                  mobileHeroOverlay ? "pb-0.5 pt-1.5" : "pb-1 pt-2.5"
+                }
+              >
+                <div
+                  className={`flex items-center overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+                    mobileHeroOverlay
+                      ? "-mx-0.5 gap-1.5 px-0.5"
+                      : "-mx-1 gap-2 px-1"
+                  }`}
+                >
                   {visibleMobilePrimaryNavItems.map((item) => {
                     const Icon = item.icon;
                     const active = isNavItemActive(item.href);
@@ -1140,15 +1150,23 @@ export function AppHeader({
                         onClick={(event) =>
                           handleRouteLinkClick(event, item.href)
                         }
-                        className={`inline-flex min-h-10 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-full border px-3.5 py-2 text-[15px] font-black leading-none tracking-[-0.01em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
-                          active
-                            ? "border-white/55 bg-white/90 text-indigo-700 shadow-[0_4px_10px_rgba(49,46,129,0.12)]"
-                            : "border-white/10 bg-transparent text-indigo-50/95 hover:border-white/25 hover:bg-white/10 hover:text-white"
+                        className={`inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full border leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
+                          mobileHeroOverlay
+                            ? `min-h-[38px] gap-1.5 px-3 py-1.5 text-[13.5px] font-semibold tracking-[-0.005em] backdrop-blur-md ${
+                                active
+                                  ? "border-white/65 bg-white/[0.86] text-indigo-700 shadow-[0_3px_8px_rgba(15,23,42,0.12)]"
+                                  : "border-white/15 bg-white/[0.07] text-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:border-white/25 hover:bg-white/[0.12] hover:text-white"
+                              }`
+                            : `min-h-10 gap-1.5 px-3.5 py-2 text-[15px] font-black tracking-[-0.01em] ${
+                                active
+                                  ? "border-white/55 bg-white/90 text-indigo-700 shadow-[0_4px_10px_rgba(49,46,129,0.12)]"
+                                  : "border-white/10 bg-transparent text-indigo-50/95 hover:border-white/25 hover:bg-white/10 hover:text-white"
+                              }`
                         }`}
                       >
                         {Icon ? (
                           <Icon
-                            size={18}
+                            size={mobileHeroOverlay ? 16 : 18}
                             className="shrink-0"
                             aria-hidden="true"
                           />
