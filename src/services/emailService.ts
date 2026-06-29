@@ -56,7 +56,10 @@ export async function sendTransactionalEmail(input: {
     : null;
 
   if (!resend || !from) {
-    const message = !resend ? "Resend API key is not configured." : "Resend sender email is not configured.";
+    const message = !resend
+      ? "Resend API key is not configured."
+      : "Resend sender email is not configured.";
+
     await markEmailDeliveryFailed({ deliveryId, message });
 
     if (strictDelivery) {
@@ -76,12 +79,18 @@ export async function sendTransactionalEmail(input: {
       text: input.text || htmlToText(input.html),
       ...(input.replyTo ? { replyTo: input.replyTo } : {}),
     },
-    input.idempotencyKey ? { headers: { "Idempotency-Key": input.idempotencyKey } } : undefined,
+    input.idempotencyKey
+      ? { headers: { "Idempotency-Key": input.idempotencyKey } }
+      : undefined,
   );
 
   if (error) {
     const statusCode = getResendStatusCode(error);
-    await markEmailDeliveryFailed({ deliveryId, message: error.message, statusCode });
+    await markEmailDeliveryFailed({
+      deliveryId,
+      message: error.message,
+      statusCode,
+    });
     throw new EmailDeliveryError(error.message, statusCode);
   }
 
@@ -93,7 +102,12 @@ function getResendStatusCode(error: ErrorResponse) {
   return typeof error.statusCode === "number" ? error.statusCode : null;
 }
 
-export function priceAlertEmail(input: { name?: string | null; route: string; price: string; url: string }) {
+export function priceAlertEmail(input: {
+  name?: string | null;
+  route: string;
+  price: string;
+  url: string;
+}) {
   const name = escapeHtml(input.name);
   const route = escapeHtml(input.route);
   const price = escapeHtml(input.price);
@@ -121,7 +135,12 @@ export function supportTicketEmail(input: { ticketId: string; subject: string })
   `;
 }
 
-export function verificationCodeEmail(input: { code: string; name?: string | null; expiresInMinutes: number; verifyUrl: string }) {
+export function verificationCodeEmail(input: {
+  code: string;
+  name?: string | null;
+  expiresInMinutes: number;
+  verifyUrl: string;
+}) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
       <h1 style="font-size:22px">Your Kurioticket verification code</h1>
@@ -134,7 +153,11 @@ export function verificationCodeEmail(input: { code: string; name?: string | nul
   `;
 }
 
-export function passwordResetEmail(input: { name?: string | null; expiresInMinutes: number; resetUrl: string }) {
+export function passwordResetEmail(input: {
+  name?: string | null;
+  expiresInMinutes: number;
+  resetUrl: string;
+}) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
       <h1 style="font-size:22px">Reset your Kurioticket password</h1>
@@ -146,7 +169,11 @@ export function passwordResetEmail(input: { name?: string | null; expiresInMinut
   `;
 }
 
-export function loginVerificationCodeEmail(input: { code: string; name?: string | null; expiresInMinutes: number }) {
+export function loginVerificationCodeEmail(input: {
+  code: string;
+  name?: string | null;
+  expiresInMinutes: number;
+}) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
       <h1 style="font-size:22px">Your Kurioticket login verification code</h1>
@@ -158,12 +185,23 @@ export function loginVerificationCodeEmail(input: { code: string; name?: string 
   `;
 }
 
+export function twoFactorCodeEmail(input: {
+  code: string;
+  name?: string | null;
+  purpose: "enable" | "disable" | "login";
+  expiresInMinutes: number;
+}) {
+  const action =
+    input.purpose === "disable"
+      ? "disable two-factor authentication"
+      : input.purpose === "enable"
+        ? "enable two-factor authentication"
+        : "finish signing in";
 
-export function twoFactorCodeEmail(input: { code: string; name?: string | null; purpose: "enable" | "disable" | "login"; expiresInMinutes: number }) {
-  const action = input.purpose === "disable" ? "disable two-factor authentication" : input.purpose === "enable" ? "enable two-factor authentication" : "finish signing in";
-  const safety = input.purpose === "disable"
-    ? "If you did not request disabling two-factor authentication, keep 2FA enabled and contact support."
-    : "If you did not request this code, you can ignore this email.";
+  const safety =
+    input.purpose === "disable"
+      ? "If you did not request disabling two-factor authentication, keep 2FA enabled and contact support."
+      : "If you did not request this code, you can ignore this email.";
 
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
@@ -176,9 +214,10 @@ export function twoFactorCodeEmail(input: { code: string; name?: string | null; 
   `;
 }
 
-export function newsletterWelcomeEmail(input?: { preferencesUrl?: string; unsubscribeUrl?: string }) {
-  const preferencesUrl = input?.preferencesUrl ? escapeHtml(input.preferencesUrl) : "";
-  const unsubscribeUrl = input?.unsubscribeUrl ? escapeHtml(input.unsubscribeUrl) : "";
+export function newsletterWelcomeEmail(input?: { preferencesUrl?: string }) {
+  const preferencesUrl = input?.preferencesUrl
+    ? escapeHtml(input.preferencesUrl)
+    : "";
 
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
@@ -186,14 +225,34 @@ export function newsletterWelcomeEmail(input?: { preferencesUrl?: string; unsubs
       <p>Thanks for subscribing. We’ll send occasional Kurioticket updates to help you compare travel options more calmly.</p>
       <p>We will not ask you for payment details by email, and booking decisions should always be confirmed on Kurioticket or the provider site.</p>
       ${preferencesUrl ? `<p><a href="${preferencesUrl}" style="color:#0f766e">Manage your Kurioticket email preferences</a></p>` : ""}
-      ${unsubscribeUrl ? `<p><a href="${unsubscribeUrl}" style="color:#64748b">Unsubscribe from Kurioticket marketing emails</a></p>` : ""}
-      <p style="font-size:12px;color:#64748b">You can unsubscribe anytime from future newsletter emails.</p>
+      <p style="font-size:12px;color:#64748b">Opening the preferences page does not unsubscribe you. You can stop updates from that page whenever you choose.</p>
+    </div>
+  `;
+}
+
+export function newsletterUnsubscribedEmail(input?: { preferencesUrl?: string }) {
+  const preferencesUrl = input?.preferencesUrl
+    ? escapeHtml(input.preferencesUrl)
+    : "";
+
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
+      <h1 style="font-size:22px">You’re unsubscribed from Kurioticket updates</h1>
+      <p>You will no longer receive Kurioticket marketing newsletters, travel inspiration, or product update emails.</p>
+      <p>Important account, security, password reset, login verification, and support emails may still be sent when needed.</p>
+      ${preferencesUrl ? `<p><a href="${preferencesUrl}" style="color:#0f766e">Resubscribe or manage email preferences</a></p>` : ""}
     </div>
   `;
 }
 
 export function accountDeletionRequestEmail(input: { deadline: Date }) {
-  const deadline = escapeHtml(new Intl.DateTimeFormat("en", { dateStyle: "full", timeStyle: "short" }).format(input.deadline));
+  const deadline = escapeHtml(
+    new Intl.DateTimeFormat("en", {
+      dateStyle: "full",
+      timeStyle: "short",
+    }).format(input.deadline),
+  );
+
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
       <h1 style="font-size:22px">Account deletion request received</h1>
@@ -205,7 +264,13 @@ export function accountDeletionRequestEmail(input: { deadline: Date }) {
   `;
 }
 
-export function accountDeletionRequestAdminEmail(input: { userId: string; email: string; requestedAt: Date; deadline: Date; supportTicketId?: string | null }) {
+export function accountDeletionRequestAdminEmail(input: {
+  userId: string;
+  email: string;
+  requestedAt: Date;
+  deadline: Date;
+  supportTicketId?: string | null;
+}) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
       <h1 style="font-size:22px">Account deletion request</h1>

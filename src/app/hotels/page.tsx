@@ -479,20 +479,20 @@ export default function HotelsSearchPage() {
               sizes="100vw"
               className="object-cover object-[52%_38%] brightness-[1.22] saturate-[1.14] contrast-[1.02]"
             />
-            <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-slate-950/44 via-slate-950/18 to-transparent" />
-            <div className="absolute left-0 top-20 h-56 w-[86%] bg-[radial-gradient(ellipse_at_18%_32%,rgba(15,23,42,0.44),rgba(15,23,42,0.20)_42%,transparent_74%)]" />
-            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950/38 via-slate-950/10 to-transparent" />
+            <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-slate-950/28 via-slate-950/8 to-transparent" />
+            <div className="absolute left-0 top-[5.8rem] h-44 w-[78%] bg-[radial-gradient(ellipse_at_18%_42%,rgba(15,23,42,0.18),rgba(15,23,42,0.08)_42%,transparent_76%)]" />
+            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/22 via-slate-950/6 to-transparent" />
           </div>
 
-          <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-[7.85rem]">
-            <div className="max-w-[23rem] text-white">
+          <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-[8.05rem]">
+            <div className="max-w-[24rem] text-white">
               <p className="sr-only">
                 {t("hotelsHeroEyebrow")}
               </p>
-              <h1 className="text-[clamp(1.62rem,6.65vw,2rem)] font-semibold leading-[1.06] tracking-[-0.03em] text-white text-balance drop-shadow-[0_3px_16px_rgba(2,6,23,0.72)]">
+              <h1 className="max-w-[22.75rem] text-[clamp(1.72rem,7.05vw,2.08rem)] font-semibold leading-[1.04] tracking-[-0.035em] text-white text-balance drop-shadow-[0_2px_10px_rgba(2,6,23,0.58)]">
                 {t("hotelsHeroTitle")}
               </h1>
-              <p className="mt-3.5 max-w-[21.5rem] text-[0.92rem] font-medium leading-[1.62] text-white/90 text-balance drop-shadow-[0_2px_10px_rgba(2,6,23,0.68)]">
+              <p className="mt-4 max-w-[23rem] text-[0.94rem] font-medium leading-[1.58] text-white/92 text-balance drop-shadow-[0_2px_8px_rgba(2,6,23,0.52)]">
                 {t("hotelsHeroSubtitle")}
               </p>
             </div>
