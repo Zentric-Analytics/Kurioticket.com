@@ -878,7 +878,11 @@ export function AppHeader({
                     setMobileMenuOpen(false);
                     setMobileAccountOpen((value) => !value);
                   }}
-                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-transparent bg-transparent text-xs font-black text-white/95 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                  className={`inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-xs font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
+                    mobileHeroOverlay
+                      ? "border border-white/35 bg-white/[0.18] text-white shadow-[0_8px_20px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-md hover:border-white/50 hover:bg-white/[0.26]"
+                      : "border border-transparent bg-transparent text-white/95 hover:bg-white/10 hover:text-white"
+                  }`}
                 >
                   <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-white text-[11px] font-black text-indigo-700 shadow-sm">
                     {session?.user?.image ? (
@@ -899,7 +903,11 @@ export function AppHeader({
                   onClick={(event) =>
                     handleRouteLinkClick(event, "/auth/signin")
                   }
-                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/95 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                  className={`inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
+                    mobileHeroOverlay
+                      ? "border border-white/35 bg-white/[0.18] text-white shadow-[0_8px_20px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-md hover:border-white/50 hover:bg-white/[0.26]"
+                      : "border border-white/10 bg-white/5 text-white/95 hover:bg-white/15 hover:text-white"
+                  }`}
                 >
                   <UserCircle size={18} />
                 </Link>
@@ -912,7 +920,11 @@ export function AppHeader({
                 }
                 aria-expanded={mobileMenuOpen}
                 aria-controls="mobile-menu-drawer"
-                className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/95 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                className={`inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
+                  mobileHeroOverlay
+                    ? "border border-white/35 bg-white/[0.18] text-white shadow-[0_8px_20px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-md hover:border-white/50 hover:bg-white/[0.26]"
+                    : "border border-white/10 bg-white/5 text-white/95 hover:bg-white/15 hover:text-white"
+                }`}
                 onClick={() => {
                   setMobileAccountOpen(false);
                   setMobileMenuOpen((value) => !value);
