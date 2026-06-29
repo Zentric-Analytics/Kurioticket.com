@@ -2364,7 +2364,7 @@ export function SecurityDashboardPage() {
   const { t } = useLocale();
   const router = useRouter();
   const [actionMessage, setActionMessage] = useState("");
-  const [securityNotificationsFeedback, setSecurityNotificationsFeedback] = useState("");
+  const [securityFeedback, setSecurityFeedback] = useState("");
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
@@ -2396,16 +2396,20 @@ export function SecurityDashboardPage() {
   const [removingSessionId, setRemovingSessionId] = useState<string | null>(null);
   const securityActionStatusId = "security-action-status";
   const tx = (key: string, fallback: string) => t[key] || fallback;
+  const showSecurityFeedback = (message: string) => {
+    setActionMessage("");
+    setSecurityFeedback(message);
+  };
 
   useEffect(() => {
-    if (!securityNotificationsFeedback) return;
+    if (!securityFeedback) return;
 
     const timeoutId = window.setTimeout(() => {
-      setSecurityNotificationsFeedback("");
+      setSecurityFeedback("");
     }, 2000);
 
     return () => window.clearTimeout(timeoutId);
-  }, [securityNotificationsFeedback]);
+  }, [securityFeedback]);
 
   useEffect(() => {
     let active = true;
@@ -2429,7 +2433,7 @@ export function SecurityDashboardPage() {
           const passkeysData = await passkeysResponse.json().catch(() => ({}));
           if (active && passkeysResponse.ok) setPasskeys(Array.isArray(passkeysData.passkeys) ? passkeysData.passkeys : []);
         } else {
-          setActionMessage(data.error || "Unable to load security preferences.");
+          setActionMessage("Unable to load security preferences.");
         }
       } catch {
         if (active) setActionMessage("Unable to load security preferences.");
@@ -2483,16 +2487,16 @@ export function SecurityDashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(passwordForm),
       });
-      const data = await response.json().catch(() => ({}));
+      await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        setActionMessage(data.error || "Unable to update password.");
+        setActionMessage("Unable to update password.");
         return;
       }
 
       setPasswordModalOpen(false);
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-      setActionMessage("Password updated successfully. Use the new password next time you sign in.");
+      showSecurityFeedback("Password updated");
     } catch {
       setActionMessage("Unable to update password.");
     } finally {
@@ -2508,13 +2512,13 @@ export function SecurityDashboardPage() {
   };
   const requestPasskeyReauth = async () => {
     const sendResponse = await fetch("/api/account/security/passkeys/reauth", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "send-email-code" }) });
-    const sendData = await sendResponse.json().catch(() => ({}));
-    if (!sendResponse.ok) throw new Error(sendData.error || "Unable to send a confirmation code.");
+    await sendResponse.json().catch(() => ({}));
+    if (!sendResponse.ok) throw new Error("Unable to send a confirmation code.");
     const secret = window.prompt("Enter the 6-digit code we sent to your account email. If authenticator-app 2FA is enabled, you can enter that code instead.");
     if (!secret) throw new Error("Verification is required before managing passkeys.");
     const response = await fetch("/api/account/security/passkeys/reauth", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "verify", code: secret.trim() }) });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok || !data.reauthToken) throw new Error(data.error || "Unable to verify that request.");
+    if (!response.ok || !data.reauthToken) throw new Error("Unable to verify that request.");
     return String(data.reauthToken);
   };
   const defaultPasskeyName = () => {
@@ -2525,19 +2529,19 @@ export function SecurityDashboardPage() {
   };
   const handleAddPasskey = async () => {
     if (!window.PublicKeyCredential || !navigator.credentials) { setActionMessage("Passkeys are not supported on this browser. Use password sign-in instead."); return; }
-    setPasskeySaving(true); setActionMessage("We’ll confirm your email before opening your device security prompt.");
+    setPasskeySaving(true); setActionMessage("");
     try {
       const reauthToken = await requestPasskeyReauth();
       const optionsResponse = await fetch("/api/account/security/passkeys/register/options", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reauthToken }) });
       const optionsData = await optionsResponse.json();
-      if (!optionsResponse.ok) throw new Error(optionsData.error || "Unable to start passkey setup.");
+      if (!optionsResponse.ok) throw new Error("Unable to start passkey setup.");
       const credential = await navigator.credentials.create({ publicKey: decodeCreationOptions(optionsData.options) }) as PublicKeyCredential | null;
       if (!credential) throw new Error("Passkey setup was cancelled.");
       const name = window.prompt("Name this passkey", defaultPasskeyName()) || defaultPasskeyName();
       const verifyResponse = await fetch("/api/account/security/passkeys/register/verify", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...serializeCreatedCredential(credential), name }) });
-      const verifyData = await verifyResponse.json().catch(() => ({}));
-      if (!verifyResponse.ok) throw new Error(verifyData.error || "Unable to save passkey.");
-      setActionMessage("Passkey added. You can now sign in to Kurioticket with this device, password manager, or security key.");
+      await verifyResponse.json().catch(() => ({}));
+      if (!verifyResponse.ok) throw new Error("Unable to save passkey.");
+      showSecurityFeedback("Passkey settings updated");
       await loadPasskeys();
     } catch (error) { setActionMessage(error instanceof Error ? error.message : "Unable to add passkey."); } finally { setPasskeySaving(false); }
   };
@@ -2547,9 +2551,9 @@ export function SecurityDashboardPage() {
     setPasskeySaving(true); setActionMessage("");
     try {
       const response = await fetch(`/api/account/security/passkeys/${id}`, { method: "PATCH", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "Unable to rename passkey.");
-      setActionMessage("Passkey renamed."); await loadPasskeys();
+      await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error("Unable to rename passkey.");
+      showSecurityFeedback("Passkey settings updated"); await loadPasskeys();
     } catch (error) { setActionMessage(error instanceof Error ? error.message : "Unable to rename passkey."); } finally { setPasskeySaving(false); }
   };
   const handleRemovePasskey = async (id: string) => {
@@ -2558,9 +2562,9 @@ export function SecurityDashboardPage() {
     try {
       const reauthToken = await requestPasskeyReauth();
       const response = await fetch(`/api/account/security/passkeys/${id}`, { method: "DELETE", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reauthToken }) });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "Unable to remove passkey.");
-      setActionMessage("Passkey removed."); await loadPasskeys();
+      await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error("Unable to remove passkey.");
+      showSecurityFeedback("Passkey settings updated"); await loadPasskeys();
     } catch (error) { setActionMessage(error instanceof Error ? error.message : "Unable to remove passkey."); } finally { setPasskeySaving(false); }
   };
 
@@ -2576,7 +2580,7 @@ export function SecurityDashboardPage() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        setActionMessage(data.error || "Unable to load active sessions.");
+        setActionMessage("Unable to load active sessions.");
         return;
       }
 
@@ -2604,14 +2608,14 @@ export function SecurityDashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId }),
       });
-      const data = await response.json().catch(() => ({}));
+      await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        setActionMessage(data.error || "Unable to remove device record.");
+        setActionMessage("Unable to remove device record.");
         return;
       }
 
-      setActionMessage("Device record removed from your active sessions list.");
+      showSecurityFeedback("Sessions updated");
       await loadSessionActivities();
     } catch {
       setActionMessage("Unable to remove device record.");
@@ -2633,7 +2637,7 @@ export function SecurityDashboardPage() {
     try {
       const response = await fetch("/api/account/security/two-factor/setup", { method: "POST", credentials: "same-origin" });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) setActionMessage(data.error || "Unable to start authenticator setup.");
+      if (!response.ok) setActionMessage("Unable to start authenticator setup.");
       else setTotpSetup(data.setup);
     } catch {
       setActionMessage("Unable to start authenticator setup.");
@@ -2658,7 +2662,7 @@ export function SecurityDashboardPage() {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setActionMessage(data.error || "Unable to update two-factor authentication.");
+        setActionMessage("Unable to update two-factor authentication.");
         return;
       }
       setTwoFactor(data.twoFactor);
@@ -2666,7 +2670,7 @@ export function SecurityDashboardPage() {
       if (!Array.isArray(data.recoveryCodes)) setTwoFactorModal(null);
       setTwoFactorCode("");
       setTwoFactorPassword("");
-      setActionMessage(twoFactorModal === "setup" ? "Two-factor authentication is enabled. Save your recovery codes now." : twoFactorModal === "recovery" ? "Recovery codes regenerated. Save them now." : "Two-factor authentication is disabled.");
+      showSecurityFeedback("Two-factor authentication updated");
     } catch {
       setActionMessage("Unable to update two-factor authentication.");
     } finally {
@@ -2677,7 +2681,7 @@ export function SecurityDashboardPage() {
   const handleSecurityAlertsToggle = async (enabled: boolean) => {
     setPreferencesSaving(true);
     setActionMessage("");
-    setSecurityNotificationsFeedback("");
+    setSecurityFeedback("");
 
     try {
       const response = await fetch("/api/account/security/preferences", {
@@ -2689,12 +2693,12 @@ export function SecurityDashboardPage() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        setActionMessage(data.error || "Unable to save security preferences.");
+        setActionMessage("Unable to save security preferences.");
         return;
       }
 
       setSecurityEmailAlerts(Boolean(data.preferences?.securityEmailAlerts));
-      setSecurityNotificationsFeedback("Security notifications updated");
+      showSecurityFeedback("Security notifications updated");
     } catch {
       setActionMessage("Unable to save security preferences.");
     } finally {
@@ -2711,15 +2715,15 @@ export function SecurityDashboardPage() {
         method: "POST",
         credentials: "same-origin",
       });
-      const data = await response.json().catch(() => ({}));
+      await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        setActionMessage(data.error || "Unable to request account deletion.");
+        setActionMessage("Unable to request account deletion.");
         return;
       }
 
       setDeleteModalOpen(false);
-      setActionMessage(`${data.message || "Your account deletion request is under review."} Deadline: ${data.request?.deletionScheduledAt ? new Date(data.request.deletionScheduledAt).toLocaleString() : "7 days from now"}.`);
+      showSecurityFeedback("Delete account request submitted");
       router.push("/account/pending-deletion");
     } catch {
       setActionMessage("Unable to request account deletion.");
@@ -2804,10 +2808,10 @@ export function SecurityDashboardPage() {
                   aria-live="polite"
                   className={cn(
                     "pointer-events-none absolute top-full z-10 mt-2 whitespace-nowrap rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 shadow-sm transition-opacity",
-                    securityNotificationsFeedback ? "opacity-100" : "opacity-0",
+                    securityFeedback === "Security notifications updated" ? "opacity-100" : "opacity-0",
                   )}
                 >
-                  {securityNotificationsFeedback}
+                  {securityFeedback === "Security notifications updated" ? securityFeedback : ""}
                 </p>
               </div>
             </div>
@@ -2822,7 +2826,17 @@ export function SecurityDashboardPage() {
           />
         </div>
       </div>
-      <p id={securityActionStatusId} role="status" aria-live="polite" className={cn("px-1 text-sm font-medium leading-5 text-slate-600 sm:px-2", actionMessage ? "" : "sr-only")}>{actionMessage}</p>
+      <p id={securityActionStatusId} role="alert" className={cn("px-1 text-sm font-medium leading-5 text-red-600 sm:px-2", actionMessage ? "" : "sr-only")}>{actionMessage}</p>
+      <div
+        role="status"
+        aria-live="polite"
+        className={cn(
+          "pointer-events-none fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-lg transition-all duration-200 sm:left-auto sm:right-6 sm:translate-x-0",
+          securityFeedback && securityFeedback !== "Security notifications updated" ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0",
+        )}
+      >
+        {securityFeedback !== "Security notifications updated" ? securityFeedback : ""}
+      </div>
 
 
       {twoFactorModal ? (
