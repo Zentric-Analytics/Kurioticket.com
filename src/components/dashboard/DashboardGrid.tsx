@@ -1153,7 +1153,7 @@ function PhoneNumberInput({
       <div className="group relative h-10 w-[72px] shrink-0 sm:h-11 sm:w-20">
         <div
           aria-hidden="true"
-          className="pointer-events-none flex h-full w-full items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2 transition group-focus-within:border-violet-500 group-focus-within:ring-2 group-focus-within:ring-violet-100"
+          className="pointer-events-none flex h-full w-full items-center justify-center gap-1.5 rounded-none border border-slate-300 bg-white px-2 transition group-focus-within:border-violet-500 group-focus-within:ring-2 group-focus-within:ring-violet-100"
         >
           <CountryFlagIcon
             countryName={selectedOption.countryName}
@@ -1278,7 +1278,7 @@ function DetailInput({
   onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
 }) {
   const baseClassName = cn(
-    "h-10 w-full min-w-0 rounded-lg border border-slate-400 bg-white px-3 text-base font-medium leading-5 text-slate-950 outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 sm:max-w-lg sm:text-sm",
+    "h-10 w-full min-w-0 rounded-none border border-slate-400 bg-white px-3 text-base font-medium leading-5 text-slate-950 outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 sm:max-w-lg sm:text-sm",
     row.readOnly &&
       "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-200 focus:border-slate-200 focus:ring-0",
   );
