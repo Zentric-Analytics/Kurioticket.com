@@ -5,6 +5,7 @@ import "./globals.css";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { CurrencyRatesProvider } from "@/components/currency/CurrencyRatesProvider";
 import { LocaleProvider } from "@/components/layout/LocaleProvider";
+import { NewsletterSessionBridge } from "@/components/newsletter/NewsletterSessionBridge";
 import { RegionProvider } from "@/components/region/RegionProvider";
 import { RouteProgressProvider } from "@/components/layout/RouteProgress";
 
@@ -85,7 +86,10 @@ export default async function RootLayout({
           <LocaleProvider>
             <RegionProvider initialMode={initialRegion} detectedMode={detectedRegion}>
               <CurrencyRatesProvider>
-                <RouteProgressProvider>{children}</RouteProgressProvider>
+                <RouteProgressProvider>
+                  <NewsletterSessionBridge />
+                  {children}
+                </RouteProgressProvider>
               </CurrencyRatesProvider>
             </RegionProvider>
           </LocaleProvider>

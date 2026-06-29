@@ -2,7 +2,9 @@ import { createHash } from "node:crypto";
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 
+import { authOptions } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
 import { newsletterSubscribeSchema } from "@/lib/validation";
 import { newsletterWelcomeEmail, sendTransactionalEmail } from "@/services/emailService";
@@ -14,9 +16,13 @@ const rateLimitWindowMs = 10 * 60 * 1000;
 const rateLimitMaxAttempts = 5;
 const rateLimitBuckets = new Map<string, { count: number; resetAt: number }>();
 
+type NewsletterSubscriptionStatus = "SUBSCRIBED" | "UNSUBSCRIBED" | "NOT_FOUND";
+
 type SubscribeResponse = {
   ok: boolean;
   message: string;
+  status?: NewsletterSubscriptionStatus;
+  email?: string;
 };
 
 function jsonResponse(body: SubscribeResponse, status: number) {
@@ -70,7 +76,12 @@ function trimMetadata(value: string | null, maxLength: number) {
   return trimmed ? trimmed.slice(0, maxLength) : null;
 }
 
-async function sendWelcomeEmail(email: string) {
+async function getAuthenticatedEmail() {
+  const session = await getServerSession(authOptions);
+  return session?.user?.email?.toLowerCase().trim() || null;
+}
+
+async function sendWelcomeEmail(email: string, source: string) {
   try {
     await sendTransactionalEmail({
       to: email,
@@ -79,9 +90,38 @@ async function sendWelcomeEmail(email: string) {
       from: process.env.NEWSLETTER_FROM_EMAIL || undefined,
       replyTo: process.env.NEWSLETTER_REPLY_TO || undefined,
       idempotencyKey: `newsletter-welcome-${email}`,
+      template: "newsletter_welcome",
+      metadata: { source },
     });
   } catch (error) {
     console.error("[newsletter:welcome-email-failed]", error);
+  }
+}
+
+export async function GET() {
+  const email = await getAuthenticatedEmail();
+
+  if (!email) {
+    return NextResponse.json({ authenticated: false, status: "NOT_FOUND" });
+  }
+
+  try {
+    const subscriber = await getPrisma().newsletterSubscriber.findUnique({
+      where: { email },
+      select: { status: true },
+    });
+
+    return NextResponse.json({
+      authenticated: true,
+      email,
+      status: subscriber?.status || "NOT_FOUND",
+    });
+  } catch (error) {
+    console.error("[newsletter:status-failed]", error);
+    return NextResponse.json(
+      { authenticated: true, email, status: "NOT_FOUND", error: "Unable to load newsletter status." },
+      { status: 500 },
+    );
   }
 }
 
@@ -103,19 +143,24 @@ export async function POST(request: NextRequest) {
     return jsonResponse({ ok: false, message: "Enter a valid email address." }, 400);
   }
 
-  if (
-    typeof payload !== "object" ||
-    payload === null ||
-    Array.isArray(payload) ||
-    typeof (payload as { email?: unknown }).email !== "string" ||
-    (payload as { email: string }).email.length > maxEmailLength
-  ) {
+  if (typeof payload !== "object" || payload === null || Array.isArray(payload)) {
+    return jsonResponse({ ok: false, message: "Enter a valid email address." }, 400);
+  }
+
+  const authenticatedEmail = await getAuthenticatedEmail();
+  const payloadEmail = typeof (payload as { email?: unknown }).email === "string"
+    ? (payload as { email: string }).email.trim()
+    : "";
+  const resolvedEmail = authenticatedEmail || payloadEmail;
+
+  if (!resolvedEmail || resolvedEmail.length > maxEmailLength) {
     return jsonResponse({ ok: false, message: "Enter a valid email address." }, 400);
   }
 
   const parsed = newsletterSubscribeSchema.safeParse({
     ...(payload as Record<string, unknown>),
-    email: (payload as { email: string }).email.trim(),
+    email: resolvedEmail,
+    source: authenticatedEmail ? "homepage_logged_in" : (payload as { source?: unknown }).source,
   });
 
   if (!parsed.success) {
@@ -161,11 +206,18 @@ export async function POST(request: NextRequest) {
     });
 
     if (shouldSendWelcome) {
-      await sendWelcomeEmail(email);
+      await sendWelcomeEmail(email, source);
     }
 
     return jsonResponse(
-      { ok: true, message: "Thanks! You’re subscribed to Kurioticket updates." },
+      {
+        ok: true,
+        message: existing?.status === "SUBSCRIBED"
+          ? "You’re already subscribed to Kurioticket updates."
+          : "Thanks! You’re subscribed to Kurioticket updates.",
+        status: "SUBSCRIBED",
+        email,
+      },
       200,
     );
   } catch (error) {
