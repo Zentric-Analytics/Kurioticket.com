@@ -7,6 +7,7 @@ import {
   Bell,
   Bookmark,
   BriefcaseBusiness,
+  ChevronDown,
   ChevronRight,
   CircleHelp,
   Headphones,
@@ -1154,13 +1155,14 @@ function PhoneNumberInput({
       <div className="group relative z-10 h-11 w-[4.75rem] shrink-0 sm:w-20">
         <div
           aria-hidden="true"
-          className="pointer-events-none flex h-full w-full items-center justify-center rounded-none border border-slate-300 bg-white px-3.5 transition group-focus-within:border-blue-700 group-focus-within:ring-2 group-focus-within:ring-blue-100 sm:px-4"
+          className="pointer-events-none flex h-full w-full items-center justify-center gap-1.5 rounded-none border border-slate-400 bg-white px-2.5 transition group-hover:border-slate-500 group-focus-within:border-blue-700 group-focus-within:ring-2 group-focus-within:ring-blue-100 sm:px-3"
         >
           <CountryFlagIcon
             countryName={selectedOption.countryName}
             isoCode={selectedOption.isoCode}
-            className="h-5 w-8 rounded-none bg-white sm:h-[22px] sm:w-9"
+            className="h-4 w-[1.375rem] rounded-none bg-white sm:h-[17px] sm:w-6"
           />
+          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-500" strokeWidth={2} />
         </div>
 
         <select
