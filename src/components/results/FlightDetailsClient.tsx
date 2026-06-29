@@ -1994,13 +1994,14 @@ function formatStops(
   } = { nonstop: enTranslations.nonstop, stopSingular: enTranslations.stopSingular, stopPlural: enTranslations.stopPlural },
 ) {
   if (stops === 0) return labels.nonstop;
+  if (stops === 1) return `${stops} ${labels.stopSingular}`;
+  if (stops === 2 && labels.stopDual) return labels.stopDual;
   if (labels.stopCount) {
     return formatTranslationTemplate(labels.stopCount, {
       count: String(stops),
     });
   }
-  if (stops === 2 && labels.stopDual) return labels.stopDual;
-  return `${stops} ${stops > 1 ? labels.stopPlural : labels.stopSingular}`;
+  return `${stops} ${labels.stopPlural}`;
 }
 
 function formatLegDirection(
