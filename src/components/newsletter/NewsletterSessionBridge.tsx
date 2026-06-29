@@ -28,7 +28,7 @@ export function NewsletterSessionBridge() {
     const newsletterInput = input;
     const newsletterForm = form;
     const newsletterContainer = container;
-    const email = status === "authenticated" ? session?.user?.email?.trim() : "";
+    const email = session?.user?.email?.trim();
 
     const existingContext = newsletterContainer.querySelector(`.${accountContextClassName}`);
     existingContext?.remove();
