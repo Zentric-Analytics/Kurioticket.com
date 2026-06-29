@@ -2950,6 +2950,81 @@ test("Hindi How Kurioticket Works page strings are localized", () => {
   assert.equal(getTranslations("hi")["howItWorks.providerWebsites.title"], "प्रदाता वेबसाइटें");
 });
 
+test("Polish About page screenshot-visible copy resolves without English fallback", () => {
+  const pl = getTranslations("pl");
+  const expectedPolishAboutStrings = {
+    aboutPageEyebrow: "O Kurioticket",
+    aboutPageTitle: "O nas",
+    aboutPageIntroPrimary:
+      "Kurioticket to platforma do wyszukiwania i porównywania podróży, która pomaga podróżnym wyszukiwać, porównywać i odkrywać loty, hotele, samochody oraz oferty podróży.",
+    aboutPageIntroSecondary:
+      "Naszym celem jest uproszczenie planowania podróży przez zebranie dostępnych opcji i informacji o dostawcach w jednym miejscu, aby podróżni mogli przejrzeć możliwości przed przejściem do dostawcy najlepiej pasującego do ich wyjazdu.",
+    aboutPagePlanningCardHeading: "Praktyczne narzędzie do planowania podróży",
+    aboutPagePlanningCardBody:
+      "Kurioticket pomaga podróżnym oceniać opcje podróży z przydatnym kontekstem. Dostępność, ceny, zasady i końcowe kroki rezerwacji mogą różnić się w zależności od dostawcy, dlatego przed podjęciem decyzji podróżni powinni dokładnie sprawdzić stronę dostawcy.",
+  };
+
+  const aboutPageSource = readFileSync("src/components/about/AboutPageContent.tsx", "utf8");
+  const aboutRouteSource = readFileSync("src/app/about/page.tsx", "utf8");
+
+  assert.ok(aboutRouteSource.includes("<AboutPageContent />"), "About route should render AboutPageContent.");
+  assert.ok(aboutPageSource.includes("getTranslation(t,"), "About page should use the i18n fallback helper.");
+  assert.ok(aboutPageSource.includes("rounded-2xl border border-border bg-white"), "About planning card layout should remain unchanged.");
+
+  for (const [key, value] of Object.entries(expectedPolishAboutStrings)) {
+    assert.equal(pl[key], value, `pl ${key} should use Polish copy`);
+    assert.notEqual(pl[key], enTranslations[key], `pl ${key} should not fall back to English`);
+    assert.ok(aboutPageSource.includes(key), `About page render path should resolve ${key} through i18n.`);
+  }
+
+  assert.match(pl.aboutPageEyebrow, /Kurioticket/);
+  assert.match(pl.aboutPageIntroPrimary, /Kurioticket/);
+});
+
+test("Polish How Kurioticket Works page strings are localized", () => {
+  const pl = getTranslations("pl");
+  const expectedPolishHowItWorksStrings = {
+    howItWorksEyebrow: "Jak działa Kurioticket",
+    howItWorksTitle: "Jak działa Kurioticket",
+    howItWorksIntro:
+      "Kurioticket pomaga podróżnym przejść od wyszukiwania do porównania, a następnie do dostawcy po wybraniu oferty.",
+    howItWorksFlowHeading: "Podstawowy przebieg",
+    "howItWorks.steps.search.title": "Wyszukaj opcje podróży",
+    "howItWorks.steps.search.description":
+      "Wprowadź szczegóły podróży, aby znaleźć dostępne loty, hotele, samochody lub oferty podróży.",
+    "howItWorks.steps.compare.title": "Porównaj dostępne wyniki",
+    "howItWorks.steps.compare.description":
+      "Przejrzyj dostępne opcje, ceny, rozkłady, informacje o dostawcach i inne dane podróży, gdy są dostępne.",
+    "howItWorks.steps.choose.title": "Wybierz ofertę",
+    "howItWorks.steps.choose.description":
+      "Po przejrzeniu dostępnych szczegółów wybierz opcję najlepiej pasującą do Twoich planów.",
+    "howItWorks.steps.continue.title": "Kontynuuj u dostawcy",
+    "howItWorks.steps.continue.description":
+      "Po przekierowaniu kontynuuj na stronie dostawcy, aby sprawdzić końcowe szczegóły i wykonać wymagane kroki rezerwacji.",
+    "howItWorks.providerWebsites.title": "Strony dostawców",
+    "howItWorks.providerWebsites.description":
+      "Niektóre rezerwacje mogą być finalizowane na stronach dostawców po przekierowaniu z Kurioticket. Przed zakupem sprawdź na stronie dostawcy ostateczną dostępność, ceny, warunki, kroki płatności i szczegóły rezerwacji.",
+  };
+
+  const howItWorksSource = readFileSync("src/app/how-it-works/HowItWorksContent.tsx", "utf8");
+  const howItWorksRouteSource = readFileSync("src/app/how-it-works/page.tsx", "utf8");
+
+  assert.ok(howItWorksRouteSource.includes("<HowItWorksContent />"), "How-it-works route should render HowItWorksContent.");
+  assert.ok(howItWorksSource.includes('number: "01"') && howItWorksSource.includes('number: "02"') && howItWorksSource.includes('number: "03"') && howItWorksSource.includes('number: "04"'), "How-it-works step numbers should remain unchanged.");
+  assert.ok(howItWorksSource.includes("Search") && howItWorksSource.includes("GitCompare") && howItWorksSource.includes("MousePointerClick") && howItWorksSource.includes("ExternalLink"), "How-it-works icons should remain unchanged.");
+  assert.ok(howItWorksSource.includes("steps.map((step)"), "How-it-works should keep mapped step order and behavior.");
+  assert.ok(howItWorksSource.includes("rounded-2xl border border-border bg-white"), "How-it-works cards should remain unchanged.");
+
+  for (const [key, value] of Object.entries(expectedPolishHowItWorksStrings)) {
+    assert.equal(pl[key], value, `pl ${key} should use Polish copy`);
+    assert.notEqual(pl[key], enTranslations[key], `pl ${key} should not fall back to English`);
+    assert.ok(howItWorksSource.includes(key), `How-it-works render path should resolve ${key} through i18n.`);
+  }
+
+  assert.match(pl.howItWorksTitle, /Kurioticket/);
+  assert.match(pl["howItWorks.providerWebsites.description"], /Kurioticket/);
+});
+
 test("Hindi legal center and policy document strings are localized", () => {
   const expectedHindiLegalStrings = {
     "legal.lastUpdated": "अंतिम अपडेट",
