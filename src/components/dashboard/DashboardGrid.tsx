@@ -937,6 +937,36 @@ function serializeStructuredAddressDraft(parts: StructuredAddressParts) {
     : "";
 }
 
+function joinAddressParts(parts: string[], separator: string) {
+  return parts
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(separator);
+}
+
+function getStructuredAddressDisplayLines(parts: StructuredAddressParts) {
+  const countryOption = personalDetailsCountryOptions.find(
+    (option) => option.code === parts.countryCode,
+  );
+  const streetLine = joinAddressParts(
+    [parts.apartmentOrSuite, parts.addressLine1],
+    ", ",
+  );
+  const cityStateLine = joinAddressParts(
+    [parts.city, parts.stateOrRegion],
+    ", ",
+  );
+  const localityLine = joinAddressParts(
+    [cityStateLine, parts.postalCode],
+    " ",
+  );
+  const countryLine = countryOption
+    ? getFriendlyCountryLabel(countryOption)
+    : parts.countryCode.trim();
+
+  return [streetLine, localityLine, countryLine].filter(Boolean);
+}
+
 function formatStructuredAddressForDisplay(value: string) {
   const trimmedValue = value.trim();
 
@@ -944,30 +974,9 @@ function formatStructuredAddressForDisplay(value: string) {
     return trimmedValue;
   }
 
-  const parts = parseStructuredAddressDraft(trimmedValue);
-  const countryOption = personalDetailsCountryOptions.find(
-    (option) => option.code === parts.countryCode,
-  );
-  const cityRegionLine = [parts.city, parts.stateOrRegion]
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .join(", ");
-  const localityLine = [cityRegionLine, parts.postalCode.trim()]
-    .filter(Boolean)
-    .join("  ");
-  const countryLine = countryOption
-    ? getFriendlyCountryLabel(countryOption)
-    : parts.countryCode.trim();
-
-  return [
-    parts.addressLine1,
-    parts.apartmentOrSuite,
-    localityLine,
-    countryLine,
-  ]
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .join("\n");
+  return getStructuredAddressDisplayLines(
+    parseStructuredAddressDraft(trimmedValue),
+  ).join("\n");
 }
 
 function StructuredAddressInput({
