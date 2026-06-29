@@ -622,6 +622,7 @@ const dateOfBirthYears = Array.from(
 
 const emailAddressPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const verificationCodePattern = /^\d{6}$/;
+const emailChangeResendCooldownSeconds = 30;
 
 function getEmailChangeError(newEmail: string, currentEmail: string) {
   const normalizedNewEmail = newEmail.trim().toLowerCase();
@@ -1401,6 +1402,7 @@ function PersonalDetailsEmailEditRow({
   isVerificationCodeValid,
   isRequestingCode,
   isConfirming,
+  resendCooldownSeconds,
   successMessage,
   errorMessage,
   onStartChange,
@@ -1419,6 +1421,7 @@ function PersonalDetailsEmailEditRow({
   isVerificationCodeValid: boolean;
   isRequestingCode: boolean;
   isConfirming: boolean;
+  resendCooldownSeconds: number;
   successMessage: string | null;
   errorMessage: string | null;
   onStartChange: () => void;
@@ -1431,6 +1434,7 @@ function PersonalDetailsEmailEditRow({
   const baseInputClassName =
     "h-11 w-full min-w-0 rounded-none border border-slate-400 bg-white px-3.5 text-base font-medium leading-5 text-slate-950 shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-blue-700 focus:ring-2 focus:ring-blue-100 sm:text-sm";
   const isBusy = isRequestingCode || isConfirming;
+  const isResendCoolingDown = resendCooldownSeconds > 0;
 
   return (
     <div className="py-3.5">
@@ -1490,11 +1494,18 @@ function PersonalDetailsEmailEditRow({
                 <button
                   type="button"
                   onClick={onRequestCode}
-                  disabled={Boolean(emailValidationError) || isBusy}
+                  disabled={
+                    Boolean(emailValidationError) || isBusy || isResendCoolingDown
+                  }
                   className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-300 sm:w-auto"
                 >
                   {isRequestingCode ? "Sending…" : "Send verification code"}
                 </button>
+                {isResendCoolingDown ? (
+                  <p className="text-xs font-medium leading-5 text-slate-500">
+                    You can request a new code in {resendCooldownSeconds}s.
+                  </p>
+                ) : null}
               </div>
               <div>
                 <label
@@ -1572,6 +1583,8 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
   const [emailVerificationCode, setEmailVerificationCode] = useState("");
   const [isRequestingEmailCode, setIsRequestingEmailCode] = useState(false);
   const [isConfirmingEmail, setIsConfirmingEmail] = useState(false);
+  const [emailCodeResendCooldownSeconds, setEmailCodeResendCooldownSeconds] =
+    useState(0);
   const [emailChangeSuccessMessage, setEmailChangeSuccessMessage] = useState<
     string | null
   >(null);
@@ -1591,7 +1604,18 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     setIsConfirmingEmail(false);
     setEmailChangeSuccessMessage(null);
     setEmailChangeErrorMessage(null);
+    setEmailCodeResendCooldownSeconds(0);
   };
+
+  useEffect(() => {
+    if (emailCodeResendCooldownSeconds <= 0) return;
+
+    const timer = window.setTimeout(() => {
+      setEmailCodeResendCooldownSeconds((seconds) => Math.max(seconds - 1, 0));
+    }, 1000);
+
+    return () => window.clearTimeout(timer);
+  }, [emailCodeResendCooldownSeconds]);
 
   const handleEdit = () => {
     setDraft(savedValues);
@@ -1617,8 +1641,15 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     const nextEmail = newEmail.trim().toLowerCase();
     const validationError = getEmailChangeError(nextEmail, savedValues.email);
 
-    if (validationError || isRequestingEmailCode) {
-      setEmailChangeErrorMessage(validationError);
+    if (
+      validationError ||
+      isRequestingEmailCode ||
+      emailCodeResendCooldownSeconds > 0
+    ) {
+      setEmailChangeErrorMessage(
+        validationError ||
+          "Please wait 30 seconds before requesting another verification code.",
+      );
       return;
     }
 
@@ -1636,6 +1667,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
 
       const data = (await response.json().catch(() => null)) as {
         ok?: boolean;
+        cooldownSeconds?: number;
         error?: string;
       } | null;
 
@@ -1645,6 +1677,9 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
 
       setNewEmail(nextEmail);
       setEmailVerificationCode("");
+      setEmailCodeResendCooldownSeconds(
+        data.cooldownSeconds ?? emailChangeResendCooldownSeconds,
+      );
       setEmailChangeSuccessMessage(
         "We sent a verification code to your new email address. Check your inbox or junk/spam folder. The code expires in 15 minutes.",
       );
@@ -1810,16 +1845,19 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
           isVerificationCodeValid={isVerificationCodeValid}
           isRequestingCode={isRequestingEmailCode}
           isConfirming={isConfirmingEmail}
+          resendCooldownSeconds={emailCodeResendCooldownSeconds}
           successMessage={emailChangeSuccessMessage}
           errorMessage={emailChangeErrorMessage}
           onStartChange={() => {
             setStatusMessage(null);
             setEmailChangeSuccessMessage(null);
             setEmailChangeErrorMessage(null);
+            setEmailCodeResendCooldownSeconds(0);
             setIsChangingEmail(true);
           }}
           onNewEmailChange={(value) => {
             setNewEmail(value);
+            setEmailCodeResendCooldownSeconds(0);
             setEmailChangeSuccessMessage(null);
             setEmailChangeErrorMessage(null);
           }}

@@ -6,6 +6,7 @@ import { EmailDeliveryError, loginVerificationCodeEmail, sendTransactionalEmail,
 const verificationCodeTtlMinutes = 10;
 const accountEmailChangeCodeTtlMinutes = 15;
 const resendCooldownMs = 60 * 1000;
+const accountEmailChangeResendCooldownMs = 30 * 1000;
 const resendCooldowns = new Map<string, number>();
 
 type SendCodeResult = {
@@ -153,7 +154,7 @@ export async function sendAccountEmailChangeCode(input: { userId: string; newEma
   }
 
   if (input.enforceCooldown) {
-    reserveResendCooldown(identifier);
+    reserveResendCooldown(identifier, accountEmailChangeResendCooldownMs);
   }
 
   const code = randomInt(100000, 1000000).toString();
@@ -183,7 +184,7 @@ export async function sendAccountEmailChangeCode(input: { userId: string; newEma
 
     return {
       cooldownSeconds: input.enforceCooldown
-        ? getRemainingCooldownSeconds(identifier) || getCooldownSeconds()
+        ? getRemainingCooldownSeconds(identifier, accountEmailChangeResendCooldownMs) || getCooldownSeconds(accountEmailChangeResendCooldownMs)
         : 0,
     };
   } catch (error) {
@@ -232,8 +233,8 @@ export async function consumeAccountEmailChangeCode(input: { userId: string; new
   await getPrisma().verificationToken.deleteMany({ where: { identifier } });
 }
 
-function reserveResendCooldown(key: string) {
-  const retryAfterSeconds = getRemainingCooldownSeconds(key);
+function reserveResendCooldown(key: string, cooldownMs = resendCooldownMs) {
+  const retryAfterSeconds = getRemainingCooldownSeconds(key, cooldownMs);
 
   if (retryAfterSeconds > 0) {
     throw new EmailVerificationCooldownError(retryAfterSeconds);
@@ -246,19 +247,19 @@ function clearResendCooldown(key: string) {
   resendCooldowns.delete(key);
 }
 
-function getRemainingCooldownSeconds(key: string) {
+function getRemainingCooldownSeconds(key: string, cooldownMs = resendCooldownMs) {
   const lastSentAt = resendCooldowns.get(key);
   const now = Date.now();
 
-  if (!lastSentAt || now - lastSentAt >= resendCooldownMs) {
+  if (!lastSentAt || now - lastSentAt >= cooldownMs) {
     return 0;
   }
 
-  return Math.ceil((resendCooldownMs - (now - lastSentAt)) / 1000);
+  return Math.ceil((cooldownMs - (now - lastSentAt)) / 1000);
 }
 
-function getCooldownSeconds() {
-  return Math.ceil(resendCooldownMs / 1000);
+function getCooldownSeconds(cooldownMs = resendCooldownMs) {
+  return Math.ceil(cooldownMs / 1000);
 }
 
 function getVerificationIdentifier(email: string) {
