@@ -27,6 +27,7 @@ export const activeHotelDestinationDisplayLocales = [
   "ko",
   "hi",
   "tr",
+  "pl",
 ] as const;
 
 export type HotelDestinationDisplayLocale =
@@ -54,6 +55,7 @@ export const normalizeHotelDestinationDisplayLocale = (
   if (normalized === "zh" || normalized.startsWith("zh-")) return "zh-cn";
   if (normalized === "hi" || normalized.startsWith("hi-")) return "hi";
   if (normalized === "tr" || normalized.startsWith("tr-")) return "tr";
+  if (normalized === "pl" || normalized.startsWith("pl-")) return "pl";
   if (normalized.startsWith("ar")) return "ar";
   if (normalized.startsWith("nl")) return "nl";
   if (normalized.startsWith("fr")) return "fr";
@@ -77,20 +79,20 @@ const hotelCityDisplayNameOverrides: Record<
   "Abu Dhabi": { ar: "أبوظبي", "zh-cn": "阿布扎比", ja: "アブダビ", ko: "아부다비", hi: "अबू धाबी" },
   Abuja: { ar: "أبوجا", "es-es": "Abuya", "zh-cn": "阿布贾", ja: "アブジャ", ko: "아부자", hi: "अबुजा", tr: "Abuja" },
   Accra: { ar: "أكرا", "es-es": "Acra", "pt-br": "Acra", "zh-cn": "阿克拉", ja: "アクラ", ko: "아크라", hi: "अक्रा", tr: "Akra" },
-  Amsterdam: { nl: "Amsterdam", "es-es": "Ámsterdam", "pt-br": "Amsterdã", "zh-cn": "阿姆斯特丹", ja: "アムステルダム", ko: "암스테르담" },
-  Bangkok: { ar: "بانكوك", "zh-cn": "曼谷", ja: "バンコク", ko: "방콕", hi: "बैंकॉक", tr: "Bangkok" },
-  Barcelona: { ar: "برشلونة", fr: "Barcelone", "it-it": "Barcellona", "zh-cn": "巴塞罗那", ja: "バルセロナ", ko: "바르셀로나", hi: "बार्सिलोना", tr: "Barselona" },
+  Amsterdam: { nl: "Amsterdam", pl: "Amsterdam", "es-es": "Ámsterdam", "pt-br": "Amsterdã", "zh-cn": "阿姆斯特丹", ja: "アムステルダム", ko: "암스테르담" },
+  Bangkok: { ar: "بانكوك", pl: "Bangkok", "zh-cn": "曼谷", ja: "バンコク", ko: "방콕", hi: "बैंकॉक", tr: "Bangkok" },
+  Barcelona: { ar: "برشلونة", pl: "Barcelona", fr: "Barcelone", "it-it": "Barcellona", "zh-cn": "巴塞罗那", ja: "バルセロナ", ko: "바르셀로나", hi: "बार्सिलोना", tr: "Barselona" },
   Berlin: { ar: "برلين", nl: "Berlijn", "es-es": "Berlín", "it-it": "Berlino", "pt-br": "Berlim", "zh-cn": "柏林", ja: "ベルリン", ko: "베를린", hi: "बर्लिन" },
   Cairo: { ar: "القاهرة", nl: "Caïro", "es-es": "El Cairo", fr: "Le Caire", "de-de": "Kairo", "it-it": "Il Cairo", "zh-cn": "开罗", ja: "カイロ", ko: "카이로", hi: "काहिरा", tr: "Kahire" },
-  Cancún: { ar: "كانكون", "zh-cn": "坎昆", ja: "カンクン", ko: "칸쿤", hi: "कैनकन", tr: "Cancun" },
+  Cancún: { ar: "كانكون", pl: "Cancun", "zh-cn": "坎昆", ja: "カンクン", ko: "칸쿤", hi: "कैनकन", tr: "Cancun" },
   "Cape Town": { ar: "كيب تاون", nl: "Kaapstad", "es-es": "Ciudad del Cabo", fr: "Le Cap", "de-de": "Kapstadt", "it-it": "Città del Capo", "pt-br": "Cidade do Cabo", "zh-cn": "开普敦", ja: "ケープタウン", ko: "케이프타운", hi: "केप टाउन" },
   Cologne: { nl: "Keulen", "es-es": "Colonia", fr: "Cologne", "de-de": "Köln", "it-it": "Colonia", "pt-br": "Colônia", "zh-cn": "科隆", ja: "ケルン", ko: "쾰른", hi: "कोलोन", tr: "Köln" },
-  Dubai: { ar: "دبي", "es-es": "Dubái", fr: "Dubaï", "zh-cn": "迪拜", ja: "ドバイ", ko: "두바이", hi: "दुबई" },
+  Dubai: { ar: "دبي", pl: "Dubaj", "es-es": "Dubái", fr: "Dubaï", "zh-cn": "迪拜", ja: "ドバイ", ko: "두바이", hi: "दुबई" },
   Edinburgh: { ar: "إدنبرة", nl: "Edinburgh", "es-es": "Edimburgo", fr: "Édimbourg", "de-de": "Edinburgh", "it-it": "Edimburgo", "pt-br": "Edimburgo", "zh-cn": "爱丁堡", ja: "エディンバラ", ko: "에든버러", hi: "एडिनबरा" },
   Florence: { nl: "Florence", "es-es": "Florencia", fr: "Florence", "de-de": "Florenz", "it-it": "Firenze", "pt-br": "Florença", "zh-cn": "佛罗伦萨", ja: "フィレンツェ", ko: "피렌체", hi: "फ्लोरेंस", tr: "Floransa" },
   Frankfurt: { ar: "فرانكفورت", "es-es": "Fráncfort", fr: "Francfort", "it-it": "Francoforte", "zh-cn": "法兰克福", ja: "フランクフルト", ko: "프랑크푸르트", hi: "फ्रैंकफर्ट" },
-  Istanbul: { ar: "إسطنبول", nl: "Istanboel", "es-es": "Estambul", "pt-br": "Istambul", "zh-cn": "伊斯坦布尔", ja: "イスタンブール", ko: "이스탄불", hi: "इस्तांबुल", tr: "İstanbul" },
-  London: { ar: "لندن", nl: "Londen", "es-es": "Londres", fr: "Londres", "it-it": "Londra", "pt-br": "Londres", "zh-cn": "伦敦", ja: "ロンドン", ko: "런던", hi: "लंदन", tr: "Londra" },
+  Istanbul: { ar: "إسطنبول", pl: "Stambuł", nl: "Istanboel", "es-es": "Estambul", "pt-br": "Istambul", "zh-cn": "伊斯坦布尔", ja: "イスタンブール", ko: "이스탄불", hi: "इस्तांबुल", tr: "İstanbul" },
+  London: { ar: "لندن", pl: "Londyn", nl: "Londen", "es-es": "Londres", fr: "Londres", "it-it": "Londra", "pt-br": "Londres", "zh-cn": "伦敦", ja: "ロンドン", ko: "런던", hi: "लंदन", tr: "Londra" },
   Lyon: { ar: "ليون", "zh-cn": "里昂", ja: "リヨン", ko: "리옹", hi: "ल्यों" },
   Marrakesh: { ar: "مراكش", "es-es": "Marrakech", fr: "Marrakech", "pt-br": "Marrakesh", "zh-cn": "马拉喀什", ja: "マラケシュ", ko: "마라케시", hi: "मराकेश" },
   Marseille: { ar: "مارسيليا", nl: "Marseille", "es-es": "Marsella", "it-it": "Marsiglia", "pt-br": "Marselha", "zh-cn": "马赛", ja: "マルセイユ", ko: "마르세유", hi: "मार्सेय" },
@@ -98,12 +100,12 @@ const hotelCityDisplayNameOverrides: Record<
   Milan: { ar: "ميلانو", nl: "Milaan", "es-es": "Milán", "de-de": "Mailand", "it-it": "Milano", "pt-br": "Milão", "zh-cn": "米兰", ja: "ミラノ", ko: "밀라노", hi: "मिलान", tr: "Milano" },
   Munich: { ar: "ميونخ", nl: "München", "es-es": "Múnich", "de-de": "München", "it-it": "Monaco di Baviera", "pt-br": "Munique", "zh-cn": "慕尼黑", ja: "ミュンヘン", ko: "뮌헨", hi: "म्यूनिख", tr: "Münih" },
   Nairobi: { ar: "نيروبي", "pt-br": "Nairóbi", "zh-cn": "内罗毕", ja: "ナイロビ", ko: "나이로비", hi: "नैरोबी" },
-  "New York": { ar: "نيويورك", "es-es": "Nueva York", "pt-br": "Nova York", "zh-cn": "纽约", ja: "ニューヨーク", ko: "뉴욕", hi: "न्यूयॉर्क" },
-  Paris: { ar: "باريس", nl: "Parijs", "es-es": "París", "it-it": "Parigi", "zh-cn": "巴黎", ja: "パリ", ko: "파리", hi: "पेरिस", tr: "Paris" },
-  Rome: { ar: "روما", "es-es": "Roma", "de-de": "Rom", "it-it": "Roma", "pt-br": "Roma", "zh-cn": "罗马", ja: "ローマ", ko: "로마", hi: "रोम", tr: "Roma" },
+  "New York": { ar: "نيويورك", pl: "Nowy Jork", "es-es": "Nueva York", "pt-br": "Nova York", "zh-cn": "纽约", ja: "ニューヨーク", ko: "뉴욕", hi: "न्यूयॉर्क" },
+  Paris: { ar: "باريس", pl: "Paryż", nl: "Parijs", "es-es": "París", "it-it": "Parigi", "zh-cn": "巴黎", ja: "パリ", ko: "파리", hi: "पेरिस", tr: "Paris" },
+  Rome: { ar: "روما", pl: "Rzym", "es-es": "Roma", "de-de": "Rom", "it-it": "Roma", "pt-br": "Roma", "zh-cn": "罗马", ja: "ローマ", ko: "로마", hi: "रोम", tr: "Roma" },
   Seville: { nl: "Sevilla", "es-es": "Sevilla", fr: "Séville", "de-de": "Sevilla", "it-it": "Siviglia", "pt-br": "Sevilha", "zh-cn": "塞维利亚", ja: "セビリア", ko: "세비야", hi: "सेविल", tr: "Sevilla" },
-  Singapore: { ar: "سنغافورة", "es-es": "Singapur", fr: "Singapour", "de-de": "Singapur", "pt-br": "Singapura", "zh-cn": "新加坡", ja: "シンガポール", ko: "싱가포르", hi: "सिंगापुर", tr: "Singapur" },
-  Tokyo: { ar: "طوكيو", nl: "Tokio", "es-es": "Tokio", "de-de": "Tokio", "pt-br": "Tóquio", "zh-cn": "东京", ja: "東京", ko: "도쿄", hi: "टोक्यो" },
+  Singapore: { ar: "سنغافورة", pl: "Singapur", "es-es": "Singapur", fr: "Singapour", "de-de": "Singapur", "pt-br": "Singapura", "zh-cn": "新加坡", ja: "シンガポール", ko: "싱가포르", hi: "सिंगापुर", tr: "Singapur" },
+  Tokyo: { ar: "طوكيو", pl: "Tokio", nl: "Tokio", "es-es": "Tokio", "de-de": "Tokio", "pt-br": "Tóquio", "zh-cn": "东京", ja: "東京", ko: "도쿄", hi: "टोक्यो" },
   Venice: { ar: "البندقية", nl: "Venetië", "es-es": "Venecia", fr: "Venise", "de-de": "Venedig", "it-it": "Venezia", "pt-br": "Veneza", "zh-cn": "威尼斯", ja: "ヴェネツィア", ko: "베네치아", hi: "वेनिस", tr: "Venedik" },
   Zurich: { ar: "زيورخ", nl: "Zürich", "es-es": "Zúrich", "de-de": "Zürich", "it-it": "Zurigo", "pt-br": "Zurique", "zh-cn": "苏黎世", ja: "チューリッヒ", ko: "취리히", hi: "ज्यूरिख", tr: "Zürih" },
 };
@@ -112,17 +114,17 @@ const hotelRegionDisplayNameOverrides: Record<
   string,
   LocalizedHotelDestinationLabelOverrides
 > = {
-  England: { ar: "إنجلترا", nl: "Engeland", "es-es": "Inglaterra", fr: "Angleterre", "de-de": "England", "it-it": "Inghilterra", "pt-br": "Inglaterra", "zh-cn": "英格兰", ja: "イングランド", ko: "잉글랜드", hi: "इंग्लैंड", tr: "İngiltere" },
-  Scotland: { ar: "اسكتلندا", nl: "Schotland", "es-es": "Escocia", fr: "Écosse", "de-de": "Schottland", "it-it": "Scozia", "pt-br": "Escócia", "zh-cn": "苏格兰", ja: "スコットランド", ko: "스코틀랜드", hi: "स्कॉटलैंड", tr: "İskoçya" },
-  "Île-de-France": { ar: "إيل دو فرانس", "zh-cn": "法兰西岛", ja: "イル＝ド＝フランス", ko: "일드프랑스", hi: "ईल-दे-फ्रांस", tr: "Île-de-France" },
+  England: { ar: "إنجلترا", pl: "Anglia", nl: "Engeland", "es-es": "Inglaterra", fr: "Angleterre", "de-de": "England", "it-it": "Inghilterra", "pt-br": "Inglaterra", "zh-cn": "英格兰", ja: "イングランド", ko: "잉글랜드", hi: "इंग्लैंड", tr: "İngiltere" },
+  Scotland: { ar: "اسكتلندا", pl: "Szkocja", nl: "Schotland", "es-es": "Escocia", fr: "Écosse", "de-de": "Schottland", "it-it": "Scozia", "pt-br": "Escócia", "zh-cn": "苏格兰", ja: "スコットランド", ko: "스코틀랜드", hi: "स्कॉटलैंड", tr: "İskoçya" },
+  "Île-de-France": { ar: "إيل دو فرانس", pl: "Île-de-France", "zh-cn": "法兰西岛", ja: "イル＝ド＝フランス", ko: "일드프랑스", hi: "ईल-दे-फ्रांस", tr: "Île-de-France" },
   "French Riviera": { ar: "الريفيرا الفرنسية", nl: "Franse Rivièra", "es-es": "Riviera francesa", fr: "Côte d’Azur", "de-de": "Französische Riviera", "it-it": "Costa Azzurra", "pt-br": "Riviera Francesa", "zh-cn": "法国里维埃拉", ja: "フレンチ・リビエラ", ko: "프렌치 리비에라", hi: "फ्रेंच रिविएरा", tr: "Fransız Rivierası" },
   Bavaria: { ar: "بافاريا", nl: "Beieren", "es-es": "Baviera", fr: "Bavière", "de-de": "Bayern", "it-it": "Baviera", "pt-br": "Baviera", "zh-cn": "巴伐利亚", ja: "バイエルン", ko: "바이에른", hi: "बवेरिया", tr: "Bavyera" },
   Hesse: { ar: "هسن", nl: "Hessen", "es-es": "Hesse", fr: "Hesse", "de-de": "Hessen", "it-it": "Assia", "pt-br": "Hesse", "zh-cn": "黑森", ja: "ヘッセン", ko: "헤센", hi: "हेसे", tr: "Hessen" },
   "North Rhine-Westphalia": { ar: "شمال الراين وستفاليا", nl: "Noordrijn-Westfalen", "es-es": "Renania del Norte-Westfalia", fr: "Rhénanie-du-Nord-Westphalie", "de-de": "Nordrhein-Westfalen", "it-it": "Renania Settentrionale-Vestfalia", "pt-br": "Renânia do Norte-Vestfália", "zh-cn": "北莱茵-威斯特法伦", ja: "ノルトライン＝ヴェストファーレン", ko: "노르트라인베스트팔렌", hi: "नॉर्थ राइन-वेस्टफेलिया", tr: "Kuzey Ren-Vestfalya" },
-  Lazio: { ar: "لاتسيو", "zh-cn": "拉齐奥", ja: "ラツィオ", ko: "라치오", hi: "लात्सियो", tr: "Lazio" },
+  Lazio: { ar: "لاتسيو", pl: "Lacjum", "zh-cn": "拉齐奥", ja: "ラツィオ", ko: "라치오", hi: "लात्सियो", tr: "Lazio" },
   Lombardy: { ar: "لومبارديا", nl: "Lombardije", "es-es": "Lombardía", fr: "Lombardie", "de-de": "Lombardei", "it-it": "Lombardia", "pt-br": "Lombardia", "zh-cn": "伦巴第", ja: "ロンバルディア", ko: "롬바르디아", hi: "लोम्बार्डी", tr: "Lombardiya" },
   Tuscany: { ar: "توسكانا", nl: "Toscane", "es-es": "Toscana", fr: "Toscane", "de-de": "Toskana", "it-it": "Toscana", "pt-br": "Toscana", "zh-cn": "托斯卡纳", ja: "トスカーナ", ko: "토스카나", hi: "टस्कनी", tr: "Toskana" },
-  Catalonia: { ar: "كتالونيا", nl: "Catalonië", "es-es": "Cataluña", fr: "Catalogne", "de-de": "Katalonien", "it-it": "Catalogna", "pt-br": "Catalunha", "zh-cn": "加泰罗尼亚", ja: "カタルーニャ", ko: "카탈루냐", hi: "कैटालोनिया", tr: "Katalonya" },
+  Catalonia: { ar: "كتالونيا", pl: "Katalonia", nl: "Catalonië", "es-es": "Cataluña", fr: "Catalogne", "de-de": "Katalonien", "it-it": "Catalogna", "pt-br": "Catalunha", "zh-cn": "加泰罗尼亚", ja: "カタルーニャ", ko: "카탈루냐", hi: "कैटालोनिया", tr: "Katalonya" },
   Andalusia: { ar: "الأندلس", nl: "Andalusië", "es-es": "Andalucía", fr: "Andalousie", "de-de": "Andalusien", "it-it": "Andalusia", "pt-br": "Andaluzia", "zh-cn": "安达卢西亚", ja: "アンダルシア", ko: "안달루시아", hi: "अंदालूसिया", tr: "Endülüs" },
   Rivers: { ar: "ريفرز", "zh-cn": "河流州", ja: "リバーズ", ko: "리버스", hi: "रिवर्स", tr: "Rivers" },
 };
