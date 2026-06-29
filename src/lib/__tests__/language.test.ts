@@ -4120,6 +4120,7 @@ test("Polish homepage-visible copy resolves without English fallback", () => {
     oneWay: "W jedną stronę",
     origin: "WYLOT",
     destination: "CEL PODRÓŻY",
+    departureDate: "DATY PODRÓŻY",
     travelDates: "DATY PODRÓŻY",
     fromPlaceholder: "Skąd?",
     travelers: "PODRÓŻNI",
@@ -4223,6 +4224,10 @@ test("Polish homepage-visible copy resolves without English fallback", () => {
     }
   }
 
+  assert.equal(pl.departureDate, "DATY PODRÓŻY");
+  assert.equal(pl.travelDates, "DATY PODRÓŻY");
+  assert.notEqual(pl.departureDate.toLocaleUpperCase("pl-PL"), "TRAVEL DATES");
+  assert.notEqual(pl.travelDates.toLocaleUpperCase("pl-PL"), "TRAVEL DATES");
   assert.equal(`${1} ${pl.adultSingular}, ${pl.economy.toLocaleLowerCase("pl-PL")}`, "1 dorosły, ekonomiczna");
   assert.equal(`${1} ${pl.guestSingular}, ${1} ${pl.roomSingular}`, "1 gość, 1 pokój");
 });
@@ -4339,7 +4344,7 @@ test("Polish homepage render paths keep using i18n keys and preserve route/searc
     assert.match(headerSource, new RegExp(`t\\.${key}|labelKey: \"${key}\"`), key);
   }
 
-  for (const key of ["roundTrip", "oneWay", "origin", "destination", "travelDates", "travelers", "passengers", "economy", "fromPlaceholder", "cityOrHotel", "hotelSearchTravelDatesLabel", "hotelSearchGuestsLabel", "stayDetails", "guestsAndRooms", "hotelAdultHelper", "hotelChildrenHelper", "hotelRoomsHelper", "petFriendly", "onlyShowPetFriendlyStays"]) {
+  for (const key of ["roundTrip", "oneWay", "origin", "destination", "departureDate", "travelDates", "travelers", "passengers", "economy", "fromPlaceholder", "cityOrHotel", "hotelSearchTravelDatesLabel", "hotelSearchGuestsLabel", "stayDetails", "guestsAndRooms", "hotelAdultHelper", "hotelChildrenHelper", "hotelRoomsHelper", "petFriendly", "onlyShowPetFriendlyStays"]) {
     assert.match(searchSource, new RegExp(key), key);
   }
 
@@ -4358,6 +4363,11 @@ test("Polish homepage render paths keep using i18n keys and preserve route/searc
   assert.match(searchSource, /destination:/);
   assert.match(searchSource, /buildFlightRecentSearch\(/);
   assert.match(searchSource, /buildHotelRecentSearch\(/);
+  assert.match(searchSource, /\{t\.departureDate \|\|\s*t\.travelDates \|\| "Travel dates"\}/);
+  assert.match(searchSource, /<span className="truncate">\s*\{dateSummary\}\s*<\/span>/);
+  assert.match(searchSource, /aria-label=\{translate\("chooseTravelDates"\) \|\| "Choose travel dates"\}/);
+  assert.match(searchSource, /onClick=\{onClearTravelDates\}/);
+  assert.match(searchSource, /renderFlightDateCalendar\(\)/);
   assert.match(searchSource, /formatAirportLabel\(option, locale\)/);
   assert.match(searchSource, /setHotelAdultCount/);
   assert.match(searchSource, /setRooms/);

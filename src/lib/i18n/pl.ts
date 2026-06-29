@@ -49,6 +49,7 @@ export const translations: TranslationDictionary = {
   oneWay: "W jedną stronę",
   origin: "WYLOT",
   destination: "CEL PODRÓŻY",
+  departureDate: "DATY PODRÓŻY",
   travelDates: "DATY PODRÓŻY",
   fromPlaceholder: "Skąd?",
   travelers: "PODRÓŻNI",
