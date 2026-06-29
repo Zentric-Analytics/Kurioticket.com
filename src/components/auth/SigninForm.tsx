@@ -241,7 +241,7 @@ export function SigninForm({
       const optionsData = await optionsResponse.json();
       if (!optionsResponse.ok) throw new Error(optionsData.error || "Unable to start passkey sign-in.");
       const publicKey = decodePublicKeyOptions(optionsData.options);
-      const credential = await navigator.credentials.get({ publicKey }) as PublicKeyCredential | null;
+      const credential = await navigator.credentials.get({ publicKey, mediation: "optional" }) as PublicKeyCredential | null;
       if (!credential) throw new Error("Passkey sign-in was cancelled.");
       const verifyResponse = await fetch("/api/auth/passkey/verify", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(serializeCredential(credential)) });
       const verifyData = await verifyResponse.json().catch(() => ({}));
@@ -303,7 +303,7 @@ export function SigninForm({
             <Input
               name="email"
               type="email"
-              autoComplete="email"
+              autoComplete="username webauthn"
               required
               disabled={busy}
             />
