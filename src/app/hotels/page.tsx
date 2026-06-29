@@ -467,7 +467,7 @@ export default function HotelsSearchPage() {
 
   return (
     <>
-      <AppHeader mobileHeroOverlay />
+      <AppHeader mobileHeroOverlay hideMobileCategoryTabs />
       <main className="relative isolate flex-1 overflow-x-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16">
         <section className="relative z-20 isolate min-h-[24.25rem] overflow-visible bg-slate-950 sm:hidden">
           <div className="absolute inset-0 overflow-hidden">
@@ -485,7 +485,7 @@ export default function HotelsSearchPage() {
             <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-slate-950/66 via-slate-950/20 to-transparent" />
           </div>
 
-          <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-[8.75rem]">
+          <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-[7.85rem]">
             <div className="max-w-[23rem] text-white">
               <p className="sr-only">
                 {t("hotelsHeroEyebrow")}
@@ -499,7 +499,7 @@ export default function HotelsSearchPage() {
             </div>
           </div>
 
-          <div className="page-shell absolute inset-x-0 bottom-[-15.05rem] z-30">
+          <div className="page-shell absolute inset-x-0 bottom-[-15.8rem] z-30">
             <div className="mx-auto max-w-6xl">
               <HotelSearchBar
                 introLabel={hotelSearchIntroLabel}
@@ -553,7 +553,7 @@ export default function HotelsSearchPage() {
           </div>
         </section>
 
-        <div className="page-shell relative z-0 mx-auto mt-0 max-w-6xl space-y-11 pt-[16.95rem] sm:mt-24 sm:pt-0 md:space-y-14 lg:mt-8">
+        <div className="page-shell relative z-0 mx-auto mt-0 max-w-6xl space-y-11 pt-[17.7rem] sm:mt-24 sm:pt-0 md:space-y-14 lg:mt-8">
           <section
             className="mt-6 space-y-4 sm:mt-12 lg:mt-8"
             aria-labelledby="hotel-destinations-heading"

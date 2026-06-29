@@ -74,6 +74,7 @@ function SavedHeartIcon({
 type AppHeaderProps = {
   hideMobileSecondaryNavLinks?: boolean;
   mobileHeroOverlay?: boolean;
+  hideMobileCategoryTabs?: boolean;
 };
 
 const signedInAccountMenuItems = [
@@ -134,6 +135,7 @@ const mobileInfoLegalMenuItems = [
 export function AppHeader({
   hideMobileSecondaryNavLinks = false,
   mobileHeroOverlay = false,
+  hideMobileCategoryTabs = false,
 }: AppHeaderProps = {}) {
   const { data: session } = useSession();
 
@@ -501,7 +503,10 @@ export function AppHeader({
   }, [navItems]);
 
   const visibleMobilePrimaryNavItems = useMemo(() => {
-    if (shouldHideDesktopTravelNavLinks) {
+    if (
+      shouldHideDesktopTravelNavLinks ||
+      (mobileHeroOverlay && hideMobileCategoryTabs)
+    ) {
       return [];
     }
 
@@ -510,7 +515,9 @@ export function AppHeader({
     // mobile secondary links now live in the overlay drawer instead of this rail.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    hideMobileCategoryTabs,
     hideMobileSecondaryNavLinks,
+    mobileHeroOverlay,
     mobilePrimaryNavItems,
     shouldHideDesktopTravelNavLinks,
   ]);
