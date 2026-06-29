@@ -237,9 +237,11 @@ export function SigninForm({
       if (showStatus) setError({ key: "Passkeys are not supported on this browser. Use password sign-in instead." });
       return;
     }
-    setPasskeyLoading(true);
-    setError(null);
-    if (showStatus) setMessage({ key: "Opening your saved passkeys…" });
+    if (showStatus) {
+      setPasskeyLoading(true);
+      setError(null);
+      setMessage({ key: "Opening your saved passkeys…" });
+    }
     try {
       const optionsResponse = await fetch("/api/auth/passkey/options", { method: "POST", credentials: "same-origin" });
       const optionsData = await optionsResponse.json();
@@ -262,7 +264,7 @@ export function SigninForm({
         setError({ key: error instanceof Error ? error.message : "Passkey sign-in failed. Use password sign-in instead." });
       }
     } finally {
-      setPasskeyLoading(false);
+      if (showStatus) setPasskeyLoading(false);
     }
   }
 
@@ -438,6 +440,7 @@ export function SigninForm({
 
       {googleEnabled && step === "credentials" ? (
         <Button
+          type="button"
           variant="secondary"
           className="mt-3 w-full hover:border-slate-300 hover:bg-slate-50 focus-visible:ring-violet-500"
           onClick={() =>

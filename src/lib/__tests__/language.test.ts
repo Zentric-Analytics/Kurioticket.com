@@ -3307,6 +3307,47 @@ test("Auth login and forgot password render paths use i18n keys for visible copy
   assert.ok(forgotPasswordSource.includes('fetch("/api/auth/forgot-password"'));
 });
 
+
+test("Signin form keeps loading state out of focus and typing paths", () => {
+  const signinSource = readFileSync("src/components/auth/SigninForm.tsx", "utf8");
+
+  assert.match(
+    signinSource,
+    /onFocus=\{\(\) => void startConditionalPasskeySignIn\(\)\}/,
+    "email focus may start silent conditional passkey discovery",
+  );
+  assert.match(
+    signinSource,
+    /async function startPasskeySignIn\(mediation: CredentialMediationRequirement = "optional", showStatus = true\)[\s\S]*?if \(showStatus\) \{[\s\S]*?setPasskeyLoading\(true\);[\s\S]*?setMessage\(\{ key: "Opening your saved passkeys…" \}\);[\s\S]*?\}/,
+    "passkey loading is only set for visible, user-initiated passkey actions",
+  );
+  assert.match(
+    signinSource,
+    /async function startConditionalPasskeySignIn\(\)[\s\S]*?void startPasskeySignIn\("conditional", false\);/,
+    "email focus uses the silent conditional passkey path",
+  );
+  assert.match(
+    signinSource,
+    /async function submitCredentials\(formData: FormData\)[\s\S]*?setLoading\(true\);[\s\S]*?signinSchema\.safeParse/,
+    "credential loading starts in the real submit path",
+  );
+  assert.match(
+    signinSource,
+    /if \(!parsed\.success\) \{[\s\S]*?setLoading\(false\);[\s\S]*?setMessage\(null\);[\s\S]*?setError\(\{ key: invalidLoginKey \}\);[\s\S]*?return;[\s\S]*?\}/,
+    "failed credential validation resets loading instead of leaving the button busy",
+  );
+  assert.match(
+    signinSource,
+    /<button type="button"[\s\S]*?startPasskeySignIn\(\)/,
+    "manual passkey control is not an accidental submit button",
+  );
+  assert.match(
+    signinSource,
+    /<Button[\s\S]*?type="button"[\s\S]*?variant="secondary"[\s\S]*?signIn\("google"/,
+    "Google auth control is not an accidental submit button",
+  );
+});
+
 test("Turkish global modals and auth pages resolve screenshot-visible copy", () => {
   const tr = getTranslations("tr");
 
