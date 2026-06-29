@@ -22,6 +22,7 @@ import { translations as jaTranslations } from "@/lib/i18n/ja";
 import { translations as koTranslations } from "@/lib/i18n/ko";
 import { translations as hiTranslations } from "@/lib/i18n/hi";
 import { translations as trTranslations } from "@/lib/i18n/tr";
+import { translations as plTranslations } from "@/lib/i18n/pl";
 import { availableLocaleOptions, getTranslations } from "@/lib/i18n";
 import { getCountryDisplayNameForLocale } from "@/lib/region/countryDisplayNames";
 import { supportedRegions } from "@/lib/region/supportedRegions";
@@ -51,6 +52,8 @@ test("global language catalog renders", () => {
   assert.ok(languageOptions.some((o) => o.code === "hi" && o.locale === "hi-IN" && o.nativeLabel === "हिन्दी" && o.label === "Hindi" && o.countryCode === "IN" && o.direction === "ltr" && o.status === "available"));
   assert.equal(languageOptions.filter((o) => o.code === "tr").length, 1);
   assert.ok(languageOptions.some((o) => o.code === "tr" && o.locale === "tr-TR" && o.nativeLabel === "Türkçe" && o.label === "Turkish" && o.countryCode === "TR" && o.direction === "ltr" && o.status === "available"));
+  assert.equal(languageOptions.filter((o) => o.code === "pl").length, 1);
+  assert.ok(languageOptions.some((o) => o.code === "pl" && o.locale === "pl-PL" && o.nativeLabel === "Polski" && o.label === "Polish" && o.countryCode === "PL" && o.direction === "ltr" && o.status === "available"));
 });
 
 
@@ -175,7 +178,7 @@ test("search filters by native label and canonical locale", () => {
   assert.ok(filtered.some((o) => o.code === "pt-br"));
 });
 
-test("selected available Spanish, French, German, Italian, Dutch, Portuguese, Chinese, Japanese, Korean, Hindi, Turkish, and Arabic locales persist and update document language", () => {
+test("selected available Spanish, French, German, Italian, Dutch, Portuguese, Chinese, Japanese, Korean, Hindi, Turkish, Polish, and Arabic locales persist and update document language", () => {
   const store = new Map<string, string>();
   const windowMock: WindowLike = {
     localStorage: {
@@ -282,6 +285,21 @@ test("selected available Spanish, French, German, Italian, Dutch, Portuguese, Ch
   assert.equal(documentMock.documentElement.lang, "tr-TR");
   assert.equal(documentMock.documentElement.dir, "ltr");
 
+  setLanguageInStorage("pl");
+  assert.equal(getLanguageFromStorage(), "pl");
+  assert.equal(documentMock.documentElement.lang, "pl-PL");
+  assert.equal(documentMock.documentElement.dir, "ltr");
+
+  setLanguageInStorage("pl-PL");
+  assert.equal(getLanguageFromStorage(), "pl");
+  assert.equal(documentMock.documentElement.lang, "pl-PL");
+  assert.equal(documentMock.documentElement.dir, "ltr");
+
+  setLanguageInStorage("pl-pl");
+  assert.equal(getLanguageFromStorage(), "pl");
+  assert.equal(documentMock.documentElement.lang, "pl-PL");
+  assert.equal(documentMock.documentElement.dir, "ltr");
+
   setLanguageInStorage("ar");
   assert.equal(getLanguageFromStorage(), "ar");
   assert.equal(documentMock.documentElement.lang, "ar");
@@ -293,20 +311,6 @@ test("selected available Spanish, French, German, Italian, Dutch, Portuguese, Ch
   assert.equal(documentMock.documentElement.dir, "rtl");
 });
 
-test("remaining preparing locales are not persisted as selected", () => {
-  const store = new Map<string, string>();
-  const windowMock: WindowLike = {
-    localStorage: {
-      getItem: (k: string) => store.get(k) ?? null,
-      setItem: (k: string, v: string) => store.set(k, v),
-    },
-    dispatchEvent: () => true,
-  };
-  Object.defineProperty(globalThis, "window", { value: windowMock, configurable: true });
-
-  setLanguageInStorage("pl-PL");
-  assert.equal(getLanguageFromStorage(), "en-us");
-});
 
 test("document language switches to rtl for Arabic", () => {
   const documentMock: DocumentLike = { documentElement: { lang: "", dir: "ltr" } };
@@ -320,7 +324,7 @@ test("unknown locales fallback to english", () => {
   assert.equal(normalizeLanguage("xx-yy"), "en-us");
 });
 
-test("German, Italian, Dutch, Portuguese, Chinese, Japanese, Korean, Hindi, and Turkish shorthand locales normalize to available options", () => {
+test("German, Italian, Dutch, Portuguese, Chinese, Japanese, Korean, Hindi, Turkish, and Polish shorthand locales normalize to available options", () => {
   assert.equal(normalizeLanguage("de"), "de-de");
   assert.equal(normalizeLanguage("it"), "it-it");
   assert.equal(normalizeLanguage("it-IT"), "it-it");
@@ -346,9 +350,12 @@ test("German, Italian, Dutch, Portuguese, Chinese, Japanese, Korean, Hindi, and 
   assert.equal(normalizeLanguage("tr"), "tr");
   assert.equal(normalizeLanguage("tr-TR"), "tr");
   assert.equal(normalizeLanguage("tr-tr"), "tr");
+  assert.equal(normalizeLanguage("pl"), "pl");
+  assert.equal(normalizeLanguage("pl-PL"), "pl");
+  assert.equal(normalizeLanguage("pl-pl"), "pl");
 });
 
-test("available locale options keep Dutch, Portuguese, Chinese, Japanese, Korean, Hindi, Turkish, and Arabic available and other preparing locales unavailable", () => {
+test("available locale options keep Dutch, Portuguese, Chinese, Japanese, Korean, Hindi, Turkish, Polish, and Arabic available and other preparing locales unavailable", () => {
   assert.ok(availableLocaleOptions.some((option) => option.code === "pt-br"));
   assert.ok(availableLocaleOptions.some((option) => option.code === "nl"));
   assert.ok(languageOptions.filter((option) => option.status !== "available").every((option) => option.code !== "pt-br"));
@@ -363,12 +370,14 @@ test("available locale options keep Dutch, Portuguese, Chinese, Japanese, Korean
   assert.ok(languageOptions.filter((option) => option.status !== "available").every((option) => option.code !== "hi"));
   assert.ok(availableLocaleOptions.some((option) => option.code === "tr" && option.locale === "tr-TR" && option.direction === "ltr" && option.nativeLabel === "Türkçe" && option.label === "Turkish" && option.countryCode === "TR"));
   assert.ok(languageOptions.filter((option) => option.status !== "available").every((option) => option.code !== "tr"));
+  assert.ok(availableLocaleOptions.some((option) => option.code === "pl" && option.locale === "pl-PL" && option.direction === "ltr" && option.nativeLabel === "Polski" && option.label === "Polish" && option.countryCode === "PL"));
+  assert.ok(languageOptions.filter((option) => option.status !== "available").every((option) => option.code !== "pl"));
   assert.ok(availableLocaleOptions.filter((option) => option.code !== "ar" && option.status === "available").every((option) => option.direction === "ltr"));
   assert.ok(availableLocaleOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
   assert.ok(languageOptions.filter((option) => option.status !== "available").every((option) => option.code !== "ar"));
 });
 
-test("Dutch, Portuguese, Japanese, Korean, Hindi, and Turkish dictionaries resolve through getTranslations", () => {
+test("Dutch, Portuguese, Japanese, Korean, Hindi, Turkish, and Polish dictionaries resolve through getTranslations", () => {
   assert.equal(getTranslations("nl").currentLanguage, "Huidige taal: {{language}}");
   assert.equal(getTranslations("nl-NL").globalLanguage, "GLOBALE TAAL");
   assert.equal(nlTranslations.websiteLanguageTitle, "Kies de taal van de site");
@@ -389,6 +398,10 @@ test("Dutch, Portuguese, Japanese, Korean, Hindi, and Turkish dictionaries resol
   assert.equal(getTranslations("tr-TR").languageSearchLabel, "Dil ara");
   assert.equal(getTranslations("tr-tr").currentLanguage, "Geçerli dil: {{language}}");
   assert.equal(trTranslations.websiteLanguageTitle, "Web sitesi dilinizi seçin");
+  assert.equal(getTranslations("pl").websiteLanguageTitle, enTranslations.websiteLanguageTitle);
+  assert.equal(getTranslations("pl-PL").languageSearchLabel, enTranslations.languageSearchLabel);
+  assert.equal(getTranslations("pl-pl").currentLanguage, enTranslations.currentLanguage);
+  assert.equal(plTranslations.websiteLanguageTitle, enTranslations.websiteLanguageTitle);
 });
 
 test("Hindi homepage and primary search UI copy resolves without English fallback", () => {
