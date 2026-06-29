@@ -511,10 +511,10 @@ export default function HotelsSearchPage() {
               <p className="sr-only">
                 {t("hotelsHeroEyebrow")}
               </p>
-              <h1 className="max-w-[20.35rem] text-[clamp(1.78rem,7.28vw,2.04rem)] font-semibold leading-[1.05] tracking-[-0.041em] text-white text-balance drop-shadow-[0_2px_10px_rgba(2,6,23,0.6)]">
+              <h1 className="w-max max-w-none text-[clamp(1.38rem,6.1vw,2rem)] font-semibold leading-[1.05] tracking-[-0.041em] text-white drop-shadow-[0_2px_10px_rgba(2,6,23,0.6)]">
                 {mobileHotelsHeroTitleSplit ? (
                   mobileHotelsHeroTitleSplit.map((line) => (
-                    <span key={line} className="block">
+                    <span key={line} className="block whitespace-nowrap">
                       {line}
                     </span>
                   ))
@@ -522,10 +522,10 @@ export default function HotelsSearchPage() {
                   mobileHotelsHeroTitle
                 )}
               </h1>
-              <p className="mt-4 max-w-[22.25rem] text-[clamp(0.82rem,3.42vw,0.89rem)] font-medium leading-[1.5] tracking-[-0.012em] text-white/92 text-balance drop-shadow-[0_2px_8px_rgba(2,6,23,0.54)]">
+              <p className="mt-4 w-max max-w-none text-[clamp(0.72rem,3.28vw,0.89rem)] font-medium leading-[1.5] tracking-[-0.012em] text-white/92 drop-shadow-[0_2px_8px_rgba(2,6,23,0.54)]">
                 {mobileHotelsHeroSubtitleSplit ? (
                   mobileHotelsHeroSubtitleSplit.map((line) => (
-                    <span key={line} className="block">
+                    <span key={line} className="block whitespace-nowrap">
                       {line}
                     </span>
                   ))
