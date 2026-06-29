@@ -4738,6 +4738,32 @@ test("active account trips and price alerts copy is localized", () => {
     trTranslations["accountDashboard.trips.history.empty.cancelled.body"],
     "İptal edilen rezervasyonlarınız referans için burada görünecek.",
   );
+
+  assert.equal(plTranslations["accountDashboard.trips.title"], "Moje podróże");
+  assert.equal(plTranslations["accountDashboard.trips.findReservation"], "Znajdź rezerwację");
+  assert.equal(plTranslations["accountDashboard.trips.current.empty.title"], "Dokąd teraz?");
+  assert.equal(
+    plTranslations["accountDashboard.trips.current.empty.body"],
+    "Nie masz jeszcze rozpoczętych podróży. Gdy dokonasz rezerwacji, pojawi się ona tutaj.",
+  );
+  assert.equal(plTranslations["accountDashboard.trips.history.tabs.active"], "Nadchodzące");
+  assert.equal(plTranslations["accountDashboard.trips.history.tabs.past"], "Przeszłe");
+  assert.equal(plTranslations["accountDashboard.trips.history.tabs.cancelled"], "Anulowane");
+  assert.equal(plTranslations["accountDashboard.trips.history.empty.past.title"], "Pamiętaj o swoich podróżach");
+  assert.equal(
+    plTranslations["accountDashboard.trips.history.empty.past.body"],
+    "Ukończone podróże pojawią się tutaj po zakończeniu wyjazdu.",
+  );
+  assert.equal(plTranslations["accountDashboard.trips.history.empty.cancelled.title"], "Plany się zmieniły?");
+  assert.equal(
+    plTranslations["accountDashboard.trips.history.empty.cancelled.body"],
+    "Twoje anulowane rezerwacje pojawią się tutaj do wglądu.",
+  );
+  assert.notEqual(plTranslations["accountDashboard.trips.history.tabs.past"], enTranslations["accountDashboard.trips.history.tabs.past"]);
+  assert.notEqual(plTranslations["accountDashboard.trips.history.tabs.cancelled"], enTranslations["accountDashboard.trips.history.tabs.cancelled"]);
+  assert.notEqual(plTranslations["accountDashboard.trips.history.empty.cancelled.title"], enTranslations["accountDashboard.trips.history.empty.cancelled.title"]);
+  assert.notEqual(plTranslations["accountDashboard.trips.history.empty.cancelled.body"], enTranslations["accountDashboard.trips.history.empty.cancelled.body"]);
+
   assert.equal(trTranslations["accountDashboard.priceAlerts.title"], "Fiyat uyarıları");
   assert.equal(
     trTranslations["accountDashboard.priceAlerts.description"],
@@ -4777,6 +4803,18 @@ test("active account trips and price alerts copy is localized", () => {
   const tripsManagementSource = readFileSync("src/app/dashboard/trips/TripsManagementPage.tsx", "utf8");
   assert.ok(tripsManagementSource.includes('type TripHistoryTab = "past" | "cancelled"'));
   assert.ok(tripsManagementSource.includes('{ id: "active", labelKey: "accountDashboard.trips.history.tabs.active" }'));
+  assert.ok(tripsManagementSource.includes('{ id: "past", labelKey: "accountDashboard.trips.history.tabs.past" }'));
+  assert.ok(tripsManagementSource.includes('labelKey: "accountDashboard.trips.history.tabs.cancelled"'));
+  assert.ok(tripsManagementSource.includes('titleKey: "accountDashboard.trips.current.empty.title"'));
+  assert.ok(tripsManagementSource.includes('bodyKey: "accountDashboard.trips.current.empty.body"'));
+  assert.ok(tripsManagementSource.includes('titleKey: "accountDashboard.trips.history.empty.past.title"'));
+  assert.ok(tripsManagementSource.includes('bodyKey: "accountDashboard.trips.history.empty.past.body"'));
+  assert.ok(tripsManagementSource.includes('titleKey: "accountDashboard.trips.history.empty.cancelled.title"'));
+  assert.ok(tripsManagementSource.includes('bodyKey: "accountDashboard.trips.history.empty.cancelled.body"'));
+  assert.ok(tripsManagementSource.includes('const historyEmptyState = mobileEmptyStates[activeHistoryTab]'));
+  assert.ok(tripsManagementSource.includes('variant={activeHistoryTab}'));
+  assert.ok(tripsManagementSource.includes('id={`${activeHistoryTab}-history-trips-panel`}'));
+  assert.ok(tripsManagementSource.includes('aria-controls={`${tab.id}-history-trips-panel`}'));
   assert.ok(tripsManagementSource.includes('setLookupMessage(t("accountDashboard.trips.lookup.unavailable"))'));
   assert.ok(!tripsManagementSource.includes('>My Trips<'));
   assert.ok(!tripsManagementSource.includes('>Find a reservation<'));
