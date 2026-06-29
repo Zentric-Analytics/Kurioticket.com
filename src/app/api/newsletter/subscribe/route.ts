@@ -148,7 +148,8 @@ function hasDeliveryBlock(subscriber: NewsletterSubscriberRow) {
     subscriber.bouncedAt ||
     subscriber.complainedAt,
   );
-}\n
+}
+
 async function upsertSubscribedNewsletterSubscriber(input: {
   email: string;
   source: string;
