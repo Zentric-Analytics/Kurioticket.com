@@ -2336,12 +2336,7 @@ function SecuritySettingRow({
       </div>
       <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
         <div className="min-w-0">
-          <p
-            className={cn(
-              "max-w-2xl text-sm leading-6",
-              danger ? "text-red-700" : "text-slate-600",
-            )}
-          >
+          <p className="max-w-2xl text-sm leading-6 text-slate-600">
             {body}
           </p>
         </div>
@@ -2369,6 +2364,7 @@ export function SecurityDashboardPage() {
   const { t } = useLocale();
   const router = useRouter();
   const [actionMessage, setActionMessage] = useState("");
+  const [securityNotificationsFeedback, setSecurityNotificationsFeedback] = useState("");
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
@@ -2400,6 +2396,16 @@ export function SecurityDashboardPage() {
   const [removingSessionId, setRemovingSessionId] = useState<string | null>(null);
   const securityActionStatusId = "security-action-status";
   const tx = (key: string, fallback: string) => t[key] || fallback;
+
+  useEffect(() => {
+    if (!securityNotificationsFeedback) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setSecurityNotificationsFeedback("");
+    }, 2000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [securityNotificationsFeedback]);
 
   useEffect(() => {
     let active = true;
@@ -2671,6 +2677,7 @@ export function SecurityDashboardPage() {
   const handleSecurityAlertsToggle = async (enabled: boolean) => {
     setPreferencesSaving(true);
     setActionMessage("");
+    setSecurityNotificationsFeedback("");
 
     try {
       const response = await fetch("/api/account/security/preferences", {
@@ -2687,7 +2694,7 @@ export function SecurityDashboardPage() {
       }
 
       setSecurityEmailAlerts(Boolean(data.preferences?.securityEmailAlerts));
-      setActionMessage(enabled ? "Email security alerts are on." : "Email security alerts are off.");
+      setSecurityNotificationsFeedback("Security notifications updated");
     } catch {
       setActionMessage("Unable to save security preferences.");
     } finally {
@@ -2777,31 +2784,34 @@ export function SecurityDashboardPage() {
                   {tx("accountDashboard.security.notifications.description", "Get alerts about important account activity.")}
                 </p>
               </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={securityEmailAlerts}
-                disabled={preferencesLoading || preferencesSaving}
-                onClick={() => handleSecurityAlertsToggle(!securityEmailAlerts)}
-                className={cn(
-                  "focus-ring inline-flex min-h-10 w-fit items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition",
-                  securityEmailAlerts ? "bg-blue-600 text-white hover:bg-blue-700" : "border border-slate-300 bg-white text-slate-800 hover:bg-slate-50",
-                  preferencesLoading || preferencesSaving ? "cursor-not-allowed opacity-60" : "cursor-pointer",
-                )}
-              >
-                {preferencesSaving ? "Saving…" : securityEmailAlerts ? "Turn off" : "Turn on"}
-              </button>
+              <div className="relative inline-flex w-fit shrink-0 flex-col items-start sm:items-end">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={securityEmailAlerts}
+                  disabled={preferencesLoading || preferencesSaving}
+                  onClick={() => handleSecurityAlertsToggle(!securityEmailAlerts)}
+                  className={cn(
+                    "focus-ring inline-flex min-h-10 w-fit items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition",
+                    securityEmailAlerts ? "bg-blue-600 text-white hover:bg-blue-700" : "border border-slate-300 bg-white text-slate-800 hover:bg-slate-50",
+                    preferencesLoading || preferencesSaving ? "cursor-not-allowed opacity-60" : "cursor-pointer",
+                  )}
+                >
+                  {preferencesSaving ? "Saving…" : securityEmailAlerts ? "Turn off" : "Turn on"}
+                </button>
+                <p
+                  role="status"
+                  aria-live="polite"
+                  className={cn(
+                    "pointer-events-none absolute top-full z-10 mt-2 whitespace-nowrap rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 shadow-sm transition-opacity",
+                    securityNotificationsFeedback ? "opacity-100" : "opacity-0",
+                  )}
+                >
+                  {securityNotificationsFeedback}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-      <div className="overflow-hidden rounded-2xl border border-red-200 bg-white shadow-sm">
-        <div className="border-b border-red-100 bg-red-50/60 px-5 py-4 sm:px-6">
-          <p className="text-sm font-semibold leading-5 text-red-700">
-            {tx("accountDashboard.security.dangerZone.title", "Danger zone")}
-          </p>
-        </div>
-        <div className="px-5 sm:px-6">
           <SecuritySettingRow
             title={tx("accountDashboard.security.deleteAccount.title", "Delete account")}
             body={tx("accountDashboard.security.deleteAccount.description", "Request permanent account deletion.")}
