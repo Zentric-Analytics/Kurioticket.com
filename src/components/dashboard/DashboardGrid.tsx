@@ -777,6 +777,19 @@ function formatDateOfBirthParts(parts: {
   return [normalizedDay, parts.month, parts.year].filter(Boolean).join(" ");
 }
 
+const mobilePersonalDetailsSelectClassName =
+  "appearance-none pe-9 sm:appearance-auto sm:pe-3.5";
+
+function MobilePersonalDetailsSelectIcon() {
+  return (
+    <ChevronDown
+      aria-hidden="true"
+      className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 sm:hidden"
+      strokeWidth={2}
+    />
+  );
+}
+
 function DateOfBirthInput({
   value,
   onChange,
@@ -800,51 +813,72 @@ function DateOfBirthInput({
 
   return (
     <div className="grid min-w-0 grid-cols-[minmax(0,4.5rem)_minmax(0,1fr)_minmax(0,5.5rem)] gap-2 sm:max-w-[34rem] sm:grid-cols-[minmax(0,5.75rem)_minmax(0,12rem)_minmax(0,7.5rem)]">
-      <select
-        className={cn(className, "cursor-pointer")}
-        value={parts.day}
-        onChange={(event) => updatePart("day", event.target.value)}
-        aria-label={t["accountDashboard.personalDetails.dateOfBirthDay"]}
-      >
-        <option value="" disabled hidden>
-          DD
-        </option>
-        {dateOfBirthDays.map((day) => (
-          <option key={day} value={day}>
-            {day}
+      <div className="relative min-w-0">
+        <select
+          className={cn(
+            className,
+            mobilePersonalDetailsSelectClassName,
+            "cursor-pointer",
+          )}
+          value={parts.day}
+          onChange={(event) => updatePart("day", event.target.value)}
+          aria-label={t["accountDashboard.personalDetails.dateOfBirthDay"]}
+        >
+          <option value="" disabled hidden>
+            DD
           </option>
-        ))}
-      </select>
-      <select
-        className={cn(className, "cursor-pointer")}
-        value={parts.month}
-        onChange={(event) => updatePart("month", event.target.value)}
-        aria-label={t["accountDashboard.personalDetails.dateOfBirthMonth"]}
-      >
-        <option value="" disabled hidden>
-          {t["accountDashboard.personalDetails.monthPlaceholder"]}
-        </option>
-        {dateOfBirthMonthOptions.map((month) => (
-          <option key={month.value} value={month.value}>
-            {t[month.labelKey]}
+          {dateOfBirthDays.map((day) => (
+            <option key={day} value={day}>
+              {day}
+            </option>
+          ))}
+        </select>
+        <MobilePersonalDetailsSelectIcon />
+      </div>
+      <div className="relative min-w-0">
+        <select
+          className={cn(
+            className,
+            mobilePersonalDetailsSelectClassName,
+            "cursor-pointer",
+          )}
+          value={parts.month}
+          onChange={(event) => updatePart("month", event.target.value)}
+          aria-label={t["accountDashboard.personalDetails.dateOfBirthMonth"]}
+        >
+          <option value="" disabled hidden>
+            {t["accountDashboard.personalDetails.monthPlaceholder"]}
           </option>
-        ))}
-      </select>
-      <select
-        className={cn(className, "cursor-pointer")}
-        value={parts.year}
-        onChange={(event) => updatePart("year", event.target.value)}
-        aria-label={t["accountDashboard.personalDetails.dateOfBirthYear"]}
-      >
-        <option value="" disabled hidden>
-          YYYY
-        </option>
-        {dateOfBirthYears.map((year) => (
-          <option key={year} value={year}>
-            {year}
+          {dateOfBirthMonthOptions.map((month) => (
+            <option key={month.value} value={month.value}>
+              {t[month.labelKey]}
+            </option>
+          ))}
+        </select>
+        <MobilePersonalDetailsSelectIcon />
+      </div>
+      <div className="relative min-w-0">
+        <select
+          className={cn(
+            className,
+            mobilePersonalDetailsSelectClassName,
+            "cursor-pointer",
+          )}
+          value={parts.year}
+          onChange={(event) => updatePart("year", event.target.value)}
+          aria-label={t["accountDashboard.personalDetails.dateOfBirthYear"]}
+        >
+          <option value="" disabled hidden>
+            YYYY
           </option>
-        ))}
-      </select>
+          {dateOfBirthYears.map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </select>
+        <MobilePersonalDetailsSelectIcon />
+      </div>
     </div>
   );
 }
@@ -1013,22 +1047,29 @@ function StructuredAddressInput({
         >
           Country/region
         </label>
-        <select
-          id="personal-address-country"
-          className={cn(className, "cursor-pointer")}
-          value={parts.countryCode}
-          onChange={(event) => updatePart("countryCode", event.target.value)}
-          autoComplete="country"
-        >
-          <option value="" disabled hidden>
-            Select one
-          </option>
-          {personalDetailsDropdownOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
+        <div className="relative min-w-0">
+          <select
+            id="personal-address-country"
+            className={cn(
+              className,
+              mobilePersonalDetailsSelectClassName,
+              "cursor-pointer",
+            )}
+            value={parts.countryCode}
+            onChange={(event) => updatePart("countryCode", event.target.value)}
+            autoComplete="country"
+          >
+            <option value="" disabled hidden>
+              Select one
             </option>
-          ))}
-        </select>
+            {personalDetailsDropdownOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <MobilePersonalDetailsSelectIcon />
+        </div>
       </div>
       <div className="max-w-full">
         <label
@@ -1083,7 +1124,8 @@ function StructuredAddressInput({
             className={fieldLabelClassName}
             htmlFor="personal-address-state"
           >
-            State / Province / Region
+            <span className="sm:hidden">State / Region</span>
+            <span className="hidden sm:inline">State / Province / Region</span>
           </label>
           <input
             id="personal-address-state"
@@ -1199,7 +1241,7 @@ function PhoneNumberInput({
         </div>
 
         <select
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          className="absolute inset-0 h-full w-full cursor-pointer appearance-none opacity-0"
           value={selectedCountryCode}
           onChange={(event) => handleCountryChange(event.target.value)}
           aria-label={`${label} country calling code`}
@@ -1248,22 +1290,29 @@ function NationalityInput({
   fallback: string;
 }) {
   return (
-    <select
-      className={cn(className, "cursor-pointer")}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      aria-label={label}
-      autoComplete="country-name"
-    >
-      <option value="" disabled hidden>
-        {fallback}
-      </option>
-      {nationalityDropdownOptions.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
+    <div className="relative min-w-0">
+      <select
+        className={cn(
+          className,
+          mobilePersonalDetailsSelectClassName,
+          "cursor-pointer",
+        )}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        aria-label={label}
+        autoComplete="country-name"
+      >
+        <option value="" disabled hidden>
+          {fallback}
         </option>
-      ))}
-    </select>
+        {nationalityDropdownOptions.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <MobilePersonalDetailsSelectIcon />
+    </div>
   );
 }
 
@@ -1371,21 +1420,28 @@ function DetailInput({
 
   if (row.options) {
     return (
-      <select
-        className={cn(baseClassName, "cursor-pointer")}
-        value={value}
-        onChange={handleChange}
-        aria-label={row.label}
-      >
-        <option value="" disabled hidden>
-          {row.fallback}
-        </option>
-        {row.options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
+      <div className="relative min-w-0 sm:max-w-[34rem]">
+        <select
+          className={cn(
+            baseClassName,
+            mobilePersonalDetailsSelectClassName,
+            "cursor-pointer",
+          )}
+          value={value}
+          onChange={handleChange}
+          aria-label={row.label}
+        >
+          <option value="" disabled hidden>
+            {row.fallback}
           </option>
-        ))}
-      </select>
+          {row.options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <MobilePersonalDetailsSelectIcon />
+      </div>
     );
   }
 
