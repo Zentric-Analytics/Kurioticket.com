@@ -2129,7 +2129,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
               type="button"
               onClick={handleSave}
               disabled={isSaving || !hasUnsavedProfileChanges}
-              className="focus-ring inline-flex min-h-11 w-auto cursor-pointer items-center justify-center rounded-xl bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-default disabled:bg-blue-100 disabled:text-blue-700"
+              className="focus-ring inline-flex min-h-11 w-auto cursor-pointer items-center justify-center rounded-xl bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-pointer disabled:bg-blue-100 disabled:text-blue-700"
             >
               {isSaving
                 ? t["accountDashboard.personalDetails.saving"] || "Saving…"
