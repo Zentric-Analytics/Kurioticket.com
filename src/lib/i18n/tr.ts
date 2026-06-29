@@ -1733,4 +1733,5 @@ export const translations: TranslationDictionary = {
   layover: "Aktarma",
   layoverSummaryTemplate: "Aktarma: {{airport}} {{duration}}",
   moreCount: "{{count}} daha",
+  "legal.index.heroLabel": "Yasal Bilgiler",
 };
