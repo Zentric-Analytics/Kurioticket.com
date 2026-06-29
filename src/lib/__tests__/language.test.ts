@@ -4119,6 +4119,79 @@ test("Polish homepage-visible copy resolves without English fallback", () => {
   assert.equal(`${1} ${pl.guestSingular}, ${1} ${pl.roomSingular}`, "1 gość, 1 pokój");
 });
 
+
+test("Polish signup page copy resolves without English fallback", () => {
+  const pl = getTranslations("pl");
+  const expectedPolishSignupCopy = {
+    signupPageTitle: "Utwórz konto",
+    signupFullNameLabel: "Imię i nazwisko",
+    signupEmailLabel: "E-mail",
+    signupPasswordLabel: "Hasło",
+    signupAgreementBeforeTerms: "Tworząc konto, akceptujesz ",
+    signupTermsLink: "Warunki",
+    signupAgreementBetweenLinks: ", ",
+    signupPrivacyPolicyLink: "Politykę prywatności",
+    signupAgreementAfterPrivacy: " oraz informacje o przekierowaniach do partnerów.",
+    signupSubmit: "Zarejestruj się",
+    signupGoogle: "Kontynuuj z Google",
+    signupAlreadyHaveAccount: "Masz już konto?",
+    signupLoginLink: "Zaloguj się",
+  };
+
+  for (const [key, expected] of Object.entries(expectedPolishSignupCopy)) {
+    assert.equal(pl[key], expected, key);
+    if (expected !== enTranslations[key]) {
+      assert.notEqual(pl[key], enTranslations[key], key);
+    }
+  }
+
+  assert.match(pl.signupGoogle, /Google/);
+  assert.doesNotMatch(pl.signupGoogle, /Create your account|Continue with/);
+  assert.equal(`${pl.signupAgreementBeforeTerms}${pl.signupTermsLink}${pl.signupAgreementBetweenLinks}${pl.signupPrivacyPolicyLink}${pl.signupAgreementAfterPrivacy}`, "Tworząc konto, akceptujesz Warunki, Politykę prywatności oraz informacje o przekierowaniach do partnerów.");
+  assert.ok(languageOptions.some((option) => option.code === "pl" && option.direction === "ltr"));
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+});
+
+test("Polish signup render path keeps i18n keys and preserves auth behavior", () => {
+  const signupFormSource = readFileSync("src/components/auth/SignupForm.tsx", "utf8");
+  const signupPageSource = readFileSync("src/app/auth/signup/page.tsx", "utf8");
+
+  for (const key of [
+    "signupPageTitle",
+    "signupFullNameLabel",
+    "signupEmailLabel",
+    "signupPasswordLabel",
+    "signupAgreementBeforeTerms",
+    "signupTermsLink",
+    "signupAgreementBetweenLinks",
+    "signupPrivacyPolicyLink",
+    "signupAgreementAfterPrivacy",
+    "signupSubmit",
+    "signupGoogle",
+    "signupAlreadyHaveAccount",
+    "signupLoginLink",
+  ]) {
+    assert.match(signupFormSource, new RegExp(`t\\.${key}`), key);
+  }
+
+  assert.doesNotMatch(signupFormSource, />Create your account<|>Full name<|>Sign Up<|>Continue with Google<|>Already have an account\?<|>Log in</);
+  assert.match(signupFormSource, /document\.title = `\$\{t\.signupPageTitle\} \| Kurioticket`/);
+  assert.match(signupFormSource, /<Input name="name" autoComplete="name" required/);
+  assert.match(signupFormSource, /<Input name="email" type="email" autoComplete="email" required/);
+  assert.match(signupFormSource, /<Input name="password" type="password" autoComplete="new-password" minLength=\{8\} required/);
+  assert.match(signupFormSource, /fetch\("\/api\/auth\/signup", \{/);
+  assert.match(signupFormSource, /method: "POST"/);
+  assert.match(signupFormSource, /window\.location\.href = `\/auth\/verify-email\?email=\$\{encodeURIComponent\(email\)\}`/);
+  assert.match(signupFormSource, /signIn\("google", \{ callbackUrl: "\/onboarding" \}\)/);
+  assert.match(signupFormSource, /href="\/legal\/terms-of-service"/);
+  assert.match(signupFormSource, /href="\/legal\/privacy-policy"/);
+  assert.match(signupFormSource, /href="\/auth\/signin"/);
+  assert.match(signupPageSource, /<SignupForm googleEnabled=\{googleEnabled\} \/>/);
+  assert.match(signupPageSource, /getGoogleClientId\(\)/);
+  assert.match(signupPageSource, /getGoogleClientSecret\(\)/);
+});
+
+
 test("Polish homepage flight and hotel date formatting uses pl-PL generated labels", () => {
   for (const locale of ["pl", "pl-PL", "pl-pl"]) {
     assert.equal(normalizeFlightsCalendarLocale(locale), "pl-PL", `flight ${locale}`);
