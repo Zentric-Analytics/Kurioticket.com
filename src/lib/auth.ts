@@ -45,6 +45,33 @@ type SessionAugmentedUser = {
   emailVerified?: Date | string | null;
 };
 
+async function isPendingDeletionLoginAllowed(userId: string) {
+  const request = await getPrisma().accountDeletionRequest.findFirst({
+    where: {
+      userId,
+      status: { in: ["PENDING", "READY_FOR_REVIEW"] },
+      cancelledAt: null,
+      completedAt: null,
+      deletionScheduledAt: { gt: new Date() },
+    },
+    select: { id: true },
+  });
+
+  return Boolean(request);
+}
+
+async function isAuthenticatableUserStatus(user: { id: string; status: string }) {
+  if (user.status === "ACTIVE") {
+    return true;
+  }
+
+  if (user.status === "PENDING_DELETION") {
+    return isPendingDeletionLoginAllowed(user.id);
+  }
+
+  return false;
+}
+
 const providers: NextAuthOptions["providers"] = [
   CredentialsProvider({
     name: "Credentials",
@@ -143,7 +170,7 @@ const providers: NextAuthOptions["providers"] = [
 
         if (
           !user ||
-          !["ACTIVE", "PENDING_DELETION"].includes(user.status) ||
+          !(await isAuthenticatableUserStatus(user)) ||
           !user.emailVerified
         ) {
           return null;
@@ -219,7 +246,7 @@ const providers: NextAuthOptions["providers"] = [
       }
 
       if (
-        !["ACTIVE", "PENDING_DELETION"].includes(user.status)
+        !(await isAuthenticatableUserStatus(user))
       ) {
         throw new Error(
           "AccountUnavailable"
@@ -377,7 +404,7 @@ export const authOptions: NextAuthOptions =
 
         if (
           dbUser?.status &&
-          !["ACTIVE", "PENDING_DELETION"].includes(dbUser.status)
+          !(await isAuthenticatableUserStatus(dbUser))
         ) {
           return "/auth/signin?error=AccountUnavailable";
         }
