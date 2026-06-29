@@ -67,6 +67,10 @@ const getCarsIntlLocale = (locale: string) => {
     return "tr-TR";
   }
 
+  if (normalizedLocale.startsWith("pl")) {
+    return "pl-PL";
+  }
+
   return locale;
 };
 

@@ -596,6 +596,137 @@ export const translations: TranslationDictionary = {
   serviceGuaranteeHelpCardTitle:
     "Potrzebujesz pomocy z kontem lub wyszukiwaniem?",
   serviceGuaranteeSupportCta: "Skontaktuj się z obsługą klienta",
+
+  searchRentalCarsEveryPartTrip: "Wyszukaj samochody na każdy etap podróży",
+  exploreCarsByTripStyle: "Odkrywaj samochody według stylu podróży",
+  carsTripStyleBody:
+    "Wybierz typ samochodu, a otworzymy wyniki z gotowym kontekstem wyszukiwania.",
+  "carsTripStyle.economy.title": "Samochody ekonomiczne",
+  "carsTripStyle.economy.subtitle":
+    "Przystępne wyszukiwania do miasta i podróży solo",
+  "carsTripStyle.economy.cta":
+    "Rozpocznij wyszukiwanie samochodu ekonomicznego",
+  "carsTripStyle.economy.ariaLabel":
+    "Rozpocznij wyszukiwanie samochodu ekonomicznego z odbiorem w centrum miasta",
+  "carsTripStyle.economy.imageAlt":
+    "Kompaktowe samochody miejskie jadące między budynkami w centrum",
+  "carsTripStyle.suv.title": "SUV-y",
+  "carsTripStyle.suv.subtitle":
+    "Więcej miejsca na rodzinne wyjazdy, bagaż i dłuższe trasy",
+  "carsTripStyle.suv.cta": "Otwórz wyszukiwanie wynajmu SUV-a",
+  "carsTripStyle.suv.ariaLabel":
+    "Otwórz wyszukiwanie wynajmu SUV-a z odbiorem na lotnisku",
+  "carsTripStyle.suv.imageAlt": "SUV jadący otwartą drogą w pobliżu gór",
+  "carsTripStyle.luxury.title": "Samochody luksusowe",
+  "carsTripStyle.luxury.subtitle":
+    "Kontekst premium dla podróży służbowych lub wyjątkowych wyjazdów",
+  "carsTripStyle.luxury.cta":
+    "Zaplanuj wyszukiwanie luksusowego samochodu",
+  "carsTripStyle.luxury.ariaLabel":
+    "Zaplanuj wyszukiwanie luksusowego samochodu z odbiorem w okolicy hotelu",
+  "carsTripStyle.luxury.imageAlt":
+    "Samochód premium zaparkowany przy eleganckim nowoczesnym budynku",
+  "carsTripStyle.van.title": "Vany",
+  "carsTripStyle.van.subtitle":
+    "Kontekst wyszukiwania dla podróży grupowych i rodzinnego bagażu",
+  "carsTripStyle.van.cta": "Szukaj vanów na podróże grupowe",
+  "carsTripStyle.van.ariaLabel":
+    "Szukaj vanów na podróże grupowe z odbiorem na lotnisku",
+  "carsTripStyle.van.imageAlt":
+    "Van pasażerski jadący jasną malowniczą drogą",
+  "carsTrust.0.title": "Stworzone z myślą o pełnych podróżach",
+  "carsTrust.0.description":
+    "Planuj loty, pobyty i transport naziemny w jednym procesie Kurioticket.",
+  "carsTrust.1.title": "Najpierw szczegóły odbioru",
+  "carsTrust.1.description":
+    "Podaj miejsce odbioru, daty, godziny i wiek kierowcy, aby wyszukiwanie wynajmu zaczęło się od właściwych szczegółów podróży.",
+  "carsTrust.2.title": "Jasne sprawdzenie wynajmu",
+  "carsTrust.2.description":
+    "Przed rezerwacją sprawdź u dostawcy ostateczną cenę, dostępność, opłaty i zasady wynajmu.",
+  carsPickupPointsTitle: "Zacznij od popularnych miejsc odbioru samochodu",
+  carsPickupPointsBody:
+    "Wybierz styl odbioru, a otworzymy stronę wyników samochodów z gotowymi szczegółami wyszukiwania.",
+  "carsPickup.Airport.title": "Odbiór na lotnisku",
+  "carsPickup.Airport.subtitle":
+    "Rozpocznij od głównych punktów przylotów na lotniskach",
+  "carsPickup.Airport.ariaLabel":
+    "Otwórz wyniki samochodów dla odbioru na lotnisku",
+  "carsPickup.Airport.imageAlt":
+    "Samolot zaparkowany przy bramce lotniskowej o zachodzie słońca",
+  "carsPickup.City center.title": "Odbiór w centrum miasta",
+  "carsPickup.City center.subtitle":
+    "Odbierz samochód blisko hoteli w centrum i dzielnic biznesowych",
+  "carsPickup.City center.ariaLabel":
+    "Otwórz wyniki samochodów dla odbioru w centrum miasta",
+  "carsPickup.City center.imageAlt":
+    "Samochody jadące miejską ulicą między wysokimi budynkami",
+  "carsPickup.Train station.title": "Odbiór przy dworcu kolejowym",
+  "carsPickup.Train station.subtitle":
+    "Kontynuuj podróż po przyjeździe pociągiem",
+  "carsPickup.Train station.ariaLabel":
+    "Otwórz wyniki samochodów dla odbioru przy dworcu kolejowym",
+  "carsPickup.Train station.imageAlt":
+    "Peron kolejowy z torami prowadzącymi do miejskiej stacji",
+  "carsPickup.Hotel area.title": "Odbiór w okolicy hotelu",
+  "carsPickup.Hotel area.subtitle":
+    "Zaplanuj odbiór samochodu w pobliżu miejsca pobytu",
+  "carsPickup.Hotel area.ariaLabel":
+    "Otwórz wyniki samochodów dla odbioru w okolicy hotelu",
+  "carsPickup.Hotel area.imageAlt":
+    "Budynek hotelu z palmami i podjazdem",
+  "carsSearch.pickupLocationLabel": "MIEJSCE ODBIORU",
+  "carsSearch.pickupLocationPlaceholder": "Lotnisko, miasto lub adres",
+  "carsSearch.returnLocationPlaceholder": "Miasto, lotnisko lub adres zwrotu",
+  "carsSearch.returnToSameLocation": "Zwrot w tym samym miejscu",
+  "carsSearch.differentReturnLocation": "Inne miejsce zwrotu",
+  "carsSearch.rentalDatesLabel": "DATY WYNAJMU",
+  "carsSearch.rentalDatePlaceholder": "Data odbioru — data zwrotu",
+  "carsSearch.pickupReturnTimeLabel": "GODZINA ODBIORU / ZWROTU",
+  "carsSearch.pickupReturnTimeSummary": "Odbiór {pickupTime} — zwrot {returnTime}",
+  "carsSearch.driverAgeLabel": "WIEK KIEROWCY",
+  "carsSearch.driverAgeAnyAge": "Dowolny wiek",
+  "carsSearch.clearPickupLocation": "Wyczyść miejsce odbioru",
+  "carsSearch.clearReturnLocation": "Wyczyść miejsce zwrotu",
+  "carsSearch.chooseRentalDatesAria":
+    "Wybierz daty odbioru i zwrotu samochodu",
+  "carsSearch.rentalDatePickerAria": "Wybór dat wynajmu",
+  "carsSearch.chooseRentalDates": "Wybierz daty wynajmu",
+  "carsSearch.previousMonth": "Poprzedni miesiąc",
+  "carsSearch.previousMonthShort": "Poprzedni",
+  "carsSearch.nextMonth": "Następny miesiąc",
+  "carsSearch.nextMonthShort": "Następny",
+  "carsSearch.selectDateAriaPrefix": "Wybierz",
+  "carsSearch.startsNewPickupDate": "rozpoczyna nową datę odbioru",
+  "carsSearch.choosePickupReturnTimesAria":
+    "Wybierz godziny odbioru i zwrotu",
+  "carsSearch.pickupReturnTimeSelectorAria":
+    "Wybór godziny odbioru i zwrotu",
+  "carsSearch.pickupTimeLabel": "Godzina odbioru",
+  "carsSearch.returnTimeLabel": "Godzina zwrotu",
+  carsSearchPreparing: "Przygotowujemy wyszukiwanie samochodów...",
+  "carsFaq.heading": "Najczęstsze pytania o samochody",
+  "carsFaq.0.question":
+    "Jakich informacji potrzebuję, aby wyszukać samochód na wynajem?",
+  "carsFaq.0.answer":
+    "Podaj miejsce odbioru, daty odbioru i zwrotu, godziny odbioru i zwrotu, wiek kierowcy oraz informację, czy planujesz zwrócić samochód w innym miejscu.",
+  "carsFaq.1.question": "Czy mogę zwrócić samochód w innym miejscu?",
+  "carsFaq.1.answer":
+    "Tak. W formularzu wyszukiwania wybierz inne miejsce zwrotu i wpisz miasto, lotnisko lub adres, pod którym planujesz zwrócić samochód.",
+  "carsFaq.2.question":
+    "Dlaczego wiek kierowcy ma znaczenie przy wynajmie samochodu?",
+  "carsFaq.2.answer":
+    "Dostawcy wynajmu mogą stosować różne zasady, opłaty, wymagania dotyczące dostępnych pojazdów lub kaucji zależnie od wieku kierowcy i lokalizacji.",
+  "carsFaq.3.question":
+    "Co sprawdzić przed rezerwacją samochodu na wynajem?",
+  "carsFaq.3.answer":
+    "Przed rezerwacją sprawdź miejsce odbioru i zwrotu, daty, godziny, limit kilometrów, politykę paliwową, opcje ubezpieczenia, warunki anulowania, wymagania dotyczące kaucji i potrzebne dokumenty.",
+  "carsFaq.4.question": "Gdzie potwierdzana jest ostateczna cena wynajmu?",
+  "carsFaq.4.answer":
+    "Ostateczna cena, dostępność pojazdu, podatki, opłaty, wymagania dotyczące kaucji i zasady wynajmu są potwierdzane przez dostawcę przed rezerwacją.",
+  "carsFaq.5.question":
+    "Jakie dokumenty mogą być potrzebne przy odbiorze?",
+  "carsFaq.5.answer":
+    "Dostawcy wynajmu mogą wymagać ważnego prawa jazdy, karty płatniczej, dokumentu tożsamości oraz dokumentów wymaganych w kraju lub miejscu odbioru.",
   aboutPageEyebrow: "O Kurioticket",
   aboutPageTitle: "O nas",
   aboutPageIntroPrimary:
