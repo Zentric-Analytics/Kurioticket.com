@@ -1149,15 +1149,15 @@ function PhoneNumberInput({
 
   return (
     <div className="flex w-full min-w-0 items-stretch gap-0 sm:max-w-xl">
-      <div className="group relative z-10 h-10 w-16 shrink-0 sm:w-[4.5rem]">
+      <div className="group relative z-10 h-10 w-[4.75rem] shrink-0 sm:w-20">
         <div
           aria-hidden="true"
-          className="pointer-events-none flex h-full w-full items-center justify-center rounded-none border border-slate-400 bg-white px-3 transition group-focus-within:border-violet-500 group-focus-within:ring-2 group-focus-within:ring-violet-100"
+          className="pointer-events-none flex h-full w-full items-center justify-center rounded-none border border-slate-400 bg-white px-3.5 transition group-focus-within:border-violet-500 group-focus-within:ring-2 group-focus-within:ring-violet-100 sm:px-4"
         >
           <CountryFlagIcon
             countryName={selectedOption.countryName}
             isoCode={selectedOption.isoCode}
-            className="h-5 w-7 rounded-none bg-white sm:h-[22px] sm:w-8"
+            className="h-5 w-8 rounded-none bg-white sm:h-[22px] sm:w-9"
           />
         </div>
 
@@ -1275,7 +1275,7 @@ function DetailInput({
   const baseClassName = cn(
     "h-10 w-full min-w-0 rounded-none border border-slate-400 bg-white px-3 text-base font-medium leading-5 text-slate-950 outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 sm:max-w-lg sm:text-sm",
     row.readOnly &&
-      "cursor-not-allowed border-slate-300 bg-slate-50 text-slate-700 hover:border-slate-300 focus:border-slate-300 focus:ring-0",
+      "cursor-not-allowed border-slate-400 bg-slate-50 text-slate-800 hover:border-slate-400 focus:border-slate-400 focus:ring-0",
   );
 
   const handleChange = (
