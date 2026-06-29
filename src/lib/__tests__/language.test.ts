@@ -26,6 +26,7 @@ import { translations as plTranslations } from "@/lib/i18n/pl";
 import { availableLocaleOptions, getTranslations } from "@/lib/i18n";
 import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
 import { buildHomepageRouteCardFlightHref } from "@/lib/home/homepageRouteCardLinks";
+import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
 import { translateHomeDiscoveryField } from "@/lib/i18n/homeDiscovery";
 import { getCountryDisplayNameForLocale } from "@/lib/region/countryDisplayNames";
 import { supportedRegions } from "@/lib/region/supportedRegions";
@@ -1247,6 +1248,110 @@ test("Hindi flights landing static render path resolves screenshot-visible copy"
   assert.ok(standaloneFlightSearchSource.includes("localizeCalendarLabels = true"));
   assert.equal(hiTranslations.flightLandingRouteAriaLabel.includes("{{origin}}"), true);
   assert.equal(hiTranslations.flightLandingRouteAriaLabel.includes("{{destination}}"), true);
+});
+
+
+test("Polish flights landing active render path resolves visible copy without English fallback", () => {
+  const pl = getTranslations("pl");
+  const flightLandingSource = readFileSync("src/components/flights/FlightLandingClient.tsx", "utf8");
+  const flightsPageSource = readFileSync("src/app/flights/page.tsx", "utf8");
+  const homeDiscoverySource = readFileSync("src/data/homeDiscovery.ts", "utf8");
+
+  const expectedCopy: Array<[string, string]> = [
+    ["flightLandingHeroTitle", "Znajdź kolejny niedrogi lot z łatwością."],
+    ["flightLandingHeroSubtitle", "Wyszukuj trasy, porównuj daty i odkrywaj opcje lotów na kolejną podróż."],
+    ["discoverDestinationsFromRegion", "Odkrywaj kierunki z Twojego regionu"],
+    ["discoverDestinationsFromRegionBody", "Przeglądaj wybrane trasy i rozpocznij kolejną podróż z pewnością."],
+    ["flightLandingStartThisSearch", "Rozpocznij to wyszukiwanie"],
+    ["flightLandingFeatureSearchReadyTitle", "Trasy gotowe do wyszukiwania"],
+    ["flightLandingFeatureSearchReadyBody", "Wprowadź rzeczywiste szczegóły podróży, zanim wyniki zostaną pobrane od dostawców lotów."],
+    ["flightLandingFeatureCompareTitle", "Porównuj w kontekście"],
+    ["flightLandingFeatureCompareBody", "Używaj dat, liczby podróżnych, klasy kabiny, czasu podróży, przesiadek i szczegółów trasy, aby ocenić opcje."],
+    ["flightLandingFeatureProviderTitle", "Sprawdzenie u dostawcy"],
+    ["flightLandingFeatureProviderBody", "Przed rezerwacją zawsze potwierdź ostateczną dostępność, cenę i zasady u dostawcy."],
+    ["flightLandingRouteIdeasTitle", "Pomysły na trasy dla elastycznych podróży"],
+    ["flightLandingRouteIdeasBody", "Przeglądaj pomysły na trasy, a następnie rozpocznij prawdziwe wyszukiwanie z datami i podróżnymi przed porównaniem dostępnych lotów."],
+    ["beachVacations", "Wakacje na plaży"],
+    ["beachVacationsBody", "Odkrywaj trasy lotnicze do słonecznych wybrzeży, wyspiarskich ucieczek i ciepłych kierunków plażowych."],
+    ["flightBookingFaqs", "Najczęstsze pytania o rezerwację lotów"],
+    ["flightBookingFaqIntro", "Sprawdź najczęstsze szczegóły wyszukiwania lotów przed przejściem do dostawcy."],
+    ["flightFaqBestTimeQuestion", "Kiedy najlepiej zarezerwować lot?"],
+    ["flightFaqBeforeBookingQuestion", "Co sprawdzić przed rezerwacją?"],
+    ["flightFaqFlexibleFareQuestion", "Czym jest elastyczna taryfa?"],
+    ["flightFaqNonstopQuestion", "Czy loty bez przesiadek są zawsze lepsze?"],
+    ["flightFaqBaggageQuestion", "Jak działają zasady dotyczące bagażu?"],
+    ["flightFaqChangeCancelQuestion", "Czy mogę zmienić lub anulować bilet?"],
+    ["flightFaqInternationalQuestion", "Co warto wiedzieć o lotach międzynarodowych?"],
+  ];
+
+  for (const [key, value] of expectedCopy) {
+    assert.equal(pl[key], value);
+    assert.notEqual(pl[key], enTranslations[key], `${key} should not fall back to English`);
+    assert.ok(flightLandingSource.includes(`t("${key}")`), `${key} should be read by active /flights client render path`);
+  }
+
+  const expectedFaqAnswers: Array<[string, string]> = [
+    ["flightFaqBestTimeAnswer", "Ceny lotów mogą zmieniać się w zależności od trasy, sezonu, popytu i dostępności. Zwykle warto porównać kilka dat, sprawdzić pobliskie lotniska, jeśli to możliwe, i przejrzeć pełny plan podróży przed wyborem taryfy."],
+    ["flightFaqBeforeBookingAnswer", "Przed ukończeniem rezerwacji u dostawcy sprawdź godziny wylotu i przylotu, całkowity czas podróży, przesiadki, zasady dotyczące bagażu, opcje wyboru miejsca, warunki anulowania oraz zasady zmiany biletu."],
+    ["flightFaqFlexibleFareAnswer", "Elastyczna taryfa może umożliwiać zmiany lub anulowanie z mniejszymi ograniczeniami niż taryfa podstawowa, ale dokładne zasady zależą od linii lotniczej lub dostawcy rezerwacji. Zawsze sprawdź warunki taryfy przed zakupem."],
+    ["flightFaqNonstopAnswer", "Nie zawsze. Loty bez przesiadek mogą oszczędzać czas, a trasy z jedną przesiadką mogą oferować inne godziny wylotu, okna przylotu lub opcje cenowe. Przed decyzją porównaj całkowity czas podróży, długość przesiadki i wygodę."],
+    ["flightFaqBaggageAnswer", "Limit bagażu może różnić się w zależności od linii lotniczej, trasy, klasy kabiny, rodzaju taryfy i dostawcy. Przed rezerwacją sprawdź, czy bagaż podręczny, rejestrowany i przedmiot osobisty są wliczone w cenę."],
+    ["flightFaqChangeCancelAnswer", "Możliwości zmiany i anulowania zależą od zasad taryfy oraz polityk dostawcy. Niektóre bilety mogą być bezzwrotne lub obejmować opłaty, dlatego przed rezerwacją dokładnie sprawdź warunki."],
+    ["flightFaqInternationalAnswer", "W przypadku podróży międzynarodowych przed rezerwacją sprawdź ważność paszportu, wymagania wizowe, zasady tranzytu, politykę bagażową i wymagania wjazdowe dla miejsca docelowego."],
+  ];
+
+  for (const [key, value] of expectedFaqAnswers) {
+    assert.equal(pl[key], value);
+    assert.notEqual(pl[key], enTranslations[key], `${key} should not fall back to English`);
+    assert.ok(flightLandingSource.includes(`t("${key}")`), `${key} should be read by getFlightFaqItems`);
+  }
+
+  const expectedDiscoveryCopy: Array<[string, string]> = [
+    ["flightLandingImageAlt.Johannesburg skyline at golden hour", "Panorama Johannesburga o złotej godzinie"],
+    ["flightLandingImageAlt.Cairo skyline with the Pyramids of Giza", "Panorama Kairu z piramidami w Gizie"],
+    ["flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands", "Widok Addis Abeby na Wyżynie Etiopskiej"],
+    ["homeDiscoveryRoute.ca-yyz-cun.title", "Zimowa ucieczka do Cancun"],
+    ["homeDiscoveryRoute.ca-yyz-cun.routeNote", "Niezawodna trasa wypoczynkowa z opcjami bez przesiadek w szczycie sezonu."],
+    ["homeDiscoveryRoute.ca-yeg-pvr.title", "Plażowy wyjazd do Puerto Vallarta"],
+    ["homeDiscoveryRoute.ca-yeg-pvr.routeNote", "Trasa po zimowe słońce, z plażami Pacyfiku i urokiem starego miasta."],
+    ["homeDiscoveryRoute.ca-yyz-hnl.title", "Daleki wyspiarski odpoczynek w Honolulu"],
+    ["homeDiscoveryRoute.ca-yyz-hnl.routeNote", "Wypoczynkowa opcja premium na plaże, surfing i wyspiarskie wędrówki."],
+    ["homeDiscoveryRoute.ca-yyz-san.title", "Słońce i surfing w San Diego"],
+    ["homeDiscoveryRoute.ca-yyz-san.routeNote", "Niezawodna trasa transgraniczna na plaże, parki i widoki portowe."],
+    ["homeDiscoveryRoute.ca-yvr-syd.title", "Transpacyficzna przygoda w Sydney"],
+    ["homeDiscoveryRoute.ca-yvr-syd.routeNote", "Popularna daleka trasa do portowych atrakcji i nadmorskich dzielnic."],
+  ];
+
+  for (const [key, value] of expectedDiscoveryCopy) {
+    assert.equal(pl[key], value);
+    assert.notEqual(pl[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  assert.ok(flightLandingSource.includes("getRouteText(item, t)"));
+  assert.ok(flightLandingSource.includes('t(`homeDiscoveryRoute.${item.id}.title`) || item.title'));
+  assert.ok(flightLandingSource.includes('t(`homeDiscoveryRoute.${item.id}.routeNote`) || item.routeNote'));
+  assert.ok(flightLandingSource.includes('"flightLandingImageAlt"'));
+  assert.ok(flightLandingSource.includes("buildDiscoveryLink(item)"));
+  assert.ok(flightsPageSource.includes("<FlightLandingClient />"));
+  assert.ok(flightLandingSource.includes("<StandaloneFlightSearchForm localizeCalendarLabels />"));
+  assert.ok(flightLandingSource.includes("rounded-3xl border border-slate-200/80 bg-white"));
+
+  const canadaCards = getHomeDiscoveryByRegion("CA");
+  for (const id of ["ca-yyz-cun", "ca-yeg-pvr", "ca-yyz-hnl", "ca-yyz-san", "ca-yvr-syd"]) {
+    const item = canadaCards.find((card) => card.id === id);
+    assert.ok(item, `${id} should remain in the Canada discovery source`);
+    assert.equal(buildDiscoveryLink(item).query.origin, item.originCode);
+    assert.equal(buildDiscoveryLink(item).query.destination, item.destinationCode);
+    assert.equal(buildDiscoveryLink(item).query.tripType, "one-way");
+    assert.equal(buildDiscoveryLink(item).query.travelers, "1");
+    assert.equal(buildDiscoveryLink(item).query.cabinClass, "economy");
+    assert.ok(homeDiscoverySource.includes(`id: "${id}"`));
+  }
+  assert.deepEqual(canadaCards.map((item) => item.id).slice(3, 5), ["ca-yyz-cun", "ca-yyc-yhz"]);
+  assert.equal(canadaCards.find((item) => item.id === "ca-yyz-cun")?.originCode, "YYZ");
+  assert.equal(canadaCards.find((item) => item.id === "ca-yyz-cun")?.destinationCode, "CUN");
+  assert.ok(homeDiscoverySource.includes("YYZ"));
+  assert.ok(homeDiscoverySource.includes("CUN"));
 });
 
 test("active locale auth verification copy is localized without English fallback", () => {
