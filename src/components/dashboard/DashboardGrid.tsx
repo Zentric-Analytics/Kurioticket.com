@@ -39,6 +39,8 @@ type TwoFactorStatus = {
 type TotpSetup = { otpauthUri: string; manualSetupKey: string; expiresAt: string };
 type TwoFactorMode = "setup" | "disable" | "recovery";
 
+type PasskeySummary = { id: string; name: string | null; createdAt: string; lastUsedAt: string | null; deviceType: string | null; backedUp: boolean | null; };
+
 type AccountSessionActivity = {
   id: string;
   deviceLabel: string;
@@ -1788,6 +1790,9 @@ export function SecurityDashboardPage() {
   const [twoFactorSaving, setTwoFactorSaving] = useState(false);
   const [preferencesLoading, setPreferencesLoading] = useState(true);
   const [preferencesSaving, setPreferencesSaving] = useState(false);
+  const [passkeys, setPasskeys] = useState<PasskeySummary[]>([]);
+  const [passkeysModalOpen, setPasskeysModalOpen] = useState(false);
+  const [passkeySaving, setPasskeySaving] = useState(false);
   const [sessionsModalOpen, setSessionsModalOpen] = useState(false);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [sessions, setSessions] = useState<AccountSessionActivity[]>([]);
@@ -1816,6 +1821,9 @@ export function SecurityDashboardPage() {
           const twoFactorResponse = await fetch("/api/account/security/two-factor", { method: "GET", credentials: "same-origin" });
           const twoFactorData = await twoFactorResponse.json().catch(() => ({}));
           if (active && twoFactorResponse.ok) setTwoFactor(twoFactorData.twoFactor);
+          const passkeysResponse = await fetch("/api/account/security/passkeys", { method: "GET", credentials: "same-origin" });
+          const passkeysData = await passkeysResponse.json().catch(() => ({}));
+          if (active && passkeysResponse.ok) setPasskeys(Array.isArray(passkeysData.passkeys) ? passkeysData.passkeys : []);
         } else {
           setActionMessage(data.error || "Unable to load security preferences.");
         }
@@ -1886,6 +1894,38 @@ export function SecurityDashboardPage() {
     } finally {
       setPasswordSaving(false);
     }
+  };
+
+
+  const loadPasskeys = async () => {
+    const response = await fetch("/api/account/security/passkeys", { method: "GET", credentials: "same-origin" });
+    const data = await response.json().catch(() => ({}));
+    if (response.ok) setPasskeys(Array.isArray(data.passkeys) ? data.passkeys : []);
+  };
+  const handleAddPasskey = async () => {
+    if (!window.PublicKeyCredential || !navigator.credentials) { setActionMessage("Passkeys are not supported on this browser. Use password sign-in instead."); return; }
+    const name = window.prompt("Name this passkey", "Passkey") || "Passkey";
+    setPasskeySaving(true); setActionMessage("");
+    try {
+      const optionsResponse = await fetch("/api/account/security/passkeys/register/options", { method: "POST", credentials: "same-origin" });
+      const optionsData = await optionsResponse.json();
+      if (!optionsResponse.ok) throw new Error(optionsData.error || "Unable to start passkey setup.");
+      const credential = await navigator.credentials.create({ publicKey: decodeCreationOptions(optionsData.options) }) as PublicKeyCredential | null;
+      if (!credential) throw new Error("Passkey setup was cancelled.");
+      const verifyResponse = await fetch("/api/account/security/passkeys/register/verify", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...serializeCreatedCredential(credential), name }) });
+      const verifyData = await verifyResponse.json().catch(() => ({}));
+      if (!verifyResponse.ok) throw new Error(verifyData.error || "Unable to save passkey.");
+      setActionMessage("Passkey added. Passkey sign-in satisfies strong authentication; password sign-in still requires TOTP when enabled.");
+      await loadPasskeys();
+    } catch (error) { setActionMessage(error instanceof Error ? error.message : "Unable to add passkey."); } finally { setPasskeySaving(false); }
+  };
+  const handleRemovePasskey = async (id: string) => {
+    setPasskeySaving(true); setActionMessage("");
+    try {
+      const response = await fetch(`/api/account/security/passkeys/${id}`, { method: "DELETE", credentials: "same-origin" });
+      if (!response.ok) throw new Error("Unable to remove passkey.");
+      setActionMessage("Passkey removed."); await loadPasskeys();
+    } catch (error) { setActionMessage(error instanceof Error ? error.message : "Unable to remove passkey."); } finally { setPasskeySaving(false); }
   };
 
   const loadSessionActivities = async () => {
@@ -2054,8 +2094,6 @@ export function SecurityDashboardPage() {
     }
   };
 
-  const comingSoonStatus = tx("accountDashboard.security.status.comingSoon", "Coming soon");
-
   return (
     <section
       aria-labelledby="security-title"
@@ -2089,9 +2127,10 @@ export function SecurityDashboardPage() {
           />
           <SecuritySettingRow
             title={tx("accountDashboard.security.passkeys.title", "Passkeys")}
-            body={tx("accountDashboard.security.passkeys.description", "Passkeys are not available yet. Password and OAuth sign-in remain supported.")}
-            status={comingSoonStatus}
-            onAction={() => undefined}
+            body={`${passkeys.length ? `${passkeys.length} passkey${passkeys.length === 1 ? "" : "s"} configured.` : "Add a passkey for phishing-resistant sign-in. Passkey login satisfies TOTP for this initial rollout; password login still requires TOTP when enabled."}`}
+            status={passkeys.length ? `Enabled · ${passkeys.length}` : "Not set up"}
+            action={tx("accountDashboard.security.action.manage", "Manage")}
+            onAction={() => setPasskeysModalOpen(true)}
             statusId={securityActionStatusId}
           />
           <SecuritySettingRow
@@ -2176,6 +2215,18 @@ export function SecurityDashboardPage() {
               {recoveryCodes.length === 0 ? <button type="submit" disabled={twoFactorSaving || (twoFactorModal === "setup" ? twoFactorCode.length !== 6 || !totpSetup : twoFactorModal === "recovery" ? twoFactorCode.length !== 6 : !twoFactorPassword && twoFactorCode.length < 6)} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{twoFactorSaving ? "Verifying…" : twoFactorModal === "setup" ? "Confirm and enable" : twoFactorModal === "recovery" ? "Regenerate codes" : "Disable 2FA"}</button> : null}
             </div>
           </form>
+        </div>
+      ) : null}
+
+      {passkeysModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="passkeys-title">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-xl sm:p-6">
+            <h2 id="passkeys-title" className="text-xl font-semibold text-slate-950">Manage passkeys</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Passkey sign-in is phishing-resistant strong authentication and does not ask for TOTP again. Password sign-in still requires TOTP when enabled.</p>
+            <button type="button" onClick={handleAddPasskey} disabled={passkeySaving} className="focus-ring mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{passkeySaving ? "Working…" : "Add passkey"}</button>
+            <div className="mt-5 space-y-3">{passkeys.length ? passkeys.map((passkey) => <div key={passkey.id} className="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold text-slate-950">{passkey.name || "Passkey"}</p><p className="text-sm text-slate-600">Created {formatSessionTime(passkey.createdAt)} · Last used {passkey.lastUsedAt ? formatSessionTime(passkey.lastUsedAt) : "never"}</p></div><button type="button" onClick={() => void handleRemovePasskey(passkey.id)} disabled={passkeySaving} className="focus-ring rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-60">Remove</button></div>) : <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">No passkeys yet.</p>}</div>
+            <div className="mt-6 flex justify-end"><button type="button" onClick={() => setPasskeysModalOpen(false)} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Done</button></div>
+          </div>
         </div>
       ) : null}
 
@@ -2311,3 +2362,8 @@ export function SupportDashboardPage() {
     </section>
   );
 }
+
+function webauthnToBase64url(buffer: ArrayBuffer) { const bytes = new Uint8Array(buffer); let binary = ""; bytes.forEach((byte) => { binary += String.fromCharCode(byte); }); return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, ""); }
+function webauthnFromBase64url(value: string) { const normalized = value.replace(/-/g, "+").replace(/_/g, "/"); const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "="); return Uint8Array.from(atob(padded), (char) => char.charCodeAt(0)).buffer; }
+function decodeCreationOptions(options: PublicKeyCredentialCreationOptions & { challenge: string; user: PublicKeyCredentialUserEntity & { id: string }; excludeCredentials?: Array<PublicKeyCredentialDescriptor & { id: string }> }) { return { ...options, challenge: webauthnFromBase64url(options.challenge), user: { ...options.user, id: webauthnFromBase64url(options.user.id) }, excludeCredentials: options.excludeCredentials?.map((credential) => ({ ...credential, id: webauthnFromBase64url(String(credential.id)) })) }; }
+function serializeCreatedCredential(credential: PublicKeyCredential) { const response = credential.response as AuthenticatorAttestationResponse; return { id: credential.id, rawId: webauthnToBase64url(credential.rawId), type: credential.type, response: { attestationObject: webauthnToBase64url(response.attestationObject), clientDataJSON: webauthnToBase64url(response.clientDataJSON), transports: response.getTransports?.() || [], authenticatorData: webauthnToBase64url(response.getAuthenticatorData()) }, authenticatorAttachment: credential.authenticatorAttachment }; }

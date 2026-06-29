@@ -121,18 +121,18 @@ enum AccountDeletionRequestStatus {
 }
 
 model User {
-  id                      String                @id @default(cuid())
+  id                      String                   @id @default(cuid())
   name                    String?
-  email                   String?               @unique
+  email                   String?                  @unique
   emailVerified           DateTime?
   image                   String?
   passwordHash            String?
-  role                    UserRole              @default(USER)
-  status                  UserStatus            @default(ACTIVE)
+  role                    UserRole                 @default(USER)
+  status                  UserStatus               @default(ACTIVE)
   priceAlertLimitOverride Int?
   onboardedAt             DateTime?
-  createdAt               DateTime              @default(now())
-  updatedAt               DateTime              @updatedAt
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
   accounts                Account[]
   sessions                Session[]
   savedFlights            SavedFlight[]
@@ -151,6 +151,8 @@ model User {
   savedTrips              SavedTrip[]
   sessionActivities       UserSessionActivity[]
   accountDeletionRequests AccountDeletionRequest[]
+  passkeys                UserPasskey[]
+  webAuthnChallenges      WebAuthnChallenge[]
 
   @@index([role])
   @@index([status])
@@ -174,19 +176,19 @@ model UserProfile {
 }
 
 model UserSecuritySettings {
-  id                  String   @id @default(cuid())
-  userId              String   @unique
-  securityEmailAlerts  Boolean   @default(true)
-  twoFactorEnabled    Boolean   @default(false)
-  twoFactorMethod     String?
+  id                       String    @id @default(cuid())
+  userId                   String    @unique
+  securityEmailAlerts      Boolean   @default(true)
+  twoFactorEnabled         Boolean   @default(false)
+  twoFactorMethod          String?
   twoFactorSecretEncrypted String?
-  twoFactorLastUsedStep BigInt?
-  recoveryCodesHash   String?
-  twoFactorEnabledAt  DateTime?
-  twoFactorDisabledAt DateTime?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime @updatedAt
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  twoFactorLastUsedStep    BigInt?
+  recoveryCodesHash        String?
+  twoFactorEnabledAt       DateTime?
+  twoFactorDisabledAt      DateTime?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+  user                     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
 }
@@ -209,6 +211,40 @@ model UserSessionActivity {
   @@unique([userId, sessionTokenHash])
   @@index([userId, lastSeenAt])
   @@index([revokedAt])
+}
+
+model UserPasskey {
+  id           String    @id @default(cuid())
+  userId       String
+  credentialId String    @unique
+  publicKey    String
+  counter      Int       @default(0)
+  transports   String?
+  deviceType   String?
+  backedUp     Boolean?
+  name         String?
+  createdAt    DateTime  @default(now())
+  lastUsedAt   DateTime?
+  revokedAt    DateTime?
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([createdAt])
+}
+
+model WebAuthnChallenge {
+  id         String    @id @default(cuid())
+  userId     String?
+  challenge  String    @unique
+  type       String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  loginToken String?   @unique
+  createdAt  DateTime  @default(now())
+  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, expiresAt])
+  @@index([loginToken])
 }
 
 model Account {
@@ -390,22 +426,22 @@ model NewsletterSubscriber {
 }
 
 model AccountDeletionRequest {
-  id                    String                       @id @default(cuid())
-  userId                String
-  email                 String
-  status                AccountDeletionRequestStatus @default(PENDING)
-  requestedAt           DateTime                     @default(now())
-  deletionScheduledAt   DateTime
-  cancelledAt           DateTime?
-  completedAt           DateTime?
-  supportTicketId       String?
-  adminNotificationId   String?
-  userReason            String?
-  cancellationMetadata  Json?
-  reviewNotes           String?
-  createdAt             DateTime                     @default(now())
-  updatedAt             DateTime                     @updatedAt
-  user                  User                         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  id                   String                       @id @default(cuid())
+  userId               String
+  email                String
+  status               AccountDeletionRequestStatus @default(PENDING)
+  requestedAt          DateTime                     @default(now())
+  deletionScheduledAt  DateTime
+  cancelledAt          DateTime?
+  completedAt          DateTime?
+  supportTicketId      String?
+  adminNotificationId  String?
+  userReason           String?
+  cancellationMetadata Json?
+  reviewNotes          String?
+  createdAt            DateTime                     @default(now())
+  updatedAt            DateTime                     @updatedAt
+  user                 User                         @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   @@index([userId, status])
   @@index([email])

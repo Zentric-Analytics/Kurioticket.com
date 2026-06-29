@@ -54,6 +54,7 @@ export function SigninForm({
   );
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [isPending, startTransition] = useTransition();
   const credentialsInFlightRef = useRef(false);
@@ -61,7 +62,7 @@ export function SigninForm({
   const resendInFlightRef = useRef(false);
   const credentialsRef = useRef<Credentials | null>(null);
 
-  const busy = loading || isPending;
+  const busy = loading || isPending || passkeyLoading;
 
   useEffect(() => {
     if (cooldownSeconds <= 0) return;
@@ -228,6 +229,34 @@ export function SigninForm({
     setResending(false);
   }
 
+
+  async function continueWithPasskey() {
+    if (!window.PublicKeyCredential || !navigator.credentials) {
+      setError({ key: "Passkeys are not supported on this browser. Use password sign-in instead." });
+      return;
+    }
+    setPasskeyLoading(true); setError(null); setMessage({ key: "Opening passkey prompt…" });
+    try {
+      const optionsResponse = await fetch("/api/auth/passkey/options", { method: "POST", credentials: "same-origin" });
+      const optionsData = await optionsResponse.json();
+      if (!optionsResponse.ok) throw new Error(optionsData.error || "Unable to start passkey sign-in.");
+      const publicKey = decodePublicKeyOptions(optionsData.options);
+      const credential = await navigator.credentials.get({ publicKey }) as PublicKeyCredential | null;
+      if (!credential) throw new Error("Passkey sign-in was cancelled.");
+      const verifyResponse = await fetch("/api/auth/passkey/verify", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(serializeCredential(credential)) });
+      const verifyData = await verifyResponse.json().catch(() => ({}));
+      if (!verifyResponse.ok || !verifyData.loginToken) throw new Error(verifyData.error || "Passkey sign-in failed.");
+      const result = await signIn("credentials", { redirect: false, passkeyLoginToken: verifyData.loginToken, callbackUrl });
+      if (!result?.ok) throw new Error("Passkey session could not be created.");
+      window.location.href = verifyData.redirectTo || result.url || callbackUrl;
+    } catch (error) {
+      setMessage(null);
+      setError({ key: error instanceof Error ? error.message : "Passkey sign-in failed. Use password sign-in instead." });
+    } finally {
+      setPasskeyLoading(false);
+    }
+  }
+
   async function requestLoginCode(credentials: Credentials) {
     const response = await fetch("/api/auth/request-login-code", {
       method: "POST",
@@ -377,6 +406,12 @@ export function SigninForm({
         </form>
       )}
 
+      {step === "credentials" ? (
+        <Button type="button" variant="secondary" className="mt-3 w-full hover:border-slate-300 hover:bg-slate-50 focus-visible:ring-violet-500" onClick={continueWithPasskey} disabled={busy}>
+          {passkeyLoading ? "Opening passkey prompt…" : "Continue with passkey"}
+        </Button>
+      ) : null}
+
       {googleEnabled && step === "credentials" ? (
         <Button
           variant="secondary"
@@ -471,4 +506,23 @@ function parseCooldownSeconds(data: unknown, fallback: number) {
   }
 
   return Math.ceil(cooldownSeconds);
+}
+
+function toBase64url(buffer: ArrayBuffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+function fromBase64url(value: string) {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+  return Uint8Array.from(atob(padded), (char) => char.charCodeAt(0)).buffer;
+}
+function decodePublicKeyOptions(options: PublicKeyCredentialRequestOptions & { challenge: string }) {
+  return { ...options, challenge: fromBase64url(options.challenge), allowCredentials: options.allowCredentials?.map((credential) => ({ ...credential, id: fromBase64url(String(credential.id)) })) };
+}
+function serializeCredential(credential: PublicKeyCredential) {
+  const response = credential.response as AuthenticatorAssertionResponse;
+  return { id: credential.id, rawId: toBase64url(credential.rawId), type: credential.type, response: { authenticatorData: toBase64url(response.authenticatorData), clientDataJSON: toBase64url(response.clientDataJSON), signature: toBase64url(response.signature), userHandle: response.userHandle ? toBase64url(response.userHandle) : null } };
 }
