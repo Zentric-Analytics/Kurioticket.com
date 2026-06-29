@@ -801,7 +801,7 @@ function DateOfBirthInput({
   return (
     <div className="grid min-w-0 grid-cols-1 gap-2 sm:max-w-[34rem] sm:grid-cols-[minmax(0,5.75rem)_minmax(0,12rem)_minmax(0,7.5rem)]">
       <select
-        className={className}
+        className={cn(className, "cursor-pointer")}
         value={parts.day}
         onChange={(event) => updatePart("day", event.target.value)}
         aria-label={t["accountDashboard.personalDetails.dateOfBirthDay"]}
@@ -816,7 +816,7 @@ function DateOfBirthInput({
         ))}
       </select>
       <select
-        className={className}
+        className={cn(className, "cursor-pointer")}
         value={parts.month}
         onChange={(event) => updatePart("month", event.target.value)}
         aria-label={t["accountDashboard.personalDetails.dateOfBirthMonth"]}
@@ -831,7 +831,7 @@ function DateOfBirthInput({
         ))}
       </select>
       <select
-        className={className}
+        className={cn(className, "cursor-pointer")}
         value={parts.year}
         onChange={(event) => updatePart("year", event.target.value)}
         aria-label={t["accountDashboard.personalDetails.dateOfBirthYear"]}
@@ -1015,7 +1015,7 @@ function StructuredAddressInput({
         </label>
         <select
           id="personal-address-country"
-          className={className}
+          className={cn(className, "cursor-pointer")}
           value={parts.countryCode}
           onChange={(event) => updatePart("countryCode", event.target.value)}
           autoComplete="country"
@@ -1249,7 +1249,7 @@ function NationalityInput({
 }) {
   return (
     <select
-      className={className}
+      className={cn(className, "cursor-pointer")}
       value={value}
       onChange={(event) => onChange(event.target.value)}
       aria-label={label}
@@ -1372,7 +1372,7 @@ function DetailInput({
   if (row.options) {
     return (
       <select
-        className={baseClassName}
+        className={cn(baseClassName, "cursor-pointer")}
         value={value}
         onChange={handleChange}
         aria-label={row.label}
@@ -1479,7 +1479,7 @@ function PersonalDetailsEmailEditRow({
             <button
               type="button"
               onClick={onStartChange}
-              className="focus-ring inline-flex min-h-9 w-fit items-center justify-center rounded-lg border border-blue-200 bg-white px-3 text-xs font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-50"
+              className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center rounded-lg border border-blue-200 bg-white px-3 text-xs font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-50"
             >
               Change email
             </button>
@@ -1517,7 +1517,7 @@ function PersonalDetailsEmailEditRow({
                   disabled={
                     Boolean(emailValidationError) || isBusy || isResendCoolingDown
                   }
-                  className="focus-ring inline-flex min-h-9 w-fit items-center justify-center rounded-lg bg-blue-700 px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-300"
+                  className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center rounded-lg bg-blue-700 px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-300"
                 >
                   {isRequestingCode ? "Sending…" : "Send verification code"}
                 </button>
@@ -1562,7 +1562,7 @@ function PersonalDetailsEmailEditRow({
                   type="button"
                   onClick={onCancel}
                   disabled={isBusy}
-                  className="focus-ring inline-flex min-h-9 w-fit items-center justify-center rounded-lg border border-slate-300 bg-white px-3.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white px-3.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Cancel
                 </button>
@@ -1574,7 +1574,7 @@ function PersonalDetailsEmailEditRow({
                     !isVerificationCodeValid ||
                     isBusy
                   }
-                  className="focus-ring inline-flex min-h-9 w-fit items-center justify-center rounded-lg bg-blue-700 px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-300"
+                  className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center rounded-lg bg-blue-700 px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-300"
                 >
                   {isConfirming ? "Updating…" : "Verify and update email"}
                 </button>
@@ -2121,7 +2121,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
               type="button"
               onClick={handleCancel}
               disabled={isSaving}
-              className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="focus-ring inline-flex min-h-11 w-auto cursor-pointer items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {t["accountDashboard.personalDetails.cancel"]}
             </button>
@@ -2129,7 +2129,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
               type="button"
               onClick={handleSave}
               disabled={isSaving || !hasUnsavedProfileChanges}
-              className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-100 disabled:text-blue-700"
+              className="focus-ring inline-flex min-h-11 w-auto cursor-pointer items-center justify-center rounded-xl bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-100 disabled:text-blue-700"
             >
               {isSaving
                 ? t["accountDashboard.personalDetails.saving"] || "Saving…"
@@ -2141,7 +2141,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
             <button
               type="button"
               onClick={handleEdit}
-              className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-blue-700 bg-white px-5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
+              className="focus-ring inline-flex min-h-11 w-auto cursor-pointer items-center justify-center rounded-xl border border-blue-700 bg-white px-5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
             >
               {t["accountDashboard.personalDetails.edit"]}
             </button>
