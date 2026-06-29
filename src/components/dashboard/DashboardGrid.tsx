@@ -966,66 +966,121 @@ function StructuredAddressInput({
     );
   };
 
+  const fieldLabelClassName =
+    "mb-1.5 block text-sm font-semibold leading-5 text-slate-900";
+
   return (
-    <div className="grid w-full min-w-0 grid-cols-1 gap-3 sm:max-w-2xl sm:grid-cols-6">
-      <select
-        className={cn(className, "sm:col-span-6")}
-        value={parts.countryCode}
-        onChange={(event) => updatePart("countryCode", event.target.value)}
-        aria-label="Country or region"
-        autoComplete="country"
-      >
-        <option value="" disabled hidden>
+    <div className="w-full min-w-0 max-w-3xl space-y-4">
+      <div className="max-w-md">
+        <label
+          className={fieldLabelClassName}
+          htmlFor="personal-address-country"
+        >
           Country/region
-        </option>
-        {personalDetailsDropdownOptions.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
+        </label>
+        <select
+          id="personal-address-country"
+          className={className}
+          value={parts.countryCode}
+          onChange={(event) => updatePart("countryCode", event.target.value)}
+          autoComplete="country"
+        >
+          <option value="" disabled hidden>
+            Country/region
           </option>
-        ))}
-      </select>
-      <input
-        className={cn(className, "sm:col-span-6")}
-        value={parts.addressLine1}
-        onChange={(event) => updatePart("addressLine1", event.target.value)}
-        placeholder="Street address"
-        aria-label="Street address"
-        autoComplete="address-line1"
-      />
-      <input
-        className={cn(className, "sm:col-span-3")}
-        value={parts.apartmentOrSuite}
-        onChange={(event) =>
-          updatePart("apartmentOrSuite", event.target.value)
-        }
-        placeholder="Apartment, suite, unit, building (optional)"
-        aria-label="Apartment, suite, unit, building (optional)"
-        autoComplete="address-line2"
-      />
-      <input
-        className={cn(className, "sm:col-span-2")}
-        value={parts.city}
-        onChange={(event) => updatePart("city", event.target.value)}
-        placeholder="Town / City"
-        aria-label="Town / City"
-        autoComplete="address-level2"
-      />
-      <input
-        className={cn(className, "sm:col-span-2")}
-        value={parts.stateOrRegion}
-        onChange={(event) => updatePart("stateOrRegion", event.target.value)}
-        placeholder="State / Province / Region"
-        aria-label="State / Province / Region"
-        autoComplete="address-level1"
-      />
-      <input
-        className={cn(className, "sm:col-span-2")}
-        value={parts.postalCode}
-        onChange={(event) => updatePart("postalCode", event.target.value)}
-        placeholder="Postcode / ZIP code"
-        aria-label="Postcode / ZIP code"
-        autoComplete="postal-code"
-      />
+          {personalDetailsDropdownOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="max-w-3xl">
+        <label
+          className={fieldLabelClassName}
+          htmlFor="personal-address-street"
+        >
+          Street address
+        </label>
+        <input
+          id="personal-address-street"
+          className={className}
+          value={parts.addressLine1}
+          onChange={(event) => updatePart("addressLine1", event.target.value)}
+          placeholder="Street address"
+          autoComplete="address-line1"
+        />
+      </div>
+      <div className="max-w-md">
+        <label
+          className={fieldLabelClassName}
+          htmlFor="personal-address-apartment"
+        >
+          Apartment, suite, unit, building
+        </label>
+        <input
+          id="personal-address-apartment"
+          className={className}
+          value={parts.apartmentOrSuite}
+          onChange={(event) =>
+            updatePart("apartmentOrSuite", event.target.value)
+          }
+          placeholder="Apartment, suite, unit, building"
+          autoComplete="address-line2"
+        />
+      </div>
+      <div className="grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="min-w-0">
+          <label
+            className={fieldLabelClassName}
+            htmlFor="personal-address-city"
+          >
+            Town / City
+          </label>
+          <input
+            id="personal-address-city"
+            className={className}
+            value={parts.city}
+            onChange={(event) => updatePart("city", event.target.value)}
+            placeholder="Town / City"
+            autoComplete="address-level2"
+          />
+        </div>
+        <div className="min-w-0">
+          <label
+            className={fieldLabelClassName}
+            htmlFor="personal-address-state"
+          >
+            State / Province / Region
+          </label>
+          <input
+            id="personal-address-state"
+            className={className}
+            value={parts.stateOrRegion}
+            onChange={(event) =>
+              updatePart("stateOrRegion", event.target.value)
+            }
+            placeholder="State / Province / Region"
+            autoComplete="address-level1"
+          />
+        </div>
+      </div>
+      <div className="max-w-xs">
+        <label
+          className={fieldLabelClassName}
+          htmlFor="personal-address-postal"
+        >
+          Postcode / ZIP code
+        </label>
+        <input
+          id="personal-address-postal"
+          className={className}
+          value={parts.postalCode}
+          onChange={(event) => updatePart("postalCode", event.target.value)}
+          placeholder="Postcode / ZIP code"
+          autoComplete="postal-code"
+        />
+      </div>
     </div>
   );
 }
@@ -1194,11 +1249,18 @@ function PersonalDetailsEditRow({
   value: string;
   onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
 }) {
+  const isAddress = row.key === "address";
+
   return (
-    <div className="grid grid-cols-1 gap-2 border-b border-slate-200 py-5 last:border-b-0 sm:grid-cols-[220px_minmax(0,1fr)] sm:gap-6">
-      <div className="pt-0.5 text-sm font-semibold leading-5 text-slate-900 sm:pt-2.5">
+    <div
+      className={cn(
+        "max-w-3xl py-3.5",
+        isAddress && "mt-5 border-t border-slate-200 pt-7",
+      )}
+    >
+      <label className="mb-1.5 block text-sm font-semibold leading-5 text-slate-900">
         {row.label}
-      </div>
+      </label>
       <div className="min-w-0">
         <DetailInput row={row} value={value} onChange={onChange} />
         {row.helper ? (
@@ -1221,7 +1283,7 @@ function DetailInput({
   onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
 }) {
   const baseClassName = cn(
-    "h-10 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-base font-medium leading-5 text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 sm:h-11 sm:max-w-xl sm:text-sm",
+    "h-10 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-base font-medium leading-5 text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 sm:max-w-lg sm:text-sm",
     row.readOnly &&
       "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-200 focus:border-slate-200 focus:ring-0",
   );
@@ -1468,10 +1530,18 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
 
   return (
     <section
-      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+      className={cn(
+        "overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm",
+        isEditing && "rounded-none border-0 bg-transparent shadow-none",
+      )}
       aria-labelledby="dashboard-title"
     >
-      <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
+      <div
+        className={cn(
+          "border-b border-slate-200 px-5 py-4 sm:px-6",
+          isEditing && "border-b-0 px-0 pb-5 pt-0",
+        )}
+      >
         <p className="text-sm text-slate-600">
           {t["accountDashboard.personalDetails.description"] ||
             "Manage the information Kurioticket uses for your account."}
@@ -1479,7 +1549,11 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       </div>
 
       {statusMessage || errorMessage ? (
-        <div className="px-5 pt-4 sm:px-6" role="status" aria-live="polite">
+        <div
+          className={cn("px-5 pt-4 sm:px-6", isEditing && "px-0")}
+          role="status"
+          aria-live="polite"
+        >
           <p
             className={cn(
               "rounded-xl px-4 py-3 text-sm font-medium",
@@ -1494,7 +1568,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       ) : null}
 
       {isEditing ? (
-        <div className="px-5 sm:px-6">
+        <div className="px-0">
           {personalDetailsFieldOrder.map((key) => renderEditField(key))}
         </div>
       ) : (
@@ -1503,7 +1577,12 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
         </div>
       )}
 
-      <div className="border-t border-slate-200 bg-slate-50/60 px-5 py-4 sm:px-6">
+      <div
+        className={cn(
+          "border-t border-slate-200 bg-slate-50/60 px-5 py-4 sm:px-6",
+          isEditing && "mt-4 bg-transparent px-0",
+        )}
+      >
         {isEditing ? (
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button
@@ -1517,7 +1596,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
             <button
               type="button"
               onClick={handleSave}
-              disabled={isSaving}
+              disabled
               className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-300 sm:w-auto"
             >
               {isSaving
