@@ -1717,6 +1717,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     setPersonalDetailsSaveMessage(null);
     setErrorMessage(null);
     setValidationErrors({});
+    setIsEditing(false);
   };
 
   const handleCancelEmailChange = () => {
