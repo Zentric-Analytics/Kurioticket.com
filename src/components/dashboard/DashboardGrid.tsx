@@ -1442,14 +1442,14 @@ function PersonalDetailsEmailEditRow({
         {row.label}
       </label>
       <div className="min-w-0 space-y-3">
-        <div className="flex max-w-[34rem] flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex max-w-[34rem] flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex min-h-11 items-center gap-2 rounded-none border border-slate-300 bg-slate-100 px-3.5 text-base font-medium leading-5 text-slate-700 sm:text-sm">
               <span className="min-w-0 flex-1 truncate">
                 {currentEmail || row.fallback}
               </span>
               {currentEmail ? (
-                <span className="shrink-0 border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                <span className="inline-flex shrink-0 items-center border border-emerald-100 bg-emerald-50/80 px-1.5 py-px text-[0.625rem] font-medium leading-4 text-emerald-700">
                   Verified
                 </span>
               ) : null}
@@ -1459,7 +1459,7 @@ function PersonalDetailsEmailEditRow({
             <button
               type="button"
               onClick={onStartChange}
-              className="focus-ring inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-blue-700 bg-white px-4 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 sm:w-auto"
+              className="focus-ring inline-flex min-h-9 w-fit items-center justify-center rounded-lg border border-blue-200 bg-white px-3 text-xs font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-50"
             >
               Change email
             </button>
@@ -1490,14 +1490,14 @@ function PersonalDetailsEmailEditRow({
                   autoComplete="email"
                 />
               </div>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                 <button
                   type="button"
                   onClick={onRequestCode}
                   disabled={
                     Boolean(emailValidationError) || isBusy || isResendCoolingDown
                   }
-                  className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-300 sm:w-auto"
+                  className="focus-ring inline-flex min-h-9 w-fit items-center justify-center rounded-lg bg-blue-700 px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-300"
                 >
                   {isRequestingCode ? "Sending…" : "Send verification code"}
                 </button>
@@ -1537,12 +1537,12 @@ function PersonalDetailsEmailEditRow({
                   {successMessage}
                 </p>
               ) : null}
-              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
+              <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-3">
                 <button
                   type="button"
                   onClick={onCancel}
                   disabled={isBusy}
-                  className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                  className="focus-ring inline-flex min-h-9 w-fit items-center justify-center rounded-lg border border-slate-300 bg-white px-3.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Cancel
                 </button>
@@ -1554,7 +1554,7 @@ function PersonalDetailsEmailEditRow({
                     !isVerificationCodeValid ||
                     isBusy
                   }
-                  className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-300 sm:w-auto"
+                  className="focus-ring inline-flex min-h-9 w-fit items-center justify-center rounded-lg bg-blue-700 px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-300"
                 >
                   {isConfirming ? "Updating…" : "Verify and update email"}
                 </button>
