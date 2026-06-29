@@ -1524,19 +1524,14 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       )}
       aria-labelledby="dashboard-title"
     >
-      <div
-        className={cn(
-          "border-b border-slate-200 px-5 py-4 sm:px-6",
-          isEditing && "mx-auto max-w-[64rem] border-b-0 px-0 pb-8 pt-0",
-        )}
-      >
-        <p className={cn("text-sm text-slate-600", isEditing && "leading-6")}>
-          {isEditing
-            ? "Update your information and manage how it is used across Kurioticket."
-            : t["accountDashboard.personalDetails.description"] ||
+      {!isEditing ? (
+        <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
+          <p className="text-sm text-slate-600">
+            {t["accountDashboard.personalDetails.description"] ||
               "Manage the information Kurioticket uses for your account."}
-        </p>
-      </div>
+          </p>
+        </div>
+      ) : null}
 
       {statusMessage || errorMessage ? (
         <div
