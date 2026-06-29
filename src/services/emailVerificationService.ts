@@ -138,6 +138,85 @@ export async function verifyEmailCode(input: { email: string; code: string }) {
   return verified;
 }
 
+export async function sendAccountEmailChangeCode(input: { userId: string; newEmail: string; name?: string | null; enforceCooldown?: boolean }): Promise<SendCodeResult> {
+  const newEmail = input.newEmail.toLowerCase().trim();
+  const identifier = getAccountEmailChangeIdentifier(input.userId, newEmail);
+  if (input.enforceCooldown) {
+    reserveResendCooldown(identifier);
+  }
+
+  const code = randomInt(100000, 1000000).toString();
+  const token = hashVerificationCode(identifier, code);
+  const expires = new Date(Date.now() + verificationCodeTtlMinutes * 60 * 1000);
+
+  try {
+    await getPrisma().verificationToken.deleteMany({ where: { identifier } });
+    await getPrisma().verificationToken.create({
+      data: { identifier, token, expires },
+    });
+
+    await sendTransactionalEmail({
+      to: newEmail,
+      subject: "Confirm your new Kurioticket email address",
+      html: verificationCodeEmail({
+        code,
+        name: input.name,
+        expiresInMinutes: verificationCodeTtlMinutes,
+        verifyUrl: `${getBaseUrl()}/dashboard/account`,
+      }),
+      idempotencyKey: `account-email-change-${input.userId}-${newEmail}-${token.slice(0, 16)}`,
+      requireConfigured: true,
+    });
+
+    console.info("[account-email-change:sent]", { userId: input.userId, newEmail });
+
+    return {
+      cooldownSeconds: input.enforceCooldown
+        ? getRemainingCooldownSeconds(identifier) || getCooldownSeconds()
+        : 0,
+    };
+  } catch (error) {
+    if (input.enforceCooldown) {
+      clearResendCooldown(identifier);
+    }
+
+    console.error("[account-email-change:failed]", {
+      userId: input.userId,
+      newEmail,
+      message: error instanceof Error ? error.message : String(error),
+      status: error instanceof EmailDeliveryError ? error.statusCode : undefined,
+    });
+
+    throw new EmailVerificationError("Unable to send verification code right now.");
+  }
+}
+
+export async function verifyAccountEmailChangeCode(input: { userId: string; newEmail: string; code: string }) {
+  const newEmail = input.newEmail.toLowerCase().trim();
+  const code = input.code.trim();
+  if (!/^\d{6}$/.test(code)) return false;
+
+  const identifier = getAccountEmailChangeIdentifier(input.userId, newEmail);
+  const token = hashVerificationCode(identifier, code);
+  const verificationToken = await getPrisma().verificationToken.findUnique({
+    where: { identifier_token: { identifier, token } },
+  });
+
+  if (!verificationToken || verificationToken.expires <= new Date()) {
+    if (verificationToken) {
+      await getPrisma().verificationToken.deleteMany({ where: { identifier, token } });
+    }
+    return false;
+  }
+
+  return true;
+}
+
+export async function consumeAccountEmailChangeCode(input: { userId: string; newEmail: string }) {
+  const identifier = getAccountEmailChangeIdentifier(input.userId, input.newEmail.toLowerCase().trim());
+  await getPrisma().verificationToken.deleteMany({ where: { identifier } });
+}
+
 function reserveResendCooldown(key: string) {
   const retryAfterSeconds = getRemainingCooldownSeconds(key);
 
@@ -253,4 +332,8 @@ export async function verifyLoginCode(input: { email: string; code: string }) {
 
 function getLoginVerificationIdentifier(email: string) {
   return `login-verification:${email}`;
+}
+
+export function getAccountEmailChangeIdentifier(userId: string, newEmail: string) {
+  return `email-change:${userId}:${newEmail.toLowerCase().trim()}`;
 }
