@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -15,8 +15,29 @@ const maxEmailLength = 254;
 const rateLimitWindowMs = 10 * 60 * 1000;
 const rateLimitMaxAttempts = 5;
 const rateLimitBuckets = new Map<string, { count: number; resetAt: number }>();
+const newsletterConsentTextVersion = "newsletter-homepage-v1";
 
-type NewsletterSubscriptionStatus = "SUBSCRIBED" | "UNSUBSCRIBED" | "NOT_FOUND";
+const nonSendableStatuses = new Set<NewsletterSubscriptionStatus>([
+  "BOUNCED",
+  "COMPLAINED",
+  "SUPPRESSED",
+]);
+
+type NewsletterSubscriptionStatus =
+  | "PENDING_CONFIRMATION"
+  | "SUBSCRIBED"
+  | "UNSUBSCRIBED"
+  | "BOUNCED"
+  | "COMPLAINED"
+  | "SUPPRESSED"
+  | "NOT_FOUND";
+
+type NewsletterSubscriberRow = {
+  id: string;
+  email: string;
+  status: Exclude<NewsletterSubscriptionStatus, "NOT_FOUND">;
+  unsubscribeTokenHash: string | null;
+};
 
 type SubscribeResponse = {
   ok: boolean;
@@ -104,6 +125,102 @@ async function getAuthenticatedEmail() {
   return session?.user?.email?.toLowerCase().trim() || null;
 }
 
+async function findNewsletterSubscriber(email: string) {
+  const rows = await getPrisma().$queryRaw<NewsletterSubscriberRow[]>`
+    SELECT id, email, status, "unsubscribeTokenHash"
+    FROM "NewsletterSubscriber"
+    WHERE email = ${email}
+    LIMIT 1
+  `;
+
+  return rows[0] || null;
+}
+
+async function upsertSubscribedNewsletterSubscriber(input: {
+  email: string;
+  source: string;
+  locale?: string;
+  regionCode?: string;
+  ipHash: string | null;
+  userAgent: string | null;
+  tokenHash: string;
+  now: Date;
+  preserveSubscribedAt: boolean;
+}) {
+  await getPrisma().$executeRaw`
+    INSERT INTO "NewsletterSubscriber" (
+      id,
+      email,
+      status,
+      source,
+      locale,
+      "regionCode",
+      "ipHash",
+      "userAgent",
+      "subscribedAt",
+      "unsubscribeTokenHash",
+      "createdAt",
+      "updatedAt",
+      "consentTextVersion",
+      "consentSource",
+      "consentedAt",
+      "confirmedAt",
+      "unsubscribedAt",
+      "suppressionReason",
+      "suppressedAt",
+      "bouncedAt",
+      "complainedAt",
+      "lastDeliveryEventAt"
+    ) VALUES (
+      ${randomUUID()},
+      ${input.email},
+      'SUBSCRIBED'::"NewsletterSubscriberStatus",
+      ${input.source},
+      ${input.locale || null},
+      ${input.regionCode || null},
+      ${input.ipHash},
+      ${input.userAgent},
+      ${input.now},
+      ${input.tokenHash},
+      ${input.now},
+      ${input.now},
+      ${newsletterConsentTextVersion},
+      ${input.source},
+      ${input.now},
+      ${input.now},
+      NULL,
+      NULL,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+    )
+    ON CONFLICT (email) DO UPDATE SET
+      status = 'SUBSCRIBED'::"NewsletterSubscriberStatus",
+      source = EXCLUDED.source,
+      locale = EXCLUDED.locale,
+      "regionCode" = EXCLUDED."regionCode",
+      "ipHash" = EXCLUDED."ipHash",
+      "userAgent" = EXCLUDED."userAgent",
+      "subscribedAt" = CASE
+        WHEN ${input.preserveSubscribedAt} THEN "NewsletterSubscriber"."subscribedAt"
+        ELSE EXCLUDED."subscribedAt"
+      END,
+      "unsubscribeTokenHash" = EXCLUDED."unsubscribeTokenHash",
+      "updatedAt" = EXCLUDED."updatedAt",
+      "consentTextVersion" = EXCLUDED."consentTextVersion",
+      "consentSource" = EXCLUDED."consentSource",
+      "consentedAt" = EXCLUDED."consentedAt",
+      "confirmedAt" = EXCLUDED."confirmedAt",
+      "unsubscribedAt" = NULL,
+      "suppressionReason" = NULL,
+      "suppressedAt" = NULL,
+      "bouncedAt" = NULL,
+      "complainedAt" = NULL,
+      "lastDeliveryEventAt" = NULL
+  `;
+}
+
 async function sendWelcomeEmail(input: {
   email: string;
   source: string;
@@ -120,7 +237,7 @@ async function sendWelcomeEmail(input: {
       replyTo: process.env.NEWSLETTER_REPLY_TO || undefined,
       idempotencyKey: `newsletter-welcome-${input.email}`,
       template: "newsletter_welcome",
-      metadata: { source: input.source },
+      metadata: { source: input.source, consentTextVersion: newsletterConsentTextVersion },
     });
   } catch (error) {
     console.error("[newsletter:welcome-email-failed]", error);
@@ -135,10 +252,7 @@ export async function GET() {
   }
 
   try {
-    const subscriber = await getPrisma().newsletterSubscriber.findUnique({
-      where: { email },
-      select: { status: true },
-    });
+    const subscriber = await findNewsletterSubscriber(email);
 
     return NextResponse.json({
       authenticated: true,
@@ -205,37 +319,32 @@ export async function POST(request: NextRequest) {
   const unsubscribeTokenHash = hashNewsletterToken(newsletterToken);
 
   try {
-    const db = getPrisma();
-    const existing = await db.newsletterSubscriber.findUnique({
-      where: { email },
-      select: { id: true, status: true },
-    });
+    const existing = await findNewsletterSubscriber(email);
+
+    if (existing && nonSendableStatuses.has(existing.status)) {
+      return jsonResponse(
+        {
+          ok: false,
+          message: "We can’t subscribe this email right now because previous newsletter email could not be delivered or was marked as unwanted. Please contact support if this is a mistake.",
+          status: existing.status,
+          email,
+        },
+        409,
+      );
+    }
+
     const shouldSendWelcome = !existing || existing.status === "UNSUBSCRIBED";
 
-    await db.newsletterSubscriber.upsert({
-      where: { email },
-      create: {
-        email,
-        status: "SUBSCRIBED",
-        source,
-        locale,
-        regionCode,
-        ipHash,
-        userAgent,
-        subscribedAt: now,
-        unsubscribeTokenHash,
-      },
-      update: {
-        status: "SUBSCRIBED",
-        source,
-        locale,
-        regionCode,
-        ipHash,
-        userAgent,
-        ...(existing?.status === "SUBSCRIBED" ? {} : { subscribedAt: now }),
-        unsubscribedAt: null,
-        unsubscribeTokenHash,
-      },
+    await upsertSubscribedNewsletterSubscriber({
+      email,
+      source,
+      locale,
+      regionCode,
+      ipHash,
+      userAgent,
+      tokenHash: unsubscribeTokenHash,
+      now,
+      preserveSubscribedAt: existing?.status === "SUBSCRIBED",
     });
 
     if (shouldSendWelcome) {
