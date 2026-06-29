@@ -2710,6 +2710,159 @@ test("Turkish hotels results copy is localized without English fallback and pres
   );
 });
 
+test("Polish hotels results active render path copy is localized without English fallback", () => {
+  const expectedPolishHotelResultsStrings = {
+    clearAll: "Wyczyść wszystko",
+    filters: "Filtry",
+    closeFilters: "Zamknij filtry",
+    done: "Gotowe",
+    search: "Szukaj",
+    hotelSearchDestinationLabel: "CEL PODRÓŻY",
+    hotelSearchTravelDatesLabel: "DATY PODRÓŻY",
+    hotelSearchGuestsLabel: "GOŚCIE",
+    guestSingular: "gość",
+    guestPlural: "gości",
+    roomSingular: "pokój",
+    roomPlural: "pokoje",
+    "hotelResults.openFilters": "Otwórz filtry",
+    "hotelResults.selectDateAriaPrefix": "Wybierz",
+    "hotelResults.foundPlacesToStay": "Znaleźliśmy dla Ciebie {{count}} miejsc na pobyt",
+    "hotelResults.summaryAria": "Podsumowanie wyników hoteli",
+    "hotelResults.cheapest": "NAJTAŃSZE",
+    "hotelResults.lowestTotalPrice": "Najniższa cena całkowita",
+    "hotelResults.bestValue": "NAJLEPSZA WARTOŚĆ",
+    "hotelResults.bestBalance": "Najlepsza równowaga",
+    "hotelResults.topRated": "NAJWYŻEJ OCENIANE",
+    "hotelResults.highestRating": "Najwyższa ocena",
+    "hotelResults.valueScore": "ocena {{score}}/100",
+    "hotelResults.starPlural": "{{count}} gwiazdek",
+    "hotelResults.activeHotelFilters": "Aktywne filtry hoteli",
+    "hotelResults.filterBy": "Filtruj według",
+    "hotelResults.removeFilter": "Usuń filtr {{label}}",
+    "hotelResults.budgetPrice": "Budżet / cena",
+    "hotelResults.totalUpTo": "Łącznie do",
+    "hotelResults.popularFilters": "Popularne filtry",
+    "hotelResults.starRating": "Ocena gwiazdkowa",
+    "hotelResults.fromRating": "Od",
+    "hotelResults.propertyType": "Typ obiektu",
+    "hotelResults.roomType": "Typ pokoju",
+    "hotelResults.bedType": "Typ łóżka",
+    "hotelResults.meals": "Wyżywienie",
+    "hotelResults.resetFilters": "Resetuj filtry",
+    "hotelResults.showLess": "Pokaż mniej",
+    "hotelResults.showMore": "Pokaż więcej ({{count}})",
+    "hotelResults.upToPrice": "Do {{price}}",
+    "hotelResults.starsAndUp": "{{rating}}+ gwiazdek",
+    "hotelResults.hotelImageAlt": "Opcja pobytu {{name}}{{location}}",
+    "hotelResults.nearLocation": "w pobliżu {{location}}",
+    "hotelResults.starHotelAria": "Hotel {{rating}}-gwiazdkowy",
+    "hotelResults.estimatedStayTotal": "szacowana suma pobytu",
+    "hotelResults.pricePerNight": "{{price}} za noc",
+    "hotelResults.viewHotel": "Zobacz hotel",
+    "hotelResults.filter.breakfastIncludedAvailable": "Śniadanie w cenie/dostępne",
+    "hotelResults.filter.hotel": "Hotel",
+    "hotelResults.filter.doubleRoom": "Pokój dwuosobowy",
+    "hotelResults.filter.singleRoom": "Pokój jednoosobowy",
+    "hotelResults.filter.kingBed": "Łóżko king-size",
+    "hotelResults.filter.bedAndBreakfast": "Nocleg ze śniadaniem",
+    "hotelResults.filter.roomOnly": "Tylko pokój",
+    "hotelResults.filter.doubleBusiness": "Pokój dwuosobowy Business",
+    "hotelResults.filter.deluxeKingRoom": "Pokój Deluxe z łóżkiem king-size",
+    "hotelResults.filter.luxuryKing": "Luksusowy pokój z łóżkiem king-size",
+    "hotelResults.filter.singleStandard": "Pokój jednoosobowy Standard",
+    "hotelResults.filter.superiorRoom": "Pokój Superior",
+  };
+
+  for (const [key, value] of Object.entries(expectedPolishHotelResultsStrings)) {
+    assert.equal(plTranslations[key], value, `pl ${key} should use the audited Polish hotels results copy`);
+
+    if (enTranslations[key] !== value) {
+      assert.notEqual(plTranslations[key], enTranslations[key], `pl ${key} should not fall back to English`);
+    }
+  }
+
+  assert.equal(
+    plTranslations["hotelResults.foundPlacesToStay"].replace("{{count}}", "6"),
+    "Znaleźliśmy dla Ciebie 6 miejsc na pobyt",
+  );
+  assert.equal(
+    plTranslations["hotelResults.valueScore"].replace("{{score}}", "75"),
+    "ocena 75/100",
+  );
+  assert.equal(
+    plTranslations["hotelResults.starPlural"].replace("{{count}}", "5"),
+    "5 gwiazdek",
+  );
+  assert.equal(
+    plTranslations["hotelResults.pricePerNight"].replace("{{price}}", "€190.54"),
+    "€190.54 za noc",
+  );
+  assert.equal(
+    `${plTranslations.guestSingular}, ${plTranslations.roomSingular}`,
+    "gość, pokój",
+  );
+
+  const selectedDestination = "lagos";
+  const selectedDateSummary = "29 cze — 1 lip";
+  const selectedGuestsRoomsSummary = `1 ${plTranslations.guestSingular}, 1 ${plTranslations.roomSingular}`;
+  assert.equal(selectedDestination, "lagos");
+  assert.equal(selectedDateSummary, "29 cze — 1 lip");
+  assert.equal(selectedGuestsRoomsSummary, "1 gość, 1 pokój");
+
+  const hotelResultsClientSource = readFileSync("src/components/results/HotelResultsClient.tsx", "utf8");
+  const hotelCardSource = readFileSync("src/components/results/HotelCard.tsx", "utf8");
+  const hotelSearchBarSource = readFileSync("src/components/search/HotelSearchBar.tsx", "utf8");
+
+  for (const key of [
+    "hotelResults.cheapest",
+    "hotelResults.bestValue",
+    "hotelResults.topRated",
+    "hotelResults.foundPlacesToStay",
+    "hotelResults.filterBy",
+    "hotelResults.budgetPrice",
+    "hotelResults.popularFilters",
+    "hotelResults.propertyType",
+    "hotelResults.roomType",
+    "hotelResults.bedType",
+    "hotelResults.meals",
+  ]) {
+    assert.match(hotelResultsClientSource, new RegExp(`t\\(\"${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\"`), `${key} should be read by the active /hotels/results client render path`);
+  }
+
+  for (const key of [
+    "hotelResults.estimatedStayTotal",
+    "hotelResults.pricePerNight",
+    "hotelResults.viewHotel",
+    "hotelResults.filter.doubleBusiness",
+    "hotelResults.filter.bedAndBreakfast",
+    "hotelResults.filter.deluxeKingRoom",
+    "hotelResults.filter.luxuryKing",
+    "hotelResults.filter.singleStandard",
+    "hotelResults.filter.superiorRoom",
+    "hotelResults.filter.doubleRoom",
+    "hotelResults.filter.roomOnly",
+    "hotelResults.hotelImageAlt",
+    "hotelResults.starHotelAria",
+  ]) {
+    assert.ok(hotelCardSource.includes(key), `${key} should be read by the active hotel result card render path`);
+  }
+
+  for (const key of [
+    "hotelSearchDestinationLabel",
+    "hotelSearchTravelDatesLabel",
+    "hotelSearchGuestsLabel",
+    "guestSingular",
+    "roomSingular",
+    "hotelResults.openFilters",
+    "hotelResults.selectDateAriaPrefix",
+  ]) {
+    assert.ok(hotelSearchBarSource.includes(key), `${key} should be read by the active hotels edit/search bar render path`);
+  }
+
+  assert.equal(languageOptions.find((option) => option.code === "pl")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
+});
+
 test("Hindi homepage search support newsletter and footer strings are localized", () => {
   const expectedHindiHomepageStrings = {
     fromPlaceholder: "कहाँ से?",
