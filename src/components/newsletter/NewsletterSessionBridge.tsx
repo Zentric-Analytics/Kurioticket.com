@@ -19,33 +19,37 @@ export function NewsletterSessionBridge() {
   useEffect(() => {
     if (pathname !== "/" || status === "loading") return;
 
-    const email = status === "authenticated" ? session?.user?.email?.trim() : "";
     const input = document.querySelector<HTMLInputElement>('main input[type="email"]');
     const form = input?.closest("form") as HTMLFormElement | null;
     const container = form?.parentElement || null;
 
     if (!input || !form || !container) return;
 
-    const existingContext = container.querySelector(`.${accountContextClassName}`);
+    const newsletterInput = input;
+    const newsletterForm = form;
+    const newsletterContainer = container;
+    const email = status === "authenticated" ? session?.user?.email?.trim() : "";
+
+    const existingContext = newsletterContainer.querySelector(`.${accountContextClassName}`);
     existingContext?.remove();
 
     if (!email) {
-      restoreGuestNewsletterForm(input, form);
+      restoreGuestNewsletterForm(newsletterInput, newsletterForm);
       return;
     }
 
     const accountEmail = email;
 
-    applyReactControlledInputValue(input, accountEmail);
-    input.required = false;
-    input.setAttribute("aria-hidden", "true");
-    input.tabIndex = -1;
-    input.style.display = "none";
+    applyReactControlledInputValue(newsletterInput, accountEmail);
+    newsletterInput.required = false;
+    newsletterInput.setAttribute("aria-hidden", "true");
+    newsletterInput.tabIndex = -1;
+    newsletterInput.style.display = "none";
 
     const accountContext = document.createElement("div");
     accountContext.className = `${accountContextClassName} rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-2 text-xs font-semibold leading-5 text-slate-700 sm:max-w-[34rem]`;
     accountContext.textContent = `Updates will be sent to your account email: ${accountEmail}`;
-    container.insertBefore(accountContext, form);
+    newsletterContainer.insertBefore(accountContext, newsletterForm);
 
     let cancelled = false;
 
@@ -63,18 +67,18 @@ export function NewsletterSessionBridge() {
 
         if (data.status === "SUBSCRIBED") {
           accountContext.textContent = `You’re subscribed to Kurioticket updates at ${accountEmail}.`;
-          form.style.display = "none";
+          newsletterForm.style.display = "none";
           return;
         }
 
         if (data.status === "UNSUBSCRIBED") {
           accountContext.textContent = `You previously unsubscribed. Resubscribe with your account email: ${accountEmail}.`;
-          form.style.display = "flex";
+          newsletterForm.style.display = "flex";
           return;
         }
 
         accountContext.textContent = `Subscribe with your account email: ${accountEmail}.`;
-        form.style.display = "flex";
+        newsletterForm.style.display = "flex";
       } catch (error) {
         console.error("[newsletter:session-bridge]", error);
       }
@@ -85,7 +89,7 @@ export function NewsletterSessionBridge() {
     return () => {
       cancelled = true;
       accountContext.remove();
-      restoreGuestNewsletterForm(input, form);
+      restoreGuestNewsletterForm(newsletterInput, newsletterForm);
     };
   }, [pathname, session?.user?.email, status]);
 
