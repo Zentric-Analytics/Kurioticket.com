@@ -4167,6 +4167,7 @@ test("Polish homepage-visible copy resolves without English fallback", () => {
     onlyShowPetFriendlyStays: "Pokaż tylko obiekty akceptujące zwierzęta",
     business: "Biznes",
     first: "Pierwsza",
+    fromPrice: "Od",
     homePopularDestinations: "Popularne kierunki",
     "homePopularDestinationCity.dubai": "Dubaj",
     "homePopularDestinationCountry.unitedArabEmirates": "Zjednoczone Emiraty Arabskie",
@@ -4223,6 +4224,10 @@ test("Polish homepage-visible copy resolves without English fallback", () => {
     }
   }
 
+  const expectedRenderedFare = `${pl.fromPrice.toLocaleLowerCase("pl-PL")} NGN 714,974`;
+  assert.equal(expectedRenderedFare, "od NGN 714,974");
+  assert.doesNotMatch(expectedRenderedFare, /^from\s/);
+  assert.match(expectedRenderedFare, /NGN 714,974$/);
   assert.equal(`${1} ${pl.adultSingular}, ${pl.economy.toLocaleLowerCase("pl-PL")}`, "1 dorosły, ekonomiczna");
   assert.equal(`${1} ${pl.guestSingular}, ${1} ${pl.roomSingular}`, "1 gość, 1 pokój");
 });
@@ -4361,8 +4366,27 @@ test("Polish homepage render paths keep using i18n keys and preserve route/searc
   assert.match(searchSource, /formatAirportLabel\(option, locale\)/);
   assert.match(searchSource, /setHotelAdultCount/);
   assert.match(searchSource, /setRooms/);
+  assert.match(pageSource, /function DestinationPricePill\(/);
+  assert.match(pageSource, /function DiscoveryPricePill\(/);
+  assert.match(pageSource, /<DestinationPricePill[\s\S]*price=\{price\}[\s\S]*displayCurrency=\{displayCurrency\}[\s\S]*expectedOriginCode=\{originCode\}[\s\S]*expectedDestinationCode=\{destinationCode\}/);
+  assert.match(pageSource, /<DiscoveryPricePill[\s\S]*price=\{price\}[\s\S]*displayCurrency=\{displayCurrency\}[\s\S]*expectedOriginCode=\{expectedOriginCode\}[\s\S]*expectedDestinationCode=\{expectedDestinationCode\}/);
+  assert.equal(pageSource.match(/t\("fromPrice"\)\.toLowerCase\(\)/g)?.length, 2);
+  assert.match(pageSource, /buildDiscoveryCardHref\(card\.fare, \{[\s\S]*originCode: card\.item\.originCode,[\s\S]*destinationCode: card\.item\.destinationCode,[\s\S]*displayCurrency: selectedOption\.currency,[\s\S]*market: regionCode/);
+  assert.match(pageSource, /buildDestinationCardHref\(price, \{[\s\S]*originCode: destination\.originCode,[\s\S]*destinationCode: destination\.code,[\s\S]*displayCurrency: selectedOption\.currency,[\s\S]*market: regionCode/);
   assert.match(pageSource, /fetch\(\s*"\/api\/newsletter\/subscribe"/);
   assert.match(pageSource, /method: "POST"/);
+});
+
+test("Polish homepage fare price prefixes resolve to od without changing fare details", () => {
+  const pl = getTranslations("pl");
+  const prefix = pl.fromPrice.toLocaleLowerCase("pl-PL");
+  const formattedFare = "NGN 714,974";
+
+  assert.equal(pl.fromPrice, "Od");
+  assert.notEqual(pl.fromPrice, enTranslations.fromPrice);
+  assert.equal(`${prefix} ${formattedFare}`, "od NGN 714,974");
+  assert.equal(`${prefix} ${formattedFare}`, `${prefix} NGN 714,974`);
+  assert.doesNotMatch(`${prefix} ${formattedFare}`, /^from NGN/);
 });
 
 test("Polish homepage discovery route cards render one route prefix from route data", () => {
