@@ -747,6 +747,136 @@ test("Hindi Deals page copy resolves without English fallback", () => {
   }
 });
 
+test("Polish Deals page copy resolves without English fallback", () => {
+  const pl = getTranslations("pl");
+  const auditedPolishDealsKeys: Array<[string, string]> = [
+    ["deals.heroTitle", "Znajdź oferty podróży na kolejny wyjazd"],
+    ["deals.heroSubtitle", "Wyszukuj loty, pobyty i samochody razem w jednym miejscu."],
+    ["deals.packageLegend", "Wybierz typ pakietu"],
+    ["deals.package.hotelFlight", "Hotel + lot"],
+    ["deals.package.hotelFlightCar", "Hotel + lot + samochód"],
+    ["deals.package.flightCar", "Lot + samochód"],
+    ["deals.package.hotelCar", "Hotel + samochód"],
+    ["deals.originLabel", "SKĄD?"],
+    ["deals.destinationLabel", "DOKĄD?"],
+    ["deals.datesLabel", "DATY PODRÓŻY"],
+    ["deals.travelersRoomsLabel", "PODRÓŻNI / POKOJE"],
+    ["deals.travelersCarsLabel", "PODRÓŻNI / SAMOCHODY"],
+    ["deals.travelersCabinLabel", "PODRÓŻNI / KABINA"],
+    ["deals.travelersDetailsLabel", "PODRÓŻNI / SZCZEGÓŁY"],
+    ["deals.travelersRoomsCarLabel", "PODRÓŻNI / POKOJE / SAMOCHÓD"],
+    ["deals.originPlaceholder", "Miasto lub lotnisko"],
+    ["deals.destinationPlaceholder", "Miasto, lotnisko lub obszar"],
+    ["deals.dateFlightPlaceholder", "Wylot — powrót"],
+    ["deals.dateHotelPlaceholder", "Zameldowanie — wymeldowanie"],
+    ["deals.dateDialog", "Wybierz daty podróży"],
+    ["deals.departDate", "Wylot"],
+    ["deals.returnDate", "Powrót"],
+    ["deals.travelerSingular", "podróżny"],
+    ["deals.travelerPlural", "podróżnych"],
+    ["deals.roomSingular", "pokój"],
+    ["deals.roomPlural", "pokoje"],
+    ["deals.driverAge", "Wiek kierowcy"],
+    ["deals.cabinClass", "Klasa kabiny"],
+    ["deals.cabin.economy", "Ekonomiczna"],
+    ["deals.cabin.business", "Biznes"],
+    ["deals.cabin.first", "Pierwsza"],
+    ["deals.clearOrigin", "Wyczyść miejsce wylotu"],
+    ["deals.clearDestination", "Wyczyść kierunek"],
+    ["deals.previous", "Poprzedni"],
+    ["deals.next", "Następny"],
+    ["deals.weekday.sun", "Nd"],
+    ["deals.weekday.mon", "Pn"],
+    ["deals.weekday.tue", "Wt"],
+    ["deals.weekday.wed", "Śr"],
+    ["deals.weekday.thu", "Cz"],
+    ["deals.weekday.fri", "Pt"],
+    ["deals.weekday.sat", "Sb"],
+    ["deals.selectDateAriaPrefix", "Wybierz"],
+    ["deals.error.origin", "Wpisz miasto lub lotnisko wylotu."],
+    ["deals.error.destination", "Wpisz kierunek."],
+    ["deals.error.startDate", "Wybierz datę rozpoczęcia."],
+    ["deals.error.endDate", "Wybierz datę zakończenia."],
+    ["deals.error.dateOrder", "Data zakończenia musi być późniejsza niż data rozpoczęcia."],
+    ["deals.error.adults", "Wymagany jest co najmniej jeden dorosły."],
+    ["deals.error.children", "Liczba dzieci nie może być mniejsza niż zero."],
+    ["deals.error.rooms", "Wymagany jest co najmniej jeden pokój."],
+    ["deals.error.guests", "Wymagany jest co najmniej jeden gość."],
+    ["deals.destinationIdeasTitle", "Miejsca, od których warto zacząć szukanie ofert"],
+    [
+      "deals.destinationIdeasSubtitle",
+      "Wybierz pomysł na kierunek, a następnie porównaj wyniki dostawców po przejściu dalej.",
+    ],
+    ["deals.destinationCardAriaPrefix", "Szukaj pomysłów na podróż do"],
+    ["deals.destination.tokyo.city", "Tokio"],
+    ["deals.destination.tokyo.country", "Japonia"],
+    ["deals.destination.london.city", "Londyn"],
+    ["deals.destination.london.country", "Wielka Brytania"],
+    ["deals.destination.paris.city", "Paryż"],
+    ["deals.destination.paris.country", "Francja"],
+    ["deals.destination.dubai.city", "Dubaj"],
+    ["deals.destination.dubai.country", "Zjednoczone Emiraty Arabskie"],
+    ["deals.destination.cancun.city", "Cancun"],
+    ["deals.destination.cancun.country", "Meksyk"],
+    ["deals.destination.rome.city", "Rzym"],
+    ["deals.destination.rome.country", "Włochy"],
+  ];
+
+  for (const [key, expected] of auditedPolishDealsKeys) {
+    assert.equal(pl[key], expected, key);
+    if (expected !== enTranslations[key]) {
+      assert.notEqual(pl[key], enTranslations[key], key);
+    }
+  }
+
+  assert.equal(pl.search, "Szukaj");
+
+  const dealsPageSource = readFileSync("src/app/deals/page.tsx", "utf8");
+  for (const renderPathToken of [
+    't("deals.heroTitle")',
+    't("deals.heroSubtitle")',
+    'labelKey: "deals.package.hotelFlight"',
+    'labelKey: "deals.package.hotelFlightCar"',
+    'labelKey: "deals.package.flightCar"',
+    'labelKey: "deals.package.hotelCar"',
+    't("deals.originLabel")',
+    'placeholder={t("deals.originPlaceholder")}',
+    't("deals.destinationLabel")',
+    'placeholder={t("deals.destinationPlaceholder")}',
+    't("deals.datesLabel")',
+    't("deals.destinationIdeasTitle")',
+    't("deals.destinationIdeasSubtitle")',
+    't(idea.cityKey)',
+    't(idea.countryKey)',
+    't("deals.destinationCardAriaPrefix")',
+  ]) {
+    assert.ok(dealsPageSource.includes(renderPathToken), renderPathToken);
+  }
+
+  for (const unchangedToken of [
+    'value: "hotel-flight"',
+    'value: "hotel-flight-car"',
+    'value: "flight-car"',
+    'value: "hotel-car"',
+    'destinationQuery: "Tokyo"',
+    'destinationQuery: "London"',
+    'destinationQuery: "Paris"',
+    'destinationQuery: "Dubai"',
+    'destinationQuery: "Cancun"',
+    'destinationQuery: "Rome"',
+    'src={idea.image}',
+    '`/flights/results?${params.toString()}`',
+    '`/hotels/results?${params.toString()}`',
+    'tripType: "round-trip"',
+    'infants: "0"',
+    'departureDate: startDate',
+    'returnDate: endDate',
+    'cabinClass,',
+  ]) {
+    assert.ok(dealsPageSource.includes(unchangedToken), unchangedToken);
+  }
+});
+
 test("Polish global modal copy resolves without English fallback", () => {
   const pl = getTranslations("pl");
 
