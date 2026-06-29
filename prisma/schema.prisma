@@ -224,6 +224,7 @@ model UserPasskey {
   backedUp     Boolean?
   name         String?
   createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
   lastUsedAt   DateTime?
   revokedAt    DateTime?
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -240,6 +241,7 @@ model WebAuthnChallenge {
   expiresAt  DateTime
   consumedAt DateTime?
   loginToken String?   @unique
+  metadata   Json?
   createdAt  DateTime  @default(now())
   user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
