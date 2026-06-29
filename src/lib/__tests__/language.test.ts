@@ -4719,3 +4719,101 @@ test("Polish service and support active render path copy resolves without Englis
   assert.ok(languageOptions.some((o) => o.code === "pl" && o.direction === "ltr"));
   assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
 });
+
+
+test("Polish Flights landing page copy resolves without English fallback", () => {
+  const pl = getTranslations("pl");
+  const keys = [
+    "flightLandingHeroTitle",
+    "flightLandingHeroSubtitle",
+    "discoverDestinationsFromRegion",
+    "discoverDestinationsFromRegionBody",
+    "flightLandingStartThisSearch",
+    "flightLandingFeatureSearchReadyTitle",
+    "flightLandingFeatureSearchReadyBody",
+    "flightLandingFeatureCompareTitle",
+    "flightLandingFeatureCompareBody",
+    "flightLandingFeatureProviderTitle",
+    "flightLandingFeatureProviderBody",
+    "flightLandingRouteIdeasTitle",
+    "flightLandingRouteIdeasBody",
+    "beachVacations",
+    "beachVacationsBody",
+    "flightBookingFaqs",
+    "flightBookingFaqIntro",
+    "flightFaqBestTimeQuestion",
+    "flightFaqBestTimeAnswer",
+    "flightFaqBeforeBookingQuestion",
+    "flightFaqBeforeBookingAnswer",
+    "flightFaqFlexibleFareQuestion",
+    "flightFaqFlexibleFareAnswer",
+    "flightFaqNonstopQuestion",
+    "flightFaqNonstopAnswer",
+    "flightFaqBaggageQuestion",
+    "flightFaqBaggageAnswer",
+    "flightFaqChangeCancelQuestion",
+    "flightFaqChangeCancelAnswer",
+    "flightFaqInternationalQuestion",
+    "flightFaqInternationalAnswer",
+    "flightLandingImageAlt.Johannesburg skyline at golden hour",
+    "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza",
+    "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands",
+    "homeDiscoveryRoute.ng-los-cpt.title",
+    "homeDiscoveryRoute.ca-yyz-cun.title",
+    "homeDiscoveryRoute.ca-yyz-cun.routeNote",
+    "homeDiscoveryRoute.ca-yeg-pvr.title",
+    "homeDiscoveryRoute.ca-yeg-pvr.routeNote",
+    "homeDiscoveryRoute.ca-yyz-hnl.title",
+    "homeDiscoveryRoute.ca-yyz-hnl.routeNote",
+    "homeDiscoveryRoute.ca-yyz-san.title",
+    "homeDiscoveryRoute.ca-yyz-san.routeNote",
+    "homeDiscoveryRoute.ca-yvr-syd.title",
+    "homeDiscoveryRoute.ca-yvr-syd.routeNote",
+  ];
+
+  assert.equal(pl.flightLandingHeroTitle, "Znajdź kolejny niedrogi lot z łatwością.");
+  assert.equal(pl.flightLandingHeroSubtitle, "Wyszukuj trasy, porównuj daty i odkrywaj opcje lotów na kolejną podróż.");
+  assert.equal(pl.discoverDestinationsFromRegion, "Odkrywaj kierunki z Twojego regionu");
+  assert.equal(pl.discoverDestinationsFromRegionBody, "Przeglądaj wybrane trasy i rozpocznij kolejną podróż z pewnością.");
+  assert.equal(pl.flightLandingStartThisSearch, "Rozpocznij to wyszukiwanie");
+  assert.equal(pl.flightLandingFeatureSearchReadyTitle, "Trasy gotowe do wyszukiwania");
+  assert.equal(pl.flightLandingFeatureCompareTitle, "Porównuj w kontekście");
+  assert.equal(pl.flightLandingFeatureProviderTitle, "Sprawdzenie u dostawcy");
+  assert.equal(pl.flightLandingRouteIdeasTitle, "Pomysły na trasy dla elastycznych podróży");
+  assert.equal(pl.beachVacations, "Wakacje na plaży");
+  assert.equal(pl.flightBookingFaqs, "Najczęstsze pytania o rezerwację lotów");
+  assert.equal(pl.flightFaqBestTimeQuestion, "Kiedy najlepiej zarezerwować lot?");
+  assert.equal(pl.flightFaqInternationalQuestion, "Co warto wiedzieć o lotach międzynarodowych?");
+
+  for (const key of keys) {
+    assert.ok(pl[key], `${key} should be defined for Polish`);
+    assert.notEqual(pl[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+});
+
+test("Polish Flights landing render path keeps localized copy data-driven and preserves route behavior", () => {
+  const flightPageSource = readFileSync("src/app/flights/page.tsx", "utf8");
+  const flightLandingSource = readFileSync("src/components/flights/FlightLandingClient.tsx", "utf8");
+  const homeDiscoverySource = readFileSync("src/data/homeDiscovery.ts", "utf8");
+  const searchFormSource = readFileSync("src/components/search/StandaloneFlightSearchForm.tsx", "utf8");
+
+  assert.ok(flightPageSource.includes('<FlightLandingClient />'));
+  assert.ok(flightLandingSource.includes('const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? ""'));
+  assert.ok(flightLandingSource.includes('t("flightLandingHeroTitle")'));
+  assert.ok(flightLandingSource.includes('t("discoverDestinationsFromRegion")'));
+  assert.ok(flightLandingSource.includes('t("flightLandingStartThisSearch")'));
+  assert.ok(flightLandingSource.includes('t("beachVacations")'));
+  assert.ok(flightLandingSource.includes('items={getFlightFaqItems(t)}'));
+  assert.ok(flightLandingSource.includes('getDiscoveryTranslation(\n      "flightLandingImageAlt"'));
+
+  for (const preserved of [
+    "LOS", "LHR", "DXB", "ABV", "ACC", "JNB", "IST", "CDG", "DOH", "KGL", "CAI", "ADD", "FCO", "CPT", "YYZ", "CUN", "YEG", "PVR", "YVR", "SYD", "→",
+    "ca-yyz-cun", "ca-yeg-pvr", "ca-yyz-hnl", "ca-yyz-san", "ca-yvr-syd",
+  ]) {
+    assert.ok(homeDiscoverySource.includes(preserved) || flightLandingSource.includes(preserved), `${preserved} should remain in the render path data`);
+  }
+
+  assert.ok(flightLandingSource.includes("buildDiscoveryLink(item)"));
+  assert.ok(searchFormSource.includes("cabin") && searchFormSource.includes("traveler") && searchFormSource.includes("departureDate"));
+  assert.ok(flightLandingSource.includes("grid gap-5 sm:grid-cols-2 lg:grid-cols-3"));
+});

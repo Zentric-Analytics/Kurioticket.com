@@ -596,4 +596,72 @@ export const translations: TranslationDictionary = {
   serviceGuaranteeHelpCardTitle:
     "Potrzebujesz pomocy z kontem lub wyszukiwaniem?",
   serviceGuaranteeSupportCta: "Skontaktuj się z obsługą klienta",
+
+  flightLandingHeroTitle: "Znajdź kolejny niedrogi lot z łatwością.",
+  flightLandingHeroSubtitle:
+    "Wyszukuj trasy, porównuj daty i odkrywaj opcje lotów na kolejną podróż.",
+  flightLandingFeatureSearchReadyTitle: "Trasy gotowe do wyszukiwania",
+  flightLandingFeatureSearchReadyBody:
+    "Wprowadź rzeczywiste szczegóły podróży, zanim wyniki zostaną pobrane od dostawców lotów.",
+  flightLandingFeatureCompareTitle: "Porównuj w kontekście",
+  flightLandingFeatureCompareBody:
+    "Używaj dat, liczby podróżnych, klasy kabiny, czasu podróży, przesiadek i szczegółów trasy, aby ocenić opcje.",
+  flightLandingFeatureProviderTitle: "Sprawdzenie u dostawcy",
+  flightLandingFeatureProviderBody:
+    "Przed rezerwacją zawsze potwierdź ostateczną dostępność, cenę i zasady u dostawcy.",
+  flightLandingStartThisSearch: "Rozpocznij to wyszukiwanie",
+  flightLandingRouteIdeasTitle: "Pomysły na trasy dla elastycznych podróży",
+  flightLandingRouteIdeasBody:
+    "Przeglądaj pomysły na trasy, a następnie rozpocznij prawdziwe wyszukiwanie z datami i podróżnymi przed porównaniem dostępnych lotów.",
+  discoverDestinationsFromRegion: "Odkrywaj kierunki z Twojego regionu",
+  discoverDestinationsFromRegionBody:
+    "Przeglądaj wybrane trasy i rozpocznij kolejną podróż z pewnością.",
+  beachVacations: "Wakacje na plaży",
+  beachVacationsBody:
+    "Odkrywaj trasy lotnicze do słonecznych wybrzeży, wyspiarskich ucieczek i ciepłych kierunków plażowych.",
+  flightBookingFaqs: "Najczęstsze pytania o rezerwację lotów",
+  flightBookingFaqIntro:
+    "Sprawdź najczęstsze szczegóły wyszukiwania lotów przed przejściem do dostawcy.",
+  flightFaqBestTimeQuestion: "Kiedy najlepiej zarezerwować lot?",
+  flightFaqBestTimeAnswer:
+    "Ceny lotów mogą zmieniać się w zależności od trasy, sezonu, popytu i dostępności. Zwykle warto porównać kilka dat i sprawdzić szczegóły u dostawcy przed rezerwacją.",
+  flightFaqBeforeBookingQuestion: "Co sprawdzić przed rezerwacją?",
+  flightFaqBeforeBookingAnswer:
+    "Sprawdź godziny wylotu i przylotu, całkowity czas podróży, przesiadki, zasady bagażowe, warunki taryfy oraz końcową cenę wyświetlaną przez dostawcę.",
+  flightFaqFlexibleFareQuestion: "Czym jest elastyczna taryfa?",
+  flightFaqFlexibleFareAnswer:
+    "Elastyczna taryfa może umożliwiać zmiany lub anulowanie z mniejszą liczbą ograniczeń niż podstawowa taryfa, ale dokładne zasady i opłaty zawsze zależą od dostawcy.",
+  flightFaqNonstopQuestion: "Czy loty bez przesiadek są zawsze lepsze?",
+  flightFaqNonstopAnswer:
+    "Nie zawsze. Loty bez przesiadek mogą oszczędzać czas, ale trasy z jedną przesiadką mogą oferować inne godziny wylotu, klasy kabiny lub korzystniejsze ceny.",
+  flightFaqBaggageQuestion: "Jak działają zasady dotyczące bagażu?",
+  flightFaqBaggageAnswer:
+    "Limit bagażu może różnić się w zależności od linii lotniczej, trasy, klasy kabiny, typu taryfy i dostawcy. Sprawdź, czy bagaż podręczny, rejestrowany i wybór miejsca są wliczone w cenę.",
+  flightFaqChangeCancelQuestion: "Czy mogę zmienić lub anulować bilet?",
+  flightFaqChangeCancelAnswer:
+    "Możliwość zmiany lub anulowania zależy od zasad taryfy i polityki dostawcy. Niektóre bilety dopuszczają zmiany za opłatą, a inne mogą być bezzwrotne.",
+  flightFaqInternationalQuestion: "Co warto wiedzieć o lotach międzynarodowych?",
+  flightFaqInternationalAnswer:
+    "Przy podróżach międzynarodowych sprawdź ważność paszportu, wymagania wizowe, zasady tranzytu, wymagane dokumenty i czas potrzebny na odprawę przed wylotem.",
+  "flightLandingImageAlt.Johannesburg skyline at golden hour":
+    "Panorama Johannesburga o złotej godzinie",
+  "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza":
+    "Panorama Kairu z piramidami w Gizie",
+  "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands":
+    "Widok Addis Abeby na Wyżynie Etiopskiej",
+  "homeDiscoveryRoute.ca-yyz-cun.title": "Zimowa ucieczka do Cancun",
+  "homeDiscoveryRoute.ca-yyz-cun.routeNote":
+    "Niezawodna trasa wypoczynkowa z opcjami bez przesiadek w szczycie sezonu.",
+  "homeDiscoveryRoute.ca-yeg-pvr.title": "Plażowy wyjazd do Puerto Vallarta",
+  "homeDiscoveryRoute.ca-yeg-pvr.routeNote":
+    "Trasa po zimowe słońce, z plażami Pacyfiku i urokiem starego miasta.",
+  "homeDiscoveryRoute.ca-yyz-hnl.title": "Daleki wyspiarski odpoczynek w Honolulu",
+  "homeDiscoveryRoute.ca-yyz-hnl.routeNote":
+    "Wypoczynkowa opcja premium na plaże, surfing i wyspiarskie wędrówki.",
+  "homeDiscoveryRoute.ca-yyz-san.title": "Słońce i surfing w San Diego",
+  "homeDiscoveryRoute.ca-yyz-san.routeNote":
+    "Niezawodna trasa transgraniczna na plaże, parki i widoki portowe.",
+  "homeDiscoveryRoute.ca-yvr-syd.title": "Transpacyficzna przygoda w Sydney",
+  "homeDiscoveryRoute.ca-yvr-syd.routeNote":
+    "Popularna daleka trasa do portowych atrakcji i nadmorskich dzielnic.",
 };
