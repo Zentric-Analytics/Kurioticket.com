@@ -1244,7 +1244,7 @@ function PersonalDetailsEditRow({
   const isAddress = row.key === "address";
 
   return (
-    <div className={cn("py-3", isAddress && "pt-1")}>
+    <div className={cn("py-3.5", isAddress && "pt-0")}>
       {!isAddress ? (
         <label className="mb-1.5 block text-sm font-semibold leading-5 text-slate-950">
           {row.label}
@@ -1272,7 +1272,7 @@ function DetailInput({
   onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
 }) {
   const baseClassName = cn(
-    "h-11 w-full min-w-0 rounded-none border border-slate-300 bg-white px-3.5 text-base font-medium leading-5 text-slate-950 shadow-[0_1px_0_rgba(15,23,42,0.03)] outline-none transition placeholder:text-slate-500 hover:border-slate-400 focus:border-blue-700 focus:ring-2 focus:ring-blue-100 sm:max-w-[34rem] sm:text-sm",
+    "h-11 w-full min-w-0 rounded-none border border-slate-400 bg-white px-3.5 text-base font-medium leading-5 text-slate-950 shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-blue-700 focus:ring-2 focus:ring-blue-100 sm:max-w-[34rem] sm:text-sm",
     row.readOnly &&
       "cursor-not-allowed border-slate-300 bg-slate-100 text-slate-700 hover:border-slate-300 focus:border-slate-300 focus:ring-0",
   );
@@ -1519,14 +1519,15 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     <section
       className={cn(
         "overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm",
-        isEditing && "rounded-none border-0 bg-transparent shadow-none",
+        isEditing &&
+          "-mx-4 rounded-none border-0 bg-slate-50 px-4 py-6 shadow-none sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8",
       )}
       aria-labelledby="dashboard-title"
     >
       <div
         className={cn(
           "border-b border-slate-200 px-5 py-4 sm:px-6",
-          isEditing && "mx-auto max-w-[46rem] border-b-0 px-0 pb-6 pt-0",
+          isEditing && "mx-auto max-w-[64rem] border-b-0 px-0 pb-8 pt-0",
         )}
       >
         <p className={cn("text-sm text-slate-600", isEditing && "leading-6")}>
@@ -1557,26 +1558,32 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       ) : null}
 
       {isEditing ? (
-        <div className="mx-auto max-w-[46rem] bg-white/80 px-0 py-1">
-          <div className="mb-2">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-900">
-              Basic information
-            </h2>
-            <p className="mt-1 text-sm leading-6 text-slate-500">
-              Manage the information Kurioticket uses for your account.
-            </p>
+        <div className="mx-auto max-w-[64rem] border border-slate-200 bg-white">
+          <div className="grid grid-cols-1 gap-6 px-5 py-7 sm:px-7 lg:grid-cols-[minmax(14rem,17rem)_minmax(0,1fr)] lg:gap-12 lg:px-9 lg:py-9">
+            <div>
+              <h2 className="text-lg font-semibold leading-7 text-slate-950">
+                Basic information
+              </h2>
+              <p className="mt-2 max-w-xs text-sm leading-6 text-slate-600">
+                Manage the information Kurioticket uses for your account.
+              </p>
+            </div>
+            <div className="min-w-0">
+              {personalDetailsFieldOrder
+                .filter((key) => key !== "address")
+                .map((key) => renderEditField(key))}
+            </div>
           </div>
-          {personalDetailsFieldOrder
-            .filter((key) => key !== "address")
-            .map((key) => renderEditField(key))}
-          <div className="mt-8 border-t border-slate-200 pt-7">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-900">
-              Address
-            </h2>
-            <p className="mt-1 text-sm leading-6 text-slate-500">
-              Used for billing, booking records, and travel communication.
-            </p>
-            {renderEditField("address")}
+          <div className="grid grid-cols-1 gap-6 border-t border-slate-200 px-5 py-7 sm:px-7 lg:grid-cols-[minmax(14rem,17rem)_minmax(0,1fr)] lg:gap-12 lg:px-9 lg:py-9">
+            <div>
+              <h2 className="text-lg font-semibold leading-7 text-slate-950">
+                Address
+              </h2>
+              <p className="mt-2 max-w-xs text-sm leading-6 text-slate-600">
+                Used for billing, booking records, and travel communication.
+              </p>
+            </div>
+            <div className="min-w-0">{renderEditField("address")}</div>
           </div>
         </div>
       ) : (
@@ -1588,7 +1595,8 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       <div
         className={cn(
           "border-t border-slate-200 bg-slate-50/60 px-5 py-4 sm:px-6",
-          isEditing && "mx-auto mt-7 max-w-[46rem] bg-transparent px-0 pt-5",
+          isEditing &&
+            "mx-auto max-w-[64rem] border-x border-b border-slate-200 bg-white px-5 py-5 sm:px-7 lg:px-9",
         )}
       >
         {isEditing ? (
