@@ -45,6 +45,10 @@ type SessionAugmentedUser = {
   emailVerified?: Date | string | null;
 };
 
+type JwtUpdateSession = {
+  twoFactorVerified?: boolean;
+};
+
 async function isPendingDeletionLoginAllowed(userId: string) {
   const request = await getPrisma().accountDeletionRequest.findFirst({
     where: {
@@ -500,9 +504,18 @@ export const authOptions: NextAuthOptions =
       async jwt({
         token,
         user,
+        trigger,
+        session,
       }) {
         if (!token.sessionActivityId) {
           token.sessionActivityId = randomUUID();
+        }
+
+        if (trigger === "update") {
+          const updateSession = session as JwtUpdateSession | undefined;
+          if (updateSession?.twoFactorVerified === true) {
+            token.twoFactorVerified = true;
+          }
         }
 
         if (user) {
@@ -523,6 +536,8 @@ export const authOptions: NextAuthOptions =
             Boolean(
               authUser.emailVerified
             );
+
+          token.twoFactorVerified = true;
         }
 
         if (
@@ -535,6 +550,13 @@ export const authOptions: NextAuthOptions =
                 where: {
                   email:
                     token.email.toLowerCase(),
+                },
+                include: {
+                  securitySettings: {
+                    select: {
+                      twoFactorEnabled: true,
+                    },
+                  },
                 },
               }
             );
@@ -553,6 +575,19 @@ export const authOptions: NextAuthOptions =
               Boolean(
                 dbUser.emailVerified
               );
+
+            token.twoFactorEnabled =
+              Boolean(
+                dbUser.securitySettings?.twoFactorEnabled
+              );
+
+            if (token.twoFactorEnabled && user) {
+              token.twoFactorVerified = false;
+            }
+
+            if (!token.twoFactorEnabled) {
+              token.twoFactorVerified = true;
+            }
           }
         }
 
@@ -584,6 +619,16 @@ export const authOptions: NextAuthOptions =
           session.user.emailVerified =
             Boolean(
               token.emailVerified
+            );
+
+          session.user.twoFactorEnabled =
+            Boolean(
+              token.twoFactorEnabled
+            );
+
+          session.user.twoFactorVerified =
+            Boolean(
+              token.twoFactorVerified
             );
         }
 

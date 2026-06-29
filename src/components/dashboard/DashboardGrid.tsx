@@ -28,6 +28,15 @@ import type { UserProfileResponse } from "@/lib/userProfile";
 
 const RawImage = "img";
 
+type TwoFactorStatus = {
+  enabled: boolean;
+  method: string | null;
+  enabledAt: string | null;
+  disabledAt: string | null;
+};
+
+type TwoFactorMode = "enable" | "disable";
+
 type AccountSessionActivity = {
   id: string;
   deviceLabel: string;
@@ -1768,6 +1777,11 @@ export function SecurityDashboardPage() {
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [deleteRequestSaving, setDeleteRequestSaving] = useState(false);
   const [securityEmailAlerts, setSecurityEmailAlerts] = useState(true);
+  const [twoFactor, setTwoFactor] = useState<TwoFactorStatus>({ enabled: false, method: null, enabledAt: null, disabledAt: null });
+  const [twoFactorModal, setTwoFactorModal] = useState<TwoFactorMode | null>(null);
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [twoFactorPassword, setTwoFactorPassword] = useState("");
+  const [twoFactorSaving, setTwoFactorSaving] = useState(false);
   const [preferencesLoading, setPreferencesLoading] = useState(true);
   const [preferencesSaving, setPreferencesSaving] = useState(false);
   const [sessionsModalOpen, setSessionsModalOpen] = useState(false);
@@ -1795,6 +1809,9 @@ export function SecurityDashboardPage() {
 
         if (response.ok) {
           setSecurityEmailAlerts(Boolean(data.preferences?.securityEmailAlerts));
+          const twoFactorResponse = await fetch("/api/account/security/two-factor", { method: "GET", credentials: "same-origin" });
+          const twoFactorData = await twoFactorResponse.json().catch(() => ({}));
+          if (active && twoFactorResponse.ok) setTwoFactor(twoFactorData.twoFactor);
         } else {
           setActionMessage(data.error || "Unable to load security preferences.");
         }
@@ -1926,6 +1943,54 @@ export function SecurityDashboardPage() {
     }
   };
 
+
+  const openTwoFactorModal = async (mode: TwoFactorMode) => {
+    setTwoFactorModal(mode);
+    setTwoFactorCode("");
+    setTwoFactorPassword("");
+    setActionMessage("");
+    setTwoFactorSaving(true);
+    try {
+      const response = await fetch(`/api/account/security/two-factor/${mode}/request`, { method: "POST", credentials: "same-origin" });
+      const data = await response.json().catch(() => ({}));
+      setActionMessage(response.ok ? (data.recentlySent ? "A verification code was already sent recently." : "Verification code sent to your email.") : data.error || "Unable to send verification code.");
+    } catch {
+      setActionMessage("Unable to send verification code.");
+    } finally {
+      setTwoFactorSaving(false);
+    }
+  };
+
+  const handleTwoFactorConfirm = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!twoFactorModal) return;
+    setTwoFactorSaving(true);
+    setActionMessage("");
+    try {
+      const body = twoFactorModal === "enable" ? { code: twoFactorCode } : { code: twoFactorCode || undefined, password: twoFactorPassword || undefined };
+      const response = await fetch(`/api/account/security/two-factor/${twoFactorModal}/confirm`, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setActionMessage(data.error || "Unable to update two-factor authentication.");
+        return;
+      }
+      setTwoFactor(data.twoFactor);
+      setTwoFactorModal(null);
+      setTwoFactorCode("");
+      setTwoFactorPassword("");
+      setActionMessage(twoFactorModal === "enable" ? "Two-factor authentication is enabled." : "Two-factor authentication is disabled.");
+    } catch {
+      setActionMessage("Unable to update two-factor authentication.");
+    } finally {
+      setTwoFactorSaving(false);
+    }
+  };
+
   const handleSecurityAlertsToggle = async (enabled: boolean) => {
     setPreferencesSaving(true);
     setActionMessage("");
@@ -2006,9 +2071,10 @@ export function SecurityDashboardPage() {
           />
           <SecuritySettingRow
             title={tx("accountDashboard.security.twoFactor.title", "Two-factor authentication")}
-            body={tx("accountDashboard.security.twoFactor.description", "Two-factor authentication is not available yet. We will add a verified setup flow before enabling it.")}
-            status={comingSoonStatus}
-            onAction={() => undefined}
+            body="Require an email verification code after password or Google sign-in. Method: Email code."
+            status={twoFactor.enabled ? "Enabled · Email code" : "Not enabled"}
+            action={twoFactor.enabled ? "Disable" : "Enable"}
+            onAction={() => void openTwoFactorModal(twoFactor.enabled ? "disable" : "enable")}
             statusId={securityActionStatusId}
           />
           <SecuritySettingRow
@@ -2077,6 +2143,30 @@ export function SecurityDashboardPage() {
         </div>
       </div>
       <p id={securityActionStatusId} role="status" aria-live="polite" className={cn("px-1 text-sm font-medium leading-5 text-slate-600 sm:px-2", actionMessage ? "" : "sr-only")}>{actionMessage}</p>
+
+
+      {twoFactorModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="two-factor-title">
+          <form onSubmit={handleTwoFactorConfirm} className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h2 id="two-factor-title" className="text-xl font-semibold text-slate-950">{twoFactorModal === "enable" ? "Enable two-factor authentication" : "Disable two-factor authentication"}</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">{twoFactorModal === "enable" ? "We sent a 6-digit code to your account email. After enabling, future sign-ins will require an email code." : "Disabling two-factor authentication reduces account protection. Enter the email code we sent, or confirm with your current password."}</p>
+            <div className="mt-5 space-y-4">
+              <label className="block text-sm font-medium text-slate-800">Email verification code
+                <input value={twoFactorCode} onChange={(event) => setTwoFactorCode(event.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" maxLength={6} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="123456" />
+              </label>
+              {twoFactorModal === "disable" ? (
+                <label className="block text-sm font-medium text-slate-800">Or current password
+                  <input type="password" value={twoFactorPassword} onChange={(event) => setTwoFactorPassword(event.target.value)} autoComplete="current-password" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                </label>
+              ) : null}
+            </div>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={() => setTwoFactorModal(null)} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button>
+              <button type="submit" disabled={twoFactorSaving || (twoFactorModal === "enable" ? twoFactorCode.length !== 6 : !twoFactorPassword && twoFactorCode.length !== 6)} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{twoFactorSaving ? "Verifying…" : twoFactorModal === "enable" ? "Enable 2FA" : "Disable 2FA"}</button>
+            </div>
+          </form>
+        </div>
+      ) : null}
 
       {sessionsModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="active-sessions-title">

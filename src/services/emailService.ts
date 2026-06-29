@@ -158,6 +158,24 @@ export function loginVerificationCodeEmail(input: { code: string; name?: string 
   `;
 }
 
+
+export function twoFactorCodeEmail(input: { code: string; name?: string | null; purpose: "enable" | "disable" | "login"; expiresInMinutes: number }) {
+  const action = input.purpose === "disable" ? "disable two-factor authentication" : input.purpose === "enable" ? "enable two-factor authentication" : "finish signing in";
+  const safety = input.purpose === "disable"
+    ? "If you did not request disabling two-factor authentication, keep 2FA enabled and contact support."
+    : "If you did not request this code, you can ignore this email.";
+
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
+      <h1 style="font-size:22px">Your Kurioticket two-factor authentication code</h1>
+      <p>${input.name ? `Hi ${escapeHtml(input.name)},` : "Hi,"} use this code to ${escapeHtml(action)}:</p>
+      <p style="display:inline-block;font-size:32px;font-weight:700;letter-spacing:7px;color:#0f766e;background:#eef4f7;border-radius:12px;padding:12px 16px">${escapeHtml(input.code)}</p>
+      <p>This code expires in ${escapeHtml(input.expiresInMinutes)} minutes.</p>
+      <p>${safety}</p>
+    </div>
+  `;
+}
+
 export function newsletterWelcomeEmail(input?: { preferencesUrl?: string; unsubscribeUrl?: string }) {
   const preferencesUrl = input?.preferencesUrl ? escapeHtml(input.preferencesUrl) : "";
   const unsubscribeUrl = input?.unsubscribeUrl ? escapeHtml(input.unsubscribeUrl) : "";
