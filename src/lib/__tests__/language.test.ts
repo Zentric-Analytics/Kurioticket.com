@@ -167,6 +167,120 @@ test("Polish signed-in account dropdown labels do not fall back to English", () 
   );
 });
 
+test("Polish account customization and booking preference pages do not fall back to English", () => {
+  const pl = getTranslations("pl");
+  const customizationSource = readFileSync(
+    "src/app/dashboard/preferences/customization/CustomizationPreferencesContent.tsx",
+    "utf8",
+  );
+  const bookingSource = readFileSync(
+    "src/app/dashboard/preferences/booking/BookingPreferencesContent.tsx",
+    "utf8",
+  );
+  const customizationPageSource = readFileSync(
+    "src/app/dashboard/preferences/customization/page.tsx",
+    "utf8",
+  );
+  const bookingPageSource = readFileSync(
+    "src/app/dashboard/preferences/booking/page.tsx",
+    "utf8",
+  );
+  const accountBackLinkSource = readFileSync(
+    "src/components/dashboard/AccountBackLink.tsx",
+    "utf8",
+  );
+
+  const expectedCustomizationCopy: Record<string, string> = {
+    "accountDashboard.preferences.customization.title": "Preferencje personalizacji",
+    "accountDashboard.preferences.customization.description":
+      "Wybierz, jak Kurioticket personalizuje Twoje doświadczenie.",
+    "accountDashboard.preferences.customization.languageRegion.title": "Język i region",
+    "accountDashboard.preferences.customization.languageRegion.description":
+      "Ustaw domyślny język, walutę i region.",
+    "accountDashboard.preferences.customization.preferredLanguage": "Preferowany język",
+    "accountDashboard.preferences.customization.selectPreferredLanguage":
+      "Wybierz preferowany język",
+    "accountDashboard.preferences.customization.currency": "Waluta",
+    "accountDashboard.preferences.customization.selectCurrency": "Wybierz walutę",
+    "accountDashboard.preferences.customization.region": "Region",
+    "accountDashboard.preferences.customization.selectRegion": "Wybierz region",
+    "accountDashboard.preferences.customization.personalization.title": "Personalizacja",
+    "accountDashboard.preferences.customization.personalization.description":
+      "Kontroluj, jak Kurioticket personalizuje Twoje rekomendacje.",
+    "accountDashboard.preferences.customization.personalizeSearches":
+      "Używaj moich wyszukiwań do personalizacji rekomendacji",
+    "accountDashboard.preferences.customization.personalizedTravelDeals":
+      "Pokazuj spersonalizowane oferty podróży",
+    "accountDashboard.preferences.customization.rememberRecentSearches":
+      "Zapamiętuj moje ostatnie wyszukiwania",
+    "accountDashboard.preferences.customization.communicationStyle.title": "Styl komunikacji",
+    "accountDashboard.preferences.customization.communicationStyle.description":
+      "Wybierz, jak Kurioticket ma się z Tobą komunikować.",
+    "accountDashboard.preferences.customization.emailUpdates": "Aktualizacje e-mail",
+    "accountDashboard.preferences.customization.priceAlertEmails": "E-maile z alertami cenowymi",
+    "accountDashboard.preferences.customization.travelInspirationEmails":
+      "E-maile z inspiracjami podróżniczymi",
+    "accountDashboard.preferences.cancel": "Anuluj",
+    "accountDashboard.preferences.savePreferences": "Zapisz preferencje",
+  };
+
+  const expectedBookingCopy: Record<string, string> = {
+    "accountDashboard.preferences.booking.title": "Preferencje rezerwacji",
+    "accountDashboard.preferences.booking.description":
+      "Ustaw domyślne preferencje podróży, aby rezerwacje były szybsze i trafniejsze.",
+    "accountDashboard.preferences.booking.airports.title": "Lotniska",
+    "accountDashboard.preferences.booking.airports.description":
+      "Wybierz lotniska, z których wolisz latać.",
+    "accountDashboard.preferences.booking.homeAirport": "Lotnisko domowe",
+    "accountDashboard.preferences.booking.searchAirport": "Wyszukaj lotnisko",
+    "accountDashboard.preferences.booking.secondaryAirports": "Lotniska dodatkowe",
+    "accountDashboard.preferences.booking.addAlternativeAirports": "Dodaj alternatywne lotniska",
+    "accountDashboard.preferences.booking.airlines.title": "Linie lotnicze",
+    "accountDashboard.preferences.booking.airlines.description":
+      "Wybierz linie lotnicze, które preferujesz lub których chcesz unikać.",
+    "accountDashboard.preferences.booking.preferredAirlines": "Preferowane linie lotnicze",
+    "accountDashboard.preferences.booking.searchAirlines": "Wyszukaj linie lotnicze",
+    "accountDashboard.preferences.booking.avoidAirlines": "Unikaj linii lotniczych",
+    "accountDashboard.preferences.booking.stays.title": "Pobyty",
+    "accountDashboard.preferences.booking.stays.description":
+      "Ustaw preferencje zakwaterowania dla rezerwacji hotelowych.",
+    "accountDashboard.preferences.booking.preferredHotelChains": "Preferowane sieci hotelowe",
+    "accountDashboard.preferences.booking.searchHotelChains": "Wyszukaj sieci hotelowe",
+    "accountDashboard.preferences.booking.avoidHotelChains": "Unikaj sieci hotelowych",
+    "accountDashboard.preferences.cancel": "Anuluj",
+    "accountDashboard.preferences.savePreferences": "Zapisz preferencje",
+  };
+
+  for (const [key, value] of Object.entries({ ...expectedCustomizationCopy, ...expectedBookingCopy })) {
+    assert.equal(pl[key], value);
+    if (pl[key] !== enTranslations[key]) {
+      assert.notEqual(pl[key], enTranslations[key], `${key} should not fall back to English`);
+    }
+  }
+
+  for (const key of Object.keys(expectedCustomizationCopy)) {
+    assert.ok(customizationSource.includes(`t["${key}"]`) || customizationSource.includes(`"${key}"`));
+  }
+  for (const key of Object.keys(expectedBookingCopy)) {
+    assert.ok(bookingSource.includes(`t["${key}"]`) || bookingSource.includes(`"${key}"`));
+  }
+
+  assert.ok(customizationSource.includes('id: "preferred-language"'));
+  assert.ok(customizationSource.includes('name={field.id}'));
+  assert.ok(customizationSource.includes('defaultValue=""'));
+  assert.ok(customizationSource.includes('value: "English"') && customizationSource.includes('value: "USD"'));
+  assert.ok(customizationSource.includes('type="checkbox"') && customizationSource.includes('type="button"'));
+  assert.ok(bookingSource.includes('id: "home-airport"') && bookingSource.includes('type="search"'));
+  assert.ok(bookingSource.includes('name={field.id}') && bookingSource.includes('placeholder={t[field.placeholderKey]}'));
+  assert.ok(bookingSource.includes('type="button"'));
+  assert.ok(customizationSource.includes('action="#"') && bookingSource.includes('action="#"'));
+  assert.ok(customizationPageSource.includes("<AccountPreferencesHeader />") && customizationPageSource.includes("<Footer />"));
+  assert.ok(bookingPageSource.includes("<AccountPreferencesHeader />") && bookingPageSource.includes("<Footer />"));
+  assert.ok(accountBackLinkSource.includes('href="/dashboard/account"') && accountBackLinkSource.includes('accountDashboard.hub.title') && pl["accountDashboard.hub.title"] === "Moje konto");
+  assert.equal(languageOptions.find((option) => option.code === "pl")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
+});
+
 test("Hindi signed-in account dropdown labels do not fall back to English", () => {
   const hi = getTranslations("hi");
 
