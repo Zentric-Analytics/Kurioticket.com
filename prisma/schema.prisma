@@ -176,8 +176,12 @@ model UserProfile {
 model UserSecuritySettings {
   id                  String   @id @default(cuid())
   userId              String   @unique
-  securityEmailAlerts Boolean  @default(true)
-  createdAt           DateTime @default(now())
+  securityEmailAlerts  Boolean   @default(true)
+  twoFactorEnabled    Boolean   @default(false)
+  twoFactorMethod     String?
+  twoFactorEnabledAt  DateTime?
+  twoFactorDisabledAt DateTime?
+  createdAt           DateTime  @default(now())
   updatedAt           DateTime @updatedAt
   user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 

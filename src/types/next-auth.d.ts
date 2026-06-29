@@ -7,6 +7,8 @@ declare module "next-auth" {
       role: string;
       status: string;
       emailVerified: boolean;
+      twoFactorEnabled: boolean;
+      twoFactorVerified: boolean;
     } & DefaultSession["user"];
   }
 
@@ -27,5 +29,7 @@ declare module "next-auth/jwt" {
     status?: string;
     emailVerified?: boolean;
     sessionActivityId?: string;
+    twoFactorEnabled?: boolean;
+    twoFactorVerified?: boolean;
   }
 }
