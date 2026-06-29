@@ -477,12 +477,11 @@ export default function HotelsSearchPage() {
               fill
               priority
               sizes="100vw"
-              className="object-cover object-[52%_38%] brightness-[1.16] saturate-[1.1] contrast-[1.01]"
+              className="object-cover object-[52%_38%] brightness-[1.22] saturate-[1.14] contrast-[1.02]"
             />
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-950/38 via-slate-950/14 to-slate-950/0" />
-            <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-slate-950/62 via-slate-950/30 to-transparent" />
-            <div className="absolute inset-y-0 left-0 w-[88%] bg-gradient-to-r from-slate-950/50 via-slate-950/20 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-slate-950/66 via-slate-950/20 to-transparent" />
+            <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-slate-950/44 via-slate-950/18 to-transparent" />
+            <div className="absolute left-0 top-20 h-56 w-[86%] bg-[radial-gradient(ellipse_at_18%_32%,rgba(15,23,42,0.44),rgba(15,23,42,0.20)_42%,transparent_74%)]" />
+            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950/38 via-slate-950/10 to-transparent" />
           </div>
 
           <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-[7.85rem]">
@@ -499,7 +498,7 @@ export default function HotelsSearchPage() {
             </div>
           </div>
 
-          <div className="page-shell absolute inset-x-0 bottom-[-15.8rem] z-30">
+          <div className="page-shell absolute inset-x-0 bottom-[-17.15rem] z-30">
             <div className="mx-auto max-w-6xl">
               <HotelSearchBar
                 introLabel={hotelSearchIntroLabel}
@@ -553,7 +552,7 @@ export default function HotelsSearchPage() {
           </div>
         </section>
 
-        <div className="page-shell relative z-0 mx-auto mt-0 max-w-6xl space-y-11 pt-[17.7rem] sm:mt-24 sm:pt-0 md:space-y-14 lg:mt-8">
+        <div className="page-shell relative z-0 mx-auto mt-0 max-w-6xl space-y-11 pt-[19.05rem] sm:mt-24 sm:pt-0 md:space-y-14 lg:mt-8">
           <section
             className="mt-6 space-y-4 sm:mt-12 lg:mt-8"
             aria-labelledby="hotel-destinations-heading"

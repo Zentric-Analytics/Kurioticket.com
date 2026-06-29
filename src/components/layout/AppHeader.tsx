@@ -698,10 +698,10 @@ export function AppHeader({
   return (
     <>
       <header
-        className={`z-50 border-b border-white/10 text-white shadow-[0_8px_24px_rgba(49,46,129,0.16)] md:relative md:bg-[#4338CA] ${
+        className={`z-50 text-white md:relative md:bg-[#4338CA] ${
           mobileHeroOverlay
-            ? "absolute inset-x-0 top-0 bg-transparent shadow-none"
-            : "relative bg-[#4338CA]"
+            ? "absolute inset-x-0 top-0 border-b-0 bg-transparent shadow-none md:border-b md:border-white/10"
+            : "relative border-b border-white/10 bg-[#4338CA] shadow-[0_8px_24px_rgba(49,46,129,0.16)]"
         }`}
       >
         <div className="page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3">
