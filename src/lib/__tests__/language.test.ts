@@ -4462,3 +4462,98 @@ test("Polish homepage discovery route search payloads remain route-data driven",
     },
   });
 });
+
+test("Polish destinations and saved trips pages do not fall back to English copy", () => {
+  const pl = getTranslations("pl");
+  const destinationsPageSource = readFileSync("src/app/destinations/page.tsx", "utf8");
+  const destinationCardSource = readFileSync("src/app/destinations/DestinationCard.tsx", "utf8");
+  const savedPageSource = readFileSync("src/app/saved/page.tsx", "utf8");
+  const savedTripsSource = readFileSync("src/components/saved/SavedTripsAndRecentSearches.tsx", "utf8");
+
+  const expectedPolishCopy: Record<string, string> = {
+    destinationsHeroBadge: "ODKRYWANIE KIERUNKÓW",
+    destinationsHeroTitle: "Dokąd chcesz polecieć dalej?",
+    destinationsHeroSubtitle:
+      "Przeglądaj starannie wybrane widoki miast, porównuj loty i znajduj oferty podróży w kilka minut.",
+    "destinations.region.europe": "Europa",
+    "destinations.region.northAmerica": "Ameryka Północna",
+    "destinations.region.asia": "Azja",
+    "destinations.region.africa": "Afryka",
+    "destinations.region.middleEast": "Bliski Wschód",
+    "destinations.card.subtitle": "Piękne widoki, loty, hotele i oferty",
+    "destinations.country.unitedKingdom": "WIELKA BRYTANIA",
+    "destinations.country.france": "FRANCJA",
+    "destinations.country.unitedStates": "STANY ZJEDNOCZONE",
+    "destinations.country.unitedArabEmirates": "ZEA",
+    "destinations.country.japan": "JAPONIA",
+    "destinations.city.london": "Londyn",
+    "destinations.city.paris": "Paryż",
+    "destinations.city.rome": "Rzym",
+    "destinations.city.lisbon": "Lizbona",
+    "destinations.city.prague": "Praga",
+    "destinations.city.athens": "Ateny",
+    "destinations.city.venice": "Wenecja",
+    "destinations.city.newYork": "Nowy Jork",
+    "destinations.city.tokyo": "Tokio",
+    "destinations.city.capeTown": "Kapsztad",
+    "destinations.city.abuDhabi": "Abu Zabi",
+    "destinations.tag.iconicSkyline": "IKONICZNA PANORAMA",
+    "destinations.tag.landmarkEscape": "WYJAZD DO IKONICZNEGO MIEJSCA",
+    "destinations.tag.cultureCapital": "STOLICA KULTURY",
+    "destinations.tag.goldenHourViews": "WIDOKI O ZŁOTEJ GODZINIE",
+    "destinations.tag.coastalEnergy": "NADMORSKA ENERGIA",
+    "destinations.tag.foodMarketNights": "WIECZORY NA TARGACH KULINARNYCH",
+    "destinations.tag.historicStreets": "HISTORYCZNE ULICE",
+    "destinations.tag.designWeekend": "WEEKEND Z DESIGNEM",
+    savedTripsPageTitle: "Zapisane podróże",
+    savedTripsPageSubtitle: "Twoje wybrane plany podróży i popularne trasy.",
+    savedTripsEmptyTitle: "Zapisuj kierunki, które lubisz",
+    savedTripsEmptyDescription:
+      "Kliknij ikonę serca przy dowolnej trasie, aby utworzyć własną listę i mieć kolejną przygodę pod ręką.",
+    savedTripsExploreDestinations: "Odkryj kierunki",
+    savedTripsRecentSearchesTitle: "Ostatnie wyszukiwania",
+    savedTripsRecentSearchesSubtitle:
+      "Wróć do miejsca, w którym przerwałeś, i wyszukaj ponownie jednym kliknięciem.",
+    savedTripsClearAllRecent: "Wyczyść ostatnie",
+    savedTripsTypeFlight: "LOT",
+    savedTripsSearchedDate: "WYSZUKANO {{date}}",
+    savedTripsRepeatSearch: "Powtórz wyszukiwanie",
+    savedTripsTravelerCountOne: "1 podróżny",
+    savedTripsCabinEconomy: "ekonomiczna",
+  };
+
+  for (const [key, value] of Object.entries(expectedPolishCopy)) {
+    assert.equal(pl[key], value, `${key} should resolve to Polish`);
+    if (enTranslations[key] !== value) {
+      assert.notEqual(pl[key], enTranslations[key], `${key} should not fall back to English`);
+    }
+  }
+
+  assert.ok(destinationsPageSource.includes("const regionLabelKeys"));
+  assert.ok(destinationsPageSource.includes("const destinationNameKeys"));
+  assert.ok(destinationsPageSource.includes("const destinationCountryKeys"));
+  assert.ok(destinationsPageSource.includes("dictionary.destinationsHeroBadge"));
+  assert.ok(destinationsPageSource.includes("translateValue(dictionary, regionLabelKeys[section.region], section.region)"));
+  assert.ok(destinationsPageSource.includes("destinationNameKeys[destination.name]"));
+  assert.ok(destinationsPageSource.includes("destinationCountryKeys[destination.country]"));
+  assert.ok(destinationsPageSource.includes("dictionary[destination.tagKey]") || destinationsPageSource.includes("translateValue(dictionary, destination.tagKey"));
+  assert.ok(destinationsPageSource.includes("destinationSubtitleKey"));
+  assert.ok(destinationCardSource.includes("aria-label={ariaLabel}"));
+  assert.ok(destinationCardSource.includes("alt={imageAlt}"));
+
+  assert.ok(savedPageSource.includes('<SavedTripsAndRecentSearches />'));
+  assert.ok(savedTripsSource.includes('t("savedTripsPageTitle")'));
+  assert.ok(savedTripsSource.includes('t("savedTripsEmptyTitle")'));
+  assert.ok(savedTripsSource.includes('t("savedTripsExploreDestinations")'));
+  assert.ok(savedTripsSource.includes('t("savedTripsRecentSearchesTitle")'));
+  assert.ok(savedTripsSource.includes('t("savedTripsTypeFlight")'));
+  assert.ok(savedTripsSource.includes('t("savedTripsRepeatSearch")'));
+  assert.ok(savedTripsSource.includes('return "pl-PL"'));
+
+  assert.ok(destinationsPageSource.includes('href={`#${getRegionId(section.region)}`}'));
+  assert.ok(destinationsPageSource.includes('return `/flights?destination=${encodeURIComponent(destination.name)}`;'));
+  assert.ok(destinationsPageSource.includes('key={`${destination.region}-${destination.name}`}'));
+  assert.ok(savedTripsSource.includes("readSavedTripIds()"));
+  assert.ok(savedTripsSource.includes("writeSavedTripIds(nextIds)"));
+  assert.ok(savedTripsSource.includes("readRecentSearches()"));
+});
