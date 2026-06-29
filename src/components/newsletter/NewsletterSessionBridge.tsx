@@ -10,7 +10,14 @@ type NewsletterStatusResponse = {
   status?: "SUBSCRIBED" | "UNSUBSCRIBED" | "NOT_FOUND";
 };
 
+type NewsletterElements = {
+  input: HTMLInputElement;
+  form: HTMLFormElement;
+  container: HTMLElement;
+};
+
 const accountContextClassName = "kurioticket-newsletter-account-context";
+const preferencesLinkClassName = "kurioticket-newsletter-preferences-link";
 
 export function NewsletterSessionBridge() {
   const pathname = usePathname();
@@ -19,94 +26,144 @@ export function NewsletterSessionBridge() {
   useEffect(() => {
     if (pathname !== "/") return;
 
-    const input = document.querySelector<HTMLInputElement>('main input[type="email"]');
-    const form = input?.closest("form") as HTMLFormElement | null;
-    const container = form?.parentElement || null;
-
-    if (!input || !form || !container) return;
-
-    const newsletterInput = input;
-    const newsletterForm = form;
-    const newsletterContainer = container;
-
-    const existingContext = newsletterContainer.querySelector(`.${accountContextClassName}`);
-    existingContext?.remove();
-
-    if (status === "loading") {
-      newsletterForm.style.visibility = "hidden";
-      insertAccountContext(
-        newsletterContainer,
-        newsletterForm,
-        "Loading your newsletter options…",
-      );
-      return;
-    }
-
-    newsletterForm.style.visibility = "";
-
-    const email = session?.user?.email?.trim();
-    if (!email) {
-      restoreGuestNewsletterForm(newsletterInput, newsletterForm);
-      return;
-    }
-
-    const accountEmail = email;
-
-    applyReactControlledInputValue(newsletterInput, accountEmail);
-    newsletterInput.required = false;
-    newsletterInput.setAttribute("aria-hidden", "true");
-    newsletterInput.tabIndex = -1;
-    newsletterInput.style.display = "none";
-
-    const accountContext = insertAccountContext(
-      newsletterContainer,
-      newsletterForm,
-      `Updates will be sent to your account email: ${accountEmail}`,
-    );
-
     let cancelled = false;
+    let cleanupAppliedState: (() => void) | null = null;
+    let retryTimer: number | null = null;
+    let observer: MutationObserver | null = null;
 
-    async function refreshNewsletterStatus() {
-      try {
-        const response = await fetch("/api/newsletter/subscribe", {
-          method: "GET",
-          headers: { Accept: "application/json" },
-        });
+    function applyWhenReady() {
+      const elements = findNewsletterElements();
 
-        if (!response.ok) return;
-
-        const data = (await response.json()) as NewsletterStatusResponse;
-        if (cancelled || data.email?.toLowerCase() !== accountEmail.toLowerCase()) return;
-
-        if (data.status === "SUBSCRIBED") {
-          accountContext.textContent = `You’re subscribed to Kurioticket updates at ${accountEmail}.`;
-          newsletterForm.style.display = "none";
-          return;
-        }
-
-        if (data.status === "UNSUBSCRIBED") {
-          accountContext.textContent = `You previously unsubscribed. Resubscribe with your account email: ${accountEmail}.`;
-          newsletterForm.style.display = "flex";
-          return;
-        }
-
-        accountContext.textContent = `Subscribe with your account email: ${accountEmail}.`;
-        newsletterForm.style.display = "flex";
-      } catch (error) {
-        console.error("[newsletter:session-bridge]", error);
+      if (!elements) {
+        return false;
       }
+
+      cleanupAppliedState?.();
+      cleanupAppliedState = applyNewsletterState(elements, status, session?.user?.email?.trim() || null);
+      return true;
     }
 
-    void refreshNewsletterStatus();
+    if (!applyWhenReady()) {
+      let attempts = 0;
+      const retry = () => {
+        if (cancelled) return;
+        attempts += 1;
+        if (applyWhenReady() || attempts >= 30) return;
+        retryTimer = window.setTimeout(retry, 80);
+      };
+
+      retryTimer = window.setTimeout(retry, 0);
+
+      observer = new MutationObserver(() => {
+        if (!cancelled) applyWhenReady();
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    }
 
     return () => {
       cancelled = true;
-      accountContext.remove();
-      restoreGuestNewsletterForm(newsletterInput, newsletterForm);
+      if (retryTimer) window.clearTimeout(retryTimer);
+      observer?.disconnect();
+      cleanupAppliedState?.();
     };
   }, [pathname, session?.user?.email, status]);
 
   return null;
+}
+
+function findNewsletterElements(): NewsletterElements | null {
+  const input = document.querySelector<HTMLInputElement>('main input[type="email"]');
+  const form = input?.closest("form") as HTMLFormElement | null;
+  const container = form?.parentElement as HTMLElement | null;
+
+  if (!input || !form || !container) return null;
+  return { input, form, container };
+}
+
+function applyNewsletterState(
+  { input, form, container }: NewsletterElements,
+  sessionStatus: "authenticated" | "loading" | "unauthenticated",
+  email: string | null,
+) {
+  const existingContext = container.querySelector(`.${accountContextClassName}`);
+  existingContext?.remove();
+
+  if (sessionStatus === "loading") {
+    form.style.visibility = "hidden";
+    const loadingContext = insertAccountContext(container, form, "Loading your newsletter options…");
+
+    return () => {
+      loadingContext.remove();
+      restoreGuestNewsletterForm(input, form);
+    };
+  }
+
+  form.style.visibility = "";
+
+  if (!email) {
+    restoreGuestNewsletterForm(input, form);
+    return () => restoreGuestNewsletterForm(input, form);
+  }
+
+  const accountEmail = email;
+  let cancelled = false;
+
+  applyReactControlledInputValue(input, accountEmail);
+  input.required = false;
+  input.setAttribute("aria-hidden", "true");
+  input.tabIndex = -1;
+  input.style.display = "none";
+
+  const accountContext = insertAccountContext(
+    container,
+    form,
+    `Updates will be sent to your account email: ${accountEmail}`,
+  );
+
+  const manageLink = insertManagePreferencesLink(container, form);
+
+  async function refreshNewsletterStatus() {
+    try {
+      const response = await fetch("/api/newsletter/subscribe", {
+        method: "GET",
+        headers: { Accept: "application/json" },
+      });
+
+      if (!response.ok) return;
+
+      const data = (await response.json()) as NewsletterStatusResponse;
+      if (cancelled || data.email?.toLowerCase() !== accountEmail.toLowerCase()) return;
+
+      if (data.status === "SUBSCRIBED") {
+        accountContext.textContent = `You’re subscribed to Kurioticket updates at ${accountEmail}.`;
+        manageLink.textContent = "Manage email preferences or unsubscribe";
+        form.style.display = "none";
+        return;
+      }
+
+      if (data.status === "UNSUBSCRIBED") {
+        accountContext.textContent = `You previously unsubscribed. Resubscribe with your account email: ${accountEmail}.`;
+        manageLink.textContent = "Manage email preferences";
+        form.style.display = "flex";
+        return;
+      }
+
+      accountContext.textContent = `Subscribe with your account email: ${accountEmail}.`;
+      manageLink.textContent = "Manage email preferences";
+      form.style.display = "flex";
+    } catch (error) {
+      console.error("[newsletter:session-bridge]", error);
+    }
+  }
+
+  void refreshNewsletterStatus();
+
+  return () => {
+    cancelled = true;
+    accountContext.remove();
+    manageLink.remove();
+    restoreGuestNewsletterForm(input, form);
+  };
 }
 
 function insertAccountContext(container: Element, form: HTMLFormElement, text: string) {
@@ -115,6 +172,18 @@ function insertAccountContext(container: Element, form: HTMLFormElement, text: s
   accountContext.textContent = text;
   container.insertBefore(accountContext, form);
   return accountContext;
+}
+
+function insertManagePreferencesLink(container: Element, form: HTMLFormElement) {
+  const existingLink = container.querySelector(`.${preferencesLinkClassName}`);
+  existingLink?.remove();
+
+  const link = document.createElement("a");
+  link.href = "/email/preferences";
+  link.className = `${preferencesLinkClassName} inline-flex w-fit text-xs font-bold text-indigo-700 underline-offset-4 hover:text-indigo-900 hover:underline`;
+  link.textContent = "Manage email preferences";
+  container.insertBefore(link, form.nextSibling);
+  return link;
 }
 
 function applyReactControlledInputValue(input: HTMLInputElement, value: string) {
