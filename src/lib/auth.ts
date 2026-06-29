@@ -567,16 +567,15 @@ export const authOptions: NextAuthOptions =
         }
 
         if (
-          token.email &&
+          (token.id || token.email) &&
           isDatabaseConfigured()
         ) {
           const dbUser =
             await getPrisma().user.findUnique(
               {
-                where: {
-                  email:
-                    token.email.toLowerCase(),
-                },
+                where: token.id
+                  ? { id: String(token.id) }
+                  : { email: String(token.email).toLowerCase() },
                 include: {
                   securitySettings: {
                     select: {
@@ -596,6 +595,10 @@ export const authOptions: NextAuthOptions =
 
             token.status =
               dbUser.status;
+
+            token.email =
+              dbUser.email ||
+              undefined;
 
             token.emailVerified =
               Boolean(
@@ -629,6 +632,11 @@ export const authOptions: NextAuthOptions =
             String(
               token.id || ""
             );
+
+          session.user.email =
+            typeof token.email === "string"
+              ? token.email
+              : session.user.email;
 
           session.user.role =
             String(
