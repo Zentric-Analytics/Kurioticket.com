@@ -34,7 +34,9 @@ export function NewsletterSessionBridge() {
       return;
     }
 
-    applyReactControlledInputValue(input, email);
+    const accountEmail = email;
+
+    applyReactControlledInputValue(input, accountEmail);
     input.required = false;
     input.setAttribute("aria-hidden", "true");
     input.tabIndex = -1;
@@ -42,7 +44,7 @@ export function NewsletterSessionBridge() {
 
     const accountContext = document.createElement("div");
     accountContext.className = `${accountContextClassName} rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-2 text-xs font-semibold leading-5 text-slate-700 sm:max-w-[34rem]`;
-    accountContext.textContent = `Updates will be sent to your account email: ${email}`;
+    accountContext.textContent = `Updates will be sent to your account email: ${accountEmail}`;
     container.insertBefore(accountContext, form);
 
     let cancelled = false;
@@ -57,21 +59,21 @@ export function NewsletterSessionBridge() {
         if (!response.ok) return;
 
         const data = (await response.json()) as NewsletterStatusResponse;
-        if (cancelled || data.email?.toLowerCase() !== email.toLowerCase()) return;
+        if (cancelled || data.email?.toLowerCase() !== accountEmail.toLowerCase()) return;
 
         if (data.status === "SUBSCRIBED") {
-          accountContext.textContent = `You’re subscribed to Kurioticket updates at ${email}.`;
+          accountContext.textContent = `You’re subscribed to Kurioticket updates at ${accountEmail}.`;
           form.style.display = "none";
           return;
         }
 
         if (data.status === "UNSUBSCRIBED") {
-          accountContext.textContent = `You previously unsubscribed. Resubscribe with your account email: ${email}.`;
+          accountContext.textContent = `You previously unsubscribed. Resubscribe with your account email: ${accountEmail}.`;
           form.style.display = "flex";
           return;
         }
 
-        accountContext.textContent = `Subscribe with your account email: ${email}.`;
+        accountContext.textContent = `Subscribe with your account email: ${accountEmail}.`;
         form.style.display = "flex";
       } catch (error) {
         console.error("[newsletter:session-bridge]", error);
