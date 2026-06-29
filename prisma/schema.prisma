@@ -16,6 +16,7 @@ enum UserRole {
 enum UserStatus {
   ACTIVE
   SUSPENDED
+  PENDING_DELETION
   DELETED
 }
 
@@ -112,6 +113,13 @@ enum NewsletterSubscriberStatus {
   UNSUBSCRIBED
 }
 
+enum AccountDeletionRequestStatus {
+  PENDING
+  CANCELLED
+  READY_FOR_REVIEW
+  COMPLETED
+}
+
 model User {
   id                      String                @id @default(cuid())
   name                    String?
@@ -142,6 +150,7 @@ model User {
   watchlistItems          TravelWatchlist[]
   savedTrips              SavedTrip[]
   sessionActivities       UserSessionActivity[]
+  accountDeletionRequests AccountDeletionRequest[]
 
   @@index([role])
   @@index([status])
@@ -371,6 +380,30 @@ model NewsletterSubscriber {
   @@index([status])
   @@index([createdAt])
   @@index([subscribedAt])
+}
+
+model AccountDeletionRequest {
+  id                    String                       @id @default(cuid())
+  userId                String
+  email                 String
+  status                AccountDeletionRequestStatus @default(PENDING)
+  requestedAt           DateTime                     @default(now())
+  deletionScheduledAt   DateTime
+  cancelledAt           DateTime?
+  completedAt           DateTime?
+  supportTicketId       String?
+  adminNotificationId   String?
+  userReason            String?
+  cancellationMetadata  Json?
+  reviewNotes           String?
+  createdAt             DateTime                     @default(now())
+  updatedAt             DateTime                     @updatedAt
+  user                  User                         @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, status])
+  @@index([email])
+  @@index([status, deletionScheduledAt])
+  @@index([requestedAt])
 }
 
 model SupportTicket {

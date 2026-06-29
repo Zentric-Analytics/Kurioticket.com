@@ -1756,6 +1756,7 @@ function SecuritySettingRow({
 
 export function SecurityDashboardPage() {
   const { t } = useLocale();
+  const router = useRouter();
   const [actionMessage, setActionMessage] = useState("");
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -1969,7 +1970,8 @@ export function SecurityDashboardPage() {
       }
 
       setDeleteModalOpen(false);
-      setActionMessage("Account deletion request received. Support will review it before any account data is removed.");
+      setActionMessage(`${data.message || "Your account deletion request is under review."} Deadline: ${data.request?.deletionScheduledAt ? new Date(data.request.deletionScheduledAt).toLocaleString() : "7 days from now"}.`);
+      router.push("/account/pending-deletion");
     } catch {
       setActionMessage("Unable to request account deletion.");
     } finally {
@@ -2160,10 +2162,10 @@ export function SecurityDashboardPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             <h2 id="delete-account-title" className="text-xl font-semibold text-slate-950">Request account deletion</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Account deletion is permanent and may affect saved trips, alerts, support history, and travel records. Kurioticket will not delete your account instantly from this page; support must review the request first.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">This starts a 7-day grace period. Your account will be marked pending deletion, normal dashboard browsing will be restricted, and you can reactivate by logging in before the deadline. Kurioticket will not instantly hard-delete your account from this page; support must review retention obligations first.</p>
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button type="button" onClick={() => setDeleteModalOpen(false)} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button>
-              <button type="button" disabled={deleteRequestSaving} onClick={handleDeletionRequest} className="focus-ring rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{deleteRequestSaving ? "Requesting…" : "Request deletion"}</button>
+              <button type="button" disabled={deleteRequestSaving} onClick={handleDeletionRequest} className="focus-ring rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{deleteRequestSaving ? "Requesting…" : "Request 7-day deletion"}</button>
             </div>
           </div>
         </div>
