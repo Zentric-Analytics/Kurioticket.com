@@ -620,6 +620,24 @@ const dateOfBirthYears = Array.from(
   (_, index) => String(currentDateOfBirthYear - index),
 );
 
+const emailAddressPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const verificationCodePattern = /^\d{6}$/;
+
+function getEmailChangeError(newEmail: string, currentEmail: string) {
+  const normalizedNewEmail = newEmail.trim().toLowerCase();
+  const normalizedCurrentEmail = currentEmail.trim().toLowerCase();
+
+  if (!normalizedNewEmail) return "Enter a new email address.";
+  if (!emailAddressPattern.test(normalizedNewEmail)) {
+    return "Enter a valid email address.";
+  }
+  if (normalizedNewEmail === normalizedCurrentEmail) {
+    return "Enter a different email address.";
+  }
+
+  return null;
+}
+
 function getPersonalDetailRows(t: TranslationDictionary): PersonalDetailRow[] {
   return [
     {
@@ -631,7 +649,7 @@ function getPersonalDetailRows(t: TranslationDictionary): PersonalDetailRow[] {
       key: "email",
       label: t["accountDashboard.personalDetails.emailAddress"],
       fallback: t["accountDashboard.personalDetails.addEmailAddress"],
-      helper: "Email address can’t be changed here.",
+      helper: "This email is used for sign-in and booking confirmations. Changes require verification.",
       inputType: "email",
       readOnly: true,
     },
@@ -1373,6 +1391,168 @@ function DetailInput({
   );
 }
 
+function PersonalDetailsEmailEditRow({
+  row,
+  currentEmail,
+  isChangingEmail,
+  newEmail,
+  verificationCode,
+  emailValidationError,
+  isVerificationCodeValid,
+  isRequestingCode,
+  isConfirming,
+  successMessage,
+  errorMessage,
+  onStartChange,
+  onNewEmailChange,
+  onCodeChange,
+  onRequestCode,
+  onConfirm,
+  onCancel,
+}: {
+  row: PersonalDetailRow;
+  currentEmail: string;
+  isChangingEmail: boolean;
+  newEmail: string;
+  verificationCode: string;
+  emailValidationError: string | null;
+  isVerificationCodeValid: boolean;
+  isRequestingCode: boolean;
+  isConfirming: boolean;
+  successMessage: string | null;
+  errorMessage: string | null;
+  onStartChange: () => void;
+  onNewEmailChange: (value: string) => void;
+  onCodeChange: (value: string) => void;
+  onRequestCode: () => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const baseInputClassName =
+    "h-11 w-full min-w-0 rounded-none border border-slate-400 bg-white px-3.5 text-base font-medium leading-5 text-slate-950 shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-blue-700 focus:ring-2 focus:ring-blue-100 sm:text-sm";
+  const isBusy = isRequestingCode || isConfirming;
+
+  return (
+    <div className="py-3.5">
+      <label className="mb-1.5 block text-sm font-semibold leading-5 text-slate-950">
+        {row.label}
+      </label>
+      <div className="min-w-0 space-y-3">
+        <div className="flex max-w-[34rem] flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="min-w-0 flex-1">
+            <div className="flex min-h-11 items-center gap-2 rounded-none border border-slate-300 bg-slate-100 px-3.5 text-base font-medium leading-5 text-slate-700 sm:text-sm">
+              <span className="min-w-0 flex-1 truncate">
+                {currentEmail || row.fallback}
+              </span>
+              {currentEmail ? (
+                <span className="shrink-0 border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                  Verified
+                </span>
+              ) : null}
+            </div>
+          </div>
+          {!isChangingEmail ? (
+            <button
+              type="button"
+              onClick={onStartChange}
+              className="focus-ring inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-blue-700 bg-white px-4 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 sm:w-auto"
+            >
+              Change email
+            </button>
+          ) : null}
+        </div>
+        {row.helper ? (
+          <p className="max-w-xl text-sm leading-6 text-slate-500">
+            {row.helper}
+          </p>
+        ) : null}
+
+        {isChangingEmail ? (
+          <div className="max-w-[34rem] border-t border-slate-200 pt-4">
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label
+                  className="mb-1.5 block text-sm font-semibold leading-5 text-slate-950"
+                  htmlFor="personal-new-email"
+                >
+                  New email address
+                </label>
+                <input
+                  id="personal-new-email"
+                  className={baseInputClassName}
+                  type="email"
+                  value={newEmail}
+                  onChange={(event) => onNewEmailChange(event.target.value)}
+                  autoComplete="email"
+                />
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <button
+                  type="button"
+                  onClick={onRequestCode}
+                  disabled={Boolean(emailValidationError) || isBusy}
+                  className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-300 sm:w-auto"
+                >
+                  {isRequestingCode ? "Sending…" : "Send verification code"}
+                </button>
+              </div>
+              <div>
+                <label
+                  className="mb-1.5 block text-sm font-semibold leading-5 text-slate-950"
+                  htmlFor="personal-email-code"
+                >
+                  Verification code
+                </label>
+                <input
+                  id="personal-email-code"
+                  className={baseInputClassName}
+                  type="text"
+                  value={verificationCode}
+                  onChange={(event) => onCodeChange(event.target.value)}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                />
+              </div>
+              {errorMessage ? (
+                <p className="text-sm font-medium leading-6 text-red-700">
+                  {errorMessage}
+                </p>
+              ) : successMessage ? (
+                <p className="text-sm font-medium leading-6 text-emerald-700">
+                  {successMessage}
+                </p>
+              ) : null}
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  disabled={isBusy}
+                  className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={onConfirm}
+                  disabled={
+                    Boolean(emailValidationError) ||
+                    !isVerificationCodeValid ||
+                    isBusy
+                  }
+                  className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-300 sm:w-auto"
+                >
+                  {isConfirming ? "Updating…" : "Verify and update email"}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function PersonalDetailsSection(props: DashboardOverviewProps) {
   const { t } = useLocale();
   const router = useRouter();
@@ -1384,7 +1564,31 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
   const [draft, setDraft] = useState<PersonalDetailsDraft>(savedValues);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isChangingEmail, setIsChangingEmail] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailVerificationCode, setEmailVerificationCode] = useState("");
+  const [isRequestingEmailCode, setIsRequestingEmailCode] = useState(false);
+  const [isConfirmingEmail, setIsConfirmingEmail] = useState(false);
+  const [emailChangeSuccessMessage, setEmailChangeSuccessMessage] = useState<
+    string | null
+  >(null);
+  const [emailChangeErrorMessage, setEmailChangeErrorMessage] = useState<
+    string | null
+  >(null);
   const personalDetailRows = getPersonalDetailRows(t);
+  const emailValidationError = getEmailChangeError(newEmail, savedValues.email);
+  const isVerificationCodeValid = verificationCodePattern.test(
+    emailVerificationCode.trim(),
+  );
+
+  const resetEmailChangeState = () => {
+    setNewEmail("");
+    setEmailVerificationCode("");
+    setIsRequestingEmailCode(false);
+    setIsConfirmingEmail(false);
+    setEmailChangeSuccessMessage(null);
+    setEmailChangeErrorMessage(null);
+  };
 
   const handleEdit = () => {
     setDraft(savedValues);
@@ -1397,6 +1601,115 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     setDraft(savedValues);
     setIsEditing(false);
     setErrorMessage(null);
+    setIsChangingEmail(false);
+    resetEmailChangeState();
+  };
+
+  const handleCancelEmailChange = () => {
+    setIsChangingEmail(false);
+    resetEmailChangeState();
+  };
+
+  const handleRequestEmailCode = async () => {
+    const nextEmail = newEmail.trim().toLowerCase();
+    const validationError = getEmailChangeError(nextEmail, savedValues.email);
+
+    if (validationError || isRequestingEmailCode) {
+      setEmailChangeErrorMessage(validationError);
+      return;
+    }
+
+    setIsRequestingEmailCode(true);
+    setEmailChangeSuccessMessage(null);
+    setEmailChangeErrorMessage(null);
+
+    try {
+      const response = await fetch("/api/account/email-change/request", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newEmail: nextEmail }),
+      });
+
+      const data = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        error?: string;
+      } | null;
+
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.error || "Unable to send verification code.");
+      }
+
+      setNewEmail(nextEmail);
+      setEmailVerificationCode("");
+      setEmailChangeSuccessMessage(
+        "We sent a verification code to your new email address.",
+      );
+    } catch (error) {
+      setEmailChangeErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to send verification code.",
+      );
+    } finally {
+      setIsRequestingEmailCode(false);
+    }
+  };
+
+  const handleConfirmEmailChange = async () => {
+    const nextEmail = newEmail.trim().toLowerCase();
+    const code = emailVerificationCode.trim();
+    const validationError = getEmailChangeError(nextEmail, savedValues.email);
+
+    if (validationError || !verificationCodePattern.test(code) || isConfirmingEmail) {
+      setEmailChangeErrorMessage(
+        validationError || "Enter the 6-digit verification code.",
+      );
+      return;
+    }
+
+    setIsConfirmingEmail(true);
+    setEmailChangeSuccessMessage(null);
+    setEmailChangeErrorMessage(null);
+
+    try {
+      const response = await fetch("/api/account/email-change/confirm", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newEmail: nextEmail, code }),
+      });
+
+      const data = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        email?: string;
+        error?: string;
+      } | null;
+
+      if (!response.ok || !data?.ok || !data.email) {
+        throw new Error(data?.error || "Unable to update email address.");
+      }
+
+      const updatedValues = {
+        ...savedValues,
+        email: data.email,
+      };
+
+      setSavedValues(updatedValues);
+      setDraft(updatedValues);
+      setIsChangingEmail(false);
+      resetEmailChangeState();
+      setStatusMessage("Your email address has been updated.");
+      router.refresh();
+    } catch (error) {
+      setEmailChangeErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to update email address.",
+      );
+    } finally {
+      setIsConfirmingEmail(false);
+    }
   };
 
   const handleSave = async () => {
@@ -1480,6 +1793,43 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
 
   const renderEditField = (key: keyof PersonalDetailsDraft) => {
     const row = getPersonalDetailRow(key);
+
+    if (key === "email") {
+      return (
+        <PersonalDetailsEmailEditRow
+          key={row.key}
+          row={row}
+          currentEmail={savedValues.email}
+          isChangingEmail={isChangingEmail}
+          newEmail={newEmail}
+          verificationCode={emailVerificationCode}
+          emailValidationError={emailValidationError}
+          isVerificationCodeValid={isVerificationCodeValid}
+          isRequestingCode={isRequestingEmailCode}
+          isConfirming={isConfirmingEmail}
+          successMessage={emailChangeSuccessMessage}
+          errorMessage={emailChangeErrorMessage}
+          onStartChange={() => {
+            setStatusMessage(null);
+            setEmailChangeSuccessMessage(null);
+            setEmailChangeErrorMessage(null);
+            setIsChangingEmail(true);
+          }}
+          onNewEmailChange={(value) => {
+            setNewEmail(value);
+            setEmailChangeSuccessMessage(null);
+            setEmailChangeErrorMessage(null);
+          }}
+          onCodeChange={(value) => {
+            setEmailVerificationCode(value.replace(/\D/g, "").slice(0, 6));
+            setEmailChangeErrorMessage(null);
+          }}
+          onRequestCode={handleRequestEmailCode}
+          onConfirm={handleConfirmEmailChange}
+          onCancel={handleCancelEmailChange}
+        />
+      );
+    }
 
     return (
       <PersonalDetailsEditRow
