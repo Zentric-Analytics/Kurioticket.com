@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "We could not sign you in. Check your email and password, then try again." }, { status: 401 });
   }
 
-  if (user.status !== "ACTIVE") {
+  if (!(await isAuthenticatableUserStatus(user.id, user.status))) {
     return NextResponse.json({ error: "This account is not available. Please contact support." }, { status: 403 });
   }
 
@@ -102,8 +102,26 @@ export async function POST(request: Request) {
 }
 
 function getSafeCallbackUrl(body: unknown) {
-  if (!body || typeof body !== "object") return "/";
+  if (!body || typeof body !== "object") return "/dashboard";
 
   const callbackUrl = String((body as Record<string, unknown>).callbackUrl || "");
-  return callbackUrl.startsWith("/") && !callbackUrl.startsWith("//") ? callbackUrl : "/";
+  return callbackUrl.startsWith("/") && !callbackUrl.startsWith("//") ? callbackUrl : "/dashboard";
+}
+
+async function isAuthenticatableUserStatus(userId: string, status: string) {
+  if (status === "ACTIVE") return true;
+  if (status !== "PENDING_DELETION") return false;
+
+  const request = await getPrisma().accountDeletionRequest.findFirst({
+    where: {
+      userId,
+      status: { in: ["PENDING", "READY_FOR_REVIEW"] },
+      cancelledAt: null,
+      completedAt: null,
+      deletionScheduledAt: { gt: new Date() },
+    },
+    select: { id: true },
+  });
+
+  return Boolean(request);
 }
