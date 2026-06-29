@@ -73,6 +73,7 @@ function SavedHeartIcon({
 
 type AppHeaderProps = {
   hideMobileSecondaryNavLinks?: boolean;
+  mobileHeroOverlay?: boolean;
 };
 
 const signedInAccountMenuItems = [
@@ -132,6 +133,7 @@ const mobileInfoLegalMenuItems = [
 
 export function AppHeader({
   hideMobileSecondaryNavLinks = false,
+  mobileHeroOverlay = false,
 }: AppHeaderProps = {}) {
   const { data: session } = useSession();
 
@@ -688,7 +690,13 @@ export function AppHeader({
 
   return (
     <>
-      <header className="relative z-50 border-b border-white/10 bg-[#4338CA] text-white shadow-[0_8px_24px_rgba(49,46,129,0.16)]">
+      <header
+        className={`z-50 border-b border-white/10 text-white shadow-[0_8px_24px_rgba(49,46,129,0.16)] md:relative md:bg-[#4338CA] ${
+          mobileHeroOverlay
+            ? "absolute inset-x-0 top-0 bg-transparent shadow-none"
+            : "relative bg-[#4338CA]"
+        }`}
+      >
         <div className="page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3">
           <div className="flex min-h-[52px] items-center justify-between gap-3 md:min-h-[48px] md:gap-8">
             <Link

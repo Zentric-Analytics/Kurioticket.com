@@ -467,9 +467,9 @@ export default function HotelsSearchPage() {
 
   return (
     <>
-      <AppHeader />
+      <AppHeader mobileHeroOverlay />
       <main className="relative isolate flex-1 overflow-x-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16">
-        <section className="relative z-20 isolate min-h-[21rem] overflow-visible bg-slate-950 sm:hidden">
+        <section className="relative z-20 isolate min-h-[24.25rem] overflow-visible bg-slate-950 sm:hidden">
           <div className="absolute inset-0 overflow-hidden">
             <Image
               src={hotelsHeroImage}
@@ -477,14 +477,15 @@ export default function HotelsSearchPage() {
               fill
               priority
               sizes="100vw"
-              className="object-cover object-[52%_42%] brightness-[1.14] saturate-[1.08] contrast-[1.01]"
+              className="object-cover object-[52%_38%] brightness-[1.16] saturate-[1.1] contrast-[1.01]"
             />
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-950/46 via-slate-950/18 to-slate-950/4" />
-            <div className="absolute inset-y-0 left-0 w-[88%] bg-gradient-to-r from-slate-950/58 via-slate-950/24 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-950/38 via-slate-950/14 to-slate-950/0" />
+            <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-slate-950/62 via-slate-950/30 to-transparent" />
+            <div className="absolute inset-y-0 left-0 w-[88%] bg-gradient-to-r from-slate-950/50 via-slate-950/20 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-slate-950/66 via-slate-950/20 to-transparent" />
           </div>
 
-          <div className="page-shell relative z-10 flex min-h-[21rem] items-start pt-12">
+          <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-[8.75rem]">
             <div className="max-w-[23rem] text-white">
               <p className="sr-only">
                 {t("hotelsHeroEyebrow")}
