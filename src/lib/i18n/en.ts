@@ -395,19 +395,19 @@ export const translations: TranslationDictionary = {
     "Manage sign-in and account security for your Kurioticket account.",
   "accountDashboard.security.password.title": "Password",
   "accountDashboard.security.password.description":
-    "Update the password used to sign in to your Kurioticket account.",
+    "Change the password used to sign in to your account.",
   "accountDashboard.security.passkeys.title": "Passkeys",
   "accountDashboard.security.passkeys.description":
-    "Passkeys are not available yet. Password and OAuth sign-in remain supported.",
+    "Use your device or security key to sign in faster.",
   "accountDashboard.security.twoFactor.title": "Two-factor authentication",
   "accountDashboard.security.twoFactor.description":
-    "Two-factor authentication is not available yet. We will add a verified setup flow before enabling it.",
+    "Add extra protection with an authenticator app.",
   "accountDashboard.security.activeSessions.title": "Active sessions",
   "accountDashboard.security.activeSessions.description":
-    "Active session management is not available yet for JWT sessions.",
+    "Review devices signed in to your account.",
   "accountDashboard.security.notifications.title": "Security notifications",
   "accountDashboard.security.notifications.description":
-    "Get notified about important account security activity.",
+    "Get alerts about important account activity.",
   "accountDashboard.security.status.notEnabled": "Not enabled",
   "accountDashboard.security.status.notSetUp": "Not set up",
   "accountDashboard.security.status.emailAlerts": "Email alerts",
@@ -416,7 +416,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.security.dangerZone.title": "Danger zone",
   "accountDashboard.security.deleteAccount.title": "Delete account",
   "accountDashboard.security.deleteAccount.description":
-    "Request permanent account deletion. Support review is required before any account records are removed.",
+    "Request permanent account deletion.",
   "accountDashboard.security.action.changePassword": "Change password",
   "accountDashboard.security.action.setUp": "Set up",
   "accountDashboard.security.action.manage": "Manage",
