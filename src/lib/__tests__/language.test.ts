@@ -2100,6 +2100,75 @@ test("Polish account dashboard overview copy resolves without English fallback",
   assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
 });
 
+test("Polish account Price Alerts active page copy resolves without English fallback", () => {
+  const pl = getTranslations("pl");
+  const priceAlertsSource = readFileSync("src/app/dashboard/alerts/PriceAlertsContent.tsx", "utf8");
+  const alertsPageSource = readFileSync("src/app/dashboard/alerts/page.tsx", "utf8");
+
+  const expectedPolishPriceAlertsCopy: Record<string, string> = {
+    "accountDashboard.priceAlerts.title": "Alerty cenowe",
+    "accountDashboard.priceAlerts.description": "Śledź ceny i otrzymuj powiadomienia, gdy taryfy się zmienią.",
+    "accountDashboard.priceAlerts.tabs.active": "Aktywne",
+    "accountDashboard.priceAlerts.tabs.expired": "Wygasłe",
+    "accountDashboard.priceAlerts.tabs.all": "Wszystkie",
+    "accountDashboard.priceAlerts.sort.label": "Sortuj według",
+    "accountDashboard.priceAlerts.sort.newest": "Najnowsze",
+    "accountDashboard.priceAlerts.sort.oldest": "Najstarsze",
+    "accountDashboard.priceAlerts.sort.routeAz": "Trasa A–Z",
+    "accountDashboard.priceAlerts.empty.title": "Nie masz jeszcze alertów cenowych.",
+    "accountDashboard.priceAlerts.empty.body": "Utwórz alert z wyszukiwania lotów, aby śledzić zmiany taryf i otrzymywać powiadomienia.",
+    "accountDashboard.priceAlerts.cta.flights": "Szukaj lotów",
+    "accountDashboard.priceAlerts.filtersAriaLabel": "Filtry alertów cenowych",
+    "accountDashboard.priceAlerts.sort.ariaLabel": "Sortuj alerty cenowe",
+    "accountDashboard.priceAlerts.featuresAriaLabel": "Funkcje alertów cenowych",
+    "accountDashboard.priceAlerts.features.monitoring.title": "Monitorowanie w czasie rzeczywistym",
+    "accountDashboard.priceAlerts.features.monitoring.body": "Monitorujemy ceny i informujemy Cię, gdy alerty zostaną uruchomione.",
+    "accountDashboard.priceAlerts.features.email.title": "Powiadomienia e-mail",
+    "accountDashboard.priceAlerts.features.email.body": "Otrzymuj powiadomienia, gdy taryfy się zmienią.",
+    "accountDashboard.priceAlerts.features.trends.title": "Trendy cenowe",
+    "accountDashboard.priceAlerts.features.trends.body": "Zobacz, jak śledzone taryfy zmieniają się w czasie.",
+    "accountDashboard.priceAlerts.features.management.title": "Łatwe zarządzanie",
+    "accountDashboard.priceAlerts.features.management.body": "Wstrzymuj lub usuwaj alerty w dowolnym momencie.",
+  };
+
+  for (const [key, value] of Object.entries(expectedPolishPriceAlertsCopy)) {
+    assert.equal(pl[key], value, `${key} should resolve to Polish Price Alerts copy`);
+    if (value !== enTranslations[key]) {
+      assert.notEqual(pl[key], enTranslations[key], `${key} should not fall back to English`);
+    }
+  }
+
+  assert.ok(alertsPageSource.includes('import { PriceAlertsContent } from "./PriceAlertsContent"'));
+  assert.ok(alertsPageSource.includes('<PriceAlertsContent showAccountLink={showAccountLink} />'));
+  assert.ok(priceAlertsSource.includes('const { t } = useLocale()'));
+  assert.ok(priceAlertsSource.includes('t["accountDashboard.priceAlerts.title"]'));
+  assert.ok(priceAlertsSource.includes('t["accountDashboard.priceAlerts.description"]'));
+  assert.ok(priceAlertsSource.includes('{`${t[tab.labelKey]} (${tab.count})`}'));
+  assert.ok(priceAlertsSource.includes('t["accountDashboard.priceAlerts.sort.label"]'));
+  assert.ok(priceAlertsSource.includes('t["accountDashboard.priceAlerts.empty.title"]'));
+  assert.ok(priceAlertsSource.includes('t["accountDashboard.priceAlerts.empty.body"]'));
+  assert.ok(priceAlertsSource.includes('t["accountDashboard.priceAlerts.cta.flights"]'));
+  assert.ok(priceAlertsSource.includes('titleKey: "accountDashboard.priceAlerts.features.monitoring.title"'));
+  assert.ok(priceAlertsSource.includes('textKey: "accountDashboard.priceAlerts.features.management.body"'));
+
+  assert.ok(priceAlertsSource.includes('id: "active"') && priceAlertsSource.includes('count: 0'));
+  assert.ok(priceAlertsSource.includes('id: "expired"') && priceAlertsSource.includes('count: 0'));
+  assert.ok(priceAlertsSource.includes('id: "all"') && priceAlertsSource.includes('count: 0'));
+  assert.ok(priceAlertsSource.includes('useState<(typeof tabs)[number]["id"]>(\n    tabs[0].id'));
+  assert.ok(priceAlertsSource.includes('{ id: "newest", labelKey: "accountDashboard.priceAlerts.sort.newest" }'));
+  assert.ok(priceAlertsSource.includes('{ id: "oldest", labelKey: "accountDashboard.priceAlerts.sort.oldest" }'));
+  assert.ok(priceAlertsSource.includes('{ id: "routeAz", labelKey: "accountDashboard.priceAlerts.sort.routeAz" }'));
+  assert.ok(priceAlertsSource.includes('useState<\n    (typeof sortOptions)[number]["id"]\n  >(sortOptions[0].id)'));
+  assert.ok(priceAlertsSource.includes('<EmptyStateIllustration />'));
+  assert.ok(priceAlertsSource.includes('href="/flights"'));
+  assert.ok(priceAlertsSource.includes('<AccountDetailShell showAccountLink={showAccountLink}>'));
+  assert.ok(priceAlertsSource.includes('className="mx-auto min-w-0 max-w-6xl px-4 pt-3 pb-8 sm:px-6 sm:pt-6 lg:px-8"'));
+  assert.ok(!priceAlertsSource.includes('>Price alerts<'));
+  assert.ok(!priceAlertsSource.includes('>Search flights<'));
+  assert.ok(languageOptions.some((option) => option.code === "pl" && option.direction === "ltr"));
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+});
+
 test("Hindi account dashboard overview copy resolves without English fallback", () => {
   const hi = getTranslations("hi");
 

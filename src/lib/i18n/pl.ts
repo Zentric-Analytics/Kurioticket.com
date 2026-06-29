@@ -99,6 +99,40 @@ export const translations: TranslationDictionary = {
   "accountMenu.myAccount.label": "Moje konto",
   "accountMenu.savedTrips.label": "Zapisane podróże",
   "accountMenu.priceAlerts.label": "Alerty cenowe",
+  "accountDashboard.priceAlerts.title": "Alerty cenowe",
+  "accountDashboard.priceAlerts.description":
+    "Śledź ceny i otrzymuj powiadomienia, gdy taryfy się zmienią.",
+  "accountDashboard.priceAlerts.empty.title": "Nie masz jeszcze alertów cenowych.",
+  "accountDashboard.priceAlerts.empty.body":
+    "Utwórz alert z wyszukiwania lotów, aby śledzić zmiany taryf i otrzymywać powiadomienia.",
+  "accountDashboard.priceAlerts.cta.flights": "Szukaj lotów",
+  "accountDashboard.priceAlerts.filtersAriaLabel": "Filtry alertów cenowych",
+  "accountDashboard.priceAlerts.featuresAriaLabel": "Funkcje alertów cenowych",
+  "accountDashboard.priceAlerts.tabs.active": "Aktywne",
+  "accountDashboard.priceAlerts.tabs.expired": "Wygasłe",
+  "accountDashboard.priceAlerts.tabs.all": "Wszystkie",
+  "accountDashboard.priceAlerts.sort.label": "Sortuj według",
+  "accountDashboard.priceAlerts.sort.ariaLabel": "Sortuj alerty cenowe",
+  "accountDashboard.priceAlerts.sort.newest": "Najnowsze",
+  "accountDashboard.priceAlerts.sort.oldest": "Najstarsze",
+  "accountDashboard.priceAlerts.sort.routeAz": "Trasa A–Z",
+  "accountDashboard.priceAlerts.features.monitoring.title": "Monitorowanie w czasie rzeczywistym",
+  "accountDashboard.priceAlerts.features.monitoring.body":
+    "Monitorujemy ceny i informujemy Cię, gdy alerty zostaną uruchomione.",
+  "accountDashboard.priceAlerts.features.email.title": "Powiadomienia e-mail",
+  "accountDashboard.priceAlerts.features.email.body":
+    "Otrzymuj powiadomienia, gdy taryfy się zmienią.",
+  "accountDashboard.priceAlerts.features.trends.title": "Trendy cenowe",
+  "accountDashboard.priceAlerts.features.trends.body":
+    "Zobacz, jak śledzone taryfy zmieniają się w czasie.",
+  "accountDashboard.priceAlerts.features.management.title": "Łatwe zarządzanie",
+  "accountDashboard.priceAlerts.features.management.body":
+    "Wstrzymuj lub usuwaj alerty w dowolnym momencie.",
+  "accountDashboard.priceAlerts.error.title":
+    "Nie udało się wczytać Twoich alertów. Spróbuj ponownie.",
+  "accountDashboard.priceAlerts.error.body":
+    "Dane Twojego konta pozostają chronione. Odśwież stronę albo wróć do panelu.",
+  "accountDashboard.priceAlerts.error.cta": "Wróć do panelu",
   signupPageTitle: "Utwórz konto",
   signupFullNameLabel: "Imię i nazwisko",
   signupEmailLabel: "E-mail",
