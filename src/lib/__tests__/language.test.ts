@@ -5441,6 +5441,69 @@ test("Polish homepage render paths keep using i18n keys and preserve route/searc
   assert.match(pageSource, /method: "POST"/);
 });
 
+
+
+test("Polish flight details active render path resolves selected-flight copy without English fallback", () => {
+  const pl = getTranslations("pl");
+  const detailsPageSource = readFileSync("src/app/flights/details/[id]/page.tsx", "utf8");
+  const detailsSource = readFileSync("src/components/results/FlightDetailsClient.tsx", "utf8");
+  const resultsSource = readFileSync("src/components/results/FlightResultsClient.tsx", "utf8");
+
+  assert.ok(detailsPageSource.includes("<FlightDetailsClient id={id} />"));
+
+  const expectedDetailsCopy: Array<[string, string, string]> = [
+    ["selectedFlights", "Wybrane loty", "Selected Flights"],
+    ["flightRouteTemplate", "{{origin}} do {{destination}}", "{{origin}} to {{destination}}"],
+    ["layoverTemplate", "Przesiadka w {{airport}} · {{duration}} · {{connection}}", "Layover in {{airport}} · {{duration}} · {{connection}}"],
+    ["flightNumberLabel", "Lot", "Flight"],
+    ["estimateShownProviderPrice", "Pokazano szacunek. Cena u dostawcy:", "Estimate shown. Provider price:"],
+    ["continueToProvider", "Przejdź do dostawcy", "Continue to Provider"],
+    ["flightDetailsProviderDisclaimer", "Ostateczna cena, dostępność, rezerwacja i zasady taryfy są potwierdzane przez dostawcę.", "Final price, availability, booking, and fare rules are confirmed by the provider."],
+    ["connection", "połączenie", "connection"],
+    ["tripType", "Typ podróży", "Trip type"],
+  ];
+
+  for (const [key, value, englishFallback] of expectedDetailsCopy) {
+    assert.equal(pl[key], value);
+    assert.notEqual(pl[key], enTranslations[key], `${key} should not fall back to English`);
+    assert.notEqual(pl[key], englishFallback, `${key} should not equal visible English fallback`);
+    assert.ok(
+      detailsSource.includes(`t.${key}`) ||
+        detailsSource.includes(`t("${key}")`) ||
+        resultsSource.includes(`t("${key}")`),
+      `${key} should be read by the active details page or its shared search/edit form`,
+    );
+  }
+
+  assert.equal(
+    pl.flightRouteTemplate.replace("{{origin}}", "Lagos").replace("{{destination}}", "Los Angeles"),
+    "Lagos do Los Angeles",
+  );
+  assert.equal(
+    pl.layoverTemplate
+      .replace("{{airport}}", "IST")
+      .replace("{{duration}}", "2h 35m")
+      .replace("{{connection}}", pl.connection),
+    "Przesiadka w IST · 2h 35m · połączenie",
+  );
+  assert.equal(`${pl.flightNumberLabel} TK0626`, "Lot TK0626");
+  assert.equal(`${pl.estimateShownProviderPrice} $2,932.63.`, "Pokazano szacunek. Cena u dostawcy: $2,932.63.");
+  assert.equal(`${1} ${pl.stopSingular}`, "1 przesiadka");
+  assert.notEqual(`${1} ${pl.stopSingular}`, "1 przesiadki");
+  assert.match(detailsSource, /if \(stops === 1\) return `\$\{stops\} \$\{labels\.stopSingular\}`;/);
+  assert.match(detailsSource, /partnerRedirectUrl \|\| flight\.bookingUrl/);
+  assert.match(detailsSource, /window\.location\.href = data\.url/);
+  assert.match(detailsSource, /flight\.airlineName/);
+  assert.match(detailsSource, /flight\.flightNumber/);
+  assert.match(detailsSource, /flight\.originAirport/);
+  assert.match(detailsSource, /flight\.destinationAirport/);
+  assert.match(detailsSource, /displayPrice\.providerFormatted/);
+  assert.match(detailsSource, /layover\.airport/);
+  assert.match(detailsSource, /layover\.duration/);
+  assert.match(detailsPageSource, /<FlightDetailsClient id=\{id\} \/>/);
+  assert.match(resultsSource, /tripType: tripTypeInput/);
+});
+
 test("Polish homepage fare price prefixes resolve to od without changing fare details", () => {
   const pl = getTranslations("pl");
   const prefix = pl.fromPrice.toLocaleLowerCase("pl-PL");
