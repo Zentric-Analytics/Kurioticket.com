@@ -1148,16 +1148,16 @@ function PhoneNumberInput({
   };
 
   return (
-    <div className="flex w-full min-w-0 items-center gap-2 sm:max-w-xl">
-      <div className="group relative h-10 w-12 shrink-0 sm:h-11 sm:w-14">
+    <div className="flex w-full min-w-0 items-stretch gap-0 sm:max-w-xl">
+      <div className="group relative z-10 h-10 w-16 shrink-0 sm:w-[4.5rem]">
         <div
           aria-hidden="true"
-          className="pointer-events-none flex h-full w-full items-center justify-center rounded-none border border-slate-300 bg-white px-2 transition group-focus-within:border-violet-500 group-focus-within:ring-2 group-focus-within:ring-violet-100"
+          className="pointer-events-none flex h-full w-full items-center justify-center rounded-none border border-slate-400 bg-white px-3 transition group-focus-within:border-violet-500 group-focus-within:ring-2 group-focus-within:ring-violet-100"
         >
           <CountryFlagIcon
             countryName={selectedOption.countryName}
             isoCode={selectedOption.isoCode}
-            className="h-[18px] w-6 rounded-none bg-white sm:h-5 sm:w-7"
+            className="h-5 w-7 rounded-none bg-white sm:h-[22px] sm:w-8"
           />
         </div>
 
@@ -1177,7 +1177,7 @@ function PhoneNumberInput({
       <div
         className={cn(
           className,
-          "flex min-w-0 items-center gap-2 overflow-hidden",
+          "-ms-px flex min-w-0 items-center gap-2 overflow-hidden",
         )}
       >
         <span className="shrink-0 whitespace-nowrap text-slate-900">
@@ -1275,7 +1275,7 @@ function DetailInput({
   const baseClassName = cn(
     "h-10 w-full min-w-0 rounded-none border border-slate-400 bg-white px-3 text-base font-medium leading-5 text-slate-950 outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 sm:max-w-lg sm:text-sm",
     row.readOnly &&
-      "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-200 focus:border-slate-200 focus:ring-0",
+      "cursor-not-allowed border-slate-300 bg-slate-50 text-slate-700 hover:border-slate-300 focus:border-slate-300 focus:ring-0",
   );
 
   const handleChange = (
