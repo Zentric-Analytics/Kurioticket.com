@@ -108,7 +108,6 @@ async function sendWelcomeEmail(input: {
   email: string;
   source: string;
   preferencesUrl: string;
-  unsubscribeUrl: string;
 }) {
   try {
     await sendTransactionalEmail({
@@ -116,7 +115,6 @@ async function sendWelcomeEmail(input: {
       subject: "You’re subscribed to Kurioticket updates",
       html: newsletterWelcomeEmail({
         preferencesUrl: input.preferencesUrl,
-        unsubscribeUrl: input.unsubscribeUrl,
       }),
       from: process.env.NEWSLETTER_FROM_EMAIL || undefined,
       replyTo: process.env.NEWSLETTER_REPLY_TO || undefined,
@@ -245,7 +243,6 @@ export async function POST(request: NextRequest) {
         email,
         source,
         preferencesUrl: buildNewsletterUrl("/email/preferences", request, email, newsletterToken),
-        unsubscribeUrl: buildNewsletterUrl("/api/newsletter/unsubscribe", request, email, newsletterToken),
       });
     }
 
