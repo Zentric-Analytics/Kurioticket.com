@@ -402,10 +402,10 @@ test("Dutch, Portuguese, Japanese, Korean, Hindi, Turkish, and Polish dictionari
   assert.equal(getTranslations("tr-TR").languageSearchLabel, "Dil ara");
   assert.equal(getTranslations("tr-tr").currentLanguage, "Geçerli dil: {{language}}");
   assert.equal(trTranslations.websiteLanguageTitle, "Web sitesi dilinizi seçin");
-  assert.equal(getTranslations("pl").websiteLanguageTitle, enTranslations.websiteLanguageTitle);
-  assert.equal(getTranslations("pl-PL").languageSearchLabel, enTranslations.languageSearchLabel);
-  assert.equal(getTranslations("pl-pl").currentLanguage, enTranslations.currentLanguage);
-  assert.equal(plTranslations.websiteLanguageTitle, enTranslations.websiteLanguageTitle);
+  assert.equal(getTranslations("pl").websiteLanguageTitle, "Wybierz język strony");
+  assert.equal(getTranslations("pl-PL").languageSearchLabel, "Wyszukaj język");
+  assert.equal(getTranslations("pl-pl").currentLanguage, "Obecny język: {{language}}");
+  assert.equal(plTranslations.websiteLanguageTitle, "Wybierz język strony");
 });
 
 test("Hindi homepage and primary search UI copy resolves without English fallback", () => {
@@ -745,6 +745,79 @@ test("Hindi Deals page copy resolves without English fallback", () => {
     assert.equal(hi[key], expected, key);
     assert.notEqual(hi[key], enTranslations[key], key);
   }
+});
+
+test("Polish global modal copy resolves without English fallback", () => {
+  const pl = getTranslations("pl");
+
+  const expectedPolishGlobalModalStrings: Record<string, string> = {
+    chooseCountryAndCurrency: "Wybierz kraj i walutę",
+    countryCurrencyDescription:
+      "Wybierz kraj i walutę używane do wyświetlania cen. Sugestie lotnisk korzystają z wykrytej lokalizacji.",
+    searchCountryOrCurrency: "Wyszukaj kraj lub walutę",
+    countryCurrencyPopularCountryAndCurrency: "POPULARNE KRAJE I WALUTY",
+    countryCurrencyAllCountriesAndCurrencies: "WSZYSTKIE KRAJE I WALUTY",
+    countryCurrencyOptionCountSingular: "{{count}} opcja",
+    countryCurrencyOptionCountPlural: "{{count}} opcji",
+    showMoreResults: "Pokaż więcej wyników",
+    globalLanguage: "JĘZYK GLOBALNY",
+    websiteLanguageTitle: "Wybierz język strony",
+    websiteLanguageDescription:
+      "English (United States) jest domyślnym językiem strony. Kurioticket zmienia język dopiero po wybraniu dostępnej opcji.",
+    currentLanguage: "Obecny język: {{language}}",
+    languagePreparingNotice:
+      "Przygotowujemy kolejne języki. Niedostępne opcje nie tłumaczą jeszcze strony.",
+    languageSearchLabel: "Wyszukaj język",
+    languageSearchPlaceholder: "Wyszukaj English, Español, Français, Deutsch...",
+  };
+
+  for (const [key, expected] of Object.entries(expectedPolishGlobalModalStrings)) {
+    assert.equal(pl[key], expected, key);
+    assert.notEqual(pl[key], enTranslations[key], key);
+  }
+
+  assert.ok(pl.websiteLanguageDescription.includes("Kurioticket"));
+  assert.equal(pl.currentLanguage.replace("{{language}}", "Polski"), "Obecny język: Polski");
+  assert.ok(pl.currentLanguage.includes("{{language}}"));
+  assert.ok(pl.countryCurrencyOptionCountSingular.includes("{{count}}"));
+  assert.ok(pl.countryCurrencyOptionCountPlural.includes("{{count}}"));
+
+  const appHeaderSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
+  const countryCurrencySelectorSource = readFileSync("src/components/region/CountryCurrencySelector.tsx", "utf8");
+
+  for (const key of [
+    "globalLanguage",
+    "websiteLanguageTitle",
+    "websiteLanguageDescription",
+    "currentLanguage",
+    "languagePreparingNotice",
+    "languageSearchLabel",
+    "languageSearchPlaceholder",
+  ]) {
+    assert.ok(appHeaderSource.includes(`t.${key}`), `AppHeader should render ${key} through i18n`);
+  }
+
+  for (const key of [
+    "chooseCountryAndCurrency",
+    "countryCurrencyDescription",
+    "searchCountryOrCurrency",
+    "countryCurrencyAllCountriesAndCurrencies",
+    "countryCurrencyPopularCountryAndCurrency",
+    "countryCurrencyOptionCountSingular",
+    "countryCurrencyOptionCountPlural",
+    "showMoreResults",
+  ]) {
+    assert.ok(
+      countryCurrencySelectorSource.includes(`t.${key}`),
+      `CountryCurrencySelector should render ${key} through i18n`,
+    );
+  }
+
+  assert.ok(countryCurrencySelectorSource.includes("displayedCountryCurrencies.map((option)"));
+  assert.ok(countryCurrencySelectorSource.includes("option.code === mode"));
+  assert.ok(countryCurrencySelectorSource.includes("option.currency === selectedCurrency"));
+  assert.ok(appHeaderSource.includes("languageOptions"));
+  assert.ok(appHeaderSource.includes("option.status === \"available\""));
 });
 
 test("Hindi country and currency modal copy resolves without English fallback", () => {
