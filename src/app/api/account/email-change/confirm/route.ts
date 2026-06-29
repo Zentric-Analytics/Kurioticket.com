@@ -52,13 +52,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Enter a different email address." }, { status: 400 });
     }
 
-    const validCode = await verifyAccountEmailChangeCode({
+    const codeVerification = await verifyAccountEmailChangeCode({
       userId: user.id,
       newEmail,
       code: payload.code,
     });
 
-    if (!validCode) {
+    if (codeVerification === "expired") {
+      return NextResponse.json({ ok: false, error: "The verification code has expired. Please request a new one." }, { status: 400 });
+    }
+
+    if (codeVerification !== "valid") {
       return NextResponse.json({ ok: false, error: "The verification code is invalid or expired." }, { status: 400 });
     }
 
