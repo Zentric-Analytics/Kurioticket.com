@@ -165,6 +165,19 @@ const globalHotelDestinationCards: HotelDestinationCard[] = [
   },
 ];
 
+const splitMobileHeroText = (text: string, lines: readonly string[]) =>
+  text === lines.join(" ") ? lines : null;
+
+const mobileHotelsHeroTitleLines = [
+  "Find the stays that start the",
+  "right trip.",
+] as const;
+
+const mobileHotelsHeroSubtitleLines = [
+  "Compare hotels in one place, from polished city arrivals",
+  "to easy resort and escapes.",
+] as const;
+
 const hotelInspirationCategoryChips = [
   "Beach",
   "City breaks",
@@ -466,6 +479,14 @@ export default function HotelsSearchPage() {
   const hotelSearchIntroLabel = t("hotelSearchIntroLabel");
   const mobileHotelsHeroTitle = t("hotelsHeroMobileTitle");
   const mobileHotelsHeroSubtitle = t("hotelsHeroMobileSubtitle");
+  const mobileHotelsHeroTitleSplit = splitMobileHeroText(
+    mobileHotelsHeroTitle,
+    mobileHotelsHeroTitleLines,
+  );
+  const mobileHotelsHeroSubtitleSplit = splitMobileHeroText(
+    mobileHotelsHeroSubtitle,
+    mobileHotelsHeroSubtitleLines,
+  );
 
   return (
     <>
@@ -490,11 +511,27 @@ export default function HotelsSearchPage() {
               <p className="sr-only">
                 {t("hotelsHeroEyebrow")}
               </p>
-              <h1 className="max-w-[20.6rem] text-[clamp(1.86rem,7.55vw,2.12rem)] font-semibold leading-[1.04] tracking-[-0.039em] text-white text-balance drop-shadow-[0_2px_10px_rgba(2,6,23,0.6)]">
-                {mobileHotelsHeroTitle}
+              <h1 className="max-w-[20.35rem] text-[clamp(1.78rem,7.28vw,2.04rem)] font-semibold leading-[1.05] tracking-[-0.041em] text-white text-balance drop-shadow-[0_2px_10px_rgba(2,6,23,0.6)]">
+                {mobileHotelsHeroTitleSplit ? (
+                  mobileHotelsHeroTitleSplit.map((line) => (
+                    <span key={line} className="block">
+                      {line}
+                    </span>
+                  ))
+                ) : (
+                  mobileHotelsHeroTitle
+                )}
               </h1>
-              <p className="mt-4 max-w-[22.15rem] text-[0.89rem] font-medium leading-[1.52] text-white/92 text-balance drop-shadow-[0_2px_8px_rgba(2,6,23,0.54)]">
-                {mobileHotelsHeroSubtitle}
+              <p className="mt-4 max-w-[22.25rem] text-[clamp(0.82rem,3.42vw,0.89rem)] font-medium leading-[1.5] tracking-[-0.012em] text-white/92 text-balance drop-shadow-[0_2px_8px_rgba(2,6,23,0.54)]">
+                {mobileHotelsHeroSubtitleSplit ? (
+                  mobileHotelsHeroSubtitleSplit.map((line) => (
+                    <span key={line} className="block">
+                      {line}
+                    </span>
+                  ))
+                ) : (
+                  mobileHotelsHeroSubtitle
+                )}
               </p>
             </div>
           </div>
