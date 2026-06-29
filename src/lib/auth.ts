@@ -29,6 +29,7 @@ import {
 } from "@/lib/prisma";
 
 import { signinSchema } from "@/lib/validation";
+import { isPasskeyLoginToken, passkeyStrongAuthNote } from "@/lib/passkeys";
 
 import {
   EmailVerificationCooldownError,
@@ -43,6 +44,7 @@ type SessionAugmentedUser = {
   role?: string;
   status?: string;
   emailVerified?: Date | string | null;
+  passkeyStrongAuth?: boolean;
 };
 
 type JwtUpdateSession = {
@@ -95,6 +97,11 @@ const providers: NextAuthOptions["providers"] = [
         label: "Login code",
         type: "text",
       },
+
+      passkeyLoginToken: {
+        label: "Passkey login token",
+        type: "text",
+      },
     },
 
     async authorize(
@@ -109,6 +116,25 @@ const providers: NextAuthOptions["providers"] = [
               ),
             } as Request)
           : undefined;
+
+      const passkeyLoginToken = String(credentials?.passkeyLoginToken || "").trim();
+
+      if (passkeyLoginToken && isPasskeyLoginToken(passkeyLoginToken)) {
+        const challenge = await getPrisma().webAuthnChallenge.findFirst({
+          where: { loginToken: passkeyLoginToken, type: "authentication", consumedAt: { not: null }, expiresAt: { gt: new Date() } },
+          include: { user: true },
+        });
+
+        if (!challenge?.user || !(await isAuthenticatableUserStatus(challenge.user)) || !challenge.user.emailVerified) return null;
+
+        await getPrisma().webAuthnChallenge.update({ where: { id: challenge.id }, data: { expiresAt: new Date() } });
+        logAuthEvent("passkey-login-strong-auth", { userId: challenge.user.id, note: passkeyStrongAuthNote });
+
+        return {
+          id: challenge.user.id, email: challenge.user.email, name: challenge.user.name, image: challenge.user.image,
+          role: challenge.user.role, status: challenge.user.status, emailVerified: challenge.user.emailVerified, passkeyStrongAuth: true,
+        };
+      }
 
       const loginCode = String(
         credentials?.loginCode || ""
@@ -581,7 +607,7 @@ export const authOptions: NextAuthOptions =
                 dbUser.securitySettings?.twoFactorEnabled
               );
 
-            if (token.twoFactorEnabled && user) {
+            if (token.twoFactorEnabled && user && !(user as SessionAugmentedUser).passkeyStrongAuth) {
               token.twoFactorVerified = false;
             }
 
