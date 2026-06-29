@@ -4,13 +4,10 @@ import Link from "next/link";
 
 import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
 import { useLocale } from "@/components/layout/LocaleProvider";
-import { getCaliforniaSellerOfTravelNotice, legalProfile } from "@/data/legalProfile";
 
 export function Footer() {
   const { t } = useLocale();
   const currentYear = new Date().getFullYear();
-  const sellerOfTravelNotice = `${legalProfile.company.legalName} — ${getCaliforniaSellerOfTravelNotice()}`;
-
   const footerSections = [
     {
       heading: t.footerContactUs,
@@ -181,7 +178,7 @@ export function Footer() {
                 href="/legal"
                 className="mt-3 block max-w-3xl text-xs leading-5 text-slate-500 transition-colors hover:text-indigo-600"
               >
-                {sellerOfTravelNotice}
+                {t.footerCaliforniaSeller}
               </Link>
             </div>
 

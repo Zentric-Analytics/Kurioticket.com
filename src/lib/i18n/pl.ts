@@ -127,6 +127,8 @@ export const translations: TranslationDictionary = {
   footerAboutUs: "O nas",
   footerHowItWorks: "Jak działa Kurioticket",
   footerConfidenceTagline: "Wyszukuj loty, hotele i oferty podróży z pewnością.",
+  footerAllRightsReserved: "Wszelkie prawa zastrzeżone.",
+  footerCaliforniaSeller: "Kurioticket LLC — Kalifornijski numer rejestracyjny sprzedawcy usług turystycznych: 2172630-70. Rejestracja jako sprzedawca usług turystycznych nie oznacza zatwierdzenia przez stan Kalifornia.",
   footerPrivacy: "Prywatność",
   footerTerms: "Warunki",
   footerCookies: "Pliki cookie",

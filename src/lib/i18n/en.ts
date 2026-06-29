@@ -2265,6 +2265,7 @@ export const translations: TranslationDictionary = {
   footerConfidenceTagline:
     "Search flights, hotels, and travel deals with confidence.",
   footerAllRightsReserved: "All rights reserved.",
+  footerCaliforniaSeller: "Kurioticket LLC — California Seller of Travel Registration No. 2172630-70. Registration as a seller of travel does not constitute approval by the State of California.",
   footerPrivacy: "Privacy",
   footerTerms: "Terms",
   footerCookies: "Cookies",

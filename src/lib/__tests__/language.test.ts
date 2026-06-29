@@ -3996,8 +3996,11 @@ test("Polish homepage-visible copy resolves without English fallback", () => {
     footerTermsSettings: "Warunki i ustawienia",
     footerAboutKurioticket: "O Kurioticket",
     footerConfidenceTagline: "Wyszukuj loty, hotele i oferty podróży z pewnością.",
+    footerAllRightsReserved: "Wszelkie prawa zastrzeżone.",
+    footerCaliforniaSeller: "Kurioticket LLC — Kalifornijski numer rejestracyjny sprzedawcy usług turystycznych: 2172630-70. Rejestracja jako sprzedawca usług turystycznych nie oznacza zatwierdzenia przez stan Kalifornia.",
     footerPrivacy: "Prywatność",
     footerTerms: "Warunki",
+    footerCookies: "Pliki cookie",
   };
 
   for (const [key, expected] of Object.entries(expectedPolishHomepageCopy)) {
@@ -4006,6 +4009,12 @@ test("Polish homepage-visible copy resolves without English fallback", () => {
       assert.notEqual(pl[key], enTranslations[key], key);
     }
   }
+
+  assert.match(pl.footerCaliforniaSeller, /Kurioticket LLC/);
+  assert.match(pl.footerCaliforniaSeller, /2172630-70/);
+  assert.equal(`© 2026 Kurioticket LLC. ${pl.footerAllRightsReserved}`, "© 2026 Kurioticket LLC. Wszelkie prawa zastrzeżone.");
+  assert.notEqual(pl.footerAllRightsReserved, enTranslations.footerAllRightsReserved);
+  assert.notEqual(pl.footerCaliforniaSeller, enTranslations.footerCaliforniaSeller);
 
   assert.equal(`${1} ${pl.adultSingular}, ${pl.economy.toLocaleLowerCase("pl-PL")}`, "1 dorosły, ekonomiczna");
 });
@@ -4041,7 +4050,7 @@ test("Polish homepage render paths keep using i18n keys and preserve route/searc
     assert.match(searchSource, new RegExp(key), key);
   }
 
-  for (const key of ["footerContactUs", "footerDiscover", "footerTermsSettings", "footerAboutKurioticket", "footerConfidenceTagline"]) {
+  for (const key of ["footerContactUs", "footerDiscover", "footerTermsSettings", "footerAboutKurioticket", "footerConfidenceTagline", "footerAllRightsReserved", "footerCaliforniaSeller", "footerPrivacy", "footerTerms", "footerCookies"]) {
     assert.match(footerSource, new RegExp(`t\\.${key}`), key);
   }
 
@@ -4052,5 +4061,7 @@ test("Polish homepage render paths keep using i18n keys and preserve route/searc
   assert.match(searchSource, /origin:/);
   assert.match(searchSource, /destination:/);
   assert.match(pageSource, /fetch\(\s*"\/api\/newsletter\/subscribe"/);
+  assert.doesNotMatch(footerSource, /getCaliforniaSellerOfTravelNotice/);
+  assert.doesNotMatch(footerSource, /California Seller of Travel Registration/);
   assert.match(pageSource, /method: "POST"/);
 });
