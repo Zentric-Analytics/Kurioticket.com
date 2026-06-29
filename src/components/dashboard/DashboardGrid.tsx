@@ -187,7 +187,6 @@ type SecuritySettingRowProps = {
   title: string;
   body: string;
   action?: string;
-  status?: string;
   danger?: boolean;
   onAction: () => void;
   statusId?: string;
@@ -2324,7 +2323,6 @@ function SecuritySettingRow({
   title,
   body,
   action,
-  status,
   danger = false,
   onAction,
   statusId,
@@ -2346,18 +2344,6 @@ function SecuritySettingRow({
           >
             {body}
           </p>
-          {status ? (
-            <p
-              className={cn(
-                "mt-2 inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-semibold leading-4",
-                danger
-                  ? "bg-red-50 text-red-700"
-                  : "bg-slate-100 text-slate-700",
-              )}
-            >
-              {status}
-            </p>
-          ) : null}
         </div>
         {action ? (
           <button
@@ -2365,7 +2351,7 @@ function SecuritySettingRow({
             onClick={onAction}
             aria-describedby={statusId}
             className={cn(
-              "focus-ring inline-flex min-h-10 w-full max-w-full shrink-0 cursor-pointer items-center justify-center rounded-lg border bg-white px-4 py-2 text-center text-sm font-semibold leading-5 transition sm:w-auto",
+              "focus-ring inline-flex min-h-10 w-fit max-w-full shrink-0 cursor-pointer items-center justify-center rounded-lg border bg-white px-4 py-2 text-center text-sm font-semibold leading-5 transition",
               danger
                 ? "border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50"
                 : "border-slate-300 text-slate-800 hover:border-slate-400 hover:bg-slate-50",
@@ -2408,8 +2394,8 @@ export function SecurityDashboardPage() {
   const [sessionsModalOpen, setSessionsModalOpen] = useState(false);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [sessions, setSessions] = useState<AccountSessionActivity[]>([]);
-  const [sessionNotice, setSessionNotice] = useState(
-    "Tracked from sign-ins and security page access. JWT sessions remain valid until they expire or you sign out.",
+  const [sessionNotice] = useState(
+    "Review devices that have recently accessed your account.",
   );
   const [removingSessionId, setRemovingSessionId] = useState<string | null>(null);
   const securityActionStatusId = "security-action-status";
@@ -2589,9 +2575,6 @@ export function SecurityDashboardPage() {
       }
 
       setSessions(Array.isArray(data.sessions) ? data.sessions : []);
-      if (data.notice) {
-        setSessionNotice(String(data.notice));
-      }
     } catch {
       setActionMessage("Unable to load active sessions.");
     } finally {
@@ -2622,7 +2605,7 @@ export function SecurityDashboardPage() {
         return;
       }
 
-      setActionMessage("Device record marked as signed out. Existing JWTs are not forcibly invalidated.");
+      setActionMessage("Device record removed from your active sessions list.");
       await loadSessionActivities();
     } catch {
       setActionMessage("Unable to remove device record.");
@@ -2756,31 +2739,28 @@ export function SecurityDashboardPage() {
         <div className="px-5 sm:px-6">
           <SecuritySettingRow
             title={tx("accountDashboard.security.password.title", "Password")}
-            body={tx("accountDashboard.security.password.description", "Update the password used to sign in to your Kurioticket account.")}
+            body={tx("accountDashboard.security.password.description", "Change the password used to sign in to your account.")}
             action={tx("accountDashboard.security.action.changePassword", "Change password")}
             onAction={() => setPasswordModalOpen(true)}
             statusId={securityActionStatusId}
           />
           <SecuritySettingRow
             title={tx("accountDashboard.security.twoFactor.title", "Two-factor authentication")}
-            body={twoFactor.enabled ? `Authenticator app is required at sign-in. Recovery codes remaining: ${twoFactor.recoveryCodesRemaining ?? 0}.` : "Use Google Authenticator, Microsoft Authenticator, 1Password, Bitwarden, Authy, 2FAS, or another TOTP app."}
-            status={twoFactor.enabled ? "Enabled · Authenticator app" : "Not enabled"}
-            action={twoFactor.enabled ? "Disable" : "Set up"}
+            body="Add extra protection with an authenticator app."
+            action={twoFactor.enabled ? "Manage" : "Set up"}
             onAction={() => void openTwoFactorModal(twoFactor.enabled ? "disable" : "setup")}
             statusId={securityActionStatusId}
           />
           <SecuritySettingRow
             title={tx("accountDashboard.security.passkeys.title", "Passkeys")}
-            body={passkeys.length ? "Sign in with your face, fingerprint, screen lock, password manager, or security key. Passkey login is strong sign-in and does not require an authenticator code again by default." : "Sign in faster and more securely with your device screen lock, Face ID, fingerprint, password manager, or security key."}
-            status={passkeys.length ? `${passkeys.length} passkey${passkeys.length === 1 ? "" : "s"} added` : "Not set up"}
+            body="Use your device or security key to sign in faster."
             action={passkeys.length ? tx("accountDashboard.security.action.manage", "Manage") : "Set up passkey"}
             onAction={() => setPasskeysModalOpen(true)}
             statusId={securityActionStatusId}
           />
           <SecuritySettingRow
             title={tx("accountDashboard.security.activeSessions.title", "Active sessions")}
-            body={tx("accountDashboard.security.activeSessions.description", "Review recent devices tracked for your account. Because sign-in uses JWT sessions, removing a record does not instantly invalidate an issued token.")}
-            status={sessions.some((session) => session.isCurrent) ? "This device tracked" : "Tracking enabled"}
+            body={tx("accountDashboard.security.activeSessions.description", "Review devices signed in to your account.")}
             action={tx("accountDashboard.security.action.manageSessions", "Manage sessions")}
             onAction={handleOpenSessions}
             statusId={securityActionStatusId}
@@ -2794,10 +2774,7 @@ export function SecurityDashboardPage() {
             <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
               <div className="min-w-0">
                 <p className="max-w-2xl text-sm leading-6 text-slate-600">
-                  {tx("accountDashboard.security.notifications.description", "Get notified about important account security activity.")}
-                </p>
-                <p className="mt-2 inline-flex w-fit rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold leading-4 text-slate-700">
-                  {securityEmailAlerts ? "Email alerts on" : "Email alerts off"}
+                  {tx("accountDashboard.security.notifications.description", "Get alerts about important account activity.")}
                 </p>
               </div>
               <button
@@ -2807,7 +2784,7 @@ export function SecurityDashboardPage() {
                 disabled={preferencesLoading || preferencesSaving}
                 onClick={() => handleSecurityAlertsToggle(!securityEmailAlerts)}
                 className={cn(
-                  "focus-ring inline-flex min-h-10 w-full items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition sm:w-auto",
+                  "focus-ring inline-flex min-h-10 w-fit items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition",
                   securityEmailAlerts ? "bg-blue-600 text-white hover:bg-blue-700" : "border border-slate-300 bg-white text-slate-800 hover:bg-slate-50",
                   preferencesLoading || preferencesSaving ? "cursor-not-allowed opacity-60" : "cursor-pointer",
                 )}
@@ -2827,7 +2804,7 @@ export function SecurityDashboardPage() {
         <div className="px-5 sm:px-6">
           <SecuritySettingRow
             title={tx("accountDashboard.security.deleteAccount.title", "Delete account")}
-            body={tx("accountDashboard.security.deleteAccount.description", "Request permanent account deletion. Support review is required before any account records are removed.")}
+            body={tx("accountDashboard.security.deleteAccount.description", "Request permanent account deletion.")}
             action={tx("accountDashboard.security.action.deleteAccount", "Delete account")}
             onAction={() => setDeleteModalOpen(true)}
             statusId={securityActionStatusId}
