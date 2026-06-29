@@ -41,6 +41,7 @@ import {
   normalizeFlightsCalendarLocale,
 } from "@/lib/flights/dateFormatting";
 import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
+import { legalDocuments } from "@/data/legalDocuments";
 
 type StorageLike = { getItem: (k: string) => string | null; setItem: (k: string, v: string) => void };
 type WindowLike = { localStorage: StorageLike; dispatchEvent: (event: Event) => boolean };
@@ -3845,6 +3846,123 @@ test("Turkish legal center and policy document strings are localized", () => {
   assert.ok(legalDocumentsSource.indexOf('slug: "terms-of-service"') < legalDocumentsSource.indexOf('slug: "privacy-policy"'));
   assert.ok(legalDocumentsSource.indexOf('slug: "privacy-policy"') < legalDocumentsSource.indexOf('slug: "cookie-policy"'));
   assert.ok(legalDocumentsSource.indexOf('slug: "security-statement"') < legalDocumentsSource.indexOf('slug: "accessibility-statement"'));
+});
+
+
+test("Legal Center overview localizes active render path for every active locale", () => {
+  const activeLocaleTranslations = {
+    en: enTranslations,
+    ar: arTranslations,
+    nl: nlTranslations,
+    es: esTranslations,
+    fr: frTranslations,
+    de: deTranslations,
+    it: itTranslations,
+    "pt-br": ptBrTranslations,
+    "zh-cn": zhCnTranslations,
+    ja: jaTranslations,
+    ko: koTranslations,
+    hi: hiTranslations,
+    tr: trTranslations,
+    pl: plTranslations,
+  } as const;
+
+  const legalOverviewKeys = [
+    "legal.index.heroLabel",
+    "legal.index.heroTitle",
+    "legal.index.heroDescription",
+    "legal.index.compliance.eyebrow",
+    "legal.index.compliance.sellerOfTravel",
+    "legal.index.compliance.registrationNumberLabel",
+    "legal.index.compliance.registrationExpires",
+    "legal.index.compliance.registrationExpiresDate",
+    "legal.index.compliance.publicNotice",
+    "legal.index.contacts.support",
+    "legal.index.contacts.legal",
+    "legal.index.contacts.privacy",
+    "legal.index.resourcesEyebrow",
+    "legal.index.resourcesTitle",
+    "legal.index.documentsCountLabel",
+    "legal.index.lastUpdated",
+    "legal.index.lastUpdatedDate",
+  ];
+
+  const expectedDocumentKeys = [
+    "termsOfService",
+    "privacyPolicy",
+    "cookiePolicy",
+    "privacyChoices",
+    "affiliateDisclosure",
+    "refundBookingDisclaimer",
+    "priceAvailabilityDisclaimer",
+    "partnerRedirectDisclaimer",
+    "californiaSellerOfTravelNotice",
+    "legalNoticeCompanyInformation",
+    "acceptableUsePolicy",
+    "dataDeletionPolicy",
+    "securityStatement",
+    "accessibilityStatement",
+  ];
+
+  for (const documentKey of expectedDocumentKeys) {
+    legalOverviewKeys.push(`legal.index.documents.${documentKey}.title`);
+    legalOverviewKeys.push(`legal.index.documents.${documentKey}.summary`);
+  }
+
+  assert.equal(legalDocuments.length, 14);
+  assert.deepEqual(
+    legalDocuments.map((document) => document.slug),
+    [
+      "terms-of-service",
+      "privacy-policy",
+      "cookie-policy",
+      "privacy-choices",
+      "affiliate-disclosure",
+      "refund-booking-disclaimer",
+      "price-availability-disclaimer",
+      "partner-redirect-disclaimer",
+      "california-seller-of-travel-notice",
+      "legal-notice-company-information",
+      "acceptable-use-policy",
+      "data-deletion-policy",
+      "security-statement",
+      "accessibility-statement",
+    ],
+  );
+
+  for (const [locale, translations] of Object.entries(activeLocaleTranslations)) {
+    for (const key of legalOverviewKeys) {
+      assert.equal(typeof translations[key], "string", `${locale} ${key} should exist`);
+      assert.notEqual(translations[key], "", `${locale} ${key} should not be empty`);
+      assert.equal(getTranslations(locale)[key], translations[key], `${locale} ${key} should resolve from the active locale dictionary`);
+    }
+    if (locale !== "en") {
+      assert.notEqual(translations["legal.index.heroDescription"], enTranslations["legal.index.heroDescription"], `${locale} hero copy should not fall back to English`);
+      assert.notEqual(translations["legal.index.compliance.eyebrow"], enTranslations["legal.index.compliance.eyebrow"], `${locale} compliance copy should not fall back to English`);
+      assert.notEqual(translations["legal.index.resourcesTitle"], enTranslations["legal.index.resourcesTitle"], `${locale} resources copy should not fall back to English`);
+      assert.notEqual(translations["legal.index.documents.privacyChoices.title"], enTranslations["legal.index.documents.privacyChoices.title"], `${locale} card copy should not fall back to English`);
+    }
+  }
+
+  assert.equal(arTranslations["legal.index.compliance.registrationNumberLabel"], "رقم التسجيل");
+  assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
+  assert.ok(availableLocaleOptions.filter((option) => option.code !== "ar").every((option) => option.direction === "ltr"));
+
+  const legalPageSource = readFileSync("src/app/legal/LegalPageContent.tsx", "utf8");
+  const legalPageRouteSource = readFileSync("src/app/legal/page.tsx", "utf8");
+  assert.ok(legalPageRouteSource.includes("listLegalDocuments()"));
+  assert.ok(legalPageRouteSource.includes("<LegalPageContent documents={documents} />"));
+  assert.ok(legalPageSource.includes('t("legal.index.heroDescription")'));
+  assert.ok(legalPageSource.includes('t("legal.index.compliance.eyebrow")'));
+  assert.ok(legalPageSource.includes('t("legal.index.resourcesTitle")'));
+  assert.ok(legalPageSource.includes('t(`legal.index.documents.${documentKey}.title`)'));
+  assert.ok(legalPageSource.includes('t(`legal.index.documents.${documentKey}.summary`)'));
+  assert.ok(legalPageSource.includes('href={`/legal/${document.slug}`}'));
+  assert.ok(legalPageSource.includes('legalProfile.company.legalName'));
+  assert.ok(legalPageSource.includes('sellerOfTravel.registrationNumber'));
+  assert.ok(legalPageSource.includes('legalProfile.contact.supportEmail'));
+  assert.ok(legalPageSource.includes('legalProfile.contact.legalEmail'));
+  assert.ok(legalPageSource.includes('legalProfile.contact.privacyEmail'));
 });
 
 

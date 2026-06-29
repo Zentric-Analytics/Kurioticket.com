@@ -663,7 +663,7 @@ export const translations: TranslationDictionary = {
   "legalCenter.cookiePolicy.cta": "View Cookie Policy",
   "legalCenter.additionalResourcesTitle": "Additional legal resources",
   "legalCenter.additionalResourcesDescription": "Additional legal resources may be added as Kurioticket grows.",
-  "legal.index.heroLabel": "Legal document system",
+  "legal.index.heroLabel": "LEGAL INFORMATION",
   "legal.index.heroTitle": "Legal Center",
   "legal.index.heroDescription": "Kurioticket’s legal resources explain how our travel search, account, privacy, provider redirect, and compliance practices work.",
   "legal.index.compliance.eyebrow": "COMPANY & COMPLIANCE",
