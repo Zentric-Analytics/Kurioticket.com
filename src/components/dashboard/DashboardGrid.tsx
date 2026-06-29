@@ -7,7 +7,6 @@ import {
   Bell,
   Bookmark,
   BriefcaseBusiness,
-  ChevronDown,
   ChevronRight,
   CircleHelp,
   Headphones,
@@ -496,7 +495,7 @@ function CountryFlagIcon({
   return (
     <span
       className={cn(
-        "inline-flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100",
+        "inline-flex h-[18px] w-6 shrink-0 items-center justify-center overflow-hidden rounded-none border border-slate-200 bg-slate-100",
         className,
       )}
     >
@@ -1150,19 +1149,15 @@ function PhoneNumberInput({
 
   return (
     <div className="flex w-full min-w-0 items-center gap-2 sm:max-w-xl">
-      <div className="group relative h-10 w-[72px] shrink-0 sm:h-11 sm:w-20">
+      <div className="group relative h-10 w-12 shrink-0 sm:h-11 sm:w-14">
         <div
           aria-hidden="true"
-          className="pointer-events-none flex h-full w-full items-center justify-center gap-1.5 rounded-none border border-slate-300 bg-white px-2 transition group-focus-within:border-violet-500 group-focus-within:ring-2 group-focus-within:ring-violet-100"
+          className="pointer-events-none flex h-full w-full items-center justify-center rounded-none border border-slate-300 bg-white px-2 transition group-focus-within:border-violet-500 group-focus-within:ring-2 group-focus-within:ring-violet-100"
         >
           <CountryFlagIcon
             countryName={selectedOption.countryName}
             isoCode={selectedOption.isoCode}
-            className="h-6 w-6 rounded-full bg-white sm:h-7 sm:w-7"
-          />
-          <ChevronDown
-            className="h-4 w-4 shrink-0 text-slate-500"
-            aria-hidden="true"
+            className="h-[18px] w-6 rounded-none bg-white sm:h-5 sm:w-7"
           />
         </div>
 
