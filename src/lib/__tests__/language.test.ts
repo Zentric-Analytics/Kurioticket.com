@@ -1512,6 +1512,85 @@ test("Hindi flights landing static render path resolves screenshot-visible copy"
 });
 
 
+test("Polish flights results active render path resolves visible copy without English fallback", () => {
+  const pl = getTranslations("pl");
+  const resultsSource = readFileSync("src/components/results/FlightResultsClient.tsx", "utf8");
+  const cardSource = readFileSync("src/components/results/FlightCard.tsx", "utf8");
+  const pageSource = readFileSync("src/app/flights/results/page.tsx", "utf8");
+
+  assert.ok(pageSource.includes("<FlightResultsClient />"), "active /flights/results page should render FlightResultsClient");
+
+  const expectedResultsCopy: Array<[string, string, string, string[]]> = [
+    ["cheapest", "NAJTAŃSZE", "CHEAPEST", [resultsSource]],
+    ["best", "NAJLEPSZE", "BEST", [resultsSource]],
+    ["quickest", "NAJSZYBSZE", "QUICKEST", [resultsSource]],
+    ["oneStop", "1 przesiadka", "1 stop", [resultsSource, cardSource]],
+    ["resultsFound", "Znaleziono {{count}} wyniki", "{{count}} results found", [resultsSource]],
+    ["departs", "Wylot {{time}}", "Departs", [resultsSource]],
+    ["filterBy", "Filtruj według", "Filter by", [resultsSource]],
+    ["price", "Cena", "Price", [resultsSource]],
+    ["times", "Godziny", "Times", [resultsSource]],
+    ["takeoff", "Wylot", "Takeoff", [resultsSource]],
+    ["landing", "Lądowanie", "Landing", [resultsSource]],
+    ["takeoffTimeFromOrigin", "Godzina wylotu z miejsca początkowego", "Take-off time from origin", [resultsSource]],
+    ["duration", "Czas podróży", "Duration", [resultsSource]],
+    ["totalTripTime", "Łączny czas podróży", "Total trip time", [resultsSource]],
+    ["stops", "Przesiadki", "Stops", [resultsSource]],
+    ["optionsFound", "Znaleziono {{count}} opcje", "{{count}} options found", [resultsSource]],
+    ["airlines", "Linie lotnicze", "Airlines", [resultsSource]],
+    ["airports", "Lotniska", "Airports", [resultsSource]],
+    ["amenities", "Udogodnienia", "Amenities", [resultsSource]],
+    ["baggageIncluded", "Bagaż w cenie", "Baggage included", [resultsSource]],
+    ["flexibleRefundable", "Elastyczne/zwrotne", "Flexible/refundable", [resultsSource]],
+    ["flightOption", "OPCJA LOTU", "Flight option", [cardSource]],
+    ["outbound", "WYLOT", "Outbound", [cardSource]],
+    ["return", "POWRÓT", "Return", [cardSource]],
+    ["layoverSummaryTemplate", "Przesiadka: {{airport}} {{duration}}", "Layover: {{airport}} {{duration}}", [cardSource]],
+    ["estimatedPrice", "szacowana cena", "Estimated price", [cardSource]],
+    ["providerPrice", "Cena u dostawcy", "Provider price", [cardSource]],
+    ["viewFlight", "Zobacz lot", "View Flight", [cardSource]],
+    ["baggage", "Bagaż", "Baggage", [cardSource]],
+    ["carryOnIncluded", "bagaż podręczny w cenie", "carry-on included", [cardSource]],
+    ["cabin", "Kabina", "Cabin", [cardSource]],
+    ["seatSelection", "Wybór miejsca", "Seat selection", [cardSource]],
+    ["providerRulesApply", "obowiązują zasady dostawcy", "Provider rules apply", [cardSource]],
+    ["fareRules", "Zasady taryfy", "Fare rules", [cardSource]],
+    ["reviewBeforeBooking", "sprawdź przed rezerwacją", "Review before booking", [cardSource]],
+    ["providerNormalizedItineraryPrefix", "Szczegóły wylotu i powrotu są wyświetlane na podstawie danych planu podróży ujednoliconych przez dostawcę.", "Outbound and return details are shown from provider-normalized itinerary data.", [cardSource]],
+    ["flightCardProviderHandoffConverted", "Ostateczna cena, dostępność, rezerwacja i zasady taryfy są potwierdzane przez dostawcę. Ostateczna waluta dostawcy może różnić się od wybranej waluty wyświetlania.", "Final price, availability, booking, and fare rules are confirmed by the provider. Final provider currency may differ from your selected display currency.", [cardSource]],
+    ["edit", "Edytuj", "Edit", [resultsSource]],
+    ["editSearch", "Edytuj wyszukiwanie", "Edit search", [resultsSource]],
+    ["closeEditSearch", "Zamknij edycję wyszukiwania", "Close edit search", [resultsSource]],
+    ["closeFilters", "Zamknij filtry", "Close filters", [resultsSource]],
+    ["editFlightSearch", "Edytuj wyszukiwanie lotu", "Edit flight search", [resultsSource]],
+    ["travelersAndCabin", "Podróżni i kabina", "Travelers and cabin", [resultsSource]],
+    ["selectDepartureDate", "Wybierz datę wylotu", "Select departure date", [resultsSource]],
+    ["selectReturnDate", "Wybierz datę powrotu", "Select return date", [resultsSource]],
+  ];
+
+  for (const [key, value, englishFallback, sources] of expectedResultsCopy) {
+    assert.equal(pl[key], value);
+    assert.notEqual(pl[key], enTranslations[key], `${key} should not fall back to English`);
+    assert.notEqual(pl[key], englishFallback, `${key} should not equal visible English fallback`);
+    assert.ok(sources.some((source) => source.includes(`t("${key}")`) || source.includes(`"${key}"`)), `${key} should be read by active flights results render path`);
+  }
+
+  assert.equal(pl.resultsFound.replace("{{count}}", "2"), "Znaleziono 2 wyniki");
+  assert.equal(pl.optionsFound.replace("{{count}}", "2"), "Znaleziono 2 opcje");
+  assert.equal(pl.departs.replace("{{time}}", "20:50"), "Wylot 20:50");
+  assert.equal(`${pl.baggage}: ${pl.carryOnIncluded}`, "Bagaż: bagaż podręczny w cenie");
+  assert.equal(`${pl.cabin}: ${pl.economy}`, "Kabina: ekonomiczna");
+  assert.equal(`${pl.seatSelection}: ${pl.providerRulesApply}`, "Wybór miejsca: obowiązują zasady dostawcy");
+  assert.equal(`${pl.fareRules}: ${pl.reviewBeforeBooking}`, "Zasady taryfy: sprawdź przed rezerwacją");
+  assert.equal(`${pl.providerNormalizedItineraryPrefix} ${pl.flightCardProviderHandoffConverted}`, "Szczegóły wylotu i powrotu są wyświetlane na podstawie danych planu podróży ujednoliconych przez dostawcę. Ostateczna cena, dostępność, rezerwacja i zasady taryfy są potwierdzane przez dostawcę. Ostateczna waluta dostawcy może różnić się od wybranej waluty wyświetlania.");
+  assert.ok(resultsSource.includes("formatResultDepartureTime(flight.departureTime, calendarLocale)"));
+  assert.ok(resultsSource.includes("formatTimeFromMinutes(minutes, locale)"));
+
+  for (const providerValue of ["Turkish Airlines", "TK0626", "LOS", "LAX", "IST"]) {
+    assert.equal(pl[providerValue], undefined, `${providerValue} must remain provider data, not locale copy`);
+  }
+});
+
 test("Polish flights landing active render path resolves visible copy without English fallback", () => {
   const pl = getTranslations("pl");
   const flightLandingSource = readFileSync("src/components/flights/FlightLandingClient.tsx", "utf8");
