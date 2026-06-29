@@ -30,6 +30,10 @@ import { translateHomeDiscoveryField } from "@/lib/i18n/homeDiscovery";
 import { getCountryDisplayNameForLocale } from "@/lib/region/countryDisplayNames";
 import { supportedRegions } from "@/lib/region/supportedRegions";
 import {
+  getLocalizedHotelDestinationCityName,
+  normalizeHotelDestinationDisplayLocale,
+} from "@/data/hotelDestinations";
+import {
   formatFlightsDateSummary,
   formatFlightsMonthHeading,
   formatFlightsWeekdays,
@@ -4470,6 +4474,117 @@ test("Polish signup render path keeps i18n keys and preserves auth behavior", ()
   assert.match(signupPageSource, /getGoogleClientSecret\(\)/);
 });
 
+
+test("Polish hotels landing render path copy resolves without English fallback", () => {
+  const pl = getTranslations("pl");
+  const auditedPolishHotelLandingKeys: Array<[string, string]> = [
+    ["hotelsHeroEyebrow", "POBYTY PREMIUM, JASNO PORÓWNANE"],
+    ["hotelsHeroTitle", "Znajdź pobyt, który dobrze rozpocznie podróż."],
+    [
+      "hotelsHeroSubtitle",
+      "Porównuj hotele w jednym miejscu — od eleganckich pobytów w mieście po wygodne wypady do resortów.",
+    ],
+    ["hotelSearchIntroLabel", "Porównaj opcje hoteli"],
+    ["hotelSearchDestinationLabel", "CEL PODRÓŻY"],
+    ["hotelSearchDestinationPlaceholder", "Miasto lub hotel"],
+    ["hotelSearchTravelDatesLabel", "DATY PODRÓŻY"],
+    ["hotelSearchDatePlaceholder", "Zameldowanie — wymeldowanie"],
+    ["hotelSearchGuestsLabel", "GOŚCIE"],
+    ["guestPlural", "gości"],
+    ["roomPlural", "pokoje"],
+    ["petFriendly", "Przyjazne zwierzętom"],
+    ["exploreHotelStaysByDestination", "Odkrywaj pobyty hotelowe według kierunku"],
+    ["featuredHotelDestinations", "Polecane kierunki hotelowe"],
+    ["findStaysEveryKindTrip", "Znajdź pobyt na każdy rodzaj podróży"],
+    ["hotelInspirationBody", "Przeglądaj pomysły na kierunki według rodzaju pobytu, który masz na myśli."],
+    ["hotelInspirationCategory.Beach", "Plaża"],
+    ["hotelInspirationCategory.City breaks", "City breaki"],
+    ["hotelInspirationCategory.Family trips", "Rodzinne wyjazdy"],
+    ["hotelInspirationCategory.Relaxed stays", "Spokojne pobyty"],
+    ["hotelInspirationCategory.Weekend ideas", "Pomysły na weekend"],
+    ["hotelInspirationBadge.Coastal stays", "Pobyty nad wybrzeżem"],
+    ["hotelInspirationBadge.City coast", "Miejskie wybrzeże"],
+    ["hotelInspirationBadge.Waterfront stays", "Pobyty nad wodą"],
+    ["hotelInspirationBadge.Harbor city", "Miasto portowe"],
+    ["hotelInspirationBadge.Warm escape", "Ciepła ucieczka"],
+    ["hotelInspirationBadge.Bay city", "Miasto nad zatoką"],
+    ["hotelTrustCompareBody", "Zobacz opcje hoteli od dostawców podróży w jednym miejscu, zanim przejdziesz dalej."],
+    ["hotelTrustReviewTitle", "Sprawdź szczegóły pobytu"],
+    ["hotelTrustReviewBody", "Sprawdź daty, gości, pokoje, kontekst cenowy i informacje o pobycie przed wyborem."],
+    ["hotelTrustProviderTitle", "Kontynuuj u dostawcy"],
+    ["hotelTrustProviderBody", "Po wybraniu opcji przejdź do dostawcy, aby potwierdzić ostateczną cenę, dostępność, opłaty i zasady anulowania."],
+    ["exploreStaysWorldwide", "Odkrywaj pobyty na całym świecie"],
+    ["hotelDestination.Tokyo.title", "Japonia"],
+    ["hotelDestination.Tokyo.subtitle", "Pobyty w Tokio"],
+    ["hotelDestination.London.title", "Wielka Brytania"],
+    ["hotelDestination.London.subtitle", "Pobyty w Londynie"],
+    ["hotelDestination.Paris.title", "Francja"],
+    ["hotelDestination.Paris.subtitle", "Pobyty w Paryżu"],
+    ["hotelDestination.New York.title", "Stany Zjednoczone"],
+    ["hotelDestination.New York.subtitle", "Pobyty w Nowym Jorku"],
+    ["hotelDestination.Rome.title", "Włochy"],
+    ["hotelDestination.Rome.subtitle", "Pobyty w Rzymie"],
+    ["hotelDestination.Dubai.title", "Zjednoczone Emiraty Arabskie"],
+    ["hotelDestination.Dubai.subtitle", "Pobyty w Dubaju"],
+    ["hotelDestination.Singapore.title", "Singapur"],
+    ["hotelDestination.Singapore.subtitle", "Pobyty w Singapurze"],
+    ["hotelDestination.Barcelona.title", "Hiszpania"],
+    ["hotelDestination.Barcelona.subtitle", "Pobyty w Barcelonie"],
+    ["hotelDestination.Toronto.title", "Kanada"],
+    ["hotelDestination.Toronto.subtitle", "Pobyty w Toronto"],
+    ["hotelDestination.Amsterdam.title", "Holandia"],
+    ["hotelDestination.Amsterdam.subtitle", "Pobyty w Amsterdamie"],
+    ["hotelDestination.Bangkok.title", "Tajlandia"],
+    ["hotelDestination.Bangkok.subtitle", "Pobyty w Bangkoku"],
+    ["hotelDestination.Cancun.title", "Meksyk"],
+    ["hotelDestination.Cancun.subtitle", "Pobyty w Cancun"],
+    ["hotelDestination.Istanbul.title", "Turcja"],
+    ["hotelDestination.Istanbul.subtitle", "Pobyty w Stambule"],
+  ];
+
+  for (const [key, expected] of auditedPolishHotelLandingKeys) {
+    assert.equal(pl[key], expected, `${key} should resolve to Polish`);
+    if (enTranslations[key] !== expected) {
+      assert.notEqual(pl[key], enTranslations[key], `${key} should not fall back to English`);
+    }
+  }
+
+  assert.ok(languageOptions.some((o) => o.code === "pl" && o.direction === "ltr"));
+  assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
+
+  const hotelsPageSource = readFileSync("src/app/hotels/page.tsx", "utf8");
+  const searchSource = readFileSync("src/components/search/HotelSearchBar.tsx", "utf8");
+
+  for (const key of [
+    "hotelsHeroEyebrow",
+    "hotelsHeroTitle",
+    "hotelsHeroSubtitle",
+    "exploreHotelStaysByDestination",
+    "featuredHotelDestinations",
+    "findStaysEveryKindTrip",
+    "hotelInspirationBody",
+    "hotelTrustReviewTitle",
+    "hotelTrustProviderTitle",
+    "exploreStaysWorldwide",
+  ]) {
+    assert.match(hotelsPageSource, new RegExp(`t\\("${key}"\\)`), key);
+  }
+
+  assert.match(hotelsPageSource, /dictionary\[`hotelDestination\.\$\{card\.destinationQuery\}\.title`\]/);
+  assert.match(hotelsPageSource, /dictionary\[`hotelInspirationCategory\.\$\{category\}`\]/);
+  assert.match(hotelsPageSource, /dictionary\[`hotelInspirationBadge\.\$\{card\.badge\}`\]/);
+  assert.match(hotelsPageSource, /destination: destinationQuery/);
+  assert.match(hotelsPageSource, /guests: "2"/);
+  assert.match(hotelsPageSource, /rooms: "1"/);
+  assert.match(hotelsPageSource, /createHotelInspirationCard\("Cancun", "Coastal stays"\)/);
+  assert.match(searchSource, /petFriendly/);
+  assert.match(searchSource, /hotelSearchDestinationLabel/);
+  assert.match(searchSource, /hotelSearchTravelDatesLabel/);
+  assert.match(searchSource, /hotelSearchGuestsLabel/);
+  assert.equal(normalizeHotelDestinationDisplayLocale("pl-PL"), "pl");
+  assert.equal(getLocalizedHotelDestinationCityName("London", "pl-PL"), "Londyn");
+  assert.equal(getLocalizedHotelDestinationCityName("Tokyo", "pl"), "Tokio");
+});
 
 test("Polish homepage flight and hotel date formatting uses pl-PL generated labels", () => {
   for (const locale of ["pl", "pl-PL", "pl-pl"]) {
