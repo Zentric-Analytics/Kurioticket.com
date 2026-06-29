@@ -3,6 +3,25 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "accountDashboard.overview.welcome": "Witaj ponownie, {name}",
+  "accountDashboard.hub.title": "Moje konto",
+  "accountDashboard.hub.description":
+    "Zarządzaj podróżami, zapisanymi elementami, preferencjami i ustawieniami konta w jednym miejscu.",
+  "accountDashboard.hub.mobileDescription":
+    "Zarządzaj podróżami, zapisanymi elementami i preferencjami.",
+  "accountDashboard.hub.manageAccount": "Zarządzaj kontem",
+  "accountDashboard.hub.personalDetails": "Dane osobowe",
+  "accountDashboard.hub.securitySettings": "Ustawienia bezpieczeństwa",
+  "accountDashboard.hub.travelActivity": "Aktywność podróży",
+  "accountDashboard.hub.myTrips": "Moje podróże",
+  "accountDashboard.hub.savedTrips": "Zapisane podróże",
+  "accountDashboard.hub.priceAlerts": "Alerty cenowe",
+  "accountDashboard.hub.preferences": "Preferencje",
+  "accountDashboard.hub.emailPreferences": "Preferencje personalizacji",
+  "accountDashboard.hub.travelPreferences": "Preferencje rezerwacji",
+  "accountDashboard.hub.helpAndSupport": "Pomoc i wsparcie",
+  "accountDashboard.hub.contactSupport": "Skontaktuj się z pomocą",
+  "accountDashboard.hub.faq": "FAQ",
   countryAndCurrency: "Kraj i waluta",
   chooseCountryAndCurrency: "Wybierz kraj i walutę",
   countryCurrencyDescription:

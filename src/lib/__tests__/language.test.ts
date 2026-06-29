@@ -2022,6 +2022,84 @@ test("Turkish account dashboard overview copy resolves without English fallback"
   );
 });
 
+test("Polish account dashboard overview copy resolves without English fallback", () => {
+  const pl = getTranslations("pl");
+  const dashboardSource = readFileSync("src/components/dashboard/DashboardGrid.tsx", "utf8");
+  const dashboardPageSource = readFileSync("src/app/dashboard/account/page.tsx", "utf8");
+
+  const expectedPolishOverviewCopy = {
+    "accountDashboard.overview.welcome": "Witaj ponownie, {name}",
+    "accountDashboard.hub.description":
+      "Zarządzaj podróżami, zapisanymi elementami, preferencjami i ustawieniami konta w jednym miejscu.",
+    "accountDashboard.hub.manageAccount": "Zarządzaj kontem",
+    "accountDashboard.hub.travelActivity": "Aktywność podróży",
+    "accountDashboard.hub.preferences": "Preferencje",
+    "accountDashboard.hub.helpAndSupport": "Pomoc i wsparcie",
+    "accountDashboard.hub.personalDetails": "Dane osobowe",
+    "accountDashboard.hub.securitySettings": "Ustawienia bezpieczeństwa",
+    "accountDashboard.hub.myTrips": "Moje podróże",
+    "accountDashboard.hub.savedTrips": "Zapisane podróże",
+    "accountDashboard.hub.priceAlerts": "Alerty cenowe",
+    "accountDashboard.hub.emailPreferences": "Preferencje personalizacji",
+    "accountDashboard.hub.travelPreferences": "Preferencje rezerwacji",
+    "accountDashboard.hub.contactSupport": "Skontaktuj się z pomocą",
+    "accountDashboard.hub.faq": "FAQ",
+  } as const;
+
+  for (const [key, value] of Object.entries(expectedPolishOverviewCopy)) {
+    assert.equal(pl[key], value);
+    if (value !== enTranslations[key]) {
+      assert.notEqual(pl[key], enTranslations[key], `${key} should not fall back to English`);
+    }
+  }
+
+  assert.equal(pl["accountDashboard.overview.welcome"].includes("{name}"), true);
+  assert.equal(pl["accountDashboard.overview.welcome"].replace("{name}", "developer"), "Witaj ponownie, developer");
+  assert.equal(pl["accountDashboard.overview.welcome"].includes("developer2@zentricresearch.com"), false);
+  assert.equal("D2", "D2", "Avatar initials remain dynamic user data and are not translated.");
+
+  assert.ok(
+    dashboardSource.includes('t["accountDashboard.overview.welcome"]') &&
+      dashboardSource.includes('t["accountDashboard.hub.description"]') &&
+      dashboardSource.includes('t["accountDashboard.hub.mobileDescription"]') &&
+      dashboardSource.includes("accountDashboardPanels.map((panel)") &&
+      dashboardSource.includes("<AccountDashboardPanel key={panel.titleKey} panel={panel} />"),
+    "Account menu overview should read the corrected i18n keys through DashboardGrid panels.",
+  );
+
+  for (const key of Object.keys(expectedPolishOverviewCopy).filter((key) => key.includes(".hub.") && key !== "accountDashboard.hub.description")) {
+    assert.ok(
+      dashboardSource.includes(`titleKey: "${key}"`) || dashboardSource.includes(`labelKey: "${key}"`) || key === "accountDashboard.hub.faq",
+      `${key} should remain wired to the active dashboard overview panel configuration.`,
+    );
+  }
+
+  assert.ok(
+    dashboardSource.includes("{initials}") &&
+      dashboardSource.includes("{userEmail}") &&
+      dashboardPageSource.includes("const displayName = getSafeDisplayName(userName, userEmail)") &&
+      dashboardPageSource.includes("const initials = getInitials(userName, userEmail)"),
+    "Dashboard overview should preserve dynamic display name, email, and initials.",
+  );
+  assert.ok(
+    dashboardSource.includes('href: "/dashboard"') &&
+      dashboardSource.includes('href: "/dashboard/security"') &&
+      dashboardSource.includes('href: "/dashboard/trips"') &&
+      dashboardSource.includes('href: "/saved?from=account"') &&
+      dashboardSource.includes('href: "/dashboard/alerts?from=account"') &&
+      dashboardSource.includes('href: "/dashboard/preferences/customization"') &&
+      dashboardSource.includes('href: "/dashboard/preferences/booking"') &&
+      dashboardSource.includes('href: "/dashboard/support"') &&
+      dashboardSource.includes('href: "/faq?from=account"') &&
+      dashboardSource.includes("icon: UserRound") &&
+      dashboardSource.includes("icon: CircleHelp"),
+    "Dashboard overview routes, icons, layout, and link behavior should remain unchanged.",
+  );
+  assert.ok(dashboardPageSource.includes("<AccountMenuPage"), "Signed-in account overview render path should use AccountMenuPage.");
+  assert.ok(languageOptions.some((option) => option.code === "pl" && option.direction === "ltr"));
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+});
+
 test("Hindi account dashboard overview copy resolves without English fallback", () => {
   const hi = getTranslations("hi");
 
