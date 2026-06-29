@@ -109,6 +109,64 @@ test("Turkish signed-in account dropdown labels do not fall back to English", ()
   );
 });
 
+test("Polish signed-in account dropdown labels do not fall back to English", () => {
+  const pl = getTranslations("pl");
+
+  assert.equal(pl["accountMenu.myAccount.label"], "Moje konto");
+  assert.equal(pl["accountMenu.savedTrips.label"], "Zapisane podróże");
+  assert.equal(pl["accountMenu.priceAlerts.label"], "Alerty cenowe");
+  assert.equal(pl.logout, "Wyloguj się");
+  assert.notEqual(pl["accountMenu.myAccount.label"], enTranslations["accountMenu.myAccount.label"]);
+  assert.notEqual(pl["accountMenu.savedTrips.label"], enTranslations["accountMenu.savedTrips.label"]);
+  assert.notEqual(pl["accountMenu.priceAlerts.label"], enTranslations["accountMenu.priceAlerts.label"]);
+  assert.notEqual(pl.logout, enTranslations.logout);
+
+  const appHeaderSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
+
+  assert.ok(
+    appHeaderSource.includes('labelKey: "accountMenu.myAccount.label"') &&
+      appHeaderSource.includes('labelKey: "accountMenu.savedTrips.label"') &&
+      appHeaderSource.includes('labelKey: "accountMenu.priceAlerts.label"') &&
+      appHeaderSource.includes("label: t[item.labelKey]"),
+    "Signed-in account dropdown menu items should continue to resolve active account menu i18n keys.",
+  );
+  assert.ok(
+    appHeaderSource.includes("session?.user?.name || accountDisplayName") &&
+      appHeaderSource.includes("session.user.email") &&
+      appHeaderSource.includes("session?.user?.email"),
+    "Signed-in account dropdown should keep user name and email display dynamic.",
+  );
+  assert.ok(
+    appHeaderSource.includes('href: "/dashboard/account"') &&
+      appHeaderSource.includes('href: "/saved"') &&
+      appHeaderSource.includes('href: "/dashboard/alerts"') &&
+      appHeaderSource.includes("onClick={handleSignOut}") &&
+      appHeaderSource.includes("revokeCurrentSessionRecord()") &&
+      appHeaderSource.includes("signOut({ redirect: false, callbackUrl: \"/\" })"),
+    "Signed-in account dropdown should keep menu routes and logout action/auth behavior wired unchanged.",
+  );
+  assert.ok(
+    appHeaderSource.includes("LayoutDashboard") &&
+      appHeaderSource.includes("SavedHeartIcon") &&
+      appHeaderSource.includes("Tag") &&
+      appHeaderSource.includes("LogOut"),
+    "Signed-in account dropdown should keep routes and logout icons wired unchanged.",
+  );
+  assert.ok(
+    appHeaderSource.includes("setAccountOpen(false)") &&
+      appHeaderSource.includes("accountOpen") &&
+      appHeaderSource.includes('role="menuitem"'),
+    "Signed-in account dropdown should keep open/close and menu behavior wired unchanged.",
+  );
+  assert.ok(
+    !appHeaderSource.includes('>My account<') &&
+      !appHeaderSource.includes('>Saved trips<') &&
+      !appHeaderSource.includes('>Price alerts<') &&
+      !appHeaderSource.includes('>Logout<'),
+    "Signed-in account dropdown should not hard-code screenshot-visible English labels.",
+  );
+});
+
 test("Hindi signed-in account dropdown labels do not fall back to English", () => {
   const hi = getTranslations("hi");
 
