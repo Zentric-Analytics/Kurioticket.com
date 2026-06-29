@@ -778,7 +778,7 @@ function formatDateOfBirthParts(parts: {
 }
 
 const mobilePersonalDetailsSelectClassName =
-  "appearance-none pe-9 sm:appearance-auto sm:pe-3.5";
+  "appearance-none bg-none pe-9 [background-image:none] [&::-ms-expand]:hidden sm:appearance-auto sm:pe-3.5";
 
 function MobilePersonalDetailsSelectIcon() {
   return (
@@ -1518,7 +1518,7 @@ function PersonalDetailsEmailEditRow({
         {row.label}
       </label>
       <div className="min-w-0 space-y-3">
-        <div className="flex max-w-[34rem] flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+        <div className="flex max-w-[34rem] flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex min-h-11 items-center gap-2 rounded-none border border-slate-300 bg-slate-100 px-3.5 text-base font-medium leading-5 text-slate-700 sm:text-sm">
               <span className="min-w-0 flex-1 truncate">
@@ -1535,7 +1535,7 @@ function PersonalDetailsEmailEditRow({
             <button
               type="button"
               onClick={onStartChange}
-              className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center rounded-lg border border-blue-200 bg-white px-3 text-xs font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-50"
+              className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center self-end rounded-lg border border-blue-200 bg-white px-3 text-xs font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-50 sm:self-auto"
             >
               Change email
             </button>
@@ -1543,7 +1543,8 @@ function PersonalDetailsEmailEditRow({
         </div>
         {row.helper ? (
           <p className="max-w-xl text-sm leading-6 text-slate-500">
-            {row.helper}
+            <span className="sm:hidden">Used for sign-in and bookings.</span>
+            <span className="hidden sm:inline">{row.helper}</span>
           </p>
         ) : null}
 
