@@ -1517,7 +1517,7 @@ function PersonalDetailsEmailEditRow({
                   disabled={
                     Boolean(emailValidationError) || isBusy || isResendCoolingDown
                   }
-                  className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center rounded-lg bg-blue-700 px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-300"
+                  className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center rounded-lg bg-blue-700 px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-default disabled:bg-blue-300"
                 >
                   {isRequestingCode ? "Sending…" : "Send verification code"}
                 </button>
@@ -1562,7 +1562,7 @@ function PersonalDetailsEmailEditRow({
                   type="button"
                   onClick={onCancel}
                   disabled={isBusy}
-                  className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white px-3.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white px-3.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-default disabled:opacity-60"
                 >
                   Cancel
                 </button>
@@ -1574,7 +1574,7 @@ function PersonalDetailsEmailEditRow({
                     !isVerificationCodeValid ||
                     isBusy
                   }
-                  className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center rounded-lg bg-blue-700 px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-300"
+                  className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center rounded-lg bg-blue-700 px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-default disabled:bg-blue-300"
                 >
                   {isConfirming ? "Updating…" : "Verify and update email"}
                 </button>
@@ -2065,7 +2065,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       ) : null}
 
       {isEditing ? (
-        <div className="mx-auto max-w-[64rem] border border-slate-200 bg-white">
+        <div className="mx-auto max-w-[64rem]">
           <div className="grid grid-cols-1 gap-6 px-5 py-7 sm:px-7 lg:grid-cols-[minmax(14rem,17rem)_minmax(0,1fr)] lg:gap-12 lg:px-9 lg:py-9">
             <div>
               <h2 className="text-lg font-semibold leading-7 text-slate-950">
@@ -2103,7 +2103,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
         className={cn(
           "border-t border-slate-200 bg-slate-50/60 px-5 py-4 sm:px-6",
           isEditing &&
-            "mx-auto max-w-[64rem] border-x border-b border-slate-200 bg-white px-5 py-5 sm:px-7 lg:px-9",
+            "mx-auto max-w-[64rem] bg-transparent px-5 py-5 sm:px-7 lg:px-9",
         )}
       >
         {isEditing ? (
@@ -2121,7 +2121,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
               type="button"
               onClick={handleCancel}
               disabled={isSaving}
-              className="focus-ring inline-flex min-h-11 w-auto cursor-pointer items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="focus-ring inline-flex min-h-11 w-auto cursor-pointer items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-default disabled:opacity-60"
             >
               {t["accountDashboard.personalDetails.cancel"]}
             </button>
@@ -2129,7 +2129,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
               type="button"
               onClick={handleSave}
               disabled={isSaving || !hasUnsavedProfileChanges}
-              className="focus-ring inline-flex min-h-11 w-auto cursor-pointer items-center justify-center rounded-xl bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-100 disabled:text-blue-700"
+              className="focus-ring inline-flex min-h-11 w-auto cursor-pointer items-center justify-center rounded-xl bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-default disabled:bg-blue-100 disabled:text-blue-700"
             >
               {isSaving
                 ? t["accountDashboard.personalDetails.saving"] || "Saving…"
