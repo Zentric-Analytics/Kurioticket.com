@@ -3966,6 +3966,113 @@ test("Legal Center overview localizes active render path for every active locale
 });
 
 
+test("Polish Legal Center overview document cards do not fall back to English", () => {
+  const pl = getTranslations("pl");
+  const legalPageSource = readFileSync("src/app/legal/LegalPageContent.tsx", "utf8");
+  const legalDocumentsSource = readFileSync("src/data/legalDocuments.ts", "utf8");
+
+  const slugToDocumentKey: Record<string, string> = {
+    "terms-of-service": "termsOfService",
+    "privacy-policy": "privacyPolicy",
+    "cookie-policy": "cookiePolicy",
+    "privacy-choices": "privacyChoices",
+    "affiliate-disclosure": "affiliateDisclosure",
+    "refund-booking-disclaimer": "refundBookingDisclaimer",
+    "price-availability-disclaimer": "priceAvailabilityDisclaimer",
+    "partner-redirect-disclaimer": "partnerRedirectDisclaimer",
+    "california-seller-of-travel-notice": "californiaSellerOfTravelNotice",
+    "legal-notice-company-information": "legalNoticeCompanyInformation",
+    "acceptable-use-policy": "acceptableUsePolicy",
+    "data-deletion-policy": "dataDeletionPolicy",
+    "security-statement": "securityStatement",
+    "accessibility-statement": "accessibilityStatement",
+  };
+
+  const expectedPolishDocumentCopy: Record<string, { title: string; summary: string }> = {
+    termsOfService: {
+      title: "Warunki korzystania z usługi",
+      summary: "Zasady korzystania z wyszukiwarki Kurioticket, kont, paneli, zapisanych narzędzi podróżnych i przekierowań do partnerów.",
+    },
+    privacyPolicy: {
+      title: "Polityka prywatności",
+      summary: "Jak Kurioticket LLC („Kurioticket”, „my”, „nas” lub „nasze”) zbiera, wykorzystuje, przechowuje i chroni dane konta, wyszukiwań, alertów, wsparcia oraz poczty e-mail.",
+    },
+    cookiePolicy: {
+      title: "Polityka plików cookie",
+      summary: "Jak Kurioticket używa plików cookie i podobnych technologii do uwierzytelniania, bezpieczeństwa, preferencji, analityki i wydajności.",
+    },
+    privacyChoices: {
+      title: "Wybory prywatności",
+      summary: "Zlokalizowane informacje dotyczące tego dokumentu prawnego Kurioticket.",
+    },
+    affiliateDisclosure: {
+      title: "Ujawnienie informacji o partnerach afiliacyjnych",
+      summary: "Jak Kurioticket może otrzymywać prowizje, gdy użytkownicy klikają lub dokonują rezerwacji przez zaufanych partnerów.",
+    },
+    refundBookingDisclaimer: {
+      title: "Zastrzeżenie dotyczące zwrotów i zewnętrznych dostawców",
+      summary: "Wyjaśnia, że zakupy, wystawianie biletów, zwroty, anulowania i płatności za oferty podróży odbywają się poza Kurioticket.",
+    },
+    priceAvailabilityDisclaimer: {
+      title: "Zastrzeżenie dotyczące cen i dostępności",
+      summary: "Wyjaśnia, dlaczego ceny podróży, zasady taryf, stawki za pokoje i dostępność mogą się zmieniać.",
+    },
+    partnerRedirectDisclaimer: {
+      title: "Zastrzeżenie dotyczące przekierowań do partnerów",
+      summary: "Co dzieje się, gdy Kurioticket przekierowuje użytkowników do linii lotniczych, hoteli, partnerów afiliacyjnych lub dostawców usług podróżnych.",
+    },
+    californiaSellerOfTravelNotice: {
+      title: "Informacja o kalifornijskim sprzedawcy podróży",
+      summary: "Zlokalizowane informacje dotyczące tego dokumentu prawnego Kurioticket.",
+    },
+    legalNoticeCompanyInformation: {
+      title: "Informacja prawna i dane firmy",
+      summary: "Zlokalizowane informacje dotyczące tego dokumentu prawnego Kurioticket.",
+    },
+    acceptableUsePolicy: {
+      title: "Zasady dopuszczalnego korzystania",
+      summary: "Zasady zachowania dotyczące bezpiecznego, uczciwego i zgodnego z prawem korzystania z systemów Kurioticket.",
+    },
+    dataDeletionPolicy: {
+      title: "Polityka usuwania danych",
+      summary: "Jak użytkownicy mogą poprosić o usunięcie konta i jakie dane mogą wymagać zachowania.",
+    },
+    securityStatement: {
+      title: "Oświadczenie o bezpieczeństwie",
+      summary: "Zlokalizowane informacje dotyczące tego dokumentu prawnego Kurioticket.",
+    },
+    accessibilityStatement: {
+      title: "Oświadczenie o dostępności",
+      summary: "Zlokalizowane informacje dotyczące tego dokumentu prawnego Kurioticket.",
+    },
+  };
+
+  assert.equal(legalDocuments.length, 14);
+  assert.deepEqual(legalDocuments.map((document) => document.slug), Object.keys(slugToDocumentKey));
+  assert.ok(legalPageSource.includes("const documentKey = legalIndexDocumentKeys[document.slug]"));
+  assert.ok(legalPageSource.includes('t(`legal.index.documents.${documentKey}.title`)'));
+  assert.ok(legalPageSource.includes('t(`legal.index.documents.${documentKey}.summary`)'));
+  assert.ok(legalPageSource.includes('t("legal.index.lastUpdated")'));
+  assert.ok(legalPageSource.includes('t("legal.index.lastUpdatedDate")'));
+  assert.ok(legalPageSource.includes('href={`/legal/${document.slug}`}'));
+
+  for (const [slug, documentKey] of Object.entries(slugToDocumentKey)) {
+    assert.ok(legalPageSource.includes(`"${slug}": "${documentKey}"`), `${slug} should map to ${documentKey} in the active overview render path`);
+    assert.equal(pl[`legal.index.documents.${documentKey}.title`], expectedPolishDocumentCopy[documentKey].title);
+    assert.equal(pl[`legal.index.documents.${documentKey}.summary`], expectedPolishDocumentCopy[documentKey].summary);
+    assert.notEqual(pl[`legal.index.documents.${documentKey}.title`], enTranslations[`legal.index.documents.${documentKey}.title`]);
+    assert.notEqual(pl[`legal.index.documents.${documentKey}.summary`], enTranslations[`legal.index.documents.${documentKey}.summary`]);
+  }
+
+  assert.equal(pl["legal.index.lastUpdated"], "Ostatnia aktualizacja");
+  assert.equal(pl["legal.index.lastUpdatedDate"], "11 maja 2026");
+  assert.notEqual(pl["legal.index.lastUpdated"], enTranslations["legal.index.lastUpdated"]);
+  assert.notEqual(pl["legal.index.lastUpdatedDate"], enTranslations["legal.index.lastUpdatedDate"]);
+  assert.ok(legalDocumentsSource.includes('slug: "terms-of-service"'));
+  assert.ok(legalDocumentsSource.includes('lastUpdated'));
+});
+
+
 test("Hindi service and support page strings are localized", () => {
   const expectedHindiServiceSupportStrings = {
     supportEyebrow: "Kurioticket सहायता डेस्क",
