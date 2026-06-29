@@ -1865,6 +1865,7 @@ test("active account FAQ translations cover all visible FAQ page strings", () =>
     ko: koTranslations,
     hi: hiTranslations,
     tr: trTranslations,
+    pl: plTranslations,
   };
   const accountFaqKeys = [
     "accountDashboard.hub.title",
@@ -1923,6 +1924,72 @@ test("active account FAQ translations cover all visible FAQ page strings", () =>
   assert.equal(trTranslations["accountDashboard.hub.title"], "Hesabım");
   assert.equal(trTranslations.faqHeading, "Sıkça sorulan sorular");
   assert.equal(trTranslations.faqGeneralQuestions, "Genel sorular");
+});
+
+
+test("Polish account FAQ support CTA resolves through localized segmented keys", () => {
+  const pl = getTranslations("pl");
+
+  assert.equal(pl["accountDashboard.hub.title"], "Moje konto");
+  assert.equal(pl.faqHeading, "Najczęściej zadawane pytania");
+  assert.equal(
+    pl.faqIntro,
+    "Dowiedz się, jak Kurioticket pomaga porównywać loty, hotele i opcje podróży przed rezerwacją u zaufanych dostawców.",
+  );
+  assert.equal(pl.faqGeneralQuestions, "Pytania ogólne");
+  assert.equal(pl.faqNeedMoreHelpPrefix, "Potrzebujesz więcej pomocy? Odwiedź");
+  assert.equal(pl.faqSupportPage, "stronę wsparcia");
+  assert.equal(pl.faqNeedMoreHelpSuffix, ", aby zobaczyć opcje obsługi i kontaktu.");
+  assert.equal(
+    `${pl.faqNeedMoreHelpPrefix} ${pl.faqSupportPage}${pl.faqNeedMoreHelpSuffix}`,
+    "Potrzebujesz więcej pomocy? Odwiedź stronę wsparcia, aby zobaczyć opcje obsługi i kontaktu.",
+  );
+
+  for (const key of [
+    "faqGeneralQuestions",
+    "faqNeedMoreHelpPrefix",
+    "faqSupportPage",
+    "faqNeedMoreHelpSuffix",
+  ]) {
+    assert.notEqual(pl[key], enTranslations[key], key);
+  }
+
+  for (const [key, expected] of [
+    ["faqQuestionFindOptions", "Jak Kurioticket znajduje opcje lotów i hoteli?"],
+    ["faqQuestionSellDirectly", "Czy Kurioticket sprzedaje bezpośrednio bilety lub pokoje hotelowe?"],
+    ["faqQuestionPriceChanges", "Dlaczego ceny mogą się zmienić po kliknięciu oferty?"],
+    ["faqQuestionCompareProviders", "Czy mogę porównać wielu dostawców dla tej samej podróży?"],
+    ["faqQuestionSecureBooking", "Jak bezpiecznie dokończyć rezerwację?"],
+    ["faqQuestionPreferences", "Czy mogę ustawić preferencje waluty i języka?"],
+  ] as const) {
+    assert.equal(pl[key], expected, key);
+    assert.notEqual(pl[key], enTranslations[key], key);
+  }
+
+  const faqContentSource = readFileSync("src/app/faq/FaqContent.tsx", "utf8");
+  const faqPageSource = readFileSync("src/app/faq/page.tsx", "utf8");
+  const faqSource = readFileSync("src/content/faqs.ts", "utf8");
+  const accountShellSource = readFileSync("src/components/dashboard/AccountDetailShell.tsx", "utf8");
+  const accountBackLinkRowSource = readFileSync("src/components/dashboard/AccountBackLinkRow.tsx", "utf8");
+  const accountBackLinkSource = readFileSync("src/components/dashboard/AccountBackLink.tsx", "utf8");
+
+  assert.ok(faqPageSource.includes("<FaqContent showAccountLink={showAccountLink} />"), "Active FAQ page should render FaqContent with account-shell flag.");
+  assert.ok(faqContentSource.includes('t("faqGeneralQuestions")'), "Account FAQ heading should use the corrected i18n key.");
+  assert.ok(faqContentSource.includes('t("faqNeedMoreHelpPrefix")'), "Account FAQ CTA prefix should use the corrected i18n key.");
+  assert.ok(faqContentSource.includes('t("faqSupportPage")'), "Account FAQ CTA link should use the corrected i18n key.");
+  assert.ok(faqContentSource.includes('t("faqNeedMoreHelpSuffix")'), "Account FAQ CTA suffix should use the corrected i18n key.");
+  assert.ok(faqContentSource.includes("supportCtaSuffixSeparator"), "Account FAQ CTA should avoid adding a space before localized punctuation suffixes.");
+  assert.ok(faqContentSource.includes('href="/dashboard/support"'), "Account FAQ support route should remain unchanged.");
+  assert.ok(faqContentSource.includes("<AccountDetailShell"), "Account FAQ should keep account shell behavior.");
+  assert.ok(accountShellSource.includes("<AccountBackLinkRow />"), "Account shell should keep rendering its back-link row. ");
+  assert.ok(accountBackLinkRowSource.includes("<AccountBackLink />"), "Account shell back-link row should keep rendering AccountBackLink.");
+  assert.ok(accountBackLinkSource.includes('href="/dashboard/account"'), "Account shell back link route should remain unchanged.");
+  assert.ok(faqContentSource.includes("faqItems.map((item) =>"), "Account FAQ order should still come from getGeneralFaqs without reordering.");
+  assert.ok(faqContentSource.includes("<details") && faqContentSource.includes("<summary"), "Account FAQ accordion behavior should remain native details/summary.");
+  assert.ok(faqContentSource.includes('className="mt-8 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-5'), "Account FAQ support CTA layout and styling should remain unchanged.");
+  assert.ok(faqSource.includes("faqItemKeys.reduce<FaqItem[]>") && faqSource.includes("seenQuestions"), "FAQ key order and duplicate-question handling should remain centralized.");
+  assert.ok(languageOptions.some((option) => option.code === "pl" && option.direction === "ltr"));
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
 });
 
 test("Turkish account FAQ support CTA resolves through localized segmented keys", () => {
