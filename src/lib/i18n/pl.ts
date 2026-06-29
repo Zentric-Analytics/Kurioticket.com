@@ -22,6 +22,54 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.helpAndSupport": "Pomoc i wsparcie",
   "accountDashboard.hub.contactSupport": "Skontaktuj się z pomocą",
   "accountDashboard.hub.faq": "FAQ",
+  "accountDashboard.personalDetails.title": "Dane osobowe",
+  "accountDashboard.personalDetails.subtitle":
+    "Aktualizuj swoje informacje i zarządzaj tym, jak są używane w Kurioticket.",
+  "accountDashboard.personalDetails.name": "Imię i nazwisko",
+  "accountDashboard.personalDetails.emailAddress": "Adres e-mail",
+  "accountDashboard.personalDetails.phoneNumber": "Numer telefonu",
+  "accountDashboard.personalDetails.dateOfBirth": "Data urodzenia",
+  "accountDashboard.personalDetails.gender": "Płeć",
+  "accountDashboard.personalDetails.nationality": "Obywatelstwo",
+  "accountDashboard.personalDetails.address": "Adres",
+  "accountDashboard.personalDetails.addName": "Dodaj swoje imię i nazwisko",
+  "accountDashboard.personalDetails.addPhoneNumber": "Dodaj swój numer telefonu",
+  "accountDashboard.personalDetails.addDateOfBirth": "Dodaj swoją datę urodzenia",
+  "accountDashboard.personalDetails.addGender": "Dodaj swoją płeć",
+  "accountDashboard.personalDetails.addNationality": "Dodaj swoje obywatelstwo",
+  "accountDashboard.personalDetails.addAddress": "Dodaj swój adres",
+  "accountDashboard.personalDetails.edit": "Edytuj",
+  "accountDashboard.personalDetails.description":
+    "Zarządzaj informacjami, których Kurioticket używa dla Twojego konta.",
+  "accountDashboard.security.title": "Ustawienia bezpieczeństwa",
+  "accountDashboard.security.description":
+    "Zarządzaj logowaniem i bezpieczeństwem swojego konta Kurioticket.",
+  "accountDashboard.security.password.title": "Hasło",
+  "accountDashboard.security.password.description":
+    "Zmień hasło używane do logowania na konto.",
+  "accountDashboard.security.twoFactor.title": "Uwierzytelnianie dwuskładnikowe",
+  "accountDashboard.security.twoFactor.description":
+    "Dodaj dodatkową ochronę za pomocą aplikacji uwierzytelniającej.",
+  "accountDashboard.security.passkeys.title": "Klucze dostępu",
+  "accountDashboard.security.passkeys.description":
+    "Użyj urządzenia lub klucza bezpieczeństwa, aby logować się szybciej.",
+  "accountDashboard.security.activeSessions.title": "Aktywne sesje",
+  "accountDashboard.security.activeSessions.description":
+    "Sprawdź urządzenia zalogowane na Twoje konto.",
+  "accountDashboard.security.notifications.title": "Powiadomienia bezpieczeństwa",
+  "accountDashboard.security.notifications.description":
+    "Otrzymuj alerty o ważnej aktywności na koncie.",
+  "accountDashboard.security.deleteAccount.title": "Usuń konto",
+  "accountDashboard.security.deleteAccount.description":
+    "Poproś o trwałe usunięcie konta.",
+  "accountDashboard.security.action.changePassword": "Zmień hasło",
+  "accountDashboard.security.action.setUp": "Skonfiguruj",
+  "accountDashboard.security.action.setUpPasskey": "Skonfiguruj klucz dostępu",
+  "accountDashboard.security.action.turnOn": "Włącz",
+  "accountDashboard.security.action.manage": "Zarządzaj",
+  "accountDashboard.security.action.manageSessions": "Zarządzaj sesjami",
+  "accountDashboard.security.action.turnOff": "Wyłącz",
+  "accountDashboard.security.action.deleteAccount": "Usuń konto",
   countryAndCurrency: "Kraj i waluta",
   chooseCountryAndCurrency: "Wybierz kraj i walutę",
   countryCurrencyDescription:

@@ -2813,15 +2813,15 @@ export function SecurityDashboardPage() {
           />
           <SecuritySettingRow
             title={tx("accountDashboard.security.twoFactor.title", "Two-factor authentication")}
-            body="Add extra protection with an authenticator app."
-            action={twoFactor.enabled ? "Manage" : "Set up"}
+            body={tx("accountDashboard.security.twoFactor.description", "Add extra protection with an authenticator app.")}
+            action={twoFactor.enabled ? tx("accountDashboard.security.action.manage", "Manage") : tx("accountDashboard.security.action.setUp", "Set up")}
             onAction={() => void openTwoFactorModal(twoFactor.enabled ? "disable" : "setup")}
             statusId={securityActionStatusId}
           />
           <SecuritySettingRow
             title={tx("accountDashboard.security.passkeys.title", "Passkeys")}
-            body="Use your device or security key to sign in faster."
-            action={passkeys.length ? tx("accountDashboard.security.action.manage", "Manage") : "Set up passkey"}
+            body={tx("accountDashboard.security.passkeys.description", "Use your device or security key to sign in faster.")}
+            action={passkeys.length ? tx("accountDashboard.security.action.manage", "Manage") : tx("accountDashboard.security.action.setUpPasskey", "Set up passkey")}
             onAction={() => setPasskeysModalOpen(true)}
             statusId={securityActionStatusId}
           />
@@ -2857,7 +2857,7 @@ export function SecurityDashboardPage() {
                     preferencesLoading || preferencesSaving ? "cursor-not-allowed opacity-60" : "cursor-pointer",
                   )}
                 >
-                  {preferencesSaving ? "Saving…" : securityEmailAlerts ? "Turn off" : "Turn on"}
+                  {preferencesSaving ? tx("accountDashboard.preferences.saving", "Saving…") : securityEmailAlerts ? tx("accountDashboard.security.action.turnOff", "Turn off") : tx("accountDashboard.security.action.turnOn", "Turn on")}
                 </button>
                 <p
                   role="status"
@@ -2924,7 +2924,7 @@ export function SecurityDashboardPage() {
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-xl sm:p-6">
             <h2 id="passkeys-title" className="text-xl font-semibold text-slate-950">Manage passkeys</h2>
             <div className="mt-2 space-y-2 text-sm leading-6 text-slate-600"><p className="font-semibold text-slate-900">Set up a passkey</p><p>Use Face ID, fingerprint, Windows Hello, your phone screen lock, password manager, or security key to sign in faster and more securely.</p><p>Kurioticket never receives your fingerprint, face, device PIN, or private key.</p><p>Passkeys are separate from authenticator-app 2FA. Password sign-in may still ask for your authenticator code. Before adding or removing a passkey, we’ll send a confirmation code to your account email; authenticator-app codes can also confirm removal or setup when enabled.</p></div>
-            <button type="button" onClick={handleAddPasskey} disabled={passkeySaving} className="focus-ring mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{passkeySaving ? "Working…" : passkeys.length ? "Add another passkey" : "Set up passkey"}</button>
+            <button type="button" onClick={handleAddPasskey} disabled={passkeySaving} className="focus-ring mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{passkeySaving ? "Working…" : passkeys.length ? "Add another passkey" : tx("accountDashboard.security.action.setUpPasskey", "Set up passkey")}</button>
             <div className="mt-5 space-y-3">{passkeys.length ? passkeys.map((passkey) => <div key={passkey.id} className="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold text-slate-950">{passkey.name || "Passkey"}</p><p className="text-sm text-slate-600">Created {formatSessionTime(passkey.createdAt)} · Last used {passkey.lastUsedAt ? formatSessionTime(passkey.lastUsedAt) : "never"} · {passkey.label || (passkey.backedUp ? "Synced passkey" : passkey.deviceType || "Device or security key")}</p></div><div className="flex gap-2"><button type="button" onClick={() => void handleRenamePasskey(passkey.id, passkey.name)} disabled={passkeySaving} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60">Rename</button><button type="button" onClick={() => void handleRemovePasskey(passkey.id)} disabled={passkeySaving} className="focus-ring rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-60">Remove</button></div></div>) : <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">No passkeys yet.</p>}</div>
             <div className="mt-6 flex justify-end"><button type="button" onClick={() => setPasskeysModalOpen(false)} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Done</button></div>
           </div>

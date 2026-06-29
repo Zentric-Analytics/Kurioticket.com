@@ -2359,6 +2359,125 @@ test("Turkish account preferences actual render-path copy resolves without Engli
   assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
 });
 
+test("Polish account personal details and security settings copy resolves without English fallback", () => {
+  const pl = getTranslations("pl");
+  const dynamicEmail = "developer2@zentricresearch.com";
+  const dynamicProfileName = "Developer Tester";
+
+  const expectedPolishPersonalDetails = {
+    "accountDashboard.personalDetails.title": "Dane osobowe",
+    "accountDashboard.personalDetails.subtitle":
+      "Aktualizuj swoje informacje i zarządzaj tym, jak są używane w Kurioticket.",
+    "accountDashboard.personalDetails.description":
+      "Zarządzaj informacjami, których Kurioticket używa dla Twojego konta.",
+    "accountDashboard.personalDetails.name": "Imię i nazwisko",
+    "accountDashboard.personalDetails.emailAddress": "Adres e-mail",
+    "accountDashboard.personalDetails.phoneNumber": "Numer telefonu",
+    "accountDashboard.personalDetails.dateOfBirth": "Data urodzenia",
+    "accountDashboard.personalDetails.gender": "Płeć",
+    "accountDashboard.personalDetails.nationality": "Obywatelstwo",
+    "accountDashboard.personalDetails.address": "Adres",
+    "accountDashboard.personalDetails.addName": "Dodaj swoje imię i nazwisko",
+    "accountDashboard.personalDetails.addPhoneNumber": "Dodaj swój numer telefonu",
+    "accountDashboard.personalDetails.addDateOfBirth": "Dodaj swoją datę urodzenia",
+    "accountDashboard.personalDetails.addGender": "Dodaj swoją płeć",
+    "accountDashboard.personalDetails.addNationality": "Dodaj swoje obywatelstwo",
+    "accountDashboard.personalDetails.addAddress": "Dodaj swój adres",
+    "accountDashboard.personalDetails.edit": "Edytuj",
+  } as const;
+
+  const expectedPolishSecurity = {
+    "accountDashboard.security.title": "Ustawienia bezpieczeństwa",
+    "accountDashboard.security.description":
+      "Zarządzaj logowaniem i bezpieczeństwem swojego konta Kurioticket.",
+    "accountDashboard.security.password.title": "Hasło",
+    "accountDashboard.security.password.description":
+      "Zmień hasło używane do logowania na konto.",
+    "accountDashboard.security.action.changePassword": "Zmień hasło",
+    "accountDashboard.security.twoFactor.title": "Uwierzytelnianie dwuskładnikowe",
+    "accountDashboard.security.twoFactor.description":
+      "Dodaj dodatkową ochronę za pomocą aplikacji uwierzytelniającej.",
+    "accountDashboard.security.action.setUp": "Skonfiguruj",
+    "accountDashboard.security.passkeys.title": "Klucze dostępu",
+    "accountDashboard.security.passkeys.description":
+      "Użyj urządzenia lub klucza bezpieczeństwa, aby logować się szybciej.",
+    "accountDashboard.security.action.setUpPasskey": "Skonfiguruj klucz dostępu",
+    "accountDashboard.security.activeSessions.title": "Aktywne sesje",
+    "accountDashboard.security.activeSessions.description":
+      "Sprawdź urządzenia zalogowane na Twoje konto.",
+    "accountDashboard.security.action.manageSessions": "Zarządzaj sesjami",
+    "accountDashboard.security.notifications.title": "Powiadomienia bezpieczeństwa",
+    "accountDashboard.security.notifications.description":
+      "Otrzymuj alerty o ważnej aktywności na koncie.",
+    "accountDashboard.security.action.turnOff": "Wyłącz",
+    "accountDashboard.security.deleteAccount.title": "Usuń konto",
+    "accountDashboard.security.deleteAccount.description":
+      "Poproś o trwałe usunięcie konta.",
+    "accountDashboard.security.action.deleteAccount": "Usuń konto",
+  } as const;
+
+  for (const [key, value] of Object.entries({ ...expectedPolishPersonalDetails, ...expectedPolishSecurity })) {
+    assert.equal(pl[key], value);
+    assert.notEqual(pl[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  assert.equal(pl["accountDashboard.hub.title"], "Moje konto");
+  assert.equal(pl["accountDashboard.backToAccount"], undefined);
+  assert.equal(dynamicEmail, "developer2@zentricresearch.com");
+  assert.equal(dynamicProfileName, "Developer Tester");
+  assert.equal(pl["accountDashboard.personalDetails.title"].includes("developer"), false);
+  assert.equal(pl["accountDashboard.security.description"].includes("Kurioticket"), true);
+  assert.ok(languageOptions.some((option) => option.code === "pl" && option.direction === "ltr"));
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+
+  const dashboardSource = readFileSync("src/components/dashboard/DashboardGrid.tsx", "utf8");
+  const dashboardPageSource = readFileSync("src/app/dashboard/page.tsx", "utf8");
+  const accountPageSource = readFileSync("src/app/dashboard/account/page.tsx", "utf8");
+  const securityPageSource = readFileSync("src/app/dashboard/security/page.tsx", "utf8");
+
+  assert.ok(
+    dashboardSource.includes('title={t["accountDashboard.personalDetails.title"]}') &&
+      dashboardSource.includes('description={t["accountDashboard.personalDetails.subtitle"]}') &&
+      dashboardSource.includes('t["accountDashboard.personalDetails.description"]') &&
+      dashboardSource.includes('label: t["accountDashboard.personalDetails.name"]') &&
+      dashboardSource.includes('fallback: t["accountDashboard.personalDetails.addName"]') &&
+      dashboardSource.includes('label: t["accountDashboard.personalDetails.emailAddress"]') &&
+      dashboardSource.includes('fallback: t["accountDashboard.personalDetails.addPhoneNumber"]') &&
+      dashboardSource.includes('{t["accountDashboard.personalDetails.edit"]}'),
+    "Active Personal details render path should read account personal-details i18n keys.",
+  );
+  assert.ok(
+    dashboardSource.includes('title={tx("accountDashboard.security.title", "Security settings")}') &&
+      dashboardSource.includes('"accountDashboard.security.description"') &&
+      dashboardSource.includes('"accountDashboard.security.password.title"') &&
+      dashboardSource.includes('"accountDashboard.security.twoFactor.description"') &&
+      dashboardSource.includes('"accountDashboard.security.passkeys.description"') &&
+      dashboardSource.includes('"accountDashboard.security.action.setUpPasskey"') &&
+      dashboardSource.includes('"accountDashboard.security.action.turnOff"') &&
+      dashboardSource.includes('"accountDashboard.security.action.deleteAccount"'),
+    "Active Security settings render path should read account security i18n keys.",
+  );
+  assert.ok(
+    dashboardSource.includes("getPersonalDetailsInitialValues(props)") &&
+      dashboardSource.includes("userEmail?.trim()") &&
+      dashboardPageSource.includes("const userName = savedProfileName || sessionUserName") &&
+      dashboardPageSource.includes("const userEmail = session?.user?.email?.trim()") &&
+      accountPageSource.includes("const userEmail = session?.user?.email?.trim()"),
+    "Personal details should keep user/session/profile values dynamic.",
+  );
+  assert.ok(
+    dashboardPageSource.includes("<DashboardOverview") &&
+      securityPageSource.includes("<SecurityDashboardPage />") &&
+      dashboardSource.includes("onAction={() => setPasswordModalOpen(true)}") &&
+      dashboardSource.includes("onAction={() => void openTwoFactorModal") &&
+      dashboardSource.includes("onAction={() => setPasskeysModalOpen(true)}") &&
+      dashboardSource.includes("onAction={handleOpenSessions}") &&
+      dashboardSource.includes("onAction={() => setDeleteModalOpen(true)}") &&
+      !dashboardSource.includes('href="/dashboard/personal-details"'),
+    "Account routes and security action handlers should remain unchanged.",
+  );
+});
+
 test("Turkish account personal details and security settings copy resolves without English fallback", () => {
   const tr = getTranslations("tr");
 
@@ -2430,9 +2549,8 @@ test("Turkish account personal details and security settings copy resolves witho
     "Security settings page should continue using account security i18n keys and unchanged unavailable action handling.",
   );
   assert.ok(
-    dashboardSource.includes("const initialValues = getPersonalDetailsInitialValues(props)") &&
+    dashboardSource.includes("getPersonalDetailsInitialValues(props)") &&
       dashboardSource.includes("userEmail?.trim()") &&
-      dashboardSource.includes("userName?.trim()") &&
       dashboardPageSource.includes("const userName = session?.user?.name?.trim()") &&
       dashboardPageSource.includes("const userEmail = session?.user?.email?.trim()"),
     "Personal details should keep user/session/profile values dynamic.",
