@@ -106,6 +106,7 @@ export const translations: TranslationDictionary = {
   onlyShowPetFriendlyStays: "Pokaż tylko obiekty akceptujące zwierzęta",
   business: "Biznes",
   first: "Pierwsza",
+  fromPrice: "Od",
   homePopularDestinations: "Popularne kierunki",
   homeExploreFares: "Sprawdź ceny",
   homeDiscoveryTitle: "Odkryj tutaj swoją następną przygodę",
