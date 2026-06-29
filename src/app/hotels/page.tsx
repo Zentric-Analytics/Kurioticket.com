@@ -477,22 +477,21 @@ export default function HotelsSearchPage() {
               fill
               priority
               sizes="100vw"
-              className="object-cover object-[52%_38%] brightness-[1.22] saturate-[1.14] contrast-[1.02]"
+              className="object-cover object-[52%_34%] brightness-[1.22] saturate-[1.14] contrast-[1.02]"
             />
             <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-slate-950/28 via-slate-950/8 to-transparent" />
-            <div className="absolute left-0 top-[5.8rem] h-44 w-[78%] bg-[radial-gradient(ellipse_at_18%_42%,rgba(15,23,42,0.18),rgba(15,23,42,0.08)_42%,transparent_76%)]" />
             <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/22 via-slate-950/6 to-transparent" />
           </div>
 
           <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-[8.05rem]">
-            <div className="max-w-[24rem] text-white">
+            <div className="max-w-[21.75rem] text-white">
               <p className="sr-only">
                 {t("hotelsHeroEyebrow")}
               </p>
-              <h1 className="max-w-[22.75rem] text-[clamp(1.72rem,7.05vw,2.08rem)] font-semibold leading-[1.04] tracking-[-0.035em] text-white text-balance drop-shadow-[0_2px_10px_rgba(2,6,23,0.58)]">
+              <h1 className="max-w-[19.9rem] text-[clamp(1.78rem,7.2vw,2.04rem)] font-semibold leading-[1.03] tracking-[-0.038em] text-white text-balance drop-shadow-[0_2px_10px_rgba(2,6,23,0.6)]">
                 {t("hotelsHeroTitle")}
               </h1>
-              <p className="mt-4 max-w-[23rem] text-[0.94rem] font-medium leading-[1.58] text-white/92 text-balance drop-shadow-[0_2px_8px_rgba(2,6,23,0.52)]">
+              <p className="mt-3.5 max-w-[21.35rem] text-[0.88rem] font-medium leading-[1.52] text-white/92 text-balance drop-shadow-[0_2px_8px_rgba(2,6,23,0.54)]">
                 {t("hotelsHeroSubtitle")}
               </p>
             </div>
