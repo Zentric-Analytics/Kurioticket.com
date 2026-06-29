@@ -427,11 +427,11 @@ export function SigninForm({
 
       {step === "credentials" && !passkeyHintDismissed ? (
         <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
-          <p className="font-semibold text-slate-900">Use a saved passkey?</p>
-          <p className="mt-1">Sign in with Face ID, fingerprint, screen lock, password manager, or security key.</p>
+          <p className="font-semibold text-slate-900">{t.loginPasskeyPromptTitle}</p>
+          <p className="mt-1">{t.loginPasskeyPromptDescription}</p>
           <div className="mt-3 flex gap-2">
-            <button type="button" className="font-semibold text-teal-dark hover:underline" onClick={() => void startPasskeySignIn()} disabled={busy}>{passkeyLoading ? "Opening…" : "Use passkey"}</button>
-            <button type="button" className="text-slate-500 hover:underline" onClick={() => setPasskeyHintDismissed(true)} disabled={busy}>Not now</button>
+            <button type="button" className="font-semibold text-teal-dark hover:underline" onClick={() => void startPasskeySignIn()} disabled={busy}>{passkeyLoading ? t.loginOpeningPasskey : t.loginUsePasskey}</button>
+            <button type="button" className="text-slate-500 hover:underline" onClick={() => setPasskeyHintDismissed(true)} disabled={busy}>{t.loginNotNow}</button>
           </div>
         </div>
       ) : null}
