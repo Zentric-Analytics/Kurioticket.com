@@ -24,28 +24,22 @@ const legalIndexDocumentKeys: Record<string, string> = {
   "acceptable-use-policy": "acceptableUsePolicy",
   "data-deletion-policy": "dataDeletionPolicy",
   "price-availability-disclaimer": "priceAvailabilityDisclaimer",
+  "privacy-choices": "privacyChoices",
   "partner-redirect-disclaimer": "partnerRedirectDisclaimer",
+  "california-seller-of-travel-notice": "californiaSellerOfTravelNotice",
+  "legal-notice-company-information": "legalNoticeCompanyInformation",
+  "security-statement": "securityStatement",
+  "accessibility-statement": "accessibilityStatement",
 };
-
-const legalCenterDescription =
-  "Kurioticket’s legal resources explain how our travel search, account, privacy, provider redirect, and compliance practices work.";
-
-const formatDate = (date: string) =>
-  new Intl.DateTimeFormat("en-US", {
-    month: "long",
-    day: "2-digit",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(`${date}T00:00:00Z`));
 
 export function LegalPageContent({ documents }: LegalPageContentProps) {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const sellerOfTravel = legalProfile.californiaSellerOfTravel;
   const contacts = [
-    { label: "Support", email: legalProfile.contact.supportEmail },
-    { label: "Legal", email: legalProfile.contact.legalEmail },
-    { label: "Privacy", email: legalProfile.contact.privacyEmail },
+    { label: t("legal.index.contacts.support"), email: legalProfile.contact.supportEmail },
+    { label: t("legal.index.contacts.legal"), email: legalProfile.contact.legalEmail },
+    { label: t("legal.index.contacts.privacy"), email: legalProfile.contact.privacyEmail },
   ];
 
   return (
@@ -56,13 +50,13 @@ export function LegalPageContent({ documents }: LegalPageContentProps) {
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center">
             <div className="max-w-3xl">
               <p className="inline-flex rounded-full bg-teal/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-teal-dark ring-1 ring-teal/15">
-                {t("legalCenter.heroLabel") || "Legal Information"}
+                {t("legalCenter.heroLabel")}
               </p>
               <h1 className="mt-4 text-3xl font-bold tracking-tight text-navy sm:text-4xl lg:text-5xl">
-                {t("legal.index.heroTitle") || "Legal Center"}
+                {t("legal.index.heroTitle")}
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-7 text-muted sm:text-lg">
-                {legalCenterDescription}
+                {t("legal.index.heroDescription")}
               </p>
             </div>
 
@@ -73,7 +67,7 @@ export function LegalPageContent({ documents }: LegalPageContentProps) {
                 </div>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-teal-dark">
-                    Company & compliance
+                    {t("legal.index.compliance.eyebrow")}
                   </p>
                   <h2 className="mt-1 text-xl font-bold text-navy">
                     {legalProfile.company.legalName}
@@ -83,19 +77,19 @@ export function LegalPageContent({ documents }: LegalPageContentProps) {
 
               <dl className="mt-5 space-y-4 text-sm leading-6">
                 <div>
-                  <dt className="font-semibold text-navy">California Seller of Travel</dt>
+                  <dt className="font-semibold text-navy">{t("legal.index.compliance.sellerOfTravel")}</dt>
                   <dd className="text-muted">
-                    Registration No. {sellerOfTravel.registrationNumber}
+                    {t("legal.index.compliance.registrationNumberLabel")} {sellerOfTravel.registrationNumber}
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-navy">Registration expires</dt>
-                  <dd className="text-muted">{formatDate(sellerOfTravel.expires)}</dd>
+                  <dt className="font-semibold text-navy">{t("legal.index.compliance.registrationExpires")}</dt>
+                  <dd className="text-muted">{t("legal.index.compliance.registrationExpiresDate")}</dd>
                 </div>
               </dl>
 
               <p className="mt-4 rounded-2xl bg-surface-muted p-3 text-sm leading-6 text-muted">
-                {sellerOfTravel.publicNotice}
+                {t("legal.index.compliance.publicNotice")}
               </p>
 
               <div className="mt-5 grid gap-2 text-sm">
@@ -119,14 +113,14 @@ export function LegalPageContent({ documents }: LegalPageContentProps) {
             <div>
               <p className="flex items-center gap-2 text-sm font-semibold text-teal-dark">
                 <ShieldCheck size={18} />
-                Official resources
+                {t("legal.index.resourcesEyebrow")}
               </p>
               <h2 id="legal-documents-heading" className="mt-1 text-2xl font-bold text-navy sm:text-3xl">
-                Legal documents
+                {t("legal.index.resourcesTitle")}
               </h2>
             </div>
             <p className="text-sm text-muted">
-              {documents.length} policies and notices available
+              {documents.length} {t("legal.index.documentsCountLabel")}
             </p>
           </div>
 
