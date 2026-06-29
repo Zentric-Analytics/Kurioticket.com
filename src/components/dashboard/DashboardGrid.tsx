@@ -799,7 +799,7 @@ function DateOfBirthInput({
   };
 
   return (
-    <div className="grid min-w-0 grid-cols-1 gap-2 sm:max-w-[34rem] sm:grid-cols-[minmax(0,5.75rem)_minmax(0,12rem)_minmax(0,7.5rem)]">
+    <div className="grid min-w-0 grid-cols-[minmax(0,4.5rem)_minmax(0,1fr)_minmax(0,5.5rem)] gap-2 sm:max-w-[34rem] sm:grid-cols-[minmax(0,5.75rem)_minmax(0,12rem)_minmax(0,7.5rem)]">
       <select
         className={cn(className, "cursor-pointer")}
         value={parts.day}
@@ -1062,7 +1062,7 @@ function StructuredAddressInput({
           autoComplete="address-line2"
         />
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,12rem)_minmax(0,12rem)]">
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3 sm:gap-4 sm:grid-cols-[minmax(0,12rem)_minmax(0,12rem)]">
         <div className="min-w-0 sm:max-w-48">
           <label
             className={fieldLabelClassName}
