@@ -4257,3 +4257,190 @@ test("Polish homepage discovery route search payloads remain route-data driven",
     },
   });
 });
+
+const polishServiceSupportKeys = [
+  "supportEyebrow",
+  "supportTitle",
+  "supportBeforeContactHeading",
+  "supportBeforeContactDescription",
+  "supportTicketHeading",
+  "supportFormEmailLabel",
+  "supportFormSubjectLabel",
+  "supportFormCategoryLabel",
+  "supportCategoryPriceAlerts",
+  "supportFormMessageLabel",
+  "supportFormMessagePlaceholder",
+  "supportFormSubmit",
+  "supportFaqHeading",
+  "supportFaqAccountQuestion",
+  "supportFaqAccountAnswer",
+  "supportFaqSearchQuestion",
+  "supportFaqSearchAnswer",
+  "supportFaqSavedTripsQuestion",
+  "supportFaqSavedTripsAnswer",
+  "supportFaqRedirectQuestion",
+  "supportFaqRedirectAnswer",
+  "supportFaqAlreadyBookedQuestion",
+  "supportFaqAlreadyBookedAnswer",
+  "supportFaqChangeBookingQuestion",
+  "supportFaqChangeBookingAnswer",
+  "supportFaqWhyRedirectedQuestion",
+  "supportFaqWhyRedirectedAnswer",
+  "serviceGuaranteeEyebrow",
+  "serviceGuaranteeTitle",
+  "serviceGuaranteeDescription",
+  "serviceGuaranteeFaqHeading",
+  "serviceGuaranteeFaqDescription",
+  "serviceGuaranteeFaqWhatGuaranteeQuestion",
+  "serviceGuaranteeFaqWhatGuaranteeAnswer",
+  "serviceGuaranteeFaqResultsDisplayedQuestion",
+  "serviceGuaranteeFaqResultsDisplayedAnswer",
+  "serviceGuaranteeFaqRedirectedQuestion",
+  "serviceGuaranteeFaqRedirectedAnswer",
+  "serviceGuaranteeFaqBookDirectlyQuestion",
+  "serviceGuaranteeFaqBookDirectlyAnswer",
+  "serviceGuaranteeFaqPricesGuaranteedQuestion",
+  "serviceGuaranteeFaqPricesGuaranteedAnswer",
+  "serviceGuaranteeFaqChooseProvidersQuestion",
+  "serviceGuaranteeFaqChooseProvidersAnswer",
+  "serviceGuaranteeFaqEncounterIssueQuestion",
+  "serviceGuaranteeFaqEncounterIssueAnswer",
+  "serviceGuaranteeFaqContactSupportQuestion",
+  "serviceGuaranteeFaqContactSupportAnswer",
+  "serviceGuaranteeHelpCardTitle",
+  "serviceGuaranteeSupportCta",
+  "moreServiceInfoEyebrow",
+  "moreServiceInfoTitle",
+  "moreServiceInfoDescription",
+  "moreServiceInfoContextTitle",
+  "moreServiceInfoContextSubtitle",
+  "moreServiceInfoContextCompare",
+  "moreServiceInfoContextSave",
+  "moreServiceInfoContextContinue",
+  "moreServiceInfoHowHeading",
+  "moreServiceInfoHowDescription",
+  "moreServiceInfoHowBadge",
+  "moreServiceInfoStepSearchTitle",
+  "moreServiceInfoStepSearchSummary",
+  "moreServiceInfoStepSearchDetails",
+  "moreServiceInfoStepCompareTitle",
+  "moreServiceInfoStepCompareSummary",
+  "moreServiceInfoStepCompareDetails",
+  "moreServiceInfoStepSaveTitle",
+  "moreServiceInfoStepSaveSummary",
+  "moreServiceInfoStepSaveDetails",
+  "moreServiceInfoStepRedirectsTitle",
+  "moreServiceInfoStepRedirectsSummary",
+  "moreServiceInfoStepRedirectsDetails",
+  "moreServiceInfoStepAccountTitle",
+  "moreServiceInfoStepAccountSummary",
+  "moreServiceInfoStepAccountDetails",
+  "moreServiceInfoFaqHeading",
+  "moreServiceInfoFaqDescription",
+  "moreServiceInfoFaqWhatQuestion",
+  "moreServiceInfoFaqWhatAnswer",
+  "moreServiceInfoFaqSearchQuestion",
+  "moreServiceInfoFaqSearchAnswer",
+  "moreServiceInfoFaqRedirectQuestion",
+  "moreServiceInfoFaqRedirectAnswer",
+  "moreServiceInfoFaqPaymentsQuestion",
+  "moreServiceInfoFaqPaymentsAnswer",
+  "moreServiceInfoFaqSaveQuestion",
+  "moreServiceInfoFaqSaveAnswer",
+  "moreServiceInfoFaqAccountQuestion",
+  "moreServiceInfoFaqAccountAnswer",
+  "moreServiceInfoFaqSupportQuestion",
+  "moreServiceInfoFaqSupportAnswer",
+  "moreServiceInfoHelpTitle",
+  "moreServiceInfoHelpDescription",
+  "moreServiceInfoSupportCta",
+] as const;
+
+test("Polish service and support pages resolve visible copy and hidden FAQ answers", () => {
+  const pl = getTranslations("pl");
+  const expected = {
+    supportEyebrow: "Centrum pomocy Kurioticket",
+    supportTitle: "Obsługa klienta",
+    supportBeforeContactHeading: "Zanim się z nami skontaktujesz",
+    supportTicketHeading: "Utwórz zgłoszenie do pomocy",
+    supportFormEmailLabel: "E-mail",
+    supportFormSubjectLabel: "Temat",
+    supportFormCategoryLabel: "Kategoria",
+    supportCategoryPriceAlerts: "Alerty cenowe",
+    supportFormMessageLabel: "Jak możemy pomóc?",
+    supportFormSubmit: "Wyślij zgłoszenie",
+    supportFaqHeading: "Często zadawane pytania",
+    serviceGuaranteeEyebrow: "Zobowiązanie serwisowe Kurioticket",
+    serviceGuaranteeTitle: "Gwarancja usług",
+    serviceGuaranteeFaqWhatGuaranteeQuestion: "Co gwarantuje Kurioticket?",
+    serviceGuaranteeFaqContactSupportAnswer: "Skorzystaj ze strony Obsługi klienta i podaj adres e-mail konta, opisz, co próbowałeś zrobić, oraz dodaj szczegóły trasy, hotelu lub dostawcy, które mogą pomóc nam przeanalizować problem.",
+    serviceGuaranteeSupportCta: "Skontaktuj się z obsługą klienta",
+    moreServiceInfoEyebrow: "Informacje o platformie",
+    moreServiceInfoTitle: "Więcej informacji o usługach",
+    moreServiceInfoContextTitle: "Planuj z kontekstem",
+    moreServiceInfoHowHeading: "Jak działa Kurioticket",
+    moreServiceInfoHowBadge: "PODSTAWY PLANOWANIA PODRÓŻY",
+    moreServiceInfoStepSearchTitle: "Wyszukuj u wielu dostawców",
+    moreServiceInfoStepCompareTitle: "Porównuj opcje podróży",
+    moreServiceInfoStepRedirectsTitle: "Wyjaśnienie przekierowań do dostawców",
+    moreServiceInfoStepAccountTitle: "Konto i narzędzia podróży",
+    moreServiceInfoFaqWhatQuestion: "Czym jest Kurioticket?",
+    moreServiceInfoFaqSupportAnswer: "Skorzystaj ze strony Obsługi klienta i podaj adres e-mail konta, opisz, co próbowałeś zrobić, oraz dodaj szczegóły trasy, hotelu lub dostawcy.",
+    moreServiceInfoHelpTitle: "Potrzebujesz pomocy?",
+    moreServiceInfoSupportCta: "Skontaktuj się z obsługą klienta",
+  } as const;
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(pl[key], value, key);
+  }
+
+  for (const key of polishServiceSupportKeys) {
+    assert.ok(pl[key], key);
+    assert.notEqual(pl[key], enTranslations[key], key);
+  }
+
+  assert.match(pl.supportEyebrow, /Kurioticket/);
+  assert.match(pl.serviceGuaranteeDescription, /Kurioticket/);
+  assert.match(pl.moreServiceInfoStepSearchDetails, /Kurioticket/);
+});
+
+test("Polish service and support render paths keep i18n keys, order, form behavior, and links", () => {
+  const supportPageSource = readFileSync("src/app/support/page.tsx", "utf8");
+  const supportSource = readFileSync("src/app/support/SupportContent.tsx", "utf8");
+  const supportFormSource = readFileSync("src/components/support/SupportForm.tsx", "utf8");
+  const guaranteePageSource = readFileSync("src/app/service-guarantee/page.tsx", "utf8");
+  const guaranteeSource = readFileSync("src/app/service-guarantee/ServiceGuaranteeContent.tsx", "utf8");
+  const moreServicePageSource = readFileSync("src/app/more-service-info/page.tsx", "utf8");
+  const moreServiceSource = readFileSync("src/app/more-service-info/MoreServiceInfoContent.tsx", "utf8");
+
+  assert.match(supportPageSource, /<SupportContent \/>/);
+  for (const key of ["supportEyebrow", "supportTitle", "supportBeforeContactHeading", "supportTicketHeading", "supportFaqHeading"]) {
+    assert.match(supportSource + supportFormSource, new RegExp(`t\\("${key}"\\)`), key);
+  }
+  assert.match(supportSource, /const supportFaqKeys = \[/);
+  assert.match(supportSource, /<details[\s\S]+<summary[\s\S]+group-open:rotate-45/);
+  assert.match(supportFormSource, /name="email" type="email" required/);
+  assert.match(supportFormSource, /name="subject" required/);
+  assert.match(supportFormSource, /<Select name="category" defaultValue="price-alerts">/);
+  for (const value of ["search-help", "price-alerts", "redirect", "account"]) assert.match(supportFormSource, new RegExp(`value="${value}"`));
+  assert.match(supportFormSource, /fetch\("\/api\/support\/tickets"/);
+  assert.match(supportFormSource, /method: "POST"/);
+  assert.match(supportFormSource, /sourceContext: \{ page: "support_center" \}/);
+
+  assert.match(guaranteePageSource, /<ServiceGuaranteeContent \/>/);
+  for (const key of ["serviceGuaranteeEyebrow", "serviceGuaranteeTitle", "serviceGuaranteeFaqHeading", "serviceGuaranteeSupportCta"]) {
+    assert.match(guaranteeSource, new RegExp(`t\\("${key}"\\)`), key);
+  }
+  assert.match(guaranteeSource, /const serviceFaqKeys = \[/);
+  assert.match(guaranteeSource, /<details[\s\S]+<summary[\s\S]+group-open:rotate-45/);
+  assert.match(guaranteeSource, /href="\/support"/);
+
+  assert.match(moreServicePageSource, /<MoreServiceInfoContent \/>/);
+  for (const key of ["moreServiceInfoEyebrow", "moreServiceInfoTitle", "moreServiceInfoHowHeading", "moreServiceInfoSupportCta"]) {
+    assert.match(moreServiceSource, new RegExp(`t\\("${key}"\\)`), key);
+  }
+  assert.match(moreServiceSource, /const serviceSections = \[/);
+  assert.match(moreServiceSource, /const serviceFaqs = \[/);
+  assert.match(moreServiceSource, /<details[\s\S]+<summary[\s\S]+group-open:rotate-45/);
+  assert.match(moreServiceSource, /href="\/support"/);
+});

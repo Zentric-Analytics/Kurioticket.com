@@ -134,6 +134,130 @@ export const translations: TranslationDictionary = {
   faqAnswerLiveCached: "Kurioticket korzysta z wyników wyszukiwania dostawców, które mogą odświeżać się wraz ze zmianą dostępności i cen. Pomaga to pokazywać aktualne opcje, ale ostateczną dostępność potwierdza dostawca.",
   faqQuestionManageChanges: "Gdzie zarządzać zmianami lub anulowaniem?",
   faqAnswerManageChanges: "Zmiany podróży, anulowania, zwroty i obsługa rezerwacji są zwykle realizowane przez dostawcę, u którego dokończono rezerwację. Do zgłoszeń serwisowych użyj danych potwierdzenia od tego dostawcy.",
+  moreServiceInfoEyebrow: "Informacje o platformie",
+  moreServiceInfoTitle: "Więcej informacji o usługach",
+  moreServiceInfoDescription:
+    "Dowiedz się, jak Kurioticket pomaga podróżnym wyszukiwać, porównywać, zapisywać i organizować opcje podróży od wielu dostawców w jednym miejscu.",
+  moreServiceInfoContextTitle: "Planuj z kontekstem",
+  moreServiceInfoContextSubtitle: "Od wyników wyszukiwania po przekierowania do dostawców",
+  moreServiceInfoContextCompare: "Porównuj opcje od wielu dostawców podróży.",
+  moreServiceInfoContextSave: "Zapisuj podróże, alerty i preferencje po zalogowaniu.",
+  moreServiceInfoContextContinue: "Sprawdź szczegóły u dostawcy przed dokonaniem rezerwacji poza Kurioticket.",
+  moreServiceInfoHowHeading: "Jak działa Kurioticket",
+  moreServiceInfoHowDescription:
+    "Te informacje wyjaśniają rolę Kurioticket przed wyszukiwaniem podróży, w jego trakcie i po nim.",
+  moreServiceInfoHowBadge: "PODSTAWY PLANOWANIA PODRÓŻY",
+  moreServiceInfoStepSearchTitle: "Wyszukuj u wielu dostawców",
+  moreServiceInfoStepSearchSummary:
+    "Wyszukuj opcje podróży u różnych dostawców z jednego miejsca, zamiast otwierać każdego dostawcę osobno.",
+  moreServiceInfoStepSearchDetails:
+    "Kurioticket łączy dostępne informacje o lotach, hotelach, trasach i wynikach podróży w jednym doświadczeniu wyszukiwania, aby podróżni mogli sprawniej przeglądać opcje.",
+  moreServiceInfoStepCompareTitle: "Porównuj opcje podróży",
+  moreServiceInfoStepCompareSummary:
+    "Porównuj ceny, trasy, hotele, rozkłady i dostępne opcje podróży, zanim zdecydujesz, co pasuje do Twojego wyjazdu.",
+  moreServiceInfoStepCompareDetails:
+    "Wyniki mogą obejmować dane dostawcy, godziny, informacje o kierunku i inne dane podróży, które pomagają ocenić opcję przed przejściem do dostawcy.",
+  moreServiceInfoStepSaveTitle: "Zapisuj podróże i alerty",
+  moreServiceInfoStepSaveSummary:
+    "Utwórz konto, aby zapisywać podróże, śledzić trasy i zarządzać alertami podróży związanymi z planowaniem.",
+  moreServiceInfoStepSaveDetails:
+    "Zapisane podróże, ostatnie wyszukiwania i alerty ułatwiają powrót do rozważanych opcji oraz porządkują szczegóły planowania podróży.",
+  moreServiceInfoStepRedirectsTitle: "Wyjaśnienie przekierowań do dostawców",
+  moreServiceInfoStepRedirectsSummary:
+    "Po wybraniu oferty możesz zostać przekierowany do dostawcy podróży, aby dokończyć rezerwację, płatność, potwierdzenie i realizację.",
+  moreServiceInfoStepRedirectsDetails:
+    "Na stronie dostawcy obsługiwane są ostateczne ceny, dostępność, zasady, kroki płatności, potwierdzenia, zmiany rezerwacji, anulacje i dokumenty podróży dla przekierowanych ofert.",
+  moreServiceInfoStepAccountTitle: "Konto i narzędzia podróży",
+  moreServiceInfoStepAccountSummary:
+    "Korzystaj z narzędzi konta, aby organizować zapisane wyszukiwania, podróże, alerty i preferencje w jednym obszarze Kurioticket.",
+  moreServiceInfoStepAccountDetails:
+    "Te narzędzia wspierają planowanie podróży w Kurioticket, a zarządzanie rezerwacją u konkretnego dostawcy pozostaje po stronie dostawcy, gdy rezerwacja jest finalizowana zewnętrznie.",
+  moreServiceInfoFaqHeading: "Często zadawane pytania",
+  moreServiceInfoFaqDescription:
+    "Krótkie odpowiedzi o wyszukiwaniu podróży, przekierowaniach do dostawców, zapisanych podróżach i narzędziach konta.",
+  moreServiceInfoFaqWhatQuestion: "Czym jest Kurioticket?",
+  moreServiceInfoFaqWhatAnswer:
+    "Kurioticket to platforma do wyszukiwania i porównywania podróży, która pomaga znajdować, porównywać, zapisywać i organizować opcje podróży od wielu dostawców.",
+  moreServiceInfoFaqSearchQuestion: "Jak działa wyszukiwanie podróży?",
+  moreServiceInfoFaqSearchAnswer:
+    "Podajesz szczegóły podróży, a Kurioticket wyświetla dostępne opcje podróży i informacje o dostawcach, które mogą pomóc w porównaniu wyborów.",
+  moreServiceInfoFaqRedirectQuestion:
+    "Dlaczego przekierowano mnie do innego dostawcy?",
+  moreServiceInfoFaqRedirectAnswer:
+    "Niektóre oferty są finalizowane na zewnętrznych stronach dostawców. Dostawca obsługuje końcowe kroki rezerwacji, płatność, potwierdzenie i realizację.",
+  moreServiceInfoFaqPaymentsQuestion: "Czy Kurioticket przetwarza płatności?",
+  moreServiceInfoFaqPaymentsAnswer:
+    "W przypadku ofert przekierowujących do dostawców Kurioticket nie przetwarza płatności. Sprawdź i dokończ płatność bezpośrednio na stronie dostawcy.",
+  moreServiceInfoFaqSaveQuestion: "Czy mogę zapisywać podróże i alerty?",
+  moreServiceInfoFaqSaveAnswer:
+    "Tak. Narzędzia konta mogą pomóc zapisywać podróże, śledzić trasy, zarządzać alertami i wracać do rozważanych opcji podróży.",
+  moreServiceInfoFaqAccountQuestion: "Czy konto jest wymagane?",
+  moreServiceInfoFaqAccountAnswer:
+    "Możesz przeglądać informacje wyszukiwania bez wszystkich narzędzi konta, ale zapisywanie podróży, alertów i preferencji może wymagać zalogowania.",
+  moreServiceInfoFaqSupportQuestion: "Jak skontaktować się z pomocą?",
+  moreServiceInfoFaqSupportAnswer:
+    "Skorzystaj ze strony Obsługi klienta i podaj adres e-mail konta, opisz, co próbowałeś zrobić, oraz dodaj szczegóły trasy, hotelu lub dostawcy.",
+  moreServiceInfoHelpTitle: "Potrzebujesz pomocy?",
+  moreServiceInfoHelpDescription:
+    "Masz pytania dotyczące konta, zapisanych podróży, alertów lub przekierowań do dostawców?",
+  moreServiceInfoSupportCta: "Skontaktuj się z obsługą klienta",
+  serviceGuaranteeEyebrow: "Zobowiązanie serwisowe Kurioticket",
+  serviceGuaranteeTitle: "Gwarancja usług",
+  serviceGuaranteeDescription:
+    "Chcemy, aby podróżni rozumieli, jak działa Kurioticket i czego mogą oczekiwać podczas korzystania z naszej platformy.",
+  serviceGuaranteeFaqHeading: "Często zadawane pytania",
+  serviceGuaranteeFaqDescription:
+    "Te odpowiedzi wyjaśniają rolę Kurioticket jako platformy do wyszukiwania i porównywania podróży.",
+  serviceGuaranteeFaqWhatGuaranteeQuestion: "Co gwarantuje Kurioticket?",
+  serviceGuaranteeFaqWhatGuaranteeAnswer:
+    "Kurioticket pomaga podróżnym przejrzyście porównywać opcje podróży. Staramy się zapewniać niezawodne działanie platformy, przejrzyste informacje wyszukiwania i jasne ścieżki do stron rezerwacji dostawców.",
+  serviceGuaranteeFaqResultsDisplayedQuestion: "Jak wyświetlane są wyniki podróży?",
+  serviceGuaranteeFaqResultsDisplayedAnswer:
+    "Wyniki są wyświetlane na podstawie informacji dostępnych od dostawców podróży, w tym tras, dat, cen i danych dostawcy, gdy są dostępne.",
+  serviceGuaranteeFaqRedirectedQuestion: "Dlaczego przekierowano mnie do innego dostawcy?",
+  serviceGuaranteeFaqRedirectedAnswer:
+    "Niektóre wyniki są finalizowane na zewnętrznej stronie dostawcy. Gdy wybierzesz jedną z tych opcji, Kurioticket przekieruje Cię, aby dostawca mógł obsłużyć rezerwację, płatność i usługę dotyczącą konkretnej podróży.",
+  serviceGuaranteeFaqBookDirectlyQuestion: "Czy rezerwuję bezpośrednio w Kurioticket?",
+  serviceGuaranteeFaqBookDirectlyAnswer:
+    "Kurioticket jest przede wszystkim platformą do wyszukiwania i porównywania podróży. Jeśli wynik przekierowuje do dostawcy, rezerwacja jest finalizowana u tego dostawcy, a nie w Kurioticket.",
+  serviceGuaranteeFaqPricesGuaranteedQuestion: "Czy ceny są zawsze gwarantowane?",
+  serviceGuaranteeFaqPricesGuaranteedAnswer:
+    "Nie. Ceny mogą się zmieniać zależnie od dostępności u dostawcy, podatków, opłat, waluty i czasu. Przed rezerwacją zawsze sprawdź ostateczną cenę na stronie dostawcy.",
+  serviceGuaranteeFaqChooseProvidersQuestion: "Jak Kurioticket wybiera dostawców?",
+  serviceGuaranteeFaqChooseProvidersAnswer:
+    "Kurioticket współpracuje z dostawcami podróży i źródłami danych, które mogą dostarczać odpowiednie wyniki wyszukiwania. Dostępność, ceny i wyświetlane opcje mogą się różnić zależnie od trasy, kierunku i zasięgu dostawcy.",
+  serviceGuaranteeFaqEncounterIssueQuestion: "Co zrobić, jeśli napotkam problem?",
+  serviceGuaranteeFaqEncounterIssueAnswer:
+    "Jeśli problem dotyczy wyszukiwania, dostępu do konta, zapisanych podróży, alertów lub przekierowania z Kurioticket, skontaktuj się z pomocą Kurioticket. Jeśli masz już rezerwację u dostawcy, skontaktuj się z nim w sprawie zmian rezerwacji, zwrotów, anulowań lub dokumentów podróży.",
+  serviceGuaranteeFaqContactSupportQuestion: "Jak skontaktować się z pomocą?",
+  serviceGuaranteeFaqContactSupportAnswer:
+    "Skorzystaj ze strony Obsługi klienta i podaj adres e-mail konta, opisz, co próbowałeś zrobić, oraz dodaj szczegóły trasy, hotelu lub dostawcy, które mogą pomóc nam przeanalizować problem.",
+  serviceGuaranteeHelpCardTitle: "Potrzebujesz pomocy z kontem lub wyszukiwaniem?",
+  serviceGuaranteeSupportCta: "Skontaktuj się z obsługą klienta",
+  supportEyebrow: "Centrum pomocy Kurioticket",
+  supportTitle: "Obsługa klienta",
+  supportBeforeContactHeading: "Zanim się z nami skontaktujesz",
+  supportBeforeContactDescription:
+    "Podaj adres e-mail przypisany do konta Kurioticket, opisz, co próbowałeś zrobić, a także trasę lub hotel, jeśli ma to znaczenie, oraz stronę dostawcy, na którą Cię przekierowano. Nie wysyłaj pełnych numerów kart płatniczych ani poufnych numerów dokumentów podróży.",
+  supportBeforeContactDashboardDescription:
+    "Podaj adres e-mail konta Kurioticket, opisz, w czym potrzebujesz pomocy, oraz dodaj szczegóły rezerwacji lub trasy, które pomogą nam zrozumieć problem.",
+  supportTicketHeading: "Utwórz zgłoszenie do pomocy",
+  supportFormEmailLabel: "E-mail",
+  supportFormSubjectLabel: "Temat",
+  supportFormCategoryLabel: "Kategoria",
+  supportCategorySearchHelp: "Pomoc w wyszukiwaniu",
+  supportCategoryPriceAlerts: "Alerty cenowe",
+  supportCategoryPartnerRedirect: "Przekierowanie do partnera",
+  supportCategoryAccountHelp: "Pomoc dotycząca konta",
+  supportFormMessageLabel: "Jak możemy pomóc?",
+  supportFormMessagePlaceholder:
+    "Opisz trasę, hotel, alert lub kontekst konta.",
+  supportFormSubmit: "Wyślij zgłoszenie",
+  supportFormSending: "Wysyłanie...",
+  supportFormSuccessPrefix: "Zgłoszenie",
+  supportFormSuccessSuffix: "utworzone.",
+  supportFormErrorFallback: "Nie udało się utworzyć zgłoszenia.",
+  supportFaqHeading: "Często zadawane pytania",
   supportFaqAccountQuestion: "Pomoc dotycząca konta i logowania",
   supportFaqAccountAnswer: "Kurioticket może pomóc w dostępie do konta, problemach z logowaniem, problemach z rejestracją, dostępem do profilu oraz problemach platformy związanych z kontem.",
   supportFaqSearchQuestion: "Pomoc dotycząca wyszukiwania i wyników",
