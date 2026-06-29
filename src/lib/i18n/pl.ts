@@ -596,4 +596,33 @@ export const translations: TranslationDictionary = {
   serviceGuaranteeHelpCardTitle:
     "Potrzebujesz pomocy z kontem lub wyszukiwaniem?",
   serviceGuaranteeSupportCta: "Skontaktuj się z obsługą klienta",
+  aboutPageEyebrow: "O Kurioticket",
+  aboutPageTitle: "O nas",
+  aboutPageIntroPrimary:
+    "Kurioticket to platforma do wyszukiwania i porównywania podróży, która pomaga podróżnym wyszukiwać, porównywać i odkrywać loty, hotele, samochody oraz oferty podróży.",
+  aboutPageIntroSecondary:
+    "Naszym celem jest uproszczenie planowania podróży przez zebranie dostępnych opcji i informacji o dostawcach w jednym miejscu, aby podróżni mogli przejrzeć możliwości przed przejściem do dostawcy najlepiej pasującego do ich wyjazdu.",
+  aboutPagePlanningCardHeading: "Praktyczne narzędzie do planowania podróży",
+  aboutPagePlanningCardBody:
+    "Kurioticket pomaga podróżnym oceniać opcje podróży z przydatnym kontekstem. Dostępność, ceny, zasady i końcowe kroki rezerwacji mogą różnić się w zależności od dostawcy, dlatego przed podjęciem decyzji podróżni powinni dokładnie sprawdzić stronę dostawcy.",
+  howItWorksEyebrow: "Jak działa Kurioticket",
+  howItWorksTitle: "Jak działa Kurioticket",
+  howItWorksIntro:
+    "Kurioticket pomaga podróżnym przejść od wyszukiwania do porównania, a następnie do dostawcy po wybraniu oferty.",
+  howItWorksFlowHeading: "Podstawowy przebieg",
+  "howItWorks.steps.search.title": "Wyszukaj opcje podróży",
+  "howItWorks.steps.search.description":
+    "Wprowadź szczegóły podróży, aby znaleźć dostępne loty, hotele, samochody lub oferty podróży.",
+  "howItWorks.steps.compare.title": "Porównaj dostępne wyniki",
+  "howItWorks.steps.compare.description":
+    "Przejrzyj dostępne opcje, ceny, rozkłady, informacje o dostawcach i inne dane podróży, gdy są dostępne.",
+  "howItWorks.steps.choose.title": "Wybierz ofertę",
+  "howItWorks.steps.choose.description":
+    "Po przejrzeniu dostępnych szczegółów wybierz opcję najlepiej pasującą do Twoich planów.",
+  "howItWorks.steps.continue.title": "Kontynuuj u dostawcy",
+  "howItWorks.steps.continue.description":
+    "Po przekierowaniu kontynuuj na stronie dostawcy, aby sprawdzić końcowe szczegóły i wykonać wymagane kroki rezerwacji.",
+  "howItWorks.providerWebsites.title": "Strony dostawców",
+  "howItWorks.providerWebsites.description":
+    "Niektóre rezerwacje mogą być finalizowane na stronach dostawców po przekierowaniu z Kurioticket. Przed zakupem sprawdź na stronie dostawcy ostateczną dostępność, ceny, warunki, kroki płatności i szczegóły rezerwacji.",
 };
