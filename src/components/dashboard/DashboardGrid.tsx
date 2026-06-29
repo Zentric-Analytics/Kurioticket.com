@@ -630,6 +630,7 @@ function getPersonalDetailRows(t: TranslationDictionary): PersonalDetailRow[] {
       key: "email",
       label: t["accountDashboard.personalDetails.emailAddress"],
       fallback: t["accountDashboard.personalDetails.addEmailAddress"],
+      helper: "Email address can’t be changed here.",
       inputType: "email",
       readOnly: true,
     },
@@ -637,6 +638,7 @@ function getPersonalDetailRows(t: TranslationDictionary): PersonalDetailRow[] {
       key: "phone",
       label: t["accountDashboard.personalDetails.phoneNumber"],
       fallback: t["accountDashboard.personalDetails.addPhoneNumber"],
+      helper: "We’ll use this number for booking updates.",
       inputType: "tel",
     },
     {
@@ -778,7 +780,7 @@ function DateOfBirthInput({
   };
 
   return (
-    <div className="grid min-w-0 grid-cols-1 gap-2 sm:max-w-xl sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)_minmax(0,1fr)]">
+    <div className="grid min-w-0 grid-cols-1 gap-2 sm:max-w-[34rem] sm:grid-cols-[minmax(0,5.75rem)_minmax(0,12rem)_minmax(0,7.5rem)]">
       <select
         className={className}
         value={parts.day}
@@ -969,8 +971,8 @@ function StructuredAddressInput({
     "mb-1.5 block text-sm font-semibold leading-5 text-slate-950";
 
   return (
-    <div className="w-full min-w-0 max-w-3xl space-y-4">
-      <div className="max-w-md">
+    <div className="w-full min-w-0 space-y-5">
+      <div className="max-w-sm">
         <label
           className={fieldLabelClassName}
           htmlFor="personal-address-country"
@@ -994,7 +996,7 @@ function StructuredAddressInput({
           ))}
         </select>
       </div>
-      <div className="max-w-3xl">
+      <div className="max-w-full">
         <label
           className={fieldLabelClassName}
           htmlFor="personal-address-street"
@@ -1009,7 +1011,7 @@ function StructuredAddressInput({
           autoComplete="address-line1"
         />
       </div>
-      <div className="max-w-md">
+      <div className="max-w-sm">
         <label
           className={fieldLabelClassName}
           htmlFor="personal-address-apartment"
@@ -1026,8 +1028,8 @@ function StructuredAddressInput({
           autoComplete="address-line2"
         />
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,16rem)_minmax(0,16rem)]">
-        <div className="min-w-0 max-w-64">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,12rem)_minmax(0,12rem)]">
+        <div className="min-w-0 sm:max-w-48">
           <label
             className={fieldLabelClassName}
             htmlFor="personal-address-city"
@@ -1042,7 +1044,7 @@ function StructuredAddressInput({
             autoComplete="address-level2"
           />
         </div>
-        <div className="min-w-0 max-w-64">
+        <div className="min-w-0 sm:max-w-48">
           <label
             className={fieldLabelClassName}
             htmlFor="personal-address-state"
@@ -1060,7 +1062,7 @@ function StructuredAddressInput({
           />
         </div>
       </div>
-      <div className="max-w-[10rem]">
+      <div className="max-w-[9rem]">
         <label
           className={fieldLabelClassName}
           htmlFor="personal-address-postal"
@@ -1148,11 +1150,11 @@ function PhoneNumberInput({
   };
 
   return (
-    <div className="flex w-full min-w-0 items-stretch gap-0 sm:max-w-xl">
-      <div className="group relative z-10 h-10 w-[4.75rem] shrink-0 sm:w-20">
+    <div className="flex w-full min-w-0 items-stretch gap-0 sm:max-w-[34rem]">
+      <div className="group relative z-10 h-11 w-[4.75rem] shrink-0 sm:w-20">
         <div
           aria-hidden="true"
-          className="pointer-events-none flex h-full w-full items-center justify-center rounded-none border border-slate-400 bg-white px-3.5 transition group-focus-within:border-violet-500 group-focus-within:ring-2 group-focus-within:ring-violet-100 sm:px-4"
+          className="pointer-events-none flex h-full w-full items-center justify-center rounded-none border border-slate-300 bg-white px-3.5 transition group-focus-within:border-blue-700 group-focus-within:ring-2 group-focus-within:ring-blue-100 sm:px-4"
         >
           <CountryFlagIcon
             countryName={selectedOption.countryName}
@@ -1242,15 +1244,12 @@ function PersonalDetailsEditRow({
   const isAddress = row.key === "address";
 
   return (
-    <div
-      className={cn(
-        "max-w-3xl py-3.5",
-        isAddress && "mt-5 border-t border-slate-200 pt-7",
-      )}
-    >
-      <label className="mb-1.5 block text-sm font-semibold leading-5 text-slate-950">
-        {row.label}
-      </label>
+    <div className={cn("py-3", isAddress && "pt-1")}>
+      {!isAddress ? (
+        <label className="mb-1.5 block text-sm font-semibold leading-5 text-slate-950">
+          {row.label}
+        </label>
+      ) : null}
       <div className="min-w-0">
         <DetailInput row={row} value={value} onChange={onChange} />
         {row.helper ? (
@@ -1273,9 +1272,9 @@ function DetailInput({
   onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
 }) {
   const baseClassName = cn(
-    "h-10 w-full min-w-0 rounded-none border border-slate-400 bg-white px-3 text-base font-medium leading-5 text-slate-950 outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 sm:max-w-lg sm:text-sm",
+    "h-11 w-full min-w-0 rounded-none border border-slate-300 bg-white px-3.5 text-base font-medium leading-5 text-slate-950 shadow-[0_1px_0_rgba(15,23,42,0.03)] outline-none transition placeholder:text-slate-500 hover:border-slate-400 focus:border-blue-700 focus:ring-2 focus:ring-blue-100 sm:max-w-[34rem] sm:text-sm",
     row.readOnly &&
-      "cursor-not-allowed border-slate-400 bg-slate-50 text-slate-800 hover:border-slate-400 focus:border-slate-400 focus:ring-0",
+      "cursor-not-allowed border-slate-300 bg-slate-100 text-slate-700 hover:border-slate-300 focus:border-slate-300 focus:ring-0",
   );
 
   const handleChange = (
@@ -1355,7 +1354,6 @@ function DetailInput({
         className={cn(baseClassName, "min-h-24 resize-y")}
         value={value}
         onChange={handleChange}
-        placeholder={row.fallback}
         readOnly={row.readOnly}
         rows={4}
       />
@@ -1368,7 +1366,6 @@ function DetailInput({
       type={row.inputType ?? "text"}
       value={value}
       onChange={handleChange}
-      placeholder={row.fallback}
       readOnly={row.readOnly}
     />
   );
@@ -1529,12 +1526,14 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       <div
         className={cn(
           "border-b border-slate-200 px-5 py-4 sm:px-6",
-          isEditing && "border-b-0 px-0 pb-5 pt-0",
+          isEditing && "mx-auto max-w-[46rem] border-b-0 px-0 pb-6 pt-0",
         )}
       >
-        <p className="text-sm text-slate-600">
-          {t["accountDashboard.personalDetails.description"] ||
-            "Manage the information Kurioticket uses for your account."}
+        <p className={cn("text-sm text-slate-600", isEditing && "leading-6")}>
+          {isEditing
+            ? "Update your information and manage how it is used across Kurioticket."
+            : t["accountDashboard.personalDetails.description"] ||
+              "Manage the information Kurioticket uses for your account."}
         </p>
       </div>
 
@@ -1558,8 +1557,27 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       ) : null}
 
       {isEditing ? (
-        <div className="px-0">
-          {personalDetailsFieldOrder.map((key) => renderEditField(key))}
+        <div className="mx-auto max-w-[46rem] bg-white/80 px-0 py-1">
+          <div className="mb-2">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-900">
+              Basic information
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Manage the information Kurioticket uses for your account.
+            </p>
+          </div>
+          {personalDetailsFieldOrder
+            .filter((key) => key !== "address")
+            .map((key) => renderEditField(key))}
+          <div className="mt-8 border-t border-slate-200 pt-7">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-900">
+              Address
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Used for billing, booking records, and travel communication.
+            </p>
+            {renderEditField("address")}
+          </div>
         </div>
       ) : (
         <div className="px-5 sm:px-6">
@@ -1570,7 +1588,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       <div
         className={cn(
           "border-t border-slate-200 bg-slate-50/60 px-5 py-4 sm:px-6",
-          isEditing && "mt-4 bg-transparent px-0",
+          isEditing && "mx-auto mt-7 max-w-[46rem] bg-transparent px-0 pt-5",
         )}
       >
         {isEditing ? (
