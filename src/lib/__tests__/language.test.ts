@@ -4120,6 +4120,7 @@ test("Polish homepage-visible copy resolves without English fallback", () => {
     oneWay: "W jedną stronę",
     origin: "WYLOT",
     destination: "CEL PODRÓŻY",
+    departureDate: "DATY PODRÓŻY",
     travelDates: "DATY PODRÓŻY",
     fromPlaceholder: "Skąd?",
     travelers: "PODRÓŻNI",
@@ -4315,6 +4316,32 @@ test("Polish homepage flight and hotel date formatting uses pl-PL generated labe
   assert.equal(formatFlightsMonthHeading(new Date(2026, 6, 1), "pl-pl"), "lipiec 2026");
   assert.deepEqual(formatFlightsWeekdays("pl-PL"), ["niedz.", "pon.", "wt.", "śr.", "czw.", "pt.", "sob."]);
   assert.equal(formatFlightsDateSummary(new Date(2026, 5, 1), new Date(2026, 6, 1), "pl"), "1 cze — 1 lip");
+});
+
+test("Polish flight date labels resolve for desktop and compact mobile paths", () => {
+  const pl = getTranslations("pl");
+  const searchSource = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
+
+  assert.equal(pl.departureDate, "DATY PODRÓŻY");
+  assert.equal(pl.travelDates, "DATY PODRÓŻY");
+  assert.equal(pl.departureDate, pl.travelDates);
+  assert.notEqual(pl.departureDate.toLocaleUpperCase("pl-PL"), "TRAVEL DATES");
+
+  assert.match(
+    searchSource,
+    /<label className=\{flightFieldLabelClassName\}>[\s\S]*?\{t\.departureDate \|\|[\s\S]*?t\.travelDates \|\| "Travel dates"\}[\s\S]*?<\/label>[\s\S]*?<button[\s\S]*?ref=\{flightDatesLauncherRef\}/,
+    "flight date field label should use departureDate before the travelDates fallback in the shared compact\/desktop field",
+  );
+  assert.match(
+    searchSource,
+    /if \(!departureSummary\) \{[\s\S]*?return t\.travelDates \|\| "Travel dates";[\s\S]*?\}/,
+    "date value\/placeholder should continue using travelDates",
+  );
+  assert.match(searchSource, /<FlightMobilePickerShell[\s\S]*?title=\{translate\("chooseTravelDates"\) \|\| "Choose travel dates"\}/);
+  assert.match(searchSource, /renderDesktopCalendarPopover\(\{[\s\S]*?mode: "flights"/);
+  assert.match(searchSource, /new URLSearchParams\(\{/);
+  assert.match(searchSource, /departureDate,/);
+  assert.match(searchSource, /returnDate,/);
 });
 
 test("Polish homepage render paths keep using i18n keys and preserve route/search behavior", () => {
