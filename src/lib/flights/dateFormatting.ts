@@ -9,6 +9,7 @@ export const normalizeFlightsCalendarLocale = (locale: string | null | undefined
   if (normalized === "pt" || normalized === "pt-br" || normalized.startsWith("pt-")) return "pt-BR";
   if (normalized === "ar" || normalized.startsWith("ar-")) return "ar";
   if (normalized === "hi" || normalized === "hi-in" || normalized.startsWith("hi-")) return "hi-IN";
+  if (normalized === "pl" || normalized === "pl-pl" || normalized.startsWith("pl-")) return "pl-PL";
   if (normalized === "tr" || normalized === "tr-tr" || normalized.startsWith("tr-")) return "tr-TR";
   if (normalized === "ja" || normalized.startsWith("ja-")) return "ja-JP";
   if (normalized === "ko" || normalized.startsWith("ko-")) return "ko-KR";
