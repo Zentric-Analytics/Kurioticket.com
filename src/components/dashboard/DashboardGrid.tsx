@@ -938,28 +938,34 @@ function serializeStructuredAddressDraft(parts: StructuredAddressParts) {
 }
 
 function formatStructuredAddressForDisplay(value: string) {
-  if (!value.trim() || !value.trim().startsWith(structuredAddressPrefix)) {
-    return value.trim();
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue || !trimmedValue.startsWith(structuredAddressPrefix)) {
+    return trimmedValue;
   }
 
-  const parts = parseStructuredAddressDraft(value);
+  const parts = parseStructuredAddressDraft(trimmedValue);
   const countryOption = personalDetailsCountryOptions.find(
     (option) => option.code === parts.countryCode,
   );
-  const localityLine = [parts.city, parts.stateOrRegion]
+  const cityRegionLine = [parts.city, parts.stateOrRegion]
+    .map((part) => part.trim())
     .filter(Boolean)
     .join(", ");
+  const localityLine = [cityRegionLine, parts.postalCode.trim()]
+    .filter(Boolean)
+    .join("  ");
   const countryLine = countryOption
     ? getFriendlyCountryLabel(countryOption)
-    : parts.countryCode;
+    : parts.countryCode.trim();
 
   return [
     parts.addressLine1,
     parts.apartmentOrSuite,
     localityLine,
-    parts.postalCode,
     countryLine,
   ]
+    .map((line) => line.trim())
     .filter(Boolean)
     .join("\n");
 }
@@ -2007,7 +2013,6 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
               : readOnlyValue
           }
           fallback={row.fallback}
-          helper={row.helper}
           preserveLines={row.key === "address"}
         />
       </div>
