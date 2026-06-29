@@ -214,8 +214,7 @@ export const translations: TranslationDictionary = {
   hotelsHeroMobileTitle: "Znajdź pobyt, który dobrze rozpocznie podróż.",
   hotelsHeroMobileSubtitle:
     "Porównuj hotele w jednym miejscu — od eleganckich pobytów w mieście po wygodne wypady do resortów.",
-  hotelsHeroImageAlt:
-    "Hotelowy boy wita gościa z bagażem w lobby premium",
+  hotelsHeroImageAlt: "Hotelowy boy wita gościa z bagażem w lobby premium",
   hotelSearchIntroLabel: "Porównaj opcje hoteli",
   hotelSearchDestinationLabel: "CEL PODRÓŻY",
   hotelSearchDestinationPlaceholder: "Miasto lub hotel",
@@ -280,7 +279,8 @@ export const translations: TranslationDictionary = {
   "hotelDestination.Tokyo.detail": "Japonia",
   "hotelDestination.London.title": "Wielka Brytania",
   "hotelDestination.London.subtitle": "Pobyty w Londynie",
-  "hotelDestination.London.linkLabel": "Szukaj hoteli w Londynie, Wielka Brytania",
+  "hotelDestination.London.linkLabel":
+    "Szukaj hoteli w Londynie, Wielka Brytania",
   "hotelDestination.London.detail": "Wielka Brytania",
   "hotelDestination.Paris.title": "Francja",
   "hotelDestination.Paris.subtitle": "Pobyty w Paryżu",
@@ -288,7 +288,8 @@ export const translations: TranslationDictionary = {
   "hotelDestination.Paris.detail": "Francja",
   "hotelDestination.New York.title": "Stany Zjednoczone",
   "hotelDestination.New York.subtitle": "Pobyty w Nowym Jorku",
-  "hotelDestination.New York.linkLabel": "Szukaj hoteli w Nowym Jorku, Stany Zjednoczone",
+  "hotelDestination.New York.linkLabel":
+    "Szukaj hoteli w Nowym Jorku, Stany Zjednoczone",
   "hotelDestination.New York.detail": "Stany Zjednoczone",
   "hotelDestination.Rome.title": "Włochy",
   "hotelDestination.Rome.subtitle": "Pobyty w Rzymie",
@@ -296,15 +297,18 @@ export const translations: TranslationDictionary = {
   "hotelDestination.Rome.detail": "Włochy",
   "hotelDestination.Dubai.title": "Zjednoczone Emiraty Arabskie",
   "hotelDestination.Dubai.subtitle": "Pobyty w Dubaju",
-  "hotelDestination.Dubai.linkLabel": "Szukaj hoteli w Dubaju, Zjednoczone Emiraty Arabskie",
+  "hotelDestination.Dubai.linkLabel":
+    "Szukaj hoteli w Dubaju, Zjednoczone Emiraty Arabskie",
   "hotelDestination.Dubai.detail": "Zjednoczone Emiraty Arabskie",
   "hotelDestination.Singapore.title": "Singapur",
   "hotelDestination.Singapore.subtitle": "Pobyty w Singapurze",
-  "hotelDestination.Singapore.linkLabel": "Szukaj hoteli w Singapurze, Singapur",
+  "hotelDestination.Singapore.linkLabel":
+    "Szukaj hoteli w Singapurze, Singapur",
   "hotelDestination.Singapore.detail": "Singapur",
   "hotelDestination.Barcelona.title": "Hiszpania",
   "hotelDestination.Barcelona.subtitle": "Pobyty w Barcelonie",
-  "hotelDestination.Barcelona.linkLabel": "Szukaj hoteli w Barcelonie, Hiszpania",
+  "hotelDestination.Barcelona.linkLabel":
+    "Szukaj hoteli w Barcelonie, Hiszpania",
   "hotelDestination.Barcelona.detail": "Hiszpania",
   "hotelDestination.Toronto.title": "Kanada",
   "hotelDestination.Toronto.subtitle": "Pobyty w Toronto",
@@ -312,7 +316,8 @@ export const translations: TranslationDictionary = {
   "hotelDestination.Toronto.detail": "Kanada",
   "hotelDestination.Amsterdam.title": "Holandia",
   "hotelDestination.Amsterdam.subtitle": "Pobyty w Amsterdamie",
-  "hotelDestination.Amsterdam.linkLabel": "Szukaj hoteli w Amsterdamie, Holandia",
+  "hotelDestination.Amsterdam.linkLabel":
+    "Szukaj hoteli w Amsterdamie, Holandia",
   "hotelDestination.Amsterdam.detail": "Holandia",
   "hotelDestination.Bangkok.title": "Tajlandia",
   "hotelDestination.Bangkok.subtitle": "Pobyty w Bangkoku",
@@ -721,8 +726,7 @@ export const translations: TranslationDictionary = {
   "carsTripStyle.luxury.title": "Samochody luksusowe",
   "carsTripStyle.luxury.subtitle":
     "Kontekst premium dla podróży służbowych lub wyjątkowych wyjazdów",
-  "carsTripStyle.luxury.cta":
-    "Zaplanuj wyszukiwanie luksusowego samochodu",
+  "carsTripStyle.luxury.cta": "Zaplanuj wyszukiwanie luksusowego samochodu",
   "carsTripStyle.luxury.ariaLabel":
     "Zaplanuj wyszukiwanie luksusowego samochodu z odbiorem w okolicy hotelu",
   "carsTripStyle.luxury.imageAlt":
@@ -733,8 +737,7 @@ export const translations: TranslationDictionary = {
   "carsTripStyle.van.cta": "Szukaj vanów na podróże grupowe",
   "carsTripStyle.van.ariaLabel":
     "Szukaj vanów na podróże grupowe z odbiorem na lotnisku",
-  "carsTripStyle.van.imageAlt":
-    "Van pasażerski jadący jasną malowniczą drogą",
+  "carsTripStyle.van.imageAlt": "Van pasażerski jadący jasną malowniczą drogą",
   "carsTrust.0.title": "Stworzone z myślą o pełnych podróżach",
   "carsTrust.0.description":
     "Planuj loty, pobyty i transport naziemny w jednym procesie Kurioticket.",
@@ -773,8 +776,7 @@ export const translations: TranslationDictionary = {
     "Zaplanuj odbiór samochodu w pobliżu miejsca pobytu",
   "carsPickup.Hotel area.ariaLabel":
     "Otwórz wyniki samochodów dla odbioru w okolicy hotelu",
-  "carsPickup.Hotel area.imageAlt":
-    "Budynek hotelu z palmami i podjazdem",
+  "carsPickup.Hotel area.imageAlt": "Budynek hotelu z palmami i podjazdem",
   "carsSearch.pickupLocationLabel": "MIEJSCE ODBIORU",
   "carsSearch.pickupLocationPlaceholder": "Lotnisko, miasto lub adres",
   "carsSearch.returnLocationPlaceholder": "Miasto, lotnisko lub adres zwrotu",
@@ -783,13 +785,13 @@ export const translations: TranslationDictionary = {
   "carsSearch.rentalDatesLabel": "DATY WYNAJMU",
   "carsSearch.rentalDatePlaceholder": "Data odbioru — data zwrotu",
   "carsSearch.pickupReturnTimeLabel": "GODZINA ODBIORU / ZWROTU",
-  "carsSearch.pickupReturnTimeSummary": "Odbiór {pickupTime} — zwrot {returnTime}",
+  "carsSearch.pickupReturnTimeSummary":
+    "Odbiór {pickupTime} — zwrot {returnTime}",
   "carsSearch.driverAgeLabel": "WIEK KIEROWCY",
   "carsSearch.driverAgeAnyAge": "Dowolny wiek",
   "carsSearch.clearPickupLocation": "Wyczyść miejsce odbioru",
   "carsSearch.clearReturnLocation": "Wyczyść miejsce zwrotu",
-  "carsSearch.chooseRentalDatesAria":
-    "Wybierz daty odbioru i zwrotu samochodu",
+  "carsSearch.chooseRentalDatesAria": "Wybierz daty odbioru i zwrotu samochodu",
   "carsSearch.rentalDatePickerAria": "Wybór dat wynajmu",
   "carsSearch.chooseRentalDates": "Wybierz daty wynajmu",
   "carsSearch.previousMonth": "Poprzedni miesiąc",
@@ -798,10 +800,8 @@ export const translations: TranslationDictionary = {
   "carsSearch.nextMonthShort": "Następny",
   "carsSearch.selectDateAriaPrefix": "Wybierz",
   "carsSearch.startsNewPickupDate": "rozpoczyna nową datę odbioru",
-  "carsSearch.choosePickupReturnTimesAria":
-    "Wybierz godziny odbioru i zwrotu",
-  "carsSearch.pickupReturnTimeSelectorAria":
-    "Wybór godziny odbioru i zwrotu",
+  "carsSearch.choosePickupReturnTimesAria": "Wybierz godziny odbioru i zwrotu",
+  "carsSearch.pickupReturnTimeSelectorAria": "Wybór godziny odbioru i zwrotu",
   "carsSearch.pickupTimeLabel": "Godzina odbioru",
   "carsSearch.returnTimeLabel": "Godzina zwrotu",
   carsSearchPreparing: "Przygotowujemy wyszukiwanie samochodów...",
@@ -817,15 +817,13 @@ export const translations: TranslationDictionary = {
     "Dlaczego wiek kierowcy ma znaczenie przy wynajmie samochodu?",
   "carsFaq.2.answer":
     "Dostawcy wynajmu mogą stosować różne zasady, opłaty, wymagania dotyczące dostępnych pojazdów lub kaucji zależnie od wieku kierowcy i lokalizacji.",
-  "carsFaq.3.question":
-    "Co sprawdzić przed rezerwacją samochodu na wynajem?",
+  "carsFaq.3.question": "Co sprawdzić przed rezerwacją samochodu na wynajem?",
   "carsFaq.3.answer":
     "Przed rezerwacją sprawdź miejsce odbioru i zwrotu, daty, godziny, limit kilometrów, politykę paliwową, opcje ubezpieczenia, warunki anulowania, wymagania dotyczące kaucji i potrzebne dokumenty.",
   "carsFaq.4.question": "Gdzie potwierdzana jest ostateczna cena wynajmu?",
   "carsFaq.4.answer":
     "Ostateczna cena, dostępność pojazdu, podatki, opłaty, wymagania dotyczące kaucji i zasady wynajmu są potwierdzane przez dostawcę przed rezerwacją.",
-  "carsFaq.5.question":
-    "Jakie dokumenty mogą być potrzebne przy odbiorze?",
+  "carsFaq.5.question": "Jakie dokumenty mogą być potrzebne przy odbiorze?",
   "carsFaq.5.answer":
     "Dostawcy wynajmu mogą wymagać ważnego prawa jazdy, karty płatniczej, dokumentu tożsamości oraz dokumentów wymaganych w kraju lub miejscu odbioru.",
   aboutPageEyebrow: "O Kurioticket",
@@ -857,4 +855,78 @@ export const translations: TranslationDictionary = {
   "howItWorks.providerWebsites.title": "Strony dostawców",
   "howItWorks.providerWebsites.description":
     "Niektóre rezerwacje mogą być finalizowane na stronach dostawców po przekierowaniu z Kurioticket. Przed zakupem sprawdź na stronie dostawcy ostateczną dostępność, ceny, warunki, kroki płatności i szczegóły rezerwacji.",
+
+  flightLandingHeroTitle: "Znajdź kolejny niedrogi lot z łatwością.",
+  flightLandingHeroSubtitle:
+    "Wyszukuj trasy, porównuj daty i odkrywaj opcje lotów na kolejną podróż.",
+  flightLandingHeroImageAlt: "Skrzydło samolotu nad jasnymi chmurami",
+  flightLandingFeatureSearchReadyTitle: "Trasy gotowe do wyszukiwania",
+  flightLandingFeatureSearchReadyBody:
+    "Wprowadź rzeczywiste szczegóły podróży, zanim wyniki zostaną pobrane od dostawców lotów.",
+  flightLandingFeatureCompareTitle: "Porównuj w kontekście",
+  flightLandingFeatureCompareBody:
+    "Używaj dat, liczby podróżnych, klasy kabiny, czasu podróży, przesiadek i szczegółów trasy, aby ocenić opcje.",
+  flightLandingFeatureProviderTitle: "Sprawdzenie u dostawcy",
+  flightLandingFeatureProviderBody:
+    "Przed rezerwacją zawsze potwierdź ostateczną dostępność, cenę i zasady u dostawcy.",
+  flightLandingStartThisSearch: "Rozpocznij to wyszukiwanie",
+  flightLandingRouteIdeasTitle: "Pomysły na trasy dla elastycznych podróży",
+  flightLandingRouteIdeasBody:
+    "Przeglądaj pomysły na trasy, a następnie rozpocznij prawdziwe wyszukiwanie z datami i podróżnymi przed porównaniem dostępnych lotów.",
+  flightLandingRouteTemplate: "{{origin}} do {{destination}}",
+  flightLandingRouteConnector: "do",
+  flightLandingRouteAriaLabel: "Szukaj lotów z {{origin}} do {{destination}}",
+  discoverDestinationsFromRegion: "Odkrywaj kierunki z Twojego regionu",
+  discoverDestinationsFromRegionBody:
+    "Przeglądaj wybrane trasy i rozpocznij kolejną podróż z pewnością.",
+  beachVacations: "Wakacje na plaży",
+  beachVacationsBody:
+    "Odkrywaj trasy lotnicze do słonecznych wybrzeży, wyspiarskich ucieczek i ciepłych kierunków plażowych.",
+  flightBookingFaqs: "Najczęstsze pytania o rezerwację lotów",
+  flightBookingFaqIntro:
+    "Sprawdź najczęstsze szczegóły wyszukiwania lotów przed przejściem do dostawcy.",
+  flightFaqBestTimeQuestion: "Kiedy najlepiej zarezerwować lot?",
+  flightFaqBestTimeAnswer:
+    "Ceny lotów mogą zmieniać się w zależności od trasy, sezonu, popytu i dostępności. Zwykle warto porównać kilka dat, sprawdzić pobliskie lotniska, jeśli to możliwe, i przejrzeć pełny plan podróży przed wyborem taryfy.",
+  flightFaqBeforeBookingQuestion: "Co sprawdzić przed rezerwacją?",
+  flightFaqBeforeBookingAnswer:
+    "Przed ukończeniem rezerwacji u dostawcy sprawdź godziny wylotu i przylotu, całkowity czas podróży, przesiadki, zasady dotyczące bagażu, opcje wyboru miejsca, warunki anulowania oraz zasady zmiany biletu.",
+  flightFaqFlexibleFareQuestion: "Czym jest elastyczna taryfa?",
+  flightFaqFlexibleFareAnswer:
+    "Elastyczna taryfa może umożliwiać zmiany lub anulowanie z mniejszymi ograniczeniami niż taryfa podstawowa, ale dokładne zasady zależą od linii lotniczej lub dostawcy rezerwacji. Zawsze sprawdź warunki taryfy przed zakupem.",
+  flightFaqNonstopQuestion: "Czy loty bez przesiadek są zawsze lepsze?",
+  flightFaqNonstopAnswer:
+    "Nie zawsze. Loty bez przesiadek mogą oszczędzać czas, a trasy z jedną przesiadką mogą oferować inne godziny wylotu, okna przylotu lub opcje cenowe. Przed decyzją porównaj całkowity czas podróży, długość przesiadki i wygodę.",
+  flightFaqBaggageQuestion: "Jak działają zasady dotyczące bagażu?",
+  flightFaqBaggageAnswer:
+    "Limit bagażu może różnić się w zależności od linii lotniczej, trasy, klasy kabiny, rodzaju taryfy i dostawcy. Przed rezerwacją sprawdź, czy bagaż podręczny, rejestrowany i przedmiot osobisty są wliczone w cenę.",
+  flightFaqChangeCancelQuestion: "Czy mogę zmienić lub anulować bilet?",
+  flightFaqChangeCancelAnswer:
+    "Możliwości zmiany i anulowania zależą od zasad taryfy oraz polityk dostawcy. Niektóre bilety mogą być bezzwrotne lub obejmować opłaty, dlatego przed rezerwacją dokładnie sprawdź warunki.",
+  flightFaqInternationalQuestion:
+    "Co warto wiedzieć o lotach międzynarodowych?",
+  flightFaqInternationalAnswer:
+    "W przypadku podróży międzynarodowych przed rezerwacją sprawdź ważność paszportu, wymagania wizowe, zasady tranzytu, politykę bagażową i wymagania wjazdowe dla miejsca docelowego.",
+  "flightLandingImageAlt.Johannesburg skyline at golden hour":
+    "Panorama Johannesburga o złotej godzinie",
+  "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza":
+    "Panorama Kairu z piramidami w Gizie",
+  "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands":
+    "Widok Addis Abeby na Wyżynie Etiopskiej",
+  "homeDiscoveryRoute.ca-yyz-cun.title": "Zimowa ucieczka do Cancun",
+  "homeDiscoveryRoute.ca-yyz-cun.routeNote":
+    "Niezawodna trasa wypoczynkowa z opcjami bez przesiadek w szczycie sezonu.",
+  "homeDiscoveryRoute.ca-yeg-pvr.title": "Plażowy wyjazd do Puerto Vallarta",
+  "homeDiscoveryRoute.ca-yeg-pvr.routeNote":
+    "Trasa po zimowe słońce, z plażami Pacyfiku i urokiem starego miasta.",
+  "homeDiscoveryRoute.ca-yyz-hnl.title":
+    "Daleki wyspiarski odpoczynek w Honolulu",
+  "homeDiscoveryRoute.ca-yyz-hnl.routeNote":
+    "Wypoczynkowa opcja premium na plaże, surfing i wyspiarskie wędrówki.",
+  "homeDiscoveryRoute.ca-yyz-san.title": "Słońce i surfing w San Diego",
+  "homeDiscoveryRoute.ca-yyz-san.routeNote":
+    "Niezawodna trasa transgraniczna na plaże, parki i widoki portowe.",
+  "homeDiscoveryRoute.ca-yvr-syd.title": "Transpacyficzna przygoda w Sydney",
+  "homeDiscoveryRoute.ca-yvr-syd.routeNote":
+    "Popularna daleka trasa do portowych atrakcji i nadmorskich dzielnic.",
 };
