@@ -2032,7 +2032,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       className={cn(
         "overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm",
         isEditing &&
-          "-mx-4 rounded-none border-0 bg-slate-50 px-4 py-6 shadow-none sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8",
+          "-mx-4 rounded-none border-0 px-4 py-6 shadow-none sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8",
       )}
       aria-labelledby="dashboard-title"
     >
