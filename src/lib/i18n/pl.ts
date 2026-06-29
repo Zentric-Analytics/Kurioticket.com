@@ -3,6 +3,25 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  countryAndCurrency: "Kraj i waluta",
+  chooseCountryAndCurrency: "Wybierz kraj i walutę",
+  countryCurrencyDescription:
+    "Wybierz kraj i walutę używane do wyświetlania cen. Sugestie lotnisk korzystają z wykrytej lokalizacji.",
+  searchCountryOrCurrency: "Wyszukaj kraj lub walutę",
+  countryCurrencyPopularCountryAndCurrency: "POPULARNE KRAJE I WALUTY",
+  countryCurrencyAllCountriesAndCurrencies: "WSZYSTKIE KRAJE I WALUTY",
+  countryCurrencyOptionCountSingular: "{{count}} opcja",
+  countryCurrencyOptionCountPlural: "{{count}} opcji",
+  showMoreResults: "Pokaż więcej wyników",
+  globalLanguage: "JĘZYK GLOBALNY",
+  websiteLanguageTitle: "Wybierz język strony",
+  websiteLanguageDescription:
+    "English (United States) jest domyślnym językiem strony. Kurioticket zmienia język dopiero po wybraniu dostępnej opcji.",
+  currentLanguage: "Obecny język: {{language}}",
+  languagePreparingNotice:
+    "Przygotowujemy kolejne języki. Niedostępne opcje nie tłumaczą jeszcze strony.",
+  languageSearchLabel: "Wyszukaj język",
+  languageSearchPlaceholder: "Wyszukaj English, Español, Français, Deutsch...",
   flights: "Loty",
   hotels: "Hotele",
   cars: "Samochody",
