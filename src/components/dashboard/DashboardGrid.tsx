@@ -707,7 +707,7 @@ function DetailValue({
         {value || fallback}
       </p>
       {helper ? (
-        <p className="max-w-lg text-sm leading-6 text-slate-600">{helper}</p>
+        <p className="max-w-lg text-sm leading-6 text-slate-500">{helper}</p>
       ) : null}
     </div>
   );
@@ -780,7 +780,7 @@ function DateOfBirthInput({
   };
 
   return (
-    <div className="grid min-w-0 grid-cols-1 gap-2 sm:max-w-[44rem] sm:grid-cols-[minmax(0,5.25rem)_minmax(0,1fr)_minmax(0,6.5rem)]">
+    <div className="grid min-w-0 grid-cols-1 gap-2 sm:max-w-[34rem] sm:grid-cols-[minmax(0,5.75rem)_minmax(0,12rem)_minmax(0,7.5rem)]">
       <select
         className={className}
         value={parts.day}
@@ -968,11 +968,11 @@ function StructuredAddressInput({
   };
 
   const fieldLabelClassName =
-    "mb-2 block text-sm font-semibold leading-5 text-slate-950";
+    "mb-1.5 block text-sm font-semibold leading-5 text-slate-950";
 
   return (
     <div className="w-full min-w-0 space-y-5">
-      <div className="max-w-md">
+      <div className="max-w-sm">
         <label
           className={fieldLabelClassName}
           htmlFor="personal-address-country"
@@ -996,7 +996,7 @@ function StructuredAddressInput({
           ))}
         </select>
       </div>
-      <div className="max-w-[48rem]">
+      <div className="max-w-full">
         <label
           className={fieldLabelClassName}
           htmlFor="personal-address-street"
@@ -1011,7 +1011,7 @@ function StructuredAddressInput({
           autoComplete="address-line1"
         />
       </div>
-      <div className="max-w-md">
+      <div className="max-w-sm">
         <label
           className={fieldLabelClassName}
           htmlFor="personal-address-apartment"
@@ -1028,8 +1028,8 @@ function StructuredAddressInput({
           autoComplete="address-line2"
         />
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,14rem)_minmax(0,14rem)]">
-        <div className="min-w-0 sm:max-w-56">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,12rem)_minmax(0,12rem)]">
+        <div className="min-w-0 sm:max-w-48">
           <label
             className={fieldLabelClassName}
             htmlFor="personal-address-city"
@@ -1044,7 +1044,7 @@ function StructuredAddressInput({
             autoComplete="address-level2"
           />
         </div>
-        <div className="min-w-0 sm:max-w-56">
+        <div className="min-w-0 sm:max-w-48">
           <label
             className={fieldLabelClassName}
             htmlFor="personal-address-state"
@@ -1150,11 +1150,11 @@ function PhoneNumberInput({
   };
 
   return (
-    <div className="flex w-full min-w-0 items-stretch gap-0 sm:max-w-[44rem]">
+    <div className="flex w-full min-w-0 items-stretch gap-0 sm:max-w-[34rem]">
       <div className="group relative z-10 h-11 w-[4.75rem] shrink-0 sm:w-20">
         <div
           aria-hidden="true"
-          className="pointer-events-none flex h-full w-full items-center justify-center rounded-none border border-slate-400 bg-white px-3.5 transition group-focus-within:border-blue-700 group-focus-within:ring-2 group-focus-within:ring-blue-100 sm:px-4"
+          className="pointer-events-none flex h-full w-full items-center justify-center rounded-none border border-slate-300 bg-white px-3.5 transition group-focus-within:border-blue-700 group-focus-within:ring-2 group-focus-within:ring-blue-100 sm:px-4"
         >
           <CountryFlagIcon
             countryName={selectedOption.countryName}
@@ -1236,26 +1236,24 @@ function PersonalDetailsEditRow({
   row,
   value,
   onChange,
-  className,
 }: {
   row: PersonalDetailRow;
   value: string;
   onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
-  className?: string;
 }) {
   const isAddress = row.key === "address";
 
   return (
-    <div className={cn("min-w-0", className, isAddress && "pt-1")}>
+    <div className={cn("py-3", isAddress && "pt-1")}>
       {!isAddress ? (
-        <label className="mb-2 block text-sm font-semibold leading-5 text-slate-950">
+        <label className="mb-1.5 block text-sm font-semibold leading-5 text-slate-950">
           {row.label}
         </label>
       ) : null}
       <div className="min-w-0">
         <DetailInput row={row} value={value} onChange={onChange} />
         {row.helper ? (
-          <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
+          <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
             {row.helper}
           </p>
         ) : null}
@@ -1274,9 +1272,9 @@ function DetailInput({
   onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
 }) {
   const baseClassName = cn(
-    "h-11 w-full min-w-0 rounded-none border border-slate-400 bg-white px-3.5 text-base font-medium leading-5 text-slate-950 shadow-[0_1px_0_rgba(15,23,42,0.03)] outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-blue-700 focus:ring-2 focus:ring-blue-100 sm:max-w-[44rem] sm:text-sm",
+    "h-11 w-full min-w-0 rounded-none border border-slate-300 bg-white px-3.5 text-base font-medium leading-5 text-slate-950 shadow-[0_1px_0_rgba(15,23,42,0.03)] outline-none transition placeholder:text-slate-500 hover:border-slate-400 focus:border-blue-700 focus:ring-2 focus:ring-blue-100 sm:max-w-[34rem] sm:text-sm",
     row.readOnly &&
-      "cursor-not-allowed border-slate-400 bg-slate-100 text-slate-800 hover:border-slate-400 focus:border-slate-400 focus:ring-0",
+      "cursor-not-allowed border-slate-300 bg-slate-100 text-slate-700 hover:border-slate-300 focus:border-slate-300 focus:ring-0",
   );
 
   const handleChange = (
@@ -1478,10 +1476,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     return row;
   };
 
-  const renderEditField = (
-    key: keyof PersonalDetailsDraft,
-    className?: string,
-  ) => {
+  const renderEditField = (key: keyof PersonalDetailsDraft) => {
     const row = getPersonalDetailRow(key);
 
     return (
@@ -1490,7 +1485,6 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
         row={row}
         value={draft[key]}
         onChange={updateDraft}
-        className={className}
       />
     );
   };
@@ -1532,23 +1526,20 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       <div
         className={cn(
           "border-b border-slate-200 px-5 py-4 sm:px-6",
-          isEditing && "mx-auto max-w-[54rem] border-b-0 px-0 pb-0 pt-0",
+          isEditing && "mx-auto max-w-[46rem] border-b-0 px-0 pb-6 pt-0",
         )}
       >
-        {!isEditing ? (
-          <p className="text-sm text-slate-600">
-            {t["accountDashboard.personalDetails.description"] ||
+        <p className={cn("text-sm text-slate-600", isEditing && "leading-6")}>
+          {isEditing
+            ? "Update your information and manage how it is used across Kurioticket."
+            : t["accountDashboard.personalDetails.description"] ||
               "Manage the information Kurioticket uses for your account."}
-          </p>
-        ) : null}
+        </p>
       </div>
 
       {statusMessage || errorMessage ? (
         <div
-          className={cn(
-            "px-5 pt-4 sm:px-6",
-            isEditing && "mx-auto max-w-[54rem] px-0",
-          )}
+          className={cn("px-5 pt-4 sm:px-6", isEditing && "px-0")}
           role="status"
           aria-live="polite"
         >
@@ -1566,87 +1557,73 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       ) : null}
 
       {isEditing ? (
-        <div className="mx-auto max-w-[54rem] px-0 py-1">
-          <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
-            <div className="p-5 sm:p-7">
-              <div className="mb-7 max-w-2xl">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">
-                  Account profile
-                </p>
-                <h2 className="text-2xl font-semibold tracking-[-0.02em] text-slate-950">
-                  Basic information
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Manage the information Kurioticket uses for your account.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2">
-                {renderEditField("name")}
-                {renderEditField("email")}
-                {renderEditField("phone", "md:col-span-2")}
-                {renderEditField("dateOfBirth", "md:col-span-2")}
-                {renderEditField("gender")}
-                {renderEditField("nationality")}
-              </div>
-            </div>
-
-            <div className="border-t border-slate-200 bg-slate-50/70 p-5 sm:p-7">
-              <div className="mb-7 max-w-2xl">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-teal-dark">
-                  Location details
-                </p>
-                <h2 className="text-2xl font-semibold tracking-[-0.02em] text-slate-950">
-                  Address
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Used for billing, booking records, and travel communication.
-                </p>
-              </div>
-              {renderEditField("address")}
-            </div>
-
-            <div className="border-t border-slate-200 bg-white px-5 py-4 sm:px-7">
-              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  disabled={isSaving}
-                  className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                >
-                  {t["accountDashboard.personalDetails.cancel"]}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled
-                  className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-300 sm:w-auto"
-                >
-                  {isSaving
-                    ? t["accountDashboard.personalDetails.saving"] || "Saving…"
-                    : t["accountDashboard.personalDetails.saveChanges"]}
-                </button>
-              </div>
-            </div>
+        <div className="mx-auto max-w-[46rem] bg-white/80 px-0 py-1">
+          <div className="mb-2">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-900">
+              Basic information
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Manage the information Kurioticket uses for your account.
+            </p>
+          </div>
+          {personalDetailsFieldOrder
+            .filter((key) => key !== "address")
+            .map((key) => renderEditField(key))}
+          <div className="mt-8 border-t border-slate-200 pt-7">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-900">
+              Address
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Used for billing, booking records, and travel communication.
+            </p>
+            {renderEditField("address")}
           </div>
         </div>
       ) : (
-        <>
-          <div className="px-5 sm:px-6">
-            {personalDetailsFieldOrder.map((key) => renderReadOnlyRow(key))}
-          </div>
-          <div className="border-t border-slate-200 bg-slate-50/60 px-5 py-4 sm:px-6">
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={handleEdit}
-                className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-blue-700 bg-white px-5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 sm:w-auto"
-              >
-                {t["accountDashboard.personalDetails.edit"]}
-              </button>
-            </div>
-          </div>
-        </>
+        <div className="px-5 sm:px-6">
+          {personalDetailsFieldOrder.map((key) => renderReadOnlyRow(key))}
+        </div>
       )}
+
+      <div
+        className={cn(
+          "border-t border-slate-200 bg-slate-50/60 px-5 py-4 sm:px-6",
+          isEditing && "mx-auto mt-7 max-w-[46rem] bg-transparent px-0 pt-5",
+        )}
+      >
+        {isEditing ? (
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={isSaving}
+              className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            >
+              {t["accountDashboard.personalDetails.cancel"]}
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled
+              className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-300 sm:w-auto"
+            >
+              {isSaving
+                ? t["accountDashboard.personalDetails.saving"] || "Saving…"
+                : t["accountDashboard.personalDetails.saveChanges"]}
+            </button>
+          </div>
+        ) : (
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleEdit}
+              className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-blue-700 bg-white px-5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 sm:w-auto"
+            >
+              {t["accountDashboard.personalDetails.edit"]}
+            </button>
+          </div>
+        )}
+      </div>
     </section>
   );
 }
