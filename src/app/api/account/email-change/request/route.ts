@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       action: "account-email-change-request",
       email: session.user?.email || newEmail,
       request,
-      limit: 5,
+      limit: 30,
       windowMs: 15 * 60 * 1000,
     });
 
@@ -60,14 +60,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "This email address is already in use." }, { status: 409 });
     }
 
-    await sendAccountEmailChangeCode({
+    const sendResult = await sendAccountEmailChangeCode({
       userId: user.id,
       newEmail,
       name: user.name,
       enforceCooldown: true,
     });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, cooldownSeconds: sendResult.cooldownSeconds });
   } catch (error) {
     if (error instanceof SyntaxError) {
       return NextResponse.json({ ok: false, error: "Enter a valid email address." }, { status: 400 });
@@ -79,14 +79,14 @@ export async function POST(request: Request) {
 
     if (error instanceof AuthRateLimitError) {
       return NextResponse.json(
-        { ok: false, error: "Please wait before requesting another verification code." },
+        { ok: false, error: "Please wait 30 seconds before requesting another verification code." },
         { status: 429, headers: { "Retry-After": String(error.retryAfterSeconds) } },
       );
     }
 
     if (error instanceof EmailVerificationCooldownError) {
       return NextResponse.json(
-        { ok: false, error: "Please wait before requesting another verification code." },
+        { ok: false, error: "Please wait 30 seconds before requesting another verification code." },
         { status: 429, headers: { "Retry-After": String(error.retryAfterSeconds) } },
       );
     }
