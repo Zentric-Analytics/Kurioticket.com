@@ -4705,6 +4705,7 @@ test("Polish homepage-visible copy resolves without English fallback", () => {
     departureDate: "DATY PODRÓŻY",
     travelDates: "DATY PODRÓŻY",
     fromPlaceholder: "Skąd?",
+    cityOrAirport: "Miasto lub lotnisko",
     travelers: "PODRÓŻNI",
     toPlaceholder: "Dokąd?",
     search: "Szukaj",
@@ -4813,6 +4814,44 @@ test("Polish homepage-visible copy resolves without English fallback", () => {
   assert.match(expectedRenderedFare, /NGN 714,974$/);
   assert.equal(`${1} ${pl.adultSingular}, ${pl.economy.toLocaleLowerCase("pl-PL")}`, "1 dorosły, ekonomiczna");
   assert.equal(`${1} ${pl.guestSingular}, ${1} ${pl.roomSingular}`, "1 gość, 1 pokój");
+});
+
+test("Polish active flights page placeholders resolve without English fallback", () => {
+  const pl = getTranslations("pl");
+  const standaloneFlightSearchSource = readFileSync("src/components/search/StandaloneFlightSearchForm.tsx", "utf8");
+
+  assert.equal(pl.cityOrAirport, "Miasto lub lotnisko");
+  assert.notEqual(pl.cityOrAirport, enTranslations.cityOrAirport);
+  assert.equal(pl.origin, "WYLOT");
+  assert.equal(pl.destination, "CEL PODRÓŻY");
+  assert.equal(pl.travelDates, "DATY PODRÓŻY");
+  assert.equal(pl.travelers, "PODRÓŻNI");
+  assert.equal(pl.roundTrip, "W obie strony");
+  assert.equal(pl.oneWay, "W jedną stronę");
+  assert.equal(pl.searchFlights, "Szukaj lotów");
+
+  assert.match(
+    standaloneFlightSearchSource,
+    /<AirportFieldControl[\s\S]*label=\{t\("origin"\)\}[\s\S]*value=\{origin\}[\s\S]*placeholder=\{t\("cityOrAirport"\)\}[\s\S]*onChange=\{\(nextValue\) => \{[\s\S]*markOriginManualInput\(current, nextValue\)/,
+    "The active /flights origin field should read the localized cityOrAirport placeholder while preserving selected origin handling.",
+  );
+  assert.match(
+    standaloneFlightSearchSource,
+    /<AirportFieldControl[\s\S]*label=\{t\("destination"\)\}[\s\S]*value=\{destination\}[\s\S]*placeholder=\{t\("cityOrAirport"\)\}[\s\S]*onChange=\{\(nextValue\) => \{[\s\S]*setDestination\(nextValue\)/,
+    "The active /flights destination field should read the localized cityOrAirport placeholder while preserving selected destination handling.",
+  );
+  assert.match(
+    standaloneFlightSearchSource,
+    /\{value \|\| placeholder\}[\s\S]*placeholder=\{placeholder\}/,
+    "The shared active airport field control should use the same i18n placeholder for mobile and desktop render paths.",
+  );
+  assert.match(standaloneFlightSearchSource, /onClick=\{swapAirports\}/);
+  assert.match(standaloneFlightSearchSource, /const params = new URLSearchParams\(\{[\s\S]*tripType,[\s\S]*origin: originCode \|\| origin\.trim\(\),[\s\S]*destination: destinationCode \|\| destination\.trim\(\),[\s\S]*cabinClass: normalizeCabinClass\(cabinClass\)/);
+  assert.match(standaloneFlightSearchSource, /router\.push\(`\/flights\/results\?\$\{params\.toString\(\)\}`\)/);
+  assert.match(standaloneFlightSearchSource, /setTripType\(nextTripType\)/);
+  assert.match(standaloneFlightSearchSource, /setDepartureDate/);
+  assert.match(standaloneFlightSearchSource, /setDraftCabinClass/);
+  assert.match(standaloneFlightSearchSource, /lg:grid-cols-\[minmax\(0,3\.35fr\)_minmax\(172px,1\.2fr\)_minmax\(164px,1\.05fr\)_136px\]/);
 });
 
 

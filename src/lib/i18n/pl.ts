@@ -172,6 +172,7 @@ export const translations: TranslationDictionary = {
   departureDate: "DATY PODRÓŻY",
   travelDates: "DATY PODRÓŻY",
   fromPlaceholder: "Skąd?",
+  cityOrAirport: "Miasto lub lotnisko",
   travelers: "PODRÓŻNI",
   toPlaceholder: "Dokąd?",
   search: "Szukaj",
