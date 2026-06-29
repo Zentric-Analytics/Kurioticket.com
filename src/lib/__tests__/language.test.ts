@@ -3918,3 +3918,139 @@ test("Turkish cars results datepicker locale normalizes to tr-TR", () => {
     ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"],
   );
 });
+
+test("Polish homepage-visible copy resolves without English fallback", () => {
+  const pl = getTranslations("pl");
+  const expectedPolishHomepageCopy: Record<string, string> = {
+    flights: "Loty",
+    hotels: "Hotele",
+    cars: "Samochody",
+    deals: "Oferty",
+    login: "Zaloguj się",
+    signUp: "Zarejestruj się",
+    homeHeroTitle: "Porównuj opcje podróży w jednym prostym wyszukiwaniu",
+    homeHeroSubtitle:
+      "Przeszukuj zaufanych dostawców podróży, przejrzyście porównuj ceny i wybierz opcję dopasowaną do swojej podróży.",
+    roundTrip: "W obie strony",
+    oneWay: "W jedną stronę",
+    origin: "WYLOT",
+    destination: "CEL PODRÓŻY",
+    travelDates: "Daty podróży",
+    travelers: "PODRÓŻNI",
+    toPlaceholder: "Dokąd?",
+    search: "Szukaj",
+    chooseTravelDates: "Wybierz daty podróży",
+    passengers: "Pasażerowie",
+    adults: "Dorośli",
+    adultAgeRange: "18+",
+    children: "Dzieci",
+    childAgeRange: "Wiek 2–17",
+    infantsOnLap: "Niemowlęta na kolanach",
+    under2: "Poniżej 2 lat",
+    cabinClass: "KLASA KABINY",
+    economy: "Ekonomiczna",
+    business: "Biznes",
+    first: "Pierwsza",
+    homePopularDestinations: "Popularne kierunki",
+    "homePopularDestinationCity.dubai": "Dubaj",
+    "homePopularDestinationCountry.unitedArabEmirates": "Zjednoczone Emiraty Arabskie",
+    "homePopularDestinationCity.london": "Londyn",
+    "homePopularDestinationCountry.unitedKingdom": "Wielka Brytania",
+    "homePopularDestinationCity.johannesburg": "Johannesburg",
+    "homePopularDestinationCountry.southAfrica": "Republika Południowej Afryki",
+    "homePopularDestinationCity.accra": "Akra",
+    "homePopularDestinationCountry.ghana": "Ghana",
+    homeExploreFares: "Sprawdź ceny",
+    homeDiscoveryTitle: "Odkryj tutaj swoją następną przygodę",
+    homeDiscoverySubtitle:
+      "Porównuj pomysły na trasy, elastyczne taryfy i kierunki dobrane do Twojego regionu.",
+    homeDiscoveryRouteIdeaBadge: "POMYSŁ NA TRASĘ",
+    homeDiscoveryOneWay: "W JEDNĄ STRONĘ",
+    homeDiscoveryEconomy: "EKONOMICZNA",
+    homeDiscoveryTravelerCountOne: "1 PODRÓŻNY",
+    homeCompareOptions: "Porównaj opcje",
+    "homeDiscoveryRoute.ng-los-dxb.title": "Zakupowy stopover w Dubaju",
+    "homeDiscoveryRoute.ng-los-dxb.routeNote":
+      "LOS → DXB · Popularna trasa na zakupy, podróże rodzinne i dalsze połączenia.",
+    "homeDiscoveryRoute.ng-los-lhr.title": "Londyn biznesowo i na weekend",
+    "homeDiscoveryRoute.ng-abv-rob.routeNote":
+      "ABV → ROB · Zachodnioafrykański city break z atlantyckimi plażami i lokalnymi targami.",
+    homeTrustTitle: "Dlaczego podróżni porównują na Kurioticket",
+    homeTrustCompareTitle: "Porównuj oferty dostawców",
+    homePromoFlightsTitle: "Oferty lotów od czołowych linii",
+    homePromoHotelsTitle: "Oszczędności hotelowe na całym świecie",
+    faqHeading: "Najczęściej zadawane pytania",
+    faqIntro:
+      "Dowiedz się, jak Kurioticket pomaga porównywać loty, hotele i opcje podróży przed rezerwacją u zaufanych dostawców.",
+    faqQuestionFindOptions: "Jak Kurioticket znajduje opcje lotów i hoteli?",
+    faqAnswerFindOptions:
+      "Kurioticket wyszukuje aktualne oferty od dostawców podróży i zbiera opcje w jednym miejscu, aby można było porównać ceny, trasy, pobyty i szczegóły przed wyborem.",
+    supportFaqAccountQuestion: "Pomoc dotycząca konta i logowania",
+    supportFaqWhyRedirectedQuestion: "Dlaczego przekierowano mnie do innego dostawcy?",
+    homeNewsletterTitle: "Bądź na bieżąco z każdą ofertą podróży",
+    homeNewsletterPlaceholder: "Wpisz swój adres e-mail",
+    homeNewsletterInvalidEmail: "Wpisz prawidłowy adres e-mail.",
+    homeSubscribing: "Subskrybowanie…",
+    footerContactUs: "Kontakt",
+    footerDiscover: "Odkrywaj",
+    footerTermsSettings: "Warunki i ustawienia",
+    footerAboutKurioticket: "O Kurioticket",
+    footerConfidenceTagline: "Wyszukuj loty, hotele i oferty podróży z pewnością.",
+    footerPrivacy: "Prywatność",
+    footerTerms: "Warunki",
+  };
+
+  for (const [key, expected] of Object.entries(expectedPolishHomepageCopy)) {
+    assert.equal(pl[key], expected, key);
+    if (expected !== enTranslations[key]) {
+      assert.notEqual(pl[key], enTranslations[key], key);
+    }
+  }
+
+  assert.equal(`${1} ${pl.adultSingular}, ${pl.economy.toLocaleLowerCase("pl-PL")}`, "1 dorosły, ekonomiczna");
+});
+
+test("Polish homepage render paths keep using i18n keys and preserve route/search behavior", () => {
+  const pageSource = readFileSync("src/app/page.tsx", "utf8");
+  const headerSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
+  const searchSource = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
+  const footerSource = readFileSync("src/components/layout/Footer.tsx", "utf8");
+  const homeDiscoverySource = readFileSync("src/data/homeDiscovery.ts", "utf8");
+
+  for (const key of [
+    "homeHeroTitle",
+    "homeDiscoveryTitle",
+    "homeTrustTitle",
+    "homePromoFlightsTitle",
+    "faqHeading",
+    "homeNewsletterTitle",
+    "homeNewsletterInvalidEmail",
+    "homeNewsletterUnableSubscribe",
+    "homeNewsletterThanks",
+    "homeNewsletterTryAgain",
+    "homeSubscribing",
+  ]) {
+    assert.match(pageSource, new RegExp(`t\\(\"${key}\"\\)`), key);
+  }
+
+  for (const key of ["flights", "hotels", "cars", "deals", "login", "signUp"]) {
+    assert.match(headerSource, new RegExp(`t\\.${key}|labelKey: \"${key}\"`), key);
+  }
+
+  for (const key of ["roundTrip", "oneWay", "origin", "destination", "travelDates", "travelers", "passengers", "economy"]) {
+    assert.match(searchSource, new RegExp(key), key);
+  }
+
+  for (const key of ["footerContactUs", "footerDiscover", "footerTermsSettings", "footerAboutKurioticket", "footerConfidenceTagline"]) {
+    assert.match(footerSource, new RegExp(`t\\.${key}`), key);
+  }
+
+  assert.match(homeDiscoverySource, /originCode: "LOS"/);
+  assert.match(homeDiscoverySource, /destinationCode: "DXB"/);
+  assert.match(plTranslations["homeDiscoveryRoute.ng-los-dxb.routeNote"], /LOS → DXB/);
+  assert.match(searchSource, /new URLSearchParams\(\{/);
+  assert.match(searchSource, /origin:/);
+  assert.match(searchSource, /destination:/);
+  assert.match(pageSource, /fetch\(\s*"\/api\/newsletter\/subscribe"/);
+  assert.match(pageSource, /method: "POST"/);
+});
