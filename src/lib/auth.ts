@@ -143,8 +143,7 @@ const providers: NextAuthOptions["providers"] = [
 
         if (
           !user ||
-          user.status !==
-            "ACTIVE" ||
+          !["ACTIVE", "PENDING_DELETION"].includes(user.status) ||
           !user.emailVerified
         ) {
           return null;
@@ -220,7 +219,7 @@ const providers: NextAuthOptions["providers"] = [
       }
 
       if (
-        user.status !== "ACTIVE"
+        !["ACTIVE", "PENDING_DELETION"].includes(user.status)
       ) {
         throw new Error(
           "AccountUnavailable"
@@ -378,8 +377,7 @@ export const authOptions: NextAuthOptions =
 
         if (
           dbUser?.status &&
-          dbUser.status !==
-            "ACTIVE"
+          !["ACTIVE", "PENDING_DELETION"].includes(dbUser.status)
         ) {
           return "/auth/signin?error=AccountUnavailable";
         }

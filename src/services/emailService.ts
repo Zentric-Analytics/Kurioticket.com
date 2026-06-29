@@ -168,3 +168,40 @@ export function newsletterWelcomeEmail() {
     </div>
   `;
 }
+
+export function accountDeletionRequestEmail(input: { deadline: Date }) {
+  const deadline = escapeHtml(new Intl.DateTimeFormat("en", { dateStyle: "full", timeStyle: "short" }).format(input.deadline));
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
+      <h1 style="font-size:22px">Account deletion request received</h1>
+      <p>We received your Kurioticket account deletion request.</p>
+      <p>Your account is scheduled for permanent deletion review on <strong>${deadline}</strong>.</p>
+      <p>You can reactivate your account by logging in before this deadline and choosing Reactivate account.</p>
+      <p>Some records may be retained where legally required for tax, fraud prevention, booking, payment, support, security, or compliance obligations.</p>
+    </div>
+  `;
+}
+
+export function accountDeletionRequestAdminEmail(input: { userId: string; email: string; requestedAt: Date; deadline: Date; supportTicketId?: string | null }) {
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
+      <h1 style="font-size:22px">Account deletion request</h1>
+      <p><strong>User id:</strong> ${escapeHtml(input.userId)}</p>
+      <p><strong>Email:</strong> ${escapeHtml(input.email)}</p>
+      <p><strong>Requested:</strong> ${escapeHtml(input.requestedAt.toISOString())}</p>
+      <p><strong>Scheduled deletion review:</strong> ${escapeHtml(input.deadline.toISOString())}</p>
+      <p><strong>Support ticket:</strong> ${escapeHtml(input.supportTicketId || "not available")}</p>
+      <p>Do not hard-delete before reviewing legal, tax, fraud, booking, payment, support, and compliance retention obligations.</p>
+    </div>
+  `;
+}
+
+export function accountDeletionCancelledEmail() {
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
+      <h1 style="font-size:22px">Account deletion cancelled</h1>
+      <p>Your Kurioticket account deletion request has been cancelled.</p>
+      <p>Your account has been reactivated and access is restored.</p>
+    </div>
+  `;
+}

@@ -31,6 +31,10 @@ export async function requireUserSession(
     );
   }
 
+  if (session.user.status === "PENDING_DELETION") {
+    redirect("/account/pending-deletion");
+  }
+
   if (
     session.user.status &&
     session.user.status !==
