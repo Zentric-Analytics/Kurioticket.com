@@ -24,6 +24,9 @@ import { translations as hiTranslations } from "@/lib/i18n/hi";
 import { translations as trTranslations } from "@/lib/i18n/tr";
 import { translations as plTranslations } from "@/lib/i18n/pl";
 import { availableLocaleOptions, getTranslations } from "@/lib/i18n";
+import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
+import { buildHomepageRouteCardFlightHref } from "@/lib/home/homepageRouteCardLinks";
+import { translateHomeDiscoveryField } from "@/lib/i18n/homeDiscovery";
 import { getCountryDisplayNameForLocale } from "@/lib/region/countryDisplayNames";
 import { supportedRegions } from "@/lib/region/supportedRegions";
 import {
@@ -3971,10 +3974,10 @@ test("Polish homepage-visible copy resolves without English fallback", () => {
     homeCompareOptions: "Porównaj opcje",
     "homeDiscoveryRoute.ng-los-dxb.title": "Zakupowy stopover w Dubaju",
     "homeDiscoveryRoute.ng-los-dxb.routeNote":
-      "LOS → DXB · Popularna trasa na zakupy, podróże rodzinne i dalsze połączenia.",
+      "Popularna trasa na zakupy, podróże rodzinne i dalsze połączenia.",
     "homeDiscoveryRoute.ng-los-lhr.title": "Londyn biznesowo i na weekend",
     "homeDiscoveryRoute.ng-abv-rob.routeNote":
-      "ABV → ROB · Zachodnioafrykański city break z atlantyckimi plażami i lokalnymi targami.",
+      "Zachodnioafrykański city break z atlantyckimi plażami i lokalnymi targami.",
     homeTrustTitle: "Dlaczego podróżni porównują na Kurioticket",
     homeTrustCompareTitle: "Porównuj oferty dostawców",
     homePromoFlightsTitle: "Oferty lotów od czołowych linii",
@@ -4047,10 +4050,87 @@ test("Polish homepage render paths keep using i18n keys and preserve route/searc
 
   assert.match(homeDiscoverySource, /originCode: "LOS"/);
   assert.match(homeDiscoverySource, /destinationCode: "DXB"/);
-  assert.match(plTranslations["homeDiscoveryRoute.ng-los-dxb.routeNote"], /LOS → DXB/);
+  assert.doesNotMatch(plTranslations["homeDiscoveryRoute.ng-los-dxb.routeNote"], /LOS → DXB/);
+  assert.match(pageSource, /originCode=\{card\.item\.originCode\}/);
+  assert.match(pageSource, /destinationCodeLabel=\{card\.item\.destinationCode\}/);
+  assert.match(pageSource, /\{originCode\} → \{destinationCodeLabel\} · \{routeNote\}/);
   assert.match(searchSource, /new URLSearchParams\(\{/);
   assert.match(searchSource, /origin:/);
   assert.match(searchSource, /destination:/);
   assert.match(pageSource, /fetch\(\s*"\/api\/newsletter\/subscribe"/);
   assert.match(pageSource, /method: "POST"/);
+});
+
+test("Polish homepage discovery route cards render one route prefix from route data", () => {
+  const routeExpectations = [
+    ["ng-los-dxb", "LOS", "DXB", "Zakupowy stopover w Dubaju", "Popularna trasa na zakupy, podróże rodzinne i dalsze połączenia."],
+    ["ng-los-lhr", "LOS", "LHR", "Londyn biznesowo i na weekend", "Częsta trasa dalekodystansowa na podróże służbowe i dodatkowy wypoczynek."],
+    ["ng-abv-acc", "ABV", "ACC", "Szybka regionalna podróż do Akry", "Krótka trasa regionalna z wygodnym połączeniem między miastami."],
+    ["ng-los-nbo", "LOS", "NBO", "Nairobi jako brama na safari", "Dostęp do Afryki Wschodniej, centrów biznesowych i wyjazdów safari."],
+    ["ng-abv-jnb", "ABV", "JNB", "City break w Johannesburgu", "Dobre połączenie na południe na spotkania i miejskie wyjazdy."],
+    ["ng-los-ist", "LOS", "IST", "Trasa przesiadkowa przez Stambuł", "Świetny hub do połączeń z Europą i dynamiczny miejski stopover."],
+    ["ng-abv-cdg", "ABV", "CDG", "Stylowy wypad do Paryża", "Klasyczna europejska trasa dla mody, muzeów i kulinariów."],
+    ["ng-los-doh", "LOS", "DOH", "Komfortowy tranzyt przez Dohę", "Trasa nastawiona na komfort i płynne dalsze połączenia."],
+    ["ng-los-kig", "LOS", "KGL", "Weekend w zielonym Kigali", "Rosnący regionalny hub z zielonymi wzgórzami i łatwym dostępem do miasta."],
+    ["ng-abv-cai", "ABV", "CAI", "Historyczny przystanek w Kairze", "Brama do historii Nilu i tętniących życiem starych dzielnic."],
+    ["ng-los-add", "LOS", "ADD", "Połączenie z Afryką Wschodnią przez Addis Abebę", "Ważny punkt przesiadkowy z rozwijającą się sceną kulinarną i kulturalną."],
+    ["ng-abv-fco", "ABV", "FCO", "Rzym i jego zabytkowa brama", "Europejska klasyka ruin, placów i spokojnego zwiedzania."],
+    ["ng-los-nrt", "LOS", "NRT", "Dalekodystansowy puls Tokio", "Ważna brama do Azji, neonowych dzielnic i sprawnego transportu."],
+    ["ng-abv-mad", "ABV", "MAD", "Madryt: tapas i sztuka", "Europejska trasa city break do muzeów, bulwarów i późnych kolacji."],
+    ["ng-los-cpt", "LOS", "CPT", "Nadmorska przygoda w Kapsztadzie", "Malownicza trasa do RPA z plażami, górami i winnicami."],
+    ["ng-abv-rob", "ABV", "ROB", "Regionalny wyjazd nad morze do Monrovii", "Zachodnioafrykański city break z atlantyckimi plażami i lokalnymi targami."],
+  ] as const;
+  const discoveryRoutes = new Map(getHomeDiscoveryByRegion("NG").map((item) => [item.id, item]));
+
+  for (const [id, originCode, destinationCode, expectedTitle, expectedNote] of routeExpectations) {
+    const item = discoveryRoutes.get(id);
+
+    assert.ok(item, id);
+    assert.equal(item.id, id);
+    assert.equal(item.originCode, originCode);
+    assert.equal(item.destinationCode, destinationCode);
+    assert.equal(translateHomeDiscoveryField(plTranslations, item, "title"), expectedTitle);
+    assert.equal(translateHomeDiscoveryField(plTranslations, item, "routeNote"), expectedNote);
+
+    const visibleRouteNote = `${item.originCode} → ${item.destinationCode} · ${translateHomeDiscoveryField(plTranslations, item, "routeNote")}`;
+    assert.equal(visibleRouteNote, `${originCode} → ${destinationCode} · ${expectedNote}`);
+    assert.equal(visibleRouteNote.split(`${originCode} → ${destinationCode}`).length - 1, 1);
+    assert.doesNotMatch(visibleRouteNote, new RegExp(`${originCode} → ${destinationCode} · ${originCode} → ${destinationCode}`));
+  }
+});
+
+test("Polish homepage discovery route search payloads remain route-data driven", () => {
+  const item = getHomeDiscoveryByRegion("NG").find((route) => route.id === "ng-los-dxb");
+
+  assert.ok(item);
+  assert.equal(item.id, "ng-los-dxb");
+  assert.equal(item.originCode, "LOS");
+  assert.equal(item.destinationCode, "DXB");
+
+  const href = buildHomepageRouteCardFlightHref({
+    route: {
+      originCode: item.originCode,
+      destinationCode: item.destinationCode,
+    },
+    displayCurrency: "USD",
+    market: "NG",
+    now: new Date("2026-06-29T00:00:00.000Z"),
+  });
+
+  assert.deepEqual(href, {
+    pathname: "/flights/results",
+    query: {
+      tripType: "one-way",
+      origin: "LOS",
+      destination: "DXB",
+      departureDate: "2026-08-14",
+      travelers: "1",
+      adults: "1",
+      children: "0",
+      infants: "0",
+      cabinClass: "economy",
+      currency: "USD",
+      market: "NG",
+    },
+  });
 });
