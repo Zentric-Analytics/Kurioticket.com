@@ -1060,7 +1060,7 @@ export default function DealsPage() {
                           ? includesFlight
                             ? t("searchingFlights")
                             : t("searchingHotels")
-                          : t("search")}
+                          : t("deals.searchButton")}
                       </button>
                     </div>
                   </div>

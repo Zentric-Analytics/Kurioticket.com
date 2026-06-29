@@ -2732,6 +2732,7 @@ export const translations: TranslationDictionary = {
   "deals.travelersDetailsLabel": "Travelers / details",
   "deals.travelersRoomsCarLabel": "Travelers / rooms / car",
   "deals.originPlaceholder": "City or airport",
+  "deals.searchButton": "Search deals",
   "deals.destinationPlaceholder": "City, airport, or area",
   "deals.dateFlightPlaceholder": "Departure — Return",
   "deals.dateHotelPlaceholder": "Check-in — Check-out",
