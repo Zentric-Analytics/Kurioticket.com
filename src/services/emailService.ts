@@ -158,13 +158,18 @@ export function loginVerificationCodeEmail(input: { code: string; name?: string 
   `;
 }
 
-export function newsletterWelcomeEmail() {
+export function newsletterWelcomeEmail(input?: { preferencesUrl?: string; unsubscribeUrl?: string }) {
+  const preferencesUrl = input?.preferencesUrl ? escapeHtml(input.preferencesUrl) : "";
+  const unsubscribeUrl = input?.unsubscribeUrl ? escapeHtml(input.unsubscribeUrl) : "";
+
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
       <h1 style="font-size:22px">You’re subscribed to Kurioticket updates</h1>
       <p>Thanks for subscribing. We’ll send occasional Kurioticket updates to help you compare travel options more calmly.</p>
       <p>We will not ask you for payment details by email, and booking decisions should always be confirmed on Kurioticket or the provider site.</p>
-      <p>You can unsubscribe anytime from future newsletter emails.</p>
+      ${preferencesUrl ? `<p><a href="${preferencesUrl}" style="color:#0f766e">Manage your Kurioticket email preferences</a></p>` : ""}
+      ${unsubscribeUrl ? `<p><a href="${unsubscribeUrl}" style="color:#64748b">Unsubscribe from Kurioticket marketing emails</a></p>` : ""}
+      <p style="font-size:12px;color:#64748b">You can unsubscribe anytime from future newsletter emails.</p>
     </div>
   `;
 }
