@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -76,22 +76,53 @@ function trimMetadata(value: string | null, maxLength: number) {
   return trimmed ? trimmed.slice(0, maxLength) : null;
 }
 
+function createNewsletterToken() {
+  return randomBytes(32).toString("base64url");
+}
+
+function hashNewsletterToken(token: string) {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+function getAppBaseUrl(request: NextRequest) {
+  return (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXTAUTH_URL ||
+    request.nextUrl.origin
+  ).replace(/\/$/, "");
+}
+
+function buildNewsletterUrl(path: string, request: NextRequest, email: string, token: string) {
+  const url = new URL(path, getAppBaseUrl(request));
+  url.searchParams.set("email", email);
+  url.searchParams.set("token", token);
+  return url.toString();
+}
+
 async function getAuthenticatedEmail() {
   const session = await getServerSession(authOptions);
   return session?.user?.email?.toLowerCase().trim() || null;
 }
 
-async function sendWelcomeEmail(email: string, source: string) {
+async function sendWelcomeEmail(input: {
+  email: string;
+  source: string;
+  preferencesUrl: string;
+  unsubscribeUrl: string;
+}) {
   try {
     await sendTransactionalEmail({
-      to: email,
+      to: input.email,
       subject: "You’re subscribed to Kurioticket updates",
-      html: newsletterWelcomeEmail(),
+      html: newsletterWelcomeEmail({
+        preferencesUrl: input.preferencesUrl,
+        unsubscribeUrl: input.unsubscribeUrl,
+      }),
       from: process.env.NEWSLETTER_FROM_EMAIL || undefined,
       replyTo: process.env.NEWSLETTER_REPLY_TO || undefined,
-      idempotencyKey: `newsletter-welcome-${email}`,
+      idempotencyKey: `newsletter-welcome-${input.email}`,
       template: "newsletter_welcome",
-      metadata: { source },
+      metadata: { source: input.source },
     });
   } catch (error) {
     console.error("[newsletter:welcome-email-failed]", error);
@@ -172,6 +203,8 @@ export async function POST(request: NextRequest) {
   const ipHash = hashIp(getClientIp(request));
   const userAgent = trimMetadata(request.headers.get("user-agent"), 512);
   const source = parsed.data.source || "homepage";
+  const newsletterToken = createNewsletterToken();
+  const unsubscribeTokenHash = hashNewsletterToken(newsletterToken);
 
   try {
     const db = getPrisma();
@@ -192,6 +225,7 @@ export async function POST(request: NextRequest) {
         ipHash,
         userAgent,
         subscribedAt: now,
+        unsubscribeTokenHash,
       },
       update: {
         status: "SUBSCRIBED",
@@ -202,11 +236,17 @@ export async function POST(request: NextRequest) {
         userAgent,
         ...(existing?.status === "SUBSCRIBED" ? {} : { subscribedAt: now }),
         unsubscribedAt: null,
+        unsubscribeTokenHash,
       },
     });
 
     if (shouldSendWelcome) {
-      await sendWelcomeEmail(email, source);
+      await sendWelcomeEmail({
+        email,
+        source,
+        preferencesUrl: buildNewsletterUrl("/email/preferences", request, email, newsletterToken),
+        unsubscribeUrl: buildNewsletterUrl("/api/newsletter/unsubscribe", request, email, newsletterToken),
+      });
     }
 
     return jsonResponse(
