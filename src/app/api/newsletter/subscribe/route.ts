@@ -37,6 +37,10 @@ type NewsletterSubscriberRow = {
   email: string;
   status: Exclude<NewsletterSubscriptionStatus, "NOT_FOUND">;
   unsubscribeTokenHash: string | null;
+  suppressionReason: string | null;
+  suppressedAt: Date | null;
+  bouncedAt: Date | null;
+  complainedAt: Date | null;
 };
 
 type SubscribeResponse = {
@@ -127,7 +131,7 @@ async function getAuthenticatedEmail() {
 
 async function findNewsletterSubscriber(email: string) {
   const rows = await getPrisma().$queryRaw<NewsletterSubscriberRow[]>`
-    SELECT id, email, status, "unsubscribeTokenHash"
+    SELECT id, email, status, "unsubscribeTokenHash", "suppressionReason", "suppressedAt", "bouncedAt", "complainedAt"
     FROM "NewsletterSubscriber"
     WHERE email = ${email}
     LIMIT 1
@@ -136,6 +140,15 @@ async function findNewsletterSubscriber(email: string) {
   return rows[0] || null;
 }
 
+function hasDeliveryBlock(subscriber: NewsletterSubscriberRow) {
+  return Boolean(
+    nonSendableStatuses.has(subscriber.status) ||
+    subscriber.suppressionReason ||
+    subscriber.suppressedAt ||
+    subscriber.bouncedAt ||
+    subscriber.complainedAt,
+  );
+}\n
 async function upsertSubscribedNewsletterSubscriber(input: {
   email: string;
   source: string;
@@ -321,11 +334,11 @@ export async function POST(request: NextRequest) {
   try {
     const existing = await findNewsletterSubscriber(email);
 
-    if (existing && nonSendableStatuses.has(existing.status)) {
+    if (existing && hasDeliveryBlock(existing)) {
       return jsonResponse(
         {
           ok: false,
-          message: "We can’t subscribe this email right now because previous newsletter email could not be delivered or was marked as unwanted. Please contact support if this is a mistake.",
+          message: "Newsletter updates are paused for this email because of a delivery safety signal. Please contact support if this is a mistake.",
           status: existing.status,
           email,
         },
