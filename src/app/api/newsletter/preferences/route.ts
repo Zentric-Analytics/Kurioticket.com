@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -7,10 +7,18 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
 import { emailSchema } from "@/lib/validation";
+import {
+  newsletterUnsubscribedEmail,
+  sendTransactionalEmail,
+} from "@/services/emailService";
 
 export const runtime = "nodejs";
 
 type PreferenceAction = "subscribe" | "unsubscribe";
+
+function createNewsletterToken() {
+  return randomBytes(32).toString("base64url");
+}
 
 function hashNewsletterToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
@@ -18,6 +26,21 @@ function hashNewsletterToken(token: string) {
 
 function isValidNewsletterToken(token: string, storedHash?: string | null) {
   return Boolean(token && storedHash && hashNewsletterToken(token) === storedHash);
+}
+
+function getAppBaseUrl(request: NextRequest) {
+  return (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXTAUTH_URL ||
+    request.nextUrl.origin
+  ).replace(/\/$/, "");
+}
+
+function buildPreferenceUrl(request: NextRequest, email: string, token: string) {
+  const url = new URL("/email/preferences", getAppBaseUrl(request));
+  url.searchParams.set("email", email);
+  url.searchParams.set("token", token);
+  return url.toString();
 }
 
 async function getAuthenticatedEmail() {
@@ -61,6 +84,26 @@ async function resolveSubscriber(input: { email: string | null; token: string | 
     authenticated: Boolean(authenticatedEmail),
     status: subscriber.status,
   };
+}
+
+async function sendOptOutConfirmation(input: {
+  email: string;
+  preferencesUrl: string;
+}) {
+  try {
+    await sendTransactionalEmail({
+      to: input.email,
+      subject: "You’re unsubscribed from Kurioticket updates",
+      html: newsletterUnsubscribedEmail({ preferencesUrl: input.preferencesUrl }),
+      from: process.env.NEWSLETTER_FROM_EMAIL || undefined,
+      replyTo: process.env.NEWSLETTER_REPLY_TO || undefined,
+      idempotencyKey: `newsletter-unsubscribe-${input.email}-${Date.now()}`,
+      template: "newsletter_unsubscribe",
+      metadata: { source: "newsletter_preferences" },
+    });
+  } catch (error) {
+    console.error("[newsletter:unsubscribe-email-failed]", error);
+  }
 }
 
 export async function GET(request: NextRequest) {
@@ -121,19 +164,26 @@ export async function POST(request: NextRequest) {
     const db = getPrisma();
 
     if (action === "unsubscribe") {
+      const freshToken = createNewsletterToken();
       await db.newsletterSubscriber.update({
         where: { email: resolved.email },
         data: {
           status: "UNSUBSCRIBED",
           unsubscribedAt: now,
+          unsubscribeTokenHash: hashNewsletterToken(freshToken),
         },
+      });
+
+      await sendOptOutConfirmation({
+        email: resolved.email,
+        preferencesUrl: buildPreferenceUrl(request, resolved.email, freshToken),
       });
 
       return NextResponse.json({
         ok: true,
         email: resolved.email,
         status: "UNSUBSCRIBED",
-        message: "You’re unsubscribed from Kurioticket marketing emails.",
+        message: "You’re unsubscribed from Kurioticket marketing emails. We sent a confirmation email.",
       });
     }
 

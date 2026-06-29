@@ -19,6 +19,7 @@ export type EmailTemplateKey =
   | "password_reset"
   | "support_ticket"
   | "newsletter_welcome"
+  | "newsletter_unsubscribe"
   | "price_alert"
   | "notification"
   | "admin_test";

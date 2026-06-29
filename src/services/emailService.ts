@@ -158,9 +158,8 @@ export function loginVerificationCodeEmail(input: { code: string; name?: string 
   `;
 }
 
-export function newsletterWelcomeEmail(input?: { preferencesUrl?: string; unsubscribeUrl?: string }) {
+export function newsletterWelcomeEmail(input?: { preferencesUrl?: string }) {
   const preferencesUrl = input?.preferencesUrl ? escapeHtml(input.preferencesUrl) : "";
-  const unsubscribeUrl = input?.unsubscribeUrl ? escapeHtml(input.unsubscribeUrl) : "";
 
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
@@ -168,8 +167,20 @@ export function newsletterWelcomeEmail(input?: { preferencesUrl?: string; unsubs
       <p>Thanks for subscribing. We’ll send occasional Kurioticket updates to help you compare travel options more calmly.</p>
       <p>We will not ask you for payment details by email, and booking decisions should always be confirmed on Kurioticket or the provider site.</p>
       ${preferencesUrl ? `<p><a href="${preferencesUrl}" style="color:#0f766e">Manage your Kurioticket email preferences</a></p>` : ""}
-      ${unsubscribeUrl ? `<p><a href="${unsubscribeUrl}" style="color:#64748b">Unsubscribe from Kurioticket marketing emails</a></p>` : ""}
-      <p style="font-size:12px;color:#64748b">You can unsubscribe anytime from future newsletter emails.</p>
+      <p style="font-size:12px;color:#64748b">Opening the preferences page does not unsubscribe you. You can stop updates from that page whenever you choose.</p>
+    </div>
+  `;
+}
+
+export function newsletterUnsubscribedEmail(input?: { preferencesUrl?: string }) {
+  const preferencesUrl = input?.preferencesUrl ? escapeHtml(input.preferencesUrl) : "";
+
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
+      <h1 style="font-size:22px">You’re unsubscribed from Kurioticket updates</h1>
+      <p>You will no longer receive Kurioticket marketing newsletters, travel inspiration, or product update emails.</p>
+      <p>Important account, security, password reset, login verification, and support emails may still be sent when needed.</p>
+      ${preferencesUrl ? `<p><a href="${preferencesUrl}" style="color:#0f766e">Resubscribe or manage email preferences</a></p>` : ""}
     </div>
   `;
 }

@@ -17,7 +17,7 @@ export function NewsletterSessionBridge() {
   const { data: session, status } = useSession();
 
   useEffect(() => {
-    if (pathname !== "/" || status === "loading") return;
+    if (pathname !== "/") return;
 
     const input = document.querySelector<HTMLInputElement>('main input[type="email"]');
     const form = input?.closest("form") as HTMLFormElement | null;
@@ -28,11 +28,23 @@ export function NewsletterSessionBridge() {
     const newsletterInput = input;
     const newsletterForm = form;
     const newsletterContainer = container;
-    const email = session?.user?.email?.trim();
 
     const existingContext = newsletterContainer.querySelector(`.${accountContextClassName}`);
     existingContext?.remove();
 
+    if (status === "loading") {
+      newsletterForm.style.visibility = "hidden";
+      insertAccountContext(
+        newsletterContainer,
+        newsletterForm,
+        "Loading your newsletter options…",
+      );
+      return;
+    }
+
+    newsletterForm.style.visibility = "";
+
+    const email = session?.user?.email?.trim();
     if (!email) {
       restoreGuestNewsletterForm(newsletterInput, newsletterForm);
       return;
@@ -46,10 +58,11 @@ export function NewsletterSessionBridge() {
     newsletterInput.tabIndex = -1;
     newsletterInput.style.display = "none";
 
-    const accountContext = document.createElement("div");
-    accountContext.className = `${accountContextClassName} rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-2 text-xs font-semibold leading-5 text-slate-700 sm:max-w-[34rem]`;
-    accountContext.textContent = `Updates will be sent to your account email: ${accountEmail}`;
-    newsletterContainer.insertBefore(accountContext, newsletterForm);
+    const accountContext = insertAccountContext(
+      newsletterContainer,
+      newsletterForm,
+      `Updates will be sent to your account email: ${accountEmail}`,
+    );
 
     let cancelled = false;
 
@@ -96,6 +109,14 @@ export function NewsletterSessionBridge() {
   return null;
 }
 
+function insertAccountContext(container: Element, form: HTMLFormElement, text: string) {
+  const accountContext = document.createElement("div");
+  accountContext.className = `${accountContextClassName} rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-2 text-xs font-semibold leading-5 text-slate-700 sm:max-w-[34rem]`;
+  accountContext.textContent = text;
+  container.insertBefore(accountContext, form);
+  return accountContext;
+}
+
 function applyReactControlledInputValue(input: HTMLInputElement, value: string) {
   const valueSetter = Object.getOwnPropertyDescriptor(input, "value")?.set;
   const prototype = Object.getPrototypeOf(input) as HTMLInputElement;
@@ -118,4 +139,5 @@ function restoreGuestNewsletterForm(input: HTMLInputElement, form: HTMLFormEleme
   input.removeAttribute("tabindex");
   input.style.display = "";
   form.style.display = "";
+  form.style.visibility = "";
 }
