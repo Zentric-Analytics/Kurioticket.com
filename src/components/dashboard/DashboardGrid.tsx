@@ -1643,6 +1643,9 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [draft, setDraft] = useState<PersonalDetailsDraft>(savedValues);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [personalDetailsSaveMessage, setPersonalDetailsSaveMessage] = useState<
+    string | null
+  >(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<
     Partial<Record<keyof PersonalDetailsDraft, string>>
@@ -1690,9 +1693,20 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     return () => window.clearTimeout(timer);
   }, [emailCodeResendCooldownSeconds]);
 
+  useEffect(() => {
+    if (!personalDetailsSaveMessage) return;
+
+    const timer = window.setTimeout(() => {
+      setPersonalDetailsSaveMessage(null);
+    }, 2000);
+
+    return () => window.clearTimeout(timer);
+  }, [personalDetailsSaveMessage]);
+
   const handleEdit = () => {
     setDraft(savedValues);
     setStatusMessage(null);
+    setPersonalDetailsSaveMessage(null);
     setErrorMessage(null);
     setIsEditing(true);
   };
@@ -1700,6 +1714,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
   const handleCancel = () => {
     setDraft(savedValues);
     setStatusMessage(null);
+    setPersonalDetailsSaveMessage(null);
     setErrorMessage(null);
     setValidationErrors({});
   };
@@ -1830,12 +1845,14 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     if (Object.keys(nextValidationErrors).length > 0) {
       setValidationErrors(nextValidationErrors);
       setStatusMessage(null);
+      setPersonalDetailsSaveMessage(null);
       setErrorMessage("Please check the highlighted personal details.");
       return;
     }
 
     setIsSaving(true);
     setStatusMessage(null);
+    setPersonalDetailsSaveMessage(null);
     setErrorMessage(null);
     setValidationErrors({});
 
@@ -1877,7 +1894,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
 
       setSavedValues(nextSavedValues);
       setDraft(nextSavedValues);
-      setStatusMessage("Your personal details have been updated.");
+      setPersonalDetailsSaveMessage("Personal details updated");
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -1893,6 +1910,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
   const updateDraft = (key: keyof PersonalDetailsDraft, value: string) => {
     if (key === "email") return;
     setDraft((current) => ({ ...current, [key]: value }));
+    setPersonalDetailsSaveMessage(null);
     setValidationErrors((current) => {
       if (!current[key]) return current;
       const { [key]: _removed, ...remainingErrors } = current;
@@ -2075,7 +2093,16 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
         )}
       >
         {isEditing ? (
-          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <div className="relative flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            {personalDetailsSaveMessage ? (
+              <p
+                className="pointer-events-none absolute bottom-full right-0 mb-3 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-lg"
+                role="status"
+                aria-live="polite"
+              >
+                {personalDetailsSaveMessage}
+              </p>
+            ) : null}
             <button
               type="button"
               onClick={handleCancel}
