@@ -680,6 +680,10 @@ export const translations: TranslationDictionary = {
   faqHeading: "Najczęściej zadawane pytania",
   faqIntro:
     "Dowiedz się, jak Kurioticket pomaga porównywać loty, hotele i opcje podróży przed rezerwacją u zaufanych dostawców.",
+  faqGeneralQuestions: "Pytania ogólne",
+  faqNeedMoreHelpPrefix: "Potrzebujesz więcej pomocy? Odwiedź",
+  faqSupportPage: "stronę wsparcia",
+  faqNeedMoreHelpSuffix: ", aby zobaczyć opcje obsługi i kontaktu.",
   faqQuestionFindOptions: "Jak Kurioticket znajduje opcje lotów i hoteli?",
   faqAnswerFindOptions:
     "Kurioticket wyszukuje aktualne oferty od dostawców podróży i zbiera opcje w jednym miejscu, aby można było porównać ceny, trasy, pobyty i szczegóły przed wyborem.",
