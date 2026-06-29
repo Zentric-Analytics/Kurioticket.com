@@ -35,7 +35,7 @@ export function VerifyEmailForm({ email }: { email: string }) {
 
     setMessage(t.verifyEmailSuccess);
     window.setTimeout(() => {
-      window.location.href = "/auth/signin?callbackUrl=/dashboard";
+      window.location.href = "/auth/signin?callbackUrl=/onboarding/security";
     }, 900);
   }
 

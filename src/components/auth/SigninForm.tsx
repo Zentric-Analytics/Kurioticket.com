@@ -55,6 +55,8 @@ export function SigninForm({
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const [passkeyHintDismissed, setPasskeyHintDismissed] = useState(false);
+  const conditionalStartedRef = useRef(false);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [isPending, startTransition] = useTransition();
   const credentialsInFlightRef = useRef(false);
@@ -230,19 +232,24 @@ export function SigninForm({
   }
 
 
-  async function continueWithPasskey() {
+  async function startPasskeySignIn(mediation: CredentialMediationRequirement = "optional", showStatus = true) {
     if (!window.PublicKeyCredential || !navigator.credentials) {
-      setError({ key: "Passkeys are not supported on this browser. Use password sign-in instead." });
+      if (showStatus) setError({ key: "Passkeys are not supported on this browser. Use password sign-in instead." });
       return;
     }
-    setPasskeyLoading(true); setError(null); setMessage({ key: "Opening passkey prompt…" });
+    setPasskeyLoading(true);
+    setError(null);
+    if (showStatus) setMessage({ key: "Opening your saved passkeys…" });
     try {
       const optionsResponse = await fetch("/api/auth/passkey/options", { method: "POST", credentials: "same-origin" });
       const optionsData = await optionsResponse.json();
       if (!optionsResponse.ok) throw new Error(optionsData.error || "Unable to start passkey sign-in.");
       const publicKey = decodePublicKeyOptions(optionsData.options);
-      const credential = await navigator.credentials.get({ publicKey, mediation: "optional" }) as PublicKeyCredential | null;
-      if (!credential) throw new Error("Passkey sign-in was cancelled.");
+      const credential = await navigator.credentials.get({ publicKey, mediation }) as PublicKeyCredential | null;
+      if (!credential) {
+        if (showStatus) throw new Error("Passkey sign-in was cancelled.");
+        return;
+      }
       const verifyResponse = await fetch("/api/auth/passkey/verify", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(serializeCredential(credential)) });
       const verifyData = await verifyResponse.json().catch(() => ({}));
       if (!verifyResponse.ok || !verifyData.loginToken) throw new Error(verifyData.error || "Passkey sign-in failed.");
@@ -250,11 +257,22 @@ export function SigninForm({
       if (!result?.ok) throw new Error("Passkey session could not be created.");
       window.location.href = verifyData.redirectTo || result.url || callbackUrl;
     } catch (error) {
-      setMessage(null);
-      setError({ key: error instanceof Error ? error.message : "Passkey sign-in failed. Use password sign-in instead." });
+      if (showStatus || mediation !== "conditional") {
+        setMessage(null);
+        setError({ key: error instanceof Error ? error.message : "Passkey sign-in failed. Use password sign-in instead." });
+      }
     } finally {
       setPasskeyLoading(false);
     }
+  }
+
+  async function startConditionalPasskeySignIn() {
+    if (conditionalStartedRef.current || step !== "credentials") return;
+    if (!window.PublicKeyCredential || !navigator.credentials) return;
+    const supported = await PublicKeyCredential.isConditionalMediationAvailable?.().catch(() => false);
+    if (!supported) return;
+    conditionalStartedRef.current = true;
+    void startPasskeySignIn("conditional", false);
   }
 
   async function requestLoginCode(credentials: Credentials) {
@@ -306,6 +324,7 @@ export function SigninForm({
               autoComplete="username webauthn"
               required
               disabled={busy}
+              onFocus={() => void startConditionalPasskeySignIn()}
             />
           </Field>
 
@@ -406,10 +425,15 @@ export function SigninForm({
         </form>
       )}
 
-      {step === "credentials" ? (
-        <Button type="button" variant="secondary" className="mt-3 w-full hover:border-slate-300 hover:bg-slate-50 focus-visible:ring-violet-500" onClick={continueWithPasskey} disabled={busy}>
-          {passkeyLoading ? "Opening passkey prompt…" : "Continue with passkey"}
-        </Button>
+      {step === "credentials" && !passkeyHintDismissed ? (
+        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+          <p className="font-semibold text-slate-900">Use a saved passkey?</p>
+          <p className="mt-1">Sign in with Face ID, fingerprint, screen lock, password manager, or security key.</p>
+          <div className="mt-3 flex gap-2">
+            <button type="button" className="font-semibold text-teal-dark hover:underline" onClick={() => void startPasskeySignIn()} disabled={busy}>{passkeyLoading ? "Opening…" : "Use passkey"}</button>
+            <button type="button" className="text-slate-500 hover:underline" onClick={() => setPasskeyHintDismissed(true)} disabled={busy}>Not now</button>
+          </div>
+        </div>
       ) : null}
 
       {googleEnabled && step === "credentials" ? (
