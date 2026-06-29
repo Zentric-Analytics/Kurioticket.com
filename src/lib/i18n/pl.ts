@@ -1167,7 +1167,6 @@ export const translations: TranslationDictionary = {
   unableToSearchFlights: "Nie można wyszukać lotów.",
   "Live flight results are temporarily unavailable. Please try again shortly.": "Wyniki lotów na żywo są chwilowo niedostępne. Spróbuj ponownie wkrótce.",
   limitedProviderChecks: "Niektóre sprawdzenia dostawców mogą być ograniczone dla tego wyszukiwania. Przed rezerwacją sprawdź ostateczną dostępność i szczegóły taryfy u dostawcy.",
-  closeFilters: "Zamknij filtry",
   editFlightSearch: "Edytuj wyszukiwanie lotu",
   selectDepartureDate: "Wybierz datę wylotu",
   selectReturnDate: "Wybierz datę powrotu",
