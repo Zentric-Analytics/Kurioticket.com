@@ -1513,6 +1513,9 @@ function PersonalDetailsEmailEditRow({
                   autoComplete="one-time-code"
                   maxLength={6}
                 />
+                <p className="mt-1.5 text-xs leading-5 text-slate-500">
+                  Code expires after 15 minutes.
+                </p>
               </div>
               {errorMessage ? (
                 <p className="text-sm font-medium leading-6 text-red-700">
@@ -1643,7 +1646,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       setNewEmail(nextEmail);
       setEmailVerificationCode("");
       setEmailChangeSuccessMessage(
-        "We sent a verification code to your new email address.",
+        "We sent a verification code to your new email address. Check your inbox or junk/spam folder. The code expires in 15 minutes.",
       );
     } catch (error) {
       setEmailChangeErrorMessage(

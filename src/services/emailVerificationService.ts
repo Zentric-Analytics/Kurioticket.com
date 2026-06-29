@@ -4,6 +4,7 @@ import { getPrisma } from "@/lib/prisma";
 import { EmailDeliveryError, loginVerificationCodeEmail, sendTransactionalEmail, verificationCodeEmail } from "@/services/emailService";
 
 const verificationCodeTtlMinutes = 10;
+const accountEmailChangeCodeTtlMinutes = 15;
 const resendCooldownMs = 60 * 1000;
 const resendCooldowns = new Map<string, number>();
 
@@ -141,13 +142,23 @@ export async function verifyEmailCode(input: { email: string; code: string }) {
 export async function sendAccountEmailChangeCode(input: { userId: string; newEmail: string; name?: string | null; enforceCooldown?: boolean }): Promise<SendCodeResult> {
   const newEmail = input.newEmail.toLowerCase().trim();
   const identifier = getAccountEmailChangeIdentifier(input.userId, newEmail);
+  const latestPendingCode = await getPrisma().verificationToken.findFirst({
+    where: { identifier },
+    orderBy: { expires: "desc" },
+    select: { expires: true },
+  });
+
+  if (latestPendingCode && latestPendingCode.expires <= new Date()) {
+    clearResendCooldown(identifier);
+  }
+
   if (input.enforceCooldown) {
     reserveResendCooldown(identifier);
   }
 
   const code = randomInt(100000, 1000000).toString();
   const token = hashVerificationCode(identifier, code);
-  const expires = new Date(Date.now() + verificationCodeTtlMinutes * 60 * 1000);
+  const expires = new Date(Date.now() + accountEmailChangeCodeTtlMinutes * 60 * 1000);
 
   try {
     await getPrisma().verificationToken.deleteMany({ where: { identifier } });
@@ -161,7 +172,7 @@ export async function sendAccountEmailChangeCode(input: { userId: string; newEma
       html: verificationCodeEmail({
         code,
         name: input.name,
-        expiresInMinutes: verificationCodeTtlMinutes,
+        expiresInMinutes: accountEmailChangeCodeTtlMinutes,
         verifyUrl: `${getBaseUrl()}/dashboard/account`,
       }),
       idempotencyKey: `account-email-change-${input.userId}-${newEmail}-${token.slice(0, 16)}`,
@@ -191,10 +202,12 @@ export async function sendAccountEmailChangeCode(input: { userId: string; newEma
   }
 }
 
-export async function verifyAccountEmailChangeCode(input: { userId: string; newEmail: string; code: string }) {
+export type AccountEmailChangeCodeVerificationResult = "valid" | "invalid" | "expired";
+
+export async function verifyAccountEmailChangeCode(input: { userId: string; newEmail: string; code: string }): Promise<AccountEmailChangeCodeVerificationResult> {
   const newEmail = input.newEmail.toLowerCase().trim();
   const code = input.code.trim();
-  if (!/^\d{6}$/.test(code)) return false;
+  if (!/^\d{6}$/.test(code)) return "invalid";
 
   const identifier = getAccountEmailChangeIdentifier(input.userId, newEmail);
   const token = hashVerificationCode(identifier, code);
@@ -202,14 +215,16 @@ export async function verifyAccountEmailChangeCode(input: { userId: string; newE
     where: { identifier_token: { identifier, token } },
   });
 
-  if (!verificationToken || verificationToken.expires <= new Date()) {
-    if (verificationToken) {
-      await getPrisma().verificationToken.deleteMany({ where: { identifier, token } });
-    }
-    return false;
+  if (!verificationToken) {
+    return "invalid";
   }
 
-  return true;
+  if (verificationToken.expires <= new Date()) {
+    await getPrisma().verificationToken.deleteMany({ where: { identifier, token } });
+    return "expired";
+  }
+
+  return "valid";
 }
 
 export async function consumeAccountEmailChangeCode(input: { userId: string; newEmail: string }) {
