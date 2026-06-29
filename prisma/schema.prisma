@@ -179,6 +179,9 @@ model UserSecuritySettings {
   securityEmailAlerts  Boolean   @default(true)
   twoFactorEnabled    Boolean   @default(false)
   twoFactorMethod     String?
+  twoFactorSecretEncrypted String?
+  twoFactorLastUsedStep BigInt?
+  recoveryCodesHash   String?
   twoFactorEnabledAt  DateTime?
   twoFactorDisabledAt DateTime?
   createdAt           DateTime  @default(now())
