@@ -464,6 +464,8 @@ export default function HotelsSearchPage() {
     href: destinationCardHref(card.destinationQuery),
   }));
   const hotelSearchIntroLabel = t("hotelSearchIntroLabel");
+  const mobileHotelsHeroTitle = t("hotelsHeroMobileTitle");
+  const mobileHotelsHeroSubtitle = t("hotelsHeroMobileSubtitle");
 
   return (
     <>
@@ -483,21 +485,21 @@ export default function HotelsSearchPage() {
             <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/22 via-slate-950/6 to-transparent" />
           </div>
 
-          <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-[8.05rem]">
-            <div className="max-w-[21.75rem] text-white">
+          <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-[7.85rem]">
+            <div className="max-w-[22.25rem] text-white">
               <p className="sr-only">
                 {t("hotelsHeroEyebrow")}
               </p>
-              <h1 className="max-w-[19.9rem] text-[clamp(1.78rem,7.2vw,2.04rem)] font-semibold leading-[1.03] tracking-[-0.038em] text-white text-balance drop-shadow-[0_2px_10px_rgba(2,6,23,0.6)]">
-                {t("hotelsHeroTitle")}
+              <h1 className="max-w-[20.6rem] text-[clamp(1.86rem,7.55vw,2.12rem)] font-semibold leading-[1.04] tracking-[-0.039em] text-white text-balance drop-shadow-[0_2px_10px_rgba(2,6,23,0.6)]">
+                {mobileHotelsHeroTitle}
               </h1>
-              <p className="mt-3.5 max-w-[21.35rem] text-[0.88rem] font-medium leading-[1.52] text-white/92 text-balance drop-shadow-[0_2px_8px_rgba(2,6,23,0.54)]">
-                {t("hotelsHeroSubtitle")}
+              <p className="mt-4 max-w-[22.15rem] text-[0.89rem] font-medium leading-[1.52] text-white/92 text-balance drop-shadow-[0_2px_8px_rgba(2,6,23,0.54)]">
+                {mobileHotelsHeroSubtitle}
               </p>
             </div>
           </div>
 
-          <div className="page-shell absolute inset-x-0 bottom-[-17.15rem] z-30">
+          <div className="page-shell absolute inset-x-0 bottom-[-18.05rem] z-30">
             <div className="mx-auto max-w-6xl">
               <HotelSearchBar
                 introLabel={hotelSearchIntroLabel}
@@ -551,7 +553,7 @@ export default function HotelsSearchPage() {
           </div>
         </section>
 
-        <div className="page-shell relative z-0 mx-auto mt-0 max-w-6xl space-y-11 pt-[19.05rem] sm:mt-24 sm:pt-0 md:space-y-14 lg:mt-8">
+        <div className="page-shell relative z-0 mx-auto mt-0 max-w-6xl space-y-11 pt-[19.95rem] sm:mt-24 sm:pt-0 md:space-y-14 lg:mt-8">
           <section
             className="mt-6 space-y-4 sm:mt-12 lg:mt-8"
             aria-labelledby="hotel-destinations-heading"

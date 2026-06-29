@@ -886,6 +886,9 @@ export const translations: TranslationDictionary = {
   hotelsHeroTitle: "Find the stay that starts the trip right.",
   hotelsHeroSubtitle:
     "Compare hotels in one place, from polished city arrivals to easy resort escapes.",
+  hotelsHeroMobileTitle: "Find the stays that start the right trip.",
+  hotelsHeroMobileSubtitle:
+    "Compare hotels in one place, from polished city arrivals to easy resort and escapes.",
   hotelSearchIntroLabel: "Compare hotel options",
   hotelSearchDestinationLabel: "Destination",
   hotelSearchDestinationPlaceholder: "City, area, or landmark",
