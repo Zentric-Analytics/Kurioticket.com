@@ -1858,7 +1858,7 @@ export function FlightResultsClient() {
     const duration = formatDurationFromMinutes(flight.durationMinutes);
     const stops = formatStopsLabel(flight.stops, t);
     const airlineOrProvider = flight.airlineName || flight.provider;
-    const departure = formatTime(flight.departureTime);
+    const departure = formatResultDepartureTime(flight.departureTime, calendarLocale);
     const primary =
       mode === "fastest"
         ? `${duration} · ${price}`
@@ -3228,7 +3228,7 @@ export function FlightResultsClient() {
 
               <button
                 type="button"
-                aria-label={t("closeSearchForm")}
+                aria-label={t("closeEditSearch")}
                 onClick={closeMobileSearchDrawer}
                 className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
               >
@@ -3464,7 +3464,7 @@ export function FlightResultsClient() {
             </span>
             <button
               type="button"
-              aria-label={t("closeSearchForm")}
+              aria-label={t("closeEditSearch")}
               onClick={closeMobileSearchDrawer}
               className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
             >
@@ -5287,6 +5287,20 @@ function getTimeMinutes(value: string) {
   if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
 
   return hours * 60 + minutes;
+}
+
+function formatResultDepartureTime(value: string, locale = "en-US") {
+  const date = new Date(value);
+
+  if (!Number.isNaN(date.getTime())) {
+    return new Intl.DateTimeFormat(locale, {
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(date);
+  }
+
+  const minutes = getTimeMinutes(value);
+  return minutes === null ? formatTime(value) : formatTimeFromMinutes(minutes, locale);
 }
 
 function formatTimeFromMinutes(value: number, locale = "en-US") {
