@@ -1256,10 +1256,12 @@ function NationalityInput({
 function PersonalDetailsEditRow({
   row,
   value,
+  error,
   onChange,
 }: {
   row: PersonalDetailRow;
   value: string;
+  error?: string;
   onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
 }) {
   const isAddress = row.key === "address";
@@ -1273,7 +1275,11 @@ function PersonalDetailsEditRow({
       ) : null}
       <div className="min-w-0">
         <DetailInput row={row} value={value} onChange={onChange} />
-        {row.helper ? (
+        {error ? (
+          <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-red-700">
+            {error}
+          </p>
+        ) : row.helper ? (
           <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
             {row.helper}
           </p>
@@ -1567,6 +1573,66 @@ function PersonalDetailsEmailEditRow({
   );
 }
 
+function normalizePersonalDetailsDraft(
+  value: PersonalDetailsDraft,
+): PersonalDetailsDraft {
+  return {
+    name: value.name.trim(),
+    email: value.email.trim(),
+    phone: value.phone.trim(),
+    dateOfBirth: value.dateOfBirth.trim(),
+    gender: value.gender.trim(),
+    nationality: value.nationality.trim(),
+    address: value.address.trim(),
+  };
+}
+
+function hasPersonalDetailsChanges(
+  draft: PersonalDetailsDraft,
+  savedValues: PersonalDetailsDraft,
+) {
+  const normalizedDraft = normalizePersonalDetailsDraft(draft);
+  const normalizedSavedValues = normalizePersonalDetailsDraft(savedValues);
+
+  return personalDetailsFieldOrder
+    .filter((key) => key !== "email")
+    .some((key) => normalizedDraft[key] !== normalizedSavedValues[key]);
+}
+
+function getPersonalDetailsValidationErrors(draft: PersonalDetailsDraft) {
+  const errors: Partial<Record<keyof PersonalDetailsDraft, string>> = {};
+
+  if (draft.name.length > 0 && !draft.name.trim()) {
+    errors.name = "Enter your name or leave this field blank.";
+  }
+
+  if (draft.name.trim().length > 120) {
+    errors.name = "Name must be 120 characters or fewer.";
+  }
+
+  if (draft.phone.trim().length > 40) {
+    errors.phone = "Phone number must be 40 characters or fewer.";
+  }
+
+  if (draft.dateOfBirth.trim().length > 40) {
+    errors.dateOfBirth = "Date of birth must be 40 characters or fewer.";
+  }
+
+  if (draft.gender.trim().length > 40) {
+    errors.gender = "Gender must be 40 characters or fewer.";
+  }
+
+  if (draft.nationality.trim().length > 120) {
+    errors.nationality = "Nationality must be 120 characters or fewer.";
+  }
+
+  if (draft.address.trim().length > 2000) {
+    errors.address = "Address must be 2,000 characters or fewer.";
+  }
+
+  return errors;
+}
+
 function PersonalDetailsSection(props: DashboardOverviewProps) {
   const { t } = useLocale();
   const router = useRouter();
@@ -1578,6 +1644,9 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
   const [draft, setDraft] = useState<PersonalDetailsDraft>(savedValues);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<
+    Partial<Record<keyof PersonalDetailsDraft, string>>
+  >({});
   const [isChangingEmail, setIsChangingEmail] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [emailVerificationCode, setEmailVerificationCode] = useState("");
@@ -1595,6 +1664,10 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
   const emailValidationError = getEmailChangeError(newEmail, savedValues.email);
   const isVerificationCodeValid = verificationCodePattern.test(
     emailVerificationCode.trim(),
+  );
+  const hasUnsavedProfileChanges = hasPersonalDetailsChanges(
+    draft,
+    savedValues,
   );
 
   const resetEmailChangeState = () => {
@@ -1626,10 +1699,9 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
 
   const handleCancel = () => {
     setDraft(savedValues);
-    setIsEditing(false);
+    setStatusMessage(null);
     setErrorMessage(null);
-    setIsChangingEmail(false);
-    resetEmailChangeState();
+    setValidationErrors({});
   };
 
   const handleCancelEmailChange = () => {
@@ -1751,24 +1823,37 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
   };
 
   const handleSave = async () => {
+    if (isSaving || !hasUnsavedProfileChanges) return;
+
+    const nextValidationErrors = getPersonalDetailsValidationErrors(draft);
+
+    if (Object.keys(nextValidationErrors).length > 0) {
+      setValidationErrors(nextValidationErrors);
+      setStatusMessage(null);
+      setErrorMessage("Please check the highlighted personal details.");
+      return;
+    }
+
     setIsSaving(true);
     setStatusMessage(null);
     setErrorMessage(null);
+    setValidationErrors({});
 
     try {
+      const profilePayload = {
+        fullName: draft.name,
+        phoneNumber: draft.phone,
+        dateOfBirth: draft.dateOfBirth,
+        gender: draft.gender,
+        nationality: draft.nationality,
+        address: draft.address,
+      };
+
       const response = await fetch("/api/account/profile", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fullName: draft.name,
-          phoneNumber: draft.phone,
-          dateOfBirth: draft.dateOfBirth,
-          gender: draft.gender,
-          nationality: draft.nationality,
-          address: draft.address,
-        }),
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profilePayload),
       });
 
       const data = (await response.json().catch(() => null)) as {
@@ -1781,23 +1866,18 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       }
 
       const nextSavedValues: PersonalDetailsDraft = {
-        name: data.profile.fullName,
+        name: data.profile.fullName ?? "",
         email: savedValues.email,
-        phone: data.profile.phoneNumber,
-        dateOfBirth: data.profile.dateOfBirth,
-        gender: data.profile.gender,
-        nationality: data.profile.nationality,
-        address: data.profile.address,
+        phone: data.profile.phoneNumber ?? "",
+        dateOfBirth: data.profile.dateOfBirth ?? "",
+        gender: data.profile.gender ?? "",
+        nationality: data.profile.nationality ?? "",
+        address: data.profile.address ?? "",
       };
 
       setSavedValues(nextSavedValues);
       setDraft(nextSavedValues);
-      setIsEditing(false);
-      setStatusMessage(
-        t["accountDashboard.personalDetails.saveSuccess"] ||
-          "Personal details saved.",
-      );
-      router.refresh();
+      setStatusMessage("Your personal details have been updated.");
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -1813,6 +1893,12 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
   const updateDraft = (key: keyof PersonalDetailsDraft, value: string) => {
     if (key === "email") return;
     setDraft((current) => ({ ...current, [key]: value }));
+    setValidationErrors((current) => {
+      if (!current[key]) return current;
+      const { [key]: _removed, ...remainingErrors } = current;
+      void _removed;
+      return remainingErrors;
+    });
   };
 
   const personalDetailRowByKey = new Map(
@@ -1877,6 +1963,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
         key={row.key}
         row={row}
         value={draft[key]}
+        error={validationErrors[key]}
         onChange={updateDraft}
       />
     );
@@ -2000,8 +2087,8 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
             <button
               type="button"
               onClick={handleSave}
-              disabled
-              className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-300 sm:w-auto"
+              disabled={isSaving || !hasUnsavedProfileChanges}
+              className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-100 disabled:text-blue-700 sm:w-auto"
             >
               {isSaving
                 ? t["accountDashboard.personalDetails.saving"] || "Saving…"
