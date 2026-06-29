@@ -967,7 +967,7 @@ function StructuredAddressInput({
   };
 
   const fieldLabelClassName =
-    "mb-1.5 block text-sm font-semibold leading-5 text-slate-900";
+    "mb-1.5 block text-sm font-semibold leading-5 text-slate-950";
 
   return (
     <div className="w-full min-w-0 max-w-3xl space-y-4">
@@ -986,7 +986,7 @@ function StructuredAddressInput({
           autoComplete="country"
         >
           <option value="" disabled hidden>
-            Country/region
+            Select one
           </option>
           {personalDetailsDropdownOptions.map((option) => (
             <option key={option.value} value={option.value}>
@@ -1007,7 +1007,6 @@ function StructuredAddressInput({
           className={className}
           value={parts.addressLine1}
           onChange={(event) => updatePart("addressLine1", event.target.value)}
-          placeholder="Street address"
           autoComplete="address-line1"
         />
       </div>
@@ -1025,12 +1024,11 @@ function StructuredAddressInput({
           onChange={(event) =>
             updatePart("apartmentOrSuite", event.target.value)
           }
-          placeholder="Apartment, suite, unit, building"
           autoComplete="address-line2"
         />
       </div>
-      <div className="grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="min-w-0">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,16rem)_minmax(0,16rem)]">
+        <div className="min-w-0 max-w-64">
           <label
             className={fieldLabelClassName}
             htmlFor="personal-address-city"
@@ -1042,11 +1040,10 @@ function StructuredAddressInput({
             className={className}
             value={parts.city}
             onChange={(event) => updatePart("city", event.target.value)}
-            placeholder="Town / City"
             autoComplete="address-level2"
           />
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 max-w-64">
           <label
             className={fieldLabelClassName}
             htmlFor="personal-address-state"
@@ -1060,12 +1057,11 @@ function StructuredAddressInput({
             onChange={(event) =>
               updatePart("stateOrRegion", event.target.value)
             }
-            placeholder="State / Province / Region"
             autoComplete="address-level1"
           />
         </div>
       </div>
-      <div className="max-w-xs">
+      <div className="max-w-[10rem]">
         <label
           className={fieldLabelClassName}
           htmlFor="personal-address-postal"
@@ -1077,7 +1073,6 @@ function StructuredAddressInput({
           className={className}
           value={parts.postalCode}
           onChange={(event) => updatePart("postalCode", event.target.value)}
-          placeholder="Postcode / ZIP code"
           autoComplete="postal-code"
         />
       </div>
@@ -1258,7 +1253,7 @@ function PersonalDetailsEditRow({
         isAddress && "mt-5 border-t border-slate-200 pt-7",
       )}
     >
-      <label className="mb-1.5 block text-sm font-semibold leading-5 text-slate-900">
+      <label className="mb-1.5 block text-sm font-semibold leading-5 text-slate-950">
         {row.label}
       </label>
       <div className="min-w-0">
@@ -1283,7 +1278,7 @@ function DetailInput({
   onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
 }) {
   const baseClassName = cn(
-    "h-10 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-base font-medium leading-5 text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 sm:max-w-lg sm:text-sm",
+    "h-10 w-full min-w-0 rounded-lg border border-slate-400 bg-white px-3 text-base font-medium leading-5 text-slate-950 outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 sm:max-w-lg sm:text-sm",
     row.readOnly &&
       "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-200 focus:border-slate-200 focus:ring-0",
   );
