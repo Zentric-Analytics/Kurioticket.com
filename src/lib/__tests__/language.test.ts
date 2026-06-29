@@ -2506,6 +2506,114 @@ test("Turkish Flights landing hero and standalone search form resolve without En
   }
 });
 
+test("Polish auth pages resolve localized login, passkey, and reset password copy", () => {
+  const pl = getTranslations("pl");
+
+  const expectedPolishAuthStrings: Record<string, string> = {
+    loginPageTitle: "Zaloguj się",
+    loginPageSubtitle:
+      "Zapisuj wyszukiwania, zarządzaj alertami i korzystaj ze swojego panelu podróży.",
+    loginEmailLabel: "E-mail",
+    loginPasswordLabel: "Hasło",
+    loginForgotPassword: "Nie pamiętasz hasła?",
+    loginSubmit: "Zaloguj się",
+    loginPasskeyPromptTitle: "Użyć zapisanego klucza dostępu?",
+    loginPasskeyPromptDescription:
+      "Zaloguj się za pomocą Face ID, odcisku palca, blokady ekranu, menedżera haseł lub klucza bezpieczeństwa.",
+    loginUsePasskey: "Użyj klucza dostępu",
+    loginNotNow: "Nie teraz",
+    loginGoogle: "Kontynuuj z Google",
+    loginSignupPrompt: "Nowy w Kurioticket?",
+    loginCreateAccount: "Utwórz konto",
+    forgotPasswordTitle: "Zresetuj hasło",
+    forgotPasswordSubtitle:
+      "Wpisz swój adres e-mail, a wyślemy instrukcje resetowania hasła.",
+    forgotPasswordEmailLabel: "E-mail",
+    forgotPasswordEmailPlaceholder: "you@example.com",
+    forgotPasswordSubmit: "Wyślij link resetujący",
+    forgotPasswordRemember: "Pamiętasz hasło?",
+    forgotPasswordLoginLink: "Zaloguj się",
+    resetPasswordTitle: "Zresetuj hasło",
+    resetPasswordRemember: "Pamiętasz hasło?",
+    resetPasswordLoginLink: "Zaloguj się",
+    loginCodeSent: "Kod logowania został wysłany",
+    loginCodeInstructions:
+      "Wpisz 6-cyfrowy kod wysłany na {{email}}. Kody wygasają po {{minutes}} minutach.",
+    loginVerificationCodeLabel: "Kod weryfikacyjny",
+    loginVerifyLogin: "Zweryfikuj logowanie",
+    loginResendIn: "Wyślij ponownie za {{seconds}} s",
+    loginUseDifferentDetails: "Użyj innych danych",
+  };
+
+  for (const [key, value] of Object.entries(expectedPolishAuthStrings)) {
+    assert.equal(pl[key], value, `pl ${key} should use Polish auth copy`);
+    if (value !== enTranslations[key]) {
+      assert.notEqual(pl[key], enTranslations[key], `pl ${key} should not fall back to English`);
+    }
+  }
+
+  assert.ok(pl.loginGoogle.includes("Google"));
+  assert.ok(pl.loginSignupPrompt.includes("Kurioticket"));
+  assert.ok(pl.loginPasskeyPromptDescription.includes("Face ID"));
+  assert.equal(pl.forgotPasswordEmailPlaceholder, "you@example.com");
+  assert.ok(pl.loginCodeInstructions.includes("{{email}}"));
+  assert.ok(pl.loginCodeInstructions.includes("{{minutes}}"));
+  assert.ok(pl.loginResendIn.includes("{{seconds}}"));
+});
+
+test("Auth login and forgot password render paths use i18n keys for visible copy", () => {
+  const signinSource = readFileSync("src/components/auth/SigninForm.tsx", "utf8");
+  const forgotPasswordSource = readFileSync("src/components/auth/ForgotPasswordForm.tsx", "utf8");
+  const signinPageSource = readFileSync("src/app/auth/signin/page.tsx", "utf8");
+  const forgotPasswordPageSource = readFileSync("src/app/auth/forgot-password/page.tsx", "utf8");
+
+  for (const key of [
+    "loginPageTitle",
+    "loginPageSubtitle",
+    "loginEmailLabel",
+    "loginPasswordLabel",
+    "loginForgotPassword",
+    "loginSubmit",
+    "loginPasskeyPromptTitle",
+    "loginPasskeyPromptDescription",
+    "loginUsePasskey",
+    "loginNotNow",
+    "loginGoogle",
+    "loginSignupPrompt",
+    "loginCreateAccount",
+    "loginCodeSent",
+    "loginCodeInstructions",
+    "loginVerificationCodeLabel",
+    "loginVerifyLogin",
+    "loginResendIn",
+    "loginUseDifferentDetails",
+  ]) {
+    assert.ok(signinSource.includes(`t.${key}`) || signinSource.includes(`key: "${key}"`), `SigninForm should resolve ${key} through i18n`);
+  }
+
+  for (const key of [
+    "forgotPasswordTitle",
+    "forgotPasswordSubtitle",
+    "forgotPasswordEmailLabel",
+    "forgotPasswordEmailPlaceholder",
+    "forgotPasswordSubmit",
+    "forgotPasswordRemember",
+    "forgotPasswordLoginLink",
+  ]) {
+    assert.ok(forgotPasswordSource.includes(`t.${key}`), `ForgotPasswordForm should resolve ${key} through i18n`);
+  }
+
+  assert.ok(signinPageSource.includes("<SigninForm"));
+  assert.ok(signinPageSource.includes("callbackUrl={callbackUrl}"));
+  assert.ok(signinPageSource.includes("googleEnabled={googleEnabled}"));
+  assert.ok(forgotPasswordPageSource.includes("<ForgotPasswordForm />"));
+  assert.ok(signinSource.includes('fetch("/api/auth/request-login-code"'));
+  assert.ok(signinSource.includes('fetch("/api/auth/passkey/options"'));
+  assert.ok(signinSource.includes('fetch("/api/auth/passkey/verify"'));
+  assert.ok(signinSource.includes('signIn("google"'));
+  assert.ok(forgotPasswordSource.includes('fetch("/api/auth/forgot-password"'));
+});
+
 test("Turkish global modals and auth pages resolve screenshot-visible copy", () => {
   const tr = getTranslations("tr");
 

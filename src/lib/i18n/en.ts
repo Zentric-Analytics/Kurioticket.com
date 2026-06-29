@@ -551,6 +551,12 @@ export const translations: TranslationDictionary = {
   loginGoogle: "Continue with Google",
   loginSignupPrompt: "New to Kurioticket?",
   loginCreateAccount: "Create an account",
+  loginPasskeyPromptTitle: "Use a saved passkey?",
+  loginPasskeyPromptDescription:
+    "Sign in with Face ID, fingerprint, screen lock, password manager, or security key.",
+  loginUsePasskey: "Use passkey",
+  loginOpeningPasskey: "Opening…",
+  loginNotNow: "Not now",
   loginInvalidCredentials:
     "We could not sign you in. Check your email and password, then try again.",
   loginRateLimited: "Too many attempts. Please wait a moment and try again.",
