@@ -150,6 +150,79 @@ test("Hindi signed-in account dropdown labels do not fall back to English", () =
   );
 });
 
+
+test("Polish cars results page copy and render path do not fall back to English", () => {
+  const pl = getTranslations("pl");
+  const carsResultsSource = readFileSync("src/components/results/CarsResultsClient.tsx", "utf8");
+  const carsResultsPageSource = readFileSync("src/app/cars/results/page.tsx", "utf8");
+
+  const expectedPolishCopy: Record<string, string> = {
+    "carsResults.pickupLocation": "MIEJSCE ODBIORU",
+    "carsResults.returnLocation": "MIEJSCE ZWROTU",
+    "carsResults.rentalDates": "DATY WYNAJMU",
+    "carsResults.pickupReturnTime": "GODZINA ODBIORU / ZWROTU",
+    "carsResults.driverAge": "WIEK KIEROWCY",
+    "carsResults.sameAsPickup": "Takie samo jak odbiór",
+    "carsResults.searchCars": "Szukaj samochodów",
+    "carsResults.edit": "EDYTUJ",
+    "carsResults.pickupLocationNeeded": "wymagane miejsce odbioru",
+    "carsResults.resultsFor": "Wyniki samochodów dla: {location}",
+    "carsResults.emptyInventory": "Aktualna dostępność samochodów nie jest jeszcze dostępna dla tego wyszukiwania. Zmień szczegóły wyszukiwania powyżej albo sprawdź ponownie później.",
+    "carsResults.filterBy": "Filtruj według",
+    "carsResults.vehicleType": "Typ pojazdu",
+    "carsResults.smallCars": "Małe samochody",
+    "carsResults.mediumCars": "Średnie samochody",
+    "carsResults.suvs": "SUV-y",
+    "carsResults.transmission": "Skrzynia biegów",
+    "carsResults.automatic": "Automatyczna",
+    "carsResults.manual": "Manualna",
+    "carsResults.seats": "Miejsca",
+    "carsResults.seats4Plus": "4+ miejsca",
+    "carsResults.seats5Plus": "5+ miejsc",
+    "carsResults.seats7Plus": "7+ miejsc",
+    "carsResults.bags": "Bagaże",
+    "carsResults.bags2Plus": "2+ bagaże",
+    "carsResults.bags3Plus": "3+ bagaże",
+    "carsResults.bags4Plus": "4+ bagaże",
+    "carsResults.fuelPolicy": "Polityka paliwowa",
+    "carsResults.fullToFull": "Pełny do pełnego",
+    "carsResults.sameToSame": "Taki sam do takiego samego",
+    "carsResults.mileagePolicy": "Polityka przebiegu",
+    "carsResults.unlimitedMileage": "Nielimitowany przebieg",
+    "carsResults.limitedMileage": "Limitowany przebieg",
+    "carsResults.cancellation": "Anulowanie",
+    "carsResults.freeCancellation": "Bezpłatne anulowanie",
+    "carsResults.payAtPickup": "Płatność przy odbiorze",
+    "carsResults.pickupLocationType": "Typ miejsca odbioru",
+    "carsResults.airportCounter": "Stanowisko na lotnisku",
+    "carsResults.shuttlePickup": "Odbiór shuttle",
+    "carsResults.cityLocation": "Lokalizacja w mieście",
+    "carsResults.openFilters": "Otwórz filtry",
+    "carsResults.closeFilters": "Zamknij filtry",
+    "carsResults.resetFilters": "Resetuj filtry",
+    "carsResults.editSearch": "Edytuj wyszukiwanie",
+    "carsResults.rentalDateRangeCalendar": "Kalendarz zakresu dat wynajmu",
+    "carsResults.pickupReturnTimeSelector": "Wybór godziny odbioru i zwrotu",
+    "carsResults.yearsOld": "lat",
+  };
+
+  for (const [key, value] of Object.entries(expectedPolishCopy)) {
+    assert.equal(pl[key], value, `${key} should resolve to Polish copy`);
+    if (enTranslations[key] !== value) {
+      assert.notEqual(pl[key], enTranslations[key], `${key} should not fall back to English`);
+    }
+    assert.ok(carsResultsSource.includes(`t("${key}")`) || carsResultsSource.includes(`labelKey: "${key}"`) || carsResultsSource.includes(`titleKey: "${key}"`), `${key} should be read by the active cars results render path`);
+  }
+
+  assert.ok(carsResultsSource.includes('if (normalizedLocale.startsWith("pl"))') && carsResultsSource.includes('return "pl-PL"'), "Polish cars results dates should use the Polish Intl locale.");
+  assert.ok(carsResultsSource.includes('["de", "es", "fr", "ja", "nl", "pl", "pt", "tr"]'), "Polish cars results times should use 24-hour labels without AM/PM.");
+  assert.ok(carsResultsSource.includes('formatCompactDate(') && carsResultsSource.includes('formatTimeLabel(pickupTime, intlLocale)'), "Date/time summaries should remain generated from selected values and locale formatting.");
+  assert.ok(carsResultsSource.includes('action="/cars/results"') && carsResultsSource.includes('method="get"'), "Cars results search form should preserve the route path and query-param submission behavior.");
+  assert.ok(carsResultsSource.includes('name="pickupDate"') && carsResultsSource.includes('value={pickupDate}') && carsResultsSource.includes('name="driverAge"') && carsResultsSource.includes('value={driverAge}'), "Cars results search should preserve selected date/time/driver-age query values.");
+  assert.ok(carsResultsSource.includes('onChange={() => onToggle(group.id, option.id)}') && carsResultsSource.includes('selectedOptions.includes(option.id)'), "Filter behavior should keep raw filter IDs while localizing only display labels.");
+  assert.ok(carsResultsPageSource.includes('action') === false && carsResultsPageSource.includes('pickupLocation') && carsResultsPageSource.includes('dropoffLocation'), "Server page should continue passing raw search params into the active client render path.");
+});
+
 test("Korean flight traveler selector uses localized infant-on-lap copy", () => {
   const ko = getTranslations("ko");
 
@@ -4669,7 +4742,7 @@ test("Turkish cars results datepicker locale normalizes to tr-TR", () => {
     "Cars results datepicker locale helper should normalize Turkish locales to tr-TR.",
   );
   assert.ok(
-    carsResultsSource.includes('["de", "es", "fr", "ja", "nl", "pt", "tr"]'),
+    carsResultsSource.includes('["de", "es", "fr", "ja", "nl", "pl", "pt", "tr"]'),
     "Cars results time summaries should use 24-hour formatting for Turkish without changing raw time values.",
   );
   assert.equal(
