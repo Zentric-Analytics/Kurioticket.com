@@ -32,6 +32,7 @@ import {
   formatFlightsWeekdays,
   normalizeFlightsCalendarLocale,
 } from "@/lib/flights/dateFormatting";
+import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
 
 type StorageLike = { getItem: (k: string) => string | null; setItem: (k: string, v: string) => void };
 type WindowLike = { localStorage: StorageLike; dispatchEvent: (event: Event) => boolean };
@@ -3935,7 +3936,8 @@ test("Polish homepage-visible copy resolves without English fallback", () => {
     oneWay: "W jedną stronę",
     origin: "WYLOT",
     destination: "CEL PODRÓŻY",
-    travelDates: "Daty podróży",
+    travelDates: "DATY PODRÓŻY",
+    fromPlaceholder: "Skąd?",
     travelers: "PODRÓŻNI",
     toPlaceholder: "Dokąd?",
     search: "Szukaj",
@@ -3948,7 +3950,37 @@ test("Polish homepage-visible copy resolves without English fallback", () => {
     infantsOnLap: "Niemowlęta na kolanach",
     under2: "Poniżej 2 lat",
     cabinClass: "KLASA KABINY",
-    economy: "Ekonomiczna",
+    economy: "ekonomiczna",
+    previousMonthShort: "Poprzedni",
+    nextMonthShort: "Następny",
+    clear: "Wyczyść",
+    done: "Gotowe",
+    weekdaySun: "ndz.",
+    weekdayMon: "pon.",
+    weekdayTue: "wt.",
+    weekdayWed: "śr.",
+    weekdayThu: "czw.",
+    weekdayFri: "pt.",
+    weekdaySat: "sob.",
+    cityOrHotel: "Miasto lub hotel",
+    hotelSearchDestinationLabel: "CEL PODRÓŻY",
+    hotelSearchDestinationPlaceholder: "Miasto lub hotel",
+    hotelSearchTravelDatesLabel: "DATY PODRÓŻY",
+    hotelSearchDatePlaceholder: "Zameldowanie — wymeldowanie",
+    hotelSearchGuestsLabel: "GOŚCIE",
+    stayDetails: "SZCZEGÓŁY POBYTU",
+    guestsAndRooms: "Goście i pokoje",
+    guests: "Goście",
+    guestSingular: "gość",
+    guestPlural: "gości",
+    rooms: "Pokoje",
+    roomSingular: "pokój",
+    roomPlural: "pokoje",
+    hotelAdultHelper: "Goście 18+",
+    hotelChildrenHelper: "Wiek 0–17",
+    hotelRoomsHelper: "Do 6 pokoi",
+    petFriendly: "Przyjazne zwierzętom",
+    onlyShowPetFriendlyStays: "Pokaż tylko obiekty akceptujące zwierzęta",
     business: "Biznes",
     first: "Pierwsza",
     homePopularDestinations: "Popularne kierunki",
@@ -4008,6 +4040,19 @@ test("Polish homepage-visible copy resolves without English fallback", () => {
   }
 
   assert.equal(`${1} ${pl.adultSingular}, ${pl.economy.toLocaleLowerCase("pl-PL")}`, "1 dorosły, ekonomiczna");
+  assert.equal(`${1} ${pl.guestSingular}, ${1} ${pl.roomSingular}`, "1 gość, 1 pokój");
+});
+
+test("Polish homepage flight and hotel date formatting uses pl-PL generated labels", () => {
+  for (const locale of ["pl", "pl-PL", "pl-pl"]) {
+    assert.equal(normalizeFlightsCalendarLocale(locale), "pl-PL", `flight ${locale}`);
+    assert.equal(normalizeHotelCalendarLocale(locale), "pl-PL", `hotel ${locale}`);
+  }
+
+  assert.equal(formatFlightsMonthHeading(new Date(2026, 5, 1), "pl"), "czerwiec 2026");
+  assert.equal(formatFlightsMonthHeading(new Date(2026, 6, 1), "pl-pl"), "lipiec 2026");
+  assert.deepEqual(formatFlightsWeekdays("pl-PL"), ["niedz.", "pon.", "wt.", "śr.", "czw.", "pt.", "sob."]);
+  assert.equal(formatFlightsDateSummary(new Date(2026, 5, 1), new Date(2026, 6, 1), "pl"), "1 cze — 1 lip");
 });
 
 test("Polish homepage render paths keep using i18n keys and preserve route/search behavior", () => {
@@ -4037,7 +4082,7 @@ test("Polish homepage render paths keep using i18n keys and preserve route/searc
     assert.match(headerSource, new RegExp(`t\\.${key}|labelKey: \"${key}\"`), key);
   }
 
-  for (const key of ["roundTrip", "oneWay", "origin", "destination", "travelDates", "travelers", "passengers", "economy"]) {
+  for (const key of ["roundTrip", "oneWay", "origin", "destination", "travelDates", "travelers", "passengers", "economy", "fromPlaceholder", "cityOrHotel", "hotelSearchTravelDatesLabel", "hotelSearchGuestsLabel", "stayDetails", "guestsAndRooms", "hotelAdultHelper", "hotelChildrenHelper", "hotelRoomsHelper", "petFriendly", "onlyShowPetFriendlyStays"]) {
     assert.match(searchSource, new RegExp(key), key);
   }
 
@@ -4051,6 +4096,11 @@ test("Polish homepage render paths keep using i18n keys and preserve route/searc
   assert.match(searchSource, /new URLSearchParams\(\{/);
   assert.match(searchSource, /origin:/);
   assert.match(searchSource, /destination:/);
+  assert.match(searchSource, /buildFlightRecentSearch\(/);
+  assert.match(searchSource, /buildHotelRecentSearch\(/);
+  assert.match(searchSource, /formatAirportLabel\(option, locale\)/);
+  assert.match(searchSource, /setHotelAdultCount/);
+  assert.match(searchSource, /setRooms/);
   assert.match(pageSource, /fetch\(\s*"\/api\/newsletter\/subscribe"/);
   assert.match(pageSource, /method: "POST"/);
 });
