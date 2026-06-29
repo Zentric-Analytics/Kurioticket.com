@@ -2009,6 +2009,96 @@ test("Turkish destinations and saved trips screenshot-visible copy resolves with
   );
 });
 
+
+test("Polish destinations and saved trips active render-path copy resolves without English fallback", () => {
+  const pl = getTranslations("pl");
+
+  const auditedPolishKeys: Array<[string, string]> = [
+    ["destinationsHeroBadge", "ODKRYWANIE KIERUNKÓW"],
+    ["destinationsHeroTitle", "Dokąd chcesz polecieć dalej?"],
+    [
+      "destinationsHeroSubtitle",
+      "Przeglądaj starannie wybrane widoki miast, porównuj loty i znajduj oferty podróży w kilka minut.",
+    ],
+    ["destinations.region.europe", "Europa"],
+    ["destinations.region.northAmerica", "Ameryka Północna"],
+    ["destinations.region.asia", "Azja"],
+    ["destinations.region.africa", "Afryka"],
+    ["destinations.region.middleEast", "Bliski Wschód"],
+    [
+      "destinations.region.europe.summary",
+      "Starannie wybrane kultowe miasta, romantyczne kanały, stolice designu oraz ponadczasowe weekendy z jedzeniem i kulturą.",
+    ],
+    ["destinations.country.unitedKingdom", "WIELKA BRYTANIA"],
+    ["destinations.country.unitedStates", "STANY ZJEDNOCZONE"],
+    ["destinations.country.unitedArabEmirates", "ZEA"],
+    ["destinations.tag.iconicSkyline", "IKONICZNA PANORAMA"],
+    ["destinations.tag.landmarkEscape", "WYJAZD DO IKONICZNEGO MIEJSCA"],
+    ["destinations.tag.cultureCapital", "STOLICA KULTURY"],
+    ["destinations.tag.goldenHourViews", "WIDOKI O ZŁOTEJ GODZINIE"],
+    ["destinations.tag.coastalEnergy", "NADMORSKA ENERGIA"],
+    ["destinations.tag.foodMarketNights", "WIECZORY NA TARGACH KULINARNYCH"],
+    ["destinations.tag.historicStreets", "HISTORYCZNE ULICE"],
+    ["destinations.tag.designWeekend", "WEEKEND Z DESIGNEM"],
+    ["destinations.city.london", "Londyn"],
+    ["destinations.city.copenhagen", "Kopenhaga"],
+    ["destinations.city.abuDhabi", "Abu Zabi"],
+    ["destinations.card.subtitle", "Piękne widoki, loty, hotele i oferty"],
+    ["destinationsImageAltSuffix", "zdjęcie podróżnicze"],
+    ["destinationsCardAriaLabel", "Szukaj lotów do: {destination}"],
+    ["savedTripsPageTitle", "Zapisane podróże"],
+    ["savedTripsPageSubtitle", "Twoje wybrane plany podróży i popularne trasy."],
+    ["savedTripsEmptyTitle", "Zapisuj kierunki, które lubisz"],
+    [
+      "savedTripsEmptyDescription",
+      "Kliknij ikonę serca przy dowolnej trasie, aby utworzyć własną listę i mieć kolejną przygodę pod ręką.",
+    ],
+    ["savedTripsExploreDestinations", "Odkryj kierunki"],
+    ["savedTripsRecentSearchesTitle", "Ostatnie wyszukiwania"],
+    [
+      "savedTripsRecentSearchesSubtitle",
+      "Wróć do miejsca, w którym przerwałeś, i wyszukaj ponownie jednym kliknięciem.",
+    ],
+    ["savedTripsClearAllRecent", "Wyczyść ostatnie"],
+    ["savedTripsTypeFlight", "LOT"],
+    ["savedTripsRepeatSearch", "Powtórz wyszukiwanie"],
+  ];
+
+  for (const [key, expected] of auditedPolishKeys) {
+    assert.equal(pl[key], expected);
+    assert.notEqual(pl[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  assert.ok(languageOptions.some((o) => o.code === "pl" && o.direction === "ltr"));
+  assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
+});
+test("Polish destinations and saved trips route fixtures still use localized dictionaries without changing route data", () => {
+  const destinationsPageSource = readFileSync(new URL("../../app/destinations/page.tsx", import.meta.url), "utf8");
+  const savedPageSource = readFileSync(new URL("../../app/saved/page.tsx", import.meta.url), "utf8");
+  const savedComponentSource = readFileSync(new URL("../../components/saved/SavedTripsAndRecentSearches.tsx", import.meta.url), "utf8");
+
+  assert.ok(destinationsPageSource.includes("dictionary.destinationsHeroBadge"));
+  assert.ok(destinationsPageSource.includes("regionLabelKeys[section.region]"));
+  assert.ok(destinationsPageSource.includes("destinationNameKeys[destination.name]"));
+  assert.ok(destinationsPageSource.includes("destinationCountryKeys[destination.country]"));
+  assert.ok(destinationsPageSource.includes("dictionary[destination.tagKey]"));
+  assert.ok(destinationsPageSource.includes("dictionary[destinationSubtitleKey]"));
+  assert.ok(destinationsPageSource.includes("getDestinationHref(destination)"));
+  assert.ok(destinationsPageSource.includes("return `/flights?destination=${encodeURIComponent(destination.name)}`;"));
+
+  assert.ok(savedPageSource.includes("<SavedTripsAndRecentSearches />"));
+  assert.ok(savedComponentSource.includes('t("savedTripsPageTitle")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsEmptyTitle")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsExploreDestinations")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsRecentSearchesTitle")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsTypeFlight")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsRepeatSearch")'));
+  assert.ok(savedComponentSource.includes("readSavedTripIds()"));
+  assert.ok(savedComponentSource.includes("readRecentSearches()"));
+  assert.ok(savedComponentSource.includes('href: "/destinations"'));
+  assert.ok(savedComponentSource.includes('pathname: "/flights/results"'));
+});
+
 test("active locale dictionaries do not keep audited cross-language UI fallbacks", () => {
   const auditedValuesByLocale = {
     english: {
