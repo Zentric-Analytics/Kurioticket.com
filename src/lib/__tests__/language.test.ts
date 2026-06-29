@@ -4462,3 +4462,143 @@ test("Polish homepage discovery route search payloads remain route-data driven",
     },
   });
 });
+
+test("Polish service and support active render path copy resolves without English fallback", () => {
+  const pl = getTranslations("pl");
+  const supportContentSource = readFileSync("src/app/support/SupportContent.tsx", "utf8");
+  const supportFormSource = readFileSync("src/components/support/SupportForm.tsx", "utf8");
+  const serviceGuaranteeSource = readFileSync("src/app/service-guarantee/ServiceGuaranteeContent.tsx", "utf8");
+  const moreServiceInfoSource = readFileSync("src/app/more-service-info/MoreServiceInfoContent.tsx", "utf8");
+
+  const expectedSupport = {
+    supportEyebrow: "Centrum pomocy Kurioticket",
+    supportTitle: "Obsługa klienta",
+    supportBeforeContactHeading: "Zanim się z nami skontaktujesz",
+    supportBeforeContactDescription: "Podaj adres e-mail przypisany do konta Kurioticket, opisz, co próbowałeś zrobić, a także trasę lub hotel, jeśli ma to znaczenie, oraz stronę dostawcy, na którą Cię przekierowano. Nie wysyłaj pełnych numerów kart płatniczych ani poufnych numerów dokumentów podróży.",
+    supportTicketHeading: "Utwórz zgłoszenie do pomocy",
+    supportFormEmailLabel: "E-mail",
+    supportFormSubjectLabel: "Temat",
+    supportFormCategoryLabel: "Kategoria",
+    supportCategoryPriceAlerts: "Alerty cenowe",
+    supportFormMessageLabel: "Jak możemy pomóc?",
+    supportFormMessagePlaceholder: "Opisz trasę, hotel, alert lub kontekst konta.",
+    supportFormSubmit: "Wyślij zgłoszenie",
+    supportFaqHeading: "Często zadawane pytania",
+    supportFaqAccountQuestion: "Pomoc dotycząca konta i logowania",
+    supportFaqSearchQuestion: "Pomoc dotycząca wyszukiwania i wyników",
+    supportFaqSavedTripsQuestion: "Zapisane podróże i alerty",
+    supportFaqRedirectQuestion: "Pomoc dotycząca rezerwacji/przekierowania do dostawcy",
+    supportFaqAlreadyBookedQuestion: "Masz już rezerwację u dostawcy?",
+    supportFaqChangeBookingQuestion: "Czy Kurioticket może zmienić moją rezerwację?",
+    supportFaqWhyRedirectedQuestion: "Dlaczego przekierowano mnie do innego dostawcy?",
+  };
+
+  const expectedServiceGuarantee = {
+    serviceGuaranteeEyebrow: "Zobowiązanie serwisowe Kurioticket",
+    serviceGuaranteeTitle: "Gwarancja usług",
+    serviceGuaranteeDescription: "Chcemy, aby podróżni rozumieli, jak działa Kurioticket i czego mogą oczekiwać podczas korzystania z naszej platformy.",
+    serviceGuaranteeFaqHeading: "Często zadawane pytania",
+    serviceGuaranteeFaqDescription: "Te odpowiedzi wyjaśniają rolę Kurioticket jako platformy do wyszukiwania i porównywania podróży.",
+    serviceGuaranteeFaqWhatGuaranteeQuestion: "Co gwarantuje Kurioticket?",
+    serviceGuaranteeFaqResultsDisplayedQuestion: "Jak wyświetlane są wyniki podróży?",
+    serviceGuaranteeFaqRedirectedQuestion: "Dlaczego przekierowano mnie do innego dostawcy?",
+    serviceGuaranteeFaqBookDirectlyQuestion: "Czy rezerwuję bezpośrednio w Kurioticket?",
+    serviceGuaranteeFaqPricesGuaranteedQuestion: "Czy ceny są zawsze gwarantowane?",
+    serviceGuaranteeFaqChooseProvidersQuestion: "Jak Kurioticket wybiera dostawców?",
+    serviceGuaranteeFaqEncounterIssueQuestion: "Co zrobić, jeśli napotkam problem?",
+    serviceGuaranteeFaqContactSupportQuestion: "Jak skontaktować się z pomocą?",
+    serviceGuaranteeHelpCardTitle: "Potrzebujesz pomocy z kontem lub wyszukiwaniem?",
+    serviceGuaranteeSupportCta: "Skontaktuj się z obsługą klienta",
+  };
+
+  const expectedMoreServiceInfo = {
+    moreServiceInfoEyebrow: "Informacje o platformie",
+    moreServiceInfoTitle: "Więcej informacji o usługach",
+    moreServiceInfoDescription: "Dowiedz się, jak Kurioticket pomaga podróżnym wyszukiwać, porównywać, zapisywać i organizować opcje podróży od wielu dostawców w jednym miejscu.",
+    moreServiceInfoContextTitle: "Planuj z kontekstem",
+    moreServiceInfoContextSubtitle: "Od wyników wyszukiwania po przekierowania do dostawców",
+    moreServiceInfoContextCompare: "Porównuj opcje od wielu dostawców podróży.",
+    moreServiceInfoContextSave: "Zapisuj podróże, alerty i preferencje po zalogowaniu.",
+    moreServiceInfoContextContinue: "Sprawdź szczegóły u dostawcy przed dokonaniem rezerwacji poza Kurioticket.",
+    moreServiceInfoHowHeading: "Jak działa Kurioticket",
+    moreServiceInfoHowDescription: "Te informacje wyjaśniają rolę Kurioticket przed wyszukiwaniem podróży, w jego trakcie i po nim.",
+    moreServiceInfoHowBadge: "PODSTAWY PLANOWANIA PODRÓŻY",
+    moreServiceInfoStepSearchTitle: "Wyszukuj u wielu dostawców",
+    moreServiceInfoStepCompareTitle: "Porównuj opcje podróży",
+    moreServiceInfoStepSaveTitle: "Zapisuj podróże i alerty",
+    moreServiceInfoStepRedirectsTitle: "Wyjaśnienie przekierowań do dostawców",
+    moreServiceInfoStepAccountTitle: "Konto i narzędzia podróży",
+    moreServiceInfoFaqHeading: "Często zadawane pytania",
+    moreServiceInfoFaqDescription: "Krótkie odpowiedzi o wyszukiwaniu podróży, przekierowaniach do dostawców, zapisanych podróżach i narzędziach konta.",
+    moreServiceInfoFaqWhatQuestion: "Czym jest Kurioticket?",
+    moreServiceInfoFaqSearchQuestion: "Jak działa wyszukiwanie podróży?",
+    moreServiceInfoFaqPaymentsQuestion: "Czy Kurioticket przetwarza płatności?",
+    moreServiceInfoFaqSaveQuestion: "Czy mogę zapisywać podróże i alerty?",
+    moreServiceInfoFaqAccountQuestion: "Czy konto jest wymagane?",
+    moreServiceInfoHelpTitle: "Potrzebujesz pomocy?",
+    moreServiceInfoHelpDescription: "Masz pytania dotyczące konta, zapisanych podróży, alertów lub przekierowań do dostawców?",
+    moreServiceInfoSupportCta: "Skontaktuj się z obsługą klienta",
+  };
+
+  for (const expected of [expectedSupport, expectedServiceGuarantee, expectedMoreServiceInfo]) {
+    for (const [key, value] of Object.entries(expected)) {
+      assert.equal(pl[key], value, key);
+      assert.notEqual(pl[key], enTranslations[key], key);
+    }
+  }
+
+  const hiddenAnswerKeys = [
+    "supportFaqAccountAnswer",
+    "supportFaqSearchAnswer",
+    "supportFaqSavedTripsAnswer",
+    "supportFaqRedirectAnswer",
+    "supportFaqAlreadyBookedAnswer",
+    "supportFaqChangeBookingAnswer",
+    "supportFaqWhyRedirectedAnswer",
+    "serviceGuaranteeFaqWhatGuaranteeAnswer",
+    "serviceGuaranteeFaqResultsDisplayedAnswer",
+    "serviceGuaranteeFaqRedirectedAnswer",
+    "serviceGuaranteeFaqBookDirectlyAnswer",
+    "serviceGuaranteeFaqPricesGuaranteedAnswer",
+    "serviceGuaranteeFaqChooseProvidersAnswer",
+    "serviceGuaranteeFaqEncounterIssueAnswer",
+    "serviceGuaranteeFaqContactSupportAnswer",
+    "moreServiceInfoStepSearchSummary",
+    "moreServiceInfoStepSearchDetails",
+    "moreServiceInfoStepCompareSummary",
+    "moreServiceInfoStepCompareDetails",
+    "moreServiceInfoStepSaveSummary",
+    "moreServiceInfoStepSaveDetails",
+    "moreServiceInfoStepRedirectsSummary",
+    "moreServiceInfoStepRedirectsDetails",
+    "moreServiceInfoStepAccountSummary",
+    "moreServiceInfoStepAccountDetails",
+    "moreServiceInfoFaqWhatAnswer",
+    "moreServiceInfoFaqSearchAnswer",
+    "moreServiceInfoFaqRedirectAnswer",
+    "moreServiceInfoFaqPaymentsAnswer",
+    "moreServiceInfoFaqSaveAnswer",
+    "moreServiceInfoFaqAccountAnswer",
+    "moreServiceInfoFaqSupportAnswer",
+  ];
+
+  for (const key of hiddenAnswerKeys) {
+    assert.ok(pl[key], key);
+    assert.notEqual(pl[key], enTranslations[key], key);
+  }
+
+  assert.ok(supportContentSource.includes('t("supportEyebrow")'));
+  assert.ok(supportContentSource.includes('t("supportBeforeContactHeading")'));
+  assert.ok(supportContentSource.includes('supportFaqKeys.map'));
+  assert.ok(supportFormSource.includes('fetch("/api/support/tickets"'));
+  assert.ok(supportFormSource.includes('name="email" type="email"'));
+  assert.ok(supportFormSource.includes('value="price-alerts"'));
+  assert.ok(serviceGuaranteeSource.includes('serviceFaqKeys.map'));
+  assert.ok(serviceGuaranteeSource.includes('href="/support"'));
+  assert.ok(moreServiceInfoSource.includes('serviceSections.map'));
+  assert.ok(moreServiceInfoSource.includes('serviceFaqs.map'));
+  assert.ok(moreServiceInfoSource.includes('href="/support"'));
+
+  assert.ok(languageOptions.some((o) => o.code === "pl" && o.direction === "ltr"));
+  assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
+});
