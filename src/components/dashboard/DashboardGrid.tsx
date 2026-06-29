@@ -2108,7 +2108,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
         )}
       >
         {isEditing ? (
-          <div className="relative flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <div className="relative flex flex-row items-center justify-end gap-3">
             {personalDetailsSaveMessage ? (
               <p
                 className="pointer-events-none absolute bottom-full right-0 mb-3 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-lg"
@@ -2122,7 +2122,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
               type="button"
               onClick={handleCancel}
               disabled={isSaving}
-              className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+              className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {t["accountDashboard.personalDetails.cancel"]}
             </button>
@@ -2130,7 +2130,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
               type="button"
               onClick={handleSave}
               disabled={isSaving || !hasUnsavedProfileChanges}
-              className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-100 disabled:text-blue-700 sm:w-auto"
+              className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-100 disabled:text-blue-700"
             >
               {isSaving
                 ? t["accountDashboard.personalDetails.saving"] || "Saving…"
@@ -2142,7 +2142,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
             <button
               type="button"
               onClick={handleEdit}
-              className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-blue-700 bg-white px-5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 sm:w-auto"
+              className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-blue-700 bg-white px-5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
             >
               {t["accountDashboard.personalDetails.edit"]}
             </button>
