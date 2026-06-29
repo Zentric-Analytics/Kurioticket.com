@@ -4156,6 +4156,126 @@ test("Turkish cars landing render path copy resolves without English fallback", 
   );
 });
 
+
+test("Polish cars landing render path copy resolves without English fallback", () => {
+  const pl = getTranslations("pl");
+  const auditedPolishCarsLandingKeys: Array<[string, string]> = [
+    ["searchRentalCarsEveryPartTrip", "Wyszukaj samochody na każdy etap podróży"],
+    ["carsSearch.pickupLocationLabel", "MIEJSCE ODBIORU"],
+    ["carsSearch.pickupLocationPlaceholder", "Lotnisko, miasto lub adres"],
+    ["carsSearch.returnLocationPlaceholder", "Miasto, lotnisko lub adres zwrotu"],
+    ["carsSearch.returnToSameLocation", "Zwrot w tym samym miejscu"],
+    ["carsSearch.differentReturnLocation", "Inne miejsce zwrotu"],
+    ["carsSearch.rentalDatesLabel", "DATY WYNAJMU"],
+    ["carsSearch.rentalDatePlaceholder", "Data odbioru — data zwrotu"],
+    ["carsSearch.pickupReturnTimeLabel", "GODZINA ODBIORU / ZWROTU"],
+    ["carsSearch.pickupReturnTimeSummary", "Odbiór {pickupTime} — zwrot {returnTime}"],
+    ["carsSearch.driverAgeLabel", "WIEK KIEROWCY"],
+    ["carsSearch.driverAgeAnyAge", "Dowolny wiek"],
+    ["carsSearch.chooseRentalDates", "Wybierz daty wynajmu"],
+    ["carsSearch.previousMonthShort", "Poprzedni"],
+    ["carsSearch.nextMonthShort", "Następny"],
+    ["carsSearch.rentalDatePickerAria", "Wybór dat wynajmu"],
+    ["exploreCarsByTripStyle", "Odkrywaj samochody według stylu podróży"],
+    ["carsTripStyleBody", "Wybierz typ samochodu, a otworzymy wyniki z gotowym kontekstem wyszukiwania."],
+    ["carsTripStyle.economy.title", "Samochody ekonomiczne"],
+    ["carsTripStyle.economy.subtitle", "Przystępne wyszukiwania do miasta i podróży solo"],
+    ["carsTripStyle.economy.cta", "Rozpocznij wyszukiwanie samochodu ekonomicznego"],
+    ["carsTripStyle.suv.title", "SUV-y"],
+    ["carsTripStyle.suv.subtitle", "Więcej miejsca na rodzinne wyjazdy, bagaż i dłuższe trasy"],
+    ["carsTripStyle.suv.cta", "Otwórz wyszukiwanie wynajmu SUV-a"],
+    ["carsTripStyle.luxury.title", "Samochody luksusowe"],
+    ["carsTripStyle.luxury.subtitle", "Kontekst premium dla podróży służbowych lub wyjątkowych wyjazdów"],
+    ["carsTripStyle.luxury.cta", "Zaplanuj wyszukiwanie luksusowego samochodu"],
+    ["carsTripStyle.van.title", "Vany"],
+    ["carsTripStyle.van.subtitle", "Kontekst wyszukiwania dla podróży grupowych i rodzinnego bagażu"],
+    ["carsTripStyle.van.cta", "Szukaj vanów na podróże grupowe"],
+    ["carsTrust.0.title", "Stworzone z myślą o pełnych podróżach"],
+    ["carsTrust.0.description", "Planuj loty, pobyty i transport naziemny w jednym procesie Kurioticket."],
+    ["carsTrust.1.title", "Najpierw szczegóły odbioru"],
+    ["carsTrust.1.description", "Podaj miejsce odbioru, daty, godziny i wiek kierowcy, aby wyszukiwanie wynajmu zaczęło się od właściwych szczegółów podróży."],
+    ["carsTrust.2.title", "Jasne sprawdzenie wynajmu"],
+    ["carsTrust.2.description", "Przed rezerwacją sprawdź u dostawcy ostateczną cenę, dostępność, opłaty i zasady wynajmu."],
+    ["carsPickupPointsTitle", "Zacznij od popularnych miejsc odbioru samochodu"],
+    ["carsPickupPointsBody", "Wybierz styl odbioru, a otworzymy stronę wyników samochodów z gotowymi szczegółami wyszukiwania."],
+    ["carsPickup.Airport.title", "Odbiór na lotnisku"],
+    ["carsPickup.Airport.subtitle", "Rozpocznij od głównych punktów przylotów na lotniskach"],
+    ["carsPickup.City center.title", "Odbiór w centrum miasta"],
+    ["carsPickup.City center.subtitle", "Odbierz samochód blisko hoteli w centrum i dzielnic biznesowych"],
+    ["carsPickup.Train station.title", "Odbiór przy dworcu kolejowym"],
+    ["carsPickup.Train station.subtitle", "Kontynuuj podróż po przyjeździe pociągiem"],
+    ["carsPickup.Hotel area.title", "Odbiór w okolicy hotelu"],
+    ["carsPickup.Hotel area.subtitle", "Zaplanuj odbiór samochodu w pobliżu miejsca pobytu"],
+    ["carsFaq.heading", "Najczęstsze pytania o samochody"],
+    ["carsFaq.0.question", "Jakich informacji potrzebuję, aby wyszukać samochód na wynajem?"],
+    ["carsFaq.0.answer", "Podaj miejsce odbioru, daty odbioru i zwrotu, godziny odbioru i zwrotu, wiek kierowcy oraz informację, czy planujesz zwrócić samochód w innym miejscu."],
+    ["carsFaq.1.question", "Czy mogę zwrócić samochód w innym miejscu?"],
+    ["carsFaq.1.answer", "Tak. W formularzu wyszukiwania wybierz inne miejsce zwrotu i wpisz miasto, lotnisko lub adres, pod którym planujesz zwrócić samochód."],
+    ["carsFaq.2.question", "Dlaczego wiek kierowcy ma znaczenie przy wynajmie samochodu?"],
+    ["carsFaq.2.answer", "Dostawcy wynajmu mogą stosować różne zasady, opłaty, wymagania dotyczące dostępnych pojazdów lub kaucji zależnie od wieku kierowcy i lokalizacji."],
+    ["carsFaq.3.question", "Co sprawdzić przed rezerwacją samochodu na wynajem?"],
+    ["carsFaq.3.answer", "Przed rezerwacją sprawdź miejsce odbioru i zwrotu, daty, godziny, limit kilometrów, politykę paliwową, opcje ubezpieczenia, warunki anulowania, wymagania dotyczące kaucji i potrzebne dokumenty."],
+    ["carsFaq.4.question", "Gdzie potwierdzana jest ostateczna cena wynajmu?"],
+    ["carsFaq.4.answer", "Ostateczna cena, dostępność pojazdu, podatki, opłaty, wymagania dotyczące kaucji i zasady wynajmu są potwierdzane przez dostawcę przed rezerwacją."],
+    ["carsFaq.5.question", "Jakie dokumenty mogą być potrzebne przy odbiorze?"],
+    ["carsFaq.5.answer", "Dostawcy wynajmu mogą wymagać ważnego prawa jazdy, karty płatniczej, dokumentu tożsamości oraz dokumentów wymaganych w kraju lub miejscu odbioru."],
+  ];
+
+  for (const [key, expected] of auditedPolishCarsLandingKeys) {
+    assert.equal(pl[key], expected, `${key} should resolve to Polish`);
+    assert.notEqual(pl[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  assert.equal(
+    pl["carsSearch.pickupReturnTimeSummary"].replace("{pickupTime}", "10:00").replace("{returnTime}", "10:00"),
+    "Odbiór 10:00 — zwrot 10:00",
+  );
+
+  const carsPageSource = readFileSync("src/app/cars/page.tsx", "utf8");
+  const carsLandingContentSource = readFileSync("src/data/carsLandingContent.ts", "utf8");
+  for (const key of ["searchRentalCarsEveryPartTrip", "carsSearch.pickupLocationLabel", "carsSearch.chooseRentalDates", "exploreCarsByTripStyle", "carsPickupPointsTitle", "carsFaq.heading"]) {
+    assert.ok(carsPageSource.includes(`t("${key}")`) || carsPageSource.includes(`dictionary[item.questionKey]`), `Cars landing render path should resolve ${key} through i18n`);
+  }
+  assert.ok(
+    carsPageSource.includes("buildCarResultsHref") &&
+      carsPageSource.includes("pickupLocation: card.pickupLocation") &&
+      carsPageSource.includes("vehicleType: card.vehicleType") &&
+      carsPageSource.includes("returnToDifferentLocation") &&
+      carsPageSource.includes("visibleMonthDate") &&
+      carsLandingContentSource.includes('translationKey: "carsTripStyle.economy"') &&
+      carsLandingContentSource.includes('vehicleType: "economy"') &&
+      carsLandingContentSource.includes('pickupLocation: "City center"') &&
+      carsLandingContentSource.includes('translationKey: "carsPickup.Airport"') &&
+      carsLandingContentSource.includes('href={card.href}') === false,
+    "Cars landing should keep raw pickup/search values, vehicle types, card IDs, image URLs, query builders, selected values, datepicker behavior, different-return behavior, order, and layout source paths intact.",
+  );
+  assert.ok(
+    !carsPageSource.includes("Search rental cars for every part of your trip") &&
+      !carsPageSource.includes("Explore rental cars by trip style") &&
+      !carsPageSource.includes("Start with popular car pickup points"),
+    "Cars landing render path should not hard-code screenshot-visible English copy.",
+  );
+  assert.ok(languageOptions.some((option) => option.code === "pl" && option.direction === "ltr"));
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+});
+
+test("Polish cars calendar locale normalizes to pl-PL for generated datepicker labels", () => {
+  const carsPageSource = readFileSync("src/app/cars/page.tsx", "utf8");
+
+  assert.ok(
+    carsPageSource.includes('normalizedLocale.startsWith("pl")') && carsPageSource.includes('return "pl-PL"'),
+    "Cars datepicker locale helper should normalize Polish locales to pl-PL.",
+  );
+  assert.equal(
+    new Intl.DateTimeFormat("pl-PL", { month: "long", year: "numeric" }).format(new Date(2026, 5, 1)),
+    "czerwiec 2026",
+  );
+  assert.deepEqual(
+    Array.from({ length: 7 }, (_, day) => new Intl.DateTimeFormat("pl-PL", { weekday: "short" }).format(new Date(2024, 0, 7 + day))),
+    ["niedz.", "pon.", "wt.", "śr.", "czw.", "pt.", "sob."],
+  );
+});
+
 test("Turkish cars calendar locale normalizes to tr-TR for generated datepicker labels", () => {
   const carsPageSource = readFileSync("src/app/cars/page.tsx", "utf8");
 
