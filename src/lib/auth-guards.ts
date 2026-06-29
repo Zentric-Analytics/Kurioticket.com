@@ -31,6 +31,10 @@ export async function requireUserSession(
     );
   }
 
+  if (session.user.twoFactorEnabled && !session.user.twoFactorVerified) {
+    redirect(`/auth/two-factor?callbackUrl=${encodeURIComponent(pathname)}`);
+  }
+
   if (session.user.status === "PENDING_DELETION") {
     redirect("/account/pending-deletion");
   }

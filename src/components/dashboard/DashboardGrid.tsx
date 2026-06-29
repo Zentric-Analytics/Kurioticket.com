@@ -33,9 +33,11 @@ type TwoFactorStatus = {
   method: string | null;
   enabledAt: string | null;
   disabledAt: string | null;
+  recoveryCodesRemaining?: number;
 };
 
-type TwoFactorMode = "enable" | "disable";
+type TotpSetup = { otpauthUri: string; manualSetupKey: string; expiresAt: string };
+type TwoFactorMode = "setup" | "disable" | "recovery";
 
 type AccountSessionActivity = {
   id: string;
@@ -1777,10 +1779,12 @@ export function SecurityDashboardPage() {
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [deleteRequestSaving, setDeleteRequestSaving] = useState(false);
   const [securityEmailAlerts, setSecurityEmailAlerts] = useState(true);
-  const [twoFactor, setTwoFactor] = useState<TwoFactorStatus>({ enabled: false, method: null, enabledAt: null, disabledAt: null });
+  const [twoFactor, setTwoFactor] = useState<TwoFactorStatus>({ enabled: false, method: null, enabledAt: null, disabledAt: null, recoveryCodesRemaining: 0 });
   const [twoFactorModal, setTwoFactorModal] = useState<TwoFactorMode | null>(null);
   const [twoFactorCode, setTwoFactorCode] = useState("");
   const [twoFactorPassword, setTwoFactorPassword] = useState("");
+  const [totpSetup, setTotpSetup] = useState<TotpSetup | null>(null);
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
   const [twoFactorSaving, setTwoFactorSaving] = useState(false);
   const [preferencesLoading, setPreferencesLoading] = useState(true);
   const [preferencesSaving, setPreferencesSaving] = useState(false);
@@ -1948,14 +1952,18 @@ export function SecurityDashboardPage() {
     setTwoFactorModal(mode);
     setTwoFactorCode("");
     setTwoFactorPassword("");
+    setTotpSetup(null);
+    setRecoveryCodes([]);
     setActionMessage("");
+    if (mode !== "setup") return;
     setTwoFactorSaving(true);
     try {
-      const response = await fetch(`/api/account/security/two-factor/${mode}/request`, { method: "POST", credentials: "same-origin" });
+      const response = await fetch("/api/account/security/two-factor/setup", { method: "POST", credentials: "same-origin" });
       const data = await response.json().catch(() => ({}));
-      setActionMessage(response.ok ? (data.recentlySent ? "A verification code was already sent recently." : "Verification code sent to your email.") : data.error || "Unable to send verification code.");
+      if (!response.ok) setActionMessage(data.error || "Unable to start authenticator setup.");
+      else setTotpSetup(data.setup);
     } catch {
-      setActionMessage("Unable to send verification code.");
+      setActionMessage("Unable to start authenticator setup.");
     } finally {
       setTwoFactorSaving(false);
     }
@@ -1967,8 +1975,9 @@ export function SecurityDashboardPage() {
     setTwoFactorSaving(true);
     setActionMessage("");
     try {
-      const body = twoFactorModal === "enable" ? { code: twoFactorCode } : { code: twoFactorCode || undefined, password: twoFactorPassword || undefined };
-      const response = await fetch(`/api/account/security/two-factor/${twoFactorModal}/confirm`, {
+      const body = twoFactorModal === "disable" ? { code: twoFactorCode || undefined, password: twoFactorPassword || undefined } : { code: twoFactorCode };
+      const endpoint = twoFactorModal === "setup" ? "/api/account/security/two-factor/confirm" : twoFactorModal === "recovery" ? "/api/account/security/two-factor/recovery-codes/regenerate" : "/api/account/security/two-factor/disable";
+      const response = await fetch(endpoint, {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
@@ -1980,10 +1989,11 @@ export function SecurityDashboardPage() {
         return;
       }
       setTwoFactor(data.twoFactor);
-      setTwoFactorModal(null);
+      setRecoveryCodes(Array.isArray(data.recoveryCodes) ? data.recoveryCodes : []);
+      if (!Array.isArray(data.recoveryCodes)) setTwoFactorModal(null);
       setTwoFactorCode("");
       setTwoFactorPassword("");
-      setActionMessage(twoFactorModal === "enable" ? "Two-factor authentication is enabled." : "Two-factor authentication is disabled.");
+      setActionMessage(twoFactorModal === "setup" ? "Two-factor authentication is enabled. Save your recovery codes now." : twoFactorModal === "recovery" ? "Recovery codes regenerated. Save them now." : "Two-factor authentication is disabled.");
     } catch {
       setActionMessage("Unable to update two-factor authentication.");
     } finally {
@@ -2071,10 +2081,10 @@ export function SecurityDashboardPage() {
           />
           <SecuritySettingRow
             title={tx("accountDashboard.security.twoFactor.title", "Two-factor authentication")}
-            body="Require an email verification code after password or Google sign-in. Method: Email code."
-            status={twoFactor.enabled ? "Enabled · Email code" : "Not enabled"}
-            action={twoFactor.enabled ? "Disable" : "Enable"}
-            onAction={() => void openTwoFactorModal(twoFactor.enabled ? "disable" : "enable")}
+            body={twoFactor.enabled ? `Authenticator app is required at sign-in. Recovery codes remaining: ${twoFactor.recoveryCodesRemaining ?? 0}.` : "Use Google Authenticator, Microsoft Authenticator, 1Password, Bitwarden, Authy, 2FAS, or another TOTP app."}
+            status={twoFactor.enabled ? "Enabled · Authenticator app" : "Not enabled"}
+            action={twoFactor.enabled ? "Disable" : "Set up"}
+            onAction={() => void openTwoFactorModal(twoFactor.enabled ? "disable" : "setup")}
             statusId={securityActionStatusId}
           />
           <SecuritySettingRow
@@ -2147,22 +2157,23 @@ export function SecurityDashboardPage() {
 
       {twoFactorModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="two-factor-title">
-          <form onSubmit={handleTwoFactorConfirm} className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h2 id="two-factor-title" className="text-xl font-semibold text-slate-950">{twoFactorModal === "enable" ? "Enable two-factor authentication" : "Disable two-factor authentication"}</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">{twoFactorModal === "enable" ? "We sent a 6-digit code to your account email. After enabling, future sign-ins will require an email code." : "Disabling two-factor authentication reduces account protection. Enter the email code we sent, or confirm with your current password."}</p>
-            <div className="mt-5 space-y-4">
-              <label className="block text-sm font-medium text-slate-800">Email verification code
-                <input value={twoFactorCode} onChange={(event) => setTwoFactorCode(event.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" maxLength={6} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="123456" />
-              </label>
-              {twoFactorModal === "disable" ? (
-                <label className="block text-sm font-medium text-slate-800">Or current password
-                  <input type="password" value={twoFactorPassword} onChange={(event) => setTwoFactorPassword(event.target.value)} autoComplete="current-password" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <form onSubmit={handleTwoFactorConfirm} className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+            <h2 id="two-factor-title" className="text-xl font-semibold text-slate-950">{twoFactorModal === "setup" ? "Set up authenticator app" : twoFactorModal === "recovery" ? "Regenerate recovery codes" : "Disable two-factor authentication"}</h2>
+            {recoveryCodes.length > 0 ? (
+              <div className="mt-5 space-y-4"><p className="rounded-xl bg-amber-50 p-3 text-sm font-semibold text-amber-800">Save these recovery codes now. They will not be shown again.</p><div className="grid grid-cols-1 gap-2 sm:grid-cols-2">{recoveryCodes.map((code) => <code key={code} className="rounded-lg bg-slate-100 px-3 py-2 text-center text-sm font-bold text-slate-900">{code}</code>)}</div><button type="button" onClick={() => void navigator.clipboard?.writeText(recoveryCodes.join("\n"))} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Copy codes</button></div>
+            ) : (
+              <><p className="mt-2 text-sm leading-6 text-slate-600">{twoFactorModal === "setup" ? "Scan the QR code with an authenticator app, or enter the manual setup key. Then enter the current 6-digit code." : twoFactorModal === "recovery" ? "Enter a current authenticator app code to replace your recovery codes." : "Disabling 2FA reduces account protection. Verify with your authenticator/recovery code, or your current password."}</p>
+              {twoFactorModal === "setup" && totpSetup ? <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-center"><img alt="Authenticator app QR code" className="mx-auto h-48 w-48 rounded-lg bg-white p-2" src={`https://api.qrserver.com/v1/create-qr-code/?size=192x192&data=${encodeURIComponent(totpSetup.otpauthUri)}`} /><p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Manual setup key</p><code className="mt-1 block break-all rounded-lg bg-white px-3 py-2 text-sm font-bold text-slate-900">{totpSetup.manualSetupKey}</code></div> : null}
+              <div className="mt-5 space-y-4">
+                <label className="block text-sm font-medium text-slate-800">{twoFactorModal === "disable" ? "Authenticator or recovery code" : "Authenticator code"}
+                  <input value={twoFactorCode} onChange={(event) => setTwoFactorCode(event.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 32))} autoComplete="one-time-code" maxLength={32} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="123456" />
                 </label>
-              ) : null}
-            </div>
+                {twoFactorModal === "disable" ? <label className="block text-sm font-medium text-slate-800">Or current password<input type="password" value={twoFactorPassword} onChange={(event) => setTwoFactorPassword(event.target.value)} autoComplete="current-password" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label> : null}
+              </div></>
+            )}
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-              <button type="button" onClick={() => setTwoFactorModal(null)} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button>
-              <button type="submit" disabled={twoFactorSaving || (twoFactorModal === "enable" ? twoFactorCode.length !== 6 : !twoFactorPassword && twoFactorCode.length !== 6)} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{twoFactorSaving ? "Verifying…" : twoFactorModal === "enable" ? "Enable 2FA" : "Disable 2FA"}</button>
+              <button type="button" onClick={() => setTwoFactorModal(null)} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">{recoveryCodes.length > 0 ? "Done" : "Cancel"}</button>
+              {recoveryCodes.length === 0 ? <button type="submit" disabled={twoFactorSaving || (twoFactorModal === "setup" ? twoFactorCode.length !== 6 || !totpSetup : twoFactorModal === "recovery" ? twoFactorCode.length !== 6 : !twoFactorPassword && twoFactorCode.length < 6)} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{twoFactorSaving ? "Verifying…" : twoFactorModal === "setup" ? "Confirm and enable" : twoFactorModal === "recovery" ? "Regenerate codes" : "Disable 2FA"}</button> : null}
             </div>
           </form>
         </div>
