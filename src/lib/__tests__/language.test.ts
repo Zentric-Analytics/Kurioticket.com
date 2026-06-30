@@ -7250,6 +7250,138 @@ test("Swedish Flights landing copy resolves through active render path", () => {
 });
 
 
+
+test("Indonesian auth, language, and country/currency copy resolves without English fallback", () => {
+  const id = getTranslations("id-ID");
+  const expected: Record<string, string> = {
+    login: "Masuk",
+    signUp: "Daftar",
+    signupPageTitle: "Buat akun Anda",
+    signupFullNameLabel: "Nama lengkap",
+    signupEmailLabel: "Email",
+    signupPasswordLabel: "Kata sandi",
+    signupAgreementBeforeTerms: "Dengan membuat akun, Anda menyetujui ",
+    signupTermsLink: "Ketentuan",
+    signupAgreementBetweenLinks: ", ",
+    signupPrivacyPolicyLink: "Kebijakan Privasi",
+    signupAgreementAfterPrivacy: ", dan pengungkapan pengalihan mitra.",
+    signupSubmit: "Daftar",
+    signupCreatingAccount: "Membuat akun...",
+    signupGoogle: "Lanjutkan dengan Google",
+    signupAlreadyHaveAccount: "Sudah punya akun?",
+    signupLoginLink: "Masuk",
+    loginPageTitle: "Masuk",
+    loginPageSubtitle: "Simpan pencarian, kelola notifikasi, dan akses dasbor perjalanan Anda.",
+    loginEmailLabel: "Email",
+    loginPasswordLabel: "Kata sandi",
+    loginForgotPassword: "Lupa kata sandi?",
+    loginSubmit: "Masuk",
+    loginCheckingDetails: "Memeriksa detail...",
+    loginGoogle: "Lanjutkan dengan Google",
+    loginDivider: "ATAU",
+    loginSignupPrompt: "Baru di Kurioticket?",
+    loginCreateAccount: "Buat akun",
+    loginCodeSent: "Kami telah mengirimkan kode verifikasi ke email Anda.",
+    loginCodeInstructions: "Masukkan kode 6 digit yang dikirim ke {{email}}. Kode berlaku selama {{minutes}} menit.",
+    loginVerificationCodeLabel: "Kode verifikasi",
+    loginVerifying: "Memverifikasi...",
+    loginVerifyLogin: "Verifikasi masuk",
+    loginSendingCode: "Mengirim...",
+    loginResendIn: "Kirim ulang dalam {{seconds}} dtk",
+    loginUseDifferentDetails: "Gunakan detail lain",
+    forgotPasswordTitle: "Atur ulang kata sandi Anda",
+    forgotPasswordSubtitle: "Masukkan email Anda dan kami akan mengirimkan instruksi untuk mengatur ulang kata sandi.",
+    forgotPasswordEmailLabel: "Email",
+    forgotPasswordEmailPlaceholder: "anda@example.com",
+    forgotPasswordSuccess: "Jika akun tersedia, kami telah mengirimkan instruksi reset kata sandi.",
+    forgotPasswordSending: "Mengirim...",
+    forgotPasswordSubmit: "Kirim tautan reset",
+    forgotPasswordRemember: "Ingat kata sandi Anda?",
+    forgotPasswordLoginLink: "Masuk",
+    resetPasswordTitle: "Atur ulang kata sandi Anda",
+    resetPasswordRemember: "Ingat kata sandi Anda?",
+    resetPasswordLoginLink: "Masuk",
+    verifyEmailTitle: "Verifikasi email Anda",
+    verifyEmailInstructions: "Masukkan kode 6 digit yang kami kirim ke email Anda. Kode berlaku selama 10 menit.",
+    verifyEmailCodeLabel: "Kode verifikasi",
+    verifyEmailVerifying: "Memverifikasi...",
+    verifyEmailSubmit: "Verifikasi email",
+    verifyEmailSending: "Mengirim...",
+    verifyEmailSendNewCode: "Kirim kode baru",
+    verifyEmailAlreadyVerified: "Sudah diverifikasi?",
+    verifyEmailLoginLink: "Masuk",
+    verifyLoginTitle: "Verifikasi masuk Anda",
+    verifyLoginInstructions: "Masukkan kode 6 digit yang kami kirim ke email Anda. Kode berlaku selama 10 menit.",
+    verifyLoginCodeLabel: "Kode verifikasi",
+    verifyLoginSubmit: "Verifikasi masuk",
+    openLanguagePreferences: "Buka preferensi bahasa, bahasa saat ini {{language}}",
+    websiteLanguageTitle: "Pilih bahasa situs web Anda",
+    websiteLanguageDescription: "Bahasa Inggris (Amerika Serikat) adalah bahasa bawaan situs web. Kurioticket hanya mengubah bahasa setelah Anda memilih opsi yang tersedia.",
+    currentLanguage: "Bahasa saat ini: {{language}}",
+    languagePreparingNotice: "Bahasa lainnya sedang disiapkan. Opsi yang belum tersedia belum menerjemahkan situs.",
+    languageSearchLabel: "Cari bahasa",
+    languageSearchPlaceholder: "Cari English, Español, Français, Deutsch...",
+    globalLanguage: "BAHASA GLOBAL",
+    chooseCountryAndCurrency: "Pilih negara dan mata uang",
+    countryCurrencyDescription: "Pilih negara dan mata uang yang digunakan untuk menampilkan harga. Saran bandara menggunakan lokasi yang terdeteksi.",
+    searchCountryOrCurrency: "Cari negara atau mata uang",
+    countryCurrencyPopularCountryAndCurrency: "NEGARA DAN MATA UANG POPULER",
+    countryCurrencyAllCountriesAndCurrencies: "SEMUA NEGARA DAN MATA UANG",
+    showMoreResults: "Tampilkan hasil lainnya",
+    countryCurrencyOptionCountSingular: "{{count}} opsi",
+    countryCurrencyOptionCountPlural: "{{count}} opsi",
+  };
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(id[key], value, key);
+    if (value !== enTranslations[key]) assert.notEqual(id[key], enTranslations[key], key);
+  }
+
+  assert.equal(id.currentLanguage.replace("{{language}}", "Bahasa Indonesia"), "Bahasa saat ini: Bahasa Indonesia");
+  assert.match(id.loginCodeInstructions, /\{\{email\}\}/);
+  assert.match(id.loginCodeInstructions, /\{\{minutes\}\}/);
+  assert.match(id.loginResendIn, /\{\{seconds\}\}/);
+  assert.equal(id.loginCodeInstructions.replace("{{email}}", "user@example.com").replace("{{minutes}}", "10"), "Masukkan kode 6 digit yang dikirim ke user@example.com. Kode berlaku selama 10 menit.");
+  assert.equal(id.loginResendIn.replace("{{seconds}}", "30"), "Kirim ulang dalam 30 dtk");
+  assert.ok(languageOptions.some((o) => o.code === "id" && o.locale === "id-ID" && o.nativeLabel === "Bahasa Indonesia" && o.direction === "ltr"));
+  assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
+});
+
+test("Indonesian auth and global modal render paths use corrected i18n keys without active English literals", () => {
+  const headerSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
+  const countryCurrencySource = readFileSync("src/components/region/CountryCurrencySelector.tsx", "utf8");
+  const signinSource = readFileSync("src/components/auth/SigninForm.tsx", "utf8");
+  const forgotSource = readFileSync("src/components/auth/ForgotPasswordForm.tsx", "utf8");
+  const signupSource = readFileSync("src/components/auth/SignupForm.tsx", "utf8");
+  const verifyEmailSource = readFileSync("src/components/auth/VerifyEmailForm.tsx", "utf8");
+  const verifyLoginSource = readFileSync("src/components/auth/VerifyLoginForm.tsx", "utf8");
+
+  for (const key of ["login", "signUp", "globalLanguage", "websiteLanguageTitle", "websiteLanguageDescription", "currentLanguage", "languagePreparingNotice", "languageSearchLabel", "languageSearchPlaceholder"]) assert.match(headerSource, new RegExp(`t\\.${key}`), key);
+  for (const key of ["chooseCountryAndCurrency", "countryCurrencyDescription", "searchCountryOrCurrency", "countryCurrencyAllCountriesAndCurrencies", "countryCurrencyPopularCountryAndCurrency", "countryCurrencyOptionCountSingular", "countryCurrencyOptionCountPlural", "showMoreResults"]) assert.match(countryCurrencySource, new RegExp(`t\\.${key}`), key);
+  for (const key of ["loginPageTitle", "loginPageSubtitle", "loginEmailLabel", "loginPasswordLabel", "loginForgotPassword", "loginSubmit", "loginCheckingDetails", "loginDivider", "loginGoogle", "loginSignupPrompt", "loginCreateAccount", "loginCodeSent", "loginCodeInstructions", "loginVerificationCodeLabel", "loginVerifyLogin", "loginResendIn", "loginUseDifferentDetails"]) assert.match(signinSource, new RegExp(`t\\.${key}|key: "${key}"`), key);
+  for (const key of ["forgotPasswordTitle", "forgotPasswordSubtitle", "forgotPasswordEmailLabel", "forgotPasswordEmailPlaceholder", "forgotPasswordSending", "forgotPasswordSubmit", "forgotPasswordRemember", "forgotPasswordLoginLink", "forgotPasswordSuccess"]) assert.match(forgotSource, new RegExp(`t\\.${key}`), key);
+  for (const key of ["signupPageTitle", "signupFullNameLabel", "signupEmailLabel", "signupPasswordLabel", "signupAgreementBeforeTerms", "signupTermsLink", "signupAgreementBetweenLinks", "signupPrivacyPolicyLink", "signupAgreementAfterPrivacy", "signupSubmit", "signupCreatingAccount", "signupGoogle", "signupAlreadyHaveAccount", "signupLoginLink"]) assert.match(signupSource, new RegExp(`t\\.${key}`), key);
+  for (const key of ["verifyEmailTitle", "verifyEmailInstructions", "verifyEmailCodeLabel", "verifyEmailVerifying", "verifyEmailSubmit", "verifyEmailSending", "verifyEmailSendNewCode", "verifyEmailAlreadyVerified", "verifyEmailLoginLink"]) assert.match(verifyEmailSource, new RegExp(`t\\.${key}`), key);
+  for (const key of ["verifyLoginTitle", "verifyLoginInstructions", "verifyLoginCodeLabel", "loginVerifying", "verifyLoginSubmit", "verifyLoginAgainLink"]) assert.match(verifyLoginSource, new RegExp(`t\\.${key}`), key);
+
+  assert.doesNotMatch(signinSource, />Log in<|>Save searches, manage alerts, and access your travel dashboard\.<|>Forgot password\?<|>OR<|>Continue with Google<|>New to Kurioticket\?<|>Create an account<|>Verification code<|>Verify login<|>Use different details</);
+  assert.doesNotMatch(forgotSource, />Reset your password<|>Enter your email and we'll send instructions to reset your password\.<|>Send reset link<|>Remember your password\?<|>Log in</);
+  assert.doesNotMatch(signupSource, />Create your account<|>Full name<|>Sign Up<|>Continue with Google<|>Already have an account\?<|>Log in</);
+  assert.doesNotMatch(headerSource, />GLOBAL LANGUAGE<|>Select your website language<|>More languages are being prepared\.|>Search language</);
+  assert.doesNotMatch(countryCurrencySource, />Choose country and currency<|>POPULAR COUNTRY AND CURRENCY<|>ALL COUNTRIES AND CURRENCIES<|>Show more results</);
+
+  assert.match(signinSource, /<Input\s+name="email"\s+type="email"/);
+  assert.match(signinSource, /<Input\s+name="password"\s+type="password"/);
+  assert.match(signinSource, /signIn\("google", \{/);
+  assert.match(signinSource, /callbackUrl/);
+  assert.match(signupSource, /<Input name="name" autoComplete="name" required/);
+  assert.match(signupSource, /signIn\("google", \{ callbackUrl: "\/onboarding" \}\)/);
+  assert.match(verifyEmailSource, /fetch\("\/api\/auth\/verify-email"/);
+  assert.match(verifyLoginSource, /signIn\("credentials", \{/);
+  assert.match(countryCurrencySource, /setOpen\(true\)/);
+  assert.match(countryCurrencySource, /selectedOption/);
+});
+
 test("Swedish global modal and auth copy resolves without English fallback", () => {
   const sv = getTranslations("sv");
   const expected: Record<string, string> = {
