@@ -125,6 +125,92 @@ test("Indonesian locale is active with homepage copy overrides", () => {
   }
 });
 
+test("Indonesian Deals landing copy resolves through active render-path keys", () => {
+  const id = getTranslations("id");
+  const dealsPageSource = readFileSync("src/app/deals/page.tsx", "utf8");
+
+  const expectedDealsCopy = {
+    "deals.heroTitle": "Temukan penawaran perjalanan untuk perjalanan Anda berikutnya",
+    "deals.heroSubtitle": "Cari penerbangan, penginapan, dan mobil bersama-sama dalam satu tempat.",
+    "deals.packageLegend": "Pilih jenis paket",
+    "deals.package.hotelFlight": "Hotel + Penerbangan",
+    "deals.package.hotelFlightCar": "Hotel + Penerbangan + Mobil",
+    "deals.package.flightCar": "Penerbangan + Mobil",
+    "deals.package.hotelCar": "Hotel + Mobil",
+    "deals.originLabel": "Dari mana?",
+    "deals.destinationLabel": "Ke mana?",
+    "deals.datesLabel": "Tanggal perjalanan",
+    "deals.travelersRoomsLabel": "Wisatawan / kamar",
+    "deals.originPlaceholder": "Kota atau bandara",
+    "deals.destinationPlaceholder": "Kota, bandara, atau area",
+    "deals.dateFlightPlaceholder": "Berangkat — Pulang",
+    "deals.searchButton": "Cari penawaran",
+    "deals.travelerSingular": "wisatawan",
+    "deals.roomSingular": "kamar",
+    "deals.destinationIdeasTitle": "Tempat untuk memulai pencarian penawaran Anda",
+    "deals.destinationIdeasSubtitle": "Pilih ide destinasi, lalu bandingkan hasil dari penyedia saat Anda melanjutkan.",
+    "deals.destinationCardAriaPrefix": "Cari ide perjalanan untuk",
+    "deals.destination.tokyo.city": "Tokyo",
+    "deals.destination.tokyo.country": "Jepang",
+    "deals.destination.london.city": "London",
+    "deals.destination.london.country": "Inggris Raya",
+    "deals.destination.paris.city": "Paris",
+    "deals.destination.paris.country": "Prancis",
+    "deals.destination.dubai.city": "Dubai",
+    "deals.destination.dubai.country": "Uni Emirat Arab",
+    "deals.destination.cancun.city": "Cancun",
+    "deals.destination.cancun.country": "Meksiko",
+    "deals.destination.rome.city": "Roma",
+    "deals.destination.rome.country": "Italia",
+    "deals.destination.rome.imageAlt": "Colosseum di Roma di bawah langit biru cerah",
+  } as const;
+
+  for (const [key, value] of Object.entries(expectedDealsCopy)) {
+    assert.equal(id[key], value, `${key} should resolve in Indonesian`);
+    if (value !== enTranslations[key]) {
+      assert.notEqual(id[key], enTranslations[key], `${key} should not fall back to English`);
+    }
+    assert.ok(dealsPageSource.includes(key), `${key} should be used by the active Deals render path`);
+  }
+
+  assert.equal(`${id["deals.travelerSingular"]}`, "wisatawan");
+  assert.equal(`1 ${id["deals.travelerSingular"]}, 1 ${id["deals.roomSingular"]}`, "1 wisatawan, 1 kamar");
+  assert.ok(languageOptions.some((o) => o.code === "id" && o.locale === "id-ID" && o.nativeLabel === "Bahasa Indonesia" && o.direction === "ltr"));
+  assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
+});
+
+test("Deals landing package values and destination card data remain unchanged while labels are localized", () => {
+  const dealsPageSource = readFileSync("src/app/deals/page.tsx", "utf8");
+
+  for (const packageValue of ["hotel-flight", "hotel-flight-car", "flight-car", "hotel-car"]) {
+    assert.match(dealsPageSource, new RegExp(`value: "${packageValue}"`));
+  }
+
+  assert.match(dealsPageSource, /name="packageMode"/);
+  assert.ok(dealsPageSource.includes("router.push(`/flights/results?${params.toString()}`)"));
+  assert.ok(dealsPageSource.includes("router.push(`/hotels/results?${params.toString()}`)"));
+  assert.match(dealsPageSource, /destination: trimmedDestination/);
+  assert.match(dealsPageSource, /departureDate: startDate/);
+  assert.match(dealsPageSource, /returnDate: endDate/);
+  assert.match(dealsPageSource, /checkIn: startDate/);
+  assert.match(dealsPageSource, /checkOut: endDate/);
+  assert.match(dealsPageSource, /destinationQuery: "Tokyo"[\s\S]*destinationQuery: "London"[\s\S]*destinationQuery: "Paris"[\s\S]*destinationQuery: "Dubai"[\s\S]*destinationQuery: "Cancun"[\s\S]*destinationQuery: "Rome"/);
+  assert.match(dealsPageSource, /image:\s*"https:\/\/images\.pexels\.com\/photos\/31344755\/pexels-photo-31344755\.jpeg\?auto=compress&cs=tinysrgb&w=1200"/);
+
+  for (const englishCopy of [
+    "Find travel deals for your next trip",
+    "Search flights, stays, and cars together in one place.",
+    "Hotel + Flight",
+    "Hotel + Flight + Car",
+    "Flight + Car",
+    "Hotel + Car",
+    "Places to start your deal search",
+    "Choose a destination idea, then compare provider results when you continue.",
+  ]) {
+    assert.equal(dealsPageSource.includes(englishCopy), false, `${englishCopy} should not be hardcoded in DealsPage`);
+  }
+});
+
 
 
 test("Indonesian service and support active render path copy resolves without English fallback", () => {
