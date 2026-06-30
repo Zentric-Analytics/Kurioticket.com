@@ -4678,6 +4678,115 @@ test("Polish Legal Center overview document cards do not fall back to English", 
 });
 
 
+test("Polish legal detail pages localize active render path without English fallback", () => {
+  const pl = getTranslations("pl");
+  const legalViewerSource = readFileSync("src/components/legal/LegalViewer.tsx", "utf8");
+  const legalPageRouteSource = readFileSync("src/app/legal/[slug]/page.tsx", "utf8");
+
+  assert.ok(legalPageRouteSource.includes("getLegalDocument(slug)"));
+  assert.ok(legalPageRouteSource.includes("<LegalViewer document={document} />"));
+  assert.ok(legalViewerSource.includes("getLegalDocumentTranslation(document, t)"));
+  assert.ok(legalViewerSource.includes("legalDocumentTranslationNamespaces"));
+  assert.ok(legalViewerSource.includes("`${namespace}.sections.${section.id}.paragraph${index + 1}`"));
+  assert.ok(legalViewerSource.includes("window.print()"));
+  assert.ok(legalViewerSource.includes("<div className=\"rounded-md border border-amber/30 bg-amber/10 p-4 text-sm leading-6 text-amber\">"));
+
+  const expected = {
+    "terms-of-service": {
+      namespace: "legal.terms",
+      title: "Warunki korzystania z usługi",
+      summary: "Zasady korzystania z wyszukiwarki Kurioticket, kont, paneli, zapisanych narzędzi podróżnych i przekierowań do partnerów.",
+      sections: ["overview", "accounts", "acceptable-use", "partner-services"],
+      sampleHeading: "Przegląd",
+      sampleBody: "Kurioticket LLC („Kurioticket”, „my”, „nas” lub „nasze”) prowadzi platformę wyszukiwania i porównywania podróży, która pomaga użytkownikom wyszukiwać loty, hotele i samochody, porównywać opcje dostawców, zapisywać plany podróży oraz tworzyć alerty.",
+    },
+    "privacy-policy": {
+      namespace: "legal.privacy",
+      title: "Polityka prywatności",
+      summary: "Jak Kurioticket LLC („Kurioticket”, „my”, „nas” lub „nasze”) zbiera, wykorzystuje, przechowuje i chroni dane konta, wyszukiwań, alertów, wsparcia oraz poczty e-mail.",
+      sections: ["data-we-collect", "vendors", "choices"],
+      sampleHeading: "Dane, które zbieramy",
+      sampleBody: "Zbieramy dane konta, takie jak imię i nazwisko, adres e-mail, zahaszowane hasło, identyfikatory dostawców uwierzytelniania oraz opcjonalne preferencje podróży. Podczas rejestracji nie prosimy o dane paszportowe, dokument tożsamości wydany przez organ państwowy ani adres domowy.",
+    },
+    "cookie-policy": {
+      namespace: "legal.cookiePolicy",
+      title: "Polityka plików cookie",
+      summary: "Jak Kurioticket używa plików cookie i podobnych technologii do uwierzytelniania, bezpieczeństwa, preferencji, analityki i wydajności.",
+      sections: ["use", "third-parties", "controls"],
+      sampleHeading: "Jak używane są pliki cookie",
+      sampleBody: "Kurioticket może używać plików cookie do sesji uwierzytelniania, bezpieczeństwa, zapobiegania oszustwom, przechowywania preferencji, analityki, monitorowania wydajności i eksperymentów funkcji.",
+    },
+  } as const;
+
+  assert.equal(pl["legal.print"], "Drukuj");
+  assert.equal(pl["legal.lastUpdated"], "Ostatnia aktualizacja");
+  assert.equal(pl["legal.tableOfContents"], "SPIS TREŚCI");
+  assert.notEqual(pl["legal.print"], enTranslations["legal.print"]);
+  assert.notEqual(pl["legal.lastUpdated"], enTranslations["legal.lastUpdated"]);
+  assert.notEqual(pl["legal.tableOfContents"], enTranslations["legal.tableOfContents"]);
+
+  for (const [slug, detail] of Object.entries(expected)) {
+    assert.ok(legalViewerSource.includes(`"${slug}": "${detail.namespace}"`));
+    assert.equal(pl[`${detail.namespace}.title`], detail.title);
+    assert.equal(pl[`${detail.namespace}.summary`], detail.summary);
+    assert.equal(pl[`${detail.namespace}.tableOfContents`], "SPIS TREŚCI");
+    assert.equal(pl[`${detail.namespace}.developerNote`], "Te projekty dokumentów prawnych są roboczymi materiałami startowymi i przed publicznym uruchomieniem na dużą skalę powinny zostać sprawdzone przez wykwalifikowanego prawnika.");
+    assert.equal(pl[`${detail.namespace}.sections.${detail.sections[0]}.title`], detail.sampleHeading);
+    assert.equal(pl[`${detail.namespace}.sections.${detail.sections[0]}.paragraph1`], detail.sampleBody);
+    assert.notEqual(pl[`${detail.namespace}.title`], enTranslations[`${detail.namespace}.title`]);
+    assert.notEqual(pl[`${detail.namespace}.summary`], enTranslations[`${detail.namespace}.summary`]);
+    assert.notEqual(pl[`${detail.namespace}.sections.${detail.sections[0]}.title`], enTranslations[`${detail.namespace}.sections.${detail.sections[0]}.title`]);
+    assert.notEqual(pl[`${detail.namespace}.sections.${detail.sections[0]}.paragraph1`], enTranslations[`${detail.namespace}.sections.${detail.sections[0]}.paragraph1`]);
+  }
+});
+
+test("Every active Polish legal detail document has localized detail content", () => {
+  const pl = getTranslations("pl");
+  const legalViewerSource = readFileSync("src/components/legal/LegalViewer.tsx", "utf8");
+  const slugToNamespace: Record<string, string> = {
+    "terms-of-service": "legal.terms",
+    "privacy-policy": "legal.privacy",
+    "cookie-policy": "legal.cookiePolicy",
+    "privacy-choices": "legal.privacyChoices",
+    "affiliate-disclosure": "legal.affiliateDisclosure",
+    "refund-booking-disclaimer": "legal.refundBookingDisclaimer",
+    "price-availability-disclaimer": "legal.priceAvailabilityDisclaimer",
+    "partner-redirect-disclaimer": "legal.partnerRedirectDisclaimer",
+    "california-seller-of-travel-notice": "legal.californiaSellerOfTravelNotice",
+    "legal-notice-company-information": "legal.legalNoticeCompanyInformation",
+    "acceptable-use-policy": "legal.acceptableUsePolicy",
+    "data-deletion-policy": "legal.dataDeletionPolicy",
+    "security-statement": "legal.securityStatement",
+    "accessibility-statement": "legal.accessibilityStatement",
+  };
+
+  assert.deepEqual(legalDocuments.map((document) => document.slug), Object.keys(slugToNamespace));
+
+  for (const document of legalDocuments) {
+    const namespace = slugToNamespace[document.slug];
+    assert.ok(legalViewerSource.includes(`"${document.slug}": "${namespace}"`));
+    assert.equal(typeof pl[`${namespace}.title`], "string");
+    assert.equal(typeof pl[`${namespace}.summary`], "string");
+    assert.equal(pl[`${namespace}.tableOfContents`], "SPIS TREŚCI");
+    assert.equal(typeof pl[`${namespace}.developerNote`], "string");
+    assert.notEqual(pl[`${namespace}.title`], document.title);
+    assert.notEqual(pl[`${namespace}.summary`], document.summary);
+    for (const section of document.sections) {
+      assert.equal(typeof pl[`${namespace}.sections.${section.id}.title`], "string", `${namespace} ${section.id} title`);
+      assert.notEqual(pl[`${namespace}.sections.${section.id}.title`], section.title);
+      section.paragraphs.forEach((paragraph, index) => {
+        const key = `${namespace}.sections.${section.id}.paragraph${index + 1}`;
+        assert.equal(typeof pl[key], "string", key);
+        assert.notEqual(pl[key], paragraph, key);
+      });
+    }
+  }
+
+  assert.equal(pl["legal.index.documents.termsOfService.title"], "Warunki korzystania z usługi");
+  assert.equal(pl["legal.index.documents.privacyPolicy.title"], "Polityka prywatności");
+  assert.equal(pl["legal.index.documents.cookiePolicy.title"], "Polityka plików cookie");
+});
+
 test("Hindi service and support page strings are localized", () => {
   const expectedHindiServiceSupportStrings = {
     supportEyebrow: "Kurioticket सहायता डेस्क",
