@@ -9,7 +9,9 @@ import { getCaliforniaSellerOfTravelNotice, legalProfile } from "@/data/legalPro
 export function Footer() {
   const { t } = useLocale();
   const currentYear = new Date().getFullYear();
-  const sellerOfTravelNotice = `${legalProfile.company.legalName} — ${getCaliforniaSellerOfTravelNotice()}`;
+  const sellerOfTravelNotice =
+    t.footerSellerOfTravelNotice ||
+    `${legalProfile.company.legalName} — ${getCaliforniaSellerOfTravelNotice()}`;
 
   const footerSections = [
     {
