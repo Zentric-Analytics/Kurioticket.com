@@ -1046,6 +1046,7 @@ export const translations: TranslationDictionary = {
   moreServiceInfoSupportCta: 'Kontakta kundsupport',
   'homeNewsletterTitle': 'Ligg steget före varje reseerbjudande',
   'homeNewsletterBody': 'Få utvalda flyg- och hotelluppdateringar varje vecka.',
+  'homeNewsletterPlaceholder': 'Ange din e-postadress',
   'homeNewsletterAccountEmail': 'Prenumerera med e-postadressen för ditt konto: {{email}}.',
   'homeSubscribe': 'Prenumerera',
   'homeNewsletterManagePreferences': 'Hantera e-postpreferenser',
