@@ -161,6 +161,8 @@ export const translations: TranslationDictionary = {
   flightLandingRouteIdeasTitle: 'Ruttidéer för flexibla resor',
   flightLandingRouteIdeasBody:
     'Bläddra bland ruttidéer och starta sedan en riktig sökning med datum och resenärer innan du jämför tillgängliga flyg.',
+  flightLandingRouteTemplate: '{{origin}} till {{destination}}',
+  flightLandingRouteConnector: 'till',
   discoverDestinationsFromRegion: 'Upptäck destinationer från din region',
   discoverDestinationsFromRegionBody:
     'Utforska utvalda rutter och starta din nästa resa med trygghet.',
