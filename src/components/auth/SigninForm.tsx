@@ -427,7 +427,7 @@ export function SigninForm({
         <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
           <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
             <span className="h-px flex-1 bg-slate-100" aria-hidden="true" />
-            <span>or</span>
+            <span>{t.loginDivider}</span>
             <span className="h-px flex-1 bg-slate-100" aria-hidden="true" />
           </div>
 

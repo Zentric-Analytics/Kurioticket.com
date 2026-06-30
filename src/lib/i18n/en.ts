@@ -566,6 +566,7 @@ export const translations: TranslationDictionary = {
   loginSubmit: "Log in",
   loginCheckingDetails: "Checking details…",
   loginGoogle: "Continue with Google",
+  loginDivider: "OR",
   loginSignupPrompt: "New to Kurioticket?",
   loginCreateAccount: "Create an account",
   loginPasskeyPromptTitle: "Use a saved passkey?",
