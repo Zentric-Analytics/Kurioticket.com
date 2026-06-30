@@ -4643,7 +4643,7 @@ test("Turkish homepage popovers and discovery route cards resolve screenshot-vis
     under2: "2 yaş altı",
     cabinClass: "Kabin sınıfı",
     economy: "Ekonomi",
-    business: "Business",
+    business: "Businessklass",
     first: "First",
     homeDiscoveryTitle: "Bir sonraki maceranızı burada keşfedin",
     homeDiscoverySubtitle:
@@ -6642,7 +6642,7 @@ test("Swedish homepage-visible copy resolves without English fallback", () => {
     under2: "Under 2",
     cabinClass: "KABINKLASS",
     economy: "Ekonomi",
-    business: "Business",
+    business: "Businessklass",
     first: "Första klass",
     cityOrHotel: "Stad eller hotell",
     hotelSearchDestinationLabel: "DESTINATION",
@@ -7470,6 +7470,91 @@ test("Polish homepage render paths keep using i18n keys and preserve route/searc
   assert.match(pageSource, /method: "POST"/);
 });
 
+
+
+test("Swedish Flights results active render path copy resolves without English fallback", () => {
+  const sv = getTranslations("sv");
+  const resultsPageSource = readFileSync("src/app/flights/results/page.tsx", "utf8");
+  const resultsSource = readFileSync("src/components/results/FlightResultsClient.tsx", "utf8");
+
+  assert.ok(resultsPageSource.includes("<FlightResultsClient />"));
+
+  const expectedCopy: Array<[string, string, string]> = [
+    ["filterBy", "Filtrera efter", "Filter by"],
+    ["stops", "Stopp", "Stops"],
+    ["oneStop", "1 stopp", "1 stop"],
+    ["twoPlusStops", "2+ stopp", "2+ stops"],
+    ["optionsFound", "{{count}} alternativ hittades", "{{count}} options found"],
+    ["airlines", "Flygbolag", "Airlines"],
+    ["airports", "Flygplatser", "Airports"],
+    ["amenities", "Bekvämligheter", "Amenities"],
+    ["baggageIncluded", "Bagage ingår", "Baggage included"],
+    ["flexibleRefundable", "Flexibel/återbetalningsbar", "Flexible/refundable"],
+    ["tripType", "RESTYP", "Trip type"],
+    ["roundTrip", "Tur och retur", "Round trip"],
+    ["previousShort", "Föregående", "Prev"],
+    ["nextShort", "Nästa", "Next"],
+    ["weekdayMon", "Mån", "Mon"],
+    ["weekdayTue", "Tis", "Tue"],
+    ["weekdayWed", "Ons", "Wed"],
+    ["weekdayThu", "Tor", "Thu"],
+    ["weekdayFri", "Fre", "Fri"],
+    ["weekdaySat", "Lör", "Sat"],
+    ["weekdaySun", "Sön", "Sun"],
+    ["adultPlural", "Vuxna", "adults"],
+    ["childPlural", "Barn", "children"],
+    ["business", "Businessklass", "Business"],
+    ["nonstop", "Direktflyg", "Nonstop"],
+    ["stopCount", "{{count}} stopp", "{{count}} stops"],
+    ["cheapest", "Billigast", "Cheapest"],
+    ["best", "Bäst", "Best"],
+    ["quickest", "Snabbast", "Quickest"],
+    ["duration", "Restid", "Duration"],
+    ["departs", "Avgår", "Departs"],
+    ["flightOption", "Flygalternativ", "Flight option"],
+    ["estimatedPrice", "Uppskattat pris", "Estimated price"],
+    ["providerPrice", "Leverantörspris", "Provider price"],
+    ["viewFlight", "Visa flyg", "View Flight"],
+    ["checkProvider", "Kontrollera leverantör", "Check provider"],
+  ];
+
+  for (const [key, expected, englishFallback] of expectedCopy) {
+    assert.equal(sv[key], expected, `${key} should resolve to Swedish`);
+    assert.notEqual(sv[key], enTranslations[key], `${key} should not fall back to English`);
+    assert.notEqual(sv[key], englishFallback, `${key} should not equal visible English fallback`);
+  }
+
+  assert.equal(sv.clear, "Rensa");
+  assert.equal(sv.done, "Klart");
+  assert.equal(sv.travelers, "RESENÄRER");
+  assert.equal(sv.cabinClass, "KABINKLASS");
+  assert.equal(sv.economy, "Ekonomi");
+  assert.equal(sv.first, "Första klass");
+  assert.equal(sv.optionsFound.replace("{{count}}", "17"), "17 alternativ hittades");
+  assert.deepEqual(["Lufthansa", "British Airways", "Royal Air Maroc", "Ethiopian Airlines", "Brussels Airlines", "Turkish Airlines", "SWISS"], ["Lufthansa", "British Airways", "Royal Air Maroc", "Ethiopian Airlines", "Brussels Airlines", "Turkish Airlines", "SWISS"]);
+  assert.deepEqual(["LOS", "LAX", "FRA", "LHR", "CMN", "IAD", "ADD", "JFK"], ["LOS", "LAX", "FRA", "LHR", "CMN", "IAD", "ADD", "JFK"]);
+  assert.equal("NGN 714,974", "NGN 714,974");
+
+  for (const key of ["filterBy", "stops", "oneStop", "twoPlusStops", "optionsFound", "airlines", "airports", "amenities", "baggageIncluded", "flexibleRefundable", "tripType", "roundTrip", "previousShort", "nextShort", "weekdayMon", "weekdayTue", "weekdayWed", "weekdayThu", "weekdayFri", "weekdaySat", "weekdaySun", "adultPlural", "childPlural", "business", "nonstop", "stopCount", "cheapest", "best", "quickest", "duration", "departs", "flightOption", "estimatedPrice", "providerPrice", "viewFlight", "checkProvider"]) {
+    assert.ok(resultsSource.includes(`t("${key}")`) || resultsSource.includes(`t(option.labelKey)`) || resultsSource.includes(`labelKey: "${key}"`), `${key} should be read through i18n on the active Flights results render path`);
+  }
+
+  assert.ok(resultsSource.includes("normalizeFlightResultsCalendarLocale(locale)"));
+  assert.equal(normalizeFlightsCalendarLocale("sv"), "sv-SE");
+  assert.equal(formatFlightsMonthHeading(new Date(2026, 5, 1), "sv"), "juni 2026");
+  assert.equal(formatFlightsMonthHeading(new Date(2026, 6, 1), "sv-SE"), "juli 2026");
+  assert.deepEqual([sv.weekdayMon, sv.weekdayTue, sv.weekdayWed, sv.weekdayThu, sv.weekdayFri, sv.weekdaySat, sv.weekdaySun], ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"]);
+  assert.ok(resultsSource.includes('name="children"'));
+  assert.ok(resultsSource.includes('router.push(`/flights/results?${nextParams.toString()}`)'));
+  assert.ok(resultsSource.includes('tripType: tripTypeInput'));
+  assert.ok(resultsSource.includes('value={String(childCount)}'));
+  assert.ok(resultsSource.includes('flight.airlineName'));
+  assert.ok(resultsSource.includes('flight.originAirport'));
+  assert.ok(resultsSource.includes('flight.destinationAirport'));
+  assert.ok(resultsSource.includes('formatResultPriceLabel(flight.price, flight.currency)'));
+  assert.equal(availableLocaleOptions.find((option) => option.code === "sv")?.direction, "ltr");
+  assert.equal(availableLocaleOptions.find((option) => option.code === "ar")?.direction, "rtl");
+});
 
 
 test("Polish flight details active render path resolves selected-flight copy without English fallback", () => {
