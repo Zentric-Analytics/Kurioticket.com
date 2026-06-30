@@ -9674,6 +9674,7 @@ test("Indonesian homepage visible copy and render paths resolve without English 
     destination: "TUJUAN",
     toPlaceholder: "Ke?",
     departureDate: "Tanggal perjalanan",
+    travelDates: "Tanggal perjalanan",
     travelers: "PENUMPANG",
     search: "Cari",
     previousShort: "Sebelumnya",
@@ -9693,7 +9694,7 @@ test("Indonesian homepage visible copy and render paths resolve without English 
     hotelSearchDestinationLabel: "TUJUAN",
     cityOrHotel: "Kota atau hotel",
     hotelSearchTravelDatesLabel: "TANGGAL PERJALANAN",
-    hotelSearchDatePlaceholder: "Check-in — check-out",
+    hotelSearchDatePlaceholder: "Tanggal check-in — check-out",
     hotelSearchGuestsLabel: "TAMU",
     guestsAndRooms: "Tamu dan kamar",
     hotelAdultHelper: "Tamu 18+",
@@ -9782,7 +9783,20 @@ test("Indonesian homepage visible copy and render paths resolve without English 
   assert.ok(translatedFaqAnswers.includes("Kurioticket dapat membantu akses akun, masalah masuk, masalah pendaftaran, akses profil, dan masalah platform yang terkait dengan akun."));
   assert.ok(translatedFaqAnswers.includes("Kurioticket adalah platform pencarian dan perbandingan perjalanan, dan beberapa hasil mengarahkan Anda ke penyedia tepercaya tempat Anda menyelesaikan pemesanan, pembayaran, dan dukungan khusus penyedia."));
   assert.ok(pageSource.includes('const translatedFaqs = getGeneralFaqs(t)') && pageSource.includes('items={translatedFaqs}'));
-  assert.ok(searchTabsSource.includes('translateHotelTravelDateText("hotelSearchDatePlaceholder")'));
+  assert.match(
+    searchTabsSource,
+    /if \(!departureSummary\) \{[\s\S]*?return t\.travelDates \|\| "Travel dates";[\s\S]*?\}/,
+    "flight empty date field should read the active travelDates i18n key before the English fallback",
+  );
+  assert.match(
+    searchTabsSource,
+    /translateHotelTravelDateText\("hotelSearchDatePlaceholder"\)[\s\S]*?\|\|\s*"Check-in — Check-out"/,
+    "hotel empty date field should read the active hotelSearchDatePlaceholder i18n key before the English fallback",
+  );
+  assert.equal(id.travelDates, "Tanggal perjalanan");
+  assert.equal(id.hotelSearchDatePlaceholder, "Tanggal check-in — check-out");
+  assert.notEqual(id.travelDates, "Travel dates");
+  assert.notEqual(id.hotelSearchDatePlaceholder, "Check-in — check-out");
 
   assert.ok(pageSource.includes('t("homeHeroTitle")') && pageSource.includes('t("homeNewsletterTitle")'));
   assert.ok(headerSource.includes('t.flights') && headerSource.includes('t.login') && headerSource.includes('t.signUp'));
