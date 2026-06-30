@@ -6983,6 +6983,7 @@ test("Swedish homepage-visible copy resolves without English fallback", () => {
     supportFaqWhyRedirectedQuestion: "Varför skickades jag till en annan leverantör?",
     homeNewsletterTitle: "Ligg steget före varje reseerbjudande",
     homeNewsletterBody: "Få utvalda flyg- och hotelluppdateringar varje vecka.",
+    homeNewsletterPlaceholder: "Ange din e-postadress",
     homeSubscribe: "Prenumerera",
     homeNewsletterConsent: "Genom att prenumerera samtycker du till att få uppdateringar från Kurioticket. Du kan avsluta prenumerationen när som helst.",
     homeNewsletterThanks: "Tack! Vi håller dig uppdaterad med reseerbjudanden.",
@@ -7017,6 +7018,38 @@ test("Swedish homepage-visible copy resolves without English fallback", () => {
   assert.equal(sv.homeNewsletterAccountEmail, "Prenumerera med e-postadressen för ditt konto: {{email}}.");
   assert.match(sv.homeNewsletterAccountEmail, /\{\{email\}\}/);
   assert.ok(languageOptions.some((o) => o.code === "sv" && o.locale === "sv-SE" && o.direction === "ltr"));
+  assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
+});
+
+
+test("Swedish newsletter email placeholder resolves through active homepage render path", () => {
+  const sv = getTranslations("sv");
+  const pageSource = readFileSync("src/app/page.tsx", "utf8");
+  const bridgeSource = readFileSync("src/components/newsletter/NewsletterSessionBridge.tsx", "utf8");
+
+  assert.equal(sv.homeNewsletterTitle, "Ligg steget före varje reseerbjudande");
+  assert.equal(sv.homeNewsletterBody, "Få utvalda flyg- och hotelluppdateringar varje vecka.");
+  assert.equal(sv.homeNewsletterPlaceholder, "Ange din e-postadress");
+  assert.equal(sv.homeSubscribe, "Prenumerera");
+  assert.equal(sv.homeNewsletterConsent, "Genom att prenumerera samtycker du till att få uppdateringar från Kurioticket. Du kan avsluta prenumerationen när som helst.");
+  assert.notEqual(sv.homeNewsletterPlaceholder, enTranslations.homeNewsletterPlaceholder);
+
+  assert.match(pageSource, /placeholder=\{t\("homeNewsletterPlaceholder"\)\}/);
+  assert.doesNotMatch(pageSource, /placeholder=["']Enter your email["']/);
+  assert.match(pageSource, /type="email"/);
+  assert.match(pageSource, /value=\{newsletterEmail\}/);
+  assert.match(pageSource, /setNewsletterEmail\(event\.target\.value\)/);
+  assert.match(pageSource, /onSubmit=\{handleNewsletterSubmit\}/);
+  assert.match(pageSource, /fetch\(\s*"\/api\/newsletter\/subscribe"/);
+  assert.match(pageSource, /source: "homepage"/);
+  assert.match(pageSource, /email,/);
+  assert.match(pageSource, /className="flex flex-col gap-2 sm:max-w-\[34rem\] sm:flex-row"/);
+  assert.match(pageSource, /aria-label=\{t\("homeEmailAddress"\)\}/);
+  assert.match(bridgeSource, /const accountEmail = email/);
+  assert.match(bridgeSource, /applyReactControlledInputValue\(input, accountEmail\)/);
+  assert.match(bridgeSource, /input\.setAttribute\("aria-hidden", "true"\)/);
+
+  assert.ok(languageOptions.some((o) => o.code === "sv" && o.locale === "sv-SE" && o.nativeLabel === "Svenska" && o.direction === "ltr"));
   assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
 });
 
