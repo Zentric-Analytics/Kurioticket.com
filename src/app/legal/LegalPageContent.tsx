@@ -50,7 +50,7 @@ export function LegalPageContent({ documents }: LegalPageContentProps) {
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center">
             <div className="max-w-3xl">
               <p className="inline-flex rounded-full bg-teal/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-teal-dark ring-1 ring-teal/15">
-                {t("legalCenter.heroLabel")}
+                {t("legal.index.heroLabel")}
               </p>
               <h1 className="mt-4 text-3xl font-bold tracking-tight text-navy sm:text-4xl lg:text-5xl">
                 {t("legal.index.heroTitle")}
