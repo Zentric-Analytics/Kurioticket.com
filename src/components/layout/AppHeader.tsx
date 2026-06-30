@@ -880,7 +880,7 @@ export function AppHeader({
                   }}
                   className={`inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-xs font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
                     mobileHeroOverlay
-                      ? "border border-white/35 bg-white/[0.18] text-white shadow-[0_8px_20px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-md hover:border-white/50 hover:bg-white/[0.26]"
+                      ? "border border-white/45 bg-white/[0.24] text-white shadow-[0_8px_22px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.30)] backdrop-blur-md hover:border-white/60 hover:bg-white/[0.30]"
                       : "border border-transparent bg-transparent text-white/95 hover:bg-white/10 hover:text-white"
                   }`}
                 >
@@ -905,7 +905,7 @@ export function AppHeader({
                   }
                   className={`inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
                     mobileHeroOverlay
-                      ? "border border-white/35 bg-white/[0.18] text-white shadow-[0_8px_20px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-md hover:border-white/50 hover:bg-white/[0.26]"
+                      ? "border border-white/45 bg-white/[0.24] text-white shadow-[0_8px_22px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.30)] backdrop-blur-md hover:border-white/60 hover:bg-white/[0.30]"
                       : "border border-white/10 bg-white/5 text-white/95 hover:bg-white/15 hover:text-white"
                   }`}
                 >
@@ -922,7 +922,7 @@ export function AppHeader({
                 aria-controls="mobile-menu-drawer"
                 className={`inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
                   mobileHeroOverlay
-                    ? "border border-white/35 bg-white/[0.18] text-white shadow-[0_8px_20px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-md hover:border-white/50 hover:bg-white/[0.26]"
+                    ? "border border-white/45 bg-white/[0.24] text-white shadow-[0_8px_22px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.30)] backdrop-blur-md hover:border-white/60 hover:bg-white/[0.30]"
                     : "border border-white/10 bg-white/5 text-white/95 hover:bg-white/15 hover:text-white"
                 }`}
                 onClick={() => {
