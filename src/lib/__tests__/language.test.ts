@@ -8935,3 +8935,94 @@ test("Swedish Account Personal details and Security settings copy resolves witho
   assert.ok(dashboardSource.includes('handleSecurityAlertsToggle'));
   assert.ok(dashboardSource.includes('setDeleteModalOpen(true)'));
 });
+
+test("Newsletter account email and Manage Email Updates copy resolve for all active locales", () => {
+  const activeLocales = [
+    ["en-us", enTranslations],
+    ["ar", arTranslations],
+    ["nl", nlTranslations],
+    ["es-es", esTranslations],
+    ["fr", frTranslations],
+    ["de", deTranslations],
+    ["it", itTranslations],
+    ["pt-br", ptBrTranslations],
+    ["zh-cn", zhCnTranslations],
+    ["ja", jaTranslations],
+    ["ko", koTranslations],
+    ["hi", hiTranslations],
+    ["tr", trTranslations],
+    ["pl", plTranslations],
+    ["sv", svTranslations],
+  ] as const;
+  const auditedKeys = [
+    "newsletter.accountEmailLine",
+    "newsletter.manageEmailPreferences",
+    "emailUpdates.eyebrow",
+    "emailUpdates.title",
+    "emailUpdates.description",
+    "emailUpdates.emailLabel",
+    "emailUpdates.subscribedStatus",
+    "emailUpdates.subscribedButton",
+    "emailUpdates.stopUpdates",
+    "emailUpdates.loadingStatus",
+    "emailUpdates.unsubscribedStatus",
+    "emailUpdates.notFoundStatus",
+    "emailUpdates.subscribeButton",
+    "emailUpdates.restartUpdates",
+    "emailUpdates.updatesStopped",
+    "emailUpdates.notAvailable",
+    "emailUpdates.invalidLink",
+    "emailUpdates.loadError",
+    "emailUpdates.updateError",
+    "emailUpdates.preferenceUpdated",
+  ];
+
+  for (const [locale, dictionary] of activeLocales) {
+    assert.equal(getTranslations(locale), dictionary);
+    for (const key of auditedKeys) {
+      assert.equal(typeof dictionary[key], "string", `${locale} should define ${key}`);
+      assert.ok(dictionary[key].length > 0, `${locale} should resolve ${key}`);
+    }
+    assert.equal(dictionary["newsletter.accountEmailLine"].includes("{{email}}"), true, `${locale} should preserve {{email}}`);
+    const renderedAccountLine = dictionary["newsletter.accountEmailLine"].replace("{{email}}", "bharrywalker@gmail.com");
+    assert.ok(renderedAccountLine.includes("bharrywalker@gmail.com"), `${locale} should preserve dynamic email addresses`);
+  }
+
+  assert.equal(svTranslations["newsletter.accountEmailLine"], "Prenumerera med e-postadressen för ditt konto: {{email}}.");
+  assert.equal(svTranslations["newsletter.manageEmailPreferences"], "Hantera e-postinställningar");
+  assert.equal(svTranslations["emailUpdates.eyebrow"], "KURIOTICKET-UPPDATERINGAR");
+  assert.equal(svTranslations["emailUpdates.title"], "Hantera e-postuppdateringar");
+  assert.equal(svTranslations["emailUpdates.subscribedStatus"], "Du prenumererar.");
+  assert.equal(svTranslations["emailUpdates.subscribedButton"], "Prenumererar");
+  assert.equal(svTranslations["emailUpdates.stopUpdates"], "Stoppa uppdateringar");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+  for (const option of languageOptions.filter((o) => o.status === "available" && o.code !== "ar")) {
+    assert.equal(option.direction, "ltr", `${option.code} should remain ltr`);
+  }
+});
+
+test("Newsletter and email updates render paths read i18n keys without changing behavior", () => {
+  const newsletterBridgeSource = readFileSync("src/components/newsletter/NewsletterSessionBridge.tsx", "utf8");
+  const preferencesClientSource = readFileSync("src/components/newsletter/NewsletterPreferencesClient.tsx", "utf8");
+
+  assert.ok(newsletterBridgeSource.includes('t["newsletter.accountEmailLine"]'), "Newsletter bridge should read account email line from i18n.");
+  assert.ok(newsletterBridgeSource.includes('t["newsletter.manageEmailPreferences"]'), "Newsletter bridge should read preferences link from i18n.");
+  assert.ok(newsletterBridgeSource.includes('replace(/{{(\\w+)}}/g'), "Newsletter bridge should preserve placeholder interpolation only for visible copy.");
+  assert.ok(newsletterBridgeSource.includes('applyReactControlledInputValue(input, accountEmail)'), "Newsletter account-email behavior should keep the account email value.");
+  assert.ok(newsletterBridgeSource.includes('link.href = "/email/preferences"'), "Newsletter preferences route should remain unchanged.");
+
+  for (const key of [
+    "emailUpdates.eyebrow",
+    "emailUpdates.title",
+    "emailUpdates.description",
+    "emailUpdates.emailLabel",
+    "emailUpdates.subscribedStatus",
+    "emailUpdates.subscribedButton",
+    "emailUpdates.stopUpdates",
+  ]) {
+    assert.ok(preferencesClientSource.includes(`t["${key}"]`), `Manage Email Updates render path should read ${key}.`);
+  }
+  assert.ok(preferencesClientSource.includes('fetch(`/api/newsletter/preferences?${params.toString()}`)'), "Preferences GET API route should remain unchanged.");
+  assert.ok(preferencesClientSource.includes('fetch("/api/newsletter/preferences", {'), "Preferences POST API route should remain unchanged.");
+  assert.ok(preferencesClientSource.includes('body: JSON.stringify({ email: address, token, action })'), "Preferences submit values should remain unchanged.");
+});
