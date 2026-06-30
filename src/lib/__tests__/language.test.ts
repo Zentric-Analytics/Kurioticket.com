@@ -7303,3 +7303,44 @@ test("Swedish remains ltr and Arabic remains rtl", () => {
   assert.ok(languageOptions.some((o) => o.code === "sv" && o.locale === "sv-SE" && o.direction === "ltr"));
   assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
 });
+
+test("Swedish Legal About How active pages resolve localized copy", () => {
+  const legalPageSource = readFileSync("src/app/legal/LegalPageContent.tsx", "utf8");
+  const legalViewerSource = readFileSync("src/components/legal/LegalViewer.tsx", "utf8");
+  const aboutSource = readFileSync("src/components/about/AboutPageContent.tsx", "utf8");
+  const howSource = readFileSync("src/app/how-it-works/HowItWorksContent.tsx", "utf8");
+  assert.equal(svTranslations["legal.index.heroLabel"], "JURIDISK INFORMATION");
+  assert.equal(svTranslations["legal.index.heroTitle"], "Juridiskt center");
+  assert.equal(svTranslations["legal.index.compliance.registrationExpiresDate"], "5 juni 2027");
+  assert.equal(svTranslations["legal.index.documentsCountLabel"], "policyer och meddelanden tillgängliga");
+  assert.equal(svTranslations["legal.index.lastUpdatedDate"], "11 MAJ 2026");
+  assert.equal(svTranslations["legal.print"], "Skriv ut");
+  assert.equal(svTranslations["legal.lastUpdated"], "Senast uppdaterad");
+  assert.equal(svTranslations["legal.tableOfContents"], "INNEHÅLLSFÖRTECKNING");
+  assert.equal(svTranslations["legal.privacy.title"], "Integritetspolicy");
+  assert.equal(svTranslations["legal.terms.title"], "Användarvillkor");
+  assert.equal(svTranslations["legal.cookiePolicy.title"], "Cookiepolicy");
+  assert.equal(svTranslations["legal.privacy.sections.data-we-collect.title"], "Data vi samlar in");
+  assert.equal(svTranslations["legal.terms.sections.partner-services.title"], "Partnertjänster");
+  assert.equal(svTranslations["legal.cookiePolicy.sections.third-parties.title"], "Teknik från tredje part");
+  assert.equal(svTranslations.aboutPageEyebrow, "Om Kurioticket");
+  assert.equal(svTranslations.aboutPageTitle, "Om oss");
+  assert.equal(svTranslations.howItWorksEyebrow, "Så fungerar Kurioticket");
+  assert.equal(svTranslations["howItWorks.steps.search.title"], "Sök resealternativ");
+  assert.equal(legalDocuments.length, 14);
+  for (const namespace of ["legal.terms","legal.acceptableUsePolicy","legal.privacy","legal.cookiePolicy","legal.privacyChoices","legal.affiliateDisclosure","legal.dataDeletionPolicy","legal.refundBookingDisclaimer","legal.priceAvailabilityDisclaimer","legal.partnerRedirectDisclaimer","legal.californiaSellerOfTravelNotice","legal.legalNoticeCompanyInformation","legal.securityStatement","legal.accessibilityStatement"]) {
+    assert.ok(svTranslations[`${namespace}.title`]);
+    assert.ok(svTranslations[`${namespace}.summary`]);
+    assert.equal(svTranslations[`${namespace}.tableOfContents`], "INNEHÅLLSFÖRTECKNING");
+    assert.ok(svTranslations[`${namespace}.developerNote`]?.includes("preliminära startmaterial"));
+  }
+  assert.ok(legalPageSource.includes('t("legal.index.heroLabel")'));
+  assert.ok(legalPageSource.includes('t(`legal.index.documents.${documentKey}.title`)'));
+  assert.ok(legalViewerSource.includes("${namespace}.sections.${section.id}.paragraph${index + 1}"));
+  assert.ok(legalViewerSource.includes("window.print()"));
+  assert.ok(aboutSource.includes('getTranslation(t, "aboutPageEyebrow")'));
+  assert.ok(howSource.includes('titleKey: "howItWorks.steps.search.title"'));
+  assert.ok(howSource.includes('t("howItWorks.providerWebsites.description")'));
+  assert.ok(languageOptions.some((o) => o.code === "sv" && o.locale === "sv-SE" && o.direction === "ltr"));
+  assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
+});
