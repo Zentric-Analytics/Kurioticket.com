@@ -439,6 +439,10 @@ export const authOptions: NextAuthOptions =
           return "/auth/signin?error=AccountUnavailable";
         }
 
+        if (dbUser?.status === "PENDING_DELETION") {
+          return "/account/pending-deletion";
+        }
+
         const isGoogleSignIn =
           account?.provider ===
           "google";
