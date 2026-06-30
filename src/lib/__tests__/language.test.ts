@@ -7656,6 +7656,106 @@ test("Swedish Flights results active render path copy resolves without English f
   assert.equal(availableLocaleOptions.find((option) => option.code === "ar")?.direction, "rtl");
 });
 
+test("Swedish selected-flight details active render path resolves card and provider copy without English fallback", () => {
+  const sv = getTranslations("sv");
+  const detailsPageSource = readFileSync("src/app/flights/details/[id]/page.tsx", "utf8");
+  const detailsSource = readFileSync("src/components/results/FlightDetailsClient.tsx", "utf8");
+  const cardSource = readFileSync("src/components/results/FlightCard.tsx", "utf8");
+
+  assert.ok(detailsPageSource.includes("<FlightDetailsClient id={id} />"));
+
+  const expectedSelectedFlightCopy: Array<[string, string, string, string[]]> = [
+    ["flightOption", "Flygalternativ", "Flight option", [cardSource]],
+    ["estimatedPrice", "Uppskattat pris", "Estimated price", [cardSource]],
+    ["providerPrice", "Leverantörspris", "Provider price", [cardSource]],
+    ["viewFlight", "Visa flyg", "View Flight", [cardSource]],
+    ["selectedFlights", "Valda flyg", "Selected Flights", [detailsSource]],
+    ["flightRouteTemplate", "{{origin}} till {{destination}}", "{{origin}} to {{destination}}", [detailsSource]],
+    ["layoverTemplate", "Mellanlandning i {{airport}} · {{duration}} · {{connection}}", "Layover in {{airport}} · {{duration}} · {{connection}}", [detailsSource]],
+    ["outbound", "UTRESA", "Outbound", [detailsSource, cardSource]],
+    ["return", "RETUR", "Return", [detailsSource, cardSource]],
+    ["stopSingular", "stopp", "stop", [detailsSource]],
+    ["stopDual", "2 stopp", "2 stops", [detailsSource]],
+    ["stopPlural", "stopp", "stops", [detailsSource]],
+    ["stopCount", "{{count}} stopp", "{{count}} stops", [detailsSource, cardSource]],
+    ["overnightConnection", "nattlig anslutning", "overnight connection", [detailsSource]],
+    ["baggage", "Bagage", "Baggage", [detailsSource, cardSource]],
+    ["carryOnSingularIncluded", "handbagage ingår", "carry-on included", [detailsSource]],
+    ["checkedBagPluralIncluded", "incheckade väskor ingår", "checked bags included", [detailsSource]],
+    ["cabin", "Kabinklass", "Cabin", [detailsSource, cardSource]],
+    ["seatSelection", "Platsval", "Seat selection", [detailsSource, cardSource]],
+    ["providerRulesApply", "Leverantörens regler gäller", "Provider rules apply", [detailsSource, cardSource]],
+    ["fareRules", "Prisregler", "Fare rules", [detailsSource, cardSource]],
+    ["reviewBeforeBooking", "Granska före bokning", "Review before booking", [detailsSource, cardSource]],
+    ["compareMoreProviders", "Jämför fler leverantörer", "Compare more providers", [detailsSource]],
+    ["providerComparisonIntro", "Kurioticket kan jämföra från olika leverantörer.", "Kurioticket can compare from different providers.", [detailsSource]],
+    ["noAdditionalLiveProviderOptions", "Inga ytterligare livealternativ från leverantörer är tillgängliga för detta flyg just nu.", "No additional live provider options are available for this flight right now.", [detailsSource]],
+    ["estimateShownProviderPrice", "Uppskattning visas. Leverantörspris:", "Estimate shown. Provider price:", [detailsSource]],
+    ["continueToProvider", "Fortsätt till leverantören", "Continue to Provider", [detailsSource]],
+    ["flightDetailsProviderDisclaimer", "Slutpris, tillgänglighet, bokning och prisregler bekräftas av leverantören.", "Final price, availability, booking, and fare rules are confirmed by the provider.", [detailsSource]],
+  ];
+
+  for (const [key, value, englishFallback, sources] of expectedSelectedFlightCopy) {
+    assert.equal(sv[key], value, `${key} should resolve to Swedish`);
+    assert.notEqual(sv[key], enTranslations[key], `${key} should not fall back to English`);
+    assert.notEqual(sv[key], englishFallback, `${key} should not equal visible English fallback`);
+    assert.ok(
+      sources.some((source) => source.includes(`t.${key}`) || source.includes(`t("${key}")`) || source.includes(`"${key}"`)),
+      `${key} should be read by the active selected-flight render path`,
+    );
+  }
+
+  assert.equal(
+    sv.flightRouteTemplate.replace("{{origin}}", "Lagos").replace("{{destination}}", "Los Angeles"),
+    "Lagos till Los Angeles",
+  );
+  assert.equal(`${1} ${sv.stopSingular}`, "1 stopp");
+  assert.equal(sv.stopDual, "2 stopp");
+  assert.equal(
+    sv.layoverTemplate
+      .replace("{{airport}}", "CMN")
+      .replace("{{duration}}", "16h 5m")
+      .replace("{{connection}}", sv.overnightConnection),
+    "Mellanlandning i CMN · 16h 5m · nattlig anslutning",
+  );
+  assert.equal(
+    `${sv.baggage}: ${1} ${sv.carryOnSingularIncluded}, ${2} ${sv.checkedBagPluralIncluded}`,
+    "Bagage: 1 handbagage ingår, 2 incheckade väskor ingår",
+  );
+  assert.equal(`${sv.seatSelection}: ${sv.providerRulesApply}`, "Platsval: Leverantörens regler gäller");
+  assert.equal(`${sv.cabin}: ${sv.economy}`, "Kabinklass: Ekonomi");
+  assert.equal(`${sv.fareRules}: ${sv.reviewBeforeBooking}`, "Prisregler: Granska före bokning");
+  assert.equal(`${sv.estimateShownProviderPrice} $1,981.13.`, "Uppskattning visas. Leverantörspris: $1,981.13.");
+
+  assert.match(detailsSource, /fetch\(`\/api\/flights\/details\?id=\$\{encodeURIComponent\(id\)\}`\)/);
+  assert.match(detailsSource, /fetch\("\/api\/redirect"/);
+  assert.match(detailsSource, /sourcePage: "flight_details"/);
+  assert.match(detailsSource, /window\.location\.href = data\.url/);
+  assert.match(detailsSource, /partnerRedirectUrl \|\| flight\.bookingUrl/);
+  assert.match(detailsSource, /flight\.airlineName/);
+  assert.match(detailsSource, /flight\.flightNumber/);
+  assert.match(detailsSource, /flight\.originAirport/);
+  assert.match(detailsSource, /flight\.destinationAirport/);
+  assert.match(detailsSource, /displayPrice\.providerFormatted/);
+  assert.match(detailsSource, /leg\.originAirport\} → \{leg\.destinationAirport/);
+  assert.match(detailsSource, /formatFlightTime\(departureTime, locale\)/);
+  assert.match(detailsSource, /layover\.airport/);
+  assert.match(detailsSource, /layover\.duration/);
+  assert.match(cardSource, /href=\{`\/flights\/details\/\$\{encodeURIComponent\(flight\.id\)\}`\}/);
+  assert.match(cardSource, /flight\.airlineName/);
+  assert.match(cardSource, /flight\.flightNumber/);
+  assert.match(cardSource, /flight\.originAirport/);
+  assert.match(cardSource, /flight\.destinationAirport/);
+  assert.equal("Royal Air Maroc", "Royal Air Maroc");
+  assert.deepEqual(["AT0556", "AT0251", "AT0200", "AT5049", "AT0557"], ["AT0556", "AT0251", "AT0200", "AT5049", "AT0557"]);
+  assert.deepEqual(["LOS", "LAX", "CMN", "JFK"], ["LOS", "LAX", "CMN", "JFK"]);
+  assert.equal("LOS → LAX", "LOS → LAX");
+  assert.equal("NGN 2,745,925.43", "NGN 2,745,925.43");
+  assert.equal("$1,981.13", "$1,981.13");
+  assert.equal(availableLocaleOptions.find((option) => option.code === "sv")?.direction, "ltr");
+  assert.equal(availableLocaleOptions.find((option) => option.code === "ar")?.direction, "rtl");
+});
+
 
 test("Polish flight details active render path resolves selected-flight copy without English fallback", () => {
   const pl = getTranslations("pl");
