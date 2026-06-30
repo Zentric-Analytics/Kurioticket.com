@@ -8885,6 +8885,86 @@ test("Swedish Legal About How active pages resolve localized copy", () => {
   assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
 });
 
+test("Indonesian About page screenshot-visible copy resolves without English fallback", () => {
+  const expectedIndonesianAboutStrings = {
+    aboutPageEyebrow: "Tentang Kurioticket",
+    aboutPageTitle: "Tentang Kami",
+    aboutPageIntroPrimary:
+      "Kurioticket adalah platform pencarian dan perbandingan perjalanan yang membantu wisatawan mencari, membandingkan, dan menemukan penerbangan, hotel, mobil, serta promo perjalanan.",
+    aboutPageIntroSecondary:
+      "Tujuan kami adalah membuat perencanaan perjalanan lebih jelas dengan menghadirkan pilihan yang tersedia dan informasi penyedia dalam satu tempat sederhana, sehingga wisatawan dapat meninjau pilihan sebelum melanjutkan ke penyedia yang sesuai dengan perjalanan mereka.",
+    aboutPagePlanningCardHeading: "Alat perencanaan perjalanan yang praktis",
+    aboutPagePlanningCardBody:
+      "Kurioticket berfokus membantu wisatawan mengevaluasi pilihan perjalanan dengan konteks yang berguna. Ketersediaan, harga, aturan, dan langkah pemesanan akhir dapat berbeda menurut penyedia, jadi wisatawan sebaiknya meninjau halaman penyedia dengan cermat sebelum mengambil keputusan.",
+  };
+
+  const aboutPageSource = readFileSync("src/components/about/AboutPageContent.tsx", "utf8");
+  const aboutRouteSource = readFileSync("src/app/about/page.tsx", "utf8");
+
+  assert.ok(aboutRouteSource.includes("<AboutPageContent />"), "About route should render AboutPageContent.");
+  assert.ok(aboutPageSource.includes("getTranslation(t,"), "About page should keep its i18n fallback helper.");
+  assert.ok(aboutPageSource.includes("max-w-3xl rounded-2xl border border-border bg-white"), "About card layout classes should remain unchanged.");
+  assert.ok(!aboutPageSource.includes("About Us"), "Active About content component should not hardcode screenshot English copy.");
+
+  for (const [key, value] of Object.entries(expectedIndonesianAboutStrings)) {
+    assert.equal(idTranslations[key], value, `id ${key} should use Indonesian copy`);
+    assert.notEqual(idTranslations[key], enTranslations[key], `id ${key} should not fall back to English`);
+    assert.ok(aboutPageSource.includes(key), `About page render path should resolve ${key} through i18n.`);
+  }
+
+  assert.match(idTranslations.aboutPageIntroPrimary, /Kurioticket/);
+  assert.match(idTranslations.aboutPagePlanningCardBody, /penyedia/);
+  assert.ok(languageOptions.some((o) => o.code === "id" && o.locale === "id-ID" && o.nativeLabel === "Bahasa Indonesia" && o.direction === "ltr"));
+  assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
+});
+
+test("Indonesian How Kurioticket Works page screenshot-visible copy resolves without English fallback", () => {
+  const expectedIndonesianHowItWorksStrings = {
+    howItWorksEyebrow: "Cara kerja Kurioticket",
+    howItWorksTitle: "Cara Kerja Kurioticket",
+    howItWorksIntro:
+      "Kurioticket membantu wisatawan beralih dari pencarian ke perbandingan, lalu melanjutkan ke penyedia saat sebuah penawaran dipilih.",
+    howItWorksFlowHeading: "Alur dasar",
+    "howItWorks.steps.search.title": "Cari pilihan perjalanan",
+    "howItWorks.steps.search.description":
+      "Masukkan detail perjalanan Anda untuk mencari penerbangan, hotel, mobil, atau promo perjalanan yang tersedia.",
+    "howItWorks.steps.compare.title": "Bandingkan hasil yang tersedia",
+    "howItWorks.steps.compare.description":
+      "Tinjau pilihan yang tersedia, harga, jadwal, detail penyedia, dan informasi perjalanan lainnya saat ditampilkan.",
+    "howItWorks.steps.choose.title": "Pilih penawaran",
+    "howItWorks.steps.choose.description":
+      "Pilih opsi yang paling sesuai dengan rencana Anda setelah meninjau detail yang tersedia.",
+    "howItWorks.steps.continue.title": "Lanjutkan ke penyedia",
+    "howItWorks.steps.continue.description":
+      "Saat diarahkan, lanjutkan di situs web penyedia untuk meninjau detail akhir dan menyelesaikan langkah pemesanan.",
+    "howItWorks.providerWebsites.title": "Situs web penyedia",
+    "howItWorks.providerWebsites.description":
+      "Beberapa pemesanan dapat diselesaikan di situs web penyedia setelah Kurioticket mengarahkan Anda. Tinjau halaman penyedia untuk ketersediaan akhir, harga, ketentuan, langkah pembayaran, dan detail pemesanan sebelum menyelesaikan pembelian.",
+  };
+
+  const howItWorksSource = readFileSync("src/app/how-it-works/HowItWorksContent.tsx", "utf8");
+  const howItWorksRouteSource = readFileSync("src/app/how-it-works/page.tsx", "utf8");
+
+  assert.ok(howItWorksRouteSource.includes("<HowItWorksContent />"), "How-it-works route should render HowItWorksContent.");
+  assert.ok(howItWorksSource.includes('number: "01"') && howItWorksSource.includes('number: "02"') && howItWorksSource.includes('number: "03"') && howItWorksSource.includes('number: "04"'), "How-it-works step numbers should remain unchanged.");
+  assert.ok(howItWorksSource.includes("Search") && howItWorksSource.includes("GitCompare") && howItWorksSource.includes("MousePointerClick") && howItWorksSource.includes("ExternalLink"), "How-it-works icons should remain unchanged.");
+  assert.ok(howItWorksSource.includes("steps.map((step)"), "How-it-works should keep mapped card order.");
+  assert.ok(howItWorksSource.includes('aria-labelledby="how-it-works-steps"'), "How-it-works accessibility attributes should remain unchanged.");
+  assert.ok(howItWorksSource.includes("rounded-2xl border border-border bg-white"), "How-it-works card layout classes should remain unchanged.");
+  assert.ok(!howItWorksSource.includes("Basic flow"), "Active How-it-works content component should not hardcode screenshot English copy.");
+
+  for (const [key, value] of Object.entries(expectedIndonesianHowItWorksStrings)) {
+    assert.equal(idTranslations[key], value, `id ${key} should use Indonesian copy`);
+    assert.notEqual(idTranslations[key], enTranslations[key], `id ${key} should not fall back to English`);
+    assert.ok(howItWorksSource.includes(key), `How-it-works render path should resolve ${key} through i18n.`);
+  }
+
+  assert.match(idTranslations.howItWorksIntro, /penyedia/);
+  assert.match(idTranslations["howItWorks.providerWebsites.description"], /penyedia/);
+  assert.ok(languageOptions.some((o) => o.code === "id" && o.locale === "id-ID" && o.nativeLabel === "Bahasa Indonesia" && o.direction === "ltr"));
+  assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
+});
+
 test("Swedish Account Personal details and Security settings copy resolves without English fallback", () => {
   const personalReadOnly = {
     "accountDashboard.mobile.backAriaLabel": "Tillbaka till Mitt konto",
