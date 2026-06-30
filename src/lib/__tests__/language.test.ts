@@ -9183,5 +9183,128 @@ test("Indonesian homepage visible copy and render paths resolve without English 
   assert.ok(headerSource.includes('t.flights') && headerSource.includes('t.login') && headerSource.includes('t.signUp'));
   assert.ok(searchTabsSource.includes('t.roundTrip') && searchTabsSource.includes('translate("hotelSearchGuestsLabel")') && searchTabsSource.includes('translate("infantsOnLap")'));
   assert.ok(footerSource.includes('t.footerSellerOfTravelNotice') && footerSource.includes('t.footerPrivacy'));
-  assert.ok(newsletterBridgeSource.includes('t["newsletter.accountEmailLine"]') && newsletterBridgeSource.includes('t["newsletter.manageEmailPreferences"]'));
+  assert.ok(newsletterBridgeSource.includes("Homepage newsletter personalization is intentionally disabled."));
+});
+
+test("Indonesian global modals, auth pages, verification state, and show more copy resolve through active i18n keys", () => {
+  const id = getTranslations("id");
+  const headerSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
+  const countryCurrencySource = readFileSync("src/components/region/CountryCurrencySelector.tsx", "utf8");
+  const signinSource = readFileSync("src/components/auth/SigninForm.tsx", "utf8");
+  const signinPageSource = readFileSync("src/app/auth/signin/page.tsx", "utf8");
+  const forgotSource = readFileSync("src/components/auth/ForgotPasswordForm.tsx", "utf8");
+  const forgotPageSource = readFileSync("src/app/auth/forgot-password/page.tsx", "utf8");
+  const signupSource = readFileSync("src/components/auth/SignupForm.tsx", "utf8");
+  const signupPageSource = readFileSync("src/app/auth/signup/page.tsx", "utf8");
+
+  const expected: Record<string, string> = {
+    chooseCountryAndCurrency: "Pilih negara dan mata uang",
+    countryCurrencyDescription:
+      "Pilih negara dan mata uang yang digunakan untuk menampilkan harga. Saran bandara menggunakan lokasi Anda yang terdeteksi.",
+    searchCountryOrCurrency: "Cari negara atau mata uang",
+    countryCurrencyPopularCountryAndCurrency: "NEGARA DAN MATA UANG POPULER",
+    countryCurrencyAllCountriesAndCurrencies: "SEMUA NEGARA DAN MATA UANG",
+    countryCurrencyOptionCountSingular: "{{count}} opsi",
+    countryCurrencyOptionCountPlural: "{{count}} opsi",
+    showMoreResults: "Tampilkan lebih banyak hasil",
+    globalLanguage: "BAHASA GLOBAL",
+    websiteLanguageTitle: "Pilih bahasa situs web Anda",
+    websiteLanguageDescription:
+      "Inggris (Amerika Serikat) adalah bahasa default situs web. Kurioticket hanya mengubah bahasa setelah Anda memilih opsi yang tersedia.",
+    currentLanguage: "Bahasa saat ini: {{language}}",
+    languagePreparingNotice:
+      "Bahasa lainnya sedang disiapkan. Opsi yang belum tersedia belum menerjemahkan situs.",
+    languageSearchLabel: "Cari bahasa",
+    languageSearchPlaceholder: "Cari English, Español, Français, Deutsch...",
+    loginPageTitle: "Masuk",
+    loginPageSubtitle: "Simpan pencarian, kelola peringatan, dan akses dasbor perjalanan Anda.",
+    loginEmailLabel: "Email",
+    loginPasswordLabel: "Kata sandi",
+    loginForgotPassword: "Lupa kata sandi?",
+    loginDivider: "ATAU",
+    loginGoogle: "Lanjutkan dengan Google",
+    loginSignupPrompt: "Baru di Kurioticket?",
+    loginCreateAccount: "Buat akun",
+    forgotPasswordTitle: "Atur ulang kata sandi Anda",
+    forgotPasswordSubtitle:
+      "Masukkan email Anda dan kami akan mengirimkan instruksi untuk mengatur ulang kata sandi.",
+    forgotPasswordEmailPlaceholder: "anda@example.com",
+    forgotPasswordSubmit: "Kirim tautan reset",
+    forgotPasswordRemember: "Ingat kata sandi Anda?",
+    forgotPasswordSuccess:
+      "Jika akun ada, kami telah mengirimkan instruksi pengaturan ulang kata sandi.",
+    loginCodeSent: "Kami telah mengirim kode verifikasi ke email Anda.",
+    loginCodeInstructions:
+      "Masukkan kode 6 digit yang dikirim ke {{email}}. Kode kedaluwarsa setelah {{minutes}} menit.",
+    loginVerificationCodeLabel: "Kode verifikasi",
+    loginVerifyLogin: "Verifikasi masuk",
+    loginResendIn: "Kirim ulang dalam {{seconds}} dtk",
+    loginUseDifferentDetails: "Gunakan detail lain",
+    loginResendCode: "Kirim ulang kode",
+    loginSendingCode: "Mengirim...",
+    loginVerifying: "Memverifikasi...",
+    signupPageTitle: "Buat akun Anda",
+    signupFullNameLabel: "Nama lengkap",
+    signupPasswordLabel: "Kata sandi",
+    signupTermsLink: "Ketentuan",
+    signupPrivacyPolicyLink: "Kebijakan Privasi",
+    signupSubmit: "Daftar",
+    signupGoogle: "Lanjutkan dengan Google",
+    signupAlreadyHaveAccount: "Sudah punya akun?",
+    signupLoginLink: "Masuk",
+  };
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(id[key], value, `${key} should resolve to Indonesian`);
+    if (value !== enTranslations[key]) {
+      assert.notEqual(id[key], enTranslations[key], `${key} should not fall back to English`);
+    }
+  }
+
+  assert.equal(id.signupAgreementBeforeTerms + id.signupTermsLink + id.signupAgreementBetweenLinks + id.signupPrivacyPolicyLink + id.signupAgreementAfterPrivacy, "Dengan membuat akun, Anda menyetujui Ketentuan, Kebijakan Privasi, dan pengungkapan pengalihan mitra.");
+  assert.equal(id.currentLanguage.replace("{{language}}", "Bahasa Indonesia"), "Bahasa saat ini: Bahasa Indonesia");
+  assert.equal(id.loginCodeInstructions.replace("{{email}}", "developer2@zentricresearch.com").replace("{{minutes}}", "10"), "Masukkan kode 6 digit yang dikirim ke developer2@zentricresearch.com. Kode kedaluwarsa setelah 10 menit.");
+  assert.equal(id.loginResendIn.replace("{{seconds}}", "29"), "Kirim ulang dalam 29 dtk");
+  assert.equal(id.countryCurrencyOptionCountPlural.replace("{{count}}", "250"), "250 opsi");
+  assert.equal(id.countryCurrencyOptionCountSingular.replace("{{count}}", "16"), "16 opsi");
+  assert.equal(id.selectCountryCurrencyOption.includes("{{code}}"), true);
+  assert.equal(id.selectCountryCurrencyOption.includes("{{currency}}"), true);
+  assert.equal(languageOptions.find((option) => option.code === "id")?.locale, "id-ID");
+  assert.equal(languageOptions.find((option) => option.code === "id")?.nativeLabel, "Bahasa Indonesia");
+  assert.equal(languageOptions.find((option) => option.code === "id")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
+
+  for (const key of ["globalLanguage", "websiteLanguageTitle", "websiteLanguageDescription", "currentLanguage", "languagePreparingNotice", "languageSearchLabel", "languageSearchPlaceholder", "closeLanguageSelector"]) {
+    assert.match(headerSource, new RegExp(`t\\.${key}`), `Language selector render path should read ${key}`);
+  }
+  for (const key of ["chooseCountryAndCurrency", "countryCurrencyDescription", "searchCountryOrCurrency", "countryCurrencyPopularCountryAndCurrency", "countryCurrencyAllCountriesAndCurrencies", "countryCurrencyOptionCountSingular", "countryCurrencyOptionCountPlural", "showMoreResults"]) {
+    assert.match(countryCurrencySource, new RegExp(`t\\.${key}`), `Country/currency render path should read ${key}`);
+  }
+  for (const key of ["loginPageTitle", "loginPageSubtitle", "loginEmailLabel", "loginPasswordLabel", "loginForgotPassword", "loginGoogle", "loginDivider", "loginSignupPrompt", "loginCreateAccount", "loginCodeSent", "loginCodeInstructions", "loginVerificationCodeLabel", "loginVerifyLogin", "loginResendIn", "loginUseDifferentDetails", "loginResendCode", "loginSendingCode", "loginVerifying"]) {
+    assert.match(signinSource, new RegExp(`t\\.${key}|key: "${key}"`), `Sign-in render path should read ${key}`);
+  }
+  for (const key of ["forgotPasswordTitle", "forgotPasswordSubtitle", "forgotPasswordEmailLabel", "forgotPasswordEmailPlaceholder", "forgotPasswordSubmit", "forgotPasswordRemember", "forgotPasswordLoginLink", "forgotPasswordSuccess"]) {
+    assert.match(forgotSource, new RegExp(`t\\.${key}`), `Forgot-password render path should read ${key}`);
+  }
+  for (const key of ["signupPageTitle", "signupFullNameLabel", "signupEmailLabel", "signupPasswordLabel", "signupAgreementBeforeTerms", "signupTermsLink", "signupPrivacyPolicyLink", "signupAgreementAfterPrivacy", "signupSubmit", "signupGoogle", "signupAlreadyHaveAccount", "signupLoginLink"]) {
+    assert.match(signupSource, new RegExp(`t\\.${key}`), `Signup render path should read ${key}`);
+  }
+
+  assert.ok(signinPageSource.includes("<SigninForm"));
+  assert.ok(forgotPageSource.includes("<ForgotPasswordForm />"));
+  assert.ok(signupPageSource.includes("<SignupForm"));
+  assert.ok(signinSource.includes('href="/auth/forgot-password"'));
+  assert.ok(signinSource.includes('href="/auth/signup"'));
+  assert.ok(signinSource.includes('fetch("/api/auth/request-login-code"'));
+  assert.ok(signinSource.includes('signIn("credentials"'));
+  assert.ok(signinSource.includes('name="email"') && signinSource.includes('name="password"') && signinSource.includes('name="code"'));
+  assert.ok(signinSource.includes('type="password"') && signinSource.includes('pattern="[0-9]{6}"') && signinSource.includes('maxLength={6}'));
+  assert.ok(forgotSource.includes('fetch("/api/auth/forgot-password"'));
+  assert.ok(forgotSource.includes('name="email"') && forgotSource.includes('type="email"'));
+  assert.ok(signupSource.includes('fetch("/api/auth/signup"'));
+  assert.ok(signupSource.includes('name="name"') && signupSource.includes('name="email"') && signupSource.includes('name="password"'));
+  assert.ok(signupSource.includes('type="password"') && signupSource.includes('minLength={8}'));
+  assert.doesNotMatch(signinSource, />Log in<|>Save searches, manage alerts, and access your travel dashboard\.<|>Forgot password\?<|>OR<|>Continue with Google<|>New to Kurioticket\?<|>Create an account<|>Verification code<|>Verify login<|>Use different details/);
+  assert.doesNotMatch(forgotSource, />Reset your password<|>Enter your email and we'll send instructions to reset your password\.<|>Send reset link<|>Remember your password\?<|>Log in</);
+  assert.doesNotMatch(signupSource, />Create your account<|>Full name<|>Sign Up<|>Continue with Google<|>Already have an account\?<|>Log in</);
 });
