@@ -6870,6 +6870,128 @@ test("Polish homepage discovery route search payloads remain route-data driven",
   });
 });
 
+test("Swedish service and support active render path copy resolves without English fallback", () => {
+  const sv = getTranslations("sv");
+  const supportContentSource = readFileSync("src/app/support/SupportContent.tsx", "utf8");
+  const supportFormSource = readFileSync("src/components/support/SupportForm.tsx", "utf8");
+  const serviceGuaranteeSource = readFileSync("src/app/service-guarantee/ServiceGuaranteeContent.tsx", "utf8");
+  const moreServiceInfoSource = readFileSync("src/app/more-service-info/MoreServiceInfoContent.tsx", "utf8");
+
+  const expected = {
+    supportEyebrow: "Kuriotickets hjälpcenter",
+    supportTitle: "Kundsupport",
+    supportBeforeContactHeading: "Innan du kontaktar oss",
+    supportBeforeContactDescription: "Ange e-postadressen på ditt Kurioticket-konto, vad du försökte göra, rutten eller hotellet om det är relevant och eventuell leverantörssida som du omdirigerades till. Skicka inte fullständiga betalkortsnummer eller känsliga resedokumentnummer.",
+    supportTicketHeading: "Skapa ett supportärende",
+    supportFormEmailLabel: "E-post",
+    supportFormSubjectLabel: "Ämne",
+    supportFormCategoryLabel: "Kategori",
+    supportCategoryPriceAlerts: "Prisaviseringar",
+    supportFormMessageLabel: "Hur kan vi hjälpa till?",
+    supportFormMessagePlaceholder: "Dela rutt-, hotell-, aviserings- eller kontosammanhang.",
+    supportFormSubmit: "Skicka förfrågan",
+    supportFaqHeading: "Vanliga frågor",
+    supportFaqAccountQuestion: "Hjälp med konto och inloggning",
+    supportFaqSearchQuestion: "Hjälp med sökning och resultat",
+    supportFaqSavedTripsQuestion: "Sparade resor och aviseringar",
+    supportFaqRedirectQuestion: "Hjälp med boknings- och leverantörsomdirigering",
+    supportFaqAlreadyBookedQuestion: "Har du redan bokat hos en leverantör?",
+    supportFaqChangeBookingQuestion: "Kan Kurioticket ändra min bokning?",
+    supportFaqWhyRedirectedQuestion: "Varför skickades jag till en annan leverantör?",
+    serviceGuaranteeEyebrow: "Kuriotickets serviceåtagande",
+    serviceGuaranteeTitle: "Servicegaranti",
+    serviceGuaranteeDescription: "Vi vill att resenärer ska förstå hur Kurioticket fungerar och vad de kan förvänta sig när de använder vår plattform.",
+    serviceGuaranteeFaqHeading: "Vanliga frågor",
+    serviceGuaranteeFaqDescription: "Dessa svar förklarar Kuriotickets roll som plattform för resesökning och jämförelse.",
+    serviceGuaranteeFaqWhatGuaranteeQuestion: "Vad garanterar Kurioticket?",
+    serviceGuaranteeFaqResultsDisplayedQuestion: "Hur visas reseresultat?",
+    serviceGuaranteeFaqRedirectedQuestion: "Varför omdirigeras jag till en annan leverantör?",
+    serviceGuaranteeFaqBookDirectlyQuestion: "Bokar jag direkt på Kurioticket?",
+    serviceGuaranteeFaqPricesGuaranteedQuestion: "Är priser alltid garanterade?",
+    serviceGuaranteeFaqChooseProvidersQuestion: "Hur väljer Kurioticket leverantörer?",
+    serviceGuaranteeFaqEncounterIssueQuestion: "Vad ska jag göra om jag stöter på ett problem?",
+    serviceGuaranteeFaqContactSupportQuestion: "Hur kontaktar jag supporten?",
+    serviceGuaranteeHelpCardTitle: "Behöver du hjälp med ditt konto eller din sökning?",
+    serviceGuaranteeSupportCta: "Kontakta kundsupport",
+    moreServiceInfoEyebrow: "Plattformsinformation",
+    moreServiceInfoTitle: "Mer serviceinformation",
+    moreServiceInfoDescription: "Läs hur Kurioticket hjälper resenärer att söka, jämföra, spara och organisera resealternativ från flera leverantörer på ett ställe.",
+    moreServiceInfoContextTitle: "Planera med sammanhang",
+    moreServiceInfoContextSubtitle: "Från sökresultat till leverantörsomdirigeringar",
+    moreServiceInfoContextCompare: "Jämför alternativ från flera reseleverantörer.",
+    moreServiceInfoContextSave: "Spara resor, aviseringar och preferenser när du är inloggad.",
+    moreServiceInfoContextContinue: "Fortsätt med leverantörens uppgifter innan du bokar externt.",
+    moreServiceInfoHowHeading: "Så fungerar Kurioticket",
+    moreServiceInfoHowDescription: "Dessa servicedetaljer förklarar Kuriotickets roll före, under och efter en resesökning.",
+    moreServiceInfoHowBadge: "GRUNDER I RESEPLANERING",
+    moreServiceInfoStepSearchTitle: "Sök hos flera leverantörer",
+    moreServiceInfoStepSearchSummary: "Sök resealternativ hos olika leverantörer från ett ställe i stället för att öppna varje leverantör separat.",
+    moreServiceInfoStepSearchDetails: "Kurioticket samlar tillgänglig information om flyg, hotell, rutter och reseresultat i en enda sökupplevelse så att resenärer kan granska alternativ mer effektivt.",
+    moreServiceInfoStepCompareTitle: "Jämför resealternativ",
+    moreServiceInfoStepCompareSummary: "Jämför priser, rutter, hotell, tidtabeller och tillgängliga resealternativ innan du bestämmer vad som passar din resa.",
+    moreServiceInfoStepCompareDetails: "Resultat kan innehålla leverantörsuppgifter, tider, destinationsinformation och andra resedata som hjälper dig att utvärdera alternativet innan du fortsätter till leverantören.",
+    moreServiceInfoStepSaveTitle: "Spara resor och aviseringar",
+    moreServiceInfoStepSaveSummary: "Skapa ett konto för att spara resor, följa rutter och hantera reseaviseringar kopplade till din reseplanering.",
+    moreServiceInfoStepSaveDetails: "Sparade resor, senaste sökningar och aviseringar gör det enklare att återvända till alternativ du överväger och hålla relaterade reseplaneringsdetaljer organiserade.",
+    moreServiceInfoStepRedirectsTitle: "Leverantörsomdirigeringar förklarade",
+    moreServiceInfoStepRedirectsSummary: "När du väljer ett erbjudande kan du omdirigeras till en reseleverantör för att slutföra bokning, betalning, bekräftelse och fullgörande.",
+    moreServiceInfoStepRedirectsDetails: "Leverantörssidan är där slutpriser, tillgänglighet, regler, betalningssteg, kvitton, bokningsändringar, avbokningar och resehandlingar hanteras för omdirigerade erbjudanden.",
+    moreServiceInfoStepAccountTitle: "Konto- och reseverktyg",
+    moreServiceInfoStepAccountSummary: "Använd kontoverktyg för att organisera sparade sökningar, resor, aviseringar och preferenser i en Kurioticket-arbetsyta.",
+    moreServiceInfoStepAccountDetails: "Dessa verktyg stödjer reseplanering på Kurioticket, medan leverantörsspecifik bokningshantering ligger kvar hos leverantören när din bokning slutförs externt.",
+    moreServiceInfoFaqHeading: "Vanliga frågor",
+    moreServiceInfoFaqDescription: "Korta svar om resesökning, leverantörsomdirigeringar, sparade resor och kontoverktyg.",
+    moreServiceInfoFaqWhatQuestion: "Vad är Kurioticket?",
+    moreServiceInfoFaqSearchQuestion: "Hur fungerar resesökning?",
+    moreServiceInfoFaqRedirectQuestion: "Varför omdirigeras jag till en annan leverantör?",
+    moreServiceInfoFaqPaymentsQuestion: "Hanterar Kurioticket betalningar?",
+    moreServiceInfoFaqSaveQuestion: "Kan jag spara resor och aviseringar?",
+    moreServiceInfoFaqAccountQuestion: "Krävs ett konto?",
+    moreServiceInfoFaqSupportQuestion: "Hur kontaktar jag supporten?",
+    moreServiceInfoHelpTitle: "Behöver du hjälp?",
+    moreServiceInfoHelpDescription: "Frågor om ditt konto, sparade resor, aviseringar eller leverantörsomdirigeringar?",
+    moreServiceInfoSupportCta: "Kontakta kundsupport",
+  };
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(sv[key], value, key);
+    assert.notEqual(sv[key], enTranslations[key], key);
+  }
+
+  const hiddenAnswerKeys = [
+    "supportFaqAccountAnswer", "supportFaqSearchAnswer", "supportFaqSavedTripsAnswer", "supportFaqRedirectAnswer",
+    "supportFaqAlreadyBookedAnswer", "supportFaqChangeBookingAnswer", "supportFaqWhyRedirectedAnswer",
+    "serviceGuaranteeFaqWhatGuaranteeAnswer", "serviceGuaranteeFaqResultsDisplayedAnswer", "serviceGuaranteeFaqRedirectedAnswer",
+    "serviceGuaranteeFaqBookDirectlyAnswer", "serviceGuaranteeFaqPricesGuaranteedAnswer", "serviceGuaranteeFaqChooseProvidersAnswer",
+    "serviceGuaranteeFaqEncounterIssueAnswer", "serviceGuaranteeFaqContactSupportAnswer",
+    "moreServiceInfoFaqWhatAnswer", "moreServiceInfoFaqSearchAnswer", "moreServiceInfoFaqRedirectAnswer", "moreServiceInfoFaqPaymentsAnswer",
+    "moreServiceInfoFaqSaveAnswer", "moreServiceInfoFaqAccountAnswer", "moreServiceInfoFaqSupportAnswer",
+  ];
+  for (const key of hiddenAnswerKeys) {
+    assert.ok(sv[key], key);
+    assert.notEqual(sv[key], enTranslations[key], key);
+  }
+
+  assert.ok(supportContentSource.includes('t("supportEyebrow")'));
+  assert.ok(supportContentSource.includes('supportFaqKeys.map'));
+  assert.ok(supportFormSource.includes('fetch("/api/support/tickets"'));
+  assert.ok(supportFormSource.includes('name="email" type="email"'));
+  assert.ok(supportFormSource.includes('name="subject" required'));
+  assert.ok(supportFormSource.includes('name="category" defaultValue="price-alerts"'));
+  assert.ok(supportFormSource.includes('value="search-help"'));
+  assert.ok(supportFormSource.includes('value="price-alerts"'));
+  assert.ok(supportFormSource.includes('value="redirect"'));
+  assert.ok(supportFormSource.includes('value="account"'));
+  assert.ok(supportFormSource.includes('name="body" required'));
+  assert.ok(serviceGuaranteeSource.includes('serviceFaqKeys.map'));
+  assert.ok(serviceGuaranteeSource.includes('href="/support"'));
+  assert.ok(moreServiceInfoSource.includes('serviceSections.map'));
+  assert.ok(moreServiceInfoSource.includes('serviceFaqs.map'));
+  assert.ok(moreServiceInfoSource.includes('href="/support"'));
+  assert.ok(languageOptions.some((o) => o.code === "sv" && o.locale === "sv-SE" && o.nativeLabel === "Svenska" && o.direction === "ltr"));
+  assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
+});
+
 test("Polish service and support active render path copy resolves without English fallback", () => {
   const pl = getTranslations("pl");
   const supportContentSource = readFileSync("src/app/support/SupportContent.tsx", "utf8");

@@ -236,6 +236,120 @@ export const translations: TranslationDictionary = {
   'supportFaqChangeBookingAnswer': 'Kurioticket kan endast hjälpa till med bokningar som gjorts direkt via Kurioticket om och när direktbokning stöds. För bokningar som slutförts hos externa leverantörer ska du kontakta den leverantören direkt.',
   'supportFaqWhyRedirectedQuestion': 'Varför skickades jag till en annan leverantör?',
   'supportFaqWhyRedirectedAnswer': 'Kurioticket är en plattform för resesökning och jämförelse, och vissa resultat omdirigerar till betrodda leverantörer där du slutför bokning, betalning och leverantörsspecifik support.',
+  supportEyebrow: 'Kuriotickets hjälpcenter',
+  supportTitle: 'Kundsupport',
+  supportBeforeContactHeading: 'Innan du kontaktar oss',
+  supportBeforeContactDescription:
+    'Ange e-postadressen på ditt Kurioticket-konto, vad du försökte göra, rutten eller hotellet om det är relevant och eventuell leverantörssida som du omdirigerades till. Skicka inte fullständiga betalkortsnummer eller känsliga resedokumentnummer.',
+  supportTicketHeading: 'Skapa ett supportärende',
+  supportFormEmailLabel: 'E-post',
+  supportFormSubjectLabel: 'Ämne',
+  supportFormCategoryLabel: 'Kategori',
+  supportCategoryPriceAlerts: 'Prisaviseringar',
+  supportFormMessageLabel: 'Hur kan vi hjälpa till?',
+  supportFormMessagePlaceholder:
+    'Dela rutt-, hotell-, aviserings- eller kontosammanhang.',
+  supportFormSubmit: 'Skicka förfrågan',
+  supportFaqHeading: 'Vanliga frågor',
+  serviceGuaranteeEyebrow: 'Kuriotickets serviceåtagande',
+  serviceGuaranteeTitle: 'Servicegaranti',
+  serviceGuaranteeDescription:
+    'Vi vill att resenärer ska förstå hur Kurioticket fungerar och vad de kan förvänta sig när de använder vår plattform.',
+  serviceGuaranteeFaqHeading: 'Vanliga frågor',
+  serviceGuaranteeFaqDescription:
+    'Dessa svar förklarar Kuriotickets roll som plattform för resesökning och jämförelse.',
+  serviceGuaranteeFaqWhatGuaranteeQuestion: 'Vad garanterar Kurioticket?',
+  serviceGuaranteeFaqWhatGuaranteeAnswer:
+    'Kurioticket är utformat för att hjälpa resenärer att jämföra resealternativ tydligt. Vi strävar efter att erbjuda en tillförlitlig plattformsupplevelse, transparent sökinformation och tydliga vägar till leverantörernas bokningssidor.',
+  serviceGuaranteeFaqResultsDisplayedQuestion: 'Hur visas reseresultat?',
+  serviceGuaranteeFaqResultsDisplayedAnswer:
+    'Resultat visas med information som är tillgänglig från reseleverantörer, inklusive rutter, datum, priser och leverantörsuppgifter när de finns tillgängliga.',
+  serviceGuaranteeFaqRedirectedQuestion: 'Varför omdirigeras jag till en annan leverantör?',
+  serviceGuaranteeFaqRedirectedAnswer:
+    'Vissa resultat slutförs på en extern leverantörs webbplats. När du väljer ett av dessa alternativ omdirigerar Kurioticket dig så att leverantören kan hantera bokning, betalning och resespecifik service.',
+  serviceGuaranteeFaqBookDirectlyQuestion: 'Bokar jag direkt på Kurioticket?',
+  serviceGuaranteeFaqBookDirectlyAnswer:
+    'Kurioticket är främst en plattform för resesökning och jämförelse. Om ett resultat omdirigerar till en leverantör slutförs bokningen hos den leverantören i stället för på Kurioticket.',
+  serviceGuaranteeFaqPricesGuaranteedQuestion: 'Är priser alltid garanterade?',
+  serviceGuaranteeFaqPricesGuaranteedAnswer:
+    'Nej. Priser kan ändras baserat på leverantörens tillgänglighet, skatter, avgifter, valuta och tidpunkt. Kontrollera alltid slutpriset på leverantörssidan innan du bokar.',
+  serviceGuaranteeFaqChooseProvidersQuestion: 'Hur väljer Kurioticket leverantörer?',
+  serviceGuaranteeFaqChooseProvidersAnswer:
+    'Kurioticket arbetar med reseleverantörer och datakällor som kan tillhandahålla relevanta sökresultat. Tillgänglighet, prissättning och visade alternativ kan variera beroende på rutt, destination och leverantörstäckning.',
+  serviceGuaranteeFaqEncounterIssueQuestion: 'Vad ska jag göra om jag stöter på ett problem?',
+  serviceGuaranteeFaqEncounterIssueAnswer:
+    'Om problemet gäller sökning, kontoåtkomst, sparade resor, aviseringar eller en omdirigering från Kurioticket ska du kontakta Kuriotickets support. Om du redan har bokat hos en leverantör ska du kontakta den leverantören för bokningsändringar, återbetalningar, avbokningar eller resehandlingar.',
+  serviceGuaranteeFaqContactSupportQuestion: 'Hur kontaktar jag supporten?',
+  serviceGuaranteeFaqContactSupportAnswer:
+    'Använd sidan Kundsupport och ange e-postadressen för ditt konto, vad du försökte göra och eventuella rutt-, hotell- eller leverantörsuppgifter som kan hjälpa oss att granska problemet.',
+  serviceGuaranteeHelpCardTitle: 'Behöver du hjälp med ditt konto eller din sökning?',
+  serviceGuaranteeSupportCta: 'Kontakta kundsupport',
+  moreServiceInfoEyebrow: 'Plattformsinformation',
+  moreServiceInfoTitle: 'Mer serviceinformation',
+  moreServiceInfoDescription:
+    'Läs hur Kurioticket hjälper resenärer att söka, jämföra, spara och organisera resealternativ från flera leverantörer på ett ställe.',
+  moreServiceInfoContextTitle: 'Planera med sammanhang',
+  moreServiceInfoContextSubtitle: 'Från sökresultat till leverantörsomdirigeringar',
+  moreServiceInfoContextCompare: 'Jämför alternativ från flera reseleverantörer.',
+  moreServiceInfoContextSave: 'Spara resor, aviseringar och preferenser när du är inloggad.',
+  moreServiceInfoContextContinue: 'Fortsätt med leverantörens uppgifter innan du bokar externt.',
+  moreServiceInfoHowHeading: 'Så fungerar Kurioticket',
+  moreServiceInfoHowDescription:
+    'Dessa servicedetaljer förklarar Kuriotickets roll före, under och efter en resesökning.',
+  moreServiceInfoHowBadge: 'GRUNDER I RESEPLANERING',
+  moreServiceInfoStepSearchTitle: 'Sök hos flera leverantörer',
+  moreServiceInfoStepSearchSummary:
+    'Sök resealternativ hos olika leverantörer från ett ställe i stället för att öppna varje leverantör separat.',
+  moreServiceInfoStepSearchDetails:
+    'Kurioticket samlar tillgänglig information om flyg, hotell, rutter och reseresultat i en enda sökupplevelse så att resenärer kan granska alternativ mer effektivt.',
+  moreServiceInfoStepCompareTitle: 'Jämför resealternativ',
+  moreServiceInfoStepCompareSummary:
+    'Jämför priser, rutter, hotell, tidtabeller och tillgängliga resealternativ innan du bestämmer vad som passar din resa.',
+  moreServiceInfoStepCompareDetails:
+    'Resultat kan innehålla leverantörsuppgifter, tider, destinationsinformation och andra resedata som hjälper dig att utvärdera alternativet innan du fortsätter till leverantören.',
+  moreServiceInfoStepSaveTitle: 'Spara resor och aviseringar',
+  moreServiceInfoStepSaveSummary:
+    'Skapa ett konto för att spara resor, följa rutter och hantera reseaviseringar kopplade till din reseplanering.',
+  moreServiceInfoStepSaveDetails:
+    'Sparade resor, senaste sökningar och aviseringar gör det enklare att återvända till alternativ du överväger och hålla relaterade reseplaneringsdetaljer organiserade.',
+  moreServiceInfoStepRedirectsTitle: 'Leverantörsomdirigeringar förklarade',
+  moreServiceInfoStepRedirectsSummary:
+    'När du väljer ett erbjudande kan du omdirigeras till en reseleverantör för att slutföra bokning, betalning, bekräftelse och fullgörande.',
+  moreServiceInfoStepRedirectsDetails:
+    'Leverantörssidan är där slutpriser, tillgänglighet, regler, betalningssteg, kvitton, bokningsändringar, avbokningar och resehandlingar hanteras för omdirigerade erbjudanden.',
+  moreServiceInfoStepAccountTitle: 'Konto- och reseverktyg',
+  moreServiceInfoStepAccountSummary:
+    'Använd kontoverktyg för att organisera sparade sökningar, resor, aviseringar och preferenser i en Kurioticket-arbetsyta.',
+  moreServiceInfoStepAccountDetails:
+    'Dessa verktyg stödjer reseplanering på Kurioticket, medan leverantörsspecifik bokningshantering ligger kvar hos leverantören när din bokning slutförs externt.',
+  moreServiceInfoFaqHeading: 'Vanliga frågor',
+  moreServiceInfoFaqDescription:
+    'Korta svar om resesökning, leverantörsomdirigeringar, sparade resor och kontoverktyg.',
+  moreServiceInfoFaqWhatQuestion: 'Vad är Kurioticket?',
+  moreServiceInfoFaqWhatAnswer:
+    'Kurioticket är en plattform för resesökning och jämförelse där du kan hitta, jämföra, spara och organisera resealternativ från flera leverantörer.',
+  moreServiceInfoFaqSearchQuestion: 'Hur fungerar resesökning?',
+  moreServiceInfoFaqSearchAnswer:
+    'Du anger reseuppgifter och Kurioticket visar tillgängliga resealternativ och leverantörsinformation som kan hjälpa dig att jämföra val.',
+  moreServiceInfoFaqRedirectQuestion: 'Varför omdirigeras jag till en annan leverantör?',
+  moreServiceInfoFaqRedirectAnswer:
+    'Vissa erbjudanden slutförs på externa leverantörers webbplatser. Leverantören hanterar de sista bokningsstegen, betalning, bekräftelse och fullgörande.',
+  moreServiceInfoFaqPaymentsQuestion: 'Hanterar Kurioticket betalningar?',
+  moreServiceInfoFaqPaymentsAnswer:
+    'För omdirigerade leverantörserbjudanden hanterar Kurioticket inte betalning. Granska och slutför betalningen direkt på leverantörssidan.',
+  moreServiceInfoFaqSaveQuestion: 'Kan jag spara resor och aviseringar?',
+  moreServiceInfoFaqSaveAnswer:
+    'Ja. Kontoverktyg kan hjälpa dig att spara resor, följa rutter, hantera aviseringar och återvända till resealternativ som du överväger.',
+  moreServiceInfoFaqAccountQuestion: 'Krävs ett konto?',
+  moreServiceInfoFaqAccountAnswer:
+    'Du kan bläddra i sökinformation utan alla kontoverktyg, men för att spara resor, aviseringar och preferenser kan du behöva logga in.',
+  moreServiceInfoFaqSupportQuestion: 'Hur kontaktar jag supporten?',
+  moreServiceInfoFaqSupportAnswer:
+    'Använd sidan Kundsupport och ange e-postadressen för ditt konto, vad du försökte göra och eventuella rutt-, hotell- eller leverantörsuppgifter.',
+  moreServiceInfoHelpTitle: 'Behöver du hjälp?',
+  moreServiceInfoHelpDescription:
+    'Frågor om ditt konto, sparade resor, aviseringar eller leverantörsomdirigeringar?',
+  moreServiceInfoSupportCta: 'Kontakta kundsupport',
   'homeNewsletterTitle': 'Ligg steget före varje reseerbjudande',
   'homeNewsletterBody': 'Få utvalda flyg- och hotelluppdateringar varje vecka.',
   'homeNewsletterAccountEmail': 'Prenumerera med e-postadressen för ditt konto: {{email}}.',
