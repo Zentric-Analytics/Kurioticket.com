@@ -28,7 +28,7 @@ import { availableLocaleOptions, getTranslations } from "@/lib/i18n";
 import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
 import { buildHomepageRouteCardFlightHref } from "@/lib/home/homepageRouteCardLinks";
 import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
-import { translateHomeDiscoveryField } from "@/lib/i18n/homeDiscovery";
+import { formatHomeDiscoveryRoute, translateHomeDiscoveryField } from "@/lib/i18n/homeDiscovery";
 import { getCountryDisplayNameForLocale } from "@/lib/region/countryDisplayNames";
 import { supportedRegions } from "@/lib/region/supportedRegions";
 import {
@@ -6268,6 +6268,8 @@ test("Swedish Flights landing copy resolves through active render path", () => {
     flightLandingFeatureProviderBody: "Bekräfta alltid slutlig tillgänglighet, pris och regler hos leverantören innan du bokar.",
     flightLandingRouteIdeasTitle: "Ruttidéer för flexibla resor",
     flightLandingRouteIdeasBody: "Bläddra bland ruttidéer och starta sedan en riktig sökning med datum och resenärer innan du jämför tillgängliga flyg.",
+    flightLandingRouteTemplate: "{{origin}} till {{destination}}",
+    flightLandingRouteConnector: "till",
     "flightLandingImageAlt.Johannesburg skyline at golden hour": "Johannesburgs silhuett i gyllene timmen",
     "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza": "Kairos silhuett med pyramiderna i Giza",
     "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands": "Addis Abebas stadsvy i de etiopiska högländerna",
@@ -6313,6 +6315,38 @@ test("Swedish Flights landing copy resolves through active render path", () => {
   assert.ok(languageOptions.some((o) => o.code === "sv" && o.locale === "sv-SE" && o.nativeLabel === "Svenska" && o.direction === "ltr"));
   assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
 
+  const expectedRouteLabels = [
+    ["Lagos", "London", "Lagos till London"],
+    ["Lagos", "Dubai", "Lagos till Dubai"],
+    ["Abuja", "Accra", "Abuja till Accra"],
+    ["Lagos", "Nairobi", "Lagos till Nairobi"],
+    ["Lagos", "Cape Town", "Lagos till Cape Town"],
+    ["Toronto", "Cancun", "Toronto till Cancun"],
+    ["Edmonton", "Puerto Vallarta", "Edmonton till Puerto Vallarta"],
+    ["Toronto", "Honolulu", "Toronto till Honolulu"],
+    ["Toronto", "San Diego", "Toronto till San Diego"],
+    ["Vancouver", "Sydney", "Vancouver till Sydney"],
+  ] as const;
+
+  for (const [originCity, destinationCity, expectedLabel] of expectedRouteLabels) {
+    const label = formatHomeDiscoveryRoute(sv, originCity, destinationCity);
+
+    assert.equal(label, expectedLabel);
+    assert.doesNotMatch(label, /\bto\b/);
+  }
+
+  assert.equal(formatHomeDiscoveryRoute(enTranslations, "Lagos", "London"), "Lagos to London");
+
+  const ngRouteCodes = getHomeDiscoveryByRegion("NG")
+    .filter((item) => ["ng-los-lhr", "ng-los-dxb", "ng-abv-acc", "ng-los-nbo", "ng-los-cpt"].includes(item.id))
+    .map((item) => `${item.originCode} → ${item.destinationCode}`);
+  const caRouteCodes = getHomeDiscoveryByRegion("CA")
+    .filter((item) => ["ca-yyz-cun", "ca-yeg-pvr", "ca-yyz-hnl", "ca-yyz-san", "ca-yvr-syd"].includes(item.id))
+    .map((item) => `${item.originCode} → ${item.destinationCode}`);
+
+  assert.deepEqual(ngRouteCodes, ["LOS → LHR", "LOS → DXB", "ABV → ACC", "LOS → NBO", "LOS → CPT"]);
+  assert.deepEqual(caRouteCodes, ["YYZ → CUN", "YEG → PVR", "YYZ → HNL", "YYZ → SAN", "YVR → SYD"]);
+
   const flightsPageSource = readFileSync("src/app/flights/page.tsx", "utf8");
   const flightLandingSource = readFileSync("src/components/flights/FlightLandingClient.tsx", "utf8");
   const searchFormSource = readFileSync("src/components/search/StandaloneFlightSearchForm.tsx", "utf8");
@@ -6325,6 +6359,10 @@ test("Swedish Flights landing copy resolves through active render path", () => {
   for (const key of ["cityOrAirport", "destination", "searchFlights", "roundTrip", "oneWay", "origin", "travelDates", "travelers"]) {
     assert.ok(searchFormSource.includes(`t("${key}")`) || searchFormSource.includes(`t("${key}")`), `Flight search form should read ${key} through i18n.`);
   }
+  assert.ok(flightLandingSource.includes("formatHomeDiscoveryRoute"));
+  assert.ok(flightLandingSource.includes('t("flightLandingRouteTemplate")'));
+  assert.ok(!flightLandingSource.includes("${routeText.originCity} to ${routeText.destinationCity}"));
+
   assert.ok(
     flightLandingSource.includes("getHomeDiscoveryByRegion(selectedOption.code)") &&
       flightLandingSource.includes("buildDiscoveryLink(item)") &&
