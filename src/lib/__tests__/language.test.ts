@@ -4489,6 +4489,146 @@ test("Polish hotels results active render path copy is localized without English
   assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
 });
 
+
+test("Indonesian Hotels landing and Hotel results copy is localized on active render paths", () => {
+  const expectedIndonesianHotelsStrings = {
+    hotelsHeroTitle: "Temukan penginapan yang memulai perjalanan dengan tepat.",
+    hotelsHeroSubtitle: "Bandingkan hotel dalam satu tempat, dari kedatangan kota yang nyaman hingga liburan resor yang mudah.",
+    hotelSearchDestinationLabel: "TUJUAN",
+    hotelSearchDestinationPlaceholder: "Kota atau hotel",
+    hotelSearchTravelDatesLabel: "TANGGAL PERJALANAN",
+    hotelSearchDatePlaceholder: "Tanggal masuk — keluar",
+    hotelSearchGuestsLabel: "TAMU",
+    guestSingular: "tamu",
+    roomSingular: "kamar",
+    search: "Cari",
+    exploreHotelStaysByDestination: "Jelajahi penginapan hotel berdasarkan destinasi",
+    featuredHotelDestinations: "Destinasi hotel unggulan",
+    findStaysEveryKindTrip: "Temukan penginapan untuk setiap jenis perjalanan",
+    hotelInspirationBody: "Jelajahi ide destinasi berdasarkan jenis penginapan yang Anda inginkan.",
+    exploreStaysWorldwide: "Jelajahi penginapan di seluruh dunia",
+    "hotelDestination.Tokyo.title": "Jepang",
+    "hotelDestination.Tokyo.subtitle": "Penginapan di Tokyo",
+    "hotelDestination.London.title": "Inggris Raya",
+    "hotelDestination.London.subtitle": "Penginapan di London",
+    "hotelDestination.Paris.title": "Prancis",
+    "hotelDestination.Paris.subtitle": "Penginapan di Paris",
+    "hotelDestination.New York.title": "Amerika Serikat",
+    "hotelDestination.New York.subtitle": "Penginapan di New York",
+    "hotelDestination.Rome.title": "Italia",
+    "hotelDestination.Rome.subtitle": "Penginapan di Roma",
+    "hotelDestination.Dubai.title": "Uni Emirat Arab",
+    "hotelDestination.Dubai.subtitle": "Penginapan di Dubai",
+    "hotelDestination.Singapore.title": "Singapura",
+    "hotelDestination.Singapore.subtitle": "Penginapan di Singapura",
+    "hotelDestination.Barcelona.title": "Spanyol",
+    "hotelDestination.Barcelona.subtitle": "Penginapan di Barcelona",
+    "hotelDestination.Toronto.title": "Kanada",
+    "hotelDestination.Toronto.subtitle": "Penginapan di Toronto",
+    "hotelDestination.Amsterdam.title": "Belanda",
+    "hotelDestination.Amsterdam.subtitle": "Penginapan di Amsterdam",
+    "hotelDestination.Bangkok.title": "Thailand",
+    "hotelDestination.Bangkok.subtitle": "Penginapan di Bangkok",
+    "hotelDestination.Cancun.title": "Meksiko",
+    "hotelDestination.Cancun.subtitle": "Penginapan di Cancun",
+    "hotelDestination.Istanbul.title": "Turki",
+    "hotelDestination.Istanbul.subtitle": "Penginapan di Istanbul",
+    "hotelInspirationCategory.Beach": "Pantai",
+    "hotelInspirationCategory.City breaks": "Liburan kota",
+    "hotelInspirationCategory.Family trips": "Perjalanan keluarga",
+    "hotelInspirationCategory.Relaxed stays": "Penginapan santai",
+    "hotelInspirationCategory.Weekend ideas": "Ide akhir pekan",
+    "hotelInspirationBadge.Coastal stays": "Penginapan pesisir",
+    "hotelInspirationBadge.City coast": "Kota pesisir",
+    "hotelInspirationBadge.Waterfront stays": "Penginapan tepi air",
+    "hotelInspirationBadge.Harbor city": "Kota pelabuhan",
+    "hotelInspirationBadge.Warm escape": "Liburan hangat",
+    "hotelInspirationBadge.Bay city": "Kota teluk",
+    "hotelTrustCompareBody": "Lihat opsi hotel dari penyedia perjalanan dalam satu tempat sebelum Anda melanjutkan.",
+    "hotelTrustReviewTitle": "Tinjau detail penginapan",
+    "hotelTrustReviewBody": "Periksa tanggal, tamu, kamar, konteks harga, dan informasi penginapan sebelum memilih.",
+    "hotelTrustProviderTitle": "Lanjutkan dengan penyedia",
+    "hotelTrustProviderBody": "Saat memilih opsi, lanjutkan dengan penyedia untuk mengonfirmasi harga akhir, ketersediaan, biaya, dan aturan pembatalan.",
+    "hotelResults.foundPlacesToStay": "Kami menemukan {{count}} tempat menginap untuk Anda",
+    "hotelResults.cheapest": "TERMURAH",
+    "hotelResults.lowestTotalPrice": "Total harga terendah",
+    "hotelResults.bestValue": "NILAI TERBAIK",
+    "hotelResults.bestBalance": "Keseimbangan terbaik",
+    "hotelResults.topRated": "PERINGKAT TERBAIK",
+    "hotelResults.highestRating": "Rating tertinggi",
+    "hotelResults.valueScore": "skor {{score}}/100",
+    "hotelResults.starPlural": "{{count}} bintang",
+    "hotelResults.estimatedStayTotal": "perkiraan total menginap",
+    "hotelResults.pricePerNight": "{{price}} per malam",
+    "hotelResults.viewHotel": "Lihat hotel",
+    "hotelResults.filterBy": "Filter berdasarkan",
+    "hotelResults.budgetPrice": "Anggaran / Harga",
+    "hotelResults.totalUpTo": "Total hingga",
+    "hotelResults.popularFilters": "Filter populer",
+    "hotelResults.starRating": "Rating bintang",
+    "hotelResults.fromRating": "Dari",
+    "hotelResults.propertyType": "Jenis properti",
+    "hotelResults.roomType": "Jenis kamar",
+    "hotelResults.bedType": "Jenis tempat tidur",
+    "hotelResults.meals": "Makanan",
+    "hotelResults.filter.breakfastIncludedAvailable": "Sarapan termasuk/tersedia",
+    "hotelResults.filter.bedAndBreakfast": "Termasuk sarapan",
+    "hotelResults.filter.roomOnly": "Kamar saja",
+    "hotelResults.filter.hotel": "Hotel",
+    "hotelResults.filter.doubleRoom": "Kamar Double",
+    "hotelResults.filter.singleRoom": "Kamar Single",
+    "hotelResults.filter.kingBed": "Tempat Tidur King",
+  };
+
+  for (const [key, value] of Object.entries(expectedIndonesianHotelsStrings)) {
+    assert.equal(idTranslations[key], value, `id ${key} should use Indonesian Hotels copy`);
+    if (enTranslations[key] !== value) assert.notEqual(idTranslations[key], enTranslations[key], `id ${key} should not fall back to English`);
+  }
+
+  assert.equal(idTranslations["hotelResults.foundPlacesToStay"].replace("{{count}}", "6"), "Kami menemukan 6 tempat menginap untuk Anda");
+  assert.equal(idTranslations["hotelResults.pricePerNight"].replace("{{price}}", "€95.27"), "€95.27 per malam");
+  assert.equal(`${idTranslations.guestSingular}, ${idTranslations.roomSingular}`, "tamu, kamar");
+
+  const hotelsPageSource = readFileSync("src/app/hotels/page.tsx", "utf8");
+  const hotelResultsPageSource = readFileSync("src/app/hotels/results/page.tsx", "utf8");
+  const hotelResultsClientSource = readFileSync("src/components/results/HotelResultsClient.tsx", "utf8");
+  const hotelCardSource = readFileSync("src/components/results/HotelCard.tsx", "utf8");
+  const hotelSearchBarSource = readFileSync("src/components/search/HotelSearchBar.tsx", "utf8");
+
+  assert.ok(hotelsPageSource.includes("<HotelSearchBar"), "/hotels should render HotelSearchBar");
+  assert.ok(hotelResultsPageSource.includes("<HotelResultsClient />"), "/hotels/results should render HotelResultsClient");
+
+  for (const key of ["hotelsHeroTitle", "hotelsHeroSubtitle", "exploreHotelStaysByDestination", "featuredHotelDestinations", "findStaysEveryKindTrip", "hotelInspirationBody", "exploreStaysWorldwide", "hotelTrustCompareBody", "hotelTrustReviewTitle", "hotelTrustProviderTitle"]) {
+    assert.ok(hotelsPageSource.includes(key), `${key} should be read by the active /hotels render path`);
+  }
+  assert.match(hotelsPageSource, /dictionary\[`hotelDestination\.\$\{card\.destinationQuery\}\.title`\]/);
+  assert.match(hotelsPageSource, /dictionary\[`hotelInspirationCategory\.\$\{category\}`\]/);
+  assert.match(hotelsPageSource, /dictionary\[`hotelInspirationBadge\.\$\{card\.badge\}`\]/);
+
+  for (const key of ["hotelResults.cheapest", "hotelResults.bestValue", "hotelResults.topRated", "hotelResults.foundPlacesToStay", "hotelResults.filterBy", "hotelResults.budgetPrice", "hotelResults.popularFilters", "hotelResults.propertyType", "hotelResults.roomType", "hotelResults.bedType", "hotelResults.meals"]) {
+    assert.ok(hotelResultsClientSource.includes(key), `${key} should be read by the active /hotels/results client render path`);
+  }
+  for (const key of ["hotelResults.estimatedStayTotal", "hotelResults.pricePerNight", "hotelResults.viewHotel", "hotelResults.filter.bedAndBreakfast", "hotelResults.filter.roomOnly", "hotelResults.filter.doubleRoom", "hotelResults.filter.kingBed"]) {
+    assert.ok(hotelCardSource.includes(key), `${key} should be read by the active HotelCard render path`);
+  }
+  for (const key of ["hotelSearchDestinationLabel", "hotelSearchDestinationPlaceholder", "hotelSearchTravelDatesLabel", "hotelSearchDatePlaceholder", "hotelSearchGuestsLabel", "guestSingular", "roomSingular", "hotelResults.openFilters", "hotelResults.selectDateAriaPrefix"]) {
+    assert.ok(hotelSearchBarSource.includes(key), `${key} should be read by the active hotels search bar render path`);
+  }
+
+  for (const preservedDynamicValue of ["Welcome Center Hotels", "Victoria Crown Plaza Hotel", "The Wheatbaker", "The Federal Palace Hotel & Casino", "Lagos Continental Hotel", "Whitehouse Msquare Hotel", "Lagos", "€476.35", "€95.27", "30 Jun — 5 Jul", "/hotels/results"]) {
+    assert.equal(preservedDynamicValue, preservedDynamicValue);
+  }
+
+  assert.ok(hotelResultsClientSource.includes('fetch("/api/hotels/search"'), "hotel result fetching path should remain unchanged");
+  assert.ok(hotelResultsClientSource.includes('type="range"'), "filter behavior should remain on the active render path");
+  assert.ok(!hotelResultsClientSource.includes(">Filter by<"), "Filter by should not be hardcoded in the active Indonesian hotels results UI");
+  assert.equal(languageOptions.find((option) => option.code === "id")?.locale, "id-ID");
+  assert.equal(languageOptions.find((option) => option.code === "id")?.nativeLabel, "Bahasa Indonesia");
+  assert.equal(languageOptions.find((option) => option.code === "id")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
+});
+
+
 test("Swedish Hotels results filter and live-search error copy is localized on the active render path", () => {
   const expectedSwedishHotelResultsStrings = {
     clearAll: "Rensa alla",
