@@ -24,7 +24,7 @@ type SigninPageProps = {
 
 function getSafeCallbackUrl(callbackUrl?: string) {
   if (!callbackUrl) {
-    return "/dashboard";
+    return "/";
   }
 
   if (callbackUrl.startsWith("/") && !callbackUrl.startsWith("//")) {
