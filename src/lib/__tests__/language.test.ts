@@ -127,6 +127,159 @@ test("Indonesian locale is active with homepage copy overrides", () => {
 
 
 
+test("Indonesian service and support active render path copy resolves without English fallback", () => {
+  const id = getTranslations("id");
+  const supportContentSource = readFileSync("src/app/support/SupportContent.tsx", "utf8");
+  const supportFormSource = readFileSync("src/components/support/SupportForm.tsx", "utf8");
+  const serviceGuaranteeSource = readFileSync("src/app/service-guarantee/ServiceGuaranteeContent.tsx", "utf8");
+  const moreServiceInfoSource = readFileSync("src/app/more-service-info/MoreServiceInfoContent.tsx", "utf8");
+
+  const expectedSupport = {
+    supportEyebrow: "Pusat bantuan Kurioticket",
+    supportTitle: "Dukungan pelanggan",
+    supportBeforeContactHeading: "Sebelum menghubungi kami",
+    supportBeforeContactDescription: "Sertakan email pada akun Kurioticket Anda, hal yang Anda coba lakukan, rute atau hotel jika relevan, dan halaman penyedia mana pun tempat Anda dialihkan. Jangan kirim nomor kartu pembayaran lengkap atau nomor dokumen perjalanan sensitif.",
+    supportBeforeContactDashboardDescription: "Sertakan email akun Kurioticket Anda, hal yang perlu dibantu, dan detail pemesanan atau rute apa pun yang dapat membantu kami memahami masalah tersebut.",
+    supportTicketHeading: "Buat tiket dukungan",
+    supportFormEmailLabel: "Email",
+    supportFormSubjectLabel: "Subjek",
+    supportFormCategoryLabel: "Kategori",
+    supportCategorySearchHelp: "Bantuan pencarian",
+    supportCategoryPriceAlerts: "Peringatan harga",
+    supportCategoryPartnerRedirect: "Pengalihan mitra",
+    supportCategoryAccountHelp: "Bantuan akun",
+    supportFormMessageLabel: "Bagaimana kami dapat membantu?",
+    supportFormMessagePlaceholder: "Bagikan konteks rute, hotel, peringatan, atau akun.",
+    supportFormSubmit: "Kirim permintaan",
+    supportFormSending: "Mengirim...",
+    supportFormSuccessPrefix: "Tiket",
+    supportFormSuccessSuffix: "dibuka.",
+    supportFormErrorFallback: "Tidak dapat membuka tiket.",
+    supportFaqHeading: "Pertanyaan yang sering diajukan",
+    supportFaqAccountQuestion: "Bantuan akun dan masuk",
+    supportFaqSearchQuestion: "Bantuan pencarian dan hasil",
+    supportFaqSavedTripsQuestion: "Perjalanan tersimpan dan peringatan",
+    supportFaqRedirectQuestion: "Bantuan pemesanan/pengalihan penyedia",
+    supportFaqAlreadyBookedQuestion: "Sudah memesan dengan penyedia?",
+    supportFaqChangeBookingQuestion: "Bisakah Kurioticket mengubah pemesanan saya?",
+    supportFaqWhyRedirectedQuestion: "Mengapa saya diarahkan ke penyedia lain?",
+  };
+
+  const expectedServiceGuarantee = {
+    serviceGuaranteeEyebrow: "Komitmen layanan Kurioticket",
+    serviceGuaranteeTitle: "Jaminan Layanan",
+    serviceGuaranteeDescription: "Kami ingin wisatawan memahami cara kerja Kurioticket dan hal yang dapat mereka harapkan saat menggunakan platform kami.",
+    serviceGuaranteeFaqHeading: "Pertanyaan yang sering diajukan",
+    serviceGuaranteeFaqDescription: "Jawaban ini menjelaskan peran Kurioticket sebagai platform pencarian dan perbandingan perjalanan.",
+    serviceGuaranteeFaqWhatGuaranteeQuestion: "Apa yang dijamin oleh Kurioticket?",
+    serviceGuaranteeFaqResultsDisplayedQuestion: "Bagaimana hasil perjalanan ditampilkan?",
+    serviceGuaranteeFaqRedirectedQuestion: "Mengapa saya dialihkan ke penyedia lain?",
+    serviceGuaranteeFaqBookDirectlyQuestion: "Apakah saya memesan langsung di Kurioticket?",
+    serviceGuaranteeFaqPricesGuaranteedQuestion: "Apakah harga selalu dijamin?",
+    serviceGuaranteeFaqChooseProvidersQuestion: "Bagaimana Kurioticket memilih penyedia?",
+    serviceGuaranteeFaqEncounterIssueQuestion: "Apa yang harus saya lakukan jika mengalami masalah?",
+    serviceGuaranteeFaqContactSupportQuestion: "Bagaimana saya dapat menghubungi dukungan?",
+    serviceGuaranteeHelpCardTitle: "Butuh bantuan dengan akun atau pencarian Anda?",
+    serviceGuaranteeSupportCta: "Hubungi Dukungan Pelanggan",
+  };
+
+  const expectedMoreServiceInfo = {
+    moreServiceInfoEyebrow: "Informasi Platform",
+    moreServiceInfoTitle: "Informasi Layanan Lainnya",
+    moreServiceInfoDescription: "Pelajari bagaimana Kurioticket membantu wisatawan mencari, membandingkan, menyimpan, dan mengatur pilihan perjalanan dari beberapa penyedia dalam satu tempat.",
+    moreServiceInfoContextTitle: "Rencanakan dengan konteks",
+    moreServiceInfoContextSubtitle: "Dari hasil pencarian hingga pengalihan ke penyedia",
+    moreServiceInfoContextCompare: "Bandingkan opsi dari beberapa penyedia perjalanan.",
+    moreServiceInfoContextSave: "Simpan perjalanan, peringatan, dan preferensi saat masuk.",
+    moreServiceInfoContextContinue: "Lanjutkan dengan detail penyedia sebelum memesan secara eksternal.",
+    moreServiceInfoHowHeading: "Cara kerja Kurioticket",
+    moreServiceInfoHowDescription: "Detail layanan ini menjelaskan peran Kurioticket sebelum, selama, dan setelah pencarian perjalanan.",
+    moreServiceInfoHowBadge: "DASAR-DASAR PERENCANAAN PERJALANAN",
+    moreServiceInfoStepSearchTitle: "Cari di Beberapa Penyedia",
+    moreServiceInfoStepSearchSummary: "Cari pilihan perjalanan dari berbagai penyedia dalam satu tempat, tanpa membuka setiap penyedia secara terpisah.",
+    moreServiceInfoStepSearchDetails: "Kurioticket menghadirkan informasi penerbangan, hotel, rute, dan hasil perjalanan yang tersedia dalam satu pengalaman pencarian agar wisatawan dapat meninjau pilihan dengan lebih efisien.",
+    moreServiceInfoStepCompareTitle: "Bandingkan Pilihan Perjalanan",
+    moreServiceInfoStepCompareSummary: "Bandingkan harga, rute, hotel, jadwal, dan pilihan perjalanan yang tersedia sebelum menentukan yang paling sesuai dengan perjalanan Anda.",
+    moreServiceInfoStepCompareDetails: "Hasil dapat mencakup detail penyedia, waktu, informasi destinasi, dan data perjalanan lain yang membantu Anda mengevaluasi opsi sebelum melanjutkan ke penyedia.",
+    moreServiceInfoStepSaveTitle: "Simpan Perjalanan dan Peringatan",
+    moreServiceInfoStepSaveSummary: "Buat akun untuk menyimpan perjalanan, melacak rute, dan mengelola peringatan perjalanan yang terkait dengan perencanaan perjalanan Anda.",
+    moreServiceInfoStepSaveDetails: "Perjalanan tersimpan, pencarian terbaru, dan peringatan memudahkan Anda kembali ke opsi yang sedang dipertimbangkan dan menjaga detail perencanaan perjalanan tetap tertata.",
+    moreServiceInfoStepRedirectsTitle: "Penjelasan Pengalihan Penyedia",
+    moreServiceInfoStepRedirectsSummary: "Saat memilih penawaran, Anda dapat dialihkan ke penyedia perjalanan untuk menyelesaikan pemesanan, pembayaran, konfirmasi, dan pemenuhan layanan.",
+    moreServiceInfoStepRedirectsDetails: "Halaman penyedia adalah tempat harga akhir, ketersediaan, aturan, langkah pembayaran, tanda terima, perubahan pemesanan, pembatalan, dan dokumen perjalanan ditangani untuk penawaran yang dialihkan.",
+    moreServiceInfoStepAccountTitle: "Alat Akun & Perjalanan",
+    moreServiceInfoStepAccountSummary: "Gunakan alat akun untuk mengatur pencarian tersimpan, perjalanan, peringatan, dan preferensi dalam satu ruang kerja Kurioticket.",
+    moreServiceInfoStepAccountDetails: "Alat ini mendukung perencanaan perjalanan di Kurioticket, sementara pengelolaan pemesanan khusus penyedia tetap berada pada penyedia saat pemesanan Anda diselesaikan secara eksternal.",
+    moreServiceInfoFaqHeading: "Pertanyaan yang sering diajukan",
+    moreServiceInfoFaqDescription: "Jawaban singkat tentang pencarian perjalanan, pengalihan penyedia, perjalanan tersimpan, dan alat akun.",
+    moreServiceInfoFaqWhatQuestion: "Apa itu Kurioticket?",
+    moreServiceInfoFaqSearchQuestion: "Bagaimana cara kerja pencarian perjalanan?",
+    moreServiceInfoFaqRedirectQuestion: "Mengapa saya dialihkan ke penyedia lain?",
+    moreServiceInfoFaqPaymentsQuestion: "Apakah Kurioticket memproses pembayaran?",
+    moreServiceInfoFaqSaveQuestion: "Bisakah saya menyimpan perjalanan dan peringatan?",
+    moreServiceInfoFaqAccountQuestion: "Apakah akun diperlukan?",
+    moreServiceInfoFaqSupportQuestion: "Bagaimana cara menghubungi dukungan?",
+    moreServiceInfoHelpTitle: "Butuh bantuan?",
+    moreServiceInfoHelpDescription: "Ada pertanyaan tentang akun, perjalanan tersimpan, peringatan, atau pengalihan penyedia?",
+    moreServiceInfoSupportCta: "Hubungi Dukungan Pelanggan",
+  };
+
+  for (const expected of [expectedSupport, expectedServiceGuarantee, expectedMoreServiceInfo]) {
+    for (const [key, value] of Object.entries(expected)) {
+      assert.equal(id[key], value, key);
+      if (value !== enTranslations[key]) assert.notEqual(id[key], enTranslations[key], key);
+    }
+  }
+
+  const hiddenAnswerKeys = [
+    "supportFaqAccountAnswer", "supportFaqSearchAnswer", "supportFaqSavedTripsAnswer", "supportFaqRedirectAnswer",
+    "supportFaqAlreadyBookedAnswer", "supportFaqChangeBookingAnswer", "supportFaqWhyRedirectedAnswer",
+    "serviceGuaranteeFaqWhatGuaranteeAnswer", "serviceGuaranteeFaqResultsDisplayedAnswer", "serviceGuaranteeFaqRedirectedAnswer",
+    "serviceGuaranteeFaqBookDirectlyAnswer", "serviceGuaranteeFaqPricesGuaranteedAnswer", "serviceGuaranteeFaqChooseProvidersAnswer",
+    "serviceGuaranteeFaqEncounterIssueAnswer", "serviceGuaranteeFaqContactSupportAnswer",
+    "moreServiceInfoFaqWhatAnswer", "moreServiceInfoFaqSearchAnswer", "moreServiceInfoFaqRedirectAnswer", "moreServiceInfoFaqPaymentsAnswer",
+    "moreServiceInfoFaqSaveAnswer", "moreServiceInfoFaqAccountAnswer", "moreServiceInfoFaqSupportAnswer",
+  ];
+  for (const key of hiddenAnswerKeys) {
+    assert.ok(id[key], key);
+    assert.notEqual(id[key], enTranslations[key], key);
+  }
+
+  assert.match(id.serviceGuaranteeFaqPricesGuaranteedAnswer, /Harga dapat berubah/);
+  assert.match(id.serviceGuaranteeFaqEncounterIssueAnswer, /penyedia tersebut untuk perubahan pemesanan, pengembalian dana, pembatalan, atau dokumen perjalanan/);
+  assert.match(id.moreServiceInfoStepRedirectsDetails, /harga akhir, ketersediaan, aturan, langkah pembayaran, tanda terima, perubahan pemesanan, pembatalan, dan dokumen perjalanan/);
+  assert.match(id.moreServiceInfoFaqPaymentsAnswer, /Kurioticket tidak memproses pembayaran/);
+
+  assert.ok(supportContentSource.includes('t("supportEyebrow")'));
+  assert.ok(supportContentSource.includes('t("supportBeforeContactHeading")'));
+  assert.ok(supportContentSource.includes('aria-label={t("supportTicketHeading")}'));
+  assert.ok(supportContentSource.includes('supportFaqKeys.map'));
+  assert.ok(supportFormSource.includes('fetch("/api/support/tickets"'));
+  assert.ok(supportFormSource.includes('sourceContext: { page: "support_center" }'));
+  assert.ok(supportFormSource.includes('name="email" type="email"'));
+  assert.ok(supportFormSource.includes('name="subject" required'));
+  assert.ok(supportFormSource.includes('name="category" defaultValue="price-alerts"'));
+  assert.ok(supportFormSource.includes('value="search-help"'));
+  assert.ok(supportFormSource.includes('value="price-alerts"'));
+  assert.ok(supportFormSource.includes('value="redirect"'));
+  assert.ok(supportFormSource.includes('value="account"'));
+  assert.ok(supportFormSource.includes('name="body" required'));
+  assert.ok(supportFormSource.includes('t("supportFormSending")'));
+  assert.ok(serviceGuaranteeSource.includes('serviceFaqKeys.map'));
+  assert.ok(serviceGuaranteeSource.includes('href="/support"'));
+  assert.ok(moreServiceInfoSource.includes('serviceSections.map'));
+  assert.ok(moreServiceInfoSource.includes('number: "01"') && moreServiceInfoSource.includes('number: "05"'));
+  assert.ok(moreServiceInfoSource.includes('Search') && moreServiceInfoSource.includes('GitCompare') && moreServiceInfoSource.includes('ExternalLink') && moreServiceInfoSource.includes('UserRound'));
+  assert.ok(moreServiceInfoSource.includes('serviceFaqs.map'));
+  assert.ok(moreServiceInfoSource.includes('href="/support"'));
+  assert.ok(!supportContentSource.includes("Kurioticket help desk"));
+  assert.ok(!supportFormSource.includes("Send Request"));
+  assert.ok(!serviceGuaranteeSource.includes("Service Guarantee"));
+  assert.ok(!moreServiceInfoSource.includes("More Service Information"));
+  assert.ok(languageOptions.some((o) => o.code === "id" && o.locale === "id-ID" && o.nativeLabel === "Bahasa Indonesia" && o.direction === "ltr"));
+  assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
+});
+
 test("Indonesian Legal Center overview and active legal documents are localized", () => {
   const id = getTranslations("id");
   const legalIndexSource = readFileSync("src/app/legal/LegalPageContent.tsx", "utf8");
