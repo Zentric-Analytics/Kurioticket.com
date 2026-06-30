@@ -1100,6 +1100,7 @@ export const translations: TranslationDictionary = {
   "hotelTrustReviewBody": "Periksa tanggal, tamu, kamar, konteks harga, dan informasi penginapan sebelum memilih.",
   "hotelTrustProviderTitle": "Lanjutkan dengan penyedia",
   "hotelTrustProviderBody": "Saat memilih opsi, lanjutkan dengan penyedia untuk mengonfirmasi harga akhir, ketersediaan, biaya, dan aturan pembatalan.",
+  "hotelResults.liveSearchUnavailable": "Pencarian hotel langsung untuk sementara tidak tersedia. Silakan coba lagi sebentar lagi.",
   "hotelResults.foundPlacesToStay": "Kami menemukan {{count}} tempat menginap untuk Anda",
   "hotelResults.cheapest": "TERMURAH",
   "hotelResults.lowestTotalPrice": "Total harga terendah",
