@@ -698,6 +698,8 @@ export const translations: TranslationDictionary = {
   flightDetailsLoading: "Memuat detail penerbangan...",
   flightQuoteUnavailable: "Penawaran harga penerbangan tidak tersedia",
   flightSearchAgainCurrentPrices: "Penawaran harga penerbangan ini tidak lagi tersedia. Silakan cari lagi untuk melihat harga saat ini.",
+  flightDetailsProviderDisclaimer:
+    "Harga akhir, ketersediaan, pemesanan, dan aturan tarif dikonfirmasi oleh penyedia.",
   beachVacations: "Liburan pantai",
   beachVacationsBody:
     "Jelajahi rute penerbangan ke pesisir cerah, liburan pulau, dan destinasi pantai bercuaca hangat.",
@@ -1023,8 +1025,6 @@ export const translations: TranslationDictionary = {
   "carsFaq.5.question": "Dokumen apa yang mungkin saya perlukan saat pengambilan?",
   "carsFaq.5.answer": "Penyedia sewa dapat meminta SIM yang masih berlaku, kartu pembayaran, bukti identitas, dan dokumen apa pun yang diwajibkan oleh negara atau lokasi pengambilan.",
 
-  flightDetailsProviderDisclaimer:
-    "Harga akhir, ketersediaan, pemesanan, dan aturan tarif dikonfirmasi oleh penyedia.",
   selectedFlights: "Penerbangan yang dipilih",
   selectedFlightItinerary: "Rencana perjalanan penerbangan yang dipilih",
   flightRouteConnector: "ke",
