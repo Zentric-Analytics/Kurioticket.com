@@ -9088,7 +9088,6 @@ test("Indonesian homepage visible copy and render paths resolve without English 
   const headerSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
   const searchTabsSource = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
   const footerSource = readFileSync("src/components/layout/Footer.tsx", "utf8");
-  const newsletterBridgeSource = readFileSync("src/components/newsletter/NewsletterSessionBridge.tsx", "utf8");
 
   const expected: Record<string, string> = {
     flights: "Penerbangan",
@@ -9147,6 +9146,27 @@ test("Indonesian homepage visible copy and render paths resolve without English 
     homePromoFlightsTitle: "Promo penerbangan dari maskapai ternama",
     homePromoHotelsTitle: "Hemat hotel di seluruh dunia",
     faqHeading: "Pertanyaan yang sering diajukan",
+    supportFaqAccountQuestion: "Bantuan akun dan masuk",
+    supportFaqAccountAnswer:
+      "Kurioticket dapat membantu akses akun, masalah masuk, masalah pendaftaran, akses profil, dan masalah platform yang terkait dengan akun.",
+    supportFaqSearchQuestion: "Bantuan pencarian dan hasil",
+    supportFaqSearchAnswer:
+      "Kurioticket dapat membantu saat pencarian penerbangan atau hotel tidak berfungsi, hasil tidak dimuat, filter membingungkan, atau harga dan penyedia tidak tampil seperti yang diharapkan.",
+    supportFaqSavedTripsQuestion: "Perjalanan tersimpan dan peringatan",
+    supportFaqSavedTripsAnswer:
+      "Kurioticket dapat membantu dengan perjalanan tersimpan, pencarian terbaru, peringatan harga, masalah notifikasi, dan alat perjalanan yang terhubung ke akun.",
+    supportFaqRedirectQuestion: "Bantuan pemesanan/pengalihan penyedia",
+    supportFaqRedirectAnswer:
+      "Kurioticket dapat membantu jika pengalihan ke mitra atau penyedia gagal, membuka halaman yang salah, atau tidak mempertahankan detail perjalanan atau pencarian yang dipilih.",
+    supportFaqAlreadyBookedQuestion: "Sudah memesan dengan penyedia?",
+    supportFaqAlreadyBookedAnswer:
+      "Jika pemesanan Anda diselesaikan dengan maskapai, hotel, agen perjalanan, atau penyedia eksternal, penyedia tersebut bertanggung jawab atas perubahan pemesanan, pengembalian dana, pembatalan, check-in, boarding, tanda terima, dan dokumen perjalanan.",
+    supportFaqChangeBookingQuestion: "Bisakah Kurioticket mengubah pemesanan saya?",
+    supportFaqChangeBookingAnswer:
+      "Kurioticket hanya dapat membantu pemesanan yang dibuat langsung melalui Kurioticket jika dan ketika pemesanan langsung didukung. Untuk pemesanan yang diselesaikan dengan penyedia eksternal, hubungi penyedia tersebut secara langsung.",
+    supportFaqWhyRedirectedQuestion: "Mengapa saya diarahkan ke penyedia lain?",
+    supportFaqWhyRedirectedAnswer:
+      "Kurioticket adalah platform pencarian dan perbandingan perjalanan, dan beberapa hasil mengarahkan Anda ke penyedia tepercaya tempat Anda menyelesaikan pemesanan, pembayaran, dan dukungan khusus penyedia.",
     homeNewsletterTitle: "Selalu terdepan untuk setiap promo perjalanan",
     homeNewsletterPlaceholder: "Masukkan email Anda",
     homeSubscribe: "Berlangganan",
@@ -9179,9 +9199,24 @@ test("Indonesian homepage visible copy and render paths resolve without English 
   assert.deepEqual(formatFlightsWeekdays("id"), ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"]);
   assert.equal(formatFlightsDateSummary(new Date(2026, 5, 30), new Date(2026, 6, 5), "id"), "30 Jun — 5 Jul");
 
+  const translatedFaqs = getGeneralFaqs((key) => id[key] ?? enTranslations[key] ?? "");
+  const translatedFaqQuestions = translatedFaqs.map((item) => item.question);
+  const translatedFaqAnswers = translatedFaqs.map((item) => item.answer);
+
+  assert.ok(translatedFaqQuestions.includes("Bantuan akun dan masuk"));
+  assert.ok(translatedFaqQuestions.includes("Bantuan pencarian dan hasil"));
+  assert.ok(translatedFaqQuestions.includes("Perjalanan tersimpan dan peringatan"));
+  assert.ok(translatedFaqQuestions.includes("Bantuan pemesanan/pengalihan penyedia"));
+  assert.ok(translatedFaqQuestions.includes("Sudah memesan dengan penyedia?"));
+  assert.ok(translatedFaqQuestions.includes("Bisakah Kurioticket mengubah pemesanan saya?"));
+  assert.ok(translatedFaqQuestions.includes("Mengapa saya diarahkan ke penyedia lain?"));
+  assert.ok(translatedFaqAnswers.includes("Kurioticket dapat membantu akses akun, masalah masuk, masalah pendaftaran, akses profil, dan masalah platform yang terkait dengan akun."));
+  assert.ok(translatedFaqAnswers.includes("Kurioticket adalah platform pencarian dan perbandingan perjalanan, dan beberapa hasil mengarahkan Anda ke penyedia tepercaya tempat Anda menyelesaikan pemesanan, pembayaran, dan dukungan khusus penyedia."));
+  assert.ok(pageSource.includes('const translatedFaqs = getGeneralFaqs(t)') && pageSource.includes('items={translatedFaqs}'));
+  assert.ok(searchTabsSource.includes('translateHotelTravelDateText("hotelSearchDatePlaceholder")'));
+
   assert.ok(pageSource.includes('t("homeHeroTitle")') && pageSource.includes('t("homeNewsletterTitle")'));
   assert.ok(headerSource.includes('t.flights') && headerSource.includes('t.login') && headerSource.includes('t.signUp'));
   assert.ok(searchTabsSource.includes('t.roundTrip') && searchTabsSource.includes('translate("hotelSearchGuestsLabel")') && searchTabsSource.includes('translate("infantsOnLap")'));
   assert.ok(footerSource.includes('t.footerSellerOfTravelNotice') && footerSource.includes('t.footerPrivacy'));
-  assert.ok(newsletterBridgeSource.includes('t["newsletter.accountEmailLine"]') && newsletterBridgeSource.includes('t["newsletter.manageEmailPreferences"]'));
 });
