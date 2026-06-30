@@ -125,6 +125,111 @@ test("Indonesian locale is active with homepage copy overrides", () => {
   }
 });
 
+test("Indonesian Destinations render path uses active Indonesian dictionary copy", () => {
+  const destinationsPageSource = readFileSync("src/app/destinations/page.tsx", "utf8");
+  const destinationCardSource = readFileSync("src/app/destinations/DestinationCard.tsx", "utf8");
+  const localeProviderSource = readFileSync("src/components/layout/LocaleProvider.tsx", "utf8");
+  const id = idTranslations as Record<string, string>;
+  const en = enTranslations as Record<string, string>;
+
+  assert.ok(destinationsPageSource.includes("const { t: dictionary } = useLocale();"));
+  assert.ok(localeProviderSource.includes("t: getTranslations(locale)"));
+  assert.ok(destinationsPageSource.includes("dictionary.destinationsHeroBadge"));
+  assert.ok(destinationsPageSource.includes("regionLabelKeys[section.region]"));
+  assert.ok(destinationsPageSource.includes("destinationNameKeys[destination.name]"));
+  assert.ok(destinationsPageSource.includes("destinationCountryKeys[destination.country]"));
+  assert.ok(destinationsPageSource.includes("dictionary[destination.tagKey]"));
+  assert.ok(destinationsPageSource.includes("dictionary[destinationSubtitleKey]"));
+  assert.ok(destinationCardSource.includes("{country}"));
+  assert.ok(destinationCardSource.includes("{tag}"));
+  assert.ok(destinationCardSource.includes("{name}"));
+  assert.ok(destinationCardSource.includes("{subtitle}"));
+
+  const expectedIndonesianCopy: Record<string, string> = {
+    destinationsHeroBadge: "PENEMUAN DESTINASI",
+    destinationsHeroTitle: "Ke mana Anda ingin pergi selanjutnya?",
+    destinationsHeroSubtitle:
+      "Jelajahi pemandangan kota pilihan yang lebih menarik, bandingkan penerbangan, dan temukan penawaran perjalanan dalam hitungan menit.",
+    "destinations.region.europe": "Eropa",
+    "destinations.region.northAmerica": "Amerika Utara",
+    "destinations.region.asia": "Asia",
+    "destinations.region.africa": "Afrika",
+    "destinations.region.middleEast": "Timur Tengah",
+    "destinations.region.europe.summary":
+      "Pilihan kota ikonik, kanal romantis, ibu kota desain, dan akhir pekan kuliner serta budaya yang tak lekang waktu.",
+    "destinations.region.northAmerica.summary":
+      "Cakrawala kota yang ikonik, destinasi pesisir, pusat hiburan, dan liburan kota sinematik yang layak direncanakan.",
+    "destinations.region.asia.summary":
+      "Pemandangan kota neon, liburan pulau, legenda kuliner kaki lima, kuil, pantai, dan destinasi belanja premium.",
+    "destinations.region.africa.summary":
+      "Favorit perjalanan berkesan dengan pemandangan laut, akses safari, ibu kota kreatif, dan kekayaan budaya.",
+    "destinations.region.middleEast.summary":
+      "Cakrawala mewah, pesisir hangat, pesona gurun, kawasan bersejarah, dan pusat perhotelan modern.",
+    "destinations.card.subtitle": "Pemandangan menarik, penerbangan, hotel, dan penawaran",
+    "destinations.tag.iconicSkyline": "CAKRAWALA IKONIK",
+    "destinations.tag.landmarkEscape": "LIBURAN IKON WISATA",
+    "destinations.tag.cultureCapital": "IBU KOTA BUDAYA",
+    "destinations.tag.goldenHourViews": "PEMANDANGAN SENJA",
+    "destinations.tag.coastalEnergy": "ENERGI PESISIR",
+    "destinations.tag.designWeekend": "AKHIR PEKAN DESAIN",
+    "destinations.tag.foodMarketNights": "MALAM PASAR KULINER",
+    "destinations.tag.historicStreets": "JALAN BERSEJARAH",
+    "destinations.city.rome": "Roma",
+    "destinations.city.prague": "Praha",
+    "destinations.city.athens": "Athena",
+    "destinations.city.venice": "Venesia",
+    "destinations.city.florence": "Firenze",
+    "destinations.city.copenhagen": "Kopenhagen",
+    "destinations.city.vienna": "Wina",
+    "destinations.city.singapore": "Singapura",
+    "destinations.city.marrakech": "Marrakesh",
+    "destinations.country.unitedKingdom": "Inggris Raya",
+    "destinations.country.france": "Prancis",
+    "destinations.country.italy": "Italia",
+    "destinations.country.spain": "Spanyol",
+    "destinations.country.netherlands": "Belanda",
+    "destinations.country.czechia": "Ceko",
+    "destinations.country.greece": "Yunani",
+    "destinations.country.germany": "Jerman",
+    "destinations.country.switzerland": "Swiss",
+    "destinations.country.unitedStates": "Amerika Serikat",
+    "destinations.country.canada": "Kanada",
+    "destinations.country.japan": "Jepang",
+    "destinations.country.southKorea": "Korea Selatan",
+    "destinations.country.southAfrica": "Afrika Selatan",
+    "destinations.country.morocco": "Maroko",
+    "destinations.country.unitedArabEmirates": "Uni Emirat Arab",
+    "destinations.country.turkey": "Turki",
+    "destinations.country.saudiArabia": "Arab Saudi",
+  };
+
+  for (const [key, expected] of Object.entries(expectedIndonesianCopy)) {
+    assert.equal(id[key], expected, `${key} should render Indonesian copy`);
+    if (expected !== en[key]) {
+      assert.notEqual(id[key], en[key], `${key} must not fall back to English on /destinations`);
+    }
+  }
+
+  const screenshotEnglishStrings = [
+    "DESTINATION DISCOVERY",
+    "Where do you want to go next?",
+    "Browse brighter, hand-picked city views, compare flights, and find travel deals in minutes.",
+    "Bright views, flights, hotels, and deals",
+    "Europe",
+    "North America",
+    "Middle East",
+  ];
+
+  for (const value of screenshotEnglishStrings) {
+    assert.ok(!Object.values(expectedIndonesianCopy).includes(value));
+  }
+
+  assert.ok(destinationsPageSource.includes("return `/flights?destination=${encodeURIComponent(destination.name)}`;"));
+  assert.ok(destinationsPageSource.includes("key={`${destination.region}-${destination.name}`}"));
+  assert.ok(destinationsPageSource.includes("image={destination.image}"));
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+});
 
 
 test("Indonesian Account dropdown and Dashboard copy resolves through active i18n render paths", () => {
