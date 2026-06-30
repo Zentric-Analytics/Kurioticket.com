@@ -122,6 +122,10 @@ export const translations: TranslationDictionary = {
   forgotPasswordSubmit: 'Skicka återställningslänk',
   forgotPasswordRemember: 'Kommer du ihåg ditt lösenord?',
   forgotPasswordLoginLink: 'Logga in',
+  logout: 'Logga ut',
+  'accountMenu.myAccount.label': 'Mitt konto',
+  'accountMenu.savedTrips.label': 'Sparade resor',
+  'accountMenu.priceAlerts.label': 'Prisaviseringar',
 
   'flights': 'Flyg',
   'hotels': 'Hotell',
