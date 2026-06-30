@@ -547,8 +547,8 @@ export const translations: TranslationDictionary = {
   moreCount: "ほか{{count}}件",
   fromPrice: "から",
   flightDetailsLoading: "航空券の詳細を読み込み中...",
-  flightQuoteUnavailable: "航空券の見積もりを利用できません",
-  flightSearchAgainCurrentPrices: "この航空券の見積もりは利用できなくなりました。現在の価格を確認するには、もう一度検索してください。",
+  flightQuoteUnavailable: "フライト見積もりは利用できません",
+  flightSearchAgainCurrentPrices: "このフライト見積もりは利用できなくなりました。現在の価格を確認するには、もう一度検索してください。",
   flightDetailsProviderDisclaimer:
     "最終価格、空席状況、予約、運賃規則は提供元で確認されます。",
   selectedFlights: "選択した航空券",
