@@ -97,6 +97,120 @@ test("Swedish locale is active and localizes homepage while preserving other fal
   }
 });
 
+test("Swedish cars landing render path resolves active copy without English fallback", () => {
+  const sv = getTranslations("sv");
+  const auditedSwedishCarsLandingKeys: Array<[string, string]> = [
+    ["searchRentalCarsEveryPartTrip", "Sök hyrbilar för varje del av din resa"],
+    ["carsSearch.pickupLocationLabel", "UPPHÄMTNINGSPLATS"],
+    ["carsSearch.pickupLocationPlaceholder", "Flygplats, stad eller adress"],
+    ["carsSearch.returnLocationPlaceholder", "Stad, flygplats eller adress för återlämning"],
+    ["carsSearch.returnToSameLocation", "Återlämna på samma plats"],
+    ["carsSearch.differentReturnLocation", "Annan återlämningsplats"],
+    ["carsSearch.rentalDatesLabel", "HYRDATUM"],
+    ["carsSearch.rentalDatePlaceholder", "Upphämtningsdatum — återlämningsdatum"],
+    ["carsSearch.pickupReturnTimeLabel", "UPPHÄMTNINGS-/ÅTERLÄMNINGSTID"],
+    ["carsSearch.pickupReturnTimeSummary", "{pickupTime} upphämtning — {returnTime} återlämning"],
+    ["carsSearch.driverAgeLabel", "FÖRARENS ÅLDER"],
+    ["carsSearch.driverAgeAnyAge", "Valfri ålder"],
+    ["search", "Sök"],
+    ["exploreCarsByTripStyle", "Utforska hyrbilar efter resestil"],
+    ["carsTripStyleBody", "Välj en biltyp så öppnar vi resultaten med söksammanhanget klart."],
+    ["carsTripStyle.economy.title", "Ekonomibilar"],
+    ["carsTripStyle.economy.subtitle", "Prisvärda sökningar för stad och ensamresor"],
+    ["carsTripStyle.economy.cta", "Starta en sökning efter ekonomibil"],
+    ["carsTripStyle.economy.ariaLabel", "Starta en sökning efter ekonomibil från upphämtning i stadskärnan"],
+    ["carsTripStyle.economy.imageAlt", "Kompakta stadsbilar som kör mellan byggnader i centrum"],
+    ["carsTripStyle.suv.title", "SUV:ar"],
+    ["carsTripStyle.suv.subtitle", "Plats för familjeresor, bagage och längre körningar"],
+    ["carsTripStyle.suv.cta", "Öppna sökning efter SUV-hyrbil"],
+    ["carsTripStyle.luxury.title", "Lyxbilar"],
+    ["carsTripStyle.luxury.subtitle", "Premiumsökning för affärsresor eller särskilda resor"],
+    ["carsTripStyle.luxury.cta", "Planera en sökning efter lyxbil"],
+    ["carsTripStyle.van.title", "Minibussar"],
+    ["carsTripStyle.van.subtitle", "Söksammanhang för gruppresor och familjebagage"],
+    ["carsTripStyle.van.cta", "Sök minibussar för gruppresor"],
+    ["carsTrust.0.title", "Byggd för kompletta resor"],
+    ["carsTrust.0.description", "Planera flyg, boenden och marktransport i ett och samma Kurioticket-flöde."],
+    ["carsTrust.1.title", "Upphämtningsdetaljer först"],
+    ["carsTrust.1.description", "Ange upphämtningsplats, datum, tider och förarens ålder så att din hyrbilssökning börjar med rätt reseuppgifter."],
+    ["carsTrust.2.title", "Tydlig genomgång av hyrbilen"],
+    ["carsTrust.2.description", "Granska slutpris, tillgänglighet, avgifter och hyresregler hos leverantören innan du bokar."],
+    ["carsPickupPointsTitle", "Börja med populära upphämtningsplatser för bil"],
+    ["carsPickupPointsBody", "Välj en upphämtningstyp så öppnar vi bilresultatsidan med sökuppgifterna redo."],
+    ["carsPickup.Airport.title", "Upphämtning på flygplats"],
+    ["carsPickup.Airport.subtitle", "Börja från större ankomstplatser på flygplatsen"],
+    ["carsPickup.Airport.imageAlt", "Flygplan parkerat vid en flygplatsgate i solnedgången"],
+    ["carsPickup.City center.title", "Upphämtning i stadskärnan"],
+    ["carsPickup.City center.subtitle", "Hämta nära hotell i centrum och affärsdistrikt"],
+    ["carsPickup.Train station.title", "Upphämtning vid tågstation"],
+    ["carsPickup.Train station.subtitle", "Fortsätt din resa efter ankomst med tåg"],
+    ["carsPickup.Hotel area.title", "Upphämtning vid hotellområde"],
+    ["carsPickup.Hotel area.subtitle", "Planera bilupphämtning nära där du bor"],
+    ["carsFaq.heading", "Vanliga frågor om bilar"],
+    ["carsFaq.0.question", "Vilken information behöver jag för att söka efter en hyrbil?"],
+    ["carsFaq.0.answer", "Ange upphämtningsplats, upphämtnings- och återlämningsdatum, upphämtnings- och återlämningstider, förarens ålder och om du planerar att lämna tillbaka bilen på en annan plats."],
+    ["carsFaq.1.question", "Kan jag lämna tillbaka bilen på en annan plats?"],
+    ["carsFaq.1.answer", "Ja. Välj Annan återlämningsplats i sökformuläret och ange den stad, flygplats eller adress där du planerar att lämna tillbaka bilen."],
+    ["carsFaq.2.question", "Varför spelar förarens ålder roll för hyrbilar?"],
+    ["carsFaq.2.answer", "Hyresleverantörer kan tillämpa olika regler, avgifter, fordonsbehörighet eller krav på deposition beroende på förarens ålder och plats."],
+    ["carsFaq.3.question", "Vad bör jag kontrollera innan jag bokar en hyrbil?"],
+    ["carsFaq.3.answer", "Granska upphämtnings- och återlämningsplats, datum, tider, körsträckepolicy, bränslepolicy, försäkringsalternativ, avbokningsvillkor, krav på deposition och nödvändiga dokument innan du bokar."],
+    ["carsFaq.4.question", "Var bekräftas det slutliga hyrbilspriset?"],
+    ["carsFaq.4.answer", "Slutpris, fordonstillgänglighet, skatter, avgifter, krav på deposition och hyresregler bekräftas av leverantören innan du bokar."],
+    ["carsFaq.5.question", "Vilka dokument kan jag behöva vid upphämtning?"],
+    ["carsFaq.5.answer", "Hyresleverantörer kan kräva giltigt körkort, betalkort, identitetsbevis och eventuella dokument som krävs av upphämtningslandet eller upphämtningsplatsen."],
+  ];
+
+  for (const [key, expected] of auditedSwedishCarsLandingKeys) {
+    assert.equal(sv[key], expected);
+    if (key !== "search") {
+      assert.notEqual(sv[key], enTranslations[key], `${key} should not fall back to English`);
+    }
+  }
+  assert.equal(
+    sv["carsSearch.pickupReturnTimeSummary"].replace("{pickupTime}", "10:00").replace("{returnTime}", "10:00"),
+    "10:00 upphämtning — 10:00 återlämning",
+  );
+  assert.ok(languageOptions.some((option) => option.code === "sv" && option.locale === "sv-SE" && option.nativeLabel === "Svenska" && option.direction === "ltr"));
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+
+  const carsPageSource = readFileSync("src/app/cars/page.tsx", "utf8");
+  const carsLandingContentSource = readFileSync("src/data/carsLandingContent.ts", "utf8");
+
+  for (const key of ["searchRentalCarsEveryPartTrip", "carsSearch.pickupLocationLabel", "carsSearch.differentReturnLocation", "exploreCarsByTripStyle", "carsPickupPointsTitle", "carsFaq.heading"]) {
+    assert.ok(carsPageSource.includes(`t("${key}")`) || carsPageSource.includes("dictionary[item.questionKey]"), `Cars landing render path should resolve ${key} through i18n`);
+  }
+  assert.ok(
+    carsPageSource.includes("buildCarResultsHref") &&
+      carsPageSource.includes("pickupLocation: card.pickupLocation") &&
+      carsPageSource.includes("vehicleType: card.vehicleType") &&
+      carsPageSource.includes("returnToDifferentLocation") &&
+      carsPageSource.includes('name="pickupLocation"') &&
+      carsPageSource.includes('name="pickupDate"') &&
+      carsPageSource.includes('type="checkbox"') &&
+      carsPageSource.includes("grid auto-cols-[minmax(240px,82vw)]") &&
+      carsLandingContentSource.includes('translationKey: "carsTripStyle.economy"') &&
+      carsLandingContentSource.includes('translationKey: "carsTripStyle.suv"') &&
+      carsLandingContentSource.includes('translationKey: "carsTripStyle.luxury"') &&
+      carsLandingContentSource.includes('translationKey: "carsTripStyle.van"') &&
+      carsLandingContentSource.includes('translationKey: "carsPickup.Airport"') &&
+      carsLandingContentSource.includes('translationKey: "carsPickup.City center"') &&
+      carsLandingContentSource.includes('translationKey: "carsPickup.Train station"') &&
+      carsLandingContentSource.includes('translationKey: "carsPickup.Hotel area"') &&
+      carsLandingContentSource.includes('image:') &&
+      carsLandingContentSource.includes('pickupLocation: "City center"') &&
+      carsLandingContentSource.includes('vehicleType: "economy"'),
+    "Cars landing should keep raw pickup/search values, vehicle types, form names, checkbox behavior, card order, image references, query builders, CTA routes, and layout source paths intact.",
+  );
+  assert.ok(
+    !carsPageSource.includes("Search rental cars for every part of your trip") &&
+      !carsPageSource.includes("Explore rental cars by trip style") &&
+      !carsPageSource.includes("Start with popular car pickup points") &&
+      !carsPageSource.includes("Cars Frequently asked questions"),
+    "Cars landing render path should not hard-code screenshot-visible English copy.",
+  );
+});
+
 
 test("Swedish Hotels landing copy resolves without English fallback", () => {
   const sv = getTranslations("sv");
