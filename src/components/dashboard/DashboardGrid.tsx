@@ -2945,7 +2945,7 @@ export function SecurityDashboardPage() {
           />
           <SecuritySettingRow
             title={tx("accountDashboard.security.passkeys.title", "Passkeys")}
-            body={passkeys.length ? "Manage the devices, password managers, and security keys you use to sign in." : "Use your device screen lock, Face ID, fingerprint, password manager, or security key to sign in faster and more securely."}
+            body={passkeys.length ? "Manage the devices, password managers, and security keys you use to sign in." : tx("accountDashboard.security.passkeys.description", "Use your device screen lock, Face ID, fingerprint, password manager, or security key to sign in faster and more securely.")}
             action={passkeys.length ? tx("accountDashboard.security.action.manage", "Manage") : tx("accountDashboard.security.action.setUp", "Set up")}
             onAction={() => setPasskeysModalOpen(true)}
             statusId={securityActionStatusId}
