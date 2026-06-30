@@ -8024,6 +8024,7 @@ test("Indonesian Flights landing copy resolves through active render path", () =
     flightLandingHeroSubtitle: "Cari rute, bandingkan tanggal, dan jelajahi opsi penerbangan untuk perjalanan Anda berikutnya.",
     cityOrAirport: "Kota atau bandara",
     searchFlights: "Cari penerbangan",
+    tripType: "JENIS PERJALANAN",
     roundTrip: "Pulang pergi",
     oneWay: "Sekali jalan",
     origin: "ASAL",
@@ -8127,9 +8128,17 @@ test("Indonesian Flights landing copy resolves through active render path", () =
   for (const key of ["flightLandingHeroTitle", "flightLandingHeroSubtitle", "discoverDestinationsFromRegion", "flightLandingStartThisSearch", "flightLandingRouteIdeasTitle", "beachVacations", "flightBookingFaqs", "flightBookingFaqIntro"]) {
     assert.ok(flightLandingSource.includes(`t("${key}")`), `${key} should be read through i18n`);
   }
-  for (const key of ["cityOrAirport", "destination", "searchFlights", "roundTrip", "oneWay", "origin", "travelDates", "travelers"]) {
+  for (const key of ["cityOrAirport", "destination", "searchFlights", "tripType", "roundTrip", "oneWay", "origin", "travelDates", "travelers"]) {
     assert.ok(searchFormSource.includes(`t("${key}")`), `${key} should be read through i18n`);
   }
+  assert.equal(id.tripType, "JENIS PERJALANAN");
+  assert.equal(id.roundTrip, "Pulang pergi");
+  assert.equal(id.oneWay, "Sekali jalan");
+  assert.notEqual(id.tripType, "TRIP TYPE");
+  assert.notEqual(id.tripType, enTranslations.tripType);
+  assert.ok(searchFormSource.includes('aria-label={t("tripType") || "Trip type"}'), "Standalone /flights trip-type control should read the i18n key before the English fallback.");
+  assert.ok(!searchFormSource.includes('>TRIP TYPE<'), "Standalone /flights trip-type control should not hardcode the Indonesian label as English.");
+  assert.ok(searchFormSource.includes('["round-trip", t("roundTrip")]') && searchFormSource.includes('["one-way", t("oneWay")]'), "Trip-type options should stay wired to Indonesian i18n values.");
   assert.ok(flightLandingSource.includes("formatHomeDiscoveryRoute"));
   assert.ok(flightLandingSource.includes('t("flightLandingRouteTemplate")'));
   assert.ok(!flightLandingSource.includes("${routeText.originCity} to ${routeText.destinationCity}"));
@@ -10456,6 +10465,10 @@ test("Indonesian homepage visible copy and render paths resolve without English 
 
   assert.ok(pageSource.includes('t("homeHeroTitle")') && pageSource.includes('t("homeNewsletterTitle")'));
   assert.ok(headerSource.includes('t.flights') && headerSource.includes('t.login') && headerSource.includes('t.signUp'));
-  assert.ok(searchTabsSource.includes('t.roundTrip') && searchTabsSource.includes('translate("hotelSearchGuestsLabel")') && searchTabsSource.includes('translate("infantsOnLap")'));
+  assert.ok(searchTabsSource.includes('t.tripType') && searchTabsSource.includes('t.roundTrip') && searchTabsSource.includes('translate("hotelSearchGuestsLabel")') && searchTabsSource.includes('translate("infantsOnLap")'));
+  assert.equal(id.tripType, "JENIS PERJALANAN");
+  assert.equal(id.roundTrip, "Pulang pergi");
+  assert.equal(id.oneWay, "Sekali jalan");
+  assert.notEqual(id.tripType, "TRIP TYPE");
   assert.ok(footerSource.includes('t.footerSellerOfTravelNotice') && footerSource.includes('t.footerPrivacy'));
 });
