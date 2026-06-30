@@ -424,9 +424,10 @@ export function FlightLandingClient() {
             fill
             priority
             sizes="100vw"
-            className="object-cover object-[56%_42%] brightness-[1.18] saturate-[1.12] contrast-[1.02]"
+            className="object-cover object-[56%_42%] brightness-[1.08] saturate-[1.08] contrast-[1.02]"
           />
-          <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-slate-950/30 via-slate-950/8 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-950/18 via-slate-950/8 to-amber-950/10" />
+          <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-slate-950/34 via-slate-950/10 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/24 via-slate-950/6 to-transparent" />
         </div>
 
@@ -461,7 +462,7 @@ export function FlightLandingClient() {
           participating in normal flow. The following section reserves the card's
           height so content begins cleanly after the overlap.
         */}
-        <div className="page-shell absolute inset-x-0 bottom-[-22rem] z-30">
+        <div className="page-shell absolute inset-x-0 bottom-[-22.75rem] z-30">
           <div className="mx-auto max-w-6xl">
             <StandaloneFlightSearchForm localizeCalendarLabels mobileHeroCard />
           </div>
@@ -504,7 +505,7 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="page-shell mt-0 pt-[27.75rem] sm:mt-32 sm:pt-0 lg:mt-36">
+      <section className="page-shell mt-0 pt-[28.5rem] sm:mt-32 sm:pt-0 lg:mt-36">
         <div>
           <div className="mb-5 max-w-3xl">
             <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">

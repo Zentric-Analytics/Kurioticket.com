@@ -74,6 +74,7 @@ function SavedHeartIcon({
 type AppHeaderProps = {
   hideMobileSecondaryNavLinks?: boolean;
   mobileHeroOverlay?: boolean;
+  mobileHeroOverlayLowered?: boolean;
   hideMobileCategoryTabs?: boolean;
 };
 
@@ -135,6 +136,7 @@ const mobileInfoLegalMenuItems = [
 export function AppHeader({
   hideMobileSecondaryNavLinks = false,
   mobileHeroOverlay = false,
+  mobileHeroOverlayLowered = false,
   hideMobileCategoryTabs = false,
 }: AppHeaderProps = {}) {
   const { data: session } = useSession();
@@ -704,7 +706,11 @@ export function AppHeader({
             : "relative border-b border-white/10 bg-[#4338CA] shadow-[0_8px_24px_rgba(49,46,129,0.16)]"
         }`}
       >
-        <div className="page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3">
+        <div
+          className={`page-shell flex flex-col gap-0.5 pb-1 md:gap-0 md:pb-2.5 md:pt-3 ${
+            mobileHeroOverlayLowered ? "pt-[13px]" : "pt-[5px]"
+          }`}
+        >
           <div className="flex min-h-[52px] items-center justify-between gap-3 md:min-h-[48px] md:gap-8">
             <Link
               href="/"
