@@ -155,6 +155,7 @@ export const translations: TranslationDictionary = {
   infantsOnLap: "Bayi dipangku",
   under2: "Di bawah 2 tahun",
   cabinClass: "KELAS KABIN",
+  tripType: "JENIS PERJALANAN",
   economy: "Ekonomi",
   business: "Bisnis",
   first: "Kelas utama",
@@ -1022,9 +1023,6 @@ export const translations: TranslationDictionary = {
   "carsFaq.5.question": "Dokumen apa yang mungkin saya perlukan saat pengambilan?",
   "carsFaq.5.answer": "Penyedia sewa dapat meminta SIM yang masih berlaku, kartu pembayaran, bukti identitas, dan dokumen apa pun yang diwajibkan oleh negara atau lokasi pengambilan.",
 
-  flightDetailsLoading: "Memuat detail penerbangan...",
-  flightQuoteUnavailable: "Kutipan penerbangan tidak tersedia",
-  flightSearchAgainCurrentPrices: "Kutipan penerbangan ini tidak lagi tersedia. Silakan cari lagi untuk harga terbaru.",
   flightDetailsProviderDisclaimer:
     "Harga akhir, ketersediaan, pemesanan, dan aturan tarif dikonfirmasi oleh penyedia.",
   selectedFlights: "Penerbangan yang dipilih",
