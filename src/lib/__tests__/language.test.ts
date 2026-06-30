@@ -7065,3 +7065,119 @@ test("Personal details edit form localization keys resolve across active locales
   assert.ok(dashboardSource.includes('onClick={handleSave}'));
   assert.ok(accountPageSource.includes('const userEmail = session?.user?.email?.trim()'));
 });
+
+test("Swedish Destinations page copy resolves through active i18n keys", () => {
+  const destinationSource = readFileSync("src/app/destinations/page.tsx", "utf8");
+  const cardSource = readFileSync("src/app/destinations/DestinationCard.tsx", "utf8");
+
+  assert.equal(svTranslations.destinationsHeroBadge, "DESTINATIONSUPPTÄCKT");
+  assert.equal(svTranslations.destinationsHeroTitle, "Vart vill du åka härnäst?");
+  assert.equal(
+    svTranslations.destinationsHeroSubtitle,
+    "En utvald guide till stadsresor, stränder, kulturhubbar och mycket mer.",
+  );
+
+  assert.deepEqual(
+    [
+      svTranslations["destinations.region.europe"],
+      svTranslations["destinations.region.northAmerica"],
+      svTranslations["destinations.region.asia"],
+      svTranslations["destinations.region.africa"],
+      svTranslations["destinations.region.middleEast"],
+    ],
+    ["Europa", "Nordamerika", "Asien", "Afrika", "Mellanöstern"],
+  );
+
+  assert.deepEqual(
+    [
+      svTranslations["destinations.region.europe.summary"],
+      svTranslations["destinations.region.northAmerica.summary"],
+      svTranslations["destinations.region.asia.summary"],
+      svTranslations["destinations.region.africa.summary"],
+      svTranslations["destinations.region.middleEast.summary"],
+    ],
+    [
+      "Utforska klassiska storstäder, kultur, arkitektur och matupplevelser över hela Europa.",
+      "Upptäck ikoniska stadssilhuetter, nöjen, kuststäder och naturupplevelser i Nordamerika.",
+      "Hitta livliga storstäder, öar, matkultur och minnesvärda resmål runt om i Asien.",
+      "Utforska kuststäder, kultur, safariportar och växande resehubbar i Afrika.",
+      "Upptäck ökenstäder, historiska knutpunkter, kustresor och moderna resecentrum i Mellanöstern.",
+    ],
+  );
+
+  assert.equal(svTranslations["destinations.city.rome"], "Rom");
+  assert.equal(svTranslations["destinations.city.lisbon"], "Lissabon");
+  assert.equal(svTranslations["destinations.city.prague"], "Prag");
+  assert.equal(svTranslations["destinations.city.athens"], "Aten");
+  assert.equal(svTranslations["destinations.city.venice"], "Venedig");
+  assert.equal(svTranslations["destinations.city.florence"], "Florens");
+  assert.equal(svTranslations["destinations.city.copenhagen"], "Köpenhamn");
+  assert.equal(svTranslations["destinations.city.zurich"], "Zürich");
+  assert.equal(svTranslations["destinations.city.vienna"], "Wien");
+  assert.equal(svTranslations["destinations.city.milan"], "Milano");
+  assert.equal(svTranslations["destinations.city.capeTown"], "Kapstaden");
+  assert.equal(svTranslations["destinations.city.muscat"], "Muskat");
+  assert.equal(svTranslations["destinations.city.jeddah"], "Jidda");
+
+  assert.equal(svTranslations["destinations.country.unitedKingdom"], "Storbritannien");
+  assert.equal(svTranslations["destinations.country.france"], "Frankrike");
+  assert.equal(svTranslations["destinations.country.unitedStates"], "USA");
+  assert.equal(svTranslations["destinations.country.southKorea"], "Sydkorea");
+  assert.equal(svTranslations["destinations.country.unitedArabEmirates"], "Förenade Arabemiraten");
+  assert.equal(svTranslations["destinations.country.saudiArabia"], "Saudiarabien");
+
+  assert.equal(svTranslations["destinations.tag.cultureCapital"], "KULTURHUVUDSTAD");
+  assert.equal(svTranslations["destinations.tag.coastalEnergy"], "KUSTENERGI");
+  assert.equal(svTranslations["destinations.tag.historicStreets"], "HISTORISKA GATOR");
+
+  assert.ok(destinationSource.includes("dictionary.destinationsHeroBadge"));
+  assert.ok(destinationSource.includes("dictionary.destinationsHeroTitle"));
+  assert.ok(destinationSource.includes("dictionary.destinationsHeroSubtitle"));
+  assert.ok(destinationSource.includes("translateValue(dictionary, regionLabelKeys[section.region], section.region)"));
+  assert.ok(destinationSource.includes("dictionary[section.summaryKey]"));
+  assert.ok(destinationSource.includes("destinationNameKeys[destination.name]"));
+  assert.ok(destinationSource.includes("destinationCountryKeys[destination.country]"));
+  assert.ok(destinationSource.includes("dictionary[destination.tagKey]"));
+  assert.ok(destinationSource.includes("href={getDestinationHref(destination)}"));
+  assert.ok(destinationSource.includes("key={`${destination.region}-${destination.name}`}"));
+  assert.ok(destinationSource.includes("image={destination.image}"));
+  assert.ok(cardSource.includes("className=\"group relative min-h-[18rem]"));
+  assert.ok(cardSource.includes("aria-label={ariaLabel}"));
+});
+
+test("Swedish Saved trips page copy resolves through active i18n keys", () => {
+  const savedPageSource = readFileSync("src/app/saved/page.tsx", "utf8");
+  const dashboardSavedSource = readFileSync("src/app/dashboard/saved/page.tsx", "utf8");
+  const savedComponentSource = readFileSync(
+    "src/components/saved/SavedTripsAndRecentSearches.tsx",
+    "utf8",
+  );
+
+  assert.equal(svTranslations.savedTripsPageTitle, "Sparade resor");
+  assert.equal(
+    svTranslations.savedTripsPageSubtitle,
+    "Dina handplockade resplaner och trendande rutter.",
+  );
+  assert.equal(svTranslations.savedTripsEmptyTitle, "Spara destinationer du gillar");
+  assert.equal(
+    svTranslations.savedTripsEmptyDescription,
+    "Tryck på hjärtikonen på valfri rutt för att skapa din personliga kortlista och ha ditt nästa äventyr bara ett klick bort.",
+  );
+  assert.equal(svTranslations.savedTripsExploreDestinations, "Utforska destinationer");
+
+  assert.ok(savedPageSource.includes("<SavedTripsAndRecentSearches />"));
+  assert.ok(dashboardSavedSource.includes('redirect("/saved")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsPageTitle")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsPageSubtitle")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsEmptyTitle")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsEmptyDescription")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsExploreDestinations")'));
+  assert.ok(savedComponentSource.includes('href="/"'));
+  assert.ok(savedComponentSource.includes("readSavedTripIds"));
+  assert.ok(savedComponentSource.includes("writeSavedTripIds"));
+});
+
+test("Swedish remains ltr and Arabic remains rtl", () => {
+  assert.ok(languageOptions.some((o) => o.code === "sv" && o.locale === "sv-SE" && o.direction === "ltr"));
+  assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
+});
