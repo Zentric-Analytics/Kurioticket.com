@@ -14,6 +14,7 @@ export const normalizeFlightsCalendarLocale = (locale: string | null | undefined
   if (normalized === "tr" || normalized === "tr-tr" || normalized.startsWith("tr-")) return "tr-TR";
   if (normalized === "ja" || normalized.startsWith("ja-")) return "ja-JP";
   if (normalized === "ko" || normalized.startsWith("ko-")) return "ko-KR";
+  if (normalized === "id" || normalized === "id-id" || normalized.startsWith("id-")) return "id-ID";
   if (
     normalized === "zh" ||
     normalized === "zh-cn" ||

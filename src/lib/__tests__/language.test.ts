@@ -74,7 +74,7 @@ test("global language catalog renders", () => {
   assert.ok(languageOptions.some((o) => o.code === "id" && o.locale === "id-ID" && o.nativeLabel === "Bahasa Indonesia" && o.label === "Indonesian" && o.countryCode === "ID" && o.fallbackText === "ID" && o.direction === "ltr" && o.status === "available"));
 });
 
-test("Indonesian locale is active with English starter fallback", () => {
+test("Indonesian locale is active with homepage copy overrides", () => {
   const indonesianOptions = languageOptions.filter((o) => o.code === "id");
   const indonesianLocaleMetadata = supportedLocales.filter((o) => o.code === "id");
 
@@ -109,8 +109,10 @@ test("Indonesian locale is active with English starter fallback", () => {
   assert.equal(normalizeLanguage("id-id"), "id");
   assert.equal(getTranslations("id"), idTranslations);
   assert.equal(getTranslations("id-ID"), idTranslations);
-  assert.equal(idTranslations.homeHeroTitle, enTranslations.homeHeroTitle);
-  assert.equal(idTranslations.search, enTranslations.search);
+  assert.equal(idTranslations.homeHeroTitle, "Bandingkan pilihan perjalanan dalam satu pencarian sederhana");
+  assert.equal(idTranslations.search, "Cari");
+  assert.notEqual(idTranslations.homeHeroTitle, enTranslations.homeHeroTitle);
+  assert.notEqual(idTranslations.search, enTranslations.search);
   assert.ok(availableLocaleOptions.some((o) => o.code === "id" && o.nativeLabel === "Bahasa Indonesia"));
   assert.ok(languageOptions.some((o) => o.code === "id" && o.nativeLabel === "Bahasa Indonesia" && o.status === "available"));
   assert.equal(indonesianOptions[0]?.direction, "ltr");
@@ -9078,4 +9080,108 @@ test("Newsletter and email updates render paths read i18n keys without changing 
   assert.ok(preferencesClientSource.includes('fetch(`/api/newsletter/preferences?${params.toString()}`)'), "Preferences GET API route should remain unchanged.");
   assert.ok(preferencesClientSource.includes('fetch("/api/newsletter/preferences", {'), "Preferences POST API route should remain unchanged.");
   assert.ok(preferencesClientSource.includes('body: JSON.stringify({ email: address, token, action })'), "Preferences submit values should remain unchanged.");
+});
+
+test("Indonesian homepage visible copy and render paths resolve without English fallback", () => {
+  const id = getTranslations("id");
+  const pageSource = readFileSync("src/app/page.tsx", "utf8");
+  const headerSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
+  const searchTabsSource = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
+  const footerSource = readFileSync("src/components/layout/Footer.tsx", "utf8");
+  const newsletterBridgeSource = readFileSync("src/components/newsletter/NewsletterSessionBridge.tsx", "utf8");
+
+  const expected: Record<string, string> = {
+    flights: "Penerbangan",
+    hotels: "Hotel",
+    cars: "Mobil",
+    deals: "Promo",
+    login: "Masuk",
+    signUp: "Daftar",
+    homeHeroTitle: "Bandingkan pilihan perjalanan dalam satu pencarian sederhana",
+    homeHeroSubtitle: "Cari penyedia perjalanan tepercaya, bandingkan harga dengan jelas, dan pilih opsi yang sesuai dengan perjalanan Anda.",
+    roundTrip: "Pulang pergi",
+    oneWay: "Sekali jalan",
+    origin: "ASAL",
+    fromPlaceholder: "Dari?",
+    destination: "TUJUAN",
+    toPlaceholder: "Ke?",
+    departureDate: "Tanggal perjalanan",
+    travelers: "PENUMPANG",
+    search: "Cari",
+    previousShort: "Sebelumnya",
+    nextShort: "Berikutnya",
+    clear: "Hapus",
+    done: "Selesai",
+    passengers: "Penumpang",
+    adults: "Dewasa",
+    children: "Anak-anak",
+    childAgeRange: "Usia 2–17",
+    infantsOnLap: "Bayi dipangku",
+    under2: "Di bawah 2 tahun",
+    cabinClass: "KELAS KABIN",
+    economy: "Ekonomi",
+    business: "Bisnis",
+    first: "Kelas utama",
+    hotelSearchDestinationLabel: "TUJUAN",
+    cityOrHotel: "Kota atau hotel",
+    hotelSearchTravelDatesLabel: "TANGGAL PERJALANAN",
+    hotelSearchDatePlaceholder: "Check-in — check-out",
+    hotelSearchGuestsLabel: "TAMU",
+    guestsAndRooms: "Tamu dan kamar",
+    hotelAdultHelper: "Tamu 18+",
+    hotelChildrenHelper: "Usia 0–17",
+    hotelRoomsHelper: "Hingga 6 kamar",
+    petFriendly: "Ramah hewan peliharaan",
+    onlyShowPetFriendlyStays: "Hanya tampilkan akomodasi yang mengizinkan hewan peliharaan",
+    homePopularDestinations: "Destinasi populer",
+    homeExploreFares: "Jelajahi tarif",
+    homeDiscoveryTitle: "Temukan petualangan Anda berikutnya di sini",
+    homeDiscoverySubtitle: "Bandingkan ide rute cerdas, tarif fleksibel, dan destinasi yang dipilih untuk wilayah Anda.",
+    homeDiscoveryRouteIdeaBadge: "IDE RUTE",
+    homeDiscoveryTripOneWay: "SEKALI JALAN",
+    homeDiscoveryCabinEconomy: "EKONOMI",
+    homeDiscoveryTravelerCountOne: "1 PENUMPANG",
+    homeCompareOptions: "Bandingkan opsi",
+    homeTrustTitle: "Mengapa wisatawan membandingkan di Kurioticket",
+    homeTrustCompareTitle: "Bandingkan penawaran penyedia",
+    homePromoFlightsTitle: "Promo penerbangan dari maskapai ternama",
+    homePromoHotelsTitle: "Hemat hotel di seluruh dunia",
+    faqHeading: "Pertanyaan yang sering diajukan",
+    homeNewsletterTitle: "Selalu terdepan untuk setiap promo perjalanan",
+    homeNewsletterPlaceholder: "Masukkan email Anda",
+    homeSubscribe: "Berlangganan",
+    footerContactUs: "Hubungi Kami",
+    footerDiscover: "Jelajahi",
+    footerPrivacyPolicy: "Kebijakan Privasi",
+    legalCenter: "Pusat Hukum",
+    footerConfidenceTagline: "Cari penerbangan, hotel, dan promo perjalanan dengan percaya diri.",
+    footerPrivacy: "Privasi",
+    footerTerms: "Ketentuan",
+    footerCookies: "Cookie",
+  };
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(id[key], value, `${key} should resolve to Indonesian`);
+    assert.notEqual(id[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  assert.equal(id["newsletter.accountEmailLine"], "Berlangganan dengan email akun Anda: {{email}}.");
+  assert.match(id["newsletter.accountEmailLine"], /\{\{email\}\}/);
+  assert.equal(id["newsletter.manageEmailPreferences"], "Kelola preferensi email");
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+  assert.equal(normalizeFlightsCalendarLocale("id"), "id-ID");
+  assert.equal(normalizeFlightsCalendarLocale("id-ID"), "id-ID");
+  assert.equal(normalizeFlightsCalendarLocale("id-id"), "id-ID");
+  assert.equal(normalizeHotelCalendarLocale("id"), "id-ID");
+  assert.equal(formatFlightsMonthHeading(new Date(2026, 5, 1), "id"), "Juni 2026");
+  assert.equal(formatFlightsMonthHeading(new Date(2026, 6, 1), "id-id"), "Juli 2026");
+  assert.deepEqual(formatFlightsWeekdays("id"), ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"]);
+  assert.equal(formatFlightsDateSummary(new Date(2026, 5, 30), new Date(2026, 6, 5), "id"), "30 Jun — 5 Jul");
+
+  assert.ok(pageSource.includes('t("homeHeroTitle")') && pageSource.includes('t("homeNewsletterTitle")'));
+  assert.ok(headerSource.includes('t.flights') && headerSource.includes('t.login') && headerSource.includes('t.signUp'));
+  assert.ok(searchTabsSource.includes('t.roundTrip') && searchTabsSource.includes('translate("hotelSearchGuestsLabel")') && searchTabsSource.includes('translate("infantsOnLap")'));
+  assert.ok(footerSource.includes('t.footerSellerOfTravelNotice') && footerSource.includes('t.footerPrivacy'));
+  assert.ok(newsletterBridgeSource.includes('t["newsletter.accountEmailLine"]') && newsletterBridgeSource.includes('t["newsletter.manageEmailPreferences"]'));
 });
