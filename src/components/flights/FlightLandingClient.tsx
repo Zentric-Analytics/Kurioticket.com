@@ -416,7 +416,7 @@ export function FlightLandingClient() {
 
   return (
     <main className="flex-1 bg-slate-50 pb-12">
-      <section className="relative isolate min-h-[19.75rem] overflow-visible bg-slate-950 sm:hidden">
+      <section className="relative isolate z-20 min-h-[24.25rem] overflow-visible bg-slate-950 sm:hidden">
         <div className="absolute inset-0 overflow-hidden">
           <Image
             src={heroImageUrl}
@@ -424,16 +424,15 @@ export function FlightLandingClient() {
             fill
             priority
             sizes="100vw"
-            className="object-cover object-[56%_42%]"
+            className="object-cover object-[56%_42%] brightness-[1.18] saturate-[1.12] contrast-[1.02]"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-950/70 via-slate-950/28 to-slate-950/10" />
-          <div className="absolute inset-y-0 start-0 w-[92%] bg-gradient-to-r from-slate-950/76 via-slate-950/38 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-slate-950/86 via-slate-950/30 to-transparent" />
+          <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-slate-950/30 via-slate-950/8 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/24 via-slate-950/6 to-transparent" />
         </div>
 
-        <div className="page-shell relative z-10 flex min-h-[19.75rem] items-start pt-11">
+        <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-[7.85rem]">
           <div className="max-w-[22.5rem] pe-2 text-start text-white">
-            <h1 className="text-[clamp(1.56rem,6.45vw,1.88rem)] font-semibold leading-[1.09] tracking-[-0.026em] text-white text-balance drop-shadow-[0_3px_16px_rgba(2,6,23,0.72)]">
+            <h1 className="text-[clamp(1.38rem,6.1vw,2rem)] font-semibold leading-[1.05] tracking-[-0.041em] text-white text-balance drop-shadow-[0_2px_10px_rgba(2,6,23,0.6)]">
               {useEnglishHeroWrap ? (
                 <span>
                   <span className="block">{englishHeroTitleFirstLine}</span>
@@ -443,7 +442,7 @@ export function FlightLandingClient() {
                 heroTitle
               )}
             </h1>
-            <p className="mt-2.5 max-w-[21rem] text-sm font-medium leading-[1.55] text-white/88 text-balance drop-shadow-[0_2px_10px_rgba(2,6,23,0.68)]">
+            <p className="mt-4 max-w-[21rem] text-[clamp(0.72rem,3.28vw,0.89rem)] font-medium leading-[1.5] tracking-[-0.012em] text-white/92 text-balance drop-shadow-[0_2px_8px_rgba(2,6,23,0.54)]">
               {useEnglishHeroWrap ? (
                 <span>
                   <span className="block">{englishHeroSubtitleFirstLine}</span>
@@ -462,9 +461,9 @@ export function FlightLandingClient() {
           participating in normal flow. The following section reserves the card's
           height so content begins cleanly after the overlap.
         */}
-        <div className="page-shell absolute inset-x-0 bottom-[-22.5rem] z-30">
+        <div className="page-shell absolute inset-x-0 bottom-[-22rem] z-30">
           <div className="mx-auto max-w-6xl">
-            <StandaloneFlightSearchForm localizeCalendarLabels />
+            <StandaloneFlightSearchForm localizeCalendarLabels mobileHeroCard />
           </div>
         </div>
       </section>
@@ -505,7 +504,7 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="page-shell mt-0 pt-[28.25rem] sm:mt-32 sm:pt-0 lg:mt-36">
+      <section className="page-shell mt-0 pt-[27.75rem] sm:mt-32 sm:pt-0 lg:mt-36">
         <div>
           <div className="mb-5 max-w-3xl">
             <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">

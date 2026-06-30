@@ -156,10 +156,12 @@ const buildMonthCells = (monthDate: Date) => {
 
 type StandaloneFlightSearchFormProps = {
   localizeCalendarLabels?: boolean;
+  mobileHeroCard?: boolean;
 };
 
 export function StandaloneFlightSearchForm({
   localizeCalendarLabels = true,
+  mobileHeroCard = false,
 }: StandaloneFlightSearchFormProps = {}) {
   const { t: dictionary, locale } = useLocale();
   const t = useCallback(
@@ -1383,7 +1385,11 @@ export function StandaloneFlightSearchForm({
   return (
     <section
       ref={standaloneFormCardRef}
-      className="relative isolate z-[120] rounded-2xl border border-white/70 bg-white/92 p-3 shadow-[0_10px_26px_rgba(15,23,42,0.06)] ring-1 ring-slate-950/[0.05] backdrop-blur-xl sm:rounded-[1.5rem] sm:p-4 sm:shadow-[0_14px_34px_rgba(15,23,42,0.08)]"
+      className={cn(
+        "relative isolate z-[120] rounded-2xl border border-white/70 bg-white/92 p-3 shadow-[0_10px_26px_rgba(15,23,42,0.06)] ring-1 ring-slate-950/[0.05] backdrop-blur-xl sm:rounded-[1.5rem] sm:p-4 sm:shadow-[0_14px_34px_rgba(15,23,42,0.08)]",
+        mobileHeroCard &&
+          "border-white/85 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.38)] ring-slate-950/[0.06] sm:p-4",
+      )}
     >
       <form onSubmit={onSubmit} className="relative space-y-3 sm:space-y-3">
         <div
