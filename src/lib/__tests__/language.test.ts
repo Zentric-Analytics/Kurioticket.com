@@ -6706,3 +6706,59 @@ test("Polish service and support active render path copy resolves without Englis
   assert.ok(languageOptions.some((o) => o.code === "pl" && o.direction === "ltr"));
   assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
 });
+
+test("Personal details edit form localization keys resolve across active locales", () => {
+  const activeLocaleTranslations = { ar: arTranslations, nl: nlTranslations, es: esTranslations, fr: frTranslations, de: deTranslations, it: itTranslations, "pt-br": ptBrTranslations, "zh-cn": zhCnTranslations, ja: jaTranslations, ko: koTranslations, hi: hiTranslations, tr: trTranslations, pl: plTranslations } as const;
+  const requiredKeys = ["accountDashboard.personalDetails.section.basicInformation", "accountDashboard.personalDetails.description", "accountDashboard.personalDetails.emailVerified", "accountDashboard.personalDetails.changeEmail", "accountDashboard.personalDetails.emailHelper", "accountDashboard.personalDetails.phoneHelper", "accountDashboard.personalDetails.dateOfBirthDayPlaceholder", "accountDashboard.personalDetails.monthPlaceholder", "accountDashboard.personalDetails.dateOfBirthYearPlaceholder", "accountDashboard.personalDetails.section.address", "accountDashboard.personalDetails.addressDescription", "accountDashboard.personalDetails.countryRegion", "accountDashboard.personalDetails.selectOne", "accountDashboard.personalDetails.streetAddress", "accountDashboard.personalDetails.apartmentSuite", "accountDashboard.personalDetails.townCity", "accountDashboard.personalDetails.stateProvinceRegion", "accountDashboard.personalDetails.postcodeZip", "accountDashboard.personalDetails.cancel", "accountDashboard.personalDetails.saveChanges"] as const;
+
+  for (const key of requiredKeys) assert.equal(typeof enTranslations[key], "string", `English should define ${key}`);
+  for (const [locale, dictionary] of Object.entries(activeLocaleTranslations)) {
+    for (const key of requiredKeys) assert.equal(typeof dictionary[key], "string", `${locale} should define ${key}`);
+  }
+
+  assert.equal(plTranslations["accountDashboard.personalDetails.section.basicInformation"], "Podstawowe informacje");
+  assert.equal(plTranslations["accountDashboard.personalDetails.description"], "Zarządzaj informacjami, których Kurioticket używa dla Twojego konta.");
+  assert.equal(plTranslations["accountDashboard.personalDetails.emailVerified"], "Zweryfikowano");
+  assert.equal(plTranslations["accountDashboard.personalDetails.changeEmail"], "Zmień e-mail");
+  assert.equal(plTranslations["accountDashboard.personalDetails.emailHelper"], "Ten adres e-mail jest używany do logowania i potwierdzeń rezerwacji. Zmiany wymagają weryfikacji.");
+  assert.equal(plTranslations["accountDashboard.personalDetails.phoneHelper"], "Użyjemy tego numeru do aktualizacji dotyczących rezerwacji.");
+  assert.equal(plTranslations["accountDashboard.personalDetails.monthPlaceholder"], "Miesiąc");
+  assert.equal(plTranslations["accountDashboard.personalDetails.dateOfBirthYearPlaceholder"], "RRRR");
+  assert.equal(plTranslations["accountDashboard.personalDetails.countryRegion"], "Kraj/region");
+  assert.equal(plTranslations["accountDashboard.personalDetails.selectOne"], "Wybierz jedną opcję");
+  assert.equal(plTranslations["accountDashboard.personalDetails.streetAddress"], "Adres ulicy");
+  assert.equal(plTranslations["accountDashboard.personalDetails.apartmentSuite"], "Mieszkanie, apartament, lokal, budynek");
+  assert.equal(plTranslations["accountDashboard.personalDetails.townCity"], "Miejscowość / miasto");
+  assert.equal(plTranslations["accountDashboard.personalDetails.stateProvinceRegion"], "Stan / prowincja / region");
+  assert.equal(plTranslations["accountDashboard.personalDetails.postcodeZip"], "Kod pocztowy");
+  assert.equal(plTranslations["accountDashboard.personalDetails.cancel"], "Anuluj");
+  assert.equal(plTranslations["accountDashboard.personalDetails.saveChanges"], "Zapisz zmiany");
+
+  for (const key of ["accountDashboard.personalDetails.emailVerified", "accountDashboard.personalDetails.changeEmail", "accountDashboard.personalDetails.emailHelper", "accountDashboard.personalDetails.phoneHelper", "accountDashboard.personalDetails.countryRegion", "accountDashboard.personalDetails.selectOne", "accountDashboard.personalDetails.saveChanges"] as const) {
+    assert.notEqual(arTranslations[key], enTranslations[key]);
+    assert.notEqual(esTranslations[key], enTranslations[key]);
+    assert.notEqual(frTranslations[key], enTranslations[key]);
+    assert.notEqual(trTranslations[key], enTranslations[key]);
+  }
+  assert.equal(arTranslations["accountDashboard.personalDetails.emailVerified"], "تم التحقق");
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+  for (const option of languageOptions.filter((option) => option.status === "available" && option.code !== "ar")) assert.equal(option.direction, "ltr");
+  assert.equal(plTranslations["accountDashboard.personalDetails.title"], "Dane osobowe");
+  assert.equal(plTranslations["accountDashboard.personalDetails.subtitle"], "Aktualizuj swoje informacje i zarządzaj tym, jak są używane w Kurioticket.");
+  assert.equal("developer2@zentricresearch.com", "developer2@zentricresearch.com");
+
+  const dashboardSource = readFileSync("src/components/dashboard/DashboardGrid.tsx", "utf8");
+  const accountPageSource = readFileSync("src/app/dashboard/account/page.tsx", "utf8");
+  for (const key of requiredKeys) assert.ok(dashboardSource.includes(key), `Active Personal details edit form should read ${key}`);
+  assert.ok(dashboardSource.includes("currentEmail || row.fallback"));
+  assert.ok(dashboardSource.includes('inputType: "email"'));
+  assert.ok(dashboardSource.includes('inputType: "tel"'));
+  assert.ok(dashboardSource.includes('type="button"'));
+  assert.ok(dashboardSource.includes('autoComplete="country"'));
+  assert.ok(dashboardSource.includes('autoComplete="address-line1"'));
+  assert.ok(dashboardSource.includes('autoComplete="postal-code"'));
+  assert.ok(dashboardSource.includes('onClick={onStartChange}'));
+  assert.ok(dashboardSource.includes('onClick={handleCancel}'));
+  assert.ok(dashboardSource.includes('onClick={handleSave}'));
+  assert.ok(accountPageSource.includes('const userEmail = session?.user?.email?.trim()'));
+});
