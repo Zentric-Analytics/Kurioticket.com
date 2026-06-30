@@ -127,6 +127,52 @@ test("Indonesian locale is active with homepage copy overrides", () => {
 
 
 
+test("Indonesian homepage SearchTabs date placeholders use localized i18n copy", () => {
+  const id = getTranslations("id");
+  const searchSource = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
+
+  assert.equal(id.departureDate, "Tanggal perjalanan");
+  assert.equal(id.travelDates, "Tanggal perjalanan");
+  assert.equal(id.hotelSearchTravelDatesLabel, "TANGGAL PERJALANAN");
+  assert.equal(id.hotelSearchDatePlaceholder, "Tanggal check-in — check-out");
+  assert.notEqual(id.travelDates, enTranslations.travelDates);
+  assert.notEqual(id.hotelSearchDatePlaceholder, enTranslations.hotelSearchDatePlaceholder);
+
+  assert.match(
+    searchSource,
+    /if \(!departureSummary\) \{[\s\S]*?return t\.travelDates \|\| "Travel dates";[\s\S]*?\}/,
+    "flight empty date value should read the active travelDates i18n key before the English fallback",
+  );
+  assert.match(
+    searchSource,
+    /if \(!checkInSummary\) \{[\s\S]*?translateHotelTravelDateText\("hotelSearchDatePlaceholder"\) \|\|[\s\S]*?"Check-in — Check-out"[\s\S]*?\}/,
+    "hotel empty date value should read the active hotelSearchDatePlaceholder i18n key before the English fallback",
+  );
+  assert.match(searchSource, /<label className=\{flightFieldLabelClassName\}>[\s\S]*?t\.departureDate \|\|[\s\S]*?t\.travelDates \|\| "Travel dates"/);
+  assert.match(searchSource, /<label className=\{hotelFieldLabelClassName\}>[\s\S]*?translateHotelTravelDateText\("hotelSearchTravelDatesLabel"\)/);
+
+  for (const locale of ["id", "id-ID", "id-id"]) {
+    assert.equal(normalizeFlightsCalendarLocale(locale), "id-ID");
+    assert.equal(normalizeHotelCalendarLocale(locale), "id-ID");
+  }
+  assert.equal(formatFlightsMonthHeading(new Date(2026, 5, 1), "id"), "Juni 2026");
+  assert.equal(formatFlightsMonthHeading(new Date(2026, 6, 1), "id-ID"), "Juli 2026");
+  assert.equal(formatFlightsDateSummary(new Date(2026, 5, 27), new Date(2026, 5, 30), "id"), "27 Jun — 30 Jun");
+
+  assert.match(searchSource, /new URLSearchParams\(\{[\s\S]*?departureDate,[\s\S]*?cabinClass: normalizedCabinClass,/);
+  assert.match(searchSource, /params\.set\([\s\S]*?"returnDate",[\s\S]*?returnDate[\s\S]*?\)/);
+  assert.match(searchSource, /new URLSearchParams\(\{[\s\S]*?checkIn,[\s\S]*?checkOut,[\s\S]*?guests:[\s\S]*?rooms:/);
+  assert.match(searchSource, /router\.push\(href\)/);
+  assert.match(searchSource, /setDepartureDate\(/);
+  assert.match(searchSource, /setCheckIn\(/);
+  assert.match(searchSource, /rounded-xl border border-slate-300 bg-white/);
+  assert.ok(!searchSource.includes('locale === "id" ? "Travel dates"'));
+  assert.ok(!searchSource.includes('locale === "id" ? "Check-in — check-out"'));
+  assert.equal(languageOptions.find((option) => option.code === "id")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
+});
+
+
 test("Indonesian Legal Center overview and active legal documents are localized", () => {
   const id = getTranslations("id");
   const legalIndexSource = readFileSync("src/app/legal/LegalPageContent.tsx", "utf8");
@@ -9454,7 +9500,7 @@ test("Indonesian homepage visible copy and render paths resolve without English 
     hotelSearchDestinationLabel: "TUJUAN",
     cityOrHotel: "Kota atau hotel",
     hotelSearchTravelDatesLabel: "TANGGAL PERJALANAN",
-    hotelSearchDatePlaceholder: "Check-in — check-out",
+    hotelSearchDatePlaceholder: "Tanggal check-in — check-out",
     hotelSearchGuestsLabel: "TAMU",
     guestsAndRooms: "Tamu dan kamar",
     hotelAdultHelper: "Tamu 18+",
