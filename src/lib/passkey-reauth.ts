@@ -3,12 +3,12 @@ import { getPrisma } from "@/lib/prisma";
 
 function hashToken(token: string) { return createHash("sha256").update(`passkey-reauth:${token}`).digest("hex"); }
 
-export async function consumePasskeyReauthToken(userId: string, token: unknown) {
+export async function consumePasskeyReauthToken(userId: string, token: unknown, purpose: "setup" | "removal" = "setup") {
   const raw = String(token || "").trim();
   if (!raw) return false;
   const prisma = getPrisma();
   const stored = await prisma.verificationToken.findFirst({
-    where: { identifier: `passkey-reauth:${userId}`, token: hashToken(raw), expires: { gt: new Date() } },
+    where: { identifier: `passkey-reauth:${purpose}:${userId}`, token: hashToken(raw), expires: { gt: new Date() } },
   });
   if (!stored) return false;
   await prisma.verificationToken.delete({ where: { identifier_token: { identifier: stored.identifier, token: stored.token } } });

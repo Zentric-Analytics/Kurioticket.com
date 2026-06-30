@@ -41,6 +41,8 @@ type TotpSetup = { otpauthUri: string; manualSetupKey: string; expiresAt: string
 type TwoFactorMode = "setup" | "disable" | "recovery";
 
 type PasskeySummary = { id: string; name: string | null; createdAt: string; lastUsedAt: string | null; deviceType: string | null; backedUp: boolean | null; label?: string | null; };
+type PasskeyFlowStep = "intro" | "sending" | "code" | "verifying" | "native" | "name" | "success";
+type PasskeyPurpose = "setup" | "removal";
 
 type AccountSessionActivity = {
   id: string;
@@ -2445,6 +2447,12 @@ export function SecurityDashboardPage() {
   const [passkeys, setPasskeys] = useState<PasskeySummary[]>([]);
   const [passkeysModalOpen, setPasskeysModalOpen] = useState(false);
   const [passkeySaving, setPasskeySaving] = useState(false);
+  const [passkeyFlowStep, setPasskeyFlowStep] = useState<PasskeyFlowStep>("intro");
+  const [passkeyVerificationMethod, setPasskeyVerificationMethod] = useState<"email" | "totp" | "password" | null>(null);
+  const [passkeyVerificationCode, setPasskeyVerificationCode] = useState("");
+  const [passkeyFlowError, setPasskeyFlowError] = useState("");
+  const [passkeyCredential, setPasskeyCredential] = useState<PublicKeyCredential | null>(null);
+  const [passkeyName, setPasskeyName] = useState("");
   const [sessionsModalOpen, setSessionsModalOpen] = useState(false);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [sessions, setSessions] = useState<AccountSessionActivity[]>([]);
@@ -2568,34 +2576,89 @@ export function SecurityDashboardPage() {
     const data = await response.json().catch(() => ({}));
     if (response.ok) setPasskeys(Array.isArray(data.passkeys) ? data.passkeys : []);
   };
-  const requestPasskeyReauth = async () => {
-    const sendResponse = await fetch("/api/account/security/passkeys/reauth", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "send-email-code" }) });
+  const resetPasskeySetupFlow = () => {
+    setPasskeySaving(false);
+    setPasskeyFlowStep("intro");
+    setPasskeyVerificationMethod(null);
+    setPasskeyVerificationCode("");
+    setPasskeyFlowError("");
+    setPasskeyCredential(null);
+    setPasskeyName("");
+  };
+  const closePasskeysModal = () => {
+    setPasskeysModalOpen(false);
+    resetPasskeySetupFlow();
+  };
+  const requestPasskeyReauth = async (purpose: PasskeyPurpose) => {
+    setPasskeyFlowStep("sending");
+    setPasskeyFlowError("");
+    const sendResponse = await fetch("/api/account/security/passkeys/reauth", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "send-email-code", purpose }) });
     const sendData = await sendResponse.json().catch(() => ({}));
     if (!sendResponse.ok) throw new Error(sendData.error || "Unable to send a confirmation code.");
-    const secret = window.prompt(sendData.method === "totp" ? "Enter your authenticator-app code or a recovery code." : "Enter the 6-digit confirmation code we sent to your account email.");
-    if (!secret) throw new Error("Verification is required before managing passkeys.");
-    const response = await fetch("/api/account/security/passkeys/reauth", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "verify", code: secret.trim() }) });
+    const method = sendData.method === "totp" ? "totp" : sendData.method === "password" ? "password" : "email";
+    setPasskeyVerificationMethod(method);
+    setPasskeyVerificationCode("");
+    setPasskeyFlowStep("code");
+    return method;
+  };
+  const verifyPasskeyReauth = async (purpose: PasskeyPurpose) => {
+    const code = passkeyVerificationCode.trim();
+    if (!code) { setPasskeyFlowError("Enter a verification code."); return null; }
+    setPasskeyFlowStep("verifying");
+    setPasskeyFlowError("");
+    const response = await fetch("/api/account/security/passkeys/reauth", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "verify", purpose, code }) });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok || !data.reauthToken) throw new Error(data.error || "Unable to verify that request.");
+    if (!response.ok || !data.reauthToken) {
+      setPasskeyFlowStep("code");
+      setPasskeyFlowError(data.error || "That code is incorrect or expired. Try again.");
+      return null;
+    }
     return String(data.reauthToken);
   };
+  const continuePasskeyRegistration = async (reauthToken: string) => {
+    setPasskeyFlowStep("native");
+    const optionsResponse = await fetch("/api/account/security/passkeys/register/options", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reauthToken }) });
+    const optionsData = await optionsResponse.json().catch(() => ({}));
+    if (!optionsResponse.ok) throw new Error(optionsData.error || "Unable to start passkey setup.");
+    const credential = await navigator.credentials.create({ publicKey: decodeRegistrationOptions(optionsData.options) }) as PublicKeyCredential | null;
+    if (!credential) throw new Error("Passkey setup was cancelled. You can try again anytime.");
+    setPasskeyCredential(credential);
+    setPasskeyName(defaultPasskeyName());
+    setPasskeyFlowStep("name");
+  };
   const handleAddPasskey = async () => {
-    if (!passkeysSupported()) { setActionMessage("This browser or device does not support passkeys. You can keep using your current sign-in methods."); return; }
-    setPasskeySaving(true); setActionMessage("");
+    if (!passkeysSupported()) { setActionMessage("Passkeys are not supported on this browser. Use password or Google sign-in instead."); return; }
+    setPasskeySaving(true); setActionMessage(""); setPasskeyFlowError("");
+    try { await requestPasskeyReauth("setup"); }
+    catch (error) { setPasskeyFlowStep("intro"); setPasskeyFlowError(error instanceof Error ? error.message : "Unable to send a confirmation code."); }
+    finally { setPasskeySaving(false); }
+  };
+  const handlePasskeyCodeSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setPasskeySaving(true);
     try {
-      const reauthToken = await requestPasskeyReauth();
-      const optionsResponse = await fetch("/api/account/security/passkeys/register/options", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reauthToken }) });
-      const optionsData = await optionsResponse.json().catch(() => ({}));
-      if (!optionsResponse.ok) throw new Error(optionsData.error || "Unable to start passkey setup.");
-      const credential = await navigator.credentials.create({ publicKey: decodeRegistrationOptions(optionsData.options) }) as PublicKeyCredential | null;
-      if (!credential) throw new Error("Passkey setup was cancelled.");
-      const suggestedName = defaultPasskeyName();
-      const name = window.prompt("Name this passkey", suggestedName) || suggestedName;
-      const verifyResponse = await fetch("/api/account/security/passkeys/register/verify", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(serializeRegistrationCredential(credential, name)) });
+      const reauthToken = await verifyPasskeyReauth("setup");
+      if (!reauthToken) return;
+      await continuePasskeyRegistration(reauthToken);
+    } catch (error) {
+      const message = error instanceof DOMException && error.name === "NotAllowedError" ? "Passkey setup was cancelled. You can try again anytime." : error instanceof Error ? error.message : "Unable to add passkey.";
+      setPasskeyFlowStep("code");
+      setPasskeyFlowError(message);
+    } finally { setPasskeySaving(false); }
+  };
+  const handlePasskeyNameSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!passkeyCredential) return;
+    setPasskeySaving(true); setPasskeyFlowError("");
+    try {
+      const verifyResponse = await fetch("/api/account/security/passkeys/register/verify", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(serializeRegistrationCredential(passkeyCredential, passkeyName.trim() || defaultPasskeyName())) });
       const verifyData = await verifyResponse.json().catch(() => ({}));
       if (!verifyResponse.ok) throw new Error(verifyData.error || "Unable to verify passkey setup.");
-      showSecurityFeedback("Passkey added"); await loadPasskeys();
-    } catch (error) { setActionMessage(error instanceof Error ? error.message : "Unable to add passkey."); } finally { setPasskeySaving(false); }
+      await loadPasskeys();
+      setPasskeyFlowStep("success");
+      showSecurityFeedback("Passkey added");
+    } catch (error) { setPasskeyFlowError(error instanceof Error ? error.message : "Unable to verify passkey setup."); }
+    finally { setPasskeySaving(false); }
   };
   const handleRenamePasskey = async (id: string, currentName: string | null) => {
     const name = window.prompt("Rename passkey", currentName || "Passkey");
@@ -2612,8 +2675,15 @@ export function SecurityDashboardPage() {
     if (passkeys.length <= 1 && !window.confirm("You will no longer be able to sign in with passkeys. Keep a backup sign-in method in case you lose access to this passkey.")) return;
     setPasskeySaving(true); setActionMessage("");
     try {
-      const reauthToken = await requestPasskeyReauth();
-      const response = await fetch(`/api/account/security/passkeys/${id}`, { method: "DELETE", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reauthToken }) });
+      const sendResponse = await fetch("/api/account/security/passkeys/reauth", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "send-email-code", purpose: "removal" }) });
+      const sendData = await sendResponse.json().catch(() => ({}));
+      if (!sendResponse.ok) throw new Error(sendData.error || "Unable to send a confirmation code.");
+      const secret = window.prompt(sendData.method === "totp" ? "Enter your authenticator-app code or a recovery code." : "Enter the 6-digit confirmation code we sent to your account email.");
+      if (!secret) throw new Error("Verification is required before removing passkeys.");
+      const verifyResponse = await fetch("/api/account/security/passkeys/reauth", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "verify", purpose: "removal", code: secret.trim() }) });
+      const verifyData = await verifyResponse.json().catch(() => ({}));
+      if (!verifyResponse.ok || !verifyData.reauthToken) throw new Error(verifyData.error || "Unable to verify that request.");
+      const response = await fetch(`/api/account/security/passkeys/${id}`, { method: "DELETE", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reauthToken: verifyData.reauthToken }) });
       await response.json().catch(() => ({}));
       if (!response.ok) throw new Error("Unable to remove passkey.");
       showSecurityFeedback("Passkey settings updated"); await loadPasskeys();
@@ -2920,8 +2990,13 @@ export function SecurityDashboardPage() {
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-xl sm:p-6">
             <h2 id="passkeys-title" className="text-xl font-semibold text-slate-950">{passkeys.length ? "Manage passkeys" : "Set up a passkey"}</h2>
             <div className="mt-2 space-y-2 text-sm leading-6 text-slate-600"><p>Use Face ID, fingerprint, Windows Hello, your device screen lock, password manager, or security key to sign in faster and more securely.</p><p className="rounded-xl bg-slate-50 p-3 text-slate-700">Kurioticket never receives your fingerprint, face, device PIN, or private key.</p></div>
-            <div className="mt-5 space-y-3">{passkeys.length ? passkeys.map((passkey) => <div key={passkey.id} className="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold text-slate-950">{passkey.name || "Passkey"}</p><p className="text-sm text-slate-600">Created {formatSessionTime(passkey.createdAt)} · Last used {passkey.lastUsedAt ? formatSessionTime(passkey.lastUsedAt) : "never"} · {passkey.label || (passkey.backedUp ? "Synced passkey" : passkey.deviceType || "Device or security key")}</p></div><div className="flex gap-2"><button type="button" onClick={() => void handleRenamePasskey(passkey.id, passkey.name)} disabled={passkeySaving} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60">Rename</button><button type="button" onClick={() => void handleRemovePasskey(passkey.id)} disabled={passkeySaving} className="focus-ring rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-60">Remove</button></div></div>) : <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">No passkeys yet.</p>}</div>
-            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><button type="button" onClick={() => setPasskeysModalOpen(false)} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button><button type="button" onClick={() => void handleAddPasskey()} disabled={passkeySaving} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{passkeySaving ? "Working…" : passkeys.length ? "Add another passkey" : "Continue"}</button></div>
+            {passkeyFlowError ? <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{passkeyFlowError}</p> : null}
+            {passkeyFlowStep === "intro" || passkeyFlowStep === "success" ? <div className="mt-5 space-y-3">{passkeys.length ? passkeys.map((passkey) => <div key={passkey.id} className="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold text-slate-950">{passkey.name || "Passkey"}</p><p className="text-sm text-slate-600">Created {formatSessionTime(passkey.createdAt)} · Last used {passkey.lastUsedAt ? formatSessionTime(passkey.lastUsedAt) : "never"} · {passkey.label || (passkey.backedUp ? "Synced passkey" : passkey.deviceType || "Device or security key")}</p></div><div className="flex gap-2"><button type="button" onClick={() => void handleRenamePasskey(passkey.id, passkey.name)} disabled={passkeySaving} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60">Rename</button><button type="button" onClick={() => void handleRemovePasskey(passkey.id)} disabled={passkeySaving} className="focus-ring rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-60">Remove</button></div></div>) : <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">No passkeys yet.</p>}{passkeyFlowStep === "success" ? <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">Passkey added successfully.</p> : null}</div> : null}
+            {passkeyFlowStep === "sending" ? <p className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-700">Sending verification code…</p> : null}
+            {passkeyFlowStep === "code" || passkeyFlowStep === "verifying" ? <form onSubmit={handlePasskeyCodeSubmit} className="mt-5 space-y-4"><p className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm font-semibold text-blue-900">{passkeyVerificationMethod === "totp" ? "Enter your authenticator app code or a recovery code." : "We sent a code to your email."}</p><label className="block text-sm font-medium text-slate-800">Verification code<input value={passkeyVerificationCode} onChange={(event) => setPasskeyVerificationCode(event.target.value.replace(/[^A-Za-z0-9-]/g, "").slice(0, 32))} autoComplete="one-time-code" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder={passkeyVerificationMethod === "totp" ? "123456 or recovery code" : "123456"} /></label><div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><button type="button" onClick={resetPasskeySetupFlow} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button>{passkeyVerificationMethod === "email" ? <button type="button" onClick={() => void handleAddPasskey()} disabled={passkeySaving} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60">Resend code</button> : null}<button type="submit" disabled={passkeySaving || !passkeyVerificationCode.trim()} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{passkeyFlowStep === "verifying" ? "Verifying…" : "OK"}</button></div></form> : null}
+            {passkeyFlowStep === "native" ? <p className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-700">Opening your browser or device passkey prompt…</p> : null}
+            {passkeyFlowStep === "name" ? <form onSubmit={handlePasskeyNameSubmit} className="mt-5 space-y-4"><label className="block text-sm font-medium text-slate-800">Passkey name<input value={passkeyName} onChange={(event) => setPasskeyName(event.target.value.slice(0, 80))} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Passkey name" /></label><div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><button type="button" onClick={resetPasskeySetupFlow} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button><button type="submit" disabled={passkeySaving} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{passkeySaving ? "Saving…" : "Save passkey"}</button></div></form> : null}
+            {passkeyFlowStep === "intro" || passkeyFlowStep === "success" ? <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><button type="button" onClick={closePasskeysModal} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button><button type="button" onClick={() => void handleAddPasskey()} disabled={passkeySaving} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{passkeySaving ? "Working…" : passkeys.length ? "Add another passkey" : "Continue"}</button></div> : null}
           </div>
         </div>
       ) : null}
