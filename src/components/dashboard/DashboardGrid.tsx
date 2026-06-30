@@ -2094,6 +2094,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     <section
       className={cn(
         "overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm",
+        !isEditing && "-mx-4 px-4 sm:mx-0 sm:px-0",
         isEditing &&
           "-mx-4 rounded-none border-0 px-4 py-6 shadow-none sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8",
       )}
@@ -2926,7 +2927,7 @@ export function SecurityDashboardPage() {
         titleId="security-title"
         flushStart
       />
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="-mx-4 overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 shadow-sm sm:mx-0 sm:px-0">
         <div className="px-5 sm:px-6">
           <SecuritySettingRow
             title={tx("accountDashboard.security.password.title", "Password")}
