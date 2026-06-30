@@ -25,6 +25,24 @@ export const translations: TranslationDictionary = {
   languageSearchLabel: 'Sök språk',
   languageSearchPlaceholder: 'Sök English, Español, Français, Deutsch...',
 
+  // Account dashboard overview
+  "accountDashboard.overview.welcome": "Välkommen tillbaka, {name}",
+  "accountDashboard.hub.description": "Hantera dina resor, sparade objekt, preferenser och kontoinställningar på ett ställe.",
+  "accountDashboard.hub.mobileDescription": "Hantera dina resor, sparade objekt och preferenser.",
+  "accountDashboard.hub.manageAccount": "Hantera konto",
+  "accountDashboard.hub.personalDetails": "Personuppgifter",
+  "accountDashboard.hub.securitySettings": "Säkerhetsinställningar",
+  "accountDashboard.hub.travelActivity": "Reseaktivitet",
+  "accountDashboard.hub.myTrips": "Mina resor",
+  "accountDashboard.hub.savedTrips": "Sparade resor",
+  "accountDashboard.hub.priceAlerts": "Prisaviseringar",
+  "accountDashboard.hub.preferences": "Preferenser",
+  "accountDashboard.hub.emailPreferences": "Anpassningspreferenser",
+  "accountDashboard.hub.travelPreferences": "Bokningspreferenser",
+  "accountDashboard.hub.helpAndSupport": "Hjälp och support",
+  "accountDashboard.hub.contactSupport": "Kontakta support",
+  "accountDashboard.hub.faq": "Vanliga frågor",
+
   // Shared header/auth pages
   login: 'Logga in',
   signUp: 'Registrera dig',
