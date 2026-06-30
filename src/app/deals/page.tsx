@@ -80,7 +80,7 @@ const destinationIdeas = [
     destinationQuery: "Tokyo",
     image:
       "https://images.pexels.com/photos/31344755/pexels-photo-31344755.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAlt: "Tokyo skyline with dense high-rise buildings in daylight",
+    imageAltKey: "deals.destination.tokyo.imageAlt",
   },
   {
     city: "London",
@@ -89,7 +89,7 @@ const destinationIdeas = [
     destinationQuery: "London",
     image:
       "https://images.pexels.com/photos/33843218/pexels-photo-33843218.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAlt: "Tower Bridge and the River Thames in London under a blue sky",
+    imageAltKey: "deals.destination.london.imageAlt",
   },
   {
     city: "Paris",
@@ -98,7 +98,7 @@ const destinationIdeas = [
     destinationQuery: "Paris",
     image:
       "https://images.pexels.com/photos/2082103/pexels-photo-2082103.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAlt: "Eiffel Tower and the Seine River in Paris at golden hour",
+    imageAltKey: "deals.destination.paris.imageAlt",
   },
   {
     city: "Dubai",
@@ -107,7 +107,7 @@ const destinationIdeas = [
     destinationQuery: "Dubai",
     image:
       "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAlt: "Dubai skyline with the Burj Khalifa rising above skyscrapers",
+    imageAltKey: "deals.destination.dubai.imageAlt",
   },
   {
     city: "Cancun",
@@ -116,7 +116,7 @@ const destinationIdeas = [
     destinationQuery: "Cancun",
     image:
       "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Cancun beach with white sand and turquoise water",
+    imageAltKey: "deals.destination.cancun.imageAlt",
   },
   {
     city: "Rome",
@@ -125,7 +125,7 @@ const destinationIdeas = [
     destinationQuery: "Rome",
     image:
       "https://images.pexels.com/photos/1701595/pexels-photo-1701595.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAlt: "The Colosseum in Rome beneath a clear blue sky",
+    imageAltKey: "deals.destination.rome.imageAlt",
   },
 ];
 
@@ -1115,7 +1115,7 @@ export default function DealsPage() {
                   <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
                     <Image
                       src={idea.image}
-                      alt={idea.imageAlt}
+                      alt={t(idea.imageAltKey)}
                       fill
                       sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 50vw"
                       className="object-cover transition duration-300 group-hover:scale-105"
