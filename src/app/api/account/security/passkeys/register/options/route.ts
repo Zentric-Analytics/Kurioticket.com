@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   } else {
     const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { status: true } });
     if (user?.status !== "ACTIVE") return NextResponse.json({ error: "Reactivate your account before adding passkeys." }, { status: 403 });
-    if (!(await consumePasskeyReauthToken(session.user.id, body.reauthToken)))
+    if (!(await consumePasskeyReauthToken(session.user.id, body.reauthToken, "setup")))
       return NextResponse.json({ error: "Verify your account before setting up a passkey." }, { status: 403 });
   }
   const challenge = newChallenge();

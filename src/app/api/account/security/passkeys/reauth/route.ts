@@ -12,28 +12,37 @@ import { verifySecondFactor } from "@/services/twoFactorService";
 
 export const runtime = "nodejs";
 
-const schema = z.object({ action: z.enum(["send-email-code", "verify"]).optional(), code: z.string().trim().optional(), password: z.string().optional() });
-const ttlMs = 10 * 60 * 1000;
+const schema = z.object({
+  action: z.enum(["send-email-code", "verify"]).optional(),
+  purpose: z.enum(["setup", "removal"]).default("setup"),
+  code: z.string().trim().optional(),
+  password: z.string().optional(),
+});
+const reauthTtlMs = 5 * 60 * 1000;
 const emailCodeTtlMs = 5 * 60 * 1000;
-const emailIdentifier = (userId: string) => `passkey-email-reauth:${userId}`;
+const maxEmailCodeAttempts = 5;
+const emailChallengeType = (purpose: string) => `passkey-email-reauth:${purpose}`;
+const reauthIdentifier = (userId: string, purpose: string) => `passkey-reauth:${purpose}:${userId}`;
 function hashToken(token: string) { return createHash("sha256").update(`passkey-reauth:${token}`).digest("hex"); }
-function hashEmailCode(userId: string, code: string) { return createHash("sha256").update(`passkey-email-reauth:${userId}:${code}`).digest("hex"); }
+function hashEmailCode(userId: string, purpose: string, code: string) { return createHash("sha256").update(`passkey-email-reauth:${purpose}:${userId}:${code}`).digest("hex"); }
 
-async function mintReauthToken(userId: string, method: string) {
+async function mintReauthToken(userId: string, purpose: string, method: string) {
   const token = randomBytes(32).toString("base64url");
-  await getPrisma().verificationToken.create({ data: { identifier: `passkey-reauth:${userId}`, token: hashToken(token), expires: new Date(Date.now() + ttlMs) } });
-  return NextResponse.json({ reauthToken: token, expiresAt: new Date(Date.now() + ttlMs).toISOString(), method });
+  const expiresAt = new Date(Date.now() + reauthTtlMs);
+  await getPrisma().verificationToken.create({ data: { identifier: reauthIdentifier(userId, purpose), token: hashToken(token), expires: expiresAt } });
+  return NextResponse.json({ reauthToken: token, expiresAt: expiresAt.toISOString(), method, purpose });
 }
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
 
-  try { checkAuthRateLimit({ action: "passkey-reauth", email: session.user.email || undefined, request, limit: 8, windowMs: 15 * 60 * 1000 }); }
-  catch (error) { if (error instanceof AuthRateLimitError) return NextResponse.json({ error: "Too many attempts. Please wait and try again." }, { status: 429 }); throw error; }
-
   const parsed = schema.safeParse(await request.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: "Enter your authenticator code, recovery code, email code, or password." }, { status: 400 });
+  const { action = "verify", purpose } = parsed.data;
+
+  try { checkAuthRateLimit({ action: `passkey-reauth:${action}`, email: session.user.email || undefined, request, limit: action === "send-email-code" ? 4 : 8, windowMs: 15 * 60 * 1000 }); }
+  catch (error) { if (error instanceof AuthRateLimitError) return NextResponse.json({ error: "Too many attempts. Please wait and try again." }, { status: 429 }); throw error; }
 
   const prisma = getPrisma();
   const user = await prisma.user.findUnique({
@@ -43,34 +52,39 @@ export async function POST(request: Request) {
   if (!user?.email) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   if (user.status !== "ACTIVE") return NextResponse.json({ error: "Reactivate your account before managing passkeys." }, { status: 403 });
 
-  if (parsed.data.action === "send-email-code") {
-    if (user.securitySettings?.twoFactorEnabled) return NextResponse.json({ ok: true, method: "totp" });
+  if (action === "send-email-code") {
+    if (user.securitySettings?.twoFactorEnabled) return NextResponse.json({ ok: true, method: "totp", purpose });
     if (!user.emailVerified) return NextResponse.json({ error: "Verify your email before using email confirmation." }, { status: 403 });
     const code = randomInt(100000, 1000000).toString();
-    const identifier = emailIdentifier(session.user.id);
-    const token = hashEmailCode(session.user.id, code);
-    await prisma.verificationToken.deleteMany({ where: { identifier } });
-    await prisma.verificationToken.create({ data: { identifier, token, expires: new Date(Date.now() + emailCodeTtlMs) } });
+    const expiresAt = new Date(Date.now() + emailCodeTtlMs);
+    await prisma.webAuthnChallenge.updateMany({ where: { userId: session.user.id, type: emailChallengeType(purpose), consumedAt: null }, data: { consumedAt: new Date() } });
+    await prisma.webAuthnChallenge.create({ data: { userId: session.user.id, type: emailChallengeType(purpose), challenge: randomBytes(18).toString("base64url"), loginToken: hashEmailCode(session.user.id, purpose, code), expiresAt, metadata: { attempts: 0, purpose } } });
     await sendTransactionalEmail({
       to: user.email,
-      subject: "Confirm passkey setup for Kurioticket",
+      subject: purpose === "removal" ? "Confirm passkey removal for Kurioticket" : "Confirm passkey setup for Kurioticket",
       html: verificationCodeEmail({ code, name: user.name, expiresInMinutes: 5, verifyUrl: `${getBaseUrl()}/dashboard/security` }),
-      idempotencyKey: `passkey-reauth-${session.user.id}-${token.slice(0, 16)}`,
+      idempotencyKey: `passkey-reauth-${purpose}-${session.user.id}-${randomBytes(8).toString("hex")}`,
       requireConfigured: true,
+      metadata: { purpose: `passkey-${purpose}` },
     });
-    return NextResponse.json({ ok: true, method: "email", expiresInMinutes: 5 });
+    return NextResponse.json({ ok: true, method: "email", expiresInMinutes: 5, purpose });
   }
 
   const code = parsed.data.code || "";
-  if (user.securitySettings?.twoFactorEnabled && code && await verifySecondFactor({ userId: session.user.id, code, consumeRecoveryCode: true })) return mintReauthToken(session.user.id, "totp");
-  if (!user.securitySettings?.twoFactorEnabled && code) {
-    const stored = await prisma.verificationToken.findUnique({ where: { identifier_token: { identifier: emailIdentifier(session.user.id), token: hashEmailCode(session.user.id, code) } } });
-    if (stored && stored.expires > new Date()) {
-      await prisma.verificationToken.deleteMany({ where: { identifier: emailIdentifier(session.user.id) } });
-      return mintReauthToken(session.user.id, "email");
+  if (!code) return NextResponse.json({ error: "Enter a verification code." }, { status: 400 });
+  if (user.securitySettings?.twoFactorEnabled && await verifySecondFactor({ userId: session.user.id, code, consumeRecoveryCode: true })) return mintReauthToken(session.user.id, purpose, "totp");
+  if (!user.securitySettings?.twoFactorEnabled && /^\d{6}$/.test(code)) {
+    const challenge = await prisma.webAuthnChallenge.findFirst({ where: { userId: session.user.id, type: emailChallengeType(purpose), consumedAt: null }, orderBy: { createdAt: "desc" } });
+    const attempts = typeof (challenge?.metadata as { attempts?: unknown } | null)?.attempts === "number" ? Number((challenge?.metadata as { attempts?: number }).attempts) : 0;
+    if (!challenge || challenge.expiresAt <= new Date() || attempts >= maxEmailCodeAttempts) return NextResponse.json({ error: "That code is incorrect or expired. Try again." }, { status: 400 });
+    if (challenge.loginToken === hashEmailCode(session.user.id, purpose, code)) {
+      await prisma.webAuthnChallenge.update({ where: { id: challenge.id }, data: { consumedAt: new Date(), metadata: { attempts, purpose, verifiedAt: new Date().toISOString() } } });
+      return mintReauthToken(session.user.id, purpose, "email");
     }
+    await prisma.webAuthnChallenge.update({ where: { id: challenge.id }, data: { consumedAt: attempts + 1 >= maxEmailCodeAttempts ? new Date() : null, metadata: { attempts: attempts + 1, purpose } } });
+    return NextResponse.json({ error: "That code is incorrect or expired. Try again." }, { status: 400 });
   }
-  if (!user.securitySettings?.twoFactorEnabled && user.passwordHash && parsed.data.password && await bcrypt.compare(parsed.data.password, user.passwordHash)) return mintReauthToken(session.user.id, "password");
+  if (!user.securitySettings?.twoFactorEnabled && user.passwordHash && parsed.data.password && await bcrypt.compare(parsed.data.password, user.passwordHash)) return mintReauthToken(session.user.id, purpose, "password");
 
-  return NextResponse.json({ error: "Unable to verify that request." }, { status: 400 });
+  return NextResponse.json({ error: "That code is incorrect or expired. Try again." }, { status: 400 });
 }
