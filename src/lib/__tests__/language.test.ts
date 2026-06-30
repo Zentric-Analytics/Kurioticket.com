@@ -1148,6 +1148,143 @@ test("Hindi Deals page copy resolves without English fallback", () => {
 });
 
 
+test("Swedish Deals active page copy resolves without English fallback", () => {
+  const sv = getTranslations("sv");
+  const auditedSwedishDealsKeys: Array<[string, string]> = [
+    ["deals.heroTitle", "Hitta reseerbjudanden för din nästa resa"],
+    ["deals.heroSubtitle", "Sök flyg, boenden och bilar tillsammans på ett ställe."],
+    ["deals.package.hotelFlight", "Hotell + flyg"],
+    ["deals.package.hotelFlightCar", "Hotell + flyg + bil"],
+    ["deals.package.flightCar", "Flyg + bil"],
+    ["deals.package.hotelCar", "Hotell + bil"],
+    ["deals.originLabel", "VARIFRÅN?"],
+    ["deals.originPlaceholder", "Stad eller flygplats"],
+    ["deals.destinationLabel", "VART?"],
+    ["deals.destinationPlaceholder", "Stad, flygplats eller område"],
+    ["deals.datesLabel", "RESEDATUM"],
+    ["deals.dateFlightPlaceholder", "Avresa — retur"],
+    ["deals.travelersRoomsLabel", "RESENÄRER / RUM"],
+    ["deals.travelerSingular", "resenär"],
+    ["deals.roomSingular", "rum"],
+    ["deals.searchButton", "Sök erbjudanden"],
+    ["deals.destinationIdeasTitle", "Platser att börja din erbjudandesökning"],
+    ["deals.destinationIdeasSubtitle", "Välj en destinationsidé och jämför sedan leverantörsresultat när du fortsätter."],
+    ["deals.destinationCardAriaPrefix", "Sök reseidéer för"],
+    ["deals.destination.tokyo.city", "Tokyo"],
+    ["deals.destination.tokyo.country", "Japan"],
+    ["deals.destination.tokyo.imageAlt", "Tokyos skyline med täta höghus i dagsljus"],
+    ["deals.destination.london.city", "London"],
+    ["deals.destination.london.country", "Storbritannien"],
+    ["deals.destination.london.imageAlt", "Tower Bridge och Themsen i London under en blå himmel"],
+    ["deals.destination.paris.city", "Paris"],
+    ["deals.destination.paris.country", "Frankrike"],
+    ["deals.destination.paris.imageAlt", "Eiffeltornet och Seine i Paris i gyllene timmen"],
+    ["deals.destination.dubai.city", "Dubai"],
+    ["deals.destination.dubai.country", "Förenade Arabemiraten"],
+    ["deals.destination.dubai.imageAlt", "Dubais skyline med Burj Khalifa över skyskraporna"],
+    ["deals.destination.cancun.city", "Cancun"],
+    ["deals.destination.cancun.country", "Mexiko"],
+    ["deals.destination.cancun.imageAlt", "Cancunstrand med vit sand och turkost vatten"],
+    ["deals.destination.rome.city", "Rom"],
+    ["deals.destination.rome.country", "Italien"],
+    ["deals.destination.rome.imageAlt", "Colosseum i Rom under en klarblå himmel"],
+  ];
+
+  for (const [key, expected] of auditedSwedishDealsKeys) {
+    assert.equal(sv[key], expected, key);
+    if (expected !== enTranslations[key]) {
+      assert.notEqual(sv[key], enTranslations[key], key);
+    }
+  }
+
+  assert.equal(`${1} ${sv["deals.travelerSingular"]}, ${1} ${sv["deals.roomSingular"]}`, "1 resenär, 1 rum");
+  assert.ok(languageOptions.some((option) => option.code === "sv" && option.direction === "ltr"));
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+});
+
+test("Swedish Deals active render path uses localized keys and preserves search/card behavior", () => {
+  const dealsPageSource = readFileSync("src/app/deals/page.tsx", "utf8");
+
+  for (const key of [
+    "deals.heroTitle",
+    "deals.heroSubtitle",
+    "deals.packageLegend",
+    "deals.originLabel",
+    "deals.originPlaceholder",
+    "deals.destinationLabel",
+    "deals.destinationPlaceholder",
+    "deals.datesLabel",
+    "deals.dateFlightPlaceholder",
+    "deals.travelerSingular",
+    "deals.roomSingular",
+    "deals.searchButton",
+    "deals.destinationIdeasTitle",
+    "deals.destinationIdeasSubtitle",
+    "deals.destinationCardAriaPrefix",
+  ]) {
+    assert.match(dealsPageSource, new RegExp(`t\\("${key}"\\)`), key);
+  }
+
+  assert.ok(dealsPageSource.includes("deals.travelersRoomsLabel"));
+
+  for (const key of [
+    "deals.package.hotelFlight",
+    "deals.package.hotelFlightCar",
+    "deals.package.flightCar",
+    "deals.package.hotelCar",
+    "deals.destination.tokyo.city",
+    "deals.destination.tokyo.country",
+    "deals.destination.tokyo.imageAlt",
+    "deals.destination.london.city",
+    "deals.destination.london.country",
+    "deals.destination.london.imageAlt",
+    "deals.destination.paris.city",
+    "deals.destination.paris.country",
+    "deals.destination.paris.imageAlt",
+    "deals.destination.dubai.city",
+    "deals.destination.dubai.country",
+    "deals.destination.dubai.imageAlt",
+    "deals.destination.cancun.city",
+    "deals.destination.cancun.country",
+    "deals.destination.cancun.imageAlt",
+    "deals.destination.rome.city",
+    "deals.destination.rome.country",
+    "deals.destination.rome.imageAlt",
+  ]) {
+    assert.ok(dealsPageSource.includes(key), key);
+  }
+
+  for (const preservedSource of [
+    'value: "hotel-flight"',
+    'value: "hotel-flight-car"',
+    'value: "flight-car"',
+    'value: "hotel-car"',
+    'name="packageMode"',
+    'destinationQuery: "Tokyo"',
+    'destinationQuery: "London"',
+    'destinationQuery: "Paris"',
+    'destinationQuery: "Dubai"',
+    'destinationQuery: "Cancun"',
+    'destinationQuery: "Rome"',
+    'tripType: "round-trip"',
+    'infants: "0"',
+    'cabinClass,',
+    '`/flights/results?${params.toString()}`',
+    '`/hotels/results?${params.toString()}`',
+    'guests: "2"',
+    'rooms: "1"',
+    'className="group block overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm shadow-slate-950/5 transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-950/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"',
+  ]) {
+    assert.ok(dealsPageSource.includes(preservedSource), preservedSource);
+  }
+
+  assert.match(dealsPageSource, /alt=\{t\(idea\.imageAltKey\)\}/);
+  assert.match(dealsPageSource, /\{t\(idea\.cityKey\)\}/);
+  assert.match(dealsPageSource, /\{t\(idea\.countryKey\)\}/);
+  assert.match(dealsPageSource, /aria-label=\{`\$\{t\("deals\.destinationCardAriaPrefix"\)\} \$\{t\(idea\.cityKey\)\}, \$\{t\(idea\.countryKey\)\}`\}/);
+});
+
+
 test("Polish Deals active page copy resolves without English fallback", () => {
   const pl = getTranslations("pl");
   const auditedPolishDealsKeys: Array<[string, string]> = [
