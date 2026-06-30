@@ -8927,6 +8927,108 @@ test("Swedish Flights results active render path copy resolves without English f
   assert.equal(availableLocaleOptions.find((option) => option.code === "ar")?.direction, "rtl");
 });
 
+
+test("Indonesian Flights results and selected-flight detail render paths resolve visible copy", () => {
+  const id = getTranslations("id");
+  const resultsPageSource = readFileSync("src/app/flights/results/page.tsx", "utf8");
+  const detailsPageSource = readFileSync("src/app/flights/details/[id]/page.tsx", "utf8");
+  const resultsSource = readFileSync("src/components/results/FlightResultsClient.tsx", "utf8");
+  const cardSource = readFileSync("src/components/results/FlightCard.tsx", "utf8");
+  const detailsSource = readFileSync("src/components/results/FlightDetailsClient.tsx", "utf8");
+
+  assert.ok(resultsPageSource.includes("<FlightResultsClient />"));
+  assert.ok(detailsPageSource.includes("<FlightDetailsClient id={id} />"));
+
+  const expectedCopy: Array<[string, string, string, string[]]> = [
+    ["cheapest", "TERMURAH", "CHEAPEST", [resultsSource]],
+    ["best", "NILAI TERBAIK", "BEST VALUE", [resultsSource]],
+    ["quickest", "PERINGKAT TERBAIK", "TOP RATED", [resultsSource]],
+    ["resultsFound", "Kami menemukan {{count}} penerbangan untuk Anda", "{{count}} results found", [resultsSource]],
+    ["filterBy", "Filter berdasarkan", "Filter by", [resultsSource]],
+    ["price", "Harga", "Price", [resultsSource]],
+    ["times", "Waktu perjalanan", "Time of travel", [resultsSource]],
+    ["duration", "Durasi", "Duration", [resultsSource]],
+    ["stops", "Transit", "Stops", [resultsSource]],
+    ["airlines", "Maskapai", "Airlines", [resultsSource]],
+    ["airports", "Bandara", "Airports", [resultsSource]],
+    ["amenities", "Fasilitas", "Amenities", [resultsSource]],
+    ["baggageIncluded", "Bagasi termasuk", "Baggage included", [resultsSource]],
+    ["flexibleRefundable", "Fleksibel/dapat dikembalikan", "Flexible/refundable", [resultsSource]],
+    ["nonstop", "Nonstop", "Nonstop", [resultsSource, cardSource]],
+    ["oneStop", "1 transit", "1 stop", [resultsSource, cardSource]],
+    ["twoPlusStops", "2+ transit", "2+ stops", [resultsSource]],
+    ["stopCount", "{{count}} transit", "{{count}} stops", [resultsSource, cardSource, detailsSource]],
+    ["flightOption", "Opsi penerbangan", "Flight option", [cardSource]],
+    ["viewFlight", "Lihat penerbangan", "View Flight", [cardSource]],
+    ["baggage", "Bagasi", "Baggage", [cardSource, detailsSource]],
+    ["carryOnIncluded", "kabin termasuk", "carry-on included", [cardSource]],
+    ["cabin", "Kabin", "Cabin", [cardSource, detailsSource]],
+    ["seatSelection", "Pemilihan kursi", "Seat selection", [cardSource, detailsSource]],
+    ["providerRulesApply", "Aturan penyedia berlaku", "Provider rules apply", [cardSource, detailsSource]],
+    ["fareRules", "Aturan tarif", "Fare rules", [cardSource, detailsSource]],
+    ["flightCardProviderHandoff", "Harga akhir, ketersediaan, pemesanan, dan aturan tarif dikonfirmasi oleh penyedia.", "Final price, availability, booking, and fare rules are confirmed by the provider.", [cardSource]],
+    ["selectedFlights", "Penerbangan yang dipilih", "Selected Flights", [detailsSource]],
+    ["flightRouteTemplate", "{{origin}} ke {{destination}}", "{{origin}} to {{destination}}", [detailsSource]],
+    ["outbound", "PERGI", "OUTBOUND", [cardSource, detailsSource]],
+    ["return", "PULANG", "RETURN", [cardSource, detailsSource]],
+    ["layoverTemplate", "Transit di {{airport}} · {{duration}} · {{connection}}", "Layover in {{airport}} · {{duration}} · {{connection}}", [detailsSource]],
+    ["connection", "koneksi", "connection", [detailsSource]],
+    ["longConnection", "koneksi lama", "long connection", [detailsSource]],
+    ["overnightConnection", "koneksi semalam", "overnight connection", [detailsSource]],
+    ["carryOnSingularIncluded", "bagasi kabin termasuk", "carry-on included", [detailsSource]],
+    ["checkedBagPluralIncluded", "bagasi terdaftar termasuk", "checked bags included", [detailsSource]],
+    ["notRefundableBeforeDeparture", "Tidak dapat dikembalikan sebelum keberangkatan.", "Not refundable before departure", [detailsSource]],
+    ["changesAllowedWithPenalty", "Perubahan diizinkan dengan penalti {{currency}} {{amount}}", "Changes allowed with {{currency}} {{amount}} penalty", [detailsSource]],
+    ["estimateShownProviderPrice", "Perkiraan ditampilkan. Harga penyedia:", "Estimate shown. Provider price:", [detailsSource]],
+    ["continueToProvider", "Lanjutkan ke Penyedia", "Continue to Provider", [detailsSource]],
+    ["compareMoreProviders", "Bandingkan lebih banyak penyedia", "Compare more providers", [detailsSource]],
+    ["providerComparisonIntro", "Kurioticket dapat membandingkan dari berbagai penyedia.", "Kurioticket can compare from different providers.", [detailsSource]],
+    ["noAdditionalLiveProviderOptions", "Tidak ada opsi penyedia langsung tambahan yang tersedia untuk penerbangan ini saat ini.", "No additional live provider options are available for this flight right now.", [detailsSource]],
+    ["flightDetailsProviderDisclaimer", "Harga akhir, ketersediaan, pemesanan, dan aturan tarif dikonfirmasi oleh penyedia.", "Final price, availability, booking, and fare rules are confirmed by the provider.", [detailsSource]],
+  ];
+
+  for (const [key, value, englishFallback, sources] of expectedCopy) {
+    assert.equal(id[key], value, `${key} should resolve to Indonesian`);
+    if (value !== englishFallback) assert.notEqual(id[key], englishFallback, `${key} should not equal visible English fallback`);
+    assert.ok(
+      sources.some((source) => source.includes(`t("${key}")`) || source.includes(`t.${key}`) || source.includes(`"${key}"`)),
+      `${key} should be read by the active Indonesian flights render path`,
+    );
+  }
+
+  assert.equal(id.resultsFound.replace("{{count}}", "16"), "Kami menemukan 16 penerbangan untuk Anda");
+  assert.equal(`${id.baggage}: ${id.carryOnIncluded}`, "Bagasi: kabin termasuk");
+  assert.equal(`${1} ${id.stopSingular}`, "1 transit");
+  assert.equal(id.stopDual, "2 transit");
+  assert.equal(id.stopCount.replace("{{count}}", "2"), "2 transit");
+  assert.equal(
+    id.layoverTemplate
+      .replace("{{airport}}", "LHR")
+      .replace("{{duration}}", "5j 40m")
+      .replace("{{connection}}", id.longConnection),
+    "Transit di LHR · 5j 40m · koneksi lama",
+  );
+  assert.equal(
+    `${id.baggage}: ${1} ${id.carryOnSingularIncluded}, ${2} ${id.checkedBagPluralIncluded}`,
+    "Bagasi: 1 bagasi kabin termasuk, 2 bagasi terdaftar termasuk",
+  );
+  assert.equal(
+    `${id.notRefundableBeforeDeparture} ${id.changesAllowedWithPenalty.replace("{{currency}}", "USD").replace("{{amount}}", "140.00")}`,
+    "Tidak dapat dikembalikan sebelum keberangkatan. Perubahan diizinkan dengan penalti USD 140.00",
+  );
+  assert.equal(`${id.estimateShownProviderPrice} $6,646.13`, "Perkiraan ditampilkan. Harga penyedia: $6,646.13");
+
+  assert.match(cardSource, /href=\{`\/flights\/details\/\$\{encodeURIComponent\(flight\.id\)\}`\}/);
+  for (const source of [resultsSource, cardSource, detailsSource]) {
+    assert.match(source, /flight\.airlineName|leg\.originAirport|displayPrice|flight\.id/);
+  }
+  for (const providerValue of ["British Airways", "Lufthansa", "Brussels Airlines", "SWISS", "BA0074", "LOS", "LAX", "LHR", "PHX", "NGN 9,211,802.03", "$6,646.13"]) {
+    assert.equal(id[providerValue], undefined, `${providerValue} must remain provider/search data, not Indonesian locale copy`);
+  }
+  assert.equal(availableLocaleOptions.find((option) => option.code === "id")?.direction, "ltr");
+  assert.equal(availableLocaleOptions.find((option) => option.code === "ar")?.direction, "rtl");
+});
+
 test("Swedish selected-flight details active render path resolves card and provider copy without English fallback", () => {
   const sv = getTranslations("sv");
   const detailsPageSource = readFileSync("src/app/flights/details/[id]/page.tsx", "utf8");
