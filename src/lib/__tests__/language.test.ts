@@ -6742,7 +6742,7 @@ test("airport picker heading is localized for all active locales", () => {
   assert.notEqual(trTranslations.nearYou, enTranslations.nearYou);
 });
 
-test("Swedish active account Trips and Price Alerts copy is localized", () => {
+test("Indonesian and Swedish active account Trips and Price Alerts copy is localized", () => {
   const activeLocaleTranslations = {
     "en-us": enTranslations,
     ar: arTranslations,
@@ -6758,6 +6758,7 @@ test("Swedish active account Trips and Price Alerts copy is localized", () => {
     hi: hiTranslations,
     tr: trTranslations,
     sv: svTranslations,
+    id: idTranslations,
   };
 
   const travelActivityKeys = [
@@ -6878,6 +6879,67 @@ test("Swedish active account Trips and Price Alerts copy is localized", () => {
   assert.notEqual(plTranslations["accountDashboard.trips.history.tabs.cancelled"], enTranslations["accountDashboard.trips.history.tabs.cancelled"]);
   assert.notEqual(plTranslations["accountDashboard.trips.history.empty.cancelled.title"], enTranslations["accountDashboard.trips.history.empty.cancelled.title"]);
   assert.notEqual(plTranslations["accountDashboard.trips.history.empty.cancelled.body"], enTranslations["accountDashboard.trips.history.empty.cancelled.body"]);
+
+  assert.equal(idTranslations["accountDashboard.trips.title"], "Perjalanan saya");
+  assert.equal(idTranslations["accountDashboard.trips.findReservation"], "Cari reservasi");
+  assert.equal(idTranslations["accountDashboard.trips.current.empty.title"], "Ke mana selanjutnya?");
+  assert.equal(
+    idTranslations["accountDashboard.trips.current.empty.body"],
+    "Anda belum memulai perjalanan apa pun. Saat Anda membuat reservasi, reservasi tersebut akan muncul di sini.",
+  );
+  assert.equal(idTranslations["accountDashboard.trips.history.tabs.past"], "Sebelumnya");
+  assert.equal(idTranslations["accountDashboard.trips.history.tabs.cancelled"], "Dibatalkan");
+  assert.equal(idTranslations["accountDashboard.trips.history.empty.past.title"], "Ingat perjalanan Anda");
+  assert.equal(
+    idTranslations["accountDashboard.trips.history.empty.past.body"],
+    "Perjalanan yang telah selesai akan muncul di sini setelah Anda bepergian.",
+  );
+  assert.equal(idTranslations["accountDashboard.trips.history.empty.cancelled.title"], "Rencana berubah?");
+  assert.equal(
+    idTranslations["accountDashboard.trips.history.empty.cancelled.body"],
+    "Reservasi yang dibatalkan akan muncul di sini sebagai referensi.",
+  );
+
+  assert.equal(idTranslations["accountDashboard.priceAlerts.title"], "Peringatan harga");
+  assert.equal(
+    idTranslations["accountDashboard.priceAlerts.description"],
+    "Pantau harga dan dapatkan notifikasi saat tarif berubah.",
+  );
+  assert.equal(idTranslations["accountDashboard.priceAlerts.tabs.active"], "Aktif");
+  assert.equal(idTranslations["accountDashboard.priceAlerts.tabs.expired"], "Kedaluwarsa");
+  assert.equal(idTranslations["accountDashboard.priceAlerts.tabs.all"], "Semua");
+  assert.equal(`${idTranslations["accountDashboard.priceAlerts.tabs.active"]} (0)`, "Aktif (0)");
+  assert.equal(`${idTranslations["accountDashboard.priceAlerts.tabs.expired"]} (0)`, "Kedaluwarsa (0)");
+  assert.equal(`${idTranslations["accountDashboard.priceAlerts.tabs.all"]} (0)`, "Semua (0)");
+  assert.equal(idTranslations["accountDashboard.priceAlerts.sort.label"], "Urutkan");
+  assert.equal(idTranslations["accountDashboard.priceAlerts.sort.newest"], "Terbaru");
+  assert.equal(idTranslations["accountDashboard.priceAlerts.sort.oldest"], "Terlama");
+  assert.equal(idTranslations["accountDashboard.priceAlerts.sort.routeAz"], "Rute A-Z");
+  assert.equal(`${idTranslations["accountDashboard.priceAlerts.sort.label"]}: ${idTranslations["accountDashboard.priceAlerts.sort.newest"]}`, "Urutkan: Terbaru");
+  assert.equal(idTranslations["accountDashboard.priceAlerts.empty.title"], "Belum ada peringatan harga.");
+  assert.equal(
+    idTranslations["accountDashboard.priceAlerts.empty.body"],
+    "Buat peringatan dari pencarian penerbangan untuk memantau perubahan tarif dan mendapatkan notifikasi.",
+  );
+  assert.equal(idTranslations["accountDashboard.priceAlerts.cta.flights"], "Cari penerbangan");
+  assert.equal(idTranslations["accountDashboard.priceAlerts.features.monitoring.title"], "Pemantauan waktu nyata");
+  assert.equal(
+    idTranslations["accountDashboard.priceAlerts.features.monitoring.body"],
+    "Kami memantau harga dan memberi tahu Anda saat peringatan terpicu.",
+  );
+  assert.equal(idTranslations["accountDashboard.priceAlerts.features.email.title"], "Notifikasi email");
+  assert.equal(idTranslations["accountDashboard.priceAlerts.features.email.body"], "Dapatkan notifikasi saat tarif berubah.");
+  assert.equal(idTranslations["accountDashboard.priceAlerts.features.trends.title"], "Tren harga");
+  assert.equal(
+    idTranslations["accountDashboard.priceAlerts.features.trends.body"],
+    "Lihat bagaimana tarif yang dipantau berubah dari waktu ke waktu.",
+  );
+  assert.equal(idTranslations["accountDashboard.priceAlerts.features.management.title"], "Pengelolaan mudah");
+  assert.equal(
+    idTranslations["accountDashboard.priceAlerts.features.management.body"],
+    "Jeda atau hapus peringatan kapan saja.",
+  );
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
 
   assert.equal(trTranslations["accountDashboard.priceAlerts.title"], "Fiyat uyarıları");
   assert.equal(
