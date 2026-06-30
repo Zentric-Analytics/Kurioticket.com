@@ -10300,6 +10300,106 @@ test("Swedish Account Personal details and Security settings copy resolves witho
   assert.ok(dashboardSource.includes('setDeleteModalOpen(true)'));
 });
 
+test("Indonesian Account Personal details and Security settings copy resolves without English fallback", () => {
+  const personalReadOnly = {
+    "accountDashboard.personalDetails.title": "Detail pribadi",
+    "accountDashboard.personalDetails.subtitle": "Perbarui informasi Anda dan kelola cara informasi tersebut digunakan di Kurioticket.",
+    "accountDashboard.personalDetails.description": "Kelola informasi yang digunakan Kurioticket untuk akun Anda.",
+    "accountDashboard.personalDetails.name": "Nama",
+    "accountDashboard.personalDetails.addName": "Tambahkan nama Anda",
+    "accountDashboard.personalDetails.emailAddress": "Alamat email",
+    "accountDashboard.personalDetails.phoneNumber": "Nomor telepon",
+    "accountDashboard.personalDetails.addPhoneNumber": "Tambahkan nomor telepon Anda",
+    "accountDashboard.personalDetails.dateOfBirth": "Tanggal lahir",
+    "accountDashboard.personalDetails.addDateOfBirth": "Tambahkan tanggal lahir Anda",
+    "accountDashboard.personalDetails.gender": "Jenis kelamin",
+    "accountDashboard.personalDetails.addGender": "Tambahkan jenis kelamin Anda",
+    "accountDashboard.personalDetails.nationality": "Kewarganegaraan",
+    "accountDashboard.personalDetails.addNationality": "Tambahkan kewarganegaraan Anda",
+    "accountDashboard.personalDetails.address": "Alamat",
+    "accountDashboard.personalDetails.addAddress": "Tambahkan alamat Anda",
+    "accountDashboard.personalDetails.edit": "Edit",
+  } as const;
+
+  const personalEdit = {
+    "accountDashboard.personalDetails.section.basicInformation": "Informasi dasar",
+    "accountDashboard.personalDetails.emailVerified": "Terverifikasi",
+    "accountDashboard.personalDetails.changeEmail": "Ubah email",
+    "accountDashboard.personalDetails.emailHelper": "Email ini digunakan untuk masuk dan konfirmasi pemesanan. Perubahan memerlukan verifikasi.",
+    "accountDashboard.personalDetails.phoneHelper": "Kami akan menggunakan nomor ini untuk pembaruan pemesanan.",
+    "accountDashboard.personalDetails.dateOfBirthDayPlaceholder": "DD",
+    "accountDashboard.personalDetails.monthPlaceholder": "Bulan",
+    "accountDashboard.personalDetails.dateOfBirthYearPlaceholder": "YYYY",
+    "accountDashboard.personalDetails.addressDescription": "Digunakan untuk penagihan, catatan pemesanan, dan komunikasi perjalanan.",
+    "accountDashboard.personalDetails.countryRegion": "Negara/wilayah",
+    "accountDashboard.personalDetails.selectOne": "Pilih satu",
+    "accountDashboard.personalDetails.streetAddress": "Alamat jalan",
+    "accountDashboard.personalDetails.apartmentSuite": "Apartemen, suite, unit, gedung",
+    "accountDashboard.personalDetails.townCity": "Kota",
+    "accountDashboard.personalDetails.stateProvinceRegion": "Negara bagian / Provinsi / Wilayah",
+    "accountDashboard.personalDetails.postcodeZip": "Kode pos",
+    "accountDashboard.personalDetails.cancel": "Batal",
+    "accountDashboard.personalDetails.saveChanges": "Simpan perubahan",
+  } as const;
+
+  const security = {
+    "accountDashboard.security.title": "Pengaturan keamanan",
+    "accountDashboard.security.description": "Kelola masuk dan keamanan akun untuk akun Kurioticket Anda.",
+    "accountDashboard.security.password.title": "Kata sandi",
+    "accountDashboard.security.password.description": "Ubah kata sandi yang digunakan untuk masuk ke akun Anda.",
+    "accountDashboard.security.action.changePassword": "Ubah kata sandi",
+    "accountDashboard.security.twoFactor.title": "Autentikasi dua faktor",
+    "accountDashboard.security.twoFactor.description": "Tambahkan perlindungan ekstra dengan aplikasi autentikator.",
+    "accountDashboard.security.action.setUp": "Siapkan",
+    "accountDashboard.security.passkeys.title": "Passkey",
+    "accountDashboard.security.passkeys.description": "Gunakan kunci layar perangkat, Face ID, sidik jari, pengelola kata sandi, atau kunci keamanan untuk masuk lebih cepat dan lebih aman.",
+    "accountDashboard.security.activeSessions.title": "Sesi aktif",
+    "accountDashboard.security.activeSessions.description": "Tinjau perangkat yang masuk ke akun Anda.",
+    "accountDashboard.security.action.manageSessions": "Kelola sesi",
+    "accountDashboard.security.notifications.title": "Notifikasi keamanan",
+    "accountDashboard.security.notifications.description": "Dapatkan peringatan tentang aktivitas akun penting.",
+    "accountDashboard.security.action.turnOff": "Matikan",
+    "accountDashboard.security.deleteAccount.title": "Hapus akun",
+    "accountDashboard.security.deleteAccount.description": "Minta penghapusan akun permanen.",
+    "accountDashboard.security.action.deleteAccount": "Hapus akun",
+  } as const;
+
+  for (const [key, expected] of Object.entries({ ...personalReadOnly, ...personalEdit, ...security })) {
+    assert.equal(idTranslations[key], expected, key);
+    if (!["accountDashboard.personalDetails.dateOfBirthDayPlaceholder", "accountDashboard.personalDetails.dateOfBirthYearPlaceholder", "accountDashboard.personalDetails.edit"].includes(key)) {
+      assert.notEqual(idTranslations[key], enTranslations[key], `${key} should not fall back to English`);
+    }
+  }
+
+  const idOption = languageOptions.find((option) => option.code === "id");
+  const arOption = languageOptions.find((option) => option.code === "ar");
+  assert.equal(idOption?.locale, "id-ID");
+  assert.equal(idOption?.nativeLabel, "Bahasa Indonesia");
+  assert.equal(idOption?.direction, "ltr");
+  assert.equal(arOption?.direction, "rtl");
+
+  const dashboardSource = readFileSync("src/components/dashboard/DashboardGrid.tsx", "utf8");
+  const accountPageSource = readFileSync("src/app/dashboard/account/page.tsx", "utf8");
+  const securityPageSource = readFileSync("src/app/dashboard/security/page.tsx", "utf8");
+  assert.ok(accountPageSource.includes("<AccountMenuPage"));
+  assert.ok(securityPageSource.includes("<SecurityDashboardPage"));
+  for (const key of Object.keys({ ...personalReadOnly, ...personalEdit, ...security })) {
+    assert.ok(dashboardSource.includes(key), `Active account render path should read ${key}`);
+  }
+  assert.ok(dashboardSource.includes('href="/dashboard/account"'));
+  assert.ok(dashboardSource.includes('onClick={handleCancel}'));
+  assert.ok(dashboardSource.includes('onClick={handleSave}'));
+  assert.ok(dashboardSource.includes('onClick={onStartChange}'));
+  assert.ok(dashboardSource.includes('body: JSON.stringify(profilePayload)'));
+  assert.ok(dashboardSource.includes('body: JSON.stringify({ newEmail: nextEmail })'));
+  assert.ok(dashboardSource.includes('setPasswordModalOpen(true)'));
+  assert.ok(dashboardSource.includes('setPasskeysModalOpen(true)'));
+  assert.ok(dashboardSource.includes('handleOpenSessions'));
+  assert.ok(dashboardSource.includes('handleSecurityAlertsToggle'));
+  assert.ok(dashboardSource.includes('setDeleteModalOpen(true)'));
+  assert.ok(dashboardSource.includes('rounded-2xl'));
+});
+
 test("Newsletter account email and Manage Email Updates copy resolve for all active locales", () => {
   const activeLocales = [
     ["en-us", enTranslations],
