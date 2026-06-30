@@ -98,6 +98,124 @@ test("Swedish locale is active and localizes homepage while preserving other fal
 });
 
 
+test("Swedish Hotels landing copy resolves without English fallback", () => {
+  const sv = getTranslations("sv");
+  const hotelsPageSource = readFileSync("src/app/hotels/page.tsx", "utf8");
+  const searchSource = readFileSync("src/components/search/HotelSearchBar.tsx", "utf8");
+
+  const expectedSwedishHotelLandingCopy: Record<string, string> = {
+    hotelsHeroTitle: "Hitta boendet som ger resan rätt start.",
+    hotelsHeroSubtitle: "Jämför hotell på ett ställe, från stilfulla stadsankomster till avslappnade resortresor.",
+    hotelsHeroMobileTitle: "Hitta boendet som ger resan rätt start.",
+    hotelsHeroMobileSubtitle: "Jämför hotell på ett ställe, från stilfulla stadsankomster till avslappnade resortresor.",
+    hotels: "Hotell",
+    hotelSearchDestinationLabel: "DESTINATION",
+    hotelSearchDestinationPlaceholder: "Stad eller hotell",
+    hotelSearchTravelDatesLabel: "RESEDATUM",
+    hotelSearchDatePlaceholder: "Incheckning — utcheckning",
+    hotelSearchGuestsLabel: "GÄSTER",
+    guestSingular: "gäst",
+    roomSingular: "rum",
+    search: "Sök",
+    exploreHotelStaysByDestination: "Utforska hotellvistelser efter destination",
+    featuredHotelDestinations: "Utvalda hotelldestinationer",
+    findStaysEveryKindTrip: "Hitta boenden för alla typer av resor",
+    hotelInspirationBody: "Bläddra bland destinationsidéer efter den typ av vistelse du har i åtanke.",
+    "hotelInspirationCategory.Beach": "Strand",
+    "hotelInspirationCategory.City breaks": "Stadsresor",
+    "hotelInspirationCategory.Family trips": "Familjeresor",
+    "hotelInspirationCategory.Relaxed stays": "Avkopplande vistelser",
+    "hotelInspirationCategory.Weekend ideas": "Weekendidéer",
+    "hotelInspirationBadge.Coastal stays": "Kustvistelser",
+    "hotelInspirationBadge.City coast": "Stadskust",
+    "hotelInspirationBadge.Waterfront stays": "Boenden vid vattnet",
+    "hotelInspirationBadge.Harbor city": "Hamnstad",
+    "hotelInspirationBadge.Warm escape": "Varm tillflykt",
+    "hotelInspirationBadge.Bay city": "Vikstad",
+    hotelTrustCompareBody: "Visa hotellalternativ från reseleverantörer på ett ställe innan du fortsätter.",
+    hotelTrustReviewTitle: "Granska vistelsedetaljer",
+    hotelTrustReviewBody: "Kontrollera datum, gäster, rum, prissammanhang och information om vistelsen innan du väljer.",
+    hotelTrustProviderTitle: "Fortsätt med leverantören",
+    hotelTrustProviderBody: "När du väljer ett alternativ fortsätter du till leverantören för att bekräfta slutpris, tillgänglighet, avgifter och avbokningsregler.",
+    exploreStaysWorldwide: "Utforska boenden runt om i världen",
+    "hotelDestination.Tokyo.title": "Japan",
+    "hotelDestination.Tokyo.subtitle": "Boenden i Tokyo",
+    "hotelDestination.London.title": "Storbritannien",
+    "hotelDestination.London.subtitle": "Boenden i London",
+    "hotelDestination.Paris.title": "Frankrike",
+    "hotelDestination.Paris.subtitle": "Boenden i Paris",
+    "hotelDestination.New York.title": "USA",
+    "hotelDestination.New York.subtitle": "Boenden i New York",
+    "hotelDestination.Rome.title": "Italien",
+    "hotelDestination.Rome.subtitle": "Boenden i Rom",
+    "hotelDestination.Dubai.title": "Förenade Arabemiraten",
+    "hotelDestination.Dubai.subtitle": "Boenden i Dubai",
+    "hotelDestination.Singapore.title": "Singapore",
+    "hotelDestination.Singapore.subtitle": "Boenden i Singapore",
+    "hotelDestination.Barcelona.title": "Spanien",
+    "hotelDestination.Barcelona.subtitle": "Boenden i Barcelona",
+    "hotelDestination.Toronto.title": "Kanada",
+    "hotelDestination.Toronto.subtitle": "Boenden i Toronto",
+    "hotelDestination.Amsterdam.title": "Nederländerna",
+    "hotelDestination.Amsterdam.subtitle": "Boenden i Amsterdam",
+    "hotelDestination.Bangkok.title": "Thailand",
+    "hotelDestination.Bangkok.subtitle": "Boenden i Bangkok",
+    "hotelDestination.Cancun.title": "Mexiko",
+    "hotelDestination.Cancun.subtitle": "Boenden i Cancun",
+    "hotelDestination.Istanbul.title": "Turkiet",
+    "hotelDestination.Istanbul.subtitle": "Boenden i Istanbul",
+    hotelsHeroImageAlt: "Hotellpiccolo välkomnar en gäst med bagage i en premiumlobby",
+    "hotelDestination.Tokyo.imageAlt": "Tokyos skyline med täta höghus i dagsljus",
+    "hotelDestination.Cancun.imageAlt": "Cancunstrand med vit sand och turkost vatten",
+  };
+
+  for (const [key, expected] of Object.entries(expectedSwedishHotelLandingCopy)) {
+    assert.equal(sv[key], expected, key);
+    if (enTranslations[key] !== expected) {
+      assert.notEqual(sv[key], enTranslations[key], key);
+    }
+  }
+
+  assert.equal(`${1} ${sv.guestSingular}, ${1} ${sv.roomSingular}`, "1 gäst, 1 rum");
+  assert.ok(languageOptions.some((o) => o.code === "sv" && o.direction === "ltr"));
+  assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
+
+  for (const key of [
+    "hotelsHeroTitle",
+    "hotelsHeroSubtitle",
+    "exploreHotelStaysByDestination",
+    "featuredHotelDestinations",
+    "findStaysEveryKindTrip",
+    "hotelInspirationBody",
+    "hotelTrustCompareBody",
+    "hotelTrustReviewTitle",
+    "hotelTrustReviewBody",
+    "hotelTrustProviderTitle",
+    "hotelTrustProviderBody",
+    "exploreStaysWorldwide",
+  ]) {
+    assert.ok(hotelsPageSource.includes(`t("${key}")`), key);
+  }
+
+  assert.match(hotelsPageSource, /dictionary\[`hotelDestination\.\$\{card\.destinationQuery\}\.title`\]/);
+  assert.match(hotelsPageSource, /dictionary\[`hotelDestination\.\$\{card\.destinationQuery\}\.subtitle`\]/);
+  assert.match(hotelsPageSource, /dictionary\[`hotelDestination\.\$\{card\.destinationQuery\}\.imageAlt`\]/);
+  assert.match(hotelsPageSource, /dictionary\[`hotelDestination\.\$\{card\.destinationQuery\}\.linkLabel`\]/);
+  assert.match(hotelsPageSource, /dictionary\[`hotelInspirationCategory\.\$\{category\}`\]/);
+  assert.match(hotelsPageSource, /dictionary\[`hotelInspirationBadge\.\$\{card\.badge\}`\]/);
+  assert.match(hotelsPageSource, /destination: destinationQuery/);
+  assert.match(hotelsPageSource, /guests: "2"/);
+  assert.match(hotelsPageSource, /rooms: "1"/);
+  assert.match(hotelsPageSource, /createHotelInspirationCard\("Cancun", "Coastal stays"\)/);
+  assert.match(hotelsPageSource, /className="page-shell relative z-0 mx-auto/);
+  assert.match(searchSource, /value={destination}/);
+  assert.match(searchSource, /hotelSearchDestinationLabel/);
+  assert.match(searchSource, /hotelSearchDestinationPlaceholder/);
+  assert.match(searchSource, /hotelSearchTravelDatesLabel/);
+  assert.match(searchSource, /hotelSearchDatePlaceholder/);
+  assert.match(searchSource, /hotelSearchGuestsLabel/);
+});
+
 test("Turkish signed-in account dropdown labels do not fall back to English", () => {
   const tr = getTranslations("tr");
 
