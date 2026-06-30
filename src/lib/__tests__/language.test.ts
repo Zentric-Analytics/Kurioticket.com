@@ -125,6 +125,103 @@ test("Indonesian locale is active with homepage copy overrides", () => {
   }
 });
 
+test("Indonesian Destinations and Saved trips copy resolves through active i18n keys", () => {
+  const id = getTranslations("id");
+
+  assert.equal(id.destinationsHeroBadge, "PENEMUAN DESTINASI");
+  assert.equal(id.destinationsHeroTitle, "Ke mana Anda ingin pergi selanjutnya?");
+  assert.equal(id.destinationsHeroSubtitle, "Panduan pilihan untuk wisata kota, pantai, pusat budaya, dan lainnya.");
+  assert.equal(id.destinationsRegionsAriaLabel, "Wilayah destinasi");
+  assert.equal(id.destinationsCardAriaLabel, "Cari penerbangan ke {destination}");
+  assert.equal(id.destinationsImageAltSuffix, "fotografi perjalanan");
+  assert.equal(id["destinations.card.subtitle"], "Pemandangan indah, penerbangan, hotel, dan promo");
+
+  assert.deepEqual(
+    [
+      id["destinations.region.europe"],
+      id["destinations.region.northAmerica"],
+      id["destinations.region.asia"],
+      id["destinations.region.africa"],
+      id["destinations.region.middleEast"],
+    ],
+    ["Eropa", "Amerika Utara", "Asia", "Afrika", "Timur Tengah"],
+  );
+  assert.equal(id["destinations.region.europe.summary"], "Liburan kota ikonis, budaya, arsitektur, dan rute berpemandangan indah untuk dijelajahi.");
+  assert.equal(id["destinations.region.northAmerica.summary"], "Pelarian kota, pantai, taman, dan ide perjalanan Amerika Utara yang layak direncanakan.");
+  assert.equal(id["destinations.region.asia.summary"], "Kota neon, pelarian pulau, kuliner, budaya, dan pusat perjalanan utama di Asia.");
+  assert.equal(id["destinations.region.africa.summary"], "Gerbang safari, kota pesisir, pusat bisnis, dan rute budaya yang kaya di Afrika.");
+  assert.equal(id["destinations.region.middleEast.summary"], "Kota modern, landmark bersejarah, pantai, dan pusat perjalanan regional Timur Tengah.");
+
+  assert.equal(id["destinations.city.rome"], "Roma");
+  assert.equal(id["destinations.city.prague"], "Praha");
+  assert.equal(id["destinations.city.athens"], "Athena");
+  assert.equal(id["destinations.city.venice"], "Venesia");
+  assert.equal(id["destinations.city.florence"], "Firenze");
+  assert.equal(id["destinations.city.copenhagen"], "Kopenhagen");
+  assert.equal(id["destinations.city.zurich"], "Zürich");
+  assert.equal(id["destinations.city.vienna"], "Wina");
+  assert.equal(id["destinations.city.singapore"], "Singapura");
+  assert.equal(id["destinations.city.marrakech"], "Marrakesh");
+  assert.equal(id["destinations.country.unitedKingdom"], "Inggris Raya");
+  assert.equal(id["destinations.country.france"], "Prancis");
+  assert.equal(id["destinations.country.unitedStates"], "Amerika Serikat");
+  assert.equal(id["destinations.country.southKorea"], "Korea Selatan");
+  assert.equal(id["destinations.country.unitedArabEmirates"], "Uni Emirat Arab");
+  assert.equal(id["destinations.country.saudiArabia"], "Arab Saudi");
+  assert.equal(id["destinations.tag.iconicSkyline"], "CAKRAWALA IKONIS");
+  assert.equal(id["destinations.tag.landmarkEscape"], "PELESIR IKON WISATA");
+  assert.equal(id["destinations.tag.cultureCapital"], "PUSAT BUDAYA");
+  assert.equal(id["destinations.tag.foodMarketNights"], "MALAM PASAR KULINER");
+
+  assert.equal(id.savedTripsPageTitle, "Perjalanan tersimpan");
+  assert.equal(id.savedTripsPageSubtitle, "Rencana perjalanan pilihan Anda dan rute yang sedang tren.");
+  assert.equal(id.savedTripsEmptyTitle, "Simpan destinasi yang Anda sukai");
+  assert.equal(id.savedTripsEmptyDescription, "Ketuk ikon hati pada rute mana pun untuk membuat daftar pilihan pribadi Anda dan menjaga petualangan berikutnya tetap mudah dijangkau.");
+  assert.equal(id.savedTripsExploreDestinations, "Jelajahi destinasi");
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+});
+
+test("Indonesian Destinations and Saved trips active render paths stay i18n-driven", () => {
+  const destinationsPageSource = readFileSync("src/app/destinations/page.tsx", "utf8");
+  const destinationCardSource = readFileSync("src/app/destinations/DestinationCard.tsx", "utf8");
+  const savedPageSource = readFileSync("src/app/saved/page.tsx", "utf8");
+  const dashboardSavedPageSource = readFileSync("src/app/dashboard/saved/page.tsx", "utf8");
+  const savedComponentSource = readFileSync("src/components/saved/SavedTripsAndRecentSearches.tsx", "utf8");
+
+  assert.ok(destinationsPageSource.includes("dictionary.destinationsHeroBadge"));
+  assert.ok(destinationsPageSource.includes("dictionary.destinationsHeroTitle"));
+  assert.ok(destinationsPageSource.includes("dictionary.destinationsHeroSubtitle"));
+  assert.ok(destinationsPageSource.includes("regionLabelKeys[section.region]"));
+  assert.ok(destinationsPageSource.includes("dictionary[section.summaryKey]"));
+  assert.ok(destinationsPageSource.includes("destinationNameKeys[destination.name]"));
+  assert.ok(destinationsPageSource.includes("destinationCountryKeys[destination.country]"));
+  assert.ok(destinationsPageSource.includes("dictionary[destination.tagKey]"));
+  assert.ok(destinationsPageSource.includes("dictionary.destinationsImageAltSuffix"));
+  assert.ok(destinationsPageSource.includes("dictionary.destinationsCardAriaLabel.replace"));
+  assert.ok(destinationsPageSource.includes("getDestinationHref(destination)"));
+  assert.ok(destinationsPageSource.includes("return `/flights?destination=${encodeURIComponent(destination.name)}`;"));
+  assert.ok(destinationCardSource.includes("aria-label={ariaLabel}"));
+  assert.ok(destinationCardSource.includes("alt={imageAlt}"));
+
+  for (const english of ["DESTINATIONS DISCOVERY", "Where do you want to go next?", "A curated guide to city trips, beaches, cultural hubs, and more."]) {
+    assert.ok(!destinationsPageSource.includes(english));
+  }
+
+  assert.ok(savedPageSource.includes("<SavedTripsAndRecentSearches />"));
+  assert.ok(dashboardSavedPageSource.includes('redirect("/saved")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsPageTitle")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsPageSubtitle")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsEmptyTitle")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsEmptyDescription")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsExploreDestinations")'));
+  assert.ok(savedComponentSource.includes("readSavedTripIds()"));
+  assert.ok(savedComponentSource.includes("writeSavedTripIds(nextIds)"));
+  assert.ok(savedComponentSource.includes("readRecentSearches()"));
+  assert.ok(savedComponentSource.includes('href="/"'));
+  assert.ok(savedComponentSource.includes('href: "/destinations"'));
+  assert.ok(savedComponentSource.includes('pathname: "/flights/results"'));
+});
 
 
 test("Indonesian service and support active render path copy resolves without English fallback", () => {
