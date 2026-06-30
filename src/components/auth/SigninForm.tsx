@@ -55,8 +55,9 @@ export function SigninForm({
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
-  const [passkeyHintDismissed, setPasskeyHintDismissed] = useState(false);
+  const [moreSignInOptionsOpen, setMoreSignInOptionsOpen] = useState(false);
   const conditionalStartedRef = useRef(false);
+  const passkeyAbortControllerRef = useRef<AbortController | null>(null);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [isPending, startTransition] = useTransition();
   const credentialsInFlightRef = useRef(false);
@@ -64,7 +65,7 @@ export function SigninForm({
   const resendInFlightRef = useRef(false);
   const credentialsRef = useRef<Credentials | null>(null);
 
-  const busy = loading || isPending || passkeyLoading;
+  const busy = loading || isPending;
 
   useEffect(() => {
     if (cooldownSeconds <= 0) return;
@@ -234,16 +235,19 @@ export function SigninForm({
 
   async function startPasskeySignIn(mediation: CredentialMediationRequirement = "optional", showStatus = true) {
     if (!window.PublicKeyCredential || !navigator.credentials) {
-      if (showStatus) setError({ key: "Passkeys are not supported on this browser. Use password sign-in instead." });
+      if (showStatus) setError({ key: "Passkeys are not supported on this browser. Use password or Google sign-in instead." });
       return;
     }
+    passkeyAbortControllerRef.current?.abort();
+    const abortController = new AbortController();
+    passkeyAbortControllerRef.current = abortController;
     if (showStatus) {
       setPasskeyLoading(true);
       setError(null);
       setMessage({ key: "Opening your saved passkeys…" });
     }
     try {
-      const optionsResponse = await fetch("/api/auth/passkey/options", { method: "POST", credentials: "same-origin" });
+      const optionsResponse = await fetch("/api/auth/passkey/options", { method: "POST", credentials: "same-origin", signal: abortController.signal });
       const optionsData = await optionsResponse.json();
       if (!optionsResponse.ok) throw new Error(optionsData.error || "Unable to start passkey sign-in.");
       const publicKey = decodePublicKeyOptions(optionsData.options);
@@ -252,18 +256,20 @@ export function SigninForm({
         if (showStatus) throw new Error("Passkey sign-in was cancelled.");
         return;
       }
-      const verifyResponse = await fetch("/api/auth/passkey/verify", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(serializeCredential(credential)) });
+      const verifyResponse = await fetch("/api/auth/passkey/verify", { method: "POST", credentials: "same-origin", signal: abortController.signal, headers: { "Content-Type": "application/json" }, body: JSON.stringify(serializeCredential(credential)) });
       const verifyData = await verifyResponse.json().catch(() => ({}));
       if (!verifyResponse.ok || !verifyData.loginToken) throw new Error(verifyData.error || "Passkey sign-in failed.");
       const result = await signIn("credentials", { redirect: false, passkeyLoginToken: verifyData.loginToken, callbackUrl });
       if (!result?.ok) throw new Error("Passkey session could not be created.");
       window.location.href = verifyData.redirectTo || result.url || callbackUrl;
     } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
       if (showStatus || mediation !== "conditional") {
         setMessage(null);
         setError({ key: error instanceof Error ? error.message : "Passkey sign-in failed. Use password sign-in instead." });
       }
     } finally {
+      if (passkeyAbortControllerRef.current === abortController) passkeyAbortControllerRef.current = null;
       if (showStatus) setPasskeyLoading(false);
     }
   }
@@ -276,6 +282,10 @@ export function SigninForm({
     conditionalStartedRef.current = true;
     void startPasskeySignIn("conditional", false);
   }
+
+  useEffect(() => () => {
+    passkeyAbortControllerRef.current?.abort();
+  }, []);
 
   async function requestLoginCode(credentials: Credentials) {
     const response = await fetch("/api/auth/request-login-code", {
@@ -427,14 +437,30 @@ export function SigninForm({
         </form>
       )}
 
-      {step === "credentials" && !passkeyHintDismissed ? (
-        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
-          <p className="font-semibold text-slate-900">{t.loginPasskeyPromptTitle}</p>
-          <p className="mt-1">{t.loginPasskeyPromptDescription}</p>
-          <div className="mt-3 flex gap-2">
-            <button type="button" className="font-semibold text-teal-dark hover:underline" onClick={() => void startPasskeySignIn()} disabled={busy}>{passkeyLoading ? t.loginOpeningPasskey : t.loginUsePasskey}</button>
-            <button type="button" className="text-slate-500 hover:underline" onClick={() => setPasskeyHintDismissed(true)} disabled={busy}>{t.loginNotNow}</button>
-          </div>
+      {step === "credentials" ? (
+        <div className="mt-3 border-t border-slate-100 pt-3 text-sm">
+          <button
+            type="button"
+            className="font-semibold text-slate-600 underline-offset-4 hover:text-teal-dark hover:underline"
+            onClick={() => setMoreSignInOptionsOpen((open) => !open)}
+            aria-expanded={moreSignInOptionsOpen}
+          >
+            More sign-in options
+          </button>
+          {moreSignInOptionsOpen ? (
+            <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-600">
+              <p className="font-semibold text-slate-900">{t.loginPasskeyPromptTitle}</p>
+              <p className="mt-1">{t.loginPasskeyPromptDescription}</p>
+              <button
+                type="button"
+                className="mt-3 font-semibold text-teal-dark hover:underline disabled:text-slate-400"
+                onClick={() => void startPasskeySignIn()}
+                disabled={passkeyLoading}
+              >
+                {passkeyLoading ? t.loginOpeningPasskey : t.loginUsePasskey}
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : null}
 

@@ -363,6 +363,10 @@ function isNewsletterEmail(value: string) {
   );
 }
 
+// Production rule: the public homepage must never initiate passkey setup,
+// passkey authentication, or passkey setup-state fetches. Optional account-security
+// onboarding belongs on /auth/signin, /onboarding/security, /dashboard/security,
+// and passkey API routes only.
 export default function Home() {
   const { locale, t: dictionary } = useLocale();
   const { mode: regionCode, selectedOption } = useRegion();

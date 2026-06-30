@@ -4,12 +4,6 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 
-type NewsletterStatusResponse = {
-  authenticated?: boolean;
-  email?: string;
-  status?: "SUBSCRIBED" | "UNSUBSCRIBED" | "NOT_FOUND";
-};
-
 type NewsletterElements = {
   input: HTMLInputElement;
   form: HTMLFormElement;
@@ -106,8 +100,6 @@ function applyNewsletterState(
   }
 
   const accountEmail = email;
-  let cancelled = false;
-
   applyReactControlledInputValue(input, accountEmail);
   input.required = false;
   input.setAttribute("aria-hidden", "true");
@@ -122,44 +114,10 @@ function applyNewsletterState(
 
   const manageLink = insertManagePreferencesLink(container, form);
 
-  async function refreshNewsletterStatus() {
-    try {
-      const response = await fetch("/api/newsletter/subscribe", {
-        method: "GET",
-        headers: { Accept: "application/json" },
-      });
-
-      if (!response.ok) return;
-
-      const data = (await response.json()) as NewsletterStatusResponse;
-      if (cancelled || data.email?.toLowerCase() !== accountEmail.toLowerCase()) return;
-
-      if (data.status === "SUBSCRIBED") {
-        accountContext.textContent = `You’re subscribed to Kurioticket updates at ${accountEmail}.`;
-        manageLink.textContent = "Manage email preferences or unsubscribe";
-        form.style.display = "none";
-        return;
-      }
-
-      if (data.status === "UNSUBSCRIBED") {
-        accountContext.textContent = `You previously unsubscribed. Resubscribe with your account email: ${accountEmail}.`;
-        manageLink.textContent = "Manage email preferences";
-        form.style.display = "flex";
-        return;
-      }
-
-      accountContext.textContent = `Subscribe with your account email: ${accountEmail}.`;
-      manageLink.textContent = "Manage email preferences";
-      form.style.display = "flex";
-    } catch (error) {
-      console.error("[newsletter:session-bridge]", error);
-    }
-  }
-
-  void refreshNewsletterStatus();
+  accountContext.textContent = `Subscribe with your account email: ${accountEmail}.`;
+  manageLink.textContent = "Manage email preferences";
 
   return () => {
-    cancelled = true;
     accountContext.remove();
     manageLink.remove();
     restoreGuestNewsletterForm(input, form);

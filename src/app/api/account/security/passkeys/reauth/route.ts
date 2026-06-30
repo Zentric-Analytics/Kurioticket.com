@@ -1,12 +1,11 @@
 import bcrypt from "bcryptjs";
-import { randomBytes, createHash, randomInt } from "node:crypto";
+import { randomBytes, createHash } from "node:crypto";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { getPrisma } from "@/lib/prisma";
-import { loginVerificationCodeEmail, sendTransactionalEmail } from "@/services/emailService";
 import { verifySecondFactor } from "@/services/twoFactorService";
 
 export const runtime = "nodejs";
@@ -15,7 +14,6 @@ const schema = z.object({ action: z.enum(["send-email-code", "verify"]).optional
 const ttlMs = 10 * 60 * 1000;
 
 function hashToken(token: string) { return createHash("sha256").update(`passkey-reauth:${token}`).digest("hex"); }
-function hashEmailCode(userId: string, code: string) { return createHash("sha256").update(`passkey-email:${userId}:${code}`).digest("hex"); }
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -34,19 +32,8 @@ export async function POST(request: Request) {
   });
   if (!user?.email) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
 
-  const emailIdentifier = `passkey-email-confirm:${session.user.id}`;
   if (parsed.data.action === "send-email-code") {
-    const code = randomInt(100000, 1000000).toString();
-    await prisma.verificationToken.deleteMany({ where: { identifier: emailIdentifier } });
-    await prisma.verificationToken.create({ data: { identifier: emailIdentifier, token: hashEmailCode(session.user.id, code), expires: new Date(Date.now() + ttlMs) } });
-    await sendTransactionalEmail({
-      to: user.email,
-      subject: "Kurioticket passkey setup code",
-      html: loginVerificationCodeEmail({ code, name: user.name, expiresInMinutes: 10 }),
-      idempotencyKey: `passkey-email-confirm-${session.user.id}-${Date.now()}`,
-      requireConfigured: true,
-    });
-    return NextResponse.json({ ok: true, cooldownSeconds: 60 });
+    return NextResponse.json({ error: "Passkey setup is being finalized." }, { status: 503 });
   }
 
   let verified = false;
@@ -54,14 +41,6 @@ export async function POST(request: Request) {
   if (user.securitySettings?.twoFactorEnabled && parsed.data.code && await verifySecondFactor({ userId: session.user.id, code: parsed.data.code, consumeRecoveryCode: false })) {
     verified = true;
     method = "totp";
-  } else if (parsed.data.code && /^\d{6}$/.test(parsed.data.code)) {
-    const stored = await prisma.verificationToken.findUnique({ where: { identifier_token: { identifier: emailIdentifier, token: hashEmailCode(session.user.id, parsed.data.code) } } });
-    if (stored && stored.expires > new Date()) {
-      verified = true;
-      await prisma.verificationToken.deleteMany({ where: { identifier: emailIdentifier } });
-    } else if (stored) {
-      await prisma.verificationToken.deleteMany({ where: { identifier: emailIdentifier } });
-    }
   } else if (!user.securitySettings?.twoFactorEnabled && user.passwordHash) {
     verified = Boolean(parsed.data.password && await bcrypt.compare(parsed.data.password, user.passwordHash));
     method = "password";
