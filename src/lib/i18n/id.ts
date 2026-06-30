@@ -671,7 +671,7 @@ export const translations: TranslationDictionary = {
   "deals.searchButton": "Cari penawaran",
   "deals.destinationPlaceholder": "Kota, bandara, atau area",
   "deals.dateFlightPlaceholder": "Berangkat — Pulang",
-  "deals.dateHotelPlaceholder": "Check-in — Check-out",
+  "deals.dateHotelPlaceholder": "Tanggal masuk — keluar",
   "deals.dateDialog": "Pilih tanggal perjalanan",
   "deals.departDate": "Berangkat",
   "deals.returnDate": "Pulang",

@@ -273,15 +273,15 @@ export default function DealsPage() {
     const formattedEnd = formatShortDate(endDate, locale);
 
     if (!formattedStart) {
-      return includesFlight
-        ? t("deals.dateFlightPlaceholder")
-        : t("deals.dateHotelPlaceholder");
+      return includesHotel
+        ? t("deals.dateHotelPlaceholder")
+        : t("deals.dateFlightPlaceholder");
     }
 
     return formattedEnd
       ? `${formattedStart} — ${formattedEnd}`
       : formattedStart;
-  }, [endDate, includesFlight, locale, startDate, t]);
+  }, [endDate, includesHotel, locale, startDate, t]);
 
   const travelersFieldLabelKey = includesHotel
     ? includesCar

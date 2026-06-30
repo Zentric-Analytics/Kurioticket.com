@@ -144,6 +144,7 @@ test("Indonesian Deals landing copy resolves through active render-path keys", (
     "deals.originPlaceholder": "Kota atau bandara",
     "deals.destinationPlaceholder": "Kota, bandara, atau area",
     "deals.dateFlightPlaceholder": "Berangkat — Pulang",
+    "deals.dateHotelPlaceholder": "Tanggal masuk — keluar",
     "deals.searchButton": "Cari penawaran",
     "deals.travelerSingular": "wisatawan",
     "deals.roomSingular": "kamar",
@@ -173,6 +174,33 @@ test("Indonesian Deals landing copy resolves through active render-path keys", (
     assert.ok(dealsPageSource.includes(key), `${key} should be used by the active Deals render path`);
   }
 
+
+  assert.match(
+    dealsPageSource,
+    /if \(!formattedStart\) \{\s*return includesHotel\s*\? t\("deals\.dateHotelPlaceholder"\)\s*: t\("deals\.dateFlightPlaceholder"\);\s*\}/,
+    "active /deals empty-date render path should use the hotel placeholder for hotel-inclusive package modes",
+  );
+  assert.match(dealsPageSource, /const includesHotel = selectedMode\.includesHotel;/);
+  assert.doesNotMatch(
+    dealsPageSource,
+    /if \(!formattedStart\) \{\s*return includesFlight\s*\? t\("deals\.dateFlightPlaceholder"\)\s*: t\("deals\.dateHotelPlaceholder"\);\s*\}/,
+    "DealsPage should not choose the flight placeholder before the hotel placeholder for hotel-inclusive modes",
+  );
+  assert.equal(dealsPageSource.includes('"Check-in — Checkout"'), false);
+  assert.equal(dealsPageSource.includes('"Check-in — Check-out"'), false);
+
+  const packageModeExpectations = [
+    { value: "hotel-flight", dateKey: "deals.dateHotelPlaceholder", placeholder: "Tanggal masuk — keluar" },
+    { value: "hotel-flight-car", dateKey: "deals.dateHotelPlaceholder", placeholder: "Tanggal masuk — keluar" },
+    { value: "hotel-car", dateKey: "deals.dateHotelPlaceholder", placeholder: "Tanggal masuk — keluar" },
+    { value: "flight-car", dateKey: "deals.dateFlightPlaceholder", placeholder: "Berangkat — Pulang" },
+  ] as const;
+
+  for (const expectation of packageModeExpectations) {
+    assert.match(dealsPageSource, new RegExp(`value: "${expectation.value}"`));
+    assert.equal(id[expectation.dateKey], expectation.placeholder);
+  }
+
   assert.equal(`${id["deals.travelerSingular"]}`, "wisatawan");
   assert.equal(`1 ${id["deals.travelerSingular"]}, 1 ${id["deals.roomSingular"]}`, "1 wisatawan, 1 kamar");
   assert.ok(languageOptions.some((o) => o.code === "id" && o.locale === "id-ID" && o.nativeLabel === "Bahasa Indonesia" && o.direction === "ltr"));
@@ -187,6 +215,10 @@ test("Deals landing package values and destination card data remain unchanged wh
   }
 
   assert.match(dealsPageSource, /name="packageMode"/);
+  assert.match(dealsPageSource, /const dateSummary = useMemo\(\(\) => \{/);
+  assert.match(dealsPageSource, /return formattedEnd\s*\? `\$\{formattedStart\} — \$\{formattedEnd\}`\s*: formattedStart;/);
+  assert.match(dealsPageSource, /className="relative min-h-\[54px\] rounded-xl border border-slate-300 bg-white/);
+  assert.match(dealsPageSource, /<span className="truncate">\{dateSummary\}<\/span>/);
   assert.ok(dealsPageSource.includes("router.push(`/flights/results?${params.toString()}`)"));
   assert.ok(dealsPageSource.includes("router.push(`/hotels/results?${params.toString()}`)"));
   assert.match(dealsPageSource, /destination: trimmedDestination/);
