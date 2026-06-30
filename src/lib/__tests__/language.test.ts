@@ -2837,6 +2837,98 @@ test("Polish account dashboard overview copy resolves without English fallback",
   assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
 });
 
+test("Swedish account Trips and Price Alerts active page copy resolves without English fallback", () => {
+  const sv = getTranslations("sv");
+  const tripsManagementSource = readFileSync("src/app/dashboard/trips/TripsManagementPage.tsx", "utf8");
+  const tripsPageSource = readFileSync("src/app/dashboard/trips/page.tsx", "utf8");
+  const priceAlertsSource = readFileSync("src/app/dashboard/alerts/PriceAlertsContent.tsx", "utf8");
+  const alertsPageSource = readFileSync("src/app/dashboard/alerts/page.tsx", "utf8");
+
+  const expectedSwedishTripsCopy: Record<string, string> = {
+    "accountDashboard.trips.title": "Mina resor",
+    "accountDashboard.trips.findReservation": "Hitta en bokning",
+    "accountDashboard.trips.current.empty.title": "Vart härnäst?",
+    "accountDashboard.trips.current.empty.body": "Du har inte påbörjat några resor än. När du gör en bokning visas den här.",
+    "accountDashboard.trips.history.tabs.past": "Tidigare",
+    "accountDashboard.trips.history.tabs.cancelled": "Avbokade",
+    "accountDashboard.trips.history.empty.past.title": "Kom ihåg dina resor",
+    "accountDashboard.trips.history.empty.past.body": "Dina slutförda resor visas här efter att du har rest.",
+    "accountDashboard.trips.history.empty.cancelled.title": "Ändrade planer?",
+    "accountDashboard.trips.history.empty.cancelled.body": "Dina avbokade bokningar visas här som referens.",
+  };
+
+  const expectedSwedishPriceAlertsCopy: Record<string, string> = {
+    "accountDashboard.priceAlerts.title": "Prisaviseringar",
+    "accountDashboard.priceAlerts.description": "Följ priser och få aviseringar när biljettpriser ändras.",
+    "accountDashboard.priceAlerts.tabs.active": "Aktiva",
+    "accountDashboard.priceAlerts.tabs.expired": "Utgångna",
+    "accountDashboard.priceAlerts.tabs.all": "Alla",
+    "accountDashboard.priceAlerts.sort.label": "Sortera efter",
+    "accountDashboard.priceAlerts.sort.newest": "Nyast",
+    "accountDashboard.priceAlerts.sort.oldest": "Äldst",
+    "accountDashboard.priceAlerts.sort.routeAz": "Rutt A–Ö",
+    "accountDashboard.priceAlerts.empty.title": "Inga prisaviseringar ännu.",
+    "accountDashboard.priceAlerts.empty.body": "Skapa en avisering från en flygsökning för att följa prisändringar och få meddelanden.",
+    "accountDashboard.priceAlerts.cta.flights": "Sök flyg",
+  };
+
+  for (const [key, value] of Object.entries({ ...expectedSwedishTripsCopy, ...expectedSwedishPriceAlertsCopy })) {
+    assert.equal(sv[key], value, `${key} should resolve to Swedish account copy`);
+    assert.notEqual(sv[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  assert.equal(`${sv["accountDashboard.priceAlerts.tabs.active"]} (0)`, "Aktiva (0)");
+  assert.equal(`${sv["accountDashboard.priceAlerts.tabs.expired"]} (0)`, "Utgångna (0)");
+  assert.equal(`${sv["accountDashboard.priceAlerts.tabs.all"]} (0)`, "Alla (0)");
+  assert.equal(`${sv["accountDashboard.priceAlerts.sort.label"]}: ${sv["accountDashboard.priceAlerts.sort.newest"]}`, "Sortera efter: Nyast");
+
+  assert.ok(tripsPageSource.includes('import { TripsManagementPage } from "./TripsManagementPage"'));
+  assert.ok(tripsPageSource.includes('<TripsManagementPage />'));
+  assert.ok(tripsManagementSource.includes('fetch("/api/dashboard/trips"'));
+  assert.ok(tripsManagementSource.includes('fetch("/api/dashboard/trips/lookup"'));
+  assert.ok(tripsManagementSource.includes('t("accountDashboard.trips.title", "My Trips")'));
+  assert.ok(tripsManagementSource.includes('"accountDashboard.trips.findReservation"'));
+  assert.ok(tripsManagementSource.includes('titleKey: "accountDashboard.trips.current.empty.title"'));
+  assert.ok(tripsManagementSource.includes('bodyKey: "accountDashboard.trips.current.empty.body"'));
+  assert.ok(tripsManagementSource.includes('labelKey: "accountDashboard.trips.history.tabs.past"'));
+  assert.ok(tripsManagementSource.includes('labelKey: "accountDashboard.trips.history.tabs.cancelled"'));
+  assert.ok(tripsManagementSource.includes('titleKey: "accountDashboard.trips.history.empty.past.title"'));
+  assert.ok(tripsManagementSource.includes('bodyKey: "accountDashboard.trips.history.empty.past.body"'));
+  assert.ok(tripsManagementSource.includes('titleKey: "accountDashboard.trips.history.empty.cancelled.title"'));
+  assert.ok(tripsManagementSource.includes('bodyKey: "accountDashboard.trips.history.empty.cancelled.body"'));
+  assert.ok(tripsManagementSource.includes('setActiveHistoryTab(tab.id as TripHistoryTab)'));
+  assert.ok(tripsManagementSource.includes('"focus-ring inline-flex h-10 shrink-0 items-center justify-center rounded-full border px-5 text-sm font-semibold transition"'));
+  assert.ok(!tripsManagementSource.includes('>My Trips<'));
+  assert.ok(!tripsManagementSource.includes('>Find a reservation<'));
+
+  assert.ok(alertsPageSource.includes('import { PriceAlertsContent } from "./PriceAlertsContent"'));
+  assert.ok(alertsPageSource.includes('<PriceAlertsContent showAccountLink={showAccountLink} />'));
+  assert.ok(priceAlertsSource.includes('const { t } = useLocale()'));
+  assert.ok(priceAlertsSource.includes('t["accountDashboard.priceAlerts.title"]'));
+  assert.ok(priceAlertsSource.includes('t["accountDashboard.priceAlerts.description"]'));
+  assert.ok(priceAlertsSource.includes('{`${t[tab.labelKey]} (${tab.count})`}'));
+  assert.ok(priceAlertsSource.includes('t["accountDashboard.priceAlerts.sort.label"]'));
+  assert.ok(priceAlertsSource.includes('t["accountDashboard.priceAlerts.empty.title"]'));
+  assert.ok(priceAlertsSource.includes('t["accountDashboard.priceAlerts.empty.body"]'));
+  assert.ok(priceAlertsSource.includes('t["accountDashboard.priceAlerts.cta.flights"]'));
+  assert.ok(priceAlertsSource.includes('id: "active"') && priceAlertsSource.includes('count: 0'));
+  assert.ok(priceAlertsSource.includes('id: "expired"') && priceAlertsSource.includes('count: 0'));
+  assert.ok(priceAlertsSource.includes('id: "all"') && priceAlertsSource.includes('count: 0'));
+  assert.ok(priceAlertsSource.includes('{ id: "newest", labelKey: "accountDashboard.priceAlerts.sort.newest" }'));
+  assert.ok(priceAlertsSource.includes('{ id: "oldest", labelKey: "accountDashboard.priceAlerts.sort.oldest" }'));
+  assert.ok(priceAlertsSource.includes('{ id: "routeAz", labelKey: "accountDashboard.priceAlerts.sort.routeAz" }'));
+  assert.ok(priceAlertsSource.includes('setSelectedTab(tab.id)'));
+  assert.ok(priceAlertsSource.includes('setSelectedSort(option.id)'));
+  assert.ok(priceAlertsSource.includes('href="/flights"'));
+  assert.ok(priceAlertsSource.includes('<AccountDetailShell showAccountLink={showAccountLink}>'));
+  assert.ok(priceAlertsSource.includes('className="mx-auto min-w-0 max-w-6xl px-4 pt-3 pb-8 sm:px-6 sm:pt-6 lg:px-8"'));
+  assert.ok(!priceAlertsSource.includes('>Price alerts<'));
+  assert.ok(!priceAlertsSource.includes('>Search flights<'));
+
+  assert.ok(languageOptions.some((option) => option.code === "sv" && option.locale === "sv-SE" && option.nativeLabel === "Svenska" && option.direction === "ltr"));
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+});
+
 test("Polish account Price Alerts active page copy resolves without English fallback", () => {
   const pl = getTranslations("pl");
   const priceAlertsSource = readFileSync("src/app/dashboard/alerts/PriceAlertsContent.tsx", "utf8");
