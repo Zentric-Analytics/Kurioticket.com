@@ -23,6 +23,7 @@ import { translations as koTranslations } from "@/lib/i18n/ko";
 import { translations as hiTranslations } from "@/lib/i18n/hi";
 import { translations as trTranslations } from "@/lib/i18n/tr";
 import { translations as plTranslations } from "@/lib/i18n/pl";
+import { translations as svTranslations } from "@/lib/i18n/sv";
 import { availableLocaleOptions, getTranslations } from "@/lib/i18n";
 import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
 import { buildHomepageRouteCardFlightHref } from "@/lib/home/homepageRouteCardLinks";
@@ -64,6 +65,35 @@ test("global language catalog renders", () => {
   assert.ok(languageOptions.some((o) => o.code === "tr" && o.locale === "tr-TR" && o.nativeLabel === "Türkçe" && o.label === "Turkish" && o.countryCode === "TR" && o.direction === "ltr" && o.status === "available"));
   assert.equal(languageOptions.filter((o) => o.code === "pl").length, 1);
   assert.ok(languageOptions.some((o) => o.code === "pl" && o.locale === "pl-PL" && o.nativeLabel === "Polski" && o.label === "Polish" && o.countryCode === "PL" && o.direction === "ltr" && o.status === "available"));
+  assert.equal(languageOptions.filter((o) => o.code === "sv").length, 1);
+  assert.ok(languageOptions.some((o) => o.code === "sv" && o.locale === "sv-SE" && o.nativeLabel === "Svenska" && o.label === "Swedish" && o.countryCode === "SE" && o.direction === "ltr" && o.status === "available"));
+});
+
+
+test("Swedish locale is active and falls back to English safely", () => {
+  const swedishOptions = languageOptions.filter((o) => o.code === "sv");
+
+  assert.equal(swedishOptions.length, 1);
+  assert.equal(swedishOptions[0]?.status, "available");
+  assert.equal(swedishOptions[0]?.locale, "sv-SE");
+  assert.equal(swedishOptions[0]?.nativeLabel, "Svenska");
+  assert.equal(swedishOptions[0]?.label, "Swedish");
+  assert.equal(swedishOptions[0]?.countryCode, "SE");
+  assert.equal(swedishOptions[0]?.direction, "ltr");
+  assert.equal(normalizeLanguage("sv"), "sv");
+  assert.equal(normalizeLanguage("sv-SE"), "sv");
+  assert.equal(normalizeLanguage("sv-se"), "sv");
+  assert.equal(getTranslations("sv"), svTranslations);
+  assert.equal(getTranslations("sv-SE"), svTranslations);
+  assert.equal(svTranslations.homeHeroTitle, enTranslations.homeHeroTitle);
+  assert.equal(svTranslations.logout, enTranslations.logout);
+
+  const arabicOption = languageOptions.find((o) => o.code === "ar");
+  assert.equal(arabicOption?.direction, "rtl");
+
+  for (const option of languageOptions.filter((o) => o.status === "available" && o.code !== "ar")) {
+    assert.equal(option.direction, "ltr", `${option.code} should remain ltr`);
+  }
 });
 
 
