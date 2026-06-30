@@ -70,7 +70,7 @@ test("global language catalog renders", () => {
 });
 
 
-test("Swedish locale is active and falls back to English safely", () => {
+test("Swedish locale is active and localizes homepage while preserving other fallback", () => {
   const swedishOptions = languageOptions.filter((o) => o.code === "sv");
 
   assert.equal(swedishOptions.length, 1);
@@ -85,7 +85,8 @@ test("Swedish locale is active and falls back to English safely", () => {
   assert.equal(normalizeLanguage("sv-se"), "sv");
   assert.equal(getTranslations("sv"), svTranslations);
   assert.equal(getTranslations("sv-SE"), svTranslations);
-  assert.equal(svTranslations.homeHeroTitle, enTranslations.homeHeroTitle);
+  assert.equal(svTranslations.homeHeroTitle, "Jämför resealternativ med en enkel sökning");
+  assert.notEqual(svTranslations.homeHeroTitle, enTranslations.homeHeroTitle);
   assert.equal(svTranslations.logout, enTranslations.logout);
 
   const arabicOption = languageOptions.find((o) => o.code === "ar");
@@ -5996,6 +5997,164 @@ test("Turkish cars results datepicker locale normalizes to tr-TR", () => {
     Array.from({ length: 7 }, (_, day) => new Intl.DateTimeFormat("tr-TR", { weekday: "short" }).format(new Date(2024, 0, 7 + day))),
     ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"],
   );
+});
+
+
+
+test("Swedish homepage-visible copy resolves without English fallback", () => {
+  const sv = getTranslations("sv");
+  const expectedSwedishHomepageCopy: Record<string, string> = {
+    flights: "Flyg",
+    hotels: "Hotell",
+    cars: "Bilar",
+    deals: "Erbjudanden",
+    homeHeroTitle: "Jämför resealternativ med en enkel sökning",
+    homeHeroSubtitle: "Sök hos betrodda reseleverantörer, jämför priser tydligt och välj alternativet som passar din resa.",
+    roundTrip: "Tur och retur",
+    oneWay: "Enkelresa",
+    origin: "AVRESEORT",
+    destination: "DESTINATION",
+    departureDate: "RESEDATUM",
+    travelDates: "RESEDATUM",
+    travelers: "RESENÄRER",
+    fromPlaceholder: "Från?",
+    toPlaceholder: "Till?",
+    search: "Sök",
+    chooseTravelDates: "Välj resedatum",
+    previousMonthShort: "Föregående",
+    nextMonthShort: "Nästa",
+    clear: "Rensa",
+    done: "Klart",
+    passengers: "Passagerare",
+    adults: "Vuxna",
+    adultAgeRange: "18+",
+    children: "Barn",
+    childAgeRange: "Ålder 2–17",
+    infantsOnLap: "Spädbarn i knä",
+    under2: "Under 2",
+    cabinClass: "KABINKLASS",
+    economy: "Ekonomi",
+    business: "Business",
+    first: "Första klass",
+    cityOrHotel: "Stad eller hotell",
+    hotelSearchDestinationLabel: "DESTINATION",
+    hotelSearchTravelDatesLabel: "RESEDATUM",
+    hotelSearchDatePlaceholder: "Incheckning — utcheckning",
+    hotelSearchGuestsLabel: "GÄSTER",
+    stayDetails: "BOENDEDETALJER",
+    guestsAndRooms: "Gäster och rum",
+    guestSingular: "gäst",
+    roomSingular: "rum",
+    hotelAdultHelper: "Gäster 18+",
+    hotelChildrenHelper: "Ålder 0–17",
+    hotelRoomsHelper: "Upp till 6 rum",
+    petFriendly: "Husdjur tillåtna",
+    onlyShowPetFriendlyStays: "Visa endast boenden som tillåter husdjur",
+    fromPrice: "Från",
+    homePopularDestinations: "Populära destinationer",
+    "homePopularDestinationCountry.unitedArabEmirates": "Förenade Arabemiraten",
+    "homePopularDestinationCountry.unitedKingdom": "Storbritannien",
+    "homePopularDestinationCountry.southAfrica": "Sydafrika",
+    homeExploreFares: "Utforska priser",
+    homeDiscoveryTitle: "Upptäck ditt nästa äventyr här",
+    homeDiscoverySubtitle: "Jämför smarta ruttidéer, flexibla priser och destinationer utvalda för din region.",
+    homeDiscoveryRouteIdeaBadge: "RUTTIDÉ",
+    homeDiscoveryOneWay: "ENKELRESA",
+    homeDiscoveryEconomy: "EKONOMI",
+    homeDiscoveryTravelerCountOne: "1 resenär",
+    homeCompareOptions: "Jämför alternativ",
+    destinationImageFallback: "DESTINATION",
+    "homeDiscoveryRoute.ng-los-dxb.title": "Shoppingstopp i Dubai",
+    "homeDiscoveryRoute.ng-los-lhr.title": "London för jobb och helg",
+    "homeDiscoveryRoute.ng-abv-rob.title": "Regional kustresa till Monrovia",
+    "homeDiscoveryRoute.ng-los-dxb.routeNote": "Populär för shoppingpauser, familjeresor och vidare anslutningar.",
+    homeTrustTitle: "Därför jämför resenärer på Kurioticket",
+    homeTrustSubtitle: "Kurioticket hjälper dig att jämföra leverantörers erbjudanden tydligt och sedan slutföra bokningen på leverantörens webbplats.",
+    homeTrustCompareTitle: "Jämför leverantörers erbjudanden",
+    homeTrustCompareBody: "Visa flyg- och hotellalternativ från flera reseleverantörer på ett och samma ställe.",
+    homeTrustPricingTitle: "Tydlig prisinformation",
+    homeTrustPricingBody: "Granska pris, rutt- eller boendedetaljer och viktiga villkor innan du fortsätter.",
+    homeTrustHandoffTitle: "Säker överlämning till leverantör",
+    homeTrustHandoffBody: "När du väljer ett erbjudande fortsätter du till leverantören för att slutföra bokningen säkert.",
+    homePromoFlightsTitle: "Flygerbjudanden från ledande flygbolag",
+    homePromoFlightsBody: "Upptäck tidsbegränsade priser och jämför alternativ direkt.",
+    homePromoFlightsCta: "Utforska flygerbjudanden",
+    homePromoHotelsTitle: "Hotellbesparingar världen över",
+    homePromoHotelsBody: "Bläddra bland boenden från boutiquehotell till globala kedjor med tydliga priser.",
+    homePromoHotelsCta: "Utforska hotellerbjudanden",
+    faqHeading: "Vanliga frågor",
+    faqQuestionFindOptions: "Hur hittar Kurioticket flyg- och hotellalternativ?",
+    supportFaqAccountQuestion: "Hjälp med konto och inloggning",
+    supportFaqWhyRedirectedQuestion: "Varför skickades jag till en annan leverantör?",
+    homeNewsletterTitle: "Ligg steget före varje reseerbjudande",
+    homeNewsletterBody: "Få utvalda flyg- och hotelluppdateringar varje vecka.",
+    homeSubscribe: "Prenumerera",
+    homeNewsletterConsent: "Genom att prenumerera samtycker du till att få uppdateringar från Kurioticket. Du kan avsluta prenumerationen när som helst.",
+    homeNewsletterThanks: "Tack! Vi håller dig uppdaterad med reseerbjudanden.",
+    footerContactUs: "Kontakta oss",
+    footerCustomerSupport: "Kundsupport",
+    footerServiceGuarantee: "Servicegaranti",
+    footerMoreServiceInfo: "Mer serviceinformation",
+    footerDiscover: "Upptäck",
+    footerSavedRecent: "Sparat och senaste",
+    footerTermsSettings: "Villkor och inställningar",
+    footerPrivacyPolicy: "Integritetspolicy",
+    footerTermsOfService: "Användarvillkor",
+    footerCookiePolicy: "Cookiepolicy",
+    footerAboutKurioticket: "Om Kurioticket",
+    footerAboutUs: "Om oss",
+    footerHowItWorks: "Så fungerar Kurioticket",
+    footerConfidenceTagline: "Sök flyg, hotell och reseerbjudanden med trygghet.",
+    footerAllRightsReserved: "Alla rättigheter förbehållna.",
+    footerPrivacy: "Integritet",
+    footerTerms: "Villkor",
+    footerCookies: "Cookies",
+  };
+
+  for (const [key, expected] of Object.entries(expectedSwedishHomepageCopy)) {
+    assert.equal(sv[key], expected, key);
+    if (expected !== enTranslations[key]) assert.notEqual(sv[key], enTranslations[key], key);
+  }
+
+  assert.equal(`${1} ${sv.adultSingular}, ${sv.economy}`, "1 vuxen, Ekonomi");
+  assert.equal(`${1} ${sv.guestSingular}, ${1} ${sv.roomSingular}`, "1 gäst, 1 rum");
+  assert.equal(`${sv.fromPrice.toLocaleLowerCase("sv-SE")} NGN 713,949`, "från NGN 713,949");
+  assert.equal(sv.homeNewsletterAccountEmail, "Prenumerera med e-postadressen för ditt konto: {{email}}.");
+  assert.match(sv.homeNewsletterAccountEmail, /\{\{email\}\}/);
+  assert.ok(languageOptions.some((o) => o.code === "sv" && o.locale === "sv-SE" && o.direction === "ltr"));
+  assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
+});
+
+test("Swedish homepage flight and hotel date formatting uses sv-SE generated labels", () => {
+  for (const locale of ["sv", "sv-SE", "sv-se"]) {
+    assert.equal(normalizeFlightsCalendarLocale(locale), "sv-SE", `flight ${locale}`);
+    assert.equal(normalizeHotelCalendarLocale(locale), "sv-SE", `hotel ${locale}`);
+  }
+  assert.equal(formatFlightsMonthHeading(new Date(2026, 5, 1), "sv"), "juni 2026");
+  assert.equal(formatFlightsMonthHeading(new Date(2026, 6, 1), "sv-se"), "juli 2026");
+  assert.deepEqual(formatFlightsWeekdays("sv-SE"), ["sön", "mån", "tis", "ons", "tors", "fre", "lör"]);
+});
+
+test("Swedish homepage render paths keep using i18n keys and preserve dynamic route data", () => {
+  const pageSource = readFileSync("src/app/page.tsx", "utf8");
+  const headerSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
+  const searchSource = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
+  const footerSource = readFileSync("src/components/layout/Footer.tsx", "utf8");
+
+  for (const key of ["homeHeroTitle", "homeHeroSubtitle", "homeDiscoveryTitle", "homeTrustTitle", "homePromoFlightsTitle", "faqHeading", "homeNewsletterTitle", "homeNewsletterConsent"]) {
+    assert.match(pageSource, new RegExp(`t\\("${key}"\\)`), key);
+  }
+  for (const key of ["flights", "hotels", "cars", "deals"]) assert.match(headerSource, new RegExp(`t\\.${key}|labelKey: "${key}"`), key);
+  for (const key of ["roundTrip", "oneWay", "origin", "destination", "travelDates", "travelers", "passengers", "economy", "fromPlaceholder", "cityOrHotel", "hotelSearchTravelDatesLabel", "hotelSearchGuestsLabel", "stayDetails", "guestsAndRooms", "hotelAdultHelper", "hotelChildrenHelper", "hotelRoomsHelper", "petFriendly", "onlyShowPetFriendlyStays"]) assert.match(searchSource, new RegExp(key), key);
+  for (const key of ["footerContactUs", "footerDiscover", "footerTermsSettings", "footerAboutKurioticket", "footerConfidenceTagline"]) assert.match(footerSource, new RegExp(`t\\.${key}`), key);
+
+  assert.match(pageSource, /originCode=\{card\.item\.originCode\}/);
+  assert.match(pageSource, /destinationCodeLabel=\{card\.item\.destinationCode\}/);
+  assert.match(pageSource, /\{originCode\} → \{destinationCodeLabel\} · \{routeNote\}/);
+  assert.match(pageSource, /buildDestinationCardHref\(price/);
+  assert.match(searchSource, /new URLSearchParams\(\{/);
+  assert.match(searchSource, /buildFlightRecentSearch\(/);
+  assert.match(searchSource, /buildHotelRecentSearch\(/);
 });
 
 test("Polish homepage-visible copy resolves without English fallback", () => {
