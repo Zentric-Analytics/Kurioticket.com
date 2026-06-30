@@ -5853,7 +5853,7 @@ test("airport picker heading is localized for all active locales", () => {
   assert.notEqual(trTranslations.nearYou, enTranslations.nearYou);
 });
 
-test("active account trips and price alerts copy is localized", () => {
+test("Swedish active account Trips and Price Alerts copy is localized", () => {
   const activeLocaleTranslations = {
     "en-us": enTranslations,
     ar: arTranslations,
@@ -5868,6 +5868,7 @@ test("active account trips and price alerts copy is localized", () => {
     ko: koTranslations,
     hi: hiTranslations,
     tr: trTranslations,
+    sv: svTranslations,
   };
 
   const travelActivityKeys = [
@@ -6024,6 +6025,51 @@ test("active account trips and price alerts copy is localized", () => {
     trTranslations["accountDashboard.priceAlerts.features.management.body"],
     "Uyarıları istediğiniz zaman duraklatın veya kaldırın.",
   );
+
+  assert.equal(svTranslations["accountDashboard.trips.title"], "Mina resor");
+  assert.equal(svTranslations["accountDashboard.trips.findReservation"], "Hitta en bokning");
+  assert.equal(svTranslations["accountDashboard.trips.current.empty.title"], "Vart härnäst?");
+  assert.equal(
+    svTranslations["accountDashboard.trips.current.empty.body"],
+    "Du har inte påbörjat några resor än. När du gör en bokning visas den här.",
+  );
+  assert.equal(svTranslations["accountDashboard.trips.history.tabs.past"], "Tidigare");
+  assert.equal(svTranslations["accountDashboard.trips.history.tabs.cancelled"], "Avbokade");
+  assert.equal(svTranslations["accountDashboard.trips.history.empty.past.title"], "Kom ihåg dina resor");
+  assert.equal(
+    svTranslations["accountDashboard.trips.history.empty.past.body"],
+    "Dina slutförda resor visas här efter att du har rest.",
+  );
+  assert.equal(svTranslations["accountDashboard.trips.history.empty.cancelled.title"], "Ändrade planer?");
+  assert.equal(
+    svTranslations["accountDashboard.trips.history.empty.cancelled.body"],
+    "Dina avbokade bokningar visas här som referens.",
+  );
+
+  assert.equal(svTranslations["accountDashboard.priceAlerts.title"], "Prisaviseringar");
+  assert.equal(
+    svTranslations["accountDashboard.priceAlerts.description"],
+    "Följ priser och få aviseringar när biljettpriser ändras.",
+  );
+  assert.equal(svTranslations["accountDashboard.priceAlerts.tabs.active"], "Aktiva");
+  assert.equal(svTranslations["accountDashboard.priceAlerts.tabs.expired"], "Utgångna");
+  assert.equal(svTranslations["accountDashboard.priceAlerts.tabs.all"], "Alla");
+  assert.equal(`${svTranslations["accountDashboard.priceAlerts.tabs.active"]} (0)`, "Aktiva (0)");
+  assert.equal(`${svTranslations["accountDashboard.priceAlerts.tabs.expired"]} (12)`, "Utgångna (12)");
+  assert.equal(`${svTranslations["accountDashboard.priceAlerts.tabs.all"]} (3)`, "Alla (3)");
+  assert.equal(svTranslations["accountDashboard.priceAlerts.sort.label"], "Sortera efter");
+  assert.equal(svTranslations["accountDashboard.priceAlerts.sort.newest"], "Nyast");
+  assert.equal(svTranslations["accountDashboard.priceAlerts.sort.oldest"], "Äldst");
+  assert.equal(svTranslations["accountDashboard.priceAlerts.sort.routeAz"], "Rutt A–Ö");
+  assert.equal(`${svTranslations["accountDashboard.priceAlerts.sort.label"]}: ${svTranslations["accountDashboard.priceAlerts.sort.newest"]}`, "Sortera efter: Nyast");
+  assert.equal(svTranslations["accountDashboard.priceAlerts.empty.title"], "Inga prisaviseringar ännu.");
+  assert.equal(
+    svTranslations["accountDashboard.priceAlerts.empty.body"],
+    "Skapa en avisering från en flygsökning för att följa prisändringar och få meddelanden.",
+  );
+  assert.equal(svTranslations["accountDashboard.priceAlerts.cta.flights"], "Sök flyg");
+  assert.equal(languageOptions.find((o) => o.code === "sv")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
 
   const tripsManagementSource = readFileSync("src/app/dashboard/trips/TripsManagementPage.tsx", "utf8");
   assert.ok(tripsManagementSource.includes('type TripStatusTab = "upcoming" | "past" | "cancelled"'));
