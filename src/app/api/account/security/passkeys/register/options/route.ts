@@ -8,6 +8,9 @@ import { consumePasskeyReauthToken } from "@/lib/passkey-reauth";
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id || !session.user.email) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+
+  const passkeySetupEnabled = process.env.PASSKEY_SETUP_ENABLED === "true";
+  if (!passkeySetupEnabled) return NextResponse.json({ error: "Passkey setup is being finalized." }, { status: 503 });
   const body = await request.json().catch(() => ({}));
   const prisma = getPrisma();
   const onboarding = body.context === "onboarding";
