@@ -16,6 +16,7 @@ import {
   Mail,
   Settings,
   ShieldCheck,
+  Trash2,
   UserRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -2462,6 +2463,7 @@ export function SecurityDashboardPage() {
     "Review devices that have recently accessed your account.",
   );
   const [removingSessionId, setRemovingSessionId] = useState<string | null>(null);
+  const [confirmingSessionRemovalId, setConfirmingSessionRemovalId] = useState<string | null>(null);
   const securityActionStatusId = "security-action-status";
   const securityModalOpen = Boolean(passwordModalOpen || deleteModalOpen || twoFactorModal || passkeysModalOpen || sessionsModalOpen);
   const tx = (key: string, fallback: string) => t[key] || fallback;
@@ -2734,6 +2736,7 @@ export function SecurityDashboardPage() {
       }
 
       setSessions(Array.isArray(data.sessions) ? data.sessions : []);
+      setConfirmingSessionRemovalId(null);
     } catch {
       setActionMessage("Unable to load active sessions.");
     } finally {
@@ -2748,6 +2751,7 @@ export function SecurityDashboardPage() {
 
   const handleRemoveSessionRecord = async (sessionId: string) => {
     setRemovingSessionId(sessionId);
+    setConfirmingSessionRemovalId(null);
     setActionMessage("");
 
     try {
@@ -3036,7 +3040,7 @@ export function SecurityDashboardPage() {
                 <h2 id="active-sessions-title" className="text-xl font-semibold text-slate-950">Active sessions</h2>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{sessionNotice}</p>
               </div>
-              <button type="button" onClick={loadSessionActivities} disabled={sessionsLoading} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60">
+              <button type="button" onClick={loadSessionActivities} disabled={sessionsLoading} className="focus-ring hidden rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60 sm:inline-flex">
                 {sessionsLoading ? "Refreshing…" : "Refresh"}
               </button>
             </div>
@@ -3045,7 +3049,7 @@ export function SecurityDashboardPage() {
                 <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Loading tracked sessions…</p>
               ) : sessions.length ? (
                 sessions.map((session) => (
-                  <div key={session.id} className="min-w-0 rounded-xl border border-slate-200 p-4">
+                  <div key={session.id} className="relative min-w-0 rounded-xl border border-slate-200 p-4 pb-16 sm:pb-4">
                     <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
@@ -3058,16 +3062,50 @@ export function SecurityDashboardPage() {
                         <p className="mt-1 break-words text-sm text-slate-600">{session.browser} on {session.os}</p>
                         <p className="mt-1 text-xs leading-5 text-slate-500">Last active {formatSessionTime(session.lastSeenAt)}</p>
                         <p className="text-xs leading-5 text-slate-500">IP network {session.maskedIp || "not available"}</p>
+                        {confirmingSessionRemovalId === session.id ? (
+                          <div role="status" aria-live="polite" className="mt-3 rounded-xl border border-red-100 bg-red-50 p-3 text-sm text-red-900 sm:max-w-md">
+                            <p className="font-semibold">Remove this device record?</p>
+                            <p className="mt-1 text-red-800">This will remove the saved device activity from your account.</p>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setConfirmingSessionRemovalId(null)}
+                                className="focus-ring rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                disabled={removingSessionId === session.id}
+                                onClick={() => void handleRemoveSessionRecord(session.id)}
+                                className="focus-ring rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+                              >
+                                {removingSessionId === session.id ? "Deleting…" : "Delete"}
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
                       </div>
                       {!session.isCurrent && !session.revokedAt ? (
-                        <button
-                          type="button"
-                          disabled={removingSessionId === session.id}
-                          onClick={() => void handleRemoveSessionRecord(session.id)}
-                          className="focus-ring inline-flex min-h-10 w-full shrink-0 items-center justify-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-60 sm:w-auto"
-                        >
-                          {removingSessionId === session.id ? "Removing…" : "Remove device record"}
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            disabled={removingSessionId === session.id}
+                            onClick={() => setConfirmingSessionRemovalId(session.id)}
+                            className="focus-ring hidden min-h-10 w-full shrink-0 items-center justify-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-60 sm:inline-flex sm:w-auto"
+                          >
+                            {removingSessionId === session.id ? "Removing…" : "Remove device record"}
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={`Remove ${session.deviceLabel || "device"} device record`}
+                            disabled={removingSessionId === session.id}
+                            onClick={() => setConfirmingSessionRemovalId(session.id)}
+                            className="focus-ring absolute bottom-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-red-200 bg-white text-red-700 shadow-sm hover:bg-red-50 disabled:opacity-60 sm:hidden"
+                          >
+                            <Trash2 aria-hidden="true" className="h-4 w-4" />
+                          </button>
+                        </>
                       ) : null}
                     </div>
                   </div>
@@ -3077,7 +3115,7 @@ export function SecurityDashboardPage() {
               )}
             </div>
             <div className="mt-6 flex justify-end">
-              <button type="button" onClick={() => setSessionsModalOpen(false)} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Done</button>
+              <button type="button" onClick={() => { setSessionsModalOpen(false); setConfirmingSessionRemovalId(null); }} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Done</button>
             </div>
           </div>
         </div>
