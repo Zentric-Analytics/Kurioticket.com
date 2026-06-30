@@ -87,7 +87,7 @@ test("Swedish locale is active and localizes homepage while preserving other fal
   assert.equal(getTranslations("sv-SE"), svTranslations);
   assert.equal(svTranslations.homeHeroTitle, "Jämför resealternativ med en enkel sökning");
   assert.notEqual(svTranslations.homeHeroTitle, enTranslations.homeHeroTitle);
-  assert.equal(svTranslations.logout, enTranslations.logout);
+  assert.equal(svTranslations.logout, "Logga ut");
 
   const arabicOption = languageOptions.find((o) => o.code === "ar");
   assert.equal(arabicOption?.direction, "rtl");
@@ -436,6 +436,73 @@ test("Swedish Hotels landing copy resolves without English fallback", () => {
   assert.match(searchSource, /hotelSearchTravelDatesLabel/);
   assert.match(searchSource, /hotelSearchDatePlaceholder/);
   assert.match(searchSource, /hotelSearchGuestsLabel/);
+});
+
+
+test("Swedish signed-in account dropdown labels do not fall back to English", () => {
+  const sv = getTranslations("sv");
+
+  assert.equal(sv["accountMenu.myAccount.label"], "Mitt konto");
+  assert.equal(sv["accountMenu.savedTrips.label"], "Sparade resor");
+  assert.equal(sv["accountMenu.priceAlerts.label"], "Prisaviseringar");
+  assert.equal(sv.logout, "Logga ut");
+  assert.notEqual(sv["accountMenu.myAccount.label"], enTranslations["accountMenu.myAccount.label"]);
+  assert.notEqual(sv["accountMenu.savedTrips.label"], enTranslations["accountMenu.savedTrips.label"]);
+  assert.notEqual(sv["accountMenu.priceAlerts.label"], enTranslations["accountMenu.priceAlerts.label"]);
+  assert.notEqual(sv.logout, enTranslations.logout);
+
+  const swedishOption = languageOptions.find((o) => o.code === "sv");
+  const arabicOption = languageOptions.find((o) => o.code === "ar");
+  assert.equal(swedishOption?.locale, "sv-SE");
+  assert.equal(swedishOption?.nativeLabel, "Svenska");
+  assert.equal(swedishOption?.direction, "ltr");
+  assert.equal(arabicOption?.direction, "rtl");
+
+  const appHeaderSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
+
+  assert.ok(
+    appHeaderSource.includes('labelKey: "accountMenu.myAccount.label"') &&
+      appHeaderSource.includes('labelKey: "accountMenu.savedTrips.label"') &&
+      appHeaderSource.includes('labelKey: "accountMenu.priceAlerts.label"') &&
+      appHeaderSource.includes("label: t[item.labelKey]"),
+    "Signed-in account dropdown menu items should continue to resolve active account menu i18n keys.",
+  );
+  assert.ok(
+    appHeaderSource.includes("session?.user?.name || accountDisplayName") &&
+      appHeaderSource.includes("session.user.email") &&
+      appHeaderSource.includes("session?.user?.email"),
+    "Signed-in account dropdown should keep user name and email display dynamic.",
+  );
+  assert.ok(
+    appHeaderSource.includes('href: "/dashboard/account"') &&
+      appHeaderSource.includes('href: "/saved"') &&
+      appHeaderSource.includes('href: "/dashboard/alerts"') &&
+      appHeaderSource.includes("onClick={handleSignOut}") &&
+      appHeaderSource.includes("revokeCurrentSessionRecord()") &&
+      appHeaderSource.includes("signOut({ redirect: false, callbackUrl: \"/\" })"),
+    "Signed-in account dropdown should keep menu routes and logout action/auth behavior wired unchanged.",
+  );
+  assert.ok(
+    appHeaderSource.includes("LayoutDashboard") &&
+      appHeaderSource.includes("SavedHeartIcon") &&
+      appHeaderSource.includes("Tag") &&
+      appHeaderSource.includes("LogOut"),
+    "Signed-in account dropdown should keep routes and logout icons wired unchanged.",
+  );
+  assert.ok(
+    appHeaderSource.includes("setAccountOpen(false)") &&
+      appHeaderSource.includes("setMobileAccountOpen(false)") &&
+      appHeaderSource.includes("accountOpen") &&
+      appHeaderSource.includes('role="menuitem"'),
+    "Signed-in account dropdown should keep click behavior, auth menu behavior, layout, styling, and accessibility wiring unchanged.",
+  );
+  assert.ok(
+    !appHeaderSource.includes('>My account<') &&
+      !appHeaderSource.includes('>Saved trips<') &&
+      !appHeaderSource.includes('>Price alerts<') &&
+      !appHeaderSource.includes('>Logout<'),
+    "Signed-in account dropdown should not hard-code screenshot-visible English labels.",
+  );
 });
 
 test("Turkish signed-in account dropdown labels do not fall back to English", () => {
