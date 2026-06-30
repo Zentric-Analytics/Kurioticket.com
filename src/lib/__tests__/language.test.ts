@@ -3893,6 +3893,162 @@ test("Hindi account preferences actual render-path copy resolves without English
   }
 });
 
+
+test("Indonesian account preferences actual render-path copy resolves without English fallback", () => {
+  const id = getTranslations("id-ID");
+  const customizationSource = readFileSync(
+    "src/app/dashboard/preferences/customization/CustomizationPreferencesContent.tsx",
+    "utf8",
+  );
+  const bookingSource = readFileSync(
+    "src/app/dashboard/preferences/booking/BookingPreferencesContent.tsx",
+    "utf8",
+  );
+  const customizationPageSource = readFileSync("src/app/dashboard/preferences/customization/page.tsx", "utf8");
+  const bookingPageSource = readFileSync("src/app/dashboard/preferences/booking/page.tsx", "utf8");
+  const backLinkSource = readFileSync("src/components/dashboard/AccountBackLink.tsx", "utf8");
+
+  const expectedCustomizationCopy = {
+    "accountDashboard.preferences.customization.title": "Preferensi penyesuaian",
+    "accountDashboard.preferences.customization.description": "Pilih cara Kurioticket mempersonalisasi pengalaman Anda.",
+    "accountDashboard.preferences.customization.languageRegion.title": "Bahasa dan wilayah",
+    "accountDashboard.preferences.customization.languageRegion.description": "Atur bahasa, mata uang, dan wilayah default Anda.",
+    "accountDashboard.preferences.customization.preferredLanguage": "Bahasa pilihan",
+    "accountDashboard.preferences.customization.selectPreferredLanguage": "Pilih bahasa pilihan",
+    "accountDashboard.preferences.customization.currency": "Mata uang",
+    "accountDashboard.preferences.customization.selectCurrency": "Pilih mata uang",
+    "accountDashboard.preferences.customization.region": "Wilayah",
+    "accountDashboard.preferences.customization.selectRegion": "Pilih wilayah",
+    "accountDashboard.preferences.customization.personalization.title": "Personalisasi",
+    "accountDashboard.preferences.customization.personalization.description": "Atur cara Kurioticket mempersonalisasi rekomendasi Anda.",
+    "accountDashboard.preferences.customization.personalizeSearches": "Gunakan pencarian saya untuk mempersonalisasi rekomendasi",
+    "accountDashboard.preferences.customization.personalizedTravelDeals": "Tampilkan penawaran perjalanan yang dipersonalisasi",
+    "accountDashboard.preferences.customization.rememberRecentSearches": "Ingat pencarian terbaru saya",
+    "accountDashboard.preferences.customization.communicationStyle.title": "Gaya komunikasi",
+    "accountDashboard.preferences.customization.communicationStyle.description": "Pilih cara Kurioticket berkomunikasi dengan Anda.",
+    "accountDashboard.preferences.customization.emailUpdates": "Pembaruan email",
+    "accountDashboard.preferences.customization.priceAlertEmails": "Email peringatan harga",
+    "accountDashboard.preferences.customization.travelInspirationEmails": "Email inspirasi perjalanan",
+  } as const;
+
+  const expectedBookingCopy = {
+    "accountDashboard.preferences.booking.title": "Preferensi pemesanan",
+    "accountDashboard.preferences.booking.description": "Atur preferensi perjalanan default Anda untuk pemesanan yang lebih cepat dan lebih relevan.",
+    "accountDashboard.preferences.booking.airports.title": "Bandara",
+    "accountDashboard.preferences.booking.airports.description": "Pilih bandara yang Anda sukai untuk keberangkatan.",
+    "accountDashboard.preferences.booking.homeAirport": "Bandara utama",
+    "accountDashboard.preferences.booking.searchAirport": "Cari bandara",
+    "accountDashboard.preferences.booking.secondaryAirports": "Bandara sekunder",
+    "accountDashboard.preferences.booking.addAlternativeAirports": "Tambahkan bandara alternatif",
+    "accountDashboard.preferences.booking.airlines.title": "Maskapai",
+    "accountDashboard.preferences.booking.airlines.description": "Pilih maskapai yang Anda sukai atau ingin hindari.",
+    "accountDashboard.preferences.booking.preferredAirlines": "Maskapai pilihan",
+    "accountDashboard.preferences.booking.searchAirlines": "Cari maskapai",
+    "accountDashboard.preferences.booking.avoidAirlines": "Hindari maskapai",
+    "accountDashboard.preferences.booking.stays.title": "Penginapan",
+    "accountDashboard.preferences.booking.stays.description": "Atur preferensi akomodasi untuk pemesanan hotel.",
+    "accountDashboard.preferences.booking.preferredHotelChains": "Jaringan hotel pilihan",
+    "accountDashboard.preferences.booking.searchHotelChains": "Cari jaringan hotel",
+    "accountDashboard.preferences.booking.avoidHotelChains": "Hindari jaringan hotel",
+  } as const;
+
+  const sharedCopy = {
+    "accountDashboard.preferences.cancel": "Batal",
+    "accountDashboard.preferences.savePreferences": "Simpan preferensi",
+  } as const;
+
+  assert.ok(customizationSource.includes("useLocale()"), "Customization active component should read the current locale context.");
+  assert.ok(bookingSource.includes("useLocale()"), "Booking active component should read the current locale context.");
+
+  for (const [key, value] of Object.entries(expectedCustomizationCopy)) {
+    assert.ok(customizationSource.includes(key), `Customization page should use active i18n key ${key}.`);
+    assert.equal(id[key], value, key);
+    assert.notEqual(id[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  for (const [key, value] of Object.entries(expectedBookingCopy)) {
+    assert.ok(bookingSource.includes(key), `Booking page should use active i18n key ${key}.`);
+    assert.equal(id[key], value, key);
+    assert.notEqual(id[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  for (const [key, value] of Object.entries(sharedCopy)) {
+    assert.ok(customizationSource.includes(key), `Customization page should use shared action key ${key}.`);
+    assert.ok(bookingSource.includes(key), `Booking page should use shared action key ${key}.`);
+    assert.equal(id[key], value, key);
+    assert.notEqual(id[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  const activeIndonesianRenderValues = [
+    ...Object.keys(expectedCustomizationCopy),
+    ...Object.keys(expectedBookingCopy),
+    ...Object.keys(sharedCopy),
+  ].map((key) => id[key]);
+
+  for (const englishFallback of [
+    "Customization preferences",
+    "Choose how Kurioticket personalizes your experience.",
+    "Language and region",
+    "Set your default language, currency, and region.",
+    "Preferred language",
+    "Select preferred language",
+    "Currency",
+    "Select currency",
+    "Region",
+    "Select region",
+    "Personalization",
+    "Control how Kurioticket personalizes your recommendations.",
+    "Use my searches to personalize recommendations",
+    "Show personalized travel deals",
+    "Remember my recent searches",
+    "Communication style",
+    "Choose how you want Kurioticket to communicate with you.",
+    "Email updates",
+    "Price alert emails",
+    "Travel inspiration emails",
+    "Booking preferences",
+    "Set your default travel preferences for faster and more relevant bookings.",
+    "Airports",
+    "Choose the airports you prefer to fly from.",
+    "Home airport",
+    "Search airport",
+    "Secondary airports",
+    "Add alternative airports",
+    "Airlines",
+    "Choose airlines you prefer or want to avoid.",
+    "Preferred airlines",
+    "Search airlines",
+    "Avoid airlines",
+    "Stays",
+    "Set accommodation preferences for hotel bookings.",
+    "Preferred hotel chains",
+    "Search hotel chains",
+    "Avoid hotel chains",
+    "Cancel",
+    "Save preferences",
+  ]) {
+    assert.ok(!activeIndonesianRenderValues.includes(englishFallback), `Indonesian account preferences render-path values should not fall back to English: ${englishFallback}`);
+  }
+
+  assert.ok(backLinkSource.includes('"accountDashboard.hub.title"'), "Back link should continue using localized account title key.");
+  assert.ok(backLinkSource.includes('href="/dashboard/account"'), "Back link route should remain unchanged.");
+  assert.equal(id["accountDashboard.hub.title"], "Akun saya");
+  assert.ok(customizationSource.includes('name={field.id}'));
+  assert.ok(bookingSource.includes('name={field.id}'));
+  assert.ok(customizationSource.includes('value={option.value}'));
+  assert.ok(customizationSource.includes('type="checkbox"'));
+  assert.ok(customizationSource.includes('type="button"'));
+  assert.ok(bookingSource.includes('type="button"'));
+  assert.ok(customizationSource.includes('action="#"'));
+  assert.ok(bookingSource.includes('action="#"'));
+  assert.ok(customizationSource.includes('className="flex-1 bg-[#f3f7fc] pb-10 pt-0"'));
+  assert.ok(bookingSource.includes('className="flex-1 bg-[#f3f7fc] pb-10 pt-0"'));
+  assert.ok(customizationPageSource.includes("<AccountPreferencesHeader />"));
+  assert.ok(bookingPageSource.includes("<AccountPreferencesHeader />"));
+  assert.ok(languageOptions.some((option) => option.code === "id" && option.locale === "id-ID" && option.nativeLabel === "Bahasa Indonesia" && option.direction === "ltr"));
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+});
+
 test("Turkish account preferences actual render-path copy resolves without English fallback", () => {
   const tr = getTranslations("tr");
   const customizationSource = readFileSync(
