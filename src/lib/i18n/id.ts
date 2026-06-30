@@ -105,6 +105,27 @@ export const translations: TranslationDictionary = {
   homePromoHotelsTitle: "Hemat hotel di seluruh dunia",
   homePromoHotelsBody: "Telusuri akomodasi dari hotel butik hingga jaringan global dengan transparansi harga.",
   homePromoHotelsCta: "Jelajahi promo hotel",
+  supportFaqAccountQuestion: "Bantuan akun dan masuk",
+  supportFaqAccountAnswer:
+    "Kurioticket dapat membantu akses akun, masalah masuk, masalah pendaftaran, akses profil, dan masalah platform yang terkait dengan akun.",
+  supportFaqSearchQuestion: "Bantuan pencarian dan hasil",
+  supportFaqSearchAnswer:
+    "Kurioticket dapat membantu saat pencarian penerbangan atau hotel tidak berfungsi, hasil tidak dimuat, filter membingungkan, atau harga dan penyedia tidak tampil seperti yang diharapkan.",
+  supportFaqSavedTripsQuestion: "Perjalanan tersimpan dan peringatan",
+  supportFaqSavedTripsAnswer:
+    "Kurioticket dapat membantu dengan perjalanan tersimpan, pencarian terbaru, peringatan harga, masalah notifikasi, dan alat perjalanan yang terhubung ke akun.",
+  supportFaqRedirectQuestion: "Bantuan pemesanan/pengalihan penyedia",
+  supportFaqRedirectAnswer:
+    "Kurioticket dapat membantu jika pengalihan ke mitra atau penyedia gagal, membuka halaman yang salah, atau tidak mempertahankan detail perjalanan atau pencarian yang dipilih.",
+  supportFaqAlreadyBookedQuestion: "Sudah memesan dengan penyedia?",
+  supportFaqAlreadyBookedAnswer:
+    "Jika pemesanan Anda diselesaikan dengan maskapai, hotel, agen perjalanan, atau penyedia eksternal, penyedia tersebut bertanggung jawab atas perubahan pemesanan, pengembalian dana, pembatalan, check-in, boarding, tanda terima, dan dokumen perjalanan.",
+  supportFaqChangeBookingQuestion: "Bisakah Kurioticket mengubah pemesanan saya?",
+  supportFaqChangeBookingAnswer:
+    "Kurioticket hanya dapat membantu pemesanan yang dibuat langsung melalui Kurioticket jika dan ketika pemesanan langsung didukung. Untuk pemesanan yang diselesaikan dengan penyedia eksternal, hubungi penyedia tersebut secara langsung.",
+  supportFaqWhyRedirectedQuestion: "Mengapa saya diarahkan ke penyedia lain?",
+  supportFaqWhyRedirectedAnswer:
+    "Kurioticket adalah platform pencarian dan perbandingan perjalanan, dan beberapa hasil mengarahkan Anda ke penyedia tepercaya tempat Anda menyelesaikan pemesanan, pembayaran, dan dukungan khusus penyedia.",
   homeNewsletterTitle: "Selalu terdepan untuk setiap promo perjalanan",
   homeNewsletterBody: "Dapatkan pembaruan penerbangan dan hotel pilihan setiap minggu.",
   homeNewsletterPlaceholder: "Masukkan email Anda",
