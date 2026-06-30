@@ -4581,6 +4581,7 @@ test("Indonesian Hotels landing and Hotel results copy is localized on active re
     "hotelTrustReviewBody": "Periksa tanggal, tamu, kamar, konteks harga, dan informasi penginapan sebelum memilih.",
     "hotelTrustProviderTitle": "Lanjutkan dengan penyedia",
     "hotelTrustProviderBody": "Saat memilih opsi, lanjutkan dengan penyedia untuk mengonfirmasi harga akhir, ketersediaan, biaya, dan aturan pembatalan.",
+    "hotelResults.liveSearchUnavailable": "Pencarian hotel langsung untuk sementara tidak tersedia. Silakan coba lagi sebentar lagi.",
     "hotelResults.foundPlacesToStay": "Kami menemukan {{count}} tempat menginap untuk Anda",
     "hotelResults.cheapest": "TERMURAH",
     "hotelResults.lowestTotalPrice": "Total harga terendah",
@@ -4637,7 +4638,7 @@ test("Indonesian Hotels landing and Hotel results copy is localized on active re
   assert.match(hotelsPageSource, /dictionary\[`hotelInspirationCategory\.\$\{category\}`\]/);
   assert.match(hotelsPageSource, /dictionary\[`hotelInspirationBadge\.\$\{card\.badge\}`\]/);
 
-  for (const key of ["hotelResults.cheapest", "hotelResults.bestValue", "hotelResults.topRated", "hotelResults.foundPlacesToStay", "hotelResults.filterBy", "hotelResults.budgetPrice", "hotelResults.popularFilters", "hotelResults.propertyType", "hotelResults.roomType", "hotelResults.bedType", "hotelResults.meals"]) {
+  for (const key of ["hotelResults.cheapest", "hotelResults.bestValue", "hotelResults.topRated", "hotelResults.foundPlacesToStay", "hotelResults.liveSearchUnavailable", "hotelResults.filterBy", "hotelResults.budgetPrice", "hotelResults.popularFilters", "hotelResults.propertyType", "hotelResults.roomType", "hotelResults.bedType", "hotelResults.meals"]) {
     assert.ok(hotelResultsClientSource.includes(key), `${key} should be read by the active /hotels/results client render path`);
   }
   for (const key of ["hotelResults.estimatedStayTotal", "hotelResults.pricePerNight", "hotelResults.viewHotel", "hotelResults.filter.bedAndBreakfast", "hotelResults.filter.roomOnly", "hotelResults.filter.doubleRoom", "hotelResults.filter.kingBed"]) {
@@ -4652,6 +4653,9 @@ test("Indonesian Hotels landing and Hotel results copy is localized on active re
   }
 
   assert.ok(hotelResultsClientSource.includes('fetch("/api/hotels/search"'), "hotel result fetching path should remain unchanged");
+  assert.ok(hotelResultsClientSource.includes('data.error === enTranslations["hotelResults.liveSearchUnavailable"]'), "canonical English API error should be mapped to localized i18n copy");
+  assert.ok(hotelResultsClientSource.includes('? t("hotelResults.liveSearchUnavailable")'), "Indonesian hotel live-search unavailable copy should resolve through the active i18n key");
+  assert.ok(!hotelResultsClientSource.includes('>Live hotel search is temporarily unavailable. Please try again shortly.<'), "live-search unavailable copy should not be hardcoded in the active Indonesian hotels results UI");
   assert.ok(hotelResultsClientSource.includes('type="range"'), "filter behavior should remain on the active render path");
   assert.ok(!hotelResultsClientSource.includes(">Filter by<"), "Filter by should not be hardcoded in the active Indonesian hotels results UI");
   assert.equal(languageOptions.find((option) => option.code === "id")?.locale, "id-ID");
