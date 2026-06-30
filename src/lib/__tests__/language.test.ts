@@ -641,7 +641,7 @@ test("Swedish Cars results render path copy and date formatting resolve without 
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
 
   assert.ok(carsResultsSource.includes('if (normalizedLocale.startsWith("sv"))') && carsResultsSource.includes('return "sv-SE"'), "Swedish cars results dates should use the Swedish Intl locale.");
-  assert.ok(carsResultsSource.includes('["de", "es", "fr", "ja", "nl", "pl", "pt", "sv", "tr"]'), "Swedish cars results times should use 24-hour labels without AM/PM.");
+  assert.ok(carsResultsSource.includes('["de", "es", "fr", "id", "ja", "nl", "pl", "pt", "sv", "tr"]'), "Swedish cars results times should use 24-hour labels without AM/PM.");
   assert.ok(carsResultsSource.includes('action="/cars/results"') && carsResultsSource.includes('method="get"'), "Cars results search form should preserve the route path and query-param submission behavior.");
   assert.ok(carsResultsSource.includes('name="pickupLocation"') && carsResultsSource.includes('name="dropoffLocation"') && carsResultsSource.includes('name="pickupDate"') && carsResultsSource.includes('name="dropoffTime"') && carsResultsSource.includes('name="driverAge"'), "Cars results search should preserve submitted field names.");
   assert.ok(carsResultsSource.includes('value={pickupLocation}') && carsResultsSource.includes('value={dropoffLocation}') && carsResultsSource.includes('value={pickupDate}') && carsResultsSource.includes('value={driverAge}'), "Cars results search should preserve raw dynamic values.");
@@ -1271,7 +1271,7 @@ test("Polish cars results page copy and render path do not fall back to English"
   }
 
   assert.ok(carsResultsSource.includes('if (normalizedLocale.startsWith("pl"))') && carsResultsSource.includes('return "pl-PL"'), "Polish cars results dates should use the Polish Intl locale.");
-  assert.ok(carsResultsSource.includes('["de", "es", "fr", "ja", "nl", "pl", "pt", "sv", "tr"]'), "Polish cars results times should use 24-hour labels without AM/PM.");
+  assert.ok(carsResultsSource.includes('["de", "es", "fr", "id", "ja", "nl", "pl", "pt", "sv", "tr"]'), "Polish cars results times should use 24-hour labels without AM/PM.");
   assert.ok(carsResultsSource.includes('formatCompactDate(') && carsResultsSource.includes('formatTimeLabel(pickupTime, intlLocale)'), "Date/time summaries should remain generated from selected values and locale formatting.");
   assert.ok(carsResultsSource.includes('action="/cars/results"') && carsResultsSource.includes('method="get"'), "Cars results search form should preserve the route path and query-param submission behavior.");
   assert.ok(carsResultsSource.includes('name="pickupDate"') && carsResultsSource.includes('value={pickupDate}') && carsResultsSource.includes('name="driverAge"') && carsResultsSource.includes('value={driverAge}'), "Cars results search should preserve selected date/time/driver-age query values.");
@@ -7160,6 +7160,82 @@ test("Turkish hotels landing render path copy resolves without English fallback"
   );
 });
 
+
+test("Indonesian Cars results render path copy resolves without English fallback", async () => {
+  const id = getTranslations("id");
+  const carsResultsSource = readFileSync("src/components/results/CarsResultsClient.tsx", "utf8");
+  const carsResultsPageSource = readFileSync("src/app/cars/results/page.tsx", "utf8");
+
+  const auditedCarsResultsKeys: Array<[string, string]> = [
+    ["carsResults.pickupLocation", "Lokasi pengambilan"],
+    ["carsResults.returnLocation", "Lokasi pengembalian"],
+    ["carsSearch.pickupLocationPlaceholder", "Bandara, kota, atau alamat"],
+    ["carsResults.sameAsPickup", "Sama seperti lokasi pengambilan"],
+    ["carsResults.rentalDates", "Tanggal sewa"],
+    ["carsResults.pickupReturnTime", "Waktu pengambilan / pengembalian"],
+    ["carsResults.driverAge", "Usia pengemudi"],
+    ["carsResults.anyDriverAgeRange", "Usia pengemudi berapa pun"],
+    ["carsResults.searchCars", "Cari mobil"],
+    ["carsResults.fuelPolicy", "Kebijakan bahan bakar"],
+    ["carsResults.fullToFull", "Penuh-ke-penuh"],
+    ["carsResults.sameToSame", "Sama-ke-sama"],
+    ["carsResults.mileagePolicy", "Kebijakan jarak tempuh"],
+    ["carsResults.unlimitedMileage", "Jarak tempuh tanpa batas"],
+    ["carsResults.limitedMileage", "Jarak tempuh terbatas"],
+    ["carsResults.cancellation", "Pembatalan"],
+    ["carsResults.freeCancellation", "Pembatalan gratis"],
+    ["carsResults.payAtPickup", "Bayar saat pengambilan"],
+    ["carsResults.pickupLocationType", "Jenis lokasi pengambilan"],
+    ["carsResults.airportCounter", "Konter bandara"],
+    ["carsResults.shuttlePickup", "Pengambilan dengan shuttle"],
+    ["carsResults.cityLocation", "Lokasi kota"],
+  ];
+
+  for (const [key, expected] of auditedCarsResultsKeys) {
+    assert.equal(id[key], expected);
+    assert.ok(
+      carsResultsSource.includes(`t("${key}")`) || carsResultsSource.includes(`labelKey: "${key}"`) || carsResultsSource.includes(`titleKey: "${key}"`),
+      `Cars results render path should resolve ${key} through i18n`,
+    );
+  }
+
+  const indonesianIntlLocale = "id-ID";
+  assert.ok(carsResultsSource.includes('if (normalizedLocale.startsWith("id"))') && carsResultsSource.includes('return "id-ID"'));
+  assert.equal(new Intl.DateTimeFormat(indonesianIntlLocale, { day: "numeric", month: "short", year: "numeric" }).format(new Date(2026, 5, 30)), "30 Jun 2026");
+  assert.equal(new Intl.DateTimeFormat(indonesianIntlLocale, { day: "numeric", month: "short", year: "numeric" }).format(new Date(2026, 6, 5)), "5 Jul 2026");
+  assert.ok(carsResultsSource.includes('intlLocale.toLowerCase().startsWith("id") ? "." : ":"'));
+
+  for (const preservedQueryName of [
+    'name="pickupDate"',
+    'name="dropoffDate"',
+    'name="pickupTime"',
+    'name="dropoffTime"',
+    'name="driverAge"',
+    'name="pickupLocation"',
+    'name="dropoffLocation"',
+    'action="/cars/results"',
+  ]) {
+    assert.ok(carsResultsSource.includes(preservedQueryName), `${preservedQueryName} should remain in the Cars results form`);
+  }
+
+  assert.ok(carsResultsPageSource.includes('pickupTime: getParamValue(params, "pickupTime") || "10:00"'));
+  assert.ok(carsResultsPageSource.includes('dropoffTime: getParamValue(params, "dropoffTime") || "10:00"'));
+  assert.ok(carsResultsPageSource.includes('driverAge: normalizeDriverAge(getParamValue(params, "driverAge"))'));
+  assert.ok(
+    !carsResultsSource.includes('"PICKUP LOCATION"') &&
+      !carsResultsSource.includes('"RETURN LOCATION"') &&
+      !carsResultsSource.includes('"RENTAL DATES"') &&
+      !carsResultsSource.includes('"PICKUP / RETURN TIME"') &&
+      !carsResultsSource.includes('"DRIVER AGE"') &&
+      !carsResultsSource.includes('"Search cars"') &&
+      !carsResultsSource.includes('"Fuel policy"') &&
+      !carsResultsSource.includes('"Mileage policy"'),
+    "Cars results components should not hard-code screenshot-visible English strings.",
+  );
+  assert.equal(languageOptions.find((option) => option.code === "id")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
+});
+
 test("Turkish hotel calendar locale normalizes to tr-TR for generated month headings", async () => {
   const { normalizeHotelCalendarLocale } = await import("@/lib/hotelsDateFormatting");
 
@@ -7574,7 +7650,7 @@ test("Turkish cars results datepicker locale normalizes to tr-TR", () => {
     "Cars results datepicker locale helper should normalize Turkish locales to tr-TR.",
   );
   assert.ok(
-    carsResultsSource.includes('["de", "es", "fr", "ja", "nl", "pl", "pt", "sv", "tr"]'),
+    carsResultsSource.includes('["de", "es", "fr", "id", "ja", "nl", "pl", "pt", "sv", "tr"]'),
     "Cars results time summaries should use 24-hour formatting for Turkish without changing raw time values.",
   );
   assert.equal(

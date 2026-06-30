@@ -141,7 +141,7 @@ const carFilterGroups: CarFilterGroup[] = [
   },
 ];
 
-const getCarsResultsIntlLocale = (locale: string) => {
+export const getCarsResultsIntlLocale = (locale: string) => {
   const normalizedLocale = locale.toLowerCase();
 
   if (normalizedLocale.startsWith("de")) {
@@ -192,6 +192,10 @@ const getCarsResultsIntlLocale = (locale: string) => {
     return "tr-TR";
   }
 
+  if (normalizedLocale.startsWith("id")) {
+    return "id-ID";
+  }
+
   if (normalizedLocale.startsWith("pl")) {
     return "pl-PL";
   }
@@ -207,8 +211,8 @@ const getCarsResultsIntlLocale = (locale: string) => {
   return "en-US";
 };
 
-const usesTwentyFourHourCarsResultsTime = (intlLocale: string) =>
-  ["de", "es", "fr", "ja", "nl", "pl", "pt", "sv", "tr"].some((localePrefix) =>
+export const usesTwentyFourHourCarsResultsTime = (intlLocale: string) =>
+  ["de", "es", "fr", "id", "ja", "nl", "pl", "pt", "sv", "tr"].some((localePrefix) =>
     intlLocale.toLowerCase().startsWith(localePrefix),
   );
 
@@ -243,7 +247,7 @@ const formatCompactDate = (date: string, intlLocale: string, fallback: string) =
     : date;
 };
 
-const formatDate = (date: string, intlLocale: string, fallback: string) => {
+export const formatDate = (date: string, intlLocale: string, fallback: string) => {
   if (!date) {
     return fallback;
   }
@@ -318,7 +322,7 @@ const getWeekdays = (intlLocale: string) =>
     ),
   );
 
-const formatTimeLabel = (time: string, intlLocale: string) => {
+export const formatTimeLabel = (time: string, intlLocale: string) => {
   const [hourValue, minuteValue] = time.split(":").map(Number);
 
   if (Number.isNaN(hourValue) || Number.isNaN(minuteValue)) {
@@ -326,7 +330,8 @@ const formatTimeLabel = (time: string, intlLocale: string) => {
   }
 
   if (usesTwentyFourHourCarsResultsTime(intlLocale)) {
-    return `${String(hourValue).padStart(2, "0")}:${String(minuteValue).padStart(2, "0")}`;
+    const separator = intlLocale.toLowerCase().startsWith("id") ? "." : ":";
+    return `${String(hourValue).padStart(2, "0")}${separator}${String(minuteValue).padStart(2, "0")}`;
   }
 
   if (usesLocalizedCarsResultsTime(intlLocale)) {
