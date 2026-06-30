@@ -10050,6 +10050,60 @@ test("Swedish Destinations page copy resolves through active i18n keys", () => {
   assert.ok(cardSource.includes("aria-label={ariaLabel}"));
 });
 
+test("Indonesian Saved trips render path resolves active locale copy", () => {
+  const savedPageSource = readFileSync("src/app/saved/page.tsx", "utf8");
+  const dashboardSavedSource = readFileSync("src/app/dashboard/saved/page.tsx", "utf8");
+  const savedComponentSource = readFileSync(
+    "src/components/saved/SavedTripsAndRecentSearches.tsx",
+    "utf8",
+  );
+  const idDictionary = getTranslations("id");
+  const screenshotEnglishStrings = [
+    "Saved trips",
+    "Your handpicked itineraries and trending routes.",
+    "Save destinations you love",
+    "Tap the heart icon on any route to build your personal shortlist and keep your next adventure one click away.",
+    "Explore destinations",
+  ];
+
+  assert.equal(idDictionary.savedTripsPageTitle, "Perjalanan tersimpan");
+  assert.equal(
+    idDictionary.savedTripsPageSubtitle,
+    "Rencana perjalanan pilihan Anda dan rute yang sedang tren.",
+  );
+  assert.equal(idDictionary.savedTripsEmptyTitle, "Simpan destinasi yang Anda sukai");
+  assert.equal(
+    idDictionary.savedTripsEmptyDescription,
+    "Ketuk ikon hati pada rute mana pun untuk membuat daftar pilihan pribadi Anda dan menjaga petualangan berikutnya tetap mudah dijangkau.",
+  );
+  assert.equal(idDictionary.savedTripsExploreDestinations, "Jelajahi destinasi");
+  for (const englishString of screenshotEnglishStrings) {
+    assert.notEqual(idDictionary.savedTripsPageTitle, englishString);
+    assert.notEqual(idDictionary.savedTripsPageSubtitle, englishString);
+    assert.notEqual(idDictionary.savedTripsEmptyTitle, englishString);
+    assert.notEqual(idDictionary.savedTripsEmptyDescription, englishString);
+    assert.notEqual(idDictionary.savedTripsExploreDestinations, englishString);
+  }
+
+  assert.ok(savedPageSource.includes("<SavedTripsAndRecentSearches />"));
+  assert.ok(dashboardSavedSource.includes('redirect("/saved")'));
+  assert.ok(savedComponentSource.includes("const { locale, t: dictionary } = useLocale();"));
+  assert.ok(savedComponentSource.includes('const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";'));
+  assert.ok(savedComponentSource.includes('t("savedTripsPageTitle")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsPageSubtitle")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsEmptyTitle")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsEmptyDescription")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsExploreDestinations")'));
+  for (const englishString of screenshotEnglishStrings) {
+    assert.ok(!savedComponentSource.includes(`>${englishString}<`));
+  }
+  assert.ok(savedComponentSource.includes('href="/"'));
+  assert.ok(savedComponentSource.includes("readSavedTripIds"));
+  assert.ok(savedComponentSource.includes("writeSavedTripIds"));
+  assert.ok(languageOptions.some((o) => o.code === "id" && o.direction === "ltr"));
+  assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
+});
+
 test("Swedish Saved trips page copy resolves through active i18n keys", () => {
   const savedPageSource = readFileSync("src/app/saved/page.tsx", "utf8");
   const dashboardSavedSource = readFileSync("src/app/dashboard/saved/page.tsx", "utf8");
