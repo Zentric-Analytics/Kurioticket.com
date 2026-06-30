@@ -398,7 +398,7 @@ export const translations: TranslationDictionary = {
     "Change the password used to sign in to your account.",
   "accountDashboard.security.passkeys.title": "Passkeys",
   "accountDashboard.security.passkeys.description":
-    "Use your device or security key to sign in faster.",
+    "Use your device screen lock, Face ID, fingerprint, password manager, or security key to sign in faster and more securely.",
   "accountDashboard.security.twoFactor.title": "Two-factor authentication",
   "accountDashboard.security.twoFactor.description":
     "Add extra protection with an authenticator app.",

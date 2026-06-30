@@ -8527,3 +8527,109 @@ test("Swedish Legal About How active pages resolve localized copy", () => {
   assert.ok(languageOptions.some((o) => o.code === "sv" && o.locale === "sv-SE" && o.direction === "ltr"));
   assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
 });
+
+test("Swedish Account Personal details and Security settings copy resolves without English fallback", () => {
+  const personalReadOnly = {
+    "accountDashboard.mobile.backAriaLabel": "Tillbaka till Mitt konto",
+    "accountDashboard.hub.title": "Mitt konto",
+    "accountDashboard.personalDetails.title": "Personuppgifter",
+    "accountDashboard.personalDetails.subtitle": "Uppdatera dina uppgifter och hantera hur de används i Kurioticket.",
+    "accountDashboard.personalDetails.description": "Hantera informationen som Kurioticket använder för ditt konto.",
+    "accountDashboard.personalDetails.name": "Namn",
+    "accountDashboard.personalDetails.addName": "Lägg till ditt namn",
+    "accountDashboard.personalDetails.emailAddress": "E-postadress",
+    "accountDashboard.personalDetails.phoneNumber": "Telefonnummer",
+    "accountDashboard.personalDetails.addPhoneNumber": "Lägg till ditt telefonnummer",
+    "accountDashboard.personalDetails.dateOfBirth": "Födelsedatum",
+    "accountDashboard.personalDetails.addDateOfBirth": "Lägg till ditt födelsedatum",
+    "accountDashboard.personalDetails.gender": "Kön",
+    "accountDashboard.personalDetails.addGender": "Lägg till ditt kön",
+    "accountDashboard.personalDetails.nationality": "Nationalitet",
+    "accountDashboard.personalDetails.addNationality": "Lägg till din nationalitet",
+    "accountDashboard.personalDetails.address": "Adress",
+    "accountDashboard.personalDetails.addAddress": "Lägg till din adress",
+    "accountDashboard.personalDetails.edit": "Redigera",
+  } as const;
+
+  const personalEdit = {
+    "accountDashboard.personalDetails.section.basicInformation": "Grundläggande information",
+    "accountDashboard.personalDetails.emailVerified": "Verifierad",
+    "accountDashboard.personalDetails.changeEmail": "Ändra e-post",
+    "accountDashboard.personalDetails.emailHelper": "Den här e-postadressen används för inloggning och bokningsbekräftelser. Ändringar kräver verifiering.",
+    "accountDashboard.personalDetails.phoneHelper": "Vi använder det här numret för bokningsuppdateringar.",
+    "accountDashboard.personalDetails.dateOfBirthDayPlaceholder": "DD",
+    "accountDashboard.personalDetails.monthPlaceholder": "Månad",
+    "accountDashboard.personalDetails.dateOfBirthYearPlaceholder": "ÅÅÅÅ",
+    "accountDashboard.personalDetails.addressDescription": "Används för fakturering, bokningsuppgifter och resekommunikation.",
+    "accountDashboard.personalDetails.countryRegion": "Land/region",
+    "accountDashboard.personalDetails.selectOne": "Välj ett alternativ",
+    "accountDashboard.personalDetails.streetAddress": "Gatuadress",
+    "accountDashboard.personalDetails.apartmentSuite": "Lägenhet, svit, enhet, byggnad",
+    "accountDashboard.personalDetails.townCity": "Ort / stad",
+    "accountDashboard.personalDetails.stateProvinceRegion": "Delstat / provins / region",
+    "accountDashboard.personalDetails.postcodeZip": "Postnummer",
+    "accountDashboard.personalDetails.cancel": "Avbryt",
+    "accountDashboard.personalDetails.saveChanges": "Spara ändringar",
+  } as const;
+
+  const security = {
+    "accountDashboard.security.title": "Säkerhetsinställningar",
+    "accountDashboard.security.description": "Hantera inloggning och kontosäkerhet för ditt Kurioticket-konto.",
+    "accountDashboard.security.password.title": "Lösenord",
+    "accountDashboard.security.password.description": "Ändra lösenordet som används för att logga in på ditt konto.",
+    "accountDashboard.security.action.changePassword": "Ändra lösenord",
+    "accountDashboard.security.twoFactor.title": "Tvåfaktorsautentisering",
+    "accountDashboard.security.twoFactor.description": "Lägg till extra skydd med en autentiseringsapp.",
+    "accountDashboard.security.action.setUp": "Konfigurera",
+    "accountDashboard.security.passkeys.title": "Passkeys",
+    "accountDashboard.security.passkeys.description": "Använd enhetens skärmlås, Face ID, fingeravtryck, lösenordshanterare eller säkerhetsnyckel för att logga in snabbare och säkrare.",
+    "accountDashboard.security.activeSessions.title": "Aktiva sessioner",
+    "accountDashboard.security.activeSessions.description": "Granska enheter som är inloggade på ditt konto.",
+    "accountDashboard.security.action.manageSessions": "Hantera sessioner",
+    "accountDashboard.security.notifications.title": "Säkerhetsaviseringar",
+    "accountDashboard.security.notifications.description": "Få aviseringar om viktig kontoaktivitet.",
+    "accountDashboard.security.action.turnOff": "Stäng av",
+    "accountDashboard.security.deleteAccount.title": "Radera konto",
+    "accountDashboard.security.deleteAccount.description": "Begär permanent radering av kontot.",
+    "accountDashboard.security.action.deleteAccount": "Radera konto",
+  } as const;
+
+  for (const [key, expected] of Object.entries({ ...personalReadOnly, ...personalEdit, ...security })) {
+    assert.equal(svTranslations[key], expected, key);
+    if (!["accountDashboard.personalDetails.dateOfBirthDayPlaceholder", "accountDashboard.security.passkeys.title"].includes(key)) {
+      assert.notEqual(svTranslations[key], enTranslations[key], `${key} should not fall back to English`);
+    }
+  }
+
+  const svOption = languageOptions.find((option) => option.code === "sv");
+  const arOption = languageOptions.find((option) => option.code === "ar");
+  assert.equal(svOption?.locale, "sv-SE");
+  assert.equal(svOption?.nativeLabel, "Svenska");
+  assert.equal(svOption?.direction, "ltr");
+  assert.equal(arOption?.direction, "rtl");
+
+  const preservedEmail = "bharrywalker@gmail.com";
+  const preservedPhone = "+234 801 234 5678";
+  const preservedName = "B Harry Walker";
+  assert.equal(preservedEmail, "bharrywalker@gmail.com");
+  assert.equal(preservedPhone.startsWith("+234"), true);
+  assert.equal(preservedName, "B Harry Walker");
+
+  const dashboardSource = readFileSync("src/components/dashboard/DashboardGrid.tsx", "utf8");
+  const accountPageSource = readFileSync("src/app/dashboard/account/page.tsx", "utf8");
+  assert.ok(accountPageSource.includes("<AccountMenuPage"));
+  for (const key of Object.keys({ ...personalReadOnly, ...personalEdit, ...security })) {
+    assert.ok(dashboardSource.includes(key) || accountPageSource.includes(key) || key === "accountDashboard.hub.title" || key === "accountDashboard.mobile.backAriaLabel", `Active account render path should read ${key}`);
+  }
+  assert.ok(dashboardSource.includes('tx("accountDashboard.security.passkeys.description"'));
+  assert.ok(dashboardSource.includes('href="/dashboard/account"'));
+  assert.ok(dashboardSource.includes('onClick={handleCancel}'));
+  assert.ok(dashboardSource.includes('onClick={handleSave}'));
+  assert.ok(dashboardSource.includes('onClick={onStartChange}'));
+  assert.ok(dashboardSource.includes('type="button"'));
+  assert.ok(dashboardSource.includes('setPasswordModalOpen(true)'));
+  assert.ok(dashboardSource.includes('setPasskeysModalOpen(true)'));
+  assert.ok(dashboardSource.includes('handleOpenSessions'));
+  assert.ok(dashboardSource.includes('handleSecurityAlertsToggle'));
+  assert.ok(dashboardSource.includes('setDeleteModalOpen(true)'));
+});
