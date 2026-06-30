@@ -9418,3 +9418,127 @@ test("Indonesian homepage visible copy and render paths resolve without English 
   assert.ok(searchTabsSource.includes('t.roundTrip') && searchTabsSource.includes('translate("hotelSearchGuestsLabel")') && searchTabsSource.includes('translate("infantsOnLap")'));
   assert.ok(footerSource.includes('t.footerSellerOfTravelNotice') && footerSource.includes('t.footerPrivacy'));
 });
+
+test("Indonesian Destinations page copy resolves through active i18n keys", () => {
+  const id = idTranslations as Record<string, string>;
+  const destinationsPageSource = readFileSync("src/app/destinations/page.tsx", "utf8");
+  const destinationCardSource = readFileSync("src/app/destinations/DestinationCard.tsx", "utf8");
+
+  const expected = {
+    destinationsHeroBadge: "PENEMUAN DESTINASI",
+    destinationsHeroTitle: "Ke mana Anda ingin pergi selanjutnya?",
+    destinationsHeroSubtitle: "Panduan pilihan untuk wisata kota, pantai, pusat budaya, dan lainnya.",
+    destinationsRegionsAriaLabel: "Wilayah destinasi",
+    destinationsCardAriaLabel: "Cari penerbangan ke {destination}",
+    destinationsImageAltSuffix: "fotografi perjalanan",
+    "destinations.card.subtitle": "Pemandangan menarik, penerbangan, hotel, dan promo",
+    "destinations.region.europe": "Eropa",
+    "destinations.region.northAmerica": "Amerika Utara",
+    "destinations.region.asia": "Asia",
+    "destinations.region.africa": "Afrika",
+    "destinations.region.middleEast": "Timur Tengah",
+    "destinations.region.europe.summary": "Liburan kota ikonis dengan budaya, arsitektur, kanal romantis, rute indah, dan akhir pekan kuliner yang klasik.",
+    "destinations.region.northAmerica.summary": "Pelarian kota, pantai, taman, cakrawala terkenal, pusat hiburan, dan ide perjalanan darat ikonis yang layak direncanakan.",
+    "destinations.region.asia.summary": "Kota neon, pelarian pulau, legenda kuliner jalanan, budaya kaya, pantai, dan gerbang belanja serta hub utama.",
+    "destinations.region.africa.summary": "Gerbang safari, kota pesisir, pusat bisnis, ibu kota kreatif, dan rute budaya dengan panorama yang kuat.",
+    "destinations.region.middleEast.summary": "Kota modern, landmark bersejarah, pantai hangat, distrik warisan, dan hub regional dengan keramahan kontemporer.",
+    "destinations.city.rome": "Roma",
+    "destinations.city.prague": "Praha",
+    "destinations.city.athens": "Athena",
+    "destinations.city.venice": "Venesia",
+    "destinations.city.florence": "Firenze",
+    "destinations.city.copenhagen": "Kopenhagen",
+    "destinations.city.zurich": "Zürich",
+    "destinations.city.vienna": "Wina",
+    "destinations.city.singapore": "Singapura",
+    "destinations.city.marrakech": "Marrakesh",
+    "destinations.country.unitedKingdom": "Inggris Raya",
+    "destinations.country.france": "Prancis",
+    "destinations.country.italy": "Italia",
+    "destinations.country.spain": "Spanyol",
+    "destinations.country.netherlands": "Belanda",
+    "destinations.country.czechia": "Ceko",
+    "destinations.country.greece": "Yunani",
+    "destinations.country.unitedStates": "Amerika Serikat",
+    "destinations.country.japan": "Jepang",
+    "destinations.country.southKorea": "Korea Selatan",
+    "destinations.country.southAfrica": "Afrika Selatan",
+    "destinations.country.morocco": "Maroko",
+    "destinations.country.unitedArabEmirates": "Uni Emirat Arab",
+    "destinations.country.turkey": "Turki",
+    "destinations.country.saudiArabia": "Arab Saudi",
+    "destinations.tag.iconicSkyline": "CAKRAWALA IKONIS",
+    "destinations.tag.landmarkEscape": "PELARIAN LANDMARK",
+    "destinations.tag.cultureCapital": "IBU KOTA BUDAYA",
+    "destinations.tag.goldenHourViews": "PEMANDANGAN SENJA",
+    "destinations.tag.coastalEnergy": "ENERGI PESISIR",
+    "destinations.tag.foodMarketNights": "MALAM PASAR KULINER",
+    "destinations.tag.historicStreets": "JALAN BERSEJARAH",
+    "destinations.tag.designWeekend": "AKHIR PEKAN DESAIN",
+  };
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(id[key], value, `${key} should resolve to Indonesian`);
+    if (value !== (enTranslations as Record<string, string>)[key]) {
+      assert.notEqual(id[key], (enTranslations as Record<string, string>)[key], `${key} should not fall back to English`);
+    }
+  }
+
+  assert.ok(destinationsPageSource.includes("dictionary.destinationsHeroBadge"));
+  assert.ok(destinationsPageSource.includes("dictionary.destinationsHeroTitle"));
+  assert.ok(destinationsPageSource.includes("dictionary.destinationsHeroSubtitle"));
+  assert.ok(destinationsPageSource.includes("translateValue(dictionary, regionLabelKeys[section.region], section.region)"));
+  assert.ok(destinationsPageSource.includes("dictionary[section.summaryKey]"));
+  assert.ok(destinationsPageSource.includes("destinationNameKeys[destination.name]"));
+  assert.ok(destinationsPageSource.includes("destinationCountryKeys[destination.country]"));
+  assert.ok(destinationsPageSource.includes("dictionary[destination.tagKey]"));
+  assert.ok(destinationsPageSource.includes("dictionary[destinationSubtitleKey]"));
+  assert.ok(destinationsPageSource.includes("dictionary.destinationsImageAltSuffix"));
+  assert.ok(destinationsPageSource.includes("dictionary.destinationsCardAriaLabel.replace"));
+  assert.ok(destinationCardSource.includes("aria-label={ariaLabel}"));
+  assert.ok(destinationCardSource.includes("alt={imageAlt}"));
+  assert.ok(destinationsPageSource.includes('href={getDestinationHref(destination)}'));
+  assert.ok(destinationsPageSource.includes('return `/flights?destination=${encodeURIComponent(destination.name)}`;'));
+  assert.ok(destinationsPageSource.includes('key={`${destination.region}-${destination.name}`}'));
+  assert.ok(destinationsPageSource.includes('image={destination.image}'));
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+});
+
+test("Indonesian Saved trips page copy and routes resolve through active i18n keys", () => {
+  const id = idTranslations as Record<string, string>;
+  const savedPageSource = readFileSync("src/app/saved/page.tsx", "utf8");
+  const dashboardSavedSource = readFileSync("src/app/dashboard/saved/page.tsx", "utf8");
+  const savedComponentSource = readFileSync("src/components/saved/SavedTripsAndRecentSearches.tsx", "utf8");
+
+  const expected = {
+    savedTripsPageTitle: "Perjalanan tersimpan",
+    savedTripsPageSubtitle: "Rencana perjalanan pilihan Anda dan rute yang sedang tren.",
+    savedTripsEmptyTitle: "Simpan destinasi yang Anda sukai",
+    savedTripsEmptyDescription: "Ketuk ikon hati pada rute mana pun untuk membuat daftar pilihan pribadi Anda dan menjaga petualangan berikutnya tetap mudah dijangkau.",
+    savedTripsExploreDestinations: "Jelajahi destinasi",
+  };
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(id[key], value, `${key} should resolve to Indonesian`);
+    if (value !== (enTranslations as Record<string, string>)[key]) {
+      assert.notEqual(id[key], (enTranslations as Record<string, string>)[key], `${key} should not fall back to English`);
+    }
+  }
+
+  assert.ok(savedPageSource.includes("<SavedTripsAndRecentSearches />"));
+  assert.ok(dashboardSavedSource.includes('redirect("/saved")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsPageTitle")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsPageSubtitle")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsEmptyTitle")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsEmptyDescription")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsExploreDestinations")'));
+  assert.ok(savedComponentSource.includes('readSavedTripIds()'));
+  assert.ok(savedComponentSource.includes('writeSavedTripIds(nextIds)'));
+  assert.ok(savedComponentSource.includes('writeSavedTripIds([])'));
+  assert.ok(savedComponentSource.includes('readRecentSearches()'));
+  assert.ok(savedComponentSource.includes('href="/"'));
+  assert.ok(savedComponentSource.includes('href: "/destinations"'));
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+});
