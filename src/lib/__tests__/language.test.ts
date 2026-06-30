@@ -127,6 +127,86 @@ test("Indonesian locale is active with homepage copy overrides", () => {
 
 
 
+test("Indonesian Account dropdown and Dashboard copy resolves through active i18n render paths", () => {
+  const appHeaderSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
+  const dashboardPageSource = readFileSync("src/app/dashboard/page.tsx", "utf8");
+  const dashboardGridSource = readFileSync("src/components/dashboard/DashboardGrid.tsx", "utf8");
+  const id = idTranslations as Record<string, string>;
+
+  const expectedAccountCopy: Record<string, string> = {
+    "accountMenu.myAccount.label": "Akun saya",
+    "accountMenu.savedTrips.label": "Perjalanan tersimpan",
+    "accountMenu.priceAlerts.label": "Peringatan harga",
+    "accountMenu.closeAccountMenu": "Tutup menu akun",
+    myAccount: "Akun saya",
+    openAccountMenu: "Buka menu akun",
+    logout: "Keluar",
+    "accountDashboard.overview.welcome": "Selamat datang kembali, {name}",
+    "accountDashboard.hub.title": "Akun saya",
+    "accountDashboard.hub.description": "Kelola perjalanan, item tersimpan, preferensi, dan pengaturan akun Anda dalam satu tempat.",
+    "accountDashboard.hub.manageAccount": "Kelola akun",
+    "accountDashboard.hub.personalDetails": "Detail pribadi",
+    "accountDashboard.hub.securitySettings": "Pengaturan keamanan",
+    "accountDashboard.hub.travelActivity": "Aktivitas perjalanan",
+    "accountDashboard.hub.myTrips": "Perjalanan saya",
+    "accountDashboard.hub.savedTrips": "Perjalanan tersimpan",
+    "accountDashboard.hub.priceAlerts": "Peringatan harga",
+    "accountDashboard.hub.preferences": "Preferensi",
+    "accountDashboard.hub.emailPreferences": "Preferensi penyesuaian",
+    "accountDashboard.hub.travelPreferences": "Preferensi pemesanan",
+    "accountDashboard.hub.helpAndSupport": "Bantuan dan dukungan",
+    "accountDashboard.hub.contactSupport": "Hubungi dukungan",
+    "accountDashboard.hub.faq": "FAQ",
+  };
+
+  for (const [key, value] of Object.entries(expectedAccountCopy)) {
+    assert.equal(id[key], value, `${key} should resolve to Indonesian`);
+    if (value !== "FAQ") assert.notEqual(id[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  const dynamicName = "Oluwadunbarin Olayinka";
+  const dynamicEmail = "bharrywalker@gmail.com";
+  const dynamicInitials = "OO";
+  assert.equal(id["accountDashboard.overview.welcome"].replace("{name}", dynamicName), `Selamat datang kembali, ${dynamicName}`);
+  assert.match(id["accountDashboard.overview.welcome"], /\{name\}/);
+
+  assert.ok(appHeaderSource.includes('labelKey: "accountMenu.myAccount.label"'));
+  assert.ok(appHeaderSource.includes('labelKey: "accountMenu.savedTrips.label"'));
+  assert.ok(appHeaderSource.includes('labelKey: "accountMenu.priceAlerts.label"'));
+  assert.ok(appHeaderSource.includes("label: t[item.labelKey]"));
+  assert.ok(appHeaderSource.includes("{isSigningOut ? t.signingOut : t.logout}"));
+  assert.ok(!appHeaderSource.includes(">My account<") && !appHeaderSource.includes(">Saved trips<") && !appHeaderSource.includes(">Price alerts<") && !appHeaderSource.includes(">Logout<"));
+
+  assert.ok(dashboardPageSource.includes("<DashboardOverview") && dashboardPageSource.includes("initials={initials}") && dashboardPageSource.includes("displayName={displayName}") && dashboardPageSource.includes("userEmail={userEmail}"));
+  assert.ok(dashboardGridSource.includes('titleKey: "accountDashboard.hub.manageAccount"'));
+  assert.ok(dashboardGridSource.includes('labelKey: "accountDashboard.hub.personalDetails"'));
+  assert.ok(dashboardGridSource.includes('labelKey: "accountDashboard.hub.securitySettings"'));
+  assert.ok(dashboardGridSource.includes('titleKey: "accountDashboard.hub.travelActivity"'));
+  assert.ok(dashboardGridSource.includes('labelKey: "accountDashboard.hub.myTrips"'));
+  assert.ok(dashboardGridSource.includes('labelKey: "accountDashboard.hub.savedTrips"'));
+  assert.ok(dashboardGridSource.includes('labelKey: "accountDashboard.hub.priceAlerts"'));
+  assert.ok(dashboardGridSource.includes('titleKey: "accountDashboard.hub.preferences"'));
+  assert.ok(dashboardGridSource.includes('labelKey: "accountDashboard.hub.emailPreferences"'));
+  assert.ok(dashboardGridSource.includes('labelKey: "accountDashboard.hub.travelPreferences"'));
+  assert.ok(dashboardGridSource.includes('titleKey: "accountDashboard.hub.helpAndSupport"'));
+  assert.ok(dashboardGridSource.includes('labelKey: "accountDashboard.hub.contactSupport"'));
+  assert.ok(dashboardGridSource.includes('labelKey: "accountDashboard.hub.faq"'));
+  assert.ok(dashboardGridSource.includes('formatAccountWelcome(') && dashboardGridSource.includes('t["accountDashboard.overview.welcome"]'));
+  assert.ok(dashboardGridSource.includes('t["accountDashboard.hub.description"]'));
+  assert.ok(dashboardGridSource.includes('t["accountDashboard.mobile.manageAccount"]'));
+  assert.ok(!dashboardGridSource.includes(">Welcome back,") && !dashboardGridSource.includes(">Manage account<") && !dashboardGridSource.includes(">Personal details<"));
+
+  assert.ok(appHeaderSource.includes('href: "/dashboard/account"') && appHeaderSource.includes('href: "/saved"') && appHeaderSource.includes('href: "/dashboard/alerts"'));
+  assert.ok(dashboardGridSource.includes('href: "/dashboard"') && dashboardGridSource.includes('href: "/dashboard/security"') && dashboardGridSource.includes('href: "/dashboard/trips"') && dashboardGridSource.includes('href: "/saved?from=account"') && dashboardGridSource.includes('href: "/dashboard/alerts?from=account"'));
+  assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.manageAccount"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.travelActivity"'));
+  assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.travelActivity"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.preferences"'));
+  assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.preferences"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.helpAndSupport"'));
+  assert.ok(!appHeaderSource.includes(dynamicName) && !appHeaderSource.includes(dynamicEmail) && !appHeaderSource.includes(dynamicInitials));
+  assert.ok(!dashboardGridSource.includes(dynamicName) && !dashboardGridSource.includes(dynamicEmail) && !dashboardGridSource.includes(dynamicInitials));
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+});
+
 test("flight quote unavailable copy resolves through active render path for all available locales", () => {
   const flightDetailsSource = readFileSync("src/components/results/FlightDetailsClient.tsx", "utf8");
   const expected = {
