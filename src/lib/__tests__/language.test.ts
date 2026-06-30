@@ -24,7 +24,9 @@ import { translations as hiTranslations } from "@/lib/i18n/hi";
 import { translations as trTranslations } from "@/lib/i18n/tr";
 import { translations as plTranslations } from "@/lib/i18n/pl";
 import { translations as svTranslations } from "@/lib/i18n/sv";
+import { translations as idTranslations } from "@/lib/i18n/id";
 import { availableLocaleOptions, getTranslations } from "@/lib/i18n";
+import { supportedLocales } from "@/lib/supportedLocales";
 import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
 import { buildHomepageRouteCardFlightHref } from "@/lib/home/homepageRouteCardLinks";
 import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
@@ -68,6 +70,57 @@ test("global language catalog renders", () => {
   assert.ok(languageOptions.some((o) => o.code === "pl" && o.locale === "pl-PL" && o.nativeLabel === "Polski" && o.label === "Polish" && o.countryCode === "PL" && o.direction === "ltr" && o.status === "available"));
   assert.equal(languageOptions.filter((o) => o.code === "sv").length, 1);
   assert.ok(languageOptions.some((o) => o.code === "sv" && o.locale === "sv-SE" && o.nativeLabel === "Svenska" && o.label === "Swedish" && o.countryCode === "SE" && o.direction === "ltr" && o.status === "available"));
+  assert.equal(languageOptions.filter((o) => o.code === "id").length, 1);
+  assert.ok(languageOptions.some((o) => o.code === "id" && o.locale === "id-ID" && o.nativeLabel === "Bahasa Indonesia" && o.label === "Indonesian" && o.countryCode === "ID" && o.fallbackText === "ID" && o.direction === "ltr" && o.status === "available"));
+});
+
+test("Indonesian locale is active with English starter fallback", () => {
+  const indonesianOptions = languageOptions.filter((o) => o.code === "id");
+  const indonesianLocaleMetadata = supportedLocales.filter((o) => o.code === "id");
+
+  assert.equal(indonesianOptions.length, 1);
+  assert.equal(indonesianLocaleMetadata.length, 1);
+  assert.deepEqual(
+    {
+      code: indonesianOptions[0]?.code,
+      locale: indonesianOptions[0]?.locale,
+      label: indonesianOptions[0]?.label,
+      nativeLabel: indonesianOptions[0]?.nativeLabel,
+      direction: indonesianOptions[0]?.direction,
+      status: indonesianOptions[0]?.status,
+      countryCode: indonesianOptions[0]?.countryCode,
+      fallbackText: indonesianOptions[0]?.fallbackText,
+      translationStatus: indonesianLocaleMetadata[0]?.translationStatus,
+    },
+    {
+      code: "id",
+      locale: "id-ID",
+      label: "Indonesian",
+      nativeLabel: "Bahasa Indonesia",
+      direction: "ltr",
+      status: "available",
+      countryCode: "ID",
+      fallbackText: "ID",
+      translationStatus: "partial",
+    },
+  );
+  assert.equal(normalizeLanguage("id"), "id");
+  assert.equal(normalizeLanguage("id-ID"), "id");
+  assert.equal(normalizeLanguage("id-id"), "id");
+  assert.equal(getTranslations("id"), idTranslations);
+  assert.equal(getTranslations("id-ID"), idTranslations);
+  assert.equal(idTranslations.homeHeroTitle, enTranslations.homeHeroTitle);
+  assert.equal(idTranslations.search, enTranslations.search);
+  assert.ok(availableLocaleOptions.some((o) => o.code === "id" && o.nativeLabel === "Bahasa Indonesia"));
+  assert.ok(languageOptions.some((o) => o.code === "id" && o.nativeLabel === "Bahasa Indonesia" && o.status === "available"));
+  assert.equal(indonesianOptions[0]?.direction, "ltr");
+
+  const arabicOption = languageOptions.find((o) => o.code === "ar");
+  assert.equal(arabicOption?.direction, "rtl");
+
+  for (const option of languageOptions.filter((o) => o.status === "available" && o.code !== "ar")) {
+    assert.equal(option.direction, "ltr", `${option.code} should remain ltr`);
+  }
 });
 
 
