@@ -8405,6 +8405,88 @@ test("Swedish remains ltr and Arabic remains rtl", () => {
   assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
 });
 
+test("Swedish account dashboard overview resolves localized copy while preserving dashboard behavior", () => {
+  const accountPageSource = readFileSync("src/app/dashboard/account/page.tsx", "utf8");
+  const dashboardSource = readFileSync("src/components/dashboard/DashboardGrid.tsx", "utf8");
+  const supportedLocalesSource = readFileSync("src/lib/supportedLocales.ts", "utf8");
+  const name = "Oluwadunbarin";
+  const fullName = "Oluwadunbarin Olayinka";
+  const email = "bharrywalker@gmail.com";
+  const initials = "OO";
+
+  assert.equal(svTranslations["accountDashboard.overview.welcome"], "Välkommen tillbaka, {name}");
+  assert.equal(svTranslations["accountDashboard.overview.welcome"].replace("{name}", name), "Välkommen tillbaka, Oluwadunbarin");
+  assert.equal(
+    svTranslations["accountDashboard.hub.description"],
+    "Hantera dina resor, sparade objekt, preferenser och kontoinställningar på ett ställe.",
+  );
+  assert.equal(svTranslations["accountDashboard.hub.manageAccount"], "Hantera konto");
+  assert.equal(svTranslations["accountDashboard.hub.travelActivity"], "Reseaktivitet");
+  assert.equal(svTranslations["accountDashboard.hub.preferences"], "Preferenser");
+  assert.equal(svTranslations["accountDashboard.hub.helpAndSupport"], "Hjälp och support");
+  assert.equal(svTranslations["accountDashboard.hub.personalDetails"], "Personuppgifter");
+  assert.equal(svTranslations["accountDashboard.hub.securitySettings"], "Säkerhetsinställningar");
+  assert.equal(svTranslations["accountDashboard.hub.myTrips"], "Mina resor");
+  assert.equal(svTranslations["accountDashboard.hub.savedTrips"], "Sparade resor");
+  assert.equal(svTranslations["accountDashboard.hub.priceAlerts"], "Prisaviseringar");
+  assert.equal(svTranslations["accountDashboard.hub.emailPreferences"], "Anpassningspreferenser");
+  assert.equal(svTranslations["accountDashboard.hub.travelPreferences"], "Bokningspreferenser");
+  assert.equal(svTranslations["accountDashboard.hub.contactSupport"], "Kontakta support");
+  assert.equal(svTranslations["accountDashboard.hub.faq"], "Vanliga frågor");
+
+  assert.ok(accountPageSource.includes("const displayName = getSafeDisplayName(userName, userEmail);"));
+  assert.ok(accountPageSource.includes("const initials = getInitials(userName, userEmail);"));
+  assert.ok(accountPageSource.includes("userEmail={userEmail}"));
+  assert.equal(fullName, "Oluwadunbarin Olayinka");
+  assert.equal(email, "bharrywalker@gmail.com");
+  assert.equal(initials, "OO");
+
+  const expectedPanelOrder = [
+    "accountDashboard.hub.manageAccount",
+    "accountDashboard.hub.personalDetails",
+    "accountDashboard.hub.securitySettings",
+    "accountDashboard.hub.travelActivity",
+    "accountDashboard.hub.myTrips",
+    "accountDashboard.hub.savedTrips",
+    "accountDashboard.hub.priceAlerts",
+    "accountDashboard.hub.preferences",
+    "accountDashboard.hub.emailPreferences",
+    "accountDashboard.hub.travelPreferences",
+    "accountDashboard.hub.helpAndSupport",
+    "accountDashboard.hub.contactSupport",
+    "accountDashboard.hub.faq",
+  ];
+  let cursor = -1;
+  for (const key of expectedPanelOrder) {
+    const next = dashboardSource.indexOf(key, cursor + 1);
+    assert.ok(next > cursor, `${key} should remain in dashboard panel order`);
+    cursor = next;
+  }
+
+  for (const route of [
+    'href: "/dashboard"',
+    'href: "/dashboard/security"',
+    'href: "/dashboard/trips"',
+    'href: "/saved?from=account"',
+    'href: "/dashboard/alerts?from=account"',
+    'href: "/dashboard/preferences/customization"',
+    'href: "/dashboard/preferences/booking"',
+    'href: "/dashboard/support"',
+    'href: "/faq?from=account"',
+  ]) {
+    assert.ok(dashboardSource.includes(route), `${route} should remain unchanged`);
+  }
+
+  for (const icon of ["UserRound", "ShieldCheck", "BriefcaseBusiness", "Bookmark", "Bell", "Mail", "Settings", "Headphones", "CircleHelp", "ChevronRight"]) {
+    assert.ok(dashboardSource.includes(icon), `${icon} should remain in account dashboard overview`);
+  }
+  assert.ok(dashboardSource.includes("href={row.href}"), "Dashboard rows should keep Link click behavior.");
+  assert.ok(dashboardSource.includes('className="grid gap-4 md:grid-cols-2 lg:gap-5"'), "Dashboard overview layout should remain unchanged.");
+  assert.ok(accountPageSource.includes("getServerSession(authOptions)"), "Account overview should preserve auth/session behavior.");
+  assert.ok(supportedLocalesSource.includes('code: "sv"') && supportedLocalesSource.includes('locale: "sv-SE"') && supportedLocalesSource.includes('nativeLabel: "Svenska"') && supportedLocalesSource.includes('direction: "ltr"'));
+  assert.ok(supportedLocalesSource.includes('code: "ar"') && supportedLocalesSource.includes('direction: "rtl"'));
+});
+
 test("Swedish Legal About How active pages resolve localized copy", () => {
   const legalPageSource = readFileSync("src/app/legal/LegalPageContent.tsx", "utf8");
   const legalViewerSource = readFileSync("src/components/legal/LegalViewer.tsx", "utf8");
