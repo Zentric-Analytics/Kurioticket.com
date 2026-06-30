@@ -55,7 +55,6 @@ export function SigninForm({
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
-  const [moreSignInOptionsOpen, setMoreSignInOptionsOpen] = useState(false);
   const conditionalStartedRef = useRef(false);
   const passkeyAbortControllerRef = useRef<AbortController | null>(null);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
@@ -266,7 +265,14 @@ export function SigninForm({
       if (error instanceof DOMException && error.name === "AbortError") return;
       if (showStatus || mediation !== "conditional") {
         setMessage(null);
-        setError({ key: error instanceof Error ? error.message : "Passkey sign-in failed. Use password sign-in instead." });
+        setError({
+          key:
+            error instanceof DOMException && error.name === "NotAllowedError"
+              ? "Passkey sign-in was cancelled."
+              : error instanceof Error
+                ? error.message
+                : "Passkey sign-in failed. Use password sign-in instead.",
+        });
       }
     } finally {
       if (passkeyAbortControllerRef.current === abortController) passkeyAbortControllerRef.current = null;
@@ -438,47 +444,42 @@ export function SigninForm({
       )}
 
       {step === "credentials" ? (
-        <div className="mt-3 border-t border-slate-100 pt-3 text-sm">
+        <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
+          <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+            <span className="h-px flex-1 bg-slate-100" aria-hidden="true" />
+            <span>or</span>
+            <span className="h-px flex-1 bg-slate-100" aria-hidden="true" />
+          </div>
+
+          {googleEnabled ? (
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full hover:border-slate-300 hover:bg-slate-50 focus-visible:ring-violet-500"
+              onClick={() =>
+                signIn("google", {
+                  callbackUrl: callbackUrl || "/",
+                  prompt: "select_account",
+                })
+              }
+              disabled={busy}
+            >
+              {t.loginGoogle}
+            </Button>
+          ) : null}
+
           <button
             type="button"
-            className="font-semibold text-slate-600 underline-offset-4 hover:text-teal-dark hover:underline"
-            onClick={() => setMoreSignInOptionsOpen((open) => !open)}
-            aria-expanded={moreSignInOptionsOpen}
+            className="focus-ring w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-teal-dark disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={() => void startPasskeySignIn()}
+            disabled={passkeyLoading}
           >
-            More sign-in options
+            {passkeyLoading ? t.loginOpeningPasskey : t.loginUsePasskey}
           </button>
-          {moreSignInOptionsOpen ? (
-            <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-600">
-              <p className="font-semibold text-slate-900">{t.loginPasskeyPromptTitle}</p>
-              <p className="mt-1">{t.loginPasskeyPromptDescription}</p>
-              <button
-                type="button"
-                className="mt-3 font-semibold text-teal-dark hover:underline disabled:text-slate-400"
-                onClick={() => void startPasskeySignIn()}
-                disabled={passkeyLoading}
-              >
-                {passkeyLoading ? t.loginOpeningPasskey : t.loginUsePasskey}
-              </button>
-            </div>
-          ) : null}
+          <p className="text-center text-xs leading-5 text-slate-500">
+            {t.loginPasskeyPromptDescription}
+          </p>
         </div>
-      ) : null}
-
-      {googleEnabled && step === "credentials" ? (
-        <Button
-          type="button"
-          variant="secondary"
-          className="mt-3 w-full hover:border-slate-300 hover:bg-slate-50 focus-visible:ring-violet-500"
-          onClick={() =>
-            signIn("google", {
-              callbackUrl: callbackUrl || "/",
-              prompt: "select_account",
-            })
-          }
-          disabled={busy}
-        >
-          {t.loginGoogle}
-        </Button>
       ) : null}
 
       <p className="mt-4 text-sm text-muted">
