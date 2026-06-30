@@ -40,6 +40,19 @@ type TripBookingRecord = {
   externalBookingId: string | null;
 };
 
+type TripBookingPrismaClient = {
+  tripBooking: {
+    findMany(args: unknown): Promise<TripBookingRecord[]>;
+    count(args: unknown): Promise<number>;
+    findFirst(args: unknown): Promise<TripBookingRecord | null>;
+  };
+  $transaction<T extends readonly Promise<unknown>[]>(
+    queries: T,
+  ): Promise<{ -readonly [K in keyof T]: Awaited<T[K]> }>;
+};
+
+let prismaClientForTesting: TripBookingPrismaClient | null = null;
+
 const publicStatusToPrisma = {
   upcoming: "UPCOMING",
   past: "PAST",
@@ -80,7 +93,7 @@ export function isPublicTripBookingStatus(value: string): value is PublicTripBoo
 }
 
 export async function listUserTripBookings(userId: string, status?: PublicTripBookingStatus) {
-  const prisma = getPrisma();
+  const prisma = getTripBookingPrisma();
   const orderBy = status === "past" || status === "cancelled"
     ? { departureDate: "desc" as const }
     : { departureDate: "asc" as const };
@@ -99,7 +112,7 @@ export async function listUserTripBookings(userId: string, status?: PublicTripBo
     prisma.tripBooking.count({ where: { userId, status: "UPCOMING" } }),
     prisma.tripBooking.count({ where: { userId, status: "PAST" } }),
     prisma.tripBooking.count({ where: { userId, status: "CANCELLED" } }),
-  ]);
+  ]) as [TripBookingRecord[], number, number, number];
 
   return {
     trips: trips.map(serializeTripBooking),
@@ -113,7 +126,7 @@ export async function listUserTripBookings(userId: string, status?: PublicTripBo
 }
 
 export async function findUserTripBookingByReference(userId: string, bookingReference: string) {
-  const trip = await getPrisma().tripBooking.findFirst({
+  const trip = await getTripBookingPrisma().tripBooking.findFirst({
     where: {
       userId,
       bookingReference,
@@ -122,6 +135,10 @@ export async function findUserTripBookingByReference(userId: string, bookingRefe
   });
 
   return trip ? serializeTripBooking(trip) : null;
+}
+
+function getTripBookingPrisma(): TripBookingPrismaClient {
+  return prismaClientForTesting ?? (getPrisma() as unknown as TripBookingPrismaClient);
 }
 
 function serializeTripBooking(trip: TripBookingRecord): PublicTripBooking {
@@ -141,3 +158,9 @@ function serializeTripBooking(trip: TripBookingRecord): PublicTripBooking {
     externalBookingId: trip.externalBookingId,
   };
 }
+
+export const __tripBookingServiceTest = {
+  setPrismaClientForTesting(prisma: TripBookingPrismaClient | null) {
+    prismaClientForTesting = prisma;
+  },
+};
