@@ -23,6 +23,7 @@ import { LinkButton } from "@/components/ui/Button";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { personalDetailsCountryOptions } from "@/lib/region/supportedRegions";
 import { cn } from "@/lib/utils";
+import { decodeRegistrationOptions, defaultPasskeyName, passkeysSupported, serializeRegistrationCredential } from "@/lib/passkey-client";
 import type { TranslationDictionary } from "@/lib/i18n/types";
 import type { UserProfileResponse } from "@/lib/userProfile";
 
@@ -2569,14 +2570,32 @@ export function SecurityDashboardPage() {
   };
   const requestPasskeyReauth = async () => {
     const sendResponse = await fetch("/api/account/security/passkeys/reauth", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "send-email-code" }) });
-    await sendResponse.json().catch(() => ({}));
-    if (!sendResponse.ok) throw new Error("Unable to send a confirmation code.");
-    const secret = window.prompt("Enter the 6-digit code we sent to your account email. If authenticator-app 2FA is enabled, you can enter that code instead.");
+    const sendData = await sendResponse.json().catch(() => ({}));
+    if (!sendResponse.ok) throw new Error(sendData.error || "Unable to send a confirmation code.");
+    const secret = window.prompt(sendData.method === "totp" ? "Enter your authenticator-app code or a recovery code." : "Enter the 6-digit confirmation code we sent to your account email.");
     if (!secret) throw new Error("Verification is required before managing passkeys.");
     const response = await fetch("/api/account/security/passkeys/reauth", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "verify", code: secret.trim() }) });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok || !data.reauthToken) throw new Error("Unable to verify that request.");
+    if (!response.ok || !data.reauthToken) throw new Error(data.error || "Unable to verify that request.");
     return String(data.reauthToken);
+  };
+  const handleAddPasskey = async () => {
+    if (!passkeysSupported()) { setActionMessage("This browser or device does not support passkeys. You can keep using your current sign-in methods."); return; }
+    setPasskeySaving(true); setActionMessage("");
+    try {
+      const reauthToken = await requestPasskeyReauth();
+      const optionsResponse = await fetch("/api/account/security/passkeys/register/options", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reauthToken }) });
+      const optionsData = await optionsResponse.json().catch(() => ({}));
+      if (!optionsResponse.ok) throw new Error(optionsData.error || "Unable to start passkey setup.");
+      const credential = await navigator.credentials.create({ publicKey: decodeRegistrationOptions(optionsData.options) }) as PublicKeyCredential | null;
+      if (!credential) throw new Error("Passkey setup was cancelled.");
+      const suggestedName = defaultPasskeyName();
+      const name = window.prompt("Name this passkey", suggestedName) || suggestedName;
+      const verifyResponse = await fetch("/api/account/security/passkeys/register/verify", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(serializeRegistrationCredential(credential, name)) });
+      const verifyData = await verifyResponse.json().catch(() => ({}));
+      if (!verifyResponse.ok) throw new Error(verifyData.error || "Unable to verify passkey setup.");
+      showSecurityFeedback("Passkey added"); await loadPasskeys();
+    } catch (error) { setActionMessage(error instanceof Error ? error.message : "Unable to add passkey."); } finally { setPasskeySaving(false); }
   };
   const handleRenamePasskey = async (id: string, currentName: string | null) => {
     const name = window.prompt("Rename passkey", currentName || "Passkey");
@@ -2797,8 +2816,8 @@ export function SecurityDashboardPage() {
           />
           <SecuritySettingRow
             title={tx("accountDashboard.security.passkeys.title", "Passkeys")}
-            body="Passkey setup is being finalized. Existing passkeys can still be reviewed, renamed, or removed."
-            action={passkeys.length ? tx("accountDashboard.security.action.manage", "Manage") : "Coming soon"}
+            body={passkeys.length ? "Manage the devices, password managers, and security keys you use to sign in." : "Use your device screen lock, Face ID, fingerprint, password manager, or security key to sign in faster and more securely."}
+            action={passkeys.length ? tx("accountDashboard.security.action.manage", "Manage") : tx("accountDashboard.security.action.setUp", "Set up")}
             onAction={() => setPasskeysModalOpen(true)}
             statusId={securityActionStatusId}
           />
@@ -2899,11 +2918,10 @@ export function SecurityDashboardPage() {
       {passkeysModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="passkeys-title">
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-xl sm:p-6">
-            <h2 id="passkeys-title" className="text-xl font-semibold text-slate-950">Manage passkeys</h2>
-            <div className="mt-2 space-y-2 text-sm leading-6 text-slate-600"><p className="font-semibold text-slate-900">Passkey setup is coming soon</p><p>We are finalizing passkey setup so account verification continues directly into the device security prompt. To avoid a confusing setup experience, adding new passkeys is temporarily unavailable.</p><p>Existing passkeys can still be renamed or removed below.</p></div>
-            <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">Passkeys are being finalized. Please use password sign-in or Google sign-in for now.</p>
+            <h2 id="passkeys-title" className="text-xl font-semibold text-slate-950">{passkeys.length ? "Manage passkeys" : "Set up a passkey"}</h2>
+            <div className="mt-2 space-y-2 text-sm leading-6 text-slate-600"><p>Use Face ID, fingerprint, Windows Hello, your device screen lock, password manager, or security key to sign in faster and more securely.</p><p className="rounded-xl bg-slate-50 p-3 text-slate-700">Kurioticket never receives your fingerprint, face, device PIN, or private key.</p></div>
             <div className="mt-5 space-y-3">{passkeys.length ? passkeys.map((passkey) => <div key={passkey.id} className="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold text-slate-950">{passkey.name || "Passkey"}</p><p className="text-sm text-slate-600">Created {formatSessionTime(passkey.createdAt)} · Last used {passkey.lastUsedAt ? formatSessionTime(passkey.lastUsedAt) : "never"} · {passkey.label || (passkey.backedUp ? "Synced passkey" : passkey.deviceType || "Device or security key")}</p></div><div className="flex gap-2"><button type="button" onClick={() => void handleRenamePasskey(passkey.id, passkey.name)} disabled={passkeySaving} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60">Rename</button><button type="button" onClick={() => void handleRemovePasskey(passkey.id)} disabled={passkeySaving} className="focus-ring rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-60">Remove</button></div></div>) : <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">No passkeys yet.</p>}</div>
-            <div className="mt-6 flex justify-end"><button type="button" onClick={() => setPasskeysModalOpen(false)} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Done</button></div>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><button type="button" onClick={() => setPasskeysModalOpen(false)} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button><button type="button" onClick={() => void handleAddPasskey()} disabled={passkeySaving} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{passkeySaving ? "Working…" : passkeys.length ? "Add another passkey" : "Continue"}</button></div>
           </div>
         </div>
       ) : null}
