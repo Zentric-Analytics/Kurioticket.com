@@ -7005,6 +7005,119 @@ test("Turkish hotel calendar locale normalizes to tr-TR for generated month head
   }
 });
 
+
+test("Indonesian cars landing render path copy resolves without English fallback", () => {
+  const id = getTranslations("id");
+  const auditedIndonesianCarsLandingKeys: Array<[string, string]> = [
+    ["searchRentalCarsEveryPartTrip", "Cari mobil sewaan untuk setiap bagian perjalanan Anda"],
+    ["carsSearch.pickupLocationLabel", "Lokasi pengambilan"],
+    ["carsSearch.pickupLocationPlaceholder", "Bandara, kota, atau alamat"],
+    ["carsSearch.returnLocationPlaceholder", "Kota, bandara, atau alamat pengembalian"],
+    ["carsSearch.returnToSameLocation", "Kembalikan ke lokasi yang sama"],
+    ["carsSearch.differentReturnLocation", "Lokasi pengembalian berbeda"],
+    ["carsSearch.rentalDatesLabel", "Tanggal sewa"],
+    ["carsSearch.rentalDatePlaceholder", "Tanggal pengambilan — tanggal pengembalian"],
+    ["carsSearch.pickupReturnTimeLabel", "Waktu pengambilan / pengembalian"],
+    ["carsSearch.pickupReturnTimeSummary", "{pickupTime} ambil — {returnTime} kembali"],
+    ["carsSearch.driverAgeLabel", "Usia pengemudi"],
+    ["carsSearch.driverAgeAnyAge", "Usia berapa pun"],
+    ["carsSearch.chooseRentalDates", "Pilih tanggal sewa"],
+    ["carsSearch.previousMonthShort", "Sebelumnya"],
+    ["carsSearch.nextMonthShort", "Berikutnya"],
+    ["exploreCarsByTripStyle", "Jelajahi mobil sewaan berdasarkan gaya perjalanan"],
+    ["carsTripStyleBody", "Pilih jenis mobil dan kami akan membuka hasil dengan konteks pencarian yang sudah siap."],
+    ["carsTripStyle.economy.title", "Mobil ekonomi"],
+    ["carsTripStyle.economy.subtitle", "Pilihan terjangkau untuk perjalanan kota dan solo"],
+    ["carsTripStyle.economy.cta", "Mulai pencarian mobil ekonomi"],
+    ["carsTripStyle.suv.title", "SUV"],
+    ["carsTripStyle.suv.subtitle", "Ruang untuk perjalanan keluarga, bagasi, dan perjalanan lebih jauh"],
+    ["carsTripStyle.suv.cta", "Buka pencarian sewa SUV"],
+    ["carsTripStyle.luxury.title", "Mobil mewah"],
+    ["carsTripStyle.luxury.subtitle", "Konteks pencarian premium untuk perjalanan bisnis atau acara khusus"],
+    ["carsTripStyle.luxury.cta", "Rencanakan pencarian mobil mewah"],
+    ["carsTripStyle.van.title", "Van"],
+    ["carsTripStyle.van.subtitle", "Konteks pencarian untuk perjalanan rombongan dan bagasi keluarga"],
+    ["carsTripStyle.van.cta", "Cari van untuk perjalanan rombongan"],
+    ["carsTrust.0.title", "Dibuat untuk perjalanan lengkap"],
+    ["carsTrust.0.description", "Rencanakan penerbangan, penginapan, dan transportasi darat dalam satu alur Kurioticket."],
+    ["carsTrust.1.title", "Detail pengambilan terlebih dahulu"],
+    ["carsTrust.1.description", "Masukkan lokasi pengambilan, tanggal, waktu, dan usia pengemudi agar pencarian sewa Anda dimulai dengan detail perjalanan yang tepat."],
+    ["carsTrust.2.title", "Tinjauan sewa yang jelas"],
+    ["carsTrust.2.description", "Tinjau harga akhir, ketersediaan, biaya, dan aturan sewa dengan penyedia sebelum memesan."],
+    ["carsPickupPointsTitle", "Mulai dari titik pengambilan mobil populer"],
+    ["carsPickupPointsBody", "Pilih gaya pengambilan dan kami akan membuka halaman hasil mobil dengan detail pencarian yang sudah siap."],
+    ["carsPickup.Airport.title", "Pengambilan di bandara"],
+    ["carsPickup.Airport.subtitle", "Mulai dari titik kedatangan bandara utama"],
+    ["carsPickup.City center.title", "Pengambilan di pusat kota"],
+    ["carsPickup.City center.subtitle", "Ambil mobil di dekat hotel pusat kota dan distrik bisnis"],
+    ["carsPickup.Train station.title", "Pengambilan di stasiun kereta"],
+    ["carsPickup.Train station.subtitle", "Lanjutkan perjalanan setelah tiba dengan kereta"],
+    ["carsPickup.Hotel area.title", "Pengambilan di area hotel"],
+    ["carsPickup.Hotel area.subtitle", "Rencanakan pengambilan mobil di dekat tempat Anda menginap"],
+    ["carsFaq.heading", "Pertanyaan yang sering diajukan tentang mobil"],
+    ["carsFaq.0.question", "Informasi apa yang saya perlukan untuk mencari mobil sewaan?"],
+    ["carsFaq.0.answer", "Masukkan lokasi pengambilan, tanggal pengambilan dan pengembalian, waktu pengambilan dan pengembalian, usia pengemudi, serta apakah Anda berencana mengembalikan mobil ke lokasi berbeda."],
+    ["carsFaq.1.question", "Bisakah saya mengembalikan mobil ke lokasi berbeda?"],
+    ["carsFaq.1.answer", "Bisa. Pilih Lokasi pengembalian berbeda di formulir pencarian dan masukkan kota, bandara, atau alamat tempat Anda berencana mengembalikan mobil."],
+    ["carsFaq.2.question", "Mengapa usia pengemudi penting untuk mobil sewaan?"],
+    ["carsFaq.2.answer", "Penyedia sewa dapat menerapkan aturan, biaya, kelayakan kendaraan, atau persyaratan deposit yang berbeda berdasarkan usia dan lokasi pengemudi."],
+    ["carsFaq.3.question", "Apa yang harus saya periksa sebelum memesan mobil sewaan?"],
+    ["carsFaq.3.answer", "Tinjau lokasi pengambilan dan pengembalian, tanggal, waktu, kebijakan jarak tempuh, kebijakan bahan bakar, opsi asuransi, ketentuan pembatalan, persyaratan deposit, dan dokumen yang diperlukan sebelum memesan."],
+    ["carsFaq.4.question", "Di mana harga sewa akhir dikonfirmasi?"],
+    ["carsFaq.4.answer", "Harga akhir, ketersediaan kendaraan, pajak, biaya, persyaratan deposit, dan aturan sewa dikonfirmasi oleh penyedia sebelum pemesanan."],
+    ["carsFaq.5.question", "Dokumen apa yang mungkin saya perlukan saat pengambilan?"],
+    ["carsFaq.5.answer", "Penyedia sewa dapat meminta SIM yang masih berlaku, kartu pembayaran, bukti identitas, dan dokumen apa pun yang diwajibkan oleh negara atau lokasi pengambilan."],
+  ];
+
+  for (const [key, expected] of auditedIndonesianCarsLandingKeys) {
+    assert.equal(id[key], expected, `${key} should resolve to Indonesian`);
+    assert.notEqual(id[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  assert.equal(id.search, "Cari");
+  assert.equal(id["carsSearch.pickupReturnTimeSummary"].replace("{pickupTime}", "10:00").replace("{returnTime}", "10:00"), "10:00 ambil — 10:00 kembali");
+  assert.equal(new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" }).format(new Date(2026, 5, 1)), "Juni 2026");
+  assert.equal(new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" }).format(new Date(2026, 6, 1)), "Juli 2026");
+  assert.deepEqual(Array.from({ length: 7 }, (_, day) => new Intl.DateTimeFormat("id-ID", { weekday: "short" }).format(new Date(2024, 0, 7 + day))), ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"]);
+
+  const carsPageSource = readFileSync("src/app/cars/page.tsx", "utf8");
+  const carsLandingContentSource = readFileSync("src/data/carsLandingContent.ts", "utf8");
+  for (const key of ["searchRentalCarsEveryPartTrip", "carsSearch.pickupLocationLabel", "carsSearch.chooseRentalDates", "exploreCarsByTripStyle", "carsPickupPointsTitle", "carsFaq.heading"]) {
+    assert.ok(carsPageSource.includes(`t("${key}")`) || carsPageSource.includes("dictionary[item.questionKey]"), `Cars landing render path should resolve ${key} through i18n`);
+  }
+  assert.ok(
+    carsPageSource.includes("buildCarResultsHref") &&
+      carsPageSource.includes("pickupLocation: card.pickupLocation") &&
+      carsPageSource.includes("vehicleType: card.vehicleType") &&
+      carsPageSource.includes("returnToDifferentLocation") &&
+      carsPageSource.includes('name="pickupLocation"') &&
+      carsPageSource.includes('name="pickupDate"') &&
+      carsPageSource.includes('type="checkbox"') &&
+      carsPageSource.includes("grid auto-cols-[minmax(240px,82vw)]") &&
+      carsLandingContentSource.includes('translationKey: "carsTripStyle.economy"') &&
+      carsLandingContentSource.includes('translationKey: "carsTripStyle.suv"') &&
+      carsLandingContentSource.includes('translationKey: "carsTripStyle.luxury"') &&
+      carsLandingContentSource.includes('translationKey: "carsTripStyle.van"') &&
+      carsLandingContentSource.includes('translationKey: "carsPickup.Airport"') &&
+      carsLandingContentSource.includes('translationKey: "carsPickup.City center"') &&
+      carsLandingContentSource.includes('translationKey: "carsPickup.Train station"') &&
+      carsLandingContentSource.includes('translationKey: "carsPickup.Hotel area"') &&
+      carsLandingContentSource.includes('vehicleType: "economy"') &&
+      carsLandingContentSource.includes('pickupLocation: "City center"') &&
+      carsLandingContentSource.includes("image:"),
+    "Cars landing should keep raw pickup/search values, vehicle types, form names, checkbox behavior, card order, image references, query builders, CTA routes, and layout source paths intact.",
+  );
+  assert.ok(
+    !carsPageSource.includes("Search rental cars for every part of your trip") &&
+      !carsPageSource.includes("Explore rental cars by trip style") &&
+      !carsPageSource.includes("Start with popular car pickup points") &&
+      !carsPageSource.includes("Cars Frequently asked questions"),
+    "Cars landing render path should not hard-code screenshot-visible English copy.",
+  );
+  assert.ok(languageOptions.some((option) => option.code === "id" && option.locale === "id-ID" && option.nativeLabel === "Bahasa Indonesia" && option.direction === "ltr"));
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+});
+
 test("Turkish cars landing render path copy resolves without English fallback", () => {
   const tr = getTranslations("tr");
   const auditedTurkishCarsLandingKeys: Array<[string, string]> = [
