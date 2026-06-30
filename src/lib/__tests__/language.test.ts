@@ -5250,9 +5250,9 @@ test("active account trips and price alerts copy is localized", () => {
   );
 
   const tripsManagementSource = readFileSync("src/app/dashboard/trips/TripsManagementPage.tsx", "utf8");
-  assert.ok(tripsManagementSource.includes('type TripHistoryTab = "past" | "cancelled"'));
-  assert.ok(tripsManagementSource.includes('{ id: "active", labelKey: "accountDashboard.trips.history.tabs.active" }'));
-  assert.ok(tripsManagementSource.includes('{ id: "past", labelKey: "accountDashboard.trips.history.tabs.past" }'));
+  assert.ok(tripsManagementSource.includes('type TripStatusTab = "upcoming" | "past" | "cancelled"'));
+  assert.ok(tripsManagementSource.includes('{ id: "upcoming", labelKey: "accountDashboard.trips.history.tabs.active", fallback: "Upcoming" }'));
+  assert.ok(tripsManagementSource.includes('{ id: "past", labelKey: "accountDashboard.trips.history.tabs.past", fallback: "Past" }'));
   assert.ok(tripsManagementSource.includes('labelKey: "accountDashboard.trips.history.tabs.cancelled"'));
   assert.ok(tripsManagementSource.includes('titleKey: "accountDashboard.trips.current.empty.title"'));
   assert.ok(tripsManagementSource.includes('bodyKey: "accountDashboard.trips.current.empty.body"'));
@@ -5260,11 +5260,11 @@ test("active account trips and price alerts copy is localized", () => {
   assert.ok(tripsManagementSource.includes('bodyKey: "accountDashboard.trips.history.empty.past.body"'));
   assert.ok(tripsManagementSource.includes('titleKey: "accountDashboard.trips.history.empty.cancelled.title"'));
   assert.ok(tripsManagementSource.includes('bodyKey: "accountDashboard.trips.history.empty.cancelled.body"'));
-  assert.ok(tripsManagementSource.includes('const historyEmptyState = mobileEmptyStates[activeHistoryTab]'));
-  assert.ok(tripsManagementSource.includes('variant={activeHistoryTab}'));
-  assert.ok(tripsManagementSource.includes('id={`${activeHistoryTab}-history-trips-panel`}'));
-  assert.ok(tripsManagementSource.includes('aria-controls={`${tab.id}-history-trips-panel`}'));
-  assert.ok(tripsManagementSource.includes('setLookupMessage(t("accountDashboard.trips.lookup.unavailable"))'));
+  assert.ok(tripsManagementSource.includes('const activeTrips = useMemo('));
+  assert.ok(tripsManagementSource.includes('() => trips.filter((trip) => trip.status === activeTab)'));
+  assert.ok(tripsManagementSource.includes('id={`${activeTab}-trips-panel`}'));
+  assert.ok(tripsManagementSource.includes('aria-controls={`${tab.id}-trips-panel`}'));
+  assert.ok(tripsManagementSource.includes('fetch("/api/dashboard/trips/lookup"'));
   assert.ok(!tripsManagementSource.includes('>My Trips<'));
   assert.ok(!tripsManagementSource.includes('>Find a reservation<'));
 
