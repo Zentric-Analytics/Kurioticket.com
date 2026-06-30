@@ -132,7 +132,7 @@ export const translations: TranslationDictionary = {
   hotelSearchDestinationLabel: "TUJUAN",
   hotelSearchDestinationPlaceholder: "Kota atau hotel",
   hotelSearchTravelDatesLabel: "TANGGAL PERJALANAN",
-  hotelSearchDatePlaceholder: "Tanggal check-in — check-out",
+  hotelSearchDatePlaceholder: "Tanggal masuk — keluar",
   hotelSearchGuestsLabel: "TAMU",
   chooseTravelDates: "Pilih tanggal perjalanan",
   previousMonthShort: "Sebelumnya",
