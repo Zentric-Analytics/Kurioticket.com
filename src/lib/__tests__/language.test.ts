@@ -126,6 +126,124 @@ test("Indonesian locale is active with homepage copy overrides", () => {
 });
 
 
+
+test("Indonesian Legal Center overview and active legal documents are localized", () => {
+  const id = getTranslations("id");
+  const legalIndexSource = readFileSync("src/app/legal/LegalPageContent.tsx", "utf8");
+  const legalViewerSource = readFileSync("src/components/legal/LegalViewer.tsx", "utf8");
+
+  assert.equal(id["legal.index.heroLabel"], "INFORMASI HUKUM");
+  assert.equal(id["legal.index.heroTitle"], "Pusat Hukum");
+  assert.equal(id["legal.index.heroDescription"], "Sumber daya hukum Kurioticket menjelaskan cara kerja pencarian perjalanan, akun, privasi, pengalihan penyedia, dan praktik kepatuhan kami.");
+  assert.equal(id["legal.index.compliance.eyebrow"], "PERUSAHAAN & KEPATUHAN");
+  assert.equal(id["legal.index.compliance.sellerOfTravel"], "Penjual Perjalanan California");
+  assert.equal(id["legal.index.compliance.registrationNumberLabel"], "Nomor Pendaftaran");
+  assert.equal(id["legal.index.compliance.registrationExpires"], "Pendaftaran berakhir");
+  assert.equal(id["legal.index.compliance.registrationExpiresDate"], "05 Juni 2027");
+  assert.equal(id["legal.index.compliance.publicNotice"], "Pendaftaran sebagai penjual perjalanan tidak berarti persetujuan dari Negara Bagian California.");
+  assert.equal(id["legal.index.contacts.support"], "Dukungan");
+  assert.equal(id["legal.index.contacts.legal"], "Hukum");
+  assert.equal(id["legal.index.contacts.privacy"], "Privasi");
+  assert.equal(id["legal.index.resourcesEyebrow"], "Sumber resmi");
+  assert.equal(id["legal.index.resourcesTitle"], "Dokumen hukum");
+  assert.equal(id["legal.index.documentsCountLabel"], "kebijakan dan pemberitahuan tersedia");
+  assert.equal(id["legal.index.lastUpdated"], "Terakhir diperbarui");
+  assert.equal(id["legal.index.lastUpdatedDate"], "11 Mei 2026");
+
+  const expectedCardTitles: Record<string, string> = {
+    termsOfService: "Ketentuan Layanan",
+    privacyPolicy: "Kebijakan Privasi",
+    cookiePolicy: "Kebijakan Cookie",
+    privacyChoices: "Pilihan Privasi",
+    affiliateDisclosure: "Pengungkapan Afiliasi",
+    refundBookingDisclaimer: "Penafian Pengembalian Dana & Penyedia Eksternal",
+    priceAvailabilityDisclaimer: "Penafian Harga & Ketersediaan",
+    partnerRedirectDisclaimer: "Penafian Pengalihan Mitra",
+    californiaSellerOfTravelNotice: "Pemberitahuan Penjual Perjalanan California",
+    legalNoticeCompanyInformation: "Pemberitahuan Hukum & Informasi Perusahaan",
+    acceptableUsePolicy: "Kebijakan Penggunaan yang Diperbolehkan",
+    dataDeletionPolicy: "Kebijakan Penghapusan Data",
+    securityStatement: "Pernyataan Keamanan",
+    accessibilityStatement: "Pernyataan Aksesibilitas",
+  };
+
+  for (const [key, title] of Object.entries(expectedCardTitles)) {
+    assert.equal(id[`legal.index.documents.${key}.title`], title);
+    assert.ok(id[`legal.index.documents.${key}.summary`]);
+    assert.notEqual(id[`legal.index.documents.${key}.summary`], enTranslations[`legal.index.documents.${key}.summary`]);
+  }
+
+  assert.equal(id.legalCenter, "Pusat Hukum");
+  assert.equal(id["legal.print"], "Cetak");
+  assert.equal(id["legal.lastUpdated"], "Terakhir diperbarui");
+  assert.equal(id["legal.tableOfContents"], "DAFTAR ISI");
+
+  assert.ok(legalIndexSource.includes('t("legal.index.heroLabel")'));
+  assert.ok(legalIndexSource.includes('t(`legal.index.documents.${documentKey}.title`)'));
+  assert.ok(legalIndexSource.includes('t(`legal.index.documents.${documentKey}.summary`)'));
+  assert.ok(legalIndexSource.includes('t("legal.index.lastUpdated")'));
+  assert.ok(legalViewerSource.includes('"privacy-policy": "legal.privacy"'));
+  assert.ok(legalViewerSource.includes('"terms-of-service": "legal.terms"'));
+  assert.ok(legalViewerSource.includes('"cookie-policy": "legal.cookiePolicy"'));
+  assert.ok(legalViewerSource.includes('window.print()'));
+
+  const expectedNamespaces = [
+    "legal.terms",
+    "legal.privacy",
+    "legal.cookiePolicy",
+    "legal.privacyChoices",
+    "legal.affiliateDisclosure",
+    "legal.refundBookingDisclaimer",
+    "legal.priceAvailabilityDisclaimer",
+    "legal.partnerRedirectDisclaimer",
+    "legal.californiaSellerOfTravelNotice",
+    "legal.legalNoticeCompanyInformation",
+    "legal.acceptableUsePolicy",
+    "legal.dataDeletionPolicy",
+    "legal.securityStatement",
+    "legal.accessibilityStatement",
+  ];
+
+  assert.equal(legalDocuments.length, 14);
+  for (const namespace of expectedNamespaces) {
+    assert.ok(id[`${namespace}.title`], `${namespace} title`);
+    assert.ok(id[`${namespace}.summary`], `${namespace} summary`);
+    assert.equal(id[`${namespace}.tableOfContents`], "DAFTAR ISI");
+    assert.equal(id[`${namespace}.developerNote`], "Draf hukum ini adalah placeholder startup dan harus ditinjau oleh penasihat hukum yang memenuhi syarat sebelum peluncuran publik berskala besar.");
+    assert.notEqual(id[`${namespace}.title`], enTranslations[`${namespace}.title`]);
+    assert.notEqual(id[`${namespace}.summary`], enTranslations[`${namespace}.summary`]);
+  }
+
+  assert.equal(id["legal.privacy.title"], "Kebijakan Privasi");
+  assert.equal(id["legal.privacy.sections.data-we-collect.title"], "Data yang Kami Kumpulkan");
+  assert.equal(id["legal.terms.title"], "Ketentuan Layanan");
+  assert.equal(id["legal.terms.sections.partner-services.paragraph2"], "Ketentuan mitra berlaku setelah Anda meninggalkan Kurioticket atau menyelesaikan transaksi dengan mitra. Tinjau semua persyaratan tarif, hotel, bagasi, perubahan, pengembalian dana, visa, dan wisatawan sebelum membeli.");
+  assert.equal(id["legal.cookiePolicy.title"], "Kebijakan Cookie");
+  assert.equal(id["legal.cookiePolicy.sections.controls.paragraph1"], "Anda dapat mengontrol cookie melalui pengaturan browser. Memblokir cookie yang diperlukan dapat mencegah proses masuk, dasbor, item tersimpan, preferensi, dan alat dukungan berfungsi dengan benar.");
+  assert.equal(id["legal.californiaSellerOfTravelNotice.sections.registration.paragraph1"].includes("2172630-70"), true);
+  assert.equal(id["legal.legalNoticeCompanyInformation.sections.contacts.paragraph1"], "Dukungan: support@kurioticket.com. Hukum: legal@kurioticket.com. Privasi: privacy@kurioticket.com.");
+
+  assert.deepEqual(legalDocuments.map((document) => document.slug), [
+    "terms-of-service",
+    "privacy-policy",
+    "cookie-policy",
+    "privacy-choices",
+    "affiliate-disclosure",
+    "refund-booking-disclaimer",
+    "price-availability-disclaimer",
+    "partner-redirect-disclaimer",
+    "california-seller-of-travel-notice",
+    "legal-notice-company-information",
+    "acceptable-use-policy",
+    "data-deletion-policy",
+    "security-statement",
+    "accessibility-statement",
+  ]);
+  assert.ok(legalDocuments.every((document) => document.sections.every((section) => section.id.length > 0)));
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+});
+
 test("Swedish locale is active and localizes homepage while preserving other fallback", () => {
   const swedishOptions = languageOptions.filter((o) => o.code === "sv");
 
