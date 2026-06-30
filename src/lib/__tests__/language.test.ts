@@ -9694,7 +9694,7 @@ test("Indonesian homepage visible copy and render paths resolve without English 
     hotelSearchDestinationLabel: "TUJUAN",
     cityOrHotel: "Kota atau hotel",
     hotelSearchTravelDatesLabel: "TANGGAL PERJALANAN",
-    hotelSearchDatePlaceholder: "Tanggal check-in — check-out",
+    hotelSearchDatePlaceholder: "Tanggal masuk — keluar",
     hotelSearchGuestsLabel: "TAMU",
     guestsAndRooms: "Tamu dan kamar",
     hotelAdultHelper: "Tamu 18+",
@@ -9794,7 +9794,12 @@ test("Indonesian homepage visible copy and render paths resolve without English 
     "hotel empty date field should read the active hotelSearchDatePlaceholder i18n key before the English fallback",
   );
   assert.equal(id.travelDates, "Tanggal perjalanan");
-  assert.equal(id.hotelSearchDatePlaceholder, "Tanggal check-in — check-out");
+  assert.equal(id.hotelSearchDatePlaceholder, "Tanggal masuk — keluar");
+  assert.ok(!searchTabsSource.includes("Tanggal check-in — check-out"));
+  assert.match(searchTabsSource, /if \(!checkInSummary\) \{[\s\S]*?translateHotelTravelDateText\("hotelSearchDatePlaceholder"\)[\s\S]*?\}/, "homepage hotel empty date summary should use the Indonesian i18n key on the active SearchTabs render path");
+  assert.match(searchTabsSource, /if \(checkOutSummary\) \{[\s\S]*?return `\$\{checkInSummary\} — \$\{checkOutSummary\}`;[\s\S]*?\}/, "selected hotel date summary should remain derived from formatted selected dates");
+  assert.ok(searchTabsSource.includes("/hotels/results?${params.toString()}"), "hotel search route/query payload should remain unchanged");
+  assert.ok(searchTabsSource.includes('translate("hotelSearchGuestsLabel")'), "hotel guest field should remain wired to i18n");
   assert.notEqual(id.travelDates, "Travel dates");
   assert.notEqual(id.hotelSearchDatePlaceholder, "Check-in — check-out");
 
