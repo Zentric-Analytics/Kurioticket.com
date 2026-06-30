@@ -204,6 +204,129 @@ export const translations: TranslationDictionary = {
   homePromoHotelsTitle: "Hemat hotel di seluruh dunia",
   homePromoHotelsBody: "Telusuri akomodasi dari hotel butik hingga jaringan global dengan transparansi harga.",
   homePromoHotelsCta: "Jelajahi promo hotel",
+  moreServiceInfoEyebrow: "Informasi Platform",
+  moreServiceInfoTitle: "Informasi Layanan Lainnya",
+  moreServiceInfoDescription:
+    "Pelajari bagaimana Kurioticket membantu wisatawan mencari, membandingkan, menyimpan, dan mengatur pilihan perjalanan dari beberapa penyedia dalam satu tempat.",
+  moreServiceInfoContextTitle: "Rencanakan dengan konteks",
+  moreServiceInfoContextSubtitle: "Dari hasil pencarian hingga pengalihan ke penyedia",
+  moreServiceInfoContextCompare: "Bandingkan opsi dari beberapa penyedia perjalanan.",
+  moreServiceInfoContextSave: "Simpan perjalanan, peringatan, dan preferensi saat masuk.",
+  moreServiceInfoContextContinue: "Lanjutkan dengan detail penyedia sebelum memesan secara eksternal.",
+  moreServiceInfoHowHeading: "Cara kerja Kurioticket",
+  moreServiceInfoHowDescription:
+    "Detail layanan ini menjelaskan peran Kurioticket sebelum, selama, dan setelah pencarian perjalanan.",
+  moreServiceInfoHowBadge: "DASAR-DASAR PERENCANAAN PERJALANAN",
+  moreServiceInfoStepSearchTitle: "Cari di Beberapa Penyedia",
+  moreServiceInfoStepSearchSummary:
+    "Cari pilihan perjalanan dari berbagai penyedia dalam satu tempat, tanpa membuka setiap penyedia secara terpisah.",
+  moreServiceInfoStepSearchDetails:
+    "Kurioticket menghadirkan informasi penerbangan, hotel, rute, dan hasil perjalanan yang tersedia dalam satu pengalaman pencarian agar wisatawan dapat meninjau pilihan dengan lebih efisien.",
+  moreServiceInfoStepCompareTitle: "Bandingkan Pilihan Perjalanan",
+  moreServiceInfoStepCompareSummary:
+    "Bandingkan harga, rute, hotel, jadwal, dan pilihan perjalanan yang tersedia sebelum menentukan yang paling sesuai dengan perjalanan Anda.",
+  moreServiceInfoStepCompareDetails:
+    "Hasil dapat mencakup detail penyedia, waktu, informasi destinasi, dan data perjalanan lain yang membantu Anda mengevaluasi opsi sebelum melanjutkan ke penyedia.",
+  moreServiceInfoStepSaveTitle: "Simpan Perjalanan dan Peringatan",
+  moreServiceInfoStepSaveSummary:
+    "Buat akun untuk menyimpan perjalanan, melacak rute, dan mengelola peringatan perjalanan yang terkait dengan perencanaan perjalanan Anda.",
+  moreServiceInfoStepSaveDetails:
+    "Perjalanan tersimpan, pencarian terbaru, dan peringatan memudahkan Anda kembali ke opsi yang sedang dipertimbangkan dan menjaga detail perencanaan perjalanan tetap tertata.",
+  moreServiceInfoStepRedirectsTitle: "Penjelasan Pengalihan Penyedia",
+  moreServiceInfoStepRedirectsSummary:
+    "Saat memilih penawaran, Anda dapat dialihkan ke penyedia perjalanan untuk menyelesaikan pemesanan, pembayaran, konfirmasi, dan pemenuhan layanan.",
+  moreServiceInfoStepRedirectsDetails:
+    "Halaman penyedia adalah tempat harga akhir, ketersediaan, aturan, langkah pembayaran, tanda terima, perubahan pemesanan, pembatalan, dan dokumen perjalanan ditangani untuk penawaran yang dialihkan.",
+  moreServiceInfoStepAccountTitle: "Alat Akun & Perjalanan",
+  moreServiceInfoStepAccountSummary:
+    "Gunakan alat akun untuk mengatur pencarian tersimpan, perjalanan, peringatan, dan preferensi dalam satu ruang kerja Kurioticket.",
+  moreServiceInfoStepAccountDetails:
+    "Alat ini mendukung perencanaan perjalanan di Kurioticket, sementara pengelolaan pemesanan khusus penyedia tetap berada pada penyedia saat pemesanan Anda diselesaikan secara eksternal.",
+  moreServiceInfoFaqHeading: "Pertanyaan yang sering diajukan",
+  moreServiceInfoFaqDescription:
+    "Jawaban singkat tentang pencarian perjalanan, pengalihan penyedia, perjalanan tersimpan, dan alat akun.",
+  moreServiceInfoFaqWhatQuestion: "Apa itu Kurioticket?",
+  moreServiceInfoFaqWhatAnswer:
+    "Kurioticket adalah platform pencarian dan perbandingan perjalanan untuk menemukan, membandingkan, menyimpan, dan mengatur pilihan perjalanan dari beberapa penyedia.",
+  moreServiceInfoFaqSearchQuestion: "Bagaimana cara kerja pencarian perjalanan?",
+  moreServiceInfoFaqSearchAnswer:
+    "Anda memasukkan detail perjalanan, lalu Kurioticket menampilkan pilihan perjalanan yang tersedia dan informasi penyedia yang dapat membantu Anda membandingkan pilihan.",
+  moreServiceInfoFaqRedirectQuestion: "Mengapa saya dialihkan ke penyedia lain?",
+  moreServiceInfoFaqRedirectAnswer:
+    "Beberapa penawaran diselesaikan di situs penyedia eksternal. Penyedia menangani langkah pemesanan akhir, pembayaran, konfirmasi, dan pemenuhan layanan.",
+  moreServiceInfoFaqPaymentsQuestion: "Apakah Kurioticket memproses pembayaran?",
+  moreServiceInfoFaqPaymentsAnswer:
+    "Untuk penawaran penyedia yang dialihkan, Kurioticket tidak memproses pembayaran. Tinjau dan selesaikan pembayaran langsung di halaman penyedia.",
+  moreServiceInfoFaqSaveQuestion: "Bisakah saya menyimpan perjalanan dan peringatan?",
+  moreServiceInfoFaqSaveAnswer:
+    "Ya. Alat akun dapat membantu Anda menyimpan perjalanan, melacak rute, mengelola peringatan, dan kembali ke pilihan perjalanan yang sedang Anda pertimbangkan.",
+  moreServiceInfoFaqAccountQuestion: "Apakah akun diperlukan?",
+  moreServiceInfoFaqAccountAnswer:
+    "Anda dapat menelusuri informasi pencarian tanpa semua alat akun, tetapi menyimpan perjalanan, peringatan, dan preferensi mungkin memerlukan masuk ke akun.",
+  moreServiceInfoFaqSupportQuestion: "Bagaimana cara menghubungi dukungan?",
+  moreServiceInfoFaqSupportAnswer:
+    "Gunakan halaman Dukungan Pelanggan dan sertakan email akun Anda, hal yang Anda coba lakukan, serta detail rute, hotel, atau penyedia apa pun.",
+  moreServiceInfoHelpTitle: "Butuh bantuan?",
+  moreServiceInfoHelpDescription:
+    "Ada pertanyaan tentang akun, perjalanan tersimpan, peringatan, atau pengalihan penyedia?",
+  moreServiceInfoSupportCta: "Hubungi Dukungan Pelanggan",
+  serviceGuaranteeEyebrow: "Komitmen layanan Kurioticket",
+  serviceGuaranteeTitle: "Jaminan Layanan",
+  serviceGuaranteeDescription:
+    "Kami ingin wisatawan memahami cara kerja Kurioticket dan hal yang dapat mereka harapkan saat menggunakan platform kami.",
+  serviceGuaranteeFaqHeading: "Pertanyaan yang sering diajukan",
+  serviceGuaranteeFaqDescription:
+    "Jawaban ini menjelaskan peran Kurioticket sebagai platform pencarian dan perbandingan perjalanan.",
+  serviceGuaranteeFaqWhatGuaranteeQuestion: "Apa yang dijamin oleh Kurioticket?",
+  serviceGuaranteeFaqWhatGuaranteeAnswer:
+    "Kurioticket dirancang untuk membantu wisatawan membandingkan pilihan perjalanan dengan jelas. Kami bertujuan menyediakan pengalaman platform yang andal, informasi pencarian yang transparan, dan jalur yang jelas ke halaman pemesanan penyedia.",
+  serviceGuaranteeFaqResultsDisplayedQuestion: "Bagaimana hasil perjalanan ditampilkan?",
+  serviceGuaranteeFaqResultsDisplayedAnswer:
+    "Hasil ditampilkan menggunakan informasi yang tersedia dari penyedia perjalanan, termasuk rute, tanggal, harga, dan detail penyedia jika tersedia.",
+  serviceGuaranteeFaqRedirectedQuestion: "Mengapa saya dialihkan ke penyedia lain?",
+  serviceGuaranteeFaqRedirectedAnswer:
+    "Beberapa hasil diselesaikan di situs penyedia eksternal. Saat memilih salah satu opsi tersebut, Kurioticket mengalihkan Anda agar penyedia dapat menangani pemesanan, pembayaran, dan layanan khusus perjalanan.",
+  serviceGuaranteeFaqBookDirectlyQuestion: "Apakah saya memesan langsung di Kurioticket?",
+  serviceGuaranteeFaqBookDirectlyAnswer:
+    "Kurioticket terutama merupakan platform pencarian dan perbandingan perjalanan. Jika sebuah hasil mengalihkan ke penyedia, pemesanan diselesaikan dengan penyedia tersebut, bukan di Kurioticket.",
+  serviceGuaranteeFaqPricesGuaranteedQuestion: "Apakah harga selalu dijamin?",
+  serviceGuaranteeFaqPricesGuaranteedAnswer:
+    "Tidak. Harga dapat berubah berdasarkan ketersediaan penyedia, pajak, biaya, mata uang, dan waktu. Selalu tinjau harga akhir di halaman penyedia sebelum memesan.",
+  serviceGuaranteeFaqChooseProvidersQuestion: "Bagaimana Kurioticket memilih penyedia?",
+  serviceGuaranteeFaqChooseProvidersAnswer:
+    "Kurioticket bekerja dengan penyedia perjalanan dan sumber data yang dapat menyediakan hasil pencarian relevan. Ketersediaan, harga, dan opsi yang ditampilkan dapat berbeda menurut rute, destinasi, dan cakupan penyedia.",
+  serviceGuaranteeFaqEncounterIssueQuestion: "Apa yang harus saya lakukan jika mengalami masalah?",
+  serviceGuaranteeFaqEncounterIssueAnswer:
+    "Jika masalah terkait pencarian, akses akun, perjalanan tersimpan, peringatan, atau pengalihan dari Kurioticket, hubungi dukungan Kurioticket. Jika Anda sudah memesan dengan penyedia, hubungi penyedia tersebut untuk perubahan pemesanan, pengembalian dana, pembatalan, atau dokumen perjalanan.",
+  serviceGuaranteeFaqContactSupportQuestion: "Bagaimana saya dapat menghubungi dukungan?",
+  serviceGuaranteeFaqContactSupportAnswer:
+    "Gunakan halaman Dukungan Pelanggan dan sertakan email akun Anda, hal yang Anda coba lakukan, serta detail rute, hotel, atau penyedia apa pun yang dapat membantu kami meninjau masalah tersebut.",
+  serviceGuaranteeHelpCardTitle: "Butuh bantuan dengan akun atau pencarian Anda?",
+  serviceGuaranteeSupportCta: "Hubungi Dukungan Pelanggan",
+  supportEyebrow: "Pusat bantuan Kurioticket",
+  supportTitle: "Dukungan pelanggan",
+  supportBeforeContactHeading: "Sebelum menghubungi kami",
+  supportBeforeContactDescription:
+    "Sertakan email pada akun Kurioticket Anda, hal yang Anda coba lakukan, rute atau hotel jika relevan, dan halaman penyedia mana pun tempat Anda dialihkan. Jangan kirim nomor kartu pembayaran lengkap atau nomor dokumen perjalanan sensitif.",
+  supportBeforeContactDashboardDescription:
+    "Sertakan email akun Kurioticket Anda, hal yang perlu dibantu, dan detail pemesanan atau rute apa pun yang dapat membantu kami memahami masalah tersebut.",
+  supportTicketHeading: "Buat tiket dukungan",
+  supportFormEmailLabel: "Email",
+  supportFormSubjectLabel: "Subjek",
+  supportFormCategoryLabel: "Kategori",
+  supportCategorySearchHelp: "Bantuan pencarian",
+  supportCategoryPriceAlerts: "Peringatan harga",
+  supportCategoryPartnerRedirect: "Pengalihan mitra",
+  supportCategoryAccountHelp: "Bantuan akun",
+  supportFormMessageLabel: "Bagaimana kami dapat membantu?",
+  supportFormMessagePlaceholder:
+    "Bagikan konteks rute, hotel, peringatan, atau akun.",
+  supportFormSubmit: "Kirim permintaan",
+  supportFormSending: "Mengirim...",
+  supportFormSuccessPrefix: "Tiket",
+  supportFormSuccessSuffix: "dibuka.",
+  supportFormErrorFallback: "Tidak dapat membuka tiket.",
+  supportFaqHeading: "Pertanyaan yang sering diajukan",
   supportFaqAccountQuestion: "Bantuan akun dan masuk",
   supportFaqAccountAnswer:
     "Kurioticket dapat membantu akses akun, masalah masuk, masalah pendaftaran, akses profil, dan masalah platform yang terkait dengan akun.",
