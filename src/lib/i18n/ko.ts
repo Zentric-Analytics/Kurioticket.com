@@ -1329,7 +1329,7 @@ export const translations: TranslationDictionary = {
   fromPrice: "부터",
   flightDetailsLoading: "항공편 세부 정보를 불러오는 중...",
   flightQuoteUnavailable: "항공권 견적을 사용할 수 없습니다",
-  flightSearchAgainCurrentPrices: "이 항공권 견적은 더 이상 사용할 수 없습니다. 현재 요금을 보려면 다시 검색하세요.",
+  flightSearchAgainCurrentPrices: "이 항공권 견적은 더 이상 사용할 수 없습니다. 현재 가격을 확인하려면 다시 검색하세요.",
   flightDetailsProviderDisclaimer:
     "최종 요금, 이용 가능 여부, 예약 및 운임 규정은 제공업체에서 확인합니다.",
   selectedFlights: "선택한 항공편",

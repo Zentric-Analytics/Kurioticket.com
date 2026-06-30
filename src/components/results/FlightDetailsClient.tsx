@@ -23,7 +23,7 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 
 const FLIGHT_QUOTE_UNAVAILABLE_MESSAGE =
-  "This flight quote is no longer available. Please search again for current prices.";
+  enTranslations.flightSearchAgainCurrentPrices;
 
 export function FlightDetailsClient({ id }: { id: string }) {
   const { selectedOption } = useRegion();
@@ -106,11 +106,11 @@ export function FlightDetailsClient({ id }: { id: string }) {
       <main className="page-shell flex-1 py-10">
         <Card className="p-6">
           <h1 className="text-xl font-bold text-navy">
-            {t.flightQuoteUnavailable || "Flight quote unavailable"}
+            {t.flightQuoteUnavailable || enTranslations.flightQuoteUnavailable}
           </h1>
           <p className="mt-2 text-muted">
             {unavailableBodyMessage ||
-              "Please search again for current prices."}
+              enTranslations.flightSearchAgainCurrentPrices}
           </p>
         </Card>
       </main>

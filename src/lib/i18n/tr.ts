@@ -1431,8 +1431,8 @@ export const translations: TranslationDictionary = {
   homeSubscribing: "Abone olunuyor…",
 
   flightDetailsLoading: "Uçuş detayları yükleniyor...",
-  flightQuoteUnavailable: "Uçuş teklifi kullanılamıyor",
-  flightSearchAgainCurrentPrices: "Bu uçuş teklifi artık kullanılamıyor. Güncel fiyatlar için lütfen tekrar arayın.",
+  flightQuoteUnavailable: "Uçuş fiyat teklifi kullanılamıyor",
+  flightSearchAgainCurrentPrices: "Bu uçuş fiyat teklifi artık kullanılamıyor. Güncel fiyatlar için lütfen tekrar arama yapın.",
   flightDetailsProviderDisclaimer:
     "Son fiyat, uygunluk, rezervasyon ve ücret kuralları sağlayıcı tarafından onaylanır.",
   selectedFlights: "Seçilen uçuşlar",

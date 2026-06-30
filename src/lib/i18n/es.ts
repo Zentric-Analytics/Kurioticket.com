@@ -2275,8 +2275,8 @@ export const translations: TranslationDictionary = {
   footerTerms: "Términos",
   footerCookies: "Cookies",
   flightDetailsLoading: "Cargando detalles del vuelo...",
-  flightQuoteUnavailable: "La cotización del vuelo no está disponible",
-  flightSearchAgainCurrentPrices: "Esta cotización de vuelo ya no está disponible. Busca de nuevo para ver los precios actuales.",
+  flightQuoteUnavailable: "Cotización de vuelo no disponible",
+  flightSearchAgainCurrentPrices: "Esta cotización de vuelo ya no está disponible. Vuelve a buscar para ver precios actuales.",
   flightDetailsProviderDisclaimer:
     "El proveedor confirma el precio final, la disponibilidad, la reserva y las reglas de la tarifa.",
   selectedFlights: "Vuelos seleccionados",

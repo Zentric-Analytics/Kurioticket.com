@@ -694,6 +694,9 @@ export const translations: TranslationDictionary = {
     "Jelajahi rute pilihan dan mulai perjalanan Anda berikutnya dengan percaya diri.",
   cityOrAirport: "Kota atau bandara",
   searchFlights: "Cari penerbangan",
+  flightDetailsLoading: "Memuat detail penerbangan...",
+  flightQuoteUnavailable: "Penawaran harga penerbangan tidak tersedia",
+  flightSearchAgainCurrentPrices: "Penawaran harga penerbangan ini tidak lagi tersedia. Silakan cari lagi untuk melihat harga saat ini.",
   beachVacations: "Liburan pantai",
   beachVacationsBody:
     "Jelajahi rute penerbangan ke pesisir cerah, liburan pulau, dan destinasi pantai bercuaca hangat.",

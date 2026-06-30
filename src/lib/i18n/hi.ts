@@ -745,9 +745,8 @@ export const translations: TranslationDictionary = {
 
   // Hindi flights results, filters, and selected-flight detail localization.
   flightDetailsLoading: "उड़ान विवरण लोड हो रहे हैं...",
-  flightQuoteUnavailable: "उड़ान कोट उपलब्ध नहीं है",
-  flightSearchAgainCurrentPrices:
-    "यह उड़ान कोट अब उपलब्ध नहीं है। मौजूदा कीमतों के लिए फिर से खोजें।",
+  flightQuoteUnavailable: "फ़्लाइट कोट उपलब्ध नहीं है",
+  flightSearchAgainCurrentPrices: "यह फ़्लाइट कोट अब उपलब्ध नहीं है। मौजूदा कीमतों के लिए कृपया फिर से खोजें।",
   flightDetailsProviderDisclaimer:
     "अंतिम कीमत, उपलब्धता, बुकिंग और किराया नियम प्रदाता द्वारा पुष्टि किए जाते हैं।",
   selectedFlights: "चुनी गई उड़ानें",

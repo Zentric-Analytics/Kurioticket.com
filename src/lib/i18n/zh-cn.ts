@@ -766,7 +766,7 @@ export const translations: TranslationDictionary = {
   fromPrice: "起价",
   flightDetailsLoading: "正在加载航班详情...",
   flightQuoteUnavailable: "航班报价不可用",
-  flightSearchAgainCurrentPrices: "此航班报价已不再可用。请重新搜索以查看当前价格。",
+  flightSearchAgainCurrentPrices: "该航班报价已不再可用。请重新搜索以查看当前价格。",
   flightDetailsProviderDisclaimer:
     "最终价格、可订情况、预订信息和票价规则由服务提供商确认。",
   selectedFlights: "已选择的航班",

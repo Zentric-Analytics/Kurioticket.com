@@ -125,6 +125,48 @@ test("Indonesian locale is active with homepage copy overrides", () => {
   }
 });
 
+
+
+test("flight quote unavailable copy resolves through active render path for all available locales", () => {
+  const flightDetailsSource = readFileSync("src/components/results/FlightDetailsClient.tsx", "utf8");
+  const expected = {
+    "en-us": ["Flight quote unavailable", "This flight quote is no longer available. Please search again for current prices."],
+    "es-es": ["Cotización de vuelo no disponible", "Esta cotización de vuelo ya no está disponible. Vuelve a buscar para ver precios actuales."],
+    fr: ["Devis de vol indisponible", "Ce devis de vol n’est plus disponible. Veuillez relancer une recherche pour obtenir les prix actuels."],
+    "de-de": ["Flugangebot nicht verfügbar", "Dieses Flugangebot ist nicht mehr verfügbar. Bitte suchen Sie erneut nach aktuellen Preisen."],
+    "it-it": ["Preventivo del volo non disponibile", "Questo preventivo del volo non è più disponibile. Cerca di nuovo per vedere i prezzi attuali."],
+    "pt-br": ["Cotação de voo indisponível", "Esta cotação de voo não está mais disponível. Pesquise novamente para ver os preços atuais."],
+    nl: ["Vluchtaanbieding niet beschikbaar", "Deze vluchtprijs is niet langer beschikbaar. Zoek opnieuw voor actuele prijzen."],
+    ar: ["عرض الرحلة غير متاح", "لم يعد عرض هذه الرحلة متاحًا. يُرجى البحث مرة أخرى للاطلاع على الأسعار الحالية."],
+    "zh-cn": ["航班报价不可用", "该航班报价已不再可用。请重新搜索以查看当前价格。"],
+    ja: ["フライト見積もりは利用できません", "このフライト見積もりは利用できなくなりました。現在の価格を確認するには、もう一度検索してください。"],
+    ko: ["항공권 견적을 사용할 수 없습니다", "이 항공권 견적은 더 이상 사용할 수 없습니다. 현재 가격을 확인하려면 다시 검색하세요."],
+    hi: ["फ़्लाइट कोट उपलब्ध नहीं है", "यह फ़्लाइट कोट अब उपलब्ध नहीं है। मौजूदा कीमतों के लिए कृपया फिर से खोजें।"],
+    tr: ["Uçuş fiyat teklifi kullanılamıyor", "Bu uçuş fiyat teklifi artık kullanılamıyor. Güncel fiyatlar için lütfen tekrar arama yapın."],
+    pl: ["Oferta lotu niedostępna", "Ta oferta lotu nie jest już dostępna. Wyszukaj ponownie, aby zobaczyć aktualne ceny."],
+    sv: ["Flygpriset är inte tillgängligt", "Det här flygpriset är inte längre tillgängligt. Sök igen för aktuella priser."],
+    id: ["Penawaran harga penerbangan tidak tersedia", "Penawaran harga penerbangan ini tidak lagi tersedia. Silakan cari lagi untuk melihat harga saat ini."],
+  } as const;
+
+  for (const option of languageOptions.filter((o) => o.status === "available")) {
+    const [title, body] = expected[option.code as keyof typeof expected];
+    assert.ok(title, `${option.code} should have expected quote-unavailable title coverage`);
+    assert.equal(getTranslations(option.code).flightQuoteUnavailable, title, `${option.code} title should resolve through i18n`);
+    assert.equal(getTranslations(option.code).flightSearchAgainCurrentPrices, body, `${option.code} body should resolve through i18n`);
+  }
+
+  assert.equal(getTranslations("ar").flightQuoteUnavailable, "عرض الرحلة غير متاح");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+  assert.equal(getTranslations("id").flightQuoteUnavailable, "Penawaran harga penerbangan tidak tersedia");
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
+
+  assert.match(flightDetailsSource, /t\.flightQuoteUnavailable \|\| enTranslations\.flightQuoteUnavailable/);
+  assert.match(flightDetailsSource, /error === FLIGHT_QUOTE_UNAVAILABLE_MESSAGE\s*\? t\.flightSearchAgainCurrentPrices/);
+  assert.match(flightDetailsSource, /<main className="page-shell flex-1 py-10">\s*<Card className="p-6">/);
+  assert.doesNotMatch(flightDetailsSource, /\{t\.flightQuoteUnavailable \|\| "Flight quote unavailable"\}/);
+  assert.doesNotMatch(flightDetailsSource, /"Please search again for current prices\."/);
+});
+
 test("Indonesian Deals landing copy resolves through active render-path keys", () => {
   const id = getTranslations("id");
   const dealsPageSource = readFileSync("src/app/deals/page.tsx", "utf8");

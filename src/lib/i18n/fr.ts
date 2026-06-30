@@ -1589,7 +1589,7 @@ flightLandingRouteAriaLabel:
   flightCardProviderHandoffConverted: "Le prix final, la disponibilité, la réservation et les règles tarifaires sont confirmés par le fournisseur. La devise finale du fournisseur peut différer de votre devise d’affichage sélectionnée.",
   flightDetailsLoading: "Chargement des détails du vol...",
   flightQuoteUnavailable: "Devis de vol indisponible",
-  flightSearchAgainCurrentPrices: "Ce devis de vol n’est plus disponible. Relancez la recherche pour consulter les prix actuels.",
+  flightSearchAgainCurrentPrices: "Ce devis de vol n’est plus disponible. Veuillez relancer une recherche pour obtenir les prix actuels.",
   flightDetailsProviderDisclaimer:
     "Le prix final, la disponibilité, la réservation et les règles tarifaires sont confirmés par le fournisseur.",
   selectedFlights: "Vols sélectionnés",
