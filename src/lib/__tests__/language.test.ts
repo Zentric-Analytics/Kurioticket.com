@@ -43,6 +43,7 @@ import {
 } from "@/lib/flights/dateFormatting";
 import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
 import { legalDocuments } from "@/data/legalDocuments";
+import { getGeneralFaqs } from "@/content/faqs";
 
 type StorageLike = { getItem: (k: string) => string | null; setItem: (k: string, v: string) => void };
 type WindowLike = { localStorage: StorageLike; dispatchEvent: (event: Event) => boolean };
@@ -2699,6 +2700,79 @@ test("Turkish account FAQ support CTA resolves through localized segmented keys"
   assert.ok(faqContentSource.includes("<summary"), "Account FAQ accordion summaries should remain unchanged.");
   assert.ok(faqSource.includes("faqItemKeys.reduce<FaqItem[]>") && faqSource.includes("seenQuestions"), "FAQ item ordering and duplicate-question handling should remain centralized.");
   assert.ok(languageOptions.some((option) => option.code === "tr" && option.direction === "ltr"));
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+});
+
+test("Swedish Account FAQ render path resolves remaining support copy without English fallback", () => {
+  const sv = getTranslations("sv");
+  const faqItems = getGeneralFaqs((key) => sv[key] ?? enTranslations[key] ?? "");
+
+  assert.equal(sv.faqHeading, "Vanliga frågor");
+  assert.equal(
+    sv.faqIntro,
+    "Lär dig hur Kurioticket hjälper dig att jämföra flyg, hotell och resealternativ innan du bokar hos betrodda leverantörer.",
+  );
+  assert.equal(sv.faqGeneralQuestions, "Allmänna frågor");
+  assert.equal(sv.faqNeedMoreHelpPrefix, "Behöver du mer hjälp? Besök");
+  assert.equal(sv.faqSupportPage, "supportsidan");
+  assert.equal(sv.faqNeedMoreHelpSuffix, "för service- och kontaktalternativ.");
+  assert.equal(
+    `${sv.faqNeedMoreHelpPrefix} ${sv.faqSupportPage} ${sv.faqNeedMoreHelpSuffix}`,
+    "Behöver du mer hjälp? Besök supportsidan för service- och kontaktalternativ.",
+  );
+
+  for (const key of [
+    "faqGeneralQuestions",
+    "faqNeedMoreHelpPrefix",
+    "faqSupportPage",
+    "faqNeedMoreHelpSuffix",
+  ]) {
+    assert.notEqual(sv[key], enTranslations[key], key);
+  }
+
+  assert.deepEqual(
+    faqItems.slice(0, 8).map((item) => item.question),
+    [
+      "Hur hittar Kurioticket flyg- och hotellalternativ?",
+      "Säljer Kurioticket biljetter eller hotellrum direkt?",
+      "Varför kan priser ändras efter att jag klickar på ett erbjudande?",
+      "Kan jag jämföra flera leverantörer för samma resa?",
+      "Hur slutför jag min bokning säkert?",
+      "Kan jag ställa in valuta- och språkpreferenser?",
+      "Är sökresultaten live eller cachade?",
+      "Var hanterar jag ändringar eller avbokningar?",
+    ],
+  );
+
+  assert.ok(faqItems.slice(0, 8).every((item) => !Object.values(enTranslations).includes(item.answer)));
+  assert.ok(faqItems.slice(0, 8).every((item) => item.answer.includes("Kurioticket") || item.answer.length > 0));
+
+  const faqContentSource = readFileSync("src/app/faq/FaqContent.tsx", "utf8");
+  const faqPageSource = readFileSync("src/app/faq/page.tsx", "utf8");
+  const faqSource = readFileSync("src/content/faqs.ts", "utf8");
+  const accountShellSource = readFileSync("src/components/dashboard/AccountDetailShell.tsx", "utf8");
+  const accountBackLinkRowSource = readFileSync("src/components/dashboard/AccountBackLinkRow.tsx", "utf8");
+  const accountBackLinkSource = readFileSync("src/components/dashboard/AccountBackLink.tsx", "utf8");
+
+  assert.ok(faqPageSource.includes("<FaqContent showAccountLink={showAccountLink} />"));
+  assert.ok(faqContentSource.includes('t("faqGeneralQuestions")'));
+  assert.ok(faqContentSource.includes('t("faqNeedMoreHelpPrefix")'));
+  assert.ok(faqContentSource.includes('t("faqSupportPage")'));
+  assert.ok(faqContentSource.includes('t("faqNeedMoreHelpSuffix")'));
+  assert.ok(!faqContentSource.includes("General questions"));
+  assert.ok(!faqContentSource.includes("Need more help? Visit the"));
+  assert.ok(faqContentSource.includes('href="/dashboard/support"'));
+  assert.ok(faqContentSource.includes("faqItems.map((item) =>"));
+  assert.ok(faqContentSource.includes("<details") && faqContentSource.includes("<summary"));
+  assert.ok(faqContentSource.includes('aria-labelledby="faq-list-heading"'));
+  assert.ok(faqContentSource.includes('id="faq-list-heading"'));
+  assert.ok(faqContentSource.includes('className="mt-8 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-5'));
+  assert.ok(faqContentSource.includes("<AccountDetailShell"));
+  assert.ok(accountShellSource.includes("<AccountBackLinkRow />"));
+  assert.ok(accountBackLinkRowSource.includes("<AccountBackLink />"));
+  assert.ok(accountBackLinkSource.includes('href="/dashboard/account"'));
+  assert.ok(faqSource.includes("faqItemKeys.reduce<FaqItem[]>") && faqSource.includes("seenQuestions"));
+  assert.ok(languageOptions.some((option) => option.code === "sv" && option.locale === "sv-SE" && option.nativeLabel === "Svenska" && option.direction === "ltr"));
   assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
 });
 
