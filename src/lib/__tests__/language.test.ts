@@ -6126,6 +6126,109 @@ test("Swedish homepage-visible copy resolves without English fallback", () => {
 });
 
 
+test("Swedish Flights landing copy resolves through active render path", () => {
+  const sv = getTranslations("sv");
+  const expected: Record<string, string> = {
+    flightLandingHeroTitle: "Hitta ditt nästa prisvärda flyg med lätthet.",
+    flightLandingHeroSubtitle: "Sök rutter, jämför datum och utforska flygalternativ för din nästa resa.",
+    cityOrAirport: "Stad eller flygplats",
+    destination: "DESTINATION",
+    searchFlights: "Sök flyg",
+    roundTrip: "Tur och retur",
+    oneWay: "Enkelresa",
+    origin: "AVRESEORT",
+    travelDates: "RESEDATUM",
+    travelers: "RESENÄRER",
+    discoverDestinationsFromRegion: "Upptäck destinationer från din region",
+    discoverDestinationsFromRegionBody: "Utforska utvalda rutter och starta din nästa resa med trygghet.",
+    flightLandingStartThisSearch: "Starta den här sökningen",
+    flightLandingFeatureSearchReadyTitle: "Sökklara rutter",
+    flightLandingFeatureSearchReadyBody: "Ange riktiga reseuppgifter innan resultat begärs från flygleverantörer.",
+    flightLandingFeatureCompareTitle: "Jämför i sitt sammanhang",
+    flightLandingFeatureCompareBody: "Använd datum, antal resenärer, kabinklass, längd, stopp och ruttuppgifter för att utvärdera alternativen.",
+    flightLandingFeatureProviderTitle: "Granska hos leverantören",
+    flightLandingFeatureProviderBody: "Bekräfta alltid slutlig tillgänglighet, pris och regler hos leverantören innan du bokar.",
+    flightLandingRouteIdeasTitle: "Ruttidéer för flexibla resor",
+    flightLandingRouteIdeasBody: "Bläddra bland ruttidéer och starta sedan en riktig sökning med datum och resenärer innan du jämför tillgängliga flyg.",
+    "flightLandingImageAlt.Johannesburg skyline at golden hour": "Johannesburgs silhuett i gyllene timmen",
+    "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza": "Kairos silhuett med pyramiderna i Giza",
+    "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands": "Addis Abebas stadsvy i de etiopiska högländerna",
+    beachVacations: "Strandsemestrar",
+    beachVacationsBody: "Utforska flygrutter till soliga kuster, öresor och stranddestinationer med varmt väder.",
+    "homeDiscoveryRoute.ca-yyz-cun.title": "Vinterresa till Cancun",
+    "homeDiscoveryRoute.ca-yyz-cun.routeNote": "Pålitlig fritidsrutt med direktalternativ under högsäsong.",
+    "flightLandingImageAlt.Puerto Vallarta coastline and old town": "Puerto Vallartas kustlinje och gamla stad",
+    "homeDiscoveryRoute.ca-yeg-pvr.title": "Strandresa till Puerto Vallarta",
+    "homeDiscoveryRoute.ca-yeg-pvr.routeNote": "Vintersolrutt med Stillahavsstränder och charmig gammal stad.",
+    "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water": "Honolulus Waikiki-strand med Diamond Head och klart blått vatten",
+    "homeDiscoveryRoute.ca-yyz-hnl.title": "Långdistansresa till Honolulu",
+    "homeDiscoveryRoute.ca-yyz-hnl.routeNote": "Premiumalternativ för stränder, surfing och vandringar på ön.",
+    "flightLandingImageAlt.San Diego bay skyline and marina": "San Diegos bukt, silhuett och marina",
+    "homeDiscoveryRoute.ca-yyz-san.title": "Sol- och surfresa till San Diego",
+    "homeDiscoveryRoute.ca-yyz-san.routeNote": "Pålitlig gränsöverskridande rutt för stränder, parker och hamnutsikter.",
+    "homeDiscoveryRoute.ca-yvr-syd.title": "Transpacifiskt äventyr till Sydney",
+    "homeDiscoveryRoute.ca-yvr-syd.routeNote": "Långdistansfavorit för hamnlandmärken och strandnära förorter.",
+    flightBookingFaqs: "Vanliga frågor om flygbokning",
+    flightBookingFaqIntro: "Gå igenom vanliga detaljer för flygsökning innan du fortsätter till en leverantör.",
+    flightFaqBestTimeQuestion: "När är bästa tiden att boka ett flyg?",
+    flightFaqBestTimeAnswer: "Flygpriser kan ändras beroende på rutt, säsong, efterfrågan och tillgänglighet. Det är ofta bra att jämföra flera datum, kontrollera närliggande flygplatser när det är möjligt och granska hela resplanen innan du väljer ett pris.",
+    flightFaqBeforeBookingQuestion: "Vad bör jag kontrollera innan bokning?",
+    flightFaqBeforeBookingAnswer: "Granska avgångs- och ankomsttider, total restid, mellanlandningar, bagageregler, platsval, avbokningsvillkor och policy för biljettändringar innan du slutför bokningen hos leverantören.",
+    flightFaqFlexibleFareQuestion: "Vad är ett flexibelt pris?",
+    flightFaqFlexibleFareAnswer: "Ett flexibelt pris kan tillåta ändringar eller avbokningar med färre begränsningar än ett baspris, men de exakta reglerna beror på flygbolaget eller bokningsleverantören. Granska alltid prisvillkoren före köp.",
+    flightFaqNonstopQuestion: "Är direktflyg alltid bättre?",
+    flightFaqNonstopAnswer: "Inte alltid. Direktflyg kan spara tid, medan rutter med ett stopp kan erbjuda andra avgångstider, ankomstfönster eller prisalternativ. Jämför total restid, mellanlandningens längd och bekvämlighet innan du bestämmer dig.",
+    flightFaqBaggageQuestion: "Hur fungerar bagageregler?",
+    flightFaqBaggageAnswer: "Bagageregler kan variera beroende på flygbolag, rutt, kabinklass, pristyp och leverantör. Kontrollera om handbagage, incheckat bagage och personliga föremål ingår innan du bokar.",
+    flightFaqChangeCancelQuestion: "Kan jag ändra eller avboka min biljett?",
+    flightFaqChangeCancelAnswer: "Möjligheter till ändring och avbokning beror på prisregler och leverantörens policyer. Vissa biljetter kan vara ej återbetalningsbara eller ha avgifter, så granska villkoren noggrant innan du bokar.",
+    flightFaqInternationalQuestion: "Vad bör jag veta om internationella flyg?",
+    flightFaqInternationalAnswer: "För internationella resor bör du kontrollera passets giltighet, visumkrav, transitregler, bagagepolicyer och inresekrav för destinationen innan du bokar.",
+  };
+
+  for (const [key, expectedValue] of Object.entries(expected)) {
+    assert.equal(sv[key], expectedValue, `${key} should resolve to Swedish`);
+    if (expectedValue !== enTranslations[key]) assert.notEqual(sv[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  assert.equal(`${1} ${sv.adultSingular}, ${sv.economy}`, "1 vuxen, Ekonomi");
+  assert.ok(languageOptions.some((o) => o.code === "sv" && o.locale === "sv-SE" && o.nativeLabel === "Svenska" && o.direction === "ltr"));
+  assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
+
+  const flightsPageSource = readFileSync("src/app/flights/page.tsx", "utf8");
+  const flightLandingSource = readFileSync("src/components/flights/FlightLandingClient.tsx", "utf8");
+  const searchFormSource = readFileSync("src/components/search/StandaloneFlightSearchForm.tsx", "utf8");
+  const homeDiscoverySource = readFileSync("src/data/homeDiscovery.ts", "utf8");
+
+  assert.ok(flightsPageSource.includes("<FlightLandingClient />"), "The /flights page should render the active flight landing client.");
+  for (const key of ["flightLandingHeroTitle", "flightLandingHeroSubtitle", "discoverDestinationsFromRegion", "flightLandingStartThisSearch", "flightLandingRouteIdeasTitle", "beachVacations", "flightBookingFaqs", "flightBookingFaqIntro"]) {
+    assert.ok(flightLandingSource.includes(`t("${key}")`), `Flight landing render path should read ${key} through i18n.`);
+  }
+  for (const key of ["cityOrAirport", "destination", "searchFlights", "roundTrip", "oneWay", "origin", "travelDates", "travelers"]) {
+    assert.ok(searchFormSource.includes(`t("${key}")`) || searchFormSource.includes(`t("${key}")`), `Flight search form should read ${key} through i18n.`);
+  }
+  assert.ok(
+    flightLandingSource.includes("getHomeDiscoveryByRegion(selectedOption.code)") &&
+      flightLandingSource.includes("buildDiscoveryLink(item)") &&
+      flightLandingSource.includes("{item.originCode} → {item.destinationCode}") &&
+      flightLandingSource.includes('className="group block overflow-hidden rounded-3xl') &&
+      homeDiscoverySource.includes('id: "ca-yyz-cun"') &&
+      homeDiscoverySource.includes('originCode: "YEG"') &&
+      homeDiscoverySource.includes('destinationCode: "CUN"') &&
+      homeDiscoverySource.includes('id: "ca-yvr-syd"') &&
+      homeDiscoverySource.includes('destinationCode: "SYD"'),
+    "Flights landing should keep route/card IDs, airport codes, route arrows, href builder, image data source, order source, and layout classes unchanged.",
+  );
+  assert.ok(
+    searchFormSource.includes('origin: originCode || origin.trim()') &&
+      searchFormSource.includes('destination: destinationCode || destination.trim()') &&
+      searchFormSource.includes('travelers: String(normalizedTravelers)') &&
+      searchFormSource.includes('router.push(`/flights/results?${params.toString()}`)'),
+    "Flights search behavior, form field payloads, and CTA route generation should remain unchanged.",
+  );
+});
+
+
 test("Swedish global modal and auth copy resolves without English fallback", () => {
   const sv = getTranslations("sv");
   const expected: Record<string, string> = {
