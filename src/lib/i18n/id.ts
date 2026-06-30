@@ -652,6 +652,90 @@ export const translations: TranslationDictionary = {
   "legal.accessibilityStatement.sections.external-providers.paragraph1": "Situs web penyedia eksternal, alur pemesanan, halaman pembayaran, aplikasi seluler, dan saluran dukungan pelanggan dikendalikan oleh penyedia tersebut dan dapat mengikuti praktik aksesibilitas mereka sendiri.",
   "legal.accessibilityStatement.sections.external-providers.paragraph2": "Jika masalah aksesibilitas terjadi setelah Anda meninggalkan Kurioticket, hubungi penyedia eksternal yang bertanggung jawab atas halaman atau alur pemesanan tersebut.",
   "legal.accessibilityStatement.developerNote": "Draf hukum ini adalah placeholder startup dan harus ditinjau oleh penasihat hukum yang memenuhi syarat sebelum peluncuran publik berskala besar.",
+
+
+  // Indonesian Flights landing page copy.
+  flightLandingHeroTitle: "Temukan penerbangan terjangkau berikutnya dengan mudah.",
+  flightLandingHeroSubtitle:
+    "Cari rute, bandingkan tanggal, dan jelajahi opsi penerbangan untuk perjalanan Anda berikutnya.",
+  flightLandingHeroImageAlt: "Sayap pesawat di atas awan cerah",
+  flightLandingFeatureSearchReadyTitle: "Rute siap dicari",
+  flightLandingFeatureSearchReadyBody:
+    "Masukkan detail perjalanan sebenarnya sebelum hasil diminta dari penyedia penerbangan.",
+  flightLandingFeatureCompareTitle: "Bandingkan dalam konteks",
+  flightLandingFeatureCompareBody:
+    "Gunakan tanggal, jumlah penumpang, kabin, durasi, transit, dan detail rute untuk mengevaluasi opsi.",
+  flightLandingFeatureProviderTitle: "Tinjauan penyedia",
+  flightLandingFeatureProviderBody:
+    "Selalu konfirmasi ketersediaan akhir, harga, dan aturan dengan penyedia sebelum memesan.",
+  flightLandingStartThisSearch: "Mulai pencarian ini",
+  flightLandingRouteIdeasTitle: "Ide rute untuk perjalanan fleksibel",
+  flightLandingRouteIdeasBody:
+    "Jelajahi ide rute, lalu mulai pencarian nyata dengan tanggal dan penumpang sebelum membandingkan penerbangan yang tersedia.",
+  flightLandingRouteTemplate: "{{origin}} ke {{destination}}",
+  flightLandingRouteConnector: "ke",
+  flightLandingRouteAriaLabel: "Cari penerbangan dari {{origin}} ke {{destination}}",
+  "flightLandingCity.Cairo": "Kairo",
+  "flightLandingCity.Rome": "Roma",
+  "flightLandingImageAlt.Johannesburg skyline at golden hour":
+    "Cakrawala Johannesburg saat cahaya senja keemasan",
+  "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza":
+    "Cakrawala Kairo dengan Piramida Giza",
+  "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands":
+    "Lanskap kota Addis Ababa di dataran tinggi Ethiopia",
+  "flightLandingImageAlt.Puerto Vallarta coastline and old town":
+    "Garis pantai Puerto Vallarta dan kota tua",
+  "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water":
+    "Pantai Waikiki Honolulu dengan Diamond Head dan air biru cerah",
+  "flightLandingImageAlt.San Diego bay skyline and marina":
+    "Cakrawala teluk San Diego dan marina",
+  discoverDestinationsFromRegion: "Temukan destinasi dari wilayah Anda",
+  discoverDestinationsFromRegionBody:
+    "Jelajahi rute pilihan dan mulai perjalanan Anda berikutnya dengan percaya diri.",
+  cityOrAirport: "Kota atau bandara",
+  searchFlights: "Cari penerbangan",
+  beachVacations: "Liburan pantai",
+  beachVacationsBody:
+    "Jelajahi rute penerbangan ke pesisir cerah, liburan pulau, dan destinasi pantai bercuaca hangat.",
+  flightBookingFaqs: "FAQ pemesanan penerbangan",
+  flightBookingFaqIntro:
+    "Tinjau detail umum pencarian penerbangan sebelum melanjutkan dengan penyedia.",
+  flightFaqBestTimeQuestion: "Kapan waktu terbaik untuk memesan penerbangan?",
+  flightFaqBestTimeAnswer:
+    "Harga penerbangan dapat berubah berdasarkan rute, musim, permintaan, dan ketersediaan. Biasanya membantu untuk membandingkan beberapa tanggal, memeriksa bandara terdekat bila memungkinkan, dan meninjau seluruh itinerari sebelum memilih tarif. Penyedia penerbangan mengonfirmasi ketersediaan dan harga akhir sebelum pemesanan selesai.",
+  flightFaqBeforeBookingQuestion: "Apa yang harus saya periksa sebelum memesan?",
+  flightFaqBeforeBookingAnswer:
+    "Tinjau waktu keberangkatan dan kedatangan, total waktu perjalanan, transit, aturan bagasi, opsi pemilihan kursi, ketentuan pembatalan, dan kebijakan perubahan tiket sebelum menyelesaikan pemesanan dengan penyedia.",
+  flightFaqFlexibleFareQuestion: "Apa itu tarif fleksibel?",
+  flightFaqFlexibleFareAnswer:
+    "Tarif fleksibel dapat memungkinkan perubahan atau pembatalan dengan pembatasan lebih sedikit daripada tarif dasar, tetapi aturan pastinya bergantung pada maskapai atau penyedia pemesanan. Selalu tinjau ketentuan tarif dengan penyedia sebelum membeli.",
+  flightFaqNonstopQuestion: "Apakah penerbangan nonstop selalu lebih baik?",
+  flightFaqNonstopAnswer:
+    "Tidak selalu. Penerbangan nonstop dapat menghemat waktu, sementara rute dengan satu transit dapat menawarkan waktu keberangkatan, jendela kedatangan, atau pilihan tarif yang berbeda. Bandingkan total waktu perjalanan, durasi transit, dan kenyamanan sebelum memutuskan.",
+  flightFaqBaggageQuestion: "Bagaimana cara kerja aturan bagasi?",
+  flightFaqBaggageAnswer:
+    "Jatah dan aturan bagasi dapat berbeda menurut maskapai, rute, kabin, jenis tarif, dan penyedia. Periksa apakah bagasi kabin, bagasi terdaftar, dan barang pribadi termasuk sebelum memesan, lalu konfirmasi aturan akhir dengan penyedia.",
+  flightFaqChangeCancelQuestion: "Bisakah saya mengubah atau membatalkan tiket?",
+  flightFaqChangeCancelAnswer:
+    "Opsi perubahan dan pembatalan bergantung pada aturan tarif dan kebijakan penyedia. Beberapa tiket mungkin tidak dapat dikembalikan atau mengenakan biaya, jadi tinjau ketentuan dengan cermat sebelum memesan dan kelola perubahan melalui penyedia tempat tiket diselesaikan.",
+  flightFaqInternationalQuestion: "Apa yang perlu saya ketahui tentang penerbangan internasional?",
+  flightFaqInternationalAnswer:
+    "Untuk perjalanan internasional, tinjau masa berlaku paspor, persyaratan visa, aturan transit, kebijakan bagasi, dan persyaratan kedatangan untuk destinasi Anda sebelum memesan. Kurioticket membantu mencari dan membandingkan opsi, dan dapat mengalihkan Anda ke penyedia untuk aturan tiket, pembayaran, dan konfirmasi akhir.",
+  "homeDiscoveryRoute.ca-yyz-cun.title": "Liburan musim dingin Cancun",
+  "homeDiscoveryRoute.ca-yyz-cun.routeNote":
+    "Rute liburan andal dengan opsi nonstop pada musim puncak.",
+  "homeDiscoveryRoute.ca-yeg-pvr.title": "Liburan pantai Puerto Vallarta",
+  "homeDiscoveryRoute.ca-yeg-pvr.routeNote":
+    "Rute matahari musim dingin dengan pantai Pasifik dan pesona kota tua.",
+  "homeDiscoveryRoute.ca-yyz-hnl.title": "Liburan pulau jarak jauh Honolulu",
+  "homeDiscoveryRoute.ca-yyz-hnl.routeNote":
+    "Opsi liburan premium untuk pantai, selancar, dan pendakian pulau.",
+  "homeDiscoveryRoute.ca-yyz-san.title": "Perjalanan matahari dan selancar San Diego",
+  "homeDiscoveryRoute.ca-yyz-san.routeNote":
+    "Rute lintas perbatasan andal untuk pantai, taman, dan pemandangan pelabuhan.",
+  "homeDiscoveryRoute.ca-yvr-syd.title": "Petualangan transpasifik Sydney",
+  "homeDiscoveryRoute.ca-yvr-syd.routeNote":
+    "Favorit jarak jauh untuk landmark pelabuhan dan pinggiran tepi pantai.",
   "deals.heroTitle": "Temukan penawaran perjalanan untuk perjalanan Anda berikutnya",
   "deals.heroSubtitle": "Cari penerbangan, penginapan, dan mobil bersama-sama dalam satu tempat.",
   "deals.packageLegend": "Pilih jenis paket",

@@ -7969,6 +7969,148 @@ test("Swedish Flights landing copy resolves through active render path", () => {
 
 
 
+
+
+test("Indonesian Flights landing copy resolves through active render path", () => {
+  const id = getTranslations("id-ID");
+  const expected: Record<string, string> = {
+    flightLandingHeroTitle: "Temukan penerbangan terjangkau berikutnya dengan mudah.",
+    flightLandingHeroSubtitle: "Cari rute, bandingkan tanggal, dan jelajahi opsi penerbangan untuk perjalanan Anda berikutnya.",
+    cityOrAirport: "Kota atau bandara",
+    searchFlights: "Cari penerbangan",
+    roundTrip: "Pulang pergi",
+    oneWay: "Sekali jalan",
+    origin: "ASAL",
+    destination: "TUJUAN",
+    travelDates: "Tanggal perjalanan",
+    travelers: "PENUMPANG",
+    discoverDestinationsFromRegion: "Temukan destinasi dari wilayah Anda",
+    discoverDestinationsFromRegionBody: "Jelajahi rute pilihan dan mulai perjalanan Anda berikutnya dengan percaya diri.",
+    flightLandingStartThisSearch: "Mulai pencarian ini",
+    flightLandingFeatureSearchReadyTitle: "Rute siap dicari",
+    flightLandingFeatureSearchReadyBody: "Masukkan detail perjalanan sebenarnya sebelum hasil diminta dari penyedia penerbangan.",
+    flightLandingFeatureCompareTitle: "Bandingkan dalam konteks",
+    flightLandingFeatureCompareBody: "Gunakan tanggal, jumlah penumpang, kabin, durasi, transit, dan detail rute untuk mengevaluasi opsi.",
+    flightLandingFeatureProviderTitle: "Tinjauan penyedia",
+    flightLandingFeatureProviderBody: "Selalu konfirmasi ketersediaan akhir, harga, dan aturan dengan penyedia sebelum memesan.",
+    flightLandingRouteIdeasTitle: "Ide rute untuk perjalanan fleksibel",
+    flightLandingRouteIdeasBody: "Jelajahi ide rute, lalu mulai pencarian nyata dengan tanggal dan penumpang sebelum membandingkan penerbangan yang tersedia.",
+    flightLandingRouteTemplate: "{{origin}} ke {{destination}}",
+    flightLandingRouteConnector: "ke",
+    "flightLandingCity.Cairo": "Kairo",
+    "flightLandingCity.Rome": "Roma",
+    "flightLandingImageAlt.Johannesburg skyline at golden hour": "Cakrawala Johannesburg saat cahaya senja keemasan",
+    "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza": "Cakrawala Kairo dengan Piramida Giza",
+    "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands": "Lanskap kota Addis Ababa di dataran tinggi Ethiopia",
+    beachVacations: "Liburan pantai",
+    beachVacationsBody: "Jelajahi rute penerbangan ke pesisir cerah, liburan pulau, dan destinasi pantai bercuaca hangat.",
+    "homeDiscoveryRoute.ca-yyz-cun.title": "Liburan musim dingin Cancun",
+    "homeDiscoveryRoute.ca-yyz-cun.routeNote": "Rute liburan andal dengan opsi nonstop pada musim puncak.",
+    "homeDiscoveryRoute.ca-yeg-pvr.title": "Liburan pantai Puerto Vallarta",
+    "homeDiscoveryRoute.ca-yeg-pvr.routeNote": "Rute matahari musim dingin dengan pantai Pasifik dan pesona kota tua.",
+    "flightLandingImageAlt.Puerto Vallarta coastline and old town": "Garis pantai Puerto Vallarta dan kota tua",
+    "homeDiscoveryRoute.ca-yyz-hnl.title": "Liburan pulau jarak jauh Honolulu",
+    "homeDiscoveryRoute.ca-yyz-hnl.routeNote": "Opsi liburan premium untuk pantai, selancar, dan pendakian pulau.",
+    "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water": "Pantai Waikiki Honolulu dengan Diamond Head dan air biru cerah",
+    "homeDiscoveryRoute.ca-yyz-san.title": "Perjalanan matahari dan selancar San Diego",
+    "homeDiscoveryRoute.ca-yyz-san.routeNote": "Rute lintas perbatasan andal untuk pantai, taman, dan pemandangan pelabuhan.",
+    "flightLandingImageAlt.San Diego bay skyline and marina": "Cakrawala teluk San Diego dan marina",
+    "homeDiscoveryRoute.ca-yvr-syd.title": "Petualangan transpasifik Sydney",
+    "homeDiscoveryRoute.ca-yvr-syd.routeNote": "Favorit jarak jauh untuk landmark pelabuhan dan pinggiran tepi pantai.",
+    flightBookingFaqs: "FAQ pemesanan penerbangan",
+    flightBookingFaqIntro: "Tinjau detail umum pencarian penerbangan sebelum melanjutkan dengan penyedia.",
+    flightFaqBestTimeQuestion: "Kapan waktu terbaik untuk memesan penerbangan?",
+    flightFaqBeforeBookingQuestion: "Apa yang harus saya periksa sebelum memesan?",
+    flightFaqFlexibleFareQuestion: "Apa itu tarif fleksibel?",
+    flightFaqNonstopQuestion: "Apakah penerbangan nonstop selalu lebih baik?",
+    flightFaqBaggageQuestion: "Bagaimana cara kerja aturan bagasi?",
+    flightFaqChangeCancelQuestion: "Bisakah saya mengubah atau membatalkan tiket?",
+    flightFaqInternationalQuestion: "Apa yang perlu saya ketahui tentang penerbangan internasional?",
+  };
+
+  for (const [key, expectedValue] of Object.entries(expected)) {
+    assert.equal(id[key], expectedValue, `${key} should resolve to Indonesian`);
+    if (expectedValue !== enTranslations[key]) assert.notEqual(id[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  assert.equal(`${1} ${id.adultSingular}, ${id.economy}`, "1 dewasa, Ekonomi");
+  assert.match(id.flightFaqInternationalAnswer, /Kurioticket membantu mencari dan membandingkan opsi/);
+  assert.match(id.flightFaqInternationalAnswer, /penyedia/);
+  assert.match(id.flightFaqChangeCancelAnswer, /penyedia tempat tiket diselesaikan/);
+  assert.ok(languageOptions.some((o) => o.code === "id" && o.locale === "id-ID" && o.nativeLabel === "Bahasa Indonesia" && o.direction === "ltr"));
+  assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
+
+  const expectedRouteLabels = [
+    ["Lagos", "London", "Lagos ke London"],
+    ["Lagos", "Dubai", "Lagos ke Dubai"],
+    ["Abuja", "Accra", "Abuja ke Accra"],
+    ["Lagos", "Nairobi", "Lagos ke Nairobi"],
+    ["Lagos", "Cape Town", "Lagos ke Cape Town"],
+    ["Toronto", "Cancun", "Toronto ke Cancun"],
+    ["Edmonton", "Puerto Vallarta", "Edmonton ke Puerto Vallarta"],
+    ["Toronto", "Honolulu", "Toronto ke Honolulu"],
+    ["Toronto", "San Diego", "Toronto ke San Diego"],
+    ["Vancouver", "Sydney", "Vancouver ke Sydney"],
+  ] as const;
+
+  for (const [originCity, destinationCity, expectedLabel] of expectedRouteLabels) {
+    const label = formatHomeDiscoveryRoute(id, originCity, destinationCity);
+    assert.equal(label, expectedLabel);
+    assert.doesNotMatch(label, /\bto\b/);
+  }
+
+  assert.deepEqual(
+    getHomeDiscoveryByRegion("NG")
+      .slice(4, 12)
+      .map((item) => `${item.originCode} → ${item.destinationCode}`),
+    ["ABV → JNB", "LOS → IST", "ABV → CDG", "LOS → DOH", "LOS → KGL", "ABV → CAI", "LOS → ADD", "ABV → FCO"],
+  );
+  assert.deepEqual(
+    getHomeDiscoveryByRegion("CA")
+      .filter((item) => ["ca-yyz-cun", "ca-yeg-pvr", "ca-yyz-hnl", "ca-yyz-san", "ca-yvr-syd"].includes(item.id))
+      .map((item) => `${item.originCode} → ${item.destinationCode}`),
+    ["YYZ → CUN", "YEG → PVR", "YYZ → HNL", "YYZ → SAN", "YVR → SYD"],
+  );
+
+  const flightsPageSource = readFileSync("src/app/flights/page.tsx", "utf8");
+  const flightLandingSource = readFileSync("src/components/flights/FlightLandingClient.tsx", "utf8");
+  const searchFormSource = readFileSync("src/components/search/StandaloneFlightSearchForm.tsx", "utf8");
+  const homeDiscoverySource = readFileSync("src/data/homeDiscovery.ts", "utf8");
+
+  assert.ok(flightsPageSource.includes("<FlightLandingClient />"));
+  for (const key of ["flightLandingHeroTitle", "flightLandingHeroSubtitle", "discoverDestinationsFromRegion", "flightLandingStartThisSearch", "flightLandingRouteIdeasTitle", "beachVacations", "flightBookingFaqs", "flightBookingFaqIntro"]) {
+    assert.ok(flightLandingSource.includes(`t("${key}")`), `${key} should be read through i18n`);
+  }
+  for (const key of ["cityOrAirport", "destination", "searchFlights", "roundTrip", "oneWay", "origin", "travelDates", "travelers"]) {
+    assert.ok(searchFormSource.includes(`t("${key}")`), `${key} should be read through i18n`);
+  }
+  assert.ok(flightLandingSource.includes("formatHomeDiscoveryRoute"));
+  assert.ok(flightLandingSource.includes('t("flightLandingRouteTemplate")'));
+  assert.ok(!flightLandingSource.includes("${routeText.originCity} to ${routeText.destinationCity}"));
+  for (const english of ["Find your next affordable flight with ease.", "Search routes, compare dates, and explore flight options for your next journey.", "Discover destinations from your region", "Start this search", "Beach vacations", "Flight booking FAQs"]) {
+    assert.ok(!flightLandingSource.includes(`>${english}<`), `${english} should not be hardcoded as rendered JSX text`);
+  }
+  assert.ok(
+    flightLandingSource.includes("getHomeDiscoveryByRegion(selectedOption.code)") &&
+      flightLandingSource.includes("buildDiscoveryLink(item)") &&
+      flightLandingSource.includes("{item.originCode} → {item.destinationCode}") &&
+      flightLandingSource.includes('className="group block overflow-hidden rounded-3xl') &&
+      homeDiscoverySource.includes('id: "ca-yyz-cun"') &&
+      homeDiscoverySource.includes('originCode: "YEG"') &&
+      homeDiscoverySource.includes('destinationCode: "CUN"') &&
+      homeDiscoverySource.includes('id: "ca-yvr-syd"') &&
+      homeDiscoverySource.includes('destinationCode: "SYD"'),
+    "Flights landing should keep route/card IDs, airport codes, route arrows, href builder, image data source, order source, and layout classes unchanged.",
+  );
+  assert.ok(
+    searchFormSource.includes('origin: originCode || origin.trim()') &&
+      searchFormSource.includes('destination: destinationCode || destination.trim()') &&
+      searchFormSource.includes('travelers: String(normalizedTravelers)') &&
+      searchFormSource.includes('router.push(`/flights/results?${params.toString()}`)'),
+    "Flights search behavior, form field payloads, and CTA route generation should remain unchanged.",
+  );
+});
+
 test("Indonesian auth, language, and country/currency copy resolves without English fallback", () => {
   const id = getTranslations("id-ID");
   const expected: Record<string, string> = {
