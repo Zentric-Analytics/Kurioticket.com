@@ -652,7 +652,7 @@ function getPersonalDetailRows(t: TranslationDictionary): PersonalDetailRow[] {
       key: "email",
       label: t["accountDashboard.personalDetails.emailAddress"],
       fallback: t["accountDashboard.personalDetails.addEmailAddress"],
-      helper: "This email is used for sign-in and booking confirmations. Changes require verification.",
+      helper: t["accountDashboard.personalDetails.emailHelper"],
       inputType: "email",
       readOnly: true,
     },
@@ -660,7 +660,7 @@ function getPersonalDetailRows(t: TranslationDictionary): PersonalDetailRow[] {
       key: "phone",
       label: t["accountDashboard.personalDetails.phoneNumber"],
       fallback: t["accountDashboard.personalDetails.addPhoneNumber"],
-      helper: "We’ll use this number for booking updates.",
+      helper: t["accountDashboard.personalDetails.phoneHelper"],
       inputType: "tel",
     },
     {
@@ -828,7 +828,7 @@ function DateOfBirthInput({
           aria-label={t["accountDashboard.personalDetails.dateOfBirthDay"]}
         >
           <option value="" disabled hidden>
-            DD
+            {t["accountDashboard.personalDetails.dateOfBirthDayPlaceholder"]}
           </option>
           {dateOfBirthDays.map((day) => (
             <option key={day} value={day}>
@@ -872,7 +872,7 @@ function DateOfBirthInput({
           aria-label={t["accountDashboard.personalDetails.dateOfBirthYear"]}
         >
           <option value="" disabled hidden>
-            YYYY
+            {t["accountDashboard.personalDetails.dateOfBirthYearPlaceholder"]}
           </option>
           {dateOfBirthYears.map((year) => (
             <option key={year} value={year}>
@@ -1024,6 +1024,7 @@ function StructuredAddressInput({
   onChange: (value: string) => void;
   className: string;
 }) {
+  const { t } = useLocale();
   const parts = useMemo(() => parseStructuredAddressDraft(value), [value]);
 
   const updatePart = (
@@ -1048,7 +1049,7 @@ function StructuredAddressInput({
           className={fieldLabelClassName}
           htmlFor="personal-address-country"
         >
-          Country/region
+          {t["accountDashboard.personalDetails.countryRegion"]}
         </label>
         <div className="relative min-w-0">
           <select
@@ -1063,7 +1064,7 @@ function StructuredAddressInput({
             autoComplete="country"
           >
             <option value="" disabled hidden>
-              Select one
+              {t["accountDashboard.personalDetails.selectOne"]}
             </option>
             {personalDetailsDropdownOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -1079,7 +1080,7 @@ function StructuredAddressInput({
           className={fieldLabelClassName}
           htmlFor="personal-address-street"
         >
-          Street address
+          {t["accountDashboard.personalDetails.streetAddress"]}
         </label>
         <input
           id="personal-address-street"
@@ -1094,7 +1095,7 @@ function StructuredAddressInput({
           className={fieldLabelClassName}
           htmlFor="personal-address-apartment"
         >
-          Apartment, suite, unit, building
+          {t["accountDashboard.personalDetails.apartmentSuite"]}
         </label>
         <input
           id="personal-address-apartment"
@@ -1112,7 +1113,7 @@ function StructuredAddressInput({
             className={fieldLabelClassName}
             htmlFor="personal-address-city"
           >
-            Town / City
+            {t["accountDashboard.personalDetails.townCity"]}
           </label>
           <input
             id="personal-address-city"
@@ -1127,8 +1128,8 @@ function StructuredAddressInput({
             className={fieldLabelClassName}
             htmlFor="personal-address-state"
           >
-            <span className="sm:hidden">State / Region</span>
-            <span className="hidden sm:inline">State / Province / Region</span>
+            <span className="sm:hidden">{t["accountDashboard.personalDetails.stateRegion"]}</span>
+            <span className="hidden sm:inline">{t["accountDashboard.personalDetails.stateProvinceRegion"]}</span>
           </label>
           <input
             id="personal-address-state"
@@ -1146,7 +1147,7 @@ function StructuredAddressInput({
           className={fieldLabelClassName}
           htmlFor="personal-address-postal"
         >
-          Postcode / ZIP code
+          {t["accountDashboard.personalDetails.postcodeZip"]}
         </label>
         <input
           id="personal-address-postal"
@@ -1510,6 +1511,7 @@ function PersonalDetailsEmailEditRow({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const { t } = useLocale();
   const baseInputClassName =
     "h-11 w-full min-w-0 rounded-none border border-slate-400 bg-white px-3.5 text-base font-medium leading-5 text-slate-950 shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-blue-700 focus:ring-2 focus:ring-blue-100 sm:text-sm";
   const isBusy = isRequestingCode || isConfirming;
@@ -1529,7 +1531,7 @@ function PersonalDetailsEmailEditRow({
               </span>
               {currentEmail ? (
                 <span className="inline-flex shrink-0 items-center border border-emerald-100 bg-emerald-50/80 px-1.5 py-px text-[0.625rem] font-medium leading-4 text-emerald-700">
-                  Verified
+                  {t["accountDashboard.personalDetails.emailVerified"]}
                 </span>
               ) : null}
             </div>
@@ -1540,7 +1542,7 @@ function PersonalDetailsEmailEditRow({
               onClick={onStartChange}
               className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center self-end rounded-lg border border-blue-200 bg-white px-3 text-xs font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-50 sm:self-auto"
             >
-              Change email
+              {t["accountDashboard.personalDetails.changeEmail"]}
             </button>
           ) : null}
         </div>
@@ -2099,8 +2101,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       {!isEditing ? (
         <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
           <p className="text-sm text-slate-600">
-            {t["accountDashboard.personalDetails.description"] ||
-              "Manage the information Kurioticket uses for your account."}
+            {t["accountDashboard.personalDetails.description"]}
           </p>
         </div>
       ) : null}
@@ -2129,10 +2130,10 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
           <div className="grid grid-cols-1 gap-6 px-5 py-7 sm:px-7 lg:grid-cols-[minmax(14rem,17rem)_minmax(0,1fr)] lg:gap-12 lg:px-9 lg:py-9">
             <div>
               <h2 className="text-lg font-semibold leading-7 text-slate-950">
-                Basic information
+                {t["accountDashboard.personalDetails.section.basicInformation"]}
               </h2>
               <p className="mt-2 max-w-xs text-sm leading-6 text-slate-600">
-                Manage the information Kurioticket uses for your account.
+                {t["accountDashboard.personalDetails.description"]}
               </p>
             </div>
             <div className="min-w-0">
@@ -2144,10 +2145,10 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
           <div className="grid grid-cols-1 gap-6 border-t border-slate-200 px-5 py-7 sm:px-7 lg:grid-cols-[minmax(14rem,17rem)_minmax(0,1fr)] lg:gap-12 lg:px-9 lg:py-9">
             <div>
               <h2 className="text-lg font-semibold leading-7 text-slate-950">
-                Address
+                {t["accountDashboard.personalDetails.section.address"]}
               </h2>
               <p className="mt-2 max-w-xs text-sm leading-6 text-slate-600">
-                Used for billing, booking records, and travel communication.
+                {t["accountDashboard.personalDetails.addressDescription"]}
               </p>
             </div>
             <div className="min-w-0">{renderEditField("address")}</div>

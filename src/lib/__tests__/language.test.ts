@@ -2728,6 +2728,92 @@ test("Polish account personal details and security settings copy resolves withou
   );
 });
 
+
+
+test("Personal details edit form newly added copy is localized for all active locales", () => {
+  const activeLocaleDictionaries = { en: enTranslations, ar: arTranslations, nl: nlTranslations, es: esTranslations, fr: frTranslations, de: deTranslations, it: itTranslations, "pt-br": ptBrTranslations, "zh-cn": zhCnTranslations, ja: jaTranslations, ko: koTranslations, hi: hiTranslations, tr: trTranslations, pl: plTranslations } as const;
+  const editFormKeys = [
+    "accountDashboard.personalDetails.section.basicInformation",
+    "accountDashboard.personalDetails.description",
+    "accountDashboard.personalDetails.emailVerified",
+    "accountDashboard.personalDetails.changeEmail",
+    "accountDashboard.personalDetails.emailHelper",
+    "accountDashboard.personalDetails.phoneHelper",
+    "accountDashboard.personalDetails.dateOfBirthDayPlaceholder",
+    "accountDashboard.personalDetails.monthPlaceholder",
+    "accountDashboard.personalDetails.dateOfBirthYearPlaceholder",
+    "accountDashboard.personalDetails.section.address",
+    "accountDashboard.personalDetails.addressDescription",
+    "accountDashboard.personalDetails.countryRegion",
+    "accountDashboard.personalDetails.selectOne",
+    "accountDashboard.personalDetails.streetAddress",
+    "accountDashboard.personalDetails.apartmentSuite",
+    "accountDashboard.personalDetails.townCity",
+    "accountDashboard.personalDetails.stateRegion",
+    "accountDashboard.personalDetails.stateProvinceRegion",
+    "accountDashboard.personalDetails.postcodeZip",
+    "accountDashboard.personalDetails.cancel",
+    "accountDashboard.personalDetails.saveChanges",
+  ] as const;
+
+  for (const [locale, dictionary] of Object.entries(activeLocaleDictionaries)) {
+    for (const key of editFormKeys) {
+      assert.equal(typeof dictionary[key], "string", `${locale} should define ${key}`);
+      assert.ok(dictionary[key].length > 0, `${locale} should not leave ${key} empty`);
+      if (locale !== "en" && key !== "accountDashboard.personalDetails.dateOfBirthDayPlaceholder") {
+        assert.notEqual(dictionary[key], enTranslations[key], `${locale} ${key} should not fall back to English`);
+      }
+    }
+  }
+
+  assert.equal(plTranslations["accountDashboard.personalDetails.section.basicInformation"], "Podstawowe informacje");
+  assert.equal(plTranslations["accountDashboard.personalDetails.emailVerified"], "Zweryfikowano");
+  assert.equal(plTranslations["accountDashboard.personalDetails.changeEmail"], "Zmień e-mail");
+  assert.equal(plTranslations["accountDashboard.personalDetails.emailHelper"], "Ten adres e-mail jest używany do logowania i potwierdzeń rezerwacji. Zmiany wymagają weryfikacji.");
+  assert.equal(plTranslations["accountDashboard.personalDetails.phoneHelper"], "Użyjemy tego numeru do aktualizacji dotyczących rezerwacji.");
+  assert.equal(plTranslations["accountDashboard.personalDetails.monthPlaceholder"], "Miesiąc");
+  assert.equal(plTranslations["accountDashboard.personalDetails.dateOfBirthYearPlaceholder"], "RRRR");
+  assert.equal(plTranslations["accountDashboard.personalDetails.countryRegion"], "Kraj/region");
+  assert.equal(plTranslations["accountDashboard.personalDetails.selectOne"], "Wybierz jedną opcję");
+  assert.equal(plTranslations["accountDashboard.personalDetails.streetAddress"], "Adres ulicy");
+  assert.equal(plTranslations["accountDashboard.personalDetails.apartmentSuite"], "Mieszkanie, apartament, lokal, budynek");
+  assert.equal(plTranslations["accountDashboard.personalDetails.townCity"], "Miejscowość / miasto");
+  assert.equal(plTranslations["accountDashboard.personalDetails.stateProvinceRegion"], "Stan / prowincja / region");
+  assert.equal(plTranslations["accountDashboard.personalDetails.postcodeZip"], "Kod pocztowy");
+  assert.equal(plTranslations["accountDashboard.personalDetails.cancel"], "Anuluj");
+  assert.equal(plTranslations["accountDashboard.personalDetails.saveChanges"], "Zapisz zmiany");
+  assert.equal(arTranslations["accountDashboard.personalDetails.section.basicInformation"], "المعلومات الأساسية");
+  assert.equal(arTranslations["accountDashboard.personalDetails.changeEmail"], "تغيير البريد الإلكتروني");
+  assert.notEqual(nlTranslations["accountDashboard.personalDetails.emailHelper"], enTranslations["accountDashboard.personalDetails.emailHelper"]);
+  assert.notEqual(frTranslations["accountDashboard.personalDetails.addressDescription"], enTranslations["accountDashboard.personalDetails.addressDescription"]);
+  assert.equal(plTranslations["accountDashboard.personalDetails.title"], "Dane osobowe");
+  assert.equal(plTranslations["accountDashboard.personalDetails.subtitle"], "Aktualizuj swoje informacje i zarządzaj tym, jak są używane w Kurioticket.");
+  assert.equal(plTranslations["accountDashboard.personalDetails.name"], "Imię i nazwisko");
+  assert.equal(plTranslations["accountDashboard.personalDetails.emailAddress"], "Adres e-mail");
+  assert.equal(plTranslations["accountDashboard.personalDetails.phoneNumber"], "Numer telefonu");
+  assert.equal(plTranslations["accountDashboard.personalDetails.dateOfBirth"], "Data urodzenia");
+  assert.equal(plTranslations["accountDashboard.personalDetails.gender"], "Płeć");
+  assert.equal(plTranslations["accountDashboard.personalDetails.addGender"], "Dodaj swoją płeć");
+  assert.equal(plTranslations["accountDashboard.personalDetails.nationality"], "Obywatelstwo");
+  assert.equal(plTranslations["accountDashboard.personalDetails.addNationality"], "Dodaj swoje obywatelstwo");
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+  for (const option of languageOptions.filter((option) => option.code !== "ar")) assert.equal(option.direction, "ltr", `${option.code} should remain ltr`);
+  const dynamicEmail = "traveler@example.com";
+  const dynamicProfileValue = "Avery Traveler";
+  assert.equal(dynamicEmail, "traveler@example.com");
+  assert.equal(dynamicProfileValue, "Avery Traveler");
+  assert.equal(plTranslations["accountDashboard.personalDetails.emailHelper"].includes(dynamicEmail), false);
+  assert.equal(plTranslations["accountDashboard.personalDetails.name"].includes(dynamicProfileValue), false);
+
+  const dashboardSource = readFileSync("src/components/dashboard/DashboardGrid.tsx", "utf8");
+  for (const key of editFormKeys) assert.ok(dashboardSource.includes(`t["${key}"]`), `Active Personal details edit form should read ${key}`);
+  assert.ok(dashboardSource.includes('inputType: "email"') && dashboardSource.includes('inputType: "tel"'));
+  assert.ok(dashboardSource.includes('value={parts.countryCode}') && dashboardSource.includes('value={parts.day}') && dashboardSource.includes('value={parts.month}') && dashboardSource.includes('value={parts.year}'));
+  assert.ok(dashboardSource.includes('type="button"') && dashboardSource.includes('onClick={handleCancel}') && dashboardSource.includes('onClick={handleSave}'));
+  assert.ok(dashboardSource.includes('onClick={onStartChange}') && dashboardSource.includes('onRequestCode={handleRequestEmailCode}') && dashboardSource.includes('onConfirm={handleConfirmEmailChange}'));
+  assert.ok(dashboardSource.includes('fetch("/api/account/profile"') && dashboardSource.includes('fetch("/api/account/email-change/request"') && dashboardSource.includes('fetch("/api/account/email-change/confirm"'));
+});
+
 test("Turkish account personal details and security settings copy resolves without English fallback", () => {
   const tr = getTranslations("tr");
 
