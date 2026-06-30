@@ -3710,6 +3710,156 @@ test("Polish hotels results active render path copy is localized without English
   assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
 });
 
+test("Swedish Hotels results filter and live-search error copy is localized on the active render path", () => {
+  const expectedSwedishHotelResultsStrings = {
+    clearAll: "Rensa alla",
+    filters: "Filter",
+    closeFilters: "Stäng filter",
+    done: "Klart",
+    search: "Sök",
+    hotelSearchDestinationLabel: "DESTINATION",
+    hotelSearchTravelDatesLabel: "RESEDATUM",
+    hotelSearchGuestsLabel: "GÄSTER",
+    guestSingular: "gäst",
+    roomSingular: "rum",
+    "hotelResults.openFilters": "Öppna filter",
+    "hotelResults.selectDateAriaPrefix": "Välj",
+    "hotelResults.searchingHotelPartners": "Söker hos hotellpartner...",
+    "hotelResults.comparingTotalStayPrices": "Jämför totala vistelsepriser...",
+    "hotelResults.checkingArrivalConvenience": "Kontrollerar ankomstsmidighet...",
+    "hotelResults.findingLowStressStays": "Hittar bekväma boenden...",
+    "hotelResults.liveSearchUnavailable": "Livesökning för hotell är tillfälligt otillgänglig. Försök igen om en liten stund.",
+    "hotelResults.searchUnavailableDetailed": "Hotellsökning är tillfälligt otillgänglig för den här förfrågan. Vi visar bara boendealternativ när pris, tillgänglighet, avgifter och regler kan granskas hos leverantören. Försök igen senare eller starta en ny sökning.",
+    "hotelResults.unableToSearchHotels": "Det gick inte att söka efter hotell.",
+    "hotelResults.limitedProviderChecks": "Vissa leverantörskontroller kan vara begränsade för den här hotellsökningen. Granska slutlig tillgänglighet, skatter, avgifter och avbokningsregler hos leverantören innan du bokar.",
+    "hotelResults.noStaysMatchFiltersTitle": "Inga boenden matchar dessa filter",
+    "hotelResults.noStaysMatchFiltersBody": "Försök att öka prisintervallet, sänka stjärnbetyget eller rensa valda hotellfilter för att se fler tillgängliga alternativ.",
+    "hotelResults.noStaysMatchFiltersInline": "Inga boenden matchar dessa filter. Bredda filtren för att se fler tillgängliga alternativ.",
+    "hotelResults.resetFilters": "Återställ filter",
+    "hotelResults.activeHotelFilters": "Aktiva hotellfilter",
+    "hotelResults.filterBy": "Filtrera efter",
+    "hotelResults.removeFilter": "Ta bort filtret {{label}}",
+    "hotelResults.budgetPrice": "Budget / pris",
+    "hotelResults.totalUpTo": "Totalt upp till",
+    "hotelResults.popularFilters": "Populära filter",
+    "hotelResults.starRating": "Stjärnbetyg",
+    "hotelResults.fromRating": "Från",
+    "hotelResults.locationArea": "Plats / område",
+    "hotelResults.propertyType": "Boendetyp",
+    "hotelResults.roomType": "Rumstyp",
+    "hotelResults.bedType": "Sängtyp",
+    "hotelResults.meals": "Måltider",
+    "hotelResults.cancellationPolicy": "Avbokningspolicy",
+    "hotelResults.facilities": "Faciliteter",
+    "hotelResults.showLess": "Visa mindre",
+    "hotelResults.showMore": "Visa fler ({{count}})",
+    "hotelResults.upToPrice": "Upp till {{price}}",
+    "hotelResults.starsAndUp": "{{rating}}+ stjärnor",
+  };
+
+  for (const [key, value] of Object.entries(expectedSwedishHotelResultsStrings)) {
+    assert.equal(svTranslations[key], value, `sv ${key} should use the audited Swedish hotels results copy`);
+
+    if (enTranslations[key] !== value) {
+      assert.notEqual(svTranslations[key], enTranslations[key], `sv ${key} should not fall back to English`);
+    }
+  }
+
+  assert.equal(
+    svTranslations["hotelResults.upToPrice"].replace("{{price}}", "$1,200"),
+    "Upp till $1,200",
+  );
+  assert.equal(
+    svTranslations["hotelResults.starsAndUp"].replace("{{rating}}", "3"),
+    "3+ stjärnor",
+  );
+
+  const selectedDestination = "Lagos, Nigeria";
+  const selectedPrice = "$1,200";
+  const selectedRating = "3+";
+  const selectedDateSummary = "30 juni — 5 juli";
+  const selectedGuestsRoomsSummary = `1 ${svTranslations.guestSingular}, 1 ${svTranslations.roomSingular}`;
+  assert.equal(selectedDestination, "Lagos, Nigeria");
+  assert.equal(selectedPrice, "$1,200");
+  assert.equal(selectedRating, "3+");
+  assert.equal(selectedDateSummary, "30 juni — 5 juli");
+  assert.equal(selectedGuestsRoomsSummary, "1 gäst, 1 rum");
+
+  const hotelResultsPageSource = readFileSync("src/app/hotels/results/page.tsx", "utf8");
+  const hotelResultsClientSource = readFileSync("src/components/results/HotelResultsClient.tsx", "utf8");
+  const hotelSearchBarSource = readFileSync("src/components/search/HotelSearchBar.tsx", "utf8");
+
+  assert.ok(hotelResultsPageSource.includes("<HotelResultsClient />"), "/hotels/results should render HotelResultsClient");
+
+  for (const key of [
+    "hotelResults.liveSearchUnavailable",
+    "hotelResults.searchUnavailableDetailed",
+    "hotelResults.unableToSearchHotels",
+    "hotelResults.limitedProviderChecks",
+    "hotelResults.noStaysMatchFiltersTitle",
+    "hotelResults.noStaysMatchFiltersBody",
+    "hotelResults.noStaysMatchFiltersInline",
+    "hotelResults.resetFilters",
+    "hotelResults.activeHotelFilters",
+    "hotelResults.removeFilter",
+    "hotelResults.filterBy",
+    "hotelResults.budgetPrice",
+    "hotelResults.totalUpTo",
+    "hotelResults.popularFilters",
+    "hotelResults.starRating",
+    "hotelResults.fromRating",
+    "hotelResults.locationArea",
+    "hotelResults.propertyType",
+    "hotelResults.roomType",
+    "hotelResults.bedType",
+    "hotelResults.meals",
+    "hotelResults.cancellationPolicy",
+    "hotelResults.facilities",
+    "hotelResults.showLess",
+    "hotelResults.showMore",
+    "hotelResults.upToPrice",
+    "hotelResults.starsAndUp",
+    "clearAll",
+    "filters",
+    "closeFilters",
+    "done",
+  ]) {
+    assert.ok(hotelResultsClientSource.includes(key), `${key} should be read by the active /hotels/results client render path`);
+  }
+
+  for (const key of [
+    "hotelSearchDestinationLabel",
+    "hotelSearchTravelDatesLabel",
+    "hotelSearchGuestsLabel",
+    "guestSingular",
+    "roomSingular",
+    "hotelResults.openFilters",
+    "hotelResults.selectDateAriaPrefix",
+  ]) {
+    assert.ok(hotelSearchBarSource.includes(key), `${key} should be read by the active hotels search bar render path`);
+  }
+
+  assert.ok(hotelResultsClientSource.includes('fetch("/api/hotels/search"'), "hotel result fetching path should remain unchanged");
+  assert.ok(hotelResultsClientSource.includes('type="range"'), "filter slider inputs should remain on the active render path");
+  assert.ok(hotelResultsClientSource.includes('data.error === enTranslations["hotelResults.liveSearchUnavailable"]'), "API status copy should be routed through localized i18n when it matches the canonical English error");
+  assert.ok(hotelResultsClientSource.includes("setError("), "error state logic should remain on the active render path");
+
+  for (const englishCopy of [
+    "Filter by",
+    "Budget / Price",
+    "Total up to",
+    "Star rating",
+    "Live hotel search is temporarily unavailable. Please try again shortly.",
+  ]) {
+    assert.ok(!hotelResultsClientSource.includes(`>${englishCopy}<`), `${englishCopy} should not be hardcoded in the active Swedish hotels results UI`);
+  }
+
+  assert.equal(languageOptions.find((option) => option.code === "sv")?.locale, "sv-SE");
+  assert.equal(languageOptions.find((option) => option.code === "sv")?.nativeLabel, "Svenska");
+  assert.equal(languageOptions.find((option) => option.code === "sv")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
+});
+
 test("Hindi homepage search support newsletter and footer strings are localized", () => {
   const expectedHindiHomepageStrings = {
     fromPlaceholder: "कहाँ से?",
