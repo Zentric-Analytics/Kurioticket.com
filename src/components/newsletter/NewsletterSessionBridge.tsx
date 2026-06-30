@@ -4,6 +4,9 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 
+import { useLocale } from "@/components/layout/LocaleProvider";
+import { translations as enTranslations } from "@/lib/i18n/en";
+
 type NewsletterElements = {
   input: HTMLInputElement;
   form: HTMLFormElement;
@@ -16,6 +19,7 @@ const preferencesLinkClassName = "kurioticket-newsletter-preferences-link";
 export function NewsletterSessionBridge() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
+  const { t } = useLocale();
 
   useEffect(() => {
     if (pathname !== "/") return;
@@ -33,7 +37,7 @@ export function NewsletterSessionBridge() {
       }
 
       cleanupAppliedState?.();
-      cleanupAppliedState = applyNewsletterState(elements, status, session?.user?.email?.trim() || null);
+      cleanupAppliedState = applyNewsletterState(elements, status, session?.user?.email?.trim() || null, t);
       return true;
     }
 
@@ -60,7 +64,7 @@ export function NewsletterSessionBridge() {
       observer?.disconnect();
       cleanupAppliedState?.();
     };
-  }, [pathname, session?.user?.email, status]);
+  }, [pathname, session?.user?.email, status, t]);
 
   return null;
 }
@@ -78,13 +82,14 @@ function applyNewsletterState(
   { input, form, container }: NewsletterElements,
   sessionStatus: "authenticated" | "loading" | "unauthenticated",
   email: string | null,
+  t: Record<string, string>,
 ) {
   const existingContext = container.querySelector(`.${accountContextClassName}`);
   existingContext?.remove();
 
   if (sessionStatus === "loading") {
     form.style.visibility = "hidden";
-    const loadingContext = insertAccountContext(container, form, "Loading your newsletter options…");
+    const loadingContext = insertAccountContext(container, form, t["emailUpdates.loadingStatus"] || enTranslations["emailUpdates.loadingStatus"]);
 
     return () => {
       loadingContext.remove();
@@ -109,13 +114,10 @@ function applyNewsletterState(
   const accountContext = insertAccountContext(
     container,
     form,
-    `Updates will be sent to your account email: ${accountEmail}`,
+    formatTranslation(t["newsletter.accountEmailLine"], { email: accountEmail }, accountEmail),
   );
 
-  const manageLink = insertManagePreferencesLink(container, form);
-
-  accountContext.textContent = `Subscribe with your account email: ${accountEmail}.`;
-  manageLink.textContent = "Manage email preferences";
+  const manageLink = insertManagePreferencesLink(container, form, t);
 
   return () => {
     accountContext.remove();
@@ -132,14 +134,14 @@ function insertAccountContext(container: Element, form: HTMLFormElement, text: s
   return accountContext;
 }
 
-function insertManagePreferencesLink(container: Element, form: HTMLFormElement) {
+function insertManagePreferencesLink(container: Element, form: HTMLFormElement, t: Record<string, string>) {
   const existingLink = container.querySelector(`.${preferencesLinkClassName}`);
   existingLink?.remove();
 
   const link = document.createElement("a");
   link.href = "/email/preferences";
   link.className = `${preferencesLinkClassName} inline-flex w-fit text-xs font-bold text-indigo-700 underline-offset-4 hover:text-indigo-900 hover:underline`;
-  link.textContent = "Manage email preferences";
+  link.textContent = t["newsletter.manageEmailPreferences"] || enTranslations["newsletter.manageEmailPreferences"];
   container.insertBefore(link, form.nextSibling);
   return link;
 }
@@ -167,4 +169,8 @@ function restoreGuestNewsletterForm(input: HTMLInputElement, form: HTMLFormEleme
   input.style.display = "";
   form.style.display = "";
   form.style.visibility = "";
+}
+
+function formatTranslation(template: string | undefined, values: Record<string, string>, fallbackEmail: string) {
+  return (template || enTranslations["newsletter.accountEmailLine"]).replace(/{{(\w+)}}/g, (match, key) => values[key] ?? (key === "email" ? fallbackEmail : match));
 }

@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 
+import { useLocale } from "@/components/layout/LocaleProvider";
+import { translations as enTranslations } from "@/lib/i18n/en";
+
 type PreferenceStatus = "SUBSCRIBED" | "UNSUBSCRIBED" | "NOT_FOUND";
 
 type ApiResponse = {
@@ -12,6 +15,7 @@ type ApiResponse = {
 };
 
 export function NewsletterPreferencesClient({ email, token }: { email: string; token: string }) {
+  const { t } = useLocale();
   const [address, setAddress] = useState(email);
   const [status, setStatus] = useState<PreferenceStatus | "LOADING">("LOADING");
   const [message, setMessage] = useState("");
@@ -30,7 +34,7 @@ export function NewsletterPreferencesClient({ email, token }: { email: string; t
         if (cancelled) return;
         if (!response.ok || !data.ok) {
           setStatus("NOT_FOUND");
-          setMessage(data.message || "This preference link is invalid or expired.");
+          setMessage(data.message || t["emailUpdates.invalidLink"] || enTranslations["emailUpdates.invalidLink"]);
           return;
         }
         setAddress(data.email || email);
@@ -38,7 +42,7 @@ export function NewsletterPreferencesClient({ email, token }: { email: string; t
       } catch {
         if (!cancelled) {
           setStatus("NOT_FOUND");
-          setMessage("We could not load these preferences right now.");
+          setMessage(t["emailUpdates.loadError"] || enTranslations["emailUpdates.loadError"]);
         }
       }
     }
@@ -47,7 +51,7 @@ export function NewsletterPreferencesClient({ email, token }: { email: string; t
     return () => {
       cancelled = true;
     };
-  }, [email, token]);
+  }, [email, t, token]);
 
   async function save(action: "subscribe" | "unsubscribe") {
     setPending(true);
@@ -60,13 +64,13 @@ export function NewsletterPreferencesClient({ email, token }: { email: string; t
       });
       const data = (await response.json()) as ApiResponse;
       if (!response.ok || !data.ok) {
-        setMessage(data.message || "We could not update this preference right now.");
+        setMessage(data.message || t["emailUpdates.updateError"] || enTranslations["emailUpdates.updateError"]);
         return;
       }
       setStatus(data.status || (action === "subscribe" ? "SUBSCRIBED" : "UNSUBSCRIBED"));
-      setMessage(data.message || "Preference updated.");
+      setMessage(data.message || t["emailUpdates.preferenceUpdated"] || enTranslations["emailUpdates.preferenceUpdated"]);
     } catch {
-      setMessage("We could not update this preference right now.");
+      setMessage(t["emailUpdates.updateError"] || enTranslations["emailUpdates.updateError"]);
     } finally {
       setPending(false);
     }
@@ -77,17 +81,17 @@ export function NewsletterPreferencesClient({ email, token }: { email: string; t
 
   return (
     <section className="mx-auto w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
-      <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-700">Kurioticket updates</p>
-      <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Manage email updates</h1>
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-700">{t["emailUpdates.eyebrow"] || enTranslations["emailUpdates.eyebrow"]}</p>
+      <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">{t["emailUpdates.title"] || enTranslations["emailUpdates.title"]}</h1>
       <p className="mt-3 text-sm font-medium leading-6 text-slate-600">
-        Choose whether Kurioticket can send travel updates and product news to this email address.
+        {t["emailUpdates.description"] || enTranslations["emailUpdates.description"]}
       </p>
 
       <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Email</p>
-        <p className="mt-1 break-words text-base font-bold text-slate-950">{address || "Not available"}</p>
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{t["emailUpdates.emailLabel"] || enTranslations["emailUpdates.emailLabel"]}</p>
+        <p className="mt-1 break-words text-base font-bold text-slate-950">{address || t["emailUpdates.notAvailable"] || enTranslations["emailUpdates.notAvailable"]}</p>
         <p className="mt-3 text-sm font-semibold text-slate-700">
-          {status === "LOADING" ? "Loading…" : isSubscribed ? "You are subscribed." : isStopped ? "You are opted out." : "No subscription was found."}
+          {status === "LOADING" ? t["emailUpdates.loadingStatus"] || enTranslations["emailUpdates.loadingStatus"] : isSubscribed ? t["emailUpdates.subscribedStatus"] || enTranslations["emailUpdates.subscribedStatus"] : isStopped ? t["emailUpdates.unsubscribedStatus"] || enTranslations["emailUpdates.unsubscribedStatus"] : t["emailUpdates.notFoundStatus"] || enTranslations["emailUpdates.notFoundStatus"]}
         </p>
       </div>
 
@@ -98,7 +102,7 @@ export function NewsletterPreferencesClient({ email, token }: { email: string; t
           disabled={pending || status === "LOADING" || isSubscribed}
           onClick={() => save("subscribe")}
         >
-          {isSubscribed ? "Subscribed" : "Subscribe"}
+          {isSubscribed ? t["emailUpdates.subscribedButton"] || enTranslations["emailUpdates.subscribedButton"] : t["emailUpdates.subscribeButton"] || enTranslations["emailUpdates.subscribeButton"]}
         </button>
         <button
           type="button"
@@ -106,7 +110,7 @@ export function NewsletterPreferencesClient({ email, token }: { email: string; t
           disabled={pending || status === "LOADING" || status === "NOT_FOUND" || isStopped}
           onClick={() => save("unsubscribe")}
         >
-          {isStopped ? "Opted out" : "Stop updates"}
+          {isStopped ? t["emailUpdates.updatesStopped"] || enTranslations["emailUpdates.updatesStopped"] : t["emailUpdates.stopUpdates"] || enTranslations["emailUpdates.stopUpdates"]}
         </button>
       </div>
 
