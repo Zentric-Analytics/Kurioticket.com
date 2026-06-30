@@ -99,6 +99,101 @@ test("Swedish locale is active and localizes homepage while preserving other fal
 
 
 
+test("Swedish account Customization and Booking Preferences copy resolves through active render paths", () => {
+  const sv = getTranslations("sv");
+  const customizationSource = readFileSync("src/app/dashboard/preferences/customization/CustomizationPreferencesContent.tsx", "utf8");
+  const bookingSource = readFileSync("src/app/dashboard/preferences/booking/BookingPreferencesContent.tsx", "utf8");
+  const customizationPageSource = readFileSync("src/app/dashboard/preferences/customization/page.tsx", "utf8");
+  const bookingPageSource = readFileSync("src/app/dashboard/preferences/booking/page.tsx", "utf8");
+
+  const expectedCustomizationCopy: Record<string, string> = {
+    "accountDashboard.preferences.customization.title": "Anpassningspreferenser",
+    "accountDashboard.preferences.customization.description": "Välj hur Kurioticket anpassar din upplevelse.",
+    "accountDashboard.preferences.customization.languageRegion.title": "Språk och region",
+    "accountDashboard.preferences.customization.languageRegion.description": "Ange ditt standardspråk, valuta och region.",
+    "accountDashboard.preferences.customization.preferredLanguage": "Föredraget språk",
+    "accountDashboard.preferences.customization.selectPreferredLanguage": "Välj föredraget språk",
+    "accountDashboard.preferences.customization.currency": "Valuta",
+    "accountDashboard.preferences.customization.selectCurrency": "Välj valuta",
+    "accountDashboard.preferences.customization.region": "Region",
+    "accountDashboard.preferences.customization.selectRegion": "Välj region",
+    "accountDashboard.preferences.customization.personalization.title": "Personalisering",
+    "accountDashboard.preferences.customization.personalization.description": "Styr hur Kurioticket anpassar dina rekommendationer.",
+    "accountDashboard.preferences.customization.personalizeSearches": "Använd mina sökningar för att anpassa rekommendationer",
+    "accountDashboard.preferences.customization.personalizedTravelDeals": "Visa personliga reseerbjudanden",
+    "accountDashboard.preferences.customization.rememberRecentSearches": "Kom ihåg mina senaste sökningar",
+    "accountDashboard.preferences.customization.communicationStyle.title": "Kommunikationsstil",
+    "accountDashboard.preferences.customization.communicationStyle.description": "Välj hur du vill att Kurioticket ska kommunicera med dig.",
+    "accountDashboard.preferences.customization.emailUpdates": "E-postuppdateringar",
+    "accountDashboard.preferences.customization.priceAlertEmails": "E-post om prisaviseringar",
+    "accountDashboard.preferences.customization.travelInspirationEmails": "E-post med reseinspiration",
+    "accountDashboard.preferences.cancel": "Avbryt",
+    "accountDashboard.preferences.savePreferences": "Spara preferenser",
+  };
+  const expectedBookingCopy: Record<string, string> = {
+    "accountDashboard.preferences.booking.title": "Bokningspreferenser",
+    "accountDashboard.preferences.booking.description": "Ange dina standardpreferenser för resor för snabbare och mer relevanta bokningar.",
+    "accountDashboard.preferences.booking.airports.title": "Flygplatser",
+    "accountDashboard.preferences.booking.airports.description": "Välj de flygplatser du föredrar att flyga från.",
+    "accountDashboard.preferences.booking.homeAirport": "Hemflygplats",
+    "accountDashboard.preferences.booking.searchAirport": "Sök flygplats",
+    "accountDashboard.preferences.booking.secondaryAirports": "Sekundära flygplatser",
+    "accountDashboard.preferences.booking.addAlternativeAirports": "Lägg till alternativa flygplatser",
+    "accountDashboard.preferences.booking.airlines.title": "Flygbolag",
+    "accountDashboard.preferences.booking.airlines.description": "Välj flygbolag du föredrar eller vill undvika.",
+    "accountDashboard.preferences.booking.preferredAirlines": "Föredragna flygbolag",
+    "accountDashboard.preferences.booking.searchAirlines": "Sök flygbolag",
+    "accountDashboard.preferences.booking.avoidAirlines": "Undvik flygbolag",
+    "accountDashboard.preferences.booking.stays.title": "Boenden",
+    "accountDashboard.preferences.booking.stays.description": "Ange boendepreferenser för hotellbokningar.",
+    "accountDashboard.preferences.booking.preferredHotelChains": "Föredragna hotellkedjor",
+    "accountDashboard.preferences.booking.searchHotelChains": "Sök hotellkedjor",
+    "accountDashboard.preferences.booking.avoidHotelChains": "Undvik hotellkedjor",
+    "accountDashboard.preferences.cancel": "Avbryt",
+    "accountDashboard.preferences.savePreferences": "Spara preferenser",
+  };
+
+  for (const [key, expected] of Object.entries({ ...expectedCustomizationCopy, ...expectedBookingCopy })) {
+    assert.equal(sv[key], expected, key);
+    if (expected !== enTranslations[key]) assert.notEqual(sv[key], enTranslations[key], key);
+  }
+
+  for (const key of Object.keys(expectedCustomizationCopy)) {
+    assert.ok(customizationSource.includes(`t["${key}"]`) || customizationSource.includes(`"${key}"`), `${key} should be read by CustomizationPreferencesContent`);
+  }
+  for (const key of Object.keys(expectedBookingCopy)) {
+    assert.ok(bookingSource.includes(`t["${key}"]`) || bookingSource.includes(`"${key}"`), `${key} should be read by BookingPreferencesContent`);
+  }
+
+  for (const english of [
+    "Choose how Kurioticket personalizes your experience.",
+    "Language and region",
+    "Preferred language",
+    "Set your default travel preferences for faster and more relevant bookings.",
+    "Home airport",
+    "Preferred hotel chains",
+  ]) {
+    assert.equal(customizationSource.includes(english), false, `${english} should not be hardcoded in customization render path`);
+    assert.equal(bookingSource.includes(english), false, `${english} should not be hardcoded in booking render path`);
+  }
+
+  assert.ok(customizationPageSource.includes('title: "Customization preferences"'));
+  assert.ok(bookingPageSource.includes('title: "Booking preferences"'));
+  assert.ok(customizationSource.includes('action="#"'));
+  assert.ok(bookingSource.includes('action="#"'));
+  assert.ok(customizationSource.includes('id: "preferred-language"') && customizationSource.includes('name={field.id}'));
+  assert.ok(customizationSource.includes('value: "English"') && customizationSource.includes('value: "USD"') && customizationSource.includes('value: "United States"'));
+  assert.ok(customizationSource.includes('id: "personalize-searches"') && customizationSource.includes('type="checkbox"'));
+  assert.ok(bookingSource.includes('id: "home-airport"') && bookingSource.includes('id: "preferred-airlines"') && bookingSource.includes('id: "preferred-hotel-chains"'));
+  assert.ok(bookingSource.includes('type="search"') && bookingSource.includes('name={field.id}'));
+  assert.ok(customizationSource.includes('type="button"') && bookingSource.includes('type="button"'));
+  assert.ok(customizationSource.includes('className="flex-1 bg-[#f3f7fc] pb-10 pt-0"'));
+  assert.ok(bookingSource.includes('className="flex-1 bg-[#f3f7fc] pb-10 pt-0"'));
+  assert.ok(languageOptions.some((o) => o.code === "sv" && o.locale === "sv-SE" && o.nativeLabel === "Svenska" && o.direction === "ltr"));
+  assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
+});
+
+
 test("Swedish Cars results render path copy and date formatting resolve without English fallback", () => {
   const sv = getTranslations("sv");
   const carsResultsSource = readFileSync("src/components/results/CarsResultsClient.tsx", "utf8");
