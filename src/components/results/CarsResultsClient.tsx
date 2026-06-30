@@ -196,6 +196,10 @@ const getCarsResultsIntlLocale = (locale: string) => {
     return "pl-PL";
   }
 
+  if (normalizedLocale.startsWith("sv")) {
+    return "sv-SE";
+  }
+
   if (normalizedLocale.startsWith("ar")) {
     return "ar-u-nu-latn";
   }
@@ -204,7 +208,7 @@ const getCarsResultsIntlLocale = (locale: string) => {
 };
 
 const usesTwentyFourHourCarsResultsTime = (intlLocale: string) =>
-  ["de", "es", "fr", "ja", "nl", "pl", "pt", "tr"].some((localePrefix) =>
+  ["de", "es", "fr", "ja", "nl", "pl", "pt", "sv", "tr"].some((localePrefix) =>
     intlLocale.toLowerCase().startsWith(localePrefix),
   );
 

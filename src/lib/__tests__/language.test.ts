@@ -97,6 +97,114 @@ test("Swedish locale is active and localizes homepage while preserving other fal
   }
 });
 
+
+
+test("Swedish Cars results render path copy and date formatting resolve without English fallback", () => {
+  const sv = getTranslations("sv");
+  const carsResultsSource = readFileSync("src/components/results/CarsResultsClient.tsx", "utf8");
+  const carsResultsPageSource = readFileSync("src/app/cars/results/page.tsx", "utf8");
+  const expectedSwedishCopy: Record<string, string> = {
+    "carsResults.resultsLabel": "Bilresultat",
+    "carsResults.resultsFor": "Bilresultat för {location}",
+    "carsResults.carResultsAria": "Bilresultat",
+    "carsResults.carFiltersAria": "Bilfilter",
+    "carsResults.filterBy": "Filtrera efter",
+    "carsResults.activeFilterCount": "{count} aktiva",
+    "carsResults.selectedFilterCount": "{count} valda",
+    "carsResults.reset": "Återställ",
+    "carsResults.resetFilters": "Återställ filter",
+    "carsResults.openFilters": "Öppna filter",
+    "carsResults.closeFilters": "Stäng filter",
+    "carsResults.edit": "REDIGERA",
+    "carsResults.editSearch": "Redigera sökning",
+    "carsResults.editCarSearch": "Redigera bilsökning",
+    "carsResults.closeEditSearch": "Stäng redigering av sökning",
+    "carsResults.carRentalSearch": "Hyrbilssökning",
+    "carsResults.searchCars": "Sök bilar",
+    "carsResults.pickupLocation": "UPPHÄMTNINGSPLATS",
+    "carsResults.returnLocation": "ÅTERLÄMNINGSPLATS",
+    "carsResults.pickupLocationNeeded": "Upphämtningsplats behövs",
+    "carsResults.pickupToReturn": "{pickup} till {return}",
+    "carsResults.sameAsPickup": "Samma som upphämtning",
+    "carsResults.selectRentalDates": "Välj hyrdatum",
+    "carsResults.selectDate": "Välj datum",
+    "carsResults.selectDates": "Välj datum",
+    "carsResults.rentalDates": "HYRDATUM",
+    "carsResults.rentalDatePlaceholder": "Upphämtningsdatum — återlämningsdatum",
+    "carsResults.rentalDateRangeCalendar": "Kalender för hyrdatumintervall",
+    "carsResults.selectPickupThenReturn": "Välj upphämtning och sedan återlämning",
+    "carsResults.pickupReturnTime": "UPPHÄMTNINGS-/ÅTERLÄMNINGSTID",
+    "carsResults.pickupReturnTimeSelector": "Väljare för upphämtnings- och återlämningstid",
+    "carsResults.pickupTime": "Upphämtningstid",
+    "carsResults.returnTime": "Återlämningstid",
+    "carsResults.driverAge": "FÖRARENS ÅLDER",
+    "carsResults.anyDriverAgeRange": "Valfri förarålder 18–70",
+    "carsResults.yearsOld": "år",
+    "carsResults.emptyInventory": "Liveutbud för bilar är ännu inte tillgängligt att visa för den här sökningen. Uppdatera sökuppgifterna ovan eller försök igen senare.",
+    "carsResults.enterPickupDetails": "Ange upphämtningsuppgifter ovan för att förbereda en bilsökning.",
+    "carsResults.vehicleType": "Fordonstyp",
+    "carsResults.smallCars": "Små bilar",
+    "carsResults.mediumCars": "Mellanstora bilar",
+    "carsResults.suvs": "SUV:ar",
+    "carsResults.transmission": "Växellåda",
+    "carsResults.automatic": "Automat",
+    "carsResults.manual": "Manuell",
+    "carsResults.seats": "Säten",
+    "carsResults.seats4Plus": "4+ säten",
+    "carsResults.seats5Plus": "5+ säten",
+    "carsResults.seats7Plus": "7+ säten",
+    "carsResults.bags": "Väskor",
+    "carsResults.bags2Plus": "2+ väskor",
+    "carsResults.bags3Plus": "3+ väskor",
+    "carsResults.bags4Plus": "4+ väskor",
+    "carsResults.fuelPolicy": "Bränslepolicy",
+    "carsResults.fullToFull": "Full till full",
+    "carsResults.sameToSame": "Samma till samma",
+    "carsResults.mileagePolicy": "Milpolicy",
+    "carsResults.unlimitedMileage": "Obegränsad körsträcka",
+    "carsResults.limitedMileage": "Begränsad körsträcka",
+    "carsResults.cancellation": "Avbokning",
+    "carsResults.freeCancellation": "Gratis avbokning",
+    "carsResults.payAtPickup": "Betala vid upphämtning",
+    "carsResults.pickupLocationType": "Typ av upphämtningsplats",
+    "carsResults.airportCounter": "Flygplatsdisk",
+    "carsResults.shuttlePickup": "Upphämtning med skyttel",
+    "carsResults.cityLocation": "Stadsplats",
+  };
+
+  for (const [key, value] of Object.entries(expectedSwedishCopy)) {
+    assert.equal(sv[key], value, `${key} should resolve to Swedish copy`);
+    if (enTranslations[key] !== value) {
+      assert.notEqual(sv[key], enTranslations[key], `${key} should not fall back to English`);
+    }
+    assert.ok(carsResultsSource.includes(`t("${key}")`) || carsResultsSource.includes(`labelKey: "${key}"`) || carsResultsSource.includes(`titleKey: "${key}"`), `${key} should be read by the active cars results render path`);
+  }
+
+  assert.equal(sv["carsResults.resultsFor"].replace("{location}", sv["carsResults.pickupLocationNeeded"]), "Bilresultat för Upphämtningsplats behövs");
+  assert.equal(sv["carsResults.resultsFor"].replace("{location}", "Stockholm"), "Bilresultat för Stockholm");
+  assert.equal(`${new Intl.DateTimeFormat("sv-SE", { day: "numeric", month: "long" }).format(new Date(2026, 5, 30))} — ${new Intl.DateTimeFormat("sv-SE", { day: "numeric", month: "long" }).format(new Date(2026, 6, 5))} · 10:00 — 10:00 · ${sv["carsResults.anyDriverAgeRange"]}`, "30 juni — 5 juli · 10:00 — 10:00 · Valfri förarålder 18–70");
+  assert.equal(`${new Intl.DateTimeFormat("sv-SE", { day: "numeric", month: "long", year: "numeric" }).format(new Date(2026, 5, 30))} — ${new Intl.DateTimeFormat("sv-SE", { day: "numeric", month: "long", year: "numeric" }).format(new Date(2026, 6, 5))}`, "30 juni 2026 — 5 juli 2026");
+  assert.equal(new Intl.DateTimeFormat("sv-SE", { month: "long", year: "numeric" }).format(new Date(2026, 5, 1)), "juni 2026");
+  assert.equal(new Intl.DateTimeFormat("sv-SE", { month: "long", year: "numeric" }).format(new Date(2026, 6, 1)), "juli 2026");
+  assert.deepEqual(Array.from({ length: 7 }, (_, day) => new Intl.DateTimeFormat("sv-SE", { weekday: "short" }).format(new Date(2024, 0, 7 + day))), ["sön", "mån", "tis", "ons", "tors", "fre", "lör"]);
+
+  assert.equal(sv["carsSearch.pickupLocationPlaceholder"], "Flygplats, stad eller adress");
+  assert.equal(sv.clear, "Rensa");
+  assert.equal(sv.done, "Klart");
+  assert.equal(sv.search, "Sök");
+  assert.equal(languageOptions.find((o) => o.code === "sv")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+
+  assert.ok(carsResultsSource.includes('if (normalizedLocale.startsWith("sv"))') && carsResultsSource.includes('return "sv-SE"'), "Swedish cars results dates should use the Swedish Intl locale.");
+  assert.ok(carsResultsSource.includes('["de", "es", "fr", "ja", "nl", "pl", "pt", "sv", "tr"]'), "Swedish cars results times should use 24-hour labels without AM/PM.");
+  assert.ok(carsResultsSource.includes('action="/cars/results"') && carsResultsSource.includes('method="get"'), "Cars results search form should preserve the route path and query-param submission behavior.");
+  assert.ok(carsResultsSource.includes('name="pickupLocation"') && carsResultsSource.includes('name="dropoffLocation"') && carsResultsSource.includes('name="pickupDate"') && carsResultsSource.includes('name="dropoffTime"') && carsResultsSource.includes('name="driverAge"'), "Cars results search should preserve submitted field names.");
+  assert.ok(carsResultsSource.includes('value={pickupLocation}') && carsResultsSource.includes('value={dropoffLocation}') && carsResultsSource.includes('value={pickupDate}') && carsResultsSource.includes('value={driverAge}'), "Cars results search should preserve raw dynamic values.");
+  assert.ok(carsResultsSource.includes('onChange={() => onToggle(group.id, option.id)}') && carsResultsSource.includes('selectedOptions.includes(option.id)'), "Filter behavior should keep raw filter IDs while localizing only display labels.");
+  assert.ok(carsResultsSource.includes('hasSearchContext') && carsResultsSource.includes('t("carsResults.emptyInventory")') && carsResultsSource.includes('t("carsResults.enterPickupDetails")'), "Inventory unavailable and empty states should resolve through carsResults i18n keys.");
+  assert.ok(carsResultsPageSource.includes('pickupLocation') && carsResultsPageSource.includes('dropoffLocation') && carsResultsPageSource.includes('normalizeDriverAge'), "Server page should continue passing raw search params into the active client render path.");
+});
+
 test("Swedish cars landing render path resolves active copy without English fallback", () => {
   const sv = getTranslations("sv");
   const auditedSwedishCarsLandingKeys: Array<[string, string]> = [
@@ -651,7 +759,7 @@ test("Polish cars results page copy and render path do not fall back to English"
   }
 
   assert.ok(carsResultsSource.includes('if (normalizedLocale.startsWith("pl"))') && carsResultsSource.includes('return "pl-PL"'), "Polish cars results dates should use the Polish Intl locale.");
-  assert.ok(carsResultsSource.includes('["de", "es", "fr", "ja", "nl", "pl", "pt", "tr"]'), "Polish cars results times should use 24-hour labels without AM/PM.");
+  assert.ok(carsResultsSource.includes('["de", "es", "fr", "ja", "nl", "pl", "pt", "sv", "tr"]'), "Polish cars results times should use 24-hour labels without AM/PM.");
   assert.ok(carsResultsSource.includes('formatCompactDate(') && carsResultsSource.includes('formatTimeLabel(pickupTime, intlLocale)'), "Date/time summaries should remain generated from selected values and locale formatting.");
   assert.ok(carsResultsSource.includes('action="/cars/results"') && carsResultsSource.includes('method="get"'), "Cars results search form should preserve the route path and query-param submission behavior.");
   assert.ok(carsResultsSource.includes('name="pickupDate"') && carsResultsSource.includes('value={pickupDate}') && carsResultsSource.includes('name="driverAge"') && carsResultsSource.includes('value={driverAge}'), "Cars results search should preserve selected date/time/driver-age query values.");
@@ -6364,7 +6472,7 @@ test("Turkish cars results datepicker locale normalizes to tr-TR", () => {
     "Cars results datepicker locale helper should normalize Turkish locales to tr-TR.",
   );
   assert.ok(
-    carsResultsSource.includes('["de", "es", "fr", "ja", "nl", "pl", "pt", "tr"]'),
+    carsResultsSource.includes('["de", "es", "fr", "ja", "nl", "pl", "pt", "sv", "tr"]'),
     "Cars results time summaries should use 24-hour formatting for Turkish without changing raw time values.",
   );
   assert.equal(
