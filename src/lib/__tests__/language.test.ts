@@ -3703,7 +3703,7 @@ test("Turkish Flights landing hero and standalone search form resolve without En
   }
 });
 
-test("Polish auth pages resolve localized login, passkey, and reset password copy", () => {
+test("Polish auth pages resolve localized login and reset password copy", () => {
   const pl = getTranslations("pl");
 
   const expectedPolishAuthStrings: Record<string, string> = {
@@ -3714,11 +3714,6 @@ test("Polish auth pages resolve localized login, passkey, and reset password cop
     loginPasswordLabel: "Hasło",
     loginForgotPassword: "Nie pamiętasz hasła?",
     loginSubmit: "Zaloguj się",
-    loginPasskeyPromptTitle: "Użyć zapisanego klucza dostępu?",
-    loginPasskeyPromptDescription:
-      "Zaloguj się za pomocą Face ID, odcisku palca, blokady ekranu, menedżera haseł lub klucza bezpieczeństwa.",
-    loginUsePasskey: "Użyj klucza dostępu",
-    loginNotNow: "Nie teraz",
     loginGoogle: "Kontynuuj z Google",
     loginSignupPrompt: "Nowy w Kurioticket?",
     loginCreateAccount: "Utwórz konto",
@@ -3751,7 +3746,6 @@ test("Polish auth pages resolve localized login, passkey, and reset password cop
 
   assert.ok(pl.loginGoogle.includes("Google"));
   assert.ok(pl.loginSignupPrompt.includes("Kurioticket"));
-  assert.ok(pl.loginPasskeyPromptDescription.includes("Face ID"));
   assert.equal(pl.forgotPasswordEmailPlaceholder, "you@example.com");
   assert.ok(pl.loginCodeInstructions.includes("{{email}}"));
   assert.ok(pl.loginCodeInstructions.includes("{{minutes}}"));
@@ -3771,10 +3765,6 @@ test("Auth login and forgot password render paths use i18n keys for visible copy
     "loginPasswordLabel",
     "loginForgotPassword",
     "loginSubmit",
-    "loginPasskeyPromptTitle",
-    "loginPasskeyPromptDescription",
-    "loginUsePasskey",
-    "loginNotNow",
     "loginGoogle",
     "loginSignupPrompt",
     "loginCreateAccount",
@@ -3822,12 +3812,17 @@ test("Signin form keeps loading state out of focus and typing paths", () => {
   );
   assert.match(
     signinSource,
-    /async function startPasskeySignIn\(mediation: CredentialMediationRequirement = "optional", showStatus = true\)[\s\S]*?if \(showStatus\) \{[\s\S]*?setPasskeyLoading\(true\);[\s\S]*?setMessage\(\{ key: "Opening your saved passkeys…" \}\);[\s\S]*?\}/,
-    "passkey loading is only set for visible, user-initiated passkey actions",
+    /async function startSilentConditionalPasskeySignIn\(\)[\s\S]*?navigator\.credentials\.get\(\{ publicKey, mediation: "conditional" \}\)/,
+    "email focus uses browser-native silent conditional passkey discovery",
+  );
+  assert.doesNotMatch(
+    signinSource,
+    /setPasskeyLoading|Opening your saved passkeys|loginUsePasskey|loginOpeningPasskey|loginPasskeyPromptDescription/,
+    "silent conditional passkey discovery does not render or set visible passkey loading UI",
   );
   assert.match(
     signinSource,
-    /async function startConditionalPasskeySignIn\(\)[\s\S]*?void startPasskeySignIn\("conditional", false\);/,
+    /async function startConditionalPasskeySignIn\(\)[\s\S]*?void startSilentConditionalPasskeySignIn\(\);/,
     "email focus uses the silent conditional passkey path",
   );
   assert.match(
@@ -3840,10 +3835,10 @@ test("Signin form keeps loading state out of focus and typing paths", () => {
     /if \(!parsed\.success\) \{[\s\S]*?setLoading\(false\);[\s\S]*?setMessage\(null\);[\s\S]*?setError\(\{ key: invalidLoginKey \}\);[\s\S]*?return;[\s\S]*?\}/,
     "failed credential validation resets loading instead of leaving the button busy",
   );
-  assert.match(
+  assert.doesNotMatch(
     signinSource,
-    /<button type="button"[\s\S]*?startPasskeySignIn\(\)/,
-    "manual passkey control is not an accidental submit button",
+    /startPasskeySignIn|Use a saved passkey|Continue with passkey|More sign-in options/,
+    "sign-in page does not expose a visible manual passkey control",
   );
   assert.match(
     signinSource,
