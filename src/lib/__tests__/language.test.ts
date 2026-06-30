@@ -3752,6 +3752,71 @@ test("Polish auth pages resolve localized login and reset password copy", () => 
   assert.ok(pl.loginResendIn.includes("{{seconds}}"));
 });
 
+test("Polish active email verification page copy resolves without English fallback", () => {
+  const pl = getTranslations("pl");
+
+  const expectedPolishVerifyEmailStrings: Record<string, string> = {
+    verifyEmailTitle: "Zweryfikuj swój adres e-mail",
+    verifyEmailInstructions:
+      "Wpisz 6-cyfrowy kod wysłany na Twój adres e-mail. Kody wygasają po 10 minutach.",
+    verifyEmailCodeLabel: "Kod weryfikacyjny",
+    verifyEmailInvalidCode: "Kod weryfikacyjny jest nieprawidłowy lub wygasł.",
+    verifyEmailSuccess: "Adres e-mail został zweryfikowany. Możesz teraz zalogować się i przejść do panelu.",
+    verifyEmailVerifying: "Weryfikowanie...",
+    verifyEmailSubmit: "Zweryfikuj e-mail",
+    verifyEmailSending: "Wysyłanie...",
+    verifyEmailSendNewCode: "Wyślij nowy kod",
+    verifyEmailResendSuccess: "Jeśli ten adres e-mail wymaga weryfikacji, wysłano nowy kod.",
+    verifyEmailAlreadyVerified: "Już zweryfikowano?",
+    verifyEmailLoginLink: "Zaloguj się",
+  };
+
+  for (const [key, value] of Object.entries(expectedPolishVerifyEmailStrings)) {
+    assert.equal(pl[key], value, `pl ${key} should use Polish email verification copy`);
+    assert.notEqual(pl[key], enTranslations[key], `pl ${key} should not fall back to English`);
+  }
+
+  assert.doesNotMatch(pl.verifyEmailInstructions, /{{email}}|{{minutes}}|{{seconds}}|{email}|{minutes}|{seconds}/);
+  assert.ok(languageOptions.some((option) => option.code === "pl" && option.direction === "ltr"));
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+});
+
+test("Active email verification render path uses localized keys and preserves form behavior", () => {
+  const verifyEmailFormSource = readFileSync("src/components/auth/VerifyEmailForm.tsx", "utf8");
+  const verifyEmailPageSource = readFileSync("src/app/auth/verify-email/page.tsx", "utf8");
+
+  for (const key of [
+    "verifyEmailTitle",
+    "verifyEmailInstructions",
+    "verifyEmailCodeLabel",
+    "verifyEmailInvalidCode",
+    "verifyEmailSuccess",
+    "verifyEmailVerifying",
+    "verifyEmailSubmit",
+    "verifyEmailSending",
+    "verifyEmailSendNewCode",
+    "verifyEmailResendSuccess",
+    "verifyEmailAlreadyVerified",
+    "verifyEmailLoginLink",
+  ]) {
+    assert.match(verifyEmailFormSource, new RegExp(`t\\.${key}`), key);
+  }
+
+  assert.doesNotMatch(verifyEmailFormSource, />Verify your email<|>Enter the 6-digit code we sent to your email|>Verification code<|>Verify email<|>Send a new code<|>Already verified\?<|>Log in</);
+  assert.match(verifyEmailFormSource, /<Input\s+name="code"\s+inputMode="numeric"\s+maxLength=\{6\}\s+minLength=\{6\}\s+pattern="\[0-9\]\{6\}"\s+required/);
+  assert.match(verifyEmailFormSource, /setCode\(event\.target\.value\.replace\(\/\\D\/g, ""\)\.slice\(0, 6\)\)/);
+  assert.match(verifyEmailFormSource, /fetch\("\/api\/auth\/verify-email", \{\s+method: "POST"/);
+  assert.match(verifyEmailFormSource, /fetch\("\/api\/auth\/verify-email", \{\s+method: "PUT"/);
+  assert.match(verifyEmailFormSource, /body: JSON\.stringify\(\{ email, code: String\(formData\.get\("code"\) \|\| ""\) \}\)/);
+  assert.match(verifyEmailFormSource, /body: JSON\.stringify\(\{ email \}\)/);
+  assert.match(verifyEmailFormSource, /window\.location\.href = "\/auth\/signin\?callbackUrl=\/onboarding\/security"/);
+  assert.match(verifyEmailFormSource, /href="\/auth\/signin\?callbackUrl=\/dashboard"/);
+  assert.match(verifyEmailFormSource, /<Card className="mx-auto w-full max-w-md p-5">/);
+  assert.match(verifyEmailFormSource, /<form action=\{submit\} className="mt-5 grid gap-4">/);
+  assert.match(verifyEmailFormSource, /<Button\s+type="button"\s+variant="secondary"\s+className="mt-3 w-full"/);
+  assert.match(verifyEmailPageSource, /<VerifyEmailForm email=\{email\} \/>/);
+});
+
 test("Auth login and forgot password render paths use i18n keys for visible copy", () => {
   const signinSource = readFileSync("src/components/auth/SigninForm.tsx", "utf8");
   const forgotPasswordSource = readFileSync("src/components/auth/ForgotPasswordForm.tsx", "utf8");
