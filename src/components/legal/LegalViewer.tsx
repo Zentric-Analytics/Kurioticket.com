@@ -31,11 +31,16 @@ const legalDocumentTranslationNamespaces: Record<string, string> = {
   "acceptable-use-policy": "legal.acceptableUsePolicy",
   "privacy-policy": "legal.privacy",
   "cookie-policy": "legal.cookiePolicy",
+  "privacy-choices": "legal.privacyChoices",
   "affiliate-disclosure": "legal.affiliateDisclosure",
   "data-deletion-policy": "legal.dataDeletionPolicy",
   "refund-booking-disclaimer": "legal.refundBookingDisclaimer",
   "price-availability-disclaimer": "legal.priceAvailabilityDisclaimer",
   "partner-redirect-disclaimer": "legal.partnerRedirectDisclaimer",
+  "california-seller-of-travel-notice": "legal.californiaSellerOfTravelNotice",
+  "legal-notice-company-information": "legal.legalNoticeCompanyInformation",
+  "security-statement": "legal.securityStatement",
+  "accessibility-statement": "legal.accessibilityStatement",
 };
 
 function getLegalDocumentTranslationNamespace(document: LegalDocument) {
