@@ -142,6 +142,71 @@ export const translations: TranslationDictionary = {
   'toPlaceholder': 'Till?',
   'roundTrip': 'Tur och retur',
   'oneWay': 'Enkelresa',
+  'cityOrAirport': 'Stad eller flygplats',
+  'searchFlights': 'Sök flyg',
+  'searchingFlights': 'Söker flyg...',
+  flightLandingHeroTitle: 'Hitta ditt nästa prisvärda flyg med lätthet.',
+  flightLandingHeroSubtitle:
+    'Sök rutter, jämför datum och utforska flygalternativ för din nästa resa.',
+  flightLandingFeatureSearchReadyTitle: 'Sökklara rutter',
+  flightLandingFeatureSearchReadyBody:
+    'Ange riktiga reseuppgifter innan resultat begärs från flygleverantörer.',
+  flightLandingFeatureCompareTitle: 'Jämför i sitt sammanhang',
+  flightLandingFeatureCompareBody:
+    'Använd datum, antal resenärer, kabinklass, längd, stopp och ruttuppgifter för att utvärdera alternativen.',
+  flightLandingFeatureProviderTitle: 'Granska hos leverantören',
+  flightLandingFeatureProviderBody:
+    'Bekräfta alltid slutlig tillgänglighet, pris och regler hos leverantören innan du bokar.',
+  flightLandingStartThisSearch: 'Starta den här sökningen',
+  flightLandingRouteIdeasTitle: 'Ruttidéer för flexibla resor',
+  flightLandingRouteIdeasBody:
+    'Bläddra bland ruttidéer och starta sedan en riktig sökning med datum och resenärer innan du jämför tillgängliga flyg.',
+  discoverDestinationsFromRegion: 'Upptäck destinationer från din region',
+  discoverDestinationsFromRegionBody:
+    'Utforska utvalda rutter och starta din nästa resa med trygghet.',
+  beachVacations: 'Strandsemestrar',
+  beachVacationsBody:
+    'Utforska flygrutter till soliga kuster, öresor och stranddestinationer med varmt väder.',
+  flightBookingFaqs: 'Vanliga frågor om flygbokning',
+  flightBookingFaqIntro:
+    'Gå igenom vanliga detaljer för flygsökning innan du fortsätter till en leverantör.',
+  flightFaqBestTimeQuestion: 'När är bästa tiden att boka ett flyg?',
+  flightFaqBestTimeAnswer:
+    'Flygpriser kan ändras beroende på rutt, säsong, efterfrågan och tillgänglighet. Det är ofta bra att jämföra flera datum, kontrollera närliggande flygplatser när det är möjligt och granska hela resplanen innan du väljer ett pris.',
+  flightFaqBeforeBookingQuestion: 'Vad bör jag kontrollera innan bokning?',
+  flightFaqBeforeBookingAnswer:
+    'Granska avgångs- och ankomsttider, total restid, mellanlandningar, bagageregler, platsval, avbokningsvillkor och policy för biljettändringar innan du slutför bokningen hos leverantören.',
+  flightFaqFlexibleFareQuestion: 'Vad är ett flexibelt pris?',
+  flightFaqFlexibleFareAnswer:
+    'Ett flexibelt pris kan tillåta ändringar eller avbokningar med färre begränsningar än ett baspris, men de exakta reglerna beror på flygbolaget eller bokningsleverantören. Granska alltid prisvillkoren före köp.',
+  flightFaqNonstopQuestion: 'Är direktflyg alltid bättre?',
+  flightFaqNonstopAnswer:
+    'Inte alltid. Direktflyg kan spara tid, medan rutter med ett stopp kan erbjuda andra avgångstider, ankomstfönster eller prisalternativ. Jämför total restid, mellanlandningens längd och bekvämlighet innan du bestämmer dig.',
+  flightFaqBaggageQuestion: 'Hur fungerar bagageregler?',
+  flightFaqBaggageAnswer:
+    'Bagageregler kan variera beroende på flygbolag, rutt, kabinklass, pristyp och leverantör. Kontrollera om handbagage, incheckat bagage och personliga föremål ingår innan du bokar.',
+  flightFaqChangeCancelQuestion: 'Kan jag ändra eller avboka min biljett?',
+  flightFaqChangeCancelAnswer:
+    'Möjligheter till ändring och avbokning beror på prisregler och leverantörens policyer. Vissa biljetter kan vara ej återbetalningsbara eller ha avgifter, så granska villkoren noggrant innan du bokar.',
+  flightFaqInternationalQuestion: 'Vad bör jag veta om internationella flyg?',
+  flightFaqInternationalAnswer:
+    'För internationella resor bör du kontrollera passets giltighet, visumkrav, transitregler, bagagepolicyer och inresekrav för destinationen innan du bokar.',
+  'flightLandingImageAlt.Johannesburg skyline at golden hour': 'Johannesburgs silhuett i gyllene timmen',
+  'flightLandingImageAlt.Cairo skyline with the Pyramids of Giza': 'Kairos silhuett med pyramiderna i Giza',
+  'flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands': 'Addis Abebas stadsvy i de etiopiska högländerna',
+  'flightLandingImageAlt.Puerto Vallarta coastline and old town': 'Puerto Vallartas kustlinje och gamla stad',
+  'flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water': 'Honolulus Waikiki-strand med Diamond Head och klart blått vatten',
+  'flightLandingImageAlt.San Diego bay skyline and marina': 'San Diegos bukt, silhuett och marina',
+  'homeDiscoveryRoute.ca-yyz-cun.title': 'Vinterresa till Cancun',
+  'homeDiscoveryRoute.ca-yyz-cun.routeNote': 'Pålitlig fritidsrutt med direktalternativ under högsäsong.',
+  'homeDiscoveryRoute.ca-yeg-pvr.title': 'Strandresa till Puerto Vallarta',
+  'homeDiscoveryRoute.ca-yeg-pvr.routeNote': 'Vintersolrutt med Stillahavsstränder och charmig gammal stad.',
+  'homeDiscoveryRoute.ca-yyz-hnl.title': 'Långdistansresa till Honolulu',
+  'homeDiscoveryRoute.ca-yyz-hnl.routeNote': 'Premiumalternativ för stränder, surfing och vandringar på ön.',
+  'homeDiscoveryRoute.ca-yyz-san.title': 'Sol- och surfresa till San Diego',
+  'homeDiscoveryRoute.ca-yyz-san.routeNote': 'Pålitlig gränsöverskridande rutt för stränder, parker och hamnutsikter.',
+  'homeDiscoveryRoute.ca-yvr-syd.title': 'Transpacifiskt äventyr till Sydney',
+  'homeDiscoveryRoute.ca-yvr-syd.routeNote': 'Långdistansfavorit för hamnlandmärken och strandnära förorter.',
   'chooseTravelDates': 'Välj resedatum',
   'adults': 'Vuxna',
   'adultAgeRange': '18+',
