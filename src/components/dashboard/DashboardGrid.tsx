@@ -2485,8 +2485,28 @@ export function SecurityDashboardPage() {
   useEffect(() => {
     if (!securityModalOpen) return;
 
-    const previousBodyOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const scrollY = window.scrollY;
+    const { body } = document;
+    const previousBodyStyles = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overflow: body.style.overflow,
+      paddingRight: body.style.paddingRight,
+    };
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      body.style.paddingRight = `${scrollbarWidth}px`;
+    }
 
     const handleBackgroundTouchMove = (event: TouchEvent) => {
       const target = event.target;
@@ -2501,8 +2521,15 @@ export function SecurityDashboardPage() {
     document.addEventListener("touchmove", handleBackgroundTouchMove, { passive: false });
 
     return () => {
-      document.body.style.overflow = previousBodyOverflow;
       document.removeEventListener("touchmove", handleBackgroundTouchMove);
+      body.style.position = previousBodyStyles.position;
+      body.style.top = previousBodyStyles.top;
+      body.style.left = previousBodyStyles.left;
+      body.style.right = previousBodyStyles.right;
+      body.style.width = previousBodyStyles.width;
+      body.style.overflow = previousBodyStyles.overflow;
+      body.style.paddingRight = previousBodyStyles.paddingRight;
+      window.scrollTo(0, scrollY);
     };
   }, [securityModalOpen]);
 
@@ -3086,7 +3113,7 @@ export function SecurityDashboardPage() {
                           </div>
                         ) : null}
                       </div>
-                      {!session.isCurrent && !session.revokedAt ? (
+                      {!session.isCurrent && !session.revokedAt && confirmingSessionRemovalId !== session.id ? (
                         <>
                           <button
                             type="button"
@@ -3123,7 +3150,7 @@ export function SecurityDashboardPage() {
 
       {passwordModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="change-password-title">
-          <form onSubmit={handlePasswordSubmit} data-security-modal-content className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+          <form onSubmit={handlePasswordSubmit} data-security-modal-content className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
             <h2 id="change-password-title" className="text-xl font-semibold text-slate-950">Change password</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">Enter your current password and choose a new password with at least 8 characters. OAuth-only accounts should use password reset to create a password.</p>
             <div className="mt-5 space-y-4">
@@ -3148,7 +3175,7 @@ export function SecurityDashboardPage() {
 
       {deleteModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
-          <div data-security-modal-content className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+          <div data-security-modal-content className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
             <h2 id="delete-account-title" className="text-xl font-semibold text-slate-950">Request account deletion</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">This starts a 7-day grace period. Your account will be marked pending deletion, normal dashboard browsing will be restricted, and you can reactivate by logging in before the deadline. Kurioticket will not instantly hard-delete your account from this page; support must review retention obligations first.</p>
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
