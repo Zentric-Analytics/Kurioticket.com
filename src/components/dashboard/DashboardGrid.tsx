@@ -2130,7 +2130,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
 
       {isEditing ? (
         <div className="mx-auto max-w-[64rem]">
-          <div className="grid grid-cols-1 gap-6 px-5 py-7 sm:px-7 lg:grid-cols-[minmax(14rem,17rem)_minmax(0,1fr)] lg:gap-12 lg:px-9 lg:py-9">
+          <div className="grid grid-cols-1 gap-6 px-5 py-7 sm:px-7 lg:px-9 lg:py-9">
             <div>
               <h2 className="text-lg font-semibold leading-7 text-slate-950">
                 {t["accountDashboard.personalDetails.section.basicInformation"]}
@@ -2145,7 +2145,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
                 .map((key) => renderEditField(key))}
             </div>
           </div>
-          <div className="grid grid-cols-1 gap-6 border-t border-slate-200 px-5 py-7 sm:px-7 lg:grid-cols-[minmax(14rem,17rem)_minmax(0,1fr)] lg:gap-12 lg:px-9 lg:py-9">
+          <div className="grid grid-cols-1 gap-6 border-t border-slate-200 px-5 py-7 sm:px-7 lg:px-9 lg:py-9">
             <div>
               <h2 className="text-lg font-semibold leading-7 text-slate-950">
                 {t["accountDashboard.personalDetails.section.address"]}
