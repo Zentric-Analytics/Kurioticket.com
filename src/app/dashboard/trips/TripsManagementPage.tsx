@@ -1,7 +1,9 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type FormEvent,
@@ -11,60 +13,157 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 
-type TripHistoryTab = "past" | "cancelled";
-type TripStatusTab = "active" | TripHistoryTab;
-type MobileTripTab = TripStatusTab;
+type TripStatusTab = "upcoming" | "past" | "cancelled";
+type RequestState = "loading" | "success" | "error" | "unauthenticated";
+type LookupState = "idle" | "loading" | "success" | "error";
 
-const mobileTripTabs: Array<{ id: MobileTripTab; labelKey: string }> = [
-  { id: "active", labelKey: "accountDashboard.trips.history.tabs.active" },
-  { id: "past", labelKey: "accountDashboard.trips.history.tabs.past" },
-  {
-    id: "cancelled",
-    labelKey: "accountDashboard.trips.history.tabs.cancelled",
-  },
+type DashboardTrip = {
+  id: string;
+  bookingReference: string;
+  provider: string;
+  tripType: string;
+  status: TripStatusTab;
+  origin: string | null;
+  destination: string;
+  departureDate: string;
+  returnDate: string | null;
+  passengerCount: number;
+  currency: string;
+  totalAmount: number | null;
+  externalBookingId: string | null;
+};
+
+type TripsSummary = Record<TripStatusTab, number> & { total: number };
+
+type TripsResponse = {
+  trips: DashboardTrip[];
+  summary: TripsSummary;
+};
+
+type LookupResponse = {
+  reservation?: DashboardTrip | null;
+  error?: string;
+};
+
+const defaultSummary: TripsSummary = {
+  upcoming: 0,
+  past: 0,
+  cancelled: 0,
+  total: 0,
+};
+
+const tripTabs: Array<{ id: TripStatusTab; labelKey: string; fallback: string }> = [
+  { id: "upcoming", labelKey: "accountDashboard.trips.history.tabs.active", fallback: "Upcoming" },
+  { id: "past", labelKey: "accountDashboard.trips.history.tabs.past", fallback: "Past" },
+  { id: "cancelled", labelKey: "accountDashboard.trips.history.tabs.cancelled", fallback: "Cancelled" },
 ];
 
-const mobileEmptyStates: Record<
-  MobileTripTab,
+const emptyStates: Record<
+  TripStatusTab,
   {
     titleKey: string;
+    titleFallback: string;
     bodyKey: string;
-    illustration: "current" | TripHistoryTab;
+    bodyFallback: string;
+    illustration: "current" | "past" | "cancelled";
   }
 > = {
-  active: {
+  upcoming: {
     titleKey: "accountDashboard.trips.current.empty.title",
+    titleFallback: "No upcoming trips yet",
     bodyKey: "accountDashboard.trips.current.empty.body",
+    bodyFallback: "Search flights or hotels to start planning your next trip.",
     illustration: "current",
   },
   past: {
     titleKey: "accountDashboard.trips.history.empty.past.title",
+    titleFallback: "No past trips yet",
     bodyKey: "accountDashboard.trips.history.empty.past.body",
+    bodyFallback: "Completed trips will appear here after you travel.",
     illustration: "past",
   },
   cancelled: {
     titleKey: "accountDashboard.trips.history.empty.cancelled.title",
+    titleFallback: "No cancelled trips",
     bodyKey: "accountDashboard.trips.history.empty.cancelled.body",
+    bodyFallback: "Cancelled bookings will appear here if you have any.",
     illustration: "cancelled",
   },
 };
 
-const desktopTripTabs: Array<{ id: TripStatusTab; labelKey: string }> =
-  mobileTripTabs;
-
 export function TripsManagementPage() {
   const { t: dictionary } = useLocale();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const [activeHistoryTab, setActiveHistoryTab] =
-    useState<TripHistoryTab>("past");
+  const t = useCallback(
+    (key: string, fallback = "") => dictionary[key] ?? enTranslations[key] ?? fallback,
+    [dictionary],
+  );
+  const [activeTab, setActiveTab] = useState<TripStatusTab>("upcoming");
+  const [trips, setTrips] = useState<DashboardTrip[]>([]);
+  const [summary, setSummary] = useState<TripsSummary>(defaultSummary);
+  const [requestState, setRequestState] = useState<RequestState>("loading");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showLookup, setShowLookup] = useState(false);
   const [lookupMessage, setLookupMessage] = useState<string | null>(null);
+  const [lookupResult, setLookupResult] = useState<DashboardTrip | null>(null);
+  const [lookupState, setLookupState] = useState<LookupState>("idle");
   const lookupPopoverRef = useRef<HTMLDivElement | null>(null);
   const lookupTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const lookupReservationCodeRef = useRef<HTMLInputElement | null>(null);
+
+  const loadTrips = useCallback(async (showLoading = true) => {
+    if (showLoading) {
+      setRequestState("loading");
+    }
+    setErrorMessage(null);
+
+    try {
+      const response = await fetch("/api/dashboard/trips", {
+        headers: { Accept: "application/json" },
+      });
+
+      if (response.status === 401) {
+        setTrips([]);
+        setSummary(defaultSummary);
+        setRequestState("unauthenticated");
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error("Unable to load your trips right now.");
+      }
+
+      const data = (await response.json()) as TripsResponse;
+      setTrips(Array.isArray(data.trips) ? data.trips : []);
+      setSummary(data.summary ?? defaultSummary);
+      setRequestState("success");
+    } catch {
+      setTrips([]);
+      setSummary(defaultSummary);
+      setErrorMessage("We could not load your trips. Please try again.");
+      setRequestState("error");
+    }
+  }, []);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      void loadTrips(false);
+    }, 0);
+
+    return () => window.clearTimeout(timeout);
+  }, [loadTrips]);
 
   useEffect(() => {
     if (!showLookup) {
       return;
+    }
+
+    const focusTimeout = window.setTimeout(() => {
+      lookupReservationCodeRef.current?.focus();
+    }, 0);
+
+    function closeLookupAndRestoreFocus() {
+      setShowLookup(false);
+      lookupTriggerRef.current?.focus();
     }
 
     function handlePointerDown(event: PointerEvent) {
@@ -81,12 +180,39 @@ export function TripsManagementPage() {
         return;
       }
 
-      setShowLookup(false);
+      closeLookupAndRestoreFocus();
     }
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setShowLookup(false);
+        closeLookupAndRestoreFocus();
+        return;
+      }
+
+      if (event.key !== "Tab") {
+        return;
+      }
+
+      const focusableElements = lookupPopoverRef.current?.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+
+      if (!focusableElements?.length) {
+        return;
+      }
+
+      const firstFocusable = focusableElements[0];
+      const lastFocusable = focusableElements[focusableElements.length - 1];
+
+      if (event.shiftKey && document.activeElement === firstFocusable) {
+        event.preventDefault();
+        lastFocusable.focus();
+        return;
+      }
+
+      if (!event.shiftKey && document.activeElement === lastFocusable) {
+        event.preventDefault();
+        firstFocusable.focus();
       }
     }
 
@@ -94,207 +220,302 @@ export function TripsManagementPage() {
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
+      window.clearTimeout(focusTimeout);
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [showLookup]);
 
+  const activeTrips = useMemo(
+    () => trips.filter((trip) => trip.status === activeTab),
+    [activeTab, trips],
+  );
+
   function closeLookup() {
     setShowLookup(false);
+    lookupTriggerRef.current?.focus();
   }
 
-  function handleLookupSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleLookupSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setLookupMessage(t("accountDashboard.trips.lookup.unavailable"));
-  }
+    setLookupMessage(null);
+    setLookupResult(null);
 
-  const historyEmptyState = mobileEmptyStates[activeHistoryTab];
+    const formData = new FormData(event.currentTarget);
+    const reservationCode = String(formData.get("reservationCode") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim().toLowerCase();
+
+    if (!reservationCode) {
+      setLookupState("error");
+      setLookupMessage(t("accountDashboard.trips.lookup.reservationCodeRequired", "Reservation code is required."));
+      return;
+    }
+
+    if (!email) {
+      setLookupState("error");
+      setLookupMessage(t("accountDashboard.trips.lookup.emailRequired", "Email address is required."));
+      return;
+    }
+
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      setLookupState("error");
+      setLookupMessage(t("accountDashboard.trips.lookup.invalidEmail", "Enter a valid email address."));
+      return;
+    }
+
+    setLookupState("loading");
+
+    try {
+      const response = await fetch("/api/dashboard/trips/lookup", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ reservationCode, email }),
+      });
+      const data = (await response.json().catch(() => ({}))) as LookupResponse;
+
+      if (response.status === 401) {
+        setLookupState("error");
+        setLookupMessage("Please sign in to look up a reservation.");
+        return;
+      }
+
+      if (response.status === 404) {
+        setLookupState("error");
+        setLookupMessage(`${t("accountDashboard.trips.lookup.notFoundTitle", "Reservation not found")}. ${t("accountDashboard.trips.lookup.notFoundDescription", "We could not find a reservation with those details.")}`);
+        return;
+      }
+
+      if (!response.ok) {
+        setLookupState("error");
+        setLookupMessage(data.error ?? "We could not look up that reservation. Please try again.");
+        return;
+      }
+
+      if (data.reservation) {
+        setLookupResult(data.reservation);
+        setLookupState("success");
+        setLookupMessage("Reservation found.");
+        void loadTrips(false);
+        return;
+      }
+
+      setLookupState("error");
+      setLookupMessage(t("accountDashboard.trips.lookup.notFoundDescription", "We could not find a reservation with those details."));
+    } catch {
+      setLookupState("error");
+      setLookupMessage("We could not look up that reservation. Please try again.");
+    }
+  }
 
   return (
     <section
       aria-labelledby="trips-title"
-      className="mx-auto min-w-0 max-w-[72rem] space-y-10 bg-white pb-12 pt-3 sm:pt-6 lg:space-y-12 lg:pb-16"
+      className="mx-auto min-w-0 max-w-[72rem] space-y-8 bg-white pb-12 pt-3 sm:pt-6 lg:space-y-10 lg:pb-16"
     >
-      <div>
-        <div className="flex min-w-0 items-start justify-between gap-4">
-          <div className="min-w-0">
-            <h1
-              id="trips-title"
-              className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]"
-            >
-              {t("accountDashboard.trips.title")}
-            </h1>
-          </div>
-          <div className="relative flex w-fit shrink-0 justify-end pt-1">
-            <button
-              ref={lookupTriggerRef}
-              type="button"
-              onClick={() => {
-                setShowLookup(true);
-                setLookupMessage(null);
-              }}
-              aria-expanded={showLookup}
-              aria-controls="reservation-lookup"
-              className="focus-ring inline-flex w-fit items-center justify-center rounded-full px-1 py-1 text-sm font-semibold text-violet-800 underline-offset-4 transition hover:text-violet-950 hover:underline lg:cursor-pointer"
-            >
-              {t("accountDashboard.trips.findReservation")}
-            </button>
+      <div className="flex min-w-0 items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1
+            id="trips-title"
+            className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]"
+          >
+            {t("accountDashboard.trips.title", "My Trips")}
+          </h1>
+          <p className="mt-2 text-sm text-slate-600">
+            {summary.total} total · {summary.upcoming} upcoming · {summary.past} past · {summary.cancelled} cancelled
+          </p>
+        </div>
+        <div className="relative flex w-fit shrink-0 justify-end pt-1">
+          <button
+            ref={lookupTriggerRef}
+            type="button"
+            onClick={() => {
+              setShowLookup(true);
+              setLookupMessage(null);
+              setLookupResult(null);
+              setLookupState("idle");
+            }}
+            aria-expanded={showLookup}
+            aria-controls="reservation-lookup"
+            className="focus-ring inline-flex w-fit items-center justify-center rounded-full px-1 py-1 text-sm font-semibold text-violet-800 underline-offset-4 transition hover:text-violet-950 hover:underline lg:cursor-pointer"
+          >
+            {t("accountDashboard.trips.findReservation", "Find a reservation")}
+          </button>
 
-            {showLookup ? (
-              <div
-                className="fixed inset-0 z-40 flex items-end justify-center bg-slate-950/20 px-3 pb-3 pt-16 sm:absolute sm:inset-auto sm:end-0 sm:top-[calc(100%+0.75rem)] sm:block sm:w-[min(24rem,calc(100vw-3rem))] sm:bg-transparent sm:p-0"
-                role="presentation"
-              >
-                <section
-                  id="reservation-lookup"
-                  ref={lookupPopoverRef}
-                  aria-labelledby="reservation-lookup-title"
-                  aria-modal="true"
-                  role="dialog"
-                  className="max-h-[calc(100vh-4.75rem)] w-full max-w-sm overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_24px_70px_-34px_rgba(15,23,42,0.55)] sm:max-h-none sm:max-w-none sm:p-6"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="min-w-0 flex-1">
-                      <h2
-                        id="reservation-lookup-title"
-                        className="text-lg font-semibold tracking-tight text-slate-950"
-                      >
-                        {t("accountDashboard.trips.lookup.title")}
-                      </h2>
-                      <p className="mt-2 text-sm leading-6 text-slate-700">
-                        {t("accountDashboard.trips.lookup.body")}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={closeLookup}
-                      aria-label={t(
-                        "accountDashboard.trips.lookup.closeAriaLabel",
-                      )}
-                      className="focus-ring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 text-xl leading-none text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
-                    >
-                      ×
-                    </button>
-                  </div>
-
-                  <form
-                    onSubmit={handleLookupSubmit}
-                    className="mt-5 grid gap-4"
-                  >
-                    <label className="grid gap-2 text-sm font-medium text-slate-700">
-                      {t("accountDashboard.trips.lookup.reservationCode")}
-                      <input
-                        type="text"
-                        name="reservationCode"
-                        autoComplete="off"
-                        className="focus-ring h-12 min-w-0 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium uppercase tracking-[0.08em] text-slate-900 outline-none transition placeholder:text-slate-500 hover:border-slate-400"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm font-medium text-slate-700">
-                      {t("accountDashboard.trips.lookup.emailAddress")}
-                      <input
-                        type="email"
-                        name="email"
-                        autoComplete="email"
-                        className="focus-ring h-12 min-w-0 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-500 hover:border-slate-400"
-                      />
-                    </label>
-                    <button
-                      type="submit"
-                      className="focus-ring inline-flex h-12 items-center justify-center rounded-xl bg-violet-700 px-5 text-sm font-semibold text-white shadow-[0_16px_34px_-24px_rgba(79,70,229,0.9)] transition hover:bg-violet-800"
-                    >
-                      {t("accountDashboard.trips.lookup.submit")}
-                    </button>
-                    {lookupMessage ? (
-                      <p
-                        className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900"
-                        role="status"
-                      >
-                        {lookupMessage}
-                      </p>
-                    ) : null}
-                  </form>
-                </section>
-              </div>
-            ) : null}
-          </div>
+          {showLookup ? (
+            <LookupDialog
+              lookupPopoverRef={lookupPopoverRef}
+              lookupState={lookupState}
+              lookupMessage={lookupMessage}
+              lookupResult={lookupResult}
+              reservationCodeRef={lookupReservationCodeRef}
+              onClose={closeLookup}
+              onSubmit={handleLookupSubmit}
+              t={t}
+            />
+          ) : null}
         </div>
       </div>
 
-      <EmptyStateRow
-        className="pt-3 sm:pt-8 lg:pt-12"
-        illustration={
-          <CurrentTripsIllustration
-            ariaLabel={t(
-              "accountDashboard.trips.illustration.currentAriaLabel",
-            )}
-          />
-        }
-        title={t("accountDashboard.trips.current.empty.title")}
-        body={t("accountDashboard.trips.current.empty.body")}
-        titleId="current-trips-panel-title"
-      />
-
-      <section
-        aria-labelledby="history-trips-panel-title"
-        className="space-y-8 pt-1 sm:pt-5 lg:pt-8"
+      <div
+        className="flex min-w-0 flex-wrap items-center gap-3"
+        role="tablist"
+        aria-label={t("accountDashboard.trips.history.filtersAriaLabel", "Filter trips by status")}
       >
-        <div
-          className="flex min-w-0 items-center gap-4"
-          role="tablist"
-          aria-label={t("accountDashboard.trips.history.filtersAriaLabel")}
-        >
-          {desktopTripTabs
-            .filter((tab) => tab.id !== "active")
-            .map((tab) => {
-              const isActive = activeHistoryTab === tab.id;
+        {tripTabs.map((tab) => {
+          const isActive = activeTab === tab.id;
 
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  aria-controls={`${tab.id}-history-trips-panel`}
-                  id={`${tab.id}-history-trips-tab`}
-                  onClick={() => setActiveHistoryTab(tab.id as TripHistoryTab)}
-                  className={cn(
-                    "focus-ring inline-flex h-10 shrink-0 items-center justify-center rounded-full border px-5 text-sm font-semibold transition",
-                    isActive
-                      ? "border-violet-300 bg-violet-50 text-violet-800"
-                      : "border-transparent bg-transparent text-slate-600 hover:border-violet-200 hover:text-slate-950",
-                  )}
-                >
-                  {t(tab.labelKey)}
-                </button>
-              );
-            })}
-        </div>
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              aria-controls={`${tab.id}-trips-panel`}
+              id={`${tab.id}-trips-tab`}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "focus-ring inline-flex h-10 shrink-0 items-center justify-center rounded-full border px-5 text-sm font-semibold transition",
+                isActive
+                  ? "border-violet-300 bg-violet-50 text-violet-800"
+                  : "border-transparent bg-transparent text-slate-600 hover:border-violet-200 hover:text-slate-950",
+              )}
+            >
+              {tab.id === "upcoming" ? tab.fallback : t(tab.labelKey, tab.fallback)}
+              <span className="ms-2 rounded-full bg-white/80 px-2 py-0.5 text-xs text-slate-600">
+                {summary[tab.id]}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
-        <div
-          id={`${activeHistoryTab}-history-trips-panel`}
-          role="tabpanel"
-          aria-labelledby={`${activeHistoryTab}-history-trips-tab`}
-        >
-          <EmptyStateRow
-            illustration={
-              <HistoryEmptyIllustration
-                variant={activeHistoryTab}
-                ariaLabel={t(
-                  activeHistoryTab === "cancelled"
-                    ? "accountDashboard.trips.illustration.cancelledAriaLabel"
-                    : "accountDashboard.trips.illustration.historyAriaLabel",
-                )}
-              />
-            }
-            title={t(historyEmptyState.titleKey)}
-            body={t(historyEmptyState.bodyKey)}
-            titleId="history-trips-panel-title"
-          />
-        </div>
-      </section>
+      <div
+        id={`${activeTab}-trips-panel`}
+        role="tabpanel"
+        aria-labelledby={`${activeTab}-trips-tab`}
+      >
+        {requestState === "loading" ? <TripsLoadingState /> : null}
+        {requestState === "unauthenticated" ? <NoticeState title="Sign in to view your trips" body="Your trips are connected to your account. Please sign in, then return here to manage upcoming, past, and cancelled bookings." /> : null}
+        {requestState === "error" ? <NoticeState title="Unable to load trips" body={errorMessage ?? "We could not load your trips. Please try again."} action={<button type="button" onClick={() => void loadTrips()} className="focus-ring mt-4 inline-flex h-11 items-center justify-center rounded-full bg-violet-700 px-5 text-sm font-semibold text-white transition hover:bg-violet-800" aria-label="Retry loading trips">Retry</button>} /> : null}
+        {requestState === "success" && activeTrips.length === 0 ? <TripEmptyState status={activeTab} t={t} /> : null}
+        {requestState === "success" && activeTrips.length > 0 ? <TripCards trips={activeTrips} /> : null}
+      </div>
     </section>
   );
+}
+
+function LookupDialog({ lookupPopoverRef, lookupState, lookupMessage, lookupResult, reservationCodeRef, onClose, onSubmit, t }: { lookupPopoverRef: React.RefObject<HTMLDivElement | null>; lookupState: LookupState; lookupMessage: string | null; lookupResult: DashboardTrip | null; reservationCodeRef: React.RefObject<HTMLInputElement | null>; onClose: () => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; t: (key: string, fallback?: string) => string; }) {
+  return (
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-slate-950/20 px-3 pb-3 pt-16 sm:absolute sm:inset-auto sm:end-0 sm:top-[calc(100%+0.75rem)] sm:block sm:w-[min(24rem,calc(100vw-3rem))] sm:bg-transparent sm:p-0" role="presentation">
+      <section id="reservation-lookup" ref={lookupPopoverRef} aria-labelledby="reservation-lookup-title" aria-modal="true" role="dialog" className="max-h-[calc(100vh-4.75rem)] w-full max-w-sm overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_24px_70px_-34px_rgba(15,23,42,0.55)] sm:max-h-none sm:max-w-none sm:p-6">
+        <div className="flex items-start gap-4">
+          <div className="min-w-0 flex-1">
+            <h2 id="reservation-lookup-title" className="text-lg font-semibold tracking-tight text-slate-950">{t("accountDashboard.trips.lookup.title", "Enter booking details")}</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-700">{t("accountDashboard.trips.lookup.body", "Enter your reservation code and email address to locate and manage your booking.")}</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label={t("accountDashboard.trips.lookup.closeAriaLabel", "Close")} className="focus-ring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 text-xl leading-none text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900">×</button>
+        </div>
+        <form onSubmit={onSubmit} className="mt-5 grid gap-4">
+          <label className="grid gap-2 text-sm font-medium text-slate-700">{t("accountDashboard.trips.lookup.reservationCode", "Reservation code")}<input ref={reservationCodeRef} type="text" name="reservationCode" autoComplete="off" className="focus-ring h-12 min-w-0 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium uppercase tracking-[0.08em] text-slate-900 outline-none transition placeholder:text-slate-500 hover:border-slate-400" /></label>
+          <label className="grid gap-2 text-sm font-medium text-slate-700">{t("accountDashboard.trips.lookup.emailAddress", "Email address")}<input type="email" name="email" autoComplete="email" className="focus-ring h-12 min-w-0 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-500 hover:border-slate-400" /></label>
+          <button type="submit" disabled={lookupState === "loading"} className="focus-ring inline-flex h-12 items-center justify-center rounded-xl bg-violet-700 px-5 text-sm font-semibold text-white shadow-[0_16px_34px_-24px_rgba(79,70,229,0.9)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:bg-violet-400">{lookupState === "loading" ? t("accountDashboard.trips.lookup.loading", "Finding reservation...") : t("accountDashboard.trips.lookup.submit", "Find reservation")}</button>
+          {lookupMessage ? <p className={cn("rounded-2xl border px-4 py-3 text-sm font-medium", lookupState === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-amber-200 bg-amber-50 text-amber-900")} role="status">{lookupMessage}</p> : null}
+          {lookupResult ? <LookupResultCard trip={lookupResult} /> : null}
+        </form>
+      </section>
+    </div>
+  );
+}
+
+function TripCards({ trips }: { trips: DashboardTrip[] }) {
+  return <div className="grid gap-4 sm:gap-5">{trips.map((trip) => <TripCard key={trip.id} trip={trip} />)}</div>;
+}
+
+function TripCard({ trip }: { trip: DashboardTrip }) {
+  return (
+    <article className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_18px_55px_-42px_rgba(15,23,42,0.45)] sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">{trip.provider} · {formatLabel(trip.tripType)}</p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">{formatRoute(trip.origin, trip.destination)}</h2>
+          <p className="mt-2 text-sm text-slate-600">Booking reference: <span className="font-semibold text-slate-900">{trip.bookingReference}</span></p>
+        </div>
+        <span className="inline-flex w-fit rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-violet-800">{formatLabel(trip.status)}</span>
+      </div>
+      <dl className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <TripDetail label="Departure" value={formatDate(trip.departureDate)} />
+        <TripDetail label="Return" value={trip.returnDate ? formatDate(trip.returnDate) : "—"} />
+        <TripDetail label="Passengers" value={`${trip.passengerCount}`} />
+        <TripDetail label="Total" value={formatAmount(trip.totalAmount, trip.currency)} />
+      </dl>
+      <button type="button" disabled className="mt-5 inline-flex h-11 items-center justify-center rounded-full border border-slate-200 px-5 text-sm font-semibold text-slate-500" aria-disabled="true">View details</button>
+    </article>
+  );
+}
+
+function LookupResultCard({ trip }: { trip: DashboardTrip }) {
+  return <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4"><p className="text-sm font-semibold text-slate-950">{formatRoute(trip.origin, trip.destination)}</p><p className="mt-1 text-sm text-slate-600">{trip.provider} · {formatDate(trip.departureDate)} · {trip.bookingReference}</p></div>;
+}
+
+function TripDetail({ label, value }: { label: string; value: string }) {
+  return <div><dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</dt><dd className="mt-1 text-sm font-semibold text-slate-950">{value}</dd></div>;
+}
+
+function TripsLoadingState() {
+  return <div className="grid gap-4" aria-live="polite" aria-busy="true"><p className="text-sm font-medium text-slate-600">Loading your trips...</p>{[0, 1].map((item) => <div key={item} className="h-40 animate-pulse rounded-3xl bg-slate-100" />)}</div>;
+}
+
+function NoticeState({ title, body, action }: { title: string; body: string; action?: ReactNode }) {
+  return <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-center"><h2 className="text-xl font-semibold text-slate-950">{title}</h2><p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-slate-600">{body}</p>{action}</div>;
+}
+
+function TripEmptyState({ status, t }: { status: TripStatusTab; t: (key: string, fallback?: string) => string }) {
+  const state = emptyStates[status];
+  const illustration = state.illustration === "current" ? <CurrentTripsIllustration ariaLabel={t("accountDashboard.trips.illustration.currentAriaLabel", "No current trips illustration")} /> : <HistoryEmptyIllustration variant={state.illustration} ariaLabel={t(state.illustration === "cancelled" ? "accountDashboard.trips.illustration.cancelledAriaLabel" : "accountDashboard.trips.illustration.historyAriaLabel", "No trip history illustration")} />;
+
+  return <EmptyStateRow className="pt-3 sm:pt-8 lg:pt-12" illustration={illustration} title={t(state.titleKey, state.titleFallback)} body={t(state.bodyKey, state.bodyFallback)} titleId={`${status}-trips-panel-title`} />;
+}
+
+function formatLabel(value: string) {
+  return value.replace(/[-_]/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function formatRoute(origin: string | null, destination: string) {
+  const safeDestination = destination.trim() || "Unknown destination";
+  const safeOrigin = origin?.trim();
+
+  return safeOrigin ? `${safeOrigin} → ${safeDestination}` : safeDestination;
+}
+
+function formatDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(date);
+}
+
+function formatAmount(amount: number | null, currency: string) {
+  if (amount === null) {
+    return "—";
+  }
+
+  try {
+    if (currency.trim()) {
+      return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(amount);
+    }
+  } catch {
+    const safeCurrency = currency.trim();
+
+    return safeCurrency ? `${safeCurrency} ${amount}` : `${amount}`;
+  }
+
+  return `${amount}`;
 }
 
 function EmptyStateRow({
@@ -337,7 +558,7 @@ function HistoryEmptyIllustration({
   variant,
   ariaLabel,
 }: {
-  variant: TripHistoryTab;
+  variant: "past" | "cancelled";
   ariaLabel: string;
 }) {
   if (variant === "cancelled") {
