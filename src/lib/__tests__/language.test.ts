@@ -6125,6 +6125,120 @@ test("Swedish homepage-visible copy resolves without English fallback", () => {
   assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
 });
 
+
+test("Swedish global modal and auth copy resolves without English fallback", () => {
+  const sv = getTranslations("sv");
+  const expected: Record<string, string> = {
+    chooseCountryAndCurrency: "Välj land och valuta",
+    countryCurrencyDescription: "Välj land och valuta som används för att visa priser. Flygplatsförslag använder din upptäckta plats.",
+    searchCountryOrCurrency: "Sök land eller valuta",
+    countryCurrencyPopularCountryAndCurrency: "POPULÄRA LÄNDER OCH VALUTOR",
+    countryCurrencyAllCountriesAndCurrencies: "ALLA LÄNDER OCH VALUTOR",
+    countryCurrencyOptionCountSingular: "{{count}} alternativ",
+    countryCurrencyOptionCountPlural: "{{count}} alternativ",
+    showMoreResults: "Visa fler resultat",
+    globalLanguage: "GLOBALT SPRÅK",
+    websiteLanguageTitle: "Välj webbplatsspråk",
+    websiteLanguageDescription: "Engelska (USA) är standardspråk för webbplatsen. Kurioticket byter språk först när du väljer ett tillgängligt alternativ.",
+    currentLanguage: "Aktuellt språk: {{language}}",
+    languagePreparingNotice: "Fler språk förbereds. Otillgängliga alternativ översätter inte webbplatsen ännu.",
+    languageSearchLabel: "Sök språk",
+    languageSearchPlaceholder: "Sök English, Español, Français, Deutsch...",
+    login: "Logga in",
+    signUp: "Registrera dig",
+    loginPageTitle: "Logga in",
+    loginPageSubtitle: "Spara sökningar, hantera aviseringar och få åtkomst till din reseöversikt.",
+    loginEmailLabel: "E-post",
+    loginPasswordLabel: "Lösenord",
+    loginForgotPassword: "Glömt lösenordet?",
+    loginDivider: "ELLER",
+    loginGoogle: "Fortsätt med Google",
+    loginSignupPrompt: "Ny på Kurioticket?",
+    loginCreateAccount: "Skapa ett konto",
+    forgotPasswordTitle: "Återställ ditt lösenord",
+    forgotPasswordSubtitle: "Ange din e-postadress så skickar vi instruktioner för att återställa ditt lösenord.",
+    forgotPasswordEmailLabel: "E-post",
+    forgotPasswordEmailPlaceholder: "du@example.com",
+    forgotPasswordSubmit: "Skicka återställningslänk",
+    forgotPasswordRemember: "Kommer du ihåg ditt lösenord?",
+    forgotPasswordLoginLink: "Logga in",
+    forgotPasswordSuccess: "Om ett konto finns har vi skickat instruktioner för lösenordsåterställning.",
+    loginCodeSent: "Vi skickade en verifieringskod till din e-post.",
+    loginCodeInstructions: "Ange den 6-siffriga koden som skickades till {{email}}. Koder upphör att gälla efter {{minutes}} minuter.",
+    loginVerificationCodeLabel: "Verifieringskod",
+    loginVerifyLogin: "Verifiera inloggning",
+    loginResendIn: "Skicka igen om {{seconds}}s",
+    loginUseDifferentDetails: "Använd andra uppgifter",
+    signupPageTitle: "Skapa ditt konto",
+    signupFullNameLabel: "Fullständigt namn",
+    signupEmailLabel: "E-post",
+    signupPasswordLabel: "Lösenord",
+    signupAgreementBeforeTerms: "Genom att skapa ett konto godkänner du ",
+    signupTermsLink: "användarvillkoren",
+    signupAgreementBetweenLinks: ", ",
+    signupPrivacyPolicyLink: "integritetspolicyn",
+    signupAgreementAfterPrivacy: " och informationen om omdirigering till partner.",
+    signupSubmit: "Registrera dig",
+    signupGoogle: "Fortsätt med Google",
+    signupAlreadyHaveAccount: "Har du redan ett konto?",
+    signupLoginLink: "Logga in",
+  };
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(sv[key], value, key);
+    if (value !== enTranslations[key]) assert.notEqual(sv[key], enTranslations[key], key);
+  }
+
+  assert.equal(sv.currentLanguage.replace("{{language}}", "Svenska"), "Aktuellt språk: Svenska");
+  assert.match(sv.currentLanguage, /\{\{language\}\}/);
+  assert.match(sv.loginCodeInstructions, /\{\{email\}\}/);
+  assert.match(sv.loginCodeInstructions, /\{\{minutes\}\}/);
+  assert.match(sv.loginResendIn, /\{\{seconds\}\}/);
+  assert.equal(sv.loginCodeInstructions.replace("{{email}}", "user@example.com").replace("{{minutes}}", "10"), "Ange den 6-siffriga koden som skickades till user@example.com. Koder upphör att gälla efter 10 minuter.");
+  assert.ok(languageOptions.some((o) => o.code === "sv" && o.locale === "sv-SE" && o.direction === "ltr"));
+  assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
+});
+
+test("Swedish global modal and auth render paths use i18n keys without active English literals", () => {
+  const headerSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
+  const countryCurrencySource = readFileSync("src/components/region/CountryCurrencySelector.tsx", "utf8");
+  const signinSource = readFileSync("src/components/auth/SigninForm.tsx", "utf8");
+  const forgotSource = readFileSync("src/components/auth/ForgotPasswordForm.tsx", "utf8");
+  const signupSource = readFileSync("src/components/auth/SignupForm.tsx", "utf8");
+  const signinPageSource = readFileSync("src/app/auth/signin/page.tsx", "utf8");
+  const forgotPageSource = readFileSync("src/app/auth/forgot-password/page.tsx", "utf8");
+  const signupPageSource = readFileSync("src/app/auth/signup/page.tsx", "utf8");
+
+  for (const key of ["login", "signUp", "globalLanguage", "websiteLanguageTitle", "websiteLanguageDescription", "currentLanguage", "languagePreparingNotice", "languageSearchLabel", "languageSearchPlaceholder"]) assert.match(headerSource, new RegExp(`t\\.${key}`), key);
+  for (const key of ["chooseCountryAndCurrency", "countryCurrencyDescription", "searchCountryOrCurrency", "countryCurrencyAllCountriesAndCurrencies", "countryCurrencyPopularCountryAndCurrency", "countryCurrencyOptionCountSingular", "countryCurrencyOptionCountPlural", "showMoreResults"]) assert.match(countryCurrencySource, new RegExp(`t\\.${key}`), key);
+  for (const key of ["loginPageTitle", "loginPageSubtitle", "loginEmailLabel", "loginPasswordLabel", "loginForgotPassword", "loginSubmit", "loginDivider", "loginGoogle", "loginSignupPrompt", "loginCreateAccount", "loginCodeSent", "loginCodeInstructions", "loginVerificationCodeLabel", "loginVerifyLogin", "loginResendIn", "loginUseDifferentDetails"]) assert.match(signinSource, new RegExp(`t\\.${key}|key: "${key}"`), key);
+  for (const key of ["forgotPasswordTitle", "forgotPasswordSubtitle", "forgotPasswordEmailLabel", "forgotPasswordEmailPlaceholder", "forgotPasswordSubmit", "forgotPasswordRemember", "forgotPasswordLoginLink", "forgotPasswordSuccess"]) assert.match(forgotSource, new RegExp(`t\\.${key}`), key);
+  for (const key of ["signupPageTitle", "signupFullNameLabel", "signupEmailLabel", "signupPasswordLabel", "signupAgreementBeforeTerms", "signupTermsLink", "signupAgreementBetweenLinks", "signupPrivacyPolicyLink", "signupAgreementAfterPrivacy", "signupSubmit", "signupGoogle", "signupAlreadyHaveAccount", "signupLoginLink"]) assert.match(signupSource, new RegExp(`t\\.${key}`), key);
+
+  assert.doesNotMatch(signinSource, />Log in<|>Save searches, manage alerts, and access your travel dashboard\.<|>Forgot password\?<|>OR<|>Continue with Google<|>New to Kurioticket\?<|>Create an account<|>Verification code<|>Verify login<|>Use different details</);
+  assert.doesNotMatch(forgotSource, />Reset your password<|>Enter your email and we'll send instructions to reset your password\.<|>Send reset link<|>Remember your password\?<|>Log in</);
+  assert.doesNotMatch(signupSource, />Create your account<|>Full name<|>Sign Up<|>Continue with Google<|>Already have an account\?<|>Log in</);
+
+  assert.match(signinSource, /<Input\s+name="email"\s+type="email"/);
+  assert.match(signinSource, /<Input\s+name="password"\s+type="password"/);
+  assert.match(signinSource, /<Input\s+name="code"\s+inputMode="numeric"/);
+  assert.match(signinSource, /signIn\("google", \{/);
+  assert.match(signinSource, /href="\/auth\/forgot-password"/);
+  assert.match(signinSource, /href="\/auth\/signup"/);
+  assert.match(forgotSource, /fetch\("\/api\/auth\/forgot-password"/);
+  assert.match(forgotSource, /<Input\s+name="email"\s+type="email"/);
+  assert.match(signupSource, /<Input name="name" autoComplete="name" required/);
+  assert.match(signupSource, /<Input name="email" type="email" autoComplete="email" required/);
+  assert.match(signupSource, /<Input name="password" type="password" autoComplete="new-password" minLength=\{8\} required/);
+  assert.match(signupSource, /fetch\("\/api\/auth\/signup", \{/);
+  assert.match(signupSource, /signIn\("google", \{ callbackUrl: "\/onboarding" \}\)/);
+  assert.match(signinPageSource, /<SigninForm/);
+  assert.match(signinPageSource, /googleEnabled=\{googleEnabled\}/);
+  assert.match(signinPageSource, /callbackUrl=\{callbackUrl\}/);
+  assert.match(forgotPageSource, /<ForgotPasswordForm \/>/);
+  assert.match(signupPageSource, /<SignupForm googleEnabled=\{googleEnabled\} \/>/);
+});
+
 test("Swedish homepage flight and hotel date formatting uses sv-SE generated labels", () => {
   for (const locale of ["sv", "sv-SE", "sv-se"]) {
     assert.equal(normalizeFlightsCalendarLocale(locale), "sv-SE", `flight ${locale}`);

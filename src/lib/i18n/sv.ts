@@ -3,6 +3,126 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  // Global country/currency modal
+  chooseCountryAndCurrency: 'Välj land och valuta',
+  countryCurrencyDescription:
+    'Välj land och valuta som används för att visa priser. Flygplatsförslag använder din upptäckta plats.',
+  searchCountryOrCurrency: 'Sök land eller valuta',
+  countryCurrencyAllCountriesAndCurrencies: 'ALLA LÄNDER OCH VALUTOR',
+  countryCurrencyPopularCountryAndCurrency: 'POPULÄRA LÄNDER OCH VALUTOR',
+  countryCurrencyOptionCountSingular: '{{count}} alternativ',
+  countryCurrencyOptionCountPlural: '{{count}} alternativ',
+  showMoreResults: 'Visa fler resultat',
+
+  // Global language modal
+  globalLanguage: 'GLOBALT SPRÅK',
+  websiteLanguageTitle: 'Välj webbplatsspråk',
+  websiteLanguageDescription:
+    'Engelska (USA) är standardspråk för webbplatsen. Kurioticket byter språk först när du väljer ett tillgängligt alternativ.',
+  currentLanguage: 'Aktuellt språk: {{language}}',
+  languagePreparingNotice:
+    'Fler språk förbereds. Otillgängliga alternativ översätter inte webbplatsen ännu.',
+  languageSearchLabel: 'Sök språk',
+  languageSearchPlaceholder: 'Sök English, Español, Français, Deutsch...',
+
+  // Shared header/auth pages
+  login: 'Logga in',
+  signUp: 'Registrera dig',
+  signupPageTitle: 'Skapa ditt konto',
+  signupFullNameLabel: 'Fullständigt namn',
+  signupEmailLabel: 'E-post',
+  signupPasswordLabel: 'Lösenord',
+  signupAgreementBeforeTerms: 'Genom att skapa ett konto godkänner du ',
+  signupTermsLink: 'användarvillkoren',
+  signupAgreementBetweenLinks: ', ',
+  signupPrivacyPolicyLink: 'integritetspolicyn',
+  signupAgreementAfterPrivacy: ' och informationen om omdirigering till partner.',
+  signupSubmit: 'Registrera dig',
+  signupCreatingAccount: 'Skapar konto...',
+  signupGoogle: 'Fortsätt med Google',
+  signupAlreadyHaveAccount: 'Har du redan ett konto?',
+  signupLoginLink: 'Logga in',
+  signupErrorFullNameRequired: 'Ange ditt fullständiga namn.',
+  signupErrorInvalidEmail: 'Ange en giltig e-postadress.',
+  signupErrorPasswordRequirements: 'Lösenordet måste vara minst 8 tecken.',
+  signupErrorUnableCreate: 'Vi kunde inte skapa ditt konto. Försök igen.',
+  signupErrorRateLimited: 'För många registreringsförsök. Vänta och försök igen.',
+  signupErrorDuplicateEmail: 'Det finns redan ett konto med den här e-postadressen.',
+  signupErrorUnableSendVerification:
+    'Det går inte att skicka verifieringskoden just nu. Försök igen.',
+  signupVerificationRequiredRedirecting: 'Verifiering krävs. Omdirigerar...',
+  signupAutomaticLoginFailed:
+    'Ditt konto skapades, men automatisk inloggning misslyckades. Logga in med ditt nya lösenord.',
+  signupAccountCreatedRedirecting: 'Kontot har skapats. Omdirigerar...',
+  loginPageTitle: 'Logga in',
+  loginPageSubtitle:
+    'Spara sökningar, hantera aviseringar och få åtkomst till din reseöversikt.',
+  loginEmailLabel: 'E-post',
+  loginPasswordLabel: 'Lösenord',
+  loginForgotPassword: 'Glömt lösenordet?',
+  loginSubmit: 'Logga in',
+  loginCheckingDetails: 'Kontrollerar uppgifter…',
+  loginGoogle: 'Fortsätt med Google',
+  loginDivider: 'ELLER',
+  loginSignupPrompt: 'Ny på Kurioticket?',
+  loginCreateAccount: 'Skapa ett konto',
+  loginPasskeyPromptTitle: 'Använd en sparad passkey?',
+  loginPasskeyPromptDescription:
+    'Logga in med Face ID, fingeravtryck, skärmlås, lösenordshanterare eller säkerhetsnyckel.',
+  loginUsePasskey: 'Använd passkey',
+  loginOpeningPasskey: 'Öppnar…',
+  loginNotNow: 'Inte nu',
+  loginInvalidCredentials:
+    'Vi kunde inte logga in dig. Kontrollera din e-post och ditt lösenord och försök igen.',
+  loginRateLimited: 'För många försök. Vänta en stund och försök igen.',
+  loginCodeSent: 'Vi skickade en verifieringskod till din e-post.',
+  loginCodeFailed: 'Koden fungerade inte. Kontrollera koden och försök igen.',
+  loginProcessing: 'Kontrollerar dina uppgifter och skickar en verifieringskod…',
+  loginResendSuccess: 'Vi skickade en ny kod om det här kontot kan logga in.',
+  loginEnterCode: 'Ange den 6-siffriga inloggningskoden.',
+  loginVerifiedRedirecting: 'Verifierad. Omdirigerar…',
+  loginStartOverError:
+    'Börja om så att vi kan kontrollera dina uppgifter innan vi skickar en ny kod.',
+  loginSendingNewCode: 'Skickar en ny verifieringskod…',
+  loginUnableSendNewCode: 'Det går inte att skicka en ny kod just nu. Försök igen.',
+  loginUnableSendLoginCode: 'Det går inte att skicka inloggningskod just nu. Försök igen.',
+  loginCodeInstructions:
+    'Ange den 6-siffriga koden som skickades till {{email}}. Koder upphör att gälla efter {{minutes}} minuter.',
+  loginVerificationCodeLabel: 'Verifieringskod',
+  loginVerifying: 'Verifierar…',
+  loginVerifyLogin: 'Verifiera inloggning',
+  loginSendingCode: 'Skickar kod…',
+  loginResendIn: 'Skicka igen om {{seconds}}s',
+  loginResendCode: 'Skicka kod igen',
+  loginUseDifferentDetails: 'Använd andra uppgifter',
+  loginPasswordResetSuccess: 'Ditt lösenord har återställts. Logga in med ditt nya lösenord.',
+  loginInactiveMessage:
+    'Du loggades ut efter 30 minuters inaktivitet. Logga in igen för att fortsätta.',
+  loginErrorAccountUnavailable: 'Det här kontot är inte tillgängligt. Kontakta supporten.',
+  loginErrorOAuthCallback:
+    'Google-inloggningen avbröts under återanropet. Försök igen.',
+  loginErrorOAuthAccountNotLinked:
+    'Den här e-postadressen är redan kopplad till en annan inloggningsmetod. Fortsätt med din ursprungliga metod eller återställ lösenordet.',
+  loginErrorAccessDenied: 'Åtkomst nekades av Google. Tillåt åtkomst och försök igen.',
+  loginErrorConfiguration:
+    'Google-inloggning är tillfälligt otillgänglig. Försök igen snart eller använd e-postinloggning.',
+  loginErrorCallback: 'Google-inloggningens återanrop misslyckades. Försök igen eller använd e-postinloggning.',
+  loginErrorGoogleGeneric:
+    'Google-inloggningen kunde inte slutföras. Försök igen eller använd e-postinloggning.',
+  forgotPasswordTitle: 'Återställ ditt lösenord',
+  forgotPasswordSubtitle:
+    'Ange din e-postadress så skickar vi instruktioner för att återställa ditt lösenord.',
+  forgotPasswordEmailLabel: 'E-post',
+  forgotPasswordEmailPlaceholder: 'du@example.com',
+  forgotPasswordInvalidEmail: 'Ange en giltig e-postadress.',
+  forgotPasswordUnableRequest: 'Det går inte att begära lösenordsåterställning just nu.',
+  forgotPasswordSuccess:
+    'Om ett konto finns har vi skickat instruktioner för lösenordsåterställning.',
+  forgotPasswordSending: 'Skickar...',
+  forgotPasswordSubmit: 'Skicka återställningslänk',
+  forgotPasswordRemember: 'Kommer du ihåg ditt lösenord?',
+  forgotPasswordLoginLink: 'Logga in',
+
   'flights': 'Flyg',
   'hotels': 'Hotell',
   'cars': 'Bilar',
