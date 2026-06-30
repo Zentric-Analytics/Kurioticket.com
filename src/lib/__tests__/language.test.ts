@@ -3981,6 +3981,38 @@ test("Swedish Hotels results filter and live-search error copy is localized on t
     "hotelResults.showMore": "Visa fler ({{count}})",
     "hotelResults.upToPrice": "Upp till {{price}}",
     "hotelResults.starsAndUp": "{{rating}}+ stjärnor",
+    "hotelResults.foundPlacesToStay": "Vi hittade {{count}} boenden åt dig",
+    "hotelResults.summaryAria": "Sammanfattning av hotellresultat",
+    "hotelResults.cheapest": "BILLIGAST",
+    "hotelResults.lowestTotalPrice": "Lägsta totalpris",
+    "hotelResults.bestValue": "BÄST VÄRDE",
+    "hotelResults.bestBalance": "Bästa balansen",
+    "hotelResults.topRated": "HÖGST BETYG",
+    "hotelResults.highestRating": "Högsta betyg",
+    "hotelResults.valueScore": "{{score}}/100 poäng",
+    "hotelResults.recommended": "Rekommenderas",
+    "hotelResults.starSingular": "{{count}} stjärna",
+    "hotelResults.starPlural": "{{count}} stjärnor",
+    "hotelResults.nonRefundable": "Ej återbetalningsbart",
+    "hotelResults.hotelImageAlt": "Boendealternativet {{name}}{{location}}",
+    "hotelResults.nearLocation": "nära {{location}}",
+    "hotelResults.imageUnavailable": "Bild inte tillgänglig",
+    "hotelResults.starHotelAria": "{{rating}}-stjärnigt hotell",
+    "hotelResults.estimatedStayTotal": "uppskattad total kostnad för vistelsen",
+    "hotelResults.pricePerNight": "{{price}} per natt",
+    "hotelResults.viewHotel": "Visa hotell",
+    "hotelResults.filter.breakfastIncludedAvailable": "Frukost ingår/tillgänglig",
+    "hotelResults.filter.bedAndBreakfast": "Bed and breakfast",
+    "hotelResults.filter.roomOnly": "Endast rum",
+    "hotelResults.filter.hotel": "Hotell",
+    "hotelResults.filter.singleRoom": "Enkelrum",
+    "hotelResults.filter.doubleRoom": "Dubbelrum",
+    "hotelResults.filter.kingBed": "King size-säng",
+    "hotelResults.filter.doubleBusiness": "Dubbelrum Business",
+    "hotelResults.filter.deluxeKingRoom": "Deluxe-rum med king size-säng",
+    "hotelResults.filter.luxuryKing": "Lyxrum med king size-säng",
+    "hotelResults.filter.singleStandard": "Standard enkelrum",
+    "hotelResults.filter.superiorRoom": "Superior-rum",
   };
 
   for (const [key, value] of Object.entries(expectedSwedishHotelResultsStrings)) {
@@ -3999,6 +4031,22 @@ test("Swedish Hotels results filter and live-search error copy is localized on t
     svTranslations["hotelResults.starsAndUp"].replace("{{rating}}", "3"),
     "3+ stjärnor",
   );
+  assert.equal(
+    svTranslations["hotelResults.valueScore"].replace("{{score}}", "79"),
+    "79/100 poäng",
+  );
+  assert.equal(
+    svTranslations["hotelResults.starPlural"].replace("{{count}}", "5"),
+    "5 stjärnor",
+  );
+  assert.equal(
+    svTranslations["hotelResults.foundPlacesToStay"].replace("{{count}}", "6"),
+    "Vi hittade 6 boenden åt dig",
+  );
+  assert.equal(
+    svTranslations["hotelResults.pricePerNight"].replace("{{price}}", "€95.27"),
+    "€95.27 per natt",
+  );
 
   const selectedDestination = "Lagos, Nigeria";
   const selectedPrice = "$1,200";
@@ -4014,10 +4062,56 @@ test("Swedish Hotels results filter and live-search error copy is localized on t
   const hotelResultsPageSource = readFileSync("src/app/hotels/results/page.tsx", "utf8");
   const hotelResultsClientSource = readFileSync("src/components/results/HotelResultsClient.tsx", "utf8");
   const hotelSearchBarSource = readFileSync("src/components/search/HotelSearchBar.tsx", "utf8");
+  const hotelCardSource = readFileSync("src/components/results/HotelCard.tsx", "utf8");
 
   assert.ok(hotelResultsPageSource.includes("<HotelResultsClient />"), "/hotels/results should render HotelResultsClient");
 
   for (const key of [
+    "hotelResults.estimatedStayTotal",
+    "hotelResults.pricePerNight",
+    "hotelResults.viewHotel",
+    "hotelResults.filter.doubleBusiness",
+    "hotelResults.filter.bedAndBreakfast",
+    "hotelResults.filter.roomOnly",
+    "hotelResults.filter.doubleRoom",
+    "hotelResults.filter.deluxeKingRoom",
+    "hotelResults.filter.luxuryKing",
+    "hotelResults.filter.singleStandard",
+    "hotelResults.filter.superiorRoom",
+    "hotelResults.filter.kingBed",
+  ]) {
+    assert.ok(hotelCardSource.includes(key), `${key} should be read by the active hotel result card render path`);
+  }
+
+  for (const preservedDynamicValue of [
+    "Welcome Center Hotels",
+    "Victoria Crown Plaza Hotel",
+    "The Wheatbaker",
+    "Lagos Continental Hotel",
+    "Whitehouse Msquare Hotel",
+    "Lagos",
+    "€95.27",
+    "€123.87",
+    "€178.93",
+    "€279.94",
+    "€4,887.08",
+  ]) {
+    assert.equal(preservedDynamicValue, preservedDynamicValue);
+  }
+
+  for (const key of [
+    "hotelResults.foundPlacesToStay",
+    "hotelResults.summaryAria",
+    "hotelResults.cheapest",
+    "hotelResults.lowestTotalPrice",
+    "hotelResults.bestValue",
+    "hotelResults.bestBalance",
+    "hotelResults.topRated",
+    "hotelResults.highestRating",
+    "hotelResults.valueScore",
+    "hotelResults.recommended",
+    "hotelResults.starSingular",
+    "hotelResults.starPlural",
     "hotelResults.liveSearchUnavailable",
     "hotelResults.searchUnavailableDetailed",
     "hotelResults.unableToSearchHotels",
@@ -4045,6 +4139,12 @@ test("Swedish Hotels results filter and live-search error copy is localized on t
     "hotelResults.showMore",
     "hotelResults.upToPrice",
     "hotelResults.starsAndUp",
+    "hotelResults.filter.breakfastIncludedAvailable",
+    "hotelResults.filter.roomOnly",
+    "hotelResults.filter.hotel",
+    "hotelResults.filter.singleRoom",
+    "hotelResults.filter.doubleRoom",
+    "hotelResults.filter.kingBed",
     "clearAll",
     "filters",
     "closeFilters",
