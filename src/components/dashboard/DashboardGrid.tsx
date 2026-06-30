@@ -2463,6 +2463,7 @@ export function SecurityDashboardPage() {
   );
   const [removingSessionId, setRemovingSessionId] = useState<string | null>(null);
   const securityActionStatusId = "security-action-status";
+  const securityModalOpen = Boolean(passwordModalOpen || deleteModalOpen || twoFactorModal || passkeysModalOpen || sessionsModalOpen);
   const tx = (key: string, fallback: string) => t[key] || fallback;
   const showSecurityFeedback = (message: string) => {
     setActionMessage("");
@@ -2478,6 +2479,30 @@ export function SecurityDashboardPage() {
 
     return () => window.clearTimeout(timeoutId);
   }, [securityFeedback]);
+
+  useEffect(() => {
+    if (!securityModalOpen) return;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleBackgroundTouchMove = (event: TouchEvent) => {
+      const target = event.target;
+
+      if (target instanceof Element && target.closest("[data-security-modal-content]")) {
+        return;
+      }
+
+      event.preventDefault();
+    };
+
+    document.addEventListener("touchmove", handleBackgroundTouchMove, { passive: false });
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.removeEventListener("touchmove", handleBackgroundTouchMove);
+    };
+  }, [securityModalOpen]);
 
   useEffect(() => {
     let active = true;
@@ -2965,7 +2990,7 @@ export function SecurityDashboardPage() {
 
       {twoFactorModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="two-factor-title">
-          <form onSubmit={handleTwoFactorConfirm} className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+          <form onSubmit={handleTwoFactorConfirm} data-security-modal-content className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
             <h2 id="two-factor-title" className="text-xl font-semibold text-slate-950">{twoFactorModal === "setup" ? "Set up authenticator app" : twoFactorModal === "recovery" ? "Regenerate recovery codes" : "Disable two-factor authentication"}</h2>
             {recoveryCodes.length > 0 ? (
               <div className="mt-5 space-y-4"><p className="rounded-xl bg-amber-50 p-3 text-sm font-semibold text-amber-800">Save these recovery codes now. They will not be shown again.</p><div className="grid grid-cols-1 gap-2 sm:grid-cols-2">{recoveryCodes.map((code) => <code key={code} className="rounded-lg bg-slate-100 px-3 py-2 text-center text-sm font-bold text-slate-900">{code}</code>)}</div><button type="button" onClick={() => void navigator.clipboard?.writeText(recoveryCodes.join("\n"))} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Copy codes</button></div>
@@ -2989,7 +3014,7 @@ export function SecurityDashboardPage() {
 
       {passkeysModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="passkeys-title">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-xl sm:p-6">
+          <div data-security-modal-content className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-xl sm:p-6">
             <h2 id="passkeys-title" className="text-xl font-semibold text-slate-950">{passkeys.length ? "Manage passkeys" : "Set up a passkey"}</h2>
             <div className="mt-2 space-y-2 text-sm leading-6 text-slate-600"><p>Use Face ID, fingerprint, Windows Hello, your device screen lock, password manager, or security key to sign in faster and more securely.</p><p className="rounded-xl bg-slate-50 p-3 text-slate-700">Kurioticket never receives your fingerprint, face, device PIN, or private key.</p></div>
             {passkeyFlowError ? <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{passkeyFlowError}</p> : null}
@@ -3005,7 +3030,7 @@ export function SecurityDashboardPage() {
 
       {sessionsModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="active-sessions-title">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-xl sm:p-6">
+          <div data-security-modal-content className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-xl sm:p-6">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h2 id="active-sessions-title" className="text-xl font-semibold text-slate-950">Active sessions</h2>
@@ -3060,7 +3085,7 @@ export function SecurityDashboardPage() {
 
       {passwordModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="change-password-title">
-          <form onSubmit={handlePasswordSubmit} className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+          <form onSubmit={handlePasswordSubmit} data-security-modal-content className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             <h2 id="change-password-title" className="text-xl font-semibold text-slate-950">Change password</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">Enter your current password and choose a new password with at least 8 characters. OAuth-only accounts should use password reset to create a password.</p>
             <div className="mt-5 space-y-4">
@@ -3085,7 +3110,7 @@ export function SecurityDashboardPage() {
 
       {deleteModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+          <div data-security-modal-content className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             <h2 id="delete-account-title" className="text-xl font-semibold text-slate-950">Request account deletion</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">This starts a 7-day grace period. Your account will be marked pending deletion, normal dashboard browsing will be restricted, and you can reactivate by logging in before the deadline. Kurioticket will not instantly hard-delete your account from this page; support must review retention obligations first.</p>
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
