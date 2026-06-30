@@ -120,6 +120,19 @@ enum AccountDeletionRequestStatus {
   COMPLETED
 }
 
+enum TripBookingType {
+  FLIGHT
+  HOTEL
+  CAR
+  PACKAGE
+}
+
+enum TripBookingStatus {
+  UPCOMING
+  PAST
+  CANCELLED
+}
+
 model User {
   id                      String                   @id @default(cuid())
   name                    String?
@@ -149,6 +162,7 @@ model User {
   travelPreferences       TravelPreferences?
   watchlistItems          TravelWatchlist[]
   savedTrips              SavedTrip[]
+  tripBookings            TripBooking[]
   sessionActivities       UserSessionActivity[]
   accountDeletionRequests AccountDeletionRequest[]
   passkeys                UserPasskey[]
@@ -626,6 +640,33 @@ model SavedTrip {
   @@index([userId])
   @@index([startsAt])
   @@index([destination])
+}
+
+model TripBooking {
+  id                String            @id @default(cuid())
+  userId            String
+  bookingReference  String
+  provider          String
+  tripType          TripBookingType
+  status            TripBookingStatus @default(UPCOMING)
+  origin            String?
+  destination       String
+  departureDate     DateTime
+  returnDate        DateTime?
+  passengerCount    Int               @default(1)
+  currency          String            @default("USD")
+  totalAmount       Decimal?          @db.Decimal(12, 2)
+  externalBookingId String?
+  rawPayload        Json?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, bookingReference])
+  @@index([userId])
+  @@index([userId, status, departureDate])
+  @@index([bookingReference])
+  @@index([externalBookingId])
 }
 
 model LegalDocument {
