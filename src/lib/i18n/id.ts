@@ -212,4 +212,33 @@ export const translations: TranslationDictionary = {
   footerPrivacy: "Privasi",
   footerTerms: "Ketentuan",
   footerCookies: "Cookie",
+  aboutPageEyebrow: "Tentang Kurioticket",
+  aboutPageTitle: "Tentang Kami",
+  aboutPageIntroPrimary:
+    "Kurioticket adalah platform pencarian dan perbandingan perjalanan yang membantu wisatawan mencari, membandingkan, dan menemukan penerbangan, hotel, mobil, serta promo perjalanan.",
+  aboutPageIntroSecondary:
+    "Tujuan kami adalah membuat perencanaan perjalanan lebih jelas dengan menghadirkan pilihan yang tersedia dan informasi penyedia dalam satu tempat sederhana, sehingga wisatawan dapat meninjau pilihan sebelum melanjutkan ke penyedia yang sesuai dengan perjalanan mereka.",
+  aboutPagePlanningCardHeading: "Alat perencanaan perjalanan yang praktis",
+  aboutPagePlanningCardBody:
+    "Kurioticket berfokus membantu wisatawan mengevaluasi pilihan perjalanan dengan konteks yang berguna. Ketersediaan, harga, aturan, dan langkah pemesanan akhir dapat berbeda menurut penyedia, jadi wisatawan sebaiknya meninjau halaman penyedia dengan cermat sebelum mengambil keputusan.",
+  howItWorksEyebrow: "Cara kerja Kurioticket",
+  howItWorksTitle: "Cara Kerja Kurioticket",
+  howItWorksIntro:
+    "Kurioticket membantu wisatawan beralih dari pencarian ke perbandingan, lalu melanjutkan ke penyedia saat sebuah penawaran dipilih.",
+  howItWorksFlowHeading: "Alur dasar",
+  "howItWorks.steps.search.title": "Cari pilihan perjalanan",
+  "howItWorks.steps.search.description":
+    "Masukkan detail perjalanan Anda untuk mencari penerbangan, hotel, mobil, atau promo perjalanan yang tersedia.",
+  "howItWorks.steps.compare.title": "Bandingkan hasil yang tersedia",
+  "howItWorks.steps.compare.description":
+    "Tinjau pilihan yang tersedia, harga, jadwal, detail penyedia, dan informasi perjalanan lainnya saat ditampilkan.",
+  "howItWorks.steps.choose.title": "Pilih penawaran",
+  "howItWorks.steps.choose.description":
+    "Pilih opsi yang paling sesuai dengan rencana Anda setelah meninjau detail yang tersedia.",
+  "howItWorks.steps.continue.title": "Lanjutkan ke penyedia",
+  "howItWorks.steps.continue.description":
+    "Saat diarahkan, lanjutkan di situs web penyedia untuk meninjau detail akhir dan menyelesaikan langkah pemesanan.",
+  "howItWorks.providerWebsites.title": "Situs web penyedia",
+  "howItWorks.providerWebsites.description":
+    "Beberapa pemesanan dapat diselesaikan di situs web penyedia setelah Kurioticket mengarahkan Anda. Tinjau halaman penyedia untuk ketersediaan akhir, harga, ketentuan, langkah pembayaran, dan detail pemesanan sebelum menyelesaikan pembelian.",
 };
