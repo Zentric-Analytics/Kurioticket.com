@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { ArrowRight, ExternalLink, Heart, Trash2, X } from "lucide-react";
 
 import { PriceText } from "@/components/currency/PriceText";
@@ -21,6 +22,11 @@ import {
   translateHomeDiscoveryCopy,
 } from "@/lib/i18n/homeDiscovery";
 import { readSavedTripIds, writeSavedTripIds } from "@/lib/saved-trips-local";
+import {
+  deleteBackendTrip,
+  fetchBackendSavedTrips,
+  getSavedTripLocalId,
+} from "@/lib/saved-trips-api";
 import {
   getHomeDiscoveryByRegion,
   homeDiscoveryByRegion,
@@ -453,20 +459,59 @@ export function SavedTripsAndRecentSearches() {
       }),
     [dateLocale],
   );
+  const { status: sessionStatus } = useSession();
   const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [backendSavedTripIds, setBackendSavedTripIds] = useState<
+    Record<string, string>
+  >({});
   const [recentSearches, setRecentSearches] = useState<RecentSearchEntry[]>([]);
   const [savedTripFares, setSavedTripFares] = useState<
     Record<string, SavedTripFare>
   >({});
 
+  const refreshBackendSavedTrips = useCallback(async (signal?: AbortSignal) => {
+    const result = await fetchBackendSavedTrips(signal);
+    if (!result.ok || !result.items) return;
+
+    const backendIds: Record<string, string> = {};
+    const localIds = result.items.map((item) => {
+      const localId = getSavedTripLocalId(item);
+      backendIds[localId] = item.id;
+      return localId;
+    });
+
+    setBackendSavedTripIds(backendIds);
+    setSavedIds(localIds);
+  }, []);
+
   useEffect(() => {
     const id = window.setTimeout(() => {
-      setSavedIds(readSavedTripIds());
       setRecentSearches(readRecentSearches());
     }, 0);
 
     return () => window.clearTimeout(id);
   }, []);
+
+  useEffect(() => {
+    if (sessionStatus === "loading") return;
+
+    if (sessionStatus === "authenticated") {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => {
+        void refreshBackendSavedTrips(controller.signal);
+      }, 0);
+      return () => {
+        window.clearTimeout(timeoutId);
+        controller.abort();
+      };
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setBackendSavedTripIds({});
+      setSavedIds(readSavedTripIds());
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [refreshBackendSavedTrips, sessionStatus]);
 
   const savedTrips = useMemo(
     () => savedIds.map((id) => resolveSavedTrip(id, dictionary)),
@@ -521,15 +566,50 @@ export function SavedTripsAndRecentSearches() {
     return () => controller.abort();
   }, [savedTrips]);
 
-  const handleUnsaveTrip = (id: string) => {
-    const nextIds = savedIds.filter((tripId) => tripId !== id);
-    writeSavedTripIds(nextIds);
-    setSavedIds(nextIds);
+  const handleUnsaveTrip = async (id: string) => {
+    if (sessionStatus !== "authenticated") {
+      const nextIds = savedIds.filter((tripId) => tripId !== id);
+      writeSavedTripIds(nextIds);
+      setSavedIds(nextIds);
+      return;
+    }
+
+    const backendId = backendSavedTripIds[id];
+    if (!backendId) {
+      await refreshBackendSavedTrips();
+      return;
+    }
+
+    const result = await deleteBackendTrip(backendId);
+    if (result.ok) {
+      setSavedIds((current) => current.filter((tripId) => tripId !== id));
+      setBackendSavedTripIds((current) => {
+        const next = { ...current };
+        delete next[id];
+        return next;
+      });
+    } else {
+      await refreshBackendSavedTrips();
+    }
   };
 
-  const handleClearSaved = () => {
-    writeSavedTripIds([]);
-    setSavedIds([]);
+  const handleClearSaved = async () => {
+    if (sessionStatus !== "authenticated") {
+      writeSavedTripIds([]);
+      setSavedIds([]);
+      return;
+    }
+
+    const entries = Object.entries(backendSavedTripIds);
+    const results = await Promise.all(
+      entries.map(([, backendId]) => deleteBackendTrip(backendId)),
+    );
+    if (results.every((result) => result.ok)) {
+      setSavedIds([]);
+      setBackendSavedTripIds({});
+    } else {
+      await refreshBackendSavedTrips();
+    }
   };
 
   const handleRemoveRecent = (id: string) => {
