@@ -7,6 +7,7 @@ export const translations: TranslationDictionary = {
   hotels: "โรงแรม",
   cars: "รถเช่า",
   deals: "ดีล",
+  destinations: "จุดหมายปลายทาง",
   login: "เข้าสู่ระบบ",
   signUp: "สมัครใช้งาน",
   homeHeroTitle: "เปรียบเทียบตัวเลือกการเดินทางได้ในการค้นหาเดียว",
