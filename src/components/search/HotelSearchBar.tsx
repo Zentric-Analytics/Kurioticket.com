@@ -33,6 +33,10 @@ import {
 } from "@/data/hotelDestinations";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
+import {
+  buildHotelRecentSearch,
+  upsertRecentSearch,
+} from "@/lib/recent-searches";
 import { cn } from "@/lib/utils";
 
 const parseIsoDate = (value: string) => {
@@ -897,6 +901,19 @@ export function HotelSearchBar({
     }, 15000);
 
     startRouteProgress();
+    try {
+      upsertRecentSearch(
+        buildHotelRecentSearch({
+          destination: trimmedDestination,
+          checkIn,
+          checkOut,
+          guests: normalizedGuests,
+          rooms: normalizedRooms,
+        }),
+      );
+    } catch {
+      // best effort only
+    }
     router.push(nextUrl);
   };
 
