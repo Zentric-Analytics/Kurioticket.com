@@ -115,6 +115,7 @@ test("listUserSavedItems supports type filters while keeping full summary counts
     searches: 1,
     total: 4,
   });
+  assert.deepEqual(prisma.transactionBatchSizes, [4]);
 });
 
 test("createUserSavedItem validates and creates user-owned saved trips without accepting userId", async () => {
@@ -192,6 +193,7 @@ function createSavedTripsPrisma(data: {
   const searches = [...(data.searches ?? [])];
   const createCalls: QueryArgs[] = [];
   const deleteManyCalls: QueryArgs[] = [];
+  const transactionBatchSizes: number[] = [];
 
   const client = {
     savedTrip: delegate(trips, "created-trip-1", createSavedTripRecord),
@@ -201,6 +203,7 @@ function createSavedTripsPrisma(data: {
     async $transaction<T extends readonly Promise<unknown>[]>(
       queries: T,
     ): Promise<{ -readonly [K in keyof T]: Awaited<T[K]> }> {
+      transactionBatchSizes.push(queries.length);
       return Promise.all(queries) as Promise<{ -readonly [K in keyof T]: Awaited<T[K]> }>;
     },
   };
@@ -236,7 +239,7 @@ function createSavedTripsPrisma(data: {
     };
   }
 
-  return { client, createCalls, deleteManyCalls };
+  return { client, createCalls, deleteManyCalls, transactionBatchSizes };
 }
 
 function matchesWhere(record: SavedRecord, where: Record<string, unknown> = {}) {

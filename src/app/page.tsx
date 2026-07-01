@@ -412,6 +412,7 @@ export default function Home() {
   const [backendSavedTripIds, setBackendSavedTripIds] = useState<
     Record<string, string>
   >({});
+  const [savedTripError, setSavedTripError] = useState("");
   const [destinationPriceState, setDestinationPriceState] =
     useState<DestinationPriceState>({
       loading: true,
@@ -723,6 +724,7 @@ export default function Home() {
     event.stopPropagation();
 
     if (sessionStatus !== "authenticated") {
+      setSavedTripError("");
       setSavedTripIds((current) => {
         const next = toggleSavedTripId(current, itemId);
         writeSavedTripIds(next);
@@ -740,6 +742,7 @@ export default function Home() {
 
       const result = await deleteBackendTrip(backendId);
       if (result.ok) {
+        setSavedTripError("");
         setSavedTripIds((current) => current.filter((id) => id !== itemId));
         setBackendSavedTripIds((current) => {
           const next = { ...current };
@@ -747,6 +750,7 @@ export default function Home() {
           return next;
         });
       } else {
+        setSavedTripError(result.error ?? "Unable to update saved trips right now.");
         await refreshBackendSavedTrips();
       }
       return;
@@ -754,7 +758,10 @@ export default function Home() {
 
     const result = await saveBackendTrip(itemId);
     if (result.ok || result.duplicate) {
+      setSavedTripError("");
       await refreshBackendSavedTrips();
+    } else {
+      setSavedTripError(result.error ?? "Unable to save trip right now.");
     }
   };
 
@@ -886,6 +893,9 @@ export default function Home() {
         </section>
 
         <section className="page-shell bg-white py-7 sm:bg-transparent sm:py-6">
+          <p className="sr-only" aria-live="polite">
+            {savedTripError}
+          </p>
           <div className="space-y-4 sm:space-y-5">
             <div className="space-y-2">
               <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
