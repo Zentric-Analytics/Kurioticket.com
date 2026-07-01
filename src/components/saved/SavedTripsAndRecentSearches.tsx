@@ -303,7 +303,6 @@ type SavedCardImageProps = {
   alt: string;
   priority?: boolean;
   hoverScaleClassName?: string;
-  heightClassName?: string;
 };
 
 function SavedCardImage({
@@ -311,15 +310,12 @@ function SavedCardImage({
   alt,
   priority = false,
   hoverScaleClassName = "group-hover:scale-[1.03]",
-  heightClassName = "h-[196px] md:h-[190px] lg:h-[198px]",
 }: SavedCardImageProps) {
   const imageMode = getCardImageOptimizationMode(src);
   const imageClassName = `object-cover transition duration-500 ${hoverScaleClassName}`;
 
   return (
-    <div
-      className={`relative w-full shrink-0 overflow-hidden ${heightClassName}`}
-    >
+    <div className="relative h-[196px] w-full shrink-0 overflow-hidden md:h-[190px] lg:h-[198px]">
       {imageMode.supported ? (
         <Image
           src={src}
@@ -915,16 +911,15 @@ export function SavedTripsAndRecentSearches() {
                         src={trip.image}
                         alt={trip.imageAlt ?? trip.title}
                         priority={index < EAGER_SAVED_TRIP_IMAGE_COUNT}
-                        heightClassName="h-40 sm:h-44 md:h-[190px] lg:h-[198px]"
                       />
                     ) : (
-                      <div className="flex h-40 w-full shrink-0 items-center justify-center bg-gradient-to-br from-violet-100 via-fuchsia-50 to-cyan-50 text-sm font-semibold uppercase tracking-[0.14em] text-slate-600 sm:h-44 md:h-[190px] lg:h-[198px]">
+                      <div className="flex h-[196px] w-full shrink-0 items-center justify-center bg-gradient-to-br from-violet-100 via-fuchsia-50 to-cyan-50 text-sm font-semibold uppercase tracking-[0.14em] text-slate-600 md:h-[190px] lg:h-[198px]">
                         {t("savedTripFallbackTitle")}
                       </div>
                     )}
 
                     <div className="flex min-w-0 flex-1 flex-col bg-white">
-                      <div className="min-w-0 flex-1 space-y-1.5 px-3 pt-2.5 sm:space-y-2 sm:pt-3">
+                      <div className="min-w-0 flex-1 space-y-2 px-3 pt-3">
                         <h3 className="line-clamp-2 break-words pe-10 text-sm font-bold leading-[1.35] text-slate-950 md:text-[0.95rem]">
                           {trip.title}
                         </h3>
@@ -949,7 +944,7 @@ export function SavedTripsAndRecentSearches() {
                         </div>
                       </div>
 
-                      <div className="mt-auto border-t border-slate-200/90 px-3 pb-3 pt-2.5 sm:pt-3">
+                      <div className="mt-auto border-t border-slate-200/90 px-3 pb-3 pt-3">
                         <div className="flex flex-col items-stretch gap-2">
                           <div>
                             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
