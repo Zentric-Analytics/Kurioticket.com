@@ -136,6 +136,7 @@ const getSavedTripsDateLocale = (locale: string) => {
   if (normalizedLocale.startsWith("hi")) return "hi-IN";
   if (normalizedLocale.startsWith("nl")) return "nl-NL";
   if (normalizedLocale.startsWith("tr")) return "tr-TR";
+  if (normalizedLocale.startsWith("th")) return "th-TH";
   if (normalizedLocale === "pt-br" || normalizedLocale.startsWith("pt")) {
     return "pt-BR";
   }

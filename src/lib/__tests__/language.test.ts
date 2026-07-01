@@ -11580,3 +11580,94 @@ test("Thai homepage hotel, destination, route-card, and date picker copy resolve
   const africaDiscoveryOrder = getHomeDiscoveryByRegion("NG").slice(0, 16).map((item) => item.id);
   assert.deepEqual(africaDiscoveryOrder, ["ng-los-lhr", "ng-los-dxb", "ng-abv-acc", "ng-los-nbo", "ng-abv-jnb", "ng-los-ist", "ng-abv-cdg", "ng-los-doh", "ng-los-kig", "ng-abv-cai", "ng-los-add", "ng-abv-fco", "ng-los-nrt", "ng-abv-mad", "ng-los-cpt", "ng-abv-rob"]);
 });
+
+test("Thai Destinations and Saved trips copy resolves through active render paths", () => {
+  const destinationsPageSource = readFileSync("src/app/destinations/page.tsx", "utf8");
+  const destinationCardSource = readFileSync("src/app/destinations/DestinationCard.tsx", "utf8");
+  const savedPageSource = readFileSync("src/app/saved/page.tsx", "utf8");
+  const dashboardSavedSource = readFileSync("src/app/dashboard/saved/page.tsx", "utf8");
+  const savedComponentSource = readFileSync("src/components/saved/SavedTripsAndRecentSearches.tsx", "utf8");
+  const th = thTranslations as Record<string, string>;
+
+  const expectedThaiCopy: Record<string, string> = {
+    destinationsHeroBadge: "สำรวจจุดหมายปลายทาง",
+    destinationsHeroTitle: "คุณอยากไปที่ไหนต่อ?",
+    destinationsHeroSubtitle: "สำรวจเมืองที่คัดสรรมา เปรียบเทียบเที่ยวบิน และค้นหาดีลการเดินทางได้ในไม่กี่นาที",
+    "destinations.region.europe": "ยุโรป",
+    "destinations.region.northAmerica": "อเมริกาเหนือ",
+    "destinations.region.asia": "เอเชีย",
+    "destinations.region.africa": "แอฟริกา",
+    "destinations.region.middleEast": "ตะวันออกกลาง",
+    "destinations.region.europe.summary": "คัดสรรเมืองแลนด์มาร์ก คลองโรแมนติก เมืองหลวงแห่งดีไซน์ และทริปสุดสัปดาห์ด้านอาหารและวัฒนธรรมที่ไม่เคยล้าสมัย",
+    "destinations.region.northAmerica.summary": "เส้นขอบฟ้าอันโดดเด่น เมืองชายฝั่ง ศูนย์กลางความบันเทิง และทริปเมืองบรรยากาศภาพยนตร์ที่ควรวางแผนไปเยือน",
+    "destinations.region.asia.summary": "เมืองแสงนีออน เกาะพักผ่อน อาหารริมทางขึ้นชื่อ วัดวา ชายหาด และทริปช้อปปิงระดับพรีเมียม",
+    "destinations.region.africa.summary": "จุดหมายยอดนิยมที่น่าประทับใจ พร้อมวิวทะเล เส้นทางซาฟารี เมืองสร้างสรรค์ และวัฒนธรรมที่หลากหลาย",
+    "destinations.region.middleEast.summary": "เส้นขอบฟ้าหรูหรา ชายฝั่งอบอุ่น เสน่ห์ทะเลทราย ย่านมรดก และศูนย์กลางการต้อนรับสมัยใหม่",
+    "destinations.card.subtitle": "วิวสวย เที่ยวบิน โรงแรม และดีล",
+    "destinations.tag.iconicSkyline": "เส้นขอบฟ้าอันโดดเด่น",
+    "destinations.tag.landmarkEscape": "พักผ่อนกับแลนด์มาร์ก",
+    "destinations.tag.cultureCapital": "เมืองหลวงแห่งวัฒนธรรม",
+    "destinations.tag.goldenHourViews": "วิวยามแสงทอง",
+    "destinations.tag.coastalEnergy": "พลังแห่งชายฝั่ง",
+    "destinations.tag.designWeekend": "สุดสัปดาห์แห่งดีไซน์",
+    "destinations.tag.foodMarketNights": "ค่ำคืนตลาดอาหาร",
+    "destinations.tag.historicStreets": "ถนนประวัติศาสตร์",
+    "destinations.city.london": "ลอนดอน",
+    "destinations.city.paris": "ปารีส",
+    "destinations.city.newYork": "นิวยอร์ก",
+    "destinations.city.bangkok": "กรุงเทพฯ",
+    "destinations.city.jeddah": "เจดดาห์",
+    "destinations.country.unitedKingdom": "สหราชอาณาจักร",
+    "destinations.country.unitedStates": "สหรัฐอเมริกา",
+    "destinations.country.thailand": "ไทย",
+    "destinations.country.saudiArabia": "ซาอุดีอาระเบีย",
+    savedTripsPageTitle: "ทริปที่บันทึกไว้",
+    savedTripsPageSubtitle: "แผนการเดินทางที่คุณเลือกไว้และเส้นทางยอดนิยม",
+    savedTripsEmptyTitle: "บันทึกจุดหมายปลายทางที่คุณชื่นชอบ",
+    savedTripsEmptyDescription: "แตะไอคอนหัวใจบนเส้นทางใดก็ได้เพื่อสร้างรายการโปรดส่วนตัว และทำให้การผจญภัยครั้งต่อไปอยู่ใกล้เพียงคลิกเดียว",
+    savedTripsExploreDestinations: "สำรวจจุดหมายปลายทาง",
+    savedTripsRecentSearchesTitle: "การค้นหาล่าสุด",
+    savedTripsRecentSearchesSubtitle: "กลับไปต่อจากจุดที่ค้างไว้และค้นหาอีกครั้งได้ในแตะเดียว",
+    savedTripsClearAllRecent: "ล้างรายการล่าสุดทั้งหมด",
+    savedTripsTypeFlight: "เที่ยวบิน",
+    savedTripsSearchedDate: "ค้นหาเมื่อ {{date}}",
+    savedTripsRepeatSearch: "ค้นหาอีกครั้ง",
+    savedTripsTravelerCountOne: "ผู้เดินทาง 1 คน",
+    savedTripsCabinEconomy: "ชั้นประหยัด",
+  };
+
+  for (const [key, expected] of Object.entries(expectedThaiCopy)) {
+    assert.equal(th[key], expected, `${key} should render Thai copy`);
+    assert.notEqual(th[key], (enTranslations as Record<string, string>)[key], `${key} must not fall back to English`);
+  }
+
+  for (const value of [
+    "DESTINATION DISCOVERY",
+    "Where do you want to go next?",
+    "Browse brighter, hand-picked city views, compare flights, and find travel deals in minutes.",
+    "Bright views, flights, hotels, and deals",
+    "Saved trips",
+    "Recent searches",
+    "Clear all recent",
+    "Repeat search",
+  ]) {
+    assert.ok(!Object.values(expectedThaiCopy).includes(value));
+  }
+
+  assert.ok(destinationsPageSource.includes("key={`${destination.region}-${destination.name}`}"));
+  assert.ok(destinationsPageSource.includes("href={getDestinationHref(destination)}"));
+  assert.ok(destinationsPageSource.includes("image={destination.image}"));
+  assert.ok(destinationsPageSource.includes("imagePosition={destination.imagePosition}"));
+  assert.ok(destinationsPageSource.includes("destinationTagKeys[destinationIndex % destinationTagKeys.length]"));
+  assert.ok(destinationsPageSource.includes("translateValue(dictionary, regionLabelKeys[section.region], section.region)"));
+  assert.ok(destinationsPageSource.includes("translateValue(") && destinationsPageSource.includes("destinationNameKeys[destination.name]"));
+  assert.ok(destinationCardSource.includes("aria-label={ariaLabel}"));
+  assert.ok(destinationCardSource.includes("alt={imageAlt}"));
+  assert.ok(savedPageSource.includes("<SavedTripsAndRecentSearches />"));
+  assert.ok(dashboardSavedSource.includes('redirect("/saved")'));
+  assert.ok(savedComponentSource.includes('readRecentSearches()'));
+  assert.ok(savedComponentSource.includes('entry.href'));
+  assert.ok(savedComponentSource.includes('if (normalizedLocale.startsWith("th")) return "th-TH";'));
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+});
