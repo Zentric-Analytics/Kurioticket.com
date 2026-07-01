@@ -11,6 +11,7 @@ import type {
 } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   ArrowRightLeft,
   Calendar,
@@ -31,7 +32,12 @@ import { FlightCardSkeleton } from "@/components/ui/Skeleton";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
-import { airports, getLocalizedAirportCountryName, getLocalizedCityName, type AirportOption } from "@/data/airports";
+import {
+  airports,
+  getLocalizedAirportCountryName,
+  getLocalizedCityName,
+  type AirportOption,
+} from "@/data/airports";
 import {
   getHomeDiscoveryByRegion,
   homeDiscoveryByRegion,
@@ -54,6 +60,12 @@ import {
   toggleSavedTripId,
   writeSavedTripIds,
 } from "@/lib/saved-trips-local";
+import {
+  deleteBackendTrip,
+  fetchBackendSavedTrips,
+  getSavedTripLocalId,
+  saveBackendTrip,
+} from "@/lib/saved-trips-api";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { cn, formatTime } from "@/lib/utils";
@@ -105,7 +117,9 @@ const normalizeCabinClassValue = (
 
 const normalizeFlightResultsCalendarLocale = normalizeFlightsCalendarLocale;
 
-function getFlightFaqItems(t: (key: string) => string): Array<{ question: string; answer: string }> {
+function getFlightFaqItems(
+  t: (key: string) => string,
+): Array<{ question: string; answer: string }> {
   return [
     {
       question: t("flightFaqBestTimeQuestion"),
@@ -592,14 +606,31 @@ export function FlightResultsClient() {
     () => ({
       clear: dictionary.clear ?? enTranslations.clear ?? "",
       done: dictionary.done ?? enTranslations.done ?? "",
-      chooseOrigin: dictionary.chooseOrigin ?? enTranslations.chooseOrigin ?? "",
+      chooseOrigin:
+        dictionary.chooseOrigin ?? enTranslations.chooseOrigin ?? "",
       clearOrigin: dictionary.clearOrigin ?? enTranslations.clearOrigin ?? "",
-      clearDestination: dictionary.clearDestination ?? enTranslations.clearDestination ?? "",
-      searchAirportsAndCities: dictionary.searchAirportsAndCities ?? enTranslations.searchAirportsAndCities ?? "",
-      searchAirportsOrCities: dictionary.searchAirportsOrCities ?? enTranslations.searchAirportsOrCities ?? "",
-      startTypingCityOrAirport: dictionary.startTypingCityOrAirport ?? enTranslations.startTypingCityOrAirport ?? "",
-      searchingAirportsAndCities: dictionary.searchingAirportsAndCities ?? enTranslations.searchingAirportsAndCities ?? "",
-      noMatchingAirportsOrCities: dictionary.noMatchingAirportsOrCities ?? enTranslations.noMatchingAirportsOrCities ?? "",
+      clearDestination:
+        dictionary.clearDestination ?? enTranslations.clearDestination ?? "",
+      searchAirportsAndCities:
+        dictionary.searchAirportsAndCities ??
+        enTranslations.searchAirportsAndCities ??
+        "",
+      searchAirportsOrCities:
+        dictionary.searchAirportsOrCities ??
+        enTranslations.searchAirportsOrCities ??
+        "",
+      startTypingCityOrAirport:
+        dictionary.startTypingCityOrAirport ??
+        enTranslations.startTypingCityOrAirport ??
+        "",
+      searchingAirportsAndCities:
+        dictionary.searchingAirportsAndCities ??
+        enTranslations.searchingAirportsAndCities ??
+        "",
+      noMatchingAirportsOrCities:
+        dictionary.noMatchingAirportsOrCities ??
+        enTranslations.noMatchingAirportsOrCities ??
+        "",
     }),
     [dictionary],
   );
@@ -759,7 +790,11 @@ export function FlightResultsClient() {
   const [destinationSuggestionsLoading, setDestinationSuggestionsLoading] =
     useState(false);
   const [recentSearches, setRecentSearches] = useState<RecentSearchEntry[]>([]);
+  const { status: sessionStatus } = useSession();
   const [savedTripIds, setSavedTripIds] = useState<string[]>([]);
+  const [backendSavedTripIds, setBackendSavedTripIds] = useState<
+    Record<string, string>
+  >({});
 
   const tripTypeMenuRef = useRef<HTMLDivElement | null>(null);
   const originInputRef = useRef<HTMLInputElement | null>(null);
@@ -1006,11 +1041,46 @@ export function FlightResultsClient() {
     };
   }, [canAutoCollapseExpandedSearch, collapseStickySearch]);
 
+  const refreshBackendSavedTrips = useCallback(async (signal?: AbortSignal) => {
+    const result = await fetchBackendSavedTrips(signal);
+    if (!result.ok || !result.items) return;
+
+    const backendIds: Record<string, string> = {};
+    const localIds = result.items.map((item) => {
+      const localId = getSavedTripLocalId(item);
+      backendIds[localId] = item.id;
+      return localId;
+    });
+
+    setBackendSavedTripIds(backendIds);
+    setSavedTripIds(localIds);
+  }, []);
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydrates client-only localStorage-backed recent searches after mount.
     setRecentSearches(readRecentSearches());
-    setSavedTripIds(readSavedTripIds());
   }, []);
+
+  useEffect(() => {
+    if (sessionStatus === "loading") return;
+
+    if (sessionStatus === "authenticated") {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => {
+        void refreshBackendSavedTrips(controller.signal);
+      }, 0);
+      return () => {
+        window.clearTimeout(timeoutId);
+        controller.abort();
+      };
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setBackendSavedTripIds({});
+      setSavedTripIds(readSavedTripIds());
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [refreshBackendSavedTrips, sessionStatus]);
 
   useEffect(() => {
     return () => {
@@ -1071,7 +1141,8 @@ export function FlightResultsClient() {
       restore: () => {
         bodyElement.style.left = previousBodyStyles.left;
         bodyElement.style.overflow = previousBodyStyles.overflow;
-        bodyElement.style.overscrollBehavior = previousBodyStyles.overscrollBehavior;
+        bodyElement.style.overscrollBehavior =
+          previousBodyStyles.overscrollBehavior;
         bodyElement.style.position = previousBodyStyles.position;
         bodyElement.style.right = previousBodyStyles.right;
         bodyElement.style.top = previousBodyStyles.top;
@@ -1189,18 +1260,47 @@ export function FlightResultsClient() {
     if (!activeMobileAirportPicker) focusDestinationInput();
   }
 
-  function handleSavedRouteToggle(
+  async function handleSavedRouteToggle(
     event: ReactMouseEvent<HTMLButtonElement>,
     itemId: string,
   ) {
     event.preventDefault();
     event.stopPropagation();
 
-    setSavedTripIds((current) => {
-      const next = toggleSavedTripId(current, itemId);
-      writeSavedTripIds(next);
-      return next;
-    });
+    if (sessionStatus !== "authenticated") {
+      setSavedTripIds((current) => {
+        const next = toggleSavedTripId(current, itemId);
+        writeSavedTripIds(next);
+        return next;
+      });
+      return;
+    }
+
+    if (savedTripIds.includes(itemId)) {
+      const backendId = backendSavedTripIds[itemId];
+      if (!backendId) {
+        await refreshBackendSavedTrips();
+        return;
+      }
+
+      const result = await deleteBackendTrip(backendId);
+      if (result.ok) {
+        setSavedTripIds((current) => current.filter((id) => id !== itemId));
+        setBackendSavedTripIds((current) => {
+          const next = { ...current };
+          delete next[itemId];
+          return next;
+        });
+      } else {
+        await refreshBackendSavedTrips();
+      }
+      return;
+    }
+
+    const result = await saveBackendTrip(itemId);
+    if (result.ok || result.duplicate) {
+      await refreshBackendSavedTrips();
+    }
   }
 
   useEffect(() => {
@@ -1220,12 +1320,9 @@ export function FlightResultsClient() {
 
     if (normalizedSearchValues.toString() !== searchValues.toString()) {
       const nextQuery = normalizedSearchValues.toString();
-      router.replace(
-        nextQuery ? `/flights/results?${nextQuery}` : "/flights",
-        {
-          scroll: false,
-        },
-      );
+      router.replace(nextQuery ? `/flights/results?${nextQuery}` : "/flights", {
+        scroll: false,
+      });
       return;
     }
 
@@ -1456,8 +1553,8 @@ export function FlightResultsClient() {
             searchError instanceof Error
               ? t(searchError.message) || searchError.message
               : dictionary.unableToSearchFlights ||
-                enTranslations.unableToSearchFlights ||
-                "Unable to search flights.",
+                  enTranslations.unableToSearchFlights ||
+                  "Unable to search flights.",
           );
         })
         .finally(() => {
@@ -1824,7 +1921,9 @@ export function FlightResultsClient() {
   );
 
   const mixedProviderCurrenciesLabel =
-    dictionary.mixedProviderCurrencies ?? enTranslations.mixedProviderCurrencies ?? "";
+    dictionary.mixedProviderCurrencies ??
+    enTranslations.mixedProviderCurrencies ??
+    "";
 
   const formatResultPriceLabel = useMemo(
     () =>
@@ -1858,7 +1957,10 @@ export function FlightResultsClient() {
     const duration = formatDurationFromMinutes(flight.durationMinutes);
     const stops = formatStopsLabel(flight.stops, t);
     const airlineOrProvider = flight.airlineName || flight.provider;
-    const departure = formatResultDepartureTime(flight.departureTime, calendarLocale);
+    const departure = formatResultDepartureTime(
+      flight.departureTime,
+      calendarLocale,
+    );
     const primary =
       mode === "fastest"
         ? `${duration} · ${price}`
@@ -2202,12 +2304,9 @@ export function FlightResultsClient() {
 
     const nextQuery = nextParams.toString();
     lastWrittenFilterQueryStringRef.current = nextQuery;
-    router.replace(
-      nextQuery ? `/flights/results?${nextQuery}` : "/flights",
-      {
-        scroll: false,
-      },
-    );
+    router.replace(nextQuery ? `/flights/results?${nextQuery}` : "/flights", {
+      scroll: false,
+    });
   }, [
     baggageIncludedOnly,
     durationBounds,
@@ -2984,8 +3083,14 @@ export function FlightResultsClient() {
                           <p className="mt-1 line-clamp-1 text-sm font-medium leading-5 text-slate-600">
                             {formatHomeDiscoveryRoute(
                               dictionary,
-                              translateHomeDiscoveryCity(dictionary, item.originCity),
-                              translateHomeDiscoveryCity(dictionary, item.destinationCity),
+                              translateHomeDiscoveryCity(
+                                dictionary,
+                                item.originCity,
+                              ),
+                              translateHomeDiscoveryCity(
+                                dictionary,
+                                item.destinationCity,
+                              ),
                             )}
                           </p>
                         </div>
@@ -3036,8 +3141,14 @@ export function FlightResultsClient() {
                               <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-900 sm:text-base sm:leading-6">
                                 {formatHomeDiscoveryRoute(
                                   dictionary,
-                                  translateHomeDiscoveryCity(dictionary, item.originCity),
-                                  translateHomeDiscoveryCity(dictionary, item.destinationCity),
+                                  translateHomeDiscoveryCity(
+                                    dictionary,
+                                    item.originCity,
+                                  ),
+                                  translateHomeDiscoveryCity(
+                                    dictionary,
+                                    item.destinationCity,
+                                  ),
                                 )}
                               </h3>
                               <p className="mt-1 text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
@@ -3338,7 +3449,9 @@ export function FlightResultsClient() {
                   )}
                 >
                   <span className="min-w-0">
-                    <span className={mobileLabelClass}>{t("travelersAndCabin")}</span>
+                    <span className={mobileLabelClass}>
+                      {t("travelersAndCabin")}
+                    </span>
                     <span className="block truncate text-base font-bold leading-5 text-slate-950">
                       {buildTravelerCabinSummary(
                         adultCount,
@@ -3472,9 +3585,7 @@ export function FlightResultsClient() {
             </button>
           </div>
 
-          <div
-            className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]"
-          >
+          <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[132px_minmax(0,2.35fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
               <div ref={tripTypeMenuRef} className="relative">
                 <button
@@ -3497,7 +3608,9 @@ export function FlightResultsClient() {
                       {t("tripType")}
                     </span>
                     <span className="block truncate text-sm font-semibold text-slate-950">
-                      {tripTypeInput === "one-way" ? t("oneWay") : t("roundTrip")}
+                      {tripTypeInput === "one-way"
+                        ? t("oneWay")
+                        : t("roundTrip")}
                     </span>
                   </span>
                   <ChevronDown
@@ -3770,7 +3883,9 @@ export function FlightResultsClient() {
                 {activeDatePicker ? (
                   <DatePickerPopover
                     alignToField="right"
-                    position={datePickerPosition ?? { top: 0, left: 0, width: 0 }}
+                    position={
+                      datePickerPosition ?? { top: 0, left: 0, width: 0 }
+                    }
                     onClose={() => {
                       setActiveDatePicker(null);
                       setDatePickerPosition(null);
@@ -3835,7 +3950,9 @@ export function FlightResultsClient() {
                 {travelerPopoverOpen ? (
                   <TravelerCabinPopover
                     alignToField="right"
-                    position={travelerPopoverPosition ?? { top: 0, left: 0, width: 0 }}
+                    position={
+                      travelerPopoverPosition ?? { top: 0, left: 0, width: 0 }
+                    }
                     onClose={() => {
                       setTravelerPopoverOpen(false);
                       setTravelerPopoverPosition(null);
@@ -3846,10 +3963,15 @@ export function FlightResultsClient() {
                     cabinClass={cabinClassInput}
                     onAdultChange={(nextValue) => {
                       markExpandedSearchInteraction();
-                      const nextAdultCount = Math.min(9, Math.max(1, nextValue));
+                      const nextAdultCount = Math.min(
+                        9,
+                        Math.max(1, nextValue),
+                      );
 
                       setAdultCount(nextAdultCount);
-                      setChildCount((current) => Math.min(current, 9 - nextAdultCount));
+                      setChildCount((current) =>
+                        Math.min(current, 9 - nextAdultCount),
+                      );
                       setInfantCount((current) =>
                         Math.min(current, nextAdultCount, 9 - nextAdultCount),
                       );
@@ -3905,7 +4027,10 @@ export function FlightResultsClient() {
           variant="secondary"
           aria-label={
             activeFilterCount > 0
-              ? t("openFiltersWithCount").replace("{{count}}", activeFilterLabel)
+              ? t("openFiltersWithCount").replace(
+                  "{{count}}",
+                  activeFilterLabel,
+                )
               : t("openFilters")
           }
           className="relative h-16 w-[72px] shrink-0 rounded-md border border-slate-200/90 bg-white px-2 text-[11px] font-semibold text-slate-700 shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:text-slate-900 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
@@ -4207,7 +4332,10 @@ export function FlightResultsClient() {
                 >
                   <SlidersHorizontal size={17} />
                   {activeFilterCount > 0
-                    ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount))
+                    ? t("filtersWithCount").replace(
+                        "{{count}}",
+                        String(activeFilterCount),
+                      )
                     : t("filters")}
                 </Button>
               </div>
@@ -4842,7 +4970,9 @@ function DatePickerPopover({
                 onSelect(date);
               }}
               className={cn(
-                mobileSheet ? "h-9 rounded-md text-xs font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 sm:h-10 sm:text-sm" : "h-8 rounded-md text-xs font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500",
+                mobileSheet
+                  ? "h-9 rounded-md text-xs font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 sm:h-10 sm:text-sm"
+                  : "h-8 rounded-md text-xs font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500",
                 selectedDeparture || selectedReturn
                   ? "bg-[#0a66c2] text-white hover:bg-[#085aa9] focus:bg-[#085aa9]"
                   : disabledDate
@@ -4924,9 +5054,16 @@ function DatePickerPopover({
         </button>
       </div>
 
-      <div className={cn("min-h-0 flex-1 grid gap-3", mobileSheet ? "overflow-visible md:grid-cols-2" : "md:grid-cols-2")}>
+      <div
+        className={cn(
+          "min-h-0 flex-1 grid gap-3",
+          mobileSheet ? "overflow-visible md:grid-cols-2" : "md:grid-cols-2",
+        )}
+      >
         {renderMonth(leftMonth)}
-        <div className={cn(mobileSheet ? "block" : "hidden md:block")}>{renderMonth(rightMonth)}</div>
+        <div className={cn(mobileSheet ? "block" : "hidden md:block")}>
+          {renderMonth(rightMonth)}
+        </div>
       </div>
 
       <div className="mt-4 flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 bg-white pt-3">
@@ -5047,7 +5184,9 @@ function TravelerCabinPopover({
       >
         <div>
           {!mobileSheet ? (
-            <h3 className="text-sm font-semibold text-slate-900">{t("travelers")}</h3>
+            <h3 className="text-sm font-semibold text-slate-900">
+              {t("travelers")}
+            </h3>
           ) : null}
 
           <div className="mt-3 divide-y divide-slate-100">
@@ -5232,7 +5371,9 @@ function SuggestionList({
             </p>
             <p className="text-[11px] leading-4 text-slate-600">
               {item.airport}
-              {item.country ? ` · ${getLocalizedAirportCountryName(item, locale)}` : ""}
+              {item.country
+                ? ` · ${getLocalizedAirportCountryName(item, locale)}`
+                : ""}
             </p>
           </button>
         ))
@@ -5300,7 +5441,9 @@ function formatResultDepartureTime(value: string, locale = "en-US") {
   }
 
   const minutes = getTimeMinutes(value);
-  return minutes === null ? formatTime(value) : formatTimeFromMinutes(minutes, locale);
+  return minutes === null
+    ? formatTime(value)
+    : formatTimeFromMinutes(minutes, locale);
 }
 
 function formatTimeFromMinutes(value: number, locale = "en-US") {
@@ -5537,12 +5680,17 @@ function Filters({
     >
       <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
         <div>
-          <h2 className="text-base font-semibold text-white/95">{t("filterBy")}</h2>
+          <h2 className="text-base font-semibold text-white/95">
+            {t("filterBy")}
+          </h2>
         </div>
         <div className="flex items-center gap-2">
           {activeFilterCount > 0 ? (
             <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-indigo-700 shadow-sm ring-1 ring-white/70">
-              {t("activeFilterCount").replace("{{count}}", String(activeFilterCount))}
+              {t("activeFilterCount").replace(
+                "{{count}}",
+                String(activeFilterCount),
+              )}
             </span>
           ) : null}
           <SlidersHorizontal className="text-white/90" size={18} />
@@ -5553,7 +5701,9 @@ function Filters({
         <section>
           {layout === "desktop" ? (
             <div className="mb-3">
-              <h3 className="text-sm font-semibold text-slate-900">{t("price")}</h3>
+              <h3 className="text-sm font-semibold text-slate-900">
+                {t("price")}
+              </h3>
             </div>
           ) : (
             <div className="mb-1.5 flex items-center justify-between gap-3 text-sm font-semibold leading-5 text-slate-800">
@@ -5650,12 +5800,18 @@ function Filters({
               <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500">
                 <span>
                   {timeBounds.takeoff
-                    ? formatTimeFromMinutes(timeBounds.takeoff.min, calendarLocale)
+                    ? formatTimeFromMinutes(
+                        timeBounds.takeoff.min,
+                        calendarLocale,
+                      )
                     : "—"}
                 </span>
                 <span>
                   {timeBounds.takeoff
-                    ? formatTimeFromMinutes(timeBounds.takeoff.max, calendarLocale)
+                    ? formatTimeFromMinutes(
+                        timeBounds.takeoff.max,
+                        calendarLocale,
+                      )
                     : "—"}
                 </span>
               </div>
@@ -5686,12 +5842,18 @@ function Filters({
               <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500">
                 <span>
                   {timeBounds.landing
-                    ? formatTimeFromMinutes(timeBounds.landing.min, calendarLocale)
+                    ? formatTimeFromMinutes(
+                        timeBounds.landing.min,
+                        calendarLocale,
+                      )
                     : "—"}
                 </span>
                 <span>
                   {timeBounds.landing
-                    ? formatTimeFromMinutes(timeBounds.landing.max, calendarLocale)
+                    ? formatTimeFromMinutes(
+                        timeBounds.landing.max,
+                        calendarLocale,
+                      )
                     : "—"}
                 </span>
               </div>

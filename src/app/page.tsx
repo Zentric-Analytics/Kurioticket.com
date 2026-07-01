@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   ChevronLeft,
@@ -38,12 +38,18 @@ import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { buildHomepageRouteCardFlightHref } from "@/lib/home/homepageRouteCardLinks";
 import { translateHomeDiscoveryField } from "@/lib/i18n/homeDiscovery";
 import { translations as enTranslations } from "@/lib/i18n/en";
+import { useSession } from "next-auth/react";
 import {
   readSavedTripIds,
   toggleSavedTripId,
   writeSavedTripIds,
 } from "@/lib/saved-trips-local";
-
+import {
+  deleteBackendTrip,
+  fetchBackendSavedTrips,
+  getSavedTripLocalId,
+  saveBackendTrip,
+} from "@/lib/saved-trips-api";
 
 function CompareOffersIllustration() {
   return (
@@ -77,7 +83,14 @@ function CompareOffersIllustration() {
         strokeLinejoin="round"
       />
       <defs>
-        <linearGradient id="compareTile" x1="6" y1="5" x2="58" y2="59" gradientUnits="userSpaceOnUse">
+        <linearGradient
+          id="compareTile"
+          x1="6"
+          y1="5"
+          x2="58"
+          y2="59"
+          gradientUnits="userSpaceOnUse"
+        >
           <stop stopColor="#EEF2FF" />
           <stop offset="1" stopColor="#ECFEFF" />
         </linearGradient>
@@ -112,9 +125,21 @@ function PricingContextIllustration() {
         strokeLinejoin="round"
       />
       <circle cx="18" cy="20" r="5" fill="#FDE68A" />
-      <path d="M18 17.6V22.4" stroke="#A16207" strokeWidth="1.8" strokeLinecap="round" />
+      <path
+        d="M18 17.6V22.4"
+        stroke="#A16207"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
       <defs>
-        <linearGradient id="pricingTile" x1="5" y1="5" x2="59" y2="59" gradientUnits="userSpaceOnUse">
+        <linearGradient
+          id="pricingTile"
+          x1="5"
+          y1="5"
+          x2="59"
+          y2="59"
+          gradientUnits="userSpaceOnUse"
+        >
           <stop stopColor="#F5F3FF" />
           <stop offset="1" stopColor="#EFF6FF" />
         </linearGradient>
@@ -158,7 +183,14 @@ function SecureHandoffIllustration() {
         strokeLinejoin="round"
       />
       <defs>
-        <linearGradient id="handoffTile" x1="6" y1="5" x2="58" y2="59" gradientUnits="userSpaceOnUse">
+        <linearGradient
+          id="handoffTile"
+          x1="6"
+          y1="5"
+          x2="58"
+          y2="59"
+          gradientUnits="userSpaceOnUse"
+        >
           <stop stopColor="#EFF6FF" />
           <stop offset="1" stopColor="#F0FDFA" />
         </linearGradient>
@@ -375,7 +407,11 @@ export default function Home() {
   const [newsletterStatus, setNewsletterStatus] =
     useState<NewsletterStatus>("idle");
   const [newsletterPending, setNewsletterPending] = useState(false);
+  const { status: sessionStatus } = useSession();
   const [savedTripIds, setSavedTripIds] = useState<string[]>([]);
+  const [backendSavedTripIds, setBackendSavedTripIds] = useState<
+    Record<string, string>
+  >({});
   const [destinationPriceState, setDestinationPriceState] =
     useState<DestinationPriceState>({
       loading: true,
@@ -547,13 +583,41 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    const frameId = window.requestAnimationFrame(() => {
-      setSavedTripIds(readSavedTripIds());
+  const refreshBackendSavedTrips = useCallback(async (signal?: AbortSignal) => {
+    const result = await fetchBackendSavedTrips(signal);
+    if (!result.ok || !result.items) return;
+
+    const backendIds: Record<string, string> = {};
+    const localIds = result.items.map((item) => {
+      const localId = getSavedTripLocalId(item);
+      backendIds[localId] = item.id;
+      return localId;
     });
 
-    return () => window.cancelAnimationFrame(frameId);
+    setBackendSavedTripIds(backendIds);
+    setSavedTripIds(localIds);
   }, []);
+
+  useEffect(() => {
+    if (sessionStatus === "loading") return;
+
+    if (sessionStatus === "authenticated") {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => {
+        void refreshBackendSavedTrips(controller.signal);
+      }, 0);
+      return () => {
+        window.clearTimeout(timeoutId);
+        controller.abort();
+      };
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setBackendSavedTripIds({});
+      setSavedTripIds(readSavedTripIds());
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [refreshBackendSavedTrips, sessionStatus]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -651,18 +715,47 @@ export default function Home() {
     return () => controller.abort();
   }, [regionCode]);
 
-  const handleSavedTripToggle = (
+  const handleSavedTripToggle = async (
     event: React.MouseEvent<HTMLButtonElement>,
     itemId: string,
   ) => {
     event.preventDefault();
     event.stopPropagation();
 
-    setSavedTripIds((current) => {
-      const next = toggleSavedTripId(current, itemId);
-      writeSavedTripIds(next);
-      return next;
-    });
+    if (sessionStatus !== "authenticated") {
+      setSavedTripIds((current) => {
+        const next = toggleSavedTripId(current, itemId);
+        writeSavedTripIds(next);
+        return next;
+      });
+      return;
+    }
+
+    if (savedTripIds.includes(itemId)) {
+      const backendId = backendSavedTripIds[itemId];
+      if (!backendId) {
+        await refreshBackendSavedTrips();
+        return;
+      }
+
+      const result = await deleteBackendTrip(backendId);
+      if (result.ok) {
+        setSavedTripIds((current) => current.filter((id) => id !== itemId));
+        setBackendSavedTripIds((current) => {
+          const next = { ...current };
+          delete next[itemId];
+          return next;
+        });
+      } else {
+        await refreshBackendSavedTrips();
+      }
+      return;
+    }
+
+    const result = await saveBackendTrip(itemId);
+    if (result.ok || result.duplicate) {
+      await refreshBackendSavedTrips();
+    }
   };
 
   return (
@@ -1203,7 +1296,8 @@ function DiscoverySuggestionCard({
           <p
             className={`font-semibold uppercase tracking-[0.08em] text-slate-500 ${compact ? "text-[11px]" : "text-[11px] md:text-xs"}`}
           >
-            {t("oneWay")} · {t("economy")} · {t("homeDiscoveryTravelerCountOne")}
+            {t("oneWay")} · {t("economy")} ·{" "}
+            {t("homeDiscoveryTravelerCountOne")}
           </p>
         </div>
       </div>
@@ -1476,9 +1570,7 @@ function DestinationCard({
             <h3 className="text-xl font-black tracking-tight sm:text-2xl">
               {city}
             </h3>
-            <p className="text-sm font-semibold text-white/95">
-              {country}
-            </p>
+            <p className="text-sm font-semibold text-white/95">{country}</p>
           </div>
         </div>
 
