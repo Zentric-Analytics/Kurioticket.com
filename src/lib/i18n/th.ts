@@ -18,6 +18,65 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.preferences": "การตั้งค่า",
   "accountDashboard.hub.emailPreferences": "การตั้งค่าการปรับแต่ง",
   "accountDashboard.hub.travelPreferences": "การตั้งค่าการจอง",
+  "accountDashboard.preferences.customization.title": "การตั้งค่าการปรับแต่ง",
+  "accountDashboard.preferences.customization.description":
+    "เลือกวิธีที่ Kurioticket ปรับแต่งประสบการณ์ของคุณ",
+  "accountDashboard.preferences.customization.languageRegion.title": "ภาษาและภูมิภาค",
+  "accountDashboard.preferences.customization.languageRegion.description":
+    "ตั้งค่าภาษา สกุลเงิน และภูมิภาคเริ่มต้นของคุณ",
+  "accountDashboard.preferences.customization.preferredLanguage": "ภาษาที่ต้องการ",
+  "accountDashboard.preferences.customization.selectPreferredLanguage":
+    "เลือกภาษาที่ต้องการ",
+  "accountDashboard.preferences.customization.currency": "สกุลเงิน",
+  "accountDashboard.preferences.customization.selectCurrency": "เลือกสกุลเงิน",
+  "accountDashboard.preferences.customization.region": "ภูมิภาค",
+  "accountDashboard.preferences.customization.selectRegion": "เลือกภูมิภาค",
+  "accountDashboard.preferences.customization.personalization.title":
+    "การปรับแต่งส่วนบุคคล",
+  "accountDashboard.preferences.customization.personalization.description":
+    "ควบคุมวิธีที่ Kurioticket ปรับแต่งคำแนะนำสำหรับคุณ",
+  "accountDashboard.preferences.customization.personalizeSearches":
+    "ใช้การค้นหาของฉันเพื่อปรับแต่งคำแนะนำ",
+  "accountDashboard.preferences.customization.personalizedTravelDeals":
+    "แสดงดีลการเดินทางที่ปรับให้เหมาะกับฉัน",
+  "accountDashboard.preferences.customization.rememberRecentSearches":
+    "จดจำการค้นหาล่าสุดของฉัน",
+  "accountDashboard.preferences.customization.communicationStyle.title":
+    "รูปแบบการสื่อสาร",
+  "accountDashboard.preferences.customization.communicationStyle.description":
+    "เลือกวิธีที่คุณต้องการให้ Kurioticket สื่อสารกับคุณ",
+  "accountDashboard.preferences.customization.emailUpdates": "อัปเดตทางอีเมล",
+  "accountDashboard.preferences.customization.priceAlertEmails":
+    "อีเมลแจ้งเตือนราคา",
+  "accountDashboard.preferences.customization.travelInspirationEmails":
+    "อีเมลแรงบันดาลใจในการเดินทาง",
+  "accountDashboard.preferences.booking.title": "การตั้งค่าการจอง",
+  "accountDashboard.preferences.booking.description":
+    "ตั้งค่าการเดินทางเริ่มต้นของคุณเพื่อให้การจองรวดเร็วและตรงความต้องการมากขึ้น",
+  "accountDashboard.preferences.booking.airports.title": "สนามบิน",
+  "accountDashboard.preferences.booking.airports.description":
+    "เลือกสนามบินที่คุณต้องการออกเดินทาง",
+  "accountDashboard.preferences.booking.homeAirport": "สนามบินหลัก",
+  "accountDashboard.preferences.booking.searchAirport": "ค้นหาสนามบิน",
+  "accountDashboard.preferences.booking.secondaryAirports": "สนามบินสำรอง",
+  "accountDashboard.preferences.booking.addAlternativeAirports":
+    "เพิ่มสนามบินทางเลือก",
+  "accountDashboard.preferences.booking.airlines.title": "สายการบิน",
+  "accountDashboard.preferences.booking.airlines.description":
+    "เลือกสายการบินที่คุณต้องการหรืออยากหลีกเลี่ยง",
+  "accountDashboard.preferences.booking.preferredAirlines": "สายการบินที่ต้องการ",
+  "accountDashboard.preferences.booking.searchAirlines": "ค้นหาสายการบิน",
+  "accountDashboard.preferences.booking.avoidAirlines": "หลีกเลี่ยงสายการบิน",
+  "accountDashboard.preferences.booking.stays.title": "ที่พัก",
+  "accountDashboard.preferences.booking.stays.description":
+    "ตั้งค่าความต้องการด้านที่พักสำหรับการจองโรงแรม",
+  "accountDashboard.preferences.booking.preferredHotelChains":
+    "เครือโรงแรมที่ต้องการ",
+  "accountDashboard.preferences.booking.searchHotelChains": "ค้นหาเครือโรงแรม",
+  "accountDashboard.preferences.booking.avoidHotelChains":
+    "หลีกเลี่ยงเครือโรงแรม",
+  "accountDashboard.preferences.cancel": "ยกเลิก",
+  "accountDashboard.preferences.savePreferences": "บันทึกการตั้งค่า",
   "accountDashboard.hub.helpAndSupport": "ความช่วยเหลือและการสนับสนุน",
   "accountDashboard.hub.contactSupport": "ติดต่อฝ่ายสนับสนุน",
   "accountDashboard.hub.faq": "คำถามที่พบบ่อย",

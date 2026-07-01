@@ -122,6 +122,126 @@ test("Thai language metadata, LTR direction, and English fallback dictionary res
   assert.equal(getTranslations("unsupported-locale"), enTranslations);
 });
 
+test("Thai account customization and booking preferences resolve through active i18n keys", () => {
+  const th = getTranslations("th");
+  const customizationPageSource = readFileSync("src/app/dashboard/preferences/customization/page.tsx", "utf8");
+  const customizationSource = readFileSync(
+    "src/app/dashboard/preferences/customization/CustomizationPreferencesContent.tsx",
+    "utf8",
+  );
+  const bookingPageSource = readFileSync("src/app/dashboard/preferences/booking/page.tsx", "utf8");
+  const bookingSource = readFileSync(
+    "src/app/dashboard/preferences/booking/BookingPreferencesContent.tsx",
+    "utf8",
+  );
+
+  assert.ok(customizationPageSource.includes("<CustomizationPreferencesContent />"));
+  assert.ok(bookingPageSource.includes("<BookingPreferencesContent />"));
+
+  const expectedCustomizationCopy = {
+    "accountDashboard.preferences.customization.title": "การตั้งค่าการปรับแต่ง",
+    "accountDashboard.preferences.customization.description": "เลือกวิธีที่ Kurioticket ปรับแต่งประสบการณ์ของคุณ",
+    "accountDashboard.preferences.customization.languageRegion.title": "ภาษาและภูมิภาค",
+    "accountDashboard.preferences.customization.languageRegion.description": "ตั้งค่าภาษา สกุลเงิน และภูมิภาคเริ่มต้นของคุณ",
+    "accountDashboard.preferences.customization.preferredLanguage": "ภาษาที่ต้องการ",
+    "accountDashboard.preferences.customization.selectPreferredLanguage": "เลือกภาษาที่ต้องการ",
+    "accountDashboard.preferences.customization.currency": "สกุลเงิน",
+    "accountDashboard.preferences.customization.selectCurrency": "เลือกสกุลเงิน",
+    "accountDashboard.preferences.customization.region": "ภูมิภาค",
+    "accountDashboard.preferences.customization.selectRegion": "เลือกภูมิภาค",
+    "accountDashboard.preferences.customization.personalization.title": "การปรับแต่งส่วนบุคคล",
+    "accountDashboard.preferences.customization.personalization.description": "ควบคุมวิธีที่ Kurioticket ปรับแต่งคำแนะนำสำหรับคุณ",
+    "accountDashboard.preferences.customization.personalizeSearches": "ใช้การค้นหาของฉันเพื่อปรับแต่งคำแนะนำ",
+    "accountDashboard.preferences.customization.personalizedTravelDeals": "แสดงดีลการเดินทางที่ปรับให้เหมาะกับฉัน",
+    "accountDashboard.preferences.customization.rememberRecentSearches": "จดจำการค้นหาล่าสุดของฉัน",
+    "accountDashboard.preferences.customization.communicationStyle.title": "รูปแบบการสื่อสาร",
+    "accountDashboard.preferences.customization.communicationStyle.description": "เลือกวิธีที่คุณต้องการให้ Kurioticket สื่อสารกับคุณ",
+    "accountDashboard.preferences.customization.emailUpdates": "อัปเดตทางอีเมล",
+    "accountDashboard.preferences.customization.priceAlertEmails": "อีเมลแจ้งเตือนราคา",
+    "accountDashboard.preferences.customization.travelInspirationEmails": "อีเมลแรงบันดาลใจในการเดินทาง",
+  } as const;
+
+  const expectedBookingCopy = {
+    "accountDashboard.preferences.booking.title": "การตั้งค่าการจอง",
+    "accountDashboard.preferences.booking.description": "ตั้งค่าการเดินทางเริ่มต้นของคุณเพื่อให้การจองรวดเร็วและตรงความต้องการมากขึ้น",
+    "accountDashboard.preferences.booking.airports.title": "สนามบิน",
+    "accountDashboard.preferences.booking.airports.description": "เลือกสนามบินที่คุณต้องการออกเดินทาง",
+    "accountDashboard.preferences.booking.homeAirport": "สนามบินหลัก",
+    "accountDashboard.preferences.booking.searchAirport": "ค้นหาสนามบิน",
+    "accountDashboard.preferences.booking.secondaryAirports": "สนามบินสำรอง",
+    "accountDashboard.preferences.booking.addAlternativeAirports": "เพิ่มสนามบินทางเลือก",
+    "accountDashboard.preferences.booking.airlines.title": "สายการบิน",
+    "accountDashboard.preferences.booking.airlines.description": "เลือกสายการบินที่คุณต้องการหรืออยากหลีกเลี่ยง",
+    "accountDashboard.preferences.booking.preferredAirlines": "สายการบินที่ต้องการ",
+    "accountDashboard.preferences.booking.searchAirlines": "ค้นหาสายการบิน",
+    "accountDashboard.preferences.booking.avoidAirlines": "หลีกเลี่ยงสายการบิน",
+    "accountDashboard.preferences.booking.stays.title": "ที่พัก",
+    "accountDashboard.preferences.booking.stays.description": "ตั้งค่าความต้องการด้านที่พักสำหรับการจองโรงแรม",
+    "accountDashboard.preferences.booking.preferredHotelChains": "เครือโรงแรมที่ต้องการ",
+    "accountDashboard.preferences.booking.searchHotelChains": "ค้นหาเครือโรงแรม",
+    "accountDashboard.preferences.booking.avoidHotelChains": "หลีกเลี่ยงเครือโรงแรม",
+  } as const;
+
+  const sharedCopy = {
+    "accountDashboard.preferences.cancel": "ยกเลิก",
+    "accountDashboard.preferences.savePreferences": "บันทึกการตั้งค่า",
+  } as const;
+
+  for (const [key, value] of Object.entries(expectedCustomizationCopy)) {
+    assert.ok(customizationSource.includes(key), `Customization page should use actual i18n key ${key}.`);
+    assert.equal(th[key], value);
+    assert.notEqual(th[key], enTranslations[key]);
+  }
+
+  for (const [key, value] of Object.entries(expectedBookingCopy)) {
+    assert.ok(bookingSource.includes(key), `Booking page should use actual i18n key ${key}.`);
+    assert.equal(th[key], value);
+    assert.notEqual(th[key], enTranslations[key]);
+  }
+
+  for (const [key, value] of Object.entries(sharedCopy)) {
+    assert.ok(customizationSource.includes(key), `Customization page should use shared action key ${key}.`);
+    assert.ok(bookingSource.includes(key), `Booking page should use shared action key ${key}.`);
+    assert.equal(th[key], value);
+    assert.notEqual(th[key], enTranslations[key]);
+  }
+
+  const activeThaiRenderValues = [
+    ...Object.keys(expectedCustomizationCopy),
+    ...Object.keys(expectedBookingCopy),
+    ...Object.keys(sharedCopy),
+  ].map((key) => th[key]);
+  for (const englishFallback of [
+    "Customization preferences", "Choose how Kurioticket personalizes your experience.", "Language and region",
+    "Set your default language, currency, and region.", "Preferred language", "Select preferred language", "Currency",
+    "Select currency", "Region", "Select region", "Personalization",
+    "Control how Kurioticket personalizes your recommendations.", "Use my searches to personalize recommendations",
+    "Show personalized travel deals", "Remember my recent searches", "Communication style",
+    "Choose how you want Kurioticket to communicate with you.", "Email updates", "Price alert emails",
+    "Travel inspiration emails", "Booking preferences",
+    "Set your default travel preferences for faster and more relevant bookings.", "Airports",
+    "Choose the airports you prefer to fly from.", "Home airport", "Search airport", "Secondary airports",
+    "Add alternative airports", "Airlines", "Choose airlines you prefer or want to avoid.", "Preferred airlines",
+    "Search airlines", "Avoid airlines", "Stays", "Set accommodation preferences for hotel bookings.",
+    "Preferred hotel chains", "Search hotel chains", "Avoid hotel chains", "Cancel", "Save preferences",
+  ]) {
+    assert.ok(!activeThaiRenderValues.includes(englishFallback), `Thai preferences should not fall back to English: ${englishFallback}`);
+  }
+
+  assert.ok(customizationSource.includes('name={field.id}'));
+  assert.ok(customizationSource.includes('value={option.value}'));
+  assert.ok(customizationSource.includes('type="checkbox"'));
+  assert.ok(customizationSource.includes('defaultValue=""'));
+  assert.ok(bookingSource.includes('name={field.id}'));
+  assert.ok(bookingSource.includes('type="search"'));
+  assert.ok(bookingSource.includes('placeholder={t[field.placeholderKey]}'));
+  assert.ok(bookingSource.includes('type="button"'));
+  assert.ok(customizationSource.includes('className="focus-ring inline-flex min-h-11'));
+  assert.ok(bookingSource.includes('className="focus-ring inline-flex min-h-11'));
+  assert.equal(availableLocaleOptions.find((option) => option.code === "th")?.direction, "ltr");
+  assert.equal(availableLocaleOptions.find((option) => option.code === "ar")?.direction, "rtl");
+});
+
 test("Thai Hotels results page copy resolves through active i18n keys", () => {
   const th = getTranslations("th");
   const resultsPageSource = readFileSync("src/app/hotels/results/page.tsx", "utf8");
