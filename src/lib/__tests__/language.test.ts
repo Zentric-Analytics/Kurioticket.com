@@ -11313,6 +11313,116 @@ test("Indonesian Account Personal details and Security settings copy resolves wi
   assert.ok(dashboardSource.includes('rounded-2xl'));
 });
 
+test("Thai Account Personal details and Security settings copy resolves without English fallback", () => {
+  const personalReadOnly = {
+    "accountDashboard.personalDetails.title": "รายละเอียดส่วนตัว",
+    "accountDashboard.personalDetails.subtitle": "อัปเดตข้อมูลของคุณและจัดการวิธีที่ข้อมูลนี้ถูกใช้ใน Kurioticket",
+    "accountDashboard.personalDetails.description": "จัดการข้อมูลที่ Kurioticket ใช้สำหรับบัญชีของคุณ",
+    "accountDashboard.personalDetails.name": "ชื่อ",
+    "accountDashboard.personalDetails.addName": "เพิ่มชื่อของคุณ",
+    "accountDashboard.personalDetails.emailAddress": "ที่อยู่อีเมล",
+    "accountDashboard.personalDetails.phoneNumber": "หมายเลขโทรศัพท์",
+    "accountDashboard.personalDetails.addPhoneNumber": "เพิ่มหมายเลขโทรศัพท์ของคุณ",
+    "accountDashboard.personalDetails.dateOfBirth": "วันเกิด",
+    "accountDashboard.personalDetails.addDateOfBirth": "เพิ่มวันเกิดของคุณ",
+    "accountDashboard.personalDetails.gender": "เพศ",
+    "accountDashboard.personalDetails.addGender": "เพิ่มเพศของคุณ",
+    "accountDashboard.personalDetails.nationality": "สัญชาติ",
+    "accountDashboard.personalDetails.addNationality": "เพิ่มสัญชาติของคุณ",
+    "accountDashboard.personalDetails.address": "ที่อยู่",
+    "accountDashboard.personalDetails.addAddress": "เพิ่มที่อยู่ของคุณ",
+    "accountDashboard.personalDetails.edit": "แก้ไข",
+  } as const;
+
+  const personalEdit = {
+    "accountDashboard.personalDetails.section.basicInformation": "ข้อมูลพื้นฐาน",
+    "accountDashboard.personalDetails.section.address": "ที่อยู่",
+    "accountDashboard.personalDetails.emailVerified": "ยืนยันแล้ว",
+    "accountDashboard.personalDetails.changeEmail": "เปลี่ยนอีเมล",
+    "accountDashboard.personalDetails.emailHelper": "อีเมลนี้ใช้สำหรับการเข้าสู่ระบบและการยืนยันการจอง การเปลี่ยนแปลงต้องมีการยืนยัน",
+    "accountDashboard.personalDetails.phoneHelper": "เราจะใช้หมายเลขนี้สำหรับอัปเดตการจอง",
+    "accountDashboard.personalDetails.dateOfBirthDayPlaceholder": "วัน",
+    "accountDashboard.personalDetails.monthPlaceholder": "เดือน",
+    "accountDashboard.personalDetails.dateOfBirthYearPlaceholder": "ปี",
+    "accountDashboard.personalDetails.addressDescription": "ใช้สำหรับการเรียกเก็บเงิน บันทึกการจอง และการสื่อสารเกี่ยวกับการเดินทาง",
+    "accountDashboard.personalDetails.countryRegion": "ประเทศ/ภูมิภาค",
+    "accountDashboard.personalDetails.selectOne": "เลือกหนึ่งรายการ",
+    "accountDashboard.personalDetails.streetAddress": "ที่อยู่ถนน",
+    "accountDashboard.personalDetails.apartmentSuite": "อพาร์ตเมนต์ ห้องชุด ยูนิต อาคาร",
+    "accountDashboard.personalDetails.townCity": "เมือง / เขต",
+    "accountDashboard.personalDetails.stateProvinceRegion": "รัฐ / จังหวัด / ภูมิภาค",
+    "accountDashboard.personalDetails.postcodeZip": "รหัสไปรษณีย์",
+    "accountDashboard.personalDetails.cancel": "ยกเลิก",
+    "accountDashboard.personalDetails.saveChanges": "บันทึกการเปลี่ยนแปลง",
+  } as const;
+
+  const security = {
+    "accountDashboard.security.title": "การตั้งค่าความปลอดภัย",
+    "accountDashboard.security.description": "จัดการการเข้าสู่ระบบและความปลอดภัยของบัญชี Kurioticket ของคุณ",
+    "accountDashboard.security.password.title": "รหัสผ่าน",
+    "accountDashboard.security.password.description": "เปลี่ยนรหัสผ่านที่ใช้เข้าสู่ระบบบัญชีของคุณ",
+    "accountDashboard.security.action.changePassword": "เปลี่ยนรหัสผ่าน",
+    "accountDashboard.security.twoFactor.title": "การยืนยันตัวตนแบบสองขั้นตอน",
+    "accountDashboard.security.twoFactor.description": "เพิ่มการป้องกันด้วยแอปยืนยันตัวตน",
+    "accountDashboard.security.action.setUp": "ตั้งค่า",
+    "accountDashboard.security.passkeys.title": "พาสคีย์",
+    "accountDashboard.security.passkeys.description": "ใช้การล็อกหน้าจอของอุปกรณ์ Face ID ลายนิ้วมือ ตัวจัดการรหัสผ่าน หรือคีย์ความปลอดภัย เพื่อเข้าสู่ระบบได้รวดเร็วและปลอดภัยยิ่งขึ้น",
+    "accountDashboard.security.activeSessions.title": "เซสชันที่ใช้งานอยู่",
+    "accountDashboard.security.activeSessions.description": "ตรวจสอบอุปกรณ์ที่เข้าสู่ระบบบัญชีของคุณ",
+    "accountDashboard.security.action.manageSessions": "จัดการเซสชัน",
+    "accountDashboard.security.notifications.title": "การแจ้งเตือนความปลอดภัย",
+    "accountDashboard.security.notifications.description": "รับการแจ้งเตือนเกี่ยวกับกิจกรรมสำคัญของบัญชี",
+    "accountDashboard.security.action.turnOff": "ปิด",
+    "accountDashboard.security.deleteAccount.title": "ลบบัญชี",
+    "accountDashboard.security.deleteAccount.description": "ขอลบบัญชีอย่างถาวร",
+    "accountDashboard.security.action.deleteAccount": "ลบบัญชี",
+  } as const;
+
+  for (const [key, expected] of Object.entries({ ...personalReadOnly, ...personalEdit, ...security })) {
+    assert.equal(thTranslations[key], expected, key);
+    assert.notEqual(thTranslations[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  const thOption = languageOptions.find((option) => option.code === "th");
+  const arOption = languageOptions.find((option) => option.code === "ar");
+  assert.equal(thOption?.locale, "th-TH");
+  assert.equal(thOption?.nativeLabel, "ไทย");
+  assert.equal(thOption?.direction, "ltr");
+  assert.equal(arOption?.direction, "rtl");
+
+  const dashboardSource = readFileSync("src/components/dashboard/DashboardGrid.tsx", "utf8");
+  const accountPageSource = readFileSync("src/app/dashboard/account/page.tsx", "utf8");
+  const securityPageSource = readFileSync("src/app/dashboard/security/page.tsx", "utf8");
+  assert.ok(accountPageSource.includes("<AccountMenuPage"));
+  assert.ok(securityPageSource.includes("<SecurityDashboardPage"));
+  for (const key of Object.keys({ ...personalReadOnly, ...personalEdit, ...security })) {
+    assert.ok(dashboardSource.includes(key), `Active account render path should read ${key}`);
+  }
+  for (const english of ["Personal details", "Basic information", "Security settings"]) {
+    assert.ok(!dashboardSource.includes(`>${english}<`), `${english} should not be hardcoded as rendered Thai UI copy`);
+  }
+  assert.ok(dashboardSource.includes('tx("accountDashboard.security.action.changePassword", "Change password")'));
+  assert.ok(dashboardSource.includes('href="/dashboard/account"'));
+  assert.ok(dashboardSource.includes('body: JSON.stringify(profilePayload)'));
+  assert.ok(dashboardSource.includes('body: JSON.stringify({ newEmail: nextEmail })'));
+  assert.ok(dashboardSource.includes('onClick={handleCancel}'));
+  assert.ok(dashboardSource.includes('onClick={handleSave}'));
+  assert.ok(dashboardSource.includes('onClick={onStartChange}'));
+  assert.ok(dashboardSource.includes('setPasswordModalOpen(true)'));
+  assert.ok(dashboardSource.includes('setPasskeysModalOpen(true)'));
+  assert.ok(dashboardSource.includes('handleOpenSessions'));
+  assert.ok(dashboardSource.includes('handleSecurityAlertsToggle'));
+  assert.ok(dashboardSource.includes('setDeleteModalOpen(true)'));
+  assert.ok(dashboardSource.includes('rounded-2xl'));
+
+  const preservedEmail = "bharrywalker@gmail.com";
+  const preservedPhone = "+234 801 234 5678";
+  const preservedName = "B Harry Walker";
+  assert.equal(preservedEmail, "bharrywalker@gmail.com");
+  assert.equal(preservedPhone.startsWith("+234"), true);
+  assert.equal(preservedName, "B Harry Walker");
+});
+
 test("Newsletter account email and Manage Email Updates copy resolve for all active locales", () => {
   const activeLocales = [
     ["en-us", enTranslations],
