@@ -51,6 +51,8 @@ export const normalizeHotelCalendarLocale = (locale: string | null | undefined) 
     return "ko-KR";
   }
 
+  if (normalized === "th" || normalized === "th-th" || normalized.startsWith("th-")) return "th-TH-u-ca-gregory";
+
   if (normalized === "id" || normalized === "id-id" || normalized.startsWith("id-")) {
     return "id-ID";
   }
