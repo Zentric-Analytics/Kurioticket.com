@@ -12659,3 +12659,72 @@ test("Thai cars landing render path copy resolves without English fallback", () 
   assert.ok(languageOptions.some((option) => option.code === "th" && option.direction === "ltr"));
   assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
 });
+
+test("Thai Legal Center and legal detail copy resolves without English fallbacks", () => {
+  const th = getTranslations("th");
+  const legalIndexSource = readFileSync("src/app/legal/LegalPageContent.tsx", "utf8");
+  const legalViewerSource = readFileSync("src/components/legal/LegalViewer.tsx", "utf8");
+  const legalDataSource = readFileSync("src/data/legalDocuments.ts", "utf8");
+
+  assert.ok(legalIndexSource.includes('t("legal.index.heroTitle")'));
+  assert.ok(legalIndexSource.includes('t("legal.index.documentsCountText")'));
+  assert.ok(legalViewerSource.includes('getLegalDocumentTranslation(document, t)'));
+  assert.ok(legalViewerSource.includes('"legal.print"'));
+  assert.ok(legalViewerSource.includes('"legal.tableOfContents"'));
+
+  assert.equal(th["legal.index.heroLabel"], "ข้อมูลทางกฎหมาย");
+  assert.equal(th["legal.index.heroTitle"], "ศูนย์กฎหมาย");
+  assert.equal(th["legal.index.documentsCountText"], "มีนโยบายและประกาศ 14 รายการ");
+  assert.equal(th["legal.index.compliance.registrationNumberLabel"], "เลขทะเบียน");
+  assert.equal(th["legal.index.contacts.support"], "ฝ่ายสนับสนุน");
+  assert.equal(th["legal.print"], "พิมพ์");
+  assert.equal(th["legal.tableOfContents"], "สารบัญ");
+  assert.equal(th["legal.lastUpdated"], "อัปเดตล่าสุด");
+  assert.equal(th["legal.index.developerNote"], "ร่างเอกสารทางกฎหมายเหล่านี้เป็นข้อความชั่วคราวสำหรับสตาร์ทอัป และควรได้รับการตรวจสอบโดยที่ปรึกษากฎหมายที่มีคุณสมบัติก่อนเปิดให้ใช้งานสาธารณะในวงกว้าง");
+
+  const documentKeys = ["termsOfService", "privacyPolicy", "cookiePolicy", "privacyChoices", "affiliateDisclosure", "refundBookingDisclaimer", "priceAvailabilityDisclaimer", "partnerRedirectDisclaimer", "californiaSellerOfTravelNotice", "legalNoticeCompanyInformation", "acceptableUsePolicy", "dataDeletionPolicy", "securityStatement", "accessibilityStatement"];
+  assert.equal(legalDocuments.length, 14);
+  for (const key of documentKeys) {
+    const title = th[`legal.index.documents.${key}.title`];
+    const summary = th[`legal.index.documents.${key}.summary`];
+    assert.ok(title, `${key} title should exist`);
+    assert.ok(summary, `${key} summary should exist`);
+    assert.notEqual(title, enTranslations[`legal.index.documents.${key}.title`]);
+    assert.notEqual(summary, enTranslations[`legal.index.documents.${key}.summary`]);
+  }
+
+  const namespaces = ["terms", "privacy", "cookiePolicy", "privacyChoices", "affiliateDisclosure", "refundBookingDisclaimer", "priceAvailabilityDisclaimer", "partnerRedirectDisclaimer", "californiaSellerOfTravelNotice", "legalNoticeCompanyInformation", "acceptableUsePolicy", "dataDeletionPolicy", "securityStatement", "accessibilityStatement"];
+  for (const namespace of namespaces) {
+    assert.ok(th[`legal.${namespace}.title`], `${namespace} detail title should exist`);
+    assert.ok(th[`legal.${namespace}.summary`], `${namespace} detail summary should exist`);
+    assert.equal(th[`legal.${namespace}.tableOfContents`], "สารบัญ");
+    assert.equal(th[`legal.${namespace}.developerNote`], th["legal.index.developerNote"]);
+    assert.notEqual(th[`legal.${namespace}.title`], enTranslations[`legal.${namespace}.title`]);
+    assert.notEqual(th[`legal.${namespace}.summary`], enTranslations[`legal.${namespace}.summary`]);
+  }
+
+  assert.equal(th["legal.terms.title"], "ข้อกำหนดการใช้บริการ");
+  assert.equal(th["legal.terms.sections.overview.title"], "ภาพรวม");
+  assert.equal(th["legal.terms.sections.accounts.title"], "บัญชี");
+  assert.equal(th["legal.terms.sections.acceptable-use.title"], "การใช้งานที่ยอมรับได้");
+  assert.equal(th["legal.terms.sections.partner-services.title"], "บริการของพันธมิตร");
+  assert.ok(th["legal.terms.sections.overview.paragraph2"].includes("Kurioticket ไม่ใช่สายการบิน"));
+  assert.equal(th["legal.privacy.title"], "นโยบายความเป็นส่วนตัว");
+  assert.equal(th["legal.privacy.sections.data-we-collect.title"], "ข้อมูลที่เราเก็บรวบรวม");
+  assert.equal(th["legal.privacy.sections.vendors.title"], "ผู้ให้บริการ");
+  assert.equal(th["legal.privacy.sections.choices.title"], "ตัวเลือกของคุณ");
+  assert.ok(th["legal.privacy.sections.vendors.paragraph2"].includes("Kurioticket ไม่ขอหรือจัดเก็บหมายเลขบัตรเครดิต"));
+  assert.equal(th["legal.cookiePolicy.title"], "นโยบายคุกกี้");
+  assert.equal(th["legal.cookiePolicy.sections.use.title"], "วิธีใช้คุกกี้");
+  assert.equal(th["legal.cookiePolicy.sections.third-parties.title"], "เทคโนโลยีของบุคคลที่สาม");
+  assert.equal(th["legal.cookiePolicy.sections.controls.title"], "การควบคุม");
+  assert.ok(th["legal.cookiePolicy.sections.controls.paragraph1"].includes("การบล็อกคุกกี้ที่จำเป็น"));
+  assert.equal(th["legal.californiaSellerOfTravelNotice.sections.registration.paragraph1"].includes("2172630-70"), true);
+  assert.equal(th["legal.legalNoticeCompanyInformation.sections.contacts.paragraph1"].includes("support@kurioticket.com"), true);
+  assert.equal(th["legal.legalNoticeCompanyInformation.sections.contacts.paragraph1"].includes("legal@kurioticket.com"), true);
+  assert.equal(th["legal.legalNoticeCompanyInformation.sections.contacts.paragraph1"].includes("privacy@kurioticket.com"), true);
+  assert.ok(legalDataSource.includes('slug: "terms-of-service"'));
+  assert.ok(legalDataSource.includes('id: "overview"'));
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+});
