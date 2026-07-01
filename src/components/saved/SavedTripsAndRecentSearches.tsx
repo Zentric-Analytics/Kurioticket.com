@@ -303,6 +303,8 @@ type SavedCardImageProps = {
   alt: string;
   priority?: boolean;
   hoverScaleClassName?: string;
+  containerClassName?: string;
+  sizes?: string;
 };
 
 function SavedCardImage({
@@ -310,18 +312,20 @@ function SavedCardImage({
   alt,
   priority = false,
   hoverScaleClassName = "group-hover:scale-[1.03]",
+  containerClassName = "relative h-[196px] w-full shrink-0 overflow-hidden md:h-[190px] lg:h-[198px]",
+  sizes = SAVED_TRIP_CARD_IMAGE_SIZES,
 }: SavedCardImageProps) {
   const imageMode = getCardImageOptimizationMode(src);
   const imageClassName = `object-cover transition duration-500 ${hoverScaleClassName}`;
 
   return (
-    <div className="relative h-[196px] w-full shrink-0 overflow-hidden md:h-[190px] lg:h-[198px]">
+    <div className={containerClassName}>
       {imageMode.supported ? (
         <Image
           src={src}
           alt={alt}
           fill
-          sizes={SAVED_TRIP_CARD_IMAGE_SIZES}
+          sizes={sizes}
           className={imageClassName}
           loading={priority ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : "auto"}
@@ -906,45 +910,49 @@ export function SavedTripsAndRecentSearches() {
                       <Heart size={15} className="fill-current" />
                     </button>
 
-                    {trip.image ? (
-                      <SavedCardImage
-                        src={trip.image}
-                        alt={trip.imageAlt ?? trip.title}
-                        priority={index < EAGER_SAVED_TRIP_IMAGE_COUNT}
-                      />
-                    ) : (
-                      <div className="flex h-[196px] w-full shrink-0 items-center justify-center bg-gradient-to-br from-violet-100 via-fuchsia-50 to-cyan-50 text-sm font-semibold uppercase tracking-[0.14em] text-slate-600 md:h-[190px] lg:h-[198px]">
-                        {t("savedTripFallbackTitle")}
-                      </div>
-                    )}
+                    <div className="flex min-w-0 gap-3 bg-white p-3 sm:contents">
+                      {trip.image ? (
+                        <SavedCardImage
+                          src={trip.image}
+                          alt={trip.imageAlt ?? trip.title}
+                          priority={index < EAGER_SAVED_TRIP_IMAGE_COUNT}
+                          containerClassName="relative h-[112px] w-[104px] shrink-0 overflow-hidden rounded-lg min-[390px]:h-32 min-[390px]:w-[120px] sm:h-[196px] sm:w-full sm:rounded-none md:h-[190px] lg:h-[198px]"
+                          sizes="(min-width: 1280px) 25vw, (min-width: 768px) 25vw, (min-width: 640px) 33vw, (min-width: 390px) 120px, 104px"
+                        />
+                      ) : (
+                        <div className="flex h-[112px] w-[104px] shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-violet-100 via-fuchsia-50 to-cyan-50 px-2 text-center text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600 min-[390px]:h-32 min-[390px]:w-[120px] sm:h-[196px] sm:w-full sm:rounded-none sm:text-sm sm:tracking-[0.14em] md:h-[190px] lg:h-[198px]">
+                          {t("savedTripFallbackTitle")}
+                        </div>
+                      )}
 
-                    <div className="flex min-w-0 flex-1 flex-col bg-white">
-                      <div className="min-w-0 flex-1 space-y-2 px-3 pt-3">
-                        <h3 className="line-clamp-2 break-words pe-10 text-sm font-bold leading-[1.35] text-slate-950 md:text-[0.95rem]">
+                      <div className="min-w-0 flex-1 space-y-1.5 self-start pe-8 sm:flex sm:min-w-0 sm:flex-1 sm:flex-col sm:self-stretch sm:space-y-2 sm:px-3 sm:pe-3 sm:pt-3">
+                        <h3 className="line-clamp-2 break-words text-[15px] font-bold leading-[1.3] text-slate-950 min-[390px]:text-base sm:pe-10 sm:text-sm sm:leading-[1.35] md:text-[0.95rem]">
                           {trip.title}
                         </h3>
-                        <p className="line-clamp-2 break-words text-xs font-medium leading-5 text-slate-600 md:text-sm">
+                        <p className="line-clamp-2 break-words text-[12px] font-medium leading-4 text-slate-600 min-[390px]:text-[13px] min-[390px]:leading-5 sm:text-xs sm:leading-5 md:text-sm">
                           {trip.route}
                         </p>
-                        <p className="line-clamp-2 break-words text-xs font-medium leading-5 text-slate-600 md:text-sm">
+                        <p className="line-clamp-2 break-words text-[12px] font-medium leading-4 text-slate-600 min-[390px]:text-[13px] min-[390px]:leading-5 sm:text-xs sm:leading-5 md:text-sm">
                           {trip.note}
                         </p>
 
-                        <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                        <div className="flex flex-wrap items-center gap-1.5 pt-0.5 sm:gap-2">
                           <span className="rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-violet-700">
                             {trip.unresolved
                               ? t("savedTripsSavedBadge")
                               : t("savedTripsTrendingBadge")}
                           </span>
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500 sm:text-[11px]">
                             {t("homeDiscoveryTripOneWay")} ·{" "}
                             {t("homeDiscoveryCabinEconomy")} ·{" "}
                             {t("homeDiscoveryTravelerCountOne")}
                           </p>
                         </div>
                       </div>
+                    </div>
 
-                      <div className="mt-auto border-t border-slate-200/90 px-3 pb-3 pt-3">
+                    <div className="mt-auto bg-white px-3 pb-3 sm:flex sm:min-w-0 sm:flex-col sm:px-3 sm:pb-3">
+                      <div className="border-t border-slate-200/90 pt-3">
                         <div className="flex flex-col items-stretch gap-2">
                           <div>
                             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
