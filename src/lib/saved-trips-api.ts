@@ -19,6 +19,28 @@ export type SavedTripApiResult = {
   error?: string;
 };
 
+export type SavedTripSearchMetadata = {
+  tripType?: string;
+  cabinClass?: string;
+  travelerCount?: number;
+  currency?: string;
+  price?: number;
+};
+
+export type SavedTripDisplayDetails = {
+  title?: string;
+  route?: string;
+  note?: string;
+  originCode?: string;
+  destinationCode?: string;
+  originCity?: string;
+  destinationCity?: string;
+  image?: string;
+  imageAlt?: string;
+  href?: string | object;
+  search?: SavedTripSearchMetadata;
+};
+
 export function getSavedTripLocalId(item: SavedTripApiItem): string {
   if (
     item.payload &&
@@ -102,6 +124,7 @@ export async function fetchBackendSavedTrips(
 
 export async function saveBackendTrip(
   localId: string,
+  display?: SavedTripDisplayDetails,
 ): Promise<SavedTripApiResult> {
   try {
     const response = await fetch("/api/dashboard/saved", {
@@ -112,9 +135,10 @@ export async function saveBackendTrip(
       },
       body: JSON.stringify({
         type: "trip",
-        name: localId,
-        destination: localId,
-        payload: { localId },
+        name: display?.title ?? localId,
+        destination:
+          display?.destinationCity ?? display?.destinationCode ?? localId,
+        payload: { ...display, localId },
       }),
     });
     const payload = await readJson(response);

@@ -65,6 +65,7 @@ import {
   fetchBackendSavedTrips,
   getSavedTripLocalId,
   saveBackendTrip,
+  type SavedTripDisplayDetails,
 } from "@/lib/saved-trips-api";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
@@ -497,6 +498,7 @@ function SavedRouteCard({
   onHeartToggle: (
     event: ReactMouseEvent<HTMLButtonElement>,
     itemId: string,
+    display?: SavedTripDisplayDetails,
   ) => void;
 }) {
   const { t: dictionary } = useLocale();
@@ -555,7 +557,25 @@ function SavedRouteCard({
         type="button"
         aria-label={`${t("remove")} ${copy.title}`}
         aria-pressed="true"
-        onClick={(event) => onHeartToggle(event, item.id)}
+        onClick={(event) =>
+          onHeartToggle(event, item.id, {
+            title: copy.title,
+            route: `${item.originCode} → ${item.destinationCode}`,
+            note: copy.routeNote,
+            originCode: item.originCode,
+            destinationCode: item.destinationCode,
+            originCity,
+            destinationCity,
+            image: item.image,
+            imageAlt: item.imageAlt,
+            href: buildDiscoveryLink(item),
+            search: {
+              tripType: "one-way",
+              cabinClass: "economy",
+              travelerCount: 1,
+            },
+          })
+        }
         className="focus-ring absolute end-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-rose-200/90 bg-rose-500/95 text-white shadow-sm shadow-rose-950/15 backdrop-blur transition hover:bg-rose-600"
       >
         <Heart className="h-4 w-4 fill-current" />
@@ -1264,6 +1284,7 @@ export function FlightResultsClient() {
   async function handleSavedRouteToggle(
     event: ReactMouseEvent<HTMLButtonElement>,
     itemId: string,
+    display?: SavedTripDisplayDetails,
   ) {
     event.preventDefault();
     event.stopPropagation();
@@ -1295,13 +1316,15 @@ export function FlightResultsClient() {
           return next;
         });
       } else {
-        setSavedTripError(result.error ?? "Unable to update saved trips right now.");
+        setSavedTripError(
+          result.error ?? "Unable to update saved trips right now.",
+        );
         await refreshBackendSavedTrips();
       }
       return;
     }
 
-    const result = await saveBackendTrip(itemId);
+    const result = await saveBackendTrip(itemId, display);
     if (result.ok || result.duplicate) {
       setSavedTripError("");
       await refreshBackendSavedTrips();
