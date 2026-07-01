@@ -222,6 +222,11 @@ const formatDealsCountLabel = (count: number, label: string, locale: string) => 
     if (label === "객실") return `${count}실`;
   }
 
+  if (normalizedLocale.startsWith("th")) {
+    if (label === "ผู้เดินทาง") return `ผู้เดินทาง ${count} คน`;
+    if (label === "ห้อง") return `ห้อง ${count} ห้อง`;
+  }
+
   if (normalizedLocale.startsWith("ar") && count === 1) {
     return `${label} واحد`;
   }
