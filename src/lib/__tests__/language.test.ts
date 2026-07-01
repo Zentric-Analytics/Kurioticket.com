@@ -122,6 +122,152 @@ test("Thai language metadata, LTR direction, and English fallback dictionary res
   assert.equal(getTranslations("unsupported-locale"), enTranslations);
 });
 
+test("Thai Hotels landing copy resolves through active i18n render path", () => {
+  const hotelsPageSource = readFileSync("src/app/hotels/page.tsx", "utf8");
+  const hotelSearchBarSource = readFileSync("src/components/search/HotelSearchBar.tsx", "utf8");
+
+  const expectedThaiHotelsCopy: Record<string, string> = {
+    hotelsHeroTitle: "ค้นหาที่พักที่เริ่มต้นทริปได้อย่างลงตัว",
+    hotelsHeroSubtitle:
+      "เปรียบเทียบโรงแรมได้ในที่เดียว ตั้งแต่ที่พักในเมืองที่สะดวกสบายไปจนถึงรีสอร์ตพักผ่อนง่าย ๆ",
+    hotelSearchDestinationLabel: "จุดหมายปลายทาง",
+    hotelSearchDestinationPlaceholder: "เมืองหรือโรงแรม",
+    hotelSearchTravelDatesLabel: "วันที่เดินทาง",
+    hotelSearchDatePlaceholder: "เช็กอิน — เช็กเอาต์",
+    hotelSearchGuestsLabel: "ผู้เข้าพัก",
+    guestSingular: "ผู้เข้าพัก",
+    roomSingular: "ห้อง",
+    exploreHotelStaysByDestination: "สำรวจที่พักโรงแรมตามจุดหมายปลายทาง",
+    featuredHotelDestinations: "จุดหมายปลายทางโรงแรมแนะนำ",
+    findStaysEveryKindTrip: "ค้นหาที่พักสำหรับทุกสไตล์การเดินทาง",
+    hotelInspirationBody:
+      "เลือกดูไอเดียจุดหมายปลายทางตามประเภทที่พักที่คุณต้องการ",
+    exploreStaysWorldwide: "สำรวจที่พักทั่วโลก",
+    homeTrustCompareTitle: "เปรียบเทียบข้อเสนอจากผู้ให้บริการ",
+    hotelTrustCompareBody:
+      "ดูตัวเลือกโรงแรมจากผู้ให้บริการหลายรายได้ในที่เดียวก่อนดำเนินการต่อ",
+    hotelTrustReviewTitle: "ตรวจสอบรายละเอียดที่พัก",
+    hotelTrustReviewBody:
+      "ตรวจสอบวันที่ ผู้เข้าพัก ห้องพัก บริบทราคา และข้อมูลที่พักก่อนเลือก",
+    hotelTrustProviderTitle: "ดำเนินการต่อกับผู้ให้บริการ",
+    hotelTrustProviderBody:
+      "เมื่อคุณเลือกตัวเลือกแล้ว ให้ดำเนินการต่อกับผู้ให้บริการเพื่อยืนยันราคาสุดท้าย ความพร้อมให้บริการ ค่าธรรมเนียม และกฎการยกเลิก",
+    "hotelInspirationCategory.Beach": "ชายหาด",
+    "hotelInspirationCategory.City breaks": "ทริปเมือง",
+    "hotelInspirationCategory.Family trips": "ทริปครอบครัว",
+    "hotelInspirationCategory.Relaxed stays": "ที่พักผ่อนสบาย",
+    "hotelInspirationCategory.Weekend ideas": "ไอเดียวันหยุดสุดสัปดาห์",
+    "hotelInspirationBadge.Coastal stays": "ที่พักริมชายฝั่ง",
+    "hotelInspirationBadge.City coast": "เมืองริมชายฝั่ง",
+    "hotelInspirationBadge.Waterfront stays": "ที่พักริมน้ำ",
+    "hotelInspirationBadge.Harbor city": "เมืองท่า",
+    "hotelInspirationBadge.Warm escape": "พักผ่อนในอากาศอบอุ่น",
+    "hotelInspirationBadge.Bay city": "เมืองริมอ่าว",
+    "hotelDestination.Tokyo.title": "ญี่ปุ่น",
+    "hotelDestination.Tokyo.subtitle": "ที่พักในโตเกียว",
+    "hotelDestination.London.title": "สหราชอาณาจักร",
+    "hotelDestination.London.subtitle": "ที่พักในลอนดอน",
+    "hotelDestination.Paris.title": "ฝรั่งเศส",
+    "hotelDestination.Paris.subtitle": "ที่พักในปารีส",
+    "hotelDestination.New York.title": "สหรัฐอเมริกา",
+    "hotelDestination.New York.subtitle": "ที่พักในนิวยอร์ก",
+    "hotelDestination.Rome.title": "อิตาลี",
+    "hotelDestination.Rome.subtitle": "ที่พักในโรม",
+    "hotelDestination.Dubai.title": "สหรัฐอาหรับเอมิเรตส์",
+    "hotelDestination.Dubai.subtitle": "ที่พักในดูไบ",
+    "hotelDestination.Singapore.title": "สิงคโปร์",
+    "hotelDestination.Singapore.subtitle": "ที่พักในสิงคโปร์",
+    "hotelDestination.Barcelona.title": "สเปน",
+    "hotelDestination.Barcelona.subtitle": "ที่พักในบาร์เซโลนา",
+    "hotelDestination.Cancun.title": "เม็กซิโก",
+    "hotelDestination.Cancun.subtitle": "ที่พักในแคนคูน",
+    "hotelDestination.Bangkok.title": "ไทย",
+    "hotelDestination.Bangkok.subtitle": "ที่พักในกรุงเทพฯ",
+    "hotelDestination.Toronto.title": "แคนาดา",
+    "hotelDestination.Toronto.subtitle": "ที่พักในโตรอนโต",
+    "hotelDestination.Amsterdam.title": "เนเธอร์แลนด์",
+    "hotelDestination.Amsterdam.subtitle": "ที่พักในอัมสเตอร์ดัม",
+    "hotelDestination.Istanbul.title": "ตุรกี",
+    "hotelDestination.Istanbul.subtitle": "ที่พักในอิสตันบูล",
+  };
+
+  for (const [key, value] of Object.entries(expectedThaiHotelsCopy)) {
+    assert.equal(thTranslations[key], value, `${key} should resolve to Thai`);
+    assert.notEqual(thTranslations[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  assert.equal(`${thTranslations.guestSingular} 1 คน, ${thTranslations.roomSingular} 1 ห้อง`, "ผู้เข้าพัก 1 คน, ห้อง 1 ห้อง");
+  assert.equal(languageOptions.find((option) => option.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
+
+  for (const key of [
+    "hotelsHeroTitle",
+    "hotelsHeroSubtitle",
+    "exploreHotelStaysByDestination",
+    "featuredHotelDestinations",
+    "findStaysEveryKindTrip",
+    "hotelInspirationBody",
+    "hotelTrustCompareBody",
+    "hotelTrustReviewTitle",
+    "hotelTrustReviewBody",
+    "hotelTrustProviderTitle",
+    "hotelTrustProviderBody",
+    "exploreStaysWorldwide",
+  ]) {
+    assert.match(hotelsPageSource, new RegExp(`t\\("${key}"\\)`));
+  }
+
+  assert.match(hotelsPageSource, /dictionary\[`hotelDestination\.\$\{card\.destinationQuery\}\.title`\]/);
+  assert.match(hotelsPageSource, /dictionary\[`hotelDestination\.\$\{card\.destinationQuery\}\.subtitle`\]/);
+  assert.match(hotelsPageSource, /dictionary\[`hotelDestination\.\$\{card\.destinationQuery\}\.imageAlt`\]/);
+  assert.match(hotelsPageSource, /dictionary\[`hotelDestination\.\$\{card\.destinationQuery\}\.linkLabel`\]/);
+  assert.match(hotelsPageSource, /dictionary\[`hotelInspirationCategory\.\$\{category\}`\]/);
+  assert.match(hotelsPageSource, /dictionary\[`hotelInspirationBadge\.\$\{card\.badge\}`\]/);
+  assert.match(hotelsPageSource, /dictionary\[`hotelDestination\.\$\{card\.destinationQuery\}\.detail`\]/);
+
+  for (const key of [
+    "hotelSearchDestinationLabel",
+    "hotelSearchDestinationPlaceholder",
+    "hotelSearchTravelDatesLabel",
+    "hotelSearchDatePlaceholder",
+    "hotelSearchGuestsLabel",
+    "guestSingular",
+    "roomSingular",
+  ]) {
+    assert.ok(hotelSearchBarSource.includes(key), `${key} should be read by the active hotel search render path`);
+  }
+
+  for (const english of [
+    "Find the stay that starts the trip right.",
+    "Compare hotels in one place, from polished city arrivals to easy resort escapes.",
+    "Explore hotel stays by destination",
+    "Featured hotel destinations",
+    "Find stays for every kind of trip",
+    "Browse destination ideas by the kind of stay you have in mind.",
+    "Review stay details",
+    "Continue with the provider",
+    "Explore stays around the world",
+  ]) {
+    assert.ok(!hotelsPageSource.includes(english), `${english} should not be hardcoded in the active /hotels page`);
+  }
+
+  for (const stableSource of [
+    /destination: destinationQuery/,
+    /checkIn: defaultCheckIn/,
+    /checkOut: defaultCheckOut/,
+    /guests: "2"/,
+    /rooms: "1"/,
+    /destinationQuery: "Tokyo"/,
+    /destinationQuery: "Istanbul"/,
+    /image:\s*"https:\/\/images\.pexels\.com\/photos\/31344755/,
+    /className="page-shell relative z-0 mx-auto/,
+    /aria-labelledby="hotel-destinations-heading"/,
+    /aria-label=\{card\.linkLabel\}/,
+  ]) {
+    assert.match(hotelsPageSource, stableSource);
+  }
+});
+
 test("Indonesian locale is active with homepage copy overrides", () => {
   const indonesianOptions = languageOptions.filter((o) => o.code === "id");
   const indonesianLocaleMetadata = supportedLocales.filter((o) => o.code === "id");
@@ -11692,7 +11838,7 @@ test("Thai homepage hotel, destination, route-card, and date picker copy resolve
     hotels: "โรงแรม",
     destination: "ปลายทาง",
     cityOrHotel: "เมืองหรือโรงแรม",
-    hotelSearchDestinationLabel: "ปลายทาง",
+    hotelSearchDestinationLabel: "จุดหมายปลายทาง",
     hotelSearchDestinationPlaceholder: "เมืองหรือโรงแรม",
     hotelSearchTravelDatesLabel: "วันที่เดินทาง",
     hotelSearchDatePlaceholder: "เช็กอิน — เช็กเอาต์",
