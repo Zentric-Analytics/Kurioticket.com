@@ -11780,7 +11780,7 @@ test("Thai homepage hotel, destination, route-card, and date picker copy resolve
     hotels: "โรงแรม",
     destination: "ปลายทาง",
     cityOrHotel: "เมืองหรือโรงแรม",
-    hotelSearchDestinationLabel: "ปลายทาง",
+    hotelSearchDestinationLabel: "จุดหมายปลายทาง",
     hotelSearchDestinationPlaceholder: "เมืองหรือโรงแรม",
     hotelSearchTravelDatesLabel: "วันที่เดินทาง",
     hotelSearchDatePlaceholder: "เช็กอิน — เช็กเอาต์",
@@ -12244,4 +12244,106 @@ test("Thai auth and country/currency render paths use i18n keys without active E
   assert.match(resetPageSource, /<ResetPasswordForm token=\{token\} \/>/);
   assert.match(signupPageSource, /<SignupForm googleEnabled=\{googleEnabled\} \/>/);
   assert.match(verifyLoginPageSource, /<VerifyLoginForm email=\{email\} callbackUrl=\{callbackUrl\} \/>/);
+});
+
+test("Thai Hotels landing localization resolves active /hotels copy", () => {
+  const hotelsPageSource = readFileSync("src/app/hotels/page.tsx", "utf8");
+  const searchSource = readFileSync("src/components/search/HotelSearchBar.tsx", "utf8");
+
+  const expectedThaiCopy: Record<string, string> = {
+    hotelsHeroTitle: "ค้นหาที่พักที่เริ่มต้นทริปได้อย่างลงตัว",
+    hotelsHeroSubtitle:
+      "เปรียบเทียบโรงแรมได้ในที่เดียว ตั้งแต่ที่พักในเมืองที่สะดวกสบายไปจนถึงรีสอร์ตพักผ่อนง่าย ๆ",
+    hotels: "โรงแรม",
+    hotelSearchDestinationLabel: "จุดหมายปลายทาง",
+    hotelSearchDestinationPlaceholder: "เมืองหรือโรงแรม",
+    hotelSearchTravelDatesLabel: "วันที่เดินทาง",
+    hotelSearchDatePlaceholder: "เช็กอิน — เช็กเอาต์",
+    hotelSearchGuestsLabel: "ผู้เข้าพัก",
+    exploreHotelStaysByDestination: "สำรวจที่พักโรงแรมตามจุดหมายปลายทาง",
+    featuredHotelDestinations: "จุดหมายปลายทางโรงแรมแนะนำ",
+    findStaysEveryKindTrip: "ค้นหาที่พักสำหรับทุกสไตล์การเดินทาง",
+    hotelInspirationBody: "เลือกดูไอเดียจุดหมายปลายทางตามประเภทที่พักที่คุณต้องการ",
+    "hotelInspirationCategory.Beach": "ชายหาด",
+    "hotelInspirationCategory.City breaks": "ทริปเมือง",
+    "hotelInspirationCategory.Family trips": "ทริปครอบครัว",
+    "hotelInspirationCategory.Relaxed stays": "ที่พักผ่อนสบาย",
+    "hotelInspirationCategory.Weekend ideas": "ไอเดียวันหยุดสุดสัปดาห์",
+    "hotelInspirationBadge.Coastal stays": "ที่พักริมชายฝั่ง",
+    "hotelInspirationBadge.City coast": "เมืองริมชายฝั่ง",
+    "hotelInspirationBadge.Waterfront stays": "ที่พักริมน้ำ",
+    "hotelInspirationBadge.Harbor city": "เมืองท่า",
+    "hotelInspirationBadge.Warm escape": "พักผ่อนในอากาศอบอุ่น",
+    "hotelInspirationBadge.Bay city": "เมืองริมอ่าว",
+    homeTrustCompareTitle: "เปรียบเทียบข้อเสนอจากผู้ให้บริการ",
+    hotelTrustCompareBody: "ดูตัวเลือกโรงแรมจากผู้ให้บริการหลายรายได้ในที่เดียวก่อนดำเนินการต่อ",
+    hotelTrustReviewTitle: "ตรวจสอบรายละเอียดที่พัก",
+    hotelTrustReviewBody: "ตรวจสอบวันที่ ผู้เข้าพัก ห้องพัก บริบทราคา และข้อมูลที่พักก่อนเลือก",
+    hotelTrustProviderTitle: "ดำเนินการต่อกับผู้ให้บริการ",
+    hotelTrustProviderBody:
+      "เมื่อคุณเลือกตัวเลือกแล้ว ให้ดำเนินการต่อกับผู้ให้บริการเพื่อยืนยันราคาสุดท้าย ความพร้อมให้บริการ ค่าธรรมเนียม และกฎการยกเลิก",
+    exploreStaysWorldwide: "สำรวจที่พักทั่วโลก",
+    "hotelDestination.Tokyo.title": "ญี่ปุ่น",
+    "hotelDestination.Tokyo.subtitle": "ที่พักในโตเกียว",
+    "hotelDestination.London.title": "สหราชอาณาจักร",
+    "hotelDestination.London.subtitle": "ที่พักในลอนดอน",
+    "hotelDestination.Paris.title": "ฝรั่งเศส",
+    "hotelDestination.Paris.subtitle": "ที่พักในปารีส",
+    "hotelDestination.New York.title": "สหรัฐอเมริกา",
+    "hotelDestination.New York.subtitle": "ที่พักในนิวยอร์ก",
+    "hotelDestination.Rome.title": "อิตาลี",
+    "hotelDestination.Rome.subtitle": "ที่พักในโรม",
+    "hotelDestination.Dubai.title": "สหรัฐอาหรับเอมิเรตส์",
+    "hotelDestination.Dubai.subtitle": "ที่พักในดูไบ",
+    "hotelDestination.Singapore.title": "สิงคโปร์",
+    "hotelDestination.Singapore.subtitle": "ที่พักในสิงคโปร์",
+    "hotelDestination.Barcelona.title": "สเปน",
+    "hotelDestination.Barcelona.subtitle": "ที่พักในบาร์เซโลนา",
+    "hotelDestination.Cancun.title": "เม็กซิโก",
+    "hotelDestination.Cancun.subtitle": "ที่พักในแคนคูน",
+    "hotelDestination.Bangkok.title": "ไทย",
+    "hotelDestination.Bangkok.subtitle": "ที่พักในกรุงเทพฯ",
+    "hotelDestination.Toronto.title": "แคนาดา",
+    "hotelDestination.Toronto.subtitle": "ที่พักในโตรอนโต",
+    "hotelDestination.Amsterdam.title": "เนเธอร์แลนด์",
+    "hotelDestination.Amsterdam.subtitle": "ที่พักในอัมสเตอร์ดัม",
+    "hotelDestination.Istanbul.title": "ตุรกี",
+    "hotelDestination.Istanbul.subtitle": "ที่พักในอิสตันบูล",
+  };
+
+  for (const [key, value] of Object.entries(expectedThaiCopy)) {
+    assert.equal(thTranslations[key], value, `Thai ${key} should resolve localized Hotels landing copy`);
+  }
+
+  assert.equal(thTranslations["hotelResults.liveSearchUnavailable"], "การค้นหาโรงแรมแบบสดไม่พร้อมใช้งานชั่วคราว โปรดลองอีกครั้งในภายหลัง");
+  assert.equal(thTranslations["hotelResults.viewHotel"], "ดูโรงแรม");
+  assert.equal(thTranslations["hotelTrustProviderBody"].includes("ผู้ให้บริการเพื่อยืนยันราคาสุดท้าย"), true);
+  assert.equal(thTranslations["hotelTrustCompareBody"].includes("ผู้ให้บริการหลายราย"), true);
+
+  for (const key of [
+    "hotelsHeroTitle",
+    "hotelsHeroSubtitle",
+    "exploreHotelStaysByDestination",
+    "featuredHotelDestinations",
+    "findStaysEveryKindTrip",
+    "hotelInspirationBody",
+    "exploreStaysWorldwide",
+  ]) {
+    assert.ok(hotelsPageSource.includes(`t("${key}")`), `${key} should be read through i18n on /hotels`);
+  }
+
+  assert.match(hotelsPageSource, /dictionary\[`hotelDestination\.\$\{card\.destinationQuery\}\.title`\]/);
+  assert.match(hotelsPageSource, /dictionary\[`hotelInspirationCategory\.\$\{category\}`\]/);
+  assert.match(hotelsPageSource, /dictionary\[`hotelInspirationBadge\.\$\{card\.badge\}`\]/);
+  assert.match(hotelsPageSource, /destination: destinationQuery/);
+  assert.match(hotelsPageSource, /guests: "2"/);
+  assert.match(hotelsPageSource, /rooms: "1"/);
+  assert.match(hotelsPageSource, /createHotelInspirationCard\("Cancun", "Coastal stays"\)/);
+  assert.match(hotelsPageSource, /className="page-shell relative z-0 mx-auto/);
+  assert.match(searchSource, /const nextUrl = `\/hotels\/results\?\$\{params\.toString\(\)\}`/);
+  assert.match(searchSource, /hotelSearchDestinationLabel/);
+  assert.match(searchSource, /hotelSearchDatePlaceholder/);
+
+  assert.equal(languageOptions.find((option) => option.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
 });
