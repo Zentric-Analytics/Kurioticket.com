@@ -1136,6 +1136,7 @@ export function SearchTabs({
   const isSimplifiedChineseLocale = normalizedSummaryLocale === "zh-cn";
   const isJapaneseLocale = normalizedSummaryLocale === "ja";
   const isKoreanLocale = normalizedSummaryLocale === "ko";
+  const isThaiLocale = normalizedSummaryLocale?.startsWith("th");
   const summarySeparator = isSimplifiedChineseLocale ? "，" : ", ";
   const hotelGuestsRoomsSummary = isArabicLocale
     ? `${Number(guests) === 1 ? `${translate("guestSingular")} واحد` : `${guests} ${translate("guestPlural")}`}، ${Number(rooms) === 1 ? `${translate("roomSingular")} واحدة` : `${rooms} ${translate("roomPlural")}`}`
@@ -1143,6 +1144,8 @@ export function SearchTabs({
       ? `${translate("guestSingular") || "宿泊者"}${guests}名、${rooms}${translate("roomSingular") || "室"}`
     : isKoreanLocale
       ? `${translate("guestSingular") || "투숙객"} ${guests}명, ${translate("roomSingular") || "객실"} ${rooms}개`
+    : isThaiLocale
+      ? `${translate("guestSingular") || "ผู้เข้าพัก"} ${guests} คน, ${translate("roomSingular") || "ห้อง"} ${rooms} ห้อง`
     : `${guests} ${
         Number(guests) === 1
           ? translate("guestSingular") || "guest"
