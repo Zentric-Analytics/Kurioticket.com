@@ -3553,6 +3553,7 @@ test("active account FAQ translations cover all visible FAQ page strings", () =>
     tr: trTranslations,
     pl: plTranslations,
     id: idTranslations,
+    th: thTranslations,
   };
   const accountFaqKeys = [
     "accountDashboard.hub.title",
@@ -3869,6 +3870,80 @@ test("Indonesian Account FAQ render path resolves remaining heading and support 
   assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
 });
 
+
+
+
+test("Thai Account FAQ render path resolves remaining heading and support copy without English fallback", () => {
+  const th = getTranslations("th");
+  const faqItems = getGeneralFaqs((key) => th[key] ?? enTranslations[key] ?? "");
+
+  assert.equal(th.faqGeneralQuestions, "คำถามทั่วไป");
+  assert.equal(th.faqNeedMoreHelpPrefix, "ต้องการความช่วยเหลือเพิ่มเติม? ไปที่");
+  assert.equal(th.faqSupportPage, "หน้าสนับสนุน");
+  assert.equal(th.faqNeedMoreHelpSuffix, "เพื่อดูตัวเลือกบริการและการติดต่อ");
+  assert.equal(
+    `${th.faqNeedMoreHelpPrefix} ${th.faqSupportPage} ${th.faqNeedMoreHelpSuffix}`,
+    "ต้องการความช่วยเหลือเพิ่มเติม? ไปที่ หน้าสนับสนุน เพื่อดูตัวเลือกบริการและการติดต่อ",
+  );
+
+  for (const key of [
+    "faqGeneralQuestions",
+    "faqNeedMoreHelpPrefix",
+    "faqSupportPage",
+    "faqNeedMoreHelpSuffix",
+  ]) {
+    assert.notEqual(th[key], enTranslations[key], key);
+  }
+
+  assert.deepEqual(
+    faqItems.slice(0, 8).map((item) => item.question),
+    [
+      "Kurioticket ค้นหาตัวเลือกเที่ยวบินและโรงแรมอย่างไร?",
+      "Kurioticket ขายตั๋วหรือห้องพักโรงแรมโดยตรงหรือไม่?",
+      "ทำไมราคาจึงเปลี่ยนได้หลังจากฉันคลิกข้อเสนอ?",
+      "ฉันสามารถเปรียบเทียบผู้ให้บริการหลายรายสำหรับทริปเดียวกันได้หรือไม่?",
+      "ฉันจะทำการจองให้เสร็จอย่างปลอดภัยได้อย่างไร?",
+      "ฉันสามารถตั้งค่าความต้องการสกุลเงินและภาษาได้หรือไม่?",
+      "ผลการค้นหาเป็นข้อมูลสดหรือข้อมูลแคช?",
+      "ฉันจะจัดการการเปลี่ยนแปลงหรือการยกเลิกได้ที่ไหน?",
+    ],
+  );
+
+  assert.ok(faqItems.every((item) => !Object.values(enTranslations).includes(item.answer)));
+  assert.ok(faqItems.some((item) => item.answer.includes("Kurioticket") && item.answer.includes("เปรียบเทียบ")));
+  assert.ok(faqItems.some((item) => item.answer.includes("ผู้ให้บริการ") && item.answer.includes("ชำระเงิน")));
+  assert.ok(faqItems.some((item) => item.answer.includes("การเปลี่ยนแปลง") && item.answer.includes("การยกเลิก") && item.answer.includes("การคืนเงิน")));
+
+  const faqContentSource = readFileSync("src/app/faq/FaqContent.tsx", "utf8");
+  const faqPageSource = readFileSync("src/app/faq/page.tsx", "utf8");
+  const faqSource = readFileSync("src/content/faqs.ts", "utf8");
+  const accountShellSource = readFileSync("src/components/dashboard/AccountDetailShell.tsx", "utf8");
+  const accountBackLinkRowSource = readFileSync("src/components/dashboard/AccountBackLinkRow.tsx", "utf8");
+  const accountBackLinkSource = readFileSync("src/components/dashboard/AccountBackLink.tsx", "utf8");
+
+  assert.ok(faqPageSource.includes("<FaqContent showAccountLink={showAccountLink} />"));
+  assert.ok(faqContentSource.includes('t("faqGeneralQuestions")'));
+  assert.ok(faqContentSource.includes('t("faqNeedMoreHelpPrefix")'));
+  assert.ok(faqContentSource.includes('t("faqSupportPage")'));
+  assert.ok(faqContentSource.includes('t("faqNeedMoreHelpSuffix")'));
+  assert.ok(!faqContentSource.includes("General questions"));
+  assert.ok(!faqContentSource.includes("Need more help? Visit the"));
+  assert.ok(!faqContentSource.includes("support page"));
+  assert.ok(!faqContentSource.includes("for service and contact options."));
+  assert.ok(faqContentSource.includes('href="/dashboard/support"'));
+  assert.ok(faqContentSource.includes("faqItems.map((item) =>"));
+  assert.ok(faqContentSource.includes("<details") && faqContentSource.includes("<summary"));
+  assert.ok(faqContentSource.includes('aria-labelledby="faq-list-heading"'));
+  assert.ok(faqContentSource.includes('id="faq-list-heading"'));
+  assert.ok(faqContentSource.includes('className="mt-8 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-5'));
+  assert.ok(faqContentSource.includes("<AccountDetailShell"));
+  assert.ok(accountShellSource.includes("<AccountBackLinkRow />"));
+  assert.ok(accountBackLinkRowSource.includes("<AccountBackLink />"));
+  assert.ok(accountBackLinkSource.includes('href="/dashboard/account"'));
+  assert.ok(faqSource.includes("faqItemKeys.reduce<FaqItem[]>") && faqSource.includes("seenQuestions"));
+  assert.ok(languageOptions.some((option) => option.code === "th" && option.locale === "th-TH" && option.nativeLabel === "ไทย" && option.direction === "ltr"));
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+});
 
 
 test("Turkish account dashboard overview copy resolves without English fallback", () => {

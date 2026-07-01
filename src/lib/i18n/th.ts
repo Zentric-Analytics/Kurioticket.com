@@ -449,6 +449,10 @@ export const translations: TranslationDictionary = {
   faqHeading: "คำถามที่พบบ่อย",
   faqIntro:
     "เรียนรู้ว่า Kurioticket ช่วยให้คุณเปรียบเทียบเที่ยวบิน โรงแรม และตัวเลือกการเดินทางก่อนจองกับผู้ให้บริการที่เชื่อถือได้อย่างไร",
+  faqGeneralQuestions: "คำถามทั่วไป",
+  faqNeedMoreHelpPrefix: "ต้องการความช่วยเหลือเพิ่มเติม? ไปที่",
+  faqSupportPage: "หน้าสนับสนุน",
+  faqNeedMoreHelpSuffix: "เพื่อดูตัวเลือกบริการและการติดต่อ",
   faqQuestionFindOptions: "Kurioticket ค้นหาตัวเลือกเที่ยวบินและโรงแรมอย่างไร?",
   faqAnswerFindOptions:
     "Kurioticket ค้นหาและเปรียบเทียบตัวเลือกการเดินทางจากผู้ให้บริการที่เชื่อถือได้ เพื่อให้คุณตรวจสอบเที่ยวบิน โรงแรม ราคา และรายละเอียดสำคัญก่อนดำเนินการต่อกับผู้ให้บริการ",
