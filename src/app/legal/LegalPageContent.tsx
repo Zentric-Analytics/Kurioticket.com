@@ -1,6 +1,12 @@
 "use client";
 
-import { ArrowRight, Building2, FileText, Mail, ShieldCheck } from "lucide-react";
+import {
+  ArrowRight,
+  Building2,
+  FileText,
+  Mail,
+  ShieldCheck,
+} from "lucide-react";
 import Link from "next/link";
 
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -37,9 +43,18 @@ export function LegalPageContent({ documents }: LegalPageContentProps) {
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const sellerOfTravel = legalProfile.californiaSellerOfTravel;
   const contacts = [
-    { label: t("legal.index.contacts.support"), email: legalProfile.contact.supportEmail },
-    { label: t("legal.index.contacts.legal"), email: legalProfile.contact.legalEmail },
-    { label: t("legal.index.contacts.privacy"), email: legalProfile.contact.privacyEmail },
+    {
+      label: t("legal.index.contacts.support"),
+      email: legalProfile.contact.supportEmail,
+    },
+    {
+      label: t("legal.index.contacts.legal"),
+      email: legalProfile.contact.legalEmail,
+    },
+    {
+      label: t("legal.index.contacts.privacy"),
+      email: legalProfile.contact.privacyEmail,
+    },
   ];
 
   return (
@@ -77,14 +92,21 @@ export function LegalPageContent({ documents }: LegalPageContentProps) {
 
               <dl className="mt-5 space-y-4 text-sm leading-6">
                 <div>
-                  <dt className="font-semibold text-navy">{t("legal.index.compliance.sellerOfTravel")}</dt>
+                  <dt className="font-semibold text-navy">
+                    {t("legal.index.compliance.sellerOfTravel")}
+                  </dt>
                   <dd className="text-muted">
-                    {t("legal.index.compliance.registrationNumberLabel")} {sellerOfTravel.registrationNumber}
+                    {t("legal.index.compliance.registrationNumberLabel")}{" "}
+                    {sellerOfTravel.registrationNumber}
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-navy">{t("legal.index.compliance.registrationExpires")}</dt>
-                  <dd className="text-muted">{t("legal.index.compliance.registrationExpiresDate")}</dd>
+                  <dt className="font-semibold text-navy">
+                    {t("legal.index.compliance.registrationExpires")}
+                  </dt>
+                  <dd className="text-muted">
+                    {t("legal.index.compliance.registrationExpiresDate")}
+                  </dd>
                 </div>
               </dl>
 
@@ -100,7 +122,9 @@ export function LegalPageContent({ documents }: LegalPageContentProps) {
                     className="flex items-center gap-2 rounded-xl px-2 py-1.5 font-semibold text-teal-dark transition hover:bg-teal/10"
                   >
                     <Mail size={16} />
-                    <span>{contact.label}: {contact.email}</span>
+                    <span>
+                      {contact.label}: {contact.email}
+                    </span>
                   </a>
                 ))}
               </div>
@@ -115,12 +139,16 @@ export function LegalPageContent({ documents }: LegalPageContentProps) {
                 <ShieldCheck size={18} />
                 {t("legal.index.resourcesEyebrow")}
               </p>
-              <h2 id="legal-documents-heading" className="mt-1 text-2xl font-bold text-navy sm:text-3xl">
+              <h2
+                id="legal-documents-heading"
+                className="mt-1 text-2xl font-bold text-navy sm:text-3xl"
+              >
                 {t("legal.index.resourcesTitle")}
               </h2>
             </div>
             <p className="text-sm text-muted">
-              {documents.length} {t("legal.index.documentsCountLabel")}
+              {t("legal.index.documentsCountText") ||
+                `${documents.length} ${t("legal.index.documentsCountLabel")}`}
             </p>
           </div>
 
@@ -135,18 +163,28 @@ export function LegalPageContent({ documents }: LegalPageContentProps) {
                 : document.summary;
 
               return (
-                <Link key={document.slug} href={`/legal/${document.slug}`} className="group">
+                <Link
+                  key={document.slug}
+                  href={`/legal/${document.slug}`}
+                  className="group"
+                >
                   <Card className="flex h-full flex-col p-5 transition group-hover:-translate-y-0.5 group-hover:border-teal/40 group-hover:shadow-md">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-surface-muted text-teal-dark">
                         <FileText size={20} />
                       </div>
-                      <ArrowRight className="mt-2 text-muted transition group-hover:translate-x-1 group-hover:text-teal-dark" size={18} />
+                      <ArrowRight
+                        className="mt-2 text-muted transition group-hover:translate-x-1 group-hover:text-teal-dark"
+                        size={18}
+                      />
                     </div>
                     <h3 className="mt-4 font-bold text-navy">{title}</h3>
-                    <p className="mt-2 flex-1 text-sm leading-6 text-muted">{summary}</p>
+                    <p className="mt-2 flex-1 text-sm leading-6 text-muted">
+                      {summary}
+                    </p>
                     <p className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-teal-dark">
-                      {t("legal.index.lastUpdated")}: {t("legal.index.lastUpdatedDate")}
+                      {t("legal.index.lastUpdated")}:{" "}
+                      {t("legal.index.lastUpdatedDate")}
                     </p>
                   </Card>
                 </Link>

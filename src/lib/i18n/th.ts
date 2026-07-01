@@ -13,8 +13,7 @@ export const translations: TranslationDictionary = {
   destinations: "จุดหมายปลายทาง",
   login: "เข้าสู่ระบบ",
   signUp: "สมัครใช้งาน",
-  openLanguagePreferences:
-    "เปิดการตั้งค่าภาษา, ภาษาปัจจุบัน {{language}}",
+  openLanguagePreferences: "เปิดการตั้งค่าภาษา, ภาษาปัจจุบัน {{language}}",
   websiteLanguageTitle: "เลือกภาษาของเว็บไซต์",
   websiteLanguageDescription:
     "English (United States) เป็นภาษาเริ่มต้นของเว็บไซต์ Kurioticket จะเปลี่ยนภาษาเฉพาะหลังจากที่คุณเลือกตัวเลือกที่พร้อมใช้งาน",
@@ -38,8 +37,7 @@ export const translations: TranslationDictionary = {
   countryCurrencyPopularCountryAndCurrency: "ประเทศและสกุลเงินยอดนิยม",
   countryCurrencyOptionCountSingular: "{{count}} ตัวเลือก",
   countryCurrencyOptionCountPlural: "{{count}} ตัวเลือก",
-  selectCountryCurrencyOption:
-    "เลือก {{country}} พร้อมสกุลเงิน {{currency}}",
+  selectCountryCurrencyOption: "เลือก {{country}} พร้อมสกุลเงิน {{currency}}",
   showMoreResults: "แสดงผลลัพธ์เพิ่มเติม",
   loginPageTitle: "เข้าสู่ระบบ",
   loginPageSubtitle:
@@ -304,7 +302,8 @@ export const translations: TranslationDictionary = {
   hotelsHeroMobileTitle: "ค้นหาที่พักที่เริ่มต้นทริปได้อย่างลงตัว",
   hotelsHeroMobileSubtitle:
     "เปรียบเทียบโรงแรมได้ในที่เดียว ตั้งแต่ที่พักในเมืองที่สะดวกสบายไปจนถึงรีสอร์ตพักผ่อนง่าย ๆ",
-  hotelsHeroImageAlt: "พนักงานยกกระเป๋าโรงแรมต้อนรับแขกพร้อมสัมภาระในล็อบบี้พรีเมียม",
+  hotelsHeroImageAlt:
+    "พนักงานยกกระเป๋าโรงแรมต้อนรับแขกพร้อมสัมภาระในล็อบบี้พรีเมียม",
   hotelSearchIntroLabel: "เปรียบเทียบตัวเลือกโรงแรม",
   cityOrHotel: "เมืองหรือโรงแรม",
   hotelSearchDestinationLabel: "จุดหมายปลายทาง",
@@ -322,7 +321,8 @@ export const translations: TranslationDictionary = {
   exploreHotelStaysByDestination: "สำรวจที่พักโรงแรมตามจุดหมายปลายทาง",
   featuredHotelDestinations: "จุดหมายปลายทางโรงแรมแนะนำ",
   findStaysEveryKindTrip: "ค้นหาที่พักสำหรับทุกสไตล์การเดินทาง",
-  hotelInspirationBody: "เลือกดูไอเดียจุดหมายปลายทางตามประเภทที่พักที่คุณต้องการ",
+  hotelInspirationBody:
+    "เลือกดูไอเดียจุดหมายปลายทางตามประเภทที่พักที่คุณต้องการ",
   hotelInspirationCategories: "หมวดหมู่ไอเดียที่พักโรงแรม",
   exploreStaysWorldwide: "สำรวจที่พักทั่วโลก",
   guestsAndRooms: "ผู้เข้าพักและห้องพัก",
@@ -374,7 +374,8 @@ export const translations: TranslationDictionary = {
   "hotelDestination.Toronto.detail": "แคนาดา",
   "hotelDestination.Amsterdam.title": "เนเธอร์แลนด์",
   "hotelDestination.Amsterdam.subtitle": "ที่พักในอัมสเตอร์ดัม",
-  "hotelDestination.Amsterdam.linkLabel": "ค้นหาโรงแรมในอัมสเตอร์ดัม เนเธอร์แลนด์",
+  "hotelDestination.Amsterdam.linkLabel":
+    "ค้นหาโรงแรมในอัมสเตอร์ดัม เนเธอร์แลนด์",
   "hotelDestination.Amsterdam.detail": "เนเธอร์แลนด์",
   "hotelDestination.Bangkok.title": "ไทย",
   "hotelDestination.Bangkok.subtitle": "ที่พักในกรุงเทพฯ",
@@ -419,12 +420,16 @@ export const translations: TranslationDictionary = {
   "hotelInspirationCategory.Family trips": "ทริปครอบครัว",
   "hotelInspirationCategory.Relaxed stays": "ที่พักผ่อนสบาย",
   "hotelInspirationCategory.Weekend ideas": "ไอเดียวันหยุดสุดสัปดาห์",
-  hotelTrustCompareBody: "ดูตัวเลือกโรงแรมจากผู้ให้บริการหลายรายได้ในที่เดียวก่อนดำเนินการต่อ",
+  hotelTrustCompareBody:
+    "ดูตัวเลือกโรงแรมจากผู้ให้บริการหลายรายได้ในที่เดียวก่อนดำเนินการต่อ",
   hotelTrustReviewTitle: "ตรวจสอบรายละเอียดที่พัก",
-  hotelTrustReviewBody: "ตรวจสอบวันที่ ผู้เข้าพัก ห้องพัก บริบทราคา และข้อมูลที่พักก่อนเลือก",
+  hotelTrustReviewBody:
+    "ตรวจสอบวันที่ ผู้เข้าพัก ห้องพัก บริบทราคา และข้อมูลที่พักก่อนเลือก",
   hotelTrustProviderTitle: "ดำเนินการต่อกับผู้ให้บริการ",
-  hotelTrustProviderBody: "เมื่อคุณเลือกตัวเลือกแล้ว ให้ดำเนินการต่อกับผู้ให้บริการเพื่อยืนยันราคาสุดท้าย ความพร้อมให้บริการ ค่าธรรมเนียม และกฎการยกเลิก",
-  "hotelResults.liveSearchUnavailable": "การค้นหาโรงแรมแบบสดไม่พร้อมใช้งานชั่วคราว โปรดลองอีกครั้งในภายหลัง",
+  hotelTrustProviderBody:
+    "เมื่อคุณเลือกตัวเลือกแล้ว ให้ดำเนินการต่อกับผู้ให้บริการเพื่อยืนยันราคาสุดท้าย ความพร้อมให้บริการ ค่าธรรมเนียม และกฎการยกเลิก",
+  "hotelResults.liveSearchUnavailable":
+    "การค้นหาโรงแรมแบบสดไม่พร้อมใช้งานชั่วคราว โปรดลองอีกครั้งในภายหลัง",
   "hotelResults.foundPlacesToStay": "เราพบที่พัก {{count}} แห่งสำหรับคุณ",
   "hotelResults.cheapest": "ถูกที่สุด",
   "hotelResults.lowestTotalPrice": "ราคารวมต่ำที่สุด",
@@ -538,7 +543,8 @@ export const translations: TranslationDictionary = {
     "ดูไอเดียเส้นทาง แล้วเริ่มค้นหาจริงพร้อมวันที่และจำนวนผู้เดินทางก่อนเปรียบเทียบเที่ยวบินที่มีให้เลือก",
   flightLandingRouteTemplate: "{{origin}} ไป {{destination}}",
   flightLandingRouteConnector: "ไป",
-  flightLandingRouteAriaLabel: "ค้นหาเที่ยวบินจาก {{origin}} ไป {{destination}}",
+  flightLandingRouteAriaLabel:
+    "ค้นหาเที่ยวบินจาก {{origin}} ไป {{destination}}",
   "flightLandingCity.Cairo": "ไคโร",
   "flightLandingCity.Honolulu": "โฮโนลูลู",
   "flightLandingCity.San Diego": "ซานดิเอโก",
@@ -680,60 +686,76 @@ export const translations: TranslationDictionary = {
   "deals.destination.rome.imageAlt": "แลนด์มาร์กกรุงโรม",
   searchRentalCarsEveryPartTrip: "ค้นหารถเช่าสำหรับทุกช่วงของทริป",
   exploreCarsByTripStyle: "สำรวจรถเช่าตามสไตล์การเดินทาง",
-  carsTripStyleBody: "เลือกประเภทรถ แล้วเราจะเปิดผลลัพธ์พร้อมบริบทการค้นหาที่เตรียมไว้",
+  carsTripStyleBody:
+    "เลือกประเภทรถ แล้วเราจะเปิดผลลัพธ์พร้อมบริบทการค้นหาที่เตรียมไว้",
   "carsTripStyle.economy.title": "รถประหยัด",
-  "carsTripStyle.economy.subtitle": "การค้นหาราคาคุ้มค่าสำหรับการเดินทางในเมืองและทริปเดี่ยว",
+  "carsTripStyle.economy.subtitle":
+    "การค้นหาราคาคุ้มค่าสำหรับการเดินทางในเมืองและทริปเดี่ยว",
   "carsTripStyle.economy.cta": "เริ่มค้นหารถประหยัด",
-  "carsTripStyle.economy.ariaLabel": "เริ่มค้นหารถประหยัดจากจุดรับรถใจกลางเมือง",
+  "carsTripStyle.economy.ariaLabel":
+    "เริ่มค้นหารถประหยัดจากจุดรับรถใจกลางเมือง",
   "carsTripStyle.economy.imageAlt": "รถขนาดกะทัดรัดวิ่งระหว่างอาคารในตัวเมือง",
   "carsTripStyle.suv.title": "รถ SUV",
-  "carsTripStyle.suv.subtitle": "มีพื้นที่สำหรับทริปครอบครัว สัมภาระ และการขับขี่ระยะไกล",
+  "carsTripStyle.suv.subtitle":
+    "มีพื้นที่สำหรับทริปครอบครัว สัมภาระ และการขับขี่ระยะไกล",
   "carsTripStyle.suv.cta": "เปิดการค้นหาเช่ารถ SUV",
   "carsTripStyle.suv.ariaLabel": "เปิดการค้นหาเช่ารถ SUV จากจุดรับรถที่สนามบิน",
   "carsTripStyle.suv.imageAlt": "รถ SUV ขับไปตามถนนเปิดโล่งใกล้ภูเขา",
   "carsTripStyle.luxury.title": "รถหรู",
-  "carsTripStyle.luxury.subtitle": "บริบทการค้นหาระดับพรีเมียมสำหรับธุรกิจหรือทริปพิเศษ",
+  "carsTripStyle.luxury.subtitle":
+    "บริบทการค้นหาระดับพรีเมียมสำหรับธุรกิจหรือทริปพิเศษ",
   "carsTripStyle.luxury.cta": "วางแผนค้นหารถหรู",
   "carsTripStyle.luxury.ariaLabel": "วางแผนค้นหารถหรูจากจุดรับรถบริเวณโรงแรม",
   "carsTripStyle.luxury.imageAlt": "รถพรีเมียมจอดใกล้อาคารสมัยใหม่ที่หรูหรา",
   "carsTripStyle.van.title": "รถตู้",
-  "carsTripStyle.van.subtitle": "บริบทการค้นหาสำหรับการเดินทางเป็นกลุ่มและสัมภาระครอบครัว",
+  "carsTripStyle.van.subtitle":
+    "บริบทการค้นหาสำหรับการเดินทางเป็นกลุ่มและสัมภาระครอบครัว",
   "carsTripStyle.van.cta": "ค้นหารถตู้สำหรับทริปกลุ่ม",
-  "carsTripStyle.van.ariaLabel": "ค้นหารถตู้สำหรับทริปกลุ่มจากจุดรับรถที่สนามบิน",
+  "carsTripStyle.van.ariaLabel":
+    "ค้นหารถตู้สำหรับทริปกลุ่มจากจุดรับรถที่สนามบิน",
   "carsTripStyle.van.imageAlt": "รถตู้โดยสารเดินทางผ่านถนนวิวสวยสว่างสดใส",
   "carsTrust.0.title": "ออกแบบมาสำหรับทริปครบวงจร",
-  "carsTrust.0.description": "วางแผนเที่ยวบิน ที่พัก และการเดินทางภาคพื้นดินได้ในขั้นตอนเดียวบน Kurioticket",
+  "carsTrust.0.description":
+    "วางแผนเที่ยวบิน ที่พัก และการเดินทางภาคพื้นดินได้ในขั้นตอนเดียวบน Kurioticket",
   "carsTrust.1.title": "เริ่มจากรายละเอียดการรับรถ",
-  "carsTrust.1.description": "ป้อนสถานที่รับรถ วันที่ เวลา และอายุผู้ขับขี่ เพื่อให้การค้นหารถเช่าเริ่มต้นด้วยรายละเอียดทริปที่ถูกต้อง",
+  "carsTrust.1.description":
+    "ป้อนสถานที่รับรถ วันที่ เวลา และอายุผู้ขับขี่ เพื่อให้การค้นหารถเช่าเริ่มต้นด้วยรายละเอียดทริปที่ถูกต้อง",
   "carsTrust.2.title": "ตรวจสอบการเช่าอย่างชัดเจน",
-  "carsTrust.2.description": "ตรวจสอบราคาสุดท้าย ความพร้อมให้บริการ ค่าธรรมเนียม และกฎการเช่ากับผู้ให้บริการก่อนจอง",
+  "carsTrust.2.description":
+    "ตรวจสอบราคาสุดท้าย ความพร้อมให้บริการ ค่าธรรมเนียม และกฎการเช่ากับผู้ให้บริการก่อนจอง",
   "carsPickup.Airport.title": "รับรถที่สนามบิน",
   "carsPickup.Airport.subtitle": "เริ่มจากจุดเดินทางมาถึงของสนามบินหลัก",
   "carsPickup.Airport.ariaLabel": "เปิดผลลัพธ์รถสำหรับการรับรถที่สนามบิน",
-  "carsPickup.Airport.imageAlt": "เครื่องบินจอดอยู่ที่ประตูสนามบินในยามพระอาทิตย์ตก",
+  "carsPickup.Airport.imageAlt":
+    "เครื่องบินจอดอยู่ที่ประตูสนามบินในยามพระอาทิตย์ตก",
   "carsPickup.City center.title": "รับรถใจกลางเมือง",
   "carsPickup.City center.subtitle": "รับรถใกล้โรงแรมในตัวเมืองและย่านธุรกิจ",
   "carsPickup.City center.ariaLabel": "เปิดผลลัพธ์รถสำหรับการรับรถใจกลางเมือง",
   "carsPickup.City center.imageAlt": "รถยนต์ขับผ่านถนนในเมืองระหว่างอาคารสูง",
   "carsPickup.Train station.title": "รับรถที่สถานีรถไฟ",
   "carsPickup.Train station.subtitle": "เดินทางต่อหลังจากมาถึงด้วยรถไฟ",
-  "carsPickup.Train station.ariaLabel": "เปิดผลลัพธ์รถสำหรับการรับรถที่สถานีรถไฟ",
-  "carsPickup.Train station.imageAlt": "ชานชาลารถไฟพร้อมรางที่มุ่งเข้าสู่สถานีในเมือง",
+  "carsPickup.Train station.ariaLabel":
+    "เปิดผลลัพธ์รถสำหรับการรับรถที่สถานีรถไฟ",
+  "carsPickup.Train station.imageAlt":
+    "ชานชาลารถไฟพร้อมรางที่มุ่งเข้าสู่สถานีในเมือง",
   "carsPickup.Hotel area.title": "รับรถใกล้บริเวณโรงแรม",
   "carsPickup.Hotel area.subtitle": "วางแผนรับรถใกล้ที่พักของคุณ",
   "carsPickup.Hotel area.ariaLabel": "เปิดผลลัพธ์รถสำหรับการรับรถบริเวณโรงแรม",
   "carsPickup.Hotel area.imageAlt": "ภายนอกโรงแรมพร้อมต้นปาล์มและทางรถเข้า",
   carsPickupPointsTitle: "เริ่มจากจุดรับรถยอดนิยม",
-  carsPickupPointsBody: "เลือกรูปแบบจุดรับรถ แล้วเราจะเปิดหน้าผลลัพธ์รถพร้อมรายละเอียดการค้นหาที่เตรียมไว้",
+  carsPickupPointsBody:
+    "เลือกรูปแบบจุดรับรถ แล้วเราจะเปิดหน้าผลลัพธ์รถพร้อมรายละเอียดการค้นหาที่เตรียมไว้",
   "carsSearch.pickupLocationLabel": "สถานที่รับรถ",
   "carsSearch.pickupLocationPlaceholder": "สนามบิน เมือง หรือที่อยู่",
-  "carsSearch.returnLocationPlaceholder": "เมือง สนามบิน หรือที่อยู่สำหรับคืนรถ",
+  "carsSearch.returnLocationPlaceholder":
+    "เมือง สนามบิน หรือที่อยู่สำหรับคืนรถ",
   "carsSearch.returnToSameLocation": "คืนรถที่สถานที่เดิม",
   "carsSearch.differentReturnLocation": "คืนรถต่างสถานที่",
   "carsSearch.rentalDatesLabel": "วันที่เช่ารถ",
   "carsSearch.rentalDatePlaceholder": "วันที่รับรถ — วันที่คืนรถ",
   "carsSearch.pickupReturnTimeLabel": "เวลารับรถ / คืนรถ",
-  "carsSearch.pickupReturnTimeSummary": "รับรถ {pickupTime} — คืนรถ {returnTime}",
+  "carsSearch.pickupReturnTimeSummary":
+    "รับรถ {pickupTime} — คืนรถ {returnTime}",
   "carsSearch.driverAgeLabel": "อายุผู้ขับขี่",
   "carsSearch.driverAgeAnyAge": "ทุกช่วงอายุ",
   "carsSearch.clearPickupLocation": "ล้างสถานที่รับรถ",
@@ -754,17 +776,23 @@ export const translations: TranslationDictionary = {
   carsSearchPreparing: "กำลังเตรียมการค้นหารถ...",
   "carsFaq.heading": "คำถามที่พบบ่อยเกี่ยวกับรถเช่า",
   "carsFaq.0.question": "ต้องใช้ข้อมูลอะไรบ้างในการค้นหารถเช่า?",
-  "carsFaq.0.answer": "ป้อนสถานที่รับรถ วันที่รับและคืนรถ เวลารับและคืนรถ อายุผู้ขับขี่ และระบุว่าคุณต้องการคืนรถต่างสถานที่หรือไม่",
+  "carsFaq.0.answer":
+    "ป้อนสถานที่รับรถ วันที่รับและคืนรถ เวลารับและคืนรถ อายุผู้ขับขี่ และระบุว่าคุณต้องการคืนรถต่างสถานที่หรือไม่",
   "carsFaq.1.question": "ฉันสามารถคืนรถต่างสถานที่ได้หรือไม่?",
-  "carsFaq.1.answer": "ได้ เลือกคืนรถต่างสถานที่ในแบบฟอร์มค้นหา แล้วป้อนเมือง สนามบิน หรือที่อยู่ที่คุณวางแผนจะคืนรถ",
+  "carsFaq.1.answer":
+    "ได้ เลือกคืนรถต่างสถานที่ในแบบฟอร์มค้นหา แล้วป้อนเมือง สนามบิน หรือที่อยู่ที่คุณวางแผนจะคืนรถ",
   "carsFaq.2.question": "ทำไมอายุผู้ขับขี่จึงสำคัญสำหรับรถเช่า?",
-  "carsFaq.2.answer": "ผู้ให้บริการรถเช่าอาจใช้กฎ ค่าธรรมเนียม สิทธิ์ในการเลือกรถ หรือข้อกำหนดเงินมัดจำที่แตกต่างกันตามอายุและสถานที่ของผู้ขับขี่",
+  "carsFaq.2.answer":
+    "ผู้ให้บริการรถเช่าอาจใช้กฎ ค่าธรรมเนียม สิทธิ์ในการเลือกรถ หรือข้อกำหนดเงินมัดจำที่แตกต่างกันตามอายุและสถานที่ของผู้ขับขี่",
   "carsFaq.3.question": "ควรตรวจสอบอะไรบ้างก่อนจองรถเช่า?",
-  "carsFaq.3.answer": "ตรวจสอบสถานที่รับและคืนรถ วันที่ เวลา นโยบายระยะทาง นโยบายน้ำมัน ตัวเลือกประกัน เงื่อนไขการยกเลิก ข้อกำหนดเงินมัดจำ และเอกสารที่ต้องใช้ก่อนจอง",
+  "carsFaq.3.answer":
+    "ตรวจสอบสถานที่รับและคืนรถ วันที่ เวลา นโยบายระยะทาง นโยบายน้ำมัน ตัวเลือกประกัน เงื่อนไขการยกเลิก ข้อกำหนดเงินมัดจำ และเอกสารที่ต้องใช้ก่อนจอง",
   "carsFaq.4.question": "ราคาสุดท้ายของรถเช่ายืนยันที่ไหน?",
-  "carsFaq.4.answer": "ราคาสุดท้าย ความพร้อมให้บริการของรถ ภาษี ค่าธรรมเนียม ข้อกำหนดเงินมัดจำ และกฎการเช่าจะได้รับการยืนยันโดยผู้ให้บริการก่อนการจอง",
+  "carsFaq.4.answer":
+    "ราคาสุดท้าย ความพร้อมให้บริการของรถ ภาษี ค่าธรรมเนียม ข้อกำหนดเงินมัดจำ และกฎการเช่าจะได้รับการยืนยันโดยผู้ให้บริการก่อนการจอง",
   "carsFaq.5.question": "ฉันอาจต้องใช้เอกสารอะไรบ้างตอนรับรถ?",
-  "carsFaq.5.answer": "ผู้ให้บริการรถเช่าอาจกำหนดให้ใช้ใบขับขี่ที่ยังไม่หมดอายุ บัตรชำระเงิน หลักฐานยืนยันตัวตน และเอกสารใด ๆ ที่ประเทศหรือสถานที่รับรถกำหนด",
+  "carsFaq.5.answer":
+    "ผู้ให้บริการรถเช่าอาจกำหนดให้ใช้ใบขับขี่ที่ยังไม่หมดอายุ บัตรชำระเงิน หลักฐานยืนยันตัวตน และเอกสารใด ๆ ที่ประเทศหรือสถานที่รับรถกำหนด",
   supportFaqAccountQuestion: "ความช่วยเหลือเกี่ยวกับบัญชีและการเข้าสู่ระบบ",
   supportFaqSearchQuestion: "ความช่วยเหลือเกี่ยวกับการค้นหาและผลลัพธ์",
   supportFaqSavedTripsQuestion: "ทริปที่บันทึกไว้และการแจ้งเตือน",
@@ -980,7 +1008,6 @@ export const translations: TranslationDictionary = {
   footerTerms: "ข้อกำหนด",
   footerCookies: "คุกกี้",
 
-
   flightDetailsLoading: "กำลังโหลดรายละเอียดเที่ยวบิน...",
   flightDetailsProviderDisclaimer:
     "ราคา ความพร้อมให้บริการ การจอง และกฎค่าโดยสารขั้นสุดท้ายได้รับการยืนยันโดยผู้ให้บริการ",
@@ -1004,14 +1031,17 @@ export const translations: TranslationDictionary = {
   estimateShownProviderPrice: "ราคาโดยประมาณที่แสดง ราคาจากผู้ให้บริการ:",
   continueToProvider: "ดำเนินการต่อไปยังผู้ให้บริการ",
   compareMoreProviders: "เปรียบเทียบผู้ให้บริการเพิ่มเติม",
-  providerComparisonIntro: "Kurioticket สามารถเปรียบเทียบจากผู้ให้บริการหลายรายได้",
+  providerComparisonIntro:
+    "Kurioticket สามารถเปรียบเทียบจากผู้ให้บริการหลายรายได้",
   noAdditionalLiveProviderOptions:
     "ขณะนี้ยังไม่มีตัวเลือกผู้ให้บริการแบบสดเพิ่มเติมสำหรับเที่ยวบินนี้",
   confirmedByProvider: "ยืนยันโดยผู้ให้บริการ",
   notRefundableBeforeDeparture: "ไม่สามารถขอคืนเงินก่อนออกเดินทางได้",
-  refundableBeforeDepartureWithPenalty: "ขอคืนเงินก่อนออกเดินทางได้โดยมีค่าปรับ {{currency}} {{amount}}",
+  refundableBeforeDepartureWithPenalty:
+    "ขอคืนเงินก่อนออกเดินทางได้โดยมีค่าปรับ {{currency}} {{amount}}",
   refundableBeforeDeparture: "ขอคืนเงินก่อนออกเดินทางได้",
-  changesAllowedWithPenalty: "เปลี่ยนแปลงได้โดยมีค่าปรับ {{currency}} {{amount}}",
+  changesAllowedWithPenalty:
+    "เปลี่ยนแปลงได้โดยมีค่าปรับ {{currency}} {{amount}}",
   changesAllowedBeforeDeparture: "เปลี่ยนแปลงได้ก่อนออกเดินทาง",
   changesNotAllowedBeforeDeparture: "ไม่สามารถเปลี่ยนแปลงก่อนออกเดินทางได้",
   baggage: "สัมภาระ",
@@ -1084,21 +1114,29 @@ export const translations: TranslationDictionary = {
   quickest: "คะแนนสูงสุด",
   departs: "ออกเดินทาง",
   updatingResults: "กำลังอัปเดตผลลัพธ์...",
-  noFlightsMatchFilters: "ไม่มีเที่ยวบินที่ตรงกับตัวกรองเหล่านี้ ขยายตัวกรองเพื่อดูตัวเลือกสดเพิ่มเติม",
+  noFlightsMatchFilters:
+    "ไม่มีเที่ยวบินที่ตรงกับตัวกรองเหล่านี้ ขยายตัวกรองเพื่อดูตัวเลือกสดเพิ่มเติม",
   unableToSearchFlights: "ไม่สามารถค้นหาเที่ยวบินได้",
-  "Live flight results are temporarily unavailable. Please try again shortly.": "ผลลัพธ์เที่ยวบินสดไม่พร้อมใช้งานชั่วคราว โปรดลองอีกครั้งในไม่ช้า",
-  limitedProviderChecks: "การตรวจสอบผู้ให้บริการบางรายการอาจมีข้อจำกัดสำหรับการค้นหานี้ โปรดตรวจสอบความพร้อมให้บริการและรายละเอียดค่าโดยสารขั้นสุดท้ายกับผู้ให้บริการก่อนจอง",
+  "Live flight results are temporarily unavailable. Please try again shortly.":
+    "ผลลัพธ์เที่ยวบินสดไม่พร้อมใช้งานชั่วคราว โปรดลองอีกครั้งในไม่ช้า",
+  limitedProviderChecks:
+    "การตรวจสอบผู้ให้บริการบางรายการอาจมีข้อจำกัดสำหรับการค้นหานี้ โปรดตรวจสอบความพร้อมให้บริการและรายละเอียดค่าโดยสารขั้นสุดท้ายกับผู้ให้บริการก่อนจอง",
   closeFilters: "ปิดตัวกรอง",
   editFlightSearch: "แก้ไขการค้นหาเที่ยวบิน",
   flightOption: "ตัวเลือกเที่ยวบิน",
   estimatedPrice: "ราคาโดยประมาณ",
   providerPrice: "ราคาจากผู้ให้บริการ",
-  displayEstimateConvertedFromProviderPrice: "{{formatted}} ราคาโดยประมาณที่แปลงจาก {{providerPrice}} ราคาผู้ให้บริการขั้นสุดท้ายอาจแตกต่างออกไป",
-  convertedDisplayEstimateProviderPrice: "ราคาแสดงผลโดยประมาณที่แปลงแล้ว ราคาจากผู้ให้บริการ: {{providerPrice}} ราคาผู้ให้บริการขั้นสุดท้ายอาจแตกต่างออกไป",
+  displayEstimateConvertedFromProviderPrice:
+    "{{formatted}} ราคาโดยประมาณที่แปลงจาก {{providerPrice}} ราคาผู้ให้บริการขั้นสุดท้ายอาจแตกต่างออกไป",
+  convertedDisplayEstimateProviderPrice:
+    "ราคาแสดงผลโดยประมาณที่แปลงแล้ว ราคาจากผู้ให้บริการ: {{providerPrice}} ราคาผู้ให้บริการขั้นสุดท้ายอาจแตกต่างออกไป",
   viewFlight: "ดูเที่ยวบิน",
-  flightCardProviderHandoff: "รายละเอียดขาไปและขากลับแสดงจากข้อมูลกำหนดการเดินทางที่ผู้ให้บริการส่งมา ราคา ความพร้อมให้บริการ การจอง และกฎค่าโดยสารขั้นสุดท้ายได้รับการยืนยันโดยผู้ให้บริการ",
-  flightCardProviderHandoffConverted: "รายละเอียดขาไปและขากลับแสดงจากข้อมูลกำหนดการเดินทางที่ผู้ให้บริการส่งมา ราคา ความพร้อมให้บริการ การจอง และกฎค่าโดยสารขั้นสุดท้ายได้รับการยืนยันโดยผู้ให้บริการ สกุลเงินสุดท้ายของผู้ให้บริการอาจแตกต่างจากสกุลเงินแสดงผลที่คุณเลือก",
-  providerNormalizedItineraryPrefix: "รายละเอียดขาไปและขากลับแสดงจากข้อมูลกำหนดการเดินทางที่ผู้ให้บริการส่งมา",
+  flightCardProviderHandoff:
+    "รายละเอียดขาไปและขากลับแสดงจากข้อมูลกำหนดการเดินทางที่ผู้ให้บริการส่งมา ราคา ความพร้อมให้บริการ การจอง และกฎค่าโดยสารขั้นสุดท้ายได้รับการยืนยันโดยผู้ให้บริการ",
+  flightCardProviderHandoffConverted:
+    "รายละเอียดขาไปและขากลับแสดงจากข้อมูลกำหนดการเดินทางที่ผู้ให้บริการส่งมา ราคา ความพร้อมให้บริการ การจอง และกฎค่าโดยสารขั้นสุดท้ายได้รับการยืนยันโดยผู้ให้บริการ สกุลเงินสุดท้ายของผู้ให้บริการอาจแตกต่างจากสกุลเงินแสดงผลที่คุณเลือก",
+  providerNormalizedItineraryPrefix:
+    "รายละเอียดขาไปและขากลับแสดงจากข้อมูลกำหนดการเดินทางที่ผู้ให้บริการส่งมา",
   checkProvider: "ตรวจสอบกับผู้ให้บริการ",
   carryOnIncluded: "รวมกระเป๋าถือขึ้นเครื่อง",
   flightLeg: "ช่วงเที่ยวบิน",
@@ -1108,7 +1146,8 @@ export const translations: TranslationDictionary = {
 
   savedTripFallbackTitle: "ทริปที่บันทึกไว้",
   savedTripFallbackRoute: "ไม่มีรายละเอียดจุดหมายปลายทาง",
-  savedTripFallbackNote: "ทริปนี้ถูกบันทึกไว้บนอุปกรณ์นี้และยังสามารถลบออกได้ทุกเมื่อ",
+  savedTripFallbackNote:
+    "ทริปนี้ถูกบันทึกไว้บนอุปกรณ์นี้และยังสามารถลบออกได้ทุกเมื่อ",
   savedTripsPageTitle: "ทริปที่บันทึกไว้",
   savedTripsPageSubtitle: "แผนการเดินทางที่คุณเลือกไว้และเส้นทางยอดนิยม",
   savedTripsClearAllSaved: "ล้างรายการที่บันทึกไว้ทั้งหมด",
@@ -1150,6 +1189,398 @@ export const translations: TranslationDictionary = {
   savedTripsCabinPremiumEconomy: "ชั้นประหยัดพรีเมียม",
   savedTripsCabinBusiness: "ชั้นธุรกิจ",
   savedTripsCabinFirst: "ชั้นหนึ่ง",
+
+  "legalCenter.heroLabel": "ข้อมูลทางกฎหมาย",
+  "legalCenter.heroTitle": "ศูนย์กฎหมาย",
+  "legal.index.heroLabel": "ข้อมูลทางกฎหมาย",
+  "legal.index.heroTitle": "ศูนย์กฎหมาย",
+  "legal.index.heroDescription":
+    "แหล่งข้อมูลทางกฎหมายของ Kurioticket อธิบายวิธีที่การค้นหาการเดินทาง บัญชี ความเป็นส่วนตัว การเปลี่ยนเส้นทางไปยังผู้ให้บริการ และแนวทางการปฏิบัติตามข้อกำหนดของเราทำงาน",
+  "legal.index.compliance.eyebrow": "บริษัทและการปฏิบัติตามข้อกำหนด",
+  "legal.index.compliance.sellerOfTravel": "ผู้ขายการเดินทางของรัฐแคลิฟอร์เนีย",
+  "legal.index.compliance.registrationNumberLabel": "เลขทะเบียน",
+  "legal.index.compliance.registrationExpires": "ทะเบียนหมดอายุ",
+  "legal.index.compliance.registrationExpiresDate": "June 05, 2027",
+  "legal.index.compliance.publicNotice":
+    "การจดทะเบียนเป็นผู้ขายการเดินทางไม่ได้ถือเป็นการรับรองจากรัฐแคลิฟอร์เนีย",
+  "legal.index.contacts.support": "ฝ่ายสนับสนุน",
+  "legal.index.contacts.legal": "ฝ่ายกฎหมาย",
+  "legal.index.contacts.privacy": "ความเป็นส่วนตัว",
+  "legal.index.resourcesEyebrow": "แหล่งข้อมูลอย่างเป็นทางการ",
+  "legal.index.resourcesTitle": "เอกสารทางกฎหมาย",
+  "legal.index.documentsCountLabel": "นโยบายและประกาศที่มีให้ดู",
+  "legal.index.documentsCountText": "มีนโยบายและประกาศ 14 รายการ",
+  "legal.index.lastUpdated": "อัปเดตล่าสุด",
+  "legal.index.lastUpdatedDate": "May 11, 2026",
+  "legal.lastUpdated": "อัปเดตล่าสุด",
+  "legal.print": "พิมพ์",
+  "legal.tableOfContents": "สารบัญ",
+  "legal.index.developerNote":
+    "ร่างเอกสารทางกฎหมายเหล่านี้เป็นข้อความชั่วคราวสำหรับสตาร์ทอัป และควรได้รับการตรวจสอบโดยที่ปรึกษากฎหมายที่มีคุณสมบัติก่อนเปิดให้ใช้งานสาธารณะในวงกว้าง",
+  "legal.index.documents.termsOfService.title": "ข้อกำหนดการใช้บริการ",
+  "legal.index.documents.termsOfService.summary":
+    "กฎสำหรับการใช้การค้นหาของ Kurioticket บัญชี แดชบอร์ด เครื่องมือบันทึกการเดินทาง และการเปลี่ยนเส้นทางไปยังพันธมิตร",
+  "legal.index.documents.privacyPolicy.title": "นโยบายความเป็นส่วนตัว",
+  "legal.index.documents.privacyPolicy.summary":
+    "วิธีที่ Kurioticket LLC (“Kurioticket”, “เรา”, “พวกเรา” หรือ “ของเรา”) เก็บรวบรวม ใช้ จัดเก็บ และปกป้องข้อมูลบัญชี การค้นหา การแจ้งเตือน การสนับสนุน และอีเมล",
+  "legal.index.documents.cookiePolicy.title": "นโยบายคุกกี้",
+  "legal.index.documents.cookiePolicy.summary":
+    "วิธีที่ Kurioticket ใช้คุกกี้และเทคโนโลยีที่คล้ายกันสำหรับการยืนยันตัวตน ความปลอดภัย การตั้งค่า การวิเคราะห์ และประสิทธิภาพ",
+  "legal.index.documents.privacyChoices.title": "ตัวเลือกความเป็นส่วนตัว",
+  "legal.index.documents.privacyChoices.summary":
+    "ตัวเลือกด้านความเป็นส่วนตัวและบัญชีที่มีให้ผู้ใช้ Kurioticket ในขณะนี้",
+  "legal.index.documents.affiliateDisclosure.title": "การเปิดเผยข้อมูลพันธมิตร",
+  "legal.index.documents.affiliateDisclosure.summary":
+    "วิธีที่ Kurioticket อาจได้รับค่าคอมมิชชันเมื่อผู้ใช้คลิกหรือจองผ่านพันธมิตรที่เชื่อถือได้",
+  "legal.index.documents.refundBookingDisclaimer.title":
+    "ข้อจำกัดความรับผิดเกี่ยวกับการคืนเงินและผู้ให้บริการภายนอก",
+  "legal.index.documents.refundBookingDisclaimer.summary":
+    "ชี้แจงว่าการซื้อ การออกตั๋ว การคืนเงิน การยกเลิก และการชำระเงินสำหรับสินค้าการเดินทางเกิดขึ้นภายนอก Kurioticket",
+  "legal.index.documents.priceAvailabilityDisclaimer.title":
+    "ข้อจำกัดความรับผิดเกี่ยวกับราคาและความพร้อมให้บริการ",
+  "legal.index.documents.priceAvailabilityDisclaimer.summary":
+    "อธิบายเหตุผลที่ราคาการเดินทาง กฎค่าโดยสาร อัตราค่าห้องพัก และความพร้อมให้บริการอาจเปลี่ยนแปลงได้",
+  "legal.index.documents.partnerRedirectDisclaimer.title":
+    "ข้อจำกัดความรับผิดเกี่ยวกับการเปลี่ยนเส้นทางไปยังพันธมิตร",
+  "legal.index.documents.partnerRedirectDisclaimer.summary":
+    "สิ่งที่เกิดขึ้นเมื่อ Kurioticket เปลี่ยนเส้นทางผู้ใช้ไปยังสายการบิน โรงแรม พันธมิตร หรือผู้ให้บริการการเดินทาง",
+  "legal.index.documents.californiaSellerOfTravelNotice.title":
+    "ประกาศผู้ขายการเดินทางของรัฐแคลิฟอร์เนีย",
+  "legal.index.documents.californiaSellerOfTravelNotice.summary":
+    "ประกาศการจดทะเบียนผู้ขายการเดินทางของรัฐแคลิฟอร์เนียสำหรับแพลตฟอร์มค้นหาและเปลี่ยนเส้นทางของ Kurioticket",
+  "legal.index.documents.legalNoticeCompanyInformation.title":
+    "ประกาศทางกฎหมายและข้อมูลบริษัท",
+  "legal.index.documents.legalNoticeCompanyInformation.summary":
+    "ข้อมูลบริษัท ช่องทางติดต่อ ขอบเขตผลิตภัณฑ์ และขอบเขตระหว่างผู้ให้บริการสำหรับ Kurioticket",
+  "legal.index.documents.acceptableUsePolicy.title":
+    "นโยบายการใช้งานที่ยอมรับได้",
+  "legal.index.documents.acceptableUsePolicy.summary":
+    "กฎการใช้งานระบบ Kurioticket อย่างปลอดภัย เป็นธรรม และถูกกฎหมาย",
+  "legal.index.documents.dataDeletionPolicy.title": "นโยบายการลบข้อมูล",
+  "legal.index.documents.dataDeletionPolicy.summary":
+    "วิธีที่ผู้ใช้อาจขอลบบัญชี และข้อมูลใดที่อาจต้องเก็บรักษาไว้",
+  "legal.index.documents.securityStatement.title": "แถลงการณ์ด้านความปลอดภัย",
+  "legal.index.documents.securityStatement.summary":
+    "แนวปฏิบัติด้านความปลอดภัยระดับสูงและความรับผิดชอบของผู้ใช้สำหรับบัญชี Kurioticket และการเปลี่ยนเส้นทางไปยังผู้ให้บริการ",
+  "legal.index.documents.accessibilityStatement.title":
+    "แถลงการณ์ด้านการเข้าถึง",
+  "legal.index.documents.accessibilityStatement.summary":
+    "ความมุ่งมั่นด้านการเข้าถึงของ Kurioticket สำหรับประสบการณ์การค้นหาการเดินทาง บัญชี และการสนับสนุน",
+  "legal.terms.title": "ข้อกำหนดการใช้บริการ",
+  "legal.terms.summary":
+    "กฎสำหรับการใช้การค้นหาของ Kurioticket บัญชี แดชบอร์ด เครื่องมือบันทึกการเดินทาง และการเปลี่ยนเส้นทางไปยังพันธมิตร",
+  "legal.terms.lastUpdatedDate": "May 11, 2026",
+  "legal.terms.tableOfContents": "สารบัญ",
+  "legal.terms.sections.overview.title": "ภาพรวม",
+  "legal.terms.sections.overview.paragraph1":
+    "Kurioticket LLC (“Kurioticket,” “เรา,” “พวกเรา,” หรือ “ของเรา”) ดำเนินแพลตฟอร์มค้นหาและเปรียบเทียบการเดินทางที่ช่วยให้ผู้ใช้ค้นหาเที่ยวบิน โรงแรม รถยนต์ เปรียบเทียบตัวเลือกผู้ให้บริการ บันทึกแผนการเดินทาง และสร้างการแจ้งเตือน",
+  "legal.terms.sections.overview.paragraph2":
+    "Kurioticket ไม่ใช่สายการบิน โรงแรม ตัวแทนท่องเที่ยวออนไลน์ ตัวแทนท่องเที่ยว ผู้ประมวลผลการชำระเงินสำหรับการซื้อการเดินทาง หรือผู้ออกตั๋ว การซื้อ กฎค่าโดยสาร การออกตั๋ว การเปลี่ยนแผนการเดินทาง การยกเลิก การคืนเงิน การขึ้นเครื่อง การเช็กอิน และเอกสารการเดินทางดำเนินการโดยผู้ให้บริการภายนอก",
+  "legal.terms.sections.accounts.title": "บัญชี",
+  "legal.terms.sections.accounts.paragraph1":
+    "คุณอาจค้นหาและดูผลลัพธ์การเดินทางได้โดยไม่มีบัญชี จำเป็นต้องมีบัญชีสำหรับเที่ยวบินที่บันทึก โรงแรมที่บันทึก การค้นหาที่บันทึก การแจ้งเตือน แดชบอร์ด และตั๋วสนับสนุน",
+  "legal.terms.sections.accounts.paragraph2":
+    "คุณมีหน้าที่ปกป้องข้อมูลเข้าสู่ระบบและรับผิดชอบกิจกรรมภายใต้บัญชีของคุณ",
+  "legal.terms.sections.acceptable-use.title": "การใช้งานที่ยอมรับได้",
+  "legal.terms.sections.acceptable-use.paragraph1":
+    "คุณต้องไม่ใช้ระบบค้นหา การแจ้งเตือน การสนับสนุน บัญชี หรือการเปลี่ยนเส้นทางไปยังผู้ให้บริการในทางที่ผิด ถอดรหัสการทำงานของการผสานรวมผู้ให้บริการ พยายามหลีกเลี่ยงขีดจำกัดอัตรา หรือใช้ Kurioticket สำหรับกิจกรรมฉ้อโกง ผิดกฎหมาย หรือเป็นอันตราย",
+  "legal.terms.sections.acceptable-use.paragraph2":
+    "เราอาจระงับการเข้าถึงหากกิจกรรมคุกคามความน่าเชื่อถือของแพลตฟอร์ม ความสัมพันธ์กับผู้ให้บริการ ความปลอดภัยของบริการ หรือความปลอดภัยของผู้ใช้",
+  "legal.terms.sections.partner-services.title": "บริการของพันธมิตร",
+  "legal.terms.sections.partner-services.paragraph1":
+    "ผลลัพธ์การเดินทางอาจรวมถึงราคา ความพร้อมให้บริการ นโยบาย ข้อมูลเส้นทาง ข้อมูลโรงแรม และลิงก์ผู้ให้บริการภายนอกที่จัดหาโดย API สายการบิน โรงแรม หรือพันธมิตร Affiliate",
+  "legal.terms.sections.partner-services.paragraph2":
+    "เงื่อนไขของพันธมิตรมีผลเมื่อคุณออกจาก Kurioticket หรือทำธุรกรรมกับพันธมิตร ตรวจสอบข้อกำหนดค่าโดยสาร โรงแรม สัมภาระ การเปลี่ยนแปลง การคืนเงิน วีซ่า และผู้เดินทางทั้งหมดก่อนซื้อ",
+  "legal.terms.developerNote":
+    "ร่างเอกสารทางกฎหมายเหล่านี้เป็นข้อความชั่วคราวสำหรับสตาร์ทอัป และควรได้รับการตรวจสอบโดยที่ปรึกษากฎหมายที่มีคุณสมบัติก่อนเปิดให้ใช้งานสาธารณะในวงกว้าง",
+  "legal.privacy.title": "นโยบายความเป็นส่วนตัว",
+  "legal.privacy.summary":
+    "วิธีที่ Kurioticket LLC (“Kurioticket,” “เรา,” “พวกเรา,” หรือ “ของเรา”) เก็บรวบรวม ใช้ จัดเก็บ และปกป้องข้อมูลบัญชี การค้นหา การแจ้งเตือน การสนับสนุน และอีเมล",
+  "legal.privacy.lastUpdatedDate": "May 11, 2026",
+  "legal.privacy.tableOfContents": "สารบัญ",
+  "legal.privacy.sections.data-we-collect.title": "ข้อมูลที่เราเก็บรวบรวม",
+  "legal.privacy.sections.data-we-collect.paragraph1":
+    "เราเก็บข้อมูลบัญชี เช่น ชื่อ อีเมล รหัสผ่านที่แฮชแล้ว ตัวระบุผู้ให้บริการยืนยันตัวตน และการตั้งค่าการเดินทางที่เลือกได้ เราไม่ขอข้อมูลหนังสือเดินทาง บัตรประจำตัวที่ออกโดยรัฐบาล หรือที่อยู่บ้านเมื่อสมัคร",
+  "legal.privacy.sections.data-we-collect.paragraph2":
+    "เราเก็บข้อมูลผลิตภัณฑ์ เช่น การค้นหา เที่ยวบินที่บันทึก โรงแรมที่บันทึก การค้นหาที่บันทึก การแจ้งเตือนราคา การเปลี่ยนเส้นทาง ตั๋วสนับสนุน การแจ้งเตือน เหตุการณ์วิเคราะห์ และการใช้งานฟีเจอร์",
+  "legal.privacy.sections.vendors.title": "ผู้ให้บริการ",
+  "legal.privacy.sections.vendors.paragraph1":
+    "เราอาจใช้ผู้ให้บริการบุคคลที่สามเพื่อช่วยดำเนินบริการ ส่งการสื่อสาร ปกป้องแพลตฟอร์ม วัดประสิทธิภาพ และสนับสนุนฟังก์ชันผลิตภัณฑ์",
+  "legal.privacy.sections.vendors.paragraph2":
+    "Kurioticket ไม่ขอหรือจัดเก็บหมายเลขบัตรเครดิตสำหรับการจองการเดินทาง Kurioticket ไม่จัดเก็บข้อมูลหนังสือเดินทาง",
+  "legal.privacy.sections.choices.title": "ตัวเลือกของคุณ",
+  "legal.privacy.sections.choices.paragraph1":
+    "คุณอาจอัปเดตการตั้งค่าการแจ้งเตือน ขอให้ลบบัญชี และขอเข้าถึงหรือแก้ไขข้อมูลเมื่อกฎหมายความเป็นส่วนตัวที่ใช้บังคับกำหนด",
+  "legal.privacy.sections.choices.paragraph2":
+    "เราเก็บรักษาเฉพาะข้อมูลที่เป็นประโยชน์ต่อการดำเนินผลิตภัณฑ์ ความปลอดภัย การสนับสนุน การวิเคราะห์ การปฏิบัติตามข้อกำหนด หรือความจำเป็นทางธุรกิจที่ชอบด้วยกฎหมาย",
+  "legal.privacy.developerNote":
+    "ร่างเอกสารทางกฎหมายเหล่านี้เป็นข้อความชั่วคราวสำหรับสตาร์ทอัป และควรได้รับการตรวจสอบโดยที่ปรึกษากฎหมายที่มีคุณสมบัติก่อนเปิดให้ใช้งานสาธารณะในวงกว้าง",
+  "legal.cookiePolicy.title": "นโยบายคุกกี้",
+  "legal.cookiePolicy.summary":
+    "วิธีที่ Kurioticket ใช้คุกกี้และเทคโนโลยีที่คล้ายกันสำหรับการยืนยันตัวตน ความปลอดภัย การตั้งค่า การวิเคราะห์ และประสิทธิภาพ",
+  "legal.cookiePolicy.lastUpdatedDate": "May 11, 2026",
+  "legal.cookiePolicy.tableOfContents": "สารบัญ",
+  "legal.cookiePolicy.sections.use.title": "วิธีใช้คุกกี้",
+  "legal.cookiePolicy.sections.use.paragraph1":
+    "Kurioticket อาจใช้คุกกี้สำหรับเซสชันการยืนยันตัวตน ความปลอดภัย การป้องกันการฉ้อโกง การจัดเก็บการตั้งค่า การวิเคราะห์ การติดตามประสิทธิภาพ และการทดลองฟีเจอร์",
+  "legal.cookiePolicy.sections.use.paragraph2":
+    "คุกกี้บางรายการจำเป็นสำหรับการเข้าสู่ระบบ การเข้าถึงแดชบอร์ด ตั๋วสนับสนุน ฟีเจอร์การเดินทางที่บันทึก ความปลอดภัย และการตั้งค่า",
+  "legal.cookiePolicy.sections.third-parties.title": "เทคโนโลยีของบุคคลที่สาม",
+  "legal.cookiePolicy.sections.third-parties.paragraph1":
+    "ผู้ให้บริการยืนยันตัวตน เครื่องมือวิเคราะห์ โครงสร้างพื้นฐานโฮสติ้ง และบริการความปลอดภัยอาจตั้งค่าหรืออ่านคุกกี้ตามที่จำเป็นเพื่อให้บริการที่ปลอดภัย",
+  "legal.cookiePolicy.sections.third-parties.paragraph2":
+    "ไซต์ผู้ให้บริการภายนอกมีแนวทางคุกกี้ของตนเองหลังการเปลี่ยนเส้นทาง",
+  "legal.cookiePolicy.sections.controls.title": "การควบคุม",
+  "legal.cookiePolicy.sections.controls.paragraph1":
+    "คุณสามารถควบคุมคุกกี้ผ่านการตั้งค่าเบราว์เซอร์ของคุณ การบล็อกคุกกี้ที่จำเป็นอาจทำให้การเข้าสู่ระบบ แดชบอร์ด รายการที่บันทึก การตั้งค่า และเครื่องมือสนับสนุนทำงานไม่ถูกต้อง",
+  "legal.cookiePolicy.developerNote":
+    "ร่างเอกสารทางกฎหมายเหล่านี้เป็นข้อความชั่วคราวสำหรับสตาร์ทอัป และควรได้รับการตรวจสอบโดยที่ปรึกษากฎหมายที่มีคุณสมบัติก่อนเปิดให้ใช้งานสาธารณะในวงกว้าง",
+  "legal.privacyChoices.title": "ตัวเลือกความเป็นส่วนตัว",
+  "legal.privacyChoices.summary":
+    "ตัวเลือกด้านความเป็นส่วนตัวและบัญชีที่มีให้ผู้ใช้ Kurioticket ในขณะนี้",
+  "legal.privacyChoices.lastUpdatedDate": "June 28, 2026",
+  "legal.privacyChoices.tableOfContents": "สารบัญ",
+  "legal.privacyChoices.sections.requests.title": "คำขอความเป็นส่วนตัว",
+  "legal.privacyChoices.sections.requests.paragraph1":
+    "คุณสามารถติดต่อ privacy@kurioticket.com สำหรับคำขอด้านความเป็นส่วนตัว คำถามเกี่ยวกับข้อมูลบัญชี และคำขอเกี่ยวกับข้อมูลส่วนบุคคลที่ Kurioticket จัดการ",
+  "legal.privacyChoices.sections.requests.paragraph2":
+    "คุณอาจขอเข้าถึง แก้ไข ลบ หรือถามคำถามเกี่ยวกับบัญชีหรือข้อมูลส่วนบุคคล Kurioticket อาจต้องยืนยันตัวตนของคุณและอาจเก็บบันทึกที่จำกัดไว้เมื่อจำเป็นเพื่อความปลอดภัย กฎหมาย การป้องกันการฉ้อโกง การระงับข้อพิพาท หรือวัตถุประสงค์ทางธุรกิจที่ชอบด้วยกฎหมาย",
+  "legal.privacyChoices.sections.account-alerts.title":
+    "ตัวเลือกบัญชีและการแจ้งเตือน",
+  "legal.privacyChoices.sections.account-alerts.paragraph1":
+    "เมื่อมีการตั้งค่าบัญชี ผู้ใช้สามารถจัดการรายละเอียดบัญชี ฟีเจอร์การเดินทางที่บันทึก การแจ้งเตือน และการตั้งค่าการสื่อสาร",
+  "legal.privacyChoices.sections.account-alerts.paragraph2":
+    "สำหรับการตั้งค่าอีเมลหรือการแจ้งเตือน ให้ใช้ลิงก์ยกเลิกการสมัครหรือจัดการการตั้งค่าเมื่อมี ปรับการตั้งค่าบัญชีที่มี หรือ ติดต่อ support@kurioticket.com เพื่อขอความช่วยเหลือ",
+  "legal.privacyChoices.sections.tracking-choices.title":
+    "ตัวเลือกโฆษณาและการวิเคราะห์",
+  "legal.privacyChoices.sections.tracking-choices.paragraph1":
+    "Kurioticket LLC ยังไม่ได้ใช้โฆษณาที่ใช้งานอยู่หรือเครื่องมือติดตามการวิเคราะห์ของบุคคลที่สาม",
+  "legal.privacyChoices.sections.tracking-choices.paragraph2":
+    "หากมีการเพิ่มโฆษณาหรือเครื่องมือติดตามการวิเคราะห์ของบุคคลที่สามในภายหลัง Kurioticket ควรอัปเดตนโยบายที่เกี่ยวข้องและให้ตัวเลือกความเป็นส่วนตัวเมื่อกฎหมายกำหนด",
+  "legal.privacyChoices.developerNote":
+    "ร่างเอกสารทางกฎหมายเหล่านี้เป็นข้อความชั่วคราวสำหรับสตาร์ทอัป และควรได้รับการตรวจสอบโดยที่ปรึกษากฎหมายที่มีคุณสมบัติก่อนเปิดให้ใช้งานสาธารณะในวงกว้าง",
+  "legal.affiliateDisclosure.title": "การเปิดเผยข้อมูลพันธมิตร",
+  "legal.affiliateDisclosure.summary":
+    "วิธีที่ Kurioticket อาจได้รับค่าคอมมิชชันเมื่อผู้ใช้คลิกหรือจองผ่านพันธมิตรที่เชื่อถือได้",
+  "legal.affiliateDisclosure.lastUpdatedDate": "May 11, 2026",
+  "legal.affiliateDisclosure.tableOfContents": "สารบัญ",
+  "legal.affiliateDisclosure.sections.model.title": "รูปแบบ Affiliate",
+  "legal.affiliateDisclosure.sections.model.paragraph1":
+    "Kurioticket ให้บริการค้นหาเที่ยวบินและโรงแรมฟรีโดยไม่มีค่าบริการ เราอาจได้รับค่าคอมมิชชัน Affiliate เมื่อผู้ใช้คลิก จอง หรือซื้อผ่านลิงก์สายการบิน โรงแรม หรือพันธมิตรการเดินทาง",
+  "legal.affiliateDisclosure.sections.model.paragraph2":
+    "Kurioticket อาจได้รับค่าตอบแทนจากพันธมิตรเมื่อผู้ใช้คลิกหรือจองผ่านลิงก์ผู้ให้บริการ สิ่งนี้ช่วยดำเนินและปรับปรุงบริการ",
+  "legal.affiliateDisclosure.sections.ranking.title":
+    "ความซื่อตรงของการจัดอันดับ",
+  "legal.affiliateDisclosure.sections.ranking.paragraph1":
+    "Kurioticket มุ่งจัดอันดับผลลัพธ์ตามสัญญาณคุณค่าสำหรับผู้ใช้ เช่น ราคา ระยะเวลา การแวะพัก ความมั่นใจ ความสะดวกสบาย และการลดความเครียด ความสัมพันธ์ Affiliate ไม่ควรสร้างความเร่งด่วนปลอม ค่าธรรมเนียมที่ซ่อนอยู่ หรือคำแนะนำที่ทำให้เข้าใจผิด",
+  "legal.affiliateDisclosure.developerNote":
+    "ร่างเอกสารทางกฎหมายเหล่านี้เป็นข้อความชั่วคราวสำหรับสตาร์ทอัป และควรได้รับการตรวจสอบโดยที่ปรึกษากฎหมายที่มีคุณสมบัติก่อนเปิดให้ใช้งานสาธารณะในวงกว้าง",
+  "legal.refundBookingDisclaimer.title":
+    "ข้อจำกัดความรับผิดเกี่ยวกับการคืนเงินและผู้ให้บริการภายนอก",
+  "legal.refundBookingDisclaimer.summary":
+    "ชี้แจงว่าการซื้อ การออกตั๋ว การคืนเงิน การยกเลิก และการชำระเงินสำหรับสินค้าการเดินทางเกิดขึ้นภายนอก Kurioticket",
+  "legal.refundBookingDisclaimer.lastUpdatedDate": "May 11, 2026",
+  "legal.refundBookingDisclaimer.tableOfContents": "สารบัญ",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.title":
+    "ไม่มีการออกตั๋วโดยตรง",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph1":
+    "Kurioticket ไม่ขายตั๋วเครื่องบินหรือการจองโรงแรม เราเปลี่ยนเส้นทางผู้ใช้ไปยังสายการบิน โรงแรม พันธมิตร Affiliate หรือผู้ให้บริการการเดินทางภายนอกเพื่อดำเนินขั้นตอนเปรียบเทียบและซื้อ",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph2":
+    "สัญญาซื้อของคุณทำกับผู้ให้บริการภายนอกที่รับการชำระเงิน ไม่ใช่ Kurioticket",
+  "legal.refundBookingDisclaimer.sections.refunds.title":
+    "การคืนเงินและการเปลี่ยนแปลง",
+  "legal.refundBookingDisclaimer.sections.refunds.paragraph1":
+    "การคืนเงิน เครดิต การเปลี่ยนตาราง การยกเลิก การพลาดการต่อเครื่อง ปัญหาการเช็กอิน ข้อพิพาทสัมภาระ และปัญหาการซื้อ จัดการโดยสายการบิน โรงแรม หรือผู้ให้บริการการเดินทางภายนอก",
+  "legal.refundBookingDisclaimer.sections.refunds.paragraph2":
+    "ฝ่ายสนับสนุน Kurioticket สามารถช่วยให้คุณเข้าใจการใช้งานแพลตฟอร์มและขอบเขตคำแนะนำการเดินทาง แต่ไม่สามารถแทนที่นโยบายของพันธมิตรหรือสายการบินได้",
+  "legal.refundBookingDisclaimer.developerNote":
+    "ร่างเอกสารทางกฎหมายเหล่านี้เป็นข้อความชั่วคราวสำหรับสตาร์ทอัป และควรได้รับการตรวจสอบโดยที่ปรึกษากฎหมายที่มีคุณสมบัติก่อนเปิดให้ใช้งานสาธารณะในวงกว้าง",
+  "legal.priceAvailabilityDisclaimer.title":
+    "ข้อจำกัดความรับผิดเกี่ยวกับราคาและความพร้อมให้บริการ",
+  "legal.priceAvailabilityDisclaimer.summary":
+    "อธิบายเหตุผลที่ราคาการเดินทาง กฎค่าโดยสาร อัตราค่าห้องพัก และความพร้อมให้บริการอาจเปลี่ยนแปลงได้",
+  "legal.priceAvailabilityDisclaimer.lastUpdatedDate": "May 11, 2026",
+  "legal.priceAvailabilityDisclaimer.tableOfContents": "สารบัญ",
+  "legal.priceAvailabilityDisclaimer.sections.change.title":
+    "ราคาอาจเปลี่ยนแปลงได้",
+  "legal.priceAvailabilityDisclaimer.sections.change.paragraph1":
+    "ราคาเที่ยวบินและโรงแรม ภาษี ค่าธรรมเนียม กฎสัมภาระ ความพร้อมของชั้นโดยสาร ห้อง ตารางเวลา และนโยบายอาจเปลี่ยนแปลงอย่างรวดเร็วและอาจแตกต่างเมื่อคุณไปถึงหน้าซื้อของผู้ให้บริการ",
+  "legal.priceAvailabilityDisclaimer.sections.change.paragraph2":
+    "Kurioticket มุ่งเปรียบเทียบข้อมูลผู้ให้บริการปัจจุบัน แต่ความล่าช้าของผู้ให้บริการ ขีดจำกัดอัตรา ช่วงเวลาแคช การแปลงสกุลเงิน กฎพันธมิตร และการเลือกของผู้ใช้อาจส่งผลต่อข้อมูลที่แสดง",
+  "legal.priceAvailabilityDisclaimer.sections.verify.title":
+    "ตรวจสอบก่อนชำระเงิน",
+  "legal.priceAvailabilityDisclaimer.sections.verify.paragraph1":
+    "ตรวจสอบไซต์ผู้ให้บริการภายนอกเสมอก่อนซื้อ ไซต์ผู้ให้บริการภายนอกเป็นแหล่งข้อมูลที่มีผลเหนือกว่าสำหรับราคาสุดท้าย ความพร้อมให้บริการ เงื่อนไขค่าโดยสาร เงื่อนไขห้องพัก และเงื่อนไขการซื้อ",
+  "legal.priceAvailabilityDisclaimer.developerNote":
+    "ร่างเอกสารทางกฎหมายเหล่านี้เป็นข้อความชั่วคราวสำหรับสตาร์ทอัป และควรได้รับการตรวจสอบโดยที่ปรึกษากฎหมายที่มีคุณสมบัติก่อนเปิดให้ใช้งานสาธารณะในวงกว้าง",
+  "legal.partnerRedirectDisclaimer.title":
+    "ข้อจำกัดความรับผิดเกี่ยวกับการเปลี่ยนเส้นทางไปยังพันธมิตร",
+  "legal.partnerRedirectDisclaimer.summary":
+    "สิ่งที่เกิดขึ้นเมื่อ Kurioticket เปลี่ยนเส้นทางผู้ใช้ไปยังสายการบิน โรงแรม พันธมิตร หรือผู้ให้บริการการเดินทาง",
+  "legal.partnerRedirectDisclaimer.lastUpdatedDate": "May 11, 2026",
+  "legal.partnerRedirectDisclaimer.tableOfContents": "สารบัญ",
+  "legal.partnerRedirectDisclaimer.sections.redirect.title":
+    "การเปลี่ยนเส้นทางที่ปลอดภัย",
+  "legal.partnerRedirectDisclaimer.sections.redirect.paragraph1":
+    "เมื่อคุณดำเนินการต่อไปยังผู้ให้บริการภายนอก Kurioticket จะเปลี่ยนเส้นทางคุณไปยังสายการบิน โรงแรม พันธมิตร Affiliate หรือผู้ให้บริการการเดินทาง เราอาจบันทึกเมทาดาทาการเปลี่ยนเส้นทาง เช่น ผู้ให้บริการ เส้นทาง ราคา เวลา ประเภทผู้ใช้ และหน้าต้นทาง เพื่อการวิเคราะห์ การสนับสนุน การป้องกันการละเมิด และการติดตาม Affiliate",
+  "legal.partnerRedirectDisclaimer.sections.redirect.paragraph2":
+    "Kurioticket ไม่กรอกเว็บไซต์สายการบินอัตโนมัติ ไม่ดึงข้อมูลจากเว็บไซต์สายการบิน หรือทำการซื้อกับพันธมิตรแทนคุณ",
+  "legal.partnerRedirectDisclaimer.sections.external-terms.title":
+    "เงื่อนไขภายนอก",
+  "legal.partnerRedirectDisclaimer.sections.external-terms.paragraph1":
+    "ไซต์พันธมิตรภายนอกอยู่ภายใต้เงื่อนไข นโยบายความเป็นส่วนตัว นโยบายคืนเงิน คุกกี้ แนวทางการเข้าถึง และกระบวนการสนับสนุนลูกค้าของตนเอง",
+  "legal.partnerRedirectDisclaimer.developerNote":
+    "ร่างเอกสารทางกฎหมายเหล่านี้เป็นข้อความชั่วคราวสำหรับสตาร์ทอัป และควรได้รับการตรวจสอบโดยที่ปรึกษากฎหมายที่มีคุณสมบัติก่อนเปิดให้ใช้งานสาธารณะในวงกว้าง",
+  "legal.acceptableUsePolicy.title": "นโยบายการใช้งานที่ยอมรับได้",
+  "legal.acceptableUsePolicy.summary":
+    "กฎการใช้งานระบบ Kurioticket อย่างปลอดภัย เป็นธรรม และถูกกฎหมาย",
+  "legal.acceptableUsePolicy.lastUpdatedDate": "May 11, 2026",
+  "legal.acceptableUsePolicy.tableOfContents": "สารบัญ",
+  "legal.acceptableUsePolicy.sections.prohibited.title": "พฤติกรรมต้องห้าม",
+  "legal.acceptableUsePolicy.sections.prohibited.paragraph1":
+    "คุณต้องไม่ดึงข้อมูลจาก Kurioticket ดึงข้อมูลเว็บไซต์สายการบินผ่าน Kurioticket โจมตี API ผู้ให้บริการ ทำการค้นหาอัตโนมัติที่เป็นการละเมิด สร้างบัญชีฉ้อโกง ทดสอบบัตรที่ถูกขโมย สแปมฝ่ายสนับสนุน หรือรบกวนความน่าเชื่อถือของแพลตฟอร์ม",
+  "legal.acceptableUsePolicy.sections.prohibited.paragraph2":
+    "คุณต้องไม่ใช้ Kurioticket เพื่อเอื้อกิจกรรมการเดินทางที่ผิดกฎหมาย การคุกคาม การฉ้อโกง การละเมิด หรือการเข้าถึงโดยไม่ได้รับอนุญาต",
+  "legal.acceptableUsePolicy.sections.enforcement.title": "การบังคับใช้",
+  "legal.acceptableUsePolicy.sections.enforcement.paragraph1":
+    "เราอาจจำกัด ระงับ ลบ หรือบล็อกการเข้าถึงเมื่อจำเป็นเพื่อปกป้องผู้ใช้ พันธมิตร ผู้ให้บริการ ความปลอดภัยของบริการ และการดำเนินงานของแพลตฟอร์ม",
+  "legal.acceptableUsePolicy.developerNote":
+    "ร่างเอกสารทางกฎหมายเหล่านี้เป็นข้อความชั่วคราวสำหรับสตาร์ทอัป และควรได้รับการตรวจสอบโดยที่ปรึกษากฎหมายที่มีคุณสมบัติก่อนเปิดให้ใช้งานสาธารณะในวงกว้าง",
+  "legal.dataDeletionPolicy.title": "นโยบายการลบข้อมูล",
+  "legal.dataDeletionPolicy.summary":
+    "วิธีที่ผู้ใช้อาจขอลบบัญชี และข้อมูลใดที่อาจต้องเก็บรักษาไว้",
+  "legal.dataDeletionPolicy.lastUpdatedDate": "May 11, 2026",
+  "legal.dataDeletionPolicy.tableOfContents": "สารบัญ",
+  "legal.dataDeletionPolicy.sections.request.title": "คำขอลบข้อมูล",
+  "legal.dataDeletionPolicy.sections.request.paragraph1":
+    "คุณอาจขอลบบัญชีจากการตั้งค่าบัญชีหรือฝ่ายสนับสนุน เราจะดำเนินคำขอลบให้สอดคล้องกับกฎหมายที่ใช้บังคับ ความจำเป็นในการยืนยันตัวตน การป้องกันการฉ้อโกง ภาระผูกพันทางกฎหมาย และข้อกำหนดด้านความปลอดภัย",
+  "legal.dataDeletionPolicy.sections.retention.title": "บันทึกที่เก็บรักษาไว้",
+  "legal.dataDeletionPolicy.sections.retention.paragraph1":
+    "บันทึกบางรายการอาจถูกเก็บรักษาไว้เพื่อวัตถุประสงค์ทางธุรกิจ ความปลอดภัย การวิเคราะห์ กฎหมาย การป้องกันการละเมิด หรือการระงับข้อพิพาทที่ชอบด้วยกฎหมาย เราลดข้อมูลส่วนบุคคลที่เก็บรักษาไว้เท่าที่ทำได้",
+  "legal.dataDeletionPolicy.developerNote":
+    "ร่างเอกสารทางกฎหมายเหล่านี้เป็นข้อความชั่วคราวสำหรับสตาร์ทอัป และควรได้รับการตรวจสอบโดยที่ปรึกษากฎหมายที่มีคุณสมบัติก่อนเปิดให้ใช้งานสาธารณะในวงกว้าง",
+  "legal.californiaSellerOfTravelNotice.title":
+    "ประกาศผู้ขายการเดินทางของรัฐแคลิฟอร์เนีย",
+  "legal.californiaSellerOfTravelNotice.summary":
+    "ประกาศการจดทะเบียนผู้ขายการเดินทางของรัฐแคลิฟอร์เนียสำหรับแพลตฟอร์มค้นหาและเปลี่ยนเส้นทางของ Kurioticket",
+  "legal.californiaSellerOfTravelNotice.lastUpdatedDate": "June 28, 2026",
+  "legal.californiaSellerOfTravelNotice.tableOfContents": "สารบัญ",
+  "legal.californiaSellerOfTravelNotice.sections.registration.title":
+    "ข้อมูลการจดทะเบียน",
+  "legal.californiaSellerOfTravelNotice.sections.registration.paragraph1":
+    "Kurioticket LLC จดทะเบียนเป็นผู้ขายการเดินทางของรัฐแคลิฟอร์เนียภายใต้เลขทะเบียน 2172630-70",
+  "legal.californiaSellerOfTravelNotice.sections.registration.paragraph2":
+    "Registration valid from June 05, 2026. Registration expires June 05, 2027.",
+  "legal.californiaSellerOfTravelNotice.sections.registration.paragraph3":
+    "การจดทะเบียนเป็นผู้ขายการเดินทางไม่ได้ถือเป็นการรับรองจากรัฐแคลิฟอร์เนีย",
+  "legal.californiaSellerOfTravelNotice.sections.platform-model.title":
+    "รูปแบบการค้นหาและเปลี่ยนเส้นทาง",
+  "legal.californiaSellerOfTravelNotice.sections.platform-model.paragraph1":
+    "Kurioticket LLC ดำเนินแพลตฟอร์มค้นหา เปรียบเทียบ และเปลี่ยนเส้นทางการเดินทางสำหรับเที่ยวบิน โรงแรม และรถเช่า Kurioticket ช่วยผู้ใช้เปรียบเทียบตัวเลือกการเดินทางและดำเนินการต่อไปยังผู้ให้บริการภายนอกสำหรับขั้นตอนการจองสุดท้าย",
+  "legal.californiaSellerOfTravelNotice.sections.platform-model.paragraph2":
+    "Kurioticket ไม่ใช่สายการบิน โรงแรม ตัวแทนท่องเที่ยวออนไลน์ ตัวแทนท่องเที่ยว ผู้ประมวลผลการชำระเงินสำหรับการซื้อการเดินทาง หรือผู้ออกตั๋ว",
+  "legal.californiaSellerOfTravelNotice.sections.provider-responsibilities.title":
+    "ความรับผิดชอบของผู้ให้บริการภายนอก",
+  "legal.californiaSellerOfTravelNotice.sections.provider-responsibilities.paragraph1":
+    "ผู้ให้บริการภายนอกจัดการการจองสุดท้าย การชำระเงิน การยืนยัน การยกเลิก การคืนเงิน การเปลี่ยนแปลง สัมภาระ การเช็กอิน และการสนับสนุนการจองหลังจากคุณออกจาก Kurioticket ไปยังไซต์ผู้ให้บริการ",
+  "legal.californiaSellerOfTravelNotice.sections.provider-responsibilities.paragraph2":
+    "ตรวจสอบราคาสุดท้าย ความพร้อมให้บริการ กฎค่าโดยสาร เงื่อนไขห้องหรือยานพาหนะ นโยบายยกเลิก นโยบายคืนเงิน กฎสัมภาระ ข้อกำหนดการเช็กอิน และเงื่อนไขสนับสนุนลูกค้าของผู้ให้บริการภายนอกก่อนซื้อ",
+  "legal.californiaSellerOfTravelNotice.sections.contact.title": "ติดต่อ",
+  "legal.californiaSellerOfTravelNotice.sections.contact.paragraph1":
+    "Kurioticket LLC, 2261 Market Street STE 10513, San Francisco, CA 94114, United States.",
+  "legal.californiaSellerOfTravelNotice.sections.contact.paragraph2":
+    "สำหรับการสนับสนุนแพลตฟอร์ม ติดต่อ support@kurioticket.com สำหรับคำถามทางกฎหมาย ติดต่อ legal@kurioticket.com สำหรับคำถามด้านความเป็นส่วนตัว ติดต่อ privacy@kurioticket.com",
+  "legal.californiaSellerOfTravelNotice.developerNote":
+    "ร่างเอกสารทางกฎหมายเหล่านี้เป็นข้อความชั่วคราวสำหรับสตาร์ทอัป และควรได้รับการตรวจสอบโดยที่ปรึกษากฎหมายที่มีคุณสมบัติก่อนเปิดให้ใช้งานสาธารณะในวงกว้าง",
+  "legal.legalNoticeCompanyInformation.title": "ประกาศทางกฎหมายและข้อมูลบริษัท",
+  "legal.legalNoticeCompanyInformation.summary":
+    "ข้อมูลบริษัท ช่องทางติดต่อ ขอบเขตผลิตภัณฑ์ และขอบเขตระหว่างผู้ให้บริการสำหรับ Kurioticket",
+  "legal.legalNoticeCompanyInformation.lastUpdatedDate": "June 28, 2026",
+  "legal.legalNoticeCompanyInformation.tableOfContents": "สารบัญ",
+  "legal.legalNoticeCompanyInformation.sections.company-information.title":
+    "ข้อมูลบริษัท",
+  "legal.legalNoticeCompanyInformation.sections.company-information.paragraph1":
+    "Kurioticket LLC, 2261 Market Street STE 10513, San Francisco, CA 94114, United States.",
+  "legal.legalNoticeCompanyInformation.sections.company-information.paragraph2":
+    "ชื่อนิติบุคคล: Kurioticket LLC. ที่อยู่: 2261 Market Street STE 10513, San Francisco, CA 94114, United States. โทรศัพท์ธุรกิจ: +1 (415) 555-0198.",
+  "legal.legalNoticeCompanyInformation.sections.contacts.title": "อีเมลติดต่อ",
+  "legal.legalNoticeCompanyInformation.sections.contacts.paragraph1":
+    "ฝ่ายสนับสนุน: support@kurioticket.com. ฝ่ายกฎหมาย: legal@kurioticket.com. ความเป็นส่วนตัว: privacy@kurioticket.com.",
+  "legal.legalNoticeCompanyInformation.sections.product-scope.title":
+    "ขอบเขตผลิตภัณฑ์และรูปแบบธุรกิจ",
+  "legal.legalNoticeCompanyInformation.sections.product-scope.paragraph1":
+    "ขอบเขตผลิตภัณฑ์ของ Kurioticket รวมถึงเที่ยวบิน โรงแรม และรถเช่า",
+  "legal.legalNoticeCompanyInformation.sections.product-scope.paragraph2":
+    "รูปแบบธุรกิจ: แพลตฟอร์มค้นหาเปรียบเทียบการเดินทางและเปลี่ยนเส้นทางไปยังพันธมิตร Kurioticket ช่วยผู้ใช้ค้นหา เปรียบเทียบ และดำเนินการต่อไปยังผู้ให้บริการการเดินทางภายนอก",
+  "legal.legalNoticeCompanyInformation.sections.provider-payment-boundary.title":
+    "ขอบเขตผู้ให้บริการและการชำระเงิน",
+  "legal.legalNoticeCompanyInformation.sections.provider-payment-boundary.paragraph1":
+    "Kurioticket ไม่ใช่สายการบิน โรงแรม ตัวแทนท่องเที่ยวออนไลน์ ตัวแทนท่องเที่ยว ผู้ประมวลผลการชำระเงินสำหรับการซื้อการเดินทาง หรือผู้ออกตั๋ว",
+  "legal.legalNoticeCompanyInformation.sections.provider-payment-boundary.paragraph2":
+    "ผู้ให้บริการภายนอกที่รับชำระเงินรับผิดชอบเงื่อนไขการจองสุดท้าย ราคาสุดท้าย การประมวลผลการชำระเงิน การยืนยัน การยกเลิก การคืนเงิน การเปลี่ยนแปลง สัมภาระ การเช็กอิน และการสนับสนุนการจอง",
+  "legal.legalNoticeCompanyInformation.sections.california-registration.title":
+    "อ้างอิงผู้ขายการเดินทางของรัฐแคลิฟอร์เนีย",
+  "legal.legalNoticeCompanyInformation.sections.california-registration.paragraph1":
+    "การจดทะเบียนเป็นผู้ขายการเดินทางไม่ได้ถือเป็นการรับรองจากรัฐแคลิฟอร์เนีย",
+  "legal.legalNoticeCompanyInformation.sections.california-registration.paragraph2":
+    "Registration valid from June 05, 2026. Registration expires June 05, 2027.",
+  "legal.legalNoticeCompanyInformation.developerNote":
+    "ร่างเอกสารทางกฎหมายเหล่านี้เป็นข้อความชั่วคราวสำหรับสตาร์ทอัป และควรได้รับการตรวจสอบโดยที่ปรึกษากฎหมายที่มีคุณสมบัติก่อนเปิดให้ใช้งานสาธารณะในวงกว้าง",
+  "legal.securityStatement.title": "แถลงการณ์ด้านความปลอดภัย",
+  "legal.securityStatement.summary":
+    "แนวปฏิบัติด้านความปลอดภัยระดับสูงและความรับผิดชอบของผู้ใช้สำหรับบัญชี Kurioticket และการเปลี่ยนเส้นทางไปยังผู้ให้บริการ",
+  "legal.securityStatement.lastUpdatedDate": "June 28, 2026",
+  "legal.securityStatement.tableOfContents": "สารบัญ",
+  "legal.securityStatement.sections.account-security.title":
+    "ความปลอดภัยของบัญชี",
+  "legal.securityStatement.sections.account-security.paragraph1":
+    "Kurioticket ใช้การยืนยันตัวตนบัญชีและการป้องกันเซสชันเพื่อช่วยปกป้องการเข้าถึงบัญชีและฟีเจอร์แพลตฟอร์ม",
+  "legal.securityStatement.sections.account-security.paragraph2":
+    "ผู้ใช้ควรปกป้องรหัสผ่าน หลีกเลี่ยงการใช้ข้อมูลเข้าสู่ระบบซ้ำในหลายบริการ รักษาข้อมูลติดต่อบัญชีให้เป็นปัจจุบัน และติดต่อฝ่ายสนับสนุนหากสงสัยว่ามีการเข้าถึงบัญชีโดยไม่ได้รับอนุญาต",
+  "legal.securityStatement.sections.provider-pages.title":
+    "หน้าผู้ให้บริการภายนอก",
+  "legal.securityStatement.sections.provider-pages.paragraph1":
+    "ก่อนป้อนข้อมูลชำระเงินหรือข้อมูลผู้เดินทางหลังการเปลี่ยนเส้นทาง ให้ตรวจสอบว่าคุณอยู่บนหน้าผู้ให้บริการภายนอกที่คาดไว้ และอ่านเงื่อนไข นโยบายความเป็นส่วนตัว กฎคืนเงิน และกระบวนการสนับสนุนของผู้ให้บริการนั้น",
+  "legal.securityStatement.sections.provider-pages.paragraph2":
+    "Kurioticket ไม่ใช่สายการบิน โรงแรม ตัวแทนท่องเที่ยวออนไลน์ ตัวแทนท่องเที่ยว ผู้ประมวลผลการชำระเงินสำหรับการซื้อการเดินทาง หรือผู้ออกตั๋ว",
+  "legal.securityStatement.sections.support-boundaries.title":
+    "ขอบเขตการสนับสนุน",
+  "legal.securityStatement.sections.support-boundaries.paragraph1":
+    "ฝ่ายสนับสนุน Kurioticket สามารถช่วยเรื่องการเข้าถึงแพลตฟอร์ม ปัญหาบัญชี เครื่องมือบันทึกการเดินทาง การแจ้งเตือน และคำถามเกี่ยวกับการเปลี่ยนเส้นทางไปยังผู้ให้บริการ",
+  "legal.securityStatement.sections.support-boundaries.paragraph2":
+    "Kurioticket ไม่สามารถแทนที่การควบคุมบัญชีของผู้ให้บริการภายนอก ระบบชำระเงิน กฎค่าโดยสาร การยืนยันการจอง การยกเลิก การคืนเงิน การเปลี่ยนแปลง สัมภาระ การเช็กอิน หรือการตัดสินใจสนับสนุนการจองได้",
+  "legal.securityStatement.sections.reporting.title":
+    "รายงานข้อกังวลด้านความปลอดภัย",
+  "legal.securityStatement.sections.reporting.paragraph1":
+    "รายงานข้อกังวลด้านความปลอดภัย กิจกรรมบัญชีที่น่าสงสัย หรือปัญหาความปลอดภัยของแพลตฟอร์มไปที่ legal@kurioticket.com หรือ support@kurioticket.com",
+  "legal.securityStatement.developerNote":
+    "ร่างเอกสารทางกฎหมายเหล่านี้เป็นข้อความชั่วคราวสำหรับสตาร์ทอัป และควรได้รับการตรวจสอบโดยที่ปรึกษากฎหมายที่มีคุณสมบัติก่อนเปิดให้ใช้งานสาธารณะในวงกว้าง",
+  "legal.accessibilityStatement.title": "แถลงการณ์ด้านการเข้าถึง",
+  "legal.accessibilityStatement.summary":
+    "ความมุ่งมั่นด้านการเข้าถึงของ Kurioticket สำหรับประสบการณ์การค้นหาการเดินทาง บัญชี และการสนับสนุน",
+  "legal.accessibilityStatement.lastUpdatedDate": "June 28, 2026",
+  "legal.accessibilityStatement.tableOfContents": "สารบัญ",
+  "legal.accessibilityStatement.sections.commitment.title":
+    "เป้าหมายด้านการเข้าถึงของเรา",
+  "legal.accessibilityStatement.sections.commitment.paragraph1":
+    "Kurioticket มุ่งมอบประสบการณ์ค้นหา เปรียบเทียบ บัญชี การแจ้งเตือน และการสนับสนุนด้านการเดินทางที่เข้าถึงได้สำหรับผู้ใช้ที่มีความต้องการ อุปกรณ์ และเทคโนโลยีช่วยเหลือที่แตกต่างกัน",
+  "legal.accessibilityStatement.sections.commitment.paragraph2":
+    "งานด้านการเข้าถึงเป็นส่วนหนึ่งของการทบทวนคุณภาพผลิตภัณฑ์ การออกแบบ วิศวกรรม และการสนับสนุนอย่างต่อเนื่องเมื่อ Kurioticket เติบโต",
+  "legal.accessibilityStatement.sections.feedback.title":
+    "ข้อเสนอแนะด้านการเข้าถึง",
+  "legal.accessibilityStatement.sections.feedback.paragraph1":
+    "หากคุณพบปัญหาการเข้าถึงขณะใช้ Kurioticket โปรดติดต่อ support@kurioticket.com และระบุหน้า ฟีเจอร์ เบราว์เซอร์หรืออุปกรณ์ เทคโนโลยีช่วยเหลือหากเกี่ยวข้อง และคำอธิบายปัญหา",
+  "legal.accessibilityStatement.sections.feedback.paragraph2":
+    "สำหรับคำถามทางกฎหมายด้านการเข้าถึง ติดต่อ legal@kurioticket.com",
+  "legal.accessibilityStatement.sections.external-providers.title":
+    "ไซต์ผู้ให้บริการภายนอก",
+  "legal.accessibilityStatement.sections.external-providers.paragraph1":
+    "เว็บไซต์ผู้ให้บริการภายนอก ขั้นตอนการจอง หน้าชำระเงิน แอปมือถือ และช่องทางสนับสนุนลูกค้าถูกควบคุมโดยผู้ให้บริการเหล่านั้นและอาจปฏิบัติตามแนวทางการเข้าถึงของตนเอง",
+  "legal.accessibilityStatement.sections.external-providers.paragraph2":
+    "หากเกิดปัญหาการเข้าถึงหลังจากคุณออกจาก Kurioticket ให้ติดต่อผู้ให้บริการภายนอกที่รับผิดชอบหน้านั้นหรือขั้นตอนการจองนั้น",
+  "legal.accessibilityStatement.developerNote":
+    "ร่างเอกสารทางกฎหมายเหล่านี้เป็นข้อความชั่วคราวสำหรับสตาร์ทอัป และควรได้รับการตรวจสอบโดยที่ปรึกษากฎหมายที่มีคุณสมบัติก่อนเปิดให้ใช้งานสาธารณะในวงกว้าง",
+
   "newsletter.accountEmailLine":
     "สมัครรับข่าวสารด้วยอีเมลบัญชีของคุณ: {{email}}.",
   "newsletter.manageEmailPreferences": "จัดการการตั้งค่าอีเมล",
