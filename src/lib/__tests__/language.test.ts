@@ -10946,6 +10946,66 @@ test("Newsletter and email updates render paths read i18n keys without changing 
   assert.ok(preferencesClientSource.includes('body: JSON.stringify({ email: address, token, action })'), "Preferences submit values should remain unchanged.");
 });
 
+test("Indonesian Deals package search clear-all copy resolves from i18n without behavior changes", () => {
+  const id = getTranslations("id");
+  const dealsPageSource = readFileSync("src/app/deals/page.tsx", "utf8");
+  const idSource = readFileSync("src/lib/i18n/id.ts", "utf8");
+
+  assert.equal(id.clearAll, "Hapus semua");
+  assert.notEqual(id.clearAll, enTranslations.clearAll);
+  assert.equal((idSource.match(/^\s*clearAll:/gm) ?? []).length, 1);
+  assert.match(
+    dealsPageSource,
+    /const t = useCallback\([\s\S]*?dictionary\[key\] \?\? enTranslations\[key\] \?\? key[\s\S]*?\);/,
+    "Deals page should resolve labels from the active locale dictionary before English fallback.",
+  );
+  assert.match(
+    dealsPageSource,
+    /hasActiveDealsSearch[\s\S]*?<button[\s\S]*?onClick=\{handleResetSearch\}[\s\S]*?\{t\("clearAll"\)\}[\s\S]*?<\/button>/,
+    "Active Deals clear/reset render path should read the shared clearAll i18n key.",
+  );
+  assert.doesNotMatch(
+    dealsPageSource,
+    /hasActiveDealsSearch[\s\S]*?>Clear all<|hasActiveDealsSearch[\s\S]*?\{"Clear all"\}/,
+    "Deals package search should not hardcode English clear-all copy.",
+  );
+
+  assert.equal(id["deals.package.hotelFlight"], "Hotel + Penerbangan");
+  assert.equal(id["deals.package.hotelFlightCar"], "Hotel + Penerbangan + Mobil");
+  assert.equal(id["deals.package.flightCar"], "Penerbangan + Mobil");
+  assert.equal(id["deals.package.hotelCar"], "Hotel + Mobil");
+  assert.equal(id["deals.dateHotelPlaceholder"], "Tanggal masuk — keluar");
+  assert.equal(id["deals.searchButton"], "Cari penawaran");
+
+  for (const value of ["hotel-flight", "hotel-flight-car", "flight-car", "hotel-car"]) {
+    assert.ok(dealsPageSource.includes(`value: "${value}"`), `${value} package value should remain unchanged.`);
+  }
+  for (const snippet of [
+    'setPackageMode("hotel-flight")',
+    'setOrigin("")',
+    'setDestination("")',
+    'setStartDate("")',
+    'setEndDate("")',
+    'setAdults(1)',
+    'setChildren(0)',
+    'setRooms(1)',
+    'setDriverAge(30)',
+    'setCabinClass("economy")',
+    'router.push(`/flights/results?${params.toString()}`)',
+    'router.push(`/hotels/results?${params.toString()}`)',
+    'name="packageMode"',
+    'id="package-origin"',
+    'id="package-destination"',
+    'focus-visible:ring-2 focus-visible:ring-indigo-500',
+    'aria-label={t("deals.packageLegend")}',
+    'aria-busy={isSubmitting}',
+  ]) {
+    assert.ok(dealsPageSource.includes(snippet), `Deals form behavior/rendering should preserve ${snippet}.`);
+  }
+  assert.equal(languageOptions.find((option) => option.code === "id")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
+});
+
 test("Indonesian homepage visible copy and render paths resolve without English fallback", () => {
   const id = getTranslations("id");
   const pageSource = readFileSync("src/app/page.tsx", "utf8");

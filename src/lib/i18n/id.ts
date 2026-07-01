@@ -414,6 +414,7 @@ export const translations: TranslationDictionary = {
   myAccount: "Akun saya",
   openAccountMenu: "Buka menu akun",
   clear: "Hapus",
+  clearAll: "Hapus semua",
   done: "Selesai",
   fromPrice: "mulai",
   tripRound: "pulang pergi",
