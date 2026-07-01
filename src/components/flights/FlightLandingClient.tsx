@@ -48,20 +48,20 @@ function SearchReadyIllustration() {
     >
       <rect width="64" height="64" rx="18" fill="url(#flightSearchTile)" />
       <rect x="12" y="15" width="35" height="31" rx="8" fill="white" />
-      <rect x="17" y="21" width="17" height="3" rx="1.5" fill="#4F46E5" />
-      <rect x="17" y="29" width="23" height="2.5" rx="1.25" fill="#C7D2FE" />
+      <rect x="17" y="21" width="17" height="3" rx="1.5" fill="#004BB8" />
+      <rect x="17" y="29" width="23" height="2.5" rx="1.25" fill="#D8E7F8" />
       <path
         d="M19 37H37"
         stroke="#CBD5E1"
         strokeWidth="2.5"
         strokeLinecap="round"
       />
-      <path d="M22 37L27.5 32L32.5 37L27.5 42L22 37Z" fill="#DBEAFE" />
-      <circle cx="43" cy="40" r="10" fill="#EEF2FF" fillOpacity="0.92" />
-      <circle cx="43" cy="40" r="7" stroke="#312E81" strokeWidth="2.8" />
+      <path d="M22 37L27.5 32L32.5 37L27.5 42L22 37Z" fill="#D8E7F8" />
+      <circle cx="43" cy="40" r="10" fill="#F2F7FA" fillOpacity="0.92" />
+      <circle cx="43" cy="40" r="7" stroke="#021C2B" strokeWidth="2.8" />
       <path
         d="M48 45L54 51"
-        stroke="#312E81"
+        stroke="#021C2B"
         strokeWidth="3.4"
         strokeLinecap="round"
       />
@@ -81,7 +81,7 @@ function SearchReadyIllustration() {
           y2="59"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#EEF2FF" />
+          <stop stopColor="#F2F7FA" />
           <stop offset="1" stopColor="#ECFEFF" />
         </linearGradient>
       </defs>
@@ -100,10 +100,10 @@ function CompareFlightsIllustration() {
     >
       <rect width="64" height="64" rx="18" fill="url(#flightCompareTile)" />
       <rect x="11" y="17" width="30" height="15" rx="5" fill="white" />
-      <rect x="17" y="23" width="10" height="3" rx="1.5" fill="#7C3AED" />
+      <rect x="17" y="23" width="10" height="3" rx="1.5" fill="#5CB6B2" />
       <path
         d="M29 24.5H35"
-        stroke="#DDD6FE"
+        stroke="#CFEAE8"
         strokeWidth="2.5"
         strokeLinecap="round"
       />
@@ -117,14 +117,14 @@ function CompareFlightsIllustration() {
       />
       <path
         d="M18 43C22.5 35.5 33.5 28.5 46 24"
-        stroke="#312E81"
+        stroke="#021C2B"
         strokeWidth="2.8"
         strokeLinecap="round"
         strokeDasharray="1 5"
       />
       <path
         d="M41 22.5L47 24L43 28.5"
-        stroke="#312E81"
+        stroke="#021C2B"
         strokeWidth="2.8"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -133,8 +133,8 @@ function CompareFlightsIllustration() {
         cx="18"
         cy="43"
         r="4"
-        fill="#DBEAFE"
-        stroke="#2563EB"
+        fill="#D8E7F8"
+        stroke="#004BB8"
         strokeWidth="2"
       />
       <circle
@@ -154,8 +154,8 @@ function CompareFlightsIllustration() {
           y2="59"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#F5F3FF" />
-          <stop offset="1" stopColor="#EFF6FF" />
+          <stop stopColor="#F2F7FA" />
+          <stop offset="1" stopColor="#EAF7F6" />
         </linearGradient>
       </defs>
     </svg>
@@ -173,12 +173,12 @@ function ProviderHandoffIllustration() {
     >
       <rect width="64" height="64" rx="18" fill="url(#flightProviderTile)" />
       <rect x="18" y="14" width="31" height="25" rx="7" fill="white" />
-      <rect x="23" y="20" width="14" height="3" rx="1.5" fill="#2563EB" />
-      <rect x="23" y="28" width="20" height="2.5" rx="1.25" fill="#BFDBFE" />
+      <rect x="23" y="20" width="14" height="3" rx="1.5" fill="#004BB8" />
+      <rect x="23" y="28" width="20" height="2.5" rx="1.25" fill="#D8E7F8" />
       <path
         d="M15 34L27 30L39 34V41C39 48 34.5 52.5 27 55C19.5 52.5 15 48 15 41V34Z"
-        fill="#EEF2FF"
-        stroke="#312E81"
+        fill="#F2F7FA"
+        stroke="#021C2B"
         strokeWidth="2.6"
         strokeLinejoin="round"
       />
@@ -191,7 +191,7 @@ function ProviderHandoffIllustration() {
       />
       <path
         d="M41 47H52M52 47L48 43M52 47L48 51"
-        stroke="#2563EB"
+        stroke="#004BB8"
         strokeWidth="2.8"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -205,7 +205,7 @@ function ProviderHandoffIllustration() {
           y2="59"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#EFF6FF" />
+          <stop stopColor="#F2F7FA" />
           <stop offset="1" stopColor="#F0FDFA" />
         </linearGradient>
       </defs>

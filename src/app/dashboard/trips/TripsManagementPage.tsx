@@ -913,8 +913,8 @@ function CurrentTripsIllustration({ ariaLabel }: { ariaLabel: string }) {
           y2="152"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#EEF2FF" />
-          <stop offset="1" stopColor="#F5F3FF" />
+          <stop stopColor="#F2F7FA" />
+          <stop offset="1" stopColor="#EAF7F6" />
         </linearGradient>
         <linearGradient
           id="currentTripGlobe"
@@ -924,8 +924,8 @@ function CurrentTripsIllustration({ ariaLabel }: { ariaLabel: string }) {
           y2="132"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#DBEAFE" />
-          <stop offset="1" stopColor="#EDE9FE" />
+          <stop stopColor="#D8E7F8" />
+          <stop offset="1" stopColor="#EAF7F6" />
         </linearGradient>
         <filter
           id="currentTripShadow"
@@ -939,7 +939,7 @@ function CurrentTripsIllustration({ ariaLabel }: { ariaLabel: string }) {
           <feDropShadow
             dx="0"
             dy="14"
-            floodColor="#4C1D95"
+            floodColor="#021C2B"
             floodOpacity="0.13"
             stdDeviation="10"
           />
@@ -955,54 +955,54 @@ function CurrentTripsIllustration({ ariaLabel }: { ariaLabel: string }) {
           cy="91"
           r="43"
           fill="url(#currentTripGlobe)"
-          stroke="#6D28D9"
+          stroke="#004BB8"
           strokeWidth="3"
         />
         <path
           d="M56 91h82M97 48c14 13 22 27 22 43s-8 30-22 43M97 48c-14 13-22 27-22 43s8 30 22 43"
-          stroke="#8B5CF6"
+          stroke="#5CB6B2"
           strokeLinecap="round"
           strokeWidth="2.5"
         />
         <path
           d="M66 65c16 8 45 8 62 0M66 117c16-8 45-8 62 0"
-          stroke="#A78BFA"
+          stroke="#5CB6B2"
           strokeLinecap="round"
           strokeWidth="2.5"
         />
         <path
           d="M59 80c18-9 32-9 50 1 18 9 32 9 50-2"
-          stroke="#2563EB"
+          stroke="#004BB8"
           strokeDasharray="4 7"
           strokeLinecap="round"
           strokeWidth="3"
         />
-        <path d="M158 74l18 7-18 8 5-8-5-7Z" fill="#6D28D9" />
+        <path d="M158 74l18 7-18 8 5-8-5-7Z" fill="#004BB8" />
         <path
           d="M67 64c0 10-13 23-13 23S41 74 41 64a13 13 0 1 1 26 0Z"
-          fill="#7C3AED"
+          fill="#5CB6B2"
         />
         <circle cx="54" cy="63" r="4" fill="white" />
         <path
           d="M145 99h36c5 0 9 4 9 9v30h-54v-30c0-5 4-9 9-9Z"
           fill="white"
-          stroke="#5B21B6"
+          stroke="#021C2B"
           strokeLinejoin="round"
           strokeWidth="3"
         />
         <path
           d="M153 99v-8c0-6 5-11 11-11s11 5 11 11v8"
-          stroke="#5B21B6"
+          stroke="#021C2B"
           strokeLinecap="round"
           strokeWidth="3"
         />
         <path
           d="M136 119h54"
-          stroke="#C4B5FD"
+          stroke="#5CB6B2"
           strokeLinecap="round"
           strokeWidth="3"
         />
-        <rect x="151" y="112" width="26" height="17" rx="5" fill="#EDE9FE" />
+        <rect x="151" y="112" width="26" height="17" rx="5" fill="#EAF7F6" />
       </g>
     </svg>
   );
@@ -1026,8 +1026,8 @@ function PastTripsIllustration({ ariaLabel }: { ariaLabel: string }) {
           y2="151"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#EFF6FF" />
-          <stop offset="1" stopColor="#F5F3FF" />
+          <stop stopColor="#F2F7FA" />
+          <stop offset="1" stopColor="#EAF7F6" />
         </linearGradient>
         <filter
           id="pastTripsShadow"
@@ -1041,7 +1041,7 @@ function PastTripsIllustration({ ariaLabel }: { ariaLabel: string }) {
           <feDropShadow
             dx="0"
             dy="13"
-            floodColor="#4C1D95"
+            floodColor="#021C2B"
             floodOpacity="0.12"
             stdDeviation="10"
           />
@@ -1059,24 +1059,24 @@ function PastTripsIllustration({ ariaLabel }: { ariaLabel: string }) {
           height="78"
           rx="14"
           fill="white"
-          stroke="#5B21B6"
+          stroke="#021C2B"
           strokeWidth="3"
         />
         <path
           d="M68 108c18-19 30-22 44-10 8 7 17 8 30-5"
-          stroke="#A78BFA"
+          stroke="#5CB6B2"
           strokeLinecap="round"
           strokeWidth="3"
         />
         <path
           d="M73 69h40M73 82h25"
-          stroke="#7C3AED"
+          stroke="#5CB6B2"
           strokeLinecap="round"
           strokeWidth="3"
         />
         <path
           d="M129 76c0 10-13 24-13 24s-13-14-13-24a13 13 0 1 1 26 0Z"
-          fill="#2563EB"
+          fill="#004BB8"
         />
         <circle cx="116" cy="75" r="4" fill="white" />
         <rect
@@ -1086,13 +1086,13 @@ function PastTripsIllustration({ ariaLabel }: { ariaLabel: string }) {
           height="72"
           rx="10"
           fill="#F8FAFC"
-          stroke="#6D28D9"
+          stroke="#004BB8"
           strokeWidth="3"
           transform="rotate(8 127 37)"
         />
         <path
           d="M141 57l24 3M138 78l26 4M136 91l18 3"
-          stroke="#A78BFA"
+          stroke="#5CB6B2"
           strokeLinecap="round"
           strokeWidth="3"
         />
@@ -1100,13 +1100,13 @@ function PastTripsIllustration({ ariaLabel }: { ariaLabel: string }) {
           cx="165"
           cy="91"
           r="8"
-          fill="#EDE9FE"
-          stroke="#7C3AED"
+          fill="#EAF7F6"
+          stroke="#5CB6B2"
           strokeWidth="3"
         />
         <path
           d="M66 134c16 8 76 10 103 0"
-          stroke="#C4B5FD"
+          stroke="#5CB6B2"
           strokeLinecap="round"
           strokeWidth="4"
         />
@@ -1133,8 +1133,8 @@ function CancelledTripIllustration({ ariaLabel }: { ariaLabel: string }) {
           y2="150"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#EEF2FF" />
-          <stop offset="1" stopColor="#F5F3FF" />
+          <stop stopColor="#F2F7FA" />
+          <stop offset="1" stopColor="#EAF7F6" />
         </linearGradient>
         <filter
           id="cancelledTripsShadow"
@@ -1148,7 +1148,7 @@ function CancelledTripIllustration({ ariaLabel }: { ariaLabel: string }) {
           <feDropShadow
             dx="0"
             dy="13"
-            floodColor="#4C1D95"
+            floodColor="#021C2B"
             floodOpacity="0.12"
             stdDeviation="10"
           />
@@ -1162,31 +1162,31 @@ function CancelledTripIllustration({ ariaLabel }: { ariaLabel: string }) {
         <path
           d="M57 60l39-15 42 15 39-15v78l-39 15-42-15-39 15V60Z"
           fill="white"
-          stroke="#5B21B6"
+          stroke="#021C2B"
           strokeLinejoin="round"
           strokeWidth="3"
         />
         <path
           d="M96 45v78M138 60v78"
-          stroke="#C4B5FD"
+          stroke="#5CB6B2"
           strokeLinecap="round"
           strokeWidth="3"
         />
         <path
           d="M70 88c17-16 38-18 58-7 16 9 27 8 43-5"
-          stroke="#2563EB"
+          stroke="#004BB8"
           strokeLinecap="round"
           strokeWidth="3"
         />
-        <path d="M157 69l17 7-15 10 4-9-6-8Z" fill="#2563EB" />
+        <path d="M157 69l17 7-15 10 4-9-6-8Z" fill="#004BB8" />
         <path
           d="M88 91c0 10-13 24-13 24S62 101 62 91a13 13 0 1 1 26 0Z"
-          fill="#7C3AED"
+          fill="#5CB6B2"
         />
         <circle cx="75" cy="90" r="4" fill="white" />
         <path
           d="M119 102c14 9 28 8 44-4"
-          stroke="#8B5CF6"
+          stroke="#5CB6B2"
           strokeDasharray="5 7"
           strokeLinecap="round"
           strokeWidth="3"
@@ -1195,19 +1195,19 @@ function CancelledTripIllustration({ ariaLabel }: { ariaLabel: string }) {
           cx="157"
           cy="105"
           r="22"
-          fill="#F5F3FF"
-          stroke="#6D28D9"
+          fill="#EAF7F6"
+          stroke="#004BB8"
           strokeWidth="3"
         />
         <path
           d="M148 96l18 18M166 96l-18 18"
-          stroke="#6D28D9"
+          stroke="#004BB8"
           strokeLinecap="round"
           strokeWidth="4"
         />
         <path
           d="M65 144c15 7 73 9 103 0"
-          stroke="#C4B5FD"
+          stroke="#5CB6B2"
           strokeLinecap="round"
           strokeWidth="4"
         />

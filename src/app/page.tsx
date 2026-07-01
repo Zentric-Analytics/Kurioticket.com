@@ -63,16 +63,16 @@ function CompareOffersIllustration() {
     >
       <rect width="64" height="64" rx="18" fill="url(#compareTile)" />
       <rect x="13" y="18" width="24" height="17" rx="5" fill="white" />
-      <rect x="17" y="23" width="12" height="3" rx="1.5" fill="#4F46E5" />
-      <rect x="17" y="29" width="16" height="2" rx="1" fill="#C7D2FE" />
+      <rect x="17" y="23" width="12" height="3" rx="1.5" fill="#004BB8" />
+      <rect x="17" y="29" width="16" height="2" rx="1" fill="#D8E7F8" />
       <rect x="29" y="25" width="23" height="18" rx="5" fill="#F8FAFC" />
       <rect x="34" y="30" width="10" height="3" rx="1.5" fill="#0D9488" />
       <rect x="34" y="36" width="13" height="2" rx="1" fill="#99F6E4" />
-      <circle cx="29" cy="34" r="11" fill="#EEF2FF" fillOpacity="0.78" />
-      <circle cx="29" cy="34" r="8" stroke="#312E81" strokeWidth="3" />
+      <circle cx="29" cy="34" r="11" fill="#F2F7FA" fillOpacity="0.78" />
+      <circle cx="29" cy="34" r="8" stroke="#021C2B" strokeWidth="3" />
       <path
         d="M35 40L43 48"
-        stroke="#312E81"
+        stroke="#021C2B"
         strokeWidth="4"
         strokeLinecap="round"
       />
@@ -92,7 +92,7 @@ function CompareOffersIllustration() {
           y2="59"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#EEF2FF" />
+          <stop stopColor="#F2F7FA" />
           <stop offset="1" stopColor="#ECFEFF" />
         </linearGradient>
       </defs>
@@ -114,9 +114,9 @@ function PricingContextIllustration() {
         d="M19 13H43C45.2091 13 47 14.7909 47 17V49L42.5 46.5L38 49L33.5 46.5L29 49L24.5 46.5L19 49V13Z"
         fill="white"
       />
-      <rect x="24" y="21" width="17" height="3" rx="1.5" fill="#7C3AED" />
-      <rect x="24" y="29" width="12" height="2.5" rx="1.25" fill="#DDD6FE" />
-      <rect x="24" y="36" width="15" height="2.5" rx="1.25" fill="#DDD6FE" />
+      <rect x="24" y="21" width="17" height="3" rx="1.5" fill="#5CB6B2" />
+      <rect x="24" y="29" width="12" height="2.5" rx="1.25" fill="#CFEAE8" />
+      <rect x="24" y="36" width="15" height="2.5" rx="1.25" fill="#CFEAE8" />
       <circle cx="43" cy="41" r="9" fill="#CCFBF1" />
       <path
         d="M39.5 41.5L42 44L47 38.5"
@@ -141,8 +141,8 @@ function PricingContextIllustration() {
           y2="59"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#F5F3FF" />
-          <stop offset="1" stopColor="#EFF6FF" />
+          <stop stopColor="#F2F7FA" />
+          <stop offset="1" stopColor="#EAF7F6" />
         </linearGradient>
       </defs>
     </svg>
@@ -160,12 +160,12 @@ function SecureHandoffIllustration() {
     >
       <rect width="64" height="64" rx="18" fill="url(#handoffTile)" />
       <rect x="30" y="16" width="22" height="18" rx="5" fill="white" />
-      <rect x="34" y="21" width="11" height="3" rx="1.5" fill="#2563EB" />
-      <rect x="34" y="28" width="14" height="2" rx="1" fill="#BFDBFE" />
+      <rect x="34" y="21" width="11" height="3" rx="1.5" fill="#004BB8" />
+      <rect x="34" y="28" width="14" height="2" rx="1" fill="#D8E7F8" />
       <path
         d="M15 20L29 15L43 20V31C43 41.5 36 47.5 29 50C22 47.5 15 41.5 15 31V20Z"
-        fill="#EEF2FF"
-        stroke="#312E81"
+        fill="#F2F7FA"
+        stroke="#021C2B"
         strokeWidth="2.8"
         strokeLinejoin="round"
       />
@@ -178,7 +178,7 @@ function SecureHandoffIllustration() {
       />
       <path
         d="M41 42H50M50 42L46 38M50 42L46 46"
-        stroke="#2563EB"
+        stroke="#004BB8"
         strokeWidth="2.8"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -192,7 +192,7 @@ function SecureHandoffIllustration() {
           y2="59"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#EFF6FF" />
+          <stop stopColor="#F2F7FA" />
           <stop offset="1" stopColor="#F0FDFA" />
         </linearGradient>
       </defs>
@@ -1758,7 +1758,7 @@ function PromoPanel({
           className={`mt-5 font-semibold ${
             isViolet
               ? "bg-violet-600 hover:bg-violet-700"
-              : "bg-[#2563eb] hover:bg-[#1d4ed8]"
+              : "bg-[#004BB8] hover:bg-[#021C2B]"
           }`}
         >
           {cta}
@@ -1770,7 +1770,7 @@ function PromoPanel({
         className={`absolute bottom-5 right-6 flex h-40 w-40 items-center justify-center rounded-full ${
           isViolet
             ? "bg-white/55 text-violet-600"
-            : "bg-white/70 text-[#2563eb]"
+            : "bg-white/70 text-[#004BB8]"
         }`}
       >
         <Sparkles className="absolute left-5 top-5 opacity-40" size={24} />
