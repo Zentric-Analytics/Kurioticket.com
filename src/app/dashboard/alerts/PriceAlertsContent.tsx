@@ -72,7 +72,7 @@ function EmptyStateIllustration() {
       >
         <path
           d="M60 102c8.3 0 15-6.7 15-15H45c0 8.3 6.7 15 15 15Z"
-          fill="#7C3AED"
+          fill="#5CB6B2"
           opacity="0.88"
         />
         <path
@@ -81,7 +81,7 @@ function EmptyStateIllustration() {
         />
         <path
           d="M33 83h54"
-          stroke="#312E81"
+          stroke="#021C2B"
           strokeOpacity="0.18"
           strokeWidth="4"
           strokeLinecap="round"
@@ -95,8 +95,8 @@ function EmptyStateIllustration() {
             y2="86"
             gradientUnits="userSpaceOnUse"
           >
-            <stop stopColor="#8B5CF6" />
-            <stop offset="1" stopColor="#3730A3" />
+            <stop stopColor="#5CB6B2" />
+            <stop offset="1" stopColor="#004BB8" />
           </linearGradient>
         </defs>
       </svg>
@@ -268,7 +268,7 @@ export function PriceAlertsContent({
               </p>
               <Link
                 href="/flights"
-                className="focus-ring mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#3730A3] px-6 text-sm font-bold text-white shadow-sm transition hover:bg-[#312E81]"
+                className="focus-ring mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#004BB8] px-6 text-sm font-bold text-white shadow-sm transition hover:bg-[#021C2B]"
               >
                 <Search className="h-5 w-5" aria-hidden="true" />
                 {t["accountDashboard.priceAlerts.cta.flights"]}

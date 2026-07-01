@@ -643,7 +643,7 @@ export default function DestinationsPage() {
       <AppHeader />
 
       <main className="flex-1 bg-[#f5f7fb] text-slate-950">
-        <section className="relative isolate overflow-hidden border-b border-violet-200 bg-[radial-gradient(circle_at_50%_100%,rgba(251,191,36,0.30),transparent_32%),linear-gradient(180deg,#111036_0%,#3b1578_48%,#7c3aed_100%)] text-white">
+        <section className="relative isolate overflow-hidden border-b border-violet-200 bg-[radial-gradient(circle_at_50%_100%,rgba(92,182,178,0.30),transparent_32%),linear-gradient(180deg,#021C2B_0%,#021C2B_48%,#004BB8_100%)] text-white">
           <div className="absolute inset-0 -z-10 opacity-25 [background-image:radial-gradient(circle_at_center,rgba(255,255,255,0.42)_1px,transparent_1.6px)] [background-size:28px_28px]" />
           <div className="absolute -left-20 top-12 -z-10 h-56 w-56 rounded-full bg-fuchsia-400/20 blur-3xl" />
           <div className="absolute -right-16 bottom-2 -z-10 h-64 w-64 rounded-full bg-amber-300/20 blur-3xl" />

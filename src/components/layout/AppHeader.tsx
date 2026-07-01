@@ -136,7 +136,6 @@ const mobileInfoLegalMenuItems = [
 export function AppHeader({
   hideMobileSecondaryNavLinks = false,
   mobileHeroOverlay = false,
-  mobileHeroOverlayLowered = false,
   hideMobileCategoryTabs = false,
 }: AppHeaderProps = {}) {
   const { data: session } = useSession();
@@ -581,7 +580,7 @@ export function AppHeader({
     countryCode: string | undefined,
     fallbackText: string | undefined,
   ) => (
-    <span className="inline-flex h-[18px] w-6 items-center justify-center overflow-hidden rounded-[3px] border border-white/35 bg-white/15 shadow-[0_1px_1px_rgba(30,27,75,0.14)]">
+    <span className="inline-flex h-[18px] w-6 items-center justify-center overflow-hidden rounded-[3px] border border-slate-200 bg-white shadow-[0_1px_1px_rgba(2,28,43,0.12)]">
       {countryCode ? (
         <RawImage
           src={`https://flagcdn.com/${countryCode.toLowerCase()}.svg`}
@@ -600,7 +599,7 @@ export function AppHeader({
         />
       ) : null}
 
-      <span className="hidden h-full w-full items-center justify-center bg-white text-[8px] font-bold leading-none text-indigo-700">
+      <span className="hidden h-full w-full items-center justify-center bg-white text-[8px] font-bold leading-none text-[#004BB8]">
         {fallbackText ?? "US"}
       </span>
     </span>
@@ -699,18 +698,8 @@ export function AppHeader({
 
   return (
     <>
-      <header
-        className={`z-50 text-white md:relative md:bg-[#4338CA] ${
-          mobileHeroOverlay
-            ? "absolute inset-x-0 top-0 border-b-0 bg-transparent shadow-none md:border-b md:border-white/10"
-            : "relative border-b border-white/10 bg-[#4338CA] shadow-[0_8px_24px_rgba(49,46,129,0.16)]"
-        }`}
-      >
-        <div
-          className={`page-shell flex flex-col gap-0.5 pb-1 md:gap-0 md:pb-2.5 md:pt-3 ${
-            mobileHeroOverlayLowered ? "pt-[13px]" : "pt-[5px]"
-          }`}
-        >
+      <header className="relative z-50 border-b border-[#E5EAF0] bg-[#F6F9FC] text-[#021C2B] shadow-[0_8px_24px_rgba(2,28,43,0.06)]">
+        <div className="page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3">
           <div className="flex min-h-[52px] items-center justify-between gap-3 md:min-h-[48px] md:gap-8">
             <Link
               href="/"
@@ -718,16 +707,15 @@ export function AppHeader({
               onClick={(event) => handleRouteLinkClick(event, "/")}
               className="shrink-0"
             >
-              <span className="block text-[22px] font-black leading-none tracking-[-0.04em] text-white md:hidden">
-                Kurioticket
-              </span>
-              <span className="hidden text-[28px] font-black leading-none tracking-[-0.055em] text-white drop-shadow-sm md:block lg:text-[30px]">
-                Kurioticket
-              </span>
+              <RawImage
+                src="/brand/kurioticket-logo-primary-light-bg.svg"
+                alt="Kurioticket"
+                className="h-7 w-auto md:h-8 lg:h-9"
+              />
             </Link>
 
             <div className="hidden min-w-0 flex-1 items-center justify-end gap-3.5 md:flex lg:gap-4">
-              <div className="[&>button]:!h-10 [&>button]:!rounded-md [&>button]:!border-transparent [&>button]:!bg-transparent [&>button]:!px-3 [&>button]:!text-[15px] [&>button]:!font-semibold [&>button]:!text-indigo-50/90 [&>button]:!shadow-none [&>button]:!backdrop-blur-0 [&>button]:hover:!bg-white/10 [&>button]:hover:!text-white">
+              <div className="[&>button]:!h-10 [&>button]:!rounded-md [&>button]:!border-transparent [&>button]:!bg-transparent [&>button]:!px-3 [&>button]:!text-[15px] [&>button]:!font-semibold [&>button]:!text-[#021C2B]/85 [&>button]:!shadow-none [&>button]:!backdrop-blur-0 [&>button]:hover:!bg-[#F2F7FA] [&>button]:hover:!text-[#004BB8]">
                 <CountryCurrencySelector variant="header" grouped />
               </div>
 
@@ -747,7 +735,7 @@ export function AppHeader({
                     "{{language}}",
                     selectedLanguageDisplayName,
                   )}
-                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-transparent bg-transparent text-indigo-50/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-transparent bg-transparent text-[#021C2B]/85 transition-colors hover:bg-[#F2F7FA] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
                 >
                   {renderDesktopHeaderFlag(
                     selectedLanguage?.countryCode,
@@ -766,9 +754,9 @@ export function AppHeader({
                       aria-label={t.openAccountMenu}
                       title={t.openAccountMenu}
                       onClick={() => setAccountOpen((value) => !value)}
-                      className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-transparent bg-transparent text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                      className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-transparent bg-transparent text-[#021C2B] transition-colors hover:bg-[#F2F7FA] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
                     >
-                      <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-white text-[11px] font-black text-indigo-700 shadow-sm">
+                      <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-[#F2F7FA] text-[11px] font-black text-[#004BB8] shadow-sm">
                         {session?.user?.image ? (
                           <RawImage
                             src={session.user.image}
@@ -812,9 +800,9 @@ export function AppHeader({
                                     setAccountOpen(false),
                                   )
                                 }
-                                className="group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-start transition-colors hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                className="group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-start transition-colors hover:bg-[#F2F7FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
                               >
-                                <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 group-hover:bg-white">
+                                <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#F2F7FA] text-[#004BB8] group-hover:bg-white">
                                   <Icon size={17} aria-hidden="true" />
                                 </span>
 
@@ -835,7 +823,7 @@ export function AppHeader({
                             onClick={handleSignOut}
                             disabled={isSigningOut}
                             aria-busy={isSigningOut}
-                            className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-start text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
+                            className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-start text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
                           >
                             <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
                               <LogOut size={17} aria-hidden="true" />
@@ -853,7 +841,7 @@ export function AppHeader({
                       onClick={(event) =>
                         handleRouteLinkClick(event, "/auth/signin")
                       }
-                      className="inline-flex h-10 cursor-pointer items-center rounded-md px-3 text-[15px] font-semibold leading-none text-indigo-50/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                      className="inline-flex h-10 cursor-pointer items-center rounded-md px-3 text-[15px] font-semibold leading-none text-[#021C2B]/85 transition-colors hover:bg-[#F2F7FA] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
                     >
                       {t.login}
                     </Link>
@@ -863,7 +851,7 @@ export function AppHeader({
                       onClick={(event) =>
                         handleRouteLinkClick(event, "/auth/signup")
                       }
-                      className="inline-flex h-10 cursor-pointer items-center rounded-md bg-white px-3 text-[15px] font-semibold leading-none text-indigo-700 shadow-[0_1px_2px_rgba(49,46,129,0.12)] transition-colors hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                      className="inline-flex h-10 cursor-pointer items-center rounded-md bg-[#004BB8] px-3 text-[15px] font-semibold leading-none text-white shadow-[0_1px_2px_rgba(0,75,184,0.16)] transition-colors hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
                     >
                       {t.signUp}
                     </Link>
@@ -884,13 +872,9 @@ export function AppHeader({
                     setMobileMenuOpen(false);
                     setMobileAccountOpen((value) => !value);
                   }}
-                  className={`inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-xs font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
-                    mobileHeroOverlay
-                      ? "border border-white/45 bg-white/[0.24] text-white shadow-[0_8px_22px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.30)] backdrop-blur-md hover:border-white/60 hover:bg-white/[0.30]"
-                      : "border border-transparent bg-transparent text-white/95 hover:bg-white/10 hover:text-white"
-                  }`}
+                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#DDE7F0] bg-[#F3F7FA]/70 text-xs font-black text-[#021C2B] transition-colors hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
                 >
-                  <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-white text-[11px] font-black text-indigo-700 shadow-sm">
+                  <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-transparent text-[11px] font-black text-[#004BB8]">
                     {session?.user?.image ? (
                       <RawImage
                         src={session.user.image}
@@ -909,11 +893,7 @@ export function AppHeader({
                   onClick={(event) =>
                     handleRouteLinkClick(event, "/auth/signin")
                   }
-                  className={`inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
-                    mobileHeroOverlay
-                      ? "border border-white/45 bg-white/[0.24] text-white shadow-[0_8px_22px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.30)] backdrop-blur-md hover:border-white/60 hover:bg-white/[0.30]"
-                      : "border border-white/10 bg-white/5 text-white/95 hover:bg-white/15 hover:text-white"
-                  }`}
+                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#DDE7F0] bg-[#F3F7FA]/70 text-[#021C2B] transition-colors hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
                 >
                   <UserCircle size={18} />
                 </Link>
@@ -926,11 +906,7 @@ export function AppHeader({
                 }
                 aria-expanded={mobileMenuOpen}
                 aria-controls="mobile-menu-drawer"
-                className={`inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
-                  mobileHeroOverlay
-                    ? "border border-white/45 bg-white/[0.24] text-white shadow-[0_8px_22px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.30)] backdrop-blur-md hover:border-white/60 hover:bg-white/[0.30]"
-                    : "border border-white/10 bg-white/5 text-white/95 hover:bg-white/15 hover:text-white"
-                }`}
+                className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#DDE7F0] bg-[#F3F7FA]/70 text-[#021C2B] transition-colors hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
                 onClick={() => {
                   setMobileAccountOpen(false);
                   setMobileMenuOpen((value) => !value);
@@ -959,7 +935,7 @@ export function AppHeader({
                     >
                       <div className="mb-5 flex items-start justify-between gap-4">
                         <div className="min-w-0">
-                          <p className="break-words text-xs font-black uppercase tracking-[0.2em] text-violet-600">
+                          <p className="break-words text-xs font-black uppercase tracking-[0.2em] text-[#004BB8]">
                             {t.globalLanguage}
                           </p>
                           <h2
@@ -979,7 +955,7 @@ export function AppHeader({
                         <button
                           type="button"
                           onClick={closeLanguageDialog}
-                          className="shrink-0 cursor-pointer rounded-none p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                          className="shrink-0 cursor-pointer rounded-none p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
                           aria-label={t.closeLanguageSelector}
                         >
                           <X size={18} aria-hidden="true" />
@@ -1005,7 +981,7 @@ export function AppHeader({
                         {t.languageSearchLabel}
                       </label>
 
-                      <div className="mb-4 flex items-center gap-2 rounded-none border border-slate-200 px-3 py-2 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100">
+                      <div className="mb-4 flex items-center gap-2 rounded-none border border-slate-200 px-3 py-2 focus-within:border-[#004BB8]/50 focus-within:ring-2 focus-within:ring-[#004BB8]/10">
                         <Search
                           size={16}
                           className="text-slate-500"
@@ -1062,11 +1038,11 @@ export function AppHeader({
                                     )
                               }
                               onClick={() => handleLanguageSelect(option)}
-                              className={`flex min-h-[4.25rem] cursor-pointer items-start justify-between gap-3 rounded-none border px-3 py-2.5 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
+                              className={`flex min-h-[4.25rem] cursor-pointer items-start justify-between gap-3 rounded-none border px-3 py-2.5 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 ${
                                 active
-                                  ? "border-violet-500 bg-violet-50 ring-2 ring-violet-100"
+                                  ? "border-[#004BB8] bg-[#F2F7FA] ring-2 ring-[#004BB8]/10"
                                   : available
-                                    ? "border-slate-200 hover:border-violet-300 hover:bg-violet-50"
+                                    ? "border-slate-200 hover:border-[#004BB8]/30 hover:bg-[#F2F7FA]"
                                     : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300"
                               }`}
                             >
@@ -1098,7 +1074,7 @@ export function AppHeader({
                               {active ? (
                                 <Check
                                   size={16}
-                                  className="mt-0.5 shrink-0 text-violet-600"
+                                  className="mt-0.5 shrink-0 text-[#004BB8]"
                                   aria-hidden="true"
                                 />
                               ) : null}
@@ -1128,10 +1104,10 @@ export function AppHeader({
                         onClick={(event) =>
                           handleRouteLinkClick(event, item.href)
                         }
-                        className={`inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-[15px] font-semibold leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 lg:px-5 ${
+                        className={`inline-flex min-h-[38px] cursor-pointer items-center gap-2 rounded-full border px-3.5 py-2 text-[15px] font-semibold leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 lg:px-4 ${
                           active
-                            ? "border-white/90 bg-white text-indigo-700 shadow-[0_6px_16px_rgba(49,46,129,0.16)]"
-                            : "border-white/10 bg-transparent text-indigo-50/95 hover:border-white/30 hover:bg-white/10 hover:text-white"
+                            ? "border-[#004BB8]/40 bg-[#EAF3FF] text-[#004BB8] shadow-[inset_0_0_0_1px_rgba(0,75,184,0.04)]"
+                            : "border-[#DDE7F0] bg-[#F3F7FA]/70 text-[#021C2B]/85 hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8]"
                         }`}
                       >
                         {Icon ? (
@@ -1152,18 +1128,8 @@ export function AppHeader({
 
           {visibleMobilePrimaryNavItems.length > 0 ? (
             <nav className="md:hidden" aria-label="Primary">
-              <div
-                className={
-                  mobileHeroOverlay ? "pb-0.5 pt-1.5" : "pb-1 pt-2.5"
-                }
-              >
-                <div
-                  className={`flex items-center overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
-                    mobileHeroOverlay
-                      ? "-mx-0.5 gap-1.5 px-0.5"
-                      : "-mx-1 gap-2 px-1"
-                  }`}
-                >
+              <div className="pb-1 pt-2.5">
+                <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {visibleMobilePrimaryNavItems.map((item) => {
                     const Icon = item.icon;
                     const active = isNavItemActive(item.href);
@@ -1175,23 +1141,15 @@ export function AppHeader({
                         onClick={(event) =>
                           handleRouteLinkClick(event, item.href)
                         }
-                        className={`inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full border leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
-                          mobileHeroOverlay
-                            ? `min-h-[38px] gap-1.5 px-3 py-1.5 text-[13.5px] font-semibold tracking-[-0.005em] backdrop-blur-md ${
-                                active
-                                  ? "border-white/65 bg-white/[0.86] text-indigo-700 shadow-[0_3px_8px_rgba(15,23,42,0.12)]"
-                                  : "border-white/15 bg-white/[0.07] text-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:border-white/25 hover:bg-white/[0.12] hover:text-white"
-                              }`
-                            : `min-h-10 gap-1.5 px-3.5 py-2 text-[15px] font-black tracking-[-0.01em] ${
-                                active
-                                  ? "border-white/55 bg-white/90 text-indigo-700 shadow-[0_4px_10px_rgba(49,46,129,0.12)]"
-                                  : "border-white/10 bg-transparent text-indigo-50/95 hover:border-white/25 hover:bg-white/10 hover:text-white"
-                              }`
+                        className={`inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full border leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 ${
+                          active
+                            ? "min-h-[38px] gap-1.5 border-[#004BB8]/40 bg-[#EAF3FF] px-3 py-2 text-[14px] font-semibold tracking-[-0.005em] text-[#004BB8] shadow-[inset_0_0_0_1px_rgba(0,75,184,0.04)]"
+                            : "min-h-[38px] gap-1.5 border-[#DDE7F0] bg-[#F3F7FA]/70 px-3 py-2 text-[14px] font-semibold tracking-[-0.005em] text-[#021C2B]/85 hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8]"
                         }`}
                       >
                         {Icon ? (
                           <Icon
-                            size={mobileHeroOverlay ? 16 : 18}
+                            size={18}
                             className="shrink-0"
                             aria-hidden="true"
                           />
@@ -1236,7 +1194,7 @@ export function AppHeader({
                     <button
                       type="button"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                      className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
                       aria-label={t.closeMobileMenu}
                     >
                       <X size={18} aria-hidden="true" />
@@ -1270,7 +1228,7 @@ export function AppHeader({
                             "{{language}}",
                             selectedLanguageDisplayName,
                           )}
-                          className="inline-flex h-10 w-auto max-w-full cursor-pointer items-center justify-between gap-2 rounded-full border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 transition-colors hover:border-violet-300 hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                          className="inline-flex h-10 w-auto max-w-full cursor-pointer items-center justify-between gap-2 rounded-full border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 transition-colors hover:border-[#004BB8]/30 hover:bg-[#F2F7FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
                         >
                           <span className="inline-flex min-w-0 items-center gap-2">
                             <span
@@ -1291,7 +1249,7 @@ export function AppHeader({
                           />
                         </button>
 
-                        <div className="[&>button]:!inline-flex [&>button]:!h-10 [&>button]:!w-auto [&>button]:!rounded-full [&>button]:!border-slate-200 [&>button]:!bg-white [&>button]:!px-3 [&>button]:!text-sm [&>button]:!shadow-none [&>button:hover]:!border-violet-300 [&>button:hover]:!bg-violet-50 [&>button>span>span:first-child]:sr-only [&>button>span>span:last-child]:!mt-0 [&>button>span>span:last-child]:!text-sm">
+                        <div className="[&>button]:!inline-flex [&>button]:!h-10 [&>button]:!w-auto [&>button]:!rounded-full [&>button]:!border-slate-200 [&>button]:!bg-white [&>button]:!px-3 [&>button]:!text-sm [&>button]:!shadow-none [&>button:hover]:!border-[#004BB8]/30 [&>button:hover]:!bg-[#F2F7FA] [&>button>span>span:first-child]:sr-only [&>button>span>span:last-child]:!mt-0 [&>button>span>span:last-child]:!text-sm">
                           <CountryCurrencySelector
                             variant="mobile"
                             onBeforeOpen={handleMobileCountryCurrencyBeforeOpen}
@@ -1324,10 +1282,10 @@ export function AppHeader({
                                   setMobileMenuOpen(false),
                                 )
                               }
-                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
                             >
                               {Icon ? (
-                                <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-indigo-700">
+                                <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-[#004BB8]">
                                   <Icon size={19} aria-hidden="true" />
                                 </span>
                               ) : null}
@@ -1362,10 +1320,10 @@ export function AppHeader({
                                   setMobileMenuOpen(false),
                                 )
                               }
-                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
                             >
                               {Icon ? (
-                                <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-indigo-700">
+                                <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-[#004BB8]">
                                   <Icon size={19} aria-hidden="true" />
                                 </span>
                               ) : null}
@@ -1399,9 +1357,9 @@ export function AppHeader({
                                   setMobileMenuOpen(false),
                                 )
                               }
-                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
                             >
-                              <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-indigo-700">
+                              <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-[#004BB8]">
                                 <Icon size={19} aria-hidden="true" />
                               </span>
                               <span className="truncate">
@@ -1443,7 +1401,7 @@ export function AppHeader({
                     <section aria-label="Account">
                       <div className="flex items-center gap-3 px-2.5 pb-5">
                         <span className="relative inline-flex h-10 w-10 shrink-0 items-center overflow-visible">
-                          <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-base font-semibold text-white shadow-sm ring-4 ring-indigo-50">
+                          <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#004BB8] text-base font-semibold text-white shadow-sm ring-4 ring-[#004BB8]/10">
                             {session?.user?.image ? (
                               <RawImage
                                 src={session.user.image}
@@ -1472,7 +1430,7 @@ export function AppHeader({
                         <button
                           type="button"
                           onClick={() => setMobileAccountOpen(false)}
-                          className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                          className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
                           aria-label={t["accountMenu.closeAccountMenu"]}
                         >
                           <X size={18} aria-hidden="true" />
@@ -1495,9 +1453,9 @@ export function AppHeader({
                                     setMobileAccountOpen(false),
                                   )
                                 }
-                                className="group inline-flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-base font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                className="group inline-flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-base font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
                               >
-                                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition-colors group-hover:border-indigo-100 group-hover:bg-indigo-50 group-hover:text-indigo-700">
+                                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition-colors group-hover:border-[#004BB8]/15 group-hover:bg-[#F2F7FA] group-hover:text-[#004BB8]">
                                   <Icon size={18} aria-hidden="true" />
                                 </span>
                                 <span className="min-w-0 flex-1">
@@ -1507,7 +1465,7 @@ export function AppHeader({
                                 </span>
                                 <ChevronRight
                                   size={18}
-                                  className="ml-auto shrink-0 text-slate-400 transition-colors group-hover:text-indigo-700"
+                                  className="ml-auto shrink-0 text-slate-400 transition-colors group-hover:text-[#004BB8]"
                                   aria-hidden="true"
                                 />
                               </Link>
@@ -1522,7 +1480,7 @@ export function AppHeader({
                           onClick={handleSignOut}
                           disabled={isSigningOut}
                           aria-busy={isSigningOut}
-                          className="group inline-flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-start text-base font-semibold text-rose-700 transition-colors hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
+                          className="group inline-flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-start text-base font-semibold text-rose-700 transition-colors hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
                         >
                           <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-rose-100 bg-rose-50 text-rose-700 transition-colors group-hover:bg-white">
                             <LogOut size={18} aria-hidden="true" />
