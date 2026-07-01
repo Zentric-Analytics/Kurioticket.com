@@ -4,6 +4,9 @@ import type { TranslationDictionary } from "./types";
 export const translations: TranslationDictionary = {
   ...en,
   flights: "เที่ยวบิน",
+  flightQuoteUnavailable: "ไม่มีใบเสนอราคาตั๋วเครื่องบิน",
+  flightSearchAgainCurrentPrices:
+    "ใบเสนอราคาตั๋วเครื่องบินนี้ไม่พร้อมใช้งานแล้ว โปรดค้นหาอีกครั้งเพื่อดูราคาปัจจุบัน",
   hotels: "โรงแรม",
   cars: "รถเช่า",
   deals: "ดีล",

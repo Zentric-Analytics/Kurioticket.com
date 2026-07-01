@@ -575,7 +575,7 @@ export const translations: TranslationDictionary = {
   infants: "Bebekler",
   under2: "2 yaş altı",
   cabinClass: "Kabin sınıfı",
-  business: "Business",
+  business: "Business sınıfı",
   first: "First",
   destinationImageFallback: "DESTİNASYON",
   weekdaySun: "Paz",
