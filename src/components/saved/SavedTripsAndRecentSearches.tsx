@@ -274,7 +274,7 @@ const normalizeDestinationKey = (value: string) =>
   value.normalize("NFKD").replace(/\p{M}/gu, "").trim().toLowerCase();
 
 const SAVED_TRIP_CARD_IMAGE_SIZES =
-  "(max-width: 767px) 100vw, (max-width: 1279px) 50vw, 33vw";
+  "(max-width: 767px) 100vw, (max-width: 1279px) 50vw, 25vw";
 const EAGER_SAVED_TRIP_IMAGE_COUNT = 3;
 const OPTIMIZED_REMOTE_IMAGE_HOSTS = new Set([
   "images.unsplash.com",
@@ -314,7 +314,7 @@ function SavedCardImage({
   const imageClassName = `object-cover transition duration-500 ${hoverScaleClassName}`;
 
   return (
-    <div className="relative h-36 w-full overflow-hidden sm:h-40">
+    <div className="relative h-44 w-full shrink-0 overflow-hidden sm:h-48 xl:h-44">
       {imageMode.supported ? (
         <Image
           src={src}
@@ -835,7 +835,7 @@ export function SavedTripsAndRecentSearches() {
 
   return (
     <div className="px-4 pb-8 pt-6 sm:px-6 sm:pb-10 sm:pt-10 lg:px-8 lg:pb-11 lg:pt-12">
-      <div className="mx-auto min-w-0 max-w-[72rem] space-y-8 text-start">
+      <div className="mx-auto min-w-0 max-w-[88rem] space-y-8 text-start">
         <section className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -884,7 +884,7 @@ export function SavedTripsAndRecentSearches() {
               </div>
             </div>
           ) : (
-            <div className="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-4">
               {savedTrips.map((trip, index) => {
                 const fare = savedTripFares[trip.id];
                 const hasProviderFare = hasFreshProviderFare(fare, trip);
@@ -893,7 +893,7 @@ export function SavedTripsAndRecentSearches() {
                 return (
                   <article
                     key={trip.id}
-                    className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+                    className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
                   >
                     <button
                       type="button"
@@ -912,19 +912,19 @@ export function SavedTripsAndRecentSearches() {
                         priority={index < EAGER_SAVED_TRIP_IMAGE_COUNT}
                       />
                     ) : (
-                      <div className="flex h-36 w-full items-center justify-center bg-gradient-to-br from-violet-100 via-fuchsia-50 to-cyan-50 text-sm font-semibold uppercase tracking-[0.14em] text-slate-600 sm:h-40">
+                      <div className="flex h-44 w-full shrink-0 items-center justify-center bg-gradient-to-br from-violet-100 via-fuchsia-50 to-cyan-50 text-sm font-semibold uppercase tracking-[0.14em] text-slate-600 sm:h-48 xl:h-44">
                         {t("savedTripFallbackTitle")}
                       </div>
                     )}
 
-                    <div className="space-y-2.5 p-4">
-                      <h3 className="pe-12 text-lg font-semibold leading-tight tracking-tight text-slate-900">
+                    <div className="flex flex-1 flex-col space-y-2.5 p-4">
+                      <h3 className="line-clamp-2 min-h-[2.75rem] break-words pe-12 text-lg font-semibold leading-tight tracking-tight text-slate-900">
                         {trip.title}
                       </h3>
-                      <p className="line-clamp-2 text-[11px] font-semibold uppercase tracking-[0.11em] text-slate-600">
+                      <p className="line-clamp-2 min-h-[2rem] break-words text-[11px] font-semibold uppercase tracking-[0.11em] text-slate-600">
                         {trip.route}
                       </p>
-                      <p className="line-clamp-2 text-sm leading-6 text-slate-600">
+                      <p className="line-clamp-2 min-h-[3rem] break-words text-sm leading-6 text-slate-600">
                         {trip.note}
                       </p>
 
@@ -941,8 +941,8 @@ export function SavedTripsAndRecentSearches() {
                         </p>
                       </div>
 
-                      <div className="mt-1 border-t border-slate-200/90 pt-3">
-                        <div className="flex items-end justify-between gap-3">
+                      <div className="mt-auto border-t border-slate-200/90 pt-3">
+                        <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-end sm:justify-between xl:flex-col xl:items-stretch 2xl:flex-row 2xl:items-end 2xl:justify-between">
                           <div>
                             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
                               {hasProviderFare
@@ -963,7 +963,7 @@ export function SavedTripsAndRecentSearches() {
                           </div>
                           <Link
                             href={tripHref}
-                            className="inline-flex min-h-9 items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-900"
+                            className="inline-flex min-h-9 items-center justify-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-center text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-900"
                           >
                             {hasProviderFare
                               ? t("savedTripsViewFare")
