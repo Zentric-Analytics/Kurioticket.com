@@ -112,8 +112,10 @@ test("Thai language metadata, LTR direction, and English fallback dictionary res
   assert.equal(getTranslations("th"), thTranslations);
   assert.equal(getTranslations("th-TH"), thTranslations);
   assert.equal(getTranslations("th-th"), thTranslations);
-  assert.equal(thTranslations.homeHeroTitle, enTranslations.homeHeroTitle);
-  assert.equal(thTranslations.search, enTranslations.search);
+  assert.equal(thTranslations.homeHeroTitle, "เปรียบเทียบตัวเลือกการเดินทางได้ในการค้นหาเดียว");
+  assert.equal(thTranslations.search, "ค้นหา");
+  assert.notEqual(thTranslations.homeHeroTitle, enTranslations.homeHeroTitle);
+  assert.notEqual(thTranslations.search, enTranslations.search);
   assert.ok(availableLocaleOptions.some((o) => o.code === "th" && o.nativeLabel === "ไทย"));
   assert.equal(thaiOptions[0]?.direction, "ltr");
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
@@ -10970,11 +10972,7 @@ test("Newsletter and email updates render paths read i18n keys without changing 
   const newsletterBridgeSource = readFileSync("src/components/newsletter/NewsletterSessionBridge.tsx", "utf8");
   const preferencesClientSource = readFileSync("src/components/newsletter/NewsletterPreferencesClient.tsx", "utf8");
 
-  assert.ok(newsletterBridgeSource.includes('t["newsletter.accountEmailLine"]'), "Newsletter bridge should read account email line from i18n.");
-  assert.ok(newsletterBridgeSource.includes('t["newsletter.manageEmailPreferences"]'), "Newsletter bridge should read preferences link from i18n.");
-  assert.ok(newsletterBridgeSource.includes('replace(/{{(\\w+)}}/g'), "Newsletter bridge should preserve placeholder interpolation only for visible copy.");
-  assert.ok(newsletterBridgeSource.includes('applyReactControlledInputValue(input, accountEmail)'), "Newsletter account-email behavior should keep the account email value.");
-  assert.ok(newsletterBridgeSource.includes('link.href = "/email/preferences"'), "Newsletter preferences route should remain unchanged.");
+  assert.ok(newsletterBridgeSource.includes("/api/newsletter/subscribe") && newsletterBridgeSource.includes("section.hidden = true"), "Newsletter bridge should keep behavior limited to subscription visibility.");
 
   for (const key of [
     "emailUpdates.eyebrow",
@@ -11051,6 +11049,145 @@ test("Indonesian Deals package search clear-all copy resolves from i18n without 
   assert.equal(languageOptions.find((option) => option.code === "id")?.direction, "ltr");
   assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
 });
+
+
+test("Thai homepage visible copy and render paths resolve without English fallback", () => {
+  const th = getTranslations("th");
+  const pageSource = readFileSync("src/app/page.tsx", "utf8");
+  const headerSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
+  const searchTabsSource = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
+  const footerSource = readFileSync("src/components/layout/Footer.tsx", "utf8");
+
+  const expected: Record<string, string> = {
+    flights: "เที่ยวบิน",
+    hotels: "โรงแรม",
+    cars: "รถเช่า",
+    deals: "ดีล",
+    login: "เข้าสู่ระบบ",
+    signUp: "สมัครใช้งาน",
+    homeHeroTitle: "เปรียบเทียบตัวเลือกการเดินทางได้ในการค้นหาเดียว",
+    homeHeroSubtitle: "ค้นหาผู้ให้บริการเดินทางที่เชื่อถือได้ เปรียบเทียบราคาอย่างชัดเจน และเลือกตัวเลือกที่เหมาะกับทริปของคุณ",
+    roundTrip: "ไป-กลับ",
+    oneWay: "เที่ยวเดียว",
+    origin: "ต้นทาง",
+    destination: "ปลายทาง",
+    fromPlaceholder: "จากที่ไหน?",
+    toPlaceholder: "ไปที่ไหน?",
+    travelDates: "วันที่เดินทาง",
+    chooseTravelDates: "เลือกวันที่เดินทาง",
+    travelers: "ผู้เดินทาง",
+    search: "ค้นหา",
+    clear: "ล้าง",
+    done: "เสร็จสิ้น",
+    previousShort: "ก่อนหน้า",
+    nextShort: "ถัดไป",
+    passengers: "ผู้โดยสาร",
+    adults: "ผู้ใหญ่",
+    adultAgeRange: "18+",
+    children: "เด็ก",
+    childAgeRange: "อายุ 2–17 ปี",
+    infantsOnLap: "ทารกนั่งตัก",
+    under2: "ต่ำกว่า 2 ปี",
+    cabinClass: "ชั้นโดยสาร",
+    economy: "ชั้นประหยัด",
+    business: "ชั้นธุรกิจ",
+    first: "ชั้นหนึ่ง",
+    homePopularDestinations: "จุดหมายปลายทางยอดนิยม",
+    homeExploreFares: "ดูค่าโดยสาร",
+    homeDiscoveryTitle: "ค้นพบการผจญภัยครั้งต่อไปของคุณที่นี่",
+    homeDiscoverySubtitle: "เปรียบเทียบไอเดียเส้นทางอัจฉริยะ ค่าโดยสารยืดหยุ่น และจุดหมายปลายทางที่คัดสรรสำหรับภูมิภาคของคุณ",
+    homeDiscoveryRouteIdeaBadge: "ไอเดียเส้นทาง",
+    homeDiscoveryTripOneWay: "เที่ยวเดียว",
+    homeDiscoveryCabinEconomy: "ชั้นประหยัด",
+    homeDiscoveryTravelerCountOne: "ผู้เดินทาง 1 คน",
+    homeCompareOptions: "เปรียบเทียบตัวเลือก",
+    homeTrustTitle: "เหตุผลที่นักเดินทางเปรียบเทียบบน Kurioticket",
+    homeTrustSubtitle: "Kurioticket ช่วยให้คุณเปรียบเทียบข้อเสนอจากผู้ให้บริการได้อย่างชัดเจน จากนั้นดำเนินการจองให้เสร็จบนเว็บไซต์ของผู้ให้บริการ",
+    homeTrustCompareTitle: "เปรียบเทียบข้อเสนอจากผู้ให้บริการ",
+    homeTrustCompareBody: "ดูตัวเลือกเที่ยวบินและโรงแรมจากผู้ให้บริการเดินทางหลายรายได้ในที่เดียว",
+    homeTrustPricingTitle: "ข้อมูลราคาที่โปร่งใส",
+    homeTrustPricingBody: "ตรวจสอบราคา รายละเอียดเส้นทางหรือที่พัก และเงื่อนไขสำคัญก่อนดำเนินการต่อ",
+    homeTrustHandoffTitle: "ส่งต่อไปยังผู้ให้บริการอย่างปลอดภัย",
+    homeTrustHandoffBody: "เมื่อคุณเลือกข้อเสนอ คุณจะไปยังผู้ให้บริการเพื่อทำการจองให้เสร็จอย่างปลอดภัย",
+    homePromoFlightsTitle: "ดีลเที่ยวบินจากสายการบินชั้นนำ",
+    homePromoFlightsBody: "ค้นหาค่าโดยสารช่วงเวลาจำกัดและเปรียบเทียบตัวเลือกได้ทันที",
+    homePromoFlightsCta: "ดูดีลเที่ยวบิน",
+    homePromoHotelsTitle: "ประหยัดค่าโรงแรมทั่วโลก",
+    homePromoHotelsBody: "เลือกดูที่พักตั้งแต่โรงแรมบูติกไปจนถึงเครือโรงแรมระดับโลก พร้อมราคาที่โปร่งใส",
+    homePromoHotelsCta: "ดูดีลโรงแรม",
+    faqHeading: "คำถามที่พบบ่อย",
+    faqIntro: "เรียนรู้ว่า Kurioticket ช่วยให้คุณเปรียบเทียบเที่ยวบิน โรงแรม และตัวเลือกการเดินทางก่อนจองกับผู้ให้บริการที่เชื่อถือได้อย่างไร",
+    faqQuestionFindOptions: "Kurioticket ค้นหาตัวเลือกเที่ยวบินและโรงแรมอย่างไร?",
+    faqQuestionSellDirectly: "Kurioticket ขายตั๋วหรือห้องพักโรงแรมโดยตรงหรือไม่?",
+    faqQuestionPriceChanges: "ทำไมราคาจึงเปลี่ยนได้หลังจากฉันคลิกข้อเสนอ?",
+    faqQuestionCompareProviders: "ฉันสามารถเปรียบเทียบผู้ให้บริการหลายรายสำหรับทริปเดียวกันได้หรือไม่?",
+    faqQuestionSecureBooking: "ฉันจะทำการจองให้เสร็จอย่างปลอดภัยได้อย่างไร?",
+    faqQuestionPreferences: "ฉันสามารถตั้งค่าความต้องการสกุลเงินและภาษาได้หรือไม่?",
+    faqQuestionLiveCached: "ผลการค้นหาเป็นข้อมูลสดหรือข้อมูลแคช?",
+    faqQuestionManageChanges: "ฉันจะจัดการการเปลี่ยนแปลงหรือการยกเลิกได้ที่ไหน?",
+    supportFaqAccountQuestion: "ความช่วยเหลือเกี่ยวกับบัญชีและการเข้าสู่ระบบ",
+    supportFaqSearchQuestion: "ความช่วยเหลือเกี่ยวกับการค้นหาและผลลัพธ์",
+    supportFaqSavedTripsQuestion: "ทริปที่บันทึกไว้และการแจ้งเตือน",
+    supportFaqRedirectQuestion: "ความช่วยเหลือเกี่ยวกับการจอง/การเปลี่ยนเส้นทางไปยังผู้ให้บริการ",
+    supportFaqAlreadyBookedQuestion: "จองกับผู้ให้บริการแล้วใช่ไหม?",
+    supportFaqChangeBookingQuestion: "Kurioticket สามารถเปลี่ยนแปลงการจองของฉันได้หรือไม่?",
+    supportFaqWhyRedirectedQuestion: "ทำไมฉันจึงถูกส่งไปยังผู้ให้บริการรายอื่น?",
+    homeNewsletterTitle: "รับข่าวดีลการเดินทางก่อนใคร",
+    homeNewsletterBody: "รับอัปเดตเที่ยวบินและโรงแรมที่คัดสรรแล้วทุกสัปดาห์",
+    homeNewsletterPlaceholder: "ป้อนอีเมลของคุณ",
+    homeSubscribe: "สมัครรับข่าวสาร",
+    homeNewsletterConsent: "เมื่อสมัครรับข่าวสาร คุณตกลงที่จะรับอัปเดตจาก Kurioticket และสามารถยกเลิกได้ทุกเมื่อ",
+    homeNewsletterThanks: "ขอบคุณ! เราจะแจ้งดีลการเดินทางให้คุณทราบ",
+    footerContactUs: "ติดต่อเรา",
+    footerCustomerSupport: "ฝ่ายสนับสนุนลูกค้า",
+    footerServiceGuarantee: "การรับประกันบริการ",
+    footerMoreServiceInfo: "ข้อมูลบริการเพิ่มเติม",
+    footerDiscover: "สำรวจ",
+    footerSavedRecent: "ที่บันทึกไว้และล่าสุด",
+    footerTermsSettings: "ข้อกำหนดและการตั้งค่า",
+    footerPrivacyPolicy: "นโยบายความเป็นส่วนตัว",
+    footerTermsOfService: "ข้อกำหนดการให้บริการ",
+    footerCookiePolicy: "นโยบายคุกกี้",
+    legalCenter: "ศูนย์กฎหมาย",
+    footerAboutKurioticket: "เกี่ยวกับ Kurioticket",
+    footerAboutUs: "เกี่ยวกับเรา",
+    footerHowItWorks: "Kurioticket ทำงานอย่างไร",
+    footerConfidenceTagline: "ค้นหาเที่ยวบิน โรงแรม และดีลการเดินทางได้อย่างมั่นใจ",
+    footerPrivacy: "ความเป็นส่วนตัว",
+    footerTerms: "ข้อกำหนด",
+    footerCookies: "คุกกี้",
+  };
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(th[key], value, `${key} should resolve to Thai`);
+    if (value !== enTranslations[key]) assert.notEqual(th[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  assert.equal(`${th.adultSingular} 1 คน, ${th.economy}`, "ผู้ใหญ่ 1 คน, ชั้นประหยัด");
+  assert.equal(th["newsletter.accountEmailLine"], "สมัครรับข่าวสารด้วยอีเมลบัญชีของคุณ: {{email}}.");
+  assert.match(th["newsletter.accountEmailLine"], /\{\{email\}\}/);
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+
+  for (const key of ["faqAnswerFindOptions", "faqAnswerSellDirectly", "faqAnswerPriceChanges", "faqAnswerSecureBooking", "faqAnswerManageChanges", "supportFaqAlreadyBookedAnswer", "supportFaqWhyRedirectedAnswer"]) {
+    assert.match(th[key], /Kurioticket|ผู้ให้บริการ/, `${key} should preserve provider-boundary meaning`);
+    assert.notEqual(th[key], enTranslations[key], `${key} should be localized`);
+  }
+
+  const translatedFaqs = getGeneralFaqs((key) => th[key] ?? enTranslations[key] ?? "");
+  assert.ok(translatedFaqs.some((item) => item.question === "ความช่วยเหลือเกี่ยวกับบัญชีและการเข้าสู่ระบบ"));
+  assert.ok(translatedFaqs.some((item) => item.answer.includes("ผู้ให้บริการภายนอก")));
+
+  assert.ok(pageSource.includes('t("homeHeroTitle")') && pageSource.includes('t("homeNewsletterTitle")'));
+  assert.ok(pageSource.includes('const translatedFaqs = getGeneralFaqs(t)') && pageSource.includes('items={translatedFaqs}'));
+  assert.ok(headerSource.includes("t.flights") && headerSource.includes("t.login") && headerSource.includes("t.signUp"));
+  assert.ok(searchTabsSource.includes("t.roundTrip") && searchTabsSource.includes('translate("infantsOnLap")') && searchTabsSource.includes('translate("hotelSearchGuestsLabel")'));
+  assert.match(searchTabsSource, /if \(!departureSummary\) \{[\s\S]*?return t\.travelDates \|\| "Travel dates";[\s\S]*?\}/);
+  assert.match(searchTabsSource, /if \(checkOutSummary\) \{[\s\S]*?return `\$\{checkInSummary\} — \$\{checkOutSummary\}`;[\s\S]*?\}/);
+  assert.ok(searchTabsSource.includes("/flights/results?") && searchTabsSource.includes("/hotels/results?${params.toString()}"));
+  assert.ok(footerSource.includes("t.footerSellerOfTravelNotice") && footerSource.includes("t.footerPrivacy"));
+});
+
 
 test("Indonesian homepage visible copy and render paths resolve without English fallback", () => {
   const id = getTranslations("id");
