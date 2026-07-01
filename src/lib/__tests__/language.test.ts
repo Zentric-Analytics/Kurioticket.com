@@ -11121,6 +11121,135 @@ test("Indonesian Deals package search clear-all copy resolves from i18n without 
 });
 
 
+test("Thai Deals landing page copy resolves from i18n without English fallback", () => {
+  const th = getTranslations("th");
+  const dealsPageSource = readFileSync("src/app/deals/page.tsx", "utf8");
+
+  const expected: Record<string, string> = {
+    "deals.heroTitle": "ค้นหาดีลการเดินทางสำหรับทริปถัดไปของคุณ",
+    "deals.heroSubtitle": "ค้นหาเที่ยวบิน ที่พัก และรถเช่ารวมกันได้ในที่เดียว",
+    "deals.package.hotelFlight": "โรงแรม + เที่ยวบิน",
+    "deals.package.hotelFlightCar": "โรงแรม + เที่ยวบิน + รถ",
+    "deals.package.flightCar": "เที่ยวบิน + รถ",
+    "deals.package.hotelCar": "โรงแรม + รถ",
+    "deals.originLabel": "จากที่ไหน?",
+    "deals.originPlaceholder": "เมืองหรือสนามบิน",
+    "deals.destinationLabel": "ไปที่ไหน?",
+    "deals.destinationPlaceholder": "เมือง สนามบิน หรือพื้นที่",
+    "deals.datesLabel": "วันที่เดินทาง",
+    "deals.dateHotelPlaceholder": "เช็กอิน — เช็กเอาต์",
+    "deals.dateFlightPlaceholder": "ออกเดินทาง — กลับ",
+    "deals.travelersRoomsLabel": "ผู้เดินทาง / ห้องพัก",
+    "deals.travelersRoomsCarLabel": "ผู้เดินทาง / ห้องพัก / รถ",
+    "deals.searchButton": "ค้นหาดีล",
+    "deals.destinationIdeasTitle": "จุดหมายเริ่มต้นสำหรับค้นหาดีล",
+    "deals.destinationIdeasSubtitle": "เลือกไอเดียจุดหมายปลายทาง แล้วเปรียบเทียบผลลัพธ์จากผู้ให้บริการเมื่อดำเนินการต่อ",
+    "deals.destination.tokyo.city": "โตเกียว",
+    "deals.destination.tokyo.country": "ญี่ปุ่น",
+    "deals.destination.london.city": "ลอนดอน",
+    "deals.destination.london.country": "สหราชอาณาจักร",
+    "deals.destination.paris.city": "ปารีส",
+    "deals.destination.paris.country": "ฝรั่งเศส",
+    "deals.destination.dubai.city": "ดูไบ",
+    "deals.destination.dubai.country": "สหรัฐอาหรับเอมิเรตส์",
+    "deals.destination.cancun.city": "แคนคูน",
+    "deals.destination.cancun.country": "เม็กซิโก",
+    "deals.destination.rome.city": "โรม",
+    "deals.destination.rome.country": "อิตาลี",
+    "deals.destination.tokyo.imageAlt": "เมืองโตเกียว",
+    "deals.destination.london.imageAlt": "ลอนดอน",
+    "deals.destination.paris.imageAlt": "ปารีส",
+    "deals.destination.dubai.imageAlt": "เส้นขอบฟ้าดูไบ",
+    "deals.destination.cancun.imageAlt": "ชายหาดแคนคูน",
+    "deals.destination.rome.imageAlt": "แลนด์มาร์กกรุงโรม",
+  };
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(th[key], value, `${key} should resolve to Thai`);
+    assert.notEqual(th[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  assert.equal(`${th["deals.travelerSingular"]} 1 คน, ${th["deals.roomSingular"]} 1 ห้อง`, "ผู้เดินทาง 1 คน, ห้อง 1 ห้อง");
+  assert.equal(languageOptions.find((option) => option.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
+
+  for (const value of ["hotel-flight", "hotel-flight-car", "flight-car", "hotel-car"]) {
+    assert.ok(dealsPageSource.includes(`value: "${value}"`), `${value} package value should remain unchanged.`);
+  }
+
+  for (const snippet of [
+    'setPackageMode("hotel-flight")',
+    'setOrigin("")',
+    'setDestination("")',
+    'setStartDate("")',
+    'setEndDate("")',
+    'setAdults(1)',
+    'setChildren(0)',
+    'setRooms(1)',
+    'setDriverAge(30)',
+    'setCabinClass("economy")',
+    'router.push(`/flights/results?${params.toString()}`)',
+    'router.push(`/hotels/results?${params.toString()}`)',
+    'origin: trimmedOrigin',
+    'destination: trimmedDestination',
+    'adults: String(normalizedAdults)',
+    'name="packageMode"',
+    'id="package-origin"',
+    'id="package-destination"',
+    'focus-visible:ring-2 focus-visible:ring-indigo-500',
+    'aria-label={t("deals.packageLegend")}',
+    'alt={t(idea.imageAltKey)}',
+  ]) {
+    assert.ok(dealsPageSource.includes(snippet), `Deals form behavior/rendering should preserve ${snippet}.`);
+  }
+
+  for (const key of [
+    "deals.heroTitle",
+    "deals.heroSubtitle",
+    "deals.originLabel",
+    "deals.originPlaceholder",
+    "deals.destinationLabel",
+    "deals.destinationPlaceholder",
+    "deals.datesLabel",
+    "deals.dateFlightPlaceholder",
+    "deals.dateHotelPlaceholder",
+    "deals.searchButton",
+    "deals.destinationIdeasTitle",
+    "deals.destinationIdeasSubtitle",
+  ]) {
+    assert.ok(dealsPageSource.includes(`t("${key}")`), `${key} should be read through i18n`);
+  }
+
+  for (const key of [
+    "deals.package.hotelFlight",
+    "deals.package.hotelFlightCar",
+    "deals.package.flightCar",
+    "deals.package.hotelCar",
+    "deals.destination.tokyo.city",
+    "deals.destination.tokyo.country",
+    "deals.destination.london.city",
+    "deals.destination.london.country",
+    "deals.destination.paris.city",
+    "deals.destination.paris.country",
+    "deals.destination.dubai.city",
+    "deals.destination.dubai.country",
+    "deals.destination.cancun.city",
+    "deals.destination.cancun.country",
+    "deals.destination.rome.city",
+    "deals.destination.rome.country",
+  ]) {
+    assert.ok(dealsPageSource.includes(key), `${key} should be in the active Deals render path`);
+  }
+
+  const destinationOrder = ["Tokyo", "London", "Paris", "Dubai", "Cancun", "Rome"];
+  const orderIndexes = destinationOrder.map((city) => dealsPageSource.indexOf(`destinationQuery: "${city}"`));
+  assert.deepEqual([...orderIndexes].sort((a, b) => a - b), orderIndexes, "Destination order should remain unchanged.");
+  for (const index of orderIndexes) assert.ok(index > -1, "Destination query should remain unchanged.");
+  assert.match(dealsPageSource, /const t = useCallback\([\s\S]*?dictionary\[key\] \?\? enTranslations\[key\] \?\? key[\s\S]*?\);/);
+  assert.doesNotMatch(dealsPageSource, />Find travel deals for your next trip<|\{"Find travel deals for your next trip"\}/);
+});
+
+
 test("Thai homepage visible copy and render paths resolve without English fallback", () => {
   const th = getTranslations("th");
   const pageSource = readFileSync("src/app/page.tsx", "utf8");
