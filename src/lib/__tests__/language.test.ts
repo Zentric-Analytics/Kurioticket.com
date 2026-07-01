@@ -12999,3 +12999,84 @@ test("Thai Legal Center and legal detail copy resolves without English fallbacks
   assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
 });
+
+test("Thai My Trips and Price alerts account pages resolve localized copy without changing render behavior", () => {
+  const th = getTranslations("th");
+  const tripsPageSource = readFileSync("src/app/dashboard/trips/page.tsx", "utf8");
+  const tripsSource = readFileSync("src/app/dashboard/trips/TripsManagementPage.tsx", "utf8");
+  const alertsPageSource = readFileSync("src/app/dashboard/alerts/page.tsx", "utf8");
+  const alertsSource = readFileSync("src/app/dashboard/alerts/PriceAlertsContent.tsx", "utf8");
+
+  const tripsCopy = {
+    "accountDashboard.trips.title": "ทริปของฉัน",
+    "accountDashboard.trips.findReservation": "ค้นหาการจอง",
+    "accountDashboard.trips.current.empty.title": "จะไปที่ไหนต่อ?",
+    "accountDashboard.trips.current.empty.body": "คุณยังไม่ได้เริ่มทริปใด ๆ เมื่อคุณทำการจอง ทริปจะแสดงที่นี่",
+    "accountDashboard.trips.history.tabs.past": "ที่ผ่านมา",
+    "accountDashboard.trips.history.tabs.cancelled": "ยกเลิกแล้ว",
+    "accountDashboard.trips.history.empty.past.title": "จดจำการเดินทางของคุณ",
+    "accountDashboard.trips.history.empty.past.body": "ทริปที่เสร็จสิ้นแล้วจะแสดงที่นี่หลังจากคุณเดินทาง",
+    "accountDashboard.trips.history.empty.cancelled.title": "แผนเปลี่ยนไปใช่ไหม?",
+    "accountDashboard.trips.history.empty.cancelled.body": "การจองที่ยกเลิกแล้วจะแสดงที่นี่เพื่อใช้อ้างอิง",
+  } as const;
+
+  const alertsCopy = {
+    "accountDashboard.priceAlerts.title": "การแจ้งเตือนราคา",
+    "accountDashboard.priceAlerts.description": "ติดตามราคาและรับการแจ้งเตือนเมื่อค่าโดยสารเปลี่ยนแปลง",
+    "accountDashboard.priceAlerts.tabs.active": "ใช้งานอยู่",
+    "accountDashboard.priceAlerts.tabs.expired": "หมดอายุ",
+    "accountDashboard.priceAlerts.tabs.all": "ทั้งหมด",
+    "accountDashboard.priceAlerts.sort.label": "เรียงตาม",
+    "accountDashboard.priceAlerts.sort.newest": "ใหม่ล่าสุด",
+    "accountDashboard.priceAlerts.sort.oldest": "เก่าสุด",
+    "accountDashboard.priceAlerts.sort.routeAz": "เส้นทาง A-Z",
+    "accountDashboard.priceAlerts.empty.title": "ยังไม่มีการแจ้งเตือนราคา",
+    "accountDashboard.priceAlerts.empty.body": "สร้างการแจ้งเตือนจากการค้นหาเที่ยวบินเพื่อติดตามการเปลี่ยนแปลงค่าโดยสารและรับการแจ้งเตือน",
+    "accountDashboard.priceAlerts.cta.flights": "ค้นหาเที่ยวบิน",
+  } as const;
+
+  for (const [key, expected] of Object.entries({ ...tripsCopy, ...alertsCopy })) {
+    assert.equal(th[key], expected, key);
+    assert.notEqual(th[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  assert.equal(`${th["accountDashboard.priceAlerts.tabs.active"]} (0)`, "ใช้งานอยู่ (0)");
+  assert.equal(`${th["accountDashboard.priceAlerts.tabs.expired"]} (0)`, "หมดอายุ (0)");
+  assert.equal(`${th["accountDashboard.priceAlerts.tabs.all"]} (0)`, "ทั้งหมด (0)");
+  assert.equal(`${th["accountDashboard.priceAlerts.sort.label"]}: ${th["accountDashboard.priceAlerts.sort.newest"]}`, "เรียงตาม: ใหม่ล่าสุด");
+
+  for (const key of Object.keys(tripsCopy)) {
+    assert.ok(tripsSource.includes(key), `Trips render path should read ${key}`);
+  }
+  for (const key of Object.keys(alertsCopy)) {
+    assert.ok(alertsSource.includes(key), `Price alerts render path should read ${key}`);
+  }
+
+  for (const english of ["Where to next?", "Remember your journeys", "Plans changed?", "No price alerts yet.", "Create an alert from a flight search to track fare changes and get notified.", "Search flights"]) {
+    assert.ok(!tripsSource.includes(`>${english}<`), `${english} should not be hardcoded as rendered Thai trips copy`);
+    assert.ok(!alertsSource.includes(`>${english}<`), `${english} should not be hardcoded as rendered Thai alerts copy`);
+  }
+
+  assert.ok(tripsPageSource.includes("<TripsManagementPage />"));
+  assert.ok(alertsPageSource.includes("<PriceAlertsContent showAccountLink={showAccountLink} />"));
+  assert.ok(tripsSource.includes('fetch("/api/dashboard/trips"'));
+  assert.ok(tripsSource.includes('fetch("/api/dashboard/trips/lookup"'));
+  assert.ok(tripsSource.includes('body: JSON.stringify({ reservationCode, email })'));
+  assert.ok(tripsSource.includes('id: "past"'));
+  assert.ok(tripsSource.includes('id: "cancelled"'));
+  assert.ok(tripsSource.includes('aria-controls={`${tab.id}-history-trips-panel`}'));
+  assert.ok(alertsSource.includes('id: "active"'));
+  assert.ok(alertsSource.includes('id: "expired"'));
+  assert.ok(alertsSource.includes('id: "all"'));
+  assert.ok(alertsSource.includes('id: "newest"'));
+  assert.ok(alertsSource.includes('id: "oldest"'));
+  assert.ok(alertsSource.includes('id: "routeAz"'));
+  assert.ok(alertsSource.includes('href="/flights"'));
+  assert.ok(alertsSource.includes('aria-expanded={isSortOpen}'));
+  assert.ok(alertsSource.includes('role="listbox"'));
+  assert.ok(alertsSource.includes('setSelectedTab(tab.id)'));
+  assert.ok(alertsSource.includes('setSelectedSort(option.id)'));
+  assert.ok(alertsSource.includes('rounded-full'));
+  assert.equal(languageOptions.find((option) => option.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
+});
