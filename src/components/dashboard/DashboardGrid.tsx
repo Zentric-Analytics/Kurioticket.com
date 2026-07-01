@@ -1129,7 +1129,7 @@ function StructuredAddressInput({
             className={fieldLabelClassName}
             htmlFor="personal-address-state"
           >
-            <span className="sm:hidden">{t["accountDashboard.personalDetails.stateProvinceRegion"]}</span>
+            <span className="sm:hidden">State / Region</span>
             <span className="hidden sm:inline">{t["accountDashboard.personalDetails.stateProvinceRegion"]}</span>
           </label>
           <input
