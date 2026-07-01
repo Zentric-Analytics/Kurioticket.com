@@ -11608,6 +11608,37 @@ test("Thai homepage hotel, destination, route-card, and date picker copy resolve
   assert.deepEqual(africaDiscoveryOrder, ["ng-los-lhr", "ng-los-dxb", "ng-abv-acc", "ng-los-nbo", "ng-abv-jnb", "ng-los-ist", "ng-abv-cdg", "ng-los-doh", "ng-los-kig", "ng-abv-cai", "ng-los-add", "ng-abv-fco", "ng-los-nrt", "ng-abv-mad", "ng-los-cpt", "ng-abv-rob"]);
 });
 
+test("Thai footer Discover destinations link resolves through active i18n key", () => {
+  const footerSource = readFileSync("src/components/layout/Footer.tsx", "utf8");
+  const th = thTranslations as Record<string, string>;
+
+  assert.equal(th.destinations, "จุดหมายปลายทาง");
+  assert.notEqual(th.destinations, enTranslations.destinations);
+
+  const expectedDiscoverLabels = [
+    ["footerDiscover", "สำรวจ"],
+    ["flights", "เที่ยวบิน"],
+    ["hotels", "โรงแรม"],
+    ["cars", "รถเช่า"],
+    ["deals", "ดีล"],
+    ["destinations", "จุดหมายปลายทาง"],
+    ["footerSavedRecent", "ที่บันทึกไว้และล่าสุด"],
+  ] as const;
+
+  for (const [key, expected] of expectedDiscoverLabels) {
+    assert.equal(th[key], expected, `${key} should remain Thai in the footer Discover column`);
+    assert.notEqual(th[key], (enTranslations as Record<string, string>)[key], `${key} should not fall back to English`);
+  }
+
+  assert.match(footerSource, /heading: t\.footerDiscover,[\s\S]*?label: t\.flights,[\s\S]*?href: "\/flights",[\s\S]*?label: t\.hotels,[\s\S]*?href: "\/hotels\/results",[\s\S]*?label: t\.cars,[\s\S]*?href: "\/cars",[\s\S]*?label: t\.deals,[\s\S]*?href: "\/deals",[\s\S]*?label: t\.destinations,[\s\S]*?href: "\/destinations",[\s\S]*?label: t\.footerSavedRecent,[\s\S]*?href: "\/saved",/);
+  assert.ok(!footerSource.includes('label: "Destinations"'));
+  assert.ok(footerSource.includes('className="border-t border-slate-200 bg-white text-slate-700"'));
+  assert.ok(footerSource.includes('className="transition-colors hover:text-indigo-600"'));
+  assert.ok(footerSource.includes('className="break-words transition-colors hover:text-indigo-600"'));
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+});
+
 test("Thai Destinations and Saved trips copy resolves through active render paths", () => {
   const destinationsPageSource = readFileSync("src/app/destinations/page.tsx", "utf8");
   const destinationCardSource = readFileSync("src/app/destinations/DestinationCard.tsx", "utf8");
