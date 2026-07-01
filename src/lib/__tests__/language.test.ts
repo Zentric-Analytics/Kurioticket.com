@@ -11935,6 +11935,81 @@ test("Thai Destinations and Saved trips copy resolves through active render path
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
 });
 
+
+test("Thai About and How Kurioticket Works page copy resolves without English fallback", () => {
+  const th = thTranslations as Record<string, string>;
+  const aboutPageSource = readFileSync("src/components/about/AboutPageContent.tsx", "utf8");
+  const aboutRouteSource = readFileSync("src/app/about/page.tsx", "utf8");
+  const howItWorksSource = readFileSync("src/app/how-it-works/HowItWorksContent.tsx", "utf8");
+  const howItWorksRouteSource = readFileSync("src/app/how-it-works/page.tsx", "utf8");
+
+  const expectedThaiCopy: Record<string, string> = {
+    aboutPageEyebrow: "เกี่ยวกับ Kurioticket",
+    aboutPageTitle: "เกี่ยวกับเรา",
+    aboutPageIntroPrimary:
+      "Kurioticket เป็นแพลตฟอร์มค้นหาและเปรียบเทียบการเดินทางที่ช่วยให้นักเดินทางค้นหา เปรียบเทียบ และค้นพบเที่ยวบิน โรงแรม รถเช่า และดีลการเดินทาง",
+    aboutPageIntroSecondary:
+      "เป้าหมายของเราคือทำให้การวางแผนเดินทางชัดเจนขึ้น โดยรวบรวมตัวเลือกที่มีและข้อมูลจากผู้ให้บริการไว้ในที่เดียว เพื่อให้นักเดินทางตรวจสอบทางเลือกก่อนดำเนินการต่อกับผู้ให้บริการที่เหมาะกับทริปของตน",
+    aboutPagePlanningCardHeading: "เครื่องมือวางแผนการเดินทางที่ใช้งานได้จริง",
+    aboutPagePlanningCardBody:
+      "Kurioticket มุ่งช่วยให้นักเดินทางประเมินตัวเลือกการเดินทางพร้อมบริบทที่เป็นประโยชน์ ความพร้อมให้บริการ ราคา กฎ และขั้นตอนการจองขั้นสุดท้ายอาจแตกต่างกันตามผู้ให้บริการ ดังนั้นนักเดินทางควรตรวจสอบหน้าของผู้ให้บริการอย่างรอบคอบก่อนตัดสินใจ",
+    howItWorksEyebrow: "วิธีการทำงานของ Kurioticket",
+    howItWorksTitle: "วิธีการทำงานของ Kurioticket",
+    howItWorksIntro:
+      "Kurioticket ช่วยให้นักเดินทางเริ่มจากการค้นหา ไปสู่การเปรียบเทียบ แล้วดำเนินการต่อไปยังผู้ให้บริการเมื่อเลือกข้อเสนอแล้ว",
+    howItWorksFlowHeading: "ขั้นตอนพื้นฐาน",
+    "howItWorks.steps.search.title": "ค้นหาตัวเลือกการเดินทาง",
+    "howItWorks.steps.search.description":
+      "ป้อนรายละเอียดทริปของคุณเพื่อค้นหาเที่ยวบิน โรงแรม รถเช่า หรือดีลการเดินทางที่มีให้เลือก",
+    "howItWorks.steps.compare.title": "เปรียบเทียบผลลัพธ์ที่มี",
+    "howItWorks.steps.compare.description":
+      "ตรวจสอบตัวเลือก ราคา ตารางเวลา รายละเอียดผู้ให้บริการ และข้อมูลการเดินทางอื่น ๆ ที่แสดง",
+    "howItWorks.steps.choose.title": "เลือกข้อเสนอ",
+    "howItWorks.steps.choose.description":
+      "เลือกตัวเลือกที่ตรงกับแผนของคุณมากที่สุดหลังจากตรวจสอบรายละเอียดที่มี",
+    "howItWorks.steps.continue.title": "ดำเนินการต่อกับผู้ให้บริการ",
+    "howItWorks.steps.continue.description":
+      "เมื่อถูกเปลี่ยนเส้นทาง ให้ดำเนินการต่อบนเว็บไซต์ของผู้ให้บริการเพื่อตรวจสอบรายละเอียดขั้นสุดท้ายและทำขั้นตอนการจองให้เสร็จสิ้น",
+    "howItWorks.providerWebsites.title": "เว็บไซต์ของผู้ให้บริการ",
+    "howItWorks.providerWebsites.description":
+      "การจองบางรายการอาจดำเนินการให้เสร็จสิ้นบนเว็บไซต์ของผู้ให้บริการหลังจาก Kurioticket เปลี่ยนเส้นทางคุณ โปรดตรวจสอบหน้าของผู้ให้บริการสำหรับความพร้อมให้บริการ ราคา เงื่อนไข ขั้นตอนการชำระเงิน และรายละเอียดการจองขั้นสุดท้ายก่อนทำการซื้อให้เสร็จสิ้น",
+  };
+
+  for (const [key, expected] of Object.entries(expectedThaiCopy)) {
+    assert.equal(th[key], expected, `${key} should resolve to Thai copy`);
+    assert.notEqual(th[key], (enTranslations as Record<string, string>)[key], `${key} should not fall back to English`);
+  }
+
+  assert.ok(aboutRouteSource.includes('import { AboutPageContent } from "@/components/about/AboutPageContent"'));
+  assert.ok(aboutRouteSource.includes("<AboutPageContent />"));
+  assert.ok(aboutPageSource.includes("getTranslation(t,"), "About render path should read i18n keys.");
+  assert.ok(aboutPageSource.includes("max-w-3xl rounded-2xl border border-border bg-white"), "About card layout classes should remain unchanged.");
+  assert.ok(!aboutPageSource.includes("About Us"), "Active About component should not hardcode screenshot English copy.");
+
+  for (const key of ["aboutPageEyebrow", "aboutPageTitle", "aboutPageIntroPrimary", "aboutPageIntroSecondary", "aboutPagePlanningCardHeading", "aboutPagePlanningCardBody"]) {
+    assert.ok(aboutPageSource.includes(key), `About page render path should resolve ${key} through i18n.`);
+  }
+
+  assert.ok(howItWorksRouteSource.includes("<HowItWorksContent />"));
+  assert.ok(howItWorksSource.includes('number: "01"') && howItWorksSource.includes('number: "02"') && howItWorksSource.includes('number: "03"') && howItWorksSource.includes('number: "04"'), "How-it-works step numbers should remain unchanged.");
+  assert.ok(howItWorksSource.includes("Search") && howItWorksSource.includes("GitCompare") && howItWorksSource.includes("MousePointerClick") && howItWorksSource.includes("ExternalLink"), "How-it-works icons should remain unchanged.");
+  assert.ok(howItWorksSource.includes("steps.map((step)"), "How-it-works should keep mapped card order.");
+  assert.ok(howItWorksSource.includes('aria-labelledby="how-it-works-steps"'), "How-it-works accessibility attributes should remain unchanged.");
+  assert.ok(howItWorksSource.includes("rounded-2xl border border-border bg-white"), "How-it-works card layout classes should remain unchanged.");
+  assert.ok(!howItWorksSource.includes("Basic flow"), "Active How-it-works component should not hardcode screenshot English copy.");
+
+  for (const key of ["howItWorksEyebrow", "howItWorksTitle", "howItWorksIntro", "howItWorksFlowHeading", "howItWorks.steps.search.title", "howItWorks.steps.search.description", "howItWorks.steps.compare.title", "howItWorks.steps.compare.description", "howItWorks.steps.choose.title", "howItWorks.steps.choose.description", "howItWorks.steps.continue.title", "howItWorks.steps.continue.description", "howItWorks.providerWebsites.title", "howItWorks.providerWebsites.description"]) {
+    assert.ok(howItWorksSource.includes(key), `How-it-works render path should resolve ${key} through i18n.`);
+  }
+
+  assert.match(th.aboutPageIntroPrimary, /ค้นหา.*เปรียบเทียบ/);
+  assert.match(th.aboutPagePlanningCardBody, /ความพร้อมให้บริการ.*ราคา.*ขั้นตอนการจองขั้นสุดท้าย.*ผู้ให้บริการ/);
+  assert.match(th.howItWorksIntro, /ค้นหา.*เปรียบเทียบ.*ผู้ให้บริการ/);
+  assert.match(th["howItWorks.providerWebsites.description"], /ผู้ให้บริการ.*ความพร้อมให้บริการ.*ราคา.*เงื่อนไข.*ขั้นตอนการชำระเงิน.*รายละเอียดการจอง/);
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+});
+
 test("Thai country/currency modal and auth copy resolves without English fallback", () => {
   const th = getTranslations("th-TH");
   const expected: Record<string, string> = {
