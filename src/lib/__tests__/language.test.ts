@@ -12561,3 +12561,101 @@ test("Thai Hotels landing localization resolves active /hotels copy", () => {
   assert.equal(languageOptions.find((option) => option.code === "th")?.direction, "ltr");
   assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
 });
+
+test("Thai cars landing render path copy resolves without English fallback", () => {
+  const th = getTranslations("th");
+  const auditedThaiCarsLandingKeys: Array<[string, string]> = [
+    ["searchRentalCarsEveryPartTrip", "ค้นหารถเช่าสำหรับทุกช่วงของทริป"],
+    ["carsSearch.pickupLocationLabel", "สถานที่รับรถ"],
+    ["carsSearch.pickupLocationPlaceholder", "สนามบิน เมือง หรือที่อยู่"],
+    ["carsSearch.returnToSameLocation", "คืนรถที่สถานที่เดิม"],
+    ["carsSearch.differentReturnLocation", "คืนรถต่างสถานที่"],
+    ["carsSearch.rentalDatesLabel", "วันที่เช่ารถ"],
+    ["carsSearch.rentalDatePlaceholder", "วันที่รับรถ — วันที่คืนรถ"],
+    ["carsSearch.pickupReturnTimeLabel", "เวลารับรถ / คืนรถ"],
+    ["carsSearch.pickupReturnTimeSummary", "รับรถ {pickupTime} — คืนรถ {returnTime}"],
+    ["carsSearch.driverAgeLabel", "อายุผู้ขับขี่"],
+    ["carsSearch.driverAgeAnyAge", "ทุกช่วงอายุ"],
+    ["exploreCarsByTripStyle", "สำรวจรถเช่าตามสไตล์การเดินทาง"],
+    ["carsTripStyleBody", "เลือกประเภทรถ แล้วเราจะเปิดผลลัพธ์พร้อมบริบทการค้นหาที่เตรียมไว้"],
+    ["carsTripStyle.economy.title", "รถประหยัด"],
+    ["carsTripStyle.economy.subtitle", "การค้นหาราคาคุ้มค่าสำหรับการเดินทางในเมืองและทริปเดี่ยว"],
+    ["carsTripStyle.economy.cta", "เริ่มค้นหารถประหยัด"],
+    ["carsTripStyle.suv.title", "รถ SUV"],
+    ["carsTripStyle.suv.subtitle", "มีพื้นที่สำหรับทริปครอบครัว สัมภาระ และการขับขี่ระยะไกล"],
+    ["carsTripStyle.suv.cta", "เปิดการค้นหาเช่ารถ SUV"],
+    ["carsTripStyle.luxury.title", "รถหรู"],
+    ["carsTripStyle.luxury.subtitle", "บริบทการค้นหาระดับพรีเมียมสำหรับธุรกิจหรือทริปพิเศษ"],
+    ["carsTripStyle.luxury.cta", "วางแผนค้นหารถหรู"],
+    ["carsTripStyle.van.title", "รถตู้"],
+    ["carsTripStyle.van.subtitle", "บริบทการค้นหาสำหรับการเดินทางเป็นกลุ่มและสัมภาระครอบครัว"],
+    ["carsTripStyle.van.cta", "ค้นหารถตู้สำหรับทริปกลุ่ม"],
+    ["carsTrust.0.title", "ออกแบบมาสำหรับทริปครบวงจร"],
+    ["carsTrust.0.description", "วางแผนเที่ยวบิน ที่พัก และการเดินทางภาคพื้นดินได้ในขั้นตอนเดียวบน Kurioticket"],
+    ["carsTrust.1.title", "เริ่มจากรายละเอียดการรับรถ"],
+    ["carsTrust.1.description", "ป้อนสถานที่รับรถ วันที่ เวลา และอายุผู้ขับขี่ เพื่อให้การค้นหารถเช่าเริ่มต้นด้วยรายละเอียดทริปที่ถูกต้อง"],
+    ["carsTrust.2.title", "ตรวจสอบการเช่าอย่างชัดเจน"],
+    ["carsTrust.2.description", "ตรวจสอบราคาสุดท้าย ความพร้อมให้บริการ ค่าธรรมเนียม และกฎการเช่ากับผู้ให้บริการก่อนจอง"],
+    ["carsPickupPointsTitle", "เริ่มจากจุดรับรถยอดนิยม"],
+    ["carsPickupPointsBody", "เลือกรูปแบบจุดรับรถ แล้วเราจะเปิดหน้าผลลัพธ์รถพร้อมรายละเอียดการค้นหาที่เตรียมไว้"],
+    ["carsPickup.Airport.title", "รับรถที่สนามบิน"],
+    ["carsPickup.Airport.subtitle", "เริ่มจากจุดเดินทางมาถึงของสนามบินหลัก"],
+    ["carsPickup.City center.title", "รับรถใจกลางเมือง"],
+    ["carsPickup.City center.subtitle", "รับรถใกล้โรงแรมในตัวเมืองและย่านธุรกิจ"],
+    ["carsPickup.Train station.title", "รับรถที่สถานีรถไฟ"],
+    ["carsPickup.Train station.subtitle", "เดินทางต่อหลังจากมาถึงด้วยรถไฟ"],
+    ["carsPickup.Hotel area.title", "รับรถใกล้บริเวณโรงแรม"],
+    ["carsPickup.Hotel area.subtitle", "วางแผนรับรถใกล้ที่พักของคุณ"],
+    ["carsFaq.heading", "คำถามที่พบบ่อยเกี่ยวกับรถเช่า"],
+    ["carsFaq.0.question", "ต้องใช้ข้อมูลอะไรบ้างในการค้นหารถเช่า?"],
+    ["carsFaq.1.question", "ฉันสามารถคืนรถต่างสถานที่ได้หรือไม่?"],
+    ["carsFaq.2.question", "ทำไมอายุผู้ขับขี่จึงสำคัญสำหรับรถเช่า?"],
+    ["carsFaq.3.question", "ควรตรวจสอบอะไรบ้างก่อนจองรถเช่า?"],
+    ["carsFaq.4.question", "ราคาสุดท้ายของรถเช่ายืนยันที่ไหน?"],
+    ["carsFaq.5.question", "ฉันอาจต้องใช้เอกสารอะไรบ้างตอนรับรถ?"],
+  ];
+
+  for (const [key, expected] of auditedThaiCarsLandingKeys) {
+    assert.equal(th[key], expected, `${key} should resolve to Thai`);
+    assert.notEqual(th[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  for (const key of ["carsFaq.0.answer", "carsFaq.1.answer", "carsFaq.2.answer", "carsFaq.3.answer", "carsFaq.4.answer", "carsFaq.5.answer"]) {
+    assert.ok(th[key] && th[key] !== enTranslations[key], `${key} should be localized to Thai`);
+  }
+  assert.match(th["carsFaq.4.answer"], /ผู้ให้บริการ/);
+  assert.match(th["carsTrust.2.description"], /ผู้ให้บริการ/);
+  assert.equal(th.search, "ค้นหา");
+  assert.equal(th["carsSearch.pickupReturnTimeSummary"].replace("{pickupTime}", "10:00").replace("{returnTime}", "10:00"), "รับรถ 10:00 — คืนรถ 10:00");
+
+  const carsPageSource = readFileSync("src/app/cars/page.tsx", "utf8");
+  const carsLandingContentSource = readFileSync("src/data/carsLandingContent.ts", "utf8");
+  for (const key of ["searchRentalCarsEveryPartTrip", "carsSearch.pickupLocationLabel", "exploreCarsByTripStyle", "carsPickupPointsTitle", "carsFaq.heading"]) {
+    assert.ok(carsPageSource.includes(`t("${key}")`) || carsPageSource.includes("dictionary[item.questionKey]"), `Cars landing render path should resolve ${key} through i18n`);
+  }
+  assert.ok(
+    carsPageSource.includes("buildCarResultsHref") &&
+      carsPageSource.includes("pickupLocation: card.pickupLocation") &&
+      carsPageSource.includes("vehicleType: card.vehicleType") &&
+      carsPageSource.includes("returnToDifferentLocation") &&
+      carsPageSource.includes('name="pickupLocation"') &&
+      carsPageSource.includes('name="pickupDate"') &&
+      carsPageSource.includes('type="checkbox"') &&
+      carsPageSource.includes("grid auto-cols-[minmax(240px,82vw)]") &&
+      carsLandingContentSource.includes('translationKey: "carsTripStyle.economy"') &&
+      carsLandingContentSource.includes('translationKey: "carsTripStyle.suv"') &&
+      carsLandingContentSource.includes('translationKey: "carsTripStyle.luxury"') &&
+      carsLandingContentSource.includes('translationKey: "carsTripStyle.van"') &&
+      carsLandingContentSource.includes('translationKey: "carsPickup.Airport"') &&
+      carsLandingContentSource.includes('translationKey: "carsPickup.City center"') &&
+      carsLandingContentSource.includes('translationKey: "carsPickup.Train station"') &&
+      carsLandingContentSource.includes('translationKey: "carsPickup.Hotel area"') &&
+      carsLandingContentSource.includes('vehicleType: "economy"') &&
+      carsLandingContentSource.includes('pickupLocation: "City center"') &&
+      carsLandingContentSource.includes("image:"),
+    "Cars landing operational data and render behavior should remain unchanged.",
+  );
+  assert.ok(!carsPageSource.includes("Search rental cars for every part of your trip"));
+  assert.ok(languageOptions.some((option) => option.code === "th" && option.direction === "ltr"));
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+});
