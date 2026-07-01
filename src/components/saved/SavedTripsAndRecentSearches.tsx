@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ComponentProps,
+} from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { ArrowRight, ExternalLink, Heart, Trash2, X } from "lucide-react";
@@ -26,6 +32,7 @@ import {
   deleteBackendTrip,
   fetchBackendSavedTrips,
   getSavedTripLocalId,
+  type SavedTripApiItem,
 } from "@/lib/saved-trips-api";
 import {
   getHomeDiscoveryByRegion,
@@ -42,7 +49,7 @@ type ResolvedSavedTrip = {
   imageAlt?: string;
   originCode?: string;
   destinationCode?: string;
-  href: string;
+  href: ComponentProps<typeof Link>["href"];
   unresolved: boolean;
 };
 
@@ -121,6 +128,71 @@ const resolveSavedTrip = (
     originCode: matched.originCode,
     destinationCode: matched.destinationCode,
     href: "/flights",
+    unresolved: false,
+  };
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value && typeof value === "object" && !Array.isArray(value));
+
+const getPayloadString = (payload: Record<string, unknown>, key: string) => {
+  const value = payload[key];
+  return typeof value === "string" && value.trim() ? value : undefined;
+};
+
+const getPayloadHref = (
+  payload: Record<string, unknown>,
+): ComponentProps<typeof Link>["href"] | undefined => {
+  const href = payload.href;
+  if (typeof href === "string" && href.trim()) return href;
+  if (!isRecord(href)) return undefined;
+
+  const pathname = getPayloadString(href, "pathname");
+  if (!pathname) return undefined;
+
+  const query = isRecord(href.query)
+    ? Object.fromEntries(
+        Object.entries(href.query).filter(
+          (entry): entry is [string, string] => typeof entry[1] === "string",
+        ),
+      )
+    : undefined;
+
+  return query ? { pathname, query } : { pathname };
+};
+
+const resolveSavedTripFromBackendPayload = (
+  item: SavedTripApiItem,
+  dictionary: Record<string, string>,
+): ResolvedSavedTrip => {
+  const localId = getSavedTripLocalId(item);
+  const discoveryTrip = resolveSavedTrip(localId, dictionary);
+  if (!discoveryTrip.unresolved) return discoveryTrip;
+
+  if (!isRecord(item.payload)) return discoveryTrip;
+
+  const originCode = getPayloadString(item.payload, "originCode");
+  const destinationCode = getPayloadString(item.payload, "destinationCode");
+  const title = getPayloadString(item.payload, "title");
+  const route =
+    getPayloadString(item.payload, "route") ??
+    (originCode && destinationCode
+      ? `${originCode} → ${destinationCode}`
+      : undefined);
+  const note = getPayloadString(item.payload, "note");
+
+  if (!title || !route || !note) return discoveryTrip;
+
+  return {
+    id: localId,
+    title,
+    route,
+    note,
+    image: getPayloadString(item.payload, "image"),
+    imageAlt: getPayloadString(item.payload, "imageAlt") ?? title,
+    originCode,
+    destinationCode,
+    href: getPayloadHref(item.payload) ?? "/flights",
     unresolved: false,
   };
 };
@@ -465,6 +537,9 @@ export function SavedTripsAndRecentSearches() {
   const [backendSavedTripIds, setBackendSavedTripIds] = useState<
     Record<string, string>
   >({});
+  const [backendSavedTrips, setBackendSavedTrips] = useState<
+    SavedTripApiItem[]
+  >([]);
   const [recentSearches, setRecentSearches] = useState<RecentSearchEntry[]>([]);
   const [savedTripFares, setSavedTripFares] = useState<
     Record<string, SavedTripFare>
@@ -482,6 +557,7 @@ export function SavedTripsAndRecentSearches() {
     });
 
     setBackendSavedTripIds(backendIds);
+    setBackendSavedTrips(result.items);
     setSavedIds(localIds);
   }, []);
 
@@ -509,14 +585,20 @@ export function SavedTripsAndRecentSearches() {
 
     const timeoutId = window.setTimeout(() => {
       setBackendSavedTripIds({});
+      setBackendSavedTrips([]);
       setSavedIds(readSavedTripIds());
     }, 0);
     return () => window.clearTimeout(timeoutId);
   }, [refreshBackendSavedTrips, sessionStatus]);
 
   const savedTrips = useMemo(
-    () => savedIds.map((id) => resolveSavedTrip(id, dictionary)),
-    [dictionary, savedIds],
+    () =>
+      sessionStatus === "authenticated"
+        ? backendSavedTrips.map((item) =>
+            resolveSavedTripFromBackendPayload(item, dictionary),
+          )
+        : savedIds.map((id) => resolveSavedTrip(id, dictionary)),
+    [backendSavedTrips, dictionary, savedIds, sessionStatus],
   );
 
   useEffect(() => {
@@ -584,6 +666,9 @@ export function SavedTripsAndRecentSearches() {
     const result = await deleteBackendTrip(backendId);
     if (result.ok) {
       setSavedIds((current) => current.filter((tripId) => tripId !== id));
+      setBackendSavedTrips((current) =>
+        current.filter((item) => item.id !== backendId),
+      );
       setBackendSavedTripIds((current) => {
         const next = { ...current };
         delete next[id];
@@ -608,6 +693,7 @@ export function SavedTripsAndRecentSearches() {
     if (results.every((result) => result.ok)) {
       setSavedIds([]);
       setBackendSavedTripIds({});
+      setBackendSavedTrips([]);
     } else {
       await refreshBackendSavedTrips();
     }

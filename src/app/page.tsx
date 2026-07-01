@@ -49,6 +49,7 @@ import {
   fetchBackendSavedTrips,
   getSavedTripLocalId,
   saveBackendTrip,
+  type SavedTripDisplayDetails,
 } from "@/lib/saved-trips-api";
 
 function CompareOffersIllustration() {
@@ -719,6 +720,7 @@ export default function Home() {
   const handleSavedTripToggle = async (
     event: React.MouseEvent<HTMLButtonElement>,
     itemId: string,
+    display?: SavedTripDisplayDetails,
   ) => {
     event.preventDefault();
     event.stopPropagation();
@@ -750,13 +752,15 @@ export default function Home() {
           return next;
         });
       } else {
-        setSavedTripError(result.error ?? "Unable to update saved trips right now.");
+        setSavedTripError(
+          result.error ?? "Unable to update saved trips right now.",
+        );
         await refreshBackendSavedTrips();
       }
       return;
     }
 
-    const result = await saveBackendTrip(itemId);
+    const result = await saveBackendTrip(itemId, display);
     if (result.ok || result.duplicate) {
       setSavedTripError("");
       await refreshBackendSavedTrips();
@@ -1253,6 +1257,7 @@ function DiscoverySuggestionCard({
   onHeartToggle: (
     event: React.MouseEvent<HTMLButtonElement>,
     itemId: string,
+    display?: SavedTripDisplayDetails,
   ) => void;
 }) {
   const { t: dictionary } = useLocale();
@@ -1265,7 +1270,25 @@ function DiscoverySuggestionCard({
     >
       <button
         type="button"
-        onClick={(event) => onHeartToggle(event, itemId)}
+        onClick={(event) =>
+          onHeartToggle(event, itemId, {
+            title,
+            route: `${originCode} → ${destinationCodeLabel}`,
+            note: routeNote,
+            originCode,
+            destinationCode: destinationCodeLabel,
+            image,
+            imageAlt,
+            href,
+            search: {
+              tripType: "one-way",
+              cabinClass: "economy",
+              travelerCount: 1,
+              currency: displayCurrency,
+              price: price?.price,
+            },
+          })
+        }
         aria-label={
           isSaved ? t("homeRemoveFromSavedRoutes") : t("homeSaveRoute")
         }
@@ -1538,6 +1561,7 @@ function DestinationCard({
   onHeartToggle: (
     event: React.MouseEvent<HTMLButtonElement>,
     itemId: string,
+    display?: SavedTripDisplayDetails,
   ) => void;
 }) {
   const [imageSource, setImageSource] = useState(image);
@@ -1571,7 +1595,26 @@ function DestinationCard({
             }`}
             aria-label={saveLabelTemplate.replace("{{city}}", city)}
             aria-pressed={isSaved}
-            onClick={(event) => onHeartToggle(event, destinationId)}
+            onClick={(event) =>
+              onHeartToggle(event, destinationId, {
+                title: city,
+                route: `${originCode} → ${destinationCode}`,
+                note: country,
+                originCode,
+                destinationCode,
+                destinationCity: city,
+                image,
+                imageAlt,
+                href,
+                search: {
+                  tripType: "one-way",
+                  cabinClass: "economy",
+                  travelerCount: 1,
+                  currency: displayCurrency,
+                  price: price?.price,
+                },
+              })
+            }
           >
             <Heart size={17} className={isSaved ? "fill-current" : ""} />
           </button>
