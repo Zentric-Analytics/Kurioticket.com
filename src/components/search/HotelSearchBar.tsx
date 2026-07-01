@@ -97,12 +97,17 @@ const buildMonthCells = (monthDate: Date): MonthCell[] => {
   });
 };
 
-const formatWeekdays = (locale: string) =>
-  Array.from({ length: 7 }, (_, day) =>
+const formatWeekdays = (locale: string) => {
+  if (locale === "th-TH-u-ca-gregory") {
+    return ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
+  }
+
+  return Array.from({ length: 7 }, (_, day) =>
     new Intl.DateTimeFormat(locale, { weekday: "short" }).format(
       new Date(2024, 0, 7 + day),
     ),
   );
+};
 
 const formatShortDate = (value: string, locale: string) => {
   if (!value) return "";

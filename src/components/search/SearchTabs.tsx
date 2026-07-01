@@ -107,6 +107,10 @@ const formatCalendarWeekday = (
     return `${formatted.replace(/\.$/, "")}.`;
   }
 
+  if (calendarLocale === "th-TH-u-ca-gregory") {
+    return ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"][date.getDay()] ?? formatted;
+  }
+
   if (calendarLocale !== "fr-FR") {
     return formatted;
   }

@@ -11350,3 +11350,121 @@ test("Indonesian homepage visible copy and render paths resolve without English 
   assert.notEqual(id.tripType, "TRIP TYPE");
   assert.ok(footerSource.includes('t.footerSellerOfTravelNotice') && footerSource.includes('t.footerPrivacy'));
 });
+
+test("Thai homepage hotel, destination, route-card, and date picker copy resolves on active render paths", () => {
+  const th = thTranslations;
+
+  const expectedThaiCopy: Record<string, string> = {
+    hotels: "โรงแรม",
+    destination: "ปลายทาง",
+    cityOrHotel: "เมืองหรือโรงแรม",
+    hotelSearchDestinationLabel: "ปลายทาง",
+    hotelSearchDestinationPlaceholder: "เมืองหรือโรงแรม",
+    hotelSearchTravelDatesLabel: "วันที่เดินทาง",
+    hotelSearchDatePlaceholder: "เช็กอิน — เช็กเอาต์",
+    hotelSearchGuestsLabel: "ผู้เข้าพัก",
+    search: "ค้นหา",
+    chooseTravelDates: "เลือกวันที่เดินทาง",
+    previousMonthShort: "ก่อนหน้า",
+    nextMonthShort: "ถัดไป",
+    clear: "ล้าง",
+    done: "เสร็จสิ้น",
+    stayDetails: "รายละเอียดการเข้าพัก",
+    guestsAndRooms: "ผู้เข้าพักและห้องพัก",
+    adults: "ผู้ใหญ่",
+    hotelAdultHelper: "ผู้เข้าพัก 18+",
+    children: "เด็ก",
+    hotelChildrenHelper: "อายุ 0–17 ปี",
+    rooms: "ห้องพัก",
+    hotelRoomsHelper: "สูงสุด 6 ห้อง",
+    petFriendly: "อนุญาตให้นำสัตว์เลี้ยงเข้าได้",
+    onlyShowPetFriendlyStays: "แสดงเฉพาะที่พักที่อนุญาตให้นำสัตว์เลี้ยงเข้าได้",
+    destinationImageFallback: "ปลายทาง",
+    "homePopularDestinationCity.dubai": "ดูไบ",
+    "homePopularDestinationCity.london": "ลอนดอน",
+    "homePopularDestinationCity.johannesburg": "โจฮันเนสเบิร์ก",
+    "homePopularDestinationCity.accra": "อักกรา",
+    "homePopularDestinationCity.nairobi": "ไนโรบี",
+    "homePopularDestinationCity.istanbul": "อิสตันบูล",
+    "homePopularDestinationCity.paris": "ปารีส",
+    "homePopularDestinationCountry.unitedArabEmirates": "สหรัฐอาหรับเอมิเรตส์",
+    "homePopularDestinationCountry.unitedKingdom": "สหราชอาณาจักร",
+    "homePopularDestinationCountry.southAfrica": "แอฟริกาใต้",
+    "homePopularDestinationCountry.ghana": "กานา",
+    "homePopularDestinationCountry.kenya": "เคนยา",
+    "homePopularDestinationCountry.turkiye": "ตุรกี",
+    "homePopularDestinationCountry.france": "ฝรั่งเศส",
+    "homeDiscoveryRoute.ng-los-lhr.title": "ทริปธุรกิจและสุดสัปดาห์ในลอนดอน",
+    "homeDiscoveryRoute.ng-los-lhr.routeNote": "เส้นทางระยะไกลยอดนิยมสำหรับทริปทำงานและวันพักผ่อนเพิ่มเติม",
+    "homeDiscoveryRoute.ng-los-dxb.title": "แวะช้อปปิงที่ดูไบ",
+    "homeDiscoveryRoute.ng-los-dxb.routeNote": "เหมาะสำหรับการพักเพื่อช้อปปิง การเดินทางกับครอบครัว และการต่อเครื่องไปยังจุดหมายถัดไป",
+    "homeDiscoveryRoute.ng-abv-acc.title": "ทริประยะสั้นในภูมิภาคสู่อักกรา",
+    "homeDiscoveryRoute.ng-abv-acc.routeNote": "เส้นทางภูมิภาคระยะสั้นที่เดินทางระหว่างเมืองได้อย่างสะดวก",
+    "homeDiscoveryRoute.ng-los-nbo.title": "ทริปซาฟารีพักผ่อนที่ไนโรบี",
+    "homeDiscoveryRoute.ng-los-nbo.routeNote": "ประตูสู่แอฟริกาตะวันออกสำหรับศูนย์กลางธุรกิจและการต่อทริปซาฟารี",
+    "homeDiscoveryRoute.ng-abv-jnb.title": "พักผ่อนในเมืองโจฮันเนสเบิร์ก",
+    "homeDiscoveryRoute.ng-abv-jnb.routeNote": "การเชื่อมต่อมุ่งใต้ที่ดีสำหรับการประชุมและการพักผ่อนในเมือง",
+    "homeDiscoveryRoute.ng-los-ist.title": "เส้นทางเชื่อมต่อผ่านอิสตันบูล",
+    "homeDiscoveryRoute.ng-los-ist.routeNote": "ศูนย์กลางที่ดีสำหรับการเชื่อมต่อยุโรป พร้อมแวะพักในเมืองที่มีชีวิตชีวา",
+    "homeDiscoveryRoute.ng-abv-cdg.title": "ทริปสไตล์ปารีส",
+    "homeDiscoveryRoute.ng-abv-cdg.routeNote": "เส้นทางยุโรปคลาสสิกสำหรับแฟชั่น พิพิธภัณฑ์ และอาหาร",
+    "homeDiscoveryRoute.ng-los-doh.title": "ต่อเครื่องพรีเมียมที่โดฮา",
+    "homeDiscoveryRoute.ng-los-doh.routeNote": "เส้นทางที่เน้นความสะดวกสบายพร้อมการเชื่อมต่อทั่วโลกที่ราบรื่น",
+    "homeDiscoveryRoute.ng-los-kig.title": "สุดสัปดาห์ในเมืองสะอาดคิกาลี",
+    "homeDiscoveryRoute.ng-los-kig.routeNote": "ศูนย์กลางภูมิภาคที่กำลังเติบโต พร้อมเนินเขาเขียวขจีและการเดินทางในเมืองที่สะดวก",
+    "homeDiscoveryRoute.ng-abv-cai.title": "แวะสัมผัสมรดกไคโร",
+    "homeDiscoveryRoute.ng-abv-cai.routeNote": "ประตูสู่ทัวร์ประวัติศาสตร์ลุ่มแม่น้ำไนล์และตลาดเมืองเก่าที่คึกคัก",
+    "homeDiscoveryRoute.ng-los-add.title": "จุดเชื่อมต่อแอฟริกาตะวันออกที่แอดดิสอาบาบา",
+    "homeDiscoveryRoute.ng-los-add.routeNote": "จุดเปลี่ยนเครื่องสำคัญพร้อมแหล่งอาหารและวัฒนธรรมที่กำลังเติบโต",
+    "homeDiscoveryRoute.ng-abv-fco.title": "เที่ยวชมแลนด์มาร์กกรุงโรม",
+    "homeDiscoveryRoute.ng-abv-fco.routeNote": "เมืองยุโรปสุดคลาสสิกสำหรับซากโบราณ จัตุรัส และค่ำคืนสบาย ๆ",
+    "homeDiscoveryRoute.ng-los-nrt.title": "จังหวะเมืองโตเกียวในเส้นทางไกล",
+    "homeDiscoveryRoute.ng-los-nrt.routeNote": "ประตูสำคัญสู่เอเชียพร้อมย่านนีออนและระบบรางที่มีประสิทธิภาพ",
+    "homeDiscoveryRoute.ng-abv-mad.title": "ทริปทาปาสและศิลปะที่มาดริด",
+    "homeDiscoveryRoute.ng-abv-mad.routeNote": "เส้นทางพักเมืองยุโรปสำหรับพิพิธภัณฑ์ ถนนใหญ่ และมื้อค่ำยามดึก",
+    "homeDiscoveryRoute.ng-los-cpt.title": "ผจญภัยชายฝั่งเคปทาวน์",
+    "homeDiscoveryRoute.ng-los-cpt.routeNote": "เส้นทางแอฟริกาใต้ที่สวยงามพร้อมชายหาด ภูเขา และไร่องุ่น",
+    "homeDiscoveryRoute.ng-abv-rob.title": "ทริปชายทะเลภูมิภาคที่มอนโรเวีย",
+    "homeDiscoveryRoute.ng-abv-rob.routeNote": "ทริปพักเมืองแอฟริกาตะวันตกพร้อมชายหาดแอตแลนติกและตลาดท้องถิ่น",
+  };
+
+  for (const [key, expected] of Object.entries(expectedThaiCopy)) {
+    assert.equal(th[key], expected, `Thai ${key} should resolve without English fallback`);
+    assert.notEqual(th[key], enTranslations[key], `Thai ${key} should not use the English value`);
+  }
+
+  assert.equal(normalizeFlightsCalendarLocale("th"), "th-TH-u-ca-gregory");
+  assert.equal(normalizeFlightsCalendarLocale("th-TH"), "th-TH-u-ca-gregory");
+  assert.equal(normalizeHotelCalendarLocale("th"), "th-TH-u-ca-gregory");
+  assert.equal(formatFlightsMonthHeading(new Date(2026, 6, 1), "th"), "กรกฎาคม 2026");
+  assert.equal(formatFlightsMonthHeading(new Date(2026, 7, 1), "th-TH"), "สิงหาคม 2026");
+  assert.deepEqual(formatFlightsWeekdays("th"), ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"]);
+  assert.deepEqual([th.weekdaySun, th.weekdayMon, th.weekdayTue, th.weekdayWed, th.weekdayThu, th.weekdayFri, th.weekdaySat], ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"]);
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+
+  const pageSource = readFileSync("src/app/page.tsx", "utf8");
+  const searchTabsSource = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
+  const hotelSearchSource = readFileSync("src/components/search/HotelSearchBar.tsx", "utf8");
+  const dateFormattingSource = readFileSync("src/lib/flights/dateFormatting.ts", "utf8");
+  const hotelDateFormattingSource = readFileSync("src/lib/hotelsDateFormatting.ts", "utf8");
+
+  assert.ok(pageSource.includes("translatePopularDestinationDisplayLabel"));
+  assert.ok(pageSource.includes('destinationFallbackLabel={t("destinationImageFallback")}'));
+  assert.ok(pageSource.includes('title={translateDiscoveryItemCopy(card.item, "title")}'));
+  assert.ok(pageSource.includes('routeNote={translateDiscoveryItemCopy('));
+  assert.ok(searchTabsSource.includes('t.hotelSearchDestinationLabel || t.destination || "Destination"'));
+  assert.ok(searchTabsSource.includes('translateHotelTravelDateText("hotelSearchDatePlaceholder")'));
+  assert.ok(searchTabsSource.includes('translate("stayDetails")'));
+  assert.ok(hotelSearchSource.includes('t("hotelSearchDatePlaceholder")'));
+  assert.ok(dateFormattingSource.includes('return "th-TH-u-ca-gregory"'));
+  assert.ok(hotelDateFormattingSource.includes('return "th-TH-u-ca-gregory"'));
+
+  const homeDiscoverySource = readFileSync("src/data/homeDiscovery.ts", "utf8");
+  const marketHomeContentSource = readFileSync("src/data/marketHomeContent.ts", "utf8");
+  for (const unchangedToken of ["LOS", "LHR", "ABV", "ACC", "NBO", "JNB", "IST", "CDG", "DOH", "KGL", "CAI", "ADD", "FCO", "NRT", "MAD", "CPT", "ROB", "/hotels/results?${params.toString()}"]) {
+    assert.ok(pageSource.includes(unchangedToken) || searchTabsSource.includes(unchangedToken) || homeDiscoverySource.includes(unchangedToken) || marketHomeContentSource.includes(unchangedToken), `${unchangedToken} should remain in active source/data`);
+  }
+  const africaDiscoveryOrder = getHomeDiscoveryByRegion("NG").slice(0, 16).map((item) => item.id);
+  assert.deepEqual(africaDiscoveryOrder, ["ng-los-lhr", "ng-los-dxb", "ng-abv-acc", "ng-los-nbo", "ng-abv-jnb", "ng-los-ist", "ng-abv-cdg", "ng-los-doh", "ng-los-kig", "ng-abv-cai", "ng-los-add", "ng-abv-fco", "ng-los-nrt", "ng-abv-mad", "ng-los-cpt", "ng-abv-rob"]);
+});
