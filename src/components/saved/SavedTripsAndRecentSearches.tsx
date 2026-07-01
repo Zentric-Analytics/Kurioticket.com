@@ -274,7 +274,7 @@ const normalizeDestinationKey = (value: string) =>
   value.normalize("NFKD").replace(/\p{M}/gu, "").trim().toLowerCase();
 
 const SAVED_TRIP_CARD_IMAGE_SIZES =
-  "(max-width: 767px) 100vw, (max-width: 1279px) 50vw, 25vw";
+  "(min-width: 1280px) 25vw, (min-width: 768px) 25vw, (min-width: 640px) 33vw, 100vw";
 const EAGER_SAVED_TRIP_IMAGE_COUNT = 3;
 const OPTIMIZED_REMOTE_IMAGE_HOSTS = new Set([
   "images.unsplash.com",
@@ -290,7 +290,8 @@ function getCardImageOptimizationMode(src: string) {
     return {
       supported,
       optimized:
-        url.protocol === "https:" && OPTIMIZED_REMOTE_IMAGE_HOSTS.has(url.hostname),
+        url.protocol === "https:" &&
+        OPTIMIZED_REMOTE_IMAGE_HOSTS.has(url.hostname),
     };
   } catch {
     return { supported: false, optimized: false };
@@ -314,7 +315,7 @@ function SavedCardImage({
   const imageClassName = `object-cover transition duration-500 ${hoverScaleClassName}`;
 
   return (
-    <div className="relative h-44 w-full shrink-0 overflow-hidden sm:h-48 xl:h-44">
+    <div className="relative h-[196px] w-full shrink-0 overflow-hidden md:h-[190px] lg:h-[198px]">
       {imageMode.supported ? (
         <Image
           src={src}
@@ -884,7 +885,7 @@ export function SavedTripsAndRecentSearches() {
               </div>
             </div>
           ) : (
-            <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
               {savedTrips.map((trip, index) => {
                 const fare = savedTripFares[trip.id];
                 const hasProviderFare = hasFreshProviderFare(fare, trip);
@@ -893,16 +894,16 @@ export function SavedTripsAndRecentSearches() {
                 return (
                   <article
                     key={trip.id}
-                    className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+                    className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-transparent shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)] active:-translate-y-0.5"
                   >
                     <button
                       type="button"
                       onClick={() => handleUnsaveTrip(trip.id)}
                       aria-label={t("savedTripsRemoveSavedTrip")}
                       aria-pressed
-                      className="focus-ring absolute end-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-rose-200/90 bg-rose-500/95 text-white shadow-sm shadow-rose-900/20 transition hover:bg-rose-500"
+                      className="focus-ring absolute end-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-600 shadow-sm backdrop-blur-sm transition hover:bg-rose-100"
                     >
-                      <Heart className="h-5 w-5 fill-current" />
+                      <Heart size={15} className="fill-current" />
                     </button>
 
                     {trip.image ? (
@@ -912,44 +913,46 @@ export function SavedTripsAndRecentSearches() {
                         priority={index < EAGER_SAVED_TRIP_IMAGE_COUNT}
                       />
                     ) : (
-                      <div className="flex h-44 w-full shrink-0 items-center justify-center bg-gradient-to-br from-violet-100 via-fuchsia-50 to-cyan-50 text-sm font-semibold uppercase tracking-[0.14em] text-slate-600 sm:h-48 xl:h-44">
+                      <div className="flex h-[196px] w-full shrink-0 items-center justify-center bg-gradient-to-br from-violet-100 via-fuchsia-50 to-cyan-50 text-sm font-semibold uppercase tracking-[0.14em] text-slate-600 md:h-[190px] lg:h-[198px]">
                         {t("savedTripFallbackTitle")}
                       </div>
                     )}
 
-                    <div className="flex flex-1 flex-col space-y-2.5 p-4">
-                      <h3 className="line-clamp-2 min-h-[2.75rem] break-words pe-12 text-lg font-semibold leading-tight tracking-tight text-slate-900">
-                        {trip.title}
-                      </h3>
-                      <p className="line-clamp-2 min-h-[2rem] break-words text-[11px] font-semibold uppercase tracking-[0.11em] text-slate-600">
-                        {trip.route}
-                      </p>
-                      <p className="line-clamp-2 min-h-[3rem] break-words text-sm leading-6 text-slate-600">
-                        {trip.note}
-                      </p>
-
-                      <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                        <span className="rounded-full border border-violet-100 bg-violet-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-violet-700">
-                          {trip.unresolved
-                            ? t("savedTripsSavedBadge")
-                            : t("savedTripsTrendingBadge")}
-                        </span>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-                          {t("homeDiscoveryTripOneWay")} ·{" "}
-                          {t("homeDiscoveryCabinEconomy")} ·{" "}
-                          {t("homeDiscoveryTravelerCountOne")}
+                    <div className="flex min-w-0 flex-1 flex-col bg-white">
+                      <div className="min-w-0 flex-1 space-y-2 px-3 pt-3">
+                        <h3 className="line-clamp-2 break-words pe-10 text-sm font-bold leading-[1.35] text-slate-950 md:text-[0.95rem]">
+                          {trip.title}
+                        </h3>
+                        <p className="line-clamp-2 break-words text-xs font-medium leading-5 text-slate-600 md:text-sm">
+                          {trip.route}
                         </p>
+                        <p className="line-clamp-2 break-words text-xs font-medium leading-5 text-slate-600 md:text-sm">
+                          {trip.note}
+                        </p>
+
+                        <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                          <span className="rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-violet-700">
+                            {trip.unresolved
+                              ? t("savedTripsSavedBadge")
+                              : t("savedTripsTrendingBadge")}
+                          </span>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                            {t("homeDiscoveryTripOneWay")} ·{" "}
+                            {t("homeDiscoveryCabinEconomy")} ·{" "}
+                            {t("homeDiscoveryTravelerCountOne")}
+                          </p>
+                        </div>
                       </div>
 
-                      <div className="mt-auto border-t border-slate-200/90 pt-3">
-                        <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-end sm:justify-between xl:flex-col xl:items-stretch 2xl:flex-row 2xl:items-end 2xl:justify-between">
+                      <div className="mt-auto border-t border-slate-200/90 px-3 pb-3 pt-3">
+                        <div className="flex flex-col items-stretch gap-2">
                           <div>
                             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
                               {hasProviderFare
                                 ? t("savedTripsProviderFare")
                                 : t("savedTripsCurrentOptions")}
                             </p>
-                            <p className="text-base font-semibold leading-tight text-slate-950">
+                            <p className="text-sm font-semibold leading-tight text-slate-950 md:text-base">
                               {hasProviderFare ? (
                                 <PriceText
                                   amountUsd={fare.price}
