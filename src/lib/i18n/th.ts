@@ -148,37 +148,54 @@ export const translations: TranslationDictionary = {
   "homePopularDestinationCountry.turkiye": "ตุรกี",
   "homePopularDestinationCountry.france": "ฝรั่งเศส",
   "homeDiscoveryRoute.ng-los-lhr.title": "ทริปธุรกิจและสุดสัปดาห์ในลอนดอน",
-  "homeDiscoveryRoute.ng-los-lhr.routeNote": "เส้นทางระยะไกลยอดนิยมสำหรับทริปทำงานและวันพักผ่อนเพิ่มเติม",
+  "homeDiscoveryRoute.ng-los-lhr.routeNote":
+    "เส้นทางระยะไกลยอดนิยมสำหรับทริปทำงานและวันพักผ่อนเพิ่มเติม",
   "homeDiscoveryRoute.ng-los-dxb.title": "แวะช้อปปิงที่ดูไบ",
-  "homeDiscoveryRoute.ng-los-dxb.routeNote": "เหมาะสำหรับการพักเพื่อช้อปปิง การเดินทางกับครอบครัว และการต่อเครื่องไปยังจุดหมายถัดไป",
+  "homeDiscoveryRoute.ng-los-dxb.routeNote":
+    "เหมาะสำหรับการพักเพื่อช้อปปิง การเดินทางกับครอบครัว และการต่อเครื่องไปยังจุดหมายถัดไป",
   "homeDiscoveryRoute.ng-abv-acc.title": "ทริประยะสั้นในภูมิภาคสู่อักกรา",
-  "homeDiscoveryRoute.ng-abv-acc.routeNote": "เส้นทางภูมิภาคระยะสั้นที่เดินทางระหว่างเมืองได้อย่างสะดวก",
+  "homeDiscoveryRoute.ng-abv-acc.routeNote":
+    "เส้นทางภูมิภาคระยะสั้นที่เดินทางระหว่างเมืองได้อย่างสะดวก",
   "homeDiscoveryRoute.ng-los-nbo.title": "ทริปซาฟารีพักผ่อนที่ไนโรบี",
-  "homeDiscoveryRoute.ng-los-nbo.routeNote": "ประตูสู่แอฟริกาตะวันออกสำหรับศูนย์กลางธุรกิจและการต่อทริปซาฟารี",
+  "homeDiscoveryRoute.ng-los-nbo.routeNote":
+    "ประตูสู่แอฟริกาตะวันออกสำหรับศูนย์กลางธุรกิจและการต่อทริปซาฟารี",
   "homeDiscoveryRoute.ng-abv-jnb.title": "พักผ่อนในเมืองโจฮันเนสเบิร์ก",
-  "homeDiscoveryRoute.ng-abv-jnb.routeNote": "การเชื่อมต่อมุ่งใต้ที่ดีสำหรับการประชุมและการพักผ่อนในเมือง",
+  "homeDiscoveryRoute.ng-abv-jnb.routeNote":
+    "การเชื่อมต่อมุ่งใต้ที่ดีสำหรับการประชุมและการพักผ่อนในเมือง",
   "homeDiscoveryRoute.ng-los-ist.title": "เส้นทางเชื่อมต่อผ่านอิสตันบูล",
-  "homeDiscoveryRoute.ng-los-ist.routeNote": "ศูนย์กลางที่ดีสำหรับการเชื่อมต่อยุโรป พร้อมแวะพักในเมืองที่มีชีวิตชีวา",
+  "homeDiscoveryRoute.ng-los-ist.routeNote":
+    "ศูนย์กลางที่ดีสำหรับการเชื่อมต่อยุโรป พร้อมแวะพักในเมืองที่มีชีวิตชีวา",
   "homeDiscoveryRoute.ng-abv-cdg.title": "ทริปสไตล์ปารีส",
-  "homeDiscoveryRoute.ng-abv-cdg.routeNote": "เส้นทางยุโรปคลาสสิกสำหรับแฟชั่น พิพิธภัณฑ์ และอาหาร",
+  "homeDiscoveryRoute.ng-abv-cdg.routeNote":
+    "เส้นทางยุโรปคลาสสิกสำหรับแฟชั่น พิพิธภัณฑ์ และอาหาร",
   "homeDiscoveryRoute.ng-los-doh.title": "ต่อเครื่องพรีเมียมที่โดฮา",
-  "homeDiscoveryRoute.ng-los-doh.routeNote": "เส้นทางที่เน้นความสะดวกสบายพร้อมการเชื่อมต่อทั่วโลกที่ราบรื่น",
+  "homeDiscoveryRoute.ng-los-doh.routeNote":
+    "เส้นทางที่เน้นความสะดวกสบายพร้อมการเชื่อมต่อทั่วโลกที่ราบรื่น",
   "homeDiscoveryRoute.ng-los-kig.title": "สุดสัปดาห์ในเมืองสะอาดคิกาลี",
-  "homeDiscoveryRoute.ng-los-kig.routeNote": "ศูนย์กลางภูมิภาคที่กำลังเติบโต พร้อมเนินเขาเขียวขจีและการเดินทางในเมืองที่สะดวก",
+  "homeDiscoveryRoute.ng-los-kig.routeNote":
+    "ศูนย์กลางภูมิภาคที่กำลังเติบโต พร้อมเนินเขาเขียวขจีและการเดินทางในเมืองที่สะดวก",
   "homeDiscoveryRoute.ng-abv-cai.title": "แวะสัมผัสมรดกไคโร",
-  "homeDiscoveryRoute.ng-abv-cai.routeNote": "ประตูสู่ทัวร์ประวัติศาสตร์ลุ่มแม่น้ำไนล์และตลาดเมืองเก่าที่คึกคัก",
-  "homeDiscoveryRoute.ng-los-add.title": "จุดเชื่อมต่อแอฟริกาตะวันออกที่แอดดิสอาบาบา",
-  "homeDiscoveryRoute.ng-los-add.routeNote": "จุดเปลี่ยนเครื่องสำคัญพร้อมแหล่งอาหารและวัฒนธรรมที่กำลังเติบโต",
+  "homeDiscoveryRoute.ng-abv-cai.routeNote":
+    "ประตูสู่ทัวร์ประวัติศาสตร์ลุ่มแม่น้ำไนล์และตลาดเมืองเก่าที่คึกคัก",
+  "homeDiscoveryRoute.ng-los-add.title":
+    "จุดเชื่อมต่อแอฟริกาตะวันออกที่แอดดิสอาบาบา",
+  "homeDiscoveryRoute.ng-los-add.routeNote":
+    "จุดเปลี่ยนเครื่องสำคัญพร้อมแหล่งอาหารและวัฒนธรรมที่กำลังเติบโต",
   "homeDiscoveryRoute.ng-abv-fco.title": "เที่ยวชมแลนด์มาร์กกรุงโรม",
-  "homeDiscoveryRoute.ng-abv-fco.routeNote": "เมืองยุโรปสุดคลาสสิกสำหรับซากโบราณ จัตุรัส และค่ำคืนสบาย ๆ",
+  "homeDiscoveryRoute.ng-abv-fco.routeNote":
+    "เมืองยุโรปสุดคลาสสิกสำหรับซากโบราณ จัตุรัส และค่ำคืนสบาย ๆ",
   "homeDiscoveryRoute.ng-los-nrt.title": "จังหวะเมืองโตเกียวในเส้นทางไกล",
-  "homeDiscoveryRoute.ng-los-nrt.routeNote": "ประตูสำคัญสู่เอเชียพร้อมย่านนีออนและระบบรางที่มีประสิทธิภาพ",
+  "homeDiscoveryRoute.ng-los-nrt.routeNote":
+    "ประตูสำคัญสู่เอเชียพร้อมย่านนีออนและระบบรางที่มีประสิทธิภาพ",
   "homeDiscoveryRoute.ng-abv-mad.title": "ทริปทาปาสและศิลปะที่มาดริด",
-  "homeDiscoveryRoute.ng-abv-mad.routeNote": "เส้นทางพักเมืองยุโรปสำหรับพิพิธภัณฑ์ ถนนใหญ่ และมื้อค่ำยามดึก",
+  "homeDiscoveryRoute.ng-abv-mad.routeNote":
+    "เส้นทางพักเมืองยุโรปสำหรับพิพิธภัณฑ์ ถนนใหญ่ และมื้อค่ำยามดึก",
   "homeDiscoveryRoute.ng-los-cpt.title": "ผจญภัยชายฝั่งเคปทาวน์",
-  "homeDiscoveryRoute.ng-los-cpt.routeNote": "เส้นทางแอฟริกาใต้ที่สวยงามพร้อมชายหาด ภูเขา และไร่องุ่น",
+  "homeDiscoveryRoute.ng-los-cpt.routeNote":
+    "เส้นทางแอฟริกาใต้ที่สวยงามพร้อมชายหาด ภูเขา และไร่องุ่น",
   "homeDiscoveryRoute.ng-abv-rob.title": "ทริปชายทะเลภูมิภาคที่มอนโรเวีย",
-  "homeDiscoveryRoute.ng-abv-rob.routeNote": "ทริปพักเมืองแอฟริกาตะวันตกพร้อมชายหาดแอตแลนติกและตลาดท้องถิ่น",
+  "homeDiscoveryRoute.ng-abv-rob.routeNote":
+    "ทริปพักเมืองแอฟริกาตะวันตกพร้อมชายหาดแอตแลนติกและตลาดท้องถิ่น",
   "deals.weekday.sun": "อา",
   "deals.weekday.mon": "จ",
   "deals.weekday.tue": "อ",
@@ -209,6 +226,141 @@ export const translations: TranslationDictionary = {
     "Kurioticket สามารถช่วยได้เฉพาะการจองที่ทำโดยตรงผ่าน Kurioticket หากและเมื่อรองรับการจองโดยตรง สำหรับการจองที่เสร็จสิ้นกับผู้ให้บริการภายนอก โปรดติดต่อผู้ให้บริการนั้นโดยตรง",
   supportFaqWhyRedirectedAnswer:
     "Kurioticket เป็นแพลตฟอร์มค้นหาและเปรียบเทียบการเดินทาง และผลลัพธ์บางรายการจะส่งคุณไปยังผู้ให้บริการที่เชื่อถือได้ ซึ่งคุณจะดำเนินการจอง ชำระเงิน และรับการสนับสนุนเฉพาะจากผู้ให้บริการ",
+  moreServiceInfoEyebrow: "ข้อมูลแพลตฟอร์ม",
+  moreServiceInfoTitle: "ข้อมูลบริการเพิ่มเติม",
+  moreServiceInfoDescription:
+    "เรียนรู้ว่า Kurioticket ช่วยให้นักเดินทางค้นหา เปรียบเทียบ บันทึก และจัดระเบียบตัวเลือกการเดินทางจากผู้ให้บริการหลายรายได้ในที่เดียวอย่างไร",
+  moreServiceInfoContextTitle: "วางแผนพร้อมบริบท",
+  moreServiceInfoContextSubtitle:
+    "ตั้งแต่ผลการค้นหาไปจนถึงการเปลี่ยนเส้นทางไปยังผู้ให้บริการ",
+  moreServiceInfoContextCompare:
+    "เปรียบเทียบตัวเลือกจากผู้ให้บริการเดินทางหลายราย",
+  moreServiceInfoContextSave:
+    "บันทึกทริป การแจ้งเตือน และการตั้งค่าเมื่อเข้าสู่ระบบ",
+  moreServiceInfoContextContinue:
+    "ดำเนินการต่อพร้อมรายละเอียดจากผู้ให้บริการก่อนจองภายนอก",
+  moreServiceInfoHowHeading: "Kurioticket ทำงานอย่างไร",
+  moreServiceInfoHowDescription:
+    "รายละเอียดบริการเหล่านี้อธิบายบทบาทของ Kurioticket ก่อน ระหว่าง และหลังการค้นหาการเดินทาง",
+  moreServiceInfoHowBadge: "พื้นฐานการวางแผนการเดินทาง",
+  moreServiceInfoStepSearchTitle: "ค้นหาผู้ให้บริการหลายราย",
+  moreServiceInfoStepSearchSummary:
+    "ค้นหาตัวเลือกการเดินทางจากผู้ให้บริการหลายรายได้จากที่เดียว แทนการเปิดแต่ละผู้ให้บริการแยกกัน",
+  moreServiceInfoStepSearchDetails:
+    "Kurioticket รวบรวมข้อมูลเที่ยวบิน โรงแรม เส้นทาง และผลลัพธ์การเดินทางที่มีอยู่ไว้ในประสบการณ์ค้นหาเดียว เพื่อให้นักเดินทางตรวจสอบตัวเลือกได้อย่างมีประสิทธิภาพมากขึ้น",
+  moreServiceInfoStepCompareTitle: "เปรียบเทียบตัวเลือกการเดินทาง",
+  moreServiceInfoStepCompareSummary:
+    "เปรียบเทียบราคา เส้นทาง โรงแรม ตารางเวลา และตัวเลือกการเดินทางที่มีอยู่ก่อนตัดสินใจว่าสิ่งใดเหมาะกับทริปของคุณ",
+  moreServiceInfoStepCompareDetails:
+    "ผลลัพธ์อาจมีรายละเอียดผู้ให้บริการ เวลา ข้อมูลจุดหมายปลายทาง และข้อมูลทริปอื่น ๆ ที่ช่วยให้คุณประเมินตัวเลือกก่อนดำเนินการต่อไปยังผู้ให้บริการ",
+  moreServiceInfoStepSaveTitle: "บันทึกทริปและการแจ้งเตือน",
+  moreServiceInfoStepSaveSummary:
+    "สร้างบัญชีเพื่อบันทึกทริป ติดตามเส้นทาง และจัดการการแจ้งเตือนการเดินทางที่เกี่ยวข้องกับการวางแผนของคุณ",
+  moreServiceInfoStepSaveDetails:
+    "ทริปที่บันทึกไว้ การค้นหาล่าสุด และการแจ้งเตือนช่วยให้กลับไปดูตัวเลือกที่คุณกำลังพิจารณาได้ง่ายขึ้น และช่วยจัดระเบียบรายละเอียดการวางแผนที่เกี่ยวข้อง",
+  moreServiceInfoStepRedirectsTitle:
+    "คำอธิบายการเปลี่ยนเส้นทางไปยังผู้ให้บริการ",
+  moreServiceInfoStepRedirectsSummary:
+    "เมื่อคุณเลือกข้อเสนอ คุณอาจถูกเปลี่ยนเส้นทางไปยังผู้ให้บริการเดินทางเพื่อดำเนินการจอง การชำระเงิน การยืนยัน และการให้บริการให้เสร็จสมบูรณ์",
+  moreServiceInfoStepRedirectsDetails:
+    "หน้าผู้ให้บริการคือที่ที่จัดการราคาสุดท้าย ความพร้อมให้บริการ กฎ ขั้นตอนการชำระเงิน ใบเสร็จ การเปลี่ยนแปลงการจอง การยกเลิก และเอกสารการเดินทางสำหรับข้อเสนอที่ถูกเปลี่ยนเส้นทาง",
+  moreServiceInfoStepAccountTitle: "เครื่องมือบัญชีและการเดินทาง",
+  moreServiceInfoStepAccountSummary:
+    "ใช้เครื่องมือบัญชีเพื่อจัดระเบียบการค้นหาที่บันทึกไว้ ทริป การแจ้งเตือน และการตั้งค่าในพื้นที่ทำงาน Kurioticket เดียว",
+  moreServiceInfoStepAccountDetails:
+    "เครื่องมือเหล่านี้ช่วยสนับสนุนการวางแผนการเดินทางบน Kurioticket ขณะที่การจัดการการจองเฉพาะผู้ให้บริการยังคงอยู่กับผู้ให้บริการเมื่อการจองของคุณเสร็จสมบูรณ์ภายนอก",
+  moreServiceInfoFaqHeading: "คำถามที่พบบ่อย",
+  moreServiceInfoFaqDescription:
+    "คำตอบสั้น ๆ เกี่ยวกับการค้นหาการเดินทาง การเปลี่ยนเส้นทางไปยังผู้ให้บริการ ทริปที่บันทึกไว้ และเครื่องมือบัญชี",
+  moreServiceInfoFaqWhatQuestion: "Kurioticket คืออะไร?",
+  moreServiceInfoFaqWhatAnswer:
+    "Kurioticket เป็นแพลตฟอร์มค้นหาและเปรียบเทียบการเดินทางสำหรับค้นหา เปรียบเทียบ บันทึก และจัดระเบียบตัวเลือกการเดินทางจากผู้ให้บริการหลายราย",
+  moreServiceInfoFaqSearchQuestion: "การค้นหาการเดินทางทำงานอย่างไร?",
+  moreServiceInfoFaqSearchAnswer:
+    "คุณป้อนรายละเอียดทริป แล้ว Kurioticket จะแสดงตัวเลือกการเดินทางและข้อมูลผู้ให้บริการที่มีอยู่เพื่อช่วยให้คุณเปรียบเทียบตัวเลือก",
+  moreServiceInfoFaqRedirectQuestion:
+    "ทำไมฉันจึงถูกเปลี่ยนเส้นทางไปยังผู้ให้บริการรายอื่น?",
+  moreServiceInfoFaqRedirectAnswer:
+    "ข้อเสนอบางรายการดำเนินการให้เสร็จบนเว็บไซต์ผู้ให้บริการภายนอก ผู้ให้บริการจะจัดการขั้นตอนการจองขั้นสุดท้าย การชำระเงิน การยืนยัน และการให้บริการ",
+  moreServiceInfoFaqPaymentsQuestion: "Kurioticket ดำเนินการชำระเงินหรือไม่?",
+  moreServiceInfoFaqPaymentsAnswer:
+    "สำหรับข้อเสนอจากผู้ให้บริการที่ถูกเปลี่ยนเส้นทาง Kurioticket ไม่ได้ดำเนินการชำระเงิน โปรดตรวจสอบและชำระเงินโดยตรงบนหน้าผู้ให้บริการ",
+  moreServiceInfoFaqSaveQuestion:
+    "ฉันสามารถบันทึกทริปและการแจ้งเตือนได้หรือไม่?",
+  moreServiceInfoFaqSaveAnswer:
+    "ได้ เครื่องมือบัญชีช่วยให้คุณบันทึกทริป ติดตามเส้นทาง จัดการการแจ้งเตือน และกลับไปยังตัวเลือกการเดินทางที่คุณกำลังพิจารณา",
+  moreServiceInfoFaqAccountQuestion: "จำเป็นต้องมีบัญชีหรือไม่?",
+  moreServiceInfoFaqAccountAnswer:
+    "คุณสามารถเรียกดูข้อมูลการค้นหาได้โดยไม่ต้องใช้เครื่องมือบัญชีทั้งหมด แต่การบันทึกทริป การแจ้งเตือน และการตั้งค่าอาจต้องเข้าสู่ระบบ",
+  moreServiceInfoFaqSupportQuestion: "ฉันจะติดต่อฝ่ายสนับสนุนได้อย่างไร?",
+  moreServiceInfoFaqSupportAnswer:
+    "ใช้หน้าฝ่ายสนับสนุนลูกค้าและระบุอีเมลบัญชีของคุณ สิ่งที่คุณพยายามทำ และรายละเอียดเส้นทาง โรงแรม หรือผู้ให้บริการที่เกี่ยวข้อง",
+  moreServiceInfoHelpTitle: "ต้องการความช่วยเหลือหรือไม่?",
+  moreServiceInfoHelpDescription:
+    "มีคำถามเกี่ยวกับบัญชี ทริปที่บันทึกไว้ การแจ้งเตือน หรือการเปลี่ยนเส้นทางไปยังผู้ให้บริการหรือไม่?",
+  moreServiceInfoSupportCta: "ติดต่อฝ่ายสนับสนุนลูกค้า",
+  serviceGuaranteeEyebrow: "คำมั่นด้านบริการของ Kurioticket",
+  serviceGuaranteeTitle: "การรับประกันบริการ",
+  serviceGuaranteeDescription:
+    "เราต้องการให้นักเดินทางเข้าใจว่า Kurioticket ทำงานอย่างไรและคาดหวังอะไรได้บ้างเมื่อใช้แพลตฟอร์มของเรา",
+  serviceGuaranteeFaqHeading: "คำถามที่พบบ่อย",
+  serviceGuaranteeFaqDescription:
+    "คำตอบเหล่านี้อธิบายบทบาทของ Kurioticket ในฐานะแพลตฟอร์มค้นหาและเปรียบเทียบการเดินทาง",
+  serviceGuaranteeFaqWhatGuaranteeQuestion: "Kurioticket รับประกันอะไร?",
+  serviceGuaranteeFaqWhatGuaranteeAnswer:
+    "Kurioticket ออกแบบมาเพื่อช่วยให้นักเดินทางเปรียบเทียบตัวเลือกการเดินทางได้อย่างชัดเจน เรามุ่งให้ประสบการณ์แพลตฟอร์มเชื่อถือได้ ข้อมูลการค้นหาโปร่งใส และเส้นทางไปยังหน้าจองของผู้ให้บริการชัดเจน",
+  serviceGuaranteeFaqResultsDisplayedQuestion: "ผลลัพธ์การเดินทางแสดงอย่างไร?",
+  serviceGuaranteeFaqResultsDisplayedAnswer:
+    "ผลลัพธ์แสดงจากข้อมูลที่มีอยู่จากผู้ให้บริการเดินทาง รวมถึงเส้นทาง วันที่ ราคา และรายละเอียดผู้ให้บริการเมื่อมีข้อมูล",
+  serviceGuaranteeFaqRedirectedQuestion:
+    "ทำไมฉันจึงถูกเปลี่ยนเส้นทางไปยังผู้ให้บริการรายอื่น?",
+  serviceGuaranteeFaqRedirectedAnswer:
+    "ผลลัพธ์บางรายการดำเนินการให้เสร็จบนเว็บไซต์ผู้ให้บริการภายนอก เมื่อคุณเลือกตัวเลือกเหล่านั้น Kurioticket จะเปลี่ยนเส้นทางคุณเพื่อให้ผู้ให้บริการจัดการการจอง การชำระเงิน และบริการเฉพาะทริป",
+  serviceGuaranteeFaqBookDirectlyQuestion:
+    "ฉันจองโดยตรงบน Kurioticket หรือไม่?",
+  serviceGuaranteeFaqBookDirectlyAnswer:
+    "Kurioticket เป็นแพลตฟอร์มค้นหาและเปรียบเทียบการเดินทางเป็นหลัก หากผลลัพธ์เปลี่ยนเส้นทางไปยังผู้ให้บริการ การจองจะเสร็จสมบูรณ์กับผู้ให้บริการนั้น ไม่ใช่บน Kurioticket",
+  serviceGuaranteeFaqPricesGuaranteedQuestion: "ราคาถูกการันตีเสมอหรือไม่?",
+  serviceGuaranteeFaqPricesGuaranteedAnswer:
+    "ไม่ ราคาอาจเปลี่ยนตามความพร้อมให้บริการของผู้ให้บริการ ภาษี ค่าธรรมเนียม สกุลเงิน และเวลา โปรดตรวจสอบราคาสุดท้ายบนหน้าผู้ให้บริการก่อนจองเสมอ",
+  serviceGuaranteeFaqChooseProvidersQuestion:
+    "Kurioticket เลือกผู้ให้บริการอย่างไร?",
+  serviceGuaranteeFaqChooseProvidersAnswer:
+    "Kurioticket ทำงานร่วมกับผู้ให้บริการเดินทางและแหล่งข้อมูลที่สามารถส่งผลลัพธ์การค้นหาที่เกี่ยวข้องได้ ความพร้อมให้บริการ ราคา และตัวเลือกที่แสดงอาจแตกต่างกันตามเส้นทาง จุดหมายปลายทาง และความครอบคลุมของผู้ให้บริการ",
+  serviceGuaranteeFaqEncounterIssueQuestion: "ฉันควรทำอย่างไรหากพบปัญหา?",
+  serviceGuaranteeFaqEncounterIssueAnswer:
+    "หากปัญหาเกี่ยวข้องกับการค้นหา การเข้าถึงบัญชี ทริปที่บันทึกไว้ การแจ้งเตือน หรือการเปลี่ยนเส้นทางจาก Kurioticket โปรดติดต่อฝ่ายสนับสนุน Kurioticket หากคุณจองกับผู้ให้บริการแล้ว โปรดติดต่อผู้ให้บริการนั้นสำหรับการเปลี่ยนแปลงการจอง การคืนเงิน การยกเลิก หรือเอกสารการเดินทาง",
+  serviceGuaranteeFaqContactSupportQuestion:
+    "ฉันจะติดต่อฝ่ายสนับสนุนได้อย่างไร?",
+  serviceGuaranteeFaqContactSupportAnswer:
+    "ใช้หน้าฝ่ายสนับสนุนลูกค้าและระบุอีเมลบัญชีของคุณ สิ่งที่คุณพยายามทำ และรายละเอียดเส้นทาง โรงแรม หรือผู้ให้บริการที่อาจช่วยให้เราตรวจสอบปัญหาได้",
+  serviceGuaranteeHelpCardTitle:
+    "ต้องการความช่วยเหลือเกี่ยวกับบัญชีหรือการค้นหาของคุณหรือไม่?",
+  serviceGuaranteeSupportCta: "ติดต่อฝ่ายสนับสนุนลูกค้า",
+  supportEyebrow: "ฝ่ายช่วยเหลือ Kurioticket",
+  supportTitle: "ฝ่ายสนับสนุนลูกค้า",
+  supportBeforeContactHeading: "ก่อนติดต่อเรา",
+  supportBeforeContactDescription:
+    "โปรดระบุอีเมลในบัญชี Kurioticket ของคุณ สิ่งที่คุณพยายามทำ เส้นทางหรือโรงแรมที่เกี่ยวข้อง และหน้าผู้ให้บริการที่คุณถูกเปลี่ยนเส้นทางไป โปรดอย่าส่งหมายเลขบัตรชำระเงินแบบเต็มหรือหมายเลขเอกสารการเดินทางที่ละเอียดอ่อน",
+  supportBeforeContactDashboardDescription:
+    "โปรดระบุอีเมลบัญชี Kurioticket ของคุณ สิ่งที่คุณต้องการความช่วยเหลือ และรายละเอียดการจองหรือเส้นทางที่ช่วยให้เราเข้าใจปัญหา",
+  supportTicketHeading: "สร้างคำขอรับการสนับสนุน",
+  supportFormEmailLabel: "อีเมล",
+  supportFormSubjectLabel: "หัวข้อ",
+  supportFormCategoryLabel: "หมวดหมู่",
+  supportCategorySearchHelp: "ผลการค้นหา",
+  supportCategoryPriceAlerts: "การแจ้งเตือนราคา",
+  supportCategoryPartnerRedirect: "การเปลี่ยนเส้นทางไปยังผู้ให้บริการ",
+  supportCategoryAccountHelp: "การเข้าถึงบัญชี",
+  supportFormMessageLabel: "เราช่วยอะไรได้บ้าง?",
+  supportFormMessagePlaceholder:
+    "แชร์เส้นทาง โรงแรม การแจ้งเตือน หรือบริบทบัญชีของคุณ",
+  supportFormSubmit: "ส่งคำขอ",
+  supportFormSending: "กำลังส่ง...",
+  supportFormSuccessPrefix: "คำขอหมายเลข",
+  supportFormSuccessSuffix: "ถูกเปิดแล้ว",
+  supportFormErrorFallback: "ไม่สามารถเปิดคำขอได้",
+  supportFaqHeading: "คำถามที่พบบ่อย",
   homeNewsletterTitle: "รับข่าวดีลการเดินทางก่อนใคร",
   homeNewsletterBody: "รับอัปเดตเที่ยวบินและโรงแรมที่คัดสรรแล้วทุกสัปดาห์",
   homeNewsletterPlaceholder: "ป้อนอีเมลของคุณ",

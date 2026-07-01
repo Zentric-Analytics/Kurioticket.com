@@ -11189,6 +11189,118 @@ test("Thai homepage visible copy and render paths resolve without English fallba
 });
 
 
+test("Thai support, service guarantee, and more service pages resolve localized active copy", () => {
+  const th = getTranslations("th");
+  const supportContentSource = readFileSync("src/app/support/SupportContent.tsx", "utf8");
+  const supportFormSource = readFileSync("src/components/support/SupportForm.tsx", "utf8");
+  const serviceGuaranteeSource = readFileSync("src/app/service-guarantee/ServiceGuaranteeContent.tsx", "utf8");
+  const moreServiceInfoSource = readFileSync("src/app/more-service-info/MoreServiceInfoContent.tsx", "utf8");
+
+  const expected: Record<string, string> = {
+    supportEyebrow: "ฝ่ายช่วยเหลือ Kurioticket",
+    supportTitle: "ฝ่ายสนับสนุนลูกค้า",
+    supportBeforeContactHeading: "ก่อนติดต่อเรา",
+    supportBeforeContactDescription: "โปรดระบุอีเมลในบัญชี Kurioticket ของคุณ สิ่งที่คุณพยายามทำ เส้นทางหรือโรงแรมที่เกี่ยวข้อง และหน้าผู้ให้บริการที่คุณถูกเปลี่ยนเส้นทางไป โปรดอย่าส่งหมายเลขบัตรชำระเงินแบบเต็มหรือหมายเลขเอกสารการเดินทางที่ละเอียดอ่อน",
+    supportTicketHeading: "สร้างคำขอรับการสนับสนุน",
+    supportFormEmailLabel: "อีเมล",
+    supportFormSubjectLabel: "หัวข้อ",
+    supportFormCategoryLabel: "หมวดหมู่",
+    supportCategorySearchHelp: "ผลการค้นหา",
+    supportCategoryPriceAlerts: "การแจ้งเตือนราคา",
+    supportCategoryPartnerRedirect: "การเปลี่ยนเส้นทางไปยังผู้ให้บริการ",
+    supportCategoryAccountHelp: "การเข้าถึงบัญชี",
+    supportFormMessageLabel: "เราช่วยอะไรได้บ้าง?",
+    supportFormMessagePlaceholder: "แชร์เส้นทาง โรงแรม การแจ้งเตือน หรือบริบทบัญชีของคุณ",
+    supportFormSubmit: "ส่งคำขอ",
+    supportFormSending: "กำลังส่ง...",
+    supportFormSuccessPrefix: "คำขอหมายเลข",
+    supportFormSuccessSuffix: "ถูกเปิดแล้ว",
+    supportFormErrorFallback: "ไม่สามารถเปิดคำขอได้",
+    supportFaqHeading: "คำถามที่พบบ่อย",
+    serviceGuaranteeEyebrow: "คำมั่นด้านบริการของ Kurioticket",
+    serviceGuaranteeTitle: "การรับประกันบริการ",
+    serviceGuaranteeDescription: "เราต้องการให้นักเดินทางเข้าใจว่า Kurioticket ทำงานอย่างไรและคาดหวังอะไรได้บ้างเมื่อใช้แพลตฟอร์มของเรา",
+    serviceGuaranteeFaqHeading: "คำถามที่พบบ่อย",
+    serviceGuaranteeFaqDescription: "คำตอบเหล่านี้อธิบายบทบาทของ Kurioticket ในฐานะแพลตฟอร์มค้นหาและเปรียบเทียบการเดินทาง",
+    serviceGuaranteeFaqWhatGuaranteeQuestion: "Kurioticket รับประกันอะไร?",
+    serviceGuaranteeFaqResultsDisplayedQuestion: "ผลลัพธ์การเดินทางแสดงอย่างไร?",
+    serviceGuaranteeFaqRedirectedQuestion: "ทำไมฉันจึงถูกเปลี่ยนเส้นทางไปยังผู้ให้บริการรายอื่น?",
+    serviceGuaranteeFaqBookDirectlyQuestion: "ฉันจองโดยตรงบน Kurioticket หรือไม่?",
+    serviceGuaranteeFaqPricesGuaranteedQuestion: "ราคาถูกการันตีเสมอหรือไม่?",
+    serviceGuaranteeFaqChooseProvidersQuestion: "Kurioticket เลือกผู้ให้บริการอย่างไร?",
+    serviceGuaranteeFaqEncounterIssueQuestion: "ฉันควรทำอย่างไรหากพบปัญหา?",
+    serviceGuaranteeFaqContactSupportQuestion: "ฉันจะติดต่อฝ่ายสนับสนุนได้อย่างไร?",
+    serviceGuaranteeHelpCardTitle: "ต้องการความช่วยเหลือเกี่ยวกับบัญชีหรือการค้นหาของคุณหรือไม่?",
+    serviceGuaranteeSupportCta: "ติดต่อฝ่ายสนับสนุนลูกค้า",
+    moreServiceInfoEyebrow: "ข้อมูลแพลตฟอร์ม",
+    moreServiceInfoTitle: "ข้อมูลบริการเพิ่มเติม",
+    moreServiceInfoDescription: "เรียนรู้ว่า Kurioticket ช่วยให้นักเดินทางค้นหา เปรียบเทียบ บันทึก และจัดระเบียบตัวเลือกการเดินทางจากผู้ให้บริการหลายรายได้ในที่เดียวอย่างไร",
+    moreServiceInfoContextTitle: "วางแผนพร้อมบริบท",
+    moreServiceInfoContextSubtitle: "ตั้งแต่ผลการค้นหาไปจนถึงการเปลี่ยนเส้นทางไปยังผู้ให้บริการ",
+    moreServiceInfoContextCompare: "เปรียบเทียบตัวเลือกจากผู้ให้บริการเดินทางหลายราย",
+    moreServiceInfoContextSave: "บันทึกทริป การแจ้งเตือน และการตั้งค่าเมื่อเข้าสู่ระบบ",
+    moreServiceInfoContextContinue: "ดำเนินการต่อพร้อมรายละเอียดจากผู้ให้บริการก่อนจองภายนอก",
+    moreServiceInfoHowHeading: "Kurioticket ทำงานอย่างไร",
+    moreServiceInfoHowDescription: "รายละเอียดบริการเหล่านี้อธิบายบทบาทของ Kurioticket ก่อน ระหว่าง และหลังการค้นหาการเดินทาง",
+    moreServiceInfoHowBadge: "พื้นฐานการวางแผนการเดินทาง",
+    moreServiceInfoStepSearchTitle: "ค้นหาผู้ให้บริการหลายราย",
+    moreServiceInfoStepCompareTitle: "เปรียบเทียบตัวเลือกการเดินทาง",
+    moreServiceInfoStepSaveTitle: "บันทึกทริปและการแจ้งเตือน",
+    moreServiceInfoStepRedirectsTitle: "คำอธิบายการเปลี่ยนเส้นทางไปยังผู้ให้บริการ",
+    moreServiceInfoStepAccountTitle: "เครื่องมือบัญชีและการเดินทาง",
+    moreServiceInfoFaqHeading: "คำถามที่พบบ่อย",
+    moreServiceInfoFaqDescription: "คำตอบสั้น ๆ เกี่ยวกับการค้นหาการเดินทาง การเปลี่ยนเส้นทางไปยังผู้ให้บริการ ทริปที่บันทึกไว้ และเครื่องมือบัญชี",
+    moreServiceInfoFaqWhatQuestion: "Kurioticket คืออะไร?",
+    moreServiceInfoFaqSearchQuestion: "การค้นหาการเดินทางทำงานอย่างไร?",
+    moreServiceInfoFaqRedirectQuestion: "ทำไมฉันจึงถูกเปลี่ยนเส้นทางไปยังผู้ให้บริการรายอื่น?",
+    moreServiceInfoFaqPaymentsQuestion: "Kurioticket ดำเนินการชำระเงินหรือไม่?",
+    moreServiceInfoFaqSaveQuestion: "ฉันสามารถบันทึกทริปและการแจ้งเตือนได้หรือไม่?",
+    moreServiceInfoFaqAccountQuestion: "จำเป็นต้องมีบัญชีหรือไม่?",
+    moreServiceInfoFaqSupportQuestion: "ฉันจะติดต่อฝ่ายสนับสนุนได้อย่างไร?",
+    moreServiceInfoHelpTitle: "ต้องการความช่วยเหลือหรือไม่?",
+    moreServiceInfoHelpDescription: "มีคำถามเกี่ยวกับบัญชี ทริปที่บันทึกไว้ การแจ้งเตือน หรือการเปลี่ยนเส้นทางไปยังผู้ให้บริการหรือไม่?",
+    moreServiceInfoSupportCta: "ติดต่อฝ่ายสนับสนุนลูกค้า",
+  };
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(th[key], value, `${key} should resolve to Thai`);
+    assert.notEqual(th[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  const localizedAnswerKeys = [
+    "supportFaqAccountAnswer", "supportFaqSearchAnswer", "supportFaqSavedTripsAnswer", "supportFaqRedirectAnswer",
+    "supportFaqAlreadyBookedAnswer", "supportFaqChangeBookingAnswer", "supportFaqWhyRedirectedAnswer",
+    "serviceGuaranteeFaqWhatGuaranteeAnswer", "serviceGuaranteeFaqResultsDisplayedAnswer", "serviceGuaranteeFaqRedirectedAnswer",
+    "serviceGuaranteeFaqBookDirectlyAnswer", "serviceGuaranteeFaqPricesGuaranteedAnswer", "serviceGuaranteeFaqChooseProvidersAnswer",
+    "serviceGuaranteeFaqEncounterIssueAnswer", "serviceGuaranteeFaqContactSupportAnswer",
+    "moreServiceInfoStepSearchSummary", "moreServiceInfoStepSearchDetails", "moreServiceInfoStepCompareSummary",
+    "moreServiceInfoStepCompareDetails", "moreServiceInfoStepSaveSummary", "moreServiceInfoStepSaveDetails",
+    "moreServiceInfoStepRedirectsSummary", "moreServiceInfoStepRedirectsDetails", "moreServiceInfoStepAccountSummary",
+    "moreServiceInfoStepAccountDetails", "moreServiceInfoFaqWhatAnswer", "moreServiceInfoFaqSearchAnswer",
+    "moreServiceInfoFaqRedirectAnswer", "moreServiceInfoFaqPaymentsAnswer", "moreServiceInfoFaqSaveAnswer",
+    "moreServiceInfoFaqAccountAnswer", "moreServiceInfoFaqSupportAnswer",
+  ];
+
+  for (const key of localizedAnswerKeys) assert.notEqual(th[key], enTranslations[key], `${key} should be localized`);
+
+  for (const key of [
+    "supportFaqAlreadyBookedAnswer", "supportFaqChangeBookingAnswer", "supportFaqWhyRedirectedAnswer",
+    "serviceGuaranteeFaqRedirectedAnswer", "serviceGuaranteeFaqBookDirectlyAnswer", "serviceGuaranteeFaqEncounterIssueAnswer",
+    "moreServiceInfoStepRedirectsSummary", "moreServiceInfoStepRedirectsDetails", "moreServiceInfoStepAccountDetails",
+    "moreServiceInfoFaqRedirectAnswer", "moreServiceInfoFaqPaymentsAnswer",
+  ]) {
+    assert.match(th[key], /Kurioticket|ผู้ให้บริการ|การจอง|การชำระเงิน|การเปลี่ยนเส้นทาง/, `${key} should preserve provider-boundary meaning`);
+  }
+
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+  assert.ok(supportContentSource.includes('t("supportEyebrow")') && supportContentSource.includes('supportFaqKeys.map'));
+  assert.ok(supportFormSource.includes('fetch("/api/support/tickets"') && supportFormSource.includes('name="email" type="email"') && supportFormSource.includes('name="subject" required') && supportFormSource.includes('name="category" defaultValue="price-alerts"') && supportFormSource.includes('value="search-help"') && supportFormSource.includes('value="price-alerts"') && supportFormSource.includes('value="redirect"') && supportFormSource.includes('value="account"') && supportFormSource.includes('name="body" required'));
+  assert.ok(serviceGuaranteeSource.includes('serviceFaqKeys.map') && serviceGuaranteeSource.includes('href="/support"'));
+  assert.ok(moreServiceInfoSource.includes('serviceSections.map') && moreServiceInfoSource.includes('serviceFaqs.map') && moreServiceInfoSource.includes('href="/support"'));
+});
+
+
 test("Indonesian homepage visible copy and render paths resolve without English fallback", () => {
   const id = getTranslations("id");
   const pageSource = readFileSync("src/app/page.tsx", "utf8");
