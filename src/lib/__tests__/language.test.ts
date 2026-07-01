@@ -11483,11 +11483,15 @@ test("Thai homepage hotel, destination, route-card, and date picker copy resolve
     done: "เสร็จสิ้น",
     stayDetails: "รายละเอียดการเข้าพัก",
     guestsAndRooms: "ผู้เข้าพักและห้องพัก",
+    guestSingular: "ผู้เข้าพัก",
+    guestPlural: "ผู้เข้าพัก",
     adults: "ผู้ใหญ่",
     hotelAdultHelper: "ผู้เข้าพัก 18+",
     children: "เด็ก",
     hotelChildrenHelper: "อายุ 0–17 ปี",
     rooms: "ห้องพัก",
+    roomSingular: "ห้อง",
+    roomPlural: "ห้อง",
     hotelRoomsHelper: "สูงสุด 6 ห้อง",
     petFriendly: "อนุญาตให้นำสัตว์เลี้ยงเข้าได้",
     onlyShowPetFriendlyStays: "แสดงเฉพาะที่พักที่อนุญาตให้นำสัตว์เลี้ยงเข้าได้",
@@ -11568,9 +11572,32 @@ test("Thai homepage hotel, destination, route-card, and date picker copy resolve
   assert.ok(searchTabsSource.includes('t.hotelSearchDestinationLabel || t.destination || "Destination"'));
   assert.ok(searchTabsSource.includes('translateHotelTravelDateText("hotelSearchDatePlaceholder")'));
   assert.ok(searchTabsSource.includes('translate("stayDetails")'));
+  assert.ok(searchTabsSource.includes('const isThaiLocale = normalizedSummaryLocale?.startsWith("th")'));
+  assert.ok(searchTabsSource.includes('translate("guestSingular") || "ผู้เข้าพัก"'));
+  assert.ok(searchTabsSource.includes('translate("roomSingular") || "ห้อง"'));
+  assert.ok(!searchTabsSource.includes('isThaiLocale\n      ? `1 guest, 1 room`'));
   assert.ok(hotelSearchSource.includes('t("hotelSearchDatePlaceholder")'));
   assert.ok(dateFormattingSource.includes('return "th-TH-u-ca-gregory"'));
   assert.ok(hotelDateFormattingSource.includes('return "th-TH-u-ca-gregory"'));
+
+  const guests = 1;
+  const rooms = 1;
+  const thaiHotelGuestsRoomsSummary = `${th.guestSingular} ${guests} คน, ${th.roomSingular} ${rooms} ห้อง`;
+  assert.equal(thaiHotelGuestsRoomsSummary, "ผู้เข้าพัก 1 คน, ห้อง 1 ห้อง");
+  assert.notEqual(thaiHotelGuestsRoomsSummary, "1 guest, 1 room");
+  assert.equal(th.guestsAndRooms, "ผู้เข้าพักและห้องพัก");
+  assert.equal(th.adults, "ผู้ใหญ่");
+  assert.equal(th.children, "เด็ก");
+  assert.equal(th.rooms, "ห้องพัก");
+  assert.equal(th.petFriendly, "อนุญาตให้นำสัตว์เลี้ยงเข้าได้");
+  assert.equal(th.onlyShowPetFriendlyStays, "แสดงเฉพาะที่พักที่อนุญาตให้นำสัตว์เลี้ยงเข้าได้");
+  assert.match(searchTabsSource, /destination:\s*destination\.trim\(\)/);
+  assert.match(searchTabsSource, /guests:\s*normalizedGuests/);
+  assert.match(searchTabsSource, /rooms:\s*normalizedRooms/);
+  assert.ok(searchTabsSource.includes('const href = `/hotels/results?${params.toString()}`'));
+  assert.ok(searchTabsSource.includes("hotelPetFriendly ?"));
+  assert.ok(searchTabsSource.includes('aria-label={translate("chooseGuestsAndRooms") || "Choose guests and rooms"}'));
+  assert.ok(searchTabsSource.includes("hotelGuestsRoomsOpen && desktopActiveFieldClassName"));
 
   const homeDiscoverySource = readFileSync("src/data/homeDiscovery.ts", "utf8");
   const marketHomeContentSource = readFileSync("src/data/marketHomeContent.ts", "utf8");
