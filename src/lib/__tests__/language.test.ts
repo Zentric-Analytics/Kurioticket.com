@@ -11698,3 +11698,134 @@ test("Thai Destinations and Saved trips copy resolves through active render path
   assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
 });
+
+test("Thai country/currency modal and auth copy resolves without English fallback", () => {
+  const th = getTranslations("th-TH");
+  const expected: Record<string, string> = {
+    chooseCountryAndCurrency: "เลือกประเทศและสกุลเงิน",
+    countryCurrencyDescription: "เลือกประเทศและสกุลเงินที่ใช้แสดงราคา คำแนะนำสนามบินจะใช้ตำแหน่งที่ตรวจพบของคุณ",
+    closeCountryCurrencySelector: "ปิดตัวเลือกประเทศและสกุลเงิน",
+    searchCountryOrCurrency: "ค้นหาประเทศหรือสกุลเงิน",
+    countryCurrencyPopularCountryAndCurrency: "ประเทศและสกุลเงินยอดนิยม",
+    countryCurrencyAllCountriesAndCurrencies: "ประเทศและสกุลเงินทั้งหมด",
+    countryCurrencyOptionCountSingular: "{{count}} ตัวเลือก",
+    countryCurrencyOptionCountPlural: "{{count}} ตัวเลือก",
+    selectCountryCurrencyOption: "เลือก {{country}} พร้อมสกุลเงิน {{currency}}",
+    showMoreResults: "แสดงผลลัพธ์เพิ่มเติม",
+    loginPageTitle: "เข้าสู่ระบบ",
+    loginPageSubtitle: "บันทึกการค้นหา จัดการการแจ้งเตือน และเข้าถึงแดชบอร์ดการเดินทางของคุณ",
+    loginEmailLabel: "อีเมล",
+    loginPasswordLabel: "รหัสผ่าน",
+    loginForgotPassword: "ลืมรหัสผ่าน?",
+    loginSubmit: "เข้าสู่ระบบ",
+    loginDivider: "หรือ",
+    loginGoogle: "ดำเนินการต่อด้วย Google",
+    loginSignupPrompt: "ยังใหม่กับ Kurioticket?",
+    loginCreateAccount: "สร้างบัญชี",
+    loginCodeSent: "เราส่งรหัสยืนยันไปยังอีเมลของคุณแล้ว",
+    loginCodeInstructions: "ป้อนรหัส 6 หลักที่ส่งไปยัง {{email}} รหัสจะหมดอายุหลังจาก {{minutes}} นาที",
+    loginVerificationCodeLabel: "รหัสยืนยัน",
+    loginVerifyLogin: "ยืนยันการเข้าสู่ระบบ",
+    loginResendIn: "ส่งอีกครั้งใน {{seconds}} วินาที",
+    loginUseDifferentDetails: "ใช้รายละเอียดอื่น",
+    forgotPasswordTitle: "รีเซ็ตรหัสผ่านของคุณ",
+    forgotPasswordSubtitle: "ป้อนอีเมลของคุณ แล้วเราจะส่งคำแนะนำสำหรับรีเซ็ตรหัสผ่านให้",
+    forgotPasswordEmailLabel: "อีเมล",
+    forgotPasswordEmailPlaceholder: "you@example.com",
+    forgotPasswordSubmit: "ส่งลิงก์รีเซ็ต",
+    forgotPasswordRemember: "จำรหัสผ่านได้แล้ว?",
+    forgotPasswordLoginLink: "เข้าสู่ระบบ",
+    resetPasswordTitle: "รีเซ็ตรหัสผ่านของคุณ",
+    resetPasswordCreateTitle: "สร้างรหัสผ่านใหม่",
+    resetPasswordSubtitle: "ป้อนรหัสผ่านใหม่ของคุณด้านล่าง",
+    resetPasswordSubmit: "รีเซ็ตรหัสผ่าน",
+    resetPasswordRemember: "จำรหัสผ่านได้แล้ว?",
+    resetPasswordLoginLink: "เข้าสู่ระบบ",
+    verifyLoginTitle: "ยืนยันการเข้าสู่ระบบ",
+    verifyLoginInstructions: "ป้อนรหัส 6 หลักที่เราส่งไปยังอีเมลของคุณ รหัสจะหมดอายุหลังจาก 10 นาที",
+    verifyLoginCodeLabel: "รหัสยืนยัน",
+    verifyLoginSubmit: "ยืนยันการเข้าสู่ระบบ",
+    verifyLoginNeedStartOver: "ต้องการเริ่มใหม่?",
+    verifyLoginAgainLink: "เข้าสู่ระบบอีกครั้ง",
+    signupPageTitle: "สร้างบัญชีของคุณ",
+    signupFullNameLabel: "ชื่อ-นามสกุล",
+    signupEmailLabel: "อีเมล",
+    signupPasswordLabel: "รหัสผ่าน",
+    signupAgreementBeforeTerms: "เมื่อสร้างบัญชี คุณยอมรับ",
+    signupTermsLink: "ข้อกำหนด",
+    signupAgreementBetweenLinks: " ",
+    signupPrivacyPolicyLink: "นโยบายความเป็นส่วนตัว",
+    signupAgreementAfterPrivacy: " และประกาศเกี่ยวกับการเปลี่ยนเส้นทางไปยังพาร์ทเนอร์",
+    signupSubmit: "สมัครใช้งาน",
+    signupGoogle: "ดำเนินการต่อด้วย Google",
+    signupAlreadyHaveAccount: "มีบัญชีอยู่แล้ว?",
+    signupLoginLink: "เข้าสู่ระบบ",
+  };
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(th[key], value, key);
+    if (value !== enTranslations[key]) assert.notEqual(th[key], enTranslations[key], key);
+  }
+
+  assert.match(th.loginCodeInstructions, /\{\{email\}\}/);
+  assert.match(th.loginCodeInstructions, /\{\{minutes\}\}/);
+  assert.match(th.loginResendIn, /\{\{seconds\}\}/);
+  assert.match(th.countryCurrencyOptionCountPlural, /\{\{count\}\}/);
+  assert.match(th.selectCountryCurrencyOption, /\{\{country\}\}/);
+  assert.match(th.selectCountryCurrencyOption, /\{\{currency\}\}/);
+  assert.equal(th.loginCodeInstructions.replace("{{email}}", "user@example.com").replace("{{minutes}}", "10"), "ป้อนรหัส 6 หลักที่ส่งไปยัง user@example.com รหัสจะหมดอายุหลังจาก 10 นาที");
+  assert.equal(th.loginResendIn.replace("{{seconds}}", "30"), "ส่งอีกครั้งใน 30 วินาที");
+  assert.ok(languageOptions.some((o) => o.code === "th" && o.locale === "th-TH" && o.direction === "ltr"));
+  assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
+});
+
+test("Thai auth and country/currency render paths use i18n keys without active English literals", () => {
+  const countryCurrencySource = readFileSync("src/components/region/CountryCurrencySelector.tsx", "utf8");
+  const signinSource = readFileSync("src/components/auth/SigninForm.tsx", "utf8");
+  const forgotSource = readFileSync("src/components/auth/ForgotPasswordForm.tsx", "utf8");
+  const resetSource = readFileSync("src/components/auth/ResetPasswordForm.tsx", "utf8");
+  const signupSource = readFileSync("src/components/auth/SignupForm.tsx", "utf8");
+  const verifyLoginSource = readFileSync("src/components/auth/VerifyLoginForm.tsx", "utf8");
+  const verifyEmailSource = readFileSync("src/components/auth/VerifyEmailForm.tsx", "utf8");
+  const signinPageSource = readFileSync("src/app/auth/signin/page.tsx", "utf8");
+  const forgotPageSource = readFileSync("src/app/auth/forgot-password/page.tsx", "utf8");
+  const resetPageSource = readFileSync("src/app/auth/reset-password/page.tsx", "utf8");
+  const signupPageSource = readFileSync("src/app/auth/signup/page.tsx", "utf8");
+  const verifyLoginPageSource = readFileSync("src/app/auth/verify-login/page.tsx", "utf8");
+
+  for (const key of ["chooseCountryAndCurrency", "countryCurrencyDescription", "closeCountryCurrencySelector", "searchCountryOrCurrency", "countryCurrencyAllCountriesAndCurrencies", "countryCurrencyPopularCountryAndCurrency", "countryCurrencyOptionCountSingular", "countryCurrencyOptionCountPlural", "selectCountryCurrencyOption", "showMoreResults"]) assert.match(countryCurrencySource, new RegExp(`t\\.${key}`), key);
+  for (const key of ["loginPageTitle", "loginPageSubtitle", "loginEmailLabel", "loginPasswordLabel", "loginForgotPassword", "loginSubmit", "loginDivider", "loginGoogle", "loginSignupPrompt", "loginCreateAccount", "loginCodeSent", "loginCodeInstructions", "loginVerificationCodeLabel", "loginVerifyLogin", "loginResendIn", "loginUseDifferentDetails"]) assert.match(signinSource, new RegExp(`t\\.${key}|key: "${key}"`), key);
+  for (const key of ["forgotPasswordTitle", "forgotPasswordSubtitle", "forgotPasswordEmailLabel", "forgotPasswordEmailPlaceholder", "forgotPasswordSubmit", "forgotPasswordRemember", "forgotPasswordLoginLink"]) assert.match(forgotSource, new RegExp(`t\\.${key}`), key);
+  for (const key of ["resetPasswordTitle", "resetPasswordCreateTitle", "resetPasswordSubtitle", "resetPasswordSubmit", "resetPasswordRemember", "resetPasswordLoginLink"]) assert.match(resetSource, new RegExp(`t\\.${key}`), key);
+  for (const key of ["signupPageTitle", "signupFullNameLabel", "signupEmailLabel", "signupPasswordLabel", "signupAgreementBeforeTerms", "signupTermsLink", "signupAgreementBetweenLinks", "signupPrivacyPolicyLink", "signupAgreementAfterPrivacy", "signupSubmit", "signupGoogle", "signupAlreadyHaveAccount", "signupLoginLink"]) assert.match(signupSource, new RegExp(`t\\.${key}`), key);
+  for (const key of ["verifyLoginTitle", "verifyLoginInstructions", "verifyLoginCodeLabel", "verifyLoginSubmit", "verifyLoginNeedStartOver", "verifyLoginAgainLink"]) assert.match(verifyLoginSource, new RegExp(`t\\.${key}`), key);
+
+  assert.doesNotMatch(countryCurrencySource, />Choose country and currency<|>Search country or currency<|>Show more results<|Close country and currency selector/);
+  assert.doesNotMatch(signinSource, />Log in<|>Save searches, manage alerts, and access your travel dashboard\.<|>Forgot password\?<|>OR<|>Continue with Google<|>New to Kurioticket\?<|>Create an account<|>Verification code<|>Verify login<|>Use different details</);
+  assert.doesNotMatch(forgotSource, />Reset your password<|>Enter your email and we'll send instructions to reset your password\.<|>Send reset link<|>Remember your password\?<|>Log in</);
+  assert.doesNotMatch(signupSource, />Create your account<|>Full name<|>Sign Up<|>Continue with Google<|>Already have an account\?<|>Log in</);
+
+  assert.match(signinSource, /<Input\s+name="email"\s+type="email"/);
+  assert.match(signinSource, /<Input\s+name="password"\s+type="password"/);
+  assert.match(signinSource, /<Input\s+name="code"\s+inputMode="numeric"/);
+  assert.match(signinSource, /signIn\("google", \{/);
+  assert.match(signinSource, /signIn\("credentials", \{/);
+  assert.match(signinSource, /href="\/auth\/forgot-password"/);
+  assert.match(signinSource, /href="\/auth\/signup"/);
+  assert.match(forgotSource, /fetch\("\/api\/auth\/forgot-password"/);
+  assert.match(resetSource, /fetch\("\/api\/auth\/reset-password"/);
+  assert.match(signupSource, /fetch\("\/api\/auth\/signup", \{/);
+  assert.match(signupSource, /signIn\("google", \{ callbackUrl: "\/onboarding" \}\)/);
+  assert.match(verifyLoginSource, /signIn\("credentials", \{/);
+  assert.match(verifyLoginSource, /fetch\("\/api\/auth\/request-login-code"/);
+  assert.match(verifyEmailSource, /fetch\("\/api\/auth\/verify-email"/);
+  assert.match(countryCurrencySource, /setOpen\(true\)/);
+  assert.match(countryCurrencySource, /setShowAllCountryCurrencies\(true\)/);
+  assert.match(countryCurrencySource, /setCountryCurrencyQuery\(""\)/);
+  assert.match(countryCurrencySource, /aria-label=\{formatTranslation\(/);
+  assert.match(signinPageSource, /<SigninForm/);
+  assert.match(forgotPageSource, /<ForgotPasswordForm \/>/);
+  assert.match(resetPageSource, /<ResetPasswordForm token=\{token\} \/>/);
+  assert.match(signupPageSource, /<SignupForm googleEnabled=\{googleEnabled\} \/>/);
+  assert.match(verifyLoginPageSource, /<VerifyLoginForm email=\{email\} callbackUrl=\{callbackUrl\} \/>/);
+});
