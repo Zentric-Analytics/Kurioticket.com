@@ -7,6 +7,7 @@ import {
   useState,
   type ComponentProps,
 } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { ArrowRight, ExternalLink, Heart, Trash2, X } from "lucide-react";
@@ -271,6 +272,64 @@ const cabinTranslationKeyByValue: Record<string, string> = {
 
 const normalizeDestinationKey = (value: string) =>
   value.normalize("NFKD").replace(/\p{M}/gu, "").trim().toLowerCase();
+
+const SAVED_TRIP_CARD_IMAGE_SIZES =
+  "(max-width: 767px) 100vw, (max-width: 1279px) 50vw, 33vw";
+const EAGER_SAVED_TRIP_IMAGE_COUNT = 3;
+const OPTIMIZED_REMOTE_IMAGE_HOSTS = new Set([
+  "images.unsplash.com",
+  "images.pexels.com",
+]);
+
+function getCardImageOptimizationMode(src: string) {
+  if (src.startsWith("/")) return { supported: true, optimized: true };
+
+  try {
+    const url = new URL(src);
+    const supported = url.protocol === "http:" || url.protocol === "https:";
+    return {
+      supported,
+      optimized:
+        url.protocol === "https:" && OPTIMIZED_REMOTE_IMAGE_HOSTS.has(url.hostname),
+    };
+  } catch {
+    return { supported: false, optimized: false };
+  }
+}
+
+type SavedCardImageProps = {
+  src: string;
+  alt: string;
+  priority?: boolean;
+  hoverScaleClassName?: string;
+};
+
+function SavedCardImage({
+  src,
+  alt,
+  priority = false,
+  hoverScaleClassName = "group-hover:scale-[1.03]",
+}: SavedCardImageProps) {
+  const imageMode = getCardImageOptimizationMode(src);
+  const imageClassName = `object-cover transition duration-500 ${hoverScaleClassName}`;
+
+  return (
+    <div className="relative h-36 w-full overflow-hidden sm:h-40">
+      {imageMode.supported ? (
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes={SAVED_TRIP_CARD_IMAGE_SIZES}
+          className={imageClassName}
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
+          unoptimized={!imageMode.optimized}
+        />
+      ) : null}
+    </div>
+  );
+}
 
 const genericTravelFallback =
   allDiscoveryItems.find(
@@ -826,7 +885,7 @@ export function SavedTripsAndRecentSearches() {
             </div>
           ) : (
             <div className="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {savedTrips.map((trip) => {
+              {savedTrips.map((trip, index) => {
                 const fare = savedTripFares[trip.id];
                 const hasProviderFare = hasFreshProviderFare(fare, trip);
                 const tripHref = buildSavedTripHref(trip, fare);
@@ -847,11 +906,10 @@ export function SavedTripsAndRecentSearches() {
                     </button>
 
                     {trip.image ? (
-                      <img
+                      <SavedCardImage
                         src={trip.image}
                         alt={trip.imageAlt ?? trip.title}
-                        className="h-36 w-full object-cover transition duration-500 group-hover:scale-[1.03] sm:h-40"
-                        loading="lazy"
+                        priority={index < EAGER_SAVED_TRIP_IMAGE_COUNT}
                       />
                     ) : (
                       <div className="flex h-36 w-full items-center justify-center bg-gradient-to-br from-violet-100 via-fuchsia-50 to-cyan-50 text-sm font-semibold uppercase tracking-[0.14em] text-slate-600 sm:h-40">
@@ -962,11 +1020,10 @@ export function SavedTripsAndRecentSearches() {
                     </button>
 
                     {visual?.image ? (
-                      <img
+                      <SavedCardImage
                         src={visual.image}
                         alt={visual.imageAlt}
-                        className="h-36 w-full object-cover transition duration-500 group-hover:scale-[1.02] sm:h-40"
-                        loading="lazy"
+                        hoverScaleClassName="group-hover:scale-[1.02]"
                       />
                     ) : (
                       <div className="flex h-36 w-full items-center justify-center bg-gradient-to-br from-slate-100 via-indigo-50 to-cyan-100 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 sm:h-40">
