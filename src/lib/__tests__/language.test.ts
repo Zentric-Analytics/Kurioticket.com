@@ -25,6 +25,7 @@ import { translations as trTranslations } from "@/lib/i18n/tr";
 import { translations as plTranslations } from "@/lib/i18n/pl";
 import { translations as svTranslations } from "@/lib/i18n/sv";
 import { translations as idTranslations } from "@/lib/i18n/id";
+import { translations as thTranslations } from "@/lib/i18n/th";
 import { availableLocaleOptions, getTranslations } from "@/lib/i18n";
 import { supportedLocales } from "@/lib/supportedLocales";
 import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
@@ -72,6 +73,51 @@ test("global language catalog renders", () => {
   assert.ok(languageOptions.some((o) => o.code === "sv" && o.locale === "sv-SE" && o.nativeLabel === "Svenska" && o.label === "Swedish" && o.countryCode === "SE" && o.direction === "ltr" && o.status === "available"));
   assert.equal(languageOptions.filter((o) => o.code === "id").length, 1);
   assert.ok(languageOptions.some((o) => o.code === "id" && o.locale === "id-ID" && o.nativeLabel === "Bahasa Indonesia" && o.label === "Indonesian" && o.countryCode === "ID" && o.fallbackText === "ID" && o.direction === "ltr" && o.status === "available"));
+});
+
+test("Thai language metadata, LTR direction, and English fallback dictionary resolve", () => {
+  const thaiOptions = languageOptions.filter((o) => o.code === "th");
+  const thaiLocaleMetadata = supportedLocales.filter((o) => o.code === "th");
+
+  assert.equal(thaiOptions.length, 1);
+  assert.equal(thaiLocaleMetadata.length, 1);
+  assert.deepEqual(
+    {
+      code: thaiOptions[0]?.code,
+      locale: thaiOptions[0]?.locale,
+      label: thaiOptions[0]?.label,
+      nativeLabel: thaiOptions[0]?.nativeLabel,
+      direction: thaiOptions[0]?.direction,
+      status: thaiOptions[0]?.status,
+      countryCode: thaiOptions[0]?.countryCode,
+      fallbackText: thaiOptions[0]?.fallbackText,
+      translationStatus: thaiLocaleMetadata[0]?.translationStatus,
+    },
+    {
+      code: "th",
+      locale: "th-TH",
+      label: "Thai",
+      nativeLabel: "ไทย",
+      direction: "ltr",
+      status: "available",
+      countryCode: "TH",
+      fallbackText: "TH",
+      translationStatus: "partial",
+    },
+  );
+
+  assert.equal(normalizeLanguage("th"), "th");
+  assert.equal(normalizeLanguage("th-TH"), "th");
+  assert.equal(normalizeLanguage("th-th"), "th");
+  assert.equal(getTranslations("th"), thTranslations);
+  assert.equal(getTranslations("th-TH"), thTranslations);
+  assert.equal(getTranslations("th-th"), thTranslations);
+  assert.equal(thTranslations.homeHeroTitle, enTranslations.homeHeroTitle);
+  assert.equal(thTranslations.search, enTranslations.search);
+  assert.ok(availableLocaleOptions.some((o) => o.code === "th" && o.nativeLabel === "ไทย"));
+  assert.equal(thaiOptions[0]?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+  assert.equal(getTranslations("unsupported-locale"), enTranslations);
 });
 
 test("Indonesian locale is active with homepage copy overrides", () => {
