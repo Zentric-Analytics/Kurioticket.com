@@ -14,23 +14,36 @@ export function SupportForm() {
 
   async function submit(formData: FormData) {
     setStatus(t("supportFormSending"));
-    const response = await fetch("/api/support/tickets", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: String(formData.get("email") || ""),
-        subject: String(formData.get("subject") || ""),
-        category: String(formData.get("category") || ""),
-        body: String(formData.get("body") || ""),
-        sourceContext: { page: "support_center" },
-      }),
-    });
-    const data = await response.json();
-    setStatus(
-      response.ok
-        ? `${t("supportFormSuccessPrefix")} ${data.ticket.id} ${t("supportFormSuccessSuffix")}`
-        : data.error || t("supportFormErrorFallback"),
-    );
+
+    try {
+      const response = await fetch("/api/support/tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: String(formData.get("email") || ""),
+          subject: String(formData.get("subject") || ""),
+          category: String(formData.get("category") || ""),
+          body: String(formData.get("body") || ""),
+          sourceContext: { page: "support_center" },
+        }),
+      });
+
+      let data: { ticket?: { id?: string }; error?: string } = {};
+      try {
+        data = await response.json();
+      } catch (error) {
+        console.warn("[support] Unable to parse support response", error);
+      }
+
+      setStatus(
+        response.ok && data.ticket?.id
+          ? `${t("supportFormSuccessPrefix")} ${data.ticket.id} ${t("supportFormSuccessSuffix")}`
+          : data.error || t("supportFormErrorFallback"),
+      );
+    } catch (error) {
+      console.warn("[support] Unable to submit support request", error);
+      setStatus(t("supportFormErrorFallback"));
+    }
   }
 
   return (
