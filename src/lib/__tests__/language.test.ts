@@ -379,6 +379,7 @@ test("flight quote unavailable copy resolves through active render path for all 
     pl: ["Oferta lotu niedostępna", "Ta oferta lotu nie jest już dostępna. Wyszukaj ponownie, aby zobaczyć aktualne ceny."],
     sv: ["Flygpriset är inte tillgängligt", "Det här flygpriset är inte längre tillgängligt. Sök igen för aktuella priser."],
     id: ["Penawaran harga penerbangan tidak tersedia", "Penawaran harga penerbangan ini tidak lagi tersedia. Silakan cari lagi untuk melihat harga saat ini."],
+    th: ["ไม่มีใบเสนอราคาตั๋วเครื่องบิน", "ใบเสนอราคาตั๋วเครื่องบินนี้ไม่พร้อมใช้งานแล้ว โปรดค้นหาอีกครั้งเพื่อดูราคาปัจจุบัน"],
   } as const;
 
   for (const option of languageOptions.filter((o) => o.status === "available")) {
@@ -3032,7 +3033,7 @@ test("Polish flights results active render path resolves visible copy without En
   assert.equal(`${pl.seatSelection}: ${pl.providerRulesApply}`, "Wybór miejsca: obowiązują zasady dostawcy");
   assert.equal(`${pl.fareRules}: ${pl.reviewBeforeBooking}`, "Zasady taryfy: sprawdź przed rezerwacją");
   assert.equal(`${pl.providerNormalizedItineraryPrefix} ${pl.flightCardProviderHandoffConverted}`, "Szczegóły wylotu i powrotu są wyświetlane na podstawie danych planu podróży ujednoliconych przez dostawcę. Ostateczna cena, dostępność, rezerwacja i zasady taryfy są potwierdzane przez dostawcę. Ostateczna waluta dostawcy może różnić się od wybranej waluty wyświetlania.");
-  assert.ok(resultsSource.includes("formatResultDepartureTime(flight.departureTime, calendarLocale)"));
+  assert.match(resultsSource, /formatResultDepartureTime\(\s*flight\.departureTime,\s*calendarLocale,?\s*\)/);
   assert.ok(resultsSource.includes("formatTimeFromMinutes(minutes, locale)"));
 
   for (const providerValue of ["Turkish Airlines", "TK0626", "LOS", "LAX", "IST"]) {
@@ -4285,7 +4286,7 @@ test("Polish account personal details and security settings copy resolves withou
       dashboardSource.includes('"accountDashboard.security.password.title"') &&
       dashboardSource.includes('"accountDashboard.security.twoFactor.description"') &&
       dashboardSource.includes('"accountDashboard.security.passkeys.description"') &&
-      dashboardSource.includes('"accountDashboard.security.action.setUpPasskey"') &&
+      dashboardSource.includes('"accountDashboard.security.action.setUp"') &&
       dashboardSource.includes('"accountDashboard.security.action.turnOff"') &&
       dashboardSource.includes('"accountDashboard.security.action.deleteAccount"'),
     "Active Security settings render path should read account security i18n keys.",
@@ -4374,17 +4375,21 @@ test("Turkish account personal details and security settings copy resolves witho
     "Personal details page should continue using account personal-details i18n keys.",
   );
   assert.ok(
-    dashboardSource.includes('title={t["accountDashboard.security.title"]}') &&
-      dashboardSource.includes('description={t["accountDashboard.security.description"]}') &&
-      dashboardSource.includes('title={t["accountDashboard.security.passkeys.title"]}') &&
-      dashboardSource.includes('action={t["accountDashboard.security.action.deleteAccount"]}') &&
-      dashboardSource.includes('setActionMessage(t["accountDashboard.security.action.unavailable"])'),
-    "Security settings page should continue using account security i18n keys and unchanged unavailable action handling.",
+    dashboardSource.includes('title={tx("accountDashboard.security.title", "Security settings")}') &&
+      dashboardSource.includes('"accountDashboard.security.description"') &&
+      dashboardSource.includes('"accountDashboard.security.passkeys.title"') &&
+      dashboardSource.includes('"accountDashboard.security.action.deleteAccount"') &&
+      dashboardSource.includes('onAction={() => setPasswordModalOpen(true)}') &&
+      dashboardSource.includes('onAction={() => void openTwoFactorModal') &&
+      dashboardSource.includes('onAction={() => setPasskeysModalOpen(true)}') &&
+      dashboardSource.includes('onAction={handleOpenSessions}') &&
+      dashboardSource.includes('onAction={() => setDeleteModalOpen(true)}'),
+    "Security settings page should continue using account security i18n keys and unchanged action handlers.",
   );
   assert.ok(
     dashboardSource.includes("getPersonalDetailsInitialValues(props)") &&
       dashboardSource.includes("userEmail?.trim()") &&
-      dashboardPageSource.includes("const userName = session?.user?.name?.trim()") &&
+      dashboardPageSource.includes("const userName = savedProfileName || sessionUserName") &&
       dashboardPageSource.includes("const userEmail = session?.user?.email?.trim()"),
     "Personal details should keep user/session/profile values dynamic.",
   );
@@ -5981,7 +5986,7 @@ test("Turkish homepage popovers and discovery route cards resolve screenshot-vis
     under2: "2 yaş altı",
     cabinClass: "Kabin sınıfı",
     economy: "Ekonomi",
-    business: "Businessklass",
+    business: "Business sınıfı",
     first: "First",
     homeDiscoveryTitle: "Bir sonraki maceranızı burada keşfedin",
     homeDiscoverySubtitle:
@@ -8393,9 +8398,10 @@ test("Swedish newsletter email placeholder resolves through active homepage rend
   assert.match(pageSource, /email,/);
   assert.match(pageSource, /className="flex flex-col gap-2 sm:max-w-\[34rem\] sm:flex-row"/);
   assert.match(pageSource, /aria-label=\{t\("homeEmailAddress"\)\}/);
-  assert.match(bridgeSource, /const accountEmail = email/);
-  assert.match(bridgeSource, /applyReactControlledInputValue\(input, accountEmail\)/);
-  assert.match(bridgeSource, /input\.setAttribute\("aria-hidden", "true"\)/);
+  assert.match(bridgeSource, /document\.querySelector<HTMLInputElement>\('main input\[type="email"\]'\)/);
+  assert.match(bridgeSource, /data\.authenticated/);
+  assert.match(bridgeSource, /data\.status !== "SUBSCRIBED"/);
+  assert.doesNotMatch(bridgeSource, /applyReactControlledInputValue/);
 
   assert.ok(languageOptions.some((o) => o.code === "sv" && o.locale === "sv-SE" && o.nativeLabel === "Svenska" && o.direction === "ltr"));
   assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
