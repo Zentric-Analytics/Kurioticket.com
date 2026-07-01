@@ -107,6 +107,10 @@ const formatCalendarWeekday = (
     return `${formatted.replace(/\.$/, "")}.`;
   }
 
+  if (calendarLocale === "th-TH-u-ca-gregory-nu-latn") {
+    return ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"][date.getDay()] ?? formatted;
+  }
+
   if (calendarLocale !== "fr-FR") {
     return formatted;
   }
@@ -1132,9 +1136,12 @@ export function SearchTabs({
   const isSimplifiedChineseLocale = normalizedSummaryLocale === "zh-cn";
   const isJapaneseLocale = normalizedSummaryLocale === "ja";
   const isKoreanLocale = normalizedSummaryLocale === "ko";
+  const isThaiLocale = normalizedSummaryLocale === "th" || normalizedSummaryLocale?.startsWith("th-");
   const summarySeparator = isSimplifiedChineseLocale ? "，" : ", ";
   const hotelGuestsRoomsSummary = isArabicLocale
     ? `${Number(guests) === 1 ? `${translate("guestSingular")} واحد` : `${guests} ${translate("guestPlural")}`}، ${Number(rooms) === 1 ? `${translate("roomSingular")} واحدة` : `${rooms} ${translate("roomPlural")}`}`
+    : isThaiLocale
+      ? `${translate("guestSingular") || "ผู้เข้าพัก"} ${guests} คน, ${translate("roomSingular") || "ห้อง"} ${rooms} ห้อง`
     : isJapaneseLocale
       ? `${translate("guestSingular") || "宿泊者"}${guests}名、${rooms}${translate("roomSingular") || "室"}`
     : isKoreanLocale

@@ -12,6 +12,7 @@ export const normalizeFlightsCalendarLocale = (locale: string | null | undefined
   if (normalized === "sv" || normalized === "sv-se" || normalized.startsWith("sv-")) return "sv-SE";
   if (normalized === "pl" || normalized === "pl-pl" || normalized.startsWith("pl-")) return "pl-PL";
   if (normalized === "tr" || normalized === "tr-tr" || normalized.startsWith("tr-")) return "tr-TR";
+  if (normalized === "th" || normalized === "th-th" || normalized.startsWith("th-")) return "th-TH-u-ca-gregory-nu-latn";
   if (normalized === "ja" || normalized.startsWith("ja-")) return "ja-JP";
   if (normalized === "ko" || normalized.startsWith("ko-")) return "ko-KR";
   if (normalized === "id" || normalized === "id-id" || normalized.startsWith("id-")) return "id-ID";
@@ -31,6 +32,11 @@ const capitalizeFrenchCalendarLabel = (value: string) =>
 
 export const formatFlightsWeekdays = (locale: string | null | undefined) => {
   const normalizedLocale = normalizeFlightsCalendarLocale(locale);
+
+  if (normalizedLocale === "th-TH-u-ca-gregory-nu-latn") {
+    return ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
+  }
+
   return Array.from({ length: 7 }, (_, day) =>
     new Intl.DateTimeFormat(normalizedLocale, { weekday: "short" }).format(new Date(2024, 0, 7 + day)),
   );

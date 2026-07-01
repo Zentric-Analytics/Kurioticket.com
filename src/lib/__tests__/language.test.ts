@@ -11350,3 +11350,83 @@ test("Indonesian homepage visible copy and render paths resolve without English 
   assert.notEqual(id.tripType, "TRIP TYPE");
   assert.ok(footerSource.includes('t.footerSellerOfTravelNotice') && footerSource.includes('t.footerPrivacy'));
 });
+
+test("Thai remaining homepage hotel and route-card copy resolves through active render paths", () => {
+  const th = getTranslations("th");
+  const searchTabsSource = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
+  const pageSource = readFileSync("src/app/page.tsx", "utf8");
+  const dateFormattingSource = readFileSync("src/lib/flights/dateFormatting.ts", "utf8");
+  const homeDiscoverySource = readFileSync("src/data/homeDiscovery.ts", "utf8");
+
+  assert.equal(th.hotels, "โรงแรม");
+  assert.equal(th.hotelSearchDestinationLabel, "ปลายทาง");
+  assert.equal(th.cityOrHotel, "เมืองหรือโรงแรม");
+  assert.equal(th.hotelSearchTravelDatesLabel, "วันที่เดินทาง");
+  assert.equal(th.hotelSearchDatePlaceholder, "เช็กอิน — เช็กเอาต์");
+  assert.equal(th.hotelSearchGuestsLabel, "ผู้เข้าพัก");
+  assert.equal(`${th.guestSingular} ${1} คน, ${th.roomSingular} ${1} ห้อง`, "ผู้เข้าพัก 1 คน, ห้อง 1 ห้อง");
+  assert.equal(th.search, "ค้นหา");
+
+  assert.equal(th.chooseTravelDates, "เลือกวันที่เดินทาง");
+  assert.equal(th.previousShort, "ก่อนหน้า");
+  assert.equal(th.nextShort, "ถัดไป");
+  assert.equal(th.clear, "ล้าง");
+  assert.equal(th.done, "เสร็จสิ้น");
+  assert.equal(normalizeFlightsCalendarLocale("th"), "th-TH-u-ca-gregory-nu-latn");
+  assert.equal(formatFlightsMonthHeading(new Date(2026, 6, 1), "th"), "กรกฎาคม 2026");
+  assert.equal(formatFlightsMonthHeading(new Date(2026, 7, 1), "th"), "สิงหาคม 2026");
+  assert.deepEqual(formatFlightsWeekdays("th"), ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"]);
+
+  assert.equal(th.stayDetails, "รายละเอียดการเข้าพัก");
+  assert.equal(th.guestsAndRooms, "ผู้เข้าพักและห้องพัก");
+  assert.equal(th.adults, "ผู้ใหญ่");
+  assert.equal(th.hotelAdultHelper, "ผู้เข้าพัก 18+");
+  assert.equal(th.children, "เด็ก");
+  assert.equal(th.hotelChildrenHelper, "อายุ 0–17 ปี");
+  assert.equal(th.rooms, "ห้องพัก");
+  assert.equal(th.hotelRoomsHelper, "สูงสุด 6 ห้อง");
+  assert.equal(th.petFriendly, "อนุญาตให้นำสัตว์เลี้ยงเข้าได้");
+  assert.equal(th.onlyShowPetFriendlyStays, "แสดงเฉพาะที่พักที่อนุญาตให้นำสัตว์เลี้ยงเข้าได้");
+
+  assert.equal(th["homePopularDestinationCity.dubai"], "ดูไบ");
+  assert.equal(th["homePopularDestinationCity.london"], "ลอนดอน");
+  assert.equal(th["homePopularDestinationCity.johannesburg"], "โจฮันเนสเบิร์ก");
+  assert.equal(th["homePopularDestinationCity.accra"], "อักกรา");
+  assert.equal(th["homePopularDestinationCity.nairobi"], "ไนโรบี");
+  assert.equal(th["homePopularDestinationCity.istanbul"], "อิสตันบูล");
+  assert.equal(th["homePopularDestinationCity.paris"], "ปารีส");
+  assert.equal(th["homePopularDestinationCountry.unitedArabEmirates"], "สหรัฐอาหรับเอมิเรตส์");
+  assert.equal(th["homePopularDestinationCountry.unitedKingdom"], "สหราชอาณาจักร");
+  assert.equal(th["homePopularDestinationCountry.southAfrica"], "แอฟริกาใต้");
+  assert.equal(th["homePopularDestinationCountry.ghana"], "กานา");
+  assert.equal(th["homePopularDestinationCountry.kenya"], "เคนยา");
+  assert.equal(th["homePopularDestinationCountry.turkiye"], "ตุรกี");
+  assert.equal(th["homePopularDestinationCountry.france"], "ฝรั่งเศส");
+
+  assert.equal(th.destinationImageFallback, "ปลายทาง");
+  assert.equal(th["homeDiscoveryRoute.ng-los-lhr.title"], "ทริปธุรกิจและสุดสัปดาห์ในลอนดอน");
+  assert.equal(th["homeDiscoveryRoute.ng-los-dxb.title"], "แวะช้อปปิงที่ดูไบ");
+  assert.equal(th["homeDiscoveryRoute.ng-abv-acc.title"], "ทริประยะสั้นในภูมิภาคสู่อักกรา");
+  assert.equal(th["homeDiscoveryRoute.ng-los-nbo.title"], "ทริปซาฟารีพักผ่อนที่ไนโรบี");
+  assert.equal(th["homeDiscoveryRoute.ng-abv-rob.title"], "ทริปชายทะเลภูมิภาคที่มอนโรเวีย");
+  assert.equal(th["homeDiscoveryRoute.ng-los-lhr.routeNote"], "เส้นทางระยะไกลยอดนิยมสำหรับทริปทำงานและวันพักผ่อนเพิ่มเติม");
+  assert.equal(th["homeDiscoveryRoute.ng-los-dxb.routeNote"], "เหมาะสำหรับการพักเพื่อช้อปปิง การเดินทางกับครอบครัว และการต่อเครื่องไปยังจุดหมายถัดไป");
+  assert.equal(th["homeDiscoveryRoute.ng-abv-rob.routeNote"], "ทริปพักเมืองแอฟริกาตะวันตกพร้อมชายหาดแอตแลนติกและตลาดท้องถิ่น");
+
+  const ngCards = getHomeDiscoveryByRegion("NG");
+  assert.deepEqual(ngCards.slice(0, 3).map((card) => card.id), ["ng-los-lhr", "ng-los-dxb", "ng-abv-acc"]);
+  assert.equal(translateHomeDiscoveryField(th, ngCards[0], "title"), "ทริปธุรกิจและสุดสัปดาห์ในลอนดอน");
+  assert.equal(translateHomeDiscoveryField(th, ngCards[0], "routeNote"), "เส้นทางระยะไกลยอดนิยมสำหรับทริปทำงานและวันพักผ่อนเพิ่มเติม");
+  assert.match(homeDiscoverySource, /originCode: "LOS"/);
+  assert.match(homeDiscoverySource, /destinationCode: "LHR"/);
+  assert.match(pageSource, /translatePopularDestinationDisplayLabel\([\s\S]*?HOME_POPULAR_DESTINATION_CITY_KEYS/);
+  assert.match(pageSource, /translateHomeDiscoveryField\(dictionary, item, field\)/);
+  assert.match(pageSource, /destinationFallbackLabel=\{t\("destinationImageFallback"\)\}/);
+  assert.match(searchTabsSource, /translateHotelTravelDateText\("hotelSearchDatePlaceholder"\)/);
+  assert.match(searchTabsSource, /isThaiLocale[\s\S]*?guestSingular[\s\S]*?คน/);
+  assert.match(searchTabsSource, /translate\("guestsAndRooms"\)/);
+  assert.match(searchTabsSource, /translate\("onlyShowPetFriendlyStays"\)/);
+  assert.match(dateFormattingSource, /return "th-TH-u-ca-gregory-nu-latn"/);
+  assert.equal(languageOptions.find((option) => option.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
+});
