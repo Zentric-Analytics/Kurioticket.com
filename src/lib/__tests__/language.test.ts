@@ -11918,6 +11918,135 @@ test("Thai homepage hotel, destination, route-card, and date picker copy resolve
   assert.deepEqual(africaDiscoveryOrder, ["ng-los-lhr", "ng-los-dxb", "ng-abv-acc", "ng-los-nbo", "ng-abv-jnb", "ng-los-ist", "ng-abv-cdg", "ng-los-doh", "ng-los-kig", "ng-abv-cai", "ng-los-add", "ng-abv-fco", "ng-los-nrt", "ng-abv-mad", "ng-los-cpt", "ng-abv-rob"]);
 });
 
+test("Thai Flights landing copy resolves through active render paths", () => {
+  const th = thTranslations as Record<string, string>;
+  const flightLandingSource = readFileSync("src/components/flights/FlightLandingClient.tsx", "utf8");
+  const standaloneFlightSearchSource = readFileSync("src/components/search/StandaloneFlightSearchForm.tsx", "utf8");
+  const homeDiscoverySource = readFileSync("src/data/homeDiscovery.ts", "utf8");
+
+  const expectedThaiCopy: Record<string, string> = {
+    flightLandingHeroTitle:
+      "ค้นหาเที่ยวบินราคาคุ้มค่าสำหรับทริปถัดไปได้อย่างง่ายดาย",
+    flightLandingHeroSubtitle:
+      "ค้นหาเส้นทาง เปรียบเทียบวันที่ และสำรวจตัวเลือกเที่ยวบินสำหรับการเดินทางครั้งต่อไป",
+    cityOrAirport: "เมืองหรือสนามบิน",
+    searchFlights: "ค้นหาเที่ยวบิน",
+    discoverDestinationsFromRegion: "ค้นพบจุดหมายปลายทางจากภูมิภาคของคุณ",
+    discoverDestinationsFromRegionBody:
+      "สำรวจเส้นทางที่คัดสรรไว้และเริ่มทริปถัดไปอย่างมั่นใจ",
+    flightLandingStartThisSearch: "เริ่มการค้นหานี้",
+    flightLandingFeatureSearchReadyTitle: "เส้นทางพร้อมค้นหา",
+    flightLandingFeatureSearchReadyBody:
+      "ป้อนรายละเอียดทริปจริงก่อนขอผลลัพธ์จากผู้ให้บริการเที่ยวบิน",
+    flightLandingFeatureCompareTitle: "เปรียบเทียบพร้อมบริบท",
+    flightLandingFeatureCompareBody:
+      "ใช้วันที่ จำนวนผู้เดินทาง ชั้นโดยสาร ระยะเวลา จุดแวะพัก และรายละเอียดเส้นทางเพื่อประเมินตัวเลือก",
+    flightLandingFeatureProviderTitle: "ตรวจสอบกับผู้ให้บริการ",
+    flightLandingFeatureProviderBody:
+      "ยืนยันความพร้อมให้บริการ ราคา และกฎขั้นสุดท้ายกับผู้ให้บริการทุกครั้งก่อนจอง",
+    flightLandingRouteIdeasTitle: "ไอเดียเส้นทางสำหรับทริปที่ยืดหยุ่น",
+    flightLandingRouteIdeasBody:
+      "ดูไอเดียเส้นทาง แล้วเริ่มค้นหาจริงพร้อมวันที่และจำนวนผู้เดินทางก่อนเปรียบเทียบเที่ยวบินที่มีให้เลือก",
+    "flightLandingImageAlt.Johannesburg skyline at golden hour":
+      "เส้นขอบฟ้าโจฮันเนสเบิร์กในแสงสีทอง",
+    "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza":
+      "เส้นขอบฟ้าไคโรพร้อมพีระมิดแห่งกีซา",
+    "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands":
+      "ทิวทัศน์เมืองแอดดิสอาบาบาบนที่ราบสูงเอธิโอเปีย",
+    beachVacations: "วันหยุดพักผ่อนริมทะเล",
+    beachVacationsBody:
+      "สำรวจเส้นทางบินสู่ชายฝั่งแดดสดใส เกาะพักผ่อน และจุดหมายปลายทางอากาศอบอุ่นริมทะเล",
+    "homeDiscoveryRoute.ng-los-cpt.title": "ผจญภัยชายฝั่งเคปทาวน์",
+    "homeDiscoveryRoute.ca-yyz-cun.title": "พักหนีหนาวที่แคนคูน",
+    "homeDiscoveryRoute.ca-yyz-cun.routeNote":
+      "เส้นทางพักผ่อนที่เชื่อถือได้พร้อมตัวเลือกบินตรงในฤดูกาลยอดนิยม",
+    "homeDiscoveryRoute.ca-yeg-pvr.title": "พักผ่อนริมทะเลที่เปอร์โตวัลลาร์ตา",
+    "homeDiscoveryRoute.ca-yeg-pvr.routeNote":
+      "เส้นทางรับแดดฤดูหนาวพร้อมชายหาดแปซิฟิกและเสน่ห์เมืองเก่า",
+    "flightLandingImageAlt.Puerto Vallarta coastline and old town":
+      "ชายฝั่งเปอร์โตวัลลาร์ตาและย่านเมืองเก่า",
+    "homeDiscoveryRoute.ca-yyz-hnl.title": "พักเกาะระยะไกลที่โฮโนลูลู",
+    "homeDiscoveryRoute.ca-yyz-hnl.routeNote":
+      "ตัวเลือกพักผ่อนระดับพรีเมียมสำหรับชายหาด โต้คลื่น และเดินเขาบนเกาะ",
+    "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water":
+      "หาดไวกิกิในโฮโนลูลูพร้อมไดมอนด์เฮดและน้ำทะเลสีฟ้าสดใส",
+    "homeDiscoveryRoute.ca-yyz-san.title": "ทริปแดดและโต้คลื่นที่ซานดิเอโก",
+    "homeDiscoveryRoute.ca-yyz-san.routeNote":
+      "เส้นทางข้ามพรมแดนที่เชื่อถือได้สำหรับชายหาด สวนสาธารณะ และวิวท่าเรือ",
+    "flightLandingImageAlt.San Diego bay skyline and marina":
+      "เส้นขอบฟ้าอ่าวซานดิเอโกและท่าจอดเรือ",
+    "homeDiscoveryRoute.ca-yvr-syd.title": "ผจญภัยข้ามแปซิฟิกสู่ซิดนีย์",
+    "homeDiscoveryRoute.ca-yvr-syd.routeNote":
+      "เส้นทางระยะไกลยอดนิยมสำหรับแลนด์มาร์กท่าเรือและย่านริมชายหาด",
+    flightBookingFaqs: "คำถามที่พบบ่อยเกี่ยวกับการจองเที่ยวบิน",
+    flightBookingFaqIntro:
+      "ตรวจสอบรายละเอียดทั่วไปของการค้นหาเที่ยวบินก่อนดำเนินการต่อกับผู้ให้บริการ",
+    flightFaqBestTimeQuestion: "ช่วงเวลาใดดีที่สุดในการจองเที่ยวบิน?",
+    flightFaqBeforeBookingQuestion: "ควรตรวจสอบอะไรบ้างก่อนจอง?",
+    flightFaqFlexibleFareQuestion: "ค่าโดยสารแบบยืดหยุ่นคืออะไร?",
+    flightFaqNonstopQuestion: "เที่ยวบินตรงดีกว่าเสมอหรือไม่?",
+    flightFaqBaggageQuestion: "กฎเกี่ยวกับสัมภาระทำงานอย่างไร?",
+    flightFaqChangeCancelQuestion: "ฉันสามารถเปลี่ยนหรือยกเลิกตั๋วได้หรือไม่?",
+    flightFaqInternationalQuestion:
+      "ฉันควรรู้อะไรบ้างเกี่ยวกับเที่ยวบินระหว่างประเทศ?",
+  };
+
+  for (const [key, expected] of Object.entries(expectedThaiCopy)) {
+    assert.equal(th[key], expected, `Thai ${key} should resolve without English fallback`);
+    assert.notEqual(th[key], (enTranslations as Record<string, string>)[key], `Thai ${key} should not use the English value`);
+  }
+
+  for (const key of [
+    "flightFaqBestTimeAnswer",
+    "flightFaqBeforeBookingAnswer",
+    "flightFaqFlexibleFareAnswer",
+    "flightFaqNonstopAnswer",
+    "flightFaqBaggageAnswer",
+    "flightFaqChangeCancelAnswer",
+    "flightFaqInternationalAnswer",
+  ]) {
+    assert.match(th[key], /ผู้ให้บริการ|Kurioticket|สายการบิน|ค่าโดยสาร|สัมภาระ|วีซ่า|หนังสือเดินทาง|ต่อเครื่อง|ราคา|ความพร้อมให้บริการ/);
+    assert.notEqual(th[key], (enTranslations as Record<string, string>)[key]);
+  }
+
+  for (const key of ["flightLandingHeroTitle", "flightLandingHeroSubtitle", "discoverDestinationsFromRegion", "flightLandingStartThisSearch", "flightLandingRouteIdeasTitle", "beachVacations", "flightBookingFaqs", "flightBookingFaqIntro"]) {
+    assert.ok(flightLandingSource.includes(`t("${key}")`), `Flight landing render path should read ${key} through i18n`);
+  }
+  for (const key of ["cityOrAirport", "destination", "searchFlights", "roundTrip", "oneWay", "origin", "travelDates", "travelers"]) {
+    assert.ok(standaloneFlightSearchSource.includes(`t("${key}")`) || standaloneFlightSearchSource.includes(`t.${key}`), `Standalone flight search should read ${key} through i18n`);
+  }
+  assert.ok(flightLandingSource.includes("formatHomeDiscoveryRoute"));
+  assert.ok(flightLandingSource.includes('t("flightLandingRouteTemplate")'));
+  assert.ok(flightLandingSource.includes('"flightLandingImageAlt"'));
+  for (const english of ["Find your next affordable flight with ease.", "Search routes, compare dates, and explore flight options for your next journey.", "Discover destinations from your region", "Start this search", "Beach vacations", "Flight booking FAQs"]) {
+    assert.ok(!flightLandingSource.includes(`>${english}<`), `${english} should not be hardcoded as rendered JSX text`);
+  }
+
+  const canadaBeachIds = getHomeDiscoveryByRegion("CA")
+    .filter((item) => ["ca-yyz-cun", "ca-yeg-pvr", "ca-yyz-hnl", "ca-yyz-san", "ca-yvr-syd"].includes(item.id))
+    .map((item) => item.id);
+  assert.deepEqual(canadaBeachIds, ["ca-yyz-cun", "ca-yeg-pvr", "ca-yyz-hnl", "ca-yyz-san", "ca-yvr-syd"]);
+  for (const id of canadaBeachIds) {
+    const item = getHomeDiscoveryByRegion("CA").find((candidate) => candidate.id === id);
+    assert.ok(item);
+    const link = buildDiscoveryLink(item);
+    assert.equal(link.pathname, "/flights/results");
+    assert.equal(link.query.origin, item.originCode);
+    assert.equal(link.query.destination, item.destinationCode);
+    assert.equal(link.query.adults, "1");
+    assert.equal(link.query.children, "0");
+    assert.equal(link.query.infants, "0");
+    assert.equal(link.query.travelers, "1");
+    assert.equal(link.query.cabinClass, "economy");
+    assert.ok(homeDiscoverySource.includes(`id: "${id}"`));
+  }
+  assert.ok(flightLandingSource.includes("{item.originCode} → {item.destinationCode}"));
+  assert.ok(flightLandingSource.includes('className="group block overflow-hidden rounded-3xl'));
+  assert.ok(flightLandingSource.includes("buildDiscoveryLink(item)"));
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+});
+
 test("Thai footer Discover destinations link resolves through active i18n key", () => {
   const footerSource = readFileSync("src/components/layout/Footer.tsx", "utf8");
   const th = thTranslations as Record<string, string>;

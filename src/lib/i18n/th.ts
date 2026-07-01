@@ -518,6 +518,91 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.ng-abv-rob.title": "ทริปชายทะเลภูมิภาคที่มอนโรเวีย",
   "homeDiscoveryRoute.ng-abv-rob.routeNote":
     "ทริปพักเมืองแอฟริกาตะวันตกพร้อมชายหาดแอตแลนติกและตลาดท้องถิ่น",
+  flightLandingHeroTitle:
+    "ค้นหาเที่ยวบินราคาคุ้มค่าสำหรับทริปถัดไปได้อย่างง่ายดาย",
+  flightLandingHeroSubtitle:
+    "ค้นหาเส้นทาง เปรียบเทียบวันที่ และสำรวจตัวเลือกเที่ยวบินสำหรับการเดินทางครั้งต่อไป",
+  flightLandingHeroImageAlt: "ปีกเครื่องบินเหนือเมฆสว่าง",
+  flightLandingFeatureSearchReadyTitle: "เส้นทางพร้อมค้นหา",
+  flightLandingFeatureSearchReadyBody:
+    "ป้อนรายละเอียดทริปจริงก่อนขอผลลัพธ์จากผู้ให้บริการเที่ยวบิน",
+  flightLandingFeatureCompareTitle: "เปรียบเทียบพร้อมบริบท",
+  flightLandingFeatureCompareBody:
+    "ใช้วันที่ จำนวนผู้เดินทาง ชั้นโดยสาร ระยะเวลา จุดแวะพัก และรายละเอียดเส้นทางเพื่อประเมินตัวเลือก",
+  flightLandingFeatureProviderTitle: "ตรวจสอบกับผู้ให้บริการ",
+  flightLandingFeatureProviderBody:
+    "ยืนยันความพร้อมให้บริการ ราคา และกฎขั้นสุดท้ายกับผู้ให้บริการทุกครั้งก่อนจอง",
+  flightLandingStartThisSearch: "เริ่มการค้นหานี้",
+  flightLandingRouteIdeasTitle: "ไอเดียเส้นทางสำหรับทริปที่ยืดหยุ่น",
+  flightLandingRouteIdeasBody:
+    "ดูไอเดียเส้นทาง แล้วเริ่มค้นหาจริงพร้อมวันที่และจำนวนผู้เดินทางก่อนเปรียบเทียบเที่ยวบินที่มีให้เลือก",
+  flightLandingRouteTemplate: "{{origin}} ไป {{destination}}",
+  flightLandingRouteConnector: "ไป",
+  flightLandingRouteAriaLabel: "ค้นหาเที่ยวบินจาก {{origin}} ไป {{destination}}",
+  "flightLandingCity.Cairo": "ไคโร",
+  "flightLandingCity.Honolulu": "โฮโนลูลู",
+  "flightLandingCity.San Diego": "ซานดิเอโก",
+  "flightLandingCity.Sydney": "ซิดนีย์",
+  "flightLandingImageAlt.Johannesburg skyline at golden hour":
+    "เส้นขอบฟ้าโจฮันเนสเบิร์กในแสงสีทอง",
+  "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza":
+    "เส้นขอบฟ้าไคโรพร้อมพีระมิดแห่งกีซา",
+  "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands":
+    "ทิวทัศน์เมืองแอดดิสอาบาบาบนที่ราบสูงเอธิโอเปีย",
+  "flightLandingImageAlt.Puerto Vallarta coastline and old town":
+    "ชายฝั่งเปอร์โตวัลลาร์ตาและย่านเมืองเก่า",
+  "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water":
+    "หาดไวกิกิในโฮโนลูลูพร้อมไดมอนด์เฮดและน้ำทะเลสีฟ้าสดใส",
+  "flightLandingImageAlt.San Diego bay skyline and marina":
+    "เส้นขอบฟ้าอ่าวซานดิเอโกและท่าจอดเรือ",
+  discoverDestinationsFromRegion: "ค้นพบจุดหมายปลายทางจากภูมิภาคของคุณ",
+  discoverDestinationsFromRegionBody:
+    "สำรวจเส้นทางที่คัดสรรไว้และเริ่มทริปถัดไปอย่างมั่นใจ",
+  cityOrAirport: "เมืองหรือสนามบิน",
+  searchFlights: "ค้นหาเที่ยวบิน",
+  beachVacations: "วันหยุดพักผ่อนริมทะเล",
+  beachVacationsBody:
+    "สำรวจเส้นทางบินสู่ชายฝั่งแดดสดใส เกาะพักผ่อน และจุดหมายปลายทางอากาศอบอุ่นริมทะเล",
+  "homeDiscoveryRoute.ca-yyz-cun.title": "พักหนีหนาวที่แคนคูน",
+  "homeDiscoveryRoute.ca-yyz-cun.routeNote":
+    "เส้นทางพักผ่อนที่เชื่อถือได้พร้อมตัวเลือกบินตรงในฤดูกาลยอดนิยม",
+  "homeDiscoveryRoute.ca-yeg-pvr.title": "พักผ่อนริมทะเลที่เปอร์โตวัลลาร์ตา",
+  "homeDiscoveryRoute.ca-yeg-pvr.routeNote":
+    "เส้นทางรับแดดฤดูหนาวพร้อมชายหาดแปซิฟิกและเสน่ห์เมืองเก่า",
+  "homeDiscoveryRoute.ca-yyz-hnl.title": "พักเกาะระยะไกลที่โฮโนลูลู",
+  "homeDiscoveryRoute.ca-yyz-hnl.routeNote":
+    "ตัวเลือกพักผ่อนระดับพรีเมียมสำหรับชายหาด โต้คลื่น และเดินเขาบนเกาะ",
+  "homeDiscoveryRoute.ca-yyz-san.title": "ทริปแดดและโต้คลื่นที่ซานดิเอโก",
+  "homeDiscoveryRoute.ca-yyz-san.routeNote":
+    "เส้นทางข้ามพรมแดนที่เชื่อถือได้สำหรับชายหาด สวนสาธารณะ และวิวท่าเรือ",
+  "homeDiscoveryRoute.ca-yvr-syd.title": "ผจญภัยข้ามแปซิฟิกสู่ซิดนีย์",
+  "homeDiscoveryRoute.ca-yvr-syd.routeNote":
+    "เส้นทางระยะไกลยอดนิยมสำหรับแลนด์มาร์กท่าเรือและย่านริมชายหาด",
+  flightBookingFaqs: "คำถามที่พบบ่อยเกี่ยวกับการจองเที่ยวบิน",
+  flightBookingFaqIntro:
+    "ตรวจสอบรายละเอียดทั่วไปของการค้นหาเที่ยวบินก่อนดำเนินการต่อกับผู้ให้บริการ",
+  flightFaqBestTimeQuestion: "ช่วงเวลาใดดีที่สุดในการจองเที่ยวบิน?",
+  flightFaqBestTimeAnswer:
+    "ราคาเที่ยวบินอาจเปลี่ยนตามเส้นทาง ฤดูกาล ความต้องการ และความพร้อมให้บริการ โดยปกติการเปรียบเทียบหลายวันที่ ตรวจสอบสนามบินใกล้เคียงเมื่อทำได้ และทบทวนกำหนดการเดินทางทั้งหมดก่อนเลือกค่าโดยสารจะช่วยได้",
+  flightFaqBeforeBookingQuestion: "ควรตรวจสอบอะไรบ้างก่อนจอง?",
+  flightFaqBeforeBookingAnswer:
+    "ตรวจสอบเวลาออกเดินทางและเวลาถึง ระยะเวลาเดินทางรวม จุดแวะพัก กฎสัมภาระ ตัวเลือกการเลือกที่นั่ง เงื่อนไขการยกเลิก และนโยบายการเปลี่ยนตั๋วก่อนดำเนินการจองกับผู้ให้บริการ",
+  flightFaqFlexibleFareQuestion: "ค่าโดยสารแบบยืดหยุ่นคืออะไร?",
+  flightFaqFlexibleFareAnswer:
+    "ค่าโดยสารแบบยืดหยุ่นอาจอนุญาตให้เปลี่ยนแปลงหรือยกเลิกได้โดยมีข้อจำกัดน้อยกว่าค่าโดยสารพื้นฐาน แต่กฎที่แน่นอนขึ้นอยู่กับสายการบินหรือผู้ให้บริการจอง โปรดตรวจสอบเงื่อนไขค่าโดยสารก่อนซื้อทุกครั้ง",
+  flightFaqNonstopQuestion: "เที่ยวบินตรงดีกว่าเสมอหรือไม่?",
+  flightFaqNonstopAnswer:
+    "ไม่เสมอไป เที่ยวบินตรงช่วยประหยัดเวลาได้ ส่วนเส้นทางที่แวะหนึ่งครั้งอาจมีเวลาออกเดินทาง ช่วงเวลาถึง หรือค่าโดยสารที่แตกต่างกัน เปรียบเทียบเวลาเดินทางรวม ระยะเวลาต่อเครื่อง และความสะดวกก่อนตัดสินใจ",
+  flightFaqBaggageQuestion: "กฎเกี่ยวกับสัมภาระทำงานอย่างไร?",
+  flightFaqBaggageAnswer:
+    "น้ำหนักและจำนวนสัมภาระอาจแตกต่างกันตามสายการบิน เส้นทาง ชั้นโดยสาร ประเภทค่าโดยสาร และผู้ให้บริการ ตรวจสอบว่าสัมภาระถือขึ้นเครื่อง กระเป๋าโหลดใต้ท้องเครื่อง และของใช้ส่วนตัวรวมอยู่แล้วหรือไม่ก่อนจอง",
+  flightFaqChangeCancelQuestion: "ฉันสามารถเปลี่ยนหรือยกเลิกตั๋วได้หรือไม่?",
+  flightFaqChangeCancelAnswer:
+    "ตัวเลือกการเปลี่ยนแปลงและการยกเลิกขึ้นอยู่กับกฎค่าโดยสารและนโยบายของผู้ให้บริการ ตั๋วบางประเภทอาจคืนเงินไม่ได้หรือมีค่าธรรมเนียม ดังนั้นโปรดตรวจสอบเงื่อนไขอย่างรอบคอบก่อนจอง",
+  flightFaqInternationalQuestion:
+    "ฉันควรรู้อะไรบ้างเกี่ยวกับเที่ยวบินระหว่างประเทศ?",
+  flightFaqInternationalAnswer:
+    "สำหรับการเดินทางระหว่างประเทศ โปรดตรวจสอบอายุหนังสือเดินทาง ข้อกำหนดวีซ่า กฎการต่อเครื่อง นโยบายสัมภาระ และข้อกำหนดการเข้าประเทศปลายทางก่อนจองกับผู้ให้บริการ",
   "deals.heroTitle": "ค้นหาดีลการเดินทางสำหรับทริปถัดไปของคุณ",
   "deals.heroSubtitle": "ค้นหาเที่ยวบิน ที่พัก และรถเช่ารวมกันได้ในที่เดียว",
   "deals.packageLegend": "เลือกประเภทแพ็กเกจ",
