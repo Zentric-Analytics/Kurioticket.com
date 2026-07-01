@@ -192,6 +192,10 @@ export const getCarsResultsIntlLocale = (locale: string) => {
     return "tr-TR";
   }
 
+  if (normalizedLocale.startsWith("th")) {
+    return "th-TH-u-ca-gregory";
+  }
+
   if (normalizedLocale.startsWith("id")) {
     return "id-ID";
   }
@@ -315,12 +319,17 @@ const buildMonthCells = (monthDate: Date) => {
   });
 };
 
-const getWeekdays = (intlLocale: string) =>
-  Array.from({ length: 7 }, (_, index) =>
+const getWeekdays = (intlLocale: string) => {
+  if (intlLocale.toLowerCase().startsWith("th")) {
+    return ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
+  }
+
+  return Array.from({ length: 7 }, (_, index) =>
     new Intl.DateTimeFormat(intlLocale, { weekday: "short" }).format(
       new Date(2024, 0, 7 + index),
     ),
   );
+};
 
 export const formatTimeLabel = (time: string, intlLocale: string) => {
   const [hourValue, minuteValue] = time.split(":").map(Number);
