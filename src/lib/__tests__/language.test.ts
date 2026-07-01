@@ -8695,6 +8695,76 @@ test("Indonesian Flights landing copy resolves through active render path", () =
   );
 });
 
+test("Thai global language selector copy resolves through active i18n keys", () => {
+  const th = getTranslations("th");
+  const expected = {
+    globalLanguage: "ภาษาของเว็บไซต์",
+    websiteLanguageTitle: "เลือกภาษาของเว็บไซต์",
+    websiteLanguageDescription:
+      "English (United States) เป็นภาษาเริ่มต้นของเว็บไซต์ Kurioticket จะเปลี่ยนภาษาเฉพาะหลังจากที่คุณเลือกตัวเลือกที่พร้อมใช้งาน",
+    currentLanguage: "ภาษาปัจจุบัน: {{language}}",
+    languagePreparingNotice:
+      "กำลังเตรียมภาษาเพิ่มเติม ตัวเลือกที่ยังไม่พร้อมใช้งานจะยังไม่แปลเว็บไซต์",
+    languageSearchLabel: "ค้นหาภาษา",
+    languageSearchPlaceholder: "ค้นหา English, Español, Français, Deutsch...",
+    closeLanguageSelector: "ปิดตัวเลือกภาษา",
+    openLanguagePreferences:
+      "เปิดการตั้งค่าภาษา, ภาษาปัจจุบัน {{language}}",
+    preparing: "กำลังเตรียม",
+    languageUnavailableMessage: "ภาษานี้ยังไม่พร้อมใช้งาน",
+    languagePreparingAria: "กำลังเตรียมภาษา {{language}}",
+    selectLanguageOption: "เลือกภาษา {{language}}",
+  } as const;
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(th[key], value, key);
+    assert.equal(thTranslations[key], value, key);
+    assert.notEqual(th[key], enTranslations[key], key);
+  }
+
+  assert.equal(th.currentLanguage.replace("{{language}}", "ไทย"), "ภาษาปัจจุบัน: ไทย");
+  assert.equal(th.selectLanguageOption.replace("{{language}}", "ไทย"), "เลือกภาษา ไทย");
+  assert.equal(th.languagePreparingAria.replace("{{language}}", "ไทย"), "กำลังเตรียมภาษา ไทย");
+  assert.match(th.currentLanguage, /\{\{language\}\}/);
+  assert.match(th.selectLanguageOption, /\{\{language\}\}/);
+  assert.match(th.languagePreparingAria, /\{\{language\}\}/);
+  assert.ok(languageOptions.some((o) => o.code === "th" && o.locale === "th-TH" && o.nativeLabel === "ไทย" && o.direction === "ltr" && o.status === "available"));
+  assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
+});
+
+test("Thai global language selector render path uses i18n keys without active screenshot English literals", () => {
+  const headerSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
+
+  for (const key of [
+    "openLanguagePreferences",
+    "globalLanguage",
+    "websiteLanguageTitle",
+    "websiteLanguageDescription",
+    "currentLanguage",
+    "languagePreparingNotice",
+    "languageSearchLabel",
+    "languageSearchPlaceholder",
+    "closeLanguageSelector",
+    "selectLanguageOption",
+    "languagePreparingAria",
+    "preparing",
+  ]) {
+    assert.match(headerSource, new RegExp(`t\\.${key}`), key);
+  }
+
+  assert.doesNotMatch(
+    headerSource,
+    />GLOBAL LANGUAGE<|>Select your website language<|English \(United States\) is the default website language|>Current language:<|>More languages are being prepared\.|>Search language<|Search English, Español, Français, Deutsch|Close language selector/,
+  );
+  assert.match(headerSource, /onClick=\{closeLanguageDialog\}/);
+  assert.match(headerSource, /setLanguageQuery\(event\.target\.value\)/);
+  assert.match(headerSource, /aria-modal="true"/);
+  assert.match(headerSource, /role="radiogroup"/);
+  assert.match(headerSource, /role="radio"/);
+  assert.match(headerSource, /aria-checked=\{active\}/);
+  assert.match(headerSource, /aria-disabled=\{!available\}/);
+});
+
 test("Indonesian auth, language, and country/currency copy resolves without English fallback", () => {
   const id = getTranslations("id-ID");
   const expected: Record<string, string> = {

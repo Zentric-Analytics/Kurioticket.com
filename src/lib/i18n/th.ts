@@ -10,6 +10,22 @@ export const translations: TranslationDictionary = {
   destinations: "จุดหมายปลายทาง",
   login: "เข้าสู่ระบบ",
   signUp: "สมัครใช้งาน",
+  openLanguagePreferences:
+    "เปิดการตั้งค่าภาษา, ภาษาปัจจุบัน {{language}}",
+  websiteLanguageTitle: "เลือกภาษาของเว็บไซต์",
+  websiteLanguageDescription:
+    "English (United States) เป็นภาษาเริ่มต้นของเว็บไซต์ Kurioticket จะเปลี่ยนภาษาเฉพาะหลังจากที่คุณเลือกตัวเลือกที่พร้อมใช้งาน",
+  currentLanguage: "ภาษาปัจจุบัน: {{language}}",
+  languagePreparingNotice:
+    "กำลังเตรียมภาษาเพิ่มเติม ตัวเลือกที่ยังไม่พร้อมใช้งานจะยังไม่แปลเว็บไซต์",
+  languageSearchLabel: "ค้นหาภาษา",
+  languageSearchPlaceholder: "ค้นหา English, Español, Français, Deutsch...",
+  selectLanguageOption: "เลือกภาษา {{language}}",
+  languagePreparingAria: "กำลังเตรียมภาษา {{language}}",
+  languageUnavailableMessage: "ภาษานี้ยังไม่พร้อมใช้งาน",
+  globalLanguage: "ภาษาของเว็บไซต์",
+  closeLanguageSelector: "ปิดตัวเลือกภาษา",
+  preparing: "กำลังเตรียม",
   chooseCountryAndCurrency: "เลือกประเทศและสกุลเงิน",
   countryCurrencyDescription:
     "เลือกประเทศและสกุลเงินที่ใช้แสดงราคา คำแนะนำสนามบินจะใช้ตำแหน่งที่ตรวจพบของคุณ",
