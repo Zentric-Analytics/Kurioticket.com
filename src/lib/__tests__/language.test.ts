@@ -8310,6 +8310,80 @@ test("Turkish cars results render path copy resolves without English fallback", 
   );
 });
 
+
+test("Thai Cars results copy and datepicker render path resolve without English fallback", () => {
+  const th = getTranslations("th");
+  const carsResultsPageSource = readFileSync("src/app/cars/results/page.tsx", "utf8");
+  const carsResultsSource = readFileSync("src/components/results/CarsResultsClient.tsx", "utf8");
+
+  assert.ok(carsResultsPageSource.includes("<CarsResultsClient"), "Cars results page should render the client path under test.");
+
+  const expectedCopy: Array<[string, string, string]> = [
+    ["carsResults.filterBy", "กรองตาม", "Filter by"],
+    ["carsResults.vehicleType", "ประเภทรถ", "Vehicle type"],
+    ["carsResults.smallCars", "รถขนาดเล็ก", "Small cars"],
+    ["carsResults.mediumCars", "รถขนาดกลาง", "Medium cars"],
+    ["carsResults.suvs", "รถ SUV", "SUVs"],
+    ["carsResults.transmission", "ระบบเกียร์", "Transmission"],
+    ["carsResults.automatic", "เกียร์อัตโนมัติ", "Automatic"],
+    ["carsResults.manual", "เกียร์ธรรมดา", "Manual"],
+    ["carsResults.seats", "ที่นั่ง", "Seats"],
+    ["carsResults.seats4Plus", "4+ ที่นั่ง", "4+ seats"],
+    ["carsResults.seats5Plus", "5+ ที่นั่ง", "5+ seats"],
+    ["carsResults.seats7Plus", "7+ ที่นั่ง", "7+ seats"],
+    ["carsResults.bags", "กระเป๋า", "Bags"],
+    ["carsResults.bags2Plus", "2+ กระเป๋า", "2+ bags"],
+    ["carsResults.bags3Plus", "3+ กระเป๋า", "3+ bags"],
+    ["carsResults.bags4Plus", "4+ กระเป๋า", "4+ bags"],
+    ["carsResults.fuelPolicy", "นโยบายน้ำมัน", "Fuel policy"],
+    ["carsResults.fullToFull", "รับเต็มคืนเต็ม", "Full-to-full"],
+    ["carsResults.sameToSame", "รับเท่าไรคืนเท่านั้น", "Same-to-same"],
+    ["carsResults.mileagePolicy", "นโยบายระยะทาง", "Mileage policy"],
+    ["carsResults.unlimitedMileage", "ไม่จำกัดระยะทาง", "Unlimited mileage"],
+    ["carsResults.limitedMileage", "จำกัดระยะทาง", "Limited mileage"],
+    ["carsResults.cancellation", "การยกเลิก", "Cancellation"],
+    ["carsResults.freeCancellation", "ยกเลิกฟรี", "Free cancellation"],
+    ["carsResults.payAtPickup", "ชำระเมื่อรับรถ", "Pay at pickup"],
+    ["carsResults.pickupLocationType", "ประเภทสถานที่รับรถ", "Pickup location type"],
+    ["carsResults.airportCounter", "เคาน์เตอร์สนามบิน", "Airport counter"],
+    ["carsResults.shuttlePickup", "รับรถด้วยรถรับส่ง", "Shuttle pickup"],
+    ["carsResults.cityLocation", "สถานที่ในเมือง", "City location"],
+    ["carsResults.resultsFor", "ผลลัพธ์รถเช่าสำหรับ {location}", "Cars results for {location}"],
+    ["carsResults.pickupLocationNeeded", "ต้องระบุสถานที่รับรถ", "Pickup location needed"],
+    ["carsResults.emptyInventory", "ยังไม่มีข้อมูลรถเช่าแบบสดให้แสดงสำหรับการค้นหานี้ โปรดอัปเดตรายละเอียดการค้นหาด้านบนหรือตรวจสอบอีกครั้งภายหลัง", "Live car inventory is not available to display for this search yet. Update the search details above or check again later."],
+    ["carsResults.pickupLocation", "สถานที่รับรถ", "Pickup location"],
+    ["carsResults.returnLocation", "สถานที่คืนรถ", "Return location"],
+    ["carsResults.rentalDates", "วันที่เช่ารถ", "Rental dates"],
+    ["carsResults.pickupReturnTime", "เวลารับรถ / คืนรถ", "Pickup / return time"],
+    ["carsResults.driverAge", "อายุผู้ขับขี่", "Driver age"],
+    ["carsResults.sameAsPickup", "เหมือนสถานที่รับรถ", "Same as pickup"],
+    ["carsResults.anyDriverAgeRange", "ผู้ขับขี่อายุ 18–70 ปี", "Any driver age 18–70"],
+    ["carsResults.searchCars", "ค้นหารถ", "Search cars"],
+    ["carsResults.edit", "แก้ไข", "Edit"],
+    ["carsResults.selectPickupThenReturn", "เลือกวันรับรถ แล้วเลือกวันคืนรถ", "Select pickup, then return"],
+  ];
+
+  for (const [key, thaiValue, englishFallback] of expectedCopy) {
+    assert.equal(th[key], thaiValue, `${key} should resolve to Thai`);
+    assert.notEqual(th[key], englishFallback, `${key} should not remain English`);
+    assert.ok(carsResultsSource.includes(`t("${key}")`) || carsResultsSource.includes("t(group.titleKey)") || carsResultsSource.includes("t(option.labelKey)"), `${key} should be read through i18n or filter key indirection.`);
+  }
+
+  assert.equal(th["carsResults.resultsFor"].replace("{location}", th["carsResults.pickupLocationNeeded"]), "ผลลัพธ์รถเช่าสำหรับ ต้องระบุสถานที่รับรถ");
+  assert.ok(carsResultsSource.includes('normalizedLocale.startsWith("th")') && carsResultsSource.includes('return "th-TH-u-ca-gregory"'), "Cars results datepicker should normalize Thai to an app-controlled Thai Gregorian locale.");
+  assert.equal(new Intl.DateTimeFormat("th-TH-u-ca-gregory", { month: "long", year: "numeric" }).format(new Date(2026, 6, 1)), "กรกฎาคม 2026");
+  assert.equal(new Intl.DateTimeFormat("th-TH-u-ca-gregory", { month: "long", year: "numeric" }).format(new Date(2026, 7, 1)), "สิงหาคม 2026");
+  assert.ok(carsResultsSource.includes('return ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];'), "Cars results datepicker should use app-standard Thai weekday abbreviations.");
+  assert.ok(carsResultsSource.includes('action="/cars/results"') && carsResultsSource.includes('method="get"'));
+  for (const preservedQueryName of ['name="pickupLocation"', 'name="dropoffLocation"', 'name="pickupDate"', 'name="dropoffDate"', 'name="pickupTime"', 'name="dropoffTime"', 'name="driverAge"', 'value={pickupLocation}', 'value={dropoffLocation}', 'value={pickupDate}', 'value={dropoffDate}', 'value={pickupTime}', 'value={dropoffTime}', 'value={driverAge}']) {
+    assert.ok(carsResultsSource.includes(preservedQueryName), `${preservedQueryName} should preserve route/query payloads and selected values.`);
+  }
+  assert.ok(carsResultsSource.includes('{ id: "smallCars", labelKey: "carsResults.smallCars" }') && carsResultsSource.includes('selectedOptions.includes(option.id)'), "Filter raw IDs should remain separate from localized labels.");
+  assert.ok(carsResultsSource.includes('className={cn(') && carsResultsSource.includes('aria-label={t("carsResults.rentalDateRangeCalendar")}'), "Layout/styling hooks and accessibility labels should remain in the render path.");
+  assert.equal(availableLocaleOptions.find((option) => option.code === "th")?.direction, "ltr");
+  assert.equal(availableLocaleOptions.find((option) => option.code === "ar")?.direction, "rtl");
+});
+
 test("Turkish cars results datepicker locale normalizes to tr-TR", () => {
   const carsResultsSource = readFileSync("src/components/results/CarsResultsClient.tsx", "utf8");
 
