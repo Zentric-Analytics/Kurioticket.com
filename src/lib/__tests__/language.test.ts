@@ -9672,6 +9672,91 @@ test("Swedish Flights results active render path copy resolves without English f
 });
 
 
+
+test("Thai Flights results and selected-flight detail render paths resolve visible copy", () => {
+  const th = getTranslations("th");
+  const resultsPageSource = readFileSync("src/app/flights/results/page.tsx", "utf8");
+  const detailsPageSource = readFileSync("src/app/flights/details/[id]/page.tsx", "utf8");
+  const resultsSource = readFileSync("src/components/results/FlightResultsClient.tsx", "utf8");
+  const cardSource = readFileSync("src/components/results/FlightCard.tsx", "utf8");
+  const detailsSource = readFileSync("src/components/results/FlightDetailsClient.tsx", "utf8");
+
+  assert.ok(resultsPageSource.includes("<FlightResultsClient />"));
+  assert.ok(detailsPageSource.includes("<FlightDetailsClient id={id} />"));
+
+  const expectedCopy: Array<[string, string, string, string[]]> = [
+    ["cheapest", "ถูกที่สุด", "CHEAPEST", [resultsSource]],
+    ["best", "คุ้มค่าที่สุด", "BEST VALUE", [resultsSource]],
+    ["quickest", "คะแนนสูงสุด", "TOP RATED", [resultsSource]],
+    ["resultsFound", "พบผลลัพธ์ {{count}} รายการ", "{{count}} results found", [resultsSource]],
+    ["filterBy", "กรองตาม", "Filter by", [resultsSource]],
+    ["price", "ราคา", "Price", [resultsSource]],
+    ["times", "เวลา", "Times", [resultsSource]],
+    ["duration", "ระยะเวลา", "Duration", [resultsSource]],
+    ["totalTripTime", "เวลารวมของทริป", "Total trip time", [resultsSource]],
+    ["stops", "จุดแวะพัก", "Stops", [resultsSource]],
+    ["airlines", "สายการบิน", "Airlines", [resultsSource]],
+    ["airports", "สนามบิน", "Airports", [resultsSource]],
+    ["amenities", "สิ่งอำนวยความสะดวก", "Amenities", [resultsSource]],
+    ["baggageIncluded", "รวมสัมภาระ", "Baggage included", [resultsSource]],
+    ["flexibleRefundable", "ยืดหยุ่น/ขอคืนเงินได้", "Flexible/refundable", [resultsSource]],
+    ["nonstop", "บินตรง", "Nonstop", [resultsSource, cardSource, detailsSource]],
+    ["oneStop", "แวะพัก 1 จุด", "1 stop", [resultsSource, cardSource]],
+    ["twoPlusStops", "แวะพัก 2 จุดขึ้นไป", "2+ stops", [resultsSource]],
+    ["flightOption", "ตัวเลือกเที่ยวบิน", "Flight option", [cardSource]],
+    ["viewFlight", "ดูเที่ยวบิน", "View Flight", [cardSource]],
+    ["baggage", "สัมภาระ", "Baggage", [cardSource, detailsSource]],
+    ["carryOnIncluded", "รวมกระเป๋าถือขึ้นเครื่อง", "carry-on included", [cardSource]],
+    ["cabin", "ชั้นโดยสาร", "Cabin", [cardSource, detailsSource]],
+    ["seatSelection", "การเลือกที่นั่ง", "Seat selection", [cardSource, detailsSource]],
+    ["providerRulesApply", "เป็นไปตามกฎของผู้ให้บริการ", "Provider rules apply", [cardSource, detailsSource]],
+    ["fareRules", "กฎค่าโดยสาร", "Fare rules", [cardSource, detailsSource]],
+    ["reviewBeforeBooking", "ตรวจสอบก่อนจอง", "Review before booking", [cardSource, detailsSource]],
+    ["flightCardProviderHandoff", "รายละเอียดขาไปและขากลับแสดงจากข้อมูลกำหนดการเดินทางที่ผู้ให้บริการส่งมา ราคา ความพร้อมให้บริการ การจอง และกฎค่าโดยสารขั้นสุดท้ายได้รับการยืนยันโดยผู้ให้บริการ", "Final price, availability, booking, and fare rules are confirmed by the provider.", [cardSource]],
+    ["selectedFlights", "เที่ยวบินที่เลือก", "Selected Flights", [detailsSource]],
+    ["outbound", "ขาไป", "OUTBOUND", [cardSource, detailsSource]],
+    ["return", "ขากลับ", "RETURN", [cardSource, detailsSource]],
+    ["layoverTemplate", "แวะพักที่ {{airport}} · {{duration}} · {{connection}}", "Layover in {{airport}} · {{duration}} · {{connection}}", [detailsSource]],
+    ["connection", "การต่อเครื่อง", "connection", [detailsSource]],
+    ["longConnection", "การต่อเครื่องนาน", "long connection", [detailsSource]],
+    ["overnightConnection", "ต่อเครื่องข้ามคืน", "overnight connection", [detailsSource]],
+    ["carryOnSingularIncluded", "รวมกระเป๋าถือขึ้นเครื่อง 1 ใบ", "carry-on included", [detailsSource]],
+    ["checkedBagPluralIncluded", "รวมสัมภาระโหลดใต้ท้องเครื่อง 2 ใบ", "checked bags included", [detailsSource]],
+    ["estimateShownProviderPrice", "ราคาโดยประมาณที่แสดง ราคาจากผู้ให้บริการ:", "Estimate shown. Provider price:", [detailsSource]],
+    ["fromPrice", "เริ่มต้นที่", "From", [detailsSource]],
+    ["continueToProvider", "ดำเนินการต่อไปยังผู้ให้บริการ", "Continue to Provider", [detailsSource]],
+    ["compareMoreProviders", "เปรียบเทียบผู้ให้บริการเพิ่มเติม", "Compare more providers", [detailsSource]],
+    ["providerComparisonIntro", "Kurioticket สามารถเปรียบเทียบจากผู้ให้บริการหลายรายได้", "Kurioticket can compare from different providers.", [detailsSource]],
+    ["noAdditionalLiveProviderOptions", "ขณะนี้ยังไม่มีตัวเลือกผู้ให้บริการแบบสดเพิ่มเติมสำหรับเที่ยวบินนี้", "No additional live provider options are available for this flight right now.", [detailsSource]],
+    ["flightDetailsProviderDisclaimer", "ราคา ความพร้อมให้บริการ การจอง และกฎค่าโดยสารขั้นสุดท้ายได้รับการยืนยันโดยผู้ให้บริการ", "Final price, availability, booking, and fare rules are confirmed by the provider.", [detailsSource]],
+  ];
+
+  for (const [key, value, englishFallback, sources] of expectedCopy) {
+    assert.equal(th[key], value, `${key} should resolve to Thai`);
+    assert.notEqual(th[key], englishFallback, `${key} should not equal visible English fallback`);
+    assert.ok(sources.some((source) => source.includes(`t("${key}")`) || source.includes(`t.${key}`) || source.includes(`"${key}"`)), `${key} should be read by the active Thai flights render path`);
+  }
+
+  assert.equal(th.resultsFound.replace("{{count}}", "15"), "พบผลลัพธ์ 15 รายการ");
+  assert.equal(th.layoverTemplate.replace("{{airport}}", "IST").replace("{{duration}}", "1h 25m").replace("{{connection}}", th.overnightConnection), "แวะพักที่ IST · 1h 25m · ต่อเครื่องข้ามคืน");
+  assert.equal(`${th.baggage}: ${th.carryOnSingularIncluded}, ${th.checkedBagPluralIncluded}`, "สัมภาระ: รวมกระเป๋าถือขึ้นเครื่อง 1 ใบ, รวมสัมภาระโหลดใต้ท้องเครื่อง 2 ใบ");
+  assert.equal(`${th.cabin}: ${th.economy}`, "ชั้นโดยสาร: ชั้นประหยัด");
+  assert.equal(`${th.estimateShownProviderPrice} NGN 3,210,987.90`, "ราคาโดยประมาณที่แสดง ราคาจากผู้ให้บริการ: NGN 3,210,987.90");
+  assert.ok(th.flightCardProviderHandoff.includes("ผู้ให้บริการ"));
+  assert.ok(th.flightDetailsProviderDisclaimer.includes("ผู้ให้บริการ"));
+
+  for (const source of [resultsSource, cardSource, detailsSource]) {
+    assert.match(source, /flight\.airlineName|leg\.originAirport|displayPrice|flight\.id/);
+  }
+  for (const providerValue of ["British Airways", "Lufthansa", "Turkish Airlines", "SWISS", "TK0626", "TK0180", "TK0625", "LOS", "LAX", "IST", "FRA", "LHR", "DFW", "MUC", "ORD", "NGN 3,210,987.90", "22h 50m", "21h 40m", "1h 25m", "→"]) {
+    assert.equal(th[providerValue], undefined, `${providerValue} must remain provider/search data, not Thai locale copy`);
+  }
+  assert.ok(cardSource.includes("href={`/flights/details/${encodeURIComponent(flight.id)}`}"));
+  assert.ok(detailsSource.includes('body: JSON.stringify({'));
+  assert.equal(availableLocaleOptions.find((option) => option.code === "th")?.direction, "ltr");
+  assert.equal(availableLocaleOptions.find((option) => option.code === "ar")?.direction, "rtl");
+});
+
 test("Indonesian Flights results and selected-flight detail render paths resolve visible copy", () => {
   const id = getTranslations("id");
   const resultsPageSource = readFileSync("src/app/flights/results/page.tsx", "utf8");
