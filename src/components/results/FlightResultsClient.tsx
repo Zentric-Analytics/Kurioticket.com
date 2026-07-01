@@ -50,9 +50,11 @@ import {
   translateHomeDiscoveryCopy,
 } from "@/lib/i18n/homeDiscovery";
 import {
+  buildFlightRecentSearch,
   clearRecentSearches,
   readRecentSearches,
   removeRecentSearch,
+  upsertRecentSearch,
   type RecentSearchEntry,
 } from "@/lib/recent-searches";
 import {
@@ -1941,6 +1943,26 @@ export function FlightResultsClient() {
       nextParams.set("returnDate", nextReturnDate);
     }
 
+    try {
+      upsertRecentSearch(
+        buildFlightRecentSearch({
+          tripType: tripTypeInput === "one-way" ? "one-way" : "round-trip",
+          origin: nextOrigin,
+          destination: nextDestination,
+          departureDate: nextDepartureDate,
+          returnDate:
+            tripTypeInput === "round-trip" ? nextReturnDate : undefined,
+          adults,
+          children,
+          infants,
+          travelers,
+          cabinClass: cabinClassInput,
+        }),
+      );
+    } catch {
+      // best effort only
+    }
+
     closeMobileSearchDrawer();
     router.push(`/flights/results?${nextParams.toString()}`);
   }
@@ -2568,26 +2590,52 @@ export function FlightResultsClient() {
               }
 
               const formData = new FormData(event.currentTarget);
+              const nextOrigin =
+                originCode ||
+                originInput.trim() ||
+                String(formData.get("origin") || "");
+              const nextDestination =
+                destinationCode ||
+                destinationInput.trim() ||
+                String(formData.get("destination") || "");
+              const travelers = adultCount + childCount + infantCount;
               const nextParams = new URLSearchParams({
                 tripType: tripTypeInput,
-                origin:
-                  originCode ||
-                  originInput.trim() ||
-                  String(formData.get("origin") || ""),
-                destination:
-                  destinationCode ||
-                  destinationInput.trim() ||
-                  String(formData.get("destination") || ""),
+                origin: nextOrigin,
+                destination: nextDestination,
                 departureDate: nextDepartureDate,
                 adults: String(adultCount),
                 children: String(childCount),
                 infants: String(infantCount),
-                travelers: String(adultCount + childCount + infantCount),
+                travelers: String(travelers),
                 cabinClass: cabinClassInput,
               });
 
               if (tripTypeInput === "round-trip" && nextReturnDate) {
                 nextParams.set("returnDate", nextReturnDate);
+              }
+
+              try {
+                upsertRecentSearch(
+                  buildFlightRecentSearch({
+                    tripType:
+                      tripTypeInput === "one-way" ? "one-way" : "round-trip",
+                    origin: nextOrigin,
+                    destination: nextDestination,
+                    departureDate: nextDepartureDate,
+                    returnDate:
+                      tripTypeInput === "round-trip"
+                        ? nextReturnDate
+                        : undefined,
+                    adults: adultCount,
+                    children: childCount,
+                    infants: infantCount,
+                    travelers,
+                    cabinClass: cabinClassInput,
+                  }),
+                );
+              } catch {
+                // best effort only
               }
 
               router.push(`/flights/results?${nextParams.toString()}`);
