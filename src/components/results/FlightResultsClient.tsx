@@ -795,6 +795,7 @@ export function FlightResultsClient() {
   const [backendSavedTripIds, setBackendSavedTripIds] = useState<
     Record<string, string>
   >({});
+  const [savedTripError, setSavedTripError] = useState("");
 
   const tripTypeMenuRef = useRef<HTMLDivElement | null>(null);
   const originInputRef = useRef<HTMLInputElement | null>(null);
@@ -1268,6 +1269,7 @@ export function FlightResultsClient() {
     event.stopPropagation();
 
     if (sessionStatus !== "authenticated") {
+      setSavedTripError("");
       setSavedTripIds((current) => {
         const next = toggleSavedTripId(current, itemId);
         writeSavedTripIds(next);
@@ -1285,6 +1287,7 @@ export function FlightResultsClient() {
 
       const result = await deleteBackendTrip(backendId);
       if (result.ok) {
+        setSavedTripError("");
         setSavedTripIds((current) => current.filter((id) => id !== itemId));
         setBackendSavedTripIds((current) => {
           const next = { ...current };
@@ -1292,6 +1295,7 @@ export function FlightResultsClient() {
           return next;
         });
       } else {
+        setSavedTripError(result.error ?? "Unable to update saved trips right now.");
         await refreshBackendSavedTrips();
       }
       return;
@@ -1299,7 +1303,10 @@ export function FlightResultsClient() {
 
     const result = await saveBackendTrip(itemId);
     if (result.ok || result.duplicate) {
+      setSavedTripError("");
       await refreshBackendSavedTrips();
+    } else {
+      setSavedTripError(result.error ?? "Unable to save trip right now.");
     }
   }
 
@@ -4216,6 +4223,9 @@ export function FlightResultsClient() {
         </aside>
 
         <section className="min-w-0 space-y-4">
+          <p className="sr-only" aria-live="polite">
+            {savedTripError}
+          </p>
           {loading ? (
             <div className="space-y-4">
               <div className="rounded-xl border border-teal/20 bg-white p-5 text-sm font-bold text-teal-dark shadow-sm">

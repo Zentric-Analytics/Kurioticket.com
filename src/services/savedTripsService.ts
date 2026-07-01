@@ -323,25 +323,26 @@ export async function listUserSavedItems(
   const prisma = getSavedTripsPrisma();
   const includeType = (type: SavedItemType) => !options.type || options.type === type;
 
-  const [trips, flights, hotels, searches, tripCount, flightCount, hotelCount, searchCount] =
+  const [tripCount, flightCount, hotelCount, searchCount] =
     await prisma.$transaction([
-      includeType("trip")
-        ? prisma.savedTrip.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, select: savedTripSelect })
-        : Promise.resolve([]),
-      includeType("flight")
-        ? prisma.savedFlight.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, select: savedFlightSelect })
-        : Promise.resolve([]),
-      includeType("hotel")
-        ? prisma.savedHotel.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, select: savedHotelSelect })
-        : Promise.resolve([]),
-      includeType("search")
-        ? prisma.savedSearch.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, select: savedSearchSelect })
-        : Promise.resolve([]),
       prisma.savedTrip.count({ where: { userId } }),
       prisma.savedFlight.count({ where: { userId } }),
       prisma.savedHotel.count({ where: { userId } }),
       prisma.savedSearch.count({ where: { userId } }),
-    ]) as [SavedTripRecord[], SavedFlightRecord[], SavedHotelRecord[], SavedSearchRecord[], number, number, number, number];
+    ]) as [number, number, number, number];
+
+  const trips = includeType("trip")
+    ? await prisma.savedTrip.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, select: savedTripSelect })
+    : [];
+  const flights = includeType("flight")
+    ? await prisma.savedFlight.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, select: savedFlightSelect })
+    : [];
+  const hotels = includeType("hotel")
+    ? await prisma.savedHotel.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, select: savedHotelSelect })
+    : [];
+  const searches = includeType("search")
+    ? await prisma.savedSearch.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, select: savedSearchSelect })
+    : [];
 
   const items = [
     ...trips.map(serializeSavedTrip),
