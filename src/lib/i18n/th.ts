@@ -109,6 +109,7 @@ export const translations: TranslationDictionary = {
   travelers: "ผู้เดินทาง",
   search: "ค้นหา",
   clear: "ล้าง",
+  clearAll: "ล้างทั้งหมด",
   done: "เสร็จสิ้น",
   previousShort: "ก่อนหน้า",
   nextShort: "ถัดไป",

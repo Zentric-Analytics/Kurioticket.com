@@ -11148,6 +11148,7 @@ test("Thai Deals landing page copy resolves from i18n without English fallback",
     "deals.travelersRoomsLabel": "ผู้เดินทาง / ห้องพัก",
     "deals.travelersRoomsCarLabel": "ผู้เดินทาง / ห้องพัก / รถ",
     "deals.searchButton": "ค้นหาดีล",
+    clearAll: "ล้างทั้งหมด",
     "deals.destinationIdeasTitle": "จุดหมายเริ่มต้นสำหรับค้นหาดีล",
     "deals.destinationIdeasSubtitle": "เลือกไอเดียจุดหมายปลายทาง แล้วเปรียบเทียบผลลัพธ์จากผู้ให้บริการเมื่อดำเนินการต่อ",
     "deals.destination.tokyo.city": "โตเกียว",
@@ -11176,6 +11177,21 @@ test("Thai Deals landing page copy resolves from i18n without English fallback",
   }
 
   assert.equal(`${th["deals.travelerSingular"]} 1 คน, ${th["deals.roomSingular"]} 1 ห้อง`, "ผู้เดินทาง 1 คน, ห้อง 1 ห้อง");
+  assert.equal(th.clearAll, "ล้างทั้งหมด");
+  assert.notEqual(th.clearAll, enTranslations.clearAll);
+
+  const thSource = readFileSync("src/lib/i18n/th.ts", "utf8");
+  assert.equal((thSource.match(/^\s*clearAll:/gm) ?? []).length, 1, "Thai clearAll key should appear exactly once.");
+  assert.match(
+    dealsPageSource,
+    /hasActiveDealsSearch[\s\S]*?<button[\s\S]*?onClick=\{handleResetSearch\}[\s\S]*?\{t\("clearAll"\)\}[\s\S]*?<\/button>/,
+    "Active Deals clear/reset render path should read the shared clearAll i18n key.",
+  );
+  assert.doesNotMatch(
+    dealsPageSource,
+    /hasActiveDealsSearch[\s\S]*?>Clear all<|hasActiveDealsSearch[\s\S]*?\{"Clear all"\}/,
+    "Deals package search should not hardcode English clear-all copy.",
+  );
   assert.equal(languageOptions.find((option) => option.code === "th")?.direction, "ltr");
   assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
 
@@ -11220,6 +11236,7 @@ test("Thai Deals landing page copy resolves from i18n without English fallback",
     "deals.dateFlightPlaceholder",
     "deals.dateHotelPlaceholder",
     "deals.searchButton",
+    "clearAll",
     "deals.destinationIdeasTitle",
     "deals.destinationIdeasSubtitle",
   ]) {
