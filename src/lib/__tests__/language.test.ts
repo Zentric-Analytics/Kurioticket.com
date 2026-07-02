@@ -1456,7 +1456,7 @@ test("flight quote unavailable copy resolves through active render path for all 
     sv: ["Flygpriset är inte tillgängligt", "Det här flygpriset är inte längre tillgängligt. Sök igen för aktuella priser."],
     id: ["Penawaran harga penerbangan tidak tersedia", "Penawaran harga penerbangan ini tidak lagi tersedia. Silakan cari lagi untuk melihat harga saat ini."],
     th: ["ไม่มีใบเสนอราคาตั๋วเครื่องบิน", "ใบเสนอราคาตั๋วเครื่องบินนี้ไม่พร้อมใช้งานแล้ว โปรดค้นหาอีกครั้งเพื่อดูราคาปัจจุบัน"],
-    vi: ["Flight quote unavailable", "This flight quote is no longer available. Please search again for current prices."],
+    vi: ["Báo giá chuyến bay không khả dụng", "Báo giá chuyến bay này không còn khả dụng. Vui lòng tìm kiếm lại để xem giá hiện tại."],
   } as const;
 
   for (const option of languageOptions.filter((o) => o.status === "available")) {
@@ -11164,6 +11164,97 @@ test("Thai Flights results and selected-flight detail render paths resolve visib
   assert.ok(detailsSource.includes('body: JSON.stringify({'));
   assert.equal(availableLocaleOptions.find((option) => option.code === "th")?.direction, "ltr");
   assert.equal(availableLocaleOptions.find((option) => option.code === "ar")?.direction, "rtl");
+});
+
+test("Vietnamese Flights Results page resolves search, filters, cards, and provider copy", () => {
+  const vi = getTranslations("vi");
+  const viVn = getTranslations("vi-VN");
+  const viAlias = getTranslations("vi-vn");
+  const resultsPageSource = readFileSync("src/app/flights/results/page.tsx", "utf8");
+  const resultsSource = readFileSync("src/components/results/FlightResultsClient.tsx", "utf8");
+  const cardSource = readFileSync("src/components/results/FlightCard.tsx", "utf8");
+  const detailsPageSource = readFileSync("src/app/flights/details/[id]/page.tsx", "utf8");
+  const detailsSource = readFileSync("src/components/results/FlightDetailsClient.tsx", "utf8");
+  const standaloneFlightSearchSource = readFileSync("src/components/search/StandaloneFlightSearchForm.tsx", "utf8");
+  const searchTabsSource = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
+
+  assert.equal(vi, viVn);
+  assert.equal(vi, viAlias);
+  assert.ok(resultsPageSource.includes("<FlightResultsClient />"));
+  assert.ok(detailsPageSource.includes("<FlightDetailsClient id={id} />"));
+
+  const expectedCopy: Array<[string, string, string, string[]]> = [
+    ["tripType", "LOẠI CHUYẾN ĐI", "Trip type", [resultsSource, standaloneFlightSearchSource, searchTabsSource]],
+    ["roundTrip", "Khứ hồi", "Round trip", [resultsSource, standaloneFlightSearchSource, searchTabsSource]],
+    ["oneWay", "Một chiều", "One way", [resultsSource, standaloneFlightSearchSource, searchTabsSource]],
+    ["filterBy", "Lọc theo", "Filter by", [resultsSource]],
+    ["airlines", "Hãng hàng không", "Airlines", [resultsSource]],
+    ["airports", "Sân bay", "Airports", [resultsSource]],
+    ["amenities", "Tiện nghi", "Amenities", [resultsSource]],
+    ["baggageIncluded", "Bao gồm hành lý", "Baggage included", [resultsSource]],
+    ["flexibleRefundable", "Linh hoạt/hoàn tiền", "Flexible/refundable", [resultsSource]],
+    ["best", "Tốt nhất", "Best", [resultsSource]],
+    ["cheapest", "Rẻ nhất", "Cheapest", [resultsSource]],
+    ["quickest", "Nhanh nhất", "Quickest", [resultsSource]],
+    ["resultsFound", "{{count}} kết quả", "{{count}} results found", [resultsSource]],
+    ["viewFlight", "Xem chuyến bay", "View Flight", [cardSource]],
+    ["flightOption", "Lựa chọn chuyến bay", "Flight option", [cardSource]],
+    ["flightDetailsProviderDisclaimer", "Giá cuối cùng, tình trạng còn chỗ, đặt chỗ và quy định giá vé được xác nhận bởi nhà cung cấp.", "Final price, availability, booking, and fare rules are confirmed by the provider.", [detailsSource]],
+    ["outbound", "Chuyến đi", "Outbound", [cardSource, detailsSource]],
+    ["return", "Chuyến về", "Return", [cardSource, detailsSource]],
+    ["departure", "Khởi hành", "Departure", [resultsSource]],
+    ["duration", "Thời lượng", "Duration", [resultsSource]],
+    ["stops", "Điểm dừng", "Stops", [resultsSource]],
+    ["nonstop", "Bay thẳng", "Nonstop", [resultsSource, cardSource, detailsSource]],
+    ["oneStop", "1 điểm dừng", "1 stop", [resultsSource, cardSource]],
+    ["stopDual", "2 điểm dừng", "2 stops", [detailsSource]],
+    ["layover", "Quá cảnh", "Layover", [cardSource]],
+    ["layoverIn", "Quá cảnh tại", "Layover in", [detailsSource]],
+    ["baggage", "Hành lý", "Baggage", [cardSource, detailsSource]],
+    ["cabin", "Hạng khoang", "Cabin", [cardSource, detailsSource]],
+    ["seatSelection", "Chọn ghế", "Seat selection", [cardSource, detailsSource]],
+    ["fareRules", "Quy định giá vé", "Fare rules", [cardSource, detailsSource]],
+    ["providerPrice", "Giá từ nhà cung cấp", "Provider price", [cardSource, detailsSource]],
+    ["continueToProvider", "Tiếp tục với nhà cung cấp", "Continue to Provider", [detailsSource]],
+    ["compareMoreProviders", "So sánh thêm nhà cung cấp", "Compare more providers", [detailsSource]],
+    ["flightCardProviderHandoff", "Giá cuối cùng, tình trạng còn chỗ, đặt chỗ và quy định giá vé được xác nhận bởi nhà cung cấp.", "Final price, availability, booking, and fare rules are confirmed by the provider.", [cardSource]],
+    ["noFlightsMatchFilters", "Không có chuyến bay nào khớp với các bộ lọc này. Hãy mở rộng bộ lọc để xem thêm lựa chọn trực tiếp.", "No flights match these filters. Widen your filters to see more live options.", [resultsSource]],
+    ["updatingResults", "Đang cập nhật kết quả...", "Updating results...", [resultsSource]],
+  ];
+
+  for (const [key, value, englishFallback, sources] of expectedCopy) {
+    assert.equal(vi[key], value, `${key} should resolve to Vietnamese`);
+    assert.notEqual(vi[key], englishFallback, `${key} should not fall back to English`);
+    assert.ok(
+      sources.some((source) => source.includes(`t("${key}")`) || source.includes(`t.${key}`) || source.includes(`"${key}"`)),
+      `${key} should be read by the active Vietnamese flights render path`,
+    );
+  }
+
+  assert.equal(vi.resultsFound.replace("{{count}}", "12"), "12 kết quả");
+  assert.equal(vi.stopCount.replace("{{count}}", "2"), "2 điểm dừng");
+  assert.equal(vi.displayEstimateConvertedFromProviderPrice.includes("{{formatted}}") && vi.displayEstimateConvertedFromProviderPrice.includes("{{providerPrice}}"), true);
+  assert.equal(vi.flightRouteTemplate.includes("{{origin}}") && vi.flightRouteTemplate.includes("{{destination}}"), true);
+  assert.equal(vi.layoverTemplate.includes("{{airport}}") && vi.layoverTemplate.includes("{{duration}}") && vi.layoverTemplate.includes("{{connection}}"), true);
+
+  assert.ok(resultsSource.includes('aria-label={t("tripType")}'));
+  assert.ok(resultsSource.includes('{t("tripType")}'));
+  assert.ok(resultsSource.includes('tripType: tripTypeInput'));
+  assert.ok(resultsSource.includes('router.push(`/flights/results?${nextParams.toString()}`)'));
+  assert.ok(standaloneFlightSearchSource.includes('aria-label={t("tripType") || "Trip type"}'));
+  assert.ok(searchTabsSource.includes('aria-label={t.tripType || "Trip type"}'));
+
+  for (const source of [resultsSource, cardSource, detailsSource]) {
+    assert.match(source, /flight\.airlineName|leg\.originAirport|displayPrice|flight\.id|tripTypeInput/);
+  }
+  for (const providerValue of ["British Airways", "Lufthansa", "Brussels Airlines", "SWISS", "BA0074", "LH0457", "SN0902", "LX0041", "LAX", "LOS", "FRA", "LHR", "EWR", "ORD", "DFW", "IAD", "NGN 9,211,802.03", "$6,646.13", "22h 50m", "1h 25m", "→"]) {
+    assert.equal(vi[providerValue], undefined, `${providerValue} must remain operational data, not Vietnamese locale copy`);
+  }
+
+  assert.equal(availableLocaleOptions.find((option) => option.code === "vi")?.direction, "ltr");
+  assert.equal(availableLocaleOptions.find((option) => option.code === "ar")?.direction, "rtl");
+  assert.equal(availableLocaleOptions.find((option) => option.code === "th")?.direction, "ltr");
+  assert.equal(availableLocaleOptions.find((option) => option.code === "id")?.direction, "ltr");
 });
 
 test("Indonesian Flights results and selected-flight detail render paths resolve visible copy", () => {
