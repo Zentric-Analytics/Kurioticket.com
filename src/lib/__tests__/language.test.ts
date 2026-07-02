@@ -11928,6 +11928,7 @@ test("Thai homepage visible copy and render paths resolve without English fallba
     signUp: "สมัครใช้งาน",
     homeHeroTitle: "เปรียบเทียบตัวเลือกการเดินทางได้ในการค้นหาเดียว",
     homeHeroSubtitle: "ค้นหาผู้ให้บริการเดินทางที่เชื่อถือได้ เปรียบเทียบราคาอย่างชัดเจน และเลือกตัวเลือกที่เหมาะกับทริปของคุณ",
+    tripType: "ประเภททริป",
     roundTrip: "ไป-กลับ",
     oneWay: "เที่ยวเดียว",
     origin: "ต้นทาง",
@@ -12042,13 +12043,46 @@ test("Thai homepage visible copy and render paths resolve without English fallba
   assert.ok(pageSource.includes('t("homeHeroTitle")') && pageSource.includes('t("homeNewsletterTitle")'));
   assert.ok(pageSource.includes('const translatedFaqs = getGeneralFaqs(t)') && pageSource.includes('items={translatedFaqs}'));
   assert.ok(headerSource.includes("t.flights") && headerSource.includes("t.login") && headerSource.includes("t.signUp"));
-  assert.ok(searchTabsSource.includes("t.roundTrip") && searchTabsSource.includes('translate("infantsOnLap")') && searchTabsSource.includes('translate("hotelSearchGuestsLabel")'));
+  assert.ok(searchTabsSource.includes("t.tripType") && searchTabsSource.includes("t.roundTrip") && searchTabsSource.includes('translate("infantsOnLap")') && searchTabsSource.includes('translate("hotelSearchGuestsLabel")'));
   assert.match(searchTabsSource, /if \(!departureSummary\) \{[\s\S]*?return t\.travelDates \|\| "Travel dates";[\s\S]*?\}/);
   assert.match(searchTabsSource, /if \(checkOutSummary\) \{[\s\S]*?return `\$\{checkInSummary\} — \$\{checkOutSummary\}`;[\s\S]*?\}/);
   assert.ok(searchTabsSource.includes("/flights/results?") && searchTabsSource.includes("/hotels/results?${params.toString()}"));
   assert.ok(footerSource.includes("t.footerSellerOfTravelNotice") && footerSource.includes("t.footerPrivacy"));
 });
 
+
+test("Thai flight results trip type label resolves through i18n without changing search behavior", () => {
+  const th = getTranslations("th");
+  const resultsPageSource = readFileSync("src/app/flights/results/page.tsx", "utf8");
+  const resultsClientSource = readFileSync("src/components/results/FlightResultsClient.tsx", "utf8");
+  const standaloneFlightSearchSource = readFileSync("src/components/search/StandaloneFlightSearchForm.tsx", "utf8");
+  const searchTabsSource = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
+
+  assert.equal(th.tripType, "ประเภททริป");
+  assert.equal(th.roundTrip, "ไป-กลับ");
+  assert.equal(th.oneWay, "เที่ยวเดียว");
+  assert.notEqual(th.tripType, "TRIP TYPE");
+  assert.notEqual(th.tripType, enTranslations.tripType);
+
+  assert.ok(resultsPageSource.includes('getParamValue(params, "tripType")'));
+  assert.ok(resultsPageSource.includes('requestedTripType === "one-way" ? "one-way" : "round-trip"'));
+  assert.ok(resultsClientSource.includes('{t("tripType")}'));
+  assert.ok(resultsClientSource.includes('aria-label={t("tripType")}'));
+  assert.ok(resultsClientSource.includes('tripTypeInput === "one-way"'));
+  assert.ok(resultsClientSource.includes('? t("oneWay")'));
+  assert.ok(resultsClientSource.includes(': t("roundTrip")'));
+  assert.ok(resultsClientSource.includes('nextParams.get("tripType") || "round-trip"'));
+  assert.ok(standaloneFlightSearchSource.includes('aria-label={t("tripType") || "Trip type"}'));
+  assert.ok(searchTabsSource.includes('aria-label={t.tripType || "Trip type"}'));
+  assert.ok(searchTabsSource.includes('t.tripType'));
+
+  assert.doesNotMatch(resultsClientSource, />\s*TRIP TYPE\s*</);
+  assert.doesNotMatch(standaloneFlightSearchSource, />\s*TRIP TYPE\s*</);
+  assert.doesNotMatch(searchTabsSource, />\s*TRIP TYPE\s*</);
+
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+});
 
 test("Thai support, service guarantee, and more service pages resolve localized active copy", () => {
   const th = getTranslations("th");
