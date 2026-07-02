@@ -21,8 +21,11 @@ export default async function SavedPage({ searchParams }: SavedPageProps) {
       </div>
       <main className="flex-1 bg-[#f3f7fc] pb-16 lg:pb-20">
         {showAccountLink ? (
-          <AccountDetailShell>
-            <SavedTripsAndRecentSearches compactTopSpacing />
+          <AccountDetailShell className="[&>div:first-child]:hidden sm:[&>div:first-child]:block">
+            <SavedTripsAndRecentSearches
+              compactTopSpacing
+              compactTopSpacingMobile={false}
+            />
           </AccountDetailShell>
         ) : (
           <SavedTripsAndRecentSearches />
