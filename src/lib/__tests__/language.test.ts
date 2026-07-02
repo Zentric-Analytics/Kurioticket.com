@@ -1416,6 +1416,129 @@ test("Indonesian Legal Center overview and active legal documents are localized"
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
 });
 
+
+test("Vietnamese Legal Center overview and all active legal detail documents are localized", () => {
+  const vi = getTranslations("vi");
+  const viVn = getTranslations("vi-VN");
+  const legalIndexSource = readFileSync("src/app/legal/LegalPageContent.tsx", "utf8");
+  const legalViewerSource = readFileSync("src/components/legal/LegalViewer.tsx", "utf8");
+
+  assert.equal(viVn["legal.index.heroTitle"], "Trung tâm pháp lý");
+  assert.equal(vi.legalCenter, "Trung tâm pháp lý");
+  assert.equal(vi["legal.index.heroLabel"], "THÔNG TIN PHÁP LÝ");
+  assert.equal(vi["legal.index.heroDescription"], "Tài nguyên pháp lý của Kurioticket giải thích cách hoạt động của tìm kiếm du lịch, tài khoản, quyền riêng tư, chuyển hướng nhà cung cấp và các thực hành tuân thủ của chúng tôi.");
+  assert.equal(vi["legal.index.compliance.eyebrow"], "CÔNG TY & TUÂN THỦ");
+  assert.equal(vi["legal.index.compliance.sellerOfTravel"], "Người bán dịch vụ du lịch California");
+  assert.equal(vi["legal.index.compliance.registrationNumberLabel"], "Số đăng ký");
+  assert.equal(vi["legal.index.compliance.registrationExpires"], "Đăng ký hết hạn");
+  assert.equal(vi["legal.index.compliance.registrationExpiresDate"], "05 tháng 6, 2027");
+  assert.equal(vi["legal.index.compliance.publicNotice"], "Việc đăng ký là người bán dịch vụ du lịch không đồng nghĩa với sự chấp thuận của Tiểu bang California.");
+  assert.equal(vi["legal.index.contacts.support"], "Hỗ trợ");
+  assert.equal(vi["legal.index.contacts.legal"], "Pháp lý");
+  assert.equal(vi["legal.index.contacts.privacy"], "Quyền riêng tư");
+  assert.equal(vi["legal.index.resourcesEyebrow"], "Tài nguyên chính thức");
+  assert.equal(vi["legal.index.resourcesTitle"], "Tài liệu pháp lý");
+  assert.equal(vi["legal.index.documentsCountText"], "Có 14 chính sách và thông báo");
+  assert.equal(vi["legal.index.lastUpdated"], "CẬP NHẬT LẦN CUỐI");
+  assert.equal(vi["legal.index.lastUpdatedDate"], "11 THÁNG 5, 2026");
+
+  const expectedCardTitles: Record<string, string> = {
+    termsOfService: "Điều khoản dịch vụ",
+    privacyPolicy: "Chính sách quyền riêng tư",
+    cookiePolicy: "Chính sách cookie",
+    privacyChoices: "Lựa chọn quyền riêng tư",
+    affiliateDisclosure: "Công bố liên kết tiếp thị",
+    refundBookingDisclaimer: "Tuyên bố miễn trừ về hoàn tiền & nhà cung cấp bên ngoài",
+    priceAvailabilityDisclaimer: "Tuyên bố miễn trừ về giá & tình trạng còn chỗ",
+    partnerRedirectDisclaimer: "Tuyên bố miễn trừ về chuyển hướng đối tác",
+    californiaSellerOfTravelNotice: "Thông báo Người bán dịch vụ du lịch California",
+    legalNoticeCompanyInformation: "Thông báo pháp lý & thông tin công ty",
+    acceptableUsePolicy: "Chính sách sử dụng được chấp nhận",
+    dataDeletionPolicy: "Chính sách xóa dữ liệu",
+    securityStatement: "Tuyên bố bảo mật",
+    accessibilityStatement: "Tuyên bố khả năng tiếp cận",
+  };
+
+  for (const [key, title] of Object.entries(expectedCardTitles)) {
+    assert.equal(vi[`legal.index.documents.${key}.title`], title);
+    assert.ok(vi[`legal.index.documents.${key}.summary`]);
+    assert.notEqual(vi[`legal.index.documents.${key}.title`], enTranslations[`legal.index.documents.${key}.title`]);
+    assert.notEqual(vi[`legal.index.documents.${key}.summary`], enTranslations[`legal.index.documents.${key}.summary`]);
+  }
+
+  assert.equal(vi["legal.print"], "In");
+  assert.equal(vi["legal.lastUpdated"], "Cập nhật lần cuối");
+  assert.equal(vi["legal.tableOfContents"], "MỤC LỤC");
+
+  const expectedNamespaces = [
+    "legal.terms",
+    "legal.privacy",
+    "legal.cookiePolicy",
+    "legal.privacyChoices",
+    "legal.affiliateDisclosure",
+    "legal.refundBookingDisclaimer",
+    "legal.priceAvailabilityDisclaimer",
+    "legal.partnerRedirectDisclaimer",
+    "legal.californiaSellerOfTravelNotice",
+    "legal.legalNoticeCompanyInformation",
+    "legal.acceptableUsePolicy",
+    "legal.dataDeletionPolicy",
+    "legal.securityStatement",
+    "legal.accessibilityStatement",
+  ];
+
+  assert.equal(legalDocuments.length, 14);
+  for (const namespace of expectedNamespaces) {
+    assert.ok(vi[`${namespace}.title`], `${namespace} title`);
+    assert.ok(vi[`${namespace}.summary`], `${namespace} summary`);
+    assert.equal(vi[`${namespace}.tableOfContents`], "MỤC LỤC");
+    assert.equal(vi[`${namespace}.developerNote`], "Các bản dự thảo pháp lý này là nội dung tạm thời cho giai đoạn khởi nghiệp và cần được luật sư đủ điều kiện xem xét trước khi ra mắt công khai ở quy mô lớn.");
+    assert.notEqual(vi[`${namespace}.title`], enTranslations[`${namespace}.title`]);
+    assert.notEqual(vi[`${namespace}.summary`], enTranslations[`${namespace}.summary`]);
+  }
+
+  assert.equal(vi["legal.privacy.title"], "Chính sách quyền riêng tư");
+  assert.equal(vi["legal.privacy.sections.data-we-collect.title"], "Dữ liệu chúng tôi thu thập");
+  assert.equal(vi["legal.privacy.sections.vendors.paragraph2"], "Kurioticket không yêu cầu hoặc lưu trữ số thẻ tín dụng cho đặt chỗ du lịch. Kurioticket không lưu trữ dữ liệu hộ chiếu.");
+  assert.equal(vi["legal.terms.title"], "Điều khoản dịch vụ");
+  assert.equal(vi["legal.terms.sections.overview.title"], "Tổng quan");
+  assert.equal(vi["legal.terms.sections.partner-services.paragraph2"], "Điều khoản của đối tác áp dụng khi bạn rời Kurioticket hoặc hoàn tất giao dịch với đối tác. Hãy xem lại mọi yêu cầu về giá vé, khách sạn, hành lý, thay đổi, hoàn tiền, thị thực và hành khách trước khi mua.");
+  assert.equal(vi["legal.cookiePolicy.title"], "Chính sách cookie");
+  assert.equal(vi["legal.cookiePolicy.sections.third-parties.title"], "Công nghệ bên thứ ba");
+  assert.equal(vi["legal.cookiePolicy.sections.controls.paragraph1"], "Bạn có thể kiểm soát cookie thông qua cài đặt trình duyệt. Việc chặn cookie cần thiết có thể khiến đăng nhập, bảng điều khiển, mục đã lưu, tùy chọn và công cụ hỗ trợ không hoạt động đúng cách.");
+  assert.equal(vi["legal.californiaSellerOfTravelNotice.sections.registration.paragraph1"].includes("2172630-70"), true);
+  assert.equal(vi["legal.legalNoticeCompanyInformation.sections.contacts.paragraph1"], "Hỗ trợ: support@kurioticket.com. Pháp lý: legal@kurioticket.com. Quyền riêng tư: privacy@kurioticket.com.");
+  assert.ok(vi["legal.accessibilityStatement.sections.external-providers.paragraph2"].includes("Kurioticket"));
+
+  assert.deepEqual(legalDocuments.map((document) => document.slug), [
+    "terms-of-service",
+    "privacy-policy",
+    "cookie-policy",
+    "privacy-choices",
+    "affiliate-disclosure",
+    "refund-booking-disclaimer",
+    "price-availability-disclaimer",
+    "partner-redirect-disclaimer",
+    "california-seller-of-travel-notice",
+    "legal-notice-company-information",
+    "acceptable-use-policy",
+    "data-deletion-policy",
+    "security-statement",
+    "accessibility-statement",
+  ]);
+  assert.ok(legalDocuments.every((document) => document.sections.every((section) => section.id.length > 0)));
+  assert.ok(legalIndexSource.includes('t("legal.index.heroLabel")'));
+  assert.ok(legalIndexSource.includes('t("legal.index.documentsCountText")'));
+  assert.ok(legalIndexSource.includes('t(`legal.index.documents.${documentKey}.title`)'));
+  assert.ok(legalViewerSource.includes('aria-label={t["legal.print"]}'));
+  assert.ok(legalViewerSource.includes('window.print()'));
+  assert.ok(legalViewerSource.includes('href={`#${section.id}`}'));
+  assert.equal(languageOptions.find((o) => o.code === "vi")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+});
+
 test("Swedish locale is active and localizes homepage while preserving other fallback", () => {
   const swedishOptions = languageOptions.filter((o) => o.code === "sv");
 
