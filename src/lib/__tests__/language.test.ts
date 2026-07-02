@@ -904,6 +904,96 @@ test("Thai Account dropdown and Dashboard overview copy resolves through active 
 });
 
 
+test("Vietnamese account menu and dashboard overview copy resolves without English fallback", () => {
+  const appHeaderSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
+  const dashboardPageSource = readFileSync("src/app/dashboard/page.tsx", "utf8");
+  const dashboardGridSource = readFileSync("src/components/dashboard/DashboardGrid.tsx", "utf8");
+  const vi = viTranslations as Record<string, string>;
+
+  const expectedVietnameseCopy: Record<string, string> = {
+    "accountMenu.myAccount.label": "Tài khoản của tôi",
+    "accountMenu.savedTrips.label": "Chuyến đi đã lưu",
+    "accountMenu.priceAlerts.label": "Cảnh báo giá",
+    "accountMenu.closeAccountMenu": "Đóng menu tài khoản",
+    myAccount: "Tài khoản của tôi",
+    openAccountMenu: "Mở menu tài khoản",
+    logout: "Đăng xuất",
+    signingOut: "Đang đăng xuất...",
+    "accountDashboard.overview.welcome": "Chào mừng trở lại, {name}",
+    "accountDashboard.hub.title": "Tài khoản của tôi",
+    "accountDashboard.mobile.manageAccount": "Quản lý tài khoản",
+    "accountDashboard.hub.description": "Quản lý chuyến đi, mục đã lưu, tùy chọn và cài đặt tài khoản của bạn tại một nơi.",
+    "accountDashboard.hub.manageAccount": "Quản lý tài khoản",
+    "accountDashboard.hub.personalDetails": "Thông tin cá nhân",
+    "accountDashboard.hub.securitySettings": "Cài đặt bảo mật",
+    "accountDashboard.hub.travelActivity": "Hoạt động du lịch",
+    "accountDashboard.hub.myTrips": "Chuyến đi của tôi",
+    "accountDashboard.hub.savedTrips": "Chuyến đi đã lưu",
+    "accountDashboard.hub.priceAlerts": "Cảnh báo giá",
+    "accountDashboard.hub.preferences": "Tùy chọn",
+    "accountDashboard.hub.emailPreferences": "Tùy chọn cá nhân hóa",
+    "accountDashboard.hub.travelPreferences": "Tùy chọn đặt chỗ",
+    "accountDashboard.hub.helpAndSupport": "Trợ giúp và hỗ trợ",
+    "accountDashboard.hub.contactSupport": "Liên hệ hỗ trợ",
+    "accountDashboard.hub.faq": "Câu hỏi thường gặp",
+  };
+
+  for (const [key, value] of Object.entries(expectedVietnameseCopy)) {
+    assert.equal(vi[key], value, `${key} should resolve to Vietnamese`);
+    assert.notEqual(vi[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  const dynamicName = "Oluwadunbarin Olayinka";
+  const dynamicEmail = "bharrywalker@gmail.com";
+  const dynamicInitials = "OO";
+  assert.equal(vi["accountDashboard.overview.welcome"].replace("{name}", dynamicName), `Chào mừng trở lại, ${dynamicName}`);
+  assert.match(vi["accountDashboard.overview.welcome"], /\{name\}/);
+  assert.doesNotMatch(vi["accountDashboard.overview.welcome"], /\{\{name\}\}/);
+
+  assert.ok(appHeaderSource.includes('labelKey: "accountMenu.myAccount.label"'));
+  assert.ok(appHeaderSource.includes('labelKey: "accountMenu.savedTrips.label"'));
+  assert.ok(appHeaderSource.includes('labelKey: "accountMenu.priceAlerts.label"'));
+  assert.ok(appHeaderSource.includes("label: t[item.labelKey]"));
+  assert.ok(appHeaderSource.includes("{isSigningOut ? t.signingOut : t.logout}"));
+  assert.ok(appHeaderSource.includes("aria-label={t.openAccountMenu}"));
+  assert.ok(appHeaderSource.includes('aria-label={t["accountMenu.closeAccountMenu"]}'));
+  assert.ok(!appHeaderSource.includes(">My account<") && !appHeaderSource.includes(">Saved trips<") && !appHeaderSource.includes(">Price alerts<") && !appHeaderSource.includes(">Logout<"));
+
+  assert.ok(dashboardPageSource.includes("<DashboardOverview") && dashboardPageSource.includes("initials={initials}") && dashboardPageSource.includes("displayName={displayName}") && dashboardPageSource.includes("userEmail={userEmail}"));
+  assert.ok(dashboardGridSource.includes('titleKey: "accountDashboard.hub.manageAccount"'));
+  assert.ok(dashboardGridSource.includes('labelKey: "accountDashboard.hub.personalDetails"'));
+  assert.ok(dashboardGridSource.includes('labelKey: "accountDashboard.hub.securitySettings"'));
+  assert.ok(dashboardGridSource.includes('titleKey: "accountDashboard.hub.travelActivity"'));
+  assert.ok(dashboardGridSource.includes('labelKey: "accountDashboard.hub.myTrips"'));
+  assert.ok(dashboardGridSource.includes('labelKey: "accountDashboard.hub.savedTrips"'));
+  assert.ok(dashboardGridSource.includes('labelKey: "accountDashboard.hub.priceAlerts"'));
+  assert.ok(dashboardGridSource.includes('titleKey: "accountDashboard.hub.preferences"'));
+  assert.ok(dashboardGridSource.includes('labelKey: "accountDashboard.hub.emailPreferences"'));
+  assert.ok(dashboardGridSource.includes('labelKey: "accountDashboard.hub.travelPreferences"'));
+  assert.ok(dashboardGridSource.includes('titleKey: "accountDashboard.hub.helpAndSupport"'));
+  assert.ok(dashboardGridSource.includes('labelKey: "accountDashboard.hub.contactSupport"'));
+  assert.ok(dashboardGridSource.includes('labelKey: "accountDashboard.hub.faq"'));
+  assert.ok(dashboardGridSource.includes('formatAccountWelcome(') && dashboardGridSource.includes('t["accountDashboard.overview.welcome"]'));
+  assert.ok(dashboardGridSource.includes('t["accountDashboard.hub.description"]'));
+  assert.ok(dashboardGridSource.includes('t["accountDashboard.mobile.manageAccount"]'));
+  assert.ok(!dashboardGridSource.includes(">Welcome back,") && !dashboardGridSource.includes(">Manage account<") && !dashboardGridSource.includes(">Personal details<"));
+
+  assert.ok(appHeaderSource.includes('href: "/dashboard/account"') && appHeaderSource.includes('href: "/saved"') && appHeaderSource.includes('href: "/dashboard/alerts"'));
+  assert.ok(dashboardGridSource.includes('href: "/dashboard"') && dashboardGridSource.includes('href: "/dashboard/security"') && dashboardGridSource.includes('href: "/dashboard/trips"') && dashboardGridSource.includes('href: "/saved?from=account"') && dashboardGridSource.includes('href: "/dashboard/alerts?from=account"') && dashboardGridSource.includes('href: "/dashboard/preferences/customization"') && dashboardGridSource.includes('href: "/dashboard/preferences/booking"') && dashboardGridSource.includes('href: "/dashboard/support"') && dashboardGridSource.includes('href: "/faq?from=account"'));
+  assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.manageAccount"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.travelActivity"'));
+  assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.travelActivity"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.preferences"'));
+  assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.preferences"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.helpAndSupport"'));
+  assert.ok(!appHeaderSource.includes(dynamicName) && !appHeaderSource.includes(dynamicEmail) && !appHeaderSource.includes(dynamicInitials));
+  assert.ok(!dashboardGridSource.includes(dynamicName) && !dashboardGridSource.includes(dynamicEmail) && !dashboardGridSource.includes(dynamicInitials));
+  assert.equal(languageOptions.find((o) => o.code === "vi")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
+  assert.equal(getTranslations("vi-VN")["accountMenu.myAccount.label"], "Tài khoản của tôi");
+  assert.equal(getTranslations("vi-vn")["accountDashboard.hub.faq"], "Câu hỏi thường gặp");
+});
+
+
 test("Indonesian Account dropdown and Dashboard copy resolves through active i18n render paths", () => {
   const appHeaderSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
   const dashboardPageSource = readFileSync("src/app/dashboard/page.tsx", "utf8");
