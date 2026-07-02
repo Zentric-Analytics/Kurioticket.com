@@ -659,6 +659,116 @@ test("Thai Hotels results page copy resolves through active i18n keys", () => {
   assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
 });
 
+test("Vietnamese Hotels Results page copy resolves through active i18n keys", () => {
+  const vi = getTranslations("vi");
+  const viVn = getTranslations("vi-VN");
+  const resultsPageSource = readFileSync("src/app/hotels/results/page.tsx", "utf8");
+  const hotelResultsClientSource = readFileSync("src/components/results/HotelResultsClient.tsx", "utf8");
+  const hotelCardSource = readFileSync("src/components/results/HotelCard.tsx", "utf8");
+  const hotelSearchBarSource = readFileSync("src/components/search/HotelSearchBar.tsx", "utf8");
+  const i18nRegistrySource = readFileSync("src/lib/i18n/index.ts", "utf8");
+  const hotelDateFormattingSource = readFileSync("src/lib/hotelsDateFormatting.ts", "utf8");
+
+  assert.ok(resultsPageSource.includes("<HotelResultsClient />"));
+  assert.equal(viVn, vi);
+
+  const expectedCopy: Array<[string, string, string, string[]]> = [
+    ["hotelResults.filterBy", "Lọc theo", "Filter by", [hotelResultsClientSource]],
+    ["hotelResults.budgetPrice", "Ngân sách / mỗi đêm", "Budget / Price", [hotelResultsClientSource]],
+    ["hotelResults.totalUpTo", "Tổng tối đa", "Total up to", [hotelResultsClientSource]],
+    ["hotelResults.popularFilters", "Bộ lọc phổ biến", "Popular filters", [hotelResultsClientSource]],
+    ["hotelResults.filter.breakfastIncludedAvailable", "Có/bao gồm bữa sáng", "Breakfast included/available", [hotelResultsClientSource]],
+    ["hotelResults.starRating", "Xếp hạng sao", "Star rating", [hotelResultsClientSource]],
+    ["hotelResults.fromRating", "Từ", "From", [hotelResultsClientSource]],
+    ["hotelResults.propertyType", "Loại chỗ nghỉ", "Property type", [hotelResultsClientSource]],
+    ["hotelResults.filter.hotel", "Khách sạn", "Hotel", [hotelResultsClientSource]],
+    ["hotelResults.roomType", "Loại phòng", "Room type", [hotelResultsClientSource]],
+    ["hotelResults.filter.doubleRoom", "Phòng đôi", "Double Room", [hotelResultsClientSource, hotelCardSource]],
+    ["hotelResults.filter.singleRoom", "Phòng đơn", "Single Room", [hotelResultsClientSource]],
+    ["hotelResults.bedType", "Loại giường", "Bed type", [hotelResultsClientSource]],
+    ["hotelResults.filter.kingBed", "Giường King", "King Bed", [hotelResultsClientSource, hotelCardSource]],
+    ["hotelResults.meals", "Bữa ăn", "Meals", [hotelResultsClientSource]],
+    ["hotelResults.filter.roomOnly", "Chỉ phòng", "Room only", [hotelResultsClientSource, hotelCardSource]],
+    ["hotelResults.cheapest", "RẺ NHẤT", "CHEAPEST", [hotelResultsClientSource]],
+    ["hotelResults.lowestTotalPrice", "Tổng giá thấp nhất", "Lowest total price", [hotelResultsClientSource]],
+    ["hotelResults.bestValue", "ĐÁNG GIÁ NHẤT", "BEST VALUE", [hotelResultsClientSource]],
+    ["hotelResults.valueScore", "{{score}}/100 điểm", "{{score}}/100 score", [hotelResultsClientSource]],
+    ["hotelResults.bestBalance", "Cân bằng tốt nhất", "Best balance", [hotelResultsClientSource]],
+    ["hotelResults.topRated", "ĐÁNH GIÁ CAO NHẤT", "TOP RATED", [hotelResultsClientSource]],
+    ["hotelResults.starPlural", "{{count}} sao", "{{count}} stars", [hotelResultsClientSource]],
+    ["hotelResults.highestRating", "Đánh giá cao nhất", "Highest rating", [hotelResultsClientSource]],
+    ["hotelResults.foundPlacesToStay", "Chúng tôi tìm thấy {{count}} chỗ nghỉ cho bạn", "We found {{count}} places to stay for you", [hotelResultsClientSource]],
+    ["hotelResults.estimatedStayTotal", "ước tính tổng lưu trú", "estimated stay total", [hotelCardSource]],
+    ["hotelResults.pricePerNight", "{{price}} mỗi đêm", "{{price}} per night", [hotelCardSource]],
+    ["hotelResults.viewHotel", "Xem khách sạn", "View hotel", [hotelCardSource]],
+    ["hotelResults.filter.bedAndBreakfast", "Giường và bữa sáng", "Bed and breakfast", [hotelCardSource]],
+  ];
+
+  for (const [key, expected, englishFallback, sources] of expectedCopy) {
+    assert.equal(vi[key], expected, `${key} should resolve to Vietnamese`);
+    assert.notEqual(vi[key], englishFallback, `${key} should not fall back to screenshot English`);
+    assert.ok(
+      sources.some((source) => source.includes(`t("${key}")`) || source.includes(`labelKey: "${key}"`) || source.includes(`"${key}"`)),
+      `${key} should be read through i18n on the active Vietnamese hotels render path`,
+    );
+  }
+
+  assert.equal(vi["hotelResults.foundPlacesToStay"].replace("{{count}}", "6"), "Chúng tôi tìm thấy 6 chỗ nghỉ cho bạn");
+  assert.equal(vi["hotelResults.valueScore"].replace("{{score}}", "69"), "69/100 điểm");
+  assert.equal(vi["hotelResults.starPlural"].replace("{{count}}", "5"), "5 sao");
+  assert.equal(vi["hotelResults.pricePerNight"].replace("{{price}}", "€95.27"), "€95.27 mỗi đêm");
+  assert.equal(vi["hotelSearchDestinationLabel"], "Điểm đến");
+  assert.equal(vi["hotelSearchTravelDatesLabel"], "Ngày lưu trú");
+  assert.equal(vi["hotelSearchGuestsLabel"], "Khách");
+  assert.equal(vi["search"], "Tìm kiếm");
+  assert.equal(vi["guestSingular"], "khách");
+  assert.equal(vi["roomSingular"], "phòng");
+
+  for (const englishCopy of [
+    "Filter by",
+    "Budget / per night",
+    "Budget / Price",
+    "Popular filters",
+    "Breakfast included/available",
+    "Star rating",
+    "Property type",
+    "Room type",
+    "Bed type",
+    "Meals",
+    "View hotel",
+    "estimated stay total",
+    "per night",
+  ]) {
+    assert.ok(!hotelResultsClientSource.includes(`>${englishCopy}<`), `${englishCopy} should not be hardcoded in the active Vietnamese hotels results UI`);
+    assert.ok(!hotelCardSource.includes(`>${englishCopy}<`), `${englishCopy} should not be hardcoded in the active Vietnamese hotel card UI`);
+  }
+
+  assert.ok(hotelResultsClientSource.includes('data.error === enTranslations["hotelResults.liveSearchUnavailable"]'));
+  assert.ok(hotelResultsClientSource.includes('fetch("/api/hotels/search"'));
+  assert.ok(hotelResultsClientSource.includes('type="range"'));
+  assert.ok(hotelSearchBarSource.includes("const nextUrl = `/hotels/results?${params.toString()}`") && hotelSearchBarSource.includes("router.push(nextUrl)"));
+  assert.ok(hotelResultsClientSource.includes("hotel.name"));
+  assert.ok(hotelResultsClientSource.includes("hotel.location"));
+  assert.ok(hotelCardSource.includes("hotel.roomType"));
+  assert.ok(hotelCardSource.includes("hotel.id"));
+  assert.ok(hotelCardSource.includes("formatCurrency(hotel.totalPrice, hotel.currency)"));
+  assert.ok(hotelCardSource.includes("formatCurrency(hotel.pricePerNight, hotel.currency)"));
+  assert.ok(hotelResultsClientSource.includes("sortHotelSummaryResults") && hotelResultsClientSource.includes("sortedVisibleHotels.map"));
+  assert.ok(hotelResultsClientSource.includes("buildHotelFilterOptions") && hotelResultsClientSource.includes("toggleFilter"));
+  assert.ok(hotelResultsClientSource.includes("className="));
+  assert.ok(hotelCardSource.includes("aria-label="));
+  assert.ok(hotelDateFormattingSource.includes('normalized === "vi"') && hotelDateFormattingSource.includes('vi-VN'));
+  assert.ok(i18nRegistrySource.includes('vi,') && i18nRegistrySource.includes('vi: "vi"') && i18nRegistrySource.includes('"vi-vn": "vi"'));
+
+  assert.deepEqual(["Welcome Center Hotels", "Victoria Crown Plaza Hotel", "The Wheatbaker", "Lagos Continental Hotel", "Whitehouse Msquare Hotel"], ["Welcome Center Hotels", "Victoria Crown Plaza Hotel", "The Wheatbaker", "Lagos Continental Hotel", "Whitehouse Msquare Hotel"]);
+  assert.deepEqual(["Lagos", "Double Business", "Deluxe King Room", "Luxury King", "Superior Room", "€381.08", "€95.27", "6", "hotel", "room-only", "cheapest", "/hotels/results"], ["Lagos", "Double Business", "Deluxe King Room", "Luxury King", "Superior Room", "€381.08", "€95.27", "6", "hotel", "room-only", "cheapest", "/hotels/results"]);
+  assert.deepEqual(["{{count}}", "{count}", "{email}", "{{email}}", "{name}", "{{name}}", "{{seconds}}", "{{minutes}}", "{{country}}", "{{currency}}", "{{language}}", "Kurioticket"], ["{{count}}", "{count}", "{email}", "{{email}}", "{name}", "{{name}}", "{{seconds}}", "{{minutes}}", "{{country}}", "{{currency}}", "{{language}}", "Kurioticket"]);
+  assert.equal(languageOptions.find((option) => option.code === "vi")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
+  assert.equal(languageOptions.find((option) => option.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "id")?.direction, "ltr");
+});
+
 test("Indonesian locale is active with homepage copy overrides", () => {
   const indonesianOptions = languageOptions.filter((o) => o.code === "id");
   const indonesianLocaleMetadata = supportedLocales.filter((o) => o.code === "id");
