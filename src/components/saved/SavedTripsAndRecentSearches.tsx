@@ -409,10 +409,12 @@ function buildSavedTripHref(trip: ResolvedSavedTrip, fare?: SavedTripFare) {
 
 type SavedTripsAndRecentSearchesProps = {
   compactTopSpacing?: boolean;
+  compactTopSpacingMobile?: boolean;
 };
 
 export function SavedTripsAndRecentSearches({
   compactTopSpacing = false,
+  compactTopSpacingMobile = compactTopSpacing,
 }: SavedTripsAndRecentSearchesProps) {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -577,7 +579,11 @@ export function SavedTripsAndRecentSearches({
   return (
     <div
       className={`px-4 pb-8 sm:px-6 sm:pb-10 lg:px-8 lg:pb-11 ${
-        compactTopSpacing ? "pt-2 sm:pt-3 lg:pt-4" : "pt-6 sm:pt-8 lg:pt-10"
+        compactTopSpacing
+          ? compactTopSpacingMobile
+            ? "pt-2 sm:pt-3 lg:pt-4"
+            : "pt-6 sm:pt-3 lg:pt-4"
+          : "pt-6 sm:pt-8 lg:pt-10"
       }`}
     >
       <div className="mx-auto min-w-0 max-w-[88rem] text-start">
