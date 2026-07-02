@@ -11,7 +11,7 @@ export const metadata = {
 export default function FlightsPage() {
   return (
     <>
-      <AppHeader mobileHeroOverlay mobileHeroOverlayLowered hideMobileCategoryTabs />
+      <AppHeader mobileHeroOverlay mobileHeroOverlayLowered />
       <FlightLandingClient />
       <Footer />
     </>
