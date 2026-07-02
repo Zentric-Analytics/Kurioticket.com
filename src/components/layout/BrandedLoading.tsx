@@ -11,6 +11,8 @@ type BrandedLoadingProps = {
   className?: string;
   contentClassName?: string;
   showLogo?: boolean;
+  showProgress?: boolean;
+  visual?: "default" | "logoPulse";
 };
 
 const variantClasses = {
@@ -28,8 +30,11 @@ export function BrandedLoading({
   className,
   contentClassName,
   showLogo = true,
+  showProgress = true,
+  visual = "default",
 }: BrandedLoadingProps) {
   const isFullscreen = variant === "fullscreen";
+  const logoPulse = visual === "logoPulse";
 
   return (
     <section
@@ -56,16 +61,30 @@ export function BrandedLoading({
       >
         {showLogo ? (
           <div className={cn("flex", isFullscreen ? "justify-center" : "justify-start")}>
-            <KurioticketLogo className="h-10 sm:h-11" />
+            <div
+              className={cn(
+                logoPulse &&
+                  "kurioticket-logo-pulse relative isolate rounded-[2rem] px-5 py-4 motion-reduce:animate-none",
+              )}
+            >
+              <KurioticketLogo
+                className={cn(
+                  "h-10 sm:h-11",
+                  logoPulse && "animate-[logo-breathe_2.6s_ease-in-out_infinite] motion-reduce:animate-none",
+                )}
+              />
+            </div>
           </div>
         ) : null}
 
         <div className={cn(showLogo ? "mt-7" : undefined)}>
-          <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-[#004BB8]/10">
-            <div className="h-full w-1/2 animate-[loading-line_1.4s_ease-in-out_infinite] rounded-full bg-[linear-gradient(90deg,#004BB8,#5CB6B2)] motion-reduce:animate-none" />
-          </div>
+          {showProgress ? (
+            <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-[#004BB8]/10">
+              <div className="h-full w-1/2 animate-[loading-line_1.4s_ease-in-out_infinite] rounded-full bg-[linear-gradient(90deg,#004BB8,#5CB6B2)] motion-reduce:animate-none" />
+            </div>
+          ) : null}
 
-          <h1 className="mt-5 text-xl font-semibold tracking-tight text-[#021C2B] sm:text-2xl">
+          <h1 className={cn("text-xl font-semibold tracking-tight text-[#021C2B] sm:text-2xl", showProgress ? "mt-5" : "mt-0")}>
             {title}
           </h1>
           {description ? (
@@ -75,11 +94,13 @@ export function BrandedLoading({
           ) : null}
         </div>
 
-        <div className="mt-5 flex gap-2" aria-hidden="true">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-[#004BB8] motion-reduce:animate-none" />
-          <span className="h-2 w-2 animate-pulse rounded-full bg-[#5CB6B2] delay-150 motion-reduce:animate-none" />
-          <span className="h-2 w-2 animate-pulse rounded-full bg-[#021C2B] delay-300 motion-reduce:animate-none" />
-        </div>
+        {showProgress ? (
+          <div className="mt-5 flex gap-2" aria-hidden="true">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-[#004BB8] motion-reduce:animate-none" />
+            <span className="h-2 w-2 animate-pulse rounded-full bg-[#5CB6B2] delay-150 motion-reduce:animate-none" />
+            <span className="h-2 w-2 animate-pulse rounded-full bg-[#021C2B] delay-300 motion-reduce:animate-none" />
+          </div>
+        ) : null}
 
         {children ? <div className="mt-6 w-full">{children}</div> : null}
       </div>
