@@ -1873,14 +1873,14 @@ flightLandingRouteAriaLabel: "Vluchten zoeken van {{origin}} naar {{destination}
   "accountDashboard.priceAlerts.sort.newest": "Nieuwste",
   "accountDashboard.priceAlerts.sort.oldest": "Oudste",
   "accountDashboard.priceAlerts.sort.routeAz": "Route A-Z (alfabetisch)",
-  "accountDashboard.priceAlerts.features.monitoring.title": "Realtime volgen",
-  "accountDashboard.priceAlerts.features.monitoring.body": "We volgen prijzen en laten het je weten wanneer meldingen worden geactiveerd.",
+  "accountDashboard.priceAlerts.features.monitoring.title": "Realtime monitoring",
+  "accountDashboard.priceAlerts.features.monitoring.body": "We houden prijzen in de gaten en laten je weten wanneer meldingen worden geactiveerd.",
   "accountDashboard.priceAlerts.features.email.title": "E-mailmeldingen",
   "accountDashboard.priceAlerts.features.email.body": "Ontvang een melding wanneer tarieven veranderen.",
   "accountDashboard.priceAlerts.features.trends.title": "Prijstrends",
-  "accountDashboard.priceAlerts.features.trends.body": "Bekijk hoe gevolgde tarieven in de loop van de tijd veranderen.",
+  "accountDashboard.priceAlerts.features.trends.body": "Bekijk hoe gevolgde tarieven zich in de loop van de tijd ontwikkelen.",
   "accountDashboard.priceAlerts.features.management.title": "Eenvoudig beheer",
-  "accountDashboard.priceAlerts.features.management.body": "Pauzeer of verwijder meldingen op elk moment.",
+  "accountDashboard.priceAlerts.features.management.body": "Pauzeer of verwijder meldingen wanneer je wilt.",
   "accountDashboard.priceAlerts.error.title":
     "We konden je alerts niet laden. Probeer het opnieuw.",
   "accountDashboard.priceAlerts.error.body":

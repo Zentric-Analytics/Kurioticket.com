@@ -195,13 +195,13 @@ export const translations: TranslationDictionary = {
     "Monitorujemy ceny i informujemy Cię, gdy alerty zostaną uruchomione.",
   "accountDashboard.priceAlerts.features.email.title": "Powiadomienia e-mail",
   "accountDashboard.priceAlerts.features.email.body":
-    "Otrzymuj powiadomienia, gdy taryfy się zmienią.",
+    "Otrzymuj powiadomienia, gdy taryfy się zmieniają.",
   "accountDashboard.priceAlerts.features.trends.title": "Trendy cenowe",
   "accountDashboard.priceAlerts.features.trends.body":
     "Zobacz, jak śledzone taryfy zmieniają się w czasie.",
   "accountDashboard.priceAlerts.features.management.title": "Łatwe zarządzanie",
   "accountDashboard.priceAlerts.features.management.body":
-    "Wstrzymuj lub usuwaj alerty w dowolnym momencie.",
+    "Wstrzymaj lub usuń alerty w dowolnym momencie.",
   "accountDashboard.priceAlerts.error.title":
     "Nie udało się wczytać Twoich alertów. Spróbuj ponownie.",
   "accountDashboard.priceAlerts.error.body":

@@ -163,11 +163,11 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.features.monitoring.title":
     "रीयल-टाइम निगरानी",
   "accountDashboard.priceAlerts.features.monitoring.body":
-    "हम कीमतों की निगरानी करते हैं और अलर्ट ट्रिगर होने पर आपको बताते हैं।",
+    "हम कीमतों पर नज़र रखते हैं और अलर्ट ट्रिगर होने पर आपको बताते हैं।",
   "accountDashboard.priceAlerts.features.email.title": "ईमेल सूचनाएँ",
   "accountDashboard.priceAlerts.features.email.body":
     "किराए बदलने पर सूचना पाएँ।",
-  "accountDashboard.priceAlerts.features.trends.title": "मूल्य रुझान",
+  "accountDashboard.priceAlerts.features.trends.title": "कीमत रुझान",
   "accountDashboard.priceAlerts.features.trends.body":
     "देखें कि ट्रैक किए गए किराए समय के साथ कैसे बदलते हैं।",
   "accountDashboard.priceAlerts.features.management.title": "आसान प्रबंधन",

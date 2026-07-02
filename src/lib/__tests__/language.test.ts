@@ -4103,11 +4103,11 @@ test("Polish account Price Alerts active page copy resolves without English fall
     "accountDashboard.priceAlerts.features.monitoring.title": "Monitorowanie w czasie rzeczywistym",
     "accountDashboard.priceAlerts.features.monitoring.body": "Monitorujemy ceny i informujemy Cię, gdy alerty zostaną uruchomione.",
     "accountDashboard.priceAlerts.features.email.title": "Powiadomienia e-mail",
-    "accountDashboard.priceAlerts.features.email.body": "Otrzymuj powiadomienia, gdy taryfy się zmienią.",
+    "accountDashboard.priceAlerts.features.email.body": "Otrzymuj powiadomienia, gdy taryfy się zmieniają.",
     "accountDashboard.priceAlerts.features.trends.title": "Trendy cenowe",
     "accountDashboard.priceAlerts.features.trends.body": "Zobacz, jak śledzone taryfy zmieniają się w czasie.",
     "accountDashboard.priceAlerts.features.management.title": "Łatwe zarządzanie",
-    "accountDashboard.priceAlerts.features.management.body": "Wstrzymuj lub usuwaj alerty w dowolnym momencie.",
+    "accountDashboard.priceAlerts.features.management.body": "Wstrzymaj lub usuń alerty w dowolnym momencie.",
   };
 
   for (const [key, value] of Object.entries(expectedPolishPriceAlertsCopy)) {
@@ -4146,6 +4146,50 @@ test("Polish account Price Alerts active page copy resolves without English fall
   assert.ok(!priceAlertsSource.includes('>Search flights<'));
   assert.ok(languageOptions.some((option) => option.code === "pl" && option.direction === "ltr"));
   assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+});
+
+test("Price alerts benefit cards resolve through i18n for all active locales without English fallback", () => {
+  const activeLocaleTranslations = {
+    "en-us": enTranslations, ar: arTranslations, nl: nlTranslations, "es-es": esTranslations, fr: frTranslations, "de-de": deTranslations, "it-it": itTranslations, "pt-br": ptBrTranslations, "zh-cn": zhCnTranslations, ja: jaTranslations, ko: koTranslations, hi: hiTranslations, tr: trTranslations, pl: plTranslations, sv: svTranslations, id: idTranslations, th: thTranslations,
+  } as const;
+  const expectedBenefitCopy: Record<keyof typeof activeLocaleTranslations, Record<string, string>> = {
+    "en-us": { "accountDashboard.priceAlerts.features.monitoring.title": "Real-time monitoring", "accountDashboard.priceAlerts.features.monitoring.body": "We monitor prices and let you know when alerts are triggered.", "accountDashboard.priceAlerts.features.email.title": "Email notifications", "accountDashboard.priceAlerts.features.email.body": "Get notified when fares change.", "accountDashboard.priceAlerts.features.trends.title": "Price trends", "accountDashboard.priceAlerts.features.trends.body": "See how tracked fares move over time.", "accountDashboard.priceAlerts.features.management.title": "Easy management", "accountDashboard.priceAlerts.features.management.body": "Pause or remove alerts anytime." },
+    ar: { "accountDashboard.priceAlerts.features.monitoring.title": "مراقبة فورية", "accountDashboard.priceAlerts.features.monitoring.body": "نراقب الأسعار ونخبرك عند تفعيل التنبيهات.", "accountDashboard.priceAlerts.features.email.title": "إشعارات البريد الإلكتروني", "accountDashboard.priceAlerts.features.email.body": "احصل على إشعار عندما تتغير الأسعار.", "accountDashboard.priceAlerts.features.trends.title": "اتجاهات الأسعار", "accountDashboard.priceAlerts.features.trends.body": "شاهد كيف تتحرك الأسعار المتتبعة بمرور الوقت.", "accountDashboard.priceAlerts.features.management.title": "إدارة سهلة", "accountDashboard.priceAlerts.features.management.body": "أوقف التنبيهات مؤقتًا أو أزلها في أي وقت." },
+    nl: { "accountDashboard.priceAlerts.features.monitoring.title": "Realtime monitoring", "accountDashboard.priceAlerts.features.monitoring.body": "We houden prijzen in de gaten en laten je weten wanneer meldingen worden geactiveerd.", "accountDashboard.priceAlerts.features.email.title": "E-mailmeldingen", "accountDashboard.priceAlerts.features.email.body": "Ontvang een melding wanneer tarieven veranderen.", "accountDashboard.priceAlerts.features.trends.title": "Prijstrends", "accountDashboard.priceAlerts.features.trends.body": "Bekijk hoe gevolgde tarieven zich in de loop van de tijd ontwikkelen.", "accountDashboard.priceAlerts.features.management.title": "Eenvoudig beheer", "accountDashboard.priceAlerts.features.management.body": "Pauzeer of verwijder meldingen wanneer je wilt." },
+    "es-es": { "accountDashboard.priceAlerts.features.monitoring.title": "Monitoreo en tiempo real", "accountDashboard.priceAlerts.features.monitoring.body": "Supervisamos los precios y te avisamos cuando se activan las alertas.", "accountDashboard.priceAlerts.features.email.title": "Notificaciones por correo electrónico", "accountDashboard.priceAlerts.features.email.body": "Recibe una notificación cuando cambien las tarifas.", "accountDashboard.priceAlerts.features.trends.title": "Tendencias de precios", "accountDashboard.priceAlerts.features.trends.body": "Consulta cómo cambian las tarifas seguidas con el tiempo.", "accountDashboard.priceAlerts.features.management.title": "Gestión sencilla", "accountDashboard.priceAlerts.features.management.body": "Pausa o elimina alertas en cualquier momento." },
+    fr: { "accountDashboard.priceAlerts.features.monitoring.title": "Suivi en temps réel", "accountDashboard.priceAlerts.features.monitoring.body": "Nous surveillons les prix et vous prévenons lorsque les alertes se déclenchent.", "accountDashboard.priceAlerts.features.email.title": "Notifications par e-mail", "accountDashboard.priceAlerts.features.email.body": "Recevez une notification lorsque les tarifs changent.", "accountDashboard.priceAlerts.features.trends.title": "Tendances des prix", "accountDashboard.priceAlerts.features.trends.body": "Suivez l’évolution des tarifs surveillés au fil du temps.", "accountDashboard.priceAlerts.features.management.title": "Gestion facile", "accountDashboard.priceAlerts.features.management.body": "Mettez en pause ou supprimez des alertes à tout moment." },
+    "de-de": { "accountDashboard.priceAlerts.features.monitoring.title": "Echtzeitüberwachung", "accountDashboard.priceAlerts.features.monitoring.body": "Wir überwachen Preise und informieren dich, wenn Benachrichtigungen ausgelöst werden.", "accountDashboard.priceAlerts.features.email.title": "E-Mail-Benachrichtigungen", "accountDashboard.priceAlerts.features.email.body": "Erhalte eine Benachrichtigung, wenn sich Tarife ändern.", "accountDashboard.priceAlerts.features.trends.title": "Preistrends", "accountDashboard.priceAlerts.features.trends.body": "Sieh, wie sich beobachtete Tarife im Laufe der Zeit entwickeln.", "accountDashboard.priceAlerts.features.management.title": "Einfache Verwaltung", "accountDashboard.priceAlerts.features.management.body": "Pausiere oder entferne Benachrichtigungen jederzeit." },
+    "it-it": { "accountDashboard.priceAlerts.features.monitoring.title": "Monitoraggio in tempo reale", "accountDashboard.priceAlerts.features.monitoring.body": "Monitoriamo i prezzi e ti avvisiamo quando gli avvisi vengono attivati.", "accountDashboard.priceAlerts.features.email.title": "Notifiche e-mail", "accountDashboard.priceAlerts.features.email.body": "Ricevi una notifica quando le tariffe cambiano.", "accountDashboard.priceAlerts.features.trends.title": "Andamento dei prezzi", "accountDashboard.priceAlerts.features.trends.body": "Scopri come cambiano nel tempo le tariffe monitorate.", "accountDashboard.priceAlerts.features.management.title": "Gestione semplice", "accountDashboard.priceAlerts.features.management.body": "Metti in pausa o rimuovi gli avvisi in qualsiasi momento." },
+    "pt-br": { "accountDashboard.priceAlerts.features.monitoring.title": "Monitoramento em tempo real", "accountDashboard.priceAlerts.features.monitoring.body": "Monitoramos os preços e avisamos quando os alertas forem acionados.", "accountDashboard.priceAlerts.features.email.title": "Notificações por e-mail", "accountDashboard.priceAlerts.features.email.body": "Receba uma notificação quando as tarifas mudarem.", "accountDashboard.priceAlerts.features.trends.title": "Tendências de preço", "accountDashboard.priceAlerts.features.trends.body": "Veja como as tarifas acompanhadas mudam ao longo do tempo.", "accountDashboard.priceAlerts.features.management.title": "Gerenciamento fácil", "accountDashboard.priceAlerts.features.management.body": "Pause ou remova alertas a qualquer momento." },
+    "zh-cn": { "accountDashboard.priceAlerts.features.monitoring.title": "实时监控", "accountDashboard.priceAlerts.features.monitoring.body": "我们会监控价格，并在触发提醒时通知你。", "accountDashboard.priceAlerts.features.email.title": "电子邮件通知", "accountDashboard.priceAlerts.features.email.body": "票价变化时接收通知。", "accountDashboard.priceAlerts.features.trends.title": "价格趋势", "accountDashboard.priceAlerts.features.trends.body": "查看已跟踪票价随时间的变化。", "accountDashboard.priceAlerts.features.management.title": "轻松管理", "accountDashboard.priceAlerts.features.management.body": "随时暂停或移除提醒。" },
+    ja: { "accountDashboard.priceAlerts.features.monitoring.title": "リアルタイム監視", "accountDashboard.priceAlerts.features.monitoring.body": "価格を監視し、アラートが発動したときにお知らせします。", "accountDashboard.priceAlerts.features.email.title": "メール通知", "accountDashboard.priceAlerts.features.email.body": "運賃が変わったときに通知を受け取れます。", "accountDashboard.priceAlerts.features.trends.title": "価格トレンド", "accountDashboard.priceAlerts.features.trends.body": "追跡中の運賃が時間とともにどう変化するか確認できます。", "accountDashboard.priceAlerts.features.management.title": "簡単な管理", "accountDashboard.priceAlerts.features.management.body": "アラートはいつでも一時停止または削除できます。" },
+    ko: { "accountDashboard.priceAlerts.features.monitoring.title": "실시간 모니터링", "accountDashboard.priceAlerts.features.monitoring.body": "가격을 모니터링하고 알림이 실행되면 알려드립니다.", "accountDashboard.priceAlerts.features.email.title": "이메일 알림", "accountDashboard.priceAlerts.features.email.body": "운임이 변경되면 알림을 받으세요.", "accountDashboard.priceAlerts.features.trends.title": "가격 추세", "accountDashboard.priceAlerts.features.trends.body": "추적 중인 운임이 시간에 따라 어떻게 변하는지 확인하세요.", "accountDashboard.priceAlerts.features.management.title": "쉬운 관리", "accountDashboard.priceAlerts.features.management.body": "언제든지 알림을 일시 중지하거나 삭제하세요." },
+    hi: { "accountDashboard.priceAlerts.features.monitoring.title": "रीयल-टाइम निगरानी", "accountDashboard.priceAlerts.features.monitoring.body": "हम कीमतों पर नज़र रखते हैं और अलर्ट ट्रिगर होने पर आपको बताते हैं।", "accountDashboard.priceAlerts.features.email.title": "ईमेल सूचनाएँ", "accountDashboard.priceAlerts.features.email.body": "किराए बदलने पर सूचना पाएँ।", "accountDashboard.priceAlerts.features.trends.title": "कीमत रुझान", "accountDashboard.priceAlerts.features.trends.body": "देखें कि ट्रैक किए गए किराए समय के साथ कैसे बदलते हैं।", "accountDashboard.priceAlerts.features.management.title": "आसान प्रबंधन", "accountDashboard.priceAlerts.features.management.body": "कभी भी अलर्ट रोकें या हटाएँ।" },
+    tr: { "accountDashboard.priceAlerts.features.monitoring.title": "Gerçek zamanlı takip", "accountDashboard.priceAlerts.features.monitoring.body": "Fiyatları izler ve uyarılar tetiklendiğinde sana haber veririz.", "accountDashboard.priceAlerts.features.email.title": "E-posta bildirimleri", "accountDashboard.priceAlerts.features.email.body": "Ücretler değiştiğinde bildirim al.", "accountDashboard.priceAlerts.features.trends.title": "Fiyat eğilimleri", "accountDashboard.priceAlerts.features.trends.body": "Takip edilen ücretlerin zaman içinde nasıl değiştiğini gör.", "accountDashboard.priceAlerts.features.management.title": "Kolay yönetim", "accountDashboard.priceAlerts.features.management.body": "Uyarıları istediğin zaman duraklat veya kaldır." },
+    pl: { "accountDashboard.priceAlerts.features.monitoring.title": "Monitorowanie w czasie rzeczywistym", "accountDashboard.priceAlerts.features.monitoring.body": "Monitorujemy ceny i informujemy Cię, gdy alerty zostaną uruchomione.", "accountDashboard.priceAlerts.features.email.title": "Powiadomienia e-mail", "accountDashboard.priceAlerts.features.email.body": "Otrzymuj powiadomienia, gdy taryfy się zmieniają.", "accountDashboard.priceAlerts.features.trends.title": "Trendy cenowe", "accountDashboard.priceAlerts.features.trends.body": "Zobacz, jak śledzone taryfy zmieniają się w czasie.", "accountDashboard.priceAlerts.features.management.title": "Łatwe zarządzanie", "accountDashboard.priceAlerts.features.management.body": "Wstrzymaj lub usuń alerty w dowolnym momencie." },
+    sv: { "accountDashboard.priceAlerts.features.monitoring.title": "Övervakning i realtid", "accountDashboard.priceAlerts.features.monitoring.body": "Vi bevakar priser och meddelar dig när aviseringar utlöses.", "accountDashboard.priceAlerts.features.email.title": "E-postaviseringar", "accountDashboard.priceAlerts.features.email.body": "Få en avisering när priser ändras.", "accountDashboard.priceAlerts.features.trends.title": "Pristrender", "accountDashboard.priceAlerts.features.trends.body": "Se hur bevakade priser förändras över tid.", "accountDashboard.priceAlerts.features.management.title": "Enkel hantering", "accountDashboard.priceAlerts.features.management.body": "Pausa eller ta bort aviseringar när som helst." },
+    id: { "accountDashboard.priceAlerts.features.monitoring.title": "Pemantauan waktu nyata", "accountDashboard.priceAlerts.features.monitoring.body": "Kami memantau harga dan memberi tahu Anda saat peringatan dipicu.", "accountDashboard.priceAlerts.features.email.title": "Notifikasi email", "accountDashboard.priceAlerts.features.email.body": "Dapatkan notifikasi saat tarif berubah.", "accountDashboard.priceAlerts.features.trends.title": "Tren harga", "accountDashboard.priceAlerts.features.trends.body": "Lihat bagaimana tarif yang dilacak berubah dari waktu ke waktu.", "accountDashboard.priceAlerts.features.management.title": "Pengelolaan mudah", "accountDashboard.priceAlerts.features.management.body": "Jeda atau hapus peringatan kapan saja." },
+    th: { "accountDashboard.priceAlerts.features.monitoring.title": "ติดตามแบบเรียลไทม์", "accountDashboard.priceAlerts.features.monitoring.body": "เราติดตามราคาและแจ้งให้คุณทราบเมื่อมีการเรียกใช้การแจ้งเตือน", "accountDashboard.priceAlerts.features.email.title": "การแจ้งเตือนทางอีเมล", "accountDashboard.priceAlerts.features.email.body": "รับการแจ้งเตือนเมื่อค่าโดยสารเปลี่ยนแปลง", "accountDashboard.priceAlerts.features.trends.title": "แนวโน้มราคา", "accountDashboard.priceAlerts.features.trends.body": "ดูว่าค่าโดยสารที่ติดตามเปลี่ยนแปลงไปอย่างไรเมื่อเวลาผ่านไป", "accountDashboard.priceAlerts.features.management.title": "จัดการง่าย", "accountDashboard.priceAlerts.features.management.body": "หยุดชั่วคราวหรือลบการแจ้งเตือนได้ทุกเมื่อ" },
+  };
+  const benefitKeys = Object.keys(expectedBenefitCopy["en-us"]);
+  const priceAlertsSource = readFileSync("src/app/dashboard/alerts/PriceAlertsContent.tsx", "utf8");
+  const alertsPageSource = readFileSync("src/app/dashboard/alerts/page.tsx", "utf8");
+  for (const [locale, dictionary] of Object.entries(activeLocaleTranslations)) {
+    for (const key of benefitKeys) {
+      assert.equal(getTranslations(locale)[key], expectedBenefitCopy[locale as keyof typeof expectedBenefitCopy][key], `${locale} should resolve ${key}`);
+      assert.equal(dictionary[key], expectedBenefitCopy[locale as keyof typeof expectedBenefitCopy][key], `${locale} should define ${key}`);
+      if (locale !== "en-us") assert.notEqual(dictionary[key], enTranslations[key], `${locale} should not fall back to English for ${key}`);
+    }
+  }
+  assert.ok(alertsPageSource.includes('<PriceAlertsContent showAccountLink={showAccountLink} />'));
+  for (const snippet of ['titleKey: "accountDashboard.priceAlerts.features.monitoring.title"', 'textKey: "accountDashboard.priceAlerts.features.monitoring.body"', 'icon: Bell', 'titleKey: "accountDashboard.priceAlerts.features.email.title"', 'textKey: "accountDashboard.priceAlerts.features.email.body"', 'icon: Mail', 'titleKey: "accountDashboard.priceAlerts.features.trends.title"', 'textKey: "accountDashboard.priceAlerts.features.trends.body"', 'icon: LineChart', 'titleKey: "accountDashboard.priceAlerts.features.management.title"', 'textKey: "accountDashboard.priceAlerts.features.management.body"', 'icon: Settings2', '{t[item.titleKey]}', '{t[item.textKey]}', 'aria-label={t["accountDashboard.priceAlerts.featuresAriaLabel"]}', 'href="/flights"', 'className="hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:block"']) assert.ok(priceAlertsSource.includes(snippet), snippet);
+  assert.ok(priceAlertsSource.indexOf("icon: Bell") < priceAlertsSource.indexOf("icon: Mail"));
+  assert.ok(priceAlertsSource.indexOf("icon: Mail") < priceAlertsSource.indexOf("icon: LineChart"));
+  assert.ok(priceAlertsSource.indexOf("icon: LineChart") < priceAlertsSource.indexOf("icon: Settings2"));
+  for (const hardcoded of [">Real-time monitoring<", ">Email notifications<", ">Price trends<", ">Easy management<"]) assert.ok(!priceAlertsSource.includes(hardcoded));
+  for (const snippet of ['id: "active"', 'id: "expired"', 'id: "all"', 'count: 0', '{ id: "newest", labelKey: "accountDashboard.priceAlerts.sort.newest" }', '{ id: "oldest", labelKey: "accountDashboard.priceAlerts.sort.oldest" }', '{ id: "routeAz", labelKey: "accountDashboard.priceAlerts.sort.routeAz" }']) assert.ok(priceAlertsSource.includes(snippet), snippet);
+  assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
+  for (const locale of ["nl", "es-es", "fr", "de-de", "it-it", "pt-br", "zh-cn", "ja", "ko", "hi", "tr", "pl", "sv", "id", "th"]) assert.equal(languageOptions.find((option) => option.code === locale || option.locale.toLowerCase() === locale)?.direction, "ltr", `${locale} should remain ltr`);
 });
 
 test("Hindi account dashboard overview copy resolves without English fallback", () => {
@@ -7582,14 +7626,14 @@ test("Indonesian and Swedish active account Trips and Price Alerts copy is local
   assert.equal(idTranslations["accountDashboard.priceAlerts.features.monitoring.title"], "Pemantauan waktu nyata");
   assert.equal(
     idTranslations["accountDashboard.priceAlerts.features.monitoring.body"],
-    "Kami memantau harga dan memberi tahu Anda saat peringatan terpicu.",
+    "Kami memantau harga dan memberi tahu Anda saat peringatan dipicu.",
   );
   assert.equal(idTranslations["accountDashboard.priceAlerts.features.email.title"], "Notifikasi email");
   assert.equal(idTranslations["accountDashboard.priceAlerts.features.email.body"], "Dapatkan notifikasi saat tarif berubah.");
   assert.equal(idTranslations["accountDashboard.priceAlerts.features.trends.title"], "Tren harga");
   assert.equal(
     idTranslations["accountDashboard.priceAlerts.features.trends.body"],
-    "Lihat bagaimana tarif yang dipantau berubah dari waktu ke waktu.",
+    "Lihat bagaimana tarif yang dilacak berubah dari waktu ke waktu.",
   );
   assert.equal(idTranslations["accountDashboard.priceAlerts.features.management.title"], "Pengelolaan mudah");
   assert.equal(
@@ -7619,19 +7663,19 @@ test("Indonesian and Swedish active account Trips and Price Alerts copy is local
   assert.equal(trTranslations["accountDashboard.priceAlerts.features.monitoring.title"], "Gerçek zamanlı takip");
   assert.equal(
     trTranslations["accountDashboard.priceAlerts.features.monitoring.body"],
-    "Fiyatları takip eder ve uyarılar tetiklendiğinde sizi bilgilendiririz.",
+    "Fiyatları izler ve uyarılar tetiklendiğinde sana haber veririz.",
   );
   assert.equal(trTranslations["accountDashboard.priceAlerts.features.email.title"], "E-posta bildirimleri");
-  assert.equal(trTranslations["accountDashboard.priceAlerts.features.email.body"], "Ücretler değiştiğinde bildirim alın.");
-  assert.equal(trTranslations["accountDashboard.priceAlerts.features.trends.title"], "Fiyat trendleri");
+  assert.equal(trTranslations["accountDashboard.priceAlerts.features.email.body"], "Ücretler değiştiğinde bildirim al.");
+  assert.equal(trTranslations["accountDashboard.priceAlerts.features.trends.title"], "Fiyat eğilimleri");
   assert.equal(
     trTranslations["accountDashboard.priceAlerts.features.trends.body"],
-    "Takip edilen ücretlerin zaman içinde nasıl değiştiğini görün.",
+    "Takip edilen ücretlerin zaman içinde nasıl değiştiğini gör.",
   );
   assert.equal(trTranslations["accountDashboard.priceAlerts.features.management.title"], "Kolay yönetim");
   assert.equal(
     trTranslations["accountDashboard.priceAlerts.features.management.body"],
-    "Uyarıları istediğiniz zaman duraklatın veya kaldırın.",
+    "Uyarıları istediğin zaman duraklat veya kaldır.",
   );
 
   assert.equal(svTranslations["accountDashboard.trips.title"], "Mina resor");
@@ -7764,19 +7808,19 @@ test("Indonesian and Swedish active account Trips and Price Alerts copy is local
   assert.equal(koTranslations["accountDashboard.priceAlerts.features.monitoring.title"], "실시간 모니터링");
   assert.equal(
     koTranslations["accountDashboard.priceAlerts.features.monitoring.body"],
-    "가격을 모니터링하고 알림 조건이 충족되면 알려드립니다.",
+    "가격을 모니터링하고 알림이 실행되면 알려드립니다.",
   );
   assert.equal(koTranslations["accountDashboard.priceAlerts.features.email.title"], "이메일 알림");
-  assert.equal(koTranslations["accountDashboard.priceAlerts.features.email.body"], "요금이 변경되면 알림을 받으세요.");
+  assert.equal(koTranslations["accountDashboard.priceAlerts.features.email.body"], "운임이 변경되면 알림을 받으세요.");
   assert.equal(koTranslations["accountDashboard.priceAlerts.features.trends.title"], "가격 추세");
   assert.equal(
     koTranslations["accountDashboard.priceAlerts.features.trends.body"],
-    "추적 중인 요금이 시간에 따라 어떻게 변하는지 확인하세요.",
+    "추적 중인 운임이 시간에 따라 어떻게 변하는지 확인하세요.",
   );
-  assert.equal(koTranslations["accountDashboard.priceAlerts.features.management.title"], "간편한 관리");
+  assert.equal(koTranslations["accountDashboard.priceAlerts.features.management.title"], "쉬운 관리");
   assert.equal(
     koTranslations["accountDashboard.priceAlerts.features.management.body"],
-    "언제든지 알림을 일시 중지하거나 삭제할 수 있습니다.",
+    "언제든지 알림을 일시 중지하거나 삭제하세요.",
   );
 
   assert.equal(hiTranslations["accountDashboard.trips.title"], "मेरी यात्राएँ");
@@ -7819,11 +7863,11 @@ test("Indonesian and Swedish active account Trips and Price Alerts copy is local
   assert.equal(hiTranslations["accountDashboard.priceAlerts.features.monitoring.title"], "रीयल-टाइम निगरानी");
   assert.equal(
     hiTranslations["accountDashboard.priceAlerts.features.monitoring.body"],
-    "हम कीमतों की निगरानी करते हैं और अलर्ट ट्रिगर होने पर आपको बताते हैं।",
+    "हम कीमतों पर नज़र रखते हैं और अलर्ट ट्रिगर होने पर आपको बताते हैं।",
   );
   assert.equal(hiTranslations["accountDashboard.priceAlerts.features.email.title"], "ईमेल सूचनाएँ");
   assert.equal(hiTranslations["accountDashboard.priceAlerts.features.email.body"], "किराए बदलने पर सूचना पाएँ।");
-  assert.equal(hiTranslations["accountDashboard.priceAlerts.features.trends.title"], "मूल्य रुझान");
+  assert.equal(hiTranslations["accountDashboard.priceAlerts.features.trends.title"], "कीमत रुझान");
   assert.equal(
     hiTranslations["accountDashboard.priceAlerts.features.trends.body"],
     "देखें कि ट्रैक किए गए किराए समय के साथ कैसे बदलते हैं।",
