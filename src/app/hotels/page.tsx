@@ -295,7 +295,7 @@ function DestinationCard({
     <Link
       href={card.href}
       aria-label={card.linkLabel}
-      className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_28px_-26px_rgba(15,23,42,0.34)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_30px_-26px_rgba(15,23,42,0.38)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-white"
+      className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_28px_-26px_rgba(15,23,42,0.34)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_30px_-26px_rgba(15,23,42,0.38)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-4 focus-visible:ring-offset-white"
     >
       <div
         className={`relative w-full overflow-hidden bg-slate-100 ${
@@ -348,7 +348,7 @@ function InspirationCard({ card }: InspirationCardProps) {
     <Link
       href={card.href}
       aria-label={card.linkLabel}
-      className="group flex h-full min-w-0 flex-col rounded-2xl bg-white p-2 transition duration-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-slate-50 sm:p-2.5"
+      className="group flex h-full min-w-0 flex-col rounded-2xl bg-white p-2 transition duration-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-4 focus-visible:ring-offset-slate-50 sm:p-2.5"
     >
       <div className="relative h-[6.75rem] w-full overflow-hidden rounded-xl bg-slate-100 sm:h-32 md:h-44 lg:h-48">
         <Image
@@ -670,7 +670,7 @@ export default function HotelsSearchPage() {
                         onClick={() => setSelectedInspirationCategory(chip)}
                         className={`focus-ring whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-semibold transition-colors ${
                           isSelected
-                            ? "border-indigo-600 bg-indigo-600 text-white shadow-sm shadow-indigo-600/20"
+                            ? "border-[#004BB8] bg-[#004BB8] text-white shadow-sm shadow-[#004BB8]/20"
                             : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
                         }`}
                       >
@@ -721,12 +721,12 @@ export default function HotelsSearchPage() {
                     <div className="pointer-events-none absolute inset-x-7 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/80 to-transparent" />
                     <div className="pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full bg-slate-200/30 blur-3xl" />
                     <div
-                      className="relative mb-2.5 inline-flex h-8 w-8 items-center justify-center rounded-[0.8rem] border border-indigo-200/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(238,242,255,0.72)_52%,rgba(248,250,252,0.92))] text-indigo-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_12px_22px_-18px_rgba(79,70,229,0.55),0_8px_18px_-20px_rgba(15,23,42,0.55)] sm:mb-5 sm:h-12 sm:w-12 sm:rounded-[1rem]"
+                      className="relative mb-2.5 inline-flex h-8 w-8 items-center justify-center rounded-[0.8rem] border border-[#004BB8]/15 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(0,75,184,0.08)_52%,rgba(248,250,252,0.92))] text-[#004BB8] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_12px_22px_-18px_rgba(0,75,184,0.28),0_8px_18px_-20px_rgba(15,23,42,0.55)] sm:mb-5 sm:h-12 sm:w-12 sm:rounded-[1rem]"
                       aria-hidden="true"
                     >
                       <span className="pointer-events-none absolute inset-[3px] rounded-[0.62rem] border border-white/80 shadow-[inset_0_1px_2px_rgba(255,255,255,0.88)] sm:inset-1 sm:rounded-[0.78rem]" />
                       <span className="pointer-events-none absolute left-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_0_1px_rgba(129,140,248,0.18)] sm:left-2 sm:top-2 sm:h-2 sm:w-2" />
-                      <span className="relative inline-flex h-5 w-5 items-center justify-center rounded-lg bg-white/45 ring-1 ring-indigo-100/70 sm:h-8 sm:w-8 sm:rounded-xl">
+                      <span className="relative inline-flex h-5 w-5 items-center justify-center rounded-lg bg-white/45 ring-1 ring-[#004BB8]/10 sm:h-8 sm:w-8 sm:rounded-xl">
                         <Icon className="h-3.5 w-3.5 stroke-[1.8] sm:h-5 sm:w-5" />
                       </span>
                     </div>

@@ -643,9 +643,9 @@ export default function DestinationsPage() {
       <AppHeader />
 
       <main className="flex-1 bg-[#f5f7fb] text-slate-950">
-        <section className="relative isolate overflow-hidden border-b border-violet-200 bg-[radial-gradient(circle_at_50%_100%,rgba(92,182,178,0.30),transparent_32%),linear-gradient(180deg,#021C2B_0%,#021C2B_48%,#004BB8_100%)] text-white">
+        <section className="relative isolate overflow-hidden border-b border-[#004BB8]/10 bg-[radial-gradient(circle_at_50%_100%,rgba(92,182,178,0.30),transparent_32%),linear-gradient(180deg,#021C2B_0%,#021C2B_48%,#004BB8_100%)] text-white">
           <div className="absolute inset-0 -z-10 opacity-25 [background-image:radial-gradient(circle_at_center,rgba(255,255,255,0.42)_1px,transparent_1.6px)] [background-size:28px_28px]" />
-          <div className="absolute -left-20 top-12 -z-10 h-56 w-56 rounded-full bg-fuchsia-400/20 blur-3xl" />
+          <div className="absolute -left-20 top-12 -z-10 h-56 w-56 rounded-full bg-[#5CB6B2]/20 blur-3xl" />
           <div className="absolute -right-16 bottom-2 -z-10 h-64 w-64 rounded-full bg-amber-300/20 blur-3xl" />
           <svg
             aria-hidden="true"
@@ -684,13 +684,13 @@ export default function DestinationsPage() {
 
           <div className="page-shell relative py-7 sm:py-9 lg:py-10">
             <div className="max-w-3xl">
-              <p className="inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-violet-50 shadow-sm shadow-black/10 backdrop-blur">
+              <p className="inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-white/90 shadow-sm shadow-black/10 backdrop-blur">
                 {dictionary.destinationsHeroBadge}
               </p>
               <h1 className="mt-4 text-3xl font-black tracking-[-0.035em] text-white drop-shadow-sm sm:text-4xl lg:text-5xl">
                 {dictionary.destinationsHeroTitle}
               </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-violet-50/90 sm:text-base">
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-white/90 sm:text-base">
                 {dictionary.destinationsHeroSubtitle}
               </p>
             </div>
@@ -709,7 +709,7 @@ export default function DestinationsPage() {
                     aria-current={isActive ? "page" : undefined}
                     className={`shrink-0 rounded-full border px-4 py-2 text-sm font-black shadow-sm backdrop-blur transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/25 ${
                       isActive
-                        ? "border-white bg-white text-violet-800 shadow-black/10 hover:bg-violet-50"
+                        ? "border-white bg-white text-[#021C2B] shadow-black/10 hover:bg-white/90"
                         : "border-white/25 bg-white/10 text-white hover:border-white/45 hover:bg-white/18"
                     }`}
                   >

@@ -50,7 +50,7 @@ export function FaqAccordion({
             )}
           >
             <span>{item.question}</span>
-            <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition group-open:bg-indigo-50 group-open:text-indigo-700">
+            <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition group-open:bg-[#004BB8]/8 group-open:text-[#004BB8]">
               <ChevronDown
                 aria-hidden="true"
                 className="h-4 w-4 transition-transform duration-200 group-open:rotate-180"

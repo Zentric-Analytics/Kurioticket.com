@@ -656,7 +656,7 @@ export default function DealsPage() {
               sizes="100vw"
               className="object-cover object-[center_52%]"
             />
-            <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(248,250,252,0.98)_0%,rgba(248,250,252,0.94)_40%,rgba(238,242,255,0.76)_68%,rgba(238,242,255,0.36)_100%)]" />
+            <div className="absolute inset-0 bg-[#F3F7FC]" />
             <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-slate-50 via-slate-50/85 to-transparent" />
           </div>
 
@@ -685,10 +685,10 @@ export default function DealsPage() {
                     {packageModes.map((mode) => (
                       <label
                         key={mode.value}
-                        className={`shrink-0 cursor-pointer rounded-full border px-3.5 py-2 text-sm font-extrabold shadow-sm backdrop-blur transition focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 ${
+                        className={`shrink-0 cursor-pointer rounded-full border px-3.5 py-2 text-sm font-extrabold shadow-sm backdrop-blur transition focus-within:outline-none focus-within:ring-2 focus-within:ring-[#004BB8]/25 focus-within:ring-offset-2 ${
                           packageMode === mode.value
-                            ? "border-indigo-600 bg-indigo-600 text-white"
-                            : "border-white/80 bg-white/80 text-slate-700 hover:border-indigo-300 hover:bg-white"
+                            ? "border-[#004BB8] bg-[#004BB8] text-white"
+                            : "border-white/80 bg-white/80 text-slate-700 hover:border-[#004BB8]/25 hover:bg-white"
                         }`}
                       >
                         <input
@@ -716,7 +716,7 @@ export default function DealsPage() {
                     }`}
                   >
                     {includesFlight ? (
-                      <div className="min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-s-xl lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+                      <div className="min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:rounded-none lg:rounded-s-xl lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
                         <label
                           htmlFor="package-origin"
                           className="mb-1 block text-xs font-semibold uppercase leading-4 [letter-spacing:0.025em] text-slate-600"
@@ -730,7 +730,7 @@ export default function DealsPage() {
                             value={origin}
                             onChange={(event) => setOrigin(event.target.value)}
                             placeholder={t("deals.originPlaceholder")}
-                            className="h-8 w-full rounded-md border-0 bg-transparent px-0 pe-9 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 md:text-sm"
+                            className="h-8 w-full rounded-md border-0 bg-transparent px-0 pe-9 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 md:text-sm"
                             autoComplete="address-level2"
                             required={includesFlight}
                           />
@@ -744,7 +744,7 @@ export default function DealsPage() {
                                 setError("");
                                 originInputRef.current?.focus();
                               }}
-                              className="absolute end-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1"
+                              className="absolute end-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1"
                             >
                               <X className="h-4 w-4" aria-hidden="true" />
                             </button>
@@ -754,7 +754,7 @@ export default function DealsPage() {
                     ) : null}
 
                     <div
-                      className={`min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0 ${
+                      className={`min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0 ${
                         includesFlight ? "" : "lg:rounded-s-xl"
                       }`}
                     >
@@ -773,7 +773,7 @@ export default function DealsPage() {
                             setDestination(event.target.value)
                           }
                           placeholder={t("deals.destinationPlaceholder")}
-                          className="h-8 w-full rounded-md border-0 bg-transparent px-0 pe-9 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 md:text-sm"
+                          className="h-8 w-full rounded-md border-0 bg-transparent px-0 pe-9 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 md:text-sm"
                           autoComplete="address-level2"
                           required
                         />
@@ -787,7 +787,7 @@ export default function DealsPage() {
                               setError("");
                               destinationInputRef.current?.focus();
                             }}
-                            className="absolute end-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1"
+                            className="absolute end-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1"
                           >
                             <X className="h-4 w-4" aria-hidden="true" />
                           </button>
@@ -797,7 +797,7 @@ export default function DealsPage() {
 
                     <div
                       ref={datesWrapperRef}
-                      className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+                      className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
                     >
                       <span className="mb-1 block text-xs font-semibold uppercase leading-4 [letter-spacing:0.025em] text-slate-600">
                         {t("deals.datesLabel")}
@@ -808,7 +808,7 @@ export default function DealsPage() {
                         aria-expanded={datesOpen}
                         aria-haspopup="dialog"
                         aria-label={t("deals.dateDialog")}
-                        className="flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] text-slate-900 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 md:text-sm"
+                        className="flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] text-slate-900 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 md:text-sm"
                       >
                         <Calendar
                           size={16}
@@ -830,7 +830,7 @@ export default function DealsPage() {
                                   addMonths(previousMonth, -1),
                                 )
                               }
-                              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
                             >
                               {t("deals.previous")}
                             </button>
@@ -842,7 +842,7 @@ export default function DealsPage() {
                                   addMonths(previousMonth, 1),
                                 )
                               }
-                              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
                             >
                               {t("deals.next")}
                             </button>
@@ -907,13 +907,13 @@ export default function DealsPage() {
                                           )}`}
                                           onClick={() => handleSelectDate(day)}
                                           disabled={isPastDate}
-                                          className={`flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed ${
+                                          className={`flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 disabled:cursor-not-allowed ${
                                             isPastDate
                                               ? "text-slate-300 hover:bg-transparent"
-                                              : "text-slate-900 hover:bg-indigo-50"
-                                          } ${isInRange ? "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100" : ""} ${
+                                              : "text-slate-900 hover:bg-[#004BB8]/8"
+                                          } ${isInRange ? "rounded-md bg-[#004BB8]/10 text-[#021C2B] hover:bg-[#004BB8]/10" : ""} ${
                                             isStart || isEnd
-                                              ? "bg-indigo-700 text-white hover:bg-indigo-700"
+                                              ? "bg-[#004BB8] text-white hover:bg-[#004BB8]"
                                               : ""
                                           }`}
                                         >
@@ -933,14 +933,14 @@ export default function DealsPage() {
                                 setStartDate("");
                                 setEndDate("");
                               }}
-                              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
                             >
                               {t("clear")}
                             </button>
                             <button
                               type="button"
                               onClick={() => setDatesOpen(false)}
-                              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
                             >
                               {t("done")}
                             </button>
@@ -951,7 +951,7 @@ export default function DealsPage() {
 
                     <div
                       ref={travelersWrapperRef}
-                      className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+                      className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
                     >
                       <span className="mb-1 block text-xs font-semibold uppercase leading-4 [letter-spacing:0.025em] text-slate-600">
                         {travelersFieldLabel}
@@ -962,7 +962,7 @@ export default function DealsPage() {
                         aria-expanded={travelersOpen}
                         aria-haspopup="dialog"
                         aria-label={travelersFieldLabel}
-                        className="flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] text-slate-900 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 md:text-sm"
+                        className="flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] text-slate-900 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 md:text-sm"
                       >
                         <span className="truncate">{travelersSummary}</span>
                         <ChevronDown
@@ -990,7 +990,7 @@ export default function DealsPage() {
                                       type="button"
                                       onClick={row.onDecrement}
                                       disabled={!canDecrement}
-                                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+                                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
                                     >
                                       <Minus className="h-4 w-4" />
                                     </button>
@@ -1001,7 +1001,7 @@ export default function DealsPage() {
                                       type="button"
                                       onClick={row.onIncrement}
                                       disabled={!canIncrement}
-                                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+                                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
                                     >
                                       <Plus className="h-4 w-4" />
                                     </button>
@@ -1026,7 +1026,7 @@ export default function DealsPage() {
                                       event.target.value as CabinClass,
                                     )
                                   }
-                                  className="mt-2 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-900 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                                  className="mt-2 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-900 outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
                                 >
                                   {cabinClasses.map((cabin) => (
                                     <option
@@ -1044,7 +1044,7 @@ export default function DealsPage() {
                               <button
                                 type="button"
                                 onClick={() => setTravelersOpen(false)}
-                                className="w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                                className="w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
                               >
                                 {t("done")}
                               </button>
@@ -1057,7 +1057,7 @@ export default function DealsPage() {
                     <div className="flex min-h-[54px] items-stretch rounded-xl border border-slate-300 bg-white p-1.5 lg:rounded-none lg:rounded-e-xl lg:border-0">
                       <button
                         type="submit"
-                        className="w-full rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-indigo-900/20 transition hover:from-indigo-500 hover:to-violet-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-75"
+                        className="w-full rounded-xl bg-gradient-to-r from-[#004BB8] to-[#021C2B] px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-[#004BB8]/20 transition hover:from-[#021C2B] hover:to-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-75"
                         disabled={isSubmitting}
                         aria-busy={isSubmitting}
                       >
@@ -1076,7 +1076,7 @@ export default function DealsPage() {
                     <button
                       type="button"
                       onClick={handleResetSearch}
-                      className="inline-flex items-center rounded-full px-3 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                      className="inline-flex items-center rounded-full px-3 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
                     >
                       {t("clearAll")}
                     </button>
@@ -1115,7 +1115,7 @@ export default function DealsPage() {
                   key={t(idea.cityKey)}
                   href={idea.href}
                   aria-label={`${t("deals.destinationCardAriaPrefix")} ${t(idea.cityKey)}, ${t(idea.countryKey)}`}
-                  className="group block overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm shadow-slate-950/5 transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-950/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                  className="group block overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm shadow-slate-950/5 transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-xl hover:shadow-[#004BB8]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
                 >
                   <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
                     <Image
