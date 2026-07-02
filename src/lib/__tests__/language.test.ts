@@ -9482,6 +9482,110 @@ test("Thai Cars results copy and datepicker render path resolve without English 
   assert.equal(availableLocaleOptions.find((option) => option.code === "ar")?.direction, "rtl");
 });
 
+
+test("Vietnamese Cars Results copy resolves without English fallback", () => {
+  const vi = getTranslations("vi");
+  const carsResultsPageSource = readFileSync("src/app/cars/results/page.tsx", "utf8");
+  const carsResultsSource = readFileSync("src/components/results/CarsResultsClient.tsx", "utf8");
+
+  assert.ok(carsResultsPageSource.includes("<CarsResultsClient"), "Cars results page should render the active client path under test.");
+
+  const expectedCopy: Array<[string, string, string]> = [
+    ["carsSearch.pickupLocationPlaceholder", "Sân bay, thành phố hoặc địa chỉ", "Airport, city, or address"],
+    ["carsSearch.previousMonthShort", "Trước", "Prev"],
+    ["carsSearch.nextMonthShort", "Tiếp", "Next"],
+    ["carsResults.pickupLocationLabel", "ĐỊA ĐIỂM NHẬN XE", "PICKUP LOCATION"],
+    ["carsResults.returnLocationLabel", "ĐỊA ĐIỂM TRẢ XE", "RETURN LOCATION"],
+    ["carsResults.rentalDatesLabel", "NGÀY THUÊ XE", "RENTAL DATES"],
+    ["carsResults.pickupReturnTimeLabel", "GIỜ NHẬN / TRẢ XE", "PICKUP / RETURN TIME"],
+    ["carsResults.driverAgeLabel", "TUỔI TÀI XẾ", "DRIVER AGE"],
+    ["carsResults.pickupLocation", "Địa điểm nhận xe", "Pickup location"],
+    ["carsResults.returnLocation", "Địa điểm trả xe", "Return location"],
+    ["carsResults.sameAsPickup", "Giống điểm nhận xe", "Same as pickup"],
+    ["carsResults.anyDriverAge", "Mọi độ tuổi tài xế", "Any driver age"],
+    ["carsResults.anyDriverAgeRange", "Mọi độ tuổi tài xế 18–70", "Any driver age 18–70"],
+    ["carsResults.searchCars", "Tìm xe", "Search cars"],
+    ["carsResults.selectPickupThenReturn", "Chọn ngày nhận xe, rồi ngày trả xe", "Select pickup, then return"],
+    ["clear", "Xóa", "Clear"],
+    ["done", "Xong", "Done"],
+    ["carsResults.resultsFor", "Kết quả xe cho {location}", "Cars results for {location}"],
+    ["carsResults.pickupLocationNeeded", "Cần địa điểm nhận xe", "Pickup location needed"],
+    ["carsResults.emptyInventory", "Kho xe trực tiếp hiện chưa có sẵn để hiển thị cho tìm kiếm này. Hãy cập nhật chi tiết tìm kiếm ở trên hoặc kiểm tra lại sau.", "Live car inventory is not available to display for this search yet. Update the search details above or check again later."],
+    ["carsResults.edit", "CHỈNH SỬA", "EDIT"],
+    ["carsResults.filterBy", "Lọc theo", "Filter by"],
+    ["carsResults.vehicleType", "Loại xe", "Vehicle type"],
+    ["carsResults.smallCars", "Xe nhỏ", "Small cars"],
+    ["carsResults.mediumCars", "Xe cỡ trung", "Medium cars"],
+    ["carsResults.suvs", "SUV", "SUVs"],
+    ["carsResults.transmission", "Hộp số", "Transmission"],
+    ["carsResults.automatic", "Tự động", "Automatic"],
+    ["carsResults.manual", "Số sàn", "Manual"],
+    ["carsResults.seats", "Số ghế", "Seats"],
+    ["carsResults.seats4Plus", "4+ ghế", "4+ seats"],
+    ["carsResults.seats5Plus", "5+ ghế", "5+ seats"],
+    ["carsResults.seats7Plus", "7+ ghế", "7+ seats"],
+    ["carsResults.bags", "Hành lý", "Bags"],
+    ["carsResults.bags2Plus", "2+ túi", "2+ bags"],
+    ["carsResults.bags3Plus", "3+ túi", "3+ bags"],
+    ["carsResults.bags4Plus", "4+ túi", "4+ bags"],
+    ["carsResults.fuelPolicy", "Chính sách nhiên liệu", "Fuel policy"],
+    ["carsResults.fullToFull", "Đầy bình khi nhận — đầy bình khi trả", "Full-to-full"],
+    ["carsResults.sameToSame", "Trả cùng mức nhiên liệu", "Same-to-same"],
+    ["carsResults.mileagePolicy", "Chính sách số km", "Mileage policy"],
+    ["carsResults.unlimitedMileage", "Không giới hạn số km", "Unlimited mileage"],
+    ["carsResults.limitedMileage", "Giới hạn số km", "Limited mileage"],
+    ["carsResults.cancellation", "Hủy đặt xe", "Cancellation"],
+    ["carsResults.freeCancellation", "Hủy miễn phí", "Free cancellation"],
+    ["carsResults.payAtPickup", "Thanh toán khi nhận xe", "Pay at pickup"],
+    ["carsResults.pickupLocationType", "Loại địa điểm nhận xe", "Pickup location type"],
+    ["carsResults.airportCounter", "Quầy tại sân bay", "Airport counter"],
+    ["carsResults.shuttlePickup", "Nhận xe bằng xe đưa đón", "Shuttle pickup"],
+    ["carsResults.cityLocation", "Địa điểm trong thành phố", "City location"],
+  ];
+
+  for (const [key, vietnameseValue, englishFallback] of expectedCopy) {
+    assert.equal(vi[key], vietnameseValue, `${key} should resolve to Vietnamese`);
+    assert.notEqual(vi[key], englishFallback, `${key} should not remain English`);
+  }
+
+  assert.equal(vi["carsResults.resultsFor"].replace("{location}", vi["carsResults.pickupLocationNeeded"]), "Kết quả xe cho Cần địa điểm nhận xe");
+  assert.ok(carsResultsSource.includes('normalizedLocale.startsWith("vi")') && carsResultsSource.includes('return "vi-VN"'), "Cars results compact/date-picker dates should normalize Vietnamese to vi-VN instead of English.");
+  const compactDateSummary = `${new Intl.DateTimeFormat("vi-VN", { day: "numeric", month: "short" }).format(new Date(2026, 6, 2))} — ${new Intl.DateTimeFormat("vi-VN", { day: "numeric", month: "short" }).format(new Date(2026, 6, 6))}`;
+  assert.ok(!compactDateSummary.includes("Jul"), "Vietnamese compact date summary must not fall back to English Jul.");
+  assert.equal(new Intl.DateTimeFormat("vi-VN", { month: "long", year: "numeric" }).format(new Date(2026, 6, 1)), "tháng 7 năm 2026");
+  assert.equal(new Intl.DateTimeFormat("vi-VN", { month: "long", year: "numeric" }).format(new Date(2026, 7, 1)), "tháng 8 năm 2026");
+
+  for (const key of [
+    "carsResults.pickupLocationLabel",
+    "carsResults.returnLocationLabel",
+    "carsResults.rentalDatesLabel",
+    "carsResults.pickupReturnTimeLabel",
+    "carsResults.driverAgeLabel",
+    "carsResults.sameAsPickup",
+    "carsResults.searchCars",
+    "carsResults.selectPickupThenReturn",
+    "carsResults.resultsFor",
+    "carsResults.emptyInventory",
+    "carsResults.edit",
+    "carsResults.filterBy",
+  ]) {
+    assert.ok(carsResultsSource.includes(`t("${key}")`) || carsResultsSource.includes("t(group.titleKey)") || carsResultsSource.includes("t(option.labelKey)"), `${key} should be read through i18n or filter key indirection.`);
+  }
+
+  for (const preservedQueryName of ['action="/cars/results"', 'method="get"', 'name="pickupLocation"', 'name="dropoffLocation"', 'name="pickupDate"', 'name="dropoffDate"', 'name="pickupTime"', 'name="dropoffTime"', 'name="driverAge"', 'value={pickupLocation}', 'value={dropoffLocation}', 'value={pickupDate}', 'value={dropoffDate}', 'value={pickupTime}', 'value={dropoffTime}', 'value={driverAge}']) {
+    assert.ok(carsResultsSource.includes(preservedQueryName), `${preservedQueryName} should preserve route/query params, payloads, and raw dynamic values.`);
+  }
+  assert.ok(carsResultsSource.includes('formatTimeLabel(pickupTime, intlLocale)') && carsResultsSource.includes('formatTimeLabel(dropoffTime, intlLocale)'), "Pickup/return time summary should preserve selected time values while localizing labels.");
+  assert.ok(carsResultsSource.includes('age === defaultDriverAge') && carsResultsSource.includes('return t("carsResults.anyDriverAgeRange")') && carsResultsSource.includes('return yearsOldLabel.length === 1'), "Driver age summary should preserve the default range and numeric age values while localizing labels.");
+  assert.ok(carsResultsSource.includes('{ id: "smallCars", labelKey: "carsResults.smallCars" }') && carsResultsSource.includes('selectedOptions.includes(option.id)'), "Filter IDs/values should remain separate from localized labels.");
+  assert.ok(carsResultsSource.includes('aria-label={t("carsResults.rentalDateRangeCalendar")}') && carsResultsSource.includes('aria-label={t("carsResults.carFiltersAria")}'), "Active aria labels should remain localized through i18n.");
+  assert.ok(!carsResultsSource.includes('"PICKUP LOCATION"') && !carsResultsSource.includes('"RETURN LOCATION"') && !carsResultsSource.includes('"RENTAL DATES"') && !carsResultsSource.includes('"DRIVER AGE"') && !carsResultsSource.includes('"Search cars"') && !carsResultsSource.includes('"Filter by"'), "Cars results render path should not hardcode screenshot English strings.");
+  assert.equal(availableLocaleOptions.find((option) => option.code === "vi")?.direction, "ltr");
+  assert.equal(availableLocaleOptions.find((option) => option.code === "ar")?.direction, "rtl");
+  assert.equal(availableLocaleOptions.find((option) => option.code === "th")?.direction, "ltr");
+  assert.equal(availableLocaleOptions.find((option) => option.code === "id")?.direction, "ltr");
+});
+
 test("Turkish cars results datepicker locale normalizes to tr-TR", () => {
   const carsResultsSource = readFileSync("src/components/results/CarsResultsClient.tsx", "utf8");
 
