@@ -683,9 +683,7 @@ export function SavedTripsAndRecentSearches({
 
                           <div className="flex flex-wrap items-center gap-2 pt-0.5">
                             <span className="rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-violet-700">
-                              {trip.unresolved
-                                ? t("savedTripsSavedBadge")
-                                : t("savedTripsTrendingBadge")}
+                              {t("savedTripsSavedRouteBadge")}
                             </span>
                             <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                               {t("homeDiscoveryTripOneWay")} ·{" "}
