@@ -556,6 +556,11 @@ export function SavedTripsAndRecentSearches({
     }
   };
 
+  const savedRoutesCountText =
+    savedTrips.length === 1
+      ? "1 saved route"
+      : `${savedTrips.length} saved routes`;
+
   const handleClearSaved = async () => {
     if (sessionStatus !== "authenticated") {
       writeSavedTripIds([]);
@@ -588,29 +593,16 @@ export function SavedTripsAndRecentSearches({
     >
       <div className="mx-auto min-w-0 max-w-[88rem] text-start">
         <div className="space-y-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h1
-                id="saved-dashboard-title"
-                className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]"
-              >
-                {t("savedTripsPageTitle")} ❤️
-              </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-                {t("savedTripsPageSubtitle")}
-              </p>
-            </div>
-
-            {savedTrips.length > 0 ? (
-              <button
-                type="button"
-                onClick={handleClearSaved}
-                className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-rose-200 hover:text-rose-700 sm:mt-1"
-              >
-                <Trash2 className="h-4 w-4" />
-                {t("savedTripsClearAllSaved")}
-              </button>
-            ) : null}
+          <div>
+            <h1
+              id="saved-dashboard-title"
+              className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]"
+            >
+              {t("savedTripsPageTitle")} ❤️
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+              {t("savedTripsPageSubtitle")}
+            </p>
           </div>
 
           <section>
@@ -636,99 +628,119 @@ export function SavedTripsAndRecentSearches({
                 </div>
               </div>
             ) : (
-              <div className="grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
-                {savedTrips.map((trip, index) => {
-                  const fare = savedTripFares[trip.id];
-                  const hasProviderFare = hasFreshProviderFare(fare, trip);
-                  const tripHref = buildSavedTripHref(trip, fare);
+              <>
+                <div className="mb-3 flex flex-col items-start gap-2 border-y border-slate-200/80 py-3 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:border-y-0 sm:border-b sm:pb-3 sm:pt-1">
+                  <div>
+                    <h2 className="text-base font-semibold tracking-tight text-slate-950">
+                      Saved routes
+                    </h2>
+                    <p className="mt-0.5 text-sm font-medium text-slate-500">
+                      {savedRoutesCountText}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleClearSaved}
+                    className="inline-flex items-center gap-1.5 rounded-md px-0 py-1 text-sm font-semibold text-violet-700 transition hover:text-violet-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-400 sm:px-2"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    {t("savedTripsClearAllSaved")}
+                  </button>
+                </div>
+                <div className="grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
+                  {savedTrips.map((trip, index) => {
+                    const fare = savedTripFares[trip.id];
+                    const hasProviderFare = hasFreshProviderFare(fare, trip);
+                    const tripHref = buildSavedTripHref(trip, fare);
 
-                  return (
-                    <article
-                      key={trip.id}
-                      className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-transparent shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)] active:-translate-y-0.5"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => handleUnsaveTrip(trip.id)}
-                        aria-label={t("savedTripsRemoveSavedTrip")}
-                        aria-pressed
-                        className="focus-ring absolute end-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-600 shadow-sm backdrop-blur-sm transition hover:bg-rose-100"
+                    return (
+                      <article
+                        key={trip.id}
+                        className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-transparent shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)] active:-translate-y-0.5"
                       >
-                        <Heart size={15} className="fill-current" />
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => handleUnsaveTrip(trip.id)}
+                          aria-label={t("savedTripsRemoveSavedTrip")}
+                          aria-pressed
+                          className="focus-ring absolute end-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-600 shadow-sm backdrop-blur-sm transition hover:bg-rose-100"
+                        >
+                          <Heart size={15} className="fill-current" />
+                        </button>
 
-                      {trip.image ? (
-                        <SavedCardImage
-                          src={trip.image}
-                          alt={trip.imageAlt ?? trip.title}
-                          priority={index < EAGER_SAVED_TRIP_IMAGE_COUNT}
-                        />
-                      ) : (
-                        <div className="flex h-[196px] w-full shrink-0 items-center justify-center bg-gradient-to-br from-violet-100 via-fuchsia-50 to-cyan-50 text-sm font-semibold uppercase tracking-[0.14em] text-slate-600 md:h-[190px] lg:h-[198px]">
-                          {t("savedTripFallbackTitle")}
-                        </div>
-                      )}
-
-                      <div className="flex min-w-0 flex-1 flex-col bg-white">
-                        <div className="min-w-0 flex-1 space-y-2 px-3 pt-3">
-                          <h3 className="line-clamp-2 break-words pe-10 text-sm font-bold leading-[1.35] text-slate-950 md:text-[0.95rem]">
-                            {trip.title}
-                          </h3>
-                          <p className="line-clamp-2 break-words text-xs font-medium leading-5 text-slate-600 md:text-sm">
-                            {trip.route}
-                          </p>
-                          <p className="line-clamp-2 break-words text-xs font-medium leading-5 text-slate-600 md:text-sm">
-                            {trip.note}
-                          </p>
-
-                          <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                            <span className="rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-violet-700">
-                              {t("savedTripsSavedRouteBadge")}
-                            </span>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-                              {t("homeDiscoveryTripOneWay")} ·{" "}
-                              {t("homeDiscoveryCabinEconomy")} ·{" "}
-                              {t("homeDiscoveryTravelerCountOne")}
-                            </p>
+                        {trip.image ? (
+                          <SavedCardImage
+                            src={trip.image}
+                            alt={trip.imageAlt ?? trip.title}
+                            priority={index < EAGER_SAVED_TRIP_IMAGE_COUNT}
+                          />
+                        ) : (
+                          <div className="flex h-[196px] w-full shrink-0 items-center justify-center bg-gradient-to-br from-violet-100 via-fuchsia-50 to-cyan-50 text-sm font-semibold uppercase tracking-[0.14em] text-slate-600 md:h-[190px] lg:h-[198px]">
+                            {t("savedTripFallbackTitle")}
                           </div>
-                        </div>
+                        )}
 
-                        <div className="mt-auto border-t border-slate-200/90 px-3 pb-3 pt-3">
-                          <div className="flex flex-col items-stretch gap-2">
-                            <div>
-                              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                                {hasProviderFare
-                                  ? t("savedTripsProviderFare")
-                                  : t("savedTripsCurrentOptions")}
-                              </p>
-                              <p className="text-sm font-semibold leading-tight text-slate-950 md:text-base">
-                                {hasProviderFare ? (
-                                  <PriceText
-                                    amountUsd={fare.price}
-                                    sourceAmount={fare.price}
-                                    sourceCurrency={fare.currency}
-                                  />
-                                ) : (
-                                  t("savedTripsCompareCurrentOptions")
-                                )}
+                        <div className="flex min-w-0 flex-1 flex-col bg-white">
+                          <div className="min-w-0 flex-1 space-y-2 px-3 pt-3">
+                            <h3 className="line-clamp-2 break-words pe-10 text-sm font-bold leading-[1.35] text-slate-950 md:text-[0.95rem]">
+                              {trip.title}
+                            </h3>
+                            <p className="line-clamp-2 break-words text-xs font-medium leading-5 text-slate-600 md:text-sm">
+                              {trip.route}
+                            </p>
+                            <p className="line-clamp-2 break-words text-xs font-medium leading-5 text-slate-600 md:text-sm">
+                              {trip.note}
+                            </p>
+
+                            <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                              <span className="rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-violet-700">
+                                {t("savedTripsSavedRouteBadge")}
+                              </span>
+                              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                                {t("homeDiscoveryTripOneWay")} ·{" "}
+                                {t("homeDiscoveryCabinEconomy")} ·{" "}
+                                {t("homeDiscoveryTravelerCountOne")}
                               </p>
                             </div>
-                            <Link
-                              href={tripHref}
-                              className="inline-flex min-h-9 items-center justify-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-center text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-900"
-                            >
-                              {hasProviderFare
-                                ? t("savedTripsViewFare")
-                                : t("savedTripsSearchRoute")}
-                              <ExternalLink className="h-4 w-4" />
-                            </Link>
+                          </div>
+
+                          <div className="mt-auto border-t border-slate-200/90 px-3 pb-3 pt-3">
+                            <div className="flex flex-col items-stretch gap-2">
+                              <div>
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                                  {hasProviderFare
+                                    ? t("savedTripsProviderFare")
+                                    : t("savedTripsCurrentOptions")}
+                                </p>
+                                <p className="text-sm font-semibold leading-tight text-slate-950 md:text-base">
+                                  {hasProviderFare ? (
+                                    <PriceText
+                                      amountUsd={fare.price}
+                                      sourceAmount={fare.price}
+                                      sourceCurrency={fare.currency}
+                                    />
+                                  ) : (
+                                    t("savedTripsCompareCurrentOptions")
+                                  )}
+                                </p>
+                              </div>
+                              <Link
+                                href={tripHref}
+                                className="inline-flex min-h-9 items-center justify-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-center text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-900"
+                              >
+                                {hasProviderFare
+                                  ? t("savedTripsViewFare")
+                                  : t("savedTripsSearchRoute")}
+                                <ExternalLink className="h-4 w-4" />
+                              </Link>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </section>
         </div>
