@@ -397,7 +397,7 @@ export function AccountMenuPage({
             aria-label={t["accountDashboard.hub.title"]}
           >
             <div className="flex min-w-0 items-center gap-3.5 sm:gap-5">
-              <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-purple-700 text-lg font-bold uppercase tracking-[-0.02em] text-white shadow-sm ring-1 ring-blue-200/70 sm:size-16 sm:text-xl">
+              <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#004BB8] to-[#021C2B] text-lg font-bold uppercase tracking-[-0.02em] text-white shadow-sm ring-1 ring-[#5CB6B2]/25 sm:size-16 sm:text-xl">
                 {initials}
               </div>
               <div className="min-w-0 flex-1">
@@ -1235,7 +1235,7 @@ function PhoneNumberInput({
       <div className="group relative z-10 h-11 w-[4.75rem] shrink-0 sm:w-20">
         <div
           aria-hidden="true"
-          className="pointer-events-none flex h-full w-full items-center justify-center gap-1.5 rounded-none border border-slate-400 bg-white px-2.5 transition group-hover:border-slate-500 group-focus-within:border-blue-700 group-focus-within:ring-2 group-focus-within:ring-blue-100 sm:px-3"
+          className="pointer-events-none flex h-full w-full items-center justify-center gap-1.5 rounded-none border border-slate-400 bg-white px-2.5 transition group-hover:border-slate-500 group-focus-within:border-[#004BB8] group-focus-within:ring-2 group-focus-within:ring-[#004BB8]/15 sm:px-3"
         >
           <CountryFlagIcon
             countryName={selectedOption.countryName}
@@ -1367,7 +1367,7 @@ function DetailInput({
   onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
 }) {
   const baseClassName = cn(
-    "h-11 w-full min-w-0 rounded-none border border-slate-400 bg-white px-3.5 text-base font-medium leading-5 text-slate-950 shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-blue-700 focus:ring-2 focus:ring-blue-100 sm:max-w-[34rem] sm:text-sm",
+    "h-11 w-full min-w-0 rounded-none border border-slate-400 bg-white px-3.5 text-base font-medium leading-5 text-slate-950 shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/15 sm:max-w-[34rem] sm:text-sm",
     row.readOnly &&
       "cursor-not-allowed border-slate-300 bg-slate-100 text-slate-700 hover:border-slate-300 focus:border-slate-300 focus:ring-0",
   );
@@ -1514,7 +1514,7 @@ function PersonalDetailsEmailEditRow({
 }) {
   const { t } = useLocale();
   const baseInputClassName =
-    "h-11 w-full min-w-0 rounded-none border border-slate-400 bg-white px-3.5 text-base font-medium leading-5 text-slate-950 shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-blue-700 focus:ring-2 focus:ring-blue-100 sm:text-sm";
+    "h-11 w-full min-w-0 rounded-none border border-slate-400 bg-white px-3.5 text-base font-medium leading-5 text-slate-950 shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/15 sm:text-sm";
   const isBusy = isRequestingCode || isConfirming;
   const isResendCoolingDown = resendCooldownSeconds > 0;
 
@@ -1541,7 +1541,7 @@ function PersonalDetailsEmailEditRow({
             <button
               type="button"
               onClick={onStartChange}
-              className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center self-end rounded-lg border border-blue-200 bg-white px-3 text-xs font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-50 sm:self-auto"
+              className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center self-end rounded-lg border border-[#004BB8]/20 bg-white px-3 text-xs font-semibold text-[#004BB8] transition hover:border-[#004BB8]/30 hover:bg-[#004BB8]/5 sm:self-auto"
             >
               {t["accountDashboard.personalDetails.changeEmail"]}
             </button>
@@ -1580,7 +1580,7 @@ function PersonalDetailsEmailEditRow({
                   disabled={
                     Boolean(emailValidationError) || isBusy || isResendCoolingDown
                   }
-                  className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center rounded-lg bg-blue-700 px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-default disabled:bg-blue-300"
+                  className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center rounded-lg bg-[#004BB8] px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-default disabled:bg-[#004BB8]/45"
                 >
                   {isRequestingCode ? "Sending…" : "Send verification code"}
                 </button>
@@ -1637,7 +1637,7 @@ function PersonalDetailsEmailEditRow({
                     !isVerificationCodeValid ||
                     isBusy
                   }
-                  className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center rounded-lg bg-blue-700 px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-default disabled:bg-blue-300"
+                  className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center rounded-lg bg-[#004BB8] px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-default disabled:bg-[#004BB8]/45"
                 >
                   {isConfirming ? "Updating…" : "Verify and update email"}
                 </button>
@@ -2193,7 +2193,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
               type="button"
               onClick={handleSave}
               disabled={isSaving || !hasUnsavedProfileChanges}
-              className="focus-ring inline-flex min-h-11 w-auto cursor-pointer items-center justify-center rounded-xl bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-pointer disabled:bg-blue-100 disabled:text-blue-700"
+              className="focus-ring inline-flex min-h-11 w-auto cursor-pointer items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-pointer disabled:bg-[#004BB8]/10 disabled:text-[#004BB8]"
             >
               {isSaving
                 ? t["accountDashboard.personalDetails.saving"] || "Saving…"
@@ -2205,7 +2205,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
             <button
               type="button"
               onClick={handleEdit}
-              className="focus-ring inline-flex min-h-11 w-auto cursor-pointer items-center justify-center rounded-xl border border-blue-700 bg-white px-5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
+              className="focus-ring inline-flex min-h-11 w-auto cursor-pointer items-center justify-center rounded-xl border border-[#004BB8] bg-white px-5 text-sm font-semibold text-[#004BB8] transition hover:bg-[#004BB8]/5"
             >
               {t["accountDashboard.personalDetails.edit"]}
             </button>

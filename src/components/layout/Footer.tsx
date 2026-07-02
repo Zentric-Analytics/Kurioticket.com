@@ -113,7 +113,7 @@ export function Footer() {
                   <Link
                     key={`${section.heading}-${link.label}`}
                     href={link.href}
-                    className="transition-colors hover:text-indigo-600"
+                    className="transition-colors hover:text-[#004BB8]"
                   >
                     {link.label}
                   </Link>
@@ -134,7 +134,7 @@ export function Footer() {
                 <Link
                   key={`${aboutSection.heading}-${link.label}`}
                   href={link.href}
-                  className="transition-colors hover:text-indigo-600"
+                  className="transition-colors hover:text-[#004BB8]"
                 >
                   {link.label}
                 </Link>
@@ -154,7 +154,7 @@ export function Footer() {
                     <Link
                       key={`${section.heading}-${link.label}`}
                       href={link.href}
-                      className="break-words transition-colors hover:text-indigo-600"
+                      className="break-words transition-colors hover:text-[#004BB8]"
                     >
                       {link.label}
                     </Link>
@@ -181,7 +181,7 @@ export function Footer() {
 
               <Link
                 href="/legal"
-                className="mt-3 block max-w-3xl text-xs leading-5 text-slate-500 transition-colors hover:text-indigo-600"
+                className="mt-3 block max-w-3xl text-xs leading-5 text-slate-500 transition-colors hover:text-[#004BB8]"
               >
                 {sellerOfTravelNotice}
               </Link>
@@ -195,21 +195,21 @@ export function Footer() {
 
               <Link
                 href="/legal/privacy-policy"
-                className="transition-colors hover:text-indigo-600"
+                className="transition-colors hover:text-[#004BB8]"
               >
                 {t.footerPrivacy}
               </Link>
 
               <Link
                 href="/legal/terms-of-service"
-                className="transition-colors hover:text-indigo-600"
+                className="transition-colors hover:text-[#004BB8]"
               >
                 {t.footerTerms}
               </Link>
 
               <Link
                 href="/legal/cookie-policy"
-                className="transition-colors hover:text-indigo-600"
+                className="transition-colors hover:text-[#004BB8]"
               >
                 {t.footerCookies}
               </Link>
