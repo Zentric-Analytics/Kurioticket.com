@@ -278,7 +278,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
   }
 
   return (
-    <Card className="mx-auto w-full max-w-[800px] overflow-hidden border-indigo-100 bg-white shadow-[0_16px_38px_-26px_rgba(30,27,75,0.5)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(30,27,75,0.55)]">
+    <Card className="mx-auto w-full max-w-[800px] overflow-hidden border-[#004BB8]/10 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(2,28,43,0.26)]">
       <div className="grid md:grid-cols-[40%_minmax(0,1fr)]">
         <div className="relative h-[clamp(280px,78vw,340px)] bg-surface-muted md:aspect-auto md:h-auto md:min-h-[230px] lg:min-h-[240px]">
           {imageUrl ? (
@@ -295,7 +295,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
               }}
             />
           ) : (
-            <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-indigo-50 via-white to-violet-50 px-5 text-center text-indigo-700">
+            <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-[#004BB8]/8 via-white to-[#5CB6B2]/10 px-5 text-center text-[#004BB8]">
               <Building2 size={36} />
               <span className="max-w-[180px] text-xs font-semibold uppercase tracking-wide text-slate-500">
                 {t("hotelResults.imageUnavailable")}
@@ -327,8 +327,8 @@ export function HotelCard({ hotel }: HotelCardProps) {
                 <h2 className="text-base font-bold leading-6 text-slate-950 lg:text-[17px]">
                   {hotel.name}
                 </h2>
-                <p className="mt-1 flex items-center gap-1.5 text-[13px] font-semibold leading-5 text-indigo-700 lg:text-sm">
-                  <MapPin size={15} className="shrink-0 text-indigo-700" />
+                <p className="mt-1 flex items-center gap-1.5 text-[13px] font-semibold leading-5 text-[#004BB8] lg:text-sm">
+                  <MapPin size={15} className="shrink-0 text-[#004BB8]" />
                   <span>{hotel.location}</span>
                 </p>
               </div>
@@ -387,7 +387,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
                 <Button
                   variant="accent"
                   size="sm"
-                  className="w-full whitespace-nowrap rounded-lg border border-indigo-700 bg-indigo-700 px-3 text-sm font-semibold text-white shadow-sm shadow-indigo-700/20 hover:border-indigo-800 hover:bg-indigo-800 min-[380px]:w-auto"
+                  className="w-full whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-3 text-sm font-semibold text-white shadow-sm shadow-[#004BB8]/20 hover:border-[#021C2B] hover:bg-[#021C2B] min-[380px]:w-auto"
                   onClick={redirectToHotel}
                 >
                   {t("hotelResults.viewHotel")}

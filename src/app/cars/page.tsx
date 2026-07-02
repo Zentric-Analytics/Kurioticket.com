@@ -352,7 +352,7 @@ function CarsSearchPage() {
                     <div className="pointer-events-none absolute inset-x-7 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/80 to-transparent" />
                     <div className="pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full bg-slate-200/30 blur-3xl" />
                     <div
-                      className="relative mb-4 inline-flex h-11 w-11 items-center justify-center rounded-[1rem] border border-indigo-200/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(238,242,255,0.72)_52%,rgba(248,250,252,0.92))] text-indigo-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_12px_22px_-18px_rgba(79,70,229,0.55),0_8px_18px_-20px_rgba(15,23,42,0.55)] sm:mb-5 sm:h-12 sm:w-12"
+                      className="relative mb-4 inline-flex h-11 w-11 items-center justify-center rounded-[1rem] border border-[#004BB8]/15 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(0,75,184,0.08)_52%,rgba(248,250,252,0.92))] text-[#004BB8] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_12px_22px_-18px_rgba(0,75,184,0.28),0_8px_18px_-20px_rgba(15,23,42,0.55)] sm:mb-5 sm:h-12 sm:w-12"
                       aria-hidden="true"
                     >
                       <Icon className="h-5 w-5 stroke-[1.8]" />
@@ -433,12 +433,12 @@ function CarsFaqSection() {
           return (
             <details
               key={item.id}
-              className="group rounded-2xl border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(248,250,252,0.74))] px-4 py-4 shadow-[0_14px_34px_-30px_rgba(15,23,42,0.34)] ring-1 ring-white/70 transition open:border-indigo-200/80 open:bg-white open:shadow-[0_18px_38px_-32px_rgba(79,70,229,0.36)] sm:px-5"
+              className="group rounded-2xl border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(248,250,252,0.74))] px-4 py-4 shadow-[0_14px_34px_-30px_rgba(15,23,42,0.34)] ring-1 ring-white/70 transition open:border-[#004BB8]/25 open:bg-white open:shadow-[0_18px_38px_-32px_rgba(0,75,184,0.20)] sm:px-5"
             >
               <summary className="flex min-h-12 cursor-pointer list-none items-start justify-between gap-3 text-sm font-semibold leading-5 text-slate-900 marker:hidden [&::-webkit-details-marker]:hidden">
                 <span>{translatedQuestion}</span>
                 <span
-                  className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-sm leading-none text-slate-500 shadow-sm transition group-open:rotate-45 group-open:border-indigo-200 group-open:text-indigo-600"
+                  className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-sm leading-none text-slate-500 shadow-sm transition group-open:rotate-45 group-open:border-[#004BB8]/25 group-open:text-[#004BB8]"
                   aria-hidden="true"
                 >
                   +
@@ -615,7 +615,7 @@ function CarsSearchBar({
                         updateValue("pickupLocation", "");
                         pickupLocationRef.current?.focus();
                       }}
-                      className="absolute end-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 lg:h-8 lg:w-8"
+                      className="absolute end-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 lg:h-8 lg:w-8"
                     >
                       <X className="h-4 w-4" aria-hidden="true" />
                     </button>
@@ -646,7 +646,7 @@ function CarsSearchBar({
                           updateValue("dropoffLocation", "");
                           dropoffLocationRef.current?.focus();
                         }}
-                        className="absolute end-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 lg:h-8 lg:w-8"
+                        className="absolute end-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 lg:h-8 lg:w-8"
                       >
                         <X className="h-4 w-4" aria-hidden="true" />
                       </button>
@@ -725,7 +725,7 @@ function CarsSearchBar({
             <div className="sm:col-span-2 lg:col-span-1">
               <button
                 type="submit"
-                className="focus-ring inline-flex h-full min-h-11 w-full items-center justify-center gap-2 bg-indigo-600 px-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 active:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-75 disabled:hover:bg-indigo-600 lg:min-h-12"
+                className="focus-ring inline-flex h-full min-h-11 w-full items-center justify-center gap-2 bg-[#004BB8] px-3 text-sm font-bold text-white shadow-lg shadow-[#004BB8]/20 transition hover:bg-[#021C2B] active:bg-[#004BB8] disabled:cursor-not-allowed disabled:opacity-75 disabled:hover:bg-[#004BB8] lg:min-h-12"
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}
               >
@@ -744,7 +744,7 @@ function CarsSearchBar({
               onChange={(event) =>
                 updateValue("returnToDifferentLocation", event.target.checked)
               }
-              className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+              className="h-4 w-4 rounded border-slate-300 text-[#004BB8] focus:ring-[#004BB8]/35"
             />
             {t("carsSearch.differentReturnLocation")}
           </label>
@@ -775,7 +775,7 @@ function CarsPageShell() {
         <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
           <div className="flex items-center gap-3 text-slate-600">
             <Clock
-              className="h-5 w-5 animate-pulse text-indigo-600"
+              className="h-5 w-5 animate-pulse text-[#004BB8]"
               aria-hidden="true"
             />
             {t("carsSearchPreparing")}
@@ -799,7 +799,7 @@ function CarImageCardLink({ card }: { card: TranslatedCarImageCard }) {
           : buildPickupHref(card.pickupLocation)
       }
       aria-label={card.ariaLabel}
-      className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_28px_-26px_rgba(15,23,42,0.34)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_30px_-26px_rgba(15,23,42,0.38)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-white"
+      className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_28px_-26px_rgba(15,23,42,0.34)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_30px_-26px_rgba(15,23,42,0.38)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-4 focus-visible:ring-offset-white"
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
         <img
@@ -817,7 +817,7 @@ function CarImageCardLink({ card }: { card: TranslatedCarImageCard }) {
           {card.subtitle}
         </p>
         {card.cta ? (
-          <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-700 transition-colors group-hover:text-indigo-800">
+          <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#004BB8] transition-colors group-hover:text-[#021C2B]">
             {card.cta}
             <ArrowRight
               className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
@@ -988,15 +988,15 @@ function RentalDatesField({
                             isPastDate
                               ? "text-slate-300 hover:bg-transparent"
                               : isBeforePickup
-                                ? "text-slate-500 hover:bg-indigo-50"
-                                : "text-slate-900 hover:bg-indigo-50"
+                                ? "text-slate-500 hover:bg-[#004BB8]/8"
+                                : "text-slate-900 hover:bg-[#004BB8]/8"
                           } ${
                             isInRange
-                              ? "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100"
+                              ? "rounded-md bg-[#004BB8]/10 text-[#021C2B] hover:bg-[#004BB8]/10"
                               : ""
                           } ${
                             isPickup || isDropoff
-                              ? "bg-indigo-700 text-white hover:bg-indigo-700"
+                              ? "bg-[#004BB8] text-white hover:bg-[#004BB8]"
                               : ""
                           }`}
                         >
@@ -1090,7 +1090,7 @@ function TimeRangeField({
                 onChange={(event) =>
                   updateValue("pickupTime", event.target.value)
                 }
-                className="focus-ring h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-950 outline-none transition focus:border-indigo-300 md:text-sm"
+                className="focus-ring h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-950 outline-none transition focus:border-[#004BB8] md:text-sm"
               >
                 {timeOptions.map((time) => (
                   <option key={`pickup-${time}`} value={time}>
@@ -1110,7 +1110,7 @@ function TimeRangeField({
                 onChange={(event) =>
                   updateValue("dropoffTime", event.target.value)
                 }
-                className="focus-ring h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-950 outline-none transition focus:border-indigo-300 md:text-sm"
+                className="focus-ring h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-950 outline-none transition focus:border-[#004BB8] md:text-sm"
               >
                 {timeOptions.map((time) => (
                   <option key={`return-${time}`} value={time}>
@@ -1139,7 +1139,7 @@ function SearchCell({
 }) {
   return (
     <div
-      className={`min-h-[58px] border border-transparent bg-white px-2.5 py-1.5 transition hover:border-slate-200 focus-within:border-indigo-200 focus-within:bg-indigo-50/20 lg:min-h-[66px] lg:px-3 lg:py-2 ${className}`}
+      className={`min-h-[58px] border border-transparent bg-white px-2.5 py-1.5 transition hover:border-slate-200 focus-within:border-[#004BB8]/25 focus-within:bg-[#004BB8]/8 lg:min-h-[66px] lg:px-3 lg:py-2 ${className}`}
     >
       <label className="mb-0.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 lg:mb-1">
         {label}

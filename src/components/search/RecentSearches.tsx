@@ -211,7 +211,7 @@ export function RecentSearches() {
           <article key={entry.id} className="h-full min-w-0">
             <Link
               href={entry.href}
-              className="focus-ring group relative flex h-full min-h-[150px] flex-col overflow-hidden rounded-xl border border-slate-200/70 bg-white/65 shadow-none backdrop-blur transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-white/85"
+              className="focus-ring group relative flex h-full min-h-[150px] flex-col overflow-hidden rounded-xl border border-slate-200/70 bg-white/65 shadow-none backdrop-blur transition-all hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:bg-white/85"
             >
               <img src={resolveCardImage(entry)} alt={entry.label} className="h-14 w-full object-cover opacity-90 transition group-hover:opacity-100" loading="lazy" />
               <div className="absolute right-2 top-2 flex items-center gap-1.5">

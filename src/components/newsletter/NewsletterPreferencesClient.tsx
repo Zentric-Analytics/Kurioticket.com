@@ -81,7 +81,7 @@ export function NewsletterPreferencesClient({ email, token }: { email: string; t
 
   return (
     <section className="mx-auto w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
-      <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-700">{t["emailUpdates.eyebrow"] || enTranslations["emailUpdates.eyebrow"]}</p>
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#004BB8]">{t["emailUpdates.eyebrow"] || enTranslations["emailUpdates.eyebrow"]}</p>
       <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">{t["emailUpdates.title"] || enTranslations["emailUpdates.title"]}</h1>
       <p className="mt-3 text-sm font-medium leading-6 text-slate-600">
         {t["emailUpdates.description"] || enTranslations["emailUpdates.description"]}
@@ -98,7 +98,7 @@ export function NewsletterPreferencesClient({ email, token }: { email: string; t
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         <button
           type="button"
-          className="focus-ring rounded-xl bg-indigo-700 px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-400"
+          className="focus-ring rounded-xl bg-[#004BB8] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:bg-slate-400"
           disabled={pending || status === "LOADING" || isSubscribed}
           onClick={() => save("subscribe")}
         >
@@ -114,7 +114,7 @@ export function NewsletterPreferencesClient({ email, token }: { email: string; t
         </button>
       </div>
 
-      {message ? <p className="mt-4 rounded-2xl bg-indigo-50 px-4 py-3 text-sm font-semibold text-slate-700">{message}</p> : null}
+      {message ? <p className="mt-4 rounded-2xl bg-[#004BB8]/8 px-4 py-3 text-sm font-semibold text-slate-700">{message}</p> : null}
     </section>
   );
 }
