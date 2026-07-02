@@ -33,6 +33,8 @@ export const translations: TranslationDictionary = {
   fromPlaceholder: "Từ đâu?",
   toPlaceholder: "Đến đâu?",
   cityOrHotel: "Thành phố hoặc khách sạn",
+  hotelSearchDestinationLabel: "Điểm đến",
+  hotelSearchTravelDatesLabel: "Ngày lưu trú",
   hotelSearchDatePlaceholder: "Nhận phòng — Trả phòng",
   hotelSearchGuestsLabel: "Khách",
   stayDetails: "Chi tiết lưu trú",
@@ -174,6 +176,7 @@ export const translations: TranslationDictionary = {
   homeNewsletterBody: "Nhận cập nhật chuyến bay và khách sạn được chọn lọc hằng tuần.",
   homeNewsletterPlaceholder: "Nhập email của bạn",
   homeSubscribe: "Đăng ký",
+  homeNewsletterThanks: "Cảm ơn! Chúng tôi sẽ tiếp tục cập nhật các ưu đãi du lịch cho bạn.",
   homeEmailAddress: "Địa chỉ email",
   homeNewsletterConsent:
     "Khi đăng ký, bạn đồng ý nhận thông tin cập nhật từ Kurioticket. Bạn có thể hủy đăng ký bất cứ lúc nào.",
