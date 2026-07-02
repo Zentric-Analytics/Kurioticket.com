@@ -22,6 +22,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { LinkButton } from "@/components/ui/Button";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { useRegion } from "@/components/region/RegionProvider";
 import { personalDetailsCountryOptions } from "@/lib/region/supportedRegions";
 import { cn } from "@/lib/utils";
 import { decodeRegistrationOptions, defaultPasskeyName, passkeysSupported, serializeRegistrationCredential } from "@/lib/passkey-client";
@@ -553,6 +554,18 @@ const countryCallingCodeOptions = countryProfileOptions.filter(
 const defaultCountryCallingCodeOption =
   countryCallingCodeOptions.find((option) => option.isoCode === "NG") ??
   countryCallingCodeOptions[0];
+
+function getSupportedPhoneCountryCode(countryCode: string | null | undefined) {
+  const normalizedCountryCode = countryCode?.trim().toUpperCase();
+
+  if (!normalizedCountryCode) return null;
+
+  return countryCallingCodeOptions.find((option) => option.isoCode === normalizedCountryCode)?.isoCode ?? null;
+}
+
+function getDefaultPhoneCountryCode(countryCode: string | null | undefined) {
+  return getSupportedPhoneCountryCode(countryCode) ?? defaultCountryCallingCodeOption?.isoCode ?? "";
+}
 
 const genderOptions = [
   { value: "Male", labelKey: "accountDashboard.personalDetails.gender.male" },
@@ -1162,7 +1175,7 @@ function StructuredAddressInput({
   );
 }
 
-function parsePhoneDraftValue(value: string) {
+function parsePhoneDraftValue(value: string, defaultCountryCode?: string | null) {
   const trimmedValue = value.trim();
   const matchedOption = [...countryCallingCodeOptions]
     .sort((left, right) => right.dialCode.length - left.dialCode.length)
@@ -1174,13 +1187,15 @@ function parsePhoneDraftValue(value: string) {
 
   if (!matchedOption) {
     return {
-      countryCode: defaultCountryCallingCodeOption?.isoCode ?? "",
+      countryCode: getDefaultPhoneCountryCode(defaultCountryCode),
+      hasRecognizedDialCode: false,
       localNumber: trimmedValue.replace(/^\+\d+\s*/, ""),
     };
   }
 
   return {
     countryCode: matchedOption.isoCode,
+    hasRecognizedDialCode: true,
     localNumber: trimmedValue.slice(matchedOption.dialCode.length).trimStart(),
   };
 }
@@ -1204,19 +1219,25 @@ function PhoneNumberInput({
   onChange,
   className,
   label,
+  defaultCountryCode,
 }: {
   value: string;
   onChange: (value: string) => void;
   className: string;
   label: string;
+  defaultCountryCode?: string | null;
 }) {
   const [selectedPhoneCountryCode, setSelectedPhoneCountryCode] = useState(
-    () => parsePhoneDraftValue(value).countryCode,
+    () => parsePhoneDraftValue(value, defaultCountryCode).countryCode,
   );
-  const parsedValue = useMemo(() => parsePhoneDraftValue(value), [value]);
+  const parsedValue = useMemo(() => parsePhoneDraftValue(value, defaultCountryCode), [defaultCountryCode, value]);
+  const effectivePhoneCountryCode =
+    parsedValue.hasRecognizedDialCode || parsedValue.localNumber
+      ? selectedPhoneCountryCode
+      : parsedValue.countryCode;
   const selectedOption =
     countryCallingCodeOptions.find(
-      (option) => option.isoCode === selectedPhoneCountryCode,
+      (option) => option.isoCode === effectivePhoneCountryCode,
     ) ?? defaultCountryCallingCodeOption;
   const selectedCountryCode =
     selectedOption?.isoCode ?? defaultCountryCallingCodeOption?.isoCode ?? "";
@@ -1326,11 +1347,13 @@ function PersonalDetailsEditRow({
   value,
   error,
   onChange,
+  defaultPhoneCountryCode,
 }: {
   row: PersonalDetailRow;
   value: string;
   error?: string;
   onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
+  defaultPhoneCountryCode?: string | null;
 }) {
   const isAddress = row.key === "address";
 
@@ -1342,7 +1365,7 @@ function PersonalDetailsEditRow({
         </label>
       ) : null}
       <div className="min-w-0">
-        <DetailInput row={row} value={value} onChange={onChange} />
+        <DetailInput row={row} value={value} onChange={onChange} defaultPhoneCountryCode={defaultPhoneCountryCode} />
         {error ? (
           <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-red-700">
             {error}
@@ -1361,10 +1384,12 @@ function DetailInput({
   row,
   value,
   onChange,
+  defaultPhoneCountryCode,
 }: {
   row: PersonalDetailRow;
   value: string;
   onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
+  defaultPhoneCountryCode?: string | null;
 }) {
   const baseClassName = cn(
     "h-11 w-full min-w-0 rounded-none border border-slate-400 bg-white px-3.5 text-base font-medium leading-5 text-slate-950 shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/15 sm:max-w-[34rem] sm:text-sm",
@@ -1397,6 +1422,7 @@ function DetailInput({
         onChange={(nextValue) => onChange(row.key, nextValue)}
         className={baseClassName}
         label={row.label}
+        defaultCountryCode={defaultPhoneCountryCode}
       />
     );
   }
@@ -1656,6 +1682,7 @@ function getPersonalDetailsValidationErrors(draft: PersonalDetailsDraft) {
 
 function PersonalDetailsSection(props: DashboardOverviewProps) {
   const { t } = useLocale();
+  const { selectedCountryCode, detectedCountryCode, selectedOption, mode } = useRegion();
   const router = useRouter();
   const [savedValues, setSavedValues] = useState<PersonalDetailsDraft>(() =>
     getPersonalDetailsInitialValues(props),
@@ -1692,6 +1719,13 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     draft,
     savedValues,
   );
+  const defaultPhoneCountryCode =
+    getSupportedPhoneCountryCode(selectedCountryCode) ??
+    getSupportedPhoneCountryCode(detectedCountryCode) ??
+    getSupportedPhoneCountryCode(selectedOption.code) ??
+    getSupportedPhoneCountryCode(mode) ??
+    defaultCountryCallingCodeOption?.isoCode ??
+    "";
 
   const resetEmailChangeState = () => {
     setNewEmail("");
@@ -2018,6 +2052,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
         value={draft[key]}
         error={validationErrors[key]}
         onChange={updateDraft}
+        defaultPhoneCountryCode={defaultPhoneCountryCode}
       />
     );
   };
