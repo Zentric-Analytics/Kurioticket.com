@@ -407,7 +407,13 @@ function buildSavedTripHref(trip: ResolvedSavedTrip, fare?: SavedTripFare) {
   };
 }
 
-export function SavedTripsAndRecentSearches() {
+type SavedTripsAndRecentSearchesProps = {
+  compactTopSpacing?: boolean;
+};
+
+export function SavedTripsAndRecentSearches({
+  compactTopSpacing = false,
+}: SavedTripsAndRecentSearchesProps) {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const { status: sessionStatus } = useSession();
@@ -569,37 +575,41 @@ export function SavedTripsAndRecentSearches() {
   };
 
   return (
-    <div className="px-4 pb-8 pt-6 sm:px-6 sm:pb-10 sm:pt-10 lg:px-8 lg:pb-11 lg:pt-12">
-      <div className="mx-auto min-w-0 max-w-[88rem] space-y-8 text-start">
-        <div className="space-y-5">
-          <div>
-            <h1
-              id="saved-dashboard-title"
-              className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]"
-            >
-              {t("savedTripsPageTitle")} ❤️
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-              {t("savedTripsPageSubtitle")}
-            </p>
-          </div>
-
-          <section className="space-y-5">
-            <div className="flex flex-wrap items-center justify-end gap-3">
-              {savedTrips.length > 0 ? (
-                <button
-                  type="button"
-                  onClick={handleClearSaved}
-                  className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-rose-200 hover:text-rose-700"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  {t("savedTripsClearAllSaved")}
-                </button>
-              ) : null}
+    <div
+      className={`px-4 pb-8 sm:px-6 sm:pb-10 lg:px-8 lg:pb-11 ${
+        compactTopSpacing ? "pt-2 sm:pt-3 lg:pt-4" : "pt-6 sm:pt-8 lg:pt-10"
+      }`}
+    >
+      <div className="mx-auto min-w-0 max-w-[88rem] text-start">
+        <div className="space-y-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h1
+                id="saved-dashboard-title"
+                className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]"
+              >
+                {t("savedTripsPageTitle")} ❤️
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+                {t("savedTripsPageSubtitle")}
+              </p>
             </div>
 
+            {savedTrips.length > 0 ? (
+              <button
+                type="button"
+                onClick={handleClearSaved}
+                className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-rose-200 hover:text-rose-700 sm:mt-1"
+              >
+                <Trash2 className="h-4 w-4" />
+                {t("savedTripsClearAllSaved")}
+              </button>
+            ) : null}
+          </div>
+
+          <section>
             {savedTrips.length === 0 ? (
-              <div className="flex min-h-[22rem] items-start justify-center px-3 pb-10 pt-6 sm:min-h-[32rem] sm:pt-14 lg:min-h-[34rem] lg:pt-16">
+              <div className="flex min-h-[22rem] items-start justify-center px-3 pb-10 pt-6 sm:min-h-[32rem] sm:pt-10 lg:min-h-[34rem] lg:pt-12">
                 <div className="mx-auto flex w-full max-w-xl flex-col items-center text-center">
                   <h2 className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-[1.6rem]">
                     {t("savedTripsEmptyTitle")}
