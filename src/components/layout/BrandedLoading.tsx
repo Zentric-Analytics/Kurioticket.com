@@ -64,13 +64,13 @@ export function BrandedLoading({
             <div
               className={cn(
                 logoPulse &&
-                  "kurioticket-logo-pulse relative isolate rounded-[2rem] px-5 py-4 motion-reduce:animate-none",
+                  "kurioticket-logo-pulse relative isolate motion-reduce:animate-none",
               )}
             >
               <KurioticketLogo
                 className={cn(
                   "h-10 sm:h-11",
-                  logoPulse && "animate-[logo-breathe_2.6s_ease-in-out_infinite] motion-reduce:animate-none",
+                  logoPulse && "drop-shadow-[0_10px_24px_rgba(0,75,184,0.14)] animate-[logo-breathe_2.8s_ease-in-out_infinite] motion-reduce:animate-none",
                 )}
               />
             </div>
