@@ -490,7 +490,7 @@ export default function HotelsSearchPage() {
 
   return (
     <>
-      <AppHeader mobileHeroOverlay hideMobileCategoryTabs />
+      <AppHeader mobileHeroOverlay />
       <main className="relative isolate flex-1 overflow-x-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16">
         <section className="relative z-20 isolate min-h-[24.25rem] overflow-visible bg-slate-950 sm:hidden">
           <div className="absolute inset-0 overflow-hidden">
