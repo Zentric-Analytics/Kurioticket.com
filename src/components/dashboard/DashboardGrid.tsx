@@ -1478,38 +1478,28 @@ function PersonalDetailsEmailEditRow({
   currentEmail,
   isChangingEmail,
   newEmail,
-  verificationCode,
   emailValidationError,
-  isVerificationCodeValid,
   isRequestingCode,
   isConfirming,
   resendCooldownSeconds,
-  successMessage,
   errorMessage,
   onStartChange,
   onNewEmailChange,
-  onCodeChange,
   onRequestCode,
-  onConfirm,
   onCancel,
 }: {
   row: PersonalDetailRow;
   currentEmail: string;
   isChangingEmail: boolean;
   newEmail: string;
-  verificationCode: string;
   emailValidationError: string | null;
-  isVerificationCodeValid: boolean;
   isRequestingCode: boolean;
   isConfirming: boolean;
   resendCooldownSeconds: number;
-  successMessage: string | null;
   errorMessage: string | null;
   onStartChange: () => void;
   onNewEmailChange: (value: string) => void;
-  onCodeChange: (value: string) => void;
   onRequestCode: () => void;
-  onConfirm: () => void;
   onCancel: () => void;
 }) {
   const { t } = useLocale();
@@ -1590,34 +1580,9 @@ function PersonalDetailsEmailEditRow({
                   </p>
                 ) : null}
               </div>
-              <div>
-                <label
-                  className="mb-1.5 block text-sm font-semibold leading-5 text-slate-950"
-                  htmlFor="personal-email-code"
-                >
-                  Verification code
-                </label>
-                <input
-                  id="personal-email-code"
-                  className={baseInputClassName}
-                  type="text"
-                  value={verificationCode}
-                  onChange={(event) => onCodeChange(event.target.value)}
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  maxLength={6}
-                />
-                <p className="mt-1.5 text-xs leading-5 text-slate-500">
-                  Code expires after 15 minutes.
-                </p>
-              </div>
               {errorMessage ? (
                 <p className="text-sm font-medium leading-6 text-red-700">
                   {errorMessage}
-                </p>
-              ) : successMessage ? (
-                <p className="text-sm font-medium leading-6 text-emerald-700">
-                  {successMessage}
                 </p>
               ) : null}
               <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-3">
@@ -1732,11 +1697,10 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
   const [emailVerificationCode, setEmailVerificationCode] = useState("");
   const [isRequestingEmailCode, setIsRequestingEmailCode] = useState(false);
   const [isConfirmingEmail, setIsConfirmingEmail] = useState(false);
+  const [isEmailVerificationModalOpen, setIsEmailVerificationModalOpen] =
+    useState(false);
   const [emailCodeResendCooldownSeconds, setEmailCodeResendCooldownSeconds] =
     useState(0);
-  const [emailChangeSuccessMessage, setEmailChangeSuccessMessage] = useState<
-    string | null
-  >(null);
   const [emailChangeErrorMessage, setEmailChangeErrorMessage] = useState<
     string | null
   >(null);
@@ -1755,7 +1719,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     setEmailVerificationCode("");
     setIsRequestingEmailCode(false);
     setIsConfirmingEmail(false);
-    setEmailChangeSuccessMessage(null);
+    setIsEmailVerificationModalOpen(false);
     setEmailChangeErrorMessage(null);
     setEmailCodeResendCooldownSeconds(0);
   };
@@ -1819,7 +1783,6 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     }
 
     setIsRequestingEmailCode(true);
-    setEmailChangeSuccessMessage(null);
     setEmailChangeErrorMessage(null);
 
     try {
@@ -1845,10 +1808,9 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       setEmailCodeResendCooldownSeconds(
         data.cooldownSeconds ?? emailChangeResendCooldownSeconds,
       );
-      setEmailChangeSuccessMessage(
-        "We sent a verification code to your new email address. Check your inbox or junk/spam folder. The code expires in 15 minutes.",
-      );
+      setIsEmailVerificationModalOpen(true);
     } catch (error) {
+      setIsEmailVerificationModalOpen(false);
       setEmailChangeErrorMessage(
         error instanceof Error
           ? error.message
@@ -1872,7 +1834,6 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     }
 
     setIsConfirmingEmail(true);
-    setEmailChangeSuccessMessage(null);
     setEmailChangeErrorMessage(null);
 
     try {
@@ -2022,33 +1983,25 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
           currentEmail={savedValues.email}
           isChangingEmail={isChangingEmail}
           newEmail={newEmail}
-          verificationCode={emailVerificationCode}
           emailValidationError={emailValidationError}
-          isVerificationCodeValid={isVerificationCodeValid}
           isRequestingCode={isRequestingEmailCode}
           isConfirming={isConfirmingEmail}
           resendCooldownSeconds={emailCodeResendCooldownSeconds}
-          successMessage={emailChangeSuccessMessage}
-          errorMessage={emailChangeErrorMessage}
+          errorMessage={isEmailVerificationModalOpen ? null : emailChangeErrorMessage}
           onStartChange={() => {
             setStatusMessage(null);
-            setEmailChangeSuccessMessage(null);
             setEmailChangeErrorMessage(null);
             setEmailCodeResendCooldownSeconds(0);
             setIsChangingEmail(true);
           }}
           onNewEmailChange={(value) => {
             setNewEmail(value);
+            setEmailVerificationCode("");
+            setIsEmailVerificationModalOpen(false);
             setEmailCodeResendCooldownSeconds(0);
-            setEmailChangeSuccessMessage(null);
-            setEmailChangeErrorMessage(null);
-          }}
-          onCodeChange={(value) => {
-            setEmailVerificationCode(value.replace(/\D/g, "").slice(0, 6));
             setEmailChangeErrorMessage(null);
           }}
           onRequestCode={handleRequestEmailCode}
-          onConfirm={handleConfirmEmailChange}
           onCancel={handleCancelEmailChange}
         />
       );
@@ -2212,6 +2165,53 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
           </div>
         )}
       </div>
+
+      {isEmailVerificationModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="verify-email-change-title">
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleConfirmEmailChange();
+            }}
+            data-security-modal-content
+            className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
+          >
+            <h2 id="verify-email-change-title" className="text-xl font-semibold text-slate-950">Verify email change</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Enter the 6-digit verification code we sent to {newEmail}. Check your inbox or junk/spam folder.</p>
+            <div className="mt-5 space-y-4">
+              <label className="block text-sm font-medium text-slate-800">
+                Verification code
+                <input
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  type="text"
+                  value={emailVerificationCode}
+                  onChange={(event) => {
+                    setEmailVerificationCode(event.target.value.replace(/\D/g, "").slice(0, 6));
+                    setEmailChangeErrorMessage(null);
+                  }}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                />
+              </label>
+              <p className="text-xs leading-5 text-slate-500">Code expires after 15 minutes.</p>
+              {emailChangeErrorMessage ? (
+                <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{emailChangeErrorMessage}</p>
+              ) : null}
+            </div>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={handleCancelEmailChange} disabled={isConfirmingEmail} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60">Cancel</button>
+              <button
+                type="submit"
+                disabled={Boolean(emailValidationError) || !isVerificationCodeValid || isConfirmingEmail}
+                className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {isConfirmingEmail ? "Updating…" : "Verify and update email"}
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
     </section>
   );
 }
