@@ -129,6 +129,139 @@ test("Vietnamese language metadata, LTR direction, and English fallback dictiona
 
 
 
+test("Vietnamese Flights landing copy resolves through active i18n render paths without English fallback", () => {
+  const vi = getTranslations("vi");
+  const en = enTranslations as Record<string, string>;
+  const flightLandingSource = readFileSync("src/components/flights/FlightLandingClient.tsx", "utf8");
+  const flightSearchSource = readFileSync("src/components/search/StandaloneFlightSearchForm.tsx", "utf8");
+  const homeDiscoverySource = readFileSync("src/data/homeDiscovery.ts", "utf8");
+  const viSource = readFileSync("src/lib/i18n/vi.ts", "utf8");
+
+  const expected: Record<string, string> = {
+    flightLandingHeroTitle: "Tìm chuyến bay giá tốt tiếp theo của bạn thật dễ dàng.",
+    flightLandingHeroSubtitle:
+      "Tìm tuyến bay, so sánh ngày và khám phá lựa chọn chuyến bay cho hành trình tiếp theo của bạn.",
+    cityOrAirport: "Thành phố hoặc sân bay",
+    searchFlights: "Tìm chuyến bay",
+    discoverDestinationsFromRegion: "Khám phá điểm đến từ khu vực của bạn",
+    discoverDestinationsFromRegionBody:
+      "Khám phá các tuyến bay được tuyển chọn và bắt đầu chuyến đi tiếp theo một cách tự tin.",
+    flightLandingFeatureSearchReadyTitle: "Tuyến bay sẵn sàng để tìm kiếm",
+    flightLandingFeatureSearchReadyBody:
+      "Nhập chi tiết chuyến đi thật trước khi yêu cầu kết quả từ nhà cung cấp chuyến bay.",
+    flightLandingFeatureCompareTitle: "So sánh trong đúng ngữ cảnh",
+    flightLandingFeatureCompareBody:
+      "Dùng ngày đi, số hành khách, hạng khoang, thời lượng, điểm dừng và chi tiết tuyến bay để đánh giá lựa chọn.",
+    flightLandingFeatureProviderTitle: "Xem lại với nhà cung cấp",
+    flightLandingFeatureProviderBody:
+      "Luôn xác nhận tình trạng còn chỗ, giá và quy định cuối cùng với nhà cung cấp trước khi đặt.",
+    flightLandingStartThisSearch: "Bắt đầu tìm kiếm này",
+    flightLandingRouteIdeasTitle: "Ý tưởng tuyến bay cho chuyến đi linh hoạt",
+    flightLandingRouteIdeasBody:
+      "Duyệt ý tưởng tuyến bay, rồi bắt đầu tìm kiếm thật với ngày đi và hành khách trước khi so sánh các chuyến bay còn chỗ.",
+    "flightLandingImageAlt.Johannesburg skyline at golden hour": "Đường chân trời Johannesburg lúc hoàng hôn",
+    "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza": "Đường chân trời Cairo với Kim tự tháp Giza",
+    "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands":
+      "Cảnh thành phố Addis Ababa trên cao nguyên Ethiopia",
+    beachVacations: "Kỳ nghỉ biển",
+    beachVacationsBody:
+      "Khám phá các tuyến bay đến bờ biển đầy nắng, đảo nghỉ dưỡng và điểm đến biển ấm áp.",
+    "flightLandingImageAlt.Puerto Vallarta coastline and old town": "Bờ biển và phố cổ Puerto Vallarta",
+    "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water":
+      "Bãi biển Waikiki ở Honolulu với Diamond Head và làn nước xanh trong",
+    "flightLandingImageAlt.San Diego bay skyline and marina":
+      "Đường chân trời vịnh San Diego và bến du thuyền",
+    "homeDiscoveryRoute.ca-yyz-cun.title": "Kỳ nghỉ đông ở Cancun",
+    "homeDiscoveryRoute.ca-yeg-pvr.title": "Kỳ nghỉ biển Puerto Vallarta",
+    "homeDiscoveryRoute.ca-yyz-hnl.title": "Kỳ nghỉ đảo đường dài Honolulu",
+    "homeDiscoveryRoute.ca-yyz-san.title": "Chuyến đi nắng và lướt sóng San Diego",
+    "homeDiscoveryRoute.ca-yvr-syd.title": "Hành trình xuyên Thái Bình Dương đến Sydney",
+    "homeDiscoveryRoute.ca-yyz-cun.routeNote":
+      "Tuyến nghỉ dưỡng đáng tin cậy với lựa chọn bay thẳng vào mùa cao điểm.",
+    "homeDiscoveryRoute.ca-yeg-pvr.routeNote":
+      "Tuyến nắng mùa đông với bãi biển Thái Bình Dương và nét duyên phố cổ.",
+    "homeDiscoveryRoute.ca-yyz-hnl.routeNote":
+      "Lựa chọn nghỉ dưỡng cao cấp cho bãi biển, lướt sóng và đi bộ đường dài trên đảo.",
+    "homeDiscoveryRoute.ca-yyz-san.routeNote":
+      "Tuyến xuyên biên giới đáng tin cậy cho bãi biển, công viên và cảnh cảng.",
+    "homeDiscoveryRoute.ca-yvr-syd.routeNote":
+      "Tuyến đường dài được yêu thích với điểm nhấn cảng và vùng ngoại ô ven biển.",
+    flightBookingFaqs: "Câu hỏi thường gặp về đặt chuyến bay",
+    flightBookingFaqIntro:
+      "Xem lại các chi tiết tìm kiếm chuyến bay thường gặp trước khi tiếp tục với nhà cung cấp.",
+    flightFaqBestTimeQuestion: "Khi nào là thời điểm tốt nhất để đặt chuyến bay?",
+    flightFaqBestTimeAnswer:
+      "Giá có thể thay đổi thường xuyên. So sánh ngày đi, tuyến bay và nhà cung cấp có thể giúp bạn hiểu các lựa chọn hiện có trước khi tiếp tục.",
+    flightFaqBeforeBookingQuestion: "Tôi nên kiểm tra gì trước khi đặt?",
+    flightFaqBeforeBookingAnswer:
+      "Hãy xem lại ngày đi, sân bay, quy định hành lý, hạng khoang, thông tin hành khách, điều khoản của nhà cung cấp và giá cuối cùng trên trang nhà cung cấp trước khi đặt.",
+    flightFaqFlexibleFareQuestion: "Giá vé linh hoạt là gì?",
+    flightFaqFlexibleFareAnswer:
+      "Giá vé linh hoạt có thể cho phép đổi hoặc hủy với quy định và phí khác nhau. Luôn xem điều khoản của nhà cung cấp trước khi chọn.",
+    flightFaqNonstopQuestion: "Chuyến bay thẳng có luôn tốt hơn không?",
+    flightFaqNonstopAnswer:
+      "Chuyến bay thẳng có thể nhanh hơn, nhưng chuyến bay nối chuyến có thể có mức giá, lịch trình hoặc lựa chọn sân bay khác. Hãy so sánh toàn bộ hành trình trước khi chọn.",
+    flightFaqBaggageQuestion: "Quy định hành lý hoạt động như thế nào?",
+    flightFaqBaggageAnswer:
+      "Hạn mức và phí hành lý khác nhau theo hãng bay, loại vé, tuyến bay và nhà cung cấp. Hãy xem chi tiết hành lý xách tay và ký gửi trước khi đặt.",
+    flightFaqChangeCancelQuestion: "Tôi có thể đổi hoặc hủy vé không?",
+    flightFaqChangeCancelAnswer:
+      "Quy định đổi và hủy phụ thuộc vào hãng bay, loại vé, nhà cung cấp và tuyến bay. Hãy xác nhận quy định trên trang nhà cung cấp trước khi đặt.",
+    flightFaqInternationalQuestion: "Tôi nên biết gì về chuyến bay quốc tế?",
+    flightFaqInternationalAnswer:
+      "Chuyến bay quốc tế có thể yêu cầu hộ chiếu, thị thực, giấy tờ quá cảnh, yêu cầu sức khỏe và thời gian làm thủ tục dài hơn. Hãy xem quy định du lịch chính thức trước khi đi.",
+  };
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(vi[key as keyof typeof vi], value, key);
+    assert.notEqual(vi[key as keyof typeof vi], en[key], `${key} must not fall back to English`);
+    assert.equal((viSource.match(new RegExp(`${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:|"${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}":`, "g")) || []).length, 1, `${key} appears once in vi.ts`);
+  }
+
+  for (const key of ["flightLandingHeroTitle", "flightLandingHeroSubtitle", "discoverDestinationsFromRegion", "discoverDestinationsFromRegionBody", "flightLandingStartThisSearch", "flightLandingRouteIdeasTitle", "flightLandingRouteIdeasBody", "beachVacations", "beachVacationsBody", "flightBookingFaqs", "flightBookingFaqIntro"]) {
+    assert.ok(flightLandingSource.includes(`t("${key}")`), `${key} is read from i18n`);
+  }
+
+  for (const key of ["cityOrAirport", "searchFlights"]) {
+    assert.ok(flightSearchSource.includes(`t("${key}")`), `${key} is read from i18n`);
+  }
+
+  for (const english of [
+    "Find your next affordable flight with ease.",
+    "Search routes, compare dates, and explore flight options for your next journey.",
+    "City or airport",
+    "Search flights",
+    "Discover destinations from your region",
+    "Start this search",
+    "Search-ready routes",
+    "Compare in context",
+    "Provider review",
+    "Route ideas for flexible trips",
+    "Beach vacations",
+    "Flight booking FAQs",
+    "When is the best time to book a flight?",
+    "What should I check before booking?",
+    "What is a flexible fare?",
+  ]) {
+    assert.ok(!Object.values(expected).includes(english), `${english} is not Vietnamese output`);
+  }
+
+  const caBeachIds = getHomeDiscoveryByRegion("CA").map((item) => item.id);
+  assert.deepEqual(caBeachIds.slice(3, 8), ["ca-yyz-cun", "ca-yyc-yhz", "ca-yul-lhr", "ca-yvr-sfo", "ca-yyz-mco"]);
+  assert.ok(homeDiscoverySource.includes('id: "ca-yyz-cun"'));
+  assert.ok(homeDiscoverySource.includes('originCode: "YYZ"'));
+  assert.ok(homeDiscoverySource.includes('destinationCode: "CUN"'));
+  assert.ok(homeDiscoverySource.includes('imageAlt: "Puerto Vallarta coastline and old town"'));
+  assert.ok(flightLandingSource.includes("{item.originCode} → {item.destinationCode}"));
+  assert.ok(flightLandingSource.includes("href={buildDiscoveryLink(item)}"));
+  assert.ok(flightLandingSource.includes('columns="three"'));
+  assert.equal(languageOptions.find((o) => o.code === "vi")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
+});
+
+
 test("Vietnamese Cars landing copy resolves through active i18n render paths", () => {
   const carsPageSource = readFileSync("src/app/cars/page.tsx", "utf8");
   const carsLandingContentSource = readFileSync("src/data/carsLandingContent.ts", "utf8");
