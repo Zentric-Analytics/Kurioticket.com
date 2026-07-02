@@ -177,6 +177,7 @@ export const translations: TranslationDictionary = {
   homeNewsletterPlaceholder: "Nhập email của bạn",
   homeNewsletterThanks: "Cảm ơn! Chúng tôi sẽ tiếp tục cập nhật các ưu đãi du lịch cho bạn.",
   homeSubscribe: "Đăng ký",
+  homeNewsletterThanks: "Cảm ơn! Chúng tôi sẽ tiếp tục cập nhật các ưu đãi du lịch cho bạn.",
   homeEmailAddress: "Địa chỉ email",
   homeNewsletterConsent:
     "Khi đăng ký, bạn đồng ý nhận thông tin cập nhật từ Kurioticket. Bạn có thể hủy đăng ký bất cứ lúc nào.",

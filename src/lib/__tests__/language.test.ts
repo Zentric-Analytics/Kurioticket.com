@@ -13558,6 +13558,7 @@ test("Vietnamese homepage copy resolves without English fallback", () => {
     homeNewsletterPlaceholder: "Nhập email của bạn",
     homeNewsletterThanks: "Cảm ơn! Chúng tôi sẽ tiếp tục cập nhật các ưu đãi du lịch cho bạn.",
     homeSubscribe: "Đăng ký",
+    homeNewsletterThanks: "Cảm ơn! Chúng tôi sẽ tiếp tục cập nhật các ưu đãi du lịch cho bạn.",
     footerContactUs: "Liên hệ",
     footerCustomerSupport: "Hỗ trợ khách hàng",
     footerDiscover: "Khám phá",
@@ -13571,6 +13572,12 @@ test("Vietnamese homepage copy resolves without English fallback", () => {
   for (const [key, value] of Object.entries(expected)) {
     assert.equal(vi[key as keyof typeof vi], value, key);
     assert.notEqual(vi[key as keyof typeof vi], enTranslations[key as keyof typeof enTranslations], key);
+  }
+
+  for (const englishFallback of ["DESTINATION", "TRAVEL DATES", "Thanks! We’ll keep you posted with travel deals.", "Thanks! We\'ll keep you posted with travel deals."]) {
+    assert.notEqual(vi.hotelSearchDestinationLabel, englishFallback);
+    assert.notEqual(vi.hotelSearchTravelDatesLabel, englishFallback);
+    assert.notEqual(vi.homeNewsletterThanks, englishFallback);
   }
 
   assert.equal(vi.homeNewsletterConsent.includes("Kurioticket"), true);
@@ -13686,4 +13693,11 @@ test("Vietnamese homepage destinations, discovery cards, support FAQ answers, da
   assert.equal(homepageSource.includes("Compare travel options in one simple search"), false);
   assert.equal(homepageSource.includes("Discover your next adventure here"), false);
   assert.equal(homepageSource.includes("Frequently asked questions"), false);
+
+  const searchTabsSource = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
+  assert.match(searchTabsSource, /t\.hotelSearchDestinationLabel \|\| t\.destination \|\| "Destination"/);
+  assert.match(searchTabsSource, /translateHotelTravelDateText\("hotelSearchTravelDatesLabel"\)/);
+
+  assert.match(homepageSource, /setNewsletterMessage\(t\("homeNewsletterThanks"\)\)/);
+  assert.match(homepageSource, /fetch\("\/api\/newsletter\/subscribe"/);
 });
