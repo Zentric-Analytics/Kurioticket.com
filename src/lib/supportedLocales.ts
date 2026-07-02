@@ -23,8 +23,6 @@ export type SupportedLocale = {
   translationStatus: "ready" | "partial";
 };
 
-const preparing = "preparing" as const;
-
 export const supportedLocales: SupportedLocale[] = [
   {
     code: "en-us",
@@ -227,12 +225,12 @@ export const supportedLocales: SupportedLocale[] = [
     translationStatus: "partial",
   },
   {
-    code: "vi-vn",
+    code: "vi",
     locale: "vi-VN",
     label: "Vietnamese",
     nativeLabel: "Tiếng Việt",
     direction: "ltr",
-    status: preparing,
+    status: "available",
     countryCode: "VN",
     fallbackText: "VN",
     translationStatus: "partial",

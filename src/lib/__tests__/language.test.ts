@@ -26,6 +26,7 @@ import { translations as plTranslations } from "@/lib/i18n/pl";
 import { translations as svTranslations } from "@/lib/i18n/sv";
 import { translations as idTranslations } from "@/lib/i18n/id";
 import { translations as thTranslations } from "@/lib/i18n/th";
+import { translations as viTranslations } from "@/lib/i18n/vi";
 import { availableLocaleOptions, getTranslations } from "@/lib/i18n";
 import { supportedLocales } from "@/lib/supportedLocales";
 import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
@@ -73,6 +74,55 @@ test("global language catalog renders", () => {
   assert.ok(languageOptions.some((o) => o.code === "sv" && o.locale === "sv-SE" && o.nativeLabel === "Svenska" && o.label === "Swedish" && o.countryCode === "SE" && o.direction === "ltr" && o.status === "available"));
   assert.equal(languageOptions.filter((o) => o.code === "id").length, 1);
   assert.ok(languageOptions.some((o) => o.code === "id" && o.locale === "id-ID" && o.nativeLabel === "Bahasa Indonesia" && o.label === "Indonesian" && o.countryCode === "ID" && o.fallbackText === "ID" && o.direction === "ltr" && o.status === "available"));
+});
+
+test("Vietnamese language metadata, LTR direction, and English fallback dictionary resolve", () => {
+  const vietnameseOptions = languageOptions.filter((o) => o.code === "vi");
+  const vietnameseLocaleMetadata = supportedLocales.filter((o) => o.code === "vi");
+
+  assert.equal(vietnameseOptions.length, 1);
+  assert.equal(vietnameseLocaleMetadata.length, 1);
+  assert.deepEqual(
+    {
+      code: vietnameseOptions[0]?.code,
+      locale: vietnameseOptions[0]?.locale,
+      label: vietnameseOptions[0]?.label,
+      nativeLabel: vietnameseOptions[0]?.nativeLabel,
+      direction: vietnameseOptions[0]?.direction,
+      status: vietnameseOptions[0]?.status,
+      countryCode: vietnameseOptions[0]?.countryCode,
+      fallbackText: vietnameseOptions[0]?.fallbackText,
+      translationStatus: vietnameseLocaleMetadata[0]?.translationStatus,
+    },
+    {
+      code: "vi",
+      locale: "vi-VN",
+      label: "Vietnamese",
+      nativeLabel: "Tiếng Việt",
+      direction: "ltr",
+      status: "available",
+      countryCode: "VN",
+      fallbackText: "VN",
+      translationStatus: "partial",
+    },
+  );
+
+  assert.equal(normalizeLanguage("vi"), "vi");
+  assert.equal(normalizeLanguage("vi-VN"), "vi");
+  assert.equal(normalizeLanguage("vi-vn"), "vi");
+  assert.equal(getTranslations("vi"), viTranslations);
+  assert.equal(getTranslations("vi-VN"), viTranslations);
+  assert.equal(getTranslations("vi-vn"), viTranslations);
+  assert.equal(viTranslations.homeHeroTitle, enTranslations.homeHeroTitle);
+  assert.equal(viTranslations.search, enTranslations.search);
+  assert.equal(getTranslations("unsupported-locale"), enTranslations);
+  assert.ok(availableLocaleOptions.some((o) => o.code === "vi" && o.nativeLabel === "Tiếng Việt"));
+  assert.equal(vietnameseOptions[0]?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "th")?.status, "available");
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "id")?.status, "available");
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
 });
 
 test("Thai language metadata, LTR direction, and English fallback dictionary resolve", () => {
@@ -675,6 +725,7 @@ test("flight quote unavailable copy resolves through active render path for all 
     sv: ["Flygpriset är inte tillgängligt", "Det här flygpriset är inte längre tillgängligt. Sök igen för aktuella priser."],
     id: ["Penawaran harga penerbangan tidak tersedia", "Penawaran harga penerbangan ini tidak lagi tersedia. Silakan cari lagi untuk melihat harga saat ini."],
     th: ["ไม่มีใบเสนอราคาตั๋วเครื่องบิน", "ใบเสนอราคาตั๋วเครื่องบินนี้ไม่พร้อมใช้งานแล้ว โปรดค้นหาอีกครั้งเพื่อดูราคาปัจจุบัน"],
+    vi: ["Flight quote unavailable", "This flight quote is no longer available. Please search again for current prices."],
   } as const;
 
   for (const option of languageOptions.filter((o) => o.status === "available")) {
