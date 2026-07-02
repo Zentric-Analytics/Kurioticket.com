@@ -62,10 +62,10 @@ export function RouteProgressProvider({
       {active ? (
         <>
           <div
-            className="pointer-events-none fixed inset-x-0 top-0 z-[70] h-0.5 overflow-hidden bg-indigo-100/40"
+            className="pointer-events-none fixed inset-x-0 top-0 z-[70] h-0.5 overflow-hidden bg-[#004BB8]/10"
             aria-hidden="true"
           >
-            <div className="h-full w-full origin-left bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 animate-pulse motion-reduce:animate-none" />
+            <div className="h-full w-full origin-left bg-gradient-to-r from-[#004BB8] via-[#004BB8] to-[#5CB6B2] animate-pulse motion-reduce:animate-none" />
           </div>
           <span
             role="status"

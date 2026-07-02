@@ -334,7 +334,7 @@ function RouteCard({
       aria-label={t("flightLandingRouteAriaLabel")
         .replace("{{origin}}", routeText.originCity)
         .replace("{{destination}}", routeText.destinationCity)}
-      className="group block overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_14px_36px_rgba(15,23,42,0.07)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_18px_42px_rgba(79,70,229,0.14)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+      className="group block overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_14px_36px_rgba(15,23,42,0.07)] transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-[0_18px_42px_rgba(0,75,184,0.14)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
     >
       <article className="flex h-full flex-col">
         <div className="relative h-40 overflow-hidden bg-slate-100">
@@ -360,7 +360,7 @@ function RouteCard({
           <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">
             {routeText.routeNote}
           </p>
-          <span className="mt-5 inline-flex min-h-10 w-fit items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-semibold text-white shadow-sm shadow-indigo-700/20 transition duration-200 group-hover:from-indigo-600 group-hover:to-violet-500 group-hover:shadow-[0_10px_22px_rgba(79,70,229,0.18)] group-active:translate-y-px">
+          <span className="mt-5 inline-flex min-h-10 w-fit items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-4 text-sm font-semibold text-white shadow-sm shadow-[#004BB8]/20 transition duration-200 group-hover:bg-[#021C2B] group-hover:shadow-[0_10px_22px_rgba(0,75,184,0.18)] group-active:translate-y-px">
             {t("flightLandingStartThisSearch")}
             <Plane className="h-4 w-4 shrink-0 stroke-[2.4] transition duration-200 group-hover:translate-x-0.5" />
           </span>
@@ -531,13 +531,13 @@ export function FlightLandingClient() {
                 title: t("flightLandingFeatureSearchReadyTitle"),
                 body: t("flightLandingFeatureSearchReadyBody"),
                 illustration: <SearchReadyIllustration />,
-                ringClassName: "ring-indigo-100/80",
+                ringClassName: "ring-[#004BB8]/10",
               },
               {
                 title: t("flightLandingFeatureCompareTitle"),
                 body: t("flightLandingFeatureCompareBody"),
                 illustration: <CompareFlightsIllustration />,
-                ringClassName: "ring-violet-100/80",
+                ringClassName: "ring-[#5CB6B2]/20",
               },
               {
                 title: t("flightLandingFeatureProviderTitle"),
@@ -588,7 +588,7 @@ export function FlightLandingClient() {
                   <Link
                     key={item.id}
                     href={buildDiscoveryLink(item)}
-                    className="group block overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_12px_32px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_16px_36px_rgba(79,70,229,0.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                    className="group block overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_12px_32px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-[0_16px_36px_rgba(0,75,184,0.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
                   >
                     <article className="flex h-full flex-col">
                       <div className="relative h-32 overflow-hidden bg-slate-100">
@@ -601,7 +601,7 @@ export function FlightLandingClient() {
                         />
                       </div>
                       <div className="flex flex-1 flex-col p-5">
-                        <p className="text-[0.72rem] font-bold uppercase leading-4 tracking-[0.14em] text-indigo-700/85">
+                        <p className="text-[0.72rem] font-bold uppercase leading-4 tracking-[0.14em] text-[#004BB8]">
                           {item.originCode} → {item.destinationCode}
                         </p>
                         <h3 className="mt-3 text-lg font-bold leading-6 tracking-[-0.015em] text-slate-950">
