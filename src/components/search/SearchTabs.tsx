@@ -217,7 +217,7 @@ const desktopPopoverPanelClassName = "z-[2147483400]";
 const desktopTravelersFieldClassName = "z-[2147483500]";
 const desktopTravelersPopoverClassName = "z-[2147483600]";
 const mobileDoneButtonClassName =
-  "focus-ring min-h-11 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-6 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition-colors hover:from-indigo-600 hover:to-violet-500 active:from-indigo-800 active:to-violet-700";
+  "focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 transition-colors hover:bg-[#021C2B] active:bg-[#021C2B]";
 
 type DesktopTopLayerPopoverProps = {
   open: boolean;
@@ -641,7 +641,7 @@ export function SearchTabs({
       : "gap-1.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_112px]"
   );
   const joinedFieldClassName = cn(
-    "transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
+    "transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/30 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
     compactHero ? "min-h-[50px] px-3 py-1 lg:min-h-[56px] lg:px-4 lg:py-2" : "min-h-[54px] px-3 py-1.5"
   );
   const flightJoinedFieldClassName = cn(
@@ -673,7 +673,7 @@ export function SearchTabs({
     compactHero ? "min-h-9 text-[17px] sm:text-[16px] lg:text-[15px] lg:tracking-[-0.01em] lg:text-slate-900 lg:placeholder:text-slate-500" : "min-h-8 text-[16px] sm:text-[15px]"
   );
   const flightRouteGroupClassName = compactHero
-    ? "grid grid-cols-1 gap-1 rounded-xl bg-transparent transition-colors sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch sm:border sm:border-slate-300 sm:bg-white sm:px-3.5 sm:py-1.5 sm:hover:border-slate-400 sm:focus-within:border-indigo-500 sm:focus-within:ring-2 sm:focus-within:ring-indigo-500/40 lg:grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)] lg:rounded-none lg:rounded-s-xl lg:border-0 lg:border-e lg:border-slate-200 lg:px-4 lg:py-2 lg:hover:border-slate-200 lg:focus-within:border-indigo-500 lg:focus-within:bg-white lg:focus-within:ring-2 lg:focus-within:ring-indigo-500/25"
+    ? "grid grid-cols-1 gap-1 rounded-xl bg-transparent transition-colors sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch sm:border sm:border-slate-300 sm:bg-white sm:px-3.5 sm:py-1.5 sm:hover:border-slate-400 sm:focus-within:border-[#004BB8] sm:focus-within:ring-2 sm:focus-within:ring-[#004BB8]/30 lg:grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)] lg:rounded-none lg:rounded-s-xl lg:border-0 lg:border-e lg:border-slate-200 lg:px-4 lg:py-2 lg:hover:border-slate-200 lg:focus-within:border-[#004BB8] lg:focus-within:bg-white lg:focus-within:ring-2 lg:focus-within:ring-[#004BB8]/25"
     : cn("grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white lg:rounded-s-xl", flightJoinedFieldClassName);
   const flightRouteFieldClassName = (side: "origin" | "destination") =>
     compactHero
@@ -687,7 +687,7 @@ export function SearchTabs({
     compactHero ? "lg:min-h-[58px]" : "lg:min-h-[58px]"
   );
   const submitButtonClassName = cn(
-    "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 enabled:hover:from-indigo-600 enabled:hover:to-violet-500 enabled:active:from-indigo-800 enabled:active:to-violet-700 disabled:from-indigo-700 disabled:to-violet-600 disabled:opacity-100 disabled:shadow-md disabled:shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-indigo-600/20 lg:text-[15px] lg:shadow-[0_10px_22px_rgba(67,56,202,0.22)] lg:disabled:shadow-[0_10px_22px_rgba(67,56,202,0.22)]",
+    "w-full rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 enabled:hover:bg-[#021C2B] enabled:active:bg-[#021C2B] disabled:bg-[#004BB8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#004BB8]/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20 lg:text-[15px] lg:shadow-[0_10px_22px_rgba(0,75,184,0.22)] lg:disabled:shadow-[0_10px_22px_rgba(0,75,184,0.22)]",
     compactHero ? "h-12 lg:min-h-[58px]" : "h-12 lg:min-h-[58px]"
   );
   const hotelSubmitWrapClassName = cn(
@@ -695,7 +695,7 @@ export function SearchTabs({
     compactHero ? "lg:min-h-[58px]" : "lg:min-h-[58px]"
   );
   const hotelSubmitButtonClassName = cn(
-    "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 enabled:hover:from-indigo-600 enabled:hover:to-violet-500 enabled:active:from-indigo-800 enabled:active:to-violet-700 disabled:from-indigo-700 disabled:to-violet-600 disabled:opacity-100 disabled:shadow-md disabled:shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-indigo-600/20 lg:text-[15px] lg:shadow-[0_10px_22px_rgba(67,56,202,0.22)] lg:disabled:shadow-[0_10px_22px_rgba(67,56,202,0.22)]",
+    "w-full rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 enabled:hover:bg-[#021C2B] enabled:active:bg-[#021C2B] disabled:bg-[#004BB8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#004BB8]/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20 lg:text-[15px] lg:shadow-[0_10px_22px_rgba(0,75,184,0.22)] lg:disabled:shadow-[0_10px_22px_rgba(0,75,184,0.22)]",
     compactHero ? "h-[54px] lg:min-h-[58px]" : "h-12 lg:min-h-[58px]"
   );
 
@@ -1931,15 +1931,15 @@ export function SearchTabs({
                         "focus-ring relative mx-auto flex h-11 w-full max-w-11 items-center justify-center rounded-full text-[15px] font-semibold transition-colors disabled:cursor-not-allowed",
                         isDisabledDate
                           ? "text-slate-300"
-                          : "text-slate-800 hover:bg-indigo-50 hover:text-indigo-800",
-                        isToday && !isDisabledDate && "ring-1 ring-inset ring-indigo-300",
-                        isInRange && "bg-indigo-50 text-indigo-900 hover:bg-indigo-100",
-                        (isDeparture || isReturn) && "bg-indigo-700 text-white shadow-sm hover:bg-indigo-700 hover:text-white ring-0"
+                          : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
+                        isToday && !isDisabledDate && "ring-1 ring-inset ring-[#5CB6B2]",
+                        isInRange && "bg-[#004BB8]/10 text-[#021C2B] hover:bg-[#004BB8]/15",
+                        (isDeparture || isReturn) && "bg-[#004BB8] text-white shadow-sm hover:bg-[#004BB8] hover:text-white ring-0"
                       )}
                     >
                       {day.getDate()}
                       {isToday && !isDeparture && !isReturn ? (
-                        <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-indigo-500" aria-hidden="true" />
+                        <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#5CB6B2]" aria-hidden="true" />
                       ) : null}
                     </button>
                   );
@@ -2021,15 +2021,15 @@ export function SearchTabs({
                         "focus-ring relative mx-auto flex h-11 w-full max-w-11 items-center justify-center rounded-full text-[15px] font-semibold transition-colors disabled:cursor-not-allowed",
                         isDisabledDate
                           ? "text-slate-300"
-                          : "text-slate-800 hover:bg-indigo-50 hover:text-indigo-800",
-                        isToday && !isDisabledDate && "ring-1 ring-inset ring-indigo-300",
-                        isInRange && "bg-indigo-50 text-indigo-900 hover:bg-indigo-100",
-                        (isCheckIn || isCheckOut) && "bg-indigo-700 text-white shadow-sm hover:bg-indigo-700 hover:text-white ring-0"
+                          : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
+                        isToday && !isDisabledDate && "ring-1 ring-inset ring-[#5CB6B2]",
+                        isInRange && "bg-[#004BB8]/10 text-[#021C2B] hover:bg-[#004BB8]/15",
+                        (isCheckIn || isCheckOut) && "bg-[#004BB8] text-white shadow-sm hover:bg-[#004BB8] hover:text-white ring-0"
                       )}
                     >
                       {day.getDate()}
                       {isToday && !isCheckIn && !isCheckOut ? (
-                        <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-indigo-500" aria-hidden="true" />
+                        <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#5CB6B2]" aria-hidden="true" />
                       ) : null}
                     </button>
                   );
@@ -2145,7 +2145,7 @@ export function SearchTabs({
                 onChange={(event) => onChange(event.target.value)}
                 placeholder={translate("cityAirportOrCode")}
                 autoComplete="off"
-                className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 ps-4 pe-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
+                className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 ps-4 pe-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/25"
               />
               {value.trim() ? (
                 <button
@@ -2236,7 +2236,7 @@ export function SearchTabs({
       <div className="max-h-[min(52vh,360px)] overflow-y-auto py-1">
         {isLoading ? (
           <div className="flex items-center gap-3 px-4 py-4 text-sm font-medium text-slate-500">
-            <span className="h-2 w-2 rounded-full bg-indigo-500 shadow-[0_0_0_4px_rgba(99,102,241,0.12)]" aria-hidden="true" />
+            <span className="h-2 w-2 rounded-full bg-[#5CB6B2] shadow-[0_0_0_4px_rgba(92,182,178,0.18)]" aria-hidden="true" />
             {translate("searchingAirportsAndCities")}
           </div>
         ) : suggestions.length ? suggestions.map((option, index) => (
@@ -2246,8 +2246,8 @@ export function SearchTabs({
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => onSelect(option)}
             className={cn(
-              "focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-2.5 text-start transition-colors last:border-b-0 hover:bg-indigo-50/60 focus-visible:bg-indigo-50/60",
-              highlight === index && "bg-indigo-50 text-indigo-950"
+              "focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-2.5 text-start transition-colors last:border-b-0 hover:bg-[#004BB8]/10 focus-visible:bg-[#004BB8]/10",
+              highlight === index && "bg-[#004BB8]/10 text-[#021C2B]"
             )}
           >
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-400 ring-1 ring-slate-200/70" aria-hidden="true">
@@ -2343,15 +2343,15 @@ export function SearchTabs({
                   "focus-ring relative mx-auto flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-colors disabled:cursor-not-allowed",
                   isDisabledDate
                     ? "text-slate-300"
-                    : "text-slate-800 hover:bg-indigo-50/80 hover:text-indigo-800",
-                  isToday && !isDisabledDate && "ring-1 ring-inset ring-indigo-200",
-                  isInRange && "rounded-xl bg-indigo-50/80 text-indigo-800 hover:bg-indigo-100",
-                  (isStart || isEnd) && "bg-indigo-600 text-white shadow-none hover:bg-indigo-600 hover:text-white ring-0"
+                    : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
+                  isToday && !isDisabledDate && "ring-1 ring-inset ring-[#5CB6B2]/70",
+                  isInRange && "rounded-xl bg-[#004BB8]/10 text-[#004BB8] hover:bg-[#004BB8]/15",
+                  (isStart || isEnd) && "bg-[#004BB8] text-white shadow-none hover:bg-[#021C2B] hover:text-white ring-0"
                 )}
               >
                 {day.getDate()}
                 {isToday && !isStart && !isEnd ? (
-                  <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-indigo-500" aria-hidden="true" />
+                  <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#5CB6B2]" aria-hidden="true" />
                 ) : null}
               </button>
             );
@@ -2452,7 +2452,7 @@ export function SearchTabs({
         <button
           type="button"
           onClick={onDone}
-          className="focus-ring rounded-lg bg-gradient-to-r from-indigo-700 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-700/20 transition-colors hover:from-indigo-600 hover:to-violet-500"
+          className="focus-ring rounded-lg bg-[#004BB8] px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-[#004BB8]/20 transition-colors hover:bg-[#021C2B]"
         >
           {translate("done") || "Done"}
         </button>
@@ -2523,7 +2523,7 @@ export function SearchTabs({
                 disabled={!canDecrement}
                 className={cn(
                   "focus-ring inline-flex items-center justify-center rounded-full border bg-white text-slate-700 shadow-sm transition-colors disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none",
-                  compact ? "h-8 w-8 border-slate-200 text-slate-600 shadow-none hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800" : "h-10 w-10 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
+                  compact ? "h-8 w-8 border-slate-200 text-slate-600 shadow-none hover:border-[#004BB8]/30 hover:bg-[#004BB8]/10 hover:text-[#004BB8]" : "h-10 w-10 hover:border-[#004BB8]/30 hover:bg-[#004BB8]/10 hover:text-[#004BB8]"
                 )}
               >
                 <Minus className="h-3.5 w-3.5" />
@@ -2557,7 +2557,7 @@ export function SearchTabs({
                 disabled={!canIncrement}
                 className={cn(
                   "focus-ring inline-flex items-center justify-center rounded-full border bg-white text-slate-700 shadow-sm transition-colors disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none",
-                  compact ? "h-8 w-8 border-slate-200 text-slate-600 shadow-none hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800" : "h-10 w-10 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
+                  compact ? "h-8 w-8 border-slate-200 text-slate-600 shadow-none hover:border-[#004BB8]/30 hover:bg-[#004BB8]/10 hover:text-[#004BB8]" : "h-10 w-10 hover:border-[#004BB8]/30 hover:bg-[#004BB8]/10 hover:text-[#004BB8]"
                 )}
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -2591,10 +2591,10 @@ export function SearchTabs({
               "focus-ring min-h-11 rounded-2xl border px-2 text-center text-sm leading-4 transition-all",
               draftCabinClass === value
                 ? cn(
-                    "border-indigo-500 bg-indigo-700 text-white shadow-[0_10px_22px_rgba(67,56,202,0.22)]",
-                    compact && "border-indigo-600 bg-indigo-600 shadow-none"
+                    "border-[#004BB8] bg-[#004BB8] text-white shadow-[0_10px_22px_rgba(0,75,184,0.22)]",
+                    compact && "border-[#004BB8] bg-[#004BB8] shadow-none"
                   )
-                : "border-slate-200 bg-slate-50/80 text-slate-700 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800",
+                : "border-slate-200 bg-slate-50/80 text-slate-700 hover:border-[#004BB8]/30 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
               compact ? "min-h-9 rounded-xl text-xs font-medium" : "font-extrabold"
             )}
           >
@@ -2712,13 +2712,13 @@ export function SearchTabs({
                           className={cn(
                             "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors lg:h-[15px] lg:w-[15px]",
                             selected
-                              ? "border-indigo-600 bg-white"
+                              ? "border-[#004BB8] bg-white"
                               : "border-slate-300 bg-white group-hover:border-slate-400"
                           )}
                         >
                           <span
                             className={cn(
-                              "h-1.5 w-1.5 rounded-full bg-indigo-600 transition-opacity",
+                              "h-1.5 w-1.5 rounded-full bg-[#004BB8] transition-opacity",
                               selected ? "opacity-100" : "opacity-0"
                             )}
                           />
@@ -2879,7 +2879,7 @@ export function SearchTabs({
                       onClick={onClearOrigin}
                       onMouseDown={(event) => event.preventDefault()}
                       aria-label={t.clearOrigin || "Clear origin"}
-                      className="focus-ring absolute end-0 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95 sm:inline-flex sm:h-8 sm:w-8"
+                      className="focus-ring absolute end-0 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 active:scale-95 sm:inline-flex sm:h-8 sm:w-8"
                     >
                       <X size={15} />
                     </button>
@@ -2905,7 +2905,7 @@ export function SearchTabs({
                 <button
                   type="button"
                   onClick={onSwapAirports}
-                  className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40 sm:shadow-none lg:h-9 lg:w-9 lg:shadow-[0_1px_3px_rgba(15,23,42,0.10)]"
+                  className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 sm:shadow-none lg:h-9 lg:w-9 lg:shadow-[0_1px_3px_rgba(15,23,42,0.10)]"
                   aria-label={t.swapOriginDestination || "Swap origin and destination"}
                 >
                   <ArrowRightLeft size={14} />
@@ -2980,7 +2980,7 @@ export function SearchTabs({
                       onClick={onClearDestination}
                       onMouseDown={(event) => event.preventDefault()}
                       aria-label={t.clearDestination || "Clear destination"}
-                      className="focus-ring absolute end-0 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95 sm:inline-flex sm:h-8 sm:w-8"
+                      className="focus-ring absolute end-0 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 active:scale-95 sm:inline-flex sm:h-8 sm:w-8"
                     >
                       <X size={15} />
                     </button>
@@ -3171,7 +3171,7 @@ export function SearchTabs({
                         </div>
                       </div>
                       <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
-                        <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-indigo-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-600">{t.done || "Done"}</button>
+                        <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#021C2B]">{t.done || "Done"}</button>
                       </div>
                     </div>
                     </DesktopTopLayerPopover>
@@ -3523,7 +3523,7 @@ export function SearchTabs({
                                 type="button"
                                 onClick={row.onDecrement}
                                 disabled={!canDecrement}
-                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
+                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-[#004BB8]/30 hover:bg-[#004BB8]/10 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
                               >
                                 <Minus className="h-3.5 w-3.5" />
                               </button>
@@ -3534,7 +3534,7 @@ export function SearchTabs({
                                 type="button"
                                 onClick={row.onIncrement}
                                 disabled={!canIncrement}
-                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
+                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-[#004BB8]/30 hover:bg-[#004BB8]/10 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
                               >
                                 <Plus className="h-3.5 w-3.5" />
                               </button>
@@ -3567,7 +3567,7 @@ export function SearchTabs({
                             className={cn(
                               "focus-ring relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors",
                               hotelPetFriendly
-                                ? "border-indigo-600 bg-indigo-600"
+                                ? "border-[#004BB8] bg-[#004BB8]"
                                 : "border-slate-300 bg-slate-200"
                             )}
                           >
@@ -3753,7 +3753,7 @@ export function SearchTabs({
                   className={cn(
                     "focus-ring relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors",
                     hotelPetFriendly
-                      ? "border-indigo-600 bg-indigo-600"
+                      ? "border-[#004BB8] bg-[#004BB8]"
                       : "border-slate-300 bg-slate-200",
                   )}
                 >
