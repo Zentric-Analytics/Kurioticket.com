@@ -431,6 +431,7 @@ export const translations: TranslationDictionary = {
   forgotPasswordEmailLabel: "이메일",
   forgotPasswordEmailPlaceholder: "you@example.com",
   forgotPasswordSubmit: "재설정 링크 보내기",
+  forgotPasswordSuccess: "계정이 존재하면 비밀번호 재설정 안내를 보냈습니다.",
   forgotPasswordRemember: "비밀번호가 기억나시나요?",
   forgotPasswordLoginLink: "로그인",
   search: "검색",

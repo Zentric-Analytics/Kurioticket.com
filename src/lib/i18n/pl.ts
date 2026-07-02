@@ -818,6 +818,7 @@ export const translations: TranslationDictionary = {
   forgotPasswordEmailLabel: "E-mail",
   forgotPasswordEmailPlaceholder: "you@example.com",
   forgotPasswordSubmit: "Wyślij link resetujący",
+  forgotPasswordSuccess: "Jeśli konto istnieje, wysłaliśmy instrukcje resetowania hasła.",
   forgotPasswordRemember: "Pamiętasz hasło?",
   forgotPasswordLoginLink: "Zaloguj się",
   resetPasswordTitle: "Zresetuj hasło",

@@ -337,6 +337,7 @@ export const translations: TranslationDictionary = {
   forgotPasswordEmailLabel: "电子邮箱",
   forgotPasswordEmailPlaceholder: "you@example.com",
   forgotPasswordSubmit: "发送重置链接",
+  forgotPasswordSuccess: "如果账户存在，我们已发送密码重置说明。",
   forgotPasswordRemember: "想起密码了？",
   forgotPasswordLoginLink: "登录",
 

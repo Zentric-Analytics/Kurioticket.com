@@ -252,6 +252,7 @@ export const translations: TranslationDictionary = {
   forgotPasswordEmailLabel: "อีเมล",
   forgotPasswordEmailPlaceholder: "you@example.com",
   forgotPasswordSubmit: "ส่งลิงก์รีเซ็ต",
+  forgotPasswordSuccess: "หากมีบัญชีอยู่ เราได้ส่งคำแนะนำในการรีเซ็ตรหัสผ่านแล้ว",
   forgotPasswordRemember: "จำรหัสผ่านได้แล้ว?",
   forgotPasswordLoginLink: "เข้าสู่ระบบ",
   resetPasswordTitle: "รีเซ็ตรหัสผ่านของคุณ",

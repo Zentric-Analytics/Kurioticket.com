@@ -9434,7 +9434,7 @@ test("Indonesian auth, language, and country/currency copy resolves without Engl
     forgotPasswordSubtitle: "Masukkan email Anda dan kami akan mengirimkan instruksi untuk mengatur ulang kata sandi.",
     forgotPasswordEmailLabel: "Email",
     forgotPasswordEmailPlaceholder: "anda@example.com",
-    forgotPasswordSuccess: "Jika akun tersedia, kami telah mengirimkan instruksi reset kata sandi.",
+    forgotPasswordSuccess: "Jika akun ada, kami telah mengirim instruksi pengaturan ulang kata sandi.",
     forgotPasswordSending: "Mengirim...",
     forgotPasswordSubmit: "Kirim tautan reset",
     forgotPasswordRemember: "Ingat kata sandi Anda?",
@@ -9559,7 +9559,7 @@ test("Swedish global modal and auth copy resolves without English fallback", () 
     forgotPasswordSubmit: "Skicka återställningslänk",
     forgotPasswordRemember: "Kommer du ihåg ditt lösenord?",
     forgotPasswordLoginLink: "Logga in",
-    forgotPasswordSuccess: "Om ett konto finns har vi skickat instruktioner för lösenordsåterställning.",
+    forgotPasswordSuccess: "Om ett konto finns har vi skickat instruktioner för att återställa lösenordet.",
     loginCodeSent: "Vi skickade en verifieringskod till din e-post.",
     loginCodeInstructions: "Ange den 6-siffriga koden som skickades till {{email}}. Koder upphör att gälla efter {{minutes}} minuter.",
     loginVerificationCodeLabel: "Verifieringskod",
@@ -13781,4 +13781,109 @@ test("Vietnamese homepage destinations, discovery cards, support FAQ answers, da
 
   assert.match(homepageSource, /setNewsletterMessage\(t\("homeNewsletterThanks"\)\)/);
   assert.match(homepageSource, /fetch\("\/api\/newsletter\/subscribe"/);
+});
+
+test("Vietnamese global auth country currency and language selector copy resolves", () => {
+  const vi = getTranslations("vi");
+  const countryCurrencySelectorSource = readFileSync("src/components/region/CountryCurrencySelector.tsx", "utf8");
+  const appHeaderSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
+  const signinSource = readFileSync("src/components/auth/SigninForm.tsx", "utf8");
+  const forgotSource = readFileSync("src/components/auth/ForgotPasswordForm.tsx", "utf8");
+  const signupSource = readFileSync("src/components/auth/SignupForm.tsx", "utf8");
+
+  const expected = {
+    chooseCountryAndCurrency: "Chọn quốc gia và tiền tệ",
+    countryCurrencyDescription: "Chọn quốc gia và tiền tệ dùng để hiển thị giá. Gợi ý sân bay sử dụng vị trí được phát hiện của bạn.",
+    searchCountryOrCurrency: "Tìm kiếm quốc gia hoặc tiền tệ",
+    countryCurrencyPopularCountryAndCurrency: "QUỐC GIA VÀ TIỀN TỆ PHỔ BIẾN",
+    countryCurrencyAllCountriesAndCurrencies: "TẤT CẢ QUỐC GIA VÀ TIỀN TỆ",
+    showMoreResults: "Hiển thị thêm kết quả",
+    globalLanguage: "NGÔN NGỮ TOÀN CỤC",
+    websiteLanguageTitle: "Chọn ngôn ngữ website của bạn",
+    websiteLanguageDescription: "English (United States) là ngôn ngữ mặc định của website. Kurioticket chỉ thay đổi ngôn ngữ sau khi bạn chọn một tùy chọn có sẵn.",
+    currentLanguage: "Ngôn ngữ hiện tại: {{language}}",
+    languagePreparingNotice: "Các ngôn ngữ khác đang được chuẩn bị. Những tùy chọn chưa có sẵn sẽ chưa dịch website.",
+    languageSearchLabel: "Tìm kiếm ngôn ngữ",
+    languageSearchPlaceholder: "Tìm kiếm English, Español, Français, Deutsch...",
+    closeLanguageSelector: "Đóng bộ chọn ngôn ngữ",
+    selectLanguageOption: "Chọn ngôn ngữ {{language}}",
+    loginPageTitle: "Đăng nhập",
+    loginPageSubtitle: "Lưu tìm kiếm, quản lý cảnh báo và truy cập bảng điều khiển du lịch của bạn.",
+    loginPasswordLabel: "Mật khẩu",
+    loginForgotPassword: "Quên mật khẩu?",
+    loginDivider: "HOẶC",
+    loginGoogle: "Tiếp tục với Google",
+    loginSignupPrompt: "Bạn mới sử dụng Kurioticket?",
+    loginCreateAccount: "Tạo tài khoản",
+    forgotPasswordTitle: "Đặt lại mật khẩu của bạn",
+    forgotPasswordSubtitle: "Nhập email của bạn và chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu.",
+    forgotPasswordEmailPlaceholder: "you@example.com",
+    forgotPasswordSubmit: "Gửi liên kết đặt lại",
+    forgotPasswordRemember: "Bạn nhớ mật khẩu?",
+    forgotPasswordSuccess: "Nếu tài khoản tồn tại, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu.",
+    loginCodeSent: "Chúng tôi đã gửi mã xác minh đến email của bạn.",
+    loginCodeInstructions: "Nhập mã gồm 6 chữ số đã gửi đến {{email}}.",
+    loginVerificationCodeLabel: "Mã xác minh",
+    loginVerifyLogin: "Xác minh đăng nhập",
+    loginResendIn: "Gửi lại sau {{seconds}} giây",
+    loginUseDifferentDetails: "Dùng thông tin khác",
+    signupPageTitle: "Tạo tài khoản của bạn",
+    signupFullNameLabel: "Họ và tên",
+    signupPasswordLabel: "Mật khẩu",
+    signupAgreementBeforeTerms: "Bằng việc tạo tài khoản, bạn đồng ý với ",
+    signupTermsLink: "Điều khoản",
+    signupPrivacyPolicyLink: "Chính sách quyền riêng tư",
+    signupAgreementAfterPrivacy: " và thông báo chuyển hướng đối tác.",
+    signupSubmit: "Đăng ký",
+    signupAlreadyHaveAccount: "Bạn đã có tài khoản?",
+  };
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(vi[key], value, key);
+    if (value !== "Email" && value !== "you@example.com") assert.notEqual(vi[key], enTranslations[key], key);
+  }
+  assert.equal(vi.countryCurrencyOptionCountSingular.replace("{{count}}", "16"), "16 lựa chọn");
+  assert.equal(vi.countryCurrencyOptionCountPlural.replace("{{count}}", "250"), "250 lựa chọn");
+  assert.equal(vi.currentLanguage.replace("{{language}}", "Tiếng Việt"), "Ngôn ngữ hiện tại: Tiếng Việt");
+  assert.ok(vi.loginCodeInstructions.includes("{{email}}"));
+  assert.ok(vi.loginResendIn.includes("{{seconds}}"));
+  assert.ok(countryCurrencySelectorSource.includes("t.chooseCountryAndCurrency") && countryCurrencySelectorSource.includes("t.countryCurrencyDescription") && countryCurrencySelectorSource.includes("formatTranslation"));
+  assert.ok(appHeaderSource.includes("t.websiteLanguageTitle") && appHeaderSource.includes("t.globalLanguage") && appHeaderSource.includes("t.languageSearchPlaceholder"));
+  assert.ok(signinSource.includes("t.loginPageTitle") && signinSource.includes("loginCodeInstructions") && signinSource.includes("loginResendIn"));
+  assert.ok(forgotSource.includes("t.forgotPasswordSuccess"));
+  assert.ok(signupSource.includes("t.signupPageTitle") && signupSource.includes("t.signupAgreementBeforeTerms"));
+});
+
+test("global auth password reset instructions resolve for every active locale", () => {
+  const activeLocales = [
+    ["en", enTranslations, "If an account exists, we sent password reset instructions."],
+    ["ar", arTranslations, "إذا كان الحساب موجودًا، فقد أرسلنا تعليمات إعادة تعيين كلمة المرور."],
+    ["nl", nlTranslations, "Als er een account bestaat، hebben we instructies voor het opnieuw instellen van het wachtwoord verzonden.".replace("،", ",")],
+    ["es", esTranslations, "Si existe una cuenta, enviamos instrucciones para restablecer la contraseña."],
+    ["fr", frTranslations, "Si un compte existe, nous avons envoyé les instructions de réinitialisation du mot de passe."],
+    ["de", deTranslations, "Wenn ein Konto existiert, haben wir Anweisungen zum Zurücksetzen des Passworts gesendet."],
+    ["it", itTranslations, "Se esiste un account, abbiamo inviato le istruzioni per reimpostare la password."],
+    ["pt-br", ptBrTranslations, "Se existir uma conta, enviamos instruções para redefinir a senha."],
+    ["zh-cn", zhCnTranslations, "如果账户存在，我们已发送密码重置说明。"],
+    ["ja", jaTranslations, "アカウントが存在する場合、パスワード再設定の手順を送信しました。"],
+    ["ko", koTranslations, "계정이 존재하면 비밀번호 재설정 안내를 보냈습니다."],
+    ["hi", hiTranslations, "यदि कोई खाता मौजूद है, तो हमने पासवर्ड रीसेट निर्देश भेज दिए हैं।"],
+    ["tr", trTranslations, "Bir hesap varsa, parola sıfırlama talimatlarını gönderdik."],
+    ["pl", plTranslations, "Jeśli konto istnieje, wysłaliśmy instrukcje resetowania hasła."],
+    ["sv", svTranslations, "Om ett konto finns har vi skickat instruktioner för att återställa lösenordet."],
+    ["id", idTranslations, "Jika akun ada, kami telah mengirim instruksi pengaturan ulang kata sandi."],
+    ["th", thTranslations, "หากมีบัญชีอยู่ เราได้ส่งคำแนะนำในการรีเซ็ตรหัสผ่านแล้ว"],
+    ["vi", viTranslations, "Nếu tài khoản tồn tại, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu."],
+  ] as const;
+
+  for (const [locale, dictionary, expected] of activeLocales) {
+    assert.equal(dictionary.forgotPasswordSuccess, expected, locale);
+    assert.deepEqual(dictionary.forgotPasswordSuccess.match(/{{[^}]+}}/g) ?? [], [], locale);
+    if (locale !== "en") assert.notEqual(dictionary.forgotPasswordSuccess, enTranslations.forgotPasswordSuccess, locale);
+  }
+
+  assert.equal(languageOptions.find((o) => o.code === "vi")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
 });

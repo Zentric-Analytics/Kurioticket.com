@@ -601,8 +601,7 @@ export const translations: TranslationDictionary = {
   forgotPasswordInvalidEmail: "Insira um endereço de e-mail válido.",
   forgotPasswordUnableRequest:
     "Não foi possível solicitar uma redefinição de senha agora.",
-  forgotPasswordSuccess:
-    "Se existir uma conta, enviamos instruções para redefinir a senha.",
+  forgotPasswordSuccess: "Se existir uma conta, enviamos instruções para redefinir a senha.",
   forgotPasswordSending: "Enviando...",
   forgotPasswordSubmit: "Enviar link de redefinição",
   forgotPasswordRemember: "Lembrou sua senha?",

@@ -242,6 +242,7 @@ export const translations: TranslationDictionary = {
   forgotPasswordEmailLabel: "E-mail",
   forgotPasswordEmailPlaceholder: "jij@example.com",
   forgotPasswordSubmit: "Resetlink verzenden",
+  forgotPasswordSuccess: "Als er een account bestaat, hebben we instructies voor het opnieuw instellen van het wachtwoord verzonden.",
   forgotPasswordRemember: "Weet je je wachtwoord nog?",
   forgotPasswordLoginLink: "Inloggen",
   sendResetLink: "Resetlink verzenden",

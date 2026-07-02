@@ -974,6 +974,7 @@ export const translations: TranslationDictionary = {
   forgotPasswordEmailLabel: "البريد الإلكتروني",
   forgotPasswordEmailPlaceholder: "you@example.com",
   forgotPasswordSubmit: "إرسال رابط إعادة التعيين",
+  forgotPasswordSuccess: "إذا كان الحساب موجودًا، فقد أرسلنا تعليمات إعادة تعيين كلمة المرور.",
   forgotPasswordRemember: "هل تذكرت كلمة المرور؟",
   forgotPasswordLoginLink: "تسجيل الدخول",
   signupPageTitle: "أنشئ حسابك",

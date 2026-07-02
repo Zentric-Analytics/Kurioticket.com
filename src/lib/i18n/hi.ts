@@ -936,6 +936,7 @@ export const translations: TranslationDictionary = {
   forgotPasswordEmailLabel: "ईमेल",
   forgotPasswordEmailPlaceholder: "you@example.com",
   forgotPasswordSubmit: "रीसेट लिंक भेजें",
+  forgotPasswordSuccess: "यदि कोई खाता मौजूद है, तो हमने पासवर्ड रीसेट निर्देश भेज दिए हैं।",
   forgotPasswordRemember: "पासवर्ड याद है?",
   forgotPasswordLoginLink: "लॉग इन करें",
   resetPasswordTitle: "अपना पासवर्ड रीसेट करें",

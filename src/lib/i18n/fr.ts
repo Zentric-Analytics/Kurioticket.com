@@ -677,8 +677,7 @@ export const translations: TranslationDictionary = {
   forgotPasswordInvalidEmail: "Saisissez une adresse e-mail valide.",
   forgotPasswordUnableRequest:
     "Impossible de demander une réinitialisation du mot de passe pour le moment.",
-  forgotPasswordSuccess:
-    "Si un compte existe, nous avons envoyé les instructions de réinitialisation du mot de passe.",
+  forgotPasswordSuccess: "Si un compte existe, nous avons envoyé les instructions de réinitialisation du mot de passe.",
   forgotPasswordSending: "Envoi...",
   forgotPasswordSubmit: "Envoyer le lien de réinitialisation",
   forgotPasswordRemember: "Vous vous souvenez de votre mot de passe ?",

@@ -187,8 +187,7 @@ export const translations: TranslationDictionary = {
     "Masukkan email Anda dan kami akan mengirimkan instruksi untuk mengatur ulang kata sandi.",
   forgotPasswordEmailLabel: "Email",
   forgotPasswordEmailPlaceholder: "anda@example.com",
-  forgotPasswordSuccess:
-    "Jika akun tersedia, kami telah mengirimkan instruksi reset kata sandi.",
+  forgotPasswordSuccess: "Jika akun ada, kami telah mengirim instruksi pengaturan ulang kata sandi.",
   forgotPasswordSending: "Mengirim...",
   forgotPasswordSubmit: "Kirim tautan reset",
   forgotPasswordRemember: "Ingat kata sandi Anda?",

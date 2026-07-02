@@ -290,8 +290,7 @@ export const translations: TranslationDictionary = {
   forgotPasswordEmailPlaceholder: 'du@example.com',
   forgotPasswordInvalidEmail: 'Ange en giltig e-postadress.',
   forgotPasswordUnableRequest: 'Det går inte att begära lösenordsåterställning just nu.',
-  forgotPasswordSuccess:
-    'Om ett konto finns har vi skickat instruktioner för lösenordsåterställning.',
+  forgotPasswordSuccess: "Om ett konto finns har vi skickat instruktioner för att återställa lösenordet.",
   forgotPasswordSending: 'Skickar...',
   forgotPasswordSubmit: 'Skicka återställningslänk',
   forgotPasswordRemember: 'Kommer du ihåg ditt lösenord?',

@@ -420,6 +420,7 @@ export const translations: TranslationDictionary = {
   forgotPasswordEmailLabel: "メールアドレス",
   forgotPasswordEmailPlaceholder: "you@example.com",
   forgotPasswordSubmit: "リセットリンクを送信",
+  forgotPasswordSuccess: "アカウントが存在する場合、パスワード再設定の手順を送信しました。",
   forgotPasswordRemember: "パスワードを思い出しましたか？",
   forgotPasswordLoginLink: "ログイン",
   tripType: "旅行タイプ",
