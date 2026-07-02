@@ -1561,7 +1561,7 @@ function PersonalDetailsEmailEditRow({
                   autoComplete="email"
                 />
               </div>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+              <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-3">
                 <button
                   type="button"
                   onClick={onRequestCode}
@@ -1572,18 +1572,6 @@ function PersonalDetailsEmailEditRow({
                 >
                   {isRequestingCode ? "Sending…" : "Send verification code"}
                 </button>
-                {isResendCoolingDown ? (
-                  <p className="text-xs font-medium leading-5 text-slate-500">
-                    You can request a new code in {resendCooldownSeconds}s.
-                  </p>
-                ) : null}
-              </div>
-              {errorMessage ? (
-                <p className="text-sm font-medium leading-6 text-red-700">
-                  {errorMessage}
-                </p>
-              ) : null}
-              <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-3">
                 <button
                   type="button"
                   onClick={onCancel}
@@ -1593,6 +1581,11 @@ function PersonalDetailsEmailEditRow({
                   Cancel
                 </button>
               </div>
+              {errorMessage ? (
+                <p className="text-sm font-medium leading-6 text-red-700">
+                  {errorMessage}
+                </p>
+              ) : null}
             </div>
           </div>
         ) : null}
@@ -2179,7 +2172,12 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
                   maxLength={6}
                 />
               </label>
-              <p className="text-xs leading-5 text-slate-500">Code expires after 15 minutes.</p>
+              <div className="space-y-1">
+                <p className="text-xs leading-5 text-slate-500">Code expires after 15 minutes.</p>
+                {emailCodeResendCooldownSeconds > 0 ? (
+                  <p className="text-xs font-medium leading-5 text-slate-500">You can request a new code in {emailCodeResendCooldownSeconds}s.</p>
+                ) : null}
+              </div>
               {emailChangeErrorMessage ? (
                 <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{emailChangeErrorMessage}</p>
               ) : null}
