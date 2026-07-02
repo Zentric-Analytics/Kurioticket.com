@@ -11046,7 +11046,7 @@ test("Indonesian Saved trips render path resolves active locale copy", () => {
   const idDictionary = getTranslations("id");
   const screenshotEnglishStrings = [
     "Saved trips",
-    "Your handpicked itineraries and trending routes.",
+    "Quickly return to the routes and travel ideas you saved.",
     "Save destinations you love",
     "Tap the heart icon on any route to build your personal shortlist and keep your next adventure one click away.",
     "Explore destinations",
@@ -13488,7 +13488,7 @@ test("Thai My Trips and Price alerts account pages resolve localized copy withou
 });
 
 const savedSearchHistoryActiveLocaleExpectations = {
-  en: [enTranslations, "Saved Trips", "Search History", "Saved Trips", "Your handpicked itineraries and trending routes.", "Recent searches", "Jump back to where you left off and search again in one click."],
+  en: [enTranslations, "Saved Trips", "Search History", "Saved Trips", "Quickly return to the routes and travel ideas you saved.", "Recent searches", "Jump back to where you left off and search again in one click."],
   ar: [arTranslations, "الرحلات المحفوظة", "سجل البحث", "الرحلات المحفوظة", "مساراتك المختارة والوجهات الرائجة.", "عمليات البحث الأخيرة", "تابع من حيث توقفت وابحث مرة أخرى بنقرة واحدة."],
   nl: [nlTranslations, "Opgeslagen reizen", "Zoekgeschiedenis", "Opgeslagen reizen", "Je zorgvuldig gekozen routes en populaire trajecten.", "Recente zoekopdrachten", "Ga verder waar je was gebleven en zoek opnieuw met één klik."],
   es: [esTranslations, "Viajes guardados", "Historial de búsqueda", "Viajes guardados", "Tus itinerarios seleccionados y rutas populares.", "Búsquedas recientes", "Vuelve a donde lo dejaste y busca de nuevo con un solo clic."],
