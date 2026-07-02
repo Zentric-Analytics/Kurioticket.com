@@ -14209,3 +14209,133 @@ test("global auth password reset instructions resolve for every active locale", 
   assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
   assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
 });
+
+test("Vietnamese Deals landing copy resolves without English fallback", () => {
+  const vi = getTranslations("vi");
+  const dealsPageSource = readFileSync("src/app/deals/page.tsx", "utf8");
+
+  const expected: Record<string, string> = {
+    "deals.heroTitle": "Tìm ưu đãi du lịch cho chuyến đi tiếp theo của bạn",
+    "deals.heroSubtitle": "Tìm chuyến bay, chỗ nghỉ và ô tô cùng nhau tại một nơi.",
+    "deals.package.hotelFlight": "Khách sạn + Chuyến bay",
+    "deals.package.hotelFlightCar": "Khách sạn + Chuyến bay + Ô tô",
+    "deals.package.flightCar": "Chuyến bay + Ô tô",
+    "deals.package.hotelCar": "Khách sạn + Ô tô",
+    "deals.originLabel": "ĐI TỪ ĐÂU?",
+    "deals.destinationLabel": "ĐI ĐẾN ĐÂU?",
+    "deals.datesLabel": "NGÀY ĐI",
+    "deals.travelersRoomsLabel": "HÀNH KHÁCH / PHÒNG",
+    "deals.travelersCarsLabel": "HÀNH KHÁCH / Ô TÔ",
+    "deals.originPlaceholder": "Thành phố hoặc sân bay",
+    "deals.destinationPlaceholder": "Thành phố, sân bay hoặc khu vực",
+    "deals.dateHotelPlaceholder": "Nhận phòng — Trả phòng",
+    "deals.dateFlightPlaceholder": "Khởi hành — Trở về",
+    "deals.searchButton": "Tìm ưu đãi",
+    "deals.dateDialog": "Chọn ngày đi",
+    "deals.previous": "Trước",
+    "deals.next": "Tiếp",
+    clear: "Xóa",
+    done: "Xong",
+    adults: "Người lớn",
+    children: "Trẻ em",
+    rooms: "Phòng",
+    "deals.driverAge": "Tuổi tài xế",
+    "deals.cabinClass": "Hạng khoang",
+    "deals.cabin.economy": "Phổ thông",
+    "deals.cabin.business": "Thương gia",
+    "deals.cabin.first": "Hạng nhất",
+    "deals.destinationIdeasTitle": "Điểm đến để bắt đầu tìm ưu đãi",
+    "deals.destinationIdeasSubtitle": "Chọn một ý tưởng điểm đến, sau đó so sánh kết quả từ nhà cung cấp khi bạn tiếp tục.",
+    "deals.destination.tokyo.country": "Nhật Bản",
+    "deals.destination.london.country": "Vương quốc Anh",
+    "deals.destination.paris.country": "Pháp",
+    "deals.destination.dubai.country": "Các Tiểu vương quốc Ả Rập Thống nhất",
+    "deals.destination.cancun.country": "Mexico",
+    "deals.destination.rome.country": "Ý",
+  };
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(vi[key], value, `${key} should resolve to Vietnamese`);
+    if (value !== enTranslations[key]) {
+      assert.notEqual(vi[key], enTranslations[key], `${key} should not fall back to English`);
+    }
+  }
+
+  assert.equal(`${1} ${vi["deals.travelerSingular"]}, ${1} ${vi["deals.roomSingular"]}`, "1 hành khách, 1 phòng");
+  assert.equal(`${1} ${vi["deals.travelerSingular"]}, ${vi["deals.cabin.economy"]}`, "1 hành khách, Phổ thông");
+
+  for (const value of ["hotel-flight", "hotel-flight-car", "flight-car", "hotel-car"]) {
+    assert.ok(dealsPageSource.includes(`value: "${value}"`), `${value} package value should remain unchanged.`);
+  }
+
+  for (const key of [
+    "deals.heroTitle",
+    "deals.heroSubtitle",
+    "deals.originLabel",
+    "deals.originPlaceholder",
+    "deals.destinationLabel",
+    "deals.destinationPlaceholder",
+    "deals.datesLabel",
+    "deals.dateFlightPlaceholder",
+    "deals.dateHotelPlaceholder",
+    "deals.dateDialog",
+    "deals.previous",
+    "deals.next",
+    "deals.driverAge",
+    "deals.cabinClass",
+    "deals.searchButton",
+    "deals.destinationIdeasTitle",
+    "deals.destinationIdeasSubtitle",
+  ]) {
+    assert.ok(dealsPageSource.includes(`t("${key}")`), `${key} should be read through i18n`);
+  }
+
+  for (const snippet of [
+    'setPackageMode("hotel-flight")',
+    'setOrigin("")',
+    'setDestination("")',
+    'setStartDate("")',
+    'setEndDate("")',
+    'setAdults(1)',
+    'setChildren(0)',
+    'setRooms(1)',
+    'setDriverAge(30)',
+    'setCabinClass("economy")',
+    'router.push(`/flights/results?${params.toString()}`)',
+    'router.push(`/hotels/results?${params.toString()}`)',
+    'destinationQuery: "Tokyo"',
+    'destinationQuery: "Rome"',
+    'aria-label={t("deals.packageLegend")}',
+    'alt={t(idea.imageAltKey)}',
+  ]) {
+    assert.ok(dealsPageSource.includes(snippet), `Deals behavior/rendering should preserve ${snippet}.`);
+  }
+
+  const destinationOrder = ["Tokyo", "London", "Paris", "Dubai", "Cancun", "Rome"];
+  const orderIndexes = destinationOrder.map((city) => dealsPageSource.indexOf(`destinationQuery: "${city}"`));
+  assert.deepEqual([...orderIndexes].sort((a, b) => a - b), orderIndexes, "Destination order should remain unchanged.");
+  assert.equal(languageOptions.find((option) => option.code === "vi")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
+  assert.equal(languageOptions.find((option) => option.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "id")?.direction, "ltr");
+
+  for (const englishCopy of [
+    "Find travel deals for your next trip",
+    "Search flights, stays, and cars together in one place.",
+    "Hotel + Flight",
+    "Hotel + Flight + Car",
+    "Flight + Car",
+    "Hotel + Car",
+    "WHERE FROM?",
+    "WHERE TO?",
+    "TRAVELERS / ROOMS",
+    "TRAVELERS / CARS",
+    "Search deals",
+    "Places to start your deal search",
+    "Choose a destination idea",
+    "Driver age",
+    "Cabin class",
+  ]) {
+    assert.equal(Object.values(expected).includes(englishCopy), false, `${englishCopy} should not be a Vietnamese Deals value.`);
+  }
+});
