@@ -95,11 +95,6 @@ export const translations: TranslationDictionary = {
     "Khi chọn một lựa chọn, hãy tiếp tục với nhà cung cấp để xác nhận giá cuối cùng, tình trạng còn chỗ, phí và quy định hủy.",
   "hotelResults.liveSearchUnavailable":
     "Tìm kiếm khách sạn trực tiếp hiện tạm thời không khả dụng. Vui lòng thử lại sau ít phút.",
-  "hotelResults.filterBy": "Lọc theo",
-  "hotelResults.budgetPrice": "Ngân sách / Giá",
-  "hotelResults.totalUpTo": "Tổng tối đa",
-  "hotelResults.starRating": "Xếp hạng sao",
-  "hotelResults.fromRating": "Từ",
   "hotelDestinationKind.city": "Thành phố",
   cars: "Ô tô",
   deals: "Ưu đãi",
