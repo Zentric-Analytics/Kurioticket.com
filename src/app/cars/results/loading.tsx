@@ -1,4 +1,5 @@
 import { AppHeader } from "@/components/layout/AppHeader";
+import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { Footer } from "@/components/layout/Footer";
 import { LocalizedLoadingLabel } from "@/components/layout/LocalizedLoadingLabel";
 
@@ -16,6 +17,14 @@ export default function CarsResultsLoading() {
         aria-live="polite"
       >
         <LocalizedLoadingLabel labelKey="loadingCarRentalResults" className="sr-only" />
+        <section className="page-shell pt-6">
+          <BrandedLoading
+            variant="compact"
+            className="rounded-3xl border border-[#004BB8]/10 px-5 shadow-[0_18px_55px_-38px_rgba(2,28,43,0.32)] sm:px-6"
+            title="Looking for the best car rental options..."
+            description="Checking vehicles, prices, and pickup options..."
+          />
+        </section>
         <div className="sticky top-16 z-30 border-b border-border bg-white/95 backdrop-blur">
           <section className="page-shell py-3" aria-hidden="true">
             <div className="rounded-2xl border border-[#004BB8]/10 bg-white p-3 shadow-[0_16px_40px_-30px_rgba(2,28,43,0.26)]">

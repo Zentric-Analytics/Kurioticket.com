@@ -144,3 +144,15 @@ textarea {
 .hotel-filter-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(124, 58, 237, 0.38);
 }
+
+@keyframes loading-line {
+  0% {
+    transform: translateX(-110%);
+  }
+  50% {
+    transform: translateX(45%);
+  }
+  100% {
+    transform: translateX(210%);
+  }
+}
