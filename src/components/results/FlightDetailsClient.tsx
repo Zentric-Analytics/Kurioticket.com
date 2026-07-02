@@ -197,7 +197,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                             </div>
                             <h1 className="flex min-w-0 flex-wrap items-center gap-2 text-3xl font-medium leading-tight tracking-tight text-slate-900 sm:text-3xl lg:text-2xl lg:font-semibold">
                               <span>{flight.originAirport}</span>
-                              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-white text-blue shadow-sm sm:h-8 sm:w-8">
+                              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#004BB8]/10 bg-white text-blue shadow-sm sm:h-8 sm:w-8">
                                 <ArrowRight size={16} aria-hidden="true" />
                               </span>
                               <span>{flight.destinationAirport}</span>
@@ -214,7 +214,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                                   className="inline-flex min-w-0 items-center gap-1.5"
                                 >
                                   <Icon
-                                    className="h-3.5 w-3.5 shrink-0 text-indigo-600"
+                                    className="h-3.5 w-3.5 shrink-0 text-[#004BB8]"
                                     aria-hidden="true"
                                   />
                                   <span className="min-w-0">
@@ -554,7 +554,7 @@ function ProviderComparisonPanel({
                       <Button
                         variant="accent"
                         size="sm"
-                        className="rounded-full bg-indigo-600 px-3 text-xs font-semibold shadow-none hover:bg-indigo-700"
+                        className="rounded-full bg-[#004BB8] px-3 text-xs font-semibold shadow-none hover:bg-[#021C2B]"
                         onClick={() => {
                           if (offer.useSelectedFlightRedirect) {
                             onContinueToProvider();
@@ -1462,14 +1462,14 @@ function CompactLegSection({
               }}
             />
           ) : (
-            <Plane className="h-4 w-4 text-indigo-600" aria-hidden="true" />
+            <Plane className="h-4 w-4 text-[#004BB8]" aria-hidden="true" />
           )}
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="mb-2 flex min-w-0 items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-700">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#021C2B]">
                 {directionLabel}
               </p>
               <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs font-medium leading-4 text-slate-600">
@@ -1626,7 +1626,7 @@ function CompactFlightRow({
         <div className="flex items-center justify-center text-teal">
           <span className="h-px flex-1 bg-slate-200" />
           <Plane
-            className="mx-1.5 h-3.5 w-3.5 shrink-0 text-indigo-600"
+            className="mx-1.5 h-3.5 w-3.5 shrink-0 text-[#004BB8]"
             aria-hidden="true"
           />
           <span className="h-px flex-1 bg-slate-200" />
