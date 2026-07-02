@@ -1480,7 +1480,6 @@ function PersonalDetailsEmailEditRow({
   newEmail,
   emailValidationError,
   isRequestingCode,
-  isConfirming,
   resendCooldownSeconds,
   errorMessage,
   onStartChange,
@@ -1494,7 +1493,6 @@ function PersonalDetailsEmailEditRow({
   newEmail: string;
   emailValidationError: string | null;
   isRequestingCode: boolean;
-  isConfirming: boolean;
   resendCooldownSeconds: number;
   errorMessage: string | null;
   onStartChange: () => void;
@@ -1505,7 +1503,7 @@ function PersonalDetailsEmailEditRow({
   const { t } = useLocale();
   const baseInputClassName =
     "h-11 w-full min-w-0 rounded-none border border-slate-400 bg-white px-3.5 text-base font-medium leading-5 text-slate-950 shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/15 sm:text-sm";
-  const isBusy = isRequestingCode || isConfirming;
+  const isBusy = isRequestingCode;
   const isResendCoolingDown = resendCooldownSeconds > 0;
 
   return (
@@ -1593,18 +1591,6 @@ function PersonalDetailsEmailEditRow({
                   className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white px-3.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-default disabled:opacity-60"
                 >
                   Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={onConfirm}
-                  disabled={
-                    Boolean(emailValidationError) ||
-                    !isVerificationCodeValid ||
-                    isBusy
-                  }
-                  className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center rounded-lg bg-[#004BB8] px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-default disabled:bg-[#004BB8]/45"
-                >
-                  {isConfirming ? "Updating…" : "Verify and update email"}
                 </button>
               </div>
             </div>
@@ -1985,7 +1971,6 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
           newEmail={newEmail}
           emailValidationError={emailValidationError}
           isRequestingCode={isRequestingEmailCode}
-          isConfirming={isConfirmingEmail}
           resendCooldownSeconds={emailCodeResendCooldownSeconds}
           errorMessage={isEmailVerificationModalOpen ? null : emailChangeErrorMessage}
           onStartChange={() => {
