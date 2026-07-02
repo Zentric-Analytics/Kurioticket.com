@@ -33,6 +33,8 @@ export const translations: TranslationDictionary = {
   fromPlaceholder: "Từ đâu?",
   toPlaceholder: "Đến đâu?",
   cityOrHotel: "Thành phố hoặc khách sạn",
+  hotelSearchDestinationLabel: "Điểm đến",
+  hotelSearchTravelDatesLabel: "Ngày lưu trú",
   hotelSearchDatePlaceholder: "Nhận phòng — Trả phòng",
   hotelSearchGuestsLabel: "Khách",
   stayDetails: "Chi tiết lưu trú",
@@ -173,6 +175,7 @@ export const translations: TranslationDictionary = {
   homeNewsletterTitle: "Luôn cập nhật mọi ưu đãi du lịch",
   homeNewsletterBody: "Nhận cập nhật chuyến bay và khách sạn được chọn lọc hằng tuần.",
   homeNewsletterPlaceholder: "Nhập email của bạn",
+  homeNewsletterThanks: "Cảm ơn! Chúng tôi sẽ tiếp tục cập nhật các ưu đãi du lịch cho bạn.",
   homeSubscribe: "Đăng ký",
   homeEmailAddress: "Địa chỉ email",
   homeNewsletterConsent:

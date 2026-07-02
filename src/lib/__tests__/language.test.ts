@@ -13520,6 +13520,8 @@ test("Vietnamese homepage copy resolves without English fallback", () => {
     first: "Hạng nhất",
     search: "Tìm kiếm",
     cityOrHotel: "Thành phố hoặc khách sạn",
+    hotelSearchDestinationLabel: "Điểm đến",
+    hotelSearchTravelDatesLabel: "Ngày lưu trú",
     hotelSearchDatePlaceholder: "Nhận phòng — Trả phòng",
     hotelSearchGuestsLabel: "Khách",
     stayDetails: "Chi tiết lưu trú",
@@ -13554,6 +13556,7 @@ test("Vietnamese homepage copy resolves without English fallback", () => {
     faqAnswerFindOptions: "Kurioticket tìm kiếm các ưu đãi trực tiếp từ nhà cung cấp du lịch và tập hợp lựa chọn vào một nơi để bạn có thể so sánh giá, tuyến đường, chỗ nghỉ và chi tiết trước khi chọn.",
     homeNewsletterTitle: "Luôn cập nhật mọi ưu đãi du lịch",
     homeNewsletterPlaceholder: "Nhập email của bạn",
+    homeNewsletterThanks: "Cảm ơn! Chúng tôi sẽ tiếp tục cập nhật các ưu đãi du lịch cho bạn.",
     homeSubscribe: "Đăng ký",
     footerContactUs: "Liên hệ",
     footerCustomerSupport: "Hỗ trợ khách hàng",
@@ -13576,6 +13579,64 @@ test("Vietnamese homepage copy resolves without English fallback", () => {
   assert.equal(vi.homeSaveDestination.includes("{{city}}"), true);
   assert.equal(vi.openLanguagePreferences.includes("{{language}}"), true);
   assert.equal(vi.openCountryCurrencySelector.includes("{{currency}}"), true);
+});
+
+
+test("Vietnamese homepage remaining hotel search and newsletter fallbacks resolve through active i18n paths", () => {
+  const vi = getTranslations("vi");
+  const searchTabsSource = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
+  const hotelSearchBarSource = readFileSync("src/components/search/HotelSearchBar.tsx", "utf8");
+  const hotelDestinationPickerSource = readFileSync("src/components/search/HotelDestinationMobilePicker.tsx", "utf8");
+  const pageSource = readFileSync("src/app/page.tsx", "utf8");
+
+  assert.equal(vi.hotelSearchDestinationLabel, "Điểm đến");
+  assert.equal(vi.hotelSearchTravelDatesLabel, "Ngày lưu trú");
+  assert.equal(
+    vi.homeNewsletterThanks,
+    "Cảm ơn! Chúng tôi sẽ tiếp tục cập nhật các ưu đãi du lịch cho bạn.",
+  );
+
+  for (const fallback of [
+    "DESTINATION",
+    "TRAVEL DATES",
+    "Thanks! We’ll keep you posted with travel deals.",
+    "Thanks! We'll keep you posted with travel deals.",
+  ]) {
+    assert.notEqual(vi.hotelSearchDestinationLabel, fallback);
+    assert.notEqual(vi.hotelSearchTravelDatesLabel, fallback);
+    assert.notEqual(vi.homeNewsletterThanks, fallback);
+  }
+
+  const stillLocalized = {
+    flights: "Chuyến bay",
+    hotels: "Khách sạn",
+    cityOrHotel: "Thành phố hoặc khách sạn",
+    hotelSearchDatePlaceholder: "Nhận phòng — Trả phòng",
+    search: "Tìm kiếm",
+    homePopularDestinations: "Điểm đến phổ biến",
+    homeExploreFares: "Khám phá giá vé",
+    homeNewsletterTitle: "Luôn cập nhật mọi ưu đãi du lịch",
+    homeNewsletterPlaceholder: "Nhập email của bạn",
+    homeSubscribe: "Đăng ký",
+  } as const;
+
+  for (const [key, value] of Object.entries(stillLocalized)) {
+    assert.equal(vi[key as keyof typeof vi], value, key);
+    assert.notEqual(vi[key as keyof typeof vi], enTranslations[key as keyof typeof enTranslations], key);
+  }
+
+  assert.match(searchTabsSource, /t\.hotelSearchDestinationLabel \|\| t\.destination \|\| "Destination"/);
+  assert.match(searchTabsSource, /translateHotelTravelDateText\("hotelSearchTravelDatesLabel"\)/);
+  assert.match(hotelSearchBarSource, /t\("hotelSearchDestinationLabel"\)/);
+  assert.match(hotelSearchBarSource, /t\("hotelSearchTravelDatesLabel"\)/);
+  assert.match(hotelDestinationPickerSource, /t\("hotelSearchDestinationLabel"\)/);
+  assert.match(pageSource, /setNewsletterMessage\(t\("homeNewsletterThanks"\)\)/);
+  assert.match(pageSource, /source: "homepage"/);
+
+  assert.equal(languageOptions.find((o) => o.code === "vi")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
 });
 
 test("Vietnamese homepage destinations, discovery cards, support FAQ answers, date labels, and render paths resolve", () => {
