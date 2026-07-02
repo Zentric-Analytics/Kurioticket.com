@@ -78,6 +78,104 @@ test("global language catalog renders", () => {
   assert.ok(languageOptions.some((o) => o.code === "id" && o.locale === "id-ID" && o.nativeLabel === "Bahasa Indonesia" && o.label === "Indonesian" && o.countryCode === "ID" && o.fallbackText === "ID" && o.direction === "ltr" && o.status === "available"));
 });
 
+test("global language selector active render path hides visible locale codes while preserving metadata", () => {
+  const appHeaderSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
+  const activeSubtitleRender =
+    "{getLanguageDescriptionLabel(option)}\n                                  </span>";
+  const visibleLocaleSuffixes = [
+    "· en-US",
+    "· es-ES",
+    "· fr",
+    "· de-DE",
+    "· it-IT",
+    "· pt-BR",
+    "· nl-NL",
+    "· ar",
+    "· zh-CN",
+    "· ja",
+    "· ko",
+    "· hi-IN",
+    "· tr-TR",
+    "· pl-PL",
+    "· sv-SE",
+    "· id-ID",
+    "· th-TH",
+    "· vi-VN",
+  ];
+  const readableLanguageNames = [
+    "English (United States)",
+    "Spanish",
+    "French",
+    "German",
+    "Italian",
+    "Português (Brasil)",
+    "Dutch",
+    "Arabic",
+    "Simplified Chinese",
+    "Japanese",
+    "Korean",
+    "Hindi",
+    "Turkish",
+    "Polish",
+    "Swedish",
+    "Indonesian",
+    "Thai",
+    "Vietnamese",
+  ];
+  const expectedLocaleMetadata = [
+    ["en-us", "en-US"],
+    ["es-es", "es-ES"],
+    ["fr", "fr"],
+    ["de-de", "de-DE"],
+    ["it-it", "it-IT"],
+    ["pt-br", "pt-BR"],
+    ["nl", "nl-NL"],
+    ["ar", "ar"],
+    ["zh-cn", "zh-CN"],
+    ["ja", "ja"],
+    ["ko", "ko"],
+    ["hi", "hi-IN"],
+    ["tr", "tr-TR"],
+    ["pl", "pl-PL"],
+    ["sv", "sv-SE"],
+    ["id", "id-ID"],
+    ["th", "th-TH"],
+    ["vi", "vi-VN"],
+  ] as const;
+
+  assert.ok(appHeaderSource.includes("role=\"dialog\""), "language selector dialog render path exists");
+  assert.ok(appHeaderSource.includes("role=\"radiogroup\""), "language selector options group exists");
+  assert.ok(appHeaderSource.includes("role=\"radio\""), "language selector option buttons exist");
+  assert.ok(appHeaderSource.includes("aria-checked={active}"), "selected state remains rendered");
+  assert.ok(appHeaderSource.includes("onClick={() => handleLanguageSelect(option)}"), "option click behavior remains rendered");
+  assert.ok(appHeaderSource.includes("aria-label={t.closeLanguageSelector}"), "close button remains rendered");
+  assert.ok(appHeaderSource.includes("id={languageSearchId}"), "search input remains rendered");
+  assert.ok(appHeaderSource.includes("option.locale.toLowerCase().includes(query)"), "locale codes remain searchable metadata");
+  assert.ok(appHeaderSource.includes(activeSubtitleRender), "active subtitle render path uses only the human-readable language description");
+  assert.ok(!appHeaderSource.includes("{option.locale}\n                                  </span>"), "active subtitle render path no longer appends locale metadata");
+
+  for (const suffix of visibleLocaleSuffixes) {
+    assert.ok(!appHeaderSource.includes(suffix), `${suffix} is not hard-coded in the active selector UI`);
+  }
+
+  for (const label of readableLanguageNames) {
+    assert.ok(languageOptions.some((option) => option.label === label), `${label} remains available as a readable language name`);
+  }
+
+  for (const [code, locale] of expectedLocaleMetadata) {
+    const option = languageOptions.find((item) => item.code === code);
+    assert.equal(option?.status, "available", `${code} remains available`);
+    assert.equal(option?.locale, locale, `${code} keeps its canonical locale metadata`);
+    assert.equal(normalizeLanguage(locale), code, `${locale} still normalizes to ${code}`);
+  }
+
+  assert.equal(languageOptions.find((o) => o.code === "vi")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
+});
+
+
 test("Vietnamese language metadata, LTR direction, and English fallback dictionary resolve", () => {
   const vietnameseOptions = languageOptions.filter((o) => o.code === "vi");
   const vietnameseLocaleMetadata = supportedLocales.filter((o) => o.code === "vi");
