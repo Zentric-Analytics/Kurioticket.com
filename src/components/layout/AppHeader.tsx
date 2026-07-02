@@ -1040,8 +1040,7 @@ export function AppHeader({
                                     {option.nativeLabel}
                                   </span>
                                   <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">
-                                    {getLanguageDescriptionLabel(option)} ·{" "}
-                                    {option.locale}
+                                    {getLanguageDescriptionLabel(option)}
                                   </span>
                                   {!available ? (
                                     <span className="mt-1 inline-flex rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-bold text-slate-500">
