@@ -13558,7 +13558,6 @@ test("Vietnamese homepage copy resolves without English fallback", () => {
     homeNewsletterPlaceholder: "Nhập email của bạn",
     homeNewsletterThanks: "Cảm ơn! Chúng tôi sẽ tiếp tục cập nhật các ưu đãi du lịch cho bạn.",
     homeSubscribe: "Đăng ký",
-    homeNewsletterThanks: "Cảm ơn! Chúng tôi sẽ tiếp tục cập nhật các ưu đãi du lịch cho bạn.",
     footerContactUs: "Liên hệ",
     footerCustomerSupport: "Hỗ trợ khách hàng",
     footerDiscover: "Khám phá",
