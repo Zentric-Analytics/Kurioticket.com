@@ -88,7 +88,7 @@ export function ForgotPasswordForm() {
 
       <p className="mt-4 text-sm text-muted">
         {t.forgotPasswordRemember}{" "}
-        <Link className="font-semibold text-teal-dark" href="/auth/signin">
+        <Link className="font-semibold text-[#004BB8] transition-colors hover:text-[#021C2B] hover:underline" href="/auth/signin">
           {t.forgotPasswordLoginLink}
         </Link>
       </p>

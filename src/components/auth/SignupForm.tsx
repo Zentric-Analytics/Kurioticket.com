@@ -91,11 +91,11 @@ export function SignupForm({ googleEnabled = false }: SignupFormProps) {
 
         <p className="break-words text-xs leading-5 text-muted">
           {t.signupAgreementBeforeTerms}
-          <Link className="font-semibold text-teal-dark" href="/legal/terms-of-service">
+          <Link className="font-semibold text-[#004BB8] transition-colors hover:text-[#021C2B] hover:underline" href="/legal/terms-of-service">
             {t.signupTermsLink}
           </Link>
           {t.signupAgreementBetweenLinks}
-          <Link className="font-semibold text-teal-dark" href="/legal/privacy-policy">
+          <Link className="font-semibold text-[#004BB8] transition-colors hover:text-[#021C2B] hover:underline" href="/legal/privacy-policy">
             {t.signupPrivacyPolicyLink}
           </Link>
           {t.signupAgreementAfterPrivacy}
@@ -124,7 +124,7 @@ export function SignupForm({ googleEnabled = false }: SignupFormProps) {
 
       <p className="mt-4 break-words text-sm text-muted">
         {t.signupAlreadyHaveAccount}{" "}
-        <Link className="font-semibold text-teal-dark" href="/auth/signin">
+        <Link className="font-semibold text-[#004BB8] transition-colors hover:text-[#021C2B] hover:underline" href="/auth/signin">
           {t.signupLoginLink}
         </Link>
       </p>
