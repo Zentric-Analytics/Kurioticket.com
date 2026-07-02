@@ -276,6 +276,7 @@ export const translations: TranslationDictionary = {
   homeHeroTitle: "เปรียบเทียบตัวเลือกการเดินทางได้ในการค้นหาเดียว",
   homeHeroSubtitle:
     "ค้นหาผู้ให้บริการเดินทางที่เชื่อถือได้ เปรียบเทียบราคาอย่างชัดเจน และเลือกตัวเลือกที่เหมาะกับทริปของคุณ",
+  tripType: "ประเภททริป",
   roundTrip: "ไป-กลับ",
   oneWay: "เที่ยวเดียว",
   origin: "ต้นทาง",
