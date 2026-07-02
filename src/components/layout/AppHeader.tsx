@@ -165,7 +165,6 @@ export function AppHeader({
   const accountRef = useRef<HTMLDivElement | null>(null);
   const languageDialogId = useId();
   const languageTitleId = useId();
-  const languageDescriptionId = useId();
   const languageSearchId = useId();
 
   const closeLanguageDialog = useCallback(() => {
@@ -930,7 +929,6 @@ export function AppHeader({
                       role="dialog"
                       aria-modal="true"
                       aria-labelledby={languageTitleId}
-                      aria-describedby={languageDescriptionId}
                       className="fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-auto rounded-none border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl md:inset-x-0 md:bottom-auto md:top-[max(64px,6vh)] md:mx-auto md:w-[min(980px,96vw)] md:rounded-3xl md:p-7"
                     >
                       <div className="mb-5 flex items-start justify-between gap-4">
@@ -944,12 +942,6 @@ export function AppHeader({
                           >
                             {t.websiteLanguageTitle}
                           </h2>
-                          <p
-                            id={languageDescriptionId}
-                            className="mt-1 max-w-2xl break-words text-sm leading-6 text-slate-600"
-                          >
-                            {t.websiteLanguageDescription}
-                          </p>
                         </div>
 
                         <button
@@ -960,18 +952,6 @@ export function AppHeader({
                         >
                           <X size={18} aria-hidden="true" />
                         </button>
-                      </div>
-
-                      <div className="mb-4 rounded-none border border-slate-200 bg-slate-50 px-4 py-3">
-                        <p className="break-words text-sm font-bold text-slate-950">
-                          {t.currentLanguage.replace(
-                            "{{language}}",
-                            selectedLanguageDisplayName,
-                          )}
-                        </p>
-                        <p className="mt-1 break-words text-xs font-medium text-slate-600">
-                          {t.languagePreparingNotice}
-                        </p>
                       </div>
 
                       <label
