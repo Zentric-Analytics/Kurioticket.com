@@ -92,19 +92,19 @@ export const translations: TranslationDictionary = {
 
   "accountDashboard.priceAlerts.filtersAriaLabel": "가격 알림 필터",
 
-  "accountDashboard.priceAlerts.features.management.body": "언제든지 알림을 일시 중지하거나 삭제할 수 있습니다.",
+  "accountDashboard.priceAlerts.features.management.body": "언제든지 알림을 일시 중지하거나 삭제하세요.",
 
-  "accountDashboard.priceAlerts.features.management.title": "간편한 관리",
+  "accountDashboard.priceAlerts.features.management.title": "쉬운 관리",
 
-  "accountDashboard.priceAlerts.features.trends.body": "추적 중인 요금이 시간에 따라 어떻게 변하는지 확인하세요.",
+  "accountDashboard.priceAlerts.features.trends.body": "추적 중인 운임이 시간에 따라 어떻게 변하는지 확인하세요.",
 
   "accountDashboard.priceAlerts.features.trends.title": "가격 추세",
 
-  "accountDashboard.priceAlerts.features.email.body": "요금이 변경되면 알림을 받으세요.",
+  "accountDashboard.priceAlerts.features.email.body": "운임이 변경되면 알림을 받으세요.",
 
   "accountDashboard.priceAlerts.features.email.title": "이메일 알림",
 
-  "accountDashboard.priceAlerts.features.monitoring.body": "가격을 모니터링하고 알림 조건이 충족되면 알려드립니다.",
+  "accountDashboard.priceAlerts.features.monitoring.body": "가격을 모니터링하고 알림이 실행되면 알려드립니다.",
 
   "accountDashboard.priceAlerts.features.monitoring.title": "실시간 모니터링",
 

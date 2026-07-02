@@ -129,7 +129,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.features.email.title": "E-Mail-Benachrichtigungen",
   "accountDashboard.priceAlerts.features.email.body": "Erhalte eine Benachrichtigung, wenn sich Tarife ändern.",
   "accountDashboard.priceAlerts.features.trends.title": "Preistrends",
-  "accountDashboard.priceAlerts.features.trends.body": "Sieh, wie sich verfolgte Tarife im Laufe der Zeit entwickeln.",
+  "accountDashboard.priceAlerts.features.trends.body": "Sieh, wie sich beobachtete Tarife im Laufe der Zeit entwickeln.",
   "accountDashboard.priceAlerts.features.management.title": "Einfache Verwaltung",
   "accountDashboard.priceAlerts.features.management.body": "Pausiere oder entferne Benachrichtigungen jederzeit.",
   "accountDashboard.priceAlerts.error.title": "Ihre Benachrichtigungen konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
