@@ -113,8 +113,8 @@ test("Vietnamese language metadata, LTR direction, and English fallback dictiona
   assert.equal(getTranslations("vi"), viTranslations);
   assert.equal(getTranslations("vi-VN"), viTranslations);
   assert.equal(getTranslations("vi-vn"), viTranslations);
-  assert.equal(viTranslations.homeHeroTitle, enTranslations.homeHeroTitle);
-  assert.equal(viTranslations.search, enTranslations.search);
+  assert.equal(viTranslations.homeHeroTitle, "So sánh các lựa chọn du lịch trong một lần tìm kiếm đơn giản");
+  assert.equal(viTranslations.search, "Tìm kiếm");
   assert.equal(getTranslations("unsupported-locale"), enTranslations);
   assert.ok(availableLocaleOptions.some((o) => o.code === "vi" && o.nativeLabel === "Tiếng Việt"));
   assert.equal(vietnameseOptions[0]?.direction, "ltr");
@@ -13488,4 +13488,141 @@ test("all active locales keep expected direction metadata for saved trips locali
     assert.ok(option, `${locale} option exists`);
     assert.equal(option.direction, locale === "ar" ? "rtl" : "ltr", `${locale} direction`);
   }
+});
+
+test("Vietnamese homepage copy resolves without English fallback", () => {
+  const vi = getTranslations("vi");
+  const expected = {
+    homeHeroTitle: "So sánh các lựa chọn du lịch trong một lần tìm kiếm đơn giản",
+    homeHeroSubtitle: "Tìm kiếm các nhà cung cấp du lịch đáng tin cậy, so sánh giá rõ ràng và chọn lựa chọn phù hợp với chuyến đi của bạn.",
+    flights: "Chuyến bay",
+    hotels: "Khách sạn",
+    cars: "Ô tô",
+    deals: "Ưu đãi",
+    signIn: "Đăng nhập",
+    login: "Đăng nhập",
+    signUp: "Đăng ký",
+    roundTrip: "Khứ hồi",
+    oneWay: "Một chiều",
+    origin: "Điểm đi",
+    destination: "Điểm đến",
+    fromPlaceholder: "Từ đâu?",
+    toPlaceholder: "Đến đâu?",
+    travelDates: "Ngày đi",
+    travelers: "Hành khách",
+    passengers: "Hành khách",
+    adults: "Người lớn",
+    children: "Trẻ em",
+    infantsOnLap: "Em bé ngồi lòng",
+    cabinClass: "Hạng khoang",
+    economy: "Phổ thông",
+    business: "Thương gia",
+    first: "Hạng nhất",
+    search: "Tìm kiếm",
+    cityOrHotel: "Thành phố hoặc khách sạn",
+    hotelSearchDatePlaceholder: "Nhận phòng — Trả phòng",
+    hotelSearchGuestsLabel: "Khách",
+    stayDetails: "Chi tiết lưu trú",
+    chooseGuestsAndRooms: "Khách và phòng",
+    guestsAndRooms: "Khách và phòng",
+    hotelAdultHelper: "Khách 18+",
+    hotelChildrenHelper: "Từ 0–17 tuổi",
+    rooms: "Phòng",
+    hotelRoomsHelper: "Tối đa 6 phòng",
+    petFriendly: "Cho phép thú cưng",
+    onlyShowPetFriendlyStays: "Chỉ hiển thị chỗ nghỉ cho phép thú cưng",
+    chooseTravelDates: "Chọn ngày đi",
+    previousMonthShort: "Trước",
+    nextMonthShort: "Tiếp",
+    clear: "Xóa",
+    done: "Xong",
+    homePopularDestinations: "Điểm đến phổ biến",
+    homeExploreFares: "Khám phá giá vé",
+    homeDiscoveryTitle: "Khám phá hành trình tiếp theo của bạn tại đây",
+    homeDiscoverySubtitle: "So sánh gợi ý tuyến đường thông minh, giá vé linh hoạt và các điểm đến được chọn cho khu vực của bạn.",
+    homeDiscoveryRouteIdeaBadge: "Gợi ý tuyến đường",
+    homeDiscoveryTripOneWay: "Một chiều",
+    homeDiscoveryCabinEconomy: "Phổ thông",
+    homeDiscoveryTravelerCountOne: "1 hành khách",
+    homeCompareOptions: "So sánh lựa chọn",
+    homeTrustTitle: "Vì sao du khách so sánh trên Kurioticket",
+    homeTrustCompareTitle: "So sánh ưu đãi từ nhà cung cấp",
+    homePromoFlightsTitle: "Ưu đãi chuyến bay từ các hãng hàng không hàng đầu",
+    homePromoHotelsTitle: "Tiết kiệm khách sạn trên toàn thế giới",
+    faqHeading: "Câu hỏi thường gặp",
+    faqQuestionFindOptions: "Kurioticket tìm các lựa chọn chuyến bay và khách sạn như thế nào?",
+    faqAnswerFindOptions: "Kurioticket tìm kiếm các ưu đãi trực tiếp từ nhà cung cấp du lịch và tập hợp lựa chọn vào một nơi để bạn có thể so sánh giá, tuyến đường, chỗ nghỉ và chi tiết trước khi chọn.",
+    homeNewsletterTitle: "Luôn cập nhật mọi ưu đãi du lịch",
+    homeNewsletterPlaceholder: "Nhập email của bạn",
+    homeSubscribe: "Đăng ký",
+    footerContactUs: "Liên hệ",
+    footerCustomerSupport: "Hỗ trợ khách hàng",
+    footerDiscover: "Khám phá",
+    footerPrivacyPolicy: "Chính sách quyền riêng tư",
+    footerConfidenceTagline: "Tìm kiếm chuyến bay, khách sạn và ưu đãi du lịch một cách tự tin.",
+    footerPrivacy: "Quyền riêng tư",
+    footerTerms: "Điều khoản",
+    footerCookies: "Cookie",
+  } as const;
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(vi[key as keyof typeof vi], value, key);
+    assert.notEqual(vi[key as keyof typeof vi], enTranslations[key as keyof typeof enTranslations], key);
+  }
+
+  assert.equal(vi.homeNewsletterConsent.includes("Kurioticket"), true);
+  assert.equal(vi.footerSellerOfTravelNotice.includes("Kurioticket LLC"), true);
+  assert.equal(vi.footerSellerOfTravelNotice.includes("2172630-70"), true);
+  assert.equal(vi.homeSaveDestination.includes("{{city}}"), true);
+  assert.equal(vi.openLanguagePreferences.includes("{{language}}"), true);
+  assert.equal(vi.openCountryCurrencySelector.includes("{{currency}}"), true);
+});
+
+test("Vietnamese homepage destinations, discovery cards, support FAQ answers, date labels, and render paths resolve", () => {
+  const vi = getTranslations("vi");
+  assert.deepEqual(formatFlightsWeekdays("vi"), ["CN", "T2", "T3", "T4", "T5", "T6", "T7"]);
+  assert.equal(formatFlightsMonthHeading(new Date(2026, 0, 1), "vi"), "Tháng 1 2026");
+  assert.equal(normalizeFlightsCalendarLocale("vi-VN"), "vi-VN");
+  assert.equal(normalizeHotelCalendarLocale("vi-vn"), "vi-VN");
+
+  const expectedKeys = {
+    "homePopularDestinationCountry.unitedArabEmirates": "Các Tiểu vương quốc Ả Rập Thống nhất",
+    "homePopularDestinationCountry.unitedKingdom": "Vương quốc Anh",
+    "homePopularDestinationCountry.southAfrica": "Nam Phi",
+    "homePopularDestinationCountry.ghana": "Ghana",
+    "homePopularDestinationCountry.kenya": "Kenya",
+    "homePopularDestinationCountry.turkiye": "Thổ Nhĩ Kỳ",
+    "homePopularDestinationCountry.france": "Pháp",
+    "homeDiscoveryRoute.ng-los-lhr.title": "Kết hợp công tác và cuối tuần ở London",
+    "homeDiscoveryRoute.ng-los-dxb.title": "Dừng chân mua sắm ở Dubai",
+    "homeDiscoveryRoute.ng-abv-acc.title": "Chuyến khu vực nhanh đến Accra",
+    "homeDiscoveryRoute.ng-los-nbo.title": "Cửa ngõ safari Nairobi",
+    "homeDiscoveryRoute.ng-abv-jnb.title": "Kỳ nghỉ đô thị Johannesburg",
+    "homeDiscoveryRoute.ng-los-ist.title": "Tuyến nối qua Istanbul",
+    "homeDiscoveryRoute.ng-abv-cdg.title": "Chuyến đi phong cách Paris",
+    "homeDiscoveryRoute.ng-los-doh.title": "Quá cảnh cao cấp tại Doha",
+    "homeDiscoveryRoute.ng-los-kig.title": "Cuối tuần tại thành phố xanh sạch Kigali",
+    "homeDiscoveryRoute.ng-abv-cai.title": "Điểm dừng di sản Cairo",
+    "homeDiscoveryRoute.ng-los-add.title": "Kết nối Đông Phi qua Addis Ababa",
+    "homeDiscoveryRoute.ng-abv-fco.title": "Chuyến đi biểu tượng Rome",
+    "homeDiscoveryRoute.ng-los-nrt.title": "Nhịp sống đô thị Tokyo đường dài",
+    "homeDiscoveryRoute.ng-abv-mad.title": "Hành trình tapas và nghệ thuật Madrid",
+    "homeDiscoveryRoute.ng-los-cpt.title": "Phiêu lưu ven biển Cape Town",
+    "homeDiscoveryRoute.ng-abv-rob.title": "Chuyến biển khu vực Monrovia",
+    supportFaqAccountQuestion: "Trợ giúp tài khoản và đăng nhập",
+    supportFaqSearchAnswer: "Kurioticket có thể hỗ trợ khi tìm kiếm chuyến bay hoặc khách sạn không hoạt động, kết quả không tải, bộ lọc khó hiểu hoặc giá và nhà cung cấp không hiển thị như mong đợi.",
+    supportFaqWhyRedirectedAnswer: "Kurioticket là nền tảng tìm kiếm và so sánh du lịch, và một số kết quả sẽ chuyển bạn đến nhà cung cấp đáng tin cậy nơi bạn hoàn tất đặt chỗ, thanh toán và nhận hỗ trợ riêng từ nhà cung cấp.",
+  } as const;
+
+  for (const [key, value] of Object.entries(expectedKeys)) {
+    assert.equal(vi[key as keyof typeof vi], value, key);
+  }
+
+  const homepageSource = readFileSync("src/app/page.tsx", "utf8");
+  for (const key of ["homeHeroTitle", "homePopularDestinations", "homeDiscoveryTitle", "homeTrustTitle", "homePromoFlightsTitle", "faqHeading", "homeNewsletterTitle"]) {
+    assert.ok(homepageSource.includes(`t(\"${key}\")`), key);
+  }
+  assert.equal(homepageSource.includes("Compare travel options in one simple search"), false);
+  assert.equal(homepageSource.includes("Discover your next adventure here"), false);
+  assert.equal(homepageSource.includes("Frequently asked questions"), false);
 });

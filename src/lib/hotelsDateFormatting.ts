@@ -53,6 +53,8 @@ export const normalizeHotelCalendarLocale = (locale: string | null | undefined) 
 
   if (normalized === "th" || normalized === "th-th" || normalized.startsWith("th-")) return "th-TH-u-ca-gregory";
 
+  if (normalized === "vi" || normalized === "vi-vn" || normalized.startsWith("vi-")) return "vi-VN";
+
   if (normalized === "id" || normalized === "id-id" || normalized.startsWith("id-")) {
     return "id-ID";
   }

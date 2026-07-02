@@ -16,6 +16,8 @@ export const normalizeFlightsCalendarLocale = (locale: string | null | undefined
   if (normalized === "ko" || normalized.startsWith("ko-")) return "ko-KR";
   if (normalized === "th" || normalized === "th-th" || normalized.startsWith("th-")) return "th-TH-u-ca-gregory";
 
+  if (normalized === "vi" || normalized === "vi-vn" || normalized.startsWith("vi-")) return "vi-VN";
+
   if (normalized === "id" || normalized === "id-id" || normalized.startsWith("id-")) return "id-ID";
   if (
     normalized === "zh" ||
@@ -36,6 +38,9 @@ export const formatFlightsWeekdays = (locale: string | null | undefined) => {
   if (normalizedLocale === "th-TH-u-ca-gregory") {
     return ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
   }
+  if (normalizedLocale === "vi-VN") {
+    return ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+  }
 
   return Array.from({ length: 7 }, (_, day) =>
     new Intl.DateTimeFormat(normalizedLocale, { weekday: "short" }).format(new Date(2024, 0, 7 + day)),
@@ -49,7 +54,10 @@ export const formatFlightsMonthHeading = (date: Date, locale: string | null | un
     year: "numeric",
   }).format(date);
 
-  return normalizedLocale === "fr-FR" ? capitalizeFrenchCalendarLabel(formatted) : formatted;
+  if (normalizedLocale === "fr-FR") return capitalizeFrenchCalendarLabel(formatted);
+  if (normalizedLocale === "vi-VN") return formatted.replace(/^tháng/, "Tháng").replace(" năm ", " ");
+
+  return formatted;
 };
 
 export const formatFlightsDateSummary = (
