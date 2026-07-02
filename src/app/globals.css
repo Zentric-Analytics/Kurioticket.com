@@ -156,3 +156,59 @@ textarea {
     transform: translateX(210%);
   }
 }
+
+.kurioticket-logo-pulse::before,
+.kurioticket-logo-pulse::after {
+  content: "";
+  position: absolute;
+  inset: -0.65rem;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.kurioticket-logo-pulse::before {
+  background: radial-gradient(circle, rgba(92, 182, 178, 0.24), rgba(0, 75, 184, 0.08) 54%, transparent 72%);
+  filter: blur(16px);
+  animation: logo-glow 2.6s ease-in-out infinite;
+}
+
+.kurioticket-logo-pulse::after {
+  border: 1px solid rgba(0, 75, 184, 0.10);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.18));
+  animation: logo-halo 2.6s ease-in-out infinite;
+}
+
+@keyframes logo-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.035);
+  }
+}
+
+@keyframes logo-glow {
+  0%,
+  100% {
+    opacity: 0.56;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.92;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes logo-halo {
+  0%,
+  100% {
+    opacity: 0.54;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 0.92;
+    transform: scale(1.025);
+  }
+}
