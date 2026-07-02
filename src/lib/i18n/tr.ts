@@ -1061,6 +1061,7 @@ export const translations: TranslationDictionary = {
   forgotPasswordEmailLabel: "E-posta",
   forgotPasswordEmailPlaceholder: "you@example.com",
   forgotPasswordSubmit: "Sıfırlama bağlantısı gönder",
+  forgotPasswordSuccess: "Bir hesap varsa, parola sıfırlama talimatlarını gönderdik.",
   forgotPasswordRemember: "Şifrenizi hatırlıyor musunuz?",
   forgotPasswordLoginLink: "Giriş yap",
   resetPasswordTitle: "Şifrenizi sıfırlayın",

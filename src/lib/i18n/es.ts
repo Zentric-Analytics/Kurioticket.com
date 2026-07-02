@@ -620,8 +620,7 @@ export const translations: TranslationDictionary = {
   forgotPasswordInvalidEmail: "Ingresa una dirección de correo electrónico válida.",
   forgotPasswordUnableRequest:
     "No se puede solicitar un restablecimiento de contraseña ahora.",
-  forgotPasswordSuccess:
-    "Si existe una cuenta, enviamos instrucciones para restablecer la contraseña.",
+  forgotPasswordSuccess: "Si existe una cuenta, enviamos instrucciones para restablecer la contraseña.",
   forgotPasswordSending: "Enviando...",
   forgotPasswordSubmit: "Enviar enlace de restablecimiento",
   forgotPasswordRemember: "¿Recordaste tu contraseña?",

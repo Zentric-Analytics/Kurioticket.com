@@ -473,8 +473,7 @@ export const translations: TranslationDictionary = {
   forgotPasswordInvalidEmail: "Gib eine gültige E-Mail-Adresse ein.",
   forgotPasswordUnableRequest:
     "Das Zurücksetzen des Passworts kann derzeit nicht angefordert werden.",
-  forgotPasswordSuccess:
-    "Wenn ein Konto existiert, haben wir Anweisungen zum Zurücksetzen des Passworts gesendet.",
+  forgotPasswordSuccess: "Wenn ein Konto existiert, haben wir Anweisungen zum Zurücksetzen des Passworts gesendet.",
   forgotPasswordSending: "Wird gesendet...",
   forgotPasswordSubmit: "Link zum Zurücksetzen senden",
   forgotPasswordRemember: "Erinnerst du dich an dein Passwort?",
