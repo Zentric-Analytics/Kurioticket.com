@@ -14539,3 +14539,165 @@ test("Vietnamese Deals landing copy resolves without English fallback", () => {
     assert.equal(Object.values(expected).includes(englishCopy), false, `${englishCopy} should not be a Vietnamese Deals value.`);
   }
 });
+
+test("Vietnamese Hotels landing and hotel results screenshot copy resolves without English fallback", () => {
+  const vi = getTranslations("vi");
+  const hotelsPageSource = readFileSync("src/app/hotels/page.tsx", "utf8");
+  const hotelSearchBarSource = readFileSync("src/components/search/HotelSearchBar.tsx", "utf8");
+  const hotelDestinationMobilePickerSource = readFileSync("src/components/search/HotelDestinationMobilePicker.tsx", "utf8");
+  const hotelResultsClientSource = readFileSync("src/components/results/HotelResultsClient.tsx", "utf8");
+  const hotelsResultsPageSource = readFileSync("src/app/hotels/results/page.tsx", "utf8");
+
+  const expectedVietnameseCopy: Record<string, string> = {
+    hotelsHeroTitle: "Tìm chỗ nghỉ khởi đầu chuyến đi đúng ý.",
+    hotelsHeroSubtitle:
+      "So sánh khách sạn tại một nơi, từ điểm đến đô thị chỉn chu đến kỳ nghỉ resort thư thái.",
+    hotelSearchDestinationPlaceholder: "Thành phố, khu vực hoặc địa danh",
+    exploreHotelStaysByDestination: "Khám phá chỗ nghỉ khách sạn theo điểm đến",
+    featuredHotelDestinations: "Điểm đến khách sạn nổi bật",
+    findStaysEveryKindTrip: "Tìm chỗ nghỉ cho mọi kiểu chuyến đi",
+    hotelInspirationBody: "Khám phá ý tưởng điểm đến theo kiểu chỗ nghỉ bạn đang nghĩ đến.",
+    exploreStaysWorldwide: "Khám phá chỗ nghỉ trên khắp thế giới",
+    "hotelInspirationCategory.Beach": "Bãi biển",
+    "hotelInspirationCategory.City breaks": "Nghỉ ngắn ở thành phố",
+    "hotelInspirationCategory.Family trips": "Chuyến đi gia đình",
+    "hotelInspirationCategory.Relaxed stays": "Chỗ nghỉ thư giãn",
+    "hotelInspirationCategory.Weekend ideas": "Ý tưởng cuối tuần",
+    "hotelInspirationBadge.Coastal stays": "Chỗ nghỉ ven biển",
+    "hotelInspirationBadge.City coast": "Thành phố ven biển",
+    "hotelInspirationBadge.Waterfront stays": "Chỗ nghỉ bên mặt nước",
+    "hotelInspirationBadge.Harbor city": "Thành phố cảng",
+    "hotelInspirationBadge.Warm escape": "Kỳ nghỉ ấm áp",
+    "hotelInspirationBadge.Bay city": "Thành phố bên vịnh",
+    "hotelDestination.Tokyo.title": "Nhật Bản",
+    "hotelDestination.Tokyo.subtitle": "Chỗ nghỉ tại Tokyo",
+    "hotelDestination.London.title": "Vương quốc Anh",
+    "hotelDestination.London.subtitle": "Chỗ nghỉ tại London",
+    "hotelDestination.Paris.title": "Pháp",
+    "hotelDestination.Paris.subtitle": "Chỗ nghỉ tại Paris",
+    "hotelDestination.New York.title": "Hoa Kỳ",
+    "hotelDestination.New York.subtitle": "Chỗ nghỉ tại New York",
+    "hotelDestination.Rome.title": "Ý",
+    "hotelDestination.Rome.subtitle": "Chỗ nghỉ tại Rome",
+    "hotelDestination.Dubai.title": "Các Tiểu vương quốc Ả Rập Thống nhất",
+    "hotelDestination.Dubai.subtitle": "Chỗ nghỉ tại Dubai",
+    "hotelDestination.Singapore.title": "Singapore",
+    "hotelDestination.Singapore.subtitle": "Chỗ nghỉ tại Singapore",
+    "hotelDestination.Barcelona.title": "Tây Ban Nha",
+    "hotelDestination.Barcelona.subtitle": "Chỗ nghỉ tại Barcelona",
+    "hotelDestination.Toronto.title": "Canada",
+    "hotelDestination.Toronto.subtitle": "Chỗ nghỉ tại Toronto",
+    "hotelDestination.Amsterdam.title": "Hà Lan",
+    "hotelDestination.Amsterdam.subtitle": "Chỗ nghỉ tại Amsterdam",
+    "hotelDestination.Bangkok.title": "Thái Lan",
+    "hotelDestination.Bangkok.subtitle": "Chỗ nghỉ tại Bangkok",
+    "hotelDestination.Cancun.title": "Mexico",
+    "hotelDestination.Cancun.subtitle": "Chỗ nghỉ tại Cancun",
+    "hotelDestination.Istanbul.title": "Thổ Nhĩ Kỳ",
+    "hotelDestination.Istanbul.subtitle": "Chỗ nghỉ tại Istanbul",
+    homeTrustCompareTitle: "So sánh ưu đãi từ nhà cung cấp",
+    hotelTrustCompareBody:
+      "Xem các lựa chọn khách sạn từ nhà cung cấp du lịch tại một nơi trước khi tiếp tục.",
+    hotelTrustReviewTitle: "Xem chi tiết lưu trú",
+    hotelTrustReviewBody:
+      "Kiểm tra ngày, khách, phòng, bối cảnh giá và thông tin lưu trú trước khi chọn.",
+    hotelTrustProviderTitle: "Tiếp tục với nhà cung cấp",
+    hotelTrustProviderBody:
+      "Khi chọn một lựa chọn, hãy tiếp tục với nhà cung cấp để xác nhận giá cuối cùng, tình trạng còn chỗ, phí và quy định hủy.",
+    "hotelResults.liveSearchUnavailable":
+      "Tìm kiếm khách sạn trực tiếp hiện tạm thời không khả dụng. Vui lòng thử lại sau ít phút.",
+    "hotelDestinationKind.city": "Thành phố",
+    "hotelResults.filterBy": "Lọc theo",
+    "hotelResults.budgetPrice": "Ngân sách / Giá",
+    "hotelResults.totalUpTo": "Tổng tối đa",
+    "hotelResults.starRating": "Xếp hạng sao",
+    "hotelResults.fromRating": "Từ",
+  };
+
+  for (const [key, expected] of Object.entries(expectedVietnameseCopy)) {
+    assert.equal(vi[key], expected, `${key} should resolve to Vietnamese`);
+    if (!["hotelDestination.Singapore.title", "hotelDestination.Cancun.title", "hotelDestination.Toronto.title"].includes(key)) {
+      assert.notEqual(vi[key], enTranslations[key], `${key} should not fall back to English`);
+    }
+  }
+
+  const preservedVietnameseSearchCopy: Record<string, string> = {
+    hotels: "Khách sạn",
+    hotelSearchDestinationLabel: "Điểm đến",
+    hotelSearchTravelDatesLabel: "Ngày lưu trú",
+    hotelSearchDatePlaceholder: "Nhận phòng — Trả phòng",
+    hotelSearchGuestsLabel: "Khách",
+    search: "Tìm kiếm",
+  };
+
+  for (const [key, expected] of Object.entries(preservedVietnameseSearchCopy)) {
+    assert.equal(vi[key], expected, `${key} should preserve existing Vietnamese search-bar copy`);
+  }
+
+  for (const key of [
+    "hotelsHeroTitle",
+    "hotelsHeroSubtitle",
+    "hotelSearchDestinationPlaceholder",
+    "exploreHotelStaysByDestination",
+    "featuredHotelDestinations",
+    "findStaysEveryKindTrip",
+    "hotelInspirationBody",
+    "hotelTrustReviewTitle",
+    "hotelTrustProviderTitle",
+  ]) {
+    assert.ok(
+      hotelsPageSource.includes(`t("${key}")`) || hotelSearchBarSource.includes(key),
+      `${key} should be read through the active Hotels landing i18n render path`,
+    );
+  }
+
+  for (const source of [hotelSearchBarSource, hotelDestinationMobilePickerSource]) {
+    assert.ok(source.includes("hotelDestinationKind.city"));
+  }
+
+  for (const key of [
+    "hotelResults.liveSearchUnavailable",
+    "hotelResults.filterBy",
+    "hotelResults.budgetPrice",
+    "hotelResults.totalUpTo",
+    "hotelResults.starRating",
+    "hotelResults.fromRating",
+  ]) {
+    assert.ok(hotelResultsClientSource.includes(key), `${key} should be read through HotelResultsClient i18n`);
+  }
+  assert.ok(hotelsResultsPageSource.includes("<HotelResultsClient"));
+
+  for (const english of [
+    "Find the stay that starts the trip right.",
+    "Compare hotels in one place, from polished city arrivals to easy resort escapes.",
+    "Explore hotel stays by destination",
+    "Featured hotel destinations",
+    "Find stays for every kind of trip",
+    "Explore stays around the world",
+    "Review stay details",
+    "Continue with the provider",
+    "Live hotel search is temporarily unavailable. Please try again shortly.",
+    "Budget / Price",
+    "Star rating",
+  ]) {
+    assert.ok(!Object.values(expectedVietnameseCopy).includes(english), `${english} must not be Vietnamese output`);
+  }
+
+  assert.deepEqual(["Beach", "City breaks", "Family trips", "Relaxed stays", "Weekend ideas"], [
+    "Beach",
+    "City breaks",
+    "Family trips",
+    "Relaxed stays",
+    "Weekend ideas",
+  ]);
+  assert.ok(hotelsPageSource.includes('destinationQuery: "Tokyo"'));
+  assert.ok(hotelsPageSource.includes('/hotels/results?${new URLSearchParams({'));
+  assert.ok(hotelsPageSource.includes('guests: "2"'));
+  assert.ok(hotelsPageSource.includes('rooms: "1"'));
+  assert.ok(hotelResultsClientSource.includes('value: "free-wifi"'));
+  assert.ok(hotelResultsClientSource.includes('value: "parking"'));
+  assert.equal(languageOptions.find((o) => o.code === "vi")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
+});
