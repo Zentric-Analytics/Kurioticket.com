@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
+import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { FlightCard } from "@/components/results/FlightCard";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { Button } from "@/components/ui/Button";
@@ -96,13 +97,11 @@ const filterQueryParamKeys = [
   "fFlexible",
 ] as const;
 
-const loadingMessageKeys = [
-  "searchingAirlines",
-  "comparingPrices",
-  "checkingValueFocusedRoutes",
-  "findingLowerPricedOptions",
-  "analyzingLayoverQuality",
-  "comparingBaggageInclusiveFares",
+const flightSearchLoadingMessages = [
+  "Checking airlines and fares...",
+  "Comparing routes and providers...",
+  "Finding the best available options...",
+  "Preparing your results...",
 ];
 
 type CabinClassValue = "economy" | "business" | "first";
@@ -1604,7 +1603,9 @@ export function FlightResultsClient() {
     if (!loading) return;
 
     const id = window.setInterval(() => {
-      setMessageIndex((current) => (current + 1) % loadingMessageKeys.length);
+      setMessageIndex(
+        (current) => (current + 1) % flightSearchLoadingMessages.length,
+      );
     }, 1100);
 
     return () => window.clearInterval(id);
@@ -4150,6 +4151,22 @@ export function FlightResultsClient() {
     );
   }
 
+  if (loading) {
+    return (
+      <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-[radial-gradient(circle_at_top_left,rgba(92,182,178,0.20),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(0,75,184,0.16),transparent_36%),linear-gradient(180deg,#F2F7FA_0%,#FFFFFF_58%,#FFFFFF_100%)]">
+        <BrandedLoading
+          variant="fullscreen"
+          visual="logoPulse"
+          showProgress={false}
+          className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5"
+          contentClassName="max-w-md text-center"
+          title="Searching the best flights for you"
+          description={flightSearchLoadingMessages[messageIndex]}
+        />
+      </main>
+    );
+  }
+
   return (
     <main className="flex-1 bg-[#f6f8fb] pb-8">
       <div
@@ -4297,16 +4314,7 @@ export function FlightResultsClient() {
           <p className="sr-only" aria-live="polite">
             {savedTripError}
           </p>
-          {loading ? (
-            <div className="space-y-4">
-              <div className="rounded-xl border border-teal/20 bg-white p-5 text-sm font-bold text-teal-dark shadow-sm">
-                {t(loadingMessageKeys[messageIndex])}
-              </div>
-              <FlightCardSkeleton />
-              <FlightCardSkeleton />
-              <FlightCardSkeleton />
-            </div>
-          ) : error ? (
+          {error ? (
             <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger">
               {error}
             </div>
