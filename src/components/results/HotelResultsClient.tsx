@@ -860,7 +860,7 @@ export function HotelResultsClient() {
 
           {loading ? (
             <div className="space-y-4">
-              <div className="rounded-md border border-indigo-100 bg-indigo-50/70 p-4 text-sm font-semibold text-violet-700">
+              <div className="rounded-md border border-[#004BB8]/10 bg-[#004BB8]/6 p-4 text-sm font-semibold text-[#004BB8]">
                 {t(loadingMessageKeys[messageIndex])}
               </div>
               <HotelSkeleton />
@@ -879,8 +879,8 @@ export function HotelResultsClient() {
                 onClearAll={resetFilters}
                 t={t}
               />
-              <div className="rounded-2xl border border-indigo-100 bg-white p-4 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)]">
-                <p className="text-base font-bold text-indigo-950">
+              <div className="rounded-2xl border border-[#004BB8]/10 bg-white p-4 shadow-[0_16px_40px_-24px_rgba(2,28,43,0.28)]">
+                <p className="text-base font-bold text-[#021C2B]">
                   {t("hotelResults.noStaysMatchFiltersTitle")}
                 </p>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
@@ -993,7 +993,7 @@ export function HotelResultsClient() {
         <div className="border-t border-slate-200 bg-white p-4">
           <Button
             type="button"
-            className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 text-base font-bold text-white shadow-lg shadow-indigo-700/20"
+            className="h-12 w-full rounded-xl bg-[#004BB8] text-base font-bold text-white shadow-lg shadow-[#004BB8]/20 hover:bg-[#021C2B]"
             onClick={() => {
               triggerFilterApplying();
               setFiltersOpen(false);
@@ -1034,10 +1034,10 @@ function HotelSummaryRow({
             key={item.label}
             type="button"
             className={cn(
-              "min-w-[152px] snap-start rounded-2xl border bg-white p-2.5 text-start shadow-[0_14px_30px_-22px_rgba(30,27,75,0.45)] transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_18px_34px_-24px_rgba(30,27,75,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f8fb] sm:min-w-0 sm:p-3.5",
+              "min-w-[152px] snap-start rounded-2xl border bg-white p-2.5 text-start shadow-[0_14px_30px_-22px_rgba(2,28,43,0.32)] transition-all hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-[0_18px_34px_-24px_rgba(0,75,184,0.34)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f8fb] sm:min-w-0 sm:p-3.5",
               isActive
-                ? "border-indigo-400 bg-indigo-50/50 shadow-[0_18px_38px_-24px_rgba(79,70,229,0.7)] ring-1 ring-indigo-200"
-                : "border-indigo-100/80",
+                ? "border-[#004BB8]/45 bg-[#004BB8]/6 shadow-[0_18px_38px_-24px_rgba(0,75,184,0.36)] ring-1 ring-[#004BB8]/15"
+                : "border-[#004BB8]/10",
             )}
             aria-pressed={isActive}
             onClick={() => onSortModeChange(item.sortMode)}
@@ -1059,7 +1059,7 @@ function HotelSummaryRow({
                 />
               </div>
               <div className="min-w-0">
-                <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-indigo-700 sm:text-[10px] sm:tracking-[0.14em]">
+                <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#004BB8] sm:text-[10px] sm:tracking-[0.14em]">
                   {item.label}
                 </p>
                 <p className="mt-0.5 text-sm font-bold leading-5 tracking-[-0.02em] text-slate-950 sm:mt-1 sm:text-base sm:leading-6">
@@ -1163,7 +1163,7 @@ function buildHotelSummaryItems(
       value: formatCurrency(getHotelSortablePrice(cheapest), cheapest.currency),
       helperText: t("hotelResults.lowestTotalPrice"),
       icon: Tag,
-      iconClassName: "bg-violet-100 text-indigo-700 ring-1 ring-violet-200",
+      iconClassName: "bg-[#004BB8]/10 text-[#004BB8] ring-1 ring-[#004BB8]/15",
       sortMode: "cheapest",
     },
     {
@@ -1254,14 +1254,14 @@ function ActiveHotelFilterChips({
         <button
           key={chip.key}
           type="button"
-          className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-semibold text-indigo-950 transition-colors hover:border-violet-300 hover:bg-violet-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+          className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-[#004BB8]/18 bg-[#004BB8]/7 px-2.5 py-1 text-xs font-semibold text-[#021C2B] transition-colors hover:border-[#004BB8]/28 hover:bg-[#004BB8]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           onClick={() => onRemove(chip)}
           aria-label={t("hotelResults.removeFilter").replace("{{label}}", chip.label)}
         >
           <span className="truncate">{chip.label}</span>
           <span
             aria-hidden="true"
-            className="text-sm leading-none text-violet-700"
+            className="text-sm leading-none text-[#004BB8]"
           >
             ×
           </span>
@@ -1269,7 +1269,7 @@ function ActiveHotelFilterChips({
       ))}
       <button
         type="button"
-        className="rounded-full px-1.5 py-1 text-xs font-bold text-violet-700 transition-colors hover:text-violet-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+        className="rounded-full px-1.5 py-1 text-xs font-bold text-[#004BB8] transition-colors hover:text-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
         onClick={onClearAll}
       >
         {t("clearAll")}
@@ -1302,11 +1302,11 @@ function HotelFilters({
   toggleFilter: (group: keyof HotelFilterSelections, value: string) => void;
 }) {
   const filterRangeClass =
-    "h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-gradient-to-r [&::-webkit-slider-runnable-track]:from-indigo-600 [&::-webkit-slider-runnable-track]:to-violet-500 [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-violet-600 [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-violet-600 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-violet-600 [&::-moz-range-thumb]:shadow-md";
+    "h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-gradient-to-r [&::-webkit-slider-runnable-track]:from-[#004BB8] [&::-webkit-slider-runnable-track]:to-[#5CB6B2] [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#004BB8] [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#004BB8] [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#004BB8] [&::-moz-range-thumb]:shadow-md";
 
   return (
     <div className="bg-white">
-      <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
+      <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-[#021C2B] to-[#004BB8] px-3 py-3">
         <div>
           <h2 className="text-base font-bold text-white">{t("hotelResults.filterBy")}</h2>
         </div>
@@ -1318,7 +1318,7 @@ function HotelFilters({
           <label className="block">
             <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
               {t("hotelResults.totalUpTo")} {" "}
-              <span className="font-mono text-indigo-950">
+              <span className="font-mono text-[#021C2B]">
                 {formatCurrency(maxPrice, priceCurrency)}
               </span>
             </span>
@@ -1346,7 +1346,7 @@ function HotelFilters({
           <label className="block">
             <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
               {t("hotelResults.fromRating")} {" "}
-              <span className="font-mono text-indigo-950">{minRating}+</span>
+              <span className="font-mono text-[#021C2B]">{minRating}+</span>
             </span>
             <input
               className={filterRangeClass}
@@ -1477,7 +1477,7 @@ function CheckboxFilterSection({
               <span className="flex min-w-0 items-start gap-2">
                 <input
                   type="checkbox"
-                  className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-slate-300 accent-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-slate-300 accent-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
                   checked={checked}
                   onChange={() => onToggle(option.value)}
                 />
@@ -1501,7 +1501,7 @@ function CheckboxFilterSection({
       {hasMore ? (
         <button
           type="button"
-          className="mt-2 text-xs font-semibold text-indigo-700 transition-colors hover:text-indigo-900"
+          className="mt-2 text-xs font-semibold text-[#004BB8] transition-colors hover:text-[#021C2B]"
           onClick={() => setExpanded((current) => !current)}
         >
           {expanded
@@ -1739,7 +1739,7 @@ function textIncludesTerms(text: string, terms: string[]) {
 
 function HotelSkeleton() {
   return (
-    <div className="rounded-2xl border border-indigo-100 bg-white p-5 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)]">
+    <div className="rounded-2xl border border-[#004BB8]/10 bg-white p-5 shadow-[0_16px_40px_-24px_rgba(2,28,43,0.28)]">
       <div className="grid gap-4 md:grid-cols-[260px_1fr]">
         <Skeleton className="aspect-[16/10] md:aspect-auto md:min-h-[236px]" />
         <div className="space-y-3">

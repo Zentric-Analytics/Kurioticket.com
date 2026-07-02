@@ -993,7 +993,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mt-6 border-y border-slate-300/80 bg-gradient-to-b from-slate-50/90 via-indigo-50/35 to-slate-50/80 sm:mt-9">
+        <section className="mt-6 border-y border-slate-300/80 bg-gradient-to-b from-slate-50/90 via-[#F2F7FA]/45 to-slate-50/80 sm:mt-9">
           <div className="page-shell py-9 sm:py-11">
             <div className="space-y-4">
               <div className="max-w-3xl space-y-1.5">
@@ -1007,7 +1007,7 @@ export default function Home() {
 
               <div className="mt-4 divide-y divide-slate-200/70 md:grid md:grid-cols-3 md:gap-6 md:divide-y-0 md:[&>article+article]:border-l md:[&>article+article]:border-slate-200/70 md:[&>article+article]:pl-6 md:rtl:[&>article+article]:border-l-0 md:rtl:[&>article+article]:border-r md:rtl:[&>article+article]:pl-0 md:rtl:[&>article+article]:pr-6">
                 <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
-                  <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-indigo-100/80">
+                  <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-[#004BB8]/10">
                     <CompareOffersIllustration />
                   </div>
                   <div>
@@ -1021,7 +1021,7 @@ export default function Home() {
                 </article>
 
                 <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
-                  <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-violet-100/80">
+                  <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-[#5CB6B2]/18">
                     <PricingContextIllustration />
                   </div>
                   <div>
@@ -1035,7 +1035,7 @@ export default function Home() {
                 </article>
 
                 <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
-                  <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-blue-100/80">
+                  <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-[#021C2B]/10">
                     <SecureHandoffIllustration />
                   </div>
                   <div>
@@ -1054,7 +1054,7 @@ export default function Home() {
 
         <section className="page-shell grid gap-5 py-9 lg:grid-cols-2">
           <PromoPanel
-            tone="violet"
+            tone="blue"
             title={t("homePromoFlightsTitle")}
             body={t("homePromoFlightsBody")}
             cta={t("homePromoFlightsCta")}
@@ -1063,7 +1063,7 @@ export default function Home() {
           />
 
           <PromoPanel
-            tone="amber"
+            tone="teal"
             title={t("homePromoHotelsTitle")}
             body={t("homePromoHotelsBody")}
             cta={t("homePromoHotelsCta")}
@@ -1090,7 +1090,7 @@ export default function Home() {
 
           <Link
             href="/faq"
-            className="mt-4 inline-flex text-sm font-bold text-indigo-700 underline-offset-4 hover:text-indigo-900 hover:underline sm:hidden"
+            className="mt-4 inline-flex text-sm font-bold text-[#004BB8] underline-offset-4 hover:text-[#021C2B] hover:underline sm:hidden"
           >
             {t("faqViewAll")}
           </Link>
@@ -1098,10 +1098,10 @@ export default function Home() {
 
         <section className="page-shell pb-6 pt-0 sm:pb-8 lg:pb-9">
           <div className="mx-auto max-w-[800px] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_14px_38px_rgba(15,23,42,0.09)] ring-1 ring-slate-950/[0.03]">
-            <div className="h-0.5 bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-400" />
+            <div className="h-0.5 bg-gradient-to-r from-[#004BB8] via-[#5CB6B2] to-[#021C2B]" />
             <div className="space-y-3 p-3.5 sm:p-4 lg:p-5">
               <div className="flex items-start gap-2.5 sm:gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 shadow-sm ring-1 ring-indigo-100 sm:h-10 sm:w-10">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#004BB8]/8 text-[#004BB8] shadow-sm ring-1 ring-[#004BB8]/10 sm:h-10 sm:w-10">
                   <Mail className="size-4 sm:size-5" />
                 </span>
 
@@ -1141,7 +1141,7 @@ export default function Home() {
 
                   <button
                     type="submit"
-                    className="focus-ring h-12 shrink-0 whitespace-nowrap rounded-xl bg-indigo-700 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition hover:bg-indigo-800 disabled:cursor-not-allowed disabled:bg-slate-500 disabled:shadow-none sm:h-10 sm:rounded-lg sm:px-4"
+                    className="focus-ring h-12 shrink-0 whitespace-nowrap rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:bg-slate-500 disabled:shadow-none sm:h-10 sm:rounded-lg sm:px-4"
                     aria-busy={newsletterPending}
                     disabled={newsletterPending}
                   >
@@ -1195,7 +1195,7 @@ function DiscoveryCardImage({
 
   if (!hasImage || hasError) {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gradient-to-br from-violet-200 via-fuchsia-100 to-cyan-100 text-slate-700">
+      <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gradient-to-br from-[#F2F7FA] via-[#EAF2FF] to-[#EAF7F6] text-slate-700">
         <Compass size={14} className="opacity-80" aria-hidden />
         <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">
           {destinationFallbackLabel}
@@ -1323,7 +1323,7 @@ function DiscoverySuggestionCard({
           {originCode} → {destinationCodeLabel} · {routeNote}
         </p>
         <div className="flex flex-wrap items-center gap-2 pt-0.5">
-          <span className="rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-violet-700">
+          <span className="rounded-full border border-[#004BB8]/12 bg-[#004BB8]/6 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#004BB8]">
             {t("homeDiscoveryRouteIdeaBadge")}
           </span>
           <p
@@ -1727,19 +1727,19 @@ function PromoPanel({
   href,
   icon,
 }: {
-  tone: "violet" | "amber";
+  tone: "blue" | "teal";
   title: string;
   body: string;
   cta: string;
   href: string;
   icon: ReactNode;
 }) {
-  const isViolet = tone === "violet";
+  const isBlue = tone === "blue";
 
   return (
     <article
       className={`relative min-h-56 overflow-hidden rounded-xl p-8 ${
-        isViolet ? "bg-[#f1e8ff]" : "bg-[#eaf2ff]"
+        isBlue ? "bg-[#EAF2FF]" : "bg-[#EAF7F6]"
       }`}
     >
       <div className="relative z-10 max-w-xs">
@@ -1755,11 +1755,7 @@ function PromoPanel({
           href={href}
           variant="primary"
           size="md"
-          className={`mt-5 font-semibold ${
-            isViolet
-              ? "bg-violet-600 hover:bg-violet-700"
-              : "bg-[#004BB8] hover:bg-[#021C2B]"
-          }`}
+          className="mt-5 bg-[#004BB8] font-semibold hover:bg-[#021C2B]"
         >
           {cta}
           <ArrowRight size={16} />
@@ -1768,8 +1764,8 @@ function PromoPanel({
 
       <div
         className={`absolute bottom-5 right-6 flex h-40 w-40 items-center justify-center rounded-full ${
-          isViolet
-            ? "bg-white/55 text-violet-600"
+          isBlue
+            ? "bg-white/55 text-[#004BB8]"
             : "bg-white/70 text-[#004BB8]"
         }`}
       >

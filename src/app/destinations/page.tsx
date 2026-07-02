@@ -152,23 +152,23 @@ const regionDetails: Record<
   Pick<DestinationSection, "accent" | "summaryKey">
 > = {
   Europe: {
-    accent: "from-blue-600 to-violet-600",
+    accent: "from-[#004BB8] to-[#5CB6B2]",
     summaryKey: "destinations.region.europe.summary",
   },
   "North America": {
-    accent: "from-sky-600 to-indigo-700",
+    accent: "from-[#004BB8] to-[#021C2B]",
     summaryKey: "destinations.region.northAmerica.summary",
   },
   Asia: {
-    accent: "from-rose-500 to-violet-700",
+    accent: "from-[#5CB6B2] to-[#004BB8]",
     summaryKey: "destinations.region.asia.summary",
   },
   Africa: {
-    accent: "from-emerald-600 to-violet-600",
+    accent: "from-[#021C2B] to-[#5CB6B2]",
     summaryKey: "destinations.region.africa.summary",
   },
   "Middle East": {
-    accent: "from-amber-500 to-fuchsia-600",
+    accent: "from-[#004BB8] to-[#021C2B]",
     summaryKey: "destinations.region.middleEast.summary",
   },
 };
@@ -646,7 +646,7 @@ export default function DestinationsPage() {
         <section className="relative isolate overflow-hidden border-b border-[#004BB8]/10 bg-[radial-gradient(circle_at_50%_100%,rgba(92,182,178,0.30),transparent_32%),linear-gradient(180deg,#021C2B_0%,#021C2B_48%,#004BB8_100%)] text-white">
           <div className="absolute inset-0 -z-10 opacity-25 [background-image:radial-gradient(circle_at_center,rgba(255,255,255,0.42)_1px,transparent_1.6px)] [background-size:28px_28px]" />
           <div className="absolute -left-20 top-12 -z-10 h-56 w-56 rounded-full bg-[#5CB6B2]/20 blur-3xl" />
-          <div className="absolute -right-16 bottom-2 -z-10 h-64 w-64 rounded-full bg-amber-300/20 blur-3xl" />
+          <div className="absolute -right-16 bottom-2 -z-10 h-64 w-64 rounded-full bg-[#5CB6B2]/16 blur-3xl" />
           <svg
             aria-hidden="true"
             className="absolute right-0 top-6 -z-10 hidden h-56 w-[42rem] text-white/25 sm:block"
