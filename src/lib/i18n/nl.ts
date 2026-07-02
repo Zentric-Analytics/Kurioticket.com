@@ -395,7 +395,10 @@ export const translations: TranslationDictionary = {
     "Deze reis is op dit apparaat opgeslagen en kan op elk moment worden verwijderd.",
   savedTripsPageTitle: "Opgeslagen reizen",
   savedTripsPageSubtitle:
-    "Je zorgvuldig gekozen routes en populaire reisroutes.",
+    "Je zorgvuldig gekozen routes en populaire trajecten.",
+  savedTripsTabsLabel: "Opgeslagen reizen / Zoekgeschiedenis",
+  savedTripsTabSaved: "Opgeslagen reizen",
+  savedTripsTabHistory: "Zoekgeschiedenis",
   savedTripsClearAllSaved: "Alle opgeslagen reizen wissen",
   savedTripsEmptyTitle: "Sla bestemmingen op die je leuk vindt",
   savedTripsEmptyDescription:
@@ -411,7 +414,7 @@ export const translations: TranslationDictionary = {
   savedTripsSearchRoute: "Route zoeken",
   savedTripsRecentSearchesTitle: "Recente zoekopdrachten",
   savedTripsRecentSearchesSubtitle:
-    "Ga verder waar je gebleven was en zoek opnieuw met één tik.",
+    "Ga verder waar je was gebleven en zoek opnieuw met één klik.",
   savedTripsClearAllRecent: "Alle recente zoekopdrachten wissen",
   savedTripsNoRecentTitle: "Start een zoekopdracht om op gang te komen",
   savedTripsNoRecentDescription:

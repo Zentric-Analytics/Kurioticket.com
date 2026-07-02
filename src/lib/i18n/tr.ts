@@ -497,8 +497,11 @@ export const translations: TranslationDictionary = {
   "destinations.country.ethiopia": "Etiyopya",
   "destinations.country.oman": "Umman",
   "destinations.country.saudiArabia": "Suudi Arabistan",
-  savedTripsPageTitle: "Kaydedilen geziler",
-  savedTripsPageSubtitle: "Seçtiğiniz rotalar ve öne çıkan güzergâhlar.",
+  savedTripsPageTitle: "Kaydedilen seyahatler",
+  savedTripsPageSubtitle: "Seçtiğiniz seyahat planları ve öne çıkan rotalar.",
+  savedTripsTabsLabel: "Kaydedilen seyahatler / Arama geçmişi",
+  savedTripsTabSaved: "Kaydedilen seyahatler",
+  savedTripsTabHistory: "Arama geçmişi",
   savedTripsClearAllSaved: "Tüm kaydedilenleri temizle",
   savedTripsEmptyTitle: "Sevdiğiniz destinasyonları kaydedin",
   savedTripsEmptyDescription:
@@ -514,7 +517,7 @@ export const translations: TranslationDictionary = {
   savedTripsSearchRoute: "Rotayı ara",
   savedTripsRecentSearchesTitle: "Son aramalar",
   savedTripsRecentSearchesSubtitle:
-    "Kaldığınız yerden devam edin ve tek dokunuşla yeniden arayın.",
+    "Kaldığınız yerden devam edin ve tek tıkla yeniden arayın.",
   savedTripsClearAllRecent: "Tüm son aramaları temizle",
   savedTripsNoRecentTitle: "Henüz son arama yok",
   savedTripsNoRecentDescription:

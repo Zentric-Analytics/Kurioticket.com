@@ -1091,6 +1091,9 @@ export const translations: TranslationDictionary = {
   searchCityAreaLandmark: "ابحث عن مدينة أو منطقة أو معلم.",
   savedTripsPageTitle: "الرحلات المحفوظة",
   savedTripsPageSubtitle: "مساراتك المختارة والوجهات الرائجة.",
+  savedTripsTabsLabel: "الرحلات المحفوظة / سجل البحث",
+  savedTripsTabSaved: "الرحلات المحفوظة",
+  savedTripsTabHistory: "سجل البحث",
   savedTripsClearAllSaved: "مسح كل المحفوظات",
   savedTripsEmptyTitle: "احفظ الوجهات التي تحبها",
   savedTripsEmptyDescription:

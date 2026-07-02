@@ -13,10 +13,15 @@ export const translations: TranslationDictionary = {
   savedTripsPageTitle: "Perjalanan tersimpan",
   savedTripsPageSubtitle:
     "Rencana perjalanan pilihan Anda dan rute yang sedang tren.",
+  savedTripsTabsLabel: "Perjalanan tersimpan / Riwayat pencarian",
+  savedTripsTabSaved: "Perjalanan tersimpan",
+  savedTripsTabHistory: "Riwayat pencarian",
   savedTripsEmptyTitle: "Simpan destinasi yang Anda sukai",
   savedTripsEmptyDescription:
     "Ketuk ikon hati pada rute mana pun untuk membuat daftar pilihan pribadi Anda dan menjaga petualangan berikutnya tetap mudah dijangkau.",
   savedTripsExploreDestinations: "Jelajahi destinasi",
+  savedTripsRecentSearchesTitle: "Pencarian terbaru",
+  savedTripsRecentSearchesSubtitle: "Lanjutkan dari tempat terakhir Anda dan cari lagi dengan sekali klik.",
 
   destinationsHeroBadge: "PENEMUAN DESTINASI",
   destinationsHeroTitle: "Ke mana Anda ingin pergi selanjutnya?",

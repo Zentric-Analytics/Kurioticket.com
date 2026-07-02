@@ -866,8 +866,11 @@ export const translations: TranslationDictionary = {
   back: "返回",
   cancel: "取消",
   remove: "移除",
-  savedTripsPageTitle: "已保存的行程",
+  savedTripsPageTitle: "已保存行程",
   savedTripsPageSubtitle: "你精选的行程和热门路线。",
+  savedTripsTabsLabel: "已保存行程 / 搜索历史",
+  savedTripsTabSaved: "已保存行程",
+  savedTripsTabHistory: "搜索历史",
   savedTripsEmptyTitle: "保存你喜欢的目的地",
   savedTripsEmptyDescription:
     "点击任意路线上的爱心图标，建立你的个人候选清单，让下一次冒险触手可及。",

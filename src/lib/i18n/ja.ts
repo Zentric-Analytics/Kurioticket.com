@@ -1088,7 +1088,10 @@ export const translations: TranslationDictionary = {
     "この旅行はこのデバイスに保存されており、いつでも削除できます。",
   savedTripsPageTitle: "保存した旅行",
   savedTripsPageSubtitle:
-    "選んだ旅程と注目のルートをまとめて確認できます。",
+    "選択した旅程と注目のルートです。",
+  savedTripsTabsLabel: "保存した旅行 / 検索履歴",
+  savedTripsTabSaved: "保存した旅行",
+  savedTripsTabHistory: "検索履歴",
   savedTripsClearAllSaved: "保存した旅行をすべて削除",
   savedTripsEmptyTitle: "気になる目的地を保存",
   savedTripsEmptyDescription:
@@ -1104,7 +1107,7 @@ export const translations: TranslationDictionary = {
   savedTripsSearchRoute: "ルートを検索",
   savedTripsRecentSearchesTitle: "最近の検索",
   savedTripsRecentSearchesSubtitle:
-    "前回の続きから、ワンタップでもう一度検索できます。",
+    "前回の続きから、ワンクリックでもう一度検索できます。",
   savedTripsClearAllRecent: "最近の検索をすべて削除",
   savedTripsNoRecentTitle: "検索を始めて旅の計画を進めましょう",
   savedTripsNoRecentDescription:

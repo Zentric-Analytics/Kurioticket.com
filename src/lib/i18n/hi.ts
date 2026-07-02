@@ -431,7 +431,10 @@ export const translations: TranslationDictionary = {
   "destinations.country.oman": "ओमान",
   "destinations.country.saudiArabia": "सऊदी अरब",
   savedTripsPageTitle: "सहेजी गई यात्राएँ",
-  savedTripsPageSubtitle: "आपकी चुनी हुई यात्राएँ और ट्रेंडिंग मार्ग।",
+  savedTripsPageSubtitle: "आपकी चुनी हुई यात्राएँ और लोकप्रिय मार्ग।",
+  savedTripsTabsLabel: "सहेजी गई यात्राएँ / खोज इतिहास",
+  savedTripsTabSaved: "सहेजी गई यात्राएँ",
+  savedTripsTabHistory: "खोज इतिहास",
   savedTripsClearAllSaved: "सभी सहेजी गई यात्राएँ साफ़ करें",
   savedTripsEmptyTitle: "अपने पसंदीदा गंतव्य सहेजें",
   savedTripsEmptyDescription:
@@ -447,7 +450,7 @@ export const translations: TranslationDictionary = {
   savedTripsSearchRoute: "मार्ग खोजें",
   savedTripsRecentSearchesTitle: "हाल की खोजें",
   savedTripsRecentSearchesSubtitle:
-    "जहाँ छोड़ा था वहीं से जारी रखें और एक टैप में फिर खोजें।",
+    "जहाँ छोड़ा था वहीं से जारी रखें और एक क्लिक में फिर से खोजें।",
   savedTripsClearAllRecent: "सभी हाल की खोजें साफ़ करें",
   savedTripsNoRecentTitle: "गति बनाने के लिए खोज शुरू करें",
   savedTripsNoRecentDescription:
