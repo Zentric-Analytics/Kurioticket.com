@@ -125,6 +125,82 @@ test("Vietnamese language metadata, LTR direction, and English fallback dictiona
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
 });
 
+test("Vietnamese About and How Kurioticket Works page copy resolves without English fallback", () => {
+  const vi = getTranslations("vi");
+  const aboutPageSource = readFileSync("src/components/about/AboutPageContent.tsx", "utf8");
+  const aboutRouteSource = readFileSync("src/app/about/page.tsx", "utf8");
+  const howItWorksSource = readFileSync("src/app/how-it-works/HowItWorksContent.tsx", "utf8");
+  const howItWorksRouteSource = readFileSync("src/app/how-it-works/page.tsx", "utf8");
+
+  const expectedVietnameseCopy: Record<string, string> = {
+    aboutPageEyebrow: "Về Kurioticket",
+    aboutPageTitle: "Về chúng tôi",
+    aboutPageIntroPrimary:
+      "Kurioticket là nền tảng tìm kiếm và so sánh du lịch giúp du khách tìm kiếm, so sánh và khám phá chuyến bay, khách sạn, ô tô và ưu đãi du lịch.",
+    aboutPageIntroSecondary:
+      "Mục tiêu của chúng tôi là giúp việc lập kế hoạch du lịch rõ ràng hơn bằng cách đưa các lựa chọn có sẵn và thông tin nhà cung cấp vào một nơi đơn giản, để du khách có thể xem xét các lựa chọn trước khi tiếp tục với nhà cung cấp phù hợp với chuyến đi của mình.",
+    aboutPagePlanningCardHeading: "Một công cụ lập kế hoạch du lịch thiết thực",
+    aboutPagePlanningCardBody:
+      "Kurioticket tập trung giúp du khách đánh giá các lựa chọn du lịch với ngữ cảnh hữu ích. Tình trạng còn chỗ, giá, quy định và các bước đặt chỗ cuối cùng có thể khác nhau tùy theo nhà cung cấp, vì vậy du khách nên xem kỹ trang của nhà cung cấp trước khi đưa ra quyết định.",
+    howItWorksEyebrow: "Cách Kurioticket hoạt động",
+    howItWorksTitle: "Cách Kurioticket hoạt động",
+    howItWorksIntro:
+      "Kurioticket giúp du khách chuyển từ tìm kiếm sang so sánh, sau đó tiếp tục đến nhà cung cấp khi một ưu đãi được chọn.",
+    howItWorksFlowHeading: "Quy trình cơ bản",
+    "howItWorks.steps.search.title": "Tìm kiếm lựa chọn du lịch",
+    "howItWorks.steps.search.description":
+      "Nhập chi tiết chuyến đi của bạn để tìm các chuyến bay, khách sạn, ô tô hoặc ưu đãi du lịch có sẵn.",
+    "howItWorks.steps.compare.title": "So sánh kết quả có sẵn",
+    "howItWorks.steps.compare.description":
+      "Xem lại các lựa chọn, giá, lịch trình, chi tiết nhà cung cấp và thông tin du lịch khác khi được hiển thị.",
+    "howItWorks.steps.choose.title": "Chọn một ưu đãi",
+    "howItWorks.steps.choose.description":
+      "Chọn lựa chọn phù hợp nhất với kế hoạch của bạn sau khi xem xét các chi tiết có sẵn.",
+    "howItWorks.steps.continue.title": "Tiếp tục với nhà cung cấp",
+    "howItWorks.steps.continue.description":
+      "Khi được chuyển hướng, hãy tiếp tục trên website của nhà cung cấp để xem lại chi tiết cuối cùng và hoàn tất các bước đặt chỗ.",
+    "howItWorks.providerWebsites.title": "Website của nhà cung cấp",
+    "howItWorks.providerWebsites.description":
+      "Một số đặt chỗ có thể được hoàn tất trên website của nhà cung cấp sau khi Kurioticket chuyển hướng bạn. Hãy xem trang của nhà cung cấp để kiểm tra tình trạng còn chỗ cuối cùng, giá, điều khoản, bước thanh toán và chi tiết đặt chỗ trước khi hoàn tất mua hàng.",
+  };
+
+  for (const [key, expected] of Object.entries(expectedVietnameseCopy)) {
+    assert.equal(vi[key], expected, `${key} should resolve to Vietnamese copy`);
+    assert.notEqual(vi[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  assert.ok(aboutRouteSource.includes('import { AboutPageContent } from "@/components/about/AboutPageContent"'));
+  assert.ok(aboutRouteSource.includes("<AboutPageContent />"));
+  assert.ok(aboutPageSource.includes("getTranslation(t,"), "About render path should read i18n keys.");
+  assert.ok(aboutPageSource.includes("max-w-3xl rounded-2xl border border-border bg-white"), "About card layout classes should remain unchanged.");
+  assert.ok(!aboutPageSource.includes("About Us"), "Active About component should not hardcode screenshot English copy.");
+
+  for (const key of ["aboutPageEyebrow", "aboutPageTitle", "aboutPageIntroPrimary", "aboutPageIntroSecondary", "aboutPagePlanningCardHeading", "aboutPagePlanningCardBody"]) {
+    assert.ok(aboutPageSource.includes(key), `About page render path should resolve ${key} through i18n.`);
+  }
+
+  assert.ok(howItWorksRouteSource.includes("<HowItWorksContent />"));
+  assert.ok(howItWorksSource.includes('number: "01"') && howItWorksSource.includes('number: "02"') && howItWorksSource.includes('number: "03"') && howItWorksSource.includes('number: "04"'), "How-it-works step numbers should remain unchanged.");
+  assert.ok(howItWorksSource.includes("Search") && howItWorksSource.includes("GitCompare") && howItWorksSource.includes("MousePointerClick") && howItWorksSource.includes("ExternalLink"), "How-it-works icons should remain unchanged.");
+  assert.ok(howItWorksSource.includes("steps.map((step)"), "How-it-works should keep mapped card order.");
+  assert.ok(howItWorksSource.includes('aria-labelledby="how-it-works-steps"'), "How-it-works accessibility attributes should remain unchanged.");
+  assert.ok(howItWorksSource.includes("rounded-2xl border border-border bg-white"), "How-it-works card layout classes should remain unchanged.");
+  assert.ok(!howItWorksSource.includes("Basic flow"), "Active How-it-works component should not hardcode screenshot English copy.");
+
+  for (const key of ["howItWorksEyebrow", "howItWorksTitle", "howItWorksIntro", "howItWorksFlowHeading", "howItWorks.steps.search.title", "howItWorks.steps.search.description", "howItWorks.steps.compare.title", "howItWorks.steps.compare.description", "howItWorks.steps.choose.title", "howItWorks.steps.choose.description", "howItWorks.steps.continue.title", "howItWorks.steps.continue.description", "howItWorks.providerWebsites.title", "howItWorks.providerWebsites.description"]) {
+    assert.ok(howItWorksSource.includes(key), `How-it-works render path should resolve ${key} through i18n.`);
+  }
+
+  assert.match(vi.aboutPageIntroPrimary, /Kurioticket/);
+  assert.match(vi.aboutPagePlanningCardBody, /Tình trạng còn chỗ.*giá.*nhà cung cấp/);
+  assert.match(vi.howItWorksIntro, /tìm kiếm.*so sánh.*nhà cung cấp/);
+  assert.match(vi["howItWorks.providerWebsites.description"], /Kurioticket.*nhà cung cấp.*giá.*điều khoản.*thanh toán/);
+  assert.equal(languageOptions.find((o) => o.code === "vi")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
+});
+
 test("Vietnamese service and support active render path copy resolves without English fallback", () => {
   const vi = getTranslations("vi");
   const supportContentSource = readFileSync("src/app/support/SupportContent.tsx", "utf8");
