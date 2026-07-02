@@ -11540,6 +11540,108 @@ test("Polish service and support active render path copy resolves without Englis
   assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
 });
 
+test("Vietnamese account personal details and security settings copy resolves without English fallback", () => {
+  const vi = getTranslations("vi-VN");
+  const viAlias = getTranslations("vi-vn");
+  const personalExpected: Record<string, string> = {
+    "accountDashboard.hub.title": "Tài khoản của tôi",
+    "accountDashboard.personalDetails.title": "Thông tin cá nhân",
+    "accountDashboard.personalDetails.subtitle": "Cập nhật thông tin của bạn và quản lý cách thông tin đó được sử dụng trên Kurioticket.",
+    "accountDashboard.personalDetails.description": "Quản lý thông tin Kurioticket sử dụng cho tài khoản của bạn.",
+    "accountDashboard.personalDetails.name": "Tên",
+    "accountDashboard.personalDetails.emailAddress": "Địa chỉ email",
+    "accountDashboard.personalDetails.phoneNumber": "Số điện thoại",
+    "accountDashboard.personalDetails.dateOfBirth": "Ngày sinh",
+    "accountDashboard.personalDetails.gender": "Giới tính",
+    "accountDashboard.personalDetails.nationality": "Quốc tịch",
+    "accountDashboard.personalDetails.address": "Địa chỉ",
+    "accountDashboard.personalDetails.addName": "Thêm tên của bạn",
+    "accountDashboard.personalDetails.addPhoneNumber": "Thêm số điện thoại của bạn",
+    "accountDashboard.personalDetails.addDateOfBirth": "Thêm ngày sinh của bạn",
+    "accountDashboard.personalDetails.addGender": "Thêm giới tính của bạn",
+    "accountDashboard.personalDetails.addNationality": "Thêm quốc tịch của bạn",
+    "accountDashboard.personalDetails.addAddress": "Thêm địa chỉ của bạn",
+    "accountDashboard.personalDetails.edit": "Chỉnh sửa",
+    "accountDashboard.personalDetails.section.basicInformation": "Thông tin cơ bản",
+    "accountDashboard.personalDetails.emailVerified": "Đã xác minh",
+    "accountDashboard.personalDetails.changeEmail": "Thay đổi email",
+    "accountDashboard.personalDetails.emailHelper": "Email này được dùng để đăng nhập và xác nhận đặt chỗ. Thay đổi cần được xác minh.",
+    "accountDashboard.personalDetails.phoneHelper": "Chúng tôi sẽ sử dụng số này cho các cập nhật đặt chỗ.",
+    "accountDashboard.personalDetails.dateOfBirthDayPlaceholder": "DD",
+    "accountDashboard.personalDetails.monthPlaceholder": "Tháng",
+    "accountDashboard.personalDetails.dateOfBirthYearPlaceholder": "YYYY",
+    "accountDashboard.personalDetails.addressDescription": "Dùng cho thanh toán, hồ sơ đặt chỗ và liên lạc du lịch.",
+    "accountDashboard.personalDetails.countryRegion": "Quốc gia/khu vực",
+    "accountDashboard.personalDetails.selectOne": "Chọn một",
+    "accountDashboard.personalDetails.streetAddress": "Địa chỉ đường phố",
+    "accountDashboard.personalDetails.apartmentSuite": "Căn hộ, phòng, đơn vị, tòa nhà",
+    "accountDashboard.personalDetails.townCity": "Thị trấn / Thành phố",
+    "accountDashboard.personalDetails.stateProvinceRegion": "Bang / Tỉnh / Khu vực",
+    "accountDashboard.personalDetails.postcodeZip": "Mã bưu chính / ZIP",
+    "accountDashboard.personalDetails.cancel": "Hủy",
+    "accountDashboard.personalDetails.saveChanges": "Lưu thay đổi",
+  };
+  const securityExpected: Record<string, string> = {
+    "accountDashboard.security.title": "Cài đặt bảo mật",
+    "accountDashboard.security.description": "Quản lý đăng nhập và bảo mật tài khoản Kurioticket của bạn.",
+    "accountDashboard.security.password.title": "Mật khẩu",
+    "accountDashboard.security.password.description": "Thay đổi mật khẩu dùng để đăng nhập vào tài khoản của bạn.",
+    "accountDashboard.security.action.changePassword": "Thay đổi mật khẩu",
+    "accountDashboard.security.twoFactor.title": "Xác thực hai yếu tố",
+    "accountDashboard.security.twoFactor.description": "Thêm lớp bảo vệ bằng ứng dụng xác thực.",
+    "accountDashboard.security.action.setUp": "Thiết lập",
+    "accountDashboard.security.passkeys.title": "Khóa đăng nhập",
+    "accountDashboard.security.passkeys.description": "Sử dụng khóa màn hình thiết bị, Face ID, vân tay, trình quản lý mật khẩu hoặc khóa bảo mật để đăng nhập nhanh hơn và an toàn hơn.",
+    "accountDashboard.security.activeSessions.title": "Phiên hoạt động",
+    "accountDashboard.security.activeSessions.description": "Xem lại các thiết bị đã đăng nhập vào tài khoản của bạn.",
+    "accountDashboard.security.action.manageSessions": "Quản lý phiên",
+    "accountDashboard.security.notifications.title": "Thông báo bảo mật",
+    "accountDashboard.security.notifications.description": "Nhận cảnh báo về hoạt động tài khoản quan trọng.",
+    "accountDashboard.security.action.turnOff": "Tắt",
+    "accountDashboard.security.deleteAccount.title": "Xóa tài khoản",
+    "accountDashboard.security.deleteAccount.description": "Yêu cầu xóa tài khoản vĩnh viễn.",
+    "accountDashboard.security.action.deleteAccount": "Xóa tài khoản",
+  };
+
+  for (const [key, expected] of Object.entries({ ...personalExpected, ...securityExpected })) {
+    assert.equal(vi[key], expected, `${key} should resolve in Vietnamese`);
+    assert.equal(viAlias[key], expected, `${key} should resolve through vi-vn alias`);
+    if (!["DD", "YYYY"].includes(expected)) assert.notEqual(vi[key], enTranslations[key], `${key} must not fall back to English`);
+  }
+
+  const dashboardSource = readFileSync("src/components/dashboard/DashboardGrid.tsx", "utf8");
+  const personalPageSource = readFileSync("src/app/dashboard/page.tsx", "utf8");
+  const securityPageSource = readFileSync("src/app/dashboard/security/page.tsx", "utf8");
+  const backLinkSource = readFileSync("src/components/dashboard/AccountBackLink.tsx", "utf8");
+
+  for (const key of Object.keys({ ...personalExpected, ...securityExpected })) {
+    if (key === "accountDashboard.hub.title") continue;
+    assert.ok(dashboardSource.includes(key), `Active account render path should read ${key}`);
+  }
+  assert.ok(backLinkSource.includes('t["accountDashboard.hub.title"]'));
+  assert.ok(backLinkSource.includes('href="/dashboard/account"'));
+  assert.ok(personalPageSource.includes("session?.user?.email?.trim()"));
+  assert.ok(personalPageSource.includes("serializeUserProfile(storedProfile)"));
+  assert.ok(dashboardSource.includes("userEmail ?? \"\"") && dashboardSource.includes("userProfile?.phoneNumber ?? \"\""));
+  assert.ok(dashboardSource.includes('countryCode: "+234"') || dashboardSource.includes("+234"));
+  assert.ok(dashboardSource.includes("countryCode") && dashboardSource.includes("selectedCountryCode"));
+  assert.ok(dashboardSource.includes("fullName: draft.name") && dashboardSource.includes("phoneNumber: draft.phone") && dashboardSource.includes("postalCode") && dashboardSource.includes("addressLine1"));
+  assert.ok(dashboardSource.includes("const profilePayload = {") && dashboardSource.includes("handleSave") && dashboardSource.includes("handleCancel"));
+  assert.ok(dashboardSource.includes('onClick={onStartChange}') && dashboardSource.includes('onClick={handleCancel}') && dashboardSource.includes('onClick={handleSave}'));
+  assert.ok(securityPageSource.includes("<SecurityDashboardPage />"));
+  assert.ok(dashboardSource.includes('onAction={() => setPasswordModalOpen(true)}') && dashboardSource.includes('onAction={handleOpenSessions}') && dashboardSource.includes('onAction={() => setDeleteModalOpen(true)}'));
+  assert.ok(dashboardSource.includes('handleSecurityAlertsToggle(!securityEmailAlerts)'));
+  assert.ok(dashboardSource.includes('href: "/dashboard/security"') && dashboardSource.includes('securityActionStatusId = "security-action-status"'));
+  assert.ok(dashboardSource.includes('className="') && dashboardSource.includes('aria-label={t["accountDashboard.personalDetails.dateOfBirthDay"]}'));
+
+  assert.ok(languageOptions.some((option) => option.code === "vi" && option.locale === "vi-VN" && option.direction === "ltr"));
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+  assert.ok(languageOptions.some((option) => option.code === "th" && option.direction === "ltr" && option.status === "available"));
+  assert.ok(languageOptions.some((option) => option.code === "id" && option.direction === "ltr" && option.status === "available"));
+  assert.equal(idTranslations.loginCodeInstructions.includes("{{email}}"), true);
+  assert.equal(thTranslations["accountDashboard.hub.title"], "บัญชีของฉัน");
+});
+
 test("Personal details edit form localization keys resolve across active locales", () => {
   const activeLocaleTranslations = { ar: arTranslations, nl: nlTranslations, es: esTranslations, fr: frTranslations, de: deTranslations, it: itTranslations, "pt-br": ptBrTranslations, "zh-cn": zhCnTranslations, ja: jaTranslations, ko: koTranslations, hi: hiTranslations, tr: trTranslations, pl: plTranslations } as const;
   const requiredKeys = ["accountDashboard.personalDetails.section.basicInformation", "accountDashboard.personalDetails.description", "accountDashboard.personalDetails.emailVerified", "accountDashboard.personalDetails.changeEmail", "accountDashboard.personalDetails.emailHelper", "accountDashboard.personalDetails.phoneHelper", "accountDashboard.personalDetails.dateOfBirthDayPlaceholder", "accountDashboard.personalDetails.monthPlaceholder", "accountDashboard.personalDetails.dateOfBirthYearPlaceholder", "accountDashboard.personalDetails.section.address", "accountDashboard.personalDetails.addressDescription", "accountDashboard.personalDetails.countryRegion", "accountDashboard.personalDetails.selectOne", "accountDashboard.personalDetails.streetAddress", "accountDashboard.personalDetails.apartmentSuite", "accountDashboard.personalDetails.townCity", "accountDashboard.personalDetails.stateProvinceRegion", "accountDashboard.personalDetails.postcodeZip", "accountDashboard.personalDetails.cancel", "accountDashboard.personalDetails.saveChanges"] as const;
