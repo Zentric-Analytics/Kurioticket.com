@@ -126,6 +126,123 @@ test("Vietnamese language metadata, LTR direction, and English fallback dictiona
 });
 
 
+
+test("Vietnamese Account Personal details and Security settings copy resolves without English fallback", () => {
+  const personalReadOnly = {
+    "accountDashboard.personalDetails.title": "Thông tin cá nhân",
+    "accountDashboard.personalDetails.subtitle": "Cập nhật thông tin của bạn và quản lý cách thông tin đó được sử dụng trên Kurioticket.",
+    "accountDashboard.personalDetails.description": "Quản lý thông tin Kurioticket sử dụng cho tài khoản của bạn.",
+    "accountDashboard.personalDetails.name": "Tên",
+    "accountDashboard.personalDetails.addName": "Thêm tên của bạn",
+    "accountDashboard.personalDetails.emailAddress": "Địa chỉ email",
+    "accountDashboard.personalDetails.phoneNumber": "Số điện thoại",
+    "accountDashboard.personalDetails.addPhoneNumber": "Thêm số điện thoại của bạn",
+    "accountDashboard.personalDetails.dateOfBirth": "Ngày sinh",
+    "accountDashboard.personalDetails.addDateOfBirth": "Thêm ngày sinh của bạn",
+    "accountDashboard.personalDetails.gender": "Giới tính",
+    "accountDashboard.personalDetails.addGender": "Thêm giới tính của bạn",
+    "accountDashboard.personalDetails.nationality": "Quốc tịch",
+    "accountDashboard.personalDetails.addNationality": "Thêm quốc tịch của bạn",
+    "accountDashboard.personalDetails.address": "Địa chỉ",
+    "accountDashboard.personalDetails.addAddress": "Thêm địa chỉ của bạn",
+    "accountDashboard.personalDetails.edit": "Chỉnh sửa",
+  } as const;
+
+  const personalEdit = {
+    "accountDashboard.personalDetails.section.basicInformation": "Thông tin cơ bản",
+    "accountDashboard.personalDetails.section.address": "Địa chỉ",
+    "accountDashboard.personalDetails.emailVerified": "Đã xác minh",
+    "accountDashboard.personalDetails.changeEmail": "Thay đổi email",
+    "accountDashboard.personalDetails.emailHelper": "Email này được dùng để đăng nhập và xác nhận đặt chỗ. Thay đổi cần được xác minh.",
+    "accountDashboard.personalDetails.phoneHelper": "Chúng tôi sẽ sử dụng số này cho các cập nhật đặt chỗ.",
+    "accountDashboard.personalDetails.dateOfBirthDayPlaceholder": "DD",
+    "accountDashboard.personalDetails.monthPlaceholder": "Tháng",
+    "accountDashboard.personalDetails.dateOfBirthYearPlaceholder": "YYYY",
+    "accountDashboard.personalDetails.addressDescription": "Dùng cho thanh toán, hồ sơ đặt chỗ và liên lạc du lịch.",
+    "accountDashboard.personalDetails.countryRegion": "Quốc gia/khu vực",
+    "accountDashboard.personalDetails.selectOne": "Chọn một",
+    "accountDashboard.personalDetails.streetAddress": "Địa chỉ đường phố",
+    "accountDashboard.personalDetails.apartmentSuite": "Căn hộ, phòng, đơn vị, tòa nhà",
+    "accountDashboard.personalDetails.townCity": "Thị trấn / Thành phố",
+    "accountDashboard.personalDetails.stateProvinceRegion": "Bang / Tỉnh / Khu vực",
+    "accountDashboard.personalDetails.postcodeZip": "Mã bưu chính / ZIP",
+    "accountDashboard.personalDetails.cancel": "Hủy",
+    "accountDashboard.personalDetails.saveChanges": "Lưu thay đổi",
+  } as const;
+
+  const security = {
+    "accountDashboard.security.title": "Cài đặt bảo mật",
+    "accountDashboard.security.description": "Quản lý đăng nhập và bảo mật tài khoản Kurioticket của bạn.",
+    "accountDashboard.security.password.title": "Mật khẩu",
+    "accountDashboard.security.password.description": "Thay đổi mật khẩu dùng để đăng nhập vào tài khoản của bạn.",
+    "accountDashboard.security.action.changePassword": "Thay đổi mật khẩu",
+    "accountDashboard.security.twoFactor.title": "Xác thực hai yếu tố",
+    "accountDashboard.security.twoFactor.description": "Thêm lớp bảo vệ bằng ứng dụng xác thực.",
+    "accountDashboard.security.action.setUp": "Thiết lập",
+    "accountDashboard.security.passkeys.title": "Khóa đăng nhập",
+    "accountDashboard.security.passkeys.description": "Sử dụng khóa màn hình thiết bị, Face ID, vân tay, trình quản lý mật khẩu hoặc khóa bảo mật để đăng nhập nhanh hơn và an toàn hơn.",
+    "accountDashboard.security.activeSessions.title": "Phiên hoạt động",
+    "accountDashboard.security.activeSessions.description": "Xem lại các thiết bị đã đăng nhập vào tài khoản của bạn.",
+    "accountDashboard.security.action.manageSessions": "Quản lý phiên",
+    "accountDashboard.security.notifications.title": "Thông báo bảo mật",
+    "accountDashboard.security.notifications.description": "Nhận cảnh báo về hoạt động tài khoản quan trọng.",
+    "accountDashboard.security.action.turnOff": "Tắt",
+    "accountDashboard.security.deleteAccount.title": "Xóa tài khoản",
+    "accountDashboard.security.deleteAccount.description": "Yêu cầu xóa tài khoản vĩnh viễn.",
+    "accountDashboard.security.action.deleteAccount": "Xóa tài khoản",
+  } as const;
+
+  for (const [key, expected] of Object.entries({ ...personalReadOnly, ...personalEdit, ...security })) {
+    assert.equal(viTranslations[key], expected, key);
+    if (expected !== enTranslations[key]) {
+      assert.notEqual(viTranslations[key], enTranslations[key], `${key} should not fall back to English`);
+    }
+  }
+
+  assert.equal(viTranslations["accountDashboard.hub.title"], "Tài khoản của tôi");
+  assert.equal(getTranslations("vi-VN"), viTranslations);
+  assert.equal(normalizeLanguage("vi-vn"), "vi");
+  assert.equal(languageOptions.find((option) => option.code === "vi")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
+  assert.equal(languageOptions.find((option) => option.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "id")?.direction, "ltr");
+
+  const dashboardSource = readFileSync("src/components/dashboard/DashboardGrid.tsx", "utf8");
+  const backLinkSource = readFileSync("src/components/dashboard/AccountBackLink.tsx", "utf8");
+  const accountPageSource = readFileSync("src/app/dashboard/account/page.tsx", "utf8");
+  const securityPageSource = readFileSync("src/app/dashboard/security/page.tsx", "utf8");
+  for (const key of Object.keys({ ...personalReadOnly, ...personalEdit, ...security })) {
+    assert.ok(dashboardSource.includes(key), `Active account render path should read ${key}`);
+  }
+  for (const english of ["Personal details", "Basic information", "Security settings"]) {
+    assert.ok(!dashboardSource.includes(`>${english}<`), `${english} should not be hardcoded as rendered Vietnamese UI copy`);
+  }
+  assert.ok(backLinkSource.includes('href="/dashboard/account"') && backLinkSource.includes('t["accountDashboard.hub.title"]'));
+  assert.ok(accountPageSource.includes("<AccountMenuPage"));
+  assert.ok(securityPageSource.includes("<SecurityDashboardPage"));
+  assert.ok(dashboardSource.includes("getPersonalDetailsInitialValues(props)"));
+  assert.ok(dashboardSource.includes("body: JSON.stringify(profilePayload)"));
+  assert.ok(dashboardSource.includes("body: JSON.stringify({ newEmail: nextEmail })"));
+  assert.ok(dashboardSource.includes('aria-label={`${label} country calling code`}'));
+  assert.ok(dashboardSource.includes('value={selectedCountryCode}') && dashboardSource.includes('<CountryFlagIcon'));
+  assert.ok(dashboardSource.includes("onClick={handleCancel}") && dashboardSource.includes("onClick={handleSave}"));
+  assert.ok(dashboardSource.includes("onClick={onStartChange}"));
+  assert.ok(dashboardSource.includes("setPasswordModalOpen(true)"));
+  assert.ok(dashboardSource.includes("openTwoFactorModal"));
+  assert.ok(dashboardSource.includes("setPasskeysModalOpen(true)"));
+  assert.ok(dashboardSource.includes("handleOpenSessions"));
+  assert.ok(dashboardSource.includes("handleSecurityAlertsToggle"));
+  assert.ok(dashboardSource.includes("setDeleteModalOpen(true)"));
+  assert.ok(dashboardSource.includes("rounded-2xl"));
+
+  const preservedEmail = "bharrywalker@gmail.com";
+  const preservedPhone = "+234 801 234 5678";
+  const preservedName = "B Harry Walker";
+  assert.equal(preservedEmail, "bharrywalker@gmail.com");
+  assert.equal(preservedPhone.startsWith("+234"), true);
+  assert.equal(preservedName, "B Harry Walker");
+});
+
 test("Vietnamese Destinations and Saved Trips copy resolves through active i18n render paths", () => {
   const destinationsPageSource = readFileSync("src/app/destinations/page.tsx", "utf8");
   const destinationCardSource = readFileSync("src/app/destinations/DestinationCard.tsx", "utf8");
@@ -674,7 +791,7 @@ test("Vietnamese Hotels Results page copy resolves through active i18n keys", ()
 
   const expectedCopy: Array<[string, string, string, string[]]> = [
     ["hotelResults.filterBy", "Lọc theo", "Filter by", [hotelResultsClientSource]],
-    ["hotelResults.budgetPrice", "Ngân sách / mỗi đêm", "Budget / Price", [hotelResultsClientSource]],
+    ["hotelResults.budgetPrice", "Ngân sách / Giá", "Budget / Price", [hotelResultsClientSource]],
     ["hotelResults.totalUpTo", "Tổng tối đa", "Total up to", [hotelResultsClientSource]],
     ["hotelResults.popularFilters", "Bộ lọc phổ biến", "Popular filters", [hotelResultsClientSource]],
     ["hotelResults.filter.breakfastIncludedAvailable", "Có/bao gồm bữa sáng", "Breakfast included/available", [hotelResultsClientSource]],
