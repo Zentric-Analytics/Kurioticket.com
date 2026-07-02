@@ -125,6 +125,88 @@ test("Vietnamese language metadata, LTR direction, and English fallback dictiona
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
 });
 
+test("Vietnamese service and support active render path copy resolves without English fallback", () => {
+  const vi = getTranslations("vi");
+  const supportContentSource = readFileSync("src/app/support/SupportContent.tsx", "utf8");
+  const supportFormSource = readFileSync("src/components/support/SupportForm.tsx", "utf8");
+  const serviceGuaranteeSource = readFileSync("src/app/service-guarantee/ServiceGuaranteeContent.tsx", "utf8");
+  const moreServiceInfoSource = readFileSync("src/app/more-service-info/MoreServiceInfoContent.tsx", "utf8");
+
+  const expected = {
+    supportEyebrow: "Trung tâm hỗ trợ Kurioticket",
+    supportTitle: "Hỗ trợ khách hàng",
+    supportBeforeContactHeading: "Trước khi liên hệ với chúng tôi",
+    supportBeforeContactDescription: "Hãy cung cấp email trên tài khoản Kurioticket của bạn, điều bạn đang cố thực hiện, tuyến đường hoặc khách sạn nếu có liên quan, và trang nhà cung cấp mà bạn được chuyển đến. Vui lòng không gửi đầy đủ số thẻ thanh toán hoặc số giấy tờ du lịch nhạy cảm.",
+    supportTicketHeading: "Tạo yêu cầu hỗ trợ",
+    supportFormSubjectLabel: "Chủ đề",
+    supportFormCategoryLabel: "Danh mục",
+    supportCategorySearchHelp: "Tìm kiếm và kết quả",
+    supportCategoryPriceAlerts: "Cảnh báo giá",
+    supportCategoryPartnerRedirect: "Chuyển hướng nhà cung cấp",
+    supportCategoryAccountHelp: "Tài khoản và đăng nhập",
+    supportFormMessageLabel: "Chúng tôi có thể giúp gì?",
+    supportFormMessagePlaceholder: "Chia sẻ tuyến đường, khách sạn, cảnh báo hoặc thông tin tài khoản liên quan.",
+    supportFormSubmit: "Gửi yêu cầu",
+    supportFormSending: "Đang gửi...",
+    supportFormSuccessTitle: "Đã gửi yêu cầu hỗ trợ",
+    supportFormSuccessMessage: "Chúng tôi đã nhận được yêu cầu hỗ trợ của bạn.",
+    supportFormEmailRequired: "Vui lòng nhập email của bạn.",
+    supportFormSubjectRequired: "Vui lòng nhập chủ đề.",
+    supportFormMessageRequired: "Vui lòng mô tả cách chúng tôi có thể hỗ trợ.",
+    serviceGuaranteeEyebrow: "Cam kết dịch vụ của Kurioticket",
+    serviceGuaranteeTitle: "Cam kết dịch vụ",
+    serviceGuaranteeDescription: "Chúng tôi muốn du khách hiểu cách Kurioticket hoạt động và những gì họ có thể mong đợi khi sử dụng nền tảng của chúng tôi.",
+    serviceGuaranteeFaqHeading: "Câu hỏi thường gặp",
+    serviceGuaranteeFaqDescription: "Những câu trả lời này giải thích vai trò của Kurioticket như một nền tảng tìm kiếm và so sánh du lịch.",
+    serviceGuaranteeFaqWhatGuaranteeQuestion: "Kurioticket cam kết điều gì?",
+    serviceGuaranteeFaqPricesGuaranteedQuestion: "Giá có luôn được đảm bảo không?",
+    serviceGuaranteeHelpCardTitle: "Cần trợ giúp về tài khoản hoặc tìm kiếm?",
+    moreServiceInfoEyebrow: "Thông tin nền tảng",
+    moreServiceInfoTitle: "Thêm thông tin dịch vụ",
+    moreServiceInfoContextTitle: "Lập kế hoạch có ngữ cảnh",
+    moreServiceInfoStepSearchTitle: "Tìm kiếm nhiều nhà cung cấp",
+    moreServiceInfoStepRedirectsTitle: "Giải thích chuyển hướng nhà cung cấp",
+    moreServiceInfoStepAccountTitle: "Tài khoản & công cụ du lịch",
+    moreServiceInfoFaqPaymentsQuestion: "Kurioticket có xử lý thanh toán không?",
+    moreServiceInfoHelpTitle: "Cần trợ giúp?",
+    moreServiceInfoSupportCta: "Liên hệ hỗ trợ khách hàng",
+  };
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(vi[key], value, key);
+    if (value !== enTranslations[key]) assert.notEqual(vi[key], enTranslations[key], key);
+  }
+
+  for (const key of [
+    "supportFaqAccountAnswer", "supportFaqSearchAnswer", "supportFaqSavedTripsAnswer", "supportFaqRedirectAnswer",
+    "serviceGuaranteeFaqWhatGuaranteeAnswer", "serviceGuaranteeFaqResultsDisplayedAnswer", "serviceGuaranteeFaqRedirectedAnswer",
+    "serviceGuaranteeFaqBookDirectlyAnswer", "serviceGuaranteeFaqPricesGuaranteedAnswer", "serviceGuaranteeFaqChooseProvidersAnswer",
+    "serviceGuaranteeFaqEncounterIssueAnswer", "serviceGuaranteeFaqContactSupportAnswer",
+    "moreServiceInfoStepSearchDetails", "moreServiceInfoStepRedirectsDetails", "moreServiceInfoFaqWhatAnswer", "moreServiceInfoFaqSearchAnswer",
+    "moreServiceInfoFaqRedirectAnswer", "moreServiceInfoFaqPaymentsAnswer", "moreServiceInfoFaqSaveAnswer", "moreServiceInfoFaqAccountAnswer", "moreServiceInfoFaqSupportAnswer",
+  ]) {
+    assert.ok(vi[key], key);
+    assert.notEqual(vi[key], enTranslations[key], key);
+  }
+
+  assert.match(vi.serviceGuaranteeFaqPricesGuaranteedAnswer, /Giá có thể thay đổi/);
+  assert.match(vi.moreServiceInfoStepRedirectsDetails, /giá cuối cùng, tình trạng còn chỗ, quy định, bước thanh toán, biên lai/);
+  assert.match(vi.moreServiceInfoFaqPaymentsAnswer, /Kurioticket không xử lý thanh toán/);
+  assert.equal(languageOptions.find((o) => o.code === "vi")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
+  assert.ok(supportContentSource.includes('t("supportEyebrow")') && supportContentSource.includes('aria-label={t("supportTicketHeading")}') && supportContentSource.includes("supportFaqKeys.map"));
+  assert.ok(supportFormSource.includes('fetch("/api/support/tickets"') && supportFormSource.includes('sourceContext: { page: "support_center" }') && supportFormSource.includes('name="category" defaultValue="price-alerts"'));
+  assert.ok(supportFormSource.includes('value="search-help"') && supportFormSource.includes('value="price-alerts"') && supportFormSource.includes('value="redirect"') && supportFormSource.includes('value="account"'));
+  assert.ok(serviceGuaranteeSource.includes("serviceFaqKeys.map") && serviceGuaranteeSource.includes('href="/support"'));
+  assert.ok(moreServiceInfoSource.includes("serviceSections.map") && moreServiceInfoSource.includes('number: "01"') && moreServiceInfoSource.includes('number: "05"') && moreServiceInfoSource.includes("serviceFaqs.map") && moreServiceInfoSource.includes('href="/support"'));
+  assert.ok(!supportContentSource.includes("Kurioticket help desk"));
+  assert.ok(!supportFormSource.includes("Send Request"));
+  assert.ok(!serviceGuaranteeSource.includes("Service Guarantee"));
+  assert.ok(!moreServiceInfoSource.includes("More Service Information"));
+});
+
 test("Thai language metadata, LTR direction, and English fallback dictionary resolve", () => {
   const thaiOptions = languageOptions.filter((o) => o.code === "th");
   const thaiLocaleMetadata = supportedLocales.filter((o) => o.code === "th");
