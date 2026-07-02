@@ -15250,3 +15250,127 @@ test("Vietnamese Hotels landing and hotel results screenshot copy resolves witho
   assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
   assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
 });
+
+test("Vietnamese account trips and price alerts render paths resolve without English fallback", () => {
+  const vi = getTranslations("vi") as Record<string, string>;
+  const en = enTranslations as Record<string, string>;
+  const tripsPageSource = readFileSync("src/app/dashboard/trips/page.tsx", "utf8");
+  const tripsSource = readFileSync("src/app/dashboard/trips/TripsManagementPage.tsx", "utf8");
+  const alertsPageSource = readFileSync("src/app/dashboard/alerts/page.tsx", "utf8");
+  const alertsSource = readFileSync("src/app/dashboard/alerts/PriceAlertsContent.tsx", "utf8");
+  const accountBackLinkSource = readFileSync("src/components/dashboard/AccountBackLink.tsx", "utf8");
+  const viSource = readFileSync("src/lib/i18n/vi.ts", "utf8");
+
+  const expectedTripsCopy: Record<string, string> = {
+    "accountDashboard.hub.title": "Tài khoản của tôi",
+    "accountDashboard.mobile.backAriaLabel": "Quay lại Tài khoản của tôi",
+    "accountDashboard.trips.title": "Chuyến đi của tôi",
+    "accountDashboard.trips.findReservation": "Tìm đặt chỗ",
+    "accountDashboard.trips.current.empty.title": "Bạn sẽ đi đâu tiếp theo?",
+    "accountDashboard.trips.current.empty.body": "Bạn chưa bắt đầu chuyến đi nào. Khi bạn đặt chỗ, chuyến đi sẽ xuất hiện tại đây.",
+    "accountDashboard.trips.history.tabs.active": "Đang hoạt động",
+    "accountDashboard.trips.history.tabs.past": "Đã qua",
+    "accountDashboard.trips.history.tabs.cancelled": "Đã hủy",
+    "accountDashboard.trips.history.empty.past.title": "Nhớ lại những hành trình của bạn",
+    "accountDashboard.trips.history.empty.past.body": "Các chuyến đi đã hoàn thành sẽ xuất hiện tại đây sau khi bạn đi.",
+    "accountDashboard.trips.history.empty.cancelled.title": "Kế hoạch thay đổi?",
+    "accountDashboard.trips.history.empty.cancelled.body": "Các đặt chỗ đã hủy của bạn sẽ xuất hiện tại đây để tham khảo.",
+    "accountDashboard.trips.history.filtersAriaLabel": "Bộ lọc lịch sử chuyến đi",
+    "accountDashboard.trips.illustration.currentAriaLabel": "Minh họa du lịch",
+    "accountDashboard.trips.illustration.historyAriaLabel": "Minh họa lịch sử chuyến đi",
+    "accountDashboard.trips.illustration.cancelledAriaLabel": "Minh họa chuyến đi đã hủy",
+  };
+
+  const expectedAlertsCopy: Record<string, string> = {
+    "accountDashboard.priceAlerts.title": "Cảnh báo giá",
+    "accountDashboard.priceAlerts.description": "Theo dõi giá và nhận thông báo khi giá vé thay đổi.",
+    "accountDashboard.priceAlerts.tabs.active": "Đang hoạt động",
+    "accountDashboard.priceAlerts.tabs.expired": "Đã hết hạn",
+    "accountDashboard.priceAlerts.tabs.all": "Tất cả",
+    "accountDashboard.priceAlerts.sort.label": "Sắp xếp theo",
+    "accountDashboard.priceAlerts.sort.newest": "Mới nhất",
+    "accountDashboard.priceAlerts.sort.oldest": "Cũ nhất",
+    "accountDashboard.priceAlerts.sort.routeAz": "Tuyến A-Z",
+    "accountDashboard.priceAlerts.sort.ariaLabel": "Sắp xếp cảnh báo giá",
+    "accountDashboard.priceAlerts.empty.title": "Chưa có cảnh báo giá.",
+    "accountDashboard.priceAlerts.empty.body": "Tạo cảnh báo từ tìm kiếm chuyến bay để theo dõi thay đổi giá vé và nhận thông báo.",
+    "accountDashboard.priceAlerts.cta.flights": "Tìm chuyến bay",
+    "accountDashboard.priceAlerts.filtersAriaLabel": "Bộ lọc cảnh báo giá",
+    "accountDashboard.priceAlerts.featuresAriaLabel": "Tính năng cảnh báo giá",
+    "accountDashboard.priceAlerts.features.monitoring.title": "Theo dõi theo thời gian thực",
+    "accountDashboard.priceAlerts.features.monitoring.body": "Chúng tôi theo dõi giá và cho bạn biết khi cảnh báo được kích hoạt.",
+    "accountDashboard.priceAlerts.features.email.title": "Thông báo qua email",
+    "accountDashboard.priceAlerts.features.email.body": "Nhận thông báo khi giá vé thay đổi.",
+    "accountDashboard.priceAlerts.features.trends.title": "Xu hướng giá",
+    "accountDashboard.priceAlerts.features.trends.body": "Xem giá vé được theo dõi thay đổi theo thời gian như thế nào.",
+    "accountDashboard.priceAlerts.features.management.title": "Quản lý dễ dàng",
+    "accountDashboard.priceAlerts.features.management.body": "Tạm dừng hoặc xóa cảnh báo bất cứ lúc nào.",
+  };
+
+  for (const [key, expected] of Object.entries({ ...expectedTripsCopy, ...expectedAlertsCopy })) {
+    assert.equal(vi[key], expected, `${key} should resolve Vietnamese copy`);
+    assert.notEqual(vi[key], en[key], `${key} must not fall back to English for Vietnamese`);
+    assert.equal((viSource.match(new RegExp(`"${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"\\s*:`, "g")) || []).length, 1, `${key} appears once in vi.ts`);
+  }
+
+  for (const english of [
+    "My Trips",
+    "Find a reservation",
+    "Where to next?",
+    "You haven’t started any trips yet",
+    "Past",
+    "Cancelled",
+    "Remember your journeys",
+    "Plans changed?",
+    "Price alerts",
+    "Track prices and get notified",
+    "No price alerts yet.",
+    "Create an alert from a flight search",
+    "Real-time monitoring",
+    "Email notifications",
+    "Price trends",
+    "Easy management",
+  ]) {
+    assert.ok(!Object.values({ ...expectedTripsCopy, ...expectedAlertsCopy }).some((value) => value.includes(english)), `${english} is not Vietnamese output`);
+  }
+
+  assert.ok(tripsPageSource.includes("<TripsManagementPage />"));
+  assert.ok(tripsSource.includes('labelKey: "accountDashboard.trips.history.tabs.past"'));
+  assert.ok(tripsSource.includes('labelKey: "accountDashboard.trips.history.tabs.cancelled"'));
+  assert.ok(tripsSource.includes('titleKey: "accountDashboard.trips.current.empty.title"'));
+  assert.ok(tripsSource.includes('bodyKey: "accountDashboard.trips.current.empty.body"'));
+  assert.ok(tripsSource.includes('aria-controls={`${tab.id}-history-trips-panel`}'));
+  assert.ok(tripsSource.includes('id={`${tab.id}-history-trips-tab`}'));
+  assert.ok(tripsSource.includes('trips.filter((trip) => trip.status === "upcoming")'));
+  assert.ok(tripsSource.includes('trips.filter((trip) => trip.status === activeHistoryTab)'));
+  assert.ok(tripsSource.includes('key={trip.id}'));
+  assert.ok(tripsSource.includes('reservationCode'));
+  assert.ok(accountBackLinkSource.includes('href="/dashboard/account"'));
+  assert.ok(accountBackLinkSource.includes('t["accountDashboard.hub.title"]'));
+
+  assert.ok(alertsPageSource.includes("<PriceAlertsContent"));
+  assert.ok(alertsSource.includes('id: "active"'));
+  assert.ok(alertsSource.includes('id: "expired"'));
+  assert.ok(alertsSource.includes('id: "all"'));
+  assert.ok(alertsSource.includes('count: 0'));
+  assert.ok(alertsSource.includes('id: "newest"'));
+  assert.ok(alertsSource.includes('id: "oldest"'));
+  assert.ok(alertsSource.includes('id: "routeAz"'));
+  assert.ok(alertsSource.includes('href="/flights"'));
+  assert.ok(alertsSource.includes('icon: Bell'));
+  assert.ok(alertsSource.includes('icon: Mail'));
+  assert.ok(alertsSource.includes('icon: LineChart'));
+  assert.ok(alertsSource.includes('icon: Settings2'));
+  assert.ok(alertsSource.includes('aria-label={t["accountDashboard.priceAlerts.filtersAriaLabel"]}'));
+  assert.ok(alertsSource.includes('aria-label={t["accountDashboard.priceAlerts.sort.ariaLabel"]}'));
+  assert.ok(alertsSource.includes('aria-label={t["accountDashboard.priceAlerts.featuresAriaLabel"]}'));
+  assert.equal(`${vi["accountDashboard.priceAlerts.sort.label"]}: ${vi["accountDashboard.priceAlerts.sort.newest"]}`, "Sắp xếp theo: Mới nhất");
+  assert.equal(`${vi["accountDashboard.priceAlerts.tabs.active"]} (0)`, "Đang hoạt động (0)");
+
+  assert.equal(languageOptions.find((option) => option.code === "vi")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
+  assert.equal(languageOptions.find((option) => option.code === "th")?.status, "available");
+  assert.equal(languageOptions.find((option) => option.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "id")?.status, "available");
+  assert.equal(languageOptions.find((option) => option.code === "id")?.direction, "ltr");
+});
