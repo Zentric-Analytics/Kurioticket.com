@@ -656,6 +656,106 @@ test("Vietnamese service and support active render path copy resolves without En
   assert.ok(!moreServiceInfoSource.includes("More Service Information"));
 });
 
+
+
+test("Vietnamese Account Support and Account FAQ copy resolves without English fallback", () => {
+  const vi = getTranslations("vi");
+  const supportContentSource = readFileSync("src/app/support/SupportContent.tsx", "utf8");
+  const supportDashboardRouteSource = readFileSync("src/app/dashboard/support/page.tsx", "utf8");
+  const supportFormSource = readFileSync("src/components/support/SupportForm.tsx", "utf8");
+  const faqPageSource = readFileSync("src/app/faq/page.tsx", "utf8");
+  const faqContentSource = readFileSync("src/app/faq/FaqContent.tsx", "utf8");
+  const faqsSource = readFileSync("src/content/faqs.ts", "utf8");
+  const accountShellSource = readFileSync("src/components/dashboard/AccountDetailShell.tsx", "utf8");
+  const accountBackLinkSource = readFileSync("src/components/dashboard/AccountBackLink.tsx", "utf8");
+
+  const expectedSupport = {
+    "accountDashboard.hub.title": "Tài khoản của tôi",
+    supportTitle: "Hỗ trợ khách hàng",
+    supportBeforeContactHeading: "Trước khi liên hệ với chúng tôi",
+    supportBeforeContactDashboardDescription: "Bao gồm email tài khoản Kurioticket của bạn, nội dung bạn cần trợ giúp và mọi chi tiết đặt chỗ hoặc tuyến đường có thể giúp chúng tôi hiểu vấn đề.",
+    supportTicketHeading: "Tạo yêu cầu hỗ trợ",
+    supportFormEmailLabel: "Địa chỉ email",
+    supportFormSubjectLabel: "Chủ đề",
+    supportFormCategoryLabel: "Danh mục",
+    supportCategoryPriceAlerts: "Cảnh báo giá",
+    supportFormMessageLabel: "Chúng tôi có thể giúp gì?",
+    supportFormMessagePlaceholder: "Chia sẻ tuyến đường, khách sạn, cảnh báo hoặc thông tin tài khoản liên quan.",
+    supportFormSubmit: "Gửi yêu cầu",
+  };
+
+  const expectedFaq = {
+    faqHeading: "Câu hỏi thường gặp",
+    faqGeneralQuestions: "Câu hỏi chung",
+    faqNeedMoreHelpPrefix: "Bạn cần thêm trợ giúp? Hãy truy cập",
+    faqSupportPage: "trang hỗ trợ",
+    faqNeedMoreHelpSuffix: "để xem các tùy chọn dịch vụ và liên hệ.",
+  };
+
+  for (const [key, expected] of Object.entries({ ...expectedSupport, ...expectedFaq })) {
+    assert.equal(vi[key], expected, key);
+    assert.notEqual(vi[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  assert.equal(`${vi.faqNeedMoreHelpPrefix} ${vi.faqSupportPage} ${vi.faqNeedMoreHelpSuffix}`, "Bạn cần thêm trợ giúp? Hãy truy cập trang hỗ trợ để xem các tùy chọn dịch vụ và liên hệ.");
+  assert.equal(languageOptions.find((o) => o.code === "vi")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
+  assert.ok(getTranslations("vi-VN") === vi && getTranslations("vi-vn") === vi);
+
+  assert.ok(supportDashboardRouteSource.includes("<SupportContent dashboardFlow showFaq={false} />"));
+  assert.ok(supportContentSource.includes('t("supportBeforeContactDashboardDescription")'));
+  assert.ok(supportContentSource.includes('aria-label={t("supportTicketHeading")}'));
+  assert.ok(accountShellSource.includes("<AccountBackLinkRow />"));
+  assert.ok(accountBackLinkSource.includes('t["accountDashboard.hub.title"]'));
+
+  assert.ok(supportFormSource.includes('fetch("/api/support/tickets"'));
+  assert.ok(supportFormSource.includes('email: String(formData.get("email") || "")'));
+  assert.ok(supportFormSource.includes('subject: String(formData.get("subject") || "")'));
+  assert.ok(supportFormSource.includes('category: String(formData.get("category") || "")'));
+  assert.ok(supportFormSource.includes('body: String(formData.get("body") || "")'));
+  assert.ok(supportFormSource.includes('sourceContext: { page: "support_center" }'));
+  assert.ok(supportFormSource.includes('name="category" defaultValue="price-alerts"'));
+  assert.ok(supportFormSource.includes('value="search-help"'));
+  assert.ok(supportFormSource.includes('value="price-alerts"'));
+  assert.ok(supportFormSource.includes('value="redirect"'));
+  assert.ok(supportFormSource.includes('value="account"'));
+  assert.ok(supportFormSource.includes('name="email"') && supportFormSource.includes('name="subject"') && supportFormSource.includes('name="body"'));
+  assert.ok(supportFormSource.includes('required placeholder={t("supportFormMessagePlaceholder")}'));
+  assert.ok(supportFormSource.includes('setStatus(t("supportFormSending"))'));
+
+  assert.ok(faqPageSource.includes('fromParam.includes("account")') && faqPageSource.includes('fromParam === "account"'));
+  assert.ok(faqContentSource.includes('const faqItems = getGeneralFaqs(t)'));
+  assert.ok(faqContentSource.includes('t("faqGeneralQuestions")'));
+  assert.ok(faqContentSource.includes('t("faqNeedMoreHelpPrefix")'));
+  assert.ok(faqContentSource.includes('t("faqSupportPage")'));
+  assert.ok(faqContentSource.includes('t("faqNeedMoreHelpSuffix")'));
+  assert.ok(faqContentSource.includes('href="/dashboard/support"'));
+  assert.ok(faqContentSource.includes("<details") && faqContentSource.includes("faqItems.map"));
+  assert.ok(faqsSource.includes("faqItemKeys") && faqsSource.includes("getGeneralFaqs"));
+  assert.ok(faqsSource.includes('["faqQuestionFindOptions", "faqAnswerFindOptions"]'));
+  assert.ok(faqsSource.includes('["supportFaqWhyRedirectedQuestion", "supportFaqWhyRedirectedAnswer"]'));
+
+  for (const english of [
+    "Include your Kurioticket account email",
+    "General questions",
+    "Need more help? Visit the",
+    "for service and contact options.",
+    "Create a support ticket",
+    "Send Request",
+  ]) {
+    assert.ok(!Object.values(expectedSupport).includes(english));
+    assert.ok(!Object.values(expectedFaq).includes(english));
+  }
+  assert.ok(!supportContentSource.includes("Include your Kurioticket account email"));
+  assert.ok(!supportFormSource.includes("Create a support ticket"));
+  assert.ok(!supportFormSource.includes("Send Request"));
+  assert.ok(!faqContentSource.includes("General questions"));
+  assert.ok(!faqContentSource.includes("Need more help? Visit the"));
+  assert.ok(!faqContentSource.includes("for service and contact options."));
+});
+
 test("Thai language metadata, LTR direction, and English fallback dictionary resolve", () => {
   const thaiOptions = languageOptions.filter((o) => o.code === "th");
   const thaiLocaleMetadata = supportedLocales.filter((o) => o.code === "th");

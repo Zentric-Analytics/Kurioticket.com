@@ -589,6 +589,10 @@ export const translations: TranslationDictionary = {
   faqHeading: "Câu hỏi thường gặp",
   faqIntro:
     "Tìm hiểu cách Kurioticket giúp bạn so sánh chuyến bay, khách sạn và các lựa chọn du lịch trước khi đặt với nhà cung cấp đáng tin cậy.",
+  faqGeneralQuestions: "Câu hỏi chung",
+  faqNeedMoreHelpPrefix: "Bạn cần thêm trợ giúp? Hãy truy cập",
+  faqSupportPage: "trang hỗ trợ",
+  faqNeedMoreHelpSuffix: "để xem các tùy chọn dịch vụ và liên hệ.",
   faqQuestionFindOptions:
     "Kurioticket tìm các lựa chọn chuyến bay và khách sạn như thế nào?",
   faqAnswerFindOptions:
@@ -733,8 +737,10 @@ export const translations: TranslationDictionary = {
   supportBeforeContactHeading: "Trước khi liên hệ với chúng tôi",
   supportBeforeContactDescription:
     "Hãy cung cấp email trên tài khoản Kurioticket của bạn, điều bạn đang cố thực hiện, tuyến đường hoặc khách sạn nếu có liên quan, và trang nhà cung cấp mà bạn được chuyển đến. Vui lòng không gửi đầy đủ số thẻ thanh toán hoặc số giấy tờ du lịch nhạy cảm.",
+  supportBeforeContactDashboardDescription:
+    "Bao gồm email tài khoản Kurioticket của bạn, nội dung bạn cần trợ giúp và mọi chi tiết đặt chỗ hoặc tuyến đường có thể giúp chúng tôi hiểu vấn đề.",
   supportTicketHeading: "Tạo yêu cầu hỗ trợ",
-  supportFormEmailLabel: "Email",
+  supportFormEmailLabel: "Địa chỉ email",
   supportFormSubjectLabel: "Chủ đề",
   supportFormCategoryLabel: "Danh mục",
   supportCategorySearchHelp: "Tìm kiếm và kết quả",
