@@ -19,9 +19,12 @@ export default function CarsResultsLoading() {
         <LocalizedLoadingLabel labelKey="loadingCarRentalResults" className="sr-only" />
         <section className="page-shell pt-6">
           <BrandedLoading
-            variant="compact"
-            className="rounded-3xl border border-[#004BB8]/10 px-5 shadow-[0_18px_55px_-38px_rgba(2,28,43,0.32)] sm:px-6"
-            title="Looking for the best car rental options..."
+            variant="fullscreen"
+            visual="logoPulse"
+            showProgress={false}
+            className="min-h-[32svh] bg-transparent px-5 py-10"
+            contentClassName="max-w-md text-center"
+            title="Looking for the best car rental options"
             description="Checking vehicles, prices, and pickup options..."
           />
         </section>
