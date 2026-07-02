@@ -196,6 +196,10 @@ export const getCarsResultsIntlLocale = (locale: string) => {
     return "th-TH-u-ca-gregory";
   }
 
+  if (normalizedLocale.startsWith("vi")) {
+    return "vi-VN";
+  }
+
   if (normalizedLocale.startsWith("id")) {
     return "id-ID";
   }
@@ -812,7 +816,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                 icon={MapPin}
                 inputRef={pickupInputRef}
                 isCompact={isCompactSearch}
-                label={t("carsResults.pickupLocation")}
+                label={t("carsResults.pickupLocationLabel") || t("carsResults.pickupLocation")}
                 name="pickupLocation"
                 onChange={(nextValue) => {
                   markExpandedSearchInteraction();
@@ -832,7 +836,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                 icon={MapPin}
                 inputRef={dropoffInputRef}
                 isCompact={isCompactSearch}
-                label={t("carsResults.returnLocation")}
+                label={t("carsResults.returnLocationLabel") || t("carsResults.returnLocation")}
                 name="dropoffLocation"
                 onChange={(nextValue) => {
                   markExpandedSearchInteraction();
@@ -1266,7 +1270,7 @@ function SearchDateCell({
           className="h-3.5 w-3.5 text-violet-600"
           aria-hidden="true"
         />
-        {t("carsResults.rentalDates")}
+        {t("carsResults.rentalDatesLabel") || t("carsResults.rentalDates")}
       </div>
       <button
         type="button"
@@ -1452,7 +1456,7 @@ function SearchTimeCell({
     >
       <div className={fieldLabelClass}>
         <Clock3 className="h-3.5 w-3.5 text-violet-600" aria-hidden="true" />
-        {t("carsResults.pickupReturnTime")}
+        {t("carsResults.pickupReturnTimeLabel") || t("carsResults.pickupReturnTime")}
       </div>
       <button
         type="button"
@@ -1545,7 +1549,7 @@ function DriverAgeCell({
     >
       <div className={fieldLabelClass}>
         <Users className="h-3.5 w-3.5 text-violet-600" aria-hidden="true" />
-        {t("carsResults.driverAge")}
+        {t("carsResults.driverAgeLabel") || t("carsResults.driverAge")}
       </div>
       <button
         type="button"
