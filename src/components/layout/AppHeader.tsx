@@ -710,7 +710,7 @@ export function AppHeader({
               <RawImage
                 src="/brand/kurioticket-logo-primary-light-bg.svg"
                 alt="Kurioticket"
-                className="h-7 w-auto md:h-8 lg:h-9"
+                className="h-8 w-auto md:h-9 lg:h-9"
               />
             </Link>
 
