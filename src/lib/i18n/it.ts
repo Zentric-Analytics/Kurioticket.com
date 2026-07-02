@@ -116,7 +116,10 @@ export const translations: TranslationDictionary = {
     "Questo viaggio è stato salvato su questo dispositivo e può essere rimosso in qualsiasi momento.",
   savedTripsPageTitle: "Viaggi salvati",
   savedTripsPageSubtitle:
-    "I tuoi itinerari selezionati e le tratte di tendenza.",
+    "I tuoi itinerari selezionati e le rotte di tendenza.",
+  savedTripsTabsLabel: "Viaggi salvati / Cronologia ricerche",
+  savedTripsTabSaved: "Viaggi salvati",
+  savedTripsTabHistory: "Cronologia ricerche",
   savedTripsClearAllSaved: "Cancella tutti i salvati",
   savedTripsEmptyTitle: "Salva le destinazioni che ami",
   savedTripsEmptyDescription:
@@ -132,7 +135,7 @@ export const translations: TranslationDictionary = {
   savedTripsSearchRoute: "Cerca tratta",
   savedTripsRecentSearchesTitle: "Ricerche recenti",
   savedTripsRecentSearchesSubtitle:
-    "Riprendi da dove hai lasciato e cerca di nuovo con un tocco.",
+    "Riprendi da dove eri rimasto e cerca di nuovo con un clic.",
   savedTripsClearAllRecent: "Cancella tutte le recenti",
   savedTripsNoRecentTitle: "Inizia una ricerca per prendere slancio",
   savedTripsNoRecentDescription:

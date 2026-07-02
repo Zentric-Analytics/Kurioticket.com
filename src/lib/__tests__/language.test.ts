@@ -4880,7 +4880,7 @@ test("Hindi destinations and saved trips screenshot-visible copy resolves withou
   assert.equal(hi["destinations.card.subtitle"], "सुंदर नज़ारे, उड़ानें, होटल और डील्स");
 
   assert.equal(hi.savedTripsPageTitle, "सहेजी गई यात्राएँ");
-  assert.equal(hi.savedTripsPageSubtitle, "आपकी चुनी हुई यात्राएँ और ट्रेंडिंग मार्ग।");
+  assert.equal(hi.savedTripsPageSubtitle, "आपकी चुनी हुई यात्राएँ और लोकप्रिय मार्ग।");
   assert.equal(hi.savedTripsEmptyTitle, "अपने पसंदीदा गंतव्य सहेजें");
   assert.equal(hi.savedTripsExploreDestinations, "गंतव्य देखें");
   assert.equal(hi.savedTripsRecentSearchesTitle, "हाल की खोजें");
@@ -4929,8 +4929,8 @@ test("Turkish destinations and saved trips screenshot-visible copy resolves with
     ["destinations.card.subtitle", "Canlı manzaralar, uçuşlar, oteller ve fırsatlar"],
     ["destinationsImageAltSuffix", "seyahat fotoğrafı"],
     ["destinationsCardAriaLabel", "{destination} için uçuş ara"],
-    ["savedTripsPageTitle", "Kaydedilen geziler"],
-    ["savedTripsPageSubtitle", "Seçtiğiniz rotalar ve öne çıkan güzergâhlar."],
+    ["savedTripsPageTitle", "Kaydedilen seyahatler"],
+    ["savedTripsPageSubtitle", "Seçtiğiniz seyahat planları ve öne çıkan rotalar."],
     ["savedTripsEmptyTitle", "Sevdiğiniz destinasyonları kaydedin"],
     [
       "savedTripsEmptyDescription",
@@ -4940,7 +4940,7 @@ test("Turkish destinations and saved trips screenshot-visible copy resolves with
     ["savedTripsRecentSearchesTitle", "Son aramalar"],
     [
       "savedTripsRecentSearchesSubtitle",
-      "Kaldığınız yerden devam edin ve tek dokunuşla yeniden arayın.",
+      "Kaldığınız yerden devam edin ve tek tıkla yeniden arayın.",
     ],
     ["savedTripsClearAllRecent", "Tüm son aramaları temizle"],
     ["savedTripsTypeFlight", "UÇUŞ"],
@@ -5003,7 +5003,7 @@ test("Polish destinations and saved trips active render-path copy resolves witho
     ["destinationsImageAltSuffix", "zdjęcie podróżnicze"],
     ["destinationsCardAriaLabel", "Szukaj lotów do: {destination}"],
     ["savedTripsPageTitle", "Zapisane podróże"],
-    ["savedTripsPageSubtitle", "Twoje wybrane plany podróży i popularne trasy."],
+    ["savedTripsPageSubtitle", "Wybrane przez Ciebie plany podróży i popularne trasy."],
     ["savedTripsEmptyTitle", "Zapisuj kierunki, które lubisz"],
     [
       "savedTripsEmptyDescription",
@@ -5013,7 +5013,7 @@ test("Polish destinations and saved trips active render-path copy resolves witho
     ["savedTripsRecentSearchesTitle", "Ostatnie wyszukiwania"],
     [
       "savedTripsRecentSearchesSubtitle",
-      "Wróć do miejsca, w którym przerwałeś, i wyszukaj ponownie jednym kliknięciem.",
+      "Wróć do miejsca, w którym przerwano, i wyszukaj ponownie jednym kliknięciem.",
     ],
     ["savedTripsClearAllRecent", "Wyczyść ostatnie"],
     ["savedTripsTypeFlight", "LOT"],
@@ -10968,7 +10968,7 @@ test("Swedish Saved trips page copy resolves through active i18n keys", () => {
   assert.equal(svTranslations.savedTripsPageTitle, "Sparade resor");
   assert.equal(
     svTranslations.savedTripsPageSubtitle,
-    "Dina handplockade resplaner och trendande rutter.",
+    "Dina utvalda resplaner och populära rutter.",
   );
   assert.equal(svTranslations.savedTripsEmptyTitle, "Spara destinationer du gillar");
   assert.equal(
@@ -12753,7 +12753,7 @@ test("Thai Destinations and Saved trips copy resolves through active render path
     savedTripsEmptyDescription: "แตะไอคอนหัวใจบนเส้นทางใดก็ได้เพื่อสร้างรายการโปรดส่วนตัว และทำให้การผจญภัยครั้งต่อไปอยู่ใกล้เพียงคลิกเดียว",
     savedTripsExploreDestinations: "สำรวจจุดหมายปลายทาง",
     savedTripsRecentSearchesTitle: "การค้นหาล่าสุด",
-    savedTripsRecentSearchesSubtitle: "กลับไปต่อจากจุดที่ค้างไว้และค้นหาอีกครั้งได้ในแตะเดียว",
+    savedTripsRecentSearchesSubtitle: "กลับไปต่อจากจุดที่ค้างไว้และค้นหาอีกครั้งได้ในคลิกเดียว",
     savedTripsClearAllRecent: "ล้างรายการล่าสุดทั้งหมด",
     savedTripsTypeFlight: "เที่ยวบิน",
     savedTripsSearchedDate: "ค้นหาเมื่อ {{date}}",
@@ -13352,4 +13352,89 @@ test("Thai My Trips and Price alerts account pages resolve localized copy withou
   assert.ok(alertsSource.includes('rounded-full'));
   assert.equal(languageOptions.find((option) => option.code === "th")?.direction, "ltr");
   assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
+});
+
+const savedSearchHistoryActiveLocaleExpectations = {
+  en: [enTranslations, "Saved Trips", "Search History", "Saved Trips", "Your handpicked itineraries and trending routes.", "Recent searches", "Jump back to where you left off and search again in one click."],
+  ar: [arTranslations, "الرحلات المحفوظة", "سجل البحث", "الرحلات المحفوظة", "مساراتك المختارة والوجهات الرائجة.", "عمليات البحث الأخيرة", "تابع من حيث توقفت وابحث مرة أخرى بنقرة واحدة."],
+  nl: [nlTranslations, "Opgeslagen reizen", "Zoekgeschiedenis", "Opgeslagen reizen", "Je zorgvuldig gekozen routes en populaire trajecten.", "Recente zoekopdrachten", "Ga verder waar je was gebleven en zoek opnieuw met één klik."],
+  es: [esTranslations, "Viajes guardados", "Historial de búsqueda", "Viajes guardados", "Tus itinerarios seleccionados y rutas populares.", "Búsquedas recientes", "Vuelve a donde lo dejaste y busca de nuevo con un solo clic."],
+  fr: [frTranslations, "Voyages enregistrés", "Historique de recherche", "Voyages enregistrés", "Vos itinéraires sélectionnés et les trajets tendance.", "Recherches récentes", "Reprenez là où vous vous étiez arrêté et relancez la recherche en un clic."],
+  de: [deTranslations, "Gespeicherte Reisen", "Suchverlauf", "Gespeicherte Reisen", "Deine ausgewählten Reisepläne und beliebten Routen.", "Letzte Suchen", "Mach dort weiter, wo du aufgehört hast, und suche mit einem Klick erneut."],
+  it: [itTranslations, "Viaggi salvati", "Cronologia ricerche", "Viaggi salvati", "I tuoi itinerari selezionati e le rotte di tendenza.", "Ricerche recenti", "Riprendi da dove eri rimasto e cerca di nuovo con un clic."],
+  "pt-br": [ptBrTranslations, "Viagens salvas", "Histórico de pesquisa", "Viagens salvas", "Seus itinerários escolhidos e rotas em destaque.", "Pesquisas recentes", "Volte de onde parou e pesquise novamente com um clique."],
+  "zh-cn": [zhCnTranslations, "已保存行程", "搜索历史", "已保存行程", "你精选的行程和热门路线。", "最近搜索", "从上次停下的地方继续，一键再次搜索。"],
+  ja: [jaTranslations, "保存した旅行", "検索履歴", "保存した旅行", "選択した旅程と注目のルートです。", "最近の検索", "前回の続きから、ワンクリックでもう一度検索できます。"],
+  ko: [koTranslations, "저장한 여행", "검색 기록", "저장한 여행", "직접 선택한 일정과 인기 경로입니다.", "최근 검색", "중단한 지점으로 돌아가 한 번의 클릭으로 다시 검색하세요."],
+  hi: [hiTranslations, "सहेजी गई यात्राएँ", "खोज इतिहास", "सहेजी गई यात्राएँ", "आपकी चुनी हुई यात्राएँ और लोकप्रिय मार्ग।", "हाल की खोजें", "जहाँ छोड़ा था वहीं से जारी रखें और एक क्लिक में फिर से खोजें।"],
+  tr: [trTranslations, "Kaydedilen seyahatler", "Arama geçmişi", "Kaydedilen seyahatler", "Seçtiğiniz seyahat planları ve öne çıkan rotalar.", "Son aramalar", "Kaldığınız yerden devam edin ve tek tıkla yeniden arayın."],
+  pl: [plTranslations, "Zapisane podróże", "Historia wyszukiwania", "Zapisane podróże", "Wybrane przez Ciebie plany podróży i popularne trasy.", "Ostatnie wyszukiwania", "Wróć do miejsca, w którym przerwano, i wyszukaj ponownie jednym kliknięciem."],
+  sv: [svTranslations, "Sparade resor", "Sökhistorik", "Sparade resor", "Dina utvalda resplaner och populära rutter.", "Senaste sökningar", "Fortsätt där du slutade och sök igen med ett klick."],
+  id: [idTranslations, "Perjalanan tersimpan", "Riwayat pencarian", "Perjalanan tersimpan", "Rencana perjalanan pilihan Anda dan rute yang sedang tren.", "Pencarian terbaru", "Lanjutkan dari tempat terakhir Anda dan cari lagi dengan sekali klik."],
+  th: [thTranslations, "ทริปที่บันทึกไว้", "ประวัติการค้นหา", "ทริปที่บันทึกไว้", "แผนการเดินทางที่คุณเลือกไว้และเส้นทางยอดนิยม", "การค้นหาล่าสุด", "กลับไปต่อจากจุดที่ค้างไว้และค้นหาอีกครั้งได้ในคลิกเดียว"],
+} as const;
+
+test("Saved Trips and Search History segmented copy resolves for all active locales", () => {
+  for (const [locale, [dictionary, savedTab, historyTab, sectionTitle, sectionSubtitle, recentTitle, recentSubtitle]] of Object.entries(savedSearchHistoryActiveLocaleExpectations)) {
+    assert.equal(dictionary.savedTripsTabSaved, savedTab, `${locale} saved tab`);
+    assert.equal(dictionary.savedTripsTabHistory, historyTab, `${locale} history tab`);
+    assert.equal(dictionary.savedTripsPageTitle, sectionTitle, `${locale} saved section heading`);
+    assert.equal(dictionary.savedTripsPageSubtitle, sectionSubtitle, `${locale} saved section subtitle`);
+    assert.equal(dictionary.savedTripsRecentSearchesTitle, recentTitle, `${locale} recent section heading`);
+    assert.equal(dictionary.savedTripsRecentSearchesSubtitle, recentSubtitle, `${locale} recent section subtitle`);
+  }
+
+  assert.notEqual(thTranslations.savedTripsTabSaved, "Saved Trips");
+  assert.notEqual(thTranslations.savedTripsTabHistory, "Search History");
+});
+
+test("active saved render path keeps saved/search-history copy on i18n without operational changes", () => {
+  const savedPageSource = readFileSync("src/app/saved/page.tsx", "utf8");
+  const dashboardSavedPageSource = readFileSync("src/app/dashboard/saved/page.tsx", "utf8");
+  const savedComponentSource = readFileSync("src/components/saved/SavedTripsAndRecentSearches.tsx", "utf8");
+  const savedTripsLocalSource = readFileSync("src/lib/saved-trips-local.ts", "utf8");
+  const recentSearchesSource = readFileSync("src/lib/recent-searches.ts", "utf8");
+
+  assert.ok(savedPageSource.includes("<SavedTripsAndRecentSearches />"));
+  assert.ok(dashboardSavedPageSource.includes('redirect("/saved")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsPageTitle")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsPageSubtitle")'));
+  assert.ok(!savedComponentSource.includes(">Saved Trips<"));
+  assert.ok(!savedComponentSource.includes(">Search History<"));
+  assert.ok(savedComponentSource.includes("readSavedTripIds"));
+  assert.ok(savedComponentSource.includes("writeSavedTripIds"));
+  assert.ok(savedComponentSource.includes('t("savedTripsClearAllSaved")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsClearAllRecent")') || enTranslations.savedTripsClearAllRecent === "Clear all search history");
+  assert.ok(savedComponentSource.includes('t("savedTripsRepeatSearch")') || enTranslations.savedTripsRepeatSearch === "Repeat search");
+  assert.ok(savedComponentSource.includes('aria-label={t("savedTripsRemoveSavedTrip")}' ));
+  assert.ok(savedTripsLocalSource.includes("kurioticket_saved_trips_v1"));
+  assert.ok(recentSearchesSource.includes("kurioticket_recent_searches_v1"));
+});
+
+test("all active locales keep expected direction metadata for saved trips localization", () => {
+  const optionCodesByLocale: Record<string, string> = {
+    en: "en-us",
+    es: "es-es",
+    de: "de-de",
+    it: "it-it",
+    "pt-br": "pt-br",
+    fr: "fr",
+    nl: "nl",
+    ar: "ar",
+    "zh-cn": "zh-cn",
+    ja: "ja",
+    ko: "ko",
+    hi: "hi",
+    tr: "tr",
+    pl: "pl",
+    sv: "sv",
+    id: "id",
+    th: "th",
+  };
+
+  for (const locale of Object.keys(savedSearchHistoryActiveLocaleExpectations)) {
+    const option = languageOptions.find((entry) => entry.code === optionCodesByLocale[locale]);
+    assert.ok(option, `${locale} option exists`);
+    assert.equal(option.direction, locale === "ar" ? "rtl" : "ltr", `${locale} direction`);
+  }
 });

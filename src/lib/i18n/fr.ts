@@ -537,7 +537,10 @@ export const translations: TranslationDictionary = {
     "Ce voyage a été enregistré sur cet appareil et peut toujours être supprimé à tout moment.",
   savedTripsPageTitle: "Voyages enregistrés",
   savedTripsPageSubtitle:
-    "Vos itinéraires sélectionnés et itinéraires tendance.",
+    "Vos itinéraires sélectionnés et les trajets tendance.",
+  savedTripsTabsLabel: "Voyages enregistrés / Historique de recherche",
+  savedTripsTabSaved: "Voyages enregistrés",
+  savedTripsTabHistory: "Historique de recherche",
   savedTripsClearAllSaved: "Effacer les voyages enregistrés",
   savedTripsEmptyTitle: "Enregistrez les destinations que vous aimez",
   savedTripsEmptyDescription:
@@ -553,7 +556,7 @@ export const translations: TranslationDictionary = {
   savedTripsSearchRoute: "Rechercher l’itinéraire",
   savedTripsRecentSearchesTitle: "Recherches récentes",
   savedTripsRecentSearchesSubtitle:
-    "Reprenez là où vous vous étiez arrêté et relancez votre recherche en un clic.",
+    "Reprenez là où vous vous étiez arrêté et relancez la recherche en un clic.",
   savedTripsClearAllRecent: "Effacer les recherches récentes",
   savedTripsNoRecentTitle: "Lancez une recherche pour garder l’élan",
   savedTripsNoRecentDescription:

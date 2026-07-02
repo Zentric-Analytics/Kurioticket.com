@@ -887,7 +887,10 @@ export const translations: TranslationDictionary = {
   savedTripFallbackNote:
     "Diese Reise wurde auf diesem Gerät gespeichert und kann jederzeit entfernt werden.",
   savedTripsPageTitle: "Gespeicherte Reisen",
-  savedTripsPageSubtitle: "Ihre ausgewählten Reisepläne und beliebten Routen.",
+  savedTripsPageSubtitle: "Deine ausgewählten Reisepläne und beliebten Routen.",
+  savedTripsTabsLabel: "Gespeicherte Reisen / Suchverlauf",
+  savedTripsTabSaved: "Gespeicherte Reisen",
+  savedTripsTabHistory: "Suchverlauf",
   savedTripsClearAllSaved: "Alle gespeicherten Reisen löschen",
   savedTripsEmptyTitle: "Speichern Sie Reiseziele, die Ihnen gefallen",
   savedTripsEmptyDescription:
@@ -903,7 +906,7 @@ export const translations: TranslationDictionary = {
   savedTripsSearchRoute: "Route suchen",
   savedTripsRecentSearchesTitle: "Letzte Suchen",
   savedTripsRecentSearchesSubtitle:
-    "Machen Sie dort weiter, wo Sie aufgehört haben, und suchen Sie mit einem Klick erneut.",
+    "Mach dort weiter, wo du aufgehört hast, und suche mit einem Klick erneut.",
   savedTripsClearAllRecent: "Alle letzten Suchen löschen",
   savedTripsNoRecentTitle: "Noch keine letzten Suchen",
   savedTripsNoRecentDescription:

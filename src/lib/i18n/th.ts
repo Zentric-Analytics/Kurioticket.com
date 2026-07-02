@@ -1415,6 +1415,9 @@ export const translations: TranslationDictionary = {
     "ทริปนี้ถูกบันทึกไว้บนอุปกรณ์นี้และยังสามารถลบออกได้ทุกเมื่อ",
   savedTripsPageTitle: "ทริปที่บันทึกไว้",
   savedTripsPageSubtitle: "แผนการเดินทางที่คุณเลือกไว้และเส้นทางยอดนิยม",
+  savedTripsTabsLabel: "ทริปที่บันทึกไว้ / ประวัติการค้นหา",
+  savedTripsTabSaved: "ทริปที่บันทึกไว้",
+  savedTripsTabHistory: "ประวัติการค้นหา",
   savedTripsClearAllSaved: "ล้างรายการที่บันทึกไว้ทั้งหมด",
   savedTripsEmptyTitle: "บันทึกจุดหมายปลายทางที่คุณชื่นชอบ",
   savedTripsEmptyDescription:
@@ -1430,7 +1433,7 @@ export const translations: TranslationDictionary = {
   savedTripsSearchRoute: "ค้นหาเส้นทาง",
   savedTripsRecentSearchesTitle: "การค้นหาล่าสุด",
   savedTripsRecentSearchesSubtitle:
-    "กลับไปต่อจากจุดที่ค้างไว้และค้นหาอีกครั้งได้ในแตะเดียว",
+    "กลับไปต่อจากจุดที่ค้างไว้และค้นหาอีกครั้งได้ในคลิกเดียว",
   savedTripsClearAllRecent: "ล้างรายการล่าสุดทั้งหมด",
   savedTripsNoRecentTitle: "เริ่มค้นหาเพื่อวางแผนต่อ",
   savedTripsNoRecentDescription:

@@ -900,7 +900,10 @@ export const translations: TranslationDictionary = {
     "대서양 해변과 현지 시장을 즐기는 서아프리카 도시 여행입니다.",
 
   savedTripsPageTitle: "저장한 여행",
-  savedTripsPageSubtitle: "직접 고른 일정과 인기 노선을 모아보세요.",
+  savedTripsPageSubtitle: "직접 선택한 일정과 인기 경로입니다.",
+  savedTripsTabsLabel: "저장한 여행 / 검색 기록",
+  savedTripsTabSaved: "저장한 여행",
+  savedTripsTabHistory: "검색 기록",
   savedTripsClearAllSaved: "저장 항목 모두 지우기",
   savedTripsEmptyTitle: "마음에 드는 목적지를 저장하세요",
   savedTripsEmptyDescription:
@@ -916,7 +919,7 @@ export const translations: TranslationDictionary = {
   savedTripsSearchRoute: "노선 검색",
   savedTripsRecentSearchesTitle: "최근 검색",
   savedTripsRecentSearchesSubtitle:
-    "이전에 보던 곳에서 이어서 한 번의 탭으로 다시 검색하세요.",
+    "중단한 지점으로 돌아가 한 번의 클릭으로 다시 검색하세요.",
   savedTripsClearAllRecent: "최근 항목 모두 지우기",
   savedTripsNoRecentTitle: "검색을 시작해 흐름을 이어가세요",
   savedTripsNoRecentDescription:
