@@ -86,6 +86,16 @@ textarea {
   margin: 0 auto;
 }
 
+.saved-account-shell-mobile {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .saved-account-shell-mobile {
+    width: min(1180px, calc(100% - 32px));
+  }
+}
+
 .focus-ring {
   outline: none;
 }
