@@ -872,6 +872,9 @@ export const translations: TranslationDictionary = {
   savedTripFallbackNote: "This trip was saved on this device and can still be removed anytime.",
   savedTripsPageTitle: "Saved trips",
   savedTripsPageSubtitle: "Your handpicked itineraries and trending routes.",
+  savedTripsTabsLabel: "Saved trips and search history",
+  savedTripsTabSaved: "Saved Trips",
+  savedTripsTabHistory: "Search History",
   savedTripsClearAllSaved: "Clear all saved",
   savedTripsEmptyTitle: "Save destinations you love",
   savedTripsEmptyDescription:
@@ -885,13 +888,13 @@ export const translations: TranslationDictionary = {
   savedTripsCompareCurrentOptions: "Compare current options",
   savedTripsViewFare: "View fare",
   savedTripsSearchRoute: "Search route",
-  savedTripsRecentSearchesTitle: "Recent searches",
+  savedTripsRecentSearchesTitle: "Search History",
   savedTripsRecentSearchesSubtitle:
     "Pick up where you left off and search again in one tap.",
-  savedTripsClearAllRecent: "Clear all recent",
-  savedTripsNoRecentTitle: "Start a search to build momentum",
+  savedTripsClearAllRecent: "Clear all search history",
+  savedTripsNoRecentTitle: "No search history yet",
   savedTripsNoRecentDescription:
-    "We'll keep your latest routes and stays here so planning feels faster every time you return.",
+    "Your recent flight and hotel searches will appear here after you search.",
   savedTripsSearchNewTrips: "Search new trips",
   savedTripsRemoveRecentSearch: "Remove recent search",
   savedTripsFlightSearchFallback: "Flight search",
