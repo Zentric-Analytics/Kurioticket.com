@@ -125,6 +125,127 @@ test("Vietnamese language metadata, LTR direction, and English fallback dictiona
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
 });
 
+
+test("Vietnamese Destinations and Saved Trips copy resolves through active i18n render paths", () => {
+  const destinationsPageSource = readFileSync("src/app/destinations/page.tsx", "utf8");
+  const destinationCardSource = readFileSync("src/app/destinations/DestinationCard.tsx", "utf8");
+  const savedPageSource = readFileSync("src/app/saved/page.tsx", "utf8");
+  const dashboardSavedPageSource = readFileSync("src/app/dashboard/saved/page.tsx", "utf8");
+  const savedComponentSource = readFileSync("src/components/saved/SavedTripsAndRecentSearches.tsx", "utf8");
+  const savedTripsLocalSource = readFileSync("src/lib/saved-trips-local.ts", "utf8");
+  const recentSearchesSource = readFileSync("src/lib/recent-searches.ts", "utf8");
+  const vi = viTranslations as Record<string, string>;
+  const en = enTranslations as Record<string, string>;
+
+  assert.ok(destinationsPageSource.includes("const { t: dictionary } = useLocale();"));
+  assert.ok(destinationsPageSource.includes("dictionary.destinationsHeroBadge"));
+  assert.ok(destinationsPageSource.includes("regionLabelKeys[section.region]"));
+  assert.ok(destinationsPageSource.includes("dictionary[section.summaryKey]"));
+  assert.ok(destinationsPageSource.includes("dictionary[destination.tagKey]"));
+  assert.ok(destinationsPageSource.includes("dictionary[destinationSubtitleKey]"));
+  assert.ok(destinationsPageSource.includes("dictionary.destinationsCardAriaLabel.replace"));
+  assert.ok(destinationCardSource.includes("aria-label={ariaLabel}"));
+
+  const expectedDestinationsCopy: Record<string, string> = {
+    destinationsHeroBadge: "KHÁM PHÁ ĐIỂM ĐẾN",
+    destinationsHeroTitle: "Bạn muốn đi đâu tiếp theo?",
+    destinationsHeroSubtitle: "Khám phá những góc nhìn thành phố được chọn lọc, so sánh chuyến bay và tìm ưu đãi du lịch chỉ trong vài phút.",
+    destinationsCardAriaLabel: "Tìm chuyến bay đến {destination}",
+    destinationsImageAltSuffix: "ảnh du lịch",
+    "destinations.region.europe": "Châu Âu",
+    "destinations.region.northAmerica": "Bắc Mỹ",
+    "destinations.region.asia": "Châu Á",
+    "destinations.region.africa": "Châu Phi",
+    "destinations.region.middleEast": "Trung Đông",
+    "destinations.region.europe.summary": "Tuyển chọn các thành phố biểu tượng, kênh đào lãng mạn, thủ đô thiết kế và những cuối tuần ẩm thực-văn hóa vượt thời gian.",
+    "destinations.region.northAmerica.summary": "Đường chân trời ấn tượng, biểu tượng ven biển, thủ phủ giải trí và những chuyến nghỉ đô thị giàu chất điện ảnh đáng để lên kế hoạch.",
+    "destinations.region.asia.summary": "Cảnh quan đô thị neon, đảo nghỉ dưỡng, thiên đường ẩm thực đường phố, đền chùa, bãi biển và cửa ngõ mua sắm cao cấp.",
+    "destinations.region.africa.summary": "Những điểm đến nổi bật với cảnh biển, cơ hội safari, thủ đô sáng tạo và chiều sâu văn hóa phong phú.",
+    "destinations.region.middleEast.summary": "Đường chân trời sang trọng, bờ biển ấm áp, cảnh quan sa mạc ấn tượng, khu di sản và trung tâm lưu trú hiện đại.",
+    "destinations.card.subtitle": "Khung cảnh rực rỡ, chuyến bay, khách sạn và ưu đãi",
+    "destinations.tag.iconicSkyline": "Đường chân trời biểu tượng",
+    "destinations.tag.landmarkEscape": "Chuyến đi biểu tượng",
+    "destinations.tag.cultureCapital": "Thủ đô văn hóa",
+    "destinations.tag.goldenHourViews": "Khung cảnh giờ vàng",
+    "destinations.tag.coastalEnergy": "Năng lượng ven biển",
+    "destinations.tag.foodMarketNights": "Đêm chợ ẩm thực",
+    "destinations.tag.historicStreets": "Phố cổ lịch sử",
+    "destinations.tag.designWeekend": "Cuối tuần thiết kế",
+    "destinations.country.unitedKingdom": "Vương quốc Anh",
+    "destinations.country.unitedStates": "Hoa Kỳ",
+    "destinations.country.unitedArabEmirates": "Các Tiểu vương quốc Ả Rập Thống nhất",
+    "destinations.country.saudiArabia": "Ả Rập Xê Út",
+  };
+
+  for (const [key, expected] of Object.entries(expectedDestinationsCopy)) {
+    assert.equal(vi[key], expected, `${key} should resolve Vietnamese copy`);
+    assert.notEqual(vi[key], en[key], `${key} must not fall back to English for Vietnamese`);
+  }
+
+  assert.ok(savedPageSource.includes("<SavedTripsAndRecentSearches />"));
+  assert.ok(dashboardSavedPageSource.includes('redirect("/saved")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsPageTitle")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsPageSubtitle")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsEmptyTitle")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsEmptyDescription")'));
+  assert.ok(savedComponentSource.includes('t("savedTripsExploreDestinations")'));
+  assert.ok(savedComponentSource.includes('aria-label={t("savedTripsRemoveSavedTrip")}'));
+
+  const expectedSavedCopy: Record<string, string> = {
+    savedTripsPageTitle: "Chuyến đi đã lưu",
+    savedTripsPageSubtitle: "Hành trình bạn chọn lọc và các tuyến đường đang thịnh hành.",
+    savedTripsTabsLabel: "Chuyến đi đã lưu / Lịch sử tìm kiếm",
+    savedTripsTabSaved: "Chuyến đi đã lưu",
+    savedTripsTabHistory: "Lịch sử tìm kiếm",
+    savedTripsEmptyTitle: "Lưu những điểm đến bạn yêu thích",
+    savedTripsEmptyDescription: "Nhấn biểu tượng trái tim trên bất kỳ tuyến đường nào để tạo danh sách yêu thích cá nhân và giữ chuyến phiêu lưu tiếp theo chỉ cách một cú nhấp.",
+    savedTripsExploreDestinations: "Khám phá điểm đến",
+    savedTripsRemoveSavedTrip: "Xóa chuyến đi đã lưu",
+    savedTripsRecentSearchesTitle: "Tìm kiếm gần đây",
+    savedTripsRecentSearchesSubtitle: "Quay lại nơi bạn đã dừng và tìm kiếm lại chỉ với một cú nhấp.",
+    savedTripsClearAllRecent: "Xóa tất cả tìm kiếm gần đây",
+    savedTripsNoRecentTitle: "Chưa có tìm kiếm gần đây",
+    savedTripsNoRecentDescription: "Các tìm kiếm gần đây của bạn sẽ xuất hiện tại đây.",
+    savedTripsRepeatSearch: "Tìm kiếm lại",
+  };
+
+  for (const [key, expected] of Object.entries(expectedSavedCopy)) {
+    assert.equal(vi[key], expected, `${key} should resolve Vietnamese copy`);
+    assert.notEqual(vi[key], en[key], `${key} must not fall back to English for Vietnamese`);
+  }
+
+  const screenshotEnglishStrings = [
+    "DESTINATION DISCOVERY",
+    "Where do you want to go next?",
+    "Browse brighter, hand-picked city views, compare flights, and find travel deals in minutes.",
+    "Bright views, flights, hotels, and deals",
+    "North America",
+    "Middle East",
+    "Saved Trips",
+    "Your handpicked itineraries and trending routes.",
+    "Save destinations you love",
+    "Tap the heart icon on any route to build your personal shortlist and keep your next adventure one click away.",
+    "Explore destinations",
+    "Search History",
+    "Recent searches",
+  ];
+  for (const value of screenshotEnglishStrings) {
+    assert.ok(!Object.values(expectedDestinationsCopy).includes(value));
+    assert.ok(!Object.values(expectedSavedCopy).includes(value));
+  }
+
+  assert.ok(destinationsPageSource.includes("return `/flights?destination=${encodeURIComponent(destination.name)}`;"));
+  assert.ok(destinationsPageSource.includes("key={`${destination.region}-${destination.name}`}"));
+  assert.ok(destinationsPageSource.includes("image={destination.image}"));
+  assert.ok(savedTripsLocalSource.includes("kurioticket_saved_trips_v1"));
+  assert.ok(recentSearchesSource.includes("kurioticket_recent_searches_v1"));
+  assert.equal(vi.destinationsCardAriaLabel.includes("{destination}"), true);
+  assert.equal(languageOptions.find((o) => o.code === "vi")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
+});
+
 test("Vietnamese About and How Kurioticket Works page copy resolves without English fallback", () => {
   const vi = getTranslations("vi");
   const aboutPageSource = readFileSync("src/components/about/AboutPageContent.tsx", "utf8");
@@ -13581,6 +13702,7 @@ const savedSearchHistoryActiveLocaleExpectations = {
   sv: [svTranslations, "Sparade resor", "Sökhistorik", "Sparade resor", "Dina utvalda resplaner och populära rutter.", "Senaste sökningar", "Fortsätt där du slutade och sök igen med ett klick."],
   id: [idTranslations, "Perjalanan tersimpan", "Riwayat pencarian", "Perjalanan tersimpan", "Rencana perjalanan pilihan Anda dan rute yang sedang tren.", "Pencarian terbaru", "Lanjutkan dari tempat terakhir Anda dan cari lagi dengan sekali klik."],
   th: [thTranslations, "ทริปที่บันทึกไว้", "ประวัติการค้นหา", "ทริปที่บันทึกไว้", "แผนการเดินทางที่คุณเลือกไว้และเส้นทางยอดนิยม", "การค้นหาล่าสุด", "กลับไปต่อจากจุดที่ค้างไว้และค้นหาอีกครั้งได้ในคลิกเดียว"],
+  vi: [viTranslations, "Chuyến đi đã lưu", "Lịch sử tìm kiếm", "Chuyến đi đã lưu", "Hành trình bạn chọn lọc và các tuyến đường đang thịnh hành.", "Tìm kiếm gần đây", "Quay lại nơi bạn đã dừng và tìm kiếm lại chỉ với một cú nhấp."],
 } as const;
 
 test("Saved Trips and Search History segmented copy resolves for all active locales", () => {
@@ -13639,6 +13761,7 @@ test("all active locales keep expected direction metadata for saved trips locali
     sv: "sv",
     id: "id",
     th: "th",
+    vi: "vi",
   };
 
   for (const locale of Object.keys(savedSearchHistoryActiveLocaleExpectations)) {
