@@ -48,6 +48,8 @@ import {
 import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
 import { legalDocuments } from "@/data/legalDocuments";
 import { getGeneralFaqs } from "@/content/faqs";
+import { carsFaqItems, pickupCards, tripStyleCards } from "@/data/carsLandingContent";
+import { buildCarResultsHref, buildPickupHref, defaultDriverAge, timeOptions } from "@/lib/cars/carsSearchUtils";
 
 type StorageLike = { getItem: (k: string) => string | null; setItem: (k: string, v: string) => void };
 type WindowLike = { localStorage: StorageLike; dispatchEvent: (event: Event) => boolean };
@@ -123,6 +125,123 @@ test("Vietnamese language metadata, LTR direction, and English fallback dictiona
   assert.equal(languageOptions.find((o) => o.code === "id")?.status, "available");
   assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+});
+
+
+
+test("Vietnamese Cars landing copy resolves through active i18n render paths", () => {
+  const carsPageSource = readFileSync("src/app/cars/page.tsx", "utf8");
+  const carsLandingContentSource = readFileSync("src/data/carsLandingContent.ts", "utf8");
+  const vi = viTranslations as Record<string, string>;
+  const en = enTranslations as Record<string, string>;
+
+  assert.ok(carsPageSource.includes('t("searchRentalCarsEveryPartTrip")'));
+  assert.ok(carsPageSource.includes('t("carsSearch.pickupLocationLabel")'));
+  assert.ok(carsPageSource.includes('t("carsSearch.chooseRentalDates")'));
+  assert.ok(carsPageSource.includes('dictionary[`${key}.title`]'));
+  assert.ok(carsPageSource.includes('dictionary[item.questionKey]'));
+  assert.ok(carsPageSource.includes('dictionary[item.answerKey]'));
+  assert.ok(!carsPageSource.includes("Search rental cars for every part of your trip"));
+  assert.ok(!carsPageSource.includes("Explore rental cars by trip style"));
+  assert.ok(!carsPageSource.includes("Start with popular car pickup points"));
+  assert.ok(!carsPageSource.includes("Cars Frequently asked questions"));
+
+  const expected: Record<string, string> = {
+    searchRentalCarsEveryPartTrip: "Tìm xe thuê cho mọi chặng trong chuyến đi của bạn",
+    "carsSearch.pickupLocationLabel": "ĐỊA ĐIỂM NHẬN XE",
+    "carsSearch.pickupLocationPlaceholder": "Sân bay, thành phố hoặc địa chỉ",
+    "carsSearch.returnToSameLocation": "Trả xe tại cùng địa điểm",
+    "carsSearch.differentReturnLocation": "Địa điểm trả xe khác",
+    "carsSearch.rentalDatesLabel": "NGÀY THUÊ XE",
+    "carsSearch.rentalDatePlaceholder": "Ngày nhận xe — Ngày trả xe",
+    "carsSearch.pickupReturnTimeLabel": "GIỜ NHẬN / TRẢ XE",
+    "carsSearch.pickupReturnTimeSummary": "{pickupTime} nhận xe — {returnTime} trả xe",
+    "carsSearch.driverAgeLabel": "TUỔI TÀI XẾ",
+    "carsSearch.driverAgeAnyAge": "Mọi độ tuổi",
+    "carsSearch.chooseRentalDates": "Chọn ngày thuê xe",
+    "carsSearch.previousMonthShort": "Trước",
+    "carsSearch.nextMonthShort": "Tiếp",
+    clear: "Xóa",
+    done: "Xong",
+    exploreCarsByTripStyle: "Khám phá xe thuê theo phong cách chuyến đi",
+    carsTripStyleBody: "Chọn loại xe và chúng tôi sẽ mở kết quả với thông tin tìm kiếm đã sẵn sàng.",
+    "carsTripStyle.economy.title": "Xe phổ thông",
+    "carsTripStyle.economy.subtitle": "Tìm kiếm tiết kiệm cho thành phố và chuyến đi một mình",
+    "carsTripStyle.economy.cta": "Bắt đầu tìm xe phổ thông",
+    "carsTripStyle.suv.title": "SUV",
+    "carsTripStyle.suv.subtitle": "Không gian cho chuyến đi gia đình, hành lý và hành trình dài hơn",
+    "carsTripStyle.suv.cta": "Mở tìm kiếm thuê SUV",
+    "carsTripStyle.luxury.title": "Xe sang",
+    "carsTripStyle.luxury.subtitle": "Ngữ cảnh tìm kiếm cao cấp cho công tác hoặc chuyến đi đặc biệt",
+    "carsTripStyle.luxury.cta": "Lên kế hoạch tìm xe sang",
+    "carsTripStyle.van.title": "Xe van",
+    "carsTripStyle.van.subtitle": "Ngữ cảnh tìm kiếm cho du lịch nhóm và hành lý gia đình",
+    "carsTripStyle.van.cta": "Tìm xe van cho chuyến đi nhóm",
+    "carsTrust.0.title": "Được xây dựng cho chuyến đi trọn vẹn",
+    "carsTrust.0.description": "Lập kế hoạch chuyến bay, chỗ nghỉ và di chuyển mặt đất trong một quy trình Kurioticket.",
+    "carsTrust.1.title": "Ưu tiên chi tiết nhận xe",
+    "carsTrust.1.description": "Nhập địa điểm nhận xe, ngày, giờ và tuổi tài xế để tìm kiếm xe thuê bắt đầu với đúng chi tiết chuyến đi.",
+    "carsTrust.2.title": "Xem xét thuê xe rõ ràng",
+    "carsTrust.2.description": "Xem lại giá cuối cùng, tình trạng còn xe, phí và quy định thuê xe với nhà cung cấp trước khi đặt.",
+    carsPickupPointsTitle: "Bắt đầu với các điểm nhận xe phổ biến",
+    carsPickupPointsBody: "Chọn kiểu nhận xe và chúng tôi sẽ mở trang kết quả ô tô với chi tiết tìm kiếm đã sẵn sàng.",
+    "carsPickup.Airport.title": "Nhận xe tại sân bay",
+    "carsPickup.Airport.subtitle": "Bắt đầu từ các điểm đến của sân bay lớn",
+    "carsPickup.City center.title": "Nhận xe ở trung tâm thành phố",
+    "carsPickup.City center.subtitle": "Nhận xe gần khách sạn trung tâm và khu thương mại",
+    "carsPickup.Train station.title": "Nhận xe tại ga tàu",
+    "carsPickup.Train station.subtitle": "Tiếp tục chuyến đi sau khi đến bằng tàu",
+    "carsPickup.Hotel area.title": "Nhận xe gần khu khách sạn",
+    "carsPickup.Hotel area.subtitle": "Lên kế hoạch nhận xe gần nơi bạn lưu trú",
+    "carsFaq.heading": "Câu hỏi thường gặp về ô tô",
+    "carsFaq.0.question": "Tôi cần thông tin gì để tìm xe thuê?",
+    "carsFaq.0.answer": "Bạn thường cần địa điểm nhận và trả xe, ngày thuê, giờ nhận và trả xe, tuổi tài xế và mọi yêu cầu của nhà cung cấp được hiển thị trước khi đặt.",
+    "carsFaq.1.question": "Tôi có thể trả xe ở địa điểm khác không?",
+    "carsFaq.1.answer": "Một số nhà cung cấp cho phép trả xe ở địa điểm khác. Tình trạng còn xe, phí và quy định sẽ được nhà cung cấp xác nhận trước khi đặt.",
+    "carsFaq.2.question": "Vì sao tuổi tài xế quan trọng khi thuê xe?",
+    "carsFaq.2.answer": "Tuổi tài xế có thể ảnh hưởng đến điều kiện thuê, phí, lựa chọn bảo hiểm và loại xe có sẵn. Hãy xem quy định của nhà cung cấp trước khi đặt.",
+    "carsFaq.3.question": "Tôi nên kiểm tra gì trước khi đặt xe thuê?",
+    "carsFaq.3.answer": "Hãy xem giá cuối cùng, quy định số km, chính sách nhiên liệu, tiền đặt cọc, lựa chọn bảo hiểm, yêu cầu nhận xe và điều khoản hủy trên trang nhà cung cấp.",
+    "carsFaq.4.question": "Giá thuê xe cuối cùng được xác nhận ở đâu?",
+    "carsFaq.4.answer": "Giá thuê xe cuối cùng được xác nhận trên trang nhà cung cấp trước khi bạn hoàn tất đặt xe hoặc thanh toán.",
+    "carsFaq.5.question": "Tôi có thể cần giấy tờ gì khi nhận xe?",
+    "carsFaq.5.answer": "Bạn có thể cần giấy phép lái xe hợp lệ, thẻ thanh toán, xác nhận đặt xe, hộ chiếu hoặc giấy tờ tùy thân và mọi giấy tờ do nhà cung cấp thuê xe hoặc quy định địa phương yêu cầu.",
+  };
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(vi[key], value, `${key} should resolve in Vietnamese`);
+    assert.notEqual(vi[key], en[key], `${key} should not fall back to English`);
+  }
+
+  assert.equal(vi.search, "Tìm kiếm");
+  assert.equal(vi["carsSearch.pickupReturnTimeSummary"].replace("{pickupTime}", "10:00").replace("{returnTime}", "10:00"), "10:00 nhận xe — 10:00 trả xe");
+  assert.deepEqual(tripStyleCards.map((card) => card.translationKey), ["carsTripStyle.economy", "carsTripStyle.suv", "carsTripStyle.luxury", "carsTripStyle.van"]);
+  assert.deepEqual(tripStyleCards.map((card) => card.vehicleType), ["economy", "suv", "luxury", "van"]);
+  assert.deepEqual(pickupCards.map((card) => card.translationKey), ["carsPickup.Airport", "carsPickup.City center", "carsPickup.Train station", "carsPickup.Hotel area"]);
+  assert.deepEqual(carsFaqItems.map((item) => item.id), ["search-information", "different-return-location", "driver-age", "before-booking", "final-price", "pickup-documents"]);
+  assert.ok(tripStyleCards.every((card) => card.image.startsWith("https://images.unsplash.com/")));
+  assert.ok(pickupCards.every((card) => card.image.startsWith("https://images.unsplash.com/")));
+  const suvHref = buildCarResultsHref({ pickupLocation: "Airport", vehicleType: "suv" });
+  assert.ok(suvHref.startsWith("/cars/results?"));
+  assert.ok(suvHref.includes("pickupLocation=Airport"));
+  assert.ok(suvHref.includes("pickupTime=10%3A00"));
+  assert.ok(suvHref.includes("dropoffTime=10%3A00"));
+  assert.ok(suvHref.includes("driverAge=18-70"));
+  assert.ok(suvHref.includes("dropoffLocation=Airport"));
+  assert.ok(suvHref.includes("vehicleType=suv"));
+  const cityHref = buildPickupHref("City center");
+  assert.ok(cityHref.includes("pickupLocation=City+center"));
+  assert.ok(cityHref.includes("pickupTime=10%3A00"));
+  assert.equal(defaultDriverAge, "18-70");
+  assert.ok(timeOptions.includes("10:00"));
+  assert.ok(carsPageSource.includes('returnToDifferentLocation: false'));
+  assert.ok(carsPageSource.includes('if (key === "returnToDifferentLocation" && value === false)'));
+  assert.ok(carsPageSource.includes('className="focus-ring'));
+  assert.ok(carsLandingContentSource.includes('ctaKey: "carsTripStyle.economy.cta"'));
+  assert.equal(languageOptions.find((option) => option.code === "vi")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
+  assert.equal(languageOptions.find((option) => option.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "id")?.direction, "ltr");
 });
 
 
