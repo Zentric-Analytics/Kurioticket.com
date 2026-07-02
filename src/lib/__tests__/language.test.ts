@@ -3804,9 +3804,6 @@ test("Polish global modal copy resolves without English fallback", () => {
   for (const key of [
     "globalLanguage",
     "websiteLanguageTitle",
-    "websiteLanguageDescription",
-    "currentLanguage",
-    "languagePreparingNotice",
     "languageSearchLabel",
     "languageSearchPlaceholder",
   ]) {
@@ -10342,9 +10339,6 @@ test("Thai global language selector render path uses i18n keys without active sc
     "openLanguagePreferences",
     "globalLanguage",
     "websiteLanguageTitle",
-    "websiteLanguageDescription",
-    "currentLanguage",
-    "languagePreparingNotice",
     "languageSearchLabel",
     "languageSearchPlaceholder",
     "closeLanguageSelector",
@@ -10359,6 +10353,9 @@ test("Thai global language selector render path uses i18n keys without active sc
     headerSource,
     />GLOBAL LANGUAGE<|>Select your website language<|English \(United States\) is the default website language|>Current language:<|>More languages are being prepared\.|>Search language<|Search English, Español, Français, Deutsch|Close language selector/,
   );
+  for (const key of ["websiteLanguageDescription", "currentLanguage", "languagePreparingNotice"]) {
+    assert.doesNotMatch(headerSource, new RegExp(`t\\.${key}`), key);
+  }
   assert.match(headerSource, /onClick=\{closeLanguageDialog\}/);
   assert.match(headerSource, /setLanguageQuery\(event\.target\.value\)/);
   assert.match(headerSource, /aria-modal="true"/);
@@ -10473,7 +10470,8 @@ test("Indonesian auth and global modal render paths use corrected i18n keys with
   const verifyEmailSource = readFileSync("src/components/auth/VerifyEmailForm.tsx", "utf8");
   const verifyLoginSource = readFileSync("src/components/auth/VerifyLoginForm.tsx", "utf8");
 
-  for (const key of ["login", "signUp", "globalLanguage", "websiteLanguageTitle", "websiteLanguageDescription", "currentLanguage", "languagePreparingNotice", "languageSearchLabel", "languageSearchPlaceholder"]) assert.match(headerSource, new RegExp(`t\\.${key}`), key);
+  for (const key of ["login", "signUp", "globalLanguage", "websiteLanguageTitle", "languageSearchLabel", "languageSearchPlaceholder"]) assert.match(headerSource, new RegExp(`t\\.${key}`), key);
+  for (const key of ["websiteLanguageDescription", "currentLanguage", "languagePreparingNotice"]) assert.doesNotMatch(headerSource, new RegExp(`t\\.${key}`), key);
   for (const key of ["chooseCountryAndCurrency", "countryCurrencyDescription", "searchCountryOrCurrency", "countryCurrencyAllCountriesAndCurrencies", "countryCurrencyPopularCountryAndCurrency", "countryCurrencyOptionCountSingular", "countryCurrencyOptionCountPlural", "showMoreResults"]) assert.match(countryCurrencySource, new RegExp(`t\\.${key}`), key);
   for (const key of ["loginPageTitle", "loginPageSubtitle", "loginEmailLabel", "loginPasswordLabel", "loginForgotPassword", "loginSubmit", "loginCheckingDetails", "loginDivider", "loginGoogle", "loginSignupPrompt", "loginCreateAccount", "loginCodeSent", "loginCodeInstructions", "loginVerificationCodeLabel", "loginVerifyLogin", "loginResendIn", "loginUseDifferentDetails"]) assert.match(signinSource, new RegExp(`t\\.${key}|key: "${key}"`), key);
   for (const key of ["forgotPasswordTitle", "forgotPasswordSubtitle", "forgotPasswordEmailLabel", "forgotPasswordEmailPlaceholder", "forgotPasswordSending", "forgotPasswordSubmit", "forgotPasswordRemember", "forgotPasswordLoginLink", "forgotPasswordSuccess"]) assert.match(forgotSource, new RegExp(`t\\.${key}`), key);
@@ -10582,7 +10580,8 @@ test("Swedish global modal and auth render paths use i18n keys without active En
   const forgotPageSource = readFileSync("src/app/auth/forgot-password/page.tsx", "utf8");
   const signupPageSource = readFileSync("src/app/auth/signup/page.tsx", "utf8");
 
-  for (const key of ["login", "signUp", "globalLanguage", "websiteLanguageTitle", "websiteLanguageDescription", "currentLanguage", "languagePreparingNotice", "languageSearchLabel", "languageSearchPlaceholder"]) assert.match(headerSource, new RegExp(`t\\.${key}`), key);
+  for (const key of ["login", "signUp", "globalLanguage", "websiteLanguageTitle", "languageSearchLabel", "languageSearchPlaceholder"]) assert.match(headerSource, new RegExp(`t\\.${key}`), key);
+  for (const key of ["websiteLanguageDescription", "currentLanguage", "languagePreparingNotice"]) assert.doesNotMatch(headerSource, new RegExp(`t\\.${key}`), key);
   for (const key of ["chooseCountryAndCurrency", "countryCurrencyDescription", "searchCountryOrCurrency", "countryCurrencyAllCountriesAndCurrencies", "countryCurrencyPopularCountryAndCurrency", "countryCurrencyOptionCountSingular", "countryCurrencyOptionCountPlural", "showMoreResults"]) assert.match(countryCurrencySource, new RegExp(`t\\.${key}`), key);
   for (const key of ["loginPageTitle", "loginPageSubtitle", "loginEmailLabel", "loginPasswordLabel", "loginForgotPassword", "loginSubmit", "loginDivider", "loginGoogle", "loginSignupPrompt", "loginCreateAccount", "loginCodeSent", "loginCodeInstructions", "loginVerificationCodeLabel", "loginVerifyLogin", "loginResendIn", "loginUseDifferentDetails"]) assert.match(signinSource, new RegExp(`t\\.${key}|key: "${key}"`), key);
   for (const key of ["forgotPasswordTitle", "forgotPasswordSubtitle", "forgotPasswordEmailLabel", "forgotPasswordEmailPlaceholder", "forgotPasswordSubmit", "forgotPasswordRemember", "forgotPasswordLoginLink", "forgotPasswordSuccess"]) assert.match(forgotSource, new RegExp(`t\\.${key}`), key);
