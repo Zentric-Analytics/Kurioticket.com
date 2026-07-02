@@ -13782,3 +13782,135 @@ test("Vietnamese homepage destinations, discovery cards, support FAQ answers, da
   assert.match(homepageSource, /setNewsletterMessage\(t\("homeNewsletterThanks"\)\)/);
   assert.match(homepageSource, /fetch\("\/api\/newsletter\/subscribe"/);
 });
+
+test("Vietnamese destinations and saved trips active render-path copy resolves without English fallback", () => {
+  const destinationSource = readFileSync("src/app/destinations/page.tsx", "utf8");
+  const destinationCardSource = readFileSync("src/app/destinations/DestinationCard.tsx", "utf8");
+  const savedPageSource = readFileSync("src/app/saved/page.tsx", "utf8");
+  const dashboardSavedSource = readFileSync("src/app/dashboard/saved/page.tsx", "utf8");
+  const savedComponentSource = readFileSync("src/components/saved/SavedTripsAndRecentSearches.tsx", "utf8");
+
+  const expected = {
+    destinationsHeroBadge: "KHÁM PHÁ ĐIỂM ĐẾN",
+    destinationsHeroTitle: "Bạn muốn đi đâu tiếp theo?",
+    destinationsHeroSubtitle:
+      "Khám phá những góc nhìn thành phố được chọn lọc, so sánh chuyến bay và tìm ưu đãi du lịch chỉ trong vài phút.",
+    "destinations.region.europe": "Châu Âu",
+    "destinations.region.northAmerica": "Bắc Mỹ",
+    "destinations.region.asia": "Châu Á",
+    "destinations.region.africa": "Châu Phi",
+    "destinations.region.middleEast": "Trung Đông",
+    "destinations.region.europe.summary":
+      "Tuyển chọn các thành phố biểu tượng, kênh đào lãng mạn, thủ đô thiết kế và những cuối tuần ẩm thực-văn hóa vượt thời gian.",
+    "destinations.region.northAmerica.summary":
+      "Đường chân trời ấn tượng, biểu tượng ven biển, thủ phủ giải trí và những chuyến nghỉ đô thị giàu chất điện ảnh đáng để lên kế hoạch.",
+    "destinations.region.asia.summary":
+      "Cảnh quan đô thị neon, đảo nghỉ dưỡng, thiên đường ẩm thực đường phố, đền chùa, bãi biển và cửa ngõ mua sắm cao cấp.",
+    "destinations.region.africa.summary":
+      "Những điểm đến nổi bật với cảnh biển, cơ hội safari, thủ đô sáng tạo và chiều sâu văn hóa phong phú.",
+    "destinations.region.middleEast.summary":
+      "Đường chân trời sang trọng, bờ biển ấm áp, cảnh quan sa mạc ấn tượng, khu di sản và trung tâm lưu trú hiện đại.",
+    "destinations.tag.iconicSkyline": "Đường chân trời biểu tượng",
+    "destinations.tag.landmarkEscape": "Chuyến đi biểu tượng",
+    "destinations.tag.cultureCapital": "Thủ đô văn hóa",
+    "destinations.tag.goldenHourViews": "Khung cảnh giờ vàng",
+    "destinations.tag.coastalEnergy": "Năng lượng ven biển",
+    "destinations.tag.foodMarketNights": "Đêm chợ ẩm thực",
+    "destinations.tag.historicStreets": "Phố cổ lịch sử",
+    "destinations.tag.designWeekend": "Cuối tuần thiết kế",
+    "destinations.card.subtitle": "Khung cảnh rực rỡ, chuyến bay, khách sạn và ưu đãi",
+    destinationsRegionsAriaLabel: "Các khu vực điểm đến",
+    destinationsCardAriaLabel: "Tìm chuyến bay đến {destination}",
+    destinationsImageAltSuffix: "ảnh du lịch",
+    "destinations.country.unitedKingdom": "Vương quốc Anh",
+    "destinations.country.france": "Pháp",
+    "destinations.country.italy": "Ý",
+    "destinations.country.spain": "Tây Ban Nha",
+    "destinations.country.netherlands": "Hà Lan",
+    "destinations.country.portugal": "Bồ Đào Nha",
+    "destinations.country.czechia": "Séc",
+    "destinations.country.greece": "Hy Lạp",
+    "destinations.country.germany": "Đức",
+    "destinations.country.denmark": "Đan Mạch",
+    "destinations.country.switzerland": "Thụy Sĩ",
+    "destinations.country.austria": "Áo",
+    "destinations.country.unitedStates": "Hoa Kỳ",
+    "destinations.country.japan": "Nhật Bản",
+    "destinations.country.southKorea": "Hàn Quốc",
+    "destinations.country.southAfrica": "Nam Phi",
+    "destinations.country.morocco": "Ma-rốc",
+    "destinations.country.unitedArabEmirates": "Các Tiểu vương quốc Ả Rập Thống nhất",
+    "destinations.country.turkey": "Thổ Nhĩ Kỳ",
+    "destinations.country.oman": "Oman",
+    "destinations.country.saudiArabia": "Ả Rập Xê Út",
+    savedTripsPageTitle: "Chuyến đi đã lưu",
+    savedTripsPageSubtitle: "Hành trình bạn chọn lọc và các tuyến đường đang thịnh hành.",
+    savedTripsTabsLabel: "Chuyến đi đã lưu / Lịch sử tìm kiếm",
+    savedTripsTabSaved: "Chuyến đi đã lưu",
+    savedTripsTabHistory: "Lịch sử tìm kiếm",
+    savedTripsEmptyTitle: "Lưu những điểm đến bạn yêu thích",
+    savedTripsEmptyDescription:
+      "Nhấn biểu tượng trái tim trên bất kỳ tuyến đường nào để tạo danh sách yêu thích cá nhân và giữ chuyến phiêu lưu tiếp theo chỉ cách một cú nhấp.",
+    savedTripsExploreDestinations: "Khám phá điểm đến",
+    savedTripsRemoveSavedTrip: "Xóa chuyến đi đã lưu",
+    savedTripsRecentSearchesTitle: "Tìm kiếm gần đây",
+    savedTripsRecentSearchesSubtitle:
+      "Quay lại nơi bạn đã dừng và tìm kiếm lại chỉ với một cú nhấp.",
+    savedTripsClearAllRecent: "Xóa tất cả tìm kiếm gần đây",
+    savedTripsNoRecentTitle: "Chưa có tìm kiếm gần đây",
+    savedTripsNoRecentDescription: "Các tìm kiếm gần đây của bạn sẽ xuất hiện tại đây.",
+    savedTripsRepeatSearch: "Tìm kiếm lại",
+  } as const;
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(viTranslations[key], value, key);
+    if (value !== enTranslations[key]) {
+      assert.notEqual(viTranslations[key], enTranslations[key], `${key} must not fall back to English for Vietnamese`);
+    }
+  }
+
+  for (const english of [
+    "DESTINATION DISCOVERY",
+    "Where do you want to go next?",
+    "Browse brighter, hand-picked city views",
+    "Bright views, flights, hotels, and deals",
+    "Saved Trips",
+    "Your handpicked itineraries and trending routes.",
+    "Save destinations you love",
+    "Tap the heart icon on any route",
+    "Explore destinations",
+  ]) {
+    assert.ok(!Object.values(viTranslations).includes(english), `Vietnamese dictionary should not expose ${english}`);
+  }
+
+  assert.ok(destinationSource.includes("dictionary.destinationsHeroBadge"));
+  assert.ok(destinationSource.includes("regionLabelKeys[section.region]"));
+  assert.ok(destinationSource.includes("destinationNameKeys[destination.name]"));
+  assert.ok(destinationSource.includes("destinationCountryKeys[destination.country]"));
+  assert.ok(destinationSource.includes("dictionary[destination.tagKey]"));
+  assert.ok(destinationSource.includes("dictionary[destinationSubtitleKey]"));
+  assert.ok(destinationSource.includes("dictionary.destinationsCardAriaLabel.replace"));
+  assert.ok(destinationSource.includes("return `/flights?destination=${encodeURIComponent(destination.name)}`;"));
+  assert.ok(destinationSource.includes("key={`${destination.region}-${destination.name}`}"));
+  assert.ok(destinationCardSource.includes("aria-label={ariaLabel}"));
+  assert.ok(savedPageSource.includes("<SavedTripsAndRecentSearches"));
+  assert.ok(dashboardSavedSource.includes('redirect("/saved")'));
+  assert.ok(savedComponentSource.includes('href="/"'));
+  assert.ok(savedComponentSource.includes('aria-label={t("savedTripsRemoveSavedTrip")'));
+  assert.ok(savedComponentSource.includes('writeSavedTripIds(nextIds)'));
+  assert.ok(savedComponentSource.includes('writeSavedTripIds([])'));
+  assert.ok(savedComponentSource.includes('deleteBackendTrip(backendId)'));
+  assert.ok(savedComponentSource.includes('pathname: "/flights/results"'));
+  assert.ok(savedComponentSource.includes('className="mt-6 inline-flex min-h-11'));
+
+  assert.equal(normalizeLanguage("vi"), "vi");
+  assert.equal(normalizeLanguage("vi-VN"), "vi");
+  assert.equal(normalizeLanguage("vi-vn"), "vi");
+  assert.equal(languageOptions.filter((option) => option.code === "vi").length, 1);
+  assert.equal(languageOptions.find((option) => option.code === "vi")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
+  assert.equal(languageOptions.find((option) => option.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((option) => option.code === "id")?.direction, "ltr");
+  assert.ok(thTranslations.flights);
+  assert.ok(idTranslations.flights);
+});
