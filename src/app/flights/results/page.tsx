@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
+import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { FlightResultsClient } from "@/components/results/FlightResultsClient";
-import { FlightCardSkeleton } from "@/components/ui/Skeleton";
 
 type FlightResultsSearchParams = Promise<
   Record<string, string | string[] | undefined>
@@ -110,8 +110,16 @@ export default async function FlightResultsPage({
 
 function ResultsFallback() {
   return (
-    <main className="page-shell flex-1 py-6">
-      <FlightCardSkeleton />
+    <main className="min-h-[100svh] bg-[radial-gradient(circle_at_top_left,rgba(92,182,178,0.20),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(0,75,184,0.16),transparent_36%),linear-gradient(180deg,#F2F7FA_0%,#FFFFFF_58%,#FFFFFF_100%)]">
+      <BrandedLoading
+        variant="fullscreen"
+        visual="logoPulse"
+        showProgress={false}
+        className="min-h-[100svh] bg-transparent px-5"
+        contentClassName="max-w-md text-center"
+        title="Searching the best flights for you"
+        description="Checking airlines and fares..."
+      />
     </main>
   );
 }
