@@ -12070,6 +12070,119 @@ test("Vietnamese account personal details and security settings copy resolves wi
   assert.equal(thTranslations["accountDashboard.hub.title"], "บัญชีของฉัน");
 });
 
+test("Vietnamese preferences v2 active Customization preferences and Booking preferences copy resolves without English fallback", () => {
+  const vi = getTranslations("vi");
+  const viVN = getTranslations("vi-VN");
+  const viAlias = getTranslations("vi-vn");
+  const customizationSource = readFileSync("src/app/dashboard/preferences/customization/CustomizationPreferencesContent.tsx", "utf8");
+  const bookingSource = readFileSync("src/app/dashboard/preferences/booking/BookingPreferencesContent.tsx", "utf8");
+  const customizationPageSource = readFileSync("src/app/dashboard/preferences/customization/page.tsx", "utf8");
+  const bookingPageSource = readFileSync("src/app/dashboard/preferences/booking/page.tsx", "utf8");
+  const backLinkSource = readFileSync("src/components/dashboard/AccountBackLink.tsx", "utf8");
+
+  const expectedCustomization: Record<string, string> = {
+    "accountDashboard.hub.title": "Tài khoản của tôi",
+    "accountDashboard.preferences.customization.title": "Tùy chọn cá nhân hóa",
+    "accountDashboard.preferences.customization.description": "Chọn cách Kurioticket cá nhân hóa trải nghiệm của bạn.",
+    "accountDashboard.preferences.customization.languageRegion.title": "Ngôn ngữ và khu vực",
+    "accountDashboard.preferences.customization.languageRegion.description": "Đặt ngôn ngữ, tiền tệ và khu vực mặc định của bạn.",
+    "accountDashboard.preferences.customization.preferredLanguage": "Ngôn ngữ ưu tiên",
+    "accountDashboard.preferences.customization.selectPreferredLanguage": "Chọn ngôn ngữ ưu tiên",
+    "accountDashboard.preferences.customization.currency": "Tiền tệ",
+    "accountDashboard.preferences.customization.selectCurrency": "Chọn tiền tệ",
+    "accountDashboard.preferences.customization.region": "Khu vực",
+    "accountDashboard.preferences.customization.selectRegion": "Chọn khu vực",
+    "accountDashboard.preferences.customization.personalization.title": "Cá nhân hóa",
+    "accountDashboard.preferences.customization.personalization.description": "Kiểm soát cách Kurioticket cá nhân hóa đề xuất của bạn.",
+    "accountDashboard.preferences.customization.personalizeSearches": "Dùng tìm kiếm của tôi để cá nhân hóa đề xuất",
+    "accountDashboard.preferences.customization.personalizedTravelDeals": "Hiển thị ưu đãi du lịch được cá nhân hóa",
+    "accountDashboard.preferences.customization.rememberRecentSearches": "Ghi nhớ các tìm kiếm gần đây của tôi",
+    "accountDashboard.preferences.customization.communicationStyle.title": "Cách liên lạc",
+    "accountDashboard.preferences.customization.communicationStyle.description": "Chọn cách bạn muốn Kurioticket liên lạc với bạn.",
+    "accountDashboard.preferences.customization.emailUpdates": "Cập nhật qua email",
+    "accountDashboard.preferences.customization.priceAlertEmails": "Email cảnh báo giá",
+    "accountDashboard.preferences.customization.travelInspirationEmails": "Email gợi ý du lịch",
+    "accountDashboard.preferences.cancel": "Hủy",
+    "accountDashboard.preferences.savePreferences": "Lưu tùy chọn",
+  };
+  const expectedBooking: Record<string, string> = {
+    "accountDashboard.preferences.booking.title": "Tùy chọn đặt chỗ",
+    "accountDashboard.preferences.booking.description": "Đặt tùy chọn du lịch mặc định để đặt chỗ nhanh hơn và phù hợp hơn.",
+    "accountDashboard.preferences.booking.airports.title": "Sân bay",
+    "accountDashboard.preferences.booking.airports.description": "Chọn các sân bay bạn muốn khởi hành.",
+    "accountDashboard.preferences.booking.homeAirport": "Sân bay chính",
+    "accountDashboard.preferences.booking.searchAirport": "Tìm sân bay",
+    "accountDashboard.preferences.booking.secondaryAirports": "Sân bay phụ",
+    "accountDashboard.preferences.booking.addAlternativeAirports": "Thêm sân bay thay thế",
+    "accountDashboard.preferences.booking.airlines.title": "Hãng hàng không",
+    "accountDashboard.preferences.booking.airlines.description": "Chọn hãng hàng không bạn ưu tiên hoặc muốn tránh.",
+    "accountDashboard.preferences.booking.preferredAirlines": "Hãng hàng không ưu tiên",
+    "accountDashboard.preferences.booking.searchAirlines": "Tìm hãng hàng không",
+    "accountDashboard.preferences.booking.avoidAirlines": "Tránh hãng hàng không",
+    "accountDashboard.preferences.booking.stays.title": "Chỗ lưu trú",
+    "accountDashboard.preferences.booking.stays.description": "Đặt tùy chọn chỗ ở cho đặt phòng khách sạn.",
+    "accountDashboard.preferences.booking.preferredHotelChains": "Chuỗi khách sạn ưu tiên",
+    "accountDashboard.preferences.booking.searchHotelChains": "Tìm chuỗi khách sạn",
+    "accountDashboard.preferences.booking.avoidHotelChains": "Tránh chuỗi khách sạn",
+    "accountDashboard.preferences.cancel": "Hủy",
+    "accountDashboard.preferences.savePreferences": "Lưu tùy chọn",
+  };
+
+  for (const [key, expected] of Object.entries({ ...expectedCustomization, ...expectedBooking })) {
+    assert.equal(vi[key], expected, `${key} should resolve in Vietnamese`);
+    assert.equal(viVN[key], expected, `${key} should resolve through vi-VN`);
+    assert.equal(viAlias[key], expected, `${key} should resolve through vi-vn`);
+    assert.notEqual(vi[key], enTranslations[key], `${key} must not fall back to English for Vietnamese`);
+  }
+
+  for (const key of Object.keys(expectedCustomization)) {
+    if (key === "accountDashboard.hub.title") continue;
+    assert.ok(customizationSource.includes(key), `Customization preferences active render path should read ${key}`);
+  }
+  for (const key of Object.keys(expectedBooking)) {
+    assert.ok(bookingSource.includes(key), `Booking preferences active render path should read ${key}`);
+  }
+
+  assert.ok(backLinkSource.includes('t["accountDashboard.hub.title"]'));
+  assert.ok(backLinkSource.includes('href="/dashboard/account"'));
+  assert.ok(customizationPageSource.includes("<CustomizationPreferencesContent />"));
+  assert.ok(bookingPageSource.includes("<BookingPreferencesContent />"));
+  assert.ok(customizationSource.includes('id: "preferred-language"') && customizationSource.includes('name={field.id}') && customizationSource.includes('defaultValue=""'));
+  assert.ok(customizationSource.includes('id: "personalize-searches"') && customizationSource.includes('id: "personalized-travel-deals"') && customizationSource.includes('id: "remember-recent-searches"'));
+  assert.ok(customizationSource.includes('id: "email-updates"') && customizationSource.includes('id: "price-alert-emails"') && customizationSource.includes('id: "travel-inspiration-emails"'));
+  assert.ok(bookingSource.includes('id: "home-airport"') && bookingSource.includes('id: "secondary-airports"'));
+  assert.ok(bookingSource.includes('id: "preferred-airlines"') && bookingSource.includes('id: "avoid-airlines"'));
+  assert.ok(bookingSource.includes('id: "preferred-hotel-chains"') && bookingSource.includes('id: "avoid-hotel-chains"'));
+  assert.ok(customizationSource.includes('type="button"') && bookingSource.includes('type="button"'));
+  assert.ok(customizationSource.includes('className="') && bookingSource.includes('className="') && customizationSource.includes('aria-labelledby') && bookingSource.includes('aria-labelledby'));
+  assert.ok(languageOptions.some((option) => option.code === "vi" && option.locale === "vi-VN" && option.direction === "ltr"));
+  assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+  assert.ok(languageOptions.some((option) => option.code === "th" && option.direction === "ltr" && option.status === "available"));
+  assert.ok(languageOptions.some((option) => option.code === "id" && option.direction === "ltr" && option.status === "available"));
+  assert.equal(idTranslations.loginCodeInstructions.includes("{{email}}"), true);
+  assert.equal(thTranslations["accountDashboard.hub.title"], "บัญชีของฉัน");
+
+  const screenshotEnglish = [
+    "Customization preferences",
+    "Choose how Kurioticket personalizes your experience.",
+    "Language and region",
+    "Select preferred language",
+    "Personalization",
+    "Use my searches to personalize recommendations",
+    "Communication style",
+    "Booking preferences",
+    "Set your default travel preferences for faster and more relevant bookings.",
+    "Choose the airports you prefer to fly from.",
+    "Preferred airlines",
+    "Search hotel chains",
+    "Save preferences",
+  ];
+  const activeVietnameseValues = Object.values({ ...expectedCustomization, ...expectedBooking });
+  for (const english of screenshotEnglish) {
+    assert.ok(!activeVietnameseValues.includes(english), `${english} should not be active Vietnamese preferences output`);
+  }
+});
+
 test("Personal details edit form localization keys resolve across active locales", () => {
   const activeLocaleTranslations = { ar: arTranslations, nl: nlTranslations, es: esTranslations, fr: frTranslations, de: deTranslations, it: itTranslations, "pt-br": ptBrTranslations, "zh-cn": zhCnTranslations, ja: jaTranslations, ko: koTranslations, hi: hiTranslations, tr: trTranslations, pl: plTranslations } as const;
   const requiredKeys = ["accountDashboard.personalDetails.section.basicInformation", "accountDashboard.personalDetails.description", "accountDashboard.personalDetails.emailVerified", "accountDashboard.personalDetails.changeEmail", "accountDashboard.personalDetails.emailHelper", "accountDashboard.personalDetails.phoneHelper", "accountDashboard.personalDetails.dateOfBirthDayPlaceholder", "accountDashboard.personalDetails.monthPlaceholder", "accountDashboard.personalDetails.dateOfBirthYearPlaceholder", "accountDashboard.personalDetails.section.address", "accountDashboard.personalDetails.addressDescription", "accountDashboard.personalDetails.countryRegion", "accountDashboard.personalDetails.selectOne", "accountDashboard.personalDetails.streetAddress", "accountDashboard.personalDetails.apartmentSuite", "accountDashboard.personalDetails.townCity", "accountDashboard.personalDetails.stateProvinceRegion", "accountDashboard.personalDetails.postcodeZip", "accountDashboard.personalDetails.cancel", "accountDashboard.personalDetails.saveChanges"] as const;
