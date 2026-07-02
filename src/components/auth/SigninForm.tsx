@@ -337,7 +337,7 @@ export function SigninForm({
           </Field>
 
           <Link
-            className="cursor-pointer text-sm font-semibold text-teal-dark transition-colors hover:text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
+            className="cursor-pointer text-sm font-semibold text-teal-dark transition-colors hover:text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] focus-visible:ring-offset-2"
             href="/auth/forgot-password"
           >
             {t.loginForgotPassword}
@@ -397,7 +397,7 @@ export function SigninForm({
           <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
             <button
               type="button"
-              className="cursor-pointer font-semibold text-teal-dark transition-colors hover:text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:text-muted disabled:no-underline"
+              className="cursor-pointer font-semibold text-teal-dark transition-colors hover:text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] disabled:cursor-not-allowed disabled:text-muted disabled:no-underline"
               onClick={resendCode}
               disabled={busy || resending || cooldownSeconds > 0}
             >
@@ -413,7 +413,7 @@ export function SigninForm({
 
             <button
               type="button"
-              className="cursor-pointer font-semibold text-teal-dark transition-colors hover:text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:text-muted disabled:no-underline"
+              className="cursor-pointer font-semibold text-teal-dark transition-colors hover:text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] disabled:cursor-not-allowed disabled:text-muted disabled:no-underline"
               onClick={startOver}
               disabled={busy || resending}
             >
@@ -434,7 +434,7 @@ export function SigninForm({
           <Button
             type="button"
             variant="secondary"
-            className="w-full hover:border-slate-300 hover:bg-slate-50 focus-visible:ring-violet-500"
+            className="w-full hover:border-slate-300 hover:bg-slate-50 focus-visible:ring-[#004BB8]"
             onClick={() =>
               signIn("google", {
                 callbackUrl: callbackUrl || "/",
@@ -451,7 +451,7 @@ export function SigninForm({
       <p className="mt-4 text-sm text-muted">
         {t.loginSignupPrompt}{" "}
         <Link
-          className="cursor-pointer font-semibold text-teal-dark transition-colors hover:text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
+          className="cursor-pointer font-semibold text-teal-dark transition-colors hover:text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] focus-visible:ring-offset-2"
           href="/auth/signup"
         >
           {t.loginCreateAccount}

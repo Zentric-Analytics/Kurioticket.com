@@ -39,19 +39,19 @@ export function TwoFactorChallengeForm() {
 
   return (
     <div className="mx-auto w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-xl sm:p-8">
-      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">Two-factor authentication</p>
+      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#004BB8]">Two-factor authentication</p>
       <h1 className="mt-3 text-2xl font-bold text-slate-950">Enter your authenticator code</h1>
       <p className="mt-3 text-sm leading-6 text-slate-600">Use the 6-digit code from your authenticator app, or enter one saved recovery code to finish signing in.</p>
       <form onSubmit={submit} className="mt-6 space-y-4">
         <label className="block text-sm font-semibold text-slate-800">Authenticator or recovery code
-          <input autoComplete="one-time-code" maxLength={32} value={code} onChange={(event) => setCode(event.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 32))} className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-center text-xl font-bold tracking-[0.18em] text-slate-950" />
+          <input autoComplete="one-time-code" maxLength={32} value={code} onChange={(event) => setCode(event.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 32))} className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-center text-xl font-bold tracking-[0.18em] text-slate-950 outline-none focus:border-[#004BB8] focus:ring-4 focus:ring-[#004BB8]/15" />
         </label>
         {message ? <p className="text-sm text-slate-600">{message}</p> : null}
         {error ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{error}</p> : null}
         <Button className="w-full" disabled={busy || code.length < 6}>{busy ? "Verifying…" : "Verify and continue"}</Button>
       </form>
       <div className="mt-5 flex justify-end text-sm">
-        <button type="button" onClick={() => signOut({ callbackUrl: "/auth/signin" })} className="font-semibold text-slate-600">Back / sign out</button>
+        <button type="button" onClick={() => signOut({ callbackUrl: "/auth/signin" })} className="font-semibold text-slate-600 transition hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30">Back / sign out</button>
       </div>
     </div>
   );

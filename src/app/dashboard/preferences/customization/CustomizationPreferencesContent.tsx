@@ -161,7 +161,7 @@ const toggleSections = [
 ];
 
 const fieldClassName =
-  "w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100";
+  "w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none transition focus:border-[#004BB8] focus:ring-4 focus:ring-[#004BB8]/15";
 
 function PreferenceSection({
   title,
@@ -266,7 +266,7 @@ export function CustomizationPreferencesContent() {
                     id={field.id}
                     name={field.id}
                     type="checkbox"
-                    className="h-5 w-5 rounded border-slate-300 text-blue-700 focus:ring-violet-500"
+                    className="h-5 w-5 rounded border-slate-300 text-[#004BB8] focus:ring-[#004BB8]/25"
                   />
                 </label>
               ))}
@@ -282,7 +282,7 @@ export function CustomizationPreferencesContent() {
             </button>
             <button
               type="button"
-              className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 sm:w-auto"
+              className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] sm:w-auto"
             >
               {t["accountDashboard.preferences.savePreferences"]}
             </button>
