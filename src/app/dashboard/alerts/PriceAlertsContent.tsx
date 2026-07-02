@@ -62,7 +62,7 @@ function EmptyStateIllustration() {
       className="relative mx-auto flex h-40 w-40 items-center justify-center sm:h-48 sm:w-48"
       aria-hidden="true"
     >
-      <div className="absolute inset-4 rounded-full bg-gradient-to-br from-violet-100 via-indigo-50 to-sky-100" />
+      <div className="absolute inset-4 rounded-full bg-gradient-to-br from-[#5CB6B2]/20 via-[#004BB8]/8 to-slate-100" />
       <div className="absolute bottom-9 h-3 w-28 rounded-full bg-indigo-200/50 blur-[1px]" />
       <svg
         className="relative h-28 w-28 drop-shadow-sm"
@@ -103,8 +103,8 @@ function EmptyStateIllustration() {
       <span className="absolute end-8 top-8 flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-lg font-black text-white shadow-lg shadow-indigo-950/20">
         !
       </span>
-      <span className="absolute start-7 top-7 h-8 w-1.5 -rotate-45 rounded-full bg-violet-300" />
-      <span className="absolute start-14 top-4 h-8 w-1.5 -rotate-12 rounded-full bg-violet-300" />
+      <span className="absolute start-7 top-7 h-8 w-1.5 -rotate-45 rounded-full bg-[#5CB6B2]" />
+      <span className="absolute start-14 top-4 h-8 w-1.5 -rotate-12 rounded-full bg-[#5CB6B2]" />
     </div>
   );
 }
@@ -170,8 +170,8 @@ export function PriceAlertsContent({
                       type="button"
                       className={`focus-ring inline-flex min-h-10 shrink-0 items-center gap-1 rounded-full px-2 text-xs font-semibold transition sm:min-h-11 sm:gap-2 sm:px-4 sm:text-sm ${
                         isSelected
-                          ? "bg-violet-100 text-indigo-700"
-                          : "text-slate-600 hover:bg-white hover:text-indigo-700"
+                          ? "bg-[#004BB8]/10 text-[#004BB8]"
+                          : "text-slate-600 hover:bg-[#004BB8]/5 hover:text-[#004BB8]"
                       }`}
                       aria-pressed={isSelected}
                       onClick={() => setSelectedTab(tab.id)}
@@ -190,7 +190,7 @@ export function PriceAlertsContent({
 
               <button
                 type="button"
-                className="focus-ring inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-full border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700 sm:min-h-12 sm:gap-3 sm:rounded-xl sm:px-4 sm:text-sm"
+                className="focus-ring inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-full border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-[#004BB8]/20 hover:text-[#004BB8] sm:min-h-12 sm:gap-3 sm:rounded-xl sm:px-4 sm:text-sm"
                 aria-expanded={isSortOpen}
                 aria-haspopup="listbox"
                 onClick={() => setIsSortOpen((current) => !current)}
@@ -232,9 +232,9 @@ export function PriceAlertsContent({
                   <button
                     key={option.id}
                     type="button"
-                    className={`block w-full px-4 py-3 text-start text-sm font-semibold transition hover:bg-violet-50 hover:text-indigo-700 ${
+                    className={`block w-full px-4 py-3 text-start text-sm font-semibold transition hover:bg-[#004BB8]/5 hover:text-[#004BB8] ${
                       selectedSort === option.id
-                        ? "bg-violet-50 text-indigo-700"
+                        ? "bg-[#004BB8]/10 text-[#004BB8]"
                         : "text-slate-700"
                     }`}
                     role="option"
@@ -285,7 +285,7 @@ export function PriceAlertsContent({
 
                   return (
                     <div key={item.titleKey} className="flex gap-4">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#5CB6B2]/12 text-[#004BB8]">
                         <Icon className="h-6 w-6" aria-hidden="true" />
                       </div>
                       <div>

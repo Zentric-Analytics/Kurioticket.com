@@ -405,7 +405,7 @@ export function TripsManagementPage() {
               }}
               aria-expanded={showLookup}
               aria-controls="reservation-lookup"
-              className="focus-ring inline-flex w-fit items-center justify-center rounded-full px-1 py-1 text-sm font-semibold text-violet-800 underline-offset-4 transition hover:text-violet-950 hover:underline lg:cursor-pointer"
+              className="focus-ring inline-flex w-fit items-center justify-center rounded-full px-1 py-1 text-sm font-semibold text-[#004BB8] underline-offset-4 transition hover:text-[#021C2B] hover:underline lg:cursor-pointer"
             >
               {t(
                 "accountDashboard.trips.findReservation",
@@ -448,7 +448,7 @@ export function TripsManagementPage() {
             <button
               type="button"
               onClick={() => void loadTrips()}
-              className="focus-ring mt-4 inline-flex h-11 items-center justify-center rounded-full bg-violet-700 px-5 text-sm font-semibold text-white transition hover:bg-violet-800"
+              className="focus-ring mt-4 inline-flex h-11 items-center justify-center rounded-full bg-[#004BB8] px-5 text-sm font-semibold text-white transition hover:bg-[#021C2B]"
               aria-label="Retry loading trips"
             >
               Retry
@@ -515,8 +515,8 @@ export function TripsManagementPage() {
                       className={cn(
                         "focus-ring inline-flex h-10 shrink-0 items-center justify-center rounded-full border px-5 text-sm font-semibold transition",
                         isActive
-                          ? "border-violet-300 bg-violet-50 text-violet-800"
-                          : "border-transparent bg-transparent text-slate-600 hover:border-violet-200 hover:text-slate-950",
+                          ? "border-[#004BB8]/20 bg-[#004BB8]/10 text-[#004BB8]"
+                          : "border-transparent bg-transparent text-slate-600 hover:border-[#004BB8]/20 hover:text-slate-950",
                       )}
                     >
                       {t(tab.labelKey, tab.fallback)}
@@ -653,7 +653,7 @@ function LookupDialog({
           <button
             type="submit"
             disabled={lookupState === "loading"}
-            className="focus-ring inline-flex h-12 items-center justify-center rounded-xl bg-violet-700 px-5 text-sm font-semibold text-white shadow-[0_16px_34px_-24px_rgba(79,70,229,0.9)] transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:bg-violet-400"
+            className="focus-ring inline-flex h-12 items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-[0_16px_34px_-24px_rgba(0,75,184,0.45)] transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:bg-[#004BB8]/45"
           >
             {lookupState === "loading"
               ? t(
@@ -697,7 +697,7 @@ function TripCard({ trip }: { trip: DashboardTrip }) {
     <article className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_18px_55px_-42px_rgba(15,23,42,0.45)] sm:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#004BB8]">
             {trip.provider} · {formatLabel(trip.tripType)}
           </p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
@@ -710,7 +710,7 @@ function TripCard({ trip }: { trip: DashboardTrip }) {
             </span>
           </p>
         </div>
-        <span className="inline-flex w-fit rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-violet-800">
+        <span className="inline-flex w-fit rounded-full border border-[#004BB8]/20 bg-[#004BB8]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#004BB8]">
           {formatLabel(trip.status)}
         </span>
       </div>
