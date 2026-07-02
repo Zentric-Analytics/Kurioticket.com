@@ -22,7 +22,7 @@ export default async function SavedPage({ searchParams }: SavedPageProps) {
       <main className="flex-1 bg-[#f3f7fc] pb-16 lg:pb-20">
         {showAccountLink ? (
           <AccountDetailShell>
-            <SavedTripsAndRecentSearches />
+            <SavedTripsAndRecentSearches compactTopSpacing />
           </AccountDetailShell>
         ) : (
           <SavedTripsAndRecentSearches />
