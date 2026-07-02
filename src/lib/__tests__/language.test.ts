@@ -5002,11 +5002,11 @@ test("Polish destinations and saved trips route fixtures still use localized dic
   assert.ok(savedComponentSource.includes('t("savedTripsPageTitle")'));
   assert.ok(savedComponentSource.includes('t("savedTripsEmptyTitle")'));
   assert.ok(savedComponentSource.includes('t("savedTripsExploreDestinations")'));
-  assert.ok(savedComponentSource.includes('t("savedTripsRecentSearchesTitle")'));
-  assert.ok(savedComponentSource.includes('t("savedTripsTypeFlight")'));
-  assert.ok(savedComponentSource.includes('t("savedTripsRepeatSearch")'));
   assert.ok(savedComponentSource.includes("readSavedTripIds()"));
-  assert.ok(savedComponentSource.includes("readRecentSearches()"));
+  assert.ok(!savedComponentSource.includes('t("savedTripsRecentSearchesTitle")'));
+  assert.ok(!savedComponentSource.includes('t("savedTripsTypeFlight")'));
+  assert.ok(!savedComponentSource.includes('t("savedTripsRepeatSearch")'));
+  assert.ok(!savedComponentSource.includes("readRecentSearches()"));
   assert.ok(savedComponentSource.includes('href: "/destinations"'));
   assert.ok(savedComponentSource.includes('pathname: "/flights/results"'));
 });
@@ -10896,7 +10896,7 @@ test("Indonesian Saved trips render path resolves active locale copy", () => {
 
   assert.ok(savedPageSource.includes("<SavedTripsAndRecentSearches />"));
   assert.ok(dashboardSavedSource.includes('redirect("/saved")'));
-  assert.ok(savedComponentSource.includes("const { locale, t: dictionary } = useLocale();"));
+  assert.ok(savedComponentSource.includes("const { t: dictionary } = useLocale();"));
   assert.ok(savedComponentSource.includes('const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";'));
   assert.ok(savedComponentSource.includes('t("savedTripsPageTitle")'));
   assert.ok(savedComponentSource.includes('t("savedTripsPageSubtitle")'));
@@ -12713,9 +12713,9 @@ test("Thai Destinations and Saved trips copy resolves through active render path
   assert.ok(destinationCardSource.includes("alt={imageAlt}"));
   assert.ok(savedPageSource.includes("<SavedTripsAndRecentSearches />"));
   assert.ok(dashboardSavedSource.includes('redirect("/saved")'));
-  assert.ok(savedComponentSource.includes('readRecentSearches()'));
-  assert.ok(savedComponentSource.includes('entry.href'));
-  assert.ok(savedComponentSource.includes('if (normalizedLocale.startsWith("th")) return "th-TH";'));
+  assert.ok(!savedComponentSource.includes('readRecentSearches()'));
+  assert.ok(!savedComponentSource.includes('entry.href'));
+  assert.ok(!savedComponentSource.includes('if (normalizedLocale.startsWith("th")) return "th-TH";'));
   assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
 });
