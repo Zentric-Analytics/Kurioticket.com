@@ -401,6 +401,35 @@ export const translations: TranslationDictionary = {
     "Vì sao tôi được chuyển đến một nhà cung cấp khác?",
   supportFaqWhyRedirectedAnswer:
     "Kurioticket là nền tảng tìm kiếm và so sánh du lịch, và một số kết quả sẽ chuyển bạn đến nhà cung cấp đáng tin cậy nơi bạn hoàn tất đặt chỗ, thanh toán và nhận hỗ trợ riêng từ nhà cung cấp.",
+  aboutPageEyebrow: "Về Kurioticket",
+  aboutPageTitle: "Về chúng tôi",
+  aboutPageIntroPrimary:
+    "Kurioticket là nền tảng tìm kiếm và so sánh du lịch giúp du khách tìm kiếm, so sánh và khám phá chuyến bay, khách sạn, ô tô và ưu đãi du lịch.",
+  aboutPageIntroSecondary:
+    "Mục tiêu của chúng tôi là giúp việc lập kế hoạch du lịch rõ ràng hơn bằng cách đưa các lựa chọn có sẵn và thông tin nhà cung cấp vào một nơi đơn giản, để du khách có thể xem xét các lựa chọn trước khi tiếp tục với nhà cung cấp phù hợp với chuyến đi của mình.",
+  aboutPagePlanningCardHeading: "Một công cụ lập kế hoạch du lịch thiết thực",
+  aboutPagePlanningCardBody:
+    "Kurioticket tập trung giúp du khách đánh giá các lựa chọn du lịch với ngữ cảnh hữu ích. Tình trạng còn chỗ, giá, quy định và các bước đặt chỗ cuối cùng có thể khác nhau tùy theo nhà cung cấp, vì vậy du khách nên xem kỹ trang của nhà cung cấp trước khi đưa ra quyết định.",
+  howItWorksEyebrow: "Cách Kurioticket hoạt động",
+  howItWorksTitle: "Cách Kurioticket hoạt động",
+  howItWorksIntro:
+    "Kurioticket giúp du khách chuyển từ tìm kiếm sang so sánh, sau đó tiếp tục đến nhà cung cấp khi một ưu đãi được chọn.",
+  howItWorksFlowHeading: "Quy trình cơ bản",
+  "howItWorks.steps.search.title": "Tìm kiếm lựa chọn du lịch",
+  "howItWorks.steps.search.description":
+    "Nhập chi tiết chuyến đi của bạn để tìm các chuyến bay, khách sạn, ô tô hoặc ưu đãi du lịch có sẵn.",
+  "howItWorks.steps.compare.title": "So sánh kết quả có sẵn",
+  "howItWorks.steps.compare.description":
+    "Xem lại các lựa chọn, giá, lịch trình, chi tiết nhà cung cấp và thông tin du lịch khác khi được hiển thị.",
+  "howItWorks.steps.choose.title": "Chọn một ưu đãi",
+  "howItWorks.steps.choose.description":
+    "Chọn lựa chọn phù hợp nhất với kế hoạch của bạn sau khi xem xét các chi tiết có sẵn.",
+  "howItWorks.steps.continue.title": "Tiếp tục với nhà cung cấp",
+  "howItWorks.steps.continue.description":
+    "Khi được chuyển hướng, hãy tiếp tục trên website của nhà cung cấp để xem lại chi tiết cuối cùng và hoàn tất các bước đặt chỗ.",
+  "howItWorks.providerWebsites.title": "Website của nhà cung cấp",
+  "howItWorks.providerWebsites.description":
+    "Một số đặt chỗ có thể được hoàn tất trên website của nhà cung cấp sau khi Kurioticket chuyển hướng bạn. Hãy xem trang của nhà cung cấp để kiểm tra tình trạng còn chỗ cuối cùng, giá, điều khoản, bước thanh toán và chi tiết đặt chỗ trước khi hoàn tất mua hàng.",
   footerContactUs: "Liên hệ",
   footerCustomerSupport: "Hỗ trợ khách hàng",
   footerServiceGuarantee: "Cam kết dịch vụ",
