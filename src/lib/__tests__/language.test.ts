@@ -15250,3 +15250,130 @@ test("Vietnamese Hotels landing and hotel results screenshot copy resolves witho
   assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
   assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
 });
+
+test("Vietnamese account preferences copy resolves through active render paths without English fallback", () => {
+  const vi = getTranslations("vi");
+  const customizationSource = readFileSync("src/app/dashboard/preferences/customization/CustomizationPreferencesContent.tsx", "utf8");
+  const bookingSource = readFileSync("src/app/dashboard/preferences/booking/BookingPreferencesContent.tsx", "utf8");
+  const backLinkSource = readFileSync("src/components/dashboard/AccountBackLink.tsx", "utf8");
+
+  const expected: Record<string, string> = {
+    "accountDashboard.hub.title": "Tài khoản của tôi",
+    "accountDashboard.preferences.customization.title": "Tùy chọn cá nhân hóa",
+    "accountDashboard.preferences.customization.description": "Chọn cách Kurioticket cá nhân hóa trải nghiệm của bạn.",
+    "accountDashboard.preferences.customization.languageRegion.title": "Ngôn ngữ và khu vực",
+    "accountDashboard.preferences.customization.languageRegion.description": "Đặt ngôn ngữ, tiền tệ và khu vực mặc định của bạn.",
+    "accountDashboard.preferences.customization.preferredLanguage": "Ngôn ngữ ưu tiên",
+    "accountDashboard.preferences.customization.selectPreferredLanguage": "Chọn ngôn ngữ ưu tiên",
+    "accountDashboard.preferences.customization.currency": "Tiền tệ",
+    "accountDashboard.preferences.customization.selectCurrency": "Chọn tiền tệ",
+    "accountDashboard.preferences.customization.region": "Khu vực",
+    "accountDashboard.preferences.customization.selectRegion": "Chọn khu vực",
+    "accountDashboard.preferences.customization.personalization.title": "Cá nhân hóa",
+    "accountDashboard.preferences.customization.personalization.description": "Kiểm soát cách Kurioticket cá nhân hóa đề xuất của bạn.",
+    "accountDashboard.preferences.customization.personalizeSearches": "Dùng tìm kiếm của tôi để cá nhân hóa đề xuất",
+    "accountDashboard.preferences.customization.personalizedTravelDeals": "Hiển thị ưu đãi du lịch được cá nhân hóa",
+    "accountDashboard.preferences.customization.rememberRecentSearches": "Ghi nhớ các tìm kiếm gần đây của tôi",
+    "accountDashboard.preferences.customization.communicationStyle.title": "Cách liên lạc",
+    "accountDashboard.preferences.customization.communicationStyle.description": "Chọn cách bạn muốn Kurioticket liên lạc với bạn.",
+    "accountDashboard.preferences.customization.emailUpdates": "Cập nhật qua email",
+    "accountDashboard.preferences.customization.priceAlertEmails": "Email cảnh báo giá",
+    "accountDashboard.preferences.customization.travelInspirationEmails": "Email gợi ý du lịch",
+    "accountDashboard.preferences.booking.title": "Tùy chọn đặt chỗ",
+    "accountDashboard.preferences.booking.description": "Đặt tùy chọn du lịch mặc định để đặt chỗ nhanh hơn và phù hợp hơn.",
+    "accountDashboard.preferences.booking.airports.title": "Sân bay",
+    "accountDashboard.preferences.booking.airports.description": "Chọn các sân bay bạn muốn khởi hành.",
+    "accountDashboard.preferences.booking.homeAirport": "Sân bay chính",
+    "accountDashboard.preferences.booking.searchAirport": "Tìm sân bay",
+    "accountDashboard.preferences.booking.secondaryAirports": "Sân bay phụ",
+    "accountDashboard.preferences.booking.addAlternativeAirports": "Thêm sân bay thay thế",
+    "accountDashboard.preferences.booking.airlines.title": "Hãng hàng không",
+    "accountDashboard.preferences.booking.airlines.description": "Chọn hãng hàng không bạn ưu tiên hoặc muốn tránh.",
+    "accountDashboard.preferences.booking.preferredAirlines": "Hãng hàng không ưu tiên",
+    "accountDashboard.preferences.booking.searchAirlines": "Tìm hãng hàng không",
+    "accountDashboard.preferences.booking.avoidAirlines": "Tránh hãng hàng không",
+    "accountDashboard.preferences.booking.stays.title": "Chỗ lưu trú",
+    "accountDashboard.preferences.booking.stays.description": "Đặt tùy chọn chỗ ở cho đặt phòng khách sạn.",
+    "accountDashboard.preferences.booking.preferredHotelChains": "Chuỗi khách sạn ưu tiên",
+    "accountDashboard.preferences.booking.searchHotelChains": "Tìm chuỗi khách sạn",
+    "accountDashboard.preferences.booking.avoidHotelChains": "Tránh chuỗi khách sạn",
+    "accountDashboard.preferences.cancel": "Hủy",
+    "accountDashboard.preferences.savePreferences": "Lưu tùy chọn",
+  };
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(vi[key], value, `${key} should resolve to Vietnamese`);
+    assert.notEqual(vi[key], enTranslations[key], `${key} should not fall back to English`);
+  }
+
+  for (const key of Object.keys(expected).filter((key) => key.includes("customization"))) {
+    assert.ok(customizationSource.includes(key), `${key} should be read by the customization render path`);
+  }
+  for (const key of Object.keys(expected).filter((key) => key.includes("booking"))) {
+    assert.ok(bookingSource.includes(key), `${key} should be read by the booking render path`);
+  }
+  assert.ok(backLinkSource.includes('href="/dashboard/account"'));
+  assert.ok(backLinkSource.includes('t["accountDashboard.hub.title"]'));
+
+  for (const snippet of [
+    'id: "preferred-language"',
+    'id: "currency"',
+    'id: "region"',
+    'value: "English"',
+    'value: "USD"',
+    'value: "United States"',
+    'id: "personalize-searches"',
+    'id: "personalized-travel-deals"',
+    'id: "remember-recent-searches"',
+    'id: "email-updates"',
+    'id: "price-alert-emails"',
+    'id: "travel-inspiration-emails"',
+    'name={field.id}',
+    'type="checkbox"',
+    'type="button"',
+  ]) {
+    assert.ok(customizationSource.includes(snippet), `Customization behavior should preserve ${snippet}`);
+  }
+
+  for (const snippet of [
+    'id: "home-airport"',
+    'id: "secondary-airports"',
+    'id: "preferred-airlines"',
+    'id: "avoid-airlines"',
+    'id: "preferred-hotel-chains"',
+    'id: "avoid-hotel-chains"',
+    'name={field.id}',
+    'type="search"',
+    'placeholder={t[field.placeholderKey]}',
+    'type="button"',
+  ]) {
+    assert.ok(bookingSource.includes(snippet), `Booking behavior should preserve ${snippet}`);
+  }
+
+  for (const english of [
+    "Customization preferences",
+    "Choose how Kurioticket personalizes your experience.",
+    "Language and region",
+    "Select preferred language",
+    "Personalization",
+    "Use my searches to personalize recommendations",
+    "Communication style",
+    "Booking preferences",
+    "Set your default travel preferences for faster and more relevant bookings.",
+    "Choose the airports you prefer to fly from.",
+    "Preferred airlines",
+    "Search hotel chains",
+    "Save preferences",
+  ]) {
+    assert.ok(!Object.values(expected).includes(english), `${english} must not be Vietnamese output`);
+  }
+
+  assert.deepEqual(Object.values(expected).flatMap((value) => value.match(/{{?[^}]+}}?/g) ?? []), []);
+  assert.equal(languageOptions.find((o) => o.code === "vi")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
+  assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
+  assert.equal(languageOptions.find((o) => o.code === "id")?.direction, "ltr");
+  assert.ok(availableLocaleOptions.some((option) => option.code === "vi" && option.locale === "vi-VN"));
+  assert.equal(getTranslations("vi-VN")["accountDashboard.preferences.booking.title"], expected["accountDashboard.preferences.booking.title"]);
+  assert.equal(getTranslations("vi-vn")["accountDashboard.preferences.customization.title"], expected["accountDashboard.preferences.customization.title"]);
+});
