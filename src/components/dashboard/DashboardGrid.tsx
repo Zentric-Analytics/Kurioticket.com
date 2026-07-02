@@ -1230,11 +1230,44 @@ function PhoneNumberInput({
   const [selectedPhoneCountryCode, setSelectedPhoneCountryCode] = useState(
     () => parsePhoneDraftValue(value, defaultCountryCode).countryCode,
   );
-  const parsedValue = useMemo(() => parsePhoneDraftValue(value, defaultCountryCode), [defaultCountryCode, value]);
-  const effectivePhoneCountryCode =
-    parsedValue.hasRecognizedDialCode || parsedValue.localNumber
-      ? selectedPhoneCountryCode
-      : parsedValue.countryCode;
+  const [hasManuallySelectedPhoneCountry, setHasManuallySelectedPhoneCountry] =
+    useState(false);
+  const parsedValue = useMemo(
+    () => parsePhoneDraftValue(value, defaultCountryCode),
+    [defaultCountryCode, value],
+  );
+
+  useEffect(() => {
+    const nextPhoneCountryCode = parsedValue.hasRecognizedDialCode
+      ? parsedValue.countryCode
+      : !value.trim() && !hasManuallySelectedPhoneCountry
+        ? getDefaultPhoneCountryCode(defaultCountryCode)
+        : null;
+
+    if (
+      !nextPhoneCountryCode ||
+      nextPhoneCountryCode === selectedPhoneCountryCode
+    ) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setSelectedPhoneCountryCode(nextPhoneCountryCode);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    defaultCountryCode,
+    hasManuallySelectedPhoneCountry,
+    parsedValue.countryCode,
+    parsedValue.hasRecognizedDialCode,
+    selectedPhoneCountryCode,
+    value,
+  ]);
+
+  const effectivePhoneCountryCode = parsedValue.hasRecognizedDialCode
+    ? parsedValue.countryCode
+    : selectedPhoneCountryCode;
   const selectedOption =
     countryCallingCodeOptions.find(
       (option) => option.isoCode === effectivePhoneCountryCode,
@@ -1243,6 +1276,7 @@ function PhoneNumberInput({
     selectedOption?.isoCode ?? defaultCountryCallingCodeOption?.isoCode ?? "";
 
   const handleCountryChange = (nextCountryCode: string) => {
+    setHasManuallySelectedPhoneCountry(true);
     setSelectedPhoneCountryCode(nextCountryCode);
     onChange(formatPhoneDraftValue(nextCountryCode, parsedValue.localNumber));
   };
