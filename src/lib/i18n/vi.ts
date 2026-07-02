@@ -977,6 +977,106 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.doubleRoom": "Phòng đôi",
   "hotelResults.filter.singleRoom": "Phòng đơn",
   "hotelResults.filter.kingBed": "Giường King",
+  searchRentalCarsEveryPartTrip: "Tìm xe thuê cho mọi chặng trong chuyến đi của bạn",
+  exploreCarsByTripStyle: "Khám phá xe thuê theo phong cách chuyến đi",
+  carsTripStyleBody:
+    "Chọn loại xe và chúng tôi sẽ mở kết quả với thông tin tìm kiếm đã sẵn sàng.",
+  "carsTripStyle.economy.title": "Xe phổ thông",
+  "carsTripStyle.economy.subtitle":
+    "Tìm kiếm tiết kiệm cho thành phố và chuyến đi một mình",
+  "carsTripStyle.economy.cta": "Bắt đầu tìm xe phổ thông",
+  "carsTripStyle.economy.ariaLabel":
+    "Bắt đầu tìm xe phổ thông từ điểm nhận xe ở trung tâm thành phố",
+  "carsTripStyle.suv.title": "SUV",
+  "carsTripStyle.suv.subtitle":
+    "Không gian cho chuyến đi gia đình, hành lý và hành trình dài hơn",
+  "carsTripStyle.suv.cta": "Mở tìm kiếm thuê SUV",
+  "carsTripStyle.suv.ariaLabel": "Mở tìm kiếm thuê SUV từ điểm nhận xe tại sân bay",
+  "carsTripStyle.luxury.title": "Xe sang",
+  "carsTripStyle.luxury.subtitle":
+    "Ngữ cảnh tìm kiếm cao cấp cho công tác hoặc chuyến đi đặc biệt",
+  "carsTripStyle.luxury.cta": "Lên kế hoạch tìm xe sang",
+  "carsTripStyle.luxury.ariaLabel":
+    "Lên kế hoạch tìm xe sang từ điểm nhận xe gần khu khách sạn",
+  "carsTripStyle.van.title": "Xe van",
+  "carsTripStyle.van.subtitle":
+    "Ngữ cảnh tìm kiếm cho du lịch nhóm và hành lý gia đình",
+  "carsTripStyle.van.cta": "Tìm xe van cho chuyến đi nhóm",
+  "carsTripStyle.van.ariaLabel":
+    "Tìm xe van cho chuyến đi nhóm từ điểm nhận xe tại sân bay",
+  "carsTrust.0.title": "Được xây dựng cho chuyến đi trọn vẹn",
+  "carsTrust.0.description":
+    "Lập kế hoạch chuyến bay, chỗ nghỉ và di chuyển mặt đất trong một quy trình Kurioticket.",
+  "carsTrust.1.title": "Ưu tiên chi tiết nhận xe",
+  "carsTrust.1.description":
+    "Nhập địa điểm nhận xe, ngày, giờ và tuổi tài xế để tìm kiếm xe thuê bắt đầu với đúng chi tiết chuyến đi.",
+  "carsTrust.2.title": "Xem xét thuê xe rõ ràng",
+  "carsTrust.2.description":
+    "Xem lại giá cuối cùng, tình trạng còn xe, phí và quy định thuê xe với nhà cung cấp trước khi đặt.",
+  "carsPickup.Airport.title": "Nhận xe tại sân bay",
+  "carsPickup.Airport.subtitle": "Bắt đầu từ các điểm đến của sân bay lớn",
+  "carsPickup.Airport.ariaLabel": "Mở kết quả ô tô cho nhận xe tại sân bay",
+  "carsPickup.City center.title": "Nhận xe ở trung tâm thành phố",
+  "carsPickup.City center.subtitle":
+    "Nhận xe gần khách sạn trung tâm và khu thương mại",
+  "carsPickup.City center.ariaLabel":
+    "Mở kết quả ô tô cho nhận xe ở trung tâm thành phố",
+  "carsPickup.Train station.title": "Nhận xe tại ga tàu",
+  "carsPickup.Train station.subtitle": "Tiếp tục chuyến đi sau khi đến bằng tàu",
+  "carsPickup.Train station.ariaLabel": "Mở kết quả ô tô cho nhận xe tại ga tàu",
+  "carsPickup.Hotel area.title": "Nhận xe gần khu khách sạn",
+  "carsPickup.Hotel area.subtitle":
+    "Lên kế hoạch nhận xe gần nơi bạn lưu trú",
+  "carsPickup.Hotel area.ariaLabel": "Mở kết quả ô tô cho nhận xe gần khu khách sạn",
+  carsPickupPointsTitle: "Bắt đầu với các điểm nhận xe phổ biến",
+  carsPickupPointsBody:
+    "Chọn kiểu nhận xe và chúng tôi sẽ mở trang kết quả ô tô với chi tiết tìm kiếm đã sẵn sàng.",
+  "carsSearch.pickupLocationLabel": "ĐỊA ĐIỂM NHẬN XE",
+  "carsSearch.pickupLocationPlaceholder": "Sân bay, thành phố hoặc địa chỉ",
+  "carsSearch.returnLocationPlaceholder": "Thành phố, sân bay hoặc địa chỉ trả xe",
+  "carsSearch.returnToSameLocation": "Trả xe tại cùng địa điểm",
+  "carsSearch.differentReturnLocation": "Địa điểm trả xe khác",
+  "carsSearch.rentalDatesLabel": "NGÀY THUÊ XE",
+  "carsSearch.rentalDatePlaceholder": "Ngày nhận xe — Ngày trả xe",
+  "carsSearch.pickupReturnTimeLabel": "GIỜ NHẬN / TRẢ XE",
+  "carsSearch.pickupReturnTimeSummary": "{pickupTime} nhận xe — {returnTime} trả xe",
+  "carsSearch.driverAgeLabel": "TUỔI TÀI XẾ",
+  "carsSearch.driverAgeAnyAge": "Mọi độ tuổi",
+  "carsSearch.clearPickupLocation": "Xóa địa điểm nhận xe",
+  "carsSearch.clearReturnLocation": "Xóa địa điểm trả xe",
+  "carsSearch.chooseRentalDatesAria": "Chọn ngày nhận và trả xe thuê",
+  "carsSearch.rentalDatePickerAria": "Bộ chọn ngày thuê xe",
+  "carsSearch.chooseRentalDates": "Chọn ngày thuê xe",
+  "carsSearch.previousMonth": "Tháng trước",
+  "carsSearch.previousMonthShort": "Trước",
+  "carsSearch.nextMonth": "Tháng tiếp theo",
+  "carsSearch.nextMonthShort": "Tiếp",
+  "carsSearch.selectDateAriaPrefix": "Chọn",
+  "carsSearch.startsNewPickupDate": "bắt đầu ngày nhận xe mới",
+  "carsSearch.choosePickupReturnTimesAria": "Chọn giờ nhận và trả xe",
+  "carsSearch.pickupReturnTimeSelectorAria": "Bộ chọn giờ nhận và trả xe",
+  "carsSearch.pickupTimeLabel": "Giờ nhận xe",
+  "carsSearch.returnTimeLabel": "Giờ trả xe",
+  "carsFaq.heading": "Câu hỏi thường gặp về ô tô",
+  "carsFaq.0.question": "Tôi cần thông tin gì để tìm xe thuê?",
+  "carsFaq.0.answer":
+    "Bạn thường cần địa điểm nhận và trả xe, ngày thuê, giờ nhận và trả xe, tuổi tài xế và mọi yêu cầu của nhà cung cấp được hiển thị trước khi đặt.",
+  "carsFaq.1.question": "Tôi có thể trả xe ở địa điểm khác không?",
+  "carsFaq.1.answer":
+    "Một số nhà cung cấp cho phép trả xe ở địa điểm khác. Tình trạng còn xe, phí và quy định sẽ được nhà cung cấp xác nhận trước khi đặt.",
+  "carsFaq.2.question": "Vì sao tuổi tài xế quan trọng khi thuê xe?",
+  "carsFaq.2.answer":
+    "Tuổi tài xế có thể ảnh hưởng đến điều kiện thuê, phí, lựa chọn bảo hiểm và loại xe có sẵn. Hãy xem quy định của nhà cung cấp trước khi đặt.",
+  "carsFaq.3.question": "Tôi nên kiểm tra gì trước khi đặt xe thuê?",
+  "carsFaq.3.answer":
+    "Hãy xem giá cuối cùng, quy định số km, chính sách nhiên liệu, tiền đặt cọc, lựa chọn bảo hiểm, yêu cầu nhận xe và điều khoản hủy trên trang nhà cung cấp.",
+  "carsFaq.4.question": "Giá thuê xe cuối cùng được xác nhận ở đâu?",
+  "carsFaq.4.answer":
+    "Giá thuê xe cuối cùng được xác nhận trên trang nhà cung cấp trước khi bạn hoàn tất đặt xe hoặc thanh toán.",
+  "carsFaq.5.question": "Tôi có thể cần giấy tờ gì khi nhận xe?",
+  "carsFaq.5.answer":
+    "Bạn có thể cần giấy phép lái xe hợp lệ, thẻ thanh toán, xác nhận đặt xe, hộ chiếu hoặc giấy tờ tùy thân và mọi giấy tờ do nhà cung cấp thuê xe hoặc quy định địa phương yêu cầu.",
+
   footerPrivacyPolicy: "Chính sách quyền riêng tư",
   footerTermsOfService: "Điều khoản dịch vụ",
   footerCookiePolicy: "Chính sách cookie",
