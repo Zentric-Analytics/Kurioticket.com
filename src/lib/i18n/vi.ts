@@ -467,6 +467,7 @@ export const translations: TranslationDictionary = {
   countryCurrencyPopularCountryAndCurrency: "Quốc gia và tiền tệ phổ biến",
   countryCurrencyOptionCountSingular: "{{count}} lựa chọn",
   countryCurrencyOptionCountPlural: "{{count}} lựa chọn",
+  selectCountryCurrencyOption: "Chọn {{country}}, {{code}}, {{currency}}",
   noCountriesOrCurrenciesFound: "Không tìm thấy quốc gia hoặc tiền tệ",
   showMoreResults: "Hiển thị thêm kết quả",
   globalLanguage: "NGÔN NGỮ TOÀN CỤC",

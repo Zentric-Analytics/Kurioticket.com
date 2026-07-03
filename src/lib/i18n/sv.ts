@@ -24,6 +24,7 @@ export const translations: TranslationDictionary = {
   countryCurrencyPopularCountryAndCurrency: 'Populära länder och valutor',
   countryCurrencyOptionCountSingular: '{{count}} alternativ',
   countryCurrencyOptionCountPlural: '{{count}} alternativ',
+  selectCountryCurrencyOption: 'Välj {{country}}, {{code}}, {{currency}}',
   noCountriesOrCurrenciesFound: 'Inga länder eller valutor hittades',
   showMoreResults: 'Visa fler resultat',
 

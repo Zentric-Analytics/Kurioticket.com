@@ -649,6 +649,7 @@ export const translations: TranslationDictionary = {
   showMoreResults: "显示更多结果",
   countryCurrencyOptionCountSingular: "{{count}} 个选项",
   countryCurrencyOptionCountPlural: "{{count}} 个选项",
+  selectCountryCurrencyOption: "选择 {{country}}，{{code}}，{{currency}}",
   "countryCurrency.country.US": "美国",
   "countryCurrency.country.GB": "英国",
   "countryCurrency.country.CA": "加拿大",
