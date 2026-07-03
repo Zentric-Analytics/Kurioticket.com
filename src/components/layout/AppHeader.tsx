@@ -734,7 +734,7 @@ export function AppHeader({
                     "{{language}}",
                     selectedLanguageDisplayName,
                   )}
-                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-transparent bg-transparent text-[#021C2B]/85 transition-colors hover:bg-[#F2F7FA] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
+                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-transparent bg-transparent text-[#021C2B]/85 transition-colors hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
                 >
                   {renderDesktopHeaderFlag(
                     selectedLanguage?.countryCode,
@@ -753,7 +753,7 @@ export function AppHeader({
                       aria-label={t.openAccountMenu}
                       title={t.openAccountMenu}
                       onClick={() => setAccountOpen((value) => !value)}
-                      className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-transparent bg-transparent text-[#021C2B] transition-colors hover:bg-[#F2F7FA] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
+                      className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-transparent bg-transparent text-[#021C2B] transition-colors hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
                     >
                       <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-[#F2F7FA] text-[11px] font-black text-[#004BB8] shadow-sm">
                         {session?.user?.image ? (
@@ -799,7 +799,7 @@ export function AppHeader({
                                     setAccountOpen(false),
                                   )
                                 }
-                                className="group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-start transition-colors hover:bg-[#F2F7FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                                className="group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-start transition-colors hover:bg-[#F2F7FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                               >
                                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#F2F7FA] text-[#004BB8] group-hover:bg-white">
                                   <Icon size={17} aria-hidden="true" />
@@ -822,7 +822,7 @@ export function AppHeader({
                             onClick={handleSignOut}
                             disabled={isSigningOut}
                             aria-busy={isSigningOut}
-                            className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-start text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
+                            className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-start text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
                           >
                             <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
                               <LogOut size={17} aria-hidden="true" />
@@ -840,7 +840,7 @@ export function AppHeader({
                       onClick={(event) =>
                         handleRouteLinkClick(event, "/auth/signin")
                       }
-                      className="inline-flex h-10 cursor-pointer items-center rounded-md px-3 text-[15px] font-semibold leading-none text-[#021C2B]/85 transition-colors hover:bg-[#F2F7FA] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
+                      className="inline-flex h-10 cursor-pointer items-center rounded-md px-3 text-[15px] font-semibold leading-none text-[#021C2B]/85 transition-colors hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
                     >
                       {t.login}
                     </Link>
@@ -850,7 +850,7 @@ export function AppHeader({
                       onClick={(event) =>
                         handleRouteLinkClick(event, "/auth/signup")
                       }
-                      className="inline-flex h-10 cursor-pointer items-center rounded-md bg-[#004BB8] px-3 text-[15px] font-semibold leading-none text-white shadow-[0_1px_2px_rgba(0,75,184,0.16)] transition-colors hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
+                      className="inline-flex h-10 cursor-pointer items-center rounded-md bg-[#004BB8] px-3 text-[15px] font-semibold leading-none text-white shadow-[0_1px_2px_rgba(0,75,184,0.16)] transition-colors hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
                     >
                       {t.signUp}
                     </Link>
@@ -871,7 +871,7 @@ export function AppHeader({
                     setMobileMenuOpen(false);
                     setMobileAccountOpen((value) => !value);
                   }}
-                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#DDE7F0] bg-[#F3F7FA]/70 text-xs font-black text-[#021C2B] transition-colors hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
+                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#DDE7F0] bg-[#F3F7FA]/70 text-xs font-black text-[#021C2B] transition-colors hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
                 >
                   <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-transparent text-[11px] font-black text-[#004BB8]">
                     {session?.user?.image ? (
@@ -892,7 +892,7 @@ export function AppHeader({
                   onClick={(event) =>
                     handleRouteLinkClick(event, "/auth/signin")
                   }
-                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#DDE7F0] bg-[#F3F7FA]/70 text-[#021C2B] transition-colors hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
+                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#DDE7F0] bg-[#F3F7FA]/70 text-[#021C2B] transition-colors hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
                 >
                   <UserCircle size={18} />
                 </Link>
@@ -905,7 +905,7 @@ export function AppHeader({
                 }
                 aria-expanded={mobileMenuOpen}
                 aria-controls="mobile-menu-drawer"
-                className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#DDE7F0] bg-[#F3F7FA]/70 text-[#021C2B] transition-colors hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
+                className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#DDE7F0] bg-[#F3F7FA]/70 text-[#021C2B] transition-colors hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
                 onClick={() => {
                   setMobileAccountOpen(false);
                   setMobileMenuOpen((value) => !value);
@@ -947,7 +947,7 @@ export function AppHeader({
                         <button
                           type="button"
                           onClick={closeLanguageDialog}
-                          className="shrink-0 cursor-pointer rounded-none p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                          className="shrink-0 cursor-pointer rounded-none p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                           aria-label={t.closeLanguageSelector}
                         >
                           <X size={18} aria-hidden="true" />
@@ -961,7 +961,7 @@ export function AppHeader({
                         {t.languageSearchLabel}
                       </label>
 
-                      <div className="mb-4 flex items-center gap-2 rounded-none border border-slate-200 px-3 py-2 focus-within:border-[#004BB8]/50 focus-within:ring-2 focus-within:ring-[#004BB8]/10">
+                      <div className="mb-4 flex items-center gap-2 rounded-none border border-slate-200 px-3 py-2 focus-within:border-[#004BB8]/25 focus-within:ring-2 focus-within:ring-[#004BB8]/20">
                         <Search
                           size={16}
                           className="text-slate-500"
@@ -1018,11 +1018,11 @@ export function AppHeader({
                                     )
                               }
                               onClick={() => handleLanguageSelect(option)}
-                              className={`flex min-h-[4.25rem] cursor-pointer items-start justify-between gap-3 rounded-none border px-3 py-2.5 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 ${
+                              className={`flex min-h-[4.25rem] cursor-pointer items-start justify-between gap-3 rounded-none border px-3 py-2.5 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 ${
                                 active
-                                  ? "border-[#004BB8] bg-[#F2F7FA] ring-2 ring-[#004BB8]/10"
+                                  ? "border-[#004BB8]/18 bg-[#004BB8]/6 ring-2 ring-[#004BB8]/8"
                                   : available
-                                    ? "border-slate-200 hover:border-[#004BB8]/30 hover:bg-[#F2F7FA]"
+                                    ? "border-slate-200 hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5"
                                     : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300"
                               }`}
                             >
@@ -1083,10 +1083,10 @@ export function AppHeader({
                         onClick={(event) =>
                           handleRouteLinkClick(event, item.href)
                         }
-                        className={`inline-flex min-h-[38px] cursor-pointer items-center gap-2 rounded-full border px-3.5 py-2 text-[15px] font-semibold leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 lg:px-4 ${
+                        className={`inline-flex min-h-[38px] cursor-pointer items-center gap-2 rounded-full border px-3.5 py-2 text-[15px] font-semibold leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2 lg:px-4 ${
                           active
-                            ? "border-[#004BB8]/40 bg-[#EAF3FF] text-[#004BB8] shadow-[inset_0_0_0_1px_rgba(0,75,184,0.04)]"
-                            : "border-[#DDE7F0] bg-[#F3F7FA]/70 text-[#021C2B]/85 hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8]"
+                            ? "border-[#004BB8]/18 bg-[#004BB8]/6 text-[#021C2B]"
+                            : "border-[#DDE7F0] bg-[#F3F7FA]/70 text-[#021C2B]/85 hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B]"
                         }`}
                       >
                         {Icon ? (
@@ -1120,10 +1120,10 @@ export function AppHeader({
                         onClick={(event) =>
                           handleRouteLinkClick(event, item.href)
                         }
-                        className={`inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full border leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 ${
+                        className={`inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full border leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2 ${
                           active
-                            ? "min-h-[38px] gap-1.5 border-[#004BB8]/40 bg-[#EAF3FF] px-3 py-2 text-[14px] font-semibold tracking-[-0.005em] text-[#004BB8] shadow-[inset_0_0_0_1px_rgba(0,75,184,0.04)]"
-                            : "min-h-[38px] gap-1.5 border-[#DDE7F0] bg-[#F3F7FA]/70 px-3 py-2 text-[14px] font-semibold tracking-[-0.005em] text-[#021C2B]/85 hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8]"
+                            ? "min-h-[38px] gap-1.5 border-[#004BB8]/18 bg-[#004BB8]/6 px-3 py-2 text-[14px] font-semibold tracking-[-0.005em] text-[#021C2B]"
+                            : "min-h-[38px] gap-1.5 border-[#DDE7F0] bg-[#F3F7FA]/70 px-3 py-2 text-[14px] font-semibold tracking-[-0.005em] text-[#021C2B]/85 hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B]"
                         }`}
                       >
                         {Icon ? (
@@ -1173,7 +1173,7 @@ export function AppHeader({
                     <button
                       type="button"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                      className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                       aria-label={t.closeMobileMenu}
                     >
                       <X size={18} aria-hidden="true" />
@@ -1207,7 +1207,7 @@ export function AppHeader({
                             "{{language}}",
                             selectedLanguageDisplayName,
                           )}
-                          className="inline-flex h-10 w-auto max-w-full cursor-pointer items-center justify-between gap-2 rounded-full border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 transition-colors hover:border-[#004BB8]/30 hover:bg-[#F2F7FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                          className="inline-flex h-10 w-auto max-w-full cursor-pointer items-center justify-between gap-2 rounded-full border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 transition-colors hover:border-[#004BB8]/30 hover:bg-[#F2F7FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                         >
                           <span className="inline-flex min-w-0 items-center gap-2">
                             <span
@@ -1261,7 +1261,7 @@ export function AppHeader({
                                   setMobileMenuOpen(false),
                                 )
                               }
-                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                             >
                               {Icon ? (
                                 <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-[#004BB8]">
@@ -1299,7 +1299,7 @@ export function AppHeader({
                                   setMobileMenuOpen(false),
                                 )
                               }
-                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                             >
                               {Icon ? (
                                 <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-[#004BB8]">
@@ -1336,7 +1336,7 @@ export function AppHeader({
                                   setMobileMenuOpen(false),
                                 )
                               }
-                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                             >
                               <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-[#004BB8]">
                                 <Icon size={19} aria-hidden="true" />
@@ -1409,7 +1409,7 @@ export function AppHeader({
                         <button
                           type="button"
                           onClick={() => setMobileAccountOpen(false)}
-                          className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                          className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                           aria-label={t["accountMenu.closeAccountMenu"]}
                         >
                           <X size={18} aria-hidden="true" />
@@ -1432,7 +1432,7 @@ export function AppHeader({
                                     setMobileAccountOpen(false),
                                   )
                                 }
-                                className="group inline-flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-base font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                                className="group inline-flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-base font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                               >
                                 <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition-colors group-hover:border-[#004BB8]/15 group-hover:bg-[#F2F7FA] group-hover:text-[#004BB8]">
                                   <Icon size={18} aria-hidden="true" />
@@ -1459,7 +1459,7 @@ export function AppHeader({
                           onClick={handleSignOut}
                           disabled={isSigningOut}
                           aria-busy={isSigningOut}
-                          className="group inline-flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-start text-base font-semibold text-rose-700 transition-colors hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
+                          className="group inline-flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-start text-base font-semibold text-rose-700 transition-colors hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
                         >
                           <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-rose-100 bg-rose-50 text-rose-700 transition-colors group-hover:bg-white">
                             <LogOut size={18} aria-hidden="true" />

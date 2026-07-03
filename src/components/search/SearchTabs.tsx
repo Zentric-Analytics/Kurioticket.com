@@ -217,7 +217,7 @@ const desktopPopoverPanelClassName = "z-[2147483400]";
 const desktopTravelersFieldClassName = "z-[2147483500]";
 const desktopTravelersPopoverClassName = "z-[2147483600]";
 const mobileDoneButtonClassName =
-  "focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-bold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35";
+  "focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-bold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35";
 
 type DesktopTopLayerPopoverProps = {
   open: boolean;
@@ -673,7 +673,7 @@ export function SearchTabs({
     compactHero ? "min-h-9 text-[17px] sm:text-[16px] lg:text-[15px] lg:tracking-[-0.01em] lg:text-slate-900 lg:placeholder:text-slate-500" : "min-h-8 text-[16px] sm:text-[15px]"
   );
   const flightRouteGroupClassName = compactHero
-    ? "grid grid-cols-1 gap-1 rounded-xl bg-transparent transition-colors sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch sm:border sm:border-slate-300 sm:bg-white sm:px-3.5 sm:py-1.5 sm:hover:border-slate-400 sm:focus-within:border-[#004BB8] sm:focus-within:ring-2 sm:focus-within:ring-[#004BB8]/30 lg:grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)] lg:rounded-none lg:rounded-s-xl lg:border-0 lg:border-e lg:border-slate-200 lg:px-4 lg:py-2 lg:hover:border-slate-200 lg:focus-within:border-[#004BB8] lg:focus-within:bg-white lg:focus-within:ring-2 lg:focus-within:ring-[#004BB8]/25"
+    ? "grid grid-cols-1 gap-1 rounded-xl bg-transparent transition-colors sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch sm:border sm:border-slate-300 sm:bg-white sm:px-3.5 sm:py-1.5 sm:hover:border-slate-400 sm:focus-within:border-[#004BB8]/35 sm:focus-within:ring-2 sm:focus-within:ring-[#004BB8]/20 lg:grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)] lg:rounded-none lg:rounded-s-xl lg:border-0 lg:border-e lg:border-slate-200 lg:px-4 lg:py-2 lg:hover:border-slate-200 lg:focus-within:border-[#004BB8]/35 lg:focus-within:bg-white lg:focus-within:ring-2 lg:focus-within:ring-[#004BB8]/20"
     : cn("grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white lg:rounded-s-xl", flightJoinedFieldClassName);
   const flightRouteFieldClassName = (side: "origin" | "destination") =>
     compactHero
@@ -687,7 +687,7 @@ export function SearchTabs({
     compactHero ? "lg:min-h-[58px]" : "lg:min-h-[58px]"
   );
   const submitButtonClassName = cn(
-    "w-full rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 enabled:hover:bg-[#021C2B] enabled:active:bg-[#021C2B] disabled:bg-[#004BB8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#004BB8]/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20 lg:text-[15px] lg:shadow-[0_10px_22px_rgba(0,75,184,0.22)] lg:disabled:shadow-[0_10px_22px_rgba(0,75,184,0.22)]",
+    "w-full rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] enabled:hover:bg-[#021C2B] enabled:active:bg-[#021C2B] disabled:bg-[#004BB8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#004BB8]/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20 lg:text-[15px] lg:shadow-[0_10px_22px_rgba(2,28,43,0.14)] lg:disabled:shadow-[0_10px_22px_rgba(2,28,43,0.14)]",
     compactHero ? "h-12 lg:min-h-[58px]" : "h-12 lg:min-h-[58px]"
   );
   const hotelSubmitWrapClassName = cn(
@@ -695,7 +695,7 @@ export function SearchTabs({
     compactHero ? "lg:min-h-[58px]" : "lg:min-h-[58px]"
   );
   const hotelSubmitButtonClassName = cn(
-    "w-full rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 enabled:hover:bg-[#021C2B] enabled:active:bg-[#021C2B] disabled:bg-[#004BB8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#004BB8]/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20 lg:text-[15px] lg:shadow-[0_10px_22px_rgba(0,75,184,0.22)] lg:disabled:shadow-[0_10px_22px_rgba(0,75,184,0.22)]",
+    "w-full rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] enabled:hover:bg-[#021C2B] enabled:active:bg-[#021C2B] disabled:bg-[#004BB8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#004BB8]/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20 lg:text-[15px] lg:shadow-[0_10px_22px_rgba(2,28,43,0.14)] lg:disabled:shadow-[0_10px_22px_rgba(2,28,43,0.14)]",
     compactHero ? "h-[54px] lg:min-h-[58px]" : "h-12 lg:min-h-[58px]"
   );
 
@@ -1933,7 +1933,7 @@ export function SearchTabs({
                           ? "text-slate-300"
                           : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
                         isToday && !isDisabledDate && "ring-1 ring-inset ring-[#004BB8]/25",
-                        isInRange && "bg-[#004BB8]/10 text-[#021C2B] hover:bg-[#004BB8]/15",
+                        isInRange && "bg-[#004BB8]/7 text-[#021C2B] hover:bg-[#004BB8]/10",
                         (isDeparture || isReturn) && "bg-[#004BB8] text-white shadow-sm hover:bg-[#004BB8] hover:text-white ring-0"
                       )}
                     >
@@ -2023,7 +2023,7 @@ export function SearchTabs({
                           ? "text-slate-300"
                           : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
                         isToday && !isDisabledDate && "ring-1 ring-inset ring-[#004BB8]/25",
-                        isInRange && "bg-[#004BB8]/10 text-[#021C2B] hover:bg-[#004BB8]/15",
+                        isInRange && "bg-[#004BB8]/7 text-[#021C2B] hover:bg-[#004BB8]/10",
                         (isCheckIn || isCheckOut) && "bg-[#004BB8] text-white shadow-sm hover:bg-[#004BB8] hover:text-white ring-0"
                       )}
                     >
@@ -2345,7 +2345,7 @@ export function SearchTabs({
                     ? "text-slate-300"
                     : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
                   isToday && !isDisabledDate && "ring-1 ring-inset ring-[#004BB8]/25",
-                  isInRange && "rounded-xl bg-[#004BB8]/10 text-[#004BB8] hover:bg-[#004BB8]/15",
+                  isInRange && "rounded-xl bg-[#004BB8]/7 text-[#021C2B] hover:bg-[#004BB8]/10",
                   (isStart || isEnd) && "bg-[#004BB8] text-white shadow-none hover:bg-[#021C2B] hover:text-white ring-0"
                 )}
               >
@@ -2452,7 +2452,7 @@ export function SearchTabs({
         <button
           type="button"
           onClick={onDone}
-          className="focus-ring rounded-lg bg-[#004BB8] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
+          className="focus-ring rounded-lg bg-[#004BB8] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
         >
           {translate("done") || "Done"}
         </button>
@@ -2591,8 +2591,8 @@ export function SearchTabs({
               "focus-ring min-h-11 rounded-2xl border px-2 text-center text-sm leading-4 transition-all",
               draftCabinClass === value
                 ? cn(
-                    "border-[#004BB8] bg-[#004BB8] text-white shadow-[0_10px_22px_rgba(0,75,184,0.22)]",
-                    compact && "border-[#004BB8] bg-[#004BB8] shadow-none"
+                    "border-[#004BB8]/20 bg-[#004BB8]/7 text-[#021C2B] shadow-none",
+                    compact && "border-[#004BB8]/20 bg-[#004BB8]/7 shadow-none"
                   )
                 : "border-slate-200 bg-slate-50/80 text-slate-700 hover:border-[#004BB8]/30 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
               compact ? "min-h-9 rounded-xl text-xs font-medium" : "font-extrabold"
@@ -3171,7 +3171,7 @@ export function SearchTabs({
                         </div>
                       </div>
                       <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
-                        <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-medium text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35">{t.done || "Done"}</button>
+                        <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-medium text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35">{t.done || "Done"}</button>
                       </div>
                     </div>
                     </DesktopTopLayerPopover>

@@ -70,7 +70,7 @@ export function FlightCard({
       className={cn(
         "relative w-full overflow-hidden border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.065)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(15,23,42,0.095)]",
         isAccented &&
-          "border-[#004BB8]/30 bg-[linear-gradient(180deg,rgba(0,75,184,0.05),#fff_34%)] shadow-[0_10px_28px_rgba(0,75,184,0.12)] ring-1 ring-[#004BB8]/10",
+          "border-[#004BB8]/16 bg-[linear-gradient(180deg,rgba(0,75,184,0.035),#fff_34%)] shadow-[0_12px_28px_-20px_rgba(2,28,43,0.18)] ring-1 ring-[#004BB8]/8",
       )}
     >
       {isAccented ? (
@@ -136,7 +136,7 @@ export function FlightCard({
           </div>
         </div>
 
-        <div className="mt-2 rounded-xl border border-[#004BB8]/10 bg-[#004BB8]/5 px-2.5 py-1.5 text-xs font-medium leading-5 text-slate-600">
+        <div className="mt-2 rounded-xl border border-[#004BB8]/8 bg-[#004BB8]/5 px-2.5 py-1.5 text-xs font-medium leading-5 text-slate-600">
           {showsProviderBackedReturn
             ? `${t("providerNormalizedItineraryPrefix")} ${providerHandoffCopy}`
             : providerHandoffCopy}
@@ -243,7 +243,7 @@ function AirlineLogo({ flight }: { flight: PublicFlightResult }) {
   }
 
   return (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#004BB8]/10 bg-[#004BB8]/5 text-[#004BB8] shadow-sm">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#004BB8]/8 bg-[#004BB8]/5 text-[#004BB8] shadow-sm">
       <PlaneTakeoff className="h-3.5 w-3.5" aria-hidden="true" />
     </div>
   );

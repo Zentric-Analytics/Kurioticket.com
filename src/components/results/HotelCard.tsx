@@ -278,7 +278,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
   }
 
   return (
-    <Card className="mx-auto w-full max-w-[800px] overflow-hidden border-[#004BB8]/10 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(2,28,43,0.26)]">
+    <Card className="mx-auto w-full max-w-[800px] overflow-hidden border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(2,28,43,0.26)]">
       <div className="grid md:grid-cols-[40%_minmax(0,1fr)]">
         <div className="relative h-[clamp(280px,78vw,340px)] bg-surface-muted md:aspect-auto md:h-auto md:min-h-[230px] lg:min-h-[240px]">
           {imageUrl ? (
@@ -387,7 +387,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
                 <Button
                   variant="accent"
                   size="sm"
-                  className="w-full whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-3 text-sm font-semibold text-white shadow-sm shadow-[#004BB8]/20 hover:border-[#021C2B] hover:bg-[#021C2B] min-[380px]:w-auto"
+                  className="w-full whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-3 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] hover:border-[#021C2B] hover:bg-[#021C2B] min-[380px]:w-auto"
                   onClick={redirectToHotel}
                 >
                   {t("hotelResults.viewHotel")}
