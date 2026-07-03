@@ -1633,6 +1633,7 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.ca-yvr-syd.routeNote":
     "Popularna daleka trasa do portowych atrakcji i nadmorskich dzielnic.",
   "legal.index.heroLabel": "Informacje prawne",
+  "legal.index.heroTitle": "Centrum prawne",
   "legal.index.heroDescription": "Zasoby prawne Kurioticket wyjaśniają, jak działają nasze praktyki dotyczące wyszukiwania podróży, kont, prywatności, przekierowań do dostawców i zgodności.",
   "legal.index.compliance.eyebrow": "FIRMA I ZGODNOŚĆ",
   "legal.index.compliance.sellerOfTravel": "Kalifornijski sprzedawca podróży",
