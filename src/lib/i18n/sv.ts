@@ -2,6 +2,14 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
+  flights: "Flyg",
+  hotels: "Hotell",
+  cars: "Bilar",
+  deals: "Erbjudanden",
+  destinations: "Resmål",
+  selectLanguage: "Välj språk",
+  suggestedLanguages: "Föreslagna språk",
+  allLanguages: "Alla språk",
   ...en,
   mobileInfoLegalHeading: "Info och juridik",
   mobileExploreHeading: "Utforska",

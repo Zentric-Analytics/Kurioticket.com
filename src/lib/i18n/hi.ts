@@ -507,6 +507,8 @@ export const translations: TranslationDictionary = {
   preparing: "तैयार हो रहा है",
   globalLanguage: "वैश्विक भाषा",
   selectLanguage: "भाषा चुनें",
+  suggestedLanguages: "सुझाई गई भाषाएँ",
+  allLanguages: "सभी भाषाएँ",
   searchLanguage: "भाषा या कोड खोजें",
   noLanguagesFound: "कोई भाषा नहीं मिली",
   done: "हो गया",
