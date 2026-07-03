@@ -108,7 +108,7 @@ export function BrandedLoading({
   return (
     <section
       className={cn(
-        "relative flex overflow-hidden bg-[linear-gradient(135deg,rgba(0,75,184,0.08),rgba(92,182,178,0.12)_45%,rgba(255,255,255,0.96))] text-[#021C2B]",
+        "relative flex overflow-hidden bg-[linear-gradient(180deg,#F8FAFC_0%,#FFFFFF_100%)] text-[#021C2B]",
         variantClasses[variant],
         className,
       )}
@@ -116,9 +116,9 @@ export function BrandedLoading({
       aria-live="polite"
       aria-busy="true"
     >
-      <div className="pointer-events-none absolute inset-0 opacity-80" aria-hidden="true">
-        <div className="absolute -left-16 top-10 h-40 w-40 rounded-full bg-[#5CB6B2]/20 blur-3xl" />
-        <div className="absolute -right-20 bottom-0 h-48 w-48 rounded-full bg-[#004BB8]/15 blur-3xl" />
+      <div className="pointer-events-none absolute inset-0 opacity-70" aria-hidden="true">
+        <div className="absolute -left-20 top-12 h-44 w-44 rounded-full bg-[#5CB6B2]/[0.06] blur-3xl" />
+        <div className="absolute -right-24 bottom-4 h-52 w-52 rounded-full bg-[#004BB8]/[0.05] blur-3xl" />
       </div>
 
       <div
@@ -139,7 +139,7 @@ export function BrandedLoading({
               <KurioticketLogo
                 className={cn(
                   "h-10 sm:h-11",
-                  logoPulse && "drop-shadow-[0_10px_24px_rgba(0,75,184,0.14)] animate-[logo-breathe_2.8s_ease-in-out_infinite] motion-reduce:animate-none",
+                  logoPulse && "drop-shadow-[0_8px_18px_rgba(0,75,184,0.08)] animate-[logo-breathe_2.8s_ease-in-out_infinite] motion-reduce:animate-none",
                 )}
               />
             </div>
@@ -148,8 +148,8 @@ export function BrandedLoading({
 
         <div className={cn(showLogo ? "mt-7" : undefined)}>
           {showProgress ? (
-            <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-[#004BB8]/10">
-              <div className="h-full w-1/2 animate-[loading-line_1.4s_ease-in-out_infinite] rounded-full bg-[linear-gradient(90deg,#004BB8,#5CB6B2)] motion-reduce:animate-none" />
+            <div className="h-1 w-full max-w-xs overflow-hidden rounded-full bg-[#004BB8]/[0.08]">
+              <div className="h-full w-1/2 animate-[loading-line_1.4s_ease-in-out_infinite] rounded-full bg-[linear-gradient(90deg,rgba(0,75,184,0.82),rgba(92,182,178,0.78))] motion-reduce:animate-none" />
             </div>
           ) : null}
 
@@ -165,9 +165,9 @@ export function BrandedLoading({
 
         {showProgress ? (
           <div className="mt-5 flex gap-2" aria-hidden="true">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-[#004BB8] motion-reduce:animate-none" />
-            <span className="h-2 w-2 animate-pulse rounded-full bg-[#5CB6B2] delay-150 motion-reduce:animate-none" />
-            <span className="h-2 w-2 animate-pulse rounded-full bg-[#021C2B] delay-300 motion-reduce:animate-none" />
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#004BB8]/80 motion-reduce:animate-none" />
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#5CB6B2]/80 delay-150 motion-reduce:animate-none" />
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#021C2B]/55 delay-300 motion-reduce:animate-none" />
           </div>
         ) : null}
 
