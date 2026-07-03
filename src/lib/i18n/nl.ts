@@ -72,8 +72,7 @@ export const translations: TranslationDictionary = {
   openCountryCurrencySelector:
     "Land- en valutakiezer openen, huidige selectie {{code}}, {{currency}}",
   chooseCountryAndCurrency: "Kies land en valuta",
-  countryCurrencyDescription:
-    "Selecteer het land en de valuta die worden gebruikt om prijzen weer te geven. Luchthavensuggesties gebruiken je gedetecteerde locatie.",
+  countryCurrencyDescription: "Kies het land en de valuta die worden gebruikt voor prijzen en regionale voorkeuren.",
   closeCountryCurrencySelector: "Land- en valutakiezer sluiten",
   searchCountryOrCurrency: "Zoek land of valuta",
   countryCurrencyAllCountriesAndCurrencies: "ALLE LANDEN EN VALUTA",

@@ -461,8 +461,7 @@ export const translations: TranslationDictionary = {
     "Mở bộ chọn quốc gia và tiền tệ, lựa chọn hiện tại {{code}}, {{currency}}",
   closeCountryCurrencySelector: "Đóng bộ chọn quốc gia và tiền tệ",
   chooseCountryAndCurrency: "Chọn quốc gia và tiền tệ",
-  countryCurrencyDescription:
-    "Chọn quốc gia và tiền tệ dùng để hiển thị giá. Gợi ý sân bay sử dụng vị trí được phát hiện của bạn.",
+  countryCurrencyDescription: "Chọn quốc gia và tiền tệ dùng cho giá và tùy chọn khu vực.",
   searchCountryOrCurrency: "Tìm kiếm quốc gia hoặc tiền tệ",
   countryCurrencyAllCountriesAndCurrencies: "TẤT CẢ QUỐC GIA VÀ TIỀN TỆ",
   countryCurrencyPopularCountryAndCurrency: "QUỐC GIA VÀ TIỀN TỆ PHỔ BIẾN",

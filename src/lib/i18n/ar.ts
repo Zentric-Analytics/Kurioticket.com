@@ -566,8 +566,7 @@ export const translations: TranslationDictionary = {
   searchCountryOrCurrency: "ابحث عن دولة أو عملة",
   openCountryCurrencySelector:
     "افتح محدد الدولة والعملة، الاختيار الحالي {{code}}، {{currency}}",
-  countryCurrencyDescription:
-    "اختر الدولة والعملة المستخدمتين لعرض الأسعار. تستخدم اقتراحات المطارات موقعك المكتشف.",
+  countryCurrencyDescription: "اختر الدولة والعملة المستخدمتين للأسعار والتفضيلات الإقليمية.",
   closeCountryCurrencySelector: "إغلاق محدد الدولة والعملة",
   countryCurrencyAllCountriesAndCurrencies: "كل الدول والعملات",
   countryCurrencyPopularCountryAndCurrency: "الدول والعملات الشائعة",

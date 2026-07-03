@@ -230,9 +230,10 @@ export const translations: TranslationDictionary = {
   globalLanguage: "ภาษาของเว็บไซต์",
   closeLanguageSelector: "ปิดตัวเลือกภาษา",
   preparing: "กำลังเตรียม",
+  countryAndCurrency: "ประเทศและสกุลเงิน",
+  openCountryCurrencySelector: "เปิดตัวเลือกประเทศและสกุลเงิน การเลือกปัจจุบัน {{code}}, {{currency}}",
   chooseCountryAndCurrency: "เลือกประเทศและสกุลเงิน",
-  countryCurrencyDescription:
-    "เลือกประเทศและสกุลเงินที่ใช้แสดงราคา คำแนะนำสนามบินจะใช้ตำแหน่งที่ตรวจพบของคุณ",
+  countryCurrencyDescription: "เลือกประเทศและสกุลเงินที่ใช้สำหรับราคาและการตั้งค่าภูมิภาค",
   closeCountryCurrencySelector: "ปิดตัวเลือกประเทศและสกุลเงิน",
   searchCountryOrCurrency: "ค้นหาประเทศหรือสกุลเงิน",
   countryCurrencyAllCountriesAndCurrencies: "ประเทศและสกุลเงินทั้งหมด",

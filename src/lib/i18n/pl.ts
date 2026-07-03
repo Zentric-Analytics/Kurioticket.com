@@ -136,9 +136,10 @@ export const translations: TranslationDictionary = {
   "accountDashboard.security.action.turnOff": "Wyłącz",
   "accountDashboard.security.action.deleteAccount": "Usuń konto",
   countryAndCurrency: "Kraj i waluta",
+  openCountryCurrencySelector: "Otwórz selektor kraju i waluty, obecny wybór {{code}}, {{currency}}",
   chooseCountryAndCurrency: "Wybierz kraj i walutę",
-  countryCurrencyDescription:
-    "Wybierz kraj i walutę używane do wyświetlania cen. Sugestie lotnisk korzystają z wykrytej lokalizacji.",
+  countryCurrencyDescription: "Wybierz kraj i walutę używane do cen i preferencji regionalnych.",
+  closeCountryCurrencySelector: "Zamknij selektor kraju i waluty",
   searchCountryOrCurrency: "Wyszukaj kraj lub walutę",
   countryCurrencyPopularCountryAndCurrency: "POPULARNE KRAJE I WALUTY",
   countryCurrencyAllCountriesAndCurrencies: "WSZYSTKIE KRAJE I WALUTY",

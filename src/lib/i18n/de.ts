@@ -735,8 +735,7 @@ export const translations: TranslationDictionary = {
   openCountryCurrencySelector:
     "Land- und Währungsauswahl öffnen, aktuelle Auswahl {{code}}, {{currency}}",
   chooseCountryAndCurrency: "Land und Währung auswählen",
-  countryCurrencyDescription:
-    "Wähle das Land und die Währung aus, die zur Anzeige von Preisen verwendet werden. Flughafenvorschläge verwenden deinen erkannten Standort.",
+  countryCurrencyDescription: "Wähle das Land und die Währung für Preise und regionale Einstellungen aus.",
   closeCountryCurrencySelector: "Land- und Währungsauswahl schließen",
   searchCountryOrCurrency: "Land oder Währung suchen",
   countryCurrencyAllCountriesAndCurrencies: "ALLE LÄNDER UND WÄHRUNGEN",

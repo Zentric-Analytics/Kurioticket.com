@@ -103,8 +103,7 @@ export const translations: TranslationDictionary = {
   openCountryCurrencySelector:
     "Abrir selector de país y moneda, selección actual {{code}}, {{currency}}",
   chooseCountryAndCurrency: "Elige país y moneda",
-  countryCurrencyDescription:
-    "Selecciona el país y la moneda usados para mostrar precios. Las sugerencias de aeropuertos usan tu ubicación detectada.",
+  countryCurrencyDescription: "Elige el país y la moneda que se usan para precios y preferencias regionales.",
   closeCountryCurrencySelector: "Cerrar selector de país y moneda",
   searchCountryOrCurrency: "Buscar país o moneda",
   countryCurrencyAllCountriesAndCurrencies: "TODOS LOS PAÍSES Y MONEDAS",
