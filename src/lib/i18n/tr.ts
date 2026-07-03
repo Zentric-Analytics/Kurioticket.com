@@ -1430,6 +1430,8 @@ export const translations: TranslationDictionary = {
   "legal.tableOfContents": "İÇİNDEKİLER",
   "legal.privacy.title": "Gizlilik Politikası",
   "legal.privacy.summary": "Kurioticket LLC’nin (“Kurioticket,” “we,” “us,” veya “our”) hesap, arama, uyarı, destek ve e-posta verilerini nasıl topladığını, kullandığını, sakladığını ve koruduğunu açıklar.",
+  "legal.privacy.lastUpdatedDate": "11 Mayıs 2026",
+  "legal.privacy.lastUpdated": "Son güncelleme: 11 Mayıs 2026",
   "legal.privacy.tableOfContents": "İÇİNDEKİLER",
   "legal.privacy.sections.data-we-collect.title": "Topladığımız Veriler",
   "legal.privacy.sections.data-we-collect.paragraph1": "Ad, e-posta, karma hâle getirilmiş parola, kimlik doğrulama sağlayıcısı tanımlayıcıları ve isteğe bağlı seyahat tercihleri gibi hesap verilerini toplarız. Kayıt sırasında pasaport verisi, resmi kimlik veya ev adresi istemeyiz.",

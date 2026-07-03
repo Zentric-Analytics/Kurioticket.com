@@ -1439,6 +1439,8 @@ export const translations: TranslationDictionary = {
   "legal.terms.developerNote": "ये कानूनी मसौदे स्टार्टअप प्लेसहोल्डर हैं और बड़े पैमाने पर सार्वजनिक लॉन्च से पहले योग्य कानूनी सलाहकार द्वारा समीक्षा किए जाने चाहिए।",
   "legal.privacy.title": "गोपनीयता नीति",
   "legal.privacy.summary": "Kurioticket LLC (“Kurioticket,” “हम,” “हमें,” या “हमारा”) खाता, खोज, अलर्ट, सहायता और ईमेल डेटा कैसे एकत्र, उपयोग, संग्रहीत और सुरक्षित करता है।",
+  "legal.privacy.lastUpdatedDate": "11 मई 2026",
+  "legal.privacy.lastUpdated": "अंतिम अपडेट: 11 मई 2026",
   "legal.privacy.tableOfContents": "विषय सूची",
   "legal.privacy.sections.data-we-collect.title": "हम जो डेटा एकत्र करते हैं",
   "legal.privacy.sections.data-we-collect.paragraph1": "हम नाम, ईमेल, हैश किया गया पासवर्ड, प्रमाणीकरण प्रदाता पहचानकर्ता और वैकल्पिक यात्रा पसंद जैसे खाता डेटा एकत्र करते हैं। साइनअप के समय हम पासपोर्ट डेटा, सरकारी आईडी या घर का पता नहीं माँगते।",

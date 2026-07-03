@@ -1662,6 +1662,7 @@ export const translations: TranslationDictionary = {
   "legal.privacy.summary":
     "วิธีที่ Kurioticket LLC (“Kurioticket,” “เรา,” “พวกเรา,” หรือ “ของเรา”) เก็บรวบรวม ใช้ จัดเก็บ และปกป้องข้อมูลบัญชี การค้นหา การแจ้งเตือน การสนับสนุน และอีเมล",
   "legal.privacy.lastUpdatedDate": "May 11, 2026",
+  "legal.privacy.lastUpdated": "อัปเดตล่าสุด: 11 พฤษภาคม 2026",
   "legal.privacy.tableOfContents": "สารบัญ",
   "legal.privacy.sections.data-we-collect.title": "ข้อมูลที่เราเก็บรวบรวม",
   "legal.privacy.sections.data-we-collect.paragraph1":
