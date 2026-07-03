@@ -3,6 +3,24 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  privacyPageTitle: "Política de privacidad",
+  privacyPageEyebrow: "Privacidad de Kurioticket",
+  privacyHeroTitle: "Política de privacidad",
+  privacyHeroSubtitle: "Cómo Kurioticket LLC (“Kurioticket”, “nosotros”, “nos” o “nuestro”) recopila, usa, almacena y protege datos de cuenta, búsqueda, alertas, soporte y correo electrónico.",
+  privacyNoticeBody: "Estos borradores legales son marcadores de posición para una startup y deben ser revisados por asesoría legal calificada antes de un lanzamiento público a gran escala.",
+  privacySectionInformationTitle: "Datos que recopilamos",
+  privacySectionInformationBody: "Recopilamos datos de cuenta como nombre, correo electrónico, contraseña cifrada, identificadores del proveedor de autenticación y preferencias de viaje opcionales. No solicitamos datos de pasaporte, identificación gubernamental ni dirección particular al registrarte.",
+  privacySectionUseTitle: "Cómo se usa la información",
+  privacySectionUseBody: "Cómo Kurioticket LLC (“Kurioticket”, “nosotros”, “nos” o “nuestro”) recopila, usa, almacena y protege datos de cuenta, búsqueda, alertas, soporte y correo electrónico.",
+  privacySectionProvidersTitle: "Proveedores externos",
+  privacySectionProvidersBody: "Podemos usar proveedores de servicios externos para ayudar a operar nuestros servicios, enviar comunicaciones, proteger la plataforma, medir el rendimiento y respaldar la funcionalidad del producto.",
+  privacySectionChoicesTitle: "Tus opciones",
+  privacySectionChoicesBody: "Puedes actualizar tus preferencias de notificación, solicitar la eliminación de tu cuenta y solicitar acceso o corrección cuando lo exijan las leyes de privacidad aplicables.",
+  privacyLegalCenterBeforeLink: "Para ver un borrador más completo, visita",
+  privacyLegalCenterLink: "Ver política de privacidad",
+  privacyLegalCenterAfterLink: ".",
+
+
   explorePageEyebrow: "Descubrimiento de viajes",
   exploreHeroTitle: "Explora ideas de viaje",
   exploreHeroSubtitle: "Empieza con rutas, estancias y herramientas de planificación diseñadas para ayudarte a comparar opciones con claridad antes de continuar con un proveedor.",

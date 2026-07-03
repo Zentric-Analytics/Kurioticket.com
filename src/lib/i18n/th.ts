@@ -3,6 +3,24 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  privacyPageTitle: "นโยบายความเป็นส่วนตัว",
+  privacyPageEyebrow: "Kurioticket privacy",
+  privacyHeroTitle: "นโยบายความเป็นส่วนตัว",
+  privacyHeroSubtitle: "วิธีที่ Kurioticket LLC (“Kurioticket,” “เรา,” “พวกเรา,” หรือ “ของเรา”) เก็บรวบรวม ใช้ จัดเก็บ และปกป้องข้อมูลบัญชี การค้นหา การแจ้งเตือน การสนับสนุน และอีเมล",
+  privacyNoticeBody: "ร่างเอกสารทางกฎหมายเหล่านี้เป็นข้อความชั่วคราวสำหรับสตาร์ทอัป และควรได้รับการตรวจสอบโดยที่ปรึกษากฎหมายที่มีคุณสมบัติก่อนเปิดให้ใช้งานสาธารณะในวงกว้าง",
+  privacySectionInformationTitle: "ข้อมูลที่เราเก็บรวบรวม",
+  privacySectionInformationBody: "เราเก็บข้อมูลบัญชี เช่น ชื่อ อีเมล รหัสผ่านที่แฮชแล้ว ตัวระบุผู้ให้บริการยืนยันตัวตน และการตั้งค่าการเดินทางที่เลือกได้ เราไม่ขอข้อมูลหนังสือเดินทาง บัตรประจำตัวที่ออกโดยรัฐบาล หรือที่อยู่บ้านเมื่อสมัคร",
+  privacySectionUseTitle: "วิธีใช้ข้อมูล",
+  privacySectionUseBody: "วิธีที่ Kurioticket LLC (“Kurioticket,” “เรา,” “พวกเรา,” หรือ “ของเรา”) เก็บรวบรวม ใช้ จัดเก็บ และปกป้องข้อมูลบัญชี การค้นหา การแจ้งเตือน การสนับสนุน และอีเมล",
+  privacySectionProvidersTitle: "ผู้ให้บริการภายนอก",
+  privacySectionProvidersBody: "เราอาจใช้ผู้ให้บริการบุคคลที่สามเพื่อช่วยดำเนินบริการ ส่งการสื่อสาร ปกป้องแพลตฟอร์ม วัดประสิทธิภาพ และสนับสนุนฟังก์ชันผลิตภัณฑ์",
+  privacySectionChoicesTitle: "ตัวเลือกของคุณ",
+  privacySectionChoicesBody: "คุณอาจอัปเดตการตั้งค่าการแจ้งเตือน ขอให้ลบบัญชี และขอเข้าถึงหรือแก้ไขข้อมูลเมื่อกฎหมายความเป็นส่วนตัวที่ใช้บังคับกำหนด",
+  privacyLegalCenterBeforeLink: "สำหรับร่างที่สมบูรณ์กว่า โปรดไปที่",
+  privacyLegalCenterLink: "legal center privacy policy",
+  privacyLegalCenterAfterLink: ".",
+
+
   explorePageEyebrow: "การค้นพบการเดินทาง",
   exploreHeroTitle: "สำรวจไอเดียการเดินทาง",
   exploreHeroSubtitle: "เริ่มจากเส้นทาง ที่พัก และเครื่องมือวางแผนที่ออกแบบมาเพื่อช่วยให้คุณเปรียบเทียบตัวเลือกได้ชัดเจนก่อนดำเนินการต่อกับผู้ให้บริการ",

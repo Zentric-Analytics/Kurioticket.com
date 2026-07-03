@@ -3,6 +3,24 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  privacyPageTitle: "Gizlilik Politikası",
+  privacyPageEyebrow: "Kurioticket privacy",
+  privacyHeroTitle: "Gizlilik Politikası",
+  privacyHeroSubtitle: "Kurioticket LLC’nin (“Kurioticket,” “we,” “us,” veya “our”) hesap, arama, uyarı, destek ve e-posta verilerini nasıl topladığını, kullandığını, sakladığını ve koruduğunu açıklar.",
+  privacyNoticeBody: "Bu yasal taslaklar başlangıç aşaması için yer tutucu metinlerdir ve geniş ölçekli herkese açık lansmandan önce nitelikli hukuk danışmanları tarafından incelenmelidir.",
+  privacySectionInformationTitle: "Topladığımız Veriler",
+  privacySectionInformationBody: "Ad, e-posta, karma hâle getirilmiş parola, kimlik doğrulama sağlayıcısı tanımlayıcıları ve isteğe bağlı seyahat tercihleri gibi hesap verilerini toplarız. Kayıt sırasında pasaport verisi, resmi kimlik veya ev adresi istemeyiz.",
+  privacySectionUseTitle: "Bilgilerin kullanımı",
+  privacySectionUseBody: "Kurioticket LLC’nin (“Kurioticket,” “we,” “us,” veya “our”) hesap, arama, uyarı, destek ve e-posta verilerini nasıl topladığını, kullandığını, sakladığını ve koruduğunu açıklar.",
+  privacySectionProvidersTitle: "Harici sağlayıcılar",
+  privacySectionProvidersBody: "Hizmetlerimizi işletmek, iletişim göndermek, platformu korumak, performansı ölçmek ve ürün işlevselliğini desteklemek için üçüncü taraf hizmet sağlayıcıları kullanabiliriz.",
+  privacySectionChoicesTitle: "Seçimleriniz",
+  privacySectionChoicesBody: "Bildirim tercihlerinizi güncelleyebilir, hesap silme talebinde bulunabilir ve geçerli gizlilik yasalarının gerektirdiği durumlarda erişim veya düzeltme talep edebilirsiniz.",
+  privacyLegalCenterBeforeLink: "Daha kapsamlı bir taslak için",
+  privacyLegalCenterLink: "Gizlilik Politikasını görüntüle",
+  privacyLegalCenterAfterLink: ".",
+
+
   explorePageEyebrow: "Seyahat keşfi",
   exploreHeroTitle: "Seyahat fikirlerini keşfedin",
   exploreHeroSubtitle: "Bir sağlayıcıyla devam etmeden önce seçenekleri netçe karşılaştırmanıza yardımcı olmak için tasarlanmış rotalar, konaklamalar ve planlama araçlarıyla başlayın.",

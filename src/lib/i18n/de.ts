@@ -3,6 +3,24 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  privacyPageTitle: "Datenschutzrichtlinie",
+  privacyPageEyebrow: "Kurioticket-Datenschutz",
+  privacyHeroTitle: "Datenschutzrichtlinie",
+  privacyHeroSubtitle: "Wie Kurioticket LLC („Kurioticket“, „wir“, „uns“ oder „unser“) Konto-, Such-, Benachrichtigungs-, Support- und E-Mail-Daten erhebt, verwendet, speichert und schützt.",
+  privacyNoticeBody: "Diese rechtlichen Entwürfe sind Platzhalter für die Startphase und sollten vor einer groß angelegten öffentlichen Einführung von qualifiziertem Rechtsbeistand geprüft werden.",
+  privacySectionInformationTitle: "Daten, die wir erheben",
+  privacySectionInformationBody: "Wir erheben Kontodaten wie Name, E-Mail-Adresse, gehashtes Passwort, Kennungen von Authentifizierungsanbietern und optionale Reisepräferenzen. Bei der Registrierung fragen wir keine Passdaten, staatlichen Ausweisdaten oder Wohnadressen ab.",
+  privacySectionUseTitle: "Wie Informationen verwendet werden",
+  privacySectionUseBody: "Wie Kurioticket LLC („Kurioticket“, „wir“, „uns“ oder „unser“) Konto-, Such-, Benachrichtigungs-, Support- und E-Mail-Daten erhebt, verwendet, speichert und schützt.",
+  privacySectionProvidersTitle: "Externe Anbieter",
+  privacySectionProvidersBody: "Wir können Drittanbieter-Dienstleister einsetzen, um unsere Dienste zu betreiben, Mitteilungen zu versenden, die Plattform zu schützen, die Leistung zu messen und Produktfunktionen zu unterstützen.",
+  privacySectionChoicesTitle: "Ihre Auswahlmöglichkeiten",
+  privacySectionChoicesBody: "Sie können Benachrichtigungseinstellungen aktualisieren, die Löschung Ihres Kontos anfordern und, soweit nach geltendem Datenschutzrecht erforderlich, Auskunft oder Berichtigung verlangen.",
+  privacyLegalCenterBeforeLink: "Für einen ausführlicheren Entwurf besuchen Sie",
+  privacyLegalCenterLink: "Datenschutzrichtlinie anzeigen",
+  privacyLegalCenterAfterLink: ".",
+
+
   explorePageEyebrow: "Reiseentdeckung",
   exploreHeroTitle: "Reiseideen entdecken",
   exploreHeroSubtitle: "Beginne mit Routen, Aufenthalten und Planungstools, die dir helfen, Optionen klar zu vergleichen, bevor du bei einem Anbieter fortfährst.",

@@ -3,6 +3,24 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  privacyPageTitle: "سياسة الخصوصية",
+  privacyPageEyebrow: "خصوصية Kurioticket",
+  privacyHeroTitle: "سياسة الخصوصية",
+  privacyHeroSubtitle: "كيف تجمع Kurioticket LLC (\"Kurioticket\" أو \"نحن\" أو \"لنا\") بيانات الحساب والبحث والتنبيهات والدعم والبريد الإلكتروني وتستخدمها وتخزنها وتحميها",
+  privacyNoticeBody: "هذه المسودات القانونية نصوص مؤقتة لشركة ناشئة ويجب مراجعتها من قبل مستشار قانوني مؤهل قبل الإطلاق العام على نطاق واسع.",
+  privacySectionInformationTitle: "البيانات التي نجمعها",
+  privacySectionInformationBody: "نجمع بيانات الحساب مثل الاسم والبريد الإلكتروني وكلمة المرور المجزأة ومعرّفات مزوّدي المصادقة وتفضيلات السفر الاختيارية. لا تطلب Kurioticket بيانات جواز السفر أو الهوية الحكومية أو عنوان المنزل عند التسجيل.",
+  privacySectionUseTitle: "كيفية استخدام المعلومات",
+  privacySectionUseBody: "كيف تجمع Kurioticket LLC (\"Kurioticket\" أو \"نحن\" أو \"لنا\") بيانات الحساب والبحث والتنبيهات والدعم والبريد الإلكتروني وتستخدمها وتخزنها وتحميها",
+  privacySectionProvidersTitle: "المزودون الخارجيون",
+  privacySectionProvidersBody: "قد نستخدم مزوّدي خدمات تابعين لجهات خارجية للمساعدة في تشغيل خدماتنا وإرسال الاتصالات وحماية المنصة وقياس الأداء ودعم وظائف المنتج.",
+  privacySectionChoicesTitle: "خياراتك",
+  privacySectionChoicesBody: "يمكنك تحديث تفضيلات الإشعارات وطلب حذف الحساب وطلب الوصول إلى البيانات أو تصحيحها عندما تقتضي قوانين الخصوصية المعمول بها ذلك.",
+  privacyLegalCenterBeforeLink: "للاطلاع على مسودة أكمل، تفضل بزيارة",
+  privacyLegalCenterLink: "عرض سياسة الخصوصية",
+  privacyLegalCenterAfterLink: ".",
+
+
   explorePageEyebrow: "اكتشاف السفر",
   exploreHeroTitle: "استكشف أفكار السفر",
   exploreHeroSubtitle: "ابدأ بالمسارات والإقامات وأدوات التخطيط المصممة لمساعدتك على مقارنة الخيارات بوضوح قبل المتابعة مع مزود.",
