@@ -1423,6 +1423,8 @@ export const translations: TranslationDictionary = {
   "legal.tableOfContents": "विषय सूची",
   "legal.terms.title": "सेवा की शर्तें",
   "legal.terms.summary": "Kurioticket खोज, खातों, डैशबोर्ड, सहेजे गए यात्रा टूल और पार्टनर रीडायरेक्ट के उपयोग के नियम।",
+  "legal.terms.lastUpdatedDate": "11 मई 2026",
+  "legal.terms.lastUpdated": "अंतिम अपडेट: 11 मई 2026",
   "legal.terms.tableOfContents": "विषय सूची",
   "legal.terms.sections.overview.title": "अवलोकन",
   "legal.terms.sections.overview.paragraph1": "Kurioticket LLC (“Kurioticket,” “हम,” “हमें,” या “हमारा”) एक यात्रा खोज और तुलना प्लेटफ़ॉर्म संचालित करता है, जो उपयोगकर्ताओं को उड़ानें, होटल और कारें खोजने, प्रदाता विकल्पों की तुलना करने, यात्रा योजनाएँ सहेजने और अलर्ट बनाने में मदद करता है।",

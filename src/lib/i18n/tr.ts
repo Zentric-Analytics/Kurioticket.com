@@ -1445,6 +1445,8 @@ export const translations: TranslationDictionary = {
   "legal.privacy.developerNote": "Bu yasal taslaklar başlangıç aşaması için yer tutucu metinlerdir ve geniş ölçekli herkese açık lansmandan önce nitelikli hukuk danışmanları tarafından incelenmelidir.",
   "legal.terms.title": "Hizmet Şartları",
   "legal.terms.summary": "Kurioticket araması, hesapları, panoları, kaydedilen seyahat araçları ve iş ortağı yönlendirmelerinin kullanımına ilişkin kurallar.",
+  "legal.terms.lastUpdatedDate": "11 Mayıs 2026",
+  "legal.terms.lastUpdated": "Son güncelleme: 11 Mayıs 2026",
   "legal.terms.tableOfContents": "İÇİNDEKİLER",
   "legal.terms.sections.overview.title": "Genel Bakış",
   "legal.terms.sections.overview.paragraph1": "Kurioticket LLC (“Kurioticket,” “we,” “us,” veya “our”), kullanıcıların uçuşları, otelleri ve araçları aramasına, sağlayıcı seçeneklerini karşılaştırmasına, seyahat planlarını kaydetmesine ve uyarılar oluşturmasına yardımcı olan bir seyahat arama ve karşılaştırma platformu işletir.",
