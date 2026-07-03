@@ -10,6 +10,8 @@ export const translations: TranslationDictionary = {
   deals: "Promo",
   destinations: "Destinasi",
   saved: "Tersimpan",
+  explore: "Jelajahi",
+  dashboard: "Dasbor",
   savedTripsPageTitle: "Perjalanan tersimpan",
   savedTripsPageSubtitle:
     "Rencana perjalanan pilihan Anda dan rute yang sedang tren.",

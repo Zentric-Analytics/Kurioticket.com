@@ -177,6 +177,9 @@ export const translations: TranslationDictionary = {
   "carsFaq.5.answer":
     "Kiralama sağlayıcıları geçerli bir sürücü belgesi, ödeme kartı, kimlik belgesi ve alış yapılan ülke veya konumun gerektirdiği belgeleri isteyebilir.",
   destinations: "Destinasyonlar",
+  explore: "Keşfet",
+  saved: "Kaydedilenler",
+  dashboard: "Kontrol paneli",
   login: "Giriş yap",
   signUp: "Kaydol",
   logout: "Çıkış yap",

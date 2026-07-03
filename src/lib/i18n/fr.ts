@@ -142,7 +142,7 @@ export const translations: TranslationDictionary = {
   "countryCurrency.country.PT": "Portugal",
   "countryCurrency.country.MX": "Mexique",
   "countryCurrency.country.SG": "Singapour",
-  destinations: "Voyages",
+  destinations: "Destinations",
   "destinationsHeroBadge": "Découverte de destinations",
   "destinationsHeroTitle": "Où voulez-vous aller ensuite ?",
   "destinationsHeroSubtitle": "Parcourez des vues de villes plus lumineuses et sélectionnées, comparez les vols et trouvez des offres de voyage en quelques minutes.",

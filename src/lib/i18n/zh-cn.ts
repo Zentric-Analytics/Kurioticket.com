@@ -628,6 +628,7 @@ export const translations: TranslationDictionary = {
   mobileTravelHeading: "旅行",
   mobilePreferencesHeading: "偏好设置",
   saved: "已保存",
+  dashboard: "仪表板",
   login: "登录",
   signUp: "注册",
   countryAndCurrency: "国家/地区和货币",
