@@ -9,8 +9,7 @@ export default function PageLoading() {
         showProgress={false}
         className="min-h-[100svh] bg-transparent px-5"
         contentClassName="max-w-md text-center"
-        title="Searching the best flights for you"
-        description="Comparing routes, airlines, and fares…"
+        searchType="flight"
       />
     </main>
   );

@@ -19,11 +19,11 @@ import {
 } from "lucide-react";
 
 import type { PublicHotelResult } from "@/lib/types";
+import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
 import { HotelSearchBar } from "@/components/search/HotelSearchBar";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn, formatCurrency } from "@/lib/utils";
 
@@ -35,13 +35,6 @@ const FILTER_APPLYING_DELAY_MS = 700;
 const SEARCH_APPLYING_TIMEOUT_MS = 15000;
 const FILTER_SCROLLBAR_HIDE_DELAY_MS = 700;
 const DEFAULT_MIN_RATING = 3;
-
-const loadingMessageKeys = [
-  "hotelResults.searchingHotelPartners",
-  "hotelResults.comparingTotalStayPrices",
-  "hotelResults.checkingArrivalConvenience",
-  "hotelResults.findingLowStressStays",
-];
 
 const POPULAR_FILTERS = [
   {
@@ -329,7 +322,6 @@ export function HotelResultsClient() {
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [messageIndex, setMessageIndex] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filterApplying, setFilterApplying] = useState(false);
   const [searchApplying, setSearchApplying] = useState(false);
@@ -564,19 +556,6 @@ export function HotelResultsClient() {
     };
   }, [body, t]);
 
-  useEffect(() => {
-    if (!loading) return;
-
-    const id = window.setInterval(
-      () =>
-        setMessageIndex((current) =>
-          (current + 1) % loadingMessageKeys.length
-        ),
-      1200,
-    );
-
-    return () => window.clearInterval(id);
-  }, [loading]);
 
   const filterOptions = useMemo(
     () => buildHotelFilterOptions(results, t),
@@ -762,6 +741,21 @@ export function HotelResultsClient() {
     setHotelSummarySortMode(sortMode);
   };
 
+  if (loading) {
+    return (
+      <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-[radial-gradient(circle_at_top_left,rgba(92,182,178,0.20),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(0,75,184,0.16),transparent_36%),linear-gradient(180deg,#F2F7FA_0%,#FFFFFF_58%,#FFFFFF_100%)]">
+        <BrandedLoading
+          variant="fullscreen"
+          visual="logoPulse"
+          showProgress={false}
+          searchType="hotel"
+          className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5"
+          contentClassName="max-w-md text-center"
+        />
+      </main>
+    );
+  }
+
   return (
     <main className="flex-1 overflow-x-clip bg-[#f6f8fb] pb-8">
       <div
@@ -858,16 +852,7 @@ export function HotelResultsClient() {
             </div>
           ) : null}
 
-          {loading ? (
-            <div className="space-y-4">
-              <div className="rounded-md border border-[#004BB8]/10 bg-[#004BB8]/6 p-4 text-sm font-semibold text-[#004BB8]">
-                {t(loadingMessageKeys[messageIndex])}
-              </div>
-              <HotelSkeleton />
-              <HotelSkeleton />
-              <HotelSkeleton />
-            </div>
-          ) : error ? (
+          {error ? (
             <div className="rounded-md border border-danger/30 bg-red-50 p-4 text-danger">
               {error}
             </div>
@@ -1735,21 +1720,6 @@ function getSearchableHotelText(hotel: PublicHotelResult) {
 function textIncludesTerms(text: string, terms: string[]) {
   const normalizedText = text.toLowerCase();
   return terms.some((term) => normalizedText.includes(term));
-}
-
-function HotelSkeleton() {
-  return (
-    <div className="rounded-2xl border border-[#004BB8]/10 bg-white p-5 shadow-[0_16px_40px_-24px_rgba(2,28,43,0.28)]">
-      <div className="grid gap-4 md:grid-cols-[260px_1fr]">
-        <Skeleton className="aspect-[16/10] md:aspect-auto md:min-h-[236px]" />
-        <div className="space-y-3">
-          <Skeleton className="h-5 w-56" />
-          <Skeleton className="h-4 w-40" />
-          <Skeleton className="h-16 w-full" />
-        </div>
-      </div>
-    </div>
-  );
 }
 
 function nextDate(offset: number) {
