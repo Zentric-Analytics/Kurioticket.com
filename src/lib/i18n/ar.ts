@@ -3,6 +3,13 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  verifyEmailSending: "جارٍ الإرسال...",
+  verifyEmailSendNewCode: "إرسال رمز جديد",
+  verifyEmailResendSuccess: "إذا كان هذا البريد الإلكتروني يحتاج إلى تحقق، فقد تم إرسال رمز جديد.",
+  verifyEmailAlreadyVerified: "تم التحقق بالفعل؟",
+  verifyEmailLoginLink: "تسجيل الدخول",
+  verifyEmailVerifying: "جارٍ التحقق...",
+  verifyEmailInvalidCode: "رمز التحقق غير صالح أو انتهت صلاحيته.",
   loginDivider: "أو",
   loginPasskeyPromptTitle: "استخدام مفتاح مرور محفوظ؟",
   loginPasskeyPromptDescription: "سجّل الدخول باستخدام Face ID أو بصمة الإصبع أو قفل الشاشة أو مدير كلمات المرور أو مفتاح أمان.",

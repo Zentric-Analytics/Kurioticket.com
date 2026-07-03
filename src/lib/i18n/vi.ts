@@ -3,6 +3,13 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  verifyEmailSending: "Đang gửi...",
+  verifyEmailSendNewCode: "Gửi mã mới",
+  verifyEmailResendSuccess: "Nếu email này cần xác minh, mã mới đã được gửi.",
+  verifyEmailAlreadyVerified: "Đã xác minh?",
+  verifyEmailLoginLink: "Đăng nhập",
+  verifyEmailVerifying: "Đang xác minh...",
+  verifyEmailInvalidCode: "Mã xác minh không hợp lệ hoặc đã hết hạn.",
   loginPasskeyPromptTitle: "Dùng passkey đã lưu?",
   loginPasskeyPromptDescription: "Đăng nhập bằng Face ID, vân tay, khóa màn hình, trình quản lý mật khẩu hoặc khóa bảo mật.",
   loginUsePasskey: "Dùng passkey",

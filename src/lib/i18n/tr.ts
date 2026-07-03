@@ -3,6 +3,13 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  verifyEmailSending: "Gönderiliyor...",
+  verifyEmailSendNewCode: "Yeni kod gönder",
+  verifyEmailResendSuccess: "Bu e-postanın doğrulanması gerekiyorsa yeni bir kod gönderildi.",
+  verifyEmailAlreadyVerified: "Zaten doğrulandı mı?",
+  verifyEmailLoginLink: "Giriş yap",
+  verifyEmailVerifying: "Doğrulanıyor...",
+  verifyEmailInvalidCode: "Doğrulama kodu geçersiz veya süresi dolmuş.",
   loginDivider: "VEYA",
   loginPasskeyPromptTitle: "Kayıtlı bir geçiş anahtarı kullanılsın mı?",
   loginPasskeyPromptDescription: "Face ID, parmak izi, ekran kilidi, parola yöneticisi veya güvenlik anahtarıyla oturum açın.",

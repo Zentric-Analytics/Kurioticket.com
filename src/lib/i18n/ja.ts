@@ -3,6 +3,13 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  verifyEmailSending: "送信中...",
+  verifyEmailSendNewCode: "新しいコードを送信",
+  verifyEmailResendSuccess: "このメールアドレスに確認が必要な場合、新しいコードを送信しました。",
+  verifyEmailAlreadyVerified: "すでに確認済みですか？",
+  verifyEmailLoginLink: "ログイン",
+  verifyEmailVerifying: "確認中...",
+  verifyEmailInvalidCode: "確認コードが無効または期限切れです。",
   loginDivider: "または",
   loginPasskeyPromptTitle: "保存済みのパスキーを使用しますか？",
   loginPasskeyPromptDescription: "Face ID、指紋、画面ロック、パスワードマネージャー、またはセキュリティキーでサインインします。",

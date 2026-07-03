@@ -267,9 +267,16 @@ export const translations: TranslationDictionary = {
   verifyEmailInstructions:
     "Voer de verificatiecode in die naar je e-mailadres is verzonden.",
   verifyEmailCodeLabel: "Verificatiecode",
+  verifyEmailInvalidCode: "De verificatiecode is ongeldig of verlopen.",
   verifyEmailSubmit: "E-mail verifiëren",
+  verifyEmailSending: "Verzenden...",
+  verifyEmailSendNewCode: "Nieuwe code verzenden",
+  verifyEmailResendSuccess: "Als dit e-mailadres verificatie nodig heeft, is er een nieuwe code verzonden.",
+  verifyEmailAlreadyVerified: "Al geverifieerd?",
+  verifyEmailLoginLink: "Inloggen",
   verifyEmailResend: "Code opnieuw verzenden",
   verifyEmailSuccess: "E-mail succesvol geverifieerd.",
+  verifyEmailVerifying: "Verifiëren...",
   websiteLanguageTitle: "Kies de taal van de site",
   websiteLanguageDescription:
     "English (United States) is de standaardtaal van de site. Kurioticket verandert de taal pas nadat je een beschikbare optie kiest.",

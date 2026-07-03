@@ -3,6 +3,13 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  verifyEmailSending: "กำลังส่ง...",
+  verifyEmailSendNewCode: "ส่งรหัสใหม่",
+  verifyEmailResendSuccess: "หากอีเมลนี้ต้องได้รับการยืนยัน ระบบได้ส่งรหัสใหม่แล้ว",
+  verifyEmailAlreadyVerified: "ยืนยันแล้วใช่ไหม?",
+  verifyEmailLoginLink: "เข้าสู่ระบบ",
+  verifyEmailVerifying: "กำลังยืนยัน...",
+  verifyEmailInvalidCode: "รหัสยืนยันไม่ถูกต้องหรือหมดอายุแล้ว",
   loginPasskeyPromptTitle: "ใช้พาสคีย์ที่บันทึกไว้หรือไม่",
   loginPasskeyPromptDescription: "ลงชื่อเข้าใช้ด้วย Face ID, ลายนิ้วมือ, การล็อกหน้าจอ, ตัวจัดการรหัสผ่าน หรือคีย์ความปลอดภัย",
   loginUsePasskey: "ใช้พาสคีย์",

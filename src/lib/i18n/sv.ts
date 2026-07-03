@@ -3,6 +3,13 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  verifyEmailSending: "Skickar...",
+  verifyEmailSendNewCode: "Skicka en ny kod",
+  verifyEmailResendSuccess: "Om den här e-postadressen behöver verifieras har en ny kod skickats.",
+  verifyEmailAlreadyVerified: "Redan verifierad?",
+  verifyEmailLoginLink: "Logga in",
+  verifyEmailVerifying: "Verifierar...",
+  verifyEmailInvalidCode: "Verifieringskoden är ogiltig eller har löpt ut.",
   selectLanguage: "Välj språk",
   suggestedLanguages: "Föreslagna språk",
   allLanguages: "Alla språk",
