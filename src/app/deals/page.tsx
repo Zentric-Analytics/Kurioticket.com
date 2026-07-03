@@ -16,6 +16,7 @@ import { Calendar, ChevronDown, Minus, Plus, X } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
+import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import {
   formatFlightsMonthHeading,
   formatFlightsWeekdays,
@@ -26,6 +27,7 @@ import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { translations as enTranslations } from "@/lib/i18n/en";
+import { formatAirportLabel, type AirportOption } from "@/data/airports";
 
 type PackageMode =
   | "hotel-flight"
@@ -33,6 +35,11 @@ type PackageMode =
   | "flight-car"
   | "hotel-car";
 type CabinClass = "economy" | "business" | "first";
+type AirportField = "origin" | "destination";
+
+type PlacesApiResponse = {
+  suggestions?: AirportOption[];
+};
 
 const packageModes: Array<{
   value: PackageMode;
@@ -82,6 +89,29 @@ const dealsSearchFieldControlClassName =
   "flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-0 lg:h-8 lg:text-[15px]";
 const dealsMobileDoneButtonClassName =
   "focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 transition-colors hover:bg-[#021C2B] active:bg-[#021C2B]";
+
+const normalizeSuggestionText = (value: string) =>
+  value.normalize("NFKD").replace(/\p{M}/gu, "").trim().toLowerCase();
+
+const dedupeSuggestions = (suggestions: AirportOption[]) => {
+  const seenCodes = new Set<string>();
+  const seenNames = new Set<string>();
+  const deduped: AirportOption[] = [];
+
+  for (const suggestion of suggestions) {
+    const codeKey = suggestion.code.trim().toUpperCase();
+    if (!codeKey || seenCodes.has(codeKey)) continue;
+
+    const nameKey = `${normalizeSuggestionText(suggestion.city)}|${normalizeSuggestionText(suggestion.airport)}`;
+    if (seenNames.has(nameKey)) continue;
+
+    seenCodes.add(codeKey);
+    seenNames.add(nameKey);
+    deduped.push(suggestion);
+  }
+
+  return deduped;
+};
 
 const cabinClasses: Array<{ value: CabinClass; labelKey: string }> = [
   { value: "economy", labelKey: "deals.cabin.economy" },
@@ -253,6 +283,22 @@ export default function DealsPage() {
     (key: string) => dictionary[key] ?? enTranslations[key] ?? key,
     [dictionary],
   );
+  const airportPickerLabels = useMemo(
+    () => ({
+      clear: t("clear"),
+      done: t("done"),
+      chooseOrigin: t("chooseOrigin"),
+      clearOrigin: t("clearOrigin"),
+      clearDestination: t("clearDestination"),
+      searchAirportsAndCities: t("searchAirportsAndCities"),
+      searchAirportsOrCities: t("searchAirportsOrCities"),
+      startTypingCityOrAirport: t("startTypingCityOrAirport"),
+      searchingAirportsAndCities: t("searchingAirportsAndCities"),
+      noMatchingAirportsOrCities: t("noMatchingAirportsOrCities"),
+    }),
+    [t],
+  );
+
   const [packageMode, setPackageMode] = useState<PackageMode>("hotel-flight");
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
@@ -265,6 +311,16 @@ export default function DealsPage() {
   const [cabinClass, setCabinClass] = useState<CabinClass>("economy");
   const [datesOpen, setDatesOpen] = useState(false);
   const [travelersOpen, setTravelersOpen] = useState(false);
+  const [activeMobileAirportPicker, setActiveMobileAirportPicker] =
+    useState<AirportField | null>(null);
+  const [originSuggestions, setOriginSuggestions] = useState<AirportOption[]>(
+    [],
+  );
+  const [destinationSuggestions, setDestinationSuggestions] = useState<
+    AirportOption[]
+  >([]);
+  const [originLoading, setOriginLoading] = useState(false);
+  const [destinationLoading, setDestinationLoading] = useState(false);
   const [visibleMonthDate, setVisibleMonthDate] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
@@ -272,7 +328,9 @@ export default function DealsPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const originInputRef = useRef<HTMLInputElement>(null);
+  const originMobileLauncherRef = useRef<HTMLButtonElement>(null);
   const destinationInputRef = useRef<HTMLInputElement>(null);
+  const destinationMobileLauncherRef = useRef<HTMLButtonElement>(null);
   const datesWrapperRef = useRef<HTMLDivElement>(null);
   const datesMobileLauncherRef = useRef<HTMLButtonElement>(null);
   const travelersWrapperRef = useRef<HTMLDivElement>(null);
@@ -376,6 +434,7 @@ export default function DealsPage() {
     cabinClass !== "economy" ||
     driverAge !== 30 ||
     error !== "" ||
+    activeMobileAirportPicker !== null ||
     datesOpen ||
     travelersOpen;
 
@@ -393,6 +452,32 @@ export default function DealsPage() {
         rooms: "1",
       }).toString()}`;
   }, []);
+
+  const buildPlacesUrl = useCallback((query: string, context: AirportField) => {
+    const params = new URLSearchParams();
+    if (query.length >= 2) params.set("q", query);
+    params.set("context", context);
+    if (typeof navigator !== "undefined" && navigator.language) {
+      params.set("locale", navigator.language);
+    }
+
+    return `/api/flights/places?${params.toString()}`;
+  }, []);
+
+  useAirportSuggestions({
+    query: origin,
+    context: "origin",
+    buildPlacesUrl,
+    setLoading: setOriginLoading,
+    setSuggestions: setOriginSuggestions,
+  });
+  useAirportSuggestions({
+    query: destination,
+    context: "destination",
+    buildPlacesUrl,
+    setLoading: setDestinationLoading,
+    setSuggestions: setDestinationSuggestions,
+  });
 
   const destinationIdeaCards = useMemo(
     () =>
@@ -430,6 +515,7 @@ export default function DealsPage() {
 
       setDatesOpen(false);
       setTravelersOpen(false);
+      setActiveMobileAirportPicker(null);
     };
 
     document.addEventListener("pointerdown", handlePointerDown);
@@ -445,13 +531,17 @@ export default function DealsPage() {
     setPackageMode(mode);
     setDatesOpen(false);
     setTravelersOpen(false);
+    setActiveMobileAirportPicker(null);
     setError("");
   };
 
   const handleToggleDates = () => {
     setDatesOpen((previousOpen) => {
       const nextOpen = !previousOpen;
-      if (nextOpen) setTravelersOpen(false);
+      if (nextOpen) {
+        setTravelersOpen(false);
+        setActiveMobileAirportPicker(null);
+      }
       return nextOpen;
     });
   };
@@ -459,7 +549,10 @@ export default function DealsPage() {
   const handleToggleTravelers = () => {
     setTravelersOpen((previousOpen) => {
       const nextOpen = !previousOpen;
-      if (nextOpen) setDatesOpen(false);
+      if (nextOpen) {
+        setDatesOpen(false);
+        setActiveMobileAirportPicker(null);
+      }
       return nextOpen;
     });
   };
@@ -477,6 +570,7 @@ export default function DealsPage() {
     setCabinClass("economy");
     setDatesOpen(false);
     setTravelersOpen(false);
+    setActiveMobileAirportPicker(null);
     setError("");
   };
 
@@ -517,6 +611,41 @@ export default function DealsPage() {
 
   const adjustDriverAge = (offset: number) => {
     setDriverAge((current) => clampCount(current + offset, 18, 99));
+  };
+
+  const openMobileAirportPicker = (field: AirportField) => {
+    setDatesOpen(false);
+    setTravelersOpen(false);
+    setError("");
+    setActiveMobileAirportPicker(field);
+  };
+
+  const clearAirport = (field: AirportField) => {
+    if (field === "origin") {
+      setOrigin("");
+      setOriginSuggestions([]);
+      setOriginLoading(false);
+      setError("");
+      return;
+    }
+
+    setDestination("");
+    setDestinationSuggestions([]);
+    setDestinationLoading(false);
+    setError("");
+  };
+
+  const selectAirport = (field: AirportField, option: AirportOption) => {
+    const formattedLabel = formatAirportLabel(option, locale);
+
+    if (field === "origin") {
+      setOrigin(formattedLabel);
+    } else {
+      setDestination(formattedLabel);
+    }
+
+    setError("");
+    setActiveMobileAirportPicker(null);
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -912,13 +1041,34 @@ export default function DealsPage() {
                           "lg:rounded-s-2xl",
                         )}
                       >
-                        <label
-                          htmlFor="package-origin"
-                          className={dealsSearchFieldLabelClassName}
-                        >
+                        <label className={dealsSearchFieldLabelClassName}>
                           {t("deals.originLabel")}
                         </label>
-                        <div className="relative">
+                        <button
+                          ref={originMobileLauncherRef}
+                          type="button"
+                          aria-expanded={activeMobileAirportPicker === "origin"}
+                          aria-haspopup="dialog"
+                          onClick={() => openMobileAirportPicker("origin")}
+                          className={cn(
+                            dealsSearchFieldControlClassName,
+                            "justify-between sm:hidden",
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "truncate",
+                              !origin && "text-slate-400",
+                            )}
+                          >
+                            {origin || t("deals.originPlaceholder")}
+                          </span>
+                          <ChevronDown
+                            className="h-4 w-4 shrink-0 text-slate-500"
+                            aria-hidden="true"
+                          />
+                        </button>
+                        <div className="relative hidden sm:block">
                           <input
                             ref={originInputRef}
                             id="package-origin"
@@ -957,13 +1107,36 @@ export default function DealsPage() {
                         !includesFlight && "lg:rounded-s-2xl",
                       )}
                     >
-                      <label
-                        htmlFor="package-destination"
-                        className={dealsSearchFieldLabelClassName}
-                      >
+                      <label className={dealsSearchFieldLabelClassName}>
                         {t("deals.destinationLabel")}
                       </label>
-                      <div className="relative">
+                      <button
+                        ref={destinationMobileLauncherRef}
+                        type="button"
+                        aria-expanded={
+                          activeMobileAirportPicker === "destination"
+                        }
+                        aria-haspopup="dialog"
+                        onClick={() => openMobileAirportPicker("destination")}
+                        className={cn(
+                          dealsSearchFieldControlClassName,
+                          "justify-between sm:hidden",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "truncate",
+                            !destination && "text-slate-400",
+                          )}
+                        >
+                          {destination || t("deals.destinationPlaceholder")}
+                        </span>
+                        <ChevronDown
+                          className="h-4 w-4 shrink-0 text-slate-500"
+                          aria-hidden="true"
+                        />
+                      </button>
+                      <div className="relative hidden sm:block">
                         <input
                           ref={destinationInputRef}
                           id="package-destination"
@@ -1255,6 +1428,53 @@ export default function DealsPage() {
                     </p>
                   ) : null}
                 </div>
+
+                <MobileAirportPicker
+                  open={activeMobileAirportPicker === "origin"}
+                  title={t("chooseOrigin")}
+                  inputId="deals-origin-mobile-search"
+                  value={origin}
+                  suggestions={originSuggestions}
+                  isLoading={origin.trim().length >= 2 && originLoading}
+                  launcherRef={originMobileLauncherRef}
+                  labels={airportPickerLabels}
+                  locale={locale}
+                  onChange={(nextValue) => {
+                    setOrigin(nextValue);
+                    setError("");
+                    if (nextValue.trim().length < 2) {
+                      setOriginSuggestions([]);
+                      setOriginLoading(false);
+                    }
+                  }}
+                  onClear={() => clearAirport("origin")}
+                  onSelect={(option) => selectAirport("origin", option)}
+                  onClose={() => setActiveMobileAirportPicker(null)}
+                />
+                <MobileAirportPicker
+                  open={activeMobileAirportPicker === "destination"}
+                  title={t("chooseDestination")}
+                  inputId="deals-destination-mobile-search"
+                  value={destination}
+                  suggestions={destinationSuggestions}
+                  isLoading={
+                    destination.trim().length >= 2 && destinationLoading
+                  }
+                  launcherRef={destinationMobileLauncherRef}
+                  labels={airportPickerLabels}
+                  locale={locale}
+                  onChange={(nextValue) => {
+                    setDestination(nextValue);
+                    setError("");
+                    if (nextValue.trim().length < 2) {
+                      setDestinationSuggestions([]);
+                      setDestinationLoading(false);
+                    }
+                  }}
+                  onClear={() => clearAirport("destination")}
+                  onSelect={(option) => selectAirport("destination", option)}
+                  onClose={() => setActiveMobileAirportPicker(null)}
+                />
               </form>
             </div>
           </div>
@@ -1306,4 +1526,52 @@ export default function DealsPage() {
       <Footer />
     </>
   );
+}
+
+function useAirportSuggestions({
+  query,
+  context,
+  buildPlacesUrl,
+  setLoading,
+  setSuggestions,
+}: {
+  query: string;
+  context: AirportField;
+  buildPlacesUrl: (query: string, context: AirportField) => string;
+  setLoading: (loading: boolean) => void;
+  setSuggestions: (suggestions: AirportOption[]) => void;
+}) {
+  useEffect(() => {
+    const trimmedQuery = query.trim();
+    if (trimmedQuery.length < 2) return;
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(buildPlacesUrl(trimmedQuery, context), {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        if (!response.ok) throw new Error("Failed to load suggestions");
+
+        const payload = (await response.json()) as PlacesApiResponse;
+        const suggestions = Array.isArray(payload.suggestions)
+          ? dedupeSuggestions(payload.suggestions)
+              .filter((item) => !!item?.code && !!item?.city && !!item?.airport)
+              .slice(0, 7)
+          : [];
+        setSuggestions(suggestions);
+      } catch {
+        if (!controller.signal.aborted) setSuggestions([]);
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [buildPlacesUrl, context, query, setLoading, setSuggestions]);
 }
