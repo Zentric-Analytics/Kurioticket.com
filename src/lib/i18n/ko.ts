@@ -42,6 +42,7 @@ export const translations: TranslationDictionary = {
   countryCurrencyOptionCountPlural: "{{count}}개 옵션",
   selectCountryCurrencyOption: "{{country}}, {{code}}, {{currency}} 선택",
   noCountriesOrCurrenciesFound: "국가 또는 통화를 찾을 수 없습니다",
+  showMoreResults: "결과 더 보기",
 
   logout: "로그아웃",
   signingOut: "로그아웃 중...",

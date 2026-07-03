@@ -241,6 +241,7 @@ export const translations: TranslationDictionary = {
   countryCurrencyOptionCountSingular: "{{count}} ตัวเลือก",
   countryCurrencyOptionCountPlural: "{{count}} ตัวเลือก",
   selectCountryCurrencyOption: "เลือก {{country}} พร้อมสกุลเงิน {{currency}}",
+  noCountriesOrCurrenciesFound: "ไม่พบประเทศหรือสกุลเงิน",
   showMoreResults: "แสดงผลลัพธ์เพิ่มเติม",
   loginPageTitle: "เข้าสู่ระบบ",
   loginPageSubtitle:

@@ -560,10 +560,11 @@ export const translations: TranslationDictionary = {
   countryCurrencyDescription: "Fiyatlar ve bölgesel tercihler için kullanılan ülke ve para birimini seçin.",
   closeCountryCurrencySelector: "Ülke ve para birimi seçicisini kapat",
   searchCountryOrCurrency: "Ülke veya para birimi ara",
-  countryCurrencyPopularCountryAndCurrency: "POPÜLER ÜLKE VE PARA BİRİMİ",
-  countryCurrencyAllCountriesAndCurrencies: "TÜM ÜLKELER VE PARA BİRİMLERİ",
+  countryCurrencyPopularCountryAndCurrency: "Popüler ülkeler ve para birimleri",
+  countryCurrencyAllCountriesAndCurrencies: "Tüm ülkeler ve para birimleri",
   countryCurrencyOptionCountSingular: "{{count}} seçenek",
   countryCurrencyOptionCountPlural: "{{count}} seçenek",
+  noCountriesOrCurrenciesFound: "Ülke veya para birimi bulunamadı",
   showMoreResults: "Daha fazla sonuç göster",
   homeHeroTitle: "Seyahat seçeneklerini tek bir basit aramada karşılaştırın",
   homeHeroSubtitle:
