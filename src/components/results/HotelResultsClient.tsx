@@ -978,7 +978,7 @@ export function HotelResultsClient() {
         <div className="border-t border-slate-200 bg-white p-4">
           <Button
             type="button"
-            className="h-12 w-full rounded-xl bg-[#004BB8] text-base font-bold text-white shadow-lg shadow-[#004BB8]/20 hover:bg-[#021C2B]"
+            className="h-12 w-full rounded-xl bg-[#004BB8] text-base font-bold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] hover:bg-[#021C2B]"
             onClick={() => {
               triggerFilterApplying();
               setFiltersOpen(false);
@@ -1019,9 +1019,9 @@ function HotelSummaryRow({
             key={item.label}
             type="button"
             className={cn(
-              "min-w-[152px] snap-start rounded-2xl border bg-white p-2.5 text-start shadow-[0_14px_30px_-22px_rgba(2,28,43,0.32)] transition-all hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-[0_18px_34px_-24px_rgba(0,75,184,0.34)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f8fb] sm:min-w-0 sm:p-3.5",
+              "min-w-[152px] snap-start rounded-2xl border bg-white p-2.5 text-start shadow-[0_14px_30px_-22px_rgba(2,28,43,0.32)] transition-all hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-[0_18px_34px_-24px_rgba(2,28,43,0.18)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f8fb] sm:min-w-0 sm:p-3.5",
               isActive
-                ? "border-[#004BB8]/45 bg-[#004BB8]/6 shadow-[0_18px_38px_-24px_rgba(0,75,184,0.36)] ring-1 ring-[#004BB8]/15"
+                ? "border-[#004BB8]/22 bg-[#004BB8]/6 shadow-[0_14px_30px_-22px_rgba(2,28,43,0.22)] ring-1 ring-[#004BB8]/8"
                 : "border-[#004BB8]/10",
             )}
             aria-pressed={isActive}
@@ -1287,15 +1287,15 @@ function HotelFilters({
   toggleFilter: (group: keyof HotelFilterSelections, value: string) => void;
 }) {
   const filterRangeClass =
-    "h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-gradient-to-r [&::-webkit-slider-runnable-track]:from-[#004BB8] [&::-webkit-slider-runnable-track]:to-[#5CB6B2] [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#004BB8] [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#004BB8] [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#004BB8] [&::-moz-range-thumb]:shadow-md";
+    "h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-gradient-to-r [&::-webkit-slider-runnable-track]:from-[#004BB8]/70 [&::-webkit-slider-runnable-track]:to-[#5CB6B2]/55 [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#004BB8] [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#004BB8]/70 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#004BB8] [&::-moz-range-thumb]:shadow-md";
 
   return (
     <div className="bg-white">
-      <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-[#021C2B] to-[#004BB8] px-3 py-3">
+      <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
         <div>
-          <h2 className="text-base font-bold text-white">{t("hotelResults.filterBy")}</h2>
+          <h2 className="text-base font-bold text-[#021C2B]">{t("hotelResults.filterBy")}</h2>
         </div>
-        <SlidersHorizontal className="text-white/90" size={18} />
+        <SlidersHorizontal className="text-[#004BB8]" size={18} />
       </div>
 
       <div className="space-y-4 bg-white px-3 py-3">

@@ -2725,7 +2725,7 @@ export function FlightResultsClient() {
               </div>
             </div>
 
-            <div className="overflow-visible rounded-[1.65rem] border border-white/70 bg-white/90 p-2.5 shadow-[0_18px_44px_rgba(0,75,184,0.12)] ring-1 ring-[#004BB8]/10 backdrop-blur sm:rounded-2xl sm:border-slate-200 sm:bg-white sm:p-1 sm:shadow-[0_10px_28px_rgba(15,23,42,0.10)] sm:ring-0">
+            <div className="overflow-visible rounded-[1.65rem] border border-white/70 bg-white/90 p-2.5 shadow-[0_18px_44px_rgba(15,23,42,0.10)] ring-1 ring-slate-950/[0.03] backdrop-blur sm:rounded-2xl sm:border-slate-200 sm:bg-white sm:p-1 sm:shadow-[0_10px_28px_rgba(15,23,42,0.10)] sm:ring-0">
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-1.5 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
                 <div className="col-span-2 grid grid-cols-[minmax(0,1fr)_34px_minmax(0,1fr)] items-stretch rounded-[1.35rem] border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 px-3 py-1.5 shadow-sm transition-colors hover:border-slate-300 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:rounded-xl sm:border-slate-300 sm:bg-white sm:px-3 sm:py-1.5 sm:shadow-none sm:hover:border-slate-400 sm:focus-within:ring-[#004BB8]/25 lg:col-span-1 lg:rounded-none lg:rounded-s-xl lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
                   <div
@@ -2978,7 +2978,7 @@ export function FlightResultsClient() {
                 <div className="col-span-2 lg:col-span-1 lg:min-h-[54px] lg:self-stretch">
                   <Button
                     type="submit"
-                    className="h-[50px] w-full rounded-[1.25rem] bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_14px_28px_rgba(0,75,184,0.24)] transition hover:bg-[#021C2B] active:scale-[0.99] active:bg-[#021C2B] sm:h-12 sm:rounded-xl sm:shadow-md sm:shadow-[#004BB8]/20 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20"
+                    className="h-[50px] w-full rounded-[1.25rem] bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_14px_28px_rgba(2,28,43,0.14)] transition hover:bg-[#021C2B] active:scale-[0.99] active:bg-[#021C2B] sm:h-12 sm:rounded-xl sm:shadow-md sm:shadow-[#004BB8]/20 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20"
                   >
                     {t("search")}
                   </Button>
@@ -3567,7 +3567,7 @@ export function FlightResultsClient() {
 
               <Button
                 type="submit"
-                className="mt-1 h-[52px] w-full rounded-2xl bg-[#004BB8] text-base font-bold text-white shadow-lg shadow-[#004BB8]/20 ring-1 ring-[#004BB8]/20 hover:bg-[#021C2B]"
+                className="mt-1 h-[52px] w-full rounded-2xl bg-[#004BB8] text-base font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] ring-1 ring-[#004BB8]/12 hover:bg-[#021C2B]"
               >
                 {t("search")}
               </Button>
@@ -4075,7 +4075,7 @@ export function FlightResultsClient() {
 
               <Button
                 type="submit"
-                className="h-full min-h-[54px] w-full rounded-xl bg-[#004BB8] px-5 text-sm font-bold text-white shadow-lg shadow-[#004BB8]/20 ring-1 ring-[#004BB8]/20 hover:bg-[#021C2B] lg:min-w-[112px] lg:rounded-s-none lg:rounded-e-xl"
+                className="h-full min-h-[54px] w-full rounded-xl bg-[#004BB8] px-5 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] ring-1 ring-[#004BB8]/12 hover:bg-[#021C2B] lg:min-w-[112px] lg:rounded-s-none lg:rounded-e-xl"
               >
                 {t("search")}
               </Button>
@@ -4533,7 +4533,7 @@ export function FlightResultsClient() {
         <div className="border-t border-slate-200 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <Button
             type="button"
-            className="h-12 w-full rounded-xl bg-gradient-to-r from-[#004BB8] to-[#021C2B] text-base font-bold text-white shadow-lg shadow-[#004BB8]/20"
+            className="h-12 w-full rounded-xl bg-gradient-to-r from-[#004BB8]/70 to-[#5CB6B2]/55 text-base font-bold text-white shadow-lg shadow-[#004BB8]/20"
             onClick={() => {
               triggerFilterApplying();
               setFiltersOpen(false);
@@ -5313,7 +5313,7 @@ function TravelerCabinPopover({
                   className={cn(
                     "focus-ring min-h-11 rounded-xl border px-3 py-2 text-sm font-bold leading-4 text-center transition-colors",
                     selected
-                      ? "border-[#004BB8] bg-[#004BB8]/8 text-[#021C2B]"
+                      ? "border-[#004BB8]/22 bg-[#004BB8]/6 text-[#021C2B]"
                       : "border-slate-300 text-slate-700 hover:bg-slate-50",
                   )}
                 >
@@ -5734,7 +5734,7 @@ function Filters({
   const calendarLocale = normalizeFlightResultsCalendarLocale(locale);
   const currencyRates = useCurrencyRates();
   const filterRangeClass =
-    "h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-gradient-to-r [&::-webkit-slider-runnable-track]:from-[#004BB8] [&::-webkit-slider-runnable-track]:to-[#5CB6B2] [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#004BB8] [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#004BB8] [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#004BB8] [&::-moz-range-thumb]:shadow-md";
+    "h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-gradient-to-r [&::-webkit-slider-runnable-track]:from-[#004BB8]/70 [&::-webkit-slider-runnable-track]:to-[#5CB6B2]/55 [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#004BB8] [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#004BB8]/70 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#004BB8] [&::-moz-range-thumb]:shadow-md";
   const formatFilterPrice = (amount: number) =>
     priceLabelCurrency
       ? formatDisplayPrice({
@@ -5755,7 +5755,7 @@ function Filters({
           "rounded-2xl border border-slate-200/80 shadow-sm shadow-slate-900/[0.04]",
       )}
     >
-      <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-[#004BB8] to-[#021C2B] px-3 py-3">
+      <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-[#004BB8]/70 to-[#5CB6B2]/55 px-3 py-3">
         <div>
           <h2 className="text-base font-semibold text-white/95">
             {t("filterBy")}
@@ -6099,7 +6099,7 @@ function SummarySortButton({
           ? "min-w-[178px] snap-start px-3 py-2.5"
           : "min-h-[104px] px-3.5 py-3",
         active
-          ? "border-[#004BB8]/30 bg-[#004BB8]/5 text-slate-800 shadow-[0_10px_28px_rgba(0,75,184,0.10)] ring-1 ring-[#004BB8]/10"
+          ? "border-[#004BB8]/22 bg-[#004BB8]/6 text-[#021C2B] shadow-[0_12px_28px_-20px_rgba(2,28,43,0.18)] ring-1 ring-[#004BB8]/8"
           : "border-slate-200/80 bg-white text-slate-600 hover:border-[#004BB8]/25 hover:bg-[#F2F7FA] hover:shadow-[0_10px_24px_rgba(2,28,43,0.08)]",
       )}
     >

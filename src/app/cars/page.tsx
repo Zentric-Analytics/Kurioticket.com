@@ -1139,7 +1139,7 @@ function SearchCell({
 }) {
   return (
     <div
-      className={`min-h-[58px] border border-transparent bg-white px-2.5 py-1.5 transition hover:border-slate-200 focus-within:border-[#004BB8]/25 focus-within:bg-[#004BB8]/8 lg:min-h-[66px] lg:px-3 lg:py-2 ${className}`}
+      className={`min-h-[58px] border border-transparent bg-white px-2.5 py-1.5 transition hover:border-slate-200 focus-within:border-[#004BB8]/25 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/20 lg:min-h-[66px] lg:px-3 lg:py-2 ${className}`}
     >
       <label className="mb-0.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 lg:mb-1">
         {label}

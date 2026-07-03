@@ -769,7 +769,7 @@ export default function DealsPage() {
     return (
       <>
         <AppHeader />
-        <main className="min-h-[calc(100svh-5rem)] bg-[radial-gradient(circle_at_top_left,rgba(92,182,178,0.20),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(0,75,184,0.16),transparent_36%),linear-gradient(180deg,#F2F7FA_0%,#FFFFFF_58%,#FFFFFF_100%)]">
+        <main className="min-h-[calc(100svh-5rem)] bg-[radial-gradient(circle_at_top_left,rgba(92,182,178,0.11),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(0,75,184,0.09),transparent_36%),linear-gradient(180deg,#F2F7FA_0%,#FFFFFF_58%,#FFFFFF_100%)]">
           <BrandedLoading
             variant="fullscreen"
             visual="logoPulse"
@@ -877,7 +877,7 @@ export default function DealsPage() {
                         key={mode.value}
                         className={`shrink-0 cursor-pointer rounded-full border px-3.5 py-2 text-sm font-extrabold shadow-sm backdrop-blur transition focus-within:outline-none focus-within:ring-2 focus-within:ring-[#004BB8]/25 focus-within:ring-offset-2 ${
                           packageMode === mode.value
-                            ? "border-[#004BB8] bg-[#004BB8] text-white"
+                            ? "border-[#004BB8]/20 bg-[#004BB8]/7 text-[#021C2B]"
                             : "border-white/80 bg-white/80 text-slate-700 hover:border-[#004BB8]/25 hover:bg-white"
                         }`}
                       >

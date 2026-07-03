@@ -1290,7 +1290,7 @@ function PhoneNumberInput({
       <div className="group relative z-10 h-11 w-[4.75rem] shrink-0 sm:w-20">
         <div
           aria-hidden="true"
-          className="pointer-events-none flex h-full w-full items-center justify-center gap-1.5 rounded-none border border-slate-400 bg-white px-2.5 transition group-hover:border-slate-500 group-focus-within:border-[#004BB8] group-focus-within:ring-2 group-focus-within:ring-[#004BB8]/15 sm:px-3"
+          className="pointer-events-none flex h-full w-full items-center justify-center gap-1.5 rounded-none border border-slate-300 bg-white px-2.5 transition group-hover:border-slate-400 group-focus-within:border-[#004BB8]/40 group-focus-within:ring-2 group-focus-within:ring-[#004BB8]/15 sm:px-3"
         >
           <CountryFlagIcon
             countryName={selectedOption.countryName}
@@ -1426,7 +1426,7 @@ function DetailInput({
   defaultPhoneCountryCode?: string | null;
 }) {
   const baseClassName = cn(
-    "h-11 w-full min-w-0 rounded-none border border-slate-400 bg-white px-3.5 text-base font-medium leading-5 text-slate-950 shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/15 sm:max-w-[34rem] sm:text-sm",
+    "h-11 w-full min-w-0 rounded-none border border-slate-300 bg-white px-3.5 text-base font-medium leading-5 text-slate-950 shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-500 hover:border-slate-400 focus:border-[#004BB8]/40 focus:ring-2 focus:ring-[#004BB8]/15 sm:max-w-[34rem] sm:text-sm",
     row.readOnly &&
       "cursor-not-allowed border-slate-300 bg-slate-100 text-slate-700 hover:border-slate-300 focus:border-slate-300 focus:ring-0",
   );
@@ -1562,7 +1562,7 @@ function PersonalDetailsEmailEditRow({
 }) {
   const { t } = useLocale();
   const baseInputClassName =
-    "h-11 w-full min-w-0 rounded-none border border-slate-400 bg-white px-3.5 text-base font-medium leading-5 text-slate-950 shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/15 sm:text-sm";
+    "h-11 w-full min-w-0 rounded-none border border-slate-300 bg-white px-3.5 text-base font-medium leading-5 text-slate-950 shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-500 hover:border-slate-400 focus:border-[#004BB8]/40 focus:ring-2 focus:ring-[#004BB8]/15 sm:text-sm";
   const isBusy = isRequestingCode;
   const isResendCoolingDown = resendCooldownSeconds > 0;
 
