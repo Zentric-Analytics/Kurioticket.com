@@ -1771,6 +1771,12 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     setEmailCodeResendCooldownSeconds(0);
   };
 
+  const closeEmailVerificationModal = () => {
+    setEmailVerificationCode("");
+    setEmailChangeErrorMessage(null);
+    setIsEmailVerificationModalOpen(false);
+  };
+
   useEffect(() => {
     if (emailCodeResendCooldownSeconds <= 0) return;
 
@@ -1785,27 +1791,62 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
     if (!isEmailVerificationModalOpen) return;
 
     const scrollY = window.scrollY;
-    const previousBodyOverflow = document.body.style.overflow;
-    const previousBodyPosition = document.body.style.position;
-    const previousBodyTop = document.body.style.top;
-    const previousBodyWidth = document.body.style.width;
-    const previousDocumentOverflow = document.documentElement.style.overflow;
+    const { body } = document;
+    const previousBodyStyles = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overflow: body.style.overflow,
+      paddingRight: body.style.paddingRight,
+    };
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
 
-    document.body.style.overflow = "hidden";
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = "100%";
-    document.documentElement.style.overflow = "hidden";
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    const handleBackgroundTouchMove = (event: TouchEvent) => {
+      const target = event.target;
+
+      if (target instanceof Element && target.closest("[data-security-modal-content]")) {
+        return;
+      }
+
+      event.preventDefault();
+    };
+
+    document.addEventListener("touchmove", handleBackgroundTouchMove, { passive: false });
 
     return () => {
-      document.body.style.overflow = previousBodyOverflow;
-      document.body.style.position = previousBodyPosition;
-      document.body.style.top = previousBodyTop;
-      document.body.style.width = previousBodyWidth;
-      document.documentElement.style.overflow = previousDocumentOverflow;
+      document.removeEventListener("touchmove", handleBackgroundTouchMove);
+      body.style.position = previousBodyStyles.position;
+      body.style.top = previousBodyStyles.top;
+      body.style.left = previousBodyStyles.left;
+      body.style.right = previousBodyStyles.right;
+      body.style.width = previousBodyStyles.width;
+      body.style.overflow = previousBodyStyles.overflow;
+      body.style.paddingRight = previousBodyStyles.paddingRight;
       window.scrollTo(0, scrollY);
     };
   }, [isEmailVerificationModalOpen]);
+
+  useEffect(() => {
+    if (!isEmailVerificationModalOpen || !emailChangeErrorMessage) return;
+
+    const timer = window.setTimeout(() => {
+      setEmailChangeErrorMessage(null);
+    }, 2000);
+
+    return () => window.clearTimeout(timer);
+  }, [emailChangeErrorMessage, isEmailVerificationModalOpen]);
 
   useEffect(() => {
     if (!personalDetailsSaveMessage) return;
@@ -2007,6 +2048,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       setSavedValues(nextSavedValues);
       setDraft(nextSavedValues);
       setPersonalDetailsSaveMessage("Personal details updated");
+      setIsEditing(false);
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -2278,7 +2320,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
               ) : null}
             </div>
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-              <button type="button" onClick={handleCancelEmailChange} disabled={isConfirmingEmail} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60">Cancel</button>
+              <button type="button" onClick={closeEmailVerificationModal} disabled={isConfirmingEmail} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60">Cancel</button>
               <button
                 type="submit"
                 disabled={Boolean(emailValidationError) || !isVerificationCodeValid || isConfirmingEmail}
