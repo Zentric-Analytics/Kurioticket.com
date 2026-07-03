@@ -217,7 +217,7 @@ const desktopPopoverPanelClassName = "z-[2147483400]";
 const desktopTravelersFieldClassName = "z-[2147483500]";
 const desktopTravelersPopoverClassName = "z-[2147483600]";
 const mobileDoneButtonClassName =
-  "focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 transition-colors hover:bg-[#021C2B] active:bg-[#021C2B]";
+  "focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-bold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35";
 
 type DesktopTopLayerPopoverProps = {
   open: boolean;
@@ -2452,7 +2452,7 @@ export function SearchTabs({
         <button
           type="button"
           onClick={onDone}
-          className="focus-ring rounded-lg bg-[#004BB8] px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-[#004BB8]/20 transition-colors hover:bg-[#021C2B]"
+          className="focus-ring rounded-lg bg-[#004BB8] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
         >
           {translate("done") || "Done"}
         </button>
@@ -3171,7 +3171,7 @@ export function SearchTabs({
                         </div>
                       </div>
                       <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
-                        <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#021C2B]">{t.done || "Done"}</button>
+                        <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-medium text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35">{t.done || "Done"}</button>
                       </div>
                     </div>
                     </DesktopTopLayerPopover>
