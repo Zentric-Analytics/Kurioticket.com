@@ -240,7 +240,7 @@ export const translations: TranslationDictionary = {
   countryCurrencyPopularCountryAndCurrency: "ประเทศและสกุลเงินยอดนิยม",
   countryCurrencyOptionCountSingular: "{{count}} ตัวเลือก",
   countryCurrencyOptionCountPlural: "{{count}} ตัวเลือก",
-  selectCountryCurrencyOption: "เลือก {{country}} พร้อมสกุลเงิน {{currency}}",
+  selectCountryCurrencyOption: "เลือก {{country}}, {{code}}, {{currency}}",
   noCountriesOrCurrenciesFound: "ไม่พบประเทศหรือสกุลเงิน",
   showMoreResults: "แสดงผลลัพธ์เพิ่มเติม",
   loginPageTitle: "เข้าสู่ระบบ",

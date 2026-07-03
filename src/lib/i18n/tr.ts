@@ -564,6 +564,7 @@ export const translations: TranslationDictionary = {
   countryCurrencyAllCountriesAndCurrencies: "Tüm ülkeler ve para birimleri",
   countryCurrencyOptionCountSingular: "{{count}} seçenek",
   countryCurrencyOptionCountPlural: "{{count}} seçenek",
+  selectCountryCurrencyOption: "{{country}}, {{code}}, {{currency}} seç",
   noCountriesOrCurrenciesFound: "Ülke veya para birimi bulunamadı",
   showMoreResults: "Daha fazla sonuç göster",
   homeHeroTitle: "Seyahat seçeneklerini tek bir basit aramada karşılaştırın",

@@ -145,6 +145,7 @@ export const translations: TranslationDictionary = {
   countryCurrencyAllCountriesAndCurrencies: "Wszystkie kraje i waluty",
   countryCurrencyOptionCountSingular: "{{count}} opcja",
   countryCurrencyOptionCountPlural: "{{count}} opcji",
+  selectCountryCurrencyOption: "Wybierz {{country}}, {{code}}, {{currency}}",
   noCountriesOrCurrenciesFound: "Nie znaleziono krajów ani walut",
   showMoreResults: "Pokaż więcej wyników",
   globalLanguage: "JĘZYK GLOBALNY",
