@@ -15,6 +15,13 @@ import { Calendar, ChevronDown, Minus, Plus, X } from "lucide-react";
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
+import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
+import {
+  formatFlightsMonthHeading,
+  formatFlightsWeekdays,
+  normalizeFlightsCalendarLocale,
+} from "@/lib/flights/dateFormatting";
+import { cn } from "@/lib/utils";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
@@ -66,6 +73,15 @@ const packageModes: Array<{
 
 const dealsHeroImage =
   "https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?auto=format&fit=crop&w=1200&q=80";
+
+const dealsSearchFieldShellClassName =
+  "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:min-h-[72px] lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:px-5 lg:py-3 lg:shadow-none lg:hover:border-[#004BB8]/20 lg:focus-within:border-[#004BB8]/20 lg:focus-within:bg-[#004BB8]/[0.03] lg:focus-within:ring-1 lg:focus-within:ring-inset lg:focus-within:ring-[#004BB8]/20";
+const dealsSearchFieldLabelClassName =
+  "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 lg:text-[11px] lg:tracking-[0.12em] lg:text-slate-700";
+const dealsSearchFieldControlClassName =
+  "flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-0 lg:h-8 lg:text-[15px]";
+const dealsMobileDoneButtonClassName =
+  "focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 transition-colors hover:bg-[#021C2B] active:bg-[#021C2B]";
 
 const cabinClasses: Array<{ value: CabinClass; labelKey: string }> = [
   { value: "economy", labelKey: "deals.cabin.economy" },
@@ -128,16 +144,6 @@ const destinationIdeas = [
       "https://images.pexels.com/photos/1701595/pexels-photo-1701595.jpeg?auto=compress&cs=tinysrgb&w=1200",
     imageAltKey: "deals.destination.rome.imageAlt",
   },
-];
-
-const dealWeekdayKeys = [
-  "deals.weekday.sun",
-  "deals.weekday.mon",
-  "deals.weekday.tue",
-  "deals.weekday.wed",
-  "deals.weekday.thu",
-  "deals.weekday.fri",
-  "deals.weekday.sat",
 ];
 
 const parseIsoDate = (value: string) => {
@@ -210,7 +216,11 @@ const clampCount = (value: number, minimum: number, maximum: number) => {
   return Math.max(minimum, Math.min(maximum, value));
 };
 
-const formatDealsCountLabel = (count: number, label: string, locale: string) => {
+const formatDealsCountLabel = (
+  count: number,
+  label: string,
+  locale: string,
+) => {
   const normalizedLocale = locale.toLowerCase();
 
   if (normalizedLocale.startsWith("ja")) {
@@ -264,6 +274,7 @@ export default function DealsPage() {
   const originInputRef = useRef<HTMLInputElement>(null);
   const destinationInputRef = useRef<HTMLInputElement>(null);
   const datesWrapperRef = useRef<HTMLDivElement>(null);
+  const datesMobileLauncherRef = useRef<HTMLButtonElement>(null);
   const travelersWrapperRef = useRef<HTMLDivElement>(null);
 
   const selectedMode =
@@ -342,7 +353,16 @@ export default function DealsPage() {
           locale,
         )}, ${cabinLabel}`
       : formatDealsCountLabel(travelerCount, travelerLabel, locale);
-  }, [adults, cabinClass, children, includesFlight, includesHotel, locale, rooms, t]);
+  }, [
+    adults,
+    cabinClass,
+    children,
+    includesFlight,
+    includesHotel,
+    locale,
+    rooms,
+    t,
+  ]);
 
   const hasActiveDealsSearch =
     packageMode !== "hotel-flight" ||
@@ -388,6 +408,13 @@ export default function DealsPage() {
       const target = event.target;
 
       if (!(target instanceof Node)) return;
+
+      if (
+        target instanceof Element &&
+        target.closest("[data-flight-mobile-picker-shell]")
+      ) {
+        return;
+      }
 
       if (!datesWrapperRef.current?.contains(target)) {
         setDatesOpen(false);
@@ -593,7 +620,150 @@ export default function DealsPage() {
     router.push(`/hotels/results?${params.toString()}`);
   };
 
-  const weekdays = dealWeekdayKeys.map(t);
+  const calendarLocale = useMemo(
+    () => normalizeFlightsCalendarLocale(locale),
+    [locale],
+  );
+  const accessibleDateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(calendarLocale, {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      }),
+    [calendarLocale],
+  );
+  const weekdays = useMemo(
+    () => formatFlightsWeekdays(calendarLocale),
+    [calendarLocale],
+  );
+
+  const renderDateCalendar = (compact = false) => {
+    const months = compact
+      ? Array.from({ length: 12 }, (_, monthOffset) =>
+          addMonths(todayLocal(), monthOffset),
+        )
+      : [0, 1].map((monthOffset) => addMonths(visibleMonthDate, monthOffset));
+
+    return (
+      <div
+        className={cn(
+          compact
+            ? "mx-auto w-full max-w-xl space-y-8 pb-2"
+            : "grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4",
+        )}
+      >
+        {months.map((monthDate) => {
+          const cells = buildMonthCells(monthDate);
+          const monthKey = `${monthDate.getFullYear()}-${monthDate.getMonth()}`;
+
+          return (
+            <section
+              key={monthKey}
+              aria-label={formatFlightsMonthHeading(monthDate, calendarLocale)}
+              className={cn("min-w-0", compact ? "space-y-2.5" : "")}
+            >
+              <h3
+                className={cn(
+                  compact
+                    ? "text-start text-[17px] font-bold tracking-tight text-slate-950"
+                    : "mb-1.5 text-center text-sm font-semibold text-slate-800",
+                )}
+              >
+                {formatFlightsMonthHeading(monthDate, calendarLocale)}
+              </h3>
+              <div
+                className={cn(
+                  "grid grid-cols-7 text-center text-slate-500",
+                  compact
+                    ? "text-[12px] font-semibold tracking-[0.08em]"
+                    : "mb-1.5 text-xs font-semibold",
+                )}
+              >
+                {weekdays.map((weekday) => (
+                  <span key={weekday} className={compact ? "py-2" : ""}>
+                    {weekday}
+                  </span>
+                ))}
+              </div>
+              <div
+                className={cn(
+                  "grid grid-cols-7",
+                  compact ? "gap-y-1.5" : "gap-1",
+                )}
+              >
+                {cells.map((cell) => {
+                  const day = cell.date;
+                  const iso = toIsoDate(day);
+                  const isStart = iso === startDate;
+                  const isEnd = iso === endDate;
+                  const isPastDate = isBeforeToday(day);
+                  const isToday = toIsoDate(new Date()) === iso;
+                  const isInRange = Boolean(
+                    checkInParsed &&
+                    checkOutParsed &&
+                    !isPastDate &&
+                    day > checkInParsed &&
+                    day < checkOutParsed,
+                  );
+
+                  if (!cell.isCurrentMonth) {
+                    return (
+                      <span
+                        key={`placeholder-${iso}`}
+                        aria-hidden="true"
+                        className={
+                          compact
+                            ? "h-11 w-full"
+                            : "h-8 w-8 justify-self-center"
+                        }
+                      />
+                    );
+                  }
+
+                  return (
+                    <button
+                      key={iso}
+                      type="button"
+                      aria-label={`${t("deals.selectDateAriaPrefix")} ${accessibleDateFormatter.format(day)}`}
+                      aria-pressed={isStart || isEnd}
+                      onClick={() => handleSelectDate(day)}
+                      disabled={isPastDate}
+                      aria-disabled={isPastDate}
+                      className={cn(
+                        "focus-ring relative flex items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed",
+                        compact
+                          ? "mx-auto h-11 w-full max-w-11 text-[15px] font-semibold"
+                          : "h-8 w-8 justify-self-center text-sm",
+                        isPastDate
+                          ? "text-slate-300"
+                          : "text-slate-800 hover:bg-[#004BB8]/8 hover:text-[#004BB8]",
+                        isToday &&
+                          !isPastDate &&
+                          "ring-1 ring-inset ring-[#004BB8]/20",
+                        isInRange &&
+                          "bg-[#004BB8]/10 text-[#021C2B] hover:bg-[#004BB8]/10",
+                        (isStart || isEnd) &&
+                          "bg-[#004BB8] text-white shadow-none ring-0 hover:bg-[#004BB8] hover:text-white",
+                      )}
+                    >
+                      {day.getDate()}
+                      {isToday && !isStart && !isEnd ? (
+                        <span
+                          className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#004BB8]"
+                          aria-hidden="true"
+                        />
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+    );
+  };
 
   if (isSubmitting) {
     return (
@@ -736,10 +906,15 @@ export default function DealsPage() {
                     }`}
                   >
                     {includesFlight ? (
-                      <div className="min-h-[58px] rounded-2xl border border-slate-300 bg-white px-4 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:min-h-[72px] lg:rounded-none lg:rounded-s-2xl lg:border-0 lg:border-e lg:border-slate-200 lg:px-5 lg:py-3 lg:shadow-none lg:hover:border-[#004BB8]/20 lg:focus-within:border-[#004BB8]/20 lg:focus-within:bg-[#004BB8]/[0.03] lg:focus-within:ring-1 lg:focus-within:ring-inset lg:focus-within:ring-[#004BB8]/20">
+                      <div
+                        className={cn(
+                          dealsSearchFieldShellClassName,
+                          "lg:rounded-s-2xl",
+                        )}
+                      >
                         <label
                           htmlFor="package-origin"
-                          className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 lg:text-[11px] lg:tracking-[0.12em] lg:text-slate-700"
+                          className={dealsSearchFieldLabelClassName}
                         >
                           {t("deals.originLabel")}
                         </label>
@@ -750,7 +925,10 @@ export default function DealsPage() {
                             value={origin}
                             onChange={(event) => setOrigin(event.target.value)}
                             placeholder={t("deals.originPlaceholder")}
-                            className="h-9 w-full rounded-md border-0 bg-transparent px-0 pe-9 text-[16px] font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 lg:h-8 lg:text-[15px]"
+                            className={cn(
+                              dealsSearchFieldControlClassName,
+                              "pe-9",
+                            )}
                             autoComplete="address-level2"
                             required={includesFlight}
                           />
@@ -774,13 +952,14 @@ export default function DealsPage() {
                     ) : null}
 
                     <div
-                      className={`min-h-[58px] rounded-2xl border border-slate-300 bg-white px-4 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:min-h-[72px] lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:px-5 lg:py-3 lg:shadow-none lg:hover:border-[#004BB8]/20 lg:focus-within:border-[#004BB8]/20 lg:focus-within:bg-[#004BB8]/[0.03] lg:focus-within:ring-1 lg:focus-within:ring-inset lg:focus-within:ring-[#004BB8]/20 ${
-                        includesFlight ? "" : "lg:rounded-s-2xl"
-                      }`}
+                      className={cn(
+                        dealsSearchFieldShellClassName,
+                        !includesFlight && "lg:rounded-s-2xl",
+                      )}
                     >
                       <label
                         htmlFor="package-destination"
-                        className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 lg:text-[11px] lg:tracking-[0.12em] lg:text-slate-700"
+                        className={dealsSearchFieldLabelClassName}
                       >
                         {t("deals.destinationLabel")}
                       </label>
@@ -793,7 +972,10 @@ export default function DealsPage() {
                             setDestination(event.target.value)
                           }
                           placeholder={t("deals.destinationPlaceholder")}
-                          className="h-9 w-full rounded-md border-0 bg-transparent px-0 pe-9 text-[16px] font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 lg:h-8 lg:text-[15px]"
+                          className={cn(
+                            dealsSearchFieldControlClassName,
+                            "pe-9",
+                          )}
                           autoComplete="address-level2"
                           required
                         />
@@ -817,18 +999,19 @@ export default function DealsPage() {
 
                     <div
                       ref={datesWrapperRef}
-                      className="relative min-h-[58px] rounded-2xl border border-slate-300 bg-white px-4 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:min-h-[72px] lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:px-5 lg:py-3 lg:shadow-none lg:hover:border-[#004BB8]/20 lg:focus-within:border-[#004BB8]/20 lg:focus-within:bg-[#004BB8]/[0.03] lg:focus-within:ring-1 lg:focus-within:ring-inset lg:focus-within:ring-[#004BB8]/20"
+                      className={dealsSearchFieldShellClassName}
                     >
-                      <span className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 lg:text-[11px] lg:tracking-[0.12em] lg:text-slate-700">
+                      <span className={dealsSearchFieldLabelClassName}>
                         {t("deals.datesLabel")}
                       </span>
                       <button
+                        ref={datesMobileLauncherRef}
                         type="button"
                         onClick={handleToggleDates}
                         aria-expanded={datesOpen}
                         aria-haspopup="dialog"
                         aria-label={t("deals.dateDialog")}
-                        className="flex h-9 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-medium text-slate-900 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 lg:h-8 lg:text-[15px]"
+                        className={dealsSearchFieldControlClassName}
                       >
                         <Calendar
                           size={16}
@@ -837,143 +1020,99 @@ export default function DealsPage() {
                         <span className="truncate">{dateSummary}</span>
                       </button>
                       {datesOpen ? (
-                        <div className="absolute inset-x-0 top-[calc(100%+10px)] z-[200] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:inset-inline-end-auto sm:w-[min(92vw,620px)] sm:p-4">
-                          <p className="mb-3 text-base font-semibold text-slate-900">
-                            {t("deals.dateDialog")}
-                          </p>
-                          <div className="mb-3 flex items-center justify-between">
-                            <button
-                              type="button"
-                              aria-label={t("deals.previous")}
-                              onClick={() =>
-                                setVisibleMonthDate((previousMonth) =>
-                                  addMonths(previousMonth, -1),
-                                )
-                              }
-                              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
-                            >
-                              {t("deals.previous")}
-                            </button>
-                            <button
-                              type="button"
-                              aria-label={t("deals.next")}
-                              onClick={() =>
-                                setVisibleMonthDate((previousMonth) =>
-                                  addMonths(previousMonth, 1),
-                                )
-                              }
-                              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
-                            >
-                              {t("deals.next")}
-                            </button>
-                          </div>
-                          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-                            {[0, 1].map((monthOffset) => {
-                              const monthDate = addMonths(
-                                visibleMonthDate,
-                                monthOffset,
-                              );
-                              const cells = buildMonthCells(monthDate);
+                        <>
+                          <FlightMobilePickerShell
+                            open={datesOpen}
+                            title={t("deals.dateDialog")}
+                            titleId="deals-mobile-dates-title"
+                            launcherRef={datesMobileLauncherRef}
+                            onClose={() => setDatesOpen(false)}
+                            contentClassName="px-4 py-4"
+                            footer={
+                              <div className="flex items-center justify-between gap-3">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setStartDate("");
+                                    setEndDate("");
+                                  }}
+                                  className="focus-ring min-h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                                >
+                                  {t("clear")}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setDatesOpen(false)}
+                                  className={dealsMobileDoneButtonClassName}
+                                >
+                                  {t("done")}
+                                </button>
+                              </div>
+                            }
+                          >
+                            {renderDateCalendar(true)}
+                          </FlightMobilePickerShell>
 
-                              return (
-                                <div key={monthOffset}>
-                                  <p className="mb-1.5 text-center text-sm font-semibold text-slate-800">
-                                    {monthDate.toLocaleDateString(locale, {
-                                      month: "long",
-                                      year: "numeric",
-                                    })}
-                                  </p>
-                                  <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-600">
-                                    {weekdays.map((weekday) => (
-                                      <span key={weekday}>{weekday}</span>
-                                    ))}
-                                  </div>
-                                  <div className="grid grid-cols-7 gap-1">
-                                    {cells.map((cell) => {
-                                      const day = cell.date;
-                                      const iso = toIsoDate(day);
-                                      const isStart = iso === startDate;
-                                      const isEnd = iso === endDate;
-                                      const isPastDate = isBeforeToday(day);
-                                      const isInRange = !!(
-                                        checkInParsed &&
-                                        checkOutParsed &&
-                                        !isPastDate &&
-                                        day > checkInParsed &&
-                                        day < checkOutParsed
-                                      );
-
-                                      if (!cell.isCurrentMonth) {
-                                        return (
-                                          <span
-                                            key={`placeholder-${iso}`}
-                                            aria-hidden="true"
-                                            className="h-8 w-8 justify-self-center"
-                                          />
-                                        );
-                                      }
-
-                                      return (
-                                        <button
-                                          key={iso}
-                                          type="button"
-                                          aria-label={`${t("deals.selectDateAriaPrefix")} ${day.toLocaleDateString(
-                                            locale,
-                                            {
-                                              month: "long",
-                                              day: "numeric",
-                                              year: "numeric",
-                                            },
-                                          )}`}
-                                          onClick={() => handleSelectDate(day)}
-                                          disabled={isPastDate}
-                                          className={`flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 disabled:cursor-not-allowed ${
-                                            isPastDate
-                                              ? "text-slate-300 hover:bg-transparent"
-                                              : "text-slate-900 hover:bg-[#004BB8]/8"
-                                          } ${isInRange ? "rounded-md bg-[#004BB8]/10 text-[#021C2B] hover:bg-[#004BB8]/10" : ""} ${
-                                            isStart || isEnd
-                                              ? "bg-[#004BB8] text-white hover:bg-[#004BB8]"
-                                              : ""
-                                          }`}
-                                        >
-                                          {day.getDate()}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              );
-                            })}
+                          <div className="absolute inset-x-0 top-[calc(100%+10px)] z-[200] hidden w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:block sm:inset-inline-end-auto sm:w-[min(92vw,620px)] sm:p-4">
+                            <p className="mb-3 text-base font-semibold text-slate-900">
+                              {t("deals.dateDialog")}
+                            </p>
+                            <div className="mb-3 flex items-center justify-between">
+                              <button
+                                type="button"
+                                aria-label={t("deals.previous")}
+                                onClick={() =>
+                                  setVisibleMonthDate((previousMonth) =>
+                                    addMonths(previousMonth, -1),
+                                  )
+                                }
+                                className="focus-ring rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:border-[#004BB8]/20 hover:bg-[#004BB8]/8 hover:text-[#004BB8]"
+                              >
+                                {t("deals.previous")}
+                              </button>
+                              <button
+                                type="button"
+                                aria-label={t("deals.next")}
+                                onClick={() =>
+                                  setVisibleMonthDate((previousMonth) =>
+                                    addMonths(previousMonth, 1),
+                                  )
+                                }
+                                className="focus-ring rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:border-[#004BB8]/20 hover:bg-[#004BB8]/8 hover:text-[#004BB8]"
+                              >
+                                {t("deals.next")}
+                              </button>
+                            </div>
+                            {renderDateCalendar(false)}
+                            <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setStartDate("");
+                                  setEndDate("");
+                                }}
+                                className="focus-ring rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                              >
+                                {t("clear")}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDatesOpen(false)}
+                                className="focus-ring rounded-xl bg-[#004BB8] px-4 py-2 text-sm font-bold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B]"
+                              >
+                                {t("done")}
+                              </button>
+                            </div>
                           </div>
-                          <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setStartDate("");
-                                setEndDate("");
-                              }}
-                              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
-                            >
-                              {t("clear")}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setDatesOpen(false)}
-                              className="rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
-                            >
-                              {t("done")}
-                            </button>
-                          </div>
-                        </div>
+                        </>
                       ) : null}
                     </div>
 
                     <div
                       ref={travelersWrapperRef}
-                      className="relative min-h-[58px] rounded-2xl border border-slate-300 bg-white px-4 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:min-h-[72px] lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:px-5 lg:py-3 lg:shadow-none lg:hover:border-[#004BB8]/20 lg:focus-within:border-[#004BB8]/20 lg:focus-within:bg-[#004BB8]/[0.03] lg:focus-within:ring-1 lg:focus-within:ring-inset lg:focus-within:ring-[#004BB8]/20"
+                      className={dealsSearchFieldShellClassName}
                     >
-                      <span className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 lg:text-[11px] lg:tracking-[0.12em] lg:text-slate-700">
+                      <span className={dealsSearchFieldLabelClassName}>
                         {travelersFieldLabel}
                       </span>
                       <button
@@ -982,7 +1121,10 @@ export default function DealsPage() {
                         aria-expanded={travelersOpen}
                         aria-haspopup="dialog"
                         aria-label={travelersFieldLabel}
-                        className="flex h-9 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-medium text-slate-900 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 lg:h-8 lg:text-[15px]"
+                        className={cn(
+                          dealsSearchFieldControlClassName,
+                          "justify-between",
+                        )}
                       >
                         <span className="truncate">{travelersSummary}</span>
                         <ChevronDown
