@@ -1452,6 +1452,8 @@ export const translations: TranslationDictionary = {
   "legal.privacy.developerNote": "ये कानूनी मसौदे स्टार्टअप प्लेसहोल्डर हैं और बड़े पैमाने पर सार्वजनिक लॉन्च से पहले योग्य कानूनी सलाहकार द्वारा समीक्षा किए जाने चाहिए।",
   "legal.cookiePolicy.title": "कुकी नीति",
   "legal.cookiePolicy.summary": "Kurioticket प्रमाणीकरण, सुरक्षा, पसंदों, एनालिटिक्स और प्रदर्शन के लिए कुकीज़ और समान तकनीकों का उपयोग कैसे करता है।",
+  "legal.cookiePolicy.lastUpdatedDate": "11 मई 2026",
+  "legal.cookiePolicy.lastUpdated": "अंतिम अपडेट: 11 मई 2026",
   "legal.cookiePolicy.tableOfContents": "विषय सूची",
   "legal.cookiePolicy.sections.use.title": "कुकीज़ का उपयोग कैसे किया जाता है",
   "legal.cookiePolicy.sections.use.paragraph1": "Kurioticket प्रमाणीकरण सत्रों, सुरक्षा, धोखाधड़ी रोकथाम, पसंदों के संग्रहण, एनालिटिक्स, प्रदर्शन निगरानी और फ़ीचर प्रयोगों के लिए कुकीज़ का उपयोग कर सकता है।",

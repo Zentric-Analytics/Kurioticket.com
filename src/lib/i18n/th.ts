@@ -1684,6 +1684,7 @@ export const translations: TranslationDictionary = {
   "legal.cookiePolicy.summary":
     "วิธีที่ Kurioticket ใช้คุกกี้และเทคโนโลยีที่คล้ายกันสำหรับการยืนยันตัวตน ความปลอดภัย การตั้งค่า การวิเคราะห์ และประสิทธิภาพ",
   "legal.cookiePolicy.lastUpdatedDate": "May 11, 2026",
+  "legal.cookiePolicy.lastUpdated": "อัปเดตล่าสุด: May 11, 2026",
   "legal.cookiePolicy.tableOfContents": "สารบัญ",
   "legal.cookiePolicy.sections.use.title": "วิธีใช้คุกกี้",
   "legal.cookiePolicy.sections.use.paragraph1":

@@ -1852,6 +1852,7 @@ export const translations: TranslationDictionary = {
   "legal.cookiePolicy.title": "Polityka plików cookie",
   "legal.cookiePolicy.summary": "Jak Kurioticket używa plików cookie i podobnych technologii do uwierzytelniania, bezpieczeństwa, preferencji, analityki i wydajności.",
   "legal.cookiePolicy.lastUpdatedDate": "May 11, 2026",
+  "legal.cookiePolicy.lastUpdated": "Ostatnia aktualizacja: 11 maja 2026",
   "legal.cookiePolicy.tableOfContents": "SPIS TREŚCI",
   "legal.cookiePolicy.sections.use.title": "Jak używane są pliki cookie",
   "legal.cookiePolicy.sections.use.paragraph1": "Kurioticket może używać plików cookie do sesji uwierzytelniania, bezpieczeństwa, zapobiegania oszustwom, przechowywania preferencji, analityki, monitorowania wydajności i eksperymentów funkcji.",

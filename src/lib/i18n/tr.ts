@@ -1459,6 +1459,8 @@ export const translations: TranslationDictionary = {
   "legal.terms.developerNote": "Bu yasal taslaklar başlangıç aşaması için yer tutucu metinlerdir ve geniş ölçekli herkese açık lansmandan önce nitelikli hukuk danışmanları tarafından incelenmelidir.",
   "legal.cookiePolicy.title": "Çerez Politikası",
   "legal.cookiePolicy.summary": "Kurioticket’in kimlik doğrulama, güvenlik, tercihler, analiz ve performans için çerezleri ve benzer teknolojileri nasıl kullandığını açıklar.",
+  "legal.cookiePolicy.lastUpdatedDate": "11 Mayıs 2026",
+  "legal.cookiePolicy.lastUpdated": "Son güncelleme: 11 Mayıs 2026",
   "legal.cookiePolicy.tableOfContents": "İÇİNDEKİLER",
   "legal.cookiePolicy.sections.use.title": "Çerezler Nasıl Kullanılır",
   "legal.cookiePolicy.sections.use.paragraph1": "Kurioticket; kimlik doğrulama oturumları, güvenlik, dolandırıcılığı önleme, tercih saklama, analiz, performans izleme ve özellik deneyleri için çerezleri kullanabilir.",
