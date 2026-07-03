@@ -312,6 +312,9 @@ export const translations: TranslationDictionary = {
   signupGoogle: "ดำเนินการต่อด้วย Google",
   signupAlreadyHaveAccount: "มีบัญชีอยู่แล้ว?",
   signupLoginLink: "เข้าสู่ระบบ",
+  signupErrorFullNameRequired: "โปรดป้อนชื่อ-นามสกุลของคุณ",
+  signupErrorInvalidEmail: "ป้อนที่อยู่อีเมลที่ถูกต้อง",
+  signupErrorPasswordRequirements: "รหัสผ่านต้องมีอย่างน้อย 8 อักขระ",
   homeHeroTitle: "เปรียบเทียบตัวเลือกการเดินทางได้ในการค้นหาเดียว",
   homeHeroSubtitle:
     "ค้นหาผู้ให้บริการเดินทางที่เชื่อถือได้ เปรียบเทียบราคาอย่างชัดเจน และเลือกตัวเลือกที่เหมาะกับทริปของคุณ",

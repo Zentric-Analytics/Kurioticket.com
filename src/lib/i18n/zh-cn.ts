@@ -1251,6 +1251,9 @@ export const translations: TranslationDictionary = {
   signupGoogle: "使用 Google 继续",
   signupAlreadyHaveAccount: "已有账户？",
   signupLoginLink: "登录",
+  signupErrorFullNameRequired: "请输入你的全名。",
+  signupErrorInvalidEmail: "请输入有效的电子邮箱地址。",
+  signupErrorPasswordRequirements: "密码必须至少包含 8 个字符。",
   footerAbout:
     "免费搜索航班和酒店，比较可信赖合作伙伴的价格，更从容地做出旅行决定。",
   footerMeta: "Kurioticket 是一个旅行元搜索平台。",

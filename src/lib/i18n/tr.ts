@@ -1070,6 +1070,9 @@ export const translations: TranslationDictionary = {
   signupGoogle: "Google ile devam et",
   signupAlreadyHaveAccount: "Zaten hesabınız var mı?",
   signupLoginLink: "Giriş yap",
+  signupErrorFullNameRequired: "Lütfen adınızı ve soyadınızı girin.",
+  signupErrorInvalidEmail: "Geçerli bir e-posta adresi girin.",
+  signupErrorPasswordRequirements: "Şifre en az 8 karakter olmalıdır.",
   loginPageTitle: "Giriş yap",
   loginPageSubtitle:
     "Aramalarınızı kaydedin, uyarıları yönetin ve seyahat panelinize erişin.",

@@ -933,6 +933,9 @@ export const translations: TranslationDictionary = {
   signupGoogle: "Google के साथ जारी रखें",
   signupAlreadyHaveAccount: "पहले से खाता है?",
   signupLoginLink: "लॉग इन करें",
+  signupErrorFullNameRequired: "कृपया अपना पूरा नाम दर्ज करें।",
+  signupErrorInvalidEmail: "एक मान्य ईमेल पता दर्ज करें।",
+  signupErrorPasswordRequirements: "पासवर्ड कम से कम 8 वर्णों का होना चाहिए।",
   loginPageTitle: "लॉग इन करें",
   loginPageSubtitle:
     "खोजें सहेजें, अलर्ट प्रबंधित करें और अपना यात्रा डैशबोर्ड खोलें।",

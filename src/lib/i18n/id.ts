@@ -180,6 +180,9 @@ export const translations: TranslationDictionary = {
   signupGoogle: "Lanjutkan dengan Google",
   signupAlreadyHaveAccount: "Sudah punya akun?",
   signupLoginLink: "Masuk",
+  signupErrorFullNameRequired: "Masukkan nama lengkap Anda.",
+  signupErrorInvalidEmail: "Masukkan alamat email yang valid.",
+  signupErrorPasswordRequirements: "Kata sandi harus minimal 8 karakter.",
   loginPageTitle: "Masuk",
   loginPageSubtitle:
     "Simpan pencarian, kelola notifikasi, dan akses dasbor perjalanan Anda.",
