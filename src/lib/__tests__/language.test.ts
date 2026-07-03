@@ -1768,7 +1768,7 @@ test("Deals landing package values and destination card data remain unchanged wh
   assert.match(dealsPageSource, /name="packageMode"/);
   assert.match(dealsPageSource, /const dateSummary = useMemo\(\(\) => \{/);
   assert.match(dealsPageSource, /return formattedEnd\s*\? `\$\{formattedStart\} — \$\{formattedEnd\}`\s*: formattedStart;/);
-  assert.match(dealsPageSource, /className="relative min-h-\[54px\] rounded-xl border border-slate-300 bg-white/);
+  assert.match(dealsPageSource, /const dealsSearchFieldShellClassName =\s*"relative min-h-\[54px\] rounded-xl border border-slate-300 bg-white/);
   assert.match(dealsPageSource, /<span className="truncate">\{dateSummary\}<\/span>/);
   assert.ok(dealsPageSource.includes("router.push(`/flights/results?${params.toString()}`)"));
   assert.ok(dealsPageSource.includes("router.push(`/hotels/results?${params.toString()}`)"));
@@ -3733,7 +3733,7 @@ test("Polish Deals active render path uses localized keys and preserves search/c
     '`/hotels/results?${params.toString()}`',
     'guests: "2"',
     'rooms: "1"',
-    'className="group block overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm shadow-slate-950/5 transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-950/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"',
+    'className="group block overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm shadow-slate-950/5 transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-xl hover:shadow-[#004BB8]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"',
   ]) {
     assert.ok(dealsPageSource.includes(preservedSource), preservedSource);
   }
@@ -3851,7 +3851,7 @@ test("Swedish Deals active render path uses localized keys and preserves search/
     '`/hotels/results?${params.toString()}`',
     'guests: "2"',
     'rooms: "1"',
-    'className="group block overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm shadow-slate-950/5 transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-950/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"',
+    'className="group block overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm shadow-slate-950/5 transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-xl hover:shadow-[#004BB8]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"',
   ]) {
     assert.ok(dealsPageSource.includes(preservedSource), preservedSource);
   }
@@ -3867,10 +3867,10 @@ test("Polish global modal copy resolves without English fallback", () => {
   const expectedPolishGlobalModalStrings: Record<string, string> = {
     chooseCountryAndCurrency: "Wybierz kraj i walutę",
     countryCurrencyDescription:
-      "Wybierz kraj i walutę używane do wyświetlania cen. Sugestie lotnisk korzystają z wykrytej lokalizacji.",
+      "Wybierz kraj i walutę używane do cen i preferencji regionalnych.",
     searchCountryOrCurrency: "Wyszukaj kraj lub walutę",
-    countryCurrencyPopularCountryAndCurrency: "POPULARNE KRAJE I WALUTY",
-    countryCurrencyAllCountriesAndCurrencies: "WSZYSTKIE KRAJE I WALUTY",
+    countryCurrencyPopularCountryAndCurrency: "Popularne kraje i waluty",
+    countryCurrencyAllCountriesAndCurrencies: "Wszystkie kraje i waluty",
     countryCurrencyOptionCountSingular: "{{count}} opcja",
     countryCurrencyOptionCountPlural: "{{count}} opcji",
     showMoreResults: "Pokaż więcej wyników",
@@ -3942,12 +3942,12 @@ test("Hindi country and currency modal copy resolves without English fallback", 
     ["chooseCountryAndCurrency", "देश और मुद्रा चुनें"],
     [
       "countryCurrencyDescription",
-      "कीमतें दिखाने के लिए इस्तेमाल होने वाला देश और मुद्रा चुनें। हवाई अड्डे के सुझाव आपके पहचाने गए स्थान का उपयोग करते हैं।",
+      "कीमतों और क्षेत्रीय प्राथमिकताओं के लिए इस्तेमाल होने वाला देश और मुद्रा चुनें।",
     ],
     ["closeCountryCurrencySelector", "देश और मुद्रा चयनकर्ता बंद करें"],
     ["searchCountryOrCurrency", "देश या मुद्रा खोजें"],
     ["countryCurrencyAllCountriesAndCurrencies", "सभी देश और मुद्राएँ"],
-    ["countryCurrencyPopularCountryAndCurrency", "लोकप्रिय देश और मुद्रा"],
+    ["countryCurrencyPopularCountryAndCurrency", "लोकप्रिय देश और मुद्राएँ"],
     ["countryCurrencyOptionCountSingular", "{{count}} विकल्प"],
     ["countryCurrencyOptionCountPlural", "{{count}} विकल्प"],
     ["selectCountryCurrencyOption", "{{country}}, {{code}}, {{currency}} चुनें"],
@@ -6217,7 +6217,7 @@ test("active locale dictionaries do not keep audited cross-language UI fallbacks
     selectedFlightCabinBusiness: "Clase ejecutiva",
   });
   assert.deepEqual(auditedValuesByLocale.french, {
-    destinations: "Voyages",
+    destinations: "Destinations",
     destination: "Lieu d’arrivée",
     hotelSearchDestinationLabel: "Lieu de séjour",
   });
@@ -7224,7 +7224,7 @@ test("Polish auth pages resolve localized login and reset password copy", () => 
     resetPasswordTitle: "Zresetuj hasło",
     resetPasswordRemember: "Pamiętasz hasło?",
     resetPasswordLoginLink: "Zaloguj się",
-    loginCodeSent: "Kod logowania został wysłany",
+    loginCodeSent: "Wysłaliśmy kod weryfikacyjny na Twój adres e-mail.",
     loginCodeInstructions:
       "Wpisz 6-cyfrowy kod wysłany na {{email}}. Kody wygasają po {{minutes}} minutach.",
     loginVerificationCodeLabel: "Kod weryfikacyjny",
@@ -7414,10 +7414,10 @@ test("Turkish global modals and auth pages resolve screenshot-visible copy", () 
   const expectedTurkishGlobalAuthStrings: Record<string, string> = {
     chooseCountryAndCurrency: "Ülke ve para birimini seçin",
     countryCurrencyDescription:
-      "Fiyatları görüntülemek için kullanılan ülke ve para birimini seçin. Havalimanı önerileri algılanan konumunuzu kullanır.",
+      "Fiyatlar ve bölgesel tercihler için kullanılan ülke ve para birimini seçin.",
     searchCountryOrCurrency: "Ülke veya para birimi ara",
-    countryCurrencyPopularCountryAndCurrency: "POPÜLER ÜLKE VE PARA BİRİMİ",
-    countryCurrencyAllCountriesAndCurrencies: "TÜM ÜLKELER VE PARA BİRİMLERİ",
+    countryCurrencyPopularCountryAndCurrency: "Popüler ülkeler ve para birimleri",
+    countryCurrencyAllCountriesAndCurrencies: "Tüm ülkeler ve para birimleri",
     countryCurrencyOptionCountPlural: "{{count}} seçenek",
     showMoreResults: "Daha fazla sonuç göster",
     globalLanguage: "GENEL DİL",
@@ -10494,7 +10494,7 @@ test("Indonesian auth, language, and country/currency copy resolves without Engl
     loginSignupPrompt: "Baru di Kurioticket?",
     loginCreateAccount: "Buat akun",
     loginCodeSent: "Kami telah mengirimkan kode verifikasi ke email Anda.",
-    loginCodeInstructions: "Masukkan kode 6 digit yang dikirim ke {{email}}. Kode berlaku selama {{minutes}} menit.",
+    loginCodeInstructions: "Masukkan kode 6 digit yang dikirim ke {{email}}. Kode kedaluwarsa setelah {{minutes}} menit.",
     loginVerificationCodeLabel: "Kode verifikasi",
     loginVerifying: "Memverifikasi...",
     loginVerifyLogin: "Verifikasi masuk",
@@ -10535,10 +10535,10 @@ test("Indonesian auth, language, and country/currency copy resolves without Engl
     languageSearchPlaceholder: "Cari English, Español, Français, Deutsch...",
     globalLanguage: "BAHASA GLOBAL",
     chooseCountryAndCurrency: "Pilih negara dan mata uang",
-    countryCurrencyDescription: "Pilih negara dan mata uang yang digunakan untuk menampilkan harga. Saran bandara menggunakan lokasi yang terdeteksi.",
+    countryCurrencyDescription: "Pilih negara dan mata uang yang digunakan untuk harga dan preferensi regional.",
     searchCountryOrCurrency: "Cari negara atau mata uang",
-    countryCurrencyPopularCountryAndCurrency: "NEGARA DAN MATA UANG POPULER",
-    countryCurrencyAllCountriesAndCurrencies: "SEMUA NEGARA DAN MATA UANG",
+    countryCurrencyPopularCountryAndCurrency: "Negara dan mata uang populer",
+    countryCurrencyAllCountriesAndCurrencies: "Semua negara dan mata uang",
     showMoreResults: "Tampilkan hasil lainnya",
     countryCurrencyOptionCountSingular: "{{count}} opsi",
     countryCurrencyOptionCountPlural: "{{count}} opsi",
@@ -10553,7 +10553,7 @@ test("Indonesian auth, language, and country/currency copy resolves without Engl
   assert.match(id.loginCodeInstructions, /\{\{email\}\}/);
   assert.match(id.loginCodeInstructions, /\{\{minutes\}\}/);
   assert.match(id.loginResendIn, /\{\{seconds\}\}/);
-  assert.equal(id.loginCodeInstructions.replace("{{email}}", "user@example.com").replace("{{minutes}}", "10"), "Masukkan kode 6 digit yang dikirim ke user@example.com. Kode berlaku selama 10 menit.");
+  assert.equal(id.loginCodeInstructions.replace("{{email}}", "user@example.com").replace("{{minutes}}", "10"), "Masukkan kode 6 digit yang dikirim ke user@example.com. Kode kedaluwarsa setelah 10 menit.");
   assert.equal(id.loginResendIn.replace("{{seconds}}", "30"), "Kirim ulang dalam 30 dtk");
   assert.ok(languageOptions.some((o) => o.code === "id" && o.locale === "id-ID" && o.nativeLabel === "Bahasa Indonesia" && o.direction === "ltr"));
   assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
@@ -10599,10 +10599,10 @@ test("Swedish global modal and auth copy resolves without English fallback", () 
   const sv = getTranslations("sv");
   const expected: Record<string, string> = {
     chooseCountryAndCurrency: "Välj land och valuta",
-    countryCurrencyDescription: "Välj land och valuta som används för att visa priser. Flygplatsförslag använder din upptäckta plats.",
+    countryCurrencyDescription: "Välj land och valuta som används för priser och regionala inställningar.",
     searchCountryOrCurrency: "Sök land eller valuta",
-    countryCurrencyPopularCountryAndCurrency: "POPULÄRA LÄNDER OCH VALUTOR",
-    countryCurrencyAllCountriesAndCurrencies: "ALLA LÄNDER OCH VALUTOR",
+    countryCurrencyPopularCountryAndCurrency: "Populära länder och valutor",
+    countryCurrencyAllCountriesAndCurrencies: "Alla länder och valutor",
     countryCurrencyOptionCountSingular: "{{count}} alternativ",
     countryCurrencyOptionCountPlural: "{{count}} alternativ",
     showMoreResults: "Visa fler resultat",
@@ -13311,7 +13311,7 @@ test("Indonesian Deals package search clear-all copy resolves from i18n without 
     'name="packageMode"',
     'id="package-origin"',
     'id="package-destination"',
-    'focus-visible:ring-2 focus-visible:ring-indigo-500',
+    'focus-visible:ring-2 focus-visible:ring-[#004BB8]/35',
     'aria-label={t("deals.packageLegend")}',
     'aria-busy={isSubmitting}',
   ]) {
@@ -13413,7 +13413,7 @@ test("Thai Deals landing page copy resolves from i18n without English fallback",
     'name="packageMode"',
     'id="package-origin"',
     'id="package-destination"',
-    'focus-visible:ring-2 focus-visible:ring-indigo-500',
+    'focus-visible:ring-2 focus-visible:ring-[#004BB8]/35',
     'aria-label={t("deals.packageLegend")}',
     'alt={t(idea.imageAltKey)}',
   ]) {
@@ -14213,8 +14213,8 @@ test("Thai footer Discover destinations link resolves through active i18n key", 
   assert.match(footerSource, /heading: t\.footerDiscover,[\s\S]*?label: t\.flights,[\s\S]*?href: "\/flights",[\s\S]*?label: t\.hotels,[\s\S]*?href: "\/hotels\/results",[\s\S]*?label: t\.cars,[\s\S]*?href: "\/cars",[\s\S]*?label: t\.deals,[\s\S]*?href: "\/deals",[\s\S]*?label: t\.destinations,[\s\S]*?href: "\/destinations",[\s\S]*?label: t\.footerSavedRecent,[\s\S]*?href: "\/saved",/);
   assert.ok(!footerSource.includes('label: "Destinations"'));
   assert.ok(footerSource.includes('className="border-t border-slate-200 bg-white text-slate-700"'));
-  assert.ok(footerSource.includes('className="transition-colors hover:text-indigo-600"'));
-  assert.ok(footerSource.includes('className="break-words transition-colors hover:text-indigo-600"'));
+  assert.ok(footerSource.includes('className="transition-colors hover:text-[#004BB8]"'));
+  assert.ok(footerSource.includes('className="break-words transition-colors hover:text-[#004BB8]"'));
   assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
 });
@@ -14389,14 +14389,14 @@ test("Thai country/currency modal and auth copy resolves without English fallbac
   const th = getTranslations("th-TH");
   const expected: Record<string, string> = {
     chooseCountryAndCurrency: "เลือกประเทศและสกุลเงิน",
-    countryCurrencyDescription: "เลือกประเทศและสกุลเงินที่ใช้แสดงราคา คำแนะนำสนามบินจะใช้ตำแหน่งที่ตรวจพบของคุณ",
+    countryCurrencyDescription: "เลือกประเทศและสกุลเงินที่ใช้สำหรับราคาและการตั้งค่าภูมิภาค",
     closeCountryCurrencySelector: "ปิดตัวเลือกประเทศและสกุลเงิน",
     searchCountryOrCurrency: "ค้นหาประเทศหรือสกุลเงิน",
     countryCurrencyPopularCountryAndCurrency: "ประเทศและสกุลเงินยอดนิยม",
     countryCurrencyAllCountriesAndCurrencies: "ประเทศและสกุลเงินทั้งหมด",
     countryCurrencyOptionCountSingular: "{{count}} ตัวเลือก",
     countryCurrencyOptionCountPlural: "{{count}} ตัวเลือก",
-    selectCountryCurrencyOption: "เลือก {{country}} พร้อมสกุลเงิน {{currency}}",
+    selectCountryCurrencyOption: "เลือก {{country}}, {{code}}, {{currency}}",
     showMoreResults: "แสดงผลลัพธ์เพิ่มเติม",
     loginPageTitle: "เข้าสู่ระบบ",
     loginPageSubtitle: "บันทึกการค้นหา จัดการการแจ้งเตือน และเข้าถึงแดชบอร์ดการเดินทางของคุณ",
@@ -15174,10 +15174,10 @@ test("Vietnamese global auth country currency and language selector copy resolve
 
   const expected = {
     chooseCountryAndCurrency: "Chọn quốc gia và tiền tệ",
-    countryCurrencyDescription: "Chọn quốc gia và tiền tệ dùng để hiển thị giá. Gợi ý sân bay sử dụng vị trí được phát hiện của bạn.",
+    countryCurrencyDescription: "Chọn quốc gia và tiền tệ dùng cho giá và tùy chọn khu vực.",
     searchCountryOrCurrency: "Tìm kiếm quốc gia hoặc tiền tệ",
-    countryCurrencyPopularCountryAndCurrency: "QUỐC GIA VÀ TIỀN TỆ PHỔ BIẾN",
-    countryCurrencyAllCountriesAndCurrencies: "TẤT CẢ QUỐC GIA VÀ TIỀN TỆ",
+    countryCurrencyPopularCountryAndCurrency: "Quốc gia và tiền tệ phổ biến",
+    countryCurrencyAllCountriesAndCurrencies: "Tất cả quốc gia và tiền tệ",
     showMoreResults: "Hiển thị thêm kết quả",
     globalLanguage: "NGÔN NGỮ TOÀN CỤC",
     websiteLanguageTitle: "Chọn ngôn ngữ website của bạn",
@@ -15203,7 +15203,7 @@ test("Vietnamese global auth country currency and language selector copy resolve
     forgotPasswordRemember: "Bạn nhớ mật khẩu?",
     forgotPasswordSuccess: "Nếu tài khoản tồn tại, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu.",
     loginCodeSent: "Chúng tôi đã gửi mã xác minh đến email của bạn.",
-    loginCodeInstructions: "Nhập mã gồm 6 chữ số đã gửi đến {{email}}.",
+    loginCodeInstructions: "Nhập mã gồm 6 chữ số đã gửi đến {{email}}. Mã hết hạn sau {{minutes}} phút.",
     loginVerificationCodeLabel: "Mã xác minh",
     loginVerifyLogin: "Xác minh đăng nhập",
     loginResendIn: "Gửi lại sau {{seconds}} giây",
@@ -15467,7 +15467,7 @@ test("Vietnamese Hotels landing and hotel results screenshot copy resolves witho
       "Tìm kiếm khách sạn trực tiếp hiện tạm thời không khả dụng. Vui lòng thử lại sau ít phút.",
     "hotelDestinationKind.city": "Thành phố",
     "hotelResults.filterBy": "Lọc theo",
-    "hotelResults.budgetPrice": "Ngân sách / Giá",
+    "hotelResults.budgetPrice": "Ngân sách / mỗi đêm",
     "hotelResults.totalUpTo": "Tổng tối đa",
     "hotelResults.starRating": "Xếp hạng sao",
     "hotelResults.fromRating": "Từ",
