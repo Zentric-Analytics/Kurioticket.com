@@ -334,6 +334,7 @@ export default function DealsPage() {
   const datesWrapperRef = useRef<HTMLDivElement>(null);
   const datesMobileLauncherRef = useRef<HTMLButtonElement>(null);
   const travelersWrapperRef = useRef<HTMLDivElement>(null);
+  const travelersMobileLauncherRef = useRef<HTMLButtonElement>(null);
 
   const selectedMode =
     packageModes.find((mode) => mode.value === packageMode) ?? packageModes[0];
@@ -960,6 +961,115 @@ export default function DealsPage() {
       : []),
   ];
 
+
+  const renderTravelersPicker = (compact = true) => (
+    <div
+      className={cn(
+        "mx-auto w-full",
+        compact ? "max-w-xl space-y-4" : "space-y-3",
+      )}
+    >
+      <div>
+        <p className="mb-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+          {travelersFieldLabel}
+        </p>
+        {!compact ? (
+          <h2 className="mb-2 text-lg font-extrabold tracking-tight text-slate-950">
+            {travelersSummary}
+          </h2>
+        ) : null}
+        <div
+          className={cn(
+            "overflow-hidden",
+            compact
+              ? "rounded-3xl border border-slate-200 bg-white shadow-[0_14px_38px_rgba(15,23,42,0.07)]"
+              : "rounded-none border-y border-slate-100 bg-transparent",
+          )}
+        >
+          {countRows.map((row) => {
+            const canDecrement = row.value > row.min;
+            const canIncrement = row.value < row.max;
+
+            return (
+              <div
+                key={row.key}
+                className={cn(
+                  "flex items-center justify-between gap-4 border-b border-slate-100 last:border-b-0",
+                  compact ? "px-4 py-4 sm:px-5" : "py-3",
+                )}
+              >
+                <span className="min-w-0 text-sm font-bold text-slate-950">
+                  {row.label}
+                </span>
+                <div className="flex shrink-0 items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={row.onDecrement}
+                    disabled={!canDecrement}
+                    aria-label={`Decrease ${row.label}`}
+                    className={cn(
+                      "focus-ring inline-flex items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition-colors hover:border-[#004BB8]/25 hover:bg-[#004BB8]/8 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300",
+                      compact ? "h-10 w-10 shadow-sm" : "h-8 w-8",
+                    )}
+                  >
+                    <Minus className="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                  <span className="min-w-8 text-center text-base font-extrabold tabular-nums text-slate-950">
+                    {row.value}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={row.onIncrement}
+                    disabled={!canIncrement}
+                    aria-label={`Increase ${row.label}`}
+                    className={cn(
+                      "focus-ring inline-flex items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition-colors hover:border-[#004BB8]/25 hover:bg-[#004BB8]/8 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300",
+                      compact ? "h-10 w-10 shadow-sm" : "h-8 w-8",
+                    )}
+                  >
+                    <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {includesFlight ? (
+        <div
+          className={cn(
+            compact
+              ? "rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_14px_38px_rgba(15,23,42,0.07)]"
+              : "pt-1",
+          )}
+        >
+          <p className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+            {t("deals.cabinClass")}
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            {cabinClasses.map((cabin) => (
+              <button
+                key={cabin.value}
+                type="button"
+                onClick={() => setCabinClass(cabin.value)}
+                className={cn(
+                  "focus-ring border px-2 text-center text-sm leading-4 transition-all",
+                  compact ? "min-h-11 rounded-2xl" : "min-h-9 rounded-xl",
+                  cabinClass === cabin.value
+                    ? "border-[#004BB8] bg-[#004BB8] font-extrabold text-white shadow-[0_10px_22px_rgba(0,75,184,0.22)]"
+                    : "border-slate-200 bg-slate-50/80 font-bold text-slate-700 hover:border-[#004BB8]/20 hover:bg-[#004BB8]/8 hover:text-[#004BB8]",
+                )}
+              >
+                {t(cabin.labelKey)}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+
   return (
     <>
       <AppHeader />
@@ -1289,6 +1399,7 @@ export default function DealsPage() {
                         {travelersFieldLabel}
                       </span>
                       <button
+                        ref={travelersMobileLauncherRef}
                         type="button"
                         onClick={handleToggleTravelers}
                         aria-expanded={travelersOpen}
@@ -1306,76 +1417,35 @@ export default function DealsPage() {
                         />
                       </button>
                       {travelersOpen ? (
-                        <div className="absolute inset-x-0 top-[calc(100%+8px)] z-[200] w-[calc(100vw-24px)] max-w-[360px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 shadow-[0_14px_32px_rgba(15,23,42,0.14)] max-sm:max-h-[min(70vh,420px)] sm:inset-inline-end-auto sm:w-[min(92vw,360px)]">
-                          <div className="space-y-4">
-                            {countRows.map((row) => {
-                              const canDecrement = row.value > row.min;
-                              const canIncrement = row.value < row.max;
-
-                              return (
-                                <div
-                                  key={row.key}
-                                  className="flex items-center justify-between gap-4"
+                        <>
+                          <FlightMobilePickerShell
+                            open={travelersOpen}
+                            title={travelersFieldLabel}
+                            titleId="deals-mobile-travelers-title"
+                            launcherRef={travelersMobileLauncherRef}
+                            onClose={() => setTravelersOpen(false)}
+                            contentClassName="px-4 py-5"
+                            footer={
+                              <div className="flex justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() => setTravelersOpen(false)}
+                                  className={cn(
+                                    dealsMobileDoneButtonClassName,
+                                    "px-6 py-3",
+                                  )}
                                 >
-                                  <span className="text-sm font-semibold text-slate-900">
-                                    {row.label}
-                                  </span>
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={row.onDecrement}
-                                      disabled={!canDecrement}
-                                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
-                                    >
-                                      <Minus className="h-4 w-4" />
-                                    </button>
-                                    <span className="min-w-7 text-center text-sm font-semibold text-slate-900">
-                                      {row.value}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={row.onIncrement}
-                                      disabled={!canIncrement}
-                                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
-                                    >
-                                      <Plus className="h-4 w-4" />
-                                    </button>
-                                  </div>
-                                </div>
-                              );
-                            })}
-
-                            {includesFlight ? (
-                              <div className="border-t border-slate-200 pt-4">
-                                <label
-                                  className="block text-sm font-semibold text-slate-900"
-                                  htmlFor="package-cabin-class"
-                                >
-                                  {t("deals.cabinClass")}
-                                </label>
-                                <select
-                                  id="package-cabin-class"
-                                  value={cabinClass}
-                                  onChange={(event) =>
-                                    setCabinClass(
-                                      event.target.value as CabinClass,
-                                    )
-                                  }
-                                  className="mt-2 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-900 outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
-                                >
-                                  {cabinClasses.map((cabin) => (
-                                    <option
-                                      key={cabin.value}
-                                      value={cabin.value}
-                                    >
-                                      {t(cabin.labelKey)}
-                                    </option>
-                                  ))}
-                                </select>
+                                  {t("done")}
+                                </button>
                               </div>
-                            ) : null}
+                            }
+                          >
+                            {renderTravelersPicker()}
+                          </FlightMobilePickerShell>
 
-                            <div className="border-t border-slate-200 pt-4">
+                          <div className="absolute inset-x-0 top-[calc(100%+8px)] z-[200] hidden w-[calc(100vw-24px)] max-w-[360px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:inset-inline-end-auto sm:block sm:w-[min(92vw,360px)]">
+                            {renderTravelersPicker(false)}
+                            <div className="mt-4 border-t border-slate-200 pt-4">
                               <button
                                 type="button"
                                 onClick={() => setTravelersOpen(false)}
@@ -1385,7 +1455,7 @@ export default function DealsPage() {
                               </button>
                             </div>
                           </div>
-                        </div>
+                        </>
                       ) : null}
                     </div>
 
