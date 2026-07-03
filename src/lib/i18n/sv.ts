@@ -3,6 +3,11 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  mobileInfoLegalHeading: "Info och juridik",
+  mobileExploreHeading: "Utforska",
+  mobileTravelHeading: "Resor",
+  mobilePreferencesHeading: "Inställningar",
+
   // Global country/currency modal
   chooseCountryAndCurrency: 'Välj land och valuta',
   countryCurrencyDescription:

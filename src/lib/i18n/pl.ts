@@ -3,6 +3,11 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  mobileInfoLegalHeading: "Informacje i prawo",
+  mobileExploreHeading: "Odkrywaj",
+  mobileTravelHeading: "Podróże",
+  mobilePreferencesHeading: "Preferencje",
+
   "accountDashboard.overview.welcome": "Witaj ponownie, {name}",
   "accountDashboard.hub.title": "Moje konto",
   "accountDashboard.hub.description":

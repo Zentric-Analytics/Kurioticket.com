@@ -3,6 +3,11 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  mobileInfoLegalHeading: "Thông tin & pháp lý",
+  mobileExploreHeading: "Khám phá",
+  mobileTravelHeading: "Du lịch",
+  mobilePreferencesHeading: "Tùy chọn",
+
 
 
   // Vietnamese Flights landing page localization.
