@@ -530,9 +530,13 @@ export const translations: TranslationDictionary = {
   loginUseDifferentDetails: "Dùng thông tin khác",
   verifyLoginTitle: "Xác minh đăng nhập",
   verifyLoginInstructions:
-    "Nhập mã gồm 6 chữ số đã gửi đến {{email}}. Mã sẽ hết hạn sau 10 phút.",
+    "Nhập mã gồm 6 chữ số mà chúng tôi đã gửi đến email của bạn. Mã sẽ hết hạn sau 10 phút.",
   verifyLoginCodeLabel: "Mã xác minh",
   verifyLoginSubmit: "Xác minh đăng nhập",
+  verifyLoginNeedNewCode: "Bạn cần mã mới? Nhập mật khẩu để chúng tôi có thể gửi lại một mã một cách an toàn.",
+  verifyLoginPasswordLabel: "Mật khẩu để gửi lại",
+  verifyLoginNeedStartOver: "Bạn cần bắt đầu lại?",
+  verifyLoginAgainLink: "Đăng nhập lại",
   forgotPasswordTitle: "Đặt lại mật khẩu của bạn",
   forgotPasswordSubtitle:
     "Nhập email của bạn và chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu.",
