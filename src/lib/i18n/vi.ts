@@ -2,6 +2,9 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
+  selectLanguage: "Chọn ngôn ngữ",
+  suggestedLanguages: "Ngôn ngữ gợi ý",
+  allLanguages: "Tất cả ngôn ngữ",
   ...en,
   mobileInfoLegalHeading: "Thông tin & pháp lý",
   mobileExploreHeading: "Khám phá",

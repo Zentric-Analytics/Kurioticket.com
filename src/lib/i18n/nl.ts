@@ -2,6 +2,9 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
+  selectLanguage: "Selecteer taal",
+  suggestedLanguages: "Voorgestelde talen",
+  allLanguages: "Alle talen",
   ...en,
   homeHeroImageAlt: "Luxe tropisch resort aan kalm water",
   homeSaveDestination: "{{city}} bewaren",
