@@ -1089,22 +1089,22 @@ export function SavedTripsAndRecentSearches({
           </section>
 
           {recentSearches.length > 0 ? (
-            <section className="space-y-4 pt-4">
-              <div className="flex flex-col items-start gap-2 border-y border-slate-200/80 py-3 sm:flex-row sm:items-center sm:justify-between sm:border-y-0 sm:border-b sm:pb-3 sm:pt-1">
-                <div>
-                  <h2 className="text-base font-semibold tracking-tight text-slate-950">
+            <section className="max-w-5xl space-y-5 pt-6">
+              <div className="flex flex-col items-start gap-3 border-y border-slate-200/80 py-4 sm:flex-row sm:items-start sm:justify-start sm:border-y-0 sm:border-b sm:pb-4 sm:pt-1">
+                <div className="max-w-2xl">
+                  <h2 className="text-lg font-semibold leading-7 tracking-tight text-slate-950">
                     {dictionary.savedTripsRecentSearchesTitle ??
                       enTranslations.savedTripsRecentSearchesTitle}
                     🕘
                   </h2>
-                  <p className="mt-0.5 text-sm font-medium text-slate-500">
+                  <p className="mt-1 text-sm leading-6 text-slate-600">
                     {t("savedTripsRecentSearchesSubtitle")}
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={handleClearRecent}
-                  className="inline-flex items-center gap-1.5 rounded-md px-0 py-1 text-sm font-semibold text-violet-700 transition hover:text-violet-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-400 sm:px-2"
+                  className="inline-flex items-center gap-1.5 rounded-md px-0 py-1 text-sm font-medium text-violet-700 transition hover:text-violet-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-400 sm:ms-3 sm:mt-1 sm:px-2"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                   {t("savedTripsClearAllRecent")}
