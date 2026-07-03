@@ -666,7 +666,7 @@ export default function DealsPage() {
       <AppHeader />
 
       <main className="flex-1 bg-slate-50 pb-12">
-        <section className="relative overflow-visible border-b border-slate-200/80 bg-[#f8f7ff] pb-14 shadow-[0_18px_45px_rgba(15,23,42,0.06)] sm:pb-20">
+        <section className="relative overflow-visible border-b border-slate-200/80 bg-[#F6F9FC] pb-14 shadow-[0_18px_45px_rgba(15,23,42,0.06)] sm:pb-20">
           <div className="absolute inset-0 overflow-hidden">
             <Image
               src={dealsHeroImage}
@@ -692,7 +692,7 @@ export default function DealsPage() {
           </div>
 
           <div className="page-shell relative z-20 pt-8 sm:pt-10">
-            <div className="mx-auto w-full max-w-[1040px] space-y-3">
+            <div className="mx-auto w-full max-w-[1120px] space-y-4">
               <div className="px-1">
                 <fieldset
                   className="min-w-0"
@@ -727,19 +727,19 @@ export default function DealsPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-                <div className="overflow-visible rounded-2xl border border-white/70 bg-white/90 p-1 shadow-[0_22px_60px_rgba(15,23,42,0.18)] backdrop-blur-md">
+                <div className="overflow-visible rounded-3xl border border-slate-200 bg-white p-3 shadow-[0_18px_46px_rgba(15,23,42,0.10)] sm:p-4 lg:p-3">
                   <div
-                    className={`grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:gap-0 ${
+                    className={`grid grid-cols-1 gap-3 sm:grid-cols-2 lg:gap-0 ${
                       includesFlight
-                        ? "lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.25fr)_minmax(0,1.35fr)_minmax(0,1.3fr)_112px]"
-                        : "lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1.45fr)_minmax(0,1.3fr)_112px]"
+                        ? "lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.25fr)_minmax(0,1.35fr)_minmax(0,1.3fr)_140px]"
+                        : "lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1.45fr)_minmax(0,1.3fr)_140px]"
                     }`}
                   >
                     {includesFlight ? (
-                      <div className="min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:rounded-none lg:rounded-s-xl lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+                      <div className="min-h-[58px] rounded-2xl border border-slate-300 bg-white px-4 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:min-h-[72px] lg:rounded-none lg:rounded-s-2xl lg:border-0 lg:border-e lg:border-slate-200 lg:px-5 lg:py-3 lg:shadow-none lg:hover:border-[#004BB8]/20 lg:focus-within:border-[#004BB8]/20 lg:focus-within:bg-[#004BB8]/[0.03] lg:focus-within:ring-1 lg:focus-within:ring-inset lg:focus-within:ring-[#004BB8]/20">
                         <label
                           htmlFor="package-origin"
-                          className="mb-1 block text-xs font-semibold uppercase leading-4 [letter-spacing:0.025em] text-slate-600"
+                          className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 lg:text-[11px] lg:tracking-[0.12em] lg:text-slate-700"
                         >
                           {t("deals.originLabel")}
                         </label>
@@ -750,7 +750,7 @@ export default function DealsPage() {
                             value={origin}
                             onChange={(event) => setOrigin(event.target.value)}
                             placeholder={t("deals.originPlaceholder")}
-                            className="h-8 w-full rounded-md border-0 bg-transparent px-0 pe-9 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 md:text-sm"
+                            className="h-9 w-full rounded-md border-0 bg-transparent px-0 pe-9 text-[16px] font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 lg:h-8 lg:text-[15px]"
                             autoComplete="address-level2"
                             required={includesFlight}
                           />
@@ -774,13 +774,13 @@ export default function DealsPage() {
                     ) : null}
 
                     <div
-                      className={`min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0 ${
-                        includesFlight ? "" : "lg:rounded-s-xl"
+                      className={`min-h-[58px] rounded-2xl border border-slate-300 bg-white px-4 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:min-h-[72px] lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:px-5 lg:py-3 lg:shadow-none lg:hover:border-[#004BB8]/20 lg:focus-within:border-[#004BB8]/20 lg:focus-within:bg-[#004BB8]/[0.03] lg:focus-within:ring-1 lg:focus-within:ring-inset lg:focus-within:ring-[#004BB8]/20 ${
+                        includesFlight ? "" : "lg:rounded-s-2xl"
                       }`}
                     >
                       <label
                         htmlFor="package-destination"
-                        className="mb-1 block text-xs font-semibold uppercase leading-4 [letter-spacing:0.025em] text-slate-600"
+                        className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 lg:text-[11px] lg:tracking-[0.12em] lg:text-slate-700"
                       >
                         {t("deals.destinationLabel")}
                       </label>
@@ -793,7 +793,7 @@ export default function DealsPage() {
                             setDestination(event.target.value)
                           }
                           placeholder={t("deals.destinationPlaceholder")}
-                          className="h-8 w-full rounded-md border-0 bg-transparent px-0 pe-9 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 md:text-sm"
+                          className="h-9 w-full rounded-md border-0 bg-transparent px-0 pe-9 text-[16px] font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 lg:h-8 lg:text-[15px]"
                           autoComplete="address-level2"
                           required
                         />
@@ -817,9 +817,9 @@ export default function DealsPage() {
 
                     <div
                       ref={datesWrapperRef}
-                      className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+                      className="relative min-h-[58px] rounded-2xl border border-slate-300 bg-white px-4 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:min-h-[72px] lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:px-5 lg:py-3 lg:shadow-none lg:hover:border-[#004BB8]/20 lg:focus-within:border-[#004BB8]/20 lg:focus-within:bg-[#004BB8]/[0.03] lg:focus-within:ring-1 lg:focus-within:ring-inset lg:focus-within:ring-[#004BB8]/20"
                     >
-                      <span className="mb-1 block text-xs font-semibold uppercase leading-4 [letter-spacing:0.025em] text-slate-600">
+                      <span className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 lg:text-[11px] lg:tracking-[0.12em] lg:text-slate-700">
                         {t("deals.datesLabel")}
                       </span>
                       <button
@@ -828,7 +828,7 @@ export default function DealsPage() {
                         aria-expanded={datesOpen}
                         aria-haspopup="dialog"
                         aria-label={t("deals.dateDialog")}
-                        className="flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] text-slate-900 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 md:text-sm"
+                        className="flex h-9 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-medium text-slate-900 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 lg:h-8 lg:text-[15px]"
                       >
                         <Calendar
                           size={16}
@@ -971,9 +971,9 @@ export default function DealsPage() {
 
                     <div
                       ref={travelersWrapperRef}
-                      className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+                      className="relative min-h-[58px] rounded-2xl border border-slate-300 bg-white px-4 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:min-h-[72px] lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:px-5 lg:py-3 lg:shadow-none lg:hover:border-[#004BB8]/20 lg:focus-within:border-[#004BB8]/20 lg:focus-within:bg-[#004BB8]/[0.03] lg:focus-within:ring-1 lg:focus-within:ring-inset lg:focus-within:ring-[#004BB8]/20"
                     >
-                      <span className="mb-1 block text-xs font-semibold uppercase leading-4 [letter-spacing:0.025em] text-slate-600">
+                      <span className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 lg:text-[11px] lg:tracking-[0.12em] lg:text-slate-700">
                         {travelersFieldLabel}
                       </span>
                       <button
@@ -982,7 +982,7 @@ export default function DealsPage() {
                         aria-expanded={travelersOpen}
                         aria-haspopup="dialog"
                         aria-label={travelersFieldLabel}
-                        className="flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] text-slate-900 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 md:text-sm"
+                        className="flex h-9 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-medium text-slate-900 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 lg:h-8 lg:text-[15px]"
                       >
                         <span className="truncate">{travelersSummary}</span>
                         <ChevronDown
@@ -1074,10 +1074,10 @@ export default function DealsPage() {
                       ) : null}
                     </div>
 
-                    <div className="flex min-h-[54px] items-stretch rounded-xl border border-slate-300 bg-white p-1.5 lg:rounded-none lg:rounded-e-xl lg:border-0">
+                    <div className="flex min-h-[58px] items-stretch rounded-2xl border border-slate-300 bg-white p-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] lg:min-h-[72px] lg:rounded-none lg:rounded-e-2xl lg:border-0 lg:p-2 lg:shadow-none">
                       <button
                         type="submit"
-                        className="w-full rounded-xl bg-[#004BB8] px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-[#004BB8]/20 transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-75"
+                        className="w-full rounded-2xl bg-[#004BB8] px-5 py-3 text-base font-black text-white shadow-[0_12px_24px_rgba(0,75,184,0.22)] transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-75 lg:text-sm"
                         disabled={isSubmitting}
                         aria-busy={isSubmitting}
                       >
