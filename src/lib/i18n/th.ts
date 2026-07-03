@@ -299,6 +299,8 @@ export const translations: TranslationDictionary = {
     "ป้อนรหัส 6 หลักที่เราส่งไปยังอีเมลของคุณ รหัสจะหมดอายุหลังจาก 10 นาที",
   verifyLoginCodeLabel: "รหัสยืนยัน",
   verifyLoginSubmit: "ยืนยันการเข้าสู่ระบบ",
+  verifyLoginNeedNewCode: "ต้องการรหัสใหม่? ป้อนรหัสผ่านเพื่อให้เราส่งรหัสใหม่ให้อย่างปลอดภัย",
+  verifyLoginPasswordLabel: "รหัสผ่านสำหรับส่งใหม่",
   verifyLoginNeedStartOver: "ต้องการเริ่มใหม่?",
   verifyLoginAgainLink: "เข้าสู่ระบบอีกครั้ง",
   signupPageTitle: "สร้างบัญชีของคุณ",

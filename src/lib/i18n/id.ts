@@ -236,6 +236,9 @@ export const translations: TranslationDictionary = {
     "Masukkan kode 6 digit yang kami kirim ke email Anda. Kode berlaku selama 10 menit.",
   verifyLoginCodeLabel: "Kode verifikasi",
   verifyLoginSubmit: "Verifikasi masuk",
+  verifyLoginNeedNewCode: "Butuh kode baru? Masukkan kata sandi agar kami dapat mengirim ulang dengan aman.",
+  verifyLoginPasswordLabel: "Kata sandi untuk kirim ulang",
+  verifyLoginNeedStartOver: "Perlu memulai ulang?",
   verifyLoginAgainLink: "Masuk lagi",
   openLanguagePreferences:
     "Buka preferensi bahasa, bahasa saat ini {{language}}",
