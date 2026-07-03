@@ -2319,14 +2319,21 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
                 <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{emailChangeErrorMessage}</p>
               ) : null}
             </div>
-            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-              <button type="button" onClick={closeEmailVerificationModal} disabled={isConfirmingEmail} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60">Cancel</button>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button type="button" onClick={closeEmailVerificationModal} disabled={isConfirmingEmail} className="focus-ring min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60 sm:px-4">Cancel</button>
               <button
                 type="submit"
                 disabled={Boolean(emailValidationError) || !isVerificationCodeValid || isConfirmingEmail}
-                className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                className="focus-ring min-w-0 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60 sm:px-4"
               >
-                {isConfirmingEmail ? "Updating…" : "Verify and update email"}
+                {isConfirmingEmail ? (
+                  "Updating…"
+                ) : (
+                  <>
+                    <span className="sm:hidden">Verify</span>
+                    <span className="hidden sm:inline">Verify and update email</span>
+                  </>
+                )}
               </button>
             </div>
           </form>
