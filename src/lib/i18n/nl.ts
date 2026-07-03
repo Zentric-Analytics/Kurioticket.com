@@ -3,6 +3,12 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  loginDivider: "OF",
+  loginPasskeyPromptTitle: "Een opgeslagen passkey gebruiken?",
+  loginPasskeyPromptDescription: "Log in met Face ID, vingerafdruk, schermvergrendeling, wachtwoordbeheerder of beveiligingssleutel.",
+  loginUsePasskey: "Passkey gebruiken",
+  loginOpeningPasskey: "Openen…",
+  loginNotNow: "Niet nu",
   selectLanguage: "Selecteer taal",
   suggestedLanguages: "Voorgestelde talen",
   allLanguages: "Alle talen",
@@ -311,7 +317,7 @@ export const translations: TranslationDictionary = {
     "Je account is aangemaakt, maar automatisch inloggen is mislukt. Meld je aan met je nieuwe wachtwoord.",
   signupAccountCreatedRedirecting: "Account aangemaakt. Doorsturen...",
   loginInvalidCredentials:
-    "We konden je niet inloggen. Controleer je e-mailadres en wachtwoord en probeer het opnieuw.",
+    "We konden je niet aanmelden. Controleer je e-mail en wachtwoord en probeer het opnieuw.",
   loginRateLimited: "Te veel pogingen. Wacht even en probeer het opnieuw.",
   loginPasswordResetSuccess:
     "Je wachtwoord is opnieuw ingesteld. Meld je aan met je nieuwe wachtwoord.",

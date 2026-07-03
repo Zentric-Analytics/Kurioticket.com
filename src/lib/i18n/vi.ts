@@ -3,6 +3,14 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  loginPasskeyPromptTitle: "Dùng passkey đã lưu?",
+  loginPasskeyPromptDescription: "Đăng nhập bằng Face ID, vân tay, khóa màn hình, trình quản lý mật khẩu hoặc khóa bảo mật.",
+  loginUsePasskey: "Dùng passkey",
+  loginOpeningPasskey: "Đang mở…",
+  loginNotNow: "Để sau",
+  loginInvalidCredentials: "Chúng tôi không thể đăng nhập cho bạn. Kiểm tra email và mật khẩu, rồi thử lại.",
+  loginRateLimited: "Quá nhiều lần thử. Vui lòng chờ một chút rồi thử lại.",
+  loginCodeFailed: "Mã đó không dùng được. Kiểm tra mã rồi thử lại.",
   selectLanguage: "Chọn ngôn ngữ",
   suggestedLanguages: "Ngôn ngữ gợi ý",
   allLanguages: "Tất cả ngôn ngữ",
@@ -505,7 +513,7 @@ export const translations: TranslationDictionary = {
   loginSignupPrompt: "Bạn mới sử dụng Kurioticket?",
   loginCreateAccount: "Tạo tài khoản",
   loginCodeSent: "Chúng tôi đã gửi mã xác minh đến email của bạn.",
-  loginCodeInstructions: "Nhập mã gồm 6 chữ số đã gửi đến {{email}}.",
+  loginCodeInstructions: "Nhập mã gồm 6 chữ số đã gửi đến {{email}}. Mã hết hạn sau {{minutes}} phút.",
   loginVerificationCodeLabel: "Mã xác minh",
   loginVerifyLogin: "Xác minh đăng nhập",
   loginResendIn: "Gửi lại sau {{seconds}} giây",

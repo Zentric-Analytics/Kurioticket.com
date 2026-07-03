@@ -3,6 +3,14 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  loginDivider: "أو",
+  loginPasskeyPromptTitle: "استخدام مفتاح مرور محفوظ؟",
+  loginPasskeyPromptDescription: "سجّل الدخول باستخدام Face ID أو بصمة الإصبع أو قفل الشاشة أو مدير كلمات المرور أو مفتاح أمان.",
+  loginUsePasskey: "استخدام مفتاح المرور",
+  loginOpeningPasskey: "جارٍ الفتح…",
+  loginNotNow: "ليس الآن",
+  loginInvalidCredentials: "تعذر تسجيل دخولك. تحقق من بريدك الإلكتروني وكلمة المرور، ثم حاول مرة أخرى.",
+  loginRateLimited: "محاولات كثيرة جدًا. يُرجى الانتظار قليلًا ثم المحاولة مرة أخرى.",
   selectLanguage: "اختر اللغة",
   suggestedLanguages: "اللغات المقترحة",
   allLanguages: "كل اللغات",
@@ -240,7 +248,7 @@ export const translations: TranslationDictionary = {
 
   loginCodeSent: "أرسلنا رمز تحقق إلى بريدك الإلكتروني.",
   loginCodeInstructions:
-    "أدخل الرمز المكون من 6 أرقام المرسل إلى {{email}}. تنتهي صلاحية الرموز بعد {{minutes}} دقائق.",
+    "أدخل الرمز المكوّن من 6 أرقام المُرسل إلى {{email}}. تنتهي صلاحية الرموز بعد {{minutes}} دقائق.",
   loginUseDifferentDetails: "استخدام تفاصيل مختلفة",
 
   searchRentalCarsEveryPartTrip: "ابحث عن سيارات للإيجار لكل جزء من رحلتك",
@@ -961,7 +969,7 @@ export const translations: TranslationDictionary = {
   loginResendIn: "إعادة الإرسال خلال {{seconds}} ث",
   loginResendCode: "إعادة إرسال الرمز",
   loginEnterCode: "أدخل الرمز المكوّن من 6 أرقام.",
-  loginCodeFailed: "رمز التحقق غير صالح.",
+  loginCodeFailed: "لم يعمل هذا الرمز. تحقق من الرمز وحاول مرة أخرى.",
   loginSendingCode: "جارٍ إرسال الرمز...",
   loginVerifying: "جارٍ التحقق...",
   loginResendSuccess: "تمت إعادة إرسال الرمز.",

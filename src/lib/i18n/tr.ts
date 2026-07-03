@@ -3,6 +3,15 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  loginDivider: "VEYA",
+  loginPasskeyPromptTitle: "Kayıtlı bir geçiş anahtarı kullanılsın mı?",
+  loginPasskeyPromptDescription: "Face ID, parmak izi, ekran kilidi, parola yöneticisi veya güvenlik anahtarıyla oturum açın.",
+  loginUsePasskey: "Geçiş anahtarı kullan",
+  loginOpeningPasskey: "Açılıyor…",
+  loginNotNow: "Şimdi değil",
+  loginInvalidCredentials: "Oturum açamadık. E-postanızı ve parolanızı kontrol edip tekrar deneyin.",
+  loginRateLimited: "Çok fazla deneme yapıldı. Lütfen biraz bekleyip tekrar deneyin.",
+  loginCodeFailed: "Bu kod çalışmadı. Kodu kontrol edip tekrar deneyin.",
   selectLanguage: "Dil seç",
   suggestedLanguages: "Önerilen diller",
   allLanguages: "Tüm diller",

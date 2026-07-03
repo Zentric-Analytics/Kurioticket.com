@@ -3,6 +3,12 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  loginDivider: "OPPURE",
+  loginPasskeyPromptTitle: "Usare una passkey salvata?",
+  loginPasskeyPromptDescription: "Accedi con Face ID, impronta digitale, blocco schermo, gestore di password o chiave di sicurezza.",
+  loginUsePasskey: "Usa passkey",
+  loginOpeningPasskey: "Apertura…",
+  loginNotNow: "Non ora",
   multiCity: "Multi-città",
   "recentSearches.title": "Ricerche recenti",
   "recentSearches.subtitle": "Percorsi rapidi dalle tue ultime ricerche.",
@@ -680,7 +686,7 @@ export const translations: TranslationDictionary = {
   loginUnableSendNewCode: "Impossibile inviare un nuovo codice al momento. Riprova.",
   loginUnableSendLoginCode: "Impossibile inviare il codice di accesso al momento. Riprova.",
   loginCodeInstructions:
-    "Inserisci il codice di 6 cifre inviato a {{email}}. I codici scadono dopo {{minutes}} minuti.",
+    "Inserisci il codice a 6 cifre inviato a {{email}}. I codici scadono dopo {{minutes}} minuti.",
   loginVerificationCodeLabel: "Codice di verifica",
   loginVerifying: "Verifica…",
   loginVerifyLogin: "Verifica accesso",
@@ -702,7 +708,7 @@ export const translations: TranslationDictionary = {
   forgotPasswordRemember: "Ricordi la password?",
   forgotPasswordLoginLink: "Accedi",
   loginInvalidCredentials:
-    "Non è stato possibile accedere. Controlla e-mail e password e riprova.",
+    "Non siamo riusciti ad accedere. Controlla e-mail e password, poi riprova.",
   loginRateLimited: "Troppi tentativi. Attendi un momento e riprova.",
   loginPasswordResetSuccess:
     "La password è stata reimpostata. Accedi con la nuova password.",
