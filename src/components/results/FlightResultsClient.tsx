@@ -2990,7 +2990,7 @@ export function FlightResultsClient() {
                 <div className="col-span-2 lg:col-span-1 lg:min-h-[54px] lg:self-stretch">
                   <Button
                     type="submit"
-                    className="h-[50px] w-full rounded-[1.25rem] bg-gradient-to-r from-[#004BB8] via-[#004BB8] to-[#5CB6B2] px-4 text-sm font-bold text-white shadow-[0_14px_28px_rgba(0,75,184,0.24)] transition-transform active:scale-[0.99] sm:h-12 sm:rounded-xl sm:bg-gradient-to-r sm:from-[#004BB8] sm:to-[#021C2B] sm:shadow-md sm:shadow-[#004BB8]/20 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20"
+                    className="h-[50px] w-full rounded-[1.25rem] bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_14px_28px_rgba(0,75,184,0.24)] transition hover:bg-[#021C2B] active:scale-[0.99] active:bg-[#021C2B] sm:h-12 sm:rounded-xl sm:shadow-md sm:shadow-[#004BB8]/20 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20"
                   >
                     {t("search")}
                   </Button>
@@ -3579,7 +3579,7 @@ export function FlightResultsClient() {
 
               <Button
                 type="submit"
-                className="mt-1 h-[52px] w-full rounded-2xl bg-gradient-to-r from-[#004BB8] to-[#021C2B] text-base font-bold text-white shadow-lg shadow-[#004BB8]/20 ring-1 ring-[#004BB8]/20"
+                className="mt-1 h-[52px] w-full rounded-2xl bg-[#004BB8] text-base font-bold text-white shadow-lg shadow-[#004BB8]/20 ring-1 ring-[#004BB8]/20 hover:bg-[#021C2B]"
               >
                 {t("search")}
               </Button>
@@ -4087,7 +4087,7 @@ export function FlightResultsClient() {
 
               <Button
                 type="submit"
-                className="h-full min-h-[54px] w-full rounded-xl bg-gradient-to-r from-[#004BB8] to-[#021C2B] px-5 text-sm font-bold text-white shadow-lg shadow-[#004BB8]/20 ring-1 ring-[#004BB8]/20 lg:min-w-[112px] lg:rounded-s-none lg:rounded-e-xl"
+                className="h-full min-h-[54px] w-full rounded-xl bg-[#004BB8] px-5 text-sm font-bold text-white shadow-lg shadow-[#004BB8]/20 ring-1 ring-[#004BB8]/20 hover:bg-[#021C2B] lg:min-w-[112px] lg:rounded-s-none lg:rounded-e-xl"
               >
                 {t("search")}
               </Button>
