@@ -232,8 +232,7 @@ export const translations: TranslationDictionary = {
   openCountryCurrencySelector:
     "देश और मुद्रा चयनकर्ता खोलें, वर्तमान चयन {{code}}, {{currency}}",
   chooseCountryAndCurrency: "देश और मुद्रा चुनें",
-  countryCurrencyDescription:
-    "कीमतें दिखाने के लिए इस्तेमाल होने वाला देश और मुद्रा चुनें। हवाई अड्डे के सुझाव आपके पहचाने गए स्थान का उपयोग करते हैं।",
+  countryCurrencyDescription: "कीमतों और क्षेत्रीय प्राथमिकताओं के लिए इस्तेमाल होने वाला देश और मुद्रा चुनें।",
   closeCountryCurrencySelector: "देश और मुद्रा चयनकर्ता बंद करें",
   searchCountryOrCurrency: "देश या मुद्रा खोजें",
   countryCurrencyAllCountriesAndCurrencies: "सभी देश और मुद्राएँ",

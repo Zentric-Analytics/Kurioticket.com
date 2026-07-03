@@ -1169,8 +1169,7 @@ export const translations: TranslationDictionary = {
   openCountryCurrencySelector:
     "国と通貨のセレクターを開く、現在の選択 {{code}}、{{currency}}",
   chooseCountryAndCurrency: "国と通貨を選択",
-  countryCurrencyDescription:
-    "表示価格に使用する国と通貨を選択します。空港候補には検出された現在地が使用されます。",
+  countryCurrencyDescription: "価格と地域設定に使用する国と通貨を選択します。",
   closeCountryCurrencySelector: "国と通貨のセレクターを閉じる",
   searchCountryOrCurrency: "国または通貨を検索",
   countryCurrencyAllCountriesAndCurrencies: "すべての国と通貨",

@@ -14,9 +14,11 @@ export const translations: TranslationDictionary = {
   mobilePreferencesHeading: "Inställningar",
 
   // Global country/currency modal
+  countryAndCurrency: 'Land och valuta',
+  openCountryCurrencySelector: 'Öppna väljaren för land och valuta, aktuellt val {{code}}, {{currency}}',
   chooseCountryAndCurrency: 'Välj land och valuta',
-  countryCurrencyDescription:
-    'Välj land och valuta som används för att visa priser. Flygplatsförslag använder din upptäckta plats.',
+  countryCurrencyDescription: 'Välj land och valuta som används för priser och regionala inställningar.',
+  closeCountryCurrencySelector: 'Stäng väljaren för land och valuta',
   searchCountryOrCurrency: 'Sök land eller valuta',
   countryCurrencyAllCountriesAndCurrencies: 'ALLA LÄNDER OCH VALUTOR',
   countryCurrencyPopularCountryAndCurrency: 'POPULÄRA LÄNDER OCH VALUTOR',

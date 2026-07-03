@@ -145,8 +145,7 @@ export const translations: TranslationDictionary = {
   openCountryCurrencySelector:
     "Buka pemilih negara dan mata uang, pilihan saat ini {{code}}, {{currency}}",
   chooseCountryAndCurrency: "Pilih negara dan mata uang",
-  countryCurrencyDescription:
-    "Pilih negara dan mata uang yang digunakan untuk menampilkan harga. Saran bandara menggunakan lokasi yang terdeteksi.",
+  countryCurrencyDescription: "Pilih negara dan mata uang yang digunakan untuk harga dan preferensi regional.",
   closeCountryCurrencySelector: "Tutup pemilih negara dan mata uang",
   searchCountryOrCurrency: "Cari negara atau mata uang",
   countryCurrencyAllCountriesAndCurrencies: "SEMUA NEGARA DAN MATA UANG",

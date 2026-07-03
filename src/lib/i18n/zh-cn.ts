@@ -640,8 +640,8 @@ export const translations: TranslationDictionary = {
   openCountryCurrencySelector:
     "打开国家/地区和货币选择器，当前选择 {{code}}，{{currency}}",
   chooseCountryAndCurrency: "选择国家/地区和货币",
-  countryCurrencyDescription:
-    "选择用于显示价格的国家/地区和货币。机场建议会使用你检测到的位置。",
+  countryCurrencyDescription: "选择用于价格和区域偏好的国家/地区和货币。",
+  closeCountryCurrencySelector: "关闭国家/地区和货币选择器",
   searchCountryOrCurrency: "搜索国家/地区或货币",
   countryCurrencyAllCountriesAndCurrencies: "所有国家/地区和货币",
   countryCurrencyPopularCountryAndCurrency: "热门国家/地区和货币",

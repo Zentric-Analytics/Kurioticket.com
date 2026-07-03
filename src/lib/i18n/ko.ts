@@ -33,8 +33,7 @@ export const translations: TranslationDictionary = {
   openCountryCurrencySelector:
     "국가 및 통화 선택기 열기, 현재 선택 {{code}}, {{currency}}",
   chooseCountryAndCurrency: "국가 및 통화 선택",
-  countryCurrencyDescription:
-    "표시 가격에 사용할 국가와 통화를 선택하세요. 공항 추천은 감지된 위치를 사용합니다.",
+  countryCurrencyDescription: "가격 및 지역 설정에 사용할 국가와 통화를 선택하세요.",
   closeCountryCurrencySelector: "국가 및 통화 선택기 닫기",
   searchCountryOrCurrency: "국가 또는 통화 검색",
   countryCurrencyAllCountriesAndCurrencies: "전체 국가 및 통화",

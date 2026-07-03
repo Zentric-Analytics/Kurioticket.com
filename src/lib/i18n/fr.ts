@@ -112,8 +112,7 @@ export const translations: TranslationDictionary = {
   openCountryCurrencySelector:
     "Ouvrir le sélecteur de pays et de devise, sélection actuelle {{code}}, {{currency}}",
   chooseCountryAndCurrency: "Choisissez le pays et la devise",
-  countryCurrencyDescription:
-    "Sélectionnez le pays et la devise utilisés pour afficher les prix. Les suggestions d’aéroports utilisent votre position détectée.",
+  countryCurrencyDescription: "Choisissez le pays et la devise utilisés pour les prix et les préférences régionales.",
   closeCountryCurrencySelector: "Fermer le sélecteur de pays et de devise",
   searchCountryOrCurrency: "Rechercher un pays ou une devise",
   countryCurrencyAllCountriesAndCurrencies: "TOUS LES PAYS ET DEVISES",

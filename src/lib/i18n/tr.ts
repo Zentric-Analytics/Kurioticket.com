@@ -555,9 +555,10 @@ export const translations: TranslationDictionary = {
   savedTripsCabinBusiness: "Business",
   savedTripsCabinFirst: "First",
   countryAndCurrency: "Ülke ve para birimi",
+  openCountryCurrencySelector: "Ülke ve para birimi seçicisini aç, mevcut seçim {{code}}, {{currency}}",
   chooseCountryAndCurrency: "Ülke ve para birimini seçin",
-  countryCurrencyDescription:
-    "Fiyatları görüntülemek için kullanılan ülke ve para birimini seçin. Havalimanı önerileri algılanan konumunuzu kullanır.",
+  countryCurrencyDescription: "Fiyatlar ve bölgesel tercihler için kullanılan ülke ve para birimini seçin.",
+  closeCountryCurrencySelector: "Ülke ve para birimi seçicisini kapat",
   searchCountryOrCurrency: "Ülke veya para birimi ara",
   countryCurrencyPopularCountryAndCurrency: "POPÜLER ÜLKE VE PARA BİRİMİ",
   countryCurrencyAllCountriesAndCurrencies: "TÜM ÜLKELER VE PARA BİRİMLERİ",
