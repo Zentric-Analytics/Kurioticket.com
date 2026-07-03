@@ -3,6 +3,12 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  loginDivider: "OU",
+  loginPasskeyPromptTitle: "Utiliser une clé d’accès enregistrée ?",
+  loginPasskeyPromptDescription: "Connectez-vous avec Face ID, une empreinte digitale, le verrouillage de l’écran, un gestionnaire de mots de passe ou une clé de sécurité.",
+  loginUsePasskey: "Utiliser la clé d’accès",
+  loginOpeningPasskey: "Ouverture…",
+  loginNotNow: "Pas maintenant",
   selectLanguage: "Choisir la langue",
   suggestedLanguages: "Langues suggérées",
   allLanguages: "Toutes les langues",
@@ -628,9 +634,9 @@ export const translations: TranslationDictionary = {
   loginSignupPrompt: "Vous découvrez Kurioticket ?",
   loginCreateAccount: "Créer un compte",
   loginInvalidCredentials:
-    "Adresse e-mail ou mot de passe incorrect. Veuillez réessayer.",
+    "Nous n’avons pas pu vous connecter. Vérifiez votre e-mail et votre mot de passe, puis réessayez.",
   loginRateLimited:
-    "Trop de tentatives. Veuillez patienter un instant, puis réessayer.",
+    "Trop de tentatives. Veuillez patienter un instant puis réessayer.",
   loginCodeSent: "Nous avons envoyé un code de vérification à votre adresse e-mail.",
   loginCodeFailed: "Ce code n’a pas fonctionné. Vérifiez le code et réessayez.",
   loginProcessing:

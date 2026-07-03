@@ -3,6 +3,14 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  loginPasskeyPromptTitle: "Gunakan passkey tersimpan?",
+  loginPasskeyPromptDescription: "Masuk dengan Face ID, sidik jari, kunci layar, pengelola kata sandi, atau kunci keamanan.",
+  loginUsePasskey: "Gunakan passkey",
+  loginOpeningPasskey: "Membuka…",
+  loginNotNow: "Jangan sekarang",
+  loginInvalidCredentials: "Kami tidak dapat membuat Anda masuk. Periksa email dan kata sandi Anda, lalu coba lagi.",
+  loginRateLimited: "Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi.",
+  loginCodeFailed: "Kode itu tidak berfungsi. Periksa kode lalu coba lagi.",
   selectLanguage: "Pilih bahasa",
   suggestedLanguages: "Bahasa yang disarankan",
   allLanguages: "Semua bahasa",
@@ -186,7 +194,7 @@ export const translations: TranslationDictionary = {
   loginCreateAccount: "Buat akun",
   loginCodeSent: "Kami telah mengirimkan kode verifikasi ke email Anda.",
   loginCodeInstructions:
-    "Masukkan kode 6 digit yang dikirim ke {{email}}. Kode berlaku selama {{minutes}} menit.",
+    "Masukkan kode 6 digit yang dikirim ke {{email}}. Kode kedaluwarsa setelah {{minutes}} menit.",
   loginVerificationCodeLabel: "Kode verifikasi",
   loginVerifying: "Memverifikasi...",
   loginVerifyLogin: "Verifikasi masuk",

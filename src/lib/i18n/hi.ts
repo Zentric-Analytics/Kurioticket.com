@@ -3,6 +3,14 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  loginDivider: "या",
+  loginPasskeyPromptTitle: "सहेजी गई पासकी इस्तेमाल करें?",
+  loginPasskeyPromptDescription: "Face ID, फ़िंगरप्रिंट, स्क्रीन लॉक, पासवर्ड मैनेजर या सुरक्षा कुंजी से साइन इन करें।",
+  loginUsePasskey: "पासकी इस्तेमाल करें",
+  loginOpeningPasskey: "खोला जा रहा है…",
+  loginNotNow: "अभी नहीं",
+  loginInvalidCredentials: "हम आपको साइन इन नहीं कर सके। अपना ईमेल और पासवर्ड जाँचें, फिर दोबारा कोशिश करें।",
+  loginRateLimited: "बहुत अधिक प्रयास हुए। कृपया थोड़ा इंतज़ार करें और फिर कोशिश करें।",
   mobileInfoLegalHeading: "जानकारी और कानूनी",
   mobileExploreHeading: "एक्सप्लोर करें",
   mobileTravelHeading: "यात्रा",

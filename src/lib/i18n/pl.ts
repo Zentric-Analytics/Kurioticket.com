@@ -3,6 +3,10 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  loginDivider: "LUB",
+  loginInvalidCredentials: "Nie udało się zalogować. Sprawdź adres e-mail i hasło, a następnie spróbuj ponownie.",
+  loginRateLimited: "Zbyt wiele prób. Poczekaj chwilę i spróbuj ponownie.",
+  loginCodeFailed: "Ten kod nie zadziałał. Sprawdź kod i spróbuj ponownie.",
   selectLanguage: "Wybierz język",
   suggestedLanguages: "Sugerowane języki",
   allLanguages: "Wszystkie języki",
@@ -821,7 +825,7 @@ export const translations: TranslationDictionary = {
   loginUsePasskey: "Użyj klucza dostępu",
   loginOpeningPasskey: "Otwieranie…",
   loginNotNow: "Nie teraz",
-  loginCodeSent: "Kod logowania został wysłany",
+  loginCodeSent: "Wysłaliśmy kod weryfikacyjny na Twój adres e-mail.",
   loginCodeInstructions:
     "Wpisz 6-cyfrowy kod wysłany na {{email}}. Kody wygasają po {{minutes}} minutach.",
   loginVerificationCodeLabel: "Kod weryfikacyjny",

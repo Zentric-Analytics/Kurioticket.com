@@ -3,6 +3,14 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  loginDivider: "또는",
+  loginPasskeyPromptTitle: "저장된 패스키를 사용하시겠어요?",
+  loginPasskeyPromptDescription: "Face ID, 지문, 화면 잠금, 비밀번호 관리자 또는 보안 키로 로그인하세요.",
+  loginUsePasskey: "패스키 사용",
+  loginOpeningPasskey: "여는 중…",
+  loginNotNow: "나중에",
+  loginInvalidCredentials: "로그인할 수 없습니다. 이메일과 비밀번호를 확인한 다음 다시 시도하세요.",
+  loginRateLimited: "시도 횟수가 너무 많습니다. 잠시 기다린 후 다시 시도하세요.",
   selectLanguage: "언어 선택",
   suggestedLanguages: "추천 언어",
   allLanguages: "모든 언어",
@@ -425,7 +433,7 @@ export const translations: TranslationDictionary = {
   loginResendCode: "코드 재전송",
   loginUseDifferentDetails: "다른 정보 사용",
   loginEnterCode: "6자리 코드를 입력하세요.",
-  loginCodeFailed: "인증 코드가 올바르지 않습니다.",
+  loginCodeFailed: "해당 코드가 작동하지 않았습니다. 코드를 확인하고 다시 시도하세요.",
   loginSendingCode: "코드를 보내는 중...",
   loginVerifying: "인증 중...",
   loginResendSuccess: "코드를 다시 보냈습니다.",

@@ -3,6 +3,14 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  loginPasskeyPromptTitle: "ใช้พาสคีย์ที่บันทึกไว้หรือไม่",
+  loginPasskeyPromptDescription: "ลงชื่อเข้าใช้ด้วย Face ID, ลายนิ้วมือ, การล็อกหน้าจอ, ตัวจัดการรหัสผ่าน หรือคีย์ความปลอดภัย",
+  loginUsePasskey: "ใช้พาสคีย์",
+  loginOpeningPasskey: "กำลังเปิด…",
+  loginNotNow: "ไม่ใช่ตอนนี้",
+  loginInvalidCredentials: "เราไม่สามารถให้คุณลงชื่อเข้าใช้ได้ ตรวจสอบอีเมลและรหัสผ่านของคุณ แล้วลองอีกครั้ง",
+  loginRateLimited: "พยายามมากเกินไป โปรดรอสักครู่แล้วลองอีกครั้ง",
+  loginCodeFailed: "รหัสนั้นใช้ไม่ได้ ตรวจสอบรหัสแล้วลองอีกครั้ง",
   selectLanguage: "เลือกภาษา",
   suggestedLanguages: "ภาษาที่แนะนำ",
   allLanguages: "ภาษาทั้งหมด",
