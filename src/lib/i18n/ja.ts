@@ -39,6 +39,9 @@ export const translations: TranslationDictionary = {
   signupGoogle: "Google で続行",
   signupAlreadyHaveAccount: "すでにアカウントをお持ちですか？",
   signupLoginLink: "ログイン",
+  signupErrorFullNameRequired: "氏名を入力してください。",
+  signupErrorInvalidEmail: "有効なメールアドレスを入力してください。",
+  signupErrorPasswordRequirements: "パスワードは8文字以上である必要があります。",
   loginPageTitle: "ログイン",
   loginPageSubtitle:
     "検索を保存し、アラートを管理して、旅行ダッシュボードにアクセスできます。",

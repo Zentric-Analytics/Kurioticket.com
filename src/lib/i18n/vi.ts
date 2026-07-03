@@ -508,6 +508,9 @@ export const translations: TranslationDictionary = {
   signupGoogle: "Tiếp tục với Google",
   signupAlreadyHaveAccount: "Bạn đã có tài khoản?",
   signupLoginLink: "Đăng nhập",
+  signupErrorFullNameRequired: "Vui lòng nhập họ và tên của bạn.",
+  signupErrorInvalidEmail: "Nhập địa chỉ email hợp lệ.",
+  signupErrorPasswordRequirements: "Mật khẩu phải có ít nhất 8 ký tự.",
   loginPageTitle: "Đăng nhập",
   loginPageSubtitle:
     "Lưu tìm kiếm, quản lý cảnh báo và truy cập bảng điều khiển du lịch của bạn.",

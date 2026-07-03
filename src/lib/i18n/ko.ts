@@ -422,6 +422,9 @@ export const translations: TranslationDictionary = {
   signupGoogle: "Google로 계속하기",
   signupAlreadyHaveAccount: "이미 계정이 있으신가요?",
   signupLoginLink: "로그인",
+  signupErrorFullNameRequired: "이름을 입력하세요.",
+  signupErrorInvalidEmail: "유효한 이메일 주소를 입력하세요.",
+  signupErrorPasswordRequirements: "비밀번호는 8자 이상이어야 합니다.",
   loginPageTitle: "로그인",
   loginPageSubtitle:
     "검색을 저장하고, 알림을 관리하며, 여행 대시보드에 접근하세요.",
