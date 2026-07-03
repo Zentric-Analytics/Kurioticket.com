@@ -3,6 +3,13 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  verifyEmailSending: "正在发送...",
+  verifyEmailSendNewCode: "发送新验证码",
+  verifyEmailResendSuccess: "如果此电子邮件需要验证，新的验证码已发送。",
+  verifyEmailAlreadyVerified: "已经验证？",
+  verifyEmailLoginLink: "登录",
+  verifyEmailVerifying: "正在验证...",
+  verifyEmailInvalidCode: "验证码无效或已过期。",
   loginDivider: "或",
   loginPasskeyPromptTitle: "使用已保存的通行密钥？",
   loginPasskeyPromptDescription: "使用 Face ID、指纹、屏幕锁、密码管理器或安全密钥登录。",

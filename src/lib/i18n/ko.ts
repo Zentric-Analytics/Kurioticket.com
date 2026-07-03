@@ -3,6 +3,13 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  verifyEmailSending: "전송 중...",
+  verifyEmailSendNewCode: "새 코드 보내기",
+  verifyEmailResendSuccess: "이 이메일에 인증이 필요한 경우 새 코드가 전송되었습니다.",
+  verifyEmailAlreadyVerified: "이미 인증되었나요?",
+  verifyEmailLoginLink: "로그인",
+  verifyEmailVerifying: "확인 중...",
+  verifyEmailInvalidCode: "인증 코드가 유효하지 않거나 만료되었습니다.",
   loginDivider: "또는",
   loginPasskeyPromptTitle: "저장된 패스키를 사용하시겠어요?",
   loginPasskeyPromptDescription: "Face ID, 지문, 화면 잠금, 비밀번호 관리자 또는 보안 키로 로그인하세요.",

@@ -3,6 +3,13 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  verifyEmailSending: "भेजा जा रहा है...",
+  verifyEmailSendNewCode: "नया कोड भेजें",
+  verifyEmailResendSuccess: "यदि इस ईमेल को सत्यापन की आवश्यकता है, तो नया कोड भेज दिया गया है।",
+  verifyEmailAlreadyVerified: "पहले से सत्यापित है?",
+  verifyEmailLoginLink: "लॉग इन करें",
+  verifyEmailVerifying: "सत्यापित किया जा रहा है...",
+  verifyEmailInvalidCode: "सत्यापन कोड अमान्य है या समाप्त हो गया है।",
   loginDivider: "या",
   loginPasskeyPromptTitle: "सहेजी गई पासकी इस्तेमाल करें?",
   loginPasskeyPromptDescription: "Face ID, फ़िंगरप्रिंट, स्क्रीन लॉक, पासवर्ड मैनेजर या सुरक्षा कुंजी से साइन इन करें।",

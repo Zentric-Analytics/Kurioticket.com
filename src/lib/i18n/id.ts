@@ -218,10 +218,12 @@ export const translations: TranslationDictionary = {
   verifyEmailInstructions:
     "Masukkan kode 6 digit yang kami kirim ke email Anda. Kode berlaku selama 10 menit.",
   verifyEmailCodeLabel: "Kode verifikasi",
+  verifyEmailInvalidCode: "Kode verifikasi tidak valid atau sudah kedaluwarsa.",
   verifyEmailVerifying: "Memverifikasi...",
   verifyEmailSubmit: "Verifikasi email",
   verifyEmailSending: "Mengirim...",
   verifyEmailSendNewCode: "Kirim kode baru",
+  verifyEmailResendSuccess: "Jika email ini perlu diverifikasi, kode baru telah dikirim.",
   verifyEmailAlreadyVerified: "Sudah diverifikasi?",
   verifyEmailLoginLink: "Masuk",
   verifyLoginTitle: "Verifikasi masuk Anda",
