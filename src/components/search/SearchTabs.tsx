@@ -1932,14 +1932,14 @@ export function SearchTabs({
                         isDisabledDate
                           ? "text-slate-300"
                           : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
-                        isToday && !isDisabledDate && "ring-1 ring-inset ring-[#5CB6B2]",
+                        isToday && !isDisabledDate && "ring-1 ring-inset ring-[#004BB8]/25",
                         isInRange && "bg-[#004BB8]/10 text-[#021C2B] hover:bg-[#004BB8]/15",
                         (isDeparture || isReturn) && "bg-[#004BB8] text-white shadow-sm hover:bg-[#004BB8] hover:text-white ring-0"
                       )}
                     >
                       {day.getDate()}
                       {isToday && !isDeparture && !isReturn ? (
-                        <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#5CB6B2]" aria-hidden="true" />
+                        <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#004BB8]" aria-hidden="true" />
                       ) : null}
                     </button>
                   );
@@ -2022,14 +2022,14 @@ export function SearchTabs({
                         isDisabledDate
                           ? "text-slate-300"
                           : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
-                        isToday && !isDisabledDate && "ring-1 ring-inset ring-[#5CB6B2]",
+                        isToday && !isDisabledDate && "ring-1 ring-inset ring-[#004BB8]/25",
                         isInRange && "bg-[#004BB8]/10 text-[#021C2B] hover:bg-[#004BB8]/15",
                         (isCheckIn || isCheckOut) && "bg-[#004BB8] text-white shadow-sm hover:bg-[#004BB8] hover:text-white ring-0"
                       )}
                     >
                       {day.getDate()}
                       {isToday && !isCheckIn && !isCheckOut ? (
-                        <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#5CB6B2]" aria-hidden="true" />
+                        <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#004BB8]" aria-hidden="true" />
                       ) : null}
                     </button>
                   );
@@ -2236,7 +2236,7 @@ export function SearchTabs({
       <div className="max-h-[min(52vh,360px)] overflow-y-auto py-1">
         {isLoading ? (
           <div className="flex items-center gap-3 px-4 py-4 text-sm font-medium text-slate-500">
-            <span className="h-2 w-2 rounded-full bg-[#5CB6B2] shadow-[0_0_0_4px_rgba(92,182,178,0.18)]" aria-hidden="true" />
+            <span className="h-2 w-2 rounded-full bg-[#004BB8] shadow-[0_0_0_4px_rgba(0,75,184,0.18)]" aria-hidden="true" />
             {translate("searchingAirportsAndCities")}
           </div>
         ) : suggestions.length ? suggestions.map((option, index) => (
@@ -2344,14 +2344,14 @@ export function SearchTabs({
                   isDisabledDate
                     ? "text-slate-300"
                     : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
-                  isToday && !isDisabledDate && "ring-1 ring-inset ring-[#5CB6B2]/70",
+                  isToday && !isDisabledDate && "ring-1 ring-inset ring-[#004BB8]/25",
                   isInRange && "rounded-xl bg-[#004BB8]/10 text-[#004BB8] hover:bg-[#004BB8]/15",
                   (isStart || isEnd) && "bg-[#004BB8] text-white shadow-none hover:bg-[#021C2B] hover:text-white ring-0"
                 )}
               >
                 {day.getDate()}
                 {isToday && !isStart && !isEnd ? (
-                  <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#5CB6B2]" aria-hidden="true" />
+                  <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#004BB8]" aria-hidden="true" />
                 ) : null}
               </button>
             );

@@ -1057,7 +1057,7 @@ export default function DealsPage() {
                     <div className="flex min-h-[54px] items-stretch rounded-xl border border-slate-300 bg-white p-1.5 lg:rounded-none lg:rounded-e-xl lg:border-0">
                       <button
                         type="submit"
-                        className="w-full rounded-xl bg-gradient-to-r from-[#004BB8] to-[#021C2B] px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-[#004BB8]/20 transition hover:from-[#021C2B] hover:to-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-75"
+                        className="w-full rounded-xl bg-[#004BB8] px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-[#004BB8]/20 transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-75"
                         disabled={isSubmitting}
                         aria-busy={isSubmitting}
                       >

@@ -918,7 +918,7 @@ export function HotelSearchBar({
   };
 
   const fieldClassName = cn(
-    "relative rounded-xl border border-slate-300 bg-white transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40",
+    "relative rounded-xl border border-slate-300 bg-white transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25",
     compact
       ? cn(
           "min-h-[56px] px-3 py-2 sm:min-h-[54px] sm:px-3 sm:py-1.5 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
@@ -963,11 +963,11 @@ export function HotelSearchBar({
                 type="button"
                 aria-label={t("hotelResults.openFilters")}
                 onClick={onOpenFilters}
-                className="focus-ring relative inline-flex h-16 w-[72px] shrink-0 items-center justify-center rounded-md border border-indigo-100/90 bg-white px-2 text-[11px] font-semibold text-slate-800 shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-indigo-200 hover:text-slate-950 hover:shadow-[0_8px_18px_rgba(79,70,229,0.12)] focus-visible:border-indigo-300"
+                className="focus-ring relative inline-flex h-16 w-[72px] shrink-0 items-center justify-center rounded-md border border-[#004BB8]/12 bg-white px-2 text-[11px] font-semibold text-slate-800 shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-[#004BB8]/20 hover:text-slate-950 hover:shadow-[0_8px_18px_rgba(0,75,184,0.12)] focus-visible:border-[#004BB8]"
               >
                 <span className="flex flex-col items-center justify-center gap-1 leading-none">
                   <SlidersHorizontal
-                    className="text-indigo-700"
+                    className="text-[#004BB8]"
                     size={17}
                     strokeWidth={2.3}
                   />
@@ -978,7 +978,7 @@ export function HotelSearchBar({
               <button
                 type="button"
                 onClick={openMobileSearchPanel}
-                className="focus-ring flex h-16 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-md border border-indigo-100/90 bg-white px-4 py-0 text-start shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-indigo-200 hover:shadow-[0_8px_18px_rgba(79,70,229,0.12)] focus-visible:border-indigo-300"
+                className="focus-ring flex h-16 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-md border border-[#004BB8]/12 bg-white px-4 py-0 text-start shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-[#004BB8]/20 hover:shadow-[0_8px_18px_rgba(0,75,184,0.12)] focus-visible:border-[#004BB8]"
               >
                 <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
                   <span className="block truncate text-[15px] font-bold leading-5 text-slate-950">
@@ -990,7 +990,7 @@ export function HotelSearchBar({
                 </span>
                 <span
                   aria-hidden="true"
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-indigo-100 bg-indigo-50/80 text-indigo-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[#004BB8]/12 bg-[#004BB8]/8 text-[#004BB8] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]"
                 >
                   <PencilLine size={16} strokeWidth={2.1} />
                 </span>
@@ -1000,7 +1000,7 @@ export function HotelSearchBar({
             <button
               type="button"
               onClick={openMobileSearchPanel}
-              className="focus-ring w-full rounded-xl border border-indigo-100 bg-white px-4 py-4 text-start shadow-[0_12px_26px_rgba(15,23,42,0.10)] transition hover:border-indigo-200 focus-visible:border-indigo-300"
+              className="focus-ring w-full rounded-xl border border-[#004BB8]/12 bg-white px-4 py-4 text-start shadow-[0_12px_26px_rgba(15,23,42,0.10)] transition hover:border-[#004BB8]/20 focus-visible:border-[#004BB8]"
             >
               <span className="block truncate text-sm font-semibold text-slate-950">
                 {mobileSearchSummary}
@@ -1037,7 +1037,7 @@ export function HotelSearchBar({
                 type="button"
                 aria-label={t("closeSearchForm")}
                 onClick={closeMobileSearchPanel}
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-base font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-base font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
               >
                 ×
               </button>
@@ -1060,11 +1060,11 @@ export function HotelSearchBar({
           {!compact && desktopIdentityLabel ? (
             <div className="flex items-center px-1 pb-2 sm:hidden">
               <span
-                className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 text-[0.86rem] font-semibold text-navy shadow-sm ring-1 ring-indigo-100/80"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#004BB8]/8 px-3 py-1.5 text-[0.86rem] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10"
               >
                 <BedDouble
                   aria-hidden="true"
-                  className="h-4 w-4 text-indigo-700"
+                  className="h-4 w-4 text-[#004BB8]"
                   strokeWidth={2.15}
                 />
                 {hotelSearchIdentityLabel}
@@ -1074,11 +1074,11 @@ export function HotelSearchBar({
           {!compact && desktopIdentityLabel ? (
             <div className="hidden items-center px-1 pb-2 sm:flex lg:pb-2.5">
               <span
-                className="inline-flex items-center gap-2 rounded-lg bg-indigo-50 px-3.5 py-1.5 text-[0.925rem] font-semibold text-navy shadow-sm ring-1 ring-indigo-100/80"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3.5 py-1.5 text-[0.925rem] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10"
               >
                 <BedDouble
                   aria-hidden="true"
-                  className="h-[1.125rem] w-[1.125rem] text-indigo-700"
+                  className="h-[1.125rem] w-[1.125rem] text-[#004BB8]"
                   strokeWidth={2.15}
                 />
                 {hotelSearchIdentityLabel}
@@ -1218,7 +1218,7 @@ export function HotelSearchBar({
                           onMouseEnter={() => setDestinationHighlight(index)}
                           className={cn(
                             "flex w-full items-start justify-between gap-3 rounded-xl px-3 py-2.5 text-start transition-colors",
-                            isActive ? "bg-indigo-50" : "hover:bg-slate-50",
+                            isActive ? "bg-[#004BB8]/8" : "hover:bg-slate-50",
                           )}
                         >
                           <span className="min-w-0">
@@ -1264,7 +1264,7 @@ export function HotelSearchBar({
                   size={16}
                   className={cn(
                     "shrink-0",
-                    compact ? "text-indigo-700" : "text-slate-500",
+                    compact ? "text-[#004BB8]" : "text-slate-500",
                   )}
                 />
                 <span className="truncate">{dateSummary}</span>
@@ -1358,14 +1358,14 @@ export function HotelSearchBar({
                                   className={`focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed ${
                                     isPastDate
                                       ? "text-slate-300 hover:bg-transparent"
-                                      : "text-slate-900 hover:bg-indigo-50"
+                                      : "text-slate-900 hover:bg-[#004BB8]/8"
                                   } ${
                                     isInRange
-                                      ? "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100"
+                                      ? "rounded-md bg-[#004BB8]/10 text-[#021C2B] hover:bg-[#004BB8]/10"
                                       : ""
                                   } ${
                                     isCheckIn || isCheckOut
-                                      ? "bg-indigo-700 text-white hover:bg-indigo-700"
+                                      ? "bg-[#004BB8] text-white hover:bg-[#004BB8]"
                                       : ""
                                   }`}
                                 >
@@ -1525,7 +1525,7 @@ export function HotelSearchBar({
                             onClick={() => setHotelPetFriendly((prev) => !prev)}
                             className={`focus-ring relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors ${
                               hotelPetFriendly
-                                ? "border-indigo-600 bg-indigo-600"
+                                ? "border-[#004BB8] bg-[#004BB8]"
                                 : "border-slate-300 bg-slate-200"
                             }`}
                           >
@@ -1554,7 +1554,7 @@ export function HotelSearchBar({
               <button
                 type="submit"
                 className={cn(
-                  "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 disabled:cursor-not-allowed disabled:opacity-75 lg:h-full lg:self-stretch lg:rounded-e-xl lg:border lg:border-s-0 lg:border-indigo-600/20",
+                  "w-full rounded-xl bg-[#004BB8] hover:bg-[#021C2B] px-4 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 disabled:cursor-not-allowed disabled:opacity-75 lg:h-full lg:self-stretch lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20",
                   compact
                     ? cn(
                         "h-[54px] shadow-lg sm:min-h-[54px] lg:min-w-[112px] lg:rounded-s-none",
@@ -1728,11 +1728,11 @@ export function HotelSearchBar({
                             "focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm font-semibold transition-colors disabled:cursor-not-allowed min-[390px]:h-9 min-[390px]:w-9",
                             isDisabledDate
                               ? "text-slate-300 hover:bg-transparent"
-                              : "text-slate-900 hover:bg-indigo-50",
+                              : "text-slate-900 hover:bg-[#004BB8]/8",
                             isInRange &&
-                              "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100",
+                              "rounded-md bg-[#004BB8]/10 text-[#021C2B] hover:bg-[#004BB8]/10",
                             (isCheckIn || isCheckOut) &&
-                              "bg-indigo-700 text-white hover:bg-indigo-700",
+                              "bg-[#004BB8] text-white hover:bg-[#004BB8]",
                           )}
                         >
                           {day.getDate()}
