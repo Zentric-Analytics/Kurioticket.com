@@ -1957,4 +1957,6 @@ export const translations: TranslationDictionary = {
   resetPasswordUnable: "ไม่สามารถรีเซ็ตรหัสผ่านได้ในขณะนี้",
   resetPasswordSuccessMessage: "รีเซ็ตรหัสผ่านสำเร็จ กำลังเปลี่ยนเส้นทางไปยังการเข้าสู่ระบบ...",
   resetPasswordResetting: "กำลังรีเซ็ต...",
+  "legal.privacyChoices.lastUpdated": "Last updated: June 28, 2026",
+
 };

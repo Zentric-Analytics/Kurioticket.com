@@ -1896,4 +1896,6 @@ export const translations: TranslationDictionary = {
   resetPasswordSuccessMessage: "Hasło zresetowane pomyślnie. Przekierowywanie do logowania...",
   resetPasswordResetting: "Resetowanie...",
   resetPasswordSubmit: "Zresetuj hasło",
+  "legal.privacyChoices.lastUpdated": "Last updated: June 28, 2026",
+
 };
