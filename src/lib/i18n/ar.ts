@@ -6,6 +6,7 @@ export const translations: TranslationDictionary = {
   selectLanguage: "اختر اللغة",
   suggestedLanguages: "اللغات المقترحة",
   allLanguages: "كل اللغات",
+  platform: "المنصة",
   flightQuoteUnavailable: "عرض الرحلة غير متاح",
   flightSearchAgainCurrentPrices: "لم يعد عرض هذه الرحلة متاحًا. يُرجى البحث مرة أخرى للاطلاع على الأسعار الحالية.",
   explore: "استكشاف",

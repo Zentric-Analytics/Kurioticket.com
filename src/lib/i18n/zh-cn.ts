@@ -6,6 +6,8 @@ export const translations: TranslationDictionary = {
   selectLanguage: "选择语言",
   suggestedLanguages: "推荐语言",
   allLanguages: "所有语言",
+  platform: "平台",
+  legal: "法律",
   explore: "探索",
   signIn: "登录",
   multiCity: "多城市",

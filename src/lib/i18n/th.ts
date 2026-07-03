@@ -6,6 +6,8 @@ export const translations: TranslationDictionary = {
   selectLanguage: "เลือกภาษา",
   suggestedLanguages: "ภาษาที่แนะนำ",
   allLanguages: "ภาษาทั้งหมด",
+  platform: "แพลตฟอร์ม",
+  legal: "กฎหมาย",
   mobileInfoLegalHeading: "ข้อมูลและกฎหมาย",
   mobileExploreHeading: "สำรวจ",
   mobileTravelHeading: "การเดินทาง",

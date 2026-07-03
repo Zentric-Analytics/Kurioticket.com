@@ -6,6 +6,8 @@ export const translations: TranslationDictionary = {
   selectLanguage: "Selecteer taal",
   suggestedLanguages: "Voorgestelde talen",
   allLanguages: "Alle talen",
+  platform: "Platform",
+  legal: "Juridisch",
   homeHeroImageAlt: "Luxe tropisch resort aan kalm water",
   homeSaveDestination: "{{city}} bewaren",
   homeNewsletterInvalidEmail: "Voer een geldig e-mailadres in.",

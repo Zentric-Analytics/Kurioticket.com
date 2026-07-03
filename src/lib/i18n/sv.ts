@@ -6,6 +6,8 @@ export const translations: TranslationDictionary = {
   selectLanguage: "Välj språk",
   suggestedLanguages: "Föreslagna språk",
   allLanguages: "Alla språk",
+  platform: "Plattform",
+  legal: "Juridik",
   mobileInfoLegalHeading: "Info och juridik",
   mobileExploreHeading: "Utforska",
   mobileTravelHeading: "Resor",
