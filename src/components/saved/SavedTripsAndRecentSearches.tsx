@@ -10,12 +10,19 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { ArrowRight, ExternalLink, Heart, Trash2 } from "lucide-react";
+import { ArrowRight, ExternalLink, Heart, Trash2, X } from "lucide-react";
 
 import { PriceText } from "@/components/currency/PriceText";
 import { useLocale } from "@/components/layout/LocaleProvider";
 
 import { translations as enTranslations } from "@/lib/i18n/en";
+import {
+  clearRecentSearches,
+  readRecentSearches,
+  removeRecentSearch,
+  type RecentFlightParams,
+  type RecentSearchEntry,
+} from "@/lib/recent-searches";
 import {
   translateHomeDiscoveryCity,
   translateHomeDiscoveryCopy,
@@ -190,6 +197,77 @@ const resolveSavedTripFromBackendPayload = (
   };
 };
 
+const getSavedTripsDateLocale = (locale: string) => {
+  const normalizedLocale = locale.toLowerCase();
+
+  if (normalizedLocale.startsWith("de")) return "de-DE";
+  if (normalizedLocale.startsWith("ar")) return "ar";
+  if (normalizedLocale.startsWith("fr")) return "fr-FR";
+  if (normalizedLocale.startsWith("es")) return "es-ES";
+  if (normalizedLocale.startsWith("it")) return "it-IT";
+  if (normalizedLocale.startsWith("hi")) return "hi-IN";
+  if (normalizedLocale.startsWith("nl")) return "nl-NL";
+  if (normalizedLocale.startsWith("tr")) return "tr-TR";
+  if (normalizedLocale.startsWith("t" + "h")) return "th-TH";
+  if (normalizedLocale === "pt-br" || normalizedLocale.startsWith("pt")) {
+    return "pt-BR";
+  }
+  if (normalizedLocale === "zh-cn" || normalizedLocale.startsWith("zh")) {
+    return "zh-CN";
+  }
+  if (normalizedLocale === "ja" || normalizedLocale.startsWith("ja")) {
+    return "ja-JP";
+  }
+  if (normalizedLocale === "ko" || normalizedLocale.startsWith("ko")) {
+    return "ko-KR";
+  }
+
+  return "en-US";
+};
+
+const parseDateValue = (value?: string) => {
+  if (!value) return null;
+  const parsed = new Date(
+    /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00` : value,
+  );
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const formatDutchShortMonth = (formattedDate: string, locale: string) => {
+  if (!locale.toLowerCase().startsWith("nl")) return formattedDate;
+
+  return formattedDate.replace(/\b([a-z]{3})(?=\s|$)/i, (month) =>
+    month.endsWith(".") ? month : `${month}.`,
+  );
+};
+
+const formatRecentDate = (
+  value: string | undefined,
+  formatter: Intl.DateTimeFormat,
+  fallback: string,
+  locale: string,
+) => {
+  if (!value) return fallback;
+  const parsed = parseDateValue(value);
+  return parsed
+    ? formatDutchShortMonth(formatter.format(parsed), locale)
+    : value;
+};
+
+const isFlightParams = (
+  params: RecentSearchEntry["params"],
+): params is RecentFlightParams => "origin" in params && "cabinClass" in params;
+
+const cabinTranslationKeyByValue: Record<string, string> = {
+  economy: "savedTripsCabinEconomy",
+  "premium economy": "savedTripsCabinPremiumEconomy",
+  business: "savedTripsCabinBusiness",
+  first: "savedTripsCabinFirst",
+};
+
+const normalizeDestinationKey = (value: string) =>
+  value.normalize("NFKD").replace(/\p{M}/gu, "").trim().toLowerCase();
+
 const SAVED_TRIP_CARD_IMAGE_SIZES =
   "(min-width: 1280px) 25vw, (min-width: 768px) 25vw, (min-width: 640px) 33vw, 100vw";
 const EAGER_SAVED_TRIP_IMAGE_COUNT = 3;
@@ -341,6 +419,62 @@ function SavedEmptyStateIllustration() {
   );
 }
 
+const genericTravelFallback =
+  allDiscoveryItems.find(
+    (item) => normalizeDestinationKey(item.destinationCity) === "dubai",
+  ) ??
+  allDiscoveryItems.find(
+    (item) => normalizeDestinationKey(item.destinationCity) === "london",
+  ) ??
+  allDiscoveryItems.find((item) => Boolean(item.image));
+
+const findFlightDiscoveryImage = (entry: RecentSearchEntry) => {
+  const params = entry.params as { origin?: string; destination?: string };
+  const origin = params.origin?.trim().toUpperCase() ?? "";
+  const destination = params.destination?.trim().toUpperCase() ?? "";
+  const labelKey = normalizeDestinationKey(entry.label);
+
+  const byDestinationCode = allDiscoveryItems.find(
+    (item) => item.destinationCode === destination,
+  );
+  if (byDestinationCode) return byDestinationCode;
+
+  const byRoute = allDiscoveryItems.find(
+    (item) =>
+      item.originCode === origin && item.destinationCode === destination,
+  );
+  if (byRoute) return byRoute;
+
+  return allDiscoveryItems.find((item) => {
+    const destinationCity = normalizeDestinationKey(item.destinationCity);
+    const title = normalizeDestinationKey(item.title);
+    return labelKey.includes(destinationCity) || title.includes(labelKey);
+  });
+};
+
+const resolveRecentSearchImage = (entry: RecentSearchEntry) => {
+  if (entry.image) {
+    return {
+      image: entry.image,
+      imageAlt: entry.imageAlt ?? entry.label,
+    };
+  }
+
+  const match = findFlightDiscoveryImage(entry);
+  if (match) {
+    return { image: match.image, imageAlt: match.imageAlt };
+  }
+
+  if (genericTravelFallback?.image) {
+    return {
+      image: genericTravelFallback.image,
+      imageAlt: genericTravelFallback.imageAlt ?? "Travel destination",
+    };
+  }
+
+  return null;
+};
+
 function hasFreshProviderFare(
   fare: SavedTripFare | undefined,
   trip: ResolvedSavedTrip,
@@ -417,7 +551,26 @@ export function SavedTripsAndRecentSearches({
   compactTopSpacingMobile = compactTopSpacing,
 }: SavedTripsAndRecentSearchesProps) {
   const { t: dictionary } = useLocale();
+  const { locale } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const dateLocale = getSavedTripsDateLocale(locale);
+  const shortDateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(dateLocale, {
+        month: "short",
+        day: "numeric",
+      }),
+    [dateLocale],
+  );
+  const searchedDateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(dateLocale, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }),
+    [dateLocale],
+  );
   const { status: sessionStatus } = useSession();
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [backendSavedTripIds, setBackendSavedTripIds] = useState<
@@ -429,6 +582,7 @@ export function SavedTripsAndRecentSearches({
   const [savedTripFares, setSavedTripFares] = useState<
     Record<string, SavedTripFare>
   >({});
+  const [recentSearches, setRecentSearches] = useState<RecentSearchEntry[]>([]);
 
   const refreshBackendSavedTrips = useCallback(async (signal?: AbortSignal) => {
     const result = await fetchBackendSavedTrips(signal);
@@ -444,6 +598,18 @@ export function SavedTripsAndRecentSearches({
     setBackendSavedTripIds(backendIds);
     setBackendSavedTrips(result.items);
     setSavedIds(localIds);
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setRecentSearches(
+        readRecentSearches
+          .call(null)
+          .filter((entry) => entry.type === "flight"),
+      );
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   useEffect(() => {
@@ -555,6 +721,56 @@ export function SavedTripsAndRecentSearches({
       await refreshBackendSavedTrips();
     }
   };
+
+  const handleRemoveRecent = (id: string) => {
+    setRecentSearches(
+      removeRecentSearch(id).filter((entry) => entry.type === "flight"),
+    );
+  };
+
+  const handleClearRecent = () => {
+    clearRecentSearches();
+    setRecentSearches([]);
+  };
+
+  const formatTravelerCount = (count: number) =>
+    count === 1
+      ? t("savedTripsTravelerCountOne")
+      : t("savedTripsTravelerCountOther").replace("{{count}}", String(count));
+
+  const formatCabinClass = (value: string) => {
+    const key = cabinTranslationKeyByValue[value.trim().toLowerCase()];
+    return key ? t(key) : value;
+  };
+
+  const formatRecentSearchSubtitle = (entry: RecentSearchEntry) => {
+    if (isFlightParams(entry.params)) {
+      const outbound = formatRecentDate(
+        entry.params.departureDate,
+        shortDateFormatter,
+        entry.params.departureDate,
+        locale,
+      );
+      const inbound = entry.params.returnDate
+        ? formatRecentDate(
+            entry.params.returnDate,
+            shortDateFormatter,
+            entry.params.returnDate,
+            locale,
+          )
+        : t("savedTripsRecentOneWay");
+
+      return `${outbound}${entry.params.returnDate ? ` – ${inbound}` : ""} · ${formatTravelerCount(entry.params.travelers)} · ${formatCabinClass(entry.params.cabinClass)}`;
+    }
+
+    return entry.subtitle;
+  };
+
+  const formatSearchedLabel = (value?: string) =>
+    t("savedTripsSearchedDate").replace(
+      "{{date}}",
+      formatRecentDate(value, searchedDateFormatter, "", locale),
+    );
 
   const savedRoutesCountText =
     savedTrips.length === 1
@@ -740,6 +956,94 @@ export function SavedTripsAndRecentSearches({
               </>
             )}
           </section>
+
+          {recentSearches.length > 0 ? (
+            <section className="space-y-4 pt-4">
+              <div className="flex flex-col items-start gap-2 border-y border-slate-200/80 py-3 sm:flex-row sm:items-center sm:justify-between sm:border-y-0 sm:border-b sm:pb-3 sm:pt-1">
+                <div>
+                  <h2 className="text-base font-semibold tracking-tight text-slate-950">
+                    {dictionary.savedTripsRecentSearchesTitle ??
+                      enTranslations.savedTripsRecentSearchesTitle}
+                    🕘
+                  </h2>
+                  <p className="mt-0.5 text-sm font-medium text-slate-500">
+                    {t("savedTripsRecentSearchesSubtitle")}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleClearRecent}
+                  className="inline-flex items-center gap-1.5 rounded-md px-0 py-1 text-sm font-semibold text-violet-700 transition hover:text-violet-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-400 sm:px-2"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  {t("savedTripsClearAllRecent")}
+                </button>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {recentSearches.map((entry) => {
+                  const visual = resolveRecentSearchImage(entry);
+
+                  return (
+                    <article
+                      key={entry.id}
+                      className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+                    >
+                      <button
+                        type="button"
+                        aria-label={t("savedTripsRemoveRecentSearch")}
+                        onClick={() => handleRemoveRecent(entry.id)}
+                        className="focus-ring absolute end-3 top-3 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+
+                      {visual?.image ? (
+                        <SavedCardImage
+                          src={visual.image}
+                          alt={visual.imageAlt}
+                          hoverScaleClassName="group-hover:scale-[1.02]"
+                        />
+                      ) : (
+                        <div className="flex h-36 w-full items-center justify-center bg-gradient-to-br from-slate-100 via-indigo-50 to-cyan-100 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 sm:h-40">
+                          {t("savedTripsFlightSearchFallback")}
+                        </div>
+                      )}
+
+                      <div className="space-y-2.5 p-4">
+                        <span className="inline-flex rounded-full border border-violet-100 bg-violet-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-violet-700">
+                          {dictionary.savedTripsTypeFlight ??
+                            enTranslations.savedTripsTypeFlight}
+                        </span>
+
+                        <h3 className="pe-12 text-lg font-semibold leading-tight tracking-tight text-slate-900">
+                          {entry.label}
+                        </h3>
+                        <p className="line-clamp-2 text-sm leading-5 text-slate-600">
+                          {formatRecentSearchSubtitle(entry)}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-600">
+                            {formatSearchedLabel(entry.createdAt)}
+                          </span>
+                        </div>
+                        <div className="mt-1 border-t border-slate-200/90 pt-2.5">
+                          <Link
+                            href={entry["href"]}
+                            className="inline-flex min-h-11 items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-900"
+                          >
+                            {dictionary.savedTripsRepeatSearch ??
+                              enTranslations.savedTripsRepeatSearch}
+                            <ExternalLink className="h-4 w-4" />
+                          </Link>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
         </div>
       </div>
     </div>
