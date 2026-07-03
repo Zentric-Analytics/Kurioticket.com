@@ -53,6 +53,7 @@ import {
 import {
   buildFlightRecentSearch,
   clearRecentSearches,
+  syncBackendRecentSearch,
   readRecentSearches,
   removeRecentSearch,
   upsertRecentSearch,
@@ -1933,8 +1934,7 @@ export function FlightResultsClient() {
     }
 
     try {
-      upsertRecentSearch(
-        buildFlightRecentSearch({
+      const recentSearch = buildFlightRecentSearch({
           tripType: tripTypeInput === "one-way" ? "one-way" : "round-trip",
           origin: nextOrigin,
           destination: nextDestination,
@@ -1946,8 +1946,11 @@ export function FlightResultsClient() {
           infants,
           travelers,
           cabinClass: cabinClassInput,
-        }),
-      );
+        });
+      upsertRecentSearch(recentSearch);
+      if (sessionStatus === "authenticated") {
+        void syncBackendRecentSearch(recentSearch);
+      }
     } catch {
       // best effort only
     }
@@ -2605,8 +2608,7 @@ export function FlightResultsClient() {
               }
 
               try {
-                upsertRecentSearch(
-                  buildFlightRecentSearch({
+                const recentSearch = buildFlightRecentSearch({
                     tripType:
                       tripTypeInput === "one-way" ? "one-way" : "round-trip",
                     origin: nextOrigin,
@@ -2621,8 +2623,11 @@ export function FlightResultsClient() {
                     infants: infantCount,
                     travelers,
                     cabinClass: cabinClassInput,
-                  }),
-                );
+                  });
+                upsertRecentSearch(recentSearch);
+                if (sessionStatus === "authenticated") {
+                  void syncBackendRecentSearch(recentSearch);
+                }
               } catch {
                 // best effort only
               }

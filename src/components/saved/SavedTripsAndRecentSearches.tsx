@@ -18,8 +18,13 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import {
   clearRecentSearches,
+  clearBackendRecentSearches,
+  deleteBackendRecentSearch,
+  fetchBackendRecentSearches,
   readRecentSearches,
   removeRecentSearch,
+  syncBackendRecentSearch,
+  writeRecentSearches,
   type RecentFlightParams,
   type RecentSearchEntry,
 } from "@/lib/recent-searches";
@@ -257,6 +262,30 @@ const formatRecentDate = (
 const isFlightParams = (
   params: RecentSearchEntry["params"],
 ): params is RecentFlightParams => "origin" in params && "cabinClass" in params;
+
+const sortRecentSearchesByDate = (entries: RecentSearchEntry[]) =>
+  [...entries].sort((left, right) => {
+    const leftDate = Date.parse(left.createdAt);
+    const rightDate = Date.parse(right.createdAt);
+    return (Number.isFinite(rightDate) ? rightDate : 0) - (Number.isFinite(leftDate) ? leftDate : 0);
+  });
+
+const mergeRecentSearchEntries = (
+  backendEntries: RecentSearchEntry[],
+  localEntries: RecentSearchEntry[],
+) => {
+  const merged = new Map<string, RecentSearchEntry>();
+
+  for (const entry of localEntries) {
+    if (entry.type === "flight") merged.set(entry.id, entry);
+  }
+
+  for (const entry of backendEntries) {
+    if (entry.type === "flight") merged.set(entry.id, entry);
+  }
+
+  return sortRecentSearchesByDate(Array.from(merged.values())).slice(0, 5);
+};
 
 const cabinTranslationKeyByValue: Record<string, string> = {
   economy: "savedTripsCabinEconomy",
@@ -601,6 +630,45 @@ export function SavedTripsAndRecentSearches({
   }, []);
 
   useEffect(() => {
+    if (sessionStatus === "loading") return;
+
+    if (sessionStatus === "authenticated") {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => {
+        const localEntries = readRecentSearches.call(null).filter(
+          (entry) => entry.type === "flight",
+        );
+
+        void fetchBackendRecentSearches(controller.signal).then((result) => {
+          if (controller.signal.aborted) return;
+
+          const backendEntries = (result.items ?? []).filter(
+            (entry) => entry.type === "flight",
+          );
+          const mergedEntries = mergeRecentSearchEntries(
+            backendEntries,
+            localEntries,
+          );
+
+          setRecentSearches(mergedEntries);
+          if (mergedEntries.length) {
+            writeRecentSearches(mergedEntries);
+          }
+
+          for (const entry of localEntries) {
+            if (!backendEntries.some((backendEntry) => backendEntry.id === entry.id)) {
+              void syncBackendRecentSearch(entry);
+            }
+          }
+        });
+      }, 0);
+
+      return () => {
+        window.clearTimeout(timeoutId);
+        controller.abort();
+      };
+    }
+
     const timeoutId = window.setTimeout(() => {
       setRecentSearches(
         readRecentSearches
@@ -610,7 +678,7 @@ export function SavedTripsAndRecentSearches({
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, []);
+  }, [sessionStatus]);
 
   useEffect(() => {
     if (sessionStatus === "loading") return;
@@ -726,11 +794,17 @@ export function SavedTripsAndRecentSearches({
     setRecentSearches(
       removeRecentSearch(id).filter((entry) => entry.type === "flight"),
     );
+    if (sessionStatus === "authenticated") {
+      void deleteBackendRecentSearch(id);
+    }
   };
 
   const handleClearRecent = () => {
     clearRecentSearches();
     setRecentSearches([]);
+    if (sessionStatus === "authenticated") {
+      void clearBackendRecentSearches();
+    }
   };
 
   const formatTravelerCount = (count: number) =>
