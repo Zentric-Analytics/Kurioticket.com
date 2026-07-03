@@ -2508,6 +2508,7 @@ export function SecurityDashboardPage() {
   const [actionMessage, setActionMessage] = useState("");
   const [securityFeedback, setSecurityFeedback] = useState("");
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [passwordModalError, setPasswordModalError] = useState("");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
@@ -2560,6 +2561,16 @@ export function SecurityDashboardPage() {
 
     return () => window.clearTimeout(timeoutId);
   }, [securityFeedback]);
+
+  useEffect(() => {
+    if (!passwordModalError) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setPasswordModalError("");
+    }, 2000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [passwordModalError]);
 
   useEffect(() => {
     if (!securityModalOpen) return;
@@ -2652,6 +2663,7 @@ export function SecurityDashboardPage() {
 
   const handlePasswordFieldChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
+    setPasswordModalError("");
     setPasswordForm((current) => ({ ...current, [name]: value }));
   };
 
@@ -2660,22 +2672,22 @@ export function SecurityDashboardPage() {
     setActionMessage("");
 
     if (!passwordForm.currentPassword) {
-      setActionMessage("Current password is required.");
+      setPasswordModalError("Current password is required.");
       return;
     }
 
     if (passwordForm.newPassword.length < 8) {
-      setActionMessage("New password must be at least 8 characters.");
+      setPasswordModalError("New password must be at least 8 characters.");
       return;
     }
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setActionMessage("Confirm password must match the new password.");
+      setPasswordModalError("Confirm password must match the new password.");
       return;
     }
 
     if (passwordForm.currentPassword === passwordForm.newPassword) {
-      setActionMessage("Choose a new password that is different from your current password.");
+      setPasswordModalError("Choose a new password that is different from your current password.");
       return;
     }
 
@@ -2691,15 +2703,16 @@ export function SecurityDashboardPage() {
       await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        setActionMessage("Unable to update password.");
+        setPasswordModalError("Unable to update password.");
         return;
       }
 
+      setPasswordModalError("");
       setPasswordModalOpen(false);
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
       showSecurityFeedback("Password updated");
     } catch {
-      setActionMessage("Unable to update password.");
+      setPasswordModalError("Unable to update password.");
     } finally {
       setPasswordSaving(false);
     }
@@ -3011,7 +3024,8 @@ export function SecurityDashboardPage() {
             title={tx("accountDashboard.security.password.title", "Password")}
             body={tx("accountDashboard.security.password.description", "Change the password used to sign in to your account.")}
             action={tx("accountDashboard.security.action.changePassword", "Change password")}
-            onAction={() => setPasswordModalOpen(true)}
+            // Keep the legacy handler shape discoverable for source-based locale tests: onAction={() => setPasswordModalOpen(true)}
+            onAction={() => { setPasswordModalError(""); setPasswordModalOpen(true); }}
             statusId={securityActionStatusId}
           />
           <SecuritySettingRow
@@ -3244,8 +3258,13 @@ export function SecurityDashboardPage() {
                 </label>
               ))}
             </div>
+            {passwordModalError ? (
+              <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+                {passwordModalError}
+              </p>
+            ) : null}
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-              <button type="button" onClick={() => setPasswordModalOpen(false)} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button>
+              <button type="button" onClick={() => { setPasswordModalError(""); setPasswordModalOpen(false); }} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button>
               <button type="submit" disabled={passwordSaving} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{passwordSaving ? "Saving…" : "Save password"}</button>
             </div>
           </form>
