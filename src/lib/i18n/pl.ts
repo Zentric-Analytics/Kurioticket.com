@@ -1821,6 +1821,7 @@ export const translations: TranslationDictionary = {
   "legal.terms.title": "Warunki korzystania z usługi",
   "legal.terms.summary": "Zasady korzystania z wyszukiwarki Kurioticket, kont, paneli, zapisanych narzędzi podróżnych i przekierowań do partnerów.",
   "legal.terms.lastUpdatedDate": "May 11, 2026",
+  "legal.terms.lastUpdated": "Ostatnia aktualizacja: 11 maja 2026",
   "legal.terms.tableOfContents": "SPIS TREŚCI",
   "legal.terms.sections.overview.title": "Przegląd",
   "legal.terms.sections.overview.paragraph1": "Kurioticket LLC („Kurioticket”, „my”, „nas” lub „nasze”) prowadzi platformę wyszukiwania i porównywania podróży, która pomaga użytkownikom wyszukiwać loty, hotele i samochody, porównywać opcje dostawców, zapisywać plany podróży oraz tworzyć alerty.",

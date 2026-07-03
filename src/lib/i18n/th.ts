@@ -1635,6 +1635,7 @@ export const translations: TranslationDictionary = {
   "legal.terms.summary":
     "กฎสำหรับการใช้การค้นหาของ Kurioticket บัญชี แดชบอร์ด เครื่องมือบันทึกการเดินทาง และการเปลี่ยนเส้นทางไปยังพันธมิตร",
   "legal.terms.lastUpdatedDate": "May 11, 2026",
+  "legal.terms.lastUpdated": "อัปเดตล่าสุด: 11 พฤษภาคม 2026",
   "legal.terms.tableOfContents": "สารบัญ",
   "legal.terms.sections.overview.title": "ภาพรวม",
   "legal.terms.sections.overview.paragraph1":
