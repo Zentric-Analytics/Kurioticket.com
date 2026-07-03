@@ -1151,6 +1151,8 @@ export const translations: TranslationDictionary = {
     "Kurioticket은 직접 예약이 지원되고 Kurioticket을 통해 직접 진행된 예약에 대해서만 도와드릴 수 있습니다. 외부 제공업체에서 완료한 예약은 해당 제공업체에 직접 문의하세요.",
   footerDiscover: "둘러보기",
   destinations: "목적지",
+  explore: "탐색",
+  dashboard: "대시보드",
   footerSavedRecent: "저장 및 최근 항목",
   footerContactUs: "문의하기",
   footerCustomerSupport: "고객 지원",

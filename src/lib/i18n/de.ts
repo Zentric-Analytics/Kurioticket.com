@@ -2321,6 +2321,8 @@ flightLandingRouteAriaLabel:
   edit: "Bearbeiten",
   editSearch: "Suche bearbeiten",
   explore: "Entdecken",
+  saved: "Gespeichert",
+  dashboard: "Dashboard",
   exploreRoute: "Route entdecken",
   remove: "Entfernen",
   searchAgain: "Erneut suchen",

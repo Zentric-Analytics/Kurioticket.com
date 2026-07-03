@@ -397,6 +397,8 @@ export const translations: TranslationDictionary = {
   "destinations.country.oman": "オマーン",
   "destinations.country.saudiArabia": "サウジアラビア",
   explore: "探す",
+  saved: "保存済み",
+  dashboard: "ダッシュボード",
   search: "検索",
   searchFlights: "航空券を検索",
   searchHotels: "ホテルを検索",
