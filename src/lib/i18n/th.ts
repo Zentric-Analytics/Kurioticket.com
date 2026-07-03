@@ -1889,4 +1889,12 @@ export const translations: TranslationDictionary = {
   "newsletter.accountEmailLine":
     "สมัครรับข่าวสารด้วยอีเมลบัญชีของคุณ: {{email}}.",
   "newsletter.manageEmailPreferences": "จัดการการตั้งค่าอีเมล",
+  resetPasswordInvalidLink: "ลิงก์รีเซ็ตนี้ไม่ถูกต้องหรือหมดอายุแล้ว โปรดขออีเมลรีเซ็ตรหัสผ่านใหม่",
+  resetPasswordRequestNew: "ขออีเมลรีเซ็ตใหม่",
+  resetPasswordNewPasswordLabel: "รหัสผ่านใหม่",
+  resetPasswordConfirmPasswordLabel: "ยืนยันรหัสผ่านใหม่",
+  resetPasswordValidationError: "ป้อนรหัสผ่านที่ถูกต้องและตรวจสอบให้แน่ใจว่าช่องรหัสผ่านทั้งสองตรงกัน",
+  resetPasswordUnable: "ไม่สามารถรีเซ็ตรหัสผ่านได้ในขณะนี้",
+  resetPasswordSuccessMessage: "รีเซ็ตรหัสผ่านสำเร็จ กำลังเปลี่ยนเส้นทางไปยังการเข้าสู่ระบบ...",
+  resetPasswordResetting: "กำลังรีเซ็ต...",
 };
