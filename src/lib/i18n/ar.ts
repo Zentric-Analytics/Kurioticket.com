@@ -2,10 +2,10 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
+  ...en,
   selectLanguage: "اختر اللغة",
   suggestedLanguages: "اللغات المقترحة",
   allLanguages: "كل اللغات",
-  ...en,
   flightQuoteUnavailable: "عرض الرحلة غير متاح",
   flightSearchAgainCurrentPrices: "لم يعد عرض هذه الرحلة متاحًا. يُرجى البحث مرة أخرى للاطلاع على الأسعار الحالية.",
   explore: "استكشاف",
