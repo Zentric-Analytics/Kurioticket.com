@@ -3,6 +3,16 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  twoFactorLoadingChallenge: "Đang tải thử thách hai yếu tố…",
+  twoFactorEyebrow: "Xác thực hai yếu tố",
+  twoFactorTitle: "Nhập mã ứng dụng xác thực của bạn",
+  twoFactorSubtitle: "Dùng mã 6 chữ số từ ứng dụng xác thực, hoặc nhập một mã khôi phục đã lưu để hoàn tất đăng nhập.",
+  twoFactorCodeLabel: "Mã ứng dụng xác thực hoặc mã khôi phục",
+  twoFactorHelperText: "Mở ứng dụng xác thực và nhập mã 6 chữ số hiện tại, hoặc dùng mã khôi phục.",
+  twoFactorInvalidCode: "Mã không hợp lệ hoặc đã được sử dụng.",
+  twoFactorVerifying: "Đang xác minh…",
+  twoFactorSubmit: "Xác minh và tiếp tục",
+  twoFactorBackToLogin: "Quay lại / đăng xuất",
   verifyEmailSending: "Đang gửi...",
   verifyEmailSendNewCode: "Gửi mã mới",
   verifyEmailResendSuccess: "Nếu email này cần xác minh, mã mới đã được gửi.",

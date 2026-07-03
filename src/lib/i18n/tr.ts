@@ -3,6 +3,16 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  twoFactorLoadingChallenge: "İki faktörlü doğrulama yükleniyor…",
+  twoFactorEyebrow: "İki faktörlü kimlik doğrulama",
+  twoFactorTitle: "Authenticator kodunuzu girin",
+  twoFactorSubtitle: "Oturum açmayı tamamlamak için authenticator uygulamanızdaki 6 haneli kodu kullanın veya kayıtlı bir kurtarma kodu girin.",
+  twoFactorCodeLabel: "Authenticator veya kurtarma kodu",
+  twoFactorHelperText: "Authenticator uygulamanızı açıp geçerli 6 haneli kodu girin veya bir kurtarma kodu kullanın.",
+  twoFactorInvalidCode: "Kod geçersiz veya zaten kullanılmış.",
+  twoFactorVerifying: "Doğrulanıyor…",
+  twoFactorSubmit: "Doğrula ve devam et",
+  twoFactorBackToLogin: "Geri / çıkış yap",
   verifyEmailSending: "Gönderiliyor...",
   verifyEmailSendNewCode: "Yeni kod gönder",
   verifyEmailResendSuccess: "Bu e-postanın doğrulanması gerekiyorsa yeni bir kod gönderildi.",

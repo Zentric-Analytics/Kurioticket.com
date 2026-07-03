@@ -3,6 +3,16 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  twoFactorLoadingChallenge: "正在加载双重验证挑战…",
+  twoFactorEyebrow: "双重身份验证",
+  twoFactorTitle: "输入你的身份验证器代码",
+  twoFactorSubtitle: "使用身份验证器应用中的 6 位代码，或输入一个已保存的恢复代码来完成登录。",
+  twoFactorCodeLabel: "身份验证器或恢复代码",
+  twoFactorHelperText: "打开你的身份验证器应用并输入当前 6 位代码，或使用恢复代码。",
+  twoFactorInvalidCode: "代码无效或已被使用。",
+  twoFactorVerifying: "正在验证…",
+  twoFactorSubmit: "验证并继续",
+  twoFactorBackToLogin: "返回 / 退出登录",
   verifyEmailSending: "正在发送...",
   verifyEmailSendNewCode: "发送新验证码",
   verifyEmailResendSuccess: "如果此电子邮件需要验证，新的验证码已发送。",

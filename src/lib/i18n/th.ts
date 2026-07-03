@@ -3,6 +3,16 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  twoFactorLoadingChallenge: "กำลังโหลดการยืนยันแบบสองขั้นตอน…",
+  twoFactorEyebrow: "การยืนยันตัวตนแบบสองขั้นตอน",
+  twoFactorTitle: "ป้อนรหัสจากแอปยืนยันตัวตน",
+  twoFactorSubtitle: "ใช้รหัส 6 หลักจากแอปยืนยันตัวตนของคุณ หรือป้อนรหัสกู้คืนที่บันทึกไว้เพื่อเข้าสู่ระบบให้เสร็จสิ้น",
+  twoFactorCodeLabel: "รหัสจากแอปยืนยันตัวตนหรือรหัสกู้คืน",
+  twoFactorHelperText: "เปิดแอปยืนยันตัวตนของคุณแล้วป้อนรหัส 6 หลักปัจจุบัน หรือใช้รหัสกู้คืน",
+  twoFactorInvalidCode: "รหัสไม่ถูกต้องหรือถูกใช้ไปแล้ว",
+  twoFactorVerifying: "กำลังยืนยัน…",
+  twoFactorSubmit: "ยืนยันและดำเนินการต่อ",
+  twoFactorBackToLogin: "กลับ / ออกจากระบบ",
   verifyEmailSending: "กำลังส่ง...",
   verifyEmailSendNewCode: "ส่งรหัสใหม่",
   verifyEmailResendSuccess: "หากอีเมลนี้ต้องได้รับการยืนยัน ระบบได้ส่งรหัสใหม่แล้ว",
