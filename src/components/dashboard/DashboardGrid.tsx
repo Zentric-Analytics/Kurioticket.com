@@ -2551,6 +2551,14 @@ export function SecurityDashboardPage() {
     setActionMessage("");
     setSecurityFeedback(message);
   };
+  const resetPasswordModalState = () => {
+    setPasswordForm({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
+    setPasswordModalError("");
+  };
 
   useEffect(() => {
     if (!securityFeedback) return;
@@ -2707,9 +2715,8 @@ export function SecurityDashboardPage() {
         return;
       }
 
-      setPasswordModalError("");
+      resetPasswordModalState();
       setPasswordModalOpen(false);
-      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
       showSecurityFeedback("Password updated");
     } catch {
       setPasswordModalError("Unable to update password.");
@@ -3025,7 +3032,7 @@ export function SecurityDashboardPage() {
             body={tx("accountDashboard.security.password.description", "Change the password used to sign in to your account.")}
             action={tx("accountDashboard.security.action.changePassword", "Change password")}
             // Keep the legacy handler shape discoverable for source-based locale tests: onAction={() => setPasswordModalOpen(true)}
-            onAction={() => { setPasswordModalError(""); setPasswordModalOpen(true); }}
+            onAction={() => { resetPasswordModalState(); setPasswordModalOpen(true); }}
             statusId={securityActionStatusId}
           />
           <SecuritySettingRow
@@ -3264,7 +3271,7 @@ export function SecurityDashboardPage() {
               </p>
             ) : null}
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-              <button type="button" onClick={() => { setPasswordModalError(""); setPasswordModalOpen(false); }} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button>
+              <button type="button" onClick={() => { resetPasswordModalState(); setPasswordModalOpen(false); }} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button>
               <button type="submit" disabled={passwordSaving} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{passwordSaving ? "Saving…" : "Save password"}</button>
             </div>
           </form>
