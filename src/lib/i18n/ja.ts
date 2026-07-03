@@ -1411,6 +1411,18 @@ export const translations: TranslationDictionary = {
   "legal.index.documents.partnerRedirectDisclaimer.summary": "Kurioticket がユーザーを航空会社、ホテル、アフィリエイトパートナー、旅行プロバイダーへリダイレクトする際に何が起こるかを説明します。",
 
 
+  "legal.refundBookingDisclaimer.title": "返金および外部プロバイダーに関する免責事項",
+  "legal.refundBookingDisclaimer.summary": "旅行商品の購入、発券、返金、キャンセル、支払いが Kurioticket の外部で行われることを明確にします。",
+  "legal.refundBookingDisclaimer.lastUpdatedDate": "2026年5月11日",
+  "legal.refundBookingDisclaimer.tableOfContents": "目次",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.title": "直接の発券は行いません",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph1": "Kurioticket は航空券やホテル予約を販売しません。当社は、比較および購入手続きを続けるために、ユーザーを外部の航空会社、ホテル、アフィリエイトパートナー、または旅行プロバイダーへリダイレクトします。",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph2": "購入契約は、Kurioticket ではなく、支払いを受け付ける外部プロバイダーとの間で成立します。",
+  "legal.refundBookingDisclaimer.sections.refunds.title": "返金および変更",
+  "legal.refundBookingDisclaimer.sections.refunds.paragraph1": "返金、クレジット、スケジュール変更、キャンセル、乗り継ぎ失敗、チェックインの問題、手荷物に関する紛争、購入上の問題は、外部の航空会社、ホテル、または旅行プロバイダーが対応します。",
+  "legal.refundBookingDisclaimer.sections.refunds.paragraph2": "Kurioticket サポートは、プラットフォームの利用方法と旅行ガイダンスの範囲を理解するお手伝いはできますが、パートナーまたは航空会社のポリシーを覆すことはできません。",
+  "legal.refundBookingDisclaimer.developerNote": "これらの法的文書の草案はスタートアップ段階の仮文書であり、大規模な一般公開前に有資格の法律専門家による確認が必要です。",
+
   "legal.affiliateDisclosure.title": "アフィリエイト開示",
   "legal.affiliateDisclosure.summary": "ユーザーが信頼できるパートナーをクリックまたは予約した際に、Kurioticket が手数料を得る場合があることを説明します。",
   "legal.affiliateDisclosure.lastUpdatedDate": "2026年5月11日",

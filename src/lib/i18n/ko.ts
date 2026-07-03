@@ -1325,6 +1325,18 @@ export const translations: TranslationDictionary = {
   "legal.index.documents.partnerRedirectDisclaimer.title": "파트너 리디렉션 면책 고지",
   "legal.index.documents.partnerRedirectDisclaimer.summary": "Kurioticket이 사용자를 항공사, 호텔, 제휴 파트너 또는 여행 제공업체로 리디렉션할 때 발생하는 일을 설명합니다.",
 
+  "legal.refundBookingDisclaimer.title": "환불 및 외부 제공업체 면책 고지",
+  "legal.refundBookingDisclaimer.summary": "여행 상품의 구매, 발권, 환불, 취소 및 결제가 Kurioticket 외부에서 이루어진다는 점을 명확히 합니다.",
+  "legal.refundBookingDisclaimer.lastUpdatedDate": "2026년 5월 11일",
+  "legal.refundBookingDisclaimer.tableOfContents": "목차",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.title": "직접 발권하지 않음",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph1": "Kurioticket은 항공권이나 호텔 예약을 판매하지 않습니다. 당사는 비교 및 구매 단계를 계속 진행할 수 있도록 사용자를 외부 항공사, 호텔, 제휴 파트너 또는 여행 제공업체로 리디렉션합니다.",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph2": "구매 계약은 Kurioticket이 아니라 결제를 수락하는 외부 제공업체와 체결됩니다.",
+  "legal.refundBookingDisclaimer.sections.refunds.title": "환불 및 변경",
+  "legal.refundBookingDisclaimer.sections.refunds.paragraph1": "환불, 크레딧, 일정 변경, 취소, 연결편 미탑승, 체크인 문제, 수하물 분쟁 및 구매 문제는 외부 항공사, 호텔 또는 여행 제공업체가 처리합니다.",
+  "legal.refundBookingDisclaimer.sections.refunds.paragraph2": "Kurioticket 지원팀은 플랫폼 사용 방법과 여행 안내 범위를 이해하도록 도울 수 있지만, 파트너 또는 항공사 정책을 무효화할 수는 없습니다.",
+  "legal.refundBookingDisclaimer.developerNote": "이 법률 초안은 스타트업용 임시 문서이며 대규모 공개 출시 전에 자격을 갖춘 법률 전문가의 검토를 받아야 합니다.",
+
   "legal.affiliateDisclosure.title": "제휴 공개",
   "legal.affiliateDisclosure.summary": "사용자가 신뢰할 수 있는 파트너를 클릭하거나 예약할 때 Kurioticket이 수수료를 받을 수 있는 방식을 설명합니다.",
   "legal.affiliateDisclosure.lastUpdatedDate": "2026년 5월 11일",

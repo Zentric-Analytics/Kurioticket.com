@@ -1419,6 +1419,18 @@ export const translations: TranslationDictionary = {
   supportFaqWhyRedirectedQuestion: "मुझे किसी दूसरे प्रदाता के पास क्यों भेजा गया?",
   supportFaqWhyRedirectedAnswer: "Kurioticket एक यात्रा खोज और तुलना प्लेटफ़ॉर्म है, और कुछ परिणाम आपको विश्वसनीय प्रदाताओं पर भेजते हैं जहाँ आप बुकिंग, भुगतान और प्रदाता-विशिष्ट सहायता पूरी करते हैं।",
 
+  "legal.refundBookingDisclaimer.title": "रिफंड और बाहरी प्रदाता अस्वीकरण",
+  "legal.refundBookingDisclaimer.summary": "स्पष्ट करता है कि यात्रा इन्वेंटरी की खरीद, टिकटिंग, रिफंड, रद्दीकरण और भुगतान Kurioticket के बाहर होते हैं।",
+  "legal.refundBookingDisclaimer.lastUpdatedDate": "11 मई 2026",
+  "legal.refundBookingDisclaimer.tableOfContents": "विषय सूची",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.title": "सीधे टिकट जारी नहीं किए जाते",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph1": "Kurioticket एयरलाइन टिकट या होटल आरक्षण नहीं बेचता है। हम उपयोगकर्ताओं को तुलना और खरीद चरण जारी रखने के लिए बाहरी एयरलाइंस, होटलों, एफ़िलिएट पार्टनर या यात्रा प्रदाताओं पर रीडायरेक्ट करते हैं।",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph2": "आपका खरीद अनुबंध उस बाहरी प्रदाता के साथ होता है जो आपका भुगतान स्वीकार करता है, Kurioticket के साथ नहीं।",
+  "legal.refundBookingDisclaimer.sections.refunds.title": "रिफंड और बदलाव",
+  "legal.refundBookingDisclaimer.sections.refunds.paragraph1": "रिफंड, क्रेडिट, शेड्यूल बदलाव, रद्दीकरण, छूटे हुए कनेक्शन, चेक-इन समस्याएँ, बैगेज विवाद और खरीद संबंधी समस्याएँ बाहरी एयरलाइन, होटल या यात्रा प्रदाता द्वारा संभाली जाती हैं।",
+  "legal.refundBookingDisclaimer.sections.refunds.paragraph2": "Kurioticket सहायता आपको प्लेटफ़ॉर्म उपयोग और यात्रा मार्गदर्शन की सीमाएँ समझने में मदद कर सकती है, लेकिन पार्टनर या एयरलाइन नीतियों को बदल नहीं सकती।",
+  "legal.refundBookingDisclaimer.developerNote": "ये कानूनी मसौदे स्टार्टअप प्लेसहोल्डर हैं और बड़े पैमाने पर सार्वजनिक लॉन्च से पहले योग्य कानूनी सलाहकार द्वारा समीक्षा किए जाने चाहिए।",
+
   "legal.affiliateDisclosure.title": "एफ़िलिएट प्रकटीकरण",
   "legal.affiliateDisclosure.summary": "जब उपयोगकर्ता भरोसेमंद पार्टनर पर क्लिक या बुक करते हैं, तो Kurioticket कमीशन कैसे कमा सकता है।",
   "legal.affiliateDisclosure.lastUpdatedDate": "11 मई 2026",
