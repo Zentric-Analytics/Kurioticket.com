@@ -147,8 +147,7 @@ export function LegalPageContent({ documents }: LegalPageContentProps) {
               </h2>
             </div>
             <p className="text-sm text-muted">
-              {t("legal.index.documentsCountText") ||
-                `${documents.length} ${t("legal.index.documentsCountLabel")}`}
+              {documents.length} {t("legal.index.documentsCountLabel")}
             </p>
           </div>
 
