@@ -3,6 +3,16 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  twoFactorLoadingChallenge: "Twee-factor-uitdaging laden…",
+  twoFactorEyebrow: "Twee-factor-authenticatie",
+  twoFactorTitle: "Voer je authenticatorcode in",
+  twoFactorSubtitle: "Gebruik de 6-cijferige code uit je authenticator-app, of voer een opgeslagen herstelcode in om het inloggen af te ronden.",
+  twoFactorCodeLabel: "Authenticator- of herstelcode",
+  twoFactorHelperText: "Open je authenticator-app en voer de huidige 6-cijferige code in, of gebruik een herstelcode.",
+  twoFactorInvalidCode: "De code is ongeldig of al gebruikt.",
+  twoFactorVerifying: "Verifiëren…",
+  twoFactorSubmit: "Verifiëren en doorgaan",
+  twoFactorBackToLogin: "Terug / uitloggen",
   loginDivider: "OF",
   loginPasskeyPromptTitle: "Een opgeslagen passkey gebruiken?",
   loginPasskeyPromptDescription: "Log in met Face ID, vingerafdruk, schermvergrendeling, wachtwoordbeheerder of beveiligingssleutel.",

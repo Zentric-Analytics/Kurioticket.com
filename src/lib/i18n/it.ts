@@ -3,6 +3,16 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  twoFactorLoadingChallenge: "Caricamento della verifica a due fattori…",
+  twoFactorEyebrow: "Autenticazione a due fattori",
+  twoFactorTitle: "Inserisci il codice dell’app di autenticazione",
+  twoFactorSubtitle: "Usa il codice a 6 cifre della tua app di autenticazione oppure inserisci un codice di recupero salvato per completare l’accesso.",
+  twoFactorCodeLabel: "Codice di autenticazione o di recupero",
+  twoFactorHelperText: "Apri la tua app di autenticazione e inserisci il codice attuale a 6 cifre, oppure usa un codice di recupero.",
+  twoFactorInvalidCode: "Il codice non è valido o è già stato utilizzato.",
+  twoFactorVerifying: "Verifica…",
+  twoFactorSubmit: "Verifica e continua",
+  twoFactorBackToLogin: "Indietro / esci",
   loginDivider: "OPPURE",
   loginPasskeyPromptTitle: "Usare una passkey salvata?",
   loginPasskeyPromptDescription: "Accedi con Face ID, impronta digitale, blocco schermo, gestore di password o chiave di sicurezza.",

@@ -3,6 +3,16 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  twoFactorLoadingChallenge: "2단계 인증 확인을 불러오는 중…",
+  twoFactorEyebrow: "2단계 인증",
+  twoFactorTitle: "인증 앱 코드를 입력하세요",
+  twoFactorSubtitle: "인증 앱의 6자리 코드를 사용하거나 저장된 복구 코드를 입력해 로그인을 완료하세요.",
+  twoFactorCodeLabel: "인증 앱 또는 복구 코드",
+  twoFactorHelperText: "인증 앱을 열고 현재 6자리 코드를 입력하거나 복구 코드를 사용하세요.",
+  twoFactorInvalidCode: "코드가 유효하지 않거나 이미 사용되었습니다.",
+  twoFactorVerifying: "확인 중…",
+  twoFactorSubmit: "확인하고 계속",
+  twoFactorBackToLogin: "뒤로 / 로그아웃",
   verifyEmailSending: "전송 중...",
   verifyEmailSendNewCode: "새 코드 보내기",
   verifyEmailResendSuccess: "이 이메일에 인증이 필요한 경우 새 코드가 전송되었습니다.",

@@ -3,6 +3,16 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  twoFactorLoadingChallenge: "दो-कारक चुनौती लोड हो रही है…",
+  twoFactorEyebrow: "दो-कारक प्रमाणीकरण",
+  twoFactorTitle: "अपना प्रमाणक कोड दर्ज करें",
+  twoFactorSubtitle: "साइन इन पूरा करने के लिए अपने प्रमाणक ऐप का 6-अंकीय कोड उपयोग करें, या सहेजा गया रिकवरी कोड दर्ज करें।",
+  twoFactorCodeLabel: "प्रमाणक या रिकवरी कोड",
+  twoFactorHelperText: "अपना प्रमाणक ऐप खोलें और वर्तमान 6-अंकीय कोड दर्ज करें, या रिकवरी कोड का उपयोग करें।",
+  twoFactorInvalidCode: "कोड अमान्य है या पहले ही उपयोग हो चुका है।",
+  twoFactorVerifying: "सत्यापित किया जा रहा है…",
+  twoFactorSubmit: "सत्यापित करें और जारी रखें",
+  twoFactorBackToLogin: "वापस / साइन आउट",
   verifyEmailSending: "भेजा जा रहा है...",
   verifyEmailSendNewCode: "नया कोड भेजें",
   verifyEmailResendSuccess: "यदि इस ईमेल को सत्यापन की आवश्यकता है, तो नया कोड भेज दिया गया है।",

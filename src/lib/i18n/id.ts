@@ -3,6 +3,16 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  twoFactorLoadingChallenge: "Memuat tantangan dua faktor…",
+  twoFactorEyebrow: "Autentikasi dua faktor",
+  twoFactorTitle: "Masukkan kode autentikator Anda",
+  twoFactorSubtitle: "Gunakan kode 6 digit dari aplikasi autentikator Anda, atau masukkan kode pemulihan tersimpan untuk menyelesaikan masuk.",
+  twoFactorCodeLabel: "Kode autentikator atau pemulihan",
+  twoFactorHelperText: "Buka aplikasi autentikator Anda dan masukkan kode 6 digit saat ini, atau gunakan kode pemulihan.",
+  twoFactorInvalidCode: "Kode tidak valid atau sudah digunakan.",
+  twoFactorVerifying: "Memverifikasi…",
+  twoFactorSubmit: "Verifikasi dan lanjutkan",
+  twoFactorBackToLogin: "Kembali / keluar",
   loginPasskeyPromptTitle: "Gunakan passkey tersimpan?",
   loginPasskeyPromptDescription: "Masuk dengan Face ID, sidik jari, kunci layar, pengelola kata sandi, atau kunci keamanan.",
   loginUsePasskey: "Gunakan passkey",

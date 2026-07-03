@@ -3,6 +3,16 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  twoFactorLoadingChallenge: "جارٍ تحميل تحدي المصادقة الثنائية…",
+  twoFactorEyebrow: "المصادقة الثنائية",
+  twoFactorTitle: "أدخل رمز تطبيق المصادقة",
+  twoFactorSubtitle: "استخدم الرمز المكوّن من 6 أرقام من تطبيق المصادقة، أو أدخل رمز استرداد محفوظًا لإكمال تسجيل الدخول.",
+  twoFactorCodeLabel: "رمز تطبيق المصادقة أو رمز الاسترداد",
+  twoFactorHelperText: "افتح تطبيق المصادقة وأدخل الرمز الحالي المكوّن من 6 أرقام، أو استخدم رمز استرداد.",
+  twoFactorInvalidCode: "الرمز غير صالح أو تم استخدامه بالفعل.",
+  twoFactorVerifying: "جارٍ التحقق…",
+  twoFactorSubmit: "تحقق وتابع",
+  twoFactorBackToLogin: "رجوع / تسجيل الخروج",
   verifyEmailSending: "جارٍ الإرسال...",
   verifyEmailSendNewCode: "إرسال رمز جديد",
   verifyEmailResendSuccess: "إذا كان هذا البريد الإلكتروني يحتاج إلى تحقق، فقد تم إرسال رمز جديد.",

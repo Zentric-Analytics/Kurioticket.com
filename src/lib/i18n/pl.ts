@@ -3,6 +3,16 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  twoFactorLoadingChallenge: "Ładowanie wyzwania dwuskładnikowego…",
+  twoFactorEyebrow: "Uwierzytelnianie dwuskładnikowe",
+  twoFactorTitle: "Wpisz kod z aplikacji uwierzytelniającej",
+  twoFactorSubtitle: "Użyj 6-cyfrowego kodu z aplikacji uwierzytelniającej albo wpisz zapisany kod odzyskiwania, aby dokończyć logowanie.",
+  twoFactorCodeLabel: "Kod z aplikacji uwierzytelniającej lub kod odzyskiwania",
+  twoFactorHelperText: "Otwórz aplikację uwierzytelniającą i wpisz aktualny 6-cyfrowy kod albo użyj kodu odzyskiwania.",
+  twoFactorInvalidCode: "Kod jest nieprawidłowy lub został już użyty.",
+  twoFactorVerifying: "Weryfikowanie…",
+  twoFactorSubmit: "Zweryfikuj i kontynuuj",
+  twoFactorBackToLogin: "Wróć / wyloguj",
   loginDivider: "LUB",
   loginInvalidCredentials: "Nie udało się zalogować. Sprawdź adres e-mail i hasło, a następnie spróbuj ponownie.",
   loginRateLimited: "Zbyt wiele prób. Poczekaj chwilę i spróbuj ponownie.",

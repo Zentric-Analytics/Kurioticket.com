@@ -3,6 +3,16 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  twoFactorLoadingChallenge: "Läser in tvåfaktorsutmaning…",
+  twoFactorEyebrow: "Tvåfaktorsautentisering",
+  twoFactorTitle: "Ange din autentiseringskod",
+  twoFactorSubtitle: "Använd den 6-siffriga koden från din autentiseringsapp, eller ange en sparad återställningskod för att slutföra inloggningen.",
+  twoFactorCodeLabel: "Autentiserings- eller återställningskod",
+  twoFactorHelperText: "Öppna din autentiseringsapp och ange den aktuella 6-siffriga koden, eller använd en återställningskod.",
+  twoFactorInvalidCode: "Koden är ogiltig eller har redan använts.",
+  twoFactorVerifying: "Verifierar…",
+  twoFactorSubmit: "Verifiera och fortsätt",
+  twoFactorBackToLogin: "Tillbaka / logga ut",
   verifyEmailSending: "Skickar...",
   verifyEmailSendNewCode: "Skicka en ny kod",
   verifyEmailResendSuccess: "Om den här e-postadressen behöver verifieras har en ny kod skickats.",

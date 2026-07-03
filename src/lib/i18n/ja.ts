@@ -3,6 +3,16 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  twoFactorLoadingChallenge: "二要素認証チャレンジを読み込み中…",
+  twoFactorEyebrow: "二要素認証",
+  twoFactorTitle: "認証アプリのコードを入力",
+  twoFactorSubtitle: "認証アプリの6桁コードを使用するか、保存済みのリカバリーコードを入力してサインインを完了してください。",
+  twoFactorCodeLabel: "認証コードまたはリカバリーコード",
+  twoFactorHelperText: "認証アプリを開いて現在の6桁コードを入力するか、リカバリーコードを使用してください。",
+  twoFactorInvalidCode: "コードが無効、またはすでに使用されています。",
+  twoFactorVerifying: "確認中…",
+  twoFactorSubmit: "確認して続行",
+  twoFactorBackToLogin: "戻る / サインアウト",
   verifyEmailSending: "送信中...",
   verifyEmailSendNewCode: "新しいコードを送信",
   verifyEmailResendSuccess: "このメールアドレスに確認が必要な場合、新しいコードを送信しました。",
