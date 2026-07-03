@@ -854,6 +854,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
               <SearchDateCell
                 dropoffDate={dropoffDate}
                 isCompact={isCompactSearch}
+                doneButtonVariant={placement === "desktop" ? "brand" : "neutral"}
                 isOpen={datesOpen}
                 onClear={() => {
                   markExpandedSearchInteraction();
@@ -1212,6 +1213,7 @@ function SearchInputCell({
 
 function SearchDateCell({
   dropoffDate,
+  doneButtonVariant,
   isCompact,
   isOpen,
   onClear,
@@ -1227,6 +1229,7 @@ function SearchDateCell({
   wrapRef,
 }: {
   dropoffDate: string;
+  doneButtonVariant: "brand" | "neutral";
   isCompact: boolean;
   isOpen: boolean;
   onClear: () => void;
@@ -1415,7 +1418,12 @@ function SearchDateCell({
             <button
               type="button"
               onClick={onDone}
-              className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+              className={cn(
+                "focus-ring rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors",
+                doneButtonVariant === "brand"
+                  ? "bg-[#004BB8] shadow-[0_8px_18px_rgba(0,75,184,0.20)] hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
+                  : "bg-slate-900 hover:bg-slate-800",
+              )}
             >
               {t("done")}
             </button>

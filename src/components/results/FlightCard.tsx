@@ -70,20 +70,20 @@ export function FlightCard({
       className={cn(
         "relative w-full overflow-hidden border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.065)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(15,23,42,0.095)]",
         isAccented &&
-          "border-indigo-200/80 bg-[linear-gradient(180deg,rgba(79,70,229,0.035),#fff_34%)] shadow-[0_10px_28px_rgba(79,70,229,0.09)] ring-1 ring-indigo-500/10",
+          "border-[#004BB8]/30 bg-[linear-gradient(180deg,rgba(0,75,184,0.05),#fff_34%)] shadow-[0_10px_28px_rgba(0,75,184,0.12)] ring-1 ring-[#004BB8]/10",
       )}
     >
       {isAccented ? (
         <div
           aria-hidden="true"
-          className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-indigo-500/55 via-purple-500/45 to-teal/40"
+          className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#004BB8]/55 via-[#004BB8]/35 to-[#5CB6B2]/35"
         />
       ) : null}
       <div className="p-2.5 sm:p-3">
         <div className="grid gap-2.5 lg:grid-cols-[minmax(0,1fr)_132px] lg:items-stretch">
           <div className="min-w-0 space-y-2">
             <div className="flex min-w-0 items-center justify-between gap-2 border-b border-slate-100 pb-1.5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-700">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#004BB8]">
                 {t("flightOption")}
               </p>
               <p className="min-w-0 truncate text-end text-xs font-semibold text-slate-700" dir="auto">
@@ -129,14 +129,14 @@ export function FlightCard({
               href={`/flights/details/${encodeURIComponent(flight.id)}`}
               variant="primary"
               size="sm"
-              className="shrink-0 whitespace-nowrap rounded-full bg-navy px-3.5 text-sm font-semibold hover:bg-navy-soft lg:w-full lg:justify-center"
+              className="shrink-0 whitespace-nowrap rounded-full bg-[#004BB8] px-3.5 text-sm font-semibold hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35 lg:w-full lg:justify-center"
             >
               {t("viewFlight")}
             </LinkButton>
           </div>
         </div>
 
-        <div className="mt-2 rounded-xl border border-indigo-100 bg-indigo-50/50 px-2.5 py-1.5 text-xs font-medium leading-5 text-slate-600">
+        <div className="mt-2 rounded-xl border border-[#004BB8]/10 bg-[#004BB8]/5 px-2.5 py-1.5 text-xs font-medium leading-5 text-slate-600">
           {showsProviderBackedReturn
             ? `${t("providerNormalizedItineraryPrefix")} ${providerHandoffCopy}`
             : providerHandoffCopy}
@@ -171,7 +171,7 @@ function FlightLegRow({
 
         <div className="min-w-0 flex-1">
           <div className="mb-1.5 flex items-center justify-between gap-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-700">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#004BB8]">
               {formatLegTitle(leg, t)}
             </p>
             <p className="truncate text-xs font-medium text-slate-600" dir="ltr">
@@ -243,7 +243,7 @@ function AirlineLogo({ flight }: { flight: PublicFlightResult }) {
   }
 
   return (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-indigo-100 bg-indigo-50/80 text-indigo-700 shadow-sm">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#004BB8]/10 bg-[#004BB8]/5 text-[#004BB8] shadow-sm">
       <PlaneTakeoff className="h-3.5 w-3.5" aria-hidden="true" />
     </div>
   );
@@ -261,7 +261,7 @@ function FlightDetailLines({ details }: { details: DetailItem[] }) {
             className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5"
           >
             <Icon
-              className="h-3.5 w-3.5 shrink-0 text-indigo-500"
+              className="h-3.5 w-3.5 shrink-0 text-[#004BB8]"
               aria-hidden="true"
             />
             <span className="shrink-0 font-medium text-slate-700">

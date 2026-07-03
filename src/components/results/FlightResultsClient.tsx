@@ -6094,13 +6094,13 @@ function SummarySortButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "group relative flex h-full flex-col rounded-2xl border text-start transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35/30",
+        "group relative flex h-full flex-col rounded-2xl border text-start transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
         mobile
           ? "min-w-[178px] snap-start px-3 py-2.5"
           : "min-h-[104px] px-3.5 py-3",
         active
-          ? "border-[#004BB8]/25 bg-gradient-to-br from-[#004BB8]/8 via-white to-[#5CB6B2]/10 text-slate-800 shadow-sm shadow-[#004BB8]/[0.04] ring-1 ring-[#004BB8]/10"
-          : "border-slate-200/80 bg-white text-slate-600 hover:border-[#004BB8]/25 hover:bg-slate-50/80 hover:shadow-sm hover:shadow-slate-900/[0.03]",
+          ? "border-[#004BB8]/30 bg-[#004BB8]/5 text-slate-800 shadow-[0_10px_28px_rgba(0,75,184,0.10)] ring-1 ring-[#004BB8]/10"
+          : "border-slate-200/80 bg-white text-slate-600 hover:border-[#004BB8]/25 hover:bg-[#F2F7FA] hover:shadow-[0_10px_24px_rgba(2,28,43,0.08)]",
       )}
     >
       <span
