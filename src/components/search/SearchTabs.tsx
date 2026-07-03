@@ -16,6 +16,7 @@ import {
 } from "react";
 
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { createPortal } from "react-dom";
 
 import {
@@ -41,6 +42,7 @@ import { cn } from "@/lib/utils";
 import {
   buildFlightRecentSearch,
   buildHotelRecentSearch,
+  syncBackendRecentSearch,
   upsertRecentSearch,
 } from "@/lib/recent-searches";
 import {
@@ -340,6 +342,7 @@ export function SearchTabs({
     locale: activeLocale,
     t: localeTranslations,
   } = useLocale();
+  const { status: sessionStatus } = useSession();
 
   const t = useMemo(
     () =>
@@ -1719,8 +1722,7 @@ export function SearchTabs({
         params.get("origin") ?? "",
         params.get("destination") ?? ""
       );
-      upsertRecentSearch(
-        buildFlightRecentSearch({
+      const recentSearch = buildFlightRecentSearch({
           tripType: (params.get("tripType") as "round-trip" | "one-way") ?? "round-trip",
           origin: params.get("origin") ?? "",
           destination: params.get("destination") ?? "",
@@ -1731,8 +1733,11 @@ export function SearchTabs({
           infants: Number(params.get("infants") ?? "0"),
           travelers: Number(params.get("travelers") ?? "1"),
           cabinClass: params.get("cabinClass") ?? "economy",
-        }, matchedFlightImage ? { image: matchedFlightImage.image, imageAlt: matchedFlightImage.imageAlt } : undefined)
-      );
+        }, matchedFlightImage ? { image: matchedFlightImage.image, imageAlt: matchedFlightImage.imageAlt } : undefined);
+      upsertRecentSearch(recentSearch);
+      if (sessionStatus === "authenticated") {
+        void syncBackendRecentSearch(recentSearch);
+      }
     } catch {
       // best effort only
     }

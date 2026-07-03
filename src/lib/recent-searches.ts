@@ -95,6 +95,100 @@ export const upsertRecentSearch = (entry: RecentSearchEntry, max = 5): RecentSea
   return deduped;
 };
 
+const RECENT_SEARCHES_API = "/api/account/recent-searches";
+
+const isRecentSearchEntry = (entry: unknown): entry is RecentSearchEntry => {
+  if (!entry || typeof entry !== "object") return false;
+  const candidate = entry as Partial<RecentSearchEntry>;
+  return Boolean(
+    candidate.id &&
+      candidate.type === "flight" &&
+      candidate.createdAt &&
+      candidate.label &&
+      candidate.subtitle &&
+      candidate.href &&
+      candidate.params &&
+      typeof candidate.params === "object"
+  );
+};
+
+export const fetchBackendRecentSearches = async (
+  signal?: AbortSignal
+): Promise<{ ok: boolean; items?: RecentSearchEntry[] }> => {
+  try {
+    const response = await fetch(RECENT_SEARCHES_API, {
+      method: "GET",
+      credentials: "same-origin",
+      signal,
+    });
+
+    if (!response.ok) return { ok: false };
+
+    const payload = (await response.json()) as { items?: unknown[] };
+    const items = Array.isArray(payload.items)
+      ? payload.items.filter(isRecentSearchEntry)
+      : [];
+
+    return { ok: true, items };
+  } catch {
+    if (signal?.aborted) return { ok: false };
+    return { ok: false };
+  }
+};
+
+export const syncBackendRecentSearch = async (
+  entry: RecentSearchEntry
+): Promise<{ ok: boolean; item?: RecentSearchEntry }> => {
+  try {
+    const response = await fetch(RECENT_SEARCHES_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify(entry),
+    });
+
+    if (!response.ok) return { ok: false };
+
+    const payload = (await response.json()) as { item?: unknown };
+    return {
+      ok: true,
+      item: isRecentSearchEntry(payload.item) ? payload.item : undefined,
+    };
+  } catch {
+    return { ok: false };
+  }
+};
+
+export const deleteBackendRecentSearch = async (
+  id: string
+): Promise<{ ok: boolean }> => {
+  try {
+    const response = await fetch(RECENT_SEARCHES_API, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ id }),
+    });
+
+    return { ok: response.ok };
+  } catch {
+    return { ok: false };
+  }
+};
+
+export const clearBackendRecentSearches = async (): Promise<{ ok: boolean }> => {
+  try {
+    const response = await fetch(`${RECENT_SEARCHES_API}?clear=all`, {
+      method: "DELETE",
+      credentials: "same-origin",
+    });
+
+    return { ok: response.ok };
+  } catch {
+    return { ok: false };
+  }
+};
+
 export const removeRecentSearch = (id: string): RecentSearchEntry[] => {
   const nextEntries = readRecentSearches().filter((entry) => entry.id !== id);
   writeRecentSearches(nextEntries);
