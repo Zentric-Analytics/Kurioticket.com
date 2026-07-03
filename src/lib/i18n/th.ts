@@ -1731,6 +1731,7 @@ export const translations: TranslationDictionary = {
   "legal.affiliateDisclosure.summary":
     "วิธีที่ Kurioticket อาจได้รับค่าคอมมิชชันเมื่อผู้ใช้คลิกหรือจองผ่านพันธมิตรที่เชื่อถือได้",
   "legal.affiliateDisclosure.lastUpdatedDate": "May 11, 2026",
+  "legal.affiliateDisclosure.lastUpdated": "อัปเดตล่าสุด: 11 พฤษภาคม 2026",
   "legal.affiliateDisclosure.tableOfContents": "สารบัญ",
   "legal.affiliateDisclosure.sections.model.title": "รูปแบบ Affiliate",
   "legal.affiliateDisclosure.sections.model.paragraph1":

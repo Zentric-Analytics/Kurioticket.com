@@ -1694,6 +1694,7 @@ export const translations: TranslationDictionary = {
   "legal.affiliateDisclosure.title": "Ujawnienie informacji o partnerach afiliacyjnych",
   "legal.affiliateDisclosure.summary": "Jak Kurioticket może otrzymywać prowizje, gdy użytkownicy klikają lub dokonują rezerwacji przez zaufanych partnerów.",
   "legal.affiliateDisclosure.lastUpdatedDate": "May 11, 2026",
+  "legal.affiliateDisclosure.lastUpdated": "Ostatnia aktualizacja: 11 maja 2026",
   "legal.affiliateDisclosure.tableOfContents": "SPIS TREŚCI",
   "legal.affiliateDisclosure.sections.model.title": "Model afiliacyjny",
   "legal.affiliateDisclosure.sections.model.paragraph1": "Kurioticket oferuje bezpłatne wyszukiwanie lotów i hoteli bez opłat serwisowych. Możemy otrzymywać prowizje afiliacyjne, gdy użytkownicy klikają, rezerwują lub kupują przez linki linii lotniczych, hoteli albo partnerów podróżnych.",

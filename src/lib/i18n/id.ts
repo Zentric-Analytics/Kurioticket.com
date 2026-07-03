@@ -926,6 +926,7 @@ export const translations: TranslationDictionary = {
   "legal.affiliateDisclosure.title": "Pengungkapan Afiliasi",
   "legal.affiliateDisclosure.summary": "Bagaimana Kurioticket dapat memperoleh komisi saat pengguna mengeklik atau memesan melalui mitra tepercaya.",
   "legal.affiliateDisclosure.lastUpdatedDate": "11 Mei 2026",
+  "legal.affiliateDisclosure.lastUpdated": "Terakhir diperbarui: 11 Mei 2026",
   "legal.affiliateDisclosure.tableOfContents": "DAFTAR ISI",
   "legal.affiliateDisclosure.sections.model.title": "Model Afiliasi",
   "legal.affiliateDisclosure.sections.model.paragraph1": "Kurioticket menawarkan pencarian penerbangan dan hotel gratis tanpa biaya layanan. Kami dapat memperoleh komisi afiliasi saat pengguna mengeklik, memesan, atau membeli melalui tautan maskapai, hotel, atau mitra perjalanan.",
