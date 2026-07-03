@@ -1410,6 +1410,18 @@ export const translations: TranslationDictionary = {
   "legal.index.documents.partnerRedirectDisclaimer.title": "パートナーリダイレクトに関する免責事項",
   "legal.index.documents.partnerRedirectDisclaimer.summary": "Kurioticket がユーザーを航空会社、ホテル、アフィリエイトパートナー、旅行プロバイダーへリダイレクトする際に何が起こるかを説明します。",
 
+
+  "legal.affiliateDisclosure.title": "アフィリエイト開示",
+  "legal.affiliateDisclosure.summary": "ユーザーが信頼できるパートナーをクリックまたは予約した際に、Kurioticket が手数料を得る場合があることを説明します。",
+  "legal.affiliateDisclosure.lastUpdatedDate": "2026年5月11日",
+  "legal.affiliateDisclosure.lastUpdated": "最終更新日：2026年5月11日",
+  "legal.affiliateDisclosure.tableOfContents": "目次",
+  "legal.affiliateDisclosure.sections.model.title": "アフィリエイトモデル",
+  "legal.affiliateDisclosure.sections.model.paragraph1": "Kurioticket はサービス手数料なしで無料の航空券およびホテル検索を提供します。ユーザーが航空会社、ホテル、旅行パートナーのリンクをクリック、予約、購入した場合、当社はアフィリエイト手数料を得ることがあります。",
+  "legal.affiliateDisclosure.sections.model.paragraph2": "Kurioticket は、ユーザーがプロバイダーのリンクをクリックまたは予約した場合に、パートナーから報酬を受け取ることがあります。これはサービスの運営と改善に役立ちます。",
+  "legal.affiliateDisclosure.sections.ranking.title": "ランキングの公正性",
+  "legal.affiliateDisclosure.sections.ranking.paragraph1": "Kurioticket は、価格、所要時間、経由地、信頼度、快適さ、ストレス軽減など、ユーザー価値のシグナルに基づいて結果をランク付けすることを目指しています。アフィリエイト関係によって、偽の緊急性、隠れた手数料、誤解を招く推奨が生じるべきではありません。",
+  "legal.affiliateDisclosure.developerNote": "これらの法的文書の草案はスタートアップ段階の仮文書であり、大規模な一般公開前に有資格の法律専門家による確認が必要です。",
   "legal.lastUpdated": "最終更新日",
   "legal.print": "印刷",
   "legal.tableOfContents": "目次",
