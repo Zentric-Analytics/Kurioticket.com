@@ -2,10 +2,10 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
+  ...en,
   selectLanguage: "选择语言",
   suggestedLanguages: "推荐语言",
   allLanguages: "所有语言",
-  ...en,
   explore: "探索",
   signIn: "登录",
   multiCity: "多城市",
