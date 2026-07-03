@@ -1651,4 +1651,6 @@ export const translations: TranslationDictionary = {
   resetPasswordSuccessMessage: "Kata sandi berhasil diatur ulang. Mengalihkan ke masuk...",
   resetPasswordResetting: "Mengatur ulang...",
   resetPasswordSubmit: "Atur ulang kata sandi",
+  "legal.privacyChoices.lastUpdated": "Last updated: June 28, 2026",
+
 };
