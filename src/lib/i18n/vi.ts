@@ -3,6 +3,24 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  privacyPageTitle: "Chính sách quyền riêng tư",
+  privacyPageEyebrow: "Kurioticket privacy",
+  privacyHeroTitle: "Chính sách quyền riêng tư",
+  privacyHeroSubtitle: "Cách Kurioticket LLC (“Kurioticket”, “chúng tôi”) thu thập, sử dụng, lưu trữ và bảo vệ dữ liệu tài khoản, tìm kiếm, cảnh báo, hỗ trợ và email.",
+  privacyNoticeBody: "Các bản dự thảo pháp lý này là nội dung tạm thời cho giai đoạn khởi nghiệp và cần được luật sư đủ điều kiện xem xét trước khi ra mắt công khai ở quy mô lớn.",
+  privacySectionInformationTitle: "Dữ liệu chúng tôi thu thập",
+  privacySectionInformationBody: "Chúng tôi thu thập dữ liệu tài khoản như tên, email, mật khẩu đã băm, mã định danh nhà cung cấp xác thực và tùy chọn du lịch không bắt buộc. Chúng tôi không yêu cầu dữ liệu hộ chiếu, giấy tờ tùy thân do chính phủ cấp hoặc địa chỉ nhà khi đăng ký.",
+  privacySectionUseTitle: "Cách thông tin được sử dụng",
+  privacySectionUseBody: "Cách Kurioticket LLC (“Kurioticket”, “chúng tôi”) thu thập, sử dụng, lưu trữ và bảo vệ dữ liệu tài khoản, tìm kiếm, cảnh báo, hỗ trợ và email.",
+  privacySectionProvidersTitle: "Nhà cung cấp bên ngoài",
+  privacySectionProvidersBody: "Chúng tôi có thể sử dụng nhà cung cấp dịch vụ bên thứ ba để hỗ trợ vận hành dịch vụ, gửi thông tin liên lạc, bảo vệ nền tảng, đo lường hiệu suất và hỗ trợ chức năng sản phẩm.",
+  privacySectionChoicesTitle: "Lựa chọn của bạn",
+  privacySectionChoicesBody: "Bạn có thể cập nhật tùy chọn thông báo, yêu cầu xóa tài khoản và yêu cầu truy cập hoặc chỉnh sửa khi luật quyền riêng tư hiện hành yêu cầu.",
+  privacyLegalCenterBeforeLink: "Để xem bản nháp đầy đủ hơn, hãy truy cập",
+  privacyLegalCenterLink: "Xem Chính sách quyền riêng tư",
+  privacyLegalCenterAfterLink: ".",
+
+
   explorePageEyebrow: "Khám phá du lịch",
   exploreHeroTitle: "Khám phá ý tưởng du lịch",
   exploreHeroSubtitle: "Bắt đầu với tuyến đường, nơi lưu trú và công cụ lập kế hoạch được thiết kế để giúp bạn so sánh lựa chọn rõ ràng trước khi tiếp tục với nhà cung cấp.",

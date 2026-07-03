@@ -3,6 +3,24 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  privacyPageTitle: "Privacybeleid",
+  privacyPageEyebrow: "Kurioticket-privacy",
+  privacyHeroTitle: "Privacybeleid",
+  privacyHeroSubtitle: "Hoe Kurioticket LLC (“Kurioticket”, “wij”, “ons” of “onze”) account-, zoek-, alert-, support- en e-mailgegevens verzamelt, gebruikt, opslaat en beschermt.",
+  privacyNoticeBody: "Deze juridische concepten zijn tijdelijke startup-placeholderteksten en moeten vóór een grootschalige publieke lancering worden beoordeeld door gekwalificeerde juridische adviseurs.",
+  privacySectionInformationTitle: "Gegevens die we verzamelen",
+  privacySectionInformationBody: "We verzamelen accountgegevens zoals naam, e-mailadres, gehashte wachtwoorden, identificatiegegevens van authenticatieproviders en optionele reisvoorkeuren. Bij registratie vragen we niet om paspoortgegevens, overheids-ID of woonadres.",
+  privacySectionUseTitle: "Hoe informatie wordt gebruikt",
+  privacySectionUseBody: "Hoe Kurioticket LLC (“Kurioticket”, “wij”, “ons” of “onze”) account-, zoek-, alert-, support- en e-mailgegevens verzamelt, gebruikt, opslaat en beschermt.",
+  privacySectionProvidersTitle: "Externe providers",
+  privacySectionProvidersBody: "We kunnen externe serviceproviders gebruiken om onze diensten te helpen beheren, communicatie te verzenden, het platform te beschermen, prestaties te meten en productfunctionaliteit te ondersteunen.",
+  privacySectionChoicesTitle: "Je keuzes",
+  privacySectionChoicesBody: "Je kunt meldingsvoorkeuren bijwerken, accountverwijdering aanvragen en inzage of correctie aanvragen waar dit vereist is op grond van toepasselijke privacywetgeving.",
+  privacyLegalCenterBeforeLink: "Bekijk voor een uitgebreidere conceptversie",
+  privacyLegalCenterLink: "Privacybeleid bekijken",
+  privacyLegalCenterAfterLink: ".",
+
+
   explorePageEyebrow: "Reisinspiratie",
   exploreHeroTitle: "Ontdek reisideeën",
   exploreHeroSubtitle: "Begin met routes, verblijven en planningstools die je helpen opties duidelijk te vergelijken voordat je doorgaat bij een aanbieder.",

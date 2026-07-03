@@ -3,6 +3,24 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  privacyPageTitle: "Politique de confidentialité",
+  privacyPageEyebrow: "Confidentialité Kurioticket",
+  privacyHeroTitle: "Politique de confidentialité",
+  privacyHeroSubtitle: "Comment Kurioticket LLC (« Kurioticket », « nous », « notre » ou « nos ») collecte, utilise, stocke et protège les données de compte, de recherche, d’alertes, d’assistance et d’e-mail.",
+  privacyNoticeBody: "Ces projets juridiques sont des textes provisoires de démarrage et doivent être examinés par un conseiller juridique qualifié avant tout lancement public à grande échelle.",
+  privacySectionInformationTitle: "Données que nous collectons",
+  privacySectionInformationBody: "Nous collectons des données de compte telles que le nom, l’e-mail, le mot de passe haché, les identifiants du fournisseur d’authentification et les préférences de voyage facultatives. Nous ne demandons pas de données de passeport, de pièce d’identité gouvernementale ni d’adresse personnelle lors de l’inscription.",
+  privacySectionUseTitle: "Utilisation des informations",
+  privacySectionUseBody: "Comment Kurioticket LLC (« Kurioticket », « nous », « notre » ou « nos ») collecte, utilise, stocke et protège les données de compte, de recherche, d’alertes, d’assistance et d’e-mail.",
+  privacySectionProvidersTitle: "Fournisseurs externes",
+  privacySectionProvidersBody: "Nous pouvons utiliser des fournisseurs de services tiers pour aider à exploiter nos services, envoyer des communications, protéger la plateforme, mesurer les performances et soutenir les fonctionnalités du produit.",
+  privacySectionChoicesTitle: "Vos choix",
+  privacySectionChoicesBody: "Vous pouvez mettre à jour vos préférences de notification, demander la suppression de votre compte et demander l’accès ou la correction lorsque les lois applicables en matière de confidentialité l’exigent.",
+  privacyLegalCenterBeforeLink: "Pour un brouillon plus complet, consultez",
+  privacyLegalCenterLink: "Voir la politique de confidentialité",
+  privacyLegalCenterAfterLink: ".",
+
+
   explorePageEyebrow: "Découverte de voyage",
   exploreHeroTitle: "Explorer des idées de voyage",
   exploreHeroSubtitle: "Commencez par des itinéraires, des séjours et des outils de planification conçus pour vous aider à comparer clairement les options avant de continuer avec un fournisseur.",

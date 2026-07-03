@@ -3,6 +3,24 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  privacyPageTitle: "Política de privacidade",
+  privacyPageEyebrow: "Privacidade da Kurioticket",
+  privacyHeroTitle: "Política de privacidade",
+  privacyHeroSubtitle: "Como a Kurioticket LLC (“Kurioticket”, “nós”, “nos” ou “nosso”) coleta, usa, armazena e protege dados de conta, pesquisa, alertas, suporte e e-mail.",
+  privacyNoticeBody: "Estes rascunhos legais são placeholders iniciais e devem ser revisados por assessoria jurídica qualificada antes de um lançamento público em grande escala.",
+  privacySectionInformationTitle: "Dados que coletamos",
+  privacySectionInformationBody: "Coletamos dados da conta, como nome, e-mail, senha com hash, identificadores de provedores de autenticação e preferências opcionais de viagem. Não solicitamos dados de passaporte, documento de identidade governamental nem endereço residencial no cadastro.",
+  privacySectionUseTitle: "Como as informações são usadas",
+  privacySectionUseBody: "Como a Kurioticket LLC (“Kurioticket”, “nós”, “nos” ou “nosso”) coleta, usa, armazena e protege dados de conta, pesquisa, alertas, suporte e e-mail.",
+  privacySectionProvidersTitle: "Provedores externos",
+  privacySectionProvidersBody: "Podemos usar provedores de serviço terceirizados para ajudar a operar nossos serviços, enviar comunicações, proteger a plataforma, medir desempenho e oferecer suporte à funcionalidade do produto.",
+  privacySectionChoicesTitle: "Suas escolhas",
+  privacySectionChoicesBody: "Você pode atualizar preferências de notificação, solicitar a exclusão da conta e solicitar acesso ou correção quando exigido pelas leis de privacidade aplicáveis.",
+  privacyLegalCenterBeforeLink: "Para um rascunho mais completo, visite",
+  privacyLegalCenterLink: "Ver Política de privacidade",
+  privacyLegalCenterAfterLink: ".",
+
+
   explorePageEyebrow: "Descoberta de viagem",
   exploreHeroTitle: "Explore ideias de viagem",
   exploreHeroSubtitle: "Comece com rotas, estadias e ferramentas de planejamento criadas para ajudar você a comparar opções com clareza antes de continuar com um fornecedor.",

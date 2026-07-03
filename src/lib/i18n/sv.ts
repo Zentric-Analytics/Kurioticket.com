@@ -3,6 +3,24 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  privacyPageTitle: "Integritetspolicy",
+  privacyPageEyebrow: "Kurioticket-integritet",
+  privacyHeroTitle: "Integritetspolicy",
+  privacyHeroSubtitle: "Denna korta integritetssida sammanfattar hur Kurioticket hanterar konto-, sök-, support- och e-postdata.",
+  privacyNoticeBody: "Slutliga integritetsvillkor bör granskas av kvalificerad juridisk rådgivning före offentlig lansering.",
+  privacySectionInformationTitle: "Data vi samlar in",
+  privacySectionInformationBody: "Kurioticket kan samla in kontoinformation, sökuppgifter, sparade resepreferenser, aviseringar, supportmeddelanden och kommunikationspreferenser.",
+  privacySectionUseTitle: "Hur information används",
+  privacySectionUseBody: "Information kan användas för att köra sökningar, hålla konton fungerande, komma ihåg preferenser, ge support och skydda plattformen.",
+  privacySectionProvidersTitle: "Externa leverantörer",
+  privacySectionProvidersBody: "Externa leverantörer hanterar sina egna villkor, integritetspraxis, cookies, betalningar och bokningssupport.",
+  privacySectionChoicesTitle: "Dina val",
+  privacySectionChoicesBody: "Du kan hantera konto- och kommunikationspreferenser via tillgängliga Kurioticket-kontoverktyg.",
+  privacyLegalCenterBeforeLink: "För ett mer fullständigt utkast, besök",
+  privacyLegalCenterLink: "integritetspolicyn i det juridiska centret",
+  privacyLegalCenterAfterLink: ".",
+
+
   explorePageEyebrow: "Reseupptäckt",
   exploreHeroTitle: "Utforska reseidéer",
   exploreHeroSubtitle: "Börja med rutter, boenden och planeringsverktyg som hjälper dig att jämföra alternativ tydligt innan du fortsätter med en leverantör.",

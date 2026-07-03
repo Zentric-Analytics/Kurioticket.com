@@ -3,6 +3,24 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  privacyPageTitle: "Kebijakan Privasi",
+  privacyPageEyebrow: "Kurioticket privacy",
+  privacyHeroTitle: "Kebijakan Privasi",
+  privacyHeroSubtitle: "Bagaimana Kurioticket LLC (“Kurioticket,” “kami,” atau “milik kami”) mengumpulkan, menggunakan, menyimpan, dan melindungi data akun, pencarian, peringatan, dukungan, dan email.",
+  privacyNoticeBody: "Draf hukum ini adalah placeholder startup dan harus ditinjau oleh penasihat hukum yang memenuhi syarat sebelum peluncuran publik berskala besar.",
+  privacySectionInformationTitle: "Data yang Kami Kumpulkan",
+  privacySectionInformationBody: "Kami mengumpulkan data akun seperti nama, email, kata sandi yang di-hash, pengenal penyedia autentikasi, dan preferensi perjalanan opsional. Kami tidak meminta data paspor, identitas pemerintah, atau alamat rumah saat pendaftaran.",
+  privacySectionUseTitle: "Cara informasi digunakan",
+  privacySectionUseBody: "Bagaimana Kurioticket LLC (“Kurioticket,” “kami,” atau “milik kami”) mengumpulkan, menggunakan, menyimpan, dan melindungi data akun, pencarian, peringatan, dukungan, dan email.",
+  privacySectionProvidersTitle: "Penyedia eksternal",
+  privacySectionProvidersBody: "Kami dapat menggunakan penyedia layanan pihak ketiga untuk membantu mengoperasikan layanan kami, mengirim komunikasi, melindungi platform, mengukur kinerja, dan mendukung fungsionalitas produk.",
+  privacySectionChoicesTitle: "Pilihan Anda",
+  privacySectionChoicesBody: "Anda dapat memperbarui preferensi notifikasi, meminta penghapusan akun, dan meminta akses atau koreksi jika diwajibkan oleh undang-undang privasi yang berlaku.",
+  privacyLegalCenterBeforeLink: "Untuk draf yang lebih lengkap, kunjungi",
+  privacyLegalCenterLink: "legal center privacy policy",
+  privacyLegalCenterAfterLink: ".",
+
+
   explorePageEyebrow: "Penemuan perjalanan",
   exploreHeroTitle: "Jelajahi ide perjalanan",
   exploreHeroSubtitle: "Mulai dengan rute, penginapan, dan alat perencanaan yang dirancang untuk membantu Anda membandingkan opsi dengan jelas sebelum melanjutkan ke penyedia.",

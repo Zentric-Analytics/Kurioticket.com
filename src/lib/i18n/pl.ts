@@ -3,6 +3,24 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  privacyPageTitle: "Polityka prywatności",
+  privacyPageEyebrow: "Prywatność Kurioticket",
+  privacyHeroTitle: "Polityka prywatności",
+  privacyHeroSubtitle: "Jak Kurioticket LLC („Kurioticket”, „my”, „nas” lub „nasze”) zbiera, wykorzystuje, przechowuje i chroni dane konta, wyszukiwań, alertów, wsparcia oraz poczty e-mail.",
+  privacyNoticeBody: "Te projekty dokumentów prawnych są roboczymi materiałami startowymi i przed publicznym uruchomieniem na dużą skalę powinny zostać sprawdzone przez wykwalifikowanego prawnika.",
+  privacySectionInformationTitle: "Dane, które zbieramy",
+  privacySectionInformationBody: "Zbieramy dane konta, takie jak imię i nazwisko, adres e-mail, zahaszowane hasło, identyfikatory dostawców uwierzytelniania oraz opcjonalne preferencje podróży. Podczas rejestracji nie prosimy o dane paszportowe, dokument tożsamości wydany przez organ państwowy ani adres domowy.",
+  privacySectionUseTitle: "Jak wykorzystywane są informacje",
+  privacySectionUseBody: "Jak Kurioticket LLC („Kurioticket”, „my”, „nas” lub „nasze”) zbiera, wykorzystuje, przechowuje i chroni dane konta, wyszukiwań, alertów, wsparcia oraz poczty e-mail.",
+  privacySectionProvidersTitle: "Zewnętrzni dostawcy",
+  privacySectionProvidersBody: "Możemy korzystać z usług zewnętrznych dostawców, aby obsługiwać nasze usługi, wysyłać komunikację, chronić platformę, mierzyć wydajność i wspierać funkcjonalność produktu.",
+  privacySectionChoicesTitle: "Twoje wybory",
+  privacySectionChoicesBody: "Możesz aktualizować preferencje powiadomień, poprosić o usunięcie konta oraz zażądać dostępu lub korekty danych, gdy wymagają tego obowiązujące przepisy o prywatności.",
+  privacyLegalCenterBeforeLink: "Aby zobaczyć pełniejszy szkic, odwiedź",
+  privacyLegalCenterLink: "legal center privacy policy",
+  privacyLegalCenterAfterLink: ".",
+
+
   explorePageEyebrow: "Odkrywanie podróży",
   exploreHeroTitle: "Odkrywaj pomysły na podróż",
   exploreHeroSubtitle: "Zacznij od tras, pobytów i narzędzi planowania, które pomagają jasno porównać opcje przed przejściem do dostawcy.",

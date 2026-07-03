@@ -3,6 +3,24 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  privacyPageTitle: "개인정보 처리방침",
+  privacyPageEyebrow: "Kurioticket 개인정보",
+  privacyHeroTitle: "개인정보 처리방침",
+  privacyHeroSubtitle: "Kurioticket LLC(“Kurioticket”, “당사”)가 계정, 검색, 알림, 지원 및 이메일 데이터를 수집, 사용, 저장, 보호하는 방법입니다.",
+  privacyNoticeBody: "이 법률 초안은 스타트업용 임시 문서이며 대규모 공개 출시 전에 자격을 갖춘 법률 전문가의 검토를 받아야 합니다.",
+  privacySectionInformationTitle: "수집하는 데이터",
+  privacySectionInformationBody: "당사는 이름, 이메일, 해시 처리된 비밀번호, 인증 제공업체 식별자, 선택적 여행 선호도와 같은 계정 데이터를 수집합니다. 가입 시 여권 정보, 정부 발급 신분증, 집 주소는 요청하지 않습니다.",
+  privacySectionUseTitle: "정보 사용 방식",
+  privacySectionUseBody: "Kurioticket LLC(“Kurioticket”, “당사”)가 계정, 검색, 알림, 지원 및 이메일 데이터를 수집, 사용, 저장, 보호하는 방법입니다.",
+  privacySectionProvidersTitle: "외부 제공업체",
+  privacySectionProvidersBody: "당사는 서비스 운영, 커뮤니케이션 발송, 플랫폼 보호, 성능 측정, 제품 기능 지원을 위해 제3자 서비스 제공업체를 이용할 수 있습니다.",
+  privacySectionChoicesTitle: "사용자의 선택",
+  privacySectionChoicesBody: "관련 개인정보 보호법에서 요구하는 경우 알림 환경설정을 업데이트하고, 계정 삭제를 요청하고, 접근 또는 정정을 요청할 수 있습니다.",
+  privacyLegalCenterBeforeLink: "더 완전한 초안은",
+  privacyLegalCenterLink: "개인정보 처리방침 보기",
+  privacyLegalCenterAfterLink: ".",
+
+
   explorePageEyebrow: "여행 탐색",
   exploreHeroTitle: "여행 아이디어 탐색",
   exploreHeroSubtitle: "제공업체로 이동하기 전에 옵션을 명확히 비교할 수 있도록 경로, 숙소, 계획 도구부터 시작하세요.",

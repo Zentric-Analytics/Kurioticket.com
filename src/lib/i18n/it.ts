@@ -3,6 +3,24 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  privacyPageTitle: "Informativa sulla privacy",
+  privacyPageEyebrow: "Kurioticket privacy",
+  privacyHeroTitle: "Informativa sulla privacy",
+  privacyHeroSubtitle: "Come Kurioticket LLC (“Kurioticket”, “noi” o “nostro”) raccoglie, utilizza, archivia e protegge i dati relativi ad account, ricerche, avvisi, assistenza ed e-mail.",
+  privacyNoticeBody: "Questi documenti legali sono bozze provvisorie per una startup e devono essere revisionati da un consulente legale qualificato prima di un lancio pubblico su larga scala.",
+  privacySectionInformationTitle: "Dati che raccogliamo",
+  privacySectionInformationBody: "Raccogliamo dati dell’account come nome, e-mail, password con hash, identificatori del fornitore di autenticazione e preferenze di viaggio opzionali. Non richiediamo dati del passaporto, documenti di identità governativi o indirizzo di casa al momento della registrazione.",
+  privacySectionUseTitle: "Come vengono usate le informazioni",
+  privacySectionUseBody: "Come Kurioticket LLC (“Kurioticket”, “noi” o “nostro”) raccoglie, utilizza, archivia e protegge i dati relativi ad account, ricerche, avvisi, assistenza ed e-mail.",
+  privacySectionProvidersTitle: "Fornitori esterni",
+  privacySectionProvidersBody: "Possiamo utilizzare fornitori di servizi terzi per aiutarci a gestire i nostri servizi, inviare comunicazioni, proteggere la piattaforma, misurare le prestazioni e supportare le funzionalità del prodotto.",
+  privacySectionChoicesTitle: "Le tue scelte",
+  privacySectionChoicesBody: "Puoi aggiornare le preferenze di notifica, richiedere l’eliminazione dell’account e richiedere l’accesso o la correzione dei dati ove previsto dalle leggi sulla privacy applicabili.",
+  privacyLegalCenterBeforeLink: "Per una bozza più completa, visita",
+  privacyLegalCenterLink: "Visualizza l’informativa sulla privacy",
+  privacyLegalCenterAfterLink: ".",
+
+
   explorePageEyebrow: "Scoperta viaggi",
   exploreHeroTitle: "Esplora idee di viaggio",
   exploreHeroSubtitle: "Inizia da rotte, soggiorni e strumenti di pianificazione pensati per aiutarti a confrontare chiaramente le opzioni prima di continuare con un fornitore.",

@@ -3,6 +3,24 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  privacyPageTitle: "プライバシーポリシー",
+  privacyPageEyebrow: "Kurioticketのプライバシー",
+  privacyHeroTitle: "プライバシーポリシー",
+  privacyHeroSubtitle: "Kurioticket LLC（「Kurioticket」「当社」）が、アカウント、検索、アラート、サポート、メールデータをどのように収集、使用、保存、保護するかを説明します。",
+  privacyNoticeBody: "これらの法的文書の草案はスタートアップ段階の仮文書であり、大規模な一般公開前に有資格の法律専門家による確認が必要です。",
+  privacySectionInformationTitle: "収集するデータ",
+  privacySectionInformationBody: "当社は、お客様が提供するアカウント情報、検索内容、保存済み旅行、アラート設定、サポートメッセージ、メール設定を収集する場合があります。",
+  privacySectionUseTitle: "情報の使用方法",
+  privacySectionUseBody: "Kurioticket LLC（「Kurioticket」「当社」）が、アカウント、検索、アラート、サポート、メールデータをどのように収集、使用、保存、保護するかを説明します。",
+  privacySectionProvidersTitle: "外部プロバイダー",
+  privacySectionProvidersBody: "当社は、ホスティング、分析、認証、メール配信、サポートツール、セキュリティ監視を支援するサービス提供事業者を利用する場合があります。",
+  privacySectionChoicesTitle: "お客様の選択肢",
+  privacySectionChoicesBody: "お客様は、アカウント設定、メール配信設定、ブラウザー設定を管理できます。適用される法律に従い、アクセス、訂正、削除、またはデータに関するその他の権利を行使するために当社へ連絡できます。",
+  privacyLegalCenterBeforeLink: "より完全な草案については、",
+  privacyLegalCenterLink: "プライバシーポリシーを見る",
+  privacyLegalCenterAfterLink: ".",
+
+
   explorePageEyebrow: "旅行の発見",
   exploreHeroTitle: "旅行アイデアを探す",
   exploreHeroSubtitle: "ルート、滞在先、計画ツールから始め、プロバイダーへ進む前に選択肢をわかりやすく比較できます。",
