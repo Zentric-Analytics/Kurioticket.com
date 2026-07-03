@@ -9,8 +9,7 @@ export default function PageLoading() {
         showProgress={false}
         className="min-h-[100svh] bg-transparent px-5"
         contentClassName="max-w-md text-center"
-        title="Finding the best stays for you"
-        description="Checking availability and rates..."
+        searchType="hotel"
       />
     </main>
   );

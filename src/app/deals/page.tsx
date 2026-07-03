@@ -15,6 +15,7 @@ import { Calendar, ChevronDown, Minus, Plus, X } from "lucide-react";
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
+import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { translations as enTranslations } from "@/lib/i18n/en";
@@ -593,6 +594,25 @@ export default function DealsPage() {
   };
 
   const weekdays = dealWeekdayKeys.map(t);
+
+  if (isSubmitting) {
+    return (
+      <>
+        <AppHeader />
+        <main className="min-h-[calc(100svh-5rem)] bg-[radial-gradient(circle_at_top_left,rgba(92,182,178,0.20),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(0,75,184,0.16),transparent_36%),linear-gradient(180deg,#F2F7FA_0%,#FFFFFF_58%,#FFFFFF_100%)]">
+          <BrandedLoading
+            variant="fullscreen"
+            visual="logoPulse"
+            showProgress={false}
+            searchType="deals"
+            className="min-h-[calc(100svh-5rem)] bg-transparent px-5"
+            contentClassName="max-w-md text-center"
+          />
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   const countRows = [
     {

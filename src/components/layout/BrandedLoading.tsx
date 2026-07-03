@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
 import { cn } from "@/lib/utils";
@@ -6,6 +8,8 @@ import { cn } from "@/lib/utils";
 type BrandedLoadingProps = {
   title?: string;
   description?: string;
+  messages?: string[];
+  searchType?: "flight" | "hotel" | "car" | "deals" | "travel";
   children?: ReactNode;
   variant?: "fullscreen" | "page" | "compact";
   className?: string;
@@ -15,6 +19,50 @@ type BrandedLoadingProps = {
   visual?: "default" | "logoPulse";
 };
 
+const searchLoadingCopy = {
+  flight: {
+    title: "Searching the best flights for you",
+    messages: [
+      "Checking airlines and fares...",
+      "Comparing routes and providers...",
+      "Finding the best available options...",
+      "Preparing your results...",
+    ],
+  },
+  hotel: {
+    title: "Finding the best stays for you",
+    messages: [
+      "Checking availability and rates...",
+      "Comparing hotels and room options...",
+      "Preparing your stays...",
+    ],
+  },
+  car: {
+    title: "Looking for the best car rental options",
+    messages: [
+      "Checking vehicles, prices, and pickup options...",
+      "Comparing rental providers...",
+      "Preparing your car options...",
+    ],
+  },
+  deals: {
+    title: "Finding the best travel deals for you",
+    messages: [
+      "Checking current offers...",
+      "Comparing available options...",
+      "Preparing your deals...",
+    ],
+  },
+  travel: {
+    title: "Finding the best travel options for you",
+    messages: [
+      "Checking providers...",
+      "Comparing available options...",
+      "Preparing your results...",
+    ],
+  },
+} satisfies Record<NonNullable<BrandedLoadingProps["searchType"]>, { title: string; messages: string[] }>;
+
 const variantClasses = {
   fullscreen:
     "min-h-screen items-center justify-center px-6 py-12 text-center",
@@ -23,8 +71,10 @@ const variantClasses = {
 } satisfies Record<NonNullable<BrandedLoadingProps["variant"]>, string>;
 
 export function BrandedLoading({
-  title = "Loading Kurioticket...",
-  description = "Preparing your experience...",
+  title,
+  description,
+  messages,
+  searchType,
   children,
   variant = "page",
   className,
@@ -35,6 +85,25 @@ export function BrandedLoading({
 }: BrandedLoadingProps) {
   const isFullscreen = variant === "fullscreen";
   const logoPulse = visual === "logoPulse";
+  const searchCopy = searchType ? searchLoadingCopy[searchType] : undefined;
+  const loadingMessages = useMemo(
+    () => messages ?? (description ? [description] : searchCopy?.messages) ?? ["Preparing your experience..."],
+    [description, messages, searchCopy?.messages],
+  );
+  const [messageIndex, setMessageIndex] = useState(0);
+
+  useEffect(() => {
+    if (loadingMessages.length <= 1) return;
+
+    const interval = window.setInterval(() => {
+      setMessageIndex((current) => (current + 1) % loadingMessages.length);
+    }, 1800);
+
+    return () => window.clearInterval(interval);
+  }, [loadingMessages.length]);
+
+  const resolvedTitle = title ?? searchCopy?.title ?? "Loading Kurioticket...";
+  const resolvedDescription = loadingMessages[messageIndex % loadingMessages.length];
 
   return (
     <section
@@ -85,11 +154,11 @@ export function BrandedLoading({
           ) : null}
 
           <h1 className={cn("text-xl font-semibold tracking-tight text-[#021C2B] sm:text-2xl", showProgress ? "mt-5" : "mt-0")}>
-            {title}
+            {resolvedTitle}
           </h1>
-          {description ? (
+          {resolvedDescription ? (
             <p className="mt-2 text-sm leading-6 text-[#021C2B]/70 sm:text-base">
-              {description}
+              {resolvedDescription}
             </p>
           ) : null}
         </div>

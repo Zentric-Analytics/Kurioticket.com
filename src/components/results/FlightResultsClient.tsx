@@ -703,7 +703,6 @@ export function FlightResultsClient() {
   const [error, setError] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [messageIndex, setMessageIndex] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filterApplying, setFilterApplying] = useState(false);
   const [maxPrice, setMaxPrice] = useState(0);
@@ -1599,17 +1598,6 @@ export function FlightResultsClient() {
     };
   }, [body, dictionary.unableToSearchFlights, t]);
 
-  useEffect(() => {
-    if (!loading) return;
-
-    const id = window.setInterval(() => {
-      setMessageIndex(
-        (current) => (current + 1) % flightSearchLoadingMessages.length,
-      );
-    }, 1100);
-
-    return () => window.clearInterval(id);
-  }, [loading]);
 
   useEffect(() => {
     if (!tripTypeMenuOpen) return;
@@ -4160,8 +4148,8 @@ export function FlightResultsClient() {
           showProgress={false}
           className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5"
           contentClassName="max-w-md text-center"
-          title="Searching the best flights for you"
-          description={flightSearchLoadingMessages[messageIndex]}
+          searchType="flight"
+          messages={flightSearchLoadingMessages}
         />
       </main>
     );
