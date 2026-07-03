@@ -2700,10 +2700,10 @@ export function SecurityDashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(passwordForm),
       });
-      await response.json().catch(() => ({}));
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        setPasswordModalError("Unable to update password.");
+        setPasswordModalError(typeof data.error === "string" && data.error ? data.error : "Unable to update password.");
         return;
       }
 
