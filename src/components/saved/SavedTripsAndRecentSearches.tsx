@@ -270,18 +270,46 @@ const sortRecentSearchesByDate = (entries: RecentSearchEntry[]) =>
     return (Number.isFinite(rightDate) ? rightDate : 0) - (Number.isFinite(leftDate) ? leftDate : 0);
   });
 
+const getRecentSearchTimestamp = (entry: RecentSearchEntry) => {
+  const timestamp = Date.parse(entry.createdAt);
+  return Number.isFinite(timestamp) ? timestamp : 0;
+};
+
+const getLocalRecentSearchesToSync = (
+  backendEntries: RecentSearchEntry[],
+  localEntries: RecentSearchEntry[],
+) => {
+  if (backendEntries.length === 0) return [];
+
+  const backendIds = new Set(backendEntries.map((entry) => entry.id));
+  const latestBackendTimestamp = Math.max(
+    ...backendEntries.map(getRecentSearchTimestamp),
+    0,
+  );
+
+  return localEntries.filter(
+    (entry) =>
+      entry.type === "flight" &&
+      !backendIds.has(entry.id) &&
+      getRecentSearchTimestamp(entry) > latestBackendTimestamp,
+  );
+};
+
 const mergeRecentSearchEntries = (
   backendEntries: RecentSearchEntry[],
   localEntries: RecentSearchEntry[],
 ) => {
   const merged = new Map<string, RecentSearchEntry>();
 
-  for (const entry of localEntries) {
+  for (const entry of backendEntries) {
     if (entry.type === "flight") merged.set(entry.id, entry);
   }
 
-  for (const entry of backendEntries) {
-    if (entry.type === "flight") merged.set(entry.id, entry);
+  for (const entry of getLocalRecentSearchesToSync(
+    backendEntries,
+    localEntries,
+  )) {
+    merged.set(entry.id, entry);
   }
 
   return sortRecentSearchesByDate(Array.from(merged.values())).slice(0, 5);
@@ -629,38 +657,50 @@ export function SavedTripsAndRecentSearches({
     setSavedIds(localIds);
   }, []);
 
+  const refreshBackendRecentSearches = useCallback(
+    async (signal?: AbortSignal) => {
+      const localEntries = readRecentSearches.call(null).filter(
+        (entry) => entry.type === "flight",
+      );
+      const result = await fetchBackendRecentSearches(signal);
+      if (signal?.aborted || !result.ok || !result.items) return;
+
+      const backendEntries = result.items.filter(
+        (entry) => entry.type === "flight",
+      );
+
+      if (backendEntries.length === 0) {
+        clearRecentSearches();
+        setRecentSearches([]);
+        return;
+      }
+
+      const localEntriesToSync = getLocalRecentSearchesToSync(
+        backendEntries,
+        localEntries,
+      );
+      const mergedEntries = mergeRecentSearchEntries(
+        backendEntries,
+        localEntries,
+      );
+
+      writeRecentSearches(mergedEntries);
+      setRecentSearches(mergedEntries);
+
+      for (const entry of localEntriesToSync) {
+        void syncBackendRecentSearch(entry);
+      }
+    },
+    [],
+  );
+
   useEffect(() => {
     if (sessionStatus === "loading") return;
 
     if (sessionStatus === "authenticated") {
       const controller = new AbortController();
       const timeoutId = window.setTimeout(() => {
-        const localEntries = readRecentSearches.call(null).filter(
-          (entry) => entry.type === "flight",
-        );
-
-        void fetchBackendRecentSearches(controller.signal).then((result) => {
-          if (controller.signal.aborted) return;
-
-          const backendEntries = (result.items ?? []).filter(
-            (entry) => entry.type === "flight",
-          );
-          const mergedEntries = mergeRecentSearchEntries(
-            backendEntries,
-            localEntries,
-          );
-
-          setRecentSearches(mergedEntries);
-          if (mergedEntries.length) {
-            writeRecentSearches(mergedEntries);
-          }
-
-          for (const entry of localEntries) {
-            if (!backendEntries.some((backendEntry) => backendEntry.id === entry.id)) {
-              void syncBackendRecentSearch(entry);
-            }
-          }
-        });
+        void refreshBackendRecentSearches(controller.signal);
       }, 0);
 
       return () => {
@@ -678,7 +718,24 @@ export function SavedTripsAndRecentSearches({
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [sessionStatus]);
+  }, [refreshBackendRecentSearches, sessionStatus]);
+
+  useEffect(() => {
+    if (sessionStatus !== "authenticated") return;
+
+    const handlePageActive = () => {
+      if (document.visibilityState === "hidden") return;
+      void refreshBackendRecentSearches();
+    };
+
+    window.addEventListener("focus", handlePageActive);
+    document.addEventListener("visibilitychange", handlePageActive);
+
+    return () => {
+      window.removeEventListener("focus", handlePageActive);
+      document.removeEventListener("visibilitychange", handlePageActive);
+    };
+  }, [refreshBackendRecentSearches, sessionStatus]);
 
   useEffect(() => {
     if (sessionStatus === "loading") return;
