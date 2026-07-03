@@ -6,6 +6,8 @@ export const translations: TranslationDictionary = {
   selectLanguage: "Chọn ngôn ngữ",
   suggestedLanguages: "Ngôn ngữ gợi ý",
   allLanguages: "Tất cả ngôn ngữ",
+  platform: "Nền tảng",
+  legal: "Pháp lý",
   mobileInfoLegalHeading: "Thông tin & pháp lý",
   mobileExploreHeading: "Khám phá",
   mobileTravelHeading: "Du lịch",

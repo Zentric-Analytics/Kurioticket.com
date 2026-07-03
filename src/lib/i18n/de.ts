@@ -6,6 +6,8 @@ export const translations: TranslationDictionary = {
   selectLanguage: "Sprache auswählen",
   suggestedLanguages: "Vorgeschlagene Sprachen",
   allLanguages: "Alle Sprachen",
+  platform: "Plattform",
+  legal: "Rechtliches",
   "recentSearches.title": "Letzte Suchen",
   "recentSearches.subtitle": "Schnelle Routen aus deinen letzten Suchen.",
   "recentSearches.clearAll": "Alle löschen",

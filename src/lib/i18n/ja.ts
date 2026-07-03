@@ -1142,6 +1142,8 @@ export const translations: TranslationDictionary = {
   selectLanguage: "言語を選択",
   suggestedLanguages: "おすすめの言語",
   allLanguages: "すべての言語",
+  platform: "プラットフォーム",
+  legal: "法務",
   searchLanguage: "言語またはコードを検索",
   noLanguagesFound: "言語が見つかりません",
   websiteLanguageTitle: "ウェブサイトの言語を選択",

@@ -6,6 +6,8 @@ export const translations: TranslationDictionary = {
   selectLanguage: "Dil seç",
   suggestedLanguages: "Önerilen diller",
   allLanguages: "Tüm diller",
+  platform: "Platform",
+  legal: "Yasal",
   mobileInfoLegalHeading: "Bilgi ve yasal",
   mobileExploreHeading: "Keşfet",
   mobileTravelHeading: "Seyahat",

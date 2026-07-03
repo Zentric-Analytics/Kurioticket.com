@@ -6,6 +6,8 @@ export const translations: TranslationDictionary = {
   selectLanguage: "언어 선택",
   suggestedLanguages: "추천 언어",
   allLanguages: "모든 언어",
+  platform: "플랫폼",
+  legal: "법률",
   mobileInfoLegalHeading: "정보 및 법률",
   mobileExploreHeading: "탐색",
   mobileTravelHeading: "여행",
