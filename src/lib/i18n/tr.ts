@@ -1426,6 +1426,18 @@ export const translations: TranslationDictionary = {
   "legal.index.documents.accessibilityStatement.title": "Erişilebilirlik Beyanı",
   "legal.index.documents.accessibilityStatement.summary": "Kurioticket’in seyahat araması, hesap ve destek deneyimleri için erişilebilirlik taahhüdü.",
 
+  "legal.refundBookingDisclaimer.title": "İade ve Harici Sağlayıcı Sorumluluk Reddi",
+  "legal.refundBookingDisclaimer.summary": "Satın alma, biletleme, iadeler, iptaller ve seyahat envanteri ödemelerinin Kurioticket dışında gerçekleştiğini açıklar.",
+  "legal.refundBookingDisclaimer.lastUpdatedDate": "11 Mayıs 2026",
+  "legal.refundBookingDisclaimer.tableOfContents": "İçindekiler",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.title": "Doğrudan bilet düzenlenmez",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph1": "Kurioticket havayolu bileti veya otel rezervasyonu satmaz. Karşılaştırma ve satın alma adımlarına devam edebilmeleri için kullanıcıları harici havayollarına, otellere, satış ortaklarına veya seyahat sağlayıcılarına yönlendiririz.",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph2": "Satın alma sözleşmeniz Kurioticket ile değil, ödemenizi kabul eden harici sağlayıcı ile yapılır.",
+  "legal.refundBookingDisclaimer.sections.refunds.title": "İadeler ve değişiklikler",
+  "legal.refundBookingDisclaimer.sections.refunds.paragraph1": "İadeler, krediler, program değişiklikleri, iptaller, kaçırılan bağlantılar, check-in sorunları, bagaj anlaşmazlıkları ve satın alma sorunları harici havayolu, otel veya seyahat sağlayıcısı tarafından ele alınır.",
+  "legal.refundBookingDisclaimer.sections.refunds.paragraph2": "Kurioticket desteği, platform kullanımını ve seyahat rehberliği sınırlarını anlamanıza yardımcı olabilir, ancak iş ortağı veya havayolu politikalarını geçersiz kılamaz.",
+  "legal.refundBookingDisclaimer.developerNote": "Bu yasal taslaklar startup aşaması için yer tutucudur ve büyük ölçekli genel lansmandan önce nitelikli hukuk danışmanları tarafından incelenmelidir.",
+
   "legal.affiliateDisclosure.title": "Satış Ortaklığı Açıklaması",
   "legal.affiliateDisclosure.summary": "Kullanıcılar güvenilir iş ortakları üzerinden tıkladığında veya rezervasyon yaptığında Kurioticket’in nasıl komisyon kazanabileceğini açıklar.",
   "legal.affiliateDisclosure.lastUpdatedDate": "11 Mayıs 2026",
