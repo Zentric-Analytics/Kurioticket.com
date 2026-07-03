@@ -3,6 +3,11 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  mobileInfoLegalHeading: "जानकारी और कानूनी",
+  mobileExploreHeading: "एक्सप्लोर करें",
+  mobileTravelHeading: "यात्रा",
+  mobilePreferencesHeading: "प्राथमिकताएँ",
+
   flights: "उड़ानें",
   hotels: "होटल",
   cars: "कारें",

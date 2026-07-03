@@ -3,6 +3,11 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  mobileInfoLegalHeading: "정보 및 법률",
+  mobileExploreHeading: "탐색",
+  mobileTravelHeading: "여행",
+  mobilePreferencesHeading: "환경설정",
+
   websiteLanguageTitle: "웹사이트 언어 선택",
   websiteLanguageDescription:
     "영어(미국)는 기본 웹사이트 언어입니다. Kurioticket은 사용 가능한 옵션을 선택한 후에만 언어를 변경합니다.",
