@@ -40,7 +40,6 @@ import {
 } from "lucide-react";
 
 import { useLocale } from "@/components/layout/LocaleProvider";
-import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { CountryCurrencySelector } from "@/components/region/CountryCurrencySelector";
 
 const RawImage = "img";
@@ -155,7 +154,6 @@ export function AppHeader({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { start: startRouteProgress } = useRouteProgress();
 
   const languageRef = useRef<HTMLDivElement | null>(null);
   const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -636,7 +634,6 @@ export function AppHeader({
       return;
     }
 
-    startRouteProgress();
     afterStart?.();
   };
 
