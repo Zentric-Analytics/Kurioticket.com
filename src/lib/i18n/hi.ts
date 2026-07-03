@@ -236,7 +236,7 @@ export const translations: TranslationDictionary = {
   closeCountryCurrencySelector: "देश और मुद्रा चयनकर्ता बंद करें",
   searchCountryOrCurrency: "देश या मुद्रा खोजें",
   countryCurrencyAllCountriesAndCurrencies: "सभी देश और मुद्राएँ",
-  countryCurrencyPopularCountryAndCurrency: "लोकप्रिय देश और मुद्रा",
+  countryCurrencyPopularCountryAndCurrency: "लोकप्रिय देश और मुद्राएँ",
   countryCurrencyOptionCountSingular: "{{count}} विकल्प",
   countryCurrencyOptionCountPlural: "{{count}} विकल्प",
   selectCountryCurrencyOption: "{{country}}, {{code}}, {{currency}} चुनें",

@@ -645,6 +645,8 @@ export const translations: TranslationDictionary = {
   searchCountryOrCurrency: "搜索国家/地区或货币",
   countryCurrencyAllCountriesAndCurrencies: "所有国家/地区和货币",
   countryCurrencyPopularCountryAndCurrency: "热门国家/地区和货币",
+  noCountriesOrCurrenciesFound: "未找到国家/地区或货币",
+  showMoreResults: "显示更多结果",
   countryCurrencyOptionCountSingular: "{{count}} 个选项",
   countryCurrencyOptionCountPlural: "{{count}} 个选项",
   "countryCurrency.country.US": "美国",

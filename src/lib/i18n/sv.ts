@@ -20,10 +20,11 @@ export const translations: TranslationDictionary = {
   countryCurrencyDescription: 'Välj land och valuta som används för priser och regionala inställningar.',
   closeCountryCurrencySelector: 'Stäng väljaren för land och valuta',
   searchCountryOrCurrency: 'Sök land eller valuta',
-  countryCurrencyAllCountriesAndCurrencies: 'ALLA LÄNDER OCH VALUTOR',
-  countryCurrencyPopularCountryAndCurrency: 'POPULÄRA LÄNDER OCH VALUTOR',
+  countryCurrencyAllCountriesAndCurrencies: 'Alla länder och valutor',
+  countryCurrencyPopularCountryAndCurrency: 'Populära länder och valutor',
   countryCurrencyOptionCountSingular: '{{count}} alternativ',
   countryCurrencyOptionCountPlural: '{{count}} alternativ',
+  noCountriesOrCurrenciesFound: 'Inga länder eller valutor hittades',
   showMoreResults: 'Visa fler resultat',
 
   // Global language modal
