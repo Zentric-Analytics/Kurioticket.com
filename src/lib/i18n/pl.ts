@@ -1838,6 +1838,7 @@ export const translations: TranslationDictionary = {
   "legal.privacy.title": "Polityka prywatności",
   "legal.privacy.summary": "Jak Kurioticket LLC („Kurioticket”, „my”, „nas” lub „nasze”) zbiera, wykorzystuje, przechowuje i chroni dane konta, wyszukiwań, alertów, wsparcia oraz poczty e-mail.",
   "legal.privacy.lastUpdatedDate": "May 11, 2026",
+  "legal.privacy.lastUpdated": "Ostatnia aktualizacja: 11 maja 2026",
   "legal.privacy.tableOfContents": "SPIS TREŚCI",
   "legal.privacy.sections.data-we-collect.title": "Dane, które zbieramy",
   "legal.privacy.sections.data-we-collect.paragraph1": "Zbieramy dane konta, takie jak imię i nazwisko, adres e-mail, zahaszowane hasło, identyfikatory dostawców uwierzytelniania oraz opcjonalne preferencje podróży. Podczas rejestracji nie prosimy o dane paszportowe, dokument tożsamości wydany przez organ państwowy ani adres domowy.",
