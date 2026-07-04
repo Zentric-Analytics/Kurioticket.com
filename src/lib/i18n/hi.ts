@@ -622,6 +622,8 @@ export const translations: TranslationDictionary = {
   cancel: "रद्द करें",
   clear: "साफ़ करें",
   clearAll: "सब साफ़ करें",
+  filters: "फ़िल्टर",
+  filtersWithCount: "फ़िल्टर · {{count}}",
 
   // Hindi /deals page localization.
   "deals.heroTitle": "अपनी अगली यात्रा के लिए ट्रैवल डील्स खोजें",
@@ -1693,6 +1695,11 @@ export const translations: TranslationDictionary = {
   "carsResults.openFilters": "फ़िल्टर खोलें",
   "carsResults.openFiltersWithCount": "फ़िल्टर खोलें, {count} सक्रिय",
   "carsResults.closeFilters": "फ़िल्टर बंद करें",
+  "carsResults.pickupLocationLabel": "पिकअप स्थान",
+  "carsResults.returnLocationLabel": "वापसी स्थान",
+  "carsResults.rentalDatesLabel": "किराये की तारीखें",
+  "carsResults.pickupReturnTimeLabel": "पिकअप / वापसी समय",
+  "carsResults.driverAgeLabel": "ड्राइवर की उम्र",
   "carsResults.edit": "संपादित करें",
   "carsResults.editSearch": "खोज संपादित करें",
   "carsResults.editCarSearch": "कार खोज संपादित करें",
