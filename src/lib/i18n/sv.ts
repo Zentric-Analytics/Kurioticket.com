@@ -386,6 +386,7 @@ export const translations: TranslationDictionary = {
   'accountMenu.myAccount.label': 'Mitt konto',
   'accountMenu.savedTrips.label': 'Sparade resor',
   'accountMenu.priceAlerts.label': 'Prisaviseringar',
+  'accountMenu.recentSearches.label': 'Senaste sökningar',
 
   'flights': 'Flyg',
   'hotels': 'Hotell',
@@ -956,6 +957,13 @@ export const translations: TranslationDictionary = {
     'Tryck på hjärtikonen på valfri rutt för att skapa din personliga kortlista och ha ditt nästa äventyr bara ett klick bort.',
   savedTripsExploreDestinations: 'Utforska destinationer',
   savedTripsRecentSearchesTitle: "Senaste sökningar",
+  recentSearchesPageTitle: "Senaste sökningar",
+  recentSearchesPageSubtitle:
+    "Jump back to where you left off and search again in one click.",
+  recentSearchesEmptyTitle: "No search history yet",
+  recentSearchesEmptyDescription:
+    "Your recent flight searches will appear here after you search.",
+  recentSearchesSearchFlights: "Search flights",
   savedTripsRecentSearchesSubtitle: "Fortsätt där du slutade och sök igen med ett klick.",
   'homeHeroTitle': 'Jämför resealternativ med en enkel sökning',
   'homeHeroSubtitle': 'Sök hos betrodda reseleverantörer, jämför priser tydligt och välj alternativet som passar din resa.',

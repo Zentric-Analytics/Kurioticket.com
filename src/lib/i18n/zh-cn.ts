@@ -942,6 +942,7 @@ export const translations: TranslationDictionary = {
   "accountMenu.myAccount.label": "我的账户",
   "accountMenu.savedTrips.label": "已保存的行程",
   "accountMenu.priceAlerts.label": "价格提醒",
+  "accountMenu.recentSearches.label": "最近搜索",
   "accountMenu.accountSettings.label": "账户设置",
   "accountSettings.eyebrow": "我的账户",
   "accountSettings.title": "账户设置",
@@ -970,6 +971,13 @@ export const translations: TranslationDictionary = {
     "点击任意路线上的爱心图标，建立你的个人候选清单，让下一次冒险触手可及。",
   savedTripsExploreDestinations: "探索目的地",
   savedTripsRecentSearchesTitle: "最近搜索",
+  recentSearchesPageTitle: "最近搜索",
+  recentSearchesPageSubtitle:
+    "Jump back to where you left off and search again in one click.",
+  recentSearchesEmptyTitle: "No search history yet",
+  recentSearchesEmptyDescription:
+    "Your recent flight searches will appear here after you search.",
+  recentSearchesSearchFlights: "Search flights",
   savedTripsRecentSearchesSubtitle:
     "从上次停下的地方继续，一键再次搜索。",
   savedTripsClearAllRecent: "清除所有最近搜索",

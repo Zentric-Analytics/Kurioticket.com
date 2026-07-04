@@ -275,6 +275,7 @@ export const translations: TranslationDictionary = {
   "accountMenu.myAccount.label": "บัญชีของฉัน",
   "accountMenu.savedTrips.label": "ทริปที่บันทึกไว้",
   "accountMenu.priceAlerts.label": "การแจ้งเตือนราคา",
+  "accountMenu.recentSearches.label": "การค้นหาล่าสุด",
   flights: "เที่ยวบิน",
   flightQuoteUnavailable: "ไม่มีใบเสนอราคาตั๋วเครื่องบิน",
   flightSearchAgainCurrentPrices:
@@ -1529,6 +1530,13 @@ export const translations: TranslationDictionary = {
   savedTripsViewFare: "ดูค่าโดยสาร",
   savedTripsSearchRoute: "ค้นหาเส้นทาง",
   savedTripsRecentSearchesTitle: "การค้นหาล่าสุด",
+  recentSearchesPageTitle: "การค้นหาล่าสุด",
+  recentSearchesPageSubtitle:
+    "Jump back to where you left off and search again in one click.",
+  recentSearchesEmptyTitle: "เริ่มค้นหาเพื่อวางแผนต่อ",
+  recentSearchesEmptyDescription:
+    "Your recent flight searches will appear here after you search.",
+  recentSearchesSearchFlights: "Search flights",
   savedTripsRecentSearchesSubtitle:
     "กลับไปต่อจากจุดที่ค้างไว้และค้นหาอีกครั้งได้ในคลิกเดียว",
   savedTripsClearAllRecent: "ล้างรายการล่าสุดทั้งหมด",

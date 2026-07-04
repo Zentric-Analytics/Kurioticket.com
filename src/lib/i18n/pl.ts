@@ -248,6 +248,7 @@ export const translations: TranslationDictionary = {
   "accountMenu.myAccount.label": "Moje konto",
   "accountMenu.savedTrips.label": "Zapisane podróże",
   "accountMenu.priceAlerts.label": "Alerty cenowe",
+  "accountMenu.recentSearches.label": "Ostatnie wyszukiwania",
   "accountDashboard.priceAlerts.title": "Alerty cenowe",
   "accountDashboard.priceAlerts.description":
     "Śledź ceny i otrzymuj powiadomienia, gdy taryfy się zmienią.",
@@ -450,6 +451,13 @@ export const translations: TranslationDictionary = {
     "Kliknij ikonę serca przy dowolnej trasie, aby utworzyć własną listę i mieć kolejną przygodę pod ręką.",
   savedTripsExploreDestinations: "Odkryj kierunki",
   savedTripsRecentSearchesTitle: "Ostatnie wyszukiwania",
+  recentSearchesPageTitle: "Ostatnie wyszukiwania",
+  recentSearchesPageSubtitle:
+    "Jump back to where you left off and search again in one click.",
+  recentSearchesEmptyTitle: "No search history yet",
+  recentSearchesEmptyDescription:
+    "Your recent flight searches will appear here after you search.",
+  recentSearchesSearchFlights: "Search flights",
   savedTripsRecentSearchesSubtitle:
     "Wróć do miejsca, w którym przerwano, i wyszukaj ponownie jednym kliknięciem.",
   savedTripsClearAllRecent: "Wyczyść ostatnie",

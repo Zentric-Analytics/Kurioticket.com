@@ -377,6 +377,7 @@ export const translations: TranslationDictionary = {
   "accountMenu.myAccount.label": "Tài khoản của tôi",
   "accountMenu.savedTrips.label": "Chuyến đi đã lưu",
   "accountMenu.priceAlerts.label": "Cảnh báo giá",
+  "accountMenu.recentSearches.label": "Tìm kiếm gần đây",
 
   flights: "Chuyến bay",
   hotels: "Khách sạn",
@@ -513,6 +514,13 @@ export const translations: TranslationDictionary = {
   savedTripsExploreDestinations: "Khám phá điểm đến",
   savedTripsRemoveSavedTrip: "Xóa chuyến đi đã lưu",
   savedTripsRecentSearchesTitle: "Tìm kiếm gần đây",
+  recentSearchesPageTitle: "Tìm kiếm gần đây",
+  recentSearchesPageSubtitle:
+    "Jump back to where you left off and search again in one click.",
+  recentSearchesEmptyTitle: "Chưa có tìm kiếm gần đây",
+  recentSearchesEmptyDescription:
+    "Your recent flight searches will appear here after you search.",
+  recentSearchesSearchFlights: "Search flights",
   savedTripsRecentSearchesSubtitle: "Quay lại nơi bạn đã dừng và tìm kiếm lại chỉ với một cú nhấp.",
   savedTripsClearAllRecent: "Xóa tất cả tìm kiếm gần đây",
   savedTripsNoRecentTitle: "Chưa có tìm kiếm gần đây",

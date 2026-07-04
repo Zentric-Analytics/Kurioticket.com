@@ -270,6 +270,7 @@ export const translations: TranslationDictionary = {
   "accountMenu.myAccount.label": "Hesabım",
   "accountMenu.savedTrips.label": "Kaydedilen seyahatler",
   "accountMenu.priceAlerts.label": "Fiyat uyarıları",
+  "accountMenu.recentSearches.label": "Son aramalar",
   "accountDashboard.overview.welcome": "Tekrar hoş geldiniz, {name}",
   "accountDashboard.hub.title": "Hesabım",
   "accountDashboard.hub.description":
@@ -603,6 +604,13 @@ export const translations: TranslationDictionary = {
   savedTripsViewFare: "Ücreti görüntüle",
   savedTripsSearchRoute: "Rotayı ara",
   savedTripsRecentSearchesTitle: "Son aramalar",
+  recentSearchesPageTitle: "Son aramalar",
+  recentSearchesPageSubtitle:
+    "Jump back to where you left off and search again in one click.",
+  recentSearchesEmptyTitle: "Henüz son arama yok",
+  recentSearchesEmptyDescription:
+    "Your recent flight searches will appear here after you search.",
+  recentSearchesSearchFlights: "Search flights",
   savedTripsRecentSearchesSubtitle:
     "Kaldığınız yerden devam edin ve tek tıkla yeniden arayın.",
   savedTripsClearAllRecent: "Tüm son aramaları temizle",

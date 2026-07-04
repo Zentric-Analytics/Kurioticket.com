@@ -492,6 +492,13 @@ export const translations: TranslationDictionary = {
   savedTripsViewFare: "Tarief bekijken",
   savedTripsSearchRoute: "Route zoeken",
   savedTripsRecentSearchesTitle: "Recente zoekopdrachten",
+  recentSearchesPageTitle: "Recente zoekopdrachten",
+  recentSearchesPageSubtitle:
+    "Jump back to where you left off and search again in one click.",
+  recentSearchesEmptyTitle: "Start een zoekopdracht om op gang te komen",
+  recentSearchesEmptyDescription:
+    "Your recent flight searches will appear here after you search.",
+  recentSearchesSearchFlights: "Search flights",
   savedTripsRecentSearchesSubtitle:
     "Ga verder waar je was gebleven en zoek opnieuw met één klik.",
   savedTripsClearAllRecent: "Alle recente zoekopdrachten wissen",
@@ -1062,6 +1069,7 @@ export const translations: TranslationDictionary = {
   "accountMenu.savedTrips.label": "Opgeslagen reizen",
   "accountMenu.savedTrips.description": "Opgeslagen verblijven en zoekopdrachten",
   "accountMenu.priceAlerts.label": "Prijsmeldingen",
+  "accountMenu.recentSearches.label": "Recente zoekopdrachten",
   "accountMenu.priceAlerts.description": "Bekijk opgeslagen meldingen",
   "accountMenu.accountSettings.label": "Accountinstellingen",
   "accountMenu.accountSettings.description": "Profiel en voorkeuren",
