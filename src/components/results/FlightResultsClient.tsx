@@ -2000,7 +2000,7 @@ export function FlightResultsClient() {
     if (!flight) return null;
 
     const price = formatResultPriceLabel(flight.price, flight.currency);
-    const duration = formatDurationFromMinutes(flight.durationMinutes);
+    const duration = formatDurationFromMinutes(flight.durationMinutes, t);
     const stops = formatStopsLabel(flight.stops, t);
     const airlineOrProvider = flight.airlineName || flight.provider;
     const departure = formatResultDepartureTime(
@@ -4650,7 +4650,7 @@ function formatDateValue(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function formatDateLabel(value: string, locale = "en-US"): string {
+function formatDateLabel(value: string, locale: string): string {
   if (!value) return "";
 
   const date = new Date(`${value}T00:00:00`);
@@ -4664,7 +4664,7 @@ function formatDateLabel(value: string, locale = "en-US"): string {
   }).format(date);
 }
 
-function formatCompactDateLabel(value: string, locale = "en-US"): string {
+function formatCompactDateLabel(value: string, locale: string): string {
   if (!value) return "";
 
   const date = new Date(`${value}T00:00:00`);
@@ -5523,7 +5523,7 @@ function getTimeMinutes(value: string) {
   return hours * 60 + minutes;
 }
 
-function formatResultDepartureTime(value: string, locale = "en-US") {
+function formatResultDepartureTime(value: string, locale: string) {
   const date = new Date(value);
 
   if (!Number.isNaN(date.getTime())) {
@@ -5535,11 +5535,11 @@ function formatResultDepartureTime(value: string, locale = "en-US") {
 
   const minutes = getTimeMinutes(value);
   return minutes === null
-    ? formatTime(value)
+    ? formatTime(value, locale)
     : formatTimeFromMinutes(minutes, locale);
 }
 
-function formatTimeFromMinutes(value: number, locale = "en-US") {
+function formatTimeFromMinutes(value: number, locale: string) {
   const normalized = Math.max(0, Math.min(1439, value));
   const hours24 = Math.floor(normalized / 60);
   const minutes = normalized % 60;
@@ -5551,15 +5551,28 @@ function formatTimeFromMinutes(value: number, locale = "en-US") {
   }).format(date);
 }
 
-function formatDurationFromMinutes(totalMinutes: number) {
+function formatDurationFromMinutes(totalMinutes: number, t: (key: string) => string) {
   const minutes = Math.max(0, Math.round(totalMinutes));
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
 
-  if (hours <= 0) return `${remainingMinutes}m`;
-  if (remainingMinutes === 0) return `${hours}h`;
+  if (hours <= 0) {
+    return t("flightResults.duration.minutesOnly").replace(
+      "{{minutes}}",
+      String(remainingMinutes),
+    );
+  }
 
-  return `${hours}h ${remainingMinutes}m`;
+  if (remainingMinutes === 0) {
+    return t("flightResults.duration.hoursOnly").replace(
+      "{{hours}}",
+      String(hours),
+    );
+  }
+
+  return t("flightResults.duration.hoursMinutes")
+    .replace("{{hours}}", String(hours))
+    .replace("{{minutes}}", String(remainingMinutes));
 }
 
 function formatOptionsFound(count: number, t: (key: string) => string) {
@@ -5959,7 +5972,7 @@ function Filters({
             <span>{t("totalTripTime")}</span>
             <span className="font-mono text-navy">
               {durationBounds && maxDurationMinutes !== null
-                ? formatDurationFromMinutes(maxDurationMinutes)
+                ? formatDurationFromMinutes(maxDurationMinutes, t)
                 : t("loading")}
             </span>
           </div>
@@ -5981,12 +5994,12 @@ function Filters({
           <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500">
             <span>
               {durationBounds
-                ? formatDurationFromMinutes(durationBounds.min)
+                ? formatDurationFromMinutes(durationBounds.min, t)
                 : "—"}
             </span>
             <span>
               {durationBounds
-                ? formatDurationFromMinutes(durationBounds.max)
+                ? formatDurationFromMinutes(durationBounds.max, t)
                 : "—"}
             </span>
           </div>

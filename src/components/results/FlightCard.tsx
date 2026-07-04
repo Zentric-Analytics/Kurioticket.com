@@ -31,7 +31,7 @@ export function FlightCard({
   flight: PublicFlightResult;
   isAccented?: boolean;
 }) {
-  const { t: dictionary } = useLocale();
+  const { t: dictionary, locale } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
@@ -99,6 +99,7 @@ export function FlightCard({
                   flight={flight}
                   leg={leg}
                   compact={visibleLegs.length > 1}
+                  locale={locale}
                 />
               ))}
             </div>
@@ -150,10 +151,12 @@ function FlightLegRow({
   flight,
   leg,
   compact,
+  locale,
 }: {
   flight: PublicFlightResult;
   leg: FlightLeg;
   compact: boolean;
+  locale: string;
 }) {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -182,7 +185,7 @@ function FlightLegRow({
           <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-3">
             <div className="min-w-0">
               <div className="text-base font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-[17px]" dir="ltr">
-                {formatTime(leg.departureTime)}
+                {formatTime(leg.departureTime, locale)}
               </div>
               <div className="mt-0.5 truncate text-xs font-medium text-slate-600" dir="ltr">
                 {leg.originAirport}
@@ -205,7 +208,7 @@ function FlightLegRow({
 
             <div className="min-w-0 text-end">
               <div className="text-base font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-[17px]" dir="ltr">
-                {formatTime(leg.arrivalTime)}
+                {formatTime(leg.arrivalTime, locale)}
               </div>
               <div className="mt-0.5 truncate text-xs font-medium text-slate-600" dir="ltr">
                 {leg.destinationAirport}

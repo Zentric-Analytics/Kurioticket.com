@@ -2615,4 +2615,8 @@ flightLandingRouteAriaLabel: "Cerca voli da {{origin}} a {{destination}}",
   "flightResults.beachVisual.SAN.alt": "Sunny San Diego coastline and blue ocean",
   "flightResults.beachVisual.MIA.alt": "Bright Miami coast and Biscayne Bay waterfront",
 
+  "flightResults.duration.minutesOnly": "{{minutes}} min",
+  "flightResults.duration.hoursOnly": "{{hours}} h",
+  "flightResults.duration.hoursMinutes": "{{hours}} h {{minutes}} min",
+
 };

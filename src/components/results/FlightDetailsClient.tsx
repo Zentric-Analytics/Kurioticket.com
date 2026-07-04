@@ -1570,7 +1570,7 @@ function CompactFlightRow({
   duration,
   stops,
   compact = false,
-  locale = "en-US",
+  locale,
 }: {
   originAirport: string;
   destinationAirport: string;
@@ -1582,7 +1582,7 @@ function CompactFlightRow({
   duration?: string;
   stops?: string;
   compact?: boolean;
-  locale?: string;
+  locale: string;
 }) {
   return (
     <div
