@@ -1727,6 +1727,7 @@ export const translations: TranslationDictionary = {
   "legal.partnerRedirectDisclaimer.title": "Zastrzeżenie dotyczące przekierowań do partnerów",
   "legal.partnerRedirectDisclaimer.summary": "Co dzieje się, gdy Kurioticket przekierowuje użytkowników do linii lotniczych, hoteli, partnerów afiliacyjnych lub dostawców usług podróżnych.",
   "legal.partnerRedirectDisclaimer.lastUpdatedDate": "May 11, 2026",
+  "legal.partnerRedirectDisclaimer.lastUpdated": "Ostatnia aktualizacja: 11 maja 2026",
   "legal.partnerRedirectDisclaimer.tableOfContents": "SPIS TREŚCI",
   "legal.partnerRedirectDisclaimer.sections.redirect.title": "Bezpieczne przekierowania",
   "legal.partnerRedirectDisclaimer.sections.redirect.paragraph1": "Gdy przechodzisz do zewnętrznego dostawcy, Kurioticket przekierowuje Cię do linii lotniczej, hotelu, partnera afiliacyjnego lub dostawcy podróży. Możemy rejestrować metadane przekierowania, takie jak dostawca, trasa, cena, znacznik czasu, typ użytkownika i strona źródłowa, na potrzeby analityki, wsparcia, zapobiegania nadużyciom i śledzenia afiliacyjnego.",

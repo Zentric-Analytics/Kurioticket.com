@@ -959,6 +959,7 @@ export const translations: TranslationDictionary = {
   "legal.partnerRedirectDisclaimer.title": "Penafian Pengalihan Mitra",
   "legal.partnerRedirectDisclaimer.summary": "Apa yang terjadi saat Kurioticket mengalihkan pengguna ke maskapai, hotel, mitra afiliasi, atau penyedia perjalanan.",
   "legal.partnerRedirectDisclaimer.lastUpdatedDate": "11 Mei 2026",
+  "legal.partnerRedirectDisclaimer.lastUpdated": "Terakhir diperbarui: 11 Mei 2026",
   "legal.partnerRedirectDisclaimer.tableOfContents": "DAFTAR ISI",
   "legal.partnerRedirectDisclaimer.sections.redirect.title": "Pengalihan Aman",
   "legal.partnerRedirectDisclaimer.sections.redirect.paragraph1": "Saat Anda melanjutkan ke penyedia eksternal, Kurioticket mengalihkan Anda ke maskapai, hotel, mitra afiliasi, atau penyedia perjalanan. Kami dapat mencatat metadata pengalihan seperti penyedia, rute, harga, stempel waktu, jenis pengguna, dan halaman sumber untuk analitik, dukungan, pencegahan penyalahgunaan, dan pelacakan afiliasi.",

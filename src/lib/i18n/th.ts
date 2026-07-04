@@ -1788,6 +1788,7 @@ export const translations: TranslationDictionary = {
   "legal.partnerRedirectDisclaimer.summary":
     "สิ่งที่เกิดขึ้นเมื่อ Kurioticket เปลี่ยนเส้นทางผู้ใช้ไปยังสายการบิน โรงแรม พันธมิตร หรือผู้ให้บริการการเดินทาง",
   "legal.partnerRedirectDisclaimer.lastUpdatedDate": "May 11, 2026",
+  "legal.partnerRedirectDisclaimer.lastUpdated": "อัปเดตล่าสุด: 11 พฤษภาคม 2026",
   "legal.partnerRedirectDisclaimer.tableOfContents": "สารบัญ",
   "legal.partnerRedirectDisclaimer.sections.redirect.title":
     "การเปลี่ยนเส้นทางที่ปลอดภัย",
