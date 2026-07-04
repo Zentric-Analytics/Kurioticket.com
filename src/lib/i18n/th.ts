@@ -1110,6 +1110,7 @@ export const translations: TranslationDictionary = {
     "รับรถ {pickupTime} — คืนรถ {returnTime}",
   "carsSearch.driverAgeLabel": "อายุผู้ขับขี่",
   "carsSearch.driverAgeAnyAge": "ทุกช่วงอายุ",
+  "carsSearch.driverAgeAnyAgeRange": "อายุใดก็ได้ 18–70",
   "carsSearch.clearPickupLocation": "ล้างสถานที่รับรถ",
   "carsSearch.clearReturnLocation": "ล้างสถานที่คืนรถ",
   "carsSearch.chooseRentalDatesAria": "เลือกวันที่รับและคืนรถเช่า",

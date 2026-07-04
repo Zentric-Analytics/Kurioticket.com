@@ -1342,6 +1342,7 @@ export const translations: TranslationDictionary = {
     "Odbiór {pickupTime} — zwrot {returnTime}",
   "carsSearch.driverAgeLabel": "WIEK KIEROWCY",
   "carsSearch.driverAgeAnyAge": "Dowolny wiek",
+  "carsSearch.driverAgeAnyAgeRange": "Dowolny wiek 18–70",
   "carsSearch.clearPickupLocation": "Wyczyść miejsce odbioru",
   "carsSearch.clearReturnLocation": "Wyczyść miejsce zwrotu",
   "carsSearch.chooseRentalDatesAria": "Wybierz daty odbioru i zwrotu samochodu",

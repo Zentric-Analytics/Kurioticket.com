@@ -311,6 +311,7 @@ export const translations: TranslationDictionary = {
   "carsSearch.pickupReturnTimeSummary": "{pickupTime} 受け取り — {returnTime} 返却",
   "carsSearch.driverAgeLabel": "運転者の年齢",
   "carsSearch.driverAgeAnyAge": "年齢指定なし",
+  "carsSearch.driverAgeAnyAgeRange": "18〜70歳なら年齢指定なし",
   "carsSearch.clearPickupLocation": "受け取り場所をクリア",
   "carsSearch.clearReturnLocation": "返却場所をクリア",
   "carsSearch.chooseRentalDatesAria": "レンタカーの受け取り日と返却日を選択",

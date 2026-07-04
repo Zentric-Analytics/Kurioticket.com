@@ -556,6 +556,7 @@ export const translations: TranslationDictionary = {
   "carsSearch.pickupReturnTimeSummary": "الاستلام {pickupTime} — الإرجاع {returnTime}",
   "carsSearch.driverAgeLabel": "عمر السائق",
   "carsSearch.driverAgeAnyAge": "أي عمر",
+  "carsSearch.driverAgeAnyAgeRange": "أي عمر 18–70",
   "carsSearch.clearPickupLocation": "مسح موقع الاستلام",
   "carsSearch.clearReturnLocation": "مسح موقع الإرجاع",
   "carsSearch.chooseRentalDatesAria": "اختر تاريخي استلام وإرجاع الإيجار",

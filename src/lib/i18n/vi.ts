@@ -1548,6 +1548,7 @@ export const translations: TranslationDictionary = {
   "carsSearch.pickupReturnTimeSummary": "{pickupTime} nhận xe — {returnTime} trả xe",
   "carsSearch.driverAgeLabel": "TUỔI TÀI XẾ",
   "carsSearch.driverAgeAnyAge": "Mọi độ tuổi",
+  "carsSearch.driverAgeAnyAgeRange": "Bất kỳ độ tuổi nào 18–70",
   "carsSearch.clearPickupLocation": "Xóa địa điểm nhận xe",
   "carsSearch.clearReturnLocation": "Xóa địa điểm trả xe",
   "carsSearch.chooseRentalDatesAria": "Chọn ngày nhận và trả xe thuê",

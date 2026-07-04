@@ -650,6 +650,7 @@ export const translations: TranslationDictionary = {
   "carsSearch.pickupReturnTimeSummary": "{pickupTime} 픽업 — {returnTime} 반납",
   "carsSearch.driverAgeLabel": "운전자 나이",
   "carsSearch.driverAgeAnyAge": "모든 연령",
+  "carsSearch.driverAgeAnyAgeRange": "모든 연령 18–70",
   "carsSearch.clearPickupLocation": "픽업 위치 지우기",
   "carsSearch.clearReturnLocation": "반납 위치 지우기",
   "carsSearch.chooseRentalDatesAria": "렌터카 픽업 및 반납 날짜 선택",

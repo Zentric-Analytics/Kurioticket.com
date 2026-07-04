@@ -2242,6 +2242,7 @@ flightLandingRouteAriaLabel:
     "Prise en charge {pickupTime} — retour {returnTime}",
   "carsSearch.driverAgeLabel": "Âge du conducteur",
   "carsSearch.driverAgeAnyAge": "Tout âge",
+  "carsSearch.driverAgeAnyAgeRange": "Tout âge 18–70",
   "carsSearch.clearPickupLocation": "Effacer le lieu de prise en charge",
   "carsSearch.clearReturnLocation": "Effacer le lieu de retour",
   "carsSearch.chooseRentalDatesAria":

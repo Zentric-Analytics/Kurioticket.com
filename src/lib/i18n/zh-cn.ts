@@ -512,6 +512,7 @@ export const translations: TranslationDictionary = {
   "carsSearch.pickupReturnTimeSummary": "{pickupTime} 取车 — {returnTime} 还车",
   "carsSearch.driverAgeLabel": "驾驶员年龄",
   "carsSearch.driverAgeAnyAge": "任意年龄",
+  "carsSearch.driverAgeAnyAgeRange": "任意年龄 18–70",
   "carsSearch.clearPickupLocation": "清除取车地点",
   "carsSearch.clearReturnLocation": "清除还车地点",
   "carsSearch.chooseRentalDatesAria": "选择租车取车和还车日期",
