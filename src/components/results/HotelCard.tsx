@@ -86,16 +86,20 @@ function getCancellationDisplay(
     return { label: t("hotelResults.filter.freeCancellation"), positive: true };
   }
 
-  if (/\bpay (?:at|on) (?:the )?property\b|\bpay later\b/i.test(policyText)) {
-    return { label: toSentenceCase(policyText), positive: true };
+  if (/\bpay (?:at|on) (?:the )?property\b/i.test(policyText)) {
+    return { label: t("hotelResults.payAtProperty"), positive: true };
+  }
+
+  if (/\bpay later\b/i.test(policyText)) {
+    return { label: t("hotelResults.payLater"), positive: true };
   }
 
   if (/\bno prepayment\b/i.test(policyText)) {
-    return { label: toSentenceCase(policyText), positive: true };
+    return { label: t("hotelResults.noPrepayment"), positive: true };
   }
 
   if (/\brefundable\b/i.test(policyText)) {
-    return { label: toSentenceCase(policyText), positive: true };
+    return { label: t("hotelResults.refundable"), positive: true };
   }
 
   return null;
@@ -122,12 +126,28 @@ function getDistanceDisplay(distanceFromCenter?: string) {
 function translateKnownHotelLabel(value: string, t: (key: string) => string) {
   const normalized = normalizeWhitespace(value).toLocaleLowerCase();
 
+  if (/^half board$/.test(normalized)) {
+    return t("hotelResults.filter.halfBoard");
+  }
+
+  if (/^full board$/.test(normalized)) {
+    return t("hotelResults.filter.fullBoard");
+  }
+
+  if (/^all[-\s]?inclusive$/.test(normalized)) {
+    return t("hotelResults.filter.allInclusive");
+  }
+
   if (/^double business$/.test(normalized)) {
     return t("hotelResults.filter.doubleBusiness");
   }
 
   if (/^bed and breakfast$/.test(normalized)) {
     return t("hotelResults.filter.bedAndBreakfast");
+  }
+
+  if (/^breakfast$/.test(normalized)) {
+    return t("hotelResults.filter.breakfastIncludedAvailable");
   }
 
   if (/^(room only|accommodation only)$/.test(normalized)) {
