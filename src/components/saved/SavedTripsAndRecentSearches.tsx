@@ -10,7 +10,14 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { ArrowRight, ExternalLink, Heart, Trash2, X } from "lucide-react";
+import {
+  ArrowRight,
+  Clock,
+  ExternalLink,
+  Heart,
+  Trash2,
+  X,
+} from "lucide-react";
 
 import { PriceText } from "@/components/currency/PriceText";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -1092,10 +1099,13 @@ export function SavedTripsAndRecentSearches({
             <section className="space-y-4 pt-4">
               <div className="flex flex-col items-start gap-2 border-y border-slate-200/80 py-3 sm:flex-row sm:items-center sm:justify-between sm:border-y-0 sm:border-b sm:pb-3 sm:pt-1">
                 <div>
-                  <h2 className="text-base font-semibold tracking-tight text-slate-950">
+                  <h2 className="inline-flex items-center gap-1.5 text-base font-semibold tracking-tight text-slate-950">
                     {dictionary.savedTripsRecentSearchesTitle ??
                       enTranslations.savedTripsRecentSearchesTitle}
-                    🕘
+                    <Clock
+                      className="h-4 w-4 text-slate-500"
+                      aria-hidden="true"
+                    />
                   </h2>
                   <p className="mt-0.5 text-sm font-medium text-slate-500">
                     {t("savedTripsRecentSearchesSubtitle")}
@@ -1118,13 +1128,13 @@ export function SavedTripsAndRecentSearches({
                   return (
                     <article
                       key={entry.id}
-                      className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+                      className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-transparent shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)] active:-translate-y-0.5"
                     >
                       <button
                         type="button"
                         aria-label={t("savedTripsRemoveRecentSearch")}
                         onClick={() => handleRemoveRecent(entry.id)}
-                        className="focus-ring absolute end-3 top-3 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900"
+                        className="focus-ring absolute end-3 top-3 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900"
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -1136,37 +1146,42 @@ export function SavedTripsAndRecentSearches({
                           hoverScaleClassName="group-hover:scale-[1.02]"
                         />
                       ) : (
-                        <div className="flex h-36 w-full items-center justify-center bg-gradient-to-br from-slate-100 via-indigo-50 to-cyan-100 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 sm:h-40">
+                        <div className="flex h-[196px] w-full shrink-0 items-center justify-center bg-gradient-to-br from-slate-100 via-indigo-50 to-cyan-100 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 md:h-[190px] lg:h-[198px]">
                           {t("savedTripsFlightSearchFallback")}
                         </div>
                       )}
 
-                      <div className="space-y-2.5 p-4">
-                        <span className="inline-flex rounded-full border border-violet-100 bg-violet-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-violet-700">
-                          {dictionary.savedTripsTypeFlight ??
-                            enTranslations.savedTripsTypeFlight}
-                        </span>
-
-                        <h3 className="pe-12 text-lg font-semibold leading-tight tracking-tight text-slate-900">
-                          {entry.label}
-                        </h3>
-                        <p className="line-clamp-2 text-sm leading-5 text-slate-600">
-                          {formatRecentSearchSubtitle(entry)}
-                        </p>
-                        <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-600">
-                            {formatSearchedLabel(entry.createdAt)}
+                      <div className="flex min-w-0 flex-1 flex-col bg-white">
+                        <div className="min-w-0 flex-1 space-y-2 px-3 pt-3">
+                          <span className="inline-flex w-fit rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-700">
+                            {dictionary.savedTripsTypeFlight ??
+                              enTranslations.savedTripsTypeFlight}
                           </span>
+
+                          <h3 className="line-clamp-2 break-words pe-10 text-sm font-bold leading-[1.35] text-slate-950 md:text-[0.95rem]">
+                            {entry.label}
+                          </h3>
+                          <p className="line-clamp-2 break-words text-xs font-medium leading-5 text-slate-600 md:text-sm">
+                            {formatRecentSearchSubtitle(entry)}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                            <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                              {formatSearchedLabel(entry.createdAt)}
+                            </span>
+                          </div>
                         </div>
-                        <div className="mt-1 border-t border-slate-200/90 pt-2.5">
-                          <Link
-                            href={entry["href"]}
-                            className="inline-flex min-h-11 items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-900"
-                          >
-                            {dictionary.savedTripsRepeatSearch ??
-                              enTranslations.savedTripsRepeatSearch}
-                            <ExternalLink className="h-4 w-4" />
-                          </Link>
+
+                        <div className="mt-auto border-t border-slate-200/90 px-3 pb-3 pt-3">
+                          <div className="flex flex-col items-stretch gap-2">
+                            <Link
+                              href={entry["href"]}
+                              className="inline-flex min-h-9 items-center justify-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-center text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-900"
+                            >
+                              {dictionary.savedTripsRepeatSearch ??
+                                enTranslations.savedTripsRepeatSearch}
+                              <ExternalLink className="h-4 w-4" />
+                            </Link>
+                          </div>
                         </div>
                       </div>
                     </article>
