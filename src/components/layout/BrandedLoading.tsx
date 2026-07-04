@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 type BrandedLoadingProps = {
@@ -29,14 +30,6 @@ const searchLoadingCopy = {
       "Preparing your results...",
     ],
   },
-  hotel: {
-    title: "Finding the best stays for you",
-    messages: [
-      "Checking availability and rates...",
-      "Comparing hotels and room options...",
-      "Preparing your stays...",
-    ],
-  },
   car: {
     title: "Looking for the best car rental options",
     messages: [
@@ -61,11 +54,13 @@ const searchLoadingCopy = {
       "Preparing your results...",
     ],
   },
-} satisfies Record<NonNullable<BrandedLoadingProps["searchType"]>, { title: string; messages: string[] }>;
+} satisfies Record<
+  Exclude<NonNullable<BrandedLoadingProps["searchType"]>, "hotel">,
+  { title: string; messages: string[] }
+>;
 
 const variantClasses = {
-  fullscreen:
-    "min-h-screen items-center justify-center px-6 py-12 text-center",
+  fullscreen: "min-h-screen items-center justify-center px-6 py-12 text-center",
   page: "py-6 text-left sm:py-8",
   compact: "py-4 text-left",
 } satisfies Record<NonNullable<BrandedLoadingProps["variant"]>, string>;
@@ -83,11 +78,31 @@ export function BrandedLoading({
   showProgress = true,
   visual = "default",
 }: BrandedLoadingProps) {
+  const { t } = useLocale();
   const isFullscreen = variant === "fullscreen";
   const logoPulse = visual === "logoPulse";
-  const searchCopy = searchType ? searchLoadingCopy[searchType] : undefined;
+  const hotelSearchCopy = useMemo(
+    () => ({
+      title: t["brandedLoading.hotel.title"],
+      messages: [
+        t["brandedLoading.hotel.checkingAvailabilityAndRates"],
+        t["brandedLoading.hotel.comparingHotelsAndRooms"],
+        t["brandedLoading.hotel.preparingStays"],
+      ],
+    }),
+    [t],
+  );
+  const searchCopy = searchType
+    ? searchType === "hotel"
+      ? hotelSearchCopy
+      : searchLoadingCopy[searchType]
+    : undefined;
   const loadingMessages = useMemo(
-    () => messages ?? (description ? [description] : searchCopy?.messages) ?? ["Preparing your experience..."],
+    () =>
+      messages ??
+      (description ? [description] : searchCopy?.messages) ?? [
+        "Preparing your experience...",
+      ],
     [description, messages, searchCopy?.messages],
   );
   const [messageIndex, setMessageIndex] = useState(0);
@@ -103,7 +118,8 @@ export function BrandedLoading({
   }, [loadingMessages.length]);
 
   const resolvedTitle = title ?? searchCopy?.title ?? "Loading Kurioticket...";
-  const resolvedDescription = loadingMessages[messageIndex % loadingMessages.length];
+  const resolvedDescription =
+    loadingMessages[messageIndex % loadingMessages.length];
 
   return (
     <section
@@ -116,7 +132,10 @@ export function BrandedLoading({
       aria-live="polite"
       aria-busy="true"
     >
-      <div className="pointer-events-none absolute inset-0 opacity-70" aria-hidden="true">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-70"
+        aria-hidden="true"
+      >
         <div className="absolute -left-20 top-12 h-44 w-44 rounded-full bg-[#5CB6B2]/[0.06] blur-3xl" />
         <div className="absolute -right-24 bottom-4 h-52 w-52 rounded-full bg-[#004BB8]/[0.05] blur-3xl" />
       </div>
@@ -129,7 +148,12 @@ export function BrandedLoading({
         )}
       >
         {showLogo ? (
-          <div className={cn("flex", isFullscreen ? "justify-center" : "justify-start")}>
+          <div
+            className={cn(
+              "flex",
+              isFullscreen ? "justify-center" : "justify-start",
+            )}
+          >
             <div
               className={cn(
                 logoPulse &&
@@ -139,7 +163,8 @@ export function BrandedLoading({
               <KurioticketLogo
                 className={cn(
                   "h-10 sm:h-11",
-                  logoPulse && "drop-shadow-[0_8px_18px_rgba(0,75,184,0.08)] animate-[logo-breathe_2.8s_ease-in-out_infinite] motion-reduce:animate-none",
+                  logoPulse &&
+                    "drop-shadow-[0_8px_18px_rgba(0,75,184,0.08)] animate-[logo-breathe_2.8s_ease-in-out_infinite] motion-reduce:animate-none",
                 )}
               />
             </div>
@@ -153,7 +178,12 @@ export function BrandedLoading({
             </div>
           ) : null}
 
-          <h1 className={cn("text-xl font-semibold tracking-tight text-[#021C2B] sm:text-2xl", showProgress ? "mt-5" : "mt-0")}>
+          <h1
+            className={cn(
+              "text-xl font-semibold tracking-tight text-[#021C2B] sm:text-2xl",
+              showProgress ? "mt-5" : "mt-0",
+            )}
+          >
             {resolvedTitle}
           </h1>
           {resolvedDescription ? (

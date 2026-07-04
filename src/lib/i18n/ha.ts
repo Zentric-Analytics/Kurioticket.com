@@ -3,6 +3,10 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "brandedLoading.hotel.title": "Finding the best stays for you",
+  "brandedLoading.hotel.checkingAvailabilityAndRates": "Checking availability and rates...",
+  "brandedLoading.hotel.comparingHotelsAndRooms": "Comparing hotels and room options...",
+  "brandedLoading.hotel.preparingStays": "Preparing your stays...",
   homeHeroTitle: "Encuentra vuelos baratos rápido",
   homeHeroSubtitle: "Busca en cientos de aerolíneas y sitios de viaje para encontrar las mejores ofertas para tu próximo viaje.",
   homeAssuranceBestPrice: "Mejores precios garantizados",
