@@ -3,6 +3,7 @@
 import { AppHeader } from "@/components/layout/AppHeader";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { Footer } from "@/components/layout/Footer";
+import { translations as englishDictionary } from "@/lib/i18n/en";
 import { DestinationCard } from "./DestinationCard";
 
 type RegionName =
@@ -619,12 +620,26 @@ const destinationCountryKeys: Record<string, string> = {
   "Saudi Arabia": "destinations.country.saudiArabia",
 };
 
-function translateValue(
+function getSafeDestinationTranslation(
   dictionary: Record<string, string>,
   key: string | undefined,
   fallback: string,
 ) {
-  return key ? dictionary[key] ?? fallback : fallback;
+  const activeTranslation = key ? dictionary[key] : undefined;
+  const englishTranslation = key ? englishDictionary[key] : undefined;
+
+  return activeTranslation || englishTranslation || fallback;
+}
+
+function formatDestinationTemplate(
+  template: string,
+  replacements: Record<string, string>,
+) {
+  return Object.entries(replacements).reduce(
+    (formattedTemplate, [placeholder, value]) =>
+      formattedTemplate.replaceAll(`{${placeholder}}`, value),
+    template,
+  );
 }
 
 function getRegionId(region: string) {
@@ -713,7 +728,11 @@ export default function DestinationsPage() {
                         : "border-white/25 bg-white/10 text-white hover:border-white/45 hover:bg-white/18"
                     }`}
                   >
-                    {translateValue(dictionary, regionLabelKeys[section.region], section.region)}
+                    {getSafeDestinationTranslation(
+                      dictionary,
+                      regionLabelKeys[section.region],
+                      section.region,
+                    )}
                   </a>
                 );
               })}
@@ -734,24 +753,38 @@ export default function DestinationsPage() {
                     className={`mb-3 h-1.5 w-16 rounded-full bg-gradient-to-r ${section.accent}`}
                   />
                   <h2 className="text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
-                    {translateValue(dictionary, regionLabelKeys[section.region], section.region)}
+                    {getSafeDestinationTranslation(
+                      dictionary,
+                      regionLabelKeys[section.region],
+                      section.region,
+                    )}
                   </h2>
                   <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
-                    {dictionary[section.summaryKey]}
+                    {getSafeDestinationTranslation(dictionary, section.summaryKey, "")}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {section.destinations.map((destination) => {
-                    const displayName = translateValue(
+                    const displayName = getSafeDestinationTranslation(
                       dictionary,
                       destinationNameKeys[destination.name],
                       destination.name,
                     );
-                    const displayCountry = translateValue(
+                    const displayCountry = getSafeDestinationTranslation(
                       dictionary,
                       destinationCountryKeys[destination.country],
                       destination.country,
+                    );
+                    const imageAltSuffix = getSafeDestinationTranslation(
+                      dictionary,
+                      "destinationsImageAltSuffix",
+                      "travel photography",
+                    );
+                    const cardAriaLabelTemplate = getSafeDestinationTranslation(
+                      dictionary,
+                      "destinationsCardAriaLabel",
+                      "Search flights to {destination}",
                     );
 
                     return (
@@ -761,13 +794,23 @@ export default function DestinationsPage() {
                         name={displayName}
                         country={displayCountry}
                         image={destination.image}
-                        imageAlt={`${displayName}, ${displayCountry} ${dictionary.destinationsImageAltSuffix}`}
+                        imageAlt={`${displayName}, ${displayCountry} ${imageAltSuffix}`}
                         imagePosition={destination.imagePosition}
-                        tag={dictionary[destination.tagKey]}
-                        subtitle={dictionary[destinationSubtitleKey]}
-                        ariaLabel={dictionary.destinationsCardAriaLabel.replace(
-                          "{destination}",
-                          displayName,
+                        tag={getSafeDestinationTranslation(
+                          dictionary,
+                          destination.tagKey,
+                          "",
+                        )}
+                        subtitle={getSafeDestinationTranslation(
+                          dictionary,
+                          destinationSubtitleKey,
+                          "",
+                        )}
+                        ariaLabel={formatDestinationTemplate(
+                          cardAriaLabelTemplate,
+                          {
+                            destination: displayName,
+                          },
                         )}
                       />
                     );
