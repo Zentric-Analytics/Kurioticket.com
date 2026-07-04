@@ -1931,4 +1931,15 @@ export const translations: TranslationDictionary = {
   resetPasswordSubmit: "Zresetuj hasło",
   "legal.privacyChoices.lastUpdated": "Last updated: June 28, 2026",
 
+  "account.pendingDeletion.eyebrow": "Witamy ponownie",
+  "account.pendingDeletion.title": "Usunięcie Twojego konta oczekuje.",
+  "account.pendingDeletion.scheduledPrefix": "Twoje konto zaplanowano do trwałego usunięcia w dniu",
+  "account.pendingDeletion.reactivateNotice": "Możesz ponownie aktywować konto przed tą datą. Do tego czasu zwykłe przeglądanie panelu będzie ograniczone.",
+  "account.pendingDeletion.helperBefore": "Witamy ponownie. Kliknięcie Aktywuj konto ponownie anuluje usunięcie przed",
+  "account.pendingDeletion.helperAfter": "i przywróci normalny dostęp do aplikacji.",
+  "account.pendingDeletion.error.reactivate": "Nie można ponownie aktywować konta.",
+  "account.pendingDeletion.error.expired": "7-dniowe okno ponownej aktywacji wygasło. Skontaktuj się z pomocą techniczną.",
+  "account.pendingDeletion.action.reactivating": "Ponowne aktywowanie…",
+  "account.pendingDeletion.action.reactivate": "Aktywuj konto ponownie",
+  "account.pendingDeletion.action.logout": "Wyloguj",
 };

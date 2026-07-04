@@ -1856,4 +1856,15 @@ export const translations: TranslationDictionary = {
   "legal.legalNoticeCompanyInformation.sections.california-registration.paragraph2": "يسري التسجيل من June 6, 2026. تنتهي صلاحية التسجيل في June 5, 2027.",
   "legal.legalNoticeCompanyInformation.developerNote": "هذه المسودات القانونية مواد أولية مؤقتة للشركات الناشئة ويجب مراجعتها من قبل مستشار قانوني مؤهل قبل إطلاق عام واسع النطاق.",
 
+  "account.pendingDeletion.eyebrow": "مرحبًا بعودتك",
+  "account.pendingDeletion.title": "حذف حسابك قيد الانتظار.",
+  "account.pendingDeletion.scheduledPrefix": "من المقرر حذف حسابك نهائيًا في",
+  "account.pendingDeletion.reactivateNotice": "يمكنك إعادة تفعيل حسابك قبل هذا التاريخ. وحتى ذلك الحين، سيكون التصفح العادي للوحة التحكم مقيّدًا.",
+  "account.pendingDeletion.helperBefore": "مرحبًا بعودتك. يؤدي النقر على إعادة تفعيل الحساب إلى إلغاء الحذف قبل",
+  "account.pendingDeletion.helperAfter": "واستعادة الوصول العادي إلى التطبيق.",
+  "account.pendingDeletion.error.reactivate": "تعذرت إعادة تفعيل الحساب.",
+  "account.pendingDeletion.error.expired": "انتهت مهلة إعادة التفعيل التي تبلغ 7 أيام. يُرجى التواصل مع الدعم.",
+  "account.pendingDeletion.action.reactivating": "جارٍ إعادة التفعيل…",
+  "account.pendingDeletion.action.reactivate": "إعادة تفعيل الحساب",
+  "account.pendingDeletion.action.logout": "تسجيل الخروج",
 };

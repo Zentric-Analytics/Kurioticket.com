@@ -1870,4 +1870,15 @@ export const translations: TranslationDictionary = {
   "legal.privacyChoices.sections.tracking-choices.paragraph2": "If ads or third-party analytics tracking tools are added later, Kurioticket should update applicable policies and provide privacy choices where required by law.",
   "legal.privacyChoices.developerNote": "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before a large-scale public launch.",
 
+  "account.pendingDeletion.eyebrow": "おかえりなさい",
+  "account.pendingDeletion.title": "アカウント削除は保留中です。",
+  "account.pendingDeletion.scheduledPrefix": "あなたのアカウントは次の日時に完全削除される予定です",
+  "account.pendingDeletion.reactivateNotice": "この日付より前であればアカウントを再有効化できます。それまでは通常のダッシュボード閲覧が制限されます。",
+  "account.pendingDeletion.helperBefore": "おかえりなさい。「アカウントを再有効化」をクリックすると、次の日時より前に削除をキャンセルし",
+  "account.pendingDeletion.helperAfter": "通常のアプリアクセスを復元します。",
+  "account.pendingDeletion.error.reactivate": "アカウントを再有効化できません。",
+  "account.pendingDeletion.error.expired": "7日間の再有効化期間が終了しました。サポートにお問い合わせください。",
+  "account.pendingDeletion.action.reactivating": "再有効化中…",
+  "account.pendingDeletion.action.reactivate": "アカウントを再有効化",
+  "account.pendingDeletion.action.logout": "ログアウト",
 };
