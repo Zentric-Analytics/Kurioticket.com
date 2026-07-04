@@ -2591,4 +2591,11 @@ flightLandingRouteAriaLabel: "Cerca voli da {{origin}} a {{destination}}",
   "legal.legalNoticeCompanyInformation.sections.california-registration.paragraph2": "La registrazione è valida dal 6 giugno 2026. La registrazione scade il 5 giugno 2027.",
   "legal.legalNoticeCompanyInformation.developerNote": "Queste bozze legali sono segnaposto preliminari per startup e devono essere esaminate da un consulente legale qualificato prima di un lancio pubblico su larga scala.",
 
+  "metadata.flightResults.title": "Risultati voli",
+  "metadata.flightResults.description": "Confronta le opzioni di volo disponibili e continua con il fornitore per confermare prezzi finali e regole tariffarie.",
+  "metadata.flightDetails.title": "Dettagli volo",
+  "metadata.flightDetails.description": "Rivedi dettagli del volo, informazioni sul passaggio al fornitore e contesto tariffario prima di continuare il viaggio.",
+  "metadata.hotelResults.title": "Risultati hotel",
+  "metadata.hotelResults.description": "Confronta le opzioni hotel disponibili e continua con il fornitore per confermare prezzi finali, disponibilità, costi e regole di cancellazione.",
+
 };

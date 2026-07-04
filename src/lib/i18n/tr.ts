@@ -2036,4 +2036,11 @@ export const translations: TranslationDictionary = {
   "account.pendingDeletion.action.reactivating": "Yeniden etkinleştiriliyor…",
   "account.pendingDeletion.action.reactivate": "Hesabı yeniden etkinleştir",
   "account.pendingDeletion.action.logout": "Çıkış yap",
+  "metadata.flightResults.title": "Uçuş sonuçları",
+  "metadata.flightResults.description": "Mevcut uçuş seçeneklerini karşılaştırın ve nihai fiyatlar ile ücret kurallarını doğrulamak için sağlayıcıyla devam edin.",
+  "metadata.flightDetails.title": "Uçuş detayları",
+  "metadata.flightDetails.description": "Yolculuğunuza devam etmeden önce uçuş detaylarını, sağlayıcı yönlendirme bilgilerini ve ücret bağlamını inceleyin.",
+  "metadata.hotelResults.title": "Otel sonuçları",
+  "metadata.hotelResults.description": "Mevcut otel seçeneklerini karşılaştırın ve nihai fiyatları, müsaitliği, ücretleri ve iptal kurallarını doğrulamak için sağlayıcıyla devam edin.",
+
 };

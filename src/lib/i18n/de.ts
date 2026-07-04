@@ -2642,4 +2642,11 @@ flightLandingRouteAriaLabel:
   "legal.legalNoticeCompanyInformation.sections.california-registration.paragraph2": "Die Registrierung gilt ab dem 6. Juni 2026. Die Registrierung läuft am 5. Juni 2027 ab.",
   "legal.legalNoticeCompanyInformation.developerNote": "Diese rechtlichen Entwürfe sind vorläufige Startup-Platzhalter und sollten vor einer groß angelegten öffentlichen Einführung von qualifiziertem Rechtsbeistand geprüft werden.",
 
+  "metadata.flightResults.title": "Flugergebnisse",
+  "metadata.flightResults.description": "Vergleichen Sie verfügbare Flugoptionen und fahren Sie beim Anbieter fort, um Endpreise und Tarifregeln zu bestätigen.",
+  "metadata.flightDetails.title": "Flugdetails",
+  "metadata.flightDetails.description": "Prüfen Sie Flugdetails, Anbieterinformationen und Tarifkontext, bevor Sie Ihre Reise fortsetzen.",
+  "metadata.hotelResults.title": "Hotelergebnisse",
+  "metadata.hotelResults.description": "Vergleichen Sie verfügbare Hoteloptionen und fahren Sie beim Anbieter fort, um Endpreise, Verfügbarkeit, Gebühren und Stornierungsregeln zu bestätigen.",
+
 };

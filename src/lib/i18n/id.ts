@@ -1698,4 +1698,11 @@ export const translations: TranslationDictionary = {
   "account.pendingDeletion.action.reactivating": "Mengaktifkan kembali…",
   "account.pendingDeletion.action.reactivate": "Aktifkan kembali akun",
   "account.pendingDeletion.action.logout": "Keluar",
+  "metadata.flightResults.title": "Hasil penerbangan",
+  "metadata.flightResults.description": "Bandingkan opsi penerbangan yang tersedia dan lanjutkan dengan penyedia untuk mengonfirmasi harga akhir dan aturan tarif.",
+  "metadata.flightDetails.title": "Detail penerbangan",
+  "metadata.flightDetails.description": "Tinjau detail penerbangan, informasi pengalihan penyedia, dan konteks tarif sebelum melanjutkan perjalanan Anda.",
+  "metadata.hotelResults.title": "Hasil hotel",
+  "metadata.hotelResults.description": "Bandingkan opsi hotel yang tersedia dan lanjutkan dengan penyedia untuk mengonfirmasi harga akhir, ketersediaan, biaya, dan aturan pembatalan.",
+
 };

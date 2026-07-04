@@ -1911,4 +1911,11 @@ export const translations: TranslationDictionary = {
   "account.pendingDeletion.action.reactivating": "फिर से सक्रिय किया जा रहा है…",
   "account.pendingDeletion.action.reactivate": "खाता फिर से सक्रिय करें",
   "account.pendingDeletion.action.logout": "लॉग आउट",
+  "metadata.flightResults.title": "फ़्लाइट परिणाम",
+  "metadata.flightResults.description": "उपलब्ध फ़्लाइट विकल्पों की तुलना करें और अंतिम कीमतों व किराया नियमों की पुष्टि के लिए प्रदाता के साथ आगे बढ़ें।",
+  "metadata.flightDetails.title": "फ़्लाइट विवरण",
+  "metadata.flightDetails.description": "यात्रा जारी रखने से पहले फ़्लाइट विवरण, प्रदाता हैंडऑफ जानकारी और किराया संदर्भ देखें।",
+  "metadata.hotelResults.title": "होटल परिणाम",
+  "metadata.hotelResults.description": "उपलब्ध होटल विकल्पों की तुलना करें और अंतिम कीमत, उपलब्धता, शुल्क व रद्दीकरण नियमों की पुष्टि के लिए प्रदाता के साथ आगे बढ़ें।",
+
 };

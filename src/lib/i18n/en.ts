@@ -3066,4 +3066,11 @@ export const translations: TranslationDictionary = {
   "legal.privacyChoices.sections.tracking-choices.paragraph2": "If ads or third-party analytics tracking tools are added later, Kurioticket should update applicable policies and provide privacy choices where required by law.",
   "legal.privacyChoices.developerNote": "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before a large-scale public launch.",
 
+  "metadata.flightResults.title": "Flight Results",
+  "metadata.flightResults.description": "Compare available flight options and continue with the provider to confirm final prices and fare rules.",
+  "metadata.flightDetails.title": "Flight Details",
+  "metadata.flightDetails.description": "Review flight details, provider handoff information, and fare context before continuing with your trip.",
+  "metadata.hotelResults.title": "Hotel Results",
+  "metadata.hotelResults.description": "Compare available hotel options and continue with the provider to confirm final prices, availability, fees, and cancellation rules.",
+
 };

@@ -3426,4 +3426,11 @@ export const translations: TranslationDictionary = {
   "legal.legalNoticeCompanyInformation.sections.california-registration.paragraph2": "O registro é válido a partir de 6 de junho de 2026. O registro expira em 5 de junho de 2027.",
   "legal.legalNoticeCompanyInformation.developerNote": "Estes rascunhos jurídicos são materiais preliminares de startup e devem ser revisados por assessoria jurídica qualificada antes de um lançamento público em grande escala.",
 
+  "metadata.flightResults.title": "Resultados de voos",
+  "metadata.flightResults.description": "Compare opções de voo disponíveis e continue com o provedor para confirmar preços finais e regras tarifárias.",
+  "metadata.flightDetails.title": "Detalhes do voo",
+  "metadata.flightDetails.description": "Revise detalhes do voo, informações de redirecionamento ao provedor e contexto tarifário antes de continuar sua viagem.",
+  "metadata.hotelResults.title": "Resultados de hotéis",
+  "metadata.hotelResults.description": "Compare opções de hotel disponíveis e continue com o provedor para confirmar preços finais, disponibilidade, taxas e regras de cancelamento.",
+
 };

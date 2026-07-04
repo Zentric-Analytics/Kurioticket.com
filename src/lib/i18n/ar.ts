@@ -1871,4 +1871,11 @@ export const translations: TranslationDictionary = {
   "account.pendingDeletion.action.reactivating": "جارٍ إعادة التفعيل…",
   "account.pendingDeletion.action.reactivate": "إعادة تفعيل الحساب",
   "account.pendingDeletion.action.logout": "تسجيل الخروج",
+  "metadata.flightResults.title": "نتائج الرحلات",
+  "metadata.flightResults.description": "قارن خيارات الرحلات المتاحة وتابع مع المزوّد لتأكيد الأسعار النهائية وقواعد الأجرة.",
+  "metadata.flightDetails.title": "تفاصيل الرحلة",
+  "metadata.flightDetails.description": "راجع تفاصيل الرحلة ومعلومات الانتقال إلى المزوّد وسياق الأجرة قبل متابعة رحلتك.",
+  "metadata.hotelResults.title": "نتائج الفنادق",
+  "metadata.hotelResults.description": "قارن خيارات الفنادق المتاحة وتابع مع المزوّد لتأكيد الأسعار النهائية والتوافر والرسوم وقواعد الإلغاء.",
+
 };

@@ -1946,4 +1946,11 @@ export const translations: TranslationDictionary = {
   "account.pendingDeletion.action.reactivating": "Ponowne aktywowanie…",
   "account.pendingDeletion.action.reactivate": "Aktywuj konto ponownie",
   "account.pendingDeletion.action.logout": "Wyloguj",
+  "metadata.flightResults.title": "Wyniki lotów",
+  "metadata.flightResults.description": "Porównaj dostępne opcje lotów i przejdź do dostawcy, aby potwierdzić końcowe ceny oraz zasady taryf.",
+  "metadata.flightDetails.title": "Szczegóły lotu",
+  "metadata.flightDetails.description": "Przed kontynuowaniem podróży sprawdź szczegóły lotu, informacje o przekierowaniu do dostawcy i kontekst taryfy.",
+  "metadata.hotelResults.title": "Wyniki hoteli",
+  "metadata.hotelResults.description": "Porównaj dostępne opcje hoteli i przejdź do dostawcy, aby potwierdzić końcowe ceny, dostępność, opłaty i zasady anulowania.",
+
 };

@@ -1801,4 +1801,11 @@ export const translations: TranslationDictionary = {
   "account.pendingDeletion.action.reactivating": "Återaktiverar…",
   "account.pendingDeletion.action.reactivate": "Återaktivera konto",
   "account.pendingDeletion.action.logout": "Logga ut",
+  "metadata.flightResults.title": "Flygresultat",
+  "metadata.flightResults.description": "Jämför tillgängliga flygalternativ och fortsätt hos leverantören för att bekräfta slutpriser och biljettregler.",
+  "metadata.flightDetails.title": "Flyginformation",
+  "metadata.flightDetails.description": "Granska flyginformation, leverantörsöverlämning och biljettkontext innan du fortsätter din resa.",
+  "metadata.hotelResults.title": "Hotellresultat",
+  "metadata.hotelResults.description": "Jämför tillgängliga hotellalternativ och fortsätt hos leverantören för att bekräfta slutpriser, tillgänglighet, avgifter och avbokningsregler.",
+
 };
