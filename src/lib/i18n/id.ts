@@ -948,6 +948,7 @@ export const translations: TranslationDictionary = {
   "legal.priceAvailabilityDisclaimer.title": "Penafian Harga & Ketersediaan",
   "legal.priceAvailabilityDisclaimer.summary": "Menjelaskan mengapa harga perjalanan, aturan tarif, tarif kamar, dan ketersediaan dapat berubah.",
   "legal.priceAvailabilityDisclaimer.lastUpdatedDate": "11 Mei 2026",
+  "legal.priceAvailabilityDisclaimer.lastUpdated": "Terakhir diperbarui: 11 Mei 2026",
   "legal.priceAvailabilityDisclaimer.tableOfContents": "DAFTAR ISI",
   "legal.priceAvailabilityDisclaimer.sections.change.title": "Harga Dapat Berubah",
   "legal.priceAvailabilityDisclaimer.sections.change.paragraph1": "Harga penerbangan dan hotel, pajak, biaya, aturan bagasi, ketersediaan kabin, kamar, jadwal, dan kebijakan dapat berubah dengan cepat dan mungkin berbeda saat Anda tiba di halaman pembelian penyedia.",

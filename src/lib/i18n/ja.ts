@@ -1423,6 +1423,18 @@ export const translations: TranslationDictionary = {
   "legal.refundBookingDisclaimer.sections.refunds.paragraph2": "Kurioticket サポートは、プラットフォームの利用方法と旅行ガイダンスの範囲を理解するお手伝いはできますが、パートナーまたは航空会社のポリシーを覆すことはできません。",
   "legal.refundBookingDisclaimer.developerNote": "これらの法的文書の草案はスタートアップ段階の仮文書であり、大規模な一般公開前に有資格の法律専門家による確認が必要です。",
 
+  "legal.priceAvailabilityDisclaimer.title": "価格および空き状況に関する免責事項",
+  "legal.priceAvailabilityDisclaimer.summary": "旅行価格、運賃規則、客室料金、空き状況が変更される理由を説明します。",
+  "legal.priceAvailabilityDisclaimer.lastUpdatedDate": "2026年5月11日",
+  "legal.priceAvailabilityDisclaimer.tableOfContents": "目次",
+  "legal.priceAvailabilityDisclaimer.lastUpdated": "最終更新日：2026年5月11日",
+  "legal.priceAvailabilityDisclaimer.sections.change.title": "価格は変更される可能性があります",
+  "legal.priceAvailabilityDisclaimer.sections.change.paragraph1": "航空券やホテルの価格、税金、手数料、手荷物規則、座席クラスの空き、客室、スケジュール、ポリシーは急速に変更される可能性があり、プロバイダーの購入ページに到達した時点で異なる場合があります。",
+  "legal.priceAvailabilityDisclaimer.sections.change.paragraph2": "Kurioticket は最新のプロバイダーデータを比較することを目指していますが、プロバイダーの遅延、レート制限、キャッシュ期間、通貨換算、パートナー規則、ユーザーの選択が表示情報に影響する場合があります。",
+  "legal.priceAvailabilityDisclaimer.sections.verify.title": "支払い前に確認してください",
+  "legal.priceAvailabilityDisclaimer.sections.verify.paragraph1": "購入前に必ず外部プロバイダーのサイトを確認してください。外部プロバイダーのサイトは、最終価格、空き状況、運賃条件、客室条件、購入条件に関する正式な情報源です。",
+  "legal.priceAvailabilityDisclaimer.developerNote": "これらの法的文書の草案はスタートアップ段階の仮文書であり、大規模な一般公開前に有資格の法律専門家による確認が必要です。",
+
   "legal.affiliateDisclosure.title": "アフィリエイト開示",
   "legal.affiliateDisclosure.summary": "ユーザーが信頼できるパートナーをクリックまたは予約した際に、Kurioticket が手数料を得る場合があることを説明します。",
   "legal.affiliateDisclosure.lastUpdatedDate": "2026年5月11日",
