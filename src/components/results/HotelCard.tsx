@@ -203,7 +203,59 @@ function getMealPlanDisplay(
   return translateKnownHotelLabel(mealText, t);
 }
 
-function getAmenityDisplay(amenities: string[], mealPlanText: string) {
+function getCanonicalAmenityTranslationKey(value: string) {
+  const normalized = normalizeWhitespace(value)
+    .toLocaleLowerCase()
+    .replace(/[‐‑‒–—]/g, "-");
+
+  if (/^(free wi-fi|wi-fi|wifi)$/.test(normalized)) {
+    return "hotelResults.filter.freeWifi";
+  }
+
+  if (/^parking$/.test(normalized)) {
+    return "hotelResults.filter.parking";
+  }
+
+  if (/^pool$/.test(normalized)) {
+    return "hotelResults.filter.pool";
+  }
+
+  if (/^airport shuttle$/.test(normalized)) {
+    return "hotelResults.filter.airportShuttle";
+  }
+
+  if (/^(spa|wellness)$/.test(normalized)) {
+    return "hotelResults.filter.spa";
+  }
+
+  if (/^(fitness center|fitness|gym)$/.test(normalized)) {
+    return "hotelResults.filter.fitnessCenter";
+  }
+
+  if (/^(workspace|desk)$/.test(normalized)) {
+    return "hotelResults.filter.workspace";
+  }
+
+  if (/^(quiet rooms|quiet)$/.test(normalized)) {
+    return "hotelResults.filter.quietRooms";
+  }
+
+  if (/^(24-hour front desk|front desk)$/.test(normalized)) {
+    return "hotelResults.filter.frontDesk24";
+  }
+
+  if (/^late check-in$/.test(normalized)) {
+    return "hotelResults.filter.lateCheckIn";
+  }
+
+  return null;
+}
+
+function getAmenityDisplay(
+  amenities: string[],
+  mealPlanText: string,
+  t: (key: string) => string,
+) {
   const seen = new Set<string>();
   const mealPlanKey = mealPlanText.toLocaleLowerCase();
 
@@ -222,12 +274,20 @@ function getAmenityDisplay(amenities: string[], mealPlanText: string) {
         return false;
       }
 
-      const key = amenity.toLocaleLowerCase();
-      if (mealPlanKey && key === mealPlanKey) return false;
+      const translationKey = getCanonicalAmenityTranslationKey(amenity);
+      const key = translationKey ?? amenity.toLocaleLowerCase();
+      if (mealPlanKey && amenity.toLocaleLowerCase() === mealPlanKey) {
+        return false;
+      }
       if (seen.has(key)) return false;
 
       seen.add(key);
       return true;
+    })
+    .map((amenity) => {
+      const translationKey = getCanonicalAmenityTranslationKey(amenity);
+
+      return translationKey ? t(translationKey) : amenity;
     })
     .slice(0, 3);
 }
@@ -283,7 +343,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
   const distanceText = getDistanceDisplay(hotel.distanceFromCenter);
   const mealPlanText = getMealPlanDisplay(hotel, rawRoomTypeText, t);
   const cancellationDisplay = getCancellationDisplay(hotel.cancellationInfo, t);
-  const amenityDisplay = getAmenityDisplay(hotel.amenities, mealPlanText);
+  const amenityDisplay = getAmenityDisplay(hotel.amenities, mealPlanText, t);
 
   async function redirectToHotel() {
     const response = await fetch("/api/redirect", {
