@@ -470,20 +470,7 @@ export function RecentSearchesPageContent({
               className="space-y-4 pt-4"
               aria-labelledby="recent-searches-title"
             >
-              <div className="flex flex-col items-start gap-2 border-y border-slate-200/80 py-3 sm:flex-row sm:items-center sm:justify-between sm:border-y-0 sm:border-b sm:pb-3 sm:pt-1">
-                <div>
-                  <h2 className="inline-flex items-center gap-1.5 text-base font-semibold tracking-tight text-slate-950">
-                    {dictionary.savedTripsRecentSearchesTitle ??
-                      enTranslations.savedTripsRecentSearchesTitle}
-                    <Clock
-                      className="h-4 w-4 text-slate-500"
-                      aria-hidden="true"
-                    />
-                  </h2>
-                  <p className="mt-0.5 text-sm font-medium text-slate-500">
-                    {t("savedTripsRecentSearchesSubtitle")}
-                  </p>
-                </div>
+              <div className="flex justify-start border-b border-slate-200/80 pb-3 sm:justify-end">
                 <button
                   type="button"
                   onClick={handleClearRecent}
