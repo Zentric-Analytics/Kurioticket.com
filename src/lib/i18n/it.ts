@@ -205,6 +205,13 @@ export const translations: TranslationDictionary = {
   savedTripsViewFare: "Vedi tariffa",
   savedTripsSearchRoute: "Cerca tratta",
   savedTripsRecentSearchesTitle: "Ricerche recenti",
+  recentSearchesPageTitle: "Ricerche recenti",
+  recentSearchesPageSubtitle:
+    "Jump back to where you left off and search again in one click.",
+  recentSearchesEmptyTitle: "Inizia una ricerca per prendere slancio",
+  recentSearchesEmptyDescription:
+    "Your recent flight searches will appear here after you search.",
+  recentSearchesSearchFlights: "Search flights",
   savedTripsRecentSearchesSubtitle:
     "Riprendi da dove eri rimasto e cerca di nuovo con un clic.",
   savedTripsClearAllRecent: "Cancella tutte le recenti",
@@ -242,6 +249,7 @@ export const translations: TranslationDictionary = {
   "accountMenu.savedTrips.label": "Viaggi salvati",
   "accountMenu.savedTrips.description": "Soggiorni e ricerche salvati",
   "accountMenu.priceAlerts.label": "Avvisi sui prezzi",
+  "accountMenu.recentSearches.label": "Ricerche recenti",
   "accountMenu.priceAlerts.description": "Visualizza gli avvisi salvati",
   "accountMenu.accountSettings.label": "Impostazioni account",
   "accountMenu.accountSettings.description": "Profilo e preferenze",

@@ -115,6 +115,7 @@ export const translations: TranslationDictionary = {
   "accountMenu.myAccount.label": "मेरा खाता",
   "accountMenu.savedTrips.label": "सहेजी गई यात्राएँ",
   "accountMenu.priceAlerts.label": "मूल्य अलर्ट",
+  "accountMenu.recentSearches.label": "हाल की खोजें",
   "accountDashboard.overview.welcome": "वापसी पर स्वागत है, {name}",
   "accountDashboard.hub.title": "मेरा खाता",
   "accountDashboard.hub.description": "अपनी यात्राएँ, सहेजे गए आइटम, प्राथमिकताएँ और खाता सेटिंग्स एक ही जगह प्रबंधित करें।",
@@ -529,6 +530,13 @@ export const translations: TranslationDictionary = {
   savedTripsViewFare: "किराया देखें",
   savedTripsSearchRoute: "मार्ग खोजें",
   savedTripsRecentSearchesTitle: "हाल की खोजें",
+  recentSearchesPageTitle: "हाल की खोजें",
+  recentSearchesPageSubtitle:
+    "Jump back to where you left off and search again in one click.",
+  recentSearchesEmptyTitle: "गति बनाने के लिए खोज शुरू करें",
+  recentSearchesEmptyDescription:
+    "Your recent flight searches will appear here after you search.",
+  recentSearchesSearchFlights: "Search flights",
   savedTripsRecentSearchesSubtitle:
     "जहाँ छोड़ा था वहीं से जारी रखें और एक क्लिक में फिर से खोजें।",
   savedTripsClearAllRecent: "सभी हाल की खोजें साफ़ करें",

@@ -132,6 +132,7 @@ export const translations: TranslationDictionary = {
   "accountMenu.savedTrips.label": "저장한 여행",
   "accountMenu.savedTrips.description": "저장한 숙소 및 검색",
   "accountMenu.priceAlerts.label": "가격 알림",
+  "accountMenu.recentSearches.label": "최근 검색",
   "accountMenu.priceAlerts.description": "저장한 알림 보기",
   "accountMenu.accountSettings.label": "계정 설정",
   "accountMenu.accountSettings.description": "프로필 및 환경설정",
@@ -1016,6 +1017,13 @@ export const translations: TranslationDictionary = {
   savedTripsViewFare: "운임 보기",
   savedTripsSearchRoute: "노선 검색",
   savedTripsRecentSearchesTitle: "최근 검색",
+  recentSearchesPageTitle: "최근 검색",
+  recentSearchesPageSubtitle:
+    "Jump back to where you left off and search again in one click.",
+  recentSearchesEmptyTitle: "검색을 시작해 흐름을 이어가세요",
+  recentSearchesEmptyDescription:
+    "Your recent flight searches will appear here after you search.",
+  recentSearchesSearchFlights: "Search flights",
   savedTripsRecentSearchesSubtitle:
     "중단한 지점으로 돌아가 한 번의 클릭으로 다시 검색하세요.",
   savedTripsClearAllRecent: "최근 항목 모두 지우기",

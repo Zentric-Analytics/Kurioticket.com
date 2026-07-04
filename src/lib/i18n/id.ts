@@ -99,6 +99,13 @@ export const translations: TranslationDictionary = {
     "Ketuk ikon hati pada rute mana pun untuk membuat daftar pilihan pribadi Anda dan menjaga petualangan berikutnya tetap mudah dijangkau.",
   savedTripsExploreDestinations: "Jelajahi destinasi",
   savedTripsRecentSearchesTitle: "Pencarian terbaru",
+  recentSearchesPageTitle: "Pencarian terbaru",
+  recentSearchesPageSubtitle:
+    "Jump back to where you left off and search again in one click.",
+  recentSearchesEmptyTitle: "No search history yet",
+  recentSearchesEmptyDescription:
+    "Your recent flight searches will appear here after you search.",
+  recentSearchesSearchFlights: "Search flights",
   savedTripsRecentSearchesSubtitle: "Lanjutkan dari tempat terakhir Anda dan cari lagi dengan sekali klik.",
 
   destinationsHeroBadge: "PENEMUAN DESTINASI",
@@ -501,6 +508,7 @@ export const translations: TranslationDictionary = {
   "accountMenu.myAccount.label": "Akun saya",
   "accountMenu.savedTrips.label": "Perjalanan tersimpan",
   "accountMenu.priceAlerts.label": "Peringatan harga",
+  "accountMenu.recentSearches.label": "Pencarian terbaru",
   "accountMenu.closeAccountMenu": "Tutup menu akun",
   myAccount: "Akun saya",
   openAccountMenu: "Buka menu akun",

@@ -1201,6 +1201,13 @@ export const translations: TranslationDictionary = {
   savedTripsViewFare: "運賃を見る",
   savedTripsSearchRoute: "ルートを検索",
   savedTripsRecentSearchesTitle: "最近の検索",
+  recentSearchesPageTitle: "最近の検索",
+  recentSearchesPageSubtitle:
+    "Jump back to where you left off and search again in one click.",
+  recentSearchesEmptyTitle: "検索を始めて旅の計画を進めましょう",
+  recentSearchesEmptyDescription:
+    "Your recent flight searches will appear here after you search.",
+  recentSearchesSearchFlights: "Search flights",
   savedTripsRecentSearchesSubtitle:
     "前回の続きから、ワンクリックでもう一度検索できます。",
   savedTripsClearAllRecent: "最近の検索をすべて削除",
@@ -1551,6 +1558,7 @@ export const translations: TranslationDictionary = {
   "accountMenu.savedTrips.label": "保存済みの旅行",
   "accountMenu.savedTrips.description": "保存した滞在先と検索",
   "accountMenu.priceAlerts.label": "価格アラート",
+  "accountMenu.recentSearches.label": "最近の検索",
   "accountMenu.priceAlerts.description": "保存済みアラートを表示",
   "accountMenu.accountSettings.label": "アカウント設定",
   "accountMenu.accountSettings.description": "プロフィールと設定",

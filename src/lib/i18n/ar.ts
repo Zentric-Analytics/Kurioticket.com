@@ -989,6 +989,7 @@ export const translations: TranslationDictionary = {
   "accountMenu.myAccount.label": "حسابي",
   "accountMenu.savedTrips.label": "الرحلات المحفوظة",
   "accountMenu.priceAlerts.label": "تنبيهات الأسعار",
+  "accountMenu.recentSearches.label": "عمليات البحث الأخيرة",
   "accountMenu.accountSettings.label": "إعدادات الحساب",
   "accountSettings.eyebrow": "حسابي",
   "accountSettings.title": "إعدادات الحساب",
@@ -1199,6 +1200,13 @@ export const translations: TranslationDictionary = {
   savedTripsViewFare: "عرض السعر",
   savedTripsSearchRoute: "البحث عن المسار",
   savedTripsRecentSearchesTitle: "عمليات البحث الأخيرة",
+  recentSearchesPageTitle: "عمليات البحث الأخيرة",
+  recentSearchesPageSubtitle:
+    "Jump back to where you left off and search again in one click.",
+  recentSearchesEmptyTitle: "ابدأ بحثًا للحفاظ على الزخم",
+  recentSearchesEmptyDescription:
+    "Your recent flight searches will appear here after you search.",
+  recentSearchesSearchFlights: "Search flights",
   savedTripsRecentSearchesSubtitle:
     "تابع من حيث توقفت وابحث مرة أخرى بنقرة واحدة.",
   savedTripsClearAllRecent: "مسح الكل",
