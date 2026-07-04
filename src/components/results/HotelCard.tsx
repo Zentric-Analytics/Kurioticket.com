@@ -15,8 +15,11 @@ function getHotelStarRating(rating: number) {
   return Math.min(Math.max(Math.floor(rating), 1), 5);
 }
 
-function formatHotelRating(rating: number) {
-  return Number.isInteger(rating) ? String(rating) : rating.toFixed(1);
+function formatHotelRating(rating: number, locale: string) {
+  return new Intl.NumberFormat(locale, {
+    maximumFractionDigits: Number.isInteger(rating) ? 0 : 1,
+    minimumFractionDigits: Number.isInteger(rating) ? 0 : 1,
+  }).format(rating);
 }
 
 function normalizeWhitespace(value: string) {
@@ -236,7 +239,7 @@ type HotelCardProps = {
 };
 
 export function HotelCard({ hotel }: HotelCardProps) {
-  const { t: dictionary } = useLocale();
+  const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const starRating = getHotelStarRating(hotel.rating);
   const fallbackImageUrl = useMemo(
@@ -312,11 +315,11 @@ export function HotelCard({ hotel }: HotelCardProps) {
                     className="mb-1 inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-500 ring-1 ring-amber-100"
                     aria-label={t("hotelResults.starHotelAria").replace(
                       "{{rating}}",
-                      formatHotelRating(hotel.rating),
+                      formatHotelRating(hotel.rating, locale),
                     )}
                     title={t("hotelResults.starHotelAria").replace(
                       "{{rating}}",
-                      formatHotelRating(hotel.rating),
+                      formatHotelRating(hotel.rating, locale),
                     )}
                   >
                     <span aria-hidden="true" className="tracking-[0.08em]">
@@ -371,7 +374,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
             <div className="mt-auto flex flex-col gap-3 min-[380px]:flex-row min-[380px]:items-end min-[380px]:justify-between md:mt-0 lg:w-40 lg:flex-col lg:items-end lg:justify-start lg:text-end">
               <div className="text-start min-[380px]:text-end lg:text-end">
                 <div className="text-xl font-bold tracking-[-0.01em] text-slate-950" dir="ltr">
-                  {formatCurrency(hotel.totalPrice, hotel.currency)}
+                  {formatCurrency(hotel.totalPrice, hotel.currency, locale)}
                 </div>
                 <div className="text-xs font-medium leading-4 text-slate-500">
                   {t("hotelResults.estimatedStayTotal")}
@@ -379,7 +382,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
                 <div className="text-xs font-medium leading-4 text-slate-500">
                   {t("hotelResults.pricePerNight").replace(
                     "{{price}}",
-                    formatCurrency(hotel.pricePerNight, hotel.currency),
+                    formatCurrency(hotel.pricePerNight, hotel.currency, locale),
                   )}
                 </div>
               </div>
