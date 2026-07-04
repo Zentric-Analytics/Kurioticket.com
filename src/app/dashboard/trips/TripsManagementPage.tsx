@@ -123,6 +123,15 @@ export function TripsManagementPage() {
       dictionary[key] ?? enTranslations[key] ?? fallback,
     [dictionary],
   );
+  const formatMessage = useCallback(
+    (key: string, values: Record<string, string | number>, fallback = "") =>
+      Object.entries(values).reduce(
+        (message, [placeholder, value]) =>
+          message.replaceAll(`{{${placeholder}}}`, String(value)),
+        t(key, fallback),
+      ),
+    [t],
+  );
   const [activeHistoryTab, setActiveHistoryTab] =
     useState<TripHistoryTab>("past");
   const [trips, setTrips] = useState<DashboardTrip[]>([]);
@@ -137,39 +146,52 @@ export function TripsManagementPage() {
   const lookupTriggerRef = useRef<HTMLButtonElement | null>(null);
   const lookupReservationCodeRef = useRef<HTMLInputElement | null>(null);
 
-  const loadTrips = useCallback(async (showLoading = true) => {
-    if (showLoading) {
-      setRequestState("loading");
-    }
-    setErrorMessage(null);
+  const loadTrips = useCallback(
+    async (showLoading = true) => {
+      if (showLoading) {
+        setRequestState("loading");
+      }
+      setErrorMessage(null);
 
-    try {
-      const response = await fetch("/api/dashboard/trips", {
-        headers: { Accept: "application/json" },
-      });
+      try {
+        const response = await fetch("/api/dashboard/trips", {
+          headers: { Accept: "application/json" },
+        });
 
-      if (response.status === 401) {
+        if (response.status === 401) {
+          setTrips([]);
+          setSummary(defaultSummary);
+          setRequestState("unauthenticated");
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            t(
+              "accountDashboard.trips.state.error.body",
+              "We could not load your trips. Please try again.",
+            ),
+          );
+        }
+
+        const data = (await response.json()) as TripsResponse;
+        setTrips(Array.isArray(data.trips) ? data.trips : []);
+        setSummary(data.summary ?? defaultSummary);
+        setRequestState("success");
+      } catch {
         setTrips([]);
         setSummary(defaultSummary);
-        setRequestState("unauthenticated");
-        return;
+        setErrorMessage(
+          t(
+            "accountDashboard.trips.state.error.body",
+            "We could not load your trips. Please try again.",
+          ),
+        );
+        setRequestState("error");
       }
-
-      if (!response.ok) {
-        throw new Error("Unable to load your trips right now.");
-      }
-
-      const data = (await response.json()) as TripsResponse;
-      setTrips(Array.isArray(data.trips) ? data.trips : []);
-      setSummary(data.summary ?? defaultSummary);
-      setRequestState("success");
-    } catch {
-      setTrips([]);
-      setSummary(defaultSummary);
-      setErrorMessage("We could not load your trips. Please try again.");
-      setRequestState("error");
-    }
-  }, []);
+    },
+    [t],
+  );
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -330,7 +352,12 @@ export function TripsManagementPage() {
 
       if (response.status === 401) {
         setLookupState("error");
-        setLookupMessage("Please sign in to look up a reservation.");
+        setLookupMessage(
+          t(
+            "accountDashboard.trips.lookup.unauthenticated",
+            "Please sign in to look up a reservation.",
+          ),
+        );
         return;
       }
 
@@ -346,7 +373,10 @@ export function TripsManagementPage() {
         setLookupState("error");
         setLookupMessage(
           data.error ??
-            "We could not look up that reservation. Please try again.",
+            t(
+              "accountDashboard.trips.lookup.error",
+              "We could not look up that reservation. Please try again.",
+            ),
         );
         return;
       }
@@ -354,7 +384,9 @@ export function TripsManagementPage() {
       if (data.reservation) {
         setLookupResult(data.reservation);
         setLookupState("success");
-        setLookupMessage("Reservation found.");
+        setLookupMessage(
+          t("accountDashboard.trips.lookup.found", "Reservation found."),
+        );
         void loadTrips(false);
         return;
       }
@@ -369,7 +401,10 @@ export function TripsManagementPage() {
     } catch {
       setLookupState("error");
       setLookupMessage(
-        "We could not look up that reservation. Please try again.",
+        t(
+          "accountDashboard.trips.lookup.error",
+          "We could not look up that reservation. Please try again.",
+        ),
       );
     }
   }
@@ -389,8 +424,11 @@ export function TripsManagementPage() {
               {t("accountDashboard.trips.title", "My Trips")}
             </h1>
             <p className="sr-only" aria-live="polite">
-              {summary.total} total trips. {summary.upcoming} upcoming,{" "}
-              {summary.past} past, {summary.cancelled} cancelled.
+              {formatMessage(
+                "accountDashboard.trips.summary",
+                summary,
+                "{{total}} total trips. {{upcoming}} upcoming, {{past}} past, {{cancelled}} cancelled.",
+              )}
             </p>
           </div>
           <div className="relative flex w-fit shrink-0 justify-end pt-1">
@@ -429,29 +467,45 @@ export function TripsManagementPage() {
         </div>
       </div>
 
-      {requestState === "loading" ? <TripsLoadingState /> : null}
+      {requestState === "loading" ? <TripsLoadingState t={t} /> : null}
 
       {requestState === "unauthenticated" ? (
         <NoticeState
-          title="Sign in to view your trips"
-          body="Your trips are connected to your account. Please sign in, then return here to manage upcoming, past, and cancelled bookings."
+          title={t(
+            "accountDashboard.trips.state.unauthenticated.title",
+            "Sign in to view your trips",
+          )}
+          body={t(
+            "accountDashboard.trips.state.unauthenticated.body",
+            "Your trips are connected to your account. Please sign in, then return here to manage upcoming, past, and cancelled bookings.",
+          )}
         />
       ) : null}
 
       {requestState === "error" ? (
         <NoticeState
-          title="Unable to load trips"
+          title={t(
+            "accountDashboard.trips.state.error.title",
+            "Unable to load trips",
+          )}
           body={
-            errorMessage ?? "We could not load your trips. Please try again."
+            errorMessage ??
+            t(
+              "accountDashboard.trips.state.error.body",
+              "We could not load your trips. Please try again.",
+            )
           }
           action={
             <button
               type="button"
               onClick={() => void loadTrips()}
               className="focus-ring mt-4 inline-flex h-11 items-center justify-center rounded-full bg-[#004BB8] px-5 text-sm font-semibold text-white transition hover:bg-[#021C2B]"
-              aria-label="Retry loading trips"
+              aria-label={t(
+                "accountDashboard.trips.state.error.retryAriaLabel",
+                "Retry loading trips",
+              )}
             >
-              Retry
+              {t("accountDashboard.trips.state.error.retry", "Retry")}
             </button>
           }
         />
@@ -460,7 +514,7 @@ export function TripsManagementPage() {
       {requestState === "success" ? (
         <>
           {upcomingTrips.length > 0 ? (
-            <TripCards trips={upcomingTrips} />
+            <TripCards trips={upcomingTrips} t={t} />
           ) : (
             <EmptyStateRow
               className="pt-3 sm:pt-8 lg:pt-12"
@@ -532,7 +586,7 @@ export function TripsManagementPage() {
               aria-labelledby={`${activeHistoryTab}-history-trips-tab`}
             >
               {historyTrips.length > 0 ? (
-                <TripCards trips={historyTrips} />
+                <TripCards trips={historyTrips} t={t} />
               ) : (
                 <EmptyStateRow
                   illustration={
@@ -675,24 +729,36 @@ function LookupDialog({
               {lookupMessage}
             </p>
           ) : null}
-          {lookupResult ? <LookupResultCard trip={lookupResult} /> : null}
+          {lookupResult ? <LookupResultCard trip={lookupResult} t={t} /> : null}
         </form>
       </section>
     </div>
   );
 }
 
-function TripCards({ trips }: { trips: DashboardTrip[] }) {
+function TripCards({
+  trips,
+  t,
+}: {
+  trips: DashboardTrip[];
+  t: (key: string, fallback?: string) => string;
+}) {
   return (
     <div className="grid gap-4 sm:gap-5">
       {trips.map((trip) => (
-        <TripCard key={trip.id} trip={trip} />
+        <TripCard key={trip.id} trip={trip} t={t} />
       ))}
     </div>
   );
 }
 
-function TripCard({ trip }: { trip: DashboardTrip }) {
+function TripCard({
+  trip,
+  t,
+}: {
+  trip: DashboardTrip;
+  t: (key: string, fallback?: string) => string;
+}) {
   return (
     <article className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_18px_55px_-42px_rgba(15,23,42,0.45)] sm:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -701,28 +767,38 @@ function TripCard({ trip }: { trip: DashboardTrip }) {
             {trip.provider} · {formatLabel(trip.tripType)}
           </p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-            {formatRoute(trip.origin, trip.destination)}
+            {formatRoute(trip.origin, trip.destination, t)}
           </h2>
           <p className="mt-2 text-sm text-slate-600">
-            Booking reference:{" "}
+            {t(
+              "accountDashboard.trips.card.bookingReference",
+              "Booking reference",
+            )}
+            :{" "}
             <span className="font-semibold text-slate-900">
               {trip.bookingReference}
             </span>
           </p>
         </div>
         <span className="inline-flex w-fit rounded-full border border-[#004BB8]/20 bg-[#004BB8]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#004BB8]">
-          {formatLabel(trip.status)}
+          {formatStatus(trip.status, t)}
         </span>
       </div>
       <dl className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <TripDetail label="Departure" value={formatDate(trip.departureDate)} />
         <TripDetail
-          label="Return"
+          label={t("accountDashboard.trips.card.departure", "Departure")}
+          value={formatDate(trip.departureDate)}
+        />
+        <TripDetail
+          label={t("accountDashboard.trips.card.return", "Return")}
           value={trip.returnDate ? formatDate(trip.returnDate) : "—"}
         />
-        <TripDetail label="Passengers" value={`${trip.passengerCount}`} />
         <TripDetail
-          label="Total"
+          label={t("accountDashboard.trips.card.passengers", "Passengers")}
+          value={`${trip.passengerCount}`}
+        />
+        <TripDetail
+          label={t("accountDashboard.trips.card.total", "Total")}
           value={formatAmount(trip.totalAmount, trip.currency)}
         />
       </dl>
@@ -732,17 +808,23 @@ function TripCard({ trip }: { trip: DashboardTrip }) {
         className="mt-5 inline-flex h-11 items-center justify-center rounded-full border border-slate-200 px-5 text-sm font-semibold text-slate-500"
         aria-disabled="true"
       >
-        View details
+        {t("accountDashboard.trips.card.viewDetails", "View details")}
       </button>
     </article>
   );
 }
 
-function LookupResultCard({ trip }: { trip: DashboardTrip }) {
+function LookupResultCard({
+  trip,
+  t,
+}: {
+  trip: DashboardTrip;
+  t: (key: string, fallback?: string) => string;
+}) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
       <p className="text-sm font-semibold text-slate-950">
-        {formatRoute(trip.origin, trip.destination)}
+        {formatRoute(trip.origin, trip.destination, t)}
       </p>
       <p className="mt-1 text-sm text-slate-600">
         {trip.provider} · {formatDate(trip.departureDate)} ·{" "}
@@ -763,11 +845,15 @@ function TripDetail({ label, value }: { label: string; value: string }) {
   );
 }
 
-function TripsLoadingState() {
+function TripsLoadingState({
+  t,
+}: {
+  t: (key: string, fallback?: string) => string;
+}) {
   return (
     <div className="grid gap-4" aria-live="polite" aria-busy="true">
       <p className="text-sm font-medium text-slate-600">
-        Loading your trips...
+        {t("accountDashboard.trips.state.loading", "Loading your trips...")}
       </p>
       {[0, 1].map((item) => (
         <div
@@ -805,8 +891,28 @@ function formatLabel(value: string) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function formatRoute(origin: string | null, destination: string) {
-  const safeDestination = destination.trim() || "Unknown destination";
+function formatStatus(
+  status: TripStatusTab,
+  t: (key: string, fallback?: string) => string,
+) {
+  if (status === "upcoming") {
+    return t("accountDashboard.trips.status.upcoming", "Upcoming");
+  }
+
+  return t(
+    `accountDashboard.trips.history.tabs.${status}`,
+    formatLabel(status),
+  );
+}
+
+function formatRoute(
+  origin: string | null,
+  destination: string,
+  t: (key: string, fallback?: string) => string,
+) {
+  const safeDestination =
+    destination.trim() ||
+    t("accountDashboard.trips.card.unknownDestination", "Unknown destination");
   const safeOrigin = origin?.trim();
 
   return safeOrigin ? `${safeOrigin} → ${safeDestination}` : safeDestination;
