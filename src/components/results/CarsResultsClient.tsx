@@ -216,16 +216,8 @@ export const getCarsResultsIntlLocale = (locale: string) => {
     return "ar-u-nu-latn";
   }
 
-  return "en-US";
+  return locale;
 };
-
-export const usesTwentyFourHourCarsResultsTime = (intlLocale: string) =>
-  ["de", "es", "fr", "id", "ja", "nl", "pl", "pt", "sv", "tr"].some((localePrefix) =>
-    intlLocale.toLowerCase().startsWith(localePrefix),
-  );
-
-const usesLocalizedCarsResultsTime = (intlLocale: string) =>
-  intlLocale.toLowerCase().startsWith("ar");
 
 const curatedLocationTranslationKeys: Record<string, string> = {
   Airport: "carsResults.location.airport",
@@ -323,41 +315,27 @@ const buildMonthCells = (monthDate: Date) => {
   });
 };
 
-const getWeekdays = (intlLocale: string) => {
-  if (intlLocale.toLowerCase().startsWith("th")) {
-    return ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
-  }
-
-  return Array.from({ length: 7 }, (_, index) =>
+const getWeekdays = (intlLocale: string) =>
+  Array.from({ length: 7 }, (_, index) =>
     new Intl.DateTimeFormat(intlLocale, { weekday: "short" }).format(
       new Date(2024, 0, 7 + index),
     ),
   );
-};
 
 export const formatTimeLabel = (time: string, intlLocale: string) => {
   const [hourValue, minuteValue] = time.split(":").map(Number);
 
   if (Number.isNaN(hourValue) || Number.isNaN(minuteValue)) {
-    return time || (usesTwentyFourHourCarsResultsTime(intlLocale) ? "10:00" : "10:00 AM");
-  }
-
-  if (usesTwentyFourHourCarsResultsTime(intlLocale)) {
-    const separator = intlLocale.toLowerCase().startsWith("id") ? "." : ":";
-    return `${String(hourValue).padStart(2, "0")}${separator}${String(minuteValue).padStart(2, "0")}`;
-  }
-
-  if (usesLocalizedCarsResultsTime(intlLocale)) {
-    return new Intl.DateTimeFormat(intlLocale, {
+    return time || new Intl.DateTimeFormat(intlLocale, {
       hour: "numeric",
       minute: "2-digit",
-    }).format(new Date(2024, 0, 1, hourValue, minuteValue));
+    }).format(new Date(2024, 0, 1, 10, 0));
   }
 
-  const period = hourValue >= 12 ? "PM" : "AM";
-  const hour = hourValue % 12 || 12;
-
-  return `${hour}:${String(minuteValue).padStart(2, "0")} ${period}`;
+  return new Intl.DateTimeFormat(intlLocale, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(2024, 0, 1, hourValue, minuteValue));
 };
 
 const normalizeDriverAge = (value: string) =>

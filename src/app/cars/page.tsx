@@ -114,6 +114,19 @@ const formatTimeRangeSummary = (
     .replace("{pickupTime}", pickupTime)
     .replace("{returnTime}", returnTime);
 
+const formatCarTimeLabel = (time: string, locale: string) => {
+  const [hourValue, minuteValue] = time.split(":").map(Number);
+
+  if (Number.isNaN(hourValue) || Number.isNaN(minuteValue)) {
+    return time;
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(2024, 0, 1, hourValue, minuteValue));
+};
+
 const trustCards = [
   {
     key: "carsTrust.0",
@@ -1060,11 +1073,12 @@ function TimeRangeField({
   ) => void;
   wrapRef: RefObject<HTMLDivElement | null>;
 }) {
-  const { t } = useCarsLandingTranslations();
+  const { locale, t } = useCarsLandingTranslations();
+  const intlLocale = getCarsIntlLocale(locale);
   const timeSummary = formatTimeRangeSummary(
     t("carsSearch.pickupReturnTimeSummary"),
-    pickupTime,
-    returnTime,
+    formatCarTimeLabel(pickupTime, intlLocale),
+    formatCarTimeLabel(returnTime, intlLocale),
   );
 
   return (
@@ -1105,7 +1119,7 @@ function TimeRangeField({
               >
                 {timeOptions.map((time) => (
                   <option key={`pickup-${time}`} value={time}>
-                    {time}
+                    {formatCarTimeLabel(time, intlLocale)}
                   </option>
                 ))}
               </select>
@@ -1125,7 +1139,7 @@ function TimeRangeField({
               >
                 {timeOptions.map((time) => (
                   <option key={`return-${time}`} value={time}>
-                    {time}
+                    {formatCarTimeLabel(time, intlLocale)}
                   </option>
                 ))}
               </select>
