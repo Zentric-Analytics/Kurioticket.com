@@ -3,6 +3,7 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  destinationsLoadingPage: "Laddar destinationssidan...",
   "deals.loadingPage": "Laddar sidan...",
   "deals.decreaseCountAria": "Minska {{label}}",
   "deals.increaseCountAria": "Öka {{label}}",

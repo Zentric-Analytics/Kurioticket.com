@@ -3,6 +3,7 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  destinationsLoadingPage: "여행지 페이지를 불러오는 중...",
   "hotelResults.unableToOpenProvider": "지금은 제공업체를 열 수 없습니다. 다시 시도해 주세요.",
   "hotelResults.payAtProperty": "숙소에서 결제",
   "hotelResults.payLater": "나중에 결제",
