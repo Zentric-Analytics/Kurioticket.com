@@ -283,6 +283,10 @@ export default function DealsPage() {
     (key: string) => dictionary[key] ?? enTranslations[key] ?? key,
     [dictionary],
   );
+  const tWithLabel = useCallback(
+    (key: string, label: string) => t(key).replace("{{label}}", label),
+    [t],
+  );
   const airportPickerLabels = useMemo(
     () => ({
       clear: t("clear"),
@@ -1006,7 +1010,7 @@ export default function DealsPage() {
                     type="button"
                     onClick={row.onDecrement}
                     disabled={!canDecrement}
-                    aria-label={`Decrease ${row.label}`}
+                    aria-label={tWithLabel("deals.decreaseCountAria", row.label)}
                     className={cn(
                       "focus-ring inline-flex items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition-colors hover:border-[#004BB8]/25 hover:bg-[#004BB8]/8 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300",
                       compact ? "h-10 w-10 shadow-sm" : "h-8 w-8",
@@ -1021,7 +1025,7 @@ export default function DealsPage() {
                     type="button"
                     onClick={row.onIncrement}
                     disabled={!canIncrement}
-                    aria-label={`Increase ${row.label}`}
+                    aria-label={tWithLabel("deals.increaseCountAria", row.label)}
                     className={cn(
                       "focus-ring inline-flex items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition-colors hover:border-[#004BB8]/25 hover:bg-[#004BB8]/8 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300",
                       compact ? "h-10 w-10 shadow-sm" : "h-8 w-8",
