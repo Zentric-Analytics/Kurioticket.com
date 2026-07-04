@@ -1931,4 +1931,15 @@ export const translations: TranslationDictionary = {
   "legal.privacyChoices.sections.tracking-choices.paragraph2": "If ads or third-party analytics tracking tools are added later, Kurioticket should update applicable policies and provide privacy choices where required by law.",
   "legal.privacyChoices.developerNote": "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before a large-scale public launch.",
 
+  "account.pendingDeletion.eyebrow": "다시 오신 것을 환영합니다",
+  "account.pendingDeletion.title": "계정 삭제가 대기 중입니다.",
+  "account.pendingDeletion.scheduledPrefix": "계정이 다음 날짜에 영구 삭제될 예정입니다",
+  "account.pendingDeletion.reactivateNotice": "이 날짜 전까지 계정을 다시 활성화할 수 있습니다. 그때까지 일반 대시보드 탐색은 제한됩니다.",
+  "account.pendingDeletion.helperBefore": "다시 오신 것을 환영합니다. 계정 다시 활성화를 클릭하면 다음 날짜 전에 삭제가 취소되고",
+  "account.pendingDeletion.helperAfter": "정상적인 앱 접근이 복원됩니다.",
+  "account.pendingDeletion.error.reactivate": "계정을 다시 활성화할 수 없습니다.",
+  "account.pendingDeletion.error.expired": "7일 재활성화 기간이 만료되었습니다. 지원팀에 문의하세요.",
+  "account.pendingDeletion.action.reactivating": "다시 활성화 중…",
+  "account.pendingDeletion.action.reactivate": "계정 다시 활성화",
+  "account.pendingDeletion.action.logout": "로그아웃",
 };

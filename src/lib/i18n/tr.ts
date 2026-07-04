@@ -2021,4 +2021,15 @@ export const translations: TranslationDictionary = {
   "legal.privacyChoices.sections.tracking-choices.paragraph2": "If ads or third-party analytics tracking tools are added later, Kurioticket should update applicable policies and provide privacy choices where required by law.",
   "legal.privacyChoices.developerNote": "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before a large-scale public launch.",
 
+  "account.pendingDeletion.eyebrow": "Tekrar hoş geldiniz",
+  "account.pendingDeletion.title": "Hesap silme işleminiz beklemede.",
+  "account.pendingDeletion.scheduledPrefix": "Hesabınız kalıcı olarak silinmek üzere planlandı:",
+  "account.pendingDeletion.reactivateNotice": "Hesabınızı bu tarihten önce yeniden etkinleştirebilirsiniz. O zamana kadar normal pano gezintisi kısıtlanır.",
+  "account.pendingDeletion.helperBefore": "Tekrar hoş geldiniz. Hesabı yeniden etkinleştir’e tıklamak silmeyi şu tarihten önce iptal eder:",
+  "account.pendingDeletion.helperAfter": "ve normal uygulama erişimini geri yükler.",
+  "account.pendingDeletion.error.reactivate": "Hesap yeniden etkinleştirilemedi.",
+  "account.pendingDeletion.error.expired": "7 günlük yeniden etkinleştirme süresi doldu. Destek ile iletişime geçin.",
+  "account.pendingDeletion.action.reactivating": "Yeniden etkinleştiriliyor…",
+  "account.pendingDeletion.action.reactivate": "Hesabı yeniden etkinleştir",
+  "account.pendingDeletion.action.logout": "Çıkış yap",
 };

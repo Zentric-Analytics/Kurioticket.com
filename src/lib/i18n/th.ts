@@ -1992,4 +1992,15 @@ export const translations: TranslationDictionary = {
   resetPasswordResetting: "กำลังรีเซ็ต...",
   "legal.privacyChoices.lastUpdated": "Last updated: June 28, 2026",
 
+  "account.pendingDeletion.eyebrow": "ยินดีต้อนรับกลับ",
+  "account.pendingDeletion.title": "การลบบัญชีของคุณอยู่ระหว่างรอดำเนินการ",
+  "account.pendingDeletion.scheduledPrefix": "บัญชีของคุณมีกำหนดถูกลบถาวรในวันที่",
+  "account.pendingDeletion.reactivateNotice": "คุณสามารถเปิดใช้งานบัญชีอีกครั้งก่อนวันที่นี้ ระหว่างนี้ การเรียกดูแดชบอร์ดตามปกติจะถูกจำกัด",
+  "account.pendingDeletion.helperBefore": "ยินดีต้อนรับกลับ การคลิกเปิดใช้งานบัญชีอีกครั้งจะยกเลิกการลบก่อน",
+  "account.pendingDeletion.helperAfter": "และกู้คืนการเข้าถึงแอปตามปกติ",
+  "account.pendingDeletion.error.reactivate": "ไม่สามารถเปิดใช้งานบัญชีอีกครั้งได้",
+  "account.pendingDeletion.error.expired": "ช่วงเวลาเปิดใช้งานอีกครั้ง 7 วันหมดอายุแล้ว โปรดติดต่อฝ่ายสนับสนุน",
+  "account.pendingDeletion.action.reactivating": "กำลังเปิดใช้งานอีกครั้ง…",
+  "account.pendingDeletion.action.reactivate": "เปิดใช้งานบัญชีอีกครั้ง",
+  "account.pendingDeletion.action.logout": "ออกจากระบบ",
 };

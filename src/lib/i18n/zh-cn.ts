@@ -1938,4 +1938,15 @@ export const translations: TranslationDictionary = {
   "legal.legalNoticeCompanyInformation.sections.california-registration.paragraph2": "注册自 2026年6月6日 起有效。注册将于 2027年6月5日 到期。",
   "legal.legalNoticeCompanyInformation.developerNote": "这些法律草案是初创阶段的临时占位材料，在大规模公开发布前应由合格法律顾问审查。",
 
+  "account.pendingDeletion.eyebrow": "欢迎回来",
+  "account.pendingDeletion.title": "你的账户删除正在等待处理。",
+  "account.pendingDeletion.scheduledPrefix": "你的账户计划永久删除时间为",
+  "account.pendingDeletion.reactivateNotice": "你可以在此日期之前重新激活账户。在此之前，正常浏览仪表板将受到限制。",
+  "account.pendingDeletion.helperBefore": "欢迎回来。点击“重新激活账户”会在以下时间之前取消删除：",
+  "account.pendingDeletion.helperAfter": "并恢复正常应用访问。",
+  "account.pendingDeletion.error.reactivate": "无法重新激活账户。",
+  "account.pendingDeletion.error.expired": "7 天重新激活期限已过。请联系支持。",
+  "account.pendingDeletion.action.reactivating": "正在重新激活…",
+  "account.pendingDeletion.action.reactivate": "重新激活账户",
+  "account.pendingDeletion.action.logout": "退出登录",
 };

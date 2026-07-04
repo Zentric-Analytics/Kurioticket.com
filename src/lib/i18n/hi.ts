@@ -1896,4 +1896,15 @@ export const translations: TranslationDictionary = {
   "legal.privacyChoices.sections.tracking-choices.paragraph2": "If ads or third-party analytics tracking tools are added later, Kurioticket should update applicable policies and provide privacy choices where required by law.",
   "legal.privacyChoices.developerNote": "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before a large-scale public launch.",
 
+  "account.pendingDeletion.eyebrow": "वापसी पर स्वागत है",
+  "account.pendingDeletion.title": "आपके खाते का हटाना लंबित है।",
+  "account.pendingDeletion.scheduledPrefix": "आपका खाता स्थायी रूप से हटाने के लिए निर्धारित है",
+  "account.pendingDeletion.reactivateNotice": "आप इस तारीख से पहले अपना खाता फिर से सक्रिय कर सकते हैं। तब तक, सामान्य डैशबोर्ड ब्राउज़िंग प्रतिबंधित रहेगी।",
+  "account.pendingDeletion.helperBefore": "वापसी पर स्वागत है। खाता फिर से सक्रिय करें पर क्लिक करने से हटाना इससे पहले रद्द हो जाता है",
+  "account.pendingDeletion.helperAfter": "और सामान्य ऐप पहुंच बहाल हो जाती है।",
+  "account.pendingDeletion.error.reactivate": "खाता फिर से सक्रिय नहीं किया जा सका।",
+  "account.pendingDeletion.error.expired": "7-दिन की पुनः सक्रियण अवधि समाप्त हो गई है। सहायता से संपर्क करें।",
+  "account.pendingDeletion.action.reactivating": "फिर से सक्रिय किया जा रहा है…",
+  "account.pendingDeletion.action.reactivate": "खाता फिर से सक्रिय करें",
+  "account.pendingDeletion.action.logout": "लॉग आउट",
 };

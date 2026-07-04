@@ -1683,4 +1683,15 @@ export const translations: TranslationDictionary = {
   resetPasswordSubmit: "Atur ulang kata sandi",
   "legal.privacyChoices.lastUpdated": "Last updated: June 28, 2026",
 
+  "account.pendingDeletion.eyebrow": "Selamat datang kembali",
+  "account.pendingDeletion.title": "Penghapusan akun Anda sedang tertunda.",
+  "account.pendingDeletion.scheduledPrefix": "Akun Anda dijadwalkan untuk dihapus permanen pada",
+  "account.pendingDeletion.reactivateNotice": "Anda dapat mengaktifkan kembali akun sebelum tanggal ini. Sampai saat itu, penjelajahan dasbor normal dibatasi.",
+  "account.pendingDeletion.helperBefore": "Selamat datang kembali. Mengklik Aktifkan kembali akun membatalkan penghapusan sebelum",
+  "account.pendingDeletion.helperAfter": "dan memulihkan akses aplikasi normal.",
+  "account.pendingDeletion.error.reactivate": "Tidak dapat mengaktifkan kembali akun.",
+  "account.pendingDeletion.error.expired": "Jendela aktivasi ulang 7 hari telah berakhir. Hubungi dukungan.",
+  "account.pendingDeletion.action.reactivating": "Mengaktifkan kembali…",
+  "account.pendingDeletion.action.reactivate": "Aktifkan kembali akun",
+  "account.pendingDeletion.action.logout": "Keluar",
 };
