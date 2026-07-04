@@ -42,7 +42,7 @@ export const toIsoDate = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
-export const formatDisplayDate = (isoDate: string) => {
+export const formatDisplayDate = (isoDate: string, locale?: string) => {
   if (!isoDate) {
     return "";
   }
@@ -53,7 +53,7 @@ export const formatDisplayDate = (isoDate: string) => {
     return "";
   }
 
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(locale, {
     month: "short",
     day: "numeric",
   }).format(new Date(year, month - 1, day));
@@ -112,7 +112,12 @@ export const buildMonthCells = (monthDate: Date): MonthCell[] => {
   });
 };
 
-export const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+export const getLocalizedWeekdays = (locale?: string) =>
+  Array.from({ length: 7 }, (_, day) =>
+    new Intl.DateTimeFormat(locale, { weekday: "short" }).format(
+      new Date(2024, 0, 7 + day),
+    ),
+  );
 
 const addDays = (date: Date, days: number) => {
   const next = new Date(date);
