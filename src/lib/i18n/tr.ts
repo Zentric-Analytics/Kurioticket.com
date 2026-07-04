@@ -396,6 +396,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.cancel": "İptal",
   "accountDashboard.preferences.savePreferences": "Tercihleri kaydet",
   "accountDashboard.security.title": "Güvenlik ayarları",
+  "accountDashboard.settings.metadataTitle": "Hesap ayarları",
   "accountDashboard.security.description":
     "Şifrenizi güncelleyin ve hesap güvenliğinizi yönetin.",
   "accountDashboard.security.passkeys.title": "Geçiş anahtarları",

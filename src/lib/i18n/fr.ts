@@ -339,6 +339,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.promo.cta": "Rechercher des vols",
   "accountDashboard.security.eyebrow": "SÉCURITÉ",
   "accountDashboard.security.title": "Paramètres de sécurité",
+  "accountDashboard.settings.metadataTitle": "Paramètres du compte",
   "accountDashboard.security.description":
     "Modifiez vos paramètres de sécurité, configurez une authentification sécurisée ou gérez l’accès au compte.",
   "accountDashboard.security.passkeys.title": "Clés d’accès",

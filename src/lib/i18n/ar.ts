@@ -109,6 +109,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.personalDetails": "التفاصيل الشخصية",
   "accountDashboard.hub.securitySettings": "إعدادات الأمان",
   "accountDashboard.security.title": "إعدادات الأمان",
+  "accountDashboard.settings.metadataTitle": "إعدادات الحساب",
   "accountDashboard.security.description":
     "حدّث كلمة المرور وأدر أمان الحساب.",
   "accountDashboard.security.passkeys.title": "مفاتيح المرور",

@@ -519,6 +519,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.savePreferences": "Guardar preferencias",
   "accountDashboard.security.eyebrow": "SEGURIDAD",
   "accountDashboard.security.title": "Configuración de seguridad",
+  "accountDashboard.settings.metadataTitle": "Configuración de la cuenta",
   "accountDashboard.security.description":
     "Cambia tu configuración de seguridad, configura autenticación segura o administra el acceso a la cuenta.",
   "accountDashboard.security.passkeys.title": "Llaves de acceso",

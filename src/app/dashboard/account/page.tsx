@@ -1,13 +1,19 @@
+import { cookies } from "next/headers";
 import { getServerSession } from "next-auth";
 import { AccountMenuPage } from "@/components/dashboard/DashboardGrid";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { authOptions } from "@/lib/auth";
 import { getOptionalPrisma } from "@/lib/prisma";
+import { getTranslations } from "@/lib/i18n";
+import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
 
-export const metadata = {
-  title: "My Account",
-};
+export async function generateMetadata() {
+  const cookieStore = await cookies();
+  const t = getTranslations(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
+
+  return { title: t["accountDashboard.hub.title"] };
+}
 
 function getInitials(name?: string | null, email?: string | null) {
   const label = name?.trim() || email?.split("@")[0] || "Kurioticket traveler";

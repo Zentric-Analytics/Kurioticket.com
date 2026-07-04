@@ -364,6 +364,7 @@ export const translations: TranslationDictionary = {
     "Prüfen Sie aktuelle Datenschutz- und Plattformrichtlinien.",
   "accountDashboard.security.eyebrow": "SICHERHEIT",
   "accountDashboard.security.title": "Sicherheitseinstellungen",
+  "accountDashboard.settings.metadataTitle": "Kontoeinstellungen",
   "accountDashboard.security.description":
     "Ändern Sie Ihre Sicherheitseinstellungen, richten Sie sichere Authentifizierung ein oder verwalten Sie den Kontozugriff.",
   "accountDashboard.security.passkeys.title": "Zugangsschlüssel",

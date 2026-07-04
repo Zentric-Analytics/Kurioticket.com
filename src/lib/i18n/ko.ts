@@ -398,6 +398,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.personalDetails.month.november": "11월",
   "accountDashboard.personalDetails.month.december": "12월",
   "accountDashboard.security.title": "보안 설정",
+  "accountDashboard.settings.metadataTitle": "계정 설정",
   "accountDashboard.security.description":
     "비밀번호를 업데이트하고 계정 보안을 관리하세요.",
   "accountDashboard.security.passkeys.title": "패스키",

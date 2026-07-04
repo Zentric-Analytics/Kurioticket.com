@@ -268,6 +268,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.personalDetails.edit": "编辑",
 
   "accountDashboard.security.title": "安全设置",
+  "accountDashboard.settings.metadataTitle": "账户设置",
   "accountDashboard.security.description":
     "更新你的密码并管理账户安全。",
   "accountDashboard.security.passkeys.title": "通行密钥",

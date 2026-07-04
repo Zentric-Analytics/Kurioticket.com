@@ -321,6 +321,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.features.management.body": "Metti in pausa o rimuovi gli avvisi in qualsiasi momento.",
   "accountDashboard.security.eyebrow": "SICUREZZA",
   "accountDashboard.security.title": "Impostazioni di sicurezza",
+  "accountDashboard.settings.metadataTitle": "Impostazioni account",
   "accountDashboard.security.description":
     "Modifica le impostazioni di sicurezza, configura l’autenticazione sicura o gestisci l’accesso all’account.",
   "accountDashboard.security.passkeys.title": "Passkey",

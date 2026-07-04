@@ -170,6 +170,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.personalDetails.description":
     "Zarządzaj informacjami, których Kurioticket używa dla Twojego konta.",
   "accountDashboard.security.title": "Ustawienia bezpieczeństwa",
+  "accountDashboard.settings.metadataTitle": "Ustawienia konta",
   "accountDashboard.security.description":
     "Zarządzaj logowaniem i bezpieczeństwem swojego konta Kurioticket.",
   "accountDashboard.security.password.title": "Hasło",

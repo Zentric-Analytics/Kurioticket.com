@@ -440,6 +440,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.savePreferences": "Save preferences",
   "accountDashboard.security.eyebrow": "SECURITY",
   "accountDashboard.security.title": "Security settings",
+  "accountDashboard.settings.metadataTitle": "Account Settings",
   "accountDashboard.security.description":
     "Manage sign-in and account security for your Kurioticket account.",
   "accountDashboard.security.password.title": "Password",
