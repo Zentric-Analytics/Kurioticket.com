@@ -1727,6 +1727,7 @@ flightLandingRouteAriaLabel: "Vluchten zoeken van {{origin}} naar {{destination}
   "hotelResults.resetFilters": "Filters resetten",
   "hotelResults.searchUnavailableDetailed": "Hotelzoekopdracht is momenteel niet beschikbaar. Probeer het opnieuw.",
   "hotelResults.unableToSearchHotels": "Kan hotels nu niet zoeken.",
+  "hotelResults.unableToOpenProvider": "Kan de aanbieder momenteel niet openen. Probeer het opnieuw.",
   "carsResults.activeFilterCount": "{{count}} actieve filters",
   "carsResults.carFiltersAria": "Autofilters",
   "carsResults.carRentalSearch": "Autoverhuur zoeken",

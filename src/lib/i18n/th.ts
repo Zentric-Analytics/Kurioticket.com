@@ -3,6 +3,7 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "hotelResults.unableToOpenProvider": "ไม่สามารถเปิดผู้ให้บริการได้ในขณะนี้ โปรดลองอีกครั้ง",
   "hotelResults.payAtProperty": "ชำระเงินที่ที่พัก",
   "hotelResults.payLater": "ชำระภายหลัง",
   "hotelResults.noPrepayment": "ไม่ต้องชำระเงินล่วงหน้า",

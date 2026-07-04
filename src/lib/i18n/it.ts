@@ -1577,6 +1577,7 @@ export const translations: TranslationDictionary = {
     "La ricerca hotel in tempo reale è temporaneamente non disponibile. Riprova tra poco.",
   "hotelResults.searchUnavailableDetailed": "La ricerca hotel è temporaneamente non disponibile per questa richiesta. Mostriamo opzioni di soggiorno solo quando prezzo, disponibilità, commissioni e regole possono essere verificati con il partner. Riprova più tardi o avvia una nuova ricerca.",
   "hotelResults.unableToSearchHotels": "Impossibile cercare hotel.",
+  "hotelResults.unableToOpenProvider": "Impossibile aprire il provider al momento. Riprova.",
   "hotelResults.limitedProviderChecks": "Alcune verifiche dei partner potrebbero essere limitate per questa ricerca hotel. Controlla disponibilità finale, tasse, commissioni e regole di cancellazione con il partner prima di prenotare.",
   "hotelResults.noStaysMatchFiltersTitle": "Nessun soggiorno corrisponde a questi filtri",
   "hotelResults.noStaysMatchFiltersBody": "Prova ad aumentare la fascia di prezzo, abbassare la categoria o cancellare i filtri hotel selezionati per vedere più opzioni disponibili.",

@@ -512,7 +512,7 @@ export function HotelResultsClient() {
           throw new Error(
             data.error === enTranslations["hotelResults.liveSearchUnavailable"]
               ? t("hotelResults.liveSearchUnavailable")
-              : data.error || t("hotelResults.unableToSearchHotels"),
+              : t("hotelResults.unableToSearchHotels"),
           );
         }
 

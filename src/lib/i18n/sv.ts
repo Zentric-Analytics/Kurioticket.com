@@ -681,6 +681,7 @@ export const translations: TranslationDictionary = {
   'hotelResults.liveSearchUnavailable': 'Livesökning för hotell är tillfälligt otillgänglig. Försök igen om en liten stund.',
   'hotelResults.searchUnavailableDetailed': 'Hotellsökning är tillfälligt otillgänglig för den här förfrågan. Vi visar bara boendealternativ när pris, tillgänglighet, avgifter och regler kan granskas hos leverantören. Försök igen senare eller starta en ny sökning.',
   'hotelResults.unableToSearchHotels': 'Det gick inte att söka efter hotell.',
+  "hotelResults.unableToOpenProvider": "Det går inte att öppna leverantören just nu. Försök igen.",
   'hotelResults.limitedProviderChecks': 'Vissa leverantörskontroller kan vara begränsade för den här hotellsökningen. Granska slutlig tillgänglighet, skatter, avgifter och avbokningsregler hos leverantören innan du bokar.',
   'hotelResults.noStaysMatchFiltersTitle': 'Inga boenden matchar dessa filter',
   'hotelResults.noStaysMatchFiltersBody': 'Försök att öka prisintervallet, sänka stjärnbetyget eller rensa valda hotellfilter för att se fler tillgängliga alternativ.',

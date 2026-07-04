@@ -1341,6 +1341,7 @@ export const translations: TranslationDictionary = {
   "hotelResults.fromRating": "से",
   "hotelResults.searchUnavailableDetailed": "इस अनुरोध के लिए होटल खोज अस्थायी रूप से उपलब्ध नहीं है। हम ठहरने के विकल्प तभी दिखाते हैं जब कीमत, उपलब्धता, शुल्क और नियम प्रदाता के साथ समीक्षा किए जा सकें। कृपया बाद में फिर कोशिश करें या नई खोज शुरू करें।",
   "hotelResults.unableToSearchHotels": "होटल खोजने में असमर्थ।",
+  "hotelResults.unableToOpenProvider": "अभी प्रदाता को खोलने में असमर्थ। कृपया फिर से प्रयास करें।",
   "hotelResults.limitedProviderChecks": "इस होटल खोज के लिए कुछ प्रदाता जाँचें सीमित हो सकती हैं। बुक करने से पहले प्रदाता के साथ अंतिम उपलब्धता, कर, शुल्क और रद्दीकरण नियमों की समीक्षा करें।",
   "hotelResults.noStaysMatchFiltersTitle": "इन फ़िल्टरों से कोई ठहराव मेल नहीं खाता",
   "hotelResults.noStaysMatchFiltersBody": "अधिक उपलब्ध विकल्प देखने के लिए कीमत सीमा बढ़ाएँ, स्टार रेटिंग घटाएँ या चुने गए होटल फ़िल्टर साफ़ करें।",

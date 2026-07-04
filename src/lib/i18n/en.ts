@@ -2929,6 +2929,7 @@ export const translations: TranslationDictionary = {
   "hotelResults.liveSearchUnavailable": "Live hotel search is temporarily unavailable. Please try again shortly.",
   "hotelResults.searchUnavailableDetailed": "Hotel search is temporarily unavailable for this request. We only show stay options when price, availability, fees, and rules can be reviewed with the provider. Please try again later or start a new search.",
   "hotelResults.unableToSearchHotels": "Unable to search hotels.",
+  "hotelResults.unableToOpenProvider": "Unable to open the provider right now. Please try again.",
   "hotelResults.limitedProviderChecks": "Some provider checks may be limited for this hotel search. Review final availability, taxes, fees, and cancellation rules with the provider before booking.",
   "hotelResults.noStaysMatchFiltersTitle": "No stays match these filters",
   "hotelResults.noStaysMatchFiltersBody": "Try increasing the price range, lowering the star rating, or clearing selected hotel filters to see more available options.",
