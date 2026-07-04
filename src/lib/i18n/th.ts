@@ -2007,4 +2007,11 @@ export const translations: TranslationDictionary = {
   "account.pendingDeletion.action.reactivating": "กำลังเปิดใช้งานอีกครั้ง…",
   "account.pendingDeletion.action.reactivate": "เปิดใช้งานบัญชีอีกครั้ง",
   "account.pendingDeletion.action.logout": "ออกจากระบบ",
+  "metadata.flightResults.title": "ผลลัพธ์เที่ยวบิน",
+  "metadata.flightResults.description": "เปรียบเทียบตัวเลือกเที่ยวบินที่มี และดำเนินการต่อกับผู้ให้บริการเพื่อยืนยันราคาสุดท้ายและกฎค่าโดยสาร",
+  "metadata.flightDetails.title": "รายละเอียดเที่ยวบิน",
+  "metadata.flightDetails.description": "ตรวจสอบรายละเอียดเที่ยวบิน ข้อมูลการส่งต่อไปยังผู้ให้บริการ และบริบทค่าโดยสารก่อนดำเนินการต่อ",
+  "metadata.hotelResults.title": "ผลลัพธ์โรงแรม",
+  "metadata.hotelResults.description": "เปรียบเทียบตัวเลือกโรงแรมที่มี และดำเนินการต่อกับผู้ให้บริการเพื่อยืนยันราคาสุดท้าย ห้องว่าง ค่าธรรมเนียม และกฎการยกเลิก",
+
 };

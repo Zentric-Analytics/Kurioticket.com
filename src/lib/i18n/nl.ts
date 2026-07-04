@@ -2369,4 +2369,11 @@ flightLandingRouteAriaLabel: "Vluchten zoeken van {{origin}} naar {{destination}
   "legal.legalNoticeCompanyInformation.sections.california-registration.paragraph2": "Registratie is geldig vanaf 6 juni 2026. Registratie verloopt op 5 juni 2027.",
   "legal.legalNoticeCompanyInformation.developerNote": "Deze juridische concepten zijn voorlopige startup-placeholders en moeten vóór een grootschalige publieke lancering worden beoordeeld door gekwalificeerde juridische counsel.",
 
+  "metadata.flightResults.title": "Vluchtresultaten",
+  "metadata.flightResults.description": "Vergelijk beschikbare vluchtopties en ga verder bij de aanbieder om definitieve prijzen en tariefregels te bevestigen.",
+  "metadata.flightDetails.title": "Vluchtgegevens",
+  "metadata.flightDetails.description": "Bekijk vluchtgegevens, overdrachtsinformatie van de aanbieder en tariefcontext voordat je verdergaat met je reis.",
+  "metadata.hotelResults.title": "Hotelresultaten",
+  "metadata.hotelResults.description": "Vergelijk beschikbare hotelopties en ga verder bij de aanbieder om definitieve prijzen, beschikbaarheid, kosten en annuleringsregels te bevestigen.",
+
 };

@@ -1953,4 +1953,11 @@ export const translations: TranslationDictionary = {
   "account.pendingDeletion.action.reactivating": "正在重新激活…",
   "account.pendingDeletion.action.reactivate": "重新激活账户",
   "account.pendingDeletion.action.logout": "退出登录",
+  "metadata.flightResults.title": "航班结果",
+  "metadata.flightResults.description": "比较可用航班选项，并继续前往服务提供商确认最终价格和票价规则。",
+  "metadata.flightDetails.title": "航班详情",
+  "metadata.flightDetails.description": "继续行程前查看航班详情、服务提供商跳转信息和票价背景。",
+  "metadata.hotelResults.title": "酒店结果",
+  "metadata.hotelResults.description": "比较可用酒店选项，并继续前往服务提供商确认最终价格、可订情况、费用和取消规则。",
+
 };

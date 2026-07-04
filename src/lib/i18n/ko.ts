@@ -1946,4 +1946,11 @@ export const translations: TranslationDictionary = {
   "account.pendingDeletion.action.reactivating": "다시 활성화 중…",
   "account.pendingDeletion.action.reactivate": "계정 다시 활성화",
   "account.pendingDeletion.action.logout": "로그아웃",
+  "metadata.flightResults.title": "항공편 결과",
+  "metadata.flightResults.description": "이용 가능한 항공편 옵션을 비교하고 제공업체에서 최종 가격과 운임 규정을 확인하세요.",
+  "metadata.flightDetails.title": "항공편 상세 정보",
+  "metadata.flightDetails.description": "여정을 계속하기 전에 항공편 상세 정보, 제공업체 이동 정보, 운임 맥락을 확인하세요.",
+  "metadata.hotelResults.title": "호텔 결과",
+  "metadata.hotelResults.description": "이용 가능한 호텔 옵션을 비교하고 제공업체에서 최종 가격, 예약 가능 여부, 수수료, 취소 규정을 확인하세요.",
+
 };

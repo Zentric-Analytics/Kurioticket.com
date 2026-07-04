@@ -1791,4 +1791,11 @@ export const translations: TranslationDictionary = {
   "account.pendingDeletion.action.reactivate": "Kích hoạt lại tài khoản",
   "account.pendingDeletion.action.logout": "Đăng xuất",
   emailPreferencesMetadataTitle: "Tùy chọn email",
+  "metadata.flightResults.title": "Kết quả chuyến bay",
+  "metadata.flightResults.description": "So sánh các lựa chọn chuyến bay có sẵn và tiếp tục với nhà cung cấp để xác nhận giá cuối cùng và quy định giá vé.",
+  "metadata.flightDetails.title": "Chi tiết chuyến bay",
+  "metadata.flightDetails.description": "Xem chi tiết chuyến bay, thông tin chuyển tiếp đến nhà cung cấp và bối cảnh giá vé trước khi tiếp tục chuyến đi.",
+  "metadata.hotelResults.title": "Kết quả khách sạn",
+  "metadata.hotelResults.description": "So sánh các lựa chọn khách sạn có sẵn và tiếp tục với nhà cung cấp để xác nhận giá cuối cùng, tình trạng phòng, phí và quy định hủy.",
+
 };

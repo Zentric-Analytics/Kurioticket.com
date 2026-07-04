@@ -1885,4 +1885,11 @@ export const translations: TranslationDictionary = {
   "account.pendingDeletion.action.reactivating": "再有効化中…",
   "account.pendingDeletion.action.reactivate": "アカウントを再有効化",
   "account.pendingDeletion.action.logout": "ログアウト",
+  "metadata.flightResults.title": "フライト検索結果",
+  "metadata.flightResults.description": "利用可能なフライトを比較し、プロバイダーで最終価格と運賃規則を確認してください。",
+  "metadata.flightDetails.title": "フライト詳細",
+  "metadata.flightDetails.description": "旅行を続ける前に、フライト詳細、プロバイダー引き継ぎ情報、運賃の背景を確認してください。",
+  "metadata.hotelResults.title": "ホテル検索結果",
+  "metadata.hotelResults.description": "利用可能なホテルを比較し、プロバイダーで最終価格、空室状況、手数料、キャンセル規則を確認してください。",
+
 };

@@ -2662,4 +2662,11 @@ flightLandingRouteAriaLabel:
   "legal.legalNoticeCompanyInformation.sections.california-registration.paragraph2": "L’enregistrement est valide à compter du 6 juin 2026. L’enregistrement expire le 5 juin 2027.",
   "legal.legalNoticeCompanyInformation.developerNote": "Ces projets juridiques sont des contenus provisoires de démarrage et doivent être examinés par un conseiller juridique qualifié avant un lancement public à grande échelle.",
 
+  "metadata.flightResults.title": "Résultats de vols",
+  "metadata.flightResults.description": "Comparez les options de vol disponibles et continuez avec le fournisseur pour confirmer les prix finaux et les règles tarifaires.",
+  "metadata.flightDetails.title": "Détails du vol",
+  "metadata.flightDetails.description": "Consultez les détails du vol, les informations de redirection fournisseur et le contexte tarifaire avant de poursuivre votre voyage.",
+  "metadata.hotelResults.title": "Résultats d’hôtels",
+  "metadata.hotelResults.description": "Comparez les options d’hôtel disponibles et continuez avec le fournisseur pour confirmer les prix finaux, la disponibilité, les frais et les règles d’annulation.",
+
 };
