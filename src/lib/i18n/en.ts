@@ -2313,6 +2313,7 @@ export const translations: TranslationDictionary = {
     "Use the Customer Support page and include your account email, what you were trying to do, and any route, hotel, or provider details that may help us review the issue.",
   serviceGuaranteeHelpCardTitle: "Need help with your account or search?",
   serviceGuaranteeSupportCta: "Contact Customer Support",
+  contactMetadataTitle: "Contact Kurioticket",
   supportEyebrow: "Kurioticket help desk",
   supportTitle: "Customer support",
   supportBeforeContactHeading: "Before you contact us",

@@ -3,6 +3,7 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  contactMetadataTitle: "Kurioticket kontaktieren",
   privacyPageTitle: "Datenschutzrichtlinie",
   privacyPageEyebrow: "Kurioticket-Datenschutz",
   privacyHeroTitle: "Datenschutzrichtlinie",

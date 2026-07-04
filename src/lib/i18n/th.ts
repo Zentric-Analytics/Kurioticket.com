@@ -3,6 +3,7 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  contactMetadataTitle: "ติดต่อ Kurioticket",
   privacyPageTitle: "นโยบายความเป็นส่วนตัว",
   privacyPageEyebrow: "Kurioticket privacy",
   privacyHeroTitle: "นโยบายความเป็นส่วนตัว",
