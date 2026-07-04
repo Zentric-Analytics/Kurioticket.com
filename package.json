@@ -20,6 +20,7 @@
     "prebuild": "npm run check:conflicts",
     "check:homepage-destination-prices": "node scripts/check-homepage-destination-prices.mjs",
     "verify:currencies": "node scripts/verify-currency-coverage.mjs",
+    "audit:i18n": "JITI_TSCONFIG_PATHS=true node scripts/audit-i18n-coverage-v2.mjs",
     "audit:images": "node scripts/audit-images.mjs"
   },
   "dependencies": {
