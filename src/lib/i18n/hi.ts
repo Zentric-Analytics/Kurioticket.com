@@ -1431,6 +1431,18 @@ export const translations: TranslationDictionary = {
   "legal.refundBookingDisclaimer.sections.refunds.paragraph2": "Kurioticket सहायता आपको प्लेटफ़ॉर्म उपयोग और यात्रा मार्गदर्शन की सीमाएँ समझने में मदद कर सकती है, लेकिन पार्टनर या एयरलाइन नीतियों को बदल नहीं सकती।",
   "legal.refundBookingDisclaimer.developerNote": "ये कानूनी मसौदे स्टार्टअप प्लेसहोल्डर हैं और बड़े पैमाने पर सार्वजनिक लॉन्च से पहले योग्य कानूनी सलाहकार द्वारा समीक्षा किए जाने चाहिए।",
 
+  "legal.priceAvailabilityDisclaimer.title": "कीमत और उपलब्धता अस्वीकरण",
+  "legal.priceAvailabilityDisclaimer.summary": "बताता है कि यात्रा कीमतें, किराया नियम, कमरे की दरें और उपलब्धता क्यों बदल सकती हैं।",
+  "legal.priceAvailabilityDisclaimer.lastUpdatedDate": "11 मई 2026",
+  "legal.priceAvailabilityDisclaimer.tableOfContents": "विषय सूची",
+  "legal.priceAvailabilityDisclaimer.lastUpdated": "अंतिम अपडेट: 11 मई 2026",
+  "legal.priceAvailabilityDisclaimer.sections.change.title": "कीमतें बदल सकती हैं",
+  "legal.priceAvailabilityDisclaimer.sections.change.paragraph1": "उड़ान और होटल की कीमतें, कर, शुल्क, सामान नियम, केबिन उपलब्धता, कमरे, कार्यक्रम और नीतियाँ तेज़ी से बदल सकती हैं और प्रदाता के खरीद पृष्ठ पर पहुँचने तक अलग हो सकती हैं।",
+  "legal.priceAvailabilityDisclaimer.sections.change.paragraph2": "Kurioticket मौजूदा प्रदाता डेटा की तुलना करने का लक्ष्य रखता है, लेकिन प्रदाता की देरी, दर सीमाएँ, कैश विंडो, मुद्रा रूपांतरण, पार्टनर नियम और उपयोगकर्ता चयन प्रदर्शित जानकारी को प्रभावित कर सकते हैं।",
+  "legal.priceAvailabilityDisclaimer.sections.verify.title": "भुगतान से पहले सत्यापित करें",
+  "legal.priceAvailabilityDisclaimer.sections.verify.paragraph1": "खरीदारी से पहले हमेशा बाहरी प्रदाता साइट की समीक्षा करें। बाहरी प्रदाता साइट अंतिम कीमत, उपलब्धता, किराया शर्तों, कमरे की शर्तों और खरीद शर्तों का आधिकारिक स्रोत है।",
+  "legal.priceAvailabilityDisclaimer.developerNote": "ये कानूनी मसौदे स्टार्टअप प्लेसहोल्डर हैं और बड़े पैमाने पर सार्वजनिक लॉन्च से पहले योग्य कानूनी सलाहकार द्वारा समीक्षा किए जाने चाहिए।",
+
   "legal.affiliateDisclosure.title": "एफ़िलिएट प्रकटीकरण",
   "legal.affiliateDisclosure.summary": "जब उपयोगकर्ता भरोसेमंद पार्टनर पर क्लिक या बुक करते हैं, तो Kurioticket कमीशन कैसे कमा सकता है।",
   "legal.affiliateDisclosure.lastUpdatedDate": "11 मई 2026",

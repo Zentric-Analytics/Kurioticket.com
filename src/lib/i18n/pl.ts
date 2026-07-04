@@ -1716,6 +1716,7 @@ export const translations: TranslationDictionary = {
   "legal.priceAvailabilityDisclaimer.title": "Zastrzeżenie dotyczące cen i dostępności",
   "legal.priceAvailabilityDisclaimer.summary": "Wyjaśnia, dlaczego ceny podróży, zasady taryf, stawki za pokoje i dostępność mogą się zmieniać.",
   "legal.priceAvailabilityDisclaimer.lastUpdatedDate": "May 11, 2026",
+  "legal.priceAvailabilityDisclaimer.lastUpdated": "Ostatnia aktualizacja: 11 maja 2026",
   "legal.priceAvailabilityDisclaimer.tableOfContents": "SPIS TREŚCI",
   "legal.priceAvailabilityDisclaimer.sections.change.title": "Ceny mogą się zmieniać",
   "legal.priceAvailabilityDisclaimer.sections.change.paragraph1": "Ceny lotów i hoteli, podatki, opłaty, zasady bagażu, dostępność kabin, pokoje, rozkłady i zasady mogą szybko się zmieniać i mogą różnić się w chwili przejścia na stronę zakupu dostawcy.",

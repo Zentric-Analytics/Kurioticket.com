@@ -1769,6 +1769,7 @@ export const translations: TranslationDictionary = {
   "legal.priceAvailabilityDisclaimer.summary":
     "อธิบายเหตุผลที่ราคาการเดินทาง กฎค่าโดยสาร อัตราค่าห้องพัก และความพร้อมให้บริการอาจเปลี่ยนแปลงได้",
   "legal.priceAvailabilityDisclaimer.lastUpdatedDate": "May 11, 2026",
+  "legal.priceAvailabilityDisclaimer.lastUpdated": "อัปเดตล่าสุด: 11 พฤษภาคม 2026",
   "legal.priceAvailabilityDisclaimer.tableOfContents": "สารบัญ",
   "legal.priceAvailabilityDisclaimer.sections.change.title":
     "ราคาอาจเปลี่ยนแปลงได้",

@@ -1438,6 +1438,18 @@ export const translations: TranslationDictionary = {
   "legal.refundBookingDisclaimer.sections.refunds.paragraph2": "Kurioticket desteği, platform kullanımını ve seyahat rehberliği sınırlarını anlamanıza yardımcı olabilir, ancak iş ortağı veya havayolu politikalarını geçersiz kılamaz.",
   "legal.refundBookingDisclaimer.developerNote": "Bu yasal taslaklar startup aşaması için yer tutucudur ve büyük ölçekli genel lansmandan önce nitelikli hukuk danışmanları tarafından incelenmelidir.",
 
+  "legal.priceAvailabilityDisclaimer.title": "Fiyat ve Müsaitlik Sorumluluk Reddi",
+  "legal.priceAvailabilityDisclaimer.summary": "Seyahat fiyatlarının, ücret kurallarının, oda fiyatlarının ve müsaitliğin neden değişebileceğini açıklar.",
+  "legal.priceAvailabilityDisclaimer.lastUpdatedDate": "11 Mayıs 2026",
+  "legal.priceAvailabilityDisclaimer.tableOfContents": "İÇİNDEKİLER",
+  "legal.priceAvailabilityDisclaimer.lastUpdated": "Son güncelleme: 11 Mayıs 2026",
+  "legal.priceAvailabilityDisclaimer.sections.change.title": "Fiyatlar Değişebilir",
+  "legal.priceAvailabilityDisclaimer.sections.change.paragraph1": "Uçuş ve otel fiyatları, vergiler, ücretler, bagaj kuralları, kabin müsaitliği, odalar, programlar ve politikalar hızla değişebilir ve sağlayıcının satın alma sayfasına ulaştığınızda farklı olabilir.",
+  "legal.priceAvailabilityDisclaimer.sections.change.paragraph2": "Kurioticket güncel sağlayıcı verilerini karşılaştırmayı amaçlar, ancak sağlayıcı gecikmeleri, hız sınırları, önbellek süreleri, para birimi dönüşümü, iş ortağı kuralları ve kullanıcı seçimleri görüntülenen bilgileri etkileyebilir.",
+  "legal.priceAvailabilityDisclaimer.sections.verify.title": "Ödemeden Önce Doğrulayın",
+  "legal.priceAvailabilityDisclaimer.sections.verify.paragraph1": "Satın almadan önce her zaman harici sağlayıcı sitesini inceleyin. Harici sağlayıcı sitesi nihai fiyat, müsaitlik, ücret koşulları, oda koşulları ve satın alma şartları için yetkili kaynaktır.",
+  "legal.priceAvailabilityDisclaimer.developerNote": "Bu yasal taslaklar startup aşaması için yer tutucudur ve büyük ölçekli genel lansmandan önce nitelikli hukuk danışmanları tarafından incelenmelidir.",
+
   "legal.affiliateDisclosure.title": "Satış Ortaklığı Açıklaması",
   "legal.affiliateDisclosure.summary": "Kullanıcılar güvenilir iş ortakları üzerinden tıkladığında veya rezervasyon yaptığında Kurioticket’in nasıl komisyon kazanabileceğini açıklar.",
   "legal.affiliateDisclosure.lastUpdatedDate": "11 Mayıs 2026",
