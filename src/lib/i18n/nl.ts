@@ -2084,6 +2084,7 @@ flightLandingRouteAriaLabel: "Vluchten zoeken van {{origin}} naar {{destination}
   "accountDashboard.preferences.savePreferences": "Voorkeuren opslaan",
   "accountDashboard.security.eyebrow": "BEVEILIGING",
   "accountDashboard.security.title": "Beveiligingsinstellingen",
+  "accountDashboard.settings.metadataTitle": "Accountinstellingen",
   "accountDashboard.security.description":
     "Werk je wachtwoord bij en beheer je accountbeveiliging.",
   "accountDashboard.security.passkeys.title": "Toegangssleutels",

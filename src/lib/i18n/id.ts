@@ -466,6 +466,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.personalDetails.stateProvinceRegion": "Negara bagian / Provinsi / Wilayah",
   "accountDashboard.personalDetails.postcodeZip": "Kode pos",
   "accountDashboard.security.title": "Pengaturan keamanan",
+  "accountDashboard.settings.metadataTitle": "Pengaturan akun",
   "accountDashboard.security.description": "Kelola masuk dan keamanan akun untuk akun Kurioticket Anda.",
   "accountDashboard.security.password.title": "Kata sandi",
   "accountDashboard.security.password.description": "Ubah kata sandi yang digunakan untuk masuk ke akun Anda.",

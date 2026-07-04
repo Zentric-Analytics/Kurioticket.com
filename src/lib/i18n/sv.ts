@@ -163,6 +163,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.personalDetails.stateProvinceRegion": "Delstat / provins / region",
   "accountDashboard.personalDetails.postcodeZip": "Postnummer",
   "accountDashboard.security.title": "Säkerhetsinställningar",
+  "accountDashboard.settings.metadataTitle": "Kontoinställningar",
   "accountDashboard.security.description": "Hantera inloggning och kontosäkerhet för ditt Kurioticket-konto.",
   "accountDashboard.security.password.title": "Lösenord",
   "accountDashboard.security.password.description": "Ändra lösenordet som används för att logga in på ditt konto.",

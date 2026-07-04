@@ -305,6 +305,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.personalDetails.addAddress": "अपना पता जोड़ें",
   "accountDashboard.personalDetails.edit": "संपादित करें",
   "accountDashboard.security.title": "सुरक्षा सेटिंग्स",
+  "accountDashboard.settings.metadataTitle": "खाता सेटिंग्स",
   "accountDashboard.security.description":
     "अपना पासवर्ड अपडेट करें और खाते की सुरक्षा प्रबंधित करें।",
   "accountDashboard.security.passkeys.title": "पासकी",

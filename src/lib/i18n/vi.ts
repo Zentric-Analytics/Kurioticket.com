@@ -363,6 +363,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.personalDetails.stateProvinceRegion": "Bang / Tỉnh / Khu vực",
   "accountDashboard.personalDetails.postcodeZip": "Mã bưu chính / ZIP",
   "accountDashboard.security.title": "Cài đặt bảo mật",
+  "accountDashboard.settings.metadataTitle": "Cài đặt tài khoản",
   "accountDashboard.security.description":
     "Quản lý đăng nhập và bảo mật tài khoản Kurioticket của bạn.",
   "accountDashboard.security.password.title": "Mật khẩu",

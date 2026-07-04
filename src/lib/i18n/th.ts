@@ -263,6 +263,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.personalDetails.stateProvinceRegion": "รัฐ / จังหวัด / ภูมิภาค",
   "accountDashboard.personalDetails.postcodeZip": "รหัสไปรษณีย์",
   "accountDashboard.security.title": "การตั้งค่าความปลอดภัย",
+  "accountDashboard.settings.metadataTitle": "การตั้งค่าบัญชี",
   "accountDashboard.security.description":
     "จัดการการเข้าสู่ระบบและความปลอดภัยของบัญชี Kurioticket ของคุณ",
   "accountDashboard.security.password.title": "รหัสผ่าน",

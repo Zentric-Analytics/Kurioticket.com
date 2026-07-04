@@ -3161,6 +3161,7 @@ export const translations: TranslationDictionary = {
   "legal.dataDeletionPolicy.developerNote": "Estes rascunhos legais são placeholders iniciais e devem ser revisados por assessoria jurídica qualificada antes de um lançamento público em grande escala.",
   "accountDashboard.security.eyebrow": "SEGURANÇA",
   "accountDashboard.security.title": "Configurações de segurança",
+  "accountDashboard.settings.metadataTitle": "Configurações da conta",
   "accountDashboard.security.description":
     "Atualize sua senha e gerencie a segurança da conta.",
   "accountDashboard.security.passkeys.title": "Chaves de acesso",

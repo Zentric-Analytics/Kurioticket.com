@@ -1622,6 +1622,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.personalDetails.addAddress": "住所を追加",
   "accountDashboard.personalDetails.edit": "編集",
   "accountDashboard.security.title": "セキュリティ設定",
+  "accountDashboard.settings.metadataTitle": "アカウント設定",
   "accountDashboard.security.description": "パスワードを更新し、アカウントのセキュリティを管理します。",
   "accountDashboard.security.passkeys.title": "パスキー",
   "accountDashboard.security.passkeys.description": "パスワードを覚えなくても安全にサインインできます。",
