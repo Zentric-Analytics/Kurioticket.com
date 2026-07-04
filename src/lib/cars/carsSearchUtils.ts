@@ -14,7 +14,6 @@ export type CarsFormErrors = Partial<
 >;
 
 export const defaultDriverAge = "18-70";
-const defaultDriverAgeLabel = "Any age 18–70";
 const minimumDriverAge = 18;
 const maximumDriverAge = 70;
 
@@ -130,8 +129,7 @@ const normalizeDriverAge = (value: string) => {
     : defaultDriverAge;
 };
 
-export const getDriverAgeOptionLabel = (age: string) =>
-  age === defaultDriverAge ? defaultDriverAgeLabel : age;
+export const getDriverAgeOptionLabel = (age: string) => age;
 
 export const buildCarResultsHref = ({
   pickupLocation,

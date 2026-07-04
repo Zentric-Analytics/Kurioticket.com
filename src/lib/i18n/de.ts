@@ -1749,6 +1749,7 @@ flightLandingRouteAriaLabel:
     "{pickupTime} Abholung — {returnTime} Rückgabe",
   "carsSearch.driverAgeLabel": "ALTER DES FAHRERS",
   "carsSearch.driverAgeAnyAge": "Jedes Alter",
+  "carsSearch.driverAgeAnyAgeRange": "Beliebiges Alter 18–70",
   "carsSearch.clearPickupLocation": "Abholort löschen",
   "carsSearch.clearReturnLocation": "Rückgabeort löschen",
   "carsSearch.chooseRentalDatesAria":

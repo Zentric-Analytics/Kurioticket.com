@@ -1289,6 +1289,7 @@ export const translations: TranslationDictionary = {
   "carsSearch.pickupReturnTimeSummary": "{pickupTime} pickup — {returnTime} return",
   "carsSearch.driverAgeLabel": "Driver age",
   "carsSearch.driverAgeAnyAge": "Any age",
+  "carsSearch.driverAgeAnyAgeRange": "Any age 18–70",
   "carsSearch.clearPickupLocation": "Clear pickup location",
   "carsSearch.clearReturnLocation": "Clear return location",
   "carsSearch.chooseRentalDatesAria": "Choose rental pickup and return dates",

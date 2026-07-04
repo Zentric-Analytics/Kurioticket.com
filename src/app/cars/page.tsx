@@ -726,7 +726,7 @@ function CarsSearchBar({
                 {driverAgeOptions.map((age) => (
                   <option key={age} value={age}>
                     {age === defaultDriverAge
-                      ? t("carsSearch.driverAgeAnyAge")
+                      ? t("carsSearch.driverAgeAnyAgeRange")
                       : getDriverAgeOptionLabel(age)}
                   </option>
                 ))}

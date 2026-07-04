@@ -1603,6 +1603,7 @@ export const translations: TranslationDictionary = {
   'carsSearch.pickupReturnTimeSummary': '{pickupTime} upphämtning — {returnTime} återlämning',
   'carsSearch.driverAgeLabel': 'FÖRARENS ÅLDER',
   'carsSearch.driverAgeAnyAge': 'Valfri ålder',
+  'carsSearch.driverAgeAnyAgeRange': 'Valfri ålder 18–70',
   'carsSearch.clearPickupLocation': 'Rensa upphämtningsplats',
   'carsSearch.clearReturnLocation': 'Rensa återlämningsplats',
   'carsSearch.chooseRentalDatesAria': 'Välj upphämtnings- och återlämningsdatum för hyrbil',

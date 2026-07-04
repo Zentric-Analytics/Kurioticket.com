@@ -1653,6 +1653,7 @@ export const translations: TranslationDictionary = {
   "carsSearch.pickupReturnTimeSummary": "{pickupTime} पिकअप — {returnTime} वापसी",
   "carsSearch.driverAgeLabel": "ड्राइवर की उम्र",
   "carsSearch.driverAgeAnyAge": "कोई भी उम्र",
+  "carsSearch.driverAgeAnyAgeRange": "कोई भी आयु 18–70",
   "carsSearch.clearPickupLocation": "पिकअप स्थान साफ़ करें",
   "carsSearch.clearReturnLocation": "वापसी स्थान साफ़ करें",
   "carsSearch.chooseRentalDatesAria": "रेंटल पिकअप और वापसी तिथियाँ चुनें",

@@ -2192,6 +2192,7 @@ flightLandingRouteAriaLabel: "Cerca voli da {{origin}} a {{destination}}",
     "Ritiro {pickupTime} — riconsegna {returnTime}",
   "carsSearch.driverAgeLabel": "ETÀ DEL CONDUCENTE",
   "carsSearch.driverAgeAnyAge": "Qualsiasi età",
+  "carsSearch.driverAgeAnyAgeRange": "Qualsiasi età 18–70",
   "carsSearch.clearPickupLocation": "Cancella luogo di ritiro",
   "carsSearch.clearReturnLocation": "Cancella luogo di riconsegna",
   "carsSearch.chooseRentalDatesAria":

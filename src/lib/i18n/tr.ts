@@ -159,6 +159,7 @@ export const translations: TranslationDictionary = {
   "carsSearch.pickupReturnTimeSummary": "{pickupTime} alış — {returnTime} iade",
   "carsSearch.driverAgeLabel": "Sürücü yaşı",
   "carsSearch.driverAgeAnyAge": "Her yaş",
+  "carsSearch.driverAgeAnyAgeRange": "Her yaş 18–70",
   "carsSearch.clearPickupLocation": "Alış konumunu temizle",
   "carsSearch.clearReturnLocation": "İade konumunu temizle",
   "carsSearch.chooseRentalDatesAria": "Alış ve iade kiralama tarihlerini seç",

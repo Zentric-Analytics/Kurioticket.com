@@ -1254,6 +1254,7 @@ flightLandingRouteAriaLabel: "Vluchten zoeken van {{origin}} naar {{destination}
   "carsSearch.pickupReturnTimeSummary": "{pickupTime} ophalen — {returnTime} terugbrengen",
   "carsSearch.driverAgeLabel": "Leeftijd bestuurder",
   "carsSearch.driverAgeAnyAge": "Elke leeftijd",
+  "carsSearch.driverAgeAnyAgeRange": "Elke leeftijd 18–70",
   "carsSearch.previousMonth": "Vorige maand",
   "carsSearch.previousMonthShort": "Vorige",
   "carsSearch.nextMonth": "Volgende maand",
