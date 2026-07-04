@@ -1493,23 +1493,30 @@ export const translations: TranslationDictionary = {
   "carsTripStyle.economy.cta": "Bắt đầu tìm xe phổ thông",
   "carsTripStyle.economy.ariaLabel":
     "Bắt đầu tìm xe phổ thông từ điểm nhận xe ở trung tâm thành phố",
+  "carsTripStyle.economy.imageAlt":
+    "Xe nhỏ gọn trong thành phố di chuyển giữa các tòa nhà trung tâm",
   "carsTripStyle.suv.title": "SUV",
   "carsTripStyle.suv.subtitle":
     "Không gian cho chuyến đi gia đình, hành lý và hành trình dài hơn",
   "carsTripStyle.suv.cta": "Mở tìm kiếm thuê SUV",
   "carsTripStyle.suv.ariaLabel": "Mở tìm kiếm thuê SUV từ điểm nhận xe tại sân bay",
+  "carsTripStyle.suv.imageAlt": "SUV chạy trên con đường rộng gần núi",
   "carsTripStyle.luxury.title": "Xe sang",
   "carsTripStyle.luxury.subtitle":
     "Ngữ cảnh tìm kiếm cao cấp cho công tác hoặc chuyến đi đặc biệt",
   "carsTripStyle.luxury.cta": "Lên kế hoạch tìm xe sang",
   "carsTripStyle.luxury.ariaLabel":
     "Lên kế hoạch tìm xe sang từ điểm nhận xe gần khu khách sạn",
+  "carsTripStyle.luxury.imageAlt":
+    "Xe cao cấp đỗ gần một tòa nhà hiện đại trang nhã",
   "carsTripStyle.van.title": "Xe van",
   "carsTripStyle.van.subtitle":
     "Ngữ cảnh tìm kiếm cho du lịch nhóm và hành lý gia đình",
   "carsTripStyle.van.cta": "Tìm xe van cho chuyến đi nhóm",
   "carsTripStyle.van.ariaLabel":
     "Tìm xe van cho chuyến đi nhóm từ điểm nhận xe tại sân bay",
+  "carsTripStyle.van.imageAlt":
+    "Xe van chở khách di chuyển qua con đường phong cảnh sáng sủa",
   "carsTrust.0.title": "Được xây dựng cho chuyến đi trọn vẹn",
   "carsTrust.0.description":
     "Lập kế hoạch chuyến bay, chỗ nghỉ và di chuyển mặt đất trong một quy trình Kurioticket.",
@@ -1522,18 +1529,25 @@ export const translations: TranslationDictionary = {
   "carsPickup.Airport.title": "Nhận xe tại sân bay",
   "carsPickup.Airport.subtitle": "Bắt đầu từ các điểm đến của sân bay lớn",
   "carsPickup.Airport.ariaLabel": "Mở kết quả ô tô cho nhận xe tại sân bay",
+  "carsPickup.Airport.imageAlt": "Máy bay đỗ tại cổng sân bay lúc hoàng hôn",
   "carsPickup.City center.title": "Nhận xe ở trung tâm thành phố",
   "carsPickup.City center.subtitle":
     "Nhận xe gần khách sạn trung tâm và khu thương mại",
   "carsPickup.City center.ariaLabel":
     "Mở kết quả ô tô cho nhận xe ở trung tâm thành phố",
+  "carsPickup.City center.imageAlt":
+    "Ô tô di chuyển qua đường phố giữa các tòa nhà cao tầng",
   "carsPickup.Train station.title": "Nhận xe tại ga tàu",
   "carsPickup.Train station.subtitle": "Tiếp tục chuyến đi sau khi đến bằng tàu",
   "carsPickup.Train station.ariaLabel": "Mở kết quả ô tô cho nhận xe tại ga tàu",
+  "carsPickup.Train station.imageAlt":
+    "Sân ga tàu với đường ray dẫn vào một nhà ga trong thành phố",
   "carsPickup.Hotel area.title": "Nhận xe gần khu khách sạn",
   "carsPickup.Hotel area.subtitle":
     "Lên kế hoạch nhận xe gần nơi bạn lưu trú",
   "carsPickup.Hotel area.ariaLabel": "Mở kết quả ô tô cho nhận xe gần khu khách sạn",
+  "carsPickup.Hotel area.imageAlt":
+    "Mặt ngoài khách sạn với cây cọ và lối xe vào",
   carsPickupPointsTitle: "Bắt đầu với các điểm nhận xe phổ biến",
   carsPickupPointsBody:
     "Chọn kiểu nhận xe và chúng tôi sẽ mở trang kết quả ô tô với chi tiết tìm kiếm đã sẵn sàng.",
