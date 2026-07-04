@@ -3494,4 +3494,14 @@ export const translations: TranslationDictionary = {
   "flightResults.duration.hoursOnly": "{{hours}} h",
   "flightResults.duration.hoursMinutes": "{{hours}} h {{minutes}} min",
 
+  "deals.searchButton": "Buscar ofertas",
+  chooseDestination: "Escolher destino",
+  chooseOrigin: "Escolher origem",
+  clearDestination: "Limpar destino",
+  clearOrigin: "Limpar origem",
+  noMatchingAirportsOrCities: "Nenhum aeroporto ou cidade correspondente",
+  searchAirportsAndCities: "Pesquisar aeroportos e cidades",
+  searchAirportsOrCities: "Pesquisar aeroportos ou cidades",
+  searchingAirportsAndCities: "Pesquisando aeroportos e cidades…",
+  startTypingCityOrAirport: "Comece a digitar o nome de uma cidade ou aeroporto para ver sugestões.",
 };

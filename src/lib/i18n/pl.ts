@@ -2025,4 +2025,13 @@ export const translations: TranslationDictionary = {
   "flightResults.duration.hoursOnly": "{{hours}} godz.",
   "flightResults.duration.hoursMinutes": "{{hours}} godz. {{minutes}} min",
 
+  chooseDestination: "Wybierz miejsce docelowe",
+  chooseOrigin: "Wybierz miejsce wylotu",
+  clearDestination: "Wyczyść miejsce docelowe",
+  clearOrigin: "Wyczyść miejsce wylotu",
+  noMatchingAirportsOrCities: "Brak pasujących lotnisk lub miast",
+  searchAirportsAndCities: "Szukaj lotnisk i miast",
+  searchAirportsOrCities: "Szukaj lotnisk lub miast",
+  searchingAirportsAndCities: "Wyszukiwanie lotnisk i miast…",
+  startTypingCityOrAirport: "Zacznij wpisywać nazwę miasta lub lotniska, aby zobaczyć sugestie.",
 };

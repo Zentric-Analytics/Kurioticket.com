@@ -1878,4 +1878,14 @@ export const translations: TranslationDictionary = {
   "flightResults.duration.hoursOnly": "{{hours}} tim",
   "flightResults.duration.hoursMinutes": "{{hours}} tim {{minutes}} min",
 
+  chooseDestination: "Välj destination",
+  chooseOrigin: "Välj avreseort",
+  clearDestination: "Rensa destination",
+  clearOrigin: "Rensa avreseort",
+  noMatchingAirportsOrCities: "Inga matchande flygplatser eller städer",
+  searchAirportsAndCities: "Sök flygplatser och städer",
+  searchAirportsOrCities: "Sök flygplatser eller städer",
+  searchingAirportsAndCities: "Söker efter flygplatser och städer…",
+  searchingHotels: "Söker hotell...",
+  startTypingCityOrAirport: "Börja skriva namnet på en stad eller flygplats för att se förslag.",
 };

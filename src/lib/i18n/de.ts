@@ -2710,4 +2710,6 @@ flightLandingRouteAriaLabel:
   "flightResults.duration.hoursOnly": "{{hours}} Std.",
   "flightResults.duration.hoursMinutes": "{{hours}} Std. {{minutes}} Min.",
 
+  "deals.searchButton": "Angebote suchen",
+  searchingFlights: "Flüge werden gesucht...",
 };

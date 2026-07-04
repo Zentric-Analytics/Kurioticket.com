@@ -2038,4 +2038,14 @@ export const translations: TranslationDictionary = {
   "flightResults.duration.hoursOnly": "{{hours}}小时",
   "flightResults.duration.hoursMinutes": "{{hours}}小时{{minutes}}分钟",
 
+  "deals.searchButton": "搜索优惠",
+  chooseDestination: "选择目的地",
+  chooseOrigin: "选择出发地",
+  clearDestination: "清除目的地",
+  clearOrigin: "清除出发地",
+  noMatchingAirportsOrCities: "没有匹配的机场或城市",
+  searchAirportsAndCities: "搜索机场和城市",
+  searchAirportsOrCities: "搜索机场或城市",
+  searchingAirportsAndCities: "正在搜索机场和城市…",
+  startTypingCityOrAirport: "开始输入城市或机场名称以查看建议。",
 };

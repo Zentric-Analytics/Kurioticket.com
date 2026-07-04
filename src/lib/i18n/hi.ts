@@ -1990,4 +1990,16 @@ export const translations: TranslationDictionary = {
   "flightResults.duration.hoursOnly": "{{hours}} घंटे",
   "flightResults.duration.hoursMinutes": "{{hours}} घंटे {{minutes}} मिनट",
 
+  "deals.searchButton": "डील खोजें",
+  chooseDestination: "गंतव्य चुनें",
+  chooseOrigin: "प्रस्थान स्थान चुनें",
+  clearDestination: "गंतव्य साफ़ करें",
+  clearOrigin: "प्रस्थान स्थान साफ़ करें",
+  noMatchingAirportsOrCities: "कोई मेल खाते हवाई अड्डे या शहर नहीं",
+  searchAirportsAndCities: "हवाई अड्डे और शहर खोजें",
+  searchAirportsOrCities: "हवाई अड्डे या शहर खोजें",
+  searchingAirportsAndCities: "हवाई अड्डे और शहर खोजे जा रहे हैं…",
+  searchingFlights: "फ़्लाइट खोजी जा रही हैं...",
+  searchingHotels: "होटल खोजे जा रहे हैं...",
+  startTypingCityOrAirport: "सुझाव देखने के लिए शहर या हवाई अड्डे का नाम लिखना शुरू करें।",
 };

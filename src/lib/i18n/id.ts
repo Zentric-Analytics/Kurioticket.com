@@ -1799,4 +1799,15 @@ export const translations: TranslationDictionary = {
   "flightResults.duration.hoursOnly": "{{hours}} jam",
   "flightResults.duration.hoursMinutes": "{{hours}} jam {{minutes}} mnt",
 
+  chooseDestination: "Pilih tujuan",
+  chooseOrigin: "Pilih asal",
+  clearDestination: "Hapus tujuan",
+  clearOrigin: "Hapus asal",
+  noMatchingAirportsOrCities: "Tidak ada bandara atau kota yang cocok",
+  searchAirportsAndCities: "Cari bandara dan kota",
+  searchAirportsOrCities: "Cari bandara atau kota",
+  searchingAirportsAndCities: "Mencari bandara dan kota…",
+  searchingFlights: "Mencari penerbangan...",
+  searchingHotels: "Mencari hotel...",
+  startTypingCityOrAirport: "Mulai ketik nama kota atau bandara untuk melihat saran.",
 };

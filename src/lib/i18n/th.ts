@@ -2096,4 +2096,15 @@ export const translations: TranslationDictionary = {
   "flightResults.duration.hoursOnly": "{{hours}} ชม.",
   "flightResults.duration.hoursMinutes": "{{hours}} ชม. {{minutes}} นาที",
 
+  chooseDestination: "เลือกจุดหมายปลายทาง",
+  chooseOrigin: "เลือกต้นทาง",
+  clearDestination: "ล้างจุดหมายปลายทาง",
+  clearOrigin: "ล้างต้นทาง",
+  noMatchingAirportsOrCities: "ไม่พบสนามบินหรือเมืองที่ตรงกัน",
+  searchAirportsAndCities: "ค้นหาสนามบินและเมือง",
+  searchAirportsOrCities: "ค้นหาสนามบินหรือเมือง",
+  searchingAirportsAndCities: "กำลังค้นหาสนามบินและเมือง…",
+  searchingFlights: "กำลังค้นหาเที่ยวบิน...",
+  searchingHotels: "กำลังค้นหาโรงแรม...",
+  startTypingCityOrAirport: "เริ่มพิมพ์ชื่อเมืองหรือสนามบินเพื่อดูคำแนะนำ",
 };
