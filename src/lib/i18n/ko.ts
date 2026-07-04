@@ -3,6 +3,10 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "brandedLoading.hotel.title": "Finding the best stays for you",
+  "brandedLoading.hotel.checkingAvailabilityAndRates": "Checking availability and rates...",
+  "brandedLoading.hotel.comparingHotelsAndRooms": "Comparing hotels and room options...",
+  "brandedLoading.hotel.preparingStays": "Preparing your stays...",
   contactMetadataTitle: "Kurioticket에 문의",
   privacyPageTitle: "개인정보 처리방침",
   privacyPageEyebrow: "Kurioticket 개인정보",
