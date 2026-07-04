@@ -411,6 +411,7 @@ export const translations: TranslationDictionary = {
   supportFormMessagePlaceholder: "请分享路线、酒店、提醒或账户相关背景。",
   supportFormSubmit: "发送请求",
 
+  forgotPasswordMetadataTitle: "忘记密码",
   forgotPasswordTitle: "重置密码",
   forgotPasswordSubtitle: "输入你的电子邮箱，我们会发送重置密码的说明。",
   forgotPasswordEmailLabel: "电子邮箱",
@@ -1871,6 +1872,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.trips.status.upcoming": "即将出行",
   "newsletter.accountEmailLine": "使用你的账户邮箱订阅：{{email}}。",
   "newsletter.manageEmailPreferences": "管理电子邮件偏好设置",
+  emailPreferencesMetadataTitle: "电子邮件偏好设置",
   "emailUpdates.eyebrow": "KURIOTICKET 更新",
   "emailUpdates.title": "管理电子邮件更新",
   "emailUpdates.description": "选择 Kurioticket 是否可以向此电子邮件地址发送旅行更新和产品新闻。",

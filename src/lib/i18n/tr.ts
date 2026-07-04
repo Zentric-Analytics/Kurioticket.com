@@ -1184,6 +1184,7 @@ export const translations: TranslationDictionary = {
   verifyLoginAgainLink: "Tekrar giriş yap",
   loginResendIn: "{{seconds}} sn içinde yeniden gönder",
   loginUseDifferentDetails: "Farklı bilgiler kullan",
+  forgotPasswordMetadataTitle: "Şifremi unuttum",
   forgotPasswordTitle: "Şifrenizi sıfırlayın",
   forgotPasswordSubtitle:
     "E-postanızı girin; şifrenizi sıfırlamak için talimatları göndereceğiz.",
@@ -1957,6 +1958,7 @@ export const translations: TranslationDictionary = {
   "legal.index.heroLabel": "Yasal Bilgiler",
   "newsletter.accountEmailLine": "Hesap e-postanla abone ol: {{email}}.",
   "newsletter.manageEmailPreferences": "E-posta tercihlerini yönet",
+  emailPreferencesMetadataTitle: "E-posta tercihleri",
   "emailUpdates.eyebrow": "KURIOTICKET GÜNCELLEMELERİ",
   "emailUpdates.title": "E-posta güncellemelerini yönet",
   "emailUpdates.description": "Kurioticket’in bu e-posta adresine seyahat güncellemeleri ve ürün haberleri gönderip gönderemeyeceğini seç.",

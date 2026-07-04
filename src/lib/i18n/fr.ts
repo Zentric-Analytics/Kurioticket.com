@@ -782,6 +782,7 @@ export const translations: TranslationDictionary = {
     "Le rappel de connexion Google a échoué. Veuillez réessayer ou utiliser la connexion par e-mail.",
   loginErrorGoogleGeneric:
     "La connexion avec Google n’a pas pu aboutir. Veuillez réessayer ou utiliser la connexion par e-mail.",
+  forgotPasswordMetadataTitle: "Mot de passe oublié",
   forgotPasswordTitle: "Réinitialisez votre mot de passe",
   forgotPasswordSubtitle:
     "Saisissez votre adresse e-mail et nous vous enverrons les instructions pour réinitialiser votre mot de passe.",
@@ -2605,6 +2606,7 @@ flightLandingRouteAriaLabel:
   "hotelDestination.New York.imageAlt": "Skyline de New York avec le One World Trade Center et le front de mer",
   "newsletter.accountEmailLine": "Abonnez-vous avec l’adresse e-mail de votre compte : {{email}}.",
   "newsletter.manageEmailPreferences": "Gérer les préférences e-mail",
+  emailPreferencesMetadataTitle: "Préférences e-mail",
   "emailUpdates.eyebrow": "ACTUALITÉS KURIOTICKET",
   "emailUpdates.title": "Gérer les mises à jour par e-mail",
   "emailUpdates.description": "Choisissez si Kurioticket peut envoyer des mises à jour de voyage et des actualités produit à cette adresse e-mail.",

@@ -929,6 +929,7 @@ export const translations: TranslationDictionary = {
   verifyLoginAgainLink: "Zaloguj się ponownie",
   loginResendIn: "Wyślij ponownie za {{seconds}} s",
   loginUseDifferentDetails: "Użyj innych danych",
+  forgotPasswordMetadataTitle: "Nie pamiętasz hasła",
   forgotPasswordTitle: "Zresetuj hasło",
   forgotPasswordSubtitle:
     "Wpisz swój adres e-mail, a wyślemy instrukcje resetowania hasła.",
@@ -1901,6 +1902,7 @@ export const translations: TranslationDictionary = {
   "legal.tableOfContents": "SPIS TREŚCI",
   "newsletter.accountEmailLine": "Subskrybuj za pomocą adresu e-mail konta: {{email}}.",
   "newsletter.manageEmailPreferences": "Zarządzaj preferencjami e-mail",
+  emailPreferencesMetadataTitle: "Preferencje e-mail",
   "emailUpdates.eyebrow": "AKTUALIZACJE KURIOTICKET",
   "emailUpdates.title": "Zarządzaj aktualizacjami e-mail",
   "emailUpdates.description": "Wybierz, czy Kurioticket może wysyłać aktualizacje podróży i informacje o produkcie na ten adres e-mail.",

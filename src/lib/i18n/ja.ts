@@ -506,6 +506,7 @@ export const translations: TranslationDictionary = {
   loginForgotPassword: "パスワードをお忘れですか？",
   loginSubmit: "ログイン",
   loginGoogle: "Google で続行",
+  forgotPasswordMetadataTitle: "パスワードをお忘れですか",
   forgotPasswordTitle: "パスワードをリセット",
   forgotPasswordSubtitle:
     "メールアドレスを入力すると、パスワードをリセットするための手順をお送りします。",
@@ -1803,6 +1804,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.trips.status.upcoming": "今後",
   "newsletter.accountEmailLine": "アカウントのメールアドレスで登録：{{email}}。",
   "newsletter.manageEmailPreferences": "メール設定を管理",
+  emailPreferencesMetadataTitle: "メール設定",
   "emailUpdates.eyebrow": "KURIOTICKET の更新情報",
   "emailUpdates.title": "メール更新を管理",
   "emailUpdates.description": "Kurioticket がこのメールアドレスに旅行の更新情報や製品ニュースを送信できるかどうかを選択してください。",

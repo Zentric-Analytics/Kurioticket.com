@@ -713,6 +713,7 @@ export const translations: TranslationDictionary = {
     "Falló la devolución de llamada del inicio de sesión con Google. Inténtalo de nuevo o usa el inicio de sesión con correo electrónico.",
   loginErrorGoogleGeneric:
     "No se pudo completar el inicio de sesión con Google. Inténtalo de nuevo o usa el inicio de sesión con correo electrónico.",
+  forgotPasswordMetadataTitle: "Contraseña olvidada",
   forgotPasswordTitle: "Restablece tu contraseña",
   forgotPasswordSubtitle:
     "Ingresa tu correo electrónico y te enviaremos instrucciones para restablecer tu contraseña.",
@@ -3045,6 +3046,7 @@ export const translations: TranslationDictionary = {
   "hotelDestination.New York.imageAlt": "Horizonte de Nueva York con One World Trade Center y la ribera",
   "newsletter.accountEmailLine": "Suscríbete con el correo electrónico de tu cuenta: {{email}}.",
   "newsletter.manageEmailPreferences": "Gestionar preferencias de correo",
+  emailPreferencesMetadataTitle: "Preferencias de correo electrónico",
   "emailUpdates.eyebrow": "ACTUALIZACIONES DE KURIOTICKET",
   "emailUpdates.title": "Gestionar actualizaciones por correo",
   "emailUpdates.description": "Elige si Kurioticket puede enviar actualizaciones de viaje y novedades del producto a esta dirección de correo electrónico.",

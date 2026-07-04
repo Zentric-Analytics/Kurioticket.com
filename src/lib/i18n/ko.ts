@@ -540,6 +540,7 @@ export const translations: TranslationDictionary = {
   loginStartOverError: "새 코드를 보내기 전에 정보를 확인할 수 있도록 처음부터 다시 시작하세요.",
   loginVerifiedRedirecting: "인증되었습니다. 리디렉션 중...",
   loginProcessing: "정보를 확인하고 인증 코드를 보내는 중...",
+  forgotPasswordMetadataTitle: "비밀번호를 잊으셨나요",
   forgotPasswordTitle: "비밀번호 재설정",
   forgotPasswordSubtitle:
     "이메일을 입력하면 비밀번호 재설정 안내를 보내드립니다.",
@@ -1864,6 +1865,7 @@ export const translations: TranslationDictionary = {
   "hotelTrustProviderBody": "옵션을 선택하면 제공업체로 이동해 최종 가격, 이용 가능 여부, 수수료 및 취소 규정을 확인하세요.",
   "newsletter.accountEmailLine": "계정 이메일로 구독: {{email}}.",
   "newsletter.manageEmailPreferences": "이메일 환경설정 관리",
+  emailPreferencesMetadataTitle: "이메일 환경설정",
   "emailUpdates.eyebrow": "KURIOTICKET 업데이트",
   "emailUpdates.title": "이메일 업데이트 관리",
   "emailUpdates.description": "Kurioticket이 이 이메일 주소로 여행 업데이트와 제품 소식을 보낼 수 있는지 선택하세요.",

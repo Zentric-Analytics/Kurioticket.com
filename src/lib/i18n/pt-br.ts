@@ -684,6 +684,7 @@ export const translations: TranslationDictionary = {
     "Falha no retorno do login com Google. Tente novamente ou use o login por e-mail.",
   loginErrorGoogleGeneric:
     "Não foi possível concluir o login com Google. Tente novamente ou use o login por e-mail.",
+  forgotPasswordMetadataTitle: "Esqueci a senha",
   forgotPasswordTitle: "Redefina sua senha",
   forgotPasswordSubtitle:
     "Insira seu e-mail e enviaremos instruções para redefinir sua senha.",
@@ -3369,6 +3370,7 @@ export const translations: TranslationDictionary = {
   "hotelDestination.New York.imageAlt": "Horizonte de Nova York com o One World Trade Center e a orla",
   "newsletter.accountEmailLine": "Assine com o e-mail da sua conta: {{email}}.",
   "newsletter.manageEmailPreferences": "Gerenciar preferências de e-mail",
+  emailPreferencesMetadataTitle: "Preferências de e-mail",
   "emailUpdates.eyebrow": "ATUALIZAÇÕES DA KURIOTICKET",
   "emailUpdates.title": "Gerenciar atualizações por e-mail",
   "emailUpdates.description": "Escolha se a Kurioticket pode enviar atualizações de viagem e novidades do produto para este endereço de e-mail.",

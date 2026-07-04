@@ -355,6 +355,7 @@ export const translations: TranslationDictionary = {
   loginVerifyLogin: "ยืนยันการเข้าสู่ระบบ",
   loginResendIn: "ส่งอีกครั้งใน {{seconds}} วินาที",
   loginUseDifferentDetails: "ใช้รายละเอียดอื่น",
+  forgotPasswordMetadataTitle: "ลืมรหัสผ่าน",
   forgotPasswordTitle: "รีเซ็ตรหัสผ่านของคุณ",
   forgotPasswordSubtitle:
     "ป้อนอีเมลของคุณ แล้วเราจะส่งคำแนะนำสำหรับรีเซ็ตรหัสผ่านให้",
@@ -1983,6 +1984,7 @@ export const translations: TranslationDictionary = {
   "newsletter.accountEmailLine":
     "สมัครรับข่าวสารด้วยอีเมลบัญชีของคุณ: {{email}}.",
   "newsletter.manageEmailPreferences": "จัดการการตั้งค่าอีเมล",
+  emailPreferencesMetadataTitle: "การตั้งค่าอีเมล",
   resetPasswordInvalidLink: "ลิงก์รีเซ็ตนี้ไม่ถูกต้องหรือหมดอายุแล้ว โปรดขออีเมลรีเซ็ตรหัสผ่านใหม่",
   resetPasswordRequestNew: "ขออีเมลรีเซ็ตใหม่",
   resetPasswordNewPasswordLabel: "รหัสผ่านใหม่",

@@ -1053,6 +1053,7 @@ export const translations: TranslationDictionary = {
   loginResendCode: "कोड फिर भेजें",
   loginResendSuccess: "यदि यह खाता साइन इन कर सकता है, तो हमने नया कोड भेजा है।",
   loginUseDifferentDetails: "अलग विवरण इस्तेमाल करें",
+  forgotPasswordMetadataTitle: "पासवर्ड भूल गए",
   forgotPasswordTitle: "अपना पासवर्ड रीसेट करें",
   forgotPasswordSubtitle:
     "अपना ईमेल दर्ज करें और हम आपको पासवर्ड रीसेट करने के निर्देश भेजेंगे।",
@@ -1832,6 +1833,7 @@ export const translations: TranslationDictionary = {
   "legal.index.documents.partnerRedirectDisclaimer.summary": "जब Kurioticket उपयोगकर्ताओं को एयरलाइंस, होटल, एफ़िलिएट पार्टनर या यात्रा प्रदाताओं पर रीडायरेक्ट करता है तो क्या होता है।",
   "newsletter.accountEmailLine": "अपने खाते के ईमेल से सदस्यता लें: {{email}}.",
   "newsletter.manageEmailPreferences": "ईमेल प्राथमिकताएँ प्रबंधित करें",
+  emailPreferencesMetadataTitle: "ईमेल प्राथमिकताएँ",
   "emailUpdates.eyebrow": "KURIOTICKET अपडेट",
   "emailUpdates.title": "ईमेल अपडेट प्रबंधित करें",
   "emailUpdates.description": "चुनें कि Kurioticket इस ईमेल पते पर यात्रा अपडेट और उत्पाद समाचार भेज सकता है या नहीं।",
