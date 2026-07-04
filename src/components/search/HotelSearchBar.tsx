@@ -137,6 +137,16 @@ const normalizeGuestCount = (value: string | number | undefined) => {
   return Math.max(1, Math.min(12, parsed));
 };
 
+const formatHotelSearchTemplate = (
+  template: string,
+  values: Record<string, string | number>,
+) =>
+  Object.entries(values).reduce(
+    (formatted, [key, value]) =>
+      formatted.replaceAll(`{{${key}}}`, String(value)),
+    template,
+  );
+
 type HotelDestinationSuggestion = {
   id: string;
   name: string;
@@ -318,7 +328,10 @@ export function HotelSearchBar({
     }
 
     if (formattedCheckOut) {
-      return `${formattedCheckIn} — ${formattedCheckOut}`;
+      return formatHotelSearchTemplate(t("hotelSearch.dateRange"), {
+        checkIn: formattedCheckIn,
+        checkOut: formattedCheckOut,
+      });
     }
 
     return formattedCheckIn;
@@ -335,26 +348,34 @@ export function HotelSearchBar({
     );
     const roomLabel = t(normalizedRooms === 1 ? "roomSingular" : "roomPlural");
 
-    const normalizedLocale = locale?.trim().replace("_", "-").toLowerCase();
-
-    if (normalizedLocale === "ja" || normalizedLocale?.startsWith("ja-")) {
-      return `${guestLabel}${normalizedGuests}名、${normalizedRooms}${roomLabel}`;
-    }
-
-    const separator = normalizedLocale === "zh-cn" ? "，" : ", ";
-
-    return `${normalizedGuests} ${guestLabel}${separator}${normalizedRooms} ${
-      roomLabel
-    }`;
-  }, [locale, rooms, t, totalHotelGuests]);
+    return formatHotelSearchTemplate(t("hotelSearch.guestsRoomsSummary"), {
+      guests: normalizedGuests,
+      guestLabel,
+      rooms: normalizedRooms,
+      roomLabel,
+    });
+  }, [rooms, t, totalHotelGuests]);
 
   const hotelSearchIntroLabel = introLabel ?? t("hotelSearchIntroLabel");
   const hotelSearchIdentityLabel = desktopIdentityLabel ?? t("hotels");
 
   const mobileSearchSummary = useMemo(() => {
     const trimmedDestination = destination.trim() || t("destination");
-    return `${trimmedDestination} · ${dateSummary} · ${guestsRoomsSummary}`;
+    return formatHotelSearchTemplate(t("hotelSearch.mobileSummary"), {
+      destination: trimmedDestination,
+      dates: dateSummary,
+      summary: guestsRoomsSummary,
+    });
   }, [dateSummary, destination, guestsRoomsSummary, t]);
+
+  const resultsSearchSummary = useMemo(
+    () =>
+      formatHotelSearchTemplate(t("hotelSearch.resultsSummary"), {
+        dates: dateSummary,
+        summary: guestsRoomsSummary,
+      }),
+    [dateSummary, guestsRoomsSummary, t],
+  );
 
   const checkInParsed = parseIsoDate(checkIn);
   const checkOutParsed = parseIsoDate(checkOut);
@@ -985,7 +1006,7 @@ export function HotelSearchBar({
                     {destination.trim() || t("destination")}
                   </span>
                   <span className="mt-1 block truncate text-[12px] font-semibold leading-4 text-slate-700">
-                    {dateSummary} · {guestsRoomsSummary}
+                    {resultsSearchSummary}
                   </span>
                 </span>
                 <span
