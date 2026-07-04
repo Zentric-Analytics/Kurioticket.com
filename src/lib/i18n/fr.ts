@@ -2730,4 +2730,5 @@ flightLandingRouteAriaLabel:
   "flightResults.duration.hoursOnly": "{{hours}} h",
   "flightResults.duration.hoursMinutes": "{{hours}} h {{minutes}} min",
 
+  "deals.searchButton": "Rechercher des offres",
 };

@@ -3170,4 +3170,5 @@ export const translations: TranslationDictionary = {
   "flightResults.duration.hoursOnly": "{{hours}} h",
   "flightResults.duration.hoursMinutes": "{{hours}} h {{minutes}} min",
 
+  "deals.searchButton": "Buscar ofertas",
 };

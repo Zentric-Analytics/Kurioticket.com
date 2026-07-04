@@ -1983,4 +1983,16 @@ export const translations: TranslationDictionary = {
   "flightResults.duration.hoursOnly": "{{hours}}時間",
   "flightResults.duration.hoursMinutes": "{{hours}}時間{{minutes}}分",
 
+  "deals.searchButton": "お得なプランを検索",
+  chooseDestination: "目的地を選択",
+  chooseOrigin: "出発地を選択",
+  clearDestination: "目的地をクリア",
+  clearOrigin: "出発地をクリア",
+  noMatchingAirportsOrCities: "一致する空港または都市はありません",
+  searchAirportsAndCities: "空港と都市を検索",
+  searchAirportsOrCities: "空港または都市を検索",
+  searchingAirportsAndCities: "空港と都市を検索しています…",
+  searchingFlights: "フライトを検索しています...",
+  searchingHotels: "ホテルを検索しています...",
+  startTypingCityOrAirport: "候補を表示するには、都市名または空港名を入力してください。",
 };

@@ -1901,4 +1901,15 @@ export const translations: TranslationDictionary = {
   "flightResults.duration.hoursOnly": "{{hours}} giờ",
   "flightResults.duration.hoursMinutes": "{{hours}} giờ {{minutes}} phút",
 
+  chooseDestination: "Chọn điểm đến",
+  chooseOrigin: "Chọn điểm khởi hành",
+  clearDestination: "Xóa điểm đến",
+  clearOrigin: "Xóa điểm khởi hành",
+  noMatchingAirportsOrCities: "Không có sân bay hoặc thành phố phù hợp",
+  searchAirportsAndCities: "Tìm sân bay và thành phố",
+  searchAirportsOrCities: "Tìm sân bay hoặc thành phố",
+  searchingAirportsAndCities: "Đang tìm sân bay và thành phố…",
+  searchingFlights: "Đang tìm chuyến bay...",
+  searchingHotels: "Đang tìm khách sạn...",
+  startTypingCityOrAirport: "Bắt đầu nhập tên thành phố hoặc sân bay để xem gợi ý.",
 };

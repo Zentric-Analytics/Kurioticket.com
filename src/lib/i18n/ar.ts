@@ -1955,4 +1955,14 @@ export const translations: TranslationDictionary = {
   "flightResults.duration.hoursOnly": "{{hours}} س",
   "flightResults.duration.hoursMinutes": "{{hours}} س {{minutes}} د",
 
+  "deals.searchButton": "ابحث عن العروض",
+  chooseDestination: "اختر الوجهة",
+  chooseOrigin: "اختر نقطة الانطلاق",
+  clearDestination: "مسح الوجهة",
+  clearOrigin: "مسح نقطة الانطلاق",
+  noMatchingAirportsOrCities: "لا توجد مطارات أو مدن مطابقة",
+  searchAirportsAndCities: "البحث عن المطارات والمدن",
+  searchAirportsOrCities: "البحث عن المطارات أو المدن",
+  searchingAirportsAndCities: "جارٍ البحث عن المطارات والمدن…",
+  startTypingCityOrAirport: "ابدأ بكتابة اسم مدينة أو مطار لعرض الاقتراحات.",
 };

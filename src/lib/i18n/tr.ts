@@ -2105,4 +2105,6 @@ export const translations: TranslationDictionary = {
   "flightResults.duration.hoursOnly": "{{hours}} sa",
   "flightResults.duration.hoursMinutes": "{{hours}} sa {{minutes}} dk",
 
+  "deals.searchButton": "Fırsat ara",
+  searchingHotels: "Oteller aranıyor...",
 };

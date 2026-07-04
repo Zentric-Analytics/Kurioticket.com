@@ -2031,4 +2031,16 @@ export const translations: TranslationDictionary = {
   "flightResults.duration.hoursOnly": "{{hours}}시간",
   "flightResults.duration.hoursMinutes": "{{hours}}시간 {{minutes}}분",
 
+  "deals.searchButton": "특가 검색",
+  chooseDestination: "도착지 선택",
+  chooseOrigin: "출발지 선택",
+  clearDestination: "도착지 지우기",
+  clearOrigin: "출발지 지우기",
+  noMatchingAirportsOrCities: "일치하는 공항 또는 도시가 없습니다",
+  searchAirportsAndCities: "공항 및 도시 검색",
+  searchAirportsOrCities: "공항 또는 도시 검색",
+  searchingAirportsAndCities: "공항 및 도시 검색 중…",
+  searchingFlights: "항공편 검색 중...",
+  searchingHotels: "호텔 검색 중...",
+  startTypingCityOrAirport: "추천을 보려면 도시 또는 공항 이름을 입력하세요.",
 };

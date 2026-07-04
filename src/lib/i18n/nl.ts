@@ -2441,4 +2441,5 @@ flightLandingRouteAriaLabel: "Vluchten zoeken van {{origin}} naar {{destination}
   "flightResults.duration.hoursOnly": "{{hours}} u",
   "flightResults.duration.hoursMinutes": "{{hours}} u {{minutes}} min",
 
+  "deals.searchButton": "Deals zoeken",
 };

@@ -2659,4 +2659,10 @@ flightLandingRouteAriaLabel: "Cerca voli da {{origin}} a {{destination}}",
   "flightResults.duration.hoursOnly": "{{hours}} h",
   "flightResults.duration.hoursMinutes": "{{hours}} h {{minutes}} min",
 
+  "deals.searchButton": "Cerca offerte",
+  noMatchingAirportsOrCities: "Nessun aeroporto o città corrispondente",
+  searchAirportsAndCities: "Cerca aeroporti e città",
+  searchAirportsOrCities: "Cerca aeroporti o città",
+  searchingAirportsAndCities: "Ricerca di aeroporti e città…",
+  startTypingCityOrAirport: "Inizia a digitare il nome di una città o di un aeroporto per vedere i suggerimenti.",
 };
