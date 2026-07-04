@@ -1,10 +1,18 @@
+import { cookies } from "next/headers";
+
+import { getTranslations } from "@/lib/i18n";
+import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
+
 const cardSkeletons = Array.from({ length: 6 });
 
-export default function PageLoading() {
+export default async function PageLoading() {
+  const cookieStore = await cookies();
+  const t = getTranslations(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
+
   return (
     <main className="bg-gradient-to-b from-[#F2F7FA]/70 via-white to-white py-8">
       <div className="page-shell space-y-6" role="status" aria-live="polite" aria-busy="true">
-        <span className="sr-only">Loading page...</span>
+        <span className="sr-only">{t.destinationsLoadingPage}</span>
         <section className="rounded-3xl border border-[#004BB8]/10 bg-white/85 p-6 shadow-[0_18px_55px_-42px_rgba(2,28,43,0.28)]" aria-hidden="true">
           <div className="h-4 w-32 animate-pulse rounded-full bg-[#5CB6B2]/20 motion-reduce:animate-none" />
           <div className="mt-4 h-8 w-80 max-w-full animate-pulse rounded-2xl bg-slate-200 motion-reduce:animate-none" />

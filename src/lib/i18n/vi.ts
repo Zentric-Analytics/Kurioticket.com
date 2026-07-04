@@ -3,6 +3,7 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  destinationsLoadingPage: "Đang tải trang điểm đến...",
   "hotelResults.unableToOpenProvider": "Hiện không thể mở nhà cung cấp. Vui lòng thử lại.",
   "hotelResults.payAtProperty": "Thanh toán tại chỗ nghỉ",
   "hotelResults.payLater": "Thanh toán sau",
