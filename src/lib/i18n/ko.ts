@@ -1953,4 +1953,21 @@ export const translations: TranslationDictionary = {
   "metadata.hotelResults.title": "호텔 결과",
   "metadata.hotelResults.description": "이용 가능한 호텔 옵션을 비교하고 제공업체에서 최종 가격, 예약 가능 여부, 수수료, 취소 규정을 확인하세요.",
 
+  "flightResults.loading.title": "Searching the best flights for you",
+  "flightResults.loading.checkingAirlinesAndFares": "Checking airlines and fares...",
+  "flightResults.loading.comparingRoutesAndProviders": "Comparing routes and providers...",
+  "flightResults.loading.findingBestAvailableOptions": "Finding the best available options...",
+  "flightResults.loading.preparingResults": "Preparing your results...",
+  "flightResults.beachVisual.CUN.alt": "Bright Cancun beach with white sand and turquoise water",
+  "flightResults.beachVisual.HNL.alt": "Sunny Waikiki beach and clear Pacific water in Honolulu",
+  "flightResults.beachVisual.SJU.alt": "Turquoise Caribbean shoreline with palms",
+  "flightResults.beachVisual.DPS.alt": "Sunny Bali coastline with tropical ocean views",
+  "flightResults.beachVisual.ZNZ.alt": "Zanzibar beach with palm trees and turquoise water",
+  "flightResults.beachVisual.PVR.alt": "Puerto Vallarta coastline with bright Pacific water",
+  "flightResults.beachVisual.FAO.alt": "Sunny Algarve cliffs and beach near Faro",
+  "flightResults.beachVisual.CPT.alt": "Cape Town coastline with ocean and mountains",
+  "flightResults.beachVisual.SYD.alt": "Bright ocean beach with turquoise water",
+  "flightResults.beachVisual.SAN.alt": "Sunny San Diego coastline and blue ocean",
+  "flightResults.beachVisual.MIA.alt": "Bright Miami coast and Biscayne Bay waterfront",
+
 };
