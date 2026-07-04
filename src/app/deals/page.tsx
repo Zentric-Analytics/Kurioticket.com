@@ -247,33 +247,14 @@ const clampCount = (value: number, minimum: number, maximum: number) => {
 };
 
 const formatDealsCountLabel = (
-  count: number,
-  label: string,
-  locale: string,
-) => {
-  const normalizedLocale = locale.toLowerCase();
-
-  if (normalizedLocale.startsWith("ja")) {
-    if (label === "旅行者") return `旅行者${count}名`;
-    if (label === "室") return `${count}室`;
-  }
-
-  if (normalizedLocale.startsWith("ko")) {
-    if (label === "여행자") return `여행자 ${count}명`;
-    if (label === "객실") return `${count}실`;
-  }
-
-  if (normalizedLocale.startsWith("th")) {
-    if (label === "ผู้เดินทาง") return `ผู้เดินทาง ${count} คน`;
-    if (label === "ห้อง") return `ห้อง ${count} ห้อง`;
-  }
-
-  if (normalizedLocale.startsWith("ar") && count === 1) {
-    return `${label} واحد`;
-  }
-
-  return `${count} ${label}`;
-};
+  template: string,
+  values: Record<string, string | number>,
+) =>
+  Object.entries(values).reduce(
+    (summary, [key, value]) =>
+      summary.replaceAll(`{{${key}}}`, String(value)),
+    template,
+  );
 
 export default function DealsPage() {
   const { locale, t: dictionary } = useLocale();
@@ -391,38 +372,57 @@ export default function DealsPage() {
       const normalizedRooms = clampCount(rooms, 1, 6);
       const roomLabel =
         normalizedRooms === 1 ? t("deals.roomSingular") : t("deals.roomPlural");
-      return `${formatDealsCountLabel(
-        travelerCount,
-        travelerLabel,
-        locale,
-      )}, ${formatDealsCountLabel(normalizedRooms, roomLabel, locale)}`;
+      return formatDealsCountLabel(t("deals.countSummary.list"), {
+        items: [
+          formatDealsCountLabel(t("deals.countSummary.travelers"), {
+            count: travelerCount,
+            label: travelerLabel,
+          }),
+          formatDealsCountLabel(t("deals.countSummary.rooms"), {
+            count: normalizedRooms,
+            label: roomLabel,
+          }),
+        ].join(", "),
+      });
     }
 
     if (includesHotel) {
       const normalizedRooms = clampCount(rooms, 1, 6);
       const roomLabel =
         normalizedRooms === 1 ? t("deals.roomSingular") : t("deals.roomPlural");
-      return `${formatDealsCountLabel(
-        travelerCount,
-        travelerLabel,
-        locale,
-      )}, ${formatDealsCountLabel(normalizedRooms, roomLabel, locale)}`;
+      return formatDealsCountLabel(t("deals.countSummary.list"), {
+        items: [
+          formatDealsCountLabel(t("deals.countSummary.travelers"), {
+            count: travelerCount,
+            label: travelerLabel,
+          }),
+          formatDealsCountLabel(t("deals.countSummary.rooms"), {
+            count: normalizedRooms,
+            label: roomLabel,
+          }),
+        ].join(", "),
+      });
     }
 
+    const formattedTravelers = formatDealsCountLabel(
+      t("deals.countSummary.travelers"),
+      {
+        count: travelerCount,
+        label: travelerLabel,
+      },
+    );
+
     return includesFlight
-      ? `${formatDealsCountLabel(
-          travelerCount,
-          travelerLabel,
-          locale,
-        )}, ${cabinLabel}`
-      : formatDealsCountLabel(travelerCount, travelerLabel, locale);
+      ? formatDealsCountLabel(t("deals.countSummary.list"), {
+          items: [formattedTravelers, cabinLabel].join(", "),
+        })
+      : formattedTravelers;
   }, [
     adults,
     cabinClass,
     children,
     includesFlight,
     includesHotel,
-    locale,
     rooms,
     t,
   ]);
