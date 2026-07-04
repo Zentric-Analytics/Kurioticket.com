@@ -1776,6 +1776,7 @@ export const translations: TranslationDictionary = {
   "hotelResults.liveSearchUnavailable": "Canlı otel araması geçici olarak kullanılamıyor. Lütfen kısa süre sonra tekrar deneyin.",
   "hotelResults.searchUnavailableDetailed": "Bu istek için otel araması geçici olarak kullanılamıyor. Konaklama seçeneklerini yalnızca fiyat, müsaitlik, ücretler ve kurallar sağlayıcıyla incelenebildiğinde gösteriyoruz. Lütfen daha sonra tekrar deneyin veya yeni bir arama başlatın.",
   "hotelResults.unableToSearchHotels": "Oteller aranamadı.",
+  "hotelResults.unableToOpenProvider": "Sağlayıcı şu anda açılamıyor. Lütfen tekrar deneyin.",
   "hotelResults.limitedProviderChecks": "Bu otel araması için bazı sağlayıcı kontrolleri sınırlı olabilir. Rezervasyondan önce son müsaitliği, vergileri, ücretleri ve iptal kurallarını sağlayıcıyla inceleyin.",
   "hotelResults.noStaysMatchFiltersTitle": "Bu filtrelerle eşleşen konaklama yok",
   "hotelResults.noStaysMatchFiltersBody": "Daha fazla uygun seçenek görmek için fiyat aralığını artırmayı, yıldız puanını düşürmeyi veya seçili otel filtrelerini temizlemeyi deneyin.",

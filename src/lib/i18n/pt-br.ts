@@ -2616,6 +2616,7 @@ export const translations: TranslationDictionary = {
   "hotelResults.liveSearchUnavailable": "A busca de hotéis ao vivo está temporariamente indisponível. Tente novamente em breve.",
   "hotelResults.searchUnavailableDetailed": "A busca de hotéis ao vivo está temporariamente indisponível para esta solicitação. Só mostramos opções de estadia quando preço, disponibilidade, taxas e regras podem ser revisados com o provedor. Tente novamente mais tarde ou inicie uma nova busca.",
   "hotelResults.unableToSearchHotels": "Não foi possível buscar hotéis.",
+  "hotelResults.unableToOpenProvider": "Não foi possível abrir o provedor no momento. Tente novamente.",
   "hotelResults.limitedProviderChecks": "Algumas verificações de provedores podem estar limitadas para esta busca de hotéis. Confira a disponibilidade final, os impostos, as taxas e as regras de cancelamento com o provedor antes de reservar.",
   "hotelResults.noStaysMatchFiltersTitle": "Nenhuma estadia corresponde a estes filtros",
   "hotelResults.noStaysMatchFiltersBody": "Tente aumentar a faixa de preço, reduzir a classificação por estrelas ou limpar os filtros de hotéis selecionados para ver mais opções disponíveis.",

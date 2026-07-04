@@ -2242,6 +2242,7 @@ flightLandingRouteAriaLabel:
   "hotelResults.liveSearchUnavailable": "Die Live-Hotelsuche ist vorübergehend nicht verfügbar. Bitte versuchen Sie es in Kürze erneut.",
   "hotelResults.searchUnavailableDetailed": "Die Hotelsuche ist für diese Anfrage vorübergehend nicht verfügbar. Wir zeigen Aufenthaltsoptionen nur an, wenn Preis, Verfügbarkeit, Gebühren und Regeln beim Anbieter geprüft werden können. Bitte versuchen Sie es später erneut oder starten Sie eine neue Suche.",
   "hotelResults.unableToSearchHotels": "Hotels konnten nicht gesucht werden.",
+  "hotelResults.unableToOpenProvider": "Der Anbieter kann derzeit nicht geöffnet werden. Bitte versuchen Sie es erneut.",
   "hotelResults.limitedProviderChecks": "Einige Anbieterprüfungen können für diese Hotelsuche eingeschränkt sein. Prüfen Sie endgültige Verfügbarkeit, Steuern, Gebühren und Stornierungsbedingungen vor der Buchung beim Anbieter.",
   "hotelResults.noStaysMatchFiltersTitle": "Keine Aufenthalte entsprechen diesen Filtern",
   "hotelResults.noStaysMatchFiltersBody": "Erhöhen Sie die Preisspanne, senken Sie die Sternebewertung oder löschen Sie ausgewählte Hotelfilter, um mehr verfügbare Optionen zu sehen.",

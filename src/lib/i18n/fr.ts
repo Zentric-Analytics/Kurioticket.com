@@ -1853,6 +1853,7 @@ flightLandingRouteAriaLabel:
   "hotelResults.liveSearchUnavailable": "La recherche d’hôtels en direct est temporairement indisponible. Veuillez réessayer sous peu.",
   "hotelResults.searchUnavailableDetailed": "La recherche d’hôtels en direct est temporairement indisponible. Veuillez réessayer dans quelques instants.",
   "hotelResults.unableToSearchHotels": "Impossible de rechercher des hôtels.",
+  "hotelResults.unableToOpenProvider": "Impossible d’ouvrir le fournisseur pour le moment. Veuillez réessayer.",
   "hotelResults.limitedProviderChecks": "Certaines vérifications des fournisseurs peuvent être limitées pour cette recherche d’hôtel. Vérifiez la disponibilité finale, les taxes, les frais et les règles d’annulation auprès du fournisseur avant de réserver.",
   "hotelResults.noStaysMatchFiltersTitle": "Aucun séjour ne correspond à ces filtres",
   "hotelResults.noStaysMatchFiltersBody": "Essayez d’augmenter la fourchette de prix, de réduire le classement par étoiles ou d’effacer les filtres d’hôtel sélectionnés pour voir plus d’options disponibles.",

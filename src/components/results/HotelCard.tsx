@@ -357,7 +357,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
     });
     const data = (await response.json()) as { url?: string; error?: string };
     if (data.url) window.location.href = data.url;
-    if (data.error) window.alert(data.error);
+    if (data.error) window.alert(t("hotelResults.unableToOpenProvider"));
   }
 
   return (
