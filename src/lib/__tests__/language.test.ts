@@ -2178,7 +2178,7 @@ test("Vietnamese Legal Center overview and all active legal detail documents are
   ]);
   assert.ok(legalDocuments.every((document) => document.sections.every((section) => section.id.length > 0)));
   assert.ok(legalIndexSource.includes('t("legal.index.heroLabel")'));
-  assert.ok(legalIndexSource.includes('t("legal.index.documentsCountText")'));
+  assert.ok(legalIndexSource.includes('t("legal.index.documentsCountLabel")'));
   assert.ok(legalIndexSource.includes('t(`legal.index.documents.${documentKey}.title`)'));
   assert.ok(legalViewerSource.includes('aria-label={t["legal.print"]}'));
   assert.ok(legalViewerSource.includes('window.print()'));
@@ -14723,7 +14723,7 @@ test("Thai Legal Center and legal detail copy resolves without English fallbacks
   const legalDataSource = readFileSync("src/data/legalDocuments.ts", "utf8");
 
   assert.ok(legalIndexSource.includes('t("legal.index.heroTitle")'));
-  assert.ok(legalIndexSource.includes('t("legal.index.documentsCountText")'));
+  assert.ok(legalIndexSource.includes('t("legal.index.documentsCountLabel")'));
   assert.ok(legalViewerSource.includes('getLegalDocumentTranslation(document, t)'));
   assert.ok(legalViewerSource.includes('"legal.print"'));
   assert.ok(legalViewerSource.includes('"legal.tableOfContents"'));
