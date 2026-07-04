@@ -145,6 +145,17 @@ function useCarsLandingTranslations() {
   return { locale, t, dictionary };
 }
 
+const translateCarsFormErrors = (
+  errors: CarsFormErrors,
+  t: (key: string) => string,
+): CarsFormErrors =>
+  Object.fromEntries(
+    Object.entries(errors).map(([field, errorKey]) => [
+      field,
+      errorKey ? t(errorKey) : errorKey,
+    ]),
+  ) as CarsFormErrors;
+
 export default function CarsPage() {
   return (
     <Suspense fallback={<CarsPageShell />}>
@@ -246,7 +257,7 @@ function CarsSearchPage() {
     }
 
     const nextErrors = validateCarsForm(values, todayIso);
-    setErrors(nextErrors);
+    setErrors(translateCarsFormErrors(nextErrors, t));
 
     if (Object.values(nextErrors).some(Boolean)) {
       return;

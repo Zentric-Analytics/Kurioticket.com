@@ -195,27 +195,27 @@ export const validateCarsForm = (
   const hasDefaultDriverAge = values.driverAge === defaultDriverAge;
 
   if (!pickupLocation) {
-    errors.pickupLocation = "Enter a pickup location.";
+    errors.pickupLocation = "carsSearch.error.pickupLocationRequired";
   }
 
   if (!values.pickupDate) {
-    errors.pickupDate = "Select a pickup date.";
+    errors.pickupDate = "carsSearch.error.pickupDateRequired";
   } else if (values.pickupDate < todayIso) {
-    errors.pickupDate = "Pickup date cannot be in the past.";
+    errors.pickupDate = "carsSearch.error.pickupDatePast";
   }
 
   if (!values.pickupTime) {
-    errors.pickupTime = "Select a pickup time.";
+    errors.pickupTime = "carsSearch.error.pickupTimeRequired";
   }
 
   if (!values.dropoffDate) {
-    errors.dropoffDate = "Select a drop-off date.";
+    errors.dropoffDate = "carsSearch.error.dropoffDateRequired";
   } else if (values.dropoffDate < todayIso) {
-    errors.dropoffDate = "Drop-off date cannot be in the past.";
+    errors.dropoffDate = "carsSearch.error.dropoffDatePast";
   }
 
   if (!values.dropoffTime) {
-    errors.dropoffTime = "Select a drop-off time.";
+    errors.dropoffTime = "carsSearch.error.dropoffTimeRequired";
   }
 
   if (
@@ -226,16 +226,16 @@ export const validateCarsForm = (
       driverAge < minimumDriverAge ||
       driverAge > maximumDriverAge)
   ) {
-    errors.driverAge = "Select Any age 18–70 or a driver age from 18 to 70.";
+    errors.driverAge = "carsSearch.error.driverAgeInvalid";
   }
 
   if (values.returnToDifferentLocation && !dropoffLocation) {
-    errors.dropoffLocation = "Enter a drop-off location.";
+    errors.dropoffLocation = "carsSearch.error.dropoffLocationRequired";
   }
 
   if (values.pickupDate && values.dropoffDate) {
     if (values.dropoffDate < values.pickupDate) {
-      errors.dateRange = "Drop-off date cannot be before pickup date.";
+      errors.dateRange = "carsSearch.error.dropoffBeforePickup";
     } else if (
       values.dropoffDate === values.pickupDate &&
       values.pickupTime &&
@@ -243,7 +243,7 @@ export const validateCarsForm = (
       values.dropoffTime <= values.pickupTime
     ) {
       errors.dateRange =
-        "For same-day returns, drop-off time must be after pickup time.";
+        "carsSearch.error.sameDayDropoffAfterPickup";
     }
   }
 
