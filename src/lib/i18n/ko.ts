@@ -3,6 +3,15 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "hotelResults.payAtProperty": "숙소에서 결제",
+  "hotelResults.payLater": "나중에 결제",
+  "hotelResults.noPrepayment": "선결제 없음",
+  "hotelResults.refundable": "환불 가능",
+  "hotelResults.nonRefundable": "환불 불가",
+  "hotelResults.filter.freeCancellation": "무료 취소",
+  "hotelResults.filter.halfBoard": "하프보드",
+  "hotelResults.filter.fullBoard": "풀보드",
+  "hotelResults.filter.allInclusive": "올 인클루시브",
   "brandedLoading.hotel.title": "Finding the best stays for you",
   "brandedLoading.hotel.checkingAvailabilityAndRates": "Checking availability and rates...",
   "brandedLoading.hotel.comparingHotelsAndRooms": "Comparing hotels and room options...",

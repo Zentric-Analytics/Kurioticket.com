@@ -3,6 +3,15 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "hotelResults.payAtProperty": "宿泊施設で支払い",
+  "hotelResults.payLater": "後払い",
+  "hotelResults.noPrepayment": "前払い不要",
+  "hotelResults.refundable": "返金可",
+  "hotelResults.nonRefundable": "返金不可",
+  "hotelResults.filter.freeCancellation": "無料キャンセル",
+  "hotelResults.filter.halfBoard": "2食付き",
+  "hotelResults.filter.fullBoard": "3食付き",
+  "hotelResults.filter.allInclusive": "オールインクルーシブ",
   "brandedLoading.hotel.title": "Finding the best stays for you",
   "brandedLoading.hotel.checkingAvailabilityAndRates": "Checking availability and rates...",
   "brandedLoading.hotel.comparingHotelsAndRooms": "Comparing hotels and room options...",

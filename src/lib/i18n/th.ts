@@ -3,6 +3,15 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "hotelResults.payAtProperty": "ชำระเงินที่ที่พัก",
+  "hotelResults.payLater": "ชำระภายหลัง",
+  "hotelResults.noPrepayment": "ไม่ต้องชำระเงินล่วงหน้า",
+  "hotelResults.refundable": "คืนเงินได้",
+  "hotelResults.nonRefundable": "ไม่สามารถคืนเงินได้",
+  "hotelResults.filter.freeCancellation": "ยกเลิกฟรี",
+  "hotelResults.filter.halfBoard": "รวมอาหารเช้าและเย็น",
+  "hotelResults.filter.fullBoard": "รวมอาหารสามมื้อ",
+  "hotelResults.filter.allInclusive": "รวมทุกอย่าง",
   "brandedLoading.hotel.title": "Finding the best stays for you",
   "brandedLoading.hotel.checkingAvailabilityAndRates": "Checking availability and rates...",
   "brandedLoading.hotel.comparingHotelsAndRooms": "Comparing hotels and room options...",
