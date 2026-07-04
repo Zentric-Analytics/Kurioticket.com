@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -27,32 +27,34 @@ type PreferencesForm = {
   highlightRelevantIdeas: boolean;
 };
 
-const selectOptions = {
+type SelectOption = { value: string; label: string };
+
+const selectOptions: Record<string, SelectOption[]> = {
   budgetStyle: [
-    ["lowest-reasonable-fare", "Lowest reasonable fare"],
-    ["balanced-value", "Balanced value"],
-    ["comfort-when-it-matters", "Comfort when it matters"],
+    { value: "lowest-reasonable-fare", label: "Lowest reasonable fare" },
+    { value: "balanced-value", label: "Balanced value" },
+    { value: "comfort-when-it-matters", label: "Comfort when it matters" },
   ],
   directVsCheaper: [
-    ["prefer-direct-when-close", "Prefer direct when prices are close"],
-    ["choose-cheaper-if-layover-good", "Choose cheaper if the layover is reasonable"],
-    ["minimize-travel-effort", "Minimize travel effort"],
+    { value: "prefer-direct-when-close", label: "Prefer direct when prices are close" },
+    { value: "choose-cheaper-if-layover-good", label: "Choose cheaper if the layover is reasonable" },
+    { value: "minimize-travel-effort", label: "Minimize travel effort" },
   ],
   comfortVsSavings: [
-    ["save-first", "Save first"],
-    ["balanced", "Balanced"],
-    ["comfort-first", "Comfort first"],
+    { value: "save-first", label: "Save first" },
+    { value: "balanced", label: "Balanced" },
+    { value: "comfort-first", label: "Comfort first" },
   ],
   travelPurpose: [
-    ["leisure", "Leisure"],
-    ["family", "Family"],
-    ["business", "Business"],
-    ["mixed", "Mixed"],
+    { value: "leisure", label: "Leisure" },
+    { value: "family", label: "Family" },
+    { value: "business", label: "Business" },
+    { value: "mixed", label: "Mixed" },
   ],
   travelFrequency: [
-    ["few-times-year", "A few times a year"],
-    ["monthly", "Monthly"],
-    ["often-for-work", "Often for work"],
+    { value: "few-times-year", label: "A few times a year" },
+    { value: "monthly", label: "Monthly" },
+    { value: "often-for-work", label: "Often for work" },
   ],
 };
 
@@ -178,7 +180,7 @@ function SelectField({
   label: string;
   value: string;
   onChange: (value: string) => void;
-  options: Array<[string, string]>;
+  options: SelectOption[];
 }) {
   return (
     <div className="space-y-2">
@@ -192,9 +194,9 @@ function SelectField({
         onChange={(event) => onChange(event.target.value)}
         className={fieldClassName}
       >
-        {options.map(([optionValue, optionLabel]) => (
-          <option key={optionValue} value={optionValue}>
-            {optionLabel}
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
           </option>
         ))}
       </select>
@@ -243,15 +245,24 @@ export function PreferencesContent() {
   } = useRegion();
 
   const languageOptions = useMemo(
-    () => locales.filter((option) => option.status === "available"),
+    () =>
+      locales
+        .filter((option) => option.status === "available")
+        .map((option) => ({ value: option.code, label: getLanguageLabel(option) })),
     [locales],
   );
   const sortedCurrencies = useMemo(
-    () => [...currencies].sort((a, b) => a.code.localeCompare(b.code)),
+    () =>
+      [...currencies]
+        .sort((a, b) => a.code.localeCompare(b.code))
+        .map((option) => ({ value: option.code, label: `${option.name} (${option.code})` })),
     [currencies],
   );
   const sortedRegions = useMemo(
-    () => [...regionOptions].sort((a, b) => a.country.localeCompare(b.country)),
+    () =>
+      [...regionOptions]
+        .sort((a, b) => a.country.localeCompare(b.country))
+        .map((option) => ({ value: option.code, label: `${option.country} (${option.code})` })),
     [regionOptions],
   );
 
@@ -378,21 +389,21 @@ export function PreferencesContent() {
               id="preferredLanguage"
               label="Language"
               value={form.preferredLanguage}
-              options={languageOptions.map((option) => [option.code, getLanguageLabel(option)])}
+              options={languageOptions}
               onChange={(value) => updateValue("preferredLanguage", value)}
             />
             <SelectField
               id="region"
               label="Country / region"
               value={form.region}
-              options={sortedRegions.map((option) => [option.code, `${option.country} (${option.code})`])}
+              options={sortedRegions}
               onChange={(value) => updateValue("region", value)}
             />
             <SelectField
               id="currency"
               label="Display currency"
               value={form.currency}
-              options={sortedCurrencies.map((option) => [option.code, `${option.name} (${option.code})`])}
+              options={sortedCurrencies}
               onChange={(value) => updateValue("currency", value)}
             />
           </PreferenceSection>
