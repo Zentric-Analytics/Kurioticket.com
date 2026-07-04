@@ -107,10 +107,19 @@ export default async function FlightResultsPage({
     redirect("/flights");
   }
 
+  const t = getTranslations((await cookies()).get(LOCALE_COOKIE_KEY)?.value);
+
   return (
     <>
       <AppHeader />
-      <Suspense fallback={<ResultsFallback />}>
+      <Suspense
+        fallback={
+          <ResultsFallback
+            title={t["flightResults.loading.title"]}
+            description={t["flightResults.loading.checkingAirlinesAndFares"]}
+          />
+        }
+      >
         <FlightResultsClient />
       </Suspense>
       <Footer />
@@ -118,7 +127,13 @@ export default async function FlightResultsPage({
   );
 }
 
-function ResultsFallback() {
+function ResultsFallback({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
   return (
     <main className="min-h-[100svh] bg-[radial-gradient(circle_at_top_left,rgba(92,182,178,0.20),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(0,75,184,0.16),transparent_36%),linear-gradient(180deg,#F2F7FA_0%,#FFFFFF_58%,#FFFFFF_100%)]">
       <BrandedLoading
@@ -127,8 +142,8 @@ function ResultsFallback() {
         showProgress={false}
         className="min-h-[100svh] bg-transparent px-5"
         contentClassName="max-w-md text-center"
-        title="Searching the best flights for you"
-        description="Checking airlines and fares..."
+        title={title}
+        description={description}
       />
     </main>
   );

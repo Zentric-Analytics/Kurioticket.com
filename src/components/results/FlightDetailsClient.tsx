@@ -38,7 +38,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok)
-          throw new Error(data.error || "Flight quote unavailable.");
+          throw new Error(data.error || enTranslations.flightQuoteUnavailable);
         return data.flight as PublicFlightResult;
       })
       .then(setFlight)
@@ -46,7 +46,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
         setError(
           detailsError instanceof Error
             ? detailsError.message
-            : "Flight quote unavailable.",
+            : enTranslations.flightQuoteUnavailable,
         ),
       )
       .finally(() => setLoading(false));
@@ -90,7 +90,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
     return (
       <main className="page-shell flex-1 py-10">
         <Card className="p-6 text-muted">
-          {t.flightDetailsLoading || "Loading flight details..."}
+          {t.flightDetailsLoading || enTranslations.flightDetailsLoading}
         </Card>
       </main>
     );
@@ -133,7 +133,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
   );
   const providerDisclaimer =
     t.flightDetailsProviderDisclaimer ||
-    "Final price, availability, booking, and fare rules are confirmed by the provider.";
+    enTranslations.flightDetailsProviderDisclaimer;
   const providerOffers = buildProviderComparisonOffers(flight);
 
   return (
@@ -152,18 +152,18 @@ export function FlightDetailsClient({ id }: { id: string }) {
                     routeHeading={routeHeading}
                     selectedFlightsLabel={t.selectedFlights}
                     selectedFlightItineraryLabel={
-                      t.selectedFlightItinerary || "Selected flight itinerary"
+                      t.selectedFlightItinerary || enTranslations.selectedFlightItinerary
                     }
-                    outboundLabel={t.outbound || "Outbound"}
-                    returnLabel={t.return || "Return"}
-                    itineraryLabel={t.itinerary || "Itinerary"}
-                    legLabel={t.leg || "Leg"}
+                    outboundLabel={t.outbound || enTranslations.outbound}
+                    returnLabel={t.return || enTranslations.return}
+                    itineraryLabel={t.itinerary || enTranslations.itinerary}
+                    legLabel={t.leg || enTranslations.leg}
                     nonstopLabel={t.nonstop || enTranslations.nonstop}
                     stopSingularLabel={t.stopSingular || enTranslations.stopSingular}
                     stopPluralLabel={t.stopPlural || enTranslations.stopPlural}
                     stopDualLabel={t.stopDual}
                     stopCountTemplate={t.stopCount}
-                    layoverInLabel={t.layoverIn || "Layover in"}
+                    layoverInLabel={t.layoverIn || enTranslations.layoverIn}
                     layoverConnectorLabel={t.layoverConnector}
                     layoverTemplate={t.layoverTemplate}
                     connectionLabels={buildConnectionLabels(t)}
@@ -189,7 +189,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                                     aria-hidden="true"
                                   />
                                   <span className="text-sm font-medium text-slate-700">
-                                    {t.flightNumberLabel || "Flight"}{" "}
+                                    {t.flightNumberLabel || enTranslations.flightNumberLabel}{" "}
                                     {flight.flightNumber}
                                   </span>
                                 </>
@@ -302,7 +302,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                     stopSingular: t.stopSingular || enTranslations.stopSingular,
                     stopPlural: t.stopPlural || enTranslations.stopPlural,
                     stopDual: t.stopDual,
-                    providedBy: t.providedBy || "Provided by",
+                    providedBy: t.providedBy || enTranslations.providedBy,
                     ...buildLocalizedDisplayLabels(t),
                   }}
                 />
@@ -1699,7 +1699,7 @@ function buildHeroDetails(
 ): HeroDetailItem[] {
   return [
     {
-      label: t.baggage || "Baggage",
+      label: t.baggage || enTranslations.baggage,
       value: formatBaggageValue(
         flight.baggageInfo,
         t.confirmedByProvider || enTranslations.confirmedByProvider,
@@ -1708,7 +1708,7 @@ function buildHeroDetails(
       icon: Luggage,
     },
     {
-      label: t.cabin || "Cabin",
+      label: t.cabin || enTranslations.cabin,
       value: formatCabinClass(
         flight.cabinClass,
         t.confirmedByProvider || enTranslations.confirmedByProvider,
@@ -1717,7 +1717,7 @@ function buildHeroDetails(
       icon: Armchair,
     },
     {
-      label: t.seatSelection || "Seat selection",
+      label: t.seatSelection || enTranslations.seatSelection,
       value: formatSeatSelectionValue(
         flight,
         t.providerRulesApply || enTranslations.providerRulesApply,
@@ -1725,7 +1725,7 @@ function buildHeroDetails(
       icon: Settings,
     },
     {
-      label: t.fareRules || "Fare rules",
+      label: t.fareRules || enTranslations.fareRules,
       value: formatFareRulesValue(
         flight,
         t.reviewBeforeBooking || enTranslations.reviewBeforeBooking,
@@ -1756,10 +1756,10 @@ type LocalizedDisplayLabels = {
 
 function buildConnectionLabels(t: Record<string, string>): ConnectionLabels {
   return {
-    short: t.shortConnection || "short connection",
-    good: t.connection || "connection",
-    long: t.longConnection || "long connection",
-    overnight: t.overnightConnection || "overnight connection",
+    short: t.shortConnection || enTranslations.shortConnection,
+    good: t.connection || enTranslations.connection,
+    long: t.longConnection || enTranslations.longConnection,
+    overnight: t.overnightConnection || enTranslations.overnightConnection,
     unknown: "",
   };
 }
@@ -1906,38 +1906,38 @@ function localizeFareRulesValue(value: string, t: Record<string, string>) {
   return value
     .replace(
       /Not refundable before departure\.?/gi,
-      t.notRefundableBeforeDeparture || "Not refundable before departure",
+      t.notRefundableBeforeDeparture || enTranslations.notRefundableBeforeDeparture,
     )
     .replace(
       /Refundable before departure with ([A-Z]{3}) ([0-9.]+) penalty/gi,
       (_match, currency: string, amount: string) =>
         formatTranslationTemplate(
           t.refundableBeforeDepartureWithPenalty ||
-            "Refundable before departure with {{currency}} {{amount}} penalty",
+            enTranslations.refundableBeforeDepartureWithPenalty,
           { currency, amount },
         ),
     )
     .replace(
       /Refundable before departure/gi,
-      t.refundableBeforeDeparture || "Refundable before departure",
+      t.refundableBeforeDeparture || enTranslations.refundableBeforeDeparture,
     )
     .replace(
       /Changes allowed with ([A-Z]{3}) ([0-9.]+) penalty/gi,
       (_match, currency: string, amount: string) =>
         formatTranslationTemplate(
           t.changesAllowedWithPenalty ||
-            "Changes allowed with {{currency}} {{amount}} penalty",
+            enTranslations.changesAllowedWithPenalty,
           { currency, amount },
         ),
     )
     .replace(
       /Changes allowed before departure/gi,
-      t.changesAllowedBeforeDeparture || "Changes allowed before departure",
+      t.changesAllowedBeforeDeparture || enTranslations.changesAllowedBeforeDeparture,
     )
     .replace(
       /Changes not allowed before departure/gi,
       t.changesNotAllowedBeforeDeparture ||
-        "Changes not allowed before departure",
+        enTranslations.changesNotAllowedBeforeDeparture,
     );
 }
 
@@ -2009,10 +2009,10 @@ function formatLegDirection(
   index: number,
   legCount: number,
   labels = {
-    outbound: "Outbound",
-    return: "Return",
-    itinerary: "Itinerary",
-    leg: "Leg",
+    outbound: enTranslations.outbound,
+    return: enTranslations.return,
+    itinerary: enTranslations.itinerary,
+    leg: enTranslations.leg,
   },
 ) {
   if (direction === "outbound") return labels.outbound;

@@ -98,13 +98,6 @@ const filterQueryParamKeys = [
   "fFlexible",
 ] as const;
 
-const flightSearchLoadingMessages = [
-  "Checking airlines and fares...",
-  "Comparing routes and providers...",
-  "Finding the best available options...",
-  "Preparing your results...",
-];
-
 type CabinClassValue = "economy" | "business" | "first";
 
 const cabinClassOptions: Array<{ labelKey: string; value: CabinClassValue }> = [
@@ -218,7 +211,7 @@ const beachDestinationKeywords = [
   "zanzibar",
 ];
 
-type BeachVacationVisual = { image: string; imageAlt: string };
+type BeachVacationVisual = { image: string; imageAltKey?: string };
 
 const beachVacationVisualsByDestinationCode: Record<
   string,
@@ -227,57 +220,57 @@ const beachVacationVisualsByDestinationCode: Record<
   CUN: {
     image:
       "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?auto=format&fit=crop&w=1200&q=90",
-    imageAlt: "Bright Cancun beach with white sand and turquoise water",
+    imageAltKey: "flightResults.beachVisual.CUN.alt",
   },
   HNL: {
     image:
       "https://images.unsplash.com/photo-1507878866276-a947ef722fee?auto=format&fit=crop&w=1200&q=90",
-    imageAlt: "Sunny Waikiki beach and clear Pacific water in Honolulu",
+    imageAltKey: "flightResults.beachVisual.HNL.alt",
   },
   SJU: {
     image:
       "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=90",
-    imageAlt: "Turquoise Caribbean shoreline with palms",
+    imageAltKey: "flightResults.beachVisual.SJU.alt",
   },
   DPS: {
     image:
       "https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?auto=format&fit=crop&w=1200&q=90",
-    imageAlt: "Sunny Bali coastline with tropical ocean views",
+    imageAltKey: "flightResults.beachVisual.DPS.alt",
   },
   ZNZ: {
     image:
       "https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?auto=format&fit=crop&w=1200&q=90",
-    imageAlt: "Zanzibar beach with palm trees and turquoise water",
+    imageAltKey: "flightResults.beachVisual.ZNZ.alt",
   },
   PVR: {
     image:
       "https://images.unsplash.com/photo-1665039400840-b6b2a5786fef?auto=format&fit=crop&w=1200&q=90",
-    imageAlt: "Puerto Vallarta coastline with bright Pacific water",
+    imageAltKey: "flightResults.beachVisual.PVR.alt",
   },
   FAO: {
     image:
       "https://images.unsplash.com/photo-1530845640344-3fcbe6f1db9f?auto=format&fit=crop&w=1200&q=90",
-    imageAlt: "Sunny Algarve cliffs and beach near Faro",
+    imageAltKey: "flightResults.beachVisual.FAO.alt",
   },
   CPT: {
     image:
       "https://images.unsplash.com/photo-1576485290814-1c72aa4bbb8e?auto=format&fit=crop&w=1200&q=90",
-    imageAlt: "Cape Town coastline with ocean and mountains",
+    imageAltKey: "flightResults.beachVisual.CPT.alt",
   },
   SYD: {
     image:
       "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=90",
-    imageAlt: "Bright ocean beach with turquoise water",
+    imageAltKey: "flightResults.beachVisual.SYD.alt",
   },
   SAN: {
     image:
       "https://images.unsplash.com/photo-1577083552431-6e5fd01988f1?auto=format&fit=crop&w=1200&q=90",
-    imageAlt: "Sunny San Diego coastline and blue ocean",
+    imageAltKey: "flightResults.beachVisual.SAN.alt",
   },
   MIA: {
     image:
       "https://images.unsplash.com/photo-1506966953602-c20cc11f75e3?auto=format&fit=crop&w=1200&q=90",
-    imageAlt: "Bright Miami coast and Biscayne Bay waterfront",
+    imageAltKey: "flightResults.beachVisual.MIA.alt",
   },
 };
 
@@ -285,9 +278,16 @@ function getBeachVacationVisual(item: HomeDiscoveryItem): BeachVacationVisual {
   return (
     beachVacationVisualsByDestinationCode[item.destinationCode] ?? {
       image: item.image,
-      imageAlt: item.imageAlt,
     }
   );
+}
+
+function getBeachVacationVisualAlt(
+  item: HomeDiscoveryItem,
+  visual: BeachVacationVisual,
+  t: (key: string) => string,
+) {
+  return visual.imageAltKey ? t(visual.imageAltKey) : item.imageAlt;
 }
 
 const cityBeachImageKeywords = [
@@ -334,7 +334,9 @@ function getBeachVacationScore(item: HomeDiscoveryItem) {
   ]
     .join(" ")
     .toLowerCase();
-  const imageText = getBeachVacationVisual(item).imageAlt.toLowerCase();
+  const imageText = [item.destinationCity, item.destinationCode, item.imageAlt]
+    .join(" ")
+    .toLowerCase();
   const routeText = [item.title, item.routeNote].join(" ").toLowerCase();
 
   let score = 0;
@@ -3267,7 +3269,11 @@ export function FlightResultsClient() {
                             <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#004BB8]/8 sm:aspect-auto sm:h-32 lg:h-40">
                               <Image
                                 src={beachVisual.image}
-                                alt={beachVisual.imageAlt}
+                                alt={getBeachVacationVisualAlt(
+                                  item,
+                                  beachVisual,
+                                  t,
+                                )}
                                 fill
                                 priority={false}
                                 sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 10rem"
@@ -4154,7 +4160,12 @@ export function FlightResultsClient() {
           className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5"
           contentClassName="max-w-md text-center"
           searchType="flight"
-          messages={flightSearchLoadingMessages}
+          messages={[
+            t("flightResults.loading.checkingAirlinesAndFares"),
+            t("flightResults.loading.comparingRoutesAndProviders"),
+            t("flightResults.loading.findingBestAvailableOptions"),
+            t("flightResults.loading.preparingResults"),
+          ]}
         />
       </main>
     );

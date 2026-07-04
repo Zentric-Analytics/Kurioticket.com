@@ -2376,4 +2376,21 @@ flightLandingRouteAriaLabel: "Vluchten zoeken van {{origin}} naar {{destination}
   "metadata.hotelResults.title": "Hotelresultaten",
   "metadata.hotelResults.description": "Vergelijk beschikbare hotelopties en ga verder bij de aanbieder om definitieve prijzen, beschikbaarheid, kosten en annuleringsregels te bevestigen.",
 
+  "flightResults.loading.title": "Searching the best flights for you",
+  "flightResults.loading.checkingAirlinesAndFares": "Checking airlines and fares...",
+  "flightResults.loading.comparingRoutesAndProviders": "Comparing routes and providers...",
+  "flightResults.loading.findingBestAvailableOptions": "Finding the best available options...",
+  "flightResults.loading.preparingResults": "Preparing your results...",
+  "flightResults.beachVisual.CUN.alt": "Bright Cancun beach with white sand and turquoise water",
+  "flightResults.beachVisual.HNL.alt": "Sunny Waikiki beach and clear Pacific water in Honolulu",
+  "flightResults.beachVisual.SJU.alt": "Turquoise Caribbean shoreline with palms",
+  "flightResults.beachVisual.DPS.alt": "Sunny Bali coastline with tropical ocean views",
+  "flightResults.beachVisual.ZNZ.alt": "Zanzibar beach with palm trees and turquoise water",
+  "flightResults.beachVisual.PVR.alt": "Puerto Vallarta coastline with bright Pacific water",
+  "flightResults.beachVisual.FAO.alt": "Sunny Algarve cliffs and beach near Faro",
+  "flightResults.beachVisual.CPT.alt": "Cape Town coastline with ocean and mountains",
+  "flightResults.beachVisual.SYD.alt": "Bright ocean beach with turquoise water",
+  "flightResults.beachVisual.SAN.alt": "Sunny San Diego coastline and blue ocean",
+  "flightResults.beachVisual.MIA.alt": "Bright Miami coast and Biscayne Bay waterfront",
+
 };
