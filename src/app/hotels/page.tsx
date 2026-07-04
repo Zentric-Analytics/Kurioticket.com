@@ -85,7 +85,7 @@ const moreHotelDestinationCards: HotelDestinationCard[] = [
     destinationQuery: "Rome",
     image:
       "https://images.pexels.com/photos/1701595/pexels-photo-1701595.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAlt: "The Colosseum in Rome beneath a clear blue sky",
+    imageAlt: enTranslations["hotelDestination.Rome.imageAlt"],
     linkLabel: enTranslations["hotelDestination.Rome.linkLabel"],
   },
   {
@@ -94,7 +94,7 @@ const moreHotelDestinationCards: HotelDestinationCard[] = [
     destinationQuery: "Dubai",
     image:
       "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAlt: "Dubai skyline with the Burj Khalifa rising above skyscrapers",
+    imageAlt: enTranslations["hotelDestination.Dubai.imageAlt"],
     linkLabel: enTranslations["hotelDestination.Dubai.linkLabel"],
   },
   {
@@ -103,7 +103,7 @@ const moreHotelDestinationCards: HotelDestinationCard[] = [
     destinationQuery: "Singapore",
     image:
       "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Marina Bay skyline in Singapore at dusk",
+    imageAlt: enTranslations["hotelDestination.Singapore.imageAlt"],
     linkLabel: enTranslations["hotelDestination.Singapore.linkLabel"],
   },
   {
@@ -112,7 +112,7 @@ const moreHotelDestinationCards: HotelDestinationCard[] = [
     destinationQuery: "Barcelona",
     image:
       "https://images.unsplash.com/photo-1583422409516-2895a77efded?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Barcelona cityscape with Sagrada Familia in daylight",
+    imageAlt: enTranslations["hotelDestination.Barcelona.imageAlt"],
     linkLabel: enTranslations["hotelDestination.Barcelona.linkLabel"],
   },
 ];
@@ -124,7 +124,7 @@ const globalHotelDestinationCards: HotelDestinationCard[] = [
     destinationQuery: "Toronto",
     image:
       "https://images.unsplash.com/photo-1517090504586-fde19ea6066f?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Toronto skyline with the CN Tower beside Lake Ontario",
+    imageAlt: enTranslations["hotelDestination.Toronto.imageAlt"],
     linkLabel: enTranslations["hotelDestination.Toronto.linkLabel"],
   },
   {
@@ -133,7 +133,7 @@ const globalHotelDestinationCards: HotelDestinationCard[] = [
     destinationQuery: "Amsterdam",
     image:
       "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Amsterdam canal houses and bridge along the water",
+    imageAlt: enTranslations["hotelDestination.Amsterdam.imageAlt"],
     linkLabel: enTranslations["hotelDestination.Amsterdam.linkLabel"],
   },
   {
@@ -142,7 +142,7 @@ const globalHotelDestinationCards: HotelDestinationCard[] = [
     destinationQuery: "Bangkok",
     image:
       "https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Bangkok city skyline and Chao Phraya river at sunset",
+    imageAlt: enTranslations["hotelDestination.Bangkok.imageAlt"],
     linkLabel: enTranslations["hotelDestination.Bangkok.linkLabel"],
   },
   {
@@ -151,7 +151,7 @@ const globalHotelDestinationCards: HotelDestinationCard[] = [
     destinationQuery: "Cancun",
     image:
       "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Cancun beach with white sand and turquoise water",
+    imageAlt: enTranslations["hotelDestination.Cancun.imageAlt"],
     linkLabel: enTranslations["hotelDestination.Cancun.linkLabel"],
   },
   {
@@ -160,7 +160,7 @@ const globalHotelDestinationCards: HotelDestinationCard[] = [
     destinationQuery: "Istanbul",
     image:
       "https://images.unsplash.com/photo-1527838832700-5059252407fa?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Istanbul waterfront with domes and minarets at golden hour",
+    imageAlt: enTranslations["hotelDestination.Istanbul.imageAlt"],
     linkLabel: enTranslations["hotelDestination.Istanbul.linkLabel"],
   },
 ];
