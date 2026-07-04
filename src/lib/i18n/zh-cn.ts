@@ -1977,4 +1977,8 @@ export const translations: TranslationDictionary = {
   "flightResults.beachVisual.SAN.alt": "Sunny San Diego coastline and blue ocean",
   "flightResults.beachVisual.MIA.alt": "Bright Miami coast and Biscayne Bay waterfront",
 
+  "flightResults.duration.minutesOnly": "{{minutes}}分钟",
+  "flightResults.duration.hoursOnly": "{{hours}}小时",
+  "flightResults.duration.hoursMinutes": "{{hours}}小时{{minutes}}分钟",
+
 };

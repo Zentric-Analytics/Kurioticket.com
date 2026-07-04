@@ -2031,4 +2031,8 @@ export const translations: TranslationDictionary = {
   "flightResults.beachVisual.SAN.alt": "Sunny San Diego coastline and blue ocean",
   "flightResults.beachVisual.MIA.alt": "Bright Miami coast and Biscayne Bay waterfront",
 
+  "flightResults.duration.minutesOnly": "{{minutes}} นาที",
+  "flightResults.duration.hoursOnly": "{{hours}} ชม.",
+  "flightResults.duration.hoursMinutes": "{{hours}} ชม. {{minutes}} นาที",
+
 };

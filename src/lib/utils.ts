@@ -13,15 +13,15 @@ export function formatCurrency(amount: number, currency = "USD") {
   }).format(amount);
 }
 
-export function formatShortDate(value: string | Date) {
-  return new Intl.DateTimeFormat("en-US", {
+export function formatShortDate(value: string | Date, locale = "en-US") {
+  return new Intl.DateTimeFormat(locale, {
     month: "short",
     day: "numeric",
   }).format(new Date(value));
 }
 
-export function formatTime(value: string | Date) {
-  return new Intl.DateTimeFormat("en-US", {
+export function formatTime(value: string | Date, locale = "en-US") {
+  return new Intl.DateTimeFormat(locale, {
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(value));
