@@ -623,6 +623,7 @@ export const translations: TranslationDictionary = {
   verifyLoginPasswordLabel: "Mật khẩu để gửi lại",
   verifyLoginNeedStartOver: "Bạn cần bắt đầu lại?",
   verifyLoginAgainLink: "Đăng nhập lại",
+  forgotPasswordMetadataTitle: "Quên mật khẩu",
   forgotPasswordTitle: "Đặt lại mật khẩu của bạn",
   forgotPasswordSubtitle:
     "Nhập email của bạn và chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu.",
@@ -1788,4 +1789,5 @@ export const translations: TranslationDictionary = {
   "account.pendingDeletion.action.reactivating": "Đang kích hoạt lại…",
   "account.pendingDeletion.action.reactivate": "Kích hoạt lại tài khoản",
   "account.pendingDeletion.action.logout": "Đăng xuất",
+  emailPreferencesMetadataTitle: "Tùy chọn email",
 };

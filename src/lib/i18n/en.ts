@@ -672,6 +672,7 @@ export const translations: TranslationDictionary = {
   loginErrorCallback: "Google sign-in callback failed. Please try again, or use email login.",
   loginErrorGoogleGeneric:
     "Google sign-in could not be completed. Please try again, or use email login.",
+  forgotPasswordMetadataTitle: "Forgot password",
   forgotPasswordTitle: "Reset your password",
   forgotPasswordSubtitle: "Enter your email and we'll send instructions to reset your password.",
   forgotPasswordEmailLabel: "Email",
@@ -3029,6 +3030,7 @@ export const translations: TranslationDictionary = {
   "hotelDestination.Istanbul.imageAlt": "Istanbul waterfront with domes and minarets at golden hour",
   "newsletter.accountEmailLine": "Subscribe with your account email: {{email}}.",
   "newsletter.manageEmailPreferences": "Manage email preferences",
+  emailPreferencesMetadataTitle: "Email preferences",
   "emailUpdates.eyebrow": "KURIOTICKET UPDATES",
   "emailUpdates.title": "Manage email updates",
   "emailUpdates.description": "Choose whether Kurioticket can send travel updates and product news to this email address.",

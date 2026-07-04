@@ -305,6 +305,7 @@ export const translations: TranslationDictionary = {
   password: "Wachtwoord",
   forgotPassword: "Wachtwoord vergeten?",
   createAccount: "Account aanmaken",
+  forgotPasswordMetadataTitle: "Wachtwoord vergeten",
   forgotPasswordTitle: "Wachtwoord opnieuw instellen",
   forgotPasswordSubtitle:
     "Voer je e-mailadres in en we sturen je instructies om je wachtwoord opnieuw in te stellen.",
@@ -2312,6 +2313,7 @@ flightLandingRouteAriaLabel: "Vluchten zoeken van {{origin}} naar {{destination}
   "hotelDestination.New York.imageAlt": "Skyline van New York City met One World Trade Center en waterfront",
   "newsletter.accountEmailLine": "Abonneer met het e-mailadres van je account: {{email}}.",
   "newsletter.manageEmailPreferences": "E-mailvoorkeuren beheren",
+  emailPreferencesMetadataTitle: "E-mailvoorkeuren",
   "emailUpdates.eyebrow": "KURIOTICKET-UPDATES",
   "emailUpdates.title": "E-mailupdates beheren",
   "emailUpdates.description": "Kies of Kurioticket reisupdates en productnieuws naar dit e-mailadres mag sturen.",

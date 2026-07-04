@@ -390,6 +390,7 @@ export const translations: TranslationDictionary = {
   loginErrorCallback: 'Google-inloggningens återanrop misslyckades. Försök igen eller använd e-postinloggning.',
   loginErrorGoogleGeneric:
     'Google-inloggningen kunde inte slutföras. Försök igen eller använd e-postinloggning.',
+  forgotPasswordMetadataTitle: "Glömt lösenord",
   forgotPasswordTitle: 'Återställ ditt lösenord',
   forgotPasswordSubtitle:
     'Ange din e-postadress så skickar vi instruktioner för att återställa ditt lösenord.',
@@ -1755,6 +1756,7 @@ export const translations: TranslationDictionary = {
 
   "newsletter.accountEmailLine": "Prenumerera med e-postadressen för ditt konto: {{email}}.",
   "newsletter.manageEmailPreferences": "Hantera e-postinställningar",
+  emailPreferencesMetadataTitle: "E-postinställningar",
   "emailUpdates.eyebrow": "KURIOTICKET-UPPDATERINGAR",
   "emailUpdates.title": "Hantera e-postuppdateringar",
   "emailUpdates.description": "Välj om Kurioticket får skicka reseuppdateringar och produktnyheter till den här e-postadressen.",

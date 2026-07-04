@@ -270,6 +270,7 @@ export const translations: TranslationDictionary = {
   loginSendingCode: "Mengirim...",
   loginResendIn: "Kirim ulang dalam {{seconds}} dtk",
   loginUseDifferentDetails: "Gunakan detail lain",
+  forgotPasswordMetadataTitle: "Lupa kata sandi",
   forgotPasswordTitle: "Atur ulang kata sandi Anda",
   forgotPasswordSubtitle:
     "Masukkan email Anda dan kami akan mengirimkan instruksi untuk mengatur ulang kata sandi.",
@@ -781,6 +782,7 @@ export const translations: TranslationDictionary = {
   homeEmailAddress: "Alamat email",
   "newsletter.accountEmailLine": "Berlangganan dengan email akun Anda: {{email}}.",
   "newsletter.manageEmailPreferences": "Kelola preferensi email",
+  emailPreferencesMetadataTitle: "Preferensi email",
   "homePopularDestinationCountry.unitedArabEmirates": "Uni Emirat Arab",
   "homePopularDestinationCountry.unitedKingdom": "Britania Raya",
   "homePopularDestinationCountry.southAfrica": "Afrika Selatan",

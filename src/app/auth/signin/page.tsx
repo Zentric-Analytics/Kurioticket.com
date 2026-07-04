@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { SigninForm } from "@/components/auth/SigninForm";
@@ -6,12 +7,17 @@ import {
   getGoogleClientId,
   getGoogleClientSecret,
 } from "@/lib/env";
+import { getTranslations } from "@/lib/i18n";
+import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Login",
-};
+export async function generateMetadata() {
+  const cookieStore = await cookies();
+  const t = getTranslations(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
+
+  return { title: t.loginPageTitle };
+}
 
 type SigninPageProps = {
   searchParams?: Promise<{

@@ -572,6 +572,7 @@ export const translations: TranslationDictionary = {
     "Der Rückruf der Google-Anmeldung ist fehlgeschlagen. Bitte versuchen Sie es erneut oder verwenden Sie die E-Mail-Anmeldung.",
   loginErrorGoogleGeneric:
     "Die Google-Anmeldung konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut oder verwenden Sie die E-Mail-Anmeldung.",
+  forgotPasswordMetadataTitle: "Passwort vergessen",
   forgotPasswordTitle: "Passwort zurücksetzen",
   forgotPasswordSubtitle:
     "Gib deine E-Mail-Adresse ein und wir senden dir Anweisungen zum Zurücksetzen deines Passworts.",
@@ -2585,6 +2586,7 @@ flightLandingRouteAriaLabel:
   "hotelDestination.New York.imageAlt": "Skyline von New York City mit One World Trade Center und Waterfront",
   "newsletter.accountEmailLine": "Mit deiner Konto-E-Mail abonnieren: {{email}}.",
   "newsletter.manageEmailPreferences": "E-Mail-Einstellungen verwalten",
+  emailPreferencesMetadataTitle: "E-Mail-Einstellungen",
   "emailUpdates.eyebrow": "KURIOTICKET-UPDATES",
   "emailUpdates.title": "E-Mail-Updates verwalten",
   "emailUpdates.description": "Lege fest, ob Kurioticket Reiseupdates und Produktneuigkeiten an diese E-Mail-Adresse senden darf.",

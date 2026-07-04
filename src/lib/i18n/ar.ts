@@ -1072,6 +1072,7 @@ export const translations: TranslationDictionary = {
   loginStartOverError: "ابدأ من جديد حتى نتمكن من التحقق من التفاصيل قبل إرسال رمز جديد.",
   loginVerifiedRedirecting: "تم التحقق. جارٍ إعادة التوجيه...",
   loginProcessing: "جارٍ التحقق من التفاصيل وإرسال رمز تحقق...",
+  forgotPasswordMetadataTitle: "نسيت كلمة المرور",
   forgotPasswordTitle: "إعادة تعيين كلمة المرور",
   forgotPasswordSubtitle:
     "أدخل بريدك الإلكتروني وسنرسل لك تعليمات لإعادة تعيين كلمة المرور.",
@@ -1789,6 +1790,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.trips.status.upcoming": "قادمة",
   "newsletter.accountEmailLine": "اشترك باستخدام بريد حسابك الإلكتروني: {{email}}.",
   "newsletter.manageEmailPreferences": "إدارة تفضيلات البريد الإلكتروني",
+  emailPreferencesMetadataTitle: "تفضيلات البريد الإلكتروني",
   "emailUpdates.eyebrow": "تحديثات KURIOTICKET",
   "emailUpdates.title": "إدارة تحديثات البريد الإلكتروني",
   "emailUpdates.description": "اختر ما إذا كان بإمكان Kurioticket إرسال تحديثات السفر وأخبار المنتج إلى عنوان البريد الإلكتروني هذا.",
