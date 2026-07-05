@@ -77,6 +77,11 @@ export function FlightMobilePickerShell({
     rootElement.style.overscrollBehavior = "none";
 
     return () => {
+      const activeElement = document.activeElement;
+      if (activeElement instanceof HTMLElement) {
+        activeElement.blur();
+      }
+
       bodyElement.style.left = previousBodyStyles.left;
       bodyElement.style.overflow = previousBodyStyles.overflow;
       bodyElement.style.overscrollBehavior = previousBodyStyles.overscrollBehavior;
@@ -89,7 +94,10 @@ export function FlightMobilePickerShell({
       rootElement.style.overflow = previousRootStyles.overflow;
       rootElement.style.overscrollBehavior = previousRootStyles.overscrollBehavior;
       window.scrollTo(0, scrollY);
-      window.requestAnimationFrame(() => launcherElement?.focus());
+      window.requestAnimationFrame(() => {
+        launcherElement?.focus({ preventScroll: true });
+        window.scrollTo(0, scrollY);
+      });
     };
   }, [launcherRef, open]);
 
