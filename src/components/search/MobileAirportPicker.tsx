@@ -91,7 +91,7 @@ export function MobileAirportPicker({
           <button
             type="button"
             onClick={onClose}
-            className="focus-ring rounded-xl bg-indigo-700 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-600"
+            className="focus-ring rounded-xl bg-[#004BB8] px-6 py-3 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
           >
             {labels.done}
           </button>
@@ -112,7 +112,7 @@ export function MobileAirportPicker({
               onChange={(event) => onChange(event.target.value)}
               placeholder={labels.searchAirportsOrCities}
               autoComplete="off"
-              className="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-slate-50/70 py-3 ps-4 pe-14 text-base font-semibold text-slate-900 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-500/15"
+              className="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-slate-50/70 py-3 ps-4 pe-14 text-base font-semibold text-[#021C2B] outline-none transition-colors hover:border-[#004BB8]/20 placeholder:font-medium placeholder:text-slate-400 focus:border-[#004BB8]/35 focus:bg-white focus:ring-2 focus:ring-[#004BB8]/20"
             />
             {value.trim() ? (
               <button
@@ -147,7 +147,7 @@ export function MobileAirportPicker({
                 onClick={() => onSelect(option)}
                 className={cn(
                   "focus-ring block min-h-[72px] w-full rounded-2xl border border-slate-200/70 bg-white/70 px-4 py-3.5 text-start transition-colors",
-                  "hover:border-slate-300 hover:bg-white focus-visible:border-indigo-300 focus-visible:bg-white",
+                  "hover:border-[#004BB8]/20 hover:bg-white focus-visible:border-[#004BB8]/35 focus-visible:bg-white focus-visible:ring-[#004BB8]/20",
                 )}
               >
                 <span className="flex items-start justify-between gap-3">
@@ -164,7 +164,7 @@ export function MobileAirportPicker({
                       </span>
                     ) : null}
                   </span>
-                  <span className="shrink-0 rounded-full border border-indigo-100 bg-indigo-50/80 px-3 py-1.5 text-sm font-extrabold text-indigo-700">
+                  <span className="shrink-0 rounded-full border border-[#004BB8]/10 bg-[#004BB8]/8 px-3 py-1.5 text-sm font-extrabold text-[#004BB8]">
                     {option.code}
                   </span>
                 </span>
