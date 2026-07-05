@@ -4,6 +4,8 @@ import type { TranslationDictionary } from "./types";
 export const translations: TranslationDictionary = {
   ...en,
   destinationsLoadingPage: "Zieleseite wird geladen...",
+  "brandedLoading.default.title": "Kurioticket wird geladen...",
+  "brandedLoading.default.preparingExperience": "Dein Erlebnis wird vorbereitet...",
   "brandedLoading.hotel.title": "Finding the best stays for you",
   "brandedLoading.hotel.checkingAvailabilityAndRates": "Checking availability and rates...",
   "brandedLoading.hotel.comparingHotelsAndRooms": "Comparing hotels and room options...",

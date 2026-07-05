@@ -24,6 +24,8 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.quietRooms": "Kamar tenang",
   "hotelResults.filter.frontDesk24": "Resepsionis 24 jam",
   "hotelResults.filter.lateCheckIn": "Check-in terlambat",
+  "brandedLoading.default.title": "Memuat Kurioticket...",
+  "brandedLoading.default.preparingExperience": "Menyiapkan pengalaman Anda...",
   "brandedLoading.hotel.title": "Finding the best stays for you",
   "brandedLoading.hotel.checkingAvailabilityAndRates": "Checking availability and rates...",
   "brandedLoading.hotel.comparingHotelsAndRooms": "Comparing hotels and room options...",

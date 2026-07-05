@@ -97,13 +97,16 @@ export function BrandedLoading({
       ? hotelSearchCopy
       : searchLoadingCopy[searchType]
     : undefined;
+  const defaultLoadingMessages = useMemo(
+    () => [t["brandedLoading.default.preparingExperience"]],
+    [t],
+  );
   const loadingMessages = useMemo(
     () =>
       messages ??
-      (description ? [description] : searchCopy?.messages) ?? [
-        "Preparing your experience...",
-      ],
-    [description, messages, searchCopy?.messages],
+      (description ? [description] : searchCopy?.messages) ??
+      defaultLoadingMessages,
+    [defaultLoadingMessages, description, messages, searchCopy?.messages],
   );
   const [messageIndex, setMessageIndex] = useState(0);
 
@@ -117,7 +120,8 @@ export function BrandedLoading({
     return () => window.clearInterval(interval);
   }, [loadingMessages.length]);
 
-  const resolvedTitle = title ?? searchCopy?.title ?? "Loading Kurioticket...";
+  const resolvedTitle =
+    title ?? searchCopy?.title ?? t["brandedLoading.default.title"];
   const resolvedDescription =
     loadingMessages[messageIndex % loadingMessages.length];
 
