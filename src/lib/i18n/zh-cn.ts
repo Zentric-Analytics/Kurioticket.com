@@ -3,6 +3,8 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "metadata.root.title.default": "Kurioticket | 快速查找廉价航班",
+  "metadata.root.description": "通过更从容的旅行决策平台，在几秒钟内比较实惠的航班和酒店。",
   destinationsLoadingPage: "正在加载目的地页面...",
   "hotelResults.unableToOpenProvider": "目前无法打开提供商。请重试。",
   "hotelResults.payAtProperty": "到店付款",
