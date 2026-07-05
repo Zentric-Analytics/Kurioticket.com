@@ -20,7 +20,7 @@ export default function SignupPage() {
     <>
       <AppHeader simpleHeader />
 
-      <main className="page-shell flex flex-1 items-start pt-6 pb-10 sm:pt-8 lg:pt-10">
+      <main className="page-shell flex flex-1 items-start pt-10 pb-10 sm:pt-12 lg:pt-14">
         <SignupForm googleEnabled={googleEnabled} />
       </main>
 
