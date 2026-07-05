@@ -1,6 +1,8 @@
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
+  "metadata.root.title.default": "Kurioticket | Find Cheap Flights Fast",
+  "metadata.root.description": "Compare affordable flights and hotels in seconds with a calmer travel decision platform.",
   flights: "Flights",
   hotels: "Hotels",
   cars: "Cars",

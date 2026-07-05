@@ -3,6 +3,8 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "metadata.root.title.default": "Kurioticket | Trova voli economici velocemente",
+  "metadata.root.description": "Confronta voli e hotel convenienti in pochi secondi con una piattaforma di decisione di viaggio più serena.",
   destinationsLoadingPage: "Caricamento della pagina delle destinazioni...",
   "brandedLoading.default.title": "Caricamento di Kurioticket...",
   "brandedLoading.default.preparingExperience": "Preparazione della tua esperienza...",
