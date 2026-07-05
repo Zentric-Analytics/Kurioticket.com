@@ -465,7 +465,7 @@ function formatTranslation(
   translations: Record<string, string>,
   message: MessageState,
 ) {
-  const template = translations[message.key] ?? message.key;
+  const template = translations[message.key] ?? translations[invalidLoginKey] ?? "";
 
   if (!message.params) {
     return template;
