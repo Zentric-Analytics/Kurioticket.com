@@ -128,6 +128,15 @@ export const translations: TranslationDictionary = {
   signupErrorFullNameRequired: "氏名を入力してください。",
   signupErrorInvalidEmail: "有効なメールアドレスを入力してください。",
   signupErrorPasswordRequirements: "パスワードは8文字以上である必要があります。",
+  signupErrorUnableCreate:
+    "アカウントを作成できませんでした。もう一度お試しください。",
+  signupErrorRateLimited: "登録の試行回数が多すぎます。しばらく待ってからもう一度お試しください。",
+  signupErrorDuplicateEmail: "このメールアドレスのアカウントはすでに存在します。",
+  signupErrorUnableSendVerification:
+    "現在、確認コードを送信できません。もう一度お試しください。",
+  signupVerificationRequiredRedirecting: "確認が必要です。リダイレクトしています...",
+  loginErrorAccountUnavailable:
+    "このアカウントは利用できません。サポートにお問い合わせください。",
   loginPageTitle: "ログイン",
   loginPageSubtitle:
     "検索を保存し、アラートを管理して、旅行ダッシュボードにアクセスできます。",

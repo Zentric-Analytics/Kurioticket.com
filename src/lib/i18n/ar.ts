@@ -1147,6 +1147,14 @@ export const translations: TranslationDictionary = {
   signupErrorFullNameRequired: "يرجى إدخال اسمك الكامل.",
   signupErrorInvalidEmail: "أدخل عنوان بريد إلكتروني صالحًا.",
   signupErrorPasswordRequirements: "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.",
+  signupErrorUnableCreate: "تعذر إنشاء حسابك. يُرجى المحاولة مرة أخرى.",
+  signupErrorRateLimited: "محاولات إنشاء الحساب كثيرة جدًا. يُرجى الانتظار ثم المحاولة مرة أخرى.",
+  signupErrorDuplicateEmail: "يوجد حساب بهذا البريد الإلكتروني بالفعل.",
+  signupErrorUnableSendVerification:
+    "لا يمكن إرسال رمز التحقق الآن. يُرجى المحاولة مرة أخرى.",
+  signupVerificationRequiredRedirecting: "التحقق مطلوب. جارٍ إعادة التوجيه...",
+  loginErrorAccountUnavailable:
+    "هذا الحساب غير متاح. يُرجى التواصل مع الدعم.",
   hotelsHeroEyebrow: "إقامات مميزة بمقارنة واضحة",
   hotelsHeroTitle: "اعثر على الإقامة التي تبدأ الرحلة بشكل صحيح.",
   filterBy: "تصفية حسب",
