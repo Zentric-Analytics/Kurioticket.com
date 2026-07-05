@@ -88,7 +88,7 @@ const dealsSearchFieldLabelClassName =
 const dealsSearchFieldControlClassName =
   "flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-0 lg:h-8 lg:text-[15px]";
 const dealsMobileDoneButtonClassName =
-  "focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 transition-colors hover:bg-[#021C2B] active:bg-[#021C2B]";
+  "focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-bold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35";
 
 const normalizeSuggestionText = (value: string) =>
   value.normalize("NFKD").replace(/\p{M}/gu, "").trim().toLowerCase();
@@ -427,22 +427,6 @@ export default function DealsPage() {
     t,
   ]);
 
-  const hasActiveDealsSearch =
-    packageMode !== "hotel-flight" ||
-    origin.trim() !== "" ||
-    destination.trim() !== "" ||
-    startDate !== "" ||
-    endDate !== "" ||
-    adults !== 1 ||
-    children !== 0 ||
-    rooms !== 1 ||
-    cabinClass !== "economy" ||
-    driverAge !== 30 ||
-    error !== "" ||
-    activeMobileAirportPicker !== null ||
-    datesOpen ||
-    travelersOpen;
-
   const destinationIdeaHref = useMemo(() => {
     const baseDate = new Date();
     const defaultCheckIn = addDays(baseDate, 21);
@@ -560,23 +544,6 @@ export default function DealsPage() {
       }
       return nextOpen;
     });
-  };
-
-  const handleResetSearch = () => {
-    setPackageMode("hotel-flight");
-    setOrigin("");
-    setDestination("");
-    setStartDate("");
-    setEndDate("");
-    setAdults(1);
-    setChildren(0);
-    setRooms(1);
-    setDriverAge(30);
-    setCabinClass("economy");
-    setDatesOpen(false);
-    setTravelersOpen(false);
-    setActiveMobileAirportPicker(null);
-    setError("");
   };
 
   const handleSelectDate = (date: Date) => {
@@ -1479,18 +1446,6 @@ export default function DealsPage() {
                     </div>
                   </div>
                 </div>
-
-                {hasActiveDealsSearch ? (
-                  <div className="flex justify-end px-1">
-                    <button
-                      type="button"
-                      onClick={handleResetSearch}
-                      className="inline-flex items-center rounded-full px-3 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
-                    >
-                      {t("clearAll")}
-                    </button>
-                  </div>
-                ) : null}
 
                 <div className="min-h-6" aria-live="polite">
                   {error ? (
