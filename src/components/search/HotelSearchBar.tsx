@@ -1080,9 +1080,7 @@ export function HotelSearchBar({
         >
           {!compact && desktopIdentityLabel ? (
             <div className="flex items-center px-1 pb-2 sm:hidden">
-              <span
-                className="inline-flex items-center gap-1.5 rounded-lg bg-[#004BB8]/8 px-3 py-1.5 text-[0.86rem] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10"
-              >
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#004BB8]/8 px-3 py-1.5 text-[0.86rem] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10">
                 <BedDouble
                   aria-hidden="true"
                   className="h-4 w-4 text-[#004BB8]"
@@ -1094,9 +1092,7 @@ export function HotelSearchBar({
           ) : null}
           {!compact && desktopIdentityLabel ? (
             <div className="hidden items-center px-1 pb-2 sm:flex lg:pb-2.5">
-              <span
-                className="inline-flex items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3.5 py-1.5 text-[0.925rem] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10"
-              >
+              <span className="inline-flex items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3.5 py-1.5 text-[0.925rem] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10">
                 <BedDouble
                   aria-hidden="true"
                   className="h-[1.125rem] w-[1.125rem] text-[#004BB8]"
@@ -1638,7 +1634,7 @@ export function HotelSearchBar({
         titleId="hotel-results-mobile-dates-title"
         launcherRef={datesMobileLauncherRef}
         onClose={() => setDatesOpen(false)}
-        contentClassName="px-3 py-3"
+        contentClassName="px-4 py-4"
         footer={
           <div className="flex items-center justify-between gap-3">
             <button
@@ -1654,117 +1650,111 @@ export function HotelSearchBar({
             <button
               type="button"
               onClick={() => setDatesOpen(false)}
-              className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
+              className="focus-ring min-h-11 rounded-xl bg-[#004BB8] px-4 py-2 text-sm font-bold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
             >
               {t("done")}
             </button>
           </div>
         }
       >
-        <div className="mx-auto flex w-full max-w-xl flex-col gap-3 rounded-2xl bg-white p-3 shadow-sm">
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              aria-label={t("previousMonth")}
-              onClick={() =>
-                setHotelVisibleMonthDate((prev) => addMonths(prev, -1))
-              }
-              className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-            >
-              {t("previousMonthShort")}
-            </button>
-            <button
-              type="button"
-              aria-label={t("nextMonth")}
-              onClick={() =>
-                setHotelVisibleMonthDate((prev) => addMonths(prev, 1))
-              }
-              className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-            >
-              {t("nextMonthShort")}
-            </button>
-          </div>
-          <div className="grid grid-cols-1 gap-3">
-            {[0, 1].map((monthOffset) => {
-              const monthDate = addMonths(hotelVisibleMonthDate, monthOffset);
-              const cells = buildMonthCells(monthDate);
+        <div className="mx-auto w-full max-w-xl space-y-8 pb-2">
+          {Array.from({ length: 12 }, (_, monthOffset) =>
+            addMonths(hotelVisibleMonthDate, monthOffset),
+          ).map((monthDate) => {
+            const monthKey = `${monthDate.getFullYear()}-${monthDate.getMonth()}`;
+            const cells = buildMonthCells(monthDate);
 
-              return (
-                <div key={monthOffset}>
-                  <p className="mb-1 text-center text-sm font-black text-slate-900">
-                    {monthDate.toLocaleDateString(calendarLocale, {
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </p>
-                  <div className="mb-1 grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-500">
-                    {weekdays.map((weekday) => (
-                      <span key={weekday}>{weekday}</span>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-7 gap-1">
-                    {cells.map((cell) => {
-                      const day = cell.date;
-                      const iso = toIsoDate(day);
-                      const isCheckIn = iso === checkIn;
-                      const isCheckOut = iso === checkOut;
-                      const isPastDate = isBeforeToday(day);
-                      const isInvalidCheckOut = Boolean(
-                        checkIn && !checkOut && iso <= checkIn,
-                      );
-                      const isDisabledDate = isPastDate || isInvalidCheckOut;
-                      const isInRange = Boolean(
-                        checkInParsed &&
-                        checkOutParsed &&
-                        !isPastDate &&
-                        day > checkInParsed &&
-                        day < checkOutParsed,
-                      );
-
-                      if (!cell.isCurrentMonth) {
-                        return (
-                          <span
-                            key={`mobile-placeholder-${iso}`}
-                            aria-hidden="true"
-                            className="h-8 w-8 justify-self-center min-[390px]:h-9 min-[390px]:w-9"
-                          />
-                        );
-                      }
-
-                      return (
-                        <button
-                          key={iso}
-                          type="button"
-                          aria-label={`${t(
-                            "hotelResults.selectDateAriaPrefix",
-                          )} ${day.toLocaleDateString(calendarLocale, {
-                            month: "long",
-                            day: "numeric",
-                            year: "numeric",
-                          })}`}
-                          onClick={() => handleSelectHotelDate(day)}
-                          disabled={isDisabledDate}
-                          aria-disabled={isDisabledDate}
-                          className={cn(
-                            "focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm font-semibold transition-colors disabled:cursor-not-allowed min-[390px]:h-9 min-[390px]:w-9",
-                            isDisabledDate
-                              ? "text-slate-300 hover:bg-transparent"
-                              : "text-slate-900 hover:bg-[#004BB8]/8",
-                            isInRange &&
-                              "rounded-md bg-[#004BB8]/10 text-[#021C2B] hover:bg-[#004BB8]/10",
-                            (isCheckIn || isCheckOut) &&
-                              "bg-[#004BB8] text-white hover:bg-[#004BB8]",
-                          )}
-                        >
-                          {day.getDate()}
-                        </button>
-                      );
-                    })}
-                  </div>
+            return (
+              <section
+                key={monthKey}
+                aria-label={monthDate.toLocaleDateString(calendarLocale, {
+                  month: "long",
+                  year: "numeric",
+                })}
+                className="space-y-2.5"
+              >
+                <h3 className="text-start text-[17px] font-bold tracking-tight text-slate-950">
+                  {monthDate.toLocaleDateString(calendarLocale, {
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </h3>
+                <div className="grid grid-cols-7 text-center text-[12px] font-semibold tracking-[0.08em] text-slate-500">
+                  {weekdays.map((weekday) => (
+                    <span key={weekday} className="py-2">
+                      {weekday}
+                    </span>
+                  ))}
                 </div>
-              );
-            })}
-          </div>
+                <div className="grid grid-cols-7 gap-y-1.5">
+                  {cells.map((cell) => {
+                    const day = cell.date;
+                    const iso = toIsoDate(day);
+                    const isCheckIn = iso === checkIn;
+                    const isCheckOut = iso === checkOut;
+                    const isPastDate = isBeforeToday(day);
+                    const isToday = toIsoDate(new Date()) === iso;
+                    const isInRange = Boolean(
+                      checkInParsed &&
+                      checkOutParsed &&
+                      !isPastDate &&
+                      day > checkInParsed &&
+                      day < checkOutParsed,
+                    );
+
+                    if (!cell.isCurrentMonth) {
+                      return (
+                        <span
+                          key={`mobile-placeholder-${iso}`}
+                          aria-hidden="true"
+                          className="h-11 w-full"
+                        />
+                      );
+                    }
+
+                    return (
+                      <button
+                        key={iso}
+                        type="button"
+                        aria-label={`${t(
+                          "hotelResults.selectDateAriaPrefix",
+                        )} ${day.toLocaleDateString(calendarLocale, {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })}`}
+                        aria-pressed={isCheckIn || isCheckOut}
+                        onClick={() => handleSelectHotelDate(day)}
+                        disabled={isPastDate}
+                        aria-disabled={isPastDate}
+                        className={cn(
+                          "focus-ring relative mx-auto flex h-11 w-full max-w-11 items-center justify-center rounded-full text-[15px] font-semibold transition-colors disabled:cursor-not-allowed",
+                          isPastDate
+                            ? "text-slate-300"
+                            : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
+                          isToday &&
+                            !isPastDate &&
+                            "ring-1 ring-inset ring-[#004BB8]/25",
+                          isInRange &&
+                            "bg-[#004BB8]/7 text-[#021C2B] hover:bg-[#004BB8]/10",
+                          (isCheckIn || isCheckOut) &&
+                            "bg-[#004BB8] text-white shadow-sm ring-0 hover:bg-[#004BB8] hover:text-white",
+                        )}
+                      >
+                        {day.getDate()}
+                        {isToday && !isCheckIn && !isCheckOut ? (
+                          <span
+                            className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#004BB8]"
+                            aria-hidden="true"
+                          />
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
         </div>
       </HotelMobilePickerShell>
 
