@@ -24,7 +24,7 @@ const contactNotes = [
 export default function ContactPage() {
   return (
     <>
-      <AppHeader />
+      <AppHeader simpleHeader />
       <main className="page-shell flex-1 pt-8 pb-10 sm:pt-10 lg:pt-12">
         <section className="max-w-3xl">
           <p className="text-sm font-semibold text-teal-dark">
