@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 
 import { X } from "lucide-react";
 
@@ -186,9 +186,9 @@ export function HotelDestinationMobilePicker({
     trimmedQuery,
   ]);
 
-  const applyValue = (nextValue: string) => {
+  const applyValue = (nextValue: string, requestClose: () => void) => {
     onChange(nextValue);
-    onClose();
+    requestClose();
   };
 
   const clearValue = () => {
@@ -201,29 +201,6 @@ export function HotelDestinationMobilePicker({
     window.requestAnimationFrame(() => inputRef.current?.focus());
   };
 
-  const footer = useMemo(
-    () => (
-      <div className="flex items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={clearValue}
-          className="focus-ring min-h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
-        >
-          {t("clear")}
-        </button>
-        <button
-          type="button"
-          onClick={() => applyValue(trimmedQuery)}
-          className={mobileDoneButtonClassName}
-        >
-          {t("done")}
-        </button>
-      </div>
-    ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [trimmedQuery],
-  );
-
   return (
     <HotelMobilePickerShell
       open={open}
@@ -231,9 +208,27 @@ export function HotelDestinationMobilePicker({
       titleId={titleId}
       launcherRef={launcherRef}
       onClose={onClose}
-      footer={footer}
+      footer={(requestClose) => (
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={clearValue}
+            className="focus-ring min-h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+          >
+            {t("clear")}
+          </button>
+          <button
+            type="button"
+            onClick={() => applyValue(trimmedQuery, requestClose)}
+            className={mobileDoneButtonClassName}
+          >
+            {t("done")}
+          </button>
+        </div>
+      )}
       contentClassName="bg-slate-50 px-4 py-5"
     >
+      {(requestClose) => (
       <div className="mx-auto w-full max-w-xl space-y-5">
         <div className="space-y-2">
           <label
@@ -269,6 +264,7 @@ export function HotelDestinationMobilePicker({
                   const highlightedSuggestion = visibleSuggestions[highlight];
                   applyValue(
                     highlightedSuggestion?.searchValue ?? trimmedQuery,
+                    requestClose,
                   );
                 }
               }}
@@ -309,7 +305,7 @@ export function HotelDestinationMobilePicker({
                   <button
                     key={suggestion.id}
                     type="button"
-                    onClick={() => applyValue(suggestion.searchValue)}
+                    onClick={() => applyValue(suggestion.searchValue, requestClose)}
                     className={cn(
                       "focus-ring flex w-full items-center justify-between gap-3 px-4 py-3.5 text-start transition-colors hover:bg-slate-50 focus-visible:bg-slate-50",
                       highlight === index && "bg-indigo-50",
@@ -339,6 +335,7 @@ export function HotelDestinationMobilePicker({
           )}
         </div>
       </div>
+      )}
     </HotelMobilePickerShell>
   );
 }
