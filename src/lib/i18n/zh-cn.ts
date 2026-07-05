@@ -3,6 +3,12 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "guides.metadata.best-time-to-book-flights.title": "预订航班的最佳时间",
+  "guides.metadata.best-time-to-book-flights.description": "了解何时预订航班、比较票价时机，并避免为下一次旅行多付费用。",
+  "guides.metadata.how-to-avoid-risky-layovers.title": "如何避免有风险的中转",
+  "guides.metadata.how-to-avoid-risky-layovers.description": "了解如何在预订前比较中转时间、机场变更和转机风险。",
+  "guides.metadata.how-to-compare-baggage-inclusive-fares.title": "如何比较含行李票价",
+  "guides.metadata.how-to-compare-baggage-inclusive-fares.description": "了解如何比较包含行李的票价，避免最便宜的机票之后变得更贵。",
   "metadata.root.title.default": "Kurioticket | 快速查找廉价航班",
   "metadata.root.description": "通过更从容的旅行决策平台，在几秒钟内比较实惠的航班和酒店。",
   destinationsLoadingPage: "正在加载目的地页面...",

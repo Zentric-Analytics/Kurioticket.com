@@ -3,6 +3,12 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "guides.metadata.best-time-to-book-flights.title": "उड़ानें बुक करने का सबसे अच्छा समय",
+  "guides.metadata.best-time-to-book-flights.description": "जानें कि उड़ानें कब बुक करें, किराये के समय की तुलना करें, और अपनी अगली यात्रा पर ज़्यादा भुगतान से बचें।",
+  "guides.metadata.how-to-avoid-risky-layovers.title": "जोखिम भरे लेओवर से कैसे बचें",
+  "guides.metadata.how-to-avoid-risky-layovers.description": "बुकिंग से पहले लेओवर समय, एयरपोर्ट बदलाव और कनेक्शन जोखिमों की तुलना करना सीखें।",
+  "guides.metadata.how-to-compare-baggage-inclusive-fares.title": "बैगेज-समेत किरायों की तुलना कैसे करें",
+  "guides.metadata.how-to-compare-baggage-inclusive-fares.description": "जानें कि बैगेज शामिल किरायों की तुलना कैसे करें ताकि सबसे सस्ता टिकट बाद में महंगा न हो जाए।",
   "metadata.root.title.default": "Kurioticket | सस्ती उड़ानें तेज़ी से खोजें",
   "metadata.root.description": "एक शांत यात्रा निर्णय प्लेटफ़ॉर्म के साथ किफायती उड़ानों और होटलों की तुलना सेकंडों में करें।",
   destinationsLoadingPage: "गंतव्य पेज लोड हो रहा है...",

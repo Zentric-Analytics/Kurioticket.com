@@ -3,6 +3,12 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "guides.metadata.best-time-to-book-flights.title": "항공권을 예약하기 가장 좋은 시기",
+  "guides.metadata.best-time-to-book-flights.description": "항공권 예약 시기와 운임 변동을 비교하고 다음 여행에서 과도한 지출을 피하는 방법을 알아보세요.",
+  "guides.metadata.how-to-avoid-risky-layovers.title": "위험한 경유를 피하는 방법",
+  "guides.metadata.how-to-avoid-risky-layovers.description": "예약 전에 경유 시간, 공항 변경, 연결 위험을 비교하는 방법을 알아보세요.",
+  "guides.metadata.how-to-compare-baggage-inclusive-fares.title": "수하물 포함 운임을 비교하는 방법",
+  "guides.metadata.how-to-compare-baggage-inclusive-fares.description": "가장 저렴한 항공권이 나중에 더 비싸지지 않도록 수하물 포함 운임을 비교하는 방법을 알아보세요.",
   "metadata.root.title.default": "Kurioticket | 저렴한 항공권을 빠르게 찾기",
   "metadata.root.description": "더 차분한 여행 결정 플랫폼에서 합리적인 항공권과 호텔을 몇 초 만에 비교하세요.",
   destinationsLoadingPage: "여행지 페이지를 불러오는 중...",

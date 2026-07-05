@@ -3,6 +3,12 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "guides.metadata.best-time-to-book-flights.title": "Bästa tiden att boka flyg",
+  "guides.metadata.best-time-to-book-flights.description": "Lär dig när du bör boka flyg, jämföra pristiming och undvika att betala för mycket för din nästa resa.",
+  "guides.metadata.how-to-avoid-risky-layovers.title": "Så undviker du riskabla mellanlandningar",
+  "guides.metadata.how-to-avoid-risky-layovers.description": "Lär dig jämföra mellanlandningstider, flygplatsbyten och anslutningsrisker innan du bokar.",
+  "guides.metadata.how-to-compare-baggage-inclusive-fares.title": "Så jämför du priser med bagage inkluderat",
+  "guides.metadata.how-to-compare-baggage-inclusive-fares.description": "Lär dig jämföra priser där bagage ingår så att den billigaste biljetten inte blir dyrare senare.",
   "metadata.root.title.default": "Kurioticket | Hitta billiga flyg snabbt",
   "metadata.root.description": "Jämför prisvärda flyg och hotell på några sekunder med en lugnare plattform för resebeslut.",
   destinationsLoadingPage: "Laddar destinationssidan...",

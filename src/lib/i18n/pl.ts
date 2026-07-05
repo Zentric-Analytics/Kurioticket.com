@@ -3,6 +3,12 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "guides.metadata.best-time-to-book-flights.title": "Najlepszy czas na rezerwację lotów",
+  "guides.metadata.best-time-to-book-flights.description": "Dowiedz się, kiedy rezerwować loty, porównywać momenty cenowe i unikać przepłacania za następną podróż.",
+  "guides.metadata.how-to-avoid-risky-layovers.title": "Jak unikać ryzykownych przesiadek",
+  "guides.metadata.how-to-avoid-risky-layovers.description": "Dowiedz się, jak porównywać czasy przesiadek, zmiany lotnisk i ryzyka połączeń przed rezerwacją.",
+  "guides.metadata.how-to-compare-baggage-inclusive-fares.title": "Jak porównywać taryfy z bagażem w cenie",
+  "guides.metadata.how-to-compare-baggage-inclusive-fares.description": "Dowiedz się, jak porównywać taryfy z bagażem w cenie, aby najtańszy bilet nie okazał się później droższy.",
   "metadata.root.title.default": "Kurioticket | Szybko znajdź tanie loty",
   "metadata.root.description": "Porównuj przystępne cenowo loty i hotele w kilka sekund dzięki spokojniejszej platformie do podejmowania decyzji podróżnych.",
   destinationsLoadingPage: "Ładowanie strony miejsc docelowych...",
