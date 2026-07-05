@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useRef,
   type ReactNode,
   type RefObject,
 } from "react";
@@ -36,6 +37,7 @@ export function FlightMobilePickerShell({
   contentClassName,
 }: FlightMobilePickerShellProps) {
   const { t } = useLocale();
+  const closeInteractionRef = useRef<"keyboard" | "pointer">("pointer");
   const portalElement = typeof document === "undefined" ? null : document.body;
 
   useEffect(() => {
@@ -64,6 +66,17 @@ export function FlightMobilePickerShell({
       overscrollBehavior: rootElement.style.overscrollBehavior,
     };
 
+    const markPointerClose = () => {
+      closeInteractionRef.current = "pointer";
+    };
+    const markKeyboardClose = () => {
+      closeInteractionRef.current = "keyboard";
+    };
+
+    window.addEventListener("pointerdown", markPointerClose, { capture: true });
+    window.addEventListener("touchstart", markPointerClose, { capture: true, passive: true });
+    window.addEventListener("keydown", markKeyboardClose, { capture: true });
+
     bodyElement.style.left = "0";
     bodyElement.style.overflow = "hidden";
     bodyElement.style.overscrollBehavior = "none";
@@ -76,27 +89,78 @@ export function FlightMobilePickerShell({
     rootElement.style.overflow = "hidden";
     rootElement.style.overscrollBehavior = "none";
 
+    let restoreTimeout: number | undefined;
+    let settleTimeout: number | undefined;
+    let didRestore = false;
+
+    const waitForViewportToSettle = (callback: () => void) => {
+      const visualViewport = window.visualViewport;
+
+      if (!visualViewport) {
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(callback);
+        });
+        return;
+      }
+
+      let lastHeight = visualViewport.height;
+      const cleanup = () => {
+        visualViewport.removeEventListener("resize", handleResize);
+        if (settleTimeout) window.clearTimeout(settleTimeout);
+      };
+      const finish = () => {
+        if (didRestore) return;
+        didRestore = true;
+        cleanup();
+        if (restoreTimeout) window.clearTimeout(restoreTimeout);
+        window.requestAnimationFrame(callback);
+      };
+      const scheduleFinish = () => {
+        if (settleTimeout) window.clearTimeout(settleTimeout);
+        settleTimeout = window.setTimeout(finish, 48);
+      };
+      const handleResize = () => {
+        if (Math.abs(visualViewport.height - lastHeight) > 1) {
+          lastHeight = visualViewport.height;
+          scheduleFinish();
+        }
+      };
+
+      visualViewport.addEventListener("resize", handleResize, { passive: true });
+      scheduleFinish();
+      restoreTimeout = window.setTimeout(finish, 160);
+    };
+
     return () => {
+      window.removeEventListener("pointerdown", markPointerClose, { capture: true });
+      window.removeEventListener("touchstart", markPointerClose, { capture: true });
+      window.removeEventListener("keydown", markKeyboardClose, { capture: true });
+
+      const shouldRestoreLauncherFocus = closeInteractionRef.current === "keyboard";
       const activeElement = document.activeElement;
       if (activeElement instanceof HTMLElement) {
         activeElement.blur();
       }
 
-      bodyElement.style.left = previousBodyStyles.left;
-      bodyElement.style.overflow = previousBodyStyles.overflow;
-      bodyElement.style.overscrollBehavior = previousBodyStyles.overscrollBehavior;
-      bodyElement.style.position = previousBodyStyles.position;
-      bodyElement.style.right = previousBodyStyles.right;
-      bodyElement.style.top = previousBodyStyles.top;
-      bodyElement.style.touchAction = previousBodyStyles.touchAction;
-      bodyElement.style.width = previousBodyStyles.width;
-      rootElement.style.height = previousRootStyles.height;
-      rootElement.style.overflow = previousRootStyles.overflow;
-      rootElement.style.overscrollBehavior = previousRootStyles.overscrollBehavior;
-      window.scrollTo(0, scrollY);
-      window.requestAnimationFrame(() => {
-        launcherElement?.focus({ preventScroll: true });
+      waitForViewportToSettle(() => {
+        bodyElement.style.left = previousBodyStyles.left;
+        bodyElement.style.overflow = previousBodyStyles.overflow;
+        bodyElement.style.overscrollBehavior = previousBodyStyles.overscrollBehavior;
+        bodyElement.style.position = previousBodyStyles.position;
+        bodyElement.style.right = previousBodyStyles.right;
+        bodyElement.style.top = previousBodyStyles.top;
+        bodyElement.style.touchAction = previousBodyStyles.touchAction;
+        bodyElement.style.width = previousBodyStyles.width;
+        rootElement.style.height = previousRootStyles.height;
+        rootElement.style.overflow = previousRootStyles.overflow;
+        rootElement.style.overscrollBehavior = previousRootStyles.overscrollBehavior;
         window.scrollTo(0, scrollY);
+
+        if (shouldRestoreLauncherFocus) {
+          window.requestAnimationFrame(() => {
+            launcherElement?.focus({ preventScroll: true });
+          });
+        }
       });
     };
   }, [launcherRef, open]);
@@ -114,6 +178,7 @@ export function FlightMobilePickerShell({
         aria-labelledby={titleId}
         onKeyDown={(event) => {
           if (event.key === "Escape") {
+            closeInteractionRef.current = "keyboard";
             event.stopPropagation();
             onClose();
           }
