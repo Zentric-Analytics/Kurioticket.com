@@ -1397,6 +1397,12 @@ export const translations: TranslationDictionary = {
   signupErrorFullNameRequired: "请输入你的全名。",
   signupErrorInvalidEmail: "请输入有效的电子邮箱地址。",
   signupErrorPasswordRequirements: "密码必须至少包含 8 个字符。",
+  signupErrorUnableCreate: "我们无法创建你的账户。请重试。",
+  signupErrorRateLimited: "注册尝试次数过多。请稍后再试。",
+  signupErrorDuplicateEmail: "已存在使用此电子邮箱的账户。",
+  signupErrorUnableSendVerification: "目前无法发送验证码。请重试。",
+  signupVerificationRequiredRedirecting: "需要验证。正在重定向...",
+  loginErrorAccountUnavailable: "此账户不可用。请联系支持。",
   footerAbout:
     "免费搜索航班和酒店，比较可信赖合作伙伴的价格，更从容地做出旅行决定。",
   footerMeta: "Kurioticket 是一个旅行元搜索平台。",

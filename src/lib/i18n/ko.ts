@@ -546,6 +546,14 @@ export const translations: TranslationDictionary = {
   signupErrorFullNameRequired: "이름을 입력하세요.",
   signupErrorInvalidEmail: "유효한 이메일 주소를 입력하세요.",
   signupErrorPasswordRequirements: "비밀번호는 8자 이상이어야 합니다.",
+  signupErrorUnableCreate: "계정을 만들 수 없습니다. 다시 시도하세요.",
+  signupErrorRateLimited: "가입 시도 횟수가 너무 많습니다. 잠시 기다린 후 다시 시도하세요.",
+  signupErrorDuplicateEmail: "이 이메일로 된 계정이 이미 있습니다.",
+  signupErrorUnableSendVerification:
+    "지금은 인증 코드를 보낼 수 없습니다. 다시 시도하세요.",
+  signupVerificationRequiredRedirecting: "인증이 필요합니다. 리디렉션 중...",
+  loginErrorAccountUnavailable:
+    "이 계정은 사용할 수 없습니다. 지원팀에 문의하세요.",
   loginPageTitle: "로그인",
   loginPageSubtitle:
     "검색을 저장하고, 알림을 관리하며, 여행 대시보드에 접근하세요.",
