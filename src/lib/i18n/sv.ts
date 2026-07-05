@@ -7,6 +7,8 @@ export const translations: TranslationDictionary = {
   "deals.loadingPage": "Laddar sidan...",
   "deals.decreaseCountAria": "Minska {{label}}",
   "deals.increaseCountAria": "Öka {{label}}",
+  "brandedLoading.default.title": "Laddar Kurioticket...",
+  "brandedLoading.default.preparingExperience": "Förbereder din upplevelse...",
   "brandedLoading.hotel.title": "Finding the best stays for you",
   "brandedLoading.hotel.checkingAvailabilityAndRates": "Checking availability and rates...",
   "brandedLoading.hotel.comparingHotelsAndRooms": "Comparing hotels and room options...",

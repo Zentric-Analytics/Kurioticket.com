@@ -24,6 +24,8 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.quietRooms": "غرف هادئة",
   "hotelResults.filter.frontDesk24": "مكتب استقبال على مدار 24 ساعة",
   "hotelResults.filter.lateCheckIn": "تسجيل وصول متأخر",
+  "brandedLoading.default.title": "جارٍ تحميل Kurioticket...",
+  "brandedLoading.default.preparingExperience": "جارٍ تجهيز تجربتك...",
   "brandedLoading.hotel.title": "Finding the best stays for you",
   "brandedLoading.hotel.checkingAvailabilityAndRates": "Checking availability and rates...",
   "brandedLoading.hotel.comparingHotelsAndRooms": "Comparing hotels and room options...",

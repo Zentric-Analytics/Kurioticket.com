@@ -24,6 +24,8 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.quietRooms": "静かな客室",
   "hotelResults.filter.frontDesk24": "24時間対応フロント",
   "hotelResults.filter.lateCheckIn": "レイトチェックイン",
+  "brandedLoading.default.title": "Kurioticket を読み込み中...",
+  "brandedLoading.default.preparingExperience": "体験を準備しています...",
   "brandedLoading.hotel.title": "Finding the best stays for you",
   "brandedLoading.hotel.checkingAvailabilityAndRates": "Checking availability and rates...",
   "brandedLoading.hotel.comparingHotelsAndRooms": "Comparing hotels and room options...",

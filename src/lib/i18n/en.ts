@@ -6,6 +6,8 @@ export const translations: TranslationDictionary = {
   cars: "Cars",
   deals: "Deals",
   destinationsLoadingPage: "Loading destinations page...",
+  "brandedLoading.default.title": "Loading Kurioticket...",
+  "brandedLoading.default.preparingExperience": "Preparing your experience...",
   "brandedLoading.hotel.title": "Finding the best stays for you",
   "brandedLoading.hotel.checkingAvailabilityAndRates": "Checking availability and rates...",
   "brandedLoading.hotel.comparingHotelsAndRooms": "Comparing hotels and room options...",

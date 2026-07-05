@@ -26,6 +26,8 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.quietRooms": "ห้องพักเงียบสงบ",
   "hotelResults.filter.frontDesk24": "แผนกต้อนรับ 24 ชั่วโมง",
   "hotelResults.filter.lateCheckIn": "เช็คอินดึก",
+  "brandedLoading.default.title": "กำลังโหลด Kurioticket...",
+  "brandedLoading.default.preparingExperience": "กำลังเตรียมประสบการณ์ของคุณ...",
   "brandedLoading.hotel.title": "Finding the best stays for you",
   "brandedLoading.hotel.checkingAvailabilityAndRates": "Checking availability and rates...",
   "brandedLoading.hotel.comparingHotelsAndRooms": "Comparing hotels and room options...",

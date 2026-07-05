@@ -26,6 +26,8 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.quietRooms": "조용한 객실",
   "hotelResults.filter.frontDesk24": "24시간 프런트 데스크",
   "hotelResults.filter.lateCheckIn": "늦은 체크인",
+  "brandedLoading.default.title": "Kurioticket 로드 중...",
+  "brandedLoading.default.preparingExperience": "경험을 준비하는 중...",
   "brandedLoading.hotel.title": "Finding the best stays for you",
   "brandedLoading.hotel.checkingAvailabilityAndRates": "Checking availability and rates...",
   "brandedLoading.hotel.comparingHotelsAndRooms": "Comparing hotels and room options...",
