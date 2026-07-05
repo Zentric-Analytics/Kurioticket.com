@@ -77,6 +77,7 @@ type AppHeaderProps = {
   mobileHeroOverlayLowered?: boolean;
   hideMobileCategoryTabs?: boolean;
   hideTravelNav?: boolean;
+  simpleHeader?: boolean;
 };
 
 const signedInAccountMenuItems = [
@@ -144,6 +145,7 @@ export function AppHeader({
   mobileHeroOverlay = false,
   hideMobileCategoryTabs = false,
   hideTravelNav = false,
+  simpleHeader = false,
 }: AppHeaderProps = {}) {
   const { data: session } = useSession();
 
@@ -481,7 +483,7 @@ export function AppHeader({
   }, [pathname, searchParams]);
 
   const desktopPrimaryNavItems = useMemo(() => {
-    if (hideTravelNav || shouldHideDesktopTravelNavLinks) {
+    if (simpleHeader || hideTravelNav || shouldHideDesktopTravelNavLinks) {
       return [];
     }
 
@@ -493,7 +495,7 @@ export function AppHeader({
     ]);
 
     return navItems.filter((item) => desktopPrimaryHrefs.has(item.href));
-  }, [hideTravelNav, navItems, shouldHideDesktopTravelNavLinks]);
+  }, [hideTravelNav, navItems, shouldHideDesktopTravelNavLinks, simpleHeader]);
 
   const mobilePrimaryNavItems = useMemo(() => {
     const mobilePrimaryHrefs = new Set([
@@ -510,6 +512,7 @@ export function AppHeader({
 
   const visibleMobilePrimaryNavItems = useMemo(() => {
     if (
+      simpleHeader ||
       hideTravelNav ||
       shouldHideDesktopTravelNavLinks ||
       (mobileHeroOverlay && hideMobileCategoryTabs)
@@ -528,6 +531,7 @@ export function AppHeader({
     mobileHeroOverlay,
     mobilePrimaryNavItems,
     shouldHideDesktopTravelNavLinks,
+    simpleHeader,
   ]);
 
   const mobileTravelDrawerHrefs = useMemo(
@@ -1244,43 +1248,45 @@ export function AppHeader({
                       </div>
                     </section>
 
-                    <section
-                      aria-labelledby="mobile-menu-travel-heading"
-                      className="mt-4 border-t border-slate-100 pt-3"
-                    >
-                      <p
-                        id="mobile-menu-travel-heading"
-                        className="px-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-500"
+                    {!simpleHeader ? (
+                      <section
+                        aria-labelledby="mobile-menu-travel-heading"
+                        className="mt-4 border-t border-slate-100 pt-3"
                       >
-                        {t.mobileTravelHeading || "Travel"}
-                      </p>
+                        <p
+                          id="mobile-menu-travel-heading"
+                          className="px-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-500"
+                        >
+                          {t.mobileTravelHeading || "Travel"}
+                        </p>
 
-                      <div className="mt-1.5 grid">
-                        {mobileTravelMenuNavItems.map((item) => {
-                          const Icon = item.icon;
+                        <div className="mt-1.5 grid">
+                          {mobileTravelMenuNavItems.map((item) => {
+                            const Icon = item.icon;
 
-                          return (
-                            <Link
-                              key={item.href}
-                              href={item.href}
-                              onClick={(event) =>
-                                handleRouteLinkClick(event, item.href, () =>
-                                  setMobileMenuOpen(false),
-                                )
-                              }
-                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
-                            >
-                              {Icon ? (
-                                <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-[#004BB8]">
-                                  <Icon size={19} aria-hidden="true" />
-                                </span>
-                              ) : null}
-                              <span className="truncate">{item.label}</span>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </section>
+                            return (
+                              <Link
+                                key={item.href}
+                                href={item.href}
+                                onClick={(event) =>
+                                  handleRouteLinkClick(event, item.href, () =>
+                                    setMobileMenuOpen(false),
+                                  )
+                                }
+                                className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                              >
+                                {Icon ? (
+                                  <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-[#004BB8]">
+                                    <Icon size={19} aria-hidden="true" />
+                                  </span>
+                                ) : null}
+                                <span className="truncate">{item.label}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </section>
+                    ) : null}
 
                     <section
                       aria-labelledby="mobile-menu-explore-heading"

@@ -9,7 +9,7 @@ export const metadata = {
 export default function PrivacyPage() {
   return (
     <>
-      <AppHeader />
+      <AppHeader simpleHeader />
       <PrivacyPageClient />
       <Footer />
     </>

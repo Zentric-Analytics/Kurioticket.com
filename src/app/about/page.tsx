@@ -15,7 +15,7 @@ export async function generateMetadata() {
 export default function AboutPage() {
   return (
     <>
-      <AppHeader />
+      <AppHeader simpleHeader />
       <AboutPageContent />
       <Footer />
     </>

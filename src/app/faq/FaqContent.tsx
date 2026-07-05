@@ -17,7 +17,9 @@ export function FaqContent({ showAccountLink }: FaqContentProps) {
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const faqItems = getGeneralFaqs(t);
   const supportCtaSuffix = t("faqNeedMoreHelpSuffix");
-  const supportCtaSuffixSeparator = /^[,.;:!?]/.test(supportCtaSuffix) ? "" : " ";
+  const supportCtaSuffixSeparator = /^[,.;:!?]/.test(supportCtaSuffix)
+    ? ""
+    : " ";
 
   const content = (
     <div className="mx-auto max-w-[72rem]">
@@ -62,13 +64,14 @@ export function FaqContent({ showAccountLink }: FaqContentProps) {
       </section>
 
       <div className="mt-8 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-5 text-sm font-medium leading-6 text-slate-700 sm:p-6 sm:text-base">
-        {t("faqNeedMoreHelpPrefix")} {" "}
+        {t("faqNeedMoreHelpPrefix")}{" "}
         <Link
           href="/dashboard/support"
           className="font-bold text-indigo-700 underline-offset-4 hover:text-indigo-900 hover:underline"
         >
           {t("faqSupportPage")}
-        </Link>{supportCtaSuffixSeparator}
+        </Link>
+        {supportCtaSuffixSeparator}
         {supportCtaSuffix}
       </div>
     </div>
@@ -76,7 +79,7 @@ export function FaqContent({ showAccountLink }: FaqContentProps) {
 
   return (
     <>
-      <AppHeader />
+      <AppHeader simpleHeader />
       <main
         className={
           showAccountLink

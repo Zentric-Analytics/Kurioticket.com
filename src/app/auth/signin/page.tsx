@@ -95,9 +95,9 @@ export default async function SigninPage({ searchParams }: SigninPageProps) {
 
   return (
     <>
-      <AppHeader hideTravelNav />
+      <AppHeader simpleHeader />
 
-      <main className="page-shell flex flex-1 items-center pt-8 pb-10 sm:pt-10 lg:pt-12">
+      <main className="page-shell flex flex-1 items-start pt-6 pb-10 sm:pt-8 lg:pt-10">
         <SigninForm
           callbackUrl={callbackUrl}
           googleEnabled={googleEnabled}
