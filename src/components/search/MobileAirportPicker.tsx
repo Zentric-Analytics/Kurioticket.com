@@ -76,7 +76,7 @@ export function MobileAirportPicker({
       titleId={titleId}
       launcherRef={launcherRef}
       onClose={onClose}
-      footer={(
+      footer={(requestClose) => (
         <div className="flex items-center justify-between gap-3">
           <button
             type="button"
@@ -90,7 +90,7 @@ export function MobileAirportPicker({
           </button>
           <button
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             className="focus-ring rounded-xl bg-[#004BB8] px-6 py-3 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
           >
             {labels.done}
@@ -98,6 +98,7 @@ export function MobileAirportPicker({
         </div>
       )}
     >
+      {(requestClose) => (
       <div className="mx-auto w-full max-w-xl space-y-4">
         <div className="rounded-3xl border border-slate-200/80 bg-white/80 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
           <label className="mb-2 block text-xs font-extrabold uppercase tracking-[0.14em] text-slate-500" htmlFor={inputId}>
@@ -144,7 +145,10 @@ export function MobileAirportPicker({
               <button
                 key={`${option.code}-${option.airport}-${inputId}`}
                 type="button"
-                onClick={() => onSelect(option)}
+                onClick={() => {
+                  onSelect(option);
+                  requestClose();
+                }}
                 className={cn(
                   "focus-ring block min-h-[72px] w-full rounded-2xl border border-slate-200/70 bg-white/70 px-4 py-3.5 text-start transition-colors",
                   "hover:border-[#004BB8]/20 hover:bg-white focus-visible:border-[#004BB8]/35 focus-visible:bg-white focus-visible:ring-[#004BB8]/20",
@@ -177,6 +181,7 @@ export function MobileAirportPicker({
           )}
         </div>
       </div>
+      )}
     </FlightMobilePickerShell>
   );
 }

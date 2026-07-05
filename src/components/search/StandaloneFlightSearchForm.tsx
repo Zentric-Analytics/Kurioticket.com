@@ -871,7 +871,7 @@ export function StandaloneFlightSearchForm({
         launcherRef={launcherRef}
         onClose={onClose}
         contentClassName="bg-slate-50 px-4 py-5"
-        footer={
+        footer={(requestClose) => (
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
@@ -885,14 +885,15 @@ export function StandaloneFlightSearchForm({
             </button>
             <button
               type="button"
-              onClick={onClose}
+              onClick={requestClose}
               className={mobileDoneButtonClassName}
             >
               {airportPickerLabels.done}
             </button>
           </div>
-        }
+        )}
       >
+        {(requestClose) => (
         <div className="mx-auto w-full max-w-xl space-y-5">
           <div className="space-y-2">
             <label
@@ -942,7 +943,10 @@ export function StandaloneFlightSearchForm({
                 <button
                   key={`${option.code}-${option.airport}-${inputId}`}
                   type="button"
-                  onClick={() => onSelect(option)}
+                  onClick={() => {
+                    onSelect(option);
+                    requestClose();
+                  }}
                   className="focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3.5 text-start transition-colors last:border-b-0 hover:bg-slate-50 focus-visible:bg-slate-50"
                 >
                   <span
@@ -972,6 +976,7 @@ export function StandaloneFlightSearchForm({
             )}
           </div>
         </div>
+        )}
       </FlightMobilePickerShell>
     );
   };
