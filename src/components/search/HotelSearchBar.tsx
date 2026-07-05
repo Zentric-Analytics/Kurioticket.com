@@ -1635,7 +1635,7 @@ export function HotelSearchBar({
         launcherRef={datesMobileLauncherRef}
         onClose={() => setDatesOpen(false)}
         contentClassName="px-4 py-4"
-        footer={
+        footer={(requestClose) => (
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
@@ -1649,13 +1649,13 @@ export function HotelSearchBar({
             </button>
             <button
               type="button"
-              onClick={() => setDatesOpen(false)}
+              onClick={requestClose}
               className="focus-ring min-h-11 rounded-xl bg-[#004BB8] px-4 py-2 text-sm font-bold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
             >
               {t("done")}
             </button>
           </div>
-        }
+        )}
       >
         <div className="mx-auto w-full max-w-xl space-y-8 pb-2">
           {Array.from({ length: 12 }, (_, monthOffset) =>
@@ -1764,17 +1764,17 @@ export function HotelSearchBar({
         titleId="hotel-results-mobile-guests-title"
         launcherRef={guestsRoomsMobileLauncherRef}
         onClose={() => setGuestsRoomsOpen(false)}
-        footer={
+        footer={(requestClose) => (
           <div className="flex justify-end">
             <button
               type="button"
-              onClick={() => setGuestsRoomsOpen(false)}
+              onClick={requestClose}
               className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
             >
               {t("done")}
             </button>
           </div>
-        }
+        )}
       >
         <div className="mx-auto w-full max-w-xl space-y-4 rounded-2xl bg-white p-4 shadow-sm">
           {[
