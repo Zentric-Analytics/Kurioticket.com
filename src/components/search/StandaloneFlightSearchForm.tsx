@@ -619,7 +619,7 @@ export function StandaloneFlightSearchForm({
     setTravelersOpen(false);
   };
 
-  const applyTravelersDraft = () => {
+  const applyTravelersDraft = (closePicker = true) => {
     const normalizedAdults = Math.max(1, Math.min(9, draftAdultCount));
     const normalizedChildren = Math.max(
       0,
@@ -637,7 +637,7 @@ export function StandaloneFlightSearchForm({
     setChildCount(normalizedChildren);
     setInfantCount(normalizedInfants);
     setCabinClass(normalizeCabinClass(draftCabinClass));
-    setTravelersOpen(false);
+    if (closePicker) setTravelersOpen(false);
   };
 
   const selectAirport = (field: AirportField, option: AirportOption) => {
@@ -651,7 +651,6 @@ export function StandaloneFlightSearchForm({
       setDestinationCode(option.code);
       setDestinationOpen(false);
     }
-    setActiveMobileAirportPicker(null);
   };
 
   const swapAirports = () => {
@@ -1575,7 +1574,7 @@ export function StandaloneFlightSearchForm({
                   launcherRef={datesMobileLauncherRef}
                   onClose={() => setDatesOpen(false)}
                   contentClassName="px-4 py-4"
-                  footer={
+                  footer={(requestClose) => (
                     <div className="flex items-center justify-between gap-3">
                       <button
                         type="button"
@@ -1589,13 +1588,13 @@ export function StandaloneFlightSearchForm({
                       </button>
                       <button
                         type="button"
-                        onClick={() => setDatesOpen(false)}
+                        onClick={requestClose}
                         className={mobileDoneButtonClassName}
                       >
                         {t("done")}
                       </button>
                     </div>
-                  }
+                  )}
                 >
                   {renderDateCalendar(true)}
                 </FlightMobilePickerShell>
@@ -1673,17 +1672,20 @@ export function StandaloneFlightSearchForm({
                   launcherRef={travelersLauncherRef}
                   onClose={closeTravelers}
                   contentClassName="px-4 py-5"
-                  footer={
+                  footer={(requestClose) => (
                     <div className="flex justify-end">
                       <button
                         type="button"
-                        onClick={applyTravelersDraft}
+                        onClick={() => {
+                          applyTravelersDraft(false);
+                          requestClose();
+                        }}
                         className={cn(mobileDoneButtonClassName, "px-6 py-3")}
                       >
                         {t("done")}
                       </button>
                     </div>
-                  }
+                  )}
                 >
                   {renderTravelersPicker()}
                 </FlightMobilePickerShell>
@@ -1698,7 +1700,7 @@ export function StandaloneFlightSearchForm({
                   <div className="mt-4 flex justify-end border-t border-slate-100 pt-3">
                     <button
                       type="button"
-                      onClick={applyTravelersDraft}
+                      onClick={() => applyTravelersDraft()}
                       className="focus-ring rounded-xl bg-[#004BB8] px-5 py-2 text-sm font-extrabold text-white shadow-md shadow-[#004BB8]/20 transition-colors hover:bg-[#021C2B]"
                     >
                       {t("done")}

@@ -762,7 +762,8 @@ export function SearchTabs({
     nextAdults: number,
     nextChildren: number,
     nextInfants: number,
-    nextCabinClass: string
+    nextCabinClass: string,
+    closePicker = true
   ) => {
     const normalized = normalizePassengerDraft(
       nextAdults,
@@ -773,15 +774,16 @@ export function SearchTabs({
     setChildCount(normalized.children);
     setInfantCount(normalized.infants);
     setCabinClass(normalizeCabinClass(nextCabinClass));
-    setTravelersMenuOpen(false);
+    if (closePicker) setTravelersMenuOpen(false);
   }, [normalizePassengerDraft]);
 
-  const applyTravelersDraft = useCallback(() => {
+  const applyTravelersDraft = useCallback((closePicker = true) => {
     applyTravelersFromValues(
       draftAdultCount,
       draftChildCount,
       draftInfantCount,
-      draftCabinClass
+      draftCabinClass,
+      closePicker
     );
   }, [applyTravelersFromValues, draftAdultCount, draftChildCount, draftInfantCount, draftCabinClass]);
 
@@ -2047,7 +2049,7 @@ export function SearchTabs({
     );
   };
 
-  const flightDatesFooter = (
+  const flightDatesFooter = (requestClose: () => void) => (
     <div className="flex items-center justify-between gap-3">
       <button
         type="button"
@@ -2061,7 +2063,7 @@ export function SearchTabs({
       </button>
       <button
         type="button"
-        onClick={() => setFlightDatesOpen(false)}
+        onClick={requestClose}
         className={cn(mobileDoneButtonClassName, "px-4 py-2")}
       >
         {translate("done") || "Done"}
@@ -3135,17 +3137,20 @@ export function SearchTabs({
                       title={translate("passengers") || t.travelers || "Travelers"}
                       titleId="homepage-flight-travelers-title"
                       launcherRef={travelersLauncherRef}
-                      footer={
+                      footer={(requestClose) => (
                         <div className="flex items-center justify-end">
                           <button
                             type="button"
-                            onClick={applyTravelersDraft}
+                            onClick={() => {
+                              applyTravelersDraft(false);
+                              requestClose();
+                            }}
                             className={cn(mobileDoneButtonClassName, "px-5 py-3")}
                           >
                             {t.done || "Done"}
                           </button>
                         </div>
-                      }
+                      )}
                       onClose={cancelTravelersDraft}
                       contentClassName="px-4 py-5"
                     >
@@ -3181,7 +3186,7 @@ export function SearchTabs({
                         </div>
                       </div>
                       <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
-                        <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-medium text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35">{t.done || "Done"}</button>
+                        <button type="button" onClick={() => applyTravelersDraft()} className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-medium text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35">{t.done || "Done"}</button>
                       </div>
                     </div>
                     </DesktopTopLayerPopover>
@@ -3245,7 +3250,6 @@ export function SearchTabs({
             },
             onSelect: (option) => {
               setFromState((current) => markOriginManualInput(current, formatAirportLabel(option, locale), option.code));
-              setActiveMobileAirportPicker(null);
             },
             onClose: () => setActiveMobileAirportPicker(null),
           })}
@@ -3277,7 +3281,6 @@ export function SearchTabs({
             onSelect: (option) => {
               setTo(formatAirportLabel(option, locale));
               setToCode(option.code);
-              setActiveMobileAirportPicker(null);
             },
             onClose: () => setActiveMobileAirportPicker(null),
           })}
@@ -3633,7 +3636,7 @@ export function SearchTabs({
             launcherRef={hotelDatesMobileLauncherRef}
             onClose={() => setHotelDatesOpen(false)}
             contentClassName="px-3 py-3"
-            footer={
+            footer={(requestClose) => (
               <div className="flex items-center justify-between gap-3">
                 <button
                   type="button"
@@ -3647,13 +3650,13 @@ export function SearchTabs({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setHotelDatesOpen(false)}
+                  onClick={requestClose}
                   className={cn(mobileDoneButtonClassName, "px-4 py-2")}
                 >
                   {translate("done") || "Done"}
                 </button>
               </div>
-            }
+            )}
           >
             {renderHotelDateCalendar()}
           </HotelMobilePickerShell>
@@ -3664,17 +3667,17 @@ export function SearchTabs({
             titleId="homepage-hotel-mobile-guests-title"
             launcherRef={hotelGuestsRoomsMobileLauncherRef}
             onClose={() => setHotelGuestsRoomsOpen(false)}
-            footer={
+            footer={(requestClose) => (
               <div className="flex justify-end">
                 <button
                   type="button"
-                  onClick={() => setHotelGuestsRoomsOpen(false)}
+                  onClick={requestClose}
                   className={cn(mobileDoneButtonClassName, "px-4 py-2")}
                 >
                   {t.done || "Done"}
                 </button>
               </div>
-            }
+            )}
           >
             <div className="mx-auto w-full max-w-xl divide-y divide-slate-200/80">
               {[

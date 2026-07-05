@@ -617,7 +617,6 @@ export default function DealsPage() {
     }
 
     setError("");
-    setActiveMobileAirportPicker(null);
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -1282,7 +1281,7 @@ export default function DealsPage() {
                             launcherRef={datesMobileLauncherRef}
                             onClose={() => setDatesOpen(false)}
                             contentClassName="px-4 py-4"
-                            footer={
+                            footer={(requestClose) => (
                               <div className="flex items-center justify-between gap-3">
                                 <button
                                   type="button"
@@ -1296,13 +1295,13 @@ export default function DealsPage() {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => setDatesOpen(false)}
+                                  onClick={requestClose}
                                   className={dealsMobileDoneButtonClassName}
                                 >
                                   {t("done")}
                                 </button>
                               </div>
-                            }
+                            )}
                           >
                             {renderDateCalendar(true)}
                           </FlightMobilePickerShell>
@@ -1396,11 +1395,11 @@ export default function DealsPage() {
                             launcherRef={travelersMobileLauncherRef}
                             onClose={() => setTravelersOpen(false)}
                             contentClassName="px-4 py-5"
-                            footer={
+                            footer={(requestClose) => (
                               <div className="flex justify-end">
                                 <button
                                   type="button"
-                                  onClick={() => setTravelersOpen(false)}
+                                  onClick={requestClose}
                                   className={cn(
                                     dealsMobileDoneButtonClassName,
                                     "px-6 py-3",
@@ -1409,7 +1408,7 @@ export default function DealsPage() {
                                   {t("done")}
                                 </button>
                               </div>
-                            }
+                            )}
                           >
                             {renderTravelersPicker()}
                           </FlightMobilePickerShell>
