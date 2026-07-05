@@ -6,9 +6,28 @@ import { Card } from "@/components/ui/Card";
 import { getTranslations } from "@/lib/i18n";
 import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
 
+const GUIDE_METADATA_SLUGS = [
+  "best-time-to-book-flights",
+  "how-to-avoid-risky-layovers",
+  "how-to-compare-baggage-inclusive-fares",
+] as const;
+
+type GuideMetadataSlug = (typeof GUIDE_METADATA_SLUGS)[number];
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  return { title: titleize(slug) };
+
+  if (!isGuideMetadataSlug(slug)) {
+    return { title: titleize(slug) };
+  }
+
+  const cookieStore = await cookies();
+  const t = getTranslations(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
+
+  return {
+    title: t[`guides.metadata.${slug}.title`],
+    description: t[`guides.metadata.${slug}.description`],
+  };
 }
 
 export default async function GuidePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -33,6 +52,10 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
       <Footer />
     </>
   );
+}
+
+function isGuideMetadataSlug(slug: string): slug is GuideMetadataSlug {
+  return GUIDE_METADATA_SLUGS.includes(slug as GuideMetadataSlug);
 }
 
 function titleize(slug: string) {
