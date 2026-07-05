@@ -84,6 +84,7 @@ export const translations: TranslationDictionary = {
   loginNotNow: "अभी नहीं",
   loginInvalidCredentials: "हम आपको साइन इन नहीं कर सके। अपना ईमेल और पासवर्ड जाँचें, फिर दोबारा कोशिश करें।",
   loginRateLimited: "बहुत अधिक प्रयास हुए। कृपया थोड़ा इंतज़ार करें और फिर कोशिश करें।",
+  loginErrorAccountUnavailable: "यह खाता उपलब्ध नहीं है। कृपया सहायता से संपर्क करें।",
   mobileInfoLegalHeading: "जानकारी और कानूनी",
   mobileExploreHeading: "एक्सप्लोर करें",
   mobileTravelHeading: "यात्रा",
@@ -1044,6 +1045,13 @@ export const translations: TranslationDictionary = {
   signupErrorFullNameRequired: "कृपया अपना पूरा नाम दर्ज करें।",
   signupErrorInvalidEmail: "एक मान्य ईमेल पता दर्ज करें।",
   signupErrorPasswordRequirements: "पासवर्ड कम से कम 8 वर्णों का होना चाहिए।",
+  signupErrorUnableCreate:
+    "हम आपका खाता नहीं बना सके। कृपया फिर कोशिश करें।",
+  signupErrorRateLimited: "साइनअप के बहुत अधिक प्रयास हुए। कृपया इंतज़ार करें और फिर कोशिश करें।",
+  signupErrorDuplicateEmail: "इस ईमेल से पहले से एक खाता मौजूद है।",
+  signupErrorUnableSendVerification:
+    "अभी सत्यापन कोड नहीं भेजा जा सकता। कृपया फिर कोशिश करें।",
+  signupVerificationRequiredRedirecting: "सत्यापन आवश्यक है। रीडायरेक्ट किया जा रहा है...",
   loginPageTitle: "लॉग इन करें",
   loginPageSubtitle:
     "खोजें सहेजें, अलर्ट प्रबंधित करें और अपना यात्रा डैशबोर्ड खोलें।",
@@ -1056,7 +1064,14 @@ export const translations: TranslationDictionary = {
   loginCreateAccount: "खाता बनाएँ",
   loginCodeSent: "हमने आपके ईमेल पर सत्यापन कोड भेजा है।",
   loginCodeFailed: "यह कोड काम नहीं किया। कोड जाँचें और फिर कोशिश करें।",
+  loginProcessing: "आपके विवरण जाँचे जा रहे हैं और सत्यापन कोड भेजा जा रहा है…",
   loginEnterCode: "6 अंकों का लॉगिन कोड दर्ज करें।",
+  loginVerifiedRedirecting: "सत्यापित हो गया। रीडायरेक्ट किया जा रहा है…",
+  loginStartOverError:
+    "नया कोड भेजने से पहले हम आपके विवरण जाँच सकें, इसलिए फिर से शुरू करें।",
+  loginSendingNewCode: "नया सत्यापन कोड भेजा जा रहा है…",
+  loginUnableSendNewCode: "अभी नया कोड नहीं भेजा जा सकता। कृपया फिर कोशिश करें।",
+  loginUnableSendLoginCode: "अभी लॉगिन कोड नहीं भेजा जा सकता। कृपया फिर कोशिश करें।",
   loginCodeInstructions:
     "{{email}} पर भेजा गया 6 अंकों का कोड दर्ज करें। कोड {{minutes}} मिनट बाद समाप्त हो जाते हैं।",
   loginVerificationCodeLabel: "सत्यापन कोड",
