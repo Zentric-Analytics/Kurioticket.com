@@ -133,7 +133,7 @@ export function SignupForm({ googleEnabled = false }: SignupFormProps) {
 }
 
 function formatTranslation(translations: Record<string, string>, message: MessageState) {
-  return translations[message.key] ?? message.key;
+  return translations[message.key] ?? translations.signupErrorUnableCreate;
 }
 
 function getPublicSignupValidationErrorKey(fieldErrors: Record<string, string[] | undefined>) {
