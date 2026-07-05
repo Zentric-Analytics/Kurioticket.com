@@ -24,9 +24,9 @@ export default function SignupPage() {
 
   return (
     <>
-      <AppHeader />
+      <AppHeader hideTravelNav />
 
-      <main className="page-shell flex flex-1 items-center pt-24 pb-10 sm:pt-28 lg:pt-28">
+      <main className="page-shell flex flex-1 items-center pt-8 pb-10 sm:pt-10 lg:pt-12">
         <SignupForm googleEnabled={googleEnabled} />
       </main>
 

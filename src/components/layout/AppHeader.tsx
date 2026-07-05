@@ -76,6 +76,7 @@ type AppHeaderProps = {
   mobileHeroOverlay?: boolean;
   mobileHeroOverlayLowered?: boolean;
   hideMobileCategoryTabs?: boolean;
+  hideTravelNav?: boolean;
 };
 
 const signedInAccountMenuItems = [
@@ -142,6 +143,7 @@ export function AppHeader({
   hideMobileSecondaryNavLinks = false,
   mobileHeroOverlay = false,
   hideMobileCategoryTabs = false,
+  hideTravelNav = false,
 }: AppHeaderProps = {}) {
   const { data: session } = useSession();
 
@@ -479,7 +481,7 @@ export function AppHeader({
   }, [pathname, searchParams]);
 
   const desktopPrimaryNavItems = useMemo(() => {
-    if (shouldHideDesktopTravelNavLinks) {
+    if (hideTravelNav || shouldHideDesktopTravelNavLinks) {
       return [];
     }
 
@@ -491,7 +493,7 @@ export function AppHeader({
     ]);
 
     return navItems.filter((item) => desktopPrimaryHrefs.has(item.href));
-  }, [navItems, shouldHideDesktopTravelNavLinks]);
+  }, [hideTravelNav, navItems, shouldHideDesktopTravelNavLinks]);
 
   const mobilePrimaryNavItems = useMemo(() => {
     const mobilePrimaryHrefs = new Set([
@@ -508,6 +510,7 @@ export function AppHeader({
 
   const visibleMobilePrimaryNavItems = useMemo(() => {
     if (
+      hideTravelNav ||
       shouldHideDesktopTravelNavLinks ||
       (mobileHeroOverlay && hideMobileCategoryTabs)
     ) {
@@ -521,6 +524,7 @@ export function AppHeader({
   }, [
     hideMobileCategoryTabs,
     hideMobileSecondaryNavLinks,
+    hideTravelNav,
     mobileHeroOverlay,
     mobilePrimaryNavItems,
     shouldHideDesktopTravelNavLinks,
