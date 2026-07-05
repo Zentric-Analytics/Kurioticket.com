@@ -3,6 +3,12 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "guides.metadata.best-time-to-book-flights.title": "Thời điểm tốt nhất để đặt chuyến bay",
+  "guides.metadata.best-time-to-book-flights.description": "Tìm hiểu khi nào nên đặt chuyến bay, so sánh thời điểm giá vé và tránh trả quá nhiều cho chuyến đi tiếp theo.",
+  "guides.metadata.how-to-avoid-risky-layovers.title": "Cách tránh quá cảnh rủi ro",
+  "guides.metadata.how-to-avoid-risky-layovers.description": "Tìm hiểu cách so sánh thời gian quá cảnh, đổi sân bay và rủi ro nối chuyến trước khi đặt.",
+  "guides.metadata.how-to-compare-baggage-inclusive-fares.title": "Cách so sánh giá vé bao gồm hành lý",
+  "guides.metadata.how-to-compare-baggage-inclusive-fares.description": "Tìm hiểu cách so sánh giá vé đã bao gồm hành lý để vé rẻ nhất không trở nên đắt hơn về sau.",
   "metadata.root.title.default": "Kurioticket | Tìm chuyến bay giá rẻ nhanh chóng",
   "metadata.root.description": "So sánh chuyến bay và khách sạn giá phải chăng trong vài giây với một nền tảng ra quyết định du lịch nhẹ nhàng hơn.",
   destinationsLoadingPage: "Đang tải trang điểm đến...",

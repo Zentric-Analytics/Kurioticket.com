@@ -3,6 +3,12 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "guides.metadata.best-time-to-book-flights.title": "航空券を予約する最適な時期",
+  "guides.metadata.best-time-to-book-flights.description": "航空券をいつ予約するか、運賃のタイミングを比較し、次の旅行で払い過ぎを避ける方法を学びましょう。",
+  "guides.metadata.how-to-avoid-risky-layovers.title": "リスクの高い乗り継ぎを避ける方法",
+  "guides.metadata.how-to-avoid-risky-layovers.description": "予約前に乗り継ぎ時間、空港変更、接続リスクを比較する方法を学びましょう。",
+  "guides.metadata.how-to-compare-baggage-inclusive-fares.title": "手荷物込み運賃を比較する方法",
+  "guides.metadata.how-to-compare-baggage-inclusive-fares.description": "最安の航空券が後で高くならないよう、手荷物込みの運賃を比較する方法を学びましょう。",
   "metadata.root.title.default": "Kurioticket | 格安航空券をすばやく検索",
   "metadata.root.description": "落ち着いて旅行を決められるプラットフォームで、手頃な航空券とホテルを数秒で比較できます。",
   destinationsLoadingPage: "目的地ページを読み込んでいます...",
