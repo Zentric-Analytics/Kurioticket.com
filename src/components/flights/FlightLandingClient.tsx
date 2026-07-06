@@ -515,7 +515,7 @@ export function FlightLandingClient() {
               {t("discoverDestinationsFromRegionBody")}
             </p>
           </div>
-          <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.28)] ring-1 ring-white/80 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:ring-0">
+          <div className="border border-slate-200/80 bg-white/80 p-3 sm:border-0 sm:bg-transparent sm:p-0">
             <div className="grid auto-cols-[minmax(260px,86vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
               {discoveryCards.map((item, index) => (
                 <RouteCard key={item.id} item={item} priority={index < 2} t={t} />
@@ -582,7 +582,7 @@ export function FlightLandingClient() {
                 {t("flightLandingRouteIdeasBody")}
               </p>
             </div>
-            <div className="rounded-[1.5rem] border border-slate-200/80 bg-slate-50/90 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:ring-0">
+            <div className="border border-slate-200/80 bg-slate-50/90 p-3 sm:border-0 sm:bg-transparent sm:p-0">
               <div className="overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 [&::-webkit-scrollbar]:hidden">
                 <div className="grid auto-cols-[minmax(148px,42vw)] grid-flow-col grid-rows-2 gap-3 sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 sm:grid-rows-none sm:gap-4 lg:grid-cols-4">
                   {routeInspirationCards.map((item) => {
@@ -635,7 +635,7 @@ export function FlightLandingClient() {
                 {t("beachVacationsBody")}
               </p>
             </div>
-            <div className="rounded-[1.5rem] border border-slate-200/80 bg-slate-50/90 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:ring-0">
+            <div className="border border-slate-200/80 bg-slate-50/90 p-3 sm:border-0 sm:bg-transparent sm:p-0">
               <div className="overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 [&::-webkit-scrollbar]:hidden">
                 <div className="grid auto-cols-[minmax(250px,84vw)] grid-flow-col gap-4 sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
                   {beachVacationCards.map((item) => (
