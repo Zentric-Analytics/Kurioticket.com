@@ -306,7 +306,7 @@ function CarsSearchPage() {
         <div className="pointer-events-none absolute start-1/2 top-10 -z-10 h-64 w-[min(50rem,88vw)] -translate-x-1/2 rounded-full bg-white/55 blur-3xl" />
         <div className="pointer-events-none absolute -right-28 bottom-28 -z-10 h-80 w-80 rounded-full bg-slate-200/14 blur-3xl" />
 
-        <div className="relative mx-auto max-w-6xl space-y-8 md:space-y-10">
+        <div className="relative mx-auto max-w-6xl">
           <section
             className="relative isolate z-20 min-h-[24.25rem] overflow-visible bg-slate-950 sm:hidden"
             aria-labelledby="cars-mobile-search-heading"
@@ -352,129 +352,131 @@ function CarsSearchPage() {
             </div>
           </section>
 
-          <section
-            className="hidden space-y-4 sm:block"
-            aria-labelledby="cars-search-heading"
-          >
-            <div className="px-1">
-              <h1
-                id="cars-search-heading"
-                className="text-[1.5rem] font-semibold leading-[1.12] tracking-[-0.02em] text-slate-900 md:text-[1.8rem] lg:whitespace-nowrap lg:text-[2rem] xl:text-[2.1rem]"
-              >
-                {t("searchRentalCarsEveryPartTrip")}
-              </h1>
-            </div>
-
-            <CarsSearchBar
-              errors={errors}
-              hasActiveSearch={Boolean(hasActiveSearch)}
-              onClearSearch={clearSearch}
-              onSubmit={handleSubmit}
-              isSubmitting={isSubmitting}
-              updateValue={updateValue}
-              values={values}
-            />
-          </section>
-
-          <section
-            className="space-y-4 pt-[25rem] sm:pt-0"
-            aria-labelledby="car-trip-style-heading"
-          >
-            <div className="flex flex-col gap-2 px-1 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h2
-                  id="car-trip-style-heading"
-                  className="text-lg font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-2xl"
+          <div className="mx-auto mt-8 w-[min(1180px,calc(100%-32px))] space-y-8 sm:mt-0 sm:w-auto md:space-y-10">
+            <section
+              className="hidden space-y-4 sm:block"
+              aria-labelledby="cars-search-heading"
+            >
+              <div className="px-1">
+                <h1
+                  id="cars-search-heading"
+                  className="text-[1.5rem] font-semibold leading-[1.12] tracking-[-0.02em] text-slate-900 md:text-[1.8rem] lg:whitespace-nowrap lg:text-[2rem] xl:text-[2.1rem]"
                 >
-                  {t("exploreCarsByTripStyle")}
-                </h2>
-                <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-600 md:text-base">
-                  {t("carsTripStyleBody")}
-                </p>
+                  {t("searchRentalCarsEveryPartTrip")}
+                </h1>
               </div>
-            </div>
 
-            <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
-              <div className="grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
-                {tripStyleCards.map((card) => (
-                  <CarImageCardLink
-                    key={card.translationKey}
-                    card={translateCarImageCard(card)}
-                  />
-                ))}
-              </div>
-            </div>
-          </section>
+              <CarsSearchBar
+                errors={errors}
+                hasActiveSearch={Boolean(hasActiveSearch)}
+                onClearSearch={clearSearch}
+                onSubmit={handleSubmit}
+                isSubmitting={isSubmitting}
+                updateValue={updateValue}
+                values={values}
+              />
+            </section>
 
-          <section className="relative isolate border-0 bg-transparent p-0 shadow-none ring-0 sm:rounded-[2rem] sm:border sm:border-slate-200/75 sm:bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(248,250,252,0.72)_54%,rgba(241,245,249,0.58))] sm:p-4 sm:shadow-[0_24px_64px_-52px_rgba(15,23,42,0.34)] sm:ring-1 sm:ring-white/80">
-            <div className="grid gap-2.5 sm:gap-4 md:grid-cols-3">
-              {trustCards.map((card) => {
-                const Icon = card.icon;
-                const translatedTitle =
-                  dictionary[`${card.key}.title`] ??
-                  enTranslations[`${card.key}.title`] ??
-                  "";
-                const translatedDescription =
-                  dictionary[`${card.key}.description`] ??
-                  enTranslations[`${card.key}.description`] ??
-                  "";
-
-                return (
-                  <article
-                    key={card.key}
-                    className="relative isolate cursor-default overflow-hidden rounded-[1rem] border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.82),rgba(248,250,252,0.7)_58%,rgba(241,245,249,0.78))] p-2.5 shadow-[0_14px_34px_-32px_rgba(15,23,42,0.38)] ring-1 ring-white/70 backdrop-blur-sm sm:rounded-[1.5rem] sm:p-6"
+            <section
+              className="space-y-4 pt-[25rem] sm:pt-0"
+              aria-labelledby="car-trip-style-heading"
+            >
+              <div className="flex flex-col gap-2 px-1 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <h2
+                    id="car-trip-style-heading"
+                    className="text-lg font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-2xl"
                   >
-                    <div className="pointer-events-none absolute inset-x-7 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/80 to-transparent" />
-                    <div className="pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full bg-slate-200/30 blur-3xl" />
-                    <div
-                      className="relative mb-2.5 inline-flex h-8 w-8 items-center justify-center rounded-[0.8rem] border border-[#004BB8]/15 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(0,75,184,0.08)_52%,rgba(248,250,252,0.92))] text-[#004BB8] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_12px_22px_-18px_rgba(0,75,184,0.28),0_8px_18px_-20px_rgba(15,23,42,0.55)] sm:mb-5 sm:h-12 sm:w-12 sm:rounded-[1rem]"
-                      aria-hidden="true"
+                    {t("exploreCarsByTripStyle")}
+                  </h2>
+                  <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-600 md:text-base">
+                    {t("carsTripStyleBody")}
+                  </p>
+                </div>
+              </div>
+
+              <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
+                <div className="grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+                  {tripStyleCards.map((card) => (
+                    <CarImageCardLink
+                      key={card.translationKey}
+                      card={translateCarImageCard(card)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            <section className="relative isolate border-0 bg-transparent p-0 shadow-none ring-0 sm:rounded-[2rem] sm:border sm:border-slate-200/75 sm:bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(248,250,252,0.72)_54%,rgba(241,245,249,0.58))] sm:p-4 sm:shadow-[0_24px_64px_-52px_rgba(15,23,42,0.34)] sm:ring-1 sm:ring-white/80">
+              <div className="grid gap-2.5 sm:gap-4 md:grid-cols-3">
+                {trustCards.map((card) => {
+                  const Icon = card.icon;
+                  const translatedTitle =
+                    dictionary[`${card.key}.title`] ??
+                    enTranslations[`${card.key}.title`] ??
+                    "";
+                  const translatedDescription =
+                    dictionary[`${card.key}.description`] ??
+                    enTranslations[`${card.key}.description`] ??
+                    "";
+
+                  return (
+                    <article
+                      key={card.key}
+                      className="relative isolate cursor-default overflow-hidden rounded-[1rem] border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.82),rgba(248,250,252,0.7)_58%,rgba(241,245,249,0.78))] p-2.5 shadow-[0_14px_34px_-32px_rgba(15,23,42,0.38)] ring-1 ring-white/70 backdrop-blur-sm sm:rounded-[1.5rem] sm:p-6"
                     >
-                      <Icon className="h-3.5 w-3.5 stroke-[1.8] sm:h-5 sm:w-5" />
-                    </div>
-                    <h2 className="relative text-[0.82rem] font-semibold leading-snug tracking-[-0.01em] text-slate-800 sm:text-base">
-                      {translatedTitle}
-                    </h2>
-                    <p className="relative mt-1.5 text-[0.75rem] leading-4 text-slate-700 sm:mt-2 sm:text-sm sm:leading-6">
-                      {translatedDescription}
-                    </p>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
-
-          <section
-            className="space-y-4"
-            aria-labelledby="car-pickup-ideas-heading"
-          >
-            <div className="flex flex-col gap-2 px-1 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h2
-                  id="car-pickup-ideas-heading"
-                  className="text-lg font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-2xl"
-                >
-                  {t("carsPickupPointsTitle")}
-                </h2>
-                <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-600 md:text-base">
-                  {t("carsPickupPointsBody")}
-                </p>
+                      <div className="pointer-events-none absolute inset-x-7 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/80 to-transparent" />
+                      <div className="pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full bg-slate-200/30 blur-3xl" />
+                      <div
+                        className="relative mb-2.5 inline-flex h-8 w-8 items-center justify-center rounded-[0.8rem] border border-[#004BB8]/15 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(0,75,184,0.08)_52%,rgba(248,250,252,0.92))] text-[#004BB8] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_12px_22px_-18px_rgba(0,75,184,0.28),0_8px_18px_-20px_rgba(15,23,42,0.55)] sm:mb-5 sm:h-12 sm:w-12 sm:rounded-[1rem]"
+                        aria-hidden="true"
+                      >
+                        <Icon className="h-3.5 w-3.5 stroke-[1.8] sm:h-5 sm:w-5" />
+                      </div>
+                      <h2 className="relative text-[0.82rem] font-semibold leading-snug tracking-[-0.01em] text-slate-800 sm:text-base">
+                        {translatedTitle}
+                      </h2>
+                      <p className="relative mt-1.5 text-[0.75rem] leading-4 text-slate-700 sm:mt-2 sm:text-sm sm:leading-6">
+                        {translatedDescription}
+                      </p>
+                    </article>
+                  );
+                })}
               </div>
-            </div>
+            </section>
 
-            <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
-              <div className="grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
-                {pickupCards.map((card) => (
-                  <CarPickupCardLink
-                    key={card.translationKey}
-                    card={translateCarImageCard(card)}
-                  />
-                ))}
+            <section
+              className="space-y-4"
+              aria-labelledby="car-pickup-ideas-heading"
+            >
+              <div className="flex flex-col gap-2 px-1 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <h2
+                    id="car-pickup-ideas-heading"
+                    className="text-lg font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-2xl"
+                  >
+                    {t("carsPickupPointsTitle")}
+                  </h2>
+                  <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-600 md:text-base">
+                    {t("carsPickupPointsBody")}
+                  </p>
+                </div>
               </div>
-            </div>
-          </section>
 
-          <CarsFaqSection />
+              <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
+                <div className="grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+                  {pickupCards.map((card) => (
+                    <CarPickupCardLink
+                      key={card.translationKey}
+                      card={translateCarImageCard(card)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            <CarsFaqSection />
+          </div>
         </div>
       </main>
       <Footer />
