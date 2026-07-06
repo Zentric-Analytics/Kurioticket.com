@@ -151,11 +151,11 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.savedTrips": "ทริปที่บันทึกไว้",
   "accountDashboard.hub.priceAlerts": "การแจ้งเตือนราคา",
   "accountDashboard.hub.preferences": "การตั้งค่า",
-  "accountDashboard.hub.emailPreferences": "Display & Notifications",
+  "accountDashboard.hub.emailPreferences": "การตั้งค่าการปรับแต่ง",
   "accountDashboard.hub.travelPreferences": "การตั้งค่าการจอง",
-  "accountDashboard.preferences.customization.title": "Display & Notifications",
+  "accountDashboard.preferences.customization.title": "การตั้งค่าการปรับแต่ง",
   "accountDashboard.preferences.customization.description":
-    "Personalize how Kurioticket looks and how you'd like us to stay in touch.",
+    "เลือกวิธีที่ Kurioticket ปรับแต่งประสบการณ์ของคุณ",
   "accountDashboard.preferences.customization.languageRegion.title": "ภาษาและภูมิภาค",
   "accountDashboard.preferences.customization.languageRegion.description":
     "ตั้งค่าภาษา สกุลเงิน และภูมิภาคเริ่มต้นของคุณ",

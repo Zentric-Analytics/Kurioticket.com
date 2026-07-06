@@ -183,8 +183,8 @@ export const translations: TranslationDictionary = {
 
 
   "accountDashboard.hub.title": "我的账户",
-  "accountDashboard.preferences.customization.title": "Display & Notifications",
-  "accountDashboard.preferences.customization.description": "Personalize how Kurioticket looks and how you'd like us to stay in touch.",
+  "accountDashboard.preferences.customization.title": "个性化偏好",
+  "accountDashboard.preferences.customization.description": "选择 Kurioticket 如何个性化你的体验。",
   "accountDashboard.preferences.customization.languageRegion.title": "语言和地区",
   "accountDashboard.preferences.customization.languageRegion.description": "设置你的默认语言、货币和地区。",
   "accountDashboard.preferences.customization.preferredLanguage": "首选语言",
@@ -235,7 +235,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.savedTrips": "已保存的行程",
   "accountDashboard.hub.priceAlerts": "价格提醒",
   "accountDashboard.hub.preferences": "偏好设置",
-  "accountDashboard.hub.emailPreferences": "Display & Notifications",
+  "accountDashboard.hub.emailPreferences": "个性化偏好",
   "accountDashboard.hub.travelPreferences": "预订偏好",
   "accountDashboard.hub.helpAndSupport": "帮助与支持",
   "accountDashboard.hub.contactSupport": "联系支持",
