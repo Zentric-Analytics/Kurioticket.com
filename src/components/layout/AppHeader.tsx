@@ -87,7 +87,7 @@ const signedInAccountMenuItems = [
     icon: LayoutDashboard,
   },
   {
-    href: "/saved",
+    href: "/saved?from=account",
     labelKey: "accountMenu.savedTrips.label",
     icon: SavedHeartIcon,
   },

@@ -533,7 +533,7 @@ test("Vietnamese Destinations and Saved Trips copy resolves through active i18n 
   }
 
   assert.ok(savedPageSource.includes("<SavedTripsAndRecentSearches />"));
-  assert.ok(dashboardSavedPageSource.includes('redirect("/saved")'));
+  assert.ok(dashboardSavedPageSource.includes('redirect("/saved?from=account")'));
   assert.ok(savedComponentSource.includes('t("savedTripsPageTitle")'));
   assert.ok(savedComponentSource.includes('t("savedTripsPageSubtitle")'));
   assert.ok(savedComponentSource.includes('t("savedTripsEmptyTitle")'));
@@ -12451,7 +12451,7 @@ test("Indonesian Saved trips render path resolves active locale copy", () => {
   }
 
   assert.ok(savedPageSource.includes("<SavedTripsAndRecentSearches />"));
-  assert.ok(dashboardSavedSource.includes('redirect("/saved")'));
+  assert.ok(dashboardSavedSource.includes('redirect("/saved?from=account")'));
   assert.ok(savedComponentSource.includes("const { t: dictionary } = useLocale();"));
   assert.ok(savedComponentSource.includes('const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";'));
   assert.ok(savedComponentSource.includes('t("savedTripsPageTitle")'));
@@ -12490,7 +12490,7 @@ test("Swedish Saved trips page copy resolves through active i18n keys", () => {
   assert.equal(svTranslations.savedTripsExploreDestinations, "Utforska destinationer");
 
   assert.ok(savedPageSource.includes("<SavedTripsAndRecentSearches />"));
-  assert.ok(dashboardSavedSource.includes('redirect("/saved")'));
+  assert.ok(dashboardSavedSource.includes('redirect("/saved?from=account")'));
   assert.ok(savedComponentSource.includes('t("savedTripsPageTitle")'));
   assert.ok(savedComponentSource.includes('t("savedTripsPageSubtitle")'));
   assert.ok(savedComponentSource.includes('t("savedTripsEmptyTitle")'));
@@ -14302,7 +14302,7 @@ test("Thai Destinations and Saved trips copy resolves through active render path
   assert.ok(destinationCardSource.includes("aria-label={ariaLabel}"));
   assert.ok(destinationCardSource.includes("alt={imageAlt}"));
   assert.ok(savedPageSource.includes("<SavedTripsAndRecentSearches />"));
-  assert.ok(dashboardSavedSource.includes('redirect("/saved")'));
+  assert.ok(dashboardSavedSource.includes('redirect("/saved?from=account")'));
   assert.ok(!savedComponentSource.includes('readRecentSearches()'));
   assert.ok(!savedComponentSource.includes('entry.href'));
   assert.ok(!savedComponentSource.includes('if (normalizedLocale.startsWith("th")) return "th-TH";'));
@@ -14909,7 +14909,7 @@ test("active saved render path keeps saved/search-history copy on i18n without o
   const recentSearchesSource = readFileSync("src/lib/recent-searches.ts", "utf8");
 
   assert.ok(savedPageSource.includes("<SavedTripsAndRecentSearches />"));
-  assert.ok(dashboardSavedPageSource.includes('redirect("/saved")'));
+  assert.ok(dashboardSavedPageSource.includes('redirect("/saved?from=account")'));
   assert.ok(savedComponentSource.includes('t("savedTripsPageTitle")'));
   assert.ok(savedComponentSource.includes('t("savedTripsPageSubtitle")'));
   assert.ok(!savedComponentSource.includes(">Saved Trips<"));
