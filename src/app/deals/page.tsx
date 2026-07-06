@@ -1055,7 +1055,8 @@ export default function DealsPage() {
               sizes="100vw"
               className="object-cover object-[center_52%]"
             />
-            <div className="absolute inset-0 bg-[#F3F7FC]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-950/25 via-slate-100/20 to-sky-100/10" />
+            <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(248,250,252,0.78)_0%,rgba(248,250,252,0.46)_42%,rgba(248,250,252,0.12)_72%,rgba(248,250,252,0)_100%)]" />
             <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-slate-50 via-slate-50/85 to-transparent" />
           </div>
 
