@@ -135,7 +135,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.savedTrips": "Sparade resor",
   "accountDashboard.hub.priceAlerts": "Prisaviseringar",
   "accountDashboard.hub.preferences": "Preferenser",
-  "accountDashboard.hub.emailPreferences": "Anpassningspreferenser",
+  "accountDashboard.hub.emailPreferences": "Display & Notifications",
   "accountDashboard.hub.travelPreferences": "Bokningspreferenser",
   "accountDashboard.hub.helpAndSupport": "Hjälp och support",
   "accountDashboard.hub.contactSupport": "Kontakta support",
@@ -204,8 +204,8 @@ export const translations: TranslationDictionary = {
 
 
   // Account dashboard preferences
-  "accountDashboard.preferences.customization.title": "Anpassningspreferenser",
-  "accountDashboard.preferences.customization.description": "Välj hur Kurioticket anpassar din upplevelse.",
+  "accountDashboard.preferences.customization.title": "Display & Notifications",
+  "accountDashboard.preferences.customization.description": "Personalize how Kurioticket looks and how you'd like us to stay in touch.",
   "accountDashboard.preferences.customization.languageRegion.title": "Språk och region",
   "accountDashboard.preferences.customization.languageRegion.description": "Ange ditt standardspråk, valuta och region.",
   "accountDashboard.preferences.customization.preferredLanguage": "Föredraget språk",
