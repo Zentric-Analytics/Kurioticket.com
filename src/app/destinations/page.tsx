@@ -620,7 +620,7 @@ const destinationCountryKeys: Record<string, string> = {
   "Saudi Arabia": "destinations.country.saudiArabia",
 };
 
-function getSafeDestinationTranslation(
+function translateValue(
   dictionary: Record<string, string>,
   key: string | undefined,
   fallback: string,
@@ -728,11 +728,7 @@ export default function DestinationsPage() {
                         : "border-white/25 bg-white/10 text-white hover:border-white/45 hover:bg-white/18"
                     }`}
                   >
-                    {getSafeDestinationTranslation(
-                      dictionary,
-                      regionLabelKeys[section.region],
-                      section.region,
-                    )}
+                    {translateValue(dictionary, regionLabelKeys[section.region], section.region)}
                   </a>
                 );
               })}
@@ -753,35 +749,31 @@ export default function DestinationsPage() {
                     className={`mb-3 h-1.5 w-16 rounded-full bg-gradient-to-r ${section.accent}`}
                   />
                   <h2 className="text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
-                    {getSafeDestinationTranslation(
-                      dictionary,
-                      regionLabelKeys[section.region],
-                      section.region,
-                    )}
+                    {translateValue(dictionary, regionLabelKeys[section.region], section.region)}
                   </h2>
                   <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
-                    {getSafeDestinationTranslation(dictionary, section.summaryKey, "")}
+                    {dictionary[section.summaryKey] ?? translateValue(dictionary, section.summaryKey, "")}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {section.destinations.map((destination) => {
-                    const displayName = getSafeDestinationTranslation(
+                    const displayName = translateValue(
                       dictionary,
                       destinationNameKeys[destination.name],
                       destination.name,
                     );
-                    const displayCountry = getSafeDestinationTranslation(
+                    const displayCountry = translateValue(
                       dictionary,
                       destinationCountryKeys[destination.country],
                       destination.country,
                     );
-                    const imageAltSuffix = getSafeDestinationTranslation(
+                    const imageAltSuffix = translateValue(
                       dictionary,
                       "destinationsImageAltSuffix",
                       "travel photography",
                     );
-                    const cardAriaLabelTemplate = getSafeDestinationTranslation(
+                    const cardAriaLabelTemplate = translateValue(
                       dictionary,
                       "destinationsCardAriaLabel",
                       "Search flights to {destination}",
@@ -796,12 +788,12 @@ export default function DestinationsPage() {
                         image={destination.image}
                         imageAlt={`${displayName}, ${displayCountry} ${imageAltSuffix}`}
                         imagePosition={destination.imagePosition}
-                        tag={getSafeDestinationTranslation(
+                        tag={dictionary[destination.tagKey] ?? translateValue(
                           dictionary,
                           destination.tagKey,
                           "",
                         )}
-                        subtitle={getSafeDestinationTranslation(
+                        subtitle={dictionary[destinationSubtitleKey] ?? translateValue(
                           dictionary,
                           destinationSubtitleKey,
                           "",
