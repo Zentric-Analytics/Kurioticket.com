@@ -129,7 +129,7 @@ const formatCarTimeLabel = (time: string, locale: string) => {
   }).format(new Date(2024, 0, 1, hourValue, minuteValue));
 };
 
-const carsMobileHeroImage = tripStyleCards[1].image;
+const carsHeroImage = tripStyleCards[1].image;
 
 const trustCards = [
   {
@@ -322,7 +322,7 @@ function CarsSearchPage() {
           >
             <div className="absolute inset-0 overflow-hidden">
               <Image
-                src={carsMobileHeroImage}
+                src={carsHeroImage}
                 alt=""
                 fill
                 priority
@@ -363,27 +363,41 @@ function CarsSearchPage() {
 
           <div className="mx-auto mt-8 w-[min(1180px,calc(100%-32px))] space-y-8 sm:mt-0 sm:w-auto md:space-y-10">
             <section
-              className="hidden space-y-4 sm:block"
+              className="relative isolate hidden min-h-[25rem] overflow-hidden rounded-[2rem] bg-slate-950 px-5 py-8 shadow-[0_30px_80px_-50px_rgba(15,23,42,0.55)] ring-1 ring-white/70 sm:block md:min-h-[27rem] md:px-7 md:py-10 lg:min-h-[29rem] lg:px-9"
               aria-labelledby="cars-search-heading"
             >
-              <div className="px-1">
-                <h1
-                  id="cars-search-heading"
-                  className="text-[1.5rem] font-semibold leading-[1.12] tracking-[-0.02em] text-slate-900 md:text-[1.8rem] lg:whitespace-nowrap lg:text-[2rem] xl:text-[2.1rem]"
-                >
-                  {t("searchRentalCarsEveryPartTrip")}
-                </h1>
-              </div>
-
-              <CarsSearchBar
-                errors={errors}
-                hasActiveSearch={Boolean(hasActiveSearch)}
-                onClearSearch={clearSearch}
-                onSubmit={handleSubmit}
-                isSubmitting={isSubmitting}
-                updateValue={updateValue}
-                values={values}
+              <Image
+                src={carsHeroImage}
+                alt=""
+                fill
+                priority
+                sizes="(min-width: 1180px) 1180px, calc(100vw - 32px)"
+                className="object-cover object-[54%_45%] brightness-[1.02] saturate-[1.08] contrast-[1.03]"
               />
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-950/68 via-slate-950/28 to-slate-950/8" />
+              <div className="absolute inset-y-0 start-0 w-[82%] bg-gradient-to-r from-slate-950/74 via-slate-950/34 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-950/54 via-slate-950/18 to-transparent" />
+
+              <div className="relative z-10 flex min-h-[calc(25rem-4rem)] flex-col justify-end gap-6 md:min-h-[calc(27rem-5rem)] lg:min-h-[calc(29rem-5rem)]">
+                <div className="max-w-3xl px-1">
+                  <h1
+                    id="cars-search-heading"
+                    className="max-w-[48rem] text-[1.5rem] font-semibold leading-[1.12] tracking-[-0.02em] text-white drop-shadow-[0_2px_12px_rgba(2,6,23,0.58)] md:text-[1.8rem] lg:whitespace-nowrap lg:text-[2rem] xl:text-[2.1rem]"
+                  >
+                    {t("searchRentalCarsEveryPartTrip")}
+                  </h1>
+                </div>
+
+                <CarsSearchBar
+                  errors={errors}
+                  hasActiveSearch={Boolean(hasActiveSearch)}
+                  onClearSearch={clearSearch}
+                  onSubmit={handleSubmit}
+                  isSubmitting={isSubmitting}
+                  updateValue={updateValue}
+                  values={values}
+                />
+              </div>
             </section>
 
             <section
