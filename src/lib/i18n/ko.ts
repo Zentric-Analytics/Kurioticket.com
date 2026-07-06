@@ -197,7 +197,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.priceAlerts": "가격 알림",
   "accountDashboard.hub.preferences": "환경설정",
   "accountDashboard.hub.languageRegionCurrency": "언어, 지역 및 통화",
-  "accountDashboard.hub.emailPreferences": "Display & Notifications",
+  "accountDashboard.hub.emailPreferences": "맞춤 설정 환경설정",
   "accountDashboard.hub.travelPreferences": "예약 환경설정",
   "accountDashboard.hub.helpAndSupport": "도움말 및 지원",
   "accountDashboard.hub.contactSupport": "지원팀 문의",
@@ -314,8 +314,8 @@ export const translations: TranslationDictionary = {
 
   "accountDashboard.trips.title": "내 여행",
 
-  "accountDashboard.preferences.customization.title": "Display & Notifications",
-  "accountDashboard.preferences.customization.description": "Personalize how Kurioticket looks and how you'd like us to stay in touch.",
+  "accountDashboard.preferences.customization.title": "맞춤 설정 환경설정",
+  "accountDashboard.preferences.customization.description": "Kurioticket이 내 경험을 맞춤 설정하는 방식을 선택하세요.",
   "accountDashboard.preferences.customization.languageRegion.title": "언어 및 지역",
   "accountDashboard.preferences.customization.languageRegion.description": "기본 언어, 통화, 지역을 설정하세요.",
   "accountDashboard.preferences.customization.preferredLanguage": "선호 언어",
