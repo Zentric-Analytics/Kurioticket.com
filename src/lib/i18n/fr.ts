@@ -678,6 +678,9 @@ export const translations: TranslationDictionary = {
   savedTripsSearchRoute: "Rechercher l’itinéraire",
   savedTripsRecentSearchesTitle: "Recherches récentes",
   recentSearchesPageTitle: "Recherches récentes",
+  recentSearchesClearAll: "Tout effacer",
+  recentSearchesClearFlights: "Effacer les vols",
+  recentSearchesClearHotels: "Effacer les hôtels",
   recentSearchesPageSubtitle:
     "Jump back to where you left off and search again in one click.",
   recentSearchesEmptyTitle: "Lancez une recherche pour garder l’élan",

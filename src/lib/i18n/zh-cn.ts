@@ -1041,6 +1041,9 @@ export const translations: TranslationDictionary = {
   savedTripsExploreDestinations: "探索目的地",
   savedTripsRecentSearchesTitle: "最近搜索",
   recentSearchesPageTitle: "最近搜索",
+  recentSearchesClearAll: "清除全部",
+  recentSearchesClearFlights: "清除航班",
+  recentSearchesClearHotels: "清除酒店",
   recentSearchesPageSubtitle:
     "Jump back to where you left off and search again in one click.",
   recentSearchesEmptyTitle: "No search history yet",

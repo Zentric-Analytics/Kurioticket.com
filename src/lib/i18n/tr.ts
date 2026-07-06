@@ -673,6 +673,9 @@ export const translations: TranslationDictionary = {
   savedTripsSearchRoute: "Rotayı ara",
   savedTripsRecentSearchesTitle: "Son aramalar",
   recentSearchesPageTitle: "Son aramalar",
+  recentSearchesClearAll: "Tümünü temizle",
+  recentSearchesClearFlights: "Uçuşları temizle",
+  recentSearchesClearHotels: "Otelleri temizle",
   recentSearchesPageSubtitle:
     "Jump back to where you left off and search again in one click.",
   recentSearchesEmptyTitle: "Henüz son arama yok",

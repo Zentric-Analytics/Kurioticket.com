@@ -998,6 +998,9 @@ export const translations: TranslationDictionary = {
   recentSearchesFilterAll: "All",
   recentSearchesFilterFlights: "Flights",
   recentSearchesFilterHotels: "Hotels",
+  recentSearchesClearAll: "Clear all",
+  recentSearchesClearFlights: "Clear flights",
+  recentSearchesClearHotels: "Clear hotels",
   recentSearchesNoFilterResults: "No searches match this filter.",
   recentSearchesPageSubtitle:
     "Jump back to where you left off and search again in one click.",

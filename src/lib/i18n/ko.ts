@@ -1119,6 +1119,9 @@ export const translations: TranslationDictionary = {
   savedTripsSearchRoute: "노선 검색",
   savedTripsRecentSearchesTitle: "최근 검색",
   recentSearchesPageTitle: "최근 검색",
+  recentSearchesClearAll: "모두 지우기",
+  recentSearchesClearFlights: "항공편 지우기",
+  recentSearchesClearHotels: "호텔 지우기",
   recentSearchesPageSubtitle:
     "Jump back to where you left off and search again in one click.",
   recentSearchesEmptyTitle: "검색을 시작해 흐름을 이어가세요",

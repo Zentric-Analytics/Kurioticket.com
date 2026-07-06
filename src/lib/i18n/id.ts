@@ -150,6 +150,9 @@ export const translations: TranslationDictionary = {
   savedTripsExploreDestinations: "Jelajahi destinasi",
   savedTripsRecentSearchesTitle: "Pencarian terbaru",
   recentSearchesPageTitle: "Pencarian terbaru",
+  recentSearchesClearAll: "Hapus semua",
+  recentSearchesClearFlights: "Hapus penerbangan",
+  recentSearchesClearHotels: "Hapus hotel",
   recentSearchesPageSubtitle:
     "Jump back to where you left off and search again in one click.",
   recentSearchesEmptyTitle: "No search history yet",

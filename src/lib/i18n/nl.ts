@@ -521,6 +521,9 @@ export const translations: TranslationDictionary = {
   savedTripsSearchRoute: "Route zoeken",
   savedTripsRecentSearchesTitle: "Recente zoekopdrachten",
   recentSearchesPageTitle: "Recente zoekopdrachten",
+  recentSearchesClearAll: "Alles wissen",
+  recentSearchesClearFlights: "Vluchten wissen",
+  recentSearchesClearHotels: "Hotels wissen",
   recentSearchesPageSubtitle:
     "Jump back to where you left off and search again in one click.",
   recentSearchesEmptyTitle: "Start een zoekopdracht om op gang te komen",

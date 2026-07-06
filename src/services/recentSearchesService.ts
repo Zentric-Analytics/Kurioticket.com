@@ -49,16 +49,46 @@ const recentHotelParamsSchema = z.object({
   rooms: positiveIntegerSchema,
 });
 
-export const recentSearchInputSchema = z.discriminatedUnion("type", [
-  recentSearchBaseInputSchema.extend({
-    type: z.literal("flight"),
-    params: recentFlightParamsSchema,
-  }),
-  recentSearchBaseInputSchema.extend({
-    type: z.literal("hotel"),
-    params: recentHotelParamsSchema,
-  }),
-]);
+const recentSearchResultPathByType = {
+  flight: "/flights/results",
+  hotel: "/hotels/results",
+} as const;
+
+function isInternalResultHrefForType(
+  href: string,
+  type: keyof typeof recentSearchResultPathByType,
+) {
+  if (!href.startsWith("/") || href.startsWith("//")) return false;
+
+  const expectedPath = recentSearchResultPathByType[type];
+  return (
+    href === expectedPath ||
+    href.startsWith(`${expectedPath}?`) ||
+    href.startsWith(`${expectedPath}#`) ||
+    href.startsWith(`${expectedPath}/`)
+  );
+}
+
+export const recentSearchInputSchema = z
+  .discriminatedUnion("type", [
+    recentSearchBaseInputSchema.extend({
+      type: z.literal("flight"),
+      params: recentFlightParamsSchema,
+    }),
+    recentSearchBaseInputSchema.extend({
+      type: z.literal("hotel"),
+      params: recentHotelParamsSchema,
+    }),
+  ])
+  .superRefine((input, context) => {
+    if (isInternalResultHrefForType(input.href, input.type)) return;
+
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["href"],
+      message: "Recent search href must be an internal results URL for its type.",
+    });
+  });
 
 export const deleteRecentSearchInputSchema = z.object({
   id: z.string().trim().min(1).max(1024),
