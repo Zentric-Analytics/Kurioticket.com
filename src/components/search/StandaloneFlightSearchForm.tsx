@@ -33,7 +33,12 @@ import {
   normalizeFlightsCalendarLocale,
 } from "@/lib/flights/dateFormatting";
 import { Button } from "@/components/ui/Button";
-import { type AirportOption, formatAirportLabel, getLocalizedAirportCountryName, getLocalizedCityName } from "@/data/airports";
+import {
+  type AirportOption,
+  formatAirportLabel,
+  getLocalizedAirportCountryName,
+  getLocalizedCityName,
+} from "@/data/airports";
 import {
   applyDefaultOrigin,
   canApplyDefaultOrigin,
@@ -46,6 +51,7 @@ import { cn } from "@/lib/utils";
 type TripType = "round-trip" | "one-way";
 type CabinClass = "economy" | "business" | "first";
 type AirportField = "origin" | "destination";
+type MobilePickerField = AirportField | "dates" | "travelers";
 
 type PlacesApiResponse = {
   suggestions?: AirportOption[];
@@ -232,8 +238,8 @@ export function StandaloneFlightSearchForm({
   const [destinationCode, setDestinationCode] = useState("");
   const [originOpen, setOriginOpen] = useState(false);
   const [destinationOpen, setDestinationOpen] = useState(false);
-  const [activeMobileAirportPicker, setActiveMobileAirportPicker] =
-    useState<AirportField | null>(null);
+  const [activeMobilePicker, setActiveMobilePicker] =
+    useState<MobilePickerField | null>(null);
   const [originHighlight, setOriginHighlight] = useState(0);
   const [destinationHighlight, setDestinationHighlight] = useState(0);
   const [originSuggestions, setOriginSuggestions] = useState<AirportOption[]>(
@@ -326,9 +332,10 @@ export function StandaloneFlightSearchForm({
       count: number,
       singularLabel: string,
       pluralLabel: string,
-    ) => isJapanese
-      ? `${singularLabel}${count}名`
-      : `${count} ${count === 1 ? singularLabel : pluralLabel}`;
+    ) =>
+      isJapanese
+        ? `${singularLabel}${count}名`
+        : `${count} ${count === 1 ? singularLabel : pluralLabel}`;
     const parts: string[] = [];
     if (adultCount > 0)
       parts.push(
@@ -352,7 +359,15 @@ export function StandaloneFlightSearchForm({
         );
 
     return `${baseSummary}${listSeparator}${cabinClassLabel}`;
-  }, [adultCount, cabinClassLabel, childCount, infantCount, locale, travelerCount, t]);
+  }, [
+    adultCount,
+    cabinClassLabel,
+    childCount,
+    infantCount,
+    locale,
+    travelerCount,
+    t,
+  ]);
 
   const buildPlacesUrl = useCallback(
     (query: string, context: AirportField, requestDefault = false) => {
@@ -448,11 +463,16 @@ export function StandaloneFlightSearchForm({
   });
 
   useEffect(() => {
-    if (!activeMobileAirportPicker || typeof window === "undefined") return;
+    if (
+      (activeMobilePicker !== "origin" &&
+        activeMobilePicker !== "destination") ||
+      typeof window === "undefined"
+    )
+      return;
 
     const focusId = window.setTimeout(() => {
       const inputRef =
-        activeMobileAirportPicker === "origin"
+        activeMobilePicker === "origin"
           ? originMobilePickerInputRef
           : destinationMobilePickerInputRef;
 
@@ -461,7 +481,7 @@ export function StandaloneFlightSearchForm({
     }, 80);
 
     return () => window.clearTimeout(focusId);
-  }, [activeMobileAirportPicker]);
+  }, [activeMobilePicker]);
 
   useEffect(() => {
     const onPointerDown = (event: MouseEvent) => {
@@ -487,7 +507,7 @@ export function StandaloneFlightSearchForm({
       setDestinationOpen(false);
       setDatesOpen(false);
       setTravelersOpen(false);
-      setActiveMobileAirportPicker(null);
+      setActiveMobilePicker(null);
     };
 
     document.addEventListener("mousedown", onPointerDown);
@@ -589,7 +609,44 @@ export function StandaloneFlightSearchForm({
     setDestinationOpen(true);
   };
 
+  const isMobilePickerViewport = () =>
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 639px)").matches;
+
+  const openDatesMobilePicker = () => {
+    setOriginOpen(false);
+    setDestinationOpen(false);
+    setDatesOpen(false);
+    setTravelersOpen(false);
+    setActiveMobilePicker("dates");
+  };
+
+  const openTravelersMobilePicker = () => {
+    const normalizedCabinClass = normalizeCabinClass(cabinClass);
+    setOriginOpen(false);
+    setDestinationOpen(false);
+    setDatesOpen(false);
+    setTravelersOpen(false);
+    setCabinClass(normalizedCabinClass);
+    setDraftAdultCount(adultCount);
+    setDraftChildCount(childCount);
+    setDraftInfantCount(infantCount);
+    setDraftCabinClass(normalizedCabinClass);
+    setActiveMobilePicker("travelers");
+  };
+
+  const closeTravelersMobilePicker = () => {
+    const normalizedCabinClass = normalizeCabinClass(cabinClass);
+    setCabinClass(normalizedCabinClass);
+    setDraftAdultCount(adultCount);
+    setDraftChildCount(childCount);
+    setDraftInfantCount(infantCount);
+    setDraftCabinClass(normalizedCabinClass);
+    setActiveMobilePicker(null);
+  };
+
   const openDatesDesktopPopover = () => {
+    setActiveMobilePicker(null);
     setOriginOpen(false);
     setDestinationOpen(false);
     setTravelersOpen(false);
@@ -598,6 +655,7 @@ export function StandaloneFlightSearchForm({
 
   const openTravelers = () => {
     const normalizedCabinClass = normalizeCabinClass(cabinClass);
+    setActiveMobilePicker(null);
     setOriginOpen(false);
     setDestinationOpen(false);
     setDatesOpen(false);
@@ -643,7 +701,11 @@ export function StandaloneFlightSearchForm({
   const selectAirport = (field: AirportField, option: AirportOption) => {
     if (field === "origin") {
       setOriginState((current) =>
-        markOriginManualInput(current, formatAirportLabel(option, locale), option.code),
+        markOriginManualInput(
+          current,
+          formatAirportLabel(option, locale),
+          option.code,
+        ),
       );
       setOriginOpen(false);
     } else {
@@ -666,7 +728,7 @@ export function StandaloneFlightSearchForm({
     setDestinationCode(nextDestinationCode);
     setOriginOpen(false);
     setDestinationOpen(false);
-    setActiveMobileAirportPicker(null);
+    setActiveMobilePicker(null);
     setOriginHighlight(0);
     setDestinationHighlight(0);
   };
@@ -678,7 +740,7 @@ export function StandaloneFlightSearchForm({
       setOriginLoading(false);
       setOriginOpen(false);
       setOriginHighlight(0);
-      if (!activeMobileAirportPicker)
+      if (!activeMobilePicker)
         window.requestAnimationFrame(() => originInputRef.current?.focus());
     } else {
       setDestination("");
@@ -687,7 +749,7 @@ export function StandaloneFlightSearchForm({
       setDestinationLoading(false);
       setDestinationOpen(false);
       setDestinationHighlight(0);
-      if (!activeMobileAirportPicker)
+      if (!activeMobilePicker)
         window.requestAnimationFrame(() =>
           destinationInputRef.current?.focus(),
         );
@@ -893,88 +955,90 @@ export function StandaloneFlightSearchForm({
         )}
       >
         {(requestClose) => (
-        <div className="mx-auto w-full max-w-xl space-y-5">
-          <div className="space-y-2">
-            <label
-              className="block text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-500"
-              htmlFor={inputId}
-            >
-              {airportPickerLabels.searchAirportsAndCities}
-            </label>
-            <div className="relative">
-              <input
-                ref={inputRef}
-                id={inputId}
-                type="text"
-                value={value}
-                onChange={(event) => onChange(event.target.value)}
-                placeholder={airportPickerLabels.searchAirportsOrCities}
-                autoComplete="off"
-                className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 ps-4 pe-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20"
-              />
-              {value.trim() ? (
-                <button
-                  type="button"
-                  aria-label={clearLabel}
-                  onClick={() => {
-                    onClear();
-                    focusInput();
-                  }}
-                  className="focus-ring absolute end-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
-                >
-                  <X className="h-4 w-4" aria-hidden="true" />
-                </button>
-              ) : null}
+          <div className="mx-auto w-full max-w-xl space-y-5">
+            <div className="space-y-2">
+              <label
+                className="block text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-500"
+                htmlFor={inputId}
+              >
+                {airportPickerLabels.searchAirportsAndCities}
+              </label>
+              <div className="relative">
+                <input
+                  ref={inputRef}
+                  id={inputId}
+                  type="text"
+                  value={value}
+                  onChange={(event) => onChange(event.target.value)}
+                  placeholder={airportPickerLabels.searchAirportsOrCities}
+                  autoComplete="off"
+                  className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 ps-4 pe-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20"
+                />
+                {value.trim() ? (
+                  <button
+                    type="button"
+                    aria-label={clearLabel}
+                    onClick={() => {
+                      onClear();
+                      focusInput();
+                    }}
+                    className="focus-ring absolute end-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
+                  >
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+              {query.length < 2 ? (
+                <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
+                  {airportPickerLabels.startTypingCityOrAirport}
+                </p>
+              ) : isLoading ? (
+                <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
+                  {airportPickerLabels.searchingAirportsAndCities}
+                </p>
+              ) : suggestions.length ? (
+                suggestions.map((option) => (
+                  <button
+                    key={`${option.code}-${option.airport}-${inputId}`}
+                    type="button"
+                    onClick={() => {
+                      onSelect(option);
+                      requestClose();
+                    }}
+                    className="focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3.5 text-start transition-colors last:border-b-0 hover:bg-slate-50 focus-visible:bg-slate-50"
+                  >
+                    <span
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500"
+                      aria-hidden="true"
+                    >
+                      <Plane className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-base font-extrabold leading-5 tracking-tight text-slate-950">
+                        {getLocalizedCityName(option.city, locale)}
+                      </span>
+                      <span className="mt-1 block truncate text-sm font-medium leading-5 text-slate-500">
+                        {option.airport}
+                        {option.country
+                          ? ` · ${getLocalizedAirportCountryName(option, locale)}`
+                          : ""}
+                      </span>
+                    </span>
+                    <span className="shrink-0 ps-2 text-end text-sm font-extrabold tracking-[0.12em] text-slate-700">
+                      {option.code}
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
+                  {airportPickerLabels.noMatchingAirportsOrCities}
+                </p>
+              )}
             </div>
           </div>
-
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-            {query.length < 2 ? (
-              <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
-                {airportPickerLabels.startTypingCityOrAirport}
-              </p>
-            ) : isLoading ? (
-              <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
-                {airportPickerLabels.searchingAirportsAndCities}
-              </p>
-            ) : suggestions.length ? (
-              suggestions.map((option) => (
-                <button
-                  key={`${option.code}-${option.airport}-${inputId}`}
-                  type="button"
-                  onClick={() => {
-                    onSelect(option);
-                    requestClose();
-                  }}
-                  className="focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3.5 text-start transition-colors last:border-b-0 hover:bg-slate-50 focus-visible:bg-slate-50"
-                >
-                  <span
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500"
-                    aria-hidden="true"
-                  >
-                    <Plane className="h-4 w-4" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-base font-extrabold leading-5 tracking-tight text-slate-950">
-                      {getLocalizedCityName(option.city, locale)}
-                    </span>
-                    <span className="mt-1 block truncate text-sm font-medium leading-5 text-slate-500">
-                      {option.airport}
-                      {option.country ? ` · ${getLocalizedAirportCountryName(option, locale)}` : ""}
-                    </span>
-                  </span>
-                  <span className="shrink-0 ps-2 text-end text-sm font-extrabold tracking-[0.12em] text-slate-700">
-                    {option.code}
-                  </span>
-                </button>
-              ))
-            ) : (
-              <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
-                {airportPickerLabels.noMatchingAirportsOrCities}
-              </p>
-            )}
-          </div>
-        </div>
         )}
       </FlightMobilePickerShell>
     );
@@ -1031,7 +1095,9 @@ export function StandaloneFlightSearchForm({
                   </span>
                   <span className="mt-0.5 block truncate text-xs font-normal leading-5 text-slate-500">
                     {option.airport}
-                    {option.country ? ` · ${getLocalizedAirportCountryName(option, locale)}` : ""}
+                    {option.country
+                      ? ` · ${getLocalizedAirportCountryName(option, locale)}`
+                      : ""}
                   </span>
                 </span>
                 <span className="shrink-0 ps-3 text-end text-sm font-medium tracking-[0.08em] text-slate-600">
@@ -1466,8 +1532,8 @@ export function StandaloneFlightSearchForm({
               label={t("origin")}
               value={origin}
               placeholder={t("cityOrAirport")}
-              open={originOpen || activeMobileAirportPicker === "origin"}
-              onMobileOpen={() => setActiveMobileAirportPicker("origin")}
+              open={originOpen || activeMobilePicker === "origin"}
+              onMobileOpen={() => setActiveMobilePicker("origin")}
               onDesktopFocus={openOriginDesktopPopover}
               onChange={(nextValue) => {
                 openOriginDesktopPopover();
@@ -1510,10 +1576,8 @@ export function StandaloneFlightSearchForm({
               label={t("destination")}
               value={destination}
               placeholder={t("cityOrAirport")}
-              open={
-                destinationOpen || activeMobileAirportPicker === "destination"
-              }
-              onMobileOpen={() => setActiveMobileAirportPicker("destination")}
+              open={destinationOpen || activeMobilePicker === "destination"}
+              onMobileOpen={() => setActiveMobilePicker("destination")}
               onDesktopFocus={openDestinationDesktopPopover}
               onChange={(nextValue) => {
                 openDestinationDesktopPopover();
@@ -1548,9 +1612,18 @@ export function StandaloneFlightSearchForm({
               ref={datesMobileLauncherRef}
               type="button"
               aria-label={t("chooseTravelDates")}
-              aria-expanded={datesOpen}
+              aria-expanded={datesOpen || activeMobilePicker === "dates"}
               aria-haspopup="dialog"
               onClick={() => {
+                if (isMobilePickerViewport()) {
+                  if (activeMobilePicker === "dates") {
+                    setActiveMobilePicker(null);
+                    return;
+                  }
+                  openDatesMobilePicker();
+                  return;
+                }
+
                 if (datesOpen) {
                   setDatesOpen(false);
                   return;
@@ -1567,37 +1640,6 @@ export function StandaloneFlightSearchForm({
             </button>
             {datesOpen ? (
               <>
-                <FlightMobilePickerShell
-                  open={datesOpen}
-                  title={t("chooseTravelDates")}
-                  titleId="standalone-flight-mobile-dates-title"
-                  launcherRef={datesMobileLauncherRef}
-                  onClose={() => setDatesOpen(false)}
-                  contentClassName="px-4 py-4"
-                  footer={(requestClose) => (
-                    <div className="flex items-center justify-between gap-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDepartureDate("");
-                          setReturnDate("");
-                        }}
-                        className="focus-ring min-h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
-                      >
-                        {t("clear")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={requestClose}
-                        className={mobileDoneButtonClassName}
-                      >
-                        {t("done")}
-                      </button>
-                    </div>
-                  )}
-                >
-                  {renderDateCalendar(true)}
-                </FlightMobilePickerShell>
                 <DesktopFlightPopover
                   open={datesOpen}
                   anchorRef={datesMobileLauncherRef}
@@ -1643,9 +1685,20 @@ export function StandaloneFlightSearchForm({
             <button
               ref={travelersLauncherRef}
               type="button"
-              aria-expanded={travelersOpen}
+              aria-expanded={
+                travelersOpen || activeMobilePicker === "travelers"
+              }
               aria-haspopup="dialog"
               onClick={() => {
+                if (isMobilePickerViewport()) {
+                  if (activeMobilePicker === "travelers") {
+                    closeTravelersMobilePicker();
+                    return;
+                  }
+                  openTravelersMobilePicker();
+                  return;
+                }
+
                 if (travelersOpen) {
                   closeTravelers();
                   return;
@@ -1665,30 +1718,6 @@ export function StandaloneFlightSearchForm({
             </button>
             {travelersOpen ? (
               <>
-                <FlightMobilePickerShell
-                  open={travelersOpen}
-                  title={t("passengers") || t("travelers") || "Travelers"}
-                  titleId="standalone-flight-mobile-travelers-title"
-                  launcherRef={travelersLauncherRef}
-                  onClose={closeTravelers}
-                  contentClassName="px-4 py-5"
-                  footer={(requestClose) => (
-                    <div className="flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          applyTravelersDraft(false);
-                          requestClose();
-                        }}
-                        className={cn(mobileDoneButtonClassName, "px-6 py-3")}
-                      >
-                        {t("done")}
-                      </button>
-                    </div>
-                  )}
-                >
-                  {renderTravelersPicker()}
-                </FlightMobilePickerShell>
                 <DesktopFlightPopover
                   open={travelersOpen}
                   anchorRef={travelersLauncherRef}
@@ -1730,9 +1759,70 @@ export function StandaloneFlightSearchForm({
           </Button>
         </div>
 
+        {activeMobilePicker === "dates" ? (
+          <FlightMobilePickerShell
+            open={true}
+            title={t("chooseTravelDates")}
+            titleId="standalone-flight-mobile-dates-title"
+            launcherRef={datesMobileLauncherRef}
+            onClose={() => setActiveMobilePicker(null)}
+            contentClassName="px-4 py-4"
+            footer={(requestClose) => (
+              <div className="flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDepartureDate("");
+                    setReturnDate("");
+                  }}
+                  className="focus-ring min-h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                >
+                  {t("clear")}
+                </button>
+                <button
+                  type="button"
+                  onClick={requestClose}
+                  className={mobileDoneButtonClassName}
+                >
+                  {t("done")}
+                </button>
+              </div>
+            )}
+          >
+            {renderDateCalendar(true)}
+          </FlightMobilePickerShell>
+        ) : null}
+
+        {activeMobilePicker === "travelers" ? (
+          <FlightMobilePickerShell
+            open={true}
+            title={t("passengers") || t("travelers") || "Travelers"}
+            titleId="standalone-flight-mobile-travelers-title"
+            launcherRef={travelersLauncherRef}
+            onClose={closeTravelersMobilePicker}
+            contentClassName="px-4 py-5"
+            footer={(requestClose) => (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    applyTravelersDraft(false);
+                    requestClose();
+                  }}
+                  className={cn(mobileDoneButtonClassName, "px-6 py-3")}
+                >
+                  {t("done")}
+                </button>
+              </div>
+            )}
+          >
+            {renderTravelersPicker()}
+          </FlightMobilePickerShell>
+        ) : null}
+
         {renderMobileAirportPicker({
           field: "origin",
-          open: activeMobileAirportPicker === "origin",
+          open: activeMobilePicker === "origin",
           title: t("chooseOrigin"),
           inputId: "standalone-flight-origin-mobile-search",
           value: origin,
@@ -1752,11 +1842,11 @@ export function StandaloneFlightSearchForm({
           },
           onClear: () => clearAirport("origin"),
           onSelect: (option) => selectAirport("origin", option),
-          onClose: () => setActiveMobileAirportPicker(null),
+          onClose: () => setActiveMobilePicker(null),
         })}
         {renderMobileAirportPicker({
           field: "destination",
-          open: activeMobileAirportPicker === "destination",
+          open: activeMobilePicker === "destination",
           title: t("chooseDestination"),
           inputId: "standalone-flight-destination-mobile-search",
           value: destination,
@@ -1775,7 +1865,7 @@ export function StandaloneFlightSearchForm({
           },
           onClear: () => clearAirport("destination"),
           onSelect: (option) => selectAirport("destination", option),
-          onClose: () => setActiveMobileAirportPicker(null),
+          onClose: () => setActiveMobilePicker(null),
         })}
       </form>
     </section>
