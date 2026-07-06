@@ -582,41 +582,43 @@ export function FlightLandingClient() {
                 {t("flightLandingRouteIdeasBody")}
               </p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {routeInspirationCards.map((item) => {
-                const routeText = getRouteText(item, t);
+            <div className="overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 [&::-webkit-scrollbar]:hidden">
+              <div className="grid auto-cols-[minmax(148px,42vw)] grid-flow-col grid-rows-2 gap-3 sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 sm:grid-rows-none sm:gap-4 lg:grid-cols-4">
+                {routeInspirationCards.map((item) => {
+                  const routeText = getRouteText(item, t);
 
-                return (
-                  <Link
-                    key={item.id}
-                    href={buildDiscoveryLink(item)}
-                    className="group block overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_12px_32px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-[0_16px_36px_rgba(0,75,184,0.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
-                  >
-                    <article className="flex h-full flex-col">
-                      <div className="relative h-32 overflow-hidden bg-slate-100">
-                        <Image
-                          src={item.image}
-                          alt={routeText.imageAlt}
-                          fill
-                          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                          className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
-                        />
-                      </div>
-                      <div className="flex flex-1 flex-col p-5">
-                        <p className="text-[0.72rem] font-bold uppercase leading-4 tracking-[0.14em] text-[#004BB8]">
-                          {item.originCode} → {item.destinationCode}
-                        </p>
-                        <h3 className="mt-3 text-lg font-bold leading-6 tracking-[-0.015em] text-slate-950">
-                          {routeText.destinationCity}
-                        </h3>
-                        <p className="mt-2.5 line-clamp-2 text-sm font-medium leading-6 text-slate-600">
-                          {routeText.routeNote}
-                        </p>
-                      </div>
-                    </article>
-                  </Link>
-                );
-              })}
+                  return (
+                    <Link
+                      key={item.id}
+                      href={buildDiscoveryLink(item)}
+                      className="group block overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_12px_32px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-[0_16px_36px_rgba(0,75,184,0.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 sm:rounded-3xl"
+                    >
+                      <article className="flex h-full flex-col">
+                        <div className="relative h-[6.75rem] overflow-hidden bg-slate-100 sm:h-32">
+                          <Image
+                            src={item.image}
+                            alt={routeText.imageAlt}
+                            fill
+                            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 42vw"
+                            className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+                          />
+                        </div>
+                        <div className="flex flex-1 flex-col p-3.5 sm:p-5">
+                          <p className="text-[0.68rem] font-bold uppercase leading-4 tracking-[0.14em] text-[#004BB8] sm:text-[0.72rem]">
+                            {item.originCode} → {item.destinationCode}
+                          </p>
+                          <h3 className="mt-2 text-[0.95rem] font-bold leading-tight tracking-[-0.015em] text-slate-950 sm:mt-3 sm:text-lg sm:leading-6">
+                            {routeText.destinationCity}
+                          </h3>
+                          <p className="mt-1.5 line-clamp-2 text-xs font-medium leading-5 text-slate-600 sm:mt-2.5 sm:text-sm sm:leading-6">
+                            {routeText.routeNote}
+                          </p>
+                        </div>
+                      </article>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
           </div>
         ) : null}
