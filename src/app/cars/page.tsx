@@ -602,14 +602,14 @@ function CarsSearchBar({
 
   return (
     <section className="rounded-[1.5rem] border border-white/80 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.38)] ring-1 ring-slate-950/[0.06] sm:rounded-none sm:border-slate-200/80 sm:bg-white/80 sm:p-4 sm:shadow-[0_16px_44px_-40px_rgba(15,23,42,0.28)] sm:ring-white/80">
-      <form onSubmit={onSubmit} className="space-y-2 sm:space-y-3" noValidate>
+      <form onSubmit={onSubmit} className="space-y-3 sm:space-y-3" noValidate>
         <input type="hidden" name="pickupDate" value={values.pickupDate} />
         <input type="hidden" name="dropoffDate" value={values.dropoffDate} />
         <input type="hidden" name="pickupTime" value={values.pickupTime} />
         <input type="hidden" name="dropoffTime" value={values.dropoffTime} />
 
-        <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)] sm:rounded-none sm:border-slate-200 sm:p-1 sm:shadow-[0_10px_28px_rgba(15,23,42,0.08)]">
-          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1.45fr)_minmax(0,1.1fr)_minmax(5.8rem,0.55fr)_104px] lg:gap-0">
+        <div className="overflow-visible rounded-none border-0 bg-transparent p-0 shadow-none sm:rounded-none sm:border sm:border-slate-200 sm:bg-white sm:p-1 sm:shadow-[0_10px_28px_rgba(15,23,42,0.08)]">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-1.5 lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1.45fr)_minmax(0,1.1fr)_minmax(5.8rem,0.55fr)_104px] lg:gap-0">
             <SearchCell
               label={t("carsSearch.pickupLocationLabel")}
               error={errors.pickupLocation || errors.dropoffLocation}
@@ -749,7 +749,7 @@ function CarsSearchBar({
             <div className="sm:col-span-2 lg:col-span-1">
               <button
                 type="submit"
-                className="focus-ring inline-flex h-full min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-3 text-sm font-bold text-white shadow-lg shadow-[#004BB8]/20 transition hover:bg-[#021C2B] active:bg-[#004BB8] disabled:cursor-not-allowed disabled:opacity-75 disabled:hover:bg-[#004BB8] sm:rounded-none lg:min-h-12"
+                className="focus-ring inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-3 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 transition hover:bg-[#021C2B] active:bg-[#004BB8] disabled:cursor-not-allowed disabled:opacity-75 disabled:hover:bg-[#004BB8] sm:h-full sm:min-h-11 sm:rounded-none sm:shadow-lg lg:min-h-12"
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}
               >
@@ -760,7 +760,7 @@ function CarsSearchBar({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 sm:rounded-none sm:border-0 sm:bg-transparent sm:px-1 sm:py-0">
           <label className="focus-within:ring-ring inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-slate-900">
             <input
               type="checkbox"
@@ -1164,9 +1164,9 @@ function SearchCell({
 }) {
   return (
     <div
-      className={`min-h-[58px] rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 shadow-sm shadow-slate-900/[0.03] transition hover:border-slate-300 focus-within:border-[#004BB8]/25 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/20 sm:rounded-none sm:border-transparent sm:shadow-none sm:hover:border-slate-200 lg:min-h-[66px] lg:px-3 lg:py-2 ${className}`}
+      className={`min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-slate-400 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[58px] sm:rounded-none sm:border-transparent sm:px-2.5 sm:shadow-none sm:hover:border-slate-200 sm:focus-within:border-[#004BB8]/25 sm:focus-within:ring-[#004BB8]/20 lg:min-h-[66px] lg:px-3 lg:py-2 ${className}`}
     >
-      <label className="mb-0.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 lg:mb-1">
+      <label className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 sm:mb-0.5 sm:text-slate-500 lg:mb-1">
         {label}
       </label>
       {children}
