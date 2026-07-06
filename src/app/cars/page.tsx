@@ -394,7 +394,7 @@ function CarsSearchPage() {
               </div>
             </div>
 
-            <div className="border-0 bg-transparent p-0 shadow-none ring-0 sm:border sm:border-slate-200/80 sm:bg-white/80 sm:p-6 sm:shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] sm:ring-1 sm:ring-white/80 md:p-7">
+            <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
               <div className="grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
                 {tripStyleCards.map((card) => (
                   <CarImageCardLink
@@ -462,7 +462,7 @@ function CarsSearchPage() {
               </div>
             </div>
 
-            <div className="border-0 bg-transparent p-0 shadow-none ring-0 sm:border sm:border-slate-200/80 sm:bg-white/80 sm:p-6 sm:shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] sm:ring-1 sm:ring-white/80 md:p-7">
+            <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
               <div className="grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
                 {pickupCards.map((card) => (
                   <CarPickupCardLink
