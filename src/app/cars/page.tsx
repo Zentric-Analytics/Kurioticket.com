@@ -385,11 +385,11 @@ function CarsSearchPage() {
                 <div>
                   <h2
                     id="car-trip-style-heading"
-                    className="text-lg font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-2xl"
+                    className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl"
                   >
                     {t("exploreCarsByTripStyle")}
                   </h2>
-                  <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-600 md:text-base">
+                  <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-slate-600 sm:text-base">
                     {t("carsTripStyleBody")}
                   </p>
                 </div>
@@ -433,10 +433,10 @@ function CarsSearchPage() {
                       >
                         <Icon className="h-3.5 w-3.5 stroke-[1.8] sm:h-5 sm:w-5" />
                       </div>
-                      <h2 className="relative text-[0.82rem] font-semibold leading-snug tracking-[-0.01em] text-slate-800 sm:text-base">
+                      <h2 className="relative text-base font-bold leading-6 text-slate-950">
                         {translatedTitle}
                       </h2>
-                      <p className="relative mt-1.5 text-[0.75rem] leading-4 text-slate-700 sm:mt-2 sm:text-sm sm:leading-6">
+                      <p className="relative mt-1 text-sm font-medium leading-6 text-slate-700">
                         {translatedDescription}
                       </p>
                     </article>
@@ -453,11 +453,11 @@ function CarsSearchPage() {
                 <div>
                   <h2
                     id="car-pickup-ideas-heading"
-                    className="text-lg font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-2xl"
+                    className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl"
                   >
                     {t("carsPickupPointsTitle")}
                   </h2>
-                  <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-600 md:text-base">
+                  <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-slate-600 sm:text-base">
                     {t("carsPickupPointsBody")}
                   </p>
                 </div>
@@ -492,7 +492,7 @@ function CarsFaqSection() {
       <div className="max-w-2xl">
         <h2
           id="cars-faq-heading"
-          className="text-lg font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-2xl"
+          className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl"
         >
           {t("carsFaq.heading")}
         </h2>
@@ -512,7 +512,7 @@ function CarsFaqSection() {
               key={item.id}
               className="group rounded-2xl border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(248,250,252,0.74))] px-3.5 py-3 shadow-[0_14px_34px_-30px_rgba(15,23,42,0.34)] ring-1 ring-white/70 transition open:border-[#004BB8]/25 open:bg-white open:shadow-[0_18px_38px_-32px_rgba(0,75,184,0.20)] sm:px-5 sm:py-4"
             >
-              <summary className="flex min-h-10 cursor-pointer list-none items-start justify-between gap-3 text-sm font-semibold leading-5 text-slate-900 marker:hidden sm:min-h-12 [&::-webkit-details-marker]:hidden">
+              <summary className="flex min-h-10 cursor-pointer list-none items-start justify-between gap-3 text-sm font-bold leading-5 text-slate-950 marker:hidden sm:min-h-12 [&::-webkit-details-marker]:hidden">
                 <span>{translatedQuestion}</span>
                 <span
                   className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-sm leading-none text-slate-500 shadow-sm transition group-open:rotate-45 group-open:border-[#004BB8]/25 group-open:text-[#004BB8]"
@@ -521,7 +521,7 @@ function CarsFaqSection() {
                   +
                 </span>
               </summary>
-              <p className="mt-2 text-[0.8125rem] leading-5 text-slate-600 sm:mt-2.5 sm:text-sm sm:leading-6">
+              <p className="mt-2 text-sm font-medium leading-6 text-slate-600 sm:mt-2.5">
                 {translatedAnswer}
               </p>
             </details>
@@ -887,14 +887,14 @@ function CarImageCardLink({ card }: { card: TranslatedCarImageCard }) {
         <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-slate-900/5" />
       </div>
       <div className="flex flex-1 flex-col p-4 md:p-5">
-        <p className="text-base font-semibold leading-tight tracking-[-0.012em] text-slate-900 md:text-lg">
+        <p className="text-lg font-bold leading-tight tracking-tight text-slate-950">
           {card.title}
         </p>
-        <p className="mt-2 text-sm font-medium leading-5 text-slate-600">
+        <p className="mt-2 text-sm font-medium leading-6 text-slate-600">
           {card.subtitle}
         </p>
         {card.cta ? (
-          <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#004BB8] transition-colors group-hover:text-[#021C2B]">
+          <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-[#004BB8] transition-colors group-hover:text-[#021C2B]">
             {card.cta}
             <ArrowRight
               className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
