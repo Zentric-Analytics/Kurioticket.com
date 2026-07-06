@@ -515,10 +515,12 @@ export function FlightLandingClient() {
               {t("discoverDestinationsFromRegionBody")}
             </p>
           </div>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {discoveryCards.map((item, index) => (
-              <RouteCard key={item.id} item={item} priority={index < 2} t={t} />
-            ))}
+          <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.28)] ring-1 ring-white/80 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:ring-0">
+            <div className="grid auto-cols-[minmax(260px,86vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+              {discoveryCards.map((item, index) => (
+                <RouteCard key={item.id} item={item} priority={index < 2} t={t} />
+              ))}
+            </div>
           </div>
         </div>
       </section>
