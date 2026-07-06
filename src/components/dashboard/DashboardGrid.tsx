@@ -24,8 +24,22 @@ import { LinkButton } from "@/components/ui/Button";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { personalDetailsCountryOptions } from "@/lib/region/supportedRegions";
+import {
+  defaultPhoneCountryOption,
+  formatPhoneDraftValue,
+  getDefaultPhoneCountryCode,
+  getFriendlyCountryLabel,
+  getSupportedPhoneCountryCode,
+  parsePhoneDraftValue,
+  phoneCountryOptions,
+} from "@/lib/phoneProfile";
 import { cn } from "@/lib/utils";
-import { decodeRegistrationOptions, defaultPasskeyName, passkeysSupported, serializeRegistrationCredential } from "@/lib/passkey-client";
+import {
+  decodeRegistrationOptions,
+  defaultPasskeyName,
+  passkeysSupported,
+  serializeRegistrationCredential,
+} from "@/lib/passkey-client";
 import type { TranslationDictionary } from "@/lib/i18n/types";
 import type { UserProfileResponse } from "@/lib/userProfile";
 
@@ -163,6 +177,7 @@ type PersonalDetailsDraft = {
   name: string;
   email: string;
   phone: string;
+  phoneCountryCode: string;
   dateOfBirth: string;
   gender: string;
   nationality: string;
@@ -443,46 +458,23 @@ export function AccountMenuPage({
   );
 }
 
-const friendlyCountryLabelByIsoCode: Record<string, string> = {
-  BO: "Bolivia",
-  BN: "Brunei",
-  CD: "Democratic Republic of the Congo",
-  FM: "Micronesia",
-  IR: "Iran",
-  KP: "North Korea",
-  KR: "South Korea",
-  LA: "Laos",
-  MD: "Moldova",
-  PS: "Palestine",
-  RU: "Russia",
-  SY: "Syria",
-  TZ: "Tanzania",
-  VA: "Vatican City",
-  VE: "Venezuela",
-  VN: "Vietnam",
-};
+const countryCallingCodeOptions = phoneCountryOptions;
 
-function getFriendlyCountryLabel(region: { code: string; country: string }) {
-  return friendlyCountryLabelByIsoCode[region.code] ?? region.country;
-}
+const personalDetailsDropdownOptions = personalDetailsCountryOptions
+  .map((region) => ({
+    value: region.code,
+    label: getFriendlyCountryLabel(region),
+  }))
+  .sort((left, right) => left.label.localeCompare(right.label));
 
-const countryCallingCodeByIsoCode: Record<string, string> = {
-  AF: "+93", AL: "+355", DZ: "+213", AD: "+376", AO: "+244", AG: "+1", AR: "+54", AM: "+374", AU: "+61", AT: "+43", AZ: "+994",
-  BS: "+1", BH: "+973", BD: "+880", BB: "+1", BY: "+375", BE: "+32", BZ: "+501", BJ: "+229", BT: "+975", BO: "+591", BA: "+387", BW: "+267", BR: "+55", BN: "+673", BG: "+359", BF: "+226", BI: "+257",
-  CV: "+238", KH: "+855", CM: "+237", CA: "+1", CF: "+236", TD: "+235", CL: "+56", CN: "+86", CO: "+57", KM: "+269", CG: "+242", CD: "+243", CR: "+506", HR: "+385", CU: "+53", CY: "+357", CZ: "+420", CI: "+225",
-  DK: "+45", DJ: "+253", DM: "+1", DO: "+1", EC: "+593", EG: "+20", SV: "+503", GQ: "+240", ER: "+291", EE: "+372", SZ: "+268", ET: "+251", FJ: "+679", FI: "+358", FR: "+33",
-  GA: "+241", GM: "+220", GE: "+995", DE: "+49", GH: "+233", GR: "+30", GD: "+1", GT: "+502", GN: "+224", GW: "+245", GY: "+592", HT: "+509", VA: "+39", HN: "+504", HU: "+36",
-  IS: "+354", IN: "+91", ID: "+62", IR: "+98", IQ: "+964", IE: "+353", IL: "+972", IT: "+39", JM: "+1", JP: "+81", JO: "+962", KZ: "+7", KE: "+254", KI: "+686", KP: "+850", KR: "+82", KW: "+965", KG: "+996", LA: "+856",
-  LV: "+371", LB: "+961", LS: "+266", LR: "+231", LY: "+218", LI: "+423", LT: "+370", LU: "+352", MG: "+261", MW: "+265", MY: "+60", MV: "+960", ML: "+223", MT: "+356", MH: "+692", MR: "+222", MU: "+230", MX: "+52", FM: "+691", MD: "+373", MC: "+377", MN: "+976", ME: "+382", MA: "+212", MZ: "+258", MM: "+95",
-  NA: "+264", NR: "+674", NP: "+977", NL: "+31", NZ: "+64", NI: "+505", NE: "+227", NG: "+234", MK: "+389", NO: "+47", OM: "+968", PK: "+92", PW: "+680", PS: "+970", PA: "+507", PG: "+675", PY: "+595", PE: "+51", PH: "+63", PL: "+48", PT: "+351", QA: "+974", RO: "+40", RU: "+7", RW: "+250",
-  KN: "+1", LC: "+1", VC: "+1", WS: "+685", SM: "+378", ST: "+239", SA: "+966", SN: "+221", RS: "+381", SC: "+248", SL: "+232", SG: "+65", SK: "+421", SI: "+386", SB: "+677", SO: "+252", ZA: "+27", SS: "+211", ES: "+34", LK: "+94", SD: "+249", SR: "+597", SE: "+46", CH: "+41", SY: "+963", TW: "+886", TJ: "+992", TZ: "+255", TH: "+66", TL: "+670", TG: "+228", TO: "+676", TT: "+1", TN: "+216", TR: "+90", TM: "+993", TV: "+688", UG: "+256", UA: "+380", AE: "+971", GB: "+44", US: "+1", UY: "+598", UZ: "+998", VU: "+678", VE: "+58", VN: "+84", YE: "+967", ZM: "+260", ZW: "+263",
-};
+const nationalityDropdownOptions = personalDetailsCountryOptions
+  .map((region) => ({
+    value: getFriendlyCountryLabel(region),
+    label: getFriendlyCountryLabel(region),
+  }))
+  .sort((left, right) => left.label.localeCompare(right.label));
 
-type CountryProfileOption = {
-  countryName: string;
-  isoCode: string;
-  dialCode?: string;
-};
+const defaultCountryCallingCodeOption = defaultPhoneCountryOption;
 
 function getFlagImageUrl(countryCode: string) {
   return `https://flagcdn.com/${countryCode.toLowerCase()}.svg`;
@@ -515,56 +507,6 @@ function CountryFlagIcon({
       />
     </span>
   );
-}
-
-function sortCountryProfileOptions(
-  left: CountryProfileOption,
-  right: CountryProfileOption,
-) {
-  return left.countryName.localeCompare(right.countryName);
-}
-
-const countryProfileOptions: CountryProfileOption[] = personalDetailsCountryOptions
-  .map((region) => ({
-    countryName: getFriendlyCountryLabel(region),
-    isoCode: region.code,
-    dialCode: countryCallingCodeByIsoCode[region.code],
-  }))
-  .sort(sortCountryProfileOptions);
-
-const personalDetailsDropdownOptions = personalDetailsCountryOptions
-  .map((region) => ({
-    value: region.code,
-    label: getFriendlyCountryLabel(region),
-  }))
-  .sort((left, right) => left.label.localeCompare(right.label));
-
-const nationalityDropdownOptions = personalDetailsCountryOptions
-  .map((region) => ({
-    value: getFriendlyCountryLabel(region),
-    label: getFriendlyCountryLabel(region),
-  }))
-  .sort((left, right) => left.label.localeCompare(right.label));
-
-const countryCallingCodeOptions = countryProfileOptions.filter(
-  (option): option is CountryProfileOption & { dialCode: string } =>
-    Boolean(option.dialCode),
-);
-
-const defaultCountryCallingCodeOption =
-  countryCallingCodeOptions.find((option) => option.isoCode === "NG") ??
-  countryCallingCodeOptions[0];
-
-function getSupportedPhoneCountryCode(countryCode: string | null | undefined) {
-  const normalizedCountryCode = countryCode?.trim().toUpperCase();
-
-  if (!normalizedCountryCode) return null;
-
-  return countryCallingCodeOptions.find((option) => option.isoCode === normalizedCountryCode)?.isoCode ?? null;
-}
-
-function getDefaultPhoneCountryCode(countryCode: string | null | undefined) {
-  return getSupportedPhoneCountryCode(countryCode) ?? defaultCountryCallingCodeOption?.isoCode ?? "";
 }
 
 const genderOptions = [
@@ -713,6 +655,7 @@ function getPersonalDetailsInitialValues({
     name: userProfile?.fullName?.trim() ?? "",
     email: userEmail?.trim() ?? "",
     phone: userProfile?.phoneNumber ?? "",
+    phoneCountryCode: getSupportedPhoneCountryCode(userProfile?.phoneCountryCode) ?? "",
     dateOfBirth: userProfile?.dateOfBirth ?? "",
     gender: userProfile?.gender ?? "",
     nationality: userProfile?.nationality ?? "",
@@ -1175,60 +1118,28 @@ function StructuredAddressInput({
   );
 }
 
-function parsePhoneDraftValue(value: string, defaultCountryCode?: string | null) {
-  const trimmedValue = value.trim();
-  const matchedOption = [...countryCallingCodeOptions]
-    .sort((left, right) => right.dialCode.length - left.dialCode.length)
-    .find(
-      (option) =>
-        trimmedValue === option.dialCode ||
-        trimmedValue.startsWith(`${option.dialCode} `),
-    );
-
-  if (!matchedOption) {
-    return {
-      countryCode: getDefaultPhoneCountryCode(defaultCountryCode),
-      hasRecognizedDialCode: false,
-      localNumber: trimmedValue.replace(/^\+\d+\s*/, ""),
-    };
-  }
-
-  return {
-    countryCode: matchedOption.isoCode,
-    hasRecognizedDialCode: true,
-    localNumber: trimmedValue.slice(matchedOption.dialCode.length).trimStart(),
-  };
-}
-
-function formatPhoneDraftValue(countryCode: string, localNumber: string) {
-  const selectedOption =
-    countryCallingCodeOptions.find(
-      (option) => option.isoCode === countryCode,
-    ) ?? defaultCountryCallingCodeOption;
-
-  if (!selectedOption) return localNumber.trimStart();
-  const trimmedLocalNumber = localNumber.trimStart();
-
-  return [selectedOption.dialCode, trimmedLocalNumber]
-    .filter(Boolean)
-    .join(" ");
-}
-
 function PhoneNumberInput({
   value,
+  phoneCountryCode,
   onChange,
+  onCountryCodeChange,
   className,
   label,
   defaultCountryCode,
 }: {
   value: string;
+  phoneCountryCode?: string | null;
   onChange: (value: string) => void;
+  onCountryCodeChange: (value: string) => void;
   className: string;
   label: string;
   defaultCountryCode?: string | null;
 }) {
+  const savedPhoneCountryCode = getSupportedPhoneCountryCode(phoneCountryCode);
   const [selectedPhoneCountryCode, setSelectedPhoneCountryCode] = useState(
-    () => parsePhoneDraftValue(value, defaultCountryCode).countryCode,
+    () =>
+      savedPhoneCountryCode ??
+      parsePhoneDraftValue(value, defaultCountryCode).countryCode,
   );
   const [hasManuallySelectedPhoneCountry, setHasManuallySelectedPhoneCountry] =
     useState(false);
@@ -1238,11 +1149,13 @@ function PhoneNumberInput({
   );
 
   useEffect(() => {
-    const nextPhoneCountryCode = parsedValue.hasRecognizedDialCode
-      ? parsedValue.countryCode
-      : !value.trim() && !hasManuallySelectedPhoneCountry
-        ? getDefaultPhoneCountryCode(defaultCountryCode)
-        : null;
+    const nextPhoneCountryCode = savedPhoneCountryCode
+      ? savedPhoneCountryCode
+      : parsedValue.hasRecognizedDialCode
+        ? parsedValue.countryCode
+        : !value.trim() && !hasManuallySelectedPhoneCountry
+          ? getDefaultPhoneCountryCode(defaultCountryCode)
+          : null;
 
     if (
       !nextPhoneCountryCode ||
@@ -1261,13 +1174,16 @@ function PhoneNumberInput({
     hasManuallySelectedPhoneCountry,
     parsedValue.countryCode,
     parsedValue.hasRecognizedDialCode,
+    savedPhoneCountryCode,
     selectedPhoneCountryCode,
     value,
   ]);
 
-  const effectivePhoneCountryCode = parsedValue.hasRecognizedDialCode
-    ? parsedValue.countryCode
-    : selectedPhoneCountryCode;
+  const effectivePhoneCountryCode =
+    savedPhoneCountryCode ??
+    (parsedValue.hasRecognizedDialCode
+      ? parsedValue.countryCode
+      : selectedPhoneCountryCode);
   const selectedOption =
     countryCallingCodeOptions.find(
       (option) => option.isoCode === effectivePhoneCountryCode,
@@ -1278,6 +1194,7 @@ function PhoneNumberInput({
   const handleCountryChange = (nextCountryCode: string) => {
     setHasManuallySelectedPhoneCountry(true);
     setSelectedPhoneCountryCode(nextCountryCode);
+    onCountryCodeChange(nextCountryCode);
     onChange(formatPhoneDraftValue(nextCountryCode, parsedValue.localNumber));
   };
 
@@ -1382,12 +1299,14 @@ function PersonalDetailsEditRow({
   error,
   onChange,
   defaultPhoneCountryCode,
+  phoneCountryCode,
 }: {
   row: PersonalDetailRow;
   value: string;
   error?: string;
   onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
   defaultPhoneCountryCode?: string | null;
+  phoneCountryCode?: string | null;
 }) {
   const isAddress = row.key === "address";
 
@@ -1399,7 +1318,13 @@ function PersonalDetailsEditRow({
         </label>
       ) : null}
       <div className="min-w-0">
-        <DetailInput row={row} value={value} onChange={onChange} defaultPhoneCountryCode={defaultPhoneCountryCode} />
+        <DetailInput
+          row={row}
+          value={value}
+          onChange={onChange}
+          defaultPhoneCountryCode={defaultPhoneCountryCode}
+          phoneCountryCode={phoneCountryCode}
+        />
         {error ? (
           <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-red-700">
             {error}
@@ -1419,11 +1344,13 @@ function DetailInput({
   value,
   onChange,
   defaultPhoneCountryCode,
+  phoneCountryCode,
 }: {
   row: PersonalDetailRow;
   value: string;
   onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
   defaultPhoneCountryCode?: string | null;
+  phoneCountryCode?: string | null;
 }) {
   const baseClassName = cn(
     "h-11 w-full min-w-0 rounded-none border border-slate-300 bg-white px-3.5 text-base font-medium leading-5 text-slate-950 shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-500 hover:border-slate-400 focus:border-[#004BB8]/40 focus:ring-2 focus:ring-[#004BB8]/15 sm:max-w-[34rem] sm:text-sm",
@@ -1453,7 +1380,11 @@ function DetailInput({
     return (
       <PhoneNumberInput
         value={value}
+        phoneCountryCode={phoneCountryCode}
         onChange={(nextValue) => onChange(row.key, nextValue)}
+        onCountryCodeChange={(nextValue) =>
+          onChange("phoneCountryCode", nextValue)
+        }
         className={baseClassName}
         label={row.label}
         defaultCountryCode={defaultPhoneCountryCode}
@@ -1661,6 +1592,7 @@ function normalizePersonalDetailsDraft(
     name: value.name.trim(),
     email: value.email.trim(),
     phone: value.phone.trim(),
+    phoneCountryCode: getSupportedPhoneCountryCode(value.phoneCountryCode) ?? "",
     dateOfBirth: value.dateOfBirth.trim(),
     gender: value.gender.trim(),
     nationality: value.nationality.trim(),
@@ -1675,9 +1607,12 @@ function hasPersonalDetailsChanges(
   const normalizedDraft = normalizePersonalDetailsDraft(draft);
   const normalizedSavedValues = normalizePersonalDetailsDraft(savedValues);
 
-  return personalDetailsFieldOrder
-    .filter((key) => key !== "email")
-    .some((key) => normalizedDraft[key] !== normalizedSavedValues[key]);
+  return (
+    personalDetailsFieldOrder
+      .filter((key) => key !== "email")
+      .some((key) => normalizedDraft[key] !== normalizedSavedValues[key]) ||
+    normalizedDraft.phoneCountryCode !== normalizedSavedValues.phoneCountryCode
+  );
 }
 
 function getPersonalDetailsValidationErrors(draft: PersonalDetailsDraft) {
@@ -2013,6 +1948,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       const profilePayload = {
         fullName: draft.name,
         phoneNumber: draft.phone,
+        phoneCountryCode: draft.phoneCountryCode || null,
         dateOfBirth: draft.dateOfBirth,
         gender: draft.gender,
         nationality: draft.nationality,
@@ -2039,6 +1975,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
         name: data.profile.fullName ?? "",
         email: savedValues.email,
         phone: data.profile.phoneNumber ?? "",
+        phoneCountryCode: getSupportedPhoneCountryCode(data.profile.phoneCountryCode) ?? "",
         dateOfBirth: data.profile.dateOfBirth ?? "",
         gender: data.profile.gender ?? "",
         nationality: data.profile.nationality ?? "",
@@ -2129,6 +2066,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
         error={validationErrors[key]}
         onChange={updateDraft}
         defaultPhoneCountryCode={defaultPhoneCountryCode}
+        phoneCountryCode={key === "phone" ? draft.phoneCountryCode : undefined}
       />
     );
   };
@@ -2397,6 +2335,7 @@ export function DashboardOverview({
     userEmail ?? "",
     userProfile?.fullName ?? "",
     userProfile?.phoneNumber ?? "",
+    userProfile?.phoneCountryCode ?? "",
     userProfile?.dateOfBirth ?? "",
     userProfile?.gender ?? "",
     userProfile?.nationality ?? "",

@@ -12147,10 +12147,11 @@ test("Vietnamese account personal details and security settings copy resolves wi
   assert.ok(backLinkSource.includes('href="/dashboard/account"'));
   assert.ok(personalPageSource.includes("session?.user?.email?.trim()"));
   assert.ok(personalPageSource.includes("serializeUserProfile(storedProfile)"));
+  const phoneProfileSource = readFileSync("src/lib/phoneProfile.ts", "utf8");
   assert.ok(dashboardSource.includes("userEmail ?? \"\"") && dashboardSource.includes("userProfile?.phoneNumber ?? \"\""));
-  assert.ok(dashboardSource.includes('countryCode: "+234"') || dashboardSource.includes("+234"));
-  assert.ok(dashboardSource.includes("countryCode") && dashboardSource.includes("selectedCountryCode"));
-  assert.ok(dashboardSource.includes("fullName: draft.name") && dashboardSource.includes("phoneNumber: draft.phone") && dashboardSource.includes("postalCode") && dashboardSource.includes("addressLine1"));
+  assert.ok(phoneProfileSource.includes("+234"));
+  assert.ok(dashboardSource.includes("phoneCountryCode") && dashboardSource.includes("selectedCountryCode"));
+  assert.ok(dashboardSource.includes("fullName: draft.name") && dashboardSource.includes("phoneNumber: draft.phone") && dashboardSource.includes("phoneCountryCode: draft.phoneCountryCode") && dashboardSource.includes("postalCode") && dashboardSource.includes("addressLine1"));
   assert.ok(dashboardSource.includes("const profilePayload = {") && dashboardSource.includes("handleSave") && dashboardSource.includes("handleCancel"));
   assert.ok(dashboardSource.includes('onClick={onStartChange}') && dashboardSource.includes('onClick={handleCancel}') && dashboardSource.includes('onClick={handleSave}'));
   assert.ok(securityPageSource.includes("<SecurityDashboardPage />"));
