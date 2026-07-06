@@ -343,7 +343,7 @@ function CarsSearchPage() {
               </div>
             </div>
 
-            <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
+            <div className="border-0 bg-transparent p-0 shadow-none ring-0 sm:border sm:border-slate-200/80 sm:bg-white/80 sm:p-6 sm:shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] sm:ring-1 sm:ring-white/80 md:p-7">
               <div className="grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
                 {tripStyleCards.map((card) => (
                   <CarImageCardLink
@@ -355,7 +355,7 @@ function CarsSearchPage() {
             </div>
           </section>
 
-          <section className="relative isolate rounded-[1.5rem] border border-slate-200/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(248,250,252,0.72)_54%,rgba(241,245,249,0.58))] p-2 shadow-[0_24px_64px_-52px_rgba(15,23,42,0.34)] ring-1 ring-white/80 sm:rounded-[2rem] sm:p-4">
+          <section className="relative isolate border-0 bg-transparent p-0 shadow-none ring-0 sm:rounded-[2rem] sm:border sm:border-slate-200/75 sm:bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(248,250,252,0.72)_54%,rgba(241,245,249,0.58))] sm:p-4 sm:shadow-[0_24px_64px_-52px_rgba(15,23,42,0.34)] sm:ring-1 sm:ring-white/80">
             <div className="grid gap-2.5 sm:gap-4 md:grid-cols-3">
               {trustCards.map((card) => {
                 const Icon = card.icon;
@@ -411,7 +411,7 @@ function CarsSearchPage() {
               </div>
             </div>
 
-            <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
+            <div className="border-0 bg-transparent p-0 shadow-none ring-0 sm:border sm:border-slate-200/80 sm:bg-white/80 sm:p-6 sm:shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] sm:ring-1 sm:ring-white/80 md:p-7">
               <div className="grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
                 {pickupCards.map((card) => (
                   <CarPickupCardLink
@@ -601,14 +601,14 @@ function CarsSearchBar({
   const timeError = errors.pickupTime || errors.dropoffTime;
 
   return (
-    <section className="border border-slate-200/80 bg-white/80 p-2.5 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.28)] ring-1 ring-white/80 sm:p-4">
+    <section className="border-0 bg-transparent p-0 shadow-none ring-0 sm:border sm:border-slate-200/80 sm:bg-white/80 sm:p-4 sm:shadow-[0_16px_44px_-40px_rgba(15,23,42,0.28)] sm:ring-1 sm:ring-white/80">
       <form onSubmit={onSubmit} className="space-y-2 sm:space-y-3" noValidate>
         <input type="hidden" name="pickupDate" value={values.pickupDate} />
         <input type="hidden" name="dropoffDate" value={values.dropoffDate} />
         <input type="hidden" name="pickupTime" value={values.pickupTime} />
         <input type="hidden" name="dropoffTime" value={values.dropoffTime} />
 
-        <div className="overflow-visible border border-slate-200 bg-white p-0.5 shadow-[0_10px_28px_rgba(15,23,42,0.08)] sm:p-1">
+        <div className="overflow-visible border-0 bg-transparent p-0 shadow-none sm:border sm:border-slate-200 sm:bg-white sm:p-1 sm:shadow-[0_10px_28px_rgba(15,23,42,0.08)]">
           <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 sm:gap-1.5 lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1.45fr)_minmax(0,1.1fr)_minmax(5.8rem,0.55fr)_104px] lg:gap-0">
             <SearchCell
               label={t("carsSearch.pickupLocationLabel")}
