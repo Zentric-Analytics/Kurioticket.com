@@ -337,7 +337,7 @@ function CarsSearchPage() {
               </div>
             </div>
 
-            <div className="page-shell absolute inset-x-0 bottom-[-28.5rem] z-30">
+            <div className="page-shell absolute inset-x-0 bottom-[-23rem] z-30">
               <div className="mx-auto max-w-6xl">
                 <CarsSearchBar
                   errors={errors}
@@ -377,7 +377,7 @@ function CarsSearchPage() {
           </section>
 
           <section
-            className="space-y-4 pt-[31rem] sm:pt-0"
+            className="space-y-4 pt-[25rem] sm:pt-0"
             aria-labelledby="car-trip-style-heading"
           >
             <div className="flex flex-col gap-2 px-1 md:flex-row md:items-end md:justify-between">
