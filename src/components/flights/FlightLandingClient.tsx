@@ -431,7 +431,7 @@ export function FlightLandingClient() {
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/24 via-slate-950/6 to-transparent" />
         </div>
 
-        <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-[7.85rem]">
+        <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-8">
           <div className="max-w-[22.5rem] pe-2 text-start text-white">
             <h1 className="text-[clamp(1.38rem,6.1vw,2rem)] font-semibold leading-[1.05] tracking-[-0.041em] text-white text-balance drop-shadow-[0_2px_10px_rgba(2,6,23,0.6)]">
               {useEnglishHeroWrap ? (
