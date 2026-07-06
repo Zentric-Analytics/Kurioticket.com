@@ -1646,6 +1646,9 @@ export const translations: TranslationDictionary = {
   savedTripsSearchRoute: "ค้นหาเส้นทาง",
   savedTripsRecentSearchesTitle: "การค้นหาล่าสุด",
   recentSearchesPageTitle: "การค้นหาล่าสุด",
+  recentSearchesClearAll: "ล้างทั้งหมด",
+  recentSearchesClearFlights: "ล้างเที่ยวบิน",
+  recentSearchesClearHotels: "ล้างโรงแรม",
   recentSearchesPageSubtitle:
     "Jump back to where you left off and search again in one click.",
   recentSearchesEmptyTitle: "เริ่มค้นหาเพื่อวางแผนต่อ",

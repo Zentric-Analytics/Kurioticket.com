@@ -52,10 +52,13 @@ import {
 } from "@/lib/i18n/homeDiscovery";
 import {
   buildFlightRecentSearch,
+  clearBackendRecentSearches,
   clearRecentSearches,
-  syncBackendRecentSearch,
+  deleteBackendRecentSearch,
+  fetchBackendRecentSearches,
   readRecentSearches,
   removeRecentSearch,
+  syncBackendRecentSearch,
   upsertRecentSearch,
   type RecentSearchEntry,
 } from "@/lib/recent-searches";
@@ -820,6 +823,16 @@ export function FlightResultsClient() {
   >({});
   const [savedTripError, setSavedTripError] = useState("");
 
+  const refreshBackendRecentSearches = useCallback(
+    async (signal?: AbortSignal) => {
+      const result = await fetchBackendRecentSearches(signal);
+      if (signal?.aborted || !result.ok || !result.items) return;
+
+      setRecentSearches(result.items);
+    },
+    [],
+  );
+
   const tripTypeMenuRef = useRef<HTMLDivElement | null>(null);
   const originInputRef = useRef<HTMLInputElement | null>(null);
   const destinationInputRef = useRef<HTMLInputElement | null>(null);
@@ -1081,9 +1094,28 @@ export function FlightResultsClient() {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydrates client-only localStorage-backed recent searches after mount.
-    setRecentSearches(readRecentSearches());
-  }, []);
+    if (sessionStatus === "loading") return;
+
+    if (sessionStatus === "authenticated") {
+      const controller = new AbortController();
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Clears any logged-out device searches before hydrating account-backed recent searches.
+      setRecentSearches([]);
+      const timeoutId = window.setTimeout(() => {
+        void refreshBackendRecentSearches(controller.signal);
+      }, 0);
+
+      return () => {
+        window.clearTimeout(timeoutId);
+        controller.abort();
+      };
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setRecentSearches(readRecentSearches());
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [refreshBackendRecentSearches, sessionStatus]);
 
   useEffect(() => {
     if (sessionStatus === "loading") return;
@@ -1196,12 +1228,26 @@ export function FlightResultsClient() {
   }
 
   function handleRemoveRecentSearch(id: string) {
+    if (sessionStatus === "authenticated") {
+      setRecentSearches((current) =>
+        current.filter((entry) => entry.id !== id),
+      );
+      void deleteBackendRecentSearch(id);
+      return;
+    }
+
     setRecentSearches(removeRecentSearch(id));
   }
 
   function handleClearRecentSearches() {
-    clearRecentSearches();
     setRecentSearches([]);
+
+    if (sessionStatus === "authenticated") {
+      void clearBackendRecentSearches();
+      return;
+    }
+
+    clearRecentSearches();
   }
 
   function handleTripTypeChange(nextTripType: string) {

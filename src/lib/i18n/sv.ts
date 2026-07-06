@@ -1023,6 +1023,9 @@ export const translations: TranslationDictionary = {
   savedTripsExploreDestinations: 'Utforska destinationer',
   savedTripsRecentSearchesTitle: "Senaste sökningar",
   recentSearchesPageTitle: "Senaste sökningar",
+  recentSearchesClearAll: "Rensa allt",
+  recentSearchesClearFlights: "Rensa flyg",
+  recentSearchesClearHotels: "Rensa hotell",
   recentSearchesPageSubtitle:
     "Jump back to where you left off and search again in one click.",
   recentSearchesEmptyTitle: "No search history yet",

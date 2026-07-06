@@ -650,6 +650,9 @@ export const translations: TranslationDictionary = {
   savedTripsRemoveSavedTrip: "Xóa chuyến đi đã lưu",
   savedTripsRecentSearchesTitle: "Tìm kiếm gần đây",
   recentSearchesPageTitle: "Tìm kiếm gần đây",
+  recentSearchesClearAll: "Xóa tất cả",
+  recentSearchesClearFlights: "Xóa chuyến bay",
+  recentSearchesClearHotels: "Xóa khách sạn",
   recentSearchesPageSubtitle:
     "Jump back to where you left off and search again in one click.",
   recentSearchesEmptyTitle: "Chưa có tìm kiếm gần đây",

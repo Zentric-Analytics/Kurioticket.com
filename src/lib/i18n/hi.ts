@@ -568,6 +568,9 @@ export const translations: TranslationDictionary = {
   savedTripsSearchRoute: "मार्ग खोजें",
   savedTripsRecentSearchesTitle: "हाल की खोजें",
   recentSearchesPageTitle: "हाल की खोजें",
+  recentSearchesClearAll: "सभी साफ़ करें",
+  recentSearchesClearFlights: "फ़्लाइट साफ़ करें",
+  recentSearchesClearHotels: "होटल साफ़ करें",
   recentSearchesPageSubtitle:
     "Jump back to where you left off and search again in one click.",
   recentSearchesEmptyTitle: "गति बनाने के लिए खोज शुरू करें",

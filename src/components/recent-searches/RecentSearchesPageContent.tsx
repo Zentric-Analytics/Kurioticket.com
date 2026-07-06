@@ -16,6 +16,7 @@ import {
   fetchBackendRecentSearches,
   readRecentSearches,
   removeRecentSearch,
+  writeRecentSearches,
   type RecentFlightParams,
   type RecentHotelParams,
   type RecentSearchEntry,
@@ -333,13 +334,33 @@ export function RecentSearchesPageContent({
   };
 
   const handleClearRecent = () => {
-    setRecentSearches([]);
-    if (sessionStatus === "authenticated") {
-      void clearBackendRecentSearches();
+    if (activeFilter === "all") {
+      setRecentSearches([]);
+      if (sessionStatus === "authenticated") {
+        void clearBackendRecentSearches();
+        return;
+      }
+
+      clearRecentSearches();
       return;
     }
 
-    clearRecentSearches();
+    const entriesToClear = recentSearches.filter(
+      (entry) => entry.type === activeFilter,
+    );
+    const remainingEntries = recentSearches.filter(
+      (entry) => entry.type !== activeFilter,
+    );
+    setRecentSearches(remainingEntries);
+
+    if (sessionStatus === "authenticated") {
+      void Promise.all(
+        entriesToClear.map((entry) => deleteBackendRecentSearch(entry.id)),
+      );
+      return;
+    }
+
+    writeRecentSearches(remainingEntries);
   };
 
   const formatTravelerCount = (count: number) =>
@@ -424,6 +445,18 @@ export function RecentSearchesPageContent({
     return t("recentSearchesFilterAll") || "All";
   };
 
+  const getClearRecentLabel = () => {
+    if (activeFilter === "flight") {
+      return t("recentSearchesClearFlights") || "Clear flights";
+    }
+
+    if (activeFilter === "hotel") {
+      return t("recentSearchesClearHotels") || "Clear hotels";
+    }
+
+    return t("recentSearchesClearAll") || t("savedTripsClearAllRecent");
+  };
+
   const getTypeLabel = (entry: RecentSearchEntry) =>
     entry.type === "hotel"
       ? (dictionary.savedTripsTypeHotel ?? enTranslations.savedTripsTypeHotel)
@@ -500,7 +533,7 @@ export function RecentSearchesPageContent({
                     className="inline-flex items-center gap-1.5 rounded-md px-0 py-1 text-sm font-semibold text-violet-700 transition hover:text-violet-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-400 sm:px-2"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
-                    {t("savedTripsClearAllRecent")}
+                    {getClearRecentLabel()}
                   </button>
                 </div>
               </div>

@@ -1287,6 +1287,9 @@ export const translations: TranslationDictionary = {
   savedTripsSearchRoute: "ルートを検索",
   savedTripsRecentSearchesTitle: "最近の検索",
   recentSearchesPageTitle: "最近の検索",
+  recentSearchesClearAll: "すべて削除",
+  recentSearchesClearFlights: "フライトを削除",
+  recentSearchesClearHotels: "ホテルを削除",
   recentSearchesPageSubtitle:
     "Jump back to where you left off and search again in one click.",
   recentSearchesEmptyTitle: "検索を始めて旅の計画を進めましょう",
