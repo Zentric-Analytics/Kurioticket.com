@@ -422,20 +422,20 @@ function CarsSearchPage() {
                 return (
                   <article
                     key={card.key}
-                    className="relative isolate cursor-default overflow-hidden rounded-[1rem] border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.82),rgba(248,250,252,0.7)_58%,rgba(241,245,249,0.78))] p-4 shadow-[0_14px_34px_-32px_rgba(15,23,42,0.38)] ring-1 ring-white/70 backdrop-blur-sm sm:rounded-[1.5rem] sm:p-6"
+                    className="relative isolate cursor-default overflow-hidden rounded-[1rem] border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.82),rgba(248,250,252,0.7)_58%,rgba(241,245,249,0.78))] p-2.5 shadow-[0_14px_34px_-32px_rgba(15,23,42,0.38)] ring-1 ring-white/70 backdrop-blur-sm sm:rounded-[1.5rem] sm:p-6"
                   >
                     <div className="pointer-events-none absolute inset-x-7 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/80 to-transparent" />
                     <div className="pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full bg-slate-200/30 blur-3xl" />
                     <div
-                      className="relative mb-4 inline-flex h-11 w-11 items-center justify-center rounded-[1rem] border border-[#004BB8]/15 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(0,75,184,0.08)_52%,rgba(248,250,252,0.92))] text-[#004BB8] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_12px_22px_-18px_rgba(0,75,184,0.28),0_8px_18px_-20px_rgba(15,23,42,0.55)] sm:mb-5 sm:h-12 sm:w-12"
+                      className="relative mb-2.5 inline-flex h-8 w-8 items-center justify-center rounded-[0.8rem] border border-[#004BB8]/15 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(0,75,184,0.08)_52%,rgba(248,250,252,0.92))] text-[#004BB8] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_12px_22px_-18px_rgba(0,75,184,0.28),0_8px_18px_-20px_rgba(15,23,42,0.55)] sm:mb-5 sm:h-12 sm:w-12 sm:rounded-[1rem]"
                       aria-hidden="true"
                     >
-                      <Icon className="h-5 w-5 stroke-[1.8]" />
+                      <Icon className="h-3.5 w-3.5 stroke-[1.8] sm:h-5 sm:w-5" />
                     </div>
-                    <h2 className="relative text-base font-semibold leading-snug tracking-[-0.01em] text-slate-800">
+                    <h2 className="relative text-[0.82rem] font-semibold leading-snug tracking-[-0.01em] text-slate-800 sm:text-base">
                       {translatedTitle}
                     </h2>
-                    <p className="relative mt-2 text-sm leading-6 text-slate-700">
+                    <p className="relative mt-1.5 text-[0.75rem] leading-4 text-slate-700 sm:mt-2 sm:text-sm sm:leading-6">
                       {translatedDescription}
                     </p>
                   </article>
@@ -508,9 +508,9 @@ function CarsFaqSection() {
           return (
             <details
               key={item.id}
-              className="group rounded-2xl border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(248,250,252,0.74))] px-4 py-4 shadow-[0_14px_34px_-30px_rgba(15,23,42,0.34)] ring-1 ring-white/70 transition open:border-[#004BB8]/25 open:bg-white open:shadow-[0_18px_38px_-32px_rgba(0,75,184,0.20)] sm:px-5"
+              className="group rounded-2xl border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(248,250,252,0.74))] px-3.5 py-3 shadow-[0_14px_34px_-30px_rgba(15,23,42,0.34)] ring-1 ring-white/70 transition open:border-[#004BB8]/25 open:bg-white open:shadow-[0_18px_38px_-32px_rgba(0,75,184,0.20)] sm:px-5 sm:py-4"
             >
-              <summary className="flex min-h-12 cursor-pointer list-none items-start justify-between gap-3 text-sm font-semibold leading-5 text-slate-900 marker:hidden [&::-webkit-details-marker]:hidden">
+              <summary className="flex min-h-10 cursor-pointer list-none items-start justify-between gap-3 text-sm font-semibold leading-5 text-slate-900 marker:hidden sm:min-h-12 [&::-webkit-details-marker]:hidden">
                 <span>{translatedQuestion}</span>
                 <span
                   className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-sm leading-none text-slate-500 shadow-sm transition group-open:rotate-45 group-open:border-[#004BB8]/25 group-open:text-[#004BB8]"
@@ -519,7 +519,7 @@ function CarsFaqSection() {
                   +
                 </span>
               </summary>
-              <p className="mt-2.5 text-sm leading-6 text-slate-600">
+              <p className="mt-2 text-[0.8125rem] leading-5 text-slate-600 sm:mt-2.5 sm:text-sm sm:leading-6">
                 {translatedAnswer}
               </p>
             </details>
