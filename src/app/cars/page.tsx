@@ -311,11 +311,11 @@ function CarsSearchPage() {
   return (
     <>
       <AppHeader mobileHeroOverlay mobileHeroOverlayLowered />
-      <main className="relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16 sm:mx-auto sm:w-[min(1180px,calc(100%-32px))] sm:pt-10 lg:pt-12">
+      <main className="relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16">
         <div className="pointer-events-none absolute start-1/2 top-10 -z-10 h-64 w-[min(50rem,88vw)] -translate-x-1/2 rounded-full bg-white/55 blur-3xl" />
         <div className="pointer-events-none absolute -right-28 bottom-28 -z-10 h-80 w-80 rounded-full bg-slate-200/14 blur-3xl" />
 
-        <div className="relative mx-auto max-w-6xl">
+        <div className="relative mx-auto max-w-6xl sm:max-w-none">
           <section
             className="relative isolate z-20 min-h-[24.25rem] overflow-visible bg-slate-950 sm:hidden"
             aria-labelledby="cars-mobile-search-heading"
@@ -361,47 +361,56 @@ function CarsSearchPage() {
             </div>
           </section>
 
-          <div className="mx-auto mt-8 w-[min(1180px,calc(100%-32px))] space-y-8 sm:mt-0 sm:w-auto md:space-y-10">
+          <div className="mx-auto mt-8 w-[min(1180px,calc(100%-32px))] space-y-8 sm:mt-0 sm:w-full md:space-y-10">
             <section
-              className="relative isolate hidden min-h-[25rem] overflow-hidden rounded-[2rem] bg-slate-950 px-5 py-8 shadow-[0_30px_80px_-50px_rgba(15,23,42,0.55)] ring-1 ring-white/70 sm:block md:min-h-[27rem] md:px-7 md:py-10 lg:min-h-[29rem] lg:px-9"
+              className="relative hidden overflow-visible pb-28 sm:block lg:pb-32"
               aria-labelledby="cars-search-heading"
             >
-              <Image
-                src={carsHeroImage}
-                alt=""
-                fill
-                priority
-                sizes="(min-width: 1180px) 1180px, calc(100vw - 32px)"
-                className="object-cover object-[54%_45%] brightness-[1.02] saturate-[1.08] contrast-[1.03]"
-              />
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-950/68 via-slate-950/28 to-slate-950/8" />
-              <div className="absolute inset-y-0 start-0 w-[82%] bg-gradient-to-r from-slate-950/74 via-slate-950/34 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-950/54 via-slate-950/18 to-transparent" />
-
-              <div className="relative z-10 flex min-h-[calc(25rem-4rem)] flex-col justify-end gap-6 md:min-h-[calc(27rem-5rem)] lg:min-h-[calc(29rem-5rem)]">
-                <div className="max-w-3xl px-1">
-                  <h1
-                    id="cars-search-heading"
-                    className="max-w-[48rem] text-[1.5rem] font-semibold leading-[1.12] tracking-[-0.02em] text-white drop-shadow-[0_2px_12px_rgba(2,6,23,0.58)] md:text-[1.8rem] lg:whitespace-nowrap lg:text-[2rem] xl:text-[2.1rem]"
-                  >
-                    {t("searchRentalCarsEveryPartTrip")}
-                  </h1>
+              <div className="relative isolate min-h-[32rem] bg-slate-950 lg:min-h-[36rem]">
+                <div className="absolute inset-0 overflow-hidden">
+                  <Image
+                    src={carsHeroImage}
+                    alt=""
+                    fill
+                    priority
+                    sizes="100vw"
+                    className="object-cover object-[56%_45%] brightness-[1.04] saturate-[1.08] contrast-[1.03]"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-950/70 via-slate-950/28 to-slate-950/8" />
+                  <div className="absolute inset-y-0 start-0 w-[78%] bg-gradient-to-r from-slate-950/76 via-slate-950/34 to-transparent" />
+                  <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-slate-950/42 via-slate-950/12 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-slate-950/72 via-slate-950/24 to-transparent" />
                 </div>
 
-                <CarsSearchBar
-                  errors={errors}
-                  hasActiveSearch={Boolean(hasActiveSearch)}
-                  onClearSearch={clearSearch}
-                  onSubmit={handleSubmit}
-                  isSubmitting={isSubmitting}
-                  updateValue={updateValue}
-                  values={values}
-                />
+                <div className="page-shell relative z-10 flex min-h-[32rem] flex-col items-start pb-36 pt-10 lg:min-h-[36rem] lg:pb-40 lg:pt-14">
+                  <div className="max-w-3xl text-start text-white">
+                    <h1
+                      id="cars-search-heading"
+                      className="max-w-[50rem] text-[2.65rem] font-semibold leading-[1.02] tracking-[-0.045em] text-white drop-shadow-[0_3px_18px_rgba(15,23,42,0.62)] lg:text-[3.3rem]"
+                    >
+                      {t("searchRentalCarsEveryPartTrip")}
+                    </h1>
+                  </div>
+                </div>
+
+                <div className="page-shell absolute inset-x-0 bottom-[-52px] z-30 lg:bottom-[-56px]">
+                  <div className="mx-auto max-w-6xl">
+                    <CarsSearchBar
+                      errors={errors}
+                      hasActiveSearch={Boolean(hasActiveSearch)}
+                      onClearSearch={clearSearch}
+                      onSubmit={handleSubmit}
+                      isSubmitting={isSubmitting}
+                      updateValue={updateValue}
+                      values={values}
+                    />
+                  </div>
+                </div>
               </div>
             </section>
 
             <section
-              className="space-y-4 pt-[25rem] sm:pt-0"
+              className="mx-auto max-w-6xl space-y-4 pt-[25rem] sm:pt-0"
               aria-labelledby="car-trip-style-heading"
             >
               <div className="flex flex-col gap-2 px-1 md:flex-row md:items-end md:justify-between">
@@ -430,7 +439,7 @@ function CarsSearchPage() {
               </div>
             </section>
 
-            <section className="relative isolate border-0 bg-transparent p-0 shadow-none ring-0 sm:rounded-[2rem] sm:border sm:border-slate-200/75 sm:bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(248,250,252,0.72)_54%,rgba(241,245,249,0.58))] sm:p-4 sm:shadow-[0_24px_64px_-52px_rgba(15,23,42,0.34)] sm:ring-1 sm:ring-white/80">
+            <section className="relative isolate mx-auto max-w-6xl border-0 bg-transparent p-0 shadow-none ring-0 sm:rounded-[2rem] sm:border sm:border-slate-200/75 sm:bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(248,250,252,0.72)_54%,rgba(241,245,249,0.58))] sm:p-4 sm:shadow-[0_24px_64px_-52px_rgba(15,23,42,0.34)] sm:ring-1 sm:ring-white/80">
               <div className="grid gap-2.5 sm:gap-4 md:grid-cols-3">
                 {trustCards.map((card) => {
                   const Icon = card.icon;
@@ -469,7 +478,7 @@ function CarsSearchPage() {
             </section>
 
             <section
-              className="space-y-4"
+              className="mx-auto max-w-6xl space-y-4"
               aria-labelledby="car-pickup-ideas-heading"
             >
               <div className="flex flex-col gap-2 px-1 md:flex-row md:items-end md:justify-between">
@@ -511,7 +520,7 @@ function CarsFaqSection() {
   const { dictionary, t } = useCarsLandingTranslations();
 
   return (
-    <section className="space-y-4 px-1" aria-labelledby="cars-faq-heading">
+    <section className="mx-auto max-w-6xl space-y-4 px-1" aria-labelledby="cars-faq-heading">
       <div className="max-w-2xl">
         <h2
           id="cars-faq-heading"
