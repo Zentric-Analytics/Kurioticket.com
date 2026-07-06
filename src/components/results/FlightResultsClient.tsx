@@ -619,6 +619,55 @@ function FlightBookingFaqSection() {
   );
 }
 
+function lockBodyScroll() {
+  const bodyElement = document.body;
+  const rootElement = document.documentElement;
+  const scrollY = window.scrollY;
+  const previousBodyStyles = {
+    left: bodyElement.style.left,
+    overflow: bodyElement.style.overflow,
+    overscrollBehavior: bodyElement.style.overscrollBehavior,
+    position: bodyElement.style.position,
+    right: bodyElement.style.right,
+    top: bodyElement.style.top,
+    touchAction: bodyElement.style.touchAction,
+    width: bodyElement.style.width,
+  };
+  const previousRootStyles = {
+    overflow: rootElement.style.overflow,
+    overscrollBehavior: rootElement.style.overscrollBehavior,
+  };
+
+  bodyElement.style.left = "0";
+  bodyElement.style.overflow = "hidden";
+  bodyElement.style.overscrollBehavior = "none";
+  bodyElement.style.position = "fixed";
+  bodyElement.style.right = "0";
+  bodyElement.style.top = `-${scrollY}px`;
+  bodyElement.style.touchAction = "none";
+  bodyElement.style.width = "100%";
+  rootElement.style.overflow = "hidden";
+  rootElement.style.overscrollBehavior = "none";
+
+  return {
+    restore: () => {
+      bodyElement.style.left = previousBodyStyles.left;
+      bodyElement.style.overflow = previousBodyStyles.overflow;
+      bodyElement.style.overscrollBehavior =
+        previousBodyStyles.overscrollBehavior;
+      bodyElement.style.position = previousBodyStyles.position;
+      bodyElement.style.right = previousBodyStyles.right;
+      bodyElement.style.top = previousBodyStyles.top;
+      bodyElement.style.touchAction = previousBodyStyles.touchAction;
+      bodyElement.style.width = previousBodyStyles.width;
+      rootElement.style.overflow = previousRootStyles.overflow;
+      rootElement.style.overscrollBehavior =
+        previousRootStyles.overscrollBehavior;
+      window.scrollTo(0, scrollY);
+    },
+  };
+}
+
 export function FlightResultsClient() {
   const { t: dictionary, locale } = useLocale();
   const t = useCallback(
@@ -851,6 +900,9 @@ export function FlightResultsClient() {
   const hydratedFilterQueryStringRef = useRef<string | null>(null);
   const lastWrittenFilterQueryStringRef = useRef<string | null>(null);
   const mobileSearchScrollLockRef = useRef<{ restore: () => void } | null>(
+    null,
+  );
+  const mobileFiltersScrollLockRef = useRef<{ restore: () => void } | null>(
     null,
   );
   const queryString = params.toString();
@@ -1164,55 +1216,51 @@ export function FlightResultsClient() {
       return releaseExistingLock;
     }
 
-    const bodyElement = document.body;
-    const rootElement = document.documentElement;
-    const scrollY = window.scrollY;
-    const previousBodyStyles = {
-      left: bodyElement.style.left,
-      overflow: bodyElement.style.overflow,
-      overscrollBehavior: bodyElement.style.overscrollBehavior,
-      position: bodyElement.style.position,
-      right: bodyElement.style.right,
-      top: bodyElement.style.top,
-      touchAction: bodyElement.style.touchAction,
-      width: bodyElement.style.width,
-    };
-    const previousRootStyles = {
-      overflow: rootElement.style.overflow,
-      overscrollBehavior: rootElement.style.overscrollBehavior,
-    };
-
-    bodyElement.style.left = "0";
-    bodyElement.style.overflow = "hidden";
-    bodyElement.style.overscrollBehavior = "none";
-    bodyElement.style.position = "fixed";
-    bodyElement.style.right = "0";
-    bodyElement.style.top = `-${scrollY}px`;
-    bodyElement.style.touchAction = "none";
-    bodyElement.style.width = "100%";
-    rootElement.style.overflow = "hidden";
-    rootElement.style.overscrollBehavior = "none";
-
-    mobileSearchScrollLockRef.current = {
-      restore: () => {
-        bodyElement.style.left = previousBodyStyles.left;
-        bodyElement.style.overflow = previousBodyStyles.overflow;
-        bodyElement.style.overscrollBehavior =
-          previousBodyStyles.overscrollBehavior;
-        bodyElement.style.position = previousBodyStyles.position;
-        bodyElement.style.right = previousBodyStyles.right;
-        bodyElement.style.top = previousBodyStyles.top;
-        bodyElement.style.touchAction = previousBodyStyles.touchAction;
-        bodyElement.style.width = previousBodyStyles.width;
-        rootElement.style.overflow = previousRootStyles.overflow;
-        rootElement.style.overscrollBehavior =
-          previousRootStyles.overscrollBehavior;
-        window.scrollTo(0, scrollY);
-      },
-    };
+    mobileSearchScrollLockRef.current = lockBodyScroll();
 
     return releaseExistingLock;
   }, [mobileSearchOpen]);
+
+  useEffect(() => {
+    const releaseExistingLock = () => {
+      mobileFiltersScrollLockRef.current?.restore();
+      mobileFiltersScrollLockRef.current = null;
+    };
+
+    if (!filtersOpen || typeof window === "undefined") {
+      releaseExistingLock();
+      return releaseExistingLock;
+    }
+
+    const mobileQuery = window.matchMedia("(max-width: 1023px)");
+
+    if (!mobileQuery.matches) {
+      releaseExistingLock();
+      return releaseExistingLock;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setFiltersOpen(false);
+      }
+    };
+
+    const previouslyFocusedElement =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+
+    mobileFiltersScrollLockRef.current = lockBodyScroll();
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      releaseExistingLock();
+      if (previouslyFocusedElement?.isConnected) {
+        previouslyFocusedElement.focus();
+      }
+    };
+  }, [filtersOpen]);
 
   function triggerFilterApplying() {
     setFilterApplying(true);
@@ -4520,42 +4568,44 @@ export function FlightResultsClient() {
         </section>
       </div>
 
-      <div
-        className={cn(
-          "fixed inset-0 z-50 bg-navy/40 lg:hidden",
-          filtersOpen ? "block" : "hidden",
-        )}
-        onClick={() => setFiltersOpen(false)}
-      />
-
       <aside
+        id="flight-mobile-filters-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="flight-mobile-filters-title"
         className={cn(
-          "fixed bottom-0 start-0 end-0 z-50 flex max-h-[86dvh] flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl transition-transform lg:hidden",
+          "fixed inset-0 z-[10000] flex h-[100dvh] flex-col overflow-hidden bg-white transition-transform duration-200 ease-out lg:hidden",
           filtersOpen ? "translate-y-0" : "translate-y-full",
         )}
       >
-        <div className="flex-1 overflow-auto p-5 pb-3">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-base font-semibold text-slate-900">
+        <div className="shrink-0 border-b border-slate-200 bg-white px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h2
+                id="flight-mobile-filters-title"
+                className="text-lg font-bold leading-6 text-slate-950"
+              >
                 {t("filters")}
               </h2>
               {activeFilterCount > 0 ? (
-                <p className="mt-1 inline-flex rounded-full bg-[#004BB8]/8 px-2 py-0.5 text-xs font-semibold text-[#004BB8] ring-1 ring-[#004BB8]/10">
+                <p className="mt-1 inline-flex rounded-full bg-[#004BB8]/8 px-2.5 py-1 text-xs font-bold text-[#004BB8] ring-1 ring-[#004BB8]/10">
                   {activeFilterLabel}
                 </p>
               ) : null}
             </div>
             <Button
+              type="button"
               variant="ghost"
-              className="h-10 w-10 px-0"
+              className="h-10 w-10 shrink-0 rounded-full border border-slate-200 bg-white px-0 text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
               aria-label={t("closeFilters")}
               onClick={() => setFiltersOpen(false)}
             >
               <X size={20} />
             </Button>
           </div>
+        </div>
 
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
           <Filters
             layout="mobile"
             activeFilterCount={activeFilterCount}
@@ -4594,10 +4644,10 @@ export function FlightResultsClient() {
           />
         </div>
 
-        <div className="border-t border-slate-200 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div className="shrink-0 border-t border-slate-200 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-10px_24px_rgba(15,23,42,0.08)]">
           <Button
             type="button"
-            className="h-12 w-full rounded-xl bg-gradient-to-r from-[#004BB8]/70 to-[#5CB6B2]/55 text-base font-bold text-white shadow-lg shadow-[#004BB8]/20"
+            className="h-12 w-full rounded-xl bg-[#004BB8] text-base font-bold text-white shadow-lg shadow-[#004BB8]/20 transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
             onClick={() => {
               triggerFilterApplying();
               setFiltersOpen(false);
