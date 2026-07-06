@@ -8,25 +8,57 @@ const MAX_RECENT_SEARCHES = 5;
 
 const recentSearchTypeToPrisma = {
   flight: "FLIGHT",
-} as const satisfies Record<"flight", PrismaSearchType>;
+  hotel: "HOTEL",
+} as const satisfies Record<"flight" | "hotel", PrismaSearchType>;
 
 const prismaSearchTypeToPublic = {
   FLIGHT: "flight",
   HOTEL: "hotel",
 } as const satisfies Record<PrismaSearchType, "flight" | "hotel">;
 
-const jsonObjectSchema = z.record(z.string(), z.unknown());
+const nonNegativeIntegerSchema = z.number().int().min(0);
+const positiveIntegerSchema = z.number().int().min(1);
 
-export const recentSearchInputSchema = z.object({
+const recentSearchBaseInputSchema = z.object({
   id: z.string().trim().min(1).max(1024),
-  type: z.literal("flight"),
   label: z.string().trim().min(1).max(256),
   subtitle: z.string().trim().min(1).max(512),
   href: z.string().trim().min(1).max(2048),
-  params: jsonObjectSchema,
   image: z.string().trim().max(2048).optional().nullable(),
   imageAlt: z.string().trim().max(512).optional().nullable(),
 });
+
+const recentFlightParamsSchema = z.object({
+  tripType: z.enum(["round-trip", "one-way"]),
+  origin: z.string().trim().min(1).max(64),
+  destination: z.string().trim().min(1).max(64),
+  departureDate: z.string().trim().min(1).max(32),
+  returnDate: z.string().trim().max(32).optional(),
+  adults: positiveIntegerSchema,
+  children: nonNegativeIntegerSchema,
+  infants: nonNegativeIntegerSchema,
+  travelers: positiveIntegerSchema,
+  cabinClass: z.string().trim().min(1).max(64),
+});
+
+const recentHotelParamsSchema = z.object({
+  destination: z.string().trim().min(1).max(256),
+  checkIn: z.string().trim().min(1).max(32),
+  checkOut: z.string().trim().min(1).max(32),
+  guests: positiveIntegerSchema,
+  rooms: positiveIntegerSchema,
+});
+
+export const recentSearchInputSchema = z.discriminatedUnion("type", [
+  recentSearchBaseInputSchema.extend({
+    type: z.literal("flight"),
+    params: recentFlightParamsSchema,
+  }),
+  recentSearchBaseInputSchema.extend({
+    type: z.literal("hotel"),
+    params: recentHotelParamsSchema,
+  }),
+]);
 
 export const deleteRecentSearchInputSchema = z.object({
   id: z.string().trim().min(1).max(1024),
@@ -76,10 +108,12 @@ const recentSearchSelect = {
 const toPrismaJson = (value: Record<string, unknown>): InputJsonValue =>
   value as InputJsonValue;
 
-export async function listUserRecentSearches(userId: string): Promise<PublicRecentSearch[]> {
+export async function listUserRecentSearches(
+  userId: string,
+): Promise<PublicRecentSearch[]> {
   const prisma = getPrisma();
   const searches = await prisma.recentSearch.findMany({
-    where: { userId, type: "FLIGHT" },
+    where: { userId },
     orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
     take: MAX_RECENT_SEARCHES,
     select: recentSearchSelect,
@@ -132,20 +166,23 @@ export async function upsertUserRecentSearch(
   return serializeRecentSearch(search);
 }
 
-export async function deleteUserRecentSearch(userId: string, clientSearchId: string): Promise<void> {
+export async function deleteUserRecentSearch(
+  userId: string,
+  clientSearchId: string,
+): Promise<void> {
   const prisma = getPrisma();
   await prisma.recentSearch.deleteMany({ where: { userId, clientSearchId } });
 }
 
 export async function clearUserRecentSearches(userId: string): Promise<void> {
   const prisma = getPrisma();
-  await prisma.recentSearch.deleteMany({ where: { userId, type: "FLIGHT" } });
+  await prisma.recentSearch.deleteMany({ where: { userId } });
 }
 
 async function trimUserRecentSearches(userId: string) {
   const prisma = getPrisma();
   const extras = await prisma.recentSearch.findMany({
-    where: { userId, type: "FLIGHT" },
+    where: { userId },
     orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
     skip: MAX_RECENT_SEARCHES,
     select: { id: true },

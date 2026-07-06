@@ -1949,9 +1949,10 @@ export function FlightResultsClient() {
           travelers,
           cabinClass: cabinClassInput,
         });
-      upsertRecentSearch(recentSearch);
       if (sessionStatus === "authenticated") {
         void syncBackendRecentSearch(recentSearch);
+      } else {
+        upsertRecentSearch(recentSearch);
       }
     } catch {
       // best effort only
@@ -2626,9 +2627,10 @@ export function FlightResultsClient() {
                     travelers,
                     cabinClass: cabinClassInput,
                   });
-                upsertRecentSearch(recentSearch);
                 if (sessionStatus === "authenticated") {
                   void syncBackendRecentSearch(recentSearch);
+                } else {
+                  upsertRecentSearch(recentSearch);
                 }
               } catch {
                 // best effort only

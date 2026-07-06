@@ -1736,9 +1736,10 @@ export function SearchTabs({
           travelers: Number(params.get("travelers") ?? "1"),
           cabinClass: params.get("cabinClass") ?? "economy",
         }, matchedFlightImage ? { image: matchedFlightImage.image, imageAlt: matchedFlightImage.imageAlt } : undefined);
-      upsertRecentSearch(recentSearch);
       if (sessionStatus === "authenticated") {
         void syncBackendRecentSearch(recentSearch);
+      } else {
+        upsertRecentSearch(recentSearch);
       }
     } catch {
       // best effort only
@@ -1795,15 +1796,18 @@ export function SearchTabs({
 
     try {
       const matchedHotelImage = findDiscoveryImageForHotel(params.get("destination") ?? "");
-      upsertRecentSearch(
-        buildHotelRecentSearch({
+      const recentSearch = buildHotelRecentSearch({
           destination: params.get("destination") ?? "",
           checkIn: params.get("checkIn") ?? "",
           checkOut: params.get("checkOut") ?? "",
           guests: Number(params.get("guests") ?? "1"),
           rooms: Number(params.get("rooms") ?? "1"),
-        }, matchedHotelImage ? { image: matchedHotelImage.image, imageAlt: matchedHotelImage.imageAlt } : undefined)
-      );
+        }, matchedHotelImage ? { image: matchedHotelImage.image, imageAlt: matchedHotelImage.imageAlt } : undefined);
+      if (sessionStatus === "authenticated") {
+        void syncBackendRecentSearch(recentSearch);
+      } else {
+        upsertRecentSearch(recentSearch);
+      }
     } catch {
       // best effort only
     }

@@ -995,11 +995,15 @@ export const translations: TranslationDictionary = {
   savedTripsSearchRoute: "Search route",
   savedTripsRecentSearchesTitle: "Recent searches",
   recentSearchesPageTitle: "Recent searches",
+  recentSearchesFilterAll: "All",
+  recentSearchesFilterFlights: "Flights",
+  recentSearchesFilterHotels: "Hotels",
+  recentSearchesNoFilterResults: "No searches match this filter.",
   recentSearchesPageSubtitle:
     "Jump back to where you left off and search again in one click.",
   recentSearchesEmptyTitle: "No search history yet",
   recentSearchesEmptyDescription:
-    "Your recent flight searches will appear here after you search.",
+    "Your recent flight and hotel searches will appear here after you search.",
   recentSearchesSearchFlights: "Search flights",
   savedTripsRecentSearchesSubtitle:
     "Jump back to where you left off and search again in one click.",
