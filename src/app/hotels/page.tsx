@@ -506,7 +506,7 @@ export default function HotelsSearchPage() {
             <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/22 via-slate-950/6 to-transparent" />
           </div>
 
-          <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-[7.85rem]">
+          <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-8">
             <div className="max-w-[22.25rem] text-white">
               <p className="sr-only">
                 {t("hotelsHeroEyebrow")}

@@ -1060,7 +1060,7 @@ export default function DealsPage() {
             <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-slate-50 via-slate-50/85 to-transparent" />
           </div>
 
-          <div className="page-shell relative z-10 pt-10 sm:pt-14">
+          <div className="page-shell relative z-10 pt-8 sm:pt-14">
             <div className="max-w-[1040px]">
               <h1 className="max-w-none text-balance text-3xl font-semibold leading-[1.12] tracking-[-0.015em] text-slate-800 sm:text-4xl lg:whitespace-nowrap lg:text-4xl lg:leading-[1.08]">
                 {t("deals.heroTitle")}
@@ -1071,7 +1071,7 @@ export default function DealsPage() {
             </div>
           </div>
 
-          <div className="page-shell relative z-20 pt-8 sm:pt-10">
+          <div className="page-shell relative z-20 pt-6 sm:pt-10">
             <div className="mx-auto w-full max-w-[1120px] space-y-4">
               <div className="px-1">
                 <fieldset
