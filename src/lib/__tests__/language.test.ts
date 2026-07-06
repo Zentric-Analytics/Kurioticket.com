@@ -1452,7 +1452,7 @@ test("Thai Account dropdown and Dashboard overview copy resolves through active 
   assert.ok(dashboardGridSource.includes('t["accountDashboard.mobile.manageAccount"]'));
   assert.ok(!dashboardGridSource.includes(">Welcome back,") && !dashboardGridSource.includes(">Manage account<") && !dashboardGridSource.includes(">Personal details<"));
 
-  assert.ok(appHeaderSource.includes('href: "/dashboard/account"') && appHeaderSource.includes('href: "/saved"') && appHeaderSource.includes('href: "/dashboard/alerts"'));
+  assert.ok(appHeaderSource.includes('href: "/dashboard/account"') && appHeaderSource.includes('href: "/saved?from=account"') && appHeaderSource.includes('href: "/dashboard/alerts?from=account"'));
   assert.ok(dashboardGridSource.includes('href: "/dashboard"') && dashboardGridSource.includes('href: "/dashboard/security"') && dashboardGridSource.includes('href: "/dashboard/trips"') && dashboardGridSource.includes('href: "/saved?from=account"') && dashboardGridSource.includes('href: "/dashboard/alerts?from=account"') && dashboardGridSource.includes('href: "/dashboard/preferences/customization"') && dashboardGridSource.includes('href: "/dashboard/preferences/booking"') && dashboardGridSource.includes('href: "/dashboard/support"') && dashboardGridSource.includes('href: "/faq?from=account"'));
   assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.manageAccount"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.travelActivity"'));
   assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.travelActivity"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.preferences"'));
@@ -1538,7 +1538,7 @@ test("Vietnamese account menu and dashboard overview copy resolves without Engli
   assert.ok(dashboardGridSource.includes('t["accountDashboard.mobile.manageAccount"]'));
   assert.ok(!dashboardGridSource.includes(">Welcome back,") && !dashboardGridSource.includes(">Manage account<") && !dashboardGridSource.includes(">Personal details<"));
 
-  assert.ok(appHeaderSource.includes('href: "/dashboard/account"') && appHeaderSource.includes('href: "/saved"') && appHeaderSource.includes('href: "/dashboard/alerts"'));
+  assert.ok(appHeaderSource.includes('href: "/dashboard/account"') && appHeaderSource.includes('href: "/saved?from=account"') && appHeaderSource.includes('href: "/dashboard/alerts?from=account"'));
   assert.ok(dashboardGridSource.includes('href: "/dashboard"') && dashboardGridSource.includes('href: "/dashboard/security"') && dashboardGridSource.includes('href: "/dashboard/trips"') && dashboardGridSource.includes('href: "/saved?from=account"') && dashboardGridSource.includes('href: "/dashboard/alerts?from=account"') && dashboardGridSource.includes('href: "/dashboard/preferences/customization"') && dashboardGridSource.includes('href: "/dashboard/preferences/booking"') && dashboardGridSource.includes('href: "/dashboard/support"') && dashboardGridSource.includes('href: "/faq?from=account"'));
   assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.manageAccount"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.travelActivity"'));
   assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.travelActivity"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.preferences"'));
@@ -1623,7 +1623,7 @@ test("Indonesian Account dropdown and Dashboard copy resolves through active i18
   assert.ok(dashboardGridSource.includes('t["accountDashboard.mobile.manageAccount"]'));
   assert.ok(!dashboardGridSource.includes(">Welcome back,") && !dashboardGridSource.includes(">Manage account<") && !dashboardGridSource.includes(">Personal details<"));
 
-  assert.ok(appHeaderSource.includes('href: "/dashboard/account"') && appHeaderSource.includes('href: "/saved"') && appHeaderSource.includes('href: "/dashboard/alerts"'));
+  assert.ok(appHeaderSource.includes('href: "/dashboard/account"') && appHeaderSource.includes('href: "/saved?from=account"') && appHeaderSource.includes('href: "/dashboard/alerts?from=account"'));
   assert.ok(dashboardGridSource.includes('href: "/dashboard"') && dashboardGridSource.includes('href: "/dashboard/security"') && dashboardGridSource.includes('href: "/dashboard/trips"') && dashboardGridSource.includes('href: "/saved?from=account"') && dashboardGridSource.includes('href: "/dashboard/alerts?from=account"'));
   assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.manageAccount"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.travelActivity"'));
   assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.travelActivity"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.preferences"'));
@@ -2594,8 +2594,8 @@ test("Swedish signed-in account dropdown labels do not fall back to English", ()
   );
   assert.ok(
     appHeaderSource.includes('href: "/dashboard/account"') &&
-      appHeaderSource.includes('href: "/saved"') &&
-      appHeaderSource.includes('href: "/dashboard/alerts"') &&
+      appHeaderSource.includes('href: "/saved?from=account"') &&
+      appHeaderSource.includes('href: "/dashboard/alerts?from=account"') &&
       appHeaderSource.includes("onClick={handleSignOut}") &&
       appHeaderSource.includes("revokeCurrentSessionRecord()") &&
       appHeaderSource.includes("signOut({ redirect: false, callbackUrl: \"/\" })"),
@@ -2652,8 +2652,8 @@ test("Turkish signed-in account dropdown labels do not fall back to English", ()
   );
   assert.ok(
     appHeaderSource.includes('href: "/dashboard/account"') &&
-      appHeaderSource.includes('href: "/saved"') &&
-      appHeaderSource.includes('href: "/dashboard/alerts"') &&
+      appHeaderSource.includes('href: "/saved?from=account"') &&
+      appHeaderSource.includes('href: "/dashboard/alerts?from=account"') &&
       appHeaderSource.includes("onClick={handleSignOut}"),
     "Signed-in account dropdown should keep menu routes and logout action wired unchanged.",
   );
@@ -2695,8 +2695,8 @@ test("Polish signed-in account dropdown labels do not fall back to English", () 
   );
   assert.ok(
     appHeaderSource.includes('href: "/dashboard/account"') &&
-      appHeaderSource.includes('href: "/saved"') &&
-      appHeaderSource.includes('href: "/dashboard/alerts"') &&
+      appHeaderSource.includes('href: "/saved?from=account"') &&
+      appHeaderSource.includes('href: "/dashboard/alerts?from=account"') &&
       appHeaderSource.includes("onClick={handleSignOut}") &&
       appHeaderSource.includes("revokeCurrentSessionRecord()") &&
       appHeaderSource.includes("signOut({ redirect: false, callbackUrl: \"/\" })"),
@@ -2866,8 +2866,8 @@ test("Hindi signed-in account dropdown labels do not fall back to English", () =
   );
   assert.ok(
     appHeaderSource.includes('href: "/dashboard/account"') &&
-      appHeaderSource.includes('href: "/saved"') &&
-      appHeaderSource.includes('href: "/dashboard/alerts"') &&
+      appHeaderSource.includes('href: "/saved?from=account"') &&
+      appHeaderSource.includes('href: "/dashboard/alerts?from=account"') &&
       appHeaderSource.includes("onClick={handleSignOut}"),
     "Signed-in account dropdown should keep menu routes and logout action wired unchanged.",
   );

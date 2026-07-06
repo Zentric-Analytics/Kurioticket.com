@@ -92,7 +92,7 @@ const signedInAccountMenuItems = [
     icon: SavedHeartIcon,
   },
   {
-    href: "/dashboard/alerts",
+    href: "/dashboard/alerts?from=account",
     labelKey: "accountMenu.priceAlerts.label",
     icon: Tag,
   },
