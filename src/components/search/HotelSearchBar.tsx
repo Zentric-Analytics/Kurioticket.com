@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   BedDouble,
   Calendar,
@@ -35,6 +36,7 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
 import {
   buildHotelRecentSearch,
+  syncBackendRecentSearch,
   upsertRecentSearch,
 } from "@/lib/recent-searches";
 import { cn } from "@/lib/utils";
@@ -236,6 +238,7 @@ export function HotelSearchBar({
   className,
 }: HotelSearchBarProps) {
   const { locale, t: dictionary } = useLocale();
+  const { status: sessionStatus } = useSession();
   const t = useCallback(
     (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
     [dictionary],
@@ -923,15 +926,18 @@ export function HotelSearchBar({
 
     startRouteProgress();
     try {
-      upsertRecentSearch(
-        buildHotelRecentSearch({
-          destination: trimmedDestination,
-          checkIn,
-          checkOut,
-          guests: normalizedGuests,
-          rooms: normalizedRooms,
-        }),
-      );
+      const recentSearch = buildHotelRecentSearch({
+        destination: trimmedDestination,
+        checkIn,
+        checkOut,
+        guests: normalizedGuests,
+        rooms: normalizedRooms,
+      });
+      if (sessionStatus === "authenticated") {
+        void syncBackendRecentSearch(recentSearch);
+      } else {
+        upsertRecentSearch(recentSearch);
+      }
     } catch {
       // best effort only
     }

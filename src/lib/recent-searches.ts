@@ -52,7 +52,7 @@ const stableJson = (value: Record<string, unknown>) =>
           acc[key] = nextValue;
         }
         return acc;
-      }, {})
+      }, {}),
   );
 
 const buildId = (type: RecentSearchType, params: Record<string, unknown>) =>
@@ -67,11 +67,14 @@ export const readRecentSearches = (): RecentSearchEntry[] => {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
     return parsed
-      .filter((entry): entry is RecentSearchEntry => Boolean(entry?.id && entry?.href && entry?.label))
+      .filter((entry): entry is RecentSearchEntry =>
+        Boolean(entry?.id && entry?.href && entry?.label),
+      )
       .map((entry) => ({
         ...entry,
         image: typeof entry.image === "string" ? entry.image : undefined,
-        imageAlt: typeof entry.imageAlt === "string" ? entry.imageAlt : undefined,
+        imageAlt:
+          typeof entry.imageAlt === "string" ? entry.imageAlt : undefined,
       }));
   } catch {
     return [];
@@ -88,9 +91,15 @@ export const writeRecentSearches = (entries: RecentSearchEntry[]): void => {
   }
 };
 
-export const upsertRecentSearch = (entry: RecentSearchEntry, max = 5): RecentSearchEntry[] => {
+export const upsertRecentSearch = (
+  entry: RecentSearchEntry,
+  max = 5,
+): RecentSearchEntry[] => {
   const existing = readRecentSearches();
-  const deduped = [entry, ...existing.filter((item) => item.id !== entry.id)].slice(0, max);
+  const deduped = [
+    entry,
+    ...existing.filter((item) => item.id !== entry.id),
+  ].slice(0, max);
   writeRecentSearches(deduped);
   return deduped;
 };
@@ -102,18 +111,18 @@ const isRecentSearchEntry = (entry: unknown): entry is RecentSearchEntry => {
   const candidate = entry as Partial<RecentSearchEntry>;
   return Boolean(
     candidate.id &&
-      candidate.type === "flight" &&
-      candidate.createdAt &&
-      candidate.label &&
-      candidate.subtitle &&
-      candidate.href &&
-      candidate.params &&
-      typeof candidate.params === "object"
+    (candidate.type === "flight" || candidate.type === "hotel") &&
+    candidate.createdAt &&
+    candidate.label &&
+    candidate.subtitle &&
+    candidate.href &&
+    candidate.params &&
+    typeof candidate.params === "object",
   );
 };
 
 export const fetchBackendRecentSearches = async (
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): Promise<{ ok: boolean; items?: RecentSearchEntry[] }> => {
   try {
     const response = await fetch(RECENT_SEARCHES_API, {
@@ -137,7 +146,7 @@ export const fetchBackendRecentSearches = async (
 };
 
 export const syncBackendRecentSearch = async (
-  entry: RecentSearchEntry
+  entry: RecentSearchEntry,
 ): Promise<{ ok: boolean; item?: RecentSearchEntry }> => {
   try {
     const response = await fetch(RECENT_SEARCHES_API, {
@@ -160,7 +169,7 @@ export const syncBackendRecentSearch = async (
 };
 
 export const deleteBackendRecentSearch = async (
-  id: string
+  id: string,
 ): Promise<{ ok: boolean }> => {
   try {
     const response = await fetch(RECENT_SEARCHES_API, {
@@ -176,7 +185,9 @@ export const deleteBackendRecentSearch = async (
   }
 };
 
-export const clearBackendRecentSearches = async (): Promise<{ ok: boolean }> => {
+export const clearBackendRecentSearches = async (): Promise<{
+  ok: boolean;
+}> => {
   try {
     const response = await fetch(`${RECENT_SEARCHES_API}?clear=all`, {
       method: "DELETE",
@@ -210,7 +221,10 @@ type SearchImageMeta = {
   imageAlt?: string;
 };
 
-export const buildHotelRecentSearch = (params: RecentHotelParams, imageMeta?: SearchImageMeta): RecentSearchEntry => {
+export const buildHotelRecentSearch = (
+  params: RecentHotelParams,
+  imageMeta?: SearchImageMeta,
+): RecentSearchEntry => {
   const id = buildId("hotel", params);
   const label = params.destination;
   const subtitle = `${formatIsoDate(params.checkIn) || params.checkIn} – ${formatIsoDate(params.checkOut) || params.checkOut} · ${params.guests} guest${params.guests === 1 ? "" : "s"} · ${params.rooms} room${params.rooms === 1 ? "" : "s"}`;
@@ -237,12 +251,14 @@ export const buildHotelRecentSearch = (params: RecentHotelParams, imageMeta?: Se
 
 export const buildFlightRecentSearch = (
   params: RecentFlightParams,
-  imageMeta?: SearchImageMeta
+  imageMeta?: SearchImageMeta,
 ): RecentSearchEntry => {
   const id = buildId("flight", params);
   const label = `${params.origin} → ${params.destination}`;
   const outbound = formatIsoDate(params.departureDate) || params.departureDate;
-  const inbound = params.returnDate ? formatIsoDate(params.returnDate) || params.returnDate : "One-way";
+  const inbound = params.returnDate
+    ? formatIsoDate(params.returnDate) || params.returnDate
+    : "One-way";
   const subtitle = `${outbound}${params.returnDate ? ` – ${inbound}` : ""} · ${params.travelers} traveler${params.travelers === 1 ? "" : "s"} · ${params.cabinClass}`;
   const query = new URLSearchParams({
     tripType: params.tripType,

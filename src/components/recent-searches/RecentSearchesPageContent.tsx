@@ -17,6 +17,7 @@ import {
   readRecentSearches,
   removeRecentSearch,
   type RecentFlightParams,
+  type RecentHotelParams,
   type RecentSearchEntry,
 } from "@/lib/recent-searches";
 import {
@@ -89,6 +90,10 @@ const formatRecentDate = (
 const isFlightParams = (
   params: RecentSearchEntry["params"],
 ): params is RecentFlightParams => "origin" in params && "cabinClass" in params;
+
+const isHotelParams = (
+  params: RecentSearchEntry["params"],
+): params is RecentHotelParams => "checkIn" in params && "checkOut" in params;
 
 const sortRecentSearchesByDate = (entries: RecentSearchEntry[]) =>
   [...entries].sort((left, right) => {
@@ -224,6 +229,10 @@ const resolveRecentSearchImage = (entry: RecentSearchEntry) => {
   return null;
 };
 
+type RecentSearchFilter = "all" | "flight" | "hotel";
+
+const recentSearchFilters: RecentSearchFilter[] = ["all", "flight", "hotel"];
+
 type RecentSearchesPageContentProps = {
   compactTopSpacing?: boolean;
   compactTopSpacingMobile?: boolean;
@@ -256,17 +265,14 @@ export function RecentSearchesPageContent({
   );
   const { status: sessionStatus } = useSession();
   const [recentSearches, setRecentSearches] = useState<RecentSearchEntry[]>([]);
+  const [activeFilter, setActiveFilter] = useState<RecentSearchFilter>("all");
 
   const refreshBackendRecentSearches = useCallback(
     async (signal?: AbortSignal) => {
       const result = await fetchBackendRecentSearches(signal);
       if (signal?.aborted || !result.ok || !result.items) return;
 
-      setRecentSearches(
-        sortRecentSearchesByDate(
-          result.items.filter((entry) => entry.type === "flight"),
-        ).slice(0, 5),
-      );
+      setRecentSearches(sortRecentSearchesByDate(result.items).slice(0, 5));
     },
     [],
   );
@@ -288,7 +294,7 @@ export function RecentSearchesPageContent({
 
     const timeoutId = window.setTimeout(() => {
       setRecentSearches(
-        readRecentSearches().filter((entry) => entry.type === "flight"),
+        sortRecentSearchesByDate(readRecentSearches()).slice(0, 5),
       );
     }, 0);
 
@@ -315,14 +321,14 @@ export function RecentSearchesPageContent({
   const handleRemoveRecent = (id: string) => {
     if (sessionStatus === "authenticated") {
       setRecentSearches((current) =>
-        current.filter((entry) => entry.id !== id && entry.type === "flight"),
+        current.filter((entry) => entry.id !== id),
       );
       void deleteBackendRecentSearch(id);
       return;
     }
 
     setRecentSearches(
-      removeRecentSearch(id).filter((entry) => entry.type === "flight"),
+      sortRecentSearchesByDate(removeRecentSearch(id)).slice(0, 5),
     );
   };
 
@@ -346,6 +352,16 @@ export function RecentSearchesPageContent({
     return key ? t(key) : value;
   };
 
+  const formatGuestCount = (count: number) =>
+    count === 1
+      ? t("savedTripsGuestCountOne")
+      : t("savedTripsGuestCountOther").replace("{{count}}", String(count));
+
+  const formatRoomCount = (count: number) =>
+    count === 1
+      ? t("savedTripsRoomCountOne")
+      : t("savedTripsRoomCountOther").replace("{{count}}", String(count));
+
   const formatRecentSearchSubtitle = (entry: RecentSearchEntry) => {
     if (isFlightParams(entry.params)) {
       const outbound = formatRecentDate(
@@ -366,6 +382,23 @@ export function RecentSearchesPageContent({
       return `${outbound}${entry.params.returnDate ? ` – ${inbound}` : ""} · ${formatTravelerCount(entry.params.travelers)} · ${formatCabinClass(entry.params.cabinClass)}`;
     }
 
+    if (isHotelParams(entry.params)) {
+      const checkIn = formatRecentDate(
+        entry.params.checkIn,
+        shortDateFormatter,
+        entry.params.checkIn,
+        locale,
+      );
+      const checkOut = formatRecentDate(
+        entry.params.checkOut,
+        shortDateFormatter,
+        entry.params.checkOut,
+        locale,
+      );
+
+      return `${entry.params.destination} · ${checkIn} – ${checkOut} · ${formatGuestCount(entry.params.guests)} · ${formatRoomCount(entry.params.rooms)}`;
+    }
+
     return entry.subtitle;
   };
 
@@ -374,6 +407,35 @@ export function RecentSearchesPageContent({
       "{{date}}",
       formatRecentDate(value, searchedDateFormatter, "", locale),
     );
+
+  const filteredRecentSearches = useMemo(
+    () =>
+      activeFilter === "all"
+        ? recentSearches
+        : recentSearches.filter((entry) => entry.type === activeFilter),
+    [activeFilter, recentSearches],
+  );
+
+  const getFilterLabel = (filter: RecentSearchFilter) => {
+    if (filter === "flight")
+      return t("recentSearchesFilterFlights") || t("savedTripsTypeFlight");
+    if (filter === "hotel")
+      return t("recentSearchesFilterHotels") || t("savedTripsTypeHotel");
+    return t("recentSearchesFilterAll") || "All";
+  };
+
+  const getTypeLabel = (entry: RecentSearchEntry) =>
+    entry.type === "hotel"
+      ? (dictionary.savedTripsTypeHotel ?? enTranslations.savedTripsTypeHotel)
+      : (dictionary.savedTripsTypeFlight ??
+        enTranslations.savedTripsTypeFlight);
+
+  const getFallbackLabel = (entry: RecentSearchEntry) =>
+    entry.type === "hotel"
+      ? t("savedTripsHotelSearchFallback") ||
+        enTranslations.savedTripsHotelSearchFallback
+      : t("savedTripsFlightSearchFallback") ||
+        enTranslations.savedTripsFlightSearchFallback;
 
   return (
     <div
@@ -405,84 +467,117 @@ export function RecentSearchesPageContent({
               className="space-y-4 pt-4"
               aria-labelledby="recent-searches-title"
             >
-              <div className="flex justify-start border-b border-slate-200/80 pb-3 sm:justify-end">
-                <button
-                  type="button"
-                  onClick={handleClearRecent}
-                  className="inline-flex items-center gap-1.5 rounded-md px-0 py-1 text-sm font-semibold text-violet-700 transition hover:text-violet-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-400 sm:px-2"
+              <div className="flex flex-col gap-3 border-b border-slate-200/80 pb-3 sm:flex-row sm:items-center sm:justify-between">
+                <div
+                  className="flex flex-wrap gap-2"
+                  role="tablist"
+                  aria-label={t("recentSearchesPageTitle")}
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  {t("savedTripsClearAllRecent")}
-                </button>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {recentSearches.map((entry) => {
-                  const visual = resolveRecentSearchImage(entry);
-
-                  return (
-                    <article
-                      key={entry.id}
-                      className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-transparent shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)] active:-translate-y-0.5"
-                    >
+                  {recentSearchFilters.map((filter) => {
+                    const isActive = activeFilter === filter;
+                    return (
                       <button
+                        key={filter}
                         type="button"
-                        aria-label={t("savedTripsRemoveRecentSearch")}
-                        onClick={() => handleRemoveRecent(entry.id)}
-                        className="focus-ring absolute end-3 top-3 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900"
+                        role="tab"
+                        aria-selected={isActive}
+                        onClick={() => setActiveFilter(filter)}
+                        className={`inline-flex min-h-9 items-center rounded-full border px-4 py-1.5 text-sm font-semibold transition ${
+                          isActive
+                            ? "border-indigo-600 bg-indigo-600 text-white shadow-sm"
+                            : "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+                        }`}
                       >
-                        <X className="h-4 w-4" />
+                        {getFilterLabel(filter)}
                       </button>
-
-                      {visual?.image ? (
-                        <SavedCardImage
-                          src={visual.image}
-                          alt={visual.imageAlt}
-                          hoverScaleClassName="group-hover:scale-[1.02]"
-                        />
-                      ) : (
-                        <div className="flex h-[196px] w-full shrink-0 items-center justify-center bg-gradient-to-br from-slate-100 via-indigo-50 to-cyan-100 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 md:h-[190px] lg:h-[198px]">
-                          {t("savedTripsFlightSearchFallback")}
-                        </div>
-                      )}
-
-                      <div className="flex min-w-0 flex-1 flex-col bg-white">
-                        <div className="min-w-0 flex-1 space-y-2 px-3 pt-3">
-                          <span className="inline-flex w-fit rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-700">
-                            {dictionary.savedTripsTypeFlight ??
-                              enTranslations.savedTripsTypeFlight}
-                          </span>
-
-                          <h3 className="line-clamp-2 break-words pe-10 text-sm font-bold leading-[1.35] text-slate-950 md:text-[0.95rem]">
-                            {entry.label}
-                          </h3>
-                          <p className="line-clamp-2 break-words text-xs font-medium leading-5 text-slate-600 md:text-sm">
-                            {formatRecentSearchSubtitle(entry)}
-                          </p>
-                          <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                            <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-                              {formatSearchedLabel(entry.createdAt)}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="mt-auto border-t border-slate-200/90 px-3 pb-3 pt-3">
-                          <div className="flex flex-col items-stretch gap-2">
-                            <Link
-                              href={entry.href}
-                              className="inline-flex min-h-9 items-center justify-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-center text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-900"
-                            >
-                              {dictionary.savedTripsRepeatSearch ??
-                                enTranslations.savedTripsRepeatSearch}
-                              <ExternalLink className="h-4 w-4" />
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+                <div className="flex justify-start sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={handleClearRecent}
+                    className="inline-flex items-center gap-1.5 rounded-md px-0 py-1 text-sm font-semibold text-violet-700 transition hover:text-violet-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-400 sm:px-2"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    {t("savedTripsClearAllRecent")}
+                  </button>
+                </div>
               </div>
+
+              {filteredRecentSearches.length > 0 ? (
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {filteredRecentSearches.map((entry) => {
+                    const visual = resolveRecentSearchImage(entry);
+
+                    return (
+                      <article
+                        key={entry.id}
+                        className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-transparent shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)] active:-translate-y-0.5"
+                      >
+                        <button
+                          type="button"
+                          aria-label={t("savedTripsRemoveRecentSearch")}
+                          onClick={() => handleRemoveRecent(entry.id)}
+                          className="focus-ring absolute end-3 top-3 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+
+                        {visual?.image ? (
+                          <SavedCardImage
+                            src={visual.image}
+                            alt={visual.imageAlt}
+                            hoverScaleClassName="group-hover:scale-[1.02]"
+                          />
+                        ) : (
+                          <div className="flex h-[196px] w-full shrink-0 items-center justify-center bg-gradient-to-br from-slate-100 via-indigo-50 to-cyan-100 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 md:h-[190px] lg:h-[198px]">
+                            {getFallbackLabel(entry)}
+                          </div>
+                        )}
+
+                        <div className="flex min-w-0 flex-1 flex-col bg-white">
+                          <div className="min-w-0 flex-1 space-y-2 px-3 pt-3">
+                            <span className="inline-flex w-fit rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-700">
+                              {getTypeLabel(entry)}
+                            </span>
+
+                            <h3 className="line-clamp-2 break-words pe-10 text-sm font-bold leading-[1.35] text-slate-950 md:text-[0.95rem]">
+                              {entry.label}
+                            </h3>
+                            <p className="line-clamp-2 break-words text-xs font-medium leading-5 text-slate-600 md:text-sm">
+                              {formatRecentSearchSubtitle(entry)}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                                {formatSearchedLabel(entry.createdAt)}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="mt-auto border-t border-slate-200/90 px-3 pb-3 pt-3">
+                            <div className="flex flex-col items-stretch gap-2">
+                              <Link
+                                href={entry.href}
+                                className="inline-flex min-h-9 items-center justify-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-center text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-900"
+                              >
+                                {dictionary.savedTripsRepeatSearch ??
+                                  enTranslations.savedTripsRepeatSearch}
+                                <ExternalLink className="h-4 w-4" />
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm font-medium text-slate-600">
+                  {t("recentSearchesNoFilterResults") ||
+                    enTranslations.recentSearchesNoFilterResults}
+                </div>
+              )}
             </section>
           ) : (
             <section
