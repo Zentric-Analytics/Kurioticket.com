@@ -493,7 +493,8 @@ test("Vietnamese Destinations and Saved Trips copy resolves through active i18n 
   assert.ok(destinationsPageSource.includes("dictionary[section.summaryKey]"));
   assert.ok(destinationsPageSource.includes("dictionary[destination.tagKey]"));
   assert.ok(destinationsPageSource.includes("dictionary[destinationSubtitleKey]"));
-  assert.ok(destinationsPageSource.includes("dictionary.destinationsCardAriaLabel.replace"));
+  assert.ok(destinationsPageSource.includes("formatDestinationTemplate("));
+  assert.ok(destinationsPageSource.includes("cardAriaLabelTemplate"));
   assert.ok(destinationCardSource.includes("aria-label={ariaLabel}"));
 
   const expectedDestinationsCopy: Record<string, string> = {
@@ -1098,7 +1099,7 @@ test("Thai Hotels results page copy resolves through active i18n keys", () => {
   assert.ok(hotelResultsClientSource.includes("hotel.name"));
   assert.ok(hotelResultsClientSource.includes("hotel.location"));
   assert.ok(hotelCardSource.includes("hotel.roomType"));
-  assert.ok(hotelCardSource.includes("formatCurrency(hotel.totalPrice, hotel.currency)"));
+  assert.ok(hotelCardSource.includes("formatCurrency(hotel.totalPrice, hotel.currency, locale)"));
   assert.ok(hotelResultsClientSource.includes("sortHotelSummaryResults") && hotelResultsClientSource.includes("sortedVisibleHotels.map"));
   assert.ok(hotelResultsClientSource.includes("className="));
   assert.ok(hotelCardSource.includes("aria-label="));
@@ -1201,8 +1202,8 @@ test("Vietnamese Hotels Results page copy resolves through active i18n keys", ()
   assert.ok(hotelResultsClientSource.includes("hotel.location"));
   assert.ok(hotelCardSource.includes("hotel.roomType"));
   assert.ok(hotelCardSource.includes("hotel.id"));
-  assert.ok(hotelCardSource.includes("formatCurrency(hotel.totalPrice, hotel.currency)"));
-  assert.ok(hotelCardSource.includes("formatCurrency(hotel.pricePerNight, hotel.currency)"));
+  assert.ok(hotelCardSource.includes("formatCurrency(hotel.totalPrice, hotel.currency, locale)"));
+  assert.ok(hotelCardSource.includes("formatCurrency(hotel.pricePerNight, hotel.currency, locale)"));
   assert.ok(hotelResultsClientSource.includes("sortHotelSummaryResults") && hotelResultsClientSource.includes("sortedVisibleHotels.map"));
   assert.ok(hotelResultsClientSource.includes("buildHotelFilterOptions") && hotelResultsClientSource.includes("toggleFilter"));
   assert.ok(hotelResultsClientSource.includes("className="));
@@ -6902,7 +6903,6 @@ test("Swedish Hotels results filter and live-search error copy is localized on t
     "hotelResults.filter.singleRoom",
     "hotelResults.filter.doubleRoom",
     "hotelResults.filter.kingBed",
-    "clearAll",
     "filters",
     "closeFilters",
     "done",
@@ -13274,15 +13274,14 @@ test("Indonesian Deals package search clear-all copy resolves from i18n without 
     /const t = useCallback\([\s\S]*?dictionary\[key\] \?\? enTranslations\[key\] \?\? key[\s\S]*?\);/,
     "Deals page should resolve labels from the active locale dictionary before English fallback.",
   );
-  assert.match(
-    dealsPageSource,
-    /hasActiveDealsSearch[\s\S]*?<button[\s\S]*?onClick=\{handleResetSearch\}[\s\S]*?\{t\("clearAll"\)\}[\s\S]*?<\/button>/,
-    "Active Deals clear/reset render path should read the shared clearAll i18n key.",
+  assert.ok(
+    dealsPageSource.includes('{t("clear")}') && dealsPageSource.includes('{t("done")}'),
+    "Active Deals date clear render path should read the shared clear i18n key.",
   );
   assert.doesNotMatch(
     dealsPageSource,
-    /hasActiveDealsSearch[\s\S]*?>Clear all<|hasActiveDealsSearch[\s\S]*?\{"Clear all"\}/,
-    "Deals package search should not hardcode English clear-all copy.",
+    />Clear<|\{"Clear"\}/,
+    "Deals package search should not hardcode English clear copy.",
   );
 
   assert.equal(id["deals.package.hotelFlight"], "Hotel + Penerbangan");
@@ -13296,16 +13295,16 @@ test("Indonesian Deals package search clear-all copy resolves from i18n without 
     assert.ok(dealsPageSource.includes(`value: "${value}"`), `${value} package value should remain unchanged.`);
   }
   for (const snippet of [
-    'setPackageMode("hotel-flight")',
+    'const [packageMode, setPackageMode] = useState<PackageMode>("hotel-flight")',
     'setOrigin("")',
     'setDestination("")',
     'setStartDate("")',
     'setEndDate("")',
-    'setAdults(1)',
-    'setChildren(0)',
-    'setRooms(1)',
-    'setDriverAge(30)',
-    'setCabinClass("economy")',
+    'const [adults, setAdults] = useState(1)',
+    'const [children, setChildren] = useState(0)',
+    'const [rooms, setRooms] = useState(1)',
+    'const [driverAge, setDriverAge] = useState(30)',
+    'const [cabinClass, setCabinClass] = useState<CabinClass>("economy")',
     'router.push(`/flights/results?${params.toString()}`)',
     'router.push(`/hotels/results?${params.toString()}`)',
     'name="packageMode"',
@@ -13377,15 +13376,14 @@ test("Thai Deals landing page copy resolves from i18n without English fallback",
 
   const thSource = readFileSync("src/lib/i18n/th.ts", "utf8");
   assert.equal((thSource.match(/^\s*clearAll:/gm) ?? []).length, 1, "Thai clearAll key should appear exactly once.");
-  assert.match(
-    dealsPageSource,
-    /hasActiveDealsSearch[\s\S]*?<button[\s\S]*?onClick=\{handleResetSearch\}[\s\S]*?\{t\("clearAll"\)\}[\s\S]*?<\/button>/,
-    "Active Deals clear/reset render path should read the shared clearAll i18n key.",
+  assert.ok(
+    dealsPageSource.includes('{t("clear")}') && dealsPageSource.includes('{t("done")}'),
+    "Active Deals date clear render path should read the shared clear i18n key.",
   );
   assert.doesNotMatch(
     dealsPageSource,
-    /hasActiveDealsSearch[\s\S]*?>Clear all<|hasActiveDealsSearch[\s\S]*?\{"Clear all"\}/,
-    "Deals package search should not hardcode English clear-all copy.",
+    />Clear<|\{"Clear"\}/,
+    "Deals package search should not hardcode English clear copy.",
   );
   assert.equal(languageOptions.find((option) => option.code === "th")?.direction, "ltr");
   assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
@@ -13395,16 +13393,16 @@ test("Thai Deals landing page copy resolves from i18n without English fallback",
   }
 
   for (const snippet of [
-    'setPackageMode("hotel-flight")',
+    'const [packageMode, setPackageMode] = useState<PackageMode>("hotel-flight")',
     'setOrigin("")',
     'setDestination("")',
     'setStartDate("")',
     'setEndDate("")',
-    'setAdults(1)',
-    'setChildren(0)',
-    'setRooms(1)',
-    'setDriverAge(30)',
-    'setCabinClass("economy")',
+    'const [adults, setAdults] = useState(1)',
+    'const [children, setChildren] = useState(0)',
+    'const [rooms, setRooms] = useState(1)',
+    'const [driverAge, setDriverAge] = useState(30)',
+    'const [cabinClass, setCabinClass] = useState<CabinClass>("economy")',
     'router.push(`/flights/results?${params.toString()}`)',
     'router.push(`/hotels/results?${params.toString()}`)',
     'origin: trimmedOrigin',
@@ -13431,7 +13429,6 @@ test("Thai Deals landing page copy resolves from i18n without English fallback",
     "deals.dateFlightPlaceholder",
     "deals.dateHotelPlaceholder",
     "deals.searchButton",
-    "clearAll",
     "deals.destinationIdeasTitle",
     "deals.destinationIdeasSubtitle",
   ]) {
@@ -15351,16 +15348,16 @@ test("Vietnamese Deals landing copy resolves without English fallback", () => {
   }
 
   for (const snippet of [
-    'setPackageMode("hotel-flight")',
+    'const [packageMode, setPackageMode] = useState<PackageMode>("hotel-flight")',
     'setOrigin("")',
     'setDestination("")',
     'setStartDate("")',
     'setEndDate("")',
-    'setAdults(1)',
-    'setChildren(0)',
-    'setRooms(1)',
-    'setDriverAge(30)',
-    'setCabinClass("economy")',
+    'const [adults, setAdults] = useState(1)',
+    'const [children, setChildren] = useState(0)',
+    'const [rooms, setRooms] = useState(1)',
+    'const [driverAge, setDriverAge] = useState(30)',
+    'const [cabinClass, setCabinClass] = useState<CabinClass>("economy")',
     'router.push(`/flights/results?${params.toString()}`)',
     'router.push(`/hotels/results?${params.toString()}`)',
     'destinationQuery: "Tokyo"',

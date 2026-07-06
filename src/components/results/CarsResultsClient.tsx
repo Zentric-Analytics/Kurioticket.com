@@ -315,27 +315,45 @@ const buildMonthCells = (monthDate: Date) => {
   });
 };
 
-const getWeekdays = (intlLocale: string) =>
-  Array.from({ length: 7 }, (_, index) =>
+const getWeekdays = (intlLocale: string) => {
+  if (intlLocale.toLowerCase().startsWith("th")) {
+    return ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
+  }
+
+  return Array.from({ length: 7 }, (_, index) =>
     new Intl.DateTimeFormat(intlLocale, { weekday: "short" }).format(
       new Date(2024, 0, 7 + index),
     ),
   );
+};
+
+const twentyFourHourTimeLocales = ["de", "es", "fr", "id", "ja", "nl", "pl", "pt", "sv", "tr"];
 
 export const formatTimeLabel = (time: string, intlLocale: string) => {
   const [hourValue, minuteValue] = time.split(":").map(Number);
-
-  if (Number.isNaN(hourValue) || Number.isNaN(minuteValue)) {
-    return time || new Intl.DateTimeFormat(intlLocale, {
-      hour: "numeric",
-      minute: "2-digit",
-    }).format(new Date(2024, 0, 1, 10, 0));
-  }
-
-  return new Intl.DateTimeFormat(intlLocale, {
+  const normalizedLocale = intlLocale.toLowerCase();
+  const timeSeparator = intlLocale.toLowerCase().startsWith("id") ? "." : ":";
+  const shouldUseTwentyFourHourTime = twentyFourHourTimeLocales.some((localePrefix) =>
+    normalizedLocale.startsWith(localePrefix),
+  );
+  const dateTimeFormatOptions: Intl.DateTimeFormatOptions = {
     hour: "numeric",
     minute: "2-digit",
-  }).format(new Date(2024, 0, 1, hourValue, minuteValue));
+    ...(shouldUseTwentyFourHourTime ? { hourCycle: "h23" } : {}),
+  };
+
+  if (Number.isNaN(hourValue) || Number.isNaN(minuteValue)) {
+    const formattedFallback = new Intl.DateTimeFormat(
+      intlLocale,
+      dateTimeFormatOptions,
+    ).format(new Date(2024, 0, 1, 10, 0));
+
+    return time || formattedFallback.replace(":", timeSeparator);
+  }
+
+  return new Intl.DateTimeFormat(intlLocale, dateTimeFormatOptions)
+    .format(new Date(2024, 0, 1, hourValue, minuteValue))
+    .replace(":", timeSeparator);
 };
 
 const normalizeDriverAge = (value: string) =>
