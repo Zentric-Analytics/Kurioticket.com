@@ -633,10 +633,12 @@ export function FlightLandingClient() {
                 {t("beachVacationsBody")}
               </p>
             </div>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {beachVacationCards.map((item) => (
-                <RouteCard key={item.id} item={item} t={t} />
-              ))}
+            <div className="overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 [&::-webkit-scrollbar]:hidden">
+              <div className="grid auto-cols-[minmax(250px,84vw)] grid-flow-col gap-4 sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+                {beachVacationCards.map((item) => (
+                  <RouteCard key={item.id} item={item} t={t} />
+                ))}
+              </div>
             </div>
           </div>
         ) : null}
