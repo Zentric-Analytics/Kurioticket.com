@@ -2538,6 +2538,8 @@ flightLandingRouteAriaLabel:
   footerMoreServiceInfo: "Plus d’infos sur le service",
   footerDiscover: "Découvrir",
   footerSavedRecent: "Enregistrés et récents",
+  footerSavedTrips: "Voyages enregistrés",
+  footerRecentSearches: "Recherches récentes",
   footerTermsSettings: "Conditions et paramètres",
   footerPrivacyPolicy: "Politique de confidentialité",
   footerTermsOfService: "Conditions d’utilisation",

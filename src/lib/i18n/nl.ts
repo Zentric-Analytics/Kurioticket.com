@@ -1011,6 +1011,8 @@ export const translations: TranslationDictionary = {
   "destinations.country.oman": "Oman",
   "destinations.country.saudiArabia": "Saoedi-Arabië",
   footerSavedRecent: "Opgeslagen en recent",
+  footerSavedTrips: "Opgeslagen reizen",
+  footerRecentSearches: "Recente zoekopdrachten",
   footerTermsSettings: "Voorwaarden en instellingen",
   footerPrivacyPolicy: "Privacybeleid",
   footerTermsOfService: "Servicevoorwaarden",

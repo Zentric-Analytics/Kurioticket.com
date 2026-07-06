@@ -1315,6 +1315,8 @@ export const translations: TranslationDictionary = {
   footerMoreServiceInfo: "Info Layanan Lainnya",
   footerDiscover: "Jelajahi",
   footerSavedRecent: "Tersimpan & terbaru",
+  footerSavedTrips: "Perjalanan tersimpan",
+  footerRecentSearches: "Pencarian terbaru",
   footerTermsSettings: "Ketentuan & Pengaturan",
   footerPrivacyPolicy: "Kebijakan Privasi",
   footerTermsOfService: "Ketentuan Layanan",

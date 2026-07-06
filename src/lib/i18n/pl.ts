@@ -1089,6 +1089,8 @@ export const translations: TranslationDictionary = {
   footerMoreServiceInfo: "Więcej informacji o usłudze",
   footerDiscover: "Odkrywaj",
   footerSavedRecent: "Zapisane i ostatnie",
+  footerSavedTrips: "Zapisane podróże",
+  footerRecentSearches: "Ostatnie wyszukiwania",
   footerTermsSettings: "Warunki i ustawienia",
   footerPrivacyPolicy: "Polityka prywatności",
   footerTermsOfService: "Warunki korzystania",

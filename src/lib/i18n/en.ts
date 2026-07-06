@@ -2423,6 +2423,8 @@ export const translations: TranslationDictionary = {
   footerMoreServiceInfo: "More Service Info",
   footerDiscover: "Discover",
   footerSavedRecent: "Saved & recent",
+  footerSavedTrips: "Saved trips",
+  footerRecentSearches: "Recent searches",
   footerTermsSettings: "Terms & Settings",
   footerPrivacyPolicy: "Privacy Policy",
   footerTermsOfService: "Terms of Service",

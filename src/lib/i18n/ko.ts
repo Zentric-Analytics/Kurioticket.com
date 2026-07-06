@@ -1360,6 +1360,8 @@ export const translations: TranslationDictionary = {
   explore: "탐색",
   dashboard: "대시보드",
   footerSavedRecent: "저장 및 최근 항목",
+  footerSavedTrips: "저장한 여행",
+  footerRecentSearches: "최근 검색",
   footerContactUs: "문의하기",
   footerCustomerSupport: "고객 지원",
   footerServiceGuarantee: "서비스 보장",

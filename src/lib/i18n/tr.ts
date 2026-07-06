@@ -1441,6 +1441,8 @@ export const translations: TranslationDictionary = {
   footerMoreServiceInfo: "Daha Fazla Hizmet Bilgisi",
   footerDiscover: "Keşfet",
   footerSavedRecent: "Kaydedilenler ve son aramalar",
+  footerSavedTrips: "Kaydedilen seyahatler",
+  footerRecentSearches: "Son aramalar",
   footerTermsSettings: "Şartlar ve Ayarlar",
   footerPrivacyPolicy: "Gizlilik Politikası",
   footerTermsOfService: "Hizmet Şartları",

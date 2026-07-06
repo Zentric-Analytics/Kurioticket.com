@@ -1470,6 +1470,8 @@ export const translations: TranslationDictionary = {
   footerMoreServiceInfo: "ข้อมูลบริการเพิ่มเติม",
   footerDiscover: "สำรวจ",
   footerSavedRecent: "ที่บันทึกไว้และล่าสุด",
+  footerSavedTrips: "ทริปที่บันทึกไว้",
+  footerRecentSearches: "การค้นหาล่าสุด",
   footerTermsSettings: "ข้อกำหนดและการตั้งค่า",
   footerPrivacyPolicy: "นโยบายความเป็นส่วนตัว",
   footerTermsOfService: "ข้อกำหนดการให้บริการ",

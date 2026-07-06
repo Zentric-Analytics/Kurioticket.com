@@ -1589,6 +1589,8 @@ export const translations: TranslationDictionary = {
     "قد تُستكمل بعض الحجوزات على مواقع المزوّدين بعد أن يعيدك Kurioticket إليها. راجع صفحة المزوّد للتأكد من التوافر النهائي والأسعار والشروط وخطوات الدفع وتفاصيل الحجز قبل إتمام الشراء.",
   footerDiscover: "اكتشف",
   footerSavedRecent: "المحفوظات والحديثة",
+  footerSavedTrips: "الرحلات المحفوظة",
+  footerRecentSearches: "عمليات البحث الأخيرة",
   footerTermsSettings: "الشروط والإعدادات",
   footerPrivacyPolicy: "سياسة الخصوصية",
   footerTermsOfService: "شروط الخدمة",

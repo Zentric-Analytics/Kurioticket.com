@@ -1176,6 +1176,8 @@ export const translations: TranslationDictionary = {
   footerMoreServiceInfo: "Thêm thông tin dịch vụ",
   footerDiscover: "Khám phá",
   footerSavedRecent: "Đã lưu & gần đây",
+  footerSavedTrips: "Chuyến đi đã lưu",
+  footerRecentSearches: "Tìm kiếm gần đây",
   footerTermsSettings: "Điều khoản & cài đặt",
   legalCenter: "Trung tâm pháp lý",
   "legalCenter.heroLabel": "Thông tin pháp lý",
