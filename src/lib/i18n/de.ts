@@ -2218,6 +2218,8 @@ flightLandingRouteAriaLabel:
   footerMoreServiceInfo: "Weitere Serviceinformationen",
   footerDiscover: "Entdecken",
   footerSavedRecent: "Gespeichert & zuletzt angesehen",
+  footerSavedTrips: "Gespeicherte Reisen",
+  footerRecentSearches: "Letzte Suchen",
   footerTermsSettings: "Bedingungen & Einstellungen",
   footerPrivacyPolicy: "Datenschutzrichtlinie",
   footerTermsOfService: "Nutzungsbedingungen",

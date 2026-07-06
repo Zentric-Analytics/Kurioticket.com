@@ -1226,6 +1226,8 @@ export const translations: TranslationDictionary = {
   saved: "Sparade",
   dashboard: "Instrumentpanel",
   'footerSavedRecent': 'Sparat och senaste',
+  'footerSavedTrips': 'Sparade resor',
+  'footerRecentSearches': 'Senaste sökningar',
   'footerTermsSettings': 'Villkor och inställningar',
   'footerPrivacyPolicy': 'Integritetspolicy',
   'footerTermsOfService': 'Användarvillkor',

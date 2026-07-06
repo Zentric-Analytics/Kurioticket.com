@@ -1241,6 +1241,8 @@ export const translations: TranslationDictionary = {
   footerMoreServiceInfo: "サービス詳細情報",
   footerDiscover: "見つける",
   footerSavedRecent: "保存済み・最近の検索",
+  footerSavedTrips: "保存した旅行",
+  footerRecentSearches: "最近の検索",
   footerTermsSettings: "規約と設定",
   footerPrivacyPolicy: "プライバシーポリシー",
   footerTermsOfService: "利用規約",

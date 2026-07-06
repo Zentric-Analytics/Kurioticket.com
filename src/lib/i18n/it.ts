@@ -1213,6 +1213,8 @@ export const translations: TranslationDictionary = {
   footerMoreServiceInfo: "Maggiori informazioni sul servizio",
   footerDiscover: "Scopri",
   footerSavedRecent: "Salvati e recenti",
+  footerSavedTrips: "Viaggi salvati",
+  footerRecentSearches: "Ricerche recenti",
   footerTermsSettings: "Termini e impostazioni",
   footerPrivacyPolicy: "Informativa sulla privacy",
   footerTermsOfService: "Termini di servizio",

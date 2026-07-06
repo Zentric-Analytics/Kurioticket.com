@@ -1420,6 +1420,8 @@ export const translations: TranslationDictionary = {
   footerMoreServiceInfo: "更多服务信息",
   footerDiscover: "发现",
   footerSavedRecent: "已保存与最近查看",
+  footerSavedTrips: "已保存行程",
+  footerRecentSearches: "最近搜索",
   footerTermsSettings: "条款与设置",
   footerPrivacyPolicy: "隐私政策",
   footerTermsOfService: "服务条款",

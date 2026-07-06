@@ -14202,7 +14202,8 @@ test("Thai footer Discover destinations link resolves through active i18n key", 
     ["cars", "รถเช่า"],
     ["deals", "ดีล"],
     ["destinations", "จุดหมายปลายทาง"],
-    ["footerSavedRecent", "ที่บันทึกไว้และล่าสุด"],
+    ["footerSavedTrips", "ทริปที่บันทึกไว้"],
+    ["footerRecentSearches", "การค้นหาล่าสุด"],
   ] as const;
 
   for (const [key, expected] of expectedDiscoverLabels) {
@@ -14210,7 +14211,7 @@ test("Thai footer Discover destinations link resolves through active i18n key", 
     assert.notEqual(th[key], (enTranslations as Record<string, string>)[key], `${key} should not fall back to English`);
   }
 
-  assert.match(footerSource, /heading: t\.footerDiscover,[\s\S]*?label: t\.flights,[\s\S]*?href: "\/flights",[\s\S]*?label: t\.hotels,[\s\S]*?href: "\/hotels\/results",[\s\S]*?label: t\.cars,[\s\S]*?href: "\/cars",[\s\S]*?label: t\.deals,[\s\S]*?href: "\/deals",[\s\S]*?label: t\.destinations,[\s\S]*?href: "\/destinations",[\s\S]*?label: t\.footerSavedRecent,[\s\S]*?href: "\/saved",/);
+  assert.match(footerSource, /heading: t\.footerDiscover,[\s\S]*?label: t\.flights,[\s\S]*?href: "\/flights",[\s\S]*?label: t\.hotels,[\s\S]*?href: "\/hotels\/results",[\s\S]*?label: t\.cars,[\s\S]*?href: "\/cars",[\s\S]*?label: t\.deals,[\s\S]*?href: "\/deals",[\s\S]*?label: t\.destinations,[\s\S]*?href: "\/destinations",[\s\S]*?label: t\.footerSavedTrips,[\s\S]*?href: "\/saved",[\s\S]*?label: t\.footerRecentSearches,[\s\S]*?href: "\/recent-searches",/);
   assert.ok(!footerSource.includes('label: "Destinations"'));
   assert.ok(footerSource.includes('className="border-t border-slate-200 bg-white text-slate-700"'));
   assert.ok(footerSource.includes('className="transition-colors hover:text-[#004BB8]"'));

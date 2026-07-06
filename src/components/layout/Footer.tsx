@@ -55,8 +55,12 @@ export function Footer() {
           href: "/destinations",
         },
         {
-          label: t.footerSavedRecent,
+          label: t.footerSavedTrips,
           href: "/saved",
+        },
+        {
+          label: t.footerRecentSearches,
+          href: "/recent-searches",
         },
       ],
     },

@@ -1631,6 +1631,8 @@ export const translations: TranslationDictionary = {
   footerMoreServiceInfo: "अधिक सेवा जानकारी",
   footerDiscover: "खोजें",
   footerSavedRecent: "सहेजे गए और हाल के",
+  footerSavedTrips: "सहेजी गई यात्राएँ",
+  footerRecentSearches: "हाल की खोजें",
   footerTermsSettings: "शर्तें और सेटिंग्स",
   footerPrivacyPolicy: "गोपनीयता नीति",
   footerTermsOfService: "सेवा की शर्तें",
