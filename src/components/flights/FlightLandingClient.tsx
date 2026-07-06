@@ -515,7 +515,7 @@ export function FlightLandingClient() {
               {t("discoverDestinationsFromRegionBody")}
             </p>
           </div>
-          <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.28)] ring-1 ring-white/80 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:ring-0">
+          <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.28)] ring-1 ring-white/80 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:ring-0">
             <div className="grid auto-cols-[minmax(260px,86vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
               {discoveryCards.map((item, index) => (
                 <RouteCard key={item.id} item={item} priority={index < 2} t={t} />
@@ -582,42 +582,44 @@ export function FlightLandingClient() {
                 {t("flightLandingRouteIdeasBody")}
               </p>
             </div>
-            <div className="overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 [&::-webkit-scrollbar]:hidden">
-              <div className="grid auto-cols-[minmax(148px,42vw)] grid-flow-col grid-rows-2 gap-3 sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 sm:grid-rows-none sm:gap-4 lg:grid-cols-4">
-                {routeInspirationCards.map((item) => {
-                  const routeText = getRouteText(item, t);
+            <div className="rounded-[1.5rem] border border-slate-200/80 bg-slate-50/90 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:ring-0">
+              <div className="overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 [&::-webkit-scrollbar]:hidden">
+                <div className="grid auto-cols-[minmax(148px,42vw)] grid-flow-col grid-rows-2 gap-3 sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 sm:grid-rows-none sm:gap-4 lg:grid-cols-4">
+                  {routeInspirationCards.map((item) => {
+                    const routeText = getRouteText(item, t);
 
-                  return (
-                    <Link
-                      key={item.id}
-                      href={buildDiscoveryLink(item)}
-                      className="group block overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_12px_32px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-[0_16px_36px_rgba(0,75,184,0.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 sm:rounded-3xl"
-                    >
-                      <article className="flex h-full flex-col">
-                        <div className="relative h-[6.75rem] overflow-hidden bg-slate-100 sm:h-32">
-                          <Image
-                            src={item.image}
-                            alt={routeText.imageAlt}
-                            fill
-                            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 42vw"
-                            className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
-                          />
-                        </div>
-                        <div className="flex flex-1 flex-col p-3.5 sm:p-5">
-                          <p className="text-[0.68rem] font-bold uppercase leading-4 tracking-[0.14em] text-[#004BB8] sm:text-[0.72rem]">
-                            {item.originCode} → {item.destinationCode}
-                          </p>
-                          <h3 className="mt-2 text-[0.95rem] font-bold leading-tight tracking-[-0.015em] text-slate-950 sm:mt-3 sm:text-lg sm:leading-6">
-                            {routeText.destinationCity}
-                          </h3>
-                          <p className="mt-1.5 line-clamp-2 text-xs font-medium leading-5 text-slate-600 sm:mt-2.5 sm:text-sm sm:leading-6">
-                            {routeText.routeNote}
-                          </p>
-                        </div>
-                      </article>
-                    </Link>
-                  );
-                })}
+                    return (
+                      <Link
+                        key={item.id}
+                        href={buildDiscoveryLink(item)}
+                        className="group block overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_12px_32px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-[0_16px_36px_rgba(0,75,184,0.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 sm:rounded-3xl"
+                      >
+                        <article className="flex h-full flex-col">
+                          <div className="relative h-[6.75rem] overflow-hidden bg-slate-100 sm:h-32">
+                            <Image
+                              src={item.image}
+                              alt={routeText.imageAlt}
+                              fill
+                              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 42vw"
+                              className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+                            />
+                          </div>
+                          <div className="flex flex-1 flex-col p-3.5 sm:p-5">
+                            <p className="text-[0.68rem] font-bold uppercase leading-4 tracking-[0.14em] text-[#004BB8] sm:text-[0.72rem]">
+                              {item.originCode} → {item.destinationCode}
+                            </p>
+                            <h3 className="mt-2 text-[0.95rem] font-bold leading-tight tracking-[-0.015em] text-slate-950 sm:mt-3 sm:text-lg sm:leading-6">
+                              {routeText.destinationCity}
+                            </h3>
+                            <p className="mt-1.5 line-clamp-2 text-xs font-medium leading-5 text-slate-600 sm:mt-2.5 sm:text-sm sm:leading-6">
+                              {routeText.routeNote}
+                            </p>
+                          </div>
+                        </article>
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
@@ -633,11 +635,13 @@ export function FlightLandingClient() {
                 {t("beachVacationsBody")}
               </p>
             </div>
-            <div className="overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 [&::-webkit-scrollbar]:hidden">
-              <div className="grid auto-cols-[minmax(250px,84vw)] grid-flow-col gap-4 sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
-                {beachVacationCards.map((item) => (
-                  <RouteCard key={item.id} item={item} t={t} />
-                ))}
+            <div className="rounded-[1.5rem] border border-slate-200/80 bg-slate-50/90 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:ring-0">
+              <div className="overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 [&::-webkit-scrollbar]:hidden">
+                <div className="grid auto-cols-[minmax(250px,84vw)] grid-flow-col gap-4 sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+                  {beachVacationCards.map((item) => (
+                    <RouteCard key={item.id} item={item} t={t} />
+                  ))}
+                </div>
               </div>
             </div>
           </div>
