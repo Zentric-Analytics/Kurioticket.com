@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 
 import { AppHeader } from "@/components/layout/AppHeader";
+import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { Footer } from "@/components/layout/Footer";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
@@ -144,6 +145,14 @@ const trustCards = [
     icon: ShieldCheck,
   },
 ];
+
+type CarsMobilePicker =
+  | "pickupLocation"
+  | "dropoffLocation"
+  | "dates"
+  | "times"
+  | "driverAge"
+  | null;
 
 type TranslatedCarImageCard = CarImageCard & {
   title: string;
@@ -555,10 +564,19 @@ function CarsSearchBar({
   const { t } = useCarsLandingTranslations();
   const pickupLocationRef = useRef<HTMLInputElement | null>(null);
   const dropoffLocationRef = useRef<HTMLInputElement | null>(null);
+  const pickupLocationLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const dropoffLocationLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const datesLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const timesLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const driverAgeLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const pickupMobileInputRef = useRef<HTMLInputElement | null>(null);
+  const dropoffMobileInputRef = useRef<HTMLInputElement | null>(null);
   const dateWrapRef = useRef<HTMLDivElement | null>(null);
   const timeWrapRef = useRef<HTMLDivElement | null>(null);
   const [datesOpen, setDatesOpen] = useState(false);
   const [timesOpen, setTimesOpen] = useState(false);
+  const [activeMobilePicker, setActiveMobilePicker] =
+    useState<CarsMobilePicker>(null);
   const [visibleMonthDate, setVisibleMonthDate] = useState(() => {
     const parsedPickup = parseIsoDate(values.pickupDate);
 
@@ -574,6 +592,13 @@ function CarsSearchBar({
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
 
+      if (
+        target instanceof Element &&
+        target.closest("[data-flight-mobile-picker-shell]")
+      ) {
+        return;
+      }
+
       if (datesOpen && !dateWrapRef.current?.contains(target)) {
         setDatesOpen(false);
       }
@@ -587,6 +612,7 @@ function CarsSearchBar({
       if (event.key === "Escape") {
         setDatesOpen(false);
         setTimesOpen(false);
+        setActiveMobilePicker(null);
       }
     };
 
@@ -599,7 +625,44 @@ function CarsSearchBar({
     };
   }, [datesOpen, timesOpen]);
 
+  const isMobilePickerViewport = () =>
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 639px)").matches;
+
+  const openMobilePicker = (picker: Exclude<CarsMobilePicker, null>) => {
+    setDatesOpen(false);
+    setTimesOpen(false);
+    setActiveMobilePicker(picker);
+  };
+
+  useEffect(() => {
+    if (
+      (activeMobilePicker !== "pickupLocation" &&
+        activeMobilePicker !== "dropoffLocation") ||
+      typeof window === "undefined"
+    ) {
+      return;
+    }
+
+    const focusId = window.setTimeout(() => {
+      const inputRef =
+        activeMobilePicker === "pickupLocation"
+          ? pickupMobileInputRef
+          : dropoffMobileInputRef;
+
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }, 80);
+
+    return () => window.clearTimeout(focusId);
+  }, [activeMobilePicker]);
+
   const toggleDates = () => {
+    if (isMobilePickerViewport()) {
+      openMobilePicker("dates");
+      return;
+    }
+
     setDatesOpen((current) => {
       const nextOpen = !current;
 
@@ -612,6 +675,11 @@ function CarsSearchBar({
   };
 
   const toggleTimes = () => {
+    if (isMobilePickerViewport()) {
+      openMobilePicker("times");
+      return;
+    }
+
     setTimesOpen((current) => {
       const nextOpen = !current;
 
@@ -670,6 +738,19 @@ function CarsSearchBar({
             >
               <div className="grid gap-2">
                 <div className="relative">
+                  <button
+                    ref={pickupLocationLauncherRef}
+                    type="button"
+                    onClick={() => openMobilePicker("pickupLocation")}
+                    className={`flex h-7 w-full items-center border-none bg-transparent py-0 ps-0 pe-9 text-start text-[16px] font-semibold focus:outline-none sm:hidden ${
+                      values.pickupLocation ? "text-slate-950" : "text-slate-400"
+                    }`}
+                  >
+                    <span className="truncate">
+                      {values.pickupLocation ||
+                        t("carsSearch.pickupLocationPlaceholder")}
+                    </span>
+                  </button>
                   <input
                     ref={pickupLocationRef}
                     id="pickupLocation"
@@ -680,7 +761,7 @@ function CarsSearchBar({
                       updateValue("pickupLocation", event.target.value)
                     }
                     placeholder={t("carsSearch.pickupLocationPlaceholder")}
-                    className="h-7 w-full border-none bg-transparent py-0 ps-0 pe-9 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none md:text-sm lg:h-8"
+                    className="hidden h-7 w-full border-none bg-transparent py-0 ps-0 pe-9 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-sm lg:h-8"
                     autoComplete="off"
                   />
 
@@ -701,6 +782,21 @@ function CarsSearchBar({
 
                 {values.returnToDifferentLocation ? (
                   <div className="relative">
+                    <button
+                      ref={dropoffLocationLauncherRef}
+                      type="button"
+                      onClick={() => openMobilePicker("dropoffLocation")}
+                      className={`flex h-7 w-full items-center border-t border-slate-100 bg-transparent py-0 ps-0 pe-9 pt-1.5 text-start text-[16px] font-semibold focus:outline-none sm:hidden ${
+                        values.dropoffLocation
+                          ? "text-slate-950"
+                          : "text-slate-400"
+                      }`}
+                    >
+                      <span className="truncate">
+                        {values.dropoffLocation ||
+                          t("carsSearch.returnLocationPlaceholder")}
+                      </span>
+                    </button>
                     <input
                       ref={dropoffLocationRef}
                       id="dropoffLocation"
@@ -711,7 +807,7 @@ function CarsSearchBar({
                         updateValue("dropoffLocation", event.target.value)
                       }
                       placeholder={t("carsSearch.returnLocationPlaceholder")}
-                      className="h-7 w-full border-t border-slate-100 bg-transparent py-0 ps-0 pe-9 pt-1.5 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none md:text-sm lg:h-8 lg:pt-2"
+                      className="hidden h-7 w-full border-t border-slate-100 bg-transparent py-0 ps-0 pe-9 pt-1.5 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-sm lg:h-8 lg:pt-2"
                       autoComplete="off"
                     />
 
@@ -757,6 +853,7 @@ function CarsSearchBar({
                 onToggle={toggleDates}
                 pickupDate={values.pickupDate}
                 visibleMonthDate={visibleMonthDate}
+                launcherRef={datesLauncherRef}
                 wrapRef={dateWrapRef}
               />
             </SearchCell>
@@ -772,6 +869,7 @@ function CarsSearchBar({
                 pickupTime={values.pickupTime}
                 returnTime={values.dropoffTime}
                 updateValue={updateValue}
+                launcherRef={timesLauncherRef}
                 wrapRef={timeWrapRef}
               />
             </SearchCell>
@@ -780,6 +878,19 @@ function CarsSearchBar({
               label={t("carsSearch.driverAgeLabel")}
               error={errors.driverAge}
             >
+              <button
+                ref={driverAgeLauncherRef}
+                type="button"
+                onClick={() => openMobilePicker("driverAge")}
+                className="flex h-7 w-full items-center justify-between gap-2 border-none bg-transparent p-0 text-start text-[16px] font-semibold text-slate-950 focus:outline-none sm:hidden"
+              >
+                <span className="truncate">
+                  {values.driverAge === defaultDriverAge
+                    ? t("carsSearch.driverAgeAnyAgeRange")
+                    : getDriverAgeOptionLabel(values.driverAge)}
+                </span>
+                <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+              </button>
               <select
                 id="driverAge"
                 name="driverAge"
@@ -787,7 +898,7 @@ function CarsSearchBar({
                 onChange={(event) =>
                   updateValue("driverAge", event.target.value)
                 }
-                className="h-7 w-full border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none md:text-sm lg:h-8"
+                className="hidden h-7 w-full border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none sm:block md:text-sm lg:h-8"
               >
                 {driverAgeOptions.map((age) => (
                   <option key={age} value={age}>
@@ -837,8 +948,312 @@ function CarsSearchBar({
             </button>
           ) : null}
         </div>
+
+        <CarsMobilePickerDialogs
+          activeMobilePicker={activeMobilePicker}
+          clearRentalDates={clearRentalDates}
+          dropoffMobileInputRef={dropoffMobileInputRef}
+          driverAgeLauncherRef={driverAgeLauncherRef}
+          pickupMobileInputRef={pickupMobileInputRef}
+          pickupLocationLauncherRef={pickupLocationLauncherRef}
+          dropoffLocationLauncherRef={dropoffLocationLauncherRef}
+          datesLauncherRef={datesLauncherRef}
+          timesLauncherRef={timesLauncherRef}
+          onClose={() => setActiveMobilePicker(null)}
+          onNextMonth={() =>
+            setVisibleMonthDate((current) => addMonths(current, 1))
+          }
+          onPreviousMonth={() =>
+            setVisibleMonthDate((current) => addMonths(current, -1))
+          }
+          onSelectDate={selectRentalDate}
+          updateValue={updateValue}
+          values={values}
+          visibleMonthDate={visibleMonthDate}
+        />
+
       </form>
     </section>
+  );
+}
+
+
+function CarsMobilePickerDialogs({
+  activeMobilePicker,
+  clearRentalDates,
+  datesLauncherRef,
+  driverAgeLauncherRef,
+  dropoffLocationLauncherRef,
+  dropoffMobileInputRef,
+  pickupLocationLauncherRef,
+  pickupMobileInputRef,
+  timesLauncherRef,
+  onClose,
+  onNextMonth,
+  onPreviousMonth,
+  onSelectDate,
+  updateValue,
+  values,
+  visibleMonthDate,
+}: {
+  activeMobilePicker: CarsMobilePicker;
+  clearRentalDates: () => void;
+  datesLauncherRef: RefObject<HTMLButtonElement | null>;
+  driverAgeLauncherRef: RefObject<HTMLButtonElement | null>;
+  dropoffLocationLauncherRef: RefObject<HTMLButtonElement | null>;
+  dropoffMobileInputRef: RefObject<HTMLInputElement | null>;
+  pickupLocationLauncherRef: RefObject<HTMLButtonElement | null>;
+  pickupMobileInputRef: RefObject<HTMLInputElement | null>;
+  timesLauncherRef: RefObject<HTMLButtonElement | null>;
+  onClose: () => void;
+  onNextMonth: () => void;
+  onPreviousMonth: () => void;
+  onSelectDate: (date: Date) => void;
+  updateValue: <Key extends keyof CarsFormValues>(
+    key: Key,
+    value: CarsFormValues[Key],
+  ) => void;
+  values: CarsFormValues;
+  visibleMonthDate: Date;
+}) {
+  const { locale, t } = useCarsLandingTranslations();
+  const intlLocale = getCarsIntlLocale(locale);
+  const weekdays = useMemo(() => formatCarWeekdays(intlLocale), [intlLocale]);
+  const pickupParsed = parseIsoDate(values.pickupDate);
+  const dropoffParsed = parseIsoDate(values.dropoffDate);
+  const timeListClass =
+    "grid max-h-72 gap-2 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2";
+
+  return (
+    <>
+      <FlightMobilePickerShell
+        open={activeMobilePicker === "pickupLocation"}
+        title={t("carsSearch.pickupLocationLabel")}
+        titleId="cars-mobile-pickup-location-title"
+        launcherRef={pickupLocationLauncherRef}
+        onClose={onClose}
+        footer={(requestClose) => (
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => updateValue("pickupLocation", "")}
+              className="focus-ring rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700"
+            >
+              {t("clear")}
+            </button>
+            <button
+              type="button"
+              onClick={requestClose}
+              className="focus-ring rounded-full bg-[#004BB8] px-5 py-2 text-sm font-bold text-white"
+            >
+              {t("done")}
+            </button>
+          </div>
+        )}
+      >
+        <input
+          ref={pickupMobileInputRef}
+          id="pickupLocationMobile"
+          type="text"
+          value={values.pickupLocation}
+          onChange={(event) =>
+            updateValue("pickupLocation", event.target.value)
+          }
+          placeholder={t("carsSearch.pickupLocationPlaceholder")}
+          className="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400"
+          autoComplete="off"
+        />
+      </FlightMobilePickerShell>
+
+      <FlightMobilePickerShell
+        open={activeMobilePicker === "dropoffLocation"}
+        title={t("carsSearch.returnLocationPlaceholder")}
+        titleId="cars-mobile-dropoff-location-title"
+        launcherRef={dropoffLocationLauncherRef}
+        onClose={onClose}
+        footer={(requestClose) => (
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => updateValue("dropoffLocation", "")}
+              className="focus-ring rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700"
+            >
+              {t("clear")}
+            </button>
+            <button
+              type="button"
+              onClick={requestClose}
+              className="focus-ring rounded-full bg-[#004BB8] px-5 py-2 text-sm font-bold text-white"
+            >
+              {t("done")}
+            </button>
+          </div>
+        )}
+      >
+        <input
+          ref={dropoffMobileInputRef}
+          id="dropoffLocationMobile"
+          type="text"
+          value={values.dropoffLocation}
+          onChange={(event) =>
+            updateValue("dropoffLocation", event.target.value)
+          }
+          placeholder={t("carsSearch.returnLocationPlaceholder")}
+          className="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400"
+          autoComplete="off"
+        />
+      </FlightMobilePickerShell>
+
+      <FlightMobilePickerShell
+        open={activeMobilePicker === "dates"}
+        title={t("carsSearch.chooseRentalDates")}
+        titleId="cars-mobile-rental-dates-title"
+        launcherRef={datesLauncherRef}
+        onClose={onClose}
+        footer={(requestClose) => (
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={clearRentalDates}
+              className="focus-ring rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700"
+            >
+              {t("clear")}
+            </button>
+            <button
+              type="button"
+              onClick={requestClose}
+              className="focus-ring rounded-full bg-[#004BB8] px-5 py-2 text-sm font-bold text-white"
+            >
+              {t("done")}
+            </button>
+          </div>
+        )}
+      >
+        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <button type="button" onClick={onPreviousMonth} className="focus-ring rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700">{t("carsSearch.previousMonthShort")}</button>
+            <button type="button" onClick={onNextMonth} className="focus-ring rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700">{t("carsSearch.nextMonthShort")}</button>
+          </div>
+          <div className="grid gap-5">
+            {[0, 1].map((monthOffset) => {
+              const monthDate = addMonths(visibleMonthDate, monthOffset);
+              const cells = buildMonthCells(monthDate);
+
+              return (
+                <div key={monthOffset}>
+                  <p className="mb-2 text-center text-sm font-bold text-slate-900">
+                    {monthDate.toLocaleDateString(intlLocale, { month: "long", year: "numeric" })}
+                  </p>
+                  <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-500">
+                    {weekdays.map((weekday) => <span key={weekday}>{weekday}</span>)}
+                  </div>
+                  <div className="grid grid-cols-7 gap-1.5">
+                    {cells.map((cell) => {
+                      const day = cell.date;
+                      const iso = toIsoDate(day);
+                      const isPickup = iso === values.pickupDate;
+                      const isDropoff = iso === values.dropoffDate;
+                      const isPastDate = isBeforeToday(day);
+                      const isInRange = Boolean(pickupParsed && dropoffParsed && !isPastDate && day > pickupParsed && day < dropoffParsed);
+
+                      if (!cell.isCurrentMonth) {
+                        return <span key={`mobile-placeholder-${iso}`} aria-hidden="true" className="h-10" />;
+                      }
+
+                      return (
+                        <button
+                          key={iso}
+                          type="button"
+                          aria-label={`${t("carsSearch.selectDateAriaPrefix")} ${formatCarFullDate(day, intlLocale)}`}
+                          onClick={() => onSelectDate(day)}
+                          disabled={isPastDate}
+                          className={`focus-ring flex h-10 items-center justify-center rounded-full text-sm font-semibold disabled:cursor-not-allowed ${
+                            isPastDate ? "text-slate-300" : "text-slate-900 hover:bg-[#004BB8]/8"
+                          } ${isInRange ? "rounded-xl bg-[#004BB8]/10 text-[#021C2B]" : ""} ${
+                            isPickup || isDropoff ? "bg-[#004BB8] text-white hover:bg-[#004BB8]" : ""
+                          }`}
+                        >
+                          {day.getDate()}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </FlightMobilePickerShell>
+
+      <FlightMobilePickerShell
+        open={activeMobilePicker === "times"}
+        title={t("carsSearch.pickupReturnTimeLabel")}
+        titleId="cars-mobile-times-title"
+        launcherRef={timesLauncherRef}
+        onClose={onClose}
+        footer={(requestClose) => (
+          <button type="button" onClick={requestClose} className="focus-ring w-full rounded-full bg-[#004BB8] px-5 py-3 text-sm font-bold text-white">{t("done")}</button>
+        )}
+      >
+        <div className="grid gap-5">
+          {[
+            ["pickupTime", t("carsSearch.pickupTimeLabel"), values.pickupTime],
+            ["dropoffTime", t("carsSearch.returnTimeLabel"), values.dropoffTime],
+          ].map(([field, label, selectedTime]) => (
+            <section key={field} className="space-y-2">
+              <h3 className="px-1 text-xs font-bold uppercase tracking-wide text-slate-500">{label}</h3>
+              <div className={timeListClass}>
+                {timeOptions.map((time) => (
+                  <button
+                    key={`${field}-${time}`}
+                    type="button"
+                    onClick={() => updateValue(field as "pickupTime" | "dropoffTime", time)}
+                    className={`focus-ring flex min-h-11 items-center justify-between rounded-xl px-3 text-sm font-bold ${
+                      selectedTime === time ? "bg-[#004BB8] text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"
+                    }`}
+                  >
+                    {formatCarTimeLabel(time, intlLocale)}
+                    {selectedTime === time ? <span aria-hidden="true">✓</span> : null}
+                  </button>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </FlightMobilePickerShell>
+
+      <FlightMobilePickerShell
+        open={activeMobilePicker === "driverAge"}
+        title={t("carsSearch.driverAgeLabel")}
+        titleId="cars-mobile-driver-age-title"
+        launcherRef={driverAgeLauncherRef}
+        onClose={onClose}
+        footer={(requestClose) => (
+          <button type="button" onClick={requestClose} className="focus-ring w-full rounded-full bg-[#004BB8] px-5 py-3 text-sm font-bold text-white">{t("done")}</button>
+        )}
+      >
+        <div className="grid gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm">
+          {driverAgeOptions.map((age) => {
+            const label = age === defaultDriverAge ? t("carsSearch.driverAgeAnyAgeRange") : getDriverAgeOptionLabel(age);
+            const selected = values.driverAge === age;
+
+            return (
+              <button
+                key={age}
+                type="button"
+                onClick={() => updateValue("driverAge", age)}
+                className={`focus-ring flex min-h-12 items-center justify-between rounded-2xl px-4 text-start text-sm font-bold ${
+                  selected ? "bg-[#004BB8] text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"
+                }`}
+              >
+                {label}
+                {selected ? <span aria-hidden="true">✓</span> : null}
+              </button>
+            );
+          })}
+        </div>
+      </FlightMobilePickerShell>
+    </>
   );
 }
 
@@ -929,6 +1344,7 @@ function RentalDatesField({
   onToggle,
   pickupDate,
   visibleMonthDate,
+  launcherRef,
   wrapRef,
 }: {
   dropoffDate: string;
@@ -940,6 +1356,7 @@ function RentalDatesField({
   onSelectDate: (date: Date) => void;
   onToggle: () => void;
   pickupDate: string;
+  launcherRef?: RefObject<HTMLButtonElement | null>;
   visibleMonthDate: Date;
   wrapRef: RefObject<HTMLDivElement | null>;
 }) {
@@ -959,6 +1376,7 @@ function RentalDatesField({
   return (
     <div ref={wrapRef}>
       <button
+        ref={launcherRef}
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
@@ -981,7 +1399,7 @@ function RentalDatesField({
         <div
           role="dialog"
           aria-label={t("carsSearch.rentalDatePickerAria")}
-          className="absolute start-0 end-0 top-[calc(100%+10px)] z-[200] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:end-auto sm:w-[min(92vw,620px)] sm:p-4"
+          className="absolute start-0 end-0 top-[calc(100%+10px)] z-[200] hidden w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:block sm:end-auto sm:w-[min(92vw,620px)] sm:p-4"
         >
           <p className="mb-3 text-base font-semibold text-slate-900">
             {t("carsSearch.chooseRentalDates")}
@@ -1114,12 +1532,14 @@ function TimeRangeField({
   pickupTime,
   returnTime,
   updateValue,
+  launcherRef,
   wrapRef,
 }: {
   isOpen: boolean;
   onToggle: () => void;
   pickupTime: string;
   returnTime: string;
+  launcherRef?: RefObject<HTMLButtonElement | null>;
   updateValue: <Key extends keyof CarsFormValues>(
     key: Key,
     value: CarsFormValues[Key],
@@ -1137,6 +1557,7 @@ function TimeRangeField({
   return (
     <div ref={wrapRef}>
       <button
+        ref={launcherRef}
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
@@ -1155,7 +1576,7 @@ function TimeRangeField({
         <div
           role="menu"
           aria-label={t("carsSearch.pickupReturnTimeSelectorAria")}
-          className="absolute start-0 end-0 top-[calc(100%+8px)] z-[180] w-full rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:end-auto sm:w-[min(92vw,320px)]"
+          className="absolute start-0 end-0 top-[calc(100%+8px)] z-[180] hidden w-full rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:block sm:end-auto sm:w-[min(92vw,320px)]"
         >
           <div className="grid gap-3">
             <label className="block">
