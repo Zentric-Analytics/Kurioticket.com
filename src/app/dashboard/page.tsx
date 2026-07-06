@@ -40,6 +40,7 @@ export default async function DashboardPage() {
           select: {
             fullName: true,
             phoneNumber: true,
+            phoneCountryCode: true,
             dateOfBirth: true,
             gender: true,
             nationality: true,

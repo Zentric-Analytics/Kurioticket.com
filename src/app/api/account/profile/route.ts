@@ -30,6 +30,7 @@ export async function GET() {
       select: {
         fullName: true,
         phoneNumber: true,
+        phoneCountryCode: true,
         dateOfBirth: true,
         gender: true,
         nationality: true,
@@ -74,6 +75,7 @@ export async function PATCH(request: Request) {
         select: {
           fullName: true,
           phoneNumber: true,
+          phoneCountryCode: true,
           dateOfBirth: true,
           gender: true,
           nationality: true,

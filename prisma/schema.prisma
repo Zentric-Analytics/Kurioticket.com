@@ -175,17 +175,18 @@ model User {
 }
 
 model UserProfile {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  fullName    String?
-  phoneNumber String?
-  dateOfBirth String?
-  gender      String?
-  nationality String?
-  address     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  fullName         String?
+  phoneNumber      String?
+  phoneCountryCode String?
+  dateOfBirth      String?
+  gender           String?
+  nationality      String?
+  address          String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
 }
