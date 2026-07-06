@@ -119,14 +119,14 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.savedTrips": "Zapisane podróże",
   "accountDashboard.hub.priceAlerts": "Alerty cenowe",
   "accountDashboard.hub.preferences": "Preferencje",
-  "accountDashboard.hub.emailPreferences": "Preferencje personalizacji",
+  "accountDashboard.hub.emailPreferences": "Display & Notifications",
   "accountDashboard.hub.travelPreferences": "Preferencje rezerwacji",
   "accountDashboard.hub.helpAndSupport": "Pomoc i wsparcie",
   "accountDashboard.hub.contactSupport": "Skontaktuj się z pomocą",
   "accountDashboard.hub.faq": "FAQ",
-  "accountDashboard.preferences.customization.title": "Preferencje personalizacji",
+  "accountDashboard.preferences.customization.title": "Display & Notifications",
   "accountDashboard.preferences.customization.description":
-    "Wybierz, jak Kurioticket personalizuje Twoje doświadczenie.",
+    "Personalize how Kurioticket looks and how you'd like us to stay in touch.",
   "accountDashboard.preferences.customization.languageRegion.title": "Język i region",
   "accountDashboard.preferences.customization.languageRegion.description":
     "Ustaw domyślny język, walutę i region.",
