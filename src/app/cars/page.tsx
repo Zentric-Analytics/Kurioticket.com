@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import {
   FormEvent,
@@ -126,6 +127,8 @@ const formatCarTimeLabel = (time: string, locale: string) => {
     minute: "2-digit",
   }).format(new Date(2024, 0, 1, hourValue, minuteValue));
 };
+
+const carsMobileHeroImage = tripStyleCards[1].image;
 
 const trustCards = [
   {
@@ -298,13 +301,61 @@ function CarsSearchPage() {
 
   return (
     <>
-      <AppHeader />
-      <main className="page-shell relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16 pt-8 !w-full sm:!w-[min(1180px,calc(100%-32px))] sm:pt-10 lg:pt-12">
+      <AppHeader mobileHeroOverlay mobileHeroOverlayLowered />
+      <main className="relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16 sm:mx-auto sm:w-[min(1180px,calc(100%-32px))] sm:pt-10 lg:pt-12">
         <div className="pointer-events-none absolute start-1/2 top-10 -z-10 h-64 w-[min(50rem,88vw)] -translate-x-1/2 rounded-full bg-white/55 blur-3xl" />
         <div className="pointer-events-none absolute -right-28 bottom-28 -z-10 h-80 w-80 rounded-full bg-slate-200/14 blur-3xl" />
 
         <div className="relative mx-auto max-w-6xl space-y-8 md:space-y-10">
-          <section className="space-y-4" aria-labelledby="cars-search-heading">
+          <section
+            className="relative isolate z-20 min-h-[24.25rem] overflow-visible bg-slate-950 sm:hidden"
+            aria-labelledby="cars-mobile-search-heading"
+          >
+            <div className="absolute inset-0 overflow-hidden">
+              <Image
+                src={carsMobileHeroImage}
+                alt=""
+                fill
+                priority
+                sizes="100vw"
+                className="object-cover object-[54%_45%] brightness-[1.03] saturate-[1.08] contrast-[1.03]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-950/52 via-slate-950/18 to-slate-950/6" />
+              <div className="absolute inset-y-0 start-0 w-[84%] bg-gradient-to-r from-slate-950/62 via-slate-950/24 to-transparent" />
+              <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-slate-950/36 via-slate-950/10 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/44 via-slate-950/12 to-transparent" />
+            </div>
+
+            <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-[7.85rem]">
+              <div className="max-w-[22.5rem] pe-2 text-start text-white">
+                <h1
+                  id="cars-mobile-search-heading"
+                  className="text-[clamp(1.38rem,6.1vw,2rem)] font-semibold leading-[1.05] tracking-[-0.041em] text-white text-balance drop-shadow-[0_2px_10px_rgba(2,6,23,0.62)]"
+                >
+                  {t("searchRentalCarsEveryPartTrip")}
+                </h1>
+              </div>
+            </div>
+
+            <div className="page-shell absolute inset-x-0 bottom-[-28.5rem] z-30">
+              <div className="mx-auto max-w-6xl">
+                <CarsSearchBar
+                  errors={errors}
+                  hasActiveSearch={Boolean(hasActiveSearch)}
+                  onClearSearch={clearSearch}
+                  onSubmit={handleSubmit}
+                  isSubmitting={isSubmitting}
+                  updateValue={updateValue}
+                  values={values}
+                />
+              </div>
+            </div>
+          </section>
+
+          <section
+            className="hidden space-y-4 sm:block"
+            aria-labelledby="cars-search-heading"
+          >
             <div className="px-1">
               <h1
                 id="cars-search-heading"
@@ -326,7 +377,7 @@ function CarsSearchPage() {
           </section>
 
           <section
-            className="space-y-4"
+            className="space-y-4 pt-[31rem] sm:pt-0"
             aria-labelledby="car-trip-style-heading"
           >
             <div className="flex flex-col gap-2 px-1 md:flex-row md:items-end md:justify-between">
