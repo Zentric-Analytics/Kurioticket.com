@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   ChevronDown,
   Clock3,
@@ -41,13 +41,13 @@ const notificationRows = [
     id: "price-alerts",
     icon: Tag,
     title: "Price Alerts",
-    description: "Notify me when saved flights or hotels change price.",
+    description: "Notify me when prices change.",
   },
   {
     id: "saved-search-updates",
     icon: Search,
     title: "Saved Search Updates",
-    description: "Notify me when saved searches have better deals.",
+    description: "Notify me about better deals for my saved searches.",
   },
   {
     id: "trip-reminders",
@@ -59,13 +59,13 @@ const notificationRows = [
     id: "travel-inspiration",
     icon: Lightbulb,
     title: "Travel Inspiration",
-    description: "Discover destinations and seasonal offers.",
+    description: "Discover destinations and seasonal travel ideas.",
   },
   {
     id: "product-updates",
     icon: Plane,
     title: "Product Updates",
-    description: "Learn about new Kurioticket features and improvements.",
+    description: "Learn about new Kurioticket features.",
   },
 ] as const;
 
@@ -85,12 +85,10 @@ const initialToggleState = {
 type ToggleId = keyof typeof initialToggleState;
 
 function SettingsSection({
-  eyebrow,
   title,
   description,
   children,
 }: {
-  eyebrow: string;
   title: string;
   description: string;
   children: React.ReactNode;
@@ -98,8 +96,7 @@ function SettingsSection({
   return (
     <section className="space-y-3" aria-labelledby={`${title.toLowerCase().replace(/\s+/g, "-")}-settings`}>
       <div className="px-1">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#004BB8]">{eyebrow}</p>
-        <h2 id={`${title.toLowerCase().replace(/\s+/g, "-")}-settings`} className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
+        <h2 id={`${title.toLowerCase().replace(/\s+/g, "-")}-settings`} className="text-xl font-semibold tracking-tight text-slate-950">
           {title}
         </h2>
         <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">{description}</p>
@@ -131,11 +128,6 @@ export function CustomizationPreferencesContent() {
   const [displayState, setDisplayState] = useState(initialDisplayState);
   const [toggles, setToggles] = useState(initialToggleState);
   const [statusMessage, setStatusMessage] = useState("");
-
-  const displaySummary = useMemo(
-    () => `${displayState["preferred-language"]} · ${displayState.currency} · ${displayState.region}`,
-    [displayState],
-  );
 
   const updateToggle = (id: ToggleId) => {
     setStatusMessage("");
@@ -169,16 +161,13 @@ export function CustomizationPreferencesContent() {
         </div>
       </header>
 
-      <div className="mx-auto min-w-0 max-w-3xl space-y-8 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-        <form className="space-y-8" action="#">
-          <SettingsSection eyebrow="Appearance" title="Display" description="How should Kurioticket appear for me?">
+      <div className="mx-auto min-w-0 max-w-3xl space-y-7 px-4 py-7 sm:px-6 sm:py-8 lg:px-8">
+        <form className="space-y-7" action="#">
+          <SettingsSection title="Display" description="Choose how travel details appear across Kurioticket.">
             <div className="divide-y divide-slate-100">
               {displayFields.map((field) => (
-                <label key={field.id} htmlFor={field.id} className="flex min-h-20 cursor-pointer items-center justify-between gap-4 px-5 py-4 sm:px-6">
-                  <span className="min-w-0">
-                    <span className="block text-sm font-semibold text-slate-950">{field.label}</span>
-                    <span className="mt-1 block text-sm text-slate-500">{displayState[field.id]}</span>
-                  </span>
+                <label key={field.id} htmlFor={field.id} className="flex min-h-16 cursor-pointer items-center justify-between gap-4 px-5 py-3.5 sm:px-6">
+                  <span className="min-w-0 text-sm font-medium text-slate-950">{field.label}</span>
                   <span className="relative shrink-0">
                     <select
                       id={field.id}
@@ -188,7 +177,7 @@ export function CustomizationPreferencesContent() {
                         setStatusMessage("");
                         setDisplayState((current) => ({ ...current, [field.id]: event.target.value }));
                       }}
-                      className="focus-ring w-40 appearance-none rounded-full border border-slate-200 bg-slate-50 py-2 pl-4 pr-9 text-sm font-semibold text-slate-700 outline-none transition hover:border-slate-300 sm:w-48"
+                      className="focus-ring w-40 appearance-none rounded-full border border-transparent bg-transparent py-2 pl-4 pr-9 text-right text-sm font-medium text-slate-600 outline-none transition hover:bg-slate-50 sm:w-48"
                     >
                       {field.options.map((option) => (
                         <option key={option} value={option}>{option}</option>
@@ -199,10 +188,9 @@ export function CustomizationPreferencesContent() {
                 </label>
               ))}
             </div>
-            <p className="border-t border-slate-100 bg-slate-50/70 px-5 py-3 text-xs text-slate-500 sm:px-6">Current display: {displaySummary}</p>
           </SettingsSection>
 
-          <SettingsSection eyebrow="Notifications" title="Stay informed" description="Choose the travel updates that should reach you first.">
+          <SettingsSection title="Stay informed" description="Choose the travel updates you want to receive.">
             <div className="divide-y divide-slate-100">
               {notificationRows.map((row) => {
                 const Icon = row.icon;
@@ -222,17 +210,17 @@ export function CustomizationPreferencesContent() {
             </div>
           </SettingsSection>
 
-          <SettingsSection eyebrow="Privacy" title="Privacy" description="Control promotional messages while keeping important account updates available.">
+          <SettingsSection title="Privacy" description="Control promotional messages and account updates.">
             <div className="divide-y divide-slate-100">
               <div className="flex min-h-24 items-center gap-4 px-5 py-4 sm:px-6">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
                   <Mail className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-semibold text-slate-950">Marketing Emails</h3>
-                  <p className="mt-1 text-sm leading-5 text-slate-500">Receive promotional emails and exclusive travel offers.</p>
+                  <h3 className="text-sm font-semibold text-slate-950">Promotional Emails</h3>
+                  <p className="mt-1 text-sm leading-5 text-slate-500">Receive deals and travel offers by email.</p>
                 </div>
-                <Toggle checked={toggles["marketing-emails"]} onChange={() => updateToggle("marketing-emails")} label="Marketing Emails" />
+                <Toggle checked={toggles["marketing-emails"]} onChange={() => updateToggle("marketing-emails")} label="Promotional Emails" />
               </div>
               <div className="space-y-4 px-5 py-5 sm:px-6">
                 <button
@@ -260,7 +248,7 @@ export function CustomizationPreferencesContent() {
               {t["accountDashboard.preferences.cancel"]}
             </button>
             <button type="button" onClick={() => setStatusMessage("Preferences saved for this session.")} className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] sm:w-auto">
-              {t["accountDashboard.preferences.savePreferences"]}
+              Save Changes
             </button>
           </div>
         </form>
