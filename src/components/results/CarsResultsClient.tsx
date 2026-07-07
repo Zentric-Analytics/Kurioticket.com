@@ -450,15 +450,15 @@ const getDriverAgeOptionLabel = (age: string, t: (key: string) => string) => {
 };
 
 const fieldShellClass =
-  "relative min-h-[50px] rounded-xl border border-slate-300 bg-white px-3 py-1 transition-[min-height,padding,border-color,box-shadow] duration-200 hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0";
+  "relative min-h-[50px] rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 shadow-sm shadow-slate-900/[0.025] transition-[min-height,padding,border-color,box-shadow] duration-200 hover:border-slate-300 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0";
 
 const searchFormGridClass =
-  "grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.16fr)_minmax(0,1.08fr)_minmax(0,1.28fr)_minmax(0,1.08fr)_minmax(7rem,0.62fr)_104px] lg:gap-0";
+  "grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.16fr)_minmax(0,1.08fr)_minmax(0,1.28fr)_minmax(0,1.08fr)_minmax(7rem,0.62fr)_112px] lg:gap-0";
 
 const compactFieldShellClass = "min-h-[46px] py-1 lg:min-h-[44px]";
 
 const fieldLabelClass =
-  "mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600";
+  "mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500";
 
 const fieldInputClass =
   "focus-ring h-8 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 md:text-sm";
@@ -947,7 +947,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
         <input type="hidden" name="driverAge" value={driverAge} />
         <div
           className={cn(
-            "overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.075)] transition-[padding,border-color,box-shadow,border-eadius] duration-200",
+            "overflow-visible rounded-[1.35rem] border border-slate-200/90 bg-white shadow-[0_16px_36px_-24px_rgba(15,23,42,0.32)] ring-1 ring-slate-950/[0.02] transition-[padding,border-color,box-shadow,border-eadius] duration-200",
             compactSummaryVisible
               ? "rounded-2xl border-slate-200 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.10)]"
               : "p-1",
@@ -1122,7 +1122,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
               <Button
                 type="submit"
                 className={cn(
-                  "mt-2 h-12 w-full rounded-xl bg-gradient-to-r from-[#004BB8] to-[#021C2B] px-4 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 transition-[min-height,height,box-shadow] duration-200 sm:mt-3 lg:mt-0 lg:h-auto lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20",
+                  "mt-2 h-12 w-full rounded-xl bg-gradient-to-r from-[#004BB8] to-[#021C2B] px-4 text-sm font-bold text-white shadow-[0_12px_24px_rgba(0,75,184,0.18)] transition-[min-height,height,box-shadow] duration-200 hover:shadow-[0_14px_28px_rgba(0,75,184,0.24)] sm:mt-3 lg:mt-0 lg:h-auto lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20",
                   isCompactSearch ? "lg:min-h-[46px]" : "lg:min-h-[54px]",
                 )}
               >
@@ -1224,7 +1224,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
         </div>
       </section>
 
-      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[252px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[244px_minmax(0,1fr)] xl:grid-cols-[252px_minmax(0,1fr)]">
         <aside className="hidden lg:sticky lg:top-[7.5rem] lg:block lg:max-h-[calc(100vh-8.5rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain">
           <CarFilters
             activeFilterCount={activeFilterCount}
@@ -1850,12 +1850,12 @@ function CarFilters({
       className={cn(
         "overflow-hidden",
         layout === "desktop"
-          ? "rounded-2xl border border-slate-200/80 bg-white shadow-sm shadow-slate-900/[0.04]"
+          ? "rounded-[1.35rem] border border-slate-200/80 bg-white shadow-[0_18px_42px_-30px_rgba(15,23,42,0.32)] ring-1 ring-slate-950/[0.02]"
           : "bg-white",
       )}
     >
       {layout === "desktop" ? (
-        <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-blue to-teal px-3 py-3">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200/80 bg-gradient-to-br from-slate-950 via-[#073b7a] to-[#0f766e] px-4 py-3.5">
           <h2 className="text-base font-semibold text-white/95">
             {t("carsResults.filterBy")}
           </h2>
@@ -1879,7 +1879,7 @@ function CarFilters({
       <div
         className={cn(
           "bg-white",
-          layout === "mobile" ? "space-y-0" : "space-y-3 px-3 py-3",
+          layout === "mobile" ? "space-y-0" : "space-y-0 px-4 py-1",
         )}
       >
         {activeFilterCount > 0 ? (
@@ -1888,10 +1888,10 @@ function CarFilters({
               "flex items-center justify-between gap-3",
               layout === "mobile"
                 ? "border-b border-border pb-3"
-                : "rounded-xl border border-border bg-surface-muted px-3 py-2.5",
+                : "rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 my-3",
             )}
           >
-            <span className="text-sm font-semibold text-navy">
+            <span className="text-[13px] font-bold uppercase tracking-[0.11em] text-slate-800">
               {interpolate(t("carsResults.selectedFilterCount"), {
                 count: String(activeFilterCount),
               })}
@@ -1942,13 +1942,13 @@ function FilterSection({
       className={cn(
         layout === "mobile"
           ? "border-t border-border py-4 first:border-t-0 first:pt-0"
-          : "rounded-xl border border-border bg-white px-3 py-3 shadow-sm shadow-slate-900/[0.025]",
+          : "border-t border-slate-200/75 py-4 first:border-t-0",
       )}
     >
-      <h3 className="text-sm font-semibold text-navy">
+      <h3 className="text-[13px] font-bold uppercase tracking-[0.11em] text-slate-800">
         {t(group.titleKey)}
       </h3>
-      <div className="mt-2 space-y-1.5">
+      <div className="mt-2 grid gap-0.5">
         {group.options.map((option) => {
           const isSelected = selectedOptions.includes(option.id);
 
@@ -1958,19 +1958,19 @@ function FilterSection({
               className={cn(
                 layout === "mobile"
                   ? "flex min-h-10 cursor-pointer items-center gap-3 py-2 text-sm font-medium text-muted transition hover:text-navy"
-                  : "flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all",
+                  : "flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-sm font-medium transition-all",
                 isSelected
                   ? layout === "mobile"
                     ? "font-semibold text-navy"
-                    : "border-blue bg-blue text-white shadow-sm shadow-blue/[0.03]"
+                    : "bg-[#004BB8]/8 text-[#021C2B] ring-1 ring-[#004BB8]/12"
                   : layout === "mobile"
                     ? undefined
-                    : "border-border bg-white text-muted hover:border-blue/25 hover:bg-surface-muted hover:text-navy",
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-950",
               )}
             >
               <input
                 type="checkbox"
-                className="h-5 w-5 shrink-0 rounded border-border accent-blue focus-visible:ring-2 focus-visible:ring-blue/35"
+                className="h-4 w-4 shrink-0 rounded border-slate-300 accent-blue focus-visible:ring-2 focus-visible:ring-blue/35"
                 checked={isSelected}
                 onChange={() => onToggle(group.id, option.id)}
               />
@@ -1979,7 +1979,7 @@ function FilterSection({
               </span>
               {isSelected && layout === "desktop" ? (
                 <CheckCircle2
-                  className="h-4 w-4 shrink-0 text-white"
+                  className="h-4 w-4 shrink-0 text-[#004BB8]"
                   aria-hidden="true"
                 />
               ) : null}

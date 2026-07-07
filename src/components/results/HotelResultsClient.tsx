@@ -1117,7 +1117,7 @@ export function HotelResultsClient() {
         </div>
       </section>
 
-      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[244px_minmax(0,1fr)]">
         <aside
           className={cn(
             "hotel-filter-scrollbar hidden lg:block lg:self-start lg:overflow-x-hidden",
@@ -1628,22 +1628,28 @@ function HotelFilters({
     "h-2 w-full cursor-pointer appearance-none rounded-full bg-border outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-blue [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-blue [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-border [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-blue [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-blue [&::-moz-range-thumb]:shadow-md";
 
   return (
-    <div className="bg-white">
+    <div
+      className={cn(
+        "bg-white",
+        layout === "desktop" &&
+          "overflow-hidden rounded-[1.35rem] border border-slate-200/80 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.32)] ring-1 ring-slate-950/[0.02]",
+      )}
+    >
       {layout === "desktop" ? (
-        <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-blue to-teal px-3 py-3">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200/80 bg-gradient-to-br from-slate-950 via-[#073b7a] to-[#0f766e] px-4 py-3.5">
           <div>
-            <h2 className="text-base font-bold text-white">
+            <h2 className="text-base font-semibold text-white/95">
               {t("hotelResults.filterBy")}
             </h2>
           </div>
-          <SlidersHorizontal className="text-white" size={18} />
+          <SlidersHorizontal className="text-white/90" size={18} />
         </div>
       ) : null}
 
       <div
         className={cn(
           "bg-white",
-          layout === "mobile" ? "space-y-0" : "space-y-4 px-3 py-3",
+          layout === "mobile" ? "space-y-0" : "space-y-0 px-4 py-1",
         )}
       >
         <FilterSection title={t("hotelResults.budgetPrice")} layout={layout}>
@@ -1786,14 +1792,14 @@ function FilterSection({
   return (
     <section
       className={cn(
-        "border-t border-border first:border-t-0 first:pt-0",
-        layout === "mobile" ? "py-4" : "pt-3",
+        "border-t border-slate-200/75 first:border-t-0",
+        layout === "mobile" ? "py-4" : "py-4",
       )}
     >
-      <h3 className="mb-2 text-sm font-semibold leading-5 text-navy">
+      <h3 className="mb-2 text-[13px] font-bold uppercase leading-5 tracking-[0.11em] text-slate-800">
         {title}
       </h3>
-      <div className="grid gap-1">{children}</div>
+      <div className="grid gap-0.5">{children}</div>
     </section>
   );
 }
@@ -1826,19 +1832,19 @@ function CheckboxFilterSection({
 
   return (
     <FilterSection title={title} layout={layout}>
-      <div className="grid gap-1">
+      <div className="grid gap-0.5">
         {visibleOptions.map((option) => {
           const checked = selected.includes(option.value);
 
           return (
             <label
               key={option.value}
-              className="flex min-h-10 cursor-pointer items-start justify-between gap-3 py-2 text-sm font-medium text-muted transition hover:text-navy"
+              className="flex min-h-9 cursor-pointer items-start justify-between gap-3 rounded-lg px-1.5 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
             >
               <span className="flex min-w-0 items-start gap-2">
                 <input
                   type="checkbox"
-                  className="mt-0.5 h-5 w-5 shrink-0 rounded border-border accent-blue focus-visible:ring-2 focus-visible:ring-blue/35"
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-blue focus-visible:ring-2 focus-visible:ring-blue/35"
                   checked={checked}
                   onChange={() => onToggle(option.value)}
                 />
