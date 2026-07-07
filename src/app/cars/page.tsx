@@ -228,6 +228,9 @@ function CarsSearchPage() {
   const [values, setValues] = useState<CarsFormValues>(initialValues);
   const [errors, setErrors] = useState<CarsFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [desktopCarsSearchPopover, setDesktopCarsSearchPopover] = useState<
+    "dates" | "times" | null
+  >(null);
 
   const hasActiveSearch =
     values.pickupLocation.trim() ||
@@ -364,7 +367,13 @@ function CarsSearchPage() {
 
           <div className="mx-auto mt-8 w-[min(1180px,calc(100%-32px))] space-y-8 sm:mt-0 sm:w-full md:space-y-10">
             <section
-              className="relative hidden overflow-visible pb-28 sm:block lg:pb-32"
+              className={`relative hidden overflow-visible sm:block ${
+                desktopCarsSearchPopover === "dates"
+                  ? "pb-[31rem] lg:pb-[32rem]"
+                  : desktopCarsSearchPopover === "times"
+                    ? "pb-56 lg:pb-60"
+                    : "pb-28 lg:pb-32"
+              }`}
               aria-labelledby="cars-search-heading"
             >
               <div className="relative isolate min-h-[32rem] bg-slate-950 lg:min-h-[36rem]">
@@ -402,6 +411,7 @@ function CarsSearchPage() {
                       onClearSearch={clearSearch}
                       onSubmit={handleSubmit}
                       isSubmitting={isSubmitting}
+                      onDesktopPopoverChange={setDesktopCarsSearchPopover}
                       updateValue={updateValue}
                       values={values}
                     />
@@ -571,6 +581,7 @@ function CarsSearchBar({
   onClearSearch,
   onSubmit,
   isSubmitting,
+  onDesktopPopoverChange,
   updateValue,
   values,
 }: {
@@ -579,6 +590,7 @@ function CarsSearchBar({
   onClearSearch: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   isSubmitting: boolean;
+  onDesktopPopoverChange?: (popover: "dates" | "times" | null) => void;
   updateValue: <Key extends keyof CarsFormValues>(
     key: Key,
     value: CarsFormValues[Key],
@@ -656,6 +668,7 @@ function CarsSearchBar({
   const openMobilePicker = (picker: Exclude<CarsMobilePicker, null>) => {
     setDatesOpen(false);
     setTimesOpen(false);
+    onDesktopPopoverChange?.(null);
     setActiveMobilePicker(picker);
   };
 
@@ -680,6 +693,12 @@ function CarsSearchBar({
 
     return () => window.clearTimeout(focusId);
   }, [activeMobilePicker]);
+
+  useEffect(() => {
+    onDesktopPopoverChange?.(datesOpen ? "dates" : timesOpen ? "times" : null);
+
+    return () => onDesktopPopoverChange?.(null);
+  }, [datesOpen, onDesktopPopoverChange, timesOpen]);
 
   const toggleDates = () => {
     if (isMobilePickerViewport()) {
