@@ -1777,7 +1777,7 @@ function CarFilters({
           : "bg-white",
       )}
     >
-      <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-[#004BB8] to-[#021C2B] px-3 py-3">
+      <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-blue to-teal px-3 py-3">
         <h2 className="text-base font-semibold text-white/95">
           {t("carsResults.filterBy")}
         </h2>
@@ -1799,15 +1799,15 @@ function CarFilters({
 
       <div className="space-y-3 bg-white px-3 py-3">
         {activeFilterCount > 0 ? (
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-[#004BB8]/10 bg-[#004BB8]/8 px-3 py-2.5">
-            <span className="text-sm font-semibold text-[#021C2B]">
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-muted px-3 py-2.5">
+            <span className="text-sm font-semibold text-navy">
               {interpolate(t("carsResults.selectedFilterCount"), {
                 count: String(activeFilterCount),
               })}
             </span>
             <button
               type="button"
-              className="focus-ring rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-[#004BB8] shadow-sm transition hover:bg-[#004BB8]/8"
+              className="focus-ring rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-blue shadow-sm transition hover:bg-surface-muted"
               onClick={onClear}
             >
               {t("carsResults.reset")}
@@ -1841,8 +1841,8 @@ function FilterSection({
   t: (key: string) => string;
 }) {
   return (
-    <section className="rounded-xl border border-slate-200/80 bg-white px-3 py-3 shadow-sm shadow-slate-900/[0.025]">
-      <h3 className="text-sm font-semibold text-slate-900">
+    <section className="rounded-xl border border-border bg-white px-3 py-3 shadow-sm shadow-slate-900/[0.025]">
+      <h3 className="text-sm font-semibold text-navy">
         {t(group.titleKey)}
       </h3>
       <div className="mt-2 space-y-1.5">
@@ -1855,13 +1855,13 @@ function FilterSection({
               className={cn(
                 "flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all",
                 isSelected
-                  ? "border-[#004BB8]/25 bg-[#004BB8]/8 text-[#021C2B] shadow-sm shadow-[#004BB8]/[0.03]"
-                  : "border-slate-200/70 bg-white text-slate-700 hover:border-[#004BB8]/10 hover:bg-[#004BB8]/8 hover:text-slate-950",
+                  ? "border-blue bg-blue text-white shadow-sm shadow-blue/[0.03]"
+                  : "border-border bg-white text-muted hover:border-blue/25 hover:bg-surface-muted hover:text-navy",
               )}
             >
               <input
                 type="checkbox"
-                className="h-3.5 w-3.5 shrink-0 rounded border-slate-300 accent-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                className="h-3.5 w-3.5 shrink-0 rounded border-border accent-blue focus-visible:ring-2 focus-visible:ring-blue/35"
                 checked={isSelected}
                 onChange={() => onToggle(group.id, option.id)}
               />
@@ -1870,7 +1870,7 @@ function FilterSection({
               </span>
               {isSelected ? (
                 <CheckCircle2
-                  className="h-4 w-4 shrink-0 text-[#004BB8]"
+                  className="h-4 w-4 shrink-0 text-white"
                   aria-hidden="true"
                 />
               ) : null}

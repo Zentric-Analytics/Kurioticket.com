@@ -1579,17 +1579,17 @@ function HotelFilters({
   toggleFilter: (group: keyof HotelFilterSelections, value: string) => void;
 }) {
   const filterRangeClass =
-    "h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-gradient-to-r [&::-webkit-slider-runnable-track]:from-[#004BB8]/70 [&::-webkit-slider-runnable-track]:to-[#5CB6B2]/55 [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#004BB8] [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#004BB8]/70 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#004BB8] [&::-moz-range-thumb]:shadow-md";
+    "h-2 w-full cursor-pointer appearance-none rounded-full bg-border outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-blue [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-blue [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-border [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-blue [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-blue [&::-moz-range-thumb]:shadow-md";
 
   return (
     <div className="bg-white">
-      <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+      <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-blue to-teal px-3 py-3">
         <div>
-          <h2 className="text-base font-bold text-[#021C2B]">
+          <h2 className="text-base font-bold text-white">
             {t("hotelResults.filterBy")}
           </h2>
         </div>
-        <SlidersHorizontal className="text-[#004BB8]" size={18} />
+        <SlidersHorizontal className="text-white" size={18} />
       </div>
 
       <div className="space-y-4 bg-white px-3 py-3">
@@ -1721,8 +1721,8 @@ function FilterSection({
   children: ReactNode;
 }) {
   return (
-    <section className="border-t border-slate-200/70 pt-3 first:border-t-0 first:pt-0">
-      <h3 className="mb-1.5 text-[13px] font-semibold leading-5 text-slate-800">
+    <section className="border-t border-border pt-3 first:border-t-0 first:pt-0">
+      <h3 className="mb-1.5 text-[13px] font-semibold leading-5 text-navy">
         {title}
       </h3>
       <div className="grid gap-1">{children}</div>
@@ -1763,19 +1763,19 @@ function CheckboxFilterSection({
           return (
             <label
               key={option.value}
-              className="flex cursor-pointer items-start justify-between gap-3 py-1.5 text-[13px] font-medium text-slate-700 transition hover:text-slate-950"
+              className="flex cursor-pointer items-start justify-between gap-3 py-1.5 text-[13px] font-medium text-muted transition hover:text-navy"
             >
               <span className="flex min-w-0 items-start gap-2">
                 <input
                   type="checkbox"
-                  className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-slate-300 accent-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-border accent-blue focus-visible:ring-2 focus-visible:ring-blue/35"
                   checked={checked}
                   onChange={() => onToggle(option.value)}
                 />
                 <span
                   className={cn(
                     "min-w-0 truncate",
-                    checked ? "font-semibold text-slate-950" : undefined,
+                    checked ? "font-semibold text-navy" : undefined,
                   )}
                 >
                   {option.label}
