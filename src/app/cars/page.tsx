@@ -745,14 +745,14 @@ function CarsSearchBar({
   const timeError = errors.pickupTime || errors.dropoffTime;
 
   return (
-    <section className="rounded-[1.5rem] border border-white/80 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.38)] ring-1 ring-slate-950/[0.06] sm:rounded-[1.75rem] sm:border-white/85 sm:bg-white/95 sm:p-4 sm:shadow-[0_24px_70px_-24px_rgba(15,23,42,0.42)] sm:ring-1 sm:ring-slate-950/[0.08] sm:backdrop-blur-xl lg:p-5">
-      <form onSubmit={onSubmit} className="space-y-3 sm:space-y-4" noValidate>
+    <section className="rounded-[1.5rem] border border-white/80 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.38)] ring-1 ring-slate-950/[0.06] sm:rounded-[1.75rem] sm:border-white/85 sm:bg-white/95 sm:p-3 sm:shadow-[0_24px_70px_-24px_rgba(15,23,42,0.42)] sm:ring-1 sm:ring-slate-950/[0.08] sm:backdrop-blur-xl lg:p-4">
+      <form onSubmit={onSubmit} className="space-y-3" noValidate>
         <input type="hidden" name="pickupDate" value={values.pickupDate} />
         <input type="hidden" name="dropoffDate" value={values.dropoffDate} />
         <input type="hidden" name="pickupTime" value={values.pickupTime} />
         <input type="hidden" name="dropoffTime" value={values.dropoffTime} />
 
-        <div className="overflow-visible rounded-none border-0 bg-transparent p-0 shadow-none sm:rounded-[1.35rem] sm:border sm:border-slate-200/90 sm:bg-white sm:p-1.5 sm:shadow-[0_14px_34px_rgba(15,23,42,0.12)] sm:ring-1 sm:ring-slate-950/[0.03]">
+        <div className="overflow-visible rounded-none border-0 bg-transparent p-0 shadow-none sm:rounded-[1.35rem] sm:border sm:border-slate-200/90 sm:bg-white sm:p-1 sm:shadow-[0_14px_34px_rgba(15,23,42,0.12)] sm:ring-1 sm:ring-slate-950/[0.03]">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-2 lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1.45fr)_minmax(0,1.1fr)_minmax(6.8rem,0.62fr)_118px] lg:gap-0">
             <SearchCell
               label={t("carsSearch.pickupLocationLabel")}
@@ -784,7 +784,7 @@ function CarsSearchBar({
                       updateValue("pickupLocation", event.target.value)
                     }
                     placeholder={t("carsSearch.pickupLocationPlaceholder")}
-                    className="hidden h-7 w-full border-none bg-transparent py-0 ps-0 pe-9 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-9"
+                    className="hidden h-7 w-full border-none bg-transparent py-0 ps-0 pe-9 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-8"
                     autoComplete="off"
                   />
 
@@ -830,7 +830,7 @@ function CarsSearchBar({
                         updateValue("dropoffLocation", event.target.value)
                       }
                       placeholder={t("carsSearch.returnLocationPlaceholder")}
-                      className="hidden h-7 w-full border-t border-slate-100 bg-transparent py-0 ps-0 pe-9 pt-1.5 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-9 lg:pt-2"
+                      className="hidden h-7 w-full border-t border-slate-100 bg-transparent py-0 ps-0 pe-9 pt-1.5 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-8 lg:pt-1.5"
                       autoComplete="off"
                     />
 
@@ -921,7 +921,7 @@ function CarsSearchBar({
                 onChange={(event) =>
                   updateValue("driverAge", event.target.value)
                 }
-                className="hidden h-7 w-full border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none sm:block md:text-[15px] lg:h-9"
+                className="hidden h-7 w-full border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none sm:block md:text-[15px] lg:h-8"
               >
                 {driverAgeOptions.map((age) => (
                   <option key={age} value={age}>
@@ -936,7 +936,7 @@ function CarsSearchBar({
             <div className="sm:col-span-2 lg:col-span-1">
               <button
                 type="submit"
-                className="focus-ring inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_10px_22px_rgba(0,75,184,0.22)] transition hover:bg-[#021C2B] active:bg-[#004BB8] disabled:cursor-not-allowed disabled:opacity-75 disabled:hover:bg-[#004BB8] sm:h-full sm:min-h-[68px] sm:rounded-xl sm:shadow-[0_12px_26px_rgba(0,75,184,0.24)] lg:min-h-[76px] lg:rounded-none lg:rounded-e-[1.05rem] lg:border lg:border-s-0 lg:border-[#004BB8]/20 lg:text-[15px]"
+                className="focus-ring inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_10px_22px_rgba(0,75,184,0.22)] transition hover:bg-[#021C2B] active:bg-[#004BB8] disabled:cursor-not-allowed disabled:opacity-75 disabled:hover:bg-[#004BB8] sm:h-full sm:min-h-[58px] sm:rounded-xl sm:shadow-[0_12px_26px_rgba(0,75,184,0.24)] lg:min-h-[64px] lg:rounded-none lg:rounded-e-[1.05rem] lg:border lg:border-s-0 lg:border-[#004BB8]/20 lg:text-[15px]"
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}
               >
@@ -947,7 +947,7 @@ function CarsSearchBar({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 sm:rounded-2xl sm:border-slate-200/70 sm:bg-white/82 sm:px-4 sm:py-3 sm:shadow-[0_8px_20px_rgba(15,23,42,0.06)] sm:ring-1 sm:ring-white/70">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 sm:rounded-2xl sm:border-slate-200/70 sm:bg-white/82 sm:px-3.5 sm:py-2 sm:shadow-[0_8px_20px_rgba(15,23,42,0.06)] sm:ring-1 sm:ring-white/70">
           <label className="focus-within:ring-ring inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-slate-900">
             <input
               type="checkbox"
@@ -1405,7 +1405,7 @@ function RentalDatesField({
         aria-expanded={isOpen}
         aria-haspopup="dialog"
         aria-label={t("carsSearch.chooseRentalDatesAria")}
-        className="focus-ring flex h-7 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-[15px] lg:h-9"
+        className="focus-ring flex h-7 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-[15px] lg:h-8"
       >
         <Calendar
           className="h-4 w-4 shrink-0 text-slate-500"
@@ -1586,7 +1586,7 @@ function TimeRangeField({
         aria-expanded={isOpen}
         aria-haspopup="menu"
         aria-label={t("carsSearch.choosePickupReturnTimesAria")}
-        className="focus-ring flex h-7 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-[15px] lg:h-9"
+        className="focus-ring flex h-7 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-[15px] lg:h-8"
       >
         <span className="truncate">{timeSummary}</span>
         <ChevronDown
@@ -1661,9 +1661,9 @@ function SearchCell({
 }) {
   return (
     <div
-      className={`min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-slate-400 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[68px] sm:rounded-xl sm:border-transparent sm:bg-transparent sm:px-4 sm:py-2.5 sm:shadow-none sm:hover:border-[#004BB8]/20 sm:focus-within:border-[#004BB8]/25 sm:focus-within:bg-[#004BB8]/[0.045] sm:focus-within:ring-1 sm:focus-within:ring-inset sm:focus-within:ring-[#004BB8]/20 lg:min-h-[76px] lg:rounded-none lg:px-4 lg:py-3 ${className}`}
+      className={`min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-slate-400 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[58px] sm:rounded-xl sm:border-transparent sm:bg-transparent sm:px-3.5 sm:py-2 sm:shadow-none sm:hover:border-[#004BB8]/20 sm:focus-within:border-[#004BB8]/25 sm:focus-within:bg-[#004BB8]/[0.045] sm:focus-within:ring-1 sm:focus-within:ring-inset sm:focus-within:ring-[#004BB8]/20 lg:min-h-[64px] lg:rounded-none lg:px-3.5 lg:py-2 ${className}`}
     >
-      <label className="mb-1 block text-xs font-bold uppercase leading-4 tracking-[0.12em] text-slate-600 sm:mb-1.5 sm:text-[0.68rem] sm:text-slate-500 lg:mb-2">
+      <label className="mb-1 block text-xs font-bold uppercase leading-4 tracking-[0.12em] text-slate-600 sm:mb-1 sm:text-[0.68rem] sm:text-slate-500 lg:mb-1">
         {label}
       </label>
       {children}
