@@ -53,7 +53,11 @@ const POPULAR_FILTERS = [
     labelKey: "hotelResults.filter.freeCancellation",
     terms: ["free cancellation", "flexible cancellation"],
   },
-  { value: "parking", labelKey: "hotelResults.filter.parking", terms: ["parking"] },
+  {
+    value: "parking",
+    labelKey: "hotelResults.filter.parking",
+    terms: ["parking"],
+  },
   { value: "pool", labelKey: "hotelResults.filter.pool", terms: ["pool"] },
   {
     value: "airport-shuttle",
@@ -63,14 +67,26 @@ const POPULAR_FILTERS = [
 ];
 
 const MEAL_FILTERS = [
-  { value: "breakfast", labelKey: "hotelResults.filter.breakfastIncludedAvailable", terms: ["breakfast"] },
+  {
+    value: "breakfast",
+    labelKey: "hotelResults.filter.breakfastIncludedAvailable",
+    terms: ["breakfast"],
+  },
   {
     value: "room-only",
     labelKey: "hotelResults.filter.roomOnly",
     terms: ["room only", "accommodation only"],
   },
-  { value: "half-board", labelKey: "hotelResults.filter.halfBoard", terms: ["half board"] },
-  { value: "full-board", labelKey: "hotelResults.filter.fullBoard", terms: ["full board"] },
+  {
+    value: "half-board",
+    labelKey: "hotelResults.filter.halfBoard",
+    terms: ["half board"],
+  },
+  {
+    value: "full-board",
+    labelKey: "hotelResults.filter.fullBoard",
+    terms: ["full board"],
+  },
   {
     value: "all-inclusive",
     labelKey: "hotelResults.filter.allInclusive",
@@ -108,17 +124,37 @@ const FACILITY_FILTERS = [
     labelKey: "hotelResults.filter.freeWifi",
     terms: ["free wi-fi", "free wifi", "wifi", "wi-fi"],
   },
-  { value: "parking", labelKey: "hotelResults.filter.parking", terms: ["parking"] },
+  {
+    value: "parking",
+    labelKey: "hotelResults.filter.parking",
+    terms: ["parking"],
+  },
   { value: "pool", labelKey: "hotelResults.filter.pool", terms: ["pool"] },
-  { value: "spa", labelKey: "hotelResults.filter.spa", terms: ["spa", "wellness"] },
-  { value: "fitness", labelKey: "hotelResults.filter.fitnessCenter", terms: ["fitness", "gym"] },
+  {
+    value: "spa",
+    labelKey: "hotelResults.filter.spa",
+    terms: ["spa", "wellness"],
+  },
+  {
+    value: "fitness",
+    labelKey: "hotelResults.filter.fitnessCenter",
+    terms: ["fitness", "gym"],
+  },
   {
     value: "airport-shuttle",
     labelKey: "hotelResults.filter.airportShuttle",
     terms: ["airport shuttle", "airport transit access"],
   },
-  { value: "workspace", labelKey: "hotelResults.filter.workspace", terms: ["workspace", "desk"] },
-  { value: "quiet-rooms", labelKey: "hotelResults.filter.quietRooms", terms: ["quiet"] },
+  {
+    value: "workspace",
+    labelKey: "hotelResults.filter.workspace",
+    terms: ["workspace", "desk"],
+  },
+  {
+    value: "quiet-rooms",
+    labelKey: "hotelResults.filter.quietRooms",
+    terms: ["quiet"],
+  },
   {
     value: "front-desk",
     labelKey: "hotelResults.filter.frontDesk24",
@@ -138,10 +174,22 @@ const PROPERTY_TYPE_FILTERS = [
     labelKey: "hotelResults.filter.apartment",
     terms: ["apartment", "apartments", "aparthotel"],
   },
-  { value: "resort", labelKey: "hotelResults.filter.resort", terms: ["resort"] },
-  { value: "suite", labelKey: "hotelResults.filter.suites", terms: ["suite", "suites"] },
+  {
+    value: "resort",
+    labelKey: "hotelResults.filter.resort",
+    terms: ["resort"],
+  },
+  {
+    value: "suite",
+    labelKey: "hotelResults.filter.suites",
+    terms: ["suite", "suites"],
+  },
   { value: "inn", labelKey: "hotelResults.filter.inn", terms: ["inn"] },
-  { value: "hostel", labelKey: "hotelResults.filter.hostel", terms: ["hostel"] },
+  {
+    value: "hostel",
+    labelKey: "hotelResults.filter.hostel",
+    terms: ["hostel"],
+  },
   { value: "villa", labelKey: "hotelResults.filter.villa", terms: ["villa"] },
 ];
 
@@ -202,9 +250,21 @@ const ROOM_TYPE_FILTERS = [
     terms: ["family room", "family standard", "family"],
   },
   { value: "suite", labelKey: "hotelResults.filter.suites", terms: ["suite"] },
-  { value: "standard-room", labelKey: "hotelResults.filter.standardRoom", terms: ["standard room"] },
-  { value: "deluxe-room", labelKey: "hotelResults.filter.deluxeRoom", terms: ["deluxe room"] },
-  { value: "studio", labelKey: "hotelResults.filter.studio", terms: ["studio"] },
+  {
+    value: "standard-room",
+    labelKey: "hotelResults.filter.standardRoom",
+    terms: ["standard room"],
+  },
+  {
+    value: "deluxe-room",
+    labelKey: "hotelResults.filter.deluxeRoom",
+    terms: ["deluxe room"],
+  },
+  {
+    value: "studio",
+    labelKey: "hotelResults.filter.studio",
+    terms: ["studio"],
+  },
 ];
 
 const BED_TYPE_FILTERS = [
@@ -339,6 +399,7 @@ export function HotelResultsClient() {
     useState(false);
 
   const stickySentinelRef = useRef<HTMLDivElement | null>(null);
+  const expandedSearchScrollYRef = useRef(0);
   const filterApplyingTimeoutRef = useRef<number | null>(null);
   const searchApplyingTimeoutRef = useRef<number | null>(null);
   const filterScrollbarTimeoutRef = useRef<number | null>(null);
@@ -391,6 +452,7 @@ export function HotelResultsClient() {
     body.sort,
   ].join("-");
 
+  const showFullSearchForm = !isSearchBarCompact || isSearchExpandedWhileSticky;
   const showCompactSearchSummary =
     isSearchBarCompact && !isSearchExpandedWhileSticky;
   const formatHotelSummaryDate = useCallback(
@@ -419,6 +481,7 @@ export function HotelResultsClient() {
     : "";
 
   const expandStickySearch = useCallback(() => {
+    expandedSearchScrollYRef.current = window.scrollY;
     setIsSearchExpandedWhileSticky(true);
   }, []);
 
@@ -539,9 +602,7 @@ export function HotelResultsClient() {
         const data = await response.json();
 
         if (data.warningCategory === "no_live_hotel_provider") {
-          throw new Error(
-            t("hotelResults.searchUnavailableDetailed"),
-          );
+          throw new Error(t("hotelResults.searchUnavailableDetailed"));
         }
 
         if (!response.ok) {
@@ -592,7 +653,6 @@ export function HotelResultsClient() {
     };
   }, [body, t]);
 
-
   const filterOptions = useMemo(
     () => buildHotelFilterOptions(results, t),
     [results, t],
@@ -623,10 +683,50 @@ export function HotelResultsClient() {
         t,
         locale,
       ),
-    [locale, maxPrice, minRating, resultCurrency, resultMaxPrice, selectedFilters, t],
+    [
+      locale,
+      maxPrice,
+      minRating,
+      resultCurrency,
+      resultMaxPrice,
+      selectedFilters,
+      t,
+    ],
   );
 
   const resultsApplying = filterApplying || searchApplying;
+
+  useEffect(() => {
+    if (!isSearchBarCompact || !isSearchExpandedWhileSticky) {
+      return undefined;
+    }
+
+    let animationFrame = 0;
+
+    const onScroll = () => {
+      if (animationFrame) return;
+
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = 0;
+        const hasContinuedScrolling =
+          Math.abs(window.scrollY - expandedSearchScrollYRef.current) > 16;
+
+        if (hasContinuedScrolling) {
+          setIsSearchExpandedWhileSticky(false);
+        }
+      });
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (animationFrame) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, [isSearchBarCompact, isSearchExpandedWhileSticky]);
+
   const visibleFilteredHotels = resultsApplying ? visibleFiltered : filtered;
   const sortedVisibleHotels = useMemo(
     () => sortHotelSummaryResults(visibleFilteredHotels, hotelSummarySortMode),
@@ -662,7 +762,14 @@ export function HotelResultsClient() {
     };
 
     const updateFromSentinelPosition = () => {
-      applyCompactState(sentinel.getBoundingClientRect().bottom <= 0);
+      const sentinelRect = sentinel.getBoundingClientRect();
+      const sentinelScrollTop = sentinelRect.top + window.scrollY;
+      const hasPassedStickyTrigger =
+        sentinelRect.top <= 0 ||
+        sentinelRect.bottom <= 0 ||
+        window.scrollY >= Math.max(16, sentinelScrollTop - 1);
+
+      applyCompactState(hasPassedStickyTrigger);
     };
 
     const schedulePositionUpdate = () => {
@@ -913,9 +1020,7 @@ export function HotelResultsClient() {
       <section
         className={cn(
           "sticky top-0 z-40 hidden border-b border-transparent bg-[#f6f8fb]/95 backdrop-blur transition-[padding,box-shadow] duration-200 sm:block",
-          showCompactSearchSummary
-            ? "py-1.5 shadow-none"
-            : "py-3 shadow-none",
+          showCompactSearchSummary ? "py-1.5 shadow-none" : "py-3 shadow-none",
         )}
       >
         <div className="page-shell">
@@ -951,7 +1056,7 @@ export function HotelResultsClient() {
                 </button>
               </div>
             </div>
-          ) : (
+          ) : showFullSearchForm ? (
             <HotelSearchBar
               key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
               initialDestination={body.destination}
@@ -968,7 +1073,7 @@ export function HotelResultsClient() {
                 setIsSearchExpandedWhileSticky(false);
               }}
             />
-          )}
+          ) : null}
         </div>
       </section>
 
@@ -1378,8 +1483,9 @@ function formatHotelRating(
     minimumFractionDigits: Number.isInteger(rating) ? 0 : 1,
   }).format(rating);
 
-  return t(rating === 1 ? "hotelResults.starSingular" : "hotelResults.starPlural")
-    .replace("{{count}}", formatted);
+  return t(
+    rating === 1 ? "hotelResults.starSingular" : "hotelResults.starPlural",
+  ).replace("{{count}}", formatted);
 }
 
 function formatHotelRatingNumber(rating: number, locale: string) {
@@ -1419,7 +1525,10 @@ function ActiveHotelFilterChips({
           type="button"
           className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-[#004BB8]/18 bg-[#004BB8]/7 px-2.5 py-1 text-xs font-semibold text-[#021C2B] transition-colors hover:border-[#004BB8]/28 hover:bg-[#004BB8]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           onClick={() => onRemove(chip)}
-          aria-label={t("hotelResults.removeFilter").replace("{{label}}", chip.label)}
+          aria-label={t("hotelResults.removeFilter").replace(
+            "{{label}}",
+            chip.label,
+          )}
         >
           <span className="truncate">{chip.label}</span>
           <span
@@ -1473,7 +1582,9 @@ function HotelFilters({
     <div className="bg-white">
       <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
         <div>
-          <h2 className="text-base font-bold text-[#021C2B]">{t("hotelResults.filterBy")}</h2>
+          <h2 className="text-base font-bold text-[#021C2B]">
+            {t("hotelResults.filterBy")}
+          </h2>
         </div>
         <SlidersHorizontal className="text-[#004BB8]" size={18} />
       </div>
@@ -1482,7 +1593,7 @@ function HotelFilters({
         <FilterSection title={t("hotelResults.budgetPrice")}>
           <label className="block">
             <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
-              {t("hotelResults.totalUpTo")} {" "}
+              {t("hotelResults.totalUpTo")}{" "}
               <span className="font-mono text-[#021C2B]">
                 {formatCurrency(maxPrice, priceCurrency, locale)}
               </span>
@@ -1511,7 +1622,7 @@ function HotelFilters({
         <FilterSection title={t("hotelResults.starRating")}>
           <label className="block">
             <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
-              {t("hotelResults.fromRating")} {" "}
+              {t("hotelResults.fromRating")}{" "}
               <span className="font-mono text-[#021C2B]">
                 {formatHotelRatingNumber(minRating, locale)}+
               </span>
@@ -1760,7 +1871,12 @@ function buildHotelFilterOptions(
   t: (key: string) => string,
 ) {
   return {
-    popular: buildTermOptions(hotels, POPULAR_FILTERS, getSearchableHotelText, t),
+    popular: buildTermOptions(
+      hotels,
+      POPULAR_FILTERS,
+      getSearchableHotelText,
+      t,
+    ),
     propertyTypes: buildTermOptions(
       hotels,
       PROPERTY_TYPE_FILTERS,
@@ -1784,7 +1900,9 @@ function buildHotelFilterOptions(
       hotels,
       LOCATION_AREA_FILTERS,
       (hotel) =>
-        [hotel.location, hotel.distanceFromCenter, ...hotel.amenities].join(" "),
+        [hotel.location, hotel.distanceFromCenter, ...hotel.amenities].join(
+          " ",
+        ),
       t,
     ),
     roomTypes: buildTermOptions(
