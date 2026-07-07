@@ -51,6 +51,21 @@ The audit currently fails when a priority market cannot resolve to a market-leve
 
 When real market assets are approved, the audit should be tightened so launch-critical market images fail if they remain replacement-required.
 
+## Homepage hero resolver helper
+
+`getHomepageHeroImageForMarket` resolves the homepage hero image through the market image system and keeps the existing global premium image as a safe fallback.
+
+The intended homepage wiring is:
+
+```tsx
+const homepageHeroImage = useMemo(
+  () => getHomepageHeroImageForMarket(regionCode),
+  [regionCode],
+);
+```
+
+Then the hero `Image` should use `homepageHeroImage.url` for the `src` value while keeping translated homepage alt text as the primary user-facing alt value.
+
 ## Rollout plan
 
 1. Add real country packs for priority markets.
