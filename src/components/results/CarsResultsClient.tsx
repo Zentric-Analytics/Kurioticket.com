@@ -984,10 +984,10 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
       <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
       <section
         className={cn(
-          "sticky top-0 z-40 hidden bg-[#f6f8fb] transition-[padding,box-shadow] duration-200 sm:block",
+          "sticky top-0 z-40 hidden border-b border-transparent bg-[#f6f8fb]/95 backdrop-blur transition-[padding,box-shadow] duration-200 sm:block",
           showCompactSearchSummary
-            ? "py-1.5 shadow-[0_6px_16px_rgba(15,23,42,0.035)]"
-            : "py-2.5 shadow-none",
+            ? "py-1.5 shadow-[0_3px_12px_rgba(15,23,42,0.05)]"
+            : "py-2.5 shadow-[0_4px_16px_rgba(15,23,42,0.06)]",
         )}
         aria-labelledby="cars-results-heading"
       >
@@ -1028,7 +1028,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
         </div>
       </section>
 
-      <div className="page-shell grid gap-5 pb-6 pt-4 sm:pt-5 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[252px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[252px_minmax(0,1fr)]">
         <aside className="hidden lg:sticky lg:top-[7.5rem] lg:block lg:max-h-[calc(100vh-8.5rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain">
           <CarFilters
             activeFilterCount={activeFilterCount}
