@@ -164,7 +164,7 @@ export function CustomizationPreferencesContent() {
             </p>
           </div>
 
-          <div className="divide-y divide-slate-200 border-t border-slate-200">
+          <div className="divide-y divide-slate-300 border-t border-slate-300">
             {preferenceSections.map((section) => (
               <div key={section.copyKey} className="py-5">
                 <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
@@ -174,7 +174,7 @@ export function CustomizationPreferencesContent() {
                     ]
                   }
                 </h3>
-                <div className="mt-3 divide-y divide-slate-200">
+                <div className="mt-3 divide-y divide-slate-300">
                   {section.editableRows?.map((row) => (
                     <div
                       key={row.id}
@@ -264,7 +264,7 @@ export function CustomizationPreferencesContent() {
             </div>
           </div>
 
-          <div className="border-t border-slate-200 py-5">
+          <div className="border-t border-slate-300 py-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm font-normal leading-6 text-slate-600">
                 {t["accountDashboard.preferences.email.trustNote"]}
