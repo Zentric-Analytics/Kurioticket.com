@@ -885,6 +885,7 @@ export default function Home() {
                       originCode={destination.originCode}
                       destinationCode={destination.code}
                       href={buildDestinationCardHref(price, {
+                        city: destination.city,
                         originCode: destination.originCode,
                         destinationCode: destination.code,
                         displayCurrency: selectedOption.currency,
@@ -1436,13 +1437,25 @@ function hasFreshProviderPrice(
 function buildDestinationCardHref(
   price: HomepageFare | undefined,
   options: {
+    city: string;
     originCode: string;
     destinationCode: string;
     displayCurrency: string;
     market: string;
   },
-) {
-  return buildRouteCardHref(price, options);
+): ComponentProps<typeof Link>["href"] {
+  void price;
+  void options.originCode;
+  void options.destinationCode;
+  void options.displayCurrency;
+  void options.market;
+
+  return {
+    pathname: "/hotels/results",
+    query: {
+      destination: options.city,
+    },
+  };
 }
 
 function buildDiscoveryCardHref(
@@ -1659,10 +1672,12 @@ function DestinationCard({
     display?: SavedTripDisplayDetails,
   ) => void;
 }) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const [imageSource, setImageSource] = useState(image);
 
   return (
-    <article className="group min-w-[18.5rem] flex-[0_0_18.5rem] snap-start overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_32px_-24px_rgba(15,23,42,0.65)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-26px_rgba(15,23,42,0.75)] sm:min-w-[22rem] sm:flex-[0_0_22rem]">
+    <article className="group min-w-[17.25rem] flex-[0_0_17.25rem] snap-start overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_32px_-24px_rgba(15,23,42,0.65)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-26px_rgba(15,23,42,0.75)] sm:min-w-[20.5rem] sm:flex-[0_0_20.5rem]">
       <Link href={href} className="focus-ring block">
         <div className="relative h-72 sm:h-80">
           <Image
@@ -1670,7 +1685,7 @@ function DestinationCard({
             alt={imageAlt}
             fill
             quality={92}
-            sizes="(min-width: 1280px) 22rem, (min-width: 640px) 22rem, 18.5rem"
+            sizes="(min-width: 1280px) 20.5rem, (min-width: 640px) 20.5rem, 17.25rem"
             className="object-cover transition duration-500 group-hover:scale-105"
             onError={() => {
               if (imageSource !== destinationImageFallback) {
@@ -1729,6 +1744,8 @@ function DestinationCard({
             expectedOriginCode={originCode}
             expectedDestinationCode={destinationCode}
             isLoading={isPriceLoading}
+            ctaLabel={t("homeExploreFares")}
+            suppressPrice
           />
         </div>
       </Link>
@@ -1742,12 +1759,16 @@ function DestinationPricePill({
   expectedOriginCode,
   expectedDestinationCode,
   isLoading,
+  ctaLabel,
+  suppressPrice,
 }: {
   price?: DestinationPrice;
   displayCurrency: string;
   expectedOriginCode?: string;
   expectedDestinationCode?: string;
   isLoading: boolean;
+  ctaLabel?: string;
+  suppressPrice?: boolean;
 }) {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -1756,6 +1777,16 @@ function DestinationPricePill({
     originCode: expectedOriginCode,
     destinationCode: expectedDestinationCode,
   });
+
+  const fallbackCtaLabel = ctaLabel ?? t("homeExploreFares");
+
+  if (suppressPrice) {
+    return (
+      <span className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]">
+        {fallbackCtaLabel}
+      </span>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -1769,7 +1800,7 @@ function DestinationPricePill({
   if (!hasProviderPrice) {
     return (
       <span className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]">
-        {t("homeExploreFares")}
+        {fallbackCtaLabel}
       </span>
     );
   }
@@ -1780,7 +1811,7 @@ function DestinationPricePill({
   if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
     return (
       <span className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]">
-        {t("homeExploreFares")}
+        {fallbackCtaLabel}
       </span>
     );
   }
