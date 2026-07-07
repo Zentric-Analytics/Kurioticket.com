@@ -1322,24 +1322,22 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
           />
         </div>
 
-        <div className="grid shrink-0 gap-2 border-t border-slate-200 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-10px_24px_rgba(15,23,42,0.08)]">
-          {activeFilterCount > 0 ? (
-            <Button
-              type="button"
-              variant="secondary"
-              className="h-10 w-full rounded-xl border-slate-300 text-sm font-bold text-slate-700"
-              onClick={clearCarFilters}
-            >
-              {t("carsResults.resetFilters")}
-            </Button>
-          ) : null}
+        <div className="flex shrink-0 items-center justify-between gap-4 border-t border-slate-200 bg-white px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-8px_20px_rgba(15,23,42,0.06)]">
           <Button
             type="button"
-            className="h-12 w-full rounded-xl bg-[#004BB8] text-base font-bold text-white shadow-lg shadow-[#004BB8]/20 transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
+            variant="ghost"
+            disabled={activeFilterCount === 0}
+            className="h-12 min-w-0 rounded-xl px-0 text-sm font-bold text-[#004BB8] transition hover:bg-transparent hover:text-[#003f9c] disabled:pointer-events-none disabled:text-slate-400"
+            onClick={clearCarFilters}
+          >
+            {t("clearAll")}
+          </Button>
+          <Button
+            type="button"
+            className="h-12 min-w-[8.75rem] rounded-xl bg-[#004BB8] px-7 text-base font-bold text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
             onClick={() => setFiltersOpen(false)}
           >
             {t("done")}
-            {activeFilterCount > 0 ? ` · ${activeFilterCount}` : ""}
           </Button>
         </div>
       </aside>
