@@ -876,7 +876,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
     if (compactSummaryVisible) {
       return (
         <div className="mx-auto w-full min-w-0 max-w-[54rem]">
-          <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.10)]">
+          <div className="overflow-visible rounded-[1.35rem] border border-slate-200/90 bg-white p-1.5 shadow-[0_12px_28px_-20px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.02]">
             <button
               type="button"
               aria-label={t("carsResults.editCarSearch")}
@@ -1183,7 +1183,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
           "sticky top-0 z-40 hidden border-b border-transparent bg-[#f6f8fb]/95 backdrop-blur transition-[padding,box-shadow] duration-200 sm:block",
           showCompactSearchSummary
             ? "py-1.5 shadow-none"
-            : "py-2.5 shadow-none",
+            : "py-3 shadow-none",
         )}
         aria-labelledby="cars-results-heading"
       >
