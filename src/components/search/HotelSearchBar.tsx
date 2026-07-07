@@ -31,6 +31,7 @@ import { useRegion } from "@/components/region/RegionProvider";
 import {
   getLocalizedHotelDestinationCityName,
   getLocalizedHotelDestinationDetail,
+  normalizeHotelDestinationSearchValue,
 } from "@/data/hotelDestinations";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
@@ -891,8 +892,11 @@ export function HotelSearchBar({
       return;
     }
 
+    const searchDestination =
+      normalizeHotelDestinationSearchValue(trimmedDestination);
+
     const params = new URLSearchParams({
-      destination: trimmedDestination,
+      destination: searchDestination,
       checkIn,
       checkOut,
       guests: String(normalizedGuests),
@@ -927,7 +931,7 @@ export function HotelSearchBar({
     startRouteProgress();
     try {
       const recentSearch = buildHotelRecentSearch({
-        destination: trimmedDestination,
+        destination: searchDestination,
         checkIn,
         checkOut,
         guests: normalizedGuests,

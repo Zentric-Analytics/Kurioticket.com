@@ -9,6 +9,7 @@ import {
   getLocalizedHotelDestinationDetail,
   hotelDestinations,
   normalizeHotelDestinationDisplayLocale,
+  normalizeHotelDestinationSearchValue,
   searchHotelDestinations,
 } from "@/data/hotelDestinations";
 import { translations as trTranslations } from "@/lib/i18n/tr";
@@ -85,4 +86,12 @@ test("hotel destination display localization does not mutate search suggestions 
   assert.equal(getLocalizedHotelDestinationCityName(london.name, "tr"), "Londra");
   assert.equal(getLocalizedHotelDestinationDetail(london, "tr"), "İngiltere, Birleşik Krallık");
   assert.equal(JSON.stringify(hotelDestinations), before);
+});
+
+test("hotel destination search value normalizes decorated suggestions to city names", () => {
+  assert.equal(normalizeHotelDestinationSearchValue("London, United Kingdom"), "London");
+  assert.equal(normalizeHotelDestinationSearchValue("Paris, France"), "Paris");
+  assert.equal(normalizeHotelDestinationSearchValue("New York, NY"), "New York");
+  assert.equal(normalizeHotelDestinationSearchValue("Tokyo"), "Tokyo");
+  assert.equal(normalizeHotelDestinationSearchValue("  Custom Beach  "), "Custom Beach");
 });
