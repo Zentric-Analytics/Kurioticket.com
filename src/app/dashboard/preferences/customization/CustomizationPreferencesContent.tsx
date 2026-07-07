@@ -249,40 +249,40 @@ export function CustomizationPreferencesContent() {
                   }
                 </p>
               ) : null}
-            </div>
-          </div>
 
-          <div className="mt-5 rounded-2xl border border-slate-300 bg-transparent p-5 sm:p-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm font-normal leading-6 text-slate-600">
-                {t["accountDashboard.preferences.email.trustNote"]}
-              </p>
-              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <button
-                  type="button"
-                  onClick={resetToDefault}
-                  className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-transparent px-5 text-sm font-semibold text-slate-800 transition hover:bg-slate-100"
-                >
-                  {t["accountDashboard.preferences.email.resetToDefault"]}
-                </button>
-                <button
-                  type="button"
-                  onClick={previewSave}
-                  className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B]"
-                >
-                  {t["accountDashboard.preferences.email.savePreferences"]}
-                </button>
+              <div className="mt-6 border-t border-slate-300 pt-5 sm:pt-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                  <p className="text-sm font-normal leading-6 text-slate-600">
+                    {t["accountDashboard.preferences.email.trustNote"]}
+                  </p>
+                  <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                    <button
+                      type="button"
+                      onClick={resetToDefault}
+                      className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-transparent px-5 text-sm font-semibold text-slate-800 transition hover:bg-slate-100"
+                    >
+                      {t["accountDashboard.preferences.email.resetToDefault"]}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={previewSave}
+                      className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B]"
+                    >
+                      {t["accountDashboard.preferences.email.savePreferences"]}
+                    </button>
+                  </div>
+                </div>
+                {statusMessage ? (
+                  <p
+                    className="mt-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-normal leading-6 text-blue-900"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    {statusMessage}
+                  </p>
+                ) : null}
               </div>
             </div>
-            {statusMessage ? (
-              <p
-                className="mt-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-normal leading-6 text-blue-900"
-                role="status"
-                aria-live="polite"
-              >
-                {statusMessage}
-              </p>
-            ) : null}
           </div>
         </section>
       </div>
