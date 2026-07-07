@@ -9,15 +9,13 @@ export async function generateMetadata() {
   const cookieStore = await cookies();
   const t = getTranslations(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
 
-  return { title: t["accountDashboard.preferences.notifications.title"] };
+  return { title: t["accountDashboard.preferences.customization.title"] };
 }
 
 export default function CustomizationPreferencesPage() {
   return (
     <>
-      <div className="[&>header]:!border-b-0 [&>header]:!shadow-none">
-        <AccountPreferencesHeader />
-      </div>
+      <AccountPreferencesHeader />
       <CustomizationPreferencesContent />
       <Footer />
     </>
