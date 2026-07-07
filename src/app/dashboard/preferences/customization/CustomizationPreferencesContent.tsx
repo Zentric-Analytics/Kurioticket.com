@@ -139,7 +139,7 @@ export function CustomizationPreferencesContent() {
       <div className="mx-auto max-w-[1120px] px-4 py-6 sm:px-6 lg:px-8">
         <AccountBackLink />
 
-        <header className="mt-6">
+        <header className="mt-6 sm:-ml-6 lg:-ml-8">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
             {t["accountDashboard.preferences.email.title"]}
           </h1>
