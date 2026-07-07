@@ -11,6 +11,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import {
   SlidersHorizontal,
+  SquarePen,
   Star,
   Tag,
   ThumbsUp,
@@ -333,7 +334,11 @@ export function HotelResultsClient() {
   const [hotelSummarySortMode, setHotelSummarySortMode] =
     useState<HotelSummarySortMode>("cheapest");
   const [mobileHotelSearchOpen, setMobileHotelSearchOpen] = useState(false);
+  const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
+  const [isSearchExpandedWhileSticky, setIsSearchExpandedWhileSticky] =
+    useState(false);
 
+  const stickySentinelRef = useRef<HTMLDivElement | null>(null);
   const filterApplyingTimeoutRef = useRef<number | null>(null);
   const searchApplyingTimeoutRef = useRef<number | null>(null);
   const filterScrollbarTimeoutRef = useRef<number | null>(null);
@@ -385,6 +390,37 @@ export function HotelResultsClient() {
     activeMobileHotelSearchDraft.rooms,
     body.sort,
   ].join("-");
+
+  const showCompactSearchSummary =
+    isSearchBarCompact && !isSearchExpandedWhileSticky;
+  const formatHotelSummaryDate = useCallback(
+    (value: string) => {
+      const [year, month, day] = value.split("-").map(Number);
+
+      if (!year || !month || !day) return value;
+
+      return new Intl.DateTimeFormat(locale, {
+        month: "short",
+        day: "numeric",
+      }).format(new Date(year, month - 1, day));
+    },
+    [locale],
+  );
+  const hotelDateSummary = `${formatHotelSummaryDate(
+    body.checkIn,
+  )} — ${formatHotelSummaryDate(body.checkOut)}`;
+  const hotelGuestRoomSummary = `${body.guests} ${
+    body.guests === 1 ? t("guest") || "guest" : t("guests") || "guests"
+  } · ${body.rooms} ${
+    body.rooms === 1 ? t("room") || "room" : t("rooms") || "rooms"
+  }`;
+  const hotelSortSummary = body.sort
+    ? `${t("sort") || "Sort"}: ${body.sort.replace(/-/g, " ")}`
+    : "";
+
+  const expandStickySearch = useCallback(() => {
+    setIsSearchExpandedWhileSticky(true);
+  }, []);
 
   const updateMobileHotelSearchDraft = useCallback(
     (nextDraft: HotelMobileSearchDraft) => {
@@ -609,6 +645,30 @@ export function HotelResultsClient() {
     filtered.length === 0;
 
   useEffect(() => {
+    const sentinel = stickySentinelRef.current;
+
+    if (!sentinel || typeof IntersectionObserver === "undefined") {
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const shouldCompact = !entry.isIntersecting;
+        setIsSearchBarCompact(shouldCompact);
+
+        if (!shouldCompact) {
+          setIsSearchExpandedWhileSticky(false);
+        }
+      },
+      { threshold: 0 },
+    );
+
+    observer.observe(sentinel);
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     if (!filterApplying || loading || error) return;
 
     if (filterApplyingTimeoutRef.current !== null) {
@@ -803,21 +863,66 @@ export function HotelResultsClient() {
         </div>
       ) : null}
 
-      <section className="sticky top-0 z-40 hidden border-b border-slate-200/80 bg-[#f6f8fb]/95 py-3 shadow-sm shadow-slate-900/5 backdrop-blur sm:block">
+      <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
+      <section
+        className={cn(
+          "sticky top-0 z-40 hidden border-b border-slate-200/80 bg-[#f6f8fb]/95 backdrop-blur transition-[padding,box-shadow] duration-200 sm:block",
+          showCompactSearchSummary
+            ? "py-1.5 shadow-[0_3px_12px_rgba(15,23,42,0.05)]"
+            : "py-3 shadow-sm shadow-slate-900/5",
+        )}
+      >
         <div className="page-shell">
-          <HotelSearchBar
-            key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
-            initialDestination={body.destination}
-            initialCheckIn={body.checkIn}
-            initialCheckOut={body.checkOut}
-            initialGuests={body.guests}
-            initialRooms={body.rooms}
-            initialSort={body.sort}
-            errorRole="alert"
-            compact
-            className="min-w-0"
-            onSubmitStart={triggerSearchApplying}
-          />
+          {showCompactSearchSummary ? (
+            <div className="mx-auto w-full min-w-0 max-w-[54rem]">
+              <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.10)]">
+                <button
+                  type="button"
+                  aria-label={t("editSearch") || "Edit search"}
+                  onClick={expandStickySearch}
+                  className="group focus-ring flex w-full min-w-0 flex-col gap-2 rounded-xl bg-white px-3 py-2.5 text-start transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
+                >
+                  <span className="grid min-w-0 flex-1 grid-cols-1 gap-1.5 sm:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.5fr)_minmax(0,0.95fr)_minmax(0,0.85fr)_minmax(0,0.8fr)] lg:items-center lg:gap-3">
+                    <span className="min-w-0 truncate text-sm font-semibold text-slate-800">
+                      {body.destination}
+                    </span>
+                    <span className="min-w-0 truncate text-sm font-medium text-slate-600">
+                      {hotelDateSummary}
+                    </span>
+                    <span className="min-w-0 truncate text-sm font-medium text-slate-600">
+                      {hotelGuestRoomSummary}
+                    </span>
+                    {hotelSortSummary ? (
+                      <span className="min-w-0 truncate text-sm font-medium capitalize text-slate-600">
+                        {hotelSortSummary}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#004BB8] shadow-sm transition group-hover:border-[#004BB8]/25 group-hover:bg-white sm:self-center">
+                    <SquarePen className="h-3.5 w-3.5" aria-hidden="true" />
+                    {t("edit") || "Edit"}
+                  </span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <HotelSearchBar
+              key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
+              initialDestination={body.destination}
+              initialCheckIn={body.checkIn}
+              initialCheckOut={body.checkOut}
+              initialGuests={body.guests}
+              initialRooms={body.rooms}
+              initialSort={body.sort}
+              errorRole="alert"
+              compact
+              className="min-w-0"
+              onSubmitStart={() => {
+                triggerSearchApplying();
+                setIsSearchExpandedWhileSticky(false);
+              }}
+            />
+          )}
         </div>
       </section>
 

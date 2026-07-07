@@ -761,7 +761,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
           className={cn(
             "overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.075)] transition-[padding,border-color,box-shadow,border-eadius] duration-200",
             compactSummaryVisible
-              ? "rounded-sm border-slate-300 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.12)]"
+              ? "rounded-2xl border-slate-200 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.10)]"
               : "p-1",
           )}
         >
@@ -770,7 +770,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
               type="button"
               aria-label={t("carsResults.editCarSearch")}
               onClick={expandStickySearch}
-              className="group focus-ring flex w-full min-w-0 flex-col gap-2 rounded-[2px] bg-white px-3 py-2.5 text-start transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
+              className="group focus-ring flex w-full min-w-0 flex-col gap-2 rounded-xl bg-white px-3 py-2.5 text-start transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
             >
               <span className="grid min-w-0 flex-1 grid-cols-1 gap-1.5 sm:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,0.8fr)] lg:items-center lg:gap-3">
                 <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-800">
@@ -799,7 +799,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                   {driverAgeSummary}
                 </span>
               </span>
-              <span className="inline-flex shrink-0 items-center gap-2 self-start rounded-[2px] border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#004BB8] shadow-sm transition group-hover:border-[#004BB8]/25 group-hover:bg-white sm:self-center">
+              <span className="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#004BB8] shadow-sm transition group-hover:border-[#004BB8]/25 group-hover:bg-white sm:self-center">
                 <SquarePen className="h-3.5 w-3.5" aria-hidden="true" />
                 {t("carsResults.edit")}
               </span>
