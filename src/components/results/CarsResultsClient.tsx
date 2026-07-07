@@ -1205,32 +1205,36 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
 
       <aside
         className={cn(
-          "fixed bottom-0 start-0 end-0 z-50 flex max-h-[86dvh] flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl transition-transform lg:hidden",
+          "fixed inset-0 z-[10000] flex h-[100dvh] flex-col overflow-hidden bg-white transition-transform duration-200 ease-out lg:hidden",
           filtersOpen ? "translate-y-0" : "translate-y-full",
         )}
         aria-label={t("carsResults.carFiltersAria")}
       >
-        <div className="flex-1 overflow-auto p-5 pb-3">
-          <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="shrink-0 border-b border-slate-200 bg-white px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+          <div className="flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-base font-semibold text-slate-900">
+              <h2 className="text-lg font-bold leading-6 text-slate-950">
                 {t("filters")}
               </h2>
               {activeFilterCount > 0 ? (
-                <p className="mt-1 inline-flex rounded-full bg-[#004BB8]/8 px-2 py-0.5 text-xs font-semibold text-[#004BB8] ring-1 ring-[#004BB8]/10">
+                <p className="mt-1 inline-flex rounded-full bg-[#004BB8]/8 px-2.5 py-1 text-xs font-bold text-[#004BB8] ring-1 ring-[#004BB8]/10">
                   {activeFilterLabel}
                 </p>
               ) : null}
             </div>
             <Button
+              type="button"
               variant="ghost"
-              className="h-10 w-10 px-0"
+              className="h-10 w-10 shrink-0 rounded-full border border-slate-200 bg-white px-0 text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
               aria-label={t("carsResults.closeFilters")}
               onClick={() => setFiltersOpen(false)}
             >
               <X size={20} />
             </Button>
           </div>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
           <CarFilters
             activeFilterCount={activeFilterCount}
             layout="mobile"
@@ -1241,12 +1245,12 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
           />
         </div>
 
-        <div className="grid gap-2 border-t border-slate-200 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div className="grid shrink-0 gap-2 border-t border-slate-200 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-10px_24px_rgba(15,23,42,0.08)]">
           {activeFilterCount > 0 ? (
             <Button
               type="button"
               variant="secondary"
-              className="h-11 w-full rounded-xl border-slate-300 text-sm font-bold text-slate-700"
+              className="h-10 w-full rounded-xl border-slate-300 text-sm font-bold text-slate-700"
               onClick={clearCarFilters}
             >
               {t("carsResults.resetFilters")}
@@ -1254,7 +1258,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
           ) : null}
           <Button
             type="button"
-            className="h-11 w-full rounded-xl bg-gradient-to-r from-[#004BB8] to-[#021C2B] text-sm font-bold text-white shadow-lg shadow-[#004BB8]/20"
+            className="h-12 w-full rounded-xl bg-[#004BB8] text-base font-bold text-white shadow-lg shadow-[#004BB8]/20 transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
             onClick={() => setFiltersOpen(false)}
           >
             {t("done")}
@@ -1797,9 +1801,21 @@ function CarFilters({
         </div>
       </div>
 
-      <div className="space-y-3 bg-white px-3 py-3">
+      <div
+        className={cn(
+          "bg-white",
+          layout === "mobile" ? "space-y-0 px-3 py-3" : "space-y-3 px-3 py-3",
+        )}
+      >
         {activeFilterCount > 0 ? (
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-muted px-3 py-2.5">
+          <div
+            className={cn(
+              "flex items-center justify-between gap-3",
+              layout === "mobile"
+                ? "border-b border-border pb-3"
+                : "rounded-xl border border-border bg-surface-muted px-3 py-2.5",
+            )}
+          >
             <span className="text-sm font-semibold text-navy">
               {interpolate(t("carsResults.selectedFilterCount"), {
                 count: String(activeFilterCount),
@@ -1807,7 +1823,10 @@ function CarFilters({
             </span>
             <button
               type="button"
-              className="focus-ring rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-blue shadow-sm transition hover:bg-surface-muted"
+              className={cn(
+                "focus-ring rounded-lg px-2.5 py-1 text-xs font-bold text-blue transition hover:bg-surface-muted",
+                layout === "mobile" ? "bg-transparent" : "bg-white shadow-sm",
+              )}
               onClick={onClear}
             >
               {t("carsResults.reset")}
@@ -1818,6 +1837,7 @@ function CarFilters({
         {carFilterGroups.map((group) => (
           <FilterSection
             key={group.id}
+            layout={layout}
             group={group}
             onToggle={onToggle}
             selectedOptions={selectedFilters[group.id] ?? []}
@@ -1830,18 +1850,26 @@ function CarFilters({
 }
 
 function FilterSection({
+  layout,
   group,
   onToggle,
   selectedOptions,
   t,
 }: {
+  layout: "desktop" | "mobile";
   group: CarFilterGroup;
   onToggle: (groupId: string, option: string) => void;
   selectedOptions: string[];
   t: (key: string) => string;
 }) {
   return (
-    <section className="rounded-xl border border-border bg-white px-3 py-3 shadow-sm shadow-slate-900/[0.025]">
+    <section
+      className={cn(
+        layout === "mobile"
+          ? "border-t border-border py-3 first:border-t-0 first:pt-0"
+          : "rounded-xl border border-border bg-white px-3 py-3 shadow-sm shadow-slate-900/[0.025]",
+      )}
+    >
       <h3 className="text-sm font-semibold text-navy">
         {t(group.titleKey)}
       </h3>
@@ -1853,10 +1881,16 @@ function FilterSection({
             <label
               key={option.id}
               className={cn(
-                "flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all",
+                layout === "mobile"
+                  ? "flex cursor-pointer items-center gap-2.5 py-1.5 text-sm font-medium text-muted transition hover:text-navy"
+                  : "flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all",
                 isSelected
-                  ? "border-blue bg-blue text-white shadow-sm shadow-blue/[0.03]"
-                  : "border-border bg-white text-muted hover:border-blue/25 hover:bg-surface-muted hover:text-navy",
+                  ? layout === "mobile"
+                    ? "font-semibold text-navy"
+                    : "border-blue bg-blue text-white shadow-sm shadow-blue/[0.03]"
+                  : layout === "mobile"
+                    ? undefined
+                    : "border-border bg-white text-muted hover:border-blue/25 hover:bg-surface-muted hover:text-navy",
               )}
             >
               <input
@@ -1868,7 +1902,7 @@ function FilterSection({
               <span className="min-w-0 flex-1 truncate">
                 {t(option.labelKey)}
               </span>
-              {isSelected ? (
+              {isSelected && layout === "desktop" ? (
                 <CheckCircle2
                   className="h-4 w-4 shrink-0 text-white"
                   aria-hidden="true"
