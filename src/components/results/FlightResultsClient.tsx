@@ -4616,7 +4616,7 @@ export function FlightResultsClient() {
         </div>
       </section>
 
-      <div className="page-shell grid gap-4 pb-5 pt-4 sm:pt-5 lg:grid-cols-[244px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-4 pb-5 pt-4 sm:pt-5 lg:grid-cols-[264px_minmax(0,1fr)]">
         <aside className={cn("hidden lg:block", desktopFilterStickyTopClass)}>
           <div ref={desktopFilterContainerRef}>
             {showFullDesktopFilters ? (
@@ -4656,6 +4656,7 @@ export function FlightResultsClient() {
                   flexibleOnly={flexibleOnly}
                   setFlexibleOnly={setFlexibleOnly}
                   onFilterChange={triggerFilterApplying}
+                  onClear={clearFlightFilters}
                 />
               </div>
             ) : (
@@ -4900,6 +4901,7 @@ export function FlightResultsClient() {
             flexibleOnly={flexibleOnly}
             setFlexibleOnly={setFlexibleOnly}
             onFilterChange={triggerFilterApplying}
+            onClear={clearFlightFilters}
           />
         </div>
 
@@ -6258,6 +6260,7 @@ function Filters({
   flexibleOnly,
   setFlexibleOnly,
   onFilterChange,
+  onClear,
 }: {
   layout: "desktop" | "mobile";
   activeFilterCount: number;
@@ -6293,6 +6296,7 @@ function Filters({
   flexibleOnly: boolean;
   setFlexibleOnly: (value: boolean) => void;
   onFilterChange: () => void;
+  onClear: () => void;
 }) {
   const { t: dictionary, locale } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -6315,29 +6319,36 @@ function Filters({
   return (
     <div
       className={cn(
-        "bg-white",
-        layout === "desktop" &&
-          "desktop-filter-sidebar overflow-hidden rounded-[1.35rem] border border-slate-200/80 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.32)] ring-1 ring-slate-950/[0.02]",
+        layout === "mobile" ? "bg-white" : "desktop-filter-sidebar bg-transparent",
       )}
     >
       {layout === "desktop" ? (
-        <div className="desktop-filter-sidebar__header flex items-center justify-between gap-2 border-b border-slate-200/80 bg-gradient-to-br from-slate-950 via-[#073b7a] to-[#0f766e] px-4 py-3.5">
+        <div className="desktop-filter-sidebar__header flex items-start justify-between gap-3 border-b border-slate-200/70 px-1 pb-3">
           <div>
-            <h2 className="desktop-filter-sidebar__title text-base font-semibold text-white/95">
+            <h2 className="desktop-filter-sidebar__title text-base font-bold text-slate-950">
               {t("filterBy")}
             </h2>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             {activeFilterCount > 0 ? (
-              <span className="desktop-filter-sidebar__count rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-[#004BB8] shadow-sm ring-1 ring-white/70">
-                {t("activeFilterCount").replace(
-                  "{{count}}",
-                  String(activeFilterCount),
-                )}
-              </span>
+              <>
+                <span className="desktop-filter-sidebar__count rounded-full bg-[#004BB8]/8 px-2.5 py-1 text-xs font-semibold text-[#004BB8] ring-1 ring-[#004BB8]/10">
+                  {t("activeFilterCount").replace(
+                    "{{count}}",
+                    String(activeFilterCount),
+                  )}
+                </span>
+                <button
+                  type="button"
+                  className="rounded-full px-2 py-1 text-xs font-bold text-[#004BB8] transition hover:bg-[#004BB8]/8 hover:text-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                  onClick={onClear}
+                >
+                  Clear all
+                </button>
+              </>
             ) : null}
             <SlidersHorizontal
-              className="desktop-filter-sidebar__icon text-white/90"
+              className="desktop-filter-sidebar__icon mt-1 text-[#004BB8]"
               size={18}
             />
           </div>
@@ -6346,8 +6357,7 @@ function Filters({
 
       <div
         className={cn(
-          "bg-white",
-          layout === "mobile" ? "space-y-4" : "space-y-0 px-4 py-1",
+          layout === "mobile" ? "space-y-4 bg-white" : "space-y-0 bg-transparent px-1 py-1",
         )}
       >
         <section>
