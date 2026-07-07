@@ -2934,15 +2934,15 @@ export function FlightResultsClient() {
               </div>
             </div>
 
-            <div className="overflow-visible rounded-[1.65rem] border border-white/70 bg-white/90 p-2.5 shadow-[0_18px_44px_rgba(15,23,42,0.10)] ring-1 ring-slate-950/[0.03] backdrop-blur sm:rounded-2xl sm:border-slate-200 sm:bg-white sm:p-1 sm:shadow-[0_10px_28px_rgba(15,23,42,0.10)] sm:ring-0">
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-1.5 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
+            <div className="overflow-visible rounded-[1.65rem] border border-white/70 bg-white/90 p-2.5 shadow-[0_18px_44px_rgba(15,23,42,0.10)] ring-1 ring-slate-950/[0.03] backdrop-blur sm:rounded-[1.35rem] sm:border-slate-200/90 sm:bg-white sm:p-1.5 sm:shadow-[0_16px_36px_-24px_rgba(15,23,42,0.32)] sm:ring-1 sm:ring-slate-950/[0.02] lg:p-1">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-1.5 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_116px] lg:gap-0">
                 <div className="col-span-2 grid grid-cols-[minmax(0,1fr)_34px_minmax(0,1fr)] items-stretch rounded-[1.35rem] border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 px-3 py-1.5 shadow-sm transition-colors hover:border-slate-300 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:rounded-xl sm:border-slate-300 sm:bg-white sm:px-3 sm:py-1.5 sm:shadow-none sm:hover:border-slate-400 sm:focus-within:ring-[#004BB8]/25 lg:col-span-1 lg:rounded-none lg:rounded-s-xl lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
                   <div
                     className="relative min-h-[48px] px-0 py-0 pe-2 sm:min-h-[54px]"
                     ref={originWrapRef}
                   >
                     <label
-                      className="mb-0.5 block text-[10px] font-bold uppercase tracking-[0.16em] leading-4 text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600"
+                      className="mb-0.5 block text-[10px] font-bold uppercase tracking-[0.16em] leading-4 text-slate-500 sm:mb-1.5 sm:text-[11px] sm:font-bold sm:tracking-[0.12em] sm:text-slate-500"
                       htmlFor="origin"
                     >
                       {t("origin")}
@@ -2975,7 +2975,7 @@ export function FlightResultsClient() {
                       }}
                       placeholder={t("fromPlaceholder")}
                       autoComplete="off"
-                      className="focus-ring h-7 w-full rounded-md border-0 bg-transparent px-0 pe-8 text-[16px] font-semibold text-slate-950 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 sm:h-8 sm:font-normal md:text-sm"
+                      className="focus-ring h-7 w-full rounded-md border-0 bg-transparent px-0 pe-8 text-[16px] font-semibold text-slate-950 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 sm:h-8 sm:font-medium md:text-sm"
                     />
                     {originInput ? (
                       <button
@@ -3028,7 +3028,7 @@ export function FlightResultsClient() {
                     ref={destinationWrapRef}
                   >
                     <label
-                      className="mb-0.5 block text-[10px] font-bold uppercase tracking-[0.16em] leading-4 text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600"
+                      className="mb-0.5 block text-[10px] font-bold uppercase tracking-[0.16em] leading-4 text-slate-500 sm:mb-1.5 sm:text-[11px] sm:font-bold sm:tracking-[0.12em] sm:text-slate-500"
                       htmlFor="destination"
                     >
                       {t("destination")}
@@ -3062,7 +3062,7 @@ export function FlightResultsClient() {
                       }}
                       placeholder={t("toPlaceholder")}
                       autoComplete="off"
-                      className="focus-ring h-7 w-full rounded-md border-0 bg-transparent px-0 pe-8 text-[16px] font-semibold text-slate-950 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 sm:h-8 sm:font-normal md:text-sm"
+                      className="focus-ring h-7 w-full rounded-md border-0 bg-transparent px-0 pe-8 text-[16px] font-semibold text-slate-950 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 sm:h-8 sm:font-medium md:text-sm"
                     />
                     {destinationInput ? (
                       <button
@@ -3104,7 +3104,7 @@ export function FlightResultsClient() {
                   className="relative min-h-[50px] rounded-[1.25rem] border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 px-3 py-1.5 shadow-sm transition-colors hover:border-slate-300 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:bg-white sm:shadow-none sm:hover:border-slate-400 sm:focus-within:ring-[#004BB8]/25 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
                   ref={departureWrapRef}
                 >
-                  <label className="mb-0.5 block text-[10px] font-bold uppercase tracking-[0.16em] leading-4 text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600">
+                  <label className="mb-0.5 block text-[10px] font-bold uppercase tracking-[0.16em] leading-4 text-slate-500 sm:mb-1.5 sm:text-[11px] sm:font-bold sm:tracking-[0.12em] sm:text-slate-500">
                     {t("travelDates")}
                   </label>
                   <button
@@ -3149,7 +3149,7 @@ export function FlightResultsClient() {
                   className="relative min-h-[50px] rounded-[1.25rem] border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 px-3 py-1.5 shadow-sm transition-colors hover:border-slate-300 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:bg-white sm:shadow-none sm:hover:border-slate-400 sm:focus-within:ring-[#004BB8]/25 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
                   ref={travelerCabinWrapRef}
                 >
-                  <label className="mb-0.5 block text-[10px] font-bold uppercase tracking-[0.16em] leading-4 text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600">
+                  <label className="mb-0.5 block text-[10px] font-bold uppercase tracking-[0.16em] leading-4 text-slate-500 sm:mb-1.5 sm:text-[11px] sm:font-bold sm:tracking-[0.12em] sm:text-slate-500">
                     {t("travelers")}
                   </label>
                   <button
@@ -3187,7 +3187,7 @@ export function FlightResultsClient() {
                 <div className="col-span-2 lg:col-span-1 lg:min-h-[54px] lg:self-stretch">
                   <Button
                     type="submit"
-                    className="h-[50px] w-full rounded-[1.25rem] bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_14px_28px_rgba(2,28,43,0.14)] transition hover:bg-[#021C2B] active:scale-[0.99] active:bg-[#021C2B] sm:h-12 sm:rounded-xl sm:shadow-md sm:shadow-[#004BB8]/20 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20"
+                    className="h-[50px] w-full rounded-[1.25rem] bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_14px_28px_rgba(2,28,43,0.14)] transition hover:bg-[#021C2B] hover:shadow-[0_16px_30px_rgba(0,75,184,0.22)] active:scale-[0.99] active:bg-[#021C2B] sm:h-12 sm:rounded-xl sm:shadow-[0_12px_24px_rgba(0,75,184,0.18)] lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20"
                   >
                     {t("search")}
                   </Button>
@@ -3811,7 +3811,7 @@ export function FlightResultsClient() {
     if (placement === "desktop" && showCompactSearchSummary) {
       return (
         <div className="mx-auto w-full min-w-0 max-w-[54rem] sm:block">
-          <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.10)]">
+          <div className="overflow-visible rounded-[1.35rem] border border-slate-200/90 bg-white p-1.5 shadow-[0_12px_28px_-20px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.02]">
             <button
               type="button"
               aria-label={t("editFlightSearch")}
@@ -3888,7 +3888,7 @@ export function FlightResultsClient() {
             </button>
           </div>
 
-          <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
+          <div className="overflow-visible rounded-[1.35rem] border border-slate-200/90 bg-white p-1.5 shadow-[0_16px_36px_-24px_rgba(15,23,42,0.32)] ring-1 ring-slate-950/[0.02]">
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[132px_minmax(0,2.35fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
               <div ref={tripTypeMenuRef} className="relative">
                 <button
@@ -4508,7 +4508,7 @@ export function FlightResultsClient() {
         </div>
       </section>
 
-      <div className="page-shell grid gap-4 pb-5 pt-4 sm:pt-5 lg:grid-cols-[232px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-4 pb-5 pt-4 sm:pt-5 lg:grid-cols-[244px_minmax(0,1fr)]">
         <aside className={cn("hidden lg:block", desktopFilterStickyTopClass)}>
           <Filters
             layout="desktop"
@@ -6196,11 +6196,11 @@ function Filters({
       className={cn(
         "bg-white",
         layout === "desktop" &&
-          "rounded-2xl border border-slate-200/80 shadow-sm shadow-slate-900/[0.04]",
+          "overflow-hidden rounded-[1.35rem] border border-slate-200/80 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.32)] ring-1 ring-slate-950/[0.02]",
       )}
     >
       {layout === "desktop" ? (
-        <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-blue to-teal px-3 py-3">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200/80 bg-gradient-to-br from-slate-950 via-[#073b7a] to-[#0f766e] px-4 py-3.5">
           <div>
             <h2 className="text-base font-semibold text-white/95">
               {t("filterBy")}
@@ -6223,13 +6223,13 @@ function Filters({
       <div
         className={cn(
           "bg-white",
-          layout === "mobile" ? "space-y-4" : "space-y-4 px-3 py-3",
+          layout === "mobile" ? "space-y-4" : "space-y-0 px-4 py-1",
         )}
       >
         <section>
           {layout === "desktop" ? (
-            <div className="mb-3">
-              <h3 className="text-sm font-semibold text-slate-900">
+            <div className="mb-2.5 flex items-center justify-between gap-3">
+              <h3 className="text-[13px] font-bold uppercase tracking-[0.12em] text-slate-800">
                 {t("price")}
               </h3>
             </div>
@@ -6275,15 +6275,15 @@ function Filters({
         </section>
 
         <FilterSection title={t("times")}>
-          <div className="grid grid-cols-2 border-b border-slate-200/70">
+          <div className="grid grid-cols-2 rounded-full bg-slate-100 p-1">
             <button
               type="button"
               onClick={() => setTimeFilterMode("takeoff")}
               className={cn(
-                "border-b-2 px-2 pb-1.5 pt-1 text-sm font-medium transition",
+                "rounded-full px-2 py-1.5 text-xs font-bold transition",
                 timeFilterMode === "takeoff"
-                  ? "border-[#004BB8] text-[#004BB8]"
-                  : "border-transparent text-slate-600 hover:text-slate-900",
+                  ? "bg-white text-[#004BB8] shadow-sm ring-1 ring-slate-200/70"
+                  : "text-slate-600 hover:text-slate-900",
               )}
             >
               {t("takeoff")}
@@ -6292,10 +6292,10 @@ function Filters({
               type="button"
               onClick={() => setTimeFilterMode("landing")}
               className={cn(
-                "border-b-2 px-2 pb-1.5 pt-1 text-sm font-medium transition",
+                "rounded-full px-2 py-1.5 text-xs font-bold transition",
                 timeFilterMode === "landing"
-                  ? "border-[#004BB8] text-[#004BB8]"
-                  : "border-transparent text-slate-600 hover:text-slate-900",
+                  ? "bg-white text-[#004BB8] shadow-sm ring-1 ring-slate-200/70"
+                  : "text-slate-600 hover:text-slate-900",
               )}
             >
               {t("landing")}
@@ -6601,11 +6601,11 @@ function FilterSection({
     Boolean(children) && (!Array.isArray(children) || children.length > 0);
 
   return (
-    <section className="border-t border-border pt-3 first:border-t-0 first:pt-0">
-      <h3 className="mb-1.5 text-sm font-semibold leading-5 text-navy">
+    <section className="border-t border-slate-200/75 py-4 first:border-t-0">
+      <h3 className="mb-2 text-[13px] font-bold uppercase leading-5 tracking-[0.11em] text-slate-800">
         {title}
       </h3>
-      <div className="grid gap-1">
+      <div className="grid gap-0.5">
         {hasOptions ? (
           children
         ) : (
@@ -6635,11 +6635,11 @@ function FilterOptionRow({
     rightLabel ?? (typeof count === "number" ? String(count) : null);
 
   return (
-    <label className="flex min-h-10 cursor-pointer items-start justify-between gap-3 py-2 text-sm font-medium text-muted transition hover:text-navy">
+    <label className="flex min-h-9 cursor-pointer items-start justify-between gap-3 rounded-lg px-1.5 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950">
       <span className="flex min-w-0 items-start gap-2">
         <input
           type="checkbox"
-          className="mt-0.5 h-5 w-5 shrink-0 rounded border-border accent-blue focus-visible:ring-2 focus-visible:ring-blue/35"
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-blue focus-visible:ring-2 focus-visible:ring-blue/35"
           checked={checked}
           onChange={onChange}
         />
