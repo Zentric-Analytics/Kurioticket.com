@@ -414,6 +414,55 @@ const fieldLabelClass =
 const fieldInputClass =
   "focus-ring h-8 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 md:text-sm";
 
+function lockBodyScroll() {
+  const bodyElement = document.body;
+  const rootElement = document.documentElement;
+  const scrollY = window.scrollY;
+  const previousBodyStyles = {
+    left: bodyElement.style.left,
+    overflow: bodyElement.style.overflow,
+    overscrollBehavior: bodyElement.style.overscrollBehavior,
+    position: bodyElement.style.position,
+    right: bodyElement.style.right,
+    top: bodyElement.style.top,
+    touchAction: bodyElement.style.touchAction,
+    width: bodyElement.style.width,
+  };
+  const previousRootStyles = {
+    overflow: rootElement.style.overflow,
+    overscrollBehavior: rootElement.style.overscrollBehavior,
+  };
+
+  bodyElement.style.left = "0";
+  bodyElement.style.overflow = "hidden";
+  bodyElement.style.overscrollBehavior = "none";
+  bodyElement.style.position = "fixed";
+  bodyElement.style.right = "0";
+  bodyElement.style.top = `-${scrollY}px`;
+  bodyElement.style.touchAction = "none";
+  bodyElement.style.width = "100%";
+  rootElement.style.overflow = "hidden";
+  rootElement.style.overscrollBehavior = "none";
+
+  return {
+    restore: () => {
+      bodyElement.style.left = previousBodyStyles.left;
+      bodyElement.style.overflow = previousBodyStyles.overflow;
+      bodyElement.style.overscrollBehavior =
+        previousBodyStyles.overscrollBehavior;
+      bodyElement.style.position = previousBodyStyles.position;
+      bodyElement.style.right = previousBodyStyles.right;
+      bodyElement.style.top = previousBodyStyles.top;
+      bodyElement.style.touchAction = previousBodyStyles.touchAction;
+      bodyElement.style.width = previousBodyStyles.width;
+      rootElement.style.overflow = previousRootStyles.overflow;
+      rootElement.style.overscrollBehavior =
+        previousRootStyles.overscrollBehavior;
+      window.scrollTo(0, scrollY);
+    },
+  };
+}
+
 export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -425,6 +474,9 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
   const [isSearchExpandedWhileSticky, setIsSearchExpandedWhileSticky] =
     useState(false);
+  const mobileFiltersScrollLockRef = useRef<{ restore: () => void } | null>(
+    null,
+  );
   const [pickupLocation, setPickupLocation] = useState(values.pickupLocation);
   const [dropoffLocation, setDropoffLocation] = useState(
     values.dropoffLocation || values.pickupLocation,
@@ -484,6 +536,47 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   const activeFilterLabel = interpolate(t("carsResults.activeFilterCount"), {
     count: String(activeFilterCount),
   });
+
+  useEffect(() => {
+    const releaseExistingLock = () => {
+      mobileFiltersScrollLockRef.current?.restore();
+      mobileFiltersScrollLockRef.current = null;
+    };
+
+    if (!filtersOpen || typeof window === "undefined") {
+      releaseExistingLock();
+      return releaseExistingLock;
+    }
+
+    const mobileQuery = window.matchMedia("(max-width: 1023px)");
+
+    if (!mobileQuery.matches) {
+      releaseExistingLock();
+      return releaseExistingLock;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setFiltersOpen(false);
+      }
+    };
+
+    const previouslyFocusedElement =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+
+    mobileFiltersScrollLockRef.current = lockBodyScroll();
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      releaseExistingLock();
+      if (previouslyFocusedElement?.isConnected) {
+        previouslyFocusedElement.focus();
+      }
+    };
+  }, [filtersOpen]);
   const showFullSearchForm = !isSearchBarCompact || isSearchExpandedWhileSticky;
   const showCompactSearchSummary =
     isSearchBarCompact && !isSearchExpandedWhileSticky;
@@ -1205,15 +1298,15 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
 
       <aside
         className={cn(
-          "fixed bottom-0 start-0 end-0 z-50 flex max-h-[86dvh] flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl transition-transform lg:hidden",
+          "fixed inset-0 z-50 flex h-[100dvh] flex-col overflow-hidden bg-white transition-transform duration-200 ease-out lg:hidden",
           filtersOpen ? "translate-y-0" : "translate-y-full",
         )}
         aria-label={t("carsResults.carFiltersAria")}
       >
-        <div className="flex-1 overflow-auto p-5 pb-3">
-          <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
+          <div className="-mx-5 -mt-4 mb-1 flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(15,23,42,0.04)]">
             <div>
-              <h2 className="text-base font-semibold text-slate-900">
+              <h2 className="text-lg font-bold leading-6 text-slate-950">
                 {t("filters")}
               </h2>
               {activeFilterCount > 0 ? (
@@ -1224,7 +1317,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             </div>
             <Button
               variant="ghost"
-              className="h-10 w-10 px-0"
+              className="h-10 w-10 shrink-0 rounded-full border border-slate-200 bg-white px-0 text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
               aria-label={t("carsResults.closeFilters")}
               onClick={() => setFiltersOpen(false)}
             >
@@ -1241,7 +1334,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
           />
         </div>
 
-        <div className="grid gap-2 border-t border-slate-200 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div className="grid shrink-0 gap-2 border-t border-slate-200 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-10px_24px_rgba(15,23,42,0.08)]">
           {activeFilterCount > 0 ? (
             <Button
               type="button"
@@ -1254,7 +1347,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
           ) : null}
           <Button
             type="button"
-            className="h-11 w-full rounded-xl bg-gradient-to-r from-[#004BB8] to-[#021C2B] text-sm font-bold text-white shadow-lg shadow-[#004BB8]/20"
+            className="h-12 w-full rounded-xl bg-[#004BB8] text-base font-bold text-white shadow-lg shadow-[#004BB8]/20 transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
             onClick={() => setFiltersOpen(false)}
           >
             {t("done")}
@@ -1777,27 +1870,7 @@ function CarFilters({
           : "bg-white",
       )}
     >
-      <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-blue to-teal px-3 py-3">
-        <h2 className="text-base font-semibold text-white/95">
-          {t("carsResults.filterBy")}
-        </h2>
-        <div className="flex shrink-0 items-center gap-2">
-          {activeFilterCount > 0 ? (
-            <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-[#004BB8] shadow-sm ring-1 ring-white/70">
-              {interpolate(t("carsResults.activeFilterCount"), {
-                count: String(activeFilterCount),
-              })}
-            </span>
-          ) : null}
-          <SlidersHorizontal
-            className="text-white/90"
-            size={18}
-            aria-hidden="true"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-3 bg-white px-3 py-3">
+      <div className="space-y-4 bg-white py-2">
         {activeFilterCount > 0 ? (
           <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-muted px-3 py-2.5">
             <span className="text-sm font-semibold text-navy">
@@ -1841,10 +1914,8 @@ function FilterSection({
   t: (key: string) => string;
 }) {
   return (
-    <section className="rounded-xl border border-border bg-white px-3 py-3 shadow-sm shadow-slate-900/[0.025]">
-      <h3 className="text-sm font-semibold text-navy">
-        {t(group.titleKey)}
-      </h3>
+    <section className="border-t border-slate-200 pt-4 first:border-t-0 first:pt-0">
+      <h3 className="text-sm font-bold text-slate-950">{t(group.titleKey)}</h3>
       <div className="mt-2 space-y-1.5">
         {group.options.map((option) => {
           const isSelected = selectedOptions.includes(option.id);
@@ -1853,7 +1924,7 @@ function FilterSection({
             <label
               key={option.id}
               className={cn(
-                "flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all",
+                "flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border px-3 py-3 text-sm font-semibold transition-all",
                 isSelected
                   ? "border-blue bg-blue text-white shadow-sm shadow-blue/[0.03]"
                   : "border-border bg-white text-muted hover:border-blue/25 hover:bg-surface-muted hover:text-navy",
@@ -1861,7 +1932,7 @@ function FilterSection({
             >
               <input
                 type="checkbox"
-                className="h-3.5 w-3.5 shrink-0 rounded border-border accent-blue focus-visible:ring-2 focus-visible:ring-blue/35"
+                className="h-5 w-5 shrink-0 rounded border-slate-300 accent-blue focus-visible:ring-2 focus-visible:ring-blue/35"
                 checked={isSelected}
                 onChange={() => onToggle(group.id, option.id)}
               />

@@ -10,7 +10,6 @@ import {
 } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  SlidersHorizontal,
   SquarePen,
   Star,
   Tag,
@@ -369,6 +368,55 @@ type HotelMobileSearchDraft = {
   rooms: number;
 };
 
+function lockBodyScroll() {
+  const bodyElement = document.body;
+  const rootElement = document.documentElement;
+  const scrollY = window.scrollY;
+  const previousBodyStyles = {
+    left: bodyElement.style.left,
+    overflow: bodyElement.style.overflow,
+    overscrollBehavior: bodyElement.style.overscrollBehavior,
+    position: bodyElement.style.position,
+    right: bodyElement.style.right,
+    top: bodyElement.style.top,
+    touchAction: bodyElement.style.touchAction,
+    width: bodyElement.style.width,
+  };
+  const previousRootStyles = {
+    overflow: rootElement.style.overflow,
+    overscrollBehavior: rootElement.style.overscrollBehavior,
+  };
+
+  bodyElement.style.left = "0";
+  bodyElement.style.overflow = "hidden";
+  bodyElement.style.overscrollBehavior = "none";
+  bodyElement.style.position = "fixed";
+  bodyElement.style.right = "0";
+  bodyElement.style.top = `-${scrollY}px`;
+  bodyElement.style.touchAction = "none";
+  bodyElement.style.width = "100%";
+  rootElement.style.overflow = "hidden";
+  rootElement.style.overscrollBehavior = "none";
+
+  return {
+    restore: () => {
+      bodyElement.style.left = previousBodyStyles.left;
+      bodyElement.style.overflow = previousBodyStyles.overflow;
+      bodyElement.style.overscrollBehavior =
+        previousBodyStyles.overscrollBehavior;
+      bodyElement.style.position = previousBodyStyles.position;
+      bodyElement.style.right = previousBodyStyles.right;
+      bodyElement.style.top = previousBodyStyles.top;
+      bodyElement.style.touchAction = previousBodyStyles.touchAction;
+      bodyElement.style.width = previousBodyStyles.width;
+      rootElement.style.overflow = previousRootStyles.overflow;
+      rootElement.style.overscrollBehavior =
+        previousRootStyles.overscrollBehavior;
+      window.scrollTo(0, scrollY);
+    },
+  };
+}
+
 export function HotelResultsClient() {
   const { locale, t: dictionary } = useLocale();
   const t = useCallback(
@@ -405,6 +453,9 @@ export function HotelResultsClient() {
   const searchApplyingTimeoutRef = useRef<number | null>(null);
   const filterScrollbarTimeoutRef = useRef<number | null>(null);
   const mobileHotelSearchScrollLockRef = useRef<{ restore: () => void } | null>(
+    null,
+  );
+  const mobileFiltersScrollLockRef = useRef<{ restore: () => void } | null>(
     null,
   );
 
@@ -592,6 +643,47 @@ export function HotelResultsClient() {
 
     return releaseExistingLock;
   }, [mobileHotelSearchOpen]);
+
+  useEffect(() => {
+    const releaseExistingLock = () => {
+      mobileFiltersScrollLockRef.current?.restore();
+      mobileFiltersScrollLockRef.current = null;
+    };
+
+    if (!filtersOpen || typeof window === "undefined") {
+      releaseExistingLock();
+      return releaseExistingLock;
+    }
+
+    const mobileQuery = window.matchMedia("(max-width: 1023px)");
+
+    if (!mobileQuery.matches) {
+      releaseExistingLock();
+      return releaseExistingLock;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setFiltersOpen(false);
+      }
+    };
+
+    const previouslyFocusedElement =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+
+    mobileFiltersScrollLockRef.current = lockBodyScroll();
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      releaseExistingLock();
+      if (previouslyFocusedElement?.isConnected) {
+        previouslyFocusedElement.focus();
+      }
+    };
+  }, [filtersOpen]);
 
   useEffect(() => {
     let active = true;
@@ -1197,24 +1289,26 @@ export function HotelResultsClient() {
 
       <aside
         className={cn(
-          "fixed bottom-0 start-0 end-0 z-50 flex max-h-[86dvh] flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl transition-transform lg:hidden",
+          "fixed inset-0 z-50 flex h-[100dvh] flex-col overflow-hidden bg-white transition-transform duration-200 ease-out lg:hidden",
           filtersOpen ? "translate-y-0" : "translate-y-full",
         )}
       >
         <div
           className={cn(
-            "hotel-filter-scrollbar flex-1 overflow-auto p-5 pb-3",
+            "hotel-filter-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4",
             filterScrollbarVisible
               ? "hotel-filter-scrollbar--visible"
               : undefined,
           )}
           onScroll={showFilterScrollbarWhileScrolling}
         >
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-bold text-navy">{t("filters")}</h2>
+          <div className="-mx-5 -mt-4 mb-1 flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+            <h2 className="text-lg font-bold leading-6 text-slate-950">
+              {t("filters")}
+            </h2>
             <Button
               variant="ghost"
-              className="h-10 w-10 px-0"
+              className="h-10 w-10 shrink-0 rounded-full border border-slate-200 bg-white px-0 text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
               aria-label={t("closeFilters")}
               onClick={() => setFiltersOpen(false)}
             >
@@ -1237,10 +1331,10 @@ export function HotelResultsClient() {
           />
         </div>
 
-        <div className="border-t border-slate-200 bg-white p-4">
+        <div className="shrink-0 border-t border-slate-200 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-10px_24px_rgba(15,23,42,0.08)]">
           <Button
             type="button"
-            className="h-12 w-full rounded-xl bg-[#004BB8] text-base font-bold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] hover:bg-[#021C2B]"
+            className="h-12 w-full rounded-xl bg-[#004BB8] text-base font-bold text-white shadow-lg shadow-[#004BB8]/20 transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
             onClick={() => {
               triggerFilterApplying();
               setFiltersOpen(false);
@@ -1583,16 +1677,7 @@ function HotelFilters({
 
   return (
     <div className="bg-white">
-      <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-blue to-teal px-3 py-3">
-        <div>
-          <h2 className="text-base font-bold text-white">
-            {t("hotelResults.filterBy")}
-          </h2>
-        </div>
-        <SlidersHorizontal className="text-white" size={18} />
-      </div>
-
-      <div className="space-y-4 bg-white px-3 py-3">
+      <div className="space-y-5 bg-white py-2">
         <FilterSection title={t("hotelResults.budgetPrice")}>
           <label className="block">
             <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
@@ -1721,11 +1806,11 @@ function FilterSection({
   children: ReactNode;
 }) {
   return (
-    <section className="border-t border-border pt-3 first:border-t-0 first:pt-0">
-      <h3 className="mb-1.5 text-[13px] font-semibold leading-5 text-navy">
+    <section className="border-t border-slate-200 pt-4 first:border-t-0 first:pt-0">
+      <h3 className="mb-2.5 text-sm font-bold leading-5 text-slate-950">
         {title}
       </h3>
-      <div className="grid gap-1">{children}</div>
+      <div className="grid gap-2">{children}</div>
     </section>
   );
 }
@@ -1763,12 +1848,12 @@ function CheckboxFilterSection({
           return (
             <label
               key={option.value}
-              className="flex cursor-pointer items-start justify-between gap-3 py-1.5 text-[13px] font-medium text-muted transition hover:text-navy"
+              className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-xl px-1 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
             >
               <span className="flex min-w-0 items-start gap-2">
                 <input
                   type="checkbox"
-                  className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-border accent-blue focus-visible:ring-2 focus-visible:ring-blue/35"
+                  className="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-300 accent-blue focus-visible:ring-2 focus-visible:ring-blue/35"
                   checked={checked}
                   onChange={() => onToggle(option.value)}
                 />
