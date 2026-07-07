@@ -986,8 +986,8 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
         className={cn(
           "sticky top-0 z-40 hidden border-b border-transparent bg-[#f6f8fb]/95 backdrop-blur transition-[padding,box-shadow] duration-200 sm:block",
           showCompactSearchSummary
-            ? "py-1.5 shadow-[0_3px_12px_rgba(15,23,42,0.05)]"
-            : "py-2.5 shadow-[0_4px_16px_rgba(15,23,42,0.06)]",
+            ? "py-1.5 shadow-none"
+            : "py-2.5 shadow-none",
         )}
         aria-labelledby="cars-results-heading"
       >
