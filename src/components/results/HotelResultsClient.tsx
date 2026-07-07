@@ -30,8 +30,110 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn, formatCurrency } from "@/lib/utils";
 
 const hotelResultStackClass = "w-full max-w-[800px]";
-const desktopHotelFilterStickyTopClass =
-  "lg:sticky lg:top-[7.25rem] lg:max-h-[calc(100vh-8.5rem)] lg:overflow-y-auto lg:overscroll-contain";
+const desktopHotelFilterStickyTopClass = "lg:sticky lg:top-[7.25rem]";
+
+function useDesktopFilterShortcut(topOffset = 116) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const [isShortcutVisible, setIsShortcutVisible] = useState(false);
+  const [isManuallyExpanded, setIsManuallyExpanded] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    let animationFrame = 0;
+    let lastFullHeight = 0;
+
+    const updateShortcutState = () => {
+      animationFrame = 0;
+      const container = containerRef.current;
+      if (!container) return;
+
+      const contentHeight = contentRef.current?.offsetHeight || lastFullHeight;
+      if (contentHeight > 0) lastFullHeight = contentHeight;
+
+      const containerTop =
+        container.getBoundingClientRect().top + window.scrollY;
+      const collapseAfter =
+        containerTop + Math.max(contentHeight - 72, 0) - topOffset;
+      const shouldCollapse = window.scrollY > collapseAfter;
+
+      if (!shouldCollapse) {
+        setIsManuallyExpanded(false);
+      }
+
+      setIsShortcutVisible(shouldCollapse && !isManuallyExpanded);
+    };
+
+    const scheduleUpdate = () => {
+      if (animationFrame) return;
+      animationFrame = window.requestAnimationFrame(updateShortcutState);
+    };
+
+    scheduleUpdate();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+
+    return () => {
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+    };
+  }, [isManuallyExpanded, topOffset]);
+
+  const showFullFilters = !isShortcutVisible;
+  const expandFilters = () => {
+    setIsManuallyExpanded(true);
+    setIsShortcutVisible(false);
+  };
+
+  return {
+    containerRef,
+    contentRef,
+    showFullFilters,
+    isShortcutVisible,
+    expandFilters,
+  };
+}
+
+function DesktopFilterShortcut({
+  activeFilterCount,
+  activeFilterLabel,
+  filterByLabel,
+  onClick,
+}: {
+  activeFilterCount: number;
+  activeFilterLabel: string;
+  filterByLabel: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="group w-full rounded-[1.15rem] border border-slate-200/90 bg-white p-4 text-left shadow-[0_14px_34px_-28px_rgba(15,23,42,0.45)] ring-1 ring-slate-950/[0.02] transition hover:-translate-y-0.5 hover:border-[#004BB8]/30 hover:shadow-[0_18px_38px_-28px_rgba(15,23,42,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+      onClick={onClick}
+    >
+      <span className="flex items-center justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-sm font-bold text-slate-950">
+            {filterByLabel}
+          </span>
+          {activeFilterCount > 0 ? (
+            <span className="mt-1 inline-flex rounded-full bg-[#004BB8]/8 px-2.5 py-1 text-xs font-bold text-[#004BB8] ring-1 ring-[#004BB8]/10">
+              {activeFilterLabel}
+            </span>
+          ) : null}
+        </span>
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition group-hover:border-[#004BB8]/30 group-hover:text-[#004BB8]">
+          <SquarePen size={17} aria-hidden="true" />
+        </span>
+      </span>
+      <span className="mt-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+        Edit filters
+      </span>
+    </button>
+  );
+}
 
 const FILTER_APPLYING_DELAY_MS = 700;
 const SEARCH_APPLYING_TIMEOUT_MS = 15000;
@@ -770,6 +872,26 @@ export function HotelResultsClient() {
     };
   }, [isSearchBarCompact, isSearchExpandedWhileSticky]);
 
+  const activeFilterCount = useMemo(() => {
+    let count = maxPrice < resultMaxPrice ? 1 : 0;
+    count += minRating > DEFAULT_MIN_RATING ? 1 : 0;
+    count += Object.values(selectedFilters).reduce(
+      (total, group) => total + group.length,
+      0,
+    );
+    return count;
+  }, [maxPrice, minRating, resultMaxPrice, selectedFilters]);
+  const activeFilterLabel = t("activeFilterCount").replace(
+    "{{count}}",
+    String(activeFilterCount),
+  );
+  const {
+    containerRef: desktopFilterContainerRef,
+    contentRef: desktopFilterContentRef,
+    showFullFilters: showFullDesktopFilters,
+    expandFilters: expandDesktopFilters,
+  } = useDesktopFilterShortcut();
+
   const visibleFilteredHotels = resultsApplying ? visibleFiltered : filtered;
   const sortedVisibleHotels = useMemo(
     () => sortHotelSummaryResults(visibleFilteredHotels, hotelSummarySortMode),
@@ -1120,27 +1242,36 @@ export function HotelResultsClient() {
       <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[244px_minmax(0,1fr)]">
         <aside
           className={cn(
-            "hotel-filter-scrollbar hidden lg:block lg:self-start lg:overflow-x-hidden",
+            "hidden lg:block lg:self-start",
             desktopHotelFilterStickyTopClass,
-            filterScrollbarVisible
-              ? "hotel-filter-scrollbar--visible"
-              : undefined,
           )}
-          onScroll={showFilterScrollbarWhileScrolling}
         >
-          <HotelFilters
-            t={t}
-            maxPrice={maxPrice}
-            setMaxPrice={updateMaxPrice}
-            resultMaxPrice={resultMaxPrice}
-            priceCurrency={resultCurrency}
-            locale={locale}
-            minRating={minRating}
-            setMinRating={updateMinRating}
-            options={filterOptions}
-            selectedFilters={selectedFilters}
-            toggleFilter={toggleFilter}
-          />
+          <div ref={desktopFilterContainerRef}>
+            {showFullDesktopFilters ? (
+              <div ref={desktopFilterContentRef}>
+                <HotelFilters
+                  t={t}
+                  maxPrice={maxPrice}
+                  setMaxPrice={updateMaxPrice}
+                  resultMaxPrice={resultMaxPrice}
+                  priceCurrency={resultCurrency}
+                  locale={locale}
+                  minRating={minRating}
+                  setMinRating={updateMinRating}
+                  options={filterOptions}
+                  selectedFilters={selectedFilters}
+                  toggleFilter={toggleFilter}
+                />
+              </div>
+            ) : (
+              <DesktopFilterShortcut
+                activeFilterCount={activeFilterCount}
+                activeFilterLabel={activeFilterLabel}
+                filterByLabel={t("hotelResults.filterBy")}
+                onClick={expandDesktopFilters}
+              />
+            )}
+          </div>
         </aside>
 
         <section className="min-w-0 space-y-4">
@@ -1642,7 +1773,10 @@ function HotelFilters({
               {t("hotelResults.filterBy")}
             </h2>
           </div>
-          <SlidersHorizontal className="desktop-filter-sidebar__icon text-white/90" size={18} />
+          <SlidersHorizontal
+            className="desktop-filter-sidebar__icon text-white/90"
+            size={18}
+          />
         </div>
       ) : null}
 

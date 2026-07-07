@@ -28,6 +28,109 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 
+function useDesktopFilterShortcut(topOffset = 116) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const [isShortcutVisible, setIsShortcutVisible] = useState(false);
+  const [isManuallyExpanded, setIsManuallyExpanded] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    let animationFrame = 0;
+    let lastFullHeight = 0;
+
+    const updateShortcutState = () => {
+      animationFrame = 0;
+      const container = containerRef.current;
+      if (!container) return;
+
+      const contentHeight = contentRef.current?.offsetHeight || lastFullHeight;
+      if (contentHeight > 0) lastFullHeight = contentHeight;
+
+      const containerTop =
+        container.getBoundingClientRect().top + window.scrollY;
+      const collapseAfter =
+        containerTop + Math.max(contentHeight - 72, 0) - topOffset;
+      const shouldCollapse = window.scrollY > collapseAfter;
+
+      if (!shouldCollapse) {
+        setIsManuallyExpanded(false);
+      }
+
+      setIsShortcutVisible(shouldCollapse && !isManuallyExpanded);
+    };
+
+    const scheduleUpdate = () => {
+      if (animationFrame) return;
+      animationFrame = window.requestAnimationFrame(updateShortcutState);
+    };
+
+    scheduleUpdate();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+
+    return () => {
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+    };
+  }, [isManuallyExpanded, topOffset]);
+
+  const showFullFilters = !isShortcutVisible;
+  const expandFilters = () => {
+    setIsManuallyExpanded(true);
+    setIsShortcutVisible(false);
+  };
+
+  return {
+    containerRef,
+    contentRef,
+    showFullFilters,
+    isShortcutVisible,
+    expandFilters,
+  };
+}
+
+function DesktopFilterShortcut({
+  activeFilterCount,
+  activeFilterLabel,
+  filterByLabel,
+  onClick,
+}: {
+  activeFilterCount: number;
+  activeFilterLabel: string;
+  filterByLabel: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="group w-full rounded-[1.15rem] border border-slate-200/90 bg-white p-4 text-left shadow-[0_14px_34px_-28px_rgba(15,23,42,0.45)] ring-1 ring-slate-950/[0.02] transition hover:-translate-y-0.5 hover:border-[#004BB8]/30 hover:shadow-[0_18px_38px_-28px_rgba(15,23,42,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+      onClick={onClick}
+    >
+      <span className="flex items-center justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-sm font-bold text-slate-950">
+            {filterByLabel}
+          </span>
+          {activeFilterCount > 0 ? (
+            <span className="mt-1 inline-flex rounded-full bg-[#004BB8]/8 px-2.5 py-1 text-xs font-bold text-[#004BB8] ring-1 ring-[#004BB8]/10">
+              {activeFilterLabel}
+            </span>
+          ) : null}
+        </span>
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition group-hover:border-[#004BB8]/30 group-hover:text-[#004BB8]">
+          <SquarePen size={17} aria-hidden="true" />
+        </span>
+      </span>
+      <span className="mt-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+        Edit filters
+      </span>
+    </button>
+  );
+}
+
 type CarsResultsValues = {
   pickupLocation: string;
   dropoffLocation: string;
@@ -536,6 +639,12 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   const activeFilterLabel = interpolate(t("carsResults.activeFilterCount"), {
     count: String(activeFilterCount),
   });
+  const {
+    containerRef: desktopFilterContainerRef,
+    contentRef: desktopFilterContentRef,
+    showFullFilters: showFullDesktopFilters,
+    expandFilters: expandDesktopFilters,
+  } = useDesktopFilterShortcut(120);
   const showFullSearchForm = !isSearchBarCompact || isSearchExpandedWhileSticky;
   const showCompactSearchSummary =
     isSearchBarCompact && !isSearchExpandedWhileSticky;
@@ -1181,9 +1290,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
       <section
         className={cn(
           "sticky top-0 z-40 hidden border-b border-transparent bg-[#f6f8fb]/95 backdrop-blur transition-[padding,box-shadow] duration-200 sm:block",
-          showCompactSearchSummary
-            ? "py-1.5 shadow-none"
-            : "py-3 shadow-none",
+          showCompactSearchSummary ? "py-1.5 shadow-none" : "py-3 shadow-none",
         )}
         aria-labelledby="cars-results-heading"
       >
@@ -1225,15 +1332,28 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
       </section>
 
       <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[244px_minmax(0,1fr)] xl:grid-cols-[252px_minmax(0,1fr)]">
-        <aside className="hidden lg:sticky lg:top-[7.5rem] lg:block lg:max-h-[calc(100vh-8.5rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain">
-          <CarFilters
-            activeFilterCount={activeFilterCount}
-            layout="desktop"
-            onClear={clearCarFilters}
-            onToggle={toggleCarFilter}
-            selectedFilters={selectedCarFilters}
-            t={t}
-          />
+        <aside className="hidden lg:sticky lg:top-[7.5rem] lg:block lg:self-start">
+          <div ref={desktopFilterContainerRef}>
+            {showFullDesktopFilters ? (
+              <div ref={desktopFilterContentRef}>
+                <CarFilters
+                  activeFilterCount={activeFilterCount}
+                  layout="desktop"
+                  onClear={clearCarFilters}
+                  onToggle={toggleCarFilter}
+                  selectedFilters={selectedCarFilters}
+                  t={t}
+                />
+              </div>
+            ) : (
+              <DesktopFilterShortcut
+                activeFilterCount={activeFilterCount}
+                activeFilterLabel={activeFilterLabel}
+                filterByLabel={t("carsResults.filterBy")}
+                onClick={expandDesktopFilters}
+              />
+            )}
+          </div>
         </aside>
 
         <section
