@@ -753,8 +753,11 @@ function CarsSearchBar({
         <input type="hidden" name="dropoffTime" value={values.dropoffTime} />
 
         <div className="overflow-visible rounded-none border-0 bg-transparent p-0 shadow-none sm:rounded-[1.35rem] sm:bg-white">
-          <div className="hidden sm:flex">
-            <span className="inline-flex min-h-10 items-center rounded-t-[1.1rem] border border-b-0 border-slate-200/85 bg-white px-5 text-sm font-bold text-[#004BB8] shadow-[0_-1px_0_rgba(255,255,255,0.9)_inset]">
+          <div className="hidden items-center px-1 pb-2 sm:flex lg:pb-2.5">
+            <span className="inline-flex items-center gap-2 rounded-lg border border-[#004BB8]/10 bg-[#004BB8]/[0.08] px-3.5 py-1.5 text-[0.925rem] font-semibold text-navy shadow-sm">
+              <span aria-hidden="true" className="text-[1rem] leading-none">
+                🚗
+              </span>
               {t("cars")}
             </span>
           </div>
