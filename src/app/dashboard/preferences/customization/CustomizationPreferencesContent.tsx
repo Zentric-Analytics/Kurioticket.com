@@ -99,8 +99,8 @@ function PreferenceSwitch({
         <span
           className={
             checked
-              ? "inline-block h-5 w-5 translate-x-6 rounded-full bg-white shadow-sm transition"
-              : "inline-block h-5 w-5 translate-x-1 rounded-full bg-white shadow-sm transition"
+              ? "inline-block h-5 w-5 translate-x-6 rounded-full bg-slate-50 shadow-sm transition"
+              : "inline-block h-5 w-5 translate-x-1 rounded-full bg-slate-50 shadow-sm transition"
           }
         />
       </span>
@@ -164,9 +164,12 @@ export function CustomizationPreferencesContent() {
             </p>
           </div>
 
-          <div className="divide-y divide-slate-300 border-t border-slate-300">
+          <div className="space-y-5">
             {preferenceSections.map((section) => (
-              <div key={section.copyKey} className="py-5">
+              <div
+                key={section.copyKey}
+                className="rounded-2xl border border-slate-300 bg-transparent p-5 sm:p-6"
+              >
                 <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
                   {
                     t[
@@ -222,8 +225,8 @@ export function CustomizationPreferencesContent() {
               </div>
             ))}
 
-            <div className="py-5">
-              <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+            <div className="rounded-2xl border border-slate-300 bg-transparent p-5 sm:p-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold leading-5 text-slate-950">
                     {
@@ -253,7 +256,7 @@ export function CustomizationPreferencesContent() {
                 />
               </div>
               {!preferences.receiveOptionalEmails ? (
-                <p className="mt-1 rounded-xl border border-slate-200 bg-white/55 px-4 py-3 text-sm font-normal leading-6 text-slate-700">
+                <p className="mt-4 rounded-xl border border-slate-300 bg-transparent px-4 py-3 text-sm font-normal leading-6 text-slate-700">
                   {
                     t[
                       "accountDashboard.preferences.email.masterOptional.disabledHelp"
@@ -264,7 +267,7 @@ export function CustomizationPreferencesContent() {
             </div>
           </div>
 
-          <div className="border-t border-slate-300 py-5">
+          <div className="mt-5 rounded-2xl border border-slate-300 bg-transparent p-5 sm:p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm font-normal leading-6 text-slate-600">
                 {t["accountDashboard.preferences.email.trustNote"]}
@@ -273,7 +276,7 @@ export function CustomizationPreferencesContent() {
                 <button
                   type="button"
                   onClick={resetToDefault}
-                  className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+                  className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-transparent px-5 text-sm font-semibold text-slate-800 transition hover:bg-slate-100"
                 >
                   {t["accountDashboard.preferences.email.resetToDefault"]}
                 </button>
