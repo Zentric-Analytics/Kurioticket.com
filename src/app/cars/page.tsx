@@ -753,11 +753,11 @@ function CarsSearchBar({
         <input type="hidden" name="dropoffTime" value={values.dropoffTime} />
 
         <div className="overflow-visible rounded-none border-0 bg-transparent p-0 shadow-none sm:rounded-[1.35rem] sm:border sm:border-slate-200/90 sm:bg-white sm:p-1 sm:shadow-[0_14px_34px_rgba(15,23,42,0.12)] sm:ring-1 sm:ring-slate-950/[0.03]">
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-2 lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1.45fr)_minmax(0,1.1fr)_minmax(6.8rem,0.62fr)_118px] lg:gap-0">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-0 lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1.45fr)_minmax(0,1.1fr)_minmax(6.8rem,0.62fr)_118px] lg:gap-0">
             <SearchCell
               label={t("carsSearch.pickupLocationLabel")}
               error={errors.pickupLocation || errors.dropoffLocation}
-              className="lg:border-e lg:border-e-slate-200/80"
+              className="sm:border-e sm:border-b sm:border-slate-200/80 lg:border-b-0"
             >
               <div className="grid gap-2">
                 <div className="relative">
@@ -859,7 +859,7 @@ function CarsSearchBar({
             <SearchCell
               label={t("carsSearch.rentalDatesLabel")}
               error={dateError}
-              className="relative lg:border-e lg:border-e-slate-200/80"
+              className="relative sm:border-b sm:border-slate-200/80 lg:border-b-0 lg:border-e"
             >
               <RentalDatesField
                 dropoffDate={values.dropoffDate}
@@ -884,7 +884,7 @@ function CarsSearchBar({
             <SearchCell
               label={t("carsSearch.pickupReturnTimeLabel")}
               error={timeError}
-              className="relative lg:border-e lg:border-e-slate-200/80"
+              className="relative sm:border-e sm:border-slate-200/80"
             >
               <TimeRangeField
                 isOpen={timesOpen}
@@ -1661,7 +1661,7 @@ function SearchCell({
 }) {
   return (
     <div
-      className={`min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-slate-400 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[58px] sm:rounded-xl sm:border-transparent sm:bg-transparent sm:px-3.5 sm:py-2 sm:shadow-none sm:hover:border-[#004BB8]/20 sm:focus-within:border-[#004BB8]/25 sm:focus-within:bg-[#004BB8]/[0.045] sm:focus-within:ring-1 sm:focus-within:ring-inset sm:focus-within:ring-[#004BB8]/20 lg:min-h-[64px] lg:rounded-none lg:px-3.5 lg:py-2 ${className}`}
+      className={`min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-slate-400 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:bg-transparent sm:px-3.5 sm:py-2 sm:shadow-none sm:hover:border-slate-200/80 sm:focus-within:bg-white sm:focus-within:ring-0 lg:min-h-[64px] lg:px-3.5 lg:py-2 ${className}`}
     >
       <label className="mb-1 block text-xs font-bold uppercase leading-4 tracking-[0.12em] text-slate-600 sm:mb-1 sm:text-[0.68rem] sm:text-slate-500 lg:mb-1">
         {label}
