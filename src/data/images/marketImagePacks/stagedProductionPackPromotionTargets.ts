@@ -1,4 +1,4 @@
-import type { MarketImageRegistryEntry } from "../imageTypes";
+import type { ImageMarketCode, MarketImageRegistryEntry } from "../imageTypes";
 import { priorityMarketCodes } from "./priorityMarkets";
 import { previewStagedProductionPackPromotion } from "./stagedProductionPackPromotion";
 import type { StagedProductionMarketImagePack } from "./stagedProductionPacks";
@@ -26,7 +26,8 @@ export function planStagedProductionPackPromotionTargets(
   const preview = previewStagedProductionPackPromotion(batchId, market, stagedPacks);
   const errors = [...preview.errors];
   const warnings = [...preview.warnings];
-  const isPriorityMarket = priorityMarketCodes.includes(market);
+  const normalizedMarket = market.toUpperCase() as ImageMarketCode;
+  const isPriorityMarket = priorityMarketCodes.includes(normalizedMarket);
 
   if (!isPriorityMarket) {
     warnings.push(
