@@ -1227,14 +1227,6 @@ export function HotelResultsClient() {
         </section>
       </div>
 
-      <div
-        className={cn(
-          "fixed inset-0 z-50 bg-navy/40 lg:hidden",
-          filtersOpen ? "block" : "hidden",
-        )}
-        onClick={() => setFiltersOpen(false)}
-      />
-
       <aside
         className={cn(
           "fixed inset-0 z-[10000] flex h-[100dvh] flex-col overflow-hidden bg-white transition-transform duration-200 ease-out lg:hidden",
