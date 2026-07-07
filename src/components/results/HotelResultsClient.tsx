@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
 import { HotelSearchBar } from "@/components/search/HotelSearchBar";
+import { normalizeHotelDestinationSearchValue } from "@/data/hotelDestinations";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn, formatCurrency } from "@/lib/utils";
 
@@ -409,7 +410,9 @@ export function HotelResultsClient() {
 
   const body = useMemo(
     () => ({
-      destination: params.get("destination") || "Tokyo",
+      destination: normalizeHotelDestinationSearchValue(
+        params.get("destination") || "Tokyo",
+      ),
       checkIn: params.get("checkIn") || nextDate(28),
       checkOut: params.get("checkOut") || nextDate(35),
       guests: Number(params.get("guests") || 2),

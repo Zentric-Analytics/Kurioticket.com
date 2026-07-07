@@ -155,6 +155,21 @@ const normalizeText = (value: string) =>
     .trim()
     .toLowerCase();
 
+export const normalizeHotelDestinationSearchValue = (value: string) => {
+  const trimmedValue = value.trim();
+  if (!trimmedValue) return "";
+
+  const normalizedValue = normalizeText(trimmedValue);
+  const matchingDestination = hotelDestinations.find((destination) => {
+    if (normalizeText(destination.searchValue) === normalizedValue) return true;
+    if (normalizeText(destination.name) === normalizedValue) return true;
+
+    return false;
+  });
+
+  return matchingDestination?.name ?? trimmedValue;
+};
+
 const EU_COUNTRY_CODES = new Set([
   "AT",
   "BE",
