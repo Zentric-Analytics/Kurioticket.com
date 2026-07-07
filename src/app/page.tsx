@@ -1434,6 +1434,9 @@ function hasFreshProviderPrice(
   return Number.isFinite(expiresAtMs) && expiresAtMs > Date.now();
 }
 
+// Popular destination cards intentionally enter the hotel results flow.
+// Keep the flight route metadata available to saved-trip displays, but only
+// pass query parameters that /hotels/results reads.
 function buildDestinationCardHref(
   price: HomepageFare | undefined,
   options: {
