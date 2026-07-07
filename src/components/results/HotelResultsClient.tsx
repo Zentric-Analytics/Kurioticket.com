@@ -1197,32 +1197,38 @@ export function HotelResultsClient() {
 
       <aside
         className={cn(
-          "fixed bottom-0 start-0 end-0 z-50 flex max-h-[86dvh] flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl transition-transform lg:hidden",
+          "fixed inset-0 z-[10000] flex h-[100dvh] flex-col overflow-hidden bg-white transition-transform duration-200 ease-out lg:hidden",
           filtersOpen ? "translate-y-0" : "translate-y-full",
         )}
       >
-        <div
-          className={cn(
-            "hotel-filter-scrollbar flex-1 overflow-auto p-5 pb-3",
-            filterScrollbarVisible
-              ? "hotel-filter-scrollbar--visible"
-              : undefined,
-          )}
-          onScroll={showFilterScrollbarWhileScrolling}
-        >
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-bold text-navy">{t("filters")}</h2>
+        <div className="shrink-0 border-b border-slate-200 bg-white px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-bold leading-6 text-slate-950">
+              {t("filters")}
+            </h2>
             <Button
+              type="button"
               variant="ghost"
-              className="h-10 w-10 px-0"
+              className="h-10 w-10 shrink-0 rounded-full border border-slate-200 bg-white px-0 text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
               aria-label={t("closeFilters")}
               onClick={() => setFiltersOpen(false)}
             >
               <X size={20} />
             </Button>
           </div>
+        </div>
 
+        <div
+          className={cn(
+            "hotel-filter-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4",
+            filterScrollbarVisible
+              ? "hotel-filter-scrollbar--visible"
+              : undefined,
+          )}
+          onScroll={showFilterScrollbarWhileScrolling}
+        >
           <HotelFilters
+            layout="mobile"
             t={t}
             maxPrice={maxPrice}
             setMaxPrice={updateMaxPrice}
@@ -1237,10 +1243,10 @@ export function HotelResultsClient() {
           />
         </div>
 
-        <div className="border-t border-slate-200 bg-white p-4">
+        <div className="shrink-0 border-t border-slate-200 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-10px_24px_rgba(15,23,42,0.08)]">
           <Button
             type="button"
-            className="h-12 w-full rounded-xl bg-[#004BB8] text-base font-bold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] hover:bg-[#021C2B]"
+            className="h-12 w-full rounded-xl bg-[#004BB8] text-base font-bold text-white shadow-lg shadow-[#004BB8]/20 transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
             onClick={() => {
               triggerFilterApplying();
               setFiltersOpen(false);
@@ -1554,6 +1560,7 @@ function ActiveHotelFilterChips({
 }
 
 function HotelFilters({
+  layout = "desktop",
   t,
   maxPrice,
   setMaxPrice,
@@ -1566,6 +1573,7 @@ function HotelFilters({
   selectedFilters,
   toggleFilter,
 }: {
+  layout?: "desktop" | "mobile";
   t: (key: string) => string;
   maxPrice: number;
   setMaxPrice: (value: number) => void;
@@ -1592,8 +1600,13 @@ function HotelFilters({
         <SlidersHorizontal className="text-white" size={18} />
       </div>
 
-      <div className="space-y-4 bg-white px-3 py-3">
-        <FilterSection title={t("hotelResults.budgetPrice")}>
+      <div
+        className={cn(
+          "bg-white",
+          layout === "mobile" ? "space-y-0 px-3 py-3" : "space-y-4 px-3 py-3",
+        )}
+      >
+        <FilterSection title={t("hotelResults.budgetPrice")} layout={layout}>
           <label className="block">
             <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
               {t("hotelResults.totalUpTo")}{" "}
@@ -1620,9 +1633,10 @@ function HotelFilters({
           onToggle={(value) => toggleFilter("popular", value)}
           t={t}
           locale={locale}
+          layout={layout}
         />
 
-        <FilterSection title={t("hotelResults.starRating")}>
+        <FilterSection title={t("hotelResults.starRating")} layout={layout}>
           <label className="block">
             <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
               {t("hotelResults.fromRating")}{" "}
@@ -1650,6 +1664,7 @@ function HotelFilters({
           t={t}
           locale={locale}
           collapsedCount={5}
+          layout={layout}
         />
 
         <CheckboxFilterSection
@@ -1659,6 +1674,7 @@ function HotelFilters({
           onToggle={(value) => toggleFilter("propertyTypes", value)}
           t={t}
           locale={locale}
+          layout={layout}
         />
 
         <CheckboxFilterSection
@@ -1669,6 +1685,7 @@ function HotelFilters({
           t={t}
           locale={locale}
           collapsedCount={5}
+          layout={layout}
         />
 
         <CheckboxFilterSection
@@ -1679,6 +1696,7 @@ function HotelFilters({
           t={t}
           locale={locale}
           collapsedCount={5}
+          layout={layout}
         />
 
         <CheckboxFilterSection
@@ -1688,6 +1706,7 @@ function HotelFilters({
           onToggle={(value) => toggleFilter("meals", value)}
           t={t}
           locale={locale}
+          layout={layout}
         />
 
         <CheckboxFilterSection
@@ -1697,6 +1716,7 @@ function HotelFilters({
           onToggle={(value) => toggleFilter("cancellationPolicies", value)}
           t={t}
           locale={locale}
+          layout={layout}
         />
 
         <CheckboxFilterSection
@@ -1707,6 +1727,7 @@ function HotelFilters({
           t={t}
           locale={locale}
           collapsedCount={6}
+          layout={layout}
         />
       </div>
     </div>
@@ -1716,12 +1737,19 @@ function HotelFilters({
 function FilterSection({
   title,
   children,
+  layout = "desktop",
 }: {
   title: string;
   children: ReactNode;
+  layout?: "desktop" | "mobile";
 }) {
   return (
-    <section className="border-t border-border pt-3 first:border-t-0 first:pt-0">
+    <section
+      className={cn(
+        "border-t border-border first:border-t-0 first:pt-0",
+        layout === "mobile" ? "py-3" : "pt-3",
+      )}
+    >
       <h3 className="mb-1.5 text-[13px] font-semibold leading-5 text-navy">
         {title}
       </h3>
@@ -1738,6 +1766,7 @@ function CheckboxFilterSection({
   t,
   collapsedCount = 4,
   locale,
+  layout = "desktop",
 }: {
   title: string;
   options: FilterOption[];
@@ -1746,6 +1775,7 @@ function CheckboxFilterSection({
   t: (key: string) => string;
   collapsedCount?: number;
   locale: string;
+  layout?: "desktop" | "mobile";
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -1755,7 +1785,7 @@ function CheckboxFilterSection({
   const hasMore = options.length > collapsedCount;
 
   return (
-    <FilterSection title={title}>
+    <FilterSection title={title} layout={layout}>
       <div className="grid gap-1">
         {visibleOptions.map((option) => {
           const checked = selected.includes(option.value);
