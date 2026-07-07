@@ -149,10 +149,10 @@ export function CustomizationPreferencesContent() {
         </header>
 
         <section
-          className="mt-7 -mx-4 max-w-[56rem] overflow-hidden rounded-none border border-slate-300/90 bg-white shadow-lg shadow-slate-200/80 sm:mx-auto sm:rounded-2xl"
+          className="mx-auto mt-7 max-w-[56rem]"
           aria-labelledby="email-preferences-settings"
         >
-          <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
+          <div className="pb-5">
             <h2
               id="email-preferences-settings"
               className="text-base font-semibold leading-6 text-slate-950"
@@ -164,14 +164,9 @@ export function CustomizationPreferencesContent() {
             </p>
           </div>
 
-          <div className="px-5 sm:px-6">
-            {preferenceSections.map((section, sectionIndex) => (
-              <div
-                key={section.copyKey}
-                className={
-                  sectionIndex === 0 ? "py-5" : "border-t border-slate-200 py-5"
-                }
-              >
+          <div className="divide-y divide-slate-200 border-t border-slate-200">
+            {preferenceSections.map((section) => (
+              <div key={section.copyKey} className="py-5">
                 <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
                   {
                     t[
@@ -179,7 +174,7 @@ export function CustomizationPreferencesContent() {
                     ]
                   }
                 </h3>
-                <div className="mt-3 divide-y divide-slate-100">
+                <div className="mt-3 divide-y divide-slate-200">
                   {section.editableRows?.map((row) => (
                     <div
                       key={row.id}
@@ -227,40 +222,38 @@ export function CustomizationPreferencesContent() {
               </div>
             ))}
 
-            <div className="border-t border-slate-200 py-5">
-              <div className="rounded-2xl bg-slate-50 px-4 py-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold leading-5 text-slate-950">
-                      {
-                        t[
-                          "accountDashboard.preferences.email.masterOptional.title"
-                        ]
-                      }
-                    </p>
-                    <p className="mt-1 text-sm font-normal leading-6 text-slate-600">
-                      {
-                        t[
-                          "accountDashboard.preferences.email.masterOptional.description"
-                        ]
-                      }
-                    </p>
-                  </div>
-                  <PreferenceSwitch
-                    checked={preferences.receiveOptionalEmails}
-                    label={
+            <div className="py-5">
+              <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold leading-5 text-slate-950">
+                    {
                       t[
                         "accountDashboard.preferences.email.masterOptional.title"
                       ]
                     }
-                    onChange={() => updatePreference("receiveOptionalEmails")}
-                    onLabel={t["accountDashboard.preferences.email.on"]}
-                    offLabel={t["accountDashboard.preferences.email.off"]}
-                  />
+                  </p>
+                  <p className="mt-1 text-sm font-normal leading-6 text-slate-600">
+                    {
+                      t[
+                        "accountDashboard.preferences.email.masterOptional.description"
+                      ]
+                    }
+                  </p>
                 </div>
+                <PreferenceSwitch
+                  checked={preferences.receiveOptionalEmails}
+                  label={
+                    t[
+                      "accountDashboard.preferences.email.masterOptional.title"
+                    ]
+                  }
+                  onChange={() => updatePreference("receiveOptionalEmails")}
+                  onLabel={t["accountDashboard.preferences.email.on"]}
+                  offLabel={t["accountDashboard.preferences.email.off"]}
+                />
               </div>
               {!preferences.receiveOptionalEmails ? (
-                <p className="mt-3 rounded-xl bg-slate-50 px-4 py-3 text-sm font-normal leading-6 text-slate-700">
+                <p className="mt-1 rounded-xl border border-slate-200 bg-white/55 px-4 py-3 text-sm font-normal leading-6 text-slate-700">
                   {
                     t[
                       "accountDashboard.preferences.email.masterOptional.disabledHelp"
@@ -271,7 +264,7 @@ export function CustomizationPreferencesContent() {
             </div>
           </div>
 
-          <div className="border-t border-slate-200 bg-slate-50/60 px-5 py-5 sm:px-6">
+          <div className="border-t border-slate-200 py-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm font-normal leading-6 text-slate-600">
                 {t["accountDashboard.preferences.email.trustNote"]}
