@@ -79,8 +79,30 @@ export const imageProductionPriorities = [
   "p3-internal-or-test",
 ] as const;
 
+export const imageMarketAudienceTypes = [
+  "local",
+  "outbound",
+  "inbound",
+  "global",
+] as const;
+
 export type ImageContentRole = (typeof imageContentRoles)[number];
 export type ImageProductionPriority = (typeof imageProductionPriorities)[number];
+export type ImageMarketAudience = (typeof imageMarketAudienceTypes)[number];
+export type ImageMarketCode = Uppercase<string>;
+export type ImageRegionCode = Lowercase<string>;
+export type ImageLocaleCode = string;
+
+export type ImageMarketScope = {
+  /** ISO 3166-1 alpha-2 market code, for example US, BR, GH, KE, or ZA. */
+  market?: ImageMarketCode;
+  /** Stable regional fallback bucket, for example west-africa, latin-america, or global. */
+  region?: ImageRegionCode;
+  /** Optional BCP 47 locale when imagery has copy, cultural, or language-specific approval. */
+  locale?: ImageLocaleCode;
+  /** Whether the image sells local identity, outbound travel, inbound travel, or global trust. */
+  audience?: ImageMarketAudience;
+};
 
 export type ImageClassification = {
   launchCritical: boolean;
@@ -92,7 +114,7 @@ export type ImageClassification = {
   notes?: string;
 };
 
-export type RegisteredImage = {
+export type RegisteredImage = ImageMarketScope & {
   id: string;
   url: string;
   alt: string;
@@ -121,7 +143,7 @@ export type RegisteredImage = {
   notes?: string;
 };
 
-export type InventoriedImage = ImageClassification & {
+export type InventoriedImage = ImageMarketScope & ImageClassification & {
   id: string;
   url: string;
   product: ImageProduct;
@@ -129,4 +151,24 @@ export type InventoriedImage = ImageClassification & {
   source: ImageSource;
   status: ImageStatus;
   sourceFiles: string[];
+};
+
+export type MarketImageRegistryEntry = RegisteredImage & Required<Pick<ImageMarketScope, "audience">>;
+
+export type MarketImageRequest = {
+  market?: ImageMarketCode;
+  region?: ImageRegionCode;
+  locale?: ImageLocaleCode;
+  product: ImageProduct;
+  usage: ImageUsage;
+  audience?: ImageMarketAudience;
+};
+
+export type MarketImageResolutionLevel = "market" | "region" | "global";
+
+export type MarketImageResolution = {
+  image: MarketImageRegistryEntry;
+  level: MarketImageResolutionLevel;
+  requestedMarket?: ImageMarketCode;
+  requestedRegion?: ImageRegionCode;
 };

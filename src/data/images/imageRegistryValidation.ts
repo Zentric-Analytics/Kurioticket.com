@@ -1,8 +1,10 @@
 import {
+  imageMarketAudienceTypes,
   imageProducts,
   imageSources,
   imageStatuses,
   imageUsages,
+  type ImageMarketAudience,
   type ImageProduct,
   type ImageSource,
   type ImageStatus,
@@ -29,6 +31,8 @@ const placeholderHosts = new Set(["picsum.photos", "placehold.co", "placekitten.
 const localPublicPathPattern = /^\/([\w.-]+\/)*[\w.-]+\.(?:avif|gif|jpe?g|png|svg|webp)$/i;
 const meaningfulAltWordPattern = /[a-z]{3,}/i;
 const weakAltTexts = new Set(["image", "photo", "picture", "placeholder", "travel", "hotel", "destination"]);
+const marketCodePattern = /^[A-Z]{2}$/;
+const regionCodePattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export function validateImageRegistry(images: RegisteredImage[]): ImageRegistryValidationResult {
   const errors: ValidationIssue[] = [];
@@ -58,6 +62,22 @@ export function validateImageRegistry(images: RegisteredImage[]): ImageRegistryV
 
     if (!isMeaningfulAlt(image.alt)) {
       errors.push(issue(image, "Alt text is required and must be meaningful."));
+    }
+
+    if (image.market && !marketCodePattern.test(image.market)) {
+      errors.push(issue(image, "Market image code must be a two-letter uppercase ISO 3166-1 alpha-2 code."));
+    }
+
+    if (image.region && !regionCodePattern.test(image.region)) {
+      errors.push(issue(image, "Image region must be a lowercase slug, for example west-africa or latin-america."));
+    }
+
+    if (image.audience && !isValidMarketAudience(image.audience)) {
+      errors.push(issue(image, `Invalid market image audience: ${image.audience}.`));
+    }
+
+    if (image.market && !image.region) {
+      warnings.push(issue(image, "Market-specific images should include a region fallback bucket."));
     }
 
     if (
@@ -181,6 +201,10 @@ function isValidSource(value: string): value is ImageSource {
 
 function isValidStatus(value: string): value is ImageStatus {
   return (imageStatuses as readonly string[]).includes(value);
+}
+
+function isValidMarketAudience(value: string): value is ImageMarketAudience {
+  return (imageMarketAudienceTypes as readonly string[]).includes(value);
 }
 
 function isMeaningfulAlt(value: string): boolean {
