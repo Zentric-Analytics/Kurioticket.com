@@ -354,7 +354,8 @@ textarea {
 
 @media (min-width: 1024px) {
   .desktop-filter-sidebar {
-    border-color: transparent;
+    border-color: rgba(203, 213, 225, 0.8);
+    border-radius: 0;
     background: transparent;
     box-shadow: none;
   }
@@ -362,7 +363,7 @@ textarea {
   .desktop-filter-sidebar__header {
     border-bottom-color: rgba(226, 232, 240, 0.95);
     background: transparent !important;
-    padding: 0 0 0.875rem;
+    padding: 0 0 0.75rem;
   }
 
   .desktop-filter-sidebar__title {

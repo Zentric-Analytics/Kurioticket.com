@@ -1331,7 +1331,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
         </div>
       </section>
 
-      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[296px_minmax(0,1fr)] xl:grid-cols-[304px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[272px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="hidden lg:sticky lg:top-[7.5rem] lg:block lg:self-start">
           <div ref={desktopFilterContainerRef}>
             {showFullDesktopFilters ? (
@@ -1969,7 +1969,7 @@ function CarFilters({
     <div
       className={cn(
         layout === "desktop"
-          ? "desktop-filter-sidebar border-0 bg-transparent shadow-none rounded-none"
+          ? "desktop-filter-sidebar border border-slate-200/80 bg-transparent p-3 shadow-none rounded-none"
           : "overflow-hidden bg-white",
       )}
     >
