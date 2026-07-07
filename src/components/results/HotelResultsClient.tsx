@@ -866,10 +866,10 @@ export function HotelResultsClient() {
       <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
       <section
         className={cn(
-          "sticky top-0 z-40 hidden border-b border-transparent bg-[#f6f8fb]/95 backdrop-blur transition-[padding,box-shadow] duration-200 sm:block",
+          "sticky top-0 z-40 hidden border-b border-slate-200/80 bg-[#f6f8fb]/95 backdrop-blur transition-[padding,box-shadow] duration-200 sm:block",
           showCompactSearchSummary
-            ? "py-1.5 shadow-none"
-            : "py-3 shadow-none",
+            ? "py-1.5 shadow-[0_3px_12px_rgba(15,23,42,0.05)]"
+            : "py-3 shadow-sm shadow-slate-900/5",
         )}
       >
         <div className="page-shell">
