@@ -746,14 +746,18 @@ function CarsSearchBar({
   const timeError = errors.pickupTime || errors.dropoffTime;
 
   return (
-    <section className="rounded-[1.5rem] border border-white/80 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.04] sm:rounded-[1.35rem] sm:border-slate-200/80 sm:bg-white sm:p-0 sm:shadow-[0_18px_42px_-28px_rgba(15,23,42,0.42)] sm:ring-1 sm:ring-white/70">
-      <form onSubmit={onSubmit} className="space-y-3 sm:space-y-0" noValidate>
+    <section className="overflow-visible rounded-[1.5rem] border border-white/80 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.04] sm:rounded-[1.35rem] sm:border-slate-200/80 sm:bg-white sm:p-0 sm:shadow-[0_18px_42px_-28px_rgba(15,23,42,0.42)] sm:ring-1 sm:ring-white/70">
+      <form
+        onSubmit={onSubmit}
+        className="relative space-y-3 overflow-visible sm:space-y-0"
+        noValidate
+      >
         <input type="hidden" name="pickupDate" value={values.pickupDate} />
         <input type="hidden" name="dropoffDate" value={values.dropoffDate} />
         <input type="hidden" name="pickupTime" value={values.pickupTime} />
         <input type="hidden" name="dropoffTime" value={values.dropoffTime} />
 
-        <div className="overflow-visible rounded-none border-0 bg-transparent p-0 shadow-none sm:rounded-[1.35rem] sm:bg-white">
+        <div className="relative z-20 overflow-visible rounded-none border-0 bg-transparent p-0 shadow-none sm:rounded-[1.35rem] sm:bg-white">
           <div className="hidden items-center px-1 pb-2 sm:flex lg:pb-2.5">
             <span className="inline-flex items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3.5 py-1.5 text-[0.925rem] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10">
               <CarFront
@@ -870,7 +874,9 @@ function CarsSearchBar({
             <SearchCell
               label={t("carsSearch.rentalDatesLabel")}
               error={dateError}
-              className="relative sm:border-b sm:border-slate-200/80 lg:border-b-0 lg:border-e"
+              className={`relative sm:border-b sm:border-slate-200/80 lg:border-b-0 lg:border-e ${
+                datesOpen ? "z-[260]" : "z-10"
+              }`}
             >
               <RentalDatesField
                 dropoffDate={values.dropoffDate}
@@ -895,7 +901,9 @@ function CarsSearchBar({
             <SearchCell
               label={t("carsSearch.pickupReturnTimeLabel")}
               error={timeError}
-              className="relative sm:border-e sm:border-slate-200/80"
+              className={`relative sm:border-e sm:border-slate-200/80 ${
+                timesOpen ? "z-[250]" : "z-10"
+              }`}
             >
               <TimeRangeField
                 isOpen={timesOpen}
@@ -958,7 +966,7 @@ function CarsSearchBar({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 sm:border-0 sm:border-t sm:border-slate-100 sm:bg-white sm:px-5 sm:py-3 sm:shadow-none sm:ring-0">
+        <div className="relative z-0 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 sm:border-0 sm:border-t sm:border-slate-100 sm:bg-white sm:px-5 sm:py-3 sm:shadow-none sm:ring-0">
           <label className="focus-within:ring-ring inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-slate-900">
             <input
               type="checkbox"
@@ -1408,7 +1416,7 @@ function RentalDatesField({
     : t("carsSearch.rentalDatePlaceholder");
 
   return (
-    <div ref={wrapRef}>
+    <div ref={wrapRef} className="overflow-visible">
       <button
         ref={launcherRef}
         type="button"
@@ -1433,7 +1441,7 @@ function RentalDatesField({
         <div
           role="dialog"
           aria-label={t("carsSearch.rentalDatePickerAria")}
-          className="absolute start-0 end-0 top-[calc(100%+10px)] z-[200] hidden w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:block sm:end-auto sm:w-[min(92vw,620px)] sm:p-4"
+          className="absolute start-0 end-0 top-[calc(100%+18px)] z-[500] hidden w-full rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-[0_24px_60px_-18px_rgba(15,23,42,0.38),0_10px_24px_-18px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.04] sm:block sm:end-auto sm:w-[min(92vw,620px)] sm:p-4"
         >
           <p className="mb-3 text-base font-semibold text-slate-900">
             {t("carsSearch.chooseRentalDates")}
@@ -1589,7 +1597,7 @@ function TimeRangeField({
   );
 
   return (
-    <div ref={wrapRef}>
+    <div ref={wrapRef} className="overflow-visible">
       <button
         ref={launcherRef}
         type="button"
@@ -1610,7 +1618,7 @@ function TimeRangeField({
         <div
           role="menu"
           aria-label={t("carsSearch.pickupReturnTimeSelectorAria")}
-          className="absolute start-0 end-0 top-[calc(100%+8px)] z-[180] hidden w-full rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:block sm:end-auto sm:w-[min(92vw,320px)]"
+          className="absolute start-0 end-0 top-[calc(100%+16px)] z-[480] hidden w-full rounded-2xl border border-slate-200/90 bg-white p-3 shadow-[0_22px_52px_-20px_rgba(15,23,42,0.36),0_8px_20px_-18px_rgba(15,23,42,0.28)] ring-1 ring-slate-950/[0.04] sm:block sm:end-auto sm:w-[min(92vw,320px)]"
         >
           <div className="grid gap-3">
             <label className="block">
