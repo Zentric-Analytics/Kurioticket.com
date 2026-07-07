@@ -1855,31 +1855,24 @@ function CarFilters({
       )}
     >
       {layout === "desktop" ? (
-        <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-blue to-teal px-3 py-3">
-          <h2 className="text-base font-semibold text-white/95">
+        <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 bg-white px-4 py-4">
+          <h2 className="text-base font-semibold text-slate-950">
             {t("carsResults.filterBy")}
           </h2>
-          <div className="flex shrink-0 items-center gap-2">
-            {activeFilterCount > 0 ? (
-              <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-[#004BB8] shadow-sm ring-1 ring-white/70">
-                {interpolate(t("carsResults.activeFilterCount"), {
-                  count: String(activeFilterCount),
-                })}
-              </span>
-            ) : null}
-            <SlidersHorizontal
-              className="text-white/90"
-              size={18}
-              aria-hidden="true"
-            />
-          </div>
+          {activeFilterCount > 0 ? (
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-[#004BB8]">
+              {interpolate(t("carsResults.activeFilterCount"), {
+                count: String(activeFilterCount),
+              })}
+            </span>
+          ) : null}
         </div>
       ) : null}
 
       <div
         className={cn(
           "bg-white",
-          layout === "mobile" ? "space-y-0" : "space-y-3 px-3 py-3",
+          layout === "mobile" ? "space-y-0" : "space-y-4 px-4 py-4",
         )}
       >
         {activeFilterCount > 0 ? (
@@ -1891,7 +1884,12 @@ function CarFilters({
                 : "rounded-xl border border-border bg-surface-muted px-3 py-2.5",
             )}
           >
-            <span className="text-sm font-semibold text-navy">
+            <span
+              className={cn(
+                "text-sm font-semibold",
+                layout === "mobile" ? "text-navy" : "text-slate-950",
+              )}
+            >
               {interpolate(t("carsResults.selectedFilterCount"), {
                 count: String(activeFilterCount),
               })}
@@ -1942,10 +1940,15 @@ function FilterSection({
       className={cn(
         layout === "mobile"
           ? "border-t border-border py-4 first:border-t-0 first:pt-0"
-          : "rounded-xl border border-border bg-white px-3 py-3 shadow-sm shadow-slate-900/[0.025]",
+          : "border-t border-slate-200/80 pt-4 first:border-t-0 first:pt-0",
       )}
     >
-      <h3 className="text-sm font-semibold text-navy">
+      <h3
+        className={cn(
+          "text-sm font-semibold",
+          layout === "mobile" ? "text-navy" : "text-slate-950",
+        )}
+      >
         {t(group.titleKey)}
       </h3>
       <div className="mt-2 space-y-1.5">
@@ -1958,14 +1961,14 @@ function FilterSection({
               className={cn(
                 layout === "mobile"
                   ? "flex min-h-10 cursor-pointer items-center gap-3 py-2 text-sm font-medium text-muted transition hover:text-navy"
-                  : "flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all",
+                  : "flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg py-2 text-sm font-medium transition",
                 isSelected
                   ? layout === "mobile"
                     ? "font-semibold text-navy"
-                    : "border-blue bg-blue text-white shadow-sm shadow-blue/[0.03]"
+                    : "text-slate-950"
                   : layout === "mobile"
                     ? undefined
-                    : "border-border bg-white text-muted hover:border-blue/25 hover:bg-surface-muted hover:text-navy",
+                    : "text-slate-600 hover:text-slate-950",
               )}
             >
               <input
@@ -1979,7 +1982,7 @@ function FilterSection({
               </span>
               {isSelected && layout === "desktop" ? (
                 <CheckCircle2
-                  className="h-4 w-4 shrink-0 text-white"
+                  className="h-4 w-4 shrink-0 text-blue"
                   aria-hidden="true"
                 />
               ) : null}

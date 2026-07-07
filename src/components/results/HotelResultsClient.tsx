@@ -10,7 +10,6 @@ import {
 } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  SlidersHorizontal,
   SquarePen,
   Star,
   Tag,
@@ -1628,22 +1627,26 @@ function HotelFilters({
     "h-2 w-full cursor-pointer appearance-none rounded-full bg-border outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-blue [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-blue [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-border [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-blue [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-blue [&::-moz-range-thumb]:shadow-md";
 
   return (
-    <div className="bg-white">
+    <div
+      className={cn(
+        "bg-white",
+        layout === "desktop"
+          ? "overflow-hidden rounded-2xl border border-slate-200/80 shadow-sm shadow-slate-900/[0.04]"
+          : undefined,
+      )}
+    >
       {layout === "desktop" ? (
-        <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-blue to-teal px-3 py-3">
-          <div>
-            <h2 className="text-base font-bold text-white">
-              {t("hotelResults.filterBy")}
-            </h2>
-          </div>
-          <SlidersHorizontal className="text-white" size={18} />
+        <div className="border-b border-slate-200/80 bg-white px-4 py-4">
+          <h2 className="text-base font-semibold text-slate-950">
+            {t("hotelResults.filterBy")}
+          </h2>
         </div>
       ) : null}
 
       <div
         className={cn(
           "bg-white",
-          layout === "mobile" ? "space-y-0" : "space-y-4 px-3 py-3",
+          layout === "mobile" ? "space-y-0" : "space-y-5 px-4 py-4",
         )}
       >
         <FilterSection title={t("hotelResults.budgetPrice")} layout={layout}>
@@ -1786,14 +1789,25 @@ function FilterSection({
   return (
     <section
       className={cn(
-        "border-t border-border first:border-t-0 first:pt-0",
-        layout === "mobile" ? "py-4" : "pt-3",
+        "first:border-t-0 first:pt-0",
+        layout === "mobile"
+          ? "border-t border-border py-4"
+          : "border-t border-slate-200/80 pt-4",
       )}
     >
-      <h3 className="mb-2 text-sm font-semibold leading-5 text-navy">
+      <h3
+        className={cn(
+          "text-sm font-semibold leading-5",
+          layout === "mobile"
+            ? "mb-2 text-navy"
+            : "mb-2.5 text-slate-950",
+        )}
+      >
         {title}
       </h3>
-      <div className="grid gap-1">{children}</div>
+      <div className={cn("grid", layout === "mobile" ? "gap-1" : "gap-1.5")}>
+        {children}
+      </div>
     </section>
   );
 }
@@ -1826,14 +1840,19 @@ function CheckboxFilterSection({
 
   return (
     <FilterSection title={title} layout={layout}>
-      <div className="grid gap-1">
+      <div className={cn("grid", layout === "mobile" ? "gap-1" : "gap-1.5")}>
         {visibleOptions.map((option) => {
           const checked = selected.includes(option.value);
 
           return (
             <label
               key={option.value}
-              className="flex min-h-10 cursor-pointer items-start justify-between gap-3 py-2 text-sm font-medium text-muted transition hover:text-navy"
+              className={cn(
+                "flex min-h-10 cursor-pointer items-start justify-between gap-3 py-2 text-sm font-medium transition",
+                layout === "mobile"
+                  ? "text-muted hover:text-navy"
+                  : "rounded-lg text-slate-600 hover:text-slate-950",
+              )}
             >
               <span className="flex min-w-0 items-start gap-2">
                 <input

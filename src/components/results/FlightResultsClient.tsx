@@ -6200,30 +6200,25 @@ function Filters({
       )}
     >
       {layout === "desktop" ? (
-        <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-blue to-teal px-3 py-3">
-          <div>
-            <h2 className="text-base font-semibold text-white/95">
-              {t("filterBy")}
-            </h2>
-          </div>
-          <div className="flex items-center gap-2">
-            {activeFilterCount > 0 ? (
-              <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-[#004BB8] shadow-sm ring-1 ring-white/70">
-                {t("activeFilterCount").replace(
-                  "{{count}}",
-                  String(activeFilterCount),
-                )}
-              </span>
-            ) : null}
-            <SlidersHorizontal className="text-white/90" size={18} />
-          </div>
+        <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 bg-white px-4 py-4">
+          <h2 className="text-base font-semibold text-slate-950">
+            {t("filterBy")}
+          </h2>
+          {activeFilterCount > 0 ? (
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-[#004BB8]">
+              {t("activeFilterCount").replace(
+                "{{count}}",
+                String(activeFilterCount),
+              )}
+            </span>
+          ) : null}
         </div>
       ) : null}
 
       <div
         className={cn(
           "bg-white",
-          layout === "mobile" ? "space-y-4" : "space-y-4 px-3 py-3",
+          layout === "mobile" ? "space-y-4" : "space-y-5 px-4 py-4",
         )}
       >
         <section>
@@ -6274,7 +6269,7 @@ function Filters({
           </div>
         </section>
 
-        <FilterSection title={t("times")}>
+        <FilterSection layout={layout} title={t("times")}>
           <div className="grid grid-cols-2 border-b border-slate-200/70">
             <button
               type="button"
@@ -6389,7 +6384,7 @@ function Filters({
           )}
         </FilterSection>
 
-        <FilterSection title={t("duration")}>
+        <FilterSection layout={layout} title={t("duration")}>
           <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600">
             <span>{t("totalTripTime")}</span>
             <span className="font-mono text-navy">
@@ -6428,9 +6423,10 @@ function Filters({
         </FilterSection>
 
         {flightQualityOptions.length ? (
-          <FilterSection title={t("flightQuality")}>
+          <FilterSection layout={layout} title={t("flightQuality")}>
             {flightQualityOptions.map((option) => (
               <FilterOptionRow
+                layout={layout}
                 key={option.value}
                 label={option.label}
                 count={option.count}
@@ -6445,11 +6441,13 @@ function Filters({
         ) : null}
 
         <FilterSection
+          layout={layout}
           title={t("stops")}
           emptyText={t("stopsAppearAfterResultsLoad")}
         >
           {stopOptions.map((option) => (
             <FilterOptionRow
+                layout={layout}
               key={option.value}
               label={option.label}
               count={option.count}
@@ -6465,11 +6463,13 @@ function Filters({
         </FilterSection>
 
         <FilterSection
+          layout={layout}
           title={t("airlines")}
           emptyText={t("airlinesAppearAfterResultsLoad")}
         >
           {airlineOptions.map((option) => (
             <FilterOptionRow
+                layout={layout}
               key={option.value}
               label={option.label}
               count={option.count}
@@ -6483,11 +6483,13 @@ function Filters({
         </FilterSection>
 
         <FilterSection
+          layout={layout}
           title={t("airports")}
           emptyText={t("airportsAppearAfterResultsLoad")}
         >
           {airportOptions.map((option) => (
             <FilterOptionRow
+                layout={layout}
               key={option.value}
               label={option.label}
               count={option.count}
@@ -6500,8 +6502,9 @@ function Filters({
           ))}
         </FilterSection>
 
-        <FilterSection title={t("amenities")}>
+        <FilterSection layout={layout} title={t("amenities")}>
           <FilterOptionRow
+                layout={layout}
             label={t("baggageIncluded")}
             checked={baggageIncludedOnly}
             onChange={() => {
@@ -6510,6 +6513,7 @@ function Filters({
             }}
           />
           <FilterOptionRow
+                layout={layout}
             label={t("flexibleRefundable")}
             checked={flexibleOnly}
             onChange={() => {
@@ -6592,20 +6596,36 @@ function FilterSection({
   title,
   emptyText,
   children,
+  layout = "desktop",
 }: {
   title: string;
   emptyText?: string;
   children: ReactNode;
+  layout?: "desktop" | "mobile";
 }) {
   const hasOptions =
     Boolean(children) && (!Array.isArray(children) || children.length > 0);
 
   return (
-    <section className="border-t border-border pt-3 first:border-t-0 first:pt-0">
-      <h3 className="mb-1.5 text-sm font-semibold leading-5 text-navy">
+    <section
+      className={cn(
+        "first:border-t-0 first:pt-0",
+        layout === "mobile"
+          ? "border-t border-border pt-3"
+          : "border-t border-slate-200/80 pt-4",
+      )}
+    >
+      <h3
+        className={cn(
+          "text-sm font-semibold leading-5",
+          layout === "mobile"
+            ? "mb-1.5 text-navy"
+            : "mb-2.5 text-slate-950",
+        )}
+      >
         {title}
       </h3>
-      <div className="grid gap-1">
+      <div className={cn("grid", layout === "mobile" ? "gap-1" : "gap-1.5")}>
         {hasOptions ? (
           children
         ) : (
@@ -6623,6 +6643,7 @@ function FilterOptionRow({
   rightLabel,
   checked,
   onChange,
+  layout = "desktop",
 }: {
   label: string;
   count?: number;
@@ -6630,12 +6651,20 @@ function FilterOptionRow({
   rightLabel?: string;
   checked: boolean;
   onChange: () => void;
+  layout?: "desktop" | "mobile";
 }) {
   const trailingLabel =
     rightLabel ?? (typeof count === "number" ? String(count) : null);
 
   return (
-    <label className="flex min-h-10 cursor-pointer items-start justify-between gap-3 py-2 text-sm font-medium text-muted transition hover:text-navy">
+    <label
+      className={cn(
+        "flex min-h-10 cursor-pointer items-start justify-between gap-3 py-2 text-sm font-medium transition",
+        layout === "mobile"
+          ? "text-muted hover:text-navy"
+          : "rounded-lg text-slate-600 hover:text-slate-950",
+      )}
+    >
       <span className="flex min-w-0 items-start gap-2">
         <input
           type="checkbox"
