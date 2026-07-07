@@ -62,6 +62,55 @@ const timeOptions = Array.from({ length: 48 }, (_, index) => {
   return `${String(hour).padStart(2, "0")}:${minute}`;
 });
 
+function lockBodyScroll() {
+  const bodyElement = document.body;
+  const rootElement = document.documentElement;
+  const scrollY = window.scrollY;
+  const previousBodyStyles = {
+    left: bodyElement.style.left,
+    overflow: bodyElement.style.overflow,
+    overscrollBehavior: bodyElement.style.overscrollBehavior,
+    position: bodyElement.style.position,
+    right: bodyElement.style.right,
+    top: bodyElement.style.top,
+    touchAction: bodyElement.style.touchAction,
+    width: bodyElement.style.width,
+  };
+  const previousRootStyles = {
+    overflow: rootElement.style.overflow,
+    overscrollBehavior: rootElement.style.overscrollBehavior,
+  };
+
+  bodyElement.style.left = "0";
+  bodyElement.style.overflow = "hidden";
+  bodyElement.style.overscrollBehavior = "none";
+  bodyElement.style.position = "fixed";
+  bodyElement.style.right = "0";
+  bodyElement.style.top = `-${scrollY}px`;
+  bodyElement.style.touchAction = "none";
+  bodyElement.style.width = "100%";
+  rootElement.style.overflow = "hidden";
+  rootElement.style.overscrollBehavior = "none";
+
+  return {
+    restore: () => {
+      bodyElement.style.left = previousBodyStyles.left;
+      bodyElement.style.overflow = previousBodyStyles.overflow;
+      bodyElement.style.overscrollBehavior =
+        previousBodyStyles.overscrollBehavior;
+      bodyElement.style.position = previousBodyStyles.position;
+      bodyElement.style.right = previousBodyStyles.right;
+      bodyElement.style.top = previousBodyStyles.top;
+      bodyElement.style.touchAction = previousBodyStyles.touchAction;
+      bodyElement.style.width = previousBodyStyles.width;
+      rootElement.style.overflow = previousRootStyles.overflow;
+      rootElement.style.overscrollBehavior =
+        previousRootStyles.overscrollBehavior;
+      window.scrollTo(0, scrollY);
+    },
+  };
+}
+
 const driverAgeOptions = [
   defaultDriverAge,
   ...Array.from(
@@ -447,6 +496,9 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   const expandedSearchScrollYRef = useRef(0);
   const pickupInputRef = useRef<HTMLInputElement | null>(null);
   const dropoffInputRef = useRef<HTMLInputElement | null>(null);
+  const mobileFiltersScrollLockRef = useRef<{ restore: () => void } | null>(
+    null,
+  );
   const [visibleMonthDate, setVisibleMonthDate] = useState(() => {
     const parsedPickup = parseIsoDate(values.pickupDate);
 
@@ -549,6 +601,39 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   };
 
   const clearCarFilters = () => setSelectedCarFilters({});
+
+  useEffect(() => {
+    const releaseExistingLock = () => {
+      mobileFiltersScrollLockRef.current?.restore();
+      mobileFiltersScrollLockRef.current = null;
+    };
+
+    if (!filtersOpen || typeof window === "undefined") {
+      releaseExistingLock();
+      return releaseExistingLock;
+    }
+
+    const mobileQuery = window.matchMedia("(max-width: 1023px)");
+
+    if (!mobileQuery.matches) {
+      releaseExistingLock();
+      return releaseExistingLock;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setFiltersOpen(false);
+      }
+    };
+
+    mobileFiltersScrollLockRef.current = lockBodyScroll();
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      releaseExistingLock();
+    };
+  }, [filtersOpen]);
 
   useEffect(() => {
     const sentinel = stickySentinelRef.current;
@@ -1781,30 +1866,32 @@ function CarFilters({
           : "bg-white",
       )}
     >
-      <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-blue to-teal px-3 py-3">
-        <h2 className="text-base font-semibold text-white/95">
-          {t("carsResults.filterBy")}
-        </h2>
-        <div className="flex shrink-0 items-center gap-2">
-          {activeFilterCount > 0 ? (
-            <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-[#004BB8] shadow-sm ring-1 ring-white/70">
-              {interpolate(t("carsResults.activeFilterCount"), {
-                count: String(activeFilterCount),
-              })}
-            </span>
-          ) : null}
-          <SlidersHorizontal
-            className="text-white/90"
-            size={18}
-            aria-hidden="true"
-          />
+      {layout === "desktop" ? (
+        <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-blue to-teal px-3 py-3">
+          <h2 className="text-base font-semibold text-white/95">
+            {t("carsResults.filterBy")}
+          </h2>
+          <div className="flex shrink-0 items-center gap-2">
+            {activeFilterCount > 0 ? (
+              <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-[#004BB8] shadow-sm ring-1 ring-white/70">
+                {interpolate(t("carsResults.activeFilterCount"), {
+                  count: String(activeFilterCount),
+                })}
+              </span>
+            ) : null}
+            <SlidersHorizontal
+              className="text-white/90"
+              size={18}
+              aria-hidden="true"
+            />
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <div
         className={cn(
           "bg-white",
-          layout === "mobile" ? "space-y-0 px-3 py-3" : "space-y-3 px-3 py-3",
+          layout === "mobile" ? "space-y-0" : "space-y-3 px-3 py-3",
         )}
       >
         {activeFilterCount > 0 ? (
@@ -1866,7 +1953,7 @@ function FilterSection({
     <section
       className={cn(
         layout === "mobile"
-          ? "border-t border-border py-3 first:border-t-0 first:pt-0"
+          ? "border-t border-border py-4 first:border-t-0 first:pt-0"
           : "rounded-xl border border-border bg-white px-3 py-3 shadow-sm shadow-slate-900/[0.025]",
       )}
     >
@@ -1882,7 +1969,7 @@ function FilterSection({
               key={option.id}
               className={cn(
                 layout === "mobile"
-                  ? "flex cursor-pointer items-center gap-2.5 py-1.5 text-sm font-medium text-muted transition hover:text-navy"
+                  ? "flex min-h-10 cursor-pointer items-center gap-3 py-2 text-sm font-medium text-muted transition hover:text-navy"
                   : "flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all",
                 isSelected
                   ? layout === "mobile"
@@ -1895,7 +1982,7 @@ function FilterSection({
             >
               <input
                 type="checkbox"
-                className="h-3.5 w-3.5 shrink-0 rounded border-border accent-blue focus-visible:ring-2 focus-visible:ring-blue/35"
+                className="h-5 w-5 shrink-0 rounded border-border accent-blue focus-visible:ring-2 focus-visible:ring-blue/35"
                 checked={isSelected}
                 onChange={() => onToggle(group.id, option.id)}
               />

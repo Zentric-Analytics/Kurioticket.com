@@ -38,6 +38,55 @@ const SEARCH_APPLYING_TIMEOUT_MS = 15000;
 const FILTER_SCROLLBAR_HIDE_DELAY_MS = 700;
 const DEFAULT_MIN_RATING = 3;
 
+function lockBodyScroll() {
+  const bodyElement = document.body;
+  const rootElement = document.documentElement;
+  const scrollY = window.scrollY;
+  const previousBodyStyles = {
+    left: bodyElement.style.left,
+    overflow: bodyElement.style.overflow,
+    overscrollBehavior: bodyElement.style.overscrollBehavior,
+    position: bodyElement.style.position,
+    right: bodyElement.style.right,
+    top: bodyElement.style.top,
+    touchAction: bodyElement.style.touchAction,
+    width: bodyElement.style.width,
+  };
+  const previousRootStyles = {
+    overflow: rootElement.style.overflow,
+    overscrollBehavior: rootElement.style.overscrollBehavior,
+  };
+
+  bodyElement.style.left = "0";
+  bodyElement.style.overflow = "hidden";
+  bodyElement.style.overscrollBehavior = "none";
+  bodyElement.style.position = "fixed";
+  bodyElement.style.right = "0";
+  bodyElement.style.top = `-${scrollY}px`;
+  bodyElement.style.touchAction = "none";
+  bodyElement.style.width = "100%";
+  rootElement.style.overflow = "hidden";
+  rootElement.style.overscrollBehavior = "none";
+
+  return {
+    restore: () => {
+      bodyElement.style.left = previousBodyStyles.left;
+      bodyElement.style.overflow = previousBodyStyles.overflow;
+      bodyElement.style.overscrollBehavior =
+        previousBodyStyles.overscrollBehavior;
+      bodyElement.style.position = previousBodyStyles.position;
+      bodyElement.style.right = previousBodyStyles.right;
+      bodyElement.style.top = previousBodyStyles.top;
+      bodyElement.style.touchAction = previousBodyStyles.touchAction;
+      bodyElement.style.width = previousBodyStyles.width;
+      rootElement.style.overflow = previousRootStyles.overflow;
+      rootElement.style.overscrollBehavior =
+        previousRootStyles.overscrollBehavior;
+      window.scrollTo(0, scrollY);
+    },
+  };
+}
+
 const POPULAR_FILTERS = [
   {
     value: "free-wifi",
@@ -407,6 +456,9 @@ export function HotelResultsClient() {
   const mobileHotelSearchScrollLockRef = useRef<{ restore: () => void } | null>(
     null,
   );
+  const mobileFiltersScrollLockRef = useRef<{ restore: () => void } | null>(
+    null,
+  );
 
   const body = useMemo(
     () => ({
@@ -543,55 +595,43 @@ export function HotelResultsClient() {
       return releaseExistingLock;
     }
 
-    const bodyElement = document.body;
-    const rootElement = document.documentElement;
-    const scrollY = window.scrollY;
-    const previousBodyStyles = {
-      left: bodyElement.style.left,
-      overflow: bodyElement.style.overflow,
-      overscrollBehavior: bodyElement.style.overscrollBehavior,
-      position: bodyElement.style.position,
-      right: bodyElement.style.right,
-      top: bodyElement.style.top,
-      touchAction: bodyElement.style.touchAction,
-      width: bodyElement.style.width,
-    };
-    const previousRootStyles = {
-      overflow: rootElement.style.overflow,
-      overscrollBehavior: rootElement.style.overscrollBehavior,
-    };
-
-    bodyElement.style.left = "0";
-    bodyElement.style.overflow = "hidden";
-    bodyElement.style.overscrollBehavior = "none";
-    bodyElement.style.position = "fixed";
-    bodyElement.style.right = "0";
-    bodyElement.style.top = `-${scrollY}px`;
-    bodyElement.style.touchAction = "none";
-    bodyElement.style.width = "100%";
-    rootElement.style.overflow = "hidden";
-    rootElement.style.overscrollBehavior = "none";
-
-    mobileHotelSearchScrollLockRef.current = {
-      restore: () => {
-        bodyElement.style.left = previousBodyStyles.left;
-        bodyElement.style.overflow = previousBodyStyles.overflow;
-        bodyElement.style.overscrollBehavior =
-          previousBodyStyles.overscrollBehavior;
-        bodyElement.style.position = previousBodyStyles.position;
-        bodyElement.style.right = previousBodyStyles.right;
-        bodyElement.style.top = previousBodyStyles.top;
-        bodyElement.style.touchAction = previousBodyStyles.touchAction;
-        bodyElement.style.width = previousBodyStyles.width;
-        rootElement.style.overflow = previousRootStyles.overflow;
-        rootElement.style.overscrollBehavior =
-          previousRootStyles.overscrollBehavior;
-        window.scrollTo(0, scrollY);
-      },
-    };
+    mobileHotelSearchScrollLockRef.current = lockBodyScroll();
 
     return releaseExistingLock;
   }, [mobileHotelSearchOpen]);
+
+  useEffect(() => {
+    const releaseExistingLock = () => {
+      mobileFiltersScrollLockRef.current?.restore();
+      mobileFiltersScrollLockRef.current = null;
+    };
+
+    if (!filtersOpen || typeof window === "undefined") {
+      releaseExistingLock();
+      return releaseExistingLock;
+    }
+
+    const mobileQuery = window.matchMedia("(max-width: 1023px)");
+
+    if (!mobileQuery.matches) {
+      releaseExistingLock();
+      return releaseExistingLock;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setFiltersOpen(false);
+      }
+    };
+
+    mobileFiltersScrollLockRef.current = lockBodyScroll();
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      releaseExistingLock();
+    };
+  }, [filtersOpen]);
 
   useEffect(() => {
     let active = true;
@@ -1591,19 +1631,21 @@ function HotelFilters({
 
   return (
     <div className="bg-white">
-      <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-blue to-teal px-3 py-3">
-        <div>
-          <h2 className="text-base font-bold text-white">
-            {t("hotelResults.filterBy")}
-          </h2>
+      {layout === "desktop" ? (
+        <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-blue to-teal px-3 py-3">
+          <div>
+            <h2 className="text-base font-bold text-white">
+              {t("hotelResults.filterBy")}
+            </h2>
+          </div>
+          <SlidersHorizontal className="text-white" size={18} />
         </div>
-        <SlidersHorizontal className="text-white" size={18} />
-      </div>
+      ) : null}
 
       <div
         className={cn(
           "bg-white",
-          layout === "mobile" ? "space-y-0 px-3 py-3" : "space-y-4 px-3 py-3",
+          layout === "mobile" ? "space-y-0" : "space-y-4 px-3 py-3",
         )}
       >
         <FilterSection title={t("hotelResults.budgetPrice")} layout={layout}>
@@ -1747,10 +1789,10 @@ function FilterSection({
     <section
       className={cn(
         "border-t border-border first:border-t-0 first:pt-0",
-        layout === "mobile" ? "py-3" : "pt-3",
+        layout === "mobile" ? "py-4" : "pt-3",
       )}
     >
-      <h3 className="mb-1.5 text-[13px] font-semibold leading-5 text-navy">
+      <h3 className="mb-2 text-sm font-semibold leading-5 text-navy">
         {title}
       </h3>
       <div className="grid gap-1">{children}</div>
@@ -1793,12 +1835,12 @@ function CheckboxFilterSection({
           return (
             <label
               key={option.value}
-              className="flex cursor-pointer items-start justify-between gap-3 py-1.5 text-[13px] font-medium text-muted transition hover:text-navy"
+              className="flex min-h-10 cursor-pointer items-start justify-between gap-3 py-2 text-sm font-medium text-muted transition hover:text-navy"
             >
               <span className="flex min-w-0 items-start gap-2">
                 <input
                   type="checkbox"
-                  className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-border accent-blue focus-visible:ring-2 focus-visible:ring-blue/35"
+                  className="mt-0.5 h-5 w-5 shrink-0 rounded border-border accent-blue focus-visible:ring-2 focus-visible:ring-blue/35"
                   checked={checked}
                   onChange={() => onToggle(option.value)}
                 />
