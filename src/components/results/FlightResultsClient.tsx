@@ -846,8 +846,6 @@ export function FlightResultsClient() {
   const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
   const [isSearchExpandedWhileSticky, setIsSearchExpandedWhileSticky] =
     useState(false);
-  const [hasInteractedWithExpandedSearch, setHasInteractedWithExpandedSearch] =
-    useState(false);
   const [travelerPopoverPosition, setTravelerPopoverPosition] = useState<{
     top: number;
     left: number;
@@ -959,7 +957,6 @@ export function FlightResultsClient() {
     isSearchBarCompact && isSearchExpandedWhileSticky;
   const canAutoCollapseExpandedSearch =
     isExpandedStickySearchActive &&
-    !hasInteractedWithExpandedSearch &&
     !tripTypeMenuOpen &&
     !activeSuggest &&
     !activeDatePicker &&
@@ -972,21 +969,15 @@ export function FlightResultsClient() {
     [savedTripIds],
   );
 
-  const markExpandedSearchInteraction = useCallback(() => {
-    if (isExpandedStickySearchActive) {
-      setHasInteractedWithExpandedSearch(true);
-    }
-  }, [isExpandedStickySearchActive]);
+  const markExpandedSearchInteraction = useCallback(() => {}, []);
 
   const expandStickySearch = useCallback(() => {
     expandedSearchScrollYRef.current = window.scrollY;
-    setHasInteractedWithExpandedSearch(false);
     setIsSearchExpandedWhileSticky(true);
   }, []);
 
   const collapseStickySearch = useCallback(() => {
     setIsSearchExpandedWhileSticky(false);
-    setHasInteractedWithExpandedSearch(false);
     setTripTypeMenuOpen(false);
     setActiveSuggest(null);
     setDropdownPosition(null);
@@ -1018,12 +1009,18 @@ export function FlightResultsClient() {
 
       if (!shouldCompact) {
         setIsSearchExpandedWhileSticky(false);
-        setHasInteractedWithExpandedSearch(false);
       }
     };
 
     const updateFromSentinelPosition = () => {
-      applyCompactState(sentinel.getBoundingClientRect().bottom <= 0);
+      const sentinelRect = sentinel.getBoundingClientRect();
+      const sentinelScrollTop = sentinelRect.top + window.scrollY;
+      const hasPassedStickyTrigger =
+        sentinelRect.top <= 0 ||
+        sentinelRect.bottom <= 0 ||
+        window.scrollY >= Math.max(16, sentinelScrollTop - 1);
+
+      applyCompactState(hasPassedStickyTrigger);
     };
 
     const schedulePositionUpdate = () => {
@@ -1087,14 +1084,10 @@ export function FlightResultsClient() {
 
       animationFrame = window.requestAnimationFrame(() => {
         animationFrame = 0;
-        const focusedElement = document.activeElement;
-        const isFocusInsideSearch = Boolean(
-          focusedElement && searchFormRef.current?.contains(focusedElement),
-        );
         const hasContinuedScrolling =
           Math.abs(window.scrollY - expandedSearchScrollYRef.current) > 16;
 
-        if (hasContinuedScrolling && !isFocusInsideSearch) {
+        if (hasContinuedScrolling) {
           collapseStickySearch();
         }
       });
@@ -1695,7 +1688,6 @@ export function FlightResultsClient() {
     };
   }, [body, dictionary.unableToSearchFlights, t]);
 
-
   useEffect(() => {
     if (!tripTypeMenuOpen) return;
 
@@ -2031,18 +2023,17 @@ export function FlightResultsClient() {
 
     try {
       const recentSearch = buildFlightRecentSearch({
-          tripType: tripTypeInput === "one-way" ? "one-way" : "round-trip",
-          origin: nextOrigin,
-          destination: nextDestination,
-          departureDate: nextDepartureDate,
-          returnDate:
-            tripTypeInput === "round-trip" ? nextReturnDate : undefined,
-          adults,
-          children,
-          infants,
-          travelers,
-          cabinClass: cabinClassInput,
-        });
+        tripType: tripTypeInput === "one-way" ? "one-way" : "round-trip",
+        origin: nextOrigin,
+        destination: nextDestination,
+        departureDate: nextDepartureDate,
+        returnDate: tripTypeInput === "round-trip" ? nextReturnDate : undefined,
+        adults,
+        children,
+        infants,
+        travelers,
+        cabinClass: cabinClassInput,
+      });
       if (sessionStatus === "authenticated") {
         void syncBackendRecentSearch(recentSearch);
       } else {
@@ -2706,21 +2697,19 @@ export function FlightResultsClient() {
 
               try {
                 const recentSearch = buildFlightRecentSearch({
-                    tripType:
-                      tripTypeInput === "one-way" ? "one-way" : "round-trip",
-                    origin: nextOrigin,
-                    destination: nextDestination,
-                    departureDate: nextDepartureDate,
-                    returnDate:
-                      tripTypeInput === "round-trip"
-                        ? nextReturnDate
-                        : undefined,
-                    adults: adultCount,
-                    children: childCount,
-                    infants: infantCount,
-                    travelers,
-                    cabinClass: cabinClassInput,
-                  });
+                  tripType:
+                    tripTypeInput === "one-way" ? "one-way" : "round-trip",
+                  origin: nextOrigin,
+                  destination: nextDestination,
+                  departureDate: nextDepartureDate,
+                  returnDate:
+                    tripTypeInput === "round-trip" ? nextReturnDate : undefined,
+                  adults: adultCount,
+                  children: childCount,
+                  infants: infantCount,
+                  travelers,
+                  cabinClass: cabinClassInput,
+                });
                 if (sessionStatus === "authenticated") {
                   void syncBackendRecentSearch(recentSearch);
                 } else {
@@ -4360,9 +4349,7 @@ export function FlightResultsClient() {
       <section
         className={cn(
           "sticky top-0 z-40 hidden border-b border-transparent bg-[#f6f8fb]/95 backdrop-blur transition-[padding,box-shadow] duration-200 sm:block",
-          showCompactSearchSummary
-            ? "py-1.5 shadow-none"
-            : "py-3 shadow-none",
+          showCompactSearchSummary ? "py-1.5 shadow-none" : "py-3 shadow-none",
         )}
       >
         <div className="page-shell">
@@ -5649,7 +5636,10 @@ function formatTimeFromMinutes(value: number, locale: string) {
   }).format(date);
 }
 
-function formatDurationFromMinutes(totalMinutes: number, t: (key: string) => string) {
+function formatDurationFromMinutes(
+  totalMinutes: number,
+  t: (key: string) => string,
+) {
   const minutes = Math.max(0, Math.round(totalMinutes));
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;

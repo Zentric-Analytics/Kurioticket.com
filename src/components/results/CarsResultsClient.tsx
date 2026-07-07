@@ -232,7 +232,11 @@ const interpolate = (template: string, values: Record<string, string>) =>
     template,
   );
 
-const formatCompactDate = (date: string, intlLocale: string, fallback: string) => {
+const formatCompactDate = (
+  date: string,
+  intlLocale: string,
+  fallback: string,
+) => {
   if (!date) {
     return fallback;
   }
@@ -247,7 +251,11 @@ const formatCompactDate = (date: string, intlLocale: string, fallback: string) =
     : date;
 };
 
-export const formatDate = (date: string, intlLocale: string, fallback: string) => {
+export const formatDate = (
+  date: string,
+  intlLocale: string,
+  fallback: string,
+) => {
   if (!date) {
     return fallback;
   }
@@ -327,14 +335,25 @@ const getWeekdays = (intlLocale: string) => {
   );
 };
 
-const twentyFourHourTimeLocales = ["de", "es", "fr", "id", "ja", "nl", "pl", "pt", "sv", "tr"];
+const twentyFourHourTimeLocales = [
+  "de",
+  "es",
+  "fr",
+  "id",
+  "ja",
+  "nl",
+  "pl",
+  "pt",
+  "sv",
+  "tr",
+];
 
 export const formatTimeLabel = (time: string, intlLocale: string) => {
   const [hourValue, minuteValue] = time.split(":").map(Number);
   const normalizedLocale = intlLocale.toLowerCase();
   const timeSeparator = intlLocale.toLowerCase().startsWith("id") ? "." : ":";
-  const shouldUseTwentyFourHourTime = twentyFourHourTimeLocales.some((localePrefix) =>
-    normalizedLocale.startsWith(localePrefix),
+  const shouldUseTwentyFourHourTime = twentyFourHourTimeLocales.some(
+    (localePrefix) => normalizedLocale.startsWith(localePrefix),
   );
   const dateTimeFormatOptions: Intl.DateTimeFormatOptions = {
     hour: "numeric",
@@ -359,17 +378,17 @@ export const formatTimeLabel = (time: string, intlLocale: string) => {
 const normalizeDriverAge = (value: string) =>
   driverAgeOptions.includes(value) ? value : defaultDriverAge;
 
-const getCuratedLocationLabel = (location: string, t: (key: string) => string) => {
+const getCuratedLocationLabel = (
+  location: string,
+  t: (key: string) => string,
+) => {
   const trimmedLocation = location.trim();
   const translationKey = curatedLocationTranslationKeys[trimmedLocation];
 
   return translationKey ? t(translationKey) : trimmedLocation;
 };
 
-const getDriverAgeOptionLabel = (
-  age: string,
-  t: (key: string) => string,
-) => {
+const getDriverAgeOptionLabel = (age: string, t: (key: string) => string) => {
   if (age === defaultDriverAge) {
     return t("carsResults.anyDriverAgeRange");
   }
@@ -405,8 +424,6 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
     useState<SelectedCarFilters>({});
   const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
   const [isSearchExpandedWhileSticky, setIsSearchExpandedWhileSticky] =
-    useState(false);
-  const [hasInteractedWithExpandedSearch, setHasInteractedWithExpandedSearch] =
     useState(false);
   const [pickupLocation, setPickupLocation] = useState(values.pickupLocation);
   const [dropoffLocation, setDropoffLocation] = useState(
@@ -444,7 +461,10 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   const trimmedPickupLocation = pickupLocation.trim();
   const trimmedDropoffLocation = dropoffLocation.trim();
   const pickupLocationLabel = getCuratedLocationLabel(trimmedPickupLocation, t);
-  const dropoffLocationLabel = getCuratedLocationLabel(trimmedDropoffLocation, t);
+  const dropoffLocationLabel = getCuratedLocationLabel(
+    trimmedDropoffLocation,
+    t,
+  );
   const locationSummary = trimmedPickupLocation
     ? trimmedDropoffLocation && trimmedDropoffLocation !== trimmedPickupLocation
       ? interpolate(t("carsResults.pickupToReturn"), {
@@ -469,7 +489,9 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
     isSearchBarCompact && !isSearchExpandedWhileSticky;
   const pickupSummary = pickupLocationLabel || t("carsResults.pickupLocation");
   const returnSummary =
-    dropoffLocationLabel || pickupLocationLabel || t("carsResults.returnLocation");
+    dropoffLocationLabel ||
+    pickupLocationLabel ||
+    t("carsResults.returnLocation");
   const rentalDateSummary = pickupDate
     ? dropoffDate
       ? `${formatCompactDate(
@@ -481,11 +503,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
           intlLocale,
           t("carsResults.selectDates"),
         )}`
-      : formatCompactDate(
-          pickupDate,
-          intlLocale,
-          t("carsResults.selectDates"),
-        )
+      : formatCompactDate(pickupDate, intlLocale, t("carsResults.selectDates"))
     : t("carsResults.selectRentalDates");
   const timeSummary = `${formatTimeLabel(pickupTime, intlLocale)} — ${formatTimeLabel(
     dropoffTime,
@@ -495,27 +513,17 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   const isExpandedStickySearchActive =
     isSearchBarCompact && isSearchExpandedWhileSticky;
   const canAutoCollapseExpandedSearch =
-    isExpandedStickySearchActive &&
-    !hasInteractedWithExpandedSearch &&
-    !datesOpen &&
-    !timesOpen &&
-    !driverAgeOpen;
+    isExpandedStickySearchActive && !datesOpen && !timesOpen && !driverAgeOpen;
 
-  const markExpandedSearchInteraction = useCallback(() => {
-    if (isExpandedStickySearchActive) {
-      setHasInteractedWithExpandedSearch(true);
-    }
-  }, [isExpandedStickySearchActive]);
+  const markExpandedSearchInteraction = useCallback(() => {}, []);
 
   const expandStickySearch = useCallback(() => {
     expandedSearchScrollYRef.current = window.scrollY;
-    setHasInteractedWithExpandedSearch(false);
     setIsSearchExpandedWhileSticky(true);
   }, []);
 
   const collapseStickySearch = useCallback(() => {
     setIsSearchExpandedWhileSticky(false);
-    setHasInteractedWithExpandedSearch(false);
     setDatesOpen(false);
     setTimesOpen(false);
     setDriverAgeOpen(false);
@@ -556,12 +564,18 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
 
       if (!shouldCompact) {
         setIsSearchExpandedWhileSticky(false);
-        setHasInteractedWithExpandedSearch(false);
       }
     };
 
     const updateFromSentinelPosition = () => {
-      applyCompactState(sentinel.getBoundingClientRect().bottom <= 0);
+      const sentinelRect = sentinel.getBoundingClientRect();
+      const sentinelScrollTop = sentinelRect.top + window.scrollY;
+      const hasPassedStickyTrigger =
+        sentinelRect.top <= 0 ||
+        sentinelRect.bottom <= 0 ||
+        window.scrollY >= Math.max(16, sentinelScrollTop - 1);
+
+      applyCompactState(hasPassedStickyTrigger);
     };
 
     const schedulePositionUpdate = () => {
@@ -627,14 +641,10 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
 
       animationFrame = window.requestAnimationFrame(() => {
         animationFrame = 0;
-        const focusedElement = document.activeElement;
-        const isFocusInsideSearch = Boolean(
-          focusedElement && searchFormRef.current?.contains(focusedElement),
-        );
         const hasContinuedScrolling =
           Math.abs(window.scrollY - expandedSearchScrollYRef.current) > 16;
 
-        if (hasContinuedScrolling && !isFocusInsideSearch) {
+        if (hasContinuedScrolling) {
           collapseStickySearch();
         }
       });
@@ -710,7 +720,6 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   const openMobileSearchDrawer = useCallback(() => {
     setMobileSearchOpen(true);
     setIsSearchExpandedWhileSticky(false);
-    setHasInteractedWithExpandedSearch(false);
     setDatesOpen(false);
     setTimesOpen(false);
     setDriverAgeOpen(false);
@@ -795,7 +804,6 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
         onSubmit={() => {
           closeMobileSearchDrawer();
           setIsSearchExpandedWhileSticky(false);
-          setHasInteractedWithExpandedSearch(false);
         }}
       >
         <input type="hidden" name="pickupDate" value={pickupDate} />
@@ -858,7 +866,10 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                 icon={MapPin}
                 inputRef={pickupInputRef}
                 isCompact={isCompactSearch}
-                label={t("carsResults.pickupLocationLabel") || t("carsResults.pickupLocation")}
+                label={
+                  t("carsResults.pickupLocationLabel") ||
+                  t("carsResults.pickupLocation")
+                }
                 name="pickupLocation"
                 onChange={(nextValue) => {
                   markExpandedSearchInteraction();
@@ -878,7 +889,10 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                 icon={MapPin}
                 inputRef={dropoffInputRef}
                 isCompact={isCompactSearch}
-                label={t("carsResults.returnLocationLabel") || t("carsResults.returnLocation")}
+                label={
+                  t("carsResults.returnLocationLabel") ||
+                  t("carsResults.returnLocation")
+                }
                 name="dropoffLocation"
                 onChange={(nextValue) => {
                   markExpandedSearchInteraction();
@@ -896,7 +910,9 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
               <SearchDateCell
                 dropoffDate={dropoffDate}
                 isCompact={isCompactSearch}
-                doneButtonVariant={placement === "desktop" ? "brand" : "neutral"}
+                doneButtonVariant={
+                  placement === "desktop" ? "brand" : "neutral"
+                }
                 isOpen={datesOpen}
                 onClear={() => {
                   markExpandedSearchInteraction();
@@ -1086,15 +1102,22 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
           />
         </aside>
 
-        <section className="min-w-0 space-y-4" aria-label={t("carsResults.carResultsAria")}>
+        <section
+          className="min-w-0 space-y-4"
+          aria-label={t("carsResults.carResultsAria")}
+        >
           <h1 id="cars-results-heading" className="sr-only">
-            {interpolate(t("carsResults.resultsFor"), { location: locationSummary })}
+            {interpolate(t("carsResults.resultsFor"), {
+              location: locationSummary,
+            })}
           </h1>
 
           <div className="hidden w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex sm:items-center sm:justify-between">
             <div className="min-w-0">
               <h2 className="truncate text-sm font-bold text-navy">
-                {interpolate(t("carsResults.resultsFor"), { location: locationSummary })}
+                {interpolate(t("carsResults.resultsFor"), {
+                  location: locationSummary,
+                })}
               </h2>
               <p className="mt-1 text-xs font-semibold text-slate-500">
                 {rentalDateSummary} · {timeSummary} · {driverAgeSummary}
@@ -1109,7 +1132,10 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             >
               <SlidersHorizontal size={17} aria-hidden="true" />
               {activeFilterCount > 0
-                ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount))
+                ? t("filtersWithCount").replace(
+                    "{{count}}",
+                    String(activeFilterCount),
+                  )
                 : t("filters")}
             </Button>
           </div>
@@ -1506,7 +1532,8 @@ function SearchTimeCell({
     >
       <div className={fieldLabelClass}>
         <Clock3 className="h-3.5 w-3.5 text-[#5CB6B2]" aria-hidden="true" />
-        {t("carsResults.pickupReturnTimeLabel") || t("carsResults.pickupReturnTime")}
+        {t("carsResults.pickupReturnTimeLabel") ||
+          t("carsResults.pickupReturnTime")}
       </div>
       <button
         type="button"
@@ -1516,7 +1543,8 @@ function SearchTimeCell({
         className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm"
       >
         <span className="truncate">
-          {formatTimeLabel(pickupTime, intlLocale)} — {formatTimeLabel(dropoffTime, intlLocale)}
+          {formatTimeLabel(pickupTime, intlLocale)} —{" "}
+          {formatTimeLabel(dropoffTime, intlLocale)}
         </span>
         <ChevronDown
           className={cn(
@@ -1608,7 +1636,9 @@ function DriverAgeCell({
         aria-haspopup="listbox"
         className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm"
       >
-        <span className="truncate">{getDriverAgeOptionLabel(driverAge, t)}</span>
+        <span className="truncate">
+          {getDriverAgeOptionLabel(driverAge, t)}
+        </span>
         <ChevronDown
           className={cn(
             "h-4 w-4 shrink-0 text-slate-500 transition-transform",
@@ -1697,7 +1727,9 @@ function CarFilters({
       )}
     >
       <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-[#004BB8] to-[#021C2B] px-3 py-3">
-        <h2 className="text-base font-semibold text-white/95">{t("carsResults.filterBy")}</h2>
+        <h2 className="text-base font-semibold text-white/95">
+          {t("carsResults.filterBy")}
+        </h2>
         <div className="flex shrink-0 items-center gap-2">
           {activeFilterCount > 0 ? (
             <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-[#004BB8] shadow-sm ring-1 ring-white/70">
@@ -1759,7 +1791,9 @@ function FilterSection({
 }) {
   return (
     <section className="rounded-xl border border-slate-200/80 bg-white px-3 py-3 shadow-sm shadow-slate-900/[0.025]">
-      <h3 className="text-sm font-semibold text-slate-900">{t(group.titleKey)}</h3>
+      <h3 className="text-sm font-semibold text-slate-900">
+        {t(group.titleKey)}
+      </h3>
       <div className="mt-2 space-y-1.5">
         {group.options.map((option) => {
           const isSelected = selectedOptions.includes(option.id);
@@ -1780,7 +1814,9 @@ function FilterSection({
                 checked={isSelected}
                 onChange={() => onToggle(group.id, option.id)}
               />
-              <span className="min-w-0 flex-1 truncate">{t(option.labelKey)}</span>
+              <span className="min-w-0 flex-1 truncate">
+                {t(option.labelKey)}
+              </span>
               {isSelected ? (
                 <CheckCircle2
                   className="h-4 w-4 shrink-0 text-[#004BB8]"
