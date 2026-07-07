@@ -957,7 +957,9 @@ export default function Home() {
                               price={card.fare}
                               displayCurrency={selectedOption.currency}
                               expectedOriginCode={card.item.originCode}
-                              expectedDestinationCode={card.item.destinationCode}
+                              expectedDestinationCode={
+                                card.item.destinationCode
+                              }
                               isPriceLoading={discoveryFareCardState.loading}
                               isSaved={savedTripIds.includes(card.item.id)}
                               onHeartToggle={handleSavedTripToggle}
@@ -1315,7 +1317,7 @@ function DiscoverySuggestionCard({
       </button>
 
       <div
-        className={`relative w-full shrink-0 overflow-hidden ${mobileBoardCard ? "h-[135px]" : compact ? "h-[148px]" : "h-[196px] md:h-[190px] lg:h-[198px]"}`}
+        className={`relative w-full shrink-0 overflow-hidden ${mobileBoardCard ? "h-[135px]" : compact ? "h-[148px]" : "h-[176px] md:h-[168px] lg:h-[160px]"}`}
       >
         <DiscoveryCardImage
           image={image}
@@ -1326,7 +1328,7 @@ function DiscoverySuggestionCard({
       </div>
 
       <div
-        className={`min-w-0 flex-1 bg-white ${mobileBoardCard ? "flex flex-col px-3 pb-3 pt-3" : compact ? "space-y-1.5 px-2.5 pt-2.5" : "space-y-2 px-3 pt-3"}`}
+        className={`min-w-0 flex-1 bg-white ${mobileBoardCard ? "flex flex-col px-3 pb-3 pt-3" : compact ? "space-y-1.5 px-2.5 pt-2.5" : "space-y-1.5 px-3 pt-2.5"}`}
       >
         <p
           className={`line-clamp-2 break-words text-slate-950 ${mobileBoardCard ? "text-sm font-extrabold leading-[1.28] tracking-[-0.01em]" : compact ? "pr-10 rtl:pl-10 rtl:pr-0 text-sm font-bold leading-[1.32]" : "pr-10 rtl:pl-10 rtl:pr-0 text-sm font-bold leading-[1.35] md:text-[0.95rem]"}`}
@@ -1334,7 +1336,7 @@ function DiscoverySuggestionCard({
           {title}
         </p>
         <p
-          className={`line-clamp-2 break-words text-slate-600 ${mobileBoardCard ? "mt-2 text-xs font-medium leading-5" : compact ? "text-xs font-medium leading-5" : "text-xs font-medium leading-5 md:text-sm"}`}
+          className={`line-clamp-2 break-words text-slate-600 ${mobileBoardCard ? "mt-2 text-xs font-medium leading-5" : compact ? "text-xs font-medium leading-5" : "text-xs font-medium leading-5 md:line-clamp-2"}`}
         >
           {originCode} → {destinationCodeLabel} · {routeNote}
         </p>
@@ -1369,7 +1371,7 @@ function DiscoverySuggestionCard({
 
       {!mobileBoardCard ? (
         <div
-          className={`border-t border-slate-200/90 bg-white ${compact ? "px-2.5 pb-2.5 pt-2.5" : "px-3 pb-3 pt-3"}`}
+          className={`border-t border-slate-200/90 bg-white ${compact ? "px-2.5 pb-2.5 pt-2.5" : "px-3 pb-2.5 pt-2"}`}
         >
           <DiscoveryPricePill
             price={price}
@@ -1679,7 +1681,7 @@ function DestinationCard({
   return (
     <article className="group min-w-[17.25rem] flex-[0_0_17.25rem] snap-start overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_32px_-24px_rgba(15,23,42,0.65)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-26px_rgba(15,23,42,0.75)] sm:min-w-[20.5rem] sm:flex-[0_0_20.5rem]">
       <Link href={href} className="focus-ring block">
-        <div className="relative h-72 sm:h-80">
+        <div className="relative h-72 sm:h-64 lg:h-60">
           <Image
             src={imageSource}
             alt={imageAlt}
@@ -1737,7 +1739,7 @@ function DestinationCard({
           </div>
         </div>
 
-        <div className="flex min-h-[4.5rem] items-end px-4 pb-4 pt-3">
+        <div className="flex min-h-[3.75rem] items-end px-4 pb-3 pt-2.5">
           <DestinationPricePill
             price={price}
             displayCurrency={displayCurrency}
@@ -1890,9 +1892,7 @@ function PromoPanel({
 
       <div
         className={`absolute bottom-5 right-6 flex h-40 w-40 items-center justify-center rounded-full ${
-          isBlue
-            ? "bg-white/55 text-[#004BB8]"
-            : "bg-white/70 text-[#004BB8]"
+          isBlue ? "bg-white/55 text-[#004BB8]" : "bg-white/70 text-[#004BB8]"
         }`}
       >
         <Sparkles className="absolute left-5 top-5 opacity-40" size={24} />

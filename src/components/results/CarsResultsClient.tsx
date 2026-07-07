@@ -1331,7 +1331,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
         </div>
       </section>
 
-      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[244px_minmax(0,1fr)] xl:grid-cols-[252px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[268px_minmax(0,1fr)]">
         <aside className="hidden lg:sticky lg:top-[7.5rem] lg:block lg:self-start">
           <div ref={desktopFilterContainerRef}>
             {showFullDesktopFilters ? (
@@ -1968,27 +1968,37 @@ function CarFilters({
   return (
     <div
       className={cn(
-        "overflow-hidden",
         layout === "desktop"
-          ? "desktop-filter-sidebar rounded-[1.35rem] border border-slate-200/80 bg-white shadow-[0_18px_42px_-30px_rgba(15,23,42,0.32)] ring-1 ring-slate-950/[0.02]"
-          : "bg-white",
+          ? "desktop-filter-sidebar bg-transparent"
+          : "overflow-hidden bg-white",
       )}
     >
       {layout === "desktop" ? (
-        <div className="desktop-filter-sidebar__header flex items-center justify-between gap-2 border-b border-slate-200/80 bg-gradient-to-br from-slate-950 via-[#073b7a] to-[#0f766e] px-4 py-3.5">
-          <h2 className="desktop-filter-sidebar__title text-base font-semibold text-white/95">
-            {t("carsResults.filterBy")}
-          </h2>
-          <div className="flex shrink-0 items-center gap-2">
+        <div className="desktop-filter-sidebar__header flex items-start justify-between gap-3 border-b border-slate-200/80 px-1 pb-3">
+          <div>
+            <h2 className="desktop-filter-sidebar__title text-base font-semibold text-slate-950">
+              {t("carsResults.filterBy")}
+            </h2>
             {activeFilterCount > 0 ? (
-              <span className="desktop-filter-sidebar__count rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-[#004BB8] shadow-sm ring-1 ring-white/70">
+              <p className="mt-1 text-xs font-semibold text-slate-500">
                 {interpolate(t("carsResults.activeFilterCount"), {
                   count: String(activeFilterCount),
                 })}
-              </span>
+              </p>
+            ) : null}
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {activeFilterCount > 0 ? (
+              <button
+                type="button"
+                className="focus-ring rounded-none px-1 py-0.5 text-xs font-bold text-[#004BB8] transition hover:text-[#021C2B]"
+                onClick={onClear}
+              >
+                {t("carsResults.reset")}
+              </button>
             ) : null}
             <SlidersHorizontal
-              className="desktop-filter-sidebar__icon text-white/90"
+              className="desktop-filter-sidebar__icon text-slate-500"
               size={18}
               aria-hidden="true"
             />
@@ -1998,17 +2008,14 @@ function CarFilters({
 
       <div
         className={cn(
-          "bg-white",
-          layout === "mobile" ? "space-y-0" : "space-y-0 px-4 py-1",
+          layout === "mobile" ? "space-y-0 bg-white" : "space-y-0 px-1 py-1",
         )}
       >
         {activeFilterCount > 0 ? (
           <div
             className={cn(
               "flex items-center justify-between gap-3",
-              layout === "mobile"
-                ? "border-b border-border pb-3"
-                : "rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 my-3",
+              layout === "mobile" ? "border-b border-border pb-3" : "hidden",
             )}
           >
             <span className="text-[13px] font-bold uppercase tracking-[0.11em] text-slate-800">
@@ -2078,14 +2085,14 @@ function FilterSection({
               className={cn(
                 layout === "mobile"
                   ? "flex min-h-10 cursor-pointer items-center gap-3 py-2 text-sm font-medium text-muted transition hover:text-navy"
-                  : "flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-sm font-medium transition-all",
+                  : "flex cursor-pointer items-center gap-2.5 px-0.5 py-1.5 text-sm font-medium transition-all",
                 isSelected
                   ? layout === "mobile"
                     ? "font-semibold text-navy"
-                    : "bg-[#004BB8]/8 text-[#021C2B] ring-1 ring-[#004BB8]/12"
+                    : "text-[#021C2B]"
                   : layout === "mobile"
                     ? undefined
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-950",
+                    : "text-slate-600 hover:text-slate-950",
               )}
             >
               <input

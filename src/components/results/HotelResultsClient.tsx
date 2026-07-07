@@ -1239,7 +1239,7 @@ export function HotelResultsClient() {
         </div>
       </section>
 
-      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[244px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside
           className={cn(
             "hidden lg:block lg:self-start",
@@ -1261,6 +1261,8 @@ export function HotelResultsClient() {
                   options={filterOptions}
                   selectedFilters={selectedFilters}
                   toggleFilter={toggleFilter}
+                  activeFilterCount={activeFilterCount}
+                  onClearAll={resetFilters}
                 />
               </div>
             ) : (
@@ -1741,6 +1743,8 @@ function HotelFilters({
   options,
   selectedFilters,
   toggleFilter,
+  activeFilterCount = 0,
+  onClearAll,
 }: {
   layout?: "desktop" | "mobile";
   t: (key: string) => string;
@@ -1754,6 +1758,8 @@ function HotelFilters({
   options: ReturnType<typeof buildHotelFilterOptions>;
   selectedFilters: HotelFilterSelections;
   toggleFilter: (group: keyof HotelFilterSelections, value: string) => void;
+  activeFilterCount?: number;
+  onClearAll?: () => void;
 }) {
   const filterRangeClass =
     "h-2 w-full cursor-pointer appearance-none rounded-full bg-border outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-blue [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-blue [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-border [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-blue [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-blue [&::-moz-range-thumb]:shadow-md";
@@ -1761,29 +1767,47 @@ function HotelFilters({
   return (
     <div
       className={cn(
-        "bg-white",
-        layout === "desktop" &&
-          "desktop-filter-sidebar overflow-hidden rounded-[1.35rem] border border-slate-200/80 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.32)] ring-1 ring-slate-950/[0.02]",
+        layout === "mobile"
+          ? "bg-white"
+          : "desktop-filter-sidebar bg-transparent",
       )}
     >
       {layout === "desktop" ? (
-        <div className="desktop-filter-sidebar__header flex items-center justify-between gap-2 border-b border-slate-200/80 bg-gradient-to-br from-slate-950 via-[#073b7a] to-[#0f766e] px-4 py-3.5">
+        <div className="desktop-filter-sidebar__header flex items-start justify-between gap-3 border-b border-slate-200/80 px-1 pb-3">
           <div>
-            <h2 className="desktop-filter-sidebar__title text-base font-semibold text-white/95">
+            <h2 className="desktop-filter-sidebar__title text-base font-semibold text-slate-950">
               {t("hotelResults.filterBy")}
             </h2>
+            {activeFilterCount > 0 ? (
+              <p className="mt-1 text-xs font-semibold text-slate-500">
+                {t("activeFilterCount").replace(
+                  "{{count}}",
+                  String(activeFilterCount),
+                )}
+              </p>
+            ) : null}
           </div>
-          <SlidersHorizontal
-            className="desktop-filter-sidebar__icon text-white/90"
-            size={18}
-          />
+          <div className="flex shrink-0 items-center gap-2">
+            {activeFilterCount > 0 && onClearAll ? (
+              <button
+                type="button"
+                className="focus-ring rounded-none px-1 py-0.5 text-xs font-bold text-[#004BB8] transition hover:text-[#021C2B]"
+                onClick={onClearAll}
+              >
+                {t("clearAll")}
+              </button>
+            ) : null}
+            <SlidersHorizontal
+              className="desktop-filter-sidebar__icon text-slate-500"
+              size={18}
+            />
+          </div>
         </div>
       ) : null}
 
       <div
         className={cn(
-          "bg-white",
-          layout === "mobile" ? "space-y-0" : "space-y-0 px-4 py-1",
+          layout === "mobile" ? "space-y-0 bg-white" : "space-y-0 px-1 py-1",
         )}
       >
         <FilterSection title={t("hotelResults.budgetPrice")} layout={layout}>
