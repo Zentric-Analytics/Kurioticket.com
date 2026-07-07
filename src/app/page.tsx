@@ -202,8 +202,10 @@ function SecureHandoffIllustration() {
 }
 
 const POPULAR_DESTINATION_VISIBLE_CARD_COUNT = 8;
+const HOME_DISCOVERY_MOBILE_LANE_COUNT = 6;
+const HOME_DISCOVERY_MOBILE_CARDS_PER_LANE = 4;
 const HOME_DISCOVERY_MOBILE_VISIBLE_CARD_COUNT =
-  HOME_DISCOVERY_VISIBLE_CARD_COUNT + 2;
+  HOME_DISCOVERY_MOBILE_LANE_COUNT * HOME_DISCOVERY_MOBILE_CARDS_PER_LANE;
 
 const destinationImageFallback =
   "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95";
@@ -527,14 +529,23 @@ export default function Home() {
     () => discoveryCards.slice(0, HOME_DISCOVERY_VISIBLE_CARD_COUNT),
     [discoveryCards],
   );
-  const mobileDiscoveryGroups = useMemo(() => {
-    const groups = [];
+  const mobileDiscoveryLanes = useMemo(() => {
+    const lanes: HomeDiscoveryFareCard[][] = [];
 
-    for (let index = 0; index < discoveryCards.length; index += 6) {
-      groups.push(discoveryCards.slice(index, index + 6));
+    for (
+      let index = 0;
+      index < discoveryCards.length && lanes.length < HOME_DISCOVERY_MOBILE_LANE_COUNT;
+      index += HOME_DISCOVERY_MOBILE_CARDS_PER_LANE
+    ) {
+      lanes.push(
+        discoveryCards.slice(
+          index,
+          index + HOME_DISCOVERY_MOBILE_CARDS_PER_LANE,
+        ),
+      );
     }
 
-    return groups;
+    return lanes;
   }, [discoveryCards]);
 
   const handleNewsletterSubmit = async (
@@ -912,52 +923,49 @@ export default function Home() {
                 {t("homeDiscoverySubtitle")}
               </p>
             </div>
-            <div className="flex items-center justify-end sm:hidden">
-              <div className="pointer-events-none mb-2 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/95 px-2.5 py-1 text-xs font-semibold text-slate-600 shadow-sm">
-                {t("homeDiscoverySwipeMore")}
-                <ChevronRight size={13} className="text-slate-500" />
+            <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden">
+              <div className="flex w-max gap-3 pr-8">
+                {mobileDiscoveryLanes.map((lane, laneIndex) => (
+                  <div
+                    key={`lane-${laneIndex}`}
+                    className="flex max-h-[min(92rem,calc(100vh-9rem))] w-[42vw] min-w-[150px] max-w-[240px] flex-col gap-3 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  >
+                    {lane.map((card) => {
+                      return (
+                        <DiscoverySuggestionCard
+                          key={card.item.id}
+                          href={buildDiscoveryCardHref(card.fare, {
+                            originCode: card.item.originCode,
+                            destinationCode: card.item.destinationCode,
+                            displayCurrency: selectedOption.currency,
+                            market: regionCode,
+                          })}
+                          itemId={card.item.id}
+                          image={card.item.image}
+                          imageAlt={card.item.imageAlt}
+                          destinationCode={card.item.destinationCode}
+                          title={translateDiscoveryItemCopy(card.item, "title")}
+                          originCode={card.item.originCode}
+                          destinationCodeLabel={card.item.destinationCode}
+                          routeNote={translateDiscoveryItemCopy(
+                            card.item,
+                            "routeNote",
+                          )}
+                          compact
+                          mobileBoardCard
+                          price={card.fare}
+                          displayCurrency={selectedOption.currency}
+                          expectedOriginCode={card.item.originCode}
+                          expectedDestinationCode={card.item.destinationCode}
+                          isPriceLoading={discoveryFareCardState.loading}
+                          isSaved={savedTripIds.includes(card.item.id)}
+                          onHeartToggle={handleSavedTripToggle}
+                        />
+                      );
+                    })}
+                  </div>
+                ))}
               </div>
-            </div>
-            <div className="-mx-1.5 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-1.5 pb-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden">
-              {mobileDiscoveryGroups.map((group, groupIndex) => (
-                <div
-                  key={`group-${groupIndex}`}
-                  className="grid min-w-full snap-start grid-cols-2 gap-2.5"
-                >
-                  {group.map((card) => {
-                    return (
-                      <DiscoverySuggestionCard
-                        key={card.item.id}
-                        href={buildDiscoveryCardHref(card.fare, {
-                          originCode: card.item.originCode,
-                          destinationCode: card.item.destinationCode,
-                          displayCurrency: selectedOption.currency,
-                          market: regionCode,
-                        })}
-                        itemId={card.item.id}
-                        image={card.item.image}
-                        imageAlt={card.item.imageAlt}
-                        destinationCode={card.item.destinationCode}
-                        title={translateDiscoveryItemCopy(card.item, "title")}
-                        originCode={card.item.originCode}
-                        destinationCodeLabel={card.item.destinationCode}
-                        routeNote={translateDiscoveryItemCopy(
-                          card.item,
-                          "routeNote",
-                        )}
-                        compact
-                        price={card.fare}
-                        displayCurrency={selectedOption.currency}
-                        expectedOriginCode={card.item.originCode}
-                        expectedDestinationCode={card.item.destinationCode}
-                        isPriceLoading={discoveryFareCardState.loading}
-                        isSaved={savedTripIds.includes(card.item.id)}
-                        onHeartToggle={handleSavedTripToggle}
-                      />
-                    );
-                  })}
-                </div>
-              ))}
             </div>
 
             <div className="hidden grid-cols-3 gap-3 sm:grid md:grid-cols-4 lg:grid-cols-4">
@@ -1233,6 +1241,7 @@ function DiscoverySuggestionCard({
   destinationCodeLabel,
   routeNote,
   compact,
+  mobileBoardCard,
   price,
   displayCurrency,
   expectedOriginCode,
@@ -1251,6 +1260,7 @@ function DiscoverySuggestionCard({
   destinationCodeLabel: string;
   routeNote: string;
   compact?: boolean;
+  mobileBoardCard?: boolean;
   price?: HomepageFare;
   displayCurrency: string;
   expectedOriginCode: string;
@@ -1269,7 +1279,7 @@ function DiscoverySuggestionCard({
   return (
     <Link
       href={href}
-      className="group relative flex min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-transparent shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)] active:-translate-y-0.5"
+      className={`group relative flex min-w-0 flex-col overflow-hidden border border-slate-200 bg-white transition duration-300 hover:-translate-y-1 hover:border-slate-300 active:-translate-y-0.5 ${mobileBoardCard ? "h-[360px] rounded-2xl shadow-[0_18px_35px_-24px_rgba(15,23,42,0.72)] hover:shadow-[0_24px_42px_-24px_rgba(15,23,42,0.72)]" : "rounded-xl shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)]"}`}
     >
       <button
         type="button"
@@ -1302,7 +1312,7 @@ function DiscoverySuggestionCard({
       </button>
 
       <div
-        className={`relative w-full shrink-0 overflow-hidden ${compact ? "h-[148px]" : "h-[196px] md:h-[190px] lg:h-[198px]"}`}
+        className={`relative w-full shrink-0 overflow-hidden ${mobileBoardCard ? "h-[150px]" : compact ? "h-[148px]" : "h-[196px] md:h-[190px] lg:h-[198px]"}`}
       >
         <DiscoveryCardImage
           image={image}
@@ -1313,42 +1323,60 @@ function DiscoverySuggestionCard({
       </div>
 
       <div
-        className={`min-w-0 flex-1 bg-white ${compact ? "space-y-1.5 px-2.5 pt-2.5" : "space-y-2 px-3 pt-3"}`}
+        className={`min-w-0 flex-1 bg-white ${mobileBoardCard ? "flex flex-col px-3 pb-3 pt-3" : compact ? "space-y-1.5 px-2.5 pt-2.5" : "space-y-2 px-3 pt-3"}`}
       >
         <p
-          className={`line-clamp-2 break-words text-slate-950 ${compact ? "pr-10 rtl:pl-10 rtl:pr-0 text-sm font-bold leading-[1.32]" : "pr-10 rtl:pl-10 rtl:pr-0 text-sm font-bold leading-[1.35] md:text-[0.95rem]"}`}
+          className={`line-clamp-2 break-words text-slate-950 ${mobileBoardCard ? "text-sm font-extrabold leading-[1.28] tracking-[-0.01em]" : compact ? "pr-10 rtl:pl-10 rtl:pr-0 text-sm font-bold leading-[1.32]" : "pr-10 rtl:pl-10 rtl:pr-0 text-sm font-bold leading-[1.35] md:text-[0.95rem]"}`}
         >
           {title}
         </p>
         <p
-          className={`line-clamp-2 text-slate-600 ${compact ? "text-xs font-medium leading-5" : "text-xs font-medium leading-5 md:text-sm"}`}
+          className={`line-clamp-2 break-words text-slate-600 ${mobileBoardCard ? "mt-2 text-xs font-medium leading-5" : compact ? "text-xs font-medium leading-5" : "text-xs font-medium leading-5 md:text-sm"}`}
         >
           {originCode} → {destinationCodeLabel} · {routeNote}
         </p>
-        <div className="flex flex-wrap items-center gap-2 pt-0.5">
-          <span className="rounded-full border border-[#004BB8]/12 bg-[#004BB8]/6 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#004BB8]">
-            {t("homeDiscoveryRouteIdeaBadge")}
-          </span>
-          <p
-            className={`font-semibold uppercase tracking-[0.08em] text-slate-500 ${compact ? "text-[11px]" : "text-[11px] md:text-xs"}`}
-          >
-            {t("oneWay")} · {t("economy")} ·{" "}
-            {t("homeDiscoveryTravelerCountOne")}
-          </p>
-        </div>
+        {mobileBoardCard ? (
+          <div className="mt-auto flex items-end justify-between gap-2 pt-3">
+            <p className="min-w-0 flex-1 text-[10px] font-extrabold uppercase leading-4 tracking-[0.1em] text-slate-500">
+              {t("oneWay")} · {t("economy")} ·{" "}
+              {t("homeDiscoveryTravelerCountOne")}
+            </p>
+            <DiscoveryInlinePrice
+              price={price}
+              displayCurrency={displayCurrency}
+              expectedOriginCode={expectedOriginCode}
+              expectedDestinationCode={expectedDestinationCode}
+              isLoading={Boolean(isPriceLoading)}
+            />
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center gap-2 pt-0.5">
+            <span className="rounded-full border border-[#004BB8]/12 bg-[#004BB8]/6 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#004BB8]">
+              {t("homeDiscoveryRouteIdeaBadge")}
+            </span>
+            <p
+              className={`font-semibold uppercase tracking-[0.08em] text-slate-500 ${compact ? "text-[11px]" : "text-[11px] md:text-xs"}`}
+            >
+              {t("oneWay")} · {t("economy")} ·{" "}
+              {t("homeDiscoveryTravelerCountOne")}
+            </p>
+          </div>
+        )}
       </div>
 
-      <div
-        className={`border-t border-slate-200/90 bg-white ${compact ? "px-2.5 pb-2.5 pt-2.5" : "px-3 pb-3 pt-3"}`}
-      >
-        <DiscoveryPricePill
-          price={price}
-          displayCurrency={displayCurrency}
-          expectedOriginCode={expectedOriginCode}
-          expectedDestinationCode={expectedDestinationCode}
-          isLoading={Boolean(isPriceLoading)}
-        />
-      </div>
+      {!mobileBoardCard ? (
+        <div
+          className={`border-t border-slate-200/90 bg-white ${compact ? "px-2.5 pb-2.5 pt-2.5" : "px-3 pb-3 pt-3"}`}
+        >
+          <DiscoveryPricePill
+            price={price}
+            displayCurrency={displayCurrency}
+            expectedOriginCode={expectedOriginCode}
+            expectedDestinationCode={expectedDestinationCode}
+            isLoading={Boolean(isPriceLoading)}
+          />
+        </div>
+      ) : null}
     </Link>
   );
 }
@@ -1451,6 +1479,68 @@ function buildRouteCardHref(
       displayCurrency: options.displayCurrency,
       market: options.market,
     }) ?? "/flights"
+  );
+}
+
+function DiscoveryInlinePrice({
+  price,
+  displayCurrency,
+  expectedOriginCode,
+  expectedDestinationCode,
+  isLoading,
+}: {
+  price?: HomepageFare;
+  displayCurrency: string;
+  expectedOriginCode?: string;
+  expectedDestinationCode?: string;
+  isLoading: boolean;
+}) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const currencyRates = useCurrencyRates();
+  const hasProviderPrice = hasFreshProviderPrice(price, {
+    originCode: expectedOriginCode,
+    destinationCode: expectedDestinationCode,
+  });
+
+  if (isLoading) {
+    return (
+      <span
+        className="h-4 w-12 shrink-0 animate-pulse rounded bg-slate-200"
+        aria-label={t("homeCheckingProviderRoutePricing")}
+      />
+    );
+  }
+
+  if (!hasProviderPrice) {
+    return (
+      <span className="shrink-0 text-right text-sm font-extrabold leading-4 tracking-[-0.01em] text-slate-950">
+        {t("homeCompareOptions").replace(/\s+options$/i, "")}
+      </span>
+    );
+  }
+
+  const displayPrice = formatDisplayPrice({
+    amount: price.price,
+    sourceCurrency: price.currency,
+    displayCurrency,
+    convertUsdEstimate: true,
+    maximumFractionDigits: 0,
+    rates: currencyRates.rates,
+    isFallbackRate: currencyRates.isFallback,
+  });
+  const estimateCopy = displayPrice.isConvertedEstimate
+    ? ` ${t("displayEstimateFinalProviderMayDiffer")}`
+    : ` ${t("finalPriceConfirmedByProvider")}`;
+
+  return (
+    <span
+      className="shrink-0 text-right text-sm font-extrabold leading-4 tracking-[-0.02em] text-slate-950"
+      aria-label={`Provider-backed route price ${displayPrice.formatted}.${estimateCopy}`}
+      title={displayPrice.title}
+    >
+      {displayPrice.formatted}
+    </span>
   );
 }
 
