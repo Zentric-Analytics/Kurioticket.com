@@ -351,3 +351,45 @@ textarea {
     font-weight: 720;
   }
 }
+
+@media (min-width: 1024px) {
+  .desktop-filter-sidebar {
+    border-color: rgba(203, 213, 225, 0.9);
+    background: #ffffff;
+    box-shadow: 0 10px 28px -24px rgba(15, 23, 42, 0.35);
+  }
+
+  .desktop-filter-sidebar__header {
+    border-bottom-color: rgba(226, 232, 240, 0.95);
+    background: #ffffff !important;
+    padding: 1rem 1rem 0.875rem;
+  }
+
+  .desktop-filter-sidebar__title {
+    color: #0f172a !important;
+    letter-spacing: -0.01em;
+  }
+
+  .desktop-filter-sidebar__icon {
+    color: #64748b !important;
+  }
+
+  .desktop-filter-sidebar__count {
+    border: 1px solid rgba(0, 75, 184, 0.12);
+    background: rgba(0, 75, 184, 0.06) !important;
+    color: #004bb8 !important;
+    box-shadow: none;
+  }
+
+  .desktop-filter-sidebar section {
+    border-top-color: rgba(226, 232, 240, 0.9);
+  }
+
+  .desktop-filter-sidebar h3 {
+    color: #334155;
+  }
+
+  .desktop-filter-sidebar label {
+    color: #475569;
+  }
+}

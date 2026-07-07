@@ -1850,25 +1850,25 @@ function CarFilters({
       className={cn(
         "overflow-hidden",
         layout === "desktop"
-          ? "rounded-[1.35rem] border border-slate-200/80 bg-white shadow-[0_18px_42px_-30px_rgba(15,23,42,0.32)] ring-1 ring-slate-950/[0.02]"
+          ? "desktop-filter-sidebar rounded-[1.35rem] border border-slate-200/80 bg-white shadow-[0_18px_42px_-30px_rgba(15,23,42,0.32)] ring-1 ring-slate-950/[0.02]"
           : "bg-white",
       )}
     >
       {layout === "desktop" ? (
-        <div className="flex items-center justify-between gap-2 border-b border-slate-200/80 bg-gradient-to-br from-slate-950 via-[#073b7a] to-[#0f766e] px-4 py-3.5">
-          <h2 className="text-base font-semibold text-white/95">
+        <div className="desktop-filter-sidebar__header flex items-center justify-between gap-2 border-b border-slate-200/80 bg-gradient-to-br from-slate-950 via-[#073b7a] to-[#0f766e] px-4 py-3.5">
+          <h2 className="desktop-filter-sidebar__title text-base font-semibold text-white/95">
             {t("carsResults.filterBy")}
           </h2>
           <div className="flex shrink-0 items-center gap-2">
             {activeFilterCount > 0 ? (
-              <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-[#004BB8] shadow-sm ring-1 ring-white/70">
+              <span className="desktop-filter-sidebar__count rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-[#004BB8] shadow-sm ring-1 ring-white/70">
                 {interpolate(t("carsResults.activeFilterCount"), {
                   count: String(activeFilterCount),
                 })}
               </span>
             ) : null}
             <SlidersHorizontal
-              className="text-white/90"
+              className="desktop-filter-sidebar__icon text-white/90"
               size={18}
               aria-hidden="true"
             />
