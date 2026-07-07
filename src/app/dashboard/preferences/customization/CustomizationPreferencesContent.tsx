@@ -12,20 +12,32 @@ type EditablePreferenceKey =
   | "productUpdates"
   | "dealsRecommendations";
 
+type PreferenceCopyKey =
+  | "travelAlerts"
+  | "priceAlerts"
+  | "savedTripReminders"
+  | "routeWatchUpdates"
+  | "inspirationUpdates"
+  | "travelInspiration"
+  | "productUpdates"
+  | "dealsRecommendations"
+  | "requiredEmails"
+  | "securityAlerts"
+  | "supportReplies"
+  | "billingReceipts";
+
 type EditablePreference = {
   id: EditablePreferenceKey;
-  title: string;
-  description: string;
+  copyKey: PreferenceCopyKey;
 };
 
 type RequiredPreference = {
   id: string;
-  title: string;
-  description: string;
+  copyKey: PreferenceCopyKey;
 };
 
 type PreferenceSection = {
-  title: string;
+  copyKey: PreferenceCopyKey;
   editableRows?: EditablePreference[];
   requiredRows?: RequiredPreference[];
 };
@@ -41,63 +53,27 @@ const defaultEmailPreferences: Record<EditablePreferenceKey, boolean> = {
 
 const preferenceSections: PreferenceSection[] = [
   {
-    title: "Travel alerts",
+    copyKey: "travelAlerts",
     editableRows: [
-      {
-        id: "priceAlerts",
-        title: "Price alert emails",
-        description: "Get notified when tracked trip prices change.",
-      },
-      {
-        id: "savedTripReminders",
-        title: "Saved trip reminders",
-        description: "Receive reminders about saved routes and trips you may want to revisit.",
-      },
-      {
-        id: "routeWatchUpdates",
-        title: "Route watch updates",
-        description: "Get occasional updates when routes you follow have meaningful changes.",
-      },
+      { id: "priceAlerts", copyKey: "priceAlerts" },
+      { id: "savedTripReminders", copyKey: "savedTripReminders" },
+      { id: "routeWatchUpdates", copyKey: "routeWatchUpdates" },
     ],
   },
   {
-    title: "Inspiration and updates",
+    copyKey: "inspirationUpdates",
     editableRows: [
-      {
-        id: "travelInspiration",
-        title: "Travel inspiration",
-        description: "Receive destination ideas, planning tips, and seasonal travel suggestions.",
-      },
-      {
-        id: "productUpdates",
-        title: "Product updates",
-        description: "Hear about new Kurioticket features and account improvements.",
-      },
-      {
-        id: "dealsRecommendations",
-        title: "Deals and recommendations",
-        description: "Receive curated travel recommendations when they are relevant.",
-      },
+      { id: "travelInspiration", copyKey: "travelInspiration" },
+      { id: "productUpdates", copyKey: "productUpdates" },
+      { id: "dealsRecommendations", copyKey: "dealsRecommendations" },
     ],
   },
   {
-    title: "Required emails",
+    copyKey: "requiredEmails",
     requiredRows: [
-      {
-        id: "security-alerts",
-        title: "Security alerts",
-        description: "Important sign-in, password, and account protection messages.",
-      },
-      {
-        id: "support-replies",
-        title: "Support replies",
-        description: "Replies to support requests and account help conversations.",
-      },
-      {
-        id: "billing-receipts",
-        title: "Billing receipts",
-        description: "Subscription, receipt, and billing-related messages when applicable.",
-      },
+      { id: "security-alerts", copyKey: "securityAlerts" },
+      { id: "support-replies", copyKey: "supportReplies" },
+      { id: "billing-receipts", copyKey: "billingReceipts" },
     ],
   },
 ];
@@ -106,21 +82,25 @@ function PreferenceSwitch({
   checked,
   label,
   onChange,
+  onLabel,
+  offLabel,
 }: {
   checked: boolean;
   label: string;
   onChange: () => void;
+  onLabel: string;
+  offLabel: string;
 }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
-      aria-label={`${label}: ${checked ? "on" : "off"}`}
+      aria-label={`${label}: ${checked ? onLabel : offLabel}`}
       onClick={onChange}
-      className="focus-ring inline-flex min-h-8 shrink-0 items-center gap-2 rounded-full p-1 text-sm font-semibold text-slate-700 transition"
+      className="focus-ring inline-flex min-h-8 shrink-0 items-center rounded-full p-1 transition"
     >
-      <span className="sr-only">{checked ? "On" : "Off"}</span>
+      <span className="sr-only">{checked ? onLabel : offLabel}</span>
       <span
         aria-hidden="true"
         className={
@@ -137,7 +117,6 @@ function PreferenceSwitch({
           }
         />
       </span>
-      <span className="min-w-8 text-left text-xs font-semibold text-slate-600 sm:text-sm">{checked ? "On" : "Off"}</span>
     </button>
   );
 }
@@ -160,41 +139,47 @@ export function CustomizationPreferencesContent() {
   };
 
   const previewSave = () => {
-    setStatusMessage("Email preference saving will be connected soon. Your choices are shown here for preview only.");
+    setStatusMessage(t["accountDashboard.preferences.email.previewSaveStatus"]);
   };
 
   return (
-    <main className="flex-1 bg-[#f3f7fc] pb-12 pt-0" data-legacy-customization-title={legacyCustomizationTitle} data-legacy-preference-actions={legacyPreferenceActions}>
+    <main className="flex-1 bg-[#eef4fb] pb-12 pt-0" data-legacy-customization-title={legacyCustomizationTitle} data-legacy-preference-actions={legacyPreferenceActions}>
       <div className="mx-auto max-w-[1120px] px-4 py-6 sm:px-6 lg:px-8">
         <AccountBackLink />
 
         <header className="mt-6">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">Email preferences</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-            Choose which Kurioticket emails you want to receive. We’ll still send critical account, security, and support messages when needed.
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">{t["accountDashboard.preferences.email.title"]}</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-700 sm:text-base">
+            {t["accountDashboard.preferences.email.subtitle"]}
           </p>
         </header>
 
-        <section className="mt-7 -mx-4 overflow-hidden rounded-none border border-slate-200 bg-white shadow-sm sm:mx-0 sm:rounded-2xl" aria-labelledby="email-preferences-settings">
+        <section className="mt-7 -mx-4 max-w-[64rem] overflow-hidden rounded-none border border-slate-300 bg-white shadow-md shadow-slate-200/70 sm:mx-0 sm:rounded-2xl" aria-labelledby="email-preferences-settings">
           <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
             <h2 id="email-preferences-settings" className="text-base font-semibold leading-6 text-slate-950">
-              Email settings
+              {t["accountDashboard.preferences.email.settingsTitle"]}
             </h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">Manage optional updates and review the required messages that keep your account running safely.</p>
+            <p className="mt-1 text-sm leading-6 text-slate-700">{t["accountDashboard.preferences.email.settingsDescription"]}</p>
           </div>
 
           <div className="px-5 sm:px-6">
             {preferenceSections.map((section, sectionIndex) => (
-              <div key={section.title} className={sectionIndex === 0 ? "py-5" : "border-t border-slate-200 py-5"}>
-                <h3 className="text-sm font-semibold leading-5 text-slate-950">{section.title}</h3>
+              <div key={section.copyKey} className={sectionIndex === 0 ? "py-5" : "border-t border-slate-200 py-5"}>
+                <h3 className="text-sm font-semibold leading-5 text-slate-950">{t[`accountDashboard.preferences.email.sections.${section.copyKey}.title`]}</h3>
                 <div className="mt-3 divide-y divide-slate-100">
                   {section.editableRows?.map((row) => (
                     <div key={row.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold leading-5 text-slate-950">{row.title}</p>
-                        <p className="mt-1 text-sm leading-6 text-slate-600">{row.description}</p>
+                        <p className="text-sm font-semibold leading-5 text-slate-950">{t[`accountDashboard.preferences.email.rows.${row.copyKey}.title`]}</p>
+                        <p className="mt-1 text-sm leading-6 text-slate-700">{t[`accountDashboard.preferences.email.rows.${row.copyKey}.description`]}</p>
                       </div>
-                      <PreferenceSwitch checked={preferences[row.id]} label={row.title} onChange={() => updatePreference(row.id)} />
+                      <PreferenceSwitch
+                        checked={preferences[row.id]}
+                        label={t[`accountDashboard.preferences.email.rows.${row.copyKey}.title`]}
+                        onChange={() => updatePreference(row.id)}
+                        onLabel={t["accountDashboard.preferences.email.on"]}
+                        offLabel={t["accountDashboard.preferences.email.off"]}
+                      />
                     </div>
                   ))}
 
@@ -202,12 +187,15 @@ export function CustomizationPreferencesContent() {
                     <div key={row.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-sm font-semibold leading-5 text-slate-950">{row.title}</p>
-                          <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700" aria-label={`${row.title} is always on`}>
-                            Always on
+                          <p className="text-sm font-semibold leading-5 text-slate-950">{t[`accountDashboard.preferences.email.rows.${row.copyKey}.title`]}</p>
+                          <span
+                            className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800"
+                            aria-label={`${t[`accountDashboard.preferences.email.rows.${row.copyKey}.title`]}: ${t["accountDashboard.preferences.email.alwaysOn"]}`}
+                          >
+                            {t["accountDashboard.preferences.email.alwaysOn"]}
                           </span>
                         </div>
-                        <p className="mt-1 text-sm leading-6 text-slate-600">{row.description}</p>
+                        <p className="mt-1 text-sm leading-6 text-slate-700">{t[`accountDashboard.preferences.email.rows.${row.copyKey}.description`]}</p>
                       </div>
                     </div>
                   ))}
@@ -218,13 +206,13 @@ export function CustomizationPreferencesContent() {
 
           <div className="border-t border-slate-200 bg-slate-50/60 px-5 py-4 sm:px-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm leading-6 text-slate-600">We respect your inbox. You can update these preferences anytime.</p>
+              <p className="text-sm leading-6 text-slate-700">{t["accountDashboard.preferences.email.trustNote"]}</p>
               <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <button type="button" onClick={resetToDefault} className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-                  Reset to default
+                <button type="button" onClick={resetToDefault} className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50">
+                  {t["accountDashboard.preferences.email.resetToDefault"]}
                 </button>
                 <button type="button" onClick={previewSave} className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B]">
-                  Save preferences
+                  {t["accountDashboard.preferences.email.savePreferences"]}
                 </button>
               </div>
             </div>
