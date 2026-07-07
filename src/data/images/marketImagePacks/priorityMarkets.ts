@@ -1,7 +1,7 @@
-import type { ImageMarketCode, MarketImageRegistryEntry } from "../imageTypes";
+import type { ImageMarketCode, ImageRegionCode, MarketImageRegistryEntry } from "../imageTypes";
 import { marketHeroContract } from "./shared";
 
-const priorityMarkets: Array<{ market: ImageMarketCode; region: MarketImageRegistryEntry["region"]; locale: string; label: string }> = [
+const priorityMarkets: Array<{ market: ImageMarketCode; region: ImageRegionCode; locale: string; label: string }> = [
   { market: "US", region: "north-america", locale: "en-US", label: "US marketplace hero" },
   { market: "GB", region: "western-europe", locale: "en-GB", label: "UK marketplace hero" },
   { market: "CA", region: "north-america", locale: "en-CA", label: "Canada marketplace hero" },
