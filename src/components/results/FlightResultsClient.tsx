@@ -1016,6 +1016,16 @@ export function FlightResultsClient() {
     const applyCompactState = (shouldCompact: boolean) => {
       setIsSearchBarCompact(shouldCompact);
 
+      if (shouldCompact && isSearchExpandedWhileSticky) {
+        const hasContinuedScrolling =
+          Math.abs(window.scrollY - expandedSearchScrollYRef.current) > 16;
+
+        if (hasContinuedScrolling) {
+          collapseStickySearch();
+          return;
+        }
+      }
+
       if (!shouldCompact) {
         setIsSearchExpandedWhileSticky(false);
         setHasInteractedWithExpandedSearch(false);
@@ -1023,7 +1033,12 @@ export function FlightResultsClient() {
     };
 
     const updateFromSentinelPosition = () => {
-      applyCompactState(sentinel.getBoundingClientRect().bottom <= 0);
+      const sentinelRect = sentinel.getBoundingClientRect();
+      const scrolledPastSentinel = sentinelRect.bottom <= 0;
+      const scrolledPastStickyTrigger =
+        window.scrollY > Math.max(8, sentinel.offsetTop);
+
+      applyCompactState(scrolledPastSentinel || scrolledPastStickyTrigger);
     };
 
     const schedulePositionUpdate = () => {
@@ -1073,10 +1088,10 @@ export function FlightResultsClient() {
         window.cancelAnimationFrame(animationFrame);
       }
     };
-  }, []);
+  }, [collapseStickySearch, isSearchExpandedWhileSticky]);
 
   useEffect(() => {
-    if (!canAutoCollapseExpandedSearch) {
+    if (!isExpandedStickySearchActive) {
       return undefined;
     }
 
@@ -1108,7 +1123,7 @@ export function FlightResultsClient() {
         window.cancelAnimationFrame(animationFrame);
       }
     };
-  }, [canAutoCollapseExpandedSearch, collapseStickySearch]);
+  }, [collapseStickySearch, isExpandedStickySearchActive]);
 
   useEffect(() => {
     if (!canAutoCollapseExpandedSearch) {

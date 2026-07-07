@@ -339,6 +339,7 @@ export function HotelResultsClient() {
     useState(false);
 
   const stickySentinelRef = useRef<HTMLDivElement | null>(null);
+  const expandedSearchScrollYRef = useRef(0);
   const filterApplyingTimeoutRef = useRef<number | null>(null);
   const searchApplyingTimeoutRef = useRef<number | null>(null);
   const filterScrollbarTimeoutRef = useRef<number | null>(null);
@@ -393,6 +394,9 @@ export function HotelResultsClient() {
 
   const showCompactSearchSummary =
     isSearchBarCompact && !isSearchExpandedWhileSticky;
+  const showFullSearchForm = !isSearchBarCompact || isSearchExpandedWhileSticky;
+  const isExpandedStickySearchActive =
+    isSearchBarCompact && isSearchExpandedWhileSticky;
   const formatHotelSummaryDate = useCallback(
     (value: string) => {
       const [year, month, day] = value.split("-").map(Number);
@@ -419,7 +423,12 @@ export function HotelResultsClient() {
     : "";
 
   const expandStickySearch = useCallback(() => {
+    expandedSearchScrollYRef.current = window.scrollY;
     setIsSearchExpandedWhileSticky(true);
+  }, []);
+
+  const collapseStickySearch = useCallback(() => {
+    setIsSearchExpandedWhileSticky(false);
   }, []);
 
   const updateMobileHotelSearchDraft = useCallback(
@@ -656,13 +665,28 @@ export function HotelResultsClient() {
     const applyCompactState = (shouldCompact: boolean) => {
       setIsSearchBarCompact(shouldCompact);
 
+      if (shouldCompact && isSearchExpandedWhileSticky) {
+        const hasContinuedScrolling =
+          Math.abs(window.scrollY - expandedSearchScrollYRef.current) > 16;
+
+        if (hasContinuedScrolling) {
+          collapseStickySearch();
+          return;
+        }
+      }
+
       if (!shouldCompact) {
         setIsSearchExpandedWhileSticky(false);
       }
     };
 
     const updateFromSentinelPosition = () => {
-      applyCompactState(sentinel.getBoundingClientRect().bottom <= 0);
+      const sentinelRect = sentinel.getBoundingClientRect();
+      const scrolledPastSentinel = sentinelRect.bottom <= 0;
+      const scrolledPastStickyTrigger =
+        window.scrollY > Math.max(8, sentinel.offsetTop);
+
+      applyCompactState(scrolledPastSentinel || scrolledPastStickyTrigger);
     };
 
     const schedulePositionUpdate = () => {
@@ -712,7 +736,38 @@ export function HotelResultsClient() {
         window.cancelAnimationFrame(animationFrame);
       }
     };
-  }, []);
+  }, [collapseStickySearch, isSearchExpandedWhileSticky]);
+
+  useEffect(() => {
+    if (!isExpandedStickySearchActive) {
+      return undefined;
+    }
+
+    let animationFrame = 0;
+
+    const onScroll = () => {
+      if (animationFrame) return;
+
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = 0;
+        const hasContinuedScrolling =
+          Math.abs(window.scrollY - expandedSearchScrollYRef.current) > 16;
+
+        if (hasContinuedScrolling) {
+          collapseStickySearch();
+        }
+      });
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (animationFrame) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, [collapseStickySearch, isExpandedStickySearchActive]);
 
   useEffect(() => {
     if (!filterApplying || loading || error) return;
@@ -951,7 +1006,7 @@ export function HotelResultsClient() {
                 </button>
               </div>
             </div>
-          ) : (
+          ) : showFullSearchForm ? (
             <HotelSearchBar
               key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
               initialDestination={body.destination}
@@ -968,7 +1023,7 @@ export function HotelResultsClient() {
                 setIsSearchExpandedWhileSticky(false);
               }}
             />
-          )}
+          ) : null}
         </div>
       </section>
 

@@ -406,8 +406,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
   const [isSearchExpandedWhileSticky, setIsSearchExpandedWhileSticky] =
     useState(false);
-  const [hasInteractedWithExpandedSearch, setHasInteractedWithExpandedSearch] =
-    useState(false);
+  const [, setHasInteractedWithExpandedSearch] = useState(false);
   const [pickupLocation, setPickupLocation] = useState(values.pickupLocation);
   const [dropoffLocation, setDropoffLocation] = useState(
     values.dropoffLocation || values.pickupLocation,
@@ -494,13 +493,6 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   const driverAgeSummary = getDriverAgeOptionLabel(driverAge, t);
   const isExpandedStickySearchActive =
     isSearchBarCompact && isSearchExpandedWhileSticky;
-  const canAutoCollapseExpandedSearch =
-    isExpandedStickySearchActive &&
-    !hasInteractedWithExpandedSearch &&
-    !datesOpen &&
-    !timesOpen &&
-    !driverAgeOpen;
-
   const markExpandedSearchInteraction = useCallback(() => {
     if (isExpandedStickySearchActive) {
       setHasInteractedWithExpandedSearch(true);
@@ -554,6 +546,16 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
     const applyCompactState = (shouldCompact: boolean) => {
       setIsSearchBarCompact(shouldCompact);
 
+      if (shouldCompact && isSearchExpandedWhileSticky) {
+        const hasContinuedScrolling =
+          Math.abs(window.scrollY - expandedSearchScrollYRef.current) > 16;
+
+        if (hasContinuedScrolling) {
+          collapseStickySearch();
+          return;
+        }
+      }
+
       if (!shouldCompact) {
         setIsSearchExpandedWhileSticky(false);
         setHasInteractedWithExpandedSearch(false);
@@ -561,7 +563,12 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
     };
 
     const updateFromSentinelPosition = () => {
-      applyCompactState(sentinel.getBoundingClientRect().bottom <= 0);
+      const sentinelRect = sentinel.getBoundingClientRect();
+      const scrolledPastSentinel = sentinelRect.bottom <= 0;
+      const scrolledPastStickyTrigger =
+        window.scrollY > Math.max(8, sentinel.offsetTop);
+
+      applyCompactState(scrolledPastSentinel || scrolledPastStickyTrigger);
     };
 
     const schedulePositionUpdate = () => {
@@ -611,10 +618,10 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
         window.cancelAnimationFrame(animationFrame);
       }
     };
-  }, []);
+  }, [collapseStickySearch, isSearchExpandedWhileSticky]);
 
   useEffect(() => {
-    if (!canAutoCollapseExpandedSearch) {
+    if (!isExpandedStickySearchActive) {
       return undefined;
     }
 
@@ -648,7 +655,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
         window.cancelAnimationFrame(animationFrame);
       }
     };
-  }, [canAutoCollapseExpandedSearch, collapseStickySearch]);
+  }, [collapseStickySearch, isExpandedStickySearchActive]);
 
   useEffect(() => {
     const onPointerDown = (event: PointerEvent) => {
