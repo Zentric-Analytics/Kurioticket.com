@@ -366,7 +366,22 @@ export const translations: TranslationDictionary = {
     "Review your account profile details when editable profile controls are available.",
   "accountDashboard.preferences.notifications.title": "Notification preferences",
   "accountDashboard.preferences.notifications.description":
-    "Manage email and alert preferences as notification controls are added.",
+    "Manage the optional website and email notifications you receive from Kurioticket.",
+  "accountDashboard.preferences.notifications.receive.title": "Receive notifications from Kurioticket",
+  "accountDashboard.preferences.notifications.receive.description":
+    "Manage the optional website and email notifications you receive from Kurioticket.",
+  "accountDashboard.preferences.notifications.emailUpdates.title": "Email updates",
+  "accountDashboard.preferences.notifications.emailUpdates.description":
+    "Receive product updates, account tips, and general Kurioticket emails.",
+  "accountDashboard.preferences.notifications.priceAlertEmails.title": "Price alert emails",
+  "accountDashboard.preferences.notifications.priceAlertEmails.description":
+    "Receive emails when saved routes, watched trips, or tracked prices change.",
+  "accountDashboard.preferences.notifications.travelInspirationEmails.title": "Travel inspiration emails",
+  "accountDashboard.preferences.notifications.travelInspirationEmails.description":
+    "Receive destination ideas, travel tips, and occasional recommendations.",
+  "accountDashboard.preferences.notifications.turnOffAll": "Turn off all optional notifications",
+  "accountDashboard.preferences.notifications.requiredDisclaimer":
+    "Important account, security, billing, legal, and service messages may still be sent when required.",
   "accountDashboard.preferences.travel.title": "Travel preferences",
   "accountDashboard.preferences.travel.description":
     "Keep preferred planning defaults easy to find for future account settings.",
@@ -530,7 +545,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.priceAlerts": "Price alerts",
   "accountDashboard.hub.preferences": "Preferences",
   "accountDashboard.hub.languageRegionCurrency": "Language, region & currency",
-  "accountDashboard.hub.emailPreferences": "Customization preferences",
+  "accountDashboard.hub.emailPreferences": "Notification preferences",
   "accountDashboard.hub.travelPreferences": "Booking preferences",
   "accountDashboard.hub.helpAndSupport": "Help and support",
   "accountDashboard.hub.contactSupport": "Contact support",

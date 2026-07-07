@@ -9,7 +9,7 @@ export async function generateMetadata() {
   const cookieStore = await cookies();
   const t = getTranslations(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
 
-  return { title: t["accountDashboard.preferences.customization.title"] };
+  return { title: t["accountDashboard.preferences.notifications.title"] };
 }
 
 export default function CustomizationPreferencesPage() {
