@@ -149,7 +149,7 @@ export function CustomizationPreferencesContent() {
         </header>
 
         <section
-          className="mx-auto mt-7 max-w-[56rem]"
+          className="mt-7 max-w-[56rem]"
           aria-labelledby="email-preferences-settings"
         >
           <div className="pb-5">
