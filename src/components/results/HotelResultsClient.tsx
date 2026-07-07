@@ -808,9 +808,7 @@ export function HotelResultsClient() {
       const sentinelRect = sentinel.getBoundingClientRect();
       const sentinelScrollTop = sentinelRect.top + window.scrollY;
       const hasPassedStickyTrigger =
-        sentinelRect.top <= 0 ||
-        sentinelRect.bottom <= 0 ||
-        window.scrollY >= Math.max(16, sentinelScrollTop - 1);
+        window.scrollY > Math.max(16, sentinelScrollTop);
 
       applyCompactState(hasPassedStickyTrigger);
     };
