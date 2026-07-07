@@ -1239,7 +1239,7 @@ export function HotelResultsClient() {
         </div>
       </section>
 
-      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[264px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[296px_minmax(0,1fr)]">
         <aside
           className={cn(
             "hidden lg:block lg:self-start",
@@ -1769,7 +1769,7 @@ function HotelFilters({
   return (
     <div
       className={cn(
-        layout === "mobile" ? "bg-white" : "desktop-filter-sidebar bg-transparent",
+        layout === "mobile" ? "bg-white" : "desktop-filter-sidebar border-0 bg-transparent shadow-none rounded-none",
       )}
     >
       {layout === "desktop" ? (
@@ -1804,7 +1804,7 @@ function HotelFilters({
 
       <div
         className={cn(
-          layout === "mobile" ? "space-y-0 bg-white" : "space-y-0 bg-transparent px-1 py-1",
+          layout === "mobile" ? "space-y-0 bg-white" : "space-y-0 bg-transparent px-0 py-1",
         )}
       >
         <FilterSection title={t("hotelResults.budgetPrice")} layout={layout}>
@@ -1951,7 +1951,7 @@ function FilterSection({
         layout === "mobile" ? "py-4" : "py-4",
       )}
     >
-      <h3 className="mb-2 text-[13px] font-bold uppercase leading-5 tracking-[0.11em] text-slate-800">
+      <h3 className="mb-2 text-sm font-extrabold uppercase leading-5 tracking-[0.14em] text-slate-950">
         {title}
       </h3>
       <div className="grid gap-0.5">{children}</div>

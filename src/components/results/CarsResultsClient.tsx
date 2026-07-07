@@ -1331,7 +1331,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
         </div>
       </section>
 
-      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[264px_minmax(0,1fr)] xl:grid-cols-[272px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[296px_minmax(0,1fr)] xl:grid-cols-[304px_minmax(0,1fr)]">
         <aside className="hidden lg:sticky lg:top-[7.5rem] lg:block lg:self-start">
           <div ref={desktopFilterContainerRef}>
             {showFullDesktopFilters ? (
@@ -1968,10 +1968,9 @@ function CarFilters({
   return (
     <div
       className={cn(
-        "overflow-hidden",
         layout === "desktop"
-          ? "desktop-filter-sidebar bg-transparent"
-          : "bg-white",
+          ? "desktop-filter-sidebar border-0 bg-transparent shadow-none rounded-none"
+          : "overflow-hidden bg-white",
       )}
     >
       {layout === "desktop" ? (
@@ -2007,14 +2006,14 @@ function CarFilters({
 
       <div
         className={cn(
-          layout === "mobile" ? "space-y-0 bg-white" : "space-y-0 bg-transparent px-1 py-1",
+          layout === "mobile" ? "space-y-0 bg-white" : "space-y-0 bg-transparent px-0 py-1",
         )}
       >
         {layout === "mobile" && activeFilterCount > 0 ? (
           <div
             className="flex items-center justify-between gap-3 border-b border-border pb-3"
           >
-            <span className="text-[13px] font-bold uppercase tracking-[0.11em] text-slate-800">
+            <span className="text-sm font-extrabold uppercase tracking-[0.14em] text-slate-950">
               {interpolate(t("carsResults.selectedFilterCount"), {
                 count: String(activeFilterCount),
               })}
@@ -2065,7 +2064,7 @@ function FilterSection({
           : "border-t border-slate-200/75 py-4 first:border-t-0",
       )}
     >
-      <h3 className="text-[13px] font-bold uppercase tracking-[0.11em] text-slate-800">
+      <h3 className="text-sm font-extrabold uppercase tracking-[0.14em] text-slate-950">
         {t(group.titleKey)}
       </h3>
       <div className="mt-2 grid gap-0.5">
