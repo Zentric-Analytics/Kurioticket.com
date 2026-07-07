@@ -202,10 +202,7 @@ function SecureHandoffIllustration() {
 }
 
 const POPULAR_DESTINATION_VISIBLE_CARD_COUNT = 8;
-const HOME_DISCOVERY_MOBILE_LANE_COUNT = 6;
-const HOME_DISCOVERY_MOBILE_CARDS_PER_LANE = 4;
-const HOME_DISCOVERY_MOBILE_VISIBLE_CARD_COUNT =
-  HOME_DISCOVERY_MOBILE_LANE_COUNT * HOME_DISCOVERY_MOBILE_CARDS_PER_LANE;
+const HOME_DISCOVERY_MOBILE_VISIBLE_CARD_COUNT = 24;
 
 const destinationImageFallback =
   "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95";
@@ -529,24 +526,10 @@ export default function Home() {
     () => discoveryCards.slice(0, HOME_DISCOVERY_VISIBLE_CARD_COUNT),
     [discoveryCards],
   );
-  const mobileDiscoveryLanes = useMemo(() => {
-    const lanes: HomeDiscoveryFareCard[][] = [];
-
-    for (
-      let index = 0;
-      index < discoveryCards.length && lanes.length < HOME_DISCOVERY_MOBILE_LANE_COUNT;
-      index += HOME_DISCOVERY_MOBILE_CARDS_PER_LANE
-    ) {
-      lanes.push(
-        discoveryCards.slice(
-          index,
-          index + HOME_DISCOVERY_MOBILE_CARDS_PER_LANE,
-        ),
-      );
-    }
-
-    return lanes;
-  }, [discoveryCards]);
+  const mobileDiscoveryCards = useMemo(
+    () => discoveryCards.slice(0, HOME_DISCOVERY_MOBILE_VISIBLE_CARD_COUNT),
+    [discoveryCards],
+  );
 
   const handleNewsletterSubmit = async (
     event: React.FormEvent<HTMLFormElement>,
@@ -924,47 +907,40 @@ export default function Home() {
               </p>
             </div>
             <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden">
-              <div className="flex w-max gap-3 pr-8">
-                {mobileDiscoveryLanes.map((lane, laneIndex) => (
-                  <div
-                    key={`lane-${laneIndex}`}
-                    className="flex max-h-[min(92rem,calc(100vh-9rem))] w-[42vw] min-w-[150px] max-w-[240px] flex-col gap-3 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                  >
-                    {lane.map((card) => {
-                      return (
-                        <DiscoverySuggestionCard
-                          key={card.item.id}
-                          href={buildDiscoveryCardHref(card.fare, {
-                            originCode: card.item.originCode,
-                            destinationCode: card.item.destinationCode,
-                            displayCurrency: selectedOption.currency,
-                            market: regionCode,
-                          })}
-                          itemId={card.item.id}
-                          image={card.item.image}
-                          imageAlt={card.item.imageAlt}
-                          destinationCode={card.item.destinationCode}
-                          title={translateDiscoveryItemCopy(card.item, "title")}
-                          originCode={card.item.originCode}
-                          destinationCodeLabel={card.item.destinationCode}
-                          routeNote={translateDiscoveryItemCopy(
-                            card.item,
-                            "routeNote",
-                          )}
-                          compact
-                          mobileBoardCard
-                          price={card.fare}
-                          displayCurrency={selectedOption.currency}
-                          expectedOriginCode={card.item.originCode}
-                          expectedDestinationCode={card.item.destinationCode}
-                          isPriceLoading={discoveryFareCardState.loading}
-                          isSaved={savedTripIds.includes(card.item.id)}
-                          onHeartToggle={handleSavedTripToggle}
-                        />
-                      );
-                    })}
-                  </div>
-                ))}
+              <div className="grid w-max auto-cols-[minmax(170px,44vw)] grid-flow-col grid-rows-2 gap-3 pr-10">
+                {mobileDiscoveryCards.map((card) => {
+                  return (
+                    <DiscoverySuggestionCard
+                      key={card.item.id}
+                      href={buildDiscoveryCardHref(card.fare, {
+                        originCode: card.item.originCode,
+                        destinationCode: card.item.destinationCode,
+                        displayCurrency: selectedOption.currency,
+                        market: regionCode,
+                      })}
+                      itemId={card.item.id}
+                      image={card.item.image}
+                      imageAlt={card.item.imageAlt}
+                      destinationCode={card.item.destinationCode}
+                      title={translateDiscoveryItemCopy(card.item, "title")}
+                      originCode={card.item.originCode}
+                      destinationCodeLabel={card.item.destinationCode}
+                      routeNote={translateDiscoveryItemCopy(
+                        card.item,
+                        "routeNote",
+                      )}
+                      compact
+                      mobileBoardCard
+                      price={card.fare}
+                      displayCurrency={selectedOption.currency}
+                      expectedOriginCode={card.item.originCode}
+                      expectedDestinationCode={card.item.destinationCode}
+                      isPriceLoading={discoveryFareCardState.loading}
+                      isSaved={savedTripIds.includes(card.item.id)}
+                      onHeartToggle={handleSavedTripToggle}
+                    />
+                  );
+                })}
               </div>
             </div>
 
@@ -1279,7 +1255,7 @@ function DiscoverySuggestionCard({
   return (
     <Link
       href={href}
-      className={`group relative flex min-w-0 flex-col overflow-hidden border border-slate-200 bg-white transition duration-300 hover:-translate-y-1 hover:border-slate-300 active:-translate-y-0.5 ${mobileBoardCard ? "h-[360px] rounded-2xl shadow-[0_18px_35px_-24px_rgba(15,23,42,0.72)] hover:shadow-[0_24px_42px_-24px_rgba(15,23,42,0.72)]" : "rounded-xl shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)]"}`}
+      className={`group relative flex min-w-0 flex-col overflow-hidden border border-slate-200 bg-white transition duration-300 hover:-translate-y-1 hover:border-slate-300 active:-translate-y-0.5 ${mobileBoardCard ? "h-[330px] rounded-2xl border-slate-200/80 shadow-[0_18px_35px_-24px_rgba(15,23,42,0.72)] hover:shadow-[0_24px_42px_-24px_rgba(15,23,42,0.72)]" : "rounded-xl shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)]"}`}
     >
       <button
         type="button"
@@ -1312,7 +1288,7 @@ function DiscoverySuggestionCard({
       </button>
 
       <div
-        className={`relative w-full shrink-0 overflow-hidden ${mobileBoardCard ? "h-[150px]" : compact ? "h-[148px]" : "h-[196px] md:h-[190px] lg:h-[198px]"}`}
+        className={`relative w-full shrink-0 overflow-hidden ${mobileBoardCard ? "h-[135px]" : compact ? "h-[148px]" : "h-[196px] md:h-[190px] lg:h-[198px]"}`}
       >
         <DiscoveryCardImage
           image={image}
