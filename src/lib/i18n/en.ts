@@ -390,8 +390,6 @@ export const translations: TranslationDictionary = {
     "Review current privacy and platform policy information.",
   "accountDashboard.preferences.email.title": "Email preferences",
   "accountDashboard.preferences.email.subtitle": "Choose which Kurioticket emails you want to receive.",
-  "accountDashboard.preferences.email.cardTitle": "Optional emails",
-  "accountDashboard.preferences.email.cardDescription": "Manage travel alerts, inspiration, product updates, deals, and recommendations.",
   "accountDashboard.preferences.email.masterOptional.title": "Receive optional Kurioticket emails",
   "accountDashboard.preferences.email.masterOptional.description": "Turn this off to unsubscribe from travel alerts, inspiration, product updates, deals, and recommendations.",
   "accountDashboard.preferences.email.masterOptional.disabledHelp": "Optional emails are turned off. Turn them back on to customize categories.",

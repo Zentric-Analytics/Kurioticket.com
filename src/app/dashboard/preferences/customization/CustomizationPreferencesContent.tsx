@@ -148,22 +148,7 @@ export function CustomizationPreferencesContent() {
           </p>
         </header>
 
-        <section
-          className="mt-7 max-w-[56rem]"
-          aria-labelledby="email-preferences-settings"
-        >
-          <div className="pb-5">
-            <h2
-              id="email-preferences-settings"
-              className="text-base font-semibold leading-6 text-slate-950"
-            >
-              {t["accountDashboard.preferences.email.cardTitle"]}
-            </h2>
-            <p className="mt-1 max-w-2xl text-sm font-normal leading-6 text-slate-600">
-              {t["accountDashboard.preferences.email.cardDescription"]}
-            </p>
-          </div>
-
+        <section className="mt-7 max-w-[56rem]">
           <div className="space-y-5">
             {preferenceSections.map((section) => (
               <div
