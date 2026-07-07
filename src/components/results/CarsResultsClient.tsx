@@ -545,26 +545,72 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   useEffect(() => {
     const sentinel = stickySentinelRef.current;
 
-    if (!sentinel || typeof IntersectionObserver === "undefined") {
+    if (!sentinel) {
       return undefined;
     }
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        const shouldCompact = !entry.isIntersecting;
-        setIsSearchBarCompact(shouldCompact);
+    let animationFrame = 0;
 
-        if (!shouldCompact) {
-          setIsSearchExpandedWhileSticky(false);
-          setHasInteractedWithExpandedSearch(false);
+    const applyCompactState = (shouldCompact: boolean) => {
+      setIsSearchBarCompact(shouldCompact);
+
+      if (!shouldCompact) {
+        setIsSearchExpandedWhileSticky(false);
+        setHasInteractedWithExpandedSearch(false);
+      }
+    };
+
+    const updateFromSentinelPosition = () => {
+      applyCompactState(sentinel.getBoundingClientRect().bottom <= 0);
+    };
+
+    const schedulePositionUpdate = () => {
+      if (animationFrame) return;
+
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = 0;
+        updateFromSentinelPosition();
+      });
+    };
+
+    updateFromSentinelPosition();
+
+    if (typeof IntersectionObserver === "undefined") {
+      window.addEventListener("scroll", schedulePositionUpdate, {
+        passive: true,
+      });
+      window.addEventListener("resize", schedulePositionUpdate);
+
+      return () => {
+        window.removeEventListener("scroll", schedulePositionUpdate);
+        window.removeEventListener("resize", schedulePositionUpdate);
+        if (animationFrame) {
+          window.cancelAnimationFrame(animationFrame);
         }
+      };
+    }
+
+    const observer = new IntersectionObserver(
+      () => {
+        updateFromSentinelPosition();
       },
       { threshold: 0 },
     );
 
     observer.observe(sentinel);
+    window.addEventListener("scroll", schedulePositionUpdate, {
+      passive: true,
+    });
+    window.addEventListener("resize", schedulePositionUpdate);
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", schedulePositionUpdate);
+      window.removeEventListener("resize", schedulePositionUpdate);
+      if (animationFrame) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+    };
   }, []);
 
   useEffect(() => {
