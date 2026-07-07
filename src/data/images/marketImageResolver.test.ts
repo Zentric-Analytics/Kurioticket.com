@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { resolveMarketImage } from "./marketImageResolver";
+import { marketImageRegistry } from "./marketImageRegistry";
+import { priorityMarketCodes } from "./marketImagePacks";
 import type { MarketImageRegistryEntry } from "./imageTypes";
 
 const baseImage = {
@@ -75,5 +77,17 @@ describe("resolveMarketImage", () => {
 
     assert.equal(resolution?.level, "global");
     assert.equal(resolution?.image.id, "global-hero");
+  });
+
+  it("resolves every priority launch market to an explicit market pack entry", () => {
+    for (const market of priorityMarketCodes) {
+      const resolution = resolveMarketImage(
+        { market, product: "global", usage: "homepage-hero" },
+        marketImageRegistry,
+      );
+
+      assert.equal(resolution?.level, "market", `${market} should resolve to a market-level image`);
+      assert.equal(resolution?.image.market, market);
+    }
   });
 });
