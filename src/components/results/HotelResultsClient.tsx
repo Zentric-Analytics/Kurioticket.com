@@ -866,10 +866,10 @@ export function HotelResultsClient() {
       <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
       <section
         className={cn(
-          "sticky top-0 z-40 hidden border-b border-slate-200/80 bg-[#f6f8fb]/95 backdrop-blur transition-[padding,box-shadow] duration-200 sm:block",
+          "sticky top-0 z-40 hidden bg-[#f6f8fb] transition-[padding,box-shadow] duration-200 sm:block",
           showCompactSearchSummary
-            ? "py-1.5 shadow-[0_3px_12px_rgba(15,23,42,0.05)]"
-            : "py-3 shadow-sm shadow-slate-900/5",
+            ? "py-1.5 shadow-[0_6px_16px_rgba(15,23,42,0.035)]"
+            : "py-3 shadow-none",
         )}
       >
         <div className="page-shell">
@@ -926,7 +926,7 @@ export function HotelResultsClient() {
         </div>
       </section>
 
-      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-5 pb-6 pt-4 sm:pt-5 lg:grid-cols-[240px_minmax(0,1fr)]">
         <aside
           className={cn(
             "hotel-filter-scrollbar hidden lg:block lg:self-start lg:overflow-x-hidden",
