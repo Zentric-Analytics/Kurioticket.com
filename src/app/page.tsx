@@ -29,6 +29,7 @@ import {
   HOME_DISCOVERY_VISIBLE_CARD_COUNT,
   getHomeDiscoveryByRegion,
 } from "@/data/homeDiscovery";
+import { getHomepageHeroImageForMarket } from "@/data/images/homepageHeroImage";
 import {
   getPopularDestinationFareCandidatesByRegion,
   getPopularDestinationsByRegion,
@@ -199,9 +200,6 @@ function SecureHandoffIllustration() {
     </svg>
   );
 }
-
-const heroImage =
-  "/images/premium/homepage/kurioticket-homepage-hero-businesswoman-modern-city-luggage-001.jpg";
 
 const POPULAR_DESTINATION_VISIBLE_CARD_COUNT = 8;
 const HOME_DISCOVERY_MOBILE_VISIBLE_CARD_COUNT =
@@ -445,6 +443,11 @@ export default function Home() {
     field: "title" | "routeNote",
   ) => translateHomeDiscoveryField(dictionary, item, field);
   const translatedFaqs = getGeneralFaqs(t);
+
+  const homepageHeroImage = useMemo(
+    () => getHomepageHeroImageForMarket(regionCode),
+    [regionCode],
+  );
 
   const popularDestinationResolution = useMemo(
     () => getPopularDestinationsByRegion(regionCode),
@@ -777,7 +780,7 @@ export default function Home() {
         <section className="relative min-h-[420px] overflow-visible bg-slate-950 sm:min-h-[550px] lg:min-h-[610px]">
           <div className="absolute inset-0">
             <Image
-              src={heroImage}
+              src={homepageHeroImage.url}
               alt={t("homeHeroImageAlt")}
               fill
               priority
