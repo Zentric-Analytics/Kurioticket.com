@@ -1131,7 +1131,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
           ) : null}
           <Button
             type="button"
-            className="h-11 w-full rounded-xl bg-gradient-to-r from-[#004BB8] to-[#021C2B] text-sm font-bold text-white shadow-lg shadow-[#004BB8]/20"
+            className="h-11 w-full rounded-xl bg-blue text-sm font-bold text-white shadow-lg shadow-[#004BB8]/20 transition hover:bg-navy active:bg-navy"
             onClick={() => setFiltersOpen(false)}
           >
             {t("done")}
@@ -1646,12 +1646,12 @@ function CarFilters({
       className={cn(
         "overflow-hidden",
         layout === "desktop"
-          ? "rounded-2xl border border-slate-200/80 bg-white shadow-sm shadow-slate-900/[0.04]"
+          ? "rounded-2xl border border-border bg-white shadow-sm shadow-slate-900/[0.04]"
           : "bg-white",
       )}
     >
-      <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-[#004BB8] to-[#021C2B] px-3 py-3">
-        <h2 className="text-base font-semibold text-white/95">{t("carsResults.filterBy")}</h2>
+      <div className="flex items-center justify-between gap-2 bg-gradient-to-r from-blue to-teal px-3 py-3">
+        <h2 className="text-base font-semibold text-white">{t("carsResults.filterBy")}</h2>
         <div className="flex shrink-0 items-center gap-2">
           {activeFilterCount > 0 ? (
             <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-[#004BB8] shadow-sm ring-1 ring-white/70">
@@ -1661,7 +1661,7 @@ function CarFilters({
             </span>
           ) : null}
           <SlidersHorizontal
-            className="text-white/90"
+            className="text-white"
             size={18}
             aria-hidden="true"
           />
@@ -1712,7 +1712,7 @@ function FilterSection({
   t: (key: string) => string;
 }) {
   return (
-    <section className="rounded-xl border border-slate-200/80 bg-white px-3 py-3 shadow-sm shadow-slate-900/[0.025]">
+    <section className="rounded-xl border border-border bg-white px-3 py-3 shadow-sm shadow-slate-900/[0.025]">
       <h3 className="text-sm font-semibold text-slate-900">{t(group.titleKey)}</h3>
       <div className="mt-2 space-y-1.5">
         {group.options.map((option) => {

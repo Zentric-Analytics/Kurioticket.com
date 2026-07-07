@@ -4647,7 +4647,7 @@ export function FlightResultsClient() {
         <div className="shrink-0 border-t border-slate-200 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-10px_24px_rgba(15,23,42,0.08)]">
           <Button
             type="button"
-            className="h-12 w-full rounded-xl bg-[#004BB8] text-base font-bold text-white shadow-lg shadow-[#004BB8]/20 transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
+            className="h-12 w-full rounded-xl bg-blue text-base font-bold text-white shadow-lg shadow-[#004BB8]/20 transition hover:bg-navy active:bg-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/35 focus-visible:ring-offset-2"
             onClick={() => {
               triggerFilterApplying();
               setFiltersOpen(false);
@@ -5879,12 +5879,12 @@ function Filters({
       className={cn(
         "bg-white",
         layout === "desktop" &&
-          "rounded-2xl border border-slate-200/80 shadow-sm shadow-slate-900/[0.04]",
+          "overflow-hidden rounded-2xl border border-border bg-white shadow-sm shadow-slate-900/[0.04]",
       )}
     >
-      <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-[#004BB8]/70 to-[#5CB6B2]/55 px-3 py-3">
+      <div className="flex items-center justify-between gap-2 bg-gradient-to-r from-blue to-teal px-3 py-3">
         <div>
-          <h2 className="text-base font-semibold text-white/95">
+          <h2 className="text-base font-semibold text-white">
             {t("filterBy")}
           </h2>
         </div>
@@ -5897,7 +5897,7 @@ function Filters({
               )}
             </span>
           ) : null}
-          <SlidersHorizontal className="text-white/90" size={18} />
+          <SlidersHorizontal className="text-white" size={18} />
         </div>
       </div>
 
@@ -6277,7 +6277,7 @@ function FilterSection({
     Boolean(children) && (!Array.isArray(children) || children.length > 0);
 
   return (
-    <section className="border-t border-slate-200/70 pt-3 first:border-t-0 first:pt-0">
+    <section className="border-t border-border pt-3 first:border-t-0 first:pt-0">
       <h3 className="mb-1.5 text-sm font-semibold leading-5 text-slate-800">
         {title}
       </h3>

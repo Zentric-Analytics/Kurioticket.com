@@ -1086,7 +1086,7 @@ export function HotelResultsClient() {
         <div className="border-t border-slate-200 bg-white p-4">
           <Button
             type="button"
-            className="h-12 w-full rounded-xl bg-[#004BB8] text-base font-bold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] hover:bg-[#021C2B]"
+            className="h-12 w-full rounded-xl bg-blue text-base font-bold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition hover:bg-navy active:bg-navy"
             onClick={() => {
               triggerFilterApplying();
               setFiltersOpen(false);
@@ -1424,12 +1424,12 @@ function HotelFilters({
     "h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-gradient-to-r [&::-webkit-slider-runnable-track]:from-[#004BB8]/70 [&::-webkit-slider-runnable-track]:to-[#5CB6B2]/55 [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#004BB8] [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#004BB8]/70 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#004BB8] [&::-moz-range-thumb]:shadow-md";
 
   return (
-    <div className="bg-white">
-      <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+    <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm shadow-slate-900/[0.04]">
+      <div className="flex items-center justify-between gap-2 bg-gradient-to-r from-blue to-teal px-3 py-3">
         <div>
-          <h2 className="text-base font-bold text-[#021C2B]">{t("hotelResults.filterBy")}</h2>
+          <h2 className="text-base font-semibold text-white">{t("hotelResults.filterBy")}</h2>
         </div>
-        <SlidersHorizontal className="text-[#004BB8]" size={18} />
+        <SlidersHorizontal className="text-white" size={18} />
       </div>
 
       <div className="space-y-4 bg-white px-3 py-3">
@@ -1561,7 +1561,7 @@ function FilterSection({
   children: ReactNode;
 }) {
   return (
-    <section className="border-t border-slate-200/70 pt-3 first:border-t-0 first:pt-0">
+    <section className="border-t border-border pt-3 first:border-t-0 first:pt-0">
       <h3 className="mb-1.5 text-[13px] font-semibold leading-5 text-slate-800">
         {title}
       </h3>

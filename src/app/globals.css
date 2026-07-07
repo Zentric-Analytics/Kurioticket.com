@@ -118,7 +118,7 @@ textarea {
 .hotel-filter-scrollbar:hover,
 .hotel-filter-scrollbar:focus-within,
 .hotel-filter-scrollbar.hotel-filter-scrollbar--visible {
-  scrollbar-color: rgba(124, 58, 237, 0.28) transparent;
+  scrollbar-color: rgba(0, 75, 184, 0.32) transparent;
 }
 
 .hotel-filter-scrollbar::-webkit-scrollbar {
@@ -138,11 +138,11 @@ textarea {
 .hotel-filter-scrollbar:hover::-webkit-scrollbar-thumb,
 .hotel-filter-scrollbar:focus-within::-webkit-scrollbar-thumb,
 .hotel-filter-scrollbar.hotel-filter-scrollbar--visible::-webkit-scrollbar-thumb {
-  background: rgba(124, 58, 237, 0.22);
+  background: rgba(0, 75, 184, 0.26);
 }
 
 .hotel-filter-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(124, 58, 237, 0.38);
+  background: rgba(63, 144, 141, 0.44);
 }
 
 @keyframes loading-line {
