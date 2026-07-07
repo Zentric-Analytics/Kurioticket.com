@@ -149,7 +149,7 @@ export function CustomizationPreferencesContent() {
         </header>
 
         <section
-          className="mt-7 -mx-4 max-w-[64rem] overflow-hidden rounded-none border border-slate-300/90 bg-white shadow-lg shadow-slate-200/80 sm:mx-0 sm:rounded-2xl"
+          className="mt-7 -mx-4 max-w-[56rem] overflow-hidden rounded-none border border-slate-300/90 bg-white shadow-lg shadow-slate-200/80 sm:mx-auto sm:rounded-2xl"
           aria-labelledby="email-preferences-settings"
         >
           <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
@@ -159,14 +159,76 @@ export function CustomizationPreferencesContent() {
             >
               {t["accountDashboard.preferences.email.cardTitle"]}
             </h2>
-            <p className="mt-1 text-sm font-normal leading-6 text-slate-600">
+            <p className="mt-1 max-w-2xl text-sm font-normal leading-6 text-slate-600">
               {t["accountDashboard.preferences.email.cardDescription"]}
             </p>
           </div>
 
           <div className="px-5 sm:px-6">
-            <div className="py-5">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4">
+            {preferenceSections.map((section, sectionIndex) => (
+              <div
+                key={section.copyKey}
+                className={
+                  sectionIndex === 0 ? "py-5" : "border-t border-slate-200 py-5"
+                }
+              >
+                <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                  {
+                    t[
+                      `accountDashboard.preferences.email.sections.${section.copyKey}.title`
+                    ]
+                  }
+                </h3>
+                <div className="mt-3 divide-y divide-slate-100">
+                  {section.editableRows?.map((row) => (
+                    <div
+                      key={row.id}
+                      className={
+                        preferences.receiveOptionalEmails
+                          ? "flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+                          : "flex flex-col gap-3 py-4 opacity-70 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+                      }
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold leading-5 text-slate-950">
+                          {
+                            t[
+                              `accountDashboard.preferences.email.rows.${row.copyKey}.title`
+                            ]
+                          }
+                        </p>
+                        <p className="mt-1 text-sm font-normal leading-6 text-slate-600">
+                          {
+                            t[
+                              `accountDashboard.preferences.email.rows.${row.copyKey}.description`
+                            ]
+                          }
+                        </p>
+                      </div>
+                      <PreferenceSwitch
+                        checked={
+                          preferences.receiveOptionalEmails
+                            ? preferences[row.id]
+                            : false
+                        }
+                        label={
+                          t[
+                            `accountDashboard.preferences.email.rows.${row.copyKey}.title`
+                          ]
+                        }
+                        onChange={() => updatePreference(row.id)}
+                        onLabel={t["accountDashboard.preferences.email.on"]}
+                        offLabel={t["accountDashboard.preferences.email.off"]}
+                        disabled={!preferences.receiveOptionalEmails}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            <div className="border-t border-slate-200 py-5">
+              <div className="rounded-2xl bg-slate-50 px-4 py-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold leading-5 text-slate-950">
@@ -196,76 +258,20 @@ export function CustomizationPreferencesContent() {
                     offLabel={t["accountDashboard.preferences.email.off"]}
                   />
                 </div>
-                {!preferences.receiveOptionalEmails ? (
-                  <p className="mt-3 text-sm font-normal leading-6 text-slate-600">
-                    {
-                      t[
-                        "accountDashboard.preferences.email.masterOptional.disabledHelp"
-                      ]
-                    }
-                  </p>
-                ) : null}
               </div>
-            </div>
-
-            {preferenceSections.map((section) => (
-              <div
-                key={section.copyKey}
-                className="border-t border-slate-200 py-5"
-              >
-                <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+              {!preferences.receiveOptionalEmails ? (
+                <p className="mt-3 rounded-xl bg-slate-50 px-4 py-3 text-sm font-normal leading-6 text-slate-700">
                   {
                     t[
-                      `accountDashboard.preferences.email.sections.${section.copyKey}.title`
+                      "accountDashboard.preferences.email.masterOptional.disabledHelp"
                     ]
                   }
-                </h3>
-                <div className="mt-3 divide-y divide-slate-100">
-                  {section.editableRows?.map((row) => (
-                    <div
-                      key={row.id}
-                      className={
-                        preferences.receiveOptionalEmails
-                          ? "flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
-                          : "flex flex-col gap-3 py-4 opacity-55 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
-                      }
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold leading-5 text-slate-950">
-                          {
-                            t[
-                              `accountDashboard.preferences.email.rows.${row.copyKey}.title`
-                            ]
-                          }
-                        </p>
-                        <p className="mt-1 text-sm font-normal leading-6 text-slate-600">
-                          {
-                            t[
-                              `accountDashboard.preferences.email.rows.${row.copyKey}.description`
-                            ]
-                          }
-                        </p>
-                      </div>
-                      <PreferenceSwitch
-                        checked={preferences[row.id]}
-                        label={
-                          t[
-                            `accountDashboard.preferences.email.rows.${row.copyKey}.title`
-                          ]
-                        }
-                        onChange={() => updatePreference(row.id)}
-                        onLabel={t["accountDashboard.preferences.email.on"]}
-                        offLabel={t["accountDashboard.preferences.email.off"]}
-                        disabled={!preferences.receiveOptionalEmails}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+                </p>
+              ) : null}
+            </div>
           </div>
 
-          <div className="border-t border-slate-200 bg-slate-50/60 px-5 py-4 sm:px-6">
+          <div className="border-t border-slate-200 bg-slate-50/60 px-5 py-5 sm:px-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm font-normal leading-6 text-slate-600">
                 {t["accountDashboard.preferences.email.trustNote"]}
