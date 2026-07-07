@@ -963,6 +963,8 @@ export function HotelSearchBar({
         )
       : "h-8 text-[16px] text-slate-900 md:text-sm",
   );
+  const desktopPopoverClassName =
+    "absolute top-[calc(100%+10px)] z-[1000] hidden border border-slate-200 bg-white shadow-[0_24px_56px_rgba(15,23,42,0.20)] ring-1 ring-slate-950/[0.04] sm:block";
   const fieldLabelClassName = cn(
     "block font-semibold uppercase",
     compact
@@ -1122,7 +1124,11 @@ export function HotelSearchBar({
           >
             <label
               ref={destinationWrapperRef}
-              className={cn(fieldClassName, "lg:rounded-s-xl")}
+              className={cn(
+                fieldClassName,
+                "lg:rounded-s-xl",
+                shouldShowDestinationSuggestions && "z-[1000]",
+              )}
             >
               <span className={fieldLabelClassName}>
                 {t("hotelSearchDestinationLabel")}
@@ -1208,7 +1214,10 @@ export function HotelSearchBar({
                   id="hotel-destination-suggestions"
                   role="listbox"
                   aria-label={t("hotelDestinationSuggestions")}
-                  className="absolute start-0 top-[calc(100%+8px)] z-50 hidden max-h-[min(68vh,360px)] w-[min(92vw,420px)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_42px_rgba(15,23,42,0.18)] sm:block lg:w-[min(42vw,440px)]"
+                  className={cn(
+                    desktopPopoverClassName,
+                    "start-0 max-h-[min(68vh,360px)] w-[min(92vw,420px)] overflow-y-auto rounded-2xl p-1.5 lg:w-[min(42vw,440px)]",
+                  )}
                 >
                   {destinationSuggestionsLoading ? (
                     <div className="px-3 py-2.5 text-sm font-medium text-slate-500">
@@ -1267,7 +1276,10 @@ export function HotelSearchBar({
               ) : null}
             </label>
 
-            <div ref={datesWrapperRef} className={fieldClassName}>
+            <div
+              ref={datesWrapperRef}
+              className={cn(fieldClassName, datesOpen && "z-[1000]")}
+            >
               <span className={fieldLabelClassName}>
                 {t("hotelSearchTravelDatesLabel")}
               </span>
@@ -1293,7 +1305,12 @@ export function HotelSearchBar({
                 <span className="truncate">{dateSummary}</span>
               </button>
               {datesOpen ? (
-                <div className="absolute start-0 top-[calc(100%+8px)] z-[200] hidden w-[min(92vw,580px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
+                <div
+                  className={cn(
+                    desktopPopoverClassName,
+                    "end-0 w-[min(92vw,580px)] rounded-2xl p-3 lg:end-auto lg:start-0",
+                  )}
+                >
                   <p className="mb-2.5 text-sm font-semibold text-slate-900">
                     {t("chooseTravelDates")}
                   </p>
@@ -1424,7 +1441,10 @@ export function HotelSearchBar({
               ) : null}
             </div>
 
-            <div ref={guestsRoomsWrapperRef} className={fieldClassName}>
+            <div
+              ref={guestsRoomsWrapperRef}
+              className={cn(fieldClassName, guestsRoomsOpen && "z-[1000]")}
+            >
               <span className={fieldLabelClassName}>
                 {t("hotelSearchGuestsLabel")}
               </span>
@@ -1449,7 +1469,12 @@ export function HotelSearchBar({
                 />
               </button>
               {guestsRoomsOpen ? (
-                <div className="absolute start-0 top-[calc(100%+8px)] z-30 hidden w-[min(92vw,320px)] rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:block">
+                <div
+                  className={cn(
+                    desktopPopoverClassName,
+                    "start-0 w-[min(92vw,320px)] rounded-xl p-3 lg:end-0 lg:start-auto",
+                  )}
+                >
                   <div className="space-y-3">
                     {[
                       {
