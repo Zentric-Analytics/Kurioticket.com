@@ -27,6 +27,18 @@ Implemented in this phase:
 - Validation for market code, region slug, and audience values.
 - Unit tests for fallback behavior.
 
+## Priority market pack scaffold
+
+The first priority market scaffold adds explicit homepage hero contract entries for these markets:
+
+US, GB, CA, BR, MX, GH, NG, KE, ZA, AE, IN, FR, DE, ES, IT, NL, TR, JP, KR, and AU.
+
+These records are not final production image approvals. They are contract entries that let the resolver, registry, and tests prove market-level coverage while the team sources real premium or owned assets.
+
+Regional fallback packs now cover:
+
+north-america, latin-america, west-africa, east-africa, southern-africa, middle-east, south-asia, western-europe, east-asia, and oceania.
+
 ## Rollout plan
 
 1. Add real country packs for priority markets.
