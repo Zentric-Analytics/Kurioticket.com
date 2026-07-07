@@ -1239,7 +1239,7 @@ export function HotelResultsClient() {
         </div>
       </section>
 
-      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[296px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[272px_minmax(0,1fr)]">
         <aside
           className={cn(
             "hidden lg:block lg:self-start",
@@ -1769,7 +1769,7 @@ function HotelFilters({
   return (
     <div
       className={cn(
-        layout === "mobile" ? "bg-white" : "desktop-filter-sidebar border-0 bg-transparent shadow-none rounded-none",
+        layout === "mobile" ? "bg-white" : "desktop-filter-sidebar border border-slate-200/80 bg-transparent p-3 shadow-none rounded-none",
       )}
     >
       {layout === "desktop" ? (
