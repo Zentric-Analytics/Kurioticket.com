@@ -6178,26 +6178,33 @@ function Filters({
           "rounded-2xl border border-slate-200/80 shadow-sm shadow-slate-900/[0.04]",
       )}
     >
-      <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-blue to-teal px-3 py-3">
-        <div>
-          <h2 className="text-base font-semibold text-white/95">
-            {t("filterBy")}
-          </h2>
+      {layout === "desktop" ? (
+        <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-blue to-teal px-3 py-3">
+          <div>
+            <h2 className="text-base font-semibold text-white/95">
+              {t("filterBy")}
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            {activeFilterCount > 0 ? (
+              <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-[#004BB8] shadow-sm ring-1 ring-white/70">
+                {t("activeFilterCount").replace(
+                  "{{count}}",
+                  String(activeFilterCount),
+                )}
+              </span>
+            ) : null}
+            <SlidersHorizontal className="text-white/90" size={18} />
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          {activeFilterCount > 0 ? (
-            <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-[#004BB8] shadow-sm ring-1 ring-white/70">
-              {t("activeFilterCount").replace(
-                "{{count}}",
-                String(activeFilterCount),
-              )}
-            </span>
-          ) : null}
-          <SlidersHorizontal className="text-white/90" size={18} />
-        </div>
-      </div>
+      ) : null}
 
-      <div className="space-y-4 bg-white px-3 py-3">
+      <div
+        className={cn(
+          "bg-white",
+          layout === "mobile" ? "space-y-4" : "space-y-4 px-3 py-3",
+        )}
+      >
         <section>
           {layout === "desktop" ? (
             <div className="mb-3">
@@ -6607,11 +6614,11 @@ function FilterOptionRow({
     rightLabel ?? (typeof count === "number" ? String(count) : null);
 
   return (
-    <label className="flex cursor-pointer items-start justify-between gap-3 py-1.5 text-sm font-medium text-muted transition hover:text-navy">
+    <label className="flex min-h-10 cursor-pointer items-start justify-between gap-3 py-2 text-sm font-medium text-muted transition hover:text-navy">
       <span className="flex min-w-0 items-start gap-2">
         <input
           type="checkbox"
-          className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-border accent-blue focus-visible:ring-2 focus-visible:ring-blue/35"
+          className="mt-0.5 h-5 w-5 shrink-0 rounded border-border accent-blue focus-visible:ring-2 focus-visible:ring-blue/35"
           checked={checked}
           onChange={onChange}
         />
