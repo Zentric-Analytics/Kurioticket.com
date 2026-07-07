@@ -951,6 +951,7 @@ export function FlightResultsClient() {
     cabinClassInput,
     t,
   );
+  const showFullSearchForm = !isSearchBarCompact || isSearchExpandedWhileSticky;
   const showCompactSearchSummary =
     isSearchBarCompact && !isSearchExpandedWhileSticky;
   const isExpandedStickySearchActive =
@@ -3721,6 +3722,10 @@ export function FlightResultsClient() {
           </div>
         </div>
       );
+    }
+
+    if (placement === "desktop" && !showFullSearchForm) {
+      return null;
     }
 
     return (
