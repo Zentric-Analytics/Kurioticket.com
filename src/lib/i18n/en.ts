@@ -2165,7 +2165,7 @@ export const translations: TranslationDictionary = {
   homeTrustHandoffTitle: "Secure provider handoff",
   homeTrustHandoffBody:
     "When you choose an offer, you continue to the provider to complete booking securely.",
-  homePopularDestinations: "Popular destinations",
+  homePopularDestinations: "Popular destination stays",
   "homePopularDestinationCity.accra": "Accra",
   "homePopularDestinationCity.addisAbaba": "Addis Ababa",
   "homePopularDestinationCity.amsterdam": "Amsterdam",
@@ -2542,7 +2542,7 @@ export const translations: TranslationDictionary = {
   homeSaveRoute: "Save route",
   homeCheckingProviderRoutePricing: "Checking provider-backed route pricing",
   homePricesUpdateWithProviderResults: "Prices update with provider results",
-  homeExploreFares: "Explore fares",
+  homeExploreFares: "Explore stays",
   homeCompareOptions: "Compare options",
   displayEstimateFinalProviderMayDiffer:
     "Display estimate; final provider price may differ.",
