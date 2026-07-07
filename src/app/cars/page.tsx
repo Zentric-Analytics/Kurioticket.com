@@ -18,6 +18,7 @@ import {
   ArrowRight,
   Calendar,
   CalendarClock,
+  CarFront,
   CheckCircle2,
   ChevronDown,
   Clock,
@@ -754,10 +755,12 @@ function CarsSearchBar({
 
         <div className="overflow-visible rounded-none border-0 bg-transparent p-0 shadow-none sm:rounded-[1.35rem] sm:bg-white">
           <div className="hidden items-center px-1 pb-2 sm:flex lg:pb-2.5">
-            <span className="inline-flex items-center gap-2 rounded-lg border border-[#004BB8]/10 bg-[#004BB8]/[0.08] px-3.5 py-1.5 text-[0.925rem] font-semibold text-navy shadow-sm">
-              <span aria-hidden="true" className="text-[1rem] leading-none">
-                🚗
-              </span>
+            <span className="inline-flex items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3.5 py-1.5 text-[0.925rem] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10">
+              <CarFront
+                aria-hidden="true"
+                className="h-[1.125rem] w-[1.125rem] text-[#004BB8]"
+                strokeWidth={2.15}
+              />
               {t("cars")}
             </span>
           </div>
