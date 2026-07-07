@@ -1053,8 +1053,8 @@ export function FlightResultsClient() {
     }
 
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        applyCompactState(!entry.isIntersecting);
+      () => {
+        updateFromSentinelPosition();
       },
       { threshold: 0 },
     );
