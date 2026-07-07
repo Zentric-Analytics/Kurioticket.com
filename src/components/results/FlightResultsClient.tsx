@@ -3447,7 +3447,7 @@ export function FlightResultsClient() {
                       className="group w-full overflow-hidden rounded-[1.25rem] border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-[0_14px_30px_rgba(15,23,42,0.085)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
                     >
                       <article className="flex h-full flex-col">
-                        <div className="relative h-36 overflow-hidden bg-slate-100 sm:h-40 lg:h-56">
+                        <div className="relative h-36 overflow-hidden bg-slate-100 sm:h-32 lg:h-44">
                           <Image
                             src={item.image}
                             alt={item.imageAlt}
@@ -3576,7 +3576,7 @@ export function FlightResultsClient() {
                           className="group w-[10rem] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-[0_14px_30px_rgba(15,23,42,0.085)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 sm:w-auto"
                         >
                           <article className="flex h-full flex-col">
-                            <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#004BB8]/8 sm:aspect-auto sm:h-32 lg:h-40">
+                            <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#004BB8]/8 sm:aspect-auto sm:h-24 lg:h-[7.5rem]">
                               <Image
                                 src={beachVisual.image}
                                 alt={getBeachVacationVisualAlt(
@@ -3590,7 +3590,7 @@ export function FlightResultsClient() {
                                 className="object-cover brightness-[1.05] saturate-[1.12] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
                               />
                             </div>
-                            <div className="bg-white px-4 py-3.5">
+                            <div className="bg-white px-3 py-2.5">
                               <h3 className="line-clamp-2 text-base font-semibold leading-snug text-slate-900 sm:line-clamp-1">
                                 {translateHomeDiscoveryCity(
                                   dictionary,
@@ -4616,7 +4616,7 @@ export function FlightResultsClient() {
         </div>
       </section>
 
-      <div className="page-shell grid gap-4 pb-5 pt-4 sm:pt-5 lg:grid-cols-[264px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-4 pb-5 pt-4 sm:pt-5 lg:grid-cols-[296px_minmax(0,1fr)]">
         <aside className={cn("hidden lg:block", desktopFilterStickyTopClass)}>
           <div ref={desktopFilterContainerRef}>
             {showFullDesktopFilters ? (
@@ -6319,7 +6319,7 @@ function Filters({
   return (
     <div
       className={cn(
-        layout === "mobile" ? "bg-white" : "desktop-filter-sidebar bg-transparent",
+        layout === "mobile" ? "bg-white" : "desktop-filter-sidebar border-0 bg-transparent shadow-none rounded-none",
       )}
     >
       {layout === "desktop" ? (
@@ -6357,13 +6357,13 @@ function Filters({
 
       <div
         className={cn(
-          layout === "mobile" ? "space-y-4 bg-white" : "space-y-0 bg-transparent px-1 py-1",
+          layout === "mobile" ? "space-y-4 bg-white" : "space-y-0 bg-transparent px-0 py-1",
         )}
       >
         <section>
           {layout === "desktop" ? (
             <div className="mb-2.5 flex items-center justify-between gap-3">
-              <h3 className="text-[13px] font-bold uppercase tracking-[0.12em] text-slate-800">
+              <h3 className="text-sm font-extrabold uppercase tracking-[0.14em] text-slate-950">
                 {t("price")}
               </h3>
             </div>
@@ -6736,7 +6736,7 @@ function FilterSection({
 
   return (
     <section className="border-t border-slate-200/75 py-4 first:border-t-0">
-      <h3 className="mb-2 text-[13px] font-bold uppercase leading-5 tracking-[0.11em] text-slate-800">
+      <h3 className="mb-2 text-sm font-extrabold uppercase leading-5 tracking-[0.14em] text-slate-950">
         {title}
       </h3>
       <div className="grid gap-0.5">

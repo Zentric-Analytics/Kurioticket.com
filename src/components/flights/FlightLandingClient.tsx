@@ -337,7 +337,7 @@ function RouteCard({
       className="group block overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_14px_36px_rgba(15,23,42,0.07)] transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-[0_18px_42px_rgba(0,75,184,0.14)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
     >
       <article className="flex h-full flex-col">
-        <div className="relative h-40 overflow-hidden bg-slate-100">
+        <div className="relative h-32 overflow-hidden bg-slate-100 sm:h-[7.5rem] lg:h-[7.5rem]">
           <Image
             src={item.image}
             alt={routeText.imageAlt}
@@ -347,7 +347,7 @@ function RouteCard({
             className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
           />
         </div>
-        <div className="flex flex-1 flex-col p-5">
+        <div className="flex flex-1 flex-col p-3.5 sm:p-4">
           <h3 className="text-lg font-bold tracking-tight text-slate-950">
             {routeText.title}
           </h3>
@@ -357,10 +357,10 @@ function RouteCard({
           <p className="mt-1 text-xs font-medium text-slate-500">
             {item.originCode} → {item.destinationCode}
           </p>
-          <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">
+          <p className="mt-2 line-clamp-2 text-sm leading-5 text-slate-600">
             {routeText.routeNote}
           </p>
-          <span className="mt-5 inline-flex min-h-10 w-fit items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-4 text-sm font-semibold text-white shadow-sm shadow-[#004BB8]/20 transition duration-200 group-hover:bg-[#021C2B] group-hover:shadow-[0_10px_22px_rgba(0,75,184,0.18)] group-active:translate-y-px">
+          <span className="mt-3 inline-flex min-h-10 w-fit items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-4 text-sm font-semibold text-white shadow-sm shadow-[#004BB8]/20 transition duration-200 group-hover:bg-[#021C2B] group-hover:shadow-[0_10px_22px_rgba(0,75,184,0.18)] group-active:translate-y-px">
             {t("flightLandingStartThisSearch")}
             <Plane className="h-4 w-4 shrink-0 stroke-[2.4] transition duration-200 group-hover:translate-x-0.5" />
           </span>
@@ -595,7 +595,7 @@ export function FlightLandingClient() {
                         className="group block overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_12px_32px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-[0_16px_36px_rgba(0,75,184,0.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 sm:rounded-3xl"
                       >
                         <article className="flex h-full flex-col">
-                          <div className="relative h-[6.75rem] overflow-hidden bg-slate-100 sm:h-32">
+                          <div className="relative h-[6.75rem] overflow-hidden bg-slate-100 sm:h-24 lg:h-[7.5rem]">
                             <Image
                               src={item.image}
                               alt={routeText.imageAlt}
@@ -604,14 +604,14 @@ export function FlightLandingClient() {
                               className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
                             />
                           </div>
-                          <div className="flex flex-1 flex-col p-3.5 sm:p-5">
+                          <div className="flex flex-1 flex-col p-3.5 sm:p-4">
                             <p className="text-[0.68rem] font-bold uppercase leading-4 tracking-[0.14em] text-[#004BB8] sm:text-[0.72rem]">
                               {item.originCode} → {item.destinationCode}
                             </p>
                             <h3 className="mt-2 text-[0.95rem] font-bold leading-tight tracking-[-0.015em] text-slate-950 sm:mt-3 sm:text-lg sm:leading-6">
                               {routeText.destinationCity}
                             </h3>
-                            <p className="mt-1.5 line-clamp-2 text-xs font-medium leading-5 text-slate-600 sm:mt-2.5 sm:text-sm sm:leading-6">
+                            <p className="mt-1.5 line-clamp-2 text-xs font-medium leading-5 text-slate-600 sm:mt-2 sm:text-sm">
                               {routeText.routeNote}
                             </p>
                           </div>

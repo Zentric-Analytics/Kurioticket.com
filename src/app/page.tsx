@@ -1315,7 +1315,7 @@ function DiscoverySuggestionCard({
       </button>
 
       <div
-        className={`relative w-full shrink-0 overflow-hidden ${mobileBoardCard ? "h-[135px]" : compact ? "h-[148px]" : "h-[196px] md:h-[190px] lg:h-[198px]"}`}
+        className={`relative w-full shrink-0 overflow-hidden ${mobileBoardCard ? "h-[135px]" : compact ? "h-[148px]" : "h-[196px] md:h-[150px] lg:h-[154px]"}`}
       >
         <DiscoveryCardImage
           image={image}
@@ -1326,7 +1326,7 @@ function DiscoverySuggestionCard({
       </div>
 
       <div
-        className={`min-w-0 flex-1 bg-white ${mobileBoardCard ? "flex flex-col px-3 pb-3 pt-3" : compact ? "space-y-1.5 px-2.5 pt-2.5" : "space-y-2 px-3 pt-3"}`}
+        className={`min-w-0 flex-1 bg-white ${mobileBoardCard ? "flex flex-col px-3 pb-3 pt-3" : compact ? "space-y-1.5 px-2.5 pt-2.5" : "space-y-1.5 px-3 pt-2.5"}`}
       >
         <p
           className={`line-clamp-2 break-words text-slate-950 ${mobileBoardCard ? "text-sm font-extrabold leading-[1.28] tracking-[-0.01em]" : compact ? "pr-10 rtl:pl-10 rtl:pr-0 text-sm font-bold leading-[1.32]" : "pr-10 rtl:pl-10 rtl:pr-0 text-sm font-bold leading-[1.35] md:text-[0.95rem]"}`}
@@ -1334,7 +1334,7 @@ function DiscoverySuggestionCard({
           {title}
         </p>
         <p
-          className={`line-clamp-2 break-words text-slate-600 ${mobileBoardCard ? "mt-2 text-xs font-medium leading-5" : compact ? "text-xs font-medium leading-5" : "text-xs font-medium leading-5 md:text-sm"}`}
+          className={`line-clamp-2 break-words text-slate-600 ${mobileBoardCard ? "mt-2 text-xs font-medium leading-5" : compact ? "text-xs font-medium leading-5" : "line-clamp-2 text-xs font-medium leading-5 md:text-sm"}`}
         >
           {originCode} → {destinationCodeLabel} · {routeNote}
         </p>
@@ -1369,7 +1369,7 @@ function DiscoverySuggestionCard({
 
       {!mobileBoardCard ? (
         <div
-          className={`border-t border-slate-200/90 bg-white ${compact ? "px-2.5 pb-2.5 pt-2.5" : "px-3 pb-3 pt-3"}`}
+          className={`border-t border-slate-200/90 bg-white ${compact ? "px-2.5 pb-2.5 pt-2.5" : "px-3 pb-2.5 pt-2.5"}`}
         >
           <DiscoveryPricePill
             price={price}
