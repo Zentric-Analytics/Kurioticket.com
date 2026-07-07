@@ -7,6 +7,7 @@ import type {
   FormEvent,
   MouseEvent as ReactMouseEvent,
   ReactNode,
+  RefObject,
   SetStateAction,
 } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -28,6 +29,7 @@ import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { FlightCard } from "@/components/results/FlightCard";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
+import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { Button } from "@/components/ui/Button";
 import { FlightCardSkeleton } from "@/components/ui/Skeleton";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -3505,6 +3507,7 @@ export function FlightResultsClient() {
           <DatePickerPopover
             position={datePickerPosition ?? { top: 0, left: 0, width: 0 }}
             mobileSheet={useMobileSheet}
+            launcherRef={useMobileSheet ? departureWrapRef : undefined}
             onClose={
               useMobileSheet
                 ? closeMobileDatePicker
@@ -3545,6 +3548,7 @@ export function FlightResultsClient() {
           <TravelerCabinPopover
             position={travelerPopoverPosition ?? { top: 0, left: 0, width: 0 }}
             mobileSheet={useMobileSheet}
+            launcherRef={useMobileSheet ? travelerCabinWrapRef : undefined}
             onClose={
               useMobileSheet
                 ? closeMobileTravelerPopover
@@ -5185,10 +5189,12 @@ function DatePickerPopover({
   onClear,
   onToday,
   onClose,
+  launcherRef,
 }: {
   position: { top: number; left: number; width: number };
   mobileSheet?: boolean;
   alignToField?: "left" | "right";
+  launcherRef?: RefObject<HTMLElement | null>;
   month: Date;
   departureValue: string;
   returnValue: string;
@@ -5239,6 +5245,8 @@ function DatePickerPopover({
           width: position.width,
           zIndex: 9999,
         } as const);
+
+  const titleId = "flight-date-picker-mobile-title";
 
   const renderMonth = (renderedMonth: Date) => (
     <div className="min-w-0">
@@ -5305,6 +5313,76 @@ function DatePickerPopover({
       </div>
     </div>
   );
+
+  if (mobileSheet) {
+    return (
+      <FlightMobilePickerShell
+        open={mobileSheet}
+        title={t("travelDates")}
+        titleId={titleId}
+        launcherRef={launcherRef}
+        onClose={onClose}
+        contentClassName="bg-white"
+        footer={(requestClose) => (
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              className="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] sm:text-sm"
+              onClick={onClear}
+            >
+              {t("clear")}
+            </button>
+
+            <button
+              type="button"
+              className="min-h-11 rounded-xl bg-[#004BB8] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1"
+              onClick={requestClose}
+            >
+              {t("done")}
+            </button>
+          </div>
+        )}
+      >
+        <div className="mx-auto flex h-full w-full max-w-xl flex-col">
+          <div className="mb-3 shrink-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+              {t("travelDates")}
+            </p>
+            <h3 id={titleId} className="text-base font-bold text-slate-950">
+              {tripType !== "round-trip" || activePicker === "departure"
+                ? t("selectDeparture")
+                : t("selectReturn")}
+            </h3>
+          </div>
+
+          <div className="mb-3 flex shrink-0 items-center justify-between">
+            <button
+              type="button"
+              aria-label={t("previousMonth")}
+              className="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] sm:text-sm"
+              onClick={() => onMonthChange(addMonths(leftMonth, -1))}
+            >
+              {t("previousShort")}
+            </button>
+
+            <button
+              type="button"
+              aria-label={t("nextMonth")}
+              className="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] sm:text-sm"
+              onClick={() => onMonthChange(addMonths(leftMonth, 1))}
+            >
+              {t("nextShort")}
+            </button>
+          </div>
+
+          <div className="grid min-h-0 flex-1 gap-3 overflow-visible md:grid-cols-2">
+            {renderMonth(leftMonth)}
+            <div className="block">{renderMonth(rightMonth)}</div>
+          </div>
+        </div>
+      </FlightMobilePickerShell>
+    );
+  }
 
   return (
     <div
@@ -5413,10 +5491,12 @@ function TravelerCabinPopover({
   onInfantChange,
   onCabinClassChange,
   onClose,
+  launcherRef,
 }: {
   position: { top: number; left: number; width: number };
   mobileSheet?: boolean;
   alignToField?: "left" | "right";
+  launcherRef?: RefObject<HTMLElement | null>;
   adultCount: number;
   childCount: number;
   infantCount: number;
@@ -5429,6 +5509,8 @@ function TravelerCabinPopover({
 }) {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const titleId = "flight-traveler-cabin-mobile-title";
+
   const dialogStyle = mobileSheet
     ? ({
         position: "fixed",
@@ -5452,6 +5534,95 @@ function TravelerCabinPopover({
           width: position.width,
           zIndex: 9999,
         } as const);
+
+  if (mobileSheet) {
+    return (
+      <FlightMobilePickerShell
+        open={mobileSheet}
+        title={t("travelersAndCabin")}
+        titleId={titleId}
+        launcherRef={launcherRef}
+        onClose={onClose}
+        footer={(requestClose) => (
+          <button
+            type="button"
+            onClick={requestClose}
+            className="min-h-12 w-full rounded-xl bg-[#004BB8] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1"
+          >
+            {t("done")}
+          </button>
+        )}
+      >
+        <div className="mx-auto w-full max-w-xl">
+          <div className="mb-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+              {t("travelers")}
+            </p>
+            <h3 id={titleId} className="text-base font-bold text-slate-950">
+              {t("travelersAndCabin")}
+            </h3>
+          </div>
+
+          <div>
+            <div className="mt-3 divide-y divide-slate-100 rounded-3xl border border-slate-200/80 bg-white px-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+              <CounterRow
+                label={t("adultPlural")}
+                description="18+"
+                value={adultCount}
+                min={1}
+                max={9}
+                onChange={onAdultChange}
+              />
+              <CounterRow
+                label={t("childPlural")}
+                description={t("childAgeRange")}
+                value={childCount}
+                min={0}
+                max={9}
+                onChange={onChildChange}
+              />
+              <CounterRow
+                label={t("infantsOnLap")}
+                description={t("under2")}
+                value={infantCount}
+                min={0}
+                max={adultCount}
+                onChange={onInfantChange}
+              />
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-3xl border border-slate-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <h3 className="text-xs font-semibold uppercase tracking-wide leading-4 text-slate-700">
+              {t("cabinClass")}
+            </h3>
+            <div className="mt-2 grid grid-cols-3 gap-1">
+              {cabinClassOptions.map((option) => {
+                const selected = option.value === cabinClass;
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => onCabinClassChange(option.value)}
+                    className={cn(
+                      "focus-ring min-h-11 rounded-xl border px-3 py-2 text-sm font-bold leading-4 text-center transition-colors",
+                      selected
+                        ? "border-[#004BB8]/22 bg-[#004BB8]/6 text-[#021C2B]"
+                        : "border-slate-300 text-slate-700 hover:bg-slate-50",
+                    )}
+                  >
+                    {t(option.labelKey)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </FlightMobilePickerShell>
+    );
+  }
 
   return (
     <div
