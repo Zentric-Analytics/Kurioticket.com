@@ -39,6 +39,18 @@ Regional fallback packs now cover:
 
 north-america, latin-america, west-africa, east-africa, southern-africa, middle-east, south-asia, western-europe, east-asia, and oceania.
 
+## Market image coverage audit
+
+Run this command to check priority marketplace image coverage:
+
+```bash
+npm run audit:market-images
+```
+
+The audit currently fails when a priority market cannot resolve to a market-level homepage hero image. It reports replacement-required scaffold records, but does not fail those yet because the approved premium or owned assets are still pending.
+
+When real market assets are approved, the audit should be tightened so launch-critical market images fail if they remain replacement-required.
+
 ## Rollout plan
 
 1. Add real country packs for priority markets.
