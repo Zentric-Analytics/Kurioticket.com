@@ -845,6 +845,11 @@ export function FlightResultsClient() {
   >(null);
   const mobileSearchScrollRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchScrollTopRef = useRef(0);
+  const pendingMobileDatePickerRef = useRef<"departure" | "return" | null>(
+    null,
+  );
+  const mobileDatePickerTransitionFrameRef = useRef<number | null>(null);
+  const mobileDatePickerTransitionTimeoutRef = useRef<number | null>(null);
   const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
   const [isSearchExpandedWhileSticky, setIsSearchExpandedWhileSticky] =
     useState(false);
@@ -1191,6 +1196,14 @@ export function FlightResultsClient() {
       if (filterApplyingTimeoutRef.current !== null) {
         window.clearTimeout(filterApplyingTimeoutRef.current);
       }
+
+      if (mobileDatePickerTransitionFrameRef.current !== null) {
+        window.cancelAnimationFrame(mobileDatePickerTransitionFrameRef.current);
+      }
+
+      if (mobileDatePickerTransitionTimeoutRef.current !== null) {
+        window.clearTimeout(mobileDatePickerTransitionTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -1346,6 +1359,63 @@ export function FlightResultsClient() {
     restoreMobileSearchScrollPosition();
   }
 
+  function getMissingMobileDatePicker() {
+    if (!departureDateInput.trim()) return "departure";
+
+    if (tripTypeInput === "round-trip" && !returnDateInput.trim()) {
+      return "return";
+    }
+
+    return null;
+  }
+
+  function clearPendingMobileDatePickerTransition() {
+    pendingMobileDatePickerRef.current = null;
+
+    if (mobileDatePickerTransitionFrameRef.current !== null) {
+      window.cancelAnimationFrame(mobileDatePickerTransitionFrameRef.current);
+      mobileDatePickerTransitionFrameRef.current = null;
+    }
+
+    if (mobileDatePickerTransitionTimeoutRef.current !== null) {
+      window.clearTimeout(mobileDatePickerTransitionTimeoutRef.current);
+      mobileDatePickerTransitionTimeoutRef.current = null;
+    }
+  }
+
+  function openPendingMobileDatePickerAfterAirportClose() {
+    const nextPicker = pendingMobileDatePickerRef.current;
+    if (!nextPicker) return;
+
+    pendingMobileDatePickerRef.current = null;
+
+    if (mobileDatePickerTransitionFrameRef.current !== null) {
+      window.cancelAnimationFrame(mobileDatePickerTransitionFrameRef.current);
+    }
+
+    if (mobileDatePickerTransitionTimeoutRef.current !== null) {
+      window.clearTimeout(mobileDatePickerTransitionTimeoutRef.current);
+      mobileDatePickerTransitionTimeoutRef.current = null;
+    }
+
+    mobileDatePickerTransitionFrameRef.current = window.requestAnimationFrame(
+      () => {
+        mobileDatePickerTransitionFrameRef.current = null;
+        mobileDatePickerTransitionTimeoutRef.current = window.setTimeout(() => {
+          mobileDatePickerTransitionTimeoutRef.current = null;
+          restoreMobileSearchScrollPosition();
+          setActiveDatePicker(nextPicker);
+          setDatePickerPosition(null);
+        }, 16);
+      },
+    );
+  }
+
+  function closeMobileAirportPicker() {
+    setActiveMobileAirportPicker(null);
+    openPendingMobileDatePickerAfterAirportClose();
+  }
+
   function closeMobileTravelerPopover() {
     setTravelerPopoverOpen(false);
     setTravelerPopoverPosition(null);
@@ -1353,6 +1423,7 @@ export function FlightResultsClient() {
   }
 
   function closeFlightSearchPopovers() {
+    clearPendingMobileDatePickerTransition();
     setActiveMobileAirportPicker(null);
     setActiveSuggest(null);
     setDropdownPosition(null);
@@ -4366,7 +4437,7 @@ export function FlightResultsClient() {
               }
               requestClose();
             }}
-            onClose={() => setActiveMobileAirportPicker(null)}
+            onClose={closeMobileAirportPicker}
           />
           <MobileAirportPicker
             open={activeMobileAirportPicker === "destination"}
@@ -4395,9 +4466,16 @@ export function FlightResultsClient() {
             onSelect={(option, requestClose) => {
               setDestinationInput(option.code);
               setDestinationCode(option.code);
+
+              const missingDatePicker = getMissingMobileDatePicker();
+              if (missingDatePicker) {
+                rememberMobileSearchScrollPosition();
+                pendingMobileDatePickerRef.current = missingDatePicker;
+              }
+
               requestClose();
             }}
-            onClose={() => setActiveMobileAirportPicker(null)}
+            onClose={closeMobileAirportPicker}
           />
         </>
       ) : null}
