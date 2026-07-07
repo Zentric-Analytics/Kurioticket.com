@@ -843,6 +843,8 @@ export function FlightResultsClient() {
   const [activeMobileAirportPicker, setActiveMobileAirportPicker] = useState<
     "origin" | "destination" | null
   >(null);
+  const mobileSearchScrollRef = useRef<HTMLDivElement | null>(null);
+  const mobileSearchScrollTopRef = useRef(0);
   const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
   const [isSearchExpandedWhileSticky, setIsSearchExpandedWhileSticky] =
     useState(false);
@@ -1320,6 +1322,34 @@ export function FlightResultsClient() {
     ) {
       setReturnDateInput("");
     }
+  }
+
+  function rememberMobileSearchScrollPosition() {
+    mobileSearchScrollTopRef.current =
+      mobileSearchScrollRef.current?.scrollTop ?? 0;
+  }
+
+  function restoreMobileSearchScrollPosition() {
+    window.requestAnimationFrame(() => {
+      const scroller = mobileSearchScrollRef.current;
+      if (!scroller) return;
+      scroller.scrollTo({
+        top: mobileSearchScrollTopRef.current,
+        behavior: "instant",
+      });
+    });
+  }
+
+  function closeMobileDatePicker() {
+    setActiveDatePicker(null);
+    setDatePickerPosition(null);
+    restoreMobileSearchScrollPosition();
+  }
+
+  function closeMobileTravelerPopover() {
+    setTravelerPopoverOpen(false);
+    setTravelerPopoverPosition(null);
+    restoreMobileSearchScrollPosition();
   }
 
   function closeFlightSearchPopovers() {
@@ -1962,6 +1992,7 @@ export function FlightResultsClient() {
 
     setActiveDatePicker(null);
     setDatePickerPosition(null);
+    restoreMobileSearchScrollPosition();
   }
 
   function handleCompactSearchSubmit(event: FormEvent<HTMLFormElement>) {
@@ -3403,10 +3434,14 @@ export function FlightResultsClient() {
           <DatePickerPopover
             position={datePickerPosition ?? { top: 0, left: 0, width: 0 }}
             mobileSheet={useMobileSheet}
-            onClose={() => {
-              setActiveDatePicker(null);
-              setDatePickerPosition(null);
-            }}
+            onClose={
+              useMobileSheet
+                ? closeMobileDatePicker
+                : () => {
+                    setActiveDatePicker(null);
+                    setDatePickerPosition(null);
+                  }
+            }
             month={calendarMonth}
             departureValue={departureDateInput}
             returnValue={returnDateInput}
@@ -3424,10 +3459,14 @@ export function FlightResultsClient() {
                 setReturnDateInput("");
               }
             }}
-            onToday={() => {
-              setActiveDatePicker(null);
-              setDatePickerPosition(null);
-            }}
+            onToday={
+              useMobileSheet
+                ? closeMobileDatePicker
+                : () => {
+                    setActiveDatePicker(null);
+                    setDatePickerPosition(null);
+                  }
+            }
           />
         ) : null}
 
@@ -3435,10 +3474,14 @@ export function FlightResultsClient() {
           <TravelerCabinPopover
             position={travelerPopoverPosition ?? { top: 0, left: 0, width: 0 }}
             mobileSheet={useMobileSheet}
-            onClose={() => {
-              setTravelerPopoverOpen(false);
-              setTravelerPopoverPosition(null);
-            }}
+            onClose={
+              useMobileSheet
+                ? closeMobileTravelerPopover
+                : () => {
+                    setTravelerPopoverOpen(false);
+                    setTravelerPopoverPosition(null);
+                  }
+            }
             adultCount={adultCount}
             childCount={childCount}
             infantCount={infantCount}
@@ -3512,7 +3555,10 @@ export function FlightResultsClient() {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+          <div
+            ref={mobileSearchScrollRef}
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
+          >
             <div className="mx-auto flex w-full max-w-xl flex-col gap-3">
               <div ref={originWrapRef}>
                 <button
@@ -3573,6 +3619,7 @@ export function FlightResultsClient() {
                     setDropdownPosition(null);
                     setTravelerPopoverOpen(false);
                     setTravelerPopoverPosition(null);
+                    rememberMobileSearchScrollPosition();
                     setActiveDatePicker("departure");
                     setDatePickerPosition(null);
                   }}
@@ -3604,6 +3651,7 @@ export function FlightResultsClient() {
                     setDropdownPosition(null);
                     setActiveDatePicker(null);
                     setDatePickerPosition(null);
+                    rememberMobileSearchScrollPosition();
                     setTravelerPopoverOpen(true);
                     setTravelerPopoverPosition(null);
                   }}
@@ -4309,10 +4357,14 @@ export function FlightResultsClient() {
               setOriginSuggestions([]);
               setOriginSuggestionsLoading(false);
             }}
-            onSelect={(option) => {
+            onSelect={(option, requestClose) => {
               setOriginInput(option.code);
               setOriginCode(option.code);
-              setActiveMobileAirportPicker(null);
+              if (!destinationCode && !destinationInput.trim()) {
+                setActiveMobileAirportPicker("destination");
+                return;
+              }
+              requestClose();
             }}
             onClose={() => setActiveMobileAirportPicker(null)}
           />
@@ -4340,10 +4392,10 @@ export function FlightResultsClient() {
               setDestinationSuggestions([]);
               setDestinationSuggestionsLoading(false);
             }}
-            onSelect={(option) => {
+            onSelect={(option, requestClose) => {
               setDestinationInput(option.code);
               setDestinationCode(option.code);
-              setActiveMobileAirportPicker(null);
+              requestClose();
             }}
             onClose={() => setActiveMobileAirportPicker(null)}
           />
