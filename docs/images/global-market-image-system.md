@@ -16,7 +16,7 @@ A launch-critical market image is production-ready only when it has approved sou
 
 ## Current Phase 1 scope
 
-This phase adds the contract only. It does not change live homepage, deals, hotels, flights, cars, or destination visuals.
+This phase adds the contract and connects the live homepage hero image source to the resolver. It does not change deals, hotels, flights, cars, destination visuals, or homepage hero styling.
 
 Implemented in this phase:
 
@@ -55,7 +55,7 @@ When real market assets are approved, the audit should be tightened so launch-cr
 
 `getHomepageHeroImageForMarket` resolves the homepage hero image through the market image system and keeps the existing global premium image as a safe fallback.
 
-The intended homepage wiring is:
+The homepage hero is now resolver-wired with:
 
 ```tsx
 const homepageHeroImage = useMemo(
@@ -64,7 +64,7 @@ const homepageHeroImage = useMemo(
 );
 ```
 
-Then the hero `Image` should use `homepageHeroImage.url` for the `src` value while keeping translated homepage alt text as the primary user-facing alt value.
+The hero `Image` uses `homepageHeroImage.url` for the `src` value while keeping translated homepage alt text as the primary user-facing alt value.
 
 ## Rollout plan
 
