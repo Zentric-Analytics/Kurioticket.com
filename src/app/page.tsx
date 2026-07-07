@@ -530,6 +530,14 @@ export default function Home() {
     () => discoveryCards.slice(0, HOME_DISCOVERY_MOBILE_VISIBLE_CARD_COUNT),
     [discoveryCards],
   );
+  const topRowDiscoveryCards = useMemo(
+    () => mobileDiscoveryCards.filter((_, index) => index % 2 === 0),
+    [mobileDiscoveryCards],
+  );
+  const bottomRowDiscoveryCards = useMemo(
+    () => mobileDiscoveryCards.filter((_, index) => index % 2 === 1),
+    [mobileDiscoveryCards],
+  );
 
   const handleNewsletterSubmit = async (
     event: React.FormEvent<HTMLFormElement>,
@@ -906,42 +914,60 @@ export default function Home() {
                 {t("homeDiscoverySubtitle")}
               </p>
             </div>
-            <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden">
-              <div className="grid w-max auto-cols-[minmax(170px,44vw)] grid-flow-col grid-rows-2 gap-3 pr-10">
-                {mobileDiscoveryCards.map((card) => {
-                  return (
-                    <DiscoverySuggestionCard
-                      key={card.item.id}
-                      href={buildDiscoveryCardHref(card.fare, {
-                        originCode: card.item.originCode,
-                        destinationCode: card.item.destinationCode,
-                        displayCurrency: selectedOption.currency,
-                        market: regionCode,
+            <div className="space-y-3 sm:hidden">
+              {[topRowDiscoveryCards, bottomRowDiscoveryCards].map(
+                (rowCards, rowIndex) => (
+                  <div
+                    key={rowIndex === 0 ? "top-row" : "bottom-row"}
+                    className={`-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+                      rowIndex === 0 ? "pb-1" : "pb-2"
+                    }`}
+                  >
+                    <div className="flex w-max gap-3 pr-10">
+                      {rowCards.map((card) => {
+                        return (
+                          <div
+                            key={card.item.id}
+                            className="w-[44vw] min-w-[170px] max-w-[210px] shrink-0"
+                          >
+                            <DiscoverySuggestionCard
+                              href={buildDiscoveryCardHref(card.fare, {
+                                originCode: card.item.originCode,
+                                destinationCode: card.item.destinationCode,
+                                displayCurrency: selectedOption.currency,
+                                market: regionCode,
+                              })}
+                              itemId={card.item.id}
+                              image={card.item.image}
+                              imageAlt={card.item.imageAlt}
+                              destinationCode={card.item.destinationCode}
+                              title={translateDiscoveryItemCopy(
+                                card.item,
+                                "title",
+                              )}
+                              originCode={card.item.originCode}
+                              destinationCodeLabel={card.item.destinationCode}
+                              routeNote={translateDiscoveryItemCopy(
+                                card.item,
+                                "routeNote",
+                              )}
+                              compact
+                              mobileBoardCard
+                              price={card.fare}
+                              displayCurrency={selectedOption.currency}
+                              expectedOriginCode={card.item.originCode}
+                              expectedDestinationCode={card.item.destinationCode}
+                              isPriceLoading={discoveryFareCardState.loading}
+                              isSaved={savedTripIds.includes(card.item.id)}
+                              onHeartToggle={handleSavedTripToggle}
+                            />
+                          </div>
+                        );
                       })}
-                      itemId={card.item.id}
-                      image={card.item.image}
-                      imageAlt={card.item.imageAlt}
-                      destinationCode={card.item.destinationCode}
-                      title={translateDiscoveryItemCopy(card.item, "title")}
-                      originCode={card.item.originCode}
-                      destinationCodeLabel={card.item.destinationCode}
-                      routeNote={translateDiscoveryItemCopy(
-                        card.item,
-                        "routeNote",
-                      )}
-                      compact
-                      mobileBoardCard
-                      price={card.fare}
-                      displayCurrency={selectedOption.currency}
-                      expectedOriginCode={card.item.originCode}
-                      expectedDestinationCode={card.item.destinationCode}
-                      isPriceLoading={discoveryFareCardState.loading}
-                      isSaved={savedTripIds.includes(card.item.id)}
-                      onHeartToggle={handleSavedTripToggle}
-                    />
-                  );
-                })}
-              </div>
+                    </div>
+                  </div>
+                ),
+              )}
             </div>
 
             <div className="hidden grid-cols-3 gap-3 sm:grid md:grid-cols-4 lg:grid-cols-4">
