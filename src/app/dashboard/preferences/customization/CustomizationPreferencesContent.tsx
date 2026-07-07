@@ -5,6 +5,7 @@ import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
 import { useLocale } from "@/components/layout/LocaleProvider";
 
 type EditablePreferenceKey =
+  | "receiveOptionalEmails"
   | "priceAlerts"
   | "savedTripReminders"
   | "routeWatchUpdates"
@@ -20,29 +21,20 @@ type PreferenceCopyKey =
   | "inspirationUpdates"
   | "travelInspiration"
   | "productUpdates"
-  | "dealsRecommendations"
-  | "requiredEmails"
-  | "securityAlerts"
-  | "supportReplies"
-  | "billingReceipts";
+  | "dealsRecommendations";
 
 type EditablePreference = {
   id: EditablePreferenceKey;
   copyKey: PreferenceCopyKey;
 };
 
-type RequiredPreference = {
-  id: string;
-  copyKey: PreferenceCopyKey;
-};
-
 type PreferenceSection = {
   copyKey: PreferenceCopyKey;
   editableRows?: EditablePreference[];
-  requiredRows?: RequiredPreference[];
 };
 
 const defaultEmailPreferences: Record<EditablePreferenceKey, boolean> = {
+  receiveOptionalEmails: true,
   priceAlerts: true,
   savedTripReminders: true,
   routeWatchUpdates: false,
@@ -68,14 +60,6 @@ const preferenceSections: PreferenceSection[] = [
       { id: "dealsRecommendations", copyKey: "dealsRecommendations" },
     ],
   },
-  {
-    copyKey: "requiredEmails",
-    requiredRows: [
-      { id: "security-alerts", copyKey: "securityAlerts" },
-      { id: "support-replies", copyKey: "supportReplies" },
-      { id: "billing-receipts", copyKey: "billingReceipts" },
-    ],
-  },
 ];
 
 function PreferenceSwitch({
@@ -84,12 +68,14 @@ function PreferenceSwitch({
   onChange,
   onLabel,
   offLabel,
+  disabled = false,
 }: {
   checked: boolean;
   label: string;
   onChange: () => void;
   onLabel: string;
   offLabel: string;
+  disabled?: boolean;
 }) {
   return (
     <button
@@ -97,8 +83,9 @@ function PreferenceSwitch({
       role="switch"
       aria-checked={checked}
       aria-label={`${label}: ${checked ? onLabel : offLabel}`}
+      disabled={disabled}
       onClick={onChange}
-      className="focus-ring inline-flex min-h-8 shrink-0 items-center rounded-full p-1 transition"
+      className="focus-ring inline-flex min-h-8 shrink-0 items-center rounded-full p-1 transition disabled:cursor-not-allowed disabled:opacity-60"
     >
       <span className="sr-only">{checked ? onLabel : offLabel}</span>
       <span
@@ -123,7 +110,8 @@ function PreferenceSwitch({
 
 export function CustomizationPreferencesContent() {
   const { t } = useLocale();
-  const legacyCustomizationTitle = t["accountDashboard.preferences.customization.title"];
+  const legacyCustomizationTitle =
+    t["accountDashboard.preferences.customization.title"];
   const legacyPreferenceActions = `${t["accountDashboard.preferences.cancel"]} ${t["accountDashboard.preferences.savePreferences"]}`;
   const [preferences, setPreferences] = useState(defaultEmailPreferences);
   const [statusMessage, setStatusMessage] = useState("");
@@ -143,60 +131,133 @@ export function CustomizationPreferencesContent() {
   };
 
   return (
-    <main className="flex-1 bg-[#eef4fb] pb-12 pt-0" data-legacy-customization-title={legacyCustomizationTitle} data-legacy-preference-actions={legacyPreferenceActions}>
+    <main
+      className="flex-1 bg-[#eef4fb] pb-12 pt-0"
+      data-legacy-customization-title={legacyCustomizationTitle}
+      data-legacy-preference-actions={legacyPreferenceActions}
+    >
       <div className="mx-auto max-w-[1120px] px-4 py-6 sm:px-6 lg:px-8">
         <AccountBackLink />
 
         <header className="mt-6">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">{t["accountDashboard.preferences.email.title"]}</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-700 sm:text-base">
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
+            {t["accountDashboard.preferences.email.title"]}
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm font-normal leading-6 text-slate-600 sm:text-base">
             {t["accountDashboard.preferences.email.subtitle"]}
           </p>
         </header>
 
-        <section className="mt-7 -mx-4 max-w-[64rem] overflow-hidden rounded-none border border-slate-300 bg-white shadow-md shadow-slate-200/70 sm:mx-0 sm:rounded-2xl" aria-labelledby="email-preferences-settings">
+        <section
+          className="mt-7 -mx-4 max-w-[64rem] overflow-hidden rounded-none border border-slate-300/90 bg-white shadow-lg shadow-slate-200/80 sm:mx-0 sm:rounded-2xl"
+          aria-labelledby="email-preferences-settings"
+        >
           <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
-            <h2 id="email-preferences-settings" className="text-base font-semibold leading-6 text-slate-950">
-              {t["accountDashboard.preferences.email.settingsTitle"]}
+            <h2
+              id="email-preferences-settings"
+              className="text-base font-semibold leading-6 text-slate-950"
+            >
+              {t["accountDashboard.preferences.email.cardTitle"]}
             </h2>
-            <p className="mt-1 text-sm leading-6 text-slate-700">{t["accountDashboard.preferences.email.settingsDescription"]}</p>
+            <p className="mt-1 text-sm font-normal leading-6 text-slate-600">
+              {t["accountDashboard.preferences.email.cardDescription"]}
+            </p>
           </div>
 
           <div className="px-5 sm:px-6">
-            {preferenceSections.map((section, sectionIndex) => (
-              <div key={section.copyKey} className={sectionIndex === 0 ? "py-5" : "border-t border-slate-200 py-5"}>
-                <h3 className="text-sm font-semibold leading-5 text-slate-950">{t[`accountDashboard.preferences.email.sections.${section.copyKey}.title`]}</h3>
+            <div className="py-5">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold leading-5 text-slate-950">
+                      {
+                        t[
+                          "accountDashboard.preferences.email.masterOptional.title"
+                        ]
+                      }
+                    </p>
+                    <p className="mt-1 text-sm font-normal leading-6 text-slate-600">
+                      {
+                        t[
+                          "accountDashboard.preferences.email.masterOptional.description"
+                        ]
+                      }
+                    </p>
+                  </div>
+                  <PreferenceSwitch
+                    checked={preferences.receiveOptionalEmails}
+                    label={
+                      t[
+                        "accountDashboard.preferences.email.masterOptional.title"
+                      ]
+                    }
+                    onChange={() => updatePreference("receiveOptionalEmails")}
+                    onLabel={t["accountDashboard.preferences.email.on"]}
+                    offLabel={t["accountDashboard.preferences.email.off"]}
+                  />
+                </div>
+                {!preferences.receiveOptionalEmails ? (
+                  <p className="mt-3 text-sm font-normal leading-6 text-slate-600">
+                    {
+                      t[
+                        "accountDashboard.preferences.email.masterOptional.disabledHelp"
+                      ]
+                    }
+                  </p>
+                ) : null}
+              </div>
+            </div>
+
+            {preferenceSections.map((section) => (
+              <div
+                key={section.copyKey}
+                className="border-t border-slate-200 py-5"
+              >
+                <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                  {
+                    t[
+                      `accountDashboard.preferences.email.sections.${section.copyKey}.title`
+                    ]
+                  }
+                </h3>
                 <div className="mt-3 divide-y divide-slate-100">
                   {section.editableRows?.map((row) => (
-                    <div key={row.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                    <div
+                      key={row.id}
+                      className={
+                        preferences.receiveOptionalEmails
+                          ? "flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+                          : "flex flex-col gap-3 py-4 opacity-55 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+                      }
+                    >
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold leading-5 text-slate-950">{t[`accountDashboard.preferences.email.rows.${row.copyKey}.title`]}</p>
-                        <p className="mt-1 text-sm leading-6 text-slate-700">{t[`accountDashboard.preferences.email.rows.${row.copyKey}.description`]}</p>
+                        <p className="text-sm font-semibold leading-5 text-slate-950">
+                          {
+                            t[
+                              `accountDashboard.preferences.email.rows.${row.copyKey}.title`
+                            ]
+                          }
+                        </p>
+                        <p className="mt-1 text-sm font-normal leading-6 text-slate-600">
+                          {
+                            t[
+                              `accountDashboard.preferences.email.rows.${row.copyKey}.description`
+                            ]
+                          }
+                        </p>
                       </div>
                       <PreferenceSwitch
                         checked={preferences[row.id]}
-                        label={t[`accountDashboard.preferences.email.rows.${row.copyKey}.title`]}
+                        label={
+                          t[
+                            `accountDashboard.preferences.email.rows.${row.copyKey}.title`
+                          ]
+                        }
                         onChange={() => updatePreference(row.id)}
                         onLabel={t["accountDashboard.preferences.email.on"]}
                         offLabel={t["accountDashboard.preferences.email.off"]}
+                        disabled={!preferences.receiveOptionalEmails}
                       />
-                    </div>
-                  ))}
-
-                  {section.requiredRows?.map((row) => (
-                    <div key={row.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-sm font-semibold leading-5 text-slate-950">{t[`accountDashboard.preferences.email.rows.${row.copyKey}.title`]}</p>
-                          <span
-                            className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800"
-                            aria-label={`${t[`accountDashboard.preferences.email.rows.${row.copyKey}.title`]}: ${t["accountDashboard.preferences.email.alwaysOn"]}`}
-                          >
-                            {t["accountDashboard.preferences.email.alwaysOn"]}
-                          </span>
-                        </div>
-                        <p className="mt-1 text-sm leading-6 text-slate-700">{t[`accountDashboard.preferences.email.rows.${row.copyKey}.description`]}</p>
-                      </div>
                     </div>
                   ))}
                 </div>
@@ -206,18 +267,32 @@ export function CustomizationPreferencesContent() {
 
           <div className="border-t border-slate-200 bg-slate-50/60 px-5 py-4 sm:px-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm leading-6 text-slate-700">{t["accountDashboard.preferences.email.trustNote"]}</p>
+              <p className="text-sm font-normal leading-6 text-slate-600">
+                {t["accountDashboard.preferences.email.trustNote"]}
+              </p>
               <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <button type="button" onClick={resetToDefault} className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50">
+                <button
+                  type="button"
+                  onClick={resetToDefault}
+                  className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+                >
                   {t["accountDashboard.preferences.email.resetToDefault"]}
                 </button>
-                <button type="button" onClick={previewSave} className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B]">
+                <button
+                  type="button"
+                  onClick={previewSave}
+                  className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B]"
+                >
                   {t["accountDashboard.preferences.email.savePreferences"]}
                 </button>
               </div>
             </div>
             {statusMessage ? (
-              <p className="mt-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-medium leading-6 text-blue-900" role="status" aria-live="polite">
+              <p
+                className="mt-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-normal leading-6 text-blue-900"
+                role="status"
+                aria-live="polite"
+              >
                 {statusMessage}
               </p>
             ) : null}
