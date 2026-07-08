@@ -2497,4 +2497,9 @@ flightLandingRouteAriaLabel: "Vluchten zoeken van {{origin}} naar {{destination}
   "accountDashboard.preferences.customization.actions.save": "Save",
   "accountDashboard.preferences.customization.actions.saving": "Saving...",
   "accountDashboard.preferences.customization.status.updatedOnDevice": "Regional defaults were updated on this device. Personalization saving will be connected soon.",
+  "accountDashboard.preferences.customization.status.loadError": "Unable to load saved customization preferences. Using this device’s settings for now.",
+  "accountDashboard.preferences.customization.status.updatedOnDeviceSignedOut": "Customization preferences are updated on this device. Sign in to sync them across devices.",
+  "accountDashboard.preferences.customization.status.saving": "Saving customization preferences…",
+  "accountDashboard.preferences.customization.status.saved": "Customization preferences saved.",
+  "accountDashboard.preferences.customization.status.saveError": "Unable to save customization preferences. Please try again.",
 };

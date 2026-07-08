@@ -13,9 +13,15 @@ type BooleanPreferenceKey =
   | "rememberChoices"
   | "personalizeRecommendations"
   | "showHelpfulTips";
-type Status = "idle" | "saving" | "success";
+type Status = "idle" | "saving" | "success" | "error";
 
 type PersonalizationPreferences = Record<BooleanPreferenceKey, boolean>;
+
+type CustomizationPreferencesDraft = PersonalizationPreferences & {
+  locale: string;
+  currency: string;
+  region: string;
+};
 
 const defaultPersonalizationPreferences: PersonalizationPreferences = {
   rememberChoices: true,
@@ -26,6 +32,13 @@ const defaultPersonalizationPreferences: PersonalizationPreferences = {
 const DEFAULT_LOCALE = "en-us";
 const DEFAULT_CURRENCY = "USD";
 const DEFAULT_REGION = "US";
+
+const defaultCustomizationPreferences: CustomizationPreferencesDraft = {
+  locale: DEFAULT_LOCALE,
+  currency: DEFAULT_CURRENCY,
+  region: DEFAULT_REGION,
+  ...defaultPersonalizationPreferences,
+};
 
 const personalizationOptions: BooleanPreferenceKey[] = [
   "rememberChoices",
@@ -81,8 +94,13 @@ export function CustomizationPreferencesContent() {
     options: regionOptions,
     currencies,
   } = useRegion();
-  const [personalizationPreferences, setPersonalizationPreferences] =
-    useState<PersonalizationPreferences>(defaultPersonalizationPreferences);
+  const [draftPreferences, setDraftPreferences] =
+    useState<CustomizationPreferencesDraft>(() => ({
+      locale,
+      currency: selectedCurrency,
+      region: mode,
+      ...defaultPersonalizationPreferences,
+    }));
   const [status, setStatus] = useState<Status>("idle");
   const [statusMessage, setStatusMessage] = useState("");
 
@@ -97,51 +115,102 @@ export function CustomizationPreferencesContent() {
     return () => window.clearTimeout(timeoutId);
   }, [status, statusMessage]);
 
-  const showUpdatedMessage = () => {
-    setStatus("success");
-    setStatusMessage(
-      t["accountDashboard.preferences.customization.status.updatedOnDevice"],
-    );
+  useEffect(() => {
+    let isActive = true;
+
+    const loadPreferences = async () => {
+      try {
+        const response = await fetch("/api/account/customization-preferences", {
+          method: "GET",
+          headers: { Accept: "application/json" },
+        });
+
+        if (response.status === 401) return;
+
+        if (!response.ok) {
+          throw new Error("Unable to load customization preferences.");
+        }
+
+        const data = (await response.json()) as {
+          hasPreferences?: boolean;
+          preferences?: Partial<CustomizationPreferencesDraft>;
+        };
+
+        if (!isActive || !data.hasPreferences || !data.preferences) return;
+
+        setDraftPreferences((current) => ({
+          ...current,
+          ...data.preferences,
+        }));
+      } catch {
+        if (!isActive) return;
+
+        setStatus("error");
+        setStatusMessage(
+          t["accountDashboard.preferences.customization.status.loadError"],
+        );
+      }
+    };
+
+    void loadPreferences();
+
+    return () => {
+      isActive = false;
+    };
+  }, [t]);
+
+  const showStatusMessage = (nextStatus: Status, messageKey: string) => {
+    setStatus(nextStatus);
+    setStatusMessage(t[messageKey]);
   };
 
   const handleLanguageChange = (nextLocale: string) => {
-    const didChangeLanguage = setLocale(nextLocale);
-
-    if (!didChangeLanguage) return;
-
-    showUpdatedMessage();
-
-    window.setTimeout(() => {
-      window.location.reload();
-    }, 220);
+    setDraftPreferences((current) => ({ ...current, locale: nextLocale }));
+    setStatus("idle");
+    setStatusMessage("");
   };
 
   const handleCurrencyChange = (nextCurrency: string) => {
-    setCurrency(nextCurrency);
-    showUpdatedMessage();
+    setDraftPreferences((current) => ({ ...current, currency: nextCurrency }));
+    setStatus("idle");
+    setStatusMessage("");
   };
 
   const handleRegionChange = (nextRegion: string) => {
-    setMode(nextRegion);
-    showUpdatedMessage();
+    setDraftPreferences((current) => ({ ...current, region: nextRegion }));
+    setStatus("idle");
+    setStatusMessage("");
   };
 
   const updatePersonalizationPreference = (
     key: BooleanPreferenceKey,
     value: boolean,
   ) => {
-    setPersonalizationPreferences((current) => ({ ...current, [key]: value }));
+    setDraftPreferences((current) => ({ ...current, [key]: value }));
     setStatus("idle");
     setStatusMessage("");
   };
 
   const resetToDefault = () => {
-    const didChangeLanguage = setLocale(DEFAULT_LOCALE);
+    setDraftPreferences(defaultCustomizationPreferences);
+    setStatus("idle");
+    setStatusMessage("");
+  };
 
-    setCurrency(DEFAULT_CURRENCY);
-    setMode(DEFAULT_REGION);
-    setPersonalizationPreferences(defaultPersonalizationPreferences);
-    showUpdatedMessage();
+  const applyDraftToDevice = (preferences: CustomizationPreferencesDraft) => {
+    const didChangeLanguage = preferences.locale !== locale;
+
+    if (didChangeLanguage) {
+      setLocale(preferences.locale);
+    }
+
+    if (preferences.currency !== selectedCurrency) {
+      setCurrency(preferences.currency);
+    }
+
+    if (preferences.region !== mode) {
+      setMode(preferences.region);
+    }
 
     if (didChangeLanguage) {
       window.setTimeout(() => {
@@ -150,11 +219,52 @@ export function CustomizationPreferencesContent() {
     }
   };
 
-  const savePreferences = () => {
+  const savePreferences = async () => {
     setStatus("saving");
-    window.setTimeout(() => {
-      showUpdatedMessage();
-    }, 150);
+    setStatusMessage(
+      t["accountDashboard.preferences.customization.status.saving"],
+    );
+
+    try {
+      const response = await fetch("/api/account/customization-preferences", {
+        method: "PATCH",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(draftPreferences),
+      });
+
+      if (response.status === 401) {
+        applyDraftToDevice(draftPreferences);
+        showStatusMessage(
+          "success",
+          "accountDashboard.preferences.customization.status.updatedOnDeviceSignedOut",
+        );
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error("Unable to save customization preferences.");
+      }
+
+      const data = (await response.json()) as {
+        preferences?: CustomizationPreferencesDraft;
+      };
+      const savedPreferences = data.preferences ?? draftPreferences;
+
+      setDraftPreferences(savedPreferences);
+      applyDraftToDevice(savedPreferences);
+      showStatusMessage(
+        "success",
+        "accountDashboard.preferences.customization.status.saved",
+      );
+    } catch {
+      showStatusMessage(
+        "error",
+        "accountDashboard.preferences.customization.status.saveError",
+      );
+    }
   };
 
   const availableLocales = locales.filter(
@@ -204,7 +314,7 @@ export function CustomizationPreferencesContent() {
                       }
                     </span>
                     <select
-                      value={locale}
+                      value={draftPreferences.locale}
                       onChange={(event) =>
                         handleLanguageChange(event.target.value)
                       }
@@ -227,7 +337,7 @@ export function CustomizationPreferencesContent() {
                       }
                     </span>
                     <select
-                      value={selectedCurrency}
+                      value={draftPreferences.currency}
                       onChange={(event) =>
                         handleCurrencyChange(event.target.value)
                       }
@@ -251,7 +361,7 @@ export function CustomizationPreferencesContent() {
                       }
                     </span>
                     <select
-                      value={mode}
+                      value={draftPreferences.region}
                       onChange={(event) =>
                         handleRegionChange(event.target.value)
                       }
@@ -304,7 +414,7 @@ export function CustomizationPreferencesContent() {
                       </div>
                       <div className="shrink-0 pt-1 sm:pt-0">
                         <PreferenceSwitch
-                          checked={personalizationPreferences[option]}
+                          checked={draftPreferences[option]}
                           label={
                             t[
                               `accountDashboard.preferences.customization.fields.${option}.label`
@@ -313,7 +423,7 @@ export function CustomizationPreferencesContent() {
                           onChange={() =>
                             updatePersonalizationPreference(
                               option,
-                              !personalizationPreferences[option],
+                              !draftPreferences[option],
                             )
                           }
                         />
