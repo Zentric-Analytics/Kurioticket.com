@@ -922,11 +922,8 @@ test("Thai account customization and booking preferences resolve through active 
   const expectedCustomizationCopy = {
     "accountDashboard.preferences.customization.title": "การตั้งค่าการปรับแต่ง",
     "accountDashboard.preferences.customization.subtitle": "Settings that make the app feel personal to you.",
-    "accountDashboard.preferences.customization.sections.display": "Display",
     "accountDashboard.preferences.customization.sections.regionalDefaults": "Regional defaults",
     "accountDashboard.preferences.customization.sections.personalization": "Personalization",
-    "accountDashboard.preferences.customization.fields.theme.label": "Theme preference",
-    "accountDashboard.preferences.customization.fields.density.label": "Display density",
     "accountDashboard.preferences.customization.fields.language.label": "Language",
     "accountDashboard.preferences.customization.fields.currency.label": "Currency",
     "accountDashboard.preferences.customization.fields.region.label": "Region",
@@ -1008,7 +1005,6 @@ test("Thai account customization and booking preferences resolve through active 
     assert.ok(!activeThaiRenderValues.includes(englishFallback), `Thai preferences should not fall back to English: ${englishFallback}`);
   }
 
-  assert.ok(customizationSource.includes('role="radiogroup"'));
   assert.ok(customizationSource.includes('role="switch"'));
   assert.ok(customizationSource.includes('value={preferences.currency}'));
   assert.ok(customizationSource.includes('value={preferences.region}'));

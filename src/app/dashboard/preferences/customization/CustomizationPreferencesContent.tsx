@@ -4,14 +4,10 @@ import { useEffect, useState } from "react";
 import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
 import { useLocale } from "@/components/layout/LocaleProvider";
 
-type ThemePreference = "system" | "light" | "dark";
-type DisplayDensity = "comfortable" | "compact";
 type CurrencyPreference = "USD" | "GBP" | "EUR" | "NGN";
 type RegionPreference = "nigeria" | "unitedKingdom" | "unitedStates" | "europe";
 
 type CustomizationPreferences = {
-  theme: ThemePreference;
-  density: DisplayDensity;
   language: "english";
   currency: CurrencyPreference;
   region: RegionPreference;
@@ -24,8 +20,6 @@ type BooleanPreferenceKey = "rememberChoices" | "personalizeRecommendations" | "
 type Status = "idle" | "saving" | "success";
 
 const defaultCustomizationPreferences: CustomizationPreferences = {
-  theme: "system",
-  density: "comfortable",
   language: "english",
   currency: "USD",
   region: "unitedStates",
@@ -34,8 +28,6 @@ const defaultCustomizationPreferences: CustomizationPreferences = {
   showHelpfulTips: true,
 };
 
-const themeOptions: ThemePreference[] = ["system", "light", "dark"];
-const densityOptions: DisplayDensity[] = ["comfortable", "compact"];
 const currencyOptions: CurrencyPreference[] = ["USD", "GBP", "EUR", "NGN"];
 const regionOptions: RegionPreference[] = ["nigeria", "unitedKingdom", "unitedStates", "europe"];
 const personalizationOptions: BooleanPreferenceKey[] = [
@@ -142,59 +134,6 @@ export function CustomizationPreferencesContent() {
           <div className="space-y-5">
             <div className="-mx-4 rounded-none border border-slate-300 bg-white/45 px-4 py-5 shadow-sm sm:mx-0 sm:rounded-2xl sm:p-6">
               <div>
-                <h3 className="text-xs font-bold uppercase tracking-[0.1em] text-slate-600">
-                  {t["accountDashboard.preferences.customization.sections.display"]}
-                </h3>
-                <div className="mt-4 grid gap-5 sm:grid-cols-2">
-                  <fieldset>
-                    <legend className="text-sm font-semibold leading-5 text-slate-950">
-                      {t["accountDashboard.preferences.customization.fields.theme.label"]}
-                    </legend>
-                    <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
-                      {t["accountDashboard.preferences.customization.fields.theme.description"]}
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-2" role="radiogroup">
-                      {themeOptions.map((option) => (
-                        <button
-                          key={option}
-                          type="button"
-                          role="radio"
-                          aria-checked={preferences.theme === option}
-                          onClick={() => updatePreference("theme", option)}
-                          className={preferences.theme === option ? "focus-ring rounded-xl border border-[#004BB8] bg-blue-50 px-4 py-2 text-sm font-semibold text-[#004BB8]" : "focus-ring rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"}
-                        >
-                          {t[`accountDashboard.preferences.customization.options.theme.${option}`]}
-                        </button>
-                      ))}
-                    </div>
-                  </fieldset>
-
-                  <fieldset>
-                    <legend className="text-sm font-semibold leading-5 text-slate-950">
-                      {t["accountDashboard.preferences.customization.fields.density.label"]}
-                    </legend>
-                    <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
-                      {t["accountDashboard.preferences.customization.fields.density.description"]}
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-2" role="radiogroup">
-                      {densityOptions.map((option) => (
-                        <button
-                          key={option}
-                          type="button"
-                          role="radio"
-                          aria-checked={preferences.density === option}
-                          onClick={() => updatePreference("density", option)}
-                          className={preferences.density === option ? "focus-ring rounded-xl border border-[#004BB8] bg-blue-50 px-4 py-2 text-sm font-semibold text-[#004BB8]" : "focus-ring rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"}
-                        >
-                          {t[`accountDashboard.preferences.customization.options.density.${option}`]}
-                        </button>
-                      ))}
-                    </div>
-                  </fieldset>
-                </div>
-              </div>
-
-              <div className="mt-6 border-t border-slate-300 pt-6">
                 <h3 className="text-xs font-bold uppercase tracking-[0.1em] text-slate-600">
                   {t["accountDashboard.preferences.customization.sections.regionalDefaults"]}
                 </h3>
