@@ -61,6 +61,8 @@ services:
         sync: false
       - key: ADMIN_EMAILS
         sync: false
+      - key: HOMEPAGE_FARES_CRON_SECRET
+        sync: false
 
   - type: web
     name: kurioticket-web-staging
@@ -123,6 +125,8 @@ services:
       - key: HOTEL_API_KEY
         sync: false
       - key: ADMIN_EMAILS
+        sync: false
+      - key: HOMEPAGE_FARES_CRON_SECRET
         sync: false
 
 databases:

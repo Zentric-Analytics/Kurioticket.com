@@ -505,7 +505,7 @@ export function HomepageFaresRefreshCard() {
       });
 
       if (!response.ok) {
-        throw new Error("Homepage fare refresh failed.");
+        throw new Error(await buildSafeRefreshFailureMessage(response));
       }
 
       const payload = await response.json();
@@ -517,11 +517,13 @@ export function HomepageFaresRefreshCard() {
         status: "success",
       });
       await loadStatus();
-    } catch {
+    } catch (error) {
       setRefreshState({
         counts: null,
         message:
-          "Could not refresh homepage fares. Please try again or check provider status.",
+          error instanceof Error
+            ? error.message
+            : "Could not refresh homepage fares. Please try again or check provider status.",
         status: "error",
       });
     } finally {
@@ -1646,6 +1648,28 @@ function StatusBadge({ status }: { status: HomepageFareSnapshotStatus }) {
       {status}
     </span>
   );
+}
+
+async function buildSafeRefreshFailureMessage(response: Response) {
+  const fallback = `Could not refresh homepage fares. Status ${response.status}.`;
+
+  try {
+    const payload = (await response.json()) as {
+      error?: unknown;
+      errorCode?: unknown;
+      safeReason?: unknown;
+    };
+    const details = [
+      typeof payload.error === "string" ? payload.error : "Homepage fare refresh failed.",
+      typeof payload.safeReason === "string" ? payload.safeReason : undefined,
+      typeof payload.errorCode === "string" ? `Code: ${payload.errorCode}.` : undefined,
+      `Status: ${response.status}.`,
+    ].filter(Boolean);
+
+    return details.join(" ");
+  } catch {
+    return fallback;
+  }
 }
 
 async function fetchHomepageFareStatus() {

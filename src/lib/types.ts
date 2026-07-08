@@ -128,7 +128,8 @@ export type ProviderErrorCategory =
   | "auth"
   | "server"
   | "invalid_response"
-  | "failed";
+  | "failed"
+  | "skipped";
 
 export type ProviderErrorReason =
   | "provider_no_inventory"
@@ -138,7 +139,8 @@ export type ProviderErrorReason =
   | "provider_auth_error"
   | "provider_server_error"
   | "provider_invalid_response"
-  | "provider_failed";
+  | "provider_failed"
+  | "provider_skipped";
 
 export type ProviderResult<T> = {
   provider: string;
