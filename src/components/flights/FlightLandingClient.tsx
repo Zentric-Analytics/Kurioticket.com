@@ -334,9 +334,9 @@ function RouteCard({
       aria-label={t("flightLandingRouteAriaLabel")
         .replace("{{origin}}", routeText.originCity)
         .replace("{{destination}}", routeText.destinationCity)}
-      className="group block overflow-hidden rounded-3xl border border-slate-200/80 bg-white h-[20.25rem] shadow-[0_14px_36px_rgba(15,23,42,0.07)] transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-[0_18px_42px_rgba(0,75,184,0.14)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 sm:h-[20.5rem]"
+      className="group block overflow-hidden rounded-3xl border border-slate-200/80 bg-white h-[23rem] shadow-[0_14px_36px_rgba(15,23,42,0.07)] transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-[0_18px_42px_rgba(0,75,184,0.14)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 sm:h-full sm:min-h-[22.5rem]"
     >
-      <article className="flex h-full flex-col">
+      <article className="flex h-full flex-col overflow-hidden">
         <div className="relative h-[9.5rem] shrink-0 overflow-hidden bg-slate-100 sm:h-40 lg:h-[9.75rem]">
           <Image
             src={item.image}
@@ -347,7 +347,7 @@ function RouteCard({
             className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
           />
         </div>
-        <div className="flex flex-1 flex-col p-3 pb-4 sm:p-3.5 sm:pb-4">
+        <div className="flex flex-1 flex-col p-4 pb-5 sm:p-4 sm:pb-5">
           <div className="min-w-0">
             <h3 className="line-clamp-2 text-lg font-bold leading-snug tracking-tight text-slate-950">
               {routeText.title}
@@ -362,7 +362,7 @@ function RouteCard({
               {routeText.routeNote}
             </p>
           </div>
-          <div className="mt-auto pt-3">
+          <div className="mt-auto pt-4">
             <span className="inline-flex min-h-10 w-fit items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-4 text-sm font-semibold text-white shadow-sm shadow-[#004BB8]/20 transition duration-200 group-hover:bg-[#021C2B] group-hover:shadow-[0_10px_22px_rgba(0,75,184,0.18)] group-active:translate-y-px">
               {t("flightLandingStartThisSearch")}
               <Plane className="h-4 w-4 shrink-0 stroke-[2.4] transition duration-200 group-hover:translate-x-0.5" />
