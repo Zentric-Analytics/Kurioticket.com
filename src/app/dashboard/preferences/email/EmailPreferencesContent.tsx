@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
 import { useLocale } from "@/components/layout/LocaleProvider";
 
@@ -23,6 +23,10 @@ type PreferenceCopyKey =
   | "productUpdates"
   | "dealsRecommendations";
 
+type EmailPreferences = Record<EditablePreferenceKey, boolean>;
+
+type Status = "idle" | "loading" | "saving" | "success" | "error";
+
 type EditablePreference = {
   id: EditablePreferenceKey;
   copyKey: PreferenceCopyKey;
@@ -33,7 +37,7 @@ type PreferenceSection = {
   editableRows?: EditablePreference[];
 };
 
-const defaultEmailPreferences: Record<EditablePreferenceKey, boolean> = {
+const defaultEmailPreferences: EmailPreferences = {
   receiveOptionalEmails: true,
   priceAlerts: true,
   savedTripReminders: true,
@@ -113,21 +117,78 @@ export function EmailPreferencesContent() {
   const legacyCustomizationTitle =
     t["accountDashboard.preferences.customization.title"];
   const legacyPreferenceActions = `${t["accountDashboard.preferences.cancel"]} ${t["accountDashboard.preferences.savePreferences"]}`;
-  const [preferences, setPreferences] = useState(defaultEmailPreferences);
+  const [preferences, setPreferences] = useState<EmailPreferences>(defaultEmailPreferences);
+  const [savedPreferences, setSavedPreferences] = useState<EmailPreferences>(defaultEmailPreferences);
+  const [status, setStatus] = useState<Status>("loading");
   const [statusMessage, setStatusMessage] = useState("");
 
+  const disabled = status === "loading" || status === "saving";
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadPreferences() {
+      try {
+        const response = await fetch("/api/account/email-preferences", { cache: "no-store" });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Unable to load email preferences.");
+        if (!active) return;
+        const nextPreferences = { ...defaultEmailPreferences, ...data.preferences };
+        setPreferences(nextPreferences);
+        setSavedPreferences(nextPreferences);
+        setStatus("idle");
+        setStatusMessage("");
+      } catch {
+        if (!active) return;
+        setPreferences(defaultEmailPreferences);
+        setSavedPreferences(defaultEmailPreferences);
+        setStatus("error");
+        setStatusMessage(t["accountDashboard.preferences.email.loadErrorStatus"]);
+      }
+    }
+
+    void loadPreferences();
+
+    return () => {
+      active = false;
+    };
+  }, [t]);
+
   const updatePreference = (id: EditablePreferenceKey) => {
+    if (disabled) return;
     setPreferences((current) => ({ ...current, [id]: !current[id] }));
+    setStatus("idle");
     setStatusMessage("");
   };
 
   const resetToDefault = () => {
+    if (disabled) return;
     setPreferences(defaultEmailPreferences);
+    setStatus("idle");
     setStatusMessage("");
   };
 
-  const previewSave = () => {
-    setStatusMessage(t["accountDashboard.preferences.email.previewSaveStatus"]);
+  const savePreferences = async () => {
+    setStatus("saving");
+    setStatusMessage("");
+
+    try {
+      const response = await fetch("/api/account/email-preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(preferences),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to save email preferences.");
+      const nextPreferences = { ...defaultEmailPreferences, ...data.preferences };
+      setPreferences(nextPreferences);
+      setSavedPreferences(nextPreferences);
+      setStatus("success");
+      setStatusMessage(t["accountDashboard.preferences.email.saveSuccessStatus"]);
+    } catch {
+      setStatus("error");
+      setStatusMessage(t["accountDashboard.preferences.email.saveErrorStatus"]);
+    }
   };
 
   return (
@@ -135,6 +196,7 @@ export function EmailPreferencesContent() {
       className="flex-1 bg-[#f3f7fc] pb-12 pt-0"
       data-legacy-customization-title={legacyCustomizationTitle}
       data-legacy-preference-actions={legacyPreferenceActions}
+      data-saved-preferences-count={Object.keys(savedPreferences).length}
     >
       <div className="mx-auto max-w-[1120px] px-4 py-6 sm:px-6 lg:px-8">
         <AccountBackLink />
@@ -234,7 +296,7 @@ export function EmailPreferencesContent() {
                               offLabel={
                                 t["accountDashboard.preferences.email.off"]
                               }
-                              disabled={!preferences.receiveOptionalEmails}
+                              disabled={disabled || !preferences.receiveOptionalEmails}
                             />
                           </div>
                         </div>
@@ -283,6 +345,7 @@ export function EmailPreferencesContent() {
                             offLabel={
                               t["accountDashboard.preferences.email.off"]
                             }
+                            disabled={disabled}
                           />
                         </div>
                       </div>
@@ -305,7 +368,8 @@ export function EmailPreferencesContent() {
               <button
                 type="button"
                 onClick={resetToDefault}
-                className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:flex-none sm:bg-transparent"
+                disabled={disabled}
+                className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:bg-transparent"
               >
                 <span className="sm:hidden">
                   {t["accountDashboard.preferences.email.resetShort"]}
@@ -316,14 +380,15 @@ export function EmailPreferencesContent() {
               </button>
               <button
                 type="button"
-                onClick={previewSave}
-                className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] sm:flex-none"
+                onClick={savePreferences}
+                disabled={disabled}
+                className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
               >
                 <span className="sm:hidden">
-                  {t["accountDashboard.preferences.email.saveShort"]}
+                  {status === "saving" ? t["accountDashboard.preferences.email.savingShort"] : t["accountDashboard.preferences.email.saveShort"]}
                 </span>
                 <span className="hidden sm:inline">
-                  {t["accountDashboard.preferences.email.savePreferences"]}
+                  {status === "saving" ? t["accountDashboard.preferences.email.savingPreferences"] : t["accountDashboard.preferences.email.savePreferences"]}
                 </span>
               </button>
             </div>
