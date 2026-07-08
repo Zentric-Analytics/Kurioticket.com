@@ -1174,7 +1174,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
       <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
       <section
         className={cn(
-          "sticky top-0 z-40 hidden border-b border-slate-200/80 bg-[#f6f8fb]/95 backdrop-blur transition-[padding,border-color] duration-200 sm:block",
+          "sticky top-0 z-40 hidden border-b border-transparent bg-[#f6f8fb]/95 backdrop-blur transition-[padding,border-color] duration-200 sm:block",
           showCompactSearchSummary ? "py-1.5" : "py-3",
         )}
         aria-labelledby="cars-results-heading"
