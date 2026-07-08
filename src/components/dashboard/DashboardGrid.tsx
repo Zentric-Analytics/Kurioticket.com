@@ -150,7 +150,7 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
       },
       {
         labelKey: "accountDashboard.hub.travelPreferences",
-        href: "/dashboard/preferences/booking",
+        href: "/dashboard/preferences/travel",
         icon: Settings,
       },
     ],
