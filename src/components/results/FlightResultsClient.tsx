@@ -3932,7 +3932,7 @@ export function FlightResultsClient() {
     ) {
       return (
         <div className="mx-auto w-full min-w-0 max-w-5xl sm:block">
-          <div className="overflow-visible border border-slate-200/90 bg-white p-0 shadow-none">
+          <div className="overflow-visible border border-slate-200/90 bg-white p-0 shadow-[0_18px_44px_-28px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.02]">
             <button
               type="button"
               aria-label={t("editFlightSearch")}
@@ -4018,7 +4018,7 @@ export function FlightResultsClient() {
             </button>
           </div>
 
-          <div className="overflow-visible border border-slate-200/90 bg-white p-1.5 shadow-none">
+          <div className="overflow-visible border border-slate-200/90 bg-white p-1.5 shadow-[0_18px_44px_-28px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.02]">
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[132px_minmax(0,2.35fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
               <div ref={tripTypeMenuRef} className="relative">
                 <button
@@ -4452,21 +4452,13 @@ export function FlightResultsClient() {
     );
   }
 
-  function renderFloatingFilterButton(placement: "mobile" | "desktop") {
+  function renderFloatingFilterButton() {
     const label =
       activeFilterCount > 0
         ? t("openFiltersWithCount").replace("{{count}}", activeFilterLabel)
         : t("openFilters");
 
     const handleClick = () => {
-      if (
-        placement === "desktop" &&
-        window.matchMedia("(min-width: 1024px)").matches
-      ) {
-        expandDesktopFilters();
-        return;
-      }
-
       setFiltersOpen(true);
     };
 
@@ -4476,10 +4468,7 @@ export function FlightResultsClient() {
         variant="secondary"
         aria-label={label}
         className={cn(
-          "relative shrink-0 border-0 bg-white/95 text-slate-700 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.05] backdrop-blur transition hover:bg-white hover:text-slate-950 hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
-          placement === "desktop"
-            ? "hidden h-[66px] w-[66px] rounded-none sm:inline-flex"
-            : "h-16 w-[72px] rounded-2xl px-2",
+          "relative h-16 w-[72px] shrink-0 rounded-2xl border-0 bg-white/95 px-2 text-slate-700 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.05] backdrop-blur transition hover:bg-white hover:text-slate-950 hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
         )}
         onClick={handleClick}
       >
@@ -4496,7 +4485,7 @@ export function FlightResultsClient() {
   function renderMobileControlsRow() {
     return (
       <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch gap-2.5">
-        {renderFloatingFilterButton("mobile")}
+        {renderFloatingFilterButton()}
 
         <button
           type="button"
@@ -4653,12 +4642,17 @@ export function FlightResultsClient() {
           "sticky top-0 z-40 hidden border-b border-transparent transition-[padding,border-color,background-color] duration-200 sm:block",
           isSearchCollapsed
             ? "bg-white/95 py-1.5 backdrop-blur"
-            : "bg-[linear-gradient(180deg,#eef4ff_0%,#eef4ff_54%,#f6f8fb_54%,#f6f8fb_100%)] pb-5 pt-5",
+            : "bg-[#F6F9FC] pb-0 pt-5 shadow-[0_18px_34px_-34px_rgba(2,28,43,0.45)]",
         )}
       >
         <div className="page-shell">
           {!mobileSearchOpen ? (
-            <div className="relative flex items-stretch gap-2">
+            <div
+              className={cn(
+                "relative flex items-stretch gap-2",
+                !isSearchCollapsed && "translate-y-1/2",
+              )}
+            >
               <div className="min-w-0 flex-1">
                 {renderCompactSearchForm("desktop")}
               </div>
@@ -4667,7 +4661,7 @@ export function FlightResultsClient() {
         </div>
       </section>
 
-      <div className="page-shell grid gap-4 pb-5 pt-12 sm:pt-5 lg:grid-cols-[256px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-4 pb-5 pt-12 sm:pt-14 lg:grid-cols-[256px_minmax(0,1fr)] lg:pt-16">
         <aside className={cn("hidden lg:block", desktopFilterStickyTopClass)}>
           <div ref={desktopFilterContainerRef}>
             {showFullDesktopFilters ? (
