@@ -6303,7 +6303,7 @@ function Filters({
   const calendarLocale = normalizeFlightResultsCalendarLocale(locale);
   const currencyRates = useCurrencyRates();
   const filterRangeClass =
-    "h-2 w-full cursor-pointer appearance-none rounded-full bg-border outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-blue [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-blue [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-border [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-blue [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-blue [&::-moz-range-thumb]:shadow-md";
+    "h-2 w-full cursor-pointer appearance-none rounded-full bg-border outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[#2F73C8] [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#2F73C8] [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-border [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#2F73C8] [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#2F73C8] [&::-moz-range-thumb]:shadow-md";
   const formatFilterPrice = (amount: number) =>
     priceLabelCurrency
       ? formatDisplayPrice({
@@ -6335,7 +6335,7 @@ function Filters({
           </div>
           {activeFilterCount > 0 ? (
             <div className="mt-2 flex items-center justify-between gap-3">
-              <span className="desktop-filter-sidebar__count rounded-full bg-[#004BB8]/8 px-2.5 py-1 text-xs font-semibold text-[#004BB8] ring-1 ring-[#004BB8]/10">
+              <span className="desktop-filter-sidebar__count rounded-full bg-[#EAF2FB] px-2 py-0.5 text-[11px] font-semibold text-[#235A9F] ring-1 ring-[#004BB8]/8">
                 {t("activeFilterCount").replace(
                   "{{count}}",
                   String(activeFilterCount),
@@ -6343,7 +6343,7 @@ function Filters({
               </span>
               <button
                 type="button"
-                className="rounded-full px-2 py-1 text-xs font-bold text-[#004BB8] transition hover:bg-[#004BB8]/8 hover:text-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                className="rounded-full px-1.5 py-0.5 text-[11px] font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-[#235A9F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                 onClick={onClear}
               >
                 Clear all
@@ -6771,7 +6771,7 @@ function FilterOptionRow({
       <span className="flex min-w-0 items-start gap-2">
         <input
           type="checkbox"
-          className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-blue focus-visible:ring-2 focus-visible:ring-blue/35"
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-blue focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
           checked={checked}
           onChange={onChange}
         />
