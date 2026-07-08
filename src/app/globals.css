@@ -10,23 +10,24 @@
 
 @font-face {
   font-family: "Inter";
-  src: url("/brand/fonts/inter/Inter-Italic-VariableFont.ttf") format("truetype");
+  src: url("/brand/fonts/inter/Inter-Italic-VariableFont.ttf")
+    format("truetype");
   font-display: swap;
   font-style: italic;
   font-weight: 100 900;
 }
 
 :root {
-  --background: #f7f9fc;
+  --background: #f2f6fa;
   --foreground: #021c2b;
   --navy: #021c2b;
   --navy-soft: #021c2b;
   --surface: #ffffff;
-  --surface-subtle: #fbfcfe;
-  --surface-muted: #eef4f8;
+  --surface-subtle: #f8fbfd;
+  --surface-muted: #e8f0f6;
   --surface-raised: #ffffff;
-  --border: #d8e1ec;
-  --border-strong: #c7d3e0;
+  --border: #cbd8e6;
+  --border-strong: #b4c4d5;
   --muted: #64748b;
   --teal: #5cb6b2;
   --teal-dark: #3f908d;
@@ -34,15 +35,15 @@
   --amber: #a96724;
   --danger: #9f1d2d;
   --danger-hover: #861727;
-  --error-surface: #fff4f5;
-  --error-border: #f3c8ce;
-  --error-text: #8f1d2c;
-  --success-surface: #eef8f6;
-  --success-border: #bfdfdc;
-  --success-text: #246c69;
-  --status-surface: #f1f6fb;
-  --status-border: #cdddeb;
-  --status-text: #1f4f7a;
+  --error-surface: #fff0f2;
+  --error-border: #e9aeb8;
+  --error-text: #842030;
+  --success-surface: #e7f5f2;
+  --success-border: #a9d3ce;
+  --success-text: #236865;
+  --status-surface: #eaf2f9;
+  --status-border: #b9cfe2;
+  --status-text: #1f4d75;
 }
 
 @theme inline {
@@ -72,8 +73,12 @@
   --color-status-surface: var(--status-surface);
   --color-status-border: var(--status-border);
   --color-status-text: var(--status-text);
-  --font-sans: "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", ui-monospace, monospace;
+  --font-sans:
+    "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, ui-sans-serif,
+    system-ui, sans-serif;
+  --font-mono:
+    "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    ui-monospace, monospace;
 }
 
 * {
@@ -133,7 +138,8 @@ textarea {
 .legal-paper {
   background:
     linear-gradient(#ffffff, #ffffff) padding-box,
-    linear-gradient(180deg, rgba(15, 159, 154, 0.42), rgba(37, 99, 235, 0.18)) border-box;
+    linear-gradient(180deg, rgba(15, 159, 154, 0.42), rgba(37, 99, 235, 0.18))
+      border-box;
 }
 
 .hotel-filter-scrollbar {
@@ -198,7 +204,13 @@ textarea {
   width: min(14rem, 68vw);
   height: min(14rem, 68vw);
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.68), rgba(92, 182, 178, 0.06) 42%, rgba(0, 75, 184, 0.04) 58%, transparent 76%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.68),
+    rgba(92, 182, 178, 0.06) 42%,
+    rgba(0, 75, 184, 0.04) 58%,
+    transparent 76%
+  );
   filter: blur(14px);
   animation: logo-glow 2.8s ease-in-out infinite;
 }
@@ -207,7 +219,12 @@ textarea {
   width: min(9rem, 52vw);
   height: min(9rem, 52vw);
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.62), rgba(242, 247, 250, 0.34) 54%, transparent 76%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.62),
+    rgba(242, 247, 250, 0.34) 54%,
+    transparent 76%
+  );
   animation: logo-halo 2.8s ease-in-out infinite;
 }
 
@@ -236,7 +253,7 @@ textarea {
 @keyframes logo-halo {
   0%,
   100% {
-    opacity: 0.20;
+    opacity: 0.2;
     transform: translate(-50%, -50%) scale(0.96);
   }
   50% {
@@ -259,7 +276,9 @@ textarea {
     overscroll-behavior: none;
   }
 
-  body:has(main > aside.fixed.bottom-0.translate-y-0) main > div.fixed.inset-0.z-50 {
+  body:has(main > aside.fixed.bottom-0.translate-y-0)
+    main
+    > div.fixed.inset-0.z-50 {
     touch-action: none;
   }
 
@@ -277,11 +296,18 @@ textarea {
     padding: 1.5rem 1.75rem 1rem;
   }
 
-  main > aside.fixed.bottom-0.translate-y-0 > div:first-child > div:first-child {
+  main
+    > aside.fixed.bottom-0.translate-y-0
+    > div:first-child
+    > div:first-child {
     margin-bottom: 1.1rem;
   }
 
-  main > aside.fixed.bottom-0.translate-y-0 > div:first-child > div:first-child h2 {
+  main
+    > aside.fixed.bottom-0.translate-y-0
+    > div:first-child
+    > div:first-child
+    h2 {
     font-size: 1.45rem;
     line-height: 1.25;
     font-weight: 750;
@@ -289,7 +315,9 @@ textarea {
     color: #021c2b;
   }
 
-  main > aside.fixed.bottom-0.translate-y-0 .bg-gradient-to-r.from-blue.to-teal {
+  main
+    > aside.fixed.bottom-0.translate-y-0
+    .bg-gradient-to-r.from-blue.to-teal {
     min-height: 4.6rem;
     border-radius: 1.35rem;
     padding: 1rem 1.25rem;
@@ -297,14 +325,20 @@ textarea {
     box-shadow: 0 12px 28px rgba(0, 75, 184, 0.12);
   }
 
-  main > aside.fixed.bottom-0.translate-y-0 .bg-gradient-to-r.from-blue.to-teal h2 {
+  main
+    > aside.fixed.bottom-0.translate-y-0
+    .bg-gradient-to-r.from-blue.to-teal
+    h2 {
     font-size: 1.25rem;
     line-height: 1.35;
     font-weight: 760;
     letter-spacing: -0.01em;
   }
 
-  main > aside.fixed.bottom-0.translate-y-0 .bg-gradient-to-r.from-blue.to-teal svg {
+  main
+    > aside.fixed.bottom-0.translate-y-0
+    .bg-gradient-to-r.from-blue.to-teal
+    svg {
     width: 1.45rem;
     height: 1.45rem;
     opacity: 0.95;
@@ -354,13 +388,17 @@ textarea {
     min-height: 2.4rem;
   }
 
-  main > aside.fixed.bottom-0.translate-y-0 input[type="range"]::-webkit-slider-thumb {
+  main
+    > aside.fixed.bottom-0.translate-y-0
+    input[type="range"]::-webkit-slider-thumb {
     width: 1.35rem;
     height: 1.35rem;
     margin-top: -0.42rem;
   }
 
-  main > aside.fixed.bottom-0.translate-y-0 input[type="range"]::-moz-range-thumb {
+  main
+    > aside.fixed.bottom-0.translate-y-0
+    input[type="range"]::-moz-range-thumb {
     width: 1.35rem;
     height: 1.35rem;
   }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/Button";
+import { MessageBanner } from "@/components/ui/MessageBanner";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -70,15 +71,10 @@ export function ForgotPasswordForm() {
           />
         </Field>
 
-        {error ? <p className="text-sm text-danger">{error}</p> : null}
+        {error ? <MessageBanner tone="error">{error}</MessageBanner> : null}
 
         {message ? (
-          <p
-            className="rounded-md bg-teal/10 px-3 py-2 text-sm font-semibold text-teal-dark"
-            aria-live="polite"
-          >
-            {message}
-          </p>
+          <MessageBanner tone="success">{message}</MessageBanner>
         ) : null}
 
         <Button disabled={loading}>
@@ -88,7 +84,10 @@ export function ForgotPasswordForm() {
 
       <p className="mt-4 text-sm text-muted">
         {t.forgotPasswordRemember}{" "}
-        <Link className="font-semibold text-[#004BB8] transition-colors hover:text-[#021C2B] hover:underline" href="/auth/signin">
+        <Link
+          className="font-semibold text-[#004BB8] transition-colors hover:text-[#021C2B] hover:underline"
+          href="/auth/signin"
+        >
           {t.forgotPasswordLoginLink}
         </Link>
       </p>

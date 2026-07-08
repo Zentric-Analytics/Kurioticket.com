@@ -26,6 +26,7 @@ import {
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
+import { MessageBanner } from "@/components/ui/MessageBanner";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import { useRegion } from "@/components/region/RegionProvider";
 import {
@@ -1638,12 +1639,9 @@ export function HotelSearchBar({
         ) : null}
 
         {error ? (
-          <p
-            className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700"
-            role={errorRole}
-          >
+          <MessageBanner tone="error" role={errorRole}>
             {error}
-          </p>
+          </MessageBanner>
         ) : null}
       </form>
 
