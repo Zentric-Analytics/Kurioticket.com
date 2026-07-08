@@ -125,6 +125,17 @@ export function EmailPreferencesContent() {
   const disabled = status === "loading" || status === "saving";
 
   useEffect(() => {
+    if (status !== "success" || !statusMessage) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setStatus("idle");
+      setStatusMessage("");
+    }, 2000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [status, statusMessage]);
+
+  useEffect(() => {
     let active = true;
 
     async function loadPreferences() {
@@ -365,6 +376,19 @@ export function EmailPreferencesContent() {
             </div>
 
             <div className="relative mt-5 flex flex-row items-center justify-end gap-3 sm:mt-0 sm:justify-end sm:pt-1">
+              {statusMessage ? (
+                <p
+                  className={
+                    status === "error"
+                      ? "inline-flex rounded-full border border-red-100 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700"
+                      : "inline-flex rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-sm font-medium text-[#004BB8]"
+                  }
+                  role="status"
+                  aria-live="polite"
+                >
+                  {statusMessage}
+                </p>
+              ) : null}
               <button
                 type="button"
                 onClick={resetToDefault}
@@ -392,15 +416,6 @@ export function EmailPreferencesContent() {
                 </span>
               </button>
             </div>
-            {statusMessage ? (
-              <p
-                className="mt-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-medium leading-6 text-blue-900"
-                role="status"
-                aria-live="polite"
-              >
-                {statusMessage}
-              </p>
-            ) : null}
           </div>
         </section>
       </div>
