@@ -1239,7 +1239,7 @@ export function HotelResultsClient() {
         </div>
       </section>
 
-      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[272px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[256px_minmax(0,1fr)]">
         <aside
           className={cn(
             "hidden lg:block lg:self-start",
@@ -1769,42 +1769,40 @@ function HotelFilters({
   return (
     <div
       className={cn(
-        layout === "mobile" ? "bg-white" : "desktop-filter-sidebar border border-slate-200/80 bg-transparent p-3 shadow-none rounded-none",
+        layout === "mobile" ? "bg-white" : "desktop-filter-sidebar border border-slate-200/80 bg-transparent p-0 shadow-none rounded-none",
       )}
     >
       {layout === "desktop" ? (
-        <div className="desktop-filter-sidebar__header flex items-start justify-between gap-3 border-b border-slate-200/70 px-1 pb-3">
-          <div>
-            <h2 className="desktop-filter-sidebar__title text-base font-bold text-slate-950">
+        <div className="desktop-filter-sidebar__header border-b border-slate-200/70 px-3 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="desktop-filter-sidebar__title truncate text-base font-bold text-slate-950">
               {t("hotelResults.filterBy")}
             </h2>
-          </div>
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            {activeFilterCount > 0 ? (
-              <>
-                <span className="desktop-filter-sidebar__count rounded-full bg-[#004BB8]/8 px-2.5 py-1 text-xs font-semibold text-[#004BB8] ring-1 ring-[#004BB8]/10">
-                  {t("activeFilterCount").replace("{{count}}", String(activeFilterCount))}
-                </span>
-                <button
-                  type="button"
-                  className="rounded-full px-2 py-1 text-xs font-bold text-[#004BB8] transition hover:bg-[#004BB8]/8 hover:text-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-                  onClick={onClear}
-                >
-                  Clear all
-                </button>
-              </>
-            ) : null}
             <SlidersHorizontal
-              className="desktop-filter-sidebar__icon mt-1 text-[#004BB8]"
+              className="desktop-filter-sidebar__icon shrink-0 text-[#004BB8]"
               size={18}
             />
           </div>
+          {activeFilterCount > 0 ? (
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <span className="desktop-filter-sidebar__count rounded-full bg-[#004BB8]/8 px-2.5 py-1 text-xs font-semibold text-[#004BB8] ring-1 ring-[#004BB8]/10">
+                {t("activeFilterCount").replace("{{count}}", String(activeFilterCount))}
+              </span>
+              <button
+                type="button"
+                className="rounded-full px-2 py-1 text-xs font-bold text-[#004BB8] transition hover:bg-[#004BB8]/8 hover:text-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                onClick={onClear}
+              >
+                Clear all
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
       <div
         className={cn(
-          layout === "mobile" ? "space-y-0 bg-white" : "space-y-0 bg-transparent px-0 py-1",
+          layout === "mobile" ? "space-y-0 bg-white" : "space-y-0 bg-transparent px-3 py-1",
         )}
       >
         <FilterSection title={t("hotelResults.budgetPrice")} layout={layout}>

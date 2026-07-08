@@ -362,8 +362,7 @@ textarea {
 
   .desktop-filter-sidebar__header {
     border-bottom-color: rgba(226, 232, 240, 0.95);
-    background: transparent !important;
-    padding: 0 0 0.75rem;
+    background: rgba(248, 250, 252, 0.72) !important;
   }
 
   .desktop-filter-sidebar__title {
