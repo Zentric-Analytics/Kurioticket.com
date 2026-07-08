@@ -904,9 +904,9 @@ test("Thai language metadata, LTR direction, and English fallback dictionary res
 
 test("Thai account customization and booking preferences resolve through active i18n keys", () => {
   const th = getTranslations("th");
-  const customizationPageSource = readFileSync("src/app/dashboard/preferences/customization/page.tsx", "utf8");
+  const customizationPageSource = readFileSync("src/app/dashboard/preferences/email/page.tsx", "utf8");
   const customizationSource = readFileSync(
-    "src/app/dashboard/preferences/customization/CustomizationPreferencesContent.tsx",
+    "src/app/dashboard/preferences/email/EmailPreferencesContent.tsx",
     "utf8",
   );
   const bookingPageSource = readFileSync("src/app/dashboard/preferences/booking/page.tsx", "utf8");
@@ -915,7 +915,10 @@ test("Thai account customization and booking preferences resolve through active 
     "utf8",
   );
 
-  assert.ok(customizationPageSource.includes("<CustomizationPreferencesContent />"));
+  assert.ok(customizationPageSource.includes("<EmailPreferencesContent />"));
+  const customizationRedirectSource = readFileSync("src/app/dashboard/preferences/customization/page.tsx", "utf8");
+  assert.ok(customizationRedirectSource.includes('import { redirect } from "next/navigation";'));
+  assert.ok(customizationRedirectSource.includes('redirect("/dashboard/preferences/email")'));
   assert.ok(bookingPageSource.includes("<BookingPreferencesContent />"));
 
   const expectedCustomizationCopy = {
@@ -1454,7 +1457,7 @@ test("Thai Account dropdown and Dashboard overview copy resolves through active 
   assert.ok(!dashboardGridSource.includes(">Welcome back,") && !dashboardGridSource.includes(">Manage account<") && !dashboardGridSource.includes(">Personal details<"));
 
   assert.ok(appHeaderSource.includes('href: "/dashboard/account"') && appHeaderSource.includes('href: "/saved?from=account"') && appHeaderSource.includes('href: "/dashboard/alerts?from=account"'));
-  assert.ok(dashboardGridSource.includes('href: "/dashboard"') && dashboardGridSource.includes('href: "/dashboard/security"') && dashboardGridSource.includes('href: "/dashboard/trips"') && dashboardGridSource.includes('href: "/saved?from=account"') && dashboardGridSource.includes('href: "/dashboard/alerts?from=account"') && dashboardGridSource.includes('href: "/dashboard/preferences/customization"') && dashboardGridSource.includes('href: "/dashboard/preferences/booking"') && dashboardGridSource.includes('href: "/dashboard/support"') && dashboardGridSource.includes('href: "/faq?from=account"'));
+  assert.ok(dashboardGridSource.includes('href: "/dashboard"') && dashboardGridSource.includes('href: "/dashboard/security"') && dashboardGridSource.includes('href: "/dashboard/trips"') && dashboardGridSource.includes('href: "/saved?from=account"') && dashboardGridSource.includes('href: "/dashboard/alerts?from=account"') && dashboardGridSource.includes('href: "/dashboard/preferences/email"') && dashboardGridSource.includes('href: "/dashboard/preferences/booking"') && dashboardGridSource.includes('href: "/dashboard/support"') && dashboardGridSource.includes('href: "/faq?from=account"'));
   assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.manageAccount"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.travelActivity"'));
   assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.travelActivity"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.preferences"'));
   assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.preferences"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.helpAndSupport"'));
@@ -1540,7 +1543,7 @@ test("Vietnamese account menu and dashboard overview copy resolves without Engli
   assert.ok(!dashboardGridSource.includes(">Welcome back,") && !dashboardGridSource.includes(">Manage account<") && !dashboardGridSource.includes(">Personal details<"));
 
   assert.ok(appHeaderSource.includes('href: "/dashboard/account"') && appHeaderSource.includes('href: "/saved?from=account"') && appHeaderSource.includes('href: "/dashboard/alerts?from=account"'));
-  assert.ok(dashboardGridSource.includes('href: "/dashboard"') && dashboardGridSource.includes('href: "/dashboard/security"') && dashboardGridSource.includes('href: "/dashboard/trips"') && dashboardGridSource.includes('href: "/saved?from=account"') && dashboardGridSource.includes('href: "/dashboard/alerts?from=account"') && dashboardGridSource.includes('href: "/dashboard/preferences/customization"') && dashboardGridSource.includes('href: "/dashboard/preferences/booking"') && dashboardGridSource.includes('href: "/dashboard/support"') && dashboardGridSource.includes('href: "/faq?from=account"'));
+  assert.ok(dashboardGridSource.includes('href: "/dashboard"') && dashboardGridSource.includes('href: "/dashboard/security"') && dashboardGridSource.includes('href: "/dashboard/trips"') && dashboardGridSource.includes('href: "/saved?from=account"') && dashboardGridSource.includes('href: "/dashboard/alerts?from=account"') && dashboardGridSource.includes('href: "/dashboard/preferences/email"') && dashboardGridSource.includes('href: "/dashboard/preferences/booking"') && dashboardGridSource.includes('href: "/dashboard/support"') && dashboardGridSource.includes('href: "/faq?from=account"'));
   assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.manageAccount"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.travelActivity"'));
   assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.travelActivity"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.preferences"'));
   assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.preferences"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.helpAndSupport"'));
@@ -2728,7 +2731,7 @@ test("Polish signed-in account dropdown labels do not fall back to English", () 
 test("Polish account customization and booking preference pages do not fall back to English", () => {
   const pl = getTranslations("pl");
   const customizationSource = readFileSync(
-    "src/app/dashboard/preferences/customization/CustomizationPreferencesContent.tsx",
+    "src/app/dashboard/preferences/email/EmailPreferencesContent.tsx",
     "utf8",
   );
   const bookingSource = readFileSync(
@@ -2736,7 +2739,7 @@ test("Polish account customization and booking preference pages do not fall back
     "utf8",
   );
   const customizationPageSource = readFileSync(
-    "src/app/dashboard/preferences/customization/page.tsx",
+    "src/app/dashboard/preferences/email/page.tsx",
     "utf8",
   );
   const bookingPageSource = readFileSync(
@@ -5094,7 +5097,7 @@ test("Turkish account dashboard overview copy resolves without English fallback"
       dashboardSource.includes('href: "/dashboard/trips"') &&
       dashboardSource.includes('href: "/saved?from=account"') &&
       dashboardSource.includes('href: "/dashboard/alerts?from=account"') &&
-      dashboardSource.includes('href: "/dashboard/preferences/customization"') &&
+      dashboardSource.includes('href: "/dashboard/preferences/email"') &&
       dashboardSource.includes('href: "/dashboard/preferences/booking"') &&
       dashboardSource.includes('href: "/dashboard/support"') &&
       dashboardSource.includes('href: "/faq?from=account"'),
@@ -5167,7 +5170,7 @@ test("Polish account dashboard overview copy resolves without English fallback",
       dashboardSource.includes('href: "/dashboard/trips"') &&
       dashboardSource.includes('href: "/saved?from=account"') &&
       dashboardSource.includes('href: "/dashboard/alerts?from=account"') &&
-      dashboardSource.includes('href: "/dashboard/preferences/customization"') &&
+      dashboardSource.includes('href: "/dashboard/preferences/email"') &&
       dashboardSource.includes('href: "/dashboard/preferences/booking"') &&
       dashboardSource.includes('href: "/dashboard/support"') &&
       dashboardSource.includes('href: "/faq?from=account"') &&
@@ -5324,7 +5327,7 @@ test("Hindi account dashboard overview copy resolves without English fallback", 
 test("Hindi account preferences actual render-path copy resolves without English fallback", () => {
   const hi = getTranslations("hi");
   const customizationSource = readFileSync(
-    "src/app/dashboard/preferences/customization/CustomizationPreferencesContent.tsx",
+    "src/app/dashboard/preferences/email/EmailPreferencesContent.tsx",
     "utf8",
   );
   const bookingSource = readFileSync(
@@ -5461,14 +5464,14 @@ test("Hindi account preferences actual render-path copy resolves without English
 test("Indonesian account preferences actual render-path copy resolves without English fallback", () => {
   const id = getTranslations("id-ID");
   const customizationSource = readFileSync(
-    "src/app/dashboard/preferences/customization/CustomizationPreferencesContent.tsx",
+    "src/app/dashboard/preferences/email/EmailPreferencesContent.tsx",
     "utf8",
   );
   const bookingSource = readFileSync(
     "src/app/dashboard/preferences/booking/BookingPreferencesContent.tsx",
     "utf8",
   );
-  const customizationPageSource = readFileSync("src/app/dashboard/preferences/customization/page.tsx", "utf8");
+  const customizationPageSource = readFileSync("src/app/dashboard/preferences/email/page.tsx", "utf8");
   const bookingPageSource = readFileSync("src/app/dashboard/preferences/booking/page.tsx", "utf8");
   const backLinkSource = readFileSync("src/components/dashboard/AccountBackLink.tsx", "utf8");
 
@@ -5616,7 +5619,7 @@ test("Indonesian account preferences actual render-path copy resolves without En
 test("Turkish account preferences actual render-path copy resolves without English fallback", () => {
   const tr = getTranslations("tr");
   const customizationSource = readFileSync(
-    "src/app/dashboard/preferences/customization/CustomizationPreferencesContent.tsx",
+    "src/app/dashboard/preferences/email/EmailPreferencesContent.tsx",
     "utf8",
   );
   const bookingSource = readFileSync(
@@ -12172,9 +12175,9 @@ test("Vietnamese preferences v2 active Customization preferences and Booking pre
   const vi = getTranslations("vi");
   const viVN = getTranslations("vi-VN");
   const viAlias = getTranslations("vi-vn");
-  const customizationSource = readFileSync("src/app/dashboard/preferences/customization/CustomizationPreferencesContent.tsx", "utf8");
+  const customizationSource = readFileSync("src/app/dashboard/preferences/email/EmailPreferencesContent.tsx", "utf8");
   const bookingSource = readFileSync("src/app/dashboard/preferences/booking/BookingPreferencesContent.tsx", "utf8");
-  const customizationPageSource = readFileSync("src/app/dashboard/preferences/customization/page.tsx", "utf8");
+  const customizationPageSource = readFileSync("src/app/dashboard/preferences/email/page.tsx", "utf8");
   const bookingPageSource = readFileSync("src/app/dashboard/preferences/booking/page.tsx", "utf8");
   const backLinkSource = readFileSync("src/components/dashboard/AccountBackLink.tsx", "utf8");
 
@@ -12243,7 +12246,7 @@ test("Vietnamese preferences v2 active Customization preferences and Booking pre
 
   assert.ok(backLinkSource.includes('t["accountDashboard.hub.title"]'));
   assert.ok(backLinkSource.includes('href="/dashboard/account"'));
-  assert.ok(customizationPageSource.includes("<CustomizationPreferencesContent />"));
+  assert.ok(customizationPageSource.includes("<EmailPreferencesContent />"));
   assert.ok(bookingPageSource.includes("<BookingPreferencesContent />"));
   assert.ok(customizationSource.includes('id: "preferred-language"') && customizationSource.includes('name={field.id}') && customizationSource.includes('defaultValue=""'));
   assert.ok(customizationSource.includes('id: "personalize-searches"') && customizationSource.includes('id: "personalized-travel-deals"') && customizationSource.includes('id: "remember-recent-searches"'));
@@ -12571,7 +12574,7 @@ test("Swedish account dashboard overview resolves localized copy while preservin
     'href: "/dashboard/trips"',
     'href: "/saved?from=account"',
     'href: "/dashboard/alerts?from=account"',
-    'href: "/dashboard/preferences/customization"',
+    'href: "/dashboard/preferences/email"',
     'href: "/dashboard/preferences/booking"',
     'href: "/dashboard/support"',
     'href: "/faq?from=account"',
@@ -12590,8 +12593,8 @@ test("Swedish account dashboard overview resolves localized copy while preservin
 });
 
 test("Swedish active account preferences pages resolve localized copy without English fallback", () => {
-  const customizationSource = readFileSync("src/app/dashboard/preferences/customization/CustomizationPreferencesContent.tsx", "utf8");
-  const customizationPageSource = readFileSync("src/app/dashboard/preferences/customization/page.tsx", "utf8");
+  const customizationSource = readFileSync("src/app/dashboard/preferences/email/EmailPreferencesContent.tsx", "utf8");
+  const customizationPageSource = readFileSync("src/app/dashboard/preferences/email/page.tsx", "utf8");
   const bookingSource = readFileSync("src/app/dashboard/preferences/booking/BookingPreferencesContent.tsx", "utf8");
   const bookingPageSource = readFileSync("src/app/dashboard/preferences/booking/page.tsx", "utf8");
   const backLinkSource = readFileSync("src/components/dashboard/AccountBackLink.tsx", "utf8");
