@@ -388,30 +388,24 @@ function RouteIdeaCard({
   return (
     <Link
       href={buildDiscoveryLink(item)}
-      className={`group block overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_12px_32px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-[0_16px_36px_rgba(0,75,184,0.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 sm:rounded-3xl ${className}`}
+      aria-label={t("flightLandingRouteAriaLabel")
+        .replace("{{origin}}", routeText.originCity)
+        .replace("{{destination}}", routeText.destinationCity)}
+      className={`group relative block h-[10rem] overflow-hidden rounded-2xl border border-white/70 bg-slate-100 shadow-[0_12px_30px_rgba(15,23,42,0.08)] transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/20 hover:shadow-[0_16px_36px_rgba(0,75,184,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 sm:h-[12rem] sm:rounded-3xl lg:h-[12.5rem] ${className}`}
     >
-      <article className="flex h-full flex-col">
-        <div className="relative h-[6.75rem] overflow-hidden bg-slate-100 sm:h-24 lg:h-[7.5rem]">
-          <Image
-            src={item.image}
-            alt={routeText.imageAlt}
-            fill
-            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 42vw"
-            className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
-          />
-        </div>
-        <div className="flex flex-1 flex-col p-3.5 sm:p-4">
-          <p className="text-[0.68rem] font-bold uppercase leading-4 tracking-[0.14em] text-[#004BB8] sm:text-[0.72rem]">
-            {item.originCode} → {item.destinationCode}
-          </p>
-          <h3 className="mt-2 text-[0.95rem] font-bold leading-tight tracking-[-0.015em] text-slate-950 sm:mt-3 sm:text-lg sm:leading-6">
-            {routeText.destinationCity}
-          </h3>
-          <p className="mt-1.5 line-clamp-2 text-xs font-medium leading-5 text-slate-600 sm:mt-2 sm:text-sm">
-            {routeText.routeNote}
-          </p>
-        </div>
-      </article>
+      <Image
+        src={item.image}
+        alt={routeText.imageAlt}
+        fill
+        sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 42vw"
+        className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+      />
+      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/45 via-slate-950/12 to-transparent" />
+      <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4">
+        <h3 className="text-lg font-extrabold leading-tight tracking-[-0.02em] text-white drop-shadow-[0_2px_8px_rgba(2,6,23,0.45)] sm:text-xl">
+          {routeText.destinationCity}
+        </h3>
+      </div>
     </Link>
   );
 }
@@ -577,7 +571,7 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="mt-10 border-y border-slate-200/90 bg-white sm:mt-12">
+      <section className="mt-6 border-y border-slate-200/90 bg-white sm:mt-8">
         <div className="page-shell py-6 sm:py-7 lg:py-8">
           <div className="divide-y divide-slate-200/70 sm:grid sm:grid-cols-3 sm:gap-5 sm:divide-y-0 sm:[&>article+article]:border-s sm:[&>article+article]:border-slate-200/70 sm:[&>article+article]:pl-5">
             {[
@@ -623,7 +617,7 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="page-shell mt-20 space-y-12 sm:mt-24 lg:mt-28">
+      <section className="page-shell mt-12 space-y-12 sm:mt-14 lg:mt-16">
         {routeInspirationCards.length > 0 ? (
           <div>
             <div className="mb-5 max-w-3xl">
@@ -646,7 +640,7 @@ export function FlightLandingClient() {
                         key={item.id}
                         item={item}
                         t={t}
-                        className="w-[42vw] min-w-[148px] max-w-[180px] shrink-0"
+                        className="w-[58vw] min-w-[210px] max-w-[250px] shrink-0"
                       />
                     ))}
                   </div>
