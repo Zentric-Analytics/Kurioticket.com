@@ -1,3 +1,4 @@
+import { marketAssetTemplatePlaceholderDimensions } from "./marketAssetBatchTemplate";
 import type { MarketAssetManifest, MarketAssetManifestEntry } from "./marketAssetManifest";
 
 export type MarketAssetManifestReadinessResult = {
@@ -8,7 +9,7 @@ export type MarketAssetManifestReadinessResult = {
 
 const todoPattern = /\bTODO\b/i;
 const placeholderDate = "YYYY-MM-DD";
-const placeholderDimensions = "TODO x TODO";
+const legacyPlaceholderDimensions = "TODO x TODO";
 
 export function checkMarketAssetManifestReadiness(
   manifest: MarketAssetManifest,
@@ -66,7 +67,10 @@ function checkEntry(
     checkString(`${label}.pageSurfaces[${surfaceIndex}]`, surface, errors);
   });
 
-  if (entry.dimensions === placeholderDimensions) {
+  if (
+    entry.dimensions === marketAssetTemplatePlaceholderDimensions ||
+    entry.dimensions === legacyPlaceholderDimensions
+  ) {
     errors.push(`${label}.dimensions must be replaced with real dimensions.`);
   }
 
