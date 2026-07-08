@@ -933,7 +933,11 @@ test("Thai account customization and booking preferences resolve through active 
     "accountDashboard.preferences.customization.actions.reset": "Reset",
     "accountDashboard.preferences.customization.actions.save": "Save",
     "accountDashboard.preferences.customization.actions.saving": "Saving...",
-    "accountDashboard.preferences.customization.status.previewSaved": "Customization preference saving will be connected soon. Your choices are shown here for preview only.",
+    "accountDashboard.preferences.customization.status.loadError": "Unable to load saved customization preferences. Using this device’s settings for now.",
+    "accountDashboard.preferences.customization.status.updatedOnDeviceSignedOut": "Customization preferences are updated on this device. Sign in to sync them across devices.",
+    "accountDashboard.preferences.customization.status.saving": "Saving customization preferences…",
+    "accountDashboard.preferences.customization.status.saved": "Customization preferences saved.",
+    "accountDashboard.preferences.customization.status.saveError": "Unable to save customization preferences. Please try again.",
   } as const;
 
   const expectedBookingCopy = {
@@ -1006,8 +1010,8 @@ test("Thai account customization and booking preferences resolve through active 
   }
 
   assert.ok(customizationSource.includes('role="switch"'));
-  assert.ok(customizationSource.includes('value={preferences.currency}'));
-  assert.ok(customizationSource.includes('value={preferences.region}'));
+  assert.ok(customizationSource.includes('value={draftPreferences.currency}'));
+  assert.ok(customizationSource.includes('value={draftPreferences.region}'));
   assert.ok(bookingSource.includes('name={field.id}'));
   assert.ok(bookingSource.includes('type="search"'));
   assert.ok(bookingSource.includes('placeholder={t[field.placeholderKey]}'));
