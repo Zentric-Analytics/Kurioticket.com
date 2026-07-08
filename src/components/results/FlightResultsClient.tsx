@@ -4625,10 +4625,10 @@ export function FlightResultsClient() {
       <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
       <section
         className={cn(
-          "hidden border-b border-slate-200 transition-[padding,border-color,background-color] duration-200 sm:block",
+          "sticky top-0 z-40 hidden border-b border-slate-200 transition-[padding,border-color,background-color] duration-200 sm:block",
           isSearchCollapsed
-            ? "sticky top-0 z-40 bg-white/95 py-1.5 backdrop-blur"
-            : "relative z-10 bg-[linear-gradient(180deg,#eef4ff_0%,#eef4ff_54%,#f6f8fb_54%,#f6f8fb_100%)] pb-5 pt-5",
+            ? "bg-white/95 py-1.5 backdrop-blur"
+            : "bg-[linear-gradient(180deg,#eef4ff_0%,#eef4ff_54%,#f6f8fb_54%,#f6f8fb_100%)] pb-5 pt-5",
         )}
       >
         <div className="page-shell">
