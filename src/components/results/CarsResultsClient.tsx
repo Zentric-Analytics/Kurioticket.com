@@ -1331,7 +1331,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
         </div>
       </section>
 
-      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[272px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[256px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="hidden lg:sticky lg:top-[7.5rem] lg:block lg:self-start">
           <div ref={desktopFilterContainerRef}>
             {showFullDesktopFilters ? (
@@ -1969,44 +1969,44 @@ function CarFilters({
     <div
       className={cn(
         layout === "desktop"
-          ? "desktop-filter-sidebar border border-slate-200/80 bg-transparent p-3 shadow-none rounded-none"
+          ? "desktop-filter-sidebar border border-slate-200/80 bg-transparent p-0 shadow-none rounded-none"
           : "overflow-hidden bg-white",
       )}
     >
       {layout === "desktop" ? (
-        <div className="desktop-filter-sidebar__header flex items-start justify-between gap-3 border-b border-slate-200/70 px-1 pb-3">
-          <h2 className="desktop-filter-sidebar__title text-base font-bold text-slate-950">
-            {t("carsResults.filterBy")}
-          </h2>
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-            {activeFilterCount > 0 ? (
-              <>
-                <span className="desktop-filter-sidebar__count rounded-full bg-[#004BB8]/8 px-2.5 py-1 text-xs font-semibold text-[#004BB8] ring-1 ring-[#004BB8]/10">
-                  {interpolate(t("carsResults.activeFilterCount"), {
-                    count: String(activeFilterCount),
-                  })}
-                </span>
-                <button
-                  type="button"
-                  className="focus-ring rounded-full px-2 py-1 text-xs font-bold text-[#004BB8] transition hover:bg-[#004BB8]/8 hover:text-[#021C2B]"
-                  onClick={onClear}
-                >
-                  Clear all
-                </button>
-              </>
-            ) : null}
+        <div className="desktop-filter-sidebar__header border-b border-slate-200/70 px-3 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="desktop-filter-sidebar__title truncate text-base font-bold text-slate-950">
+              {t("carsResults.filterBy")}
+            </h2>
             <SlidersHorizontal
-              className="desktop-filter-sidebar__icon mt-1 text-[#004BB8]"
+              className="desktop-filter-sidebar__icon shrink-0 text-[#004BB8]"
               size={18}
               aria-hidden="true"
             />
           </div>
+          {activeFilterCount > 0 ? (
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <span className="desktop-filter-sidebar__count rounded-full bg-[#004BB8]/8 px-2.5 py-1 text-xs font-semibold text-[#004BB8] ring-1 ring-[#004BB8]/10">
+                {interpolate(t("carsResults.activeFilterCount"), {
+                  count: String(activeFilterCount),
+                })}
+              </span>
+              <button
+                type="button"
+                className="focus-ring rounded-full px-2 py-1 text-xs font-bold text-[#004BB8] transition hover:bg-[#004BB8]/8 hover:text-[#021C2B]"
+                onClick={onClear}
+              >
+                Clear all
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
       <div
         className={cn(
-          layout === "mobile" ? "space-y-0 bg-white" : "space-y-0 bg-transparent px-0 py-1",
+          layout === "mobile" ? "space-y-0 bg-white" : "space-y-0 bg-transparent px-3 py-1",
         )}
       >
         {layout === "mobile" && activeFilterCount > 0 ? (
