@@ -14,6 +14,7 @@ import {
   LifeBuoy,
   LockKeyhole,
   Mail,
+  Palette,
   Settings,
   ShieldCheck,
   Trash2,
@@ -141,6 +142,11 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
         labelKey: "accountDashboard.hub.emailPreferences",
         href: "/dashboard/preferences/email",
         icon: Mail,
+      },
+      {
+        labelKey: "accountDashboard.hub.customizationPreferences",
+        href: "/dashboard/preferences/customization",
+        icon: Palette,
       },
       {
         labelKey: "accountDashboard.hub.travelPreferences",
