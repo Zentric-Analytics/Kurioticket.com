@@ -5,6 +5,7 @@ import {
   getHomepageFareDateStrategy,
   refreshPhase3AHomepageFareSnapshots,
   type HomepageFareRefreshScope,
+  buildSafeHomepageFareRefreshErrorResponse,
 } from "@/services/homepageFareSnapshotService";
 
 export const runtime = "nodejs";
@@ -18,10 +19,20 @@ export async function POST(request: Request) {
 
   const scope = await readRefreshScope(request);
   const dateStrategy = getHomepageFareDateStrategy();
-  const counts = await refreshPhase3AHomepageFareSnapshots({
-    scope,
-    dateStrategy,
-  });
+  let counts;
+
+  try {
+    counts = await refreshPhase3AHomepageFareSnapshots({
+      scope,
+      dateStrategy,
+    });
+  } catch (error) {
+    console.error("[homepage-fares:admin-refresh]", error);
+    return NextResponse.json(
+      buildSafeHomepageFareRefreshErrorResponse(error),
+      { status: 500 },
+    );
+  }
 
   await writeAdminAuditLog({
     adminUserId: auth.session.user.id,

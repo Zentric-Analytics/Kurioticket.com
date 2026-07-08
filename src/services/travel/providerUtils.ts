@@ -89,6 +89,8 @@ export function skippedProvider<T>(
     status: "skipped",
     latencyMs: 0,
     error: reason,
+    errorCategory: "skipped",
+    errorReason: "provider_skipped",
   };
 }
 

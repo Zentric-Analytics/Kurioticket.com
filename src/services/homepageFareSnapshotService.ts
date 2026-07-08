@@ -3890,6 +3890,56 @@ function parseDateKey(value: string | Date) {
   return new Date(`${value.slice(0, 10)}T00:00:00.000Z`);
 }
 
+export type SafeHomepageFareRefreshErrorResponse = {
+  error: "Homepage fare refresh failed.";
+  errorCode: "homepage_fare_refresh_failed";
+  safeReason: string;
+  counts?: Partial<HomepageFareRefreshCounts>;
+};
+
+export function buildSafeHomepageFareRefreshErrorResponse(
+  error?: unknown,
+  counts?: Partial<HomepageFareRefreshCounts>,
+): SafeHomepageFareRefreshErrorResponse {
+  return {
+    error: "Homepage fare refresh failed.",
+    errorCode: "homepage_fare_refresh_failed",
+    safeReason: getSafeHomepageFareRefreshFailureReason(error),
+    ...(counts ? { counts } : {}),
+  };
+}
+
+function getSafeHomepageFareRefreshFailureReason(error: unknown) {
+  if (isPrismaInitializationLikeError(error)) {
+    return "Database is unavailable or misconfigured. Check DATABASE_URL and database connectivity.";
+  }
+
+  if (isPrismaKnownRequestLikeError(error)) {
+    return "Database rejected the homepage fare refresh operation.";
+  }
+
+  return "The refresh service failed before completing. Check server logs for the internal incident details.";
+}
+
+function isPrismaInitializationLikeError(error: unknown) {
+  return Boolean(
+    error &&
+      typeof error === "object" &&
+      "name" in error &&
+      typeof (error as { name?: unknown }).name === "string" &&
+      (error as { name: string }).name.includes("PrismaClientInitializationError"),
+  );
+}
+
+function isPrismaKnownRequestLikeError(error: unknown) {
+  return Boolean(
+    error &&
+      typeof error === "object" &&
+      "name" in error &&
+      typeof (error as { name?: unknown }).name === "string" &&
+      (error as { name: string }).name.includes("PrismaClientKnownRequestError"),
+  );
+}
 
 export const __homepageFareCoverageTest = {
   getRefreshRoutes,
