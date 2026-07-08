@@ -1987,14 +1987,14 @@ function CarFilters({
           </div>
           {activeFilterCount > 0 ? (
             <div className="mt-2 flex items-center justify-between gap-3">
-              <span className="desktop-filter-sidebar__count rounded-full bg-[#004BB8]/8 px-2.5 py-1 text-xs font-semibold text-[#004BB8] ring-1 ring-[#004BB8]/10">
+              <span className="desktop-filter-sidebar__count rounded-full bg-[#EAF2FB] px-2 py-0.5 text-[11px] font-semibold text-[#235A9F] ring-1 ring-[#004BB8]/8">
                 {interpolate(t("carsResults.activeFilterCount"), {
                   count: String(activeFilterCount),
                 })}
               </span>
               <button
                 type="button"
-                className="focus-ring rounded-full px-2 py-1 text-xs font-bold text-[#004BB8] transition hover:bg-[#004BB8]/8 hover:text-[#021C2B]"
+                className="focus-ring rounded-full px-1.5 py-0.5 text-[11px] font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-[#235A9F]"
                 onClick={onClear}
               >
                 Clear all
@@ -2081,7 +2081,7 @@ function FilterSection({
                 isSelected
                   ? layout === "mobile"
                     ? "font-semibold text-navy"
-                    : "bg-[#004BB8]/8 text-[#021C2B] ring-1 ring-[#004BB8]/12"
+                    : "font-semibold text-[#021C2B] hover:bg-slate-50"
                   : layout === "mobile"
                     ? undefined
                     : "text-slate-600 hover:bg-slate-50 hover:text-slate-950",
@@ -2089,19 +2089,13 @@ function FilterSection({
             >
               <input
                 type="checkbox"
-                className="h-4 w-4 shrink-0 rounded border-slate-300 accent-blue focus-visible:ring-2 focus-visible:ring-blue/35"
+                className="h-4 w-4 shrink-0 rounded border-slate-300 accent-blue focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                 checked={isSelected}
                 onChange={() => onToggle(group.id, option.id)}
               />
               <span className="min-w-0 flex-1 truncate">
                 {t(option.labelKey)}
               </span>
-              {isSelected && layout === "desktop" ? (
-                <CheckCircle2
-                  className="h-4 w-4 shrink-0 text-[#004BB8]"
-                  aria-hidden="true"
-                />
-              ) : null}
             </label>
           );
         })}
