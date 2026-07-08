@@ -90,9 +90,9 @@ const hasValidFlightSearchParams = (
 
   return Boolean(
     parsedDepartureDate &&
-      parsedReturnDate &&
-      parsedReturnDate >= parsedDepartureDate &&
-      isValidFutureOrTodayDate(returnDate),
+    parsedReturnDate &&
+    parsedReturnDate >= parsedDepartureDate &&
+    isValidFutureOrTodayDate(returnDate),
   );
 };
 
@@ -111,7 +111,7 @@ export default async function FlightResultsPage({
 
   return (
     <>
-      <AppHeader />
+      <AppHeader hideTravelNav />
       <Suspense
         fallback={
           <ResultsFallback
