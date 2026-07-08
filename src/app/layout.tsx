@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { cookies, headers } from "next/headers";
 import "./globals.css";
 
+import { AccountCustomizationHydrator } from "@/components/account/AccountCustomizationHydrator";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { CurrencyRatesProvider } from "@/components/currency/CurrencyRatesProvider";
 import { LocaleProvider } from "@/components/layout/LocaleProvider";
@@ -116,6 +117,7 @@ export default async function RootLayout({
         <AuthProvider>
           <LocaleProvider>
             <RegionProvider initialMode={initialRegion} detectedMode={detectedRegion}>
+              <AccountCustomizationHydrator />
               <CurrencyRatesProvider>
                 <RouteProgressProvider>
                   <NewsletterSessionBridge />
