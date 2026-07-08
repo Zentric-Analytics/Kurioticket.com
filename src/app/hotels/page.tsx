@@ -283,6 +283,7 @@ type DestinationCardProps = {
   imageSizes: string;
   isCompact?: boolean;
   isFeatured?: boolean;
+  hasMobilePolish?: boolean;
 };
 
 function DestinationCard({
@@ -290,20 +291,29 @@ function DestinationCard({
   imageSizes,
   isCompact = false,
   isFeatured = false,
+  hasMobilePolish = false,
 }: DestinationCardProps) {
   return (
     <Link
       href={card.href}
       aria-label={card.linkLabel}
-      className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_28px_-26px_rgba(15,23,42,0.34)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_30px_-26px_rgba(15,23,42,0.38)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-4 focus-visible:ring-offset-white"
+      className={`group flex h-full min-w-0 flex-col overflow-hidden border bg-white transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_30px_-26px_rgba(15,23,42,0.38)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-4 focus-visible:ring-offset-white ${
+        hasMobilePolish
+          ? "snap-start rounded-[1.35rem] border-slate-200/90 shadow-[0_16px_34px_-26px_rgba(15,23,42,0.42)] sm:rounded-2xl sm:border-slate-200 sm:shadow-[0_12px_28px_-26px_rgba(15,23,42,0.34)]"
+          : "rounded-2xl border-slate-200 shadow-[0_12px_28px_-26px_rgba(15,23,42,0.34)]"
+      }`}
     >
       <div
         className={`relative w-full overflow-hidden bg-slate-100 ${
           isFeatured
-            ? "h-[18rem] sm:h-[20rem] md:h-[24rem] lg:h-[25rem]"
+            ? hasMobilePolish
+              ? "aspect-[16/10] sm:h-[20rem] sm:aspect-auto md:h-[24rem] lg:h-[25rem]"
+              : "h-[18rem] sm:h-[20rem] md:h-[24rem] lg:h-[25rem]"
             : isCompact
               ? "aspect-[16/11]"
-              : "aspect-[4/3]"
+              : hasMobilePolish
+                ? "aspect-[16/10] sm:aspect-[4/3]"
+                : "aspect-[4/3]"
         }`}
       >
         <Image
@@ -315,12 +325,22 @@ function DestinationCard({
         />
         <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-slate-900/5" />
       </div>
-      <div className={isCompact ? "p-3.5 sm:p-4" : "p-4 md:p-5"}>
+      <div
+        className={
+          isCompact
+            ? "p-3.5 sm:p-4"
+            : hasMobilePolish
+              ? "flex flex-1 flex-col p-[1.125rem] sm:p-4 md:p-5"
+              : "p-4 md:p-5"
+        }
+      >
         <p
           className={
             isCompact
               ? "text-base font-semibold leading-tight tracking-[-0.012em] text-slate-900 sm:text-lg"
-              : "text-lg font-semibold leading-tight tracking-[-0.012em] text-slate-900 md:text-xl"
+              : hasMobilePolish
+                ? "text-lg font-semibold leading-snug tracking-[-0.012em] text-slate-900 sm:leading-tight md:text-xl"
+                : "text-lg font-semibold leading-tight tracking-[-0.012em] text-slate-900 md:text-xl"
           }
         >
           {card.title}
@@ -329,7 +349,9 @@ function DestinationCard({
           className={
             isCompact
               ? "mt-1.5 text-xs font-medium leading-5 text-slate-600 sm:text-sm"
-              : "mt-2 text-sm font-medium leading-5 text-slate-600"
+              : hasMobilePolish
+                ? "mt-2 text-sm font-medium leading-6 text-slate-600 sm:leading-5"
+                : "mt-2 text-sm font-medium leading-5 text-slate-600"
           }
         >
           {card.subtitle}
@@ -348,9 +370,9 @@ function InspirationCard({ card }: InspirationCardProps) {
     <Link
       href={card.href}
       aria-label={card.linkLabel}
-      className="group flex h-full min-w-0 flex-col rounded-2xl bg-white p-2 transition duration-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-4 focus-visible:ring-offset-slate-50 sm:p-2.5"
+      className="group flex h-full min-w-0 snap-start flex-col overflow-hidden rounded-[1.25rem] border border-slate-200/90 bg-white p-2 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.38)] transition duration-300 hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_14px_30px_-24px_rgba(15,23,42,0.42)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-4 focus-visible:ring-offset-slate-50 sm:rounded-2xl sm:p-2.5"
     >
-      <div className="relative h-[6.75rem] w-full overflow-hidden rounded-xl bg-slate-100 sm:h-32 md:h-44 lg:h-48">
+      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[1rem] bg-slate-100 sm:h-32 sm:aspect-auto md:h-44 lg:h-48">
         <Image
           src={card.image}
           alt={card.imageAlt}
@@ -360,11 +382,11 @@ function InspirationCard({ card }: InspirationCardProps) {
         />
         <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-slate-900/5" />
       </div>
-      <div className="px-1 pb-1 pt-2.5 sm:pb-1.5 sm:pt-3">
+      <div className="px-1.5 pb-1.5 pt-3 sm:px-1 sm:pb-1.5 sm:pt-3">
         <span className="mb-1.5 inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[0.68rem] font-semibold leading-5 text-slate-700 sm:mb-2 sm:px-2.5 sm:py-1 sm:text-xs">
           {card.badge}
         </span>
-        <p className="text-[0.95rem] font-semibold leading-tight tracking-[-0.012em] text-slate-900 sm:text-base md:text-lg">
+        <p className="text-[0.95rem] font-semibold leading-snug tracking-[-0.012em] text-slate-900 sm:text-base sm:leading-tight md:text-lg">
           {card.title}
         </p>
         <p className="mt-1 text-xs font-medium leading-5 text-slate-600 sm:mt-1.5 sm:text-sm">
@@ -601,13 +623,14 @@ export default function HotelsSearchPage() {
             >
               {t("exploreHotelStaysByDestination")}
             </h2>
-            <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.28)] ring-1 ring-white/80 sm:p-6 md:p-7">
-              <div className="grid auto-cols-[minmax(260px,86vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+            <div className="overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-3 shadow-[0_18px_48px_-34px_rgba(15,23,42,0.32)] ring-1 ring-white/80 sm:rounded-none sm:bg-white/80 sm:p-6 sm:shadow-[0_16px_44px_-40px_rgba(15,23,42,0.28)] md:p-7">
+              <div className="grid snap-x snap-mandatory auto-cols-[minmax(17rem,calc(100vw-4.5rem))] grid-flow-col gap-4 overflow-x-auto scroll-smooth px-1 pb-4 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:auto-cols-[minmax(260px,86vw)] md:grid-flow-row md:snap-none md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
                 {hotelDestinationLinks.map((card) => (
                   <DestinationCard
                     key={card.title}
                     card={card}
                     imageSizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 86vw"
+                    hasMobilePolish
                   />
                 ))}
               </div>
@@ -624,14 +647,15 @@ export default function HotelsSearchPage() {
             >
               {t("featuredHotelDestinations")}
             </h2>
-            <div className="border border-slate-200/80 bg-slate-50/85 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
-              <div className="grid auto-cols-[minmax(250px,84vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+            <div className="overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-3 shadow-[0_18px_48px_-34px_rgba(15,23,42,0.32)] ring-1 ring-white/80 sm:rounded-none sm:bg-slate-50/85 sm:p-6 sm:shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] md:p-7">
+              <div className="grid snap-x snap-mandatory auto-cols-[minmax(17rem,calc(100vw-4.5rem))] grid-flow-col gap-4 overflow-x-auto scroll-smooth px-1 pb-4 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:auto-cols-[minmax(250px,84vw)] md:grid-flow-row md:snap-none md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
                 {moreHotelDestinationLinks.map((card) => (
                   <DestinationCard
                     key={card.title}
                     card={card}
                     imageSizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 84vw"
                     isFeatured
+                    hasMobilePolish
                   />
                 ))}
               </div>
@@ -642,7 +666,7 @@ export default function HotelsSearchPage() {
             className="space-y-5"
             aria-labelledby="hotel-inspiration-heading"
           >
-            <div className="border border-slate-200/80 bg-slate-50/90 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
+            <div className="overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-3 shadow-[0_18px_48px_-34px_rgba(15,23,42,0.32)] ring-1 ring-white/80 sm:rounded-none sm:bg-slate-50/90 sm:p-6 sm:shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] md:p-7">
               <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                 <div className="max-w-2xl">
                   <h2
@@ -681,8 +705,8 @@ export default function HotelsSearchPage() {
                 </div>
               </div>
 
-              <div className="mt-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:overflow-visible md:px-0 md:pb-0 md:pt-0 [&::-webkit-scrollbar]:hidden">
-                <div className="grid auto-cols-[minmax(148px,42vw)] grid-flow-col grid-rows-2 gap-3 sm:auto-cols-[minmax(170px,34vw)] sm:gap-4 md:grid-flow-row md:auto-cols-auto md:grid-cols-3 md:grid-rows-none">
+              <div className="mt-4 overflow-x-auto scroll-smooth px-1 pb-4 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:overflow-visible md:px-0 md:pb-0 md:pt-0 [&::-webkit-scrollbar]:hidden">
+                <div className="grid snap-x snap-mandatory auto-cols-[minmax(10rem,44vw)] grid-flow-col grid-rows-2 gap-3 sm:auto-cols-[minmax(170px,34vw)] sm:gap-4 md:grid-flow-row md:snap-none md:auto-cols-auto md:grid-cols-3 md:grid-rows-none">
                   {hotelInspirationLinks.map((card) => (
                     <InspirationCard key={card.title} card={card} />
                   ))}
