@@ -4003,12 +4003,12 @@ export function FlightResultsClient() {
           placement === "desktop" && "hidden sm:block",
         )}
       >
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-0">
           {placement === "desktop" ? (
             <div
               role="radiogroup"
               aria-label={t("tripType")}
-              className="hidden items-center gap-6 px-1 pb-1 sm:flex"
+              className="hidden translate-y-5 items-center gap-4 px-1 pb-0 sm:flex"
             >
               {[
                 { label: t("oneWay"), value: "one-way" },
@@ -4024,7 +4024,7 @@ export function FlightResultsClient() {
                     aria-checked={selected}
                     onClick={() => handleTripTypeChange(option.value)}
                     className={cn(
-                      "focus-ring inline-flex min-h-7 items-center gap-2 rounded-full px-1 py-1 text-sm font-medium transition-colors",
+                      "focus-ring inline-flex min-h-6 items-center gap-1.5 rounded-full px-1 py-0.5 text-xs font-medium transition-colors",
                       selected
                         ? "text-slate-900"
                         : "text-slate-500 hover:text-slate-800",
@@ -4033,7 +4033,7 @@ export function FlightResultsClient() {
                     <span
                       aria-hidden="true"
                       className={cn(
-                        "inline-flex h-4 w-4 items-center justify-center rounded-full border transition-colors",
+                        "inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border transition-colors",
                         selected
                           ? "border-[#004BB8] bg-white shadow-[0_0_0_3px_rgba(0,75,184,0.10)]"
                           : "border-slate-300 bg-white/70",
@@ -4041,7 +4041,7 @@ export function FlightResultsClient() {
                     >
                       <span
                         className={cn(
-                          "h-2 w-2 rounded-full transition-colors",
+                          "h-1.5 w-1.5 rounded-full transition-colors",
                           selected ? "bg-[#004BB8]" : "bg-transparent",
                         )}
                       />
@@ -4622,7 +4622,7 @@ export function FlightResultsClient() {
           "sticky top-0 z-40 hidden transition-[padding,background-color] duration-200 sm:block",
           isSearchCollapsed
             ? "border-b border-slate-200/70 bg-white/95 py-1.5 backdrop-blur"
-            : "bg-[linear-gradient(180deg,#F6F9FC_0%,#F6F9FC_calc(100%-25px),#f6f8fb_calc(100%-25px),#f6f8fb_100%)] pb-0 pt-5 shadow-[0_18px_34px_-34px_rgba(2,28,43,0.45)]",
+            : "bg-[#F6F9FC] pb-0 pt-5 shadow-[0_18px_34px_-34px_rgba(2,28,43,0.45)]",
         )}
       >
         <div className="page-shell">
@@ -4631,7 +4631,7 @@ export function FlightResultsClient() {
               {!isSearchCollapsed ? (
                 <span
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-4 bottom-[25px] h-px bg-slate-300/60"
+                  className="pointer-events-none absolute inset-x-4 bottom-[25px] h-px bg-slate-300/80 shadow-[0_1px_0_rgba(255,255,255,0.78)]"
                 />
               ) : null}
               <div className="relative z-10 min-w-0 flex-1">
