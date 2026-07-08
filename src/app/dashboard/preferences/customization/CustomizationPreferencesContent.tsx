@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -101,6 +101,7 @@ export function CustomizationPreferencesContent() {
       region: mode,
       ...defaultPersonalizationPreferences,
     }));
+  const hasUserEditedDraftRef = useRef(false);
   const [status, setStatus] = useState<Status>("idle");
   const [statusMessage, setStatusMessage] = useState("");
 
@@ -136,7 +137,13 @@ export function CustomizationPreferencesContent() {
           preferences?: Partial<CustomizationPreferencesDraft>;
         };
 
-        if (!isActive || !data.hasPreferences || !data.preferences) return;
+        if (
+          !isActive ||
+          !data.hasPreferences ||
+          !data.preferences ||
+          hasUserEditedDraftRef.current
+        )
+          return;
 
         setDraftPreferences((current) => ({
           ...current,
@@ -165,18 +172,21 @@ export function CustomizationPreferencesContent() {
   };
 
   const handleLanguageChange = (nextLocale: string) => {
+    hasUserEditedDraftRef.current = true;
     setDraftPreferences((current) => ({ ...current, locale: nextLocale }));
     setStatus("idle");
     setStatusMessage("");
   };
 
   const handleCurrencyChange = (nextCurrency: string) => {
+    hasUserEditedDraftRef.current = true;
     setDraftPreferences((current) => ({ ...current, currency: nextCurrency }));
     setStatus("idle");
     setStatusMessage("");
   };
 
   const handleRegionChange = (nextRegion: string) => {
+    hasUserEditedDraftRef.current = true;
     setDraftPreferences((current) => ({ ...current, region: nextRegion }));
     setStatus("idle");
     setStatusMessage("");
@@ -186,12 +196,14 @@ export function CustomizationPreferencesContent() {
     key: BooleanPreferenceKey,
     value: boolean,
   ) => {
+    hasUserEditedDraftRef.current = true;
     setDraftPreferences((current) => ({ ...current, [key]: value }));
     setStatus("idle");
     setStatusMessage("");
   };
 
   const resetToDefault = () => {
+    hasUserEditedDraftRef.current = true;
     setDraftPreferences(defaultCustomizationPreferences);
     setStatus("idle");
     setStatusMessage("");

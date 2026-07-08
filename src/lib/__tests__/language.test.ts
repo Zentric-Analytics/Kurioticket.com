@@ -5381,7 +5381,7 @@ test("Hindi account preferences actual render-path copy resolves without English
     "accountDashboard.preferences.savePreferences": "प्राथमिकताएँ सहेजें",
   } as const;
 
-  for (const key of Object.keys(expectedCustomizationCopy)) {
+  for (const [key, value] of Object.entries(expectedCustomizationCopy)) {
     assert.ok(customizationSource.includes(key), `Customization page should use actual i18n key ${key}.`);
     assert.equal(hi[key], value);
     assert.notEqual(hi[key], enTranslations[key]);
@@ -5524,7 +5524,7 @@ test("Indonesian account preferences actual render-path copy resolves without En
   assert.ok(customizationSource.includes("useLocale()"), "Customization active component should read the current locale context.");
   assert.ok(bookingSource.includes("useLocale()"), "Booking active component should read the current locale context.");
 
-  for (const key of Object.keys(expectedCustomizationCopy)) {
+  for (const [key, value] of Object.entries(expectedCustomizationCopy)) {
     assert.ok(customizationSource.includes(key), `Customization page should use active i18n key ${key}.`);
     assert.equal(id[key], value, key);
     assert.notEqual(id[key], enTranslations[key], `${key} should not fall back to English`);
@@ -5673,7 +5673,7 @@ test("Turkish account preferences actual render-path copy resolves without Engli
     "accountDashboard.preferences.savePreferences": "Tercihleri kaydet",
   } as const;
 
-  for (const key of Object.keys(expectedCustomizationCopy)) {
+  for (const [key, value] of Object.entries(expectedCustomizationCopy)) {
     assert.ok(customizationSource.includes(key), `Customization page should use actual i18n key ${key}.`);
     assert.equal(tr[key], value);
     assert.notEqual(tr[key], enTranslations[key]);
@@ -12648,7 +12648,7 @@ test("Swedish active account preferences pages resolve localized copy without En
   assert.ok(customizationSource.includes("useLocale()"), "Customization active component should read the current locale context.");
   assert.ok(bookingSource.includes("useLocale()"), "Booking active component should read the current locale context.");
 
-  for (const key of Object.keys(expectedCustomizationCopy)) {
+  for (const [key, value] of Object.entries(expectedCustomizationCopy)) {
     assert.ok(customizationSource.includes(key), `Customization page should use active i18n key ${key}.`);
     assert.equal(svTranslations[key], value, key);
     if (value !== enTranslations[key]) assert.notEqual(svTranslations[key], enTranslations[key], `${key} should not fall back to English`);
