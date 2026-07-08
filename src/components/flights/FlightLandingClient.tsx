@@ -374,6 +374,48 @@ function RouteCard({
   );
 }
 
+function RouteIdeaCard({
+  item,
+  t,
+  className = "",
+}: {
+  item: HomeDiscoveryItem;
+  t: (key: string) => string;
+  className?: string;
+}) {
+  const routeText = getRouteText(item, t);
+
+  return (
+    <Link
+      href={buildDiscoveryLink(item)}
+      className={`group block overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_12px_32px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-[0_16px_36px_rgba(0,75,184,0.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 sm:rounded-3xl ${className}`}
+    >
+      <article className="flex h-full flex-col">
+        <div className="relative h-[6.75rem] overflow-hidden bg-slate-100 sm:h-24 lg:h-[7.5rem]">
+          <Image
+            src={item.image}
+            alt={routeText.imageAlt}
+            fill
+            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 42vw"
+            className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+          />
+        </div>
+        <div className="flex flex-1 flex-col p-3.5 sm:p-4">
+          <p className="text-[0.68rem] font-bold uppercase leading-4 tracking-[0.14em] text-[#004BB8] sm:text-[0.72rem]">
+            {item.originCode} → {item.destinationCode}
+          </p>
+          <h3 className="mt-2 text-[0.95rem] font-bold leading-tight tracking-[-0.015em] text-slate-950 sm:mt-3 sm:text-lg sm:leading-6">
+            {routeText.destinationCity}
+          </h3>
+          <p className="mt-1.5 line-clamp-2 text-xs font-medium leading-5 text-slate-600 sm:mt-2 sm:text-sm">
+            {routeText.routeNote}
+          </p>
+        </div>
+      </article>
+    </Link>
+  );
+}
+
 export function FlightLandingClient() {
   const { t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
@@ -391,6 +433,12 @@ export function FlightLandingClient() {
   const routeInspirationCards = getHomeDiscoveryByRegion(selectedOption.code)
     .filter((item) => !discoveryIds.has(item.id))
     .slice(0, 8);
+  const topRouteIdeaCards = routeInspirationCards.filter(
+    (_item, index) => index % 2 === 0,
+  );
+  const bottomRouteIdeaCards = routeInspirationCards.filter(
+    (_item, index) => index % 2 === 1,
+  );
 
   const heroTitle = t("flightLandingHeroTitle");
   const heroSubtitle = t("flightLandingHeroSubtitle");
@@ -529,8 +577,8 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="mt-14 border-y border-slate-200/90 bg-white sm:mt-16">
-        <div className="page-shell py-7 sm:py-8 lg:py-9">
+      <section className="mt-10 border-y border-slate-200/90 bg-white sm:mt-12">
+        <div className="page-shell py-6 sm:py-7 lg:py-8">
           <div className="divide-y divide-slate-200/70 sm:grid sm:grid-cols-3 sm:gap-5 sm:divide-y-0 sm:[&>article+article]:border-s sm:[&>article+article]:border-slate-200/70 sm:[&>article+article]:pl-5">
             {[
               {
@@ -554,10 +602,10 @@ export function FlightLandingClient() {
             ].map(({ title, body, illustration, ringClassName }) => (
               <article
                 key={title}
-                className="flex items-start gap-3.5 py-4 first:pt-1 last:pb-1 sm:px-2 sm:py-2"
+                className="flex items-start gap-3 py-3.5 first:pt-1 last:pb-1 sm:gap-3.5 sm:px-2 sm:py-2"
               >
                 <div
-                  className={`inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ${ringClassName}`}
+                  className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 sm:h-14 sm:w-14 ${ringClassName}`}
                 >
                   {illustration}
                 </div>
@@ -575,7 +623,7 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="page-shell mt-32 space-y-12 sm:mt-36 lg:mt-40">
+      <section className="page-shell mt-20 space-y-12 sm:mt-24 lg:mt-28">
         {routeInspirationCards.length > 0 ? (
           <div>
             <div className="mb-5 max-w-3xl">
@@ -586,45 +634,29 @@ export function FlightLandingClient() {
                 {t("flightLandingRouteIdeasBody")}
               </p>
             </div>
-            <div className="border border-slate-200/80 bg-slate-50/90 p-3 sm:border-0 sm:bg-transparent sm:p-0">
-              <div className="overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 [&::-webkit-scrollbar]:hidden">
-                <div className="grid auto-cols-[minmax(148px,42vw)] grid-flow-col grid-rows-2 gap-3 sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 sm:grid-rows-none sm:gap-4 lg:grid-cols-4">
-                  {routeInspirationCards.map((item) => {
-                    const routeText = getRouteText(item, t);
-
-                    return (
-                      <Link
+            <div className="space-y-3 sm:hidden">
+              {[topRouteIdeaCards, bottomRouteIdeaCards].map((cards, rowIndex) => (
+                <div
+                  key={rowIndex}
+                  className="-mx-4 overflow-x-auto px-4 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                >
+                  <div className="flex w-max gap-3 pr-10">
+                    {cards.map((item) => (
+                      <RouteIdeaCard
                         key={item.id}
-                        href={buildDiscoveryLink(item)}
-                        className="group block overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_12px_32px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-[0_16px_36px_rgba(0,75,184,0.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 sm:rounded-3xl"
-                      >
-                        <article className="flex h-full flex-col">
-                          <div className="relative h-[6.75rem] overflow-hidden bg-slate-100 sm:h-24 lg:h-[7.5rem]">
-                            <Image
-                              src={item.image}
-                              alt={routeText.imageAlt}
-                              fill
-                              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 42vw"
-                              className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
-                            />
-                          </div>
-                          <div className="flex flex-1 flex-col p-3.5 sm:p-4">
-                            <p className="text-[0.68rem] font-bold uppercase leading-4 tracking-[0.14em] text-[#004BB8] sm:text-[0.72rem]">
-                              {item.originCode} → {item.destinationCode}
-                            </p>
-                            <h3 className="mt-2 text-[0.95rem] font-bold leading-tight tracking-[-0.015em] text-slate-950 sm:mt-3 sm:text-lg sm:leading-6">
-                              {routeText.destinationCity}
-                            </h3>
-                            <p className="mt-1.5 line-clamp-2 text-xs font-medium leading-5 text-slate-600 sm:mt-2 sm:text-sm">
-                              {routeText.routeNote}
-                            </p>
-                          </div>
-                        </article>
-                      </Link>
-                    );
-                  })}
+                        item={item}
+                        t={t}
+                        className="w-[42vw] min-w-[148px] max-w-[180px] shrink-0"
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ))}
+            </div>
+            <div className="hidden sm:grid sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+              {routeInspirationCards.map((item) => (
+                <RouteIdeaCard key={item.id} item={item} t={t} />
+              ))}
             </div>
           </div>
         ) : null}
