@@ -137,7 +137,7 @@ export function CustomizationPreferencesContent() {
                 <h3 className="text-xs font-bold uppercase tracking-[0.1em] text-slate-600">
                   {t["accountDashboard.preferences.customization.sections.regionalDefaults"]}
                 </h3>
-                <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                <div className="mt-4 grid gap-4">
                   <label className="block">
                     <span className="text-sm font-semibold leading-5 text-slate-950">
                       {t["accountDashboard.preferences.customization.fields.language.label"]}
