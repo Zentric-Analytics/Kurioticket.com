@@ -171,9 +171,9 @@ export function EmailPreferencesContent() {
                     return (
                       <div
                         key={row.id}
-                        className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+                        className="flex items-start justify-between gap-4 py-4 sm:items-center sm:gap-6"
                       >
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1 sm:flex-initial">
                           <p
                             className={
                               preferences.receiveOptionalEmails
@@ -190,8 +190,21 @@ export function EmailPreferencesContent() {
                           <p
                             className={
                               preferences.receiveOptionalEmails
-                                ? "mt-1 text-sm font-medium leading-6 text-slate-700"
-                                : "mt-1 text-sm font-medium leading-6 text-slate-500"
+                                ? "mt-1 text-sm font-medium leading-6 text-slate-700 sm:hidden"
+                                : "mt-1 text-sm font-medium leading-6 text-slate-500 sm:hidden"
+                            }
+                          >
+                            {
+                              t[
+                                `accountDashboard.preferences.email.rows.${row.copyKey}.shortDescription`
+                              ]
+                            }
+                          </p>
+                          <p
+                            className={
+                              preferences.receiveOptionalEmails
+                                ? "mt-1 hidden text-sm font-medium leading-6 text-slate-700 sm:block"
+                                : "mt-1 hidden text-sm font-medium leading-6 text-slate-500 sm:block"
                             }
                           >
                             {
@@ -201,18 +214,22 @@ export function EmailPreferencesContent() {
                             }
                           </p>
                         </div>
-                        <PreferenceSwitch
-                          checked={displayChecked}
-                          label={
-                            t[
-                              `accountDashboard.preferences.email.rows.${row.copyKey}.title`
-                            ]
-                          }
-                          onChange={() => updatePreference(row.id)}
-                          onLabel={t["accountDashboard.preferences.email.on"]}
-                          offLabel={t["accountDashboard.preferences.email.off"]}
-                          disabled={!preferences.receiveOptionalEmails}
-                        />
+                        <div className="shrink-0 pt-1 sm:pt-0">
+                          <PreferenceSwitch
+                            checked={displayChecked}
+                            label={
+                              t[
+                                `accountDashboard.preferences.email.rows.${row.copyKey}.title`
+                              ]
+                            }
+                            onChange={() => updatePreference(row.id)}
+                            onLabel={t["accountDashboard.preferences.email.on"]}
+                            offLabel={
+                              t["accountDashboard.preferences.email.off"]
+                            }
+                            disabled={!preferences.receiveOptionalEmails}
+                          />
+                        </div>
                       </div>
                     );
                   })}
@@ -220,8 +237,8 @@ export function EmailPreferencesContent() {
 
                 {section.copyKey === "inspirationUpdates" ? (
                   <div className="mt-6 border-t border-slate-300 pt-5">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-                      <div className="min-w-0">
+                    <div className="flex items-start justify-between gap-4 sm:items-center sm:gap-6">
+                      <div className="min-w-0 flex-1 sm:flex-initial">
                         <p className="text-sm font-semibold leading-5 text-slate-950">
                           {
                             t[
@@ -229,7 +246,14 @@ export function EmailPreferencesContent() {
                             ]
                           }
                         </p>
-                        <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                        <p className="mt-1 text-sm font-medium leading-6 text-slate-700 sm:hidden">
+                          {
+                            t[
+                              "accountDashboard.preferences.email.masterOptional.shortDescription"
+                            ]
+                          }
+                        </p>
+                        <p className="mt-1 hidden text-sm font-medium leading-6 text-slate-700 sm:block">
                           {
                             t[
                               "accountDashboard.preferences.email.masterOptional.description"
@@ -237,19 +261,21 @@ export function EmailPreferencesContent() {
                           }
                         </p>
                       </div>
-                      <PreferenceSwitch
-                        checked={preferences.receiveOptionalEmails}
-                        label={
-                          t[
-                            "accountDashboard.preferences.email.masterOptional.title"
-                          ]
-                        }
-                        onChange={() =>
-                          updatePreference("receiveOptionalEmails")
-                        }
-                        onLabel={t["accountDashboard.preferences.email.on"]}
-                        offLabel={t["accountDashboard.preferences.email.off"]}
-                      />
+                      <div className="shrink-0 pt-1 sm:pt-0">
+                        <PreferenceSwitch
+                          checked={preferences.receiveOptionalEmails}
+                          label={
+                            t[
+                              "accountDashboard.preferences.email.masterOptional.title"
+                            ]
+                          }
+                          onChange={() =>
+                            updatePreference("receiveOptionalEmails")
+                          }
+                          onLabel={t["accountDashboard.preferences.email.on"]}
+                          offLabel={t["accountDashboard.preferences.email.off"]}
+                        />
+                      </div>
                     </div>
                     {!preferences.receiveOptionalEmails ? (
                       <p className="mt-4 rounded-xl border border-slate-300 bg-white/40 px-4 py-3 text-sm font-medium leading-6 text-slate-700">
