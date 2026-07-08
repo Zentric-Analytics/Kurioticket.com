@@ -4067,7 +4067,12 @@ export function FlightResultsClient() {
             </button>
           </div>
 
-          <div className="relative overflow-visible rounded-xl border border-slate-200/80 bg-white/90 p-1.5 shadow-[0_16px_36px_-30px_rgba(15,23,42,0.55)] ring-1 ring-white/70 backdrop-blur-md sm:rounded-xl">
+          <div
+            className={cn(
+              "relative overflow-visible rounded-xl border border-slate-200/80 bg-white/90 p-1.5 shadow-[0_16px_36px_-30px_rgba(15,23,42,0.55)] ring-1 ring-white/70 backdrop-blur-md sm:rounded-xl",
+              placement === "desktop" && "sm:translate-y-8",
+            )}
+          >
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.85fr)_minmax(0,1.35fr)_minmax(0,1.1fr)_112px] lg:gap-0">
               <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-200/80 bg-white/60 px-4 py-1.5 transition-colors hover:border-slate-300 hover:bg-white/90 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/80 lg:hover:border-slate-200/80 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
                 <div
