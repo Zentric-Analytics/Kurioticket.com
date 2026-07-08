@@ -43,6 +43,22 @@ const emptyPreferences: TravelPreferences = {
   travelPurpose: "",
 };
 
+type TravelPreferencesApiResponse = Partial<TravelPreferences> & {
+  notificationPreferences?: unknown;
+};
+
+function projectTravelPreferences(value: TravelPreferencesApiResponse | null | undefined): TravelPreferences {
+  return {
+    homeAirport: value?.homeAirport ?? emptyPreferences.homeAirport,
+    preferredAirlines: Array.isArray(value?.preferredAirlines) ? value.preferredAirlines : emptyPreferences.preferredAirlines,
+    budgetStyle: value?.budgetStyle ?? emptyPreferences.budgetStyle,
+    directVsCheaper: value?.directVsCheaper ?? emptyPreferences.directVsCheaper,
+    travelFrequency: value?.travelFrequency ?? emptyPreferences.travelFrequency,
+    comfortVsSavings: value?.comfortVsSavings ?? emptyPreferences.comfortVsSavings,
+    travelPurpose: value?.travelPurpose ?? emptyPreferences.travelPurpose,
+  };
+}
+
 const fieldClassName =
   "w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#004BB8] focus:ring-4 focus:ring-[#004BB8]/15 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500";
 
@@ -131,23 +147,34 @@ export function BookingPreferencesContent() {
   const airlineText = useMemo(() => preferences.preferredAirlines.join(", "), [preferences.preferredAirlines]);
 
   useEffect(() => {
+    if (status !== "success" || !message) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      setMessage("");
+      setStatus("idle");
+    }, 2000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [message, status]);
+
+  useEffect(() => {
     let active = true;
 
     async function loadPreferences() {
       try {
         const response = await fetch("/api/account/travel-preferences", { cache: "no-store" });
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Unable to load travel preferences.");
+        if (!response.ok) throw new Error(data.error || t["accountDashboard.preferences.booking.status.loadError"] || "Unable to load travel preferences.");
         if (!active) return;
-        const nextPreferences = { ...emptyPreferences, ...data.preferences };
+        const nextPreferences = projectTravelPreferences(data.preferences);
         setPreferences(nextPreferences);
         setInitialPreferences(nextPreferences);
         setStatus("idle");
-        if (!data.hasPreferences) setMessage("No travel preferences saved yet. Add your defaults below.");
+        if (!data.hasPreferences) setMessage(t["accountDashboard.preferences.booking.status.empty"] ?? "No travel preferences saved yet. Add your defaults below.");
       } catch (error) {
         if (!active) return;
         setStatus("error");
-        setMessage(error instanceof Error ? error.message : "Unable to load travel preferences.");
+        setMessage(error instanceof Error ? error.message : t["accountDashboard.preferences.booking.status.loadError"] ?? "Unable to load travel preferences.");
       }
     }
 
@@ -156,7 +183,7 @@ export function BookingPreferencesContent() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [t]);
 
   function updateField(field: keyof TravelPreferences, value: string) {
     setPreferences((current) => ({ ...current, [field]: value }));
@@ -170,18 +197,18 @@ export function BookingPreferencesContent() {
       const response = await fetch("/api/account/travel-preferences", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(preferences),
+        body: JSON.stringify(projectTravelPreferences(preferences)),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Unable to save travel preferences.");
-      const nextPreferences = { ...emptyPreferences, ...data.preferences };
+      if (!response.ok) throw new Error(data.error || t["accountDashboard.preferences.booking.status.saveError"] || "Unable to save travel preferences.");
+      const nextPreferences = projectTravelPreferences(data.preferences);
       setPreferences(nextPreferences);
       setInitialPreferences(nextPreferences);
       setStatus("success");
-      setMessage("Travel preferences saved.");
+      setMessage(t["accountDashboard.preferences.booking.status.saved"] ?? "Travel preferences saved.");
     } catch (error) {
       setStatus("error");
-      setMessage(error instanceof Error ? error.message : "Unable to save travel preferences.");
+      setMessage(error instanceof Error ? error.message : t["accountDashboard.preferences.booking.status.saveError"] ?? "Unable to save travel preferences.");
     }
   }
 
@@ -197,8 +224,8 @@ export function BookingPreferencesContent() {
 
       <div className="mx-auto -mt-6 min-w-0 max-w-6xl space-y-6 px-4 pb-6 pt-0 sm:-mt-8 sm:px-6 sm:pb-8 lg:px-8">
         <form className="w-full space-y-6" action="#" onSubmit={handleSubmit}>
-          {message ? <div className={`rounded-2xl border px-4 py-3 text-sm font-medium ${status === "error" ? "border-red-200 bg-red-50 text-red-700" : status === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-blue-200 bg-blue-50 text-blue-800"}`} role="status">{message}</div> : null}
-          {status === "loading" ? <div className="rounded-2xl border border-slate-300 bg-white p-5 text-sm text-slate-600">Loading your travel preferences…</div> : null}
+          {message ? <p className={`text-sm font-medium ${status === "error" ? "text-red-700" : status === "success" ? "text-emerald-700" : "text-blue-800"}`} role="status">{message}</p> : null}
+          {status === "loading" ? <div className="rounded-2xl border border-slate-300 bg-white p-5 text-sm text-slate-600">{t["accountDashboard.preferences.booking.status.loading"] ?? "Loading your travel preferences…"}</div> : null}
 
           <PreferenceSection title="Flight defaults" description="Tell Kurioticket which airports and airlines you prefer." blendWithFormArea>
             <div className="min-w-0 space-y-2"><label htmlFor="homeAirport" className="block text-sm font-medium leading-5 text-slate-700">{t["accountDashboard.preferences.booking.homeAirport"]}</label><input id="homeAirport" name="homeAirport" value={preferences.homeAirport} disabled={disabled} onChange={(event) => updateField("homeAirport", event.target.value.toUpperCase())} placeholder="Example: JFK" maxLength={80} className={fieldClassName} /></div>
@@ -214,8 +241,8 @@ export function BookingPreferencesContent() {
           </PreferenceSection>
 
           <div className="flex flex-col-reverse gap-3 pt-1 sm:flex-row sm:justify-end">
-            <button type="button" disabled={disabled} onClick={() => { setPreferences(initialPreferences); setMessage("Changes reset."); setStatus("idle"); }} className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto">{t["accountDashboard.preferences.cancel"]}</button>
-            <button type="submit" disabled={disabled} className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto">{status === "saving" ? "Saving…" : t["accountDashboard.preferences.savePreferences"]}</button>
+            <button type="button" disabled={disabled} onClick={() => { setPreferences(initialPreferences); setMessage(t["accountDashboard.preferences.booking.status.reverted"] ?? "Changes reverted."); setStatus("idle"); }} className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto">{t["accountDashboard.preferences.booking.actions.revert"] ?? "Revert changes"}</button>
+            <button type="submit" disabled={disabled} className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto">{status === "saving" ? t["accountDashboard.preferences.booking.actions.saving"] ?? "Saving…" : t["accountDashboard.preferences.savePreferences"]}</button>
           </div>
         </form>
       </div>
