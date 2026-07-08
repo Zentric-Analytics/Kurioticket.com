@@ -248,6 +248,19 @@ function getFlightFaqItems(
   ];
 }
 
+function getUniqueDiscoveryItems(items: HomeDiscoveryItem[]): HomeDiscoveryItem[] {
+  const seenIds = new Set<string>();
+
+  return items.filter((item) => {
+    if (seenIds.has(item.id)) {
+      return false;
+    }
+
+    seenIds.add(item.id);
+    return true;
+  });
+}
+
 function getBeachVacationCards(
   regionCode: string,
   excludedIds: Set<string>,
@@ -280,6 +293,25 @@ function getBeachVacationCards(
   );
 
   return [...regionalMatches, ...fallbackMatches].slice(0, 6);
+}
+
+function getRouteInspirationCards(
+  regionCode: string,
+  excludedIds: Set<string>,
+): HomeDiscoveryItem[] {
+  const regionalCards = getHomeDiscoveryByRegion(regionCode).filter(
+    (item) => !excludedIds.has(item.id),
+  );
+
+  const regionalIds = new Set(regionalCards.map((item) => item.id));
+  const fallbackCards = allDiscoveryItems.filter(
+    (item) => !excludedIds.has(item.id) && !regionalIds.has(item.id),
+  );
+
+  return getUniqueDiscoveryItems([...regionalCards, ...fallbackCards]).slice(
+    0,
+    14,
+  );
 }
 
 function getDiscoveryTranslation(
@@ -391,16 +423,16 @@ function RouteIdeaCard({
       aria-label={t("flightLandingRouteAriaLabel")
         .replace("{{origin}}", routeText.originCity)
         .replace("{{destination}}", routeText.destinationCity)}
-      className={`group relative block h-[10rem] overflow-hidden rounded-2xl border border-white/70 bg-slate-100 shadow-[0_12px_30px_rgba(15,23,42,0.08)] transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/20 hover:shadow-[0_16px_36px_rgba(0,75,184,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 sm:h-[12rem] sm:rounded-3xl lg:h-[12.5rem] ${className}`}
+      className={`group relative block h-[9.5rem] overflow-hidden rounded-2xl border border-white/70 bg-slate-100 shadow-[0_12px_30px_rgba(15,23,42,0.08)] transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/20 hover:shadow-[0_16px_36px_rgba(0,75,184,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 sm:h-[11.25rem] sm:rounded-3xl lg:h-[12rem] ${className}`}
     >
       <Image
         src={item.image}
         alt={routeText.imageAlt}
         fill
         sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 42vw"
-        className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+        className="object-cover brightness-[1.08] saturate-[1.05] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
       />
-      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/45 via-slate-950/12 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/25 via-slate-950/8 to-transparent" />
       <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4">
         <h3 className="text-lg font-extrabold leading-tight tracking-[-0.02em] text-white drop-shadow-[0_2px_8px_rgba(2,6,23,0.45)] sm:text-xl">
           {routeText.destinationCity}
@@ -417,16 +449,17 @@ export function FlightLandingClient() {
 
   const discoveryCards = getHomeDiscoveryByRegion(selectedOption.code).slice(
     0,
-    4,
+    7,
   );
   const discoveryIds = new Set(discoveryCards.map((item) => item.id));
   const beachVacationCards = getBeachVacationCards(
     selectedOption.code,
     discoveryIds,
   );
-  const routeInspirationCards = getHomeDiscoveryByRegion(selectedOption.code)
-    .filter((item) => !discoveryIds.has(item.id))
-    .slice(0, 8);
+  const routeInspirationCards = getRouteInspirationCards(
+    selectedOption.code,
+    discoveryIds,
+  );
   const topRouteIdeaCards = routeInspirationCards.filter(
     (_item, index) => index % 2 === 0,
   );
@@ -640,7 +673,7 @@ export function FlightLandingClient() {
                         key={item.id}
                         item={item}
                         t={t}
-                        className="w-[58vw] min-w-[210px] max-w-[250px] shrink-0"
+                        className="w-[56vw] min-w-[205px] max-w-[240px] shrink-0"
                       />
                     ))}
                   </div>
