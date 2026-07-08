@@ -121,23 +121,32 @@ function snapshot({
   departureDate = "2026-07-24",
   searchedAt,
   expiresAt,
+  currency = "USD",
+  providerBacked = true,
+  status = "ACTIVE",
+  payload,
 }: {
   origin?: string;
   destination?: string;
   departureDate?: string;
   searchedAt: string;
   expiresAt: string;
+  currency?: string;
+  providerBacked?: boolean;
+  status?: string;
+  payload?: Record<string, unknown>;
 }) {
   return {
     origin,
     destination,
     departureDate: new Date(`${departureDate}T00:00:00.000Z`),
-    currency: "USD",
+    currency,
     price: 499,
-    providerBacked: true,
+    providerBacked,
     searchedAt: new Date(searchedAt),
     expiresAt: new Date(expiresAt),
-    status: "ACTIVE",
+    status,
+    payload,
   } as unknown as Parameters<typeof __homepageFareCoverageTest.isFreshHomepageFareSnapshotRecord>[0]["snapshot"];
 }
 
@@ -207,7 +216,7 @@ test("underfill execution metadata reports budget, candidate, and provider cause
   assert.equal(noOffers.underfillCauseByMarket.US, "provider_unavailable_no_offers");
 });
 
-test("public homepage response uses exact-route last-known-good fares safely", () => {
+test("public homepage response hides exact-route last-known-good fares", () => {
   const now = new Date("2026-06-09T00:00:00.000Z");
   const entry = __homepageFareCoverageTest.formatHomepageFareSnapshotResponseEntry({
     route: { id: "case-route", origin: "JFK", destination: "LHR" },
@@ -222,11 +231,128 @@ test("public homepage response uses exact-route last-known-good fares safely", (
     departureDate: "2026-07-24",
   });
 
+  assert.equal(entry.unavailable, true);
+  assert.equal(entry.providerBacked, false);
+  assert.equal(entry.price, undefined);
+  assert.equal(entry.priceState, "none");
+});
+
+
+test("public homepage response shows only fresh active provider-backed exact-route exact-date fares", () => {
+  const now = new Date("2026-06-09T00:00:00.000Z");
+  const entry = __homepageFareCoverageTest.formatHomepageFareSnapshotResponseEntry({
+    route: { id: "fresh-route", origin: "JFK", destination: "LHR" },
+    snapshot: snapshot({
+      origin: "JFK",
+      destination: "LHR",
+      departureDate: "2026-07-24",
+      searchedAt: "2026-06-08T00:00:00.000Z",
+      expiresAt: "2026-06-10T00:00:00.000Z",
+    }) as never,
+    now,
+    currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
+    departureDate: "2026-07-24",
+  });
+
   assert.equal(entry.price, 499);
   assert.equal(entry.providerBacked, true);
-  assert.equal(entry.priceState, "last_known_good");
+  assert.equal(entry.priceState, "fresh");
   assert.equal(entry.search?.origin, "JFK");
   assert.equal(entry.search?.destination, "LHR");
+  assert.equal(entry.search?.departureDate, "2026-07-24");
+});
+
+test("public homepage response hides expired, unavailable, failed, non-provider, currency mismatch, and fallback-date fares", () => {
+  const now = new Date("2026-06-09T00:00:00.000Z");
+  const base = {
+    origin: "JFK",
+    destination: "LHR",
+    departureDate: "2026-07-24",
+    searchedAt: "2026-06-08T00:00:00.000Z",
+    expiresAt: "2026-06-10T00:00:00.000Z",
+  };
+  const cases = [
+    { name: "expired active", snapshot: snapshot({ ...base, expiresAt: "2026-06-08T01:00:00.000Z" }) },
+    { name: "unavailable", snapshot: snapshot({ ...base, status: "UNAVAILABLE" }) },
+    { name: "failed", snapshot: snapshot({ ...base, status: "FAILED" }) },
+    { name: "non-provider", snapshot: snapshot({ ...base, providerBacked: false }) },
+    { name: "currency mismatch", snapshot: snapshot({ ...base, currency: "EUR" }) },
+    { name: "date fallback", snapshot: snapshot({ ...base, payload: { dateFallbackUsed: true } }) },
+    { name: "different date", snapshot: snapshot({ ...base, departureDate: "2026-07-25" }) },
+  ];
+
+  for (const testCase of cases) {
+    const entry = __homepageFareCoverageTest.formatHomepageFareSnapshotResponseEntry({
+      route: { id: testCase.name, origin: "JFK", destination: "LHR" },
+      snapshot: testCase.snapshot as never,
+      now,
+      currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
+      departureDate: "2026-07-24",
+    });
+
+    assert.equal(entry.unavailable, true, testCase.name);
+    assert.equal(entry.providerBacked, false, testCase.name);
+    assert.equal(entry.price, undefined, testCase.name);
+  }
+});
+
+test("public homepage response rejects origin and destination mismatches", () => {
+  const now = new Date("2026-06-09T00:00:00.000Z");
+
+  for (const testCase of [
+    { name: "origin mismatch", origin: "EWR", destination: "LHR" },
+    { name: "destination mismatch", origin: "JFK", destination: "CDG" },
+  ]) {
+    const entry = __homepageFareCoverageTest.formatHomepageFareSnapshotResponseEntry({
+      route: { id: testCase.name, origin: "JFK", destination: "LHR" },
+      snapshot: snapshot({
+        origin: testCase.origin,
+        destination: testCase.destination,
+        searchedAt: "2026-06-08T00:00:00.000Z",
+        expiresAt: "2026-06-10T00:00:00.000Z",
+      }) as never,
+      now,
+      currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
+      departureDate: "2026-07-24",
+    });
+
+    assert.equal(entry.unavailable, true, testCase.name);
+    assert.equal(entry.price, undefined, testCase.name);
+  }
+});
+
+test("provider result exactness requires matching route and currency before active writes", () => {
+  const baseResult = {
+    id: "offer_1",
+    provider: "Duffel",
+    airlineName: "Airline",
+    originAirport: "JFK",
+    destinationAirport: "LHR",
+    departureTime: "2026-07-24T12:00:00.000Z",
+    arrivalTime: "2026-07-24T20:00:00.000Z",
+    duration: "8h",
+    durationMinutes: 480,
+    stops: 0,
+    layovers: [],
+    cabinClass: "economy",
+    baggageInfo: "Baggage varies",
+    refundInfo: "Rules vary",
+    price: 499,
+    currency: "USD",
+    bookingUrl: "https://example.com",
+    partnerRedirectUrl: "https://example.com",
+    valueScore: 1,
+    riskScore: 1,
+    comfortScore: 1,
+    travelConfidenceScore: 1,
+    travelEffortScore: 1,
+    recommendationReasons: [],
+    badges: [],
+  };
+
+  assert.equal(__homepageFareCoverageTest.isExactProviderResultForHomepageFareSnapshot({ result: baseResult, origin: "JFK", destination: "LHR", currency: "USD" }), true);
+  assert.equal(__homepageFareCoverageTest.isExactProviderResultForHomepageFareSnapshot({ result: { ...baseResult, destinationAirport: "CDG" }, origin: "JFK", destination: "LHR", currency: "USD" }), false);
+  assert.equal(__homepageFareCoverageTest.isExactProviderResultForHomepageFareSnapshot({ result: { ...baseResult, currency: "EUR" }, origin: "JFK", destination: "LHR", currency: "USD" }), false);
 });
 
 test("public homepage response rejects wrong-route snapshots", () => {

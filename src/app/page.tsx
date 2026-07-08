@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
+import { hasFreshProviderPrice } from "@/lib/homepageFareDisplay";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
@@ -1382,56 +1383,6 @@ function DiscoverySuggestionCard({
       ) : null}
     </Link>
   );
-}
-
-type ProviderBackedHomepageFare = HomepageFare & {
-  price: number;
-  currency: string;
-  search: DestinationPriceSearch;
-  expiresAt: string;
-};
-
-function hasFreshProviderPrice(
-  price?: HomepageFare,
-  expectedRoute?: { originCode?: string; destinationCode?: string },
-): price is ProviderBackedHomepageFare {
-  if (
-    price?.providerBacked !== true ||
-    typeof price.price !== "number" ||
-    !Number.isFinite(price.price) ||
-    !price.currency ||
-    !price.search ||
-    !price.expiresAt
-  ) {
-    return false;
-  }
-
-  if (price.search.currency !== price.currency) return false;
-
-  if (
-    expectedRoute?.originCode &&
-    price.search.origin.toUpperCase() !== expectedRoute.originCode.toUpperCase()
-  ) {
-    return false;
-  }
-
-  if (
-    expectedRoute?.destinationCode &&
-    price.search.destination.toUpperCase() !==
-      expectedRoute.destinationCode.toUpperCase()
-  ) {
-    return false;
-  }
-
-  if (
-    price.priceState === "last_known_good" ||
-    price.cachedProviderBacked === true
-  ) {
-    return true;
-  }
-
-  const expiresAtMs = Date.parse(price.expiresAt);
-  return Number.isFinite(expiresAtMs) && expiresAtMs > Date.now();
 }
 
 function buildDestinationCardHref(
