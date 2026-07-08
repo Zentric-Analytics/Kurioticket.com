@@ -301,11 +301,11 @@ export function EmailPreferencesContent() {
               ))}
             </div>
 
-            <div className="mt-5 flex items-center gap-3 sm:mt-0 sm:justify-end sm:pt-1">
+            <div className="relative mt-5 flex flex-row items-center justify-end gap-3 sm:mt-0 sm:justify-end sm:pt-1">
               <button
                 type="button"
                 onClick={resetToDefault}
-                className="focus-ring inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-slate-300 bg-transparent px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:flex-none sm:px-5"
+                className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:flex-none sm:bg-transparent"
               >
                 <span className="sm:hidden">
                   {t["accountDashboard.preferences.email.resetShort"]}
@@ -317,7 +317,7 @@ export function EmailPreferencesContent() {
               <button
                 type="button"
                 onClick={previewSave}
-                className="focus-ring inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-[#004BB8] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] sm:flex-none sm:px-5"
+                className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] sm:flex-none"
               >
                 <span className="sm:hidden">
                   {t["accountDashboard.preferences.email.saveShort"]}
