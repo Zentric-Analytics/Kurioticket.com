@@ -1127,8 +1127,10 @@ export function FlightResultsClient() {
     const updateFromSentinelPosition = () => {
       const sentinelRect = sentinel.getBoundingClientRect();
       const sentinelScrollTop = sentinelRect.top + window.scrollY;
+      const fullSearchHeight = searchFormRef.current?.offsetHeight ?? 0;
+      const compactTriggerOffset = Math.max(fullSearchHeight - 56, 72);
       const hasPassedStickyTrigger =
-        window.scrollY > Math.max(16, sentinelScrollTop);
+        window.scrollY > Math.max(16, sentinelScrollTop + compactTriggerOffset);
 
       applyCompactState(hasPassedStickyTrigger);
     };
@@ -3919,12 +3921,12 @@ export function FlightResultsClient() {
     if (placement === "desktop" && showCompactSearchSummary) {
       return (
         <div className="mx-auto w-full min-w-0 max-w-[54rem] sm:block">
-          <div className="overflow-visible rounded-none border border-slate-200 bg-white p-1 shadow-none">
+          <div className="overflow-visible border border-slate-200/90 bg-white p-1 shadow-none">
             <button
               type="button"
               aria-label={t("editFlightSearch")}
               onClick={expandStickySearch}
-              className="group focus-ring flex w-full min-w-0 flex-col gap-2 rounded-none bg-white px-3 py-2 text-start transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
+              className="group focus-ring flex w-full min-w-0 flex-col gap-2 bg-white px-3 py-2 text-start transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
             >
               <span className="grid min-w-0 flex-1 grid-cols-1 gap-1.5 sm:grid-cols-[minmax(0,1.5fr)_minmax(0,0.8fr)] lg:grid-cols-[minmax(0,1.6fr)_minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1.1fr)] lg:items-center lg:gap-3">
                 <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-800">
@@ -3957,7 +3959,7 @@ export function FlightResultsClient() {
                   {travelerCabinSummary}
                 </span>
               </span>
-              <span className="inline-flex shrink-0 items-center gap-2 self-start rounded-none border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#004BB8] shadow-none transition group-hover:border-[#004BB8]/25 group-hover:bg-white sm:self-center">
+              <span className="inline-flex shrink-0 items-center gap-2 self-start border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#004BB8] shadow-none transition group-hover:border-[#004BB8]/25 group-hover:bg-white sm:self-center">
                 <SquarePen className="h-3.5 w-3.5" aria-hidden="true" />
                 {t("edit")}
               </span>
@@ -3996,7 +3998,7 @@ export function FlightResultsClient() {
             </button>
           </div>
 
-          <div className="overflow-visible rounded-none border border-slate-200 bg-white p-1.5 shadow-none">
+          <div className="overflow-visible border border-slate-200/90 bg-white p-1.5 shadow-none">
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[132px_minmax(0,2.35fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
               <div ref={tripTypeMenuRef} className="relative">
                 <button
@@ -4607,8 +4609,8 @@ export function FlightResultsClient() {
       <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
       <section
         className={cn(
-          "sticky top-0 z-40 hidden border-b border-slate-200/80 bg-[#f6f8fb]/95 backdrop-blur transition-[padding,border-color] duration-200 sm:block",
-          showCompactSearchSummary ? "py-1.5" : "py-3",
+          "sticky top-0 z-40 hidden border-b border-slate-200 bg-white/95 backdrop-blur transition-[padding,border-color] duration-200 sm:block",
+          showCompactSearchSummary ? "py-1.5" : "py-2.5",
         )}
       >
         <div className="page-shell">
