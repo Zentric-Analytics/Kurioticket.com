@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { buildMarketAssetBatchTemplate } from "./marketAssetBatchTemplate";
+import {
+  buildMarketAssetBatchTemplate,
+  marketAssetTemplatePlaceholderDimensions,
+} from "./marketAssetBatchTemplate";
 import { checkMarketAssetManifestReadiness } from "./marketAssetManifestReadiness";
 import type { MarketAssetManifest } from "./marketAssetManifest";
 
@@ -37,7 +40,18 @@ describe("checkMarketAssetManifestReadiness", () => {
     assert.equal(result.ready, false);
     assert.ok(result.errors.some((error) => error.includes("createdAt")));
     assert.ok(result.errors.some((error) => error.includes("TODO")));
+    assert.ok(result.errors.some((error) => error.includes("dimensions")));
     assert.ok(result.errors.some((error) => error.includes("desktopApproved")));
+  });
+
+  it("fails typed template placeholder dimensions", () => {
+    const manifest = buildReadyManifest();
+    manifest.entries[0].dimensions = marketAssetTemplatePlaceholderDimensions;
+
+    const result = checkMarketAssetManifestReadiness(manifest);
+
+    assert.equal(result.ready, false);
+    assert.ok(result.errors.some((error) => error.includes("dimensions")));
   });
 
   it("passes a completed manifest", () => {
