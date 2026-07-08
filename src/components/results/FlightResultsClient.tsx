@@ -4008,7 +4008,7 @@ export function FlightResultsClient() {
             <div
               role="radiogroup"
               aria-label={t("tripType")}
-              className="hidden items-center gap-5 px-1 sm:flex"
+              className="hidden items-center gap-6 px-1 pb-1 sm:flex"
             >
               {[
                 { label: t("oneWay"), value: "one-way" },
@@ -4024,24 +4024,24 @@ export function FlightResultsClient() {
                     aria-checked={selected}
                     onClick={() => handleTripTypeChange(option.value)}
                     className={cn(
-                      "focus-ring inline-flex min-h-7 items-center gap-2 rounded-full px-1.5 py-1 text-sm font-medium transition-colors",
+                      "focus-ring inline-flex min-h-7 items-center gap-2 rounded-full px-1 py-1 text-sm font-medium transition-colors",
                       selected
-                        ? "text-slate-950"
-                        : "text-slate-600 hover:text-slate-950",
+                        ? "text-slate-900"
+                        : "text-slate-500 hover:text-slate-800",
                     )}
                   >
                     <span
                       aria-hidden="true"
                       className={cn(
-                        "inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border transition-colors",
+                        "inline-flex h-4 w-4 items-center justify-center rounded-full border transition-colors",
                         selected
-                          ? "border-[#004BB8] bg-white shadow-[0_0_0_3px_rgba(0,75,184,0.08)]"
-                          : "border-slate-300 bg-white/80",
+                          ? "border-[#004BB8] bg-white shadow-[0_0_0_3px_rgba(0,75,184,0.10)]"
+                          : "border-slate-300 bg-white/70",
                       )}
                     >
                       <span
                         className={cn(
-                          "h-1.5 w-1.5 rounded-full transition-colors",
+                          "h-2 w-2 rounded-full transition-colors",
                           selected ? "bg-[#004BB8]" : "bg-transparent",
                         )}
                       />
@@ -4067,9 +4067,9 @@ export function FlightResultsClient() {
             </button>
           </div>
 
-          <div className="overflow-visible rounded-[1.35rem] border border-white/75 bg-white/85 p-1.5 shadow-[0_18px_44px_-30px_rgba(15,23,42,0.5)] ring-1 ring-slate-950/[0.03] backdrop-blur-md">
+          <div className="relative overflow-visible rounded-xl border border-slate-200/80 bg-white/90 p-1.5 shadow-[0_16px_36px_-30px_rgba(15,23,42,0.55)] ring-1 ring-white/70 backdrop-blur-md sm:rounded-xl">
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.85fr)_minmax(0,1.35fr)_minmax(0,1.1fr)_112px] lg:gap-0">
-              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-2xl border border-slate-200/90 bg-white/70 px-4 py-1.5 transition-colors hover:border-slate-300 hover:bg-white/90 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/80 lg:hover:border-slate-200/80 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-200/80 bg-white/60 px-4 py-1.5 transition-colors hover:border-slate-300 hover:bg-white/90 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/80 lg:hover:border-slate-200/80 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
                 <div
                   ref={originWrapRef}
                   className="relative min-h-[50px] px-0 py-0 pe-4"
@@ -4271,7 +4271,7 @@ export function FlightResultsClient() {
                     setActiveDatePicker("departure");
                     setDatePickerPosition(null);
                   }}
-                  className="focus-ring flex h-full min-h-[50px] w-full items-center gap-2 rounded-2xl border border-slate-200/90 bg-white/70 px-3.5 py-1.5 text-start transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/80 lg:hover:border-slate-200/80"
+                  className="focus-ring flex h-full min-h-[50px] w-full items-center gap-2 rounded-xl border border-slate-200/80 bg-white/60 px-3.5 py-1.5 text-start transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/80 lg:hover:border-slate-200/80"
                 >
                   <Calendar className="h-4 w-4 shrink-0 text-[#004BB8]" />
                   <span className="min-w-0">
@@ -4336,7 +4336,7 @@ export function FlightResultsClient() {
                     setTravelerPopoverOpen(true);
                     setTravelerPopoverPosition(null);
                   }}
-                  className="focus-ring flex h-full min-h-[50px] w-full items-center justify-between gap-2 rounded-2xl border border-slate-200/90 bg-white/70 px-3.5 py-1.5 text-start transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/80 lg:hover:border-slate-200/80"
+                  className="focus-ring flex h-full min-h-[50px] w-full items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-white/60 px-3.5 py-1.5 text-start transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/80 lg:hover:border-slate-200/80"
                 >
                   <span className="min-w-0">
                     <span className="block text-[0.68rem] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-500">
@@ -4416,7 +4416,7 @@ export function FlightResultsClient() {
 
               <Button
                 type="submit"
-                className="h-full min-h-[50px] w-full rounded-2xl bg-[#004BB8] px-5 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] ring-1 ring-[#004BB8]/12 hover:bg-[#021C2B] lg:min-w-[112px] lg:rounded-none"
+                className="h-full min-h-[50px] w-full rounded-xl bg-[#004BB8] px-5 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] ring-1 ring-[#004BB8]/12 hover:bg-[#021C2B] lg:min-w-[112px] lg:rounded-lg"
               >
                 {t("search")}
               </Button>
@@ -4614,21 +4614,22 @@ export function FlightResultsClient() {
       <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
       <section
         className={cn(
-          "sticky top-0 z-40 hidden border-b border-transparent transition-[padding,border-color,background-color] duration-200 sm:block",
+          "sticky top-0 z-40 hidden transition-[padding,background-color] duration-200 sm:block",
           isSearchCollapsed
-            ? "bg-white/95 py-1.5 backdrop-blur"
-            : "bg-[#F6F9FC] pb-0 pt-5 shadow-[0_18px_34px_-34px_rgba(2,28,43,0.45)]",
+            ? "border-b border-slate-200/70 bg-white/95 py-1.5 backdrop-blur"
+            : "bg-[linear-gradient(180deg,#F6F9FC_0%,#F6F9FC_calc(100%-25px),#f6f8fb_calc(100%-25px),#f6f8fb_100%)] pb-0 pt-5 shadow-[0_18px_34px_-34px_rgba(2,28,43,0.45)]",
         )}
       >
         <div className="page-shell">
           {!mobileSearchOpen ? (
-            <div
-              className={cn(
-                "relative flex items-stretch gap-2",
-                !isSearchCollapsed && "translate-y-1/2",
-              )}
-            >
-              <div className="min-w-0 flex-1">
+            <div className="relative flex items-stretch gap-2">
+              {!isSearchCollapsed ? (
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-4 bottom-[25px] h-px bg-slate-300/60"
+                />
+              ) : null}
+              <div className="relative z-10 min-w-0 flex-1">
                 {renderCompactSearchForm("desktop")}
               </div>
             </div>
@@ -4636,7 +4637,7 @@ export function FlightResultsClient() {
         </div>
       </section>
 
-      <div className="page-shell grid gap-4 pb-5 pt-12 sm:pt-14 lg:grid-cols-[256px_minmax(0,1fr)] lg:pt-16">
+      <div className="page-shell grid gap-4 pb-5 pt-14 sm:pt-20 lg:grid-cols-[256px_minmax(0,1fr)] lg:pt-20">
         <aside className={cn("hidden lg:block", desktopFilterStickyTopClass)}>
           <div ref={desktopFilterContainerRef}>
             {showFullDesktopFilters ? (
