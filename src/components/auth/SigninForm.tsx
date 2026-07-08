@@ -7,6 +7,7 @@ import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
+import { MessageBanner } from "@/components/ui/MessageBanner";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { signinSchema } from "@/lib/validation";
 
@@ -337,7 +338,7 @@ export function SigninForm({
           </Field>
 
           <Link
-            className="cursor-pointer text-sm font-semibold text-[#004BB8] transition-colors hover:text-[#021C2B] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2"
+            className="cursor-pointer text-sm font-semibold text-blue transition-colors hover:text-navy hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/30 focus-visible:ring-offset-2"
             href="/auth/forgot-password"
           >
             {t.loginForgotPassword}
@@ -356,9 +357,9 @@ export function SigninForm({
         </form>
       ) : (
         <form action={submitCode} className="mt-5 grid gap-4">
-          <div className="rounded-md bg-teal/10 px-3 py-2 text-sm text-teal-dark">
+          <div className="rounded-xl border border-success-border bg-success-surface px-3.5 py-3 text-sm text-success-text">
             <p className="font-semibold">{t.loginCodeSent}</p>
-            <p className="mt-1 text-teal-dark/80">
+            <p className="mt-1 text-success-text/80">
               {formatTranslation(t, {
                 key: "loginCodeInstructions",
                 params: { email: emailForCode, minutes: 10 },
@@ -397,7 +398,7 @@ export function SigninForm({
           <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
             <button
               type="button"
-              className="cursor-pointer font-semibold text-[#004BB8] transition-colors hover:text-[#021C2B] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 disabled:cursor-not-allowed disabled:text-muted disabled:no-underline"
+              className="cursor-pointer font-semibold text-blue transition-colors hover:text-navy hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/30 disabled:cursor-not-allowed disabled:text-muted disabled:no-underline"
               onClick={resendCode}
               disabled={busy || resending || cooldownSeconds > 0}
             >
@@ -413,7 +414,7 @@ export function SigninForm({
 
             <button
               type="button"
-              className="cursor-pointer font-semibold text-[#004BB8] transition-colors hover:text-[#021C2B] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 disabled:cursor-not-allowed disabled:text-muted disabled:no-underline"
+              className="cursor-pointer font-semibold text-blue transition-colors hover:text-navy hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/30 disabled:cursor-not-allowed disabled:text-muted disabled:no-underline"
               onClick={startOver}
               disabled={busy || resending}
             >
@@ -434,7 +435,7 @@ export function SigninForm({
           <Button
             type="button"
             variant="secondary"
-            className="w-full hover:border-slate-300 hover:bg-slate-50 focus-visible:ring-[#004BB8]/30"
+            className="w-full focus-visible:ring-blue/30"
             onClick={() =>
               signIn("google", {
                 callbackUrl: callbackUrl || "/",
@@ -451,7 +452,7 @@ export function SigninForm({
       <p className="mt-4 text-sm text-muted">
         {t.loginSignupPrompt}{" "}
         <Link
-          className="cursor-pointer font-semibold text-[#004BB8] transition-colors hover:text-[#021C2B] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2"
+          className="cursor-pointer font-semibold text-blue transition-colors hover:text-navy hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/30 focus-visible:ring-offset-2"
           href="/auth/signup"
         >
           {t.loginCreateAccount}
@@ -492,20 +493,17 @@ function getLoginErrorKey(error: unknown) {
 
 function StatusMessage({ children }: { children: string }) {
   return (
-    <p
-      className="rounded-md bg-teal/10 px-3 py-2 text-sm font-semibold text-teal-dark"
-      aria-live="polite"
-    >
+    <MessageBanner tone="success" aria-live="polite">
       {children}
-    </p>
+    </MessageBanner>
   );
 }
 
 function ErrorMessage({ children }: { children: string }) {
   return (
-    <p className="text-sm text-danger" aria-live="polite">
+    <MessageBanner tone="error" aria-live="polite">
       {children}
-    </p>
+    </MessageBanner>
   );
 }
 

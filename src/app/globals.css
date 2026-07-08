@@ -17,19 +17,32 @@
 }
 
 :root {
-  --background: #ffffff;
+  --background: #f7f9fc;
   --foreground: #021c2b;
   --navy: #021c2b;
   --navy-soft: #021c2b;
   --surface: #ffffff;
-  --surface-muted: #f2f7fa;
-  --border: #dbe3f3;
+  --surface-subtle: #fbfcfe;
+  --surface-muted: #eef4f8;
+  --surface-raised: #ffffff;
+  --border: #d8e1ec;
+  --border-strong: #c7d3e0;
   --muted: #64748b;
   --teal: #5cb6b2;
   --teal-dark: #3f908d;
   --blue: #004bb8;
-  --amber: #c27a2c;
-  --danger: #b91c1c;
+  --amber: #a96724;
+  --danger: #9f1d2d;
+  --danger-hover: #861727;
+  --error-surface: #fff4f5;
+  --error-border: #f3c8ce;
+  --error-text: #8f1d2c;
+  --success-surface: #eef8f6;
+  --success-border: #bfdfdc;
+  --success-text: #246c69;
+  --status-surface: #f1f6fb;
+  --status-border: #cdddeb;
+  --status-text: #1f4f7a;
 }
 
 @theme inline {
@@ -38,14 +51,27 @@
   --color-navy: var(--navy);
   --color-navy-soft: var(--navy-soft);
   --color-surface: var(--surface);
+  --color-surface-subtle: var(--surface-subtle);
   --color-surface-muted: var(--surface-muted);
+  --color-surface-raised: var(--surface-raised);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-muted: var(--muted);
   --color-teal: var(--teal);
   --color-teal-dark: var(--teal-dark);
   --color-blue: var(--blue);
   --color-amber: var(--amber);
   --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-error-surface: var(--error-surface);
+  --color-error-border: var(--error-border);
+  --color-error-text: var(--error-text);
+  --color-success-surface: var(--success-surface);
+  --color-success-border: var(--success-border);
+  --color-success-text: var(--success-text);
+  --color-status-surface: var(--status-surface);
+  --color-status-border: var(--status-border);
+  --color-status-text: var(--status-text);
   --font-sans: "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, ui-sans-serif, system-ui, sans-serif;
   --font-mono: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", ui-monospace, monospace;
 }
