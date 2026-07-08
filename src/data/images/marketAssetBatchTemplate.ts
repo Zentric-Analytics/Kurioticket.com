@@ -18,6 +18,9 @@ const marketLocales: Record<ProductionAssetIntakeMarket, string> = {
   CA: "en-CA",
 };
 
+export const marketAssetTemplatePlaceholderDimensions: MarketAssetManifestEntry["dimensions"] =
+  "0 x 0";
+
 export type MarketAssetBatchTemplateOptions = {
   batchId?: string;
   createdAt?: string;
@@ -56,7 +59,6 @@ function buildTemplateEntry(
   index: number,
 ): MarketAssetManifestEntry {
   const lowerMarket = market.toLowerCase();
-  const usageSlug = usage.replaceAll("-", "_");
   const fileSlug = usage.replaceAll("-", "/");
   const slotNumber = String(index).padStart(2, "0");
 
@@ -76,14 +78,14 @@ function buildTemplateEntry(
     sourcePage: "TODO: Add source or asset purchase URL",
     license: "TODO: Add commercial license type",
     licenseNotes: "TODO: Add approved license notes for web and mobile-web use",
-    dimensions: "TODO x TODO",
+    dimensions: marketAssetTemplatePlaceholderDimensions,
     cropNotes: "TODO: Add desktop and mobile crop approval notes",
     focalPoint: "center",
     desktopApproved: false,
     mobileApproved: false,
     pageSurfaces: [usageToPageSurface(usage)],
     reviewer: "TODO: Add reviewer name or team",
-    notes: `Template placeholder for ${market} ${usage} asset ${slotNumber}. Do not convert until all TODOs are replaced and crop approvals are true.`,
+    notes: `Template placeholder for ${market} ${usage} asset ${slotNumber}. Replace ${marketAssetTemplatePlaceholderDimensions} dimensions before conversion. Do not convert until all TODOs are replaced and crop approvals are true.`,
   };
 }
 
