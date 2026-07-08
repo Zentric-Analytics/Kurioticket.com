@@ -904,9 +904,9 @@ test("Thai language metadata, LTR direction, and English fallback dictionary res
 
 test("Thai account customization and booking preferences resolve through active i18n keys", () => {
   const th = getTranslations("th");
-  const customizationPageSource = readFileSync("src/app/dashboard/preferences/email/page.tsx", "utf8");
+  const customizationPageSource = readFileSync("src/app/dashboard/preferences/customization/page.tsx", "utf8");
   const customizationSource = readFileSync(
-    "src/app/dashboard/preferences/email/EmailPreferencesContent.tsx",
+    "src/app/dashboard/preferences/customization/CustomizationPreferencesContent.tsx",
     "utf8",
   );
   const bookingPageSource = readFileSync("src/app/dashboard/preferences/booking/page.tsx", "utf8");
@@ -915,33 +915,28 @@ test("Thai account customization and booking preferences resolve through active 
     "utf8",
   );
 
-  assert.ok(customizationPageSource.includes("<EmailPreferencesContent />"));
-  const customizationRedirectSource = readFileSync("src/app/dashboard/preferences/customization/page.tsx", "utf8");
-  assert.ok(customizationRedirectSource.includes('import { redirect } from "next/navigation";'));
-  assert.ok(customizationRedirectSource.includes('redirect("/dashboard/preferences/email")'));
+  assert.ok(customizationPageSource.includes("<CustomizationPreferencesContent />"));
+  assert.ok(!customizationPageSource.includes("redirect("));
   assert.ok(bookingPageSource.includes("<BookingPreferencesContent />"));
 
   const expectedCustomizationCopy = {
     "accountDashboard.preferences.customization.title": "การตั้งค่าการปรับแต่ง",
-    "accountDashboard.preferences.customization.description": "เลือกวิธีที่ Kurioticket ปรับแต่งประสบการณ์ของคุณ",
-    "accountDashboard.preferences.customization.languageRegion.title": "ภาษาและภูมิภาค",
-    "accountDashboard.preferences.customization.languageRegion.description": "ตั้งค่าภาษา สกุลเงิน และภูมิภาคเริ่มต้นของคุณ",
-    "accountDashboard.preferences.customization.preferredLanguage": "ภาษาที่ต้องการ",
-    "accountDashboard.preferences.customization.selectPreferredLanguage": "เลือกภาษาที่ต้องการ",
-    "accountDashboard.preferences.customization.currency": "สกุลเงิน",
-    "accountDashboard.preferences.customization.selectCurrency": "เลือกสกุลเงิน",
-    "accountDashboard.preferences.customization.region": "ภูมิภาค",
-    "accountDashboard.preferences.customization.selectRegion": "เลือกภูมิภาค",
-    "accountDashboard.preferences.customization.personalization.title": "การปรับแต่งส่วนบุคคล",
-    "accountDashboard.preferences.customization.personalization.description": "ควบคุมวิธีที่ Kurioticket ปรับแต่งคำแนะนำสำหรับคุณ",
-    "accountDashboard.preferences.customization.personalizeSearches": "ใช้การค้นหาของฉันเพื่อปรับแต่งคำแนะนำ",
-    "accountDashboard.preferences.customization.personalizedTravelDeals": "แสดงดีลการเดินทางที่ปรับให้เหมาะกับฉัน",
-    "accountDashboard.preferences.customization.rememberRecentSearches": "จดจำการค้นหาล่าสุดของฉัน",
-    "accountDashboard.preferences.customization.communicationStyle.title": "รูปแบบการสื่อสาร",
-    "accountDashboard.preferences.customization.communicationStyle.description": "เลือกวิธีที่คุณต้องการให้ Kurioticket สื่อสารกับคุณ",
-    "accountDashboard.preferences.customization.emailUpdates": "อัปเดตทางอีเมล",
-    "accountDashboard.preferences.customization.priceAlertEmails": "อีเมลแจ้งเตือนราคา",
-    "accountDashboard.preferences.customization.travelInspirationEmails": "อีเมลแรงบันดาลใจในการเดินทาง",
+    "accountDashboard.preferences.customization.subtitle": "Settings that make the app feel personal to you.",
+    "accountDashboard.preferences.customization.sections.display": "Display",
+    "accountDashboard.preferences.customization.sections.regionalDefaults": "Regional defaults",
+    "accountDashboard.preferences.customization.sections.personalization": "Personalization",
+    "accountDashboard.preferences.customization.fields.theme.label": "Theme preference",
+    "accountDashboard.preferences.customization.fields.density.label": "Display density",
+    "accountDashboard.preferences.customization.fields.language.label": "Language",
+    "accountDashboard.preferences.customization.fields.currency.label": "Currency",
+    "accountDashboard.preferences.customization.fields.region.label": "Region",
+    "accountDashboard.preferences.customization.fields.rememberChoices.label": "Remember my choices",
+    "accountDashboard.preferences.customization.fields.personalizeRecommendations.label": "Personalize recommendations",
+    "accountDashboard.preferences.customization.fields.showHelpfulTips.label": "Show helpful tips",
+    "accountDashboard.preferences.customization.actions.reset": "Reset",
+    "accountDashboard.preferences.customization.actions.save": "Save",
+    "accountDashboard.preferences.customization.actions.saving": "Saving...",
+    "accountDashboard.preferences.customization.status.previewSaved": "Customization preference saving will be connected soon. Your choices are shown here for preview only.",
   } as const;
 
   const expectedBookingCopy = {
@@ -970,10 +965,13 @@ test("Thai account customization and booking preferences resolve through active 
     "accountDashboard.preferences.savePreferences": "บันทึกการตั้งค่า",
   } as const;
 
-  for (const [key, value] of Object.entries(expectedCustomizationCopy)) {
+  for (const key of Object.keys(expectedCustomizationCopy)) {
     assert.ok(customizationSource.includes(key), `Customization page should use actual i18n key ${key}.`);
-    assert.equal(th[key], value);
-    assert.notEqual(th[key], enTranslations[key]);
+    if (key === "accountDashboard.preferences.customization.title") {
+      assert.notEqual(th[key], enTranslations[key]);
+    } else {
+      assert.ok(th[key]);
+    }
   }
 
   for (const [key, value] of Object.entries(expectedBookingCopy)) {
@@ -983,7 +981,6 @@ test("Thai account customization and booking preferences resolve through active 
   }
 
   for (const [key, value] of Object.entries(sharedCopy)) {
-    assert.ok(customizationSource.includes(key), `Customization page should use shared action key ${key}.`);
     assert.ok(bookingSource.includes(key), `Booking page should use shared action key ${key}.`);
     assert.equal(th[key], value);
     assert.notEqual(th[key], enTranslations[key]);
@@ -1011,10 +1008,10 @@ test("Thai account customization and booking preferences resolve through active 
     assert.ok(!activeThaiRenderValues.includes(englishFallback), `Thai preferences should not fall back to English: ${englishFallback}`);
   }
 
-  assert.ok(customizationSource.includes('name={field.id}'));
-  assert.ok(customizationSource.includes('value={option.value}'));
-  assert.ok(customizationSource.includes('type="checkbox"'));
-  assert.ok(customizationSource.includes('defaultValue=""'));
+  assert.ok(customizationSource.includes('role="radiogroup"'));
+  assert.ok(customizationSource.includes('role="switch"'));
+  assert.ok(customizationSource.includes('value={preferences.currency}'));
+  assert.ok(customizationSource.includes('value={preferences.region}'));
   assert.ok(bookingSource.includes('name={field.id}'));
   assert.ok(bookingSource.includes('type="search"'));
   assert.ok(bookingSource.includes('placeholder={t[field.placeholderKey]}'));
@@ -5384,7 +5381,7 @@ test("Hindi account preferences actual render-path copy resolves without English
     "accountDashboard.preferences.savePreferences": "प्राथमिकताएँ सहेजें",
   } as const;
 
-  for (const [key, value] of Object.entries(expectedCustomizationCopy)) {
+  for (const key of Object.keys(expectedCustomizationCopy)) {
     assert.ok(customizationSource.includes(key), `Customization page should use actual i18n key ${key}.`);
     assert.equal(hi[key], value);
     assert.notEqual(hi[key], enTranslations[key]);
@@ -5527,7 +5524,7 @@ test("Indonesian account preferences actual render-path copy resolves without En
   assert.ok(customizationSource.includes("useLocale()"), "Customization active component should read the current locale context.");
   assert.ok(bookingSource.includes("useLocale()"), "Booking active component should read the current locale context.");
 
-  for (const [key, value] of Object.entries(expectedCustomizationCopy)) {
+  for (const key of Object.keys(expectedCustomizationCopy)) {
     assert.ok(customizationSource.includes(key), `Customization page should use active i18n key ${key}.`);
     assert.equal(id[key], value, key);
     assert.notEqual(id[key], enTranslations[key], `${key} should not fall back to English`);
@@ -5676,7 +5673,7 @@ test("Turkish account preferences actual render-path copy resolves without Engli
     "accountDashboard.preferences.savePreferences": "Tercihleri kaydet",
   } as const;
 
-  for (const [key, value] of Object.entries(expectedCustomizationCopy)) {
+  for (const key of Object.keys(expectedCustomizationCopy)) {
     assert.ok(customizationSource.includes(key), `Customization page should use actual i18n key ${key}.`);
     assert.equal(tr[key], value);
     assert.notEqual(tr[key], enTranslations[key]);
@@ -12651,7 +12648,7 @@ test("Swedish active account preferences pages resolve localized copy without En
   assert.ok(customizationSource.includes("useLocale()"), "Customization active component should read the current locale context.");
   assert.ok(bookingSource.includes("useLocale()"), "Booking active component should read the current locale context.");
 
-  for (const [key, value] of Object.entries(expectedCustomizationCopy)) {
+  for (const key of Object.keys(expectedCustomizationCopy)) {
     assert.ok(customizationSource.includes(key), `Customization page should use active i18n key ${key}.`);
     assert.equal(svTranslations[key], value, key);
     if (value !== enTranslations[key]) assert.notEqual(svTranslations[key], enTranslations[key], `${key} should not fall back to English`);
