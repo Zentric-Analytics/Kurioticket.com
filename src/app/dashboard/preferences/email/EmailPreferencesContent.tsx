@@ -132,7 +132,7 @@ export function EmailPreferencesContent() {
 
   return (
     <main
-      className="flex-1 bg-[#eef4fb] pb-12 pt-0"
+      className="flex-1 bg-[#f3f7fc] pb-12 pt-0"
       data-legacy-customization-title={legacyCustomizationTitle}
       data-legacy-preference-actions={legacyPreferenceActions}
     >
@@ -143,7 +143,7 @@ export function EmailPreferencesContent() {
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
             {t["accountDashboard.preferences.email.title"]}
           </h1>
-          <p className="mt-3 max-w-2xl text-sm font-normal leading-6 text-slate-600 sm:text-base">
+          <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-slate-700 sm:text-base">
             {t["accountDashboard.preferences.email.subtitle"]}
           </p>
         </header>
@@ -153,16 +153,16 @@ export function EmailPreferencesContent() {
             {preferenceSections.map((section) => (
               <div
                 key={section.copyKey}
-                className="rounded-2xl border border-slate-300 bg-transparent p-5 sm:p-6"
+                className="rounded-2xl border border-slate-300 bg-white/45 p-5 shadow-sm sm:p-6"
               >
-                <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                <h3 className="text-xs font-bold uppercase tracking-[0.1em] text-slate-600">
                   {
                     t[
                       `accountDashboard.preferences.email.sections.${section.copyKey}.title`
                     ]
                   }
                 </h3>
-                <div className="mt-3 divide-y divide-slate-300">
+                <div className="mt-3 divide-y divide-slate-200">
                   {section.editableRows?.map((row) => {
                     const displayChecked = preferences.receiveOptionalEmails
                       ? preferences[row.id]
@@ -171,21 +171,29 @@ export function EmailPreferencesContent() {
                     return (
                       <div
                         key={row.id}
-                        className={
-                          preferences.receiveOptionalEmails
-                            ? "flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
-                            : "flex flex-col gap-3 py-4 opacity-70 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
-                        }
+                        className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
                       >
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold leading-5 text-slate-950">
+                          <p
+                            className={
+                              preferences.receiveOptionalEmails
+                                ? "text-sm font-semibold leading-5 text-slate-950"
+                                : "text-sm font-semibold leading-5 text-slate-500"
+                            }
+                          >
                             {
                               t[
                                 `accountDashboard.preferences.email.rows.${row.copyKey}.title`
                               ]
                             }
                           </p>
-                          <p className="mt-1 text-sm font-normal leading-6 text-slate-600">
+                          <p
+                            className={
+                              preferences.receiveOptionalEmails
+                                ? "mt-1 text-sm font-medium leading-6 text-slate-700"
+                                : "mt-1 text-sm font-medium leading-6 text-slate-500"
+                            }
+                          >
                             {
                               t[
                                 `accountDashboard.preferences.email.rows.${row.copyKey}.description`
@@ -221,7 +229,7 @@ export function EmailPreferencesContent() {
                             ]
                           }
                         </p>
-                        <p className="mt-1 text-sm font-normal leading-6 text-slate-600">
+                        <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
                           {
                             t[
                               "accountDashboard.preferences.email.masterOptional.description"
@@ -244,7 +252,7 @@ export function EmailPreferencesContent() {
                       />
                     </div>
                     {!preferences.receiveOptionalEmails ? (
-                      <p className="mt-4 rounded-xl border border-slate-300 bg-transparent px-4 py-3 text-sm font-normal leading-6 text-slate-700">
+                      <p className="mt-4 rounded-xl border border-slate-300 bg-white/40 px-4 py-3 text-sm font-medium leading-6 text-slate-700">
                         {
                           t[
                             "accountDashboard.preferences.email.masterOptional.disabledHelp"
@@ -261,7 +269,7 @@ export function EmailPreferencesContent() {
               <button
                 type="button"
                 onClick={resetToDefault}
-                className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-transparent px-5 text-sm font-semibold text-slate-800 transition hover:bg-slate-100"
+                className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-transparent px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
               >
                 {t["accountDashboard.preferences.email.resetToDefault"]}
               </button>
@@ -275,7 +283,7 @@ export function EmailPreferencesContent() {
             </div>
             {statusMessage ? (
               <p
-                className="mt-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-normal leading-6 text-blue-900"
+                className="mt-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-medium leading-6 text-blue-900"
                 role="status"
                 aria-live="polite"
               >
