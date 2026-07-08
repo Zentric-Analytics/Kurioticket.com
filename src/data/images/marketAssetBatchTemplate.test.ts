@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import {
   buildMarketAssetBatchTemplate,
   isProductionAssetIntakeMarket,
+  marketAssetTemplatePlaceholderDimensions,
 } from "./marketAssetBatchTemplate";
 
 describe("buildMarketAssetBatchTemplate", () => {
@@ -27,6 +28,7 @@ describe("buildMarketAssetBatchTemplate", () => {
 
     assert.ok(result.entries.every((entry) => entry.desktopApproved === false));
     assert.ok(result.entries.every((entry) => entry.mobileApproved === false));
+    assert.ok(result.entries.every((entry) => entry.dimensions === marketAssetTemplatePlaceholderDimensions));
     assert.ok(result.entries.every((entry) => entry.notes?.includes("Do not convert")));
   });
 
