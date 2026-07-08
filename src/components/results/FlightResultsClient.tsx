@@ -4019,81 +4019,55 @@ export function FlightResultsClient() {
           </div>
 
           <div className="overflow-visible border border-slate-200/90 bg-white p-1.5 shadow-[0_18px_44px_-28px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.02]">
-            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[132px_minmax(0,2.35fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
-              <div ref={tripTypeMenuRef} className="relative">
-                <button
-                  type="button"
-                  aria-expanded={tripTypeMenuOpen}
-                  aria-haspopup="listbox"
-                  onClick={() => {
-                    setActiveSuggest(null);
-                    setDropdownPosition(null);
-                    setActiveDatePicker(null);
-                    setDatePickerPosition(null);
-                    setTravelerPopoverOpen(false);
-                    setTravelerPopoverPosition(null);
-                    setTripTypeMenuOpen((open) => !open);
-                  }}
-                  className="focus-ring flex h-full min-h-[54px] w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-start transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200"
-                >
-                  <span className="min-w-0">
-                    <span className="block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
-                      {t("tripType")}
-                    </span>
-                    <span className="block truncate text-sm font-semibold text-slate-950">
-                      {tripTypeInput === "one-way"
-                        ? t("oneWay")
-                        : t("roundTrip")}
-                    </span>
-                  </span>
-                  <ChevronDown
-                    aria-hidden="true"
-                    className={cn(
-                      "h-4 w-4 shrink-0 text-slate-500 transition-transform",
-                      tripTypeMenuOpen && "rotate-180",
-                    )}
-                  />
-                </button>
+            {placement === "desktop" ? (
+              <div
+                role="radiogroup"
+                aria-label={t("tripType")}
+                className="hidden items-center gap-4 px-3 pb-2 pt-1.5 sm:flex"
+              >
+                {[
+                  { label: t("oneWay"), value: "one-way" },
+                  { label: t("roundTrip"), value: "round-trip" },
+                ].map((option) => {
+                  const selected = tripTypeInput === option.value;
 
-                {tripTypeMenuOpen ? (
-                  <div
-                    role="listbox"
-                    aria-label={t("tripType")}
-                    className="absolute start-0 top-full z-30 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
-                  >
+                  return (
                     <button
+                      key={option.value}
                       type="button"
-                      role="option"
-                      aria-selected={tripTypeInput === "round-trip"}
-                      onClick={() => handleTripTypeChange("round-trip")}
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => handleTripTypeChange(option.value)}
                       className={cn(
-                        "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-start text-sm font-medium transition-colors",
-                        tripTypeInput === "round-trip"
-                          ? "bg-slate-900 text-white"
-                          : "text-slate-700 hover:bg-slate-100",
+                        "focus-ring inline-flex min-h-8 items-center gap-2 rounded-full px-1.5 py-1 text-sm font-semibold transition-colors",
+                        selected
+                          ? "text-slate-950"
+                          : "text-slate-600 hover:text-slate-950",
                       )}
                     >
-                      {t("roundTrip")}
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          "inline-flex h-4 w-4 items-center justify-center rounded-full border transition-colors",
+                          selected
+                            ? "border-[#004BB8] bg-[#004BB8]/10"
+                            : "border-slate-300 bg-white",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "h-2 w-2 rounded-full transition-colors",
+                            selected ? "bg-[#004BB8]" : "bg-transparent",
+                          )}
+                        />
+                      </span>
+                      {option.label}
                     </button>
-
-                    <button
-                      type="button"
-                      role="option"
-                      aria-selected={tripTypeInput === "one-way"}
-                      onClick={() => handleTripTypeChange("one-way")}
-                      className={cn(
-                        "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-start text-sm font-medium transition-colors",
-                        tripTypeInput === "one-way"
-                          ? "bg-slate-900 text-white"
-                          : "text-slate-700 hover:bg-slate-100",
-                      )}
-                    >
-                      {t("oneWay")}
-                    </button>
-                  </div>
-                ) : null}
+                  );
+                })}
               </div>
-
+            ) : null}
+            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.85fr)_minmax(0,1.35fr)_minmax(0,1.1fr)_112px] lg:gap-0">
               <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
                 <div
                   ref={originWrapRef}
