@@ -334,7 +334,7 @@ function RouteCard({
       aria-label={t("flightLandingRouteAriaLabel")
         .replace("{{origin}}", routeText.originCity)
         .replace("{{destination}}", routeText.destinationCity)}
-      className="group block overflow-hidden rounded-3xl border border-slate-200/80 bg-white h-[19rem] shadow-[0_14px_36px_rgba(15,23,42,0.07)] transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-[0_18px_42px_rgba(0,75,184,0.14)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 sm:h-[19.25rem]"
+      className="group block overflow-hidden rounded-3xl border border-slate-200/80 bg-white h-[20.25rem] shadow-[0_14px_36px_rgba(15,23,42,0.07)] transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-[0_18px_42px_rgba(0,75,184,0.14)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 sm:h-[20.5rem]"
     >
       <article className="flex h-full flex-col">
         <div className="relative h-[9.5rem] shrink-0 overflow-hidden bg-slate-100 sm:h-40 lg:h-[9.75rem]">
@@ -347,7 +347,7 @@ function RouteCard({
             className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
           />
         </div>
-        <div className="flex flex-1 flex-col p-3 sm:p-3.5">
+        <div className="flex flex-1 flex-col p-3 pb-4 sm:p-3.5 sm:pb-4">
           <div className="min-w-0">
             <h3 className="line-clamp-2 text-lg font-bold leading-snug tracking-tight text-slate-950">
               {routeText.title}
@@ -519,8 +519,8 @@ export function FlightLandingClient() {
               {t("discoverDestinationsFromRegionBody")}
             </p>
           </div>
-          <div className="border border-slate-200/80 bg-white/80 p-3 sm:border-0 sm:bg-transparent sm:p-0">
-            <div className="grid auto-cols-[minmax(235px,78vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+          <div className="-mx-1 sm:mx-0">
+            <div className="grid auto-cols-[minmax(235px,78vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-5 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
               {discoveryCards.map((item, index) => (
                 <RouteCard key={item.id} item={item} priority={index < 2} t={t} />
               ))}
@@ -639,8 +639,8 @@ export function FlightLandingClient() {
                 {t("beachVacationsBody")}
               </p>
             </div>
-            <div className="border border-slate-200/80 bg-slate-50/90 p-3 sm:border-0 sm:bg-transparent sm:p-0">
-              <div className="overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 [&::-webkit-scrollbar]:hidden">
+            <div className="-mx-1 sm:mx-0">
+              <div className="overflow-x-auto px-1 pb-5 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 [&::-webkit-scrollbar]:hidden">
                 <div className="grid auto-cols-[minmax(230px,76vw)] grid-flow-col gap-4 sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
                   {beachVacationCards.map((item) => (
                     <RouteCard key={item.id} item={item} t={t} />
