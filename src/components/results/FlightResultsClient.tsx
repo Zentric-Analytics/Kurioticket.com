@@ -2739,6 +2739,10 @@ export function FlightResultsClient() {
     expandFilters: expandDesktopFilters,
   } = useDesktopFilterShortcut();
 
+  const openDesktopFiltersFromFloatingButton = useCallback(() => {
+    expandDesktopFilters();
+  }, [expandDesktopFilters]);
+
   const clearFlightFilters = () => {
     triggerFilterApplying();
     setMaxPrice(priceBounds.max);
@@ -4445,38 +4449,54 @@ export function FlightResultsClient() {
     );
   }
 
+  function renderFloatingFilterButton({
+    placement,
+    onClick,
+  }: {
+    placement: "mobile" | "desktop";
+    onClick: () => void;
+  }) {
+    return (
+      <Button
+        type="button"
+        variant="secondary"
+        aria-label={
+          activeFilterCount > 0
+            ? t("openFiltersWithCount").replace("{{count}}", activeFilterLabel)
+            : t("openFilters")
+        }
+        className={cn(
+          "relative shrink-0 rounded-2xl border border-white/80 bg-white text-slate-700 shadow-[0_18px_42px_-28px_rgba(15,23,42,0.65)] ring-1 ring-slate-950/[0.05] backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:text-[#004BB8] hover:shadow-[0_22px_46px_-30px_rgba(15,23,42,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#eef4ff]",
+          placement === "mobile" ? "h-16 w-14 px-0" : "h-[72px] w-[72px] px-0",
+        )}
+        onClick={onClick}
+      >
+        <SlidersHorizontal
+          size={placement === "mobile" ? 20 : 22}
+          strokeWidth={2.35}
+          aria-hidden="true"
+        />
+        {activeFilterCount > 0 ? (
+          <span className="absolute end-1.5 top-1.5 inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-[#004BB8] px-1.5 text-[11px] font-bold leading-none text-white shadow-sm ring-2 ring-white">
+            {activeFilterCount}
+          </span>
+        ) : null}
+      </Button>
+    );
+  }
+
   function renderMobileControlsRow() {
     return (
       <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch gap-2.5">
-        <Button
-          type="button"
-          variant="secondary"
-          aria-label={
-            activeFilterCount > 0
-              ? t("openFiltersWithCount").replace(
-                  "{{count}}",
-                  activeFilterLabel,
-                )
-              : t("openFilters")
-          }
-          className="relative h-16 w-[72px] shrink-0 rounded-2xl border-0 bg-white/95 px-2 text-[11px] font-semibold text-slate-700 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.05] backdrop-blur transition hover:bg-white hover:text-slate-950 hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-          onClick={() => setFiltersOpen(true)}
-        >
-          <span className="flex flex-col items-center justify-center gap-1 leading-none">
-            <SlidersHorizontal size={17} strokeWidth={2.3} />
-            <span>{t("filters")}</span>
-          </span>
-          {activeFilterCount > 0 ? (
-            <span className="absolute end-1.5 top-1.5 inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] font-semibold leading-none text-[#004BB8] shadow-sm ring-2 ring-white">
-              {activeFilterCount}
-            </span>
-          ) : null}
-        </Button>
+        {renderFloatingFilterButton({
+          placement: "mobile",
+          onClick: () => setFiltersOpen(true),
+        })}
 
         <button
           type="button"
           onClick={openMobileSearchDrawer}
-          className="flex h-16 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-2xl border-0 bg-white/95 px-4 py-0 text-start shadow-[0_14px_34px_-24px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.05] backdrop-blur transition hover:bg-white hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+          className="flex h-16 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-2xl border border-white/80 bg-white px-4 py-0 text-start shadow-[0_18px_42px_-28px_rgba(15,23,42,0.65)] ring-1 ring-slate-950/[0.05] backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_22px_46px_-30px_rgba(15,23,42,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#eef4ff]"
         >
           <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
             <span className="block truncate text-[16px] font-bold leading-5 text-slate-950">
@@ -4625,18 +4645,32 @@ export function FlightResultsClient() {
       <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
       <section
         className={cn(
-          "hidden border-b border-slate-200 transition-[padding,border-color,background-color] duration-200 sm:block",
+          "hidden transition-[padding,border-color,background-color] duration-200 sm:block",
           isSearchCollapsed
-            ? "sticky top-0 z-40 bg-white/95 py-1.5 backdrop-blur"
-            : "relative z-10 bg-[linear-gradient(180deg,#eef4ff_0%,#eef4ff_54%,#f6f8fb_54%,#f6f8fb_100%)] pb-5 pt-5",
+            ? "sticky top-0 z-40 border-b border-slate-200 bg-white/95 py-1.5 backdrop-blur"
+            : "relative z-40 border-b border-transparent bg-[linear-gradient(180deg,#eef4ff_0%,#eef4ff_50%,#f6f8fb_50%,#f6f8fb_100%)] py-0",
         )}
+        aria-label="Flight search controls"
       >
-        <div className="page-shell">
-          {!mobileSearchOpen ? renderCompactSearchForm("desktop") : null}
+        <div
+          className={cn(
+            "page-shell",
+            isSearchCollapsed ? "" : "translate-y-1/2",
+          )}
+        >
+          <div className="flex items-stretch gap-3 lg:gap-4">
+            {renderFloatingFilterButton({
+              placement: "desktop",
+              onClick: openDesktopFiltersFromFloatingButton,
+            })}
+            <div className="min-w-0 flex-1">
+              {!mobileSearchOpen ? renderCompactSearchForm("desktop") : null}
+            </div>
+          </div>
         </div>
       </section>
 
-      <div className="page-shell grid gap-4 pb-5 pt-12 sm:pt-5 lg:grid-cols-[256px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-4 pb-5 pt-12 sm:pt-14 lg:grid-cols-[256px_minmax(0,1fr)]">
         <aside className={cn("hidden lg:block", desktopFilterStickyTopClass)}>
           <div ref={desktopFilterContainerRef}>
             {showFullDesktopFilters ? (
