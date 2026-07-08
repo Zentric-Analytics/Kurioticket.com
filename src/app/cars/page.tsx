@@ -4,14 +4,17 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   FormEvent,
+  CSSProperties,
   ReactNode,
   RefObject,
   Suspense,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -617,7 +620,8 @@ function CarsSearchBar({
 
       if (
         target instanceof Element &&
-        target.closest("[data-flight-mobile-picker-shell]")
+        (target.closest("[data-flight-mobile-picker-shell]") ||
+          target.closest("[data-cars-desktop-popover]"))
       ) {
         return;
       }
@@ -1375,6 +1379,76 @@ function CarPickupCardLink({ card }: { card: TranslatedCarImageCard }) {
   );
 }
 
+type DesktopPopoverPlacement = "above" | "below";
+
+const desktopPopoverViewportPadding = 16;
+const desktopPopoverOffset = 14;
+
+function useDesktopPopoverPosition(
+  isOpen: boolean,
+  launcherRef: RefObject<HTMLButtonElement | null> | undefined,
+  preferredWidth: number,
+) {
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+  const [style, setStyle] = useState<CSSProperties | null>(null);
+  const [placement, setPlacement] = useState<DesktopPopoverPlacement>("above");
+
+  useLayoutEffect(() => {
+    if (!isOpen || !launcherRef?.current || typeof window === "undefined") {
+      return;
+    }
+
+    const updatePosition = () => {
+      const launcherRect = launcherRef.current?.getBoundingClientRect();
+
+      if (!launcherRect) {
+        return;
+      }
+
+      const popoverRect = popoverRef.current?.getBoundingClientRect();
+      const popoverWidth = Math.min(
+        preferredWidth,
+        window.innerWidth - desktopPopoverViewportPadding * 2,
+      );
+      const popoverHeight = popoverRect?.height ?? 420;
+      const centeredLeft =
+        launcherRect.left + launcherRect.width / 2 - popoverWidth / 2;
+      const left = Math.min(
+        Math.max(centeredLeft, desktopPopoverViewportPadding),
+        window.innerWidth - popoverWidth - desktopPopoverViewportPadding,
+      );
+      const spaceBelow =
+        window.innerHeight - launcherRect.bottom - desktopPopoverOffset;
+      const shouldOpenBelow =
+        spaceBelow >= popoverHeight + desktopPopoverViewportPadding;
+      const nextTop = shouldOpenBelow
+        ? launcherRect.bottom + desktopPopoverOffset
+        : Math.max(
+            desktopPopoverViewportPadding,
+            launcherRect.top - popoverHeight - desktopPopoverOffset,
+          );
+
+      setPlacement(shouldOpenBelow ? "below" : "above");
+      setStyle({
+        left,
+        top: nextTop,
+        width: popoverWidth,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [isOpen, launcherRef, preferredWidth]);
+
+  return { placement, popoverRef, style };
+}
+
 function RentalDatesField({
   dropoffDate,
   isOpen,
@@ -1414,6 +1488,11 @@ function RentalDatesField({
       ? `${pickupDisplay} — ${dropoffDisplay}`
       : pickupDisplay
     : t("carsSearch.rentalDatePlaceholder");
+  const { placement, popoverRef, style } = useDesktopPopoverPosition(
+    isOpen,
+    launcherRef,
+    620,
+  );
 
   return (
     <div ref={wrapRef} className="relative overflow-visible">
@@ -1437,12 +1516,17 @@ function RentalDatesField({
         </span>
       </button>
 
-      {isOpen ? (
-        <div
-          role="dialog"
-          aria-label={t("carsSearch.rentalDatePickerAria")}
-          className="absolute start-0 end-0 top-[calc(100%+18px)] z-[500] hidden w-full rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-[0_24px_60px_-18px_rgba(15,23,42,0.38),0_10px_24px_-18px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.04] sm:block sm:end-auto sm:w-[min(92vw,620px)] sm:p-4"
-        >
+      {isOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              ref={popoverRef}
+              role="dialog"
+              aria-label={t("carsSearch.rentalDatePickerAria")}
+              data-cars-desktop-popover="dates"
+              data-placement={placement}
+              style={style ?? undefined}
+              className="fixed z-[1000] hidden rounded-[1.35rem] border border-slate-200/95 bg-white p-4 shadow-[0_30px_90px_-30px_rgba(15,23,42,0.52),0_16px_36px_-22px_rgba(15,23,42,0.34)] ring-1 ring-slate-950/[0.08] sm:block"
+            >
           <p className="mb-3 text-base font-semibold text-slate-900">
             {t("carsSearch.chooseRentalDates")}
           </p>
@@ -1562,8 +1646,10 @@ function RentalDatesField({
               {t("done")}
             </button>
           </div>
-        </div>
-      ) : null}
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
@@ -1595,6 +1681,11 @@ function TimeRangeField({
     formatCarTimeLabel(pickupTime, intlLocale),
     formatCarTimeLabel(returnTime, intlLocale),
   );
+  const { placement, popoverRef, style } = useDesktopPopoverPosition(
+    isOpen,
+    launcherRef,
+    320,
+  );
 
   return (
     <div ref={wrapRef} className="relative overflow-visible">
@@ -1614,12 +1705,17 @@ function TimeRangeField({
         />
       </button>
 
-      {isOpen ? (
-        <div
-          role="menu"
-          aria-label={t("carsSearch.pickupReturnTimeSelectorAria")}
-          className="absolute start-0 end-0 top-[calc(100%+16px)] z-[480] hidden w-full rounded-2xl border border-slate-200/90 bg-white p-3 shadow-[0_22px_52px_-20px_rgba(15,23,42,0.36),0_8px_20px_-18px_rgba(15,23,42,0.28)] ring-1 ring-slate-950/[0.04] sm:block sm:end-auto sm:w-[min(92vw,320px)]"
-        >
+      {isOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              ref={popoverRef}
+              role="menu"
+              aria-label={t("carsSearch.pickupReturnTimeSelectorAria")}
+              data-cars-desktop-popover="times"
+              data-placement={placement}
+              style={style ?? undefined}
+              className="fixed z-[990] hidden rounded-2xl border border-slate-200/95 bg-white p-3 shadow-[0_26px_70px_-28px_rgba(15,23,42,0.48),0_12px_28px_-20px_rgba(15,23,42,0.32)] ring-1 ring-slate-950/[0.08] sm:block"
+            >
           <div className="grid gap-3">
             <label className="block">
               <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -1661,8 +1757,10 @@ function TimeRangeField({
               </select>
             </label>
           </div>
-        </div>
-      ) : null}
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
