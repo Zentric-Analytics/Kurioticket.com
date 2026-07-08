@@ -4451,7 +4451,7 @@ export function FlightResultsClient() {
                 )
               : t("openFilters")
           }
-          className="relative h-16 w-[72px] shrink-0 rounded-md border border-slate-200/90 bg-white px-2 text-[11px] font-semibold text-slate-700 shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:text-slate-900 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+          className="relative h-16 w-[72px] shrink-0 rounded-2xl border-0 bg-white/95 px-2 text-[11px] font-semibold text-slate-700 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.05] backdrop-blur transition hover:bg-white hover:text-slate-950 hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           onClick={() => setFiltersOpen(true)}
         >
           <span className="flex flex-col items-center justify-center gap-1 leading-none">
@@ -4468,7 +4468,7 @@ export function FlightResultsClient() {
         <button
           type="button"
           onClick={openMobileSearchDrawer}
-          className="flex h-16 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-md border border-slate-200/90 bg-white px-4 py-0 text-start shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+          className="flex h-16 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-2xl border-0 bg-white/95 px-4 py-0 text-start shadow-[0_14px_34px_-24px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.05] backdrop-blur transition hover:bg-white hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
         >
           <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
             <span className="block truncate text-[16px] font-bold leading-5 text-slate-950">
@@ -4481,7 +4481,7 @@ export function FlightResultsClient() {
           </span>
           <span
             aria-hidden="true"
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#f4f7fb] text-slate-700 ring-1 ring-slate-950/[0.06]"
           >
             <SquarePen size={16} strokeWidth={2.1} />
           </span>
@@ -4513,14 +4513,17 @@ export function FlightResultsClient() {
 
   return (
     <main className="flex-1 bg-[#f6f8fb] pb-8">
-      <div
+      <section
         className={cn(
-          "sticky top-0 z-50 border-b border-slate-200/70 bg-[#f6f8fb]/95 px-4 py-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.04)] backdrop-blur sm:hidden",
+          "relative z-40 bg-[linear-gradient(180deg,#eef6ff_0%,#f3f8ff_58%,rgba(246,248,251,0)_100%)] px-4 pb-8 pt-[calc(0.85rem+env(safe-area-inset-top))] sm:hidden",
           mobileSearchOpen && "hidden",
         )}
+        aria-label="Flight search controls"
       >
-        {renderMobileControlsRow()}
-      </div>
+        <div className="relative translate-y-1/2">
+          {renderMobileControlsRow()}
+        </div>
+      </section>
 
       <div
         className={cn(
@@ -4625,7 +4628,7 @@ export function FlightResultsClient() {
         </div>
       </section>
 
-      <div className="page-shell grid gap-4 pb-5 pt-4 sm:pt-5 lg:grid-cols-[256px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-4 pb-5 pt-12 sm:pt-5 lg:grid-cols-[256px_minmax(0,1fr)]">
         <aside className={cn("hidden lg:block", desktopFilterStickyTopClass)}>
           <div ref={desktopFilterContainerRef}>
             {showFullDesktopFilters ? (
