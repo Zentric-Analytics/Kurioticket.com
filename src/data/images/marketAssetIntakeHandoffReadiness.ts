@@ -18,8 +18,8 @@ export function checkMarketAssetIntakeHandoffReadiness(
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  checkString("batchId", handoff.batchId, errors);
-  checkString("owner", handoff.owner, errors);
+  checkRequiredString("batchId", handoff.batchId, errors);
+  checkRequiredString("owner", handoff.owner, errors);
 
   if (handoff.createdAt === placeholderDate) {
     errors.push("createdAt must be replaced with a real date before handoff approval.");
