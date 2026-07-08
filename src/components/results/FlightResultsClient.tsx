@@ -4643,8 +4643,7 @@ export function FlightResultsClient() {
       >
         <div className="page-shell">
           {!mobileSearchOpen ? (
-            <div className="relative flex translate-y-1/2 items-stretch gap-2">
-              {renderFloatingFilterButton("desktop")}
+            <div className="relative flex items-stretch gap-2">
               <div className="min-w-0 flex-1">
                 {renderCompactSearchForm("desktop")}
               </div>
