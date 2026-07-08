@@ -430,8 +430,8 @@ function CarsSearchPage() {
                 </div>
               </div>
 
-              <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
-                <div className="grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+              <div className="overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-3 shadow-[0_18px_48px_-34px_rgba(15,23,42,0.32)] ring-1 ring-white/80 sm:rounded-none sm:bg-white/80 sm:p-6 sm:shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] md:p-7">
+                <div className="grid snap-x snap-mandatory auto-cols-[minmax(17rem,calc(100vw-4.5rem))] grid-flow-col gap-4 overflow-x-auto scroll-smooth px-1 pb-4 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:auto-cols-[minmax(240px,82vw)] md:grid-flow-row md:snap-none md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
                   {tripStyleCards.map((card) => (
                     <CarImageCardLink
                       key={card.translationKey}
@@ -498,8 +498,8 @@ function CarsSearchPage() {
                 </div>
               </div>
 
-              <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
-                <div className="grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+              <div className="overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-3 shadow-[0_18px_48px_-34px_rgba(15,23,42,0.32)] ring-1 ring-white/80 sm:rounded-none sm:bg-white/80 sm:p-6 sm:shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] md:p-7">
+                <div className="grid snap-x snap-mandatory auto-cols-[minmax(17rem,calc(100vw-4.5rem))] grid-flow-col gap-4 overflow-x-auto scroll-smooth px-1 pb-4 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:auto-cols-[minmax(240px,82vw)] md:grid-flow-row md:snap-none md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
                   {pickupCards.map((card) => (
                     <CarPickupCardLink
                       key={card.translationKey}
@@ -1337,9 +1337,9 @@ function CarImageCardLink({ card }: { card: TranslatedCarImageCard }) {
           : buildPickupHref(card.pickupLocation)
       }
       aria-label={card.ariaLabel}
-      className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_28px_-26px_rgba(15,23,42,0.34)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_30px_-26px_rgba(15,23,42,0.38)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-4 focus-visible:ring-offset-white"
+      className="group flex h-full min-w-0 snap-start flex-col overflow-hidden rounded-[1.35rem] border border-slate-200/90 bg-white shadow-[0_16px_34px_-26px_rgba(15,23,42,0.42)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_30px_-26px_rgba(15,23,42,0.38)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-4 focus-visible:ring-offset-white sm:rounded-2xl sm:border-slate-200 sm:shadow-[0_12px_28px_-26px_rgba(15,23,42,0.34)]"
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100 sm:aspect-[4/3]">
         <img
           src={card.image}
           alt={card.imageAlt}
@@ -1347,8 +1347,8 @@ function CarImageCardLink({ card }: { card: TranslatedCarImageCard }) {
         />
         <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-slate-900/5" />
       </div>
-      <div className="flex flex-1 flex-col p-4 md:p-5">
-        <p className="text-lg font-bold leading-tight tracking-tight text-slate-950">
+      <div className="flex flex-1 flex-col p-[1.125rem] sm:p-4 md:p-5">
+        <p className="text-lg font-bold leading-snug tracking-tight text-slate-950 sm:leading-tight">
           {card.title}
         </p>
         <p className="mt-2 text-sm font-medium leading-6 text-slate-600">
