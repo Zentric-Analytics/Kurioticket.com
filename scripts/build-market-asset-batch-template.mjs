@@ -23,6 +23,5 @@ const template = buildMarketAssetBatchTemplate(normalizedMarket, {
   createdAt,
 });
 
+console.error("Template only: replace every TODO and crop approval before validating or converting this manifest.");
 console.log(JSON.stringify(template, null, 2));
-console.log("");
-console.log("Template only: replace every TODO and crop approval before validating or converting this manifest.");
