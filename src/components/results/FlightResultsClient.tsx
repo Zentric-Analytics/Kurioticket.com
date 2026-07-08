@@ -4445,33 +4445,51 @@ export function FlightResultsClient() {
     );
   }
 
+  function renderFloatingFilterButton(placement: "mobile" | "desktop") {
+    const label =
+      activeFilterCount > 0
+        ? t("openFiltersWithCount").replace("{{count}}", activeFilterLabel)
+        : t("openFilters");
+
+    const handleClick = () => {
+      if (
+        placement === "desktop" &&
+        window.matchMedia("(min-width: 1024px)").matches
+      ) {
+        expandDesktopFilters();
+        return;
+      }
+
+      setFiltersOpen(true);
+    };
+
+    return (
+      <Button
+        type="button"
+        variant="secondary"
+        aria-label={label}
+        className={cn(
+          "relative shrink-0 border-0 bg-white/95 text-slate-700 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.05] backdrop-blur transition hover:bg-white hover:text-slate-950 hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
+          placement === "desktop"
+            ? "hidden h-[66px] w-[66px] rounded-none sm:inline-flex"
+            : "h-16 w-[72px] rounded-2xl px-2",
+        )}
+        onClick={handleClick}
+      >
+        <SlidersHorizontal size={19} strokeWidth={2.3} aria-hidden="true" />
+        {activeFilterCount > 0 ? (
+          <span className="absolute end-1.5 top-1.5 inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] font-semibold leading-none text-[#004BB8] shadow-sm ring-2 ring-white">
+            {activeFilterCount}
+          </span>
+        ) : null}
+      </Button>
+    );
+  }
+
   function renderMobileControlsRow() {
     return (
       <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch gap-2.5">
-        <Button
-          type="button"
-          variant="secondary"
-          aria-label={
-            activeFilterCount > 0
-              ? t("openFiltersWithCount").replace(
-                  "{{count}}",
-                  activeFilterLabel,
-                )
-              : t("openFilters")
-          }
-          className="relative h-16 w-[72px] shrink-0 rounded-2xl border-0 bg-white/95 px-2 text-[11px] font-semibold text-slate-700 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.05] backdrop-blur transition hover:bg-white hover:text-slate-950 hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-          onClick={() => setFiltersOpen(true)}
-        >
-          <span className="flex flex-col items-center justify-center gap-1 leading-none">
-            <SlidersHorizontal size={17} strokeWidth={2.3} />
-            <span>{t("filters")}</span>
-          </span>
-          {activeFilterCount > 0 ? (
-            <span className="absolute end-1.5 top-1.5 inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] font-semibold leading-none text-[#004BB8] shadow-sm ring-2 ring-white">
-              {activeFilterCount}
-            </span>
-          ) : null}
-        </Button>
+        {renderFloatingFilterButton("mobile")}
 
         <button
           type="button"
@@ -4632,7 +4650,14 @@ export function FlightResultsClient() {
         )}
       >
         <div className="page-shell">
-          {!mobileSearchOpen ? renderCompactSearchForm("desktop") : null}
+          {!mobileSearchOpen ? (
+            <div className="relative flex translate-y-1/2 items-stretch gap-2">
+              {renderFloatingFilterButton("desktop")}
+              <div className="min-w-0 flex-1">
+                {renderCompactSearchForm("desktop")}
+              </div>
+            </div>
+          ) : null}
         </div>
       </section>
 
