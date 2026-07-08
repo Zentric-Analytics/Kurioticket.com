@@ -150,7 +150,7 @@ export function EmailPreferencesContent() {
 
         <section className="mt-7 max-w-[56rem]">
           <div className="space-y-5">
-            <div className="rounded-2xl border border-slate-300 bg-white/45 p-4 shadow-sm sm:p-6">
+            <div className="-mx-4 rounded-none border border-slate-300 bg-white/45 px-4 py-5 shadow-sm sm:mx-0 sm:rounded-2xl sm:p-6">
               {preferenceSections.map((section, sectionIndex) => (
                 <div
                   key={section.copyKey}
