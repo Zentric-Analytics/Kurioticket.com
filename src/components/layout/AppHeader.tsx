@@ -42,6 +42,7 @@ import {
 
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { CountryCurrencySelector } from "@/components/region/CountryCurrencySelector";
+import { cn } from "@/lib/utils";
 
 const RawImage = "img";
 
@@ -78,6 +79,7 @@ type AppHeaderProps = {
   hideMobileCategoryTabs?: boolean;
   hideTravelNav?: boolean;
   simpleHeader?: boolean;
+  flushDesktopBottom?: boolean;
 };
 
 const signedInAccountMenuItems = [
@@ -146,6 +148,7 @@ export function AppHeader({
   hideMobileCategoryTabs = false,
   hideTravelNav = false,
   simpleHeader = false,
+  flushDesktopBottom = false,
 }: AppHeaderProps = {}) {
   const { data: session } = useSession();
 
@@ -708,7 +711,12 @@ export function AppHeader({
 
   return (
     <>
-      <header className="relative z-50 border-b border-[#E5EAF0] bg-[#F6F9FC] text-[#021C2B] shadow-[0_8px_24px_rgba(2,28,43,0.06)]">
+      <header
+        className={cn(
+          "relative z-50 border-b border-[#E5EAF0] bg-[#F6F9FC] text-[#021C2B] shadow-[0_8px_24px_rgba(2,28,43,0.06)]",
+          flushDesktopBottom && "md:border-b-0 md:shadow-none",
+        )}
+      >
         <div className="page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3">
           <div className="flex min-h-[52px] items-center justify-between gap-3 md:min-h-[48px] md:gap-8">
             <Link
