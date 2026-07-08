@@ -1,35 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { useRegion } from "@/components/region/RegionProvider";
+import {
+  getCanonicalDisplayLocale,
+  getCountryDisplayNameForLocale,
+} from "@/lib/region/countryDisplayNames";
 
-type CurrencyPreference = "USD" | "GBP" | "EUR" | "NGN";
-type RegionPreference = "nigeria" | "unitedKingdom" | "unitedStates" | "europe";
-
-type CustomizationPreferences = {
-  language: "english";
-  currency: CurrencyPreference;
-  region: RegionPreference;
-  rememberChoices: boolean;
-  personalizeRecommendations: boolean;
-  showHelpfulTips: boolean;
-};
-
-type BooleanPreferenceKey = "rememberChoices" | "personalizeRecommendations" | "showHelpfulTips";
+type BooleanPreferenceKey =
+  | "rememberChoices"
+  | "personalizeRecommendations"
+  | "showHelpfulTips";
 type Status = "idle" | "saving" | "success";
 
-const defaultCustomizationPreferences: CustomizationPreferences = {
-  language: "english",
-  currency: "USD",
-  region: "unitedStates",
+type PersonalizationPreferences = Record<BooleanPreferenceKey, boolean>;
+
+const defaultPersonalizationPreferences: PersonalizationPreferences = {
   rememberChoices: true,
   personalizeRecommendations: true,
   showHelpfulTips: true,
 };
 
-const currencyOptions: CurrencyPreference[] = ["USD", "GBP", "EUR", "NGN"];
-const regionOptions: RegionPreference[] = ["nigeria", "unitedKingdom", "unitedStates", "europe"];
+const DEFAULT_LOCALE = "en-us";
+const DEFAULT_CURRENCY = "USD";
+const DEFAULT_REGION = "US";
+
 const personalizationOptions: BooleanPreferenceKey[] = [
   "rememberChoices",
   "personalizeRecommendations",
@@ -75,10 +72,17 @@ function PreferenceSwitch({
 }
 
 export function CustomizationPreferencesContent() {
-  const { t } = useLocale();
-  const [preferences, setPreferences] = useState<CustomizationPreferences>(
-    defaultCustomizationPreferences,
-  );
+  const { locale, setLocale, t, locales } = useLocale();
+  const {
+    mode,
+    setMode,
+    selectedCurrency,
+    setCurrency,
+    options: regionOptions,
+    currencies,
+  } = useRegion();
+  const [personalizationPreferences, setPersonalizationPreferences] =
+    useState<PersonalizationPreferences>(defaultPersonalizationPreferences);
   const [status, setStatus] = useState<Status>("idle");
   const [statusMessage, setStatusMessage] = useState("");
 
@@ -93,28 +97,77 @@ export function CustomizationPreferencesContent() {
     return () => window.clearTimeout(timeoutId);
   }, [status, statusMessage]);
 
-  const updatePreference = <Key extends keyof CustomizationPreferences>(
-    key: Key,
-    value: CustomizationPreferences[Key],
+  const showUpdatedMessage = () => {
+    setStatus("success");
+    setStatusMessage(
+      t["accountDashboard.preferences.customization.status.updatedOnDevice"],
+    );
+  };
+
+  const handleLanguageChange = (nextLocale: string) => {
+    const didChangeLanguage = setLocale(nextLocale);
+
+    if (!didChangeLanguage) return;
+
+    showUpdatedMessage();
+
+    window.setTimeout(() => {
+      window.location.reload();
+    }, 220);
+  };
+
+  const handleCurrencyChange = (nextCurrency: string) => {
+    setCurrency(nextCurrency);
+    showUpdatedMessage();
+  };
+
+  const handleRegionChange = (nextRegion: string) => {
+    setMode(nextRegion);
+    showUpdatedMessage();
+  };
+
+  const updatePersonalizationPreference = (
+    key: BooleanPreferenceKey,
+    value: boolean,
   ) => {
-    setPreferences((current) => ({ ...current, [key]: value }));
+    setPersonalizationPreferences((current) => ({ ...current, [key]: value }));
     setStatus("idle");
     setStatusMessage("");
   };
 
   const resetToDefault = () => {
-    setPreferences(defaultCustomizationPreferences);
-    setStatus("idle");
-    setStatusMessage("");
+    const didChangeLanguage = setLocale(DEFAULT_LOCALE);
+
+    setCurrency(DEFAULT_CURRENCY);
+    setMode(DEFAULT_REGION);
+    setPersonalizationPreferences(defaultPersonalizationPreferences);
+    showUpdatedMessage();
+
+    if (didChangeLanguage) {
+      window.setTimeout(() => {
+        window.location.reload();
+      }, 220);
+    }
   };
 
   const savePreferences = () => {
     setStatus("saving");
     window.setTimeout(() => {
-      setStatus("success");
-      setStatusMessage(t["accountDashboard.preferences.customization.status.previewSaved"]);
+      showUpdatedMessage();
     }, 150);
   };
+
+  const availableLocales = locales.filter(
+    (option) => option.status === "available",
+  );
+  const displayLocale = getCanonicalDisplayLocale(locale);
+  const currencyDisplayNames = useMemo(() => {
+    try {
+      return new Intl.DisplayNames([displayLocale], { type: "currency" });
+    } catch {
+      return null;
+    }
+  }, [displayLocale]);
 
   return (
     <main className="flex-1 bg-[#f3f7fc] pb-12 pt-0">
@@ -135,36 +188,31 @@ export function CustomizationPreferencesContent() {
             <div className="-mx-4 rounded-none border border-slate-300 bg-white/45 px-4 py-5 shadow-sm sm:mx-0 sm:rounded-2xl sm:p-6">
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-[0.1em] text-slate-600">
-                  {t["accountDashboard.preferences.customization.sections.regionalDefaults"]}
+                  {
+                    t[
+                      "accountDashboard.preferences.customization.sections.regionalDefaults"
+                    ]
+                  }
                 </h3>
                 <div className="mt-4 grid gap-4">
                   <label className="block">
                     <span className="text-sm font-semibold leading-5 text-slate-950">
-                      {t["accountDashboard.preferences.customization.fields.language.label"]}
+                      {
+                        t[
+                          "accountDashboard.preferences.customization.fields.language.label"
+                        ]
+                      }
                     </span>
                     <select
-                      value={preferences.language}
-                      onChange={() => updatePreference("language", "english")}
+                      value={locale}
+                      onChange={(event) =>
+                        handleLanguageChange(event.target.value)
+                      }
                       className="focus-ring mt-2 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
                     >
-                      <option value="english">
-                        {t["accountDashboard.preferences.customization.options.language.english"]}
-                      </option>
-                    </select>
-                  </label>
-
-                  <label className="block">
-                    <span className="text-sm font-semibold leading-5 text-slate-950">
-                      {t["accountDashboard.preferences.customization.fields.currency.label"]}
-                    </span>
-                    <select
-                      value={preferences.currency}
-                      onChange={(event) => updatePreference("currency", event.target.value as CurrencyPreference)}
-                      className="focus-ring mt-2 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
-                    >
-                      {currencyOptions.map((option) => (
-                        <option key={option} value={option}>
-                          {t[`accountDashboard.preferences.customization.options.currency.${option}`]}
+                      {availableLocales.map((option) => (
+                        <option key={option.code} value={option.code}>
+                          {option.nativeLabel}
                         </option>
                       ))}
                     </select>
@@ -172,16 +220,51 @@ export function CustomizationPreferencesContent() {
 
                   <label className="block">
                     <span className="text-sm font-semibold leading-5 text-slate-950">
-                      {t["accountDashboard.preferences.customization.fields.region.label"]}
+                      {
+                        t[
+                          "accountDashboard.preferences.customization.fields.currency.label"
+                        ]
+                      }
                     </span>
                     <select
-                      value={preferences.region}
-                      onChange={(event) => updatePreference("region", event.target.value as RegionPreference)}
+                      value={selectedCurrency}
+                      onChange={(event) =>
+                        handleCurrencyChange(event.target.value)
+                      }
+                      className="focus-ring mt-2 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
+                    >
+                      {currencies.map((option) => (
+                        <option key={option.code} value={option.code}>
+                          {option.code} ·{" "}
+                          {currencyDisplayNames?.of(option.code) ?? option.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="block">
+                    <span className="text-sm font-semibold leading-5 text-slate-950">
+                      {
+                        t[
+                          "accountDashboard.preferences.customization.fields.region.label"
+                        ]
+                      }
+                    </span>
+                    <select
+                      value={mode}
+                      onChange={(event) =>
+                        handleRegionChange(event.target.value)
+                      }
                       className="focus-ring mt-2 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
                     >
                       {regionOptions.map((option) => (
-                        <option key={option} value={option}>
-                          {t[`accountDashboard.preferences.customization.options.region.${option}`]}
+                        <option key={option.code} value={option.code}>
+                          {getCountryDisplayNameForLocale(
+                            option.code,
+                            locale,
+                            option.country,
+                          )}{" "}
+                          · {option.currency}
                         </option>
                       ))}
                     </select>
@@ -191,24 +274,48 @@ export function CustomizationPreferencesContent() {
 
               <div className="mt-6 border-t border-slate-300 pt-6">
                 <h3 className="text-xs font-bold uppercase tracking-[0.1em] text-slate-600">
-                  {t["accountDashboard.preferences.customization.sections.personalization"]}
+                  {
+                    t[
+                      "accountDashboard.preferences.customization.sections.personalization"
+                    ]
+                  }
                 </h3>
                 <div className="mt-3 divide-y divide-slate-200">
                   {personalizationOptions.map((option) => (
-                    <div key={option} className="flex items-start justify-between gap-4 py-4 sm:items-center sm:gap-6">
+                    <div
+                      key={option}
+                      className="flex items-start justify-between gap-4 py-4 sm:items-center sm:gap-6"
+                    >
                       <div className="min-w-0 flex-1 sm:flex-initial">
                         <p className="text-sm font-semibold leading-5 text-slate-950">
-                          {t[`accountDashboard.preferences.customization.fields.${option}.label`]}
+                          {
+                            t[
+                              `accountDashboard.preferences.customization.fields.${option}.label`
+                            ]
+                          }
                         </p>
                         <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
-                          {t[`accountDashboard.preferences.customization.fields.${option}.description`]}
+                          {
+                            t[
+                              `accountDashboard.preferences.customization.fields.${option}.description`
+                            ]
+                          }
                         </p>
                       </div>
                       <div className="shrink-0 pt-1 sm:pt-0">
                         <PreferenceSwitch
-                          checked={preferences[option]}
-                          label={t[`accountDashboard.preferences.customization.fields.${option}.label`]}
-                          onChange={() => updatePreference(option, !preferences[option])}
+                          checked={personalizationPreferences[option]}
+                          label={
+                            t[
+                              `accountDashboard.preferences.customization.fields.${option}.label`
+                            ]
+                          }
+                          onChange={() =>
+                            updatePersonalizationPreference(
+                              option,
+                              !personalizationPreferences[option],
+                            )
+                          }
                         />
                       </div>
                     </div>
@@ -241,8 +348,12 @@ export function CustomizationPreferencesContent() {
                 className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
               >
                 {status === "saving"
-                  ? t["accountDashboard.preferences.customization.actions.saving"]
-                  : t["accountDashboard.preferences.customization.actions.save"]}
+                  ? t[
+                      "accountDashboard.preferences.customization.actions.saving"
+                    ]
+                  : t[
+                      "accountDashboard.preferences.customization.actions.save"
+                    ]}
               </button>
             </div>
           </div>
@@ -256,3 +367,6 @@ export function CustomizationPreferencesContent() {
 // accountDashboard.preferences.customization.fields.rememberChoices.label
 // accountDashboard.preferences.customization.fields.personalizeRecommendations.label
 // accountDashboard.preferences.customization.fields.showHelpfulTips.label
+// accountDashboard.preferences.customization.fields.rememberChoices.description
+// accountDashboard.preferences.customization.fields.personalizeRecommendations.description
+// accountDashboard.preferences.customization.fields.showHelpfulTips.description

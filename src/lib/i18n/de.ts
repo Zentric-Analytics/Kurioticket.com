@@ -2742,7 +2742,7 @@ flightLandingRouteAriaLabel:
   "accountDashboard.preferences.customization.fields.density.description": "Adjust how spacious lists and controls feel.",
   "accountDashboard.preferences.customization.fields.language.label": "Language",
   "accountDashboard.preferences.customization.fields.currency.label": "Currency",
-  "accountDashboard.preferences.customization.fields.region.label": "Region",
+  "accountDashboard.preferences.customization.fields.region.label": "Display/search market",
   "accountDashboard.preferences.customization.fields.rememberChoices.label": "Remember my choices",
   "accountDashboard.preferences.customization.fields.rememberChoices.description": "Keep your recent app selections available for a smoother experience.",
   "accountDashboard.preferences.customization.fields.personalizeRecommendations.label": "Personalize recommendations",
@@ -2766,5 +2766,5 @@ flightLandingRouteAriaLabel:
   "accountDashboard.preferences.customization.actions.reset": "Reset",
   "accountDashboard.preferences.customization.actions.save": "Save",
   "accountDashboard.preferences.customization.actions.saving": "Saving...",
-  "accountDashboard.preferences.customization.status.previewSaved": "Customization preference saving will be connected soon. Your choices are shown here for preview only.",
+  "accountDashboard.preferences.customization.status.updatedOnDevice": "Regional defaults were updated on this device. Personalization saving will be connected soon.",
 };
