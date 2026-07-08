@@ -3042,9 +3042,9 @@ export function FlightResultsClient() {
               </div>
             </div>
 
-            <div className="overflow-visible rounded-[1.65rem] border border-white/70 bg-white/90 p-2.5 shadow-[0_18px_44px_rgba(15,23,42,0.10)] ring-1 ring-slate-950/[0.03] backdrop-blur sm:rounded-[1.35rem] sm:border-slate-200/90 sm:bg-white sm:p-1.5 sm:shadow-[0_16px_36px_-24px_rgba(15,23,42,0.32)] sm:ring-1 sm:ring-slate-950/[0.02] lg:p-1">
+            <div className="overflow-visible rounded-[1.65rem] border border-white/70 bg-white/90 p-2.5 shadow-[0_18px_44px_rgba(15,23,42,0.10)] ring-1 ring-slate-950/[0.03] backdrop-blur sm:rounded-none sm:border-slate-200 sm:bg-white sm:p-1.5 sm:shadow-none sm:ring-0 lg:p-1">
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-1.5 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_116px] lg:gap-0">
-                <div className="col-span-2 grid grid-cols-[minmax(0,1fr)_34px_minmax(0,1fr)] items-stretch rounded-[1.35rem] border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 px-3 py-1.5 shadow-sm transition-colors hover:border-slate-300 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:rounded-xl sm:border-slate-300 sm:bg-white sm:px-3 sm:py-1.5 sm:shadow-none sm:hover:border-slate-400 sm:focus-within:ring-[#004BB8]/25 lg:col-span-1 lg:rounded-none lg:rounded-s-xl lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+                <div className="col-span-2 grid grid-cols-[minmax(0,1fr)_34px_minmax(0,1fr)] items-stretch rounded-[1.35rem] border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 px-3 py-1.5 shadow-sm transition-colors hover:border-slate-300 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:rounded-xl sm:border-slate-300 sm:bg-white sm:px-3 sm:py-1.5 sm:shadow-none sm:hover:border-slate-400 sm:focus-within:ring-[#004BB8]/25 lg:col-span-1 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
                   <div
                     className="relative min-h-[48px] px-0 py-0 pe-2 sm:min-h-[54px]"
                     ref={originWrapRef}
@@ -3295,7 +3295,7 @@ export function FlightResultsClient() {
                 <div className="col-span-2 lg:col-span-1 lg:min-h-[54px] lg:self-stretch">
                   <Button
                     type="submit"
-                    className="h-[50px] w-full rounded-[1.25rem] bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_14px_28px_rgba(2,28,43,0.14)] transition hover:bg-[#021C2B] hover:shadow-[0_16px_30px_rgba(0,75,184,0.22)] active:scale-[0.99] active:bg-[#021C2B] sm:h-12 sm:rounded-xl sm:shadow-[0_12px_24px_rgba(0,75,184,0.18)] lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20"
+                    className="h-[50px] w-full rounded-[1.25rem] bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_14px_28px_rgba(2,28,43,0.14)] transition hover:bg-[#021C2B] hover:shadow-[0_16px_30px_rgba(0,75,184,0.22)] active:scale-[0.99] active:bg-[#021C2B] sm:h-12 sm:rounded-xl sm:shadow-[0_12px_24px_rgba(0,75,184,0.18)] lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:border lg:border-s-0 lg:border-[#004BB8]/20"
                   >
                     {t("search")}
                   </Button>
@@ -3919,12 +3919,12 @@ export function FlightResultsClient() {
     if (placement === "desktop" && showCompactSearchSummary) {
       return (
         <div className="mx-auto w-full min-w-0 max-w-[54rem] sm:block">
-          <div className="overflow-visible rounded-[1.35rem] border border-slate-200/90 bg-white p-1.5 shadow-[0_12px_28px_-20px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.02]">
+          <div className="overflow-visible rounded-none border border-slate-200 bg-white p-1.5 shadow-none">
             <button
               type="button"
               aria-label={t("editFlightSearch")}
               onClick={expandStickySearch}
-              className="group focus-ring flex w-full min-w-0 flex-col gap-2 rounded-xl bg-white px-3 py-2.5 text-start transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
+              className="group focus-ring flex w-full min-w-0 flex-col gap-2 rounded-none bg-white px-3 py-2.5 text-start transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
             >
               <span className="grid min-w-0 flex-1 grid-cols-1 gap-1.5 sm:grid-cols-[minmax(0,1.5fr)_minmax(0,0.8fr)] lg:grid-cols-[minmax(0,1.6fr)_minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1.1fr)] lg:items-center lg:gap-3">
                 <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-800">
@@ -3996,7 +3996,7 @@ export function FlightResultsClient() {
             </button>
           </div>
 
-          <div className="overflow-visible rounded-[1.35rem] border border-slate-200/90 bg-white p-1.5 shadow-[0_16px_36px_-24px_rgba(15,23,42,0.32)] ring-1 ring-slate-950/[0.02]">
+          <div className="overflow-visible rounded-none border border-slate-200 bg-white p-1.5 shadow-none">
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[132px_minmax(0,2.35fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
               <div ref={tripTypeMenuRef} className="relative">
                 <button
@@ -4012,7 +4012,7 @@ export function FlightResultsClient() {
                     setTravelerPopoverPosition(null);
                     setTripTypeMenuOpen((open) => !open);
                   }}
-                  className="focus-ring flex h-full min-h-[54px] w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-start transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:rounded-none lg:rounded-s-xl lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200"
+                  className="focus-ring flex h-full min-h-[54px] w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-start transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200"
                 >
                   <span className="min-w-0">
                     <span className="block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
@@ -4419,7 +4419,7 @@ export function FlightResultsClient() {
 
               <Button
                 type="submit"
-                className="h-full min-h-[54px] w-full rounded-xl bg-[#004BB8] px-5 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] ring-1 ring-[#004BB8]/12 hover:bg-[#021C2B] lg:min-w-[112px] lg:rounded-s-none lg:rounded-e-xl"
+                className="h-full min-h-[54px] w-full rounded-xl bg-[#004BB8] px-5 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] ring-1 ring-[#004BB8]/12 hover:bg-[#021C2B] lg:min-w-[112px] lg:rounded-none"
               >
                 {t("search")}
               </Button>
