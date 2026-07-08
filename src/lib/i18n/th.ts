@@ -2153,7 +2153,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.customization.fields.density.description": "ปรับความโปร่งของรายการและปุ่มควบคุม",
   "accountDashboard.preferences.customization.fields.language.label": "ภาษา",
   "accountDashboard.preferences.customization.fields.currency.label": "สกุลเงิน",
-  "accountDashboard.preferences.customization.fields.region.label": "ภูมิภาค",
+  "accountDashboard.preferences.customization.fields.region.label": "Display/search market",
   "accountDashboard.preferences.customization.fields.rememberChoices.label": "จดจำตัวเลือกของฉัน",
   "accountDashboard.preferences.customization.fields.rememberChoices.description": "เก็บตัวเลือกล่าสุดในแอปเพื่อประสบการณ์ที่ราบรื่นขึ้น",
   "accountDashboard.preferences.customization.fields.personalizeRecommendations.label": "ปรับคำแนะนำให้เหมาะกับฉัน",
@@ -2177,5 +2177,5 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.customization.actions.reset": "รีเซ็ต",
   "accountDashboard.preferences.customization.actions.save": "บันทึก",
   "accountDashboard.preferences.customization.actions.saving": "กำลังบันทึก...",
-  "accountDashboard.preferences.customization.status.previewSaved": "การบันทึกการตั้งค่าการปรับแต่งจะเชื่อมต่อเร็ว ๆ นี้ ตัวเลือกของคุณแสดงที่นี่เพื่อดูตัวอย่างเท่านั้น",
+  "accountDashboard.preferences.customization.status.updatedOnDevice": "Regional defaults were updated on this device. Personalization saving will be connected soon.",
 };
