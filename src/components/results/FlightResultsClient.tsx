@@ -1062,11 +1062,19 @@ export function FlightResultsClient() {
     cabinClassInput,
     t,
   );
-  const showFullSearchForm = !isSearchCollapsed || isSearchExpandedWhileSticky;
+  const keepDesktopSearchFormVisible = true;
+  const showFullSearchForm =
+    keepDesktopSearchFormVisible ||
+    !isSearchCollapsed ||
+    isSearchExpandedWhileSticky;
   const showCompactSearchSummary =
-    isSearchCollapsed && !isSearchExpandedWhileSticky;
+    !keepDesktopSearchFormVisible &&
+    isSearchCollapsed &&
+    !isSearchExpandedWhileSticky;
   const isExpandedStickySearchActive =
-    isSearchCollapsed && isSearchExpandedWhileSticky;
+    !keepDesktopSearchFormVisible &&
+    isSearchCollapsed &&
+    isSearchExpandedWhileSticky;
   const canAutoCollapseExpandedSearch =
     isExpandedStickySearchActive &&
     !tripTypeMenuOpen &&
