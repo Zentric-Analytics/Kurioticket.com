@@ -16,7 +16,6 @@ import {
   ChevronRight,
   Clock3,
   MapPin,
-  Search,
   SquarePen,
   SlidersHorizontal,
   Users,
@@ -553,7 +552,7 @@ const getDriverAgeOptionLabel = (age: string, t: (key: string) => string) => {
 };
 
 const fieldShellClass =
-  "relative min-h-[50px] rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 shadow-sm shadow-slate-900/[0.025] transition-[min-height,padding,border-color,box-shadow] duration-200 hover:border-slate-300 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0";
+  "relative min-h-[50px] rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 shadow-sm shadow-slate-900/[0.025] transition-[min-height,padding,border-color,box-shadow] duration-200 hover:border-slate-300 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[54px] sm:px-3 sm:py-1.5 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0";
 
 const searchFormGridClass =
   "grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.16fr)_minmax(0,1.08fr)_minmax(0,1.28fr)_minmax(0,1.08fr)_minmax(7rem,0.62fr)_112px] lg:gap-0";
@@ -561,7 +560,7 @@ const searchFormGridClass =
 const compactFieldShellClass = "min-h-[46px] py-1 lg:min-h-[44px]";
 
 const fieldLabelClass =
-  "mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500";
+  "mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600";
 
 const fieldInputClass =
   "focus-ring h-8 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 md:text-sm";
@@ -978,7 +977,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
         ref={searchFormRef}
         action="/cars/results"
         method="get"
-        className="mx-auto w-full min-w-0 max-w-[72rem]"
+        className="mx-auto w-full min-w-0 max-w-[72rem] sm:max-w-5xl"
         onFocusCapture={markExpandedSearchInteraction}
         onChangeCapture={markExpandedSearchInteraction}
         onSubmit={() => {
@@ -1117,12 +1116,10 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             <Button
               type="submit"
               className={cn(
-                "mt-2 h-12 w-full rounded-xl bg-gradient-to-r from-[#004BB8] to-[#021C2B] px-4 text-sm font-bold text-white shadow-[0_12px_24px_rgba(0,75,184,0.18)] transition-[min-height,height,box-shadow] duration-200 hover:shadow-[0_14px_28px_rgba(0,75,184,0.24)] sm:mt-3 lg:mt-0 lg:h-auto lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20",
-                isCompactSearch ? "lg:min-h-[46px]" : "lg:min-h-[54px]",
+                "mt-2 h-12 w-full rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_12px_24px_rgba(0,75,184,0.18)] transition-[min-height,height,box-shadow,background-color] duration-200 hover:bg-[#021C2B] hover:shadow-[0_14px_28px_rgba(0,75,184,0.24)] sm:mt-3 lg:mt-0 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20",
               )}
             >
-              <Search className="h-4 w-4" aria-hidden="true" />
-              {t("carsResults.searchCars")}
+              {t("search")}
             </Button>
           </div>
         </div>
