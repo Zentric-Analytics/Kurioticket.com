@@ -64,7 +64,7 @@ function projectTravelPreferences(
 }
 
 const fieldClassName =
-  "focus-ring mt-2 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500";
+  "focus-ring mt-2 min-h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500";
 
 const selectClassName = `${fieldClassName} cursor-pointer`;
 
@@ -114,7 +114,7 @@ function PreferenceSection({
 
   return (
     <section
-      className={bordered ? "mt-6 border-t border-slate-300 pt-6" : undefined}
+      className={bordered ? "mt-5 border-t border-slate-300 pt-5" : undefined}
       aria-labelledby={id}
     >
       <div>
@@ -124,11 +124,11 @@ function PreferenceSection({
         >
           {title}
         </h3>
-        <p className="mt-2 text-sm font-medium leading-6 text-slate-700">
+        <p className="mt-1.5 text-sm font-medium leading-6 text-slate-700">
           {description}
         </p>
       </div>
-      <div className="mt-4 grid gap-4">{children}</div>
+      <div className="mt-3 grid gap-3.5">{children}</div>
     </section>
   );
 }
@@ -301,7 +301,7 @@ export function BookingPreferencesContent() {
             <div className="-mx-4 rounded-none border border-slate-300 bg-white/45 px-4 py-5 shadow-sm sm:mx-0 sm:rounded-2xl sm:p-6">
               {status === "loading" ? (
                 <p
-                  className="text-sm font-medium leading-6 text-slate-700"
+                  className="max-w-2xl text-sm font-medium leading-6 text-slate-700"
                   role="status"
                   aria-live="polite"
                 >
@@ -310,146 +310,150 @@ export function BookingPreferencesContent() {
                 </p>
               ) : null}
 
-              <PreferenceSection
-                title={
-                  t[
-                    "accountDashboard.preferences.booking.sections.flightDefaults.title"
-                  ] ?? "Flight defaults"
-                }
-                description={
-                  t[
-                    "accountDashboard.preferences.booking.sections.flightDefaults.description"
-                  ] ??
-                  "Tell Kurioticket which airports and airlines you prefer."
-                }
-              >
-                <label className="block" htmlFor="homeAirport">
-                  <span className="text-sm font-semibold leading-5 text-slate-950">
-                    {t["accountDashboard.preferences.booking.homeAirport"]}
-                  </span>
-                  <input
-                    id="homeAirport"
-                    name="homeAirport"
-                    value={preferences.homeAirport}
-                    disabled={disabled}
-                    onChange={(event) =>
-                      updateField(
-                        "homeAirport",
-                        event.target.value.toUpperCase(),
-                      )
-                    }
-                    placeholder="Example: JFK"
-                    maxLength={80}
-                    className={fieldClassName}
-                  />
-                </label>
-                <label className="block" htmlFor="preferredAirlines">
-                  <span className="text-sm font-semibold leading-5 text-slate-950">
-                    {
-                      t[
-                        "accountDashboard.preferences.booking.preferredAirlines"
-                      ]
-                    }
-                  </span>
-                  <input
-                    id="preferredAirlines"
-                    name="preferredAirlines"
-                    value={airlineText}
-                    disabled={disabled}
-                    onChange={(event) =>
-                      setPreferences((current) => ({
-                        ...current,
-                        preferredAirlines: event.target.value
-                          .split(",")
-                          .map((item) => item.trim())
-                          .filter(Boolean),
-                      }))
-                    }
-                    placeholder="Delta, United, Emirates"
-                    maxLength={240}
-                    className={fieldClassName}
-                  />
-                  <span className="mt-2 block text-xs font-medium leading-5 text-slate-500">
-                    {t[
-                      "accountDashboard.preferences.booking.preferredAirlinesHelp"
-                    ] ?? "Separate airlines with commas."}
-                  </span>
-                </label>
-                <SelectField
-                  id="directVsCheaper"
-                  label={
-                    t["accountDashboard.preferences.booking.directVsCheaper"] ??
-                    "Direct vs cheaper"
-                  }
-                  value={preferences.directVsCheaper}
-                  options={directOptions}
-                  disabled={disabled}
-                  onChange={updateField}
-                />
-              </PreferenceSection>
-
-              <PreferenceSection
-                title={
-                  t[
-                    "accountDashboard.preferences.booking.sections.tripStyle.title"
-                  ] ?? "Trip style"
-                }
-                description={
-                  t[
-                    "accountDashboard.preferences.booking.sections.tripStyle.description"
-                  ] ?? "Set defaults that describe how you usually travel."
-                }
-                bordered
-              >
-                <SelectField
-                  id="budgetStyle"
-                  label={
-                    t["accountDashboard.preferences.booking.budgetStyle"] ??
-                    "Budget style"
-                  }
-                  value={preferences.budgetStyle}
-                  options={budgetOptions}
-                  disabled={disabled}
-                  onChange={updateField}
-                />
-                <SelectField
-                  id="travelFrequency"
-                  label={
-                    t["accountDashboard.preferences.booking.travelFrequency"] ??
-                    "Travel frequency"
-                  }
-                  value={preferences.travelFrequency}
-                  options={frequencyOptions}
-                  disabled={disabled}
-                  onChange={updateField}
-                />
-                <SelectField
-                  id="comfortVsSavings"
-                  label={
+              <div className="max-w-2xl">
+                <PreferenceSection
+                  title={
                     t[
-                      "accountDashboard.preferences.booking.comfortVsSavings"
-                    ] ?? "Comfort vs savings"
+                      "accountDashboard.preferences.booking.sections.flightDefaults.title"
+                    ] ?? "Flight defaults"
                   }
-                  value={preferences.comfortVsSavings}
-                  options={comfortOptions}
-                  disabled={disabled}
-                  onChange={updateField}
-                />
-                <SelectField
-                  id="travelPurpose"
-                  label={
-                    t["accountDashboard.preferences.booking.travelPurpose"] ??
-                    "Travel purpose"
+                  description={
+                    t[
+                      "accountDashboard.preferences.booking.sections.flightDefaults.description"
+                    ] ??
+                    "Tell Kurioticket which airports and airlines you prefer."
                   }
-                  value={preferences.travelPurpose}
-                  options={purposeOptions}
-                  disabled={disabled}
-                  onChange={updateField}
-                />
-              </PreferenceSection>
+                >
+                  <label className="block" htmlFor="homeAirport">
+                    <span className="text-sm font-semibold leading-5 text-slate-950">
+                      {t["accountDashboard.preferences.booking.homeAirport"]}
+                    </span>
+                    <input
+                      id="homeAirport"
+                      name="homeAirport"
+                      value={preferences.homeAirport}
+                      disabled={disabled}
+                      onChange={(event) =>
+                        updateField(
+                          "homeAirport",
+                          event.target.value.toUpperCase(),
+                        )
+                      }
+                      placeholder="Example: JFK"
+                      maxLength={80}
+                      className={fieldClassName}
+                    />
+                  </label>
+                  <label className="block" htmlFor="preferredAirlines">
+                    <span className="text-sm font-semibold leading-5 text-slate-950">
+                      {
+                        t[
+                          "accountDashboard.preferences.booking.preferredAirlines"
+                        ]
+                      }
+                    </span>
+                    <input
+                      id="preferredAirlines"
+                      name="preferredAirlines"
+                      value={airlineText}
+                      disabled={disabled}
+                      onChange={(event) =>
+                        setPreferences((current) => ({
+                          ...current,
+                          preferredAirlines: event.target.value
+                            .split(",")
+                            .map((item) => item.trim())
+                            .filter(Boolean),
+                        }))
+                      }
+                      placeholder="Delta, United, Emirates"
+                      maxLength={240}
+                      className={fieldClassName}
+                    />
+                    <span className="mt-1.5 block text-xs font-medium leading-5 text-slate-500">
+                      {t[
+                        "accountDashboard.preferences.booking.preferredAirlinesHelp"
+                      ] ?? "Separate airlines with commas."}
+                    </span>
+                  </label>
+                  <SelectField
+                    id="directVsCheaper"
+                    label={
+                      t[
+                        "accountDashboard.preferences.booking.directVsCheaper"
+                      ] ?? "Direct vs cheaper"
+                    }
+                    value={preferences.directVsCheaper}
+                    options={directOptions}
+                    disabled={disabled}
+                    onChange={updateField}
+                  />
+                </PreferenceSection>
+
+                <PreferenceSection
+                  title={
+                    t[
+                      "accountDashboard.preferences.booking.sections.tripStyle.title"
+                    ] ?? "Trip style"
+                  }
+                  description={
+                    t[
+                      "accountDashboard.preferences.booking.sections.tripStyle.description"
+                    ] ?? "Set defaults that describe how you usually travel."
+                  }
+                  bordered
+                >
+                  <SelectField
+                    id="budgetStyle"
+                    label={
+                      t["accountDashboard.preferences.booking.budgetStyle"] ??
+                      "Budget style"
+                    }
+                    value={preferences.budgetStyle}
+                    options={budgetOptions}
+                    disabled={disabled}
+                    onChange={updateField}
+                  />
+                  <SelectField
+                    id="travelFrequency"
+                    label={
+                      t[
+                        "accountDashboard.preferences.booking.travelFrequency"
+                      ] ?? "Travel frequency"
+                    }
+                    value={preferences.travelFrequency}
+                    options={frequencyOptions}
+                    disabled={disabled}
+                    onChange={updateField}
+                  />
+                  <SelectField
+                    id="comfortVsSavings"
+                    label={
+                      t[
+                        "accountDashboard.preferences.booking.comfortVsSavings"
+                      ] ?? "Comfort vs savings"
+                    }
+                    value={preferences.comfortVsSavings}
+                    options={comfortOptions}
+                    disabled={disabled}
+                    onChange={updateField}
+                  />
+                  <SelectField
+                    id="travelPurpose"
+                    label={
+                      t["accountDashboard.preferences.booking.travelPurpose"] ??
+                      "Travel purpose"
+                    }
+                    value={preferences.travelPurpose}
+                    options={purposeOptions}
+                    disabled={disabled}
+                    onChange={updateField}
+                  />
+                </PreferenceSection>
+              </div>
             </div>
 
-            <div className="relative mt-5 flex flex-row items-center justify-end gap-3 sm:mt-0 sm:justify-end sm:pt-1">
+            <div className="relative mt-5 flex max-w-2xl flex-row items-center justify-end gap-3 sm:mt-0 sm:justify-end sm:pt-1">
               {message ? (
                 <p
                   className={
@@ -474,7 +478,7 @@ export function BookingPreferencesContent() {
                   );
                   setStatus("idle");
                 }}
-                className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:bg-transparent"
+                className="focus-ring inline-flex min-h-10 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:bg-transparent"
               >
                 {t["accountDashboard.preferences.booking.actions.revert"] ??
                   "Revert changes"}
@@ -482,7 +486,7 @@ export function BookingPreferencesContent() {
               <button
                 type="submit"
                 disabled={disabled}
-                className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
+                className="focus-ring inline-flex min-h-10 w-auto items-center justify-center rounded-xl bg-[#004BB8] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
               >
                 {status === "saving"
                   ? (t["accountDashboard.preferences.booking.actions.saving"] ??
