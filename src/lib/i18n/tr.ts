@@ -333,7 +333,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.savedTrips": "Kaydedilen seyahatler",
   "accountDashboard.hub.priceAlerts": "Fiyat uyarıları",
   "accountDashboard.hub.preferences": "Tercihler",
-  "accountDashboard.hub.emailPreferences": "Özelleştirme tercihleri",
+  "accountDashboard.hub.emailPreferences": "E-posta tercihleri",
   "accountDashboard.hub.travelPreferences": "Rezervasyon tercihleri",
   "accountDashboard.hub.helpAndSupport": "Yardım ve destek",
   "accountDashboard.hub.contactSupport": "Destekle iletişime geç",

@@ -3333,7 +3333,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.priceAlerts": "Alertas de preço",
   "accountDashboard.hub.preferences": "Preferências",
   "accountDashboard.hub.languageRegionCurrency": "Idioma, região e moeda",
-  "accountDashboard.hub.emailPreferences": "Preferências de personalização",
+  "accountDashboard.hub.emailPreferences": "Preferências de e-mail",
   "accountDashboard.hub.travelPreferences": "Preferências de reserva",
   "accountDashboard.hub.helpAndSupport": "Ajuda e suporte",
   "accountDashboard.hub.contactSupport": "Contatar suporte",

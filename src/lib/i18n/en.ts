@@ -570,7 +570,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.priceAlerts": "Price alerts",
   "accountDashboard.hub.preferences": "Preferences",
   "accountDashboard.hub.languageRegionCurrency": "Language, region & currency",
-  "accountDashboard.hub.emailPreferences": "Customization preferences",
+  "accountDashboard.hub.emailPreferences": "Email preferences",
   "accountDashboard.hub.travelPreferences": "Booking preferences",
   "accountDashboard.hub.helpAndSupport": "Help and support",
   "accountDashboard.hub.contactSupport": "Contact support",

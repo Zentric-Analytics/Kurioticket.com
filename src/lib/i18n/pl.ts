@@ -119,7 +119,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.savedTrips": "Zapisane podróże",
   "accountDashboard.hub.priceAlerts": "Alerty cenowe",
   "accountDashboard.hub.preferences": "Preferencje",
-  "accountDashboard.hub.emailPreferences": "Preferencje personalizacji",
+  "accountDashboard.hub.emailPreferences": "Preferencje e-mail",
   "accountDashboard.hub.travelPreferences": "Preferencje rezerwacji",
   "accountDashboard.hub.helpAndSupport": "Pomoc i wsparcie",
   "accountDashboard.hub.contactSupport": "Skontaktuj się z pomocą",

@@ -2178,7 +2178,7 @@ flightLandingRouteAriaLabel: "Vluchten zoeken van {{origin}} naar {{destination}
   "accountDashboard.hub.savedTrips": "Opgeslagen reizen",
   "accountDashboard.hub.priceAlerts": "Prijsmeldingen",
   "accountDashboard.hub.preferences": "Voorkeuren",
-  "accountDashboard.hub.emailPreferences": "Personalisatievoorkeuren",
+  "accountDashboard.hub.emailPreferences": "E-mailvoorkeuren",
   "accountDashboard.hub.travelPreferences": "Boekingsvoorkeuren",
   "accountDashboard.hub.helpAndSupport": "Hulp en ondersteuning",
   "accountDashboard.hub.contactSupport": "Contact opnemen met support",

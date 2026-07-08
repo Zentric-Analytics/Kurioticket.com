@@ -3079,7 +3079,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.priceAlerts": "Alertas de precio",
   "accountDashboard.hub.preferences": "Preferencias",
   "accountDashboard.hub.languageRegionCurrency": "Idioma, región y moneda",
-  "accountDashboard.hub.emailPreferences": "Preferencias de personalización",
+  "accountDashboard.hub.emailPreferences": "Preferencias de correo electrónico",
   "accountDashboard.hub.travelPreferences": "Preferencias de reserva",
   "accountDashboard.hub.helpAndSupport": "Ayuda y soporte",
   "accountDashboard.hub.contactSupport": "Contactar soporte",

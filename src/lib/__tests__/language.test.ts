@@ -1406,7 +1406,7 @@ test("Thai Account dropdown and Dashboard overview copy resolves through active 
     "accountDashboard.hub.savedTrips": "ทริปที่บันทึกไว้",
     "accountDashboard.hub.priceAlerts": "การแจ้งเตือนราคา",
     "accountDashboard.hub.preferences": "การตั้งค่า",
-    "accountDashboard.hub.emailPreferences": "การตั้งค่าการปรับแต่ง",
+    "accountDashboard.hub.emailPreferences": "การตั้งค่าอีเมล",
     "accountDashboard.hub.travelPreferences": "การตั้งค่าการจอง",
     "accountDashboard.hub.helpAndSupport": "ความช่วยเหลือและการสนับสนุน",
     "accountDashboard.hub.contactSupport": "ติดต่อฝ่ายสนับสนุน",
@@ -1492,7 +1492,7 @@ test("Vietnamese account menu and dashboard overview copy resolves without Engli
     "accountDashboard.hub.savedTrips": "Chuyến đi đã lưu",
     "accountDashboard.hub.priceAlerts": "Cảnh báo giá",
     "accountDashboard.hub.preferences": "Tùy chọn",
-    "accountDashboard.hub.emailPreferences": "Tùy chọn cá nhân hóa",
+    "accountDashboard.hub.emailPreferences": "Tùy chọn email",
     "accountDashboard.hub.travelPreferences": "Tùy chọn đặt chỗ",
     "accountDashboard.hub.helpAndSupport": "Trợ giúp và hỗ trợ",
     "accountDashboard.hub.contactSupport": "Liên hệ hỗ trợ",
@@ -1580,7 +1580,7 @@ test("Indonesian Account dropdown and Dashboard copy resolves through active i18
     "accountDashboard.hub.savedTrips": "Perjalanan tersimpan",
     "accountDashboard.hub.priceAlerts": "Peringatan harga",
     "accountDashboard.hub.preferences": "Preferensi",
-    "accountDashboard.hub.emailPreferences": "Preferensi penyesuaian",
+    "accountDashboard.hub.emailPreferences": "Preferensi email",
     "accountDashboard.hub.travelPreferences": "Preferensi pemesanan",
     "accountDashboard.hub.helpAndSupport": "Bantuan dan dukungan",
     "accountDashboard.hub.contactSupport": "Hubungi dukungan",
@@ -5064,7 +5064,7 @@ test("Turkish account dashboard overview copy resolves without English fallback"
   assert.equal(tr["accountDashboard.hub.myTrips"], "Seyahatlerim");
   assert.equal(tr["accountDashboard.hub.savedTrips"], "Kaydedilen seyahatler");
   assert.equal(tr["accountDashboard.hub.priceAlerts"], "Fiyat uyarıları");
-  assert.equal(tr["accountDashboard.hub.emailPreferences"], "Özelleştirme tercihleri");
+  assert.equal(tr["accountDashboard.hub.emailPreferences"], "E-posta tercihleri");
   assert.equal(tr["accountDashboard.hub.travelPreferences"], "Rezervasyon tercihleri");
   assert.equal(tr["accountDashboard.hub.contactSupport"], "Destekle iletişime geç");
   assert.equal(tr["accountDashboard.hub.faq"], "SSS");
@@ -5120,7 +5120,7 @@ test("Polish account dashboard overview copy resolves without English fallback",
     "accountDashboard.hub.myTrips": "Moje podróże",
     "accountDashboard.hub.savedTrips": "Zapisane podróże",
     "accountDashboard.hub.priceAlerts": "Alerty cenowe",
-    "accountDashboard.hub.emailPreferences": "Preferencje personalizacji",
+    "accountDashboard.hub.emailPreferences": "Preferencje e-mail",
     "accountDashboard.hub.travelPreferences": "Preferencje rezerwacji",
     "accountDashboard.hub.contactSupport": "Skontaktuj się z pomocą",
     "accountDashboard.hub.faq": "FAQ",
@@ -5310,7 +5310,7 @@ test("Hindi account dashboard overview copy resolves without English fallback", 
   assert.equal(hi["accountDashboard.hub.myTrips"], "मेरी यात्राएँ");
   assert.equal(hi["accountDashboard.hub.savedTrips"], "सहेजी गई यात्राएँ");
   assert.equal(hi["accountDashboard.hub.priceAlerts"], "मूल्य अलर्ट");
-  assert.equal(hi["accountDashboard.hub.emailPreferences"], "कस्टमाइज़ेशन प्राथमिकताएँ");
+  assert.equal(hi["accountDashboard.hub.emailPreferences"], "ईमेल प्राथमिकताएँ");
   assert.equal(hi["accountDashboard.hub.travelPreferences"], "बुकिंग प्राथमिकताएँ");
   assert.equal(hi["accountDashboard.hub.contactSupport"], "सहायता से संपर्क करें");
   assert.equal(hi["accountDashboard.hub.faq"], "अक्सर पूछे जाने वाले प्रश्न");
@@ -12531,7 +12531,7 @@ test("Swedish account dashboard overview resolves localized copy while preservin
   assert.equal(svTranslations["accountDashboard.hub.myTrips"], "Mina resor");
   assert.equal(svTranslations["accountDashboard.hub.savedTrips"], "Sparade resor");
   assert.equal(svTranslations["accountDashboard.hub.priceAlerts"], "Prisaviseringar");
-  assert.equal(svTranslations["accountDashboard.hub.emailPreferences"], "Anpassningspreferenser");
+  assert.equal(svTranslations["accountDashboard.hub.emailPreferences"], "E-postinställningar");
   assert.equal(svTranslations["accountDashboard.hub.travelPreferences"], "Bokningspreferenser");
   assert.equal(svTranslations["accountDashboard.hub.contactSupport"], "Kontakta support");
   assert.equal(svTranslations["accountDashboard.hub.faq"], "Vanliga frågor");
