@@ -28,7 +28,7 @@ const notificationPreferencesSchema = z
 
 const notificationPreferencesReadSchema = notificationPreferencesSchema.partial().passthrough();
 
-const travelPreferencesPatchSchema = z
+export const travelPreferencesPatchSchema = z
   .object({
     homeAirport: z.string().trim().max(80).optional(),
     preferredAirlines: z.array(z.string().trim().min(1).max(80)).max(10).optional(),
@@ -44,10 +44,26 @@ const travelPreferencesPatchSchema = z
 
 type TravelPreferencesPatch = z.infer<typeof travelPreferencesPatchSchema>;
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function normalizeNotifications(value: unknown) {
   const parsed = notificationPreferencesReadSchema.safeParse(value);
 
   return parsed.success ? { ...notificationDefaults, ...parsed.data } : notificationDefaults;
+}
+
+export function mergeLegacyNotificationPreferences(
+  existingNotifications: unknown,
+  legacyNotifications: NonNullable<TravelPreferencesPatch["notificationPreferences"]>,
+) {
+  return {
+    ...(isRecord(existingNotifications) ? existingNotifications : {}),
+    emailUpdates: legacyNotifications.emailUpdates,
+    priceAlertEmails: legacyNotifications.priceAlertEmails,
+    travelInspirationEmails: legacyNotifications.travelInspirationEmails,
+  };
 }
 
 function serializePreferences(preferences: {
@@ -86,7 +102,7 @@ function buildCreateData(userId: string, payload: TravelPreferencesPatch) {
   };
 }
 
-function buildUpdateData(payload: TravelPreferencesPatch) {
+function buildUpdateData(payload: TravelPreferencesPatch, existingNotifications: unknown) {
   const data: Partial<ReturnType<typeof buildCreateData>> = {};
 
   if (payload.homeAirport !== undefined) data.homeAirport = payload.homeAirport;
@@ -96,7 +112,12 @@ function buildUpdateData(payload: TravelPreferencesPatch) {
   if (payload.travelFrequency !== undefined) data.travelFrequency = payload.travelFrequency;
   if (payload.comfortVsSavings !== undefined) data.comfortVsSavings = payload.comfortVsSavings;
   if (payload.travelPurpose !== undefined) data.travelPurpose = payload.travelPurpose;
-  if (payload.notificationPreferences !== undefined) data.notificationPreferences = payload.notificationPreferences;
+  if (payload.notificationPreferences !== undefined) {
+    data.notificationPreferences = mergeLegacyNotificationPreferences(
+      existingNotifications,
+      payload.notificationPreferences,
+    );
+  }
 
   return data;
 }
@@ -143,10 +164,18 @@ export async function PATCH(request: Request) {
 
   try {
     const payload = travelPreferencesPatchSchema.parse(await request.json());
-    const preferences = await getPrisma().travelPreferences.upsert({
+    const prisma = getPrisma();
+    const existingPreferences =
+      payload.notificationPreferences !== undefined
+        ? await prisma.travelPreferences.findUnique({
+            where: { userId },
+            select: { notificationPreferences: true },
+          })
+        : null;
+    const preferences = await prisma.travelPreferences.upsert({
       where: { userId },
       create: buildCreateData(userId, payload),
-      update: buildUpdateData(payload),
+      update: buildUpdateData(payload, existingPreferences?.notificationPreferences),
       select: travelPreferencesSelect,
     });
 
