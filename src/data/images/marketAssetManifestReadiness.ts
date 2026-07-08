@@ -67,10 +67,7 @@ function checkEntry(
     checkString(`${label}.pageSurfaces[${surfaceIndex}]`, surface, errors);
   });
 
-  if (
-    entry.dimensions === marketAssetTemplatePlaceholderDimensions ||
-    entry.dimensions === legacyPlaceholderDimensions
-  ) {
+  if (isPlaceholderDimensions(entry.dimensions)) {
     errors.push(`${label}.dimensions must be replaced with real dimensions.`);
   }
 
@@ -85,6 +82,11 @@ function checkEntry(
   if (!entry.approvedAt) {
     warnings.push(`${label}.approvedAt is missing; add the approval date when available.`);
   }
+}
+
+function isPlaceholderDimensions(dimensions: MarketAssetManifestEntry["dimensions"]): boolean {
+  const value = String(dimensions);
+  return value === marketAssetTemplatePlaceholderDimensions || value === legacyPlaceholderDimensions;
 }
 
 function checkString(label: string, value: string | undefined, errors: string[]) {
