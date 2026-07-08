@@ -5,6 +5,7 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 
 import { Button } from "@/components/ui/Button";
+import { MessageBanner } from "@/components/ui/MessageBanner";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -102,15 +103,15 @@ export function SignupForm({ googleEnabled = false }: SignupFormProps) {
         </p>
 
         {error ? (
-          <p className="break-words text-sm text-danger" aria-live="polite">
+          <MessageBanner tone="error" className="break-words">
             {formatTranslation(t, error)}
-          </p>
+          </MessageBanner>
         ) : null}
 
         {message ? (
-          <p className="break-words rounded-md bg-teal/10 px-3 py-2 text-sm font-semibold text-teal-dark" aria-live="polite">
+          <MessageBanner tone="success" className="break-words">
             {formatTranslation(t, message)}
-          </p>
+          </MessageBanner>
         ) : null}
 
         <Button disabled={loading || isPending}>{loading || isPending ? t.signupCreatingAccount : t.signupSubmit}</Button>

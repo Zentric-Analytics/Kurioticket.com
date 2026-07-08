@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { LinkButton } from "@/components/ui/Button";
+import { MessageBanner } from "@/components/ui/MessageBanner";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { personalDetailsCountryOptions } from "@/lib/region/supportedRegions";
@@ -2116,21 +2117,10 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       ) : null}
 
       {statusMessage || errorMessage ? (
-        <div
-          className={cn("px-5 pt-4 sm:px-6", isEditing && "px-0")}
-          role="status"
-          aria-live="polite"
-        >
-          <p
-            className={cn(
-              "rounded-xl px-4 py-3 text-sm font-medium",
-              errorMessage
-                ? "border border-red-200 bg-red-50 text-red-700"
-                : "border border-emerald-200 bg-emerald-50 text-emerald-700",
-            )}
-          >
+        <div className={cn("px-5 pt-4 sm:px-6", isEditing && "px-0")}>
+          <MessageBanner tone={errorMessage ? "error" : "success"}>
             {errorMessage || statusMessage}
-          </p>
+          </MessageBanner>
         </div>
       ) : null}
 
@@ -2254,7 +2244,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
                 ) : null}
               </div>
               {emailChangeErrorMessage ? (
-                <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{emailChangeErrorMessage}</p>
+                <MessageBanner tone="error">{emailChangeErrorMessage}</MessageBanner>
               ) : null}
             </div>
             <div className="mt-6 grid grid-cols-2 gap-3">
@@ -3145,7 +3135,7 @@ export function SecurityDashboardPage() {
               <div className="mt-5 space-y-4"><p className="rounded-xl bg-amber-50 p-3 text-sm font-semibold text-amber-800">Save these recovery codes now. They will not be shown again.</p><div className="grid grid-cols-1 gap-2 sm:grid-cols-2">{recoveryCodes.map((code) => <code key={code} className="rounded-lg bg-slate-100 px-3 py-2 text-center text-sm font-bold text-slate-900">{code}</code>)}</div><button type="button" onClick={() => void navigator.clipboard?.writeText(recoveryCodes.join("\n"))} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Copy codes</button></div>
             ) : (
               <><p className="mt-2 text-sm leading-6 text-slate-600">{twoFactorModal === "setup" ? "Scan the QR code with an authenticator app, or enter the manual setup key. Then enter the current 6-digit code." : twoFactorModal === "recovery" ? "Enter a current authenticator app code to replace your recovery codes." : "Disabling 2FA reduces account protection. Verify with your authenticator/recovery code, or your current password."}</p>
-              {twoFactorModalError ? <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{twoFactorModalError}</p> : null}
+              {twoFactorModalError ? <MessageBanner tone="error" className="mt-4">{twoFactorModalError}</MessageBanner> : null}
               {twoFactorModal === "setup" && totpSetup ? <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-center"><img alt="Authenticator app QR code" className="mx-auto h-48 w-48 rounded-lg bg-white p-2" src={`https://api.qrserver.com/v1/create-qr-code/?size=192x192&data=${encodeURIComponent(totpSetup.otpauthUri)}`} /><p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Manual setup key</p><code className="mt-1 block break-all rounded-lg bg-white px-3 py-2 text-sm font-bold text-slate-900">{totpSetup.manualSetupKey}</code></div> : null}
               <div className="mt-5 space-y-4">
                 <label className="block text-sm font-medium text-slate-800">{twoFactorModal === "disable" ? "Authenticator or recovery code" : "Authenticator code"}
@@ -3167,8 +3157,8 @@ export function SecurityDashboardPage() {
           <div data-security-modal-content className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-xl sm:p-6">
             <h2 id="passkeys-title" className="text-xl font-semibold text-slate-950">{passkeys.length ? "Manage passkeys" : "Set up a passkey"}</h2>
             <div className="mt-2 space-y-2 text-sm leading-6 text-slate-600"><p>Use Face ID, fingerprint, Windows Hello, your device screen lock, password manager, or security key to sign in faster and more securely.</p><p className="rounded-xl bg-slate-50 p-3 text-slate-700">Kurioticket never receives your fingerprint, face, device PIN, or private key.</p></div>
-            {passkeyFlowError ? <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{passkeyFlowError}</p> : null}
-            {passkeyFlowStep === "intro" || passkeyFlowStep === "success" ? <div className="mt-5 space-y-3">{passkeys.length ? passkeys.map((passkey) => <div key={passkey.id} className="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold text-slate-950">{passkey.name || "Passkey"}</p><p className="text-sm text-slate-600">Created {formatSessionTime(passkey.createdAt)} · Last used {passkey.lastUsedAt ? formatSessionTime(passkey.lastUsedAt) : "never"} · {passkey.label || (passkey.backedUp ? "Synced passkey" : passkey.deviceType || "Device or security key")}</p></div><div className="flex gap-2"><button type="button" onClick={() => void handleRenamePasskey(passkey.id, passkey.name)} disabled={passkeySaving} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60">Rename</button><button type="button" onClick={() => void handleRemovePasskey(passkey.id)} disabled={passkeySaving} className="focus-ring rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-60">Remove</button></div></div>) : <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">No passkeys yet.</p>}{passkeyFlowStep === "success" ? <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">Passkey added successfully.</p> : null}</div> : null}
+            {passkeyFlowError ? <MessageBanner tone="error" className="mt-4">{passkeyFlowError}</MessageBanner> : null}
+            {passkeyFlowStep === "intro" || passkeyFlowStep === "success" ? <div className="mt-5 space-y-3">{passkeys.length ? passkeys.map((passkey) => <div key={passkey.id} className="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold text-slate-950">{passkey.name || "Passkey"}</p><p className="text-sm text-slate-600">Created {formatSessionTime(passkey.createdAt)} · Last used {passkey.lastUsedAt ? formatSessionTime(passkey.lastUsedAt) : "never"} · {passkey.label || (passkey.backedUp ? "Synced passkey" : passkey.deviceType || "Device or security key")}</p></div><div className="flex gap-2"><button type="button" onClick={() => void handleRenamePasskey(passkey.id, passkey.name)} disabled={passkeySaving} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60">Rename</button><button type="button" onClick={() => void handleRemovePasskey(passkey.id)} disabled={passkeySaving} className="focus-ring rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-60">Remove</button></div></div>) : <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">No passkeys yet.</p>}{passkeyFlowStep === "success" ? <MessageBanner tone="success">Passkey added successfully.</MessageBanner> : null}</div> : null}
             {passkeyFlowStep === "sending" ? <p className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-700">Sending verification code…</p> : null}
             {passkeyFlowStep === "code" || passkeyFlowStep === "verifying" ? <form onSubmit={handlePasskeyCodeSubmit} className="mt-5 space-y-4"><p className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm font-semibold text-blue-900">{passkeyVerificationMethod === "totp" ? "Enter your authenticator app code or a recovery code." : "We sent a code to your email."}</p><label className="block text-sm font-medium text-slate-800">Verification code<input value={passkeyVerificationCode} onChange={(event) => setPasskeyVerificationCode(event.target.value.replace(/[^A-Za-z0-9-]/g, "").slice(0, 32))} autoComplete="one-time-code" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder={passkeyVerificationMethod === "totp" ? "123456 or recovery code" : "123456"} /></label><div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><button type="button" onClick={resetPasskeySetupFlow} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button>{passkeyVerificationMethod === "email" ? <button type="button" onClick={() => void handleAddPasskey()} disabled={passkeySaving} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60">Resend code</button> : null}<button type="submit" disabled={passkeySaving || !passkeyVerificationCode.trim()} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{passkeyFlowStep === "verifying" ? "Verifying…" : "OK"}</button></div></form> : null}
             {passkeyFlowStep === "native" ? <p className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-700">Opening your browser or device passkey prompt…</p> : null}
@@ -3285,9 +3275,9 @@ export function SecurityDashboardPage() {
               ))}
             </div>
             {passwordModalError ? (
-              <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+              <MessageBanner tone="error" className="mt-4">
                 {passwordModalError}
-              </p>
+              </MessageBanner>
             ) : null}
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button type="button" onClick={() => { resetPasswordModalState(); setPasswordModalOpen(false); }} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button>
