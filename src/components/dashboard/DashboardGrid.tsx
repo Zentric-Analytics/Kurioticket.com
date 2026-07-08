@@ -138,7 +138,7 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
     rows: [
       {
         labelKey: "accountDashboard.hub.emailPreferences",
-        href: "/dashboard/preferences/customization",
+        href: "/dashboard/preferences/email",
         icon: Mail,
       },
       {

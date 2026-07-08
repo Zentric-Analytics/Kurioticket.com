@@ -108,7 +108,7 @@ function PreferenceSwitch({
   );
 }
 
-export function CustomizationPreferencesContent() {
+export function EmailPreferencesContent() {
   const { t } = useLocale();
   const legacyCustomizationTitle =
     t["accountDashboard.preferences.customization.title"];
@@ -289,7 +289,7 @@ export function CustomizationPreferencesContent() {
   );
 }
 
-// Legacy route-audit keys retained because this route is still /dashboard/preferences/customization.
+// Legacy customization i18n keys retained for localization coverage while the canonical email route is /dashboard/preferences/email.
 // accountDashboard.preferences.customization.title
 // accountDashboard.preferences.customization.description
 // accountDashboard.preferences.customization.languageRegion.title
