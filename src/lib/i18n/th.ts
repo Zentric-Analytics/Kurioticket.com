@@ -151,7 +151,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.savedTrips": "ทริปที่บันทึกไว้",
   "accountDashboard.hub.priceAlerts": "การแจ้งเตือนราคา",
   "accountDashboard.hub.preferences": "การตั้งค่า",
-  "accountDashboard.hub.emailPreferences": "การตั้งค่าการปรับแต่ง",
+  "accountDashboard.hub.emailPreferences": "การตั้งค่าอีเมล",
   "accountDashboard.hub.travelPreferences": "การตั้งค่าการจอง",
   "accountDashboard.preferences.customization.title": "การตั้งค่าการปรับแต่ง",
   "accountDashboard.preferences.customization.description":

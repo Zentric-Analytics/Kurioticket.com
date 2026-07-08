@@ -197,7 +197,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.priceAlerts": "가격 알림",
   "accountDashboard.hub.preferences": "환경설정",
   "accountDashboard.hub.languageRegionCurrency": "언어, 지역 및 통화",
-  "accountDashboard.hub.emailPreferences": "맞춤 설정 환경설정",
+  "accountDashboard.hub.emailPreferences": "이메일 환경설정",
   "accountDashboard.hub.travelPreferences": "예약 환경설정",
   "accountDashboard.hub.helpAndSupport": "도움말 및 지원",
   "accountDashboard.hub.contactSupport": "지원팀 문의",

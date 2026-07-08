@@ -2610,7 +2610,7 @@ flightLandingRouteAriaLabel:
   "accountDashboard.hub.priceAlerts": "Preisalarme",
   "accountDashboard.hub.preferences": "Einstellungen",
   "accountDashboard.hub.languageRegionCurrency": "Sprache, Region und Währung",
-  "accountDashboard.hub.emailPreferences": "Anpassungseinstellungen",
+  "accountDashboard.hub.emailPreferences": "E-Mail-Einstellungen",
   "accountDashboard.hub.travelPreferences": "Buchungseinstellungen",
   "accountDashboard.hub.helpAndSupport": "Hilfe und Support",
   "accountDashboard.hub.contactSupport": "Support kontaktieren",

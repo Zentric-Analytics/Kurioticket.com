@@ -235,7 +235,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.savedTrips": "Chuyến đi đã lưu",
   "accountDashboard.hub.priceAlerts": "Cảnh báo giá",
   "accountDashboard.hub.preferences": "Tùy chọn",
-  "accountDashboard.hub.emailPreferences": "Tùy chọn cá nhân hóa",
+  "accountDashboard.hub.emailPreferences": "Tùy chọn email",
   "accountDashboard.hub.travelPreferences": "Tùy chọn đặt chỗ",
   "accountDashboard.preferences.customization.title": "Tùy chọn cá nhân hóa",
   "accountDashboard.preferences.customization.description": "Chọn cách Kurioticket cá nhân hóa trải nghiệm của bạn.",

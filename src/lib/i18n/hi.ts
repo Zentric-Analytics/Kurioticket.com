@@ -145,7 +145,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.savedTrips": "सहेजी गई यात्राएँ",
   "accountDashboard.hub.priceAlerts": "मूल्य अलर्ट",
   "accountDashboard.hub.preferences": "प्राथमिकताएँ",
-  "accountDashboard.hub.emailPreferences": "कस्टमाइज़ेशन प्राथमिकताएँ",
+  "accountDashboard.hub.emailPreferences": "ईमेल प्राथमिकताएँ",
   "accountDashboard.hub.travelPreferences": "बुकिंग प्राथमिकताएँ",
   "accountDashboard.hub.helpAndSupport": "सहायता और समर्थन",
   "accountDashboard.hub.contactSupport": "सहायता से संपर्क करें",

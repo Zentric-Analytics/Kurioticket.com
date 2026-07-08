@@ -2631,7 +2631,7 @@ flightLandingRouteAriaLabel:
   "accountDashboard.hub.priceAlerts": "Alertes de prix",
   "accountDashboard.hub.preferences": "Préférences",
   "accountDashboard.hub.languageRegionCurrency": "Langue, région et devise",
-  "accountDashboard.hub.emailPreferences": "Préférences de personnalisation",
+  "accountDashboard.hub.emailPreferences": "Préférences e-mail",
   "accountDashboard.hub.travelPreferences": "Préférences de réservation",
   "accountDashboard.hub.helpAndSupport": "Aide et support",
   "accountDashboard.hub.contactSupport": "Contacter le support",

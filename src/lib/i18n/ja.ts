@@ -1694,7 +1694,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.savedTrips": "保存済みの旅行",
   "accountDashboard.hub.priceAlerts": "価格アラート",
   "accountDashboard.hub.preferences": "設定",
-  "accountDashboard.hub.emailPreferences": "カスタマイズ設定",
+  "accountDashboard.hub.emailPreferences": "メール設定",
   "accountDashboard.hub.travelPreferences": "予約設定",
   "accountDashboard.hub.helpAndSupport": "ヘルプとサポート",
   "accountDashboard.hub.contactSupport": "サポートに問い合わせる",

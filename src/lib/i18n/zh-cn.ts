@@ -235,7 +235,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.savedTrips": "已保存的行程",
   "accountDashboard.hub.priceAlerts": "价格提醒",
   "accountDashboard.hub.preferences": "偏好设置",
-  "accountDashboard.hub.emailPreferences": "个性化偏好",
+  "accountDashboard.hub.emailPreferences": "电子邮件偏好",
   "accountDashboard.hub.travelPreferences": "预订偏好",
   "accountDashboard.hub.helpAndSupport": "帮助与支持",
   "accountDashboard.hub.contactSupport": "联系支持",

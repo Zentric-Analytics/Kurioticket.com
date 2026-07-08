@@ -392,7 +392,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.savedTrips": "Perjalanan tersimpan",
   "accountDashboard.hub.priceAlerts": "Peringatan harga",
   "accountDashboard.hub.preferences": "Preferensi",
-  "accountDashboard.hub.emailPreferences": "Preferensi penyesuaian",
+  "accountDashboard.hub.emailPreferences": "Preferensi email",
   "accountDashboard.hub.travelPreferences": "Preferensi pemesanan",
   "accountDashboard.hub.helpAndSupport": "Bantuan dan dukungan",
   "accountDashboard.hub.contactSupport": "Hubungi dukungan",

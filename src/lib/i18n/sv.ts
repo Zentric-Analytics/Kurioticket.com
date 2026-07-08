@@ -135,7 +135,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.savedTrips": "Sparade resor",
   "accountDashboard.hub.priceAlerts": "Prisaviseringar",
   "accountDashboard.hub.preferences": "Preferenser",
-  "accountDashboard.hub.emailPreferences": "Anpassningspreferenser",
+  "accountDashboard.hub.emailPreferences": "E-postinställningar",
   "accountDashboard.hub.travelPreferences": "Bokningspreferenser",
   "accountDashboard.hub.helpAndSupport": "Hjälp och support",
   "accountDashboard.hub.contactSupport": "Kontakta support",

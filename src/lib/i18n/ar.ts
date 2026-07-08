@@ -181,7 +181,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.features.management.title": "إدارة سهلة",
   "accountDashboard.priceAlerts.features.management.body": "أوقف التنبيهات مؤقتًا أو أزلها في أي وقت.",
   "accountDashboard.hub.preferences": "التفضيلات",
-  "accountDashboard.hub.emailPreferences": "تفضيلات التخصيص",
+  "accountDashboard.hub.emailPreferences": "تفضيلات البريد الإلكتروني",
   "accountDashboard.hub.travelPreferences": "تفضيلات الحجز",
   "accountDashboard.hub.helpAndSupport": "المساعدة والدعم",
   "accountDashboard.hub.contactSupport": "التواصل مع الدعم",
