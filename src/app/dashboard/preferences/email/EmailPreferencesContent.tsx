@@ -106,7 +106,7 @@ function PreferenceSwitch({
       aria-label={`${label}: ${checked ? onLabel : offLabel}`}
       disabled={disabled}
       onClick={onChange}
-      className="focus-ring inline-flex min-h-8 shrink-0 items-center rounded-full p-1 transition disabled:cursor-not-allowed disabled:opacity-60"
+      className="focus-ring inline-flex min-h-8 shrink-0 cursor-pointer items-center rounded-full p-1 transition disabled:cursor-not-allowed disabled:opacity-60"
     >
       <span className="sr-only">{checked ? onLabel : offLabel}</span>
       <span
@@ -421,7 +421,7 @@ export function EmailPreferencesContent() {
                     type="button"
                     onClick={resetToDefault}
                     disabled={resetDisabled}
-                    className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:bg-transparent"
+                    className="focus-ring inline-flex min-h-11 w-auto cursor-pointer items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:bg-transparent"
                   >
                     <span className="sm:hidden">
                       {t["accountDashboard.preferences.email.resetShort"]}
@@ -436,7 +436,7 @@ export function EmailPreferencesContent() {
                     type="button"
                     onClick={savePreferences}
                     disabled={saveDisabled}
-                    className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
+                    className="focus-ring inline-flex min-h-11 w-auto cursor-pointer items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
                   >
                     <span className="sm:hidden">
                       {status === "saving"

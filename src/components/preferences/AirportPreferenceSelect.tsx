@@ -239,7 +239,7 @@ export function AirportPreferenceSelect({
             aria-label="Clear home airport"
             disabled={disabled}
             onClick={clearAirport}
-            className="focus-ring absolute end-2 top-1/2 mt-1 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+            className="focus-ring absolute end-2 top-1/2 mt-1 inline-flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <X aria-hidden="true" className="h-4 w-4" />
           </button>
@@ -273,7 +273,7 @@ export function AirportPreferenceSelect({
                   aria-selected={index === activeIndex}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => selectAirport(airport)}
-                  className={`w-full rounded-xl px-3 py-2 text-left transition ${
+                  className={`w-full cursor-pointer rounded-xl px-3 py-2 text-left transition ${
                     index === activeIndex
                       ? "bg-blue-50 text-[#004BB8]"
                       : "text-slate-800 hover:bg-slate-50"
