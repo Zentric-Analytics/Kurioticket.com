@@ -4622,7 +4622,7 @@ export function FlightResultsClient() {
           "sticky top-0 z-40 hidden transition-[padding,background-color] duration-200 sm:block",
           isSearchCollapsed
             ? "border-b border-slate-200/70 bg-white/95 py-1.5 backdrop-blur"
-            : "bg-[#F6F9FC] pb-0 pt-5 shadow-[0_18px_34px_-34px_rgba(2,28,43,0.45)]",
+            : "bg-[#F6F9FC] pb-0 pt-5",
         )}
       >
         <div className="page-shell">
