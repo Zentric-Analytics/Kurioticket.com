@@ -78,6 +78,7 @@ type AppHeaderProps = {
   mobileHeroOverlayLowered?: boolean;
   hideMobileCategoryTabs?: boolean;
   hideTravelNav?: boolean;
+  hideDesktopTravelNav?: boolean;
   simpleHeader?: boolean;
   flushDesktopBottom?: boolean;
 };
@@ -147,6 +148,7 @@ export function AppHeader({
   mobileHeroOverlay = false,
   hideMobileCategoryTabs = false,
   hideTravelNav = false,
+  hideDesktopTravelNav = false,
   simpleHeader = false,
   flushDesktopBottom = false,
 }: AppHeaderProps = {}) {
@@ -486,7 +488,12 @@ export function AppHeader({
   }, [pathname, searchParams]);
 
   const desktopPrimaryNavItems = useMemo(() => {
-    if (simpleHeader || hideTravelNav || shouldHideDesktopTravelNavLinks) {
+    if (
+      simpleHeader ||
+      hideTravelNav ||
+      hideDesktopTravelNav ||
+      shouldHideDesktopTravelNavLinks
+    ) {
       return [];
     }
 
@@ -498,7 +505,13 @@ export function AppHeader({
     ]);
 
     return navItems.filter((item) => desktopPrimaryHrefs.has(item.href));
-  }, [hideTravelNav, navItems, shouldHideDesktopTravelNavLinks, simpleHeader]);
+  }, [
+    hideDesktopTravelNav,
+    hideTravelNav,
+    navItems,
+    shouldHideDesktopTravelNavLinks,
+    simpleHeader,
+  ]);
 
   const mobilePrimaryNavItems = useMemo(() => {
     const mobilePrimaryHrefs = new Set([
