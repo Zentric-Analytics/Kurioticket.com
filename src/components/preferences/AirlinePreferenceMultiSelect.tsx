@@ -17,8 +17,11 @@ type AirlinePreferenceMultiSelectProps = {
 
 const MAX_SELECTED_AIRLINES = 10;
 
+const inputContainerClassName =
+  "mt-2 flex min-h-10 w-full flex-wrap items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 transition focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-blue-100";
+
 const inputClassName =
-  "focus-ring mt-2 min-h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500";
+  "min-w-[12rem] flex-[1_0_12rem] border-0 bg-transparent p-0 text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed disabled:text-slate-500";
 
 const codeToAirline = new Map(
   airlines.map((airline) => [airline.code.toUpperCase(), airline]),
@@ -40,7 +43,11 @@ function normalizeSavedValue(value: string) {
   if (codeToAirline.has(code)) return code;
 
   const lookupValue = normalizeLookupValue(trimmed);
-  return normalizedNameToCode.get(lookupValue) ?? airlineAliases[lookupValue] ?? trimmed;
+  return (
+    normalizedNameToCode.get(lookupValue) ??
+    airlineAliases[lookupValue] ??
+    trimmed
+  );
 }
 
 function normalizeSavedValues(values: string[]) {
@@ -55,7 +62,11 @@ function normalizeSavedValues(values: string[]) {
 
     if (!nextValue || seen.has(dedupeKey)) continue;
     seen.add(dedupeKey);
-    normalized.push(codeToAirline.has(nextValue.toUpperCase()) ? nextValue.toUpperCase() : nextValue);
+    normalized.push(
+      codeToAirline.has(nextValue.toUpperCase())
+        ? nextValue.toUpperCase()
+        : nextValue,
+    );
   }
 
   return normalized.slice(0, MAX_SELECTED_AIRLINES);
@@ -103,7 +114,10 @@ export function AirlinePreferenceMultiSelect({
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
 
-  const normalizedValues = useMemo(() => normalizeSavedValues(values), [values]);
+  const normalizedValues = useMemo(
+    () => normalizeSavedValues(values),
+    [values],
+  );
   const isAtLimit = normalizedValues.length >= MAX_SELECTED_AIRLINES;
   const suggestions = useMemo(
     () => filterAirlines(query, normalizedValues),
@@ -121,7 +135,8 @@ export function AirlinePreferenceMultiSelect({
   function selectAirline(airline: AirlineOption) {
     if (disabled || isAtLimit) return;
     const code = airline.code.toUpperCase();
-    if (normalizedValues.some((value) => value.trim().toUpperCase() === code)) return;
+    if (normalizedValues.some((value) => value.trim().toUpperCase() === code))
+      return;
 
     onChange([...normalizedValues, code].slice(0, MAX_SELECTED_AIRLINES));
     setQuery("");
@@ -133,108 +148,105 @@ export function AirlinePreferenceMultiSelect({
     onChange(normalizedValues.filter((value) => value !== valueToRemove));
   }
 
-  function clearAll() {
-    onChange([]);
-    setQuery("");
-    setIsOpen(false);
-    setActiveIndex(-1);
-  }
-
   return (
     <div className="block">
-      <div className="flex items-center justify-between gap-3">
-        <label className="text-sm font-semibold leading-5 text-slate-950" htmlFor={id}>
-          {label}
-        </label>
-        {normalizedValues.length ? (
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={clearAll}
-            className="focus-ring rounded-full px-2 py-1 text-xs font-bold text-[#004BB8] transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            Clear all
-          </button>
-        ) : null}
-      </div>
-
-      {normalizedValues.length ? (
-        <div className="mt-2 flex flex-wrap gap-2">
-          {normalizedValues.map((value) => {
-            const isKnown = codeToAirline.has(value.trim().toUpperCase());
-            return (
-              <span
-                key={value}
-                className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-bold ${
-                  isKnown
-                    ? "border-blue-100 bg-blue-50 text-[#004BB8]"
-                    : "border-amber-200 bg-amber-50 text-amber-800"
-                }`}
-              >
-                <span className="truncate">{getAirlineLabel(value)}</span>
-                <button
-                  type="button"
-                  aria-label={`Remove ${getAirlineLabel(value)}`}
-                  disabled={disabled}
-                  onClick={() => removeValue(value)}
-                  className="focus-ring rounded-full p-0.5 transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <X aria-hidden="true" className="h-3.5 w-3.5" />
-                </button>
-              </span>
-            );
-          })}
-        </div>
-      ) : null}
+      <label
+        className="text-sm font-semibold leading-5 text-slate-950"
+        htmlFor={id}
+      >
+        {label}
+      </label>
 
       <input type="hidden" name={name} value={normalizedValues.join(",")} />
-      <input
-        id={id}
-        type="text"
-        role="combobox"
-        aria-autocomplete="list"
-        aria-controls={listboxId}
-        aria-expanded={isOpen}
-        aria-activedescendant={activeOptionId}
-        aria-describedby={`${helpId} ${statusId}`}
-        autoComplete="off"
-        value={query}
-        disabled={disabled || isAtLimit}
-        placeholder={isAtLimit ? "Maximum of 10 airlines selected" : "Search airline or code"}
-        maxLength={80}
-        className={inputClassName}
-        onFocus={() => setIsOpen(true)}
-        onChange={(event) => {
-          setQuery(event.target.value);
-          setIsOpen(true);
-          setActiveIndex(-1);
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "ArrowDown") {
-            event.preventDefault();
-            setIsOpen(true);
-            setActiveIndex((current) =>
-              suggestions.length ? (current + 1) % suggestions.length : -1,
-            );
-          } else if (event.key === "ArrowUp") {
-            event.preventDefault();
-            setActiveIndex((current) =>
-              suggestions.length ? (current <= 0 ? suggestions.length : current) - 1 : -1,
-            );
-          } else if (event.key === "Enter" && activeIndex >= 0) {
-            event.preventDefault();
-            const selected = suggestions[activeIndex];
-            if (selected) selectAirline(selected);
-          } else if (event.key === "Escape") {
-            setIsOpen(false);
-            setActiveIndex(-1);
+      <div
+        className={`${inputContainerClassName} ${
+          disabled || isAtLimit ? "bg-slate-100 text-slate-500" : ""
+        }`}
+      >
+        {normalizedValues.map((value) => {
+          const isKnown = codeToAirline.has(value.trim().toUpperCase());
+          return (
+            <span
+              key={value}
+              className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-bold ${
+                isKnown
+                  ? "border-blue-100 bg-blue-50 text-[#004BB8]"
+                  : "border-amber-200 bg-amber-50 text-amber-800"
+              }`}
+            >
+              <span className="truncate">{getAirlineLabel(value)}</span>
+              <button
+                type="button"
+                aria-label={`Remove ${getAirlineLabel(value)}`}
+                disabled={disabled}
+                onClick={() => removeValue(value)}
+                className="focus-ring rounded-full p-0.5 transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <X aria-hidden="true" className="h-3.5 w-3.5" />
+              </button>
+            </span>
+          );
+        })}
+        <input
+          id={id}
+          type="text"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-controls={listboxId}
+          aria-expanded={isOpen}
+          aria-activedescendant={activeOptionId}
+          aria-describedby={`${helpId} ${statusId}`}
+          autoComplete="off"
+          value={query}
+          disabled={disabled || isAtLimit}
+          placeholder={
+            isAtLimit
+              ? "Maximum of 10 airlines selected"
+              : "Search airline or code"
           }
-        }}
-      />
-      <p id={helpId} className="mt-1.5 text-xs font-medium leading-5 text-slate-500">
+          maxLength={80}
+          className={inputClassName}
+          onFocus={() => setIsOpen(true)}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setIsOpen(true);
+            setActiveIndex(-1);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowDown") {
+              event.preventDefault();
+              setIsOpen(true);
+              setActiveIndex((current) =>
+                suggestions.length ? (current + 1) % suggestions.length : -1,
+              );
+            } else if (event.key === "ArrowUp") {
+              event.preventDefault();
+              setActiveIndex((current) =>
+                suggestions.length
+                  ? (current <= 0 ? suggestions.length : current) - 1
+                  : -1,
+              );
+            } else if (event.key === "Enter" && activeIndex >= 0) {
+              event.preventDefault();
+              const selected = suggestions[activeIndex];
+              if (selected) selectAirline(selected);
+            } else if (event.key === "Escape") {
+              setIsOpen(false);
+              setActiveIndex(-1);
+            }
+          }}
+        />
+      </div>
+      <p
+        id={helpId}
+        className="mt-1.5 text-xs font-medium leading-5 text-slate-500"
+      >
         {helpText}
       </p>
-      <p id={statusId} className="mt-1 text-xs font-semibold leading-5 text-slate-500">
+      <p
+        id={statusId}
+        className="mt-1 text-xs font-semibold leading-5 text-slate-500"
+      >
         {normalizedValues.length}/{MAX_SELECTED_AIRLINES} selected
       </p>
 
@@ -261,13 +273,19 @@ export function AirlinePreferenceMultiSelect({
                       : "text-slate-800 hover:bg-slate-50"
                   }`}
                 >
-                  <span className="block text-sm font-bold">{airline.name}</span>
-                  <span className="block text-xs font-medium text-slate-500">{airline.code}</span>
+                  <span className="block text-sm font-bold">
+                    {airline.name}
+                  </span>
+                  <span className="block text-xs font-medium text-slate-500">
+                    {airline.code}
+                  </span>
                 </button>
               ))
             ) : (
               <p className="px-3 py-2 text-sm font-medium text-slate-500">
-                {query.trim() ? "No matching airlines found." : "Start typing to search airlines."}
+                {query.trim()
+                  ? "No matching airlines found."
+                  : "Start typing to search airlines."}
               </p>
             )}
           </div>
