@@ -3838,7 +3838,111 @@ export function FlightResultsClient() {
     );
   }
 
-  function renderDesktopMinimizedSearchBar() {
+  function renderResultsBreadcrumb(className?: string) {
+    return (
+      <nav aria-label="Breadcrumb" className={className}>
+        <ol className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
+          <li>
+            <Link
+              href="/"
+              className="transition-colors hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+            >
+              Home
+            </Link>
+          </li>
+          <li className="text-slate-300" aria-hidden="true">
+            &gt;
+          </li>
+          <li>
+            <Link
+              href="/flights"
+              className="transition-colors hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+            >
+              Flights
+            </Link>
+          </li>
+          <li className="text-slate-300" aria-hidden="true">
+            &gt;
+          </li>
+          <li className="text-slate-700" aria-current="page">
+            Flight results
+          </li>
+        </ol>
+      </nav>
+    );
+  }
+
+  function renderDesktopSortCards(compact = false) {
+    return (
+      <div className="hidden auto-rows-fr grid-cols-3 gap-2 sm:grid">
+        <SummarySortButton
+          label={t("cheapest")}
+          details={buildSummaryDetails(sortSummaries.cheapest, "cheapest")}
+          active={sortMode === "cheapest"}
+          compact={compact}
+          onClick={() => {
+            triggerFilterApplying();
+            setSortMode("cheapest");
+          }}
+        />
+
+        <SummarySortButton
+          label={t("best")}
+          details={buildSummaryDetails(sortSummaries.best, "best")}
+          active={sortMode === "best"}
+          compact={compact}
+          onClick={() => {
+            triggerFilterApplying();
+            setSortMode("best");
+          }}
+        />
+
+        <SummarySortButton
+          label={t("quickest")}
+          details={buildSummaryDetails(sortSummaries.fastest, "fastest")}
+          active={sortMode === "fastest"}
+          compact={compact}
+          onClick={() => {
+            triggerFilterApplying();
+            setSortMode("fastest");
+          }}
+        />
+      </div>
+    );
+  }
+
+  function renderDesktopResultsCountCard(compact = false) {
+    return (
+      <div
+        className={cn(
+          "hidden w-full rounded-xl border border-slate-200 bg-white shadow-sm sm:flex sm:items-center sm:justify-between",
+          compact ? "px-3 py-2" : "p-4",
+        )}
+      >
+        <p className="text-sm font-bold text-navy">
+          {formatResultsFound(sortedResults.length, t)}
+        </p>
+
+        {!compact ? (
+          <Button
+            variant="secondary"
+            className="h-10 rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] lg:hidden"
+            onClick={() => setFiltersOpen(true)}
+          >
+            <SlidersHorizontal size={17} />
+            {activeFilterCount > 0
+              ? t("filtersWithCount").replace(
+                  "{{count}}",
+                  String(activeFilterCount),
+                )
+              : t("filters")}
+          </Button>
+        ) : null}
+      </div>
+    );
+  }
+
+  function renderDesktopStickyResultsHeader() {
     const stickyFieldClass =
       "group relative flex min-h-[46px] min-w-0 flex-col justify-center rounded-lg border border-slate-200/80 bg-white/80 px-3 py-1.5 text-start transition-colors hover:border-slate-300 hover:bg-white focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/20";
     const stickyLabelClass =
@@ -3857,12 +3961,12 @@ export function FlightResultsClient() {
         aria-hidden={!isSearchCollapsed}
       >
         <div className="page-shell">
-          <form
-            onSubmit={handleCompactSearchSubmit}
-            onChangeCapture={markExpandedSearchInteraction}
-            className="mx-auto w-full max-w-5xl rounded-xl border border-slate-200/80 bg-white/95 p-1.5 shadow-[0_16px_36px_-24px_rgba(15,23,42,0.55)] ring-1 ring-white/80 backdrop-blur-md"
-          >
-            <div className="grid min-h-[50px] grid-cols-[minmax(0,1.1fr)_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1fr)_104px] items-stretch gap-1.5">
+          <div className="mx-auto w-full max-w-5xl rounded-2xl border border-slate-200/85 bg-white/95 p-2.5 shadow-[0_18px_42px_-28px_rgba(15,23,42,0.55)] ring-1 ring-white/80 backdrop-blur-md">
+            <form
+              onSubmit={handleCompactSearchSubmit}
+              onChangeCapture={markExpandedSearchInteraction}
+            >
+              <div className="grid min-h-[50px] grid-cols-[minmax(0,1.1fr)_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1fr)_104px] items-stretch gap-1.5">
               <div className={stickyFieldClass}>
                 <label className={stickyLabelClass} htmlFor="sticky-results-origin">
                   {t("origin")}
@@ -4131,8 +4235,13 @@ export function FlightResultsClient() {
               >
                 {t("search")}
               </Button>
-            </div>
-          </form>
+              </div>
+            </form>
+
+            {renderResultsBreadcrumb("mt-2 border-t border-slate-100 pt-2")}
+            <div className="mt-2">{renderDesktopSortCards(true)}</div>
+            <div className="mt-2">{renderDesktopResultsCountCard(true)}</div>
+          </div>
         </div>
       </div>
     );
@@ -5142,7 +5251,7 @@ export function FlightResultsClient() {
         </>
       ) : null}
 
-      {renderDesktopMinimizedSearchBar()}
+      {renderDesktopStickyResultsHeader()}
 
       <div
         ref={stickySentinelRef}
@@ -5171,38 +5280,7 @@ export function FlightResultsClient() {
         </div>
       </section>
 
-      <nav
-        aria-label="Breadcrumb"
-        className="page-shell hidden pt-12 sm:block lg:pt-14"
-      >
-        <ol className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
-          <li>
-            <Link
-              href="/"
-              className="transition-colors hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
-            >
-              Home
-            </Link>
-          </li>
-          <li className="text-slate-300" aria-hidden="true">
-            &gt;
-          </li>
-          <li>
-            <Link
-              href="/flights"
-              className="transition-colors hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
-            >
-              Flights
-            </Link>
-          </li>
-          <li className="text-slate-300" aria-hidden="true">
-            &gt;
-          </li>
-          <li className="text-slate-700" aria-current="page">
-            Flight results
-          </li>
-        </ol>
-      </nav>
+      {renderResultsBreadcrumb("page-shell hidden pt-12 sm:block lg:pt-14")}
 
       <div className="page-shell grid gap-4 pb-5 pt-8 sm:pt-5 lg:grid-cols-[256px_minmax(0,1fr)] lg:pt-6">
         <aside className={cn("hidden lg:block", desktopFilterStickyTopClass)}>
@@ -5290,43 +5368,7 @@ export function FlightResultsClient() {
           ) : (
             <div className={cn(resultStackClass, "space-y-4")}>
               <div className="w-full">
-                <div className="hidden auto-rows-fr grid-cols-3 gap-2 sm:grid">
-                  <SummarySortButton
-                    label={t("cheapest")}
-                    details={buildSummaryDetails(
-                      sortSummaries.cheapest,
-                      "cheapest",
-                    )}
-                    active={sortMode === "cheapest"}
-                    onClick={() => {
-                      triggerFilterApplying();
-                      setSortMode("cheapest");
-                    }}
-                  />
-
-                  <SummarySortButton
-                    label={t("best")}
-                    details={buildSummaryDetails(sortSummaries.best, "best")}
-                    active={sortMode === "best"}
-                    onClick={() => {
-                      triggerFilterApplying();
-                      setSortMode("best");
-                    }}
-                  />
-
-                  <SummarySortButton
-                    label={t("quickest")}
-                    details={buildSummaryDetails(
-                      sortSummaries.fastest,
-                      "fastest",
-                    )}
-                    active={sortMode === "fastest"}
-                    onClick={() => {
-                      triggerFilterApplying();
-                      setSortMode("fastest");
-                    }}
-                  />
-                </div>
+                {renderDesktopSortCards()}
 
                 <div className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1 sm:hidden">
                   <SummarySortButton
@@ -5378,25 +5420,7 @@ export function FlightResultsClient() {
                 </div>
               </div>
 
-              <div className="hidden w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex sm:items-center sm:justify-between">
-                <p className="text-sm font-bold text-navy">
-                  {formatResultsFound(sortedResults.length, t)}
-                </p>
-
-                <Button
-                  variant="secondary"
-                  className="h-10 rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] lg:hidden"
-                  onClick={() => setFiltersOpen(true)}
-                >
-                  <SlidersHorizontal size={17} />
-                  {activeFilterCount > 0
-                    ? t("filtersWithCount").replace(
-                        "{{count}}",
-                        String(activeFilterCount),
-                      )
-                    : t("filters")}
-                </Button>
-              </div>
+              {renderDesktopResultsCountCard()}
 
               {warnings.length > 0 ? (
                 <div
@@ -7273,6 +7297,7 @@ function SummarySortButton({
   details,
   active,
   mobile = false,
+  compact = false,
   onClick,
 }: {
   label: string;
@@ -7283,6 +7308,7 @@ function SummarySortButton({
   } | null;
   active: boolean;
   mobile?: boolean;
+  compact?: boolean;
   onClick: () => void;
 }) {
   return (
@@ -7293,6 +7319,8 @@ function SummarySortButton({
         "group relative flex h-full flex-col rounded-2xl border text-start transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
         mobile
           ? "min-w-[178px] snap-start px-3 py-2.5"
+          : compact
+            ? "min-h-[76px] px-3 py-2"
           : "min-h-[104px] px-3.5 py-3",
         active
           ? "border-[#004BB8]/22 bg-[#004BB8]/6 text-[#021C2B] shadow-[0_12px_28px_-20px_rgba(2,28,43,0.18)] ring-1 ring-[#004BB8]/8"
@@ -7309,11 +7337,23 @@ function SummarySortButton({
       >
         {label}
       </span>
-      <span className="mt-2 block truncate text-lg font-semibold leading-6 tracking-[-0.02em] text-slate-800 sm:text-base sm:leading-6 lg:text-lg">
+      <span
+        className={cn(
+          "block truncate font-semibold tracking-[-0.02em] text-slate-800",
+          compact
+            ? "mt-1 text-sm leading-5"
+            : "mt-2 text-lg leading-6 sm:text-base sm:leading-6 lg:text-lg",
+        )}
+      >
         {details?.primary ?? "—"}
       </span>
       {details ? (
-        <span className="mt-1.5 flex min-h-0 flex-1 flex-col justify-end gap-1">
+        <span
+          className={cn(
+            "flex min-h-0 flex-1 flex-col justify-end",
+            compact ? "mt-1 gap-0.5" : "mt-1.5 gap-1",
+          )}
+        >
           <span className="block truncate text-xs font-medium leading-4 text-slate-600">
             {details.context}
           </span>
