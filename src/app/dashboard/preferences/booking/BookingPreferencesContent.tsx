@@ -21,7 +21,13 @@ type TravelPreferences = {
   travelPurpose: string;
 };
 
-type Status = "idle" | "loading" | "saving" | "success" | "error";
+type Status =
+  | "idle"
+  | "loading"
+  | "saving"
+  | "success"
+  | "reverted"
+  | "error";
 
 // Existing i18n coverage keys retained for active localized preference-page audits:
 // accountDashboard.preferences.booking.airports.title
@@ -157,7 +163,9 @@ export function BookingPreferencesContent() {
   const disabled = status === "loading" || status === "saving";
 
   useEffect(() => {
-    if (status !== "success" || !message) return undefined;
+    if ((status !== "success" && status !== "reverted") || !message) {
+      return undefined;
+    }
 
     const timeoutId = window.setTimeout(() => {
       setMessage("");
@@ -404,7 +412,7 @@ export function BookingPreferencesContent() {
                     t["accountDashboard.preferences.booking.status.reverted"] ??
                       "Changes reverted.",
                   );
-                  setStatus("idle");
+                  setStatus("reverted");
                 }}
                 className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:bg-transparent"
               >
