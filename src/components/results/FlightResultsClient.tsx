@@ -4005,7 +4005,7 @@ export function FlightResultsClient() {
             <div
               role="radiogroup"
               aria-label={t("tripType")}
-              className="hidden items-center gap-4 px-1 pb-2 sm:flex"
+              className="hidden translate-y-2 items-center gap-4 px-1 pb-0 sm:flex"
             >
               {[
                 { label: t("oneWay"), value: "one-way" },
@@ -4651,7 +4651,40 @@ export function FlightResultsClient() {
         </div>
       </section>
 
-      <div className="page-shell grid gap-4 pb-5 pt-8 sm:pt-10 lg:grid-cols-[256px_minmax(0,1fr)] lg:pt-10">
+      <nav
+        aria-label="Breadcrumb"
+        className="page-shell hidden pt-12 sm:block lg:pt-14"
+      >
+        <ol className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
+          <li>
+            <Link
+              href="/"
+              className="transition-colors hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+            >
+              Home
+            </Link>
+          </li>
+          <li className="text-slate-300" aria-hidden="true">
+            &gt;
+          </li>
+          <li>
+            <Link
+              href="/flights"
+              className="transition-colors hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+            >
+              Flights
+            </Link>
+          </li>
+          <li className="text-slate-300" aria-hidden="true">
+            &gt;
+          </li>
+          <li className="text-slate-700" aria-current="page">
+            Flight results
+          </li>
+        </ol>
+      </nav>
+
+      <div className="page-shell grid gap-4 pb-5 pt-8 sm:pt-5 lg:grid-cols-[256px_minmax(0,1fr)] lg:pt-6">
         <aside className={cn("hidden lg:block", desktopFilterStickyTopClass)}>
           <div ref={desktopFilterContainerRef}>
             {showFullDesktopFilters ? (
