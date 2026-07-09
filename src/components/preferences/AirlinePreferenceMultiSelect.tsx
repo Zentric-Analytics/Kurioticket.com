@@ -18,7 +18,7 @@ type AirlinePreferenceMultiSelectProps = {
 const MAX_SELECTED_AIRLINES = 10;
 
 const inputContainerClassName =
-  "mt-2 flex min-h-10 w-full flex-wrap items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 transition focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-blue-100";
+  "mt-2 flex min-h-10 w-full flex-wrap items-center gap-2 rounded-none border border-slate-300 bg-white px-3 py-2 transition focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-blue-100";
 
 const inputClassName =
   "min-w-[12rem] flex-[1_0_12rem] border-0 bg-transparent p-0 text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed disabled:text-slate-500";
@@ -286,7 +286,7 @@ export function AirlinePreferenceMultiSelect({
           <div
             id={listboxId}
             role="listbox"
-            className="absolute mt-2 max-h-44 w-full overflow-auto overflow-x-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl sm:max-h-72"
+            className="absolute mt-2 max-h-44 w-full overflow-auto overflow-x-hidden rounded-none border border-slate-200 bg-white p-1.5 shadow-xl sm:max-h-72"
           >
             {suggestions.length ? (
               suggestions.map((airline, index) => (
@@ -298,7 +298,7 @@ export function AirlinePreferenceMultiSelect({
                   aria-selected={index === activeIndex}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => selectAirline(airline)}
-                  className={`w-full cursor-pointer rounded-xl px-3 py-2 text-left transition ${
+                  className={`w-full cursor-pointer rounded-none px-3 py-2 text-left transition ${
                     index === activeIndex
                       ? "bg-blue-50 text-[#004BB8]"
                       : "text-slate-800 hover:bg-slate-50"
