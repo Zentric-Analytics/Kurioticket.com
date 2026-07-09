@@ -210,7 +210,7 @@ export function AirlinePreferenceMultiSelect({
                 aria-label={`Remove ${getAirlineLabel(value)}`}
                 disabled={disabled}
                 onClick={() => removeValue(value)}
-                className="focus-ring rounded-full p-0.5 transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                className="focus-ring cursor-pointer rounded-full p-0.5 transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <X aria-hidden="true" className="h-3.5 w-3.5" />
               </button>
@@ -298,7 +298,7 @@ export function AirlinePreferenceMultiSelect({
                   aria-selected={index === activeIndex}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => selectAirline(airline)}
-                  className={`w-full rounded-xl px-3 py-2 text-left transition ${
+                  className={`w-full cursor-pointer rounded-xl px-3 py-2 text-left transition ${
                     index === activeIndex
                       ? "bg-blue-50 text-[#004BB8]"
                       : "text-slate-800 hover:bg-slate-50"
