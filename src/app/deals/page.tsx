@@ -1510,7 +1510,7 @@ export default function DealsPage() {
         </section>
 
         <section className="page-shell pt-12 sm:pt-16 lg:pt-20">
-          <div className="border-t border-slate-200/80 pt-8 sm:pt-10">
+          <div className="border-t border-transparent pt-8 sm:pt-10">
             <div className="max-w-2xl">
               <h2 className="text-xl font-extrabold [letter-spacing:-0.025em] text-slate-950 sm:text-2xl">
                 {t("deals.destinationIdeasTitle")}
