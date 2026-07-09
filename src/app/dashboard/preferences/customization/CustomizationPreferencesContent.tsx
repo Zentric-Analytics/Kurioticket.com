@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   PreferencesActions,
   PreferencesCard,
+  PreferencesLoadingState,
   PreferencesPageShell,
   PreferencesSection,
 } from "@/components/preferences/PreferencesLayout";
@@ -18,7 +19,7 @@ type BooleanPreferenceKey =
   | "rememberChoices"
   | "personalizeRecommendations"
   | "showHelpfulTips";
-type Status = "idle" | "saving" | "success" | "error";
+type Status = "idle" | "loading" | "saving" | "success" | "error";
 
 type PersonalizationPreferences = Record<BooleanPreferenceKey, boolean>;
 
@@ -125,7 +126,7 @@ export function CustomizationPreferencesContent() {
       ...defaultPersonalizationPreferences,
     }));
   const hasUserEditedDraftRef = useRef(false);
-  const [status, setStatus] = useState<Status>("idle");
+  const [status, setStatus] = useState<Status>("loading");
   const [statusMessage, setStatusMessage] = useState("");
   const hasUnsavedChanges = useMemo(
     () => !areCustomizationPreferencesEqual(draftPreferences, savedPreferences),
@@ -163,7 +164,11 @@ export function CustomizationPreferencesContent() {
           headers: { Accept: "application/json" },
         });
 
-        if (response.status === 401) return;
+        if (response.status === 401) {
+          if (!isActive) return;
+          setStatus("idle");
+          return;
+        }
 
         if (!response.ok) {
           throw new Error("Unable to load customization preferences.");
@@ -174,13 +179,16 @@ export function CustomizationPreferencesContent() {
           preferences?: Partial<CustomizationPreferencesDraft>;
         };
 
+        if (!isActive) return;
+
         if (
-          !isActive ||
           !data.hasPreferences ||
           !data.preferences ||
           hasUserEditedDraftRef.current
-        )
+        ) {
+          setStatus("idle");
           return;
+        }
 
         const nextPreferences = {
           ...defaultCustomizationPreferences,
@@ -192,6 +200,7 @@ export function CustomizationPreferencesContent() {
           ...nextPreferences,
         }));
         setSavedPreferences(nextPreferences);
+        setStatus("idle");
       } catch {
         if (!isActive) return;
 
@@ -347,174 +356,188 @@ export function CustomizationPreferencesContent() {
     >
       <div className="space-y-5">
         <PreferencesCard>
-          <PreferencesSection
-            title={
-              t[
-                "accountDashboard.preferences.customization.sections.regionalDefaults"
-              ]
-            }
-            contentClassName="grid gap-4"
-          >
-            <label className="block">
-              <span className="text-sm font-semibold leading-5 text-slate-950">
-                {
+          {status === "loading" ? (
+            <PreferencesLoadingState message="Loading your customization preferences…" />
+          ) : (
+            <>
+              <PreferencesSection
+                title={
                   t[
-                    "accountDashboard.preferences.customization.fields.language.label"
+                    "accountDashboard.preferences.customization.sections.regionalDefaults"
                   ]
                 }
-              </span>
-              <select
-                value={draftPreferences.locale}
-                onChange={(event) => handleLanguageChange(event.target.value)}
-                className="focus-ring mt-2 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
+                contentClassName="grid gap-4"
               >
-                {availableLocales.map((option) => (
-                  <option key={option.code} value={option.code}>
-                    {option.nativeLabel}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="block">
-              <span className="text-sm font-semibold leading-5 text-slate-950">
-                {
-                  t[
-                    "accountDashboard.preferences.customization.fields.currency.label"
-                  ]
-                }
-              </span>
-              <select
-                value={draftPreferences.currency}
-                onChange={(event) => handleCurrencyChange(event.target.value)}
-                className="focus-ring mt-2 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
-              >
-                {currencies.map((option) => (
-                  <option key={option.code} value={option.code}>
-                    {option.code} ·{" "}
-                    {currencyDisplayNames?.of(option.code) ?? option.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="block">
-              <span className="text-sm font-semibold leading-5 text-slate-950">
-                {
-                  t[
-                    "accountDashboard.preferences.customization.fields.region.label"
-                  ]
-                }
-              </span>
-              <select
-                value={draftPreferences.region}
-                onChange={(event) => handleRegionChange(event.target.value)}
-                className="focus-ring mt-2 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
-              >
-                {regionOptions.map((option) => (
-                  <option key={option.code} value={option.code}>
-                    {getCountryDisplayNameForLocale(
-                      option.code,
-                      locale,
-                      option.country,
-                    )}{" "}
-                    · {option.currency}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </PreferencesSection>
-
-          <PreferencesSection
-            title={
-              t[
-                "accountDashboard.preferences.customization.sections.personalization"
-              ]
-            }
-            bordered
-            contentClassName="divide-y divide-slate-200"
-          >
-            {personalizationOptions.map((option) => (
-              <div
-                key={option}
-                className="flex items-start justify-between gap-4 py-4 sm:items-center sm:gap-6"
-              >
-                <div className="min-w-0 flex-1 sm:flex-initial">
-                  <p className="text-sm font-semibold leading-5 text-slate-950">
+                <label className="block">
+                  <span className="text-sm font-semibold leading-5 text-slate-950">
                     {
                       t[
-                        `accountDashboard.preferences.customization.fields.${option}.label`
+                        "accountDashboard.preferences.customization.fields.language.label"
                       ]
                     }
-                  </p>
-                  <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                  </span>
+                  <select
+                    value={draftPreferences.locale}
+                    onChange={(event) =>
+                      handleLanguageChange(event.target.value)
+                    }
+                    className="focus-ring mt-2 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
+                  >
+                    {availableLocales.map((option) => (
+                      <option key={option.code} value={option.code}>
+                        {option.nativeLabel}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="block">
+                  <span className="text-sm font-semibold leading-5 text-slate-950">
                     {
                       t[
-                        `accountDashboard.preferences.customization.fields.${option}.description`
+                        "accountDashboard.preferences.customization.fields.currency.label"
                       ]
                     }
-                  </p>
-                </div>
-                <div className="shrink-0 pt-1 sm:pt-0">
-                  <PreferenceSwitch
-                    checked={draftPreferences[option]}
-                    label={
+                  </span>
+                  <select
+                    value={draftPreferences.currency}
+                    onChange={(event) =>
+                      handleCurrencyChange(event.target.value)
+                    }
+                    className="focus-ring mt-2 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
+                  >
+                    {currencies.map((option) => (
+                      <option key={option.code} value={option.code}>
+                        {option.code} ·{" "}
+                        {currencyDisplayNames?.of(option.code) ?? option.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="block">
+                  <span className="text-sm font-semibold leading-5 text-slate-950">
+                    {
                       t[
-                        `accountDashboard.preferences.customization.fields.${option}.label`
+                        "accountDashboard.preferences.customization.fields.region.label"
                       ]
                     }
-                    onChange={() =>
-                      updatePersonalizationPreference(
-                        option,
-                        !draftPreferences[option],
-                      )
-                    }
-                  />
-                </div>
-              </div>
-            ))}
-          </PreferencesSection>
-          <PreferencesActions
-            statusMessage={statusMessage}
-            mobileStatusMessage={
-              status === "saving"
-                ? t[
-                    "accountDashboard.preferences.customization.status.savingShort"
+                  </span>
+                  <select
+                    value={draftPreferences.region}
+                    onChange={(event) => handleRegionChange(event.target.value)}
+                    className="focus-ring mt-2 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
+                  >
+                    {regionOptions.map((option) => (
+                      <option key={option.code} value={option.code}>
+                        {getCountryDisplayNameForLocale(
+                          option.code,
+                          locale,
+                          option.country,
+                        )}{" "}
+                        · {option.currency}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </PreferencesSection>
+
+              <PreferencesSection
+                title={
+                  t[
+                    "accountDashboard.preferences.customization.sections.personalization"
                   ]
-                : status === "success"
-                  ? t[
-                      "accountDashboard.preferences.customization.status.savedShort"
-                    ]
-                  : undefined
-            }
-            statusTone={status === "error" ? "error" : "info"}
-            secondaryAction={
-              <button
-                type="button"
-                onClick={resetToDefault}
-                disabled={resetDisabled}
-                className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:bg-transparent"
+                }
+                bordered
+                contentClassName="divide-y divide-slate-200"
               >
-                {t["accountDashboard.preferences.customization.actions.reset"]}
-              </button>
-            }
-            primaryAction={
-              <button
-                type="button"
-                onClick={savePreferences}
-                disabled={saveDisabled}
-                className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
-              >
-                {status === "saving"
-                  ? t[
-                      "accountDashboard.preferences.customization.actions.saving"
-                    ]
-                  : t[
-                      "accountDashboard.preferences.customization.actions.save"
-                    ]}
-              </button>
-            }
-          />
+                {personalizationOptions.map((option) => (
+                  <div
+                    key={option}
+                    className="flex items-start justify-between gap-4 py-4 sm:items-center sm:gap-6"
+                  >
+                    <div className="min-w-0 flex-1 sm:flex-initial">
+                      <p className="text-sm font-semibold leading-5 text-slate-950">
+                        {
+                          t[
+                            `accountDashboard.preferences.customization.fields.${option}.label`
+                          ]
+                        }
+                      </p>
+                      <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                        {
+                          t[
+                            `accountDashboard.preferences.customization.fields.${option}.description`
+                          ]
+                        }
+                      </p>
+                    </div>
+                    <div className="shrink-0 pt-1 sm:pt-0">
+                      <PreferenceSwitch
+                        checked={draftPreferences[option]}
+                        label={
+                          t[
+                            `accountDashboard.preferences.customization.fields.${option}.label`
+                          ]
+                        }
+                        onChange={() =>
+                          updatePersonalizationPreference(
+                            option,
+                            !draftPreferences[option],
+                          )
+                        }
+                      />
+                    </div>
+                  </div>
+                ))}
+              </PreferencesSection>
+              <PreferencesActions
+                statusMessage={statusMessage}
+                mobileStatusMessage={
+                  status === "saving"
+                    ? t[
+                        "accountDashboard.preferences.customization.status.savingShort"
+                      ]
+                    : status === "success"
+                      ? t[
+                          "accountDashboard.preferences.customization.status.savedShort"
+                        ]
+                      : undefined
+                }
+                statusTone={status === "error" ? "error" : "info"}
+                secondaryAction={
+                  <button
+                    type="button"
+                    onClick={resetToDefault}
+                    disabled={resetDisabled}
+                    className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:bg-transparent"
+                  >
+                    {
+                      t[
+                        "accountDashboard.preferences.customization.actions.reset"
+                      ]
+                    }
+                  </button>
+                }
+                primaryAction={
+                  <button
+                    type="button"
+                    onClick={savePreferences}
+                    disabled={saveDisabled}
+                    className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
+                  >
+                    {status === "saving"
+                      ? t[
+                          "accountDashboard.preferences.customization.actions.saving"
+                        ]
+                      : t[
+                          "accountDashboard.preferences.customization.actions.save"
+                        ]}
+                  </button>
+                }
+              />
+            </>
+          )}
         </PreferencesCard>
       </div>
     </PreferencesPageShell>
