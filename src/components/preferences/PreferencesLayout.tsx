@@ -103,17 +103,21 @@ export function PreferencesSection({
 
 export function PreferencesStatus({
   message,
+  mobileMessage,
   tone = "info",
 }: {
   message?: string;
+  mobileMessage?: string;
   tone?: StatusTone;
 }) {
   if (!message) return null;
 
+  const hasMobileMessage = Boolean(mobileMessage);
+
   return (
     <p
       className={clsx(
-        "inline-flex rounded-full border px-3 py-1.5 text-sm font-medium",
+        "inline-flex max-w-full rounded-full border px-3 py-1.5 text-sm font-medium leading-5",
         tone === "error"
           ? "border-red-100 bg-red-50 text-red-700"
           : "border-blue-100 bg-blue-50 text-[#004BB8]",
@@ -121,31 +125,50 @@ export function PreferencesStatus({
       role="status"
       aria-live="polite"
     >
-      {message}
+      {hasMobileMessage ? (
+        <>
+          <span className="sm:hidden">{mobileMessage}</span>
+          <span className="hidden sm:inline">{message}</span>
+        </>
+      ) : (
+        <span className="truncate">{message}</span>
+      )}
     </p>
   );
 }
 
 export function PreferencesActions({
   statusMessage,
+  mobileStatusMessage,
   statusTone = "info",
-  children,
+  secondaryAction,
+  primaryAction,
   className,
 }: {
   statusMessage?: string;
+  mobileStatusMessage?: string;
   statusTone?: StatusTone;
-  children: ReactNode;
+  secondaryAction?: ReactNode;
+  primaryAction: ReactNode;
   className?: string;
 }) {
   return (
-    <div
-      className={clsx(
-        "relative mt-5 flex flex-row items-center justify-end gap-3 sm:mt-0 sm:justify-end sm:pt-1",
-        className,
-      )}
-    >
-      <PreferencesStatus message={statusMessage} tone={statusTone} />
-      {children}
+    <div className={clsx("mt-6 border-t border-slate-300 pt-5", className)}>
+      <div className="flex flex-row items-end justify-end gap-3">
+        {secondaryAction ? (
+          <div className="flex shrink-0 items-center justify-end">
+            {secondaryAction}
+          </div>
+        ) : null}
+        <div className="flex min-w-0 shrink flex-col items-end gap-2">
+          <PreferencesStatus
+            message={statusMessage}
+            mobileMessage={mobileStatusMessage}
+            tone={statusTone}
+          />
+          <div className="flex shrink-0 justify-end">{primaryAction}</div>
+        </div>
+      </div>
     </div>
   );
 }
