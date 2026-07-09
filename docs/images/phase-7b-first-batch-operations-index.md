@@ -24,6 +24,7 @@ transfer-checklist-us-001.json
 transfer-completions-us-001.json
 manifest-us-001.json
 first-batch-status-us-001.json
+first-batch-package-us-001.json
 ```
 
 ## 2. Generate the command plan
@@ -40,19 +41,23 @@ node scripts/build-market-asset-first-batch-command-plan.mjs
 
 Use the generated plan as the source of truth for command order and output filenames.
 
-## 3. Create the status overlay
+## 3. Create the status and package overlays
 
 Read:
 
 - `docs/images/market-asset-first-batch-status-template.md`
+- `docs/images/market-asset-first-batch-package-template.md`
+- `docs/images/market-asset-first-batch-package-readiness.md`
 
-Command:
+Commands:
 
 ```bash
 node scripts/build-market-asset-first-batch-status-template.mjs > first-batch-status-us-001.json
+node scripts/build-market-asset-first-batch-package-template.mjs true true > first-batch-package-us-001.json
+node scripts/check-market-asset-first-batch-package-readiness.mjs first-batch-package-us-001.json
 ```
 
-All gates should start incomplete.
+All status gates should start incomplete. Package readiness is expected to remain incomplete until the transfer checklist, transfer completions, and manifest files exist.
 
 ## 4. Run the intake and transfer gates
 
@@ -73,6 +78,8 @@ node scripts/build-market-asset-handoff-transfer-completion-template.mjs transfe
 node scripts/check-market-asset-handoff-transfer-readiness.mjs transfer-checklist-us-001.json transfer-completions-us-001.json
 ```
 
+After each required package file is created, update `first-batch-package-us-001.json` and rerun package readiness.
+
 ## 5. Review and convert only after all gates pass
 
 Read:
@@ -80,15 +87,15 @@ Read:
 - `docs/images/market-asset-manifest-review.md`
 - `docs/images/market-asset-first-batch-status-integrity.md`
 - `docs/images/market-asset-first-batch-status-summary.md`
+- `docs/images/market-asset-first-batch-status-report.md`
 
-Core status commands:
+Core status command:
 
 ```bash
-node scripts/check-market-asset-first-batch-status-integrity.mjs first-batch-status-us-001.json
-node scripts/summarize-market-asset-first-batch-status.mjs first-batch-status-us-001.json
+node scripts/build-market-asset-first-batch-status-report.mjs first-batch-status-us-001.json
 ```
 
-Only trust the status summary when integrity returns `valid: true`.
+Only trust the status summary when the report returns `trusted: true`.
 
 ## Required gate order
 
@@ -108,9 +115,10 @@ handoffGenerated
 
 Stop immediately if:
 
+- package readiness returns `ready: false` after required files should exist
 - handoff readiness fails
 - transfer readiness fails
-- status integrity fails
+- status report returns `trusted: false`
 - final manifest review fails
 - conflict checks fail
 - any image has unclear license coverage
