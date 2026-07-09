@@ -103,34 +103,76 @@ const fieldClassName =
 const selectClassName = `${fieldClassName} cursor-pointer`;
 
 const budgetOptions = [
-  ["budget", "Budget-conscious"],
-  ["balanced", "Balanced value"],
-  ["premium", "Premium comfort"],
+  ["budget", "accountDashboard.preferences.booking.options.budgetStyle.budget"],
+  [
+    "balanced",
+    "accountDashboard.preferences.booking.options.budgetStyle.balanced",
+  ],
+  [
+    "premium",
+    "accountDashboard.preferences.booking.options.budgetStyle.premium",
+  ],
 ];
 
 const directOptions = [
-  ["direct", "Prefer direct flights"],
-  ["cheaper", "Prefer cheaper options"],
-  ["balanced", "Balance time and price"],
+  [
+    "direct",
+    "accountDashboard.preferences.booking.options.directVsCheaper.direct",
+  ],
+  [
+    "cheaper",
+    "accountDashboard.preferences.booking.options.directVsCheaper.cheaper",
+  ],
+  [
+    "balanced",
+    "accountDashboard.preferences.booking.options.directVsCheaper.balanced",
+  ],
 ];
 
 const frequencyOptions = [
-  ["rarely", "A few times a year"],
-  ["monthly", "Monthly"],
-  ["frequent", "Several times a month"],
+  [
+    "rarely",
+    "accountDashboard.preferences.booking.options.travelFrequency.rarely",
+  ],
+  [
+    "monthly",
+    "accountDashboard.preferences.booking.options.travelFrequency.monthly",
+  ],
+  [
+    "frequent",
+    "accountDashboard.preferences.booking.options.travelFrequency.frequent",
+  ],
 ];
 
 const comfortOptions = [
-  ["savings", "Maximize savings"],
-  ["balanced", "Balance comfort and savings"],
-  ["comfort", "Prioritize comfort"],
+  [
+    "savings",
+    "accountDashboard.preferences.booking.options.comfortVsSavings.savings",
+  ],
+  [
+    "balanced",
+    "accountDashboard.preferences.booking.options.comfortVsSavings.balanced",
+  ],
+  [
+    "comfort",
+    "accountDashboard.preferences.booking.options.comfortVsSavings.comfort",
+  ],
 ];
 
 const purposeOptions = [
-  ["leisure", "Mostly leisure"],
-  ["business", "Mostly business"],
-  ["family", "Family travel"],
-  ["mixed", "Mixed purposes"],
+  [
+    "leisure",
+    "accountDashboard.preferences.booking.options.travelPurpose.leisure",
+  ],
+  [
+    "business",
+    "accountDashboard.preferences.booking.options.travelPurpose.business",
+  ],
+  [
+    "family",
+    "accountDashboard.preferences.booking.options.travelPurpose.family",
+  ],
+  ["mixed", "accountDashboard.preferences.booking.options.travelPurpose.mixed"],
 ];
 
 function SelectField({
@@ -139,12 +181,14 @@ function SelectField({
   value,
   options,
   disabled,
+  noPreferenceLabel,
   onChange,
 }: {
   id: keyof TravelPreferences;
   label: string;
   value: string;
   options: string[][];
+  noPreferenceLabel: string;
   disabled: boolean;
   onChange: (field: keyof TravelPreferences, value: string) => void;
 }) {
@@ -161,7 +205,7 @@ function SelectField({
         onChange={(event) => onChange(id, event.target.value)}
         className={selectClassName}
       >
-        <option value="">No preference</option>
+        <option value="">{noPreferenceLabel}</option>
         {options.map(([optionValue, optionLabel]) => (
           <option key={optionValue} value={optionValue}>
             {optionLabel}
@@ -188,6 +232,10 @@ export function BookingPreferencesContent() {
   );
   const saveDisabled = disabled || !hasUnsavedChanges;
   const revertDisabled = disabled || !hasUnsavedChanges;
+  const noPreferenceLabel =
+    t["accountDashboard.preferences.booking.noPreference"] ?? "No preference";
+  const localizeOptions = (options: string[][]) =>
+    options.map(([value, key]) => [value, t[key] ?? key]);
 
   useEffect(() => {
     if ((status !== "success" && status !== "reverted") || !message) {
@@ -343,7 +391,9 @@ export function BookingPreferencesContent() {
                     }
                     values={preferences.preferredAirlines}
                     disabled={disabled}
-                    helpText="Search by airline name or IATA code. Choose up to 10 airlines."
+                    helpText={
+                      t["accountDashboard.preferences.booking.airline.help"]
+                    }
                     onChange={(values) => {
                       setPreferences((current) => ({
                         ...current,
@@ -361,7 +411,8 @@ export function BookingPreferencesContent() {
                       ] ?? "Direct vs cheaper"
                     }
                     value={preferences.directVsCheaper}
-                    options={directOptions}
+                    options={localizeOptions(directOptions)}
+                    noPreferenceLabel={noPreferenceLabel}
                     disabled={disabled}
                     onChange={updateField}
                   />
@@ -389,7 +440,8 @@ export function BookingPreferencesContent() {
                       "Budget style"
                     }
                     value={preferences.budgetStyle}
-                    options={budgetOptions}
+                    options={localizeOptions(budgetOptions)}
+                    noPreferenceLabel={noPreferenceLabel}
                     disabled={disabled}
                     onChange={updateField}
                   />
@@ -401,7 +453,8 @@ export function BookingPreferencesContent() {
                       ] ?? "Travel frequency"
                     }
                     value={preferences.travelFrequency}
-                    options={frequencyOptions}
+                    options={localizeOptions(frequencyOptions)}
+                    noPreferenceLabel={noPreferenceLabel}
                     disabled={disabled}
                     onChange={updateField}
                   />
@@ -413,7 +466,8 @@ export function BookingPreferencesContent() {
                       ] ?? "Comfort vs savings"
                     }
                     value={preferences.comfortVsSavings}
-                    options={comfortOptions}
+                    options={localizeOptions(comfortOptions)}
+                    noPreferenceLabel={noPreferenceLabel}
                     disabled={disabled}
                     onChange={updateField}
                   />
@@ -424,7 +478,8 @@ export function BookingPreferencesContent() {
                       "Travel purpose"
                     }
                     value={preferences.travelPurpose}
-                    options={purposeOptions}
+                    options={localizeOptions(purposeOptions)}
+                    noPreferenceLabel={noPreferenceLabel}
                     disabled={disabled}
                     onChange={updateField}
                   />
