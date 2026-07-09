@@ -89,108 +89,7 @@ import {
 const resultStackClass = "w-full max-w-[680px] lg:ms-4 xl:ms-6";
 const desktopFilterStickyTopClass = "lg:sticky lg:top-[7.25rem]";
 
-function useDesktopFilterShortcut(topOffset = 116) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const contentRef = useRef<HTMLDivElement | null>(null);
-  const containerDocumentTopRef = useRef<number | null>(null);
-  const lastFullHeightRef = useRef(0);
-  const [isShortcutVisible, setIsShortcutVisible] = useState(false);
-  const [isManuallyExpanded, setIsManuallyExpanded] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return undefined;
-
-    let animationFrame = 0;
-
-    const getOffsetDocumentTop = (element: HTMLElement) => {
-      let documentTop = 0;
-      let current: HTMLElement | null = element;
-
-      while (current) {
-        documentTop += current.offsetTop;
-        current = current.offsetParent as HTMLElement | null;
-      }
-
-      return documentTop;
-    };
-
-    const updateShortcutState = () => {
-      animationFrame = 0;
-      const container = containerRef.current;
-      if (!container) return;
-
-      if (containerDocumentTopRef.current === null) {
-        const rectDocumentTop =
-          container.getBoundingClientRect().top + window.scrollY;
-        const offsetDocumentTop = getOffsetDocumentTop(container);
-        containerDocumentTopRef.current = Math.min(
-          rectDocumentTop,
-          offsetDocumentTop || rectDocumentTop,
-        );
-      }
-
-      const contentHeight =
-        contentRef.current?.offsetHeight || lastFullHeightRef.current;
-      if (contentHeight > 0) lastFullHeightRef.current = contentHeight;
-
-      const containerTop = containerDocumentTopRef.current;
-      const collapseAfter =
-        containerTop + Math.max(contentHeight - 72, 0) - topOffset;
-      const shouldCollapse = window.scrollY > collapseAfter;
-
-      if (!shouldCollapse) {
-        setIsManuallyExpanded(false);
-      }
-
-      setIsShortcutVisible(shouldCollapse && !isManuallyExpanded);
-    };
-
-    const scheduleUpdate = () => {
-      if (animationFrame) return;
-      animationFrame = window.requestAnimationFrame(updateShortcutState);
-    };
-
-    const handleResize = () => {
-      containerDocumentTopRef.current = null;
-      scheduleUpdate();
-    };
-
-    const resizeObserver =
-      typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(scheduleUpdate)
-        : null;
-
-    if (containerRef.current) resizeObserver?.observe(containerRef.current);
-    if (contentRef.current) resizeObserver?.observe(contentRef.current);
-
-    scheduleUpdate();
-    window.addEventListener("scroll", scheduleUpdate, { passive: true });
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      if (animationFrame) window.cancelAnimationFrame(animationFrame);
-      resizeObserver?.disconnect();
-      window.removeEventListener("scroll", scheduleUpdate);
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [isManuallyExpanded, topOffset]);
-
-  const showFullFilters = !isShortcutVisible;
-  const expandFilters = () => {
-    setIsManuallyExpanded(true);
-    setIsShortcutVisible(false);
-  };
-
-  return {
-    containerRef,
-    contentRef,
-    showFullFilters,
-    isShortcutVisible,
-    expandFilters,
-  };
-}
-
-function DesktopFilterShortcut({
+function DesktopCompactFlightFilters({
   activeFilterCount,
   activeFilterLabel,
   filterByLabel,
@@ -215,7 +114,6 @@ function DesktopFilterShortcut({
   setBaggageIncludedOnly,
   onFilterChange,
   onClear,
-  onExpand,
 }: {
   activeFilterCount: number;
   activeFilterLabel: string;
@@ -241,7 +139,6 @@ function DesktopFilterShortcut({
   setBaggageIncludedOnly: (value: boolean) => void;
   onFilterChange: () => void;
   onClear: () => void;
-  onExpand: () => void;
 }) {
   const { t: dictionary, locale } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -269,23 +166,13 @@ function DesktopFilterShortcut({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-sm font-bold text-slate-950">
-            {filterByLabel}
-          </h2>
+          <h2 className="text-sm font-bold text-slate-950">{filterByLabel}</h2>
           {activeFilterCount > 0 ? (
             <span className="mt-1 inline-flex rounded-full bg-[#004BB8]/8 px-2.5 py-1 text-xs font-bold text-[#004BB8] ring-1 ring-[#004BB8]/10">
               {activeFilterLabel}
             </span>
           ) : null}
         </div>
-        <button
-          type="button"
-          aria-label="Open full flight filters"
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#D8E1EC] bg-[#F8FAFC] text-slate-700 transition hover:border-[#CBD6E2] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-          onClick={onExpand}
-        >
-          <SquarePen size={17} aria-hidden="true" />
-        </button>
       </div>
 
       {activeFilterCount > 0 ? (
@@ -2980,13 +2867,6 @@ export function FlightResultsClient() {
   ]);
 
   const activeFilterLabel = `${t("activeFilterCount").replace("{{count}}", String(activeFilterCount))}`;
-  const {
-    containerRef: desktopFilterContainerRef,
-    contentRef: desktopFilterContentRef,
-    showFullFilters: showFullDesktopFilters,
-    expandFilters: expandDesktopFilters,
-  } = useDesktopFilterShortcut();
-
   const clearFlightFilters = () => {
     triggerFilterApplying();
     setMaxPrice(priceBounds.max);
@@ -3901,7 +3781,10 @@ export function FlightResultsClient() {
           >
             <div className="grid min-h-[50px] grid-cols-[minmax(0,1.1fr)_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1fr)_104px] items-stretch gap-1.5">
               <div className={stickyFieldClass}>
-                <label className={stickyLabelClass} htmlFor="sticky-results-origin">
+                <label
+                  className={stickyLabelClass}
+                  htmlFor="sticky-results-origin"
+                >
                   {t("origin")}
                 </label>
                 <input
@@ -3916,7 +3799,8 @@ export function FlightResultsClient() {
                     setDatePickerPosition(null);
                     setTravelerPopoverOpen(false);
                     setTravelerPopoverPosition(null);
-                    if (originInput.trim().length >= 2) setActiveSuggest("origin");
+                    if (originInput.trim().length >= 2)
+                      setActiveSuggest("origin");
                   }}
                   onKeyDown={(event) => {
                     if (event.key === "Escape") {
@@ -3944,7 +3828,8 @@ export function FlightResultsClient() {
                   autoComplete="off"
                   className="mt-0.5 h-5 min-w-0 border-0 bg-transparent p-0 text-sm font-medium leading-5 text-slate-950 outline-none placeholder:text-slate-400"
                 />
-                {activeSuggest === "origin" && activeDesktopSearchSurface === "sticky" ? (
+                {activeSuggest === "origin" &&
+                activeDesktopSearchSurface === "sticky" ? (
                   <SuggestionList
                     id="sticky-flight-origin-suggestions"
                     alignToField
@@ -4010,7 +3895,8 @@ export function FlightResultsClient() {
                   autoComplete="off"
                   className="mt-0.5 h-5 min-w-0 border-0 bg-transparent p-0 text-sm font-medium leading-5 text-slate-950 outline-none placeholder:text-slate-400"
                 />
-                {activeSuggest === "destination" && activeDesktopSearchSurface === "sticky" ? (
+                {activeSuggest === "destination" &&
+                activeDesktopSearchSurface === "sticky" ? (
                   <SuggestionList
                     id="sticky-flight-destination-suggestions"
                     alignToField
@@ -4054,7 +3940,9 @@ export function FlightResultsClient() {
                 {activeDatePicker && activeDesktopSearchSurface === "sticky" ? (
                   <DatePickerPopover
                     alignToField="right"
-                    position={datePickerPosition ?? { top: 0, left: 0, width: 0 }}
+                    position={
+                      datePickerPosition ?? { top: 0, left: 0, width: 0 }
+                    }
                     onClose={() => {
                       setActiveDatePicker(null);
                       setDatePickerPosition(null);
@@ -4106,7 +3994,8 @@ export function FlightResultsClient() {
                     <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-500" />
                   </span>
                 </button>
-                {travelerPopoverOpen && activeDesktopSearchSurface === "sticky" ? (
+                {travelerPopoverOpen &&
+                activeDesktopSearchSurface === "sticky" ? (
                   <TravelerCabinPopover
                     alignToField="right"
                     position={
@@ -4122,7 +4011,10 @@ export function FlightResultsClient() {
                     cabinClass={cabinClassInput}
                     onAdultChange={(nextValue) => {
                       markExpandedSearchInteraction();
-                      const nextAdultCount = Math.min(9, Math.max(1, nextValue));
+                      const nextAdultCount = Math.min(
+                        9,
+                        Math.max(1, nextValue),
+                      );
 
                       setAdultCount(nextAdultCount);
                       setChildCount((current) =>
@@ -4702,7 +4594,8 @@ export function FlightResultsClient() {
                       </button>
                     ) : null}
 
-                    {activeSuggest === "origin" && activeDesktopSearchSurface !== "sticky" ? (
+                    {activeSuggest === "origin" &&
+                    activeDesktopSearchSurface !== "sticky" ? (
                       <SuggestionList
                         id="flight-airport-suggestions"
                         alignToField
@@ -4803,7 +4696,8 @@ export function FlightResultsClient() {
                       </button>
                     ) : null}
 
-                    {activeSuggest === "destination" && activeDesktopSearchSurface !== "sticky" ? (
+                    {activeSuggest === "destination" &&
+                    activeDesktopSearchSurface !== "sticky" ? (
                       <SuggestionList
                         id="flight-airport-suggestions"
                         alignToField
@@ -4854,7 +4748,8 @@ export function FlightResultsClient() {
                     </span>
                   </button>
 
-                  {activeDatePicker && activeDesktopSearchSurface !== "sticky" ? (
+                  {activeDatePicker &&
+                  activeDesktopSearchSurface !== "sticky" ? (
                     <DatePickerPopover
                       alignToField="right"
                       position={
@@ -4922,7 +4817,8 @@ export function FlightResultsClient() {
                     <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
                   </button>
 
-                  {travelerPopoverOpen && activeDesktopSearchSurface !== "sticky" ? (
+                  {travelerPopoverOpen &&
+                  activeDesktopSearchSurface !== "sticky" ? (
                     <TravelerCabinPopover
                       alignToField="right"
                       position={
@@ -5242,77 +5138,34 @@ export function FlightResultsClient() {
       </nav>
 
       <div className="page-shell grid gap-4 pb-5 pt-8 sm:pt-5 lg:grid-cols-[256px_minmax(0,1fr)] lg:pt-6">
-        <aside className={cn("hidden lg:block", desktopFilterStickyTopClass)}>
-          <div ref={desktopFilterContainerRef}>
-            {showFullDesktopFilters ? (
-              <div ref={desktopFilterContentRef}>
-                <Filters
-                  layout="desktop"
-                  activeFilterCount={activeFilterCount}
-                  maxPrice={maxPrice}
-                  setMaxPrice={setMaxPrice}
-                  priceBounds={priceBounds}
-                  priceLabelCurrency={priceLabelCurrency}
-                  selectedCurrency={selectedCurrency}
-                  timeFilterMode={timeFilterMode}
-                  setTimeFilterMode={setTimeFilterMode}
-                  timeBounds={timeBounds}
-                  maxTakeoffMinutes={maxTakeoffMinutes}
-                  setMaxTakeoffMinutes={setMaxTakeoffMinutes}
-                  maxLandingMinutes={maxLandingMinutes}
-                  setMaxLandingMinutes={setMaxLandingMinutes}
-                  durationBounds={durationBounds}
-                  maxDurationMinutes={maxDurationMinutes}
-                  setMaxDurationMinutes={setMaxDurationMinutes}
-                  stopOptions={stopOptions}
-                  selectedStops={selectedStops}
-                  setSelectedStops={setSelectedStops}
-                  airlineOptions={airlineOptions}
-                  selectedAirlines={selectedAirlines}
-                  setSelectedAirlines={setSelectedAirlines}
-                  airportOptions={airportOptions}
-                  selectedAirports={selectedAirports}
-                  setSelectedAirports={setSelectedAirports}
-                  flightQualityOptions={flightQualityOptions}
-                  selectedFlightQuality={selectedFlightQuality}
-                  setSelectedFlightQuality={setSelectedFlightQuality}
-                  baggageIncludedOnly={baggageIncludedOnly}
-                  setBaggageIncludedOnly={setBaggageIncludedOnly}
-                  flexibleOnly={flexibleOnly}
-                  setFlexibleOnly={setFlexibleOnly}
-                  onFilterChange={triggerFilterApplying}
-                  onClear={clearFlightFilters}
-                />
-              </div>
-            ) : (
-              <DesktopFilterShortcut
-                activeFilterCount={activeFilterCount}
-                activeFilterLabel={activeFilterLabel}
-                filterByLabel={t("filterBy")}
-                maxPrice={maxPrice}
-                setMaxPrice={setMaxPrice}
-                priceBounds={priceBounds}
-                priceLabelCurrency={priceLabelCurrency}
-                selectedCurrency={selectedCurrency}
-                timeBounds={timeBounds}
-                maxTakeoffMinutes={maxTakeoffMinutes}
-                setMaxTakeoffMinutes={setMaxTakeoffMinutes}
-                durationBounds={durationBounds}
-                maxDurationMinutes={maxDurationMinutes}
-                setMaxDurationMinutes={setMaxDurationMinutes}
-                stopOptions={stopOptions}
-                selectedStops={selectedStops}
-                setSelectedStops={setSelectedStops}
-                airlineOptions={airlineOptions}
-                selectedAirlines={selectedAirlines}
-                setSelectedAirlines={setSelectedAirlines}
-                baggageIncludedOnly={baggageIncludedOnly}
-                setBaggageIncludedOnly={setBaggageIncludedOnly}
-                onFilterChange={triggerFilterApplying}
-                onClear={clearFlightFilters}
-                onExpand={expandDesktopFilters}
-              />
-            )}
+        <aside className="hidden lg:block">
+          <div className={desktopFilterStickyTopClass}>
+            <DesktopCompactFlightFilters
+              activeFilterCount={activeFilterCount}
+              activeFilterLabel={activeFilterLabel}
+              filterByLabel={t("filterBy")}
+              maxPrice={maxPrice}
+              setMaxPrice={setMaxPrice}
+              priceBounds={priceBounds}
+              priceLabelCurrency={priceLabelCurrency}
+              selectedCurrency={selectedCurrency}
+              timeBounds={timeBounds}
+              maxTakeoffMinutes={maxTakeoffMinutes}
+              setMaxTakeoffMinutes={setMaxTakeoffMinutes}
+              durationBounds={durationBounds}
+              maxDurationMinutes={maxDurationMinutes}
+              setMaxDurationMinutes={setMaxDurationMinutes}
+              stopOptions={stopOptions}
+              selectedStops={selectedStops}
+              setSelectedStops={setSelectedStops}
+              airlineOptions={airlineOptions}
+              selectedAirlines={selectedAirlines}
+              setSelectedAirlines={setSelectedAirlines}
+              baggageIncludedOnly={baggageIncludedOnly}
+              setBaggageIncludedOnly={setBaggageIncludedOnly}
+              onFilterChange={triggerFilterApplying}
+              onClear={clearFlightFilters}
+            />
           </div>
         </aside>
 
