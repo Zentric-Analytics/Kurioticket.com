@@ -3994,10 +3994,7 @@ export function FlightResultsClient() {
     }
 
     return (
-      <form
-        ref={placement === "desktop" ? searchFormRef : undefined}
-        onSubmit={handleCompactSearchSubmit}
-        onChangeCapture={markExpandedSearchInteraction}
+      <div
         className={cn(
           "mx-auto w-full min-w-0 max-w-full sm:max-w-5xl",
           placement === "desktop" && "hidden sm:block",
@@ -4053,383 +4050,393 @@ export function FlightResultsClient() {
             </div>
           ) : null}
 
-          <div className="flex items-center justify-between sm:hidden">
-            <span className="text-sm font-semibold text-slate-500">
-              {t("editSearch")}
-            </span>
-            <button
-              type="button"
-              aria-label={t("closeEditSearch")}
-              onClick={closeMobileSearchDrawer}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-            >
-              ×
-            </button>
-          </div>
-
-          <div
-            className={cn(
-              "relative overflow-visible rounded-xl border border-slate-200/80 bg-white/90 p-1.5 shadow-[0_16px_36px_-30px_rgba(15,23,42,0.55)] ring-1 ring-white/70 backdrop-blur-md sm:rounded-xl",
-              placement === "desktop" &&
-                "sm:bg-white sm:ring-slate-950/[0.03] sm:backdrop-blur-none",
-            )}
+          <form
+            ref={placement === "desktop" ? searchFormRef : undefined}
+            onSubmit={handleCompactSearchSubmit}
+            onChangeCapture={markExpandedSearchInteraction}
+            className="sm:translate-y-4"
           >
-            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.85fr)_minmax(0,1.35fr)_minmax(0,1.1fr)_112px] lg:gap-0">
-              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-200/80 bg-white/60 px-4 py-1.5 transition-colors hover:border-slate-300 hover:bg-white/90 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/80 lg:hover:border-slate-200/80 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
-                <div
-                  ref={originWrapRef}
-                  className="relative min-h-[50px] px-0 py-0 pe-4"
-                >
-                  <label
-                    className="mb-1 block text-[0.68rem] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-500"
-                    htmlFor="results-origin"
+            <div className="flex items-center justify-between sm:hidden">
+              <span className="text-sm font-semibold text-slate-500">
+                {t("editSearch")}
+              </span>
+              <button
+                type="button"
+                aria-label={t("closeEditSearch")}
+                onClick={closeMobileSearchDrawer}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+              >
+                ×
+              </button>
+            </div>
+
+            <div
+              className={cn(
+                "relative overflow-visible rounded-xl border border-slate-200/80 bg-white/90 p-1.5 shadow-[0_16px_36px_-30px_rgba(15,23,42,0.55)] ring-1 ring-white/70 backdrop-blur-md sm:rounded-xl",
+                placement === "desktop" &&
+                  "sm:bg-white sm:ring-slate-950/[0.03] sm:backdrop-blur-none",
+              )}
+            >
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.85fr)_minmax(0,1.35fr)_minmax(0,1.1fr)_112px] lg:gap-0">
+                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-200/80 bg-white/60 px-4 py-1.5 transition-colors hover:border-slate-300 hover:bg-white/90 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/80 lg:hover:border-slate-200/80 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+                  <div
+                    ref={originWrapRef}
+                    className="relative min-h-[50px] px-0 py-0 pe-4"
                   >
-                    {t("origin")}
-                  </label>
-                  <input
-                    id="results-origin"
-                    ref={originInputRef}
-                    name="origin"
-                    required
-                    value={originInput}
-                    onFocus={() => {
-                      setTripTypeMenuOpen(false);
-                      setActiveDatePicker(null);
-                      setDatePickerPosition(null);
-                      setTravelerPopoverOpen(false);
-                      setTravelerPopoverPosition(null);
-                      if (originInput.trim().length >= 2)
-                        setActiveSuggest("origin");
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === "Escape") {
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
-                      }
-                    }}
-                    onChange={(event) => {
-                      setTripTypeMenuOpen(false);
-                      setActiveDatePicker(null);
-                      setDatePickerPosition(null);
-                      setTravelerPopoverOpen(false);
-                      setTravelerPopoverPosition(null);
-                      setOriginInput(event.target.value);
-                      setOriginCode("");
+                    <label
+                      className="mb-1 block text-[0.68rem] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-500"
+                      htmlFor="results-origin"
+                    >
+                      {t("origin")}
+                    </label>
+                    <input
+                      id="results-origin"
+                      ref={originInputRef}
+                      name="origin"
+                      required
+                      value={originInput}
+                      onFocus={() => {
+                        setTripTypeMenuOpen(false);
+                        setActiveDatePicker(null);
+                        setDatePickerPosition(null);
+                        setTravelerPopoverOpen(false);
+                        setTravelerPopoverPosition(null);
+                        if (originInput.trim().length >= 2)
+                          setActiveSuggest("origin");
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Escape") {
+                          setActiveSuggest(null);
+                          setDropdownPosition(null);
+                        }
+                      }}
+                      onChange={(event) => {
+                        setTripTypeMenuOpen(false);
+                        setActiveDatePicker(null);
+                        setDatePickerPosition(null);
+                        setTravelerPopoverOpen(false);
+                        setTravelerPopoverPosition(null);
+                        setOriginInput(event.target.value);
+                        setOriginCode("");
 
-                      if (event.target.value.trim().length >= 2) {
-                        setActiveSuggest("origin");
-                      } else {
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
-                      }
-                    }}
-                    placeholder={t("fromPlaceholder")}
-                    autoComplete="off"
-                    className="h-7 w-full border-0 bg-transparent p-0 pe-7 text-[16px] font-medium text-slate-950 outline-none placeholder:text-slate-400 md:text-sm"
-                  />
+                        if (event.target.value.trim().length >= 2) {
+                          setActiveSuggest("origin");
+                        } else {
+                          setActiveSuggest(null);
+                          setDropdownPosition(null);
+                        }
+                      }}
+                      placeholder={t("fromPlaceholder")}
+                      autoComplete="off"
+                      className="h-7 w-full border-0 bg-transparent p-0 pe-7 text-[16px] font-medium text-slate-950 outline-none placeholder:text-slate-400 md:text-sm"
+                    />
 
-                  {originInput ? (
+                    {originInput ? (
+                      <button
+                        type="button"
+                        aria-label={t("clearOrigin")}
+                        onMouseDown={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                        }}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          clearOriginField();
+                        }}
+                        className="focus-ring absolute end-2 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                      >
+                        <X size={14} />
+                      </button>
+                    ) : null}
+
+                    {activeSuggest === "origin" ? (
+                      <SuggestionList
+                        id="flight-airport-suggestions"
+                        alignToField
+                        suggestions={resolvedOriginSuggestions}
+                        locale={locale}
+                        onSelect={(value) => {
+                          markExpandedSearchInteraction();
+                          setOriginInput(value);
+                          setOriginCode(value);
+                          setActiveSuggest(null);
+                          setDropdownPosition(null);
+                        }}
+                      />
+                    ) : null}
+                  </div>
+
+                  <div className="flex items-center justify-center">
                     <button
                       type="button"
-                      aria-label={t("clearOrigin")}
-                      onMouseDown={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                      }}
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        clearOriginField();
-                      }}
-                      className="focus-ring absolute end-2 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                      aria-label={t("swapOriginDestination")}
+                      onClick={handleSwapLocations}
+                      className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
                     >
-                      <X size={14} />
+                      <ArrowRightLeft size={14} />
                     </button>
-                  ) : null}
+                  </div>
 
-                  {activeSuggest === "origin" ? (
-                    <SuggestionList
-                      id="flight-airport-suggestions"
-                      alignToField
-                      suggestions={resolvedOriginSuggestions}
-                      locale={locale}
-                      onSelect={(value) => {
-                        markExpandedSearchInteraction();
-                        setOriginInput(value);
-                        setOriginCode(value);
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
+                  <div
+                    ref={destinationWrapRef}
+                    className="relative min-h-[50px] px-0 py-0 ps-4"
+                  >
+                    <label
+                      className="mb-1 block text-[0.68rem] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-500"
+                      htmlFor="results-destination"
+                    >
+                      {t("destination")}
+                    </label>
+                    <input
+                      id="results-destination"
+                      ref={destinationInputRef}
+                      name="destination"
+                      required
+                      value={destinationInput}
+                      onFocus={() => {
+                        setTripTypeMenuOpen(false);
+                        setActiveDatePicker(null);
+                        setDatePickerPosition(null);
+                        setTravelerPopoverOpen(false);
+                        setTravelerPopoverPosition(null);
+                        if (destinationInput.trim().length >= 2) {
+                          setActiveSuggest("destination");
+                        }
                       }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Escape") {
+                          setActiveSuggest(null);
+                          setDropdownPosition(null);
+                        }
+                      }}
+                      onChange={(event) => {
+                        setTripTypeMenuOpen(false);
+                        setActiveDatePicker(null);
+                        setDatePickerPosition(null);
+                        setTravelerPopoverOpen(false);
+                        setTravelerPopoverPosition(null);
+                        setDestinationInput(event.target.value);
+                        setDestinationCode("");
+
+                        if (event.target.value.trim().length >= 2) {
+                          setActiveSuggest("destination");
+                        } else {
+                          setActiveSuggest(null);
+                          setDropdownPosition(null);
+                        }
+                      }}
+                      placeholder={t("toPlaceholder")}
+                      autoComplete="off"
+                      className="h-7 w-full border-0 bg-transparent p-0 pe-7 text-[16px] font-medium text-slate-950 outline-none placeholder:text-slate-400 md:text-sm"
                     />
-                  ) : null}
+
+                    {destinationInput ? (
+                      <button
+                        type="button"
+                        aria-label={t("clearDestination")}
+                        onMouseDown={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                        }}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          clearDestinationField();
+                        }}
+                        className="focus-ring absolute end-0 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                      >
+                        <X size={14} />
+                      </button>
+                    ) : null}
+
+                    {activeSuggest === "destination" ? (
+                      <SuggestionList
+                        id="flight-airport-suggestions"
+                        alignToField
+                        suggestions={resolvedDestinationSuggestions}
+                        locale={locale}
+                        onSelect={(value) => {
+                          markExpandedSearchInteraction();
+                          setDestinationInput(value);
+                          setDestinationCode(value);
+                          setActiveSuggest(null);
+                          setDropdownPosition(null);
+                        }}
+                      />
+                    ) : null}
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-center">
+                <div ref={departureWrapRef} className="relative">
                   <button
                     type="button"
-                    aria-label={t("swapOriginDestination")}
-                    onClick={handleSwapLocations}
-                    className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                    onClick={() => {
+                      setTripTypeMenuOpen(false);
+                      setActiveSuggest(null);
+                      setDropdownPosition(null);
+                      setTravelerPopoverOpen(false);
+                      setTravelerPopoverPosition(null);
+                      setActiveDatePicker("departure");
+                      setDatePickerPosition(null);
+                    }}
+                    className="focus-ring flex h-full min-h-[50px] w-full items-center gap-2 rounded-xl border border-slate-200/80 bg-white/60 px-3.5 py-1.5 text-start transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/80 lg:hover:border-slate-200/80"
                   >
-                    <ArrowRightLeft size={14} />
+                    <Calendar className="h-4 w-4 shrink-0 text-[#004BB8]" />
+                    <span className="min-w-0">
+                      <span className="block text-[0.68rem] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-500">
+                        {t("travelDates")}
+                      </span>
+                      <span className="block truncate text-sm font-medium text-slate-950">
+                        {departureDateInput
+                          ? tripTypeInput === "round-trip" && returnDateInput
+                            ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
+                            : formatDateLabel(
+                                departureDateInput,
+                                calendarLocale,
+                              )
+                          : t("travelDates")}
+                      </span>
+                    </span>
                   </button>
-                </div>
 
-                <div
-                  ref={destinationWrapRef}
-                  className="relative min-h-[50px] px-0 py-0 ps-4"
-                >
-                  <label
-                    className="mb-1 block text-[0.68rem] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-500"
-                    htmlFor="results-destination"
-                  >
-                    {t("destination")}
-                  </label>
-                  <input
-                    id="results-destination"
-                    ref={destinationInputRef}
-                    name="destination"
-                    required
-                    value={destinationInput}
-                    onFocus={() => {
-                      setTripTypeMenuOpen(false);
-                      setActiveDatePicker(null);
-                      setDatePickerPosition(null);
-                      setTravelerPopoverOpen(false);
-                      setTravelerPopoverPosition(null);
-                      if (destinationInput.trim().length >= 2) {
-                        setActiveSuggest("destination");
+                  {activeDatePicker ? (
+                    <DatePickerPopover
+                      alignToField="right"
+                      position={
+                        datePickerPosition ?? { top: 0, left: 0, width: 0 }
                       }
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === "Escape") {
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
-                      }
-                    }}
-                    onChange={(event) => {
-                      setTripTypeMenuOpen(false);
-                      setActiveDatePicker(null);
-                      setDatePickerPosition(null);
-                      setTravelerPopoverOpen(false);
-                      setTravelerPopoverPosition(null);
-                      setDestinationInput(event.target.value);
-                      setDestinationCode("");
-
-                      if (event.target.value.trim().length >= 2) {
-                        setActiveSuggest("destination");
-                      } else {
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
-                      }
-                    }}
-                    placeholder={t("toPlaceholder")}
-                    autoComplete="off"
-                    className="h-7 w-full border-0 bg-transparent p-0 pe-7 text-[16px] font-medium text-slate-950 outline-none placeholder:text-slate-400 md:text-sm"
-                  />
-
-                  {destinationInput ? (
-                    <button
-                      type="button"
-                      aria-label={t("clearDestination")}
-                      onMouseDown={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
+                      onClose={() => {
+                        setActiveDatePicker(null);
+                        setDatePickerPosition(null);
                       }}
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        clearDestinationField();
-                      }}
-                      className="focus-ring absolute end-0 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
-                    >
-                      <X size={14} />
-                    </button>
-                  ) : null}
-
-                  {activeSuggest === "destination" ? (
-                    <SuggestionList
-                      id="flight-airport-suggestions"
-                      alignToField
-                      suggestions={resolvedDestinationSuggestions}
-                      locale={locale}
-                      onSelect={(value) => {
+                      month={calendarMonth}
+                      departureValue={departureDateInput}
+                      returnValue={returnDateInput}
+                      activePicker={activeDatePicker}
+                      tripType={tripTypeInput}
+                      onMonthChange={setCalendarMonth}
+                      onSelect={applyFlightDateSelection}
+                      onClear={() => {
                         markExpandedSearchInteraction();
-                        setDestinationInput(value);
-                        setDestinationCode(value);
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
+                        if (activeDatePicker === "departure") {
+                          setDepartureDateInput("");
+                          setReturnDateInput("");
+                        }
+
+                        if (activeDatePicker === "return") {
+                          setReturnDateInput("");
+                        }
+                      }}
+                      onToday={() => {
+                        setActiveDatePicker(null);
+                        setDatePickerPosition(null);
                       }}
                     />
                   ) : null}
                 </div>
-              </div>
 
-              <div ref={departureWrapRef} className="relative">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTripTypeMenuOpen(false);
-                    setActiveSuggest(null);
-                    setDropdownPosition(null);
-                    setTravelerPopoverOpen(false);
-                    setTravelerPopoverPosition(null);
-                    setActiveDatePicker("departure");
-                    setDatePickerPosition(null);
-                  }}
-                  className="focus-ring flex h-full min-h-[50px] w-full items-center gap-2 rounded-xl border border-slate-200/80 bg-white/60 px-3.5 py-1.5 text-start transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/80 lg:hover:border-slate-200/80"
-                >
-                  <Calendar className="h-4 w-4 shrink-0 text-[#004BB8]" />
-                  <span className="min-w-0">
-                    <span className="block text-[0.68rem] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-500">
-                      {t("travelDates")}
-                    </span>
-                    <span className="block truncate text-sm font-medium text-slate-950">
-                      {departureDateInput
-                        ? tripTypeInput === "round-trip" && returnDateInput
-                          ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
-                          : formatDateLabel(departureDateInput, calendarLocale)
-                        : t("travelDates")}
-                    </span>
-                  </span>
-                </button>
-
-                {activeDatePicker ? (
-                  <DatePickerPopover
-                    alignToField="right"
-                    position={
-                      datePickerPosition ?? { top: 0, left: 0, width: 0 }
-                    }
-                    onClose={() => {
+                <div ref={travelerCabinWrapRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTripTypeMenuOpen(false);
+                      setActiveSuggest(null);
+                      setDropdownPosition(null);
                       setActiveDatePicker(null);
                       setDatePickerPosition(null);
-                    }}
-                    month={calendarMonth}
-                    departureValue={departureDateInput}
-                    returnValue={returnDateInput}
-                    activePicker={activeDatePicker}
-                    tripType={tripTypeInput}
-                    onMonthChange={setCalendarMonth}
-                    onSelect={applyFlightDateSelection}
-                    onClear={() => {
-                      markExpandedSearchInteraction();
-                      if (activeDatePicker === "departure") {
-                        setDepartureDateInput("");
-                        setReturnDateInput("");
-                      }
-
-                      if (activeDatePicker === "return") {
-                        setReturnDateInput("");
-                      }
-                    }}
-                    onToday={() => {
-                      setActiveDatePicker(null);
-                      setDatePickerPosition(null);
-                    }}
-                  />
-                ) : null}
-              </div>
-
-              <div ref={travelerCabinWrapRef} className="relative">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTripTypeMenuOpen(false);
-                    setActiveSuggest(null);
-                    setDropdownPosition(null);
-                    setActiveDatePicker(null);
-                    setDatePickerPosition(null);
-                    setTravelerPopoverOpen(true);
-                    setTravelerPopoverPosition(null);
-                  }}
-                  className="focus-ring flex h-full min-h-[50px] w-full items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-white/60 px-3.5 py-1.5 text-start transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/80 lg:hover:border-slate-200/80"
-                >
-                  <span className="min-w-0">
-                    <span className="block text-[0.68rem] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-500">
-                      {t("travelers")}
-                    </span>
-                    <span className="block truncate text-sm font-medium text-slate-950">
-                      {buildTravelerCabinSummary(
-                        adultCount,
-                        childCount,
-                        infantCount,
-                        cabinClassInput,
-                        t,
-                      )}
-                    </span>
-                  </span>
-                  <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
-                </button>
-
-                {travelerPopoverOpen ? (
-                  <TravelerCabinPopover
-                    alignToField="right"
-                    position={
-                      travelerPopoverPosition ?? { top: 0, left: 0, width: 0 }
-                    }
-                    onClose={() => {
-                      setTravelerPopoverOpen(false);
+                      setTravelerPopoverOpen(true);
                       setTravelerPopoverPosition(null);
                     }}
-                    adultCount={adultCount}
-                    childCount={childCount}
-                    infantCount={infantCount}
-                    cabinClass={cabinClassInput}
-                    onAdultChange={(nextValue) => {
-                      markExpandedSearchInteraction();
-                      const nextAdultCount = Math.min(
-                        9,
-                        Math.max(1, nextValue),
-                      );
-
-                      setAdultCount(nextAdultCount);
-                      setChildCount((current) =>
-                        Math.min(current, 9 - nextAdultCount),
-                      );
-                      setInfantCount((current) =>
-                        Math.min(current, nextAdultCount, 9 - nextAdultCount),
-                      );
-                    }}
-                    onChildChange={(nextValue) => {
-                      markExpandedSearchInteraction();
-                      const nextChildCount = Math.min(
-                        9 - adultCount,
-                        Math.max(0, nextValue),
-                      );
-
-                      setChildCount(nextChildCount);
-                      setInfantCount((current) =>
-                        Math.min(current, 9 - adultCount - nextChildCount),
-                      );
-                    }}
-                    onInfantChange={(nextValue) => {
-                      markExpandedSearchInteraction();
-                      setInfantCount(
-                        Math.min(
+                    className="focus-ring flex h-full min-h-[50px] w-full items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-white/60 px-3.5 py-1.5 text-start transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/80 lg:hover:border-slate-200/80"
+                  >
+                    <span className="min-w-0">
+                      <span className="block text-[0.68rem] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-500">
+                        {t("travelers")}
+                      </span>
+                      <span className="block truncate text-sm font-medium text-slate-950">
+                        {buildTravelerCabinSummary(
                           adultCount,
-                          9 - adultCount - childCount,
-                          Math.max(0, nextValue),
-                        ),
-                      );
-                    }}
-                    onCabinClassChange={(nextValue) => {
-                      markExpandedSearchInteraction();
-                      setCabinClassInput(nextValue);
-                    }}
-                  />
-                ) : null}
-              </div>
+                          childCount,
+                          infantCount,
+                          cabinClassInput,
+                          t,
+                        )}
+                      </span>
+                    </span>
+                    <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
+                  </button>
 
-              <Button
-                type="submit"
-                className="h-full min-h-[50px] w-full rounded-xl bg-[#004BB8] px-5 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] ring-1 ring-[#004BB8]/12 hover:bg-[#021C2B] lg:min-w-[112px] lg:rounded-lg"
-              >
-                {t("search")}
-              </Button>
+                  {travelerPopoverOpen ? (
+                    <TravelerCabinPopover
+                      alignToField="right"
+                      position={
+                        travelerPopoverPosition ?? { top: 0, left: 0, width: 0 }
+                      }
+                      onClose={() => {
+                        setTravelerPopoverOpen(false);
+                        setTravelerPopoverPosition(null);
+                      }}
+                      adultCount={adultCount}
+                      childCount={childCount}
+                      infantCount={infantCount}
+                      cabinClass={cabinClassInput}
+                      onAdultChange={(nextValue) => {
+                        markExpandedSearchInteraction();
+                        const nextAdultCount = Math.min(
+                          9,
+                          Math.max(1, nextValue),
+                        );
+
+                        setAdultCount(nextAdultCount);
+                        setChildCount((current) =>
+                          Math.min(current, 9 - nextAdultCount),
+                        );
+                        setInfantCount((current) =>
+                          Math.min(current, nextAdultCount, 9 - nextAdultCount),
+                        );
+                      }}
+                      onChildChange={(nextValue) => {
+                        markExpandedSearchInteraction();
+                        const nextChildCount = Math.min(
+                          9 - adultCount,
+                          Math.max(0, nextValue),
+                        );
+
+                        setChildCount(nextChildCount);
+                        setInfantCount((current) =>
+                          Math.min(current, 9 - adultCount - nextChildCount),
+                        );
+                      }}
+                      onInfantChange={(nextValue) => {
+                        markExpandedSearchInteraction();
+                        setInfantCount(
+                          Math.min(
+                            adultCount,
+                            9 - adultCount - childCount,
+                            Math.max(0, nextValue),
+                          ),
+                        );
+                      }}
+                      onCabinClassChange={(nextValue) => {
+                        markExpandedSearchInteraction();
+                        setCabinClassInput(nextValue);
+                      }}
+                    />
+                  ) : null}
+                </div>
+
+                <Button
+                  type="submit"
+                  className="h-full min-h-[50px] w-full rounded-xl bg-[#004BB8] px-5 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] ring-1 ring-[#004BB8]/12 hover:bg-[#021C2B] lg:min-w-[112px] lg:rounded-lg"
+                >
+                  {t("search")}
+                </Button>
+              </div>
             </div>
-          </div>
+          </form>
         </div>
-      </form>
+      </div>
     );
   }
 
