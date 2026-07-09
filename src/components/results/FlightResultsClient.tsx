@@ -4518,12 +4518,12 @@ export function FlightResultsClient() {
     <main className="flex-1 bg-[#F3F6FA] pb-8">
       <section
         className={cn(
-          "relative z-40 border-b border-[#D8E1EC] bg-[#F8FAFC] px-4 pb-4 pt-[calc(0.85rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(255,255,255,0.9)] sm:hidden",
+          "relative z-40 bg-[#F3F6FA] px-4 pb-8 pt-[calc(0.85rem+env(safe-area-inset-top))] sm:hidden",
           mobileSearchOpen && "hidden",
         )}
         aria-label="Flight search controls"
       >
-        <div className="relative">
+        <div className="relative translate-y-1/2">
           {renderMobileControlsRow()}
         </div>
       </section>
@@ -4623,7 +4623,7 @@ export function FlightResultsClient() {
           "sticky top-0 z-40 hidden border-b transition-[padding,background-color] duration-200 sm:block",
           isSearchCollapsed
             ? "border-[#D8E1EC] bg-white/95 py-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.05)] backdrop-blur"
-            : "border-[#CBD6E2] bg-[#F8FAFC] pb-0 pt-5 shadow-[0_1px_0_rgba(255,255,255,0.9)]",
+            : "border-[#CBD6E2] bg-[#F3F6FA] pb-0 pt-5 shadow-[0_1px_0_rgba(255,255,255,0.9)]",
         )}
       >
         <div className="page-shell">
@@ -4635,7 +4635,7 @@ export function FlightResultsClient() {
         </div>
       </section>
 
-      <div className="page-shell grid gap-4 pb-5 pt-5 sm:pt-6 lg:grid-cols-[256px_minmax(0,1fr)] lg:pt-8">
+      <div className="page-shell grid gap-4 pb-5 pt-14 sm:pt-20 lg:grid-cols-[256px_minmax(0,1fr)] lg:pt-20">
         <aside className={cn("hidden lg:block", desktopFilterStickyTopClass)}>
           <div ref={desktopFilterContainerRef}>
             {showFullDesktopFilters ? (
