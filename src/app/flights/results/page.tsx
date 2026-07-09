@@ -135,7 +135,7 @@ function ResultsFallback({
   description: string;
 }) {
   return (
-    <main className="min-h-[100svh] bg-[#F3F6FA]">
+    <main className="min-h-[100svh] bg-white">
       <BrandedLoading
         variant="fullscreen"
         visual="logoPulse"
