@@ -35,6 +35,12 @@ Use `first-batch-package-us-001.json` to track whether each required package fil
 }
 ```
 
+Generate the starter package tracker instead of hand-writing it:
+
+```bash
+node scripts/build-market-asset-first-batch-package-template.mjs true true > first-batch-package-us-001.json
+```
+
 ## Required real asset count
 
 The first batch must contain 13 approved production images:
@@ -73,7 +79,13 @@ Create the first-batch status overlay before tracking gate progress:
 node scripts/build-market-asset-first-batch-status-template.mjs > first-batch-status-us-001.json
 ```
 
-Create the package readiness status file and mark only files that exist:
+Generate the package readiness status file after the handoff and status overlay exist:
+
+```bash
+node scripts/build-market-asset-first-batch-package-template.mjs true true > first-batch-package-us-001.json
+```
+
+The generated starter package marks only the existing handoff and status files as present:
 
 ```json
 {
@@ -199,6 +211,16 @@ node scripts/convert-market-asset-manifest.mjs manifest-us-001.json
 ```
 
 After conversion succeeds and output shape is checked, update `converted` to `true` in `first-batch-status-us-001.json`, then run the final status report.
+
+## First-batch package template
+
+Run this after generating the handoff and first-batch status overlay:
+
+```bash
+node scripts/build-market-asset-first-batch-package-template.mjs true true > first-batch-package-us-001.json
+```
+
+Use the template output as the starter package tracker. Update package flags only after the matching files exist.
 
 ## First-batch package readiness
 
