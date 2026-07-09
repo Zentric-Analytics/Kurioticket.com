@@ -58,6 +58,18 @@ export function PreferencesCard({
   );
 }
 
+export function PreferencesLoadingState({ message }: { message: ReactNode }) {
+  return (
+    <p
+      className="max-w-2xl text-sm font-medium leading-6 text-slate-700"
+      role="status"
+      aria-live="polite"
+    >
+      {message}
+    </p>
+  );
+}
+
 export function PreferencesSection({
   title,
   description,
