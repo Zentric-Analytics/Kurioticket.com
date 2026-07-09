@@ -225,7 +225,7 @@ export function AirlinePreferenceMultiSelect({
           aria-controls={listboxId}
           aria-expanded={isOpen}
           aria-activedescendant={activeOptionId}
-          aria-describedby={`${helpId} ${statusId}`}
+          aria-describedby={isOpen ? statusId : `${helpId} ${statusId}`}
           autoComplete="off"
           value={query}
           disabled={disabled || isAtLimit}
@@ -266,12 +266,14 @@ export function AirlinePreferenceMultiSelect({
           }}
         />
       </div>
-      <p
-        id={helpId}
-        className="mt-1.5 text-xs font-medium leading-5 text-slate-500"
-      >
-        {helpText}
-      </p>
+      {!isOpen ? (
+        <p
+          id={helpId}
+          className="mt-1.5 text-xs font-medium leading-5 text-slate-500"
+        >
+          {helpText}
+        </p>
+      ) : null}
       <p
         id={statusId}
         className="mt-1 text-xs font-semibold leading-5 text-slate-500"
@@ -284,7 +286,7 @@ export function AirlinePreferenceMultiSelect({
           <div
             id={listboxId}
             role="listbox"
-            className="absolute mt-2 max-h-72 w-full overflow-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl"
+            className="absolute mt-2 max-h-44 w-full overflow-auto overflow-x-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl sm:max-h-72"
           >
             {suggestions.length ? (
               suggestions.map((airline, index) => (
