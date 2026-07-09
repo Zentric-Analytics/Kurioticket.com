@@ -157,38 +157,227 @@ function DesktopFilterShortcut({
   activeFilterCount,
   activeFilterLabel,
   filterByLabel,
-  onClick,
+  maxPrice,
+  setMaxPrice,
+  priceBounds,
+  priceLabelCurrency,
+  selectedCurrency,
+  timeBounds,
+  maxTakeoffMinutes,
+  setMaxTakeoffMinutes,
+  durationBounds,
+  maxDurationMinutes,
+  setMaxDurationMinutes,
+  stopOptions,
+  selectedStops,
+  setSelectedStops,
+  airlineOptions,
+  selectedAirlines,
+  setSelectedAirlines,
+  baggageIncludedOnly,
+  setBaggageIncludedOnly,
+  onFilterChange,
+  onClear,
+  onExpand,
 }: {
   activeFilterCount: number;
   activeFilterLabel: string;
   filterByLabel: string;
-  onClick: () => void;
+  maxPrice: number;
+  setMaxPrice: (value: number) => void;
+  priceBounds: { min: number; max: number };
+  priceLabelCurrency: string | null;
+  selectedCurrency: string;
+  timeBounds: TimeBounds;
+  maxTakeoffMinutes: number | null;
+  setMaxTakeoffMinutes: (value: number | null) => void;
+  durationBounds: { min: number; max: number } | null;
+  maxDurationMinutes: number | null;
+  setMaxDurationMinutes: (value: number | null) => void;
+  stopOptions: FilterOption[];
+  selectedStops: string[];
+  setSelectedStops: Dispatch<SetStateAction<string[]>>;
+  airlineOptions: FilterOption[];
+  selectedAirlines: string[];
+  setSelectedAirlines: Dispatch<SetStateAction<string[]>>;
+  baggageIncludedOnly: boolean;
+  setBaggageIncludedOnly: (value: boolean) => void;
+  onFilterChange: () => void;
+  onClear: () => void;
+  onExpand: () => void;
 }) {
+  const { t: dictionary, locale } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const calendarLocale = normalizeFlightResultsCalendarLocale(locale);
+  const currencyRates = useCurrencyRates();
+  const compactAirlineOptions = airlineOptions.slice(0, 4);
+  const filterRangeClass =
+    "h-2 w-full cursor-pointer appearance-none rounded-full bg-[#D8E1EC] outline-none transition focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[#CBD6E2] [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#004BB8] [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-[#CBD6E2] [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#004BB8] [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#004BB8] [&::-moz-range-thumb]:shadow-md";
+  const formatFilterPrice = (amount: number) =>
+    priceLabelCurrency
+      ? formatDisplayPrice({
+          amount,
+          sourceCurrency: priceLabelCurrency,
+          displayCurrency: selectedCurrency,
+          convertUsdEstimate: true,
+          rates: currencyRates.rates,
+          isFallbackRate: currencyRates.isFallback,
+        }).formatted
+      : t("mixedProviderCurrencies");
+
   return (
-    <button
-      type="button"
-      className="group w-full rounded-[1.15rem] border border-slate-200/90 bg-white p-4 text-left shadow-[0_14px_34px_-28px_rgba(15,23,42,0.45)] ring-1 ring-slate-950/[0.02] transition hover:-translate-y-0.5 hover:border-[#004BB8]/30 hover:shadow-[0_18px_38px_-28px_rgba(15,23,42,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-      onClick={onClick}
+    <section
+      aria-label="Compact flight filters"
+      className="w-full rounded-[1.15rem] border border-[#D8E1EC] bg-white p-3 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.45)] ring-1 ring-slate-950/[0.02]"
     >
-      <span className="flex items-center justify-between gap-3">
-        <span className="min-w-0">
-          <span className="block text-sm font-bold text-slate-950">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-sm font-bold text-slate-950">
             {filterByLabel}
-          </span>
+          </h2>
           {activeFilterCount > 0 ? (
             <span className="mt-1 inline-flex rounded-full bg-[#004BB8]/8 px-2.5 py-1 text-xs font-bold text-[#004BB8] ring-1 ring-[#004BB8]/10">
               {activeFilterLabel}
             </span>
           ) : null}
-        </span>
-        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition group-hover:border-[#004BB8]/30 group-hover:text-[#004BB8]">
+        </div>
+        <button
+          type="button"
+          aria-label="Open full flight filters"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#D8E1EC] bg-[#F8FAFC] text-slate-700 transition hover:border-[#CBD6E2] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+          onClick={onExpand}
+        >
           <SquarePen size={17} aria-hidden="true" />
-        </span>
-      </span>
-      <span className="mt-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
-        Edit filters
-      </span>
-    </button>
+        </button>
+      </div>
+
+      {activeFilterCount > 0 ? (
+        <button
+          type="button"
+          className="mt-3 text-xs font-bold text-slate-500 underline-offset-4 transition hover:text-[#004BB8] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+          onClick={onClear}
+        >
+          Clear all
+        </button>
+      ) : null}
+
+      <div className="mt-3 space-y-3 rounded-2xl bg-[#F8FAFC] p-3">
+        <label className="block">
+          <span className="mb-1 flex items-center justify-between gap-2 text-xs font-bold text-slate-700">
+            <span>{t("price")}</span>
+            <span className="font-semibold text-slate-500">
+              {priceBounds.max && priceLabelCurrency
+                ? formatFilterPrice(Math.min(maxPrice, priceBounds.max))
+                : "—"}
+            </span>
+          </span>
+          <input
+            className={filterRangeClass}
+            type="range"
+            min={priceBounds.min || 0}
+            max={priceBounds.max || 0}
+            step={25}
+            value={priceBounds.max ? Math.min(maxPrice, priceBounds.max) : 0}
+            disabled={!priceBounds.max}
+            onChange={(event) => {
+              onFilterChange();
+              setMaxPrice(Number(event.target.value));
+            }}
+          />
+        </label>
+
+        <div>
+          <p className="mb-1 text-xs font-bold text-slate-700">{t("stops")}</p>
+          {stopOptions.map((option) => (
+            <FilterOptionRow
+              key={`compact-stop-${option.value}`}
+              label={option.label}
+              count={option.count}
+              checked={selectedStops.includes(option.value)}
+              onChange={() => {
+                onFilterChange();
+                toggleFilterValue(option.value, setSelectedStops);
+              }}
+            />
+          ))}
+        </div>
+
+        <div>
+          <p className="mb-1 text-xs font-bold text-slate-700">
+            {t("airlines")}
+          </p>
+          {compactAirlineOptions.map((option) => (
+            <FilterOptionRow
+              key={`compact-airline-${option.value}`}
+              label={option.label}
+              count={option.count}
+              checked={selectedAirlines.includes(option.value)}
+              onChange={() => {
+                onFilterChange();
+                toggleFilterValue(option.value, setSelectedAirlines);
+              }}
+            />
+          ))}
+        </div>
+
+        <label className="block">
+          <span className="mb-1 flex items-center justify-between gap-2 text-xs font-bold text-slate-700">
+            <span>{t("takeoff")}</span>
+            <span className="font-mono font-semibold text-slate-500">
+              {timeBounds.takeoff && maxTakeoffMinutes !== null
+                ? formatTimeFromMinutes(maxTakeoffMinutes, calendarLocale)
+                : "—"}
+            </span>
+          </span>
+          <input
+            className={filterRangeClass}
+            type="range"
+            min={timeBounds.takeoff?.min ?? 0}
+            max={timeBounds.takeoff?.max ?? 0}
+            step={15}
+            value={maxTakeoffMinutes ?? timeBounds.takeoff?.max ?? 0}
+            disabled={!timeBounds.takeoff}
+            onChange={(event) => {
+              onFilterChange();
+              setMaxTakeoffMinutes(Number(event.target.value));
+            }}
+          />
+        </label>
+
+        <label className="block">
+          <span className="mb-1 flex items-center justify-between gap-2 text-xs font-bold text-slate-700">
+            <span>{t("duration")}</span>
+            <span className="font-mono font-semibold text-slate-500">
+              {durationBounds && maxDurationMinutes !== null
+                ? formatDurationFromMinutes(maxDurationMinutes, t)
+                : "—"}
+            </span>
+          </span>
+          <input
+            className={filterRangeClass}
+            type="range"
+            min={durationBounds?.min ?? 0}
+            max={durationBounds?.max ?? 0}
+            step={15}
+            value={maxDurationMinutes ?? durationBounds?.max ?? 0}
+            disabled={!durationBounds}
+            onChange={(event) => {
+              onFilterChange();
+              setMaxDurationMinutes(Number(event.target.value));
+            }}
+          />
+        </label>
+
+        <FilterOptionRow
+          label={t("baggageIncluded")}
+          checked={baggageIncludedOnly}
+          onChange={() => {
+            onFilterChange();
+            setBaggageIncludedOnly(!baggageIncludedOnly);
+          }}
+        />
+      </div>
+    </section>
   );
 }
 
@@ -883,7 +1072,7 @@ export function FlightResultsClient() {
   const [selectedFlightQuality, setSelectedFlightQuality] = useState<string[]>(
     [],
   );
-  const [baggageIncludedOnly, setBaggageIncludedOnly] = useState(true);
+  const [baggageIncludedOnly, setBaggageIncludedOnly] = useState(false);
   const [flexibleOnly, setFlexibleOnly] = useState(false);
   const [tripTypeInput, setTripTypeInput] = useState(
     initialDateSafeParams.get("tripType") || "round-trip",
@@ -2549,7 +2738,7 @@ export function FlightResultsClient() {
       "fQuality",
       allowedQuality,
     );
-    const nextBaggageIncludedOnly = filterParams.get("fBaggage") !== "0";
+    const nextBaggageIncludedOnly = filterParams.get("fBaggage") === "1";
     const nextFlexibleOnly = filterParams.get("fFlexible") === "1";
 
     setMaxPrice((current) =>
@@ -2656,8 +2845,8 @@ export function FlightResultsClient() {
     appendFilterList(nextParams, "fAirport", selectedAirports);
     appendFilterList(nextParams, "fQuality", selectedFlightQuality);
 
-    if (!baggageIncludedOnly) {
-      nextParams.set("fBaggage", "0");
+    if (baggageIncludedOnly) {
+      nextParams.set("fBaggage", "1");
     }
 
     if (flexibleOnly) {
@@ -2727,12 +2916,17 @@ export function FlightResultsClient() {
     count += selectedAirports.length;
     count += selectedFlightQuality.length;
 
+    if (baggageIncludedOnly) {
+      count += 1;
+    }
+
     if (flexibleOnly) {
       count += 1;
     }
 
     return count;
   }, [
+    baggageIncludedOnly,
     durationBounds,
     flexibleOnly,
     maxDurationMinutes,
@@ -2766,7 +2960,7 @@ export function FlightResultsClient() {
     setSelectedAirlines([]);
     setSelectedAirports([]);
     setSelectedFlightQuality([]);
-    setBaggageIncludedOnly(true);
+    setBaggageIncludedOnly(false);
     setFlexibleOnly(false);
   };
 
@@ -5058,7 +5252,28 @@ export function FlightResultsClient() {
                 activeFilterCount={activeFilterCount}
                 activeFilterLabel={activeFilterLabel}
                 filterByLabel={t("filterBy")}
-                onClick={expandDesktopFilters}
+                maxPrice={maxPrice}
+                setMaxPrice={setMaxPrice}
+                priceBounds={priceBounds}
+                priceLabelCurrency={priceLabelCurrency}
+                selectedCurrency={selectedCurrency}
+                timeBounds={timeBounds}
+                maxTakeoffMinutes={maxTakeoffMinutes}
+                setMaxTakeoffMinutes={setMaxTakeoffMinutes}
+                durationBounds={durationBounds}
+                maxDurationMinutes={maxDurationMinutes}
+                setMaxDurationMinutes={setMaxDurationMinutes}
+                stopOptions={stopOptions}
+                selectedStops={selectedStops}
+                setSelectedStops={setSelectedStops}
+                airlineOptions={airlineOptions}
+                selectedAirlines={selectedAirlines}
+                setSelectedAirlines={setSelectedAirlines}
+                baggageIncludedOnly={baggageIncludedOnly}
+                setBaggageIncludedOnly={setBaggageIncludedOnly}
+                onFilterChange={triggerFilterApplying}
+                onClear={clearFlightFilters}
+                onExpand={expandDesktopFilters}
               />
             )}
           </div>
