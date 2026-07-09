@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
 
 import { airlineAliases, airlines, type AirlineOption } from "@/data/airlines";
@@ -110,6 +110,7 @@ export function AirlinePreferenceMultiSelect({
   const listboxId = `${id}-${generatedId}-listbox`;
   const helpId = `${id}-${generatedId}-help`;
   const statusId = `${id}-${generatedId}-status`;
+  const rootRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -132,6 +133,27 @@ export function AirlinePreferenceMultiSelect({
     }
   }, [normalizedValues, onChange, values]);
 
+  function closeDropdown() {
+    setIsOpen(false);
+    setActiveIndex(-1);
+  }
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    function handleDocumentPointerDown(event: PointerEvent) {
+      const root = rootRef.current;
+      if (!root || root.contains(event.target as Node)) return;
+
+      closeDropdown();
+    }
+
+    document.addEventListener("pointerdown", handleDocumentPointerDown);
+    return () => {
+      document.removeEventListener("pointerdown", handleDocumentPointerDown);
+    };
+  }, [isOpen]);
+
   function selectAirline(airline: AirlineOption) {
     if (disabled || isAtLimit) return;
     const code = airline.code.toUpperCase();
@@ -140,8 +162,7 @@ export function AirlinePreferenceMultiSelect({
 
     onChange([...normalizedValues, code].slice(0, MAX_SELECTED_AIRLINES));
     setQuery("");
-    setIsOpen(false);
-    setActiveIndex(-1);
+    closeDropdown();
   }
 
   function removeValue(valueToRemove: string) {
@@ -149,7 +170,16 @@ export function AirlinePreferenceMultiSelect({
   }
 
   return (
-    <div className="block">
+    <div
+      ref={rootRef}
+      className="block"
+      onBlur={(event) => {
+        const nextFocusedElement =
+          event.relatedTarget instanceof Node ? event.relatedTarget : null;
+        if (event.currentTarget.contains(nextFocusedElement)) return;
+        closeDropdown();
+      }}
+    >
       <label
         className="text-sm font-semibold leading-5 text-slate-950"
         htmlFor={id}
@@ -231,8 +261,7 @@ export function AirlinePreferenceMultiSelect({
               const selected = suggestions[activeIndex];
               if (selected) selectAirline(selected);
             } else if (event.key === "Escape") {
-              setIsOpen(false);
-              setActiveIndex(-1);
+              closeDropdown();
             }
           }}
         />
