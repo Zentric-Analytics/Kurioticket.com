@@ -92,6 +92,8 @@ const desktopFilterStickyTopClass = "lg:sticky lg:top-[7.25rem]";
 function useDesktopFilterShortcut(topOffset = 116) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const containerDocumentTopRef = useRef<number | null>(null);
+  const lastFullHeightRef = useRef(0);
   const [isShortcutVisible, setIsShortcutVisible] = useState(false);
   const [isManuallyExpanded, setIsManuallyExpanded] = useState(false);
 
@@ -99,18 +101,39 @@ function useDesktopFilterShortcut(topOffset = 116) {
     if (typeof window === "undefined") return undefined;
 
     let animationFrame = 0;
-    let lastFullHeight = 0;
+
+    const getOffsetDocumentTop = (element: HTMLElement) => {
+      let documentTop = 0;
+      let current: HTMLElement | null = element;
+
+      while (current) {
+        documentTop += current.offsetTop;
+        current = current.offsetParent as HTMLElement | null;
+      }
+
+      return documentTop;
+    };
 
     const updateShortcutState = () => {
       animationFrame = 0;
       const container = containerRef.current;
       if (!container) return;
 
-      const contentHeight = contentRef.current?.offsetHeight || lastFullHeight;
-      if (contentHeight > 0) lastFullHeight = contentHeight;
+      if (containerDocumentTopRef.current === null) {
+        const rectDocumentTop =
+          container.getBoundingClientRect().top + window.scrollY;
+        const offsetDocumentTop = getOffsetDocumentTop(container);
+        containerDocumentTopRef.current = Math.min(
+          rectDocumentTop,
+          offsetDocumentTop || rectDocumentTop,
+        );
+      }
 
-      const containerTop =
-        container.getBoundingClientRect().top + window.scrollY;
+      const contentHeight =
+        contentRef.current?.offsetHeight || lastFullHeightRef.current;
+      if (contentHeight > 0) lastFullHeightRef.current = contentHeight;
+
+      const containerTop = containerDocumentTopRef.current;
       const collapseAfter =
         containerTop + Math.max(contentHeight - 72, 0) - topOffset;
       const shouldCollapse = window.scrollY > collapseAfter;
@@ -127,14 +150,28 @@ function useDesktopFilterShortcut(topOffset = 116) {
       animationFrame = window.requestAnimationFrame(updateShortcutState);
     };
 
+    const handleResize = () => {
+      containerDocumentTopRef.current = null;
+      scheduleUpdate();
+    };
+
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(scheduleUpdate)
+        : null;
+
+    if (containerRef.current) resizeObserver?.observe(containerRef.current);
+    if (contentRef.current) resizeObserver?.observe(contentRef.current);
+
     scheduleUpdate();
     window.addEventListener("scroll", scheduleUpdate, { passive: true });
-    window.addEventListener("resize", scheduleUpdate);
+    window.addEventListener("resize", handleResize);
 
     return () => {
       if (animationFrame) window.cancelAnimationFrame(animationFrame);
+      resizeObserver?.disconnect();
       window.removeEventListener("scroll", scheduleUpdate);
-      window.removeEventListener("resize", scheduleUpdate);
+      window.removeEventListener("resize", handleResize);
     };
   }, [isManuallyExpanded, topOffset]);
 
