@@ -397,7 +397,7 @@ function CarsSearchPage() {
                 </div>
 
                 <div className="page-shell absolute inset-x-0 bottom-[-52px] z-30 lg:bottom-[-56px]">
-                  <div className="mx-auto max-w-6xl">
+                  <div className="mx-auto max-w-[940px]">
                     <CarsSearchBar
                       errors={errors}
                       hasActiveSearch={Boolean(hasActiveSearch)}
