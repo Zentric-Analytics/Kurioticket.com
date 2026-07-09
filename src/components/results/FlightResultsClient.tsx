@@ -4008,7 +4008,7 @@ export function FlightResultsClient() {
             <div
               role="radiogroup"
               aria-label={t("tripType")}
-              className="hidden translate-y-5 items-center gap-4 px-1 pb-0 sm:flex"
+              className="hidden translate-y-6 items-center gap-4 px-1 pb-0 sm:flex"
             >
               {[
                 { label: t("oneWay"), value: "one-way" },
@@ -4623,7 +4623,7 @@ export function FlightResultsClient() {
           "sticky top-[72px] z-40 hidden border-b border-transparent transition-[padding,background-color] duration-200 sm:block",
           isSearchCollapsed
             ? "border-transparent bg-white/95 py-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.05)] backdrop-blur"
-            : "border-transparent bg-white pb-0 pt-5",
+            : "border-transparent bg-white pb-0 pt-6",
         )}
       >
         <div className="page-shell">

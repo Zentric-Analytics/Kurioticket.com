@@ -111,7 +111,7 @@ export default async function FlightResultsPage({
 
   return (
     <>
-      <AppHeader />
+      <AppHeader flushDesktopBottom />
       <Suspense
         fallback={
           <ResultsFallback
