@@ -4620,24 +4620,16 @@ export function FlightResultsClient() {
       <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
       <section
         className={cn(
-          "sticky top-0 z-40 hidden transition-[padding,background-color] duration-200 sm:block",
+          "sticky top-0 z-40 hidden border-b transition-[padding,background-color] duration-200 sm:block",
           isSearchCollapsed
-            ? "border-b border-slate-200/70 bg-white/95 py-1.5 backdrop-blur"
-            : "bg-[#F6F9FC] pb-0 pt-5",
+            ? "border-slate-200/70 bg-white/95 py-1.5 backdrop-blur"
+            : "border-slate-300/95 bg-[#F6F9FC] pb-0 pt-5 shadow-[0_1px_0_rgba(255,255,255,0.9)]",
         )}
       >
         <div className="page-shell">
           {!mobileSearchOpen ? (
-            <div className="relative flex items-stretch gap-2">
-              {!isSearchCollapsed ? (
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-px bg-slate-300/95 shadow-[0_1px_0_rgba(255,255,255,0.9)]"
-                />
-              ) : null}
-              <div className="relative z-10 min-w-0 flex-1">
-                {renderCompactSearchForm("desktop")}
-              </div>
+            <div className="relative z-10 min-w-0">
+              {renderCompactSearchForm("desktop")}
             </div>
           ) : null}
         </div>
