@@ -20,6 +20,19 @@ transfer-checklist-us-001.json
 transfer-completions-us-001.json
 manifest-us-001.json
 first-batch-status-us-001.json
+first-batch-package-us-001.json
+```
+
+Use `first-batch-package-us-001.json` to track whether each required package file exists:
+
+```json
+{
+  "handoff": true,
+  "transferChecklist": true,
+  "transferCompletions": true,
+  "manifest": true,
+  "status": true
+}
 ```
 
 ## Required real asset count
@@ -60,6 +73,26 @@ Create the first-batch status overlay before tracking gate progress:
 node scripts/build-market-asset-first-batch-status-template.mjs > first-batch-status-us-001.json
 ```
 
+Create the package readiness status file and mark only files that exist:
+
+```json
+{
+  "handoff": true,
+  "transferChecklist": false,
+  "transferCompletions": false,
+  "manifest": false,
+  "status": true
+}
+```
+
+Then run package readiness:
+
+```bash
+node scripts/check-market-asset-first-batch-package-readiness.mjs first-batch-package-us-001.json
+```
+
+At this point package readiness is expected to return `ready: false` until every required package file exists.
+
 ### 2. Fill real approved production metadata
 
 Operators must replace every placeholder in `intake-handoff-us-001.json` with real approved metadata.
@@ -97,7 +130,7 @@ Only use the status summary when the report returns `trusted: true`.
 node scripts/build-market-asset-handoff-transfer-checklist.mjs intake-handoff-us-001.json > transfer-checklist-us-001.json
 ```
 
-Update `transferChecklistGenerated` to `true` in `first-batch-status-us-001.json`, then rerun the status report.
+Update `transferChecklistGenerated` to `true` in `first-batch-status-us-001.json`, update `transferChecklist` to `true` in `first-batch-package-us-001.json`, then rerun the status report and package readiness check.
 
 ### 5. Generate transfer completion overlay
 
@@ -105,7 +138,7 @@ Update `transferChecklistGenerated` to `true` in `first-batch-status-us-001.json
 node scripts/build-market-asset-handoff-transfer-completion-template.mjs transfer-checklist-us-001.json > transfer-completions-us-001.json
 ```
 
-Update `transferCompletionsGenerated` to `true` in `first-batch-status-us-001.json`, then rerun the status report.
+Update `transferCompletionsGenerated` to `true` in `first-batch-status-us-001.json`, update `transferCompletions` to `true` in `first-batch-package-us-001.json`, then rerun the status report and package readiness check.
 
 ### 6. Generate final manifest template
 
@@ -113,7 +146,9 @@ Update `transferCompletionsGenerated` to `true` in `first-batch-status-us-001.js
 node scripts/build-market-asset-batch-template.mjs US market-assets-2026-07-us-001 2026-07-08 > manifest-us-001.json
 ```
 
-Update `manifestGenerated` to `true` in `first-batch-status-us-001.json`, then rerun the status report.
+Update `manifestGenerated` to `true` in `first-batch-status-us-001.json`, update `manifest` to `true` in `first-batch-package-us-001.json`, then rerun the status report and package readiness check.
+
+Before transferring approved values into the manifest, package readiness should return `ready: true`.
 
 ### 7. Transfer approved values into manifest
 
@@ -165,6 +200,23 @@ node scripts/convert-market-asset-manifest.mjs manifest-us-001.json
 
 After conversion succeeds and output shape is checked, update `converted` to `true` in `first-batch-status-us-001.json`, then run the final status report.
 
+## First-batch package readiness
+
+Run this after each package file is created:
+
+```bash
+node scripts/check-market-asset-first-batch-package-readiness.mjs first-batch-package-us-001.json
+```
+
+Use the output to confirm:
+
+- `ready: true`
+- `requiredFileCount: 5`
+- `presentFileCount: 5`
+- `missingFileIds: []`
+
+If `ready` is `false`, create the missing files before continuing toward manifest transfer or conversion.
+
 ## First-batch status report
 
 Run this after each status overlay update:
@@ -190,6 +242,7 @@ Stop the first batch immediately if any of these happen:
 - desktop or mobile crop approval is missing
 - alt text is still placeholder-quality
 - dimensions are unknown or still `0 x 0`
+- package readiness returns `ready: false` after required files should exist
 - handoff readiness fails
 - transfer readiness fails
 - manifest review fails
@@ -200,6 +253,6 @@ Stop the first batch immediately if any of these happen:
 ## Safety notes
 
 - Do not add real assets directly to active packs.
-- Do not convert before handoff readiness, transfer readiness, manifest review, conflict checks, and status report integrity all pass.
+- Do not convert before package readiness, handoff readiness, transfer readiness, manifest review, conflict checks, and status report integrity all pass.
 - Do not promote staged entries until staged promotion preview, active audit, release readiness, and build verification pass.
 - Keep the first batch small and fully auditable before scaling to the remaining 99 planned launch batches.
