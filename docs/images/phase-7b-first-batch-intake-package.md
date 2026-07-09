@@ -19,6 +19,7 @@ intake-handoff-us-001.json
 transfer-checklist-us-001.json
 transfer-completions-us-001.json
 manifest-us-001.json
+first-batch-status-us-001.json
 ```
 
 ## Required real asset count
@@ -53,6 +54,12 @@ Every image must have:
 node scripts/build-market-asset-intake-handoff-template.mjs US market-assets-2026-07-us-001 2026-07-08 "Design ops" > intake-handoff-us-001.json
 ```
 
+Create the first-batch status overlay before tracking gate progress:
+
+```bash
+node scripts/build-market-asset-first-batch-status-template.mjs > first-batch-status-us-001.json
+```
+
 ### 2. Fill real approved production metadata
 
 Operators must replace every placeholder in `intake-handoff-us-001.json` with real approved metadata.
@@ -76,11 +83,21 @@ node scripts/check-market-asset-intake-handoff-readiness.mjs intake-handoff-us-0
 
 Only continue when readiness returns `ready: true`.
 
+After the handoff file is generated and readiness passes, update `first-batch-status-us-001.json` so `handoffGenerated` and `handoffReady` are `true`, then run:
+
+```bash
+node scripts/build-market-asset-first-batch-status-report.mjs first-batch-status-us-001.json
+```
+
+Only use the status summary when the report returns `trusted: true`.
+
 ### 4. Generate transfer checklist
 
 ```bash
 node scripts/build-market-asset-handoff-transfer-checklist.mjs intake-handoff-us-001.json > transfer-checklist-us-001.json
 ```
+
+Update `transferChecklistGenerated` to `true` in `first-batch-status-us-001.json`, then rerun the status report.
 
 ### 5. Generate transfer completion overlay
 
@@ -88,11 +105,15 @@ node scripts/build-market-asset-handoff-transfer-checklist.mjs intake-handoff-us
 node scripts/build-market-asset-handoff-transfer-completion-template.mjs transfer-checklist-us-001.json > transfer-completions-us-001.json
 ```
 
+Update `transferCompletionsGenerated` to `true` in `first-batch-status-us-001.json`, then rerun the status report.
+
 ### 6. Generate final manifest template
 
 ```bash
 node scripts/build-market-asset-batch-template.mjs US market-assets-2026-07-us-001 2026-07-08 > manifest-us-001.json
 ```
+
+Update `manifestGenerated` to `true` in `first-batch-status-us-001.json`, then rerun the status report.
 
 ### 7. Transfer approved values into manifest
 
@@ -114,6 +135,8 @@ node scripts/check-market-asset-handoff-transfer-readiness.mjs transfer-checklis
 
 Only continue when transfer readiness returns `ready: true`.
 
+Update `transferReady` to `true` in `first-batch-status-us-001.json`, then rerun the status report.
+
 ### 9. Run final manifest review
 
 ```bash
@@ -121,6 +144,8 @@ node scripts/review-market-asset-manifest.mjs manifest-us-001.json
 ```
 
 Only continue when manifest review returns `ready: true`.
+
+Update `manifestReady` to `true` in `first-batch-status-us-001.json`, then rerun the status report.
 
 ### 10. Run conflict checks
 
@@ -130,11 +155,32 @@ node scripts/check-market-asset-manifest-conflicts.mjs manifest-us-001.json
 
 Only continue when no conflicts are found.
 
+Update `conflictsClear` to `true` in `first-batch-status-us-001.json`, then rerun the status report.
+
 ### 11. Convert the approved manifest
 
 ```bash
 node scripts/convert-market-asset-manifest.mjs manifest-us-001.json
 ```
+
+After conversion succeeds and output shape is checked, update `converted` to `true` in `first-batch-status-us-001.json`, then run the final status report.
+
+## First-batch status report
+
+Run this after each status overlay update:
+
+```bash
+node scripts/build-market-asset-first-batch-status-report.mjs first-batch-status-us-001.json
+```
+
+Use the report to confirm:
+
+- `trusted: true`
+- `integrity.valid: true`
+- the expected `nextGate`
+- whether `readyForConversion` is safe to use
+
+If `trusted` is `false`, fix the status overlay before continuing.
 
 ## First-batch stop conditions
 
@@ -148,11 +194,12 @@ Stop the first batch immediately if any of these happen:
 - transfer readiness fails
 - manifest review fails
 - conflict checks fail
+- status report returns `trusted: false`
 - conversion output does not match the expected staged pack shape
 
 ## Safety notes
 
 - Do not add real assets directly to active packs.
-- Do not convert before handoff readiness, transfer readiness, manifest review, and conflict checks all pass.
+- Do not convert before handoff readiness, transfer readiness, manifest review, conflict checks, and status report integrity all pass.
 - Do not promote staged entries until staged promotion preview, active audit, release readiness, and build verification pass.
 - Keep the first batch small and fully auditable before scaling to the remaining 99 planned launch batches.
