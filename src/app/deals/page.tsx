@@ -1071,7 +1071,7 @@ export default function DealsPage() {
             </div>
           </div>
 
-          <div className="page-shell relative z-20 pt-6 sm:pt-10">
+          <div className="page-shell relative z-20 pt-6 sm:pt-10 lg:pt-20 xl:pt-24">
             <div className="mx-auto w-full max-w-[1120px] space-y-4">
               <div className="px-1">
                 <fieldset
