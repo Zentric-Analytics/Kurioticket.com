@@ -117,10 +117,12 @@ export function PreferencesStatus({
   message,
   mobileMessage,
   tone = "info",
+  className,
 }: {
   message?: string;
   mobileMessage?: string;
   tone?: StatusTone;
+  className?: string;
 }) {
   if (!message) return null;
 
@@ -129,18 +131,19 @@ export function PreferencesStatus({
   return (
     <p
       className={clsx(
-        "inline-flex max-w-full rounded-full border px-3 py-1.5 text-sm font-medium leading-5",
+        "pointer-events-none inline-flex max-w-full rounded-full border px-3 py-1.5 text-sm font-medium leading-5 shadow-sm",
         tone === "error"
           ? "border-red-100 bg-red-50 text-red-700"
           : "border-blue-100 bg-blue-50 text-[#004BB8]",
+        className,
       )}
       role="status"
       aria-live="polite"
     >
       {hasMobileMessage ? (
         <>
-          <span className="sm:hidden">{mobileMessage}</span>
-          <span className="hidden sm:inline">{message}</span>
+          <span className="truncate sm:hidden">{mobileMessage}</span>
+          <span className="hidden truncate sm:inline">{message}</span>
         </>
       ) : (
         <span className="truncate">{message}</span>
@@ -165,22 +168,31 @@ export function PreferencesActions({
   className?: string;
 }) {
   return (
-    <div className={clsx("mt-6 border-t border-slate-300 pt-5", className)}>
-      <div className="flex flex-row items-end justify-end gap-3">
+    <div
+      className={clsx(
+        "relative mt-6 border-t border-slate-300 pb-9 pt-5",
+        className,
+      )}
+    >
+      <div className="flex flex-row items-center justify-end gap-3">
         {secondaryAction ? (
           <div className="flex shrink-0 items-center justify-end">
             {secondaryAction}
           </div>
         ) : null}
-        <div className="flex min-w-0 shrink flex-col items-end gap-2">
+        <div className="flex shrink-0 justify-end">{primaryAction}</div>
+      </div>
+
+      {statusMessage ? (
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-end overflow-hidden">
           <PreferencesStatus
+            className="max-w-full whitespace-nowrap"
             message={statusMessage}
             mobileMessage={mobileStatusMessage}
             tone={statusTone}
           />
-          <div className="flex shrink-0 justify-end">{primaryAction}</div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }
