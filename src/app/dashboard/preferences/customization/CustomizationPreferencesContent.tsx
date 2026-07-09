@@ -434,26 +434,40 @@ export function CustomizationPreferencesContent() {
 
         <PreferencesActions
           statusMessage={statusMessage}
+          statusMobileMessage={
+            status === "saving"
+              ? (t[
+                  "accountDashboard.preferences.customization.status.savingMobile"
+                ] ?? "Saving…")
+              : status === "success"
+                ? (t[
+                    "accountDashboard.preferences.customization.status.savedMobile"
+                  ] ?? "Saved.")
+                : undefined
+          }
           statusTone={status === "error" ? "error" : "info"}
-        >
-          <button
-            type="button"
-            onClick={resetToDefault}
-            className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:flex-none sm:bg-transparent"
-          >
-            {t["accountDashboard.preferences.customization.actions.reset"]}
-          </button>
-          <button
-            type="button"
-            onClick={savePreferences}
-            disabled={status === "saving"}
-            className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
-          >
-            {status === "saving"
-              ? t["accountDashboard.preferences.customization.actions.saving"]
-              : t["accountDashboard.preferences.customization.actions.save"]}
-          </button>
-        </PreferencesActions>
+          secondaryAction={
+            <button
+              type="button"
+              onClick={resetToDefault}
+              className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:flex-none sm:bg-transparent"
+            >
+              {t["accountDashboard.preferences.customization.actions.reset"]}
+            </button>
+          }
+          primaryAction={
+            <button
+              type="button"
+              onClick={savePreferences}
+              disabled={status === "saving"}
+              className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
+            >
+              {status === "saving"
+                ? t["accountDashboard.preferences.customization.actions.saving"]
+                : t["accountDashboard.preferences.customization.actions.save"]}
+            </button>
+          }
+        />
       </div>
     </PreferencesPageShell>
   );

@@ -377,39 +377,49 @@ export function EmailPreferencesContent() {
 
         <PreferencesActions
           statusMessage={statusMessage}
+          statusMobileMessage={
+            status === "success"
+              ? (t[
+                  "accountDashboard.preferences.email.saveSuccessStatusMobile"
+                ] ?? "Saved.")
+              : undefined
+          }
           statusTone={status === "error" ? "error" : "info"}
-        >
-          <button
-            type="button"
-            onClick={resetToDefault}
-            disabled={disabled}
-            className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:bg-transparent"
-          >
-            <span className="sm:hidden">
-              {t["accountDashboard.preferences.email.resetShort"]}
-            </span>
-            <span className="hidden sm:inline">
-              {t["accountDashboard.preferences.email.resetToDefault"]}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={savePreferences}
-            disabled={disabled}
-            className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
-          >
-            <span className="sm:hidden">
-              {status === "saving"
-                ? t["accountDashboard.preferences.email.savingShort"]
-                : t["accountDashboard.preferences.email.saveShort"]}
-            </span>
-            <span className="hidden sm:inline">
-              {status === "saving"
-                ? t["accountDashboard.preferences.email.savingPreferences"]
-                : t["accountDashboard.preferences.email.savePreferences"]}
-            </span>
-          </button>
-        </PreferencesActions>
+          secondaryAction={
+            <button
+              type="button"
+              onClick={resetToDefault}
+              disabled={disabled}
+              className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:bg-transparent"
+            >
+              <span className="sm:hidden">
+                {t["accountDashboard.preferences.email.resetShort"]}
+              </span>
+              <span className="hidden sm:inline">
+                {t["accountDashboard.preferences.email.resetToDefault"]}
+              </span>
+            </button>
+          }
+          primaryAction={
+            <button
+              type="button"
+              onClick={savePreferences}
+              disabled={disabled}
+              className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
+            >
+              <span className="sm:hidden">
+                {status === "saving"
+                  ? t["accountDashboard.preferences.email.savingShort"]
+                  : t["accountDashboard.preferences.email.saveShort"]}
+              </span>
+              <span className="hidden sm:inline">
+                {status === "saving"
+                  ? t["accountDashboard.preferences.email.savingPreferences"]
+                  : t["accountDashboard.preferences.email.savePreferences"]}
+              </span>
+            </button>
+          }
+        />
       </div>
     </PreferencesPageShell>
   );

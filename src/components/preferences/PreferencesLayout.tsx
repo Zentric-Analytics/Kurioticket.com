@@ -103,9 +103,11 @@ export function PreferencesSection({
 
 export function PreferencesStatus({
   message,
+  mobileMessage,
   tone = "info",
 }: {
   message?: string;
+  mobileMessage?: string;
   tone?: StatusTone;
 }) {
   if (!message) return null;
@@ -113,7 +115,7 @@ export function PreferencesStatus({
   return (
     <p
       className={clsx(
-        "inline-flex rounded-full border px-3 py-1.5 text-sm font-medium",
+        "inline-flex max-w-[min(14rem,calc(100vw-2rem))] rounded-full border px-3 py-1.5 text-sm font-medium leading-5",
         tone === "error"
           ? "border-red-100 bg-red-50 text-red-700"
           : "border-blue-100 bg-blue-50 text-[#004BB8]",
@@ -121,31 +123,59 @@ export function PreferencesStatus({
       role="status"
       aria-live="polite"
     >
-      {message}
+      {mobileMessage ? (
+        <>
+          <span className="sm:hidden">{mobileMessage}</span>
+          <span className="hidden sm:inline">{message}</span>
+        </>
+      ) : (
+        message
+      )}
     </p>
   );
 }
 
 export function PreferencesActions({
   statusMessage,
+  statusMobileMessage,
   statusTone = "info",
+  secondaryAction,
+  primaryAction,
   children,
   className,
 }: {
   statusMessage?: string;
+  statusMobileMessage?: string;
   statusTone?: StatusTone;
-  children: ReactNode;
+  secondaryAction?: ReactNode;
+  primaryAction?: ReactNode;
+  children?: ReactNode;
   className?: string;
 }) {
+  const hasActionSlots = secondaryAction || primaryAction;
+
   return (
     <div
       className={clsx(
-        "relative mt-5 flex flex-row items-center justify-end gap-3 sm:mt-0 sm:justify-end sm:pt-1",
+        "relative mt-5 flex flex-row items-end justify-end gap-3 sm:mt-0 sm:justify-end sm:pt-1",
         className,
       )}
     >
-      <PreferencesStatus message={statusMessage} tone={statusTone} />
-      {children}
+      {hasActionSlots ? (
+        <>
+          <div className="flex shrink-0 items-end">{secondaryAction}</div>
+          <div className="flex min-w-0 flex-col items-end gap-2">
+            <PreferencesStatus
+              message={statusMessage}
+              mobileMessage={statusMobileMessage}
+              tone={statusTone}
+            />
+            {primaryAction}
+          </div>
+        </>
+      ) : (
+        children
+      )}
     </div>
   );
 }
