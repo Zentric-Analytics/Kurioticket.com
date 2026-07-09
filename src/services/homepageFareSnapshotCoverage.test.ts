@@ -238,15 +238,44 @@ test("public homepage response hides exact-route last-known-good fares", () => {
 });
 
 
-test("public homepage response shows only fresh active provider-backed exact-route exact-date fares", () => {
+test("public homepage response shows provider-backed exact-route exact-date fares refreshed within 6 hours", () => {
+  const now = new Date("2026-06-09T00:00:00.000Z");
+  for (const searchedAt of [
+    "2026-06-08T23:00:00.000Z",
+    "2026-06-08T18:01:00.000Z",
+  ]) {
+    const entry = __homepageFareCoverageTest.formatHomepageFareSnapshotResponseEntry({
+      route: { id: "fresh-route", origin: "JFK", destination: "LHR" },
+      snapshot: snapshot({
+        origin: "JFK",
+        destination: "LHR",
+        departureDate: "2026-07-24",
+        searchedAt,
+        expiresAt: "2026-06-10T00:00:00.000Z",
+      }) as never,
+      now,
+      currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
+      departureDate: "2026-07-24",
+    });
+
+    assert.equal(entry.price, 499, searchedAt);
+    assert.equal(entry.providerBacked, true, searchedAt);
+    assert.equal(entry.priceState, "fresh", searchedAt);
+    assert.equal(entry.search?.origin, "JFK", searchedAt);
+    assert.equal(entry.search?.destination, "LHR", searchedAt);
+    assert.equal(entry.search?.departureDate, "2026-07-24", searchedAt);
+  }
+});
+
+test("public homepage response hides provider-backed exact-route fares older than 6 hours", () => {
   const now = new Date("2026-06-09T00:00:00.000Z");
   const entry = __homepageFareCoverageTest.formatHomepageFareSnapshotResponseEntry({
-    route: { id: "fresh-route", origin: "JFK", destination: "LHR" },
+    route: { id: "stale-public-route", origin: "JFK", destination: "LHR" },
     snapshot: snapshot({
       origin: "JFK",
       destination: "LHR",
       departureDate: "2026-07-24",
-      searchedAt: "2026-06-08T00:00:00.000Z",
+      searchedAt: "2026-06-08T17:59:00.000Z",
       expiresAt: "2026-06-10T00:00:00.000Z",
     }) as never,
     now,
@@ -254,12 +283,10 @@ test("public homepage response shows only fresh active provider-backed exact-rou
     departureDate: "2026-07-24",
   });
 
-  assert.equal(entry.price, 499);
-  assert.equal(entry.providerBacked, true);
-  assert.equal(entry.priceState, "fresh");
-  assert.equal(entry.search?.origin, "JFK");
-  assert.equal(entry.search?.destination, "LHR");
-  assert.equal(entry.search?.departureDate, "2026-07-24");
+  assert.equal(entry.unavailable, true);
+  assert.equal(entry.providerBacked, false);
+  assert.equal(entry.price, undefined);
+  assert.equal(entry.priceState, "none");
 });
 
 test("public homepage response hides expired, unavailable, failed, non-provider, currency mismatch, and fallback-date fares", () => {
@@ -268,7 +295,7 @@ test("public homepage response hides expired, unavailable, failed, non-provider,
     origin: "JFK",
     destination: "LHR",
     departureDate: "2026-07-24",
-    searchedAt: "2026-06-08T00:00:00.000Z",
+    searchedAt: "2026-06-08T23:00:00.000Z",
     expiresAt: "2026-06-10T00:00:00.000Z",
   };
   const cases = [

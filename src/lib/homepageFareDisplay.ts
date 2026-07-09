@@ -18,8 +18,11 @@ export type FreshPublicHomepageFare<T extends PublicHomepageFareDisplayCandidate
   currency: string;
   providerBacked: true;
   search: NonNullable<T["search"]>;
+  searchedAt: string;
   expiresAt: string;
 };
+
+export const PUBLIC_HOMEPAGE_FARE_TTL_MS = 6 * 60 * 60 * 1000;
 
 export function hasFreshProviderPrice<T extends PublicHomepageFareDisplayCandidate>(
   price: T | undefined,
@@ -32,6 +35,7 @@ export function hasFreshProviderPrice<T extends PublicHomepageFareDisplayCandida
     price.price <= 0 ||
     !price.currency ||
     !price.search ||
+    !price.searchedAt ||
     !price.expiresAt
   ) {
     return false;
@@ -56,9 +60,13 @@ export function hasFreshProviderPrice<T extends PublicHomepageFareDisplayCandida
 
   if (price.priceState && price.priceState !== "fresh") return false;
 
+  const searchedAtMs = Date.parse(price.searchedAt);
   const expiresAtMs = Date.parse(price.expiresAt);
   return (
+    Number.isFinite(searchedAtMs) &&
     Number.isFinite(expiresAtMs) &&
+    searchedAtMs <= Date.now() &&
+    Date.now() - searchedAtMs <= PUBLIC_HOMEPAGE_FARE_TTL_MS &&
     expiresAtMs > Date.now() &&
     price.cachedProviderBacked !== true
   );

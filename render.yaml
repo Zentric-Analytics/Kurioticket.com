@@ -1,4 +1,8 @@
 services:
+  # Schedule POST /api/internal/homepage-fares/refresh with the
+  # HOMEPAGE_FARES_CRON_SECRET bearer token at least every 6 hours. Public
+  # homepage prices are hidden once their provider-backed snapshot is older
+  # than the 6-hour display window.
   - type: web
     name: kurioticket-web
     runtime: node
