@@ -376,19 +376,21 @@ export function CustomizationPreferencesContent() {
                       ]
                     }
                   </span>
-                  <select
-                    value={draftPreferences.locale}
-                    onChange={(event) =>
-                      handleLanguageChange(event.target.value)
-                    }
-                    className="focus-ring mt-2 min-h-11 w-full cursor-pointer rounded-none border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
-                  >
-                    {availableLocales.map((option) => (
-                      <option key={option.code} value={option.code}>
-                        {option.nativeLabel}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="mt-2 w-full sm:max-w-[34rem]">
+                    <select
+                      value={draftPreferences.locale}
+                      onChange={(event) =>
+                        handleLanguageChange(event.target.value)
+                      }
+                      className="focus-ring min-h-11 w-full cursor-pointer rounded-none border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
+                    >
+                      {availableLocales.map((option) => (
+                        <option key={option.code} value={option.code}>
+                          {option.nativeLabel}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </label>
 
                 <label className="block">
@@ -399,20 +401,22 @@ export function CustomizationPreferencesContent() {
                       ]
                     }
                   </span>
-                  <select
-                    value={draftPreferences.currency}
-                    onChange={(event) =>
-                      handleCurrencyChange(event.target.value)
-                    }
-                    className="focus-ring mt-2 min-h-11 w-full cursor-pointer rounded-none border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
-                  >
-                    {currencies.map((option) => (
-                      <option key={option.code} value={option.code}>
-                        {option.code} ·{" "}
-                        {currencyDisplayNames?.of(option.code) ?? option.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="mt-2 w-full sm:max-w-[34rem]">
+                    <select
+                      value={draftPreferences.currency}
+                      onChange={(event) =>
+                        handleCurrencyChange(event.target.value)
+                      }
+                      className="focus-ring min-h-11 w-full cursor-pointer rounded-none border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
+                    >
+                      {currencies.map((option) => (
+                        <option key={option.code} value={option.code}>
+                          {option.code} ·{" "}
+                          {currencyDisplayNames?.of(option.code) ?? option.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </label>
 
                 <label className="block">
@@ -423,22 +427,26 @@ export function CustomizationPreferencesContent() {
                       ]
                     }
                   </span>
-                  <select
-                    value={draftPreferences.region}
-                    onChange={(event) => handleRegionChange(event.target.value)}
-                    className="focus-ring mt-2 min-h-11 w-full cursor-pointer rounded-none border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
-                  >
-                    {regionOptions.map((option) => (
-                      <option key={option.code} value={option.code}>
-                        {getCountryDisplayNameForLocale(
-                          option.code,
-                          locale,
-                          option.country,
-                        )}{" "}
-                        · {option.currency}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="mt-2 w-full sm:max-w-[34rem]">
+                    <select
+                      value={draftPreferences.region}
+                      onChange={(event) =>
+                        handleRegionChange(event.target.value)
+                      }
+                      className="focus-ring min-h-11 w-full cursor-pointer rounded-none border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
+                    >
+                      {regionOptions.map((option) => (
+                        <option key={option.code} value={option.code}>
+                          {getCountryDisplayNameForLocale(
+                            option.code,
+                            locale,
+                            option.country,
+                          )}{" "}
+                          · {option.currency}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </label>
               </PreferencesSection>
 
