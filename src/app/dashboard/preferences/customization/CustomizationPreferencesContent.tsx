@@ -60,10 +60,12 @@ function PreferenceSwitch({
   checked,
   label,
   onChange,
+  disabled = false,
 }: {
   checked: boolean;
   label: string;
   onChange: () => void;
+  disabled?: boolean;
 }) {
   return (
     <button
@@ -71,8 +73,9 @@ function PreferenceSwitch({
       role="switch"
       aria-checked={checked}
       aria-label={label}
+      disabled={disabled}
       onClick={onChange}
-      className="focus-ring inline-flex min-h-8 shrink-0 cursor-pointer items-center rounded-full p-1 transition"
+      className="focus-ring inline-flex min-h-8 shrink-0 cursor-pointer items-center rounded-full p-1 transition disabled:cursor-not-allowed disabled:opacity-60"
     >
       <span
         aria-hidden="true"
@@ -248,6 +251,8 @@ export function CustomizationPreferencesContent() {
     key: BooleanPreferenceKey,
     value: boolean,
   ) => {
+    if (status === "saving") return;
+
     hasUserEditedDraftRef.current = true;
     setDraftPreferences((current) => ({ ...current, [key]: value }));
     setStatus("idle");
@@ -483,6 +488,7 @@ export function CustomizationPreferencesContent() {
                     <div className="shrink-0 pt-1 sm:pt-0">
                       <PreferenceSwitch
                         checked={draftPreferences[option]}
+                        disabled={status === "saving"}
                         label={
                           t[
                             `accountDashboard.preferences.customization.fields.${option}.label`

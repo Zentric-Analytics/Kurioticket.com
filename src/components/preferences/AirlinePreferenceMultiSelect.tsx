@@ -50,7 +50,7 @@ function normalizeSavedValue(value: string) {
   );
 }
 
-function normalizeSavedValues(values: string[]) {
+export function normalizeAirlinePreferenceValues(values: string[]) {
   const seen = new Set<string>();
   const normalized: string[] = [];
 
@@ -116,7 +116,7 @@ export function AirlinePreferenceMultiSelect({
   const [activeIndex, setActiveIndex] = useState(-1);
 
   const normalizedValues = useMemo(
-    () => normalizeSavedValues(values),
+    () => normalizeAirlinePreferenceValues(values),
     [values],
   );
   const isAtLimit = normalizedValues.length >= MAX_SELECTED_AIRLINES;

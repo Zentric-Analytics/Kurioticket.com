@@ -9,7 +9,10 @@ import {
   PreferencesSection,
 } from "@/components/preferences/PreferencesLayout";
 import { AirportPreferenceSelect } from "@/components/preferences/AirportPreferenceSelect";
-import { AirlinePreferenceMultiSelect } from "@/components/preferences/AirlinePreferenceMultiSelect";
+import {
+  AirlinePreferenceMultiSelect,
+  normalizeAirlinePreferenceValues,
+} from "@/components/preferences/AirlinePreferenceMultiSelect";
 import { useLocale } from "@/components/layout/LocaleProvider";
 
 type TravelPreferences = {
@@ -64,7 +67,7 @@ function projectTravelPreferences(
   return {
     homeAirport: value?.homeAirport ?? emptyPreferences.homeAirport,
     preferredAirlines: Array.isArray(value?.preferredAirlines)
-      ? value.preferredAirlines
+      ? normalizeAirlinePreferenceValues(value.preferredAirlines)
       : emptyPreferences.preferredAirlines,
     budgetStyle: value?.budgetStyle ?? emptyPreferences.budgetStyle,
     directVsCheaper: value?.directVsCheaper ?? emptyPreferences.directVsCheaper,
