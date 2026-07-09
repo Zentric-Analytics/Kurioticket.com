@@ -4071,7 +4071,7 @@ export function FlightResultsClient() {
             className={cn(
               "relative overflow-visible rounded-xl border border-slate-200/80 bg-white/90 p-1.5 shadow-[0_16px_36px_-30px_rgba(15,23,42,0.55)] ring-1 ring-white/70 backdrop-blur-md sm:rounded-xl",
               placement === "desktop" &&
-                "sm:translate-y-8 sm:bg-white sm:ring-slate-950/[0.03] sm:backdrop-blur-none",
+                "sm:bg-white sm:ring-slate-950/[0.03] sm:backdrop-blur-none",
             )}
           >
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.85fr)_minmax(0,1.35fr)_minmax(0,1.1fr)_112px] lg:gap-0">
@@ -4620,10 +4620,10 @@ export function FlightResultsClient() {
       <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
       <section
         className={cn(
-          "sticky top-0 z-40 hidden border-b transition-[padding,background-color] duration-200 sm:block",
+          "sticky top-[72px] z-40 hidden border-b border-transparent transition-[padding,background-color] duration-200 sm:block",
           isSearchCollapsed
-            ? "border-[#D8E1EC] bg-white/95 py-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.05)] backdrop-blur"
-            : "border-[#CBD6E2] bg-white pb-0 pt-5",
+            ? "border-transparent bg-white/95 py-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.05)] backdrop-blur"
+            : "border-transparent bg-white pb-0 pt-5",
         )}
       >
         <div className="page-shell">
@@ -4635,7 +4635,7 @@ export function FlightResultsClient() {
         </div>
       </section>
 
-      <div className="page-shell grid gap-4 pb-5 pt-14 sm:pt-20 lg:grid-cols-[256px_minmax(0,1fr)] lg:pt-20">
+      <div className="page-shell grid gap-4 pb-5 pt-8 sm:pt-10 lg:grid-cols-[256px_minmax(0,1fr)] lg:pt-10">
         <aside className={cn("hidden lg:block", desktopFilterStickyTopClass)}>
           <div ref={desktopFilterContainerRef}>
             {showFullDesktopFilters ? (
