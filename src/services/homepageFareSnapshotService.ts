@@ -13,6 +13,7 @@ import {
 import { popularDestinationsByMarket } from "@/data/marketHomeContent";
 import { HOMEPAGE_REFRESH_MARKET_CODES } from "@/lib/market/resolveMarket";
 import { getOptionalPrisma } from "@/lib/prisma";
+import { PUBLIC_HOMEPAGE_FARE_TTL_MS } from "@/lib/homepageFareDisplay";
 import type {
   FlightSearchParams,
   NormalizedFlightResult,
@@ -2427,12 +2428,17 @@ function isFreshHomepageFareSnapshotRecord({
   currency: string;
 }) {
   const price = readFinitePrice(snapshot?.price);
+  const searchedAtMs = snapshot?.searchedAt.getTime();
+  const nowMs = now.getTime();
 
   return Boolean(
     snapshot &&
       snapshot.providerBacked === true &&
       snapshot.status === HomepageFareSnapshotStatus.ACTIVE &&
-      snapshot.expiresAt.getTime() > now.getTime() &&
+      searchedAtMs !== undefined &&
+      searchedAtMs <= nowMs &&
+      nowMs - searchedAtMs <= PUBLIC_HOMEPAGE_FARE_TTL_MS &&
+      snapshot.expiresAt.getTime() > nowMs &&
       price &&
       normalizeHomepageFareCurrency(snapshot.currency) === currency,
   );
@@ -3631,12 +3637,7 @@ function formatHomepageFareSnapshotStatusRoute({
   const price = readFinitePrice(snapshot.price);
   const expiresAtMs = snapshot.expiresAt.getTime();
   const isExpired = expiresAtMs <= now.getTime();
-  const isFresh =
-    snapshot.providerBacked === true &&
-    snapshot.status === HomepageFareSnapshotStatus.ACTIVE &&
-    !isExpired &&
-    Boolean(price) &&
-    normalizeHomepageFareCurrency(snapshot.currency) === currency;
+  const isFresh = isFreshHomepageFareSnapshotRecord({ snapshot, now, currency });
   const isLastKnownGood = isLastKnownGoodHomepageFareSnapshotRecord({
     snapshot,
     now,
@@ -3853,6 +3854,8 @@ function formatHomepageFareSnapshotResponseEntry({
 
   const price = readFinitePrice(snapshot.price);
   const expiresAtMs = snapshot.expiresAt.getTime();
+  const searchedAtMs = snapshot.searchedAt.getTime();
+  const nowMs = now.getTime();
   const normalizedSnapshotCurrency = normalizeHomepageFareCurrency(snapshot.currency);
   const snapshotDepartureDate = formatDateKey(snapshot.departureDate);
   const providerBacked =
@@ -3862,6 +3865,8 @@ function formatHomepageFareSnapshotResponseEntry({
     normalizedSnapshotCurrency === currency;
   const isFreshExactPublicFare =
     providerBacked &&
+    searchedAtMs <= nowMs &&
+    nowMs - searchedAtMs <= PUBLIC_HOMEPAGE_FARE_TTL_MS &&
     expiresAtMs > now.getTime() &&
     snapshotDepartureDate === departureDate &&
     !hasHomepageFareDateFallbackPayload(snapshot.payload);
