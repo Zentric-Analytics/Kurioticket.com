@@ -4070,7 +4070,8 @@ export function FlightResultsClient() {
           <div
             className={cn(
               "relative overflow-visible rounded-xl border border-slate-200/80 bg-white/90 p-1.5 shadow-[0_16px_36px_-30px_rgba(15,23,42,0.55)] ring-1 ring-white/70 backdrop-blur-md sm:rounded-xl",
-              placement === "desktop" && "sm:translate-y-8",
+              placement === "desktop" &&
+                "sm:translate-y-8 sm:bg-white sm:ring-slate-950/[0.03] sm:backdrop-blur-none",
             )}
           >
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.85fr)_minmax(0,1.35fr)_minmax(0,1.1fr)_112px] lg:gap-0">
