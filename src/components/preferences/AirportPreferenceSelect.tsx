@@ -21,7 +21,7 @@ type AirportPreferenceSelectProps = {
 };
 
 const inputClassName =
-  "focus-ring mt-2 min-h-10 w-full rounded-none border border-slate-300 bg-white px-3 pe-11 text-sm font-semibold text-slate-800 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500";
+  "focus-ring mt-2 min-h-10 w-full rounded-none border border-slate-300 bg-white px-3 pe-11 text-base font-semibold text-slate-800 sm:text-sm placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500";
 
 const codeToAirport = new Map(
   airports.map((airport) => [airport.code.toUpperCase(), airport]),
@@ -247,7 +247,7 @@ export function AirportPreferenceSelect({
       </div>
 
       {showLegacyNote ? (
-        <p id={helpId} className="mt-1.5 text-xs font-medium leading-5 text-slate-500">
+        <p id={helpId} className="mt-1.5 text-sm font-medium leading-6 text-slate-500">
           Saved as “{value}”. Search and select an airport to replace it, or clear it for no preference.
         </p>
       ) : null}
@@ -279,10 +279,10 @@ export function AirportPreferenceSelect({
                       : "text-slate-800 hover:bg-slate-50"
                   }`}
                 >
-                  <span className="block text-sm font-bold">
+                  <span className="block text-base font-bold sm:text-sm">
                     {getAirportPrimaryLabel(airport, locale)}
                   </span>
-                  <span className="block text-xs font-medium text-slate-500">
+                  <span className="block text-sm font-medium leading-5 text-slate-500">
                     {getAirportSecondaryLabel(airport, locale)}
                   </span>
                 </button>

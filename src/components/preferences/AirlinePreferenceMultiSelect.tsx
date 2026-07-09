@@ -21,7 +21,7 @@ const inputContainerClassName =
   "flex min-h-10 w-full flex-wrap items-center gap-2 rounded-none border border-slate-300 bg-white px-3 py-2 transition focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-blue-100";
 
 const inputClassName =
-  "min-w-[12rem] flex-[1_0_12rem] border-0 bg-transparent p-0 text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed disabled:text-slate-500";
+  "min-w-[12rem] flex-[1_0_12rem] border-0 bg-transparent p-0 text-base font-semibold text-slate-800 sm:text-sm outline-none placeholder:text-slate-400 disabled:cursor-not-allowed disabled:text-slate-500";
 
 const codeToAirline = new Map(
   airlines.map((airline) => [airline.code.toUpperCase(), airline]),
@@ -274,7 +274,7 @@ export function AirlinePreferenceMultiSelect({
           <div className="absolute left-0 top-full z-20 -mt-px max-h-44 w-full overflow-auto overflow-x-hidden rounded-none border border-slate-200 bg-white shadow-xl sm:max-h-72">
             <p
               id={statusId}
-              className="border-b border-slate-200 px-4 py-2 text-xs font-semibold leading-5 text-slate-500"
+              className="border-b border-slate-200 px-4 py-2 text-sm font-semibold leading-5 text-slate-500"
             >
               {normalizedValues.length}/{MAX_SELECTED_AIRLINES} selected
             </p>
@@ -295,10 +295,10 @@ export function AirlinePreferenceMultiSelect({
                         : "text-slate-800 hover:bg-slate-50"
                     }`}
                   >
-                    <span className="block text-sm font-bold">
+                    <span className="block text-base font-bold sm:text-sm">
                       {airline.name}
                     </span>
-                    <span className="block text-xs font-medium text-slate-500">
+                    <span className="block text-sm font-medium leading-5 text-slate-500">
                       {airline.code}
                     </span>
                   </button>
@@ -318,13 +318,13 @@ export function AirlinePreferenceMultiSelect({
         <>
           <p
             id={helpId}
-            className="mt-1.5 text-xs font-medium leading-5 text-slate-500"
+            className="mt-1.5 text-sm font-medium leading-6 text-slate-500"
           >
             {helpText}
           </p>
           <p
             id={statusId}
-            className="mt-1 text-xs font-semibold leading-5 text-slate-500"
+            className="mt-1 text-sm font-semibold leading-5 text-slate-500"
           >
             {normalizedValues.length}/{MAX_SELECTED_AIRLINES} selected
           </p>

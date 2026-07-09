@@ -369,7 +369,7 @@ export function CustomizationPreferencesContent() {
                 contentClassName="grid gap-4"
               >
                 <label className="block">
-                  <span className="text-sm font-semibold leading-5 text-slate-950">
+                  <span className="text-base font-semibold leading-6 text-slate-950 sm:text-sm sm:leading-5">
                     {
                       t[
                         "accountDashboard.preferences.customization.fields.language.label"
@@ -382,7 +382,7 @@ export function CustomizationPreferencesContent() {
                       onChange={(event) =>
                         handleLanguageChange(event.target.value)
                       }
-                      className="focus-ring min-h-11 w-full cursor-pointer rounded-none border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
+                      className="focus-ring min-h-11 w-full cursor-pointer rounded-none border border-slate-300 bg-white px-3 text-base font-semibold text-slate-800 sm:text-sm"
                     >
                       {availableLocales.map((option) => (
                         <option key={option.code} value={option.code}>
@@ -394,7 +394,7 @@ export function CustomizationPreferencesContent() {
                 </label>
 
                 <label className="block">
-                  <span className="text-sm font-semibold leading-5 text-slate-950">
+                  <span className="text-base font-semibold leading-6 text-slate-950 sm:text-sm sm:leading-5">
                     {
                       t[
                         "accountDashboard.preferences.customization.fields.currency.label"
@@ -407,7 +407,7 @@ export function CustomizationPreferencesContent() {
                       onChange={(event) =>
                         handleCurrencyChange(event.target.value)
                       }
-                      className="focus-ring min-h-11 w-full cursor-pointer rounded-none border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
+                      className="focus-ring min-h-11 w-full cursor-pointer rounded-none border border-slate-300 bg-white px-3 text-base font-semibold text-slate-800 sm:text-sm"
                     >
                       {currencies.map((option) => (
                         <option key={option.code} value={option.code}>
@@ -420,7 +420,7 @@ export function CustomizationPreferencesContent() {
                 </label>
 
                 <label className="block">
-                  <span className="text-sm font-semibold leading-5 text-slate-950">
+                  <span className="text-base font-semibold leading-6 text-slate-950 sm:text-sm sm:leading-5">
                     {
                       t[
                         "accountDashboard.preferences.customization.fields.region.label"
@@ -433,7 +433,7 @@ export function CustomizationPreferencesContent() {
                       onChange={(event) =>
                         handleRegionChange(event.target.value)
                       }
-                      className="focus-ring min-h-11 w-full cursor-pointer rounded-none border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
+                      className="focus-ring min-h-11 w-full cursor-pointer rounded-none border border-slate-300 bg-white px-3 text-base font-semibold text-slate-800 sm:text-sm"
                     >
                       {regionOptions.map((option) => (
                         <option key={option.code} value={option.code}>
@@ -465,7 +465,7 @@ export function CustomizationPreferencesContent() {
                     className="flex items-start justify-between gap-4 py-4 sm:items-center sm:gap-6"
                   >
                     <div className="min-w-0 flex-1 sm:flex-initial">
-                      <p className="text-sm font-semibold leading-5 text-slate-950">
+                      <p className="text-base font-semibold leading-6 text-slate-950 sm:text-sm sm:leading-5">
                         {
                           t[
                             `accountDashboard.preferences.customization.fields.${option}.label`
