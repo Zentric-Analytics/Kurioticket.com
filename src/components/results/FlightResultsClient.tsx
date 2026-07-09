@@ -1095,6 +1095,18 @@ export function FlightResultsClient() {
     setIsSearchExpandedWhileSticky(true);
   }, []);
 
+  function revealFullSearchForm() {
+    closeFlightSearchPopovers();
+    setIsSearchExpandedWhileSticky(false);
+    searchFormRef.current?.scrollIntoView({
+      block: "center",
+      behavior: "smooth",
+    });
+    window.setTimeout(() => {
+      originInputRef.current?.focus({ preventScroll: true });
+    }, 250);
+  }
+
   const collapseStickySearch = useCallback(() => {
     setIsSearchExpandedWhileSticky(false);
     setTripTypeMenuOpen(false);
@@ -3626,6 +3638,65 @@ export function FlightResultsClient() {
     );
   }
 
+  function renderDesktopMinimizedSearchBar() {
+    return (
+      <div
+        className={cn(
+          "fixed inset-x-0 top-0 z-40 hidden px-4 pt-3 transition-all duration-200 lg:block",
+          isSearchCollapsed
+            ? "pointer-events-auto translate-y-0 opacity-100"
+            : "pointer-events-none -translate-y-3 opacity-0",
+        )}
+        aria-hidden={!isSearchCollapsed}
+      >
+        <div className="page-shell">
+          <div className="mx-auto flex min-h-[58px] w-full max-w-5xl items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white/95 px-4 py-2.5 shadow-[0_16px_36px_-24px_rgba(15,23,42,0.55)] ring-1 ring-white/80 backdrop-blur-md">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E9F8F7] text-[#027D78]">
+                <ArrowRightLeft className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <div className="min-w-0">
+                <div className="flex min-w-0 items-center gap-2 text-sm font-black text-slate-950">
+                  <span className="truncate">{mobileOriginSummary}</span>
+                  <span className="shrink-0 text-slate-400" aria-hidden="true">
+                    →
+                  </span>
+                  <span className="truncate">{mobileDestinationSummary}</span>
+                </div>
+                <div className="mt-0.5 flex min-w-0 items-center gap-2 text-xs font-semibold text-slate-500">
+                  <span className="shrink-0">{mobileTripTypeSummary}</span>
+                  <span className="text-slate-300" aria-hidden="true">
+                    ·
+                  </span>
+                  <span className="truncate">{mobileDateSummary}</span>
+                  <span
+                    className="hidden text-slate-300 xl:inline"
+                    aria-hidden="true"
+                  >
+                    ·
+                  </span>
+                  <span className="hidden truncate xl:inline">
+                    {travelerCabinSummary}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              aria-label={t("editFlightSearch")}
+              onClick={revealFullSearchForm}
+              className="focus-ring inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-[#004BB8]/15 bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_10px_20px_rgba(0,75,184,0.16)] transition hover:bg-[#021C2B]"
+            >
+              <SquarePen className="h-4 w-4" aria-hidden="true" />
+              {t("edit")}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   function renderCompactSearchPopovers(
     placement: "mobile" | "desktop" = "desktop",
   ) {
@@ -4623,6 +4694,8 @@ export function FlightResultsClient() {
           />
         </>
       ) : null}
+
+      {renderDesktopMinimizedSearchBar()}
 
       <div
         ref={stickySentinelRef}
