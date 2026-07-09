@@ -1144,12 +1144,17 @@ export function FlightResultsClient() {
     };
 
     const updateFromSentinelPosition = () => {
+      const searchFormRect = searchFormRef.current?.getBoundingClientRect();
+
+      if (searchFormRect) {
+        applyCompactState(searchFormRect.bottom <= 16);
+        return;
+      }
+
       const sentinelRect = sentinel.getBoundingClientRect();
       const sentinelScrollTop = sentinelRect.top + window.scrollY;
-      const fullSearchHeight = searchFormRef.current?.offsetHeight ?? 0;
-      const compactTriggerOffset = Math.max(fullSearchHeight - 56, 72);
       const hasPassedStickyTrigger =
-        window.scrollY > Math.max(16, sentinelScrollTop + compactTriggerOffset);
+        window.scrollY > Math.max(16, sentinelScrollTop + 72);
 
       applyCompactState(hasPassedStickyTrigger);
     };
@@ -3642,7 +3647,7 @@ export function FlightResultsClient() {
     return (
       <div
         className={cn(
-          "fixed inset-x-0 top-0 z-40 hidden px-4 pt-3 transition-all duration-200 lg:block",
+          "fixed inset-x-0 top-0 z-[100] hidden px-4 pt-3 transition-all duration-200 lg:block",
           isSearchCollapsed
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none -translate-y-3 opacity-0",
