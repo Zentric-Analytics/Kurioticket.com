@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   PreferencesActions,
   PreferencesCard,
@@ -51,6 +51,17 @@ const defaultEmailPreferences: EmailPreferences = {
   productUpdates: true,
   dealsRecommendations: false,
 };
+
+const emailPreferenceKeys = Object.keys(
+  defaultEmailPreferences,
+) as EditablePreferenceKey[];
+
+function areEmailPreferencesEqual(
+  first: EmailPreferences,
+  second: EmailPreferences,
+) {
+  return emailPreferenceKeys.every((key) => first[key] === second[key]);
+}
 
 const preferenceSections: PreferenceSection[] = [
   {
@@ -132,6 +143,16 @@ export function EmailPreferencesContent() {
   const [statusMessage, setStatusMessage] = useState("");
 
   const disabled = status === "loading" || status === "saving";
+  const hasUnsavedChanges = useMemo(
+    () => !areEmailPreferencesEqual(preferences, savedPreferences),
+    [preferences, savedPreferences],
+  );
+  const canResetToDefault = useMemo(
+    () => !areEmailPreferencesEqual(preferences, defaultEmailPreferences),
+    [preferences],
+  );
+  const saveDisabled = disabled || !hasUnsavedChanges;
+  const resetDisabled = disabled || !canResetToDefault;
 
   useEffect(() => {
     if (status !== "success" || !statusMessage) return;
@@ -190,13 +211,15 @@ export function EmailPreferencesContent() {
   };
 
   const resetToDefault = () => {
-    if (disabled) return;
+    if (resetDisabled) return;
     setPreferences(defaultEmailPreferences);
     setStatus("idle");
     setStatusMessage("");
   };
 
   const savePreferences = async () => {
+    if (saveDisabled) return;
+
     setStatus("saving");
     setStatusMessage("");
 
@@ -386,7 +409,7 @@ export function EmailPreferencesContent() {
               <button
                 type="button"
                 onClick={resetToDefault}
-                disabled={disabled}
+                disabled={resetDisabled}
                 className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:bg-transparent"
               >
                 <span className="sm:hidden">
@@ -401,7 +424,7 @@ export function EmailPreferencesContent() {
               <button
                 type="button"
                 onClick={savePreferences}
-                disabled={disabled}
+                disabled={saveDisabled}
                 className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
               >
                 <span className="sm:hidden">
