@@ -4632,7 +4632,7 @@ export function FlightResultsClient() {
               {!isSearchCollapsed ? (
                 <span
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-4 bottom-0 h-px bg-slate-400/80 shadow-[0_1px_0_rgba(255,255,255,0.82)]"
+                  className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-px bg-slate-300/95 shadow-[0_1px_0_rgba(255,255,255,0.9)]"
                 />
               ) : null}
               <div className="relative z-10 min-w-0 flex-1">
