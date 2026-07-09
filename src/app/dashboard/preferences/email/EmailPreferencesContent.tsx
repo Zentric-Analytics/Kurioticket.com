@@ -288,8 +288,8 @@ export function EmailPreferencesContent() {
                           <p
                             className={
                               preferences.receiveOptionalEmails
-                                ? "text-sm font-semibold leading-5 text-slate-950"
-                                : "text-sm font-semibold leading-5 text-slate-500"
+                                ? "text-base font-semibold leading-6 text-slate-950 sm:text-sm sm:leading-5"
+                                : "text-base font-semibold leading-6 text-slate-500 sm:text-sm sm:leading-5"
                             }
                           >
                             {
@@ -351,7 +351,7 @@ export function EmailPreferencesContent() {
                     <div className="mt-6 border-t border-slate-300 pt-5">
                       <div className="flex items-start justify-between gap-4 sm:items-center sm:gap-6">
                         <div className="min-w-0 flex-1 sm:flex-initial">
-                          <p className="text-sm font-semibold leading-5 text-slate-950">
+                          <p className="text-base font-semibold leading-6 text-slate-950 sm:text-sm sm:leading-5">
                             {
                               t[
                                 "accountDashboard.preferences.email.masterOptional.title"

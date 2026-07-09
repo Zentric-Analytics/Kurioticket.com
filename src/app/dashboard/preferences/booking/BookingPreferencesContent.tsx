@@ -95,7 +95,7 @@ function areTravelPreferencesEqual(
 }
 
 const fieldClassName =
-  "focus-ring mt-2 min-h-10 w-full rounded-none border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500";
+  "focus-ring mt-2 min-h-10 w-full rounded-none border border-slate-300 bg-white px-3 text-base font-semibold text-slate-800 sm:text-sm placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500";
 
 const selectClassName = `${fieldClassName} cursor-pointer`;
 

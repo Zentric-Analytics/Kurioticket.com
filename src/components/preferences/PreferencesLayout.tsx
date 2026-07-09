@@ -98,7 +98,7 @@ export function PreferencesSection({
       <div>
         <h3
           id={id}
-          className="text-xs font-bold uppercase tracking-[0.1em] text-slate-600"
+          className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-600"
         >
           {title}
         </h3>
