@@ -3,6 +3,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
 
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { airlineAliases, airlines, type AirlineOption } from "@/data/airlines";
 
 type AirlinePreferenceMultiSelectProps = {
@@ -103,9 +104,10 @@ export function AirlinePreferenceMultiSelect({
   label,
   values,
   disabled = false,
-  helpText = "Search by airline name or IATA code. Choose up to 10 airlines.",
+  helpText,
   onChange,
 }: AirlinePreferenceMultiSelectProps) {
+  const { t } = useLocale();
   const generatedId = useId();
   const listboxId = `${id}-${generatedId}-listbox`;
   const helpId = `${id}-${generatedId}-help`;
@@ -126,6 +128,11 @@ export function AirlinePreferenceMultiSelect({
   );
   const activeOptionId =
     activeIndex >= 0 ? `${listboxId}-option-${activeIndex}` : undefined;
+  const selectedCountText = t[
+    "accountDashboard.preferences.booking.airline.selectedCount"
+  ]
+    .replace("{{count}}", String(normalizedValues.length))
+    .replace("{{max}}", String(MAX_SELECTED_AIRLINES));
 
   useEffect(() => {
     if (JSON.stringify(normalizedValues) !== JSON.stringify(values)) {
@@ -234,8 +241,10 @@ export function AirlinePreferenceMultiSelect({
             disabled={disabled || isAtLimit}
             placeholder={
               isAtLimit
-                ? "Maximum of 10 airlines selected"
-                : "Search airline or code"
+                ? t[
+                    "accountDashboard.preferences.booking.airline.limitPlaceholder"
+                  ]
+                : t["accountDashboard.preferences.booking.airline.placeholder"]
             }
             maxLength={80}
             className={inputClassName}
@@ -276,7 +285,7 @@ export function AirlinePreferenceMultiSelect({
               id={statusId}
               className="border-b border-slate-200 px-4 py-2 text-sm font-semibold leading-5 text-slate-500"
             >
-              {normalizedValues.length}/{MAX_SELECTED_AIRLINES} selected
+              {selectedCountText}
             </p>
             <div id={listboxId} role="listbox" className="p-1.5">
               {suggestions.length ? (
@@ -306,8 +315,12 @@ export function AirlinePreferenceMultiSelect({
               ) : (
                 <p className="px-3 py-2 text-sm font-medium text-slate-500">
                   {query.trim()
-                    ? "No matching airlines found."
-                    : "Start typing to search airlines."}
+                    ? t[
+                        "accountDashboard.preferences.booking.airline.noMatches"
+                      ]
+                    : t[
+                        "accountDashboard.preferences.booking.airline.startTyping"
+                      ]}
                 </p>
               )}
             </div>
@@ -320,13 +333,13 @@ export function AirlinePreferenceMultiSelect({
             id={helpId}
             className="mt-1.5 text-sm font-medium leading-6 text-slate-500"
           >
-            {helpText}
+            {helpText ?? t["accountDashboard.preferences.booking.airline.help"]}
           </p>
           <p
             id={statusId}
             className="mt-1 text-sm font-semibold leading-5 text-slate-500"
           >
-            {normalizedValues.length}/{MAX_SELECTED_AIRLINES} selected
+            {selectedCountText}
           </p>
         </>
       ) : null}

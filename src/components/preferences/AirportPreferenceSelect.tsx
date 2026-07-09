@@ -3,6 +3,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
 
+import { useLocale } from "@/components/layout/LocaleProvider";
 import {
   airports,
   formatAirportLabel,
@@ -27,7 +28,10 @@ const codeToAirport = new Map(
   airports.map((airport) => [airport.code.toUpperCase(), airport]),
 );
 
-function getAirportPrimaryLabel(airport: AirportOption, locale?: string | null) {
+function getAirportPrimaryLabel(
+  airport: AirportOption,
+  locale?: string | null,
+) {
   return formatAirportLabel(airport, locale);
 }
 
@@ -43,7 +47,10 @@ function getAirportSecondaryLabel(
     .join(" · ");
 }
 
-function getAirportDisplayLabel(airport: AirportOption, locale?: string | null) {
+function getAirportDisplayLabel(
+  airport: AirportOption,
+  locale?: string | null,
+) {
   const secondary = getAirportSecondaryLabel(airport, locale);
   return secondary
     ? `${getAirportPrimaryLabel(airport, locale)} — ${secondary}`
@@ -77,6 +84,7 @@ export function AirportPreferenceSelect({
   locale,
   onChange,
 }: AirportPreferenceSelectProps) {
+  const { t } = useLocale();
   const generatedId = useId();
   const listboxId = `${id}-${generatedId}-listbox`;
   const helpId = `${id}-${generatedId}-help`;
@@ -109,12 +117,17 @@ export function AirportPreferenceSelect({
         if (typeof navigator !== "undefined" && navigator.language) {
           params.set("locale", navigator.language);
         }
-        const response = await fetch(`/api/flights/places?${params.toString()}`, {
-          cache: "no-store",
-          signal: controller.signal,
-        });
+        const response = await fetch(
+          `/api/flights/places?${params.toString()}`,
+          {
+            cache: "no-store",
+            signal: controller.signal,
+          },
+        );
         if (!response.ok) throw new Error("Airport suggestions unavailable.");
-        const data = (await response.json()) as { suggestions?: AirportOption[] };
+        const data = (await response.json()) as {
+          suggestions?: AirportOption[];
+        };
         setSuggestions(dedupeSuggestions(data.suggestions ?? []).slice(0, 8));
       } catch {
         if (!controller.signal.aborted) setSuggestions([]);
@@ -178,7 +191,10 @@ export function AirportPreferenceSelect({
         closeDropdown();
       }}
     >
-      <label className="text-sm font-semibold leading-5 text-slate-950" htmlFor={id}>
+      <label
+        className="text-sm font-semibold leading-5 text-slate-950"
+        htmlFor={id}
+      >
         {label}
       </label>
       <div className="relative mt-2">
@@ -196,7 +212,9 @@ export function AirportPreferenceSelect({
           autoComplete="off"
           value={displayedInputValue}
           disabled={disabled}
-          placeholder="Search city, airport, or code"
+          placeholder={
+            t["accountDashboard.preferences.booking.airport.placeholder"]
+          }
           maxLength={120}
           className={`${inputClassName} ${
             isOpen && !disabled ? "border-b-slate-200" : ""
@@ -238,7 +256,7 @@ export function AirportPreferenceSelect({
         {value || inputValue ? (
           <button
             type="button"
-            aria-label="Clear home airport"
+            aria-label={t["accountDashboard.preferences.booking.airport.clear"]}
             disabled={disabled}
             onClick={clearAirport}
             className="focus-ring absolute end-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
@@ -254,8 +272,11 @@ export function AirportPreferenceSelect({
             className="absolute left-0 top-full z-20 -mt-px max-h-44 w-full overflow-auto rounded-none border border-slate-200 bg-white p-1.5 shadow-xl sm:max-h-72"
           >
             {isLoading ? (
-              <p className="px-3 py-2 text-sm font-medium text-slate-500" role="status">
-                Searching airports…
+              <p
+                className="px-3 py-2 text-sm font-medium text-slate-500"
+                role="status"
+              >
+                {t["accountDashboard.preferences.booking.airport.searching"]}
               </p>
             ) : suggestions.length ? (
               suggestions.map((airport, index) => (
@@ -283,11 +304,11 @@ export function AirportPreferenceSelect({
               ))
             ) : displayedInputValue.trim() ? (
               <p className="px-3 py-2 text-sm font-medium text-slate-500">
-                No matching airports found.
+                {t["accountDashboard.preferences.booking.airport.noMatches"]}
               </p>
             ) : (
               <p className="px-3 py-2 text-sm font-medium text-slate-500">
-                Start typing to search airports.
+                {t["accountDashboard.preferences.booking.airport.startTyping"]}
               </p>
             )}
           </div>
@@ -295,8 +316,13 @@ export function AirportPreferenceSelect({
       </div>
 
       {showLegacyNote ? (
-        <p id={helpId} className="mt-1.5 text-sm font-medium leading-6 text-slate-500">
-          Saved as “{value}”. Search and select an airport to replace it, or clear it for no preference.
+        <p
+          id={helpId}
+          className="mt-1.5 text-sm font-medium leading-6 text-slate-500"
+        >
+          {t[
+            "accountDashboard.preferences.booking.airport.savedLegacy"
+          ].replace("{{value}}", value)}
         </p>
       ) : null}
     </div>
