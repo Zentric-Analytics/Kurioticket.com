@@ -45,6 +45,10 @@ const defaultCustomizationPreferences: CustomizationPreferencesDraft = {
   ...defaultPersonalizationPreferences,
 };
 
+const customizationPreferenceKeys = Object.keys(
+  defaultCustomizationPreferences,
+) as Array<keyof CustomizationPreferencesDraft>;
+
 const personalizationOptions: BooleanPreferenceKey[] = [
   "rememberChoices",
   "personalizeRecommendations",
@@ -89,6 +93,13 @@ function PreferenceSwitch({
   );
 }
 
+function areCustomizationPreferencesEqual(
+  first: CustomizationPreferencesDraft,
+  second: CustomizationPreferencesDraft,
+) {
+  return customizationPreferenceKeys.every((key) => first[key] === second[key]);
+}
+
 export function CustomizationPreferencesContent() {
   const { locale, setLocale, t, locales } = useLocale();
   const {
@@ -106,9 +117,30 @@ export function CustomizationPreferencesContent() {
       region: mode,
       ...defaultPersonalizationPreferences,
     }));
+  const [savedPreferences, setSavedPreferences] =
+    useState<CustomizationPreferencesDraft>(() => ({
+      locale,
+      currency: selectedCurrency,
+      region: mode,
+      ...defaultPersonalizationPreferences,
+    }));
   const hasUserEditedDraftRef = useRef(false);
   const [status, setStatus] = useState<Status>("idle");
   const [statusMessage, setStatusMessage] = useState("");
+  const hasUnsavedChanges = useMemo(
+    () => !areCustomizationPreferencesEqual(draftPreferences, savedPreferences),
+    [draftPreferences, savedPreferences],
+  );
+  const canResetToDefault = useMemo(
+    () =>
+      !areCustomizationPreferencesEqual(
+        draftPreferences,
+        defaultCustomizationPreferences,
+      ),
+    [draftPreferences],
+  );
+  const saveDisabled = status === "saving" || !hasUnsavedChanges;
+  const resetDisabled = status === "saving" || !canResetToDefault;
 
   useEffect(() => {
     if (status !== "success" || !statusMessage) return;
@@ -150,10 +182,16 @@ export function CustomizationPreferencesContent() {
         )
           return;
 
+        const nextPreferences = {
+          ...defaultCustomizationPreferences,
+          ...data.preferences,
+        };
+
         setDraftPreferences((current) => ({
           ...current,
-          ...data.preferences,
+          ...nextPreferences,
         }));
+        setSavedPreferences(nextPreferences);
       } catch {
         if (!isActive) return;
 
@@ -208,6 +246,8 @@ export function CustomizationPreferencesContent() {
   };
 
   const resetToDefault = () => {
+    if (resetDisabled) return;
+
     hasUserEditedDraftRef.current = true;
     setDraftPreferences(defaultCustomizationPreferences);
     setStatus("idle");
@@ -237,6 +277,8 @@ export function CustomizationPreferencesContent() {
   };
 
   const savePreferences = async () => {
+    if (saveDisabled) return;
+
     setStatus("saving");
     setStatusMessage(
       t["accountDashboard.preferences.customization.status.saving"],
@@ -254,6 +296,7 @@ export function CustomizationPreferencesContent() {
 
       if (response.status === 401) {
         applyDraftToDevice(draftPreferences);
+        setSavedPreferences(draftPreferences);
         showStatusMessage(
           "success",
           "accountDashboard.preferences.customization.status.updatedOnDeviceSignedOut",
@@ -271,6 +314,7 @@ export function CustomizationPreferencesContent() {
       const savedPreferences = data.preferences ?? draftPreferences;
 
       setDraftPreferences(savedPreferences);
+      setSavedPreferences(savedPreferences);
       applyDraftToDevice(savedPreferences);
       showStatusMessage(
         "success",
@@ -448,7 +492,8 @@ export function CustomizationPreferencesContent() {
               <button
                 type="button"
                 onClick={resetToDefault}
-                className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:flex-none sm:bg-transparent"
+                disabled={resetDisabled}
+                className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:bg-transparent"
               >
                 {t["accountDashboard.preferences.customization.actions.reset"]}
               </button>
@@ -457,7 +502,7 @@ export function CustomizationPreferencesContent() {
               <button
                 type="button"
                 onClick={savePreferences}
-                disabled={status === "saving"}
+                disabled={saveDisabled}
                 className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
               >
                 {status === "saving"

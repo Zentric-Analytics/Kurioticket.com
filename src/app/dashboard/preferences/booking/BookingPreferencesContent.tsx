@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   PreferencesActions,
   PreferencesCard,
@@ -55,6 +55,10 @@ const emptyPreferences: TravelPreferences = {
   travelPurpose: "",
 };
 
+const travelPreferenceKeys = Object.keys(
+  emptyPreferences,
+) as Array<keyof TravelPreferences>;
+
 type TravelPreferencesApiResponse = Partial<TravelPreferences> & {
   notificationPreferences?: unknown;
 };
@@ -74,6 +78,25 @@ function projectTravelPreferences(
       value?.comfortVsSavings ?? emptyPreferences.comfortVsSavings,
     travelPurpose: value?.travelPurpose ?? emptyPreferences.travelPurpose,
   };
+}
+
+function areTravelPreferencesEqual(
+  first: TravelPreferences,
+  second: TravelPreferences,
+) {
+  return travelPreferenceKeys.every((key) => {
+    const firstValue = first[key];
+    const secondValue = second[key];
+
+    if (Array.isArray(firstValue) && Array.isArray(secondValue)) {
+      return (
+        firstValue.length === secondValue.length &&
+        firstValue.every((value, index) => value === secondValue[index])
+      );
+    }
+
+    return firstValue === secondValue;
+  });
 }
 
 const fieldClassName =
@@ -161,6 +184,12 @@ export function BookingPreferencesContent() {
   const [message, setMessage] = useState("");
 
   const disabled = status === "loading" || status === "saving";
+  const hasUnsavedChanges = useMemo(
+    () => !areTravelPreferencesEqual(preferences, initialPreferences),
+    [preferences, initialPreferences],
+  );
+  const saveDisabled = disabled || !hasUnsavedChanges;
+  const revertDisabled = disabled || !hasUnsavedChanges;
 
   useEffect(() => {
     if ((status !== "success" && status !== "reverted") || !message) {
@@ -221,10 +250,14 @@ export function BookingPreferencesContent() {
 
   function updateField(field: keyof TravelPreferences, value: string) {
     setPreferences((current) => ({ ...current, [field]: value }));
+    setStatus("idle");
+    setMessage("");
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (saveDisabled) return;
+
     setStatus("saving");
     setMessage("");
     try {
@@ -310,12 +343,14 @@ export function BookingPreferencesContent() {
                 values={preferences.preferredAirlines}
                 disabled={disabled}
                 helpText="Search by airline name or IATA code. Choose up to 10 airlines."
-                onChange={(values) =>
+                onChange={(values) => {
                   setPreferences((current) => ({
                     ...current,
                     preferredAirlines: values,
-                  }))
-                }
+                  }));
+                  setStatus("idle");
+                  setMessage("");
+                }}
               />
               <SelectField
                 id="directVsCheaper"
@@ -405,8 +440,10 @@ export function BookingPreferencesContent() {
             secondaryAction={
               <button
                 type="button"
-                disabled={disabled}
+                disabled={revertDisabled}
                 onClick={() => {
+                  if (revertDisabled) return;
+
                   setPreferences(initialPreferences);
                   setMessage(
                     t["accountDashboard.preferences.booking.status.reverted"] ??
@@ -423,7 +460,7 @@ export function BookingPreferencesContent() {
             primaryAction={
               <button
                 type="submit"
-                disabled={disabled}
+                disabled={saveDisabled}
                 className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
               >
                 {status === "saving"
