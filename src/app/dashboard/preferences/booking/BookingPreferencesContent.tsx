@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   PreferencesActions,
   PreferencesCard,
+  PreferencesLoadingState,
   PreferencesPageShell,
   PreferencesSection,
 } from "@/components/preferences/PreferencesLayout";
@@ -21,13 +22,7 @@ type TravelPreferences = {
   travelPurpose: string;
 };
 
-type Status =
-  | "idle"
-  | "loading"
-  | "saving"
-  | "success"
-  | "reverted"
-  | "error";
+type Status = "idle" | "loading" | "saving" | "success" | "reverted" | "error";
 
 // Existing i18n coverage keys retained for active localized preference-page audits:
 // accountDashboard.preferences.booking.airports.title
@@ -55,9 +50,9 @@ const emptyPreferences: TravelPreferences = {
   travelPurpose: "",
 };
 
-const travelPreferenceKeys = Object.keys(
-  emptyPreferences,
-) as Array<keyof TravelPreferences>;
+const travelPreferenceKeys = Object.keys(emptyPreferences) as Array<
+  keyof TravelPreferences
+>;
 
 type TravelPreferencesApiResponse = Partial<TravelPreferences> & {
   notificationPreferences?: unknown;
@@ -300,176 +295,186 @@ export function BookingPreferencesContent() {
       <form className="space-y-5" action="#" onSubmit={handleSubmit}>
         <PreferencesCard>
           {status === "loading" ? (
-            <p
-              className="max-w-2xl text-sm font-medium leading-6 text-slate-700"
-              role="status"
-              aria-live="polite"
-            >
-              {t["accountDashboard.preferences.booking.status.loading"] ??
-                "Loading your travel preferences…"}
-            </p>
-          ) : null}
-
-          <div className="max-w-2xl">
-            <PreferencesSection
-              id="flight-defaults-preferences"
-              title={
-                t[
-                  "accountDashboard.preferences.booking.sections.flightDefaults.title"
-                ] ?? "Flight defaults"
+            <PreferencesLoadingState
+              message={
+                t["accountDashboard.preferences.booking.status.loading"] ??
+                "Loading your travel preferences…"
               }
-              description={
-                t[
-                  "accountDashboard.preferences.booking.sections.flightDefaults.description"
-                ] ?? "Tell Kurioticket which airports and airlines you prefer."
-              }
-              contentClassName="grid gap-3.5"
-            >
-              <AirportPreferenceSelect
-                id="homeAirport"
-                name="homeAirport"
-                label={t["accountDashboard.preferences.booking.homeAirport"]}
-                value={preferences.homeAirport}
-                disabled={disabled}
-                locale={locale}
-                onChange={(value) => updateField("homeAirport", value)}
-              />
-              <AirlinePreferenceMultiSelect
-                id="preferredAirlines"
-                name="preferredAirlines"
-                label={
-                  t["accountDashboard.preferences.booking.preferredAirlines"]
-                }
-                values={preferences.preferredAirlines}
-                disabled={disabled}
-                helpText="Search by airline name or IATA code. Choose up to 10 airlines."
-                onChange={(values) => {
-                  setPreferences((current) => ({
-                    ...current,
-                    preferredAirlines: values,
-                  }));
-                  setStatus("idle");
-                  setMessage("");
-                }}
-              />
-              <SelectField
-                id="directVsCheaper"
-                label={
-                  t["accountDashboard.preferences.booking.directVsCheaper"] ??
-                  "Direct vs cheaper"
-                }
-                value={preferences.directVsCheaper}
-                options={directOptions}
-                disabled={disabled}
-                onChange={updateField}
-              />
-            </PreferencesSection>
+            />
+          ) : (
+            <>
+              <div className="max-w-2xl">
+                <PreferencesSection
+                  id="flight-defaults-preferences"
+                  title={
+                    t[
+                      "accountDashboard.preferences.booking.sections.flightDefaults.title"
+                    ] ?? "Flight defaults"
+                  }
+                  description={
+                    t[
+                      "accountDashboard.preferences.booking.sections.flightDefaults.description"
+                    ] ??
+                    "Tell Kurioticket which airports and airlines you prefer."
+                  }
+                  contentClassName="grid gap-3.5"
+                >
+                  <AirportPreferenceSelect
+                    id="homeAirport"
+                    name="homeAirport"
+                    label={
+                      t["accountDashboard.preferences.booking.homeAirport"]
+                    }
+                    value={preferences.homeAirport}
+                    disabled={disabled}
+                    locale={locale}
+                    onChange={(value) => updateField("homeAirport", value)}
+                  />
+                  <AirlinePreferenceMultiSelect
+                    id="preferredAirlines"
+                    name="preferredAirlines"
+                    label={
+                      t[
+                        "accountDashboard.preferences.booking.preferredAirlines"
+                      ]
+                    }
+                    values={preferences.preferredAirlines}
+                    disabled={disabled}
+                    helpText="Search by airline name or IATA code. Choose up to 10 airlines."
+                    onChange={(values) => {
+                      setPreferences((current) => ({
+                        ...current,
+                        preferredAirlines: values,
+                      }));
+                      setStatus("idle");
+                      setMessage("");
+                    }}
+                  />
+                  <SelectField
+                    id="directVsCheaper"
+                    label={
+                      t[
+                        "accountDashboard.preferences.booking.directVsCheaper"
+                      ] ?? "Direct vs cheaper"
+                    }
+                    value={preferences.directVsCheaper}
+                    options={directOptions}
+                    disabled={disabled}
+                    onChange={updateField}
+                  />
+                </PreferencesSection>
 
-            <PreferencesSection
-              id="trip-style-preferences"
-              title={
-                t[
-                  "accountDashboard.preferences.booking.sections.tripStyle.title"
-                ] ?? "Trip style"
-              }
-              description={
-                t[
-                  "accountDashboard.preferences.booking.sections.tripStyle.description"
-                ] ?? "Set defaults that describe how you usually travel."
-              }
-              bordered
-              contentClassName="grid gap-3.5"
-            >
-              <SelectField
-                id="budgetStyle"
-                label={
-                  t["accountDashboard.preferences.booking.budgetStyle"] ??
-                  "Budget style"
-                }
-                value={preferences.budgetStyle}
-                options={budgetOptions}
-                disabled={disabled}
-                onChange={updateField}
-              />
-              <SelectField
-                id="travelFrequency"
-                label={
-                  t["accountDashboard.preferences.booking.travelFrequency"] ??
-                  "Travel frequency"
-                }
-                value={preferences.travelFrequency}
-                options={frequencyOptions}
-                disabled={disabled}
-                onChange={updateField}
-              />
-              <SelectField
-                id="comfortVsSavings"
-                label={
-                  t["accountDashboard.preferences.booking.comfortVsSavings"] ??
-                  "Comfort vs savings"
-                }
-                value={preferences.comfortVsSavings}
-                options={comfortOptions}
-                disabled={disabled}
-                onChange={updateField}
-              />
-              <SelectField
-                id="travelPurpose"
-                label={
-                  t["accountDashboard.preferences.booking.travelPurpose"] ??
-                  "Travel purpose"
-                }
-                value={preferences.travelPurpose}
-                options={purposeOptions}
-                disabled={disabled}
-                onChange={updateField}
-              />
-            </PreferencesSection>
-          </div>
+                <PreferencesSection
+                  id="trip-style-preferences"
+                  title={
+                    t[
+                      "accountDashboard.preferences.booking.sections.tripStyle.title"
+                    ] ?? "Trip style"
+                  }
+                  description={
+                    t[
+                      "accountDashboard.preferences.booking.sections.tripStyle.description"
+                    ] ?? "Set defaults that describe how you usually travel."
+                  }
+                  bordered
+                  contentClassName="grid gap-3.5"
+                >
+                  <SelectField
+                    id="budgetStyle"
+                    label={
+                      t["accountDashboard.preferences.booking.budgetStyle"] ??
+                      "Budget style"
+                    }
+                    value={preferences.budgetStyle}
+                    options={budgetOptions}
+                    disabled={disabled}
+                    onChange={updateField}
+                  />
+                  <SelectField
+                    id="travelFrequency"
+                    label={
+                      t[
+                        "accountDashboard.preferences.booking.travelFrequency"
+                      ] ?? "Travel frequency"
+                    }
+                    value={preferences.travelFrequency}
+                    options={frequencyOptions}
+                    disabled={disabled}
+                    onChange={updateField}
+                  />
+                  <SelectField
+                    id="comfortVsSavings"
+                    label={
+                      t[
+                        "accountDashboard.preferences.booking.comfortVsSavings"
+                      ] ?? "Comfort vs savings"
+                    }
+                    value={preferences.comfortVsSavings}
+                    options={comfortOptions}
+                    disabled={disabled}
+                    onChange={updateField}
+                  />
+                  <SelectField
+                    id="travelPurpose"
+                    label={
+                      t["accountDashboard.preferences.booking.travelPurpose"] ??
+                      "Travel purpose"
+                    }
+                    value={preferences.travelPurpose}
+                    options={purposeOptions}
+                    disabled={disabled}
+                    onChange={updateField}
+                  />
+                </PreferencesSection>
+              </div>
 
-          <PreferencesActions
-            statusMessage={message}
-            mobileStatusMessage={
-              status === "success"
-                ? (t[
-                    "accountDashboard.preferences.booking.status.savedShort"
-                  ] ?? "Saved.")
-                : undefined
-            }
-            statusTone={status === "error" ? "error" : "info"}
-            secondaryAction={
-              <button
-                type="button"
-                disabled={revertDisabled}
-                onClick={() => {
-                  if (revertDisabled) return;
+              <PreferencesActions
+                statusMessage={message}
+                mobileStatusMessage={
+                  status === "success"
+                    ? (t[
+                        "accountDashboard.preferences.booking.status.savedShort"
+                      ] ?? "Saved.")
+                    : undefined
+                }
+                statusTone={status === "error" ? "error" : "info"}
+                secondaryAction={
+                  <button
+                    type="button"
+                    disabled={revertDisabled}
+                    onClick={() => {
+                      if (revertDisabled) return;
 
-                  setPreferences(initialPreferences);
-                  setMessage(
-                    t["accountDashboard.preferences.booking.status.reverted"] ??
-                      "Changes reverted.",
-                  );
-                  setStatus("reverted");
-                }}
-                className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:bg-transparent"
-              >
-                {t["accountDashboard.preferences.booking.actions.revert"] ??
-                  "Revert changes"}
-              </button>
-            }
-            primaryAction={
-              <button
-                type="submit"
-                disabled={saveDisabled}
-                className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
-              >
-                {status === "saving"
-                  ? (t["accountDashboard.preferences.booking.actions.saving"] ??
-                    "Saving…")
-                  : t["accountDashboard.preferences.savePreferences"]}
-              </button>
-            }
-          />
+                      setPreferences(initialPreferences);
+                      setMessage(
+                        t[
+                          "accountDashboard.preferences.booking.status.reverted"
+                        ] ?? "Changes reverted.",
+                      );
+                      setStatus("reverted");
+                    }}
+                    className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:bg-transparent"
+                  >
+                    {t["accountDashboard.preferences.booking.actions.revert"] ??
+                      "Revert changes"}
+                  </button>
+                }
+                primaryAction={
+                  <button
+                    type="submit"
+                    disabled={saveDisabled}
+                    className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
+                  >
+                    {status === "saving"
+                      ? (t[
+                          "accountDashboard.preferences.booking.actions.saving"
+                        ] ?? "Saving…")
+                      : t["accountDashboard.preferences.savePreferences"]}
+                  </button>
+                }
+              />
+            </>
+          )}
         </PreferencesCard>
       </form>
     </PreferencesPageShell>
