@@ -1127,13 +1127,12 @@ export function FlightResultsClient() {
   ]);
 
   useEffect(() => {
-    const sentinel = stickySentinelRef.current;
-
-    if (!sentinel) {
+    if (loading) {
       return undefined;
     }
 
     let animationFrame = 0;
+    const sentinel = stickySentinelRef.current;
 
     const applyCompactState = (shouldCompact: boolean) => {
       setIsSearchCollapsed(shouldCompact);
@@ -1151,7 +1150,14 @@ export function FlightResultsClient() {
         return;
       }
 
-      const sentinelRect = sentinel.getBoundingClientRect();
+      const currentSentinel = stickySentinelRef.current;
+
+      if (!currentSentinel) {
+        applyCompactState(false);
+        return;
+      }
+
+      const sentinelRect = currentSentinel.getBoundingClientRect();
       const sentinelScrollTop = sentinelRect.top + window.scrollY;
       const hasPassedStickyTrigger =
         window.scrollY > Math.max(16, sentinelScrollTop + 72);
@@ -1192,7 +1198,10 @@ export function FlightResultsClient() {
       { threshold: 0 },
     );
 
-    observer.observe(sentinel);
+    if (sentinel) {
+      observer.observe(sentinel);
+    }
+
     window.addEventListener("scroll", schedulePositionUpdate, {
       passive: true,
     });
@@ -1206,7 +1215,7 @@ export function FlightResultsClient() {
         window.cancelAnimationFrame(animationFrame);
       }
     };
-  }, []);
+  }, [loading]);
 
   useEffect(() => {
     if (!canAutoCollapseExpandedSearch) {
