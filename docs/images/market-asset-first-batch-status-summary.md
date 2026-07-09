@@ -22,6 +22,17 @@ Example:
 node scripts/summarize-market-asset-first-batch-status.mjs first-batch-status-us-001.json
 ```
 
+## Integrity check before summary
+
+Before trusting a status summary, validate that the status overlay follows the required gate order:
+
+```bash
+node scripts/check-market-asset-first-batch-status-integrity.mjs first-batch-status-us-001.json
+node scripts/summarize-market-asset-first-batch-status.mjs first-batch-status-us-001.json
+```
+
+Only use the summary for first-batch decisions when the integrity check returns `valid: true`.
+
 ## Status overlay format
 
 ```json
@@ -52,6 +63,22 @@ The summary tracks:
 8. manifest conflict checks passed
 9. approved manifest converted
 
+## Required gate order
+
+The status overlay must advance in this order:
+
+```text
+handoffGenerated
+  -> handoffReady
+  -> transferChecklistGenerated
+  -> transferCompletionsGenerated
+  -> manifestGenerated
+  -> transferReady
+  -> manifestReady
+  -> conflictsClear
+  -> converted
+```
+
 ## Output
 
 The command prints JSON with:
@@ -65,6 +92,8 @@ The command prints JSON with:
 
 ## Safety notes
 
-- `readyForConversion: true` means the readiness, review, and conflict gates have passed.
+- Run the status integrity check before relying on the summary.
+- `readyForConversion: true` means the readiness, review, and conflict gates have passed in the status overlay.
 - It does not mean the staged output has been promoted.
+- Do not mark later status gates complete before earlier required gates pass.
 - Do not promote staged entries until staged promotion preview, active audit, release readiness, and build verification pass.
