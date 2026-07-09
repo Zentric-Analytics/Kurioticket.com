@@ -4632,7 +4632,12 @@ export function FlightResultsClient() {
       >
         <div className="page-shell">
           {!mobileSearchOpen ? (
-            <div className="relative z-10 min-w-0">
+            <div
+              className={cn(
+                "relative z-10 min-w-0",
+                !isSearchCollapsed && "translate-y-5",
+              )}
+            >
               {renderCompactSearchForm("desktop")}
             </div>
           ) : null}
