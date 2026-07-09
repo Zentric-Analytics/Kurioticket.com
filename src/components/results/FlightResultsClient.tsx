@@ -4495,7 +4495,7 @@ export function FlightResultsClient() {
 
   if (loading) {
     return (
-      <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-[#F3F6FA]">
+      <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
         <BrandedLoading
           variant="fullscreen"
           visual="logoPulse"
@@ -4617,13 +4617,17 @@ export function FlightResultsClient() {
         </>
       ) : null}
 
-      <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
+      <div
+        ref={stickySentinelRef}
+        className="pointer-events-none absolute h-px w-px opacity-0"
+        aria-hidden="true"
+      />
       <section
         className={cn(
           "relative z-40 hidden border-b border-transparent transition-[padding,background-color] duration-200 sm:block",
           isSearchCollapsed
             ? "border-transparent bg-white/95 py-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.05)] backdrop-blur"
-            : "border-transparent bg-white pb-0 pt-6",
+            : "border-transparent bg-white pb-0 pt-7",
         )}
       >
         <div className="page-shell">
