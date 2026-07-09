@@ -1,8 +1,9 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
 import { AirportPreferenceSelect } from "@/components/preferences/AirportPreferenceSelect";
+import { AirlinePreferenceMultiSelect } from "@/components/preferences/AirlinePreferenceMultiSelect";
 import { useLocale } from "@/components/layout/LocaleProvider";
 
 type TravelPreferences = {
@@ -183,10 +184,6 @@ export function BookingPreferencesContent() {
   const [message, setMessage] = useState("");
 
   const disabled = status === "loading" || status === "saving";
-  const airlineText = useMemo(
-    () => preferences.preferredAirlines.join(", "),
-    [preferences.preferredAirlines],
-  );
 
   useEffect(() => {
     if (status !== "success" || !message) return undefined;
@@ -334,38 +331,24 @@ export function BookingPreferencesContent() {
                     locale={locale}
                     onChange={(value) => updateField("homeAirport", value)}
                   />
-                  <label className="block" htmlFor="preferredAirlines">
-                    <span className="text-sm font-semibold leading-5 text-slate-950">
-                      {
-                        t[
-                          "accountDashboard.preferences.booking.preferredAirlines"
-                        ]
-                      }
-                    </span>
-                    <input
-                      id="preferredAirlines"
-                      name="preferredAirlines"
-                      value={airlineText}
-                      disabled={disabled}
-                      onChange={(event) =>
-                        setPreferences((current) => ({
-                          ...current,
-                          preferredAirlines: event.target.value
-                            .split(",")
-                            .map((item) => item.trim())
-                            .filter(Boolean),
-                        }))
-                      }
-                      placeholder="Delta, United, Emirates"
-                      maxLength={240}
-                      className={fieldClassName}
-                    />
-                    <span className="mt-1.5 block text-xs font-medium leading-5 text-slate-500">
-                      {t[
-                        "accountDashboard.preferences.booking.preferredAirlinesHelp"
-                      ] ?? "Separate airlines with commas."}
-                    </span>
-                  </label>
+                  <AirlinePreferenceMultiSelect
+                    id="preferredAirlines"
+                    name="preferredAirlines"
+                    label={
+                      t[
+                        "accountDashboard.preferences.booking.preferredAirlines"
+                      ]
+                    }
+                    values={preferences.preferredAirlines}
+                    disabled={disabled}
+                    helpText="Search by airline name or IATA code. Choose up to 10 airlines."
+                    onChange={(values) =>
+                      setPreferences((current) => ({
+                        ...current,
+                        preferredAirlines: values,
+                      }))
+                    }
+                  />
                   <SelectField
                     id="directVsCheaper"
                     label={
