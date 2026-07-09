@@ -68,17 +68,10 @@ export function FlightCard({
   return (
     <Card
       className={cn(
-        "relative w-full overflow-hidden border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.065)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(15,23,42,0.095)]",
-        isAccented &&
-          "border-[#004BB8]/16 bg-[linear-gradient(180deg,rgba(0,75,184,0.035),#fff_34%)] shadow-[0_12px_28px_-20px_rgba(2,28,43,0.18)] ring-1 ring-[#004BB8]/8",
+        "relative w-full overflow-hidden border-[#D8E1EC] bg-white shadow-[0_10px_28px_rgba(15,23,42,0.07)] transition hover:-translate-y-0.5 hover:border-[#CBD6E2] hover:shadow-[0_16px_34px_rgba(15,23,42,0.095)]",
+        isAccented && "ring-1 ring-slate-950/[0.03]",
       )}
     >
-      {isAccented ? (
-        <div
-          aria-hidden="true"
-          className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#004BB8]/55 via-[#004BB8]/35 to-[#5CB6B2]/35"
-        />
-      ) : null}
       <div className="p-2.5 sm:p-3">
         <div className="grid gap-2.5 lg:grid-cols-[minmax(0,1fr)_132px] lg:items-stretch">
           <div className="min-w-0 space-y-2">
@@ -107,7 +100,7 @@ export function FlightCard({
             <FlightDetailLines details={details} />
           </div>
 
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2 lg:min-h-[118px] lg:shrink-0 lg:flex-col lg:items-stretch lg:justify-center lg:gap-2 lg:self-stretch lg:border-0 lg:bg-transparent lg:px-1 lg:py-3 lg:text-center">
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-[#D8E1EC] bg-[#F8FAFC] px-3 py-2 lg:min-h-[118px] lg:shrink-0 lg:flex-col lg:items-stretch lg:justify-center lg:gap-2 lg:self-stretch lg:border-0 lg:bg-transparent lg:px-1 lg:py-3 lg:text-center">
             <div className="min-w-0 lg:flex lg:min-h-[72px] lg:flex-col lg:items-center lg:justify-center lg:text-center">
               <div
                 className="text-lg font-semibold leading-tight tracking-[-0.025em] text-slate-950 sm:text-xl"
@@ -137,7 +130,7 @@ export function FlightCard({
           </div>
         </div>
 
-        <div className="mt-2 rounded-xl border border-[#004BB8]/8 bg-[#004BB8]/5 px-2.5 py-1.5 text-xs font-medium leading-5 text-slate-600">
+        <div className="mt-2 rounded-xl border border-[#D8E1EC] bg-[#F8FAFC] px-2.5 py-1.5 text-xs font-medium leading-5 text-slate-600">
           {showsProviderBackedReturn
             ? `${t("providerNormalizedItineraryPrefix")} ${providerHandoffCopy}`
             : providerHandoffCopy}
@@ -165,7 +158,7 @@ function FlightLegRow({
     <section
       aria-label={formatLegTitle(leg, t)}
       className={cn(
-        "rounded-xl border border-slate-200 bg-slate-50/60 p-2",
+        "rounded-xl border border-[#D8E1EC] bg-[#F8FAFC] p-2",
         compact ? "sm:p-2" : "sm:p-2.5",
       )}
     >

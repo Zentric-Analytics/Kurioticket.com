@@ -111,7 +111,7 @@ export default async function FlightResultsPage({
 
   return (
     <>
-      <AppHeader hideTravelNav flushDesktopBottom />
+      <AppHeader hideTravelNav />
       <Suspense
         fallback={
           <ResultsFallback
@@ -135,7 +135,7 @@ function ResultsFallback({
   description: string;
 }) {
   return (
-    <main className="min-h-[100svh] bg-[radial-gradient(circle_at_top_left,rgba(92,182,178,0.20),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(0,75,184,0.16),transparent_36%),linear-gradient(180deg,#F2F7FA_0%,#FFFFFF_58%,#FFFFFF_100%)]">
+    <main className="min-h-[100svh] bg-[#F3F6FA]">
       <BrandedLoading
         variant="fullscreen"
         visual="logoPulse"

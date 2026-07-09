@@ -713,8 +713,8 @@ export function AppHeader({
     <>
       <header
         className={cn(
-          "relative z-50 border-b border-[#E5EAF0] bg-[#F6F9FC] text-[#021C2B] shadow-[0_8px_24px_rgba(2,28,43,0.06)]",
-          flushDesktopBottom && "md:border-b-0 md:shadow-none",
+          "relative z-50 border-b border-[#D8E1EC] bg-white text-[#021C2B] shadow-[0_8px_24px_rgba(2,28,43,0.05)]",
+          flushDesktopBottom && "md:shadow-[0_1px_0_rgba(216,225,236,0.85)]",
         )}
       >
         <div className="page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3">

@@ -2883,7 +2883,7 @@ export function FlightResultsClient() {
 
   if (!body) {
     return (
-      <main className="flex-1 bg-[radial-gradient(circle_at_top,_#eef4ff_0%,_#f8fafd_42%,_#f2f6fc_100%)] pb-8 pt-4 sm:pt-8 lg:pt-8">
+      <main className="flex-1 bg-[#F3F6FA] pb-8 pt-4 sm:pt-8 lg:pt-8">
         <section className="page-shell">
           <form
             className="mx-auto mt-0 w-full max-w-5xl space-y-3 sm:space-y-2"
@@ -4495,7 +4495,7 @@ export function FlightResultsClient() {
 
   if (loading) {
     return (
-      <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-[radial-gradient(circle_at_top_left,rgba(92,182,178,0.20),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(0,75,184,0.16),transparent_36%),linear-gradient(180deg,#F2F7FA_0%,#FFFFFF_58%,#FFFFFF_100%)]">
+      <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-[#F3F6FA]">
         <BrandedLoading
           variant="fullscreen"
           visual="logoPulse"
@@ -4515,10 +4515,10 @@ export function FlightResultsClient() {
   }
 
   return (
-    <main className="flex-1 bg-[#f6f8fb] pb-8">
+    <main className="flex-1 bg-[#F3F6FA] pb-8">
       <section
         className={cn(
-          "relative z-40 bg-[linear-gradient(180deg,#eef6ff_0%,#f3f8ff_58%,rgba(246,248,251,0)_100%)] px-4 pb-8 pt-[calc(0.85rem+env(safe-area-inset-top))] sm:hidden",
+          "relative z-40 bg-[#F3F6FA] px-4 pb-8 pt-[calc(0.85rem+env(safe-area-inset-top))] sm:hidden",
           mobileSearchOpen && "hidden",
         )}
         aria-label="Flight search controls"
@@ -4622,8 +4622,8 @@ export function FlightResultsClient() {
         className={cn(
           "sticky top-0 z-40 hidden border-b transition-[padding,background-color] duration-200 sm:block",
           isSearchCollapsed
-            ? "border-slate-200/70 bg-white/95 py-1.5 backdrop-blur"
-            : "border-slate-300/95 bg-[#F6F9FC] pb-0 pt-5 shadow-[0_1px_0_rgba(255,255,255,0.9)]",
+            ? "border-[#D8E1EC] bg-white/95 py-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.05)] backdrop-blur"
+            : "border-[#CBD6E2] bg-[#F3F6FA] pb-0 pt-5 shadow-[0_1px_0_rgba(255,255,255,0.9)]",
         )}
       >
         <div className="page-shell">
@@ -6340,7 +6340,7 @@ function Filters({
       className={cn(
         layout === "mobile"
           ? "bg-white"
-          : "desktop-filter-sidebar border border-slate-200/80 bg-transparent p-0 shadow-none rounded-none",
+          : "desktop-filter-sidebar rounded-2xl border border-[#D8E1EC] bg-white p-0 shadow-[0_12px_30px_-24px_rgba(15,23,42,0.42)]",
       )}
     >
       {layout === "desktop" ? (
@@ -6378,7 +6378,7 @@ function Filters({
         className={cn(
           layout === "mobile"
             ? "space-y-4 bg-white"
-            : "space-y-0 bg-transparent px-3 py-1",
+            : "space-y-0 bg-white px-3 py-1",
         )}
       >
         <section>
@@ -6706,7 +6706,7 @@ function SummarySortButton({
           : "min-h-[104px] px-3.5 py-3",
         active
           ? "border-[#004BB8]/22 bg-[#004BB8]/6 text-[#021C2B] shadow-[0_12px_28px_-20px_rgba(2,28,43,0.18)] ring-1 ring-[#004BB8]/8"
-          : "border-slate-200/80 bg-white text-slate-600 hover:border-[#004BB8]/25 hover:bg-[#F2F7FA] hover:shadow-[0_10px_24px_rgba(2,28,43,0.08)]",
+          : "border-[#D8E1EC] bg-white text-slate-600 hover:border-[#CBD6E2] hover:bg-[#F8FAFC] hover:shadow-[0_10px_24px_rgba(2,28,43,0.08)]",
       )}
     >
       <span
