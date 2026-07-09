@@ -80,6 +80,7 @@ export function AirportPreferenceSelect({
   const generatedId = useId();
   const listboxId = `${id}-${generatedId}-listbox`;
   const helpId = `${id}-${generatedId}-help`;
+  const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [inputValue, setInputValue] = useState("");
   const [suggestions, setSuggestions] = useState<AirportOption[]>([]);
@@ -88,6 +89,11 @@ export function AirportPreferenceSelect({
   const [activeIndex, setActiveIndex] = useState(-1);
 
   const knownAirport = useMemo(() => getKnownAirport(value), [value]);
+
+  function closeDropdown() {
+    setIsOpen(false);
+    setActiveIndex(-1);
+  }
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -123,20 +129,34 @@ export function AirportPreferenceSelect({
     };
   }, [inputValue, isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    function handleDocumentPointerDown(event: PointerEvent) {
+      const root = rootRef.current;
+      if (!root || root.contains(event.target as Node)) return;
+
+      closeDropdown();
+    }
+
+    document.addEventListener("pointerdown", handleDocumentPointerDown);
+    return () => {
+      document.removeEventListener("pointerdown", handleDocumentPointerDown);
+    };
+  }, [isOpen]);
+
   function selectAirport(airport: AirportOption) {
     onChange(airport.code.toUpperCase());
     setInputValue(getAirportDisplayLabel(airport, locale));
     setSuggestions([]);
-    setIsOpen(false);
-    setActiveIndex(-1);
+    closeDropdown();
   }
 
   function clearAirport() {
     onChange("");
     setInputValue("");
     setSuggestions([]);
-    setIsOpen(false);
-    setActiveIndex(-1);
+    closeDropdown();
   }
 
   const savedDisplayValue = knownAirport
@@ -148,7 +168,16 @@ export function AirportPreferenceSelect({
     activeIndex >= 0 ? `${listboxId}-option-${activeIndex}` : undefined;
 
   return (
-    <div className="block">
+    <div
+      ref={rootRef}
+      className="block"
+      onBlur={(event) => {
+        const nextFocusedElement =
+          event.relatedTarget instanceof Node ? event.relatedTarget : null;
+        if (event.currentTarget.contains(nextFocusedElement)) return;
+        closeDropdown();
+      }}
+    >
       <label className="text-sm font-semibold leading-5 text-slate-950" htmlFor={id}>
         {label}
       </label>
@@ -200,8 +229,7 @@ export function AirportPreferenceSelect({
               const selected = suggestions[activeIndex];
               if (selected) selectAirport(selected);
             } else if (event.key === "Escape") {
-              setIsOpen(false);
-              setActiveIndex(-1);
+              closeDropdown();
             }
           }}
         />
