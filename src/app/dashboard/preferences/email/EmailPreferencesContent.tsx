@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
+import {
+  PreferencesActions,
+  PreferencesCard,
+  PreferencesPageShell,
+  PreferencesSection,
+} from "@/components/preferences/PreferencesLayout";
 import { useLocale } from "@/components/layout/LocaleProvider";
 
 type EditablePreferenceKey =
@@ -117,8 +122,12 @@ export function EmailPreferencesContent() {
   const legacyCustomizationTitle =
     t["accountDashboard.preferences.customization.title"];
   const legacyPreferenceActions = `${t["accountDashboard.preferences.cancel"]} ${t["accountDashboard.preferences.savePreferences"]}`;
-  const [preferences, setPreferences] = useState<EmailPreferences>(defaultEmailPreferences);
-  const [savedPreferences, setSavedPreferences] = useState<EmailPreferences>(defaultEmailPreferences);
+  const [preferences, setPreferences] = useState<EmailPreferences>(
+    defaultEmailPreferences,
+  );
+  const [savedPreferences, setSavedPreferences] = useState<EmailPreferences>(
+    defaultEmailPreferences,
+  );
   const [status, setStatus] = useState<Status>("loading");
   const [statusMessage, setStatusMessage] = useState("");
 
@@ -140,11 +149,17 @@ export function EmailPreferencesContent() {
 
     async function loadPreferences() {
       try {
-        const response = await fetch("/api/account/email-preferences", { cache: "no-store" });
+        const response = await fetch("/api/account/email-preferences", {
+          cache: "no-store",
+        });
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Unable to load email preferences.");
+        if (!response.ok)
+          throw new Error(data.error || "Unable to load email preferences.");
         if (!active) return;
-        const nextPreferences = { ...defaultEmailPreferences, ...data.preferences };
+        const nextPreferences = {
+          ...defaultEmailPreferences,
+          ...data.preferences,
+        };
         setPreferences(nextPreferences);
         setSavedPreferences(nextPreferences);
         setStatus("idle");
@@ -154,7 +169,9 @@ export function EmailPreferencesContent() {
         setPreferences(defaultEmailPreferences);
         setSavedPreferences(defaultEmailPreferences);
         setStatus("error");
-        setStatusMessage(t["accountDashboard.preferences.email.loadErrorStatus"]);
+        setStatusMessage(
+          t["accountDashboard.preferences.email.loadErrorStatus"],
+        );
       }
     }
 
@@ -190,12 +207,18 @@ export function EmailPreferencesContent() {
         body: JSON.stringify(preferences),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Unable to save email preferences.");
-      const nextPreferences = { ...defaultEmailPreferences, ...data.preferences };
+      if (!response.ok)
+        throw new Error(data.error || "Unable to save email preferences.");
+      const nextPreferences = {
+        ...defaultEmailPreferences,
+        ...data.preferences,
+      };
       setPreferences(nextPreferences);
       setSavedPreferences(nextPreferences);
       setStatus("success");
-      setStatusMessage(t["accountDashboard.preferences.email.saveSuccessStatus"]);
+      setStatusMessage(
+        t["accountDashboard.preferences.email.saveSuccessStatus"],
+      );
     } catch {
       setStatus("error");
       setStatusMessage(t["accountDashboard.preferences.email.saveErrorStatus"]);
@@ -203,223 +226,192 @@ export function EmailPreferencesContent() {
   };
 
   return (
-    <main
-      className="flex-1 bg-[#f3f7fc] pb-12 pt-0"
+    <PreferencesPageShell
+      title={t["accountDashboard.preferences.email.title"]}
+      description={t["accountDashboard.preferences.email.subtitle"]}
       data-legacy-customization-title={legacyCustomizationTitle}
       data-legacy-preference-actions={legacyPreferenceActions}
       data-saved-preferences-count={Object.keys(savedPreferences).length}
     >
-      <div className="mx-auto max-w-[1120px] px-4 py-6 sm:px-6 lg:px-8">
-        <AccountBackLink />
+      <div className="space-y-5">
+        <PreferencesCard>
+          {preferenceSections.map((section, sectionIndex) => (
+            <PreferencesSection
+              key={section.copyKey}
+              title={
+                t[
+                  `accountDashboard.preferences.email.sections.${section.copyKey}.title`
+                ]
+              }
+              bordered={sectionIndex !== 0}
+              contentClassName="divide-y divide-slate-200"
+            >
+              {section.editableRows?.map((row) => {
+                const displayChecked = preferences.receiveOptionalEmails
+                  ? preferences[row.id]
+                  : false;
 
-        <header className="mt-6 sm:-ml-8 lg:-ml-12">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
-            {t["accountDashboard.preferences.email.title"]}
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-slate-700 sm:text-base">
-            {t["accountDashboard.preferences.email.subtitle"]}
-          </p>
-        </header>
-
-        <section className="mt-7 max-w-[56rem]">
-          <div className="space-y-5">
-            <div className="-mx-4 rounded-none border border-slate-300 bg-white/45 px-4 py-5 shadow-sm sm:mx-0 sm:rounded-2xl sm:p-6">
-              {preferenceSections.map((section, sectionIndex) => (
-                <div
-                  key={section.copyKey}
-                  className={
-                    sectionIndex === 0
-                      ? undefined
-                      : "mt-6 border-t border-slate-300 pt-6"
-                  }
-                >
-                  <h3 className="text-xs font-bold uppercase tracking-[0.1em] text-slate-600">
-                    {
-                      t[
-                        `accountDashboard.preferences.email.sections.${section.copyKey}.title`
-                      ]
-                    }
-                  </h3>
-                  <div className="mt-3 divide-y divide-slate-200">
-                    {section.editableRows?.map((row) => {
-                      const displayChecked = preferences.receiveOptionalEmails
-                        ? preferences[row.id]
-                        : false;
-
-                      return (
-                        <div
-                          key={row.id}
-                          className="flex items-start justify-between gap-4 py-4 sm:items-center sm:gap-6"
-                        >
-                          <div className="min-w-0 flex-1 sm:flex-initial">
-                            <p
-                              className={
-                                preferences.receiveOptionalEmails
-                                  ? "text-sm font-semibold leading-5 text-slate-950"
-                                  : "text-sm font-semibold leading-5 text-slate-500"
-                              }
-                            >
-                              {
-                                t[
-                                  `accountDashboard.preferences.email.rows.${row.copyKey}.title`
-                                ]
-                              }
-                            </p>
-                            <p
-                              className={
-                                preferences.receiveOptionalEmails
-                                  ? "mt-1 text-sm font-medium leading-6 text-slate-700 sm:hidden"
-                                  : "mt-1 text-sm font-medium leading-6 text-slate-500 sm:hidden"
-                              }
-                            >
-                              {
-                                t[
-                                  `accountDashboard.preferences.email.rows.${row.copyKey}.shortDescription`
-                                ]
-                              }
-                            </p>
-                            <p
-                              className={
-                                preferences.receiveOptionalEmails
-                                  ? "mt-1 hidden text-sm font-medium leading-6 text-slate-700 sm:block"
-                                  : "mt-1 hidden text-sm font-medium leading-6 text-slate-500 sm:block"
-                              }
-                            >
-                              {
-                                t[
-                                  `accountDashboard.preferences.email.rows.${row.copyKey}.description`
-                                ]
-                              }
-                            </p>
-                          </div>
-                          <div className="shrink-0 pt-1 sm:pt-0">
-                            <PreferenceSwitch
-                              checked={displayChecked}
-                              label={
-                                t[
-                                  `accountDashboard.preferences.email.rows.${row.copyKey}.title`
-                                ]
-                              }
-                              onChange={() => updatePreference(row.id)}
-                              onLabel={
-                                t["accountDashboard.preferences.email.on"]
-                              }
-                              offLabel={
-                                t["accountDashboard.preferences.email.off"]
-                              }
-                              disabled={disabled || !preferences.receiveOptionalEmails}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {section.copyKey === "inspirationUpdates" ? (
-                    <div className="mt-6 border-t border-slate-300 pt-5">
-                      <div className="flex items-start justify-between gap-4 sm:items-center sm:gap-6">
-                        <div className="min-w-0 flex-1 sm:flex-initial">
-                          <p className="text-sm font-semibold leading-5 text-slate-950">
-                            {
-                              t[
-                                "accountDashboard.preferences.email.masterOptional.title"
-                              ]
-                            }
-                          </p>
-                          <p className="mt-1 text-sm font-medium leading-6 text-slate-700 sm:hidden">
-                            {
-                              t[
-                                "accountDashboard.preferences.email.masterOptional.shortDescription"
-                              ]
-                            }
-                          </p>
-                          <p className="mt-1 hidden text-sm font-medium leading-6 text-slate-700 sm:block">
-                            {
-                              t[
-                                "accountDashboard.preferences.email.masterOptional.description"
-                              ]
-                            }
-                          </p>
-                        </div>
-                        <div className="shrink-0 pt-1 sm:pt-0">
-                          <PreferenceSwitch
-                            checked={preferences.receiveOptionalEmails}
-                            label={
-                              t[
-                                "accountDashboard.preferences.email.masterOptional.title"
-                              ]
-                            }
-                            onChange={() =>
-                              updatePreference("receiveOptionalEmails")
-                            }
-                            onLabel={t["accountDashboard.preferences.email.on"]}
-                            offLabel={
-                              t["accountDashboard.preferences.email.off"]
-                            }
-                            disabled={disabled}
-                          />
-                        </div>
-                      </div>
-                      {!preferences.receiveOptionalEmails ? (
-                        <p className="mt-4 rounded-xl border border-slate-300 bg-white/40 px-4 py-3 text-sm font-medium leading-6 text-slate-700">
-                          {
-                            t[
-                              "accountDashboard.preferences.email.masterOptional.disabledHelp"
-                            ]
-                          }
-                        </p>
-                      ) : null}
+                return (
+                  <div
+                    key={row.id}
+                    className="flex items-start justify-between gap-4 py-4 sm:items-center sm:gap-6"
+                  >
+                    <div className="min-w-0 flex-1 sm:flex-initial">
+                      <p
+                        className={
+                          preferences.receiveOptionalEmails
+                            ? "text-sm font-semibold leading-5 text-slate-950"
+                            : "text-sm font-semibold leading-5 text-slate-500"
+                        }
+                      >
+                        {
+                          t[
+                            `accountDashboard.preferences.email.rows.${row.copyKey}.title`
+                          ]
+                        }
+                      </p>
+                      <p
+                        className={
+                          preferences.receiveOptionalEmails
+                            ? "mt-1 text-sm font-medium leading-6 text-slate-700 sm:hidden"
+                            : "mt-1 text-sm font-medium leading-6 text-slate-500 sm:hidden"
+                        }
+                      >
+                        {
+                          t[
+                            `accountDashboard.preferences.email.rows.${row.copyKey}.shortDescription`
+                          ]
+                        }
+                      </p>
+                      <p
+                        className={
+                          preferences.receiveOptionalEmails
+                            ? "mt-1 hidden text-sm font-medium leading-6 text-slate-700 sm:block"
+                            : "mt-1 hidden text-sm font-medium leading-6 text-slate-500 sm:block"
+                        }
+                      >
+                        {
+                          t[
+                            `accountDashboard.preferences.email.rows.${row.copyKey}.description`
+                          ]
+                        }
+                      </p>
                     </div>
+                    <div className="shrink-0 pt-1 sm:pt-0">
+                      <PreferenceSwitch
+                        checked={displayChecked}
+                        label={
+                          t[
+                            `accountDashboard.preferences.email.rows.${row.copyKey}.title`
+                          ]
+                        }
+                        onChange={() => updatePreference(row.id)}
+                        onLabel={t["accountDashboard.preferences.email.on"]}
+                        offLabel={t["accountDashboard.preferences.email.off"]}
+                        disabled={
+                          disabled || !preferences.receiveOptionalEmails
+                        }
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+
+              {section.copyKey === "inspirationUpdates" ? (
+                <div className="mt-6 border-t border-slate-300 pt-5">
+                  <div className="flex items-start justify-between gap-4 sm:items-center sm:gap-6">
+                    <div className="min-w-0 flex-1 sm:flex-initial">
+                      <p className="text-sm font-semibold leading-5 text-slate-950">
+                        {
+                          t[
+                            "accountDashboard.preferences.email.masterOptional.title"
+                          ]
+                        }
+                      </p>
+                      <p className="mt-1 text-sm font-medium leading-6 text-slate-700 sm:hidden">
+                        {
+                          t[
+                            "accountDashboard.preferences.email.masterOptional.shortDescription"
+                          ]
+                        }
+                      </p>
+                      <p className="mt-1 hidden text-sm font-medium leading-6 text-slate-700 sm:block">
+                        {
+                          t[
+                            "accountDashboard.preferences.email.masterOptional.description"
+                          ]
+                        }
+                      </p>
+                    </div>
+                    <div className="shrink-0 pt-1 sm:pt-0">
+                      <PreferenceSwitch
+                        checked={preferences.receiveOptionalEmails}
+                        label={
+                          t[
+                            "accountDashboard.preferences.email.masterOptional.title"
+                          ]
+                        }
+                        onChange={() =>
+                          updatePreference("receiveOptionalEmails")
+                        }
+                        onLabel={t["accountDashboard.preferences.email.on"]}
+                        offLabel={t["accountDashboard.preferences.email.off"]}
+                        disabled={disabled}
+                      />
+                    </div>
+                  </div>
+                  {!preferences.receiveOptionalEmails ? (
+                    <p className="mt-4 rounded-xl border border-slate-300 bg-white/40 px-4 py-3 text-sm font-medium leading-6 text-slate-700">
+                      {
+                        t[
+                          "accountDashboard.preferences.email.masterOptional.disabledHelp"
+                        ]
+                      }
+                    </p>
                   ) : null}
                 </div>
-              ))}
-            </div>
-
-            <div className="relative mt-5 flex flex-row items-center justify-end gap-3 sm:mt-0 sm:justify-end sm:pt-1">
-              {statusMessage ? (
-                <p
-                  className={
-                    status === "error"
-                      ? "inline-flex rounded-full border border-red-100 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700"
-                      : "inline-flex rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-sm font-medium text-[#004BB8]"
-                  }
-                  role="status"
-                  aria-live="polite"
-                >
-                  {statusMessage}
-                </p>
               ) : null}
-              <button
-                type="button"
-                onClick={resetToDefault}
-                disabled={disabled}
-                className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:bg-transparent"
-              >
-                <span className="sm:hidden">
-                  {t["accountDashboard.preferences.email.resetShort"]}
-                </span>
-                <span className="hidden sm:inline">
-                  {t["accountDashboard.preferences.email.resetToDefault"]}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={savePreferences}
-                disabled={disabled}
-                className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
-              >
-                <span className="sm:hidden">
-                  {status === "saving" ? t["accountDashboard.preferences.email.savingShort"] : t["accountDashboard.preferences.email.saveShort"]}
-                </span>
-                <span className="hidden sm:inline">
-                  {status === "saving" ? t["accountDashboard.preferences.email.savingPreferences"] : t["accountDashboard.preferences.email.savePreferences"]}
-                </span>
-              </button>
-            </div>
-          </div>
-        </section>
+            </PreferencesSection>
+          ))}
+        </PreferencesCard>
+
+        <PreferencesActions
+          statusMessage={statusMessage}
+          statusTone={status === "error" ? "error" : "info"}
+        >
+          <button
+            type="button"
+            onClick={resetToDefault}
+            disabled={disabled}
+            className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:bg-transparent"
+          >
+            <span className="sm:hidden">
+              {t["accountDashboard.preferences.email.resetShort"]}
+            </span>
+            <span className="hidden sm:inline">
+              {t["accountDashboard.preferences.email.resetToDefault"]}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={savePreferences}
+            disabled={disabled}
+            className="focus-ring inline-flex min-h-11 w-auto items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
+          >
+            <span className="sm:hidden">
+              {status === "saving"
+                ? t["accountDashboard.preferences.email.savingShort"]
+                : t["accountDashboard.preferences.email.saveShort"]}
+            </span>
+            <span className="hidden sm:inline">
+              {status === "saving"
+                ? t["accountDashboard.preferences.email.savingPreferences"]
+                : t["accountDashboard.preferences.email.savePreferences"]}
+            </span>
+          </button>
+        </PreferencesActions>
       </div>
-    </main>
+    </PreferencesPageShell>
   );
 }
 
