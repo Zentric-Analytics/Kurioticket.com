@@ -147,9 +147,48 @@ This repository includes `render.yaml` for a Render Blueprint:
 
 - Production Node web service on `main`
 - Staging Node web service on `dev`
+- Production homepage fare refresh cron on `main`
 - Separate production and staging Render PostgreSQL databases
 - `/api/health` health check
 - production and staging env var placeholders with secrets marked `sync: false`
+
+
+### Homepage Fare Refresh Cron
+
+Render Blueprint supports cron jobs with `type: cron`, a cron `schedule`, and a command-style `startCommand`. Render does not offer the free instance type for cron jobs, so the Blueprint cron uses the smallest paid cron plan (`starter`). If a workspace cannot create paid cron jobs, create the cron manually in the Render Dashboard after billing/plan access is enabled, or use an external scheduler that can send the same protected POST request.
+
+The production cron in `render.yaml` is intentionally lightweight:
+
+- Schedule: `0 */4 * * *` (every 4 hours, UTC)
+- Build command: `true`
+- Run command: `curl -fsS -X POST "https://kurioticket.com/api/internal/homepage-fares/refresh" -H "Authorization: Bearer $HOMEPAGE_FARES_CRON_SECRET" -H "Content-Type: application/json"`
+- Environment variable: `HOMEPAGE_FARES_CRON_SECRET` with `sync: false`
+
+This cron does not build or run the Next.js app. It only calls the already-deployed production endpoint. The Duffel API key stays on the web service because the protected endpoint executes provider calls from the web service environment.
+
+Keep these timing rules together: the cron target frequency is every 4 hours, and public homepage fare prices display only for provider-backed snapshots inside the 6-hour display window.
+
+If manual Dashboard setup is required, use these exact settings:
+
+- Service type: Cron Job
+- Name: `kurioticket-homepage-fares-refresh`
+- Runtime: Node
+- Branch: `main`
+- Plan: `starter` or another paid cron-capable instance type
+- Schedule: `0 */4 * * *`
+- Build command: `true`
+- Command: `curl -fsS -X POST "https://kurioticket.com/api/internal/homepage-fares/refresh" -H "Authorization: Bearer $HOMEPAGE_FARES_CRON_SECRET" -H "Content-Type: application/json"`
+- Environment variables: add only `HOMEPAGE_FARES_CRON_SECRET` and use the same secret value configured on `kurioticket-web`; do not add `DUFFEL_API_KEY` to the cron job.
+
+Troubleshooting:
+
+- Deploy failure: confirm the workspace can create paid cron services, the cron service is not configured as `plan: free`, and Blueprint validation accepts `type: cron`, `schedule`, `buildCommand`, and `startCommand`.
+- Run failure with missing secret: set `HOMEPAGE_FARES_CRON_SECRET` on both the cron job and the production web service. The endpoint returns `503 homepage_fare_refresh_not_configured` when the web service is missing it.
+- Run failure with mismatched bearer secret: make the cron job secret exactly match the web service secret. The endpoint returns `401 homepage_fare_refresh_unauthorized` when the bearer value is wrong.
+- Wrong method, path, or domain: use `POST`, `/api/internal/homepage-fares/refresh`, and `https://kurioticket.com`. `curl -f` exits non-zero for non-2xx/3xx responses so Render marks the run failed.
+- Free-plan cold starts: the production web service is currently on Render's free web plan, so the first cron request after inactivity may spend time waking the service. Upgrade the web service if cold starts cause timeouts.
+- Endpoint timeout from too many provider calls: reduce the refresh budget in `src/services/homepageFareSnapshotService.ts` or upgrade runtime capacity if the endpoint cannot finish before platform/request limits.
+- `409 homepage_fare_refresh_in_progress`: a previous refresh is still running. Wait for it to finish; the next scheduled run should retry normally.
 
 Production deployment flow:
 

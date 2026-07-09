@@ -1,8 +1,20 @@
 services:
-  # Schedule POST /api/internal/homepage-fares/refresh with the
-  # HOMEPAGE_FARES_CRON_SECRET bearer token at least every 6 hours. Public
-  # homepage prices are hidden once their provider-backed snapshot is older
-  # than the 6-hour display window.
+  - type: cron
+    name: kurioticket-homepage-fares-refresh
+    runtime: node
+    plan: starter
+    branch: main
+    autoDeploy: true
+    schedule: '0 */4 * * *'
+    buildCommand: 'true'
+    startCommand: >-
+      curl -fsS -X POST "https://kurioticket.com/api/internal/homepage-fares/refresh"
+      -H "Authorization: Bearer $HOMEPAGE_FARES_CRON_SECRET"
+      -H "Content-Type: application/json"
+    envVars:
+      - key: HOMEPAGE_FARES_CRON_SECRET
+        sync: false
+
   - type: web
     name: kurioticket-web
     runtime: node
