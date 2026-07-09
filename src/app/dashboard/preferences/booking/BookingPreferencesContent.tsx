@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
+import { AirportPreferenceSelect } from "@/components/preferences/AirportPreferenceSelect";
 import { useLocale } from "@/components/layout/LocaleProvider";
 
 type TravelPreferences = {
@@ -173,7 +174,7 @@ function SelectField({
 }
 
 export function BookingPreferencesContent() {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const [preferences, setPreferences] =
     useState<TravelPreferences>(emptyPreferences);
   const [initialPreferences, setInitialPreferences] =
@@ -324,26 +325,15 @@ export function BookingPreferencesContent() {
                     "Tell Kurioticket which airports and airlines you prefer."
                   }
                 >
-                  <label className="block" htmlFor="homeAirport">
-                    <span className="text-sm font-semibold leading-5 text-slate-950">
-                      {t["accountDashboard.preferences.booking.homeAirport"]}
-                    </span>
-                    <input
-                      id="homeAirport"
-                      name="homeAirport"
-                      value={preferences.homeAirport}
-                      disabled={disabled}
-                      onChange={(event) =>
-                        updateField(
-                          "homeAirport",
-                          event.target.value.toUpperCase(),
-                        )
-                      }
-                      placeholder="Example: JFK"
-                      maxLength={80}
-                      className={fieldClassName}
-                    />
-                  </label>
+                  <AirportPreferenceSelect
+                    id="homeAirport"
+                    name="homeAirport"
+                    label={t["accountDashboard.preferences.booking.homeAirport"]}
+                    value={preferences.homeAirport}
+                    disabled={disabled}
+                    locale={locale}
+                    onChange={(value) => updateField("homeAirport", value)}
+                  />
                   <label className="block" htmlFor="preferredAirlines">
                     <span className="text-sm font-semibold leading-5 text-slate-950">
                       {
