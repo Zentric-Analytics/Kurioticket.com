@@ -21,7 +21,7 @@ type AirportPreferenceSelectProps = {
 };
 
 const inputClassName =
-  "focus-ring mt-2 min-h-10 w-full rounded-xl border border-slate-300 bg-white px-3 pe-11 text-sm font-semibold text-slate-800 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500";
+  "focus-ring mt-2 min-h-10 w-full rounded-none border border-slate-300 bg-white px-3 pe-11 text-sm font-semibold text-slate-800 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500";
 
 const codeToAirport = new Map(
   airports.map((airport) => [airport.code.toUpperCase(), airport]),
@@ -257,7 +257,7 @@ export function AirportPreferenceSelect({
           <div
             id={listboxId}
             role="listbox"
-            className="absolute mt-2 max-h-72 w-full overflow-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl"
+            className="absolute mt-2 max-h-72 w-full overflow-auto rounded-none border border-slate-200 bg-white p-1.5 shadow-xl"
           >
             {isLoading ? (
               <p className="px-3 py-2 text-sm font-medium text-slate-500" role="status">
@@ -273,7 +273,7 @@ export function AirportPreferenceSelect({
                   aria-selected={index === activeIndex}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => selectAirport(airport)}
-                  className={`w-full cursor-pointer rounded-xl px-3 py-2 text-left transition ${
+                  className={`w-full cursor-pointer rounded-none px-3 py-2 text-left transition ${
                     index === activeIndex
                       ? "bg-blue-50 text-[#004BB8]"
                       : "text-slate-800 hover:bg-slate-50"

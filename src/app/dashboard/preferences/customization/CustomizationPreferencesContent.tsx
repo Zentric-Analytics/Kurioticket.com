@@ -381,7 +381,7 @@ export function CustomizationPreferencesContent() {
                     onChange={(event) =>
                       handleLanguageChange(event.target.value)
                     }
-                    className="focus-ring mt-2 min-h-11 w-full cursor-pointer rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
+                    className="focus-ring mt-2 min-h-11 w-full cursor-pointer rounded-none border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
                   >
                     {availableLocales.map((option) => (
                       <option key={option.code} value={option.code}>
@@ -404,7 +404,7 @@ export function CustomizationPreferencesContent() {
                     onChange={(event) =>
                       handleCurrencyChange(event.target.value)
                     }
-                    className="focus-ring mt-2 min-h-11 w-full cursor-pointer rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
+                    className="focus-ring mt-2 min-h-11 w-full cursor-pointer rounded-none border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
                   >
                     {currencies.map((option) => (
                       <option key={option.code} value={option.code}>
@@ -426,7 +426,7 @@ export function CustomizationPreferencesContent() {
                   <select
                     value={draftPreferences.region}
                     onChange={(event) => handleRegionChange(event.target.value)}
-                    className="focus-ring mt-2 min-h-11 w-full cursor-pointer rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
+                    className="focus-ring mt-2 min-h-11 w-full cursor-pointer rounded-none border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
                   >
                     {regionOptions.map((option) => (
                       <option key={option.code} value={option.code}>
