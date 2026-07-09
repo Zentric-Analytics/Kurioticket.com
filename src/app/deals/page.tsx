@@ -1045,7 +1045,7 @@ export default function DealsPage() {
       <AppHeader />
 
       <main className="flex-1 bg-slate-50 pb-12">
-        <section className="relative overflow-visible border-b border-slate-200/80 bg-[#F6F9FC] pb-14 shadow-[0_18px_45px_rgba(15,23,42,0.06)] sm:pb-20">
+        <section className="relative overflow-visible border-b border-transparent bg-[#F6F9FC] pb-14 shadow-[0_18px_45px_rgba(15,23,42,0.06)] sm:pb-20">
           <div className="absolute inset-0 overflow-hidden">
             <Image
               src={dealsHeroImage}
