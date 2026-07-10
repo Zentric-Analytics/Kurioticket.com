@@ -82,3 +82,33 @@ test("emailPreferencesUpdatedEmail safely escapes dynamic values and renders cha
   assert.match(html, /individual email-category choices have been preserved/);
   assert.doesNotMatch(html, /<Bisola>/);
 });
+
+test("emailPreferencesUpdatedEmail renders natural master off wording separately from category lists", () => {
+  const html = emailPreferencesUpdatedEmail({
+    enabledLabels: [],
+    disabledLabels: [],
+    changedAt: new Date("2026-07-10T18:30:00.000Z"),
+    preferencesUrl: "https://example.com/dashboard/preferences/email",
+    masterStatusChange: "disabled",
+    masterDisabled: true,
+  });
+
+  assert.match(html, /All optional emails have been turned off/);
+  assert.match(html, /individual email-category choices have been preserved/);
+  assert.doesNotMatch(html, /<li>Optional emails<\/li>/);
+});
+
+test("emailPreferencesUpdatedEmail renders natural master on wording", () => {
+  const html = emailPreferencesUpdatedEmail({
+    enabledLabels: [],
+    disabledLabels: [],
+    changedAt: new Date("2026-07-10T18:30:00.000Z"),
+    preferencesUrl: "https://example.com/dashboard/preferences/email",
+    masterStatusChange: "enabled",
+    masterDisabled: false,
+  });
+
+  assert.match(html, /Optional emails have been turned back on/);
+  assert.doesNotMatch(html, /individual email-category choices have been preserved/);
+  assert.doesNotMatch(html, /<li>Optional emails<\/li>/);
+});

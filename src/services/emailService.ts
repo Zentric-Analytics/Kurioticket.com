@@ -298,6 +298,7 @@ export function emailPreferencesUpdatedEmail(input: {
   disabledLabels: string[];
   changedAt: Date;
   preferencesUrl: string;
+  masterStatusChange?: "disabled" | "enabled";
   masterDisabled: boolean;
 }) {
   const name = escapeHtml(input.name);
@@ -310,12 +311,19 @@ export function emailPreferencesUpdatedEmail(input: {
   );
   const enabledItems = input.enabledLabels.map((label) => `<li>${escapeHtml(label)}</li>`).join("");
   const disabledItems = input.disabledLabels.map((label) => `<li>${escapeHtml(label)}</li>`).join("");
+  const masterStatusMessage =
+    input.masterStatusChange === "disabled"
+      ? "All optional emails have been turned off."
+      : input.masterStatusChange === "enabled"
+        ? "Optional emails have been turned back on. You can now receive the optional email categories you have enabled."
+        : "";
 
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
       <h1 style="font-size:22px">Your Kurioticket email preferences were updated</h1>
       <p>${name ? `Hi ${name},` : "Hi,"}</p>
       <p>Your Kurioticket email preferences were updated.</p>
+      ${masterStatusMessage ? `<p>${masterStatusMessage}</p>` : ""}
       ${
         disabledItems
           ? `<h2 style="font-size:16px;margin-top:20px">Turned off:</h2><ul>${disabledItems}</ul>`

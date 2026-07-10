@@ -46,22 +46,59 @@ test("canSendOptionalEmail returns false when category toggle is false", async (
   assert.equal(await canSendOptionalEmail("user-1", "savedTripReminders"), false);
 });
 
-test("missing preferences use existing defaults", async () => {
+test("emailPreferenceDefaults has every email preference set to false", () => {
+  assert.deepEqual(emailPreferenceDefaults, {
+    receiveOptionalEmails: false,
+    priceAlerts: false,
+    savedTripReminders: false,
+    routeWatchUpdates: false,
+    travelInspiration: false,
+    productUpdates: false,
+    dealsRecommendations: false,
+  });
+});
+
+test("missing preferences use all-false defaults and block new-user optional emails", async () => {
   mockPreferences(undefined);
 
   assert.deepEqual(getSavedEmailPreferences(null), {
     hasPreferences: false,
     preferences: emailPreferenceDefaults,
   });
-  assert.equal(await canSendOptionalEmail("user-1", "priceAlerts"), true);
+  assert.equal(await canSendOptionalEmail("user-1", "priceAlerts"), false);
   assert.equal(await canSendOptionalEmail("user-1", "travelInspiration"), false);
 });
 
-test("malformed saved preferences normalize to defaults", async () => {
+test("malformed saved preferences normalize against all-false defaults", async () => {
   mockPreferences({ email: [] });
 
-  assert.equal(await canSendOptionalEmail("user-1", "priceAlerts"), true);
+  assert.deepEqual(getSavedEmailPreferences({ email: [] }), {
+    hasPreferences: false,
+    preferences: emailPreferenceDefaults,
+  });
+  assert.equal(await canSendOptionalEmail("user-1", "priceAlerts"), false);
   assert.equal(await canSendOptionalEmail("user-1", "routeWatchUpdates"), false);
+});
+
+test("saved true and false values are preserved while partial missing fields default to false", () => {
+  assert.deepEqual(
+    getSavedEmailPreferences({
+      email: {
+        receiveOptionalEmails: true,
+        priceAlerts: true,
+        savedTripReminders: false,
+      },
+    }),
+    {
+      hasPreferences: true,
+      preferences: {
+        ...emailPreferenceDefaults,
+        receiveOptionalEmails: true,
+        priceAlerts: true,
+        savedTripReminders: false,
+      },
+    },
+  );
 });
 
 test("each optional category checks only its own toggle", async () => {
