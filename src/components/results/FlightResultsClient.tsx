@@ -89,14 +89,21 @@ import {
 
 const resultStackClass = "w-full max-w-[680px] lg:ms-4 xl:ms-6";
 const desktopCompactFilterTopOffset = 116;
-const desktopCompactFilterBottomGap = 16;
-
 type DesktopCompactFilterFrame = {
   left: number;
   width: number;
-  maxHeight: number;
 };
 
+type CompactFilterSectionId =
+  | "price"
+  | "times"
+  | "duration"
+  | "quality"
+  | "stops"
+  | "airlines"
+  | "airports"
+  | "amenities"
+  | null;
 
 const filterQueryParamKeys = [
   "fPrice",
@@ -2730,7 +2737,6 @@ export function FlightResultsClient() {
     const measureDesktopCompactFilter = () => {
       const sentinel = desktopFilterSentinelRef.current;
       const sidebar = desktopFilterSidebarRef.current;
-      const resultsGrid = resultsGridRef.current;
       const viewportWidth = window.innerWidth;
       const sentinelTop =
         sentinel?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY;
@@ -2751,32 +2757,16 @@ export function FlightResultsClient() {
       }
 
       const sidebarRect = sidebar.getBoundingClientRect();
-      const resultsBottom =
-        resultsGrid?.getBoundingClientRect().bottom ?? window.innerHeight;
-      const maxHeight = Math.max(
-        0,
-        Math.min(
-          window.innerHeight -
-            desktopCompactFilterTopOffset -
-            desktopCompactFilterBottomGap,
-          resultsBottom -
-            desktopCompactFilterTopOffset -
-            desktopCompactFilterBottomGap,
-        ),
-      );
-
       setDesktopCompactFilterFrame((current) => {
         const nextFrame = {
           left: sidebarRect.left,
           width: sidebarRect.width,
-          maxHeight,
         };
 
         if (
           current &&
           Math.abs(current.left - nextFrame.left) < 0.5 &&
-          Math.abs(current.width - nextFrame.width) < 0.5 &&
-          Math.abs(current.maxHeight - nextFrame.maxHeight) < 0.5
+          Math.abs(current.width - nextFrame.width) < 0.5
         ) {
           return current;
         }
@@ -5312,12 +5302,13 @@ export function FlightResultsClient() {
             />
             {showDesktopFilterShortcut && desktopCompactFilterFrame ? (
               <div
-                className="fixed z-30 overflow-y-auto overscroll-contain"
+                className="fixed z-30 overflow-visible"
                 style={{
                   top: desktopCompactFilterTopOffset,
                   left: desktopCompactFilterFrame.left,
                   width: desktopCompactFilterFrame.width,
-                  maxHeight: desktopCompactFilterFrame.maxHeight,
+                  height: "auto",
+                  overflow: "visible",
                 }}
               >
                 <Filters
@@ -7008,9 +6999,8 @@ function Filters({
         }).formatted
       : t("mixedProviderCurrencies");
 
-  const [compactOpenSection, setCompactOpenSection] = useState<string | null>(
-    null,
-  );
+  const [compactOpenSection, setCompactOpenSection] =
+    useState<CompactFilterSectionId>(null);
   const activeFilterLabel = t("activeFilterCount").replace(
     "{{count}}",
     String(activeFilterCount),
@@ -7035,7 +7025,7 @@ function Filters({
 
   if (layout === "compact") {
     return (
-      <div className="desktop-filter-sidebar flex max-h-[calc(100vh-8.5rem)] flex-col overflow-hidden rounded-2xl border border-[#D8E1EC] bg-white p-0 shadow-[0_16px_36px_-28px_rgba(15,23,42,0.5)]">
+      <div className="desktop-filter-sidebar flex h-auto flex-col overflow-visible rounded-2xl border border-[#D8E1EC] bg-white p-0 shadow-[0_16px_36px_-28px_rgba(15,23,42,0.5)]">
         <div className="desktop-filter-sidebar__header shrink-0 border-b border-[#D8E1EC]/80 bg-gradient-to-b from-[#F8FBFF] to-white px-3.5 py-3">
           <div className="flex items-center justify-between gap-3">
             <h2 className="desktop-filter-sidebar__title truncate text-[15px] font-semibold leading-5 tracking-[-0.01em] text-slate-950">
@@ -7064,7 +7054,7 @@ function Filters({
             </div>
           ) : null}
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white px-2 py-1.5">
+        <div className="h-auto overflow-visible bg-white px-2 py-1.5">
           <CompactFilterSection
             title={t("price")}
             count={compactSectionCounts.price}
@@ -7086,13 +7076,13 @@ function Filters({
                 setMaxPrice(Number(event.target.value));
               }}
             />
-            <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500">
-              <span>
+            <div className="mt-2 flex items-center justify-between gap-3 text-[11px] font-medium tabular-nums text-slate-500">
+              <span className="min-w-0 truncate whitespace-nowrap">
                 {priceBounds.max && priceLabelCurrency
                   ? formatFilterPrice(priceBounds.min)
                   : "—"}
               </span>
-              <span>
+              <span className="min-w-0 truncate whitespace-nowrap">
                 {priceBounds.max && priceLabelCurrency
                   ? formatFilterPrice(Math.min(maxPrice, priceBounds.max))
                   : "—"}
@@ -7106,10 +7096,11 @@ function Filters({
             openSection={compactOpenSection}
             setOpenSection={setCompactOpenSection}
           >
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               {[
                 {
                   key: "takeoff",
+                  eyebrow: t("takeoff"),
                   label: t("takeoffTimeFromOrigin"),
                   bounds: timeBounds.takeoff,
                   value: maxTakeoffMinutes,
@@ -7117,6 +7108,7 @@ function Filters({
                 },
                 {
                   key: "landing",
+                  eyebrow: t("landing"),
                   label: t("landingTimeAtDestination"),
                   bounds: timeBounds.landing,
                   value: maxLandingMinutes,
@@ -7124,9 +7116,12 @@ function Filters({
                 },
               ].map((item) => (
                 <label key={item.key} className="block">
-                  <span className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600">
-                    <span>{item.label}</span>
-                    <span className="font-mono text-navy">
+                  <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                    {item.eyebrow}
+                  </span>
+                  <span className="mb-1.5 flex items-center justify-between gap-3 text-xs font-medium text-slate-600">
+                    <span className="min-w-0 truncate">{item.label}</span>
+                    <span className="shrink-0 whitespace-nowrap font-mono tabular-nums text-navy">
                       {item.bounds && item.value !== null
                         ? formatTimeFromMinutes(item.value, calendarLocale)
                         : t("loading")}
@@ -7156,9 +7151,9 @@ function Filters({
             openSection={compactOpenSection}
             setOpenSection={setCompactOpenSection}
           >
-            <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600">
-              <span>{t("totalTripTime")}</span>
-              <span className="font-mono text-navy">
+            <div className="mb-1.5 flex items-center justify-between gap-3 text-xs font-medium text-slate-600">
+              <span className="min-w-0 truncate">{t("totalTripTime")}</span>
+              <span className="shrink-0 whitespace-nowrap font-mono tabular-nums text-navy">
                 {durationBounds && maxDurationMinutes !== null
                   ? formatDurationFromMinutes(maxDurationMinutes, t)
                   : t("loading")}
@@ -7189,6 +7184,7 @@ function Filters({
           >
             {flightQualityOptions.map((option) => (
               <FilterOptionRow
+                compact
                 key={option.value}
                 label={option.label}
                 count={option.count}
@@ -7210,6 +7206,7 @@ function Filters({
           >
             {stopOptions.map((option) => (
               <FilterOptionRow
+                compact
                 key={option.value}
                 label={option.label}
                 count={option.count}
@@ -7233,6 +7230,7 @@ function Filters({
           >
             {airlineOptions.map((option) => (
               <FilterOptionRow
+                compact
                 key={option.value}
                 label={option.label}
                 count={option.count}
@@ -7254,6 +7252,7 @@ function Filters({
           >
             {airportOptions.map((option) => (
               <FilterOptionRow
+                compact
                 key={option.value}
                 label={option.label}
                 count={option.count}
@@ -7273,6 +7272,7 @@ function Filters({
             setOpenSection={setCompactOpenSection}
           >
             <FilterOptionRow
+              compact
               label={t("baggageIncluded")}
               checked={baggageIncludedOnly}
               onChange={() => {
@@ -7281,6 +7281,7 @@ function Filters({
               }}
             />
             <FilterOptionRow
+              compact
               label={t("flexibleRefundable")}
               checked={flexibleOnly}
               onChange={() => {
@@ -7439,7 +7440,7 @@ function Filters({
                   setMaxTakeoffMinutes(Number(event.target.value));
                 }}
               />
-              <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500">
+              <div className="mt-2 flex items-center justify-between gap-3 text-[11px] font-medium tabular-nums text-slate-500">
                 <span>
                   {timeBounds.takeoff
                     ? formatTimeFromMinutes(
@@ -7481,7 +7482,7 @@ function Filters({
                   setMaxLandingMinutes(Number(event.target.value));
                 }}
               />
-              <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500">
+              <div className="mt-2 flex items-center justify-between gap-3 text-[11px] font-medium tabular-nums text-slate-500">
                 <span>
                   {timeBounds.landing
                     ? formatTimeFromMinutes(
@@ -7713,9 +7714,9 @@ function CompactFilterSection({
 }: {
   title: string;
   count: number;
-  sectionId: string;
-  openSection: string | null;
-  setOpenSection: Dispatch<SetStateAction<string | null>>;
+  sectionId: Exclude<CompactFilterSectionId, null>;
+  openSection: CompactFilterSectionId;
+  setOpenSection: Dispatch<SetStateAction<CompactFilterSectionId>>;
   emptyText?: string;
   children: ReactNode;
 }) {
@@ -7762,8 +7763,8 @@ function CompactFilterSection({
       <div
         id={panelId}
         className={cn(
-          "mx-1 grid gap-0.5 overflow-y-auto rounded-b-xl bg-[#F8FAFC] px-2.5 pb-3 pt-2 ring-1 ring-inset ring-[#D8E1EC]/50",
-          isOpen ? "max-h-[min(24rem,calc(100vh-18rem))]" : "hidden",
+          "mx-1 grid h-auto gap-0.5 overflow-visible rounded-b-xl bg-[#F8FAFC] px-2 pb-2.5 pt-2 ring-1 ring-inset ring-[#D8E1EC]/50",
+          !isOpen && "hidden",
         )}
       >
         {hasOptions ? (
@@ -7811,6 +7812,7 @@ function FilterOptionRow({
   rightLabel,
   checked,
   onChange,
+  compact = false,
 }: {
   label: string;
   count?: number;
@@ -7818,16 +7820,29 @@ function FilterOptionRow({
   rightLabel?: string;
   checked: boolean;
   onChange: () => void;
+  compact?: boolean;
 }) {
   const trailingLabel =
     rightLabel ?? (typeof count === "number" ? String(count) : null);
 
   return (
-    <label className="flex min-h-9 cursor-pointer items-start justify-between gap-3 rounded-lg px-1.5 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950">
-      <span className="flex min-w-0 items-start gap-2">
+    <label
+      className={cn(
+        "flex cursor-pointer items-start justify-between rounded-lg font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950",
+        compact
+          ? "min-h-8 gap-2 px-1.5 py-1 text-[13px]"
+          : "min-h-9 gap-3 px-1.5 py-1.5 text-sm",
+      )}
+    >
+      <span
+        className={cn("flex min-w-0 items-start", compact ? "gap-1.5" : "gap-2")}
+      >
         <input
           type="checkbox"
-          className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-blue focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+          className={cn(
+            "mt-0.5 shrink-0 rounded border-slate-300 accent-blue focus-visible:ring-2 focus-visible:ring-[#004BB8]/25",
+            compact ? "h-3.5 w-3.5" : "h-4 w-4",
+          )}
           checked={checked}
           onChange={onChange}
         />
