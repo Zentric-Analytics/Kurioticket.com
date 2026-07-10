@@ -79,7 +79,11 @@ import {
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { cn, formatTime } from "@/lib/utils";
-import { shouldShowDesktopCompactFilter } from "@/lib/flights/desktopCompactFilter";
+import {
+  calculateCompactFilterPlacement,
+  shouldRenderFlightQualityFilter,
+  shouldShowDesktopCompactFilter,
+} from "@/lib/flights/desktopCompactFilter";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import {
   formatFlightsDateSummary,
@@ -92,6 +96,7 @@ const desktopCompactFilterTopOffset = 116;
 type DesktopCompactFilterFrame = {
   left: number;
   width: number;
+  top: number;
 };
 
 type CompactFilterSectionId =
@@ -1389,7 +1394,7 @@ export function FlightResultsClient() {
     };
   }, [filtersOpen]);
 
-  function triggerFilterApplying() {
+  const triggerFilterApplying = useCallback(() => {
     setFilterApplying(true);
 
     if (filterApplyingTimeoutRef.current !== null) {
@@ -1400,7 +1405,7 @@ export function FlightResultsClient() {
       setFilterApplying(false);
       filterApplyingTimeoutRef.current = null;
     }, 700);
-  }
+  }, [setFilterApplying]);
 
   function handleRemoveRecentSearch(id: string) {
     if (sessionStatus === "authenticated") {
@@ -2441,6 +2446,11 @@ export function FlightResultsClient() {
     [results, t],
   );
 
+  const renderFlightQualityFilter = shouldRenderFlightQualityFilter({
+    loading,
+    optionCount: flightQualityOptions.length,
+  });
+
   const priceBounds = useMemo(() => {
     const prices = results
       .map((flight) => flight.price)
@@ -2515,7 +2525,9 @@ export function FlightResultsClient() {
       airportOptions.map((option) => option.value),
     );
     const allowedQuality = new Set(
-      flightQualityOptions.map((option) => option.value),
+      renderFlightQualityFilter
+        ? flightQualityOptions.map((option) => option.value)
+        : [],
     );
     const nextMaxPrice =
       parseBoundedFilterNumber(
@@ -2617,6 +2629,7 @@ export function FlightResultsClient() {
     durationBounds?.min,
     flightQualityOptions,
     loading,
+    renderFlightQualityFilter,
     priceBounds.max,
     priceBounds.min,
     queryString,
@@ -2672,7 +2685,9 @@ export function FlightResultsClient() {
     appendFilterList(nextParams, "fStop", selectedStops);
     appendFilterList(nextParams, "fAirline", selectedAirlines);
     appendFilterList(nextParams, "fAirport", selectedAirports);
-    appendFilterList(nextParams, "fQuality", selectedFlightQuality);
+    if (renderFlightQualityFilter) {
+      appendFilterList(nextParams, "fQuality", selectedFlightQuality);
+    }
 
     if (baggageIncludedOnly) {
       nextParams.set("fBaggage", "1");
@@ -2700,6 +2715,7 @@ export function FlightResultsClient() {
     maxTakeoffMinutes,
     priceBounds.max,
     queryString,
+    renderFlightQualityFilter,
     router,
     selectedAirlines,
     selectedAirports,
@@ -2743,7 +2759,9 @@ export function FlightResultsClient() {
     count += selectedStops.length;
     count += selectedAirlines.length;
     count += selectedAirports.length;
-    count += selectedFlightQuality.length;
+    if (renderFlightQualityFilter) {
+      count += selectedFlightQuality.length;
+    }
 
     if (baggageIncludedOnly) {
       count += 1;
@@ -2763,6 +2781,7 @@ export function FlightResultsClient() {
     maxPrice,
     maxTakeoffMinutes,
     priceBounds.max,
+    renderFlightQualityFilter,
     selectedAirlines.length,
     selectedAirports.length,
     selectedFlightQuality.length,
@@ -2778,11 +2797,37 @@ export function FlightResultsClient() {
   const desktopFilterSidebarRef = useRef<HTMLElement | null>(null);
   const desktopFilterSentinelRef = useRef<HTMLDivElement | null>(null);
   const resultsGridRef = useRef<HTMLDivElement | null>(null);
+  const flightResultsTopRef = useRef<HTMLDivElement | null>(null);
+  const desktopCompactFilterRef = useRef<HTMLDivElement | null>(null);
   const [showDesktopFilterShortcut, setShowDesktopFilterShortcut] =
     useState(false);
   const [desktopCompactFilterFrame, setDesktopCompactFilterFrame] =
     useState<DesktopCompactFilterFrame | null>(null);
   const desktopFilterShortcutVisibilityRef = useRef(false);
+
+  const scrollToFlightResultsTop = useCallback(() => {
+    if (typeof window === "undefined") return;
+
+    const target = flightResultsTopRef.current;
+    if (!target) return;
+
+    const stickyClearance = desktopCompactFilterTopOffset + 16;
+    const top =
+      target.getBoundingClientRect().top + window.scrollY - stickyClearance;
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    window.scrollTo({
+      top: Math.max(0, top),
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+    });
+  }, []);
+
+  const handleUserFilterCommit = useCallback(() => {
+    triggerFilterApplying();
+    scrollToFlightResultsTop();
+  }, [scrollToFlightResultsTop, triggerFilterApplying]);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -2792,6 +2837,8 @@ export function FlightResultsClient() {
     const measureDesktopCompactFilter = () => {
       const sentinel = desktopFilterSentinelRef.current;
       const sidebar = desktopFilterSidebarRef.current;
+      const compactPanel = desktopCompactFilterRef.current;
+      const resultsBody = resultsGridRef.current;
       const viewportWidth = window.innerWidth;
       const sentinelTop =
         sentinel?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY;
@@ -2812,16 +2859,31 @@ export function FlightResultsClient() {
       }
 
       const sidebarRect = sidebar.getBoundingClientRect();
+      const panelRect = compactPanel?.getBoundingClientRect();
+      const bodyRect = resultsBody?.getBoundingClientRect();
+      const placement = calculateCompactFilterPlacement({
+        enabled: nextVisibility,
+        desiredTop: desktopCompactFilterTopOffset,
+        panelHeight: panelRect?.height ?? 1,
+        bodyBottom: bodyRect?.bottom ?? Number.POSITIVE_INFINITY,
+      });
+
+      if (placement.state === "hidden") {
+        setDesktopCompactFilterFrame(null);
+        return;
+      }
       setDesktopCompactFilterFrame((current) => {
         const nextFrame = {
           left: sidebarRect.left,
           width: sidebarRect.width,
+          top: placement.top,
         };
 
         if (
           current &&
           Math.abs(current.left - nextFrame.left) < 0.5 &&
-          Math.abs(current.width - nextFrame.width) < 0.5
+          Math.abs(current.width - nextFrame.width) < 0.5 &&
+          Math.abs(current.top - nextFrame.top) < 0.5
         ) {
           return current;
         }
@@ -2864,6 +2926,9 @@ export function FlightResultsClient() {
       if (resultsGridRef.current) {
         resizeObserver.observe(resultsGridRef.current);
       }
+      if (desktopCompactFilterRef.current) {
+        resizeObserver.observe(desktopCompactFilterRef.current);
+      }
     }
 
     measureDesktopCompactFilter();
@@ -2881,8 +2946,23 @@ export function FlightResultsClient() {
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined" || !showDesktopFilterShortcut) return;
+
+    const animationFrameId = window.requestAnimationFrame(() => {
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    return () => window.cancelAnimationFrame(animationFrameId);
+  }, [
+    activeFilterCount,
+    results.length,
+    renderFlightQualityFilter,
+    showDesktopFilterShortcut,
+  ]);
+
   const clearFlightFilters = () => {
-    triggerFilterApplying();
+    handleUserFilterCommit();
     setMaxPrice(priceBounds.max);
     setMaxTakeoffMinutes(timeBounds.takeoff?.max ?? null);
     setMaxLandingMinutes(timeBounds.landing?.max ?? null);
@@ -2914,6 +2994,7 @@ export function FlightResultsClient() {
           !baggageIncludedOnly || hasBaggageIncluded(flight);
         const matchesFlexibility = !flexibleOnly || hasFlexibleTerms(flight);
         const matchesFlightQuality =
+          !renderFlightQualityFilter ||
           selectedFlightQuality.length === 0 ||
           selectedFlightQuality.every((option) =>
             flightHasQualityOption(flight, option),
@@ -2953,6 +3034,7 @@ export function FlightResultsClient() {
       maxLandingMinutes,
       maxPrice,
       maxTakeoffMinutes,
+      renderFlightQualityFilter,
       results,
       selectedAirlines,
       selectedAirports,
@@ -5344,6 +5426,7 @@ export function FlightResultsClient() {
               selectedAirports={selectedAirports}
               setSelectedAirports={setSelectedAirports}
               flightQualityOptions={flightQualityOptions}
+              renderFlightQualityFilter={renderFlightQualityFilter}
               selectedFlightQuality={selectedFlightQuality}
               setSelectedFlightQuality={setSelectedFlightQuality}
               baggageIncludedOnly={baggageIncludedOnly}
@@ -5351,6 +5434,7 @@ export function FlightResultsClient() {
               flexibleOnly={flexibleOnly}
               setFlexibleOnly={setFlexibleOnly}
               onFilterChange={triggerFilterApplying}
+              onFilterCommit={handleUserFilterCommit}
               onClear={clearFlightFilters}
             />
             <div
@@ -5360,9 +5444,10 @@ export function FlightResultsClient() {
             />
             {showDesktopFilterShortcut && desktopCompactFilterFrame ? (
               <div
+                ref={desktopCompactFilterRef}
                 className="fixed z-30 overflow-visible"
                 style={{
-                  top: desktopCompactFilterTopOffset,
+                  top: desktopCompactFilterFrame.top,
                   left: desktopCompactFilterFrame.left,
                   width: desktopCompactFilterFrame.width,
                   height: "auto",
@@ -5397,6 +5482,7 @@ export function FlightResultsClient() {
                   selectedAirports={selectedAirports}
                   setSelectedAirports={setSelectedAirports}
                   flightQualityOptions={flightQualityOptions}
+                  renderFlightQualityFilter={renderFlightQualityFilter}
                   selectedFlightQuality={selectedFlightQuality}
                   setSelectedFlightQuality={setSelectedFlightQuality}
                   baggageIncludedOnly={baggageIncludedOnly}
@@ -5404,6 +5490,7 @@ export function FlightResultsClient() {
                   flexibleOnly={flexibleOnly}
                   setFlexibleOnly={setFlexibleOnly}
                   onFilterChange={triggerFilterApplying}
+                  onFilterCommit={handleUserFilterCommit}
                   onClear={clearFlightFilters}
                 />
               </div>
@@ -5415,6 +5502,7 @@ export function FlightResultsClient() {
           <p className="sr-only" aria-live="polite">
             {savedTripError}
           </p>
+          <div ref={flightResultsTopRef} aria-hidden="true" />
           {error ? (
             <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger">
               {error}
@@ -5635,6 +5723,7 @@ export function FlightResultsClient() {
             selectedAirports={selectedAirports}
             setSelectedAirports={setSelectedAirports}
             flightQualityOptions={flightQualityOptions}
+            renderFlightQualityFilter={renderFlightQualityFilter}
             selectedFlightQuality={selectedFlightQuality}
             setSelectedFlightQuality={setSelectedFlightQuality}
             baggageIncludedOnly={baggageIncludedOnly}
@@ -5642,6 +5731,7 @@ export function FlightResultsClient() {
             flexibleOnly={flexibleOnly}
             setFlexibleOnly={setFlexibleOnly}
             onFilterChange={triggerFilterApplying}
+            onFilterCommit={handleUserFilterCommit}
             onClear={clearFlightFilters}
           />
         </div>
@@ -6994,6 +7084,7 @@ function Filters({
   selectedAirports,
   setSelectedAirports,
   flightQualityOptions,
+  renderFlightQualityFilter,
   selectedFlightQuality,
   setSelectedFlightQuality,
   baggageIncludedOnly,
@@ -7001,6 +7092,7 @@ function Filters({
   flexibleOnly,
   setFlexibleOnly,
   onFilterChange,
+  onFilterCommit,
   onClear,
 }: {
   layout: "desktop" | "mobile" | "compact";
@@ -7030,6 +7122,7 @@ function Filters({
   selectedAirports: string[];
   setSelectedAirports: Dispatch<SetStateAction<string[]>>;
   flightQualityOptions: FilterOption[];
+  renderFlightQualityFilter: boolean;
   selectedFlightQuality: string[];
   setSelectedFlightQuality: Dispatch<SetStateAction<string[]>>;
   baggageIncludedOnly: boolean;
@@ -7037,6 +7130,7 @@ function Filters({
   flexibleOnly: boolean;
   setFlexibleOnly: (value: boolean) => void;
   onFilterChange: () => void;
+  onFilterCommit: () => void;
   onClear: () => void;
 }) {
   const { t: dictionary, locale } = useLocale();
@@ -7063,6 +7157,14 @@ function Filters({
     "{{count}}",
     String(activeFilterCount),
   );
+  const renderQualitySection =
+    renderFlightQualityFilter && flightQualityOptions.length > 0;
+
+  const effectiveCompactOpenSection =
+    compactOpenSection === "quality" && !renderQualitySection
+      ? null
+      : compactOpenSection;
+
   const compactSectionCounts = {
     price: priceBounds.max && maxPrice < priceBounds.max ? 1 : 0,
     times:
@@ -7117,7 +7219,7 @@ function Filters({
             title={t("price")}
             count={compactSectionCounts.price}
             sectionId="price"
-            openSection={compactOpenSection}
+            openSection={effectiveCompactOpenSection}
             setOpenSection={setCompactOpenSection}
           >
             <input
@@ -7129,6 +7231,11 @@ function Filters({
               step={25}
               value={priceBounds.max ? Math.min(maxPrice, priceBounds.max) : 0}
               disabled={!priceBounds.max}
+              onPointerUp={onFilterCommit}
+              onMouseUp={onFilterCommit}
+              onTouchEnd={onFilterCommit}
+              onKeyUp={onFilterCommit}
+              onBlur={onFilterCommit}
               onChange={(event) => {
                 onFilterChange();
                 setMaxPrice(Number(event.target.value));
@@ -7151,7 +7258,7 @@ function Filters({
             title={t("times")}
             count={compactSectionCounts.times}
             sectionId="times"
-            openSection={compactOpenSection}
+            openSection={effectiveCompactOpenSection}
             setOpenSection={setCompactOpenSection}
           >
             <div className="space-y-3.5">
@@ -7193,6 +7300,11 @@ function Filters({
                     step={15}
                     value={item.value ?? item.bounds?.max ?? 0}
                     disabled={!item.bounds}
+                    onPointerUp={onFilterCommit}
+                    onMouseUp={onFilterCommit}
+                    onTouchEnd={onFilterCommit}
+                    onKeyUp={onFilterCommit}
+                    onBlur={onFilterCommit}
                     onChange={(event) => {
                       onFilterChange();
                       item.setValue(Number(event.target.value));
@@ -7206,7 +7318,7 @@ function Filters({
             title={t("duration")}
             count={compactSectionCounts.duration}
             sectionId="duration"
-            openSection={compactOpenSection}
+            openSection={effectiveCompactOpenSection}
             setOpenSection={setCompactOpenSection}
           >
             <div className="mb-1.5 flex items-center justify-between gap-3 text-xs font-medium text-slate-600">
@@ -7226,39 +7338,45 @@ function Filters({
               step={15}
               value={maxDurationMinutes ?? durationBounds?.max ?? 0}
               disabled={!durationBounds}
+              onPointerUp={onFilterCommit}
+              onMouseUp={onFilterCommit}
+              onTouchEnd={onFilterCommit}
+              onKeyUp={onFilterCommit}
+              onBlur={onFilterCommit}
               onChange={(event) => {
                 onFilterChange();
                 setMaxDurationMinutes(Number(event.target.value));
               }}
             />
           </CompactFilterSection>
-          <CompactFilterSection
-            title={t("flightQuality")}
-            count={compactSectionCounts.quality}
-            sectionId="quality"
-            openSection={compactOpenSection}
-            setOpenSection={setCompactOpenSection}
-            emptyText={t("loading")}
-          >
-            {flightQualityOptions.map((option) => (
-              <FilterOptionRow
-                compact
-                key={option.value}
-                label={option.label}
-                count={option.count}
-                checked={selectedFlightQuality.includes(option.value)}
-                onChange={() => {
-                  onFilterChange();
-                  toggleFilterValue(option.value, setSelectedFlightQuality);
-                }}
-              />
-            ))}
-          </CompactFilterSection>
+          {renderQualitySection ? (
+            <CompactFilterSection
+              title={t("flightQuality")}
+              count={compactSectionCounts.quality}
+              sectionId="quality"
+              openSection={effectiveCompactOpenSection}
+              setOpenSection={setCompactOpenSection}
+            >
+              {flightQualityOptions.map((option) => (
+                <FilterOptionRow
+                  compact
+                  key={option.value}
+                  label={option.label}
+                  count={option.count}
+                  checked={selectedFlightQuality.includes(option.value)}
+                  onChange={() => {
+                    toggleFilterValue(option.value, setSelectedFlightQuality);
+                    onFilterCommit();
+                  }}
+                />
+              ))}
+            </CompactFilterSection>
+          ) : null}
           <CompactFilterSection
             title={t("stops")}
             count={compactSectionCounts.stops}
             sectionId="stops"
-            openSection={compactOpenSection}
+            openSection={effectiveCompactOpenSection}
             setOpenSection={setCompactOpenSection}
             emptyText={t("stopsAppearAfterResultsLoad")}
           >
@@ -7272,8 +7390,8 @@ function Filters({
                 rightLabel={option.rightLabel}
                 checked={selectedStops.includes(option.value)}
                 onChange={() => {
-                  onFilterChange();
                   toggleFilterValue(option.value, setSelectedStops);
+                  onFilterCommit();
                 }}
               />
             ))}
@@ -7282,7 +7400,7 @@ function Filters({
             title={t("airlines")}
             count={compactSectionCounts.airlines}
             sectionId="airlines"
-            openSection={compactOpenSection}
+            openSection={effectiveCompactOpenSection}
             setOpenSection={setCompactOpenSection}
             emptyText={t("airlinesAppearAfterResultsLoad")}
           >
@@ -7294,8 +7412,8 @@ function Filters({
                 count={option.count}
                 checked={selectedAirlines.includes(option.value)}
                 onChange={() => {
-                  onFilterChange();
                   toggleFilterValue(option.value, setSelectedAirlines);
+                  onFilterCommit();
                 }}
               />
             ))}
@@ -7304,7 +7422,7 @@ function Filters({
             title={t("airports")}
             count={compactSectionCounts.airports}
             sectionId="airports"
-            openSection={compactOpenSection}
+            openSection={effectiveCompactOpenSection}
             setOpenSection={setCompactOpenSection}
             emptyText={t("airportsAppearAfterResultsLoad")}
           >
@@ -7316,8 +7434,8 @@ function Filters({
                 count={option.count}
                 checked={selectedAirports.includes(option.value)}
                 onChange={() => {
-                  onFilterChange();
                   toggleFilterValue(option.value, setSelectedAirports);
+                  onFilterCommit();
                 }}
               />
             ))}
@@ -7326,7 +7444,7 @@ function Filters({
             title={t("amenities")}
             count={compactSectionCounts.amenities}
             sectionId="amenities"
-            openSection={compactOpenSection}
+            openSection={effectiveCompactOpenSection}
             setOpenSection={setCompactOpenSection}
           >
             <FilterOptionRow
@@ -7334,8 +7452,8 @@ function Filters({
               label={t("baggageIncluded")}
               checked={baggageIncludedOnly}
               onChange={() => {
-                onFilterChange();
                 setBaggageIncludedOnly(!baggageIncludedOnly);
+                onFilterCommit();
               }}
             />
             <FilterOptionRow
@@ -7343,8 +7461,8 @@ function Filters({
               label={t("flexibleRefundable")}
               checked={flexibleOnly}
               onChange={() => {
-                onFilterChange();
                 setFlexibleOnly(!flexibleOnly);
+                onFilterCommit();
               }}
             />
           </CompactFilterSection>
@@ -7493,6 +7611,11 @@ function Filters({
                 step={15}
                 value={maxTakeoffMinutes ?? timeBounds.takeoff?.max ?? 0}
                 disabled={!timeBounds.takeoff}
+                onPointerUp={onFilterCommit}
+                onMouseUp={onFilterCommit}
+                onTouchEnd={onFilterCommit}
+                onKeyUp={onFilterCommit}
+                onBlur={onFilterCommit}
                 onChange={(event) => {
                   onFilterChange();
                   setMaxTakeoffMinutes(Number(event.target.value));
@@ -7535,6 +7658,11 @@ function Filters({
                 step={15}
                 value={maxLandingMinutes ?? timeBounds.landing?.max ?? 0}
                 disabled={!timeBounds.landing}
+                onPointerUp={onFilterCommit}
+                onMouseUp={onFilterCommit}
+                onTouchEnd={onFilterCommit}
+                onKeyUp={onFilterCommit}
+                onBlur={onFilterCommit}
                 onChange={(event) => {
                   onFilterChange();
                   setMaxLandingMinutes(Number(event.target.value));
@@ -7600,7 +7728,7 @@ function Filters({
           </div>
         </FilterSection>
 
-        {flightQualityOptions.length ? (
+        {renderQualitySection ? (
           <FilterSection title={t("flightQuality")}>
             {flightQualityOptions.map((option) => (
               <FilterOptionRow
@@ -7609,8 +7737,8 @@ function Filters({
                 count={option.count}
                 checked={selectedFlightQuality.includes(option.value)}
                 onChange={() => {
-                  onFilterChange();
                   toggleFilterValue(option.value, setSelectedFlightQuality);
+                  onFilterCommit();
                 }}
               />
             ))}
@@ -7632,6 +7760,7 @@ function Filters({
               onChange={() => {
                 onFilterChange();
                 toggleFilterValue(option.value, setSelectedStops);
+                onFilterCommit();
               }}
             />
           ))}
@@ -7650,6 +7779,7 @@ function Filters({
               onChange={() => {
                 onFilterChange();
                 toggleFilterValue(option.value, setSelectedAirlines);
+                onFilterCommit();
               }}
             />
           ))}
@@ -7668,6 +7798,7 @@ function Filters({
               onChange={() => {
                 onFilterChange();
                 toggleFilterValue(option.value, setSelectedAirports);
+                onFilterCommit();
               }}
             />
           ))}
@@ -7678,16 +7809,16 @@ function Filters({
             label={t("baggageIncluded")}
             checked={baggageIncludedOnly}
             onChange={() => {
-              onFilterChange();
               setBaggageIncludedOnly(!baggageIncludedOnly);
+              onFilterCommit();
             }}
           />
           <FilterOptionRow
             label={t("flexibleRefundable")}
             checked={flexibleOnly}
             onChange={() => {
-              onFilterChange();
               setFlexibleOnly(!flexibleOnly);
+              onFilterCommit();
             }}
           />
         </FilterSection>
@@ -7793,11 +7924,17 @@ function CompactFilterSection({
           "group flex w-full items-center justify-between gap-3 px-2.5 py-3 text-start text-[13px] font-semibold leading-5 tracking-[-0.005em] text-slate-800 transition-colors duration-200 motion-reduce:transition-none hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30",
           isOpen && "text-[#004BB8]",
         )}
-        onClick={() =>
+        onClick={() => {
           setOpenSection((current) =>
             current === sectionId ? null : sectionId,
-          )
-        }
+          );
+
+          if (typeof window !== "undefined") {
+            window.requestAnimationFrame(() => {
+              window.dispatchEvent(new Event("resize"));
+            });
+          }
+        }}
       >
         <span className="min-w-0 truncate">{title}</span>
         <span className="flex shrink-0 items-center gap-2">
@@ -7891,7 +8028,10 @@ function FilterOptionRow({
       )}
     >
       <span
-        className={cn("flex min-w-0 items-start", compact ? "gap-1.5" : "gap-2")}
+        className={cn(
+          "flex min-w-0 items-start",
+          compact ? "gap-1.5" : "gap-2",
+        )}
       >
         <input
           type="checkbox"
