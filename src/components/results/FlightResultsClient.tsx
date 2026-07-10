@@ -5305,8 +5305,8 @@ export function FlightResultsClient() {
       mobileSortOptions[0];
 
     return (
-      <div className="mx-auto flex w-full max-w-[30rem] min-w-0 items-center justify-between gap-2">
-        <p className="min-w-0 flex-1 truncate text-[13px] font-extrabold leading-5 text-navy sm:text-sm">
+      <div className="mx-auto flex w-full max-w-[30rem] min-w-0 items-center justify-between gap-2.5">
+        <p className="min-w-0 flex-1 truncate text-[15px] font-semibold leading-6 tracking-[-0.01em] text-slate-900">
           {formatResultsFound(sortedResults.length, t)}
         </p>
 
@@ -5316,7 +5316,7 @@ export function FlightResultsClient() {
             aria-haspopup="menu"
             aria-expanded={mobileSortMenuOpen}
             onClick={() => setMobileSortMenuOpen((open) => !open)}
-            className="focus-ring inline-flex h-9 min-w-[6.75rem] items-center justify-between gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-[13px] font-bold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+            className="focus-ring inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-transparent px-2.5 text-[14px] font-semibold text-slate-800 transition hover:bg-slate-200/45 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           >
             <span className="truncate">{activeSortOption.label}</span>
             <ChevronDown
@@ -5374,18 +5374,15 @@ export function FlightResultsClient() {
     };
 
     return (
-      <Button
+      <button
         type="button"
-        variant="secondary"
         aria-label={label}
-        className={cn(
-          "relative h-9 justify-start gap-2 rounded-lg border-0 bg-transparent px-0 text-sm font-bold text-slate-700 shadow-none ring-0 transition hover:bg-transparent hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
-        )}
+        className="focus-ring relative inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-transparent px-2 text-[14px] font-semibold text-slate-800 transition hover:bg-slate-200/45 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
         onClick={handleClick}
       >
         <SlidersHorizontal
-          className="h-[17px] w-[17px] text-[#004BB8]"
-          strokeWidth={2.3}
+          className="h-4 w-4 text-[#004BB8]"
+          strokeWidth={2.2}
           aria-hidden="true"
         />
         <span>Filter</span>
@@ -5394,7 +5391,7 @@ export function FlightResultsClient() {
             {activeFilterCount}
           </span>
         ) : null}
-      </Button>
+      </button>
     );
   }
 
@@ -5467,7 +5464,7 @@ export function FlightResultsClient() {
 
       {!mobileSearchOpen ? (
         <section
-          className="relative z-30 px-4 pb-2 pt-11 sm:hidden"
+          className="relative z-30 px-4 pb-0 pt-12 sm:hidden"
           aria-label={t("filters")}
         >
           {renderMobileSortResultsRow()}
@@ -5628,7 +5625,7 @@ export function FlightResultsClient() {
 
       <div
         ref={resultsGridRef}
-        className="page-shell grid gap-4 pb-5 pt-8 sm:pt-5 lg:grid-cols-[256px_minmax(0,1fr)] lg:pt-6"
+        className="page-shell grid gap-4 pb-5 pt-3 sm:pt-5 lg:grid-cols-[256px_minmax(0,1fr)] lg:pt-6"
       >
         <aside
           ref={desktopFilterSidebarRef}
