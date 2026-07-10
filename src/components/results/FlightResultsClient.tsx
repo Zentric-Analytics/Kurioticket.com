@@ -5288,21 +5288,18 @@ export function FlightResultsClient() {
         variant="secondary"
         aria-label={label}
         className={cn(
-          "relative h-12 w-full justify-center rounded-2xl border-0 bg-white/95 px-4 text-sm font-bold text-slate-700 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.06] backdrop-blur transition hover:bg-white hover:text-slate-950 hover:shadow-[0_16px_34px_-26px_rgba(15,23,42,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
+          "relative h-9 justify-start gap-2 rounded-lg border-0 bg-transparent px-0 text-sm font-bold text-slate-700 shadow-none ring-0 transition hover:bg-transparent hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
         )}
         onClick={handleClick}
       >
-        <SlidersHorizontal size={17} strokeWidth={2.3} aria-hidden="true" />
-        <span>
-          {activeFilterCount > 0
-            ? t("filtersWithCount").replace(
-                "{{count}}",
-                String(activeFilterCount),
-              )
-            : t("filters")}
-        </span>
+        <SlidersHorizontal
+          className="h-[17px] w-[17px] text-[#004BB8]"
+          strokeWidth={2.3}
+          aria-hidden="true"
+        />
+        <span>Filter</span>
         {activeFilterCount > 0 ? (
-          <span className="absolute end-1.5 top-1.5 inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] font-semibold leading-none text-[#004BB8] shadow-sm ring-2 ring-white">
+          <span className="ms-0.5 inline-flex h-[20px] min-w-[20px] items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] font-semibold leading-none text-[#004BB8]">
             {activeFilterCount}
           </span>
         ) : null}
@@ -5316,22 +5313,22 @@ export function FlightResultsClient() {
         <button
           type="button"
           onClick={openMobileSearchDrawer}
-          className="relative z-10 flex h-16 min-w-0 w-full max-w-[30rem] items-center justify-between gap-3 overflow-hidden rounded-2xl border-0 bg-white/95 px-4 py-0 text-start shadow-[0_14px_34px_-24px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.05] backdrop-blur transition hover:bg-white hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+          className="group relative z-10 flex h-[4.25rem] min-w-0 w-full max-w-[30rem] items-center justify-between gap-3 overflow-hidden rounded-xl border border-slate-200/80 bg-white px-4 py-0 text-start shadow-[0_16px_34px_-26px_rgba(15,23,42,0.55)] transition hover:border-slate-300 hover:bg-white hover:shadow-[0_18px_38px_-28px_rgba(15,23,42,0.62)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
         >
-          <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
-            <span className="block truncate text-[16px] font-bold leading-5 text-slate-950">
+          <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden pe-1">
+            <span className="block truncate text-[16px] font-extrabold leading-5 tracking-[-0.015em] text-slate-950">
               {mobileRouteSummary}
             </span>
-            <span className="mt-1 block truncate text-[12px] font-semibold leading-4 text-slate-600">
+            <span className="mt-1.5 block truncate text-[12.5px] font-semibold leading-4 text-slate-500">
               {mobileTripTypeSummary} · {mobileDateSummary} ·{" "}
               {mobileTravelerSummary}
             </span>
           </span>
           <span
             aria-hidden="true"
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#f4f7fb] text-slate-700 ring-1 ring-slate-950/[0.06]"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200/90 bg-slate-50 text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] transition group-hover:border-slate-300 group-hover:bg-slate-100"
           >
-            <SquarePen size={16} strokeWidth={2.1} />
+            <SquarePen size={15} strokeWidth={2.2} />
           </span>
         </button>
       </div>
@@ -5379,10 +5376,10 @@ export function FlightResultsClient() {
 
       {!mobileSearchOpen ? (
         <section
-          className="relative z-30 px-4 pb-1 pt-12 sm:hidden"
+          className="relative z-30 px-4 pb-1 pt-11 sm:hidden"
           aria-label={t("filters")}
         >
-          <div className="mx-auto w-full max-w-[30rem]">
+          <div className="mx-auto flex w-full max-w-[30rem] justify-start">
             {renderFloatingFilterButton()}
           </div>
         </section>
