@@ -1079,34 +1079,35 @@ export function FlightResultsClient() {
     stickySearchPanelOpenRef.current = isStickySearchPanelOpen;
   }, [isStickySearchPanelOpen]);
 
-  const collapseStickySearch = useCallback(({
-    restoreScroll = true,
-  }: { restoreScroll?: boolean } = {}) => {
-    const activeScrollLock = stickySearchScrollLockRef.current;
+  const collapseStickySearch = useCallback(
+    ({ restoreScroll = true }: { restoreScroll?: boolean } = {}) => {
+      const activeScrollLock = stickySearchScrollLockRef.current;
 
-    if (!restoreScroll && activeScrollLock) {
-      activeScrollLock.restore({ restoreScroll: false });
-      stickySearchScrollLockRef.current = null;
-    }
+      if (!restoreScroll && activeScrollLock) {
+        activeScrollLock.restore({ restoreScroll: false });
+        stickySearchScrollLockRef.current = null;
+      }
 
-    setIsSearchExpandedWhileSticky(false);
-    setTripTypeMenuOpen(false);
-    setActiveSuggest(null);
-    setDropdownPosition(null);
-    setActiveDatePicker(null);
-    setDatePickerPosition(null);
-    setTravelerPopoverOpen(false);
-    setTravelerPopoverPosition(null);
-    setActiveDesktopSearchSurface(null);
-  }, [
-    setActiveDatePicker,
-    setActiveSuggest,
-    setDatePickerPosition,
-    setDropdownPosition,
-    setTravelerPopoverOpen,
-    setTravelerPopoverPosition,
-    setTripTypeMenuOpen,
-  ]);
+      setIsSearchExpandedWhileSticky(false);
+      setTripTypeMenuOpen(false);
+      setActiveSuggest(null);
+      setDropdownPosition(null);
+      setActiveDatePicker(null);
+      setDatePickerPosition(null);
+      setTravelerPopoverOpen(false);
+      setTravelerPopoverPosition(null);
+      setActiveDesktopSearchSurface(null);
+    },
+    [
+      setActiveDatePicker,
+      setActiveSuggest,
+      setDatePickerPosition,
+      setDropdownPosition,
+      setTravelerPopoverOpen,
+      setTravelerPopoverPosition,
+      setTripTypeMenuOpen,
+    ],
+  );
 
   useEffect(() => {
     if (!isStickySearchPanelOpen) {
@@ -2857,9 +2858,9 @@ export function FlightResultsClient() {
     null,
   );
   const desktopCompactFilterHeightRef = useRef(1);
-  const scheduleDesktopCompactFilterMeasurementRef = useRef<(() => void) | null>(
-    null,
-  );
+  const scheduleDesktopCompactFilterMeasurementRef = useRef<
+    (() => void) | null
+  >(null);
 
   const scrollToFlightResultsTop = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -2941,7 +2942,8 @@ export function FlightResultsClient() {
       const sidebarRect = sidebar.getBoundingClientRect();
       const panelRect = compactPanel?.getBoundingClientRect();
       const bodyRect = resultsBody.getBoundingClientRect();
-      const panelHeight = panelRect?.height ?? desktopCompactFilterHeightRef.current;
+      const panelHeight =
+        panelRect?.height ?? desktopCompactFilterHeightRef.current;
 
       if (Number.isFinite(panelHeight) && panelHeight > 0) {
         desktopCompactFilterHeightRef.current = panelHeight;
@@ -3998,7 +4000,10 @@ export function FlightResultsClient() {
                   className={collapsedConnectorClass}
                 >
                   <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#5CB6B2]/25 bg-[#5CB6B2]/10 text-current shadow-sm ring-1 ring-white/80 transition-transform hover:scale-105">
-                    <ArrowRightLeft className="h-3.5 w-3.5" aria-hidden="true" />
+                    <ArrowRightLeft
+                      className="h-3.5 w-3.5"
+                      aria-hidden="true"
+                    />
                   </span>
                 </button>
                 <button
@@ -5283,11 +5288,19 @@ export function FlightResultsClient() {
         variant="secondary"
         aria-label={label}
         className={cn(
-          "relative h-16 w-[72px] shrink-0 rounded-2xl border-0 bg-white/95 px-2 text-slate-700 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.05] backdrop-blur transition hover:bg-white hover:text-slate-950 hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
+          "relative h-12 w-full justify-center rounded-2xl border-0 bg-white/95 px-4 text-sm font-bold text-slate-700 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.06] backdrop-blur transition hover:bg-white hover:text-slate-950 hover:shadow-[0_16px_34px_-26px_rgba(15,23,42,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
         )}
         onClick={handleClick}
       >
-        <SlidersHorizontal size={19} strokeWidth={2.3} aria-hidden="true" />
+        <SlidersHorizontal size={17} strokeWidth={2.3} aria-hidden="true" />
+        <span>
+          {activeFilterCount > 0
+            ? t("filtersWithCount").replace(
+                "{{count}}",
+                String(activeFilterCount),
+              )
+            : t("filters")}
+        </span>
         {activeFilterCount > 0 ? (
           <span className="absolute end-1.5 top-1.5 inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] font-semibold leading-none text-[#004BB8] shadow-sm ring-2 ring-white">
             {activeFilterCount}
@@ -5299,13 +5312,11 @@ export function FlightResultsClient() {
 
   function renderMobileControlsRow() {
     return (
-      <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch gap-2.5">
-        {renderFloatingFilterButton()}
-
+      <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch justify-center px-4">
         <button
           type="button"
           onClick={openMobileSearchDrawer}
-          className="flex h-16 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-2xl border-0 bg-white/95 px-4 py-0 text-start shadow-[0_14px_34px_-24px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.05] backdrop-blur transition hover:bg-white hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+          className="relative z-10 flex h-16 min-w-0 w-full max-w-[30rem] items-center justify-between gap-3 overflow-hidden rounded-2xl border-0 bg-white/95 px-4 py-0 text-start shadow-[0_14px_34px_-24px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.05] backdrop-blur transition hover:bg-white hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
         >
           <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
             <span className="block truncate text-[16px] font-bold leading-5 text-slate-950">
@@ -5352,15 +5363,30 @@ export function FlightResultsClient() {
     <main className="flex-1 bg-[#F3F6FA] pb-8">
       <section
         className={cn(
-          "relative z-40 border-b border-slate-200 bg-white px-4 pb-0 pt-0 sm:hidden",
+          "relative z-40 bg-white pb-0 pt-0 sm:hidden",
           mobileSearchOpen && "hidden",
         )}
         aria-label="Flight search controls"
       >
         <div className="relative translate-y-1/2">
+          <div
+            className="pointer-events-none absolute inset-x-0 top-1/2 z-0 h-px -translate-y-1/2 bg-slate-300 shadow-[0_1px_0_rgba(100,116,139,0.18)]"
+            aria-hidden="true"
+          />
           {renderMobileControlsRow()}
         </div>
       </section>
+
+      {!mobileSearchOpen ? (
+        <section
+          className="relative z-30 px-4 pb-1 pt-12 sm:hidden"
+          aria-label={t("filters")}
+        >
+          <div className="mx-auto w-full max-w-[30rem]">
+            {renderFloatingFilterButton()}
+          </div>
+        </section>
+      ) : null}
 
       <div
         className={cn(
