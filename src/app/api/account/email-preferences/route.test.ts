@@ -189,8 +189,10 @@ test("PATCH sends one transactional confirmation for a turned off category after
   assert.equal(response.status, 200);
   assert.deepEqual(body, { preferences: { ...emailPreferenceDefaults, priceAlerts: false } });
   assert.equal(sent.length, 1);
-  assert.match((sent[0] as { html: string }).html, /Turned off:/);
+  assert.match((sent[0] as { html: string }).html, /Your email preferences were updated/);
   assert.match((sent[0] as { html: string }).html, /Price alerts/);
+  assert.match((sent[0] as { html: string }).html, /Off/);
+  assert.equal((sent[0] as { subject: string }).subject, "Your Kurioticket email preferences were updated");
   assert.equal((sent[0] as { to: string }).to, "registered@example.com");
   assert.equal((sent[0] as { template: string }).template, "email_preferences_updated");
 });
@@ -208,8 +210,9 @@ test("PATCH sends one transactional confirmation for a turned on category", asyn
   await PATCH(jsonRequest({ ...emailPreferenceDefaults, travelInspiration: true }));
 
   assert.equal(sent.length, 1);
-  assert.match((sent[0] as { html: string }).html, /Turned on:/);
+  assert.match((sent[0] as { html: string }).html, /Changes/);
   assert.match((sent[0] as { html: string }).html, /Travel inspiration/);
+  assert.match((sent[0] as { html: string }).html, /On/);
 });
 
 test("PATCH summarizes multiple changes in exactly one email", async () => {
@@ -251,8 +254,9 @@ test("PATCH confirmation still sends when optional emails are turned off and doe
   await PATCH(jsonRequest({ ...emailPreferenceDefaults, receiveOptionalEmails: false }));
 
   assert.equal(sent.length, 1);
-  assert.match((sent[0] as { html: string }).html, /All optional emails have been turned off/);
-  assert.match((sent[0] as { html: string }).html, /individual email-category choices have been preserved/);
+  assert.match((sent[0] as { html: string }).html, /You’ll no longer receive optional Kurioticket emails/);
+  assert.match((sent[0] as { html: string }).html, /Your category choices are saved and will become active again if you resubscribe/);
+  assert.equal((sent[0] as { subject: string }).subject, "You’re unsubscribed from optional Kurioticket emails");
 });
 
 test("PATCH confirmation sends when optional emails are turned on", async () => {
@@ -268,7 +272,8 @@ test("PATCH confirmation sends when optional emails are turned on", async () => 
   await PATCH(jsonRequest({ ...emailPreferenceDefaults, receiveOptionalEmails: true }));
 
   assert.equal(sent.length, 1);
-  assert.match((sent[0] as { html: string }).html, /Optional emails have been turned back on/);
+  assert.match((sent[0] as { html: string }).html, /Optional emails are enabled again/);
+  assert.equal((sent[0] as { subject: string }).subject, "Optional Kurioticket emails are back on");
   assert.doesNotMatch((sent[0] as { html: string }).html, /<li>Optional emails<\/li>/);
 });
 
@@ -285,9 +290,35 @@ test("PATCH does not list unchanged children when master switch turns off", asyn
   await PATCH(jsonRequest({ ...emailPreferenceDefaults, receiveOptionalEmails: false }));
 
   const html = (sent[0] as { html: string }).html;
-  assert.match(html, /All optional emails have been turned off/);
+  assert.match(html, /You’ll no longer receive optional Kurioticket emails/);
   assert.doesNotMatch(html, /Price alerts/);
-  assert.match(html, /individual email-category choices have been preserved/);
+  assert.match(html, /Your category choices are saved and will become active again if you resubscribe/);
+});
+
+
+test("PATCH lists category edits under Other changes when the master switch changes", async () => {
+  const sent: unknown[] = [];
+  mockPatchDependencies({
+    existingEmailPreferences: {
+      email: { ...emailPreferenceDefaults, receiveOptionalEmails: true, priceAlerts: true, productUpdates: false },
+    },
+  });
+  __emailPreferencesRouteTest.setSendTransactionalEmailForTesting(async (input) => {
+    sent.push(input);
+    return { id: "email-1" };
+  });
+
+  await PATCH(jsonRequest({
+    ...emailPreferenceDefaults,
+    receiveOptionalEmails: false,
+    priceAlerts: false,
+    productUpdates: true,
+  }));
+
+  const html = (sent[0] as { html: string }).html;
+  assert.match(html, /Other changes/);
+  assert.match(html, /Price alerts[\s\S]*Off/);
+  assert.match(html, /Product updates[\s\S]*On/);
 });
 
 test("PATCH does not send confirmation for no-op saves", async () => {
