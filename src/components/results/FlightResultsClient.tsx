@@ -96,8 +96,9 @@ const desktopCompactFilterTopOffset = 116;
 type DesktopCompactFilterFrame = {
   left: number;
   width: number;
-  top: number;
 };
+
+type DesktopCompactFilterPlacementState = "hidden" | "fixed" | "docked";
 
 type BodyScrollLock = {
   restore: (options?: { restoreScroll?: boolean }) => void;
@@ -2799,7 +2800,18 @@ export function FlightResultsClient() {
     useState(false);
   const [desktopCompactFilterFrame, setDesktopCompactFilterFrame] =
     useState<DesktopCompactFilterFrame | null>(null);
+  const [desktopCompactFilterPlacement, setDesktopCompactFilterPlacement] =
+    useState<DesktopCompactFilterPlacementState>("hidden");
   const desktopFilterShortcutVisibilityRef = useRef(false);
+  const desktopCompactFilterPlacementRef =
+    useRef<DesktopCompactFilterPlacementState>("hidden");
+  const desktopCompactFilterFrameRef = useRef<DesktopCompactFilterFrame | null>(
+    null,
+  );
+  const desktopCompactFilterHeightRef = useRef(1);
+  const scheduleDesktopCompactFilterMeasurementRef = useRef<(() => void) | null>(
+    null,
+  );
 
   const scrollToFlightResultsTop = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -2830,12 +2842,36 @@ export function FlightResultsClient() {
 
     let animationFrameId: number | null = null;
 
+    const applyPlacement = (
+      placement: DesktopCompactFilterPlacementState,
+      frame: DesktopCompactFilterFrame | null,
+    ) => {
+      if (placement !== desktopCompactFilterPlacementRef.current) {
+        desktopCompactFilterPlacementRef.current = placement;
+        setDesktopCompactFilterPlacement(placement);
+      }
+
+      const currentFrame = desktopCompactFilterFrameRef.current;
+      const frameChanged =
+        (frame === null) !== (currentFrame === null) ||
+        (frame !== null &&
+          currentFrame !== null &&
+          (Math.abs(frame.left - currentFrame.left) >= 0.5 ||
+            Math.abs(frame.width - currentFrame.width) >= 0.5));
+
+      if (frameChanged) {
+        desktopCompactFilterFrameRef.current = frame;
+        setDesktopCompactFilterFrame(frame);
+      }
+    };
+
     const measureDesktopCompactFilter = () => {
       const sentinel = desktopFilterSentinelRef.current;
       const sidebar = desktopFilterSidebarRef.current;
       const compactPanel = desktopCompactFilterRef.current;
       const resultsBody = resultsGridRef.current;
       const viewportWidth = window.innerWidth;
+      const scrollY = window.scrollY;
       const sentinelTop =
         sentinel?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY;
       const nextVisibility = shouldShowDesktopCompactFilter({
@@ -2849,42 +2885,37 @@ export function FlightResultsClient() {
         setShowDesktopFilterShortcut(nextVisibility);
       }
 
-      if (!nextVisibility || !sidebar) {
-        setDesktopCompactFilterFrame(null);
+      if (!nextVisibility || !sidebar || !resultsBody) {
+        applyPlacement("hidden", null);
         return;
       }
 
       const sidebarRect = sidebar.getBoundingClientRect();
       const panelRect = compactPanel?.getBoundingClientRect();
-      const bodyRect = resultsBody?.getBoundingClientRect();
+      const bodyRect = resultsBody.getBoundingClientRect();
+      const panelHeight = panelRect?.height ?? desktopCompactFilterHeightRef.current;
+
+      if (Number.isFinite(panelHeight) && panelHeight > 0) {
+        desktopCompactFilterHeightRef.current = panelHeight;
+      }
+
       const placement = calculateCompactFilterPlacement({
         enabled: nextVisibility,
+        scrollY,
         desiredTop: desktopCompactFilterTopOffset,
-        panelHeight: panelRect?.height ?? 1,
-        bodyBottom: bodyRect?.bottom ?? Number.POSITIVE_INFINITY,
+        panelHeight,
+        bodyBottomDocument: bodyRect.bottom + scrollY,
+        currentState: desktopCompactFilterPlacementRef.current,
       });
 
       if (placement.state === "hidden") {
-        setDesktopCompactFilterFrame(null);
+        applyPlacement("hidden", null);
         return;
       }
-      setDesktopCompactFilterFrame((current) => {
-        const nextFrame = {
-          left: sidebarRect.left,
-          width: sidebarRect.width,
-          top: placement.top,
-        };
 
-        if (
-          current &&
-          Math.abs(current.left - nextFrame.left) < 0.5 &&
-          Math.abs(current.width - nextFrame.width) < 0.5 &&
-          Math.abs(current.top - nextFrame.top) < 0.5
-        ) {
-          return current;
-        }
-
-        return nextFrame;
+      applyPlacement(placement.state, {
+        left: sidebarRect.left,
+        width: sidebarRect.width,
       });
     };
 
@@ -2897,18 +2928,7 @@ export function FlightResultsClient() {
       });
     };
 
-    const observer =
-      "IntersectionObserver" in window && desktopFilterSentinelRef.current
-        ? new IntersectionObserver(scheduleMeasurement, {
-            root: null,
-            rootMargin: `-${desktopCompactFilterTopOffset}px 0px 0px 0px`,
-            threshold: 0,
-          })
-        : null;
-
-    if (observer && desktopFilterSentinelRef.current) {
-      observer.observe(desktopFilterSentinelRef.current);
-    }
+    scheduleDesktopCompactFilterMeasurementRef.current = scheduleMeasurement;
 
     const resizeObserver =
       "ResizeObserver" in window
@@ -2922,9 +2942,6 @@ export function FlightResultsClient() {
       if (resultsGridRef.current) {
         resizeObserver.observe(resultsGridRef.current);
       }
-      if (desktopCompactFilterRef.current) {
-        resizeObserver.observe(desktopCompactFilterRef.current);
-      }
     }
 
     measureDesktopCompactFilter();
@@ -2935,12 +2952,33 @@ export function FlightResultsClient() {
       if (animationFrameId !== null) {
         window.cancelAnimationFrame(animationFrameId);
       }
-      observer?.disconnect();
+      scheduleDesktopCompactFilterMeasurementRef.current = null;
       resizeObserver?.disconnect();
       window.removeEventListener("scroll", scheduleMeasurement);
       window.removeEventListener("resize", scheduleMeasurement);
     };
   }, []);
+
+  useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      !("ResizeObserver" in window) ||
+      desktopCompactFilterPlacement === "hidden" ||
+      !desktopCompactFilterRef.current
+    ) {
+      return undefined;
+    }
+
+    const resizeObserver = new ResizeObserver(() => {
+      scheduleDesktopCompactFilterMeasurementRef.current?.();
+    });
+
+    resizeObserver.observe(desktopCompactFilterRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [desktopCompactFilterPlacement]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !showDesktopFilterShortcut) return;
@@ -5438,17 +5476,32 @@ export function FlightResultsClient() {
               className="h-px w-full"
               aria-hidden="true"
             />
-            {showDesktopFilterShortcut && desktopCompactFilterFrame ? (
+            {showDesktopFilterShortcut &&
+            desktopCompactFilterFrame &&
+            desktopCompactFilterPlacement !== "hidden" ? (
               <div
                 ref={desktopCompactFilterRef}
-                className="fixed z-30 overflow-visible"
-                style={{
-                  top: desktopCompactFilterFrame.top,
-                  left: desktopCompactFilterFrame.left,
-                  width: desktopCompactFilterFrame.width,
-                  height: "auto",
-                  overflow: "visible",
-                }}
+                className={cn(
+                  "z-30 overflow-visible",
+                  desktopCompactFilterPlacement === "fixed" && "fixed",
+                  desktopCompactFilterPlacement === "docked" &&
+                    "absolute inset-x-0 bottom-0",
+                )}
+                style={
+                  desktopCompactFilterPlacement === "fixed"
+                    ? {
+                        top: desktopCompactFilterTopOffset,
+                        left: desktopCompactFilterFrame.left,
+                        width: desktopCompactFilterFrame.width,
+                        height: "auto",
+                        overflow: "visible",
+                      }
+                    : {
+                        width: "100%",
+                        height: "auto",
+                        overflow: "visible",
+                      }
+                }
               >
                 <Filters
                   layout="compact"

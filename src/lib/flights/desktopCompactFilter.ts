@@ -24,43 +24,75 @@ export function shouldRenderFlightQualityFilter({
   return !loading && optionCount > 0;
 }
 
+export type DesktopCompactFilterPlacementState = "hidden" | "fixed" | "docked";
+
 export type DesktopCompactFilterPlacementInput = {
   enabled: boolean;
+  scrollY: number;
   desiredTop: number;
   panelHeight: number;
-  bodyBottom: number;
+  bodyBottomDocument: number;
+  currentState?: DesktopCompactFilterPlacementState;
+  bottomGap?: number;
+  dockOverlap?: number;
+  undockClearance?: number;
 };
 
 export type DesktopCompactFilterPlacement =
   | { state: "hidden" }
-  | { state: "fixed"; top: number };
+  | { state: "fixed" }
+  | { state: "docked" };
+
+const defaultBottomGap = 12;
+const defaultDockOverlap = 3;
+const defaultUndockClearance = 8;
 
 export function calculateCompactFilterPlacement({
   enabled,
+  scrollY,
   desiredTop,
   panelHeight,
-  bodyBottom,
+  bodyBottomDocument,
+  currentState,
+  bottomGap = defaultBottomGap,
+  dockOverlap = defaultDockOverlap,
+  undockClearance = defaultUndockClearance,
 }: DesktopCompactFilterPlacementInput): DesktopCompactFilterPlacement {
   if (
     !enabled ||
+    !Number.isFinite(scrollY) ||
     !Number.isFinite(desiredTop) ||
     !Number.isFinite(panelHeight) ||
-    !Number.isFinite(bodyBottom) ||
+    !Number.isFinite(bodyBottomDocument) ||
+    !Number.isFinite(bottomGap) ||
+    !Number.isFinite(dockOverlap) ||
+    !Number.isFinite(undockClearance) ||
+    scrollY < 0 ||
     desiredTop < 0 ||
     panelHeight <= 0 ||
-    bodyBottom <= 0
+    bodyBottomDocument <= 0 ||
+    bottomGap < 0 ||
+    dockOverlap < 0 ||
+    undockClearance < 0
   ) {
     return { state: "hidden" };
   }
 
-  const maximumViewportTop = bodyBottom - panelHeight;
-
-  if (maximumViewportTop <= 0) {
+  if (bodyBottomDocument <= panelHeight + bottomGap) {
     return { state: "hidden" };
   }
 
-  return {
-    state: "fixed",
-    top: Math.min(desiredTop, maximumViewportTop),
-  };
+  const bodyStopDocument = bodyBottomDocument - bottomGap;
+  const fixedPanelBottomDocument = scrollY + desiredTop + panelHeight;
+  const overlap = fixedPanelBottomDocument - bodyStopDocument;
+
+  if (currentState === "fixed") {
+    return overlap >= dockOverlap ? { state: "docked" } : { state: "fixed" };
+  }
+
+  if (currentState === "docked") {
+    return overlap <= -undockClearance ? { state: "fixed" } : { state: "docked" };
+  }
+
+  return overlap >= 0 ? { state: "docked" } : { state: "fixed" };
 }

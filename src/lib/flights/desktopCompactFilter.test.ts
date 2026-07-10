@@ -91,57 +91,10 @@ test("compact filter placement hides when disabled before threshold", () => {
   assert.deepEqual(
     calculateCompactFilterPlacement({
       enabled: false,
+      scrollY: 100,
       desiredTop: 116,
       panelHeight: 400,
-      bodyBottom: 900,
-    }),
-    { state: "hidden" },
-  );
-});
-
-test("compact filter placement stays fixed in the normal results range", () => {
-  assert.deepEqual(
-    calculateCompactFilterPlacement({
-      enabled: true,
-      desiredTop: 116,
-      panelHeight: 400,
-      bodyBottom: 900,
-    }),
-    { state: "fixed", top: 116 },
-  );
-});
-
-test("compact filter placement clamps before footer", () => {
-  assert.deepEqual(
-    calculateCompactFilterPlacement({
-      enabled: true,
-      desiredTop: 116,
-      panelHeight: 400,
-      bodyBottom: 450,
-    }),
-    { state: "fixed", top: 50 },
-  );
-});
-
-test("compact filter placement accounts for expanded panel height near footer", () => {
-  assert.deepEqual(
-    calculateCompactFilterPlacement({
-      enabled: true,
-      desiredTop: 116,
-      panelHeight: 620,
-      bodyBottom: 700,
-    }),
-    { state: "fixed", top: 80 },
-  );
-});
-
-test("compact filter placement hides when body is shorter than the panel", () => {
-  assert.deepEqual(
-    calculateCompactFilterPlacement({
-      enabled: true,
-      desiredTop: 116,
-      panelHeight: 500,
-      bodyBottom: 300,
+      bodyBottomDocument: 1500,
     }),
     { state: "hidden" },
   );
@@ -151,19 +104,186 @@ test("compact filter placement handles invalid measurements safely", () => {
   assert.deepEqual(
     calculateCompactFilterPlacement({
       enabled: true,
+      scrollY: 0,
       desiredTop: 116,
       panelHeight: 0,
-      bodyBottom: 900,
+      bodyBottomDocument: 900,
     }),
     { state: "hidden" },
   );
   assert.deepEqual(
     calculateCompactFilterPlacement({
       enabled: true,
+      scrollY: 0,
       desiredTop: 116,
       panelHeight: 400,
-      bodyBottom: -1,
+      bodyBottomDocument: -1,
     }),
     { state: "hidden" },
+  );
+});
+
+test("compact filter placement stays fixed when panel fits above body bottom", () => {
+  assert.deepEqual(
+    calculateCompactFilterPlacement({
+      enabled: true,
+      scrollY: 100,
+      desiredTop: 116,
+      panelHeight: 400,
+      bodyBottomDocument: 1200,
+    }),
+    { state: "fixed" },
+  );
+});
+
+test("compact filter placement docks when fixed panel would cross body bottom", () => {
+  assert.deepEqual(
+    calculateCompactFilterPlacement({
+      enabled: true,
+      scrollY: 700,
+      desiredTop: 116,
+      panelHeight: 400,
+      bodyBottomDocument: 1200,
+    }),
+    { state: "docked" },
+  );
+});
+
+test("compact filter placement docks at exact threshold without a prior mode", () => {
+  assert.deepEqual(
+    calculateCompactFilterPlacement({
+      enabled: true,
+      scrollY: 672,
+      desiredTop: 116,
+      panelHeight: 400,
+      bodyBottomDocument: 1200,
+      bottomGap: 12,
+    }),
+    { state: "docked" },
+  );
+});
+
+test("compact filter placement hysteresis prevents fixed and docked flapping", () => {
+  assert.deepEqual(
+    calculateCompactFilterPlacement({
+      enabled: true,
+      scrollY: 673,
+      desiredTop: 116,
+      panelHeight: 400,
+      bodyBottomDocument: 1200,
+      currentState: "fixed",
+      bottomGap: 12,
+      dockOverlap: 3,
+    }),
+    { state: "fixed" },
+  );
+  assert.deepEqual(
+    calculateCompactFilterPlacement({
+      enabled: true,
+      scrollY: 673,
+      desiredTop: 116,
+      panelHeight: 400,
+      bodyBottomDocument: 1200,
+      currentState: "docked",
+      bottomGap: 12,
+      undockClearance: 8,
+    }),
+    { state: "docked" },
+  );
+});
+
+test("compact filter placement changes fixed to docked once after expansion removes clearance", () => {
+  assert.deepEqual(
+    calculateCompactFilterPlacement({
+      enabled: true,
+      scrollY: 500,
+      desiredTop: 116,
+      panelHeight: 320,
+      bodyBottomDocument: 1000,
+      currentState: "fixed",
+    }),
+    { state: "fixed" },
+  );
+  assert.deepEqual(
+    calculateCompactFilterPlacement({
+      enabled: true,
+      scrollY: 500,
+      desiredTop: 116,
+      panelHeight: 480,
+      bodyBottomDocument: 1000,
+      currentState: "fixed",
+    }),
+    { state: "docked" },
+  );
+});
+
+test("compact filter placement changes docked to fixed only after renewed hysteresis clearance", () => {
+  assert.deepEqual(
+    calculateCompactFilterPlacement({
+      enabled: true,
+      scrollY: 665,
+      desiredTop: 116,
+      panelHeight: 400,
+      bodyBottomDocument: 1200,
+      currentState: "docked",
+    }),
+    { state: "docked" },
+  );
+  assert.deepEqual(
+    calculateCompactFilterPlacement({
+      enabled: true,
+      scrollY: 663,
+      desiredTop: 116,
+      panelHeight: 400,
+      bodyBottomDocument: 1200,
+      currentState: "docked",
+    }),
+    { state: "fixed" },
+  );
+});
+
+test("compact filter placement hides when body cannot safely contain the panel", () => {
+  assert.deepEqual(
+    calculateCompactFilterPlacement({
+      enabled: true,
+      scrollY: 0,
+      desiredTop: 116,
+      panelHeight: 500,
+      bodyBottomDocument: 500,
+    }),
+    { state: "hidden" },
+  );
+});
+
+test("compact filter placement output never contains a continuously changing fixed top", () => {
+  const placement = calculateCompactFilterPlacement({
+    enabled: true,
+    scrollY: 100,
+    desiredTop: 116,
+    panelHeight: 400,
+    bodyBottomDocument: 1200,
+  });
+
+  assert.equal(Object.hasOwn(placement, "top"), false);
+});
+
+test("compact filter placement remains unchanged while scrolling in normal fixed range", () => {
+  assert.deepEqual(
+    calculateCompactFilterPlacement({
+      enabled: true,
+      scrollY: 100,
+      desiredTop: 116,
+      panelHeight: 400,
+      bodyBottomDocument: 2000,
+      currentState: "fixed",
+    }),
+    calculateCompactFilterPlacement({
+      enabled: true,
+      scrollY: 250,
+      desiredTop: 116,
+      panelHeight: 400,
+      bodyBottomDocument: 2000,
+      currentState: "fixed",
+    }),
   );
 });
