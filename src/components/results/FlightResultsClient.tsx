@@ -94,6 +94,10 @@ type DesktopCompactFilterFrame = {
   width: number;
 };
 
+type BodyScrollLock = {
+  restore: (options?: { restoreScroll?: boolean }) => void;
+};
+
 type CompactFilterSectionId =
   | "price"
   | "times"
@@ -668,7 +672,7 @@ function lockBodyScroll() {
   rootElement.style.overscrollBehavior = "none";
 
   return {
-    restore: () => {
+    restore: ({ restoreScroll = true }: { restoreScroll?: boolean } = {}) => {
       if (restored) return;
       restored = true;
       bodyElement.style.left = previousBodyStyles.left;
@@ -683,10 +687,12 @@ function lockBodyScroll() {
       rootElement.style.overflow = previousRootStyles.overflow;
       rootElement.style.overscrollBehavior =
         previousRootStyles.overscrollBehavior;
-      window.scrollTo(0, scrollY);
-      window.requestAnimationFrame(() => {
+      if (restoreScroll) {
         window.scrollTo(0, scrollY);
-      });
+        window.requestAnimationFrame(() => {
+          window.scrollTo(0, scrollY);
+        });
+      }
     },
   };
 }
@@ -930,20 +936,13 @@ export function FlightResultsClient() {
   const stickySearchPopoutRef = useRef<HTMLFormElement | null>(null);
   const searchFormRef = useRef<HTMLFormElement | null>(null);
   const expandedSearchScrollYRef = useRef(0);
-  const stickySearchOpenScrollYRef = useRef(0);
   const filterApplyingTimeoutRef = useRef<number | null>(null);
   const filtersHydratedFromUrlRef = useRef(false);
   const hydratedFilterQueryStringRef = useRef<string | null>(null);
   const lastWrittenFilterQueryStringRef = useRef<string | null>(null);
-  const mobileSearchScrollLockRef = useRef<{ restore: () => void } | null>(
-    null,
-  );
-  const mobileFiltersScrollLockRef = useRef<{ restore: () => void } | null>(
-    null,
-  );
-  const stickySearchScrollLockRef = useRef<{ restore: () => void } | null>(
-    null,
-  );
+  const mobileSearchScrollLockRef = useRef<BodyScrollLock | null>(null);
+  const mobileFiltersScrollLockRef = useRef<BodyScrollLock | null>(null);
+  const stickySearchScrollLockRef = useRef<BodyScrollLock | null>(null);
   const stickySearchPanelOpenRef = useRef(false);
   const queryString = params.toString();
   const searchQueryString = getSearchQueryString(params);
@@ -1016,7 +1015,6 @@ export function FlightResultsClient() {
   const expandStickySearch = useCallback(() => {
     const currentScrollY = window.scrollY;
     expandedSearchScrollYRef.current = currentScrollY;
-    stickySearchOpenScrollYRef.current = currentScrollY;
     setIsSearchExpandedWhileSticky(true);
   }, []);
 
@@ -1027,16 +1025,16 @@ export function FlightResultsClient() {
     stickySearchPanelOpenRef.current = isStickySearchPanelOpen;
   }, [isStickySearchPanelOpen]);
 
-  const restoreStickySearchOpenScrollPosition = useCallback(() => {
-    const scrollY = stickySearchOpenScrollYRef.current;
+  const collapseStickySearch = useCallback(({
+    restoreScroll = true,
+  }: { restoreScroll?: boolean } = {}) => {
+    const activeScrollLock = stickySearchScrollLockRef.current;
 
-    window.scrollTo(0, scrollY);
-    window.requestAnimationFrame(() => {
-      window.scrollTo(0, scrollY);
-    });
-  }, []);
+    if (!restoreScroll && activeScrollLock) {
+      activeScrollLock.restore({ restoreScroll: false });
+      stickySearchScrollLockRef.current = null;
+    }
 
-  const collapseStickySearch = useCallback(() => {
     setIsSearchExpandedWhileSticky(false);
     setTripTypeMenuOpen(false);
     setActiveSuggest(null);
@@ -1046,9 +1044,7 @@ export function FlightResultsClient() {
     setTravelerPopoverOpen(false);
     setTravelerPopoverPosition(null);
     setActiveDesktopSearchSurface(null);
-    window.requestAnimationFrame(restoreStickySearchOpenScrollPosition);
   }, [
-    restoreStickySearchOpenScrollPosition,
     setActiveDatePicker,
     setActiveSuggest,
     setDatePickerPosition,
@@ -2291,10 +2287,10 @@ export function FlightResultsClient() {
     }
 
     if (shouldCloseStickyPopout) {
-      collapseStickySearch();
+      collapseStickySearch({ restoreScroll: false });
     }
 
-    router.push(`/flights/results?${nextParams.toString()}`, { scroll: false });
+    router.push(`/flights/results?${nextParams.toString()}`, { scroll: true });
   }
 
   const priceLabelCurrency = useMemo(
@@ -3909,7 +3905,7 @@ export function FlightResultsClient() {
                   <button
                     type="button"
                     aria-label={t("close")}
-                    onClick={collapseStickySearch}
+                    onClick={() => collapseStickySearch()}
                     className="focus-ring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-950"
                   >
                     <X className="h-4 w-4" aria-hidden="true" />
