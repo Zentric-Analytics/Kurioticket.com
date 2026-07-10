@@ -4,17 +4,20 @@ import { z, ZodError } from "zod";
 import type { InputJsonValue } from "@prisma/client/runtime/client";
 import { authOptions } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
+import {
+  emailPreferenceDefaults,
+  getSavedEmailPreferences,
+  mergeEmailNotificationPreferences,
+  normalizeEmailPreferences,
+} from "@/services/emailPreferencesService";
 
 export const runtime = "nodejs";
 
-export const emailPreferenceDefaults = {
-  receiveOptionalEmails: true,
-  priceAlerts: true,
-  savedTripReminders: true,
-  routeWatchUpdates: false,
-  travelInspiration: false,
-  productUpdates: true,
-  dealsRecommendations: false,
+export {
+  emailPreferenceDefaults,
+  getSavedEmailPreferences,
+  mergeEmailNotificationPreferences,
+  normalizeEmailPreferences,
 };
 
 export const emailPreferencesSchema = z
@@ -28,50 +31,6 @@ export const emailPreferencesSchema = z
     dealsRecommendations: z.boolean(),
   })
   .strict();
-
-type EmailPreferences = z.infer<typeof emailPreferencesSchema>;
-type NotificationPreferences = Record<string, unknown>;
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-export function normalizeEmailPreferences(value: unknown): EmailPreferences {
-  if (!isRecord(value)) return emailPreferenceDefaults;
-
-  const normalized = { ...emailPreferenceDefaults };
-
-  for (const key of Object.keys(emailPreferenceDefaults) as Array<keyof EmailPreferences>) {
-    if (typeof value[key] === "boolean") {
-      normalized[key] = value[key];
-    }
-  }
-
-  return normalized;
-}
-
-function normalizeNotificationPreferences(value: unknown): NotificationPreferences {
-  return isRecord(value) ? { ...value } : {};
-}
-
-export function mergeEmailNotificationPreferences(value: unknown, email: EmailPreferences): NotificationPreferences {
-  return {
-    ...normalizeNotificationPreferences(value),
-    email,
-  };
-}
-
-export function getSavedEmailPreferences(value: unknown) {
-  const notificationPreferences = normalizeNotificationPreferences(value);
-  const hasPreferences = isRecord(notificationPreferences.email);
-
-  return {
-    hasPreferences,
-    preferences: hasPreferences
-      ? normalizeEmailPreferences(notificationPreferences.email)
-      : emailPreferenceDefaults,
-  };
-}
 
 async function getAuthenticatedUserId() {
   const session = await getServerSession(authOptions);

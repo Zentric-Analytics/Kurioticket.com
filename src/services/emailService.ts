@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import type { ErrorResponse } from "resend";
+import { canSendOptionalEmail, type OptionalEmailCategory } from "@/services/emailPreferencesService";
 
 import {
   createEmailDeliveryRecord,
@@ -11,6 +12,7 @@ import {
 } from "@/services/emailDeliveryService";
 
 let resendClient: Resend | null = null;
+let sendTransactionalEmailForTesting: typeof sendTransactionalEmail | null = null;
 
 export class EmailDeliveryError extends Error {
   statusCode?: number | null;
@@ -96,6 +98,51 @@ export async function sendTransactionalEmail(input: {
 
   await markEmailDeliverySent({ deliveryId, providerMessageId: data?.id });
   return { id: data?.id };
+}
+
+export async function sendOptionalEmail(input: {
+  userId: string;
+  category: OptionalEmailCategory;
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+  template?: EmailTemplateKey;
+  from?: string;
+  replyTo?: string;
+  idempotencyKey?: string;
+  requireConfigured?: boolean;
+  metadata?: Record<string, unknown>;
+}) {
+  const allowed = await canSendOptionalEmail(input.userId, input.category);
+
+  if (!allowed) {
+    console.info("[email:optional-skipped]", {
+      userId: input.userId,
+      category: input.category,
+      template: input.template || "notification",
+    });
+    return { skipped: true as const, reason: "preferences_disabled" as const };
+  }
+
+  const sendEmail = sendTransactionalEmailForTesting ?? sendTransactionalEmail;
+  const result = await sendEmail({
+    to: input.to,
+    subject: input.subject,
+    html: input.html,
+    text: input.text,
+    template: input.template,
+    from: input.from,
+    replyTo: input.replyTo,
+    idempotencyKey: input.idempotencyKey,
+    requireConfigured: input.requireConfigured,
+    metadata: {
+      ...(input.metadata || {}),
+      optionalEmailCategory: input.category,
+    },
+  });
+
+  return { skipped: false as const, ...result };
 }
 
 function getResendStatusCode(error: ErrorResponse) {
@@ -293,3 +340,9 @@ export function accountDeletionCancelledEmail() {
     </div>
   `;
 }
+
+export const __emailServiceTest = {
+  setSendTransactionalEmailForTesting(sendEmail: typeof sendTransactionalEmail | null) {
+    sendTransactionalEmailForTesting = sendEmail;
+  },
+};
