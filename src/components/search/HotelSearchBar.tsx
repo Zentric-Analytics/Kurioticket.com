@@ -216,6 +216,7 @@ export type HotelSearchBarProps = {
   onOpenMobileSearch?: () => void;
   onCloseMobileSearch?: () => void;
   onMobileDraftChange?: (draft: HotelSearchDraft) => void;
+  onDesktopDraftChange?: (draft: HotelSearchDraft) => void;
   onSubmitStart?: () => void;
   className?: string;
 };
@@ -236,6 +237,7 @@ export function HotelSearchBar({
   onOpenMobileSearch,
   onCloseMobileSearch,
   onMobileDraftChange,
+  onDesktopDraftChange,
   onSubmitStart,
   className,
 }: HotelSearchBarProps) {
@@ -430,6 +432,29 @@ export function HotelSearchBar({
     destination,
     mobileLayout,
     onMobileDraftChange,
+    rooms,
+    totalHotelGuests,
+  ]);
+
+  useEffect(() => {
+    if (!compact || mobileLayout !== "default" || !onDesktopDraftChange) {
+      return;
+    }
+
+    onDesktopDraftChange({
+      destination,
+      checkIn,
+      checkOut,
+      guests: Math.max(1, Math.min(12, totalHotelGuests)),
+      rooms: clampCount(rooms, 1, 6),
+    });
+  }, [
+    checkIn,
+    checkOut,
+    compact,
+    destination,
+    mobileLayout,
+    onDesktopDraftChange,
     rooms,
     totalHotelGuests,
   ]);

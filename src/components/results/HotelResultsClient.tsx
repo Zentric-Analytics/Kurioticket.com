@@ -468,12 +468,10 @@ export function HotelResultsClient() {
   const [hotelSummarySortMode, setHotelSummarySortMode] =
     useState<HotelSummarySortMode>("cheapest");
   const [mobileHotelSearchOpen, setMobileHotelSearchOpen] = useState(false);
-  const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
-  const [desktopSearchHeight, setDesktopSearchHeight] = useState<number | null>(null);
+  const [showDesktopMinimizedSearch, setShowDesktopMinimizedSearch] =
+    useState(false);
 
   const desktopSearchFrameRef = useRef<HTMLDivElement | null>(null);
-  const desktopSearchSurfaceRef = useRef<HTMLDivElement | null>(null);
-  const desktopSearchSentinelRef = useRef<HTMLDivElement | null>(null);
   const filterApplyingTimeoutRef = useRef<number | null>(null);
   const searchApplyingTimeoutRef = useRef<number | null>(null);
   const filterScrollbarTimeoutRef = useRef<number | null>(null);
@@ -518,9 +516,17 @@ export function HotelResultsClient() {
     useState<HotelMobileSearchDraft>(() => bodyMobileSearchDraft);
   const [mobileHotelSearchDraftKey, setMobileHotelSearchDraftKey] =
     useState(bodySearchKey);
+  const [desktopHotelSearchDraft, setDesktopHotelSearchDraft] =
+    useState<HotelMobileSearchDraft>(() => bodyMobileSearchDraft);
+  const [desktopHotelSearchDraftKey, setDesktopHotelSearchDraftKey] =
+    useState(bodySearchKey);
   const activeMobileHotelSearchDraft =
     mobileHotelSearchDraftKey === bodySearchKey
       ? mobileHotelSearchDraft
+      : bodyMobileSearchDraft;
+  const activeDesktopHotelSearchDraft =
+    desktopHotelSearchDraftKey === bodySearchKey
+      ? desktopHotelSearchDraft
       : bodyMobileSearchDraft;
   const activeMobileHotelSearchKey = [
     activeMobileHotelSearchDraft.destination,
@@ -550,6 +556,73 @@ export function HotelResultsClient() {
     },
     [bodySearchKey],
   );
+
+  const updateDesktopHotelSearchDraft = useCallback(
+    (nextDraft: HotelMobileSearchDraft) => {
+      setDesktopHotelSearchDraftKey(bodySearchKey);
+      setDesktopHotelSearchDraft((currentDraft) => {
+        if (
+          currentDraft.destination === nextDraft.destination &&
+          currentDraft.checkIn === nextDraft.checkIn &&
+          currentDraft.checkOut === nextDraft.checkOut &&
+          currentDraft.guests === nextDraft.guests &&
+          currentDraft.rooms === nextDraft.rooms
+        ) {
+          return currentDraft;
+        }
+
+        return nextDraft;
+      });
+    },
+    [bodySearchKey],
+  );
+
+  const formatCompactHotelDate = useCallback(
+    (value: string) => {
+      if (!value) return "";
+      const date = new Date(`${value}T00:00:00`);
+      if (Number.isNaN(date.getTime())) return value;
+
+      return new Intl.DateTimeFormat(locale, {
+        month: "short",
+        day: "numeric",
+      }).format(date);
+    },
+    [locale],
+  );
+
+  const desktopMinimizedDateSummary = useMemo(() => {
+    const checkIn = formatCompactHotelDate(activeDesktopHotelSearchDraft.checkIn);
+    const checkOut = formatCompactHotelDate(activeDesktopHotelSearchDraft.checkOut);
+
+    if (checkIn && checkOut) return `${checkIn} – ${checkOut}`;
+    return checkIn || checkOut || "Travel dates";
+  }, [activeDesktopHotelSearchDraft.checkIn, activeDesktopHotelSearchDraft.checkOut, formatCompactHotelDate]);
+
+  const desktopMinimizedGuestsSummary = useMemo(() => {
+    const guests = Math.max(1, Math.min(12, activeDesktopHotelSearchDraft.guests));
+    const rooms = Math.max(1, Math.min(6, activeDesktopHotelSearchDraft.rooms));
+    const guestLabel = guests === 1 ? t("guestSingular") || "guest" : t("guestPlural") || "guests";
+    const roomLabel = rooms === 1 ? t("roomSingular") || "room" : t("roomPlural") || "rooms";
+
+    return `${guests} ${guestLabel}, ${rooms} ${roomLabel}`;
+  }, [activeDesktopHotelSearchDraft.guests, activeDesktopHotelSearchDraft.rooms, t]);
+
+  const scrollToFullHotelSearch = useCallback(() => {
+    if (typeof window === "undefined") return;
+
+    const target = desktopSearchFrameRef.current;
+    if (!target) return;
+
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    target.scrollIntoView({
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+      block: "start",
+    });
+  }, []);
 
   const openMobileHotelSearch = useCallback(() => {
     setFiltersOpen(false);
@@ -782,54 +855,31 @@ export function HotelResultsClient() {
 
     let animationFrame = 0;
 
-    const measureSearchPosition = () => {
+    const updateDesktopSearchState = () => {
       animationFrame = 0;
+      const frame = desktopSearchFrameRef.current;
 
-      const sentinel = desktopSearchSentinelRef.current;
-      const surface = desktopSearchSurfaceRef.current;
-      if (!sentinel || !surface) return;
+      const shouldShow =
+        window.innerWidth >= 1024 &&
+        Boolean(frame) &&
+        frame!.getBoundingClientRect().bottom <= 16;
 
-      const nextHeight = surface.offsetHeight;
-      if (nextHeight > 0) {
-        setDesktopSearchHeight((current) =>
-          current !== null && Math.abs(current - nextHeight) < 0.5
-            ? current
-            : nextHeight,
-        );
-      }
-
-      const shouldFix = window.innerWidth >= 640 && sentinel.getBoundingClientRect().top <= 0;
-      setIsSearchBarCompact(shouldFix);
+      setShowDesktopMinimizedSearch(shouldShow);
     };
 
-    const scheduleMeasurement = () => {
+    const scheduleUpdate = () => {
       if (animationFrame) return;
-      animationFrame = window.requestAnimationFrame(measureSearchPosition);
+      animationFrame = window.requestAnimationFrame(updateDesktopSearchState);
     };
 
-    const resizeObserver =
-      "ResizeObserver" in window
-        ? new ResizeObserver(scheduleMeasurement)
-        : null;
-
-    if (resizeObserver) {
-      if (desktopSearchFrameRef.current) {
-        resizeObserver.observe(desktopSearchFrameRef.current);
-      }
-      if (desktopSearchSurfaceRef.current) {
-        resizeObserver.observe(desktopSearchSurfaceRef.current);
-      }
-    }
-
-    measureSearchPosition();
-    window.addEventListener("scroll", scheduleMeasurement, { passive: true });
-    window.addEventListener("resize", scheduleMeasurement);
+    updateDesktopSearchState();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
 
     return () => {
       if (animationFrame) window.cancelAnimationFrame(animationFrame);
-      resizeObserver?.disconnect();
-      window.removeEventListener("scroll", scheduleMeasurement);
-      window.removeEventListener("resize", scheduleMeasurement);
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
     };
   }, []);
 
@@ -1185,47 +1235,60 @@ export function HotelResultsClient() {
           <div
             ref={desktopSearchFrameRef}
             className="relative z-40 min-w-0 overflow-visible"
-            style={
-              isSearchBarCompact && desktopSearchHeight !== null
-                ? { minHeight: desktopSearchHeight }
-                : undefined
-            }
           >
-            <div
-              ref={desktopSearchSurfaceRef}
-              className={cn(
-                "min-w-0 overflow-visible",
-                isSearchBarCompact
-                  ? "fixed inset-x-0 top-0 z-[1000] px-3 pt-2 sm:px-4 lg:px-6"
-                  : "relative z-10 translate-y-5",
-              )}
-            >
-              <div className={cn(isSearchBarCompact && "page-shell")}>
-                <div className="min-w-0">
-                  <HotelSearchBar
-                    key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
-                    initialDestination={body.destination}
-                    initialCheckIn={body.checkIn}
-                    initialCheckOut={body.checkOut}
-                    initialGuests={body.guests}
-                    initialRooms={body.rooms}
-                    initialSort={body.sort}
-                    errorRole="alert"
-                    compact
-                    className="min-w-0"
-                    onSubmitStart={triggerSearchApplying}
-                  />
-                </div>
-              </div>
+            <div className="relative z-10 min-w-0 translate-y-5 overflow-visible">
+              <HotelSearchBar
+                key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
+                initialDestination={body.destination}
+                initialCheckIn={body.checkIn}
+                initialCheckOut={body.checkOut}
+                initialGuests={body.guests}
+                initialRooms={body.rooms}
+                initialSort={body.sort}
+                errorRole="alert"
+                compact
+                className="min-w-0"
+                onDesktopDraftChange={updateDesktopHotelSearchDraft}
+                onSubmitStart={triggerSearchApplying}
+              />
             </div>
-            <div
-              ref={desktopSearchSentinelRef}
-              className={cn("h-px w-full", !isSearchBarCompact && "translate-y-5")}
-              aria-hidden="true"
-            />
           </div>
         </div>
       </section>
+
+      <div
+        className={cn(
+          "fixed inset-x-0 top-0 z-[1000] hidden border-b border-slate-200/80 bg-gradient-to-b from-[#fbfdff]/96 via-[#f8fbff]/94 to-[#f5f9ff]/92 px-4 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.07)] backdrop-blur-xl transition-all duration-200 lg:block",
+          showDesktopMinimizedSearch
+            ? "pointer-events-auto translate-y-0 opacity-100"
+            : "pointer-events-none -translate-y-3 opacity-0",
+        )}
+        aria-hidden={!showDesktopMinimizedSearch}
+      >
+        <div className="page-shell">
+          <div className="mx-auto w-full max-w-5xl">
+            <div className="group flex min-h-[56px] w-full items-stretch overflow-hidden rounded-xl border border-slate-200/90 bg-white/95 text-start shadow-[0_18px_40px_-26px_rgba(15,23,42,0.68)] ring-1 ring-white/85 backdrop-blur-md transition hover:border-slate-300 hover:bg-white">
+              <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto] items-stretch">
+                <button type="button" aria-label="Edit hotel destination" onClick={scrollToFullHotelSearch} className="focus-ring flex min-h-[44px] min-w-0 flex-col justify-center border-e border-slate-200/80 px-3 py-1.5 text-start transition-colors hover:bg-white/70 focus-visible:bg-white/75">
+                  <span className="whitespace-nowrap text-[0.62rem] font-semibold uppercase leading-3 tracking-[0.12em] text-slate-500">Destination</span>
+                  <span className="mt-0.5 block truncate text-sm font-semibold leading-5 text-slate-950">{activeDesktopHotelSearchDraft.destination || body.destination}</span>
+                </button>
+                <button type="button" aria-label="Edit travel dates" onClick={scrollToFullHotelSearch} className="focus-ring flex min-h-[44px] min-w-0 flex-col justify-center border-e border-slate-200/80 px-3 py-1.5 text-start transition-colors hover:bg-white/70 focus-visible:bg-white/75">
+                  <span className="whitespace-nowrap text-[0.62rem] font-semibold uppercase leading-3 tracking-[0.12em] text-slate-500">Travel dates</span>
+                  <span className="mt-0.5 block truncate text-sm font-semibold leading-5 text-slate-950">{desktopMinimizedDateSummary}</span>
+                </button>
+                <button type="button" aria-label="Edit guests and rooms" onClick={scrollToFullHotelSearch} className="focus-ring flex min-h-[44px] min-w-0 flex-col justify-center border-e border-slate-200/80 px-3 py-1.5 text-start transition-colors hover:bg-white/70 focus-visible:bg-white/75">
+                  <span className="whitespace-nowrap text-[0.62rem] font-semibold uppercase leading-3 tracking-[0.12em] text-slate-500">Guests / rooms</span>
+                  <span className="mt-0.5 block truncate text-sm font-semibold leading-5 text-slate-950">{desktopMinimizedGuestsSummary}</span>
+                </button>
+                <div className="flex min-h-[44px] items-center justify-center px-3 py-1.5">
+                  <button type="button" aria-label="Edit hotel search" onClick={scrollToFullHotelSearch} className="h-9 whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-sm font-bold text-white transition-colors hover:bg-[#021C2B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">Search</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <nav
         aria-label="Breadcrumb"
