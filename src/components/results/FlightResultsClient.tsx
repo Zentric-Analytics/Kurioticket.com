@@ -1243,6 +1243,9 @@ export function FlightResultsClient() {
   const mobileFiltersScrollLockRef = useRef<{ restore: () => void } | null>(
     null,
   );
+  const stickySearchScrollLockRef = useRef<{ restore: () => void } | null>(
+    null,
+  );
   const queryString = params.toString();
   const searchQueryString = getSearchQueryString(params);
 
@@ -1406,6 +1409,21 @@ export function FlightResultsClient() {
     travelerPopoverOpen,
     tripTypeMenuOpen,
   ]);
+
+  useEffect(() => {
+    if (!isStickySearchPanelOpen) {
+      stickySearchScrollLockRef.current?.restore();
+      stickySearchScrollLockRef.current = null;
+      return undefined;
+    }
+
+    stickySearchScrollLockRef.current = lockBodyScroll();
+
+    return () => {
+      stickySearchScrollLockRef.current?.restore();
+      stickySearchScrollLockRef.current = null;
+    };
+  }, [isStickySearchPanelOpen]);
 
   useEffect(() => {
     if (loading) {
@@ -3945,27 +3963,20 @@ export function FlightResultsClient() {
       "mt-0.5 block min-w-0 truncate text-sm font-semibold leading-5 text-slate-950";
     const collapsedFieldClass =
       "flex min-h-[44px] min-w-0 flex-col justify-center border-r border-slate-200/80 px-3 py-1.5 last:border-r-0 transition-colors group-hover:bg-white/60";
-    const panelFieldClass =
-      "group relative flex min-h-[46px] min-w-0 flex-col justify-center rounded-lg border border-slate-200/80 bg-white/90 px-3 py-1.5 text-start transition-colors hover:border-slate-300 hover:bg-white focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/20";
     const stickyDateSummary = departureDateInput
       ? tripTypeInput === "round-trip" && returnDateInput
         ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
         : formatCompactDateLabel(departureDateInput, calendarLocale)
       : t("travelDates");
-    const tripTypeOptions = [
-      { label: t("oneWay"), value: "one-way" },
-      { label: t("roundTrip"), value: "round-trip" },
-    ];
-
     return (
       <div
         className={cn(
           "fixed inset-x-0 top-0 z-[100] hidden px-4 pt-3 transition-all duration-200 lg:block",
-          isSearchCollapsed
+          isSearchCollapsed && !isStickySearchPanelOpen
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none -translate-y-3 opacity-0",
         )}
-        aria-hidden={!isSearchCollapsed}
+        aria-hidden={!isSearchCollapsed || isStickySearchPanelOpen}
       >
         <div ref={stickySearchPanelRef} className="page-shell">
           <div className="mx-auto w-full max-w-5xl">
@@ -4025,10 +4036,32 @@ export function FlightResultsClient() {
             </form>
           </div>
         </div>
+      </div>
+    );
+  }
 
+  function renderStickySearchPopoutOverlay() {
+    const stickyLabelClass =
+      "text-[0.62rem] font-semibold uppercase leading-3 tracking-[0.12em] text-slate-500";
+    const stickyValueClass =
+      "mt-0.5 block min-w-0 truncate text-sm font-semibold leading-5 text-slate-950";
+    const panelFieldClass =
+      "group relative flex min-h-[46px] min-w-0 flex-col justify-center rounded-lg border border-slate-200/80 bg-white/90 px-3 py-1.5 text-start transition-colors hover:border-slate-300 hover:bg-white focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/20";
+    const stickyDateSummary = departureDateInput
+      ? tripTypeInput === "round-trip" && returnDateInput
+        ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
+        : formatCompactDateLabel(departureDateInput, calendarLocale)
+      : t("travelDates");
+    const tripTypeOptions = [
+      { label: t("oneWay"), value: "one-way" },
+      { label: t("roundTrip"), value: "round-trip" },
+    ];
+
+    return (
+      <>
         {isStickySearchPanelOpen ? (
           <div
-            className="fixed inset-0 z-[110] bg-slate-950/28 backdrop-blur-[2px]"
+            className="fixed inset-0 z-[110] bg-slate-950/30 backdrop-blur-[2px]"
             role="presentation"
             onMouseDown={collapseStickySearch}
           >
@@ -4371,7 +4404,7 @@ export function FlightResultsClient() {
             </div>
           </div>
         ) : null}
-      </div>
+      </>
     );
   }
 
@@ -5384,6 +5417,7 @@ export function FlightResultsClient() {
       ) : null}
 
       {renderDesktopMinimizedSearchBar()}
+      {renderStickySearchPopoutOverlay()}
 
       <div
         ref={stickySentinelRef}
