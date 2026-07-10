@@ -7033,16 +7033,19 @@ function Filters({
 
   if (layout === "compact") {
     return (
-      <div className="desktop-filter-sidebar flex max-h-[calc(100vh-8.5rem)] flex-col overflow-hidden rounded-2xl border border-[#D8E1EC] bg-white p-0 shadow-[0_12px_30px_-24px_rgba(15,23,42,0.42)]">
-        <div className="desktop-filter-sidebar__header shrink-0 border-b border-slate-200/70 px-3 py-3">
+      <div className="desktop-filter-sidebar flex max-h-[calc(100vh-8.5rem)] flex-col overflow-hidden rounded-2xl border border-[#D8E1EC] bg-white p-0 shadow-[0_16px_36px_-28px_rgba(15,23,42,0.5)]">
+        <div className="desktop-filter-sidebar__header shrink-0 border-b border-[#D8E1EC]/80 bg-gradient-to-b from-[#F8FBFF] to-white px-3.5 py-3">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="desktop-filter-sidebar__title truncate text-base font-bold text-slate-950">
+            <h2 className="desktop-filter-sidebar__title truncate text-[15px] font-semibold leading-5 tracking-[-0.01em] text-slate-950">
               {t("filterBy")}
             </h2>
-            <SlidersHorizontal
-              className="desktop-filter-sidebar__icon shrink-0 text-[#004BB8]"
-              size={18}
-            />
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#D8E1EC]/80 bg-white text-[#004BB8] shadow-[0_6px_16px_-12px_rgba(0,75,184,0.55)]">
+              <SlidersHorizontal
+                className="desktop-filter-sidebar__icon"
+                size={16}
+                strokeWidth={2.2}
+              />
+            </span>
           </div>
           {activeFilterCount > 0 ? (
             <div className="mt-2 flex items-center justify-between gap-3">
@@ -7059,7 +7062,7 @@ function Filters({
             </div>
           ) : null}
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white px-3 py-1">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white px-2 py-1.5">
           <CompactFilterSection
             title={t("price")}
             count={compactSectionCounts.price}
@@ -7720,12 +7723,17 @@ function CompactFilterSection({
     Boolean(children) && (!Array.isArray(children) || children.length > 0);
 
   return (
-    <section className="border-t border-slate-200/75 first:border-t-0">
+    <section className="border-t border-[#D8E1EC]/65 first:border-t-0">
       <button
         type="button"
         aria-expanded={isOpen}
         aria-controls={panelId}
-        className="flex w-full items-center justify-between gap-3 py-3 text-start text-sm font-extrabold uppercase leading-5 tracking-[0.14em] text-slate-950 transition hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+        className={cn(
+          "group flex w-full items-center justify-between gap-3 rounded-xl px-2.5 py-3 text-start text-[13px] font-semibold leading-5 tracking-[-0.005em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+          isOpen
+            ? "bg-[#EAF2FB] text-[#004BB8] shadow-[inset_3px_0_0_#004BB8]"
+            : "text-slate-800 hover:bg-[#F8FBFF] hover:text-slate-950",
+        )}
         onClick={() =>
           setOpenSection((current) =>
             current === sectionId ? null : sectionId,
@@ -7735,23 +7743,24 @@ function CompactFilterSection({
         <span className="min-w-0 truncate">{title}</span>
         <span className="flex shrink-0 items-center gap-2">
           {count > 0 ? (
-            <span className="rounded-full bg-[#EAF2FB] px-2 py-0.5 text-[11px] font-semibold normal-case tracking-normal text-[#235A9F] ring-1 ring-[#004BB8]/8">
+            <span className="min-w-5 rounded-full bg-white px-2 py-0.5 text-center text-[11px] font-semibold normal-case leading-4 tracking-normal text-[#235A9F] ring-1 ring-[#004BB8]/10 group-hover:bg-[#EAF2FB]">
               {count}
             </span>
           ) : null}
           <ChevronDown
             aria-hidden="true"
             className={cn(
-              "h-4 w-4 text-slate-500 transition-transform",
-              isOpen && "rotate-180",
+              "h-3.5 w-3.5 text-slate-500 transition duration-200 motion-reduce:transition-none group-hover:text-[#004BB8]",
+              isOpen && "rotate-180 text-[#004BB8]",
             )}
+            strokeWidth={2.3}
           />
         </span>
       </button>
       <div
         id={panelId}
         className={cn(
-          "grid gap-0.5 overflow-y-auto pb-3 pr-1",
+          "mx-1 grid gap-0.5 overflow-y-auto rounded-b-xl bg-[#F8FAFC] px-2.5 pb-3 pt-2 ring-1 ring-inset ring-[#D8E1EC]/50",
           isOpen ? "max-h-[min(24rem,calc(100vh-18rem))]" : "hidden",
         )}
       >
