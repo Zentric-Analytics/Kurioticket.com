@@ -702,6 +702,54 @@ function lockBodyScroll() {
   };
 }
 
+function lockDocumentScrollWithoutLayoutShift() {
+  const bodyElement = document.body;
+  const rootElement = document.documentElement;
+  const scrollY = window.scrollY;
+  const scrollbarWidth = window.innerWidth - rootElement.clientWidth;
+  let restored = false;
+  const previousBodyStyles = {
+    overflow: bodyElement.style.overflow,
+    overscrollBehavior: bodyElement.style.overscrollBehavior,
+    paddingRight: bodyElement.style.paddingRight,
+  };
+  const previousRootStyles = {
+    overflow: rootElement.style.overflow,
+    overscrollBehavior: rootElement.style.overscrollBehavior,
+  };
+
+  rootElement.style.overflow = "hidden";
+  bodyElement.style.overflow = "hidden";
+  rootElement.style.overscrollBehavior = "none";
+  bodyElement.style.overscrollBehavior = "none";
+
+  if (scrollbarWidth > 0) {
+    bodyElement.style.paddingRight = `${scrollbarWidth}px`;
+  }
+
+  return {
+    restore: ({ restoreScroll = true }: { restoreScroll?: boolean } = {}) => {
+      if (restored) return;
+      restored = true;
+      rootElement.style.overflow = previousRootStyles.overflow;
+      rootElement.style.overscrollBehavior =
+        previousRootStyles.overscrollBehavior;
+      bodyElement.style.overflow = previousBodyStyles.overflow;
+      bodyElement.style.overscrollBehavior =
+        previousBodyStyles.overscrollBehavior;
+      bodyElement.style.paddingRight = previousBodyStyles.paddingRight;
+
+      if (restoreScroll && window.scrollY !== scrollY) {
+        window.requestAnimationFrame(() => {
+          if (window.scrollY !== scrollY) {
+            window.scrollTo(0, scrollY);
+          }
+        });
+      }
+    },
+  };
+}
+
 export function FlightResultsClient() {
   const { t: dictionary, locale } = useLocale();
   const t = useCallback(
@@ -1149,7 +1197,7 @@ export function FlightResultsClient() {
       return undefined;
     }
 
-    stickySearchScrollLockRef.current = lockBodyScroll();
+    stickySearchScrollLockRef.current = lockDocumentScrollWithoutLayoutShift();
 
     return () => {
       stickySearchScrollLockRef.current?.restore();
