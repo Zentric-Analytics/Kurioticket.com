@@ -920,6 +920,8 @@ export function FlightResultsClient() {
   const mobileDestinationLauncherRef = useRef<HTMLButtonElement | null>(null);
   const originWrapRef = useRef<HTMLDivElement | null>(null);
   const destinationWrapRef = useRef<HTMLDivElement | null>(null);
+  const stickyOriginWrapRef = useRef<HTMLDivElement | null>(null);
+  const stickyDestinationWrapRef = useRef<HTMLDivElement | null>(null);
   const departureWrapRef = useRef<HTMLDivElement | null>(null);
   const returnWrapRef = useRef<HTMLDivElement | null>(null);
   const travelerCabinWrapRef = useRef<HTMLDivElement | null>(null);
@@ -928,6 +930,7 @@ export function FlightResultsClient() {
   const stickySearchPopoutRef = useRef<HTMLFormElement | null>(null);
   const searchFormRef = useRef<HTMLFormElement | null>(null);
   const expandedSearchScrollYRef = useRef(0);
+  const stickySearchOpenScrollYRef = useRef(0);
   const filterApplyingTimeoutRef = useRef<number | null>(null);
   const filtersHydratedFromUrlRef = useRef(false);
   const hydratedFilterQueryStringRef = useRef<string | null>(null);
@@ -1011,7 +1014,9 @@ export function FlightResultsClient() {
   const markExpandedSearchInteraction = useCallback(() => {}, []);
 
   const expandStickySearch = useCallback(() => {
-    expandedSearchScrollYRef.current = window.scrollY;
+    const currentScrollY = window.scrollY;
+    expandedSearchScrollYRef.current = currentScrollY;
+    stickySearchOpenScrollYRef.current = currentScrollY;
     setIsSearchExpandedWhileSticky(true);
   }, []);
 
@@ -1021,6 +1026,15 @@ export function FlightResultsClient() {
   useEffect(() => {
     stickySearchPanelOpenRef.current = isStickySearchPanelOpen;
   }, [isStickySearchPanelOpen]);
+
+  const restoreStickySearchOpenScrollPosition = useCallback(() => {
+    const scrollY = stickySearchOpenScrollYRef.current;
+
+    window.scrollTo(0, scrollY);
+    window.requestAnimationFrame(() => {
+      window.scrollTo(0, scrollY);
+    });
+  }, []);
 
   const collapseStickySearch = useCallback(() => {
     setIsSearchExpandedWhileSticky(false);
@@ -1032,7 +1046,9 @@ export function FlightResultsClient() {
     setTravelerPopoverOpen(false);
     setTravelerPopoverPosition(null);
     setActiveDesktopSearchSurface(null);
+    window.requestAnimationFrame(restoreStickySearchOpenScrollPosition);
   }, [
+    restoreStickySearchOpenScrollPosition,
     setActiveDatePicker,
     setActiveSuggest,
     setDatePickerPosition,
@@ -1060,12 +1076,22 @@ export function FlightResultsClient() {
       const airportSuggestions = document.getElementById(
         "flight-airport-suggestions",
       );
+      const stickyOriginSuggestions = document.getElementById(
+        "sticky-flight-origin-suggestions",
+      );
+      const stickyDestinationSuggestions = document.getElementById(
+        "sticky-flight-destination-suggestions",
+      );
 
       if (panel?.contains(target)) return;
       if (compactBar?.contains(target)) return;
       if (datePickerPopover?.contains(target)) return;
       if (travelerPopover?.contains(target)) return;
       if (airportSuggestions?.contains(target)) return;
+      if (stickyOriginSuggestions?.contains(target)) return;
+      if (stickyDestinationSuggestions?.contains(target)) return;
+      if (stickyOriginWrapRef.current?.contains(target)) return;
+      if (stickyDestinationWrapRef.current?.contains(target)) return;
 
       collapseStickySearch();
     };
@@ -1910,10 +1936,15 @@ export function FlightResultsClient() {
     function updateDropdownPosition(target: "origin" | "destination") {
       const viewportPadding = 16;
       const preferredWidth = 380;
+      const useStickyWrap = activeDesktopSearchSurface === "sticky";
       const wrap =
         target === "origin"
-          ? originWrapRef.current
-          : destinationWrapRef.current;
+          ? useStickyWrap
+            ? stickyOriginWrapRef.current
+            : originWrapRef.current
+          : useStickyWrap
+            ? stickyDestinationWrapRef.current
+            : destinationWrapRef.current;
       const input = wrap?.querySelector("input");
 
       if (!input) return;
@@ -1952,14 +1983,28 @@ export function FlightResultsClient() {
 
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
-      const dropdown = document.getElementById("flight-airport-suggestions");
-      const clickedDropdown = dropdown?.contains(target);
+      const dropdowns = [
+        document.getElementById("flight-airport-suggestions"),
+        document.getElementById("sticky-flight-origin-suggestions"),
+        document.getElementById("sticky-flight-destination-suggestions"),
+      ];
+      const clickedDropdown = dropdowns.some((dropdown) =>
+        dropdown?.contains(target),
+      );
+      const originWrap =
+        activeDesktopSearchSurface === "sticky"
+          ? stickyOriginWrapRef.current
+          : originWrapRef.current;
+      const destinationWrap =
+        activeDesktopSearchSurface === "sticky"
+          ? stickyDestinationWrapRef.current
+          : destinationWrapRef.current;
 
       if (
         !clickedDropdown &&
         activeSuggest === "origin" &&
-        originWrapRef.current &&
-        !originWrapRef.current.contains(target)
+        originWrap &&
+        !originWrap.contains(target)
       ) {
         setActiveSuggest(null);
         setDropdownPosition(null);
@@ -1968,8 +2013,8 @@ export function FlightResultsClient() {
       if (
         !clickedDropdown &&
         activeSuggest === "destination" &&
-        destinationWrapRef.current &&
-        !destinationWrapRef.current.contains(target)
+        destinationWrap &&
+        !destinationWrap.contains(target)
       ) {
         setActiveSuggest(null);
         setDropdownPosition(null);
@@ -1985,7 +2030,7 @@ export function FlightResultsClient() {
       window.removeEventListener("resize", handleViewportChange);
       window.removeEventListener("scroll", handleViewportChange, true);
     };
-  }, [activeSuggest, mobileSearchOpen]);
+  }, [activeDesktopSearchSurface, activeSuggest, mobileSearchOpen]);
 
   useEffect(() => {
     function updateDatePickerPosition(target: "departure" | "return") {
@@ -2238,8 +2283,18 @@ export function FlightResultsClient() {
       // best effort only
     }
 
-    closeMobileSearchDrawer();
-    router.push(`/flights/results?${nextParams.toString()}`);
+    const shouldCloseMobileDrawer = mobileSearchOpen;
+    const shouldCloseStickyPopout = stickySearchPanelOpenRef.current;
+
+    if (shouldCloseMobileDrawer) {
+      closeMobileSearchDrawer();
+    }
+
+    if (shouldCloseStickyPopout) {
+      collapseStickySearch();
+    }
+
+    router.push(`/flights/results?${nextParams.toString()}`, { scroll: false });
   }
 
   const priceLabelCurrency = useMemo(
@@ -3897,7 +3952,7 @@ export function FlightResultsClient() {
                 </div>
 
                 <div className="grid min-h-[58px] grid-cols-[minmax(0,1.05fr)_44px_minmax(0,1.05fr)_minmax(0,0.95fr)_minmax(0,1fr)_112px] items-stretch overflow-visible rounded-xl border border-slate-200/85 bg-white/90 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]">
-                  <div className={panelFieldClass}>
+                  <div ref={stickyOriginWrapRef} className={panelFieldClass}>
                     <label
                       className={stickyLabelClass}
                       htmlFor="sticky-results-origin"
@@ -3960,7 +4015,10 @@ export function FlightResultsClient() {
                     <ArrowRightLeft className="h-4 w-4" aria-hidden="true" />
                   </div>
 
-                  <div className={panelFieldClass}>
+                  <div
+                    ref={stickyDestinationWrapRef}
+                    className={panelFieldClass}
+                  >
                     <label
                       className={stickyLabelClass}
                       htmlFor="sticky-results-destination"
