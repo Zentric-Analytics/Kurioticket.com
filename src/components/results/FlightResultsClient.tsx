@@ -842,6 +842,8 @@ export function FlightResultsClient() {
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [mobileSortMenuOpen, setMobileSortMenuOpen] = useState(false);
+  const mobileSortMenuRef = useRef<HTMLDivElement | null>(null);
   const [filterApplying, setFilterApplying] = useState(false);
   const [maxPrice, setMaxPrice] = useState(0);
   const [timeFilterMode, setTimeFilterMode] = useState<"takeoff" | "landing">(
@@ -1375,6 +1377,26 @@ export function FlightResultsClient() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!mobileSortMenuOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (
+        mobileSortMenuRef.current &&
+        event.target instanceof Node &&
+        !mobileSortMenuRef.current.contains(event.target)
+      ) {
+        setMobileSortMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [mobileSortMenuOpen]);
 
   useEffect(() => {
     const releaseExistingLock = () => {
@@ -5272,6 +5294,75 @@ export function FlightResultsClient() {
     );
   }
 
+  function renderMobileSortResultsRow() {
+    const mobileSortOptions: Array<{ label: string; value: SortMode }> = [
+      { label: t("cheapest"), value: "cheapest" },
+      { label: t("best"), value: "best" },
+      { label: t("quickest"), value: "fastest" },
+    ];
+    const activeSortOption =
+      mobileSortOptions.find((option) => option.value === sortMode) ??
+      mobileSortOptions[0];
+
+    return (
+      <div className="mx-auto flex w-full max-w-[30rem] min-w-0 items-center justify-between gap-2">
+        <p className="min-w-0 flex-1 truncate text-[13px] font-extrabold leading-5 text-navy sm:text-sm">
+          {formatResultsFound(sortedResults.length, t)}
+        </p>
+
+        <div ref={mobileSortMenuRef} className="relative shrink-0">
+          <button
+            type="button"
+            aria-haspopup="menu"
+            aria-expanded={mobileSortMenuOpen}
+            onClick={() => setMobileSortMenuOpen((open) => !open)}
+            className="focus-ring inline-flex h-9 min-w-[6.75rem] items-center justify-between gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-[13px] font-bold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+          >
+            <span className="truncate">{activeSortOption.label}</span>
+            <ChevronDown
+              className={cn(
+                "h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform",
+                mobileSortMenuOpen && "rotate-180",
+              )}
+              aria-hidden="true"
+            />
+          </button>
+
+          {mobileSortMenuOpen ? (
+            <div
+              role="menu"
+              className="absolute right-0 top-[calc(100%+0.4rem)] z-50 w-36 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_38px_-18px_rgba(15,23,42,0.35)]"
+            >
+              {mobileSortOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={sortMode === option.value}
+                  onClick={() => {
+                    triggerFilterApplying();
+                    setSortMode(option.value);
+                    setMobileSortMenuOpen(false);
+                  }}
+                  className={cn(
+                    "flex min-h-9 w-full items-center rounded-lg px-3 text-left text-[13px] font-bold transition",
+                    sortMode === option.value
+                      ? "bg-[#004BB8]/8 text-[#004BB8]"
+                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        {renderFloatingFilterButton()}
+      </div>
+    );
+  }
+
   function renderFloatingFilterButton() {
     const label =
       activeFilterCount > 0
@@ -5376,12 +5467,10 @@ export function FlightResultsClient() {
 
       {!mobileSearchOpen ? (
         <section
-          className="relative z-30 px-4 pb-1 pt-11 sm:hidden"
+          className="relative z-30 px-4 pb-2 pt-11 sm:hidden"
           aria-label={t("filters")}
         >
-          <div className="mx-auto flex w-full max-w-[30rem] justify-start">
-            {renderFloatingFilterButton()}
-          </div>
+          {renderMobileSortResultsRow()}
         </section>
       ) : null}
 
@@ -5672,8 +5761,8 @@ export function FlightResultsClient() {
             </div>
           ) : (
             <div className={cn(resultStackClass, "space-y-4")}>
-              <div className="w-full">
-                <div className="hidden auto-rows-fr grid-cols-3 gap-2 sm:grid">
+              <div className="hidden w-full sm:block">
+                <div className="grid auto-rows-fr grid-cols-3 gap-2">
                   <SummarySortButton
                     label={t("cheapest")}
                     details={buildSummaryDetails(
@@ -5709,55 +5798,6 @@ export function FlightResultsClient() {
                       setSortMode("fastest");
                     }}
                   />
-                </div>
-
-                <div className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1 sm:hidden">
-                  <SummarySortButton
-                    label={t("cheapest")}
-                    details={buildSummaryDetails(
-                      sortSummaries.cheapest,
-                      "cheapest",
-                    )}
-                    active={sortMode === "cheapest"}
-                    mobile
-                    onClick={() => {
-                      triggerFilterApplying();
-                      setSortMode("cheapest");
-                    }}
-                  />
-
-                  <SummarySortButton
-                    label={t("best")}
-                    details={buildSummaryDetails(sortSummaries.best, "best")}
-                    active={sortMode === "best"}
-                    mobile
-                    onClick={() => {
-                      triggerFilterApplying();
-                      setSortMode("best");
-                    }}
-                  />
-
-                  <SummarySortButton
-                    label={t("quickest")}
-                    details={buildSummaryDetails(
-                      sortSummaries.fastest,
-                      "fastest",
-                    )}
-                    active={sortMode === "fastest"}
-                    mobile
-                    onClick={() => {
-                      triggerFilterApplying();
-                      setSortMode("fastest");
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-3 sm:hidden">
-                <div className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <p className="text-sm font-bold text-navy">
-                    {formatResultsFound(sortedResults.length, t)}
-                  </p>
                 </div>
               </div>
 
