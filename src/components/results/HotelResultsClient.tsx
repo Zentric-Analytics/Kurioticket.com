@@ -11,8 +11,8 @@ import {
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
+  ChevronDown,
   SlidersHorizontal,
-  SquarePen,
   Star,
   Tag,
   ThumbsUp,
@@ -29,112 +29,33 @@ import { HotelSearchBar } from "@/components/search/HotelSearchBar";
 import { normalizeHotelDestinationSearchValue } from "@/data/hotelDestinations";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn, formatCurrency } from "@/lib/utils";
+import {
+  calculateCompactFilterPlacement,
+  shouldShowDesktopCompactFilter,
+} from "@/lib/flights/desktopCompactFilter";
 
 const hotelResultStackClass = "w-full max-w-[800px]";
-const desktopHotelFilterStickyTopClass = "lg:sticky lg:top-[7.25rem]";
+const desktopCompactFilterTopOffset = 116;
 
-function useDesktopFilterShortcut(topOffset = 116) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const contentRef = useRef<HTMLDivElement | null>(null);
-  const [isShortcutVisible, setIsShortcutVisible] = useState(false);
-  const [isManuallyExpanded, setIsManuallyExpanded] = useState(false);
+type DesktopCompactFilterFrame = {
+  left: number;
+  width: number;
+};
 
-  useEffect(() => {
-    if (typeof window === "undefined") return undefined;
+type DesktopCompactFilterPlacementState = "hidden" | "fixed" | "docked";
 
-    let animationFrame = 0;
-    let lastFullHeight = 0;
-
-    const updateShortcutState = () => {
-      animationFrame = 0;
-      const container = containerRef.current;
-      if (!container) return;
-
-      const contentHeight = contentRef.current?.offsetHeight || lastFullHeight;
-      if (contentHeight > 0) lastFullHeight = contentHeight;
-
-      const containerTop =
-        container.getBoundingClientRect().top + window.scrollY;
-      const collapseAfter =
-        containerTop + Math.max(contentHeight - 72, 0) - topOffset;
-      const shouldCollapse = window.scrollY > collapseAfter;
-
-      if (!shouldCollapse) {
-        setIsManuallyExpanded(false);
-      }
-
-      setIsShortcutVisible(shouldCollapse && !isManuallyExpanded);
-    };
-
-    const scheduleUpdate = () => {
-      if (animationFrame) return;
-      animationFrame = window.requestAnimationFrame(updateShortcutState);
-    };
-
-    scheduleUpdate();
-    window.addEventListener("scroll", scheduleUpdate, { passive: true });
-    window.addEventListener("resize", scheduleUpdate);
-
-    return () => {
-      if (animationFrame) window.cancelAnimationFrame(animationFrame);
-      window.removeEventListener("scroll", scheduleUpdate);
-      window.removeEventListener("resize", scheduleUpdate);
-    };
-  }, [isManuallyExpanded, topOffset]);
-
-  const showFullFilters = !isShortcutVisible;
-  const expandFilters = () => {
-    setIsManuallyExpanded(true);
-    setIsShortcutVisible(false);
-  };
-
-  return {
-    containerRef,
-    contentRef,
-    showFullFilters,
-    isShortcutVisible,
-    expandFilters,
-  };
-}
-
-function DesktopFilterShortcut({
-  activeFilterCount,
-  activeFilterLabel,
-  filterByLabel,
-  onClick,
-}: {
-  activeFilterCount: number;
-  activeFilterLabel: string;
-  filterByLabel: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      className="group w-full rounded-[1.15rem] border border-slate-200/90 bg-white p-4 text-left shadow-[0_14px_34px_-28px_rgba(15,23,42,0.45)] ring-1 ring-slate-950/[0.02] transition hover:-translate-y-0.5 hover:border-[#004BB8]/30 hover:shadow-[0_18px_38px_-28px_rgba(15,23,42,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-      onClick={onClick}
-    >
-      <span className="flex items-center justify-between gap-3">
-        <span className="min-w-0">
-          <span className="block text-sm font-bold text-slate-950">
-            {filterByLabel}
-          </span>
-          {activeFilterCount > 0 ? (
-            <span className="mt-1 inline-flex rounded-full bg-[#004BB8]/8 px-2.5 py-1 text-xs font-bold text-[#004BB8] ring-1 ring-[#004BB8]/10">
-              {activeFilterLabel}
-            </span>
-          ) : null}
-        </span>
-        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition group-hover:border-[#004BB8]/30 group-hover:text-[#004BB8]">
-          <SquarePen size={17} aria-hidden="true" />
-        </span>
-      </span>
-      <span className="mt-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
-        Edit filters
-      </span>
-    </button>
-  );
-}
+type CompactHotelFilterSectionId =
+  | "price"
+  | "popular"
+  | "rating"
+  | "locations"
+  | "propertyTypes"
+  | "roomTypes"
+  | "bedTypes"
+  | "meals"
+  | "cancellationPolicies"
+  | "facilities"
+  | null;
 
 const FILTER_APPLYING_DELAY_MS = 700;
 const SEARCH_APPLYING_TIMEOUT_MS = 15000;
@@ -548,11 +469,11 @@ export function HotelResultsClient() {
     useState<HotelSummarySortMode>("cheapest");
   const [mobileHotelSearchOpen, setMobileHotelSearchOpen] = useState(false);
   const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
-  const [isSearchExpandedWhileSticky, setIsSearchExpandedWhileSticky] =
-    useState(false);
+  const [desktopSearchHeight, setDesktopSearchHeight] = useState<number | null>(null);
 
-  const stickySentinelRef = useRef<HTMLDivElement | null>(null);
-  const expandedSearchScrollYRef = useRef(0);
+  const desktopSearchFrameRef = useRef<HTMLDivElement | null>(null);
+  const desktopSearchSurfaceRef = useRef<HTMLDivElement | null>(null);
+  const desktopSearchSentinelRef = useRef<HTMLDivElement | null>(null);
   const filterApplyingTimeoutRef = useRef<number | null>(null);
   const searchApplyingTimeoutRef = useRef<number | null>(null);
   const filterScrollbarTimeoutRef = useRef<number | null>(null);
@@ -609,39 +530,6 @@ export function HotelResultsClient() {
     activeMobileHotelSearchDraft.rooms,
     body.sort,
   ].join("-");
-
-  const showFullSearchForm = !isSearchBarCompact || isSearchExpandedWhileSticky;
-  const showCompactSearchSummary =
-    isSearchBarCompact && !isSearchExpandedWhileSticky;
-  const formatHotelSummaryDate = useCallback(
-    (value: string) => {
-      const [year, month, day] = value.split("-").map(Number);
-
-      if (!year || !month || !day) return value;
-
-      return new Intl.DateTimeFormat(locale, {
-        month: "short",
-        day: "numeric",
-      }).format(new Date(year, month - 1, day));
-    },
-    [locale],
-  );
-  const hotelDateSummary = `${formatHotelSummaryDate(
-    body.checkIn,
-  )} — ${formatHotelSummaryDate(body.checkOut)}`;
-  const hotelGuestRoomSummary = `${body.guests} ${
-    body.guests === 1 ? t("guest") || "guest" : t("guests") || "guests"
-  } · ${body.rooms} ${
-    body.rooms === 1 ? t("room") || "room" : t("rooms") || "rooms"
-  }`;
-  const hotelSortSummary = body.sort
-    ? `${t("sort") || "Sort"}: ${body.sort.replace(/-/g, " ")}`
-    : "";
-
-  const expandStickySearch = useCallback(() => {
-    expandedSearchScrollYRef.current = window.scrollY;
-    setIsSearchExpandedWhileSticky(true);
-  }, []);
 
   const updateMobileHotelSearchDraft = useCallback(
     (nextDraft: HotelMobileSearchDraft) => {
@@ -842,37 +730,6 @@ export function HotelResultsClient() {
 
   const resultsApplying = filterApplying || searchApplying;
 
-  useEffect(() => {
-    if (!isSearchBarCompact || !isSearchExpandedWhileSticky) {
-      return undefined;
-    }
-
-    let animationFrame = 0;
-
-    const onScroll = () => {
-      if (animationFrame) return;
-
-      animationFrame = window.requestAnimationFrame(() => {
-        animationFrame = 0;
-        const hasContinuedScrolling =
-          Math.abs(window.scrollY - expandedSearchScrollYRef.current) > 16;
-
-        if (hasContinuedScrolling) {
-          setIsSearchExpandedWhileSticky(false);
-        }
-      });
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (animationFrame) {
-        window.cancelAnimationFrame(animationFrame);
-      }
-    };
-  }, [isSearchBarCompact, isSearchExpandedWhileSticky]);
-
   const activeFilterCount = useMemo(() => {
     let count = maxPrice < resultMaxPrice ? 1 : 0;
     count += minRating > DEFAULT_MIN_RATING ? 1 : 0;
@@ -882,16 +739,26 @@ export function HotelResultsClient() {
     );
     return count;
   }, [maxPrice, minRating, resultMaxPrice, selectedFilters]);
-  const activeFilterLabel = t("activeFilterCount").replace(
-    "{{count}}",
-    String(activeFilterCount),
+  const desktopFilterSidebarRef = useRef<HTMLElement | null>(null);
+  const desktopFilterSentinelRef = useRef<HTMLDivElement | null>(null);
+  const resultsGridRef = useRef<HTMLDivElement | null>(null);
+  const desktopCompactFilterRef = useRef<HTMLDivElement | null>(null);
+  const [showDesktopFilterShortcut, setShowDesktopFilterShortcut] =
+    useState(false);
+  const [desktopCompactFilterFrame, setDesktopCompactFilterFrame] =
+    useState<DesktopCompactFilterFrame | null>(null);
+  const [desktopCompactFilterPlacement, setDesktopCompactFilterPlacement] =
+    useState<DesktopCompactFilterPlacementState>("hidden");
+  const desktopFilterShortcutVisibilityRef = useRef(false);
+  const desktopCompactFilterPlacementRef =
+    useRef<DesktopCompactFilterPlacementState>("hidden");
+  const desktopCompactFilterFrameRef = useRef<DesktopCompactFilterFrame | null>(
+    null,
   );
-  const {
-    containerRef: desktopFilterContainerRef,
-    contentRef: desktopFilterContentRef,
-    showFullFilters: showFullDesktopFilters,
-    expandFilters: expandDesktopFilters,
-  } = useDesktopFilterShortcut();
+  const desktopCompactFilterHeightRef = useRef(1);
+  const scheduleDesktopCompactFilterMeasurementRef = useRef<(() => void) | null>(
+    null,
+  );
 
   const visibleFilteredHotels = resultsApplying ? visibleFiltered : filtered;
   const sortedVisibleHotels = useMemo(
@@ -911,79 +778,213 @@ export function HotelResultsClient() {
     filtered.length === 0;
 
   useEffect(() => {
-    const sentinel = stickySentinelRef.current;
-
-    if (!sentinel) {
-      return undefined;
-    }
+    if (typeof window === "undefined") return undefined;
 
     let animationFrame = 0;
 
-    const applyCompactState = (shouldCompact: boolean) => {
-      setIsSearchBarCompact(shouldCompact);
+    const measureSearchPosition = () => {
+      animationFrame = 0;
 
-      if (!shouldCompact) {
-        setIsSearchExpandedWhileSticky(false);
+      const sentinel = desktopSearchSentinelRef.current;
+      const surface = desktopSearchSurfaceRef.current;
+      if (!sentinel || !surface) return;
+
+      const nextHeight = surface.offsetHeight;
+      if (nextHeight > 0) {
+        setDesktopSearchHeight((current) =>
+          current !== null && Math.abs(current - nextHeight) < 0.5
+            ? current
+            : nextHeight,
+        );
       }
+
+      const shouldFix = window.innerWidth >= 640 && sentinel.getBoundingClientRect().top <= 0;
+      setIsSearchBarCompact(shouldFix);
     };
 
-    const updateFromSentinelPosition = () => {
-      const sentinelRect = sentinel.getBoundingClientRect();
-      const sentinelScrollTop = sentinelRect.top + window.scrollY;
-      const hasPassedStickyTrigger =
-        window.scrollY > Math.max(16, sentinelScrollTop);
-
-      applyCompactState(hasPassedStickyTrigger);
-    };
-
-    const schedulePositionUpdate = () => {
+    const scheduleMeasurement = () => {
       if (animationFrame) return;
-
-      animationFrame = window.requestAnimationFrame(() => {
-        animationFrame = 0;
-        updateFromSentinelPosition();
-      });
+      animationFrame = window.requestAnimationFrame(measureSearchPosition);
     };
 
-    updateFromSentinelPosition();
+    const resizeObserver =
+      "ResizeObserver" in window
+        ? new ResizeObserver(scheduleMeasurement)
+        : null;
 
-    if (typeof IntersectionObserver === "undefined") {
-      window.addEventListener("scroll", schedulePositionUpdate, {
-        passive: true,
-      });
-      window.addEventListener("resize", schedulePositionUpdate);
-
-      return () => {
-        window.removeEventListener("scroll", schedulePositionUpdate);
-        window.removeEventListener("resize", schedulePositionUpdate);
-        if (animationFrame) {
-          window.cancelAnimationFrame(animationFrame);
-        }
-      };
+    if (resizeObserver) {
+      if (desktopSearchFrameRef.current) {
+        resizeObserver.observe(desktopSearchFrameRef.current);
+      }
+      if (desktopSearchSurfaceRef.current) {
+        resizeObserver.observe(desktopSearchSurfaceRef.current);
+      }
     }
 
-    const observer = new IntersectionObserver(
-      () => {
-        updateFromSentinelPosition();
-      },
-      { threshold: 0 },
-    );
-
-    observer.observe(sentinel);
-    window.addEventListener("scroll", schedulePositionUpdate, {
-      passive: true,
-    });
-    window.addEventListener("resize", schedulePositionUpdate);
+    measureSearchPosition();
+    window.addEventListener("scroll", scheduleMeasurement, { passive: true });
+    window.addEventListener("resize", scheduleMeasurement);
 
     return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", schedulePositionUpdate);
-      window.removeEventListener("resize", schedulePositionUpdate);
-      if (animationFrame) {
-        window.cancelAnimationFrame(animationFrame);
-      }
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+      resizeObserver?.disconnect();
+      window.removeEventListener("scroll", scheduleMeasurement);
+      window.removeEventListener("resize", scheduleMeasurement);
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    let animationFrameId: number | null = null;
+
+    const applyPlacement = (
+      placement: DesktopCompactFilterPlacementState,
+      frame: DesktopCompactFilterFrame | null,
+    ) => {
+      if (placement !== desktopCompactFilterPlacementRef.current) {
+        desktopCompactFilterPlacementRef.current = placement;
+        setDesktopCompactFilterPlacement(placement);
+      }
+
+      const currentFrame = desktopCompactFilterFrameRef.current;
+      const frameChanged =
+        (frame === null) !== (currentFrame === null) ||
+        (frame !== null &&
+          currentFrame !== null &&
+          (Math.abs(frame.left - currentFrame.left) >= 0.5 ||
+            Math.abs(frame.width - currentFrame.width) >= 0.5));
+
+      if (frameChanged) {
+        desktopCompactFilterFrameRef.current = frame;
+        setDesktopCompactFilterFrame(frame);
+      }
+    };
+
+    const measureDesktopCompactFilter = () => {
+      const sentinel = desktopFilterSentinelRef.current;
+      const sidebar = desktopFilterSidebarRef.current;
+      const compactPanel = desktopCompactFilterRef.current;
+      const resultsBody = resultsGridRef.current;
+      const viewportWidth = window.innerWidth;
+      const scrollY = window.scrollY;
+      const sentinelTop =
+        sentinel?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY;
+      const nextVisibility = shouldShowDesktopCompactFilter({
+        viewportWidth,
+        sentinelTop,
+        topOffset: desktopCompactFilterTopOffset,
+      });
+
+      if (nextVisibility !== desktopFilterShortcutVisibilityRef.current) {
+        desktopFilterShortcutVisibilityRef.current = nextVisibility;
+        setShowDesktopFilterShortcut(nextVisibility);
+      }
+
+      if (!nextVisibility || !sidebar || !resultsBody) {
+        applyPlacement("hidden", null);
+        return;
+      }
+
+      const sidebarRect = sidebar.getBoundingClientRect();
+      const panelRect = compactPanel?.getBoundingClientRect();
+      const bodyRect = resultsBody.getBoundingClientRect();
+      const panelHeight = panelRect?.height ?? desktopCompactFilterHeightRef.current;
+
+      if (Number.isFinite(panelHeight) && panelHeight > 0) {
+        desktopCompactFilterHeightRef.current = panelHeight;
+      }
+
+      const placement = calculateCompactFilterPlacement({
+        enabled: nextVisibility,
+        scrollY,
+        desiredTop: desktopCompactFilterTopOffset,
+        panelHeight,
+        bodyBottomDocument: bodyRect.bottom + scrollY,
+        currentState: desktopCompactFilterPlacementRef.current,
+      });
+
+      if (placement.state === "hidden") {
+        applyPlacement("hidden", null);
+        return;
+      }
+
+      applyPlacement(placement.state, {
+        left: sidebarRect.left,
+        width: sidebarRect.width,
+      });
+    };
+
+    const scheduleMeasurement = () => {
+      if (animationFrameId !== null) return;
+
+      animationFrameId = window.requestAnimationFrame(() => {
+        animationFrameId = null;
+        measureDesktopCompactFilter();
+      });
+    };
+
+    scheduleDesktopCompactFilterMeasurementRef.current = scheduleMeasurement;
+
+    const resizeObserver =
+      "ResizeObserver" in window
+        ? new ResizeObserver(scheduleMeasurement)
+        : null;
+
+    if (resizeObserver) {
+      if (desktopFilterSidebarRef.current) {
+        resizeObserver.observe(desktopFilterSidebarRef.current);
+      }
+      if (resultsGridRef.current) {
+        resizeObserver.observe(resultsGridRef.current);
+      }
+    }
+
+    measureDesktopCompactFilter();
+    window.addEventListener("scroll", scheduleMeasurement, { passive: true });
+    window.addEventListener("resize", scheduleMeasurement);
+
+    return () => {
+      if (animationFrameId !== null) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
+      scheduleDesktopCompactFilterMeasurementRef.current = null;
+      resizeObserver?.disconnect();
+      window.removeEventListener("scroll", scheduleMeasurement);
+      window.removeEventListener("resize", scheduleMeasurement);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      !("ResizeObserver" in window) ||
+      desktopCompactFilterPlacement === "hidden" ||
+      !desktopCompactFilterRef.current
+    ) {
+      return undefined;
+    }
+
+    const resizeObserver = new ResizeObserver(() => {
+      scheduleDesktopCompactFilterMeasurementRef.current?.();
+    });
+
+    resizeObserver.observe(desktopCompactFilterRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [desktopCompactFilterPlacement]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !showDesktopFilterShortcut) return;
+
+    const animationFrameId = window.requestAnimationFrame(() => {
+      scheduleDesktopCompactFilterMeasurementRef.current?.();
+    });
+
+    return () => window.cancelAnimationFrame(animationFrameId);
+  }, [activeFilterCount, results.length, showDesktopFilterShortcut]);
 
   useEffect(() => {
     if (!filterApplying || loading || error) return;
@@ -1179,76 +1180,50 @@ export function HotelResultsClient() {
         </div>
       ) : null}
 
-      <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
-      <section
-        className={cn(
-          "z-40 hidden border-b border-transparent transition-[padding,background-color,box-shadow] duration-200 sm:block",
-          isSearchBarCompact
-            ? cn(
-                "sticky top-0 bg-[#f6f8fb]/95 shadow-none backdrop-blur",
-                showCompactSearchSummary ? "py-1.5" : "py-3",
-              )
-            : "relative bg-white pb-0 pt-7 shadow-none",
-        )}
-      >
+      <section className="hidden bg-white pb-0 pt-7 shadow-none sm:block">
         <div className="page-shell">
-          {showCompactSearchSummary ? (
-            <div className="mx-auto w-full min-w-0 max-w-[54rem]">
-              <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.10)]">
-                <button
-                  type="button"
-                  aria-label={t("editSearch") || "Edit search"}
-                  onClick={expandStickySearch}
-                  className="group focus-ring flex w-full min-w-0 flex-col gap-2 rounded-xl bg-white px-3 py-2.5 text-start transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
-                >
-                  <span className="grid min-w-0 flex-1 grid-cols-1 gap-1.5 sm:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.5fr)_minmax(0,0.95fr)_minmax(0,0.85fr)_minmax(0,0.8fr)] lg:items-center lg:gap-3">
-                    <span className="min-w-0 truncate text-sm font-semibold text-slate-800">
-                      {body.destination}
-                    </span>
-                    <span className="min-w-0 truncate text-sm font-medium text-slate-600">
-                      {hotelDateSummary}
-                    </span>
-                    <span className="min-w-0 truncate text-sm font-medium text-slate-600">
-                      {hotelGuestRoomSummary}
-                    </span>
-                    {hotelSortSummary ? (
-                      <span className="min-w-0 truncate text-sm font-medium capitalize text-slate-600">
-                        {hotelSortSummary}
-                      </span>
-                    ) : null}
-                  </span>
-                  <span className="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#004BB8] shadow-sm transition group-hover:border-[#004BB8]/25 group-hover:bg-white sm:self-center">
-                    <SquarePen className="h-3.5 w-3.5" aria-hidden="true" />
-                    {t("edit") || "Edit"}
-                  </span>
-                </button>
-              </div>
-            </div>
-          ) : showFullSearchForm ? (
+          <div
+            ref={desktopSearchFrameRef}
+            className="relative z-40 min-w-0 overflow-visible"
+            style={
+              isSearchBarCompact && desktopSearchHeight !== null
+                ? { minHeight: desktopSearchHeight }
+                : undefined
+            }
+          >
             <div
+              ref={desktopSearchSurfaceRef}
               className={cn(
-                "relative z-10 min-w-0",
-                !isSearchBarCompact && "translate-y-5",
+                "min-w-0 overflow-visible",
+                isSearchBarCompact
+                  ? "fixed inset-x-0 top-0 z-[1000] px-3 pt-2 sm:px-4 lg:px-6"
+                  : "relative z-10 translate-y-5",
               )}
             >
-              <HotelSearchBar
-                key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
-                initialDestination={body.destination}
-                initialCheckIn={body.checkIn}
-                initialCheckOut={body.checkOut}
-                initialGuests={body.guests}
-                initialRooms={body.rooms}
-                initialSort={body.sort}
-                errorRole="alert"
-                compact
-                className="min-w-0"
-                onSubmitStart={() => {
-                  triggerSearchApplying();
-                  setIsSearchExpandedWhileSticky(false);
-                }}
-              />
+              <div className={cn(isSearchBarCompact && "page-shell")}>
+                <div className="min-w-0">
+                  <HotelSearchBar
+                    key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
+                    initialDestination={body.destination}
+                    initialCheckIn={body.checkIn}
+                    initialCheckOut={body.checkOut}
+                    initialGuests={body.guests}
+                    initialRooms={body.rooms}
+                    initialSort={body.sort}
+                    errorRole="alert"
+                    compact
+                    className="min-w-0"
+                    onSubmitStart={triggerSearchApplying}
+                  />
+                </div>
+              </div>
             </div>
-          ) : null}
+            <div
+              ref={desktopSearchSentinelRef}
+              className={cn("h-px w-full", !isSearchBarCompact && "translate-y-5")}
+              aria-hidden="true"
+            />
+          </div>
         </div>
       </section>
 
@@ -1289,17 +1264,65 @@ export function HotelResultsClient() {
         </ol>
       </nav>
 
-      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[256px_minmax(0,1fr)]">
+      <div
+        ref={resultsGridRef}
+        className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[256px_minmax(0,1fr)]"
+      >
         <aside
-          className={cn(
-            "hidden lg:block lg:self-start",
-            desktopHotelFilterStickyTopClass,
-          )}
+          ref={desktopFilterSidebarRef}
+          className="relative hidden self-stretch lg:block"
         >
-          <div ref={desktopFilterContainerRef}>
-            {showFullDesktopFilters ? (
-              <div ref={desktopFilterContentRef}>
+          <div>
+            <HotelFilters
+              layout="desktop"
+              t={t}
+              maxPrice={maxPrice}
+              setMaxPrice={updateMaxPrice}
+              resultMaxPrice={resultMaxPrice}
+              priceCurrency={resultCurrency}
+              locale={locale}
+              minRating={minRating}
+              setMinRating={updateMinRating}
+              options={filterOptions}
+              selectedFilters={selectedFilters}
+              toggleFilter={toggleFilter}
+              activeFilterCount={activeFilterCount}
+              onClear={resetFilters}
+            />
+            <div
+              ref={desktopFilterSentinelRef}
+              className="h-px w-full"
+              aria-hidden="true"
+            />
+            {showDesktopFilterShortcut &&
+            desktopCompactFilterFrame &&
+            desktopCompactFilterPlacement !== "hidden" ? (
+              <div
+                ref={desktopCompactFilterRef}
+                className={cn(
+                  "z-30 overflow-visible",
+                  desktopCompactFilterPlacement === "fixed" && "fixed",
+                  desktopCompactFilterPlacement === "docked" &&
+                    "absolute inset-x-0 bottom-0",
+                )}
+                style={
+                  desktopCompactFilterPlacement === "fixed"
+                    ? {
+                        top: desktopCompactFilterTopOffset,
+                        left: desktopCompactFilterFrame.left,
+                        width: desktopCompactFilterFrame.width,
+                        height: "auto",
+                        overflow: "visible",
+                      }
+                    : {
+                        width: "100%",
+                        height: "auto",
+                        overflow: "visible",
+                      }
+                }
+              >
                 <HotelFilters
+                  layout="compact"
                   t={t}
                   maxPrice={maxPrice}
                   setMaxPrice={updateMaxPrice}
@@ -1315,14 +1338,7 @@ export function HotelResultsClient() {
                   onClear={resetFilters}
                 />
               </div>
-            ) : (
-              <DesktopFilterShortcut
-                activeFilterCount={activeFilterCount}
-                activeFilterLabel={activeFilterLabel}
-                filterByLabel={t("hotelResults.filterBy")}
-                onClick={expandDesktopFilters}
-              />
-            )}
+            ) : null}
           </div>
         </aside>
 
@@ -1798,7 +1814,7 @@ function HotelFilters({
   activeFilterCount,
   onClear,
 }: {
-  layout?: "desktop" | "mobile";
+  layout?: "desktop" | "compact" | "mobile";
   t: (key: string) => string;
   maxPrice: number;
   setMaxPrice: (value: number) => void;
@@ -1815,6 +1831,121 @@ function HotelFilters({
 }) {
   const filterRangeClass =
     "h-2 w-full cursor-pointer appearance-none rounded-full bg-border outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[#2F73C8] [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#2F73C8] [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-border [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#2F73C8] [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#2F73C8] [&::-moz-range-thumb]:shadow-md";
+
+  const [openCompactSection, setOpenCompactSection] =
+    useState<CompactHotelFilterSectionId>("price");
+  const getSelectedCount = (group: keyof HotelFilterSelections) =>
+    selectedFilters[group].length;
+  const compactSections: Array<{
+    id: Exclude<CompactHotelFilterSectionId, null>;
+    title: string;
+    selectedCount: number;
+    content: ReactNode;
+  }> = [
+    {
+      id: "price",
+      title: t("hotelResults.budgetPrice"),
+      selectedCount: maxPrice < resultMaxPrice ? 1 : 0,
+      content: (
+        <PriceFilterControl
+          t={t}
+          maxPrice={maxPrice}
+          setMaxPrice={setMaxPrice}
+          resultMaxPrice={resultMaxPrice}
+          priceCurrency={priceCurrency}
+          locale={locale}
+          filterRangeClass={filterRangeClass}
+        />
+      ),
+    },
+    {
+      id: "popular",
+      title: t("hotelResults.popularFilters"),
+      selectedCount: getSelectedCount("popular"),
+      content: (
+        <CheckboxFilterOptions
+          options={options.popular}
+          selected={selectedFilters.popular}
+          onToggle={(value) => toggleFilter("popular", value)}
+          t={t}
+          locale={locale}
+        />
+      ),
+    },
+    {
+      id: "rating",
+      title: t("hotelResults.starRating"),
+      selectedCount: minRating > DEFAULT_MIN_RATING ? 1 : 0,
+      content: (
+        <RatingFilterControl
+          t={t}
+          minRating={minRating}
+          setMinRating={setMinRating}
+          locale={locale}
+          filterRangeClass={filterRangeClass}
+        />
+      ),
+    },
+    { id: "locations", title: t("hotelResults.locationArea"), selectedCount: getSelectedCount("locations"), content: <CheckboxFilterOptions options={options.locations} selected={selectedFilters.locations} onToggle={(value) => toggleFilter("locations", value)} t={t} locale={locale} /> },
+    { id: "propertyTypes", title: t("hotelResults.propertyType"), selectedCount: getSelectedCount("propertyTypes"), content: <CheckboxFilterOptions options={options.propertyTypes} selected={selectedFilters.propertyTypes} onToggle={(value) => toggleFilter("propertyTypes", value)} t={t} locale={locale} /> },
+    { id: "roomTypes", title: t("hotelResults.roomType"), selectedCount: getSelectedCount("roomTypes"), content: <CheckboxFilterOptions options={options.roomTypes} selected={selectedFilters.roomTypes} onToggle={(value) => toggleFilter("roomTypes", value)} t={t} locale={locale} /> },
+    { id: "bedTypes", title: t("hotelResults.bedType"), selectedCount: getSelectedCount("bedTypes"), content: <CheckboxFilterOptions options={options.bedTypes} selected={selectedFilters.bedTypes} onToggle={(value) => toggleFilter("bedTypes", value)} t={t} locale={locale} /> },
+    { id: "meals", title: t("hotelResults.meals"), selectedCount: getSelectedCount("meals"), content: <CheckboxFilterOptions options={options.meals} selected={selectedFilters.meals} onToggle={(value) => toggleFilter("meals", value)} t={t} locale={locale} /> },
+    { id: "cancellationPolicies", title: t("hotelResults.cancellationPolicy"), selectedCount: getSelectedCount("cancellationPolicies"), content: <CheckboxFilterOptions options={options.cancellationPolicies} selected={selectedFilters.cancellationPolicies} onToggle={(value) => toggleFilter("cancellationPolicies", value)} t={t} locale={locale} /> },
+    { id: "facilities", title: t("hotelResults.facilities"), selectedCount: getSelectedCount("facilities"), content: <CheckboxFilterOptions options={options.facilities} selected={selectedFilters.facilities} onToggle={(value) => toggleFilter("facilities", value)} t={t} locale={locale} /> },
+  ];
+
+  if (layout === "compact") {
+    return (
+      <div
+        className="rounded-[1.15rem] border border-slate-200/90 bg-white shadow-[0_14px_34px_-28px_rgba(15,23,42,0.45)] ring-1 ring-slate-950/[0.02]"
+        style={{
+          maxHeight: `calc(100vh - ${desktopCompactFilterTopOffset + 12}px)`,
+          overflowY: "auto",
+          overscrollBehavior: "contain",
+        }}
+      >
+        <div className="border-b border-slate-200/70 px-3 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="truncate text-sm font-bold text-slate-950">
+              {t("hotelResults.filterBy")}
+            </h2>
+            {activeFilterCount > 0 ? (
+              <button
+                type="button"
+                className="rounded-full px-1.5 py-0.5 text-[11px] font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-[#235A9F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                onClick={onClear}
+              >
+                Clear all
+              </button>
+            ) : null}
+          </div>
+          {activeFilterCount > 0 ? (
+            <span className="mt-2 inline-flex rounded-full bg-[#EAF2FB] px-2 py-0.5 text-[11px] font-semibold text-[#235A9F] ring-1 ring-[#004BB8]/8">
+              {t("activeFilterCount").replace("{{count}}", String(activeFilterCount))}
+            </span>
+          ) : null}
+        </div>
+        <div className="divide-y divide-slate-200/75">
+          {compactSections.map((section) => (
+            <CompactHotelFilterSection
+              key={section.id}
+              title={section.title}
+              selectedCount={section.selectedCount}
+              expanded={openCompactSection === section.id}
+              onToggle={() =>
+                setOpenCompactSection((current) =>
+                  current === section.id ? null : section.id,
+                )
+              }
+            >
+              {section.content}
+            </CompactHotelFilterSection>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -1983,48 +2114,135 @@ function HotelFilters({
   );
 }
 
-function FilterSection({
-  title,
-  children,
-  layout = "desktop",
+
+function PriceFilterControl({
+  t,
+  maxPrice,
+  setMaxPrice,
+  resultMaxPrice,
+  priceCurrency,
+  locale,
+  filterRangeClass,
 }: {
-  title: string;
-  children: ReactNode;
-  layout?: "desktop" | "mobile";
+  t: (key: string) => string;
+  maxPrice: number;
+  setMaxPrice: (value: number) => void;
+  resultMaxPrice: number;
+  priceCurrency: string;
+  locale: string;
+  filterRangeClass: string;
 }) {
   return (
-    <section
-      className={cn(
-        "border-t border-slate-200/75 first:border-t-0",
-        layout === "mobile" ? "py-4" : "py-4",
-      )}
-    >
-      <h3 className="mb-2 text-sm font-extrabold uppercase leading-5 tracking-[0.14em] text-slate-950">
-        {title}
-      </h3>
-      <div className="grid gap-0.5">{children}</div>
+    <label className="block">
+      <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
+        {t("hotelResults.totalUpTo")} {" "}
+        <span className="font-mono text-[#021C2B]">
+          {formatCurrency(maxPrice, priceCurrency, locale)}
+        </span>
+      </span>
+      <input
+        className={filterRangeClass}
+        type="range"
+        min={100}
+        max={Math.max(resultMaxPrice, 300)}
+        step={25}
+        value={maxPrice}
+        onChange={(event) => setMaxPrice(Number(event.target.value))}
+      />
+    </label>
+  );
+}
+
+function RatingFilterControl({
+  t,
+  minRating,
+  setMinRating,
+  locale,
+  filterRangeClass,
+}: {
+  t: (key: string) => string;
+  minRating: number;
+  setMinRating: (value: number) => void;
+  locale: string;
+  filterRangeClass: string;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
+        {t("hotelResults.fromRating")} {" "}
+        <span className="font-mono text-[#021C2B]">
+          {formatHotelRatingNumber(minRating, locale)}+
+        </span>
+      </span>
+      <input
+        className={filterRangeClass}
+        type="range"
+        min={1}
+        max={5}
+        step={0.5}
+        value={minRating}
+        onChange={(event) => setMinRating(Number(event.target.value))}
+      />
+    </label>
+  );
+}
+
+function CompactHotelFilterSection({
+  title,
+  selectedCount,
+  expanded,
+  onToggle,
+  children,
+}: {
+  title: string;
+  selectedCount: number;
+  expanded: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <section>
+      <button
+        type="button"
+        className="flex w-full items-center justify-between gap-2 px-3 py-3 text-left text-sm font-bold text-slate-950 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/25"
+        aria-expanded={expanded}
+        onClick={onToggle}
+      >
+        <span className="min-w-0 truncate">{title}</span>
+        <span className="flex shrink-0 items-center gap-2">
+          {selectedCount > 0 ? (
+            <span className="rounded-full bg-[#EAF2FB] px-2 py-0.5 text-[11px] font-semibold text-[#235A9F] ring-1 ring-[#004BB8]/8">
+              {selectedCount}
+            </span>
+          ) : null}
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 text-slate-500 transition-transform",
+              expanded && "rotate-180",
+            )}
+            aria-hidden="true"
+          />
+        </span>
+      </button>
+      {expanded ? <div className="px-3 pb-3">{children}</div> : null}
     </section>
   );
 }
 
-function CheckboxFilterSection({
-  title,
+function CheckboxFilterOptions({
   options,
   selected,
   onToggle,
   t,
   collapsedCount = 4,
   locale,
-  layout = "desktop",
 }: {
-  title: string;
   options: FilterOption[];
   selected: string[];
   onToggle: (value: string) => void;
   t: (key: string) => string;
   collapsedCount?: number;
   locale: string;
-  layout?: "desktop" | "mobile";
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -2034,7 +2252,7 @@ function CheckboxFilterSection({
   const hasMore = options.length > collapsedCount;
 
   return (
-    <FilterSection title={title} layout={layout}>
+    <>
       <div className="grid gap-0.5">
         {visibleOptions.map((option) => {
           const checked = selected.includes(option.value);
@@ -2082,6 +2300,63 @@ function CheckboxFilterSection({
               )}
         </button>
       ) : null}
+    </>
+  );
+}
+
+function FilterSection({
+  title,
+  children,
+  layout = "desktop",
+}: {
+  title: string;
+  children: ReactNode;
+  layout?: "desktop" | "compact" | "mobile";
+}) {
+  return (
+    <section
+      className={cn(
+        "border-t border-slate-200/75 first:border-t-0",
+        layout === "mobile" ? "py-4" : "py-4",
+      )}
+    >
+      <h3 className="mb-2 text-sm font-extrabold uppercase leading-5 tracking-[0.14em] text-slate-950">
+        {title}
+      </h3>
+      <div className="grid gap-0.5">{children}</div>
+    </section>
+  );
+}
+
+function CheckboxFilterSection({
+  title,
+  options,
+  selected,
+  onToggle,
+  t,
+  collapsedCount = 4,
+  locale,
+  layout = "desktop",
+}: {
+  title: string;
+  options: FilterOption[];
+  selected: string[];
+  onToggle: (value: string) => void;
+  t: (key: string) => string;
+  collapsedCount?: number;
+  locale: string;
+  layout?: "desktop" | "compact" | "mobile";
+}) {
+  return (
+    <FilterSection title={title} layout={layout}>
+      <CheckboxFilterOptions
+        options={options}
+        selected={selected}
+        onToggle={onToggle}
+        t={t}
+        collapsedCount={collapsedCount}
+        locale={locale}
+      />
     </FilterSection>
   );
 }
