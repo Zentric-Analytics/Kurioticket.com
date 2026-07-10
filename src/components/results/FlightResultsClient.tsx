@@ -3948,7 +3948,7 @@ export function FlightResultsClient() {
     return (
       <div
         className={cn(
-          "fixed inset-x-0 top-0 z-[100] hidden px-4 pt-3 transition-all duration-200 lg:block",
+          "fixed inset-x-0 top-0 z-[100] hidden bg-white/95 px-4 py-3 shadow-[0_8px_24px_rgba(15,23,42,0.06)] backdrop-blur-md transition-all duration-200 lg:block",
           isSearchCollapsed && !isStickySearchPanelOpen
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none -translate-y-3 opacity-0",
