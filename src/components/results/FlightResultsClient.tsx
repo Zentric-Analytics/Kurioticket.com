@@ -1249,37 +1249,9 @@ export function FlightResultsClient() {
     };
   }, [loading]);
 
-  useEffect(() => {
-    if (!canAutoCollapseExpandedSearch) {
-      return undefined;
-    }
-
-    let animationFrame = 0;
-
-    const onScroll = () => {
-      if (animationFrame) return;
-
-      animationFrame = window.requestAnimationFrame(() => {
-        animationFrame = 0;
-        const hasContinuedScrolling =
-          Math.abs(window.scrollY - expandedSearchScrollYRef.current) > 16;
-
-        if (hasContinuedScrolling) {
-          collapseStickySearch();
-        }
-      });
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (animationFrame) {
-        window.cancelAnimationFrame(animationFrame);
-      }
-    };
-  }, [canAutoCollapseExpandedSearch, collapseStickySearch]);
-
+  // Do not auto-collapse the sticky pop-out on scroll. Opening the pop-out
+  // locks the page body, which can emit scroll/layout updates; those should
+  // not be interpreted as user intent to close the panel.
   useEffect(() => {
     if (!canAutoCollapseExpandedSearch) {
       return undefined;
