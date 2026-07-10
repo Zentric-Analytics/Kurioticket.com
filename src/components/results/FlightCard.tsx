@@ -97,37 +97,35 @@ export function FlightCard({
               ))}
             </div>
 
-            <FlightDetailLines details={details} />
+            <div className="flex items-start justify-between gap-3 border-t border-slate-100 pt-2 lg:block lg:border-t-0 lg:pt-0">
+              <FlightDetailLines details={details} />
+              <FlightFareAction
+                flightId={flight.id}
+                formattedPrice={displayPrice.formatted}
+                priceAriaLabel={priceAriaLabel}
+                priceTitle={priceTitle}
+                priceLabel={priceLabel}
+                showConvertedProviderPrice={displayPrice.isConvertedEstimate}
+                providerPrice={providerPrice}
+                providerPriceLabel={t("providerPrice")}
+                viewFlightLabel={t("viewFlight")}
+                className="lg:hidden"
+              />
+            </div>
           </div>
 
-          <div className="flex flex-col items-stretch gap-2 rounded-xl px-1 py-2 text-start lg:min-h-[118px] lg:shrink-0 lg:items-stretch lg:justify-center lg:self-stretch lg:px-1 lg:py-3 lg:text-center">
-            <div className="min-w-0 lg:flex lg:min-h-[72px] lg:flex-col lg:items-center lg:justify-center lg:text-center">
-              <div
-                className="text-lg font-semibold leading-tight tracking-[-0.025em] text-slate-950 sm:text-xl"
-                aria-label={priceAriaLabel}
-                title={priceTitle}
-                dir="ltr"
-              >
-                {displayPrice.formatted}
-              </div>
-              <p className="mt-1 text-[11px] font-medium uppercase leading-none tracking-[0.1em] text-slate-600">
-                {priceLabel}
-              </p>
-              {displayPrice.isConvertedEstimate ? (
-                <div className="mt-1.5 space-y-0.5 text-xs font-medium leading-4 text-slate-600 lg:text-center">
-                  <p><span>{t("providerPrice")}:</span> <span dir="ltr">{providerPrice}</span></p>
-                </div>
-              ) : null}
-            </div>
-            <LinkButton
-              href={`/flights/details/${encodeURIComponent(flight.id)}`}
-              variant="primary"
-              size="sm"
-              className="w-full shrink-0 justify-center whitespace-nowrap rounded-full bg-[#004BB8] px-3.5 text-sm font-semibold hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35 lg:w-full lg:justify-center"
-            >
-              {t("viewFlight")}
-            </LinkButton>
-          </div>
+          <FlightFareAction
+            flightId={flight.id}
+            formattedPrice={displayPrice.formatted}
+            priceAriaLabel={priceAriaLabel}
+            priceTitle={priceTitle}
+            priceLabel={priceLabel}
+            showConvertedProviderPrice={displayPrice.isConvertedEstimate}
+            providerPrice={providerPrice}
+            providerPriceLabel={t("providerPrice")}
+            viewFlightLabel={t("viewFlight")}
+            className="hidden lg:flex"
+          />
         </div>
 
         <div className="mt-2 px-1 text-xs font-medium leading-5 text-slate-600">
@@ -245,9 +243,72 @@ function AirlineLogo({ flight }: { flight: PublicFlightResult }) {
   );
 }
 
+function FlightFareAction({
+  flightId,
+  formattedPrice,
+  priceAriaLabel,
+  priceTitle,
+  priceLabel,
+  showConvertedProviderPrice,
+  providerPrice,
+  providerPriceLabel,
+  viewFlightLabel,
+  className,
+}: {
+  flightId: string;
+  formattedPrice: string;
+  priceAriaLabel: string;
+  priceTitle: string | undefined;
+  priceLabel: string;
+  showConvertedProviderPrice: boolean;
+  providerPrice: string;
+  providerPriceLabel: string;
+  viewFlightLabel: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex shrink-0 flex-col items-end gap-2 rounded-xl px-0 py-0 text-end lg:min-h-[118px] lg:items-stretch lg:justify-center lg:self-stretch lg:px-1 lg:py-3 lg:text-center",
+        className,
+      )}
+    >
+      <div className="min-w-0 lg:flex lg:min-h-[72px] lg:flex-col lg:items-center lg:justify-center lg:text-center">
+        <div
+          className="text-lg font-semibold leading-tight tracking-[-0.025em] text-slate-950 sm:text-xl"
+          aria-label={priceAriaLabel}
+          title={priceTitle}
+          dir="ltr"
+        >
+          {formattedPrice}
+        </div>
+        <p className="mt-1 text-[10px] font-medium uppercase leading-none tracking-[0.08em] text-slate-600 sm:text-[11px]">
+          {priceLabel}
+        </p>
+        {showConvertedProviderPrice ? (
+          <div className="mt-1.5 space-y-0.5 text-xs font-medium leading-4 text-slate-600 lg:text-center">
+            <p>
+              <span>{providerPriceLabel}:</span>{" "}
+              <span dir="ltr">{providerPrice}</span>
+            </p>
+          </div>
+        ) : null}
+      </div>
+      <LinkButton
+        href={`/flights/details/${encodeURIComponent(flightId)}`}
+        variant="primary"
+        size="sm"
+        className="w-auto shrink-0 justify-center whitespace-nowrap rounded-full bg-[#004BB8] px-3 py-1.5 text-xs font-semibold hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35 sm:px-3.5 sm:text-sm lg:w-full lg:px-3.5 lg:py-2 lg:text-sm"
+      >
+        {viewFlightLabel}
+      </LinkButton>
+    </div>
+  );
+}
+
 function FlightDetailLines({ details }: { details: DetailItem[] }) {
   return (
-    <div className="grid gap-x-4 gap-y-1 border-t border-slate-100 pt-2 text-xs leading-5 text-slate-600 sm:grid-cols-2">
+    <div className="grid min-w-0 flex-1 gap-x-4 gap-y-1 text-xs leading-5 text-slate-600 sm:grid-cols-2 lg:border-t lg:border-slate-100 lg:pt-2">
       {details.map((detail) => {
         const Icon = detail.icon;
 
