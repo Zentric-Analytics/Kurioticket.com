@@ -20,6 +20,7 @@ export type EmailTemplateKey =
   | "support_ticket"
   | "newsletter_welcome"
   | "newsletter_unsubscribe"
+  | "email_preferences_updated"
   | "price_alert"
   | "notification"
   | "admin_test";

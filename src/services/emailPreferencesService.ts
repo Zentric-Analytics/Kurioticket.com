@@ -12,6 +12,24 @@ export const emailPreferenceDefaults = {
 
 export type EmailPreferences = typeof emailPreferenceDefaults;
 
+export type EmailPreferenceChange = {
+  key: keyof EmailPreferences;
+  previousValue: boolean;
+  nextValue: boolean;
+};
+
+export const emailPreferenceKeys = Object.keys(emailPreferenceDefaults) as Array<keyof EmailPreferences>;
+
+export const emailPreferenceLabels = {
+  receiveOptionalEmails: "Optional emails",
+  priceAlerts: "Price alerts",
+  savedTripReminders: "Saved trip reminders",
+  routeWatchUpdates: "Route watch updates",
+  travelInspiration: "Travel inspiration",
+  productUpdates: "Product updates",
+  dealsRecommendations: "Deals and recommendations",
+} as const satisfies Record<keyof EmailPreferences, string>;
+
 export type OptionalEmailCategory =
   | "priceAlerts"
   | "savedTripReminders"
@@ -42,13 +60,30 @@ export function normalizeEmailPreferences(value: unknown): EmailPreferences {
 
   const normalized = { ...emailPreferenceDefaults };
 
-  for (const key of Object.keys(emailPreferenceDefaults) as Array<keyof EmailPreferences>) {
+  for (const key of emailPreferenceKeys) {
     if (typeof value[key] === "boolean") {
       normalized[key] = value[key];
     }
   }
 
   return normalized;
+}
+
+export function getEmailPreferenceChanges(
+  previous: EmailPreferences,
+  next: EmailPreferences,
+): EmailPreferenceChange[] {
+  return emailPreferenceKeys.flatMap((key) =>
+    previous[key] === next[key]
+      ? []
+      : [
+          {
+            key,
+            previousValue: previous[key],
+            nextValue: next[key],
+          },
+        ],
+  );
 }
 
 function normalizeNotificationPreferences(value: unknown): NotificationPreferences {

@@ -292,6 +292,52 @@ export function newsletterUnsubscribedEmail(input?: { preferencesUrl?: string })
   `;
 }
 
+export function emailPreferencesUpdatedEmail(input: {
+  name?: string | null;
+  enabledLabels: string[];
+  disabledLabels: string[];
+  changedAt: Date;
+  preferencesUrl: string;
+  masterDisabled: boolean;
+}) {
+  const name = escapeHtml(input.name);
+  const preferencesUrl = escapeHtml(input.preferencesUrl);
+  const changedAt = escapeHtml(
+    new Intl.DateTimeFormat("en", {
+      dateStyle: "long",
+      timeStyle: "short",
+    }).format(input.changedAt),
+  );
+  const enabledItems = input.enabledLabels.map((label) => `<li>${escapeHtml(label)}</li>`).join("");
+  const disabledItems = input.disabledLabels.map((label) => `<li>${escapeHtml(label)}</li>`).join("");
+
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
+      <h1 style="font-size:22px">Your Kurioticket email preferences were updated</h1>
+      <p>${name ? `Hi ${name},` : "Hi,"}</p>
+      <p>Your Kurioticket email preferences were updated.</p>
+      ${
+        disabledItems
+          ? `<h2 style="font-size:16px;margin-top:20px">Turned off:</h2><ul>${disabledItems}</ul>`
+          : ""
+      }
+      ${
+        enabledItems
+          ? `<h2 style="font-size:16px;margin-top:20px">Turned on:</h2><ul>${enabledItems}</ul>`
+          : ""
+      }
+      ${
+        input.masterDisabled
+          ? "<p>Your individual email-category choices have been preserved and will apply again if you turn optional emails back on.</p>"
+          : ""
+      }
+      <p><strong>Changed on:</strong><br />${changedAt}</p>
+      <p><a href="${preferencesUrl}" style="color:#0f766e">Manage email preferences</a></p>
+      <p>If you did not make this change, review your account security and contact Kurioticket support.</p>
+    </div>
+  `;
+}
+
 export function accountDeletionRequestEmail(input: { deadline: Date }) {
   const deadline = escapeHtml(
     new Intl.DateTimeFormat("en", {

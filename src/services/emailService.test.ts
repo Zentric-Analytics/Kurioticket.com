@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test, { afterEach } from "node:test";
 
-import { __emailServiceTest, sendOptionalEmail } from "@/services/emailService";
+import { __emailServiceTest, emailPreferencesUpdatedEmail, sendOptionalEmail } from "@/services/emailService";
 import { __emailPreferencesServiceTest, emailPreferenceDefaults } from "@/services/emailPreferencesService";
 
 afterEach(() => {
@@ -62,4 +62,23 @@ test("sendOptionalEmail calls transactional sender and includes optional categor
   assert.equal(sendInputs.length, 1);
   assert.deepEqual(sendInputs[0].metadata, { source: "test", optionalEmailCategory: "priceAlerts" });
   assert.equal(sendInputs[0].template, "price_alert");
+});
+
+test("emailPreferencesUpdatedEmail safely escapes dynamic values and renders changed sections", () => {
+  const html = emailPreferencesUpdatedEmail({
+    name: "<Bisola>",
+    enabledLabels: ["Product <updates>"],
+    disabledLabels: ["Price & alerts"],
+    changedAt: new Date("2026-07-10T18:30:00.000Z"),
+    preferencesUrl: "https://example.com/dashboard/preferences/email?x=<script>",
+    masterDisabled: true,
+  });
+
+  assert.match(html, /Hi &lt;Bisola&gt;/);
+  assert.match(html, /Product &lt;updates&gt;/);
+  assert.match(html, /Price &amp; alerts/);
+  assert.match(html, /dashboard\/preferences\/email\?x=&lt;script&gt;/);
+  assert.match(html, /Changed on:/);
+  assert.match(html, /individual email-category choices have been preserved/);
+  assert.doesNotMatch(html, /<Bisola>/);
 });
