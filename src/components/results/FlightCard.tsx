@@ -100,7 +100,7 @@ export function FlightCard({
             <FlightDetailLines details={details} />
           </div>
 
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-[#D8E1EC] bg-[#F8FAFC] px-3 py-2 lg:min-h-[118px] lg:shrink-0 lg:flex-col lg:items-stretch lg:justify-center lg:gap-2 lg:self-stretch lg:border-0 lg:bg-transparent lg:px-1 lg:py-3 lg:text-center">
+          <div className="flex flex-col items-stretch gap-2 rounded-xl px-1 py-2 text-start lg:min-h-[118px] lg:shrink-0 lg:items-stretch lg:justify-center lg:self-stretch lg:px-1 lg:py-3 lg:text-center">
             <div className="min-w-0 lg:flex lg:min-h-[72px] lg:flex-col lg:items-center lg:justify-center lg:text-center">
               <div
                 className="text-lg font-semibold leading-tight tracking-[-0.025em] text-slate-950 sm:text-xl"
@@ -123,14 +123,14 @@ export function FlightCard({
               href={`/flights/details/${encodeURIComponent(flight.id)}`}
               variant="primary"
               size="sm"
-              className="shrink-0 whitespace-nowrap rounded-full bg-[#004BB8] px-3.5 text-sm font-semibold hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35 lg:w-full lg:justify-center"
+              className="w-full shrink-0 justify-center whitespace-nowrap rounded-full bg-[#004BB8] px-3.5 text-sm font-semibold hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35 lg:w-full lg:justify-center"
             >
               {t("viewFlight")}
             </LinkButton>
           </div>
         </div>
 
-        <div className="mt-2 rounded-xl border border-[#D8E1EC] bg-[#F8FAFC] px-2.5 py-1.5 text-xs font-medium leading-5 text-slate-600">
+        <div className="mt-2 px-1 text-xs font-medium leading-5 text-slate-600">
           {showsProviderBackedReturn
             ? `${t("providerNormalizedItineraryPrefix")} ${providerHandoffCopy}`
             : providerHandoffCopy}

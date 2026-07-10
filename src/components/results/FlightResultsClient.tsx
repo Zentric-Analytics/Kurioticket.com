@@ -5316,7 +5316,7 @@ export function FlightResultsClient() {
             aria-haspopup="menu"
             aria-expanded={mobileSortMenuOpen}
             onClick={() => setMobileSortMenuOpen((open) => !open)}
-            className="focus-ring inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-transparent px-2.5 text-[14px] font-semibold text-slate-800 transition hover:bg-slate-200/45 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+            className="focus-ring inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-slate-300/80 bg-transparent px-3 text-[14px] font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-200/35 hover:text-slate-950 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           >
             <span className="truncate">{activeSortOption.label}</span>
             <ChevronDown
@@ -5377,7 +5377,7 @@ export function FlightResultsClient() {
       <button
         type="button"
         aria-label={label}
-        className="focus-ring relative inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-transparent px-2 text-[14px] font-semibold text-slate-800 transition hover:bg-slate-200/45 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+        className="focus-ring relative inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-slate-300/80 bg-transparent px-3 text-[14px] font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-200/35 hover:text-slate-950 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
         onClick={handleClick}
       >
         <SlidersHorizontal
