@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   SlidersHorizontal,
@@ -1181,8 +1182,13 @@ export function HotelResultsClient() {
       <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
       <section
         className={cn(
-          "sticky top-0 z-40 hidden border-b border-transparent bg-[#f6f8fb]/95 backdrop-blur transition-[padding,box-shadow] duration-200 sm:block",
-          showCompactSearchSummary ? "py-1.5 shadow-none" : "py-3 shadow-none",
+          "z-40 hidden border-b border-transparent transition-[padding,background-color,box-shadow] duration-200 sm:block",
+          isSearchBarCompact
+            ? cn(
+                "sticky top-0 bg-[#f6f8fb]/95 shadow-none backdrop-blur",
+                showCompactSearchSummary ? "py-1.5" : "py-3",
+              )
+            : "relative bg-white pb-0 pt-7 shadow-none",
         )}
       >
         <div className="page-shell">
@@ -1219,25 +1225,69 @@ export function HotelResultsClient() {
               </div>
             </div>
           ) : showFullSearchForm ? (
-            <HotelSearchBar
-              key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
-              initialDestination={body.destination}
-              initialCheckIn={body.checkIn}
-              initialCheckOut={body.checkOut}
-              initialGuests={body.guests}
-              initialRooms={body.rooms}
-              initialSort={body.sort}
-              errorRole="alert"
-              compact
-              className="min-w-0"
-              onSubmitStart={() => {
-                triggerSearchApplying();
-                setIsSearchExpandedWhileSticky(false);
-              }}
-            />
+            <div
+              className={cn(
+                "relative z-10 min-w-0",
+                !isSearchBarCompact && "translate-y-5",
+              )}
+            >
+              <HotelSearchBar
+                key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
+                initialDestination={body.destination}
+                initialCheckIn={body.checkIn}
+                initialCheckOut={body.checkOut}
+                initialGuests={body.guests}
+                initialRooms={body.rooms}
+                initialSort={body.sort}
+                errorRole="alert"
+                compact
+                className="min-w-0"
+                onSubmitStart={() => {
+                  triggerSearchApplying();
+                  setIsSearchExpandedWhileSticky(false);
+                }}
+              />
+            </div>
           ) : null}
         </div>
       </section>
+
+      <nav
+        aria-label="Breadcrumb"
+        className="page-shell hidden pt-12 sm:block lg:pt-14"
+      >
+        <ol className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
+          <li>
+            <Link
+              href="/"
+              className="transition-colors hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+            >
+              Home
+            </Link>
+          </li>
+
+          <li className="text-slate-300" aria-hidden="true">
+            &gt;
+          </li>
+
+          <li>
+            <Link
+              href="/hotels"
+              className="transition-colors hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+            >
+              Hotels
+            </Link>
+          </li>
+
+          <li className="text-slate-300" aria-hidden="true">
+            &gt;
+          </li>
+
+          <li className="text-slate-700" aria-current="page">
+            Hotel results
+          </li>
+        </ol>
+      </nav>
 
       <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[256px_minmax(0,1fr)]">
         <aside
