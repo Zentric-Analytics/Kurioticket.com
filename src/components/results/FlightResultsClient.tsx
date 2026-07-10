@@ -79,6 +79,7 @@ import {
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { cn, formatTime } from "@/lib/utils";
+import { shouldShowDesktopCompactFilter } from "@/lib/flights/desktopCompactFilter";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import {
   formatFlightsDateSummary,
@@ -87,53 +88,15 @@ import {
 } from "@/lib/flights/dateFormatting";
 
 const resultStackClass = "w-full max-w-[680px] lg:ms-4 xl:ms-6";
-const desktopFilterStickyTopClass = "lg:sticky lg:top-[7.25rem]";
+const desktopCompactFilterTopOffset = 116;
+const desktopCompactFilterBottomGap = 16;
 
-function useDesktopFilterShortcut(topOffset = 116) {
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const [isShortcutVisible, setIsShortcutVisible] = useState(false);
+type DesktopCompactFilterFrame = {
+  left: number;
+  width: number;
+  maxHeight: number;
+};
 
-  useEffect(() => {
-    if (typeof window === "undefined") return undefined;
-
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return undefined;
-
-    const updateForDesktop = (isVisible: boolean) => {
-      setIsShortcutVisible(window.innerWidth >= 1024 && isVisible);
-    };
-
-    const updateFromSentinelPosition = () => {
-      updateForDesktop(sentinel.getBoundingClientRect().top <= topOffset);
-    };
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        updateForDesktop(entry.boundingClientRect.top <= topOffset);
-      },
-      {
-        root: null,
-        rootMargin: `-${topOffset}px 0px 0px 0px`,
-        threshold: 0,
-      },
-    );
-
-    observer.observe(sentinel);
-    updateFromSentinelPosition();
-
-    window.addEventListener("resize", updateFromSentinelPosition);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", updateFromSentinelPosition);
-    };
-  }, [topOffset]);
-
-  return {
-    sentinelRef,
-    isShortcutVisible,
-  };
-}
 
 const filterQueryParamKeys = [
   "fPrice",
@@ -2755,10 +2718,128 @@ export function FlightResultsClient() {
     "{{count}}",
     String(activeFilterCount),
   );
-  const {
-    sentinelRef: desktopFilterSentinelRef,
-    isShortcutVisible: showDesktopFilterShortcut,
-  } = useDesktopFilterShortcut();
+  const desktopFilterSidebarRef = useRef<HTMLElement | null>(null);
+  const desktopFilterSentinelRef = useRef<HTMLDivElement | null>(null);
+  const resultsGridRef = useRef<HTMLDivElement | null>(null);
+  const [showDesktopFilterShortcut, setShowDesktopFilterShortcut] =
+    useState(false);
+  const [desktopCompactFilterFrame, setDesktopCompactFilterFrame] =
+    useState<DesktopCompactFilterFrame | null>(null);
+  const desktopFilterShortcutVisibilityRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    let animationFrameId: number | null = null;
+
+    const measureDesktopCompactFilter = () => {
+      const sentinel = desktopFilterSentinelRef.current;
+      const sidebar = desktopFilterSidebarRef.current;
+      const resultsGrid = resultsGridRef.current;
+      const viewportWidth = window.innerWidth;
+      const sentinelTop =
+        sentinel?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY;
+      const nextVisibility = shouldShowDesktopCompactFilter({
+        viewportWidth,
+        sentinelTop,
+        topOffset: desktopCompactFilterTopOffset,
+      });
+
+      if (nextVisibility !== desktopFilterShortcutVisibilityRef.current) {
+        desktopFilterShortcutVisibilityRef.current = nextVisibility;
+        setShowDesktopFilterShortcut(nextVisibility);
+      }
+
+      if (!nextVisibility || !sidebar) {
+        setDesktopCompactFilterFrame(null);
+        return;
+      }
+
+      const sidebarRect = sidebar.getBoundingClientRect();
+      const resultsBottom =
+        resultsGrid?.getBoundingClientRect().bottom ?? window.innerHeight;
+      const maxHeight = Math.max(
+        0,
+        Math.min(
+          window.innerHeight -
+            desktopCompactFilterTopOffset -
+            desktopCompactFilterBottomGap,
+          resultsBottom -
+            desktopCompactFilterTopOffset -
+            desktopCompactFilterBottomGap,
+        ),
+      );
+
+      setDesktopCompactFilterFrame((current) => {
+        const nextFrame = {
+          left: sidebarRect.left,
+          width: sidebarRect.width,
+          maxHeight,
+        };
+
+        if (
+          current &&
+          Math.abs(current.left - nextFrame.left) < 0.5 &&
+          Math.abs(current.width - nextFrame.width) < 0.5 &&
+          Math.abs(current.maxHeight - nextFrame.maxHeight) < 0.5
+        ) {
+          return current;
+        }
+
+        return nextFrame;
+      });
+    };
+
+    const scheduleMeasurement = () => {
+      if (animationFrameId !== null) return;
+
+      animationFrameId = window.requestAnimationFrame(() => {
+        animationFrameId = null;
+        measureDesktopCompactFilter();
+      });
+    };
+
+    const observer =
+      "IntersectionObserver" in window && desktopFilterSentinelRef.current
+        ? new IntersectionObserver(scheduleMeasurement, {
+            root: null,
+            rootMargin: `-${desktopCompactFilterTopOffset}px 0px 0px 0px`,
+            threshold: 0,
+          })
+        : null;
+
+    if (observer && desktopFilterSentinelRef.current) {
+      observer.observe(desktopFilterSentinelRef.current);
+    }
+
+    const resizeObserver =
+      "ResizeObserver" in window
+        ? new ResizeObserver(scheduleMeasurement)
+        : null;
+
+    if (resizeObserver) {
+      if (desktopFilterSidebarRef.current) {
+        resizeObserver.observe(desktopFilterSidebarRef.current);
+      }
+      if (resultsGridRef.current) {
+        resizeObserver.observe(resultsGridRef.current);
+      }
+    }
+
+    measureDesktopCompactFilter();
+    window.addEventListener("scroll", scheduleMeasurement, { passive: true });
+    window.addEventListener("resize", scheduleMeasurement);
+
+    return () => {
+      if (animationFrameId !== null) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
+      observer?.disconnect();
+      resizeObserver?.disconnect();
+      window.removeEventListener("scroll", scheduleMeasurement);
+      window.removeEventListener("resize", scheduleMeasurement);
+    };
+  }, []);
 
   const clearFlightFilters = () => {
     triggerFilterApplying();
@@ -5171,8 +5252,14 @@ export function FlightResultsClient() {
         </ol>
       </nav>
 
-      <div className="page-shell grid gap-4 pb-5 pt-8 sm:pt-5 lg:grid-cols-[256px_minmax(0,1fr)] lg:pt-6">
-        <aside className="hidden lg:block">
+      <div
+        ref={resultsGridRef}
+        className="page-shell grid gap-4 pb-5 pt-8 sm:pt-5 lg:grid-cols-[256px_minmax(0,1fr)] lg:pt-6"
+      >
+        <aside
+          ref={desktopFilterSidebarRef}
+          className="relative hidden self-stretch lg:block"
+        >
           <div>
             <Filters
               layout="desktop"
@@ -5211,9 +5298,21 @@ export function FlightResultsClient() {
               onFilterChange={triggerFilterApplying}
               onClear={clearFlightFilters}
             />
-            <div ref={desktopFilterSentinelRef} aria-hidden="true" />
-            {showDesktopFilterShortcut ? (
-              <div className={desktopFilterStickyTopClass}>
+            <div
+              ref={desktopFilterSentinelRef}
+              className="h-px w-full"
+              aria-hidden="true"
+            />
+            {showDesktopFilterShortcut && desktopCompactFilterFrame ? (
+              <div
+                className="fixed z-30 overflow-y-auto overscroll-contain"
+                style={{
+                  top: desktopCompactFilterTopOffset,
+                  left: desktopCompactFilterFrame.left,
+                  width: desktopCompactFilterFrame.width,
+                  maxHeight: desktopCompactFilterFrame.maxHeight,
+                }}
+              >
                 <Filters
                   layout="compact"
                   activeFilterCount={activeFilterCount}
