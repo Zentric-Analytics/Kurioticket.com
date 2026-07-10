@@ -30,6 +30,8 @@ export {
 };
 
 const EMAIL_PREFERENCES_UPDATED_SUBJECT = "Your Kurioticket email preferences were updated";
+const EMAIL_PREFERENCES_UNSUBSCRIBED_SUBJECT = "You’re unsubscribed from optional Kurioticket emails";
+const EMAIL_PREFERENCES_RESUBSCRIBED_SUBJECT = "Optional Kurioticket emails are back on";
 
 type EmailPreferencesRoutePrisma = ReturnType<typeof getPrisma>;
 type AuthenticatedUser = { id: string } | null;
@@ -141,10 +143,16 @@ async function sendEmailPreferencesUpdatedConfirmation(input: {
       : "disabled"
     : undefined;
   const sendEmail = sendTransactionalEmailForTesting ?? sendTransactionalEmail;
+  const subject =
+    masterStatusChange === "disabled"
+      ? EMAIL_PREFERENCES_UNSUBSCRIBED_SUBJECT
+      : masterStatusChange === "enabled"
+        ? EMAIL_PREFERENCES_RESUBSCRIBED_SUBJECT
+        : EMAIL_PREFERENCES_UPDATED_SUBJECT;
 
   await sendEmail({
     to: email,
-    subject: EMAIL_PREFERENCES_UPDATED_SUBJECT,
+    subject,
     html: emailPreferencesUpdatedEmail({
       name: input.user.name,
       enabledLabels: enabledPreferenceKeys.map((key) => emailPreferenceLabels[key]),

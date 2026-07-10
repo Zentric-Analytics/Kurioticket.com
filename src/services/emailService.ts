@@ -292,6 +292,44 @@ export function newsletterUnsubscribedEmail(input?: { preferencesUrl?: string })
   `;
 }
 
+function getUsableGivenName(name?: string | null) {
+  const trimmed = name?.trim();
+  if (!trimmed || trimmed.includes("@")) return "";
+
+  const firstToken = trimmed.split(/\s+/)[0]?.replace(/^[^\p{L}]+|[^\p{L}'’-]+$/gu, "") || "";
+  if (!firstToken || !/\p{L}/u.test(firstToken) || /\d/u.test(firstToken)) return "";
+
+  return firstToken
+    .toLocaleLowerCase("en")
+    .replace(/(^|[-'’])\p{L}/gu, (match) => match.toLocaleUpperCase("en"));
+}
+
+function formatEmailPreferenceChangedAt(changedAt: Date) {
+  const parts = new Intl.DateTimeFormat("en", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).formatToParts(changedAt);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((datePart) => datePart.type === type)?.value || "";
+
+  return `Changed ${part("month")} ${part("day")}, ${part("year")} at ${part("hour")}:${part("minute")} ${part("dayPeriod")}`;
+}
+
+function emailPreferenceStatusRows(labels: string[], status: "On" | "Off") {
+  return labels
+    .map(
+      (label) => `
+        <tr>
+          <td style="padding:6px 0;color:#334155">${escapeHtml(label)}</td>
+          <td align="right" style="padding:6px 0;font-weight:700;color:#0f172a">${status}</td>
+        </tr>`,
+    )
+    .join("");
+}
+
 export function emailPreferencesUpdatedEmail(input: {
   name?: string | null;
   enabledLabels: string[];
@@ -301,51 +339,51 @@ export function emailPreferencesUpdatedEmail(input: {
   masterStatusChange?: "disabled" | "enabled";
   masterDisabled: boolean;
 }) {
-  const name = escapeHtml(input.name);
+  const givenName = getUsableGivenName(input.name);
+  const greeting = givenName ? `Hi ${escapeHtml(givenName)},` : "Hi,";
   const preferencesUrl = escapeHtml(input.preferencesUrl);
-  const changedAt = escapeHtml(
-    new Intl.DateTimeFormat("en", {
-      dateStyle: "long",
-      timeStyle: "short",
-    }).format(input.changedAt),
-  );
-  const enabledItems = input.enabledLabels.map((label) => `<li>${escapeHtml(label)}</li>`).join("");
-  const disabledItems = input.disabledLabels.map((label) => `<li>${escapeHtml(label)}</li>`).join("");
-  const masterStatusMessage =
+  const changedAt = escapeHtml(formatEmailPreferenceChangedAt(input.changedAt));
+  const enabledRows = emailPreferenceStatusRows(input.enabledLabels, "On");
+  const disabledRows = emailPreferenceStatusRows(input.disabledLabels, "Off");
+  const changeRows = `${disabledRows}${enabledRows}`;
+  const hasMasterChange = Boolean(input.masterStatusChange);
+  const heading =
     input.masterStatusChange === "disabled"
-      ? "All optional emails have been turned off."
+      ? "You’re unsubscribed"
       : input.masterStatusChange === "enabled"
-        ? "Optional emails have been turned back on. You can now receive the optional email categories you have enabled."
-        : "";
+        ? "You’re resubscribed"
+        : "Your email preferences were updated";
+  const summary =
+    input.masterStatusChange === "disabled"
+      ? "You’ll no longer receive optional Kurioticket emails."
+      : input.masterStatusChange === "enabled"
+        ? "Optional emails are enabled again. You’ll receive only the categories you have turned on."
+        : "We saved your latest optional email choices.";
 
   return `
-    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
-      <h1 style="font-size:22px">Your Kurioticket email preferences were updated</h1>
-      <p>${name ? `Hi ${name},` : "Hi,"}</p>
-      <p>Your Kurioticket email preferences were updated.</p>
-      ${masterStatusMessage ? `<p>${masterStatusMessage}</p>` : ""}
-      ${
-        disabledItems
-          ? `<h2 style="font-size:16px;margin-top:20px">Turned off:</h2><ul>${disabledItems}</ul>`
-          : ""
-      }
-      ${
-        enabledItems
-          ? `<h2 style="font-size:16px;margin-top:20px">Turned on:</h2><ul>${enabledItems}</ul>`
-          : ""
-      }
-      ${
-        input.masterDisabled
-          ? "<p>Your individual email-category choices have been preserved and will apply again if you turn optional emails back on.</p>"
-          : ""
-      }
-      <p><strong>Changed on:</strong><br />${changedAt}</p>
-      <p><a href="${preferencesUrl}" style="color:#0f766e">Manage email preferences</a></p>
-      <p>If you did not make this change, review your account security and contact Kurioticket support.</p>
+    <div style="margin:0;background:#f8fafc;padding:16px;font-family:Arial,sans-serif;color:#0f172a">
+      <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:22px;line-height:1.45">
+        <h1 style="font-size:24px;line-height:1.2;margin:0 0 12px;color:#0f172a">${heading}</h1>
+        <p style="margin:0 0 10px">${greeting}</p>
+        <p style="margin:0 0 14px">${summary}</p>
+        ${
+          input.masterStatusChange === "disabled"
+            ? '<p style="margin:0 0 14px">Your category choices are saved and will become active again if you resubscribe.</p>'
+            : ""
+        }
+        ${
+          changeRows
+            ? `<h2 style="font-size:15px;margin:16px 0 6px;color:#0f172a">${hasMasterChange ? "Other changes" : "Changes"}</h2>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;margin:0 0 16px">${changeRows}</table>`
+            : ""
+        }
+        <p style="margin:0 0 16px;font-size:12px;color:#64748b">${changedAt}</p>
+        <p style="margin:0 0 16px"><a href="${preferencesUrl}" style="display:block;text-align:center;background:#0f766e;color:#ffffff;text-decoration:none;font-weight:700;border-radius:999px;padding:11px 16px">Manage email preferences</a></p>
+        <p style="margin:0;font-size:12px;line-height:1.4;color:#64748b">If you didn’t make this change, review your account security or contact Kurioticket support.</p>
+      </div>
     </div>
   `;
 }
-
 export function accountDeletionRequestEmail(input: { deadline: Date }) {
   const deadline = escapeHtml(
     new Intl.DateTimeFormat("en", {

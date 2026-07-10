@@ -66,21 +66,21 @@ test("sendOptionalEmail calls transactional sender and includes optional categor
 
 test("emailPreferencesUpdatedEmail safely escapes dynamic values and renders changed sections", () => {
   const html = emailPreferencesUpdatedEmail({
-    name: "<Bisola>",
+    name: "  bISOLA adeyemi  ",
     enabledLabels: ["Product <updates>"],
     disabledLabels: ["Price & alerts"],
     changedAt: new Date("2026-07-10T18:30:00.000Z"),
     preferencesUrl: "https://example.com/dashboard/preferences/email?x=<script>",
-    masterDisabled: true,
+    masterDisabled: false,
   });
 
-  assert.match(html, /Hi &lt;Bisola&gt;/);
+  assert.match(html, /Hi Bisola,/);
   assert.match(html, /Product &lt;updates&gt;/);
   assert.match(html, /Price &amp; alerts/);
   assert.match(html, /dashboard\/preferences\/email\?x=&lt;script&gt;/);
-  assert.match(html, /Changed on:/);
-  assert.match(html, /individual email-category choices have been preserved/);
-  assert.doesNotMatch(html, /<Bisola>/);
+  assert.match(html, /Changed July 10, 2026 at 6:30 PM/);
+  assert.match(html, /Manage email preferences/);
+  assert.doesNotMatch(html, /bISOLA/);
 });
 
 test("emailPreferencesUpdatedEmail renders natural master off wording separately from category lists", () => {
@@ -93,8 +93,8 @@ test("emailPreferencesUpdatedEmail renders natural master off wording separately
     masterDisabled: true,
   });
 
-  assert.match(html, /All optional emails have been turned off/);
-  assert.match(html, /individual email-category choices have been preserved/);
+  assert.match(html, /You’ll no longer receive optional Kurioticket emails/);
+  assert.match(html, /Your category choices are saved and will become active again if you resubscribe/);
   assert.doesNotMatch(html, /<li>Optional emails<\/li>/);
 });
 
@@ -108,7 +108,35 @@ test("emailPreferencesUpdatedEmail renders natural master on wording", () => {
     masterDisabled: false,
   });
 
-  assert.match(html, /Optional emails have been turned back on/);
-  assert.doesNotMatch(html, /individual email-category choices have been preserved/);
+  assert.match(html, /Optional emails are enabled again/);
+  assert.doesNotMatch(html, /Your category choices are saved/);
   assert.doesNotMatch(html, /<li>Optional emails<\/li>/);
+});
+
+test("emailPreferencesUpdatedEmail renders timestamp and security footer once", () => {
+  const html = emailPreferencesUpdatedEmail({
+    enabledLabels: ["Product updates"],
+    disabledLabels: [],
+    changedAt: new Date("2026-07-10T18:30:00.000Z"),
+    preferencesUrl: "https://example.com/dashboard/preferences/email",
+    masterDisabled: false,
+  });
+
+  assert.equal((html.match(/Changed July 10, 2026 at 6:30 PM/g) || []).length, 1);
+  assert.equal((html.match(/If you didn’t make this change/g) || []).length, 1);
+});
+
+
+test("emailPreferencesUpdatedEmail falls back to neutral greeting for unreliable names", () => {
+  const html = emailPreferencesUpdatedEmail({
+    name: "user@example.com",
+    enabledLabels: [],
+    disabledLabels: [],
+    changedAt: new Date("2026-07-10T18:30:00.000Z"),
+    preferencesUrl: "https://example.com/dashboard/preferences/email",
+    masterDisabled: false,
+  });
+
+  assert.match(html, /Hi,/);
+  assert.doesNotMatch(html, /user@example.com/);
 });
