@@ -3738,7 +3738,7 @@ export function FlightResultsClient() {
     const stickyValueClass =
       "mt-0.5 block min-w-0 truncate text-sm font-semibold leading-5 text-slate-950";
     const panelFieldClass =
-      "group relative flex min-h-[46px] min-w-0 flex-col justify-center rounded-lg border border-slate-200/80 bg-white/90 px-3 py-1.5 text-start transition-colors hover:border-slate-300 hover:bg-white focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/20";
+      "group relative flex min-h-[58px] min-w-0 flex-col justify-center border-r border-slate-200/80 bg-white/90 px-3 py-1.5 text-start transition-colors hover:bg-white focus-within:z-10 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/20";
     const stickyDateSummary = departureDateInput
       ? tripTypeInput === "round-trip" && returnDateInput
         ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
@@ -3763,6 +3763,7 @@ export function FlightResultsClient() {
                 onSubmit={handleCompactSearchSubmit}
                 onChangeCapture={markExpandedSearchInteraction}
                 onMouseDown={(event) => event.stopPropagation()}
+                onClick={(event) => event.stopPropagation()}
                 className="w-full max-w-4xl rounded-2xl border border-slate-200/90 bg-[#fbfaf7]/95 p-4 text-start shadow-[0_30px_90px_-32px_rgba(15,23,42,0.72)] ring-1 ring-white/80 backdrop-blur-md"
               >
                 <div className="mb-4 flex items-start justify-between gap-4 border-b border-slate-200/80 pb-3">
@@ -3822,7 +3823,7 @@ export function FlightResultsClient() {
                   })}
                 </div>
 
-                <div className="grid min-h-[58px] grid-cols-[minmax(0,1.05fr)_minmax(0,1.05fr)_minmax(0,0.95fr)_minmax(0,1fr)_112px] items-stretch gap-3">
+                <div className="grid min-h-[58px] grid-cols-[minmax(0,1.05fr)_44px_minmax(0,1.05fr)_minmax(0,0.95fr)_minmax(0,1fr)_112px] items-stretch overflow-visible rounded-xl border border-slate-200/85 bg-white/90 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]">
                   <div className={panelFieldClass}>
                     <label
                       className={stickyLabelClass}
@@ -3880,6 +3881,10 @@ export function FlightResultsClient() {
                         }}
                       />
                     ) : null}
+                  </div>
+
+                  <div className="flex min-h-[58px] items-center justify-center border-r border-slate-200/80 bg-white/90 text-[#5CB6B2]">
+                    <ArrowRightLeft className="h-4 w-4" aria-hidden="true" />
                   </div>
 
                   <div className={panelFieldClass}>
@@ -4087,7 +4092,7 @@ export function FlightResultsClient() {
 
                   <Button
                     type="submit"
-                    className="h-full min-h-[46px] rounded-lg bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_10px_20px_rgba(0,75,184,0.14)] ring-1 ring-[#004BB8]/12 hover:bg-[#021C2B]"
+                    className="h-full min-h-[58px] rounded-none rounded-r-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-none ring-0 hover:bg-[#021C2B]"
                   >
                     {t("search")}
                   </Button>
