@@ -1230,6 +1230,7 @@ export function FlightResultsClient() {
   const travelerCabinWrapRef = useRef<HTMLDivElement | null>(null);
   const stickySentinelRef = useRef<HTMLDivElement | null>(null);
   const stickySearchPanelRef = useRef<HTMLDivElement | null>(null);
+  const stickySearchPopoutRef = useRef<HTMLFormElement | null>(null);
   const searchFormRef = useRef<HTMLFormElement | null>(null);
   const expandedSearchScrollYRef = useRef(0);
   const filterApplyingTimeoutRef = useRef<number | null>(null);
@@ -1352,17 +1353,42 @@ export function FlightResultsClient() {
     }
 
     const handleStickyPanelPointerDown = (event: MouseEvent) => {
-      const panel = stickySearchPanelRef.current;
+      const panel = stickySearchPopoutRef.current;
+      const compactBar = stickySearchPanelRef.current;
 
-      if (panel && !panel.contains(event.target as Node)) {
-        collapseStickySearch();
-      }
+      if (panel?.contains(event.target as Node)) return;
+      if (compactBar?.contains(event.target as Node)) return;
+
+      collapseStickySearch();
     };
 
     const handleStickyPanelKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        collapseStickySearch();
+      if (event.key !== "Escape") return;
+
+      if (activeSuggest) {
+        setActiveSuggest(null);
+        setDropdownPosition(null);
+        return;
       }
+
+      if (activeDatePicker) {
+        setActiveDatePicker(null);
+        setDatePickerPosition(null);
+        return;
+      }
+
+      if (travelerPopoverOpen) {
+        setTravelerPopoverOpen(false);
+        setTravelerPopoverPosition(null);
+        return;
+      }
+
+      if (tripTypeMenuOpen) {
+        setTripTypeMenuOpen(false);
+        return;
+      }
+
+      collapseStickySearch();
     };
 
     document.addEventListener("mousedown", handleStickyPanelPointerDown);
@@ -1372,7 +1398,14 @@ export function FlightResultsClient() {
       document.removeEventListener("mousedown", handleStickyPanelPointerDown);
       document.removeEventListener("keydown", handleStickyPanelKeyDown);
     };
-  }, [collapseStickySearch, isStickySearchPanelOpen]);
+  }, [
+    activeDatePicker,
+    activeSuggest,
+    collapseStickySearch,
+    isStickySearchPanelOpen,
+    travelerPopoverOpen,
+    tripTypeMenuOpen,
+  ]);
 
   useEffect(() => {
     if (loading) {
@@ -3990,13 +4023,45 @@ export function FlightResultsClient() {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
 
-            {isStickySearchPanelOpen ? (
+        {isStickySearchPanelOpen ? (
+          <div
+            className="fixed inset-0 z-[110] bg-slate-950/28 backdrop-blur-[2px]"
+            role="presentation"
+            onMouseDown={collapseStickySearch}
+          >
+            <div className="flex min-h-dvh items-start justify-center px-6 pb-10 pt-24 xl:pt-28">
               <form
+                ref={stickySearchPopoutRef}
                 onSubmit={handleCompactSearchSubmit}
                 onChangeCapture={markExpandedSearchInteraction}
-                className="mt-1.5 rounded-b-xl rounded-t-md border border-slate-200/85 bg-slate-50/95 p-3 shadow-[0_24px_52px_-28px_rgba(15,23,42,0.58)] ring-1 ring-white/80 backdrop-blur-md"
+                onMouseDown={(event) => event.stopPropagation()}
+                className="w-full max-w-4xl rounded-2xl border border-slate-200/90 bg-[#fbfaf7]/95 p-4 text-start shadow-[0_30px_90px_-32px_rgba(15,23,42,0.72)] ring-1 ring-white/80 backdrop-blur-md"
               >
+                <div className="mb-4 flex items-start justify-between gap-4 border-b border-slate-200/80 pb-3">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">
+                      {t("searchFlights")}
+                    </p>
+                    <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-950">
+                      {mobileRouteSummary}
+                    </h2>
+                    <p className="mt-1 text-sm font-medium text-slate-600">
+                      {stickyDateSummary} · {travelerCabinSummary}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label={t("close")}
+                    onClick={collapseStickySearch}
+                    className="focus-ring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-950"
+                  >
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
+
                 <div
                   role="radiogroup"
                   aria-label={t("tripType")}
@@ -4032,7 +4097,7 @@ export function FlightResultsClient() {
                   })}
                 </div>
 
-                <div className="grid min-h-[52px] grid-cols-[minmax(0,1.1fr)_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1fr)_104px] items-stretch gap-2">
+                <div className="grid min-h-[58px] grid-cols-[minmax(0,1.05fr)_minmax(0,1.05fr)_minmax(0,0.95fr)_minmax(0,1fr)_112px] items-stretch gap-3">
                   <div className={panelFieldClass}>
                     <label
                       className={stickyLabelClass}
@@ -4303,9 +4368,9 @@ export function FlightResultsClient() {
                   </Button>
                 </div>
               </form>
-            ) : null}
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
     );
   }
