@@ -530,8 +530,8 @@ export function AppHeader({
     if (
       simpleHeader ||
       hideTravelNav ||
-      shouldHideDesktopTravelNavLinks ||
-      (mobileHeroOverlay && hideMobileCategoryTabs)
+      hideMobileCategoryTabs ||
+      shouldHideDesktopTravelNavLinks
     ) {
       return [];
     }
