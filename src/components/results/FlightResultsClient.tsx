@@ -7732,10 +7732,8 @@ function CompactFilterSection({
         aria-expanded={isOpen}
         aria-controls={panelId}
         className={cn(
-          "group flex w-full items-center justify-between gap-3 rounded-xl px-2.5 py-3 text-start text-[13px] font-semibold leading-5 tracking-[-0.005em] transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
-          isOpen
-            ? "bg-[#EAF2FB] text-[#004BB8] shadow-[inset_3px_0_0_#004BB8]"
-            : "text-slate-800 hover:bg-[#F8FBFF] hover:text-slate-950",
+          "group flex w-full items-center justify-between gap-3 px-2.5 py-3 text-start text-[13px] font-semibold leading-5 tracking-[-0.005em] text-slate-800 transition-colors duration-200 motion-reduce:transition-none hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30",
+          isOpen && "text-[#004BB8]",
         )}
         onClick={() =>
           setOpenSection((current) =>
@@ -7763,7 +7761,7 @@ function CompactFilterSection({
       <div
         id={panelId}
         className={cn(
-          "mx-1 grid h-auto gap-0.5 overflow-visible rounded-b-xl bg-[#F8FAFC] px-2 pb-2.5 pt-2 ring-1 ring-inset ring-[#D8E1EC]/50",
+          "grid h-auto gap-0.5 overflow-visible bg-white px-2.5 pb-3 pt-0.5",
           !isOpen && "hidden",
         )}
       >
