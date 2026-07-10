@@ -3939,9 +3939,9 @@ export function FlightResultsClient() {
     const stickyValueClass =
       "mt-0.5 block min-w-0 truncate text-sm font-semibold leading-5 text-slate-950";
     const collapsedFieldClass =
-      "flex min-h-[44px] min-w-0 flex-col justify-center border-r border-slate-200/80 px-3 py-1.5 transition-colors group-hover:bg-white/60";
+      "flex min-h-[44px] min-w-0 flex-col justify-center border-r border-slate-200/80 px-3 py-1.5 text-start transition-colors hover:bg-white/70 focus-visible:bg-white/75";
     const collapsedConnectorClass =
-      "flex min-h-[44px] items-center justify-center border-r border-slate-200/80 bg-slate-50/80 px-1 transition-colors group-hover:bg-white/70";
+      "focus-ring flex min-h-[44px] cursor-pointer items-center justify-center border-r border-slate-200/80 bg-blue-50/50 px-1 text-[#5CB6B2] transition-colors hover:bg-white hover:text-[#39948F] focus-visible:bg-white";
     const stickyDateSummary = departureDateInput
       ? tripTypeInput === "round-trip" && returnDateInput
         ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
@@ -3950,7 +3950,7 @@ export function FlightResultsClient() {
     return (
       <div
         className={cn(
-          "fixed inset-x-0 top-0 z-[100] hidden border-b border-slate-200/80 bg-gradient-to-b from-[#f6f9fd]/95 via-[#f8fbff]/92 to-[#eef4fa]/90 px-4 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl transition-all duration-200 lg:block",
+          "fixed inset-x-0 top-0 z-[100] hidden border-b border-slate-200/80 bg-gradient-to-b from-[#fbfdff]/96 via-[#f8fbff]/94 to-[#f5f9ff]/92 px-4 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.07)] backdrop-blur-xl transition-all duration-200 lg:block",
           isSearchCollapsed && !isStickySearchPanelOpen
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none -translate-y-3 opacity-0",
@@ -3963,47 +3963,79 @@ export function FlightResultsClient() {
               onSubmit={handleCompactSearchSubmit}
               className="group flex min-h-[56px] w-full items-stretch overflow-hidden rounded-xl border border-slate-200/90 bg-white/95 text-start shadow-[0_18px_40px_-26px_rgba(15,23,42,0.68)] ring-1 ring-white/85 backdrop-blur-md transition hover:border-slate-300 hover:bg-white"
             >
-              <button
-                type="button"
-                aria-expanded={isStickySearchPanelOpen}
-                aria-label={t("searchFlights")}
-                onClick={expandStickySearch}
-                className="focus-ring grid min-w-0 flex-1 grid-cols-[0.7fr_minmax(0,1fr)_40px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.05fr)] items-stretch text-start"
-              >
-                <span className={collapsedFieldClass}>
+              <div className="grid min-w-0 flex-1 grid-cols-[0.7fr_minmax(0,1fr)_40px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.05fr)] items-stretch">
+                <button
+                  type="button"
+                  aria-expanded={isStickySearchPanelOpen}
+                  aria-label={t("searchFlights")}
+                  onClick={expandStickySearch}
+                  className={cn(collapsedFieldClass, "focus-ring")}
+                >
                   <span className={stickyLabelClass}>{t("tripType")}</span>
                   <span className={stickyValueClass}>
                     {mobileTripTypeSummary}
                   </span>
-                </span>
-                <span className={collapsedFieldClass}>
+                </button>
+                <button
+                  type="button"
+                  aria-expanded={isStickySearchPanelOpen}
+                  aria-label={t("searchFlights")}
+                  onClick={expandStickySearch}
+                  className={cn(collapsedFieldClass, "focus-ring")}
+                >
                   <span className={stickyLabelClass}>{t("origin")}</span>
                   <span className={stickyValueClass}>
                     {mobileOriginSummary}
                   </span>
-                </span>
-                <span className={collapsedConnectorClass} aria-hidden="true">
-                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#5CB6B2]/25 bg-[#5CB6B2]/10 text-[#5CB6B2] shadow-sm ring-1 ring-white/80">
-                    <ArrowRightLeft className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  aria-label={t("swapOriginDestination")}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleSwapLocations();
+                  }}
+                  className={collapsedConnectorClass}
+                >
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#5CB6B2]/25 bg-[#5CB6B2]/10 text-current shadow-sm ring-1 ring-white/80 transition-transform hover:scale-105">
+                    <ArrowRightLeft className="h-3.5 w-3.5" aria-hidden="true" />
                   </span>
-                </span>
-                <span className={collapsedFieldClass}>
+                </button>
+                <button
+                  type="button"
+                  aria-expanded={isStickySearchPanelOpen}
+                  aria-label={t("searchFlights")}
+                  onClick={expandStickySearch}
+                  className={cn(collapsedFieldClass, "focus-ring")}
+                >
                   <span className={stickyLabelClass}>{t("destination")}</span>
                   <span className={stickyValueClass}>
                     {mobileDestinationSummary}
                   </span>
-                </span>
-                <span className={collapsedFieldClass}>
+                </button>
+                <button
+                  type="button"
+                  aria-expanded={isStickySearchPanelOpen}
+                  aria-label={t("searchFlights")}
+                  onClick={expandStickySearch}
+                  className={cn(collapsedFieldClass, "focus-ring")}
+                >
                   <span className={stickyLabelClass}>{t("travelDates")}</span>
                   <span className={stickyValueClass}>{stickyDateSummary}</span>
-                </span>
-                <span className={cn(collapsedFieldClass, "border-r-0")}>
+                </button>
+                <button
+                  type="button"
+                  aria-expanded={isStickySearchPanelOpen}
+                  aria-label={t("searchFlights")}
+                  onClick={expandStickySearch}
+                  className={cn(collapsedFieldClass, "focus-ring border-r-0")}
+                >
                   <span className={stickyLabelClass}>{t("travelers")}</span>
                   <span className={stickyValueClass}>
                     {travelerCabinSummary}
                   </span>
-                </span>
-              </button>
+                </button>
+              </div>
               <div className="flex items-center border-l border-slate-200/80 bg-white/60 px-2.5">
                 <Button
                   type="submit"
@@ -4178,9 +4210,17 @@ export function FlightResultsClient() {
                     ) : null}
                   </div>
 
-                  <div className="flex min-h-[58px] items-center justify-center border-r border-slate-200/80 bg-white/90 text-[#5CB6B2]">
+                  <button
+                    type="button"
+                    aria-label={t("swapOriginDestination")}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleSwapLocations();
+                    }}
+                    className="focus-ring flex min-h-[58px] cursor-pointer items-center justify-center border-r border-slate-200/80 bg-white/90 text-[#5CB6B2] transition-colors hover:bg-blue-50/60 hover:text-[#39948F]"
+                  >
                     <ArrowRightLeft className="h-4 w-4" aria-hidden="true" />
-                  </div>
+                  </button>
 
                   <div
                     ref={stickyDestinationWrapRef}
