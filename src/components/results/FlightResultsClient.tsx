@@ -5352,7 +5352,7 @@ export function FlightResultsClient() {
     <main className="flex-1 bg-[#F3F6FA] pb-8">
       <section
         className={cn(
-          "relative z-40 bg-[#F3F6FA] px-4 pb-8 pt-[calc(0.85rem+env(safe-area-inset-top))] sm:hidden",
+          "relative z-40 border-b border-slate-200 bg-white px-4 pb-0 pt-0 sm:hidden",
           mobileSearchOpen && "hidden",
         )}
         aria-label="Flight search controls"
