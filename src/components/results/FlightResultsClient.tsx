@@ -633,6 +633,7 @@ function lockBodyScroll() {
   const bodyElement = document.body;
   const rootElement = document.documentElement;
   const scrollY = window.scrollY;
+  let restored = false;
   const previousBodyStyles = {
     left: bodyElement.style.left,
     overflow: bodyElement.style.overflow,
@@ -661,6 +662,8 @@ function lockBodyScroll() {
 
   return {
     restore: () => {
+      if (restored) return;
+      restored = true;
       bodyElement.style.left = previousBodyStyles.left;
       bodyElement.style.overflow = previousBodyStyles.overflow;
       bodyElement.style.overscrollBehavior =
@@ -674,6 +677,9 @@ function lockBodyScroll() {
       rootElement.style.overscrollBehavior =
         previousRootStyles.overscrollBehavior;
       window.scrollTo(0, scrollY);
+      window.requestAnimationFrame(() => {
+        window.scrollTo(0, scrollY);
+      });
     },
   };
 }
@@ -928,6 +934,7 @@ export function FlightResultsClient() {
   const stickySearchScrollLockRef = useRef<{ restore: () => void } | null>(
     null,
   );
+  const stickySearchPanelOpenRef = useRef(false);
   const queryString = params.toString();
   const searchQueryString = getSearchQueryString(params);
 
@@ -1012,6 +1019,10 @@ export function FlightResultsClient() {
   const isStickySearchPanelOpen =
     isSearchCollapsed && isSearchExpandedWhileSticky;
 
+  useEffect(() => {
+    stickySearchPanelOpenRef.current = isStickySearchPanelOpen;
+  }, [isStickySearchPanelOpen]);
+
   const collapseStickySearch = useCallback(() => {
     setIsSearchExpandedWhileSticky(false);
     setTripTypeMenuOpen(false);
@@ -1038,11 +1049,24 @@ export function FlightResultsClient() {
     }
 
     const handleStickyPanelPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
       const panel = stickySearchPopoutRef.current;
       const compactBar = stickySearchPanelRef.current;
+      const datePickerPopover = document.getElementById(
+        "flight-date-picker-popover",
+      );
+      const travelerPopover = document.getElementById(
+        "flight-traveler-cabin-popover",
+      );
+      const airportSuggestions = document.getElementById(
+        "flight-airport-suggestions",
+      );
 
-      if (panel?.contains(event.target as Node)) return;
-      if (compactBar?.contains(event.target as Node)) return;
+      if (panel?.contains(target)) return;
+      if (compactBar?.contains(target)) return;
+      if (datePickerPopover?.contains(target)) return;
+      if (travelerPopover?.contains(target)) return;
+      if (airportSuggestions?.contains(target)) return;
 
       collapseStickySearch();
     };
@@ -1124,6 +1148,8 @@ export function FlightResultsClient() {
     };
 
     const updateFromSentinelPosition = () => {
+      if (stickySearchPanelOpenRef.current) return;
+
       const searchFormRect = searchFormRef.current?.getBoundingClientRect();
 
       if (searchFormRect) {
@@ -3836,9 +3862,16 @@ export function FlightResultsClient() {
           <div
             className="fixed inset-0 z-[110] bg-slate-950/30 backdrop-blur-[2px]"
             role="presentation"
-            onMouseDown={collapseStickySearch}
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) {
+                collapseStickySearch();
+              }
+            }}
           >
-            <div className="flex min-h-dvh items-start justify-center px-6 pb-10 pt-24 xl:pt-28">
+            <div
+              className="flex min-h-dvh items-start justify-center px-6 pb-10 pt-24 xl:pt-28"
+              onMouseDown={(event) => event.stopPropagation()}
+            >
               <form
                 ref={stickySearchPopoutRef}
                 onSubmit={handleCompactSearchSubmit}
