@@ -44,12 +44,12 @@ type PreferenceSection = {
 };
 
 const defaultEmailPreferences: EmailPreferences = {
-  receiveOptionalEmails: true,
-  priceAlerts: true,
-  savedTripReminders: true,
+  receiveOptionalEmails: false,
+  priceAlerts: false,
+  savedTripReminders: false,
   routeWatchUpdates: false,
   travelInspiration: false,
-  productUpdates: true,
+  productUpdates: false,
   dealsRecommendations: false,
 };
 
@@ -127,6 +127,14 @@ function PreferenceSwitch({
       </span>
     </button>
   );
+}
+
+export function isMasterUnsubscribeChecked(preferences: EmailPreferences) {
+  return !preferences.receiveOptionalEmails;
+}
+
+export function toReceiveOptionalEmailsFromMasterUnsubscribe(checked: boolean) {
+  return !checked;
 }
 
 export function EmailPreferencesContent() {
@@ -207,6 +215,18 @@ export function EmailPreferencesContent() {
   const updatePreference = (id: EditablePreferenceKey) => {
     if (disabled) return;
     setPreferences((current) => ({ ...current, [id]: !current[id] }));
+    setStatus("idle");
+    setStatusMessage("");
+  };
+
+  const updateMasterUnsubscribePreference = () => {
+    if (disabled) return;
+    setPreferences((current) => ({
+      ...current,
+      receiveOptionalEmails: toReceiveOptionalEmailsFromMasterUnsubscribe(
+        !isMasterUnsubscribeChecked(current),
+      ),
+    }));
     setStatus("idle");
     setStatusMessage("");
   };
@@ -375,15 +395,13 @@ export function EmailPreferencesContent() {
                         </div>
                         <div className="shrink-0 pt-1 sm:pt-0">
                           <PreferenceSwitch
-                            checked={preferences.receiveOptionalEmails}
+                            checked={isMasterUnsubscribeChecked(preferences)}
                             label={
                               t[
                                 "accountDashboard.preferences.email.masterOptional.title"
                               ]
                             }
-                            onChange={() =>
-                              updatePreference("receiveOptionalEmails")
-                            }
+                            onChange={updateMasterUnsubscribePreference}
                             onLabel={t["accountDashboard.preferences.email.on"]}
                             offLabel={
                               t["accountDashboard.preferences.email.off"]
@@ -392,7 +410,7 @@ export function EmailPreferencesContent() {
                           />
                         </div>
                       </div>
-                      {!preferences.receiveOptionalEmails ? (
+                      {isMasterUnsubscribeChecked(preferences) ? (
                         <p className="mt-4 rounded-xl border border-slate-300 bg-white/40 px-4 py-3 text-sm font-medium leading-6 text-slate-700">
                           {
                             t[

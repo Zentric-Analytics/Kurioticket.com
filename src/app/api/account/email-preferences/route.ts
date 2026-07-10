@@ -128,12 +128,18 @@ async function sendEmailPreferencesUpdatedConfirmation(input: {
   const changes = getEmailPreferenceChanges(input.previous, input.next);
   if (!changes.length) return;
 
-  const enabledPreferenceKeys = changes
+  const categoryChanges = changes.filter((change) => change.key !== "receiveOptionalEmails");
+  const enabledPreferenceKeys = categoryChanges
     .filter((change) => change.nextValue)
     .map((change) => change.key);
-  const disabledPreferenceKeys = changes
+  const disabledPreferenceKeys = categoryChanges
     .filter((change) => !change.nextValue)
     .map((change) => change.key);
+  const masterStatusChange = changes.some((change) => change.key === "receiveOptionalEmails")
+    ? input.next.receiveOptionalEmails
+      ? "enabled"
+      : "disabled"
+    : undefined;
   const sendEmail = sendTransactionalEmailForTesting ?? sendTransactionalEmail;
 
   await sendEmail({
@@ -145,6 +151,7 @@ async function sendEmailPreferencesUpdatedConfirmation(input: {
       disabledLabels: disabledPreferenceKeys.map((key) => emailPreferenceLabels[key]),
       changedAt: input.changedAt,
       preferencesUrl: buildEmailPreferencesUrl(),
+      masterStatusChange,
       masterDisabled: input.next.receiveOptionalEmails === false,
     }),
     template: "email_preferences_updated",

@@ -20,6 +20,15 @@ afterEach(() => {
 });
 
 test("email preference normalization returns defaults for missing or malformed values", () => {
+  assert.deepEqual(emailPreferenceDefaults, {
+    receiveOptionalEmails: false,
+    priceAlerts: false,
+    savedTripReminders: false,
+    routeWatchUpdates: false,
+    travelInspiration: false,
+    productUpdates: false,
+    dealsRecommendations: false,
+  });
   assert.deepEqual(normalizeEmailPreferences(null), emailPreferenceDefaults);
   assert.deepEqual(normalizeEmailPreferences([]), emailPreferenceDefaults);
   assert.deepEqual(getSavedEmailPreferences(null), {
@@ -166,7 +175,9 @@ function mockPatchDependencies(input?: {
 
 test("PATCH sends one transactional confirmation for a turned off category after saving", async () => {
   const sent: unknown[] = [];
-  mockPatchDependencies();
+  mockPatchDependencies({
+    existingEmailPreferences: { email: { ...emailPreferenceDefaults, priceAlerts: true } },
+  });
   __emailPreferencesRouteTest.setSendTransactionalEmailForTesting(async (input) => {
     sent.push(input);
     return { id: "email-1" };
@@ -203,7 +214,9 @@ test("PATCH sends one transactional confirmation for a turned on category", asyn
 
 test("PATCH summarizes multiple changes in exactly one email", async () => {
   const sent: unknown[] = [];
-  mockPatchDependencies();
+  mockPatchDependencies({
+    existingEmailPreferences: { email: { ...emailPreferenceDefaults, priceAlerts: true } },
+  });
   __emailPreferencesRouteTest.setSendTransactionalEmailForTesting(async (input) => {
     sent.push(input);
     return { id: "email-1" };
@@ -225,9 +238,11 @@ test("PATCH summarizes multiple changes in exactly one email", async () => {
   assert.match(html, /Deals and recommendations/);
 });
 
-test("PATCH confirmation still sends when Optional emails is turned off and does not use optional sender", async () => {
+test("PATCH confirmation still sends when optional emails are turned off and does not use optional sender", async () => {
   const sent: unknown[] = [];
-  mockPatchDependencies();
+  mockPatchDependencies({
+    existingEmailPreferences: { email: { ...emailPreferenceDefaults, receiveOptionalEmails: true } },
+  });
   __emailPreferencesRouteTest.setSendTransactionalEmailForTesting(async (input) => {
     sent.push(input);
     return { id: "email-1" };
@@ -236,11 +251,11 @@ test("PATCH confirmation still sends when Optional emails is turned off and does
   await PATCH(jsonRequest({ ...emailPreferenceDefaults, receiveOptionalEmails: false }));
 
   assert.equal(sent.length, 1);
-  assert.match((sent[0] as { html: string }).html, /Optional emails/);
+  assert.match((sent[0] as { html: string }).html, /All optional emails have been turned off/);
   assert.match((sent[0] as { html: string }).html, /individual email-category choices have been preserved/);
 });
 
-test("PATCH confirmation sends when Optional emails is turned on", async () => {
+test("PATCH confirmation sends when optional emails are turned on", async () => {
   const sent: unknown[] = [];
   mockPatchDependencies({
     existingEmailPreferences: { email: { ...emailPreferenceDefaults, receiveOptionalEmails: false } },
@@ -250,16 +265,18 @@ test("PATCH confirmation sends when Optional emails is turned on", async () => {
     return { id: "email-1" };
   });
 
-  await PATCH(jsonRequest(emailPreferenceDefaults));
+  await PATCH(jsonRequest({ ...emailPreferenceDefaults, receiveOptionalEmails: true }));
 
   assert.equal(sent.length, 1);
-  assert.match((sent[0] as { html: string }).html, /Turned on:/);
-  assert.match((sent[0] as { html: string }).html, /Optional emails/);
+  assert.match((sent[0] as { html: string }).html, /Optional emails have been turned back on/);
+  assert.doesNotMatch((sent[0] as { html: string }).html, /<li>Optional emails<\/li>/);
 });
 
 test("PATCH does not list unchanged children when master switch turns off", async () => {
   const sent: unknown[] = [];
-  mockPatchDependencies();
+  mockPatchDependencies({
+    existingEmailPreferences: { email: { ...emailPreferenceDefaults, receiveOptionalEmails: true } },
+  });
   __emailPreferencesRouteTest.setSendTransactionalEmailForTesting(async (input) => {
     sent.push(input);
     return { id: "email-1" };
@@ -268,7 +285,7 @@ test("PATCH does not list unchanged children when master switch turns off", asyn
   await PATCH(jsonRequest({ ...emailPreferenceDefaults, receiveOptionalEmails: false }));
 
   const html = (sent[0] as { html: string }).html;
-  assert.match(html, /Optional emails/);
+  assert.match(html, /All optional emails have been turned off/);
   assert.doesNotMatch(html, /Price alerts/);
   assert.match(html, /individual email-category choices have been preserved/);
 });
@@ -295,14 +312,16 @@ test("PATCH does not send confirmation when database write fails", async () => {
     return { id: "email-1" };
   });
 
-  const response = await PATCH(jsonRequest({ ...emailPreferenceDefaults, priceAlerts: false }));
+  const response = await PATCH(jsonRequest({ ...emailPreferenceDefaults, priceAlerts: true }));
 
   assert.equal(response.status, 500);
   assert.equal(sent.length, 0);
 });
 
 test("PATCH succeeds after confirmation delivery failure", async () => {
-  mockPatchDependencies();
+  mockPatchDependencies({
+    existingEmailPreferences: { email: { ...emailPreferenceDefaults, priceAlerts: true } },
+  });
   __emailPreferencesRouteTest.setSendTransactionalEmailForTesting(async () => {
     throw new Error("email failed");
   });
@@ -316,7 +335,10 @@ test("PATCH succeeds after confirmation delivery failure", async () => {
 
 test("PATCH skips delivery when authenticated user has no email", async () => {
   const sent: unknown[] = [];
-  mockPatchDependencies({ user: { email: " ", name: "Bisola" } });
+  mockPatchDependencies({
+    existingEmailPreferences: { email: { ...emailPreferenceDefaults, priceAlerts: true } },
+    user: { email: " ", name: "Bisola" },
+  });
   __emailPreferencesRouteTest.setSendTransactionalEmailForTesting(async (input) => {
     sent.push(input);
     return { id: "email-1" };
@@ -346,7 +368,7 @@ test("PATCH recipient comes from authenticated database user and response shape 
 
   assert.equal(response.status, 400);
 
-  const validResponse = await PATCH(jsonRequest({ ...emailPreferenceDefaults, priceAlerts: false }));
+  const validResponse = await PATCH(jsonRequest({ ...emailPreferenceDefaults, priceAlerts: true }));
   const body = await validResponse.json();
   assert.deepEqual(Object.keys(body), ["preferences"]);
   assert.equal((sent[0] as { to: string }).to, "db-user@example.com");
@@ -354,7 +376,10 @@ test("PATCH recipient comes from authenticated database user and response shape 
 
 test("PATCH uses deterministic idempotency key for same saved transition", async () => {
   const sent: Array<{ idempotencyKey?: string }> = [];
-  mockPatchDependencies({ updatedAt: new Date("2026-07-10T18:30:00.000Z") });
+  mockPatchDependencies({
+    updatedAt: new Date("2026-07-10T18:30:00.000Z"),
+    existingEmailPreferences: { email: { ...emailPreferenceDefaults, priceAlerts: true } },
+  });
   __emailPreferencesRouteTest.setSendTransactionalEmailForTesting(async (input) => {
     sent.push(input);
     return { id: "email-1" };
@@ -410,7 +435,7 @@ test("PATCH awaits the transactional email send before returning", async () => {
     );
   });
 
-  const patchPromise = PATCH(jsonRequest({ ...emailPreferenceDefaults, priceAlerts: false }));
+  const patchPromise = PATCH(jsonRequest({ ...emailPreferenceDefaults, priceAlerts: true }));
   await sendStarted;
   let patchReturned = false;
   patchPromise.then(() => {

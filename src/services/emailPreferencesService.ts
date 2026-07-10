@@ -1,12 +1,12 @@
 import { getPrisma } from "@/lib/prisma";
 
 export const emailPreferenceDefaults = {
-  receiveOptionalEmails: true,
-  priceAlerts: true,
-  savedTripReminders: true,
+  receiveOptionalEmails: false,
+  priceAlerts: false,
+  savedTripReminders: false,
   routeWatchUpdates: false,
   travelInspiration: false,
-  productUpdates: true,
+  productUpdates: false,
   dealsRecommendations: false,
 };
 
