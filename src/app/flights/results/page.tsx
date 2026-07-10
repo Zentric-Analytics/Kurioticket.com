@@ -113,6 +113,7 @@ export default async function FlightResultsPage({
     <>
       <AppHeader
         flushDesktopBottom
+        flushMobileBottom
         hideDesktopTravelNav
         hideMobileCategoryTabs
       />
