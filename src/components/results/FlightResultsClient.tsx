@@ -3939,7 +3939,9 @@ export function FlightResultsClient() {
     const stickyValueClass =
       "mt-0.5 block min-w-0 truncate text-sm font-semibold leading-5 text-slate-950";
     const collapsedFieldClass =
-      "flex min-h-[44px] min-w-0 flex-col justify-center border-r border-slate-200/80 px-3 py-1.5 last:border-r-0 transition-colors group-hover:bg-white/60";
+      "flex min-h-[44px] min-w-0 flex-col justify-center border-r border-slate-200/80 px-3 py-1.5 transition-colors group-hover:bg-white/60";
+    const collapsedConnectorClass =
+      "flex min-h-[44px] items-center justify-center border-r border-slate-200/80 bg-slate-50/80 px-1 transition-colors group-hover:bg-white/70";
     const stickyDateSummary = departureDateInput
       ? tripTypeInput === "round-trip" && returnDateInput
         ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
@@ -3948,7 +3950,7 @@ export function FlightResultsClient() {
     return (
       <div
         className={cn(
-          "fixed inset-x-0 top-0 z-[100] hidden bg-white/95 px-4 py-3 shadow-[0_8px_24px_rgba(15,23,42,0.06)] backdrop-blur-md transition-all duration-200 lg:block",
+          "fixed inset-x-0 top-0 z-[100] hidden border-b border-slate-200/80 bg-gradient-to-b from-[#f6f9fd]/95 via-[#f8fbff]/92 to-[#eef4fa]/90 px-4 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl transition-all duration-200 lg:block",
           isSearchCollapsed && !isStickySearchPanelOpen
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none -translate-y-3 opacity-0",
@@ -3959,14 +3961,14 @@ export function FlightResultsClient() {
           <div className="mx-auto w-full max-w-5xl">
             <form
               onSubmit={handleCompactSearchSubmit}
-              className="group flex min-h-[56px] w-full items-stretch overflow-hidden rounded-xl border border-slate-200/85 bg-slate-50/95 text-start shadow-[0_16px_36px_-26px_rgba(15,23,42,0.62)] ring-1 ring-white/75 backdrop-blur-md transition hover:border-slate-300 hover:bg-white"
+              className="group flex min-h-[56px] w-full items-stretch overflow-hidden rounded-xl border border-slate-200/90 bg-white/95 text-start shadow-[0_18px_40px_-26px_rgba(15,23,42,0.68)] ring-1 ring-white/85 backdrop-blur-md transition hover:border-slate-300 hover:bg-white"
             >
               <button
                 type="button"
                 aria-expanded={isStickySearchPanelOpen}
                 aria-label={t("searchFlights")}
                 onClick={expandStickySearch}
-                className="focus-ring grid min-w-0 flex-1 grid-cols-[0.7fr_1fr_1fr_1fr_1.05fr] items-stretch text-start"
+                className="focus-ring grid min-w-0 flex-1 grid-cols-[0.7fr_minmax(0,1fr)_40px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.05fr)] items-stretch text-start"
               >
                 <span className={collapsedFieldClass}>
                   <span className={stickyLabelClass}>{t("tripType")}</span>
@@ -3980,14 +3982,15 @@ export function FlightResultsClient() {
                     {mobileOriginSummary}
                   </span>
                 </span>
+                <span className={collapsedConnectorClass} aria-hidden="true">
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#5CB6B2]/25 bg-[#5CB6B2]/10 text-[#5CB6B2] shadow-sm ring-1 ring-white/80">
+                    <ArrowRightLeft className="h-3.5 w-3.5" />
+                  </span>
+                </span>
                 <span className={collapsedFieldClass}>
                   <span className={stickyLabelClass}>{t("destination")}</span>
-                  <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-sm font-semibold leading-5 text-slate-950">
-                    <ArrowRightLeft
-                      className="h-3.5 w-3.5 shrink-0 text-[#5CB6B2]"
-                      aria-hidden="true"
-                    />
-                    <span className="truncate">{mobileDestinationSummary}</span>
+                  <span className={stickyValueClass}>
+                    {mobileDestinationSummary}
                   </span>
                 </span>
                 <span className={collapsedFieldClass}>
