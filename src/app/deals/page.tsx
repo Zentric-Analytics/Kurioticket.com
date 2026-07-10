@@ -1430,10 +1430,10 @@ export default function DealsPage() {
                       ) : null}
                     </div>
 
-                    <div className="flex min-h-[58px] items-stretch rounded-2xl border border-slate-300 bg-white p-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] lg:min-h-[72px] lg:rounded-none lg:rounded-e-2xl lg:border-0 lg:p-2 lg:shadow-none">
+                    <div className="flex min-h-[58px] items-stretch lg:min-h-[72px]">
                       <button
                         type="submit"
-                        className="w-full rounded-2xl bg-[#004BB8] px-5 py-3 text-base font-black text-white shadow-[0_12px_24px_rgba(0,75,184,0.22)] transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-75 lg:text-sm"
+                        className="h-12 w-full whitespace-nowrap rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 transition-colors enabled:hover:bg-[#021C2B] enabled:active:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 disabled:bg-[#004BB8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#004BB8]/20 lg:h-full lg:min-h-[72px] lg:rounded-none lg:rounded-e-2xl lg:border lg:border-s-0 lg:border-[#004BB8]/20 lg:px-5 lg:text-[15px] lg:font-bold lg:shadow-[0_10px_22px_rgba(0,75,184,0.22)] lg:disabled:shadow-[0_10px_22px_rgba(0,75,184,0.22)]"
                         disabled={isSubmitting}
                         aria-busy={isSubmitting}
                       >

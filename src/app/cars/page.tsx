@@ -959,12 +959,11 @@ function CarsSearchBar({
             <div className="sm:col-span-2 lg:col-span-1">
               <button
                 type="submit"
-                className="focus-ring inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_10px_22px_rgba(0,75,184,0.18)] transition hover:bg-[#021C2B] active:bg-[#004BB8] disabled:cursor-not-allowed disabled:opacity-75 disabled:hover:bg-[#004BB8] sm:h-full sm:min-h-[58px] sm:rounded-none sm:rounded-br-[1.2rem] sm:shadow-none lg:min-h-[60px] lg:rounded-e-[1.2rem] lg:rounded-bl-none lg:border lg:border-s-0 lg:border-[#004BB8]/20 lg:text-[15px]"
+                className="focus-ring inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 enabled:hover:bg-[#021C2B] enabled:active:bg-[#021C2B] disabled:bg-[#004BB8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#004BB8]/20 sm:h-full sm:min-h-[58px] sm:rounded-none sm:rounded-e-2xl sm:border sm:border-s-0 sm:border-[#004BB8]/20 sm:px-5 sm:text-[15px] sm:font-bold sm:shadow-[0_10px_22px_rgba(0,75,184,0.22)] sm:disabled:shadow-[0_10px_22px_rgba(0,75,184,0.22)] lg:h-full"
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}
               >
-                {isSubmitting ? t("searchingCars") : t("search")}
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                {isSubmitting ? t("searchingCars") : t("searchCars")}
               </button>
             </div>
           </div>
