@@ -993,14 +993,6 @@ export function FlightResultsClient() {
     !shouldRenderDesktopFullSearchForm &&
     isSearchCollapsed &&
     !isSearchExpandedWhileSticky;
-  const isExpandedStickySearchActive =
-    isSearchCollapsed && isSearchExpandedWhileSticky;
-  const canAutoCollapseExpandedSearch =
-    isExpandedStickySearchActive &&
-    !tripTypeMenuOpen &&
-    !activeSuggest &&
-    !activeDatePicker &&
-    !travelerPopoverOpen;
   const savedRoutes = useMemo(
     () =>
       savedTripIds
@@ -1223,29 +1215,6 @@ export function FlightResultsClient() {
       }
     };
   }, [loading]);
-
-  // Do not auto-collapse the sticky pop-out on scroll. Opening the pop-out
-  // locks the page body, which can emit scroll/layout updates; those should
-  // not be interpreted as user intent to close the panel.
-  useEffect(() => {
-    if (!canAutoCollapseExpandedSearch) {
-      return undefined;
-    }
-
-    function handleOutsideClick(event: MouseEvent) {
-      const target = event.target as Node;
-
-      if (searchFormRef.current?.contains(target)) return;
-
-      collapseStickySearch();
-    }
-
-    document.addEventListener("mousedown", handleOutsideClick);
-
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-    };
-  }, [canAutoCollapseExpandedSearch, collapseStickySearch]);
 
   const refreshBackendSavedTrips = useCallback(async (signal?: AbortSignal) => {
     const result = await fetchBackendSavedTrips(signal);
