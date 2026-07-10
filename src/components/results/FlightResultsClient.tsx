@@ -90,61 +90,47 @@ const resultStackClass = "w-full max-w-[680px] lg:ms-4 xl:ms-6";
 const desktopFilterStickyTopClass = "lg:sticky lg:top-[7.25rem]";
 
 function useDesktopFilterShortcut(topOffset = 116) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const contentRef = useRef<HTMLDivElement | null>(null);
-  const boundaryRef = useRef<HTMLDivElement | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [isShortcutVisible, setIsShortcutVisible] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
 
-    let animationFrame = 0;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return undefined;
 
-    const updateShortcutState = () => {
-      animationFrame = 0;
-      const boundary = boundaryRef.current;
-      if (!boundary || window.innerWidth < 1024) {
-        setIsShortcutVisible(false);
-        return;
-      }
-
-      const boundaryTop = boundary.getBoundingClientRect().top;
-      setIsShortcutVisible(boundaryTop <= topOffset);
+    const updateForDesktop = (isVisible: boolean) => {
+      setIsShortcutVisible(window.innerWidth >= 1024 && isVisible);
     };
 
-    const scheduleUpdate = () => {
-      if (animationFrame) return;
-      animationFrame = window.requestAnimationFrame(updateShortcutState);
+    const updateFromSentinelPosition = () => {
+      updateForDesktop(sentinel.getBoundingClientRect().top <= topOffset);
     };
 
-    const resizeObserver =
-      typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(scheduleUpdate)
-        : null;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        updateForDesktop(entry.boundingClientRect.top <= topOffset);
+      },
+      {
+        root: null,
+        rootMargin: `-${topOffset}px 0px 0px 0px`,
+        threshold: 0,
+      },
+    );
 
-    if (containerRef.current) resizeObserver?.observe(containerRef.current);
-    if (contentRef.current) resizeObserver?.observe(contentRef.current);
-    if (boundaryRef.current) resizeObserver?.observe(boundaryRef.current);
+    observer.observe(sentinel);
+    updateFromSentinelPosition();
 
-    scheduleUpdate();
-    window.addEventListener("scroll", scheduleUpdate, { passive: true });
-    window.addEventListener("resize", scheduleUpdate);
+    window.addEventListener("resize", updateFromSentinelPosition);
 
     return () => {
-      if (animationFrame) window.cancelAnimationFrame(animationFrame);
-      resizeObserver?.disconnect();
-      window.removeEventListener("scroll", scheduleUpdate);
-      window.removeEventListener("resize", scheduleUpdate);
+      observer.disconnect();
+      window.removeEventListener("resize", updateFromSentinelPosition);
     };
   }, [topOffset]);
 
-  const showFullFilters = !isShortcutVisible;
-
   return {
-    containerRef,
-    contentRef,
-    boundaryRef,
-    showFullFilters,
+    sentinelRef,
     isShortcutVisible,
   };
 }
@@ -2770,10 +2756,8 @@ export function FlightResultsClient() {
     String(activeFilterCount),
   );
   const {
-    containerRef: desktopFilterContainerRef,
-    contentRef: desktopFilterContentRef,
-    boundaryRef: desktopFilterBoundaryRef,
-    showFullFilters: showFullDesktopFilters,
+    sentinelRef: desktopFilterSentinelRef,
+    isShortcutVisible: showDesktopFilterShortcut,
   } = useDesktopFilterShortcut();
 
   const clearFlightFilters = () => {
@@ -5188,13 +5172,50 @@ export function FlightResultsClient() {
       </nav>
 
       <div className="page-shell grid gap-4 pb-5 pt-8 sm:pt-5 lg:grid-cols-[256px_minmax(0,1fr)] lg:pt-6">
-        <aside className={cn("hidden lg:block", desktopFilterStickyTopClass)}>
-          <div ref={desktopFilterContainerRef}>
-            {showFullDesktopFilters ? (
-              <>
-                <div ref={desktopFilterContentRef}>
+        <aside className="hidden lg:block">
+          <div>
+            <Filters
+              layout="desktop"
+              activeFilterCount={activeFilterCount}
+              maxPrice={maxPrice}
+              setMaxPrice={setMaxPrice}
+              priceBounds={priceBounds}
+              priceLabelCurrency={priceLabelCurrency}
+              selectedCurrency={selectedCurrency}
+              timeFilterMode={timeFilterMode}
+              setTimeFilterMode={setTimeFilterMode}
+              timeBounds={timeBounds}
+              maxTakeoffMinutes={maxTakeoffMinutes}
+              setMaxTakeoffMinutes={setMaxTakeoffMinutes}
+              maxLandingMinutes={maxLandingMinutes}
+              setMaxLandingMinutes={setMaxLandingMinutes}
+              durationBounds={durationBounds}
+              maxDurationMinutes={maxDurationMinutes}
+              setMaxDurationMinutes={setMaxDurationMinutes}
+              stopOptions={stopOptions}
+              selectedStops={selectedStops}
+              setSelectedStops={setSelectedStops}
+              airlineOptions={airlineOptions}
+              selectedAirlines={selectedAirlines}
+              setSelectedAirlines={setSelectedAirlines}
+              airportOptions={airportOptions}
+              selectedAirports={selectedAirports}
+              setSelectedAirports={setSelectedAirports}
+              flightQualityOptions={flightQualityOptions}
+              selectedFlightQuality={selectedFlightQuality}
+              setSelectedFlightQuality={setSelectedFlightQuality}
+              baggageIncludedOnly={baggageIncludedOnly}
+              setBaggageIncludedOnly={setBaggageIncludedOnly}
+              flexibleOnly={flexibleOnly}
+              setFlexibleOnly={setFlexibleOnly}
+              onFilterChange={triggerFilterApplying}
+              onClear={clearFlightFilters}
+            />
+            <div ref={desktopFilterSentinelRef} aria-hidden="true" />
+            {showDesktopFilterShortcut ? (
+              <div className={desktopFilterStickyTopClass}>
                 <Filters
-                  layout="desktop"
+                  layout="compact"
                   activeFilterCount={activeFilterCount}
                   maxPrice={maxPrice}
                   setMaxPrice={setMaxPrice}
@@ -5230,48 +5251,8 @@ export function FlightResultsClient() {
                   onFilterChange={triggerFilterApplying}
                   onClear={clearFlightFilters}
                 />
-                </div>
-                <div ref={desktopFilterBoundaryRef} aria-hidden="true" />
-              </>
-            ) : (
-              <Filters
-                layout="compact"
-                activeFilterCount={activeFilterCount}
-                maxPrice={maxPrice}
-                setMaxPrice={setMaxPrice}
-                priceBounds={priceBounds}
-                priceLabelCurrency={priceLabelCurrency}
-                selectedCurrency={selectedCurrency}
-                timeFilterMode={timeFilterMode}
-                setTimeFilterMode={setTimeFilterMode}
-                timeBounds={timeBounds}
-                maxTakeoffMinutes={maxTakeoffMinutes}
-                setMaxTakeoffMinutes={setMaxTakeoffMinutes}
-                maxLandingMinutes={maxLandingMinutes}
-                setMaxLandingMinutes={setMaxLandingMinutes}
-                durationBounds={durationBounds}
-                maxDurationMinutes={maxDurationMinutes}
-                setMaxDurationMinutes={setMaxDurationMinutes}
-                stopOptions={stopOptions}
-                selectedStops={selectedStops}
-                setSelectedStops={setSelectedStops}
-                airlineOptions={airlineOptions}
-                selectedAirlines={selectedAirlines}
-                setSelectedAirlines={setSelectedAirlines}
-                airportOptions={airportOptions}
-                selectedAirports={selectedAirports}
-                setSelectedAirports={setSelectedAirports}
-                flightQualityOptions={flightQualityOptions}
-                selectedFlightQuality={selectedFlightQuality}
-                setSelectedFlightQuality={setSelectedFlightQuality}
-                baggageIncludedOnly={baggageIncludedOnly}
-                setBaggageIncludedOnly={setBaggageIncludedOnly}
-                flexibleOnly={flexibleOnly}
-                setFlexibleOnly={setFlexibleOnly}
-                onFilterChange={triggerFilterApplying}
-                onClear={clearFlightFilters}
-              />
-            )}
+              </div>
+            ) : null}
           </div>
         </aside>
 
@@ -6921,7 +6902,9 @@ function Filters({
         }).formatted
       : t("mixedProviderCurrencies");
 
-  const [compactOpenSection, setCompactOpenSection] = useState<string | null>(null);
+  const [compactOpenSection, setCompactOpenSection] = useState<string | null>(
+    null,
+  );
   const activeFilterLabel = t("activeFilterCount").replace(
     "{{count}}",
     String(activeFilterCount),
@@ -6929,8 +6912,12 @@ function Filters({
   const compactSectionCounts = {
     price: priceBounds.max && maxPrice < priceBounds.max ? 1 : 0,
     times:
-      (timeBounds.takeoff && maxTakeoffMinutes !== timeBounds.takeoff.max ? 1 : 0) +
-      (timeBounds.landing && maxLandingMinutes !== timeBounds.landing.max ? 1 : 0),
+      (timeBounds.takeoff && maxTakeoffMinutes !== timeBounds.takeoff.max
+        ? 1
+        : 0) +
+      (timeBounds.landing && maxLandingMinutes !== timeBounds.landing.max
+        ? 1
+        : 0),
     duration:
       durationBounds && maxDurationMinutes !== durationBounds.max ? 1 : 0,
     quality: selectedFlightQuality.length,
@@ -6948,49 +6935,250 @@ function Filters({
             <h2 className="desktop-filter-sidebar__title truncate text-base font-bold text-slate-950">
               {t("filterBy")}
             </h2>
-            <SlidersHorizontal className="desktop-filter-sidebar__icon shrink-0 text-[#004BB8]" size={18} />
+            <SlidersHorizontal
+              className="desktop-filter-sidebar__icon shrink-0 text-[#004BB8]"
+              size={18}
+            />
           </div>
           {activeFilterCount > 0 ? (
             <div className="mt-2 flex items-center justify-between gap-3">
               <span className="desktop-filter-sidebar__count rounded-full bg-[#EAF2FB] px-2 py-0.5 text-[11px] font-semibold text-[#235A9F] ring-1 ring-[#004BB8]/8">
                 {activeFilterLabel}
               </span>
-              <button type="button" className="rounded-full px-1.5 py-0.5 text-[11px] font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-[#235A9F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25" onClick={onClear}>
+              <button
+                type="button"
+                className="rounded-full px-1.5 py-0.5 text-[11px] font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-[#235A9F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                onClick={onClear}
+              >
                 Clear all
               </button>
             </div>
           ) : null}
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white px-3 py-1">
-          <CompactFilterSection title={t("price")} count={compactSectionCounts.price} sectionId="price" openSection={compactOpenSection} setOpenSection={setCompactOpenSection}>
-            <input aria-label={t("price")} className={filterRangeClass} type="range" min={priceBounds.min || 0} max={priceBounds.max || 0} step={25} value={priceBounds.max ? Math.min(maxPrice, priceBounds.max) : 0} disabled={!priceBounds.max} onChange={(event) => { onFilterChange(); setMaxPrice(Number(event.target.value)); }} />
-            <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500"><span>{priceBounds.max && priceLabelCurrency ? formatFilterPrice(priceBounds.min) : "—"}</span><span>{priceBounds.max && priceLabelCurrency ? formatFilterPrice(Math.min(maxPrice, priceBounds.max)) : "—"}</span></div>
+          <CompactFilterSection
+            title={t("price")}
+            count={compactSectionCounts.price}
+            sectionId="price"
+            openSection={compactOpenSection}
+            setOpenSection={setCompactOpenSection}
+          >
+            <input
+              aria-label={t("price")}
+              className={filterRangeClass}
+              type="range"
+              min={priceBounds.min || 0}
+              max={priceBounds.max || 0}
+              step={25}
+              value={priceBounds.max ? Math.min(maxPrice, priceBounds.max) : 0}
+              disabled={!priceBounds.max}
+              onChange={(event) => {
+                onFilterChange();
+                setMaxPrice(Number(event.target.value));
+              }}
+            />
+            <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500">
+              <span>
+                {priceBounds.max && priceLabelCurrency
+                  ? formatFilterPrice(priceBounds.min)
+                  : "—"}
+              </span>
+              <span>
+                {priceBounds.max && priceLabelCurrency
+                  ? formatFilterPrice(Math.min(maxPrice, priceBounds.max))
+                  : "—"}
+              </span>
+            </div>
           </CompactFilterSection>
-          <CompactFilterSection title={t("times")} count={compactSectionCounts.times} sectionId="times" openSection={compactOpenSection} setOpenSection={setCompactOpenSection}>
+          <CompactFilterSection
+            title={t("times")}
+            count={compactSectionCounts.times}
+            sectionId="times"
+            openSection={compactOpenSection}
+            setOpenSection={setCompactOpenSection}
+          >
             <div className="space-y-3">
-              {[{key: "takeoff", label: t("takeoffTimeFromOrigin"), bounds: timeBounds.takeoff, value: maxTakeoffMinutes, setValue: setMaxTakeoffMinutes}, {key: "landing", label: t("landingTimeAtDestination"), bounds: timeBounds.landing, value: maxLandingMinutes, setValue: setMaxLandingMinutes}].map((item) => (
-                <label key={item.key} className="block"><span className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600"><span>{item.label}</span><span className="font-mono text-navy">{item.bounds && item.value !== null ? formatTimeFromMinutes(item.value, calendarLocale) : t("loading")}</span></span><input className={filterRangeClass} type="range" min={item.bounds?.min ?? 0} max={item.bounds?.max ?? 0} step={15} value={item.value ?? item.bounds?.max ?? 0} disabled={!item.bounds} onChange={(event) => { onFilterChange(); item.setValue(Number(event.target.value)); }} /></label>
+              {[
+                {
+                  key: "takeoff",
+                  label: t("takeoffTimeFromOrigin"),
+                  bounds: timeBounds.takeoff,
+                  value: maxTakeoffMinutes,
+                  setValue: setMaxTakeoffMinutes,
+                },
+                {
+                  key: "landing",
+                  label: t("landingTimeAtDestination"),
+                  bounds: timeBounds.landing,
+                  value: maxLandingMinutes,
+                  setValue: setMaxLandingMinutes,
+                },
+              ].map((item) => (
+                <label key={item.key} className="block">
+                  <span className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600">
+                    <span>{item.label}</span>
+                    <span className="font-mono text-navy">
+                      {item.bounds && item.value !== null
+                        ? formatTimeFromMinutes(item.value, calendarLocale)
+                        : t("loading")}
+                    </span>
+                  </span>
+                  <input
+                    className={filterRangeClass}
+                    type="range"
+                    min={item.bounds?.min ?? 0}
+                    max={item.bounds?.max ?? 0}
+                    step={15}
+                    value={item.value ?? item.bounds?.max ?? 0}
+                    disabled={!item.bounds}
+                    onChange={(event) => {
+                      onFilterChange();
+                      item.setValue(Number(event.target.value));
+                    }}
+                  />
+                </label>
               ))}
             </div>
           </CompactFilterSection>
-          <CompactFilterSection title={t("duration")} count={compactSectionCounts.duration} sectionId="duration" openSection={compactOpenSection} setOpenSection={setCompactOpenSection}>
-            <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600"><span>{t("totalTripTime")}</span><span className="font-mono text-navy">{durationBounds && maxDurationMinutes !== null ? formatDurationFromMinutes(maxDurationMinutes, t) : t("loading")}</span></div><input aria-label={t("duration")} className={filterRangeClass} type="range" min={durationBounds?.min ?? 0} max={durationBounds?.max ?? 0} step={15} value={maxDurationMinutes ?? durationBounds?.max ?? 0} disabled={!durationBounds} onChange={(event) => { onFilterChange(); setMaxDurationMinutes(Number(event.target.value)); }} />
+          <CompactFilterSection
+            title={t("duration")}
+            count={compactSectionCounts.duration}
+            sectionId="duration"
+            openSection={compactOpenSection}
+            setOpenSection={setCompactOpenSection}
+          >
+            <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600">
+              <span>{t("totalTripTime")}</span>
+              <span className="font-mono text-navy">
+                {durationBounds && maxDurationMinutes !== null
+                  ? formatDurationFromMinutes(maxDurationMinutes, t)
+                  : t("loading")}
+              </span>
+            </div>
+            <input
+              aria-label={t("duration")}
+              className={filterRangeClass}
+              type="range"
+              min={durationBounds?.min ?? 0}
+              max={durationBounds?.max ?? 0}
+              step={15}
+              value={maxDurationMinutes ?? durationBounds?.max ?? 0}
+              disabled={!durationBounds}
+              onChange={(event) => {
+                onFilterChange();
+                setMaxDurationMinutes(Number(event.target.value));
+              }}
+            />
           </CompactFilterSection>
-          <CompactFilterSection title={t("flightQuality")} count={compactSectionCounts.quality} sectionId="quality" openSection={compactOpenSection} setOpenSection={setCompactOpenSection} emptyText={t("loading")}>
-            {flightQualityOptions.map((option) => <FilterOptionRow key={option.value} label={option.label} count={option.count} checked={selectedFlightQuality.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedFlightQuality); }} />)}
+          <CompactFilterSection
+            title={t("flightQuality")}
+            count={compactSectionCounts.quality}
+            sectionId="quality"
+            openSection={compactOpenSection}
+            setOpenSection={setCompactOpenSection}
+            emptyText={t("loading")}
+          >
+            {flightQualityOptions.map((option) => (
+              <FilterOptionRow
+                key={option.value}
+                label={option.label}
+                count={option.count}
+                checked={selectedFlightQuality.includes(option.value)}
+                onChange={() => {
+                  onFilterChange();
+                  toggleFilterValue(option.value, setSelectedFlightQuality);
+                }}
+              />
+            ))}
           </CompactFilterSection>
-          <CompactFilterSection title={t("stops")} count={compactSectionCounts.stops} sectionId="stops" openSection={compactOpenSection} setOpenSection={setCompactOpenSection} emptyText={t("stopsAppearAfterResultsLoad")}>
-            {stopOptions.map((option) => <FilterOptionRow key={option.value} label={option.label} count={option.count} secondaryLabel={option.secondaryLabel} rightLabel={option.rightLabel} checked={selectedStops.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedStops); }} />)}
+          <CompactFilterSection
+            title={t("stops")}
+            count={compactSectionCounts.stops}
+            sectionId="stops"
+            openSection={compactOpenSection}
+            setOpenSection={setCompactOpenSection}
+            emptyText={t("stopsAppearAfterResultsLoad")}
+          >
+            {stopOptions.map((option) => (
+              <FilterOptionRow
+                key={option.value}
+                label={option.label}
+                count={option.count}
+                secondaryLabel={option.secondaryLabel}
+                rightLabel={option.rightLabel}
+                checked={selectedStops.includes(option.value)}
+                onChange={() => {
+                  onFilterChange();
+                  toggleFilterValue(option.value, setSelectedStops);
+                }}
+              />
+            ))}
           </CompactFilterSection>
-          <CompactFilterSection title={t("airlines")} count={compactSectionCounts.airlines} sectionId="airlines" openSection={compactOpenSection} setOpenSection={setCompactOpenSection} emptyText={t("airlinesAppearAfterResultsLoad")}>
-            {airlineOptions.map((option) => <FilterOptionRow key={option.value} label={option.label} count={option.count} checked={selectedAirlines.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedAirlines); }} />)}
+          <CompactFilterSection
+            title={t("airlines")}
+            count={compactSectionCounts.airlines}
+            sectionId="airlines"
+            openSection={compactOpenSection}
+            setOpenSection={setCompactOpenSection}
+            emptyText={t("airlinesAppearAfterResultsLoad")}
+          >
+            {airlineOptions.map((option) => (
+              <FilterOptionRow
+                key={option.value}
+                label={option.label}
+                count={option.count}
+                checked={selectedAirlines.includes(option.value)}
+                onChange={() => {
+                  onFilterChange();
+                  toggleFilterValue(option.value, setSelectedAirlines);
+                }}
+              />
+            ))}
           </CompactFilterSection>
-          <CompactFilterSection title={t("airports")} count={compactSectionCounts.airports} sectionId="airports" openSection={compactOpenSection} setOpenSection={setCompactOpenSection} emptyText={t("airportsAppearAfterResultsLoad")}>
-            {airportOptions.map((option) => <FilterOptionRow key={option.value} label={option.label} count={option.count} checked={selectedAirports.includes(option.value)} onChange={() => { onFilterChange(); toggleFilterValue(option.value, setSelectedAirports); }} />)}
+          <CompactFilterSection
+            title={t("airports")}
+            count={compactSectionCounts.airports}
+            sectionId="airports"
+            openSection={compactOpenSection}
+            setOpenSection={setCompactOpenSection}
+            emptyText={t("airportsAppearAfterResultsLoad")}
+          >
+            {airportOptions.map((option) => (
+              <FilterOptionRow
+                key={option.value}
+                label={option.label}
+                count={option.count}
+                checked={selectedAirports.includes(option.value)}
+                onChange={() => {
+                  onFilterChange();
+                  toggleFilterValue(option.value, setSelectedAirports);
+                }}
+              />
+            ))}
           </CompactFilterSection>
-          <CompactFilterSection title={t("amenities")} count={compactSectionCounts.amenities} sectionId="amenities" openSection={compactOpenSection} setOpenSection={setCompactOpenSection}>
-            <FilterOptionRow label={t("baggageIncluded")} checked={baggageIncludedOnly} onChange={() => { onFilterChange(); setBaggageIncludedOnly(!baggageIncludedOnly); }} />
-            <FilterOptionRow label={t("flexibleRefundable")} checked={flexibleOnly} onChange={() => { onFilterChange(); setFlexibleOnly(!flexibleOnly); }} />
+          <CompactFilterSection
+            title={t("amenities")}
+            count={compactSectionCounts.amenities}
+            sectionId="amenities"
+            openSection={compactOpenSection}
+            setOpenSection={setCompactOpenSection}
+          >
+            <FilterOptionRow
+              label={t("baggageIncluded")}
+              checked={baggageIncludedOnly}
+              onChange={() => {
+                onFilterChange();
+                setBaggageIncludedOnly(!baggageIncludedOnly);
+              }}
+            />
+            <FilterOptionRow
+              label={t("flexibleRefundable")}
+              checked={flexibleOnly}
+              onChange={() => {
+                onFilterChange();
+                setFlexibleOnly(!flexibleOnly);
+              }}
+            />
           </CompactFilterSection>
         </div>
       </div>
@@ -7434,7 +7622,11 @@ function CompactFilterSection({
         aria-expanded={isOpen}
         aria-controls={panelId}
         className="flex w-full items-center justify-between gap-3 py-3 text-start text-sm font-extrabold uppercase leading-5 tracking-[0.14em] text-slate-950 transition hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
-        onClick={() => setOpenSection((current) => (current === sectionId ? null : sectionId))}
+        onClick={() =>
+          setOpenSection((current) =>
+            current === sectionId ? null : sectionId,
+          )
+        }
       >
         <span className="min-w-0 truncate">{title}</span>
         <span className="flex shrink-0 items-center gap-2">
