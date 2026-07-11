@@ -675,7 +675,10 @@ function FlightBookingFaqSection() {
 function lockMobileOverlayScroll() {
   const bodyElement = document.body;
   const rootElement = document.documentElement;
-  const scrollbarWidth = Math.max(0, window.innerWidth - rootElement.clientWidth);
+  const scrollbarWidth = Math.max(
+    0,
+    window.innerWidth - rootElement.clientWidth,
+  );
   let restored = false;
   const previousBodyStyles = {
     overflow: bodyElement.style.overflow,
@@ -688,7 +691,8 @@ function lockMobileOverlayScroll() {
   };
 
   if (scrollbarWidth > 0) {
-    const computedPaddingRight = window.getComputedStyle(bodyElement).paddingRight;
+    const computedPaddingRight =
+      window.getComputedStyle(bodyElement).paddingRight;
     bodyElement.style.paddingRight = `calc(${computedPaddingRight} + ${scrollbarWidth}px)`;
   }
 
@@ -5352,8 +5356,7 @@ export function FlightResultsClient() {
             <div
               className={cn(
                 "relative overflow-visible rounded-[1.15rem] border border-slate-200/90 bg-white p-1.5 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-slate-950/[0.025] backdrop-blur-md sm:rounded-[1.15rem]",
-                placement === "desktop" &&
-                  "sm:bg-white sm:backdrop-blur-none",
+                placement === "desktop" && "sm:bg-white sm:backdrop-blur-none",
               )}
             >
               <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.95fr)_minmax(0,1.35fr)_minmax(0,1.12fr)_116px] lg:gap-0">
@@ -6308,7 +6311,7 @@ export function FlightResultsClient() {
 
       <div
         ref={resultsGridRef}
-        className="page-shell grid gap-4 pb-5 pt-3 sm:pt-5 lg:grid-cols-[210px_minmax(0,1fr)] lg:pt-6 xl:grid-cols-[220px_minmax(0,1fr)_minmax(80px,160px)] min-[1366px]:grid-cols-[230px_minmax(0,940px)_minmax(160px,220px)] min-[1600px]:grid-cols-[240px_minmax(0,980px)_minmax(240px,300px)]"
+        className="flight-results-grid page-shell grid gap-4 pb-5 pt-3 sm:pt-5 lg:pt-6"
         style={{ width: "min(1560px, calc(100% - 32px))" }}
       >
         <aside
@@ -6490,7 +6493,9 @@ export function FlightResultsClient() {
                 <Button
                   variant="secondary"
                   className="h-10 rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] lg:hidden"
-                  onClick={(event) => openMobileFiltersDrawer(event.currentTarget)}
+                  onClick={(event) =>
+                    openMobileFiltersDrawer(event.currentTarget)
+                  }
                 >
                   <SlidersHorizontal size={17} />
                   {activeFilterCount > 0
@@ -6547,7 +6552,7 @@ export function FlightResultsClient() {
         </section>
 
         <aside
-          className="hidden min-w-0 xl:block"
+          className="flight-results-right-rail hidden min-w-0 xl:block"
           aria-hidden="true"
         />
       </div>
