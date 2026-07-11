@@ -124,24 +124,31 @@ export function FlightCard({
       {mobileCard}
 
       <div className="hidden px-5 py-4 lg:block xl:px-6">
-        <div className="grid grid-cols-[minmax(0,1fr)_190px] items-stretch gap-0 xl:grid-cols-[minmax(0,1fr)_214px]">
-          <div className="min-w-0 pr-6 xl:pr-8">
-            <div className="space-y-4">
-              {visibleLegs.map((leg, index) => (
-                <DesktopFlightLegRow
-                  key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${leg.departureTime}-${index}`}
-                  flight={flight}
-                  leg={leg}
-                  locale={locale}
-                />
-              ))}
+        <div className="flex min-w-0 items-center justify-between gap-4 border-b border-[#E5ECF5] pb-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <AirlineLogo flight={flight} desktop />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold leading-5 text-slate-800" dir="auto">
+                {flight.airlineName}
+              </p>
+              {flight.flightNumber ? (
+                <p className="mt-0.5 truncate text-sm font-medium leading-5 text-[#536B92]" dir="ltr">
+                  {flight.flightNumber}
+                </p>
+              ) : null}
             </div>
+          </div>
+        </div>
 
-            <FlightDetailLines details={details} desktop />
-
-            <div className="mt-3 rounded-[4px] bg-[#F3F7FD] px-3 py-2 text-xs font-medium leading-5 text-[#536B92]">
-              {providerHandoffCopy}
-            </div>
+        <div className="mt-4 grid min-w-0 grid-cols-[minmax(150px,0.9fr)_minmax(280px,1.6fr)_minmax(150px,0.9fr)_minmax(175px,0.8fr)] items-stretch gap-x-5 gap-y-5 xl:grid-cols-[minmax(165px,0.9fr)_minmax(340px,1.7fr)_minmax(165px,0.9fr)_minmax(190px,0.8fr)] xl:gap-x-6">
+          <div className="col-span-3 grid min-w-0 gap-5">
+            {visibleLegs.map((leg, index) => (
+              <DesktopFlightLegRow
+                key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${leg.departureTime}-${index}`}
+                leg={leg}
+                locale={locale}
+              />
+            ))}
           </div>
 
           <FlightFareAction
@@ -154,9 +161,15 @@ export function FlightCard({
             providerPrice={providerPrice}
             providerPriceLabel={t("providerPrice")}
             viewFlightLabel={t("viewFlight")}
-            className="border-l border-[#D8E1EC] pl-7 xl:pl-8"
+            className="border-l border-[#D8E1EC] pl-5 xl:pl-6"
             desktop
           />
+        </div>
+
+        <FlightDetailLines details={details} desktop />
+
+        <div className="mt-3 w-full rounded-[6px] bg-[#F3F7FD] px-4 py-2.5 text-xs font-medium leading-5 text-[#536B92]">
+          {providerHandoffCopy}
         </div>
       </div>
     </Card>
@@ -265,11 +278,9 @@ function FlightLegRow({
 }
 
 function DesktopFlightLegRow({
-  flight,
   leg,
   locale,
 }: {
-  flight: PublicFlightResult;
   leg: FlightLeg;
   locale: string;
 }) {
@@ -279,27 +290,9 @@ function DesktopFlightLegRow({
 
   return (
     <section aria-label={legTitle} className="min-w-0">
-      <div className="grid min-w-0 grid-cols-[64px_minmax(150px,0.78fr)_minmax(260px,1.32fr)_minmax(118px,0.62fr)] items-center gap-5 xl:grid-cols-[72px_minmax(170px,0.78fr)_minmax(340px,1.42fr)_minmax(132px,0.62fr)] xl:gap-6">
-        <div className="flex items-center justify-center self-start pt-1">
-          <AirlineLogo flight={flight} desktop />
-        </div>
-
-        <div className="min-w-0 self-start pt-1">
-          <p
-            className="truncate text-sm font-semibold leading-5 text-slate-800"
-            dir="auto"
-          >
-            {flight.airlineName}
-          </p>
-          {flight.flightNumber ? (
-            <p
-              className="mt-1 truncate text-sm font-medium leading-5 text-[#536B92]"
-              dir="ltr"
-            >
-              {flight.flightNumber}
-            </p>
-          ) : null}
-          <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.12em] text-[#0057E7]">
+      <div className="grid min-w-0 grid-cols-[minmax(150px,0.9fr)_minmax(280px,1.6fr)_minmax(150px,0.9fr)] items-center gap-5 xl:grid-cols-[minmax(165px,0.9fr)_minmax(340px,1.7fr)_minmax(165px,0.9fr)] xl:gap-6">
+        <div className="min-w-0 self-center">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#0057E7]">
             {legTitle}
           </p>
           <div
@@ -346,7 +339,10 @@ function DesktopFlightLegRow({
           )}
         </div>
 
-        <div className="min-w-0 self-end pb-1 text-right">
+        <div className="min-w-0 self-center text-right">
+          <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#0057E7]">
+            ARRIVAL
+          </p>
           <div
             className="text-[22px] font-semibold leading-6 tracking-[-0.025em] text-[#07133B]"
             dir="ltr"
@@ -514,7 +510,7 @@ function FlightDetailLines({
       className={cn(
         "grid min-w-0 flex-1 text-xs leading-5 text-slate-600",
         desktop
-          ? "mt-4 grid-cols-3 gap-x-0 gap-y-2 border-t border-[#D8E1EC] pt-3 xl:grid-cols-4"
+          ? "mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-[#D8E1EC] pt-3"
           : "gap-x-4 gap-y-1 sm:grid-cols-2 lg:border-t lg:border-slate-100 lg:pt-2",
       )}
     >
@@ -527,7 +523,7 @@ function FlightDetailLines({
             className={cn(
               "flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5",
               desktop &&
-                "border-r border-[#EEF2F7] pr-4 last:border-r-0 last:pr-0",
+                "flex-nowrap whitespace-nowrap border-r border-[#EEF2F7] pr-6 last:border-r-0 last:pr-0",
             )}
           >
             <Icon
