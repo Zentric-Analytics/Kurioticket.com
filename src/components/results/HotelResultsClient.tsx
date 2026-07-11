@@ -25,6 +25,12 @@ import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
+import {
+  filterHotelsBySavedIds,
+  parseSavedHotelIds,
+  SAVED_HOTEL_IDS_CHANGED_EVENT,
+  SAVED_HOTEL_IDS_STORAGE_KEY,
+} from "@/components/results/hotelSavedStorage";
 import { HotelSearchBar } from "@/components/search/HotelSearchBar";
 import { normalizeHotelDestinationSearchValue } from "@/data/hotelDestinations";
 import { translations as enTranslations } from "@/lib/i18n/en";
@@ -467,6 +473,8 @@ export function HotelResultsClient() {
     useState<HotelFilterSelections>(emptySelections);
   const [hotelSummarySortMode, setHotelSummarySortMode] =
     useState<HotelSummarySortMode>("cheapest");
+  const [savedHotelIds, setSavedHotelIds] = useState<string[]>([]);
+  const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [mobileHotelSearchOpen, setMobileHotelSearchOpen] = useState(false);
   const [showDesktopMinimizedSearch, setShowDesktopMinimizedSearch] =
     useState(false);
@@ -538,6 +546,58 @@ export function HotelResultsClient() {
     activeMobileHotelSearchDraft.rooms,
     body.sort,
   ].join("-");
+
+  useEffect(() => {
+    let isActive = true;
+
+    function updateSavedHotelIds(rawValue: string | null) {
+      if (!isActive) return;
+
+      setSavedHotelIds(parseSavedHotelIds(rawValue));
+    }
+
+    queueMicrotask(() => {
+      try {
+        updateSavedHotelIds(
+          window.localStorage.getItem(SAVED_HOTEL_IDS_STORAGE_KEY),
+        );
+      } catch {
+        updateSavedHotelIds(null);
+      }
+    });
+
+    function handleStorage(event: StorageEvent) {
+      if (event.key !== SAVED_HOTEL_IDS_STORAGE_KEY) return;
+
+      updateSavedHotelIds(event.newValue);
+    }
+
+    function handleSavedHotelIdsChanged(event: Event) {
+      if (!(event instanceof CustomEvent)) return;
+      if (typeof event.detail !== "string") return;
+
+      updateSavedHotelIds(event.detail);
+    }
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener(
+      SAVED_HOTEL_IDS_CHANGED_EVENT,
+      handleSavedHotelIdsChanged,
+    );
+
+    return () => {
+      isActive = false;
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener(
+        SAVED_HOTEL_IDS_CHANGED_EVENT,
+        handleSavedHotelIdsChanged,
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    queueMicrotask(() => setShowSavedOnly(false));
+  }, [bodySearchKey]);
 
   const updateMobileHotelSearchDraft = useCallback(
     (nextDraft: HotelMobileSearchDraft) => {
@@ -836,14 +896,29 @@ export function HotelResultsClient() {
   );
 
   const visibleFilteredHotels = resultsApplying ? visibleFiltered : filtered;
+  const savedVisibleHotels = useMemo(
+    () => filterHotelsBySavedIds(visibleFilteredHotels, savedHotelIds),
+    [savedHotelIds, visibleFilteredHotels],
+  );
+  const displayedHotels = showSavedOnly
+    ? savedVisibleHotels
+    : visibleFilteredHotels;
   const sortedVisibleHotels = useMemo(
-    () => sortHotelSummaryResults(visibleFilteredHotels, hotelSummarySortMode),
-    [hotelSummarySortMode, visibleFilteredHotels],
+    () => sortHotelSummaryResults(displayedHotels, hotelSummarySortMode),
+    [displayedHotels, hotelSummarySortMode],
   );
   const hotelSummaryItems = useMemo(
-    () => buildHotelSummaryItems(visibleFilteredHotels, t, locale),
-    [locale, t, visibleFilteredHotels],
+    () => buildHotelSummaryItems(displayedHotels, t, locale),
+    [displayedHotels, locale, t],
   );
+  const formattedSavedVisibleHotelCount = new Intl.NumberFormat(locale).format(
+    savedVisibleHotels.length,
+  );
+  const showSavedEmptyState =
+    showSavedOnly &&
+    visibleFilteredHotels.length > 0 &&
+    savedVisibleHotels.length === 0 &&
+    !error;
 
   const showFilteredEmptyState =
     !loading &&
@@ -1473,35 +1548,85 @@ export function HotelResultsClient() {
                   <h1 className="min-w-0 text-sm font-bold text-navy">
                     {t("hotelResults.foundPlacesToStay").replace(
                       "{{count}}",
-                      formatHotelCount(visibleFilteredHotels.length, locale),
+                      formatHotelCount(displayedHotels.length, locale),
                     )}
                   </h1>
-                  <label className="hidden shrink-0 items-center gap-2 sm:flex">
-                    <span className="whitespace-nowrap text-xs font-semibold text-slate-500">
-                      {t("sortBy") || "Sort by"}
-                    </span>
-                    <select
-                      className="h-9 min-w-[136px] rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-800 shadow-sm outline-none transition-colors hover:border-slate-300 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20"
-                      value={hotelSummarySortMode}
-                      onChange={(event) =>
-                        updateHotelSummarySortMode(
-                          event.currentTarget.value as HotelSummarySortMode,
-                        )
-                      }
-                    >
-                      {hotelSummaryItems.map((item) => (
-                        <option key={item.sortMode} value={item.sortMode}>
-                          {item.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1">
+                      <button
+                        type="button"
+                        aria-pressed={!showSavedOnly}
+                        className={cn(
+                          "rounded-md px-3 py-1.5 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+                          !showSavedOnly
+                            ? "bg-white text-[#004BB8] shadow-sm"
+                            : "text-slate-600 hover:bg-white/70 hover:text-slate-950",
+                        )}
+                        onClick={() => setShowSavedOnly(false)}
+                      >
+                        {t("hotelResults.allHotels") || "All"}
+                      </button>
+                      <button
+                        type="button"
+                        aria-pressed={showSavedOnly}
+                        className={cn(
+                          "rounded-md px-3 py-1.5 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+                          showSavedOnly
+                            ? "bg-white text-[#004BB8] shadow-sm"
+                            : "text-slate-600 hover:bg-white/70 hover:text-slate-950",
+                        )}
+                        onClick={() => setShowSavedOnly(true)}
+                      >
+                        {t("hotelResults.savedHotels") || "Saved"} (
+                        {formattedSavedVisibleHotelCount})
+                      </button>
+                    </div>
+                    <label className="hidden shrink-0 items-center gap-2 sm:flex">
+                      <span className="whitespace-nowrap text-xs font-semibold text-slate-500">
+                        {t("sortBy") || "Sort by"}
+                      </span>
+                      <select
+                        className="h-9 min-w-[136px] rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-800 shadow-sm outline-none transition-colors hover:border-slate-300 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20"
+                        value={hotelSummarySortMode}
+                        onChange={(event) =>
+                          updateHotelSummarySortMode(
+                            event.currentTarget.value as HotelSummarySortMode,
+                          )
+                        }
+                      >
+                        {hotelSummaryItems.map((item) => (
+                          <option key={item.sortMode} value={item.sortMode}>
+                            {item.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
                 </div>
 
                 {sortedVisibleHotels.length ? (
                   sortedVisibleHotels.map((hotel) => (
                     <HotelCard key={hotel.id} hotel={hotel} />
                   ))
+                ) : showSavedEmptyState ? (
+                  <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-muted shadow-sm">
+                    <p className="text-base font-bold text-[#021C2B]">
+                      {t("hotelResults.noSavedHotelsTitle") ||
+                        "No saved hotels in these results"}
+                    </p>
+                    <p className="mt-2 max-w-2xl leading-6">
+                      {t("hotelResults.noSavedHotelsBody") ||
+                        "Save a hotel using the heart, or return to all results."}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="mt-4"
+                      onClick={() => setShowSavedOnly(false)}
+                    >
+                      {t("hotelResults.showAllHotels") || "Show all hotels"}
+                    </Button>
+                  </div>
                 ) : (
                   <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm font-semibold text-muted shadow-sm">
                     {t("hotelResults.noStaysMatchFiltersInline")}

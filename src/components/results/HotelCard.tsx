@@ -28,6 +28,7 @@ import {
 import {
   isHotelIdSaved,
   parseSavedHotelIds,
+  SAVED_HOTEL_IDS_CHANGED_EVENT,
   SAVED_HOTEL_IDS_STORAGE_KEY,
   serializeSavedHotelIds,
   toggleSavedHotelId,
@@ -474,11 +475,26 @@ export function HotelCard({ hotel }: HotelCardProps) {
       updateSavedState(event.newValue);
     }
 
+    function handleSavedHotelIdsChanged(event: Event) {
+      if (!(event instanceof CustomEvent)) return;
+      if (typeof event.detail !== "string") return;
+
+      updateSavedState(event.detail);
+    }
+
     window.addEventListener("storage", handleStorage);
+    window.addEventListener(
+      SAVED_HOTEL_IDS_CHANGED_EVENT,
+      handleSavedHotelIdsChanged,
+    );
 
     return () => {
       isActive = false;
       window.removeEventListener("storage", handleStorage);
+      window.removeEventListener(
+        SAVED_HOTEL_IDS_CHANGED_EVENT,
+        handleSavedHotelIdsChanged,
+      );
     };
   }, [hotel.id]);
 
@@ -527,6 +543,11 @@ export function HotelCard({ hotel }: HotelCardProps) {
         serializedValue,
       );
       setIsSaved(isHotelIdSaved(nextSavedIds, hotel.id));
+      window.dispatchEvent(
+        new CustomEvent(SAVED_HOTEL_IDS_CHANGED_EVENT, {
+          detail: serializedValue,
+        }),
+      );
     } catch {
       // Keep the previous visual state if browser storage is unavailable.
     }
