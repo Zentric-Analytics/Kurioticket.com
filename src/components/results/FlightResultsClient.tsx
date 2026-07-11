@@ -2811,14 +2811,56 @@ export function FlightResultsClient() {
     );
   }, [formatResultPriceLabel, results, t]);
 
-  const airlineOptions = useMemo(
-    () =>
-      buildCountOptions(results.map((flight) => flight.airlineName)).slice(
-        0,
-        8,
-      ),
-    [results],
-  );
+  const airlineOptions = useMemo(() => {
+    const buckets = new Map<
+      string,
+      { count: number; minPrice: number; currencies: Set<string> }
+    >();
+
+    results.forEach((flight) => {
+      const airlineName = flight.airlineName.trim();
+
+      if (!airlineName) return;
+
+      const current = buckets.get(airlineName) ?? {
+        count: 0,
+        minPrice: Number.POSITIVE_INFINITY,
+        currencies: new Set<string>(),
+      };
+      const currencies = new Set(current.currencies);
+
+      if (flight.currency) {
+        currencies.add(flight.currency.toUpperCase());
+      }
+
+      buckets.set(airlineName, {
+        count: current.count + 1,
+        minPrice:
+          Number.isFinite(flight.price) && flight.price > 0
+            ? Math.min(current.minPrice, flight.price)
+            : current.minPrice,
+        currencies,
+      });
+    });
+
+    return Array.from(buckets, ([value, data]) => ({
+      value,
+      label: value,
+      count: data.count,
+      rightLabel: Number.isFinite(data.minPrice)
+        ? formatResultPriceLabel(
+            data.minPrice,
+            data.currencies.size === 1 ? Array.from(data.currencies)[0] : null,
+          )
+        : undefined,
+    }))
+      .sort((first, second) => {
+        if (second.count !== first.count) return second.count - first.count;
+
+        return first.label.localeCompare(second.label);
+      })
+      .slice(0, 8);
+  }, [formatResultPriceLabel, results]);
 
   const airportOptions = useMemo(() => {
     const airportsForResults = results.flatMap((flight) => [
@@ -6411,10 +6453,34 @@ export function FlightResultsClient() {
             </div>
           ) : (
             <div className={cn(resultStackClass, "space-y-4")}>
-              <div className="hidden w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex sm:items-center sm:justify-between">
-                <p className="text-sm font-bold text-navy">
+              <div className="hidden w-full items-center justify-between gap-4 sm:flex lg:border-b lg:border-slate-200/70 lg:bg-transparent lg:px-0 lg:pb-2 lg:pt-1">
+                <p className="text-base font-semibold tracking-[-0.01em] text-slate-950 lg:text-[17px]">
                   {formatResultsFound(sortedResults.length, t)}
                 </p>
+
+                <div className="hidden items-center gap-2 lg:flex">
+                  <label
+                    htmlFor="desktop-flight-sort"
+                    className="text-sm font-medium text-slate-600"
+                  >
+                    Sort by
+                  </label>
+                  <select
+                    id="desktop-flight-sort"
+                    aria-label="Sort flight results"
+                    className="h-11 min-w-[144px] rounded-lg border border-slate-300 bg-white px-3 pr-9 text-sm font-semibold text-slate-950 shadow-sm transition hover:border-slate-400 focus:border-[#004BB8] focus:outline-none focus:ring-2 focus:ring-[#004BB8]/25"
+                    value={sortMode}
+                    onChange={(event) => {
+                      triggerFilterApplying();
+                      setSortMode(event.target.value as SortMode);
+                      handleUserFilterCommit();
+                    }}
+                  >
+                    <option value="best">{t("best")}</option>
+                    <option value="cheapest">{t("cheapest")}</option>
+                    <option value="fastest">{t("quickest")}</option>
+                  </select>
+                </div>
 
                 <Button
                   variant="secondary"
@@ -7972,6 +8038,18 @@ function Filters({
 
   const [compactOpenSection, setCompactOpenSection] =
     useState<CompactFilterSectionId>(null);
+  const [desktopAirlineSearch, setDesktopAirlineSearch] = useState("");
+  const visibleDesktopAirlineOptions = useMemo(() => {
+    const query = desktopAirlineSearch.trim().toLowerCase();
+
+    if (!query) return airlineOptions;
+
+    return airlineOptions.filter(
+      (option) =>
+        option.label.toLowerCase().includes(query) ||
+        selectedAirlines.includes(option.value),
+    );
+  }, [airlineOptions, desktopAirlineSearch, selectedAirlines]);
   const activeFilterLabel = t("activeFilterCount").replace(
     "{{count}}",
     String(activeFilterCount),
@@ -8290,15 +8368,298 @@ function Filters({
     );
   }
 
+  if (layout === "desktop") {
+    const timeBoundsForMode =
+      timeFilterMode === "takeoff" ? timeBounds.takeoff : timeBounds.landing;
+    const maxTimeForMode =
+      timeFilterMode === "takeoff" ? maxTakeoffMinutes : maxLandingMinutes;
+    const setMaxTimeForMode =
+      timeFilterMode === "takeoff"
+        ? setMaxTakeoffMinutes
+        : setMaxLandingMinutes;
+
+    return (
+      <div className="desktop-filter-sidebar rounded-xl border border-[#D8E1EC] bg-white px-5 py-5 shadow-[0_10px_26px_-22px_rgba(15,23,42,0.38)]">
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <h2 className="text-[17px] font-semibold tracking-[-0.01em] text-slate-950">
+            {t("filterBy")}
+          </h2>
+          <button
+            type="button"
+            className="rounded-md px-1.5 py-1 text-xs font-semibold text-[#004BB8] transition hover:bg-[#EAF2FB] disabled:pointer-events-none disabled:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+            onClick={onClear}
+            disabled={activeFilterCount === 0}
+          >
+            Reset all
+          </button>
+        </div>
+
+        <div className="space-y-5">
+          <section>
+            <h3 className="mb-3 text-xs font-extrabold uppercase tracking-[0.12em] text-slate-950">
+              {t("price")}
+            </h3>
+            <div className="mb-2 flex justify-between text-xs font-semibold text-slate-950">
+              <span>
+                {priceBounds.max && priceLabelCurrency
+                  ? formatFilterPrice(priceBounds.min)
+                  : "—"}
+              </span>
+              <span>
+                {priceBounds.max && priceLabelCurrency
+                  ? formatFilterPrice(priceBounds.max)
+                  : "—"}
+              </span>
+            </div>
+            <input
+              aria-label={t("price")}
+              className={filterRangeClass}
+              type="range"
+              min={priceBounds.min || 0}
+              max={priceBounds.max || 0}
+              step={25}
+              value={priceBounds.max ? Math.min(maxPrice, priceBounds.max) : 0}
+              disabled={!priceBounds.max}
+              onPointerUp={onFilterCommit}
+              onMouseUp={onFilterCommit}
+              onTouchEnd={onFilterCommit}
+              onKeyUp={onFilterCommit}
+              onBlur={onFilterCommit}
+              onChange={(event) => {
+                onFilterChange();
+                setMaxPrice(Number(event.target.value));
+              }}
+            />
+          </section>
+
+          <DesktopFilterSection
+            title={t("stops")}
+            emptyText={t("stopsAppearAfterResultsLoad")}
+          >
+            {stopOptions.map((option) => (
+              <FilterOptionRow
+                key={option.value}
+                label={option.label}
+                count={option.count}
+                secondaryLabel={
+                  option.rightLabel
+                    ? `from ${option.rightLabel}`
+                    : option.secondaryLabel
+                }
+                checked={selectedStops.includes(option.value)}
+                onChange={() => {
+                  onFilterChange();
+                  toggleFilterValue(option.value, setSelectedStops);
+                  onFilterCommit();
+                }}
+              />
+            ))}
+          </DesktopFilterSection>
+
+          <section>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <h3 className="text-xs font-extrabold uppercase tracking-[0.12em] text-slate-950">
+                {timeFilterMode === "takeoff"
+                  ? t("takeoffTimeFromOrigin")
+                  : t("landingTimeAtDestination")}
+              </h3>
+            </div>
+            <div className="mb-2 grid grid-cols-2 rounded-lg bg-slate-100 p-0.5">
+              <button
+                type="button"
+                onClick={() => setTimeFilterMode("takeoff")}
+                className={cn(
+                  "rounded-md px-2 py-1.5 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30",
+                  timeFilterMode === "takeoff"
+                    ? "bg-white text-[#004BB8] shadow-sm"
+                    : "text-slate-600 hover:text-slate-950",
+                )}
+              >
+                {t("takeoff")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimeFilterMode("landing")}
+                className={cn(
+                  "rounded-md px-2 py-1.5 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30",
+                  timeFilterMode === "landing"
+                    ? "bg-white text-[#004BB8] shadow-sm"
+                    : "text-slate-600 hover:text-slate-950",
+                )}
+              >
+                {t("landing")}
+              </button>
+            </div>
+            <div className="mb-2 flex justify-between text-xs font-medium tabular-nums text-slate-700">
+              <span>
+                {timeBoundsForMode
+                  ? formatTimeFromMinutes(timeBoundsForMode.min, calendarLocale)
+                  : "—"}
+              </span>
+              <span>
+                {timeBoundsForMode
+                  ? formatTimeFromMinutes(timeBoundsForMode.max, calendarLocale)
+                  : "—"}
+              </span>
+            </div>
+            <input
+              aria-label={
+                timeFilterMode === "takeoff" ? t("takeoff") : t("landing")
+              }
+              className={filterRangeClass}
+              type="range"
+              min={timeBoundsForMode?.min ?? 0}
+              max={timeBoundsForMode?.max ?? 0}
+              step={15}
+              value={maxTimeForMode ?? timeBoundsForMode?.max ?? 0}
+              disabled={!timeBoundsForMode}
+              onPointerUp={onFilterCommit}
+              onMouseUp={onFilterCommit}
+              onTouchEnd={onFilterCommit}
+              onKeyUp={onFilterCommit}
+              onBlur={onFilterCommit}
+              onChange={(event) => {
+                onFilterChange();
+                setMaxTimeForMode(Number(event.target.value));
+              }}
+            />
+          </section>
+
+          <section>
+            <h3 className="mb-3 text-xs font-extrabold uppercase tracking-[0.12em] text-slate-950">
+              {t("duration")}
+            </h3>
+            <div className="mb-2 flex justify-between text-xs font-medium tabular-nums text-slate-700">
+              <span>
+                {durationBounds
+                  ? formatDurationFromMinutes(durationBounds.min, t)
+                  : "—"}
+              </span>
+              <span>
+                {durationBounds
+                  ? formatDurationFromMinutes(durationBounds.max, t)
+                  : "—"}
+              </span>
+            </div>
+            <input
+              aria-label={t("duration")}
+              className={filterRangeClass}
+              type="range"
+              min={durationBounds?.min ?? 0}
+              max={durationBounds?.max ?? 0}
+              step={15}
+              value={maxDurationMinutes ?? durationBounds?.max ?? 0}
+              disabled={!durationBounds}
+              onPointerUp={onFilterCommit}
+              onMouseUp={onFilterCommit}
+              onTouchEnd={onFilterCommit}
+              onKeyUp={onFilterCommit}
+              onBlur={onFilterCommit}
+              onChange={(event) => {
+                onFilterChange();
+                setMaxDurationMinutes(Number(event.target.value));
+              }}
+            />
+          </section>
+
+          <DesktopFilterSection
+            title={t("airlines")}
+            emptyText={t("airlinesAppearAfterResultsLoad")}
+          >
+            <label className="sr-only" htmlFor="desktop-airline-filter-search">
+              Search airlines
+            </label>
+            <input
+              id="desktop-airline-filter-search"
+              className="mb-2 h-9 w-full rounded-lg border border-slate-200 px-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-[#004BB8] focus:outline-none focus:ring-2 focus:ring-[#004BB8]/20"
+              placeholder="Search airlines"
+              type="search"
+              value={desktopAirlineSearch}
+              onChange={(event) => setDesktopAirlineSearch(event.target.value)}
+            />
+            {visibleDesktopAirlineOptions.map((option) => (
+              <FilterOptionRow
+                key={option.value}
+                label={option.label}
+                count={option.count}
+                secondaryLabel={
+                  option.rightLabel ? `from ${option.rightLabel}` : undefined
+                }
+                checked={selectedAirlines.includes(option.value)}
+                onChange={() => {
+                  onFilterChange();
+                  toggleFilterValue(option.value, setSelectedAirlines);
+                  onFilterCommit();
+                }}
+              />
+            ))}
+          </DesktopFilterSection>
+
+          <DesktopCollapsibleSection title={t("baggage") || t("amenities")}>
+            <FilterOptionRow
+              label={t("baggageIncluded")}
+              checked={baggageIncludedOnly}
+              onChange={() => {
+                onFilterChange();
+                setBaggageIncludedOnly(!baggageIncludedOnly);
+                onFilterCommit();
+              }}
+            />
+          </DesktopCollapsibleSection>
+          <DesktopCollapsibleSection title={t("flexibleRefundable")}>
+            <FilterOptionRow
+              label={t("flexibleRefundable")}
+              checked={flexibleOnly}
+              onChange={() => {
+                onFilterChange();
+                setFlexibleOnly(!flexibleOnly);
+                onFilterCommit();
+              }}
+            />
+          </DesktopCollapsibleSection>
+          {renderQualitySection ? (
+            <DesktopCollapsibleSection title={t("flightQuality")}>
+              {flightQualityOptions.map((option) => (
+                <FilterOptionRow
+                  key={option.value}
+                  label={option.label}
+                  count={option.count}
+                  checked={selectedFlightQuality.includes(option.value)}
+                  onChange={() => {
+                    onFilterChange();
+                    toggleFilterValue(option.value, setSelectedFlightQuality);
+                    onFilterCommit();
+                  }}
+                />
+              ))}
+            </DesktopCollapsibleSection>
+          ) : null}
+          <DesktopCollapsibleSection
+            title={t("airports")}
+            emptyText={t("airportsAppearAfterResultsLoad")}
+          >
+            {airportOptions.map((option) => (
+              <FilterOptionRow
+                key={option.value}
+                label={option.label}
+                count={option.count}
+                checked={selectedAirports.includes(option.value)}
+                onChange={() => {
+                  onFilterChange();
+                  toggleFilterValue(option.value, setSelectedAirports);
+                  onFilterCommit();
+                }}
+              />
+            ))}
+          </DesktopCollapsibleSection>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={cn(
-        layout === "mobile"
-          ? "bg-white"
-          : "desktop-filter-sidebar rounded-2xl border border-[#D8E1EC] bg-white p-0 shadow-[0_12px_30px_-24px_rgba(15,23,42,0.42)]",
-      )}
-    >
-      {layout === "desktop" ? (
+    <div className="bg-white">
+      {false ? (
         <div className="desktop-filter-sidebar__header border-b border-slate-200/70 px-3 py-3">
           <div className="flex items-center justify-between gap-3">
             <h2 className="desktop-filter-sidebar__title truncate text-base font-bold text-slate-950">
@@ -8329,15 +8690,9 @@ function Filters({
         </div>
       ) : null}
 
-      <div
-        className={cn(
-          layout === "mobile"
-            ? "space-y-4 bg-white"
-            : "space-y-0 bg-white px-3 py-1",
-        )}
-      >
+      <div className={cn("space-y-4 bg-white")}>
         <section>
-          {layout === "desktop" ? (
+          {false ? (
             <div className="mb-2.5 flex items-center justify-between gap-3">
               <h3 className="text-sm font-extrabold uppercase tracking-[0.14em] text-slate-950">
                 {t("price")}
@@ -8643,6 +8998,80 @@ function Filters({
         </FilterSection>
       </div>
     </div>
+  );
+}
+
+function DesktopFilterSection({
+  title,
+  emptyText,
+  children,
+}: {
+  title: string;
+  emptyText?: string;
+  children: ReactNode;
+}) {
+  const hasOptions =
+    Boolean(children) && (!Array.isArray(children) || children.length > 0);
+
+  return (
+    <section>
+      <h3 className="mb-3 text-xs font-extrabold uppercase tracking-[0.12em] text-slate-950">
+        {title}
+      </h3>
+      <div className="grid gap-0.5">
+        {hasOptions ? (
+          children
+        ) : (
+          <p className="py-1 text-xs font-normal text-slate-500">{emptyText}</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function DesktopCollapsibleSection({
+  title,
+  emptyText,
+  children,
+}: {
+  title: string;
+  emptyText?: string;
+  children: ReactNode;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const panelId = `desktop-filter-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-panel`;
+  const hasOptions =
+    Boolean(children) && (!Array.isArray(children) || children.length > 0);
+
+  return (
+    <section className="border-t border-slate-200/80 pt-0">
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        aria-controls={panelId}
+        className="flex w-full items-center justify-between gap-3 py-3 text-left text-xs font-extrabold uppercase tracking-[0.08em] text-slate-950 transition hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+        onClick={() => setIsOpen((current) => !current)}
+      >
+        <span>{title}</span>
+        <ChevronDown
+          aria-hidden="true"
+          className={cn(
+            "h-4 w-4 text-slate-600 transition",
+            isOpen && "rotate-180 text-[#004BB8]",
+          )}
+        />
+      </button>
+      <div
+        id={panelId}
+        className={cn("grid gap-0.5 pb-3", !isOpen && "hidden")}
+      >
+        {hasOptions ? (
+          children
+        ) : (
+          <p className="py-1 text-xs font-normal text-slate-500">{emptyText}</p>
+        )}
+      </div>
+    </section>
   );
 }
 
