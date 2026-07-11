@@ -4325,7 +4325,7 @@ export function FlightResultsClient() {
       "focus-ring flex min-h-[50px] min-w-0 flex-col justify-center px-4 py-2 text-start transition-colors hover:bg-white/60 focus-visible:bg-white/75";
     const collapsedSeparatorClass = "border-r border-slate-300/60";
     const collapsedConnectorClass =
-      "focus-ring flex min-h-[50px] cursor-pointer items-center justify-center border-r border-slate-300/60 bg-slate-50/70 px-1.5 text-slate-600 transition-colors hover:bg-white/80 hover:text-slate-950 focus-visible:bg-white";
+      "focus-ring flex min-h-[50px] cursor-pointer items-center justify-center bg-slate-50/60 px-1.5 text-[#004BB8] transition-colors hover:bg-white/75 hover:text-[#021C2B] focus-visible:bg-white";
     const stickyDateSummary = departureDateInput
       ? tripTypeInput === "round-trip" && returnDateInput
         ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
@@ -4345,7 +4345,7 @@ export function FlightResultsClient() {
           <div className="mx-auto w-full max-w-5xl">
             <form
               onSubmit={handleCompactSearchSubmit}
-              className="group grid min-h-[62px] w-full grid-cols-[minmax(108px,0.72fr)_minmax(140px,1fr)_44px_minmax(140px,1fr)_minmax(150px,1.03fr)_minmax(150px,1.05fr)_auto] items-stretch overflow-hidden rounded-2xl border border-slate-300/75 bg-[#f6f9fd]/95 text-start shadow-[0_18px_44px_-24px_rgba(15,23,42,0.45)] ring-1 ring-white/70 backdrop-blur-md transition hover:border-slate-400/70"
+              className="group grid min-h-[62px] w-full grid-cols-[minmax(108px,0.72fr)_minmax(140px,1fr)_44px_minmax(140px,1fr)_minmax(150px,1.03fr)_minmax(150px,1.05fr)_auto] items-stretch overflow-hidden rounded-xl border border-slate-300 bg-[#f6f9fd]/95 text-start shadow-[0_14px_34px_-24px_rgba(15,23,42,0.48)] ring-1 ring-white/70 backdrop-blur-md transition hover:border-slate-400/70"
             >
               <button
                 type="button"
@@ -4364,7 +4364,7 @@ export function FlightResultsClient() {
                 aria-expanded={isStickySearchPanelOpen}
                 aria-label={t("searchFlights")}
                 onClick={expandStickySearch}
-                className={cn(collapsedFieldClass, collapsedSeparatorClass)}
+                className={collapsedFieldClass}
               >
                 <span className={stickyLabelClass}>{t("origin")}</span>
                 <span className={stickyValueClass}>{mobileOriginSummary}</span>
@@ -4378,7 +4378,7 @@ export function FlightResultsClient() {
                 }}
                 className={collapsedConnectorClass}
               >
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300/80 bg-white/75 text-current shadow-[0_4px_12px_rgba(15,23,42,0.08)] ring-1 ring-white/80 transition group-hover:border-slate-400/80">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/65 text-current shadow-[0_4px_12px_rgba(15,23,42,0.06)] ring-1 ring-white/80 transition group-hover:border-slate-400/80">
                   <ArrowRightLeft className="h-4 w-4" aria-hidden="true" />
                 </span>
               </button>
@@ -4417,7 +4417,7 @@ export function FlightResultsClient() {
               <div className="flex items-center border-l border-slate-300/60 bg-white/55 px-3">
                 <Button
                   type="submit"
-                  className="h-[42px] rounded-xl bg-[#004BB8] px-5 text-sm font-bold text-white shadow-[0_10px_20px_rgba(0,75,184,0.14)] ring-1 ring-[#004BB8]/12 hover:bg-[#021C2B]"
+                  className="h-[42px] rounded-lg bg-[#004BB8] px-5 text-sm font-bold text-white shadow-[0_10px_20px_rgba(0,75,184,0.14)] ring-1 ring-[#004BB8]/12 hover:bg-[#021C2B]"
                   onClick={(event) => event.stopPropagation()}
                 >
                   {t("search")}
