@@ -3,10 +3,13 @@
 import Image from "next/image";
 import {
   Armchair,
+  Award,
   Luggage,
   PlaneTakeoff,
   Settings,
   ShieldCheck,
+  Tag,
+  Zap,
 } from "lucide-react";
 import type { FlightLeg, PublicFlightResult } from "@/lib/types";
 import { LinkButton } from "@/components/ui/Button";
@@ -24,12 +27,16 @@ type DetailItem = {
   icon: React.ComponentType<{ className?: string }>;
 };
 
+type ResultBadge = "best" | "fastest" | "cheapest";
+
 export function FlightCard({
   flight,
   isAccented = false,
+  resultBadge,
 }: {
   flight: PublicFlightResult;
   isAccented?: boolean;
+  resultBadge?: ResultBadge;
 }) {
   const { t: dictionary, locale } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -44,6 +51,9 @@ export function FlightCard({
     isFallbackRate: currencyRates.isFallback,
   });
   const details = buildFlightDetails(flight, t);
+  const desktopDetails = details.filter(
+    (detail) => detail.label !== t("seatSelection"),
+  );
   const visibleLegs = getVisibleLegs(flight);
   const providerPrice = `${displayPrice.providerFormatted} ${displayPrice.sourceCurrency}`;
   const priceAriaLabel = displayPrice.isConvertedEstimate
@@ -124,7 +134,7 @@ export function FlightCard({
       {mobileCard}
 
       <div className="hidden px-5 py-4 lg:block xl:px-6">
-        <div className="flex min-w-0 items-center justify-between gap-4 border-b border-[#E5ECF5] pb-3">
+        <div className="flex min-w-0 items-start justify-between gap-4 pb-2">
           <div className="flex min-w-0 items-center gap-3">
             <AirlineLogo flight={flight} desktop />
             <div className="min-w-0">
@@ -138,9 +148,10 @@ export function FlightCard({
               ) : null}
             </div>
           </div>
+          <ResultBadgePill badge={resultBadge} />
         </div>
 
-        <div className="mt-4 grid min-w-0 grid-cols-[minmax(150px,0.9fr)_minmax(280px,1.6fr)_minmax(150px,0.9fr)_minmax(175px,0.8fr)] items-stretch gap-x-5 gap-y-5 xl:grid-cols-[minmax(165px,0.9fr)_minmax(340px,1.7fr)_minmax(165px,0.9fr)_minmax(190px,0.8fr)] xl:gap-x-6">
+        <div className="mt-2 grid min-w-0 grid-cols-[minmax(130px,0.85fr)_minmax(260px,1.55fr)_minmax(130px,0.8fr)_minmax(190px,0.85fr)] items-stretch gap-x-5 gap-y-4 xl:grid-cols-[minmax(140px,0.85fr)_minmax(300px,1.55fr)_minmax(140px,0.8fr)_minmax(205px,0.85fr)] xl:gap-x-6">
           <div className="col-span-3 grid min-w-0 gap-5">
             {visibleLegs.map((leg, index) => (
               <DesktopFlightLegRow
@@ -161,18 +172,57 @@ export function FlightCard({
             providerPrice={providerPrice}
             providerPriceLabel={t("providerPrice")}
             viewFlightLabel={t("viewFlight")}
-            className="border-l border-[#D8E1EC] pl-5 xl:pl-6"
             desktop
           />
         </div>
 
-        <FlightDetailLines details={details} desktop />
-
-        <div className="mt-3 w-full rounded-[6px] bg-[#F3F7FD] px-4 py-2.5 text-xs font-medium leading-5 text-[#536B92]">
-          {providerHandoffCopy}
-        </div>
+        <FlightDetailLines details={desktopDetails} desktop />
       </div>
     </Card>
+  );
+}
+
+
+function ResultBadgePill({ badge }: { badge?: ResultBadge }) {
+  if (!badge) return null;
+
+  const badgeConfig = {
+    best: {
+      label: "Best value",
+      Icon: Award,
+      className: "bg-emerald-50 text-emerald-700",
+    },
+    fastest: {
+      label: "Fastest",
+      Icon: Zap,
+      className: "bg-blue-50 text-[#004BB8]",
+    },
+    cheapest: {
+      label: "Cheapest",
+      Icon: Tag,
+      className: "bg-emerald-50 text-emerald-700",
+    },
+  } satisfies Record<
+    ResultBadge,
+    {
+      label: string;
+      Icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+      className: string;
+    }
+  >;
+
+  const { label, Icon, className } = badgeConfig[badge];
+
+  return (
+    <div
+      className={cn(
+        "inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1 text-xs font-semibold leading-5",
+        className,
+      )}
+    >
+      <Icon className="h-3.5 w-3.5" aria-hidden />
+      {label}
+    </div>
   );
 }
 
@@ -340,9 +390,6 @@ function DesktopFlightLegRow({
         </div>
 
         <div className="min-w-0 self-center text-right">
-          <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#0057E7]">
-            ARRIVAL
-          </p>
           <div
             className="text-[22px] font-semibold leading-6 tracking-[-0.025em] text-[#07133B]"
             dir="ltr"
@@ -445,7 +492,7 @@ function FlightFareAction({
     <div
       className={cn(
         desktop
-          ? "flex min-w-0 flex-col items-center justify-center gap-3 text-center"
+          ? "flex min-w-[190px] flex-col items-center justify-center gap-3 border-l border-[#D8E1EC] pl-5 text-center xl:min-w-[205px] xl:pl-6"
           : "flex w-[104px] shrink-0 flex-col items-center gap-2.5 rounded-xl px-0 py-0 text-center sm:w-[112px] lg:min-h-[118px] lg:w-auto lg:items-stretch lg:justify-center lg:gap-2 lg:self-stretch lg:px-1 lg:py-3 lg:text-center",
         className,
       )}
@@ -488,7 +535,7 @@ function FlightFareAction({
         className={cn(
           "w-auto shrink-0 justify-center whitespace-nowrap bg-[#004BB8] text-sm font-semibold hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35",
           desktop
-            ? "min-w-[128px] rounded-md px-5 py-2.5"
+            ? "min-w-[126px] rounded-md px-5 py-2.5"
             : "min-w-[104px] rounded-full px-5 py-2.5 sm:px-4 sm:py-2 sm:text-sm lg:w-full lg:min-w-0 lg:px-3.5 lg:py-2 lg:text-sm",
         )}
       >
@@ -510,7 +557,7 @@ function FlightDetailLines({
       className={cn(
         "grid min-w-0 flex-1 text-xs leading-5 text-slate-600",
         desktop
-          ? "mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-[#D8E1EC] pt-3"
+          ? "mt-4 grid grid-cols-3 items-center gap-x-6 border-t border-[#D8E1EC] pt-3"
           : "gap-x-4 gap-y-1 sm:grid-cols-2 lg:border-t lg:border-slate-100 lg:pt-2",
       )}
     >
