@@ -88,7 +88,7 @@ import {
 } from "@/lib/saved-trips-api";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
-import { cn, formatTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import {
   calculateCompactFilterPlacement,
   shouldRenderFlightQualityFilter,
@@ -2764,39 +2764,6 @@ export function FlightResultsClient() {
       mixedProviderCurrenciesLabel,
     ],
   );
-
-  const buildSummaryDetails = (
-    flight: PublicFlightResult | null,
-    mode: SortMode,
-  ) => {
-    if (!flight) return null;
-
-    const price = formatResultPriceLabel(flight.price, flight.currency);
-    const duration = formatDurationFromMinutes(flight.durationMinutes, t);
-    const stops = formatStopsLabel(flight.stops, t);
-    const airlineOrProvider = flight.airlineName || flight.provider;
-    const departure = formatResultDepartureTime(
-      flight.departureTime,
-      calendarLocale,
-    );
-    const primary =
-      mode === "fastest"
-        ? `${duration} · ${price}`
-        : mode === "best"
-          ? `${price} · ${duration}`
-          : price;
-    const context = [airlineOrProvider, duration, stops]
-      .filter(Boolean)
-      .join(" · ");
-
-    return {
-      primary,
-      context,
-      departure: t("departs").includes("{{time}}")
-        ? t("departs").replace("{{time}}", departure)
-        : `${t("departs")} ${departure}`,
-    };
-  };
 
   const stopOptions = useMemo(() => {
     const buckets = new Map<
@@ -6444,46 +6411,6 @@ export function FlightResultsClient() {
             </div>
           ) : (
             <div className={cn(resultStackClass, "space-y-4")}>
-              <div className="hidden w-full sm:block">
-                <div className="grid auto-rows-fr grid-cols-3 gap-2">
-                  <SummarySortButton
-                    label={t("cheapest")}
-                    details={buildSummaryDetails(
-                      sortSummaries.cheapest,
-                      "cheapest",
-                    )}
-                    active={sortMode === "cheapest"}
-                    onClick={() => {
-                      triggerFilterApplying();
-                      setSortMode("cheapest");
-                    }}
-                  />
-
-                  <SummarySortButton
-                    label={t("best")}
-                    details={buildSummaryDetails(sortSummaries.best, "best")}
-                    active={sortMode === "best"}
-                    onClick={() => {
-                      triggerFilterApplying();
-                      setSortMode("best");
-                    }}
-                  />
-
-                  <SummarySortButton
-                    label={t("quickest")}
-                    details={buildSummaryDetails(
-                      sortSummaries.fastest,
-                      "fastest",
-                    )}
-                    active={sortMode === "fastest"}
-                    onClick={() => {
-                      triggerFilterApplying();
-                      setSortMode("fastest");
-                    }}
-                  />
-                </div>
-              </div>
-
               <div className="hidden w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex sm:items-center sm:justify-between">
                 <p className="text-sm font-bold text-navy">
                   {formatResultsFound(sortedResults.length, t)}
@@ -7797,22 +7724,6 @@ function getTimeMinutes(value: string) {
   return hours * 60 + minutes;
 }
 
-function formatResultDepartureTime(value: string, locale: string) {
-  const date = new Date(value);
-
-  if (!Number.isNaN(date.getTime())) {
-    return new Intl.DateTimeFormat(locale, {
-      hour: "numeric",
-      minute: "2-digit",
-    }).format(date);
-  }
-
-  const minutes = getTimeMinutes(value);
-  return minutes === null
-    ? formatTime(value, locale)
-    : formatTimeFromMinutes(minutes, locale);
-}
-
 function formatTimeFromMinutes(value: number, locale: string) {
   const normalized = Math.max(0, Math.min(1439, value));
   const hours24 = Math.floor(normalized / 60);
@@ -8733,71 +8644,6 @@ function Filters({
       </div>
     </div>
   );
-}
-
-function SummarySortButton({
-  label,
-  details,
-  active,
-  mobile = false,
-  onClick,
-}: {
-  label: string;
-  details: {
-    primary: string;
-    context: string;
-    departure: string;
-  } | null;
-  active: boolean;
-  mobile?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "group relative flex h-full flex-col rounded-2xl border text-start transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
-        mobile
-          ? "min-w-[178px] snap-start px-3 py-2.5"
-          : "min-h-[104px] px-3.5 py-3",
-        active
-          ? "border-[#004BB8]/22 bg-[#004BB8]/6 text-[#021C2B] shadow-[0_12px_28px_-20px_rgba(2,28,43,0.18)] ring-1 ring-[#004BB8]/8"
-          : "border-[#D8E1EC] bg-white text-slate-600 hover:border-[#CBD6E2] hover:bg-[#F8FAFC] hover:shadow-[0_10px_24px_rgba(2,28,43,0.08)]",
-      )}
-    >
-      <span
-        className={cn(
-          "inline-flex w-fit rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em]",
-          active
-            ? "bg-[#004BB8]/10 text-[#004BB8]"
-            : "bg-slate-100 text-slate-500",
-        )}
-      >
-        {label}
-      </span>
-      <span className="mt-2 block truncate text-lg font-semibold leading-6 tracking-[-0.02em] text-slate-800 sm:text-base sm:leading-6 lg:text-lg">
-        {details?.primary ?? "—"}
-      </span>
-      {details ? (
-        <span className="mt-1.5 flex min-h-0 flex-1 flex-col justify-end gap-1">
-          <span className="block truncate text-xs font-medium leading-4 text-slate-600">
-            {details.context}
-          </span>
-          <span className="block truncate text-[11px] font-normal leading-4 text-slate-500">
-            {details.departure}
-          </span>
-        </span>
-      ) : null}
-    </button>
-  );
-}
-
-function formatStopsLabel(stops: number, t: (key: string) => string) {
-  if (stops === 0) return t("nonstop");
-  return stops === 1
-    ? t("oneStop")
-    : t("stopCount").replace("{{count}}", String(stops));
 }
 
 function CompactFilterSection({
