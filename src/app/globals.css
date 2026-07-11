@@ -638,13 +638,17 @@ textarea {
 
 @media (min-width: 1024px) and (max-width: 1199px) {
   .flight-results-grid {
-    grid-template-columns: 190px minmax(0, 1fr);
+    grid-template-columns: 170px minmax(0, 1fr) minmax(96px, 130px);
+  }
+
+  .flight-results-right-rail {
+    display: block;
   }
 }
 
 @media (min-width: 1200px) and (max-width: 1279px) {
   .flight-results-grid {
-    grid-template-columns: 200px minmax(0, 856px) minmax(64px, 80px);
+    grid-template-columns: 180px minmax(0, 1fr) minmax(130px, 170px);
   }
 
   .flight-results-right-rail {
@@ -654,7 +658,7 @@ textarea {
 
 @media (min-width: 1280px) and (max-width: 1365px) {
   .flight-results-grid {
-    grid-template-columns: 210px minmax(0, 880px) minmax(88px, 128px);
+    grid-template-columns: 190px minmax(0, 820px) minmax(160px, 210px);
   }
 
   .flight-results-right-rail {
@@ -664,7 +668,7 @@ textarea {
 
 @media (min-width: 1366px) and (max-width: 1439px) {
   .flight-results-grid {
-    grid-template-columns: 220px minmax(0, 900px) minmax(110px, 160px);
+    grid-template-columns: 210px minmax(0, 850px) minmax(180px, 240px);
   }
 
   .flight-results-right-rail {
@@ -674,7 +678,7 @@ textarea {
 
 @media (min-width: 1440px) and (max-width: 1599px) {
   .flight-results-grid {
-    grid-template-columns: 230px minmax(0, 920px) minmax(150px, 220px);
+    grid-template-columns: 220px minmax(0, 880px) minmax(220px, 280px);
   }
 
   .flight-results-right-rail {
@@ -684,7 +688,7 @@ textarea {
 
 @media (min-width: 1600px) {
   .flight-results-grid {
-    grid-template-columns: 240px minmax(0, 980px) minmax(220px, 300px);
+    grid-template-columns: 230px minmax(0, 920px) minmax(260px, 340px);
   }
 
   .flight-results-right-rail {
