@@ -23,6 +23,7 @@ import {
   ArrowRightLeft,
   BedDouble,
   Calendar,
+  CarFront,
   MapPin,
   ChevronDown,
   Minus,
@@ -64,10 +65,20 @@ import {
   formatFlightsMonthHeading,
   normalizeFlightsCalendarLocale,
 } from "@/lib/flights/dateFormatting";
+import {
+  defaultDriverAge,
+  driverAgeOptions,
+  timeOptions,
+  toIsoDate as toCarsIsoDate,
+  validateCarsForm,
+  type CarsFormErrors,
+  type CarsFormValues,
+} from "@/lib/cars/carsSearchUtils";
 
 type TabMode =
   | "flights"
-  | "hotels";
+  | "hotels"
+  | "cars";
 
 type TripType =
   | "round-trip"
@@ -449,6 +460,19 @@ export function SearchTabs({
     useState(false);
   const [isHotelSubmitting, setIsHotelSubmitting] =
     useState(false);
+  const [isCarsSubmitting, setIsCarsSubmitting] =
+    useState(false);
+  const [carsValues, setCarsValues] = useState<CarsFormValues>({
+    pickupLocation: "",
+    pickupDate: "",
+    pickupTime: "10:00",
+    dropoffDate: "",
+    dropoffTime: "10:00",
+    driverAge: defaultDriverAge,
+    returnToDifferentLocation: false,
+    dropoffLocation: "",
+  });
+  const [carsErrors, setCarsErrors] = useState<CarsFormErrors>({});
 
   const [tripType, setTripType] =
     useState<TripType>(
@@ -1817,6 +1841,78 @@ export function SearchTabs({
     router.push(href);
   };
 
+
+  const updateCarsValue = <Key extends keyof CarsFormValues>(
+    key: Key,
+    value: CarsFormValues[Key],
+  ) => {
+    setCarsValues((current) => {
+      const next = { ...current, [key]: value };
+
+      if (key === "returnToDifferentLocation" && value === false) {
+        next.dropoffLocation = "";
+      }
+
+      return next;
+    });
+    setCarsErrors((current) => ({
+      ...current,
+      [key]: undefined,
+      dateRange: undefined,
+      ...(key === "returnToDifferentLocation"
+        ? { dropoffLocation: undefined }
+        : {}),
+    }));
+  };
+
+  const translateCarsFormErrors = (errors: CarsFormErrors): CarsFormErrors =>
+    Object.fromEntries(
+      Object.entries(errors).map(([field, errorKey]) => [
+        field,
+        errorKey ? translate(errorKey) : errorKey,
+      ]),
+    ) as CarsFormErrors;
+
+  const onCarsSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (isCarsSubmitting) return;
+
+    const nextErrors = validateCarsForm(carsValues, toCarsIsoDate(new Date()));
+    setCarsErrors(translateCarsFormErrors(nextErrors));
+
+    if (Object.values(nextErrors).some(Boolean)) {
+      return;
+    }
+
+    const pickupLocation = carsValues.pickupLocation.trim();
+    const dropoffLocation = carsValues.returnToDifferentLocation
+      ? carsValues.dropoffLocation.trim()
+      : pickupLocation;
+    const params = new URLSearchParams({
+      pickupLocation,
+      pickupDate: carsValues.pickupDate,
+      pickupTime: carsValues.pickupTime,
+      dropoffDate: carsValues.dropoffDate,
+      dropoffTime: carsValues.dropoffTime,
+      driverAge: carsValues.driverAge,
+      dropoffLocation,
+    });
+
+    setIsCarsSubmitting(true);
+    startRouteProgress();
+    router.push(`/cars/results?${params.toString()}`);
+  };
+
+  const isCarsSearchDisabled =
+    isCarsSubmitting ||
+    !carsValues.pickupLocation.trim() ||
+    !carsValues.pickupDate ||
+    !carsValues.dropoffDate ||
+    !carsValues.pickupTime ||
+    !carsValues.dropoffTime ||
+    (carsValues.returnToDifferentLocation && !carsValues.dropoffLocation.trim());
+
   const hotelDateSummary = useMemo(
     () => {
       const checkInSummary =
@@ -2675,6 +2771,24 @@ export function SearchTabs({
           <BedDouble className="h-4 w-4" />
           {t.hotels}
         </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            setTab("cars")
+          }
+          className={cn(
+            "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
+            compactHero && "lg:px-3.5 lg:py-2 lg:text-[15px]",
+            tab === "cars"
+              ? "bg-white text-navy shadow-sm"
+              : "text-slate-600 hover:text-slate-800",
+            compactHero && tab === "cars" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
+          )}
+        >
+          <CarFront className="h-4 w-4" />
+          {t.cars}
+        </button>
       </div>
 
       {tab === "flights" ? (
@@ -3289,7 +3403,7 @@ export function SearchTabs({
             onClose: () => setActiveMobileAirportPicker(null),
           })}
         </form>
-      ) : (
+      ) : tab === "hotels" ? (
         <form
           onSubmit={
             onHotelSubmit
@@ -3784,6 +3898,48 @@ export function SearchTabs({
               </div>
             </div>
           </HotelMobilePickerShell>
+        </form>
+      ) : (
+        <form onSubmit={onCarsSubmit} className={formClassName} noValidate>
+          <div className={fieldCardClassName}>
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_112px]">
+              <div className="relative rounded-xl border border-slate-300 bg-white p-3">
+                <label className={hotelFieldLabelClassName}>{translate("carsSearch.pickupLocationLabel") || "Pickup location"}</label>
+                <input className={cn(hotelFieldValueClassName, "w-full")} value={carsValues.pickupLocation} onChange={(e) => updateCarsValue("pickupLocation", e.target.value)} placeholder={translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"} />
+                {carsErrors.pickupLocation ? <p className="mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupLocation}</p> : null}
+              </div>
+              <div className="relative rounded-xl border border-slate-300 bg-white p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <label className={hotelFieldLabelClassName}>{translate("carsSearch.differentReturnLocation") || "Different return location"}</label>
+                  <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-[#004BB8]" checked={carsValues.returnToDifferentLocation} onChange={(e) => updateCarsValue("returnToDifferentLocation", e.target.checked)} aria-label={translate("carsSearch.differentReturnLocation") || "Different return location"} />
+                </div>
+                <input className={cn(hotelFieldValueClassName, "mt-1 w-full disabled:text-slate-400")} value={carsValues.returnToDifferentLocation ? carsValues.dropoffLocation : carsValues.pickupLocation} onChange={(e) => updateCarsValue("dropoffLocation", e.target.value)} placeholder={translate("carsSearch.returnLocationPlaceholder") || "Return city, airport or address"} disabled={!carsValues.returnToDifferentLocation} />
+                {carsErrors.dropoffLocation ? <p className="mt-1 text-xs font-semibold text-red-600">{carsErrors.dropoffLocation}</p> : null}
+              </div>
+              <div className="relative rounded-xl border border-slate-300 bg-white p-3">
+                <label className={hotelFieldLabelClassName}>{translate("carsSearch.rentalDatesLabel") || "Rental dates"}</label>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                  <input type="date" className="focus-ring min-h-11 rounded-lg border border-slate-200 px-2 text-sm font-semibold" value={carsValues.pickupDate} onChange={(e) => updateCarsValue("pickupDate", e.target.value)} aria-label="Pickup date" />
+                  <input type="date" className="focus-ring min-h-11 rounded-lg border border-slate-200 px-2 text-sm font-semibold" value={carsValues.dropoffDate} onChange={(e) => updateCarsValue("dropoffDate", e.target.value)} aria-label="Return date" />
+                </div>
+                {carsErrors.pickupDate || carsErrors.dropoffDate || carsErrors.dateRange ? <p className="mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupDate || carsErrors.dropoffDate || carsErrors.dateRange}</p> : null}
+              </div>
+              <div className="relative rounded-xl border border-slate-300 bg-white p-3">
+                <label className={hotelFieldLabelClassName}>{translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"}</label>
+                <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+                  <select className="focus-ring min-h-11 rounded-lg border border-slate-200 px-2 text-sm font-semibold" value={carsValues.pickupTime} onChange={(e) => updateCarsValue("pickupTime", e.target.value)} aria-label={translate("carsSearch.pickupTimeLabel") || "Pickup time"}>{timeOptions.map((time) => <option key={time} value={time}>{time}</option>)}</select>
+                  <select className="focus-ring min-h-11 rounded-lg border border-slate-200 px-2 text-sm font-semibold" value={carsValues.dropoffTime} onChange={(e) => updateCarsValue("dropoffTime", e.target.value)} aria-label={translate("carsSearch.returnTimeLabel") || "Return time"}>{timeOptions.map((time) => <option key={time} value={time}>{time}</option>)}</select>
+                  <select className="focus-ring min-h-11 rounded-lg border border-slate-200 px-2 text-sm font-semibold" value={carsValues.driverAge} onChange={(e) => updateCarsValue("driverAge", e.target.value)} aria-label={translate("carsSearch.driverAgeLabel") || "Driver age"}>{driverAgeOptions.map((age) => <option key={age} value={age}>{age === defaultDriverAge ? translate("carsSearch.driverAgeAnyAgeRange") || age : age}</option>)}</select>
+                </div>
+                {carsErrors.pickupTime || carsErrors.dropoffTime || carsErrors.driverAge ? <p className="mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupTime || carsErrors.dropoffTime || carsErrors.driverAge}</p> : null}
+              </div>
+              <div className={hotelSubmitWrapClassName}>
+                <Button type="submit" disabled={isCarsSearchDisabled} aria-busy={isCarsSubmitting} aria-label={translate("searchCars") || "Search cars"} className={hotelSubmitButtonClassName}>
+                  {isCarsSubmitting ? translate("carsSearchPreparing") || "Preparing car search..." : translate("searchCars") || "Search cars"}
+                </Button>
+              </div>
+            </div>
+          </div>
         </form>
       )}
       </section>

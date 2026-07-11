@@ -15,7 +15,6 @@ import {
   Hotel,
   Plane,
   Sparkles,
-  Mail,
 } from "lucide-react";
 
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
@@ -423,6 +422,18 @@ export default function Home() {
       cards: [],
     });
   const destinationsRailRef = useRef<HTMLDivElement>(null);
+  const [canScrollDestinationsLeft, setCanScrollDestinationsLeft] = useState(false);
+  const [canScrollDestinationsRight, setCanScrollDestinationsRight] = useState(false);
+
+  const updateDestinationArrowState = useCallback(() => {
+    const rail = destinationsRailRef.current;
+    if (!rail) return;
+    const tolerance = 2;
+    const maxScrollLeft = Math.max(0, rail.scrollWidth - rail.clientWidth);
+    const normalizedScrollLeft = Math.abs(rail.scrollLeft);
+    setCanScrollDestinationsLeft(normalizedScrollLeft > tolerance);
+    setCanScrollDestinationsRight(normalizedScrollLeft < maxScrollLeft - tolerance);
+  }, []);
 
   const scrollDestinationsRail = (direction: "left" | "right") => {
     const rail = destinationsRailRef.current;
@@ -435,6 +446,7 @@ export default function Home() {
       left: direction === "left" ? -amount : amount,
       behavior: "smooth",
     });
+    window.setTimeout(updateDestinationArrowState, 350);
   };
 
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -723,6 +735,24 @@ export default function Home() {
     return () => controller.abort();
   }, [regionCode]);
 
+  useEffect(() => {
+    updateDestinationArrowState();
+    const rail = destinationsRailRef.current;
+    if (!rail) return;
+
+    const resizeObserver = new ResizeObserver(updateDestinationArrowState);
+    resizeObserver.observe(rail);
+    Array.from(rail.children).forEach((child) => resizeObserver.observe(child));
+    rail.addEventListener("scroll", updateDestinationArrowState, { passive: true });
+    window.addEventListener("resize", updateDestinationArrowState);
+
+    return () => {
+      resizeObserver.disconnect();
+      rail.removeEventListener("scroll", updateDestinationArrowState);
+      window.removeEventListener("resize", updateDestinationArrowState);
+    };
+  }, [updateDestinationArrowState, visiblePopularDestinations]);
+
   const handleSavedTripToggle = async (
     event: React.MouseEvent<HTMLButtonElement>,
     itemId: string,
@@ -837,23 +867,27 @@ export default function Home() {
             </div>
 
             <div className="relative mt-6">
-              <button
-                type="button"
-                aria-label={t("homePreviousDestinations")}
-                onClick={() => scrollDestinationsRail("left")}
-                className="focus-ring absolute -left-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
-              >
-                <ChevronLeft size={18} />
-              </button>
+              {canScrollDestinationsLeft ? (
+                <button
+                  type="button"
+                  aria-label={t("homePreviousDestinations")}
+                  onClick={() => scrollDestinationsRail("left")}
+                  className="focus-ring absolute -left-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+              ) : null}
 
-              <button
-                type="button"
-                aria-label={t("homeNextDestinations")}
-                onClick={() => scrollDestinationsRail("right")}
-                className="focus-ring absolute -right-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
-              >
-                <ChevronRight size={18} />
-              </button>
+              {canScrollDestinationsRight ? (
+                <button
+                  type="button"
+                  aria-label={t("homeNextDestinations")}
+                  onClick={() => scrollDestinationsRail("right")}
+                  className="focus-ring absolute -right-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              ) : null}
 
               <div
                 ref={destinationsRailRef}
@@ -1008,6 +1042,41 @@ export default function Home() {
           </div>
         </section>
 
+
+        <section className="page-shell bg-white pb-8 pt-1 sm:bg-transparent sm:pb-9 sm:pt-3" aria-labelledby="regional-routes-heading">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <h2 id="regional-routes-heading" className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
+              {t("homeRegionalRoutesTitle") || "Discover destinations from your region"}
+            </h2>
+            <Link href="/flights" className="focus-ring hidden items-center gap-1.5 rounded-full px-2 py-1 text-sm font-bold text-[#004BB8] hover:text-[#021C2B] sm:inline-flex">
+              {t("homeRegionalRoutesViewAll") || "View all route ideas"}
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
+          <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
+            <div className="flex snap-x snap-mandatory gap-4 sm:grid sm:grid-cols-5 sm:gap-5">
+              {discoveryCards.slice(0, 5).map((card) => (
+                <RegionalRouteCard
+                  key={`regional-${card.item.id}`}
+                  href={buildDiscoveryCardHref(card.fare, {
+                    originCode: card.item.originCode,
+                    destinationCode: card.item.destinationCode,
+                    displayCurrency: selectedOption.currency,
+                    market: regionCode,
+                  })}
+                  originCity={card.item.originCity}
+                  destinationCity={card.item.destinationCity}
+                  price={card.fare}
+                  displayCurrency={selectedOption.currency}
+                  expectedOriginCode={card.item.originCode}
+                  expectedDestinationCode={card.item.destinationCode}
+                  isLoading={discoveryFareCardState.loading}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="mt-6 border-y border-slate-300/80 bg-gradient-to-b from-slate-50/90 via-[#F2F7FA]/45 to-slate-50/80 sm:mt-9">
           <div className="page-shell py-9 sm:py-11">
             <div className="space-y-4">
@@ -1087,6 +1156,30 @@ export default function Home() {
           />
         </section>
 
+        <section className="page-shell pb-7 pt-2 sm:pb-9 sm:pt-4">
+          <div className="overflow-hidden rounded-2xl bg-[#062B63] px-5 py-5 text-white shadow-[0_22px_50px_-30px_rgba(2,28,43,0.7)] sm:rounded-3xl sm:px-8 sm:py-6 lg:grid lg:grid-cols-[190px_minmax(0,1fr)_minmax(360px,0.9fr)] lg:items-center lg:gap-8">
+            <div className="mx-auto mb-4 h-20 w-40 text-white/90 lg:mb-0 lg:mx-0" aria-hidden="true">
+              <svg viewBox="0 0 180 90" fill="none" className="h-full w-full">
+                <path d="M2 62C32 36 46 87 68 55C84 31 103 40 121 22" stroke="white" strokeOpacity="0.62" strokeWidth="2" strokeDasharray="6 7" strokeLinecap="round" />
+                <path d="M83 36L160 8L132 76L116 49L83 36Z" fill="#EAF7FF" />
+                <path d="M116 49L160 8L102 43" stroke="#94DFF0" strokeWidth="3" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <div className="text-center lg:text-start">
+              <h2 className="text-xl font-extrabold tracking-tight sm:text-2xl">{t("homeNewsletterTitle")}</h2>
+              <p className="mt-2 text-sm font-medium leading-6 text-white/82">{t("homeNewsletterBody")}</p>
+            </div>
+            <div className="mt-5 lg:mt-0">
+              <form className="flex flex-col gap-2 sm:flex-row sm:gap-0" onSubmit={handleNewsletterSubmit} aria-busy={newsletterPending}>
+                <input type="email" value={newsletterEmail} onChange={(event) => { setNewsletterEmail(event.target.value); if (newsletterStatus !== "idle") { setNewsletterStatus("idle"); setNewsletterMessage(""); } }} placeholder={t("homeNewsletterPlaceholder")} className="focus-ring h-12 min-w-0 flex-1 rounded-xl border-0 bg-white px-4 text-base font-semibold text-slate-950 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 sm:rounded-e-none" aria-label={t("homeEmailAddress")} disabled={newsletterPending} required />
+                <button type="submit" className="focus-ring h-12 shrink-0 rounded-xl bg-[#5CB6B2] px-5 text-sm font-extrabold text-white transition hover:bg-[#48a5a1] disabled:cursor-not-allowed disabled:bg-slate-500 sm:rounded-s-none" aria-busy={newsletterPending} disabled={newsletterPending}>{newsletterPending ? t("homeSubscribing") : t("homeSubscribe")}</button>
+              </form>
+              <p className="mt-2 text-xs font-medium leading-5 text-white/72">{t("homeNewsletterConsent")}</p>
+              {newsletterMessage ? <p className={`mt-2 text-xs font-semibold ${newsletterStatus === "error" ? "text-red-200" : "text-teal-100"}`} role="status" aria-live="polite">{newsletterMessage}</p> : null}
+            </div>
+          </div>
+        </section>
+
         <section className="page-shell pb-12 pt-2 sm:pt-3">
           <div className="max-w-3xl space-y-2">
             <h2 className="text-xl font-semibold tracking-normal text-slate-800 sm:font-bold sm:text-slate-900">
@@ -1111,87 +1204,98 @@ export default function Home() {
           </Link>
         </section>
 
-        <section className="page-shell pb-6 pt-0 sm:pb-8 lg:pb-9">
-          <div className="mx-auto max-w-[800px] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_14px_38px_rgba(15,23,42,0.09)] ring-1 ring-slate-950/[0.03]">
-            <div className="h-0.5 bg-gradient-to-r from-[#004BB8] via-[#5CB6B2] to-[#021C2B]" />
-            <div className="space-y-3 p-3.5 sm:p-4 lg:p-5">
-              <div className="flex items-start gap-2.5 sm:gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#004BB8]/8 text-[#004BB8] shadow-sm ring-1 ring-[#004BB8]/10 sm:h-10 sm:w-10">
-                  <Mail className="size-4 sm:size-5" />
-                </span>
 
-                <div className="max-w-2xl space-y-1">
-                  <h2 className="text-base font-bold tracking-tight text-slate-950 sm:text-xl sm:leading-tight">
-                    {t("homeNewsletterTitle")}
-                  </h2>
-
-                  <p className="text-xs font-medium leading-5 text-slate-700 sm:text-sm sm:leading-5">
-                    {t("homeNewsletterBody")}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2 sm:pl-[3.25rem] sm:rtl:pl-0 sm:rtl:pr-[3.25rem]">
-                <form
-                  className="flex flex-col gap-2 sm:max-w-[34rem] sm:flex-row"
-                  onSubmit={handleNewsletterSubmit}
-                  aria-busy={newsletterPending}
-                >
-                  <input
-                    type="email"
-                    value={newsletterEmail}
-                    onChange={(event) => {
-                      setNewsletterEmail(event.target.value);
-                      if (newsletterStatus !== "idle") {
-                        setNewsletterStatus("idle");
-                        setNewsletterMessage("");
-                      }
-                    }}
-                    placeholder={t("homeNewsletterPlaceholder")}
-                    className="focus-ring h-12 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50/70 px-4 text-base font-semibold text-slate-950 shadow-inner shadow-slate-200/50 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 sm:h-10 sm:min-w-[11rem] sm:rounded-lg sm:px-3.5 sm:text-sm"
-                    aria-label={t("homeEmailAddress")}
-                    disabled={newsletterPending}
-                    required
-                  />
-
-                  <button
-                    type="submit"
-                    className="focus-ring h-12 shrink-0 whitespace-nowrap rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 transition hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:bg-slate-500 disabled:shadow-none sm:h-10 sm:rounded-lg sm:px-4"
-                    aria-busy={newsletterPending}
-                    disabled={newsletterPending}
-                  >
-                    {newsletterPending
-                      ? t("homeSubscribing")
-                      : t("homeSubscribe")}
-                  </button>
-                </form>
-
-                <p className="text-xs font-medium leading-5 text-slate-600">
-                  {t("homeNewsletterConsent")}
-                </p>
-
-                {newsletterMessage ? (
-                  <p
-                    className={`text-xs font-semibold sm:text-sm ${
-                      newsletterStatus === "error"
-                        ? "text-red-700"
-                        : "text-slate-700"
-                    }`}
-                    role="status"
-                    aria-live="polite"
-                  >
-                    {newsletterMessage}
-                  </p>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
 
       <Footer />
     </>
   );
+}
+
+function RegionalRouteCard({
+  href,
+  originCity,
+  destinationCity,
+  price,
+  displayCurrency,
+  expectedOriginCode,
+  expectedDestinationCode,
+  isLoading,
+}: {
+  href: ComponentProps<typeof Link>["href"];
+  originCity: string;
+  destinationCity: string;
+  price?: HomepageFare;
+  displayCurrency: string;
+  expectedOriginCode: string;
+  expectedDestinationCode: string;
+  isLoading: boolean;
+}) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+
+  return (
+    <Link
+      href={href}
+      aria-label={`${originCity} to ${destinationCity}`}
+      className="focus-ring group flex min-h-[104px] w-[min(78vw,230px)] shrink-0 snap-start flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-[0_10px_24px_-22px_rgba(15,23,42,0.55)] transition hover:-translate-y-0.5 hover:border-slate-300 sm:w-auto sm:min-w-0"
+    >
+      <div className="flex items-center gap-2 text-sm font-extrabold text-slate-950">
+        <span className="min-w-0 flex-1 truncate">{originCity}</span>
+        <Plane className="h-3.5 w-3.5 shrink-0 text-[#004BB8]" aria-hidden="true" />
+        <span className="min-w-0 flex-1 truncate text-end">{destinationCity}</span>
+      </div>
+      <div className="mt-4 flex items-end justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold text-slate-500">{t("fromPrice") || "From"}</p>
+          <RegionalRoutePrice price={price} displayCurrency={displayCurrency} expectedOriginCode={expectedOriginCode} expectedDestinationCode={expectedDestinationCode} isLoading={isLoading} />
+        </div>
+        <ChevronRight className="h-4 w-4 shrink-0 text-slate-900 transition group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" aria-hidden="true" />
+      </div>
+    </Link>
+  );
+}
+
+function RegionalRoutePrice({
+  price,
+  displayCurrency,
+  expectedOriginCode,
+  expectedDestinationCode,
+  isLoading,
+}: {
+  price?: HomepageFare;
+  displayCurrency: string;
+  expectedOriginCode: string;
+  expectedDestinationCode: string;
+  isLoading: boolean;
+}) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const currencyRates = useCurrencyRates();
+  const hasProviderPrice = hasFreshProviderPrice(price, {
+    originCode: expectedOriginCode,
+    destinationCode: expectedDestinationCode,
+  });
+
+  if (isLoading) {
+    return <span className="mt-1 block h-6 w-16 animate-pulse rounded bg-slate-200" aria-label={t("homeCheckingProviderRoutePricing")} />;
+  }
+
+  if (!hasProviderPrice || typeof price?.price !== "number" || !price.currency) {
+    return <span className="mt-1 block text-base font-extrabold text-slate-950">{t("homeCompareOptions")}</span>;
+  }
+
+  const displayPrice = formatDisplayPrice({
+    amount: price.price,
+    sourceCurrency: price.currency,
+    displayCurrency,
+    convertUsdEstimate: true,
+    maximumFractionDigits: 0,
+    rates: currencyRates.rates,
+    isFallbackRate: currencyRates.isFallback,
+  });
+
+  return <span className="mt-1 block text-lg font-black tracking-tight text-slate-950" title={displayPrice.title}>{displayPrice.formatted}</span>;
 }
 
 function DiscoveryCardImage({
