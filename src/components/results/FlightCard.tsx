@@ -45,9 +45,6 @@ export function FlightCard({
   });
   const details = buildFlightDetails(flight, t);
   const visibleLegs = getVisibleLegs(flight);
-  const showsProviderBackedReturn = visibleLegs.some(
-    (leg) => leg.direction === "return",
-  );
   const providerPrice = `${displayPrice.providerFormatted} ${displayPrice.sourceCurrency}`;
   const priceAriaLabel = displayPrice.isConvertedEstimate
     ? t("displayEstimateConvertedFromProviderPrice")
@@ -55,15 +52,15 @@ export function FlightCard({
         .replace("{{providerPrice}}", providerPrice)
     : providerPrice;
   const priceTitle = displayPrice.isConvertedEstimate
-    ? t("convertedDisplayEstimateProviderPrice")
-        .replace("{{providerPrice}}", providerPrice)
+    ? t("convertedDisplayEstimateProviderPrice").replace(
+        "{{providerPrice}}",
+        providerPrice,
+      )
     : undefined;
   const priceLabel = displayPrice.isConvertedEstimate
     ? t("estimatedPrice")
     : t("providerPrice");
-  const providerHandoffCopy = displayPrice.isConvertedEstimate
-    ? t("flightCardProviderHandoffConverted")
-    : t("flightCardProviderHandoff");
+  const providerHandoffCopy = t("flightCardProviderHandoff");
 
   return (
     <Card
@@ -79,7 +76,10 @@ export function FlightCard({
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#004BB8]">
                 {t("flightOption")}
               </p>
-              <p className="min-w-0 truncate text-end text-xs font-semibold text-slate-700" dir="auto">
+              <p
+                className="min-w-0 truncate text-end text-xs font-semibold text-slate-700"
+                dir="auto"
+              >
                 {flight.airlineName}
                 {flight.flightNumber ? ` · ${flight.flightNumber}` : ""}
               </p>
@@ -97,7 +97,7 @@ export function FlightCard({
               ))}
             </div>
 
-            <div className="flex items-start justify-between gap-3 border-t border-slate-100 pt-2 lg:block lg:border-t-0 lg:pt-0">
+            <div className="mt-1 flex items-start justify-between gap-3 border-t border-slate-100 pt-3.5 lg:mt-0 lg:block lg:border-t-0 lg:pt-0">
               <FlightDetailLines details={details} />
               <FlightFareAction
                 flightId={flight.id}
@@ -128,10 +128,8 @@ export function FlightCard({
           />
         </div>
 
-        <div className="mt-2 px-1 text-xs font-medium leading-5 text-slate-600">
-          {showsProviderBackedReturn
-            ? `${t("providerNormalizedItineraryPrefix")} ${providerHandoffCopy}`
-            : providerHandoffCopy}
+        <div className="mt-3 rounded-xl border border-[#D8E1EC]/80 bg-[#F8FAFC] px-3 py-2 text-xs font-medium leading-5 text-slate-600">
+          {providerHandoffCopy}
         </div>
       </div>
     </Card>
@@ -168,17 +166,26 @@ function FlightLegRow({
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#004BB8]">
               {formatLegTitle(leg, t)}
             </p>
-            <p className="truncate text-xs font-medium text-slate-600" dir="ltr">
+            <p
+              className="truncate text-xs font-medium text-slate-600"
+              dir="ltr"
+            >
               {leg.originAirport} → {leg.destinationAirport}
             </p>
           </div>
 
           <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-3">
             <div className="min-w-0">
-              <div className="text-base font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-[17px]" dir="ltr">
+              <div
+                className="text-base font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-[17px]"
+                dir="ltr"
+              >
                 {formatTime(leg.departureTime, locale)}
               </div>
-              <div className="mt-0.5 truncate text-xs font-medium text-slate-600" dir="ltr">
+              <div
+                className="mt-0.5 truncate text-xs font-medium text-slate-600"
+                dir="ltr"
+              >
                 {leg.originAirport}
               </div>
             </div>
@@ -189,7 +196,10 @@ function FlightLegRow({
                 <PlaneTakeoff className="mx-1.5 h-3 w-3" />
                 <span className="h-px flex-1 bg-slate-200" />
               </div>
-              <div className="mt-0.5 text-xs font-semibold leading-4 text-slate-800" dir="auto">
+              <div
+                className="mt-0.5 text-xs font-semibold leading-4 text-slate-800"
+                dir="auto"
+              >
                 {leg.duration}
               </div>
               <div className="text-[11px] font-medium leading-4 text-slate-600">
@@ -198,10 +208,16 @@ function FlightLegRow({
             </div>
 
             <div className="min-w-0 text-end">
-              <div className="text-base font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-[17px]" dir="ltr">
+              <div
+                className="text-base font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-[17px]"
+                dir="ltr"
+              >
                 {formatTime(leg.arrivalTime, locale)}
               </div>
-              <div className="mt-0.5 truncate text-xs font-medium text-slate-600" dir="ltr">
+              <div
+                className="mt-0.5 truncate text-xs font-medium text-slate-600"
+                dir="ltr"
+              >
                 {leg.destinationAirport}
               </div>
             </div>
@@ -269,7 +285,7 @@ function FlightFareAction({
   return (
     <div
       className={cn(
-        "flex shrink-0 flex-col items-end gap-2 rounded-xl px-0 py-0 text-end lg:min-h-[118px] lg:items-stretch lg:justify-center lg:self-stretch lg:px-1 lg:py-3 lg:text-center",
+        "flex shrink-0 flex-col items-end gap-2.5 rounded-xl px-0 py-0 text-end lg:min-h-[118px] lg:items-stretch lg:justify-center lg:gap-2 lg:self-stretch lg:px-1 lg:py-3 lg:text-center",
         className,
       )}
     >
@@ -282,7 +298,7 @@ function FlightFareAction({
         >
           {formattedPrice}
         </div>
-        <p className="mt-1 text-[10px] font-medium uppercase leading-none tracking-[0.08em] text-slate-600 sm:text-[11px]">
+        <p className="mt-1.5 text-[10px] font-medium uppercase leading-none tracking-[0.08em] text-slate-600 sm:text-[11px] lg:mt-1">
           {priceLabel}
         </p>
         {showConvertedProviderPrice ? (
@@ -394,7 +410,10 @@ function formatStopsLabel(stops: number, t: (key: string) => string) {
     : t("stopCount").replace("{{count}}", String(stops));
 }
 
-function formatCabinClass(value: string | undefined, t: (key: string) => string) {
+function formatCabinClass(
+  value: string | undefined,
+  t: (key: string) => string,
+) {
   if (!value) return t("checkProvider");
   const normalized = value.toLowerCase().replace(/[-_]/g, " ");
   if (normalized === "economy") return t("economy");
@@ -406,7 +425,10 @@ function formatCabinClass(value: string | undefined, t: (key: string) => string)
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
-function formatBaggageValue(value: string | undefined, t: (key: string) => string) {
+function formatBaggageValue(
+  value: string | undefined,
+  t: (key: string) => string,
+) {
   if (
     !value ||
     isProviderReviewCopy(value) ||
