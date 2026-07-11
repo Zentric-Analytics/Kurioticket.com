@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useId, useMemo, useState } from "react";
-import { Building2, MapPin } from "lucide-react";
+import { Building2, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import type { PublicHotelResult } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -14,6 +14,11 @@ import {
   getHotelReviewCount,
   type HotelReviewBand,
 } from "@/components/results/hotelReviewPresentation";
+import {
+  buildHotelGalleryCandidates,
+  getAdjacentHotelGalleryIndex,
+  resolveHotelGalleryIndex,
+} from "@/components/results/hotelGalleryPresentation";
 
 function getHotelStarRating(rating: number) {
   if (!Number.isFinite(rating) || rating <= 0) return null;
@@ -345,21 +350,40 @@ export function HotelCard({ hotel }: HotelCardProps) {
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const detailsRegionId = useId();
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [preferredImageIndex, setPreferredImageIndex] = useState(0);
   const starRating = getHotelStarRating(hotel.rating);
   const fallbackImageUrl = useMemo(
     () => getDeterministicFallbackImage(hotel),
     [hotel],
   );
-  const supplierImageUrl = hotel.imageUrl?.trim();
+  const explicitGalleryImages = useMemo(
+    () => buildHotelGalleryCandidates(hotel.imageUrls, hotel.imageUrl),
+    [hotel.imageUrl, hotel.imageUrls],
+  );
   const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(
     () => new Set(),
   );
-  const imageUrl =
-    supplierImageUrl && !failedImageUrls.has(supplierImageUrl)
-      ? supplierImageUrl
-      : failedImageUrls.has(fallbackImageUrl)
-        ? ""
-        : fallbackImageUrl;
+  const resolvedActiveImageIndex = resolveHotelGalleryIndex(
+    explicitGalleryImages,
+    failedImageUrls,
+    preferredImageIndex,
+  );
+  const availableImageIndices = explicitGalleryImages.reduce<number[]>(
+    (indices, url, index) => {
+      if (!failedImageUrls.has(url)) indices.push(index);
+      return indices;
+    },
+    [],
+  );
+  const activeGalleryImageUrl =
+    resolvedActiveImageIndex >= 0
+      ? explicitGalleryImages[resolvedActiveImageIndex]
+      : "";
+  const displayImageUrl = activeGalleryImageUrl
+    ? activeGalleryImageUrl
+    : failedImageUrls.has(fallbackImageUrl)
+      ? ""
+      : fallbackImageUrl;
   const rawRoomTypeText = hotel.roomType ? toTitleCase(hotel.roomType) : "";
   const roomTypeText = rawRoomTypeText
     ? translateKnownHotelLabel(rawRoomTypeText, t)
@@ -406,6 +430,38 @@ export function HotelCard({ hotel }: HotelCardProps) {
           "Taxes and fees not included"
         : "";
 
+  function markImageFailed(url: string) {
+    if (!url) return;
+
+    setFailedImageUrls((current) => {
+      if (current.has(url)) return current;
+      const next = new Set(current);
+      next.add(url);
+      return next;
+    });
+  }
+
+  const showGalleryControls = availableImageIndices.length > 1;
+  const activeGalleryPosition = availableImageIndices.indexOf(
+    resolvedActiveImageIndex,
+  );
+  const photoCounterText = (
+    t("hotelResults.photoCounter") || "{{current}} of {{total}} photos"
+  )
+    .replace("{{current}}", String(activeGalleryPosition + 1))
+    .replace("{{total}}", String(availableImageIndices.length));
+
+  function selectAdjacentImage(direction: -1 | 1) {
+    const nextIndex = getAdjacentHotelGalleryIndex(
+      explicitGalleryImages,
+      failedImageUrls,
+      resolvedActiveImageIndex,
+      direction,
+    );
+
+    if (nextIndex !== -1) setPreferredImageIndex(nextIndex);
+  }
+
   async function redirectToHotel() {
     if (isDemoHotel) return;
 
@@ -427,19 +483,49 @@ export function HotelCard({ hotel }: HotelCardProps) {
     <Card className="mx-auto w-full max-w-[800px] overflow-hidden border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(2,28,43,0.26)]">
       <div className="grid md:grid-cols-[40%_minmax(0,1fr)]">
         <div className="relative h-[clamp(280px,78vw,340px)] bg-surface-muted md:aspect-auto md:h-auto md:min-h-[230px] lg:min-h-[240px]">
-          {imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt={t("hotelResults.hotelImageAlt")
-                .replace("{{name}}", hotel.name)
-                .replace("{{location}}", hotel.location ? ` ${t("hotelResults.nearLocation").replace("{{location}}", hotel.location)}` : "")}
-              fill
-              className="object-cover"
-              sizes="(min-width: 768px) 40vw, 100vw"
-              onError={() => {
-                setFailedImageUrls((current) => new Set(current).add(imageUrl));
-              }}
-            />
+          {displayImageUrl ? (
+            <>
+              <Image
+                src={displayImageUrl}
+                alt={t("hotelResults.hotelImageAlt")
+                  .replace("{{name}}", hotel.name)
+                  .replace(
+                    "{{location}}",
+                    hotel.location
+                      ? ` ${t("hotelResults.nearLocation").replace("{{location}}", hotel.location)}`
+                      : "",
+                  )}
+                fill
+                className="object-cover"
+                sizes="(min-width: 768px) 40vw, 100vw"
+                onError={() => markImageFailed(displayImageUrl)}
+              />
+              {showGalleryControls ? (
+                <>
+                  <button
+                    type="button"
+                    className="absolute left-2 top-1/2 flex min-h-10 min-w-10 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/75 text-white shadow-lg ring-1 ring-white/40 transition hover:bg-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                    aria-label={
+                      t("hotelResults.previousPhoto") || "Previous photo"
+                    }
+                    onClick={() => selectAdjacentImage(-1)}
+                  >
+                    <ChevronLeft size={20} aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    className="absolute right-2 top-1/2 flex min-h-10 min-w-10 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/75 text-white shadow-lg ring-1 ring-white/40 transition hover:bg-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                    aria-label={t("hotelResults.nextPhoto") || "Next photo"}
+                    onClick={() => selectAdjacentImage(1)}
+                  >
+                    <ChevronRight size={20} aria-hidden="true" />
+                  </button>
+                  <div className="absolute bottom-2 right-2 rounded-full bg-slate-950/75 px-2.5 py-1 text-xs font-semibold text-white shadow-lg ring-1 ring-white/30">
+                    {photoCounterText}
+                  </div>
+                </>
+              ) : null}
+            </>
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-[#004BB8]/8 via-white to-[#5CB6B2]/10 px-5 text-center text-[#004BB8]">
               <Building2 size={36} />
@@ -541,7 +627,10 @@ export function HotelCard({ hotel }: HotelCardProps) {
             </div>
             <div className="mt-auto flex flex-col gap-3 min-[380px]:flex-row min-[380px]:items-end min-[380px]:justify-between md:mt-0 lg:w-40 lg:flex-col lg:items-end lg:justify-start lg:text-end">
               <div className="text-start min-[380px]:text-end lg:text-end">
-                <div className="text-xl font-bold tracking-[-0.01em] text-slate-950" dir="ltr">
+                <div
+                  className="text-xl font-bold tracking-[-0.01em] text-slate-950"
+                  dir="ltr"
+                >
                   {formatCurrency(hotel.totalPrice, hotel.currency, locale)}
                 </div>
                 <div className="text-xs font-medium leading-4 text-slate-500">
@@ -603,6 +692,43 @@ export function HotelCard({ hotel }: HotelCardProps) {
             {t("hotelResults.demoDisclaimer") ||
               "Illustrative demo listing. Prices, reviews and property details are not live inventory."}
           </p>
+          {showGalleryControls ? (
+            <div className="mt-3 min-w-0">
+              <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                {t("hotelResults.photos") || "Photos"}
+              </h4>
+              <div className="mt-2 flex max-w-full gap-2 overflow-x-auto pb-1">
+                {availableImageIndices.map((imageIndex, visibleIndex) => {
+                  const thumbnailUrl = explicitGalleryImages[imageIndex];
+                  return (
+                    <button
+                      key={thumbnailUrl}
+                      type="button"
+                      aria-pressed={resolvedActiveImageIndex === imageIndex}
+                      aria-label={(
+                        t("hotelResults.selectPhoto") || "Show photo {{number}}"
+                      ).replace("{{number}}", String(visibleIndex + 1))}
+                      className={
+                        resolvedActiveImageIndex === imageIndex
+                          ? "relative h-16 w-24 shrink-0 overflow-hidden rounded-lg ring-2 ring-[#004BB8] ring-offset-2 ring-offset-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
+                          : "relative h-16 w-24 shrink-0 overflow-hidden rounded-lg ring-1 ring-slate-200 transition hover:ring-[#004BB8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
+                      }
+                      onClick={() => setPreferredImageIndex(imageIndex)}
+                    >
+                      <Image
+                        src={thumbnailUrl}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        sizes="96px"
+                        onError={() => markImageFailed(thumbnailUrl)}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
           <dl className="mt-3 grid gap-3 text-sm text-slate-700 md:grid-cols-2">
             {roomTypeText ? (
               <div>
