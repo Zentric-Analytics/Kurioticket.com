@@ -10,7 +10,14 @@ import type {
   RefObject,
   SetStateAction,
 } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -1037,6 +1044,8 @@ export function FlightResultsClient() {
   const mobileFiltersScrollLockRef = useRef<BodyScrollLock | null>(null);
   const mobileSearchLauncherRef = useRef<HTMLElement | null>(null);
   const mobileFiltersLauncherRef = useRef<HTMLElement | null>(null);
+  const shouldRestoreMobileSearchFocusRef = useRef(true);
+  const shouldRestoreMobileFiltersFocusRef = useRef(true);
   const stickySearchScrollLockRef = useRef<BodyScrollLock | null>(null);
   const stickySearchPanelOpenRef = useRef(false);
   const queryString = params.toString();
@@ -1574,10 +1583,18 @@ export function FlightResultsClient() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const releaseExistingLock = () => {
+      const launcher = mobileSearchLauncherRef.current;
+      const shouldRestoreFocus = shouldRestoreMobileSearchFocusRef.current;
+
       mobileSearchScrollLockRef.current?.restore();
       mobileSearchScrollLockRef.current = null;
+      shouldRestoreMobileSearchFocusRef.current = true;
+
+      if (shouldRestoreFocus && launcher?.isConnected) {
+        launcher.focus({ preventScroll: true });
+      }
     };
 
     if (!mobileSearchOpen || typeof window === "undefined") {
@@ -1592,15 +1609,33 @@ export function FlightResultsClient() {
       return releaseExistingLock;
     }
 
-    mobileSearchScrollLockRef.current ??= lockMobileOverlayScroll();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeMobileSearchDrawer();
+      }
+    };
 
-    return releaseExistingLock;
+    mobileSearchScrollLockRef.current ??= lockMobileOverlayScroll();
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      releaseExistingLock();
+    };
   }, [mobileSearchOpen]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const releaseExistingLock = () => {
+      const launcher = mobileFiltersLauncherRef.current;
+      const shouldRestoreFocus = shouldRestoreMobileFiltersFocusRef.current;
+
       mobileFiltersScrollLockRef.current?.restore();
       mobileFiltersScrollLockRef.current = null;
+      shouldRestoreMobileFiltersFocusRef.current = true;
+
+      if (shouldRestoreFocus && launcher?.isConnected) {
+        launcher.focus({ preventScroll: true });
+      }
     };
 
     if (!filtersOpen || typeof window === "undefined") {
@@ -1617,13 +1652,7 @@ export function FlightResultsClient() {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        const launcher = mobileFiltersLauncherRef.current;
-        mobileFiltersScrollLockRef.current?.restore();
-        mobileFiltersScrollLockRef.current = null;
-        if (launcher?.isConnected) {
-          launcher.focus({ preventScroll: true });
-        }
-        setFiltersOpen(false);
+        closeMobileFiltersDrawer();
       }
     };
 
@@ -1860,36 +1889,18 @@ export function FlightResultsClient() {
     setTripTypeMenuOpen(false);
   }
 
-  function restoreMobileOverlayScrollLock(
-    lockRef: RefObject<BodyScrollLock | null>,
-    launcherRef: RefObject<HTMLElement | null>,
-    { restoreFocus = true }: MobileOverlayCloseOptions = {},
-  ) {
-    const launcher = launcherRef.current;
-    lockRef.current?.restore();
-    lockRef.current = null;
-
-    if (restoreFocus && launcher?.isConnected) {
-      launcher.focus({ preventScroll: true });
-    }
-  }
-
-  function closeMobileSearchDrawer(options?: MobileOverlayCloseOptions) {
+  function closeMobileSearchDrawer({
+    restoreFocus = true,
+  }: MobileOverlayCloseOptions = {}) {
     closeFlightSearchPopovers();
-    restoreMobileOverlayScrollLock(
-      mobileSearchScrollLockRef,
-      mobileSearchLauncherRef,
-      options,
-    );
+    shouldRestoreMobileSearchFocusRef.current = restoreFocus;
     setMobileSearchOpen(false);
   }
 
-  function closeMobileFiltersDrawer(options?: MobileOverlayCloseOptions) {
-    restoreMobileOverlayScrollLock(
-      mobileFiltersScrollLockRef,
-      mobileFiltersLauncherRef,
-      options,
-    );
+  function closeMobileFiltersDrawer({
+    restoreFocus = true,
+  }: MobileOverlayCloseOptions = {}) {
+    shouldRestoreMobileFiltersFocusRef.current = restoreFocus;
     setFiltersOpen(false);
   }
 
