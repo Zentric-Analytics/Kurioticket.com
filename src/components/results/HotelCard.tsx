@@ -1,8 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useId, useMemo, useState } from "react";
-import { Building2, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
+import { useEffect, useId, useMemo, useState } from "react";
+import {
+  Building2,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  MapPin,
+} from "lucide-react";
 import type { PublicHotelResult } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -19,6 +25,14 @@ import {
   getAdjacentHotelGalleryIndex,
   resolveHotelGalleryIndex,
 } from "@/components/results/hotelGalleryPresentation";
+import {
+  isHotelIdSaved,
+  parseSavedHotelIds,
+  SAVED_HOTEL_IDS_CHANGED_EVENT,
+  SAVED_HOTEL_IDS_STORAGE_KEY,
+  serializeSavedHotelIds,
+  toggleSavedHotelId,
+} from "@/components/results/hotelSavedStorage";
 
 function getHotelStarRating(rating: number) {
   if (!Number.isFinite(rating) || rating <= 0) return null;
@@ -350,6 +364,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const detailsRegionId = useId();
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const [preferredImageIndex, setPreferredImageIndex] = useState(0);
   const starRating = getHotelStarRating(hotel.rating);
   const fallbackImageUrl = useMemo(
@@ -429,6 +444,59 @@ export function HotelCard({ hotel }: HotelCardProps) {
         ? t("hotelResults.taxesFeesNotIncluded") ||
           "Taxes and fees not included"
         : "";
+  const savedHotelLabel = (
+    isSaved
+      ? t("hotelResults.removeSavedHotel") || "Remove {{name}} from saved hotels"
+      : t("hotelResults.saveHotel") || "Save {{name}}"
+  ).replace("{{name}}", hotel.name);
+
+  useEffect(() => {
+    let isActive = true;
+
+    function updateSavedState(rawValue: string | null) {
+      if (!isActive) return;
+
+      setIsSaved(isHotelIdSaved(parseSavedHotelIds(rawValue), hotel.id));
+    }
+
+    queueMicrotask(() => {
+      try {
+        updateSavedState(
+          window.localStorage.getItem(SAVED_HOTEL_IDS_STORAGE_KEY),
+        );
+      } catch {
+        updateSavedState(null);
+      }
+    });
+
+    function handleStorage(event: StorageEvent) {
+      if (event.key !== SAVED_HOTEL_IDS_STORAGE_KEY) return;
+
+      updateSavedState(event.newValue);
+    }
+
+    function handleSavedHotelIdsChanged(event: Event) {
+      if (!(event instanceof CustomEvent)) return;
+      if (typeof event.detail !== "string") return;
+
+      updateSavedState(event.detail);
+    }
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener(
+      SAVED_HOTEL_IDS_CHANGED_EVENT,
+      handleSavedHotelIdsChanged,
+    );
+
+    return () => {
+      isActive = false;
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener(
+        SAVED_HOTEL_IDS_CHANGED_EVENT,
+        handleSavedHotelIdsChanged,
+      );
+    };
+  }, [hotel.id]);
 
   function markImageFailed(url: string) {
     if (!url) return;
@@ -462,6 +530,29 @@ export function HotelCard({ hotel }: HotelCardProps) {
     if (nextIndex !== -1) setPreferredImageIndex(nextIndex);
   }
 
+  function toggleSavedHotel() {
+    try {
+      const savedIds = parseSavedHotelIds(
+        window.localStorage.getItem(SAVED_HOTEL_IDS_STORAGE_KEY),
+      );
+      const nextSavedIds = toggleSavedHotelId(savedIds, hotel.id);
+      const serializedValue = serializeSavedHotelIds(nextSavedIds);
+
+      window.localStorage.setItem(
+        SAVED_HOTEL_IDS_STORAGE_KEY,
+        serializedValue,
+      );
+      setIsSaved(isHotelIdSaved(nextSavedIds, hotel.id));
+      window.dispatchEvent(
+        new CustomEvent(SAVED_HOTEL_IDS_CHANGED_EVENT, {
+          detail: serializedValue,
+        }),
+      );
+    } catch {
+      // Keep the previous visual state if browser storage is unavailable.
+    }
+  }
+
   async function redirectToHotel() {
     if (isDemoHotel) return;
 
@@ -483,6 +574,24 @@ export function HotelCard({ hotel }: HotelCardProps) {
     <Card className="mx-auto w-full max-w-[800px] overflow-hidden border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(2,28,43,0.26)]">
       <div className="grid md:grid-cols-[40%_minmax(0,1fr)]">
         <div className="relative h-[clamp(280px,78vw,340px)] bg-surface-muted md:aspect-auto md:h-auto md:min-h-[230px] lg:min-h-[240px]">
+          <button
+            type="button"
+            aria-label={savedHotelLabel}
+            aria-pressed={isSaved}
+            title={savedHotelLabel}
+            className={
+              isSaved
+                ? "absolute right-2 top-2 z-20 flex min-h-10 min-w-10 items-center justify-center rounded-full border border-rose-200 bg-white/95 text-rose-600 shadow-lg transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
+                : "absolute right-2 top-2 z-20 flex min-h-10 min-w-10 items-center justify-center rounded-full border border-white/80 bg-white/90 text-slate-800 shadow-lg transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
+            }
+            onClick={toggleSavedHotel}
+          >
+            <Heart
+              size={20}
+              aria-hidden="true"
+              fill={isSaved ? "currentColor" : "none"}
+            />
+          </button>
           {displayImageUrl ? (
             <>
               <Image
