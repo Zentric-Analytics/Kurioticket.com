@@ -1157,6 +1157,12 @@ export const translations: TranslationDictionary = {
   savedTripFallbackRoute: "선택한 목적지",
   savedTripFallbackNote: "이 여행 아이디어를 계속 저장해 두고 나중에 다시 확인하세요.",
 
+  homeHotelDestinationsTitle: "전 세계 숙소 둘러보기",
+  homeHotelDestinationsSubtitle:
+    "인기 도시, 국가, 지역의 호텔 목적지를 찾아보세요.",
+  homeHotelDestinationsExploreStays: "숙소 둘러보기",
+  homeHotelDestinationsExploreAll: "모든 숙소 보기",
+  homeHotelDestinationsCardAria: "{{country}} {{city}}의 호텔 숙소를 둘러보세요.",
   homeNewsletterTitle: "모든 여행 특가를 먼저 받아보세요",
   homeNewsletterBody: "엄선된 항공권과 호텔 업데이트를 매주 받아보세요.",
   homeNewsletterPlaceholder: "이메일을 입력하세요",

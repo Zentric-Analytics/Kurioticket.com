@@ -996,6 +996,12 @@ export const translations: TranslationDictionary = {
   homePromoHotelsBody:
     "ブティックホテルからグローバルチェーンまで、料金をわかりやすく比較しながら探せます。",
   homePromoHotelsCta: "ホテルのお得情報を見る",
+  homeHotelDestinationsTitle: "世界の滞在先を探す",
+  homeHotelDestinationsSubtitle:
+    "人気の都市、国、地域からホテル目的地を見つけましょう。",
+  homeHotelDestinationsExploreStays: "滞在先を探す",
+  homeHotelDestinationsExploreAll: "すべての滞在先を見る",
+  homeHotelDestinationsCardAria: "{{country}}、{{city}}のホテル滞在を探す。",
   homeNewsletterTitle: "旅行のお得情報をいち早くチェック",
   homeNewsletterBody: "厳選した航空券とホテルの最新情報を毎週お届けします。",
   homeNewsletterPlaceholder: "メールアドレスを入力",

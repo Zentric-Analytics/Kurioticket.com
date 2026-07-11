@@ -1071,6 +1071,12 @@ export const translations: TranslationDictionary = {
     "Dlaczego przekierowano mnie do innego dostawcy?",
   supportFaqWhyRedirectedAnswer:
     "Kurioticket to platforma wyszukiwania i porównywania podróży, a niektóre wyniki przekierowują do zaufanych dostawców, u których dokończysz rezerwację, płatność i obsługę właściwą dla dostawcy.",
+  homeHotelDestinationsTitle: "Odkrywaj pobyty na świecie",
+  homeHotelDestinationsSubtitle:
+    "Odkrywaj kierunki hotelowe w popularnych miastach, krajach i regionach.",
+  homeHotelDestinationsExploreStays: "Odkrywaj pobyty",
+  homeHotelDestinationsExploreAll: "Odkrywaj wszystkie pobyty",
+  homeHotelDestinationsCardAria: "Odkrywaj hotele w {{city}}, {{country}}.",
   homeNewsletterTitle: "Bądź na bieżąco z każdą ofertą podróży",
   homeNewsletterBody:
     "Otrzymuj co tydzień wybrane aktualizacje lotów i hoteli.",

@@ -30,6 +30,12 @@ export const translations: TranslationDictionary = {
   homePromoHotelsTitle: "Ahorros en hoteles en todo el mundo",
   homePromoHotelsBody: "Explora estancias desde hoteles boutique hasta cadenas globales con transparencia de precios.",
   homePromoHotelsCta: "Explorar ofertas de hoteles",
+  homeHotelDestinationsTitle: "Explore stays around the world",
+  homeHotelDestinationsSubtitle:
+    "Discover hotel destinations across popular cities, countries, and regions.",
+  homeHotelDestinationsExploreStays: "Explore stays",
+  homeHotelDestinationsExploreAll: "Explore all stays",
+  homeHotelDestinationsCardAria: "Explore hotel stays in {{city}}, {{country}}.",
   homeNewsletterTitle: "Anticípate a cada oferta de viaje",
   homeNewsletterBody: "Recibe cada semana actualizaciones seleccionadas de vuelos y hoteles.",
   homeNewsletterPlaceholder: "Introduce tu correo",

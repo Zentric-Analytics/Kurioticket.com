@@ -1494,6 +1494,12 @@ export const translations: TranslationDictionary = {
   petFriendly: "पालतू-मैत्रीपूर्ण",
   onlyShowPetFriendlyStays: "केवल वे ठहराव दिखाएँ जहाँ पालतू जानवरों की अनुमति है",
   chooseHotelDestination: "होटल गंतव्य चुनें",
+  homeHotelDestinationsTitle: "दुनिया भर में ठहराव खोजें",
+  homeHotelDestinationsSubtitle:
+    "लोकप्रिय शहरों, देशों और क्षेत्रों में होटल गंतव्य खोजें।",
+  homeHotelDestinationsExploreStays: "ठहराव खोजें",
+  homeHotelDestinationsExploreAll: "सभी ठहराव देखें",
+  homeHotelDestinationsCardAria: "{{city}}, {{country}} में होटल ठहराव खोजें।",
   homeNewsletterTitle: "हर यात्रा डील से आगे रहें",
   homeNewsletterBody: "चुनी हुई उड़ान और होटल अपडेट हर सप्ताह पाएँ।",
   homeNewsletterPlaceholder: "अपना ईमेल दर्ज करें",

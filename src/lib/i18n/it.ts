@@ -1095,6 +1095,12 @@ export const translations: TranslationDictionary = {
   faqAnswerManageChanges:
     "Modifiche al viaggio, cancellazioni, rimborsi e assistenza sulla prenotazione sono di solito gestiti dal fornitore presso cui è stata completata la prenotazione. Usa i dettagli di conferma di quel fornitore per le richieste di assistenza.",
 
+  homeHotelDestinationsTitle: "Esplora soggiorni nel mondo",
+  homeHotelDestinationsSubtitle:
+    "Scopri destinazioni hotel in città, paesi e regioni popolari.",
+  homeHotelDestinationsExploreStays: "Esplora soggiorni",
+  homeHotelDestinationsExploreAll: "Esplora tutti i soggiorni",
+  homeHotelDestinationsCardAria: "Esplora soggiorni a {{city}}, {{country}}.",
   homeNewsletterTitle: "Anticipa ogni offerta...",
   homeNewsletterBody: "Ricevi offerte selezionate...",
   homeNewsletterPlaceholder: "Inserisci la tua email",

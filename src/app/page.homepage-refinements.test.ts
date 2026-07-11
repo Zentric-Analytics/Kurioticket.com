@@ -56,3 +56,31 @@ test("previous-to-start programmatic completion clears the next-arrow gate and p
   assert.match(scrollHandlerSource, /setCanScrollDestinationsLeft\(false\)/);
   assert.match(scrollHandlerSource, /updateDestinationArrowState\(\)/);
 });
+
+test("homepage hotel destination section sits between promo panels and newsletter with six cards", () => {
+  const promoIndex = pageSource.indexOf("homePromoHotelsTitle");
+  const hotelSectionIndex = pageSource.indexOf('aria-labelledby="homepage-hotel-destinations-heading"');
+  const newsletterIndex = pageSource.indexOf("homeNewsletterTitle");
+
+  assert.ok(promoIndex >= 0, "hotel promo panel should exist");
+  assert.ok(hotelSectionIndex > promoIndex, "hotel destination section should follow promo panels");
+  assert.ok(newsletterIndex > hotelSectionIndex, "newsletter should follow hotel destination section");
+  assert.match(pageSource, /homepageHotelDestinationIds = \[/);
+  assert.match(pageSource, /"us-new-york"/);
+  assert.match(pageSource, /"gb-london"/);
+  assert.match(pageSource, /"fr-paris"/);
+  assert.match(pageSource, /"ae-dubai"/);
+  assert.match(pageSource, /"jp-tokyo"/);
+  assert.match(pageSource, /"mx-cancun"/);
+});
+
+test("homepage hotel destination cards use existing hotel results contract", () => {
+  const hrefSource = pageSource.slice(pageSource.indexOf("function buildHotelDestinationHref"), pageSource.indexOf("function CompareOffersIllustration"));
+
+  assert.match(hrefSource, /pathname: "\/hotels\/results"/);
+  assert.match(hrefSource, /destination: destination\.searchValue/);
+  assert.match(hrefSource, /checkIn/);
+  assert.match(hrefSource, /checkOut/);
+  assert.match(hrefSource, /guests: "2"/);
+  assert.match(hrefSource, /rooms: "1"/);
+});

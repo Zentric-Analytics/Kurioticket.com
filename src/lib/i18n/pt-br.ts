@@ -1409,6 +1409,12 @@ export const translations: TranslationDictionary = {
   homePromoHotelsBody:
     "Explore ofertas de hotéis no mundo todo antes de concluir sua estadia com um fornecedor.",
   homePromoHotelsCta: "Explorar ofertas de hotéis",
+  homeHotelDestinationsTitle: "Explore estadias pelo mundo",
+  homeHotelDestinationsSubtitle:
+    "Descubra destinos de hotel em cidades, países e regiões populares.",
+  homeHotelDestinationsExploreStays: "Explorar estadias",
+  homeHotelDestinationsExploreAll: "Explorar todas as estadias",
+  homeHotelDestinationsCardAria: "Explore estadias em {{city}}, {{country}}.",
   homeNewsletterTitle: "Receba as próximas ofertas de viagem",
   homeNewsletterBody:
     "Receba atualizações selecionadas de voos e hotéis toda semana.",

@@ -1284,6 +1284,12 @@ export const translations: TranslationDictionary = {
   homePromoHotelsTitle: "全球酒店优惠",
   homePromoHotelsBody: "浏览从精品酒店到全球连锁酒店的住宿，并清楚了解价格。",
   homePromoHotelsCta: "探索酒店优惠",
+  homeHotelDestinationsTitle: "探索全球住宿",
+  homeHotelDestinationsSubtitle:
+    "发现热门城市、国家和地区的酒店目的地。",
+  homeHotelDestinationsExploreStays: "探索住宿",
+  homeHotelDestinationsExploreAll: "探索所有住宿",
+  homeHotelDestinationsCardAria: "探索{{country}}{{city}}的酒店住宿。",
   homeNewsletterTitle: "不错过任何旅行优惠",
   homeNewsletterBody: "每周接收精选航班和酒店更新。",
   homeNewsletterPlaceholder: "输入你的电子邮箱",

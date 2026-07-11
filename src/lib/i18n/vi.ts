@@ -930,6 +930,12 @@ export const translations: TranslationDictionary = {
   homePromoHotelsBody:
     "Duyệt chỗ nghỉ từ khách sạn boutique đến chuỗi khách sạn toàn cầu với giá minh bạch.",
   homePromoHotelsCta: "Khám phá ưu đãi khách sạn",
+  homeHotelDestinationsTitle: "Khám phá chỗ nghỉ khắp thế giới",
+  homeHotelDestinationsSubtitle:
+    "Khám phá điểm đến khách sạn tại các thành phố, quốc gia và khu vực phổ biến.",
+  homeHotelDestinationsExploreStays: "Khám phá chỗ nghỉ",
+  homeHotelDestinationsExploreAll: "Khám phá tất cả chỗ nghỉ",
+  homeHotelDestinationsCardAria: "Khám phá chỗ nghỉ khách sạn tại {{city}}, {{country}}.",
   homeNewsletterTitle: "Luôn cập nhật mọi ưu đãi du lịch",
   homeNewsletterBody:
     "Nhận cập nhật chuyến bay và khách sạn được chọn lọc hằng tuần.",

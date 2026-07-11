@@ -664,6 +664,12 @@ export const translations: TranslationDictionary = {
   homePromoHotelsBody:
     "Bekijk verblijven van boetiekhotels tot internationale ketens met transparante prijzen.",
   homePromoHotelsCta: "Hoteldeals bekijken",
+  homeHotelDestinationsTitle: "Ontdek verblijven wereldwijd",
+  homeHotelDestinationsSubtitle:
+    "Ontdek hotelbestemmingen in populaire steden, landen en regio’s.",
+  homeHotelDestinationsExploreStays: "Verblijven bekijken",
+  homeHotelDestinationsExploreAll: "Alle verblijven bekijken",
+  homeHotelDestinationsCardAria: "Bekijk hotelverblijven in {{city}}, {{country}}.",
   homeNewsletterTitle: "Blijf elke reisdeal voor",
   homeNewsletterBody:
     "Ontvang geselecteerde vlucht- en hotelupdates, dealmeldingen en reisinzichten.",
