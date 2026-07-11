@@ -24,6 +24,8 @@ import { useSession } from "next-auth/react";
 import {
   ArrowLeft,
   ArrowRightLeft,
+  ChevronLeft,
+  ChevronRight,
   ChevronUp,
   Calendar,
   ChevronDown,
@@ -916,7 +918,12 @@ export function FlightResultsClient() {
   );
   const nearbyFareCacheRef = useRef(new Map<string, NearbyFareState>());
   const nearbyFareRequestsRef = useRef(new Set<string>());
+  const nearbyFareStripScrollRef = useRef<HTMLDivElement | null>(null);
   const [nearbyFares, setNearbyFares] = useState<NearbyFareState[]>([]);
+  const [nearbyFareCanScrollPrevious, setNearbyFareCanScrollPrevious] =
+    useState(false);
+  const [nearbyFareCanScrollNext, setNearbyFareCanScrollNext] =
+    useState(false);
   const [returnDateInput, setReturnDateInput] = useState(
     initialDateSafeParams.get("returnDate") || "",
   );
@@ -2907,6 +2914,54 @@ export function FlightResultsClient() {
       selectedCurrency,
       mixedProviderCurrenciesLabel,
     ],
+  );
+
+  const updateNearbyFareScrollState = useCallback(() => {
+    const strip = nearbyFareStripScrollRef.current;
+    if (!strip) {
+      setNearbyFareCanScrollPrevious(false);
+      setNearbyFareCanScrollNext(false);
+      return;
+    }
+
+    const maxScrollLeft = Math.max(0, strip.scrollWidth - strip.clientWidth);
+    setNearbyFareCanScrollPrevious(strip.scrollLeft > 1);
+    setNearbyFareCanScrollNext(strip.scrollLeft < maxScrollLeft - 1);
+  }, []);
+
+  useLayoutEffect(() => {
+    updateNearbyFareScrollState();
+
+    const strip = nearbyFareStripScrollRef.current;
+    if (!strip) return;
+
+    const resizeObserver = new ResizeObserver(updateNearbyFareScrollState);
+    resizeObserver.observe(strip);
+
+    return () => resizeObserver.disconnect();
+  }, [nearbyFares, updateNearbyFareScrollState]);
+
+  const scrollNearbyFareStrip = useCallback(
+    (direction: "previous" | "next") => {
+      const strip = nearbyFareStripScrollRef.current;
+      if (!strip) return;
+
+      const firstCell = strip.querySelector<HTMLElement>(
+        "[data-fare-date-cell]",
+      );
+      const cellWidth = firstCell?.getBoundingClientRect().width ?? 104;
+      const gap =
+        Number.parseFloat(window.getComputedStyle(strip).columnGap || "0") || 0;
+      const distance = cellWidth + gap;
+
+      strip.scrollBy({
+        left: direction === "previous" ? -distance : distance,
+        behavior: "smooth",
+      });
+
+      window.setTimeout(updateNearbyFareScrollState, 240);
+    },
+    [updateNearbyFareScrollState],
   );
 
   const sortOptions = useMemo(
@@ -6645,24 +6700,32 @@ export function FlightResultsClient() {
           ) : (
             <div className={cn(resultStackClass, "space-y-4")}>
               <div className="hidden w-full sm:block" aria-label="Nearby departure fares">
-                <div className="grid grid-cols-[48px_minmax(0,1fr)_48px] items-center gap-3 py-1.5">
+                <div className="relative">
                   <button
                     type="button"
-                    aria-label="Show previous departure date"
-                    disabled={!body?.departureDate || loading}
-                    onClick={() => {
-                      if (!body?.departureDate) return;
-                      const selectedDate = parseDateValue(body.departureDate);
-                      if (selectedDate) {
-                        handleNearbyFareDateSelect(formatDateValue(addDays(selectedDate, -1)));
-                      }
+                    aria-label="Scroll to previous departure fares"
+                    aria-disabled={!nearbyFareCanScrollPrevious}
+                    disabled={!nearbyFareCanScrollPrevious}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      scrollNearbyFareStrip("previous");
                     }}
-                    className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white/70 text-3xl font-semibold leading-none text-[#0057FF] shadow-[0_3px_8px_rgba(15,23,42,0.08)] transition hover:border-[#0057FF]/35 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                    className="focus-ring absolute left-0 top-1/2 z-10 inline-flex h-12 w-8 -translate-y-1/2 items-center justify-start border-0 bg-transparent p-0 text-[#0057FF] shadow-none transition hover:text-[#003E91] focus-visible:text-[#003E91] disabled:cursor-not-allowed disabled:text-slate-300 lg:-translate-x-7 xl:-translate-x-8"
                   >
-                    ‹
+                    <ChevronLeft
+                      className="h-8 w-8"
+                      strokeWidth={2.7}
+                      aria-hidden="true"
+                    />
                   </button>
 
-                  <div className="fare-strip-scroll grid grid-cols-7 items-center gap-3 overflow-x-auto scroll-smooth px-1 py-1" role="list">
+                  <div
+                    ref={nearbyFareStripScrollRef}
+                    onScroll={updateNearbyFareScrollState}
+                    className="fare-strip-scroll grid auto-cols-[minmax(96px,1fr)] grid-flow-col items-center gap-3 overflow-x-auto scroll-smooth px-0 py-1"
+                    role="list"
+                  >
                     {nearbyFares.length
                       ? nearbyFares.map((fare) => {
                           const selected = fare.date === body?.departureDate;
@@ -6670,6 +6733,7 @@ export function FlightResultsClient() {
                             <button
                               key={fare.date}
                               type="button"
+                              data-fare-date-cell
                               className={cn(
                                 "focus-ring flex min-h-[86px] min-w-[96px] flex-col items-center justify-center rounded-lg border px-2.5 py-3 text-center transition hover:text-[#004BB8]",
                                 selected
@@ -6682,10 +6746,10 @@ export function FlightResultsClient() {
                               onClick={() => handleNearbyFareDateSelect(fare.date)}
                             >
                               <span className={cn("text-[13px] font-semibold uppercase leading-5 tracking-[0.02em]", selected ? "text-[#0057FF]" : "text-slate-600")}>
-                                {formatFareStripDateLabel(fare.date, calendarLocale)}
+                                {formatFareStripDateLabel(fare.date, calendarLocale).toUpperCase()}
                               </span>
                               <span className={cn("text-[13px] font-semibold uppercase leading-5", selected ? "text-[#0057FF]" : "text-[#24324A]")}>
-                                {formatFareStripWeekdayLabel(fare.date, calendarLocale)}
+                                {formatFareStripWeekdayLabel(fare.date, calendarLocale).toUpperCase()}
                               </span>
                               <span className={cn("mt-1 text-[15px] font-semibold leading-5", selected ? "text-[#0057FF]" : "text-slate-950")} aria-live={fare.status === "loading" ? "polite" : undefined}>
                                 {fare.status === "loading" ? (
@@ -6702,7 +6766,7 @@ export function FlightResultsClient() {
                                     isFallbackRate: currencyRates.isFallback,
                                   }).formatted
                                 ) : (
-                                  "View fares"
+                                  "Unavailable"
                                 )}
                               </span>
                             </button>
@@ -6722,18 +6786,21 @@ export function FlightResultsClient() {
 
                   <button
                     type="button"
-                    aria-label="Show next departure date"
-                    disabled={!body?.departureDate || loading}
-                    onClick={() => {
-                      if (!body?.departureDate) return;
-                      const selectedDate = parseDateValue(body.departureDate);
-                      if (selectedDate) {
-                        handleNearbyFareDateSelect(formatDateValue(addDays(selectedDate, 1)));
-                      }
+                    aria-label="Scroll to next departure fares"
+                    aria-disabled={!nearbyFareCanScrollNext}
+                    disabled={!nearbyFareCanScrollNext}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      scrollNearbyFareStrip("next");
                     }}
-                    className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white/70 text-3xl font-semibold leading-none text-[#0057FF] shadow-[0_3px_8px_rgba(15,23,42,0.08)] transition hover:border-[#0057FF]/35 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                    className="focus-ring absolute right-0 top-1/2 z-10 inline-flex h-12 w-8 -translate-y-1/2 items-center justify-end border-0 bg-transparent p-0 text-[#0057FF] shadow-none transition hover:text-[#003E91] focus-visible:text-[#003E91] disabled:cursor-not-allowed disabled:text-slate-300 lg:translate-x-7 xl:translate-x-8"
                   >
-                    ›
+                    <ChevronRight
+                      className="h-8 w-8"
+                      strokeWidth={2.7}
+                      aria-hidden="true"
+                    />
                   </button>
                 </div>
               </div>
