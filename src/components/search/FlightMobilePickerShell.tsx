@@ -22,11 +22,16 @@ type FlightMobilePickerShellProps = {
   title: string;
   titleId: string;
   launcherRef?: RefObject<HTMLElement | null>;
-  children: ReactNode | ((requestClose: FlightMobilePickerRequestClose) => ReactNode);
-  footer?: ReactNode | ((requestClose: FlightMobilePickerRequestClose) => ReactNode);
+  children:
+    | ReactNode
+    | ((requestClose: FlightMobilePickerRequestClose) => ReactNode);
+  footer?:
+    | ReactNode
+    | ((requestClose: FlightMobilePickerRequestClose) => ReactNode);
   onClose: () => void;
   className?: string;
   contentClassName?: string;
+  pickerMarker?: "flight-date" | "traveler-cabin";
 };
 
 type ScrollLockSnapshot = {
@@ -112,8 +117,12 @@ function waitForMobileViewportToSettle() {
 
     const fallbackTimeout = window.setTimeout(finish, VIEWPORT_FALLBACK_MS);
 
-    viewport.addEventListener("resize", handleViewportChange, { passive: true });
-    viewport.addEventListener("scroll", handleViewportChange, { passive: true });
+    viewport.addEventListener("resize", handleViewportChange, {
+      passive: true,
+    });
+    viewport.addEventListener("scroll", handleViewportChange, {
+      passive: true,
+    });
     scheduleSettle();
   });
 }
@@ -128,6 +137,7 @@ export function FlightMobilePickerShell({
   onClose,
   className,
   contentClassName,
+  pickerMarker,
 }: FlightMobilePickerShellProps) {
   const { t } = useLocale();
   const [isClosing, setIsClosing] = useState(false);
@@ -147,7 +157,8 @@ export function FlightMobilePickerShell({
     scrollLockSnapshotRef.current = null;
     snapshot.body.style.left = snapshot.previousBodyStyles.left;
     snapshot.body.style.overflow = snapshot.previousBodyStyles.overflow;
-    snapshot.body.style.overscrollBehavior = snapshot.previousBodyStyles.overscrollBehavior;
+    snapshot.body.style.overscrollBehavior =
+      snapshot.previousBodyStyles.overscrollBehavior;
     snapshot.body.style.position = snapshot.previousBodyStyles.position;
     snapshot.body.style.right = snapshot.previousBodyStyles.right;
     snapshot.body.style.top = snapshot.previousBodyStyles.top;
@@ -155,7 +166,8 @@ export function FlightMobilePickerShell({
     snapshot.body.style.width = snapshot.previousBodyStyles.width;
     snapshot.root.style.height = snapshot.previousRootStyles.height;
     snapshot.root.style.overflow = snapshot.previousRootStyles.overflow;
-    snapshot.root.style.overscrollBehavior = snapshot.previousRootStyles.overscrollBehavior;
+    snapshot.root.style.overscrollBehavior =
+      snapshot.previousRootStyles.overscrollBehavior;
     window.scrollTo(0, snapshot.scrollY);
 
     if (restoreFocus) {
@@ -247,7 +259,10 @@ export function FlightMobilePickerShell({
     };
 
     window.addEventListener("pointerdown", markPointerClose, { capture: true });
-    window.addEventListener("touchstart", markPointerClose, { capture: true, passive: true });
+    window.addEventListener("touchstart", markPointerClose, {
+      capture: true,
+      passive: true,
+    });
     window.addEventListener("keydown", markKeyboardClose, { capture: true });
 
     bodyElement.style.left = "0";
@@ -265,13 +280,22 @@ export function FlightMobilePickerShell({
     const shellElement = shellRef.current;
 
     return () => {
-      window.removeEventListener("pointerdown", markPointerClose, { capture: true });
-      window.removeEventListener("touchstart", markPointerClose, { capture: true });
-      window.removeEventListener("keydown", markKeyboardClose, { capture: true });
+      window.removeEventListener("pointerdown", markPointerClose, {
+        capture: true,
+      });
+      window.removeEventListener("touchstart", markPointerClose, {
+        capture: true,
+      });
+      window.removeEventListener("keydown", markKeyboardClose, {
+        capture: true,
+      });
 
       if (!canRestoreScrollLockRef.current) {
         const activeElement = document.activeElement;
-        if (activeElement instanceof HTMLElement && shellElement?.contains(activeElement)) {
+        if (
+          activeElement instanceof HTMLElement &&
+          shellElement?.contains(activeElement)
+        ) {
           activeElement.blur();
         }
       }
@@ -283,15 +307,27 @@ export function FlightMobilePickerShell({
   if (!open || !portalElement) return null;
 
   // Render-prop children receive only the stable close helper for descendant event handlers.
-  // eslint-disable-next-line react-hooks/refs
-  const renderedChildren = typeof children === "function" ? children(requestClose) : children;
-  // eslint-disable-next-line react-hooks/refs
-  const renderedFooter = typeof footer === "function" ? footer(requestClose) : footer;
+  const renderedChildren =
+    typeof children === "function"
+      ? // eslint-disable-next-line react-hooks/refs
+        children(requestClose)
+      : children;
+  const renderedFooter =
+    typeof footer === "function"
+      ? // eslint-disable-next-line react-hooks/refs
+        footer(requestClose)
+      : footer;
 
   return createPortal(
     <div
       ref={shellRef}
       data-flight-mobile-picker-shell
+      data-mobile-flight-date-picker={
+        pickerMarker === "flight-date" ? "true" : undefined
+      }
+      data-mobile-traveler-cabin-picker={
+        pickerMarker === "traveler-cabin" ? "true" : undefined
+      }
       data-closing={isClosing ? "true" : undefined}
       className="fixed inset-0 z-[2147483647] h-[100dvh] w-screen max-w-full overflow-hidden bg-white sm:hidden"
     >
@@ -322,7 +358,10 @@ export function FlightMobilePickerShell({
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               {t.back}
             </button>
-            <h2 id={titleId} className="min-w-0 truncate text-base font-bold text-slate-950">
+            <h2
+              id={titleId}
+              className="min-w-0 truncate text-base font-bold text-slate-950"
+            >
               {title}
             </h2>
             <button
@@ -336,7 +375,12 @@ export function FlightMobilePickerShell({
           </div>
         </div>
 
-        <div className={cn("min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-slate-50 px-4 py-4", contentClassName)}>
+        <div
+          className={cn(
+            "min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-slate-50 px-4 py-4",
+            contentClassName,
+          )}
+        >
           {renderedChildren}
         </div>
 
