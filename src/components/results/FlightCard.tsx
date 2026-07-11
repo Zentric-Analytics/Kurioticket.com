@@ -133,12 +133,12 @@ export function FlightCard({
     >
       {mobileCard}
 
-      <div className="hidden px-5 py-4 lg:block xl:px-6">
-        <div className="flex min-w-0 items-start justify-between gap-4 pb-2">
-          <div className="flex min-w-0 items-center gap-3">
+      <div className="hidden px-[clamp(1rem,1.25vw,1.5rem)] py-4 lg:block">
+        <div className="flex min-w-0 items-start justify-between gap-[clamp(0.75rem,1vw,1rem)] pb-2">
+          <div className="flex min-w-0 items-center gap-[clamp(0.625rem,0.8vw,0.75rem)]">
             <AirlineLogo flight={flight} desktop />
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold leading-5 text-slate-800" dir="auto">
+              <p className="truncate text-[clamp(0.8125rem,0.8vw,0.875rem)] font-semibold leading-5 text-slate-800" dir="auto">
                 {flight.airlineName}
               </p>
               {flight.flightNumber ? (
@@ -151,8 +151,8 @@ export function FlightCard({
           <ResultBadgePill badge={resultBadge} />
         </div>
 
-        <div className="mt-2 grid min-w-0 grid-cols-[minmax(130px,0.85fr)_minmax(260px,1.55fr)_minmax(130px,0.8fr)_minmax(190px,0.85fr)] items-stretch gap-x-5 gap-y-4 xl:grid-cols-[minmax(140px,0.85fr)_minmax(300px,1.55fr)_minmax(140px,0.8fr)_minmax(205px,0.85fr)] xl:gap-x-6">
-          <div className="col-span-3 grid min-w-0 gap-5">
+        <div className="mt-2 grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(150px,0.85fr)] items-stretch gap-x-[clamp(0.875rem,1.15vw,1.5rem)] gap-y-4">
+          <div className="grid min-w-0 gap-5">
             {visibleLegs.map((leg, index) => (
               <DesktopFlightLegRow
                 key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${leg.departureTime}-${index}`}
@@ -340,13 +340,13 @@ function DesktopFlightLegRow({
 
   return (
     <section aria-label={legTitle} className="min-w-0">
-      <div className="grid min-w-0 grid-cols-[minmax(150px,0.9fr)_minmax(280px,1.6fr)_minmax(150px,0.9fr)] items-center gap-5 xl:grid-cols-[minmax(165px,0.9fr)_minmax(340px,1.7fr)_minmax(165px,0.9fr)] xl:gap-6">
+      <div className="grid min-w-0 grid-cols-[minmax(115px,0.8fr)_minmax(220px,1.5fr)_minmax(110px,0.75fr)] items-center gap-[clamp(0.875rem,1.2vw,1.5rem)]">
         <div className="min-w-0 self-center">
           <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#0057E7]">
             {legTitle}
           </p>
           <div
-            className="mt-1 text-[22px] font-semibold leading-6 tracking-[-0.025em] text-[#07133B]"
+            className="mt-1 text-[clamp(1.25rem,1.25vw,1.375rem)] font-semibold leading-6 tracking-[-0.025em] text-[#07133B]"
             dir="ltr"
           >
             {formatTime(leg.departureTime, locale)}
@@ -391,7 +391,7 @@ function DesktopFlightLegRow({
 
         <div className="min-w-0 self-center text-right">
           <div
-            className="text-[22px] font-semibold leading-6 tracking-[-0.025em] text-[#07133B]"
+            className="text-[clamp(1.25rem,1.25vw,1.375rem)] font-semibold leading-6 tracking-[-0.025em] text-[#07133B]"
             dir="ltr"
           >
             {formatTime(leg.arrivalTime, locale)}
@@ -426,15 +426,15 @@ function AirlineLogo({
       <div
         className={cn(
           "flex shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white shadow-sm",
-          desktop ? "h-12 w-12" : "h-8 w-8",
+          desktop ? "h-[clamp(2.625rem,2.7vw,3rem)] w-[clamp(2.625rem,2.7vw,3rem)]" : "h-8 w-8",
         )}
       >
         <Image
           src={flight.airlineLogo}
           alt={`${flight.airlineName} logo`}
-          width={desktop ? 40 : 24}
-          height={desktop ? 40 : 24}
-          className={cn("object-contain", desktop ? "h-10 w-10" : "h-6 w-6")}
+          width={desktop ? 38 : 24}
+          height={desktop ? 38 : 24}
+          className={cn("object-contain", desktop ? "h-[clamp(2.125rem,2.25vw,2.5rem)] w-[clamp(2.125rem,2.25vw,2.5rem)]" : "h-6 w-6")}
         />
       </div>
     );
@@ -444,11 +444,11 @@ function AirlineLogo({
     <div
       className={cn(
         "flex shrink-0 items-center justify-center rounded-lg border border-[#004BB8]/8 bg-[#004BB8]/5 text-[#004BB8] shadow-sm",
-        desktop ? "h-12 w-12" : "h-8 w-8",
+        desktop ? "h-[clamp(2.625rem,2.7vw,3rem)] w-[clamp(2.625rem,2.7vw,3rem)]" : "h-8 w-8",
       )}
     >
       <PlaneTakeoff
-        className={cn(desktop ? "h-5 w-5" : "h-3.5 w-3.5")}
+        className={cn(desktop ? "h-[clamp(1.125rem,1.2vw,1.25rem)] w-[clamp(1.125rem,1.2vw,1.25rem)]" : "h-3.5 w-3.5")}
         aria-hidden="true"
       />
     </div>
@@ -492,7 +492,7 @@ function FlightFareAction({
     <div
       className={cn(
         desktop
-          ? "flex min-w-[190px] flex-col items-center justify-center gap-3 border-l border-[#D8E1EC] pl-5 text-center xl:min-w-[205px] xl:pl-6"
+          ? "flex min-w-[150px] flex-col items-center justify-center gap-[clamp(0.625rem,0.85vw,0.75rem)] border-l border-[#D8E1EC] pl-[clamp(0.875rem,1.15vw,1.5rem)] text-center"
           : "flex w-[104px] shrink-0 flex-col items-center gap-2.5 rounded-xl px-0 py-0 text-center sm:w-[112px] lg:min-h-[118px] lg:w-auto lg:items-stretch lg:justify-center lg:gap-2 lg:self-stretch lg:px-1 lg:py-3 lg:text-center",
         className,
       )}
@@ -508,7 +508,7 @@ function FlightFareAction({
         <div
           className={cn(
             "font-semibold leading-tight tracking-[-0.025em] text-slate-950",
-            desktop ? "text-[22px]" : "text-lg sm:text-xl",
+            desktop ? "text-[clamp(1.25rem,1.25vw,1.375rem)]" : "text-lg sm:text-xl",
           )}
           aria-label={priceAriaLabel}
           title={priceTitle}
@@ -535,7 +535,7 @@ function FlightFareAction({
         className={cn(
           "w-auto shrink-0 justify-center whitespace-nowrap bg-[#004BB8] text-sm font-semibold hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35",
           desktop
-            ? "min-w-[126px] rounded-md px-5 py-2.5"
+            ? "min-w-[126px] rounded-md px-[clamp(1rem,1.1vw,1.25rem)] py-2.5"
             : "min-w-[104px] rounded-full px-5 py-2.5 sm:px-4 sm:py-2 sm:text-sm lg:w-full lg:min-w-0 lg:px-3.5 lg:py-2 lg:text-sm",
         )}
       >
@@ -557,7 +557,7 @@ function FlightDetailLines({
       className={cn(
         "grid min-w-0 flex-1 text-xs leading-5 text-slate-600",
         desktop
-          ? "mt-4 grid grid-cols-3 items-center gap-x-6 border-t border-[#D8E1EC] pt-3"
+          ? "mt-4 grid grid-cols-3 items-center gap-x-[clamp(0.75rem,1.25vw,1.5rem)] border-t border-[#D8E1EC] pt-3"
           : "gap-x-4 gap-y-1 sm:grid-cols-2 lg:border-t lg:border-slate-100 lg:pt-2",
       )}
     >
@@ -570,7 +570,7 @@ function FlightDetailLines({
             className={cn(
               "flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5",
               desktop &&
-                "flex-nowrap whitespace-nowrap border-r border-[#EEF2F7] pr-6 last:border-r-0 last:pr-0",
+                "flex-nowrap whitespace-nowrap border-r border-[#EEF2F7] pr-[clamp(0.75rem,1.25vw,1.5rem)] last:border-r-0 last:pr-0",
             )}
           >
             <Icon

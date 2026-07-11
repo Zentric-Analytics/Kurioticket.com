@@ -6308,7 +6308,8 @@ export function FlightResultsClient() {
 
       <div
         ref={resultsGridRef}
-        className="page-shell grid gap-4 pb-5 pt-3 sm:pt-5 lg:grid-cols-[256px_minmax(0,1fr)] lg:pt-6"
+        className="page-shell grid gap-4 pb-5 pt-3 sm:pt-5 lg:grid-cols-[210px_minmax(0,1fr)] lg:pt-6 xl:grid-cols-[220px_minmax(0,1fr)_minmax(80px,160px)] min-[1366px]:grid-cols-[230px_minmax(0,940px)_minmax(160px,220px)] min-[1600px]:grid-cols-[240px_minmax(0,980px)_minmax(240px,300px)]"
+        style={{ width: "min(1560px, calc(100% - 32px))" }}
       >
         <aside
           ref={desktopFilterSidebarRef}
@@ -6544,6 +6545,11 @@ export function FlightResultsClient() {
             </div>
           )}
         </section>
+
+        <aside
+          className="hidden min-w-0 xl:block"
+          aria-hidden="true"
+        />
       </div>
 
       <button
