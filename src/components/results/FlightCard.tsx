@@ -285,11 +285,11 @@ function FlightFareAction({
   return (
     <div
       className={cn(
-        "flex shrink-0 flex-col items-end gap-2.5 rounded-xl px-0 py-0 text-end lg:min-h-[118px] lg:items-stretch lg:justify-center lg:gap-2 lg:self-stretch lg:px-1 lg:py-3 lg:text-center",
+        "flex w-[104px] shrink-0 flex-col items-center gap-2.5 rounded-xl px-0 py-0 text-center sm:w-[112px] lg:min-h-[118px] lg:w-auto lg:items-stretch lg:justify-center lg:gap-2 lg:self-stretch lg:px-1 lg:py-3 lg:text-center",
         className,
       )}
     >
-      <div className="min-w-0 lg:flex lg:min-h-[72px] lg:flex-col lg:items-center lg:justify-center lg:text-center">
+      <div className="min-w-0 text-center lg:flex lg:min-h-[72px] lg:flex-col lg:items-center lg:justify-center lg:text-center">
         <div
           className="text-lg font-semibold leading-tight tracking-[-0.025em] text-slate-950 sm:text-xl"
           aria-label={priceAriaLabel}

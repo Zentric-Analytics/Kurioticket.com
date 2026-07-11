@@ -15,6 +15,7 @@ import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
+  ArrowLeft,
   ArrowRightLeft,
   ArrowUp,
   Calendar,
@@ -942,9 +943,12 @@ export function FlightResultsClient() {
   );
   const [travelerPopoverOpen, setTravelerPopoverOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [mobileCompactHeaderVisible, setMobileCompactHeaderVisible] =
+    useState(false);
   const [activeMobileAirportPicker, setActiveMobileAirportPicker] = useState<
     "origin" | "destination" | null
   >(null);
+  const mobileSearchSummarySentinelRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchScrollRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchScrollTopRef = useRef(0);
   const pendingMobileDatePickerRef = useRef<"departure" | "return" | null>(
@@ -1313,6 +1317,54 @@ export function FlightResultsClient() {
       if (animationFrame) {
         window.cancelAnimationFrame(animationFrame);
       }
+    };
+  }, [loading]);
+
+
+  useEffect(() => {
+    if (loading || typeof window === "undefined") {
+      return undefined;
+    }
+
+    const sentinel = mobileSearchSummarySentinelRef.current;
+
+    const updateFromSentinel = () => {
+      const currentSentinel = mobileSearchSummarySentinelRef.current;
+
+      if (!currentSentinel) {
+        setMobileCompactHeaderVisible(false);
+        return;
+      }
+
+      const rect = currentSentinel.getBoundingClientRect();
+      setMobileCompactHeaderVisible(rect.bottom < 8 && window.scrollY > 96);
+    };
+
+    updateFromSentinel();
+
+    if (typeof IntersectionObserver === "undefined" || !sentinel) {
+      window.addEventListener("scroll", updateFromSentinel, { passive: true });
+      window.addEventListener("resize", updateFromSentinel);
+
+      return () => {
+        window.removeEventListener("scroll", updateFromSentinel);
+        window.removeEventListener("resize", updateFromSentinel);
+      };
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setMobileCompactHeaderVisible(!entry.isIntersecting && window.scrollY > 96);
+      },
+      { rootMargin: "-8px 0px 0px 0px", threshold: 0 },
+    );
+
+    observer.observe(sentinel);
+    window.addEventListener("scroll", updateFromSentinel, { passive: true });
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", updateFromSentinel);
     };
   }, [loading]);
 
@@ -5645,6 +5697,62 @@ export function FlightResultsClient() {
     );
   }
 
+
+  function renderMobileCompactResultsHeader() {
+    const routeLabel = `${mobileOriginSummary} ⇄ ${mobileDestinationSummary}`;
+    const modifySearchLabel = `Modify flight search from ${mobileOriginSummary} to ${mobileDestinationSummary}`;
+
+    return (
+      <header
+        className={cn(
+          "fixed inset-x-0 top-0 z-[90] border-b border-slate-200/80 bg-white/95 px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] shadow-[0_10px_26px_-20px_rgba(15,23,42,0.55)] backdrop-blur-xl transition-all duration-200 ease-out sm:hidden",
+          mobileCompactHeaderVisible && !mobileSearchOpen
+            ? "pointer-events-auto translate-y-0 opacity-100"
+            : "pointer-events-none -translate-y-2 opacity-0",
+        )}
+        aria-hidden={!mobileCompactHeaderVisible || mobileSearchOpen}
+      >
+        <div className="mx-auto grid h-12 w-full max-w-3xl grid-cols-[44px_minmax(0,1fr)_82px] items-center gap-2">
+          <button
+            type="button"
+            aria-label="Back to flights"
+            onClick={() => router.push("/flights")}
+            className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-800 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+          >
+            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+          </button>
+
+          <button
+            type="button"
+            aria-label={modifySearchLabel}
+            onClick={openMobileSearchDrawer}
+            className="focus-ring flex min-w-0 flex-col items-center justify-center rounded-xl px-2 py-1 text-center transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+          >
+            <span className="block max-w-full truncate text-[15px] font-extrabold leading-5 tracking-[-0.015em] text-slate-950" dir="ltr">
+              {routeLabel}
+            </span>
+            <span className="mt-0.5 block text-[11px] font-semibold leading-4 text-slate-500">
+              Modify search
+            </span>
+          </button>
+
+          <button
+            type="button"
+            aria-label={activeFilterCount > 0 ? `Open filters, ${activeFilterCount} active` : "Open filters"}
+            onClick={() => {
+              closeMobileShortcutMenus();
+              setFiltersOpen(true);
+            }}
+            className="focus-ring inline-flex h-11 min-w-0 items-center justify-center gap-1 rounded-full px-2 text-[13px] font-bold text-slate-800 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+          >
+            <SlidersHorizontal className="h-4 w-4 shrink-0 text-[#004BB8]" strokeWidth={2.2} aria-hidden="true" />
+            <span className="truncate">Filter</span>
+          </button>
+        </div>
+      </header>
+    );
+  }
+
   function renderMobileControlsRow() {
     return (
       <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch justify-center px-4">
@@ -5696,6 +5804,7 @@ export function FlightResultsClient() {
 
   return (
     <main className="flex-1 bg-[#F3F6FA] pb-8">
+      {renderMobileCompactResultsHeader()}
       <section
         className={cn(
           "relative z-40 bg-white pb-0 pt-0 sm:hidden",
@@ -5710,6 +5819,11 @@ export function FlightResultsClient() {
           />
           {renderMobileControlsRow()}
         </div>
+        <div
+          ref={mobileSearchSummarySentinelRef}
+          className="pointer-events-none h-px w-full"
+          aria-hidden="true"
+        />
       </section>
 
       {!mobileSearchOpen ? (
