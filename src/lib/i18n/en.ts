@@ -1265,6 +1265,7 @@ export const translations: TranslationDictionary = {
   homeDiscoveryTitle: "Discover your next adventure here",
   homeRegionalRoutesTitle: "Discover destinations from your region",
   homeRegionalRoutesViewAll: "View all route ideas",
+  homeRegionalRoutesStartSearch: "Start search",
   homeDiscoverySubtitle:
     "Compare smart route ideas, flexible fares, and destinations picked for your region.",
   homeDiscoverySwipeMore: "Swipe for more",

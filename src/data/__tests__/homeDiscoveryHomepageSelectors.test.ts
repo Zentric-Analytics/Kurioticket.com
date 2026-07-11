@@ -22,12 +22,21 @@ test("homepage image-card selector removes exactly four cards per regional sourc
   }
 });
 
-test("homepage regional route selector returns ten unique valid routes", () => {
-  const cards = getHomepageRegionalRouteCards("US");
-  assert.equal(cards.length, HOME_REGIONAL_ROUTE_CARD_COUNT);
-  assert.equal(new Set(cards.map((card) => `${card.originCode}-${card.destinationCode}`)).size, HOME_REGIONAL_ROUTE_CARD_COUNT);
-  assert.ok(cards.every((card) => /^[A-Z]{3}$/.test(card.originCode) && /^[A-Z]{3}$/.test(card.destinationCode)));
-  assert.ok(cards.every((card) => card.originCode !== card.destinationCode));
-  assert.ok(cards.every((card) => card.image.trim().length > 0));
-  assert.ok(cards.every((card) => card.imageAlt.toLowerCase().includes(card.destinationCity.toLowerCase().split(" ")[0])));
+test("homepage regional route selector returns unique valid non-overlapping routes for every source", () => {
+  for (const regionCode of Object.keys(homeDiscoveryByRegion)) {
+    const adventureCards = getHomeDiscoveryImageCardsByRegion(regionCode);
+    const adventureRoutes = new Set(
+      adventureCards.map((card) => `${card.originCode}-${card.destinationCode}`),
+    );
+    const cards = getHomepageRegionalRouteCards(regionCode, adventureCards);
+    const routeKeys = cards.map((card) => `${card.originCode}-${card.destinationCode}`);
+
+    assert.ok(cards.length <= HOME_REGIONAL_ROUTE_CARD_COUNT, regionCode);
+    assert.equal(new Set(routeKeys).size, cards.length, regionCode);
+    assert.ok(routeKeys.every((routeKey) => !adventureRoutes.has(routeKey)), regionCode);
+    assert.ok(cards.every((card) => /^[A-Z]{3}$/.test(card.originCode) && /^[A-Z]{3}$/.test(card.destinationCode)), regionCode);
+    assert.ok(cards.every((card) => card.originCode !== card.destinationCode), regionCode);
+    assert.ok(cards.every((card) => card.image.trim().length > 0), regionCode);
+    assert.ok(cards.every((card) => card.imageAlt.toLowerCase().includes(card.destinationCity.toLowerCase().split(" ")[0])), regionCode);
+  }
 });
