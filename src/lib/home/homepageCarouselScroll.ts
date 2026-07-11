@@ -14,6 +14,12 @@ export type CarouselScrollState = {
   canScrollRight: boolean;
 };
 
+export type CarouselArrowRenderState = {
+  canScrollToPrevious: boolean;
+  canScrollToNext: boolean;
+  shouldRenderPreviousArrow: boolean;
+};
+
 const DEFAULT_SCROLL_TOLERANCE = 2;
 
 export function getLogicalCarouselScrollState(
@@ -37,6 +43,26 @@ export function getLogicalCarouselScrollState(
     canScrollLeft: logicalScrollLeft > safeTolerance,
     canScrollRight: maxScrollLeft - logicalScrollLeft > safeTolerance,
   };
+}
+
+export function getCarouselArrowRenderState(
+  scrollState: CarouselScrollState,
+  hasAdvancedWithNextArrow: boolean,
+): CarouselArrowRenderState {
+  return {
+    canScrollToPrevious: scrollState.canScrollLeft,
+    canScrollToNext: scrollState.canScrollRight,
+    shouldRenderPreviousArrow:
+      hasAdvancedWithNextArrow && scrollState.canScrollLeft,
+  };
+}
+
+export function hasCarouselAdvancedForward(
+  before: CarouselScrollState,
+  after: CarouselScrollState,
+  tolerance = DEFAULT_SCROLL_TOLERANCE,
+) {
+  return after.logicalScrollLeft - before.logicalScrollLeft > Math.max(0, tolerance);
 }
 
 export function getCarouselStartScrollLeft(direction: CarouselDirection | string | undefined, maxScrollLeft: number) {

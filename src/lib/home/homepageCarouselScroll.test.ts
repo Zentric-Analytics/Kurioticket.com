@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { getLogicalCarouselScrollState } from "./homepageCarouselScroll";
+import {
+  getCarouselArrowRenderState,
+  getLogicalCarouselScrollState,
+  hasCarouselAdvancedForward,
+} from "./homepageCarouselScroll";
 
 test("logical carousel state handles LTR start, middle, and end", () => {
   assert.deepEqual(getLogicalCarouselScrollState({ scrollLeft: 0, scrollWidth: 1000, clientWidth: 400, direction: "ltr" }), {
@@ -46,4 +50,68 @@ test("logical carousel state handles no-overflow rail", () => {
     canScrollLeft: false,
     canScrollRight: false,
   });
+});
+
+test("previous arrow stays hidden until a successful next-arrow advance", () => {
+  const restoredLtr = getLogicalCarouselScrollState({
+    scrollLeft: 240,
+    scrollWidth: 1000,
+    clientWidth: 400,
+    direction: "ltr",
+  });
+  assert.equal(getCarouselArrowRenderState(restoredLtr, false).shouldRenderPreviousArrow, false);
+  assert.equal(getCarouselArrowRenderState(restoredLtr, true).shouldRenderPreviousArrow, true);
+
+  const restoredRtl = getLogicalCarouselScrollState({
+    scrollLeft: 420,
+    scrollWidth: 1000,
+    clientWidth: 400,
+    direction: "rtl",
+  });
+  assert.equal(getCarouselArrowRenderState(restoredRtl, false).shouldRenderPreviousArrow, false);
+});
+
+test("next-arrow gate is set only after confirmed forward movement", () => {
+  const start = getLogicalCarouselScrollState({
+    scrollLeft: 0,
+    scrollWidth: 1000,
+    clientWidth: 400,
+    direction: "ltr",
+  });
+  const moved = getLogicalCarouselScrollState({
+    scrollLeft: 320,
+    scrollWidth: 1000,
+    clientWidth: 400,
+    direction: "ltr",
+  });
+  const unchanged = getLogicalCarouselScrollState({
+    scrollLeft: 0,
+    scrollWidth: 1000,
+    clientWidth: 400,
+    direction: "ltr",
+  });
+
+  assert.equal(hasCarouselAdvancedForward(start, moved), true);
+  assert.equal(hasCarouselAdvancedForward(start, unchanged), false);
+  assert.equal(getCarouselArrowRenderState(moved, hasCarouselAdvancedForward(start, moved)).shouldRenderPreviousArrow, true);
+});
+
+test("returning to first card and no-overflow rails hide previous arrow", () => {
+  const atStart = getLogicalCarouselScrollState({
+    scrollLeft: 0,
+    scrollWidth: 1000,
+    clientWidth: 400,
+    direction: "ltr",
+  });
+  assert.equal(getCarouselArrowRenderState(atStart, true).shouldRenderPreviousArrow, false);
+
+  const noOverflow = getLogicalCarouselScrollState({
+    scrollLeft: 0,
+    scrollWidth: 360,
+    clientWidth: 400,
+    direction: "ltr",
+  });
+  const arrows = getCarouselArrowRenderState(noOverflow, true);
+  assert.equal(arrows.shouldRenderPreviousArrow, false);
+  assert.equal(arrows.canScrollToNext, false);
 });
