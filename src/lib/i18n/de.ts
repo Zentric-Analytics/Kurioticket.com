@@ -677,6 +677,12 @@ export const translations: TranslationDictionary = {
   homePromoHotelsBody:
     "Finde Unterkünfte von Boutique-Hotels bis zu globalen Ketten mit Preistransparenz.",
   homePromoHotelsCta: "Hotelangebote entdecken",
+  homeHotelDestinationsTitle: "Unterkünfte weltweit entdecken",
+  homeHotelDestinationsSubtitle:
+    "Entdecke Hotelziele in beliebten Städten, Ländern und Regionen.",
+  homeHotelDestinationsExploreStays: "Unterkünfte entdecken",
+  homeHotelDestinationsExploreAll: "Alle Unterkünfte entdecken",
+  homeHotelDestinationsCardAria: "Unterkünfte in {{city}}, {{country}} entdecken.",
   homeNewsletterTitle: "Bleib bei jedem Reiseangebot vorne",
   homeNewsletterBody: "Erhalte wöchentliche kuratierte Flug- und Hotelupdates.",
   homeNewsletterPlaceholder: "E-Mail eingeben",

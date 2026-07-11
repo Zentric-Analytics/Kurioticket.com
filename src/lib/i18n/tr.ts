@@ -1680,6 +1680,12 @@ export const translations: TranslationDictionary = {
   faqQuestionManageChanges: "Değişiklikleri veya iptalleri nereden yönetirim?",
   faqAnswerManageChanges:
     "Seyahat değişiklikleri, iptaller, iadeler ve rezervasyon desteği genellikle rezervasyonun tamamlandığı sağlayıcı tarafından ele alınır. Hizmet talepleri için o sağlayıcıdan gelen onay bilgilerini kullanın.",
+  homeHotelDestinationsTitle: "Dünyadaki konaklamaları keşfet",
+  homeHotelDestinationsSubtitle:
+    "Popüler şehirler, ülkeler ve bölgelerde otel destinasyonlarını keşfet.",
+  homeHotelDestinationsExploreStays: "Konaklamaları keşfet",
+  homeHotelDestinationsExploreAll: "Tüm konaklamaları keşfet",
+  homeHotelDestinationsCardAria: "{{city}}, {{country}} otel konaklamalarını keşfet.",
   homeNewsletterTitle: "Her seyahat fırsatından haberdar olun",
   homeNewsletterBody:
     "Seçilmiş uçuş ve otel güncellemelerini haftalık olarak alın.",

@@ -1642,6 +1642,12 @@ export const translations: TranslationDictionary = {
   homePromoHotelsTitle: "توفير على الفنادق حول العالم",
   homePromoHotelsBody: "تصفح الإقامات من الفنادق البوتيكية إلى السلاسل العالمية مع شفافية الأسعار.",
   homePromoHotelsCta: "استكشف عروض الفنادق",
+  homeHotelDestinationsTitle: "استكشف الإقامات حول العالم",
+  homeHotelDestinationsSubtitle:
+    "اكتشف وجهات فندقية في مدن ودول ومناطق شهيرة.",
+  homeHotelDestinationsExploreStays: "استكشف الإقامات",
+  homeHotelDestinationsExploreAll: "استكشف كل الإقامات",
+  homeHotelDestinationsCardAria: "استكشف إقامات الفنادق في {{city}}، {{country}}.",
   homeNewsletterTitle: "ابقَ في المقدمة مع كل عرض سفر",
   homeNewsletterBody: "احصل على تحديثات أسبوعية منتقاة للرحلات والفنادق.",
   homeNewsletterPlaceholder: "أدخل بريدك الإلكتروني",

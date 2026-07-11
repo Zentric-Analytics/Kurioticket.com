@@ -832,6 +832,12 @@ export const translations: TranslationDictionary = {
   supportFaqWhyRedirectedQuestion: "Mengapa saya diarahkan ke penyedia lain?",
   supportFaqWhyRedirectedAnswer:
     "Kurioticket adalah platform pencarian dan perbandingan perjalanan, dan beberapa hasil mengarahkan Anda ke penyedia tepercaya tempat Anda menyelesaikan pemesanan, pembayaran, dan dukungan khusus penyedia.",
+  homeHotelDestinationsTitle: "Jelajahi penginapan di dunia",
+  homeHotelDestinationsSubtitle:
+    "Temukan destinasi hotel di kota, negara, dan wilayah populer.",
+  homeHotelDestinationsExploreStays: "Jelajahi penginapan",
+  homeHotelDestinationsExploreAll: "Jelajahi semua penginapan",
+  homeHotelDestinationsCardAria: "Jelajahi penginapan hotel di {{city}}, {{country}}.",
   homeNewsletterTitle: "Selalu terdepan untuk setiap promo perjalanan",
   homeNewsletterBody: "Dapatkan pembaruan penerbangan dan hotel pilihan setiap minggu.",
   homeNewsletterPlaceholder: "Masukkan email Anda",

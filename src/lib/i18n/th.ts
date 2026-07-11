@@ -1427,6 +1427,12 @@ export const translations: TranslationDictionary = {
   supportFormSuccessSuffix: "ถูกเปิดแล้ว",
   supportFormErrorFallback: "ไม่สามารถเปิดคำขอได้",
   supportFaqHeading: "คำถามที่พบบ่อย",
+  homeHotelDestinationsTitle: "สำรวจที่พักทั่วโลก",
+  homeHotelDestinationsSubtitle:
+    "ค้นพบจุดหมายปลายทางโรงแรมในเมือง ประเทศ และภูมิภาคยอดนิยม",
+  homeHotelDestinationsExploreStays: "สำรวจที่พัก",
+  homeHotelDestinationsExploreAll: "สำรวจที่พักทั้งหมด",
+  homeHotelDestinationsCardAria: "สำรวจที่พักโรงแรมใน {{city}}, {{country}}",
   homeNewsletterTitle: "รับข่าวดีลการเดินทางก่อนใคร",
   homeNewsletterBody: "รับอัปเดตเที่ยวบินและโรงแรมที่คัดสรรแล้วทุกสัปดาห์",
   homeNewsletterPlaceholder: "ป้อนอีเมลของคุณ",

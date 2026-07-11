@@ -2335,6 +2335,12 @@ export const translations: TranslationDictionary = {
   homePromoHotelsBody:
     "Browse stays from boutique hotels to global chains with price transparency.",
   homePromoHotelsCta: "Explore hotel deals",
+  homeHotelDestinationsTitle: "Explore stays around the world",
+  homeHotelDestinationsSubtitle:
+    "Discover hotel destinations across popular cities, countries, and regions.",
+  homeHotelDestinationsExploreStays: "Explore stays",
+  homeHotelDestinationsExploreAll: "Explore all stays",
+  homeHotelDestinationsCardAria: "Explore hotel stays in {{city}}, {{country}}.",
   homeNewsletterTitle: "Stay ahead of every travel deal",
   homeNewsletterBody: "Get curated flight and hotel updates delivered weekly.",
   homeNewsletterPlaceholder: "Enter your email",

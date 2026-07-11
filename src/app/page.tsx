@@ -31,6 +31,11 @@ import {
   getHomepageRegionalRouteCards,
 } from "@/data/homeDiscovery";
 import { getHomepageHeroImageForMarket } from "@/data/images/homepageHeroImage";
+import { destinationImageCatalog } from "@/data/hotelDestinationCards";
+import {
+  getLocalizedHotelDestinationCountryName,
+  hotelDestinations,
+} from "@/data/hotelDestinations";
 import {
   getPopularDestinationFareCandidatesByRegion,
   getPopularDestinationsByRegion,
@@ -58,6 +63,80 @@ import {
   saveBackendTrip,
   type SavedTripDisplayDetails,
 } from "@/lib/saved-trips-api";
+
+const homepageHotelDestinationIds = [
+  "us-new-york",
+  "gb-london",
+  "fr-paris",
+  "ae-dubai",
+  "jp-tokyo",
+  "mx-cancun",
+] as const;
+
+const hotelDestinationCardByQuery = new Map(
+  destinationImageCatalog.map((card) => [card.destinationQuery, card]),
+);
+
+const homepageHotelDestinations = homepageHotelDestinationIds.map((id) => {
+  const destination = hotelDestinations.find((item) => item.id === id);
+
+  if (!destination) {
+    throw new Error(`Homepage hotel destination is not approved: ${id}`);
+  }
+
+  const imageCard =
+    hotelDestinationCardByQuery.get(destination.name) ??
+    hotelDestinationCardByQuery.get(destination.name.replace("ú", "u"));
+
+  if (!imageCard) {
+    throw new Error(`Homepage hotel destination is missing an approved image: ${id}`);
+  }
+
+  return {
+    ...destination,
+    image: imageCard.image,
+    imageAlt: imageCard.imageAlt,
+  };
+});
+
+type HomepageHotelDestination = (typeof homepageHotelDestinations)[number];
+
+const homepageHotelDestinationLayout = [
+  "md:col-span-2 lg:col-span-6 lg:row-span-2 min-h-[290px] sm:min-h-[340px] lg:min-h-[520px]",
+  "md:col-span-1 lg:col-span-3 min-h-[260px]",
+  "md:col-span-1 lg:col-span-3 min-h-[260px]",
+  "md:col-span-1 lg:col-span-2 min-h-[240px]",
+  "md:col-span-1 lg:col-span-2 min-h-[240px]",
+  "md:col-span-2 lg:col-span-2 min-h-[240px]",
+] as const;
+
+const addDaysToIsoDate = (date: Date, days: number) => {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+
+  const year = next.getFullYear();
+  const month = String(next.getMonth() + 1).padStart(2, "0");
+  const day = String(next.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+function buildHotelDestinationHref(destination: HomepageHotelDestination) {
+  const baseDate = new Date();
+  const checkIn = addDaysToIsoDate(baseDate, 21);
+  const checkOut = addDaysToIsoDate(baseDate, 24);
+
+  return {
+    pathname: "/hotels/results",
+    query: {
+      destination: destination.searchValue,
+      checkIn,
+      checkOut,
+      guests: "2",
+      rooms: "1",
+    },
+  } satisfies ComponentProps<typeof Link>["href"];
+}
 
 function CompareOffersIllustration() {
   return (
@@ -641,6 +720,11 @@ export default function Home() {
     () => getHomepageRegionalRouteCards(regionCode, curatedDiscoveryItems),
     [curatedDiscoveryItems, regionCode],
   );
+  const homepageHotelDestinationCards = homepageHotelDestinations.map((destination) => ({
+    ...destination,
+    countryLabel: getLocalizedHotelDestinationCountryName(destination, locale),
+    href: buildHotelDestinationHref(destination),
+  }));
   const fareCardsByExactRoute = useMemo(() => {
     const cardsByRoute = new Map<string, HomeDiscoveryFareCard>();
 
@@ -1226,7 +1310,7 @@ export default function Home() {
         </section>
 
 
-        <section className="page-shell bg-white pb-8 pt-1 sm:bg-transparent sm:pb-9 sm:pt-3" aria-labelledby="regional-routes-heading">
+        <section className="page-shell bg-white pb-8 pt-8 sm:bg-transparent sm:pb-9 sm:pt-11" aria-labelledby="regional-routes-heading">
           <div className="mb-4 flex items-center justify-between gap-4">
             <h2 id="regional-routes-heading" className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
               {t("homeRegionalRoutesTitle") || "Discover destinations from your region"}
@@ -1280,6 +1364,57 @@ export default function Home() {
             href="/hotels/results"
             icon={<Hotel size={74} />}
           />
+        </section>
+
+        <section className="page-shell pb-8 pt-2 sm:pb-10 sm:pt-3" aria-labelledby="homepage-hotel-destinations-heading">
+          <div className="mb-5 flex flex-col gap-3 sm:mb-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl space-y-2">
+              <h2 id="homepage-hotel-destinations-heading" className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
+                {t("homeHotelDestinationsTitle")}
+              </h2>
+              <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
+                {t("homeHotelDestinationsSubtitle")}
+              </p>
+            </div>
+            <Link href="/hotels" className="focus-ring inline-flex w-fit items-center gap-1.5 rounded-full px-2 py-1 text-sm font-bold text-[#004BB8] hover:text-[#021C2B]">
+              {t("homeHotelDestinationsExploreAll")}
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:auto-rows-[240px] lg:grid-cols-12 lg:gap-5">
+            {homepageHotelDestinationCards.map((destination, index) => (
+              <Link
+                key={destination.id}
+                href={destination.href}
+                aria-label={t("homeHotelDestinationsCardAria")
+                  .replace("{{city}}", destination.name)
+                  .replace("{{country}}", destination.countryLabel)}
+                className={`focus-ring group relative isolate flex overflow-hidden rounded-[1.6rem] bg-slate-900 shadow-[0_24px_60px_-34px_rgba(2,28,43,0.72)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_30px_70px_-34px_rgba(2,28,43,0.85)] ${homepageHotelDestinationLayout[index]}`}
+              >
+                <Image
+                  src={destination.image}
+                  alt={destination.imageAlt}
+                  fill
+                  sizes={index === 0 ? "(min-width: 1024px) 50vw, (min-width: 768px) 100vw, 100vw" : "(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"}
+                  className="object-cover transition duration-500 group-hover:scale-[1.04]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/78 via-slate-950/28 to-slate-950/5" aria-hidden="true" />
+                <div className="relative mt-auto w-full p-5 text-white sm:p-6">
+                  <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-white/78">
+                    {destination.countryLabel}
+                  </p>
+                  <h3 className="mt-1 text-2xl font-black tracking-tight text-white drop-shadow-sm sm:text-3xl">
+                    {destination.name}
+                  </h3>
+                  <p className="mt-3 inline-flex items-center gap-1.5 text-sm font-extrabold text-white drop-shadow-sm">
+                    {t("homeHotelDestinationsExploreStays")}
+                    <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden="true" />
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
         </section>
 
         <section className="page-shell pb-7 pt-2 sm:pb-9 sm:pt-4">
