@@ -120,6 +120,16 @@ type MobileOverlayCloseOptions = {
   restoreFocus?: boolean;
 };
 
+const scrollWindowToPageTop = () => {
+  if (typeof window === "undefined") return;
+
+  window.scrollTo({
+    top: 0,
+    left: 0,
+    behavior: "auto",
+  });
+};
+
 type CompactFilterSectionId =
   | "price"
   | "times"
@@ -1023,6 +1033,7 @@ export function FlightResultsClient() {
   const mobileFiltersLauncherRef = useRef<HTMLElement | null>(null);
   const shouldRestoreMobileSearchFocusRef = useRef(true);
   const shouldRestoreMobileFiltersFocusRef = useRef(true);
+  const shouldScrollToTopAfterFilterApplyRef = useRef(false);
   const stickySearchScrollLockRef = useRef<BodyScrollLock | null>(null);
   const stickySearchPanelOpenRef = useRef(false);
   const queryString = params.toString();
@@ -1452,6 +1463,46 @@ export function FlightResultsClient() {
     };
   }, []);
 
+  useLayoutEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      !("scrollRestoration" in window.history)
+    ) {
+      return undefined;
+    }
+
+    const previousScrollRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+
+    const navigationEntry = window.performance.getEntriesByType(
+      "navigation",
+    )[0] as PerformanceNavigationTiming | undefined;
+    const isHistoryTraversal = navigationEntry?.type === "back_forward";
+
+    if (!isHistoryTraversal) {
+      scrollWindowToPageTop();
+    }
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (!event.persisted) return;
+
+      const currentNavigationEntry = window.performance.getEntriesByType(
+        "navigation",
+      )[0] as PerformanceNavigationTiming | undefined;
+
+      if (currentNavigationEntry?.type !== "back_forward") {
+        scrollWindowToPageTop();
+      }
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+      window.history.scrollRestoration = previousScrollRestoration;
+    };
+  }, []);
+
   const closeMobileShortcutMenus = useCallback(() => {
     setMobileSortMenuOpen(false);
     setMobileAirportMenuOpen(false);
@@ -1641,6 +1692,13 @@ export function FlightResultsClient() {
       releaseExistingLock();
     };
   }, [filtersOpen]);
+
+  useLayoutEffect(() => {
+    if (filtersOpen || !shouldScrollToTopAfterFilterApplyRef.current) return;
+
+    shouldScrollToTopAfterFilterApplyRef.current = false;
+    scrollWindowToPageTop();
+  }, [filtersOpen, queryString]);
 
   const triggerFilterApplying = useCallback(() => {
     setFilterApplying(true);
@@ -6580,6 +6638,7 @@ export function FlightResultsClient() {
             type="button"
             className="h-12 min-w-[8.75rem] rounded-xl bg-[#004BB8] px-7 text-base font-bold text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
             onClick={() => {
+              shouldScrollToTopAfterFilterApplyRef.current = true;
               triggerFilterApplying();
               closeMobileFiltersDrawer({ restoreFocus: false });
             }}
