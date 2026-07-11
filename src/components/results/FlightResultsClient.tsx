@@ -6453,8 +6453,8 @@ export function FlightResultsClient() {
             </div>
           ) : (
             <div className={cn(resultStackClass, "space-y-4")}>
-              <div className="hidden w-full items-center justify-between gap-4 sm:flex lg:border-b lg:border-slate-200/70 lg:bg-transparent lg:px-0 lg:pb-2 lg:pt-1">
-                <p className="text-base font-semibold tracking-[-0.01em] text-slate-950 lg:text-[17px]">
+              <div className="hidden w-full items-center justify-between gap-4 sm:flex lg:bg-transparent lg:px-0 lg:pb-2 lg:pt-1">
+                <p className="text-[18px] font-semibold leading-7 tracking-[-0.01em] text-slate-950">
                   {formatResultsFound(sortedResults.length, t)}
                 </p>
 
@@ -6468,7 +6468,7 @@ export function FlightResultsClient() {
                   <select
                     id="desktop-flight-sort"
                     aria-label="Sort flight results"
-                    className="h-11 min-w-[144px] rounded-lg border border-slate-300 bg-white px-3 pr-9 text-sm font-semibold text-slate-950 shadow-sm transition hover:border-slate-400 focus:border-[#004BB8] focus:outline-none focus:ring-2 focus:ring-[#004BB8]/25"
+                    className="h-9 min-w-[128px] rounded-lg border border-slate-300 bg-white/70 px-3 pr-8 text-sm font-semibold text-slate-950 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.35)] transition hover:border-slate-400 hover:bg-white focus:border-[#004BB8] focus:outline-none focus:ring-2 focus:ring-[#004BB8]/25"
                     value={sortMode}
                     onChange={(event) => {
                       triggerFilterApplying();
@@ -8039,17 +8039,26 @@ function Filters({
   const [compactOpenSection, setCompactOpenSection] =
     useState<CompactFilterSectionId>(null);
   const [desktopAirlineSearch, setDesktopAirlineSearch] = useState("");
+  const [showAllDesktopAirlines, setShowAllDesktopAirlines] = useState(false);
   const visibleDesktopAirlineOptions = useMemo(() => {
     const query = desktopAirlineSearch.trim().toLowerCase();
+    const searchedOptions = query
+      ? airlineOptions.filter(
+          (option) =>
+            option.label.toLowerCase().includes(query) ||
+            selectedAirlines.includes(option.value),
+        )
+      : airlineOptions;
 
-    if (!query) return airlineOptions;
+    if (query || showAllDesktopAirlines) return searchedOptions;
 
-    return airlineOptions.filter(
-      (option) =>
-        option.label.toLowerCase().includes(query) ||
-        selectedAirlines.includes(option.value),
-    );
-  }, [airlineOptions, desktopAirlineSearch, selectedAirlines]);
+    return searchedOptions.slice(0, 5);
+  }, [
+    airlineOptions,
+    desktopAirlineSearch,
+    selectedAirlines,
+    showAllDesktopAirlines,
+  ]);
   const activeFilterLabel = t("activeFilterCount").replace(
     "{{count}}",
     String(activeFilterCount),
@@ -8379,8 +8388,8 @@ function Filters({
         : setMaxLandingMinutes;
 
     return (
-      <div className="desktop-filter-sidebar rounded-xl border border-[#D8E1EC] bg-white px-5 py-5 shadow-[0_10px_26px_-22px_rgba(15,23,42,0.38)]">
-        <div className="mb-5 flex items-center justify-between gap-3">
+      <div className="desktop-filter-sidebar rounded-xl border border-[#D8E1EC] bg-[#FCFDFF] px-5 py-5 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.45)]">
+        <div className="mb-6 flex items-center justify-between gap-3">
           <h2 className="text-[17px] font-semibold tracking-[-0.01em] text-slate-950">
             {t("filterBy")}
           </h2>
@@ -8394,12 +8403,12 @@ function Filters({
           </button>
         </div>
 
-        <div className="space-y-5">
+        <div className="space-y-6">
           <section>
-            <h3 className="mb-3 text-xs font-extrabold uppercase tracking-[0.12em] text-slate-950">
+            <h3 className="mb-3 text-[12px] font-extrabold uppercase leading-4 tracking-[0.13em] text-slate-950">
               {t("price")}
             </h3>
-            <div className="mb-2 flex justify-between text-xs font-semibold text-slate-950">
+            <div className="mb-2.5 flex justify-between text-[12px] font-semibold tabular-nums text-slate-950">
               <span>
                 {priceBounds.max && priceLabelCurrency
                   ? formatFilterPrice(priceBounds.min)
@@ -8464,7 +8473,7 @@ function Filters({
                   : t("landingTimeAtDestination")}
               </h3>
             </div>
-            <div className="mb-2 grid grid-cols-2 rounded-lg bg-slate-100 p-0.5">
+            <div className="mb-2.5 grid grid-cols-2 rounded-lg bg-slate-100 p-0.5">
               <button
                 type="button"
                 onClick={() => setTimeFilterMode("takeoff")}
@@ -8490,7 +8499,7 @@ function Filters({
                 {t("landing")}
               </button>
             </div>
-            <div className="mb-2 flex justify-between text-xs font-medium tabular-nums text-slate-700">
+            <div className="mb-2.5 flex justify-between text-[12px] font-medium tabular-nums text-slate-700">
               <span>
                 {timeBoundsForMode
                   ? formatTimeFromMinutes(timeBoundsForMode.min, calendarLocale)
@@ -8526,10 +8535,10 @@ function Filters({
           </section>
 
           <section>
-            <h3 className="mb-3 text-xs font-extrabold uppercase tracking-[0.12em] text-slate-950">
+            <h3 className="mb-3 text-[12px] font-extrabold uppercase leading-4 tracking-[0.13em] text-slate-950">
               {t("duration")}
             </h3>
-            <div className="mb-2 flex justify-between text-xs font-medium tabular-nums text-slate-700">
+            <div className="mb-2.5 flex justify-between text-[12px] font-medium tabular-nums text-slate-700">
               <span>
                 {durationBounds
                   ? formatDurationFromMinutes(durationBounds.min, t)
@@ -8571,7 +8580,7 @@ function Filters({
             </label>
             <input
               id="desktop-airline-filter-search"
-              className="mb-2 h-9 w-full rounded-lg border border-slate-200 px-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-[#004BB8] focus:outline-none focus:ring-2 focus:ring-[#004BB8]/20"
+              className="mb-3 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-[13px] font-medium text-slate-800 shadow-sm shadow-slate-900/[0.02] placeholder:text-slate-400 focus:border-[#004BB8] focus:outline-none focus:ring-2 focus:ring-[#004BB8]/20"
               placeholder="Search airlines"
               type="search"
               value={desktopAirlineSearch}
@@ -8593,6 +8602,22 @@ function Filters({
                 }}
               />
             ))}
+            {!desktopAirlineSearch.trim() && airlineOptions.length > 5 ? (
+              <button
+                type="button"
+                className="mt-2 inline-flex items-center justify-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-[#004BB8] transition hover:bg-[#EAF2FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                onClick={() => setShowAllDesktopAirlines((current) => !current)}
+              >
+                {showAllDesktopAirlines ? "Show less" : "Show more"}
+                <ChevronDown
+                  aria-hidden="true"
+                  className={cn(
+                    "h-3.5 w-3.5 transition",
+                    showAllDesktopAirlines && "rotate-180",
+                  )}
+                />
+              </button>
+            ) : null}
           </DesktopFilterSection>
 
           <DesktopCollapsibleSection title={t("baggage") || t("amenities")}>
@@ -9015,7 +9040,7 @@ function DesktopFilterSection({
 
   return (
     <section>
-      <h3 className="mb-3 text-xs font-extrabold uppercase tracking-[0.12em] text-slate-950">
+      <h3 className="mb-3 text-[12px] font-extrabold uppercase leading-4 tracking-[0.13em] text-slate-950">
         {title}
       </h3>
       <div className="grid gap-0.5">
@@ -9207,7 +9232,7 @@ function FilterOptionRow({
         "flex cursor-pointer items-start justify-between rounded-lg font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950",
         compact
           ? "min-h-8 gap-2 px-1.5 py-1 text-[13px]"
-          : "min-h-9 gap-3 px-1.5 py-1.5 text-sm",
+          : "min-h-10 gap-3 px-1 py-1.5 text-[13px] leading-5",
       )}
     >
       <span
@@ -9220,7 +9245,7 @@ function FilterOptionRow({
           type="checkbox"
           className={cn(
             "mt-0.5 shrink-0 rounded border-slate-300 accent-blue focus-visible:ring-2 focus-visible:ring-[#004BB8]/25",
-            compact ? "h-3.5 w-3.5" : "h-4 w-4",
+            compact ? "h-3.5 w-3.5" : "h-[15px] w-[15px]",
           )}
           checked={checked}
           onChange={onChange}
@@ -9228,14 +9253,14 @@ function FilterOptionRow({
         <span className="min-w-0">
           <span className="block truncate">{label}</span>
           {secondaryLabel ? (
-            <span className="block text-xs font-medium text-slate-500">
+            <span className="block text-[12px] font-medium leading-4 text-slate-500">
               {secondaryLabel}
             </span>
           ) : null}
         </span>
       </span>
       {trailingLabel ? (
-        <span className="shrink-0 text-xs font-medium text-slate-500">
+        <span className="shrink-0 text-[12px] font-medium leading-5 text-slate-500">
           {trailingLabel}
         </span>
       ) : null}
