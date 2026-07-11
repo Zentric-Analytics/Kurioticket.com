@@ -109,6 +109,10 @@ type BodyScrollLock = {
   restore: (options?: { restoreScroll?: boolean }) => void;
 };
 
+type MobileOverlayCloseOptions = {
+  restoreFocus?: boolean;
+};
+
 type CompactFilterSectionId =
   | "price"
   | "times"
@@ -651,15 +655,18 @@ function FlightBookingFaqSection() {
   );
 }
 
-function lockBodyScroll() {
+function lockMobileOverlayScroll() {
   const bodyElement = document.body;
   const rootElement = document.documentElement;
+  const scrollX = window.scrollX;
   const scrollY = window.scrollY;
+  const scrollbarWidth = Math.max(0, window.innerWidth - rootElement.clientWidth);
   let restored = false;
   const previousBodyStyles = {
     left: bodyElement.style.left,
     overflow: bodyElement.style.overflow,
     overscrollBehavior: bodyElement.style.overscrollBehavior,
+    paddingRight: bodyElement.style.paddingRight,
     position: bodyElement.style.position,
     right: bodyElement.style.right,
     top: bodyElement.style.top,
@@ -671,12 +678,17 @@ function lockBodyScroll() {
     overscrollBehavior: rootElement.style.overscrollBehavior,
   };
 
-  bodyElement.style.left = "0";
+  if (scrollbarWidth > 0) {
+    const computedPaddingRight = window.getComputedStyle(bodyElement).paddingRight;
+    bodyElement.style.paddingRight = `calc(${computedPaddingRight} + ${scrollbarWidth}px)`;
+  }
+
+  bodyElement.style.left = `${-scrollX}px`;
   bodyElement.style.overflow = "hidden";
   bodyElement.style.overscrollBehavior = "none";
   bodyElement.style.position = "fixed";
   bodyElement.style.right = "0";
-  bodyElement.style.top = `-${scrollY}px`;
+  bodyElement.style.top = `${-scrollY}px`;
   bodyElement.style.touchAction = "none";
   bodyElement.style.width = "100%";
   rootElement.style.overflow = "hidden";
@@ -690,6 +702,7 @@ function lockBodyScroll() {
       bodyElement.style.overflow = previousBodyStyles.overflow;
       bodyElement.style.overscrollBehavior =
         previousBodyStyles.overscrollBehavior;
+      bodyElement.style.paddingRight = previousBodyStyles.paddingRight;
       bodyElement.style.position = previousBodyStyles.position;
       bodyElement.style.right = previousBodyStyles.right;
       bodyElement.style.top = previousBodyStyles.top;
@@ -699,10 +712,7 @@ function lockBodyScroll() {
       rootElement.style.overscrollBehavior =
         previousRootStyles.overscrollBehavior;
       if (restoreScroll) {
-        window.scrollTo(0, scrollY);
-        window.requestAnimationFrame(() => {
-          window.scrollTo(0, scrollY);
-        });
+        window.scrollTo(scrollX, scrollY);
       }
     },
   };
@@ -1025,6 +1035,8 @@ export function FlightResultsClient() {
   const lastWrittenFilterQueryStringRef = useRef<string | null>(null);
   const mobileSearchScrollLockRef = useRef<BodyScrollLock | null>(null);
   const mobileFiltersScrollLockRef = useRef<BodyScrollLock | null>(null);
+  const mobileSearchLauncherRef = useRef<HTMLElement | null>(null);
+  const mobileFiltersLauncherRef = useRef<HTMLElement | null>(null);
   const stickySearchScrollLockRef = useRef<BodyScrollLock | null>(null);
   const stickySearchPanelOpenRef = useRef(false);
   const queryString = params.toString();
@@ -1580,7 +1592,7 @@ export function FlightResultsClient() {
       return releaseExistingLock;
     }
 
-    mobileSearchScrollLockRef.current = lockBodyScroll();
+    mobileSearchScrollLockRef.current ??= lockMobileOverlayScroll();
 
     return releaseExistingLock;
   }, [mobileSearchOpen]);
@@ -1605,24 +1617,22 @@ export function FlightResultsClient() {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        const launcher = mobileFiltersLauncherRef.current;
+        mobileFiltersScrollLockRef.current?.restore();
+        mobileFiltersScrollLockRef.current = null;
+        if (launcher?.isConnected) {
+          launcher.focus({ preventScroll: true });
+        }
         setFiltersOpen(false);
       }
     };
 
-    const previouslyFocusedElement =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-
-    mobileFiltersScrollLockRef.current = lockBodyScroll();
+    mobileFiltersScrollLockRef.current ??= lockMobileOverlayScroll();
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       releaseExistingLock();
-      if (previouslyFocusedElement?.isConnected) {
-        previouslyFocusedElement.focus();
-      }
     };
   }, [filtersOpen]);
 
@@ -1850,15 +1860,62 @@ export function FlightResultsClient() {
     setTripTypeMenuOpen(false);
   }
 
-  function closeMobileSearchDrawer() {
+  function restoreMobileOverlayScrollLock(
+    lockRef: RefObject<BodyScrollLock | null>,
+    launcherRef: RefObject<HTMLElement | null>,
+    { restoreFocus = true }: MobileOverlayCloseOptions = {},
+  ) {
+    const launcher = launcherRef.current;
+    lockRef.current?.restore();
+    lockRef.current = null;
+
+    if (restoreFocus && launcher?.isConnected) {
+      launcher.focus({ preventScroll: true });
+    }
+  }
+
+  function closeMobileSearchDrawer(options?: MobileOverlayCloseOptions) {
     closeFlightSearchPopovers();
+    restoreMobileOverlayScrollLock(
+      mobileSearchScrollLockRef,
+      mobileSearchLauncherRef,
+      options,
+    );
     setMobileSearchOpen(false);
   }
 
-  function openMobileSearchDrawer() {
+  function closeMobileFiltersDrawer(options?: MobileOverlayCloseOptions) {
+    restoreMobileOverlayScrollLock(
+      mobileFiltersScrollLockRef,
+      mobileFiltersLauncherRef,
+      options,
+    );
     setFiltersOpen(false);
+  }
+
+  function openMobileSearchDrawer(launcher?: HTMLElement | null) {
+    mobileSearchLauncherRef.current = launcher ?? null;
+    closeMobileFiltersDrawer({ restoreFocus: false });
     closeFlightSearchPopovers();
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 639px)").matches
+    ) {
+      mobileSearchScrollLockRef.current ??= lockMobileOverlayScroll();
+    }
     setMobileSearchOpen(true);
+  }
+
+  function openMobileFiltersDrawer(launcher?: HTMLElement | null) {
+    mobileFiltersLauncherRef.current = launcher ?? null;
+    closeMobileShortcutMenus();
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 1023px)").matches
+    ) {
+      mobileFiltersScrollLockRef.current ??= lockMobileOverlayScroll();
+    }
+    setFiltersOpen(true);
   }
 
   function focusOriginInput() {
@@ -2616,7 +2673,7 @@ export function FlightResultsClient() {
     const shouldCloseStickyPopout = stickySearchPanelOpenRef.current;
 
     if (shouldCloseMobileDrawer) {
-      closeMobileSearchDrawer();
+      closeMobileSearchDrawer({ restoreFocus: false });
     }
 
     if (shouldCloseStickyPopout) {
@@ -4907,7 +4964,7 @@ export function FlightResultsClient() {
               <button
                 type="button"
                 aria-label={t("closeEditSearch")}
-                onClick={closeMobileSearchDrawer}
+                onClick={() => closeMobileSearchDrawer()}
                 className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
               >
                 ×
@@ -5229,7 +5286,7 @@ export function FlightResultsClient() {
               <button
                 type="button"
                 aria-label={t("closeEditSearch")}
-                onClick={closeMobileSearchDrawer}
+                onClick={() => closeMobileSearchDrawer()}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
               >
                 ×
@@ -5859,9 +5916,8 @@ export function FlightResultsClient() {
         ? t("openFiltersWithCount").replace("{{count}}", activeFilterLabel)
         : t("openFilters");
 
-    const handleClick = () => {
-      closeMobileShortcutMenus();
-      setFiltersOpen(true);
+    const handleClick = (event: ReactMouseEvent<HTMLButtonElement>) => {
+      openMobileFiltersDrawer(event.currentTarget);
     };
 
     return (
@@ -5916,7 +5972,7 @@ export function FlightResultsClient() {
           <button
             type="button"
             aria-label={modifySearchLabel}
-            onClick={openMobileSearchDrawer}
+            onClick={(event) => openMobileSearchDrawer(event.currentTarget)}
             className="focus-ring flex min-w-0 flex-col items-center justify-center rounded-xl px-2 py-1 text-center transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           >
             <span
@@ -5937,10 +5993,7 @@ export function FlightResultsClient() {
                 ? `Open filters, ${activeFilterCount} active`
                 : "Open filters"
             }
-            onClick={() => {
-              closeMobileShortcutMenus();
-              setFiltersOpen(true);
-            }}
+            onClick={(event) => openMobileFiltersDrawer(event.currentTarget)}
             className="focus-ring inline-flex h-11 min-w-0 items-center justify-center gap-1 rounded-full px-2 text-[13px] font-bold text-slate-800 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           >
             <SlidersHorizontal
@@ -5960,7 +6013,7 @@ export function FlightResultsClient() {
       <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch justify-center px-4">
         <button
           type="button"
-          onClick={openMobileSearchDrawer}
+          onClick={(event) => openMobileSearchDrawer(event.currentTarget)}
           className="group relative z-10 flex h-[4.25rem] min-w-0 w-full max-w-[30rem] items-center justify-between gap-3 overflow-hidden rounded-xl border border-slate-200/80 bg-white px-4 py-0 text-start shadow-[0_16px_34px_-26px_rgba(15,23,42,0.55)] transition hover:border-slate-300 hover:bg-white hover:shadow-[0_18px_38px_-28px_rgba(15,23,42,0.62)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
         >
           <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden pe-1">
@@ -6376,7 +6429,7 @@ export function FlightResultsClient() {
                 <Button
                   variant="secondary"
                   className="h-10 rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] lg:hidden"
-                  onClick={() => setFiltersOpen(true)}
+                  onClick={(event) => openMobileFiltersDrawer(event.currentTarget)}
                 >
                   <SlidersHorizontal size={17} />
                   {activeFilterCount > 0
@@ -6476,7 +6529,7 @@ export function FlightResultsClient() {
               variant="ghost"
               className="h-10 w-10 shrink-0 rounded-full border border-slate-200 bg-white px-0 text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
               aria-label={t("closeFilters")}
-              onClick={() => setFiltersOpen(false)}
+              onClick={() => closeMobileFiltersDrawer()}
             >
               <X size={20} />
             </Button>
@@ -6540,7 +6593,7 @@ export function FlightResultsClient() {
             className="h-12 min-w-[8.75rem] rounded-xl bg-[#004BB8] px-7 text-base font-bold text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
             onClick={() => {
               triggerFilterApplying();
-              setFiltersOpen(false);
+              closeMobileFiltersDrawer({ restoreFocus: false });
             }}
           >
             {t("done")}
