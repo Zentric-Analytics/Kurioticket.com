@@ -696,3 +696,12 @@ textarea {
     display: block;
   }
 }
+
+.fare-strip-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.fare-strip-scroll::-webkit-scrollbar {
+  display: none;
+}

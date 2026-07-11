@@ -859,6 +859,7 @@ export function FlightResultsClient() {
   );
   const [desktopSortOpen, setDesktopSortOpen] = useState(false);
   const desktopSortRef = useRef<HTMLDivElement | null>(null);
+  const desktopSortButtonRef = useRef<HTMLButtonElement | null>(null);
   const [results, setResults] = useState<PublicFlightResult[]>([]);
   const [error, setError] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -2335,7 +2336,10 @@ export function FlightResultsClient() {
     }
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setDesktopSortOpen(false);
+      if (event.key === "Escape") {
+        setDesktopSortOpen(false);
+        desktopSortButtonRef.current?.focus();
+      }
     }
 
     document.addEventListener("mousedown", handleClose);
@@ -2922,15 +2926,24 @@ export function FlightResultsClient() {
       if (!body || date === body.departureDate) return;
 
       const nextParams = new URLSearchParams(queryString);
+      const currentDepartureDate = nextParams.get("departureDate") ?? body.departureDate;
+      const currentReturnDate = nextParams.get("returnDate") ?? body.returnDate ?? "";
       nextParams.set("departureDate", date);
 
-      if (
-        nextParams.get("tripType") === "round-trip" &&
-        nextParams.get("returnDate") &&
-        isDateValueBefore(nextParams.get("returnDate") ?? "", date)
-      ) {
-        nextParams.delete("returnDate");
-        setReturnDateInput("");
+      if (nextParams.get("tripType") === "round-trip" && currentReturnDate) {
+        const adjustedReturnDate = preserveRoundTripDuration(
+          currentDepartureDate,
+          currentReturnDate,
+          date,
+        );
+
+        if (adjustedReturnDate) {
+          nextParams.set("returnDate", adjustedReturnDate);
+          setReturnDateInput(adjustedReturnDate);
+        } else if (isDateValueBefore(currentReturnDate, date)) {
+          nextParams.set("returnDate", date);
+          setReturnDateInput(date);
+        }
       }
 
       setDepartureDateInput(date);
@@ -6631,62 +6644,102 @@ export function FlightResultsClient() {
             </div>
           ) : (
             <div className={cn(resultStackClass, "space-y-4")}>
-              <div className="hidden w-full rounded-2xl border border-slate-200/80 bg-white/80 p-2 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.35)] sm:block">
-                <div className="flex items-stretch gap-2 overflow-x-auto">
-                  {nearbyFares.length
-                    ? nearbyFares.map((fare) => {
-                        const selected = fare.date === body?.departureDate;
-                        return (
-                          <button
-                            key={fare.date}
-                            type="button"
-                            className={cn(
-                              "min-w-[112px] rounded-xl border px-3 py-2.5 text-left transition hover:border-[#004BB8]/35 hover:bg-[#F5F8FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30",
-                              selected
-                                ? "border-[#004BB8]/35 bg-[#F5F8FF] text-[#003B95]"
-                                : "border-transparent bg-transparent text-slate-700",
-                            )}
-                            aria-current={selected ? "date" : undefined}
-                            onClick={() => handleNearbyFareDateSelect(fare.date)}
-                          >
-                            <span className="block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
-                              {formatFareStripDateLabel(fare.date, calendarLocale)}
-                            </span>
-                            <span className="mt-1 block text-sm font-semibold text-slate-950">
-                              {fare.status === "loading" ? (
-                                <span className="block h-4 w-14 animate-pulse rounded-full bg-slate-200" />
-                              ) : fare.status === "available" &&
-                                fare.price !== null &&
-                                fare.currency ? (
-                                formatDisplayPrice({
-                                  amount: fare.price,
-                                  sourceCurrency: fare.currency,
-                                  displayCurrency: selectedCurrency,
-                                  convertUsdEstimate: true,
-                                  rates: currencyRates.rates,
-                                  isFallbackRate: currencyRates.isFallback,
-                                }).formatted
-                              ) : (
-                                "Unavailable"
+              <div className="hidden w-full sm:block" aria-label="Nearby departure fares">
+                <div className="grid grid-cols-[48px_minmax(0,1fr)_48px] items-center gap-3 py-1.5">
+                  <button
+                    type="button"
+                    aria-label="Show previous departure date"
+                    disabled={!body?.departureDate || loading}
+                    onClick={() => {
+                      if (!body?.departureDate) return;
+                      const selectedDate = parseDateValue(body.departureDate);
+                      if (selectedDate) {
+                        handleNearbyFareDateSelect(formatDateValue(addDays(selectedDate, -1)));
+                      }
+                    }}
+                    className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white/70 text-3xl font-semibold leading-none text-[#0057FF] shadow-[0_3px_8px_rgba(15,23,42,0.08)] transition hover:border-[#0057FF]/35 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    ‹
+                  </button>
+
+                  <div className="fare-strip-scroll grid grid-cols-7 items-center gap-3 overflow-x-auto scroll-smooth px-1 py-1" role="list">
+                    {nearbyFares.length
+                      ? nearbyFares.map((fare) => {
+                          const selected = fare.date === body?.departureDate;
+                          return (
+                            <button
+                              key={fare.date}
+                              type="button"
+                              className={cn(
+                                "focus-ring flex min-h-[86px] min-w-[96px] flex-col items-center justify-center rounded-lg border px-2.5 py-3 text-center transition hover:text-[#004BB8]",
+                                selected
+                                  ? "border-[#0057FF] bg-transparent text-[#0057FF]"
+                                  : "border-transparent bg-transparent text-[#24324A]",
                               )}
-                            </span>
-                          </button>
-                        );
-                      })
-                    : Array.from({ length: 5 }).map((_, index) => (
-                        <div
-                          key={index}
-                          className="min-w-[112px] rounded-xl border border-transparent px-3 py-2.5"
-                        >
-                          <div className="h-3 w-16 animate-pulse rounded-full bg-slate-200" />
-                          <div className="mt-2 h-4 w-12 animate-pulse rounded-full bg-slate-200" />
-                        </div>
-                      ))}
+                              aria-current={selected ? "date" : undefined}
+                              aria-pressed={selected}
+                              disabled={selected || loading}
+                              onClick={() => handleNearbyFareDateSelect(fare.date)}
+                            >
+                              <span className={cn("text-[13px] font-semibold uppercase leading-5 tracking-[0.02em]", selected ? "text-[#0057FF]" : "text-slate-600")}>
+                                {formatFareStripDateLabel(fare.date, calendarLocale)}
+                              </span>
+                              <span className={cn("text-[13px] font-semibold uppercase leading-5", selected ? "text-[#0057FF]" : "text-[#24324A]")}>
+                                {formatFareStripWeekdayLabel(fare.date, calendarLocale)}
+                              </span>
+                              <span className={cn("mt-1 text-[15px] font-semibold leading-5", selected ? "text-[#0057FF]" : "text-slate-950")} aria-live={fare.status === "loading" ? "polite" : undefined}>
+                                {fare.status === "loading" ? (
+                                  <span className="block h-4 w-14 animate-pulse rounded-full bg-slate-200" aria-label="Loading fare" />
+                                ) : fare.status === "available" &&
+                                  fare.price !== null &&
+                                  fare.currency ? (
+                                  formatDisplayPrice({
+                                    amount: fare.price,
+                                    sourceCurrency: fare.currency,
+                                    displayCurrency: selectedCurrency,
+                                    convertUsdEstimate: true,
+                                    rates: currencyRates.rates,
+                                    isFallbackRate: currencyRates.isFallback,
+                                  }).formatted
+                                ) : (
+                                  "View fares"
+                                )}
+                              </span>
+                            </button>
+                          );
+                        })
+                      : Array.from({ length: 7 }).map((_, index) => (
+                          <div
+                            key={index}
+                            className="flex min-h-[86px] min-w-[96px] flex-col items-center justify-center px-2.5 py-3"
+                          >
+                            <div className="h-3 w-14 animate-pulse rounded-full bg-slate-200" />
+                            <div className="mt-2 h-3 w-8 animate-pulse rounded-full bg-slate-200" />
+                            <div className="mt-2 h-4 w-14 animate-pulse rounded-full bg-slate-200" />
+                          </div>
+                        ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    aria-label="Show next departure date"
+                    disabled={!body?.departureDate || loading}
+                    onClick={() => {
+                      if (!body?.departureDate) return;
+                      const selectedDate = parseDateValue(body.departureDate);
+                      if (selectedDate) {
+                        handleNearbyFareDateSelect(formatDateValue(addDays(selectedDate, 1)));
+                      }
+                    }}
+                    className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white/70 text-3xl font-semibold leading-none text-[#0057FF] shadow-[0_3px_8px_rgba(15,23,42,0.08)] transition hover:border-[#0057FF]/35 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    ›
+                  </button>
                 </div>
               </div>
 
-              <div className="hidden w-full items-center justify-between gap-4 sm:flex lg:bg-transparent lg:px-0 lg:pb-2">
-                <p className="text-[16px] font-semibold leading-6 tracking-[-0.005em] text-slate-900">
+              <div className="hidden w-full items-center justify-between gap-4 pt-2 sm:flex lg:bg-transparent lg:px-0 lg:pb-2">
+                <p className="text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">
                   {formatResultsFound(sortedResults.length, t)}
                 </p>
 
@@ -6694,24 +6747,25 @@ export function FlightResultsClient() {
                   ref={desktopSortRef}
                   className="relative hidden items-center gap-2 lg:flex"
                 >
-                  <span className="text-sm font-medium text-slate-600">
+                  <span className="text-[16px] font-medium text-[#142033]">
                     Sort by
                   </span>
                   <button
+                    ref={desktopSortButtonRef}
                     type="button"
                     aria-label="Sort flight results"
                     aria-haspopup="menu"
                     aria-expanded={desktopSortOpen}
-                    className="inline-flex h-9 min-w-[118px] items-center justify-between gap-2 rounded-full border border-slate-200 bg-slate-50/70 px-3 text-sm font-semibold text-slate-950 transition hover:border-slate-300 hover:bg-slate-100 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                    className="inline-flex h-9 items-center justify-center gap-3 rounded-md bg-transparent px-2 text-[16px] font-semibold text-[#142033] transition hover:bg-[#004BB8]/5 hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                     onClick={() => setDesktopSortOpen((open) => !open)}
                   >
                     {selectedSortLabel}
-                    <ChevronDown size={15} aria-hidden="true" />
+                    <ChevronDown size={16} aria-hidden="true" />
                   </button>
                   <div
                     role="menu"
                     className={cn(
-                      "absolute right-0 top-11 z-30 w-44 origin-top-right rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_45px_-24px_rgba(15,23,42,0.55)] transition duration-150",
+                      "absolute right-0 top-11 z-30 w-44 origin-top-right rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_14px_32px_-18px_rgba(15,23,42,0.45)] transition duration-150",
                       desktopSortOpen
                         ? "translate-y-0 scale-100 opacity-100"
                         : "pointer-events-none -translate-y-1 scale-95 opacity-0",
@@ -6723,7 +6777,7 @@ export function FlightResultsClient() {
                         type="button"
                         role="menuitemradio"
                         aria-checked={sortMode === option.value}
-                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                        className={cn("flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25", sortMode === option.value ? "text-[#004BB8]" : "text-slate-700")}
                         onClick={() => {
                           triggerFilterApplying();
                           setSortMode(option.value);
@@ -7055,6 +7109,42 @@ function formatFareStripDateLabel(value: string, locale: string): string {
     day: "numeric",
     month: "short",
   }).format(date);
+}
+
+function formatFareStripWeekdayLabel(value: string, locale: string): string {
+  if (!value) return "";
+
+  const date = new Date(`${value}T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) return "";
+
+  return new Intl.DateTimeFormat(normalizeFlightResultsCalendarLocale(locale), {
+    weekday: "short",
+  }).format(date);
+}
+
+function preserveRoundTripDuration(
+  currentDepartureValue: string,
+  currentReturnValue: string,
+  nextDepartureValue: string,
+): string | null {
+  const currentDepartureDate = parseDateValue(currentDepartureValue);
+  const currentReturnDate = parseDateValue(currentReturnValue);
+  const nextDepartureDate = parseDateValue(nextDepartureValue);
+
+  if (!currentDepartureDate || !currentReturnDate || !nextDepartureDate) {
+    return null;
+  }
+
+  const durationDays = Math.max(
+    0,
+    Math.round(
+      (currentReturnDate.getTime() - currentDepartureDate.getTime()) /
+        (24 * 60 * 60 * 1000),
+    ),
+  );
+
+  return formatDateValue(addDays(nextDepartureDate, durationDays));
 }
 
 function getLowestProviderFare(results: PublicFlightResult[]) {
