@@ -6565,7 +6565,7 @@ export function FlightResultsClient() {
 
       <div
         ref={resultsGridRef}
-        className="flight-results-grid page-shell grid gap-4 pb-5 pt-3 sm:pt-5 lg:pt-6"
+        className="flight-results-grid page-shell grid gap-x-6 gap-y-4 pb-5 pt-3 sm:pt-5 lg:gap-x-9 lg:pt-6"
       >
         <aside
           ref={desktopFilterSidebarRef}
@@ -6688,7 +6688,7 @@ export function FlightResultsClient() {
           </div>
         </aside>
 
-        <section className="min-w-0 space-y-4">
+        <section className="min-w-0 space-y-4 lg:space-y-0">
           <p className="sr-only" aria-live="polite">
             {savedTripError}
           </p>
@@ -6711,7 +6711,7 @@ export function FlightResultsClient() {
                       event.stopPropagation();
                       scrollNearbyFareStrip("previous");
                     }}
-                    className="focus-ring absolute left-0 top-1/2 z-10 inline-flex h-12 w-8 -translate-y-1/2 items-center justify-start border-0 bg-transparent p-0 text-[#0057FF] shadow-none transition hover:text-[#003E91] focus-visible:text-[#003E91] disabled:cursor-not-allowed disabled:text-slate-300 lg:-translate-x-7 xl:-translate-x-8"
+                    className="focus-ring absolute left-0 top-1/2 z-10 inline-flex h-12 w-8 -translate-x-5 -translate-y-1/2 items-center justify-start border-0 bg-transparent p-0 text-[#0057FF] shadow-none transition hover:text-[#003E91] focus-visible:text-[#003E91] disabled:cursor-not-allowed disabled:text-slate-300 lg:-translate-x-7 xl:-translate-x-7"
                   >
                     <ChevronLeft
                       className="h-8 w-8"
@@ -6735,10 +6735,8 @@ export function FlightResultsClient() {
                               type="button"
                               data-fare-date-cell
                               className={cn(
-                                "focus-ring flex min-h-[86px] min-w-[96px] flex-col items-center justify-center rounded-lg border px-2.5 py-3 text-center transition hover:text-[#004BB8]",
-                                selected
-                                  ? "border-[#0057FF] bg-transparent text-[#0057FF]"
-                                  : "border-transparent bg-transparent text-[#24324A]",
+                                "flex min-h-[86px] min-w-[96px] flex-col items-center justify-center bg-transparent px-2.5 py-3 text-center text-[#24324A] transition hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30",
+                                selected ? "text-[#0057FF]" : "text-[#24324A]",
                               )}
                               aria-current={selected ? "date" : undefined}
                               aria-pressed={selected}
