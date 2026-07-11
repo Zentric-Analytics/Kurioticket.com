@@ -32,7 +32,7 @@ export const translations: TranslationDictionary = {
   homePromoHotelsCta: "Explorar ofertas de hoteles",
   homeHotelDestinationsTitle: "Explore stays around the world",
   homeHotelDestinationsSubtitle:
-    "Discover hotel destinations across popular cities, countries, and regions.",
+    "Discover hotel stays across popular countries and destinations.",
   homeHotelDestinationsExploreStays: "Explore stays",
   homeHotelDestinationsExploreAll: "Explore all stays",
   homeHotelDestinationsCardAria: "Explore hotel stays in {{city}}, {{country}}.",

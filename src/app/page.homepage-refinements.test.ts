@@ -3,6 +3,10 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const pageSource = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
+const homepageHotelCountryCardSource = readFileSync(
+  new URL("../data/homepageHotelCountryCards.ts", import.meta.url),
+  "utf8",
+);
 
 test("regional image cards keep start-search copy out of visible overlay", () => {
   const cardSource = pageSource.slice(pageSource.indexOf("function RegionalRouteCard"), pageSource.indexOf("function DiscoveryCardImage"));
@@ -57,7 +61,7 @@ test("previous-to-start programmatic completion clears the next-arrow gate and p
   assert.match(scrollHandlerSource, /updateDestinationArrowState\(\)/);
 });
 
-test("homepage hotel destination section sits between promo panels and newsletter with six cards", () => {
+test("homepage hotel destination section sits between promo panels and newsletter with eight country cards", () => {
   const promoIndex = pageSource.indexOf("homePromoHotelsTitle");
   const hotelSectionIndex = pageSource.indexOf('aria-labelledby="homepage-hotel-destinations-heading"');
   const newsletterIndex = pageSource.indexOf("homeNewsletterTitle");
@@ -65,13 +69,16 @@ test("homepage hotel destination section sits between promo panels and newslette
   assert.ok(promoIndex >= 0, "hotel promo panel should exist");
   assert.ok(hotelSectionIndex > promoIndex, "hotel destination section should follow promo panels");
   assert.ok(newsletterIndex > hotelSectionIndex, "newsletter should follow hotel destination section");
-  assert.match(pageSource, /homepageHotelDestinationIds = \[/);
-  assert.match(pageSource, /"us-new-york"/);
-  assert.match(pageSource, /"gb-london"/);
-  assert.match(pageSource, /"fr-paris"/);
-  assert.match(pageSource, /"ae-dubai"/);
-  assert.match(pageSource, /"jp-tokyo"/);
-  assert.match(pageSource, /"mx-cancun"/);
+  assert.match(pageSource, /homepageHotelCountryCards/);
+  assert.match(homepageHotelCountryCardSource, /homepageHotelCountryDestinationIds = \[/);
+  assert.match(homepageHotelCountryCardSource, /"us-new-york"/);
+  assert.match(homepageHotelCountryCardSource, /"gb-london"/);
+  assert.match(homepageHotelCountryCardSource, /"fr-paris"/);
+  assert.match(homepageHotelCountryCardSource, /"ae-dubai"/);
+  assert.match(homepageHotelCountryCardSource, /"jp-tokyo"/);
+  assert.match(homepageHotelCountryCardSource, /"mx-cancun"/);
+  assert.match(homepageHotelCountryCardSource, /"it-rome"/);
+  assert.match(homepageHotelCountryCardSource, /"sg-singapore"/);
 });
 
 test("homepage hotel destination cards use existing hotel results contract", () => {

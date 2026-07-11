@@ -31,11 +31,13 @@ import {
   getHomepageRegionalRouteCards,
 } from "@/data/homeDiscovery";
 import { getHomepageHeroImageForMarket } from "@/data/images/homepageHeroImage";
-import { destinationImageCatalog } from "@/data/hotelDestinationCards";
 import {
-  getLocalizedHotelDestinationCountryName,
-  hotelDestinations,
-} from "@/data/hotelDestinations";
+  homepageHotelCountryCardLayout,
+  homepageHotelCountryCards,
+  type HomepageHotelCountryCard,
+} from "@/data/homepageHotelCountryCards";
+import { getLocalizedHotelDestinationCountryName } from "@/data/hotelDestinations";
+import { getFlagEmojiFromCountryCode } from "@/lib/region/flagEmoji";
 import {
   getPopularDestinationFareCandidatesByRegion,
   getPopularDestinationsByRegion,
@@ -64,51 +66,7 @@ import {
   type SavedTripDisplayDetails,
 } from "@/lib/saved-trips-api";
 
-const homepageHotelDestinationIds = [
-  "us-new-york",
-  "gb-london",
-  "fr-paris",
-  "ae-dubai",
-  "jp-tokyo",
-  "mx-cancun",
-] as const;
-
-const hotelDestinationCardByQuery = new Map(
-  destinationImageCatalog.map((card) => [card.destinationQuery, card]),
-);
-
-const homepageHotelDestinations = homepageHotelDestinationIds.map((id) => {
-  const destination = hotelDestinations.find((item) => item.id === id);
-
-  if (!destination) {
-    throw new Error(`Homepage hotel destination is not approved: ${id}`);
-  }
-
-  const imageCard =
-    hotelDestinationCardByQuery.get(destination.name) ??
-    hotelDestinationCardByQuery.get(destination.name.replace("ú", "u"));
-
-  if (!imageCard) {
-    throw new Error(`Homepage hotel destination is missing an approved image: ${id}`);
-  }
-
-  return {
-    ...destination,
-    image: imageCard.image,
-    imageAlt: imageCard.imageAlt,
-  };
-});
-
-type HomepageHotelDestination = (typeof homepageHotelDestinations)[number];
-
-const homepageHotelDestinationLayout = [
-  "md:col-span-2 lg:col-span-6 lg:row-span-2 min-h-[290px] sm:min-h-[340px] lg:min-h-[520px]",
-  "md:col-span-1 lg:col-span-3 min-h-[260px]",
-  "md:col-span-1 lg:col-span-3 min-h-[260px]",
-  "md:col-span-1 lg:col-span-2 min-h-[240px]",
-  "md:col-span-1 lg:col-span-2 min-h-[240px]",
-  "md:col-span-2 lg:col-span-2 min-h-[240px]",
-] as const;
+const homepageHotelDestinationLayout = homepageHotelCountryCardLayout;
 
 const addDaysToIsoDate = (date: Date, days: number) => {
   const next = new Date(date);
@@ -121,7 +79,7 @@ const addDaysToIsoDate = (date: Date, days: number) => {
   return `${year}-${month}-${day}`;
 };
 
-function buildHotelDestinationHref(destination: HomepageHotelDestination) {
+function buildHotelDestinationHref(destination: HomepageHotelCountryCard) {
   const baseDate = new Date();
   const checkIn = addDaysToIsoDate(baseDate, 21);
   const checkOut = addDaysToIsoDate(baseDate, 24);
@@ -720,9 +678,10 @@ export default function Home() {
     () => getHomepageRegionalRouteCards(regionCode, curatedDiscoveryItems),
     [curatedDiscoveryItems, regionCode],
   );
-  const homepageHotelDestinationCards = homepageHotelDestinations.map((destination) => ({
+  const homepageHotelDestinationCards = homepageHotelCountryCards.map((destination) => ({
     ...destination,
     countryLabel: getLocalizedHotelDestinationCountryName(destination, locale),
+    countryFlag: getFlagEmojiFromCountryCode(destination.countryCode),
     href: buildHotelDestinationHref(destination),
   }));
   const fareCardsByExactRoute = useMemo(() => {
@@ -1382,7 +1341,7 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:auto-rows-[240px] lg:grid-cols-12 lg:gap-5">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-12 lg:gap-5">
             {homepageHotelDestinationCards.map((destination, index) => (
               <Link
                 key={destination.id}
@@ -1390,23 +1349,27 @@ export default function Home() {
                 aria-label={t("homeHotelDestinationsCardAria")
                   .replace("{{city}}", destination.name)
                   .replace("{{country}}", destination.countryLabel)}
-                className={`focus-ring group relative isolate flex overflow-hidden rounded-[1.6rem] bg-slate-900 shadow-[0_24px_60px_-34px_rgba(2,28,43,0.72)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_30px_70px_-34px_rgba(2,28,43,0.85)] ${homepageHotelDestinationLayout[index]}`}
+                className={`focus-ring group relative isolate flex overflow-hidden rounded-[1.6rem] bg-slate-100 shadow-[0_24px_60px_-34px_rgba(2,28,43,0.52)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_30px_70px_-34px_rgba(2,28,43,0.62)] ${homepageHotelDestinationLayout[index]}`}
               >
                 <Image
                   src={destination.image}
                   alt={destination.imageAlt}
                   fill
-                  sizes={index === 0 ? "(min-width: 1024px) 50vw, (min-width: 768px) 100vw, 100vw" : "(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"}
+                  sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"
                   className="object-cover transition duration-500 group-hover:scale-[1.04]"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/78 via-slate-950/28 to-slate-950/5" aria-hidden="true" />
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-slate-950/60 via-slate-950/24 to-transparent" aria-hidden="true" />
                 <div className="relative mt-auto w-full p-5 text-white sm:p-6">
-                  <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-white/78">
-                    {destination.countryLabel}
-                  </p>
-                  <h3 className="mt-1 text-2xl font-black tracking-tight text-white drop-shadow-sm sm:text-3xl">
-                    {destination.name}
-                  </h3>
+                  <div className="flex items-center gap-2 text-white drop-shadow-[0_2px_8px_rgba(2,28,43,0.55)]">
+                    {destination.countryFlag ? (
+                      <span className="text-2xl sm:text-3xl" aria-hidden="true">
+                        {destination.countryFlag}
+                      </span>
+                    ) : null}
+                    <h3 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                      {destination.countryLabel}
+                    </h3>
+                  </div>
                   <p className="mt-3 inline-flex items-center gap-1.5 text-sm font-extrabold text-white drop-shadow-sm">
                     {t("homeHotelDestinationsExploreStays")}
                     <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden="true" />
