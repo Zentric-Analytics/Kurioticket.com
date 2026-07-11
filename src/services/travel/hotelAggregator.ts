@@ -1,11 +1,34 @@
 import type { AggregatedResult, HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
-import { canUseDevelopmentFallbacks } from "@/lib/env";
+import { canUseDevelopmentFallbacks, getHotelResultsMode } from "@/lib/env";
 import { rememberHotels } from "@/lib/searchCache";
 import { fallbackHotels } from "@/services/travel/fallbackData";
+import { buildDemoHotelResults } from "@/services/travel/demoHotelResults";
 import { searchHotelProvider } from "@/services/travel/providers/hotelProvider";
 
 export async function searchHotels(search: HotelSearchParams): Promise<AggregatedResult<NormalizedHotelResult>> {
   const startedAt = Date.now();
+  const hotelResultsMode = getHotelResultsMode();
+
+  if (hotelResultsMode === "demo") {
+    const results = assignBadges(sortHotels(buildDemoHotelResults(search), search.sort || "cheapest"));
+    rememberHotels(results);
+
+    return {
+      results,
+      providerStatuses: [
+        {
+          provider: "Demo Hotel Catalogue",
+          results,
+          status: "success",
+          latencyMs: Date.now() - startedAt,
+        },
+      ],
+      warnings: ["Demo hotel listings are illustrative and are not live inventory."],
+      servedFromFallback: false,
+      latencyMs: Date.now() - startedAt,
+    };
+  }
+
   const providers = await Promise.all([searchHotelProvider(search)]);
   const merged = providers.flatMap((provider) => provider.results);
   const deduped = assignBadges(sortHotels(dedupeHotels(merged), search.sort || "cheapest"));

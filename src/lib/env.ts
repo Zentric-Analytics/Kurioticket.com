@@ -25,6 +25,7 @@ export function getGoogleClientSecret() {
 
 export type TravelProviderMode = "local" | "staging" | "production";
 export type FlightProviderPrimary = "duffel" | "none";
+export type HotelResultsMode = "demo" | "live";
 export type HotelProviderPrimary =
   | "none"
   | "kayak_sandbox"
@@ -72,6 +73,13 @@ export function allowSandboxProviders() {
 
 export function getFlightProviderPrimary(): FlightProviderPrimary {
   return readEnum("FLIGHT_PROVIDER_PRIMARY", ["duffel", "none"] as const, "duffel");
+}
+
+export function getHotelResultsMode(): HotelResultsMode {
+  // Demo is an intentional temporary Hotels product source. Live must be
+  // selected when a verified live provider is ready. This mode is separate
+  // from emergency/local development fallbacks.
+  return readEnum("HOTEL_RESULTS_MODE", ["demo", "live"] as const, "demo");
 }
 
 export function getHotelProviderPrimary(): HotelProviderPrimary {
