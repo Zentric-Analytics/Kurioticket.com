@@ -284,13 +284,23 @@ function nights(search: HotelSearchParams) {
 }
 
 function normalizeReviewScore(value: unknown) {
-  const score = Number(value);
-  return Number.isFinite(score) && score >= 0 && score <= 10 ? score : undefined;
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return undefined;
+  }
+
+  return value >= 0 && value <= 10 ? value : undefined;
 }
 
 function normalizeReviewCount(value: unknown) {
-  const count = Number(value);
-  return Number.isFinite(count) && count >= 0 ? Math.floor(count) : undefined;
+  if (
+    typeof value !== "number" ||
+    !Number.isFinite(value) ||
+    value < 0
+  ) {
+    return undefined;
+  }
+
+  return Math.floor(value);
 }
 
 function normalizeOptionalString(value: unknown) {

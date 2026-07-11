@@ -344,8 +344,11 @@ export function HotelCard({ hotel }: HotelCardProps) {
   const mealPlanText = getMealPlanDisplay(hotel, rawRoomTypeText, t);
   const cancellationDisplay = getCancellationDisplay(hotel.cancellationInfo, t);
   const amenityDisplay = getAmenityDisplay(hotel.amenities, mealPlanText, t);
+  const isDemoHotel = hotel.dataSource === "demo";
 
   async function redirectToHotel() {
+    if (isDemoHotel) return;
+
     const response = await fetch("/api/redirect", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -466,16 +469,18 @@ export function HotelCard({ hotel }: HotelCardProps) {
                   )}
                 </div>
               </div>
-              <div className="min-[380px]:text-end">
-                <Button
-                  variant="accent"
-                  size="sm"
-                  className="w-full whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-3 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] hover:border-[#021C2B] hover:bg-[#021C2B] min-[380px]:w-auto"
-                  onClick={redirectToHotel}
-                >
-                  {t("hotelResults.viewHotel")}
-                </Button>
-              </div>
+              {!isDemoHotel ? (
+                <div className="min-[380px]:text-end">
+                  <Button
+                    variant="accent"
+                    size="sm"
+                    className="w-full whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-3 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] hover:border-[#021C2B] hover:bg-[#021C2B] min-[380px]:w-auto"
+                    onClick={redirectToHotel}
+                  >
+                    {t("hotelResults.viewHotel")}
+                  </Button>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
