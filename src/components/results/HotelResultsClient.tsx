@@ -502,6 +502,8 @@ export function HotelResultsClient() {
     body.guests,
     body.rooms,
   ].join("-");
+  const isDemoInventory =
+    results.length > 0 && results.every((hotel) => hotel.dataSource === "demo");
   const bodyMobileSearchDraft = useMemo<HotelMobileSearchDraft>(
     () => ({
       destination: body.destination,
@@ -1406,7 +1408,12 @@ export function HotelResultsClient() {
         </aside>
 
         <section className="min-w-0 space-y-4">
-          {!loading && !error && warnings.length ? (
+          {!loading && !error && isDemoInventory ? (
+            <div className="rounded-md border border-amber/30 bg-amber/10 p-3 text-sm text-amber">
+              {t("hotelResults.demoInventoryNotice") ||
+                "Demo hotel listings are illustrative and are not live inventory."}
+            </div>
+          ) : !loading && !error && warnings.length ? (
             <div className="rounded-md border border-amber/30 bg-amber/10 p-3 text-sm text-amber">
               {t("hotelResults.limitedProviderChecks")}
             </div>

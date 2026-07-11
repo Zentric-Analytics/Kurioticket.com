@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { Building2, MapPin } from "lucide-react";
 import type { PublicHotelResult } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
@@ -9,6 +9,11 @@ import { Card } from "@/components/ui/Card";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { formatCurrency } from "@/lib/utils";
+import {
+  getHotelReviewBand,
+  getHotelReviewCount,
+  type HotelReviewBand,
+} from "@/components/results/hotelReviewPresentation";
 
 function getHotelStarRating(rating: number) {
   if (!Number.isFinite(rating) || rating <= 0) return null;
@@ -255,6 +260,7 @@ function getAmenityDisplay(
   amenities: string[],
   mealPlanText: string,
   t: (key: string) => string,
+  limit = 3,
 ) {
   const seen = new Set<string>();
   const mealPlanKey = mealPlanText.toLocaleLowerCase();
@@ -289,7 +295,7 @@ function getAmenityDisplay(
 
       return translationKey ? t(translationKey) : amenity;
     })
-    .slice(0, 3);
+    .slice(0, limit);
 }
 
 const fallbackHotelImages = [
@@ -314,6 +320,22 @@ function getDeterministicFallbackImage(hotel: PublicHotelResult) {
   return fallbackHotelImages[hash % fallbackHotelImages.length];
 }
 
+const reviewLabelKeys: Record<HotelReviewBand, string> = {
+  exceptional: "hotelResults.review.exceptional",
+  veryGood: "hotelResults.review.veryGood",
+  good: "hotelResults.review.good",
+  pleasant: "hotelResults.review.pleasant",
+  reviewScore: "hotelResults.review.score",
+};
+
+const reviewLabelFallbacks: Record<HotelReviewBand, string> = {
+  exceptional: "Exceptional",
+  veryGood: "Very good",
+  good: "Good",
+  pleasant: "Pleasant",
+  reviewScore: "Review score",
+};
+
 type HotelCardProps = {
   hotel: PublicHotelResult;
 };
@@ -321,6 +343,8 @@ type HotelCardProps = {
 export function HotelCard({ hotel }: HotelCardProps) {
   const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const detailsRegionId = useId();
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const starRating = getHotelStarRating(hotel.rating);
   const fallbackImageUrl = useMemo(
     () => getDeterministicFallbackImage(hotel),
@@ -344,7 +368,43 @@ export function HotelCard({ hotel }: HotelCardProps) {
   const mealPlanText = getMealPlanDisplay(hotel, rawRoomTypeText, t);
   const cancellationDisplay = getCancellationDisplay(hotel.cancellationInfo, t);
   const amenityDisplay = getAmenityDisplay(hotel.amenities, mealPlanText, t);
+  const expandedAmenityDisplay = getAmenityDisplay(
+    hotel.amenities,
+    mealPlanText,
+    t,
+    8,
+  );
   const isDemoHotel = hotel.dataSource === "demo";
+  const neighbourhood = hotel.neighbourhood?.trim() || "";
+  const reviewScore = hotel.reviewScore;
+  const reviewBand = getHotelReviewBand(reviewScore);
+  const reviewCount = getHotelReviewCount(hotel.reviewCount);
+  const reviewLabel = reviewBand
+    ? t(reviewLabelKeys[reviewBand]) || reviewLabelFallbacks[reviewBand]
+    : "";
+  const formattedReviewScore = reviewBand
+    ? new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(
+        typeof reviewScore === "number" ? reviewScore : 0,
+      )
+    : "";
+  const formattedReviewCount =
+    reviewCount !== null
+      ? new Intl.NumberFormat(locale).format(reviewCount)
+      : "";
+  const reviewCountText =
+    reviewCount !== null
+      ? (reviewCount === 1
+          ? t("hotelResults.review.single") || "{{count}} review"
+          : t("hotelResults.review.multiple") || "{{count}} reviews"
+        ).replace("{{count}}", formattedReviewCount)
+      : "";
+  const taxesAndFeesText =
+    hotel.taxesAndFeesIncluded === true
+      ? t("hotelResults.taxesFeesIncluded") || "Includes taxes and fees"
+      : hotel.taxesAndFeesIncluded === false
+        ? t("hotelResults.taxesFeesNotIncluded") ||
+          "Taxes and fees not included"
+        : "";
 
   async function redirectToHotel() {
     if (isDemoHotel) return;
@@ -418,6 +478,31 @@ export function HotelCard({ hotel }: HotelCardProps) {
                   <span>{hotel.location}</span>
                 </p>
               </div>
+              {reviewBand || neighbourhood || isDemoHotel ? (
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-slate-600">
+                  {reviewBand ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2 py-0.5 text-white">
+                      <span>{formattedReviewScore}</span>
+                      <span>{reviewLabel}</span>
+                    </span>
+                  ) : null}
+                  {reviewCountText ? (
+                    <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">
+                      {reviewCountText}
+                    </span>
+                  ) : null}
+                  {neighbourhood ? (
+                    <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">
+                      {neighbourhood}
+                    </span>
+                  ) : null}
+                  {isDemoHotel ? (
+                    <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[#004BB8] ring-1 ring-blue-100">
+                      {t("hotelResults.demoListing") || "Demo listing"}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
               {distanceText ? (
                 <p className="mt-1 text-[13px] font-normal leading-5 text-slate-600 lg:text-sm">
                   {distanceText}
@@ -468,8 +553,29 @@ export function HotelCard({ hotel }: HotelCardProps) {
                     formatCurrency(hotel.pricePerNight, hotel.currency, locale),
                   )}
                 </div>
+                {taxesAndFeesText ? (
+                  <div className="text-xs font-medium leading-4 text-slate-500">
+                    {taxesAndFeesText}
+                  </div>
+                ) : null}
               </div>
-              {!isDemoHotel ? (
+              {isDemoHotel ? (
+                <div className="min-[380px]:text-end">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="w-full whitespace-nowrap rounded-lg px-3 text-sm font-semibold min-[380px]:w-auto"
+                    aria-expanded={detailsOpen}
+                    aria-controls={detailsRegionId}
+                    onClick={() => setDetailsOpen((open) => !open)}
+                  >
+                    {detailsOpen
+                      ? t("hotelResults.hideDetails") || "Hide details"
+                      : t("hotelResults.viewDetails") || "View details"}
+                  </Button>
+                </div>
+              ) : (
                 <div className="min-[380px]:text-end">
                   <Button
                     variant="accent"
@@ -480,11 +586,83 @@ export function HotelCard({ hotel }: HotelCardProps) {
                     {t("hotelResults.viewHotel")}
                   </Button>
                 </div>
-              ) : null}
+              )}
             </div>
           </div>
         </div>
       </div>
+      {isDemoHotel && detailsOpen ? (
+        <div
+          id={detailsRegionId}
+          className="border-t border-slate-200 bg-slate-50/80 px-3.5 py-3.5 md:px-4 md:py-4"
+        >
+          <h3 className="text-sm font-bold text-slate-950">
+            {t("hotelResults.detailsHeading") || "Hotel details"}
+          </h3>
+          <p className="mt-1 text-xs leading-5 text-slate-600">
+            {t("hotelResults.demoDisclaimer") ||
+              "Illustrative demo listing. Prices, reviews and property details are not live inventory."}
+          </p>
+          <dl className="mt-3 grid gap-3 text-sm text-slate-700 md:grid-cols-2">
+            {roomTypeText ? (
+              <div>
+                <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                  {t("hotelResults.roomDetails") || "Room"}
+                </dt>
+                <dd className="mt-1">{roomTypeText}</dd>
+              </div>
+            ) : null}
+            {neighbourhood ? (
+              <div>
+                <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                  {t("hotelResults.areaDetails") || "Area"}
+                </dt>
+                <dd className="mt-1">{neighbourhood}</dd>
+              </div>
+            ) : null}
+            {cancellationDisplay ? (
+              <div>
+                <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                  {t("hotelResults.cancellationDetails") || "Cancellation"}
+                </dt>
+                <dd className="mt-1">{cancellationDisplay.label}</dd>
+              </div>
+            ) : null}
+            {expandedAmenityDisplay.length > 0 ? (
+              <div>
+                <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                  {t("hotelResults.amenitiesDetails") || "Amenities"}
+                </dt>
+                <dd className="mt-1">{expandedAmenityDisplay.join(" · ")}</dd>
+              </div>
+            ) : null}
+            {reviewBand ? (
+              <div>
+                <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                  {t("hotelResults.review.score") || "Review score"}
+                </dt>
+                <dd className="mt-1">
+                  {formattedReviewScore} {reviewLabel}
+                  {reviewCountText ? ` · ${reviewCountText}` : ""}
+                </dd>
+              </div>
+            ) : null}
+            <div>
+              <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                {t("hotelResults.priceDetails") || "Price"}
+              </dt>
+              <dd className="mt-1">
+                {formatCurrency(hotel.totalPrice, hotel.currency, locale)} ·{" "}
+                {t("hotelResults.pricePerNight").replace(
+                  "{{price}}",
+                  formatCurrency(hotel.pricePerNight, hotel.currency, locale),
+                )}
+                {taxesAndFeesText ? ` · ${taxesAndFeesText}` : ""}
+              </dd>
+            </div>
+          </dl>
+        </div>
+      ) : null}
     </Card>
   );
 }
