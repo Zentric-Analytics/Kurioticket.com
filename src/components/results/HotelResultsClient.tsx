@@ -1462,13 +1462,33 @@ export function HotelResultsClient() {
                   t={t}
                 />
 
-                <div className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <h1 className="text-sm font-bold text-navy">
+                <div className="flex min-h-[52px] w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
+                  <h1 className="min-w-0 text-sm font-bold text-navy">
                     {t("hotelResults.foundPlacesToStay").replace(
                       "{{count}}",
                       formatHotelCount(visibleFilteredHotels.length, locale),
                     )}
                   </h1>
+                  <label className="hidden shrink-0 items-center gap-2 sm:flex">
+                    <span className="whitespace-nowrap text-xs font-semibold text-slate-500">
+                      {t("sortBy") || "Sort by"}
+                    </span>
+                    <select
+                      className="h-9 min-w-[136px] rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-800 shadow-sm outline-none transition-colors hover:border-slate-300 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20"
+                      value={hotelSummarySortMode}
+                      onChange={(event) =>
+                        updateHotelSummarySortMode(
+                          event.currentTarget.value as HotelSummarySortMode,
+                        )
+                      }
+                    >
+                      {hotelSummaryItems.map((item) => (
+                        <option key={item.sortMode} value={item.sortMode}>
+                          {item.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
 
                 {sortedVisibleHotels.length ? (
@@ -1589,38 +1609,38 @@ function HotelSummaryRow({
             key={item.label}
             type="button"
             className={cn(
-              "min-w-[152px] snap-start rounded-2xl border bg-white p-2.5 text-start shadow-[0_14px_30px_-22px_rgba(2,28,43,0.32)] transition-all hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-[0_18px_34px_-24px_rgba(2,28,43,0.18)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f8fb] sm:min-w-0 sm:p-3.5",
+              "min-w-[152px] snap-start rounded-xl border bg-white px-2.5 py-2 text-start transition-[border-color,background-color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f8fb] sm:min-w-0 sm:px-3 sm:py-2.5",
               isActive
-                ? "border-[#004BB8]/22 bg-[#004BB8]/6 shadow-[0_14px_30px_-22px_rgba(2,28,43,0.22)] ring-1 ring-[#004BB8]/8"
-                : "border-[#004BB8]/10",
+                ? "border-[#004BB8]/35 bg-[#004BB8]/[0.055] shadow-[0_8px_20px_-18px_rgba(0,75,184,0.45)] ring-1 ring-[#004BB8]/10"
+                : "border-slate-200 shadow-[0_8px_20px_-20px_rgba(15,23,42,0.35)] hover:border-[#004BB8]/25 hover:bg-slate-50/60",
             )}
             aria-pressed={isActive}
             onClick={() => onSortModeChange(item.sortMode)}
           >
-            <div className="flex items-start gap-2 sm:gap-3">
+            <div className="flex items-start gap-2">
               <div
                 className={cn(
-                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9 sm:rounded-xl",
+                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
                   item.iconClassName,
                 )}
                 aria-hidden="true"
               >
                 <Icon
                   className={cn(
-                    "h-3.5 w-3.5 sm:h-[18px] sm:w-[18px]",
+                    "h-3.5 w-3.5",
                     item.iconElementClassName,
                   )}
                   strokeWidth={2.8}
                 />
               </div>
               <div className="min-w-0">
-                <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#004BB8] sm:text-[10px] sm:tracking-[0.14em]">
+                <p className="truncate text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-[#004BB8]">
                   {item.label}
                 </p>
-                <p className="mt-0.5 text-sm font-bold leading-5 tracking-[-0.02em] text-slate-950 sm:mt-1 sm:text-base sm:leading-6">
+                <p className="mt-0.5 truncate text-sm font-bold leading-5 tracking-[-0.01em] text-slate-950">
                   {item.value}
                 </p>
-                <p className="mt-0.5 truncate text-[11px] font-medium leading-4 text-slate-500 sm:text-xs">
+                <p className="mt-0.5 truncate text-[11px] font-medium leading-4 text-slate-500">
                   {item.helperText}
                 </p>
               </div>
