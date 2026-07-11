@@ -127,3 +127,28 @@ test("returning to first card and no-overflow rails hide previous arrow", () => 
   assert.equal(arrows.shouldRenderPreviousArrow, false);
   assert.equal(arrows.canScrollToNext, false);
 });
+
+test("fractional positions up to one pixel are treated as the start", () => {
+  for (const scrollLeft of [0.3, 1]) {
+    const state = getLogicalCarouselScrollState({ scrollLeft, scrollWidth: 1000, clientWidth: 400, direction: "ltr" });
+    const arrows = getCarouselArrowRenderState(state, true);
+    assert.equal(state.isAtStart, true);
+    assert.equal(arrows.shouldRenderPreviousArrow, false);
+  }
+});
+
+test("CSS snap completion at start clears previous arrow without a manual scroll", () => {
+  const before = getLogicalCarouselScrollState({ scrollLeft: 260, scrollWidth: 1000, clientWidth: 400, direction: "ltr" });
+  assert.equal(getCarouselArrowRenderState(before, true).shouldRenderPreviousArrow, true);
+
+  const afterSnap = getLogicalCarouselScrollState({ scrollLeft: 1, scrollWidth: 1000, clientWidth: 400, direction: "ltr" });
+  assert.equal(afterSnap.isAtStart, true);
+  assert.equal(getCarouselArrowRenderState(afterSnap, true).shouldRenderPreviousArrow, false);
+});
+
+test("RTL fractional logical start hides previous arrow", () => {
+  const state = getLogicalCarouselScrollState({ scrollLeft: 599, scrollWidth: 1000, clientWidth: 400, direction: "rtl" });
+  assert.equal(state.logicalScrollLeft, 1);
+  assert.equal(state.isAtStart, true);
+  assert.equal(getCarouselArrowRenderState(state, true).shouldRenderPreviousArrow, false);
+});
