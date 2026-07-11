@@ -17,7 +17,7 @@ import { useSession } from "next-auth/react";
 import {
   ArrowLeft,
   ArrowRightLeft,
-  ArrowUp,
+  ChevronUp,
   Calendar,
   ChevronDown,
   Heart,
@@ -1320,7 +1320,6 @@ export function FlightResultsClient() {
     };
   }, [loading]);
 
-
   useEffect(() => {
     if (loading || typeof window === "undefined") {
       return undefined;
@@ -1354,7 +1353,9 @@ export function FlightResultsClient() {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setMobileCompactHeaderVisible(!entry.isIntersecting && window.scrollY > 96);
+        setMobileCompactHeaderVisible(
+          !entry.isIntersecting && window.scrollY > 96,
+        );
       },
       { rootMargin: "-8px 0px 0px 0px", threshold: 0 },
     );
@@ -1458,20 +1459,19 @@ export function FlightResultsClient() {
     setMobileStopsMenuOpen,
   ]);
 
-  const getActiveMobileShortcutMenu = useCallback(():
-    | MobileShortcutMenu
-    | null => {
-    if (mobileSortMenuOpen) return "sort";
-    if (mobileAirlineMenuOpen) return "airlines";
-    if (mobileStopsMenuOpen) return "stops";
-    if (mobileAirportMenuOpen) return "airports";
-    return null;
-  }, [
-    mobileAirlineMenuOpen,
-    mobileAirportMenuOpen,
-    mobileSortMenuOpen,
-    mobileStopsMenuOpen,
-  ]);
+  const getActiveMobileShortcutMenu =
+    useCallback((): MobileShortcutMenu | null => {
+      if (mobileSortMenuOpen) return "sort";
+      if (mobileAirlineMenuOpen) return "airlines";
+      if (mobileStopsMenuOpen) return "stops";
+      if (mobileAirportMenuOpen) return "airports";
+      return null;
+    }, [
+      mobileAirlineMenuOpen,
+      mobileAirportMenuOpen,
+      mobileSortMenuOpen,
+      mobileStopsMenuOpen,
+    ]);
 
   const positionMobileShortcutMenu = useCallback(
     (rect: DOMRect, width: number) => {
@@ -1535,10 +1535,7 @@ export function FlightResultsClient() {
       window.removeEventListener("resize", handleViewportChange);
       window.removeEventListener("orientationchange", handleViewportChange);
     };
-  }, [
-    closeMobileShortcutMenus,
-    getActiveMobileShortcutMenu,
-  ]);
+  }, [closeMobileShortcutMenus, getActiveMobileShortcutMenu]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -4731,9 +4728,9 @@ export function FlightResultsClient() {
   function renderCompactSearchForm(placement: "mobile" | "desktop") {
     if (placement === "mobile") {
       const mobileFieldClass =
-        "rounded-3xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm shadow-slate-900/[0.03] transition-colors focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25";
+        "rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm shadow-slate-900/[0.025] transition-colors hover:border-slate-300 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/25";
       const mobileLabelClass =
-        "mb-1.5 block text-[0.68rem] font-black uppercase leading-4 tracking-[0.16em] text-slate-500";
+        "mb-1.5 block text-[0.68rem] font-bold uppercase leading-4 tracking-[0.14em] text-slate-500";
       const mobileTripTypeOptions = [
         { labelKey: "roundTrip", value: "round-trip" },
         { labelKey: "oneWay", value: "one-way" },
@@ -4745,8 +4742,11 @@ export function FlightResultsClient() {
           className="flex h-full min-h-0 w-full min-w-0 flex-col bg-slate-50"
         >
           <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 pb-3 pt-[calc(0.85rem+env(safe-area-inset-top))]">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-lg font-black tracking-tight text-slate-950">
+            <div className="flex min-h-10 items-center justify-between gap-3">
+              <h2
+                id="flight-mobile-search-title"
+                className="text-[1.15rem] font-bold leading-6 tracking-[-0.01em] text-slate-950"
+              >
                 {t("editFlightSearch")}
               </h2>
 
@@ -4766,6 +4766,50 @@ export function FlightResultsClient() {
             className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
           >
             <div className="mx-auto flex w-full max-w-xl flex-col gap-3">
+              <div
+                role="radiogroup"
+                aria-label={t("tripType")}
+                className="flex min-h-11 items-center gap-5 rounded-2xl bg-slate-50/50 px-1 py-1"
+              >
+                {mobileTripTypeOptions.map((option) => {
+                  const selected = tripTypeInput === option.value;
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => handleTripTypeChange(option.value)}
+                      className={cn(
+                        "focus-ring inline-flex min-h-10 items-center gap-2 rounded-full px-2.5 py-1 text-sm font-semibold transition-colors",
+                        selected
+                          ? "text-slate-950"
+                          : "text-slate-600 hover:text-slate-900",
+                      )}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          "inline-flex h-4 w-4 items-center justify-center rounded-full border transition-colors",
+                          selected
+                            ? "border-[#004BB8] bg-white shadow-[0_0_0_3px_rgba(0,75,184,0.10)]"
+                            : "border-slate-300 bg-white",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "h-2 w-2 rounded-full transition-colors",
+                            selected ? "bg-[#004BB8]" : "bg-transparent",
+                          )}
+                        />
+                      </span>
+                      {t(option.labelKey)}
+                    </button>
+                  );
+                })}
+              </div>
+
               <div ref={originWrapRef}>
                 <button
                   ref={mobileOriginLauncherRef}
@@ -4884,38 +4928,6 @@ export function FlightResultsClient() {
                   </span>
                   <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
                 </button>
-              </div>
-
-              <div className="rounded-3xl border border-slate-200 bg-white p-1.5 shadow-sm shadow-slate-900/[0.03]">
-                <span className="mb-2 block px-2 text-[0.68rem] font-black uppercase leading-4 tracking-[0.16em] text-slate-500">
-                  {t("tripType")}
-                </span>
-                <div
-                  className="grid grid-cols-2 gap-1.5"
-                  role="group"
-                  aria-label={t("tripType")}
-                >
-                  {mobileTripTypeOptions.map((option) => {
-                    const selected = tripTypeInput === option.value;
-
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        aria-pressed={selected}
-                        onClick={() => handleTripTypeChange(option.value)}
-                        className={cn(
-                          "focus-ring min-h-11 rounded-2xl px-3 py-2 text-sm font-black transition-colors",
-                          selected
-                            ? "bg-slate-950 text-white shadow-sm"
-                            : "bg-slate-100 text-slate-700 hover:bg-slate-200",
-                        )}
-                      >
-                        {t(option.labelKey)}
-                      </button>
-                    );
-                  })}
-                </div>
               </div>
 
               <Button
@@ -5483,7 +5495,9 @@ export function FlightResultsClient() {
         if (menu === "airlines") setMobileAirlineMenuOpen(true);
         if (menu === "stops") setMobileStopsMenuOpen(true);
         if (menu === "airports") setMobileAirportMenuOpen(true);
-        window.requestAnimationFrame(() => positionMobileShortcutMenu(rect, width));
+        window.requestAnimationFrame(() =>
+          positionMobileShortcutMenu(rect, width),
+        );
       }
     };
 
@@ -5518,7 +5532,11 @@ export function FlightResultsClient() {
     );
 
     const renderMenu = () => {
-      if (!activeMenu || !mobileShortcutMenuPosition || typeof document === "undefined") {
+      if (
+        !activeMenu ||
+        !mobileShortcutMenuPosition ||
+        typeof document === "undefined"
+      ) {
         return null;
       }
 
@@ -5650,10 +5668,34 @@ export function FlightResultsClient() {
         >
           <div className="flex w-max flex-nowrap items-center gap-2.5">
             {renderFloatingFilterButton(shortcutButtonClass)}
-            {renderTrigger("sort", activeSortOption.label, mobileSortMenuOpen, 144, mobileSortMenuRef)}
-            {renderTrigger("airlines", "Airlines", mobileAirlineMenuOpen, 224, mobileAirlineMenuRef)}
-            {renderTrigger("stops", "Stops", mobileStopsMenuOpen, 160, mobileStopsMenuRef)}
-            {renderTrigger("airports", "Airports", mobileAirportMenuOpen, 176, mobileAirportMenuRef)}
+            {renderTrigger(
+              "sort",
+              activeSortOption.label,
+              mobileSortMenuOpen,
+              144,
+              mobileSortMenuRef,
+            )}
+            {renderTrigger(
+              "airlines",
+              "Airlines",
+              mobileAirlineMenuOpen,
+              224,
+              mobileAirlineMenuRef,
+            )}
+            {renderTrigger(
+              "stops",
+              "Stops",
+              mobileStopsMenuOpen,
+              160,
+              mobileStopsMenuRef,
+            )}
+            {renderTrigger(
+              "airports",
+              "Airports",
+              mobileAirportMenuOpen,
+              176,
+              mobileAirportMenuRef,
+            )}
           </div>
         </div>
         {renderMenu()}
@@ -5697,7 +5739,6 @@ export function FlightResultsClient() {
     );
   }
 
-
   function renderMobileCompactResultsHeader() {
     const routeLabel = `${mobileOriginSummary} ⇄ ${mobileDestinationSummary}`;
     const modifySearchLabel = `Modify flight search from ${mobileOriginSummary} to ${mobileDestinationSummary}`;
@@ -5728,7 +5769,10 @@ export function FlightResultsClient() {
             onClick={openMobileSearchDrawer}
             className="focus-ring flex min-w-0 flex-col items-center justify-center rounded-xl px-2 py-1 text-center transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           >
-            <span className="block max-w-full truncate text-[15px] font-extrabold leading-5 tracking-[-0.015em] text-slate-950" dir="ltr">
+            <span
+              className="block max-w-full truncate text-[15px] font-extrabold leading-5 tracking-[-0.015em] text-slate-950"
+              dir="ltr"
+            >
               {routeLabel}
             </span>
             <span className="mt-0.5 block text-[11px] font-semibold leading-4 text-slate-500">
@@ -5738,14 +5782,22 @@ export function FlightResultsClient() {
 
           <button
             type="button"
-            aria-label={activeFilterCount > 0 ? `Open filters, ${activeFilterCount} active` : "Open filters"}
+            aria-label={
+              activeFilterCount > 0
+                ? `Open filters, ${activeFilterCount} active`
+                : "Open filters"
+            }
             onClick={() => {
               closeMobileShortcutMenus();
               setFiltersOpen(true);
             }}
             className="focus-ring inline-flex h-11 min-w-0 items-center justify-center gap-1 rounded-full px-2 text-[13px] font-bold text-slate-800 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           >
-            <SlidersHorizontal className="h-4 w-4 shrink-0 text-[#004BB8]" strokeWidth={2.2} aria-hidden="true" />
+            <SlidersHorizontal
+              className="h-4 w-4 shrink-0 text-[#004BB8]"
+              strokeWidth={2.2}
+              aria-hidden="true"
+            />
             <span className="truncate">Filter</span>
           </button>
         </div>
@@ -5837,6 +5889,9 @@ export function FlightResultsClient() {
       ) : null}
 
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="flight-mobile-search-title"
         className={cn(
           "fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden bg-slate-50 sm:hidden",
           mobileSearchOpen ? "block" : "hidden",
@@ -6238,7 +6293,7 @@ export function FlightResultsClient() {
             : "pointer-events-none translate-y-3 opacity-0",
         )}
       >
-        <ArrowUp className="h-5 w-5" strokeWidth={2.4} aria-hidden="true" />
+        <ChevronUp className="h-5 w-5" strokeWidth={2.6} aria-hidden="true" />
       </button>
 
       <aside
@@ -6832,6 +6887,14 @@ function DatePickerPopover({
 
           const selectedDeparture = isSameDateValue(date, departureValue);
           const selectedReturn = isSameDateValue(date, returnValue);
+          const departureDate = parseDateValue(departureValue);
+          const returnDate = parseDateValue(returnValue);
+          const isInRange = Boolean(
+            departureDate &&
+            returnDate &&
+            startOfLocalDay(date) > startOfLocalDay(departureDate) &&
+            startOfLocalDay(date) < startOfLocalDay(returnDate),
+          );
           const isToday = isSameDateValue(date, formatDateValue(today));
           // Flight calendars use one shared rule for enabled days: only past
           // local days are disabled. In round-trip return mode, future dates
@@ -6845,23 +6908,27 @@ function DatePickerPopover({
               type="button"
               disabled={disabledDate}
               aria-disabled={disabledDate}
+              aria-pressed={selectedDeparture || selectedReturn}
               onClick={() => {
                 if (disabledDate || !isSelectableFlightDate(date)) return;
                 onSelect(date);
               }}
               className={cn(
                 mobileSheet
-                  ? "h-9 rounded-md text-xs font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] sm:h-10 sm:text-sm"
+                  ? "relative mx-auto flex h-11 w-full max-w-11 items-center justify-center rounded-full text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8]"
                   : "h-8 rounded-md text-xs font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8]",
                 selectedDeparture || selectedReturn
-                  ? "bg-[#004BB8] text-white hover:bg-[#021C2B] focus:bg-[#021C2B]"
+                  ? "bg-[#004BB8] text-white hover:bg-[#004BB8] focus:bg-[#004BB8]"
                   : disabledDate
                     ? "cursor-not-allowed text-slate-300 hover:bg-transparent"
-                    : "text-slate-800",
+                    : "text-slate-800 hover:bg-[#004BB8]/8 hover:text-[#004BB8]",
+                isInRange &&
+                  !(selectedDeparture || selectedReturn) &&
+                  "bg-[#004BB8]/10 text-[#021C2B] hover:bg-[#004BB8]/10",
                 isToday &&
                   !(selectedDeparture || selectedReturn) &&
                   !disabledDate
-                  ? "ring-1 ring-slate-300"
+                  ? "ring-1 ring-inset ring-[#004BB8]/20"
                   : "",
               )}
             >
@@ -6903,7 +6970,7 @@ function DatePickerPopover({
         )}
       >
         <div className="mx-auto flex h-full w-full max-w-xl flex-col">
-          <div className="mb-3 shrink-0">
+          <div className="mb-4 shrink-0">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
               {t("travelDates")}
             </p>
@@ -6914,29 +6981,12 @@ function DatePickerPopover({
             </h3>
           </div>
 
-          <div className="mb-3 flex shrink-0 items-center justify-between">
-            <button
-              type="button"
-              aria-label={t("previousMonth")}
-              className="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] sm:text-sm"
-              onClick={() => onMonthChange(addMonths(leftMonth, -1))}
-            >
-              {t("previousShort")}
-            </button>
-
-            <button
-              type="button"
-              aria-label={t("nextMonth")}
-              className="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:border-[#004BB8] sm:text-sm"
-              onClick={() => onMonthChange(addMonths(leftMonth, 1))}
-            >
-              {t("nextShort")}
-            </button>
-          </div>
-
-          <div className="grid min-h-0 flex-1 gap-3 overflow-visible md:grid-cols-2">
-            {renderMonth(leftMonth)}
-            <div className="block">{renderMonth(rightMonth)}</div>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-2">
+            <div className="mx-auto w-full max-w-xl space-y-8">
+              {Array.from({ length: 12 }, (_, monthOffset) =>
+                renderMonth(addMonths(startOfMonth(today), monthOffset)),
+              )}
+            </div>
           </div>
         </div>
       </FlightMobilePickerShell>
@@ -7113,19 +7163,10 @@ function TravelerCabinPopover({
         )}
       >
         <div className="mx-auto w-full max-w-xl">
-          <div className="mb-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-              {t("travelers")}
-            </p>
-            <h3 id={titleId} className="text-base font-bold text-slate-950">
-              {t("travelersAndCabin")}
-            </h3>
-          </div>
-
           <div>
-            <div className="mt-3 divide-y divide-slate-100 rounded-3xl border border-slate-200/80 bg-white px-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200/80 bg-white px-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
               <CounterRow
-                label={t("adultPlural")}
+                label="Adults"
                 description="18+"
                 value={adultCount}
                 min={1}
@@ -7133,7 +7174,7 @@ function TravelerCabinPopover({
                 onChange={onAdultChange}
               />
               <CounterRow
-                label={t("childPlural")}
+                label="Children"
                 description={t("childAgeRange")}
                 value={childCount}
                 min={0}
@@ -7141,7 +7182,7 @@ function TravelerCabinPopover({
                 onChange={onChildChange}
               />
               <CounterRow
-                label={t("infantsOnLap")}
+                label="Infants"
                 description={t("under2")}
                 value={infantCount}
                 min={0}
@@ -7151,7 +7192,7 @@ function TravelerCabinPopover({
             </div>
           </div>
 
-          <div className="mt-4 rounded-3xl border border-slate-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="mt-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
             <h3 className="text-xs font-semibold uppercase tracking-wide leading-4 text-slate-700">
               {t("cabinClass")}
             </h3>
@@ -7334,7 +7375,7 @@ function CounterRow({
       <div className="flex items-center gap-1">
         <button
           type="button"
-          aria-label={`Decrease ${label}`}
+          aria-label={`Decrease ${label.toLowerCase()}`}
           disabled={decrementDisabled}
           onClick={() => onChange(value - 1)}
           className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
@@ -7348,7 +7389,7 @@ function CounterRow({
 
         <button
           type="button"
-          aria-label={`Increase ${label}`}
+          aria-label={`Increase ${label.toLowerCase()}`}
           disabled={incrementDisabled}
           onClick={() => onChange(value + 1)}
           className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
