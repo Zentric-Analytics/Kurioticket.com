@@ -6312,7 +6312,6 @@ export function FlightResultsClient() {
       <div
         ref={resultsGridRef}
         className="flight-results-grid page-shell grid gap-4 pb-5 pt-3 sm:pt-5 lg:pt-6"
-        style={{ width: "min(1560px, calc(100% - 32px))" }}
       >
         <aside
           ref={desktopFilterSidebarRef}
@@ -6552,7 +6551,7 @@ export function FlightResultsClient() {
         </section>
 
         <aside
-          className="flight-results-right-rail hidden min-w-0 xl:block"
+          className="flight-results-right-rail min-w-0"
           aria-hidden="true"
         />
       </div>
