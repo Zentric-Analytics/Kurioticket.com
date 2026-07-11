@@ -1263,6 +1263,8 @@ export const translations: TranslationDictionary = {
   homeFeaturesDealsBody:
     "Catch fare drops and exclusive promotions before they disappear.",
   homeDiscoveryTitle: "Discover your next adventure here",
+  homeRegionalRoutesTitle: "Discover destinations from your region",
+  homeRegionalRoutesViewAll: "View all route ideas",
   homeDiscoverySubtitle:
     "Compare smart route ideas, flexible fares, and destinations picked for your region.",
   homeDiscoverySwipeMore: "Swipe for more",
