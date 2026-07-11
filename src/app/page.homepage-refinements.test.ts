@@ -7,6 +7,14 @@ const homepageHotelCountryCardSource = readFileSync(
   new URL("../data/homepageHotelCountryCards.ts", import.meta.url),
   "utf8",
 );
+const flagEmojiSource = readFileSync(
+  new URL("../lib/region/flagEmoji.ts", import.meta.url),
+  "utf8",
+);
+const hotelsPageSource = readFileSync(
+  new URL("./hotels/page.tsx", import.meta.url),
+  "utf8",
+);
 
 test("regional image cards keep start-search copy out of visible overlay", () => {
   const cardSource = pageSource.slice(pageSource.indexOf("function RegionalRouteCard"), pageSource.indexOf("function DiscoveryCardImage"));
@@ -65,20 +73,70 @@ test("homepage hotel destination section sits between promo panels and newslette
   const promoIndex = pageSource.indexOf("homePromoHotelsTitle");
   const hotelSectionIndex = pageSource.indexOf('aria-labelledby="homepage-hotel-destinations-heading"');
   const newsletterIndex = pageSource.indexOf("homeNewsletterTitle");
+  const destinationIds = [...homepageHotelCountryCardSource.matchAll(/"([a-z]{2}-[a-z-]+)"/g)]
+    .map((match) => match[1])
+    .filter((id) => id.includes("-"))
+    .slice(0, 8);
 
   assert.ok(promoIndex >= 0, "hotel promo panel should exist");
   assert.ok(hotelSectionIndex > promoIndex, "hotel destination section should follow promo panels");
   assert.ok(newsletterIndex > hotelSectionIndex, "newsletter should follow hotel destination section");
   assert.match(pageSource, /homepageHotelCountryCards/);
-  assert.match(homepageHotelCountryCardSource, /homepageHotelCountryDestinationIds = \[/);
-  assert.match(homepageHotelCountryCardSource, /"us-new-york"/);
-  assert.match(homepageHotelCountryCardSource, /"gb-london"/);
-  assert.match(homepageHotelCountryCardSource, /"fr-paris"/);
-  assert.match(homepageHotelCountryCardSource, /"ae-dubai"/);
-  assert.match(homepageHotelCountryCardSource, /"jp-tokyo"/);
-  assert.match(homepageHotelCountryCardSource, /"mx-cancun"/);
-  assert.match(homepageHotelCountryCardSource, /"it-rome"/);
-  assert.match(homepageHotelCountryCardSource, /"sg-singapore"/);
+  assert.deepEqual(destinationIds, [
+    "us-new-york",
+    "gb-london",
+    "fr-paris",
+    "ae-dubai",
+    "jp-tokyo",
+    "mx-cancun",
+    "it-rome",
+    "sg-singapore",
+  ]);
+  assert.equal(new Set(destinationIds).size, 8, "country cards should be unique");
+});
+
+test("homepage hotel country cards use localized short labels, flags, valid images, and varied moderate layouts", () => {
+  for (const key of [
+    "homeHotelDestinationsCountry.unitedStates",
+    "homeHotelDestinationsCountry.uk",
+    "homeHotelDestinationsCountry.france",
+    "homeHotelDestinationsCountry.uae",
+    "homeHotelDestinationsCountry.japan",
+    "homeHotelDestinationsCountry.mexico",
+    "homeHotelDestinationsCountry.italy",
+    "homeHotelDestinationsCountry.singapore",
+  ]) {
+    assert.match(homepageHotelCountryCardSource, new RegExp(key));
+  }
+
+  assert.match(flagEmojiSource, /\^\[A-Z\]\{2\}\$/);
+  assert.match(flagEmojiSource, /String\.fromCodePoint\(0x1f1e6/);
+  assert.match(pageSource, /getFlagEmojiFromCountryCode\(destination\.countryCode\)/);
+  assert.match(pageSource, /aria-hidden="true"/);
+  assert.doesNotMatch(pageSource, /\{destination\.countryCode\}\s*<\//);
+  const hotelSectionSource = pageSource.slice(
+    pageSource.indexOf('aria-labelledby="homepage-hotel-destinations-heading"'),
+    pageSource.indexOf('homeNewsletterTitle'),
+  );
+  assert.doesNotMatch(hotelSectionSource, /font-black/);
+
+  assert.match(homepageHotelCountryCardSource, /image: imageCard\.image/);
+  assert.match(homepageHotelCountryCardSource, /imageAlt: imageCard\.imageAlt/);
+  assert.match(homepageHotelCountryCardSource, /searchValue: destination\.searchValue/);
+
+  const layoutVariants = [...homepageHotelCountryCardSource.matchAll(/layoutVariant: homepageHotelCountryLayoutVariants\[index\]/g)];
+  assert.equal(layoutVariants.length, 1, "cards should be assigned shared layout variants");
+  assert.match(homepageHotelCountryCardSource, /landscape/);
+  assert.match(homepageHotelCountryCardSource, /square/);
+  assert.match(homepageHotelCountryCardSource, /portraitSquare/);
+  assert.match(homepageHotelCountryCardSource, /compactPortrait/);
+  assert.doesNotMatch(homepageHotelCountryCardSource, /520px|min-h-\[520px\]|h-\[520px\]/);
+  assert.doesNotMatch(homepageHotelCountryCardSource, /lg:min-h-\[(3[7-9][0-9]|[4-9][0-9]{2})px\]/);
+});
+
+test("hotels page source remains on the shared destination image catalog", () => {
+  assert.match(hotelsPageSource, /destinationImageCatalog/);
+  assert.doesNotMatch(hotelsPageSource, /homepageHotelCountryCards/);
 });
 
 test("homepage hotel destination cards use existing hotel results contract", () => {
