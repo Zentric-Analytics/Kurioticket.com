@@ -110,6 +110,12 @@ type DesktopCompactFilterFrame = {
   left: number;
   width: number;
 };
+type NearbyFareState = {
+  date: string;
+  status: "loading" | "available" | "unavailable";
+  price: number | null;
+  currency: string | null;
+};
 
 type DesktopCompactFilterPlacementState = "hidden" | "fixed" | "docked";
 
@@ -851,6 +857,8 @@ export function FlightResultsClient() {
   const [sortMode, setSortMode] = useState<SortMode>(
     (params.get("sort") as SortMode) || "cheapest",
   );
+  const [desktopSortOpen, setDesktopSortOpen] = useState(false);
+  const desktopSortRef = useRef<HTMLDivElement | null>(null);
   const [results, setResults] = useState<PublicFlightResult[]>([]);
   const [error, setError] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -905,6 +913,9 @@ export function FlightResultsClient() {
   const [departureDateInput, setDepartureDateInput] = useState(
     initialDateSafeParams.get("departureDate") || "",
   );
+  const nearbyFareCacheRef = useRef(new Map<string, NearbyFareState>());
+  const nearbyFareRequestsRef = useRef(new Set<string>());
+  const [nearbyFares, setNearbyFares] = useState<NearbyFareState[]>([]);
   const [returnDateInput, setReturnDateInput] = useState(
     initialDateSafeParams.get("returnDate") || "",
   );
@@ -2315,6 +2326,134 @@ export function FlightResultsClient() {
   }, [body, dictionary.unableToSearchFlights, t]);
 
   useEffect(() => {
+    if (!desktopSortOpen) return;
+
+    function handleClose(event: MouseEvent) {
+      const target = event.target as Node;
+      if (desktopSortRef.current?.contains(target)) return;
+      setDesktopSortOpen(false);
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setDesktopSortOpen(false);
+    }
+
+    document.addEventListener("mousedown", handleClose);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClose);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [desktopSortOpen]);
+
+  useEffect(() => {
+    if (!body?.departureDate) {
+      const timer = window.setTimeout(() => setNearbyFares([]), 0);
+      return () => window.clearTimeout(timer);
+    }
+
+    const centerDate = parseDateValue(body.departureDate);
+    if (!centerDate) {
+      const timer = window.setTimeout(() => setNearbyFares([]), 0);
+      return () => window.clearTimeout(timer);
+    }
+    let active = true;
+
+    const dates = [-2, -1, 0, 1, 2, 3, 4]
+      .map((offset) => addDays(centerDate, offset))
+      .filter(isSelectableFlightDate)
+      .map(formatDateValue);
+
+    const currentFare = getLowestProviderFare(results);
+    const nextFares = dates.map((date) => {
+      if (date === body.departureDate && currentFare) {
+        return {
+          date,
+          status: "available" as const,
+          price: currentFare.price,
+          currency: currentFare.currency,
+        };
+      }
+
+      return (
+        nearbyFareCacheRef.current.get(getNearbyFareCacheKey(body, date)) ?? {
+          date,
+          status: "loading" as const,
+          price: null,
+          currency: null,
+        }
+      );
+    });
+
+    const syncTimer = window.setTimeout(() => {
+      if (active) setNearbyFares(nextFares);
+    }, 0);
+
+    dates.forEach((date) => {
+      if (date === body.departureDate) return;
+      const key = getNearbyFareCacheKey(body, date);
+      if (
+        nearbyFareCacheRef.current.has(key) ||
+        nearbyFareRequestsRef.current.has(key)
+      ) {
+        return;
+      }
+
+      nearbyFareRequestsRef.current.add(key);
+      const fareBody = { ...body, departureDate: date };
+      fetch("/api/flights/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(fareBody),
+      })
+        .then(async (response) => {
+          if (!response.ok) return null;
+          const data = (await response.json()) as {
+            results?: PublicFlightResult[];
+          };
+          return getLowestProviderFare(data.results ?? []);
+        })
+        .then((fare) => {
+          if (!active) return;
+          const state: NearbyFareState = fare
+            ? {
+                date,
+                status: "available",
+                price: fare.price,
+                currency: fare.currency,
+              }
+            : { date, status: "unavailable", price: null, currency: null };
+          nearbyFareCacheRef.current.set(key, state);
+          setNearbyFares((current) =>
+            current.map((item) => (item.date === date ? state : item)),
+          );
+        })
+        .catch(() => {
+          if (!active) return;
+          const state: NearbyFareState = {
+            date,
+            status: "unavailable",
+            price: null,
+            currency: null,
+          };
+          nearbyFareCacheRef.current.set(key, state);
+          setNearbyFares((current) =>
+            current.map((item) => (item.date === date ? state : item)),
+          );
+        })
+        .finally(() => {
+          nearbyFareRequestsRef.current.delete(key);
+        });
+    });
+
+    return () => {
+      active = false;
+      window.clearTimeout(syncTimer);
+    };
+  }, [body, results]);
+
+  useEffect(() => {
     if (!tripTypeMenuOpen) return;
 
     function handleClose(event: MouseEvent) {
@@ -2764,6 +2903,43 @@ export function FlightResultsClient() {
       selectedCurrency,
       mixedProviderCurrenciesLabel,
     ],
+  );
+
+  const sortOptions = useMemo(
+    () => [
+      { value: "best" as SortMode, label: t("best") },
+      { value: "cheapest" as SortMode, label: t("cheapest") },
+      { value: "fastest" as SortMode, label: t("quickest") },
+    ],
+    [t],
+  );
+  const selectedSortLabel =
+    sortOptions.find((option) => option.value === sortMode)?.label ??
+    t("cheapest");
+
+  const handleNearbyFareDateSelect = useCallback(
+    (date: string) => {
+      if (!body || date === body.departureDate) return;
+
+      const nextParams = new URLSearchParams(queryString);
+      nextParams.set("departureDate", date);
+
+      if (
+        nextParams.get("tripType") === "round-trip" &&
+        nextParams.get("returnDate") &&
+        isDateValueBefore(nextParams.get("returnDate") ?? "", date)
+      ) {
+        nextParams.delete("returnDate");
+        setReturnDateInput("");
+      }
+
+      setDepartureDateInput(date);
+      triggerFilterApplying();
+      router.push(`/flights/results?${nextParams.toString()}`, {
+        scroll: true,
+      });
+    },
+    [body, queryString, router, triggerFilterApplying],
   );
 
   const stopOptions = useMemo(() => {
@@ -6455,33 +6631,113 @@ export function FlightResultsClient() {
             </div>
           ) : (
             <div className={cn(resultStackClass, "space-y-4")}>
-              <div className="hidden w-full items-center justify-between gap-4 sm:flex lg:bg-transparent lg:px-0 lg:pb-2 lg:pt-1">
-                <p className="text-[18px] font-semibold leading-7 tracking-[-0.01em] text-slate-950">
+              <div className="hidden w-full rounded-2xl border border-slate-200/80 bg-white/80 p-2 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.35)] sm:block">
+                <div className="flex items-stretch gap-2 overflow-x-auto">
+                  {nearbyFares.length
+                    ? nearbyFares.map((fare) => {
+                        const selected = fare.date === body?.departureDate;
+                        return (
+                          <button
+                            key={fare.date}
+                            type="button"
+                            className={cn(
+                              "min-w-[112px] rounded-xl border px-3 py-2.5 text-left transition hover:border-[#004BB8]/35 hover:bg-[#F5F8FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30",
+                              selected
+                                ? "border-[#004BB8]/35 bg-[#F5F8FF] text-[#003B95]"
+                                : "border-transparent bg-transparent text-slate-700",
+                            )}
+                            aria-current={selected ? "date" : undefined}
+                            onClick={() => handleNearbyFareDateSelect(fare.date)}
+                          >
+                            <span className="block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                              {formatFareStripDateLabel(fare.date, calendarLocale)}
+                            </span>
+                            <span className="mt-1 block text-sm font-semibold text-slate-950">
+                              {fare.status === "loading" ? (
+                                <span className="block h-4 w-14 animate-pulse rounded-full bg-slate-200" />
+                              ) : fare.status === "available" &&
+                                fare.price !== null &&
+                                fare.currency ? (
+                                formatDisplayPrice({
+                                  amount: fare.price,
+                                  sourceCurrency: fare.currency,
+                                  displayCurrency: selectedCurrency,
+                                  convertUsdEstimate: true,
+                                  rates: currencyRates.rates,
+                                  isFallbackRate: currencyRates.isFallback,
+                                }).formatted
+                              ) : (
+                                "Unavailable"
+                              )}
+                            </span>
+                          </button>
+                        );
+                      })
+                    : Array.from({ length: 5 }).map((_, index) => (
+                        <div
+                          key={index}
+                          className="min-w-[112px] rounded-xl border border-transparent px-3 py-2.5"
+                        >
+                          <div className="h-3 w-16 animate-pulse rounded-full bg-slate-200" />
+                          <div className="mt-2 h-4 w-12 animate-pulse rounded-full bg-slate-200" />
+                        </div>
+                      ))}
+                </div>
+              </div>
+
+              <div className="hidden w-full items-center justify-between gap-4 sm:flex lg:bg-transparent lg:px-0 lg:pb-2">
+                <p className="text-[16px] font-semibold leading-6 tracking-[-0.005em] text-slate-900">
                   {formatResultsFound(sortedResults.length, t)}
                 </p>
 
-                <div className="hidden items-center gap-2 lg:flex">
-                  <label
-                    htmlFor="desktop-flight-sort"
-                    className="text-sm font-medium text-slate-600"
-                  >
+                <div
+                  ref={desktopSortRef}
+                  className="relative hidden items-center gap-2 lg:flex"
+                >
+                  <span className="text-sm font-medium text-slate-600">
                     Sort by
-                  </label>
-                  <select
-                    id="desktop-flight-sort"
+                  </span>
+                  <button
+                    type="button"
                     aria-label="Sort flight results"
-                    className="h-9 min-w-[128px] rounded-lg border border-slate-300 bg-white/70 px-3 pr-8 text-sm font-semibold text-slate-950 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.35)] transition hover:border-slate-400 hover:bg-white focus:border-[#004BB8] focus:outline-none focus:ring-2 focus:ring-[#004BB8]/25"
-                    value={sortMode}
-                    onChange={(event) => {
-                      triggerFilterApplying();
-                      setSortMode(event.target.value as SortMode);
-                      handleUserFilterCommit();
-                    }}
+                    aria-haspopup="menu"
+                    aria-expanded={desktopSortOpen}
+                    className="inline-flex h-9 min-w-[118px] items-center justify-between gap-2 rounded-full border border-slate-200 bg-slate-50/70 px-3 text-sm font-semibold text-slate-950 transition hover:border-slate-300 hover:bg-slate-100 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                    onClick={() => setDesktopSortOpen((open) => !open)}
                   >
-                    <option value="best">{t("best")}</option>
-                    <option value="cheapest">{t("cheapest")}</option>
-                    <option value="fastest">{t("quickest")}</option>
-                  </select>
+                    {selectedSortLabel}
+                    <ChevronDown size={15} aria-hidden="true" />
+                  </button>
+                  <div
+                    role="menu"
+                    className={cn(
+                      "absolute right-0 top-11 z-30 w-44 origin-top-right rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_45px_-24px_rgba(15,23,42,0.55)] transition duration-150",
+                      desktopSortOpen
+                        ? "translate-y-0 scale-100 opacity-100"
+                        : "pointer-events-none -translate-y-1 scale-95 opacity-0",
+                    )}
+                  >
+                    {sortOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        role="menuitemradio"
+                        aria-checked={sortMode === option.value}
+                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                        onClick={() => {
+                          triggerFilterApplying();
+                          setSortMode(option.value);
+                          setDesktopSortOpen(false);
+                          handleUserFilterCommit();
+                        }}
+                      >
+                        <span className="w-4 text-[#004BB8]">
+                          {sortMode === option.value ? "✓" : ""}
+                        </span>
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <Button
@@ -6750,6 +7006,12 @@ function addMonths(date: Date, amount: number): Date {
   return new Date(date.getFullYear(), date.getMonth() + amount, 1);
 }
 
+function addDays(date: Date, amount: number): Date {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + amount);
+  return nextDate;
+}
+
 function formatDateValue(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -6780,6 +7042,62 @@ function formatCompactDateLabel(value: string, locale: string): string {
   if (Number.isNaN(date.getTime())) return value;
 
   return formatFlightsDateSummary(date, null, locale);
+}
+
+function formatFareStripDateLabel(value: string, locale: string): string {
+  if (!value) return "";
+
+  const date = new Date(`${value}T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) return value;
+
+  return new Intl.DateTimeFormat(normalizeFlightResultsCalendarLocale(locale), {
+    day: "numeric",
+    month: "short",
+  }).format(date);
+}
+
+function getLowestProviderFare(results: PublicFlightResult[]) {
+  return results.reduce<{ price: number; currency: string } | null>(
+    (lowest, result) => {
+      if (!Number.isFinite(result.price) || !result.currency) return lowest;
+
+      if (!lowest || result.price < lowest.price) {
+        return { price: result.price, currency: result.currency };
+      }
+
+      return lowest;
+    },
+    null,
+  );
+}
+
+function getNearbyFareCacheKey(
+  search: {
+    tripType: string;
+    origin: string;
+    destination: string;
+    returnDate?: string;
+    adults: number;
+    children: number;
+    infants: number;
+    cabinClass: string;
+    currency?: string;
+  },
+  date: string,
+) {
+  return [
+    search.tripType,
+    search.origin,
+    search.destination,
+    date,
+    search.tripType === "round-trip" ? search.returnDate ?? "" : "",
+    search.adults,
+    search.children,
+    search.infants,
+    search.cabinClass,
+    search.currency ?? "",
+  ].join("|");
 }
 
 function parseDateValue(value: string): Date | null {
