@@ -39,8 +39,10 @@ import { getGeneralFaqs } from "@/content/faqs";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { buildHomepageRouteCardFlightHref } from "@/lib/home/homepageRouteCardLinks";
 import {
+  getCarouselArrowRenderState,
   getCarouselStartScrollLeft,
   getLogicalCarouselScrollState,
+  hasCarouselAdvancedForward,
 } from "@/lib/home/homepageCarouselScroll";
 import { translateHomeDiscoveryField } from "@/lib/i18n/homeDiscovery";
 import { translations as enTranslations } from "@/lib/i18n/en";
@@ -429,6 +431,7 @@ export default function Home() {
   const destinationsRailRef = useRef<HTMLDivElement>(null);
   const [canScrollDestinationsLeft, setCanScrollDestinationsLeft] = useState(false);
   const [canScrollDestinationsRight, setCanScrollDestinationsRight] = useState(false);
+  const [hasAdvancedWithNextArrow, setHasAdvancedWithNextArrow] = useState(false);
 
   const updateDestinationArrowState = useCallback(() => {
     const rail = destinationsRailRef.current;
@@ -439,8 +442,24 @@ export default function Home() {
       clientWidth: rail.clientWidth,
       direction: window.getComputedStyle(rail).direction,
     });
-    setCanScrollDestinationsLeft(state.canScrollLeft);
-    setCanScrollDestinationsRight(state.canScrollRight);
+    const arrows = getCarouselArrowRenderState(state, hasAdvancedWithNextArrow);
+    if (!state.canScrollLeft && hasAdvancedWithNextArrow) {
+      setHasAdvancedWithNextArrow(false);
+    }
+    setCanScrollDestinationsLeft(arrows.shouldRenderPreviousArrow);
+    setCanScrollDestinationsRight(arrows.canScrollToNext);
+    return state;
+  }, [hasAdvancedWithNextArrow]);
+
+  const measureDestinationRailState = useCallback(() => {
+    const rail = destinationsRailRef.current;
+    if (!rail) return null;
+    return getLogicalCarouselScrollState({
+      scrollLeft: rail.scrollLeft,
+      scrollWidth: rail.scrollWidth,
+      clientWidth: rail.clientWidth,
+      direction: window.getComputedStyle(rail).direction,
+    });
   }, []);
 
   const scrollDestinationsRail = (direction: "left" | "right") => {
@@ -448,12 +467,45 @@ export default function Home() {
 
     if (!rail) return;
 
+    const beforeState = measureDestinationRailState();
     const amount = Math.round(rail.clientWidth * 0.85);
 
     rail.scrollBy({
       left: direction === "left" ? -amount : amount,
       behavior: "smooth",
     });
+
+    if (direction !== "right" || !beforeState) return;
+
+    let rafId = 0;
+    let fallbackId = 0;
+    const cleanup = () => {
+      window.cancelAnimationFrame(rafId);
+      window.clearTimeout(fallbackId);
+      rail.removeEventListener("scroll", confirmAdvance);
+      rail.removeEventListener("scrollend", confirmAdvance);
+    };
+    const confirmAdvance = () => {
+      const afterState = measureDestinationRailState();
+      if (!afterState) return;
+      if (hasCarouselAdvancedForward(beforeState, afterState)) {
+        setHasAdvancedWithNextArrow(true);
+        cleanup();
+      } else if (!afterState.canScrollRight && !hasCarouselAdvancedForward(beforeState, afterState)) {
+        cleanup();
+      }
+    };
+    const confirmOnFrame = () => {
+      confirmAdvance();
+      rafId = window.requestAnimationFrame(confirmOnFrame);
+    };
+    rail.addEventListener("scroll", confirmAdvance, { passive: true });
+    rail.addEventListener("scrollend", confirmAdvance, { passive: true });
+    rafId = window.requestAnimationFrame(confirmOnFrame);
+    fallbackId = window.setTimeout(() => {
+      confirmAdvance();
+      cleanup();
+    }, 900);
   };
 
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -687,6 +739,7 @@ export default function Home() {
         left: getCarouselStartScrollLeft(direction, maxScrollLeft),
         behavior: "instant",
       });
+      setHasAdvancedWithNextArrow(false);
       setCanScrollDestinationsLeft(false);
       measure();
     };
@@ -1140,6 +1193,9 @@ export default function Home() {
                     })}
                     originCity={item.originCity}
                     destinationCity={item.destinationCity}
+                    image={item.image}
+                    imageAlt={item.imageAlt}
+                    destinationCode={item.destinationCode}
                     price={fareCard?.fare}
                     displayCurrency={selectedOption.currency}
                     expectedOriginCode={item.originCode}
@@ -1292,6 +1348,9 @@ function RegionalRouteCard({
   href,
   originCity,
   destinationCity,
+  image,
+  imageAlt,
+  destinationCode,
   price,
   displayCurrency,
   expectedOriginCode,
@@ -1301,6 +1360,9 @@ function RegionalRouteCard({
   href: ComponentProps<typeof Link>["href"];
   originCity: string;
   destinationCity: string;
+  image: string;
+  imageAlt: string;
+  destinationCode: string;
   price?: HomepageFare;
   displayCurrency: string;
   expectedOriginCode: string;
@@ -1314,19 +1376,28 @@ function RegionalRouteCard({
     <Link
       href={href}
       aria-label={`${originCity} to ${destinationCity}`}
-      className="focus-ring group flex min-h-[104px] w-[min(78vw,230px)] shrink-0 snap-start flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-[0_10px_24px_-22px_rgba(15,23,42,0.55)] transition hover:-translate-y-0.5 hover:border-slate-300 sm:w-auto sm:min-w-0"
+      className="focus-ring group flex w-[min(78vw,230px)] shrink-0 snap-start flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_10px_24px_-22px_rgba(15,23,42,0.55)] transition hover:-translate-y-0.5 hover:border-slate-300 sm:w-auto sm:min-w-0"
     >
-      <div className="flex items-center gap-2 text-sm font-extrabold text-slate-950">
-        <span className="min-w-0 flex-1 truncate">{originCity}</span>
-        <Plane className="h-3.5 w-3.5 shrink-0 text-[#004BB8]" aria-hidden="true" />
-        <span className="min-w-0 flex-1 truncate text-end">{destinationCity}</span>
+      <div className="relative h-20 w-full overflow-hidden bg-slate-100 sm:h-[82px]">
+        <DiscoveryCardImage
+          image={image}
+          imageAlt={imageAlt}
+          destinationCode={destinationCode}
+          destinationFallbackLabel={t("destinationImageFallback")}
+        />
       </div>
-      <div className="mt-4 flex items-end justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold text-slate-500">{t("fromPrice") || "From"}</p>
-          <RegionalRoutePrice price={price} displayCurrency={displayCurrency} expectedOriginCode={expectedOriginCode} expectedDestinationCode={expectedDestinationCode} isLoading={isLoading} />
+      <div className="flex min-h-[92px] flex-col justify-between p-4">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
+          <span className="min-w-0 flex-1 truncate">{originCity}</span>
+          <Plane className="h-3.5 w-3.5 shrink-0 text-[#004BB8]" aria-hidden="true" />
+          <span className="min-w-0 flex-1 truncate text-end">{destinationCity}</span>
         </div>
-        <ChevronRight className="h-4 w-4 shrink-0 text-slate-900 transition group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" aria-hidden="true" />
+        <div className="mt-4 flex items-end justify-between gap-3">
+          <div className="min-w-0">
+            <RegionalRoutePrice price={price} displayCurrency={displayCurrency} expectedOriginCode={expectedOriginCode} expectedDestinationCode={expectedDestinationCode} isLoading={isLoading} />
+          </div>
+          <ChevronRight className="h-4 w-4 shrink-0 text-[#004BB8] transition group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" aria-hidden="true" />
+        </div>
       </div>
     </Link>
   );
@@ -1358,7 +1429,7 @@ function RegionalRoutePrice({
   }
 
   if (!hasProviderPrice || typeof price?.price !== "number" || !price.currency) {
-    return <span className="mt-1 block text-base font-extrabold text-slate-950">{t("homeCompareOptions")}</span>;
+    return <span className="mt-1 block h-7" aria-hidden="true" />;
   }
 
   const displayPrice = formatDisplayPrice({
@@ -1371,7 +1442,12 @@ function RegionalRoutePrice({
     isFallbackRate: currencyRates.isFallback,
   });
 
-  return <span className="mt-1 block text-lg font-black tracking-tight text-slate-950" title={displayPrice.title}>{displayPrice.formatted}</span>;
+  return (
+    <>
+      <span className="block text-[11px] font-medium text-slate-500">{t("fromPrice") || "From"}</span>
+      <span className="mt-1 block text-lg font-bold tracking-tight text-slate-950" title={displayPrice.title}>{displayPrice.formatted}</span>
+    </>
+  );
 }
 
 function DiscoveryCardImage({
@@ -1459,11 +1535,30 @@ function DiscoverySuggestionCard({
 }) {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const currencyRates = useCurrencyRates();
+  const hasProviderPrice = hasFreshProviderPrice(price, {
+    originCode: expectedOriginCode,
+    destinationCode: expectedDestinationCode,
+  });
+  const displayPrice =
+    hasProviderPrice && typeof price?.price === "number" && price.currency
+      ? formatDisplayPrice({
+          amount: price.price,
+          sourceCurrency: price.currency,
+          displayCurrency,
+          convertUsdEstimate: true,
+          maximumFractionDigits: 0,
+          rates: currencyRates.rates,
+          isFallbackRate: currencyRates.isFallback,
+        })
+      : null;
+  const tripSummary = `${t("oneWay")} · ${t("economy")} · ${t("homeDiscoveryTravelerCountOne")}`;
 
   return (
     <Link
       href={href}
-      className={`group relative flex min-w-0 flex-col overflow-hidden border border-slate-200 bg-white transition duration-300 hover:-translate-y-1 hover:border-slate-300 active:-translate-y-0.5 ${mobileBoardCard ? "h-[330px] rounded-2xl border-slate-200/80 shadow-[0_18px_35px_-24px_rgba(15,23,42,0.72)] hover:shadow-[0_24px_42px_-24px_rgba(15,23,42,0.72)]" : "rounded-xl shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)]"}`}
+      aria-label={`${title}. ${originCode} to ${destinationCodeLabel}.${displayPrice ? ` ${t("fromPrice")} ${displayPrice.formatted}.` : ""}`}
+      className={`group relative flex min-w-0 flex-col overflow-hidden border border-slate-200 bg-white transition duration-300 hover:-translate-y-1 hover:border-slate-300 active:-translate-y-0.5 ${mobileBoardCard ? "h-[300px] rounded-2xl border-slate-200/80 shadow-[0_18px_35px_-24px_rgba(15,23,42,0.72)] hover:shadow-[0_24px_42px_-24px_rgba(15,23,42,0.72)]" : "rounded-xl shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)]"}`}
     >
       <button
         type="button"
@@ -1507,60 +1602,30 @@ function DiscoverySuggestionCard({
       </div>
 
       <div
-        className={`min-w-0 flex-1 bg-white ${mobileBoardCard ? "flex flex-col px-3 pb-3 pt-3" : compact ? "space-y-1.5 px-2.5 pt-2.5" : "space-y-1.5 px-3 pt-2.5"}`}
+        className={`min-w-0 flex-1 bg-white ${mobileBoardCard ? "flex flex-col px-3 pb-3 pt-3" : compact ? "space-y-2 px-2.5 py-3" : "space-y-2 px-3 py-3"}`}
       >
         <p
-          className={`line-clamp-2 break-words text-slate-950 ${mobileBoardCard ? "text-sm font-extrabold leading-[1.28] tracking-[-0.01em]" : compact ? "pr-10 rtl:pl-10 rtl:pr-0 text-sm font-bold leading-[1.32]" : "pr-10 rtl:pl-10 rtl:pr-0 text-sm font-bold leading-[1.35] md:text-[0.95rem]"}`}
+          className={`line-clamp-2 break-words text-slate-950 ${mobileBoardCard ? "text-sm font-semibold leading-[1.28] tracking-[-0.01em]" : compact ? "pr-10 rtl:pl-10 rtl:pr-0 text-sm font-semibold leading-[1.32]" : "pr-10 rtl:pl-10 rtl:pr-0 text-sm font-semibold leading-[1.35] md:text-[0.95rem]"}`}
         >
           {title}
         </p>
-        <p
-          className={`line-clamp-2 break-words text-slate-600 ${mobileBoardCard ? "mt-2 text-xs font-medium leading-5" : compact ? "text-xs font-medium leading-5" : "line-clamp-2 text-xs font-medium leading-5 md:text-sm"}`}
-        >
-          {originCode} → {destinationCodeLabel} · {routeNote}
+        <p className="text-xs font-semibold leading-5 text-slate-700">
+          {originCode} → {destinationCodeLabel}
         </p>
-        {mobileBoardCard ? (
-          <div className="mt-auto flex items-end justify-between gap-2 pt-3">
-            <p className="min-w-0 flex-1 text-[10px] font-extrabold uppercase leading-4 tracking-[0.1em] text-slate-500">
-              {t("oneWay")} · {t("economy")} ·{" "}
-              {t("homeDiscoveryTravelerCountOne")}
-            </p>
-            <DiscoveryInlinePrice
-              price={price}
-              displayCurrency={displayCurrency}
-              expectedOriginCode={expectedOriginCode}
-              expectedDestinationCode={expectedDestinationCode}
-              isLoading={Boolean(isPriceLoading)}
-            />
-          </div>
-        ) : (
-          <div className="flex flex-wrap items-center gap-2 pt-0.5">
-            <span className="rounded-full border border-[#004BB8]/12 bg-[#004BB8]/6 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#004BB8]">
-              {t("homeDiscoveryRouteIdeaBadge")}
-            </span>
-            <p
-              className={`font-semibold uppercase tracking-[0.08em] text-slate-500 ${compact ? "text-[11px]" : "text-[11px] md:text-xs"}`}
-            >
-              {t("oneWay")} · {t("economy")} ·{" "}
-              {t("homeDiscoveryTravelerCountOne")}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {!mobileBoardCard ? (
-        <div
-          className={`border-t border-slate-200/90 bg-white ${compact ? "px-2.5 pb-2.5 pt-2.5" : "px-3 pb-2.5 pt-2.5"}`}
+        <p
+          className={`font-semibold uppercase leading-4 tracking-[0.08em] text-slate-500 ${compact ? "text-[10px]" : "text-[10px] md:text-[11px]"}`}
         >
-          <DiscoveryPricePill
-            price={price}
-            displayCurrency={displayCurrency}
-            expectedOriginCode={expectedOriginCode}
-            expectedDestinationCode={expectedDestinationCode}
-            isLoading={Boolean(isPriceLoading)}
-          />
-        </div>
-      ) : null}
+          {tripSummary}
+        </p>
+        {isPriceLoading ? (
+          <span className="mt-auto block h-8 w-16 animate-pulse rounded bg-slate-200" aria-label={t("homeCheckingProviderRoutePricing")} />
+        ) : displayPrice ? (
+          <div className="mt-auto pt-1" title={displayPrice.title}>
+            <p className="text-[11px] font-medium leading-4 text-slate-500">{t("fromPrice")}</p>
+            <p className="text-lg font-bold leading-5 tracking-tight text-slate-950">{displayPrice.formatted}</p>
+          </div>
+        ) : null}
+      </div>
     </Link>
   );
 }
@@ -1634,146 +1699,6 @@ function buildRouteCardHref(
       displayCurrency: options.displayCurrency,
       market: options.market,
     }) ?? "/flights"
-  );
-}
-
-function DiscoveryInlinePrice({
-  price,
-  displayCurrency,
-  expectedOriginCode,
-  expectedDestinationCode,
-  isLoading,
-}: {
-  price?: HomepageFare;
-  displayCurrency: string;
-  expectedOriginCode?: string;
-  expectedDestinationCode?: string;
-  isLoading: boolean;
-}) {
-  const { t: dictionary } = useLocale();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const currencyRates = useCurrencyRates();
-  const hasProviderPrice = hasFreshProviderPrice(price, {
-    originCode: expectedOriginCode,
-    destinationCode: expectedDestinationCode,
-  });
-
-  if (isLoading) {
-    return (
-      <span
-        className="h-4 w-12 shrink-0 animate-pulse rounded bg-slate-200"
-        aria-label={t("homeCheckingProviderRoutePricing")}
-      />
-    );
-  }
-
-  if (!hasProviderPrice) {
-    return (
-      <span className="shrink-0 text-right text-sm font-extrabold leading-4 tracking-[-0.01em] text-slate-950">
-        {t("homeCompareOptions").replace(/\s+options$/i, "")}
-      </span>
-    );
-  }
-
-  const displayPrice = formatDisplayPrice({
-    amount: price.price,
-    sourceCurrency: price.currency,
-    displayCurrency,
-    convertUsdEstimate: true,
-    maximumFractionDigits: 0,
-    rates: currencyRates.rates,
-    isFallbackRate: currencyRates.isFallback,
-  });
-  const estimateCopy = displayPrice.isConvertedEstimate
-    ? ` ${t("displayEstimateFinalProviderMayDiffer")}`
-    : ` ${t("finalPriceConfirmedByProvider")}`;
-
-  return (
-    <span
-      className="shrink-0 text-right text-sm font-extrabold leading-4 tracking-[-0.02em] text-slate-950"
-      aria-label={`Provider-backed route price ${displayPrice.formatted}.${estimateCopy}`}
-      title={displayPrice.title}
-    >
-      {displayPrice.formatted}
-    </span>
-  );
-}
-
-function DiscoveryPricePill({
-  price,
-  displayCurrency,
-  expectedOriginCode,
-  expectedDestinationCode,
-  isLoading,
-}: {
-  price?: HomepageFare;
-  displayCurrency: string;
-  expectedOriginCode?: string;
-  expectedDestinationCode?: string;
-  isLoading: boolean;
-}) {
-  const { t: dictionary } = useLocale();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const currencyRates = useCurrencyRates();
-  const hasProviderPrice = hasFreshProviderPrice(price, {
-    originCode: expectedOriginCode,
-    destinationCode: expectedDestinationCode,
-  });
-
-  if (isLoading) {
-    return (
-      <span
-        className="inline-flex h-10 w-[9rem] animate-pulse rounded-full border border-slate-300 bg-white shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:h-11 sm:w-[10rem]"
-        aria-label={t("homeCheckingProviderRoutePricing")}
-      />
-    );
-  }
-
-  if (!hasProviderPrice) {
-    return (
-      <span className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold leading-5 tracking-tight text-slate-900 shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:text-base sm:leading-6">
-        {t("homeCompareOptions")}
-      </span>
-    );
-  }
-
-  const amount = price.price;
-  const currency = price.currency;
-
-  if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
-    return (
-      <span className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold leading-5 tracking-tight text-slate-900 shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:text-base sm:leading-6">
-        {t("homeCompareOptions")}
-      </span>
-    );
-  }
-
-  const displayPrice = formatDisplayPrice({
-    amount,
-    sourceCurrency: currency,
-    displayCurrency,
-    convertUsdEstimate: true,
-    maximumFractionDigits: 0,
-    rates: currencyRates.rates,
-    isFallbackRate: currencyRates.isFallback,
-  });
-  const estimateCopy = displayPrice.isConvertedEstimate
-    ? ` ${t("displayEstimateFinalProviderMayDiffer")}`
-    : ` ${t("finalPriceConfirmedByProvider")}`;
-
-  return (
-    <span
-      className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-300 bg-white px-4 py-2 leading-6 tracking-tight text-slate-950 shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:leading-7"
-      aria-label={`Provider-backed route price from ${displayPrice.formatted}.${estimateCopy}`}
-      title={displayPrice.title}
-    >
-      <span className="text-sm font-semibold text-slate-600 sm:text-base">
-        {t("fromPrice").toLowerCase()}
-      </span>
-      <span className="text-base font-bold text-slate-950 sm:text-lg">
-        {displayPrice.formatted}
-      </span>
-    </span>
   );
 }
 
