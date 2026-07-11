@@ -1312,6 +1312,7 @@ export const translations: TranslationDictionary = {
   faqHeading: "常见问题",
   faqIntro:
     "了解 Kurioticket 如何帮助你在向可信赖的服务商预订前比较航班、酒店和旅行选择。",
+  homepageFaqViewAll: "查看所有常见问题",
   faqViewAll: "查看所有常见问题",
   faqHelpCenter: "帮助中心",
   faqGeneralQuestions: "一般问题",

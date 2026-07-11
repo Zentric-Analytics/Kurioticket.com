@@ -2184,6 +2184,7 @@ flightLandingRouteAriaLabel:
   faqNeedMoreHelpPrefix: "Benötigen Sie weitere Hilfe? Besuchen Sie die",
   faqSupportPage: "Support-Seite",
   faqNeedMoreHelpSuffix: "für Service- und Kontaktoptionen.",
+  homepageFaqViewAll: "Alle häufig gestellten Fragen ansehen",
   faqViewAll: "Alle FAQs ansehen",
   faqQuestionFindOptions:
     "Wie findet Kurioticket Flug- und Hoteloptionen?",

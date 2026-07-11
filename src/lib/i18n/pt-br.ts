@@ -1439,6 +1439,7 @@ export const translations: TranslationDictionary = {
   faqNeedMoreHelpPrefix: "Precisa de mais ajuda? Visite a",
   faqSupportPage: "página de suporte",
   faqNeedMoreHelpSuffix: "para opções de serviço e contato.",
+  homepageFaqViewAll: "Ver todas as perguntas frequentes",
   faqViewAll: "Ver todas as perguntas frequentes",
   faqHelpCenter: "Central de ajuda",
   faqGeneralQuestions: "Perguntas gerais",

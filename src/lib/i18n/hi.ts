@@ -397,6 +397,7 @@ export const translations: TranslationDictionary = {
   faqHeading: "अक्सर पूछे जाने वाले प्रश्न",
   faqIntro:
     "जानें कि विश्वसनीय प्रदाताओं के साथ बुकिंग से पहले Kurioticket उड़ानों, होटलों और यात्रा विकल्पों की तुलना करने में कैसे मदद करता है।",
+  homepageFaqViewAll: "सभी अक्सर पूछे जाने वाले प्रश्न देखें",
   faqViewAll: "सभी FAQ देखें",
   faqHelpCenter: "सहायता केंद्र",
   faqGeneralQuestions: "सामान्य प्रश्न",

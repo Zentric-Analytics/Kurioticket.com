@@ -1407,6 +1407,7 @@ export const translations: TranslationDictionary = {
   homeTrustHandoffBody: "عند اختيار عرض، تنتقل إلى المزود لإتمام الحجز بأمان.",
   faqHeading: "الأسئلة الشائعة",
   faqIntro: "تعرّف على كيفية مساعدة Kurioticket لك في مقارنة الرحلات والفنادق وخيارات السفر قبل الحجز مع مزودين موثوقين.",
+  homepageFaqViewAll: "عرض كل الأسئلة الشائعة",
   faqViewAll: "عرض كل الأسئلة الشائعة",
   faqHelpCenter: "مركز المساعدة",
   faqGeneralQuestions: "أسئلة عامة",
