@@ -42,7 +42,6 @@ import {
   getCarouselArrowRenderState,
   getCarouselStartScrollLeft,
   getLogicalCarouselScrollState,
-  hasCarouselAdvancedForward,
 } from "@/lib/home/homepageCarouselScroll";
 import { translateHomeDiscoveryField } from "@/lib/i18n/homeDiscovery";
 import { translations as enTranslations } from "@/lib/i18n/en";
@@ -433,6 +432,7 @@ export default function Home() {
   const [canScrollDestinationsRight, setCanScrollDestinationsRight] = useState(false);
   const [, setHasAdvancedWithNextArrowState] = useState(false);
   const hasAdvancedWithNextArrowRef = useRef(false);
+  const programmaticDestinationScrollCleanupRef = useRef<(() => void) | null>(null);
 
   const setHasAdvancedWithNextArrow = useCallback((value: boolean) => {
     hasAdvancedWithNextArrowRef.current = value;
@@ -470,6 +470,7 @@ export default function Home() {
 
     if (!rail) return;
 
+    programmaticDestinationScrollCleanupRef.current?.();
     const beforeState = measureDestinationRailState();
     if (!beforeState) return;
     const targetLogical = getDestinationRailTargetLogicalScroll(
@@ -478,6 +479,29 @@ export default function Home() {
       direction,
     );
     const directionStyle = window.getComputedStyle(rail).direction;
+    const targetIsStart = targetLogical <= 2;
+
+    const finalizeProgrammaticScroll = () => {
+      const finalState = measureDestinationRailState();
+      if (!finalState) return;
+
+      if (direction === "right" && finalState.logicalScrollLeft > beforeState.logicalScrollLeft + 2) {
+        setHasAdvancedWithNextArrow(true);
+      }
+
+      if (targetIsStart && finalState.logicalScrollLeft <= 2) {
+        rail.scrollTo({
+          left: getCarouselStartScrollLeft(directionStyle, finalState.maxScrollLeft),
+          behavior: "instant",
+        });
+        setHasAdvancedWithNextArrow(false);
+        setCanScrollDestinationsLeft(false);
+        setCanScrollDestinationsRight(finalState.maxScrollLeft > 2);
+        return;
+      }
+
+      updateDestinationArrowState();
+    };
 
     rail.scrollTo({
       left: getPhysicalScrollLeftForLogicalTarget(
@@ -489,37 +513,11 @@ export default function Home() {
       behavior: "smooth",
     });
 
-    if (direction !== "right") return;
-
-    let rafId = 0;
-    let fallbackId = 0;
-    const cleanup = () => {
-      window.cancelAnimationFrame(rafId);
-      window.clearTimeout(fallbackId);
-      rail.removeEventListener("scroll", confirmAdvance);
-      rail.removeEventListener("scrollend", confirmAdvance);
-    };
-    const confirmAdvance = () => {
-      const afterState = measureDestinationRailState();
-      if (!afterState) return;
-      if (hasCarouselAdvancedForward(beforeState, afterState)) {
-        setHasAdvancedWithNextArrow(true);
-        cleanup();
-      } else if (!afterState.canScrollRight && !hasCarouselAdvancedForward(beforeState, afterState)) {
-        cleanup();
-      }
-    };
-    const confirmOnFrame = () => {
-      confirmAdvance();
-      rafId = window.requestAnimationFrame(confirmOnFrame);
-    };
-    rail.addEventListener("scroll", confirmAdvance, { passive: true });
-    rail.addEventListener("scrollend", confirmAdvance, { passive: true });
-    rafId = window.requestAnimationFrame(confirmOnFrame);
-    fallbackId = window.setTimeout(() => {
-      confirmAdvance();
-      cleanup();
-    }, 900);
+    programmaticDestinationScrollCleanupRef.current = observeProgrammaticCarouselScroll(
+      rail,
+      measureDestinationRailState,
+      finalizeProgrammaticScroll,
+    );
   };
 
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -772,6 +770,8 @@ export default function Home() {
 
     return () => {
       window.cancelAnimationFrame(firstFrame);
+      programmaticDestinationScrollCleanupRef.current?.();
+      programmaticDestinationScrollCleanupRef.current = null;
       resizeObserver.disconnect();
       rail.removeEventListener("scroll", measure);
     };
@@ -1164,42 +1164,6 @@ export default function Home() {
         </section>
 
 
-        <section className="page-shell bg-white pb-8 pt-1 sm:bg-transparent sm:pb-9 sm:pt-3" aria-labelledby="regional-routes-heading">
-          <div className="mb-4 flex items-center justify-between gap-4">
-            <h2 id="regional-routes-heading" className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
-              {t("homeRegionalRoutesTitle") || "Discover destinations from your region"}
-            </h2>
-            <Link href="/flights" className="focus-ring hidden items-center gap-1.5 rounded-full px-2 py-1 text-sm font-bold text-[#004BB8] hover:text-[#021C2B] sm:inline-flex">
-              {t("homeRegionalRoutesViewAll") || "View all route ideas"}
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
-          </div>
-          <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
-            <div className="flex snap-x snap-mandatory gap-4 sm:grid sm:grid-cols-5 sm:gap-5">
-              {regionalRouteItems.map((item) => {
-                const fareCard = fareCardsByExactRoute.get(getRouteKey(item.originCode, item.destinationCode) ?? "");
-
-                return (
-                  <RegionalRouteCard
-                    key={`regional-${item.id}`}
-                    href={buildDiscoveryCardHref(fareCard?.fare, {
-                      originCode: item.originCode,
-                      destinationCode: item.destinationCode,
-                      displayCurrency: selectedOption.currency,
-                      market: regionCode,
-                    })}
-                    originCity={item.originCity}
-                    destinationCity={item.destinationCity}
-                    image={item.image}
-                    imageAlt={item.imageAlt}
-                    destinationCode={item.destinationCode}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
         <section className="page-shell mt-6 sm:mt-9">
           <div className="border-y border-slate-300/80 bg-gradient-to-b from-slate-50/90 via-[#F2F7FA]/45 to-slate-50/80 py-9 sm:py-11">
             <div className="px-0">
@@ -1257,6 +1221,43 @@ export default function Home() {
                 </article>
               </div>
             </div>
+            </div>
+          </div>
+        </section>
+
+
+        <section className="page-shell bg-white pb-8 pt-1 sm:bg-transparent sm:pb-9 sm:pt-3" aria-labelledby="regional-routes-heading">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <h2 id="regional-routes-heading" className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
+              {t("homeRegionalRoutesTitle") || "Discover destinations from your region"}
+            </h2>
+            <Link href="/flights" className="focus-ring hidden items-center gap-1.5 rounded-full px-2 py-1 text-sm font-bold text-[#004BB8] hover:text-[#021C2B] sm:inline-flex">
+              {t("homeRegionalRoutesViewAll") || "View all route ideas"}
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
+          <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
+            <div className="flex snap-x snap-mandatory gap-4 sm:grid sm:grid-cols-5 sm:gap-5">
+              {regionalRouteItems.map((item) => {
+                const fareCard = fareCardsByExactRoute.get(getRouteKey(item.originCode, item.destinationCode) ?? "");
+
+                return (
+                  <RegionalRouteCard
+                    key={`regional-${item.id}`}
+                    href={buildDiscoveryCardHref(fareCard?.fare, {
+                      originCode: item.originCode,
+                      destinationCode: item.destinationCode,
+                      displayCurrency: selectedOption.currency,
+                      market: regionCode,
+                    })}
+                    originCity={item.originCity}
+                    destinationCity={item.destinationCity}
+                    image={item.image}
+                    imageAlt={item.imageAlt}
+                    destinationCode={item.destinationCode}
+                  />
+                );
+              })}
             </div>
           </div>
         </section>
@@ -1336,6 +1337,74 @@ export default function Home() {
   );
 }
 
+
+function observeProgrammaticCarouselScroll(
+  rail: HTMLDivElement,
+  measure: () => ReturnType<typeof getLogicalCarouselScrollState> | null,
+  onSettled: () => void,
+) {
+  let rafId = 0;
+  let fallbackId = 0;
+  let lastLogicalPosition: number | null = null;
+  let stableFrameCount = 0;
+  let cleanedUp = false;
+  const settleTolerance = 0.5;
+  const requiredStableFrames = 2;
+
+  const cleanup = () => {
+    if (cleanedUp) return;
+    cleanedUp = true;
+    window.cancelAnimationFrame(rafId);
+    window.clearTimeout(fallbackId);
+    rail.removeEventListener("scroll", onScrollActivity);
+    rail.removeEventListener("scrollend", settleNow);
+  };
+
+  const settleNow = () => {
+    if (cleanedUp) return;
+    cleanup();
+    onSettled();
+  };
+
+  const checkForSettledPosition = () => {
+    if (cleanedUp) return;
+    const state = measure();
+    if (!state) {
+      settleNow();
+      return;
+    }
+
+    if (
+      lastLogicalPosition !== null &&
+      Math.abs(state.logicalScrollLeft - lastLogicalPosition) <= settleTolerance
+    ) {
+      stableFrameCount += 1;
+    } else {
+      stableFrameCount = 0;
+    }
+
+    lastLogicalPosition = state.logicalScrollLeft;
+
+    if (stableFrameCount >= requiredStableFrames) {
+      settleNow();
+      return;
+    }
+
+    rafId = window.requestAnimationFrame(checkForSettledPosition);
+  };
+
+  function onScrollActivity() {
+    stableFrameCount = 0;
+  }
+
+  rail.addEventListener("scroll", onScrollActivity, { passive: true });
+  rail.addEventListener("scrollend", settleNow, { passive: true });
+  rafId = window.requestAnimationFrame(checkForSettledPosition);
+  fallbackId = window.setTimeout(settleNow, 1200);
+
+  return cleanup;
+}
+
 function getDestinationRailTargetLogicalScroll(
   rail: HTMLDivElement,
   currentLogicalScrollLeft: number,
@@ -1402,7 +1471,7 @@ function RegionalRouteCard({
   return (
     <Link
       href={href}
-      aria-label={`${routeLabel}. ${t("homeRegionalRoutesStartSearch") || "Start search"}.`}
+      aria-label={`${originCity} to ${destinationCity} flight search.`}
       className="focus-ring group relative flex aspect-[4/3] w-[min(78vw,250px)] shrink-0 snap-start overflow-hidden rounded-2xl bg-slate-900 shadow-[0_18px_36px_-24px_rgba(15,23,42,0.72)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_44px_-24px_rgba(15,23,42,0.78)] sm:w-auto sm:min-w-0"
     >
       <DiscoveryCardImage
@@ -1412,13 +1481,10 @@ function RegionalRouteCard({
         destinationFallbackLabel={t("destinationImageFallback")}
         sizes="(min-width: 1280px) 14rem, (min-width: 640px) 20vw, 78vw"
       />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/78 via-slate-950/34 to-transparent px-4 pb-4 pt-14">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/78 via-slate-950/34 to-transparent px-4 pb-5 pt-16">
         <p className="text-base font-semibold leading-5 text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.55)]">
           {routeLabel}
         </p>
-        <span className="mt-2 inline-flex items-center rounded-full bg-white/14 px-2.5 py-1 text-xs font-semibold text-white/92 ring-1 ring-white/18 backdrop-blur-sm">
-          {t("homeRegionalRoutesStartSearch") || "Start search"} →
-        </span>
       </div>
     </Link>
   );
@@ -1598,10 +1664,10 @@ function DiscoverySuggestionCard({
         {isPriceLoading ? (
           <span className="mt-auto block h-8 w-16 animate-pulse rounded bg-slate-200" aria-label={t("homeCheckingProviderRoutePricing")} />
         ) : (
-          <div className="mt-auto flex items-baseline gap-1.5 pt-1" title={displayPrice?.title}>
-            <span className="text-xs font-medium leading-4 text-slate-500">{t("fromPrice")}</span>
+          <div className="mt-auto flex items-baseline gap-1.5 pt-2">
+            <span className="text-sm font-semibold leading-5 text-slate-700">{t("fromPrice")}</span>
             {displayPrice ? (
-              <span className="text-base font-bold leading-5 tracking-tight text-slate-950">{displayPrice.formatted}</span>
+              <span className="text-base font-bold leading-5 tracking-tight text-slate-950" title={displayPrice.title}>{displayPrice.formatted}</span>
             ) : null}
           </div>
         )}
