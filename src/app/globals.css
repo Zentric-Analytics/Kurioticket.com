@@ -626,31 +626,68 @@ textarea {
   }
 }
 
-@media (min-width: 1024px) and (max-width: 1279px) {
+.flight-results-grid {
+  width: min(100% - 32px, 1560px);
+  margin-inline: auto;
+  justify-content: center;
+}
+
+.flight-results-right-rail {
+  display: none;
+}
+
+@media (min-width: 1024px) and (max-width: 1199px) {
   .flight-results-grid {
-    width: min(1560px, calc(100% - 24px));
-    grid-template-columns: 200px minmax(0, 1fr);
+    grid-template-columns: 190px minmax(0, 1fr);
   }
 }
 
-@media (min-width: 1280px) and (max-width: 1439px) {
+@media (min-width: 1200px) and (max-width: 1279px) {
   .flight-results-grid {
-    grid-template-columns: 220px minmax(0, 1fr);
+    grid-template-columns: 200px minmax(0, 856px) minmax(64px, 80px);
   }
 
   .flight-results-right-rail {
-    display: none;
+    display: block;
+  }
+}
+
+@media (min-width: 1280px) and (max-width: 1365px) {
+  .flight-results-grid {
+    grid-template-columns: 210px minmax(0, 880px) minmax(88px, 128px);
+  }
+
+  .flight-results-right-rail {
+    display: block;
+  }
+}
+
+@media (min-width: 1366px) and (max-width: 1439px) {
+  .flight-results-grid {
+    grid-template-columns: 220px minmax(0, 900px) minmax(110px, 160px);
+  }
+
+  .flight-results-right-rail {
+    display: block;
   }
 }
 
 @media (min-width: 1440px) and (max-width: 1599px) {
   .flight-results-grid {
-    grid-template-columns: 230px minmax(0, 940px) minmax(80px, 140px);
+    grid-template-columns: 230px minmax(0, 920px) minmax(150px, 220px);
+  }
+
+  .flight-results-right-rail {
+    display: block;
   }
 }
 
 @media (min-width: 1600px) {
   .flight-results-grid {
-    grid-template-columns: 240px minmax(0, 980px) minmax(160px, 260px);
+    grid-template-columns: 240px minmax(0, 980px) minmax(220px, 300px);
+  }
+
+  .flight-results-right-rail {
+    display: block;
   }
 }
