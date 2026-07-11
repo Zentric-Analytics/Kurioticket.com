@@ -457,3 +457,200 @@ textarea {
     color: #475569;
   }
 }
+
+/* Desktop flight results cards respond to their own result-column width. */
+.flight-card-desktop-shell {
+  container-type: inline-size;
+}
+
+.flight-card-desktop {
+  padding: 1rem 1.25rem;
+}
+
+.flight-card-desktop-header {
+  gap: 1rem;
+}
+
+.flight-card-desktop-brand {
+  gap: 0.75rem;
+}
+
+.flight-card-airline-name {
+  font-size: 0.875rem;
+}
+
+.flight-card-logo-box {
+  height: 3rem;
+  width: 3rem;
+}
+
+.flight-card-logo-image {
+  height: 2.5rem;
+  width: 2.5rem;
+}
+
+.flight-card-logo-icon {
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+.flight-card-desktop-itinerary {
+  grid-template-columns: minmax(0, 1fr) 136px;
+  column-gap: 1rem;
+}
+
+.flight-card-leg-grid {
+  grid-template-columns: minmax(105px, 0.8fr) minmax(190px, 1.5fr) minmax(
+      105px,
+      0.75fr
+    );
+  gap: 1.25rem;
+}
+
+.flight-card-time,
+.flight-card-price {
+  font-size: 1.375rem;
+}
+
+.flight-card-fare-action {
+  min-width: 0;
+  gap: 0.75rem;
+  padding-left: 0.75rem;
+}
+
+.flight-card-view-button {
+  min-width: 114px;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.flight-card-details {
+  column-gap: 1rem;
+}
+
+.flight-card-detail-item {
+  padding-right: 1rem;
+}
+
+@container (max-width: 759px) {
+  .flight-card-desktop {
+    padding: 0.875rem 1rem;
+  }
+
+  .flight-card-desktop-header {
+    gap: 0.75rem;
+  }
+
+  .flight-card-desktop-brand {
+    gap: 0.625rem;
+  }
+
+  .flight-card-airline-name {
+    font-size: 0.8125rem;
+  }
+
+  .flight-card-logo-box {
+    height: 2.625rem;
+    width: 2.625rem;
+  }
+
+  .flight-card-logo-image {
+    height: 2.125rem;
+    width: 2.125rem;
+  }
+
+  .flight-card-logo-icon {
+    height: 1.125rem;
+    width: 1.125rem;
+  }
+
+  .flight-card-desktop-itinerary {
+    grid-template-columns: minmax(0, 1fr) 126px;
+    column-gap: 0.75rem;
+  }
+
+  .flight-card-leg-grid {
+    grid-template-columns: minmax(96px, 0.8fr) minmax(150px, 1.35fr) minmax(
+        100px,
+        0.75fr
+      );
+    gap: 0.75rem;
+  }
+
+  .flight-card-time,
+  .flight-card-price {
+    font-size: 1.25rem;
+  }
+
+  .flight-card-fare-action {
+    gap: 0.625rem;
+    padding-left: 0.625rem;
+  }
+
+  .flight-card-view-button {
+    min-width: 108px;
+    padding-left: 0.875rem;
+    padding-right: 0.875rem;
+  }
+
+  .flight-card-details {
+    column-gap: 0.75rem;
+  }
+
+  .flight-card-detail-item {
+    padding-right: 0.75rem;
+  }
+}
+
+@container (max-width: 639px) {
+  .flight-card-desktop-itinerary {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0.875rem;
+  }
+
+  .flight-card-leg-grid {
+    grid-template-columns: minmax(92px, 0.8fr) minmax(128px, 1.15fr) minmax(
+        96px,
+        0.75fr
+      );
+    gap: 0.625rem;
+  }
+
+  .flight-card-fare-action {
+    justify-self: end;
+    width: min(144px, 100%);
+    border-left-width: 0;
+    border-top: 1px solid #d8e1ec;
+    padding-left: 0;
+    padding-top: 0.75rem;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .flight-results-grid {
+    width: min(1560px, calc(100% - 24px));
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 1280px) and (max-width: 1439px) {
+  .flight-results-grid {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+
+  .flight-results-right-rail {
+    display: none;
+  }
+}
+
+@media (min-width: 1440px) and (max-width: 1599px) {
+  .flight-results-grid {
+    grid-template-columns: 230px minmax(0, 940px) minmax(80px, 140px);
+  }
+}
+
+@media (min-width: 1600px) {
+  .flight-results-grid {
+    grid-template-columns: 240px minmax(0, 980px) minmax(160px, 260px);
+  }
+}
