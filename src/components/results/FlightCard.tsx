@@ -123,10 +123,10 @@ export function FlightCard({
     >
       {mobileCard}
 
-      <div className="hidden p-4 lg:block">
-        <div className="grid grid-cols-[minmax(0,1fr)_150px] items-stretch gap-4 xl:grid-cols-[minmax(0,1fr)_164px]">
-          <div className="min-w-0">
-            <div className="space-y-3">
+      <div className="hidden px-5 py-4 lg:block xl:px-6">
+        <div className="grid grid-cols-[minmax(0,1fr)_190px] items-stretch gap-0 xl:grid-cols-[minmax(0,1fr)_214px]">
+          <div className="min-w-0 pr-6 xl:pr-8">
+            <div className="space-y-4">
               {visibleLegs.map((leg, index) => (
                 <DesktopFlightLegRow
                   key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${leg.departureTime}-${index}`}
@@ -139,7 +139,7 @@ export function FlightCard({
 
             <FlightDetailLines details={details} desktop />
 
-            <div className="mt-3 rounded-lg border border-[#D8E1EC]/80 bg-[#F8FBFF] px-3 py-2 text-xs font-medium leading-5 text-slate-600">
+            <div className="mt-3 rounded-[4px] bg-[#F3F7FD] px-3 py-2 text-xs font-medium leading-5 text-[#536B92]">
               {providerHandoffCopy}
             </div>
           </div>
@@ -154,7 +154,7 @@ export function FlightCard({
             providerPrice={providerPrice}
             providerPriceLabel={t("providerPrice")}
             viewFlightLabel={t("viewFlight")}
-            className="border-l border-[#D8E1EC] pl-4"
+            className="border-l border-[#D8E1EC] pl-7 xl:pl-8"
             desktop
           />
         </div>
@@ -279,68 +279,91 @@ function DesktopFlightLegRow({
 
   return (
     <section aria-label={legTitle} className="min-w-0">
-      <div className="grid min-w-0 grid-cols-[44px_minmax(132px,0.82fr)_minmax(190px,1.15fr)_minmax(132px,0.82fr)] items-center gap-4 xl:grid-cols-[48px_minmax(150px,0.86fr)_minmax(230px,1.2fr)_minmax(150px,0.86fr)]">
-        <AirlineLogo flight={flight} />
+      <div className="grid min-w-0 grid-cols-[64px_minmax(150px,0.78fr)_minmax(260px,1.32fr)_minmax(118px,0.62fr)] items-center gap-5 xl:grid-cols-[72px_minmax(170px,0.78fr)_minmax(340px,1.42fr)_minmax(132px,0.62fr)] xl:gap-6">
+        <div className="flex items-center justify-center self-start pt-1">
+          <AirlineLogo flight={flight} desktop />
+        </div>
 
-        <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#004BB8]">
+        <div className="min-w-0 self-start pt-1">
+          <p
+            className="truncate text-sm font-semibold leading-5 text-slate-800"
+            dir="auto"
+          >
+            {flight.airlineName}
+          </p>
+          {flight.flightNumber ? (
+            <p
+              className="mt-1 truncate text-sm font-medium leading-5 text-[#536B92]"
+              dir="ltr"
+            >
+              {flight.flightNumber}
+            </p>
+          ) : null}
+          <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.12em] text-[#0057E7]">
             {legTitle}
           </p>
           <div
-            className="mt-1 text-xl font-semibold leading-6 tracking-[-0.02em] text-slate-950"
+            className="mt-1 text-[22px] font-semibold leading-6 tracking-[-0.025em] text-[#07133B]"
             dir="ltr"
           >
             {formatTime(leg.departureTime, locale)}
           </div>
-          <div className="mt-1 flex min-w-0 items-center gap-2">
-            <span className="shrink-0 text-sm font-bold text-slate-800" dir="ltr">
-              {leg.originAirport}
-            </span>
-            <span className="min-w-0 truncate text-xs font-medium text-slate-500" dir="auto">
-              {flight.airlineName}{flight.flightNumber ? ` · ${flight.flightNumber}` : ""}
-            </span>
+          <div
+            className="mt-1 text-sm font-bold leading-5 text-[#07133B]"
+            dir="ltr"
+          >
+            {leg.originAirport}
           </div>
         </div>
 
-        <div className="min-w-0 text-center">
-          <div className="mb-1.5 flex items-center justify-center gap-2 text-xs font-semibold text-slate-700">
+        <div className="min-w-0 self-center text-center">
+          <div className="mb-2 flex items-center justify-center gap-2 text-sm font-semibold text-[#07133B]">
             <span dir="auto">{leg.duration}</span>
-            <span className="h-1 w-1 rounded-full bg-slate-300" aria-hidden="true" />
+            <span
+              className="h-1 w-1 rounded-full bg-[#07133B]"
+              aria-hidden="true"
+            />
             <span>{formatStopsLabel(leg.stops, t)}</span>
           </div>
-          <div className="flex items-center text-slate-300" aria-hidden="true">
-            <span className="h-2 w-2 rounded-full border border-[#004BB8]/45 bg-white" />
-            <span className="h-px flex-1 bg-slate-300" />
-            <PlaneTakeoff className="mx-2 h-3.5 w-3.5 text-[#004BB8]" />
-            <span className="h-px flex-1 bg-slate-300" />
-            <span className="h-2 w-2 rounded-full border border-slate-400 bg-white" />
+          <div className="flex items-center text-[#7890B8]" aria-hidden="true">
+            <span className="h-2 w-2 rounded-full bg-[#7890B8]" />
+            <span className="h-px flex-1 bg-[#B9C5D8]" />
+            <PlaneTakeoff className="mx-2 h-3.5 w-3.5 text-[#0057E7]" />
+            <span className="h-px flex-1 bg-[#B9C5D8]" />
+            <span className="h-2 w-2 rounded-full bg-[#7890B8]" />
           </div>
           {leg.layovers.length ? (
             <p
-              className="mt-1.5 truncate text-xs font-medium leading-4 text-slate-500"
+              className="mt-2 truncate text-sm font-medium leading-5 text-[#536B92]"
               title={formatLayoverText(leg, t)}
             >
               {formatLayoverText(leg, t)}
             </p>
           ) : (
-            <p className="mt-1.5 text-xs font-medium leading-4 text-slate-400">
+            <p className="mt-2 text-sm font-medium leading-5 text-[#536B92]">
               {leg.originAirport} → {leg.destinationAirport}
             </p>
           )}
         </div>
 
-        <div className="min-w-0 text-right">
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
-            {t("arrival") || "Arrival"}
-          </p>
+        <div className="min-w-0 self-end pb-1 text-right">
           <div
-            className="mt-1 text-xl font-semibold leading-6 tracking-[-0.02em] text-slate-950"
+            className="text-[22px] font-semibold leading-6 tracking-[-0.025em] text-[#07133B]"
             dir="ltr"
           >
             {formatTime(leg.arrivalTime, locale)}
           </div>
-          <div className="mt-1 truncate text-sm font-bold text-slate-800" dir="ltr">
+          <div
+            className="mt-1 truncate text-sm font-bold leading-5 text-[#07133B]"
+            dir="ltr"
+          >
             {leg.destinationAirport}
+          </div>
+          <div
+            className="mt-0.5 text-sm font-medium leading-5 text-[#07133B]"
+            dir="auto"
+          >
+            {formatShortDate(leg.arrivalTime, locale)}
           </div>
         </div>
       </div>
@@ -348,26 +371,53 @@ function DesktopFlightLegRow({
   );
 }
 
-function AirlineLogo({ flight }: { flight: PublicFlightResult }) {
+function AirlineLogo({
+  flight,
+  desktop = false,
+}: {
+  flight: PublicFlightResult;
+  desktop?: boolean;
+}) {
   if (flight.airlineLogo) {
     return (
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div
+        className={cn(
+          "flex shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white shadow-sm",
+          desktop ? "h-12 w-12" : "h-8 w-8",
+        )}
+      >
         <Image
           src={flight.airlineLogo}
           alt={`${flight.airlineName} logo`}
-          width={24}
-          height={24}
-          className="h-6 w-6 object-contain"
+          width={desktop ? 40 : 24}
+          height={desktop ? 40 : 24}
+          className={cn("object-contain", desktop ? "h-10 w-10" : "h-6 w-6")}
         />
       </div>
     );
   }
 
   return (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#004BB8]/8 bg-[#004BB8]/5 text-[#004BB8] shadow-sm">
-      <PlaneTakeoff className="h-3.5 w-3.5" aria-hidden="true" />
+    <div
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-lg border border-[#004BB8]/8 bg-[#004BB8]/5 text-[#004BB8] shadow-sm",
+        desktop ? "h-12 w-12" : "h-8 w-8",
+      )}
+    >
+      <PlaneTakeoff
+        className={cn(desktop ? "h-5 w-5" : "h-3.5 w-3.5")}
+        aria-hidden="true"
+      />
     </div>
   );
+}
+
+function formatShortDate(value: Date | string, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(value));
 }
 
 function FlightFareAction({
@@ -404,9 +454,19 @@ function FlightFareAction({
         className,
       )}
     >
-      <div className={cn("min-w-0 text-center", desktop ? "flex flex-col items-center justify-center" : "lg:flex lg:min-h-[72px] lg:flex-col lg:items-center lg:justify-center lg:text-center")}>
+      <div
+        className={cn(
+          "min-w-0 text-center",
+          desktop
+            ? "flex flex-col items-center justify-center"
+            : "lg:flex lg:min-h-[72px] lg:flex-col lg:items-center lg:justify-center lg:text-center",
+        )}
+      >
         <div
-          className={cn("font-semibold leading-tight tracking-[-0.025em] text-slate-950", desktop ? "text-2xl" : "text-lg sm:text-xl")}
+          className={cn(
+            "font-semibold leading-tight tracking-[-0.025em] text-slate-950",
+            desktop ? "text-[22px]" : "text-lg sm:text-xl",
+          )}
           aria-label={priceAriaLabel}
           title={priceTitle}
           dir="ltr"
@@ -429,7 +489,12 @@ function FlightFareAction({
         href={`/flights/details/${encodeURIComponent(flightId)}`}
         variant="primary"
         size="sm"
-        className={cn("w-auto shrink-0 justify-center whitespace-nowrap bg-[#004BB8] text-sm font-semibold hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35", desktop ? "min-w-[112px] rounded-lg px-4 py-2.5" : "min-w-[104px] rounded-full px-5 py-2.5 sm:px-4 sm:py-2 sm:text-sm lg:w-full lg:min-w-0 lg:px-3.5 lg:py-2 lg:text-sm")}
+        className={cn(
+          "w-auto shrink-0 justify-center whitespace-nowrap bg-[#004BB8] text-sm font-semibold hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35",
+          desktop
+            ? "min-w-[128px] rounded-md px-5 py-2.5"
+            : "min-w-[104px] rounded-full px-5 py-2.5 sm:px-4 sm:py-2 sm:text-sm lg:w-full lg:min-w-0 lg:px-3.5 lg:py-2 lg:text-sm",
+        )}
       >
         {viewFlightLabel}
       </LinkButton>
@@ -449,7 +514,7 @@ function FlightDetailLines({
       className={cn(
         "grid min-w-0 flex-1 text-xs leading-5 text-slate-600",
         desktop
-          ? "mt-4 grid-cols-2 gap-x-4 gap-y-2 border-t border-slate-100 pt-3 xl:grid-cols-4"
+          ? "mt-4 grid-cols-3 gap-x-0 gap-y-2 border-t border-[#D8E1EC] pt-3 xl:grid-cols-4"
           : "gap-x-4 gap-y-1 sm:grid-cols-2 lg:border-t lg:border-slate-100 lg:pt-2",
       )}
     >
@@ -459,7 +524,11 @@ function FlightDetailLines({
         return (
           <p
             key={detail.label}
-            className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5"
+            className={cn(
+              "flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5",
+              desktop &&
+                "border-r border-[#EEF2F7] pr-4 last:border-r-0 last:pr-0",
+            )}
           >
             <Icon
               className="h-3.5 w-3.5 shrink-0 text-[#004BB8]"
