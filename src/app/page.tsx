@@ -36,7 +36,6 @@ import {
   homepageHotelCountryCards,
   type HomepageHotelCountryCard,
 } from "@/data/homepageHotelCountryCards";
-import { getLocalizedHotelDestinationCountryName } from "@/data/hotelDestinations";
 import { getFlagEmojiFromCountryCode } from "@/lib/region/flagEmoji";
 import {
   getPopularDestinationFareCandidatesByRegion,
@@ -680,7 +679,7 @@ export default function Home() {
   );
   const homepageHotelDestinationCards = homepageHotelCountryCards.map((destination) => ({
     ...destination,
-    countryLabel: getLocalizedHotelDestinationCountryName(destination, locale),
+    countryLabel: t(destination.countryDisplayLabelKey),
     countryFlag: getFlagEmojiFromCountryCode(destination.countryCode),
     href: buildHotelDestinationHref(destination),
   }));
@@ -1356,21 +1355,21 @@ export default function Home() {
                   alt={destination.imageAlt}
                   fill
                   sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"
-                  className="object-cover transition duration-500 group-hover:scale-[1.04]"
+                  className="object-cover transition duration-500 group-hover:scale-[1.035]"
                 />
-                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-slate-950/60 via-slate-950/24 to-transparent" aria-hidden="true" />
-                <div className="relative mt-auto w-full p-5 text-white sm:p-6">
-                  <div className="flex items-center gap-2 text-white drop-shadow-[0_2px_8px_rgba(2,28,43,0.55)]">
+                <div className="absolute inset-x-0 bottom-0 h-[46%] bg-gradient-to-t from-slate-950/68 via-slate-950/22 to-transparent" aria-hidden="true" />
+                <div className="relative mt-auto w-full p-4 text-white sm:p-5">
+                  <div className="flex min-w-0 items-center gap-2 text-white drop-shadow-[0_2px_8px_rgba(2,28,43,0.5)]">
                     {destination.countryFlag ? (
-                      <span className="text-2xl sm:text-3xl" aria-hidden="true">
+                      <span className="shrink-0 text-2xl leading-none sm:text-[1.7rem]" aria-hidden="true">
                         {destination.countryFlag}
                       </span>
                     ) : null}
-                    <h3 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                    <h3 className="min-w-0 whitespace-nowrap text-xl font-semibold leading-tight tracking-tight text-white sm:text-2xl">
                       {destination.countryLabel}
                     </h3>
                   </div>
-                  <p className="mt-3 inline-flex items-center gap-1.5 text-sm font-extrabold text-white drop-shadow-sm">
+                  <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-white drop-shadow-sm">
                     {t("homeHotelDestinationsExploreStays")}
                     <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden="true" />
                   </p>
