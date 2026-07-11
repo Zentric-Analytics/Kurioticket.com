@@ -314,7 +314,7 @@ function FlightFareAction({
         href={`/flights/details/${encodeURIComponent(flightId)}`}
         variant="primary"
         size="sm"
-        className="w-auto shrink-0 justify-center whitespace-nowrap rounded-full bg-[#004BB8] px-4 py-2 text-xs font-semibold hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35 sm:px-4 sm:py-2 sm:text-sm lg:w-full lg:px-3.5 lg:py-2 lg:text-sm"
+        className="w-auto min-w-[104px] shrink-0 justify-center whitespace-nowrap rounded-full bg-[#004BB8] px-5 py-2.5 text-sm font-semibold hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35 sm:px-4 sm:py-2 sm:text-sm lg:w-full lg:min-w-0 lg:px-3.5 lg:py-2 lg:text-sm"
       >
         {viewFlightLabel}
       </LinkButton>

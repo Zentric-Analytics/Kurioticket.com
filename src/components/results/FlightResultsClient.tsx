@@ -11,10 +11,12 @@ import type {
   SetStateAction,
 } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   ArrowRightLeft,
+  ArrowUp,
   Calendar,
   ChevronDown,
   Heart,
@@ -93,6 +95,8 @@ import {
 
 const resultStackClass = "w-full max-w-[680px] lg:ms-4 xl:ms-6";
 const desktopCompactFilterTopOffset = 116;
+type MobileShortcutMenu = "sort" | "airlines" | "stops" | "airports";
+type MobileShortcutMenuPosition = { top: number; left: number; width: number };
 type DesktopCompactFilterFrame = {
   left: number;
   width: number;
@@ -846,10 +850,14 @@ export function FlightResultsClient() {
   const [mobileAirportMenuOpen, setMobileAirportMenuOpen] = useState(false);
   const [mobileStopsMenuOpen, setMobileStopsMenuOpen] = useState(false);
   const [mobileAirlineMenuOpen, setMobileAirlineMenuOpen] = useState(false);
+  const [mobileShortcutMenuPosition, setMobileShortcutMenuPosition] =
+    useState<MobileShortcutMenuPosition | null>(null);
+  const [showMobileBackToTop, setShowMobileBackToTop] = useState(false);
   const mobileSortMenuRef = useRef<HTMLDivElement | null>(null);
   const mobileAirportMenuRef = useRef<HTMLDivElement | null>(null);
   const mobileStopsMenuRef = useRef<HTMLDivElement | null>(null);
   const mobileAirlineMenuRef = useRef<HTMLDivElement | null>(null);
+  const mobileShortcutMenuContentRef = useRef<HTMLDivElement | null>(null);
   const [filterApplying, setFilterApplying] = useState(false);
   const [maxPrice, setMaxPrice] = useState(0);
   const [timeFilterMode, setTimeFilterMode] = useState<"takeoff" | "landing">(
@@ -1384,58 +1392,117 @@ export function FlightResultsClient() {
     };
   }, []);
 
-  useEffect(() => {
-    if (
-      !mobileSortMenuOpen &&
-      !mobileAirportMenuOpen &&
-      !mobileStopsMenuOpen &&
-      !mobileAirlineMenuOpen
-    )
-      return;
+  const closeMobileShortcutMenus = useCallback(() => {
+    setMobileSortMenuOpen(false);
+    setMobileAirportMenuOpen(false);
+    setMobileStopsMenuOpen(false);
+    setMobileAirlineMenuOpen(false);
+    setMobileShortcutMenuPosition(null);
+  }, [
+    setMobileAirlineMenuOpen,
+    setMobileAirportMenuOpen,
+    setMobileShortcutMenuPosition,
+    setMobileSortMenuOpen,
+    setMobileStopsMenuOpen,
+  ]);
 
-    const handlePointerDown = (event: PointerEvent) => {
-      if (!(event.target instanceof Node)) return;
-
-      if (
-        mobileSortMenuRef.current &&
-        !mobileSortMenuRef.current.contains(event.target)
-      ) {
-        setMobileSortMenuOpen(false);
-      }
-
-      if (
-        mobileAirportMenuRef.current &&
-        !mobileAirportMenuRef.current.contains(event.target)
-      ) {
-        setMobileAirportMenuOpen(false);
-      }
-
-      if (
-        mobileStopsMenuRef.current &&
-        !mobileStopsMenuRef.current.contains(event.target)
-      ) {
-        setMobileStopsMenuOpen(false);
-      }
-
-      if (
-        mobileAirlineMenuRef.current &&
-        !mobileAirlineMenuRef.current.contains(event.target)
-      ) {
-        setMobileAirlineMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("pointerdown", handlePointerDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
+  const getActiveMobileShortcutMenu = useCallback(():
+    | MobileShortcutMenu
+    | null => {
+    if (mobileSortMenuOpen) return "sort";
+    if (mobileAirlineMenuOpen) return "airlines";
+    if (mobileStopsMenuOpen) return "stops";
+    if (mobileAirportMenuOpen) return "airports";
+    return null;
   }, [
     mobileAirlineMenuOpen,
     mobileAirportMenuOpen,
     mobileSortMenuOpen,
     mobileStopsMenuOpen,
   ]);
+
+  const positionMobileShortcutMenu = useCallback(
+    (rect: DOMRect, width: number) => {
+      if (typeof window === "undefined") return;
+
+      const gutter = 16;
+      const safeWidth = Math.min(width, window.innerWidth - gutter * 2);
+      const left = Math.min(
+        Math.max(rect.left, gutter),
+        window.innerWidth - safeWidth - gutter,
+      );
+
+      setMobileShortcutMenuPosition({
+        top: Math.min(rect.bottom + 8, window.innerHeight - gutter),
+        left,
+        width: safeWidth,
+      });
+    },
+    [setMobileShortcutMenuPosition],
+  );
+
+  useEffect(() => {
+    const activeMenu = getActiveMobileShortcutMenu();
+    if (!activeMenu) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!(event.target instanceof Node)) return;
+
+      const triggerRef = {
+        sort: mobileSortMenuRef,
+        airlines: mobileAirlineMenuRef,
+        stops: mobileStopsMenuRef,
+        airports: mobileAirportMenuRef,
+      }[activeMenu];
+
+      if (
+        triggerRef.current?.contains(event.target) ||
+        mobileShortcutMenuContentRef.current?.contains(event.target)
+      ) {
+        return;
+      }
+
+      closeMobileShortcutMenus();
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeMobileShortcutMenus();
+    };
+    const handleViewportChange = () => closeMobileShortcutMenus();
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("scroll", handleViewportChange, { passive: true });
+    window.addEventListener("resize", handleViewportChange);
+    window.addEventListener("orientationchange", handleViewportChange);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("scroll", handleViewportChange);
+      window.removeEventListener("resize", handleViewportChange);
+      window.removeEventListener("orientationchange", handleViewportChange);
+    };
+  }, [
+    closeMobileShortcutMenus,
+    getActiveMobileShortcutMenu,
+  ]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const threshold = 600;
+    const handleScroll = () => {
+      const shouldShow = window.scrollY > threshold;
+      setShowMobileBackToTop((current) =>
+        current === shouldShow ? current : shouldShow,
+      );
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     const releaseExistingLock = () => {
@@ -5345,220 +5412,200 @@ export function FlightResultsClient() {
     const shortcutButtonClass =
       "focus-ring inline-flex h-10 flex-shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-300/80 bg-transparent px-3.5 text-[13px] font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-200/35 hover:text-slate-950 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35";
     const menuClass =
-      "absolute top-[calc(100%+0.45rem)] z-50 max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_38px_-18px_rgba(15,23,42,0.35)]";
+      "z-[90] max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_38px_-18px_rgba(15,23,42,0.35)]";
     const menuItemClass =
-      "flex min-h-9 w-full items-center justify-between gap-2 rounded-lg px-3 text-left text-[13px] font-bold transition";
+      "flex min-h-9 w-full items-center justify-between gap-2 rounded-lg px-3 text-left text-[13px] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30";
+    const activeMenu = getActiveMobileShortcutMenu();
+
+    const openMobileShortcutMenu = (
+      menu: MobileShortcutMenu,
+      width: number,
+      trigger: HTMLButtonElement,
+    ) => {
+      const isOpen = activeMenu === menu;
+      const rect = trigger.getBoundingClientRect();
+      closeMobileShortcutMenus();
+
+      if (!isOpen) {
+        if (menu === "sort") setMobileSortMenuOpen(true);
+        if (menu === "airlines") setMobileAirlineMenuOpen(true);
+        if (menu === "stops") setMobileStopsMenuOpen(true);
+        if (menu === "airports") setMobileAirportMenuOpen(true);
+        window.requestAnimationFrame(() => positionMobileShortcutMenu(rect, width));
+      }
+    };
+
+    const renderTrigger = (
+      menu: MobileShortcutMenu,
+      label: string,
+      menuOpen: boolean,
+      width: number,
+      ref: RefObject<HTMLDivElement | null>,
+    ) => (
+      <div ref={ref} className="flex-shrink-0">
+        <button
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          onClick={(event) => {
+            event.stopPropagation();
+            openMobileShortcutMenu(menu, width, event.currentTarget);
+          }}
+          className={shortcutButtonClass}
+        >
+          <span className="whitespace-nowrap">{label}</span>
+          <ChevronDown
+            className={cn(
+              "h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform",
+              menuOpen && "rotate-180",
+            )}
+            aria-hidden="true"
+          />
+        </button>
+      </div>
+    );
+
+    const renderMenu = () => {
+      if (!activeMenu || !mobileShortcutMenuPosition || typeof document === "undefined") {
+        return null;
+      }
+
+      return createPortal(
+        <div
+          ref={mobileShortcutMenuContentRef}
+          role="menu"
+          style={{
+            position: "fixed",
+            top: mobileShortcutMenuPosition.top,
+            left: mobileShortcutMenuPosition.left,
+            width: mobileShortcutMenuPosition.width,
+          }}
+          className={menuClass}
+          onClick={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          {activeMenu === "sort"
+            ? mobileSortOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={sortMode === option.value}
+                  onClick={() => {
+                    triggerFilterApplying();
+                    setSortMode(option.value);
+                    closeMobileShortcutMenus();
+                  }}
+                  className={cn(
+                    "flex min-h-9 w-full items-center rounded-lg px-3 text-left text-[13px] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30",
+                    sortMode === option.value
+                      ? "bg-[#004BB8]/8 text-[#004BB8]"
+                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))
+            : null}
+
+          {activeMenu === "airlines"
+            ? airlineOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="menuitemcheckbox"
+                  aria-checked={selectedAirlines.includes(option.value)}
+                  onClick={() => {
+                    triggerFilterApplying();
+                    toggleFilterValue(option.value, setSelectedAirlines);
+                  }}
+                  className={cn(
+                    menuItemClass,
+                    selectedAirlines.includes(option.value)
+                      ? "bg-[#004BB8]/8 text-[#004BB8]"
+                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
+                  )}
+                >
+                  <span className="truncate">{option.label}</span>
+                  <span className="shrink-0 text-[11px] font-semibold text-slate-500">
+                    {option.count}
+                  </span>
+                </button>
+              ))
+            : null}
+
+          {activeMenu === "stops"
+            ? stopOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="menuitemcheckbox"
+                  aria-checked={selectedStops.includes(option.value)}
+                  onClick={() => {
+                    triggerFilterApplying();
+                    toggleFilterValue(option.value, setSelectedStops);
+                  }}
+                  className={cn(
+                    menuItemClass,
+                    selectedStops.includes(option.value)
+                      ? "bg-[#004BB8]/8 text-[#004BB8]"
+                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
+                  )}
+                >
+                  <span>{option.label}</span>
+                  <span className="text-[11px] font-semibold text-slate-500">
+                    {option.count}
+                  </span>
+                </button>
+              ))
+            : null}
+
+          {activeMenu === "airports"
+            ? airportOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="menuitemcheckbox"
+                  aria-checked={selectedAirports.includes(option.value)}
+                  onClick={() => {
+                    triggerFilterApplying();
+                    toggleFilterValue(option.value, setSelectedAirports);
+                  }}
+                  className={cn(
+                    menuItemClass,
+                    selectedAirports.includes(option.value)
+                      ? "bg-[#004BB8]/8 text-[#004BB8]"
+                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
+                  )}
+                >
+                  <span>{option.label}</span>
+                  <span className="text-[11px] font-semibold text-slate-500">
+                    {option.count}
+                  </span>
+                </button>
+              ))
+            : null}
+        </div>,
+        document.body,
+      );
+    };
 
     return (
-      <div className="w-full overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex w-max flex-nowrap items-center gap-2.5">
-          {renderFloatingFilterButton(shortcutButtonClass)}
-
-          <div ref={mobileSortMenuRef} className="relative flex-shrink-0">
-            <button
-              type="button"
-              aria-haspopup="menu"
-              aria-expanded={mobileSortMenuOpen}
-              onClick={() => {
-                setMobileSortMenuOpen((open) => !open);
-                setMobileAirlineMenuOpen(false);
-                setMobileAirportMenuOpen(false);
-                setMobileStopsMenuOpen(false);
-              }}
-              className={shortcutButtonClass}
-            >
-              <span className="whitespace-nowrap">
-                {activeSortOption.label}
-              </span>
-              <ChevronDown
-                className={cn(
-                  "h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform",
-                  mobileSortMenuOpen && "rotate-180",
-                )}
-                aria-hidden="true"
-              />
-            </button>
-            {mobileSortMenuOpen ? (
-              <div role="menu" className={cn(menuClass, "left-0 w-36")}>
-                {mobileSortOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={sortMode === option.value}
-                    onClick={() => {
-                      triggerFilterApplying();
-                      setSortMode(option.value);
-                      setMobileSortMenuOpen(false);
-                    }}
-                    className={cn(
-                      "flex min-h-9 w-full items-center rounded-lg px-3 text-left text-[13px] font-bold transition",
-                      sortMode === option.value
-                        ? "bg-[#004BB8]/8 text-[#004BB8]"
-                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
-                    )}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-
-          <div ref={mobileAirlineMenuRef} className="relative flex-shrink-0">
-            <button
-              type="button"
-              aria-haspopup="menu"
-              aria-expanded={mobileAirlineMenuOpen}
-              onClick={() => {
-                setMobileAirlineMenuOpen((open) => !open);
-                setMobileAirportMenuOpen(false);
-                setMobileStopsMenuOpen(false);
-                setMobileSortMenuOpen(false);
-              }}
-              className={shortcutButtonClass}
-            >
-              <span className="whitespace-nowrap">Airlines</span>
-              <ChevronDown
-                className={cn(
-                  "h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform",
-                  mobileAirlineMenuOpen && "rotate-180",
-                )}
-                aria-hidden="true"
-              />
-            </button>
-            {mobileAirlineMenuOpen ? (
-              <div role="menu" className={cn(menuClass, "left-0 w-56")}>
-                {airlineOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    role="menuitemcheckbox"
-                    aria-checked={selectedAirlines.includes(option.value)}
-                    onClick={() => {
-                      triggerFilterApplying();
-                      toggleFilterValue(option.value, setSelectedAirlines);
-                    }}
-                    className={cn(
-                      menuItemClass,
-                      selectedAirlines.includes(option.value)
-                        ? "bg-[#004BB8]/8 text-[#004BB8]"
-                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
-                    )}
-                  >
-                    <span className="truncate">{option.label}</span>
-                    <span className="shrink-0 text-[11px] font-semibold text-slate-500">
-                      {option.count}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-
-          <div ref={mobileStopsMenuRef} className="relative flex-shrink-0">
-            <button
-              type="button"
-              aria-haspopup="menu"
-              aria-expanded={mobileStopsMenuOpen}
-              onClick={() => {
-                setMobileStopsMenuOpen((open) => !open);
-                setMobileAirlineMenuOpen(false);
-                setMobileAirportMenuOpen(false);
-                setMobileSortMenuOpen(false);
-              }}
-              className={shortcutButtonClass}
-            >
-              <span className="whitespace-nowrap">Stops</span>
-              <ChevronDown
-                className={cn(
-                  "h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform",
-                  mobileStopsMenuOpen && "rotate-180",
-                )}
-                aria-hidden="true"
-              />
-            </button>
-            {mobileStopsMenuOpen ? (
-              <div role="menu" className={cn(menuClass, "left-0 w-40")}>
-                {stopOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    role="menuitemcheckbox"
-                    aria-checked={selectedStops.includes(option.value)}
-                    onClick={() => {
-                      triggerFilterApplying();
-                      toggleFilterValue(option.value, setSelectedStops);
-                    }}
-                    className={cn(
-                      menuItemClass,
-                      selectedStops.includes(option.value)
-                        ? "bg-[#004BB8]/8 text-[#004BB8]"
-                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
-                    )}
-                  >
-                    <span>{option.label}</span>
-                    <span className="text-[11px] font-semibold text-slate-500">
-                      {option.count}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-
-          <div ref={mobileAirportMenuRef} className="relative flex-shrink-0">
-            <button
-              type="button"
-              aria-haspopup="menu"
-              aria-expanded={mobileAirportMenuOpen}
-              onClick={() => {
-                setMobileAirportMenuOpen((open) => !open);
-                setMobileAirlineMenuOpen(false);
-                setMobileStopsMenuOpen(false);
-                setMobileSortMenuOpen(false);
-              }}
-              className={shortcutButtonClass}
-            >
-              <span className="whitespace-nowrap">Airports</span>
-              <ChevronDown
-                className={cn(
-                  "h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform",
-                  mobileAirportMenuOpen && "rotate-180",
-                )}
-                aria-hidden="true"
-              />
-            </button>
-            {mobileAirportMenuOpen ? (
-              <div role="menu" className={cn(menuClass, "right-0 w-44")}>
-                {airportOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    role="menuitemcheckbox"
-                    aria-checked={selectedAirports.includes(option.value)}
-                    onClick={() => {
-                      triggerFilterApplying();
-                      toggleFilterValue(option.value, setSelectedAirports);
-                    }}
-                    className={cn(
-                      menuItemClass,
-                      selectedAirports.includes(option.value)
-                        ? "bg-[#004BB8]/8 text-[#004BB8]"
-                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
-                    )}
-                  >
-                    <span>{option.label}</span>
-                    <span className="text-[11px] font-semibold text-slate-500">
-                      {option.count}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            ) : null}
+      <>
+        <div
+          className="w-full overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden"
+          onScroll={closeMobileShortcutMenus}
+        >
+          <div className="flex w-max flex-nowrap items-center gap-2.5">
+            {renderFloatingFilterButton(shortcutButtonClass)}
+            {renderTrigger("sort", activeSortOption.label, mobileSortMenuOpen, 144, mobileSortMenuRef)}
+            {renderTrigger("airlines", "Airlines", mobileAirlineMenuOpen, 224, mobileAirlineMenuRef)}
+            {renderTrigger("stops", "Stops", mobileStopsMenuOpen, 160, mobileStopsMenuRef)}
+            {renderTrigger("airports", "Airports", mobileAirportMenuOpen, 176, mobileAirportMenuRef)}
           </div>
         </div>
-      </div>
+        {renderMenu()}
+      </>
     );
   }
 
@@ -5569,6 +5616,7 @@ export function FlightResultsClient() {
         : t("openFilters");
 
     const handleClick = () => {
+      closeMobileShortcutMenus();
       setFiltersOpen(true);
     };
 
@@ -5669,6 +5717,7 @@ export function FlightResultsClient() {
           className="relative z-30 px-4 pb-0 pt-12 sm:hidden"
           aria-label={t("filters")}
         >
+          {/* eslint-disable-next-line react-hooks/refs */}
           {renderMobileSortResultsRow()}
         </section>
       ) : null}
@@ -6063,6 +6112,20 @@ export function FlightResultsClient() {
           )}
         </section>
       </div>
+
+      <button
+        type="button"
+        aria-label="Back to top"
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        className={cn(
+          "fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-[80] inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#004BB8]/20 bg-white text-[#004BB8] shadow-[0_12px_28px_rgba(15,23,42,0.18)] transition sm:hidden",
+          showMobileBackToTop
+            ? "pointer-events-auto translate-y-0 opacity-100"
+            : "pointer-events-none translate-y-3 opacity-0",
+        )}
+      >
+        <ArrowUp className="h-5 w-5" strokeWidth={2.4} aria-hidden="true" />
+      </button>
 
       <aside
         id="flight-mobile-filters-dialog"
