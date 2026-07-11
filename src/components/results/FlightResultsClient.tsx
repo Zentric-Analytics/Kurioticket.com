@@ -5341,19 +5341,19 @@ export function FlightResultsClient() {
 
             <div
               className={cn(
-                "relative overflow-visible rounded-xl border border-slate-200/80 bg-white/90 p-1.5 shadow-[0_16px_36px_-30px_rgba(15,23,42,0.55)] ring-1 ring-white/70 backdrop-blur-md sm:rounded-xl",
+                "relative overflow-visible rounded-[1.15rem] border border-slate-200/90 bg-white p-1.5 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-slate-950/[0.025] backdrop-blur-md sm:rounded-[1.15rem]",
                 placement === "desktop" &&
-                  "sm:bg-white sm:ring-slate-950/[0.03] sm:backdrop-blur-none",
+                  "sm:bg-white sm:backdrop-blur-none",
               )}
             >
-              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.85fr)_minmax(0,1.35fr)_minmax(0,1.1fr)_112px] lg:gap-0">
-                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-200/80 bg-white/60 px-4 py-1.5 transition-colors hover:border-slate-300 hover:bg-white/90 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/80 lg:hover:border-slate-200/80 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.95fr)_minmax(0,1.35fr)_minmax(0,1.12fr)_116px] lg:gap-0">
+                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] items-stretch rounded-[0.9rem] border border-slate-200/85 bg-gradient-to-b from-white to-slate-50/35 transition-colors hover:border-slate-300/90 focus-within:border-[#004BB8]/55 focus-within:ring-2 focus-within:ring-[#004BB8]/15 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/85 lg:bg-transparent lg:hover:border-slate-200/85 lg:focus-within:border-slate-200/85 lg:focus-within:ring-0">
                   <div
                     ref={originWrapRef}
-                    className="relative min-h-[50px] px-0 py-0 pe-4"
+                    className="relative flex min-h-[58px] flex-col justify-center px-3.5 py-2.5 pe-2 lg:px-4 lg:pe-3"
                   >
                     <label
-                      className="mb-1 block text-[0.68rem] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-500"
+                      className="mb-1.5 block text-[0.66rem] font-semibold uppercase leading-3 tracking-[0.13em] text-slate-500"
                       htmlFor="results-origin"
                     >
                       {t("origin")}
@@ -5398,7 +5398,7 @@ export function FlightResultsClient() {
                       }}
                       placeholder={t("fromPlaceholder")}
                       autoComplete="off"
-                      className="h-7 w-full border-0 bg-transparent p-0 pe-7 text-[16px] font-medium text-slate-950 outline-none placeholder:text-slate-400 md:text-sm"
+                      className="h-6 w-full border-0 bg-transparent p-0 pe-7 text-[16px] font-semibold leading-6 text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-400 md:text-sm"
                     />
 
                     {originInput ? (
@@ -5443,18 +5443,22 @@ export function FlightResultsClient() {
                       type="button"
                       aria-label={t("swapOriginDestination")}
                       onClick={handleSwapLocations}
-                      className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+                      className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.75)] transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
                     >
-                      <ArrowRightLeft size={14} />
+                      <ArrowRightLeft
+                        className="h-4 w-4"
+                        strokeWidth={2.1}
+                        aria-hidden="true"
+                      />
                     </button>
                   </div>
 
                   <div
                     ref={destinationWrapRef}
-                    className="relative min-h-[50px] px-0 py-0 ps-4"
+                    className="relative flex min-h-[58px] flex-col justify-center px-3.5 py-2.5 ps-2 lg:px-4 lg:ps-3"
                   >
                     <label
-                      className="mb-1 block text-[0.68rem] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-500"
+                      className="mb-1.5 block text-[0.66rem] font-semibold uppercase leading-3 tracking-[0.13em] text-slate-500"
                       htmlFor="results-destination"
                     >
                       {t("destination")}
@@ -5500,7 +5504,7 @@ export function FlightResultsClient() {
                       }}
                       placeholder={t("toPlaceholder")}
                       autoComplete="off"
-                      className="h-7 w-full border-0 bg-transparent p-0 pe-7 text-[16px] font-medium text-slate-950 outline-none placeholder:text-slate-400 md:text-sm"
+                      className="h-6 w-full border-0 bg-transparent p-0 pe-7 text-[16px] font-semibold leading-6 text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-400 md:text-sm"
                     />
 
                     {destinationInput ? (
@@ -5554,14 +5558,14 @@ export function FlightResultsClient() {
                       setActiveDatePicker("departure");
                       setDatePickerPosition(null);
                     }}
-                    className="focus-ring flex h-full min-h-[50px] w-full items-center gap-2 rounded-xl border border-slate-200/80 bg-white/60 px-3.5 py-1.5 text-start transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/80 lg:hover:border-slate-200/80"
+                    className="focus-ring flex h-full min-h-[58px] w-full items-center gap-2.5 rounded-[0.9rem] border border-slate-200/85 bg-gradient-to-b from-white to-slate-50/35 px-4 py-2.5 text-start transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/85 lg:bg-transparent lg:hover:border-slate-200/85"
                   >
                     <Calendar className="h-4 w-4 shrink-0 text-[#004BB8]" />
                     <span className="min-w-0">
-                      <span className="block text-[0.68rem] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-500">
+                      <span className="mb-1.5 block text-[0.66rem] font-semibold uppercase leading-3 tracking-[0.13em] text-slate-500">
                         {t("travelDates")}
                       </span>
-                      <span className="block truncate text-sm font-medium text-slate-950">
+                      <span className="block truncate text-sm font-semibold leading-6 text-slate-950">
                         {departureDateInput
                           ? tripTypeInput === "round-trip" && returnDateInput
                             ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
@@ -5624,13 +5628,13 @@ export function FlightResultsClient() {
                       setTravelerPopoverOpen(true);
                       setTravelerPopoverPosition(null);
                     }}
-                    className="focus-ring flex h-full min-h-[50px] w-full items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-white/60 px-3.5 py-1.5 text-start transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/80 lg:hover:border-slate-200/80"
+                    className="focus-ring flex h-full min-h-[58px] w-full items-center justify-between gap-2.5 rounded-[0.9rem] border border-slate-200/85 bg-gradient-to-b from-white to-slate-50/35 px-4 py-2.5 text-start transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/85 lg:bg-transparent lg:hover:border-slate-200/85"
                   >
                     <span className="min-w-0">
-                      <span className="block text-[0.68rem] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-500">
+                      <span className="mb-1.5 block text-[0.66rem] font-semibold uppercase leading-3 tracking-[0.13em] text-slate-500">
                         {t("travelers")}
                       </span>
-                      <span className="block truncate text-sm font-medium text-slate-950">
+                      <span className="block truncate text-sm font-semibold leading-6 text-slate-950">
                         {buildTravelerCabinSummary(
                           adultCount,
                           childCount,
@@ -5705,7 +5709,7 @@ export function FlightResultsClient() {
 
                 <Button
                   type="submit"
-                  className="h-full min-h-[50px] w-full rounded-xl bg-[#004BB8] px-5 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] ring-1 ring-[#004BB8]/12 hover:bg-[#021C2B] lg:min-w-[112px] lg:rounded-lg"
+                  className="h-full min-h-[58px] w-full rounded-[0.9rem] bg-[#004BB8] px-5 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] ring-1 ring-[#004BB8]/12 hover:bg-[#021C2B] lg:min-w-[116px] lg:rounded-[0.8rem]"
                 >
                   {t("search")}
                 </Button>
