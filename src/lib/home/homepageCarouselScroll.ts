@@ -12,6 +12,10 @@ export type CarouselScrollState = {
   maxScrollLeft: number;
   canScrollLeft: boolean;
   canScrollRight: boolean;
+  canScrollPrevious: boolean;
+  canScrollNext: boolean;
+  isAtStart: boolean;
+  isAtEnd: boolean;
 };
 
 export type CarouselArrowRenderState = {
@@ -37,11 +41,18 @@ export function getLogicalCarouselScrollState(
     maxScrollLeft,
   );
 
+  const canScrollPrevious = logicalScrollLeft > safeTolerance;
+  const canScrollNext = maxScrollLeft - logicalScrollLeft > safeTolerance;
+
   return {
     logicalScrollLeft,
     maxScrollLeft,
-    canScrollLeft: logicalScrollLeft > safeTolerance,
-    canScrollRight: maxScrollLeft - logicalScrollLeft > safeTolerance,
+    canScrollLeft: canScrollPrevious,
+    canScrollRight: canScrollNext,
+    canScrollPrevious,
+    canScrollNext,
+    isAtStart: !canScrollPrevious,
+    isAtEnd: !canScrollNext,
   };
 }
 

@@ -13,6 +13,10 @@ test("logical carousel state handles LTR start, middle, and end", () => {
     maxScrollLeft: 600,
     canScrollLeft: false,
     canScrollRight: true,
+    canScrollPrevious: false,
+    canScrollNext: true,
+    isAtStart: true,
+    isAtEnd: false,
   });
   assert.equal(getLogicalCarouselScrollState({ scrollLeft: 240, scrollWidth: 1000, clientWidth: 400, direction: "ltr" }).canScrollLeft, true);
   assert.deepEqual(getLogicalCarouselScrollState({ scrollLeft: 600, scrollWidth: 1000, clientWidth: 400, direction: "ltr" }), {
@@ -20,6 +24,10 @@ test("logical carousel state handles LTR start, middle, and end", () => {
     maxScrollLeft: 600,
     canScrollLeft: true,
     canScrollRight: false,
+    canScrollPrevious: true,
+    canScrollNext: false,
+    isAtStart: false,
+    isAtEnd: true,
   });
 });
 
@@ -49,6 +57,10 @@ test("logical carousel state handles no-overflow rail", () => {
     maxScrollLeft: 0,
     canScrollLeft: false,
     canScrollRight: false,
+    canScrollPrevious: false,
+    canScrollNext: false,
+    isAtStart: true,
+    isAtEnd: true,
   });
 });
 

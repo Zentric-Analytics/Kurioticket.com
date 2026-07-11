@@ -2787,25 +2787,56 @@ export function getHomeDiscoveryImageCardsByRegion(
 
 export function getHomepageRegionalRouteCards(
   regionCode?: string | null,
+  adventureCards: readonly Pick<HomeDiscoveryItem, "originCode" | "destinationCode">[] =
+    getHomeDiscoveryImageCardsByRegion(regionCode),
 ): HomeDiscoveryItem[] {
+  const normalizedRegionCode = normalizeHomeDiscoveryRegionCode(regionCode);
+  const sourceCode = getHomeDiscoveryResolvedSourceCode(normalizedRegionCode);
   const selected: HomeDiscoveryItem[] = [];
   const seenRoutes = new Set<string>();
+  const seenReverseRoutes = new Set<string>();
+  const adventureRouteKeys = new Set(
+    adventureCards
+      .map((card) => getHomeDiscoveryRouteKey(card.originCode, card.destinationCode))
+      .filter((key): key is string => Boolean(key)),
+  );
+  const pools = [
+    getHomeDiscoveryByRegion(normalizedRegionCode),
+    sourceCode !== normalizedRegionCode
+      ? homeDiscoveryByRegion[sourceCode] ?? []
+      : [],
+    fallbackDiscovery,
+  ];
 
-  for (const item of getHomeDiscoveryByRegion(regionCode)) {
-    const origin = item.originCode.trim().toUpperCase();
-    const destination = item.destinationCode.trim().toUpperCase();
-    if (!/^[A-Z]{3}$/.test(origin) || !/^[A-Z]{3}$/.test(destination)) continue;
-    if (origin === destination) continue;
+  for (const pool of pools) {
+    for (const item of pool) {
+      const routeKey = getHomeDiscoveryRouteKey(item.originCode, item.destinationCode);
+      if (!routeKey) continue;
+      if (adventureRouteKeys.has(routeKey) || seenRoutes.has(routeKey)) continue;
+      const reverseRouteKey = getHomeDiscoveryRouteKey(
+        item.destinationCode,
+        item.originCode,
+      );
+      if (reverseRouteKey && seenReverseRoutes.has(reverseRouteKey)) continue;
 
-    const routeKey = `${origin}-${destination}`;
-    if (seenRoutes.has(routeKey)) continue;
-
-    seenRoutes.add(routeKey);
-    selected.push(item);
-    if (selected.length === HOME_REGIONAL_ROUTE_CARD_COUNT) break;
+      seenRoutes.add(routeKey);
+      seenReverseRoutes.add(routeKey);
+      selected.push(item);
+      if (selected.length === HOME_REGIONAL_ROUTE_CARD_COUNT) return selected;
+    }
   }
 
   return selected;
+}
+
+function getHomeDiscoveryRouteKey(originCode: string, destinationCode: string) {
+  const origin = originCode.trim().toUpperCase();
+  const destination = destinationCode.trim().toUpperCase();
+
+  if (!/^[A-Z]{3}$/.test(origin) || !/^[A-Z]{3}$/.test(destination)) return null;
+  if (origin === destination) return null;
+
+  return `${origin}-${destination}`;
 }
 
 function getHomeDiscoveryResolvedSourceCode(normalizedRegionCode: string) {

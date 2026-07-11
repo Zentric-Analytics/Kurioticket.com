@@ -431,25 +431,13 @@ export default function Home() {
   const destinationsRailRef = useRef<HTMLDivElement>(null);
   const [canScrollDestinationsLeft, setCanScrollDestinationsLeft] = useState(false);
   const [canScrollDestinationsRight, setCanScrollDestinationsRight] = useState(false);
-  const [hasAdvancedWithNextArrow, setHasAdvancedWithNextArrow] = useState(false);
+  const [, setHasAdvancedWithNextArrowState] = useState(false);
+  const hasAdvancedWithNextArrowRef = useRef(false);
 
-  const updateDestinationArrowState = useCallback(() => {
-    const rail = destinationsRailRef.current;
-    if (!rail) return;
-    const state = getLogicalCarouselScrollState({
-      scrollLeft: rail.scrollLeft,
-      scrollWidth: rail.scrollWidth,
-      clientWidth: rail.clientWidth,
-      direction: window.getComputedStyle(rail).direction,
-    });
-    const arrows = getCarouselArrowRenderState(state, hasAdvancedWithNextArrow);
-    if (!state.canScrollLeft && hasAdvancedWithNextArrow) {
-      setHasAdvancedWithNextArrow(false);
-    }
-    setCanScrollDestinationsLeft(arrows.shouldRenderPreviousArrow);
-    setCanScrollDestinationsRight(arrows.canScrollToNext);
-    return state;
-  }, [hasAdvancedWithNextArrow]);
+  const setHasAdvancedWithNextArrow = useCallback((value: boolean) => {
+    hasAdvancedWithNextArrowRef.current = value;
+    setHasAdvancedWithNextArrowState(value);
+  }, []);
 
   const measureDestinationRailState = useCallback(() => {
     const rail = destinationsRailRef.current;
@@ -462,20 +450,46 @@ export default function Home() {
     });
   }, []);
 
+  const updateDestinationArrowState = useCallback(() => {
+    const state = measureDestinationRailState();
+    if (!state) return null;
+    if (state.isAtStart && hasAdvancedWithNextArrowRef.current) {
+      setHasAdvancedWithNextArrow(false);
+    }
+    const arrows = getCarouselArrowRenderState(
+      state,
+      hasAdvancedWithNextArrowRef.current,
+    );
+    setCanScrollDestinationsLeft(arrows.shouldRenderPreviousArrow);
+    setCanScrollDestinationsRight(arrows.canScrollToNext);
+    return state;
+  }, [measureDestinationRailState, setHasAdvancedWithNextArrow]);
+
   const scrollDestinationsRail = (direction: "left" | "right") => {
     const rail = destinationsRailRef.current;
 
     if (!rail) return;
 
     const beforeState = measureDestinationRailState();
-    const amount = Math.round(rail.clientWidth * 0.85);
+    if (!beforeState) return;
+    const targetLogical = getDestinationRailTargetLogicalScroll(
+      rail,
+      beforeState.logicalScrollLeft,
+      direction,
+    );
+    const directionStyle = window.getComputedStyle(rail).direction;
 
-    rail.scrollBy({
-      left: direction === "left" ? -amount : amount,
+    rail.scrollTo({
+      left: getPhysicalScrollLeftForLogicalTarget(
+        targetLogical,
+        beforeState.maxScrollLeft,
+        directionStyle,
+        rail.scrollLeft,
+      ),
       behavior: "smooth",
     });
 
-    if (direction !== "right" || !beforeState) return;
+    if (direction !== "right") return;
 
     let rafId = 0;
     let fallbackId = 0;
@@ -626,8 +640,8 @@ export default function Home() {
     [mobileDiscoveryCards],
   );
   const regionalRouteItems = useMemo(
-    () => getHomepageRegionalRouteCards(regionCode),
-    [regionCode],
+    () => getHomepageRegionalRouteCards(regionCode, curatedDiscoveryItems),
+    [curatedDiscoveryItems, regionCode],
   );
   const fareCardsByExactRoute = useMemo(() => {
     const cardsByRoute = new Map<string, HomeDiscoveryFareCard>();
@@ -761,7 +775,7 @@ export default function Home() {
       resizeObserver.disconnect();
       rail.removeEventListener("scroll", measure);
     };
-  }, [updateDestinationArrowState, popularDestinationMarket, visiblePopularDestinations]);
+  }, [measureDestinationRailState, popularDestinationMarket, visiblePopularDestinations, setHasAdvancedWithNextArrow, updateDestinationArrowState]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -859,23 +873,6 @@ export default function Home() {
     return () => controller.abort();
   }, [regionCode]);
 
-  useEffect(() => {
-    updateDestinationArrowState();
-    const rail = destinationsRailRef.current;
-    if (!rail) return;
-
-    const resizeObserver = new ResizeObserver(updateDestinationArrowState);
-    resizeObserver.observe(rail);
-    Array.from(rail.children).forEach((child) => resizeObserver.observe(child));
-    rail.addEventListener("scroll", updateDestinationArrowState, { passive: true });
-    window.addEventListener("resize", updateDestinationArrowState);
-
-    return () => {
-      resizeObserver.disconnect();
-      rail.removeEventListener("scroll", updateDestinationArrowState);
-      window.removeEventListener("resize", updateDestinationArrowState);
-    };
-  }, [updateDestinationArrowState, visiblePopularDestinations]);
 
   const handleSavedTripToggle = async (
     event: React.MouseEvent<HTMLButtonElement>,
@@ -1196,11 +1193,6 @@ export default function Home() {
                     image={item.image}
                     imageAlt={item.imageAlt}
                     destinationCode={item.destinationCode}
-                    price={fareCard?.fare}
-                    displayCurrency={selectedOption.currency}
-                    expectedOriginCode={item.originCode}
-                    expectedDestinationCode={item.destinationCode}
-                    isLoading={discoveryFareCardState.loading}
                   />
                 );
               })}
@@ -1344,6 +1336,50 @@ export default function Home() {
   );
 }
 
+function getDestinationRailTargetLogicalScroll(
+  rail: HTMLDivElement,
+  currentLogicalScrollLeft: number,
+  direction: "left" | "right",
+) {
+  const state = getLogicalCarouselScrollState({
+    scrollLeft: rail.scrollLeft,
+    scrollWidth: rail.scrollWidth,
+    clientWidth: rail.clientWidth,
+    direction: window.getComputedStyle(rail).direction,
+  });
+  const tolerance = 2;
+  const childStarts = Array.from(rail.children)
+    .map((child) => (child instanceof HTMLElement ? child.offsetLeft - rail.offsetLeft : null))
+    .filter((value): value is number => typeof value === "number")
+    .map((value) => Math.min(state.maxScrollLeft, Math.max(0, value)))
+    .sort((first, second) => first - second);
+
+  if (direction === "right") {
+    return (
+      childStarts.find((start) => start > currentLogicalScrollLeft + tolerance) ??
+      state.maxScrollLeft
+    );
+  }
+
+  return (
+    [...childStarts]
+      .reverse()
+      .find((start) => start < currentLogicalScrollLeft - tolerance) ?? 0
+  );
+}
+
+function getPhysicalScrollLeftForLogicalTarget(
+  logicalTarget: number,
+  maxScrollLeft: number,
+  direction: string,
+  currentScrollLeft: number,
+) {
+  const target = Math.min(maxScrollLeft, Math.max(0, logicalTarget));
+  if (direction !== "rtl") return target;
+
+  return currentScrollLeft < 0 ? -target : maxScrollLeft - target;
+}
+
 function RegionalRouteCard({
   href,
   originCity,
@@ -1351,11 +1387,6 @@ function RegionalRouteCard({
   image,
   imageAlt,
   destinationCode,
-  price,
-  displayCurrency,
-  expectedOriginCode,
-  expectedDestinationCode,
-  isLoading,
 }: {
   href: ComponentProps<typeof Link>["href"];
   originCity: string;
@@ -1363,103 +1394,50 @@ function RegionalRouteCard({
   image: string;
   imageAlt: string;
   destinationCode: string;
-  price?: HomepageFare;
-  displayCurrency: string;
-  expectedOriginCode: string;
-  expectedDestinationCode: string;
-  isLoading: boolean;
 }) {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const routeLabel = `${originCity} → ${destinationCity}`;
 
   return (
     <Link
       href={href}
-      aria-label={`${originCity} to ${destinationCity}`}
-      className="focus-ring group flex w-[min(78vw,230px)] shrink-0 snap-start flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_10px_24px_-22px_rgba(15,23,42,0.55)] transition hover:-translate-y-0.5 hover:border-slate-300 sm:w-auto sm:min-w-0"
+      aria-label={`${routeLabel}. ${t("homeRegionalRoutesStartSearch") || "Start search"}.`}
+      className="focus-ring group relative flex aspect-[4/3] w-[min(78vw,250px)] shrink-0 snap-start overflow-hidden rounded-2xl bg-slate-900 shadow-[0_18px_36px_-24px_rgba(15,23,42,0.72)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_44px_-24px_rgba(15,23,42,0.78)] sm:w-auto sm:min-w-0"
     >
-      <div className="relative h-20 w-full overflow-hidden bg-slate-100 sm:h-[82px]">
-        <DiscoveryCardImage
-          image={image}
-          imageAlt={imageAlt}
-          destinationCode={destinationCode}
-          destinationFallbackLabel={t("destinationImageFallback")}
-        />
-      </div>
-      <div className="flex min-h-[92px] flex-col justify-between p-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
-          <span className="min-w-0 flex-1 truncate">{originCity}</span>
-          <Plane className="h-3.5 w-3.5 shrink-0 text-[#004BB8]" aria-hidden="true" />
-          <span className="min-w-0 flex-1 truncate text-end">{destinationCity}</span>
-        </div>
-        <div className="mt-4 flex items-end justify-between gap-3">
-          <div className="min-w-0">
-            <RegionalRoutePrice price={price} displayCurrency={displayCurrency} expectedOriginCode={expectedOriginCode} expectedDestinationCode={expectedDestinationCode} isLoading={isLoading} />
-          </div>
-          <ChevronRight className="h-4 w-4 shrink-0 text-[#004BB8] transition group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" aria-hidden="true" />
-        </div>
+      <DiscoveryCardImage
+        image={image}
+        imageAlt={imageAlt}
+        destinationCode={destinationCode}
+        destinationFallbackLabel={t("destinationImageFallback")}
+        sizes="(min-width: 1280px) 14rem, (min-width: 640px) 20vw, 78vw"
+      />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/78 via-slate-950/34 to-transparent px-4 pb-4 pt-14">
+        <p className="text-base font-semibold leading-5 text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.55)]">
+          {routeLabel}
+        </p>
+        <span className="mt-2 inline-flex items-center rounded-full bg-white/14 px-2.5 py-1 text-xs font-semibold text-white/92 ring-1 ring-white/18 backdrop-blur-sm">
+          {t("homeRegionalRoutesStartSearch") || "Start search"} →
+        </span>
       </div>
     </Link>
   );
 }
 
-function RegionalRoutePrice({
-  price,
-  displayCurrency,
-  expectedOriginCode,
-  expectedDestinationCode,
-  isLoading,
-}: {
-  price?: HomepageFare;
-  displayCurrency: string;
-  expectedOriginCode: string;
-  expectedDestinationCode: string;
-  isLoading: boolean;
-}) {
-  const { t: dictionary } = useLocale();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const currencyRates = useCurrencyRates();
-  const hasProviderPrice = hasFreshProviderPrice(price, {
-    originCode: expectedOriginCode,
-    destinationCode: expectedDestinationCode,
-  });
 
-  if (isLoading) {
-    return <span className="mt-1 block h-6 w-16 animate-pulse rounded bg-slate-200" aria-label={t("homeCheckingProviderRoutePricing")} />;
-  }
-
-  if (!hasProviderPrice || typeof price?.price !== "number" || !price.currency) {
-    return <span className="mt-1 block h-7" aria-hidden="true" />;
-  }
-
-  const displayPrice = formatDisplayPrice({
-    amount: price.price,
-    sourceCurrency: price.currency,
-    displayCurrency,
-    convertUsdEstimate: true,
-    maximumFractionDigits: 0,
-    rates: currencyRates.rates,
-    isFallbackRate: currencyRates.isFallback,
-  });
-
-  return (
-    <>
-      <span className="block text-[11px] font-medium text-slate-500">{t("fromPrice") || "From"}</span>
-      <span className="mt-1 block text-lg font-bold tracking-tight text-slate-950" title={displayPrice.title}>{displayPrice.formatted}</span>
-    </>
-  );
-}
 
 function DiscoveryCardImage({
   image,
   imageAlt,
   destinationCode,
   destinationFallbackLabel,
+  sizes = "(min-width: 1280px) 7rem, (min-width: 640px) 6.5rem, 5rem",
 }: {
   image: string;
   imageAlt: string;
   destinationCode: string;
   destinationFallbackLabel: string;
+  sizes?: string;
 }) {
   const [hasError, setHasError] = useState(false);
   const hasImage = Boolean(image?.trim());
@@ -1483,7 +1461,7 @@ function DiscoveryCardImage({
       src={image}
       alt={imageAlt}
       fill
-      sizes="(min-width: 1280px) 7rem, (min-width: 640px) 6.5rem, 5rem"
+      sizes={sizes}
       className="object-cover transition duration-500 group-hover:scale-[1.03]"
       onError={() => setHasError(true)}
     />
@@ -1619,12 +1597,14 @@ function DiscoverySuggestionCard({
         </p>
         {isPriceLoading ? (
           <span className="mt-auto block h-8 w-16 animate-pulse rounded bg-slate-200" aria-label={t("homeCheckingProviderRoutePricing")} />
-        ) : displayPrice ? (
-          <div className="mt-auto pt-1" title={displayPrice.title}>
-            <p className="text-[11px] font-medium leading-4 text-slate-500">{t("fromPrice")}</p>
-            <p className="text-lg font-bold leading-5 tracking-tight text-slate-950">{displayPrice.formatted}</p>
+        ) : (
+          <div className="mt-auto flex items-baseline gap-1.5 pt-1" title={displayPrice?.title}>
+            <span className="text-xs font-medium leading-4 text-slate-500">{t("fromPrice")}</span>
+            {displayPrice ? (
+              <span className="text-base font-bold leading-5 tracking-tight text-slate-950">{displayPrice.formatted}</span>
+            ) : null}
           </div>
-        ) : null}
+        )}
       </div>
     </Link>
   );
