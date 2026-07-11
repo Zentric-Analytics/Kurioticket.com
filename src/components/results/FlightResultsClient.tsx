@@ -665,20 +665,12 @@ function FlightBookingFaqSection() {
 function lockMobileOverlayScroll() {
   const bodyElement = document.body;
   const rootElement = document.documentElement;
-  const scrollX = window.scrollX;
-  const scrollY = window.scrollY;
   const scrollbarWidth = Math.max(0, window.innerWidth - rootElement.clientWidth);
   let restored = false;
   const previousBodyStyles = {
-    left: bodyElement.style.left,
     overflow: bodyElement.style.overflow,
     overscrollBehavior: bodyElement.style.overscrollBehavior,
     paddingRight: bodyElement.style.paddingRight,
-    position: bodyElement.style.position,
-    right: bodyElement.style.right,
-    top: bodyElement.style.top,
-    touchAction: bodyElement.style.touchAction,
-    width: bodyElement.style.width,
   };
   const previousRootStyles = {
     overflow: rootElement.style.overflow,
@@ -690,37 +682,22 @@ function lockMobileOverlayScroll() {
     bodyElement.style.paddingRight = `calc(${computedPaddingRight} + ${scrollbarWidth}px)`;
   }
 
-  bodyElement.style.left = `${-scrollX}px`;
   bodyElement.style.overflow = "hidden";
   bodyElement.style.overscrollBehavior = "none";
-  bodyElement.style.position = "fixed";
-  bodyElement.style.right = "0";
-  bodyElement.style.top = `${-scrollY}px`;
-  bodyElement.style.touchAction = "none";
-  bodyElement.style.width = "100%";
   rootElement.style.overflow = "hidden";
   rootElement.style.overscrollBehavior = "none";
 
   return {
-    restore: ({ restoreScroll = true }: { restoreScroll?: boolean } = {}) => {
+    restore: () => {
       if (restored) return;
       restored = true;
-      bodyElement.style.left = previousBodyStyles.left;
       bodyElement.style.overflow = previousBodyStyles.overflow;
       bodyElement.style.overscrollBehavior =
         previousBodyStyles.overscrollBehavior;
       bodyElement.style.paddingRight = previousBodyStyles.paddingRight;
-      bodyElement.style.position = previousBodyStyles.position;
-      bodyElement.style.right = previousBodyStyles.right;
-      bodyElement.style.top = previousBodyStyles.top;
-      bodyElement.style.touchAction = previousBodyStyles.touchAction;
-      bodyElement.style.width = previousBodyStyles.width;
       rootElement.style.overflow = previousRootStyles.overflow;
       rootElement.style.overscrollBehavior =
         previousRootStyles.overscrollBehavior;
-      if (restoreScroll) {
-        window.scrollTo(scrollX, scrollY);
-      }
     },
   };
 }
@@ -6107,7 +6084,7 @@ export function FlightResultsClient() {
         aria-modal="true"
         aria-labelledby="flight-mobile-search-title"
         className={cn(
-          "fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden bg-slate-50 sm:hidden",
+          "fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden overscroll-contain bg-slate-50 sm:hidden",
           mobileSearchOpen ? "block" : "hidden",
         )}
       >
@@ -6516,7 +6493,7 @@ export function FlightResultsClient() {
         aria-modal="true"
         aria-labelledby="flight-mobile-filters-title"
         className={cn(
-          "fixed inset-0 z-[10000] flex h-[100dvh] flex-col overflow-hidden bg-white transition-transform duration-200 ease-out lg:hidden",
+          "fixed inset-0 z-[10000] flex h-[100dvh] flex-col overflow-hidden overscroll-contain bg-white transition-transform duration-200 ease-out lg:hidden",
           filtersOpen ? "translate-y-0" : "translate-y-full",
         )}
       >
