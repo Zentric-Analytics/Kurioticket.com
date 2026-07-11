@@ -845,9 +845,11 @@ export function FlightResultsClient() {
   const [mobileSortMenuOpen, setMobileSortMenuOpen] = useState(false);
   const [mobileAirportMenuOpen, setMobileAirportMenuOpen] = useState(false);
   const [mobileStopsMenuOpen, setMobileStopsMenuOpen] = useState(false);
+  const [mobileAirlineMenuOpen, setMobileAirlineMenuOpen] = useState(false);
   const mobileSortMenuRef = useRef<HTMLDivElement | null>(null);
   const mobileAirportMenuRef = useRef<HTMLDivElement | null>(null);
   const mobileStopsMenuRef = useRef<HTMLDivElement | null>(null);
+  const mobileAirlineMenuRef = useRef<HTMLDivElement | null>(null);
   const [filterApplying, setFilterApplying] = useState(false);
   const [maxPrice, setMaxPrice] = useState(0);
   const [timeFilterMode, setTimeFilterMode] = useState<"takeoff" | "landing">(
@@ -1383,7 +1385,12 @@ export function FlightResultsClient() {
   }, []);
 
   useEffect(() => {
-    if (!mobileSortMenuOpen && !mobileAirportMenuOpen && !mobileStopsMenuOpen)
+    if (
+      !mobileSortMenuOpen &&
+      !mobileAirportMenuOpen &&
+      !mobileStopsMenuOpen &&
+      !mobileAirlineMenuOpen
+    )
       return;
 
     const handlePointerDown = (event: PointerEvent) => {
@@ -1409,6 +1416,13 @@ export function FlightResultsClient() {
       ) {
         setMobileStopsMenuOpen(false);
       }
+
+      if (
+        mobileAirlineMenuRef.current &&
+        !mobileAirlineMenuRef.current.contains(event.target)
+      ) {
+        setMobileAirlineMenuOpen(false);
+      }
     };
 
     document.addEventListener("pointerdown", handlePointerDown);
@@ -1416,7 +1430,12 @@ export function FlightResultsClient() {
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [mobileAirportMenuOpen, mobileSortMenuOpen, mobileStopsMenuOpen]);
+  }, [
+    mobileAirlineMenuOpen,
+    mobileAirportMenuOpen,
+    mobileSortMenuOpen,
+    mobileStopsMenuOpen,
+  ]);
 
   useEffect(() => {
     const releaseExistingLock = () => {
@@ -5323,177 +5342,227 @@ export function FlightResultsClient() {
     const activeSortOption =
       mobileSortOptions.find((option) => option.value === sortMode) ??
       mobileSortOptions[0];
-    const activeAirportLabel = selectedAirports.length
-      ? selectedAirports.length === 1
-        ? selectedAirports[0]
-        : `${selectedAirports.length} Airports`
-      : "Airports";
-    const activeStopsLabel = selectedStops.length
-      ? selectedStops.length === 1
-        ? stopLabel(selectedStops[0], t)
-        : `${selectedStops.length} Stops`
-      : "Stops";
-    const controlClass =
-      "focus-ring inline-flex h-9 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border border-slate-300/80 bg-transparent px-2 text-[13px] font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-200/35 hover:text-slate-950 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35";
+    const shortcutButtonClass =
+      "focus-ring inline-flex h-10 flex-shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-300/80 bg-transparent px-3.5 text-[13px] font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-200/35 hover:text-slate-950 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35";
     const menuClass =
-      "absolute top-[calc(100%+0.4rem)] z-50 max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_38px_-18px_rgba(15,23,42,0.35)]";
+      "absolute top-[calc(100%+0.45rem)] z-50 max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_38px_-18px_rgba(15,23,42,0.35)]";
+    const menuItemClass =
+      "flex min-h-9 w-full items-center justify-between gap-2 rounded-lg px-3 text-left text-[13px] font-bold transition";
 
     return (
-      <div className="mx-auto grid w-full max-w-[30rem] min-w-0 grid-cols-4 items-center gap-2">
-        <div ref={mobileAirportMenuRef} className="relative min-w-0">
-          <button
-            type="button"
-            aria-haspopup="menu"
-            aria-expanded={mobileAirportMenuOpen}
-            onClick={() => {
-              setMobileAirportMenuOpen((open) => !open);
-              setMobileStopsMenuOpen(false);
-              setMobileSortMenuOpen(false);
-            }}
-            className={controlClass}
-          >
-            <span className="truncate">{activeAirportLabel}</span>
-            <ChevronDown
-              className={cn(
-                "h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform",
-                mobileAirportMenuOpen && "rotate-180",
-              )}
-              aria-hidden="true"
-            />
-          </button>
-          {mobileAirportMenuOpen ? (
-            <div role="menu" className={cn(menuClass, "left-0 w-44")}>
-              {airportOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="menuitemcheckbox"
-                  aria-checked={selectedAirports.includes(option.value)}
-                  onClick={() => {
-                    triggerFilterApplying();
-                    toggleFilterValue(option.value, setSelectedAirports);
-                  }}
-                  className={cn(
-                    "flex min-h-9 w-full items-center justify-between gap-2 rounded-lg px-3 text-left text-[13px] font-bold transition",
-                    selectedAirports.includes(option.value)
-                      ? "bg-[#004BB8]/8 text-[#004BB8]"
-                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
-                  )}
-                >
-                  <span>{option.label}</span>
-                  <span className="text-[11px] font-semibold text-slate-500">
-                    {option.count}
-                  </span>
-                </button>
-              ))}
-            </div>
-          ) : null}
-        </div>
+      <div className="w-full overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex w-max flex-nowrap items-center gap-2.5">
+          {renderFloatingFilterButton(shortcutButtonClass)}
 
-        <div ref={mobileStopsMenuRef} className="relative min-w-0">
-          <button
-            type="button"
-            aria-haspopup="menu"
-            aria-expanded={mobileStopsMenuOpen}
-            onClick={() => {
-              setMobileStopsMenuOpen((open) => !open);
-              setMobileAirportMenuOpen(false);
-              setMobileSortMenuOpen(false);
-            }}
-            className={controlClass}
-          >
-            <span className="truncate">{activeStopsLabel}</span>
-            <ChevronDown
-              className={cn(
-                "h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform",
-                mobileStopsMenuOpen && "rotate-180",
-              )}
-              aria-hidden="true"
-            />
-          </button>
-          {mobileStopsMenuOpen ? (
-            <div role="menu" className={cn(menuClass, "left-0 w-40")}>
-              {stopOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="menuitemcheckbox"
-                  aria-checked={selectedStops.includes(option.value)}
-                  onClick={() => {
-                    triggerFilterApplying();
-                    toggleFilterValue(option.value, setSelectedStops);
-                  }}
-                  className={cn(
-                    "flex min-h-9 w-full items-center justify-between gap-2 rounded-lg px-3 text-left text-[13px] font-bold transition",
-                    selectedStops.includes(option.value)
-                      ? "bg-[#004BB8]/8 text-[#004BB8]"
-                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
-                  )}
-                >
-                  <span>{option.label}</span>
-                  <span className="text-[11px] font-semibold text-slate-500">
-                    {option.count}
-                  </span>
-                </button>
-              ))}
-            </div>
-          ) : null}
-        </div>
+          <div ref={mobileSortMenuRef} className="relative flex-shrink-0">
+            <button
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={mobileSortMenuOpen}
+              onClick={() => {
+                setMobileSortMenuOpen((open) => !open);
+                setMobileAirlineMenuOpen(false);
+                setMobileAirportMenuOpen(false);
+                setMobileStopsMenuOpen(false);
+              }}
+              className={shortcutButtonClass}
+            >
+              <span className="whitespace-nowrap">
+                {activeSortOption.label}
+              </span>
+              <ChevronDown
+                className={cn(
+                  "h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform",
+                  mobileSortMenuOpen && "rotate-180",
+                )}
+                aria-hidden="true"
+              />
+            </button>
+            {mobileSortMenuOpen ? (
+              <div role="menu" className={cn(menuClass, "left-0 w-36")}>
+                {mobileSortOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={sortMode === option.value}
+                    onClick={() => {
+                      triggerFilterApplying();
+                      setSortMode(option.value);
+                      setMobileSortMenuOpen(false);
+                    }}
+                    className={cn(
+                      "flex min-h-9 w-full items-center rounded-lg px-3 text-left text-[13px] font-bold transition",
+                      sortMode === option.value
+                        ? "bg-[#004BB8]/8 text-[#004BB8]"
+                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
 
-        <div ref={mobileSortMenuRef} className="relative min-w-0">
-          <button
-            type="button"
-            aria-haspopup="menu"
-            aria-expanded={mobileSortMenuOpen}
-            onClick={() => {
-              setMobileSortMenuOpen((open) => !open);
-              setMobileAirportMenuOpen(false);
-              setMobileStopsMenuOpen(false);
-            }}
-            className={controlClass}
-          >
-            <span className="truncate">{activeSortOption.label}</span>
-            <ChevronDown
-              className={cn(
-                "h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform",
-                mobileSortMenuOpen && "rotate-180",
-              )}
-              aria-hidden="true"
-            />
-          </button>
-          {mobileSortMenuOpen ? (
-            <div role="menu" className={cn(menuClass, "right-0 w-36")}>
-              {mobileSortOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="menuitemradio"
-                  aria-checked={sortMode === option.value}
-                  onClick={() => {
-                    triggerFilterApplying();
-                    setSortMode(option.value);
-                    setMobileSortMenuOpen(false);
-                  }}
-                  className={cn(
-                    "flex min-h-9 w-full items-center rounded-lg px-3 text-left text-[13px] font-bold transition",
-                    sortMode === option.value
-                      ? "bg-[#004BB8]/8 text-[#004BB8]"
-                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
-                  )}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          ) : null}
-        </div>
+          <div ref={mobileAirlineMenuRef} className="relative flex-shrink-0">
+            <button
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={mobileAirlineMenuOpen}
+              onClick={() => {
+                setMobileAirlineMenuOpen((open) => !open);
+                setMobileAirportMenuOpen(false);
+                setMobileStopsMenuOpen(false);
+                setMobileSortMenuOpen(false);
+              }}
+              className={shortcutButtonClass}
+            >
+              <span className="whitespace-nowrap">Airlines</span>
+              <ChevronDown
+                className={cn(
+                  "h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform",
+                  mobileAirlineMenuOpen && "rotate-180",
+                )}
+                aria-hidden="true"
+              />
+            </button>
+            {mobileAirlineMenuOpen ? (
+              <div role="menu" className={cn(menuClass, "left-0 w-56")}>
+                {airlineOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="menuitemcheckbox"
+                    aria-checked={selectedAirlines.includes(option.value)}
+                    onClick={() => {
+                      triggerFilterApplying();
+                      toggleFilterValue(option.value, setSelectedAirlines);
+                    }}
+                    className={cn(
+                      menuItemClass,
+                      selectedAirlines.includes(option.value)
+                        ? "bg-[#004BB8]/8 text-[#004BB8]"
+                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
+                    )}
+                  >
+                    <span className="truncate">{option.label}</span>
+                    <span className="shrink-0 text-[11px] font-semibold text-slate-500">
+                      {option.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
 
-        {renderFloatingFilterButton()}
+          <div ref={mobileStopsMenuRef} className="relative flex-shrink-0">
+            <button
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={mobileStopsMenuOpen}
+              onClick={() => {
+                setMobileStopsMenuOpen((open) => !open);
+                setMobileAirlineMenuOpen(false);
+                setMobileAirportMenuOpen(false);
+                setMobileSortMenuOpen(false);
+              }}
+              className={shortcutButtonClass}
+            >
+              <span className="whitespace-nowrap">Stops</span>
+              <ChevronDown
+                className={cn(
+                  "h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform",
+                  mobileStopsMenuOpen && "rotate-180",
+                )}
+                aria-hidden="true"
+              />
+            </button>
+            {mobileStopsMenuOpen ? (
+              <div role="menu" className={cn(menuClass, "left-0 w-40")}>
+                {stopOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="menuitemcheckbox"
+                    aria-checked={selectedStops.includes(option.value)}
+                    onClick={() => {
+                      triggerFilterApplying();
+                      toggleFilterValue(option.value, setSelectedStops);
+                    }}
+                    className={cn(
+                      menuItemClass,
+                      selectedStops.includes(option.value)
+                        ? "bg-[#004BB8]/8 text-[#004BB8]"
+                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
+                    )}
+                  >
+                    <span>{option.label}</span>
+                    <span className="text-[11px] font-semibold text-slate-500">
+                      {option.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+
+          <div ref={mobileAirportMenuRef} className="relative flex-shrink-0">
+            <button
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={mobileAirportMenuOpen}
+              onClick={() => {
+                setMobileAirportMenuOpen((open) => !open);
+                setMobileAirlineMenuOpen(false);
+                setMobileStopsMenuOpen(false);
+                setMobileSortMenuOpen(false);
+              }}
+              className={shortcutButtonClass}
+            >
+              <span className="whitespace-nowrap">Airports</span>
+              <ChevronDown
+                className={cn(
+                  "h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform",
+                  mobileAirportMenuOpen && "rotate-180",
+                )}
+                aria-hidden="true"
+              />
+            </button>
+            {mobileAirportMenuOpen ? (
+              <div role="menu" className={cn(menuClass, "right-0 w-44")}>
+                {airportOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="menuitemcheckbox"
+                    aria-checked={selectedAirports.includes(option.value)}
+                    onClick={() => {
+                      triggerFilterApplying();
+                      toggleFilterValue(option.value, setSelectedAirports);
+                    }}
+                    className={cn(
+                      menuItemClass,
+                      selectedAirports.includes(option.value)
+                        ? "bg-[#004BB8]/8 text-[#004BB8]"
+                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
+                    )}
+                  >
+                    <span>{option.label}</span>
+                    <span className="text-[11px] font-semibold text-slate-500">
+                      {option.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </div>
       </div>
     );
   }
 
-  function renderFloatingFilterButton() {
+  function renderFloatingFilterButton(className?: string) {
     const label =
       activeFilterCount > 0
         ? t("openFiltersWithCount").replace("{{count}}", activeFilterLabel)
@@ -5507,7 +5576,10 @@ export function FlightResultsClient() {
       <button
         type="button"
         aria-label={label}
-        className="focus-ring relative inline-flex h-9 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border border-slate-300/80 bg-transparent px-2 text-[13px] font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-200/35 hover:text-slate-950 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+        className={cn(
+          "focus-ring relative inline-flex h-9 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border border-slate-300/80 bg-transparent px-2 text-[13px] font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-200/35 hover:text-slate-950 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35",
+          className,
+        )}
         onClick={handleClick}
       >
         <SlidersHorizontal
@@ -5971,7 +6043,7 @@ export function FlightResultsClient() {
                 </div>
               ) : sortedResults.length ? (
                 <>
-                  <p className="-mb-1 text-[16px] font-semibold leading-6 tracking-[-0.01em] text-slate-900 sm:hidden">
+                  <p className="mb-3 text-[16px] font-semibold leading-6 tracking-[-0.01em] text-slate-900 sm:hidden">
                     {formatResultsFound(sortedResults.length, t)}
                   </p>
                   {sortedResults.map((flight, index) => (
