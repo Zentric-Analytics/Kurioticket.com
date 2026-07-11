@@ -97,7 +97,7 @@ export function FlightCard({
               ))}
             </div>
 
-            <div className="mt-1 flex items-start justify-between gap-3 border-t border-slate-100 pt-3.5 lg:mt-0 lg:block lg:border-t-0 lg:pt-0">
+            <div className="mt-2 flex items-start justify-between gap-4 border-t border-slate-100 pt-4 lg:mt-0 lg:block lg:border-t-0 lg:pt-0">
               <FlightDetailLines details={details} />
               <FlightFareAction
                 flightId={flight.id}
@@ -128,7 +128,7 @@ export function FlightCard({
           />
         </div>
 
-        <div className="mt-3 rounded-xl border border-[#D8E1EC]/80 bg-[#F8FAFC] px-3 py-2 text-xs font-medium leading-5 text-slate-600">
+        <div className="mt-3 rounded-lg border border-[#D8E1EC]/70 bg-[#F8FAFC]/80 px-3 py-2.5 text-xs font-medium leading-5 text-slate-600">
           {providerHandoffCopy}
         </div>
       </div>
@@ -314,7 +314,7 @@ function FlightFareAction({
         href={`/flights/details/${encodeURIComponent(flightId)}`}
         variant="primary"
         size="sm"
-        className="w-auto shrink-0 justify-center whitespace-nowrap rounded-full bg-[#004BB8] px-3 py-1.5 text-xs font-semibold hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35 sm:px-3.5 sm:text-sm lg:w-full lg:px-3.5 lg:py-2 lg:text-sm"
+        className="w-auto shrink-0 justify-center whitespace-nowrap rounded-full bg-[#004BB8] px-4 py-2 text-xs font-semibold hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35 sm:px-4 sm:py-2 sm:text-sm lg:w-full lg:px-3.5 lg:py-2 lg:text-sm"
       >
         {viewFlightLabel}
       </LinkButton>
