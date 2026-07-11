@@ -35,6 +35,35 @@ function withEnv<T>(env: Record<string, string | undefined>, run: () => T): T {
   }
 }
 
+
+function normalizeDemoHotelReviewFields(fields: {
+  reviewScore?: unknown;
+  reviewCount?: unknown;
+}) {
+  const result = normalizeHotelResult(
+    "Demo Hotel Catalogue",
+    {
+      id: "demo-review-normalization",
+      name: "Demo Review Normalization Hotel",
+      imageUrl: "https://example.com/demo.jpg",
+      rating: 4,
+      location: "Sample City",
+      pricePerNight: 100,
+      totalPrice: 300,
+      currency: "USD",
+      amenities: [],
+      roomType: "Standard room",
+      cancellationInfo: "Flexible cancellation",
+      dataSource: "demo",
+      ...fields,
+    },
+    search,
+  );
+
+  assert.ok(result);
+  return result;
+}
+
 async function withEnvAsync<T>(env: Record<string, string | undefined>, run: () => Promise<T>): Promise<T> {
   const previous = new Map<string, string | undefined>();
   for (const key of Object.keys(env)) {
@@ -119,6 +148,45 @@ test("demo results map catalogue fields into normalized results and vary only to
   const longerStay = buildDemoHotelResults({ ...search, checkOut: "2026-08-06" });
   assert.equal(longerStay[0].pricePerNight, results[0].pricePerNight);
   assert.equal(longerStay[0].totalPrice, results[0].pricePerNight * 5);
+});
+
+test("demo review score normalization rejects coerced values", () => {
+  const cases: Array<{ value: unknown; expected: number | undefined }> = [
+    { value: 0, expected: 0 },
+    { value: 8.5, expected: 8.5 },
+    { value: 10, expected: 10 },
+    { value: undefined, expected: undefined },
+    { value: null, expected: undefined },
+    { value: "", expected: undefined },
+    { value: "8.5", expected: undefined },
+    { value: Number.NaN, expected: undefined },
+    { value: Infinity, expected: undefined },
+    { value: -1, expected: undefined },
+    { value: 10.1, expected: undefined },
+  ];
+
+  for (const { value, expected } of cases) {
+    assert.equal(normalizeDemoHotelReviewFields({ reviewScore: value }).reviewScore, expected);
+  }
+});
+
+test("demo review count normalization rejects coerced values", () => {
+  const cases: Array<{ value: unknown; expected: number | undefined }> = [
+    { value: 0, expected: 0 },
+    { value: 125, expected: 125 },
+    { value: 125.9, expected: 125 },
+    { value: undefined, expected: undefined },
+    { value: null, expected: undefined },
+    { value: "", expected: undefined },
+    { value: "125", expected: undefined },
+    { value: Number.NaN, expected: undefined },
+    { value: Infinity, expected: undefined },
+    { value: -1, expected: undefined },
+  ];
+
+  for (const { value, expected } of cases) {
+    assert.equal(normalizeDemoHotelReviewFields({ reviewCount: value }).reviewCount, expected);
+  }
 });
 
 test("live provider normalization is isolated from demo metadata", () => {
