@@ -96,7 +96,11 @@ export type NormalizedHotelResult = {
   provider: string;
   name: string;
   imageUrl?: string;
+  imageUrls?: string[];
   rating: number;
+  reviewScore?: number;
+  reviewCount?: number;
+  neighbourhood?: string;
   location: string;
   distanceFromCenter?: string;
   pricePerNight: number;
@@ -105,6 +109,9 @@ export type NormalizedHotelResult = {
   amenities: string[];
   roomType: string;
   cancellationInfo: string;
+  taxesAndFeesIncluded?: boolean;
+  similarHotelIds?: string[];
+  dataSource?: "demo" | "live";
   bookingUrl: string;
   partnerRedirectUrl: string;
   valueScore: number;
