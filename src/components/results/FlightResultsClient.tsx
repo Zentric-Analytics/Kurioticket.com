@@ -3571,6 +3571,24 @@ export function FlightResultsClient() {
     };
   }, [filtered]);
 
+  const resultBadgeByFlightId = useMemo(() => {
+    const badges = new Map<string, "best" | "fastest" | "cheapest">();
+
+    if (sortSummaries.cheapest) {
+      badges.set(sortSummaries.cheapest.id, "cheapest");
+    }
+
+    if (sortSummaries.fastest) {
+      badges.set(sortSummaries.fastest.id, "fastest");
+    }
+
+    if (sortSummaries.best) {
+      badges.set(sortSummaries.best.id, "best");
+    }
+
+    return badges;
+  }, [sortSummaries]);
+
   if (!body) {
     return (
       <main className="flex-1 bg-[#F3F6FA] pb-8 pt-4 sm:pt-8 lg:pt-8">
@@ -6514,6 +6532,7 @@ export function FlightResultsClient() {
                       key={flight.id}
                       flight={flight}
                       isAccented={index % 2 === 0}
+                      resultBadge={resultBadgeByFlightId.get(flight.id)}
                     />
                   ))}
                 </>
