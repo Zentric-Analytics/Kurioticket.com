@@ -1184,6 +1184,7 @@ export const translations: TranslationDictionary = {
   faqHeading: "자주 묻는 질문",
   faqIntro:
     "신뢰할 수 있는 제공업체에서 예약하기 전에 Kurioticket이 항공권, 호텔, 여행 옵션 비교를 어떻게 돕는지 알아보세요.",
+  homepageFaqViewAll: "모든 자주 묻는 질문 보기",
   faqViewAll: "전체 FAQ 보기",
   faqHelpCenter: "도움말 센터",
   faqGeneralQuestions: "일반 질문",

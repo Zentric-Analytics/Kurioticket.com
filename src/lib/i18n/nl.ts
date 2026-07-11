@@ -686,6 +686,7 @@ export const translations: TranslationDictionary = {
   faqNeedMoreHelpPrefix: "Meer hulp nodig? Bezoek de",
   faqSupportPage: "supportpagina",
   faqNeedMoreHelpSuffix: "voor service- en contactopties.",
+  homepageFaqViewAll: "Alle veelgestelde vragen bekijken",
   faqViewAll: "Alle FAQ’s bekijken",
   faqQuestionFindOptions: "Hoe vindt Kurioticket vlucht- en hotelopties?",
   faqAnswerFindOptions:

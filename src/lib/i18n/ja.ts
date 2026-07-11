@@ -1023,6 +1023,7 @@ export const translations: TranslationDictionary = {
   faqHeading: "よくある質問",
   faqIntro:
     "Kurioticket が、信頼できるプロバイダーで予約する前に航空券、ホテル、旅行オプションの比較をどのようにサポートするかをご確認ください。",
+  homepageFaqViewAll: "よくある質問をすべて見る",
   faqViewAll: "すべてのFAQを見る",
   faqHelpCenter: "ヘルプセンター",
   faqQuestionFindOptions:

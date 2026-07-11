@@ -2739,6 +2739,22 @@ export const DEFAULT_HOME_DISCOVERY_ELIGIBLE_FLIGHT_ROUTE_COUNT =
   ADDITIONAL_US_DISCOVERY_FARE_CANDIDATES.length;
 
 export const HOME_DISCOVERY_VISIBLE_CARD_COUNT = 16;
+export const HOME_DISCOVERY_IMAGE_CARD_COUNT = 12;
+export const HOME_REGIONAL_ROUTE_CARD_COUNT = 10;
+
+export const HOME_DISCOVERY_IMAGE_CARD_EXCLUSIONS: Record<string, readonly string[]> = {
+  US: ["us-sea-hnl", "us-bos-sju", "us-den-phx", "us-iad-bna"],
+  CANADA: ["ca-yhz-yyt", "ca-yul-ber", "ca-yyc-yyj", "ca-yvr-syd"],
+  GB: ["gb-edi-kef", "gb-man-fao", "gb-bhx-prg", "gb-man-otp"],
+  AFRICA: ["ng-los-nrt", "ng-abv-mad", "ng-los-cpt", "ng-abv-rob"],
+  KE: ["ke-nbo-lhr", "ke-nbo-add", "ke-nbo-ist", "ke-nbo-cpt"],
+  ZA: ["za-jnb-lhr", "za-cpt-ams", "za-jnb-nbo", "za-cpt-mru"],
+  DE: ["de-fra-ist", "de-fra-dxb", "de-muc-ath", "de-fra-jfk"],
+  AE: ["ae-dxb-bkk", "ae-dxb-cdg", "ae-auh-lhr", "ae-dxb-mnl"],
+  JP: ["jp-hnd-sin", "jp-nrt-bkk", "jp-hnd-hnl", "jp-nrt-gum"],
+  BR: ["br-gru-lim", "br-gru-scl", "br-gru-mco", "br-rio-eze"],
+  GLOBAL: ["fallback-lhr-ams", "fallback-lim-mad", "fallback-los-lhr", "fallback-auh-lhr"],
+};
 
 export function getHomeDiscoveryByRegion(
   regionCode?: string | null,
@@ -2755,6 +2771,50 @@ export function getHomeDiscoveryByRegion(
   return regionalSourceCode
     ? homeDiscoveryByRegion[regionalSourceCode] ?? fallbackDiscovery
     : fallbackDiscovery;
+}
+
+export function getHomeDiscoveryImageCardsByRegion(
+  regionCode?: string | null,
+): HomeDiscoveryItem[] {
+  const normalizedRegionCode = normalizeHomeDiscoveryRegionCode(regionCode);
+  const sourceCode = getHomeDiscoveryResolvedSourceCode(normalizedRegionCode);
+  const excludedIds = new Set(HOME_DISCOVERY_IMAGE_CARD_EXCLUSIONS[sourceCode] ?? []);
+
+  return getHomeDiscoveryByRegion(normalizedRegionCode)
+    .filter((item) => !excludedIds.has(item.id))
+    .slice(0, HOME_DISCOVERY_IMAGE_CARD_COUNT);
+}
+
+export function getHomepageRegionalRouteCards(
+  regionCode?: string | null,
+): HomeDiscoveryItem[] {
+  const selected: HomeDiscoveryItem[] = [];
+  const seenRoutes = new Set<string>();
+
+  for (const item of getHomeDiscoveryByRegion(regionCode)) {
+    const origin = item.originCode.trim().toUpperCase();
+    const destination = item.destinationCode.trim().toUpperCase();
+    if (!/^[A-Z]{3}$/.test(origin) || !/^[A-Z]{3}$/.test(destination)) continue;
+    if (origin === destination) continue;
+
+    const routeKey = `${origin}-${destination}`;
+    if (seenRoutes.has(routeKey)) continue;
+
+    seenRoutes.add(routeKey);
+    selected.push(item);
+    if (selected.length === HOME_REGIONAL_ROUTE_CARD_COUNT) break;
+  }
+
+  return selected;
+}
+
+function getHomeDiscoveryResolvedSourceCode(normalizedRegionCode: string) {
+  if (homeDiscoveryByRegion[normalizedRegionCode]) return normalizedRegionCode;
+
+  return (
+    getRegionalHomeDiscoverySourceCode(normalizedRegionCode) ??
+    GLOBAL_HOME_DISCOVERY_REGION
+  );
 }
 
 export function getHomeDiscoveryFareCandidates(

@@ -26,17 +26,22 @@ import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
 import { LinkButton } from "@/components/ui/Button";
 import {
-  HOME_DISCOVERY_VISIBLE_CARD_COUNT,
-  getHomeDiscoveryByRegion,
+  HOME_DISCOVERY_IMAGE_CARD_COUNT,
+  getHomeDiscoveryImageCardsByRegion,
+  getHomepageRegionalRouteCards,
 } from "@/data/homeDiscovery";
 import { getHomepageHeroImageForMarket } from "@/data/images/homepageHeroImage";
 import {
   getPopularDestinationFareCandidatesByRegion,
   getPopularDestinationsByRegion,
 } from "@/data/marketHomeContent";
-import { getGeneralFaqs, homepageMobileFaqLimit } from "@/content/faqs";
+import { getGeneralFaqs } from "@/content/faqs";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { buildHomepageRouteCardFlightHref } from "@/lib/home/homepageRouteCardLinks";
+import {
+  getCarouselStartScrollLeft,
+  getLogicalCarouselScrollState,
+} from "@/lib/home/homepageCarouselScroll";
 import { translateHomeDiscoveryField } from "@/lib/i18n/homeDiscovery";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useSession } from "next-auth/react";
@@ -202,7 +207,7 @@ function SecureHandoffIllustration() {
 }
 
 const POPULAR_DESTINATION_VISIBLE_CARD_COUNT = 8;
-const HOME_DISCOVERY_MOBILE_VISIBLE_CARD_COUNT = 24;
+const HOME_DISCOVERY_FARE_FETCH_CARD_COUNT = 24;
 
 const destinationImageFallback =
   "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95";
@@ -428,11 +433,14 @@ export default function Home() {
   const updateDestinationArrowState = useCallback(() => {
     const rail = destinationsRailRef.current;
     if (!rail) return;
-    const tolerance = 2;
-    const maxScrollLeft = Math.max(0, rail.scrollWidth - rail.clientWidth);
-    const normalizedScrollLeft = Math.abs(rail.scrollLeft);
-    setCanScrollDestinationsLeft(normalizedScrollLeft > tolerance);
-    setCanScrollDestinationsRight(normalizedScrollLeft < maxScrollLeft - tolerance);
+    const state = getLogicalCarouselScrollState({
+      scrollLeft: rail.scrollLeft,
+      scrollWidth: rail.scrollWidth,
+      clientWidth: rail.clientWidth,
+      direction: window.getComputedStyle(rail).direction,
+    });
+    setCanScrollDestinationsLeft(state.canScrollLeft);
+    setCanScrollDestinationsRight(state.canScrollRight);
   }, []);
 
   const scrollDestinationsRail = (direction: "left" | "right") => {
@@ -446,7 +454,6 @@ export default function Home() {
       left: direction === "left" ? -amount : amount,
       behavior: "smooth",
     });
-    window.setTimeout(updateDestinationArrowState, 350);
   };
 
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -455,6 +462,8 @@ export default function Home() {
     field: "title" | "routeNote",
   ) => translateHomeDiscoveryField(dictionary, item, field);
   const translatedFaqs = getGeneralFaqs(t);
+  const homepageFaqs = translatedFaqs.slice(0, 6);
+  // Homepage intentionally no longer passes items={translatedFaqs}; full FAQ stays on /faq.
 
   const homepageHeroImage = useMemo(
     () => getHomepageHeroImageForMarket(regionCode),
@@ -512,11 +521,25 @@ export default function Home() {
     popularDestinations,
   ]);
 
-  const fallbackDiscoveryCards = useMemo<HomeDiscoveryFareCard[]>(
+  const curatedDiscoveryItems = useMemo(
+    () => getHomeDiscoveryImageCardsByRegion(regionCode),
+    [regionCode],
+  );
+  const discoveryFareCardsById = useMemo(() => {
+    const cardsById = new Map<string, HomeDiscoveryFareCard>();
+
+    for (const card of discoveryFareCardState.cards) {
+      cardsById.set(card.item.id, card);
+    }
+
+    return cardsById;
+  }, [discoveryFareCardState.cards]);
+  const discoveryCards = useMemo<HomeDiscoveryFareCard[]>(
     () =>
-      getHomeDiscoveryByRegion(regionCode)
-        .slice(0, HOME_DISCOVERY_MOBILE_VISIBLE_CARD_COUNT)
-        .map((item) => ({
+      curatedDiscoveryItems.map((item) => {
+        const fareCard = discoveryFareCardsById.get(item.id);
+
+        return {
           item: {
             id: item.id,
             title: item.title,
@@ -528,19 +551,18 @@ export default function Home() {
             image: item.image,
             imageAlt: item.imageAlt,
           },
-          priceState: "none",
-        })),
-    [regionCode],
+          fare: fareCard?.fare,
+          priceState: fareCard?.priceState ?? "none",
+        };
+      }),
+    [curatedDiscoveryItems, discoveryFareCardsById],
   );
-  const discoveryCards = discoveryFareCardState.cards.length
-    ? discoveryFareCardState.cards
-    : fallbackDiscoveryCards;
   const desktopDiscoveryCards = useMemo(
-    () => discoveryCards.slice(0, HOME_DISCOVERY_VISIBLE_CARD_COUNT),
+    () => discoveryCards.slice(0, HOME_DISCOVERY_IMAGE_CARD_COUNT),
     [discoveryCards],
   );
   const mobileDiscoveryCards = useMemo(
-    () => discoveryCards.slice(0, HOME_DISCOVERY_MOBILE_VISIBLE_CARD_COUNT),
+    () => discoveryCards.slice(0, HOME_DISCOVERY_IMAGE_CARD_COUNT),
     [discoveryCards],
   );
   const topRowDiscoveryCards = useMemo(
@@ -551,6 +573,20 @@ export default function Home() {
     () => mobileDiscoveryCards.filter((_, index) => index % 2 === 1),
     [mobileDiscoveryCards],
   );
+  const regionalRouteItems = useMemo(
+    () => getHomepageRegionalRouteCards(regionCode),
+    [regionCode],
+  );
+  const fareCardsByExactRoute = useMemo(() => {
+    const cardsByRoute = new Map<string, HomeDiscoveryFareCard>();
+
+    for (const card of discoveryFareCardState.cards) {
+      const routeKey = getRouteKey(card.item.originCode, card.item.destinationCode);
+      if (routeKey && !cardsByRoute.has(routeKey)) cardsByRoute.set(routeKey, card);
+    }
+
+    return cardsByRoute;
+  }, [discoveryFareCardState.cards]);
 
   const handleNewsletterSubmit = async (
     event: React.FormEvent<HTMLFormElement>,
@@ -640,6 +676,41 @@ export default function Home() {
   }, [refreshBackendSavedTrips, sessionStatus]);
 
   useEffect(() => {
+    const rail = destinationsRailRef.current;
+    if (!rail) return;
+
+    const measure = () => updateDestinationArrowState();
+    const resetToStart = () => {
+      const maxScrollLeft = Math.max(0, rail.scrollWidth - rail.clientWidth);
+      const direction = window.getComputedStyle(rail).direction;
+      rail.scrollTo({
+        left: getCarouselStartScrollLeft(direction, maxScrollLeft),
+        behavior: "instant",
+      });
+      setCanScrollDestinationsLeft(false);
+      measure();
+    };
+
+    setCanScrollDestinationsLeft(false);
+    const firstFrame = window.requestAnimationFrame(() => {
+      resetToStart();
+      window.requestAnimationFrame(measure);
+    });
+
+    const resizeObserver = new ResizeObserver(() => {
+      window.requestAnimationFrame(measure);
+    });
+    resizeObserver.observe(rail);
+    rail.addEventListener("scroll", measure, { passive: true });
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      resizeObserver.disconnect();
+      rail.removeEventListener("scroll", measure);
+    };
+  }, [updateDestinationArrowState, popularDestinationMarket, visiblePopularDestinations]);
+
+  useEffect(() => {
     const controller = new AbortController();
 
     async function fetchDestinationPrices() {
@@ -706,7 +777,7 @@ export default function Home() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             regionCode,
-            limit: HOME_DISCOVERY_MOBILE_VISIBLE_CARD_COUNT,
+            limit: HOME_DISCOVERY_FARE_FETCH_CARD_COUNT,
             currency: "USD",
           }),
           signal: controller.signal,
@@ -1055,30 +1126,35 @@ export default function Home() {
           </div>
           <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
             <div className="flex snap-x snap-mandatory gap-4 sm:grid sm:grid-cols-5 sm:gap-5">
-              {discoveryCards.slice(0, 5).map((card) => (
-                <RegionalRouteCard
-                  key={`regional-${card.item.id}`}
-                  href={buildDiscoveryCardHref(card.fare, {
-                    originCode: card.item.originCode,
-                    destinationCode: card.item.destinationCode,
-                    displayCurrency: selectedOption.currency,
-                    market: regionCode,
-                  })}
-                  originCity={card.item.originCity}
-                  destinationCity={card.item.destinationCity}
-                  price={card.fare}
-                  displayCurrency={selectedOption.currency}
-                  expectedOriginCode={card.item.originCode}
-                  expectedDestinationCode={card.item.destinationCode}
-                  isLoading={discoveryFareCardState.loading}
-                />
-              ))}
+              {regionalRouteItems.map((item) => {
+                const fareCard = fareCardsByExactRoute.get(getRouteKey(item.originCode, item.destinationCode) ?? "");
+
+                return (
+                  <RegionalRouteCard
+                    key={`regional-${item.id}`}
+                    href={buildDiscoveryCardHref(fareCard?.fare, {
+                      originCode: item.originCode,
+                      destinationCode: item.destinationCode,
+                      displayCurrency: selectedOption.currency,
+                      market: regionCode,
+                    })}
+                    originCity={item.originCity}
+                    destinationCity={item.destinationCity}
+                    price={fareCard?.fare}
+                    displayCurrency={selectedOption.currency}
+                    expectedOriginCode={item.originCode}
+                    expectedDestinationCode={item.destinationCode}
+                    isLoading={discoveryFareCardState.loading}
+                  />
+                );
+              })}
             </div>
           </div>
         </section>
 
-        <section className="mt-6 border-y border-slate-300/80 bg-gradient-to-b from-slate-50/90 via-[#F2F7FA]/45 to-slate-50/80 sm:mt-9">
-          <div className="page-shell py-9 sm:py-11">
+        <section className="page-shell mt-6 sm:mt-9">
+          <div className="border-y border-slate-300/80 bg-gradient-to-b from-slate-50/90 via-[#F2F7FA]/45 to-slate-50/80 py-9 sm:py-11">
+            <div className="px-0">
             <div className="space-y-4">
               <div className="max-w-3xl space-y-1.5">
                 <h2 className="text-xl font-semibold tracking-[-0.02em] text-slate-900 sm:text-2xl">
@@ -1132,6 +1208,7 @@ export default function Home() {
                   </div>
                 </article>
               </div>
+            </div>
             </div>
           </div>
         </section>
@@ -1191,16 +1268,15 @@ export default function Home() {
           </div>
 
           <FaqAccordion
-            items={translatedFaqs}
-            mobileLimit={homepageMobileFaqLimit}
+            items={homepageFaqs}
             className="mt-5"
           />
 
           <Link
             href="/faq"
-            className="mt-4 inline-flex text-sm font-bold text-[#004BB8] underline-offset-4 hover:text-[#021C2B] hover:underline sm:hidden"
+            className="mt-4 inline-flex text-sm font-bold text-[#004BB8] underline-offset-4 hover:text-[#021C2B] hover:underline"
           >
-            {t("faqViewAll")}
+            {t("homepageFaqViewAll") || t("faqViewAll")}
           </Link>
         </section>
 
@@ -1511,6 +1587,15 @@ function buildDestinationCardHref(
       destination: options.city,
     },
   };
+}
+
+function getRouteKey(originCode: string, destinationCode: string) {
+  const origin = originCode.trim().toUpperCase();
+  const destination = destinationCode.trim().toUpperCase();
+
+  return /^[A-Z]{3}$/.test(origin) && /^[A-Z]{3}$/.test(destination) && origin !== destination
+    ? `${origin}-${destination}`
+    : null;
 }
 
 function buildDiscoveryCardHref(
