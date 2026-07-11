@@ -101,7 +101,7 @@ import {
   normalizeFlightsCalendarLocale,
 } from "@/lib/flights/dateFormatting";
 
-const resultStackClass = "w-full max-w-[680px] lg:ms-4 xl:ms-6";
+const resultStackClass = "w-full min-w-0";
 const desktopCompactFilterTopOffset = 116;
 type MobileShortcutMenu = "sort" | "airlines" | "stops" | "airports";
 type MobileShortcutMenuPosition = { top: number; left: number; width: number };
