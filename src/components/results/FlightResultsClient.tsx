@@ -942,6 +942,15 @@ export function FlightResultsClient() {
     startOfMonth(new Date()),
   );
   const [travelerPopoverOpen, setTravelerPopoverOpen] = useState(false);
+  const [draftMobileDepartureDate, setDraftMobileDepartureDate] =
+    useState(departureDateInput);
+  const [draftMobileReturnDate, setDraftMobileReturnDate] =
+    useState(returnDateInput);
+  const [draftAdultCount, setDraftAdultCount] = useState(adultCount);
+  const [draftChildCount, setDraftChildCount] = useState(childCount);
+  const [draftInfantCount, setDraftInfantCount] = useState(infantCount);
+  const [draftCabinClassInput, setDraftCabinClassInput] =
+    useState<CabinClassValue>(cabinClassInput);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileCompactHeaderVisible, setMobileCompactHeaderVisible] =
     useState(false);
@@ -1700,6 +1709,35 @@ export function FlightResultsClient() {
   }
 
   function closeMobileDatePicker() {
+    setDraftMobileDepartureDate(departureDateInput);
+    setDraftMobileReturnDate(returnDateInput);
+    setActiveDatePicker(null);
+    setDatePickerPosition(null);
+    restoreMobileSearchScrollPosition();
+  }
+
+  function openMobileDatePicker() {
+    rememberMobileSearchScrollPosition();
+    setDraftMobileDepartureDate(departureDateInput);
+    setDraftMobileReturnDate(returnDateInput);
+    setActiveDatePicker("departure");
+    setDatePickerPosition(null);
+  }
+
+  function commitMobileDatePicker() {
+    const nextDepartureDate = draftMobileDepartureDate.trim();
+    const nextReturnDate = draftMobileReturnDate.trim();
+    const hasValidDepartureDate =
+      isValidFutureOrTodayDateValue(nextDepartureDate);
+    const hasValidReturnDate =
+      tripTypeInput !== "round-trip" ||
+      (isValidFutureOrTodayDateValue(nextReturnDate) &&
+        !isDateValueBefore(nextReturnDate, nextDepartureDate));
+
+    if (!hasValidDepartureDate || !hasValidReturnDate) return;
+
+    setDepartureDateInput(nextDepartureDate);
+    setReturnDateInput(tripTypeInput === "round-trip" ? nextReturnDate : "");
     setActiveDatePicker(null);
     setDatePickerPosition(null);
     restoreMobileSearchScrollPosition();
@@ -1763,6 +1801,38 @@ export function FlightResultsClient() {
   }
 
   function closeMobileTravelerPopover() {
+    setDraftAdultCount(adultCount);
+    setDraftChildCount(childCount);
+    setDraftInfantCount(infantCount);
+    setDraftCabinClassInput(cabinClassInput);
+    setTravelerPopoverOpen(false);
+    setTravelerPopoverPosition(null);
+    restoreMobileSearchScrollPosition();
+  }
+
+  function openMobileTravelerPopover() {
+    rememberMobileSearchScrollPosition();
+    setDraftAdultCount(adultCount);
+    setDraftChildCount(childCount);
+    setDraftInfantCount(infantCount);
+    setDraftCabinClassInput(cabinClassInput);
+    setTravelerPopoverOpen(true);
+    setTravelerPopoverPosition(null);
+  }
+
+  function commitMobileTravelerPopover() {
+    const adults = Math.min(9, Math.max(1, draftAdultCount));
+    const children = Math.min(9 - adults, Math.max(0, draftChildCount));
+    const infants = Math.min(
+      adults,
+      9 - adults - children,
+      Math.max(0, draftInfantCount),
+    );
+
+    setAdultCount(adults);
+    setChildCount(children);
+    setInfantCount(infants);
+    setCabinClassInput(draftCabinClassInput);
     setTravelerPopoverOpen(false);
     setTravelerPopoverPosition(null);
     restoreMobileSearchScrollPosition();
@@ -2297,7 +2367,11 @@ export function FlightResultsClient() {
     function handleClose(event: MouseEvent) {
       const target = event.target as Node;
       const popover = document.getElementById("flight-date-picker-popover");
-      const clickedPopover = popover?.contains(target);
+      const mobilePopover = document.querySelector(
+        "[data-mobile-flight-date-picker]",
+      );
+      const clickedPopover =
+        popover?.contains(target) || mobilePopover?.contains(target);
       const clickedDeparture = departureWrapRef.current?.contains(target);
       const clickedReturn = returnWrapRef.current?.contains(target);
 
@@ -2360,7 +2434,11 @@ export function FlightResultsClient() {
     function handleClose(event: MouseEvent) {
       const target = event.target as Node;
       const popover = document.getElementById("flight-traveler-cabin-popover");
-      const clickedPopover = popover?.contains(target);
+      const mobilePopover = document.querySelector(
+        "[data-mobile-traveler-cabin-picker]",
+      );
+      const clickedPopover =
+        popover?.contains(target) || mobilePopover?.contains(target);
       const clickedTrigger = travelerCabinWrapRef.current?.contains(target);
 
       if (!clickedPopover && !clickedTrigger) {
@@ -2401,6 +2479,29 @@ export function FlightResultsClient() {
     setDestinationCode(currentOriginCode);
     setActiveSuggest(null);
     setDropdownPosition(null);
+  }
+
+  function applyMobileFlightDateSelection(date: Date) {
+    if (!activeDatePicker) return;
+
+    markExpandedSearchInteraction();
+
+    const nextDateState = getNextFlightDateSelection({
+      activePicker: activeDatePicker,
+      date,
+      departureDate: draftMobileDepartureDate,
+      returnDate: draftMobileReturnDate,
+      tripType: tripTypeInput,
+    });
+
+    if (!nextDateState) return;
+
+    setDraftMobileDepartureDate(nextDateState.departureDate);
+    setDraftMobileReturnDate(nextDateState.returnDate);
+
+    if (nextDateState.activePicker) {
+      setActiveDatePicker(nextDateState.activePicker);
+    }
   }
 
   function applyFlightDateSelection(date: Date) {
@@ -4645,25 +4746,49 @@ export function FlightResultsClient() {
                   }
             }
             month={calendarMonth}
-            departureValue={departureDateInput}
-            returnValue={returnDateInput}
+            departureValue={
+              useMobileSheet ? draftMobileDepartureDate : departureDateInput
+            }
+            returnValue={
+              useMobileSheet ? draftMobileReturnDate : returnDateInput
+            }
             activePicker={activeDatePicker}
             tripType={tripTypeInput}
+            doneDisabled={
+              useMobileSheet &&
+              (!isValidFutureOrTodayDateValue(draftMobileDepartureDate) ||
+                (tripTypeInput === "round-trip" &&
+                  (!isValidFutureOrTodayDateValue(draftMobileReturnDate) ||
+                    isDateValueBefore(
+                      draftMobileReturnDate,
+                      draftMobileDepartureDate,
+                    ))))
+            }
             onMonthChange={setCalendarMonth}
-            onSelect={applyFlightDateSelection}
+            onSelect={
+              useMobileSheet
+                ? applyMobileFlightDateSelection
+                : applyFlightDateSelection
+            }
             onClear={() => {
               if (activeDatePicker === "departure") {
-                setDepartureDateInput("");
-                setReturnDateInput("");
+                if (useMobileSheet) {
+                  setDraftMobileDepartureDate("");
+                  setDraftMobileReturnDate("");
+                } else {
+                  setDepartureDateInput("");
+                  setReturnDateInput("");
+                }
               }
 
               if (activeDatePicker === "return") {
-                setReturnDateInput("");
+                if (useMobileSheet) setDraftMobileReturnDate("");
+                else setReturnDateInput("");
               }
             }}
             onToday={
               useMobileSheet
-                ? closeMobileDatePicker
+                ? commitMobileDatePicker
                 : () => {
                     setActiveDatePicker(null);
                     setDatePickerPosition(null);
@@ -4685,40 +4810,69 @@ export function FlightResultsClient() {
                     setTravelerPopoverPosition(null);
                   }
             }
-            adultCount={adultCount}
-            childCount={childCount}
-            infantCount={infantCount}
-            cabinClass={cabinClassInput}
+            onDone={useMobileSheet ? commitMobileTravelerPopover : undefined}
+            adultCount={useMobileSheet ? draftAdultCount : adultCount}
+            childCount={useMobileSheet ? draftChildCount : childCount}
+            infantCount={useMobileSheet ? draftInfantCount : infantCount}
+            cabinClass={useMobileSheet ? draftCabinClassInput : cabinClassInput}
             onAdultChange={(nextValue) => {
               const nextAdultCount = Math.min(9, Math.max(1, nextValue));
 
-              setAdultCount(nextAdultCount);
-              setChildCount((current) => Math.min(current, 9 - nextAdultCount));
-              setInfantCount((current) =>
-                Math.min(current, nextAdultCount, 9 - nextAdultCount),
-              );
+              if (useMobileSheet) {
+                setDraftAdultCount(nextAdultCount);
+                setDraftChildCount((current) =>
+                  Math.min(current, 9 - nextAdultCount),
+                );
+                setDraftInfantCount((current) =>
+                  Math.min(current, nextAdultCount, 9 - nextAdultCount),
+                );
+              } else {
+                setAdultCount(nextAdultCount);
+                setChildCount((current) =>
+                  Math.min(current, 9 - nextAdultCount),
+                );
+                setInfantCount((current) =>
+                  Math.min(current, nextAdultCount, 9 - nextAdultCount),
+                );
+              }
             }}
             onChildChange={(nextValue) => {
               const nextChildCount = Math.min(
-                9 - adultCount,
+                9 - (useMobileSheet ? draftAdultCount : adultCount),
                 Math.max(0, nextValue),
               );
 
-              setChildCount(nextChildCount);
-              setInfantCount((current) =>
-                Math.min(current, 9 - adultCount - nextChildCount),
-              );
+              if (useMobileSheet) {
+                setDraftChildCount(nextChildCount);
+                setDraftInfantCount((current) =>
+                  Math.min(current, 9 - draftAdultCount - nextChildCount),
+                );
+              } else {
+                setChildCount(nextChildCount);
+                setInfantCount((current) =>
+                  Math.min(current, 9 - adultCount - nextChildCount),
+                );
+              }
             }}
             onInfantChange={(nextValue) => {
-              setInfantCount(
-                Math.min(
-                  adultCount,
-                  9 - adultCount - childCount,
-                  Math.max(0, nextValue),
-                ),
+              const currentAdults = useMobileSheet
+                ? draftAdultCount
+                : adultCount;
+              const currentChildren = useMobileSheet
+                ? draftChildCount
+                : childCount;
+              const nextInfantCount = Math.min(
+                currentAdults,
+                9 - currentAdults - currentChildren,
+                Math.max(0, nextValue),
               );
+
+              if (useMobileSheet) setDraftInfantCount(nextInfantCount);
+              else setInfantCount(nextInfantCount);
             }}
-            onCabinClassChange={setCabinClassInput}
+            onCabinClassChange={
+              useMobileSheet ? setDraftCabinClassInput : setCabinClassInput
+            }
           />
         ) : null}
       </>
@@ -4870,9 +5024,7 @@ export function FlightResultsClient() {
                     setDropdownPosition(null);
                     setTravelerPopoverOpen(false);
                     setTravelerPopoverPosition(null);
-                    rememberMobileSearchScrollPosition();
-                    setActiveDatePicker("departure");
-                    setDatePickerPosition(null);
+                    openMobileDatePicker();
                   }}
                   className={cn(
                     mobileFieldClass,
@@ -4903,9 +5055,7 @@ export function FlightResultsClient() {
                     setDropdownPosition(null);
                     setActiveDatePicker(null);
                     setDatePickerPosition(null);
-                    rememberMobileSearchScrollPosition();
-                    setTravelerPopoverOpen(true);
-                    setTravelerPopoverPosition(null);
+                    openMobileTravelerPopover();
                   }}
                   className={cn(
                     mobileFieldClass,
@@ -6803,6 +6953,7 @@ function DatePickerPopover({
   onClear,
   onToday,
   onClose,
+  doneDisabled = false,
   launcherRef,
 }: {
   position: { top: number; left: number; width: number };
@@ -6819,6 +6970,7 @@ function DatePickerPopover({
   onClear: () => void;
   onToday: () => void;
   onClose: () => void;
+  doneDisabled?: boolean;
 }) {
   const { t: dictionary, locale } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -6948,8 +7100,9 @@ function DatePickerPopover({
         titleId={titleId}
         launcherRef={launcherRef}
         onClose={onClose}
+        pickerMarker="flight-date"
         contentClassName="bg-white"
-        footer={(requestClose) => (
+        footer={() => (
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
@@ -6961,8 +7114,9 @@ function DatePickerPopover({
 
             <button
               type="button"
-              className="min-h-11 rounded-xl bg-[#004BB8] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1"
-              onClick={requestClose}
+              onClick={onToday}
+              disabled={doneDisabled}
+              className="min-h-11 rounded-xl bg-[#004BB8] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
             >
               {t("done")}
             </button>
@@ -7079,6 +7233,7 @@ function DatePickerPopover({
           type="button"
           className="min-h-11 rounded-xl bg-[#004BB8] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1"
           onClick={onToday}
+          disabled={doneDisabled}
         >
           {t("done")}
         </button>
@@ -7100,6 +7255,7 @@ function TravelerCabinPopover({
   onInfantChange,
   onCabinClassChange,
   onClose,
+  onDone = onClose,
   launcherRef,
 }: {
   position: { top: number; left: number; width: number };
@@ -7115,6 +7271,7 @@ function TravelerCabinPopover({
   onInfantChange: (value: number) => void;
   onCabinClassChange: (value: CabinClassValue) => void;
   onClose: () => void;
+  onDone?: () => void;
 }) {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -7152,10 +7309,11 @@ function TravelerCabinPopover({
         titleId={titleId}
         launcherRef={launcherRef}
         onClose={onClose}
-        footer={(requestClose) => (
+        pickerMarker="traveler-cabin"
+        footer={() => (
           <button
             type="button"
-            onClick={requestClose}
+            onClick={onDone}
             className="min-h-12 w-full rounded-xl bg-[#004BB8] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1"
           >
             {t("done")}
