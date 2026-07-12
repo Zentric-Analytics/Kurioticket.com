@@ -91,7 +91,7 @@ import {
 } from "@/lib/saved-trips-api";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, getItineraryDateKey } from "@/lib/utils";
 import {
   calculateCompactFilterPlacement,
   shouldRenderFlightQualityFilter,
@@ -879,6 +879,7 @@ export function FlightResultsClient() {
   const desktopSortRef = useRef<HTMLDivElement | null>(null);
   const desktopSortButtonRef = useRef<HTMLButtonElement | null>(null);
   const [results, setResults] = useState<PublicFlightResult[]>([]);
+  const activeFlightSearchKeyRef = useRef<string>("");
   const [error, setError] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -2294,11 +2295,22 @@ export function FlightResultsClient() {
   }, [searchQueryString, selectedCurrency]);
 
   useEffect(() => {
-    if (!body) return;
+    if (!body) {
+      activeFlightSearchKeyRef.current = "";
+      const resetTimer = window.setTimeout(() => {
+        setResults([]);
+        setWarnings([]);
+      }, 0);
+      return () => window.clearTimeout(resetTimer);
+    }
 
     let active = true;
+    const searchKey = buildFlightResultsSearchKey(body);
+    activeFlightSearchKeyRef.current = searchKey;
 
     const timer = window.setTimeout(() => {
+      if (activeFlightSearchKeyRef.current !== searchKey) return;
+      setResults([]);
       setLoading(true);
       setError("");
       setWarnings([]);
@@ -2323,13 +2335,13 @@ export function FlightResultsClient() {
           return data as { results: PublicFlightResult[]; warnings?: string[] };
         })
         .then((data) => {
-          if (!active) return;
+          if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
 
-          setResults(data.results);
+          setResults(filterResultsByRequestedOutboundDate(data.results, body.departureDate));
           setWarnings(Array.isArray(data.warnings) ? data.warnings : []);
         })
         .catch((searchError) => {
-          if (!active) return;
+          if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
 
           setError(
             searchError instanceof Error
@@ -2340,7 +2352,7 @@ export function FlightResultsClient() {
           );
         })
         .finally(() => {
-          if (active) setLoading(false);
+          if (active && activeFlightSearchKeyRef.current === searchKey) setLoading(false);
         });
     }, 0);
 
@@ -6866,7 +6878,7 @@ export function FlightResultsClient() {
                 </div>
               </div>
 
-              <div className="hidden w-full items-center justify-between gap-4 pt-2 sm:flex lg:bg-transparent lg:px-0 lg:pb-2">
+              <div className="hidden w-full items-center justify-between gap-4 pt-2 sm:flex lg:bg-transparent lg:px-0 lg:pb-0.5">
                 <p className="text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">
                   {formatResultsFound(sortedResults.length, t)}
                 </p>
@@ -7166,6 +7178,50 @@ function dedupeSuggestions(suggestions: AirportOption[]) {
 
 function airportInputValue(item: AirportOption) {
   return item.code;
+}
+
+function buildFlightResultsSearchKey(body: {
+  origin: string;
+  destination: string;
+  departureDate: string;
+  returnDate?: string;
+  tripType: string;
+  adults: number;
+  children: number;
+  infants: number;
+  travelers: number;
+  cabinClass: string;
+  currency?: string;
+}) {
+  return [
+    body.origin.trim().toUpperCase(),
+    body.destination.trim().toUpperCase(),
+    body.departureDate,
+    body.returnDate || "",
+    body.tripType,
+    body.adults,
+    body.children,
+    body.infants,
+    body.travelers,
+    body.cabinClass,
+    body.currency || "",
+  ].join("|");
+}
+
+function filterResultsByRequestedOutboundDate(
+  results: PublicFlightResult[],
+  requestedDepartureDate: string,
+) {
+  if (!requestedDepartureDate) return results;
+
+  return results.filter((result) => {
+    const outboundLeg =
+      result.legs?.find((leg) => leg.direction === "outbound") ??
+      result.legs?.[0];
+    const departureTime = outboundLeg?.departureTime || result.departureTime;
+
+    return getItineraryDateKey(departureTime) === requestedDepartureDate;
+  });
 }
 
 function getUniformResultCurrency(results: PublicFlightResult[]) {
@@ -8658,19 +8714,18 @@ function Filters({
 
   if (layout === "compact") {
     return (
-      <div className="desktop-filter-sidebar flex h-auto flex-col overflow-visible rounded-2xl border border-[#D8E1EC] bg-white p-0 shadow-[0_16px_36px_-28px_rgba(15,23,42,0.5)]">
-        <div className="desktop-filter-sidebar__header shrink-0 border-b border-[#D8E1EC]/80 bg-gradient-to-b from-[#F8FBFF] to-white px-3.5 py-3">
+      <div className="desktop-filter-sidebar flex h-auto flex-col overflow-visible rounded-2xl border border-[#D8E1EC] bg-[#EEF3F8] p-0 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.42)]">
+        <div className="desktop-filter-sidebar__header shrink-0 border-b border-[#D8E1EC]/80 bg-[#EEF3F8] px-3.5 py-2.5">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="desktop-filter-sidebar__title truncate text-[15px] font-semibold leading-5 tracking-[-0.01em] text-slate-950">
-              {t("filterBy")}
-            </h2>
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#D8E1EC]/80 bg-white text-[#004BB8] shadow-[0_6px_16px_-12px_rgba(0,75,184,0.55)]">
+            <h2 className="desktop-filter-sidebar__title flex min-w-0 items-center gap-2 truncate text-[15px] font-semibold leading-5 tracking-[-0.01em] text-slate-950">
               <SlidersHorizontal
-                className="desktop-filter-sidebar__icon"
-                size={16}
-                strokeWidth={2.2}
+                className="desktop-filter-sidebar__icon shrink-0 text-[#004BB8]"
+                size={15}
+                strokeWidth={2.25}
+                aria-hidden="true"
               />
-            </span>
+              <span className="truncate">{t("filterBy")}</span>
+            </h2>
           </div>
           {activeFilterCount > 0 ? (
             <div className="mt-2 flex items-center justify-between gap-3">
@@ -8687,7 +8742,7 @@ function Filters({
             </div>
           ) : null}
         </div>
-        <div className="h-auto overflow-visible bg-white px-2 py-1.5">
+        <div className="h-auto overflow-visible bg-[#EEF3F8] px-2 py-1">
           <CompactFilterSection
             title={t("price")}
             count={compactSectionCounts.price}
@@ -9276,13 +9331,13 @@ function CompactFilterSection({
     Boolean(children) && (!Array.isArray(children) || children.length > 0);
 
   return (
-    <section className="border-t border-[#D8E1EC]/65 first:border-t-0">
+    <section className="border-t border-[#D8E1EC]/75 first:border-t-0">
       <button
         type="button"
         aria-expanded={isOpen}
         aria-controls={panelId}
         className={cn(
-          "group flex w-full items-center justify-between gap-3 px-2.5 py-3 text-start text-[13px] font-semibold leading-5 tracking-[-0.005em] text-slate-800 transition-colors duration-200 motion-reduce:transition-none hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30",
+          "group flex min-h-9 w-full items-center justify-between gap-3 rounded-md px-2.5 py-2 text-start text-[13px] font-semibold leading-5 tracking-[-0.005em] text-slate-800 transition-colors duration-200 motion-reduce:transition-none hover:bg-[#E5ECF4] hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30",
           isOpen && "text-[#004BB8]",
         )}
         onClick={() => {
@@ -9300,7 +9355,7 @@ function CompactFilterSection({
         <span className="min-w-0 truncate">{title}</span>
         <span className="flex shrink-0 items-center gap-2">
           {count > 0 ? (
-            <span className="min-w-5 rounded-full bg-white px-2 py-0.5 text-center text-[11px] font-semibold normal-case leading-4 tracking-normal text-[#235A9F] ring-1 ring-[#004BB8]/10 group-hover:bg-[#EAF2FB]">
+            <span className="min-w-5 rounded-full bg-[#E2EAF3] px-2 py-0.5 text-center text-[11px] font-semibold normal-case leading-4 tracking-normal text-[#235A9F] ring-1 ring-[#004BB8]/10 group-hover:bg-[#DCE8F6]">
               {count}
             </span>
           ) : null}
@@ -9317,7 +9372,7 @@ function CompactFilterSection({
       <div
         id={panelId}
         className={cn(
-          "grid h-auto gap-0.5 overflow-visible bg-white px-2.5 pb-3 pt-0.5",
+          "grid h-auto gap-0.5 overflow-visible bg-transparent px-2.5 pb-3 pt-0.5",
           !isOpen && "hidden",
         )}
       >

@@ -1,4 +1,5 @@
 import type { AggregatedResult, FlightSearchParams, NormalizedFlightResult, SortMode } from "@/lib/types";
+import { getItineraryDateKey } from "@/lib/utils";
 import { canUseDevelopmentFallbacks, getFlightProviderPrimary } from "@/lib/env";
 import { rememberFlights } from "@/lib/searchCache";
 import { fallbackFlights } from "@/services/travel/fallbackData";
@@ -10,7 +11,8 @@ export async function searchFlights(search: FlightSearchParams): Promise<Aggrega
   const providers = await Promise.all([selectFlightProvider(search)]);
 
   const merged = providers.flatMap((provider) => provider.results);
-  const deduped = assignBadges(sortFlights(dedupeFlights(merged), search.sort || "cheapest"));
+  const dateMatched = filterFlightsByRequestedOutboundDate(merged, search.departureDate);
+  const deduped = assignBadges(sortFlights(dedupeFlights(dateMatched), search.sort || "cheapest"));
   const providerWarnings = providers
     .filter((provider) => provider.status === "failed")
     .map((provider) => `${provider.provider} provider failed internally.`);
@@ -72,6 +74,22 @@ export function sortFlights(results: NormalizedFlightResult[], sort: SortMode) {
   if (sort === "fastest") return sorted.sort((a, b) => a.durationMinutes - b.durationMinutes || a.price - b.price);
   if (sort === "stops") return sorted.sort((a, b) => a.stops - b.stops || a.price - b.price);
   return sorted.sort((a, b) => a.price - b.price || b.valueScore - a.valueScore);
+}
+
+export function filterFlightsByRequestedOutboundDate(
+  results: NormalizedFlightResult[],
+  requestedDepartureDate: string,
+) {
+  if (!requestedDepartureDate) return results;
+
+  return results.filter((result) => {
+    const outboundLeg =
+      result.legs?.find((leg) => leg.direction === "outbound") ??
+      result.legs?.[0];
+    const departureTime = outboundLeg?.departureTime || result.departureTime;
+
+    return getItineraryDateKey(departureTime) === requestedDepartureDate;
+  });
 }
 
 function dedupeFlights(results: NormalizedFlightResult[]) {

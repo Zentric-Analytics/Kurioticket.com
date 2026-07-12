@@ -19,7 +19,7 @@ import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
-import { cn, formatTime } from "@/lib/utils";
+import { cn, formatItineraryShortDate, formatTime } from "@/lib/utils";
 
 type DetailItem = {
   label: string;
@@ -416,7 +416,7 @@ function DesktopFlightLegRow({
             className="mt-0.5 text-sm font-medium leading-5 text-[#07133B]"
             dir="auto"
           >
-            {formatShortDate(leg.arrivalTime, locale)}
+            {formatItineraryShortDate({ value: leg.arrivalTime, locale })}
           </div>
         </div>
       </div>
@@ -468,13 +468,6 @@ function AirlineLogo({
   );
 }
 
-function formatShortDate(value: Date | string, locale: string) {
-  return new Intl.DateTimeFormat(locale, {
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(value));
-}
 
 function FlightFareAction({
   flightId,
