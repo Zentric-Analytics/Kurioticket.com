@@ -911,6 +911,19 @@ export function HotelResultsClient() {
     () => buildHotelSummaryItems(displayedHotels, t, locale),
     [displayedHotels, locale, t],
   );
+  const formattedDisplayedHotelCount = formatHotelCount(
+    displayedHotels.length,
+    locale,
+  );
+  const searchedDestination = body.destination.trim();
+  const resultsHeading = searchedDestination
+    ? `${formattedDisplayedHotelCount} ${
+        displayedHotels.length === 1 ? "property" : "properties"
+      } found in ${searchedDestination}`
+    : t("hotelResults.foundPlacesToStay").replace(
+        "{{count}}",
+        formattedDisplayedHotelCount,
+      );
   const formattedSavedVisibleHotelCount = new Intl.NumberFormat(locale).format(
     savedVisibleHotels.length,
   );
@@ -1546,10 +1559,7 @@ export function HotelResultsClient() {
 
                 <div className="flex min-h-[52px] w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
                   <h1 className="min-w-0 text-sm font-bold text-navy">
-                    {t("hotelResults.foundPlacesToStay").replace(
-                      "{{count}}",
-                      formatHotelCount(displayedHotels.length, locale),
-                    )}
+                    {resultsHeading}
                   </h1>
                   <div className="flex shrink-0 items-center gap-2">
                     <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1">
