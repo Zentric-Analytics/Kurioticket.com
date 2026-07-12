@@ -104,6 +104,7 @@ import {
   formatFlightsMonthHeading,
   normalizeFlightsCalendarLocale,
 } from "@/lib/flights/dateFormatting";
+import { getDateWindowStart } from "@/lib/flights/flexibleDateWindow";
 
 const resultStackClass = "w-full min-w-0";
 const desktopCompactFilterTopOffset = 116;
@@ -938,6 +939,7 @@ export function FlightResultsClient() {
   const nearbyFareRequestsRef = useRef(new Map<string, NearbyFareRequest>());
   const nearbyFareGenerationRef = useRef(0);
   const nearbyFareStripScrollRef = useRef<HTMLDivElement | null>(null);
+  const nearbyFarePositionedContextRef = useRef<string | null>(null);
   const [nearbyFares, setNearbyFares] = useState<NearbyFareState[]>([]);
   const [nearbyFareCanScrollPrevious, setNearbyFareCanScrollPrevious] =
     useState(false);
@@ -3055,6 +3057,63 @@ export function FlightResultsClient() {
 
     return () => resizeObserver.disconnect();
   }, [nearbyFares, updateNearbyFareScrollState]);
+
+  useLayoutEffect(() => {
+    const departureDate = body?.departureDate;
+    if (!departureDate || nearbyFares.length === 0) return;
+
+    const strip = nearbyFareStripScrollRef.current;
+    if (!strip) return;
+
+    const selectedIndex = nearbyFares.findIndex((fare) => fare.date === departureDate);
+    if (selectedIndex < 0) return;
+
+    const positioningContext = [
+      body.tripType,
+      body.origin,
+      body.destination,
+      departureDate,
+      body.returnDate ?? "",
+      body.travelers,
+      body.cabinClass ?? "",
+    ].join("|");
+
+    if (nearbyFarePositionedContextRef.current === positioningContext) return;
+
+    const firstCell = strip.querySelector<HTMLElement>("[data-fare-date-cell]");
+    if (!firstCell) return;
+
+    const cellWidth = firstCell.getBoundingClientRect().width;
+    const gap =
+      Number.parseFloat(window.getComputedStyle(strip).columnGap || "0") || 0;
+    const step = cellWidth + gap;
+    if (step <= 0) return;
+
+    const visibleCount = Math.max(1, Math.floor((strip.clientWidth + gap) / step));
+    const windowStart = getDateWindowStart({
+      selectedIndex,
+      totalDates: nearbyFares.length,
+      visibleCount,
+      desiredPosition: 2,
+    });
+
+    strip.scrollTo({
+      left: windowStart * step,
+      behavior: "auto",
+    });
+    nearbyFarePositionedContextRef.current = positioningContext;
+    window.requestAnimationFrame(updateNearbyFareScrollState);
+  }, [
+    body?.cabinClass,
+    body?.departureDate,
+    body?.destination,
+    body?.origin,
+    body?.returnDate,
+    body?.travelers,
+    body?.tripType,
+    nearbyFares,
+    updateNearbyFareScrollState,
+  ]);
 
   const scrollNearbyFareStrip = useCallback(
     (direction: "previous" | "next") => {
