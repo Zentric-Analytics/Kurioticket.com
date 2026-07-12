@@ -186,6 +186,7 @@ export function DesktopFlightFilters({
   const airportCode = timeFilterMode === "takeoff" ? originCode : destinationCode;
   const renderQualitySection = renderFlightQualityFilter && flightQualityOptions.length > 0;
   const rangeClass = "h-1.5 w-full cursor-pointer appearance-none rounded-full bg-[#D7E5F8] accent-[#0067DB] disabled:cursor-not-allowed disabled:opacity-60";
+  const hasActiveFilters = activeFilterCount > 0;
 
   return (
     <div className="rounded-[10px] border border-[#D8E1EC] bg-[#F5F8FC] px-4 py-4 shadow-[0_10px_26px_-24px_rgba(15,23,42,0.5)] xl:px-5">
@@ -195,14 +196,16 @@ export function DesktopFlightFilters({
             <SlidersHorizontal aria-hidden="true" className="h-4 w-4 text-[#004BB8]" strokeWidth={2.2} />
             <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-slate-950">{t("filterBy")}</h2>
           </div>
-          <button
-            type="button"
-            className="rounded-md px-1.5 py-1 text-xs font-semibold text-[#004BB8] transition hover:bg-[#EAF2FB] disabled:pointer-events-none disabled:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
-            onClick={onClear}
-            disabled={activeFilterCount === 0}
-          >
-            {t("carsResults.reset")}
-          </button>
+          {hasActiveFilters ? (
+            <button
+              type="button"
+              aria-label="Reset filters"
+              className="rounded-md px-1.5 py-1 text-xs font-semibold text-[#004BB8] transition hover:bg-[#EAF2FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+              onClick={onClear}
+            >
+              {t("carsResults.reset")}
+            </button>
+          ) : null}
         </div>
       </div>
 
