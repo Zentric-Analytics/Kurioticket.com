@@ -112,12 +112,28 @@ type DesktopCompactFilterFrame = {
   left: number;
   width: number;
 };
-type NearbyFareState = {
-  date: string;
-  status: "loading" | "available" | "unavailable";
-  price: number | null;
-  currency: string | null;
+type NearbyFareState =
+  | { date: string; status: "idle" }
+  | { date: string; status: "loading" }
+  | {
+      date: string;
+      status: "success";
+      amount: number;
+      currency: string;
+      fetchedAt: number;
+    }
+  | { date: string; status: "unavailable"; fetchedAt: number }
+  | { date: string; status: "error"; message?: string; fetchedAt?: number };
+
+type NearbyFareRequest = {
+  controller: AbortController;
+  promise: Promise<void>;
 };
+
+const nearbyFareRangeSize = 14;
+const nearbyFareDaysBeforeAnchor = 6;
+const nearbyFareRequestConcurrency = 4;
+const nearbyFareCacheTtlMs = 10 * 60 * 1000;
 
 type DesktopCompactFilterPlacementState = "hidden" | "fixed" | "docked";
 
@@ -917,7 +933,8 @@ export function FlightResultsClient() {
     initialDateSafeParams.get("departureDate") || "",
   );
   const nearbyFareCacheRef = useRef(new Map<string, NearbyFareState>());
-  const nearbyFareRequestsRef = useRef(new Set<string>());
+  const nearbyFareRequestsRef = useRef(new Map<string, NearbyFareRequest>());
+  const nearbyFareGenerationRef = useRef(0);
   const nearbyFareStripScrollRef = useRef<HTMLDivElement | null>(null);
   const [nearbyFares, setNearbyFares] = useState<NearbyFareState[]>([]);
   const [nearbyFareCanScrollPrevious, setNearbyFareCanScrollPrevious] =
@@ -2358,7 +2375,27 @@ export function FlightResultsClient() {
     };
   }, [desktopSortOpen]);
 
+  const updateNearbyFareScrollState = useCallback(() => {
+    const strip = nearbyFareStripScrollRef.current;
+    if (!strip) {
+      setNearbyFareCanScrollPrevious(false);
+      setNearbyFareCanScrollNext(false);
+      return;
+    }
+
+    const maxScrollLeft = Math.max(0, strip.scrollWidth - strip.clientWidth);
+    setNearbyFareCanScrollPrevious(strip.scrollLeft > 1);
+    setNearbyFareCanScrollNext(strip.scrollLeft < maxScrollLeft - 1);
+  }, []);
+
   useEffect(() => {
+    const generation = nearbyFareGenerationRef.current + 1;
+    nearbyFareGenerationRef.current = generation;
+
+    const activeRequests = nearbyFareRequestsRef.current;
+    activeRequests.forEach((request) => request.controller.abort());
+    activeRequests.clear();
+
     if (!body?.departureDate) {
       const timer = window.setTimeout(() => setNearbyFares([]), 0);
       return () => window.clearTimeout(timer);
@@ -2369,84 +2406,98 @@ export function FlightResultsClient() {
       const timer = window.setTimeout(() => setNearbyFares([]), 0);
       return () => window.clearTimeout(timer);
     }
+
     let active = true;
-
-    const dates = [-2, -1, 0, 1, 2, 3, 4]
-      .map((offset) => addDays(centerDate, offset))
-      .filter(isSelectableFlightDate)
-      .map(formatDateValue);
-
+    const dates = getNearbyFareDateRange(centerDate);
+    const fetchedAt = Date.now();
     const currentFare = getLowestProviderFare(results);
-    const nextFares = dates.map((date) => {
-      if (date === body.departureDate && currentFare) {
-        return {
-          date,
-          status: "available" as const,
-          price: currentFare.price,
-          currency: currentFare.currency,
-        };
-      }
+    const selectedKey = getNearbyFareCacheKey(body, body.departureDate);
 
-      return (
-        nearbyFareCacheRef.current.get(getNearbyFareCacheKey(body, date)) ?? {
-          date,
-          status: "loading" as const,
-          price: null,
-          currency: null,
-        }
+    if (currentFare) {
+      nearbyFareCacheRef.current.set(selectedKey, {
+        date: body.departureDate,
+        status: "success",
+        amount: currentFare.price,
+        currency: currentFare.currency,
+        fetchedAt,
+      });
+    }
+
+    const nextFares = dates.map((date) => {
+      const cached = getFreshNearbyFareCacheEntry(
+        nearbyFareCacheRef.current,
+        getNearbyFareCacheKey(body, date),
       );
+
+      return cached ?? { date, status: "loading" as const };
     });
 
     const syncTimer = window.setTimeout(() => {
-      if (active) setNearbyFares(nextFares);
+      if (active && nearbyFareGenerationRef.current === generation) {
+        setNearbyFares(nextFares);
+        window.requestAnimationFrame(updateNearbyFareScrollState);
+      }
     }, 0);
 
-    dates.forEach((date) => {
-      if (date === body.departureDate) return;
+    const selectedIndex = dates.indexOf(body.departureDate);
+    const prioritizedDates = [...dates]
+      .sort((left, right) => {
+        const leftDistance = Math.abs(dates.indexOf(left) - selectedIndex);
+        const rightDistance = Math.abs(dates.indexOf(right) - selectedIndex);
+        return leftDistance - rightDistance;
+      })
+      .filter((date) => !getFreshNearbyFareCacheEntry(
+        nearbyFareCacheRef.current,
+        getNearbyFareCacheKey(body, date),
+      ));
+
+    async function fetchFareForDate(date: string) {
+      if (!body || !active || nearbyFareGenerationRef.current !== generation) return;
+
       const key = getNearbyFareCacheKey(body, date);
-      if (
-        nearbyFareCacheRef.current.has(key) ||
-        nearbyFareRequestsRef.current.has(key)
-      ) {
+      const existing = nearbyFareRequestsRef.current.get(key);
+      if (existing) {
+        await existing.promise;
         return;
       }
 
-      nearbyFareRequestsRef.current.add(key);
-      const fareBody = { ...body, departureDate: date };
-      fetch("/api/flights/search", {
+      const controller = new AbortController();
+      const fareBody = buildNearbyFareSearchBody(body, date);
+      const promise = fetch("/api/flights/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(fareBody),
+        signal: controller.signal,
       })
         .then(async (response) => {
-          if (!response.ok) return null;
-          const data = (await response.json()) as {
-            results?: PublicFlightResult[];
-          };
-          return getLowestProviderFare(data.results ?? []);
-        })
-        .then((fare) => {
-          if (!active) return;
+          if (!response.ok) throw new Error("nearby-fare-search-failed");
+          const data = (await response.json()) as { results?: PublicFlightResult[] };
+          const fare = getLowestProviderFare(data.results ?? []);
           const state: NearbyFareState = fare
             ? {
                 date,
-                status: "available",
-                price: fare.price,
+                status: "success",
+                amount: fare.price,
                 currency: fare.currency,
+                fetchedAt: Date.now(),
               }
-            : { date, status: "unavailable", price: null, currency: null };
+            : { date, status: "unavailable", fetchedAt: Date.now() };
+
+          if (!active || nearbyFareGenerationRef.current !== generation) return;
+
           nearbyFareCacheRef.current.set(key, state);
           setNearbyFares((current) =>
             current.map((item) => (item.date === date ? state : item)),
           );
         })
-        .catch(() => {
-          if (!active) return;
+        .catch((error) => {
+          if (controller.signal.aborted || !active || nearbyFareGenerationRef.current !== generation) return;
+
           const state: NearbyFareState = {
             date,
-            status: "unavailable",
-            price: null,
-            currency: null,
+            status: "error",
+            message: error instanceof Error ? error.message : undefined,
+            fetchedAt: Date.now(),
           };
           nearbyFareCacheRef.current.set(key, state);
           setNearbyFares((current) =>
@@ -2454,15 +2505,41 @@ export function FlightResultsClient() {
           );
         })
         .finally(() => {
-          nearbyFareRequestsRef.current.delete(key);
+          if (nearbyFareRequestsRef.current.get(key)?.controller === controller) {
+            nearbyFareRequestsRef.current.delete(key);
+          }
         });
-    });
+
+      nearbyFareRequestsRef.current.set(key, { controller, promise });
+      await promise;
+    }
+
+    async function runQueue() {
+      let nextIndex = 0;
+      const workers = Array.from(
+        { length: Math.min(nearbyFareRequestConcurrency, prioritizedDates.length) },
+        async () => {
+          while (active && nearbyFareGenerationRef.current === generation) {
+            const date = prioritizedDates[nextIndex];
+            nextIndex += 1;
+            if (!date) break;
+            await fetchFareForDate(date);
+          }
+        },
+      );
+
+      await Promise.all(workers);
+    }
+
+    void runQueue();
 
     return () => {
       active = false;
       window.clearTimeout(syncTimer);
+      activeRequests.forEach((request) => request.controller.abort());
+      activeRequests.clear();
     };
-  }, [body, results]);
+  }, [body, results, updateNearbyFareScrollState]);
 
   useEffect(() => {
     if (!tripTypeMenuOpen) return;
@@ -2916,18 +2993,7 @@ export function FlightResultsClient() {
     ],
   );
 
-  const updateNearbyFareScrollState = useCallback(() => {
-    const strip = nearbyFareStripScrollRef.current;
-    if (!strip) {
-      setNearbyFareCanScrollPrevious(false);
-      setNearbyFareCanScrollNext(false);
-      return;
-    }
 
-    const maxScrollLeft = Math.max(0, strip.scrollWidth - strip.clientWidth);
-    setNearbyFareCanScrollPrevious(strip.scrollLeft > 1);
-    setNearbyFareCanScrollNext(strip.scrollLeft < maxScrollLeft - 1);
-  }, []);
 
   useLayoutEffect(() => {
     updateNearbyFareScrollState();
@@ -6403,7 +6469,6 @@ export function FlightResultsClient() {
           className="relative z-30 px-4 pb-0 pt-12 sm:hidden"
           aria-label={t("filters")}
         >
-          {/* eslint-disable-next-line react-hooks/refs */}
           {renderMobileSortResultsRow()}
         </section>
       ) : null}
@@ -6752,11 +6817,9 @@ export function FlightResultsClient() {
                               <span className={cn("mt-1 text-[15px] font-semibold leading-5", selected ? "text-[#0057FF]" : "text-slate-950")} aria-live={fare.status === "loading" ? "polite" : undefined}>
                                 {fare.status === "loading" ? (
                                   <span className="block h-4 w-14 animate-pulse rounded-full bg-slate-200" aria-label="Loading fare" />
-                                ) : fare.status === "available" &&
-                                  fare.price !== null &&
-                                  fare.currency ? (
+                                ) : fare.status === "success" ? (
                                   formatDisplayPrice({
-                                    amount: fare.price,
+                                    amount: fare.amount,
                                     sourceCurrency: fare.currency,
                                     displayCurrency: selectedCurrency,
                                     convertUsdEstimate: true,
@@ -6770,7 +6833,7 @@ export function FlightResultsClient() {
                             </button>
                           );
                         })
-                      : Array.from({ length: 7 }).map((_, index) => (
+                      : Array.from({ length: nearbyFareRangeSize }).map((_, index) => (
                           <div
                             key={index}
                             className="flex min-h-[86px] min-w-[96px] flex-col items-center justify-center px-2.5 py-3"
@@ -7186,6 +7249,56 @@ function formatFareStripWeekdayLabel(value: string, locale: string): string {
   return new Intl.DateTimeFormat(normalizeFlightResultsCalendarLocale(locale), {
     weekday: "short",
   }).format(date);
+}
+
+function getNearbyFareDateRange(anchorDate: Date): string[] {
+  const today = startOfLocalDay(new Date());
+  const preferredStart = addDays(anchorDate, -nearbyFareDaysBeforeAnchor);
+  const startDate = startOfLocalDay(preferredStart) < today ? today : preferredStart;
+
+  return Array.from({ length: nearbyFareRangeSize }, (_, index) =>
+    formatDateValue(addDays(startDate, index)),
+  );
+}
+
+function isFreshNearbyFareState(
+  state: NearbyFareState | undefined,
+): state is NearbyFareState {
+  if (!state || state.status === "idle" || state.status === "loading") return false;
+  if (!("fetchedAt" in state) || typeof state.fetchedAt !== "number") return false;
+
+  return Date.now() - state.fetchedAt <= nearbyFareCacheTtlMs;
+}
+
+function getFreshNearbyFareCacheEntry(
+  cache: Map<string, NearbyFareState>,
+  key: string,
+): NearbyFareState | null {
+  const state = cache.get(key);
+  if (!isFreshNearbyFareState(state)) {
+    if (state) cache.delete(key);
+    return null;
+  }
+
+  return state;
+}
+
+function buildNearbyFareSearchBody<
+  T extends { tripType: string; departureDate: string; returnDate?: string },
+>(search: T, departureDate: string): T {
+  const currentDepartureDate = search.departureDate;
+  const nextSearch = { ...search, departureDate };
+
+  if (search.tripType === "round-trip" && search.returnDate) {
+    const adjustedReturnDate = preserveRoundTripDuration(
+      currentDepartureDate,
+      search.returnDate,
+      departureDate,
+    );
+    nextSearch.returnDate = adjustedReturnDate ?? search.returnDate;
+  }
+
+  return nextSearch;
 }
 
 function preserveRoundTripDuration(
