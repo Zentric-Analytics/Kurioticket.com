@@ -1,5 +1,21 @@
 services:
   - type: cron
+    name: kurioticket-price-alerts
+    runtime: node
+    plan: starter
+    branch: main
+    autoDeploy: true
+    schedule: '0 * * * *'
+    buildCommand: 'true'
+    startCommand: >-
+      curl -fsS -X POST "https://kurioticket.com/api/cron/price-alerts"
+      -H "Authorization: Bearer $PRICE_ALERTS_CRON_SECRET"
+      -H "Content-Type: application/json"
+    envVars:
+      - key: PRICE_ALERTS_CRON_SECRET
+        sync: false
+
+  - type: cron
     name: kurioticket-homepage-fares-refresh
     runtime: node
     plan: starter
@@ -79,6 +95,8 @@ services:
         sync: false
       - key: HOMEPAGE_FARES_CRON_SECRET
         sync: false
+      - key: PRICE_ALERTS_CRON_SECRET
+        sync: false
 
   - type: web
     name: kurioticket-web-staging
@@ -143,6 +161,8 @@ services:
       - key: ADMIN_EMAILS
         sync: false
       - key: HOMEPAGE_FARES_CRON_SECRET
+        sync: false
+      - key: PRICE_ALERTS_CRON_SECRET
         sync: false
 
 databases:
