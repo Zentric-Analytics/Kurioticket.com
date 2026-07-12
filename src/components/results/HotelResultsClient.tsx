@@ -2410,8 +2410,6 @@ function StarRatingFilterControl({
   return (
     <fieldset className="space-y-1.5">
       <legend className="sr-only">{t("hotelResults.starRating")}</legend>
-      <span className="sr-only">{t("hotelResults.fromRating")}</span>
-      <span className="sr-only">{t("hotelResults.starsAndUp")}</span>
       {options.map((rating) => {
         const selected = selectedRating === rating;
         const label =
@@ -2431,7 +2429,7 @@ function StarRatingFilterControl({
           >
             <span className="flex min-w-0 items-center gap-1.5">
               <input
-                className="sr-only"
+                className="h-4 w-4 shrink-0 cursor-pointer accent-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
                 type="radio"
                 name={groupId}
                 value={rating}
