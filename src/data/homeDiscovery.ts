@@ -2739,7 +2739,7 @@ export const DEFAULT_HOME_DISCOVERY_ELIGIBLE_FLIGHT_ROUTE_COUNT =
   ADDITIONAL_US_DISCOVERY_FARE_CANDIDATES.length;
 
 export const HOME_DISCOVERY_VISIBLE_CARD_COUNT = 16;
-export const HOME_DISCOVERY_IMAGE_CARD_COUNT = 12;
+export const HOME_DISCOVERY_IMAGE_CARD_COUNT = 8;
 export const HOME_REGIONAL_ROUTE_CARD_COUNT = 10;
 
 export const HOME_DISCOVERY_IMAGE_CARD_EXCLUSIONS: Record<string, readonly string[]> = {
@@ -2753,6 +2753,7 @@ export const HOME_DISCOVERY_IMAGE_CARD_EXCLUSIONS: Record<string, readonly strin
   AE: ["ae-dxb-bkk", "ae-dxb-cdg", "ae-auh-lhr", "ae-dxb-mnl"],
   JP: ["jp-hnd-sin", "jp-nrt-bkk", "jp-hnd-hnl", "jp-nrt-gum"],
   BR: ["br-gru-lim", "br-gru-scl", "br-gru-mco", "br-rio-eze"],
+  LATIN_AMERICA: ["br-gru-lim", "br-gru-scl", "br-gru-mco", "br-rio-eze"],
   GLOBAL: ["fallback-lhr-ams", "fallback-lim-mad", "fallback-los-lhr", "fallback-auh-lhr"],
 };
 
