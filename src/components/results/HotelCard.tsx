@@ -3,11 +3,30 @@
 import Image from "next/image";
 import { useEffect, useId, useMemo, useState } from "react";
 import {
+  AirVent,
+  Armchair,
+  Bike,
   Building2,
+  BusFront,
   ChevronLeft,
   ChevronRight,
+  CircleDot,
+  CircleParking,
+  Clock3,
+  Coffee,
+  ConciergeBell,
+  CookingPot,
+  Dumbbell,
+  Flower2,
   Heart,
+  Laptop,
   MapPin,
+  Trees,
+  UtensilsCrossed,
+  VolumeX,
+  Waves,
+  Wifi,
+  type LucideIcon,
 } from "lucide-react";
 import type { PublicHotelResult } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
@@ -33,6 +52,11 @@ import {
   serializeSavedHotelIds,
   toggleSavedHotelId,
 } from "@/components/results/hotelSavedStorage";
+import {
+  buildHotelAmenityPresentation,
+  type HotelAmenityIconKey,
+  type HotelAmenityPresentationItem,
+} from "@/components/results/hotelAmenityPresentation";
 
 function getHotelStarRating(rating: number) {
   if (!Number.isFinite(rating) || rating <= 0) return null;
@@ -82,10 +106,6 @@ function toSentenceCase(value: string) {
     : normalized;
 
   return `${sentence.charAt(0).toLocaleUpperCase()}${sentence.slice(1)}`;
-}
-
-function isCancellationText(value: string) {
-  return /cancellation|cancel|policy|refund|prepayment/i.test(value);
 }
 
 function isMealPlanText(value: string) {
@@ -227,96 +247,6 @@ function getMealPlanDisplay(
   return translateKnownHotelLabel(mealText, t);
 }
 
-function getCanonicalAmenityTranslationKey(value: string) {
-  const normalized = normalizeWhitespace(value)
-    .toLocaleLowerCase()
-    .replace(/[‐‑‒–—]/g, "-");
-
-  if (/^(free wi-fi|wi-fi|wifi)$/.test(normalized)) {
-    return "hotelResults.filter.freeWifi";
-  }
-
-  if (/^parking$/.test(normalized)) {
-    return "hotelResults.filter.parking";
-  }
-
-  if (/^pool$/.test(normalized)) {
-    return "hotelResults.filter.pool";
-  }
-
-  if (/^airport shuttle$/.test(normalized)) {
-    return "hotelResults.filter.airportShuttle";
-  }
-
-  if (/^(spa|wellness)$/.test(normalized)) {
-    return "hotelResults.filter.spa";
-  }
-
-  if (/^(fitness center|fitness|gym)$/.test(normalized)) {
-    return "hotelResults.filter.fitnessCenter";
-  }
-
-  if (/^(workspace|desk)$/.test(normalized)) {
-    return "hotelResults.filter.workspace";
-  }
-
-  if (/^(quiet rooms|quiet)$/.test(normalized)) {
-    return "hotelResults.filter.quietRooms";
-  }
-
-  if (/^(24-hour front desk|front desk)$/.test(normalized)) {
-    return "hotelResults.filter.frontDesk24";
-  }
-
-  if (/^late check-in$/.test(normalized)) {
-    return "hotelResults.filter.lateCheckIn";
-  }
-
-  return null;
-}
-
-function getAmenityDisplay(
-  amenities: string[],
-  mealPlanText: string,
-  t: (key: string) => string,
-  limit = 3,
-) {
-  const seen = new Set<string>();
-  const mealPlanKey = mealPlanText.toLocaleLowerCase();
-
-  return amenities
-    .map((amenity) => toSentenceCase(amenity))
-    .filter((amenity) => {
-      if (
-        !amenity ||
-        isCancellationText(amenity) ||
-        isMealPlanText(amenity) ||
-        /verified partner inventory/i.test(amenity) ||
-        /^(central|transit-friendly area|central or transit-friendly area)$/i.test(
-          amenity,
-        )
-      ) {
-        return false;
-      }
-
-      const translationKey = getCanonicalAmenityTranslationKey(amenity);
-      const key = translationKey ?? amenity.toLocaleLowerCase();
-      if (mealPlanKey && amenity.toLocaleLowerCase() === mealPlanKey) {
-        return false;
-      }
-      if (seen.has(key)) return false;
-
-      seen.add(key);
-      return true;
-    })
-    .map((amenity) => {
-      const translationKey = getCanonicalAmenityTranslationKey(amenity);
-
-      return translationKey ? t(translationKey) : amenity;
-    })
-    .slice(0, limit);
-}
-
 const fallbackHotelImages = [
   "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=90",
   "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1200&q=90",
@@ -354,6 +284,80 @@ const reviewLabelFallbacks: Record<HotelReviewBand, string> = {
   pleasant: "Pleasant",
   reviewScore: "Review score",
 };
+
+const hotelAmenityIcons: Record<HotelAmenityIconKey, LucideIcon> = {
+  wifi: Wifi,
+  breakfast: Coffee,
+  pool: Waves,
+  spa: Flower2,
+  airportShuttle: BusFront,
+  parking: CircleParking,
+  fitness: Dumbbell,
+  workspace: Laptop,
+  quietRooms: VolumeX,
+  frontDesk: ConciergeBell,
+  lateCheckIn: Clock3,
+  kitchenette: CookingPot,
+  bikeStorage: Bike,
+  courtyard: Trees,
+  lounge: Armchair,
+  restaurant: UtensilsCrossed,
+  airConditioning: AirVent,
+  generic: CircleDot,
+};
+
+function resolveAmenityLabels(
+  items: HotelAmenityPresentationItem[],
+  t: (key: string) => string,
+) {
+  return items.map((item) => {
+    const translatedLabel = item.translationKey ? t(item.translationKey) : "";
+
+    return {
+      ...item,
+      label: translatedLabel.trim() || item.label,
+    };
+  });
+}
+
+function HotelAmenityList({
+  items,
+  expanded = false,
+}: {
+  items: HotelAmenityPresentationItem[];
+  expanded?: boolean;
+}) {
+  if (items.length === 0) return null;
+
+  return (
+    <ul
+      role="list"
+      className={
+        expanded
+          ? "mt-2 grid grid-cols-1 gap-x-4 gap-y-1.5 min-[380px]:grid-cols-2"
+          : "mt-2 grid grid-cols-1 gap-x-4 gap-y-1.5 min-[380px]:grid-cols-2"
+      }
+    >
+      {items.map((item) => {
+        const Icon = hotelAmenityIcons[item.iconKey];
+
+        return (
+          <li
+            key={item.key}
+            className="flex min-w-0 items-start gap-1.5 text-[12px] font-medium leading-4 text-slate-600"
+          >
+            <Icon
+              className="h-4 w-4 shrink-0 text-slate-500"
+              strokeWidth={1.8}
+              aria-hidden="true"
+            />
+            <span className="min-w-0">{item.label}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
 type HotelCardProps = {
   hotel: PublicHotelResult;
@@ -406,13 +410,17 @@ export function HotelCard({ hotel }: HotelCardProps) {
   const distanceText = getDistanceDisplay(hotel.distanceFromCenter);
   const mealPlanText = getMealPlanDisplay(hotel, rawRoomTypeText, t);
   const cancellationDisplay = getCancellationDisplay(hotel.cancellationInfo, t);
-  const amenityDisplay = getAmenityDisplay(hotel.amenities, mealPlanText, t);
-  const expandedAmenityDisplay = getAmenityDisplay(
+  const expandedAmenityItems = buildHotelAmenityPresentation(
     hotel.amenities,
-    mealPlanText,
-    t,
     8,
   );
+  const collapsedAmenityItems = expandedAmenityItems.slice(0, 4);
+  const hasBreakfastAmenity = expandedAmenityItems.some(
+    (item) => item.iconKey === "breakfast",
+  );
+  const shouldShowMealPlanText =
+    Boolean(mealPlanText) &&
+    (!hasBreakfastAmenity || !/^breakfast/i.test(mealPlanText));
   const isDemoHotel = hotel.dataSource === "demo";
   const neighbourhood = hotel.neighbourhood?.trim() || "";
   const reviewScore = hotel.reviewScore;
@@ -446,7 +454,8 @@ export function HotelCard({ hotel }: HotelCardProps) {
         : "";
   const savedHotelLabel = (
     isSaved
-      ? t("hotelResults.removeSavedHotel") || "Remove {{name}} from saved hotels"
+      ? t("hotelResults.removeSavedHotel") ||
+        "Remove {{name}} from saved hotels"
       : t("hotelResults.saveHotel") || "Save {{name}}"
   ).replace("{{name}}", hotel.name);
 
@@ -538,10 +547,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
       const nextSavedIds = toggleSavedHotelId(savedIds, hotel.id);
       const serializedValue = serializeSavedHotelIds(nextSavedIds);
 
-      window.localStorage.setItem(
-        SAVED_HOTEL_IDS_STORAGE_KEY,
-        serializedValue,
-      );
+      window.localStorage.setItem(SAVED_HOTEL_IDS_STORAGE_KEY, serializedValue);
       setIsSaved(isHotelIdSaved(nextSavedIds, hotel.id));
       window.dispatchEvent(
         new CustomEvent(SAVED_HOTEL_IDS_CHANGED_EVENT, {
@@ -703,23 +709,23 @@ export function HotelCard({ hotel }: HotelCardProps) {
                   {distanceText}
                 </p>
               ) : null}
-              {roomTypeText || mealPlanText || amenityDisplay.length > 0 ? (
+              {roomTypeText ||
+              shouldShowMealPlanText ||
+              collapsedAmenityItems.length > 0 ? (
                 <div className="mt-2 space-y-1">
                   {roomTypeText ? (
                     <p className="text-sm font-medium leading-5 text-slate-800">
                       {roomTypeText}
                     </p>
                   ) : null}
-                  {mealPlanText ? (
+                  {shouldShowMealPlanText ? (
                     <p className="text-[13px] font-normal leading-5 text-slate-600">
                       {mealPlanText}
                     </p>
                   ) : null}
-                  {amenityDisplay.length > 0 ? (
-                    <p className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-normal leading-5 text-slate-600">
-                      {amenityDisplay.join(" · ")}
-                    </p>
-                  ) : null}
+                  <HotelAmenityList
+                    items={resolveAmenityLabels(collapsedAmenityItems, t)}
+                  />
                 </div>
               ) : null}
               {cancellationDisplay ? (
@@ -863,12 +869,17 @@ export function HotelCard({ hotel }: HotelCardProps) {
                 <dd className="mt-1">{cancellationDisplay.label}</dd>
               </div>
             ) : null}
-            {expandedAmenityDisplay.length > 0 ? (
+            {expandedAmenityItems.length > 0 ? (
               <div>
                 <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">
                   {t("hotelResults.amenitiesDetails") || "Amenities"}
                 </dt>
-                <dd className="mt-1">{expandedAmenityDisplay.join(" · ")}</dd>
+                <dd>
+                  <HotelAmenityList
+                    items={resolveAmenityLabels(expandedAmenityItems, t)}
+                    expanded
+                  />
+                </dd>
               </div>
             ) : null}
             {reviewBand ? (
