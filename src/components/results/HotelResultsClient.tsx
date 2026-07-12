@@ -2408,8 +2408,9 @@ function StarRatingFilterControl({
   ];
 
   return (
-    <fieldset className="space-y-1.5">
+    <fieldset className="space-y-0.5">
       <legend className="sr-only">{t("hotelResults.starRating")}</legend>
+
       {options.map((rating) => {
         const selected = selectedRating === rating;
         const label =
@@ -2421,15 +2422,15 @@ function StarRatingFilterControl({
           <label
             key={rating}
             className={cn(
-              "flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-lg border px-2.5 py-2 text-sm transition-colors focus-within:ring-2 focus-within:ring-[#004BB8]/25",
+              "group flex min-h-9 cursor-pointer items-center justify-between gap-3 rounded-md border border-transparent px-2 py-1.5 text-sm transition-colors focus-within:ring-2 focus-within:ring-[#004BB8]/25",
               selected
-                ? "border-[#004BB8] bg-[#EAF2FB] text-[#123B65]"
-                : "border-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-50",
+                ? "border-[#8FB3DC]/70 bg-[#F4F8FC] text-[#123B65]"
+                : "text-slate-700 hover:bg-slate-50",
             )}
           >
-            <span className="flex min-w-0 items-center gap-1.5">
+            <span className="flex min-w-0 items-center gap-2">
               <input
-                className="h-4 w-4 shrink-0 cursor-pointer accent-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+                className="h-3.5 w-3.5 shrink-0 cursor-pointer accent-[#0057B8]"
                 type="radio"
                 name={groupId}
                 value={rating}
@@ -2437,21 +2438,38 @@ function StarRatingFilterControl({
                 onChange={() => onChange(rating)}
                 aria-label={label}
               />
+
               {rating === ALL_HOTEL_STAR_RATINGS ? (
-                <span className="font-medium">{label}</span>
+                <span
+                  className={cn(
+                    "leading-none",
+                    selected ? "font-semibold" : "font-normal",
+                  )}
+                >
+                  {label}
+                </span>
               ) : (
-                <span className="flex items-center gap-0.5" aria-hidden="true">
+                <span
+                  className="flex items-center gap-[2px]"
+                  aria-hidden="true"
+                >
                   {Array.from({ length: rating }).map((_, index) => (
                     <Star
                       key={index}
-                      className="h-4 w-4 fill-amber-400 text-amber-400"
+                      className="h-[15px] w-[15px] fill-[#E9A400] text-[#E9A400]"
                       aria-hidden="true"
                     />
                   ))}
                 </span>
               )}
             </span>
-            <span className="shrink-0 font-mono text-xs text-slate-500">
+
+            <span
+              className={cn(
+                "min-w-6 shrink-0 text-right text-[11px] font-medium tabular-nums",
+                selected ? "text-[#315E8C]" : "text-slate-500",
+              )}
+            >
               {formatHotelCount(counts[rating] ?? 0, locale)}
             </span>
           </label>
