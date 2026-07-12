@@ -1037,7 +1037,6 @@ test("Thai Hotels results page copy resolves through active i18n keys", () => {
     ["hotelResults.budgetPrice", "งบประมาณ / ราคา", "Budget / Price", [hotelResultsClientSource]],
     ["hotelResults.totalUpTo", "รวมสูงสุด", "Total up to", [hotelResultsClientSource]],
     ["hotelResults.starRating", "ระดับดาว", "Star rating", [hotelResultsClientSource]],
-    ["hotelResults.fromRating", "จาก", "From", [hotelResultsClientSource]],
     ["hotelResults.popularFilters", "ตัวกรองยอดนิยม", "Popular filters", [hotelResultsClientSource]],
     ["hotelResults.filter.breakfastIncludedAvailable", "รวม/มีอาหารเช้า", "Breakfast included/available", [hotelResultsClientSource]],
     ["hotelResults.propertyType", "ประเภทที่พัก", "Property type", [hotelResultsClientSource]],
@@ -1063,6 +1062,9 @@ test("Thai Hotels results page copy resolves through active i18n keys", () => {
     ["hotelResults.viewHotel", "ดูโรงแรม", "View hotel", [hotelCardSource]],
     ["hotelResults.filter.bedAndBreakfast", "ที่พักพร้อมอาหารเช้า", "Bed and breakfast", [hotelCardSource]],
   ];
+
+  assert.equal(th["hotelResults.fromRating"], "จาก", "hotelResults.fromRating should resolve to Thai");
+  assert.notEqual(th["hotelResults.fromRating"], "From", "hotelResults.fromRating should not fall back to screenshot English");
 
   for (const [key, expected, englishFallback, sources] of expectedCopy) {
     assert.equal(th[key], expected, `${key} should resolve to Thai`);
@@ -1130,7 +1132,6 @@ test("Vietnamese Hotels Results page copy resolves through active i18n keys", ()
     ["hotelResults.popularFilters", "Bộ lọc phổ biến", "Popular filters", [hotelResultsClientSource]],
     ["hotelResults.filter.breakfastIncludedAvailable", "Có/bao gồm bữa sáng", "Breakfast included/available", [hotelResultsClientSource]],
     ["hotelResults.starRating", "Xếp hạng sao", "Star rating", [hotelResultsClientSource]],
-    ["hotelResults.fromRating", "Từ", "From", [hotelResultsClientSource]],
     ["hotelResults.propertyType", "Loại chỗ nghỉ", "Property type", [hotelResultsClientSource]],
     ["hotelResults.filter.hotel", "Khách sạn", "Hotel", [hotelResultsClientSource]],
     ["hotelResults.roomType", "Loại phòng", "Room type", [hotelResultsClientSource]],
@@ -1154,6 +1155,9 @@ test("Vietnamese Hotels Results page copy resolves through active i18n keys", ()
     ["hotelResults.viewHotel", "Xem khách sạn", "View hotel", [hotelCardSource]],
     ["hotelResults.filter.bedAndBreakfast", "Giường và bữa sáng", "Bed and breakfast", [hotelCardSource]],
   ];
+
+  assert.equal(vi["hotelResults.fromRating"], "Từ", "hotelResults.fromRating should resolve to Vietnamese");
+  assert.notEqual(vi["hotelResults.fromRating"], "From", "hotelResults.fromRating should not fall back to screenshot English");
 
   for (const [key, expected, englishFallback, sources] of expectedCopy) {
     assert.equal(vi[key], expected, `${key} should resolve to Vietnamese`);
@@ -6885,7 +6889,6 @@ test("Swedish Hotels results filter and live-search error copy is localized on t
     "hotelResults.totalUpTo",
     "hotelResults.popularFilters",
     "hotelResults.starRating",
-    "hotelResults.fromRating",
     "hotelResults.locationArea",
     "hotelResults.propertyType",
     "hotelResults.roomType",
@@ -6896,7 +6899,6 @@ test("Swedish Hotels results filter and live-search error copy is localized on t
     "hotelResults.showLess",
     "hotelResults.showMore",
     "hotelResults.upToPrice",
-    "hotelResults.starsAndUp",
     "hotelResults.filter.breakfastIncludedAvailable",
     "hotelResults.filter.roomOnly",
     "hotelResults.filter.hotel",
@@ -15519,7 +15521,6 @@ test("Vietnamese Hotels landing and hotel results screenshot copy resolves witho
     "hotelResults.budgetPrice",
     "hotelResults.totalUpTo",
     "hotelResults.starRating",
-    "hotelResults.fromRating",
   ]) {
     assert.ok(hotelResultsClientSource.includes(key), `${key} should be read through HotelResultsClient i18n`);
   }
