@@ -32,6 +32,7 @@ import {
   Heart,
   Minus,
   SquarePen,
+  Users,
   Plus,
   SlidersHorizontal,
   X,
@@ -1151,6 +1152,38 @@ export function FlightResultsClient() {
     expandedSearchScrollYRef.current = currentScrollY;
     setIsSearchExpandedWhileSticky(true);
   }, []);
+
+  const openStickySearchEditor = useCallback(
+    (target: "route" | "dates" | "travelers") => {
+      const currentScrollY = window.scrollY;
+      expandedSearchScrollYRef.current = currentScrollY;
+      setIsSearchExpandedWhileSticky(true);
+      setActiveDesktopSearchSurface("sticky");
+      setTripTypeMenuOpen(false);
+      setActiveSuggest(null);
+      setDropdownPosition(null);
+      setActiveDatePicker(target === "dates" ? "departure" : null);
+      setDatePickerPosition(null);
+      setTravelerPopoverOpen(target === "travelers");
+      setTravelerPopoverPosition(null);
+
+      if (target === "route") {
+        window.requestAnimationFrame(() => {
+          const originInput = stickyOriginWrapRef.current?.querySelector("input");
+          originInput?.focus();
+        });
+      }
+    },
+    [
+      setActiveDatePicker,
+      setActiveSuggest,
+      setDatePickerPosition,
+      setDropdownPosition,
+      setTravelerPopoverOpen,
+      setTravelerPopoverPosition,
+      setTripTypeMenuOpen,
+    ],
+  );
 
   const isStickySearchPanelOpen =
     isSearchCollapsed && isSearchExpandedWhileSticky;
@@ -4671,114 +4704,87 @@ export function FlightResultsClient() {
   }
 
   function renderDesktopMinimizedSearchBar() {
-    const stickyLabelClass =
-      "text-[0.6rem] font-semibold uppercase leading-3 tracking-[0.13em] text-slate-500/95";
-    const stickyValueClass =
-      "mt-1 block min-w-0 truncate text-[0.93rem] font-semibold leading-5 text-slate-950";
-    const collapsedFieldClass =
-      "focus-ring flex min-h-[50px] min-w-0 flex-col justify-center px-4 py-2 text-start transition-colors hover:bg-white/60 focus-visible:bg-white/75";
-    const collapsedSeparatorClass = "border-r border-slate-300/60";
-    const collapsedConnectorClass =
-      "focus-ring flex min-h-[50px] cursor-pointer items-center justify-center bg-slate-50/60 px-1.5 text-[#004BB8] transition-colors hover:bg-white/75 hover:text-[#021C2B] focus-visible:bg-white";
-    const stickyDateSummary = departureDateInput
+    const compactSectionClass =
+      "focus-ring flex h-[56px] min-w-0 items-center gap-2.5 px-3 text-start transition-colors hover:bg-slate-50/80 focus-visible:bg-slate-50/90";
+    const compactValueClass = "min-w-0 truncate text-[0.86rem] font-medium leading-5 text-slate-800";
+    const compactDateSummary = departureDateInput
       ? tripTypeInput === "round-trip" && returnDateInput
         ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
         : formatCompactDateLabel(departureDateInput, calendarLocale)
       : t("travelDates");
+
     return (
       <div
         className={cn(
-          "fixed inset-x-0 top-0 z-[100] hidden border-b border-slate-200/80 bg-gradient-to-b from-[#fbfdff]/96 via-[#f8fbff]/94 to-[#f5f9ff]/92 px-4 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.07)] backdrop-blur-xl transition-all duration-200 lg:block",
+          "pointer-events-none fixed inset-x-0 top-3 z-[100] hidden px-4 transition-all duration-200 lg:block",
           isSearchCollapsed && !isStickySearchPanelOpen
-            ? "pointer-events-auto translate-y-0 opacity-100"
-            : "pointer-events-none -translate-y-3 opacity-0",
+            ? "translate-y-0 opacity-100"
+            : "-translate-y-3 opacity-0",
         )}
         aria-hidden={!isSearchCollapsed || isStickySearchPanelOpen}
       >
         <div ref={stickySearchPanelRef} className="page-shell">
-          <div className="mx-auto w-full max-w-5xl">
-            <form
-              onSubmit={handleCompactSearchSubmit}
-              className="group grid min-h-[62px] w-full grid-cols-[minmax(108px,0.72fr)_minmax(140px,1fr)_44px_minmax(140px,1fr)_minmax(150px,1.03fr)_minmax(150px,1.05fr)_auto] items-stretch overflow-hidden rounded-xl border border-slate-300 bg-[#f6f9fd]/95 text-start shadow-[0_14px_34px_-24px_rgba(15,23,42,0.48)] ring-1 ring-white/70 backdrop-blur-md transition hover:border-slate-400/70"
+          <form
+            onSubmit={handleCompactSearchSubmit}
+            className="pointer-events-auto mx-auto grid h-[58px] w-full max-w-[820px] grid-cols-[minmax(220px,1.5fr)_minmax(150px,0.9fr)_minmax(160px,1fr)_92px] items-center overflow-hidden rounded-xl border border-slate-200/95 bg-white shadow-[0_12px_28px_-22px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.025]"
+          >
+            <button
+              type="button"
+              aria-expanded={isStickySearchPanelOpen}
+              aria-label={`${t("editFlightSearch")}: ${mobileOriginSummary} ${t("to")} ${mobileDestinationSummary}`}
+              onClick={() => openStickySearchEditor("route")}
+              className={cn(compactSectionClass, "border-r border-slate-200/85")}
             >
-              <button
-                type="button"
-                aria-expanded={isStickySearchPanelOpen}
-                aria-label={t("searchFlights")}
-                onClick={expandStickySearch}
-                className={cn(collapsedFieldClass, collapsedSeparatorClass)}
+              <span className="min-w-0 truncate text-[0.92rem] font-semibold leading-5 text-slate-950">
+                {mobileOriginSummary}
+              </span>
+              <ArrowRightLeft
+                className="h-4 w-4 shrink-0 text-[#004BB8]"
+                aria-hidden="true"
+              />
+              <span className="min-w-0 truncate text-[0.92rem] font-semibold leading-5 text-slate-950">
+                {mobileDestinationSummary}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              aria-expanded={isStickySearchPanelOpen}
+              aria-label={`${t("editFlightSearch")}: ${compactDateSummary}`}
+              onClick={() => openStickySearchEditor("dates")}
+              className={cn(compactSectionClass, "border-r border-slate-200/85")}
+            >
+              <Calendar
+                className="h-4 w-4 shrink-0 text-[#004BB8]"
+                aria-hidden="true"
+              />
+              <span className={compactValueClass}>{compactDateSummary}</span>
+            </button>
+
+            <button
+              type="button"
+              aria-expanded={isStickySearchPanelOpen}
+              aria-label={`${t("editFlightSearch")}: ${travelerCabinSummary}`}
+              onClick={() => openStickySearchEditor("travelers")}
+              className={cn(compactSectionClass, "border-r border-slate-200/85")}
+            >
+              <Users
+                className="h-4 w-4 shrink-0 text-[#004BB8]"
+                aria-hidden="true"
+              />
+              <span className={compactValueClass}>{travelerCabinSummary}</span>
+            </button>
+
+            <div className="flex h-[56px] items-center justify-center px-2">
+              <Button
+                type="submit"
+                className="h-10 w-[92px] rounded-lg bg-[#004BB8] px-3 text-sm font-semibold text-white shadow-none ring-1 ring-[#004BB8]/10 hover:bg-[#021C2B]"
+                onClick={(event) => event.stopPropagation()}
               >
-                <span className={stickyLabelClass}>{t("tripType")}</span>
-                <span className={stickyValueClass}>
-                  {mobileTripTypeSummary}
-                </span>
-              </button>
-              <button
-                type="button"
-                aria-expanded={isStickySearchPanelOpen}
-                aria-label={t("searchFlights")}
-                onClick={expandStickySearch}
-                className={collapsedFieldClass}
-              >
-                <span className={stickyLabelClass}>{t("origin")}</span>
-                <span className={stickyValueClass}>{mobileOriginSummary}</span>
-              </button>
-              <button
-                type="button"
-                aria-label={t("swapOriginDestination")}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  handleSwapLocations();
-                }}
-                className={collapsedConnectorClass}
-              >
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/65 text-current shadow-[0_4px_12px_rgba(15,23,42,0.06)] ring-1 ring-white/80 transition group-hover:border-slate-400/80">
-                  <ArrowRightLeft className="h-4 w-4" aria-hidden="true" />
-                </span>
-              </button>
-              <button
-                type="button"
-                aria-expanded={isStickySearchPanelOpen}
-                aria-label={t("searchFlights")}
-                onClick={expandStickySearch}
-                className={cn(collapsedFieldClass, collapsedSeparatorClass)}
-              >
-                <span className={stickyLabelClass}>{t("destination")}</span>
-                <span className={stickyValueClass}>
-                  {mobileDestinationSummary}
-                </span>
-              </button>
-              <button
-                type="button"
-                aria-expanded={isStickySearchPanelOpen}
-                aria-label={t("searchFlights")}
-                onClick={expandStickySearch}
-                className={cn(collapsedFieldClass, collapsedSeparatorClass)}
-              >
-                <span className={stickyLabelClass}>{t("travelDates")}</span>
-                <span className={stickyValueClass}>{stickyDateSummary}</span>
-              </button>
-              <button
-                type="button"
-                aria-expanded={isStickySearchPanelOpen}
-                aria-label={t("searchFlights")}
-                onClick={expandStickySearch}
-                className={collapsedFieldClass}
-              >
-                <span className={stickyLabelClass}>{t("travelers")}</span>
-                <span className={stickyValueClass}>{travelerCabinSummary}</span>
-              </button>
-              <div className="flex items-center border-l border-slate-300/60 bg-white/55 px-3">
-                <Button
-                  type="submit"
-                  className="h-[42px] rounded-lg bg-[#004BB8] px-5 text-sm font-bold text-white shadow-[0_10px_20px_rgba(0,75,184,0.14)] ring-1 ring-[#004BB8]/12 hover:bg-[#021C2B]"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  {t("search")}
-                </Button>
-              </div>
-            </form>
-          </div>
+                {t("search")}
+              </Button>
+            </div>
+          </form>
         </div>
       </div>
     );
