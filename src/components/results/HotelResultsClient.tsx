@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -36,6 +37,12 @@ import { normalizeHotelDestinationSearchValue } from "@/data/hotelDestinations";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn, formatCurrency } from "@/lib/utils";
 import {
+  ALL_HOTEL_STAR_RATINGS,
+  countHotelsByStarRating,
+  hotelMatchesStarRating,
+  type HotelStarRatingSelection,
+} from "@/components/results/hotelStarRatingFilter";
+import {
   calculateCompactFilterPlacement,
   shouldShowDesktopCompactFilter,
 } from "@/lib/flights/desktopCompactFilter";
@@ -66,7 +73,6 @@ type CompactHotelFilterSectionId =
 const FILTER_APPLYING_DELAY_MS = 700;
 const SEARCH_APPLYING_TIMEOUT_MS = 15000;
 const FILTER_SCROLLBAR_HIDE_DELAY_MS = 700;
-const DEFAULT_MIN_RATING = 3;
 
 function lockBodyScroll() {
   const bodyElement = document.body;
@@ -387,7 +393,7 @@ type ActiveHotelFilterChip = {
   label: string;
   group?: keyof HotelFilterSelections;
   value?: string;
-  kind?: "maxPrice" | "minRating";
+  kind?: "maxPrice" | "starRating";
 };
 
 type HotelFilterSelections = {
@@ -468,7 +474,8 @@ export function HotelResultsClient() {
   const [searchApplying, setSearchApplying] = useState(false);
   const [filterScrollbarVisible, setFilterScrollbarVisible] = useState(false);
   const [maxPrice, setMaxPrice] = useState(1200);
-  const [minRating, setMinRating] = useState(DEFAULT_MIN_RATING);
+  const [selectedStarRating, setSelectedStarRating] =
+    useState<HotelStarRatingSelection>(ALL_HOTEL_STAR_RATINGS);
   const [selectedFilters, setSelectedFilters] =
     useState<HotelFilterSelections>(emptySelections);
   const [hotelSummarySortMode, setHotelSummarySortMode] =
@@ -798,6 +805,7 @@ export function HotelResultsClient() {
         }
         setMaxPrice(getResultMaxPrice(data.results));
         setSelectedFilters(emptySelections);
+        setSelectedStarRating(ALL_HOTEL_STAR_RATINGS);
       })
       .catch((searchError) => {
         if (!active) return;
@@ -830,12 +838,21 @@ export function HotelResultsClient() {
   const filtered = useMemo(
     () =>
       results.filter((hotel) =>
-        hotelMatchesFilters(hotel, maxPrice, minRating, selectedFilters),
+        hotelMatchesFilters(
+          hotel,
+          maxPrice,
+          selectedStarRating,
+          selectedFilters,
+        ),
       ),
-    [maxPrice, minRating, results, selectedFilters],
+    [maxPrice, results, selectedFilters, selectedStarRating],
   );
 
   const resultMaxPrice = useMemo(() => getResultMaxPrice(results), [results]);
+  const starRatingCounts = useMemo(
+    () => countHotelsByStarRating(results),
+    [results],
+  );
   const resultCurrency = useMemo(
     () => getSingleHotelResultCurrency(results),
     [results],
@@ -847,7 +864,7 @@ export function HotelResultsClient() {
         selectedFilters,
         maxPrice,
         resultMaxPrice,
-        minRating,
+        selectedStarRating,
         resultCurrency,
         t,
         locale,
@@ -855,7 +872,7 @@ export function HotelResultsClient() {
     [
       locale,
       maxPrice,
-      minRating,
+      selectedStarRating,
       resultCurrency,
       resultMaxPrice,
       selectedFilters,
@@ -867,13 +884,13 @@ export function HotelResultsClient() {
 
   const activeFilterCount = useMemo(() => {
     let count = maxPrice < resultMaxPrice ? 1 : 0;
-    count += minRating > DEFAULT_MIN_RATING ? 1 : 0;
+    count += selectedStarRating === ALL_HOTEL_STAR_RATINGS ? 0 : 1;
     count += Object.values(selectedFilters).reduce(
       (total, group) => total + group.length,
       0,
     );
     return count;
-  }, [maxPrice, minRating, resultMaxPrice, selectedFilters]);
+  }, [maxPrice, resultMaxPrice, selectedFilters, selectedStarRating]);
   const desktopFilterSidebarRef = useRef<HTMLElement | null>(null);
   const desktopFilterSentinelRef = useRef<HTMLDivElement | null>(null);
   const resultsGridRef = useRef<HTMLDivElement | null>(null);
@@ -1209,15 +1226,15 @@ export function HotelResultsClient() {
     setMaxPrice(value);
   };
 
-  const updateMinRating = (value: number) => {
+  const updateSelectedStarRating = (rating: HotelStarRatingSelection) => {
     triggerFilterApplying();
-    setMinRating(value);
+    setSelectedStarRating(rating);
   };
 
   const resetFilters = () => {
     triggerFilterApplying();
     setMaxPrice(resultMaxPrice);
-    setMinRating(DEFAULT_MIN_RATING);
+    setSelectedStarRating(ALL_HOTEL_STAR_RATINGS);
     setSelectedFilters(emptySelections);
   };
 
@@ -1239,8 +1256,8 @@ export function HotelResultsClient() {
       return;
     }
 
-    if (chip.kind === "minRating") {
-      setMinRating(DEFAULT_MIN_RATING);
+    if (chip.kind === "starRating") {
+      setSelectedStarRating(ALL_HOTEL_STAR_RATINGS);
       return;
     }
 
@@ -1434,8 +1451,9 @@ export function HotelResultsClient() {
               resultMaxPrice={resultMaxPrice}
               priceCurrency={resultCurrency}
               locale={locale}
-              minRating={minRating}
-              setMinRating={updateMinRating}
+              selectedRating={selectedStarRating}
+              setSelectedRating={updateSelectedStarRating}
+              starRatingCounts={starRatingCounts}
               options={filterOptions}
               selectedFilters={selectedFilters}
               toggleFilter={toggleFilter}
@@ -1482,8 +1500,9 @@ export function HotelResultsClient() {
                   resultMaxPrice={resultMaxPrice}
                   priceCurrency={resultCurrency}
                   locale={locale}
-                  minRating={minRating}
-                  setMinRating={updateMinRating}
+                  selectedRating={selectedStarRating}
+                  setSelectedRating={updateSelectedStarRating}
+                  starRatingCounts={starRatingCounts}
                   options={filterOptions}
                   selectedFilters={selectedFilters}
                   toggleFilter={toggleFilter}
@@ -1688,8 +1707,9 @@ export function HotelResultsClient() {
             resultMaxPrice={resultMaxPrice}
             priceCurrency={resultCurrency}
             locale={locale}
-            minRating={minRating}
-            setMinRating={updateMinRating}
+            selectedRating={selectedStarRating}
+            setSelectedRating={updateSelectedStarRating}
+            starRatingCounts={starRatingCounts}
             options={filterOptions}
             selectedFilters={selectedFilters}
             toggleFilter={toggleFilter}
@@ -1961,12 +1981,6 @@ function formatHotelRating(
   ).replace("{{count}}", formatted);
 }
 
-function formatHotelRatingNumber(rating: number, locale: string) {
-  return new Intl.NumberFormat(locale, {
-    maximumFractionDigits: Number.isInteger(rating) ? 0 : 1,
-    minimumFractionDigits: Number.isInteger(rating) ? 0 : 1,
-  }).format(rating);
-}
 
 function formatHotelCount(count: number, locale: string) {
   return new Intl.NumberFormat(locale, {
@@ -2031,8 +2045,9 @@ function HotelFilters({
   resultMaxPrice,
   priceCurrency,
   locale,
-  minRating,
-  setMinRating,
+  selectedRating,
+  setSelectedRating,
+  starRatingCounts,
   options,
   selectedFilters,
   toggleFilter,
@@ -2046,8 +2061,9 @@ function HotelFilters({
   resultMaxPrice: number;
   priceCurrency: string;
   locale: string;
-  minRating: number;
-  setMinRating: (value: number) => void;
+  selectedRating: HotelStarRatingSelection;
+  setSelectedRating: (value: HotelStarRatingSelection) => void;
+  starRatingCounts: Record<HotelStarRatingSelection, number>;
   options: ReturnType<typeof buildHotelFilterOptions>;
   selectedFilters: HotelFilterSelections;
   toggleFilter: (group: keyof HotelFilterSelections, value: string) => void;
@@ -2100,14 +2116,14 @@ function HotelFilters({
     {
       id: "rating",
       title: t("hotelResults.starRating"),
-      selectedCount: minRating > DEFAULT_MIN_RATING ? 1 : 0,
+      selectedCount: selectedRating === ALL_HOTEL_STAR_RATINGS ? 0 : 1,
       content: (
-        <RatingFilterControl
-          t={t}
-          minRating={minRating}
-          setMinRating={setMinRating}
+        <StarRatingFilterControl
+          selectedRating={selectedRating}
+          onChange={setSelectedRating}
+          counts={starRatingCounts}
           locale={locale}
-          filterRangeClass={filterRangeClass}
+          t={t}
         />
       ),
     },
@@ -2242,23 +2258,13 @@ function HotelFilters({
         />
 
         <FilterSection title={t("hotelResults.starRating")} layout={layout}>
-          <label className="block">
-            <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
-              {t("hotelResults.fromRating")}{" "}
-              <span className="font-mono text-[#021C2B]">
-                {formatHotelRatingNumber(minRating, locale)}+
-              </span>
-            </span>
-            <input
-              className={filterRangeClass}
-              type="range"
-              min={1}
-              max={5}
-              step={0.5}
-              value={minRating}
-              onChange={(event) => setMinRating(Number(event.target.value))}
-            />
-          </label>
+          <StarRatingFilterControl
+            selectedRating={selectedRating}
+            onChange={setSelectedRating}
+            counts={starRatingCounts}
+            locale={locale}
+            t={t}
+          />
         </FilterSection>
 
         <CheckboxFilterSection
@@ -2378,37 +2384,82 @@ function PriceFilterControl({
   );
 }
 
-function RatingFilterControl({
-  t,
-  minRating,
-  setMinRating,
+function StarRatingFilterControl({
+  selectedRating,
+  onChange,
+  counts,
   locale,
-  filterRangeClass,
+  t,
 }: {
-  t: (key: string) => string;
-  minRating: number;
-  setMinRating: (value: number) => void;
+  selectedRating: HotelStarRatingSelection;
+  onChange: (rating: HotelStarRatingSelection) => void;
+  counts: Record<HotelStarRatingSelection, number>;
   locale: string;
-  filterRangeClass: string;
+  t: (key: string) => string;
 }) {
+  const groupId = useId();
+  const options: HotelStarRatingSelection[] = [
+    ALL_HOTEL_STAR_RATINGS,
+    5,
+    4,
+    3,
+    2,
+    1,
+  ];
+
   return (
-    <label className="block">
-      <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
-        {t("hotelResults.fromRating")} {" "}
-        <span className="font-mono text-[#021C2B]">
-          {formatHotelRatingNumber(minRating, locale)}+
-        </span>
-      </span>
-      <input
-        className={filterRangeClass}
-        type="range"
-        min={1}
-        max={5}
-        step={0.5}
-        value={minRating}
-        onChange={(event) => setMinRating(Number(event.target.value))}
-      />
-    </label>
+    <fieldset className="space-y-1.5">
+      <legend className="sr-only">{t("hotelResults.starRating")}</legend>
+      <span className="sr-only">{t("hotelResults.fromRating")}</span>
+      <span className="sr-only">{t("hotelResults.starsAndUp")}</span>
+      {options.map((rating) => {
+        const selected = selectedRating === rating;
+        const label =
+          rating === ALL_HOTEL_STAR_RATINGS
+            ? t("recentSearchesFilterAll") || "All"
+            : formatHotelRating(rating, t, locale);
+
+        return (
+          <label
+            key={rating}
+            className={cn(
+              "flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-lg border px-2.5 py-2 text-sm transition-colors focus-within:ring-2 focus-within:ring-[#004BB8]/25",
+              selected
+                ? "border-[#004BB8] bg-[#EAF2FB] text-[#123B65]"
+                : "border-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-50",
+            )}
+          >
+            <span className="flex min-w-0 items-center gap-1.5">
+              <input
+                className="sr-only"
+                type="radio"
+                name={groupId}
+                value={rating}
+                checked={selected}
+                onChange={() => onChange(rating)}
+                aria-label={label}
+              />
+              {rating === ALL_HOTEL_STAR_RATINGS ? (
+                <span className="font-medium">{label}</span>
+              ) : (
+                <span className="flex items-center gap-0.5" aria-hidden="true">
+                  {Array.from({ length: rating }).map((_, index) => (
+                    <Star
+                      key={index}
+                      className="h-4 w-4 fill-amber-400 text-amber-400"
+                      aria-hidden="true"
+                    />
+                  ))}
+                </span>
+              )}
+            </span>
+            <span className="shrink-0 font-mono text-xs text-slate-500">
+              {formatHotelCount(counts[rating] ?? 0, locale)}
+            </span>
+          </label>
+        );
+      })}
+    </fieldset>
   );
 }
 
@@ -2590,7 +2641,7 @@ function buildActiveFilterChips(
   selectedFilters: HotelFilterSelections,
   maxPrice: number,
   resultMaxPrice: number,
-  minRating: number,
+  selectedStarRating: HotelStarRatingSelection,
   priceCurrency: string,
   t: (key: string) => string,
   locale: string,
@@ -2634,14 +2685,11 @@ function buildActiveFilterChips(
     });
   }
 
-  if (minRating > DEFAULT_MIN_RATING) {
+  if (selectedStarRating !== ALL_HOTEL_STAR_RATINGS) {
     chips.push({
-      key: "minRating",
-      label: t("hotelResults.starsAndUp").replace(
-        "{{rating}}",
-        formatHotelRatingNumber(minRating, locale),
-      ),
-      kind: "minRating",
+      key: "starRating",
+      label: formatHotelRating(selectedStarRating, t, locale),
+      kind: "starRating",
     });
   }
 
@@ -2726,12 +2774,12 @@ function buildTermOptions(
 function hotelMatchesFilters(
   hotel: PublicHotelResult,
   maxPrice: number,
-  minRating: number,
+  selectedStarRating: HotelStarRatingSelection,
   selectedFilters: HotelFilterSelections,
 ) {
   return (
     hotel.totalPrice <= maxPrice &&
-    hotel.rating >= minRating &&
+    hotelMatchesStarRating(hotel.rating, selectedStarRating) &&
     matchesTermGroup(
       hotel,
       selectedFilters.popular,
