@@ -2,7 +2,7 @@
 
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { useMemo, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, SlidersHorizontal } from "lucide-react";
 
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -188,17 +188,22 @@ export function DesktopFlightFilters({
   const rangeClass = "h-1.5 w-full cursor-pointer appearance-none rounded-full bg-[#D7E5F8] accent-[#0067DB] disabled:cursor-not-allowed disabled:opacity-60";
 
   return (
-    <div className="rounded-[10px] border border-[#D8E1EC] bg-[#FCFDFF] px-4 py-4 shadow-[0_10px_26px_-24px_rgba(15,23,42,0.5)] xl:px-5">
-      <div className="mb-5 flex items-center justify-between gap-3">
-        <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-slate-950">{t("filterBy")}</h2>
-        <button
-          type="button"
-          className="rounded-md px-1.5 py-1 text-xs font-semibold text-[#004BB8] transition hover:bg-[#EAF2FB] disabled:pointer-events-none disabled:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
-          onClick={onClear}
-          disabled={activeFilterCount === 0}
-        >
-          {t("carsResults.resetFilters")}
-        </button>
+    <div className="rounded-[10px] border border-[#D8E1EC] bg-[#F5F8FC] px-4 py-4 shadow-[0_10px_26px_-24px_rgba(15,23,42,0.5)] xl:px-5">
+      <div className="mb-4 border-b border-[#C7D5E6]/80 pb-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal aria-hidden="true" className="h-4 w-4 text-[#004BB8]" strokeWidth={2.2} />
+            <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-slate-950">{t("filterBy")}</h2>
+          </div>
+          <button
+            type="button"
+            className="rounded-md px-1.5 py-1 text-xs font-semibold text-[#004BB8] transition hover:bg-[#EAF2FB] disabled:pointer-events-none disabled:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+            onClick={onClear}
+            disabled={activeFilterCount === 0}
+          >
+            {t("carsResults.reset")}
+          </button>
+        </div>
       </div>
 
       <div className="space-y-5">
@@ -259,7 +264,7 @@ function Accordion({ title, emptyText, children }: { title: string; emptyText?: 
   const panelId = `desktop-flight-filter-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-panel`;
   const hasOptions = Boolean(children) && (!Array.isArray(children) || children.length > 0);
 
-  return <section className="border-t border-slate-200/80"><button type="button" aria-expanded={isOpen} aria-controls={panelId} className="flex w-full items-center justify-between gap-3 py-3 text-left text-xs font-extrabold uppercase tracking-[0.08em] text-slate-950 transition hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30" onClick={() => setIsOpen((current) => !current)}><span>{title}</span><ChevronDown aria-hidden="true" className={cn("h-4 w-4 text-slate-600 transition", isOpen && "rotate-180 text-[#004BB8]")} /></button><div id={panelId} className={cn("grid gap-0.5 pb-3", !isOpen && "hidden")}>{hasOptions ? children : <p className="py-1 text-xs text-slate-500">{emptyText}</p>}</div></section>;
+  return <section className="border-t border-slate-200/80"><button type="button" aria-expanded={isOpen} aria-controls={panelId} className="flex min-h-10 w-full items-center justify-between gap-3 py-2.5 text-left text-[12px] font-semibold uppercase tracking-[0.055em] text-slate-700 transition hover:bg-[#EAF2FB]/55 hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30" onClick={() => setIsOpen((current) => !current)}><span>{title}</span><ChevronDown aria-hidden="true" className={cn("h-4 w-4 text-slate-500 transition", isOpen && "rotate-180 text-[#004BB8]")} /></button><div id={panelId} className={cn("grid gap-0.5 pb-2.5", !isOpen && "hidden")}>{hasOptions ? children : <p className="py-1 text-xs text-slate-500">{emptyText}</p>}</div></section>;
 }
 
 function FacetRow({ label, count, secondaryLabel, rightLabel, checked, onChange }: { label: string; count?: number; secondaryLabel?: string; rightLabel?: string; checked: boolean; onChange: () => void }) {

@@ -6876,7 +6876,7 @@ export function FlightResultsClient() {
                   className="relative hidden items-center gap-2 lg:flex"
                 >
                   <span className="text-[16px] font-medium text-[#142033]">
-                    Sort by
+                    Sort by:
                   </span>
                   <button
                     ref={desktopSortButtonRef}
