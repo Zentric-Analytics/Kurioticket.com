@@ -13597,7 +13597,8 @@ test("Thai homepage visible copy and render paths resolve without English fallba
   assert.ok(translatedFaqs.some((item) => item.answer.includes("ผู้ให้บริการภายนอก")));
 
   assert.ok(pageSource.includes('t("homeHeroTitle")') && pageSource.includes('t("homeNewsletterTitle")'));
-  assert.ok(pageSource.includes('const translatedFaqs = getGeneralFaqs(t)') && pageSource.includes('items={translatedFaqs}'));
+  assert.equal(pageSource.includes('const translatedFaqs = getGeneralFaqs(t)'), false);
+  assert.equal(pageSource.includes('items={translatedFaqs}'), false);
   assert.ok(headerSource.includes("t.flights") && headerSource.includes("t.login") && headerSource.includes("t.signUp"));
   assert.ok(searchTabsSource.includes("t.tripType") && searchTabsSource.includes("t.roundTrip") && searchTabsSource.includes('translate("infantsOnLap")') && searchTabsSource.includes('translate("hotelSearchGuestsLabel")'));
   assert.match(searchTabsSource, /if \(!departureSummary\) \{[\s\S]*?return t\.travelDates \|\| "Travel dates";[\s\S]*?\}/);
@@ -13883,7 +13884,8 @@ test("Indonesian homepage visible copy and render paths resolve without English 
   assert.ok(translatedFaqQuestions.includes("Mengapa saya diarahkan ke penyedia lain?"));
   assert.ok(translatedFaqAnswers.includes("Kurioticket dapat membantu akses akun, masalah masuk, masalah pendaftaran, akses profil, dan masalah platform yang terkait dengan akun."));
   assert.ok(translatedFaqAnswers.includes("Kurioticket adalah platform pencarian dan perbandingan perjalanan, dan beberapa hasil mengarahkan Anda ke penyedia tepercaya tempat Anda menyelesaikan pemesanan, pembayaran, dan dukungan khusus penyedia."));
-  assert.ok(pageSource.includes('const translatedFaqs = getGeneralFaqs(t)') && pageSource.includes('items={translatedFaqs}'));
+  assert.equal(pageSource.includes('const translatedFaqs = getGeneralFaqs(t)'), false);
+  assert.equal(pageSource.includes('items={translatedFaqs}'), false);
   assert.match(
     searchTabsSource,
     /if \(!departureSummary\) \{[\s\S]*?return t\.travelDates \|\| "Travel dates";[\s\S]*?\}/,
@@ -15150,7 +15152,7 @@ test("Vietnamese homepage destinations, discovery cards, support FAQ answers, da
   }
 
   const homepageSource = readFileSync("src/app/page.tsx", "utf8");
-  for (const key of ["homeHeroTitle", "homePopularDestinations", "homeDiscoveryTitle", "homeTrustTitle", "homePromoFlightsTitle", "faqHeading", "homeNewsletterTitle"]) {
+  for (const key of ["homeHeroTitle", "homePopularDestinations", "homeDiscoveryTitle", "homeTrustTitle", "homePromoFlightsTitle", "homeNewsletterTitle"]) {
     assert.ok(homepageSource.includes(`t(\"${key}\")`), key);
   }
   assert.equal(homepageSource.includes("Compare travel options in one simple search"), false);

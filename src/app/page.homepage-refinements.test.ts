@@ -3,14 +3,6 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const pageSource = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
-const homepageHotelCountryCardSource = readFileSync(
-  new URL("../data/homepageHotelCountryCards.ts", import.meta.url),
-  "utf8",
-);
-const flagEmojiSource = readFileSync(
-  new URL("../lib/region/flagEmoji.ts", import.meta.url),
-  "utf8",
-);
 const hotelsPageSource = readFileSync(
   new URL("./hotels/page.tsx", import.meta.url),
   "utf8",
@@ -69,69 +61,54 @@ test("previous-to-start programmatic completion clears the next-arrow gate and p
   assert.match(scrollHandlerSource, /updateDestinationArrowState\(\)/);
 });
 
-test("homepage hotel destination section sits between promo panels and newsletter with eight country cards", () => {
+test("homepage country directory replaces the hotel mosaic between promo panels and newsletter", () => {
   const promoIndex = pageSource.indexOf("homePromoHotelsTitle");
-  const hotelSectionIndex = pageSource.indexOf('aria-labelledby="homepage-hotel-destinations-heading"');
+  const directoryIndex = pageSource.indexOf('aria-labelledby="homepage-country-directory-heading"');
   const newsletterIndex = pageSource.indexOf("homeNewsletterTitle");
-  const destinationIds = [...homepageHotelCountryCardSource.matchAll(/"([a-z]{2}-[a-z-]+)"/g)]
-    .map((match) => match[1])
-    .filter((id) => id.includes("-"))
-    .slice(0, 8);
 
   assert.ok(promoIndex >= 0, "hotel promo panel should exist");
-  assert.ok(hotelSectionIndex > promoIndex, "hotel destination section should follow promo panels");
-  assert.ok(newsletterIndex > hotelSectionIndex, "newsletter should follow hotel destination section");
-  assert.match(pageSource, /homepageHotelCountryCards/);
-  assert.deepEqual(destinationIds, [
-    "us-new-york",
-    "gb-london",
-    "fr-paris",
-    "ae-dubai",
-    "jp-tokyo",
-    "mx-cancun",
-    "it-rome",
-    "sg-singapore",
-  ]);
-  assert.equal(new Set(destinationIds).size, 8, "country cards should be unique");
+  assert.ok(directoryIndex > promoIndex, "country directory should follow promo panels");
+  assert.ok(newsletterIndex > directoryIndex, "newsletter should follow country directory");
+  assert.match(pageSource, /countryDirectoryCountries/);
+  assert.doesNotMatch(pageSource, /homepageHotelDestinationCards/);
 });
 
-test("homepage hotel country cards use localized short labels, flags, valid images, and varied moderate layouts", () => {
-  for (const key of [
-    "homeHotelDestinationsCountry.unitedStates",
-    "homeHotelDestinationsCountry.uk",
-    "homeHotelDestinationsCountry.france",
-    "homeHotelDestinationsCountry.uae",
-    "homeHotelDestinationsCountry.japan",
-    "homeHotelDestinationsCountry.mexico",
-    "homeHotelDestinationsCountry.italy",
-    "homeHotelDestinationsCountry.singapore",
+test("homepage country directory uses flags, full display names, and one expanded row state", () => {
+  for (const expected of [
+    'flag: "🇺🇸",\n    name: "United States"',
+    'flag: "🇬🇧", name: "UK"',
+    'flag: "🇫🇷", name: "France"',
+    'flag: "🇦🇪", name: "UAE"',
+    'flag: "🇯🇵", name: "Japan"',
+    'flag: "🇲🇽", name: "Mexico"',
+    'flag: "🇮🇹", name: "Italy"',
+    'flag: "🇸🇬", name: "Singapore"',
   ]) {
-    assert.match(homepageHotelCountryCardSource, new RegExp(key));
+    assert.match(pageSource, new RegExp(expected));
   }
 
-  assert.match(flagEmojiSource, /\^\[A-Z\]\{2\}\$/);
-  assert.match(flagEmojiSource, /String\.fromCodePoint\(0x1f1e6/);
-  assert.match(pageSource, /getFlagEmojiFromCountryCode\(destination\.countryCode\)/);
-  assert.match(pageSource, /aria-hidden="true"/);
-  assert.doesNotMatch(pageSource, /\{destination\.countryCode\}\s*<\//);
-  const hotelSectionSource = pageSource.slice(
-    pageSource.indexOf('aria-labelledby="homepage-hotel-destinations-heading"'),
+  const directorySource = pageSource.slice(
+    pageSource.indexOf('aria-labelledby="homepage-country-directory-heading"'),
     pageSource.indexOf('homeNewsletterTitle'),
   );
-  assert.doesNotMatch(hotelSectionSource, /font-black/);
 
-  assert.match(homepageHotelCountryCardSource, /image: imageCard\.image/);
-  assert.match(homepageHotelCountryCardSource, /imageAlt: imageCard\.imageAlt/);
-  assert.match(homepageHotelCountryCardSource, /searchValue: destination\.searchValue/);
+  assert.match(directorySource, /CARS · FLIGHTS · HOTELS/);
+  assert.match(directorySource, /aria-expanded=\{isExpanded\}/);
+  assert.match(directorySource, /expandedCountryDirectoryId === country\.id/);
+  assert.match(directorySource, /\(\["Flights", "Hotels", "Cars"\] as const\)/);
+  assert.doesNotMatch(directorySource, /\{country\.countryCode\}/);
+});
 
-  const layoutVariants = [...homepageHotelCountryCardSource.matchAll(/layoutVariant: homepageHotelCountryLayoutVariants\[index\]/g)];
-  assert.equal(layoutVariants.length, 1, "cards should be assigned shared layout variants");
-  assert.match(homepageHotelCountryCardSource, /landscape/);
-  assert.match(homepageHotelCountryCardSource, /square/);
-  assert.match(homepageHotelCountryCardSource, /portraitSquare/);
-  assert.match(homepageHotelCountryCardSource, /compactPortrait/);
-  assert.doesNotMatch(homepageHotelCountryCardSource, /520px|min-h-\[520px\]|h-\[520px\]/);
-  assert.doesNotMatch(homepageHotelCountryCardSource, /lg:min-h-\[(3[7-9][0-9]|[4-9][0-9]{2})px\]/);
+test("homepage country directory only shows provider-backed prices when valid fares exist", () => {
+  const directorySource = pageSource.slice(
+    pageSource.indexOf('aria-labelledby="homepage-country-directory-heading"'),
+    pageSource.indexOf('homeNewsletterTitle'),
+  );
+
+  assert.match(directorySource, /fareCardsByExactRoute\.get\(link\.routeKey\)/);
+  assert.match(directorySource, /hasFreshProviderPrice/);
+  assert.match(directorySource, /formatDisplayPrice/);
+  assert.match(directorySource, /\{displayPrice \? <span>\{displayPrice\}<\/span> : null\}/);
 });
 
 test("hotels page source remains on the shared destination image catalog", () => {
@@ -139,11 +116,11 @@ test("hotels page source remains on the shared destination image catalog", () =>
   assert.doesNotMatch(hotelsPageSource, /homepageHotelCountryCards/);
 });
 
-test("homepage hotel destination cards use existing hotel results contract", () => {
-  const hrefSource = pageSource.slice(pageSource.indexOf("function buildHotelDestinationHref"), pageSource.indexOf("function CompareOffersIllustration"));
+test("homepage country directory hotel links use existing hotel results contract", () => {
+  const hrefSource = pageSource.slice(pageSource.indexOf("function buildHotelDirectoryHref"), pageSource.indexOf("const countryDirectoryCountries"));
 
   assert.match(hrefSource, /pathname: "\/hotels\/results"/);
-  assert.match(hrefSource, /destination: destination\.searchValue/);
+  assert.match(hrefSource, /destination: searchValue/);
   assert.match(hrefSource, /checkIn/);
   assert.match(hrefSource, /checkOut/);
   assert.match(hrefSource, /guests: "2"/);
