@@ -27,9 +27,41 @@ test("desktop sticky compact search is a small four-section toolbar without trip
   );
   assert.match(toolbar, /h-\[58px\]/);
   assert.match(toolbar, /h-10 w-\[92px\]/);
-  assert.match(toolbar, /openStickySearchEditor\("route"\)/);
-  assert.match(toolbar, /openStickySearchEditor\("dates"\)/);
-  assert.match(toolbar, /openStickySearchEditor\("travelers"\)/);
+  assert.match(toolbar, /top-0/);
+  assert.match(toolbar, /rounded-lg/);
+  assert.match(toolbar, /onClick={openStickySearchEditor}/);
+  assert.doesNotMatch(toolbar, /openStickySearchEditor\("route"\)/);
+  assert.doesNotMatch(toolbar, /openStickySearchEditor\("dates"\)/);
+  assert.doesNotMatch(toolbar, /openStickySearchEditor\("travelers"\)/);
   assert.doesNotMatch(toolbar, /t\("tripType"\)/);
   assert.doesNotMatch(toolbar, /mobileTripTypeSummary/);
+});
+
+
+function stickyEditorCallbackSource() {
+  const start = source.indexOf("const openStickySearchEditor = useCallback(");
+  const end = source.indexOf("const isStickySearchPanelOpen", start);
+
+  assert.notEqual(start, -1, "sticky editor callback exists");
+  assert.notEqual(end, -1, "sticky panel open state follows editor callback");
+
+  return source.slice(start, end);
+}
+
+test("desktop sticky compact search opens the popout neutrally without targeting fields", () => {
+  const callback = stickyEditorCallbackSource();
+
+  assert.match(callback, /setActiveDatePicker\(null\)/);
+  assert.match(callback, /setTravelerPopoverOpen\(false\)/);
+  assert.match(callback, /setActiveSuggest\(null\)/);
+  assert.match(callback, /stickySearchLauncherRef\.current = event\.currentTarget/);
+  assert.doesNotMatch(callback, /target ===/);
+  assert.doesNotMatch(callback, /\.focus\(\)/);
+});
+
+test("sticky search popout uses neutral dialog focus and returns focus to trigger", () => {
+  assert.match(source, /role="dialog"/);
+  assert.match(source, /aria-modal="true"/);
+  assert.match(source, /stickySearchCloseButtonRef\.current\?\.focus\(\)/);
+  assert.match(source, /stickySearchLauncherRef\.current\?\.focus\(\)/);
 });
