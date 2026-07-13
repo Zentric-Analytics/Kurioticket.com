@@ -679,7 +679,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
                   <span>{hotel.location}</span>
                 </p>
               </div>
-              {reviewBand || neighbourhood || isDemoHotel ? (
+              {reviewBand || reviewCountText || neighbourhood ? (
                 <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-slate-600">
                   {reviewBand ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2 py-0.5 text-white">
@@ -695,11 +695,6 @@ export function HotelCard({ hotel }: HotelCardProps) {
                   {neighbourhood ? (
                     <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">
                       {neighbourhood}
-                    </span>
-                  ) : null}
-                  {isDemoHotel ? (
-                    <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[#004BB8] ring-1 ring-blue-100">
-                      {t("hotelResults.demoListing") || "Demo listing"}
                     </span>
                   ) : null}
                 </div>
