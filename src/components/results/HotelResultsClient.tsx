@@ -1160,13 +1160,16 @@ export function HotelResultsClient() {
     setSelectedFilters(emptySelections);
   };
 
-  const toggleFilter = (group: keyof HotelFilterSelections, value: string) => {
+  const toggleFilter = (group: keyof HotelFilterSelections, value?: string) => {
     triggerFilterApplying();
     setSelectedFilters((current) => ({
       ...current,
-      [group]: current[group].includes(value)
-        ? current[group].filter((item) => item !== value)
-        : [...current[group], value],
+      [group]:
+        value === undefined
+          ? []
+          : current[group].includes(value)
+            ? current[group].filter((item) => item !== value)
+            : [...current[group], value],
     }));
   };
 
@@ -1988,7 +1991,7 @@ function HotelFilters({
   starRatingCounts: Record<HotelStarRatingSelection, number>;
   options: ReturnType<typeof buildHotelFilterOptions>;
   selectedFilters: HotelFilterSelections;
-  toggleFilter: (group: keyof HotelFilterSelections, value: string) => void;
+  toggleFilter: (group: keyof HotelFilterSelections, value?: string) => void;
   activeFilterCount: number;
   onClear: () => void;
 }) {
@@ -2031,8 +2034,8 @@ function HotelFilters({
       ),
     },
     { id: "locations", title: t("hotelResults.locationArea"), selectedCount: getSelectedCount("locations"), content: <CheckboxFilterOptions options={options.locations} selected={selectedFilters.locations} onToggle={(value) => toggleFilter("locations", value)} t={t} locale={locale} /> },
-    { id: "propertyTypes", title: t("hotelResults.propertyType"), selectedCount: getSelectedCount("propertyTypes"), content: <CheckboxFilterOptions options={options.propertyTypes} selected={selectedFilters.propertyTypes} onToggle={(value) => toggleFilter("propertyTypes", value)} t={t} locale={locale} /> },
-    { id: "roomTypes", title: t("hotelResults.roomType"), selectedCount: getSelectedCount("roomTypes"), content: <CheckboxFilterOptions options={options.roomTypes} selected={selectedFilters.roomTypes} onToggle={(value) => toggleFilter("roomTypes", value)} t={t} locale={locale} /> },
+    { id: "propertyTypes", title: t("hotelResults.propertyType"), selectedCount: getSelectedCount("propertyTypes"), content: <CheckboxFilterOptions options={options.propertyTypes} selected={selectedFilters.propertyTypes} onToggle={(value) => toggleFilter("propertyTypes", value)} allOption={{ label: "Any property type", count: options.totalCount, onSelect: () => toggleFilter("propertyTypes") }} t={t} locale={locale} /> },
+    { id: "roomTypes", title: t("hotelResults.roomType"), selectedCount: getSelectedCount("roomTypes"), content: <CheckboxFilterOptions options={options.roomTypes} selected={selectedFilters.roomTypes} onToggle={(value) => toggleFilter("roomTypes", value)} allOption={{ label: "Any room type", count: options.totalCount, onSelect: () => toggleFilter("roomTypes") }} t={t} locale={locale} /> },
     { id: "bedTypes", title: t("hotelResults.bedType"), selectedCount: getSelectedCount("bedTypes"), content: <CheckboxFilterOptions options={options.bedTypes} selected={selectedFilters.bedTypes} onToggle={(value) => toggleFilter("bedTypes", value)} t={t} locale={locale} /> },
     { id: "meals", title: t("hotelResults.meals"), selectedCount: getSelectedCount("meals"), content: <CheckboxFilterOptions options={options.meals} selected={selectedFilters.meals} onToggle={(value) => toggleFilter("meals", value)} t={t} locale={locale} /> },
     { id: "cancellationPolicies", title: t("hotelResults.cancellationPolicy"), selectedCount: getSelectedCount("cancellationPolicies"), content: <CheckboxFilterOptions options={options.cancellationPolicies} selected={selectedFilters.cancellationPolicies} onToggle={(value) => toggleFilter("cancellationPolicies", value)} t={t} locale={locale} /> },
@@ -2183,6 +2186,11 @@ function HotelFilters({
           options={options.propertyTypes}
           selected={selectedFilters.propertyTypes}
           onToggle={(value) => toggleFilter("propertyTypes", value)}
+          allOption={{
+            label: "Any property type",
+            count: options.totalCount,
+            onSelect: () => toggleFilter("propertyTypes"),
+          }}
           t={t}
           locale={locale}
           layout={layout}
@@ -2193,6 +2201,11 @@ function HotelFilters({
           options={options.roomTypes}
           selected={selectedFilters.roomTypes}
           onToggle={(value) => toggleFilter("roomTypes", value)}
+          allOption={{
+            label: "Any room type",
+            count: options.totalCount,
+            onSelect: () => toggleFilter("roomTypes"),
+          }}
           t={t}
           locale={locale}
           collapsedCount={5}
@@ -2436,6 +2449,7 @@ function CheckboxFilterOptions({
   options,
   selected,
   onToggle,
+  allOption,
   t,
   collapsedCount = 4,
   locale,
@@ -2443,20 +2457,69 @@ function CheckboxFilterOptions({
   options: FilterOption[];
   selected: string[];
   onToggle: (value: string) => void;
+  allOption?: {
+    label: string;
+    count: number;
+    onSelect: () => void;
+  };
   t: (key: string) => string;
   collapsedCount?: number;
   locale: string;
 }) {
   const [expanded, setExpanded] = useState(false);
 
-  if (!options.length) return null;
+  if (!options.length && !allOption) return null;
 
+  const allOptionChecked = Boolean(allOption) && selected.length === 0;
   const visibleOptions = expanded ? options : options.slice(0, collapsedCount);
   const hasMore = options.length > collapsedCount;
 
   return (
     <>
       <div className="grid gap-0.5">
+        {allOption ? (
+          <label className="group flex min-h-9 min-w-0 cursor-pointer items-start justify-between gap-3 rounded-lg px-1.5 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950">
+            <span className="flex min-w-0 flex-1 items-start gap-2">
+              <input
+                className="peer sr-only"
+                type="checkbox"
+                checked={allOptionChecked}
+                onChange={() => {
+                  if (!allOptionChecked) allOption.onSelect();
+                }}
+              />
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-[2px] border transition-colors",
+                  allOptionChecked
+                    ? "border-[#0057B8] bg-[#0057B8] text-white"
+                    : "border-slate-300 bg-white group-hover:border-slate-400",
+                  "peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8]/30 peer-focus-visible:ring-offset-2",
+                )}
+              >
+                {allOptionChecked ? (
+                  <Check
+                    className="h-3 w-3"
+                    strokeWidth={3}
+                    aria-hidden="true"
+                  />
+                ) : null}
+              </span>
+              <span
+                className={cn(
+                  "min-w-0 truncate",
+                  allOptionChecked ? "font-semibold text-[#0057B8]" : undefined,
+                )}
+              >
+                {allOption.label}
+              </span>
+            </span>
+            <span className="min-w-6 shrink-0 text-right text-xs font-medium tabular-nums text-slate-500">
+              {formatHotelCount(allOption.count, locale)}
+            </span>
+          </label>
+        ) : null}
         {visibleOptions.map((option) => {
           const checked = selected.includes(option.value);
 
@@ -2554,6 +2617,7 @@ function CheckboxFilterSection({
   options,
   selected,
   onToggle,
+  allOption,
   t,
   collapsedCount = 4,
   locale,
@@ -2563,6 +2627,11 @@ function CheckboxFilterSection({
   options: FilterOption[];
   selected: string[];
   onToggle: (value: string) => void;
+  allOption?: {
+    label: string;
+    count: number;
+    onSelect: () => void;
+  };
   t: (key: string) => string;
   collapsedCount?: number;
   locale: string;
@@ -2574,6 +2643,7 @@ function CheckboxFilterSection({
         options={options}
         selected={selected}
         onToggle={onToggle}
+        allOption={allOption}
         t={t}
         collapsedCount={collapsedCount}
         locale={locale}
@@ -2656,11 +2726,13 @@ function buildHotelFilterOptions(
   t: (key: string) => string,
 ) {
   return {
+    totalCount: hotels.length,
     propertyTypes: buildTermOptions(
       hotels,
       PROPERTY_TYPE_FILTERS,
       (hotel) => [hotel.name, hotel.roomType].join(" "),
       t,
+      true,
     ),
     meals: buildTermOptions(hotels, MEAL_FILTERS, getSearchableHotelText, t),
     cancellationPolicies: buildTermOptions(
@@ -2684,6 +2756,7 @@ function buildHotelFilterOptions(
       ROOM_TYPE_FILTERS,
       (hotel) => hotel.roomType,
       t,
+      true,
     ),
     bedTypes: buildTermOptions(
       hotels,
@@ -2699,6 +2772,7 @@ function buildTermOptions(
   filters: TermFilter[],
   textForHotel: (hotel: PublicHotelResult) => string,
   t: (key: string) => string,
+  includeUniversal = false,
 ) {
   return filters
     .map((filter) => ({
@@ -2708,7 +2782,10 @@ function buildTermOptions(
         textIncludesTerms(textForHotel(hotel), filter.terms),
       ).length,
     }))
-    .filter((option) => option.count > 0 && option.count < hotels.length)
+    .filter(
+      (option) =>
+        option.count > 0 && (includeUniversal || option.count < hotels.length),
+    )
     .sort(
       (first, second) =>
         second.count - first.count || first.label.localeCompare(second.label),
