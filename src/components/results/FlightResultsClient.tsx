@@ -89,6 +89,7 @@ import {
   getSavedTripLocalId,
   saveBackendTrip,
   type SavedTripDisplayDetails,
+  type SavedTripFlightSearch,
 } from "@/lib/saved-trips-api";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
@@ -2073,6 +2074,28 @@ export function FlightResultsClient() {
     if (!activeMobileAirportPicker) focusDestinationInput();
   }
 
+
+  function getCurrentFlightSearchForSavedTrip(): SavedTripFlightSearch | undefined {
+    if (!body) return undefined;
+    const tripType = body.tripType === "one-way" ? "one-way" : "round-trip";
+    const cabinClass = body.cabinClass === "business" || body.cabinClass === "first" ? body.cabinClass : "economy";
+    if (!body.origin || !body.destination || !body.departureDate) return undefined;
+    if (tripType === "round-trip" && !body.returnDate) return undefined;
+    return {
+      tripType,
+      origin: body.origin,
+      destination: body.destination,
+      departureDate: body.departureDate,
+      returnDate: tripType === "round-trip" ? body.returnDate : null,
+      adults: body.adults,
+      children: body.children,
+      infants: body.infants,
+      travelers: body.travelers,
+      cabinClass,
+      currency: body.currency,
+    };
+  }
+
   async function handleSavedRouteToggle(
     event: ReactMouseEvent<HTMLButtonElement>,
     itemId: string,
@@ -2116,7 +2139,7 @@ export function FlightResultsClient() {
       return;
     }
 
-    const result = await saveBackendTrip(itemId, display);
+    const result = await saveBackendTrip(itemId, display, getCurrentFlightSearchForSavedTrip());
     if (result.ok || result.duplicate) {
       setSavedTripError("");
       await refreshBackendSavedTrips();

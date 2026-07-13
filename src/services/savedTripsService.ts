@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { getPrisma } from "@/lib/prisma";
+import { parseSavedFlightSearchQuery } from "@/lib/saved-searches";
 import type { RouteWatchStatus, SearchType as PrismaSearchType } from "@/generated/prisma/enums";
 import { __routeWatchServiceTest, listRouteWatchSummariesForSavedSearches, validateSavedSearchForRouteWatch } from "@/services/routeWatchService";
 
@@ -25,6 +26,27 @@ export type PublicSavedTrip = {
   payload: unknown;
   createdAt: string;
   updatedAt: string;
+  savedSearchId: string | null;
+  detailedSearch: {
+    origin: string;
+    destination: string;
+    tripType: string;
+    departureDate: string;
+    returnDate: string | null;
+    adults: number;
+    children: number;
+    infants: number;
+    travelers: number;
+    cabinClass: string;
+    currency: string | null;
+    href: string;
+  } | null;
+  isWatching: boolean;
+  routeWatchStatus: RouteWatchStatus | null;
+  routeWatchId: string | null;
+  lastCheckedAt: string | null;
+  nextCheckAt: string | null;
+  routeWatchUnavailableReason: "invalid" | "expired" | null;
 };
 
 export type PublicSavedFlight = {
@@ -110,6 +132,35 @@ const nonEmptyStringSchema = z.string().trim().min(1).max(256);
 const currencySchema = z.string().trim().min(3).max(3).transform((value) => value.toUpperCase());
 const jsonObjectSchema = z.record(z.string(), z.unknown());
 
+
+const flightSearchInputSchema = z
+  .object({
+    tripType: z.enum(["round-trip", "one-way"]),
+    origin: z.string().trim().min(1).max(128),
+    destination: z.string().trim().min(1).max(128),
+    departureDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    returnDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+    adults: z.coerce.number().int().min(1).max(9),
+    children: z.coerce.number().int().min(0).max(9).default(0),
+    infants: z.coerce.number().int().min(0).max(9).default(0),
+    travelers: z.coerce.number().int().min(1).max(27).optional(),
+    cabinClass: z.enum(["economy", "business", "first"]),
+    currency: currencySchema.optional(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    const travelers = value.adults + value.children + value.infants;
+    if (value.travelers !== undefined && value.travelers !== travelers) {
+      context.addIssue({ code: "custom", path: ["travelers"], message: "Traveler total must match passenger counts." });
+    }
+    if (value.tripType === "round-trip" && !value.returnDate) {
+      context.addIssue({ code: "custom", path: ["returnDate"], message: "Return date is required for round trips." });
+    }
+    if (value.tripType === "one-way" && value.returnDate) {
+      context.addIssue({ code: "custom", path: ["returnDate"], message: "One-way trips cannot include a return date." });
+    }
+  });
+
 const savedTripInputSchema = z.object({
   type: z.literal("trip"),
   name: nonEmptyStringSchema,
@@ -117,6 +168,7 @@ const savedTripInputSchema = z.object({
   endsAt: isoDateTimeSchema.optional().nullable(),
   destination: z.string().trim().max(256).optional().nullable(),
   payload: jsonObjectSchema.default({}),
+  flightSearch: flightSearchInputSchema.optional(),
 });
 
 const savedFlightInputSchema = z.object({
@@ -180,6 +232,7 @@ type SavedTripRecord = {
   payload: unknown;
   createdAt: Date;
   updatedAt: Date;
+  savedSearch?: (SavedSearchRecord & { routeWatchState?: { id: string; status: RouteWatchStatus; lastCheckedAt: Date | null; nextCheckAt: Date | null } | null }) | null;
 };
 
 type SavedFlightRecord = {
@@ -220,6 +273,7 @@ type SavedSearchRecord = {
   checkOut: Date | null;
   query: unknown;
   createdAt: Date;
+  savedTripId?: string | null;
 };
 
 type SavedTripsPrismaClient = {
@@ -248,6 +302,7 @@ type SavedTripsPrismaClient = {
     findMany(args: unknown): Promise<SavedSearchRecord[]>;
     findFirst(args: unknown): Promise<SavedSearchRecord | null>;
     create(args: unknown): Promise<SavedSearchRecord>;
+    update?(args: unknown): Promise<SavedSearchRecord>;
     deleteMany(args: unknown): Promise<{ count: number }>;
     count(args: unknown): Promise<number>;
   };
@@ -257,6 +312,7 @@ type SavedTripsPrismaClient = {
   $transaction<T extends readonly Promise<unknown>[]>(
     queries: T,
   ): Promise<{ -readonly [K in keyof T]: Awaited<T[K]> }>;
+  $transaction<T>(fn: (tx: SavedTripsPrismaClient) => Promise<T>): Promise<T>;
 };
 
 let prismaClientForTesting: SavedTripsPrismaClient | null = null;
@@ -270,6 +326,12 @@ const savedTripSelect = {
   payload: true,
   createdAt: true,
   updatedAt: true,
+  savedSearch: {
+    select: {
+      id: true, type: true, label: true, origin: true, destination: true, checkIn: true, checkOut: true, query: true, createdAt: true,
+      routeWatchState: { select: { id: true, status: true, lastCheckedAt: true, nextCheckAt: true } },
+    },
+  },
 } as const;
 
 const savedFlightSelect = {
@@ -310,6 +372,7 @@ const savedSearchSelect = {
   checkOut: true,
   query: true,
   createdAt: true,
+  savedTripId: true,
 } as const;
 
 const searchTypeToPrisma = {
@@ -351,7 +414,7 @@ export async function listUserSavedItems(
     ? await prisma.savedHotel.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, select: savedHotelSelect })
     : [];
   const searches = includeType("search")
-    ? await prisma.savedSearch.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, select: savedSearchSelect })
+    ? (await prisma.savedSearch.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, select: savedSearchSelect })).filter((search) => !search.savedTripId)
     : [];
 
   let watchSummaries = new Map();
@@ -421,26 +484,79 @@ async function createUserSavedTrip(
   const endsAt = input.endsAt ? new Date(input.endsAt) : null;
   const destination = input.destination || null;
 
-  const existing = await prisma.savedTrip.findFirst({
-    where: { userId, name: input.name, startsAt, endsAt, destination },
-    select: { id: true },
+  if (!input.flightSearch) {
+    const existing = await prisma.savedTrip.findFirst({
+      where: { userId, name: input.name, startsAt, endsAt, destination },
+      select: { id: true },
+    });
+
+    if (existing) throw new DuplicateSavedItemError();
+
+    const savedTrip = await prisma.savedTrip.create({
+      data: { userId, name: input.name, startsAt, endsAt, destination, payload: input.payload },
+      select: savedTripSelect,
+    });
+
+    return serializeSavedTrip(savedTrip);
+  }
+
+  const travelers = input.flightSearch.adults + input.flightSearch.children + input.flightSearch.infants;
+  const canonicalQuery = {
+    tripType: input.flightSearch.tripType,
+    origin: input.flightSearch.origin,
+    destination: input.flightSearch.destination,
+    departureDate: input.flightSearch.departureDate,
+    ...(input.flightSearch.returnDate ? { returnDate: input.flightSearch.returnDate } : {}),
+    adults: input.flightSearch.adults,
+    children: input.flightSearch.children,
+    infants: input.flightSearch.infants,
+    travelers,
+    cabinClass: input.flightSearch.cabinClass,
+    ...(input.flightSearch.currency ? { currency: input.flightSearch.currency } : {}),
+  };
+  const parsed = parseSavedFlightSearchQuery(canonicalQuery);
+  if (!parsed) throw new Error("Invalid canonical flight search.");
+
+  return prisma.$transaction(async (tx) => {
+    let savedSearch = await tx.savedSearch.findFirst({
+      where: { userId, type: "FLIGHT", origin: parsed.origin, destination: parsed.destination, checkIn: new Date(`${parsed.departureDate}T00:00:00.000Z`), checkOut: parsed.returnDate ? new Date(`${parsed.returnDate}T00:00:00.000Z`) : null, query: { equals: canonicalQuery } },
+      select: { id: true, savedTripId: true },
+    }) as (SavedSearchRecord & { savedTripId?: string | null }) | null;
+
+    let savedTrip = savedSearch?.savedTripId ? await tx.savedTrip.findFirst({ where: { id: savedSearch.savedTripId, userId }, select: savedTripSelect }) : null;
+
+    if (!savedTrip) {
+      savedTrip = await tx.savedTrip.findFirst({
+        where: { userId, name: input.name, startsAt, endsAt, destination },
+        select: savedTripSelect,
+      });
+    }
+
+    if (!savedTrip) {
+      savedTrip = await tx.savedTrip.create({
+        data: { userId, name: input.name, startsAt, endsAt, destination, payload: input.payload },
+        select: savedTripSelect,
+      });
+    }
+
+    if (!savedSearch) {
+      savedSearch = await tx.savedSearch.create({
+        data: {
+          userId, type: "FLIGHT", label: input.name, origin: parsed.origin, destination: parsed.destination,
+          checkIn: new Date(`${parsed.departureDate}T00:00:00.000Z`),
+          checkOut: parsed.returnDate ? new Date(`${parsed.returnDate}T00:00:00.000Z`) : null,
+          query: canonicalQuery, savedTripId: savedTrip.id,
+        },
+        select: savedSearchSelect,
+      }) as SavedSearchRecord;
+    } else if (!savedSearch.savedTripId) {
+      if (!tx.savedSearch.update) throw new Error("Saved search update unavailable.");
+      savedSearch = await tx.savedSearch.update({ where: { id: savedSearch.id, userId }, data: { savedTripId: savedTrip.id }, select: savedSearchSelect }) as SavedSearchRecord;
+    }
+
+    const linkedTrip = await tx.savedTrip.findFirst({ where: { id: savedTrip.id, userId }, select: savedTripSelect });
+    return serializeSavedTrip(linkedTrip ?? savedTrip);
   });
-
-  if (existing) throw new DuplicateSavedItemError();
-
-  const savedTrip = await prisma.savedTrip.create({
-    data: {
-      userId,
-      name: input.name,
-      startsAt,
-      endsAt,
-      destination,
-      payload: input.payload,
-    },
-    select: savedTripSelect,
-  });
-
-  return serializeSavedTrip(savedTrip);
 }
 
 async function createUserSavedFlight(
@@ -591,7 +707,28 @@ function serializeSavedTrip(trip: SavedTripRecord): PublicSavedTrip {
     payload: trip.payload,
     createdAt: trip.createdAt.toISOString(),
     updatedAt: trip.updatedAt.toISOString(),
+    ...serializeLinkedSavedSearch(trip.savedSearch ?? null),
   };
+}
+
+function emptyLinkedSavedSearchFields() {
+  return { savedSearchId: null, detailedSearch: null, isWatching: false, routeWatchStatus: null, routeWatchId: null, lastCheckedAt: null, nextCheckAt: null, routeWatchUnavailableReason: null } as const;
+}
+
+function serializeLinkedSavedSearch(search: SavedTripRecord["savedSearch"]) {
+  if (!search || search.type !== "FLIGHT") return emptyLinkedSavedSearchFields();
+  const parsed = parseSavedFlightSearchQuery(search.query);
+  if (!parsed || !search.origin || !search.destination) {
+    return { ...emptyLinkedSavedSearchFields(), savedSearchId: search.id, routeWatchUnavailableReason: "invalid" as const };
+  }
+  const watch = search.routeWatchState ?? null;
+  const fields = {
+    savedSearchId: search.id,
+    detailedSearch: { origin: parsed.origin, destination: parsed.destination, tripType: parsed.tripType, departureDate: parsed.departureDate, returnDate: parsed.returnDate ?? null, adults: parsed.adults, children: parsed.children, infants: parsed.infants, travelers: parsed.travelers, cabinClass: parsed.cabinClass, currency: parsed.currency ?? null, href: parsed.href },
+    isWatching: watch?.status === "ACTIVE", routeWatchStatus: watch?.status ?? null, routeWatchId: watch?.id ?? null, lastCheckedAt: watch?.lastCheckedAt?.toISOString() ?? null, nextCheckAt: watch?.nextCheckAt?.toISOString() ?? null, routeWatchUnavailableReason: null as "invalid" | "expired" | null,
+  };
+  try { validateSavedSearchForRouteWatch({ ...search, userId: "" }); } catch (error) { fields.routeWatchUnavailableReason = error instanceof Error && error.message === "This departure date has passed." ? "expired" : "invalid"; }
+  return fields;
 }
 
 function serializeSavedFlight(flight: SavedFlightRecord): PublicSavedFlight {

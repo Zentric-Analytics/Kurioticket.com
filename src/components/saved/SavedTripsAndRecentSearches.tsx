@@ -48,6 +48,15 @@ type ResolvedSavedTrip = {
   originCode?: string;
   destinationCode?: string;
   search?: SavedTripFareSearch;
+  detailedSearch?: SavedTripApiItem["detailedSearch"];
+  savedSearchId?: string | null;
+  isWatching?: boolean;
+  routeWatchStatus?: SavedTripApiItem["routeWatchStatus"];
+  routeWatchId?: string | null;
+  lastCheckedAt?: string | null;
+  nextCheckAt?: string | null;
+  routeWatchUnavailableReason?: SavedTripApiItem["routeWatchUnavailableReason"];
+  backendId?: string;
   href: ComponentProps<typeof Link>["href"];
   unresolved: boolean;
 };
@@ -230,7 +239,16 @@ const resolveSavedTripFromBackendPayload = (
     originCode,
     destinationCode,
     search: getPayloadSavedTripSearch(item.payload),
-    href: getPayloadHref(item.payload) ?? "/flights",
+    detailedSearch: item.detailedSearch ?? null,
+    savedSearchId: item.savedSearchId ?? null,
+    isWatching: item.isWatching ?? false,
+    routeWatchStatus: item.routeWatchStatus ?? null,
+    routeWatchId: item.routeWatchId ?? null,
+    lastCheckedAt: item.lastCheckedAt ?? null,
+    nextCheckAt: item.nextCheckAt ?? null,
+    routeWatchUnavailableReason: item.routeWatchUnavailableReason ?? null,
+    backendId: item.id,
+    href: item.detailedSearch?.href ?? getPayloadHref(item.payload) ?? "/flights",
     unresolved: false,
   };
 };
@@ -656,8 +674,9 @@ export function SavedTripsAndRecentSearches({
     });
   };
 
+  const linkedSavedSearchIds = new Set(savedTrips.map((trip) => trip.savedSearchId).filter((id): id is string => Boolean(id)));
   const visibleSavedSearches = savedSearches.filter(
-    (search) => !savedSearchMatchesTrip(search),
+    (search) => !linkedSavedSearchIds.has(search.id) && !savedSearchMatchesTrip(search),
   );
 
   const unifiedSavedTripCount = savedTrips.length + visibleSavedSearches.length;
@@ -839,7 +858,12 @@ export function SavedTripsAndRecentSearches({
                   {savedTrips.map((trip, index) => {
                     const fare = savedTripFares[trip.id];
                     const hasProviderFare = hasFreshProviderFare(fare, trip);
-                    const tripHref = buildSavedTripHref(trip, fare);
+                    const tripHref = trip.detailedSearch?.href ?? buildSavedTripHref(trip, fare);
+                    const detailed = trip.detailedSearch;
+                    const canWatchRoute = Boolean(trip.savedSearchId && detailed && !trip.routeWatchUnavailableReason);
+                    const routeWatchUpdating = trip.savedSearchId ? Boolean(updatingRouteWatchIds[trip.savedSearchId]) : false;
+                    const routeWatchError = trip.savedSearchId ? Boolean(routeWatchErrorIds[trip.savedSearchId]) : false;
+                    const watchSwitchId = `route-watch-trip-${trip.id}`;
 
                     return (
                       <article
@@ -896,6 +920,46 @@ export function SavedTripsAndRecentSearches({
                                   t("savedTripsCompareCurrentOptions")
                                 )}
                               </p>
+
+                              {detailed ? (
+                                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                  <p className="text-sm font-bold text-slate-950">{detailed.origin} → {detailed.destination}</p>
+                                  <p className="mt-1 text-xs font-medium text-slate-600">
+                                    {detailed.departureDate}{detailed.returnDate ? ` – ${detailed.returnDate}` : ""}
+                                  </p>
+                                  <p className="mt-1 text-xs font-medium text-slate-600">
+                                    {detailed.travelers} traveler{detailed.travelers === 1 ? "" : "s"} · {detailed.cabinClass}
+                                  </p>
+                                  <div className="mt-3 border-t border-slate-200 pt-3">
+                                    {canWatchRoute && trip.savedSearchId ? (
+                                      <div className="flex min-w-0 items-center justify-between gap-3" aria-busy={routeWatchUpdating}>
+                                        <div className="min-w-0">
+                                          <p id={watchSwitchId} className="text-sm font-bold text-slate-950">{trip.isWatching ? "Watching route" : "Watch this route"}</p>
+                                          <p className="mt-1 text-xs leading-5 text-slate-600">Track meaningful fare changes for this trip.</p>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          role="switch"
+                                          aria-checked={Boolean(trip.isWatching)}
+                                          aria-labelledby={watchSwitchId}
+                                          disabled={routeWatchUpdating}
+                                          onClick={() => handleRouteWatchToggle({ type: "search", id: trip.savedSearchId!, searchType: "flight", label: trip.title, origin: detailed.origin, destination: detailed.destination, checkIn: null, checkOut: null, query: detailed, createdAt: "", isWatching: trip.isWatching, routeWatchStatus: trip.routeWatchStatus ?? undefined, routeWatchId: trip.routeWatchId ?? undefined, lastCheckedAt: trip.lastCheckedAt ?? null, nextCheckAt: trip.nextCheckAt ?? null } as PublicSavedSearch, !trip.isWatching)}
+                                          className={`relative inline-flex h-8 min-h-8 w-14 min-w-14 shrink-0 items-center rounded-full border transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 disabled:cursor-not-allowed disabled:opacity-70 ${trip.isWatching ? "border-teal-600 bg-teal-600" : "border-slate-300 bg-slate-300"}`}
+                                        >
+                                          <span className={`inline-block h-6 w-6 rounded-full bg-white shadow transition ${trip.isWatching ? "translate-x-7" : "translate-x-1"}`} />
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <p className="text-sm font-semibold text-slate-600">
+                                        {trip.routeWatchUnavailableReason === "expired" ? "This departure date has passed." : "This trip can’t be watched. Run the search again and save it."}
+                                      </p>
+                                    )}
+                                    {routeWatchError ? (
+                                      <p className="mt-2 text-xs font-semibold text-rose-700" role="alert">We couldn’t update route watching. Please try again.</p>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              ) : null}
                               <Link
                                 href={tripHref}
                                 className="inline-flex min-h-11 items-center justify-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-center text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-900"
