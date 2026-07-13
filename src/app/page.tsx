@@ -1466,12 +1466,12 @@ export default function Home() {
                                 key={`${country.id}-${category}`}
                                 data-product-section={category.toLowerCase()}
                               >
-                                <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-700">
+                                <h3 className="text-xs font-bold uppercase leading-4 tracking-[0.08em] text-slate-900">
                                   {category}
                                 </h3>
                                 <div className="mt-2 space-y-1.5">
                                   {country.links[category]
-                                    .slice(0, 3)
+                                    .slice(0, 5)
                                     .map((link) => {
                                       const fareCard = link.routeKey
                                         ? fareCardsByExactRoute.get(

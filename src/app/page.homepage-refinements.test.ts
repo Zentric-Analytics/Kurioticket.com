@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { countryDirectoryCountries } from "@/data/homepageCountryDirectory";
+
+const countryDirectoryCategories = ["Hotels", "Flights", "Cars"] as const;
 
 const pageSource = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
 const hotelsPageSource = readFileSync(
@@ -221,8 +224,85 @@ test("homepage country directory flag, row, service, and dropdown typography are
   assert.match(directorySource, /border-b border-slate-100 bg-transparent/);
   assert.match(directorySource, /text-\[15px\] font-semibold leading-6 tracking-\[-0\.01em\] text-\[#07133F\]/);
   assert.match(directorySource, /text-\[10px\] font-semibold uppercase leading-4 tracking-\[0\.07em\] text-\[#004BB8\]/);
-  assert.match(directorySource, /text-\[11px\] font-semibold uppercase tracking-\[0\.1em\] text-slate-700/);
+  assert.match(directorySource, /text-xs font-bold uppercase leading-4 tracking-\[0\.08em\] text-slate-900/);
   assert.match(directorySource, /text-sm font-normal leading-5 text-slate-800/);
+  assert.match(directorySource, /\.slice\(0, 5\)/);
   assert.doesNotMatch(directorySource, /\{country\.flag\}/);
   assert.doesNotMatch(directorySource, /rounded-\[3px\]|bg-gradient-to-br from-slate-100 via-white to-slate-200/);
+});
+
+
+test("homepage country directory config targets five unique suggestions per supported product", () => {
+  const underfilledCategories: string[] = [];
+
+  for (const country of countryDirectoryCountries) {
+    for (const category of countryDirectoryCategories) {
+      const links = country.links[category];
+      if (links.length < 5) underfilledCategories.push(`${country.id}:${category}`);
+      assert.ok(links.length <= 5, `${country.id} ${category} should not exceed five curated suggestions`);
+      assert.equal(new Set(links.map((link) => link.label)).size, links.length, `${country.id} ${category} labels should be unique`);
+    }
+
+    assert.equal(
+      new Set(country.links.Hotels.map((link) => link.label.replace(/ stays$/, ""))).size,
+      country.links.Hotels.length,
+      `${country.id} hotel destinations should be unique`,
+    );
+    assert.equal(
+      new Set(country.links.Cars.map((link) => link.label.replace(/ car hire$/, ""))).size,
+      country.links.Cars.length,
+      `${country.id} car locations should be unique`,
+    );
+    assert.equal(
+      new Set(country.links.Flights.map((link) => link.routeKey)).size,
+      country.links.Flights.length,
+      `${country.id} flight routes should be unique`,
+    );
+  }
+
+  assert.deepEqual(underfilledCategories, [], "no currently configured categories are truthfully underfilled");
+});
+
+test("homepage country directory links preserve exact search contracts", () => {
+  for (const country of countryDirectoryCountries) {
+    for (const link of country.links.Flights) {
+      assert.match(link.routeKey ?? "", /^[A-Z]{3}-[A-Z]{3}$/);
+      const [origin, destination] = link.routeKey?.split("-") ?? [];
+      assert.notEqual(origin, destination, `${country.id} flight route should not reuse the same airport code`);
+      assert.equal(typeof link.href, "object");
+      assert.equal(link.href.pathname, "/flights/results");
+      assert.equal(link.href.query?.origin, origin);
+      assert.equal(link.href.query?.destination, destination);
+      assert.match(String(link.href.query?.departureDate), /^\d{4}-\d{2}-\d{2}$/);
+      assert.equal(link.href.query?.tripType, "one-way");
+      assert.equal(link.href.query?.travelers, "1");
+      assert.equal(link.href.query?.adults, "1");
+      assert.equal(link.href.query?.cabinClass, "economy");
+      assert.equal(link.href.query?.currency, "USD");
+      assert.equal(link.href.query?.market, "US");
+    }
+
+    for (const link of country.links.Hotels) {
+      assert.equal(typeof link.href, "object");
+      assert.equal(link.href.pathname, "/hotels/results");
+      assert.ok(link.href.query?.destination);
+      assert.match(String(link.href.query?.checkIn), /^\d{4}-\d{2}-\d{2}$/);
+      assert.match(String(link.href.query?.checkOut), /^\d{4}-\d{2}-\d{2}$/);
+      assert.equal(link.href.query?.guests, "2");
+      assert.equal(link.href.query?.rooms, "1");
+    }
+
+    for (const link of country.links.Cars) {
+      assert.equal(typeof link.href, "string");
+      const url = new URL(link.href, "https://www.kurioticket.test");
+      assert.equal(url.pathname, "/cars/results");
+      assert.ok(url.searchParams.get("pickupLocation"));
+      assert.equal(url.searchParams.get("dropoffLocation"), url.searchParams.get("pickupLocation"));
+      assert.match(url.searchParams.get("pickupDate") ?? "", /^\d{4}-\d{2}-\d{2}$/);
+      assert.match(url.searchParams.get("dropoffDate") ?? "", /^\d{4}-\d{2}-\d{2}$/);
+      assert.equal(url.searchParams.get("pickupTime"), "10:00");
+      assert.equal(url.searchParams.get("dropoffTime"), "10:00");
+      assert.ok(url.searchParams.get("driverAge"));
+    }
+  }
 });
