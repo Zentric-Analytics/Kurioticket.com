@@ -22,11 +22,15 @@ import {
 } from "@/lib/i18n/homeDiscovery";
 import { readSavedTripIds, writeSavedTripIds } from "@/lib/saved-trips-local";
 import {
+  deleteBackendSavedSearch,
   deleteBackendTrip,
+  fetchBackendSavedSearches,
   fetchBackendSavedTrips,
   getSavedTripLocalId,
+  type PublicSavedSearch,
   type SavedTripApiItem,
 } from "@/lib/saved-trips-api";
+import { parseSavedSearchQuery } from "@/lib/saved-searches";
 import {
   getHomeDiscoveryByRegion,
   homeDiscoveryByRegion,
@@ -230,7 +234,6 @@ function SavedCardImage({
 }: SavedCardImageProps) {
   const imageMode = getCardImageOptimizationMode(src);
   const imageClassName = `object-cover transition duration-500 ${hoverScaleClassName}`;
-
   return (
     <div className="relative h-[196px] w-full shrink-0 overflow-hidden md:h-[190px] lg:h-[198px]">
       {imageMode.supported ? (
@@ -429,6 +432,12 @@ export function SavedTripsAndRecentSearches({
   const [savedTripFares, setSavedTripFares] = useState<
     Record<string, SavedTripFare>
   >({});
+  const [savedSearches, setSavedSearches] = useState<PublicSavedSearch[]>([]);
+  const [savedSearchesLoading, setSavedSearchesLoading] = useState(false);
+  const [savedSearchesError, setSavedSearchesError] = useState("");
+  const [deletingSavedSearchIds, setDeletingSavedSearchIds] = useState<
+    Record<string, boolean>
+  >({});
   const refreshBackendSavedTrips = useCallback(async (signal?: AbortSignal) => {
     const result = await fetchBackendSavedTrips(signal);
     if (!result.ok || !result.items) return;
@@ -445,6 +454,20 @@ export function SavedTripsAndRecentSearches({
     setSavedIds(localIds);
   }, []);
 
+
+  const refreshBackendSavedSearches = useCallback(async (signal?: AbortSignal) => {
+    setSavedSearchesLoading(true);
+    setSavedSearchesError("");
+    const result = await fetchBackendSavedSearches(signal);
+    if (signal?.aborted) return;
+    setSavedSearchesLoading(false);
+    if (!result.ok || !result.items) {
+      setSavedSearchesError(result.error ?? "Unable to load saved searches.");
+      return;
+    }
+    setSavedSearches(result.items);
+  }, []);
+
   useEffect(() => {
     if (sessionStatus === "loading") return;
 
@@ -452,6 +475,7 @@ export function SavedTripsAndRecentSearches({
       const controller = new AbortController();
       const timeoutId = window.setTimeout(() => {
         void refreshBackendSavedTrips(controller.signal);
+        void refreshBackendSavedSearches(controller.signal);
       }, 0);
       return () => {
         window.clearTimeout(timeoutId);
@@ -462,10 +486,12 @@ export function SavedTripsAndRecentSearches({
     const timeoutId = window.setTimeout(() => {
       setBackendSavedTripIds({});
       setBackendSavedTrips([]);
+      setSavedSearches([]);
+      setSavedSearchesError("");
       setSavedIds(readSavedTripIds());
     }, 0);
     return () => window.clearTimeout(timeoutId);
-  }, [refreshBackendSavedTrips, sessionStatus]);
+  }, [refreshBackendSavedSearches, refreshBackendSavedTrips, sessionStatus]);
 
   const savedTrips = useMemo(
     () =>
@@ -559,6 +585,35 @@ export function SavedTripsAndRecentSearches({
     savedTrips.length === 1
       ? "1 saved route"
       : `${savedTrips.length} saved routes`;
+
+
+  const handleDeleteSavedSearch = async (search: PublicSavedSearch) => {
+    setDeletingSavedSearchIds((current) => ({ ...current, [search.id]: true }));
+    setSavedSearchesError("");
+    const result = await deleteBackendSavedSearch(search.id);
+    setDeletingSavedSearchIds((current) => {
+      const next = { ...current };
+      delete next[search.id];
+      return next;
+    });
+    if (result.ok) {
+      setSavedSearches((current) =>
+        current.filter((item) => item.id !== search.id),
+      );
+      return;
+    }
+    setSavedSearchesError(result.error ?? "Unable to delete saved search.");
+  };
+
+  const formatCreatedDate = (value: string) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Saved date unavailable";
+    return `Saved ${date.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    })}`;
+  };
 
   const handleClearSaved = async () => {
     if (sessionStatus !== "authenticated") {
@@ -738,6 +793,76 @@ export function SavedTripsAndRecentSearches({
                 </div>
               </>
             )}
+          </section>
+
+          <section aria-labelledby="saved-searches-heading" className="pt-6">
+            <div className="mb-3 flex flex-col gap-1 border-b border-slate-200/80 pb-3" aria-live="polite" aria-busy={savedSearchesLoading}>
+              <h2 id="saved-searches-heading" className="text-base font-semibold tracking-tight text-slate-950">
+                Saved searches
+              </h2>
+              <p className="text-sm font-medium text-slate-500">
+                {savedSearchesLoading ? "Loading saved searches…" : `${savedSearches.length} saved search${savedSearches.length === 1 ? "" : "es"}`}
+              </p>
+              {savedSearchesError ? (
+                <p className="text-sm font-semibold text-rose-700" role="alert">{savedSearchesError}</p>
+              ) : null}
+            </div>
+
+            {!savedSearchesLoading && savedSearches.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-white/80 p-6 text-center">
+                <h3 className="text-lg font-semibold text-slate-950">No saved searches yet</h3>
+                <p className="mt-2 text-sm text-slate-600">Save a flight or hotel search to find it here later.</p>
+              </div>
+            ) : null}
+
+            {savedSearches.length > 0 ? (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {savedSearches.map((search) => {
+                  const parsed = parseSavedSearchQuery(search.searchType, search.query);
+                  const isFlight = search.searchType === "flight";
+                  const routeLabel = isFlight
+                    ? `${search.origin ?? (parsed?.kind === "flight" ? parsed.origin : "Unknown origin")} to ${search.destination ?? (parsed?.kind === "flight" ? parsed.destination : "Unknown destination")}`
+                    : `Hotel search for ${search.destination ?? (parsed?.kind === "hotel" ? parsed.destination : "unknown destination")}`;
+                  const deleting = Boolean(deletingSavedSearchIds[search.id]);
+                  return (
+                    <article key={search.id} className="flex min-h-full flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_16px_30px_-24px_rgba(15,23,42,0.45)]">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-[0.12em] text-teal-700">{isFlight ? "Flight search" : "Hotel search"}</p>
+                          <h3 className="mt-1 text-base font-bold text-slate-950">{search.label || routeLabel}</h3>
+                        </div>
+                      </div>
+                      <dl className="mt-3 grid grid-cols-1 gap-2 text-sm text-slate-700">
+                        <div><dt className="font-semibold text-slate-950">Origin</dt><dd>{isFlight ? (search.origin ?? (parsed?.kind === "flight" ? parsed.origin : "Unknown origin")) : "Hotel search"}</dd></div>
+                        <div><dt className="font-semibold text-slate-950">Destination</dt><dd>{search.destination ?? (parsed ? parsed.destination : "Unknown destination")}</dd></div>
+                        {parsed?.kind === "flight" ? (<>
+                          <div><dt className="font-semibold text-slate-950">Departure</dt><dd>{parsed.departureDate}</dd></div>
+                          {parsed.returnDate ? <div><dt className="font-semibold text-slate-950">Return</dt><dd>{parsed.returnDate}</dd></div> : null}
+                          <div><dt className="font-semibold text-slate-950">Trip type</dt><dd>{parsed.tripType}</dd></div>
+                          <div><dt className="font-semibold text-slate-950">Travelers</dt><dd>{parsed.travelers} traveler{parsed.travelers === 1 ? "" : "s"}</dd></div>
+                          <div><dt className="font-semibold text-slate-950">Cabin</dt><dd>{parsed.cabinClass}</dd></div>
+                        </>) : null}
+                        {parsed?.kind === "hotel" ? (<>
+                          <div><dt className="font-semibold text-slate-950">Check-in</dt><dd>{parsed.checkIn}</dd></div>
+                          <div><dt className="font-semibold text-slate-950">Check-out</dt><dd>{parsed.checkOut}</dd></div>
+                          <div><dt className="font-semibold text-slate-950">Guests</dt><dd>{parsed.guests} guest{parsed.guests === 1 ? "" : "s"}, {parsed.rooms} room{parsed.rooms === 1 ? "" : "s"}</dd></div>
+                        </>) : null}
+                        <div><dt className="font-semibold text-slate-950">Created</dt><dd>{formatCreatedDate(search.createdAt)}</dd></div>
+                      </dl>
+                      {!parsed ? <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm font-medium text-amber-900">We can’t reopen this saved search. Run the search again and save it.</p> : null}
+                      <div className="mt-auto flex flex-col gap-2 pt-4 sm:flex-row">
+                        {parsed ? (
+                          <Link href={parsed.href} aria-label={`Rerun ${routeLabel}`} className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400">Rerun search</Link>
+                        ) : (
+                          <button type="button" disabled aria-label={`Rerun unavailable for ${routeLabel}`} className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-500">Rerun unavailable</button>
+                        )}
+                        <button type="button" onClick={() => handleDeleteSavedSearch(search)} disabled={deleting} aria-label={`Delete saved search ${routeLabel}`} className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400 disabled:opacity-60">{deleting ? "Deleting…" : "Delete"}</button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : null}
           </section>
         </div>
       </div>
