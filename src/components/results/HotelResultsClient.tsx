@@ -64,7 +64,6 @@ type DesktopCompactFilterPlacementState = "hidden" | "fixed" | "docked";
 
 type CompactHotelFilterSectionId =
   | "price"
-  | "popular"
   | "rating"
   | "locations"
   | "propertyTypes"
@@ -128,41 +127,7 @@ function lockBodyScroll() {
   };
 }
 
-const POPULAR_FILTERS = [
-  {
-    value: "free-wifi",
-    labelKey: "hotelResults.filter.freeWifi",
-    terms: ["free wi-fi", "free wifi", "wifi", "wi-fi"],
-  },
-  {
-    value: "breakfast",
-    labelKey: "hotelResults.filter.breakfastIncludedAvailable",
-    terms: ["breakfast"],
-  },
-  {
-    value: "free-cancellation",
-    labelKey: "hotelResults.filter.freeCancellation",
-    terms: ["free cancellation", "flexible cancellation"],
-  },
-  {
-    value: "parking",
-    labelKey: "hotelResults.filter.parking",
-    terms: ["parking"],
-  },
-  { value: "pool", labelKey: "hotelResults.filter.pool", terms: ["pool"] },
-  {
-    value: "airport-shuttle",
-    labelKey: "hotelResults.filter.airportShuttle",
-    terms: ["airport shuttle", "airport transit", "airport"],
-  },
-];
-
 const MEAL_FILTERS = [
-  {
-    value: "breakfast",
-    labelKey: "hotelResults.filter.breakfastIncludedAvailable",
-    terms: ["breakfast"],
-  },
   {
     value: "room-only",
     labelKey: "hotelResults.filter.roomOnly",
@@ -354,7 +319,6 @@ type ActiveHotelFilterChip = {
 };
 
 type HotelFilterSelections = {
-  popular: string[];
   propertyTypes: string[];
   meals: string[];
   cancellationPolicies: string[];
@@ -365,7 +329,6 @@ type HotelFilterSelections = {
 };
 
 const emptySelections: HotelFilterSelections = {
-  popular: [],
   propertyTypes: [],
   meals: [],
   cancellationPolicies: [],
@@ -2036,12 +1999,7 @@ function HotelFilters({
     useState<CompactHotelFilterSectionId>("price");
   const getSelectedCount = (group: keyof HotelFilterSelections) =>
     selectedFilters[group].length;
-  const compactSections: Array<{
-    id: Exclude<CompactHotelFilterSectionId, null>;
-    title: string;
-    selectedCount: number;
-    content: ReactNode;
-  }> = [
+  const compactSections = ([
     {
       id: "price",
       title: t("hotelResults.budgetPrice"),
@@ -2055,20 +2013,6 @@ function HotelFilters({
           priceCurrency={priceCurrency}
           locale={locale}
           filterRangeClass={filterRangeClass}
-        />
-      ),
-    },
-    {
-      id: "popular",
-      title: t("hotelResults.popularFilters"),
-      selectedCount: getSelectedCount("popular"),
-      content: (
-        <CheckboxFilterOptions
-          options={options.popular}
-          selected={selectedFilters.popular}
-          onToggle={(value) => toggleFilter("popular", value)}
-          t={t}
-          locale={locale}
         />
       ),
     },
@@ -2093,7 +2037,14 @@ function HotelFilters({
     { id: "meals", title: t("hotelResults.meals"), selectedCount: getSelectedCount("meals"), content: <CheckboxFilterOptions options={options.meals} selected={selectedFilters.meals} onToggle={(value) => toggleFilter("meals", value)} t={t} locale={locale} /> },
     { id: "cancellationPolicies", title: t("hotelResults.cancellationPolicy"), selectedCount: getSelectedCount("cancellationPolicies"), content: <CheckboxFilterOptions options={options.cancellationPolicies} selected={selectedFilters.cancellationPolicies} onToggle={(value) => toggleFilter("cancellationPolicies", value)} t={t} locale={locale} /> },
     { id: "facilities", title: t("hotelResults.facilities"), selectedCount: getSelectedCount("facilities"), content: <CheckboxFilterOptions options={options.facilities} selected={selectedFilters.facilities} onToggle={(value) => toggleFilter("facilities", value)} t={t} locale={locale} /> },
-  ];
+  ] satisfies Array<{
+    id: Exclude<CompactHotelFilterSectionId, null>;
+    title: string;
+    selectedCount: number;
+    content: ReactNode;
+  }>).filter(
+    (section) => section.id !== "meals" || options.meals.length > 0,
+  );
 
   if (layout === "compact") {
     return (
@@ -2206,16 +2157,6 @@ function HotelFilters({
           </label>
         </FilterSection>
 
-        <CheckboxFilterSection
-          title={t("hotelResults.popularFilters")}
-          options={options.popular}
-          selected={selectedFilters.popular}
-          onToggle={(value) => toggleFilter("popular", value)}
-          t={t}
-          locale={locale}
-          layout={layout}
-        />
-
         <FilterSection title={t("hotelResults.starRating")} layout={layout}>
           <StarRatingFilterControl
             selectedRating={selectedRating}
@@ -2269,15 +2210,17 @@ function HotelFilters({
           layout={layout}
         />
 
-        <CheckboxFilterSection
-          title={t("hotelResults.meals")}
-          options={options.meals}
-          selected={selectedFilters.meals}
-          onToggle={(value) => toggleFilter("meals", value)}
-          t={t}
-          locale={locale}
-          layout={layout}
-        />
+        {options.meals.length > 0 ? (
+          <CheckboxFilterSection
+            title={t("hotelResults.meals")}
+            options={options.meals}
+            selected={selectedFilters.meals}
+            onToggle={(value) => toggleFilter("meals", value)}
+            t={t}
+            locale={locale}
+            layout={layout}
+          />
+        ) : null}
 
         <CheckboxFilterSection
           title={t("hotelResults.cancellationPolicy")}
@@ -2635,7 +2578,6 @@ function buildActiveFilterChips(
     group: keyof HotelFilterSelections;
     filters: TermFilter[];
   }> = [
-    { group: "popular", filters: POPULAR_FILTERS },
     { group: "propertyTypes", filters: PROPERTY_TYPE_FILTERS },
     { group: "meals", filters: MEAL_FILTERS },
     { group: "cancellationPolicies", filters: CANCELLATION_FILTERS },
@@ -2696,12 +2638,6 @@ function buildHotelFilterOptions(
   t: (key: string) => string,
 ) {
   return {
-    popular: buildTermOptions(
-      hotels,
-      POPULAR_FILTERS,
-      getSearchableHotelText,
-      t,
-    ),
     propertyTypes: buildTermOptions(
       hotels,
       PROPERTY_TYPE_FILTERS,
@@ -2770,12 +2706,6 @@ function hotelMatchesFilters(
   return (
     hotel.totalPrice <= maxPrice &&
     hotelMatchesStarRating(hotel.rating, selectedStarRating) &&
-    matchesTermGroup(
-      hotel,
-      selectedFilters.popular,
-      POPULAR_FILTERS,
-      getSearchableHotelText,
-    ) &&
     matchesTermGroup(
       hotel,
       selectedFilters.propertyTypes,

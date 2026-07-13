@@ -1037,8 +1037,6 @@ test("Thai Hotels results page copy resolves through active i18n keys", () => {
     ["hotelResults.budgetPrice", "งบประมาณ / ราคา", "Budget / Price", [hotelResultsClientSource]],
     ["hotelResults.totalUpTo", "รวมสูงสุด", "Total up to", [hotelResultsClientSource]],
     ["hotelResults.starRating", "ระดับดาว", "Star rating", [hotelResultsClientSource]],
-    ["hotelResults.popularFilters", "ตัวกรองยอดนิยม", "Popular filters", [hotelResultsClientSource]],
-    ["hotelResults.filter.breakfastIncludedAvailable", "รวม/มีอาหารเช้า", "Breakfast included/available", [hotelResultsClientSource]],
     ["hotelResults.propertyType", "ประเภทที่พัก", "Property type", [hotelResultsClientSource]],
     ["hotelResults.filter.hotel", "โรงแรม", "Hotel", [hotelResultsClientSource]],
     ["hotelResults.roomType", "ประเภทห้อง", "Room type", [hotelResultsClientSource]],
@@ -1129,8 +1127,6 @@ test("Vietnamese Hotels Results page copy resolves through active i18n keys", ()
     ["hotelResults.filterBy", "Lọc theo", "Filter by", [hotelResultsClientSource]],
     ["hotelResults.budgetPrice", "Ngân sách / mỗi đêm", "Budget / Price", [hotelResultsClientSource]],
     ["hotelResults.totalUpTo", "Tổng tối đa", "Total up to", [hotelResultsClientSource]],
-    ["hotelResults.popularFilters", "Bộ lọc phổ biến", "Popular filters", [hotelResultsClientSource]],
-    ["hotelResults.filter.breakfastIncludedAvailable", "Có/bao gồm bữa sáng", "Breakfast included/available", [hotelResultsClientSource]],
     ["hotelResults.starRating", "Xếp hạng sao", "Star rating", [hotelResultsClientSource]],
     ["hotelResults.propertyType", "Loại chỗ nghỉ", "Property type", [hotelResultsClientSource]],
     ["hotelResults.filter.hotel", "Khách sạn", "Hotel", [hotelResultsClientSource]],
@@ -6511,7 +6507,6 @@ test("Polish hotels results active render path copy is localized without English
     "hotelResults.foundPlacesToStay",
     "hotelResults.filterBy",
     "hotelResults.budgetPrice",
-    "hotelResults.popularFilters",
     "hotelResults.propertyType",
     "hotelResults.roomType",
     "hotelResults.bedType",
@@ -6671,7 +6666,7 @@ test("Indonesian Hotels landing and Hotel results copy is localized on active re
   assert.match(hotelsPageSource, /dictionary\[`hotelInspirationCategory\.\$\{category\}`\]/);
   assert.match(hotelsPageSource, /dictionary\[`hotelInspirationBadge\.\$\{card\.badge\}`\]/);
 
-  for (const key of ["hotelResults.cheapest", "hotelResults.bestValue", "hotelResults.topRated", "hotelResults.foundPlacesToStay", "hotelResults.liveSearchUnavailable", "hotelResults.filterBy", "hotelResults.budgetPrice", "hotelResults.popularFilters", "hotelResults.propertyType", "hotelResults.roomType", "hotelResults.bedType", "hotelResults.meals"]) {
+  for (const key of ["hotelResults.cheapest", "hotelResults.bestValue", "hotelResults.topRated", "hotelResults.foundPlacesToStay", "hotelResults.liveSearchUnavailable", "hotelResults.filterBy", "hotelResults.budgetPrice", "hotelResults.propertyType", "hotelResults.roomType", "hotelResults.bedType", "hotelResults.meals"]) {
     assert.ok(hotelResultsClientSource.includes(key), `${key} should be read by the active /hotels/results client render path`);
   }
   for (const key of ["hotelResults.estimatedStayTotal", "hotelResults.pricePerNight", "hotelResults.viewHotel", "hotelResults.filter.bedAndBreakfast", "hotelResults.filter.roomOnly", "hotelResults.filter.doubleRoom", "hotelResults.filter.kingBed"]) {
@@ -6887,7 +6882,6 @@ test("Swedish Hotels results filter and live-search error copy is localized on t
     "hotelResults.filterBy",
     "hotelResults.budgetPrice",
     "hotelResults.totalUpTo",
-    "hotelResults.popularFilters",
     "hotelResults.starRating",
     "hotelResults.locationArea",
     "hotelResults.propertyType",
@@ -6899,7 +6893,6 @@ test("Swedish Hotels results filter and live-search error copy is localized on t
     "hotelResults.showLess",
     "hotelResults.showMore",
     "hotelResults.upToPrice",
-    "hotelResults.filter.breakfastIncludedAvailable",
     "hotelResults.filter.roomOnly",
     "hotelResults.filter.hotel",
     "hotelResults.filter.singleRoom",
@@ -15555,8 +15548,6 @@ test("Vietnamese Hotels landing and hotel results screenshot copy resolves witho
   assert.ok(hotelsPageSource.includes('/hotels/results?${new URLSearchParams({'));
   assert.ok(hotelsPageSource.includes('guests: "2"'));
   assert.ok(hotelsPageSource.includes('rooms: "1"'));
-  assert.ok(hotelResultsClientSource.includes('value: "free-wifi"'));
-  assert.ok(hotelResultsClientSource.includes('value: "parking"'));
   assert.equal(languageOptions.find((o) => o.code === "vi")?.direction, "ltr");
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
   assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
