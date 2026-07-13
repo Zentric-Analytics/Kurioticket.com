@@ -2465,7 +2465,7 @@ function CheckboxFilterOptions({
               key={option.value}
               className="flex min-h-9 cursor-pointer items-start justify-between gap-3 rounded-lg px-1.5 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
             >
-              <span className="flex min-w-0 items-start gap-2">
+              <span className="flex min-w-0 flex-1 items-start gap-2">
                 <input
                   type="checkbox"
                   className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-blue focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
@@ -2481,7 +2481,7 @@ function CheckboxFilterOptions({
                   {option.label}
                 </span>
               </span>
-              <span className="shrink-0 text-xs font-medium text-slate-500">
+              <span className="min-w-6 shrink-0 text-right text-xs font-medium tabular-nums text-slate-500">
                 {formatHotelCount(option.count, locale)}
               </span>
             </label>
