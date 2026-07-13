@@ -32,9 +32,12 @@ import {
 } from "@/data/homeDiscovery";
 import { getHomepageHeroImageForMarket } from "@/data/images/homepageHeroImage";
 import {
-  countryDirectoryCountries,
+  distributeCountryDirectoryColumns,
+  getCountryDirectoryLabel,
+  getSortedCountryDirectoryCountries,
   type CountryDirectoryCategory,
 } from "@/data/homepageCountryDirectory";
+import { CountryFlag } from "@/components/home/CountryFlag";
 import {
   getPopularDestinationFareCandidatesByRegion,
   getPopularDestinationsByRegion,
@@ -537,7 +540,10 @@ export default function Home() {
       );
   };
 
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const t = useCallback(
+    (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
+    [dictionary],
+  );
   const translateDiscoveryItemCopy = (
     item: HomeDiscoveryCardItem,
     field: "title" | "routeNote",
@@ -668,19 +674,14 @@ export default function Home() {
 
     return cardsByRoute;
   }, [discoveryFareCardState.cards]);
-  const countryDirectoryColumns = useMemo(() => {
-    const columnCount = 4;
-    const countriesPerColumn = Math.ceil(
-      countryDirectoryCountries.length / columnCount,
-    );
-
-    return Array.from({ length: columnCount }, (_, columnIndex) =>
-      countryDirectoryCountries.slice(
-        columnIndex * countriesPerColumn,
-        (columnIndex + 1) * countriesPerColumn,
-      ),
-    );
-  }, []);
+  const sortedCountryDirectoryCountries = useMemo(
+    () => getSortedCountryDirectoryCountries(locale, t),
+    [locale, t],
+  );
+  const countryDirectoryColumns = useMemo(
+    () => distributeCountryDirectoryColumns(sortedCountryDirectoryCountries, 4),
+    [sortedCountryDirectoryCountries],
+  );
 
   const handleNewsletterSubmit = async (
     event: React.FormEvent<HTMLFormElement>,
@@ -1356,35 +1357,31 @@ export default function Home() {
             {countryDirectoryColumns.map((columnCountries, columnIndex) => (
               <div
                 key={`country-directory-column-${columnIndex}`}
-                className={`${columnIndex % 2 === 1 ? "sm:border-l sm:border-slate-200" : ""} ${columnIndex > 0 ? "lg:border-l lg:border-slate-200" : ""}`}
+                className={`${columnIndex % 2 === 1 ? "sm:border-l sm:border-slate-100" : ""} ${columnIndex > 0 ? "lg:border-l lg:border-slate-100" : ""}`}
                 data-country-directory-column
               >
                 {columnCountries.map((country) => {
                   const isExpanded = expandedCountryDirectoryId === country.id;
                   const panelId = `country-directory-${country.id}`;
-                  const countryName =
-                    t(country.labelKey) === country.labelKey
-                      ? country.fallbackName
-                      : t(country.labelKey);
+                  const countryName = getCountryDirectoryLabel(country, t);
 
                   return (
                     <article
                       key={country.id}
-                      className="border-t border-slate-200 bg-white"
+                      className="border-b border-slate-100 bg-transparent"
                       data-country-row
                       data-expanded={isExpanded ? "true" : "false"}
                     >
-                      <div className="group relative flex min-h-[72px] items-start gap-3 px-3 py-3.5 sm:px-4">
-                        <span
-                          className="mt-0.5 inline-flex h-6 w-7 shrink-0 items-center justify-center overflow-hidden rounded-[3px] bg-gradient-to-br from-slate-100 via-white to-slate-200 text-[1.35rem] leading-none [font-family:'Apple_Color_Emoji','Segoe_UI_Emoji','Noto_Color_Emoji',sans-serif]"
-                          aria-hidden="true"
-                        >
-                          {country.flag}
-                        </span>
+                      <div className="group relative flex min-h-[76px] items-start gap-3 px-1 py-4 sm:px-4">
+                        <CountryFlag
+                          countryCode={country.countryCode}
+                          countryName={countryName}
+                          size="md"
+                        />
                         <div className="min-w-0 flex-1 pr-8">
                           <button
                             type="button"
-                            className="focus-ring block max-w-full text-left text-base font-semibold leading-6 text-[#07133F] transition hover:text-[#004BB8]"
+                            className="focus-ring block max-w-full text-left text-[15px] font-semibold leading-6 tracking-[-0.01em] text-[#07133F] transition hover:text-[#004BB8] sm:text-base"
                             aria-expanded={isExpanded}
                             aria-controls={panelId}
                             onClick={() =>
@@ -1396,7 +1393,7 @@ export default function Home() {
                             <span className="truncate">{countryName}</span>
                           </button>
                           <nav
-                            className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.68rem] font-extrabold uppercase tracking-[0.12em] text-[#004BB8]"
+                            className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-semibold uppercase leading-4 tracking-[0.07em] text-[#004BB8] sm:text-xs"
                             aria-label={`${countryName} travel products`}
                           >
                             {(
@@ -1451,7 +1448,7 @@ export default function Home() {
                       {isExpanded ? (
                         <div
                           id={panelId}
-                          className="border-t border-slate-100 bg-[#F8FBFC]/70 pb-4 pl-[3.55rem] pr-3 pt-3 sm:pl-[4.05rem] sm:pr-4"
+                          className="border-t border-slate-100 bg-slate-50/45 pb-4 pl-9 pr-1 pt-3 sm:pl-[4.05rem] sm:pr-4"
                           data-inline-country-panel
                         >
                           <div
@@ -1469,7 +1466,7 @@ export default function Home() {
                                 key={`${country.id}-${category}`}
                                 data-product-section={category.toLowerCase()}
                               >
-                                <h3 className="text-[0.68rem] font-extrabold uppercase tracking-[0.18em] text-slate-500">
+                                <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-700">
                                   {category}
                                 </h3>
                                 <div className="mt-2 space-y-1.5">
@@ -1501,12 +1498,12 @@ export default function Home() {
                                         <Link
                                           key={link.label}
                                           href={link.href}
-                                          className="focus-ring group flex items-center justify-between gap-3 rounded-sm py-1 text-sm font-medium leading-5 text-[#07133F] transition hover:text-[#004BB8]"
+                                          className="focus-ring group flex items-center justify-between gap-3 rounded-sm py-1.5 text-sm font-normal leading-5 text-slate-800 transition hover:text-[#004BB8] focus-visible:text-[#004BB8]"
                                         >
                                           <span>{link.label}</span>
                                           <span className="flex shrink-0 items-center gap-2 text-[#004BB8]">
                                             {displayPrice ? (
-                                              <span className="text-xs font-bold">
+                                              <span className="text-xs font-semibold">
                                                 {displayPrice}
                                               </span>
                                             ) : null}

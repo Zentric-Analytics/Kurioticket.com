@@ -116,7 +116,8 @@ test("homepage country directory replaces the hotel mosaic between promo panels 
     newsletterIndex > directoryIndex,
     "newsletter should follow country directory",
   );
-  assert.match(pageSource, /countryDirectoryCountries/);
+  assert.match(pageSource, /getSortedCountryDirectoryCountries\(locale, t\)/);
+  assert.match(pageSource, /distributeCountryDirectoryColumns\(sortedCountryDirectoryCountries, 4\)/);
   assert.doesNotMatch(pageSource, /homepageHotelDestinationCards/);
 });
 
@@ -126,7 +127,8 @@ test("homepage country directory uses closed-first inline independent column acc
     pageSource.indexOf("homeNewsletterTitle"),
   );
 
-  assert.match(pageSource, /countryDirectoryCountries/);
+  assert.match(pageSource, /getSortedCountryDirectoryCountries\(locale, t\)/);
+  assert.match(pageSource, /distributeCountryDirectoryColumns\(sortedCountryDirectoryCountries, 4\)/);
   assert.match(pageSource, /useState<\s*string \| null\s*>\(null\)/);
   assert.doesNotMatch(pageSource, /useState\(countryDirectoryCountries\[0\]/);
   assert.match(directorySource, /data-country-directory-columns="4"/);
@@ -152,7 +154,8 @@ test("homepage country directory uses closed-first inline independent column acc
     directorySource,
     /onClick=\{\(event\) => event\.stopPropagation\(\)\}/,
   );
-  assert.match(directorySource, /Apple_Color_Emoji/);
+  assert.match(directorySource, /<CountryFlag\s+countryCode=\{country\.countryCode\}/);
+  assert.doesNotMatch(directorySource, /Apple_Color_Emoji|Segoe_UI_Emoji|Noto_Color_Emoji/);
   assert.doesNotMatch(directorySource, /data-integrated-country-panel/);
   assert.doesNotMatch(directorySource, /data-product-column/);
   assert.doesNotMatch(directorySource, /sm:grid-cols-3/);
@@ -161,7 +164,8 @@ test("homepage country directory uses closed-first inline independent column acc
     /View all \{category\.toLowerCase\(\)\}/,
   );
   assert.doesNotMatch(directorySource, /rounded-xl border border-slate-200/);
-  assert.doesNotMatch(directorySource, /\{country\.countryCode\}/);
+  assert.doesNotMatch(directorySource, /bg-gradient-to-br from-slate-100 via-white to-slate-200/);
+  assert.doesNotMatch(directorySource, />\s*\{country\.countryCode\}\s*</);
 });
 
 test("homepage country directory only shows provider-backed prices when valid fares exist", () => {
@@ -204,4 +208,21 @@ test("homepage country directory hotel links use existing hotel results contract
   assert.match(hrefSource, /checkOut/);
   assert.match(hrefSource, /guests: "2"/);
   assert.match(hrefSource, /rooms: "1"/);
+});
+
+test("homepage country directory flag, row, service, and dropdown typography are production-refined", () => {
+  const directorySource = pageSource.slice(
+    pageSource.indexOf('aria-labelledby="homepage-country-directory-heading"'),
+    pageSource.indexOf("homeNewsletterTitle"),
+  );
+
+  assert.match(directorySource, /<CountryFlag\s+countryCode=\{country\.countryCode\}/);
+  assert.match(directorySource, /data-country-row/);
+  assert.match(directorySource, /border-b border-slate-100 bg-transparent/);
+  assert.match(directorySource, /text-\[15px\] font-semibold leading-6 tracking-\[-0\.01em\] text-\[#07133F\]/);
+  assert.match(directorySource, /text-\[10px\] font-semibold uppercase leading-4 tracking-\[0\.07em\] text-\[#004BB8\]/);
+  assert.match(directorySource, /text-\[11px\] font-semibold uppercase tracking-\[0\.1em\] text-slate-700/);
+  assert.match(directorySource, /text-sm font-normal leading-5 text-slate-800/);
+  assert.doesNotMatch(directorySource, /\{country\.flag\}/);
+  assert.doesNotMatch(directorySource, /rounded-\[3px\]|bg-gradient-to-br from-slate-100 via-white to-slate-200/);
 });
