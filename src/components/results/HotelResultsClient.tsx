@@ -2430,7 +2430,7 @@ function StarRatingFilterControl({
           >
             <span className="flex min-w-0 items-center gap-2">
               <input
-                className="h-3.5 w-3.5 shrink-0 cursor-pointer accent-[#0057B8]"
+                className="h-3.5 w-3.5 shrink-0 cursor-pointer appearance-none rounded-[2px] border border-slate-400 bg-white transition-colors hover:border-slate-500 checked:border-[#0057B8] checked:bg-[#0057B8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2"
                 type="radio"
                 name={groupId}
                 value={rating}
