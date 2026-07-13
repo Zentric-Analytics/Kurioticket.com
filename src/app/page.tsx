@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   ChevronLeft,
+  ChevronDown,
   ChevronRight,
   CircleDollarSign,
   Compass,
@@ -30,7 +31,7 @@ import {
   getHomepageRegionalRouteCards,
 } from "@/data/homeDiscovery";
 import { getHomepageHeroImageForMarket } from "@/data/images/homepageHeroImage";
-import type { HomepageHotelCountryCard } from "@/data/homepageHotelCountryCards";
+import { countryDirectoryCountries, type CountryDirectoryCategory } from "@/data/homepageCountryDirectory";
 import {
   getPopularDestinationFareCandidatesByRegion,
   getPopularDestinationsByRegion,
@@ -58,85 +59,6 @@ import {
   type SavedTripDisplayDetails,
 } from "@/lib/saved-trips-api";
 
-
-const addDaysToIsoDate = (date: Date, days: number) => {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-
-  const year = next.getFullYear();
-  const month = String(next.getMonth() + 1).padStart(2, "0");
-  const day = String(next.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-};
-
-
-type CountryDirectoryCategory = "Flights" | "Hotels" | "Cars";
-
-type CountryDirectoryLink = {
-  label: string;
-  href: ComponentProps<typeof Link>["href"];
-  routeKey?: string;
-};
-
-type CountryDirectoryCountry = {
-  id: string;
-  flag: string;
-  name: string;
-  links: Record<CountryDirectoryCategory, CountryDirectoryLink[]>;
-};
-
-function buildFlightDirectoryHref(origin: string, destination: string) {
-  return { pathname: "/flights/results", query: { origin, destination } } satisfies ComponentProps<typeof Link>["href"];
-}
-
-function buildCarsDirectoryHref(pickup: string) {
-  return { pathname: "/cars/results", query: { pickup } } satisfies ComponentProps<typeof Link>["href"];
-}
-
-function buildHotelDirectoryHref(destination: HomepageHotelCountryCard | string) {
-  const baseDate = new Date();
-  const checkIn = addDaysToIsoDate(baseDate, 21);
-  const checkOut = addDaysToIsoDate(baseDate, 24);
-  const searchValue = typeof destination === "string" ? destination : destination.searchValue;
-
-  return {
-    pathname: "/hotels/results",
-    query: { destination: searchValue, checkIn, checkOut, guests: "2", rooms: "1" },
-  } satisfies ComponentProps<typeof Link>["href"];
-}
-
-const countryDirectoryCountries: CountryDirectoryCountry[] = [
-  {
-    id: "united-states",
-    flag: "🇺🇸",
-    name: "United States",
-    links: {
-      Flights: [
-        { label: "New York to Los Angeles", href: buildFlightDirectoryHref("JFK", "LAX"), routeKey: "JFK-LAX" },
-        { label: "Chicago to Miami", href: buildFlightDirectoryHref("ORD", "MIA"), routeKey: "ORD-MIA" },
-        { label: "Seattle to Honolulu", href: buildFlightDirectoryHref("SEA", "HNL"), routeKey: "SEA-HNL" },
-      ],
-      Hotels: [
-        { label: "New York stays", href: buildHotelDirectoryHref("New York") },
-        { label: "Las Vegas stays", href: buildHotelDirectoryHref("Las Vegas") },
-        { label: "Miami stays", href: buildHotelDirectoryHref("Miami") },
-      ],
-      Cars: [
-        { label: "Los Angeles car hire", href: buildCarsDirectoryHref("Los Angeles") },
-        { label: "Orlando car hire", href: buildCarsDirectoryHref("Orlando") },
-        { label: "Denver car hire", href: buildCarsDirectoryHref("Denver") },
-      ],
-    },
-  },
-  { id: "uk", flag: "🇬🇧", name: "UK", links: { Flights: [{ label: "London to Amsterdam", href: buildFlightDirectoryHref("LHR", "AMS"), routeKey: "LHR-AMS" }, { label: "Manchester to Faro", href: buildFlightDirectoryHref("MAN", "FAO"), routeKey: "MAN-FAO" }], Hotels: [{ label: "London stays", href: buildHotelDirectoryHref("London") }, { label: "Edinburgh stays", href: buildHotelDirectoryHref("Edinburgh") }], Cars: [{ label: "London car hire", href: buildCarsDirectoryHref("London") }, { label: "Manchester car hire", href: buildCarsDirectoryHref("Manchester") }] } },
-  { id: "france", flag: "🇫🇷", name: "France", links: { Flights: [{ label: "Paris to Rome", href: buildFlightDirectoryHref("CDG", "FCO"), routeKey: "CDG-FCO" }, { label: "Paris to Dubai", href: buildFlightDirectoryHref("CDG", "DXB"), routeKey: "CDG-DXB" }], Hotels: [{ label: "Paris stays", href: buildHotelDirectoryHref("Paris") }, { label: "Nice stays", href: buildHotelDirectoryHref("Nice") }], Cars: [{ label: "Paris car hire", href: buildCarsDirectoryHref("Paris") }, { label: "Nice car hire", href: buildCarsDirectoryHref("Nice") }] } },
-  { id: "uae", flag: "🇦🇪", name: "UAE", links: { Flights: [{ label: "Dubai to Bangkok", href: buildFlightDirectoryHref("DXB", "BKK"), routeKey: "DXB-BKK" }, { label: "Abu Dhabi to London", href: buildFlightDirectoryHref("AUH", "LHR"), routeKey: "AUH-LHR" }], Hotels: [{ label: "Dubai stays", href: buildHotelDirectoryHref("Dubai") }, { label: "Abu Dhabi stays", href: buildHotelDirectoryHref("Abu Dhabi") }], Cars: [{ label: "Dubai car hire", href: buildCarsDirectoryHref("Dubai") }, { label: "Abu Dhabi car hire", href: buildCarsDirectoryHref("Abu Dhabi") }] } },
-  { id: "japan", flag: "🇯🇵", name: "Japan", links: { Flights: [{ label: "Tokyo to Singapore", href: buildFlightDirectoryHref("HND", "SIN"), routeKey: "HND-SIN" }, { label: "Tokyo to Bangkok", href: buildFlightDirectoryHref("NRT", "BKK"), routeKey: "NRT-BKK" }], Hotels: [{ label: "Tokyo stays", href: buildHotelDirectoryHref("Tokyo") }, { label: "Osaka stays", href: buildHotelDirectoryHref("Osaka") }], Cars: [{ label: "Tokyo car hire", href: buildCarsDirectoryHref("Tokyo") }, { label: "Osaka car hire", href: buildCarsDirectoryHref("Osaka") }] } },
-  { id: "mexico", flag: "🇲🇽", name: "Mexico", links: { Flights: [{ label: "Los Angeles to Mexico City", href: buildFlightDirectoryHref("LAX", "MEX"), routeKey: "LAX-MEX" }, { label: "New York to Cancún", href: buildFlightDirectoryHref("JFK", "CUN"), routeKey: "JFK-CUN" }], Hotels: [{ label: "Cancún stays", href: buildHotelDirectoryHref("Cancún") }, { label: "Mexico City stays", href: buildHotelDirectoryHref("Mexico City") }], Cars: [{ label: "Cancún car hire", href: buildCarsDirectoryHref("Cancún") }, { label: "Mexico City car hire", href: buildCarsDirectoryHref("Mexico City") }] } },
-  { id: "italy", flag: "🇮🇹", name: "Italy", links: { Flights: [{ label: "Rome to Paris", href: buildFlightDirectoryHref("FCO", "CDG"), routeKey: "FCO-CDG" }, { label: "Milan to London", href: buildFlightDirectoryHref("MXP", "LHR"), routeKey: "MXP-LHR" }], Hotels: [{ label: "Rome stays", href: buildHotelDirectoryHref("Rome") }, { label: "Venice stays", href: buildHotelDirectoryHref("Venice") }], Cars: [{ label: "Rome car hire", href: buildCarsDirectoryHref("Rome") }, { label: "Milan car hire", href: buildCarsDirectoryHref("Milan") }] } },
-  { id: "singapore", flag: "🇸🇬", name: "Singapore", links: { Flights: [{ label: "Singapore to Bali", href: buildFlightDirectoryHref("SIN", "DPS"), routeKey: "SIN-DPS" }, { label: "Singapore to Tokyo", href: buildFlightDirectoryHref("SIN", "HND"), routeKey: "SIN-HND" }], Hotels: [{ label: "Singapore stays", href: buildHotelDirectoryHref("Singapore") }, { label: "Sentosa stays", href: buildHotelDirectoryHref("Sentosa") }], Cars: [{ label: "Singapore car hire", href: buildCarsDirectoryHref("Singapore") }, { label: "Changi car hire", href: buildCarsDirectoryHref("Changi") }] } },
-];
 
 function CompareOffersIllustration() {
   return (
@@ -1358,73 +1280,115 @@ export default function Home() {
           />
         </section>
 
-        <section className="page-shell pb-7 pt-2 sm:pb-8 sm:pt-3" aria-labelledby="homepage-country-directory-heading">
-          <div className="mb-4 max-w-3xl space-y-2 sm:mb-5">
-            <h2 id="homepage-country-directory-heading" className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
-              {t("homeHotelDestinationsTitle")}
-            </h2>
-            <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
-              {t("homeHotelDestinationsSubtitle")}
-            </p>
+        <section className="page-shell bg-white pb-7 pt-2 sm:pb-8 sm:pt-3" aria-labelledby="homepage-country-directory-heading" data-country-directory>
+          <div className="mb-5 flex flex-col gap-3 sm:mb-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl space-y-2">
+              <h2 id="homepage-country-directory-heading" className="text-xl font-bold tracking-tight text-[#07133F] sm:text-2xl">
+                {t("homeTripPlanningDirectoryTitle")}
+              </h2>
+              <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
+                {t("homeTripPlanningDirectorySubtitle")}
+              </p>
+            </div>
           </div>
 
-          <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-[0_24px_70px_-42px_rgba(2,28,43,0.5)]">
-            {countryDirectoryCountries.map((country) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" data-country-directory-columns="4">
+            {countryDirectoryCountries.map((country, index) => {
               const isExpanded = expandedCountryDirectoryId === country.id;
+              const panelId = `country-directory-${country.id}`;
+              const countryName = t(country.labelKey) === country.labelKey ? country.fallbackName : t(country.labelKey);
+              const columnClassName = index % 4 === 0 ? "" : "lg:border-l lg:border-slate-200";
+              const tabletColumnClassName = index % 2 === 0 ? "" : "sm:border-l sm:border-slate-200";
 
               return (
-                <article key={country.id} className="border-b border-slate-200 last:border-b-0">
-                  <button
-                    type="button"
-                    className="focus-ring flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition hover:bg-[#F2F7FA]/70 sm:px-6"
-                    aria-expanded={isExpanded}
-                    aria-controls={`country-directory-${country.id}`}
-                    onClick={() => setExpandedCountryDirectoryId((current) => current === country.id ? "" : country.id)}
-                  >
-                    <span className="flex min-w-0 items-center gap-3">
-                      <span className="text-3xl leading-none" aria-hidden="true">{country.flag}</span>
-                      <span className="min-w-0">
-                        <span className="block truncate text-base font-bold text-slate-950 sm:text-lg">{country.name}</span>
-                        <span className="mt-0.5 block text-[0.68rem] font-extrabold uppercase tracking-[0.22em] text-[#004BB8]">CARS · FLIGHTS · HOTELS</span>
-                      </span>
-                    </span>
-                    <ChevronRight className={`h-5 w-5 shrink-0 text-slate-500 transition ${isExpanded ? "rotate-90" : ""}`} aria-hidden="true" />
-                  </button>
-
-                  {isExpanded ? (
-                    <div id={`country-directory-${country.id}`} className="grid gap-4 bg-[#F8FBFC] px-4 pb-5 pt-1 sm:grid-cols-3 sm:px-6 sm:pb-6">
-                      {(["Flights", "Hotels", "Cars"] as const).map((category) => (
-                        <div key={`${country.id}-${category}`} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/75">
-                          <h3 className="text-sm font-extrabold uppercase tracking-[0.16em] text-slate-500">{category}</h3>
-                          <div className="mt-3 space-y-2.5">
-                            {country.links[category].map((link) => {
-                              const fareCard = link.routeKey ? fareCardsByExactRoute.get(link.routeKey) : undefined;
-                              const displayPrice = fareCard && hasFreshProviderPrice(fareCard.fare, {
-                                originCode: fareCard.item.originCode,
-                                destinationCode: fareCard.item.destinationCode,
-                              })
-                                ? formatDisplayPrice({ amount: fareCard.fare.price, sourceCurrency: fareCard.fare.currency, displayCurrency: selectedOption.currency }).formatted
-                                : "";
-
-                              return (
-                                <Link key={link.label} href={link.href} className="focus-ring group flex items-center justify-between gap-3 rounded-xl px-2 py-2 text-sm font-semibold text-slate-800 transition hover:bg-[#F2F7FA] hover:text-[#004BB8]">
-                                  <span>{link.label}</span>
-                                  <span className="flex shrink-0 items-center gap-1 text-xs font-extrabold text-[#004BB8]">
-                                    {displayPrice ? <span>{displayPrice}</span> : null}
-                                    <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" aria-hidden="true" />
-                                  </span>
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ))}
+                <article key={country.id} className={`border-t border-slate-200 ${tabletColumnClassName} ${columnClassName}`} data-country-row>
+                  <div className="group relative flex min-h-[74px] items-start gap-3 px-3 py-3.5 sm:px-4">
+                    <span className="mt-0.5 text-[1.35rem] leading-none" aria-hidden="true">{country.flag}</span>
+                    <div className="min-w-0 flex-1 pr-8">
+                      <button
+                        type="button"
+                        className="focus-ring block max-w-full text-left text-base font-bold leading-6 text-[#07133F] transition hover:text-[#004BB8]"
+                        aria-expanded={isExpanded}
+                        aria-controls={panelId}
+                        onClick={() => setExpandedCountryDirectoryId((current) => current === country.id ? "" : country.id)}
+                      >
+                        <span className="truncate">{countryName}</span>
+                      </button>
+                      <nav className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.68rem] font-extrabold uppercase tracking-[0.12em] text-[#004BB8]" aria-label={`${countryName} travel products`}>
+                        {(["Cars", "Flights", "Hotels"] as CountryDirectoryCategory[]).map((category, categoryIndex) => (
+                          <span key={`${country.id}-${category}-quick`} className="inline-flex items-center gap-2">
+                            {categoryIndex > 0 ? <span aria-hidden="true" className="text-[#004BB8]/70">·</span> : null}
+                            <Link href={country.links[category][0].href} className="focus-ring rounded-sm hover:text-[#00327A]" onClick={(event) => event.stopPropagation()}>{category.toUpperCase()}</Link>
+                          </span>
+                        ))}
+                      </nav>
                     </div>
-                  ) : null}
+                    <button
+                      type="button"
+                      className="focus-ring absolute right-3 top-4 rounded-full p-1 text-[#07133F] transition hover:text-[#004BB8] sm:right-4"
+                      aria-label={`${isExpanded ? "Collapse" : "Expand"} ${countryName}`}
+                      aria-expanded={isExpanded}
+                      aria-controls={panelId}
+                      onClick={() => setExpandedCountryDirectoryId((current) => current === country.id ? "" : country.id)}
+                    >
+                      <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`} aria-hidden="true" />
+                    </button>
+                  </div>
                 </article>
               );
             })}
           </div>
+
+          {countryDirectoryCountries.map((country) => {
+            const isExpanded = expandedCountryDirectoryId === country.id;
+            if (!isExpanded) return null;
+            const countryName = t(country.labelKey) === country.labelKey ? country.fallbackName : t(country.labelKey);
+
+            return (
+              <div key={`${country.id}-panel`} id={`country-directory-${country.id}`} className="mt-4 rounded-xl border border-slate-200 bg-[#F8FBFC] px-4 py-4 sm:px-5 sm:py-5" data-integrated-country-panel>
+                <div className="mb-5 flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span className="text-[1.4rem] leading-none" aria-hidden="true">{country.flag}</span>
+                    <div className="min-w-0">
+                      <h3 className="truncate text-base font-bold text-[#07133F]">{countryName}</h3>
+                      <p className="mt-0.5 text-[0.68rem] font-extrabold uppercase tracking-[0.12em] text-[#004BB8]">CARS · FLIGHTS · HOTELS</p>
+                    </div>
+                  </div>
+                  <button type="button" className="focus-ring rounded-full p-1 text-[#07133F]" aria-label={`Collapse ${countryName}`} aria-expanded={isExpanded} aria-controls={`country-directory-${country.id}`} onClick={() => setExpandedCountryDirectoryId("")}>
+                    <ChevronDown className="h-4 w-4 rotate-180" aria-hidden="true" />
+                  </button>
+                </div>
+                <div className="grid gap-5 sm:grid-cols-3 sm:gap-0">
+                  {(["Flights", "Hotels", "Cars"] as CountryDirectoryCategory[]).map((category, categoryIndex) => (
+                    <div key={`${country.id}-${category}`} className={`sm:px-6 ${categoryIndex === 0 ? "sm:pl-0" : "border-t border-slate-200 pt-5 sm:border-l sm:border-t-0 sm:pt-0"}`} data-product-column={category.toLowerCase()}>
+                      <h4 className="text-sm font-extrabold uppercase tracking-[0.22em] text-slate-600">{category}</h4>
+                      <div className="mt-4 space-y-3">
+                        {country.links[category].slice(0, 3).map((link) => {
+                          const fareCard = link.routeKey ? fareCardsByExactRoute.get(link.routeKey) : undefined;
+                          const displayPrice = fareCard && hasFreshProviderPrice(fareCard.fare, { originCode: fareCard.item.originCode, destinationCode: fareCard.item.destinationCode })
+                            ? formatDisplayPrice({ amount: fareCard.fare.price, sourceCurrency: fareCard.fare.currency, displayCurrency: selectedOption.currency }).formatted
+                            : "";
+
+                          return (
+                            <Link key={link.label} href={link.href} className="focus-ring group flex items-center justify-between gap-3 rounded-md py-1.5 text-sm font-medium text-[#07133F] transition hover:text-[#004BB8]">
+                              <span>{link.label}</span>
+                              <span className="flex shrink-0 items-center gap-2 text-[#004BB8]">
+                                {displayPrice ? <span className="text-xs font-bold">{displayPrice}</span> : null}
+                                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden="true" />
+                              </span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                      <Link href={country.links[category][0].href} className="focus-ring mt-4 inline-flex items-center gap-2 rounded-md text-sm font-bold text-[#004BB8] hover:text-[#00327A]">
+                        View all {category.toLowerCase()} <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </section>
 
         <section className="page-shell pb-5 pt-1 sm:pb-7 sm:pt-2">
