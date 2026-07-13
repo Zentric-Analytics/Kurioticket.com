@@ -2463,7 +2463,7 @@ function CheckboxFilterOptions({
           return (
             <label
               key={option.value}
-              className="flex min-h-9 cursor-pointer items-start justify-between gap-3 rounded-lg px-1.5 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
+              className="flex min-h-9 min-w-0 cursor-pointer items-start justify-between gap-3 rounded-lg px-1.5 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
             >
               <span className="flex min-w-0 flex-1 items-start gap-2">
                 <input
