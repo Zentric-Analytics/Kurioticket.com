@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
+  Check,
   ChevronDown,
   SlidersHorizontal,
   Star,
@@ -2421,16 +2422,11 @@ function StarRatingFilterControl({
         return (
           <label
             key={rating}
-            className={cn(
-              "group flex min-h-9 cursor-pointer items-center justify-between gap-3 rounded-md border border-transparent px-2 py-1.5 text-sm transition-colors focus-within:ring-2 focus-within:ring-[#004BB8]/25",
-              selected
-                ? "border-[#8FB3DC]/70 bg-[#F4F8FC] text-[#123B65]"
-                : "text-slate-700 hover:bg-slate-50",
-            )}
+            className="group flex min-h-9 cursor-pointer items-center justify-between gap-3 rounded-md px-1.5 py-1.5 text-sm text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-950"
           >
             <span className="flex min-w-0 items-center gap-2">
               <input
-                className="h-3.5 w-3.5 shrink-0 cursor-pointer appearance-none rounded-[2px] border border-slate-400 bg-white transition-colors hover:border-slate-500 checked:border-[#0057B8] checked:bg-[#0057B8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2"
+                className="peer sr-only"
                 type="radio"
                 name={groupId}
                 value={rating}
@@ -2438,6 +2434,25 @@ function StarRatingFilterControl({
                 onChange={() => onChange(rating)}
                 aria-label={label}
               />
+
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "flex h-4 w-4 shrink-0 items-center justify-center rounded-[2px] border transition-colors",
+                  selected
+                    ? "border-[#0057B8] bg-[#0057B8] text-white"
+                    : "border-slate-300 bg-white group-hover:border-slate-400",
+                  "peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8]/30 peer-focus-visible:ring-offset-2",
+                )}
+              >
+                {selected ? (
+                  <Check
+                    className="h-3 w-3"
+                    strokeWidth={3}
+                    aria-hidden="true"
+                  />
+                ) : null}
+              </span>
 
               {rating === ALL_HOTEL_STAR_RATINGS ? (
                 <span
@@ -2464,12 +2479,7 @@ function StarRatingFilterControl({
               )}
             </span>
 
-            <span
-              className={cn(
-                "min-w-6 shrink-0 text-right text-[11px] font-medium tabular-nums",
-                selected ? "text-[#315E8C]" : "text-slate-500",
-              )}
-            >
+            <span className="min-w-6 shrink-0 text-right text-[11px] font-medium tabular-nums text-slate-500">
               {formatHotelCount(counts[rating] ?? 0, locale)}
             </span>
           </label>
