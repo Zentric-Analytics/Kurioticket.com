@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 import { getPrisma } from "@/lib/prisma";
-import type { SearchType as PrismaSearchType } from "@/generated/prisma/enums";
+import type { RouteWatchStatus, SearchType as PrismaSearchType } from "@/generated/prisma/enums";
+import { __routeWatchServiceTest, listRouteWatchSummariesForSavedSearches, validateSavedSearchForRouteWatch } from "@/services/routeWatchService";
 
 export const savedItemTypes = ["trip", "flight", "hotel", "search"] as const;
 export type SavedItemType = (typeof savedItemTypes)[number];
@@ -67,6 +68,12 @@ export type PublicSavedSearch = {
   checkOut: string | null;
   query: unknown;
   createdAt: string;
+  isWatching?: boolean;
+  routeWatchStatus?: RouteWatchStatus;
+  routeWatchId?: string;
+  lastCheckedAt?: string | null;
+  nextCheckAt?: string | null;
+  routeWatchUnavailableReason?: "invalid" | "expired";
 };
 
 export type PublicSavedItem =
@@ -244,6 +251,9 @@ type SavedTripsPrismaClient = {
     deleteMany(args: unknown): Promise<{ count: number }>;
     count(args: unknown): Promise<number>;
   };
+  routeWatchState?: {
+    findMany(args: unknown): Promise<[]>;
+  };
   $transaction<T extends readonly Promise<unknown>[]>(
     queries: T,
   ): Promise<{ -readonly [K in keyof T]: Awaited<T[K]> }>;
@@ -344,11 +354,20 @@ export async function listUserSavedItems(
     ? await prisma.savedSearch.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, select: savedSearchSelect })
     : [];
 
+  let watchSummaries = new Map();
+  if (searches.length) {
+    if (prismaClientForTesting && !prismaClientForTesting.routeWatchState) {
+      watchSummaries = new Map();
+    } else {
+      watchSummaries = await listRouteWatchSummariesForSavedSearches(userId, searches.map((search) => search.id));
+    }
+  }
+
   const items = [
     ...trips.map(serializeSavedTrip),
     ...flights.map(serializeSavedFlight),
     ...hotels.map(serializeSavedHotel),
-    ...searches.map(serializeSavedSearch),
+    ...searches.map((search) => serializeSavedSearch(search, watchSummaries.get(search.id))),
   ].sort((left, right) => getSavedItemCreatedAt(right).localeCompare(getSavedItemCreatedAt(left)));
 
   return {
@@ -609,8 +628,8 @@ function serializeSavedHotel(hotel: SavedHotelRecord): PublicSavedHotel {
   };
 }
 
-function serializeSavedSearch(search: SavedSearchRecord): PublicSavedSearch {
-  return {
+function serializeSavedSearch(search: SavedSearchRecord, watch?: { id: string; status: RouteWatchStatus; isWatching: boolean; lastCheckedAt: string | null; nextCheckAt: string | null }): PublicSavedSearch {
+  const item: PublicSavedSearch = {
     type: "search",
     id: search.id,
     searchType: prismaSearchTypeToPublic[search.type],
@@ -622,6 +641,22 @@ function serializeSavedSearch(search: SavedSearchRecord): PublicSavedSearch {
     query: search.query,
     createdAt: search.createdAt.toISOString(),
   };
+
+  if (search.type === "FLIGHT") {
+    try {
+      validateSavedSearchForRouteWatch({ ...search, userId: "" });
+      item.isWatching = watch?.isWatching ?? false;
+      item.routeWatchStatus = watch?.status;
+      item.routeWatchId = watch?.id;
+      item.lastCheckedAt = watch?.lastCheckedAt ?? null;
+      item.nextCheckAt = watch?.nextCheckAt ?? null;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      item.routeWatchUnavailableReason = message === "This departure date has passed." ? "expired" : "invalid";
+    }
+  }
+
+  return item;
 }
 
 function getSavedItemCreatedAt(item: PublicSavedItem) {
@@ -631,5 +666,6 @@ function getSavedItemCreatedAt(item: PublicSavedItem) {
 export const __savedTripsServiceTest = {
   setPrismaClientForTesting(prisma: SavedTripsPrismaClient | null) {
     prismaClientForTesting = prisma;
+    __routeWatchServiceTest.setPrismaClientForTesting(prisma && prisma.routeWatchState ? prisma as never : null);
   },
 };

@@ -27,6 +27,7 @@ import {
   fetchBackendSavedSearches,
   fetchBackendSavedTrips,
   getSavedTripLocalId,
+  updateRouteWatch,
   type PublicSavedSearch,
   type SavedTripApiItem,
 } from "@/lib/saved-trips-api";
@@ -487,6 +488,9 @@ export function SavedTripsAndRecentSearches({
   const [deletingSavedSearchIds, setDeletingSavedSearchIds] = useState<
     Record<string, boolean>
   >({});
+  const [updatingRouteWatchIds, setUpdatingRouteWatchIds] = useState<Record<string, boolean>>({});
+  const [routeWatchErrorIds, setRouteWatchErrorIds] = useState<Record<string, boolean>>({});
+  const [routeWatchAnnouncement, setRouteWatchAnnouncement] = useState("");
   const refreshBackendSavedTrips = useCallback(async (signal?: AbortSignal) => {
     const result = await fetchBackendSavedTrips(signal);
     if (!result.ok || !result.items) return;
@@ -662,6 +666,37 @@ export function SavedTripsAndRecentSearches({
       ? "1 saved trip"
       : `${unifiedSavedTripCount} saved trips`;
 
+  const handleRouteWatchToggle = async (search: PublicSavedSearch, enabled: boolean) => {
+    const previous = search;
+    setUpdatingRouteWatchIds((current) => ({ ...current, [search.id]: true }));
+    setRouteWatchErrorIds((current) => {
+      const next = { ...current };
+      delete next[search.id];
+      return next;
+    });
+    setSavedSearches((current) => current.map((item) => item.id === search.id ? { ...item, isWatching: enabled, routeWatchStatus: enabled ? "ACTIVE" : "PAUSED" } : item));
+    const result = await updateRouteWatch(search.id, enabled);
+    setUpdatingRouteWatchIds((current) => {
+      const next = { ...current };
+      delete next[search.id];
+      return next;
+    });
+    if (!result.ok || !result.watch) {
+      setSavedSearches((current) => current.map((item) => item.id === search.id ? previous : item));
+      setRouteWatchErrorIds((current) => ({ ...current, [search.id]: true }));
+      return;
+    }
+    setSavedSearches((current) => current.map((item) => item.id === search.id ? {
+      ...item,
+      isWatching: result.watch?.isWatching ?? false,
+      routeWatchStatus: result.watch?.status,
+      routeWatchId: result.watch?.id,
+      lastCheckedAt: result.watch?.lastCheckedAt ?? null,
+      nextCheckAt: result.watch?.nextCheckAt ?? null,
+    } : item));
+    setRouteWatchAnnouncement(enabled ? "Route watch enabled." : "Route watch disabled.");
+  };
+
   const handleDeleteSavedSearch = async (search: PublicSavedSearch) => {
     setDeletingSavedSearchIds((current) => ({ ...current, [search.id]: true }));
     setSavedSearchesError("");
@@ -721,6 +756,7 @@ export function SavedTripsAndRecentSearches({
       }`}
     >
       <div className="mx-auto min-w-0 max-w-[88rem] text-start">
+        <p className="sr-only" role="status" aria-live="polite">{routeWatchAnnouncement}</p>
         <div className="space-y-4">
           <div>
             <h1
@@ -885,6 +921,16 @@ export function SavedTripsAndRecentSearches({
                       ? `${search.origin ?? (parsed?.kind === "flight" ? parsed.origin : "Unknown origin")} to ${search.destination ?? (parsed?.kind === "flight" ? parsed.destination : "Unknown destination")}`
                       : `Hotel trip for ${search.destination ?? (parsed?.kind === "hotel" ? parsed.destination : "unknown destination")}`;
                     const deleting = Boolean(deletingSavedSearchIds[search.id]);
+                    const routeWatchUpdating = Boolean(updatingRouteWatchIds[search.id]);
+                    const routeWatchError = Boolean(routeWatchErrorIds[search.id]);
+                    const canWatchRoute = isFlight && parsed?.kind === "flight" && !search.routeWatchUnavailableReason;
+                    const watchSwitchId = `route-watch-${search.id}`;
+                    const watchLabel = search.isWatching ? "Watching route" : "Watch this route";
+                    const watchHelper = routeWatchUpdating
+                      ? search.isWatching ? "Turning off…" : "Turning on…"
+                      : search.isWatching
+                        ? "This trip is ready for automatic fare checks."
+                        : "Track meaningful fare changes for this trip.";
                     return (
                       <article
                         key={`search-${search.id}`}
@@ -987,6 +1033,42 @@ export function SavedTripsAndRecentSearches({
                             <dd>{formatCreatedDate(search.createdAt)}</dd>
                           </div>
                         </dl>
+
+                        {isFlight ? (
+                          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                            {canWatchRoute ? (
+                              <div className="flex min-w-0 items-center justify-between gap-3" aria-busy={routeWatchUpdating}>
+                                <div className="min-w-0">
+                                  <p id={watchSwitchId} className="text-sm font-bold text-slate-950">{watchLabel}</p>
+                                  <p className="mt-1 text-xs leading-5 text-slate-600">{watchHelper}</p>
+                                </div>
+                                <button
+                                  type="button"
+                                  role="switch"
+                                  aria-checked={Boolean(search.isWatching)}
+                                  aria-labelledby={watchSwitchId}
+                                  aria-label={`${watchLabel} for ${routeLabel}`}
+                                  disabled={routeWatchUpdating}
+                                  onClick={() => handleRouteWatchToggle(search, !search.isWatching)}
+                                  className={`relative inline-flex h-8 min-h-8 w-14 min-w-14 shrink-0 items-center rounded-full border transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 disabled:cursor-not-allowed disabled:opacity-70 ${search.isWatching ? "border-teal-600 bg-teal-600" : "border-slate-300 bg-slate-300"}`}
+                                >
+                                  <span className={`inline-block h-6 w-6 rounded-full bg-white shadow transition ${search.isWatching ? "translate-x-7" : "translate-x-1"}`} />
+                                </button>
+                              </div>
+                            ) : (
+                              <p className="text-sm font-semibold text-slate-600">
+                                {search.routeWatchUnavailableReason === "expired"
+                                  ? "This departure date has passed."
+                                  : "This trip can’t be watched. Run the search again and save it."}
+                              </p>
+                            )}
+                            {routeWatchError ? (
+                              <p className="mt-2 text-xs font-semibold text-rose-700" role="alert">
+                                We couldn’t update route watching. Please try again.
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : null}
                         {!parsed ? (
                           <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm font-medium text-amber-900">
                             We can’t reopen this saved trip. Run the search

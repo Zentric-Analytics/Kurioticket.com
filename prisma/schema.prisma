@@ -120,6 +120,13 @@ enum AccountDeletionRequestStatus {
   COMPLETED
 }
 
+enum RouteWatchStatus {
+  ACTIVE
+  PAUSED
+  EXPIRED
+  ERROR
+}
+
 enum TripBookingType {
   FLIGHT
   HOTEL
@@ -151,6 +158,7 @@ model User {
   savedFlights            SavedFlight[]
   savedHotels             SavedHotel[]
   savedSearches           SavedSearch[]
+  routeWatchStates         RouteWatchState[]
   recentSearches          RecentSearch[]
   searchHistory           SearchHistory[]
   priceAlerts             PriceAlert[]
@@ -357,11 +365,29 @@ model SavedSearch {
   query       Json
   createdAt   DateTime   @default(now())
   user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routeWatchState RouteWatchState?
 
   @@index([userId])
   @@index([type])
   @@index([origin, destination])
   @@index([createdAt])
+}
+
+model RouteWatchState {
+  id            String           @id @default(cuid())
+  userId        String
+  savedSearchId String           @unique
+  status        RouteWatchStatus @default(ACTIVE)
+  lastCheckedAt DateTime?
+  nextCheckAt   DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  savedSearch   SavedSearch      @relation(fields: [savedSearchId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, status])
+  @@index([status, nextCheckAt])
 }
 
 model RecentSearch {
