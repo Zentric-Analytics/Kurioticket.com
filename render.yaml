@@ -16,6 +16,22 @@ services:
         sync: false
 
   - type: cron
+    name: kurioticket-saved-trip-reminders
+    runtime: node
+    plan: starter
+    branch: main
+    autoDeploy: true
+    schedule: '0 * * * *'
+    buildCommand: 'true'
+    startCommand: >-
+      curl -fsS -X POST "https://kurioticket.com/api/cron/saved-trip-reminders"
+      -H "Authorization: Bearer $SAVED_TRIP_REMINDERS_CRON_SECRET"
+      -H "Content-Type: application/json"
+    envVars:
+      - key: SAVED_TRIP_REMINDERS_CRON_SECRET
+        sync: false
+
+  - type: cron
     name: kurioticket-homepage-fares-refresh
     runtime: node
     plan: starter
@@ -62,6 +78,8 @@ services:
       - key: RESEND_API_KEY
         sync: false
       - key: RESEND_FROM_EMAIL
+        sync: false
+      - key: SAVED_TRIP_REMINDERS_CRON_SECRET
         sync: false
       - key: STRIPE_SECRET_KEY
         sync: false
@@ -129,6 +147,8 @@ services:
       - key: RESEND_API_KEY
         sync: false
       - key: RESEND_FROM_EMAIL
+        sync: false
+      - key: SAVED_TRIP_REMINDERS_CRON_SECRET
         sync: false
       - key: STRIPE_SECRET_KEY
         sync: false
