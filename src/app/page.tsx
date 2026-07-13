@@ -31,7 +31,10 @@ import {
   getHomepageRegionalRouteCards,
 } from "@/data/homeDiscovery";
 import { getHomepageHeroImageForMarket } from "@/data/images/homepageHeroImage";
-import { countryDirectoryCountries, type CountryDirectoryCategory } from "@/data/homepageCountryDirectory";
+import {
+  countryDirectoryCountries,
+  type CountryDirectoryCategory,
+} from "@/data/homepageCountryDirectory";
 import {
   getPopularDestinationFareCandidatesByRegion,
   getPopularDestinationsByRegion,
@@ -58,7 +61,6 @@ import {
   saveBackendTrip,
   type SavedTripDisplayDetails,
 } from "@/lib/saved-trips-api";
-
 
 function CompareOffersIllustration() {
   return (
@@ -429,12 +431,18 @@ export default function Home() {
       cards: [],
     });
   const destinationsRailRef = useRef<HTMLDivElement>(null);
-  const [canScrollDestinationsLeft, setCanScrollDestinationsLeft] = useState(false);
-  const [canScrollDestinationsRight, setCanScrollDestinationsRight] = useState(false);
+  const [canScrollDestinationsLeft, setCanScrollDestinationsLeft] =
+    useState(false);
+  const [canScrollDestinationsRight, setCanScrollDestinationsRight] =
+    useState(false);
   const [, setHasAdvancedWithNextArrowState] = useState(false);
   const hasAdvancedWithNextArrowRef = useRef(false);
-  const programmaticDestinationScrollCleanupRef = useRef<(() => void) | null>(null);
-  const [expandedCountryDirectoryId, setExpandedCountryDirectoryId] = useState(countryDirectoryCountries[0]?.id ?? "");
+  const programmaticDestinationScrollCleanupRef = useRef<(() => void) | null>(
+    null,
+  );
+  const [expandedCountryDirectoryId, setExpandedCountryDirectoryId] = useState<
+    string | null
+  >(null);
 
   const setHasAdvancedWithNextArrow = useCallback((value: boolean) => {
     hasAdvancedWithNextArrowRef.current = value;
@@ -487,13 +495,19 @@ export default function Home() {
       const finalState = measureDestinationRailState();
       if (!finalState) return;
 
-      if (direction === "right" && finalState.logicalScrollLeft > beforeState.logicalScrollLeft + 2) {
+      if (
+        direction === "right" &&
+        finalState.logicalScrollLeft > beforeState.logicalScrollLeft + 2
+      ) {
         setHasAdvancedWithNextArrow(true);
       }
 
       if (targetIsStart && finalState.logicalScrollLeft <= 2) {
         rail.scrollTo({
-          left: getCarouselStartScrollLeft(directionStyle, finalState.maxScrollLeft),
+          left: getCarouselStartScrollLeft(
+            directionStyle,
+            finalState.maxScrollLeft,
+          ),
           behavior: "instant",
         });
         setHasAdvancedWithNextArrow(false);
@@ -515,11 +529,12 @@ export default function Home() {
       behavior: "smooth",
     });
 
-    programmaticDestinationScrollCleanupRef.current = observeProgrammaticCarouselScroll(
-      rail,
-      measureDestinationRailState,
-      finalizeProgrammaticScroll,
-    );
+    programmaticDestinationScrollCleanupRef.current =
+      observeProgrammaticCarouselScroll(
+        rail,
+        measureDestinationRailState,
+        finalizeProgrammaticScroll,
+      );
   };
 
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -643,12 +658,29 @@ export default function Home() {
     const cardsByRoute = new Map<string, HomeDiscoveryFareCard>();
 
     for (const card of discoveryFareCardState.cards) {
-      const routeKey = getRouteKey(card.item.originCode, card.item.destinationCode);
-      if (routeKey && !cardsByRoute.has(routeKey)) cardsByRoute.set(routeKey, card);
+      const routeKey = getRouteKey(
+        card.item.originCode,
+        card.item.destinationCode,
+      );
+      if (routeKey && !cardsByRoute.has(routeKey))
+        cardsByRoute.set(routeKey, card);
     }
 
     return cardsByRoute;
   }, [discoveryFareCardState.cards]);
+  const countryDirectoryColumns = useMemo(() => {
+    const columnCount = 4;
+    const countriesPerColumn = Math.ceil(
+      countryDirectoryCountries.length / columnCount,
+    );
+
+    return Array.from({ length: columnCount }, (_, columnIndex) =>
+      countryDirectoryCountries.slice(
+        columnIndex * countriesPerColumn,
+        (columnIndex + 1) * countriesPerColumn,
+      ),
+    );
+  }, []);
 
   const handleNewsletterSubmit = async (
     event: React.FormEvent<HTMLFormElement>,
@@ -773,7 +805,13 @@ export default function Home() {
       resizeObserver.disconnect();
       rail.removeEventListener("scroll", measure);
     };
-  }, [measureDestinationRailState, popularDestinationMarket, visiblePopularDestinations, setHasAdvancedWithNextArrow, updateDestinationArrowState]);
+  }, [
+    measureDestinationRailState,
+    popularDestinationMarket,
+    visiblePopularDestinations,
+    setHasAdvancedWithNextArrow,
+    updateDestinationArrowState,
+  ]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -870,7 +908,6 @@ export default function Home() {
 
     return () => controller.abort();
   }, [regionCode]);
-
 
   const handleSavedTripToggle = async (
     event: React.MouseEvent<HTMLButtonElement>,
@@ -1111,7 +1148,9 @@ export default function Home() {
                               price={card.fare}
                               displayCurrency={selectedOption.currency}
                               expectedOriginCode={card.item.originCode}
-                              expectedDestinationCode={card.item.destinationCode}
+                              expectedDestinationCode={
+                                card.item.destinationCode
+                              }
                               isPriceLoading={discoveryFareCardState.loading}
                               isSaved={savedTripIds.includes(card.item.id)}
                               onHeartToggle={handleSavedTripToggle}
@@ -1161,75 +1200,83 @@ export default function Home() {
           </div>
         </section>
 
-
         <section className="page-shell mt-4 sm:mt-6">
           <div className="border-y border-slate-300/80 bg-gradient-to-b from-slate-50/90 via-[#F2F7FA]/45 to-slate-50/80 py-5 sm:py-7">
             <div className="px-0">
-            <div className="space-y-4">
-              <div className="max-w-3xl space-y-1.5">
-                <h2 className="text-xl font-semibold tracking-[-0.02em] text-slate-900 sm:text-2xl">
-                  {t("homeTrustTitle")}
-                </h2>
-                <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
-                  {t("homeTrustSubtitle")}
-                </p>
+              <div className="space-y-4">
+                <div className="max-w-3xl space-y-1.5">
+                  <h2 className="text-xl font-semibold tracking-[-0.02em] text-slate-900 sm:text-2xl">
+                    {t("homeTrustTitle")}
+                  </h2>
+                  <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
+                    {t("homeTrustSubtitle")}
+                  </p>
+                </div>
+
+                <div className="mt-3 divide-y divide-slate-200/70 md:grid md:grid-cols-3 md:gap-6 md:divide-y-0 md:[&>article+article]:border-l md:[&>article+article]:border-slate-200/70 md:[&>article+article]:pl-6 md:rtl:[&>article+article]:border-l-0 md:rtl:[&>article+article]:border-r md:rtl:[&>article+article]:pl-0 md:rtl:[&>article+article]:pr-6">
+                  <article className="flex items-start gap-3 py-2.5 first:pt-1 last:pb-1 md:px-2 md:py-1.5">
+                    <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-[#004BB8]/10">
+                      <CompareOffersIllustration />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold leading-6 text-slate-900">
+                        {t("homeTrustCompareTitle")}
+                      </h3>
+                      <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                        {t("homeTrustCompareBody")}
+                      </p>
+                    </div>
+                  </article>
+
+                  <article className="flex items-start gap-3 py-2.5 first:pt-1 last:pb-1 md:px-2 md:py-1.5">
+                    <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-[#5CB6B2]/18">
+                      <PricingContextIllustration />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold leading-6 text-slate-900">
+                        {t("homeTrustPricingTitle")}
+                      </h3>
+                      <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                        {t("homeTrustPricingBody")}
+                      </p>
+                    </div>
+                  </article>
+
+                  <article className="flex items-start gap-3 py-2.5 first:pt-1 last:pb-1 md:px-2 md:py-1.5">
+                    <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-[#021C2B]/10">
+                      <SecureHandoffIllustration />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold leading-6 text-slate-900">
+                        {t("homeTrustHandoffTitle")}
+                      </h3>
+                      <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                        {t("homeTrustHandoffBody")}
+                      </p>
+                    </div>
+                  </article>
+                </div>
               </div>
-
-              <div className="mt-3 divide-y divide-slate-200/70 md:grid md:grid-cols-3 md:gap-6 md:divide-y-0 md:[&>article+article]:border-l md:[&>article+article]:border-slate-200/70 md:[&>article+article]:pl-6 md:rtl:[&>article+article]:border-l-0 md:rtl:[&>article+article]:border-r md:rtl:[&>article+article]:pl-0 md:rtl:[&>article+article]:pr-6">
-                <article className="flex items-start gap-3 py-2.5 first:pt-1 last:pb-1 md:px-2 md:py-1.5">
-                  <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-[#004BB8]/10">
-                    <CompareOffersIllustration />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold leading-6 text-slate-900">
-                      {t("homeTrustCompareTitle")}
-                    </h3>
-                    <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
-                      {t("homeTrustCompareBody")}
-                    </p>
-                  </div>
-                </article>
-
-                <article className="flex items-start gap-3 py-2.5 first:pt-1 last:pb-1 md:px-2 md:py-1.5">
-                  <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-[#5CB6B2]/18">
-                    <PricingContextIllustration />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold leading-6 text-slate-900">
-                      {t("homeTrustPricingTitle")}
-                    </h3>
-                    <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
-                      {t("homeTrustPricingBody")}
-                    </p>
-                  </div>
-                </article>
-
-                <article className="flex items-start gap-3 py-2.5 first:pt-1 last:pb-1 md:px-2 md:py-1.5">
-                  <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-[#021C2B]/10">
-                    <SecureHandoffIllustration />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold leading-6 text-slate-900">
-                      {t("homeTrustHandoffTitle")}
-                    </h3>
-                    <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
-                      {t("homeTrustHandoffBody")}
-                    </p>
-                  </div>
-                </article>
-              </div>
-            </div>
             </div>
           </div>
         </section>
 
-
-        <section className="page-shell bg-white pb-8 pt-8 sm:bg-transparent sm:pb-9 sm:pt-11" aria-labelledby="regional-routes-heading">
+        <section
+          className="page-shell bg-white pb-8 pt-8 sm:bg-transparent sm:pb-9 sm:pt-11"
+          aria-labelledby="regional-routes-heading"
+        >
           <div className="mb-4 flex items-center justify-between gap-4">
-            <h2 id="regional-routes-heading" className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
-              {t("homeRegionalRoutesTitle") || "Discover destinations from your region"}
+            <h2
+              id="regional-routes-heading"
+              className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl"
+            >
+              {t("homeRegionalRoutesTitle") ||
+                "Discover destinations from your region"}
             </h2>
-            <Link href="/flights" className="focus-ring hidden items-center gap-1.5 rounded-full px-2 py-1 text-sm font-bold text-[#004BB8] hover:text-[#021C2B] sm:inline-flex">
+            <Link
+              href="/flights"
+              className="focus-ring hidden items-center gap-1.5 rounded-full px-2 py-1 text-sm font-bold text-[#004BB8] hover:text-[#021C2B] sm:inline-flex"
+            >
               {t("homeRegionalRoutesViewAll") || "View all route ideas"}
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
@@ -1237,7 +1284,9 @@ export default function Home() {
           <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
             <div className="flex snap-x snap-mandatory gap-4 sm:grid sm:grid-cols-5 sm:gap-5">
               {regionalRouteItems.map((item) => {
-                const fareCard = fareCardsByExactRoute.get(getRouteKey(item.originCode, item.destinationCode) ?? "");
+                const fareCard = fareCardsByExactRoute.get(
+                  getRouteKey(item.originCode, item.destinationCode) ?? "",
+                );
 
                 return (
                   <RegionalRouteCard
@@ -1280,10 +1329,17 @@ export default function Home() {
           />
         </section>
 
-        <section className="page-shell bg-white pb-7 pt-2 sm:pb-8 sm:pt-3" aria-labelledby="homepage-country-directory-heading" data-country-directory>
+        <section
+          className="page-shell bg-white pb-7 pt-2 sm:pb-8 sm:pt-3"
+          aria-labelledby="homepage-country-directory-heading"
+          data-country-directory
+        >
           <div className="mb-5 flex flex-col gap-3 sm:mb-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl space-y-2">
-              <h2 id="homepage-country-directory-heading" className="text-xl font-bold tracking-tight text-[#07133F] sm:text-2xl">
+              <h2
+                id="homepage-country-directory-heading"
+                className="text-xl font-bold tracking-tight text-[#07133F] sm:text-2xl"
+              >
                 {t("homeTripPlanningDirectoryTitle")}
               </h2>
               <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
@@ -1292,138 +1348,276 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" data-country-directory-columns="4">
-            {countryDirectoryCountries.map((country, index) => {
-              const isExpanded = expandedCountryDirectoryId === country.id;
-              const panelId = `country-directory-${country.id}`;
-              const countryName = t(country.labelKey) === country.labelKey ? country.fallbackName : t(country.labelKey);
-              const columnClassName = index % 4 === 0 ? "" : "lg:border-l lg:border-slate-200";
-              const tabletColumnClassName = index % 2 === 0 ? "" : "sm:border-l sm:border-slate-200";
+          <div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+            data-country-directory-columns="4"
+            data-independent-country-columns
+          >
+            {countryDirectoryColumns.map((columnCountries, columnIndex) => (
+              <div
+                key={`country-directory-column-${columnIndex}`}
+                className={`${columnIndex % 2 === 1 ? "sm:border-l sm:border-slate-200" : ""} ${columnIndex > 0 ? "lg:border-l lg:border-slate-200" : ""}`}
+                data-country-directory-column
+              >
+                {columnCountries.map((country) => {
+                  const isExpanded = expandedCountryDirectoryId === country.id;
+                  const panelId = `country-directory-${country.id}`;
+                  const countryName =
+                    t(country.labelKey) === country.labelKey
+                      ? country.fallbackName
+                      : t(country.labelKey);
 
-              return (
-                <article key={country.id} className={`border-t border-slate-200 ${tabletColumnClassName} ${columnClassName}`} data-country-row>
-                  <div className="group relative flex min-h-[74px] items-start gap-3 px-3 py-3.5 sm:px-4">
-                    <span className="mt-0.5 text-[1.35rem] leading-none" aria-hidden="true">{country.flag}</span>
-                    <div className="min-w-0 flex-1 pr-8">
-                      <button
-                        type="button"
-                        className="focus-ring block max-w-full text-left text-base font-bold leading-6 text-[#07133F] transition hover:text-[#004BB8]"
-                        aria-expanded={isExpanded}
-                        aria-controls={panelId}
-                        onClick={() => setExpandedCountryDirectoryId((current) => current === country.id ? "" : country.id)}
-                      >
-                        <span className="truncate">{countryName}</span>
-                      </button>
-                      <nav className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.68rem] font-extrabold uppercase tracking-[0.12em] text-[#004BB8]" aria-label={`${countryName} travel products`}>
-                        {(["Cars", "Flights", "Hotels"] as CountryDirectoryCategory[]).map((category, categoryIndex) => (
-                          <span key={`${country.id}-${category}-quick`} className="inline-flex items-center gap-2">
-                            {categoryIndex > 0 ? <span aria-hidden="true" className="text-[#004BB8]/70">·</span> : null}
-                            <Link href={country.links[category][0].href} className="focus-ring rounded-sm hover:text-[#00327A]" onClick={(event) => event.stopPropagation()}>{category.toUpperCase()}</Link>
-                          </span>
-                        ))}
-                      </nav>
-                    </div>
-                    <button
-                      type="button"
-                      className="focus-ring absolute right-3 top-4 rounded-full p-1 text-[#07133F] transition hover:text-[#004BB8] sm:right-4"
-                      aria-label={`${isExpanded ? "Collapse" : "Expand"} ${countryName}`}
-                      aria-expanded={isExpanded}
-                      aria-controls={panelId}
-                      onClick={() => setExpandedCountryDirectoryId((current) => current === country.id ? "" : country.id)}
+                  return (
+                    <article
+                      key={country.id}
+                      className="border-t border-slate-200 bg-white"
+                      data-country-row
+                      data-expanded={isExpanded ? "true" : "false"}
                     >
-                      <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`} aria-hidden="true" />
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-
-          {countryDirectoryCountries.map((country) => {
-            const isExpanded = expandedCountryDirectoryId === country.id;
-            if (!isExpanded) return null;
-            const countryName = t(country.labelKey) === country.labelKey ? country.fallbackName : t(country.labelKey);
-
-            return (
-              <div key={`${country.id}-panel`} id={`country-directory-${country.id}`} className="mt-4 rounded-xl border border-slate-200 bg-[#F8FBFC] px-4 py-4 sm:px-5 sm:py-5" data-integrated-country-panel>
-                <div className="mb-5 flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-start gap-3">
-                    <span className="text-[1.4rem] leading-none" aria-hidden="true">{country.flag}</span>
-                    <div className="min-w-0">
-                      <h3 className="truncate text-base font-bold text-[#07133F]">{countryName}</h3>
-                      <p className="mt-0.5 text-[0.68rem] font-extrabold uppercase tracking-[0.12em] text-[#004BB8]">CARS · FLIGHTS · HOTELS</p>
-                    </div>
-                  </div>
-                  <button type="button" className="focus-ring rounded-full p-1 text-[#07133F]" aria-label={`Collapse ${countryName}`} aria-expanded={isExpanded} aria-controls={`country-directory-${country.id}`} onClick={() => setExpandedCountryDirectoryId("")}>
-                    <ChevronDown className="h-4 w-4 rotate-180" aria-hidden="true" />
-                  </button>
-                </div>
-                <div className="grid gap-5 sm:grid-cols-3 sm:gap-0">
-                  {(["Flights", "Hotels", "Cars"] as CountryDirectoryCategory[]).map((category, categoryIndex) => (
-                    <div key={`${country.id}-${category}`} className={`sm:px-6 ${categoryIndex === 0 ? "sm:pl-0" : "border-t border-slate-200 pt-5 sm:border-l sm:border-t-0 sm:pt-0"}`} data-product-column={category.toLowerCase()}>
-                      <h4 className="text-sm font-extrabold uppercase tracking-[0.22em] text-slate-600">{category}</h4>
-                      <div className="mt-4 space-y-3">
-                        {country.links[category].slice(0, 3).map((link) => {
-                          const fareCard = link.routeKey ? fareCardsByExactRoute.get(link.routeKey) : undefined;
-                          const displayPrice = fareCard && hasFreshProviderPrice(fareCard.fare, { originCode: fareCard.item.originCode, destinationCode: fareCard.item.destinationCode })
-                            ? formatDisplayPrice({ amount: fareCard.fare.price, sourceCurrency: fareCard.fare.currency, displayCurrency: selectedOption.currency }).formatted
-                            : "";
-
-                          return (
-                            <Link key={link.label} href={link.href} className="focus-ring group flex items-center justify-between gap-3 rounded-md py-1.5 text-sm font-medium text-[#07133F] transition hover:text-[#004BB8]">
-                              <span>{link.label}</span>
-                              <span className="flex shrink-0 items-center gap-2 text-[#004BB8]">
-                                {displayPrice ? <span className="text-xs font-bold">{displayPrice}</span> : null}
-                                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden="true" />
+                      <div className="group relative flex min-h-[72px] items-start gap-3 px-3 py-3.5 sm:px-4">
+                        <span
+                          className="mt-0.5 inline-flex h-6 w-7 shrink-0 items-center justify-center overflow-hidden rounded-[3px] bg-gradient-to-br from-slate-100 via-white to-slate-200 text-[1.35rem] leading-none [font-family:'Apple_Color_Emoji','Segoe_UI_Emoji','Noto_Color_Emoji',sans-serif]"
+                          aria-hidden="true"
+                        >
+                          {country.flag}
+                        </span>
+                        <div className="min-w-0 flex-1 pr-8">
+                          <button
+                            type="button"
+                            className="focus-ring block max-w-full text-left text-base font-semibold leading-6 text-[#07133F] transition hover:text-[#004BB8]"
+                            aria-expanded={isExpanded}
+                            aria-controls={panelId}
+                            onClick={() =>
+                              setExpandedCountryDirectoryId((current) =>
+                                current === country.id ? null : country.id,
+                              )
+                            }
+                          >
+                            <span className="truncate">{countryName}</span>
+                          </button>
+                          <nav
+                            className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.68rem] font-extrabold uppercase tracking-[0.12em] text-[#004BB8]"
+                            aria-label={`${countryName} travel products`}
+                          >
+                            {(
+                              [
+                                "Cars",
+                                "Flights",
+                                "Hotels",
+                              ] as CountryDirectoryCategory[]
+                            ).map((category, categoryIndex) => (
+                              <span
+                                key={`${country.id}-${category}-quick`}
+                                className="inline-flex items-center gap-2"
+                              >
+                                {categoryIndex > 0 ? (
+                                  <span
+                                    aria-hidden="true"
+                                    className="text-[#004BB8]/70"
+                                  >
+                                    ·
+                                  </span>
+                                ) : null}
+                                <Link
+                                  href={country.links[category][0].href}
+                                  className="focus-ring rounded-sm hover:text-[#00327A]"
+                                  onClick={(event) => event.stopPropagation()}
+                                >
+                                  {category.toUpperCase()}
+                                </Link>
                               </span>
-                            </Link>
-                          );
-                        })}
+                            ))}
+                          </nav>
+                        </div>
+                        <button
+                          type="button"
+                          className="focus-ring absolute right-3 top-4 rounded-full p-1 text-[#07133F] transition hover:text-[#004BB8] sm:right-4"
+                          aria-label={`${isExpanded ? "Collapse" : "Expand"} ${countryName}`}
+                          aria-expanded={isExpanded}
+                          aria-controls={panelId}
+                          onClick={() =>
+                            setExpandedCountryDirectoryId((current) =>
+                              current === country.id ? null : country.id,
+                            )
+                          }
+                        >
+                          <ChevronDown
+                            className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                            aria-hidden="true"
+                          />
+                        </button>
                       </div>
-                      <Link href={country.links[category][0].href} className="focus-ring mt-4 inline-flex items-center gap-2 rounded-md text-sm font-bold text-[#004BB8] hover:text-[#00327A]">
-                        View all {category.toLowerCase()} <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                      </Link>
-                    </div>
-                  ))}
-                </div>
+
+                      {isExpanded ? (
+                        <div
+                          id={panelId}
+                          className="border-t border-slate-100 bg-[#F8FBFC]/70 pb-4 pl-[3.55rem] pr-3 pt-3 sm:pl-[4.05rem] sm:pr-4"
+                          data-inline-country-panel
+                        >
+                          <div
+                            className="space-y-4"
+                            data-product-sections="vertical"
+                          >
+                            {(
+                              [
+                                "Hotels",
+                                "Flights",
+                                "Cars",
+                              ] as CountryDirectoryCategory[]
+                            ).map((category) => (
+                              <section
+                                key={`${country.id}-${category}`}
+                                data-product-section={category.toLowerCase()}
+                              >
+                                <h3 className="text-[0.68rem] font-extrabold uppercase tracking-[0.18em] text-slate-500">
+                                  {category}
+                                </h3>
+                                <div className="mt-2 space-y-1.5">
+                                  {country.links[category]
+                                    .slice(0, 3)
+                                    .map((link) => {
+                                      const fareCard = link.routeKey
+                                        ? fareCardsByExactRoute.get(
+                                            link.routeKey,
+                                          )
+                                        : undefined;
+                                      const displayPrice =
+                                        fareCard &&
+                                        hasFreshProviderPrice(fareCard.fare, {
+                                          originCode: fareCard.item.originCode,
+                                          destinationCode:
+                                            fareCard.item.destinationCode,
+                                        })
+                                          ? formatDisplayPrice({
+                                              amount: fareCard.fare.price,
+                                              sourceCurrency:
+                                                fareCard.fare.currency,
+                                              displayCurrency:
+                                                selectedOption.currency,
+                                            }).formatted
+                                          : "";
+
+                                      return (
+                                        <Link
+                                          key={link.label}
+                                          href={link.href}
+                                          className="focus-ring group flex items-center justify-between gap-3 rounded-sm py-1 text-sm font-medium leading-5 text-[#07133F] transition hover:text-[#004BB8]"
+                                        >
+                                          <span>{link.label}</span>
+                                          <span className="flex shrink-0 items-center gap-2 text-[#004BB8]">
+                                            {displayPrice ? (
+                                              <span className="text-xs font-bold">
+                                                {displayPrice}
+                                              </span>
+                                            ) : null}
+                                            <ArrowRight
+                                              className="h-3.5 w-3.5 transition group-hover:translate-x-0.5"
+                                              aria-hidden="true"
+                                            />
+                                          </span>
+                                        </Link>
+                                      );
+                                    })}
+                                </div>
+                              </section>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </article>
+                  );
+                })}
               </div>
-            );
-          })}
+            ))}
+          </div>
         </section>
 
         <section className="page-shell pb-5 pt-1 sm:pb-7 sm:pt-2">
           <div className="overflow-hidden rounded-2xl bg-[#062B63] px-5 py-4 text-white shadow-[0_22px_50px_-30px_rgba(2,28,43,0.7)] sm:rounded-3xl sm:px-7 sm:py-5 lg:grid lg:grid-cols-[150px_minmax(0,1fr)_minmax(360px,0.9fr)] lg:items-center lg:gap-6">
-            <div className="mx-auto mb-3 h-16 w-36 text-white/90 lg:mb-0 lg:mx-0" aria-hidden="true">
+            <div
+              className="mx-auto mb-3 h-16 w-36 text-white/90 lg:mb-0 lg:mx-0"
+              aria-hidden="true"
+            >
               <svg viewBox="0 0 180 90" fill="none" className="h-full w-full">
-                <path d="M2 62C32 36 46 87 68 55C84 31 103 40 121 22" stroke="white" strokeOpacity="0.62" strokeWidth="2" strokeDasharray="6 7" strokeLinecap="round" />
+                <path
+                  d="M2 62C32 36 46 87 68 55C84 31 103 40 121 22"
+                  stroke="white"
+                  strokeOpacity="0.62"
+                  strokeWidth="2"
+                  strokeDasharray="6 7"
+                  strokeLinecap="round"
+                />
                 <path d="M83 36L160 8L132 76L116 49L83 36Z" fill="#EAF7FF" />
-                <path d="M116 49L160 8L102 43" stroke="#94DFF0" strokeWidth="3" strokeLinejoin="round" />
+                <path
+                  d="M116 49L160 8L102 43"
+                  stroke="#94DFF0"
+                  strokeWidth="3"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
             <div className="text-center lg:text-start">
-              <h2 className="text-xl font-extrabold tracking-tight sm:text-2xl">{t("homeNewsletterTitle")}</h2>
-              <p className="mt-1.5 text-sm font-medium leading-6 text-white/82">{t("homeNewsletterBody")}</p>
+              <h2 className="text-xl font-extrabold tracking-tight sm:text-2xl">
+                {t("homeNewsletterTitle")}
+              </h2>
+              <p className="mt-1.5 text-sm font-medium leading-6 text-white/82">
+                {t("homeNewsletterBody")}
+              </p>
             </div>
             <div className="mt-4 lg:mt-0">
-              <form className="flex flex-col gap-2 sm:flex-row sm:gap-0" onSubmit={handleNewsletterSubmit} aria-busy={newsletterPending}>
-                <input type="email" value={newsletterEmail} onChange={(event) => { setNewsletterEmail(event.target.value); if (newsletterStatus !== "idle") { setNewsletterStatus("idle"); setNewsletterMessage(""); } }} placeholder={t("homeNewsletterPlaceholder")} className="focus-ring h-12 min-w-0 flex-1 rounded-xl border-0 bg-white px-4 text-base font-semibold text-slate-950 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 sm:rounded-e-none" aria-label={t("homeEmailAddress")} disabled={newsletterPending} required />
-                <button type="submit" className="focus-ring h-12 shrink-0 rounded-xl bg-[#5CB6B2] px-5 text-sm font-extrabold text-white transition hover:bg-[#48a5a1] disabled:cursor-not-allowed disabled:bg-slate-500 sm:rounded-s-none" aria-busy={newsletterPending} disabled={newsletterPending}>{newsletterPending ? t("homeSubscribing") : t("homeSubscribe")}</button>
+              <form
+                className="flex flex-col gap-2 sm:flex-row sm:gap-0"
+                onSubmit={handleNewsletterSubmit}
+                aria-busy={newsletterPending}
+              >
+                <input
+                  type="email"
+                  value={newsletterEmail}
+                  onChange={(event) => {
+                    setNewsletterEmail(event.target.value);
+                    if (newsletterStatus !== "idle") {
+                      setNewsletterStatus("idle");
+                      setNewsletterMessage("");
+                    }
+                  }}
+                  placeholder={t("homeNewsletterPlaceholder")}
+                  className="focus-ring h-12 min-w-0 flex-1 rounded-xl border-0 bg-white px-4 text-base font-semibold text-slate-950 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 sm:rounded-e-none"
+                  aria-label={t("homeEmailAddress")}
+                  disabled={newsletterPending}
+                  required
+                />
+                <button
+                  type="submit"
+                  className="focus-ring h-12 shrink-0 rounded-xl bg-[#5CB6B2] px-5 text-sm font-extrabold text-white transition hover:bg-[#48a5a1] disabled:cursor-not-allowed disabled:bg-slate-500 sm:rounded-s-none"
+                  aria-busy={newsletterPending}
+                  disabled={newsletterPending}
+                >
+                  {newsletterPending
+                    ? t("homeSubscribing")
+                    : t("homeSubscribe")}
+                </button>
               </form>
-              <p className="mt-1.5 text-xs font-medium leading-5 text-white/72">{t("homeNewsletterConsent")}</p>
-              {newsletterMessage ? <p className={`mt-1.5 text-xs font-semibold ${newsletterStatus === "error" ? "text-red-200" : "text-teal-100"}`} role="status" aria-live="polite">{newsletterMessage}</p> : null}
+              <p className="mt-1.5 text-xs font-medium leading-5 text-white/72">
+                {t("homeNewsletterConsent")}
+              </p>
+              {newsletterMessage ? (
+                <p
+                  className={`mt-1.5 text-xs font-semibold ${newsletterStatus === "error" ? "text-red-200" : "text-teal-100"}`}
+                  role="status"
+                  aria-live="polite"
+                >
+                  {newsletterMessage}
+                </p>
+              ) : null}
             </div>
           </div>
         </section>
-
-
-
       </main>
 
       <Footer />
     </>
   );
 }
-
 
 function observeProgrammaticCarouselScroll(
   rail: HTMLDivElement,
@@ -1505,15 +1699,18 @@ function getDestinationRailTargetLogicalScroll(
   });
   const tolerance = 2;
   const childStarts = Array.from(rail.children)
-    .map((child) => (child instanceof HTMLElement ? child.offsetLeft - rail.offsetLeft : null))
+    .map((child) =>
+      child instanceof HTMLElement ? child.offsetLeft - rail.offsetLeft : null,
+    )
     .filter((value): value is number => typeof value === "number")
     .map((value) => Math.min(state.maxScrollLeft, Math.max(0, value)))
     .sort((first, second) => first - second);
 
   if (direction === "right") {
     return (
-      childStarts.find((start) => start > currentLogicalScrollLeft + tolerance) ??
-      state.maxScrollLeft
+      childStarts.find(
+        (start) => start > currentLogicalScrollLeft + tolerance,
+      ) ?? state.maxScrollLeft
     );
   }
 
@@ -1576,8 +1773,6 @@ function RegionalRouteCard({
     </Link>
   );
 }
-
-
 
 function DiscoveryCardImage({
   image,
@@ -1749,12 +1944,22 @@ function DiscoverySuggestionCard({
           {tripSummary}
         </p>
         {isPriceLoading ? (
-          <span className="mt-auto block h-8 w-16 animate-pulse rounded bg-slate-200" aria-label={t("homeCheckingProviderRoutePricing")} />
+          <span
+            className="mt-auto block h-8 w-16 animate-pulse rounded bg-slate-200"
+            aria-label={t("homeCheckingProviderRoutePricing")}
+          />
         ) : (
           <div className="mt-auto flex items-baseline gap-1.5 pt-2">
-            <span className="text-sm font-semibold leading-5 text-slate-700">{t("fromPrice")}</span>
+            <span className="text-sm font-semibold leading-5 text-slate-700">
+              {t("fromPrice")}
+            </span>
             {displayPrice ? (
-              <span className="text-base font-bold leading-5 tracking-tight text-slate-950" title={displayPrice.title}>{displayPrice.formatted}</span>
+              <span
+                className="text-base font-bold leading-5 tracking-tight text-slate-950"
+                title={displayPrice.title}
+              >
+                {displayPrice.formatted}
+              </span>
             ) : null}
           </div>
         )}
@@ -1791,7 +1996,9 @@ function getRouteKey(originCode: string, destinationCode: string) {
   const origin = originCode.trim().toUpperCase();
   const destination = destinationCode.trim().toUpperCase();
 
-  return /^[A-Z]{3}$/.test(origin) && /^[A-Z]{3}$/.test(destination) && origin !== destination
+  return /^[A-Z]{3}$/.test(origin) &&
+    /^[A-Z]{3}$/.test(destination) &&
+    origin !== destination
     ? `${origin}-${destination}`
     : null;
 }
@@ -2088,9 +2295,7 @@ function PromoPanel({
 
       <div
         className={`absolute bottom-5 right-6 flex h-40 w-40 items-center justify-center rounded-full ${
-          isBlue
-            ? "bg-white/55 text-[#004BB8]"
-            : "bg-white/70 text-[#004BB8]"
+          isBlue ? "bg-white/55 text-[#004BB8]" : "bg-white/70 text-[#004BB8]"
         }`}
       >
         <Sparkles className="absolute left-5 top-5 opacity-40" size={24} />
