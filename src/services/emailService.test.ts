@@ -140,3 +140,62 @@ test("emailPreferencesUpdatedEmail falls back to neutral greeting for unreliable
   assert.match(html, /Hi,/);
   assert.doesNotMatch(html, /user@example.com/);
 });
+
+test("savedTripReminderEmail renders mobile-friendly CTA copy", async () => {
+  const { savedTripReminderEmail } = await import("@/services/emailService");
+  const html = savedTripReminderEmail({
+    name: "User",
+    title: "Kuri Air KT123",
+    destination: "LAX",
+    anchorAt: new Date("2026-07-17T12:00:00.000Z"),
+    provider: "Duffel",
+    ctaUrl: "https://kurioticket.com/saved",
+    window: "7d",
+  });
+
+  assert.match(html, /Saved trip reminder/);
+  assert.match(html, /Review saved trip/);
+  assert.match(html, /https:\/\/kurioticket.com\/saved/);
+});
+
+test("sendOptionalEmail skips savedTripReminders when master optional emails are disabled", async () => {
+  let sendCalls = 0;
+  mockPreferences({ email: { ...emailPreferenceDefaults, receiveOptionalEmails: false, savedTripReminders: true } });
+  __emailServiceTest.setSendTransactionalEmailForTesting(async () => {
+    sendCalls += 1;
+    return { id: "email-1" };
+  });
+
+  const result = await sendOptionalEmail({
+    userId: "user-1",
+    category: "savedTripReminders",
+    to: "user@example.com",
+    subject: "Saved trip reminder",
+    html: "<p>Reminder</p>",
+    template: "saved_trip_reminder",
+  });
+
+  assert.deepEqual(result, { skipped: true, reason: "preferences_disabled" });
+  assert.equal(sendCalls, 0);
+});
+
+test("sendOptionalEmail skips savedTripReminders when category is disabled", async () => {
+  let sendCalls = 0;
+  mockPreferences({ email: { ...emailPreferenceDefaults, receiveOptionalEmails: true, savedTripReminders: false } });
+  __emailServiceTest.setSendTransactionalEmailForTesting(async () => {
+    sendCalls += 1;
+    return { id: "email-1" };
+  });
+
+  const result = await sendOptionalEmail({
+    userId: "user-1",
+    category: "savedTripReminders",
+    to: "user@example.com",
+    subject: "Saved trip reminder",
+    html: "<p>Reminder</p>",
+    template: "saved_trip_reminder",
+  });
+
+  assert.deepEqual(result, { skipped: true, reason: "preferences_disabled" });
+  assert.equal(sendCalls, 0);
+});

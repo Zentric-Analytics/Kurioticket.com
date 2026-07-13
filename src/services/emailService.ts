@@ -170,6 +170,54 @@ export function priceAlertEmail(input: {
   `;
 }
 
+
+export function savedTripReminderEmail(input: {
+  name?: string | null;
+  title: string;
+  destination: string;
+  anchorAt: Date;
+  endAt?: Date;
+  provider?: string;
+  ctaUrl: string;
+  window: "7d" | "24h";
+}) {
+  const name = escapeHtml(input.name);
+  const title = escapeHtml(input.title);
+  const destination = escapeHtml(input.destination);
+  const ctaUrl = escapeHtml(input.ctaUrl);
+  const provider = input.provider ? escapeHtml(input.provider) : "";
+  const when = escapeHtml(formatSavedTripReminderDate(input.anchorAt));
+  const end = input.endAt ? escapeHtml(formatSavedTripReminderDate(input.endAt)) : "";
+  const intro = input.window === "7d" ? "Your saved travel plan is coming up in 7 days." : "Your saved travel plan is coming up in about 24 hours.";
+
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a;max-width:560px;margin:0 auto">
+      <h1 style="font-size:22px;margin:0 0 12px">Saved trip reminder</h1>
+      <p style="margin:0 0 12px">${name ? `Hi ${name},` : "Hi,"} ${intro}</p>
+      <div style="border:1px solid #dbe3ea;border-radius:18px;padding:16px;margin:0 0 16px;background:#f8fafc">
+        <p style="margin:0 0 6px;font-weight:700;color:#0f172a">${title}</p>
+        <p style="margin:0;color:#334155">${destination}</p>
+        <p style="margin:8px 0 0;color:#334155">Starts ${when}${end ? ` · Ends ${end}` : ""}</p>
+        ${provider ? `<p style="margin:8px 0 0;color:#64748b">Provider: ${provider}</p>` : ""}
+      </div>
+      <p style="margin:0 0 16px">Review current availability, details, and provider terms before you travel.</p>
+      <p style="margin:0"><a href="${ctaUrl}" style="display:inline-block;border-radius:999px;background:#0f766e;color:#ffffff;text-decoration:none;font-weight:700;padding:11px 16px">Review saved trip</a></p>
+    </div>
+  `;
+}
+
+function formatSavedTripReminderDate(date: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "UTC",
+    timeZoneName: "short",
+  }).format(date);
+}
+
 export function supportTicketEmail(input: { ticketId: string; subject: string }) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">

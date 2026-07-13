@@ -22,6 +22,7 @@ export type EmailTemplateKey =
   | "newsletter_unsubscribe"
   | "email_preferences_updated"
   | "price_alert"
+  | "saved_trip_reminder"
   | "notification"
   | "admin_test";
 
