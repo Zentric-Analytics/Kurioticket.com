@@ -8,6 +8,16 @@ export type SavedTripApiItem = {
   payload: unknown;
   createdAt: string;
   updatedAt: string;
+  savedSearchId?: string | null;
+  detailedSearch?: {
+    origin: string; destination: string; tripType: string; departureDate: string; returnDate: string | null; adults: number; children: number; infants: number; travelers: number; cabinClass: string; currency: string | null; href: string;
+  } | null;
+  isWatching?: boolean;
+  routeWatchStatus?: "ACTIVE" | "PAUSED" | "EXPIRED" | "ERROR" | null;
+  routeWatchId?: string | null;
+  lastCheckedAt?: string | null;
+  nextCheckAt?: string | null;
+  routeWatchUnavailableReason?: "invalid" | "expired" | null;
 };
 
 export type PublicSavedSearch = {
@@ -51,6 +61,20 @@ export type SavedTripSearchMetadata = {
   travelerCount?: number;
   currency?: string;
   price?: number;
+};
+
+export type SavedTripFlightSearch = {
+  tripType: "round-trip" | "one-way";
+  origin: string;
+  destination: string;
+  departureDate: string;
+  returnDate?: string | null;
+  adults: number;
+  children: number;
+  infants: number;
+  travelers: number;
+  cabinClass: "economy" | "business" | "first";
+  currency?: string;
 };
 
 export type SavedTripDisplayDetails = {
@@ -151,6 +175,7 @@ export async function fetchBackendSavedTrips(
 export async function saveBackendTrip(
   localId: string,
   display?: SavedTripDisplayDetails,
+  flightSearch?: SavedTripFlightSearch,
 ): Promise<SavedTripApiResult> {
   try {
     const response = await fetch("/api/dashboard/saved", {
@@ -165,6 +190,7 @@ export async function saveBackendTrip(
         destination:
           display?.destinationCity ?? display?.destinationCode ?? localId,
         payload: { ...display, localId },
+        ...(flightSearch ? { flightSearch } : {}),
       }),
     });
     const payload = await readJson(response);

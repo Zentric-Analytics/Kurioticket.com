@@ -141,42 +141,42 @@ enum TripBookingStatus {
 }
 
 model User {
-  id                      String                   @id @default(cuid())
-  name                    String?
-  email                   String?                  @unique
-  emailVerified           DateTime?
-  image                   String?
-  passwordHash            String?
-  role                    UserRole                 @default(USER)
-  status                  UserStatus               @default(ACTIVE)
-  priceAlertLimitOverride Int?
-  onboardedAt             DateTime?
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
-  accounts                Account[]
-  sessions                Session[]
-  savedFlights            SavedFlight[]
-  savedHotels             SavedHotel[]
-  savedSearches           SavedSearch[]
+  id                       String                        @id @default(cuid())
+  name                     String?
+  email                    String?                       @unique
+  emailVerified            DateTime?
+  image                    String?
+  passwordHash             String?
+  role                     UserRole                      @default(USER)
+  status                   UserStatus                    @default(ACTIVE)
+  priceAlertLimitOverride  Int?
+  onboardedAt              DateTime?
+  createdAt                DateTime                      @default(now())
+  updatedAt                DateTime                      @updatedAt
+  accounts                 Account[]
+  sessions                 Session[]
+  savedFlights             SavedFlight[]
+  savedHotels              SavedHotel[]
+  savedSearches            SavedSearch[]
   routeWatchStates         RouteWatchState[]
-  recentSearches          RecentSearch[]
-  searchHistory           SearchHistory[]
-  priceAlerts             PriceAlert[]
-  supportTickets          SupportTicket[]
-  redirectLogs            RedirectLog[]
-  apiEvents               AnalyticsEvent[]
-  notifications           Notification[]
-  profile                 UserProfile?
-  securitySettings        UserSecuritySettings?
+  recentSearches           RecentSearch[]
+  searchHistory            SearchHistory[]
+  priceAlerts              PriceAlert[]
+  supportTickets           SupportTicket[]
+  redirectLogs             RedirectLog[]
+  apiEvents                AnalyticsEvent[]
+  notifications            Notification[]
+  profile                  UserProfile?
+  securitySettings         UserSecuritySettings?
   customizationPreferences UserCustomizationPreferences?
-  travelPreferences       TravelPreferences?
-  watchlistItems          TravelWatchlist[]
-  savedTrips              SavedTrip[]
-  tripBookings            TripBooking[]
-  sessionActivities       UserSessionActivity[]
-  accountDeletionRequests AccountDeletionRequest[]
-  passkeys                UserPasskey[]
-  webAuthnChallenges      WebAuthnChallenge[]
+  travelPreferences        TravelPreferences?
+  watchlistItems           TravelWatchlist[]
+  savedTrips               SavedTrip[]
+  tripBookings             TripBooking[]
+  sessionActivities        UserSessionActivity[]
+  accountDeletionRequests  AccountDeletionRequest[]
+  passkeys                 UserPasskey[]
+  webAuthnChallenges       WebAuthnChallenge[]
 
   @@index([role])
   @@index([status])
@@ -354,18 +354,20 @@ model SavedHotel {
 }
 
 model SavedSearch {
-  id          String     @id @default(cuid())
-  userId      String
-  type        SearchType
-  label       String?
-  origin      String?
-  destination String?
-  checkIn     DateTime?
-  checkOut    DateTime?
-  query       Json
-  createdAt   DateTime   @default(now())
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String           @id @default(cuid())
+  userId          String
+  type            SearchType
+  label           String?
+  origin          String?
+  destination     String?
+  checkIn         DateTime?
+  checkOut        DateTime?
+  query           Json
+  createdAt       DateTime         @default(now())
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   routeWatchState RouteWatchState?
+  savedTripId     String?          @unique
+  savedTrip       SavedTrip?       @relation(fields: [savedTripId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([type])
@@ -642,7 +644,6 @@ model Notification {
   @@index([createdAt])
 }
 
-
 model UserCustomizationPreferences {
   id                         String   @id @default(cuid())
   userId                     String   @unique
@@ -692,16 +693,17 @@ model TravelWatchlist {
 }
 
 model SavedTrip {
-  id          String    @id @default(cuid())
+  id          String       @id @default(cuid())
   userId      String
   name        String
   startsAt    DateTime?
   endsAt      DateTime?
   destination String?
   payload     Json
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  savedSearch SavedSearch?
 
   @@index([userId])
   @@index([startsAt])
