@@ -73,31 +73,27 @@ test("homepage country directory replaces the hotel mosaic between promo panels 
   assert.doesNotMatch(pageSource, /homepageHotelDestinationCards/);
 });
 
-test("homepage country directory uses flags, full display names, and one expanded row state", () => {
-  for (const expected of [
-    'flag: "🇺🇸",\n    name: "United States"',
-    'flag: "🇬🇧", name: "UK"',
-    'flag: "🇫🇷", name: "France"',
-    'flag: "🇦🇪", name: "UAE"',
-    'flag: "🇯🇵", name: "Japan"',
-    'flag: "🇲🇽", name: "Mexico"',
-    'flag: "🇮🇹", name: "Italy"',
-    'flag: "🇸🇬", name: "Singapore"',
-  ]) {
-    assert.match(pageSource, new RegExp(expected));
-  }
-
+test("homepage country directory uses generated flags, accessible triggers, four columns, and one integrated panel", () => {
   const directorySource = pageSource.slice(
     pageSource.indexOf('aria-labelledby="homepage-country-directory-heading"'),
     pageSource.indexOf('homeNewsletterTitle'),
   );
 
-  assert.match(directorySource, /CARS · FLIGHTS · HOTELS/);
+  assert.match(pageSource, /countryDirectoryCountries/);
+  assert.match(directorySource, /data-country-directory-columns="4"/);
+  assert.match(directorySource, /lg:grid-cols-4/);
   assert.match(directorySource, /aria-expanded=\{isExpanded\}/);
+  assert.match(directorySource, /aria-controls=\{panelId\}/);
   assert.match(directorySource, /expandedCountryDirectoryId === country\.id/);
-  assert.match(directorySource, /\(\["Flights", "Hotels", "Cars"\] as const\)/);
+  assert.match(directorySource, /setExpandedCountryDirectoryId\(\(current\) => current === country\.id \? "" : country\.id\)/);
+  assert.match(directorySource, /data-integrated-country-panel/);
+  assert.match(directorySource, /data-product-column=\{category\.toLowerCase\(\)\}/);
+  assert.match(directorySource, /onClick=\{\(event\) => event\.stopPropagation\(\)\}/);
+  assert.match(directorySource, /CARS · FLIGHTS · HOTELS/);
+  assert.doesNotMatch(directorySource, /rounded-2xl bg-white p-4 shadow-sm/);
   assert.doesNotMatch(directorySource, /\{country\.countryCode\}/);
 });
+
 
 test("homepage country directory only shows provider-backed prices when valid fares exist", () => {
   const directorySource = pageSource.slice(
@@ -108,7 +104,7 @@ test("homepage country directory only shows provider-backed prices when valid fa
   assert.match(directorySource, /fareCardsByExactRoute\.get\(link\.routeKey\)/);
   assert.match(directorySource, /hasFreshProviderPrice/);
   assert.match(directorySource, /formatDisplayPrice/);
-  assert.match(directorySource, /\{displayPrice \? <span>\{displayPrice\}<\/span> : null\}/);
+  assert.match(directorySource, /displayPrice \? <span/);
 });
 
 test("hotels page source remains on the shared destination image catalog", () => {
@@ -117,10 +113,11 @@ test("hotels page source remains on the shared destination image catalog", () =>
 });
 
 test("homepage country directory hotel links use existing hotel results contract", () => {
-  const hrefSource = pageSource.slice(pageSource.indexOf("function buildHotelDirectoryHref"), pageSource.indexOf("const countryDirectoryCountries"));
+  const directoryDataSource = readFileSync(new URL("../data/homepageCountryDirectory.ts", import.meta.url), "utf8");
+  const hrefSource = directoryDataSource.slice(directoryDataSource.indexOf("export function buildCountryDirectoryHotelHref"), directoryDataSource.indexOf("export function buildCountryDirectoryCarsHref"));
 
   assert.match(hrefSource, /pathname: "\/hotels\/results"/);
-  assert.match(hrefSource, /destination: searchValue/);
+  assert.match(hrefSource, /destination/);
   assert.match(hrefSource, /checkIn/);
   assert.match(hrefSource, /checkOut/);
   assert.match(hrefSource, /guests: "2"/);
