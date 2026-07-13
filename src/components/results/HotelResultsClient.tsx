@@ -28,6 +28,10 @@ import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
 import {
+  buildHotelFacilityFilterOptions,
+  hotelMatchesFacilityFilters,
+} from "@/components/results/hotelFacilityFilter";
+import {
   filterHotelsBySavedIds,
   parseSavedHotelIds,
   SAVED_HOTEL_IDS_CHANGED_EVENT,
@@ -205,54 +209,6 @@ const CANCELLATION_FILTERS = [
   },
 ];
 
-const FACILITY_FILTERS = [
-  {
-    value: "free-wifi",
-    labelKey: "hotelResults.filter.freeWifi",
-    terms: ["free wi-fi", "free wifi", "wifi", "wi-fi"],
-  },
-  {
-    value: "parking",
-    labelKey: "hotelResults.filter.parking",
-    terms: ["parking"],
-  },
-  { value: "pool", labelKey: "hotelResults.filter.pool", terms: ["pool"] },
-  {
-    value: "spa",
-    labelKey: "hotelResults.filter.spa",
-    terms: ["spa", "wellness"],
-  },
-  {
-    value: "fitness",
-    labelKey: "hotelResults.filter.fitnessCenter",
-    terms: ["fitness", "gym"],
-  },
-  {
-    value: "airport-shuttle",
-    labelKey: "hotelResults.filter.airportShuttle",
-    terms: ["airport shuttle", "airport transit access"],
-  },
-  {
-    value: "workspace",
-    labelKey: "hotelResults.filter.workspace",
-    terms: ["workspace", "desk"],
-  },
-  {
-    value: "quiet-rooms",
-    labelKey: "hotelResults.filter.quietRooms",
-    terms: ["quiet"],
-  },
-  {
-    value: "front-desk",
-    labelKey: "hotelResults.filter.frontDesk24",
-    terms: ["24-hour desk", "24 hour desk", "24-hour front desk"],
-  },
-  {
-    value: "late-check-in",
-    labelKey: "hotelResults.filter.lateCheckIn",
-    terms: ["late check-in", "late checkin"],
-  },
-];
 
 const PROPERTY_TYPE_FILTERS = [
   { value: "hotel", labelKey: "hotelResults.filter.hotel", terms: ["hotel"] },
@@ -869,6 +825,7 @@ export function HotelResultsClient() {
         resultCurrency,
         t,
         locale,
+        filterOptions.facilities,
       ),
     [
       locale,
@@ -878,6 +835,7 @@ export function HotelResultsClient() {
       resultMaxPrice,
       selectedFilters,
       t,
+      filterOptions.facilities,
     ],
   );
 
@@ -2671,6 +2629,7 @@ function buildActiveFilterChips(
   priceCurrency: string,
   t: (key: string) => string,
   locale: string,
+  facilityOptions: FilterOption[],
 ): ActiveHotelFilterChip[] {
   const filterGroups: Array<{
     group: keyof HotelFilterSelections;
@@ -2680,7 +2639,6 @@ function buildActiveFilterChips(
     { group: "propertyTypes", filters: PROPERTY_TYPE_FILTERS },
     { group: "meals", filters: MEAL_FILTERS },
     { group: "cancellationPolicies", filters: CANCELLATION_FILTERS },
-    { group: "facilities", filters: FACILITY_FILTERS },
     { group: "locations", filters: LOCATION_AREA_FILTERS },
     { group: "roomTypes", filters: ROOM_TYPE_FILTERS },
     { group: "bedTypes", filters: BED_TYPE_FILTERS },
@@ -2699,6 +2657,17 @@ function buildActiveFilterChips(
         };
       }),
   );
+
+  selectedFilters.facilities.forEach((value) => {
+    const option = facilityOptions.find((item) => item.value === value);
+
+    chips.push({
+      key: `facilities-${value}`,
+      label: option?.label ?? value,
+      group: "facilities",
+      value,
+    });
+  });
 
   if (maxPrice < resultMaxPrice) {
     chips.push({
@@ -2746,12 +2715,7 @@ function buildHotelFilterOptions(
       (hotel) => [hotel.cancellationInfo, ...hotel.amenities].join(" "),
       t,
     ),
-    facilities: buildTermOptions(
-      hotels,
-      FACILITY_FILTERS,
-      (hotel) => hotel.amenities.join(" "),
-      t,
-    ),
+    facilities: buildHotelFacilityFilterOptions(hotels, t),
     locations: buildTermOptions(
       hotels,
       LOCATION_AREA_FILTERS,
@@ -2830,12 +2794,7 @@ function hotelMatchesFilters(
       CANCELLATION_FILTERS,
       (item) => [item.cancellationInfo, ...item.amenities].join(" "),
     ) &&
-    matchesTermGroup(
-      hotel,
-      selectedFilters.facilities,
-      FACILITY_FILTERS,
-      (item) => item.amenities.join(" "),
-    ) &&
+    hotelMatchesFacilityFilters(hotel, selectedFilters.facilities) &&
     matchesTermGroup(
       hotel,
       selectedFilters.locations,
