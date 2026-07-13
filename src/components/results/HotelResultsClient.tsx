@@ -2463,15 +2463,33 @@ function CheckboxFilterOptions({
           return (
             <label
               key={option.value}
-              className="flex min-h-9 min-w-0 cursor-pointer items-start justify-between gap-3 rounded-lg px-1.5 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
+              className="group flex min-h-9 min-w-0 cursor-pointer items-start justify-between gap-3 rounded-lg px-1.5 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
             >
               <span className="flex min-w-0 flex-1 items-start gap-2">
                 <input
+                  className="peer sr-only"
                   type="checkbox"
-                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-blue focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                   checked={checked}
                   onChange={() => onToggle(option.value)}
                 />
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-[2px] border transition-colors",
+                    checked
+                      ? "border-[#0057B8] bg-[#0057B8] text-white"
+                      : "border-slate-300 bg-white group-hover:border-slate-400",
+                    "peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8]/30 peer-focus-visible:ring-offset-2",
+                  )}
+                >
+                  {checked ? (
+                    <Check
+                      className="h-3 w-3"
+                      strokeWidth={3}
+                      aria-hidden="true"
+                    />
+                  ) : null}
+                </span>
                 <span
                   className={cn(
                     "min-w-0 truncate",
