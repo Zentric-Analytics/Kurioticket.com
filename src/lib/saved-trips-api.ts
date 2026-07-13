@@ -10,12 +10,32 @@ export type SavedTripApiItem = {
   updatedAt: string;
 };
 
+export type PublicSavedSearch = {
+  type: "search";
+  id: string;
+  searchType: "flight" | "hotel";
+  label: string | null;
+  origin: string | null;
+  destination: string | null;
+  checkIn: string | null;
+  checkOut: string | null;
+  query: unknown;
+  createdAt: string;
+};
+
 export type SavedTripApiResult = {
   ok: boolean;
   status: number;
   duplicate?: boolean;
   items?: SavedTripApiItem[];
   item?: SavedTripApiItem;
+  error?: string;
+};
+
+export type SavedSearchApiResult = {
+  ok: boolean;
+  status: number;
+  items?: PublicSavedSearch[];
   error?: string;
 };
 
@@ -191,5 +211,79 @@ export async function deleteBackendTrip(
     return { ok: true, status: response.status };
   } catch {
     return { ok: false, status: 0, error: "Unable to delete saved trip." };
+  }
+}
+
+export async function fetchBackendSavedSearches(
+  signal?: AbortSignal,
+): Promise<SavedSearchApiResult> {
+  try {
+    const response = await fetch("/api/dashboard/saved?type=search", {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      signal,
+    });
+    const payload = await readJson(response);
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        status: response.status,
+        error: getError(payload, "Unable to load saved searches."),
+      };
+    }
+
+    const items =
+      payload &&
+      typeof payload === "object" &&
+      "items" in payload &&
+      Array.isArray(payload.items)
+        ? payload.items.filter((item): item is PublicSavedSearch =>
+            Boolean(
+              item &&
+                typeof item === "object" &&
+                "type" in item &&
+                item.type === "search" &&
+                "id" in item &&
+                typeof item.id === "string" &&
+                "searchType" in item &&
+                (item.searchType === "flight" || item.searchType === "hotel"),
+            ),
+          )
+        : [];
+
+    return { ok: true, status: response.status, items };
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError")
+      throw error;
+    return { ok: false, status: 0, error: "Unable to load saved searches." };
+  }
+}
+
+export async function deleteBackendSavedSearch(
+  id: string,
+): Promise<SavedSearchApiResult> {
+  try {
+    const response = await fetch("/api/dashboard/saved", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ type: "search", id }),
+    });
+    const payload = await readJson(response);
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        status: response.status,
+        error: getError(payload, "Unable to delete saved search."),
+      };
+    }
+
+    return { ok: true, status: response.status };
+  } catch {
+    return { ok: false, status: 0, error: "Unable to delete saved search." };
   }
 }
