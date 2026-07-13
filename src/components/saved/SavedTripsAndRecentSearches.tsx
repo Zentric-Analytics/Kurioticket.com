@@ -46,6 +46,7 @@ type ResolvedSavedTrip = {
   imageAlt?: string;
   originCode?: string;
   destinationCode?: string;
+  search?: SavedTripFareSearch;
   href: ComponentProps<typeof Link>["href"];
   unresolved: boolean;
 };
@@ -137,6 +138,44 @@ const getPayloadString = (payload: Record<string, unknown>, key: string) => {
   return typeof value === "string" && value.trim() ? value : undefined;
 };
 
+const getPayloadSavedTripSearch = (
+  payload: Record<string, unknown>,
+): SavedTripFareSearch | undefined => {
+  if (!isRecord(payload.search)) return undefined;
+  const tripType = getPayloadString(payload.search, "tripType");
+  const origin = getPayloadString(payload.search, "origin");
+  const destination = getPayloadString(payload.search, "destination");
+  const departureDate = getPayloadString(payload.search, "departureDate");
+  const returnDate = getPayloadString(payload.search, "returnDate");
+  const cabinClass = getPayloadString(payload.search, "cabinClass");
+  const currency = getPayloadString(payload.search, "currency");
+
+  if (
+    tripType !== "one-way" ||
+    !origin ||
+    !destination ||
+    !departureDate ||
+    cabinClass !== "economy" ||
+    !currency
+  ) {
+    return undefined;
+  }
+
+  return {
+    tripType,
+    origin,
+    destination,
+    departureDate,
+    returnDate,
+    travelers: 1,
+    adults: 1,
+    children: 0,
+    infants: 0,
+    cabinClass,
+    currency,
+  };
+};
+
 const getPayloadHref = (
   payload: Record<string, unknown>,
 ): ComponentProps<typeof Link>["href"] | undefined => {
@@ -189,6 +228,7 @@ const resolveSavedTripFromBackendPayload = (
     imageAlt: getPayloadString(item.payload, "imageAlt") ?? title,
     originCode,
     destinationCode,
+    search: getPayloadSavedTripSearch(item.payload),
     href: getPayloadHref(item.payload) ?? "/flights",
     unresolved: false,
   };
@@ -382,6 +422,15 @@ function hasFreshProviderFare(
   return Number.isFinite(expiresAtMs) && expiresAtMs > Date.now();
 }
 
+function normalizedMatch(
+  left: string | null | undefined,
+  right: string | null | undefined,
+) {
+  return Boolean(
+    left && right && left.trim().toUpperCase() === right.trim().toUpperCase(),
+  );
+}
+
 function buildSavedTripHref(trip: ResolvedSavedTrip, fare?: SavedTripFare) {
   const search = hasFreshProviderFare(fare, trip) ? fare.search : undefined;
 
@@ -454,19 +503,23 @@ export function SavedTripsAndRecentSearches({
     setSavedIds(localIds);
   }, []);
 
-
-  const refreshBackendSavedSearches = useCallback(async (signal?: AbortSignal) => {
-    setSavedSearchesLoading(true);
-    setSavedSearchesError("");
-    const result = await fetchBackendSavedSearches(signal);
-    if (signal?.aborted) return;
-    setSavedSearchesLoading(false);
-    if (!result.ok || !result.items) {
-      setSavedSearchesError(result.error ?? "Unable to load saved searches.");
-      return;
-    }
-    setSavedSearches(result.items);
-  }, []);
+  const refreshBackendSavedSearches = useCallback(
+    async (signal?: AbortSignal) => {
+      setSavedSearchesLoading(true);
+      setSavedSearchesError("");
+      const result = await fetchBackendSavedSearches(signal);
+      if (signal?.aborted) return;
+      setSavedSearchesLoading(false);
+      if (!result.ok || !result.items) {
+        setSavedSearchesError(
+          "Some saved trip details could not be loaded. Please try again.",
+        );
+        return;
+      }
+      setSavedSearches(result.items);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (sessionStatus === "loading") return;
@@ -581,11 +634,33 @@ export function SavedTripsAndRecentSearches({
     }
   };
 
-  const savedRoutesCountText =
-    savedTrips.length === 1
-      ? "1 saved route"
-      : `${savedTrips.length} saved routes`;
+  const savedSearchMatchesTrip = (search: PublicSavedSearch) => {
+    const parsed = parseSavedSearchQuery(search.searchType, search.query);
+    if (!parsed) return false;
 
+    return savedTrips.some((trip) => {
+      const tripSearch = trip.search ?? savedTripFares[trip.id]?.search;
+      if (!tripSearch) return false;
+      if (parsed.kind !== "flight") return false;
+      return (
+        normalizedMatch(tripSearch.origin, parsed.origin) &&
+        normalizedMatch(tripSearch.destination, parsed.destination) &&
+        tripSearch.departureDate === parsed.departureDate &&
+        (tripSearch.returnDate ?? "") === (parsed.returnDate ?? "") &&
+        tripSearch.tripType === parsed.tripType
+      );
+    });
+  };
+
+  const visibleSavedSearches = savedSearches.filter(
+    (search) => !savedSearchMatchesTrip(search),
+  );
+
+  const unifiedSavedTripCount = savedTrips.length + visibleSavedSearches.length;
+  const savedRoutesCountText =
+    unifiedSavedTripCount === 1
+      ? "1 saved trip"
+      : `${unifiedSavedTripCount} saved trips`;
 
   const handleDeleteSavedSearch = async (search: PublicSavedSearch) => {
     setDeletingSavedSearchIds((current) => ({ ...current, [search.id]: true }));
@@ -602,7 +677,7 @@ export function SavedTripsAndRecentSearches({
       );
       return;
     }
-    setSavedSearchesError(result.error ?? "Unable to delete saved search.");
+    setSavedSearchesError(result.error ?? "Unable to remove saved trip.");
   };
 
   const formatCreatedDate = (value: string) => {
@@ -659,18 +734,21 @@ export function SavedTripsAndRecentSearches({
             </p>
           </div>
 
-          <section>
-            {savedTrips.length === 0 ? (
+          <section aria-labelledby="saved-trips-heading">
+            {unifiedSavedTripCount === 0 ? (
               <div className="flex min-h-[22rem] items-start justify-center px-3 pb-10 pt-6 sm:min-h-[32rem] sm:pt-10 lg:min-h-[34rem] lg:pt-12">
                 <div className="mx-auto flex w-full max-w-xl flex-col items-center text-center">
-                  <h2 className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-[1.6rem]">
-                    {t("savedTripsEmptyTitle")}
+                  <h2
+                    id="saved-trips-heading"
+                    className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-[1.6rem]"
+                  >
+                    No saved trips yet
                   </h2>
                   <div className="mt-2 w-full sm:mt-6">
                     <SavedEmptyStateIllustration />
                   </div>
                   <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-slate-600 sm:mt-4">
-                    {t("savedTripsEmptyDescription")}
+                    Save a route or travel search to find it here later.
                   </p>
                   <Link
                     href="/"
@@ -683,25 +761,45 @@ export function SavedTripsAndRecentSearches({
               </div>
             ) : (
               <>
-                <div className="mb-3 flex flex-col items-start gap-2 border-y border-slate-200/80 py-3 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:border-y-0 sm:border-b sm:pb-3 sm:pt-1">
+                <div
+                  className="mb-3 flex flex-col items-start gap-2 border-y border-slate-200/80 py-3 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:border-y-0 sm:border-b sm:pb-3 sm:pt-1"
+                  aria-live="polite"
+                  aria-busy={savedSearchesLoading}
+                >
                   <div>
-                    <h2 className="text-base font-semibold tracking-tight text-slate-950">
-                      Saved routes
+                    <h2
+                      id="saved-trips-heading"
+                      className="text-base font-semibold tracking-tight text-slate-950"
+                    >
+                      Saved trips
                     </h2>
                     <p className="mt-0.5 text-sm font-medium text-slate-500">
-                      {savedRoutesCountText}
+                      {savedSearchesLoading
+                        ? "Loading saved trips…"
+                        : savedRoutesCountText}
                     </p>
+                    {savedSearchesError ? (
+                      <p
+                        className="mt-1 text-sm font-semibold text-rose-700"
+                        role="alert"
+                      >
+                        {savedSearchesError}
+                      </p>
+                    ) : null}
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleClearSaved}
-                    className="inline-flex items-center gap-1.5 rounded-md px-0 py-1 text-sm font-semibold text-violet-700 transition hover:text-violet-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-400 sm:px-2"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    {t("savedTripsClearAllSaved")}
-                  </button>
+                  {savedTrips.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={handleClearSaved}
+                      aria-label="Remove all basic saved trip routes"
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-md px-0 py-1 text-sm font-semibold text-violet-700 transition hover:text-violet-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-400 sm:px-2"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      {t("savedTripsClearAllSaved")}
+                    </button>
+                  ) : null}
                 </div>
-                <div className="grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
+                <div className="grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                   {savedTrips.map((trip, index) => {
                     const fare = savedTripFares[trip.id];
                     const hasProviderFare = hasFreshProviderFare(fare, trip);
@@ -709,19 +807,18 @@ export function SavedTripsAndRecentSearches({
 
                     return (
                       <article
-                        key={trip.id}
+                        key={`trip-${trip.id}`}
                         className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-transparent shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)] active:-translate-y-0.5"
                       >
                         <button
                           type="button"
                           onClick={() => handleUnsaveTrip(trip.id)}
-                          aria-label={t("savedTripsRemoveSavedTrip")}
+                          aria-label={`Remove saved trip ${trip.title}`}
                           aria-pressed
-                          className="focus-ring absolute end-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-600 shadow-sm backdrop-blur-sm transition hover:bg-rose-100"
+                          className="focus-ring absolute end-3 top-3 z-10 flex min-h-11 min-w-11 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-600 shadow-sm backdrop-blur-sm transition hover:bg-rose-100"
                         >
                           <Heart size={15} className="fill-current" />
                         </button>
-
                         {trip.image ? (
                           <SavedCardImage
                             src={trip.image}
@@ -733,7 +830,6 @@ export function SavedTripsAndRecentSearches({
                             {t("savedTripFallbackTitle")}
                           </div>
                         )}
-
                         <div className="flex min-w-0 flex-1 flex-col bg-white">
                           <div className="min-w-0 flex-1 space-y-2 px-3 pt-3">
                             <h3 className="line-clamp-2 break-words pe-10 text-sm font-bold leading-[1.35] text-slate-950 md:text-[0.95rem]">
@@ -745,39 +841,28 @@ export function SavedTripsAndRecentSearches({
                             <p className="line-clamp-2 break-words text-xs font-medium leading-5 text-slate-600 md:text-sm">
                               {trip.note}
                             </p>
-
-                            <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-                                {t("homeDiscoveryTripOneWay")} ·{" "}
-                                {t("homeDiscoveryCabinEconomy")} ·{" "}
-                                {t("homeDiscoveryTravelerCountOne")}
-                              </p>
-                            </div>
                           </div>
-
                           <div className="mt-auto border-t border-slate-200/90 px-3 pb-3 pt-3">
                             <div className="flex flex-col items-stretch gap-2">
-                              <div>
-                                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                                  {hasProviderFare
-                                    ? t("savedTripsProviderFare")
-                                    : t("savedTripsCurrentOptions")}
-                                </p>
-                                <p className="text-sm font-semibold leading-tight text-slate-950 md:text-base">
-                                  {hasProviderFare ? (
-                                    <PriceText
-                                      amountUsd={fare.price}
-                                      sourceAmount={fare.price}
-                                      sourceCurrency={fare.currency}
-                                    />
-                                  ) : (
-                                    t("savedTripsCompareCurrentOptions")
-                                  )}
-                                </p>
-                              </div>
+                              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                                {hasProviderFare
+                                  ? t("savedTripsProviderFare")
+                                  : t("savedTripsCurrentOptions")}
+                              </p>
+                              <p className="text-sm font-semibold leading-tight text-slate-950 md:text-base">
+                                {hasProviderFare ? (
+                                  <PriceText
+                                    amountUsd={fare.price}
+                                    sourceAmount={fare.price}
+                                    sourceCurrency={fare.currency}
+                                  />
+                                ) : (
+                                  t("savedTripsCompareCurrentOptions")
+                                )}
+                              </p>
                               <Link
                                 href={tripHref}
-                                className="inline-flex min-h-9 items-center justify-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-center text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-900"
+                                className="inline-flex min-h-11 items-center justify-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-center text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-900"
                               >
                                 {hasProviderFare
                                   ? t("savedTripsViewFare")
@@ -790,79 +875,159 @@ export function SavedTripsAndRecentSearches({
                       </article>
                     );
                   })}
+                  {visibleSavedSearches.map((search) => {
+                    const parsed = parseSavedSearchQuery(
+                      search.searchType,
+                      search.query,
+                    );
+                    const isFlight = search.searchType === "flight";
+                    const routeLabel = isFlight
+                      ? `${search.origin ?? (parsed?.kind === "flight" ? parsed.origin : "Unknown origin")} to ${search.destination ?? (parsed?.kind === "flight" ? parsed.destination : "Unknown destination")}`
+                      : `Hotel trip for ${search.destination ?? (parsed?.kind === "hotel" ? parsed.destination : "unknown destination")}`;
+                    const deleting = Boolean(deletingSavedSearchIds[search.id]);
+                    return (
+                      <article
+                        key={`search-${search.id}`}
+                        className="flex min-h-full flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_16px_30px_-24px_rgba(15,23,42,0.45)]"
+                      >
+                        <p className="text-xs font-bold uppercase tracking-[0.12em] text-teal-700">
+                          {isFlight ? "Flight trip" : "Hotel trip"}
+                        </p>
+                        <h3 className="mt-1 text-base font-bold text-slate-950">
+                          {search.label || routeLabel}
+                        </h3>
+                        <dl className="mt-3 grid grid-cols-1 gap-2 text-sm text-slate-700">
+                          <div>
+                            <dt className="font-semibold text-slate-950">
+                              Destination
+                            </dt>
+                            <dd>
+                              {search.destination ??
+                                (parsed
+                                  ? parsed.destination
+                                  : "Unknown destination")}
+                            </dd>
+                          </div>
+                          {parsed?.kind === "flight" ? (
+                            <>
+                              <div>
+                                <dt className="font-semibold text-slate-950">
+                                  Origin
+                                </dt>
+                                <dd>{search.origin ?? parsed.origin}</dd>
+                              </div>
+                              <div>
+                                <dt className="font-semibold text-slate-950">
+                                  Departure
+                                </dt>
+                                <dd>{parsed.departureDate}</dd>
+                              </div>
+                              {parsed.returnDate ? (
+                                <div>
+                                  <dt className="font-semibold text-slate-950">
+                                    Return
+                                  </dt>
+                                  <dd>{parsed.returnDate}</dd>
+                                </div>
+                              ) : null}
+                              <div>
+                                <dt className="font-semibold text-slate-950">
+                                  Trip type
+                                </dt>
+                                <dd>{parsed.tripType}</dd>
+                              </div>
+                              <div>
+                                <dt className="font-semibold text-slate-950">
+                                  Travelers
+                                </dt>
+                                <dd>
+                                  {parsed.travelers} traveler
+                                  {parsed.travelers === 1 ? "" : "s"}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt className="font-semibold text-slate-950">
+                                  Cabin
+                                </dt>
+                                <dd>{parsed.cabinClass}</dd>
+                              </div>
+                            </>
+                          ) : null}
+                          {parsed?.kind === "hotel" ? (
+                            <>
+                              <div>
+                                <dt className="font-semibold text-slate-950">
+                                  Check-in
+                                </dt>
+                                <dd>{parsed.checkIn}</dd>
+                              </div>
+                              <div>
+                                <dt className="font-semibold text-slate-950">
+                                  Check-out
+                                </dt>
+                                <dd>{parsed.checkOut}</dd>
+                              </div>
+                              <div>
+                                <dt className="font-semibold text-slate-950">
+                                  Guests
+                                </dt>
+                                <dd>
+                                  {parsed.guests} guest
+                                  {parsed.guests === 1 ? "" : "s"},{" "}
+                                  {parsed.rooms} room
+                                  {parsed.rooms === 1 ? "" : "s"}
+                                </dd>
+                              </div>
+                            </>
+                          ) : null}
+                          <div>
+                            <dt className="font-semibold text-slate-950">
+                              Created
+                            </dt>
+                            <dd>{formatCreatedDate(search.createdAt)}</dd>
+                          </div>
+                        </dl>
+                        {!parsed ? (
+                          <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm font-medium text-amber-900">
+                            We can’t reopen this saved trip. Run the search
+                            again and save it.
+                          </p>
+                        ) : null}
+                        <div className="mt-auto flex flex-col gap-2 pt-4 sm:flex-row">
+                          {parsed ? (
+                            <Link
+                              href={parsed.href}
+                              aria-label={`Reopen search for ${routeLabel}`}
+                              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+                            >
+                              Reopen search
+                            </Link>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled
+                              aria-label={`Reopen search unavailable for ${routeLabel}`}
+                              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-500"
+                            >
+                              Reopen unavailable
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteSavedSearch(search)}
+                            disabled={deleting}
+                            aria-label={`Remove saved trip ${routeLabel}`}
+                            className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400 disabled:opacity-60"
+                          >
+                            {deleting ? "Removing…" : "Remove saved trip"}
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
               </>
             )}
-          </section>
-
-          <section aria-labelledby="saved-searches-heading" className="pt-6">
-            <div className="mb-3 flex flex-col gap-1 border-b border-slate-200/80 pb-3" aria-live="polite" aria-busy={savedSearchesLoading}>
-              <h2 id="saved-searches-heading" className="text-base font-semibold tracking-tight text-slate-950">
-                Saved searches
-              </h2>
-              <p className="text-sm font-medium text-slate-500">
-                {savedSearchesLoading ? "Loading saved searches…" : `${savedSearches.length} saved search${savedSearches.length === 1 ? "" : "es"}`}
-              </p>
-              {savedSearchesError ? (
-                <p className="text-sm font-semibold text-rose-700" role="alert">{savedSearchesError}</p>
-              ) : null}
-            </div>
-
-            {!savedSearchesLoading && savedSearches.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-white/80 p-6 text-center">
-                <h3 className="text-lg font-semibold text-slate-950">No saved searches yet</h3>
-                <p className="mt-2 text-sm text-slate-600">Save a flight or hotel search to find it here later.</p>
-              </div>
-            ) : null}
-
-            {savedSearches.length > 0 ? (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {savedSearches.map((search) => {
-                  const parsed = parseSavedSearchQuery(search.searchType, search.query);
-                  const isFlight = search.searchType === "flight";
-                  const routeLabel = isFlight
-                    ? `${search.origin ?? (parsed?.kind === "flight" ? parsed.origin : "Unknown origin")} to ${search.destination ?? (parsed?.kind === "flight" ? parsed.destination : "Unknown destination")}`
-                    : `Hotel search for ${search.destination ?? (parsed?.kind === "hotel" ? parsed.destination : "unknown destination")}`;
-                  const deleting = Boolean(deletingSavedSearchIds[search.id]);
-                  return (
-                    <article key={search.id} className="flex min-h-full flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_16px_30px_-24px_rgba(15,23,42,0.45)]">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-xs font-bold uppercase tracking-[0.12em] text-teal-700">{isFlight ? "Flight search" : "Hotel search"}</p>
-                          <h3 className="mt-1 text-base font-bold text-slate-950">{search.label || routeLabel}</h3>
-                        </div>
-                      </div>
-                      <dl className="mt-3 grid grid-cols-1 gap-2 text-sm text-slate-700">
-                        <div><dt className="font-semibold text-slate-950">Origin</dt><dd>{isFlight ? (search.origin ?? (parsed?.kind === "flight" ? parsed.origin : "Unknown origin")) : "Hotel search"}</dd></div>
-                        <div><dt className="font-semibold text-slate-950">Destination</dt><dd>{search.destination ?? (parsed ? parsed.destination : "Unknown destination")}</dd></div>
-                        {parsed?.kind === "flight" ? (<>
-                          <div><dt className="font-semibold text-slate-950">Departure</dt><dd>{parsed.departureDate}</dd></div>
-                          {parsed.returnDate ? <div><dt className="font-semibold text-slate-950">Return</dt><dd>{parsed.returnDate}</dd></div> : null}
-                          <div><dt className="font-semibold text-slate-950">Trip type</dt><dd>{parsed.tripType}</dd></div>
-                          <div><dt className="font-semibold text-slate-950">Travelers</dt><dd>{parsed.travelers} traveler{parsed.travelers === 1 ? "" : "s"}</dd></div>
-                          <div><dt className="font-semibold text-slate-950">Cabin</dt><dd>{parsed.cabinClass}</dd></div>
-                        </>) : null}
-                        {parsed?.kind === "hotel" ? (<>
-                          <div><dt className="font-semibold text-slate-950">Check-in</dt><dd>{parsed.checkIn}</dd></div>
-                          <div><dt className="font-semibold text-slate-950">Check-out</dt><dd>{parsed.checkOut}</dd></div>
-                          <div><dt className="font-semibold text-slate-950">Guests</dt><dd>{parsed.guests} guest{parsed.guests === 1 ? "" : "s"}, {parsed.rooms} room{parsed.rooms === 1 ? "" : "s"}</dd></div>
-                        </>) : null}
-                        <div><dt className="font-semibold text-slate-950">Created</dt><dd>{formatCreatedDate(search.createdAt)}</dd></div>
-                      </dl>
-                      {!parsed ? <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm font-medium text-amber-900">We can’t reopen this saved search. Run the search again and save it.</p> : null}
-                      <div className="mt-auto flex flex-col gap-2 pt-4 sm:flex-row">
-                        {parsed ? (
-                          <Link href={parsed.href} aria-label={`Rerun ${routeLabel}`} className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400">Rerun search</Link>
-                        ) : (
-                          <button type="button" disabled aria-label={`Rerun unavailable for ${routeLabel}`} className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-500">Rerun unavailable</button>
-                        )}
-                        <button type="button" onClick={() => handleDeleteSavedSearch(search)} disabled={deleting} aria-label={`Delete saved search ${routeLabel}`} className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400 disabled:opacity-60">{deleting ? "Deleting…" : "Delete"}</button>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            ) : null}
           </section>
         </div>
       </div>

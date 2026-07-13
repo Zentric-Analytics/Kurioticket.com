@@ -229,7 +229,10 @@ export async function fetchBackendSavedSearches(
       return {
         ok: false,
         status: response.status,
-        error: getError(payload, "Unable to load saved searches."),
+        error: getError(
+          payload,
+          "Some saved trip details could not be loaded. Please try again.",
+        ),
       };
     }
 
@@ -241,13 +244,13 @@ export async function fetchBackendSavedSearches(
         ? payload.items.filter((item): item is PublicSavedSearch =>
             Boolean(
               item &&
-                typeof item === "object" &&
-                "type" in item &&
-                item.type === "search" &&
-                "id" in item &&
-                typeof item.id === "string" &&
-                "searchType" in item &&
-                (item.searchType === "flight" || item.searchType === "hotel"),
+              typeof item === "object" &&
+              "type" in item &&
+              item.type === "search" &&
+              "id" in item &&
+              typeof item.id === "string" &&
+              "searchType" in item &&
+              (item.searchType === "flight" || item.searchType === "hotel"),
             ),
           )
         : [];
@@ -256,7 +259,11 @@ export async function fetchBackendSavedSearches(
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError")
       throw error;
-    return { ok: false, status: 0, error: "Unable to load saved searches." };
+    return {
+      ok: false,
+      status: 0,
+      error: "Some saved trip details could not be loaded. Please try again.",
+    };
   }
 }
 
@@ -278,12 +285,12 @@ export async function deleteBackendSavedSearch(
       return {
         ok: false,
         status: response.status,
-        error: getError(payload, "Unable to delete saved search."),
+        error: getError(payload, "Unable to remove saved trip."),
       };
     }
 
     return { ok: true, status: response.status };
   } catch {
-    return { ok: false, status: 0, error: "Unable to delete saved search." };
+    return { ok: false, status: 0, error: "Unable to remove saved trip." };
   }
 }
