@@ -1503,26 +1503,35 @@ export function HotelResultsClient() {
                         {formattedSavedVisibleHotelCount})
                       </button>
                     </div>
-                    <label className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-none sm:shrink-0">
-                      <span className="sr-only whitespace-nowrap text-xs font-semibold text-slate-500 sm:not-sr-only">
-                        {t("sortBy") || "Sort by"}
+                    <label className="flex min-w-0 flex-1 items-center justify-end gap-1.5 sm:flex-none sm:shrink-0">
+                      <span className="whitespace-nowrap text-sm font-semibold text-slate-600">
+                        {`${t("sortBy") || "Sort by"}:`}
                       </span>
-                      <select
-                        aria-label={t("sortBy") || "Sort by"}
-                        className="h-9 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-800 shadow-sm outline-none transition-colors hover:border-slate-300 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20 sm:min-w-[136px] sm:flex-none"
-                        value={hotelSummarySortMode}
-                        onChange={(event) =>
-                          updateHotelSummarySortMode(
-                            event.currentTarget.value as HotelSummarySortMode,
-                          )
-                        }
-                      >
-                        {hotelSortOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
+
+                      <span className="relative inline-flex min-w-0 items-center">
+                        <select
+                          aria-label={t("sortBy") || "Sort by"}
+                          className="h-9 min-w-0 cursor-pointer appearance-none bg-transparent py-1 pl-1 pr-5 text-base font-semibold text-slate-950 outline-none transition-colors hover:text-[#004BB8] focus-visible:text-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2 sm:w-auto"
+                          value={hotelSummarySortMode}
+                          onChange={(event) =>
+                            updateHotelSummarySortMode(
+                              event.currentTarget.value as HotelSummarySortMode,
+                            )
+                          }
+                        >
+                          {hotelSortOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+
+                        <ChevronDown
+                          aria-hidden="true"
+                          className="pointer-events-none absolute right-0 h-4 w-4 text-slate-600"
+                          strokeWidth={2}
+                        />
+                      </span>
                     </label>
                   </div>
                 </div>
