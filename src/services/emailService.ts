@@ -7,6 +7,7 @@ import {
   escapeHtml,
   htmlToText,
   markEmailDeliveryFailed,
+  isEmailSuppressed,
   markEmailDeliverySent,
   type EmailTemplateKey,
 } from "@/services/emailDeliveryService";
@@ -125,6 +126,16 @@ export async function sendOptionalEmail(input: {
     return { skipped: true as const, reason: "preferences_disabled" as const };
   }
 
+  if (await isEmailSuppressed(input.to)) {
+    console.info("[email:optional-skipped]", {
+      userId: input.userId,
+      category: input.category,
+      template: input.template || "notification",
+      reason: "email_suppressed",
+    });
+    return { skipped: true as const, reason: "email_suppressed" as const };
+  }
+
   const sendEmail = sendTransactionalEmailForTesting ?? sendTransactionalEmail;
   const result = await sendEmail({
     to: input.to,
@@ -216,6 +227,52 @@ function formatSavedTripReminderDate(date: Date) {
     timeZone: "UTC",
     timeZoneName: "short",
   }).format(date);
+}
+
+export function routeWatchUpdateEmail(input: {
+  name?: string | null;
+  origin: string;
+  destination: string;
+  departureDate: string;
+  returnDate?: string | null;
+  previousPrice: string;
+  currentPrice: string;
+  decreasePercent: string;
+  currency: string;
+  ctaUrl: string;
+  preferencesUrl: string;
+}) {
+  const name = escapeHtml(input.name);
+  const origin = escapeHtml(input.origin);
+  const destination = escapeHtml(input.destination);
+  const departureDate = escapeHtml(input.departureDate);
+  const returnDate = input.returnDate ? escapeHtml(input.returnDate) : "";
+  const previousPrice = escapeHtml(input.previousPrice);
+  const currentPrice = escapeHtml(input.currentPrice);
+  const decreasePercent = escapeHtml(input.decreasePercent);
+  const currency = escapeHtml(input.currency);
+  const ctaUrl = escapeHtml(input.ctaUrl);
+  const preferencesUrl = escapeHtml(input.preferencesUrl);
+
+  return `
+    <div style="margin:0;background:#f8fafc;padding:16px;font-family:Arial,sans-serif;color:#0f172a">
+      <div style="max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;padding:22px;line-height:1.45">
+        <h1 style="font-size:24px;line-height:1.2;margin:0 0 12px;color:#0f172a">A lower fare is available for a route you’re watching.</h1>
+        <p style="margin:0 0 12px">${name ? `Hi ${name},` : "Hi,"} Kurioticket found a lower observed fare for ${origin} to ${destination}.</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;margin:0 0 16px">
+          <tr><td style="padding:8px 0;color:#334155">Departure</td><td align="right" style="padding:8px 0;font-weight:700;color:#0f172a">${departureDate}</td></tr>
+          ${returnDate ? `<tr><td style="padding:8px 0;color:#334155">Return</td><td align="right" style="padding:8px 0;font-weight:700;color:#0f172a">${returnDate}</td></tr>` : ""}
+          <tr><td style="padding:8px 0;color:#334155">Previous comparison price</td><td align="right" style="padding:8px 0;font-weight:700;color:#0f172a">${previousPrice}</td></tr>
+          <tr><td style="padding:8px 0;color:#334155">Current observed price</td><td align="right" style="padding:8px 0;font-weight:700;color:#0f766e">${currentPrice}</td></tr>
+          <tr><td style="padding:8px 0;color:#334155">Decrease</td><td align="right" style="padding:8px 0;font-weight:700;color:#0f172a">${decreasePercent} in ${currency}</td></tr>
+        </table>
+        <p style="margin:0 0 16px"><a href="${ctaUrl}" style="display:block;text-align:center;background:#0f766e;color:#ffffff;text-decoration:none;font-weight:700;border-radius:999px;padding:11px 16px">Compare current options</a></p>
+        <p style="margin:0 0 14px;color:#334155">Kurioticket helps you search and compare travel options. Fares and availability may change, and you must confirm current prices, availability, fare rules, and provider terms on the external provider site before booking.</p>
+        <p style="margin:0 0 16px"><a href="${preferencesUrl}" style="color:#0f766e">Manage email preferences</a></p>
+        <p style="margin:0;font-size:12px;line-height:1.4;color:#64748b">You received this because Route watch updates and optional emails are enabled in your Kurioticket account.</p>
+      </div>
+    </div>
+  `;
 }
 
 export function supportTicketEmail(input: { ticketId: string; subject: string }) {
