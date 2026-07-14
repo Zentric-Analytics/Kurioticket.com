@@ -432,6 +432,67 @@ export function emailPreferencesUpdatedEmail(input: {
     </div>
   `;
 }
+
+export function travelInspirationDigestEmail(input: {
+  name?: string | null;
+  heading: string;
+  intro: string;
+  preheader: string;
+  destinations: Array<{
+    title: string;
+    description: string;
+    image: string;
+    imageAlt: string;
+    ctaUrl: string;
+  }>;
+  preferencesUrl: string;
+}) {
+  const givenName = getUsableGivenName(input.name);
+  const greeting = givenName ? `Hi ${escapeHtml(givenName)},` : "Hi,";
+  const heading = escapeHtml(input.heading);
+  const intro = escapeHtml(input.intro);
+  const preheader = escapeHtml(input.preheader);
+  const preferencesUrl = escapeHtml(input.preferencesUrl);
+  const destinationCards = input.destinations
+    .map((destination) => {
+      const title = escapeHtml(destination.title);
+      const description = escapeHtml(destination.description);
+      const image = escapeHtml(destination.image);
+      const imageAlt = escapeHtml(destination.imageAlt);
+      const ctaUrl = escapeHtml(destination.ctaUrl);
+
+      return `
+        <tr>
+          <td style="padding:0 0 18px">
+            <div style="border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;background:#ffffff">
+              <img src="${image}" alt="${imageAlt}" width="560" style="display:block;width:100%;max-width:560px;height:auto;border:0" />
+              <div style="padding:16px">
+                <h2 style="font-size:18px;line-height:1.25;margin:0 0 8px;color:#0f172a">${title}</h2>
+                <p style="margin:0 0 14px;color:#334155;font-size:14px;line-height:1.5">${description}</p>
+                <a href="${ctaUrl}" style="display:inline-block;border-radius:999px;background:#0f766e;color:#ffffff;text-decoration:none;font-weight:700;padding:10px 15px">Explore destination</a>
+              </div>
+            </div>
+          </td>
+        </tr>`;
+    })
+    .join("");
+
+  return `
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">${preheader}</div>
+    <div style="margin:0;background:#f8fafc;padding:16px;font-family:Arial,sans-serif;color:#0f172a">
+      <div style="max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;padding:22px;line-height:1.45">
+        <h1 style="font-size:24px;line-height:1.2;margin:0 0 12px;color:#0f172a">${heading}</h1>
+        <p style="margin:0 0 10px">${greeting}</p>
+        <p style="margin:0 0 18px;color:#334155">${intro}</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">${destinationCards}</table>
+        <p style="margin:2px 0 16px;color:#334155">Kurioticket helps you search and compare travel options. We are not an airline, hotel, tour operator, or booking provider. Always confirm current prices, availability, and provider terms before booking.</p>
+        <p style="margin:0 0 16px"><a href="${preferencesUrl}" style="display:block;text-align:center;background:#0f766e;color:#ffffff;text-decoration:none;font-weight:700;border-radius:999px;padding:11px 16px">Manage email preferences</a></p>
+        <p style="margin:0;font-size:12px;line-height:1.4;color:#64748b">You received this because Travel inspiration and optional emails are enabled in your Kurioticket account. You can turn them off from email preferences.</p>
+      </div>
+    </div>
+  `;
+}
+
 export function accountDeletionRequestEmail(input: { deadline: Date }) {
   const deadline = escapeHtml(
     new Intl.DateTimeFormat("en", {

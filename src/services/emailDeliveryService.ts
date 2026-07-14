@@ -23,6 +23,7 @@ export type EmailTemplateKey =
   | "email_preferences_updated"
   | "price_alert"
   | "saved_trip_reminder"
+  | "travel_inspiration_digest"
   | "notification"
   | "admin_test";
 

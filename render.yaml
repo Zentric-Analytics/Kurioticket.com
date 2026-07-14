@@ -32,6 +32,22 @@ services:
         sync: false
 
   - type: cron
+    name: kurioticket-travel-inspiration
+    runtime: node
+    plan: starter
+    branch: main
+    autoDeploy: true
+    schedule: '0 * * * *'
+    buildCommand: 'true'
+    startCommand: >-
+      curl -fsS -X POST "https://kurioticket.com/api/cron/travel-inspiration"
+      -H "Authorization: Bearer $TRAVEL_INSPIRATION_CRON_SECRET"
+      -H "Content-Type: application/json"
+    envVars:
+      - key: TRAVEL_INSPIRATION_CRON_SECRET
+        sync: false
+
+  - type: cron
     name: kurioticket-homepage-fares-refresh
     runtime: node
     plan: starter
