@@ -50,6 +50,7 @@ import {
   getLogicalCarouselScrollState,
 } from "@/lib/home/homepageCarouselScroll";
 import { translateHomeDiscoveryField } from "@/lib/i18n/homeDiscovery";
+import { applyHomepageRecommendationOrder } from "@/lib/recommendations/homepagePersonalization";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useSession } from "next-auth/react";
 import {
@@ -393,6 +394,9 @@ type DiscoveryFareCardState = {
   cards: HomeDiscoveryFareCard[];
 };
 
+type HomepageRecommendationSurface = "popular" | "discovery" | "regionalRoutes";
+type HomepageRecommendationOrder = Partial<Record<HomepageRecommendationSurface, string[]>>;
+
 type NewsletterStatus = "idle" | "success" | "error";
 
 function isNewsletterEmail(value: string) {
@@ -433,6 +437,10 @@ export default function Home() {
       loading: true,
       cards: [],
     });
+  const [homepageRecommendationOrder, setHomepageRecommendationOrder] =
+    useState<HomepageRecommendationOrder>({});
+  const effectiveHomepageRecommendationOrder =
+    sessionStatus === "authenticated" ? homepageRecommendationOrder : {};
   const destinationsRailRef = useRef<HTMLDivElement>(null);
   const [canScrollDestinationsLeft, setCanScrollDestinationsLeft] =
     useState(false);
@@ -583,30 +591,41 @@ export default function Home() {
       },
     );
 
-    if (destinationPriceState.loading) {
-      return destinationsWithIndex
-        .slice(0, POPULAR_DESTINATION_VISIBLE_CARD_COUNT)
-        .map(({ destination }) => destination);
-    }
+    const homepageOrderedDestinations = destinationPriceState.loading
+      ? destinationsWithIndex.map(({ destination }) => destination)
+      : destinationsWithIndex
+          .sort(
+            (first, second) =>
+              Number(second.hasFreshPrice) - Number(first.hasFreshPrice) ||
+              first.index - second.index,
+          )
+          .map(({ destination }) => destination);
 
-    return destinationsWithIndex
-      .sort(
-        (first, second) =>
-          Number(second.hasFreshPrice) - Number(first.hasFreshPrice) ||
-          first.index - second.index,
-      )
-      .slice(0, POPULAR_DESTINATION_VISIBLE_CARD_COUNT)
-      .map(({ destination }) => destination);
+    return applyHomepageRecommendationOrder(
+      homepageOrderedDestinations,
+      effectiveHomepageRecommendationOrder.popular,
+      (destination) => destination.id,
+    ).slice(0, POPULAR_DESTINATION_VISIBLE_CARD_COUNT);
   }, [
     destinationPriceState.loading,
     destinationPriceState.prices,
+    effectiveHomepageRecommendationOrder.popular,
     popularDestinationFareCandidates,
     popularDestinations,
   ]);
 
-  const curatedDiscoveryItems = useMemo(
+  const genericCuratedDiscoveryItems = useMemo(
     () => getHomeDiscoveryImageCardsByRegion(regionCode),
     [regionCode],
+  );
+  const curatedDiscoveryItems = useMemo(
+    () =>
+      applyHomepageRecommendationOrder(
+        genericCuratedDiscoveryItems,
+        effectiveHomepageRecommendationOrder.discovery,
+        (item) => item.id,
+      ),
+    [genericCuratedDiscoveryItems, effectiveHomepageRecommendationOrder.discovery],
   );
   const discoveryFareCardsById = useMemo(() => {
     const cardsById = new Map<string, HomeDiscoveryFareCard>();
@@ -656,10 +675,80 @@ export default function Home() {
     () => mobileDiscoveryCards.filter((_, index) => index % 2 === 1),
     [mobileDiscoveryCards],
   );
-  const regionalRouteItems = useMemo(
-    () => getHomepageRegionalRouteCards(regionCode, curatedDiscoveryItems),
-    [curatedDiscoveryItems, regionCode],
+  const genericRegionalRouteItems = useMemo(
+    () => getHomepageRegionalRouteCards(regionCode, genericCuratedDiscoveryItems),
+    [genericCuratedDiscoveryItems, regionCode],
   );
+  const regionalRouteItems = useMemo(
+    () =>
+      applyHomepageRecommendationOrder(
+        genericRegionalRouteItems,
+        effectiveHomepageRecommendationOrder.regionalRoutes,
+        (item) => item.id,
+      ),
+    [genericRegionalRouteItems, effectiveHomepageRecommendationOrder.regionalRoutes],
+  );
+  useEffect(() => {
+    if (sessionStatus !== "authenticated") return;
+
+    let active = true;
+
+    async function loadHomepageRecommendationOrder() {
+      try {
+        const response = await fetch("/api/homepage/recommendations", {
+          method: "POST",
+          cache: "no-store",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            surfaces: {
+              popular: popularDestinationFareCandidates.map((destination) => ({
+                id: destination.id,
+                destinationCode: destination.code,
+              })),
+              discovery: genericCuratedDiscoveryItems.map((item) => ({
+                id: item.id,
+                destinationCode: item.destinationCode,
+              })),
+              regionalRoutes: genericRegionalRouteItems.map((item) => ({
+                id: item.id,
+                destinationCode: item.destinationCode,
+              })),
+            },
+          }),
+        });
+
+        if (!active) return;
+
+        if (!response.ok) {
+          setHomepageRecommendationOrder({});
+          return;
+        }
+
+        const data = (await response.json()) as {
+          order?: HomepageRecommendationOrder;
+        };
+
+        setHomepageRecommendationOrder(data.order ?? {});
+      } catch {
+        if (active) setHomepageRecommendationOrder({});
+      }
+    }
+
+    void loadHomepageRecommendationOrder();
+
+    return () => {
+      active = false;
+    };
+  }, [
+    genericCuratedDiscoveryItems,
+    genericRegionalRouteItems,
+    popularDestinationFareCandidates,
+    sessionStatus,
+  ]);
+
   const fareCardsByExactRoute = useMemo(() => {
     const cardsByRoute = new Map<string, HomeDiscoveryFareCard>();
 
