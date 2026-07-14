@@ -55,7 +55,6 @@ function selectPreferences(row: StoredPreferences): Preferences {
     currency: row.currency,
     region: row.region,
     personalizeRecommendations: row.personalizeRecommendations,
-    showHelpfulTips: row.showHelpfulTips,
   };
 }
 
@@ -175,13 +174,11 @@ test("customization preferences PATCH updates existing row and preserves omitted
       currency: "EUR",
       region: "FR",
       personalizeRecommendations: false,
-      showHelpfulTips: false,
     },
   ]);
 
   const response = await handleCustomizationPreferencesPatch("user-1", prisma, {
     currency: "usd",
-    showHelpfulTips: true,
   });
   const body = await responseJson(response);
 
@@ -191,7 +188,6 @@ test("customization preferences PATCH updates existing row and preserves omitted
     currency: "USD",
     region: "FR",
     personalizeRecommendations: false,
-    showHelpfulTips: true,
   });
   assert.deepEqual(selectPreferences(rows.get("user-1")!), body.preferences);
 });
@@ -204,7 +200,6 @@ test("customization preferences GET returns saved normalized values", async () =
       currency: "EUR",
       region: "FR",
       personalizeRecommendations: true,
-      showHelpfulTips: false,
     },
   ]);
   const response = await handleCustomizationPreferencesGet("user-1", prisma);
@@ -217,7 +212,6 @@ test("customization preferences GET returns saved normalized values", async () =
     currency: "EUR",
     region: "FR",
     personalizeRecommendations: true,
-    showHelpfulTips: false,
   });
 });
 
@@ -229,7 +223,6 @@ test("customization preferences PATCH does not affect another user's row", async
       currency: "EUR",
       region: "DE",
       personalizeRecommendations: false,
-      showHelpfulTips: false,
     },
   ]);
 
@@ -245,6 +238,5 @@ test("customization preferences PATCH does not affect another user's row", async
     currency: "EUR",
     region: "DE",
     personalizeRecommendations: false,
-    showHelpfulTips: false,
   });
 });

@@ -18,7 +18,6 @@ export const customizationPreferenceDefaults = {
   currency: "USD",
   region: "US",
   personalizeRecommendations: true,
-  showHelpfulTips: true,
 };
 
 type CustomizationPreferences = typeof customizationPreferenceDefaults;
@@ -97,7 +96,6 @@ const customizationPreferencesPatchSchema = z
       .transform(normalizeRegionPreference)
       .optional(),
     personalizeRecommendations: z.boolean().optional(),
-    showHelpfulTips: z.boolean().optional(),
   })
   .strict()
   .refine(
@@ -121,9 +119,6 @@ export function serializeCustomizationPreferences(
     personalizeRecommendations:
       preferences?.personalizeRecommendations ??
       customizationPreferenceDefaults.personalizeRecommendations,
-    showHelpfulTips:
-      preferences?.showHelpfulTips ??
-      customizationPreferenceDefaults.showHelpfulTips,
   };
 }
 
@@ -158,7 +153,6 @@ export async function handleCustomizationPreferencesGet(
         currency: true,
         region: true,
         personalizeRecommendations: true,
-        showHelpfulTips: true,
       },
     });
 
@@ -203,7 +197,6 @@ export async function handleCustomizationPreferencesPatch(
         currency: true,
         region: true,
         personalizeRecommendations: true,
-        showHelpfulTips: true,
       },
     });
 
