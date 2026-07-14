@@ -79,6 +79,11 @@ import {
   type RecentSearchEntry,
 } from "@/lib/recent-searches";
 import {
+  hasAirlineFilterSearchParam,
+  normalizePreferredAirlineFilterValues,
+  type TravelPreferencesAirlinePayload,
+} from "@/lib/flights/preferredAirlineFilters";
+import {
   readSavedTripIds,
   toggleSavedTripId,
   writeSavedTripIds,
@@ -1075,6 +1080,9 @@ export function FlightResultsClient() {
   const filtersHydratedFromUrlRef = useRef(false);
   const hydratedFilterQueryStringRef = useRef<string | null>(null);
   const lastWrittenFilterQueryStringRef = useRef<string | null>(null);
+  const travelPreferencesRequestedRef = useRef(false);
+  const preferredAirlineDefaultResolvedRef = useRef(false);
+  const preferredAirlineDefaultAppliedRef = useRef(false);
   const mobileSearchScrollLockRef = useRef<BodyScrollLock | null>(null);
   const mobileFiltersScrollLockRef = useRef<BodyScrollLock | null>(null);
   const mobileSearchLauncherRef = useRef<HTMLElement | null>(null);
@@ -1086,6 +1094,9 @@ export function FlightResultsClient() {
   const stickySearchPanelOpenRef = useRef(false);
   const queryString = params.toString();
   const searchQueryString = getSearchQueryString(params);
+  const [preferredAirlineDefaults, setPreferredAirlineDefaults] = useState<
+    string[] | null
+  >(null);
 
   const originFallbackSuggestions = useMemo(
     () => filterAirportOptions(originInput),
@@ -3304,6 +3315,48 @@ export function FlightResultsClient() {
       .slice(0, 8);
   }, [formatResultPriceLabel, results]);
 
+  useEffect(() => {
+    if (sessionStatus === "loading") return;
+
+    if (sessionStatus !== "authenticated") {
+      preferredAirlineDefaultResolvedRef.current = true;
+      return;
+    }
+
+    if (travelPreferencesRequestedRef.current) return;
+    travelPreferencesRequestedRef.current = true;
+
+    const controller = new AbortController();
+
+    const loadPreferredAirlineDefaults = async () => {
+      try {
+        const response = await fetch("/api/account/travel-preferences", {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+
+        const payload =
+          (await response.json()) as TravelPreferencesAirlinePayload;
+        setPreferredAirlineDefaults(
+          Array.isArray(payload.preferences?.preferredAirlines)
+            ? payload.preferences.preferredAirlines
+            : [],
+        );
+      } catch {
+        // Flight results keep today's behavior if travel preferences are unavailable.
+      } finally {
+        if (!controller.signal.aborted) {
+          preferredAirlineDefaultResolvedRef.current = true;
+        }
+      }
+    };
+
+    void loadPreferredAirlineDefaults();
+
+    return () => controller.abort();
+  }, [sessionStatus]);
+
   const airportOptions = useMemo(() => {
     const airportsForResults = results.flatMap((flight) => [
       flight.originAirport,
@@ -3520,6 +3573,43 @@ export function FlightResultsClient() {
     timeBounds.landing?.min,
     timeBounds.takeoff?.max,
     timeBounds.takeoff?.min,
+  ]);
+
+  useEffect(() => {
+    if (
+      loading ||
+      sessionStatus !== "authenticated" ||
+      preferredAirlineDefaultAppliedRef.current ||
+      !preferredAirlineDefaultResolvedRef.current ||
+      !filtersHydratedFromUrlRef.current ||
+      hydratedFilterQueryStringRef.current !== queryString
+    ) {
+      return;
+    }
+
+    preferredAirlineDefaultAppliedRef.current = true;
+
+    if (hasAirlineFilterSearchParam(new URLSearchParams(queryString))) return;
+    if (selectedAirlines.length > 0) return;
+
+    const nextSelectedAirlines = normalizePreferredAirlineFilterValues(
+      preferredAirlineDefaults,
+      airlineOptions.map((option) => option.value),
+    );
+    if (nextSelectedAirlines.length === 0) return;
+
+    const applyPreferredAirlinesId = window.setTimeout(() => {
+      setSelectedAirlines(nextSelectedAirlines);
+    }, 0);
+
+    return () => window.clearTimeout(applyPreferredAirlinesId);
+  }, [
+    airlineOptions,
+    loading,
+    preferredAirlineDefaults,
+    queryString,
+    selectedAirlines.length,
+    sessionStatus,
   ]);
 
   useEffect(() => {
