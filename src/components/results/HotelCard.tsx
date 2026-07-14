@@ -767,9 +767,9 @@ export function HotelCard({ hotel }: HotelCardProps) {
                 <div className="min-[380px]:text-end">
                   <Button
                     type="button"
-                    variant="secondary"
+                    variant="accent"
                     size="sm"
-                    className="w-full whitespace-nowrap rounded-lg px-3 text-sm font-semibold min-[380px]:w-auto"
+                    className="w-full whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-3 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] hover:border-[#021C2B] hover:bg-[#021C2B] min-[380px]:w-auto"
                     aria-expanded={detailsOpen}
                     aria-controls={detailsRegionId}
                     onClick={() => setDetailsOpen((open) => !open)}
