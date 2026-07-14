@@ -1465,13 +1465,13 @@ export function HotelResultsClient() {
                   t={t}
                 />
 
-                <div className="flex w-full flex-col gap-2 py-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                <div className="flex w-full flex-col gap-2 py-1 sm:grid sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center sm:gap-x-6 sm:gap-y-0">
                   <h1 className="min-w-0 text-sm font-bold text-navy">
                     {resultsHeading}
                   </h1>
-                  <div className="flex w-full min-w-0 items-center justify-between gap-2 sm:w-auto sm:shrink-0 sm:justify-end">
+                  <div className="flex w-full min-w-0 items-center justify-between gap-2 sm:contents">
                     <div
-                      className="inline-flex shrink-0 items-center gap-4"
+                      className="inline-flex shrink-0 items-center gap-4 sm:justify-self-center"
                       role="group"
                       aria-label={t("hotelResults.savedHotels") || "Hotel result view"}
                     >
@@ -1490,7 +1490,7 @@ export function HotelResultsClient() {
                         {formattedSavedVisibleHotelCount})
                       </button>
                     </div>
-                    <label className="flex min-w-0 flex-1 items-center justify-end gap-1.5 sm:flex-none sm:shrink-0">
+                    <label className="flex min-w-0 flex-1 items-center justify-end gap-1.5 sm:flex-none sm:shrink-0 sm:justify-self-end">
                       <span className="whitespace-nowrap text-sm font-semibold text-slate-600">
                         {`${t("sortBy") || "Sort by"}:`}
                       </span>
