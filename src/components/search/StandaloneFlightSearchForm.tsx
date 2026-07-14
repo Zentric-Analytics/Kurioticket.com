@@ -12,6 +12,7 @@ import React, {
 import { createPortal } from "react-dom";
 
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 import {
   ArrowRightLeft,
@@ -41,8 +42,11 @@ import {
 } from "@/data/airports";
 import {
   applyDefaultOrigin,
+  applySavedHomeAirport,
   canApplyDefaultOrigin,
+  markOriginFromUrl,
   markOriginManualInput,
+  shouldRequestSavedHomeAirportDefault,
   type OriginFieldState,
 } from "@/lib/flights/defaultOrigin";
 import { translations as enTranslations } from "@/lib/i18n/en";
@@ -61,6 +65,12 @@ type PlacesApiResponse = {
 type LocationApiResponse = {
   source?: "ipinfo-lite" | "fallback";
   countryCode?: string | null;
+};
+
+type TravelPreferencesApiResponse = {
+  preferences?: {
+    homeAirport?: string | null;
+  } | null;
 };
 
 type MonthCell = {
@@ -209,6 +219,7 @@ export function StandaloneFlightSearchForm({
   );
 
   const router = useRouter();
+  const { status: sessionStatus } = useSession();
   const { start: startRouteProgress } = useRouteProgress();
 
   const standaloneFormCardRef = useRef<HTMLElement>(null);
@@ -224,13 +235,22 @@ export function StandaloneFlightSearchForm({
   const datesMobileLauncherRef = useRef<HTMLButtonElement>(null);
   const travelersWrapRef = useRef<HTMLDivElement>(null);
   const travelersLauncherRef = useRef<HTMLButtonElement>(null);
+  const travelPreferencesRequestedRef = useRef(false);
 
   const [tripType, setTripType] = useState<TripType>("round-trip");
-  const [originState, setOriginState] = useState<OriginFieldState>({
-    input: "",
-    code: "",
-    source: "empty",
-    userInteracted: false,
+  const [originState, setOriginState] = useState<OriginFieldState>(() => {
+    if (typeof window === "undefined") {
+      return {
+        input: "",
+        code: "",
+        source: "empty",
+        userInteracted: false,
+      };
+    }
+
+    return markOriginFromUrl(
+      new URLSearchParams(window.location.search).get("origin")?.trim() ?? "",
+    );
   });
   const origin = originState.input;
   const originCode = originState.code;
@@ -268,6 +288,8 @@ export function StandaloneFlightSearchForm({
   const [draftCabinClass, setDraftCabinClass] = useState<CabinClass>("economy");
   const [travelersOpen, setTravelersOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [homeAirportDefaultResolved, setHomeAirportDefaultResolved] =
+    useState(false);
   const originQuery = origin.trim();
   const destinationQuery = destination.trim();
   const visibleOriginSuggestions =
@@ -413,6 +435,49 @@ export function StandaloneFlightSearchForm({
   }, []);
 
   useEffect(() => {
+    if (sessionStatus === "loading") return;
+    if (sessionStatus === "unauthenticated") return;
+    if (!canApplyDefaultOrigin(originState)) return;
+    if (
+      !shouldRequestSavedHomeAirportDefault(
+        originState,
+        sessionStatus,
+        travelPreferencesRequestedRef.current,
+      )
+    ) {
+      return;
+    }
+
+    travelPreferencesRequestedRef.current = true;
+
+    const loadHomeAirportDefault = async () => {
+      try {
+        const response = await fetch("/api/account/travel-preferences", {
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+
+        const payload = (await response.json()) as TravelPreferencesApiResponse;
+        setOriginState((current) =>
+          applySavedHomeAirport(
+            current,
+            payload.preferences?.homeAirport ?? null,
+            locale,
+          ),
+        );
+      } catch {
+        // Flight search keeps today's behavior if travel preferences are unavailable.
+      } finally {
+        setHomeAirportDefaultResolved(true);
+      }
+    };
+
+    void loadHomeAirportDefault();
+  }, [locale, originState, sessionStatus]);
+
+  useEffect(() => {
+    if (sessionStatus === "authenticated" && !homeAirportDefaultResolved)
+      return;
     if (!canApplyDefaultOrigin(originState)) return;
 
     const controller = new AbortController();
@@ -445,7 +510,13 @@ export function StandaloneFlightSearchForm({
     void loadDefaultOrigin();
 
     return () => controller.abort();
-  }, [buildPlacesUrl, locale, originState]);
+  }, [
+    buildPlacesUrl,
+    homeAirportDefaultResolved,
+    locale,
+    originState,
+    sessionStatus,
+  ]);
 
   useAirportSuggestions({
     query: origin,
