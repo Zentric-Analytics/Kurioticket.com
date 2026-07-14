@@ -2495,7 +2495,7 @@ flightLandingRouteAriaLabel: "Vluchten zoeken van {{origin}} naar {{destination}
   "accountDashboard.preferences.customization.fields.currency.label": "Currency",
   "accountDashboard.preferences.customization.fields.region.label": "Display/search market",
   "accountDashboard.preferences.customization.fields.personalizeRecommendations.label": "Personalize recommendations",
-  "accountDashboard.preferences.customization.fields.personalizeRecommendations.description": "Use your Kurioticket activity to improve suggestions and recommendations.",
+  "accountDashboard.preferences.customization.fields.personalizeRecommendations.description": "Use your saved trips to personalize homepage destination recommendations.",
   "accountDashboard.preferences.customization.fields.showHelpfulTips.label": "Show helpful tips",
   "accountDashboard.preferences.customization.fields.showHelpfulTips.description": "Display occasional guidance for useful features and settings.",
   "accountDashboard.preferences.customization.options.theme.system": "System default",
