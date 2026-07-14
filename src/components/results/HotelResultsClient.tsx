@@ -1465,7 +1465,7 @@ export function HotelResultsClient() {
                   t={t}
                 />
 
-                <div className="flex min-h-[52px] w-full flex-col gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                <div className="flex w-full flex-col gap-2 py-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                   <h1 className="min-w-0 text-sm font-bold text-navy">
                     {resultsHeading}
                   </h1>
