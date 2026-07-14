@@ -654,9 +654,13 @@ export function HotelCard({ hotel }: HotelCardProps) {
           <div className="flex flex-1 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
               <div>
+                <h2 className="text-base font-bold leading-6 text-slate-950 lg:text-[17px]">
+                  {hotel.name}
+                </h2>
+
                 {starRating ? (
                   <div
-                    className="mb-1 inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-500 ring-1 ring-amber-100"
+                    className="mt-1 flex items-center"
                     aria-label={t("hotelResults.starHotelAria").replace(
                       "{{rating}}",
                       formatHotelRating(hotel.rating, locale),
@@ -666,17 +670,31 @@ export function HotelCard({ hotel }: HotelCardProps) {
                       formatHotelRating(hotel.rating, locale),
                     )}
                   >
-                    <span aria-hidden="true" className="tracking-[0.08em]">
+                    <span
+                      aria-hidden="true"
+                      className="text-[14px] leading-5 tracking-[0.08em] text-amber-500"
+                    >
                       {"★".repeat(starRating)}
                     </span>
                   </div>
                 ) : null}
-                <h2 className="text-base font-bold leading-6 text-slate-950 lg:text-[17px]">
-                  {hotel.name}
-                </h2>
-                <p className="mt-1 flex items-center gap-1.5 text-[13px] font-semibold leading-5 text-[#004BB8] lg:text-sm">
+
+                <p className="mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[13px] font-semibold leading-5 text-[#004BB8] lg:text-sm">
                   <MapPin size={15} className="shrink-0 text-[#004BB8]" />
-                  <span>{hotel.location}</span>
+                  <span className="min-w-0">{hotel.location}</span>
+                  {distanceText ? (
+                    <>
+                      <span
+                        aria-hidden="true"
+                        className="shrink-0 font-normal text-slate-400"
+                      >
+                        ·
+                      </span>
+                      <span className="font-normal text-slate-600">
+                        {distanceText}
+                      </span>
+                    </>
+                  ) : null}
                 </p>
               </div>
               {reviewBand || reviewCountText || neighbourhood ? (
@@ -698,11 +716,6 @@ export function HotelCard({ hotel }: HotelCardProps) {
                     </span>
                   ) : null}
                 </div>
-              ) : null}
-              {distanceText ? (
-                <p className="mt-1 text-[13px] font-normal leading-5 text-slate-600 lg:text-sm">
-                  {distanceText}
-                </p>
               ) : null}
               {roomTypeText ||
               shouldShowMealPlanText ||
