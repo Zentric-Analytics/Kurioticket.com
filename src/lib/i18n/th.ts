@@ -2176,8 +2176,6 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.customization.fields.region.label": "Display/search market",
   "accountDashboard.preferences.customization.fields.personalizeRecommendations.label": "ปรับคำแนะนำให้เหมาะกับฉัน",
   "accountDashboard.preferences.customization.fields.personalizeRecommendations.description": "ใช้กิจกรรมในแอปเพื่อปรับคำแนะนำและทางลัด",
-  "accountDashboard.preferences.customization.fields.showHelpfulTips.label": "แสดงเคล็ดลับที่เป็นประโยชน์",
-  "accountDashboard.preferences.customization.fields.showHelpfulTips.description": "แสดงคำแนะนำเป็นครั้งคราวสำหรับฟีเจอร์และการตั้งค่าที่มีประโยชน์",
   "accountDashboard.preferences.customization.options.theme.system": "ค่าเริ่มต้นของระบบ",
   "accountDashboard.preferences.customization.options.theme.light": "สว่าง",
   "accountDashboard.preferences.customization.options.theme.dark": "มืด",

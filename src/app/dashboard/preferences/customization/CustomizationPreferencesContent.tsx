@@ -15,9 +15,7 @@ import {
   getCountryDisplayNameForLocale,
 } from "@/lib/region/countryDisplayNames";
 
-type BooleanPreferenceKey =
-  | "personalizeRecommendations"
-  | "showHelpfulTips";
+type BooleanPreferenceKey = "personalizeRecommendations";
 type Status = "idle" | "loading" | "saving" | "success" | "error";
 
 type PersonalizationPreferences = Record<BooleanPreferenceKey, boolean>;
@@ -30,7 +28,6 @@ type CustomizationPreferencesDraft = PersonalizationPreferences & {
 
 const defaultPersonalizationPreferences: PersonalizationPreferences = {
   personalizeRecommendations: true,
-  showHelpfulTips: true,
 };
 
 const DEFAULT_LOCALE = "en-us";
@@ -50,7 +47,6 @@ const customizationPreferenceKeys = Object.keys(
 
 const personalizationOptions: BooleanPreferenceKey[] = [
   "personalizeRecommendations",
-  "showHelpfulTips",
 ];
 
 function PreferenceSwitch({
@@ -557,6 +553,4 @@ export function CustomizationPreferencesContent() {
 
 // i18n coverage keys used through computed row lookups:
 // accountDashboard.preferences.customization.fields.personalizeRecommendations.label
-// accountDashboard.preferences.customization.fields.showHelpfulTips.label
 // accountDashboard.preferences.customization.fields.personalizeRecommendations.description
-// accountDashboard.preferences.customization.fields.showHelpfulTips.description

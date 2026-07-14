@@ -928,7 +928,6 @@ test("Thai account customization and booking preferences resolve through active 
     "accountDashboard.preferences.customization.fields.currency.label": "Currency",
     "accountDashboard.preferences.customization.fields.region.label": "Region",
     "accountDashboard.preferences.customization.fields.personalizeRecommendations.label": "Personalize recommendations",
-    "accountDashboard.preferences.customization.fields.showHelpfulTips.label": "Show helpful tips",
     "accountDashboard.preferences.customization.actions.reset": "Reset",
     "accountDashboard.preferences.customization.actions.save": "Save",
     "accountDashboard.preferences.customization.actions.saving": "Saving...",
