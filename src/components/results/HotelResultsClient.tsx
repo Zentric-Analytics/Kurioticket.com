@@ -1470,15 +1470,19 @@ export function HotelResultsClient() {
                     {resultsHeading}
                   </h1>
                   <div className="flex w-full min-w-0 items-center justify-between gap-2 sm:w-auto sm:shrink-0 sm:justify-end">
-                    <div className="inline-flex shrink-0 rounded-lg border border-slate-200 bg-slate-50 p-1">
+                    <div
+                      className="inline-flex shrink-0 items-center gap-4"
+                      role="group"
+                      aria-label={t("hotelResults.savedHotels") || "Hotel result view"}
+                    >
                       <button
                         type="button"
                         aria-pressed={!showSavedOnly}
                         className={cn(
-                          "rounded-md px-3 py-1.5 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+                          "relative px-0 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2",
                           !showSavedOnly
-                            ? "bg-white text-[#004BB8] shadow-sm"
-                            : "text-slate-600 hover:bg-white/70 hover:text-slate-950",
+                            ? "text-[#004BB8] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-[#004BB8]"
+                            : "text-slate-600 hover:text-slate-950",
                         )}
                         onClick={() => setShowSavedOnly(false)}
                       >
@@ -1488,10 +1492,10 @@ export function HotelResultsClient() {
                         type="button"
                         aria-pressed={showSavedOnly}
                         className={cn(
-                          "rounded-md px-3 py-1.5 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+                          "relative px-0 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2",
                           showSavedOnly
-                            ? "bg-white text-[#004BB8] shadow-sm"
-                            : "text-slate-600 hover:bg-white/70 hover:text-slate-950",
+                            ? "text-[#004BB8] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-[#004BB8]"
+                            : "text-slate-600 hover:text-slate-950",
                         )}
                         onClick={() => setShowSavedOnly(true)}
                       >
