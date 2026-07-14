@@ -663,11 +663,6 @@ model TravelPreferences {
   userId                  String   @unique
   homeAirport             String?
   preferredAirlines       String[] @default([])
-  budgetStyle             String?
-  directVsCheaper         String?
-  travelFrequency         String?
-  comfortVsSavings        String?
-  travelPurpose           String?
   notificationPreferences Json?
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt

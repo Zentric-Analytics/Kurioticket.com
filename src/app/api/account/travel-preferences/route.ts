@@ -12,35 +12,36 @@ const notificationDefaults = {
   travelInspirationEmails: false,
 };
 
-const budgetStyleSchema = z.enum(["", "budget", "balanced", "premium"]);
-const directVsCheaperSchema = z.enum(["", "direct", "cheaper", "balanced"]);
-const travelFrequencySchema = z.enum(["", "rarely", "monthly", "frequent"]);
-const comfortVsSavingsSchema = z.enum(["", "savings", "balanced", "comfort"]);
-const travelPurposeSchema = z.enum(["", "leisure", "business", "family", "mixed"]);
-
 const notificationPreferencesSchema = z
   .object({
     emailUpdates: z.boolean().default(notificationDefaults.emailUpdates),
-    priceAlertEmails: z.boolean().default(notificationDefaults.priceAlertEmails),
-    travelInspirationEmails: z.boolean().default(notificationDefaults.travelInspirationEmails),
+    priceAlertEmails: z
+      .boolean()
+      .default(notificationDefaults.priceAlertEmails),
+    travelInspirationEmails: z
+      .boolean()
+      .default(notificationDefaults.travelInspirationEmails),
   })
   .strict();
 
-const notificationPreferencesReadSchema = notificationPreferencesSchema.partial().passthrough();
+const notificationPreferencesReadSchema = notificationPreferencesSchema
+  .partial()
+  .passthrough();
 
 export const travelPreferencesPatchSchema = z
   .object({
     homeAirport: z.string().trim().max(80).optional(),
-    preferredAirlines: z.array(z.string().trim().min(1).max(80)).max(10).optional(),
-    budgetStyle: budgetStyleSchema.optional(),
-    directVsCheaper: directVsCheaperSchema.optional(),
-    travelFrequency: travelFrequencySchema.optional(),
-    comfortVsSavings: comfortVsSavingsSchema.optional(),
-    travelPurpose: travelPurposeSchema.optional(),
+    preferredAirlines: z
+      .array(z.string().trim().min(1).max(80))
+      .max(10)
+      .optional(),
     notificationPreferences: notificationPreferencesSchema.optional(),
   })
   .strict()
-  .refine((payload) => Object.keys(payload).length > 0, "At least one preference must be provided.");
+  .refine(
+    (payload) => Object.keys(payload).length > 0,
+    "At least one preference must be provided.",
+  );
 
 type TravelPreferencesPatch = z.infer<typeof travelPreferencesPatchSchema>;
 
@@ -51,12 +52,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function normalizeNotifications(value: unknown) {
   const parsed = notificationPreferencesReadSchema.safeParse(value);
 
-  return parsed.success ? { ...notificationDefaults, ...parsed.data } : notificationDefaults;
+  return parsed.success
+    ? { ...notificationDefaults, ...parsed.data }
+    : notificationDefaults;
 }
 
 export function mergeLegacyNotificationPreferences(
   existingNotifications: unknown,
-  legacyNotifications: NonNullable<TravelPreferencesPatch["notificationPreferences"]>,
+  legacyNotifications: NonNullable<
+    TravelPreferencesPatch["notificationPreferences"]
+  >,
 ) {
   return {
     ...(isRecord(existingNotifications) ? existingNotifications : {}),
@@ -69,22 +74,14 @@ export function mergeLegacyNotificationPreferences(
 function serializePreferences(preferences: {
   homeAirport: string | null;
   preferredAirlines: string[];
-  budgetStyle: string | null;
-  directVsCheaper: string | null;
-  travelFrequency: string | null;
-  comfortVsSavings: string | null;
-  travelPurpose: string | null;
   notificationPreferences: unknown;
 }) {
   return {
     homeAirport: preferences.homeAirport ?? "",
     preferredAirlines: preferences.preferredAirlines,
-    budgetStyle: preferences.budgetStyle ?? "",
-    directVsCheaper: preferences.directVsCheaper ?? "",
-    travelFrequency: preferences.travelFrequency ?? "",
-    comfortVsSavings: preferences.comfortVsSavings ?? "",
-    travelPurpose: preferences.travelPurpose ?? "",
-    notificationPreferences: normalizeNotifications(preferences.notificationPreferences),
+    notificationPreferences: normalizeNotifications(
+      preferences.notificationPreferences,
+    ),
   };
 }
 
@@ -93,25 +90,20 @@ function buildCreateData(userId: string, payload: TravelPreferencesPatch) {
     userId,
     homeAirport: payload.homeAirport ?? "",
     preferredAirlines: payload.preferredAirlines ?? [],
-    budgetStyle: payload.budgetStyle ?? "",
-    directVsCheaper: payload.directVsCheaper ?? "",
-    travelFrequency: payload.travelFrequency ?? "",
-    comfortVsSavings: payload.comfortVsSavings ?? "",
-    travelPurpose: payload.travelPurpose ?? "",
-    notificationPreferences: payload.notificationPreferences ?? notificationDefaults,
+    notificationPreferences:
+      payload.notificationPreferences ?? notificationDefaults,
   };
 }
 
-function buildUpdateData(payload: TravelPreferencesPatch, existingNotifications: unknown) {
+function buildUpdateData(
+  payload: TravelPreferencesPatch,
+  existingNotifications: unknown,
+) {
   const data: Partial<ReturnType<typeof buildCreateData>> = {};
 
   if (payload.homeAirport !== undefined) data.homeAirport = payload.homeAirport;
-  if (payload.preferredAirlines !== undefined) data.preferredAirlines = payload.preferredAirlines;
-  if (payload.budgetStyle !== undefined) data.budgetStyle = payload.budgetStyle;
-  if (payload.directVsCheaper !== undefined) data.directVsCheaper = payload.directVsCheaper;
-  if (payload.travelFrequency !== undefined) data.travelFrequency = payload.travelFrequency;
-  if (payload.comfortVsSavings !== undefined) data.comfortVsSavings = payload.comfortVsSavings;
-  if (payload.travelPurpose !== undefined) data.travelPurpose = payload.travelPurpose;
+  if (payload.preferredAirlines !== undefined)
+    data.preferredAirlines = payload.preferredAirlines;
   if (payload.notificationPreferences !== undefined) {
     data.notificationPreferences = mergeLegacyNotificationPreferences(
       existingNotifications,
@@ -125,11 +117,6 @@ function buildUpdateData(payload: TravelPreferencesPatch, existingNotifications:
 const travelPreferencesSelect = {
   homeAirport: true,
   preferredAirlines: true,
-  budgetStyle: true,
-  directVsCheaper: true,
-  travelFrequency: true,
-  comfortVsSavings: true,
-  travelPurpose: true,
   notificationPreferences: true,
 } as const;
 
@@ -140,7 +127,11 @@ async function getAuthenticatedUserId() {
 
 export async function GET() {
   const userId = await getAuthenticatedUserId();
-  if (!userId) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  if (!userId)
+    return NextResponse.json(
+      { error: "Authentication required." },
+      { status: 401 },
+    );
 
   try {
     const preferences = await getPrisma().travelPreferences.findUnique({
@@ -150,17 +141,30 @@ export async function GET() {
 
     return NextResponse.json({
       hasPreferences: Boolean(preferences),
-      preferences: preferences ? serializePreferences(preferences) : serializePreferences({ homeAirport: null, preferredAirlines: [], budgetStyle: null, directVsCheaper: null, travelFrequency: null, comfortVsSavings: null, travelPurpose: null, notificationPreferences: null }),
+      preferences: preferences
+        ? serializePreferences(preferences)
+        : serializePreferences({
+            homeAirport: null,
+            preferredAirlines: [],
+            notificationPreferences: null,
+          }),
     });
   } catch (error) {
     console.error("[account-travel-preferences:get]", error);
-    return NextResponse.json({ error: "Unable to load travel preferences." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Unable to load travel preferences." },
+      { status: 500 },
+    );
   }
 }
 
 export async function PATCH(request: Request) {
   const userId = await getAuthenticatedUserId();
-  if (!userId) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  if (!userId)
+    return NextResponse.json(
+      { error: "Authentication required." },
+      { status: 401 },
+    );
 
   try {
     const payload = travelPreferencesPatchSchema.parse(await request.json());
@@ -175,14 +179,26 @@ export async function PATCH(request: Request) {
     const preferences = await prisma.travelPreferences.upsert({
       where: { userId },
       create: buildCreateData(userId, payload),
-      update: buildUpdateData(payload, existingPreferences?.notificationPreferences),
+      update: buildUpdateData(
+        payload,
+        existingPreferences?.notificationPreferences,
+      ),
       select: travelPreferencesSelect,
     });
 
-    return NextResponse.json({ preferences: serializePreferences(preferences) });
+    return NextResponse.json({
+      preferences: serializePreferences(preferences),
+    });
   } catch (error) {
-    if (error instanceof ZodError) return NextResponse.json({ error: "Please check your travel preferences and try again." }, { status: 400 });
+    if (error instanceof ZodError)
+      return NextResponse.json(
+        { error: "Please check your travel preferences and try again." },
+        { status: 400 },
+      );
     console.error("[account-travel-preferences:patch]", error);
-    return NextResponse.json({ error: "Unable to save travel preferences." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Unable to save travel preferences." },
+      { status: 500 },
+    );
   }
 }
