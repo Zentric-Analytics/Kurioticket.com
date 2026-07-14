@@ -1477,19 +1477,6 @@ export function HotelResultsClient() {
                     >
                       <button
                         type="button"
-                        aria-pressed={!showSavedOnly}
-                        className={cn(
-                          "relative px-0 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2",
-                          !showSavedOnly
-                            ? "text-[#004BB8] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-[#004BB8]"
-                            : "text-slate-600 hover:text-slate-950",
-                        )}
-                        onClick={() => setShowSavedOnly(false)}
-                      >
-                        {t("hotelResults.allHotels") || "All"}
-                      </button>
-                      <button
-                        type="button"
                         aria-pressed={showSavedOnly}
                         className={cn(
                           "relative px-0 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2",
