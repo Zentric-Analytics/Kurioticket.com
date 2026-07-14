@@ -23,6 +23,7 @@ export type EmailTemplateKey =
   | "email_preferences_updated"
   | "price_alert"
   | "saved_trip_reminder"
+  | "route_watch_update"
   | "travel_inspiration_digest"
   | "notification"
   | "admin_test";
@@ -206,6 +207,33 @@ export async function recordProviderEmailEvent(input: {
       `;
     }
   });
+}
+
+
+export async function isEmailSuppressed(email: string) {
+  const normalized = email.toLowerCase().trim();
+  if (!normalized) return false;
+
+  return withEmailDeliveryDb(async (db) => {
+    const rows = await db.$queryRaw<Array<{ id: string }>>`
+      SELECT id FROM email_suppressions WHERE email = ${normalized} LIMIT 1
+    `;
+    return rows.length > 0;
+  }, false);
+}
+
+export async function hasSuccessfulEmailDelivery(idempotencyKey: string) {
+  if (!idempotencyKey.trim()) return false;
+
+  return withEmailDeliveryDb(async (db) => {
+    const rows = await db.$queryRaw<Array<{ id: string }>>`
+      SELECT id FROM email_deliveries
+      WHERE idempotency_key = ${idempotencyKey}
+        AND status IN ('SENT', 'DELIVERED', 'DELIVERY_DELAYED', 'OPENED', 'CLICKED')
+      LIMIT 1
+    `;
+    return rows.length > 0;
+  }, false);
 }
 
 export async function getEmailDeliveryHealthSnapshot() {
