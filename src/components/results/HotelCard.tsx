@@ -776,7 +776,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
                   >
                     {detailsOpen
                       ? t("hotelResults.hideDetails") || "Hide details"
-                      : t("hotelResults.viewDetails") || "View details"}
+                      : t("hotelResults.viewHotel") || "View hotel"}
                   </Button>
                 </div>
               ) : (
