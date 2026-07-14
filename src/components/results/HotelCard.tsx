@@ -743,20 +743,25 @@ export function HotelCard({ hotel }: HotelCardProps) {
                 >
                   {formatCurrency(hotel.totalPrice, hotel.currency, locale)}
                 </div>
-                <div className="text-xs font-medium leading-4 text-slate-500">
+
+                <div className="mt-0.5 text-xs font-medium leading-4 text-slate-500">
                   {t("hotelResults.estimatedStayTotal")}
                 </div>
-                <div className="text-xs font-medium leading-4 text-slate-500">
-                  {t("hotelResults.pricePerNight").replace(
-                    "{{price}}",
-                    formatCurrency(hotel.pricePerNight, hotel.currency, locale),
-                  )}
-                </div>
-                {taxesAndFeesText ? (
-                  <div className="text-xs font-medium leading-4 text-slate-500">
-                    {taxesAndFeesText}
+
+                <div className="mt-2.5 space-y-1">
+                  <div className="text-[13px] font-semibold leading-5 text-slate-700">
+                    {t("hotelResults.pricePerNight").replace(
+                      "{{price}}",
+                      formatCurrency(hotel.pricePerNight, hotel.currency, locale),
+                    )}
                   </div>
-                ) : null}
+
+                  {taxesAndFeesText ? (
+                    <div className="text-[11px] font-medium leading-4 text-slate-500">
+                      {taxesAndFeesText}
+                    </div>
+                  ) : null}
+                </div>
               </div>
               {isDemoHotel ? (
                 <div className="min-[380px]:text-end">
