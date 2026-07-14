@@ -3298,8 +3298,6 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.customization.fields.language.label": "Language",
   "accountDashboard.preferences.customization.fields.currency.label": "Currency",
   "accountDashboard.preferences.customization.fields.region.label": "Display/search market",
-  "accountDashboard.preferences.customization.fields.rememberChoices.label": "Remember my choices",
-  "accountDashboard.preferences.customization.fields.rememberChoices.description": "Keep recent selections available for a smoother experience.",
   "accountDashboard.preferences.customization.fields.personalizeRecommendations.label": "Personalize recommendations",
   "accountDashboard.preferences.customization.fields.personalizeRecommendations.description": "Use your Kurioticket activity to improve suggestions and recommendations.",
   "accountDashboard.preferences.customization.fields.showHelpfulTips.label": "Show helpful tips",

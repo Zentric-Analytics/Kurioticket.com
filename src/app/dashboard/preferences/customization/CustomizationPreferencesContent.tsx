@@ -16,7 +16,6 @@ import {
 } from "@/lib/region/countryDisplayNames";
 
 type BooleanPreferenceKey =
-  | "rememberChoices"
   | "personalizeRecommendations"
   | "showHelpfulTips";
 type Status = "idle" | "loading" | "saving" | "success" | "error";
@@ -30,7 +29,6 @@ type CustomizationPreferencesDraft = PersonalizationPreferences & {
 };
 
 const defaultPersonalizationPreferences: PersonalizationPreferences = {
-  rememberChoices: true,
   personalizeRecommendations: true,
   showHelpfulTips: true,
 };
@@ -51,7 +49,6 @@ const customizationPreferenceKeys = Object.keys(
 ) as Array<keyof CustomizationPreferencesDraft>;
 
 const personalizationOptions: BooleanPreferenceKey[] = [
-  "rememberChoices",
   "personalizeRecommendations",
   "showHelpfulTips",
 ];
@@ -559,9 +556,7 @@ export function CustomizationPreferencesContent() {
 }
 
 // i18n coverage keys used through computed row lookups:
-// accountDashboard.preferences.customization.fields.rememberChoices.label
 // accountDashboard.preferences.customization.fields.personalizeRecommendations.label
 // accountDashboard.preferences.customization.fields.showHelpfulTips.label
-// accountDashboard.preferences.customization.fields.rememberChoices.description
 // accountDashboard.preferences.customization.fields.personalizeRecommendations.description
 // accountDashboard.preferences.customization.fields.showHelpfulTips.description
