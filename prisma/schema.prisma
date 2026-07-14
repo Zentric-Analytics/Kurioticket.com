@@ -650,7 +650,6 @@ model UserCustomizationPreferences {
   locale                     String   @default("en-us")
   currency                   String   @default("USD")
   region                     String   @default("US")
-  rememberChoices            Boolean  @default(true)
   personalizeRecommendations Boolean  @default(true)
   showHelpfulTips            Boolean  @default(true)
   createdAt                  DateTime @default(now())

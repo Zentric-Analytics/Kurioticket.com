@@ -17,7 +17,6 @@ export const customizationPreferenceDefaults = {
   locale: "en-us",
   currency: "USD",
   region: "US",
-  rememberChoices: true,
   personalizeRecommendations: true,
   showHelpfulTips: true,
 };
@@ -97,7 +96,6 @@ const customizationPreferencesPatchSchema = z
       .min(1)
       .transform(normalizeRegionPreference)
       .optional(),
-    rememberChoices: z.boolean().optional(),
     personalizeRecommendations: z.boolean().optional(),
     showHelpfulTips: z.boolean().optional(),
   })
@@ -120,9 +118,6 @@ export function serializeCustomizationPreferences(
     region: normalizeRegionPreference(
       preferences?.region ?? customizationPreferenceDefaults.region,
     ),
-    rememberChoices:
-      preferences?.rememberChoices ??
-      customizationPreferenceDefaults.rememberChoices,
     personalizeRecommendations:
       preferences?.personalizeRecommendations ??
       customizationPreferenceDefaults.personalizeRecommendations,
@@ -162,7 +157,6 @@ export async function handleCustomizationPreferencesGet(
         locale: true,
         currency: true,
         region: true,
-        rememberChoices: true,
         personalizeRecommendations: true,
         showHelpfulTips: true,
       },
@@ -208,7 +202,6 @@ export async function handleCustomizationPreferencesPatch(
         locale: true,
         currency: true,
         region: true,
-        rememberChoices: true,
         personalizeRecommendations: true,
         showHelpfulTips: true,
       },

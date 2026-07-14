@@ -2174,8 +2174,6 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.customization.fields.language.label": "ภาษา",
   "accountDashboard.preferences.customization.fields.currency.label": "สกุลเงิน",
   "accountDashboard.preferences.customization.fields.region.label": "Display/search market",
-  "accountDashboard.preferences.customization.fields.rememberChoices.label": "จดจำตัวเลือกของฉัน",
-  "accountDashboard.preferences.customization.fields.rememberChoices.description": "เก็บตัวเลือกล่าสุดในแอปเพื่อประสบการณ์ที่ราบรื่นขึ้น",
   "accountDashboard.preferences.customization.fields.personalizeRecommendations.label": "ปรับคำแนะนำให้เหมาะกับฉัน",
   "accountDashboard.preferences.customization.fields.personalizeRecommendations.description": "ใช้กิจกรรมในแอปเพื่อปรับคำแนะนำและทางลัด",
   "accountDashboard.preferences.customization.fields.showHelpfulTips.label": "แสดงเคล็ดลับที่เป็นประโยชน์",

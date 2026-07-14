@@ -54,7 +54,6 @@ function selectPreferences(row: StoredPreferences): Preferences {
     locale: row.locale,
     currency: row.currency,
     region: row.region,
-    rememberChoices: row.rememberChoices,
     personalizeRecommendations: row.personalizeRecommendations,
     showHelpfulTips: row.showHelpfulTips,
   };
@@ -141,7 +140,7 @@ test("customization preferences PATCH rejects unsupported region", async () => {
 test("customization preferences PATCH rejects non-boolean personalization values", async () => {
   const { prisma } = createFakePrisma();
   const response = await handleCustomizationPreferencesPatch("user-1", prisma, {
-    rememberChoices: "true",
+    personalizeRecommendations: "false",
   });
 
   assert.equal(response.status, 400);
@@ -175,7 +174,6 @@ test("customization preferences PATCH updates existing row and preserves omitted
       locale: "fr",
       currency: "EUR",
       region: "FR",
-      rememberChoices: false,
       personalizeRecommendations: false,
       showHelpfulTips: false,
     },
@@ -192,7 +190,6 @@ test("customization preferences PATCH updates existing row and preserves omitted
     locale: "fr",
     currency: "USD",
     region: "FR",
-    rememberChoices: false,
     personalizeRecommendations: false,
     showHelpfulTips: true,
   });
@@ -206,7 +203,6 @@ test("customization preferences GET returns saved normalized values", async () =
       locale: "fr",
       currency: "EUR",
       region: "FR",
-      rememberChoices: false,
       personalizeRecommendations: true,
       showHelpfulTips: false,
     },
@@ -220,7 +216,6 @@ test("customization preferences GET returns saved normalized values", async () =
     locale: "fr",
     currency: "EUR",
     region: "FR",
-    rememberChoices: false,
     personalizeRecommendations: true,
     showHelpfulTips: false,
   });
@@ -233,7 +228,6 @@ test("customization preferences PATCH does not affect another user's row", async
       locale: "de",
       currency: "EUR",
       region: "DE",
-      rememberChoices: false,
       personalizeRecommendations: false,
       showHelpfulTips: false,
     },
@@ -250,7 +244,6 @@ test("customization preferences PATCH does not affect another user's row", async
     locale: "de",
     currency: "EUR",
     region: "DE",
-    rememberChoices: false,
     personalizeRecommendations: false,
     showHelpfulTips: false,
   });
