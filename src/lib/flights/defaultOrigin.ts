@@ -1,7 +1,19 @@
-import { formatAirportLabel, type AirportOption } from "@/data/airports";
-import { getCityAwareOriginAirports, type OriginSuggestionLocation } from "@/lib/flights/originAirportSuggestions";
+import {
+  formatAirportLabel,
+  getAirportByCode,
+  type AirportOption,
+} from "@/data/airports";
+import {
+  getCityAwareOriginAirports,
+  type OriginSuggestionLocation,
+} from "@/lib/flights/originAirportSuggestions";
 
-export type OriginValueSource = "empty" | "manual" | "url" | "saved" | "maxmind-default";
+export type OriginValueSource =
+  | "empty"
+  | "manual"
+  | "url"
+  | "saved"
+  | "maxmind-default";
 
 export type OriginFieldState = {
   input: string;
@@ -13,6 +25,22 @@ export type OriginFieldState = {
 export type OriginDefaultCandidate = {
   airport: AirportOption | null;
   suggestions: AirportOption[];
+};
+
+const HOME_AIRPORT_CODE_PATTERN = /^[A-Z]{3}$/;
+const HOME_AIRPORT_LABEL_CODE_PATTERN = /\(([A-Z]{3})\)\s*$/;
+
+export const resolveSavedHomeAirport = (
+  homeAirport: string | null | undefined,
+): AirportOption | null => {
+  const trimmed = homeAirport?.trim().toUpperCase() ?? "";
+  if (!trimmed) return null;
+
+  const code = HOME_AIRPORT_CODE_PATTERN.test(trimmed)
+    ? trimmed
+    : (trimmed.match(HOME_AIRPORT_LABEL_CODE_PATTERN)?.[1] ?? "");
+
+  return getAirportByCode(code);
 };
 
 export const getDefaultOriginAirport = (
@@ -33,6 +61,15 @@ export const canApplyDefaultOrigin = (state: OriginFieldState) =>
   state.input.trim().length === 0 &&
   state.code.trim().length === 0;
 
+export const shouldRequestSavedHomeAirportDefault = (
+  state: OriginFieldState,
+  sessionStatus: "authenticated" | "unauthenticated" | "loading",
+  alreadyRequested: boolean,
+) =>
+  sessionStatus === "authenticated" &&
+  !alreadyRequested &&
+  canApplyDefaultOrigin(state);
+
 export const applyDefaultOrigin = (
   state: OriginFieldState,
   airport: AirportOption | null | undefined,
@@ -44,6 +81,22 @@ export const applyDefaultOrigin = (
     input: formatAirportLabel(airport, locale),
     code: airport.code,
     source: "maxmind-default",
+    userInteracted: false,
+  };
+};
+
+export const applySavedHomeAirport = (
+  state: OriginFieldState,
+  homeAirport: string | null | undefined,
+  locale?: string | null,
+): OriginFieldState => {
+  const airport = resolveSavedHomeAirport(homeAirport);
+  if (!airport || !canApplyDefaultOrigin(state)) return state;
+
+  return {
+    input: formatAirportLabel(airport, locale),
+    code: airport.code,
+    source: "saved",
     userInteracted: false,
   };
 };

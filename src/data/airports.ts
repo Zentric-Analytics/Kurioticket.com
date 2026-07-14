@@ -316,6 +316,13 @@ export const airports: AirportOption[] = airportSeeds.map((seed, index) => {
 
 export const destinationDefaults = ["LHR", "CDG", "DXB", "JFK", "LAX", "AMS", "MAD", "FCO", "SIN", "HND", "DOH"];
 
+export function getAirportByCode(code: string | null | undefined) {
+  const normalizedCode = code?.trim().toUpperCase() ?? "";
+  if (!/^[A-Z]{3}$/.test(normalizedCode)) return null;
+
+  return airports.find((airport) => airport.code === normalizedCode) ?? null;
+}
+
 const airportCountryMatches = (airport: AirportOption, countryCode?: string) => {
   const normalizedCountryCode = normalizeCountryCode(countryCode);
   if (!normalizedCountryCode) return false;
