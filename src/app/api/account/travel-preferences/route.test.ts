@@ -89,3 +89,32 @@ test("travel preferences PATCH schema still rejects invalid legacy notification 
     false,
   );
 });
+
+test("travel preferences PATCH schema accepts only active profile defaults", () => {
+  assert.equal(
+    travelPreferencesPatchSchema.safeParse({
+      homeAirport: "IAH",
+      preferredAirlines: ["Delta", "United"],
+    }).success,
+    true,
+  );
+});
+
+test("travel preferences PATCH schema rejects removed preference fields", () => {
+  for (const removedField of [
+    "budgetStyle",
+    "directVsCheaper",
+    "comfortVsSavings",
+    "travelFrequency",
+    "travelPurpose",
+  ]) {
+    assert.equal(
+      travelPreferencesPatchSchema.safeParse({
+        homeAirport: "IAH",
+        [removedField]: "balanced",
+      }).success,
+      false,
+      `${removedField} should not be accepted`,
+    );
+  }
+});

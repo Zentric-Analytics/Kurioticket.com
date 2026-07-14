@@ -18,11 +18,6 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 type TravelPreferences = {
   homeAirport: string;
   preferredAirlines: string[];
-  budgetStyle: string;
-  directVsCheaper: string;
-  travelFrequency: string;
-  comfortVsSavings: string;
-  travelPurpose: string;
 };
 
 type Status = "idle" | "loading" | "saving" | "success" | "reverted" | "error";
@@ -46,11 +41,6 @@ type Status = "idle" | "loading" | "saving" | "success" | "reverted" | "error";
 const emptyPreferences: TravelPreferences = {
   homeAirport: "",
   preferredAirlines: [],
-  budgetStyle: "",
-  directVsCheaper: "",
-  travelFrequency: "",
-  comfortVsSavings: "",
-  travelPurpose: "",
 };
 
 const travelPreferenceKeys = Object.keys(emptyPreferences) as Array<
@@ -69,12 +59,6 @@ function projectTravelPreferences(
     preferredAirlines: Array.isArray(value?.preferredAirlines)
       ? normalizeAirlinePreferenceValues(value.preferredAirlines)
       : emptyPreferences.preferredAirlines,
-    budgetStyle: value?.budgetStyle ?? emptyPreferences.budgetStyle,
-    directVsCheaper: value?.directVsCheaper ?? emptyPreferences.directVsCheaper,
-    travelFrequency: value?.travelFrequency ?? emptyPreferences.travelFrequency,
-    comfortVsSavings:
-      value?.comfortVsSavings ?? emptyPreferences.comfortVsSavings,
-    travelPurpose: value?.travelPurpose ?? emptyPreferences.travelPurpose,
   };
 }
 
@@ -97,125 +81,6 @@ function areTravelPreferencesEqual(
   });
 }
 
-const fieldClassName =
-  "focus-ring mt-2 min-h-10 w-full rounded-none border border-slate-300 bg-white px-3 text-base font-semibold text-slate-800 sm:text-sm placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500";
-
-const selectClassName = `${fieldClassName} cursor-pointer`;
-
-const budgetOptions = [
-  ["budget", "accountDashboard.preferences.booking.options.budgetStyle.budget"],
-  [
-    "balanced",
-    "accountDashboard.preferences.booking.options.budgetStyle.balanced",
-  ],
-  [
-    "premium",
-    "accountDashboard.preferences.booking.options.budgetStyle.premium",
-  ],
-];
-
-const directOptions = [
-  [
-    "direct",
-    "accountDashboard.preferences.booking.options.directVsCheaper.direct",
-  ],
-  [
-    "cheaper",
-    "accountDashboard.preferences.booking.options.directVsCheaper.cheaper",
-  ],
-  [
-    "balanced",
-    "accountDashboard.preferences.booking.options.directVsCheaper.balanced",
-  ],
-];
-
-const frequencyOptions = [
-  [
-    "rarely",
-    "accountDashboard.preferences.booking.options.travelFrequency.rarely",
-  ],
-  [
-    "monthly",
-    "accountDashboard.preferences.booking.options.travelFrequency.monthly",
-  ],
-  [
-    "frequent",
-    "accountDashboard.preferences.booking.options.travelFrequency.frequent",
-  ],
-];
-
-const comfortOptions = [
-  [
-    "savings",
-    "accountDashboard.preferences.booking.options.comfortVsSavings.savings",
-  ],
-  [
-    "balanced",
-    "accountDashboard.preferences.booking.options.comfortVsSavings.balanced",
-  ],
-  [
-    "comfort",
-    "accountDashboard.preferences.booking.options.comfortVsSavings.comfort",
-  ],
-];
-
-const purposeOptions = [
-  [
-    "leisure",
-    "accountDashboard.preferences.booking.options.travelPurpose.leisure",
-  ],
-  [
-    "business",
-    "accountDashboard.preferences.booking.options.travelPurpose.business",
-  ],
-  [
-    "family",
-    "accountDashboard.preferences.booking.options.travelPurpose.family",
-  ],
-  ["mixed", "accountDashboard.preferences.booking.options.travelPurpose.mixed"],
-];
-
-function SelectField({
-  id,
-  label,
-  value,
-  options,
-  disabled,
-  noPreferenceLabel,
-  onChange,
-}: {
-  id: keyof TravelPreferences;
-  label: string;
-  value: string;
-  options: string[][];
-  noPreferenceLabel: string;
-  disabled: boolean;
-  onChange: (field: keyof TravelPreferences, value: string) => void;
-}) {
-  return (
-    <label className="block" htmlFor={id}>
-      <span className="text-sm font-semibold leading-5 text-slate-950">
-        {label}
-      </span>
-      <select
-        id={id}
-        name={id}
-        value={value}
-        disabled={disabled}
-        onChange={(event) => onChange(id, event.target.value)}
-        className={selectClassName}
-      >
-        <option value="">{noPreferenceLabel}</option>
-        {options.map(([optionValue, optionLabel]) => (
-          <option key={optionValue} value={optionValue}>
-            {optionLabel}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
 export function BookingPreferencesContent() {
   const { locale, t } = useLocale();
   const [preferences, setPreferences] =
@@ -232,11 +97,6 @@ export function BookingPreferencesContent() {
   );
   const saveDisabled = disabled || !hasUnsavedChanges;
   const revertDisabled = disabled || !hasUnsavedChanges;
-  const noPreferenceLabel =
-    t["accountDashboard.preferences.booking.noPreference"] ?? "No preference";
-  const localizeOptions = (options: string[][]) =>
-    options.map(([value, key]) => [value, t[key] ?? key]);
-
   useEffect(() => {
     if ((status !== "success" && status !== "reverted") || !message) {
       return undefined;
@@ -366,7 +226,7 @@ export function BookingPreferencesContent() {
                     t[
                       "accountDashboard.preferences.booking.sections.flightDefaults.description"
                     ] ??
-                    "Tell Kurioticket which airports and airlines you prefer."
+                    "Set the airport and airlines saved in your travel profile defaults."
                   }
                   contentClassName="grid gap-3.5"
                 >
@@ -402,86 +262,6 @@ export function BookingPreferencesContent() {
                       setStatus("idle");
                       setMessage("");
                     }}
-                  />
-                  <SelectField
-                    id="directVsCheaper"
-                    label={
-                      t[
-                        "accountDashboard.preferences.booking.directVsCheaper"
-                      ] ?? "Direct vs cheaper"
-                    }
-                    value={preferences.directVsCheaper}
-                    options={localizeOptions(directOptions)}
-                    noPreferenceLabel={noPreferenceLabel}
-                    disabled={disabled}
-                    onChange={updateField}
-                  />
-                </PreferencesSection>
-
-                <PreferencesSection
-                  id="trip-style-preferences"
-                  title={
-                    t[
-                      "accountDashboard.preferences.booking.sections.tripStyle.title"
-                    ] ?? "Trip style"
-                  }
-                  description={
-                    t[
-                      "accountDashboard.preferences.booking.sections.tripStyle.description"
-                    ] ?? "Set defaults that describe how you usually travel."
-                  }
-                  bordered
-                  contentClassName="grid gap-3.5"
-                >
-                  <SelectField
-                    id="budgetStyle"
-                    label={
-                      t["accountDashboard.preferences.booking.budgetStyle"] ??
-                      "Budget style"
-                    }
-                    value={preferences.budgetStyle}
-                    options={localizeOptions(budgetOptions)}
-                    noPreferenceLabel={noPreferenceLabel}
-                    disabled={disabled}
-                    onChange={updateField}
-                  />
-                  <SelectField
-                    id="travelFrequency"
-                    label={
-                      t[
-                        "accountDashboard.preferences.booking.travelFrequency"
-                      ] ?? "Travel frequency"
-                    }
-                    value={preferences.travelFrequency}
-                    options={localizeOptions(frequencyOptions)}
-                    noPreferenceLabel={noPreferenceLabel}
-                    disabled={disabled}
-                    onChange={updateField}
-                  />
-                  <SelectField
-                    id="comfortVsSavings"
-                    label={
-                      t[
-                        "accountDashboard.preferences.booking.comfortVsSavings"
-                      ] ?? "Comfort vs savings"
-                    }
-                    value={preferences.comfortVsSavings}
-                    options={localizeOptions(comfortOptions)}
-                    noPreferenceLabel={noPreferenceLabel}
-                    disabled={disabled}
-                    onChange={updateField}
-                  />
-                  <SelectField
-                    id="travelPurpose"
-                    label={
-                      t["accountDashboard.preferences.booking.travelPurpose"] ??
-                      "Travel purpose"
-                    }
-                    value={preferences.travelPurpose}
-                    options={localizeOptions(purposeOptions)}
-                    noPreferenceLabel={noPreferenceLabel}
-                    disabled={disabled}
-                    onChange={updateField}
                   />
                 </PreferencesSection>
               </div>
