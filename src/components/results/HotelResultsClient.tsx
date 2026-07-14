@@ -198,41 +198,6 @@ const PROPERTY_TYPE_FILTERS = [
   { value: "villa", labelKey: "hotelResults.filter.villa", terms: ["villa"] },
 ];
 
-const LOCATION_AREA_FILTERS = [
-  {
-    value: "city-centre",
-    labelKey: "hotelResults.filter.cityCentre",
-    terms: [
-      "city centre",
-      "city center",
-      "central",
-      "downtown",
-      "centre",
-      "center",
-    ],
-  },
-  {
-    value: "airport-area",
-    labelKey: "hotelResults.filter.airportArea",
-    terms: ["airport", "airport area", "airport link", "airport transit"],
-  },
-  {
-    value: "business-district",
-    labelKey: "hotelResults.filter.businessDistrict",
-    terms: ["business district", "financial district", "business area"],
-  },
-  {
-    value: "near-attractions",
-    labelKey: "hotelResults.filter.nearAttractions",
-    terms: ["attraction", "attractions", "landmark", "museum", "tourist"],
-  },
-  {
-    value: "residential-area",
-    labelKey: "hotelResults.filter.residentialArea",
-    terms: ["residential", "neighborhood", "neighbourhood"],
-  },
-];
-
 const ROOM_TYPE_FILTERS = [
   {
     value: "single-room",
@@ -737,9 +702,10 @@ export function HotelResultsClient() {
     };
   }, [body, t]);
 
+  const searchedDestination = body.destination.trim();
   const filterOptions = useMemo(
-    () => buildHotelFilterOptions(results, t),
-    [results, t],
+    () => buildHotelFilterOptions(results, t, searchedDestination),
+    [results, searchedDestination, t],
   );
 
   const filtered = useMemo(
@@ -776,6 +742,7 @@ export function HotelResultsClient() {
         t,
         locale,
         filterOptions.facilities,
+        filterOptions.locations,
       ),
     [
       locale,
@@ -786,6 +753,7 @@ export function HotelResultsClient() {
       selectedFilters,
       t,
       filterOptions.facilities,
+      filterOptions.locations,
     ],
   );
 
@@ -858,7 +826,6 @@ export function HotelResultsClient() {
     displayedHotels.length,
     locale,
   );
-  const searchedDestination = body.destination.trim();
   const resultsHeading = searchedDestination
     ? `${formattedDisplayedHotelCount} ${
         displayedHotels.length === 1 ? "property" : "properties"
@@ -2507,6 +2474,7 @@ function buildActiveFilterChips(
   t: (key: string) => string,
   locale: string,
   facilityOptions: FilterOption[],
+  locationOptions: FilterOption[],
 ): ActiveHotelFilterChip[] {
   const filterGroups: Array<{
     group: keyof HotelFilterSelections;
@@ -2515,7 +2483,6 @@ function buildActiveFilterChips(
     { group: "propertyTypes", filters: PROPERTY_TYPE_FILTERS },
     { group: "meals", filters: MEAL_FILTERS },
     { group: "cancellationPolicies", filters: CANCELLATION_FILTERS },
-    { group: "locations", filters: LOCATION_AREA_FILTERS },
     { group: "roomTypes", filters: ROOM_TYPE_FILTERS },
     { group: "bedTypes", filters: BED_TYPE_FILTERS },
   ];
@@ -2533,6 +2500,17 @@ function buildActiveFilterChips(
         };
       }),
   );
+
+  selectedFilters.locations.forEach((value) => {
+    const option = locationOptions.find((item) => item.value === value);
+
+    chips.push({
+      key: `locations-${value}`,
+      label: option?.label ?? value,
+      group: "locations",
+      value,
+    });
+  });
 
   selectedFilters.facilities.forEach((value) => {
     const option = facilityOptions.find((item) => item.value === value);
@@ -2570,6 +2548,7 @@ function buildActiveFilterChips(
 function buildHotelFilterOptions(
   hotels: PublicHotelResult[],
   t: (key: string) => string,
+  destination: string,
 ) {
   return {
     totalCount: hotels.length,
@@ -2588,15 +2567,7 @@ function buildHotelFilterOptions(
       t,
     ),
     facilities: buildHotelFacilityFilterOptions(hotels, t),
-    locations: buildTermOptions(
-      hotels,
-      LOCATION_AREA_FILTERS,
-      (hotel) =>
-        [hotel.location, hotel.distanceFromCenter, ...hotel.amenities].join(
-          " ",
-        ),
-      t,
-    ),
+    locations: buildHotelNeighbourhoodFilterOptions(hotels, destination),
     roomTypes: buildTermOptions(
       hotels,
       ROOM_TYPE_FILTERS,
@@ -2611,6 +2582,72 @@ function buildHotelFilterOptions(
       t,
     ),
   };
+}
+
+
+function cleanHotelNeighbourhood(value: string | undefined) {
+  return value?.trim().replace(/\s+/g, " ") ?? "";
+}
+
+function getHotelNeighbourhoodFilterValue(value: string | undefined) {
+  return cleanHotelNeighbourhood(value).toLocaleLowerCase();
+}
+
+function formatNeighbourhoodFilterLabel(
+  neighbourhood: string,
+  destination: string,
+) {
+  const cleanNeighbourhood = cleanHotelNeighbourhood(neighbourhood);
+  const cleanDestination = destination.trim().replace(/\s+/g, " ");
+
+  if (!cleanDestination) return cleanNeighbourhood;
+
+  const primaryCity = cleanDestination.split(",")[0]?.trim();
+  const neighbourhoodSegments = cleanNeighbourhood
+    .split(",")
+    .map((segment) => segment.trim().toLocaleLowerCase());
+
+  if (
+    primaryCity &&
+    neighbourhoodSegments.includes(primaryCity.toLocaleLowerCase())
+  ) {
+    return cleanNeighbourhood;
+  }
+
+  return `${cleanNeighbourhood}, ${cleanDestination}`;
+}
+
+function buildHotelNeighbourhoodFilterOptions(
+  hotels: PublicHotelResult[],
+  destination: string,
+): FilterOption[] {
+  const optionsByNeighbourhood = new Map<string, FilterOption>();
+
+  hotels.forEach((hotel) => {
+    const value = getHotelNeighbourhoodFilterValue(hotel.neighbourhood);
+    if (!value) return;
+
+    const option = optionsByNeighbourhood.get(value);
+
+    if (option) {
+      option.count += 1;
+      return;
+    }
+
+    optionsByNeighbourhood.set(value, {
+      value,
+      label: formatNeighbourhoodFilterLabel(
+        cleanHotelNeighbourhood(hotel.neighbourhood),
+        destination,
+      ),
+      count: 1,
+    });
+  });
+
+  return Array.from(optionsByNeighbourhood.values()).sort(
+    (first, second) =>
+      second.count - first.count || first.label.localeCompare(second.label),
+  );
 }
 
 function buildTermOptions(
@@ -2636,6 +2673,22 @@ function buildTermOptions(
       (first, second) =>
         second.count - first.count || first.label.localeCompare(second.label),
     );
+}
+
+function hotelMatchesNeighbourhoodFilters(
+  hotel: PublicHotelResult,
+  selectedValues: string[],
+) {
+  if (!selectedValues.length) return true;
+
+  const neighbourhoodValue = getHotelNeighbourhoodFilterValue(
+    hotel.neighbourhood,
+  );
+
+  return (
+    neighbourhoodValue.length > 0 &&
+    selectedValues.includes(neighbourhoodValue)
+  );
 }
 
 function hotelMatchesFilters(
@@ -2666,13 +2719,7 @@ function hotelMatchesFilters(
       (item) => [item.cancellationInfo, ...item.amenities].join(" "),
     ) &&
     hotelMatchesFacilityFilters(hotel, selectedFilters.facilities) &&
-    matchesTermGroup(
-      hotel,
-      selectedFilters.locations,
-      LOCATION_AREA_FILTERS,
-      (item) =>
-        [item.location, item.distanceFromCenter, ...item.amenities].join(" "),
-    ) &&
+    hotelMatchesNeighbourhoodFilters(hotel, selectedFilters.locations) &&
     matchesTermGroup(
       hotel,
       selectedFilters.roomTypes,
