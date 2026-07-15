@@ -472,7 +472,6 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.customization.region.australia": "Australia",
   "accountDashboard.preferences.booking.title": "Travel preferences",
   "accountDashboard.preferences.booking.description": "Set the airport and airlines saved in your travel profile defaults.",
-  "accountDashboard.preferences.booking.status.empty": "No travel preferences saved yet. Add your defaults below.",
   "accountDashboard.preferences.booking.status.loadError": "Unable to load travel preferences.",
   "accountDashboard.preferences.booking.status.saved": "Travel preferences saved.",
   "accountDashboard.preferences.booking.status.savedShort": "Saved.",

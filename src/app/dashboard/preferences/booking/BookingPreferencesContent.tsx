@@ -130,11 +130,6 @@ export function BookingPreferencesContent() {
         setPreferences(nextPreferences);
         setInitialPreferences(nextPreferences);
         setStatus("idle");
-        if (!data.hasPreferences)
-          setMessage(
-            t["accountDashboard.preferences.booking.status.empty"] ??
-              "No travel preferences saved yet. Add your defaults below.",
-          );
       } catch (error) {
         if (!active) return;
         setStatus("error");
