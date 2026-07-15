@@ -100,9 +100,6 @@ function EmptyStateIllustration() {
           </linearGradient>
         </defs>
       </svg>
-      <span className="absolute end-8 top-8 flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-lg font-black text-white shadow-lg shadow-indigo-950/20">
-        !
-      </span>
       <span className="absolute start-7 top-7 h-8 w-1.5 -rotate-45 rounded-full bg-[#5CB6B2]" />
       <span className="absolute start-14 top-4 h-8 w-1.5 -rotate-12 rounded-full bg-[#5CB6B2]" />
     </div>
