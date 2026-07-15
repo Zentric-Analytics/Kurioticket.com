@@ -3092,7 +3092,7 @@ export const translations: TranslationDictionary = {
   "hotelResults.popularFilters": "Popular filters",
   "hotelResults.starRating": "Star rating",
   "hotelResults.fromRating": "From",
-  "hotelResults.locationArea": "Location / Area",
+  "hotelResults.locationArea": "Area",
   "hotelResults.propertyType": "Property type",
   "hotelResults.roomType": "Room type",
   "hotelResults.bedType": "Bed type",
