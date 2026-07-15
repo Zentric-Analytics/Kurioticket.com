@@ -10,14 +10,15 @@ import {
 } from "@/components/preferences/PreferencesLayout";
 import { useLocale } from "@/components/layout/LocaleProvider";
 
-type EditablePreferenceKey =
-  | "receiveOptionalEmails"
-  | "priceAlerts"
-  | "savedTripReminders"
-  | "routeWatchUpdates"
-  | "travelInspiration"
-  | "productUpdates"
-  | "dealsRecommendations";
+import {
+  areEmailPreferencesEqual,
+  defaultEmailPreferences,
+  getNextEmailPreferencesForToggle,
+  isMasterUnsubscribeChecked,
+  toReceiveOptionalEmailsFromMasterUnsubscribe,
+  type EditablePreferenceKey,
+  type EmailPreferences,
+} from "./EmailPreferencesState";
 
 type PreferenceCopyKey =
   | "travelAlerts"
@@ -29,7 +30,6 @@ type PreferenceCopyKey =
   | "productUpdates"
   | "dealsRecommendations";
 
-type EmailPreferences = Record<EditablePreferenceKey, boolean>;
 
 type Status = "idle" | "loading" | "saving" | "success" | "error";
 
@@ -42,27 +42,6 @@ type PreferenceSection = {
   copyKey: PreferenceCopyKey;
   editableRows?: EditablePreference[];
 };
-
-const defaultEmailPreferences: EmailPreferences = {
-  receiveOptionalEmails: false,
-  priceAlerts: false,
-  savedTripReminders: false,
-  routeWatchUpdates: false,
-  travelInspiration: false,
-  productUpdates: false,
-  dealsRecommendations: false,
-};
-
-const emailPreferenceKeys = Object.keys(
-  defaultEmailPreferences,
-) as EditablePreferenceKey[];
-
-function areEmailPreferencesEqual(
-  first: EmailPreferences,
-  second: EmailPreferences,
-) {
-  return emailPreferenceKeys.every((key) => first[key] === second[key]);
-}
 
 const preferenceSections: PreferenceSection[] = [
   {
@@ -127,14 +106,6 @@ function PreferenceSwitch({
       </span>
     </button>
   );
-}
-
-export function isMasterUnsubscribeChecked(preferences: EmailPreferences) {
-  return !preferences.receiveOptionalEmails;
-}
-
-export function toReceiveOptionalEmailsFromMasterUnsubscribe(checked: boolean) {
-  return !checked;
 }
 
 export function EmailPreferencesContent() {
@@ -214,7 +185,7 @@ export function EmailPreferencesContent() {
 
   const updatePreference = (id: EditablePreferenceKey) => {
     if (disabled) return;
-    setPreferences((current) => ({ ...current, [id]: !current[id] }));
+    setPreferences((current) => getNextEmailPreferencesForToggle(current, id));
     setStatus("idle");
     setStatusMessage("");
   };
@@ -358,9 +329,7 @@ export function EmailPreferencesContent() {
                             offLabel={
                               t["accountDashboard.preferences.email.off"]
                             }
-                            disabled={
-                              disabled || !preferences.receiveOptionalEmails
-                            }
+                            disabled={disabled}
                           />
                         </div>
                       </div>
