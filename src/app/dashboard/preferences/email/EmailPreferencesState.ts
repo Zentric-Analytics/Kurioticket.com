@@ -23,6 +23,10 @@ export const emailPreferenceKeys = Object.keys(
   defaultEmailPreferences,
 ) as EditablePreferenceKey[];
 
+export const emailPreferenceCategoryKeys = emailPreferenceKeys.filter(
+  (key) => key !== "receiveOptionalEmails",
+) as Exclude<EditablePreferenceKey, "receiveOptionalEmails">[];
+
 export function areEmailPreferencesEqual(
   first: EmailPreferences,
   second: EmailPreferences,
@@ -38,20 +42,44 @@ export function toReceiveOptionalEmailsFromMasterUnsubscribe(checked: boolean) {
   return !checked;
 }
 
+function withAllCategoriesDisabled(preferences: EmailPreferences) {
+  return emailPreferenceCategoryKeys.reduce<EmailPreferences>(
+    (nextPreferences, key) => ({ ...nextPreferences, [key]: false }),
+    preferences,
+  );
+}
+
+export function getNextEmailPreferencesForMasterUnsubscribe(
+  preferences: EmailPreferences,
+  checked: boolean,
+): EmailPreferences {
+  if (checked) {
+    return withAllCategoriesDisabled({
+      ...preferences,
+      receiveOptionalEmails: toReceiveOptionalEmailsFromMasterUnsubscribe(true),
+    });
+  }
+
+  return {
+    ...preferences,
+    receiveOptionalEmails: toReceiveOptionalEmailsFromMasterUnsubscribe(false),
+  };
+}
+
 export function getNextEmailPreferencesForToggle(
   preferences: EmailPreferences,
   id: EditablePreferenceKey,
 ): EmailPreferences {
   if (id === "receiveOptionalEmails") {
-    return {
-      ...preferences,
-      receiveOptionalEmails: !preferences.receiveOptionalEmails,
-    };
+    return getNextEmailPreferencesForMasterUnsubscribe(
+      preferences,
+      !isMasterUnsubscribeChecked(preferences),
+    );
   }
 
   if (!preferences.receiveOptionalEmails) {
     return {
-      ...preferences,
+      ...withAllCategoriesDisabled(preferences),
       receiveOptionalEmails: true,
       [id]: true,
     };

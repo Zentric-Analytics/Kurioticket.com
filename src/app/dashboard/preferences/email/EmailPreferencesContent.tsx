@@ -13,9 +13,9 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import {
   areEmailPreferencesEqual,
   defaultEmailPreferences,
+  getNextEmailPreferencesForMasterUnsubscribe,
   getNextEmailPreferencesForToggle,
   isMasterUnsubscribeChecked,
-  toReceiveOptionalEmailsFromMasterUnsubscribe,
   type EditablePreferenceKey,
   type EmailPreferences,
 } from "./EmailPreferencesState";
@@ -192,12 +192,12 @@ export function EmailPreferencesContent() {
 
   const updateMasterUnsubscribePreference = () => {
     if (disabled) return;
-    setPreferences((current) => ({
-      ...current,
-      receiveOptionalEmails: toReceiveOptionalEmailsFromMasterUnsubscribe(
+    setPreferences((current) =>
+      getNextEmailPreferencesForMasterUnsubscribe(
+        current,
         !isMasterUnsubscribeChecked(current),
       ),
-    }));
+    );
     setStatus("idle");
     setStatusMessage("");
   };
@@ -266,9 +266,7 @@ export function EmailPreferencesContent() {
                   contentClassName="divide-y divide-slate-200"
                 >
                   {section.editableRows?.map((row) => {
-                    const displayChecked = preferences.receiveOptionalEmails
-                      ? preferences[row.id]
-                      : false;
+                    const displayChecked = preferences[row.id];
 
                     return (
                       <div
