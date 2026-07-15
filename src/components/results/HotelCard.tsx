@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AirVent,
   Armchair,
@@ -29,7 +29,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { PublicHotelResult } from "@/lib/types";
-import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
@@ -366,8 +366,6 @@ type HotelCardProps = {
 export function HotelCard({ hotel }: HotelCardProps) {
   const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const detailsRegionId = useId();
-  const [detailsOpen, setDetailsOpen] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [preferredImageIndex, setPreferredImageIndex] = useState(0);
   const starRating = getHotelStarRating(hotel.rating);
@@ -421,8 +419,6 @@ export function HotelCard({ hotel }: HotelCardProps) {
   const shouldShowMealPlanText =
     Boolean(mealPlanText) &&
     (!hasBreakfastAmenity || !/^breakfast/i.test(mealPlanText));
-  const isDemoHotel = hotel.dataSource === "demo";
-  const neighbourhood = hotel.neighbourhood?.trim() || "";
   const reviewScore = hotel.reviewScore;
   const reviewBand = getHotelReviewBand(reviewScore);
   const reviewCount = getHotelReviewCount(hotel.reviewCount);
@@ -559,22 +555,6 @@ export function HotelCard({ hotel }: HotelCardProps) {
     }
   }
 
-  async function redirectToHotel() {
-    if (isDemoHotel) return;
-
-    const response = await fetch("/api/redirect", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: hotel.id,
-        type: "hotel",
-        sourcePage: "hotel_results",
-      }),
-    });
-    const data = (await response.json()) as { url?: string; error?: string };
-    if (data.url) window.location.href = data.url;
-    if (data.error) window.alert(t("hotelResults.unableToOpenProvider"));
-  }
 
   return (
     <Card className="mx-auto w-full max-w-[800px] overflow-hidden border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(2,28,43,0.26)]">
@@ -771,152 +751,20 @@ export function HotelCard({ hotel }: HotelCardProps) {
                   ) : null}
                 </div>
               </div>
-              {isDemoHotel ? (
-                <div className="min-[380px]:text-end">
-                  <Button
-                    type="button"
-                    variant="accent"
-                    size="sm"
-                    className="w-full whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-3 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] hover:border-[#021C2B] hover:bg-[#021C2B] min-[380px]:w-auto"
-                    aria-expanded={detailsOpen}
-                    aria-controls={detailsRegionId}
-                    onClick={() => setDetailsOpen((open) => !open)}
-                  >
-                    {detailsOpen
-                      ? t("hotelResults.hideDetails") || "Hide details"
-                      : t("hotelResults.viewHotel") || "View hotel"}
-                  </Button>
-                </div>
-              ) : (
-                <div className="min-[380px]:text-end">
-                  <Button
-                    variant="accent"
-                    size="sm"
-                    className="w-full whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-3 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] hover:border-[#021C2B] hover:bg-[#021C2B] min-[380px]:w-auto"
-                    onClick={redirectToHotel}
-                  >
-                    {t("hotelResults.viewHotel")}
-                  </Button>
-                </div>
-              )}
+              <div className="min-[380px]:text-end">
+                <LinkButton
+                  href={`/hotels/details/${encodeURIComponent(hotel.id)}`}
+                  variant="accent"
+                  size="sm"
+                  className="w-full whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-3 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] hover:border-[#021C2B] hover:bg-[#021C2B] min-[380px]:w-auto"
+                >
+                  {t("hotelResults.viewHotel") || "View hotel"}
+                </LinkButton>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      {isDemoHotel && detailsOpen ? (
-        <div
-          id={detailsRegionId}
-          className="border-t border-slate-200 bg-slate-50/80 px-3.5 py-3.5 md:px-4 md:py-4"
-        >
-          <h3 className="text-sm font-bold text-slate-950">
-            {t("hotelResults.detailsHeading") || "Hotel details"}
-          </h3>
-          <p className="mt-1 text-xs leading-5 text-slate-600">
-            {t("hotelResults.demoDisclaimer") ||
-              "Illustrative demo listing. Prices, reviews and property details are not live inventory."}
-          </p>
-          {showGalleryControls ? (
-            <div className="mt-3 min-w-0">
-              <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                {t("hotelResults.photos") || "Photos"}
-              </h4>
-              <div className="mt-2 flex max-w-full gap-2 overflow-x-auto pb-1">
-                {availableImageIndices.map((imageIndex, visibleIndex) => {
-                  const thumbnailUrl = explicitGalleryImages[imageIndex];
-                  return (
-                    <button
-                      key={thumbnailUrl}
-                      type="button"
-                      aria-pressed={resolvedActiveImageIndex === imageIndex}
-                      aria-label={(
-                        t("hotelResults.selectPhoto") || "Show photo {{number}}"
-                      ).replace("{{number}}", String(visibleIndex + 1))}
-                      className={
-                        resolvedActiveImageIndex === imageIndex
-                          ? "relative h-16 w-24 shrink-0 overflow-hidden rounded-lg ring-2 ring-[#004BB8] ring-offset-2 ring-offset-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
-                          : "relative h-16 w-24 shrink-0 overflow-hidden rounded-lg ring-1 ring-slate-200 transition hover:ring-[#004BB8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
-                      }
-                      onClick={() => setPreferredImageIndex(imageIndex)}
-                    >
-                      <Image
-                        src={thumbnailUrl}
-                        alt=""
-                        fill
-                        className="object-cover"
-                        sizes="96px"
-                        onError={() => markImageFailed(thumbnailUrl)}
-                      />
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ) : null}
-          <dl className="mt-3 grid gap-3 text-sm text-slate-700 md:grid-cols-2">
-            {roomTypeText ? (
-              <div>
-                <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                  {t("hotelResults.roomDetails") || "Room"}
-                </dt>
-                <dd className="mt-1">{roomTypeText}</dd>
-              </div>
-            ) : null}
-            {neighbourhood ? (
-              <div>
-                <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                  {t("hotelResults.areaDetails") || "Area"}
-                </dt>
-                <dd className="mt-1">{neighbourhood}</dd>
-              </div>
-            ) : null}
-            {cancellationDisplay ? (
-              <div>
-                <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                  {t("hotelResults.cancellationDetails") || "Cancellation"}
-                </dt>
-                <dd className="mt-1">{cancellationDisplay.label}</dd>
-              </div>
-            ) : null}
-            {expandedAmenityItems.length > 0 ? (
-              <div>
-                <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                  {t("hotelResults.amenitiesDetails") || "Amenities"}
-                </dt>
-                <dd>
-                  <HotelAmenityList
-                    items={resolveAmenityLabels(expandedAmenityItems, t)}
-                    expanded
-                  />
-                </dd>
-              </div>
-            ) : null}
-            {reviewBand ? (
-              <div>
-                <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                  {t("hotelResults.review.score") || "Review score"}
-                </dt>
-                <dd className="mt-1">
-                  {formattedReviewScore} {reviewLabel}
-                  {reviewCountText ? ` · ${reviewCountText}` : ""}
-                </dd>
-              </div>
-            ) : null}
-            <div>
-              <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                {t("hotelResults.priceDetails") || "Price"}
-              </dt>
-              <dd className="mt-1">
-                {formatCurrency(hotel.totalPrice, hotel.currency, locale)} ·{" "}
-                {t("hotelResults.pricePerNight").replace(
-                  "{{price}}",
-                  formatCurrency(hotel.pricePerNight, hotel.currency, locale),
-                )}
-                {taxesAndFeesText ? ` · ${taxesAndFeesText}` : ""}
-              </dd>
-            </div>
-          </dl>
-        </div>
-      ) : null}
     </Card>
   );
 }

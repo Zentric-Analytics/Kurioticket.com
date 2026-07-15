@@ -19,6 +19,16 @@ export async function POST(request: Request) {
     );
   }
 
+  if (body.type === "hotel" && "dataSource" in target && target.dataSource === "demo") {
+    return NextResponse.json(
+      {
+        error:
+          "This illustrative demo hotel cannot be opened with an external provider.",
+      },
+      { status: 409 },
+    );
+  }
+
   if (!target.partnerRedirectUrl && !target.bookingUrl) {
     return NextResponse.json(
       {
