@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
 } from "react";
 import Link from "next/link";
@@ -352,6 +353,7 @@ export function HotelResultsClient() {
     useState<HotelFilterSelections>(emptySelections);
   const [hotelSummarySortMode, setHotelSummarySortMode] =
     useState<HotelSummarySortMode>("cheapest");
+  const [hotelSortMenuOpen, setHotelSortMenuOpen] = useState(false);
   const [savedHotelIds, setSavedHotelIds] = useState<string[]>([]);
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [mobileHotelSearchOpen, setMobileHotelSearchOpen] = useState(false);
@@ -359,6 +361,10 @@ export function HotelResultsClient() {
     useState(false);
 
   const desktopSearchFrameRef = useRef<HTMLDivElement | null>(null);
+  const hotelSortWrapperRef = useRef<HTMLDivElement | null>(null);
+  const hotelSortMenuRef = useRef<HTMLDivElement | null>(null);
+  const hotelSortTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const hotelSortOptionRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const filterApplyingTimeoutRef = useRef<number | null>(null);
   const searchApplyingTimeoutRef = useRef<number | null>(null);
   const filterScrollbarTimeoutRef = useRef<number | null>(null);
@@ -822,6 +828,9 @@ export function HotelResultsClient() {
       }>,
     [t],
   );
+  const selectedHotelSortLabel =
+    hotelSortOptions.find((option) => option.value === hotelSummarySortMode)
+      ?.label ?? hotelSortOptions[0]?.label ?? "";
   const formattedDisplayedHotelCount = formatHotelCount(
     displayedHotels.length,
     locale,
@@ -1172,6 +1181,111 @@ export function HotelResultsClient() {
     setHotelSummarySortMode(sortMode);
   };
 
+  const focusHotelSortOption = useCallback(
+    (index: number) => {
+      const optionCount = hotelSortOptions.length;
+
+      if (!optionCount) return;
+
+      const nextIndex = (index + optionCount) % optionCount;
+      hotelSortOptionRefs.current[nextIndex]?.focus();
+    },
+    [hotelSortOptions.length],
+  );
+
+  const openHotelSortMenu = useCallback(() => {
+    setHotelSortMenuOpen(true);
+
+    window.requestAnimationFrame(() => {
+      const selectedIndex = hotelSortOptions.findIndex(
+        (option) => option.value === hotelSummarySortMode,
+      );
+
+      hotelSortOptionRefs.current[Math.max(selectedIndex, 0)]?.focus({
+        preventScroll: true,
+      });
+    });
+  }, [hotelSortOptions, hotelSummarySortMode]);
+
+  const closeHotelSortMenu = useCallback((returnFocus = false) => {
+    setHotelSortMenuOpen(false);
+
+    if (returnFocus) {
+      hotelSortTriggerRef.current?.focus({ preventScroll: true });
+    }
+  }, []);
+
+  const handleHotelSortTriggerClick = useCallback(() => {
+    if (hotelSortMenuOpen) {
+      closeHotelSortMenu();
+      return;
+    }
+
+    openHotelSortMenu();
+  }, [closeHotelSortMenu, hotelSortMenuOpen, openHotelSortMenu]);
+
+  const handleHotelSortOptionKeyDown = useCallback(
+    (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        focusHotelSortOption(index + 1);
+        return;
+      }
+
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        focusHotelSortOption(index - 1);
+        return;
+      }
+
+      if (event.key === "Home") {
+        event.preventDefault();
+        focusHotelSortOption(0);
+        return;
+      }
+
+      if (event.key === "End") {
+        event.preventDefault();
+        focusHotelSortOption(hotelSortOptions.length - 1);
+        return;
+      }
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        closeHotelSortMenu(true);
+      }
+    },
+    [closeHotelSortMenu, focusHotelSortOption, hotelSortOptions.length],
+  );
+
+  useEffect(() => {
+    if (!hotelSortMenuOpen) return;
+
+    function handlePointerDown(event: MouseEvent) {
+      const target = event.target as Node;
+
+      if (hotelSortWrapperRef.current?.contains(target)) return;
+
+      setHotelSortMenuOpen(false);
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+
+      setHotelSortMenuOpen(false);
+      hotelSortTriggerRef.current?.focus({ preventScroll: true });
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [hotelSortMenuOpen]);
+
   if (loading) {
     return (
       <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-[radial-gradient(circle_at_top_left,rgba(92,182,178,0.20),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(0,75,184,0.16),transparent_36%),linear-gradient(180deg,#F2F7FA_0%,#FFFFFF_58%,#FFFFFF_100%)]">
@@ -1490,36 +1604,102 @@ export function HotelResultsClient() {
                         {formattedSavedVisibleHotelCount})
                       </button>
                     </div>
-                    <label className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-none sm:shrink-0 sm:justify-self-end">
+                    <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-none sm:shrink-0 sm:justify-self-end">
                       <span className="whitespace-nowrap text-base font-semibold text-slate-700">
                         {`${t("sortBy") || "Sort by"}:`}
                       </span>
 
-                      <span className="relative inline-flex min-w-0 items-center">
-                        <select
-                          aria-label={t("sortBy") || "Sort by"}
-                          className="h-10 min-w-0 cursor-pointer appearance-none bg-transparent py-1 pl-1 pr-7 text-lg font-bold text-slate-950 outline-none transition-colors hover:text-[#004BB8] focus-visible:text-[#004BB8] focus-visible:outline-none sm:w-auto"
-                          value={hotelSummarySortMode}
-                          onChange={(event) =>
-                            updateHotelSummarySortMode(
-                              event.currentTarget.value as HotelSummarySortMode,
+                      <div
+                        ref={hotelSortWrapperRef}
+                        className="relative inline-flex min-w-0 items-center"
+                        onBlur={(event) => {
+                          if (
+                            !event.currentTarget.contains(
+                              event.relatedTarget,
                             )
+                          ) {
+                            setHotelSortMenuOpen(false);
                           }
+                        }}
+                      >
+                        <button
+                          ref={hotelSortTriggerRef}
+                          type="button"
+                          aria-haspopup="listbox"
+                          aria-expanded={hotelSortMenuOpen}
+                          aria-controls="hotel-results-sort-menu"
+                          className="inline-flex h-10 items-center gap-2 bg-transparent py-1 pl-1 text-lg font-bold text-slate-950 outline-none transition-colors hover:text-[#004BB8] focus-visible:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2"
+                          onClick={handleHotelSortTriggerClick}
                         >
-                          {hotelSortOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
+                          <span>{selectedHotelSortLabel}</span>
+                          <ChevronDown
+                            aria-hidden="true"
+                            className={cn(
+                              "h-[18px] w-[18px] text-slate-700 transition-transform",
+                              hotelSortMenuOpen && "rotate-180",
+                            )}
+                            strokeWidth={2.25}
+                          />
+                        </button>
 
-                        <ChevronDown
-                          aria-hidden="true"
-                          className="pointer-events-none absolute right-0 h-[18px] w-[18px] text-slate-700"
-                          strokeWidth={2.25}
-                        />
-                      </span>
-                    </label>
+                        {hotelSortMenuOpen ? (
+                          <div
+                            ref={hotelSortMenuRef}
+                            id="hotel-results-sort-menu"
+                            role="listbox"
+                            aria-label={t("sortBy") || "Sort by"}
+                            className="absolute right-0 top-[calc(100%+0.5rem)] z-50 min-w-[190px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_38px_-18px_rgba(15,23,42,0.35)]"
+                          >
+                            {hotelSortOptions.map((option, index) => {
+                              const selected =
+                                option.value === hotelSummarySortMode;
+
+                              return (
+                                <button
+                                  key={option.value}
+                                  ref={(element) => {
+                                    hotelSortOptionRefs.current[index] =
+                                      element;
+                                  }}
+                                  type="button"
+                                  role="option"
+                                  aria-selected={selected}
+                                  tabIndex={selected ? 0 : -1}
+                                  className={cn(
+                                    "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-base font-medium leading-6 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30",
+                                    selected
+                                      ? "bg-[#004BB8]/[0.08] text-[#004BB8]"
+                                      : "text-slate-800 hover:bg-slate-50 hover:text-slate-950",
+                                  )}
+                                  onClick={() => {
+                                    updateHotelSummarySortMode(option.value);
+                                    setHotelSortMenuOpen(false);
+                                    hotelSortTriggerRef.current?.focus({
+                                      preventScroll: true,
+                                    });
+                                  }}
+                                  onKeyDown={(event) =>
+                                    handleHotelSortOptionKeyDown(event, index)
+                                  }
+                                >
+                                  <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                                    {selected ? (
+                                      <Check
+                                        aria-hidden="true"
+                                        className="h-4 w-4"
+                                        strokeWidth={2.25}
+                                      />
+                                    ) : null}
+                                  </span>
+
+                                  <span>{option.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
