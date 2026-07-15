@@ -166,7 +166,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.empty.body": "أنشئ تنبيهًا من بحث رحلة لتتبّع تغيّرات الأسعار وتلقي الإشعارات",
   "accountDashboard.priceAlerts.cta.flights": "البحث عن رحلات",
   "accountDashboard.priceAlerts.tabs.active": "نشطة",
-  "accountDashboard.priceAlerts.tabs.expired": "منتهية",
+  "accountDashboard.priceAlerts.tabs.triggered": "منتهية",
   "accountDashboard.priceAlerts.tabs.all": "الكل",
   "accountDashboard.priceAlerts.sort.label": "ترتيب حسب",
   "accountDashboard.priceAlerts.sort.newest": "الأحدث",

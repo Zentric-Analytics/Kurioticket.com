@@ -2060,7 +2060,7 @@ flightLandingRouteAriaLabel: "Vluchten zoeken van {{origin}} naar {{destination}
   "accountDashboard.priceAlerts.filtersAriaLabel": "Filters voor prijsmeldingen",
   "accountDashboard.priceAlerts.featuresAriaLabel": "Functies voor prijsmeldingen",
   "accountDashboard.priceAlerts.tabs.active": "Actief",
-  "accountDashboard.priceAlerts.tabs.expired": "Verlopen",
+  "accountDashboard.priceAlerts.tabs.triggered": "Verlopen",
   "accountDashboard.priceAlerts.tabs.all": "Alles",
   "accountDashboard.priceAlerts.sort.label": "Sorteren op",
   "accountDashboard.priceAlerts.sort.ariaLabel": "Prijsmeldingen sorteren",

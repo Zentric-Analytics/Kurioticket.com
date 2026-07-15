@@ -240,7 +240,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.filtersAriaLabel": "Filtros de alertas de preço",
   "accountDashboard.priceAlerts.featuresAriaLabel": "Recursos dos alertas de preço",
   "accountDashboard.priceAlerts.tabs.active": "Ativos",
-  "accountDashboard.priceAlerts.tabs.expired": "Expirados",
+  "accountDashboard.priceAlerts.tabs.triggered": "Expirados",
   "accountDashboard.priceAlerts.tabs.all": "Todos",
   "accountDashboard.priceAlerts.sort.label": "Ordenar por",
   "accountDashboard.priceAlerts.sort.ariaLabel": "Ordenar alertas de preço",

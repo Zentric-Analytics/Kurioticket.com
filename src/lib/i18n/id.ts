@@ -463,7 +463,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.filtersAriaLabel": "Filter peringatan harga",
   "accountDashboard.priceAlerts.featuresAriaLabel": "Fitur peringatan harga",
   "accountDashboard.priceAlerts.tabs.active": "Aktif",
-  "accountDashboard.priceAlerts.tabs.expired": "Kedaluwarsa",
+  "accountDashboard.priceAlerts.tabs.triggered": "Kedaluwarsa",
   "accountDashboard.priceAlerts.tabs.all": "Semua",
   "accountDashboard.priceAlerts.sort.label": "Urutkan",
   "accountDashboard.priceAlerts.sort.ariaLabel": "Urutkan peringatan harga",

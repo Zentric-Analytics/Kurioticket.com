@@ -270,7 +270,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.empty.body": "从航班搜索创建提醒，以跟踪票价变化并接收通知。",
   "accountDashboard.priceAlerts.cta.flights": "搜索航班",
   "accountDashboard.priceAlerts.tabs.active": "有效",
-  "accountDashboard.priceAlerts.tabs.expired": "已过期",
+  "accountDashboard.priceAlerts.tabs.triggered": "已过期",
   "accountDashboard.priceAlerts.tabs.all": "全部",
   "accountDashboard.priceAlerts.sort.label": "排序方式",
   "accountDashboard.priceAlerts.sort.newest": "最新",

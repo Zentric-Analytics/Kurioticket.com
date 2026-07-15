@@ -12,6 +12,9 @@ export type AccountPriceAlert = {
   status: "ACTIVE" | "PAUSED" | "TRIGGERED" | "EXPIRED" | "DELETED";
   createdAt: string;
   updatedAt: string;
+  lastSeenPrice: string | null;
+  lastCheckedAt: string | null;
+  query: Record<string, unknown>;
 };
 
 export class DuplicatePriceAlertError extends Error {
@@ -41,6 +44,9 @@ function serializePriceAlert(alert: {
   status: "ACTIVE" | "PAUSED" | "TRIGGERED" | "EXPIRED" | "DELETED";
   createdAt: Date;
   updatedAt: Date;
+  lastSeenPrice?: { toString: () => string } | number | string | null;
+  lastCheckedAt?: Date | null;
+  query?: unknown;
 }): AccountPriceAlert {
   return {
     id: alert.id,
@@ -52,6 +58,9 @@ function serializePriceAlert(alert: {
     status: alert.status,
     createdAt: alert.createdAt.toISOString(),
     updatedAt: alert.updatedAt.toISOString(),
+    lastSeenPrice: alert.lastSeenPrice == null ? null : alert.lastSeenPrice.toString(),
+    lastCheckedAt: alert.lastCheckedAt?.toISOString() ?? null,
+    query: typeof alert.query === "object" && alert.query !== null && !Array.isArray(alert.query) ? alert.query as Record<string, unknown> : {},
   };
 }
 
@@ -83,6 +92,9 @@ export async function listUserPriceAlerts(userId: string): Promise<AccountPriceA
         status: true,
         createdAt: true,
         updatedAt: true,
+        lastSeenPrice: true,
+        lastCheckedAt: true,
+        query: true,
       },
     });
 
@@ -153,6 +165,9 @@ export async function createPriceAlert(input: {
         status: true,
         createdAt: true,
         updatedAt: true,
+        lastSeenPrice: true,
+        lastCheckedAt: true,
+        query: true,
       },
     });
 

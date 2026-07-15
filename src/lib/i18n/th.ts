@@ -263,7 +263,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.features.monitoring.body": "เราติดตามราคาและแจ้งให้คุณทราบเมื่อมีการเรียกใช้การแจ้งเตือน",
   "accountDashboard.priceAlerts.features.monitoring.title": "ติดตามแบบเรียลไทม์",
   "accountDashboard.priceAlerts.tabs.active": "ใช้งานอยู่",
-  "accountDashboard.priceAlerts.tabs.expired": "หมดอายุ",
+  "accountDashboard.priceAlerts.tabs.triggered": "หมดอายุ",
   "accountDashboard.priceAlerts.tabs.all": "ทั้งหมด",
   "accountDashboard.priceAlerts.sort.label": "เรียงตาม",
   "accountDashboard.priceAlerts.sort.ariaLabel": "เรียงลำดับการแจ้งเตือนราคา",

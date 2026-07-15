@@ -518,7 +518,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.filtersAriaLabel": "Fiyat uyarısı filtreleri",
   "accountDashboard.priceAlerts.featuresAriaLabel": "Fiyat uyarısı özellikleri",
   "accountDashboard.priceAlerts.tabs.active": "Aktif",
-  "accountDashboard.priceAlerts.tabs.expired": "Süresi dolan",
+  "accountDashboard.priceAlerts.tabs.triggered": "Süresi dolan",
   "accountDashboard.priceAlerts.tabs.all": "Tümü",
   "accountDashboard.priceAlerts.sort.label": "Sırala",
   "accountDashboard.priceAlerts.sort.ariaLabel": "Fiyat uyarılarını sırala",
