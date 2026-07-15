@@ -770,21 +770,21 @@ export function HotelCard({ hotel, sortBadge }: HotelCardProps) {
                 </p>
               ) : null}
             </div>
-            <div className="mt-auto flex flex-col gap-3 min-[380px]:flex-row min-[380px]:items-end min-[380px]:justify-between md:mt-0 lg:w-40 lg:flex-col lg:items-end lg:justify-start lg:text-end">
+            <div className="mt-auto flex flex-col gap-3 min-[380px]:flex-row min-[380px]:items-end min-[380px]:justify-between md:mt-0 lg:w-44 lg:flex-col lg:items-end lg:justify-start lg:text-end">
               <div className="text-start min-[380px]:text-end lg:text-end">
                 <div
-                  className="text-xl font-bold tracking-[-0.01em] text-slate-950"
+                  className="whitespace-nowrap text-xl font-bold leading-7 tracking-[-0.01em] text-slate-950 tabular-nums"
                   dir="ltr"
                 >
                   {formatCurrency(hotel.totalPrice, hotel.currency, locale)}
                 </div>
 
-                <div className="mt-0.5 text-xs font-medium leading-4 text-slate-500">
+                <div className="mt-1 text-[13px] font-medium leading-5 text-slate-500">
                   {t("hotelResults.estimatedStayTotal")}
                 </div>
 
-                <div className="mt-2.5 space-y-1">
-                  <div className="text-[13px] font-semibold leading-5 text-slate-700">
+                <div className="mt-3 space-y-1.5">
+                  <div className="text-sm font-semibold leading-5 text-slate-800 tabular-nums">
                     {t("hotelResults.pricePerNight").replace(
                       "{{price}}",
                       formatCurrency(hotel.pricePerNight, hotel.currency, locale),
@@ -792,7 +792,7 @@ export function HotelCard({ hotel, sortBadge }: HotelCardProps) {
                   </div>
 
                   {taxesAndFeesText ? (
-                    <div className="text-[11px] font-medium leading-4 text-slate-500">
+                    <div className="text-xs font-medium leading-[18px] text-slate-500">
                       {taxesAndFeesText}
                     </div>
                   ) : null}
