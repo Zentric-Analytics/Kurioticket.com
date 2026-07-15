@@ -1332,7 +1332,7 @@ export function HotelResultsClient() {
 
       <div
         ref={resultsGridRef}
-        className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[256px_minmax(0,1fr)]"
+        className="page-shell grid gap-y-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[256px_minmax(0,1fr)] lg:gap-x-9"
       >
         <aside
           ref={desktopFilterSidebarRef}
@@ -1412,22 +1412,37 @@ export function HotelResultsClient() {
 
         <section className="min-w-0 space-y-4">
           {!loading && !error && isDemoInventory ? (
-            <div className="rounded-md border border-amber/30 bg-amber/10 p-3 text-sm text-amber">
+            <div
+              className={cn(
+                hotelResultStackClass,
+                "rounded-md border border-amber/30 bg-amber/10 p-3 text-sm text-amber",
+              )}
+            >
               {t("hotelResults.demoInventoryNotice") ||
                 "Demo hotel listings are illustrative and are not live inventory."}
             </div>
           ) : !loading && !error && warnings.length ? (
-            <div className="rounded-md border border-amber/30 bg-amber/10 p-3 text-sm text-amber">
+            <div
+              className={cn(
+                hotelResultStackClass,
+                "rounded-md border border-amber/30 bg-amber/10 p-3 text-sm text-amber",
+              )}
+            >
               {t("hotelResults.limitedProviderChecks")}
             </div>
           ) : null}
 
           {error ? (
-            <div className="rounded-md border border-danger/30 bg-red-50 p-4 text-danger">
+            <div
+              className={cn(
+                hotelResultStackClass,
+                "rounded-md border border-danger/30 bg-red-50 p-4 text-danger",
+              )}
+            >
               {error}
             </div>
           ) : showFilteredEmptyState ? (
-            <div className={cn(hotelResultStackClass, "space-y-3")}>
+            <div className={cn(hotelResultStackClass, "space-y-4")}>
               <ActiveHotelFilterChips
                 chips={activeFilterChips}
                 onRemove={removeFilterChip}
@@ -1451,7 +1466,7 @@ export function HotelResultsClient() {
               </div>
             </div>
           ) : (
-            <div className={cn(hotelResultStackClass, "space-y-3")}>
+            <div className={cn(hotelResultStackClass, "space-y-4")}>
               <div
                 className={cn(
                   "space-y-3 transition-opacity",
