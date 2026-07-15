@@ -1490,15 +1490,15 @@ export function HotelResultsClient() {
                         {formattedSavedVisibleHotelCount})
                       </button>
                     </div>
-                    <label className="flex min-w-0 flex-1 items-center justify-end gap-1.5 sm:flex-none sm:shrink-0 sm:justify-self-end">
-                      <span className="whitespace-nowrap text-sm font-semibold text-slate-600">
+                    <label className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-none sm:shrink-0 sm:justify-self-end">
+                      <span className="whitespace-nowrap text-base font-semibold text-slate-700">
                         {`${t("sortBy") || "Sort by"}:`}
                       </span>
 
                       <span className="relative inline-flex min-w-0 items-center">
                         <select
                           aria-label={t("sortBy") || "Sort by"}
-                          className="h-9 min-w-0 cursor-pointer appearance-none bg-transparent py-1 pl-1 pr-5 text-base font-semibold text-slate-950 outline-none transition-colors hover:text-[#004BB8] focus-visible:text-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2 sm:w-auto"
+                          className="h-10 min-w-0 cursor-pointer appearance-none bg-transparent py-1 pl-1 pr-7 text-lg font-bold text-slate-950 outline-none transition-colors hover:text-[#004BB8] focus-visible:text-[#004BB8] focus-visible:outline-none sm:w-auto"
                           value={hotelSummarySortMode}
                           onChange={(event) =>
                             updateHotelSummarySortMode(
@@ -1515,8 +1515,8 @@ export function HotelResultsClient() {
 
                         <ChevronDown
                           aria-hidden="true"
-                          className="pointer-events-none absolute right-0 h-4 w-4 text-slate-600"
-                          strokeWidth={2}
+                          className="pointer-events-none absolute right-0 h-[18px] w-[18px] text-slate-700"
+                          strokeWidth={2.25}
                         />
                       </span>
                     </label>
