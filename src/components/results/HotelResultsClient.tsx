@@ -339,7 +339,6 @@ export function HotelResultsClient() {
   const [visibleFiltered, setVisibleFiltered] = useState<PublicHotelResult[]>(
     [],
   );
-  const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -672,7 +671,6 @@ export function HotelResultsClient() {
 
         setResults(data.results);
         setVisibleFiltered(data.results);
-        setWarnings(data.warnings || []);
         setFilterApplying(false);
         setSearchApplying(false);
         if (searchApplyingTimeoutRef.current !== null) {
@@ -1523,17 +1521,6 @@ export function HotelResultsClient() {
         </aside>
 
         <section className="min-w-0 space-y-4">
-          {!loading && !error && warnings.length ? (
-            <div
-              className={cn(
-                hotelResultStackClass,
-                "rounded-md border border-amber/30 bg-amber/10 p-3 text-sm text-amber",
-              )}
-            >
-              {t("hotelResults.limitedProviderChecks")}
-            </div>
-          ) : null}
-
           {error ? (
             <div
               className={cn(
