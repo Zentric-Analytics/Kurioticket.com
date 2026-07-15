@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { priceAlertSchema } from "@/lib/validation";
 import {
   createPriceAlert,
+  DuplicatePriceAlertError,
   listUserPriceAlerts,
 } from "@/services/priceTrackingService";
 
@@ -47,7 +48,10 @@ export async function POST(request: Request) {
       ...parsed.data,
     });
     return NextResponse.json({ alert }, { status: 201 });
-  } catch {
+  } catch (error) {
+    if (error instanceof DuplicatePriceAlertError) {
+      return NextResponse.json({ error: error.message, duplicate: true, alert: error.alert }, { status: 409 });
+    }
     return NextResponse.json({ error: "We could not create your alert. Please try again." }, { status: 503 });
   }
 }
