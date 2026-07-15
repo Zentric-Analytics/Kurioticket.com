@@ -271,7 +271,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.filtersAriaLabel": "मूल्य अलर्ट फ़िल्टर",
   "accountDashboard.priceAlerts.featuresAriaLabel": "मूल्य अलर्ट सुविधाएँ",
   "accountDashboard.priceAlerts.tabs.active": "सक्रिय",
-  "accountDashboard.priceAlerts.tabs.expired": "समाप्त",
+  "accountDashboard.priceAlerts.tabs.triggered": "समाप्त",
   "accountDashboard.priceAlerts.tabs.all": "सभी",
   "accountDashboard.priceAlerts.sort.label": "क्रमबद्ध करें",
   "accountDashboard.priceAlerts.sort.ariaLabel": "मूल्य अलर्ट क्रमबद्ध करें",

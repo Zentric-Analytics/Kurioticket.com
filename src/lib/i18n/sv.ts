@@ -296,7 +296,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.title": "Prisaviseringar",
   "accountDashboard.priceAlerts.description": "Följ priser och få aviseringar när biljettpriser ändras.",
   "accountDashboard.priceAlerts.tabs.active": "Aktiva",
-  "accountDashboard.priceAlerts.tabs.expired": "Utgångna",
+  "accountDashboard.priceAlerts.tabs.triggered": "Utgångna",
   "accountDashboard.priceAlerts.tabs.all": "Alla",
   "accountDashboard.priceAlerts.sort.label": "Sortera efter",
   "accountDashboard.priceAlerts.sort.newest": "Nyast",

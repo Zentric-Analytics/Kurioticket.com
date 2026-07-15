@@ -244,7 +244,7 @@ export const translations: TranslationDictionary = {
 
   "accountDashboard.priceAlerts.tabs.all": "전체",
 
-  "accountDashboard.priceAlerts.tabs.expired": "만료됨",
+  "accountDashboard.priceAlerts.tabs.triggered": "만료됨",
 
   "accountDashboard.priceAlerts.tabs.active": "활성",
 

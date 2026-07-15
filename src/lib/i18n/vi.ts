@@ -347,7 +347,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.filtersAriaLabel": "Bộ lọc cảnh báo giá",
   "accountDashboard.priceAlerts.featuresAriaLabel": "Tính năng cảnh báo giá",
   "accountDashboard.priceAlerts.tabs.active": "Đang hoạt động",
-  "accountDashboard.priceAlerts.tabs.expired": "Đã hết hạn",
+  "accountDashboard.priceAlerts.tabs.triggered": "Đã hết hạn",
   "accountDashboard.priceAlerts.tabs.all": "Tất cả",
   "accountDashboard.priceAlerts.sort.label": "Sắp xếp theo",
   "accountDashboard.priceAlerts.sort.ariaLabel": "Sắp xếp cảnh báo giá",

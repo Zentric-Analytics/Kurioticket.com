@@ -1821,7 +1821,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.title": "価格アラート",
   "accountDashboard.priceAlerts.description": "価格を追跡し、運賃が変わったら通知を受け取ります。",
   "accountDashboard.priceAlerts.tabs.active": "有効",
-  "accountDashboard.priceAlerts.tabs.expired": "期限切れ",
+  "accountDashboard.priceAlerts.tabs.triggered": "期限切れ",
   "accountDashboard.priceAlerts.tabs.all": "すべて",
   "accountDashboard.priceAlerts.sort.label": "並べ替え",
   "accountDashboard.priceAlerts.sort.ariaLabel": "価格アラートを並べ替え",

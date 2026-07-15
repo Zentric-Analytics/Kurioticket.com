@@ -5179,7 +5179,7 @@ test("Polish account Price Alerts active page copy resolves without English fall
     "accountDashboard.priceAlerts.title": "Alerty cenowe",
     "accountDashboard.priceAlerts.description": "Śledź ceny i otrzymuj powiadomienia, gdy taryfy się zmienią.",
     "accountDashboard.priceAlerts.tabs.active": "Aktywne",
-    "accountDashboard.priceAlerts.tabs.expired": "Wygasłe",
+    "accountDashboard.priceAlerts.tabs.triggered": "Wygasłe",
     "accountDashboard.priceAlerts.tabs.all": "Wszystkie",
     "accountDashboard.priceAlerts.sort.label": "Sortuj według",
     "accountDashboard.priceAlerts.sort.newest": "Najnowsze",
@@ -5222,7 +5222,7 @@ test("Polish account Price Alerts active page copy resolves without English fall
   assert.ok(priceAlertsSource.includes('textKey: "accountDashboard.priceAlerts.features.management.body"'));
 
   assert.ok(priceAlertsSource.includes('id: "active"') && priceAlertsSource.includes('count: 0'));
-  assert.ok(priceAlertsSource.includes('id: "expired"') && priceAlertsSource.includes('count: 0'));
+  assert.ok(priceAlertsSource.includes('id: "triggered"') && priceAlertsSource.includes('count: 0'));
   assert.ok(priceAlertsSource.includes('id: "all"') && priceAlertsSource.includes('count: 0'));
   assert.ok(priceAlertsSource.includes('useState<(typeof tabs)[number]["id"]>(\n    tabs[0].id'));
   assert.ok(priceAlertsSource.includes('{ id: "newest", labelKey: "accountDashboard.priceAlerts.sort.newest" }'));
@@ -5278,7 +5278,7 @@ test("Price alerts benefit cards resolve through i18n for all active locales wit
   assert.ok(priceAlertsSource.indexOf("icon: Mail") < priceAlertsSource.indexOf("icon: LineChart"));
   assert.ok(priceAlertsSource.indexOf("icon: LineChart") < priceAlertsSource.indexOf("icon: Settings2"));
   for (const hardcoded of [">Real-time monitoring<", ">Email notifications<", ">Price trends<", ">Easy management<"]) assert.ok(!priceAlertsSource.includes(hardcoded));
-  for (const snippet of ['id: "active"', 'id: "expired"', 'id: "all"', 'count: 0', '{ id: "newest", labelKey: "accountDashboard.priceAlerts.sort.newest" }', '{ id: "oldest", labelKey: "accountDashboard.priceAlerts.sort.oldest" }', '{ id: "routeAz", labelKey: "accountDashboard.priceAlerts.sort.routeAz" }']) assert.ok(priceAlertsSource.includes(snippet), snippet);
+  for (const snippet of ['id: "active"', 'id: "triggered"', 'id: "all"', 'count: 0', '{ id: "newest", labelKey: "accountDashboard.priceAlerts.sort.newest" }', '{ id: "oldest", labelKey: "accountDashboard.priceAlerts.sort.oldest" }', '{ id: "routeAz", labelKey: "accountDashboard.priceAlerts.sort.routeAz" }']) assert.ok(priceAlertsSource.includes(snippet), snippet);
   assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
   for (const locale of ["nl", "es-es", "fr", "de-de", "it-it", "pt-br", "zh-cn", "ja", "ko", "hi", "tr", "pl", "sv", "id", "th"]) assert.equal(languageOptions.find((option) => option.code === locale || option.locale.toLowerCase() === locale)?.direction, "ltr", `${locale} should remain ltr`);
 });
@@ -8561,7 +8561,7 @@ test("Indonesian and Swedish active account Trips and Price Alerts copy is local
     "accountDashboard.priceAlerts.title",
     "accountDashboard.priceAlerts.description",
     "accountDashboard.priceAlerts.tabs.active",
-    "accountDashboard.priceAlerts.tabs.expired",
+    "accountDashboard.priceAlerts.tabs.triggered",
     "accountDashboard.priceAlerts.tabs.all",
     "accountDashboard.priceAlerts.sort.label",
     "accountDashboard.priceAlerts.sort.newest",
@@ -8692,10 +8692,10 @@ test("Indonesian and Swedish active account Trips and Price Alerts copy is local
     "Pantau harga dan dapatkan notifikasi saat tarif berubah.",
   );
   assert.equal(idTranslations["accountDashboard.priceAlerts.tabs.active"], "Aktif");
-  assert.equal(idTranslations["accountDashboard.priceAlerts.tabs.expired"], "Kedaluwarsa");
+  assert.equal(idTranslations["accountDashboard.priceAlerts.tabs.triggered"], "Kedaluwarsa");
   assert.equal(idTranslations["accountDashboard.priceAlerts.tabs.all"], "Semua");
   assert.equal(`${idTranslations["accountDashboard.priceAlerts.tabs.active"]} (0)`, "Aktif (0)");
-  assert.equal(`${idTranslations["accountDashboard.priceAlerts.tabs.expired"]} (0)`, "Kedaluwarsa (0)");
+  assert.equal(`${idTranslations["accountDashboard.priceAlerts.tabs.triggered"]} (0)`, "Kedaluwarsa (0)");
   assert.equal(`${idTranslations["accountDashboard.priceAlerts.tabs.all"]} (0)`, "Semua (0)");
   assert.equal(idTranslations["accountDashboard.priceAlerts.sort.label"], "Urutkan");
   assert.equal(idTranslations["accountDashboard.priceAlerts.sort.newest"], "Terbaru");
@@ -8733,7 +8733,7 @@ test("Indonesian and Swedish active account Trips and Price Alerts copy is local
     "Fiyatları takip edin ve ücretler değiştiğinde bildirim alın.",
   );
   assert.equal(trTranslations["accountDashboard.priceAlerts.tabs.active"], "Aktif");
-  assert.equal(trTranslations["accountDashboard.priceAlerts.tabs.expired"], "Süresi dolan");
+  assert.equal(trTranslations["accountDashboard.priceAlerts.tabs.triggered"], "Süresi dolan");
   assert.equal(trTranslations["accountDashboard.priceAlerts.tabs.all"], "Tümü");
   assert.equal(trTranslations["accountDashboard.priceAlerts.sort.label"], "Sırala");
   assert.equal(trTranslations["accountDashboard.priceAlerts.sort.newest"], "En yeni");
@@ -8789,10 +8789,10 @@ test("Indonesian and Swedish active account Trips and Price Alerts copy is local
     "Följ priser och få aviseringar när biljettpriser ändras.",
   );
   assert.equal(svTranslations["accountDashboard.priceAlerts.tabs.active"], "Aktiva");
-  assert.equal(svTranslations["accountDashboard.priceAlerts.tabs.expired"], "Utgångna");
+  assert.equal(svTranslations["accountDashboard.priceAlerts.tabs.triggered"], "Utgångna");
   assert.equal(svTranslations["accountDashboard.priceAlerts.tabs.all"], "Alla");
   assert.equal(`${svTranslations["accountDashboard.priceAlerts.tabs.active"]} (0)`, "Aktiva (0)");
-  assert.equal(`${svTranslations["accountDashboard.priceAlerts.tabs.expired"]} (12)`, "Utgångna (12)");
+  assert.equal(`${svTranslations["accountDashboard.priceAlerts.tabs.triggered"]} (12)`, "Utgångna (12)");
   assert.equal(`${svTranslations["accountDashboard.priceAlerts.tabs.all"]} (3)`, "Alla (3)");
   assert.equal(svTranslations["accountDashboard.priceAlerts.sort.label"], "Sortera efter");
   assert.equal(svTranslations["accountDashboard.priceAlerts.sort.newest"], "Nyast");
@@ -8829,7 +8829,7 @@ test("Indonesian and Swedish active account Trips and Price Alerts copy is local
 
   const priceAlertsSource = readFileSync("src/app/dashboard/alerts/PriceAlertsContent.tsx", "utf8");
   assert.ok(priceAlertsSource.includes('id: "active"') && priceAlertsSource.includes('count: 0'));
-  assert.ok(priceAlertsSource.includes('id: "expired"') && priceAlertsSource.includes('count: 0'));
+  assert.ok(priceAlertsSource.includes('id: "triggered"') && priceAlertsSource.includes('count: 0'));
   assert.ok(priceAlertsSource.includes('{ id: "newest", labelKey: "accountDashboard.priceAlerts.sort.newest" }'));
   assert.ok(priceAlertsSource.includes('{ id: "oldest", labelKey: "accountDashboard.priceAlerts.sort.oldest" }'));
   assert.ok(priceAlertsSource.includes('{ id: "routeAz", labelKey: "accountDashboard.priceAlerts.sort.routeAz" }'));
@@ -8879,7 +8879,7 @@ test("Indonesian and Swedish active account Trips and Price Alerts copy is local
     "요금을 추적하고 가격이 변경되면 알림을 받으세요.",
   );
   assert.equal(koTranslations["accountDashboard.priceAlerts.tabs.active"], "활성");
-  assert.equal(koTranslations["accountDashboard.priceAlerts.tabs.expired"], "만료됨");
+  assert.equal(koTranslations["accountDashboard.priceAlerts.tabs.triggered"], "만료됨");
   assert.equal(koTranslations["accountDashboard.priceAlerts.tabs.all"], "전체");
   assert.equal(koTranslations["accountDashboard.priceAlerts.sort.label"], "정렬 기준");
   assert.equal(koTranslations["accountDashboard.priceAlerts.sort.newest"], "최신순");
@@ -8933,7 +8933,7 @@ test("Indonesian and Swedish active account Trips and Price Alerts copy is local
     "कीमतों पर नज़र रखें और किराए बदलने पर सूचना पाएँ।",
   );
   assert.equal(hiTranslations["accountDashboard.priceAlerts.tabs.active"], "सक्रिय");
-  assert.equal(hiTranslations["accountDashboard.priceAlerts.tabs.expired"], "समाप्त");
+  assert.equal(hiTranslations["accountDashboard.priceAlerts.tabs.triggered"], "समाप्त");
   assert.equal(hiTranslations["accountDashboard.priceAlerts.tabs.all"], "सभी");
   assert.equal(hiTranslations["accountDashboard.priceAlerts.sort.label"], "क्रमबद्ध करें");
   assert.equal(hiTranslations["accountDashboard.priceAlerts.sort.newest"], "नवीनतम");
@@ -14795,7 +14795,7 @@ test("Thai My Trips and Price alerts account pages resolve localized copy withou
     "accountDashboard.priceAlerts.title": "การแจ้งเตือนราคา",
     "accountDashboard.priceAlerts.description": "ติดตามราคาและรับการแจ้งเตือนเมื่อค่าโดยสารเปลี่ยนแปลง",
     "accountDashboard.priceAlerts.tabs.active": "ใช้งานอยู่",
-    "accountDashboard.priceAlerts.tabs.expired": "หมดอายุ",
+    "accountDashboard.priceAlerts.tabs.triggered": "หมดอายุ",
     "accountDashboard.priceAlerts.tabs.all": "ทั้งหมด",
     "accountDashboard.priceAlerts.sort.label": "เรียงตาม",
     "accountDashboard.priceAlerts.sort.newest": "ใหม่ล่าสุด",
@@ -14812,7 +14812,7 @@ test("Thai My Trips and Price alerts account pages resolve localized copy withou
   }
 
   assert.equal(`${th["accountDashboard.priceAlerts.tabs.active"]} (0)`, "ใช้งานอยู่ (0)");
-  assert.equal(`${th["accountDashboard.priceAlerts.tabs.expired"]} (0)`, "หมดอายุ (0)");
+  assert.equal(`${th["accountDashboard.priceAlerts.tabs.triggered"]} (0)`, "หมดอายุ (0)");
   assert.equal(`${th["accountDashboard.priceAlerts.tabs.all"]} (0)`, "ทั้งหมด (0)");
   assert.equal(`${th["accountDashboard.priceAlerts.sort.label"]}: ${th["accountDashboard.priceAlerts.sort.newest"]}`, "เรียงตาม: ใหม่ล่าสุด");
 
@@ -14837,7 +14837,7 @@ test("Thai My Trips and Price alerts account pages resolve localized copy withou
   assert.ok(tripsSource.includes('id: "cancelled"'));
   assert.ok(tripsSource.includes('aria-controls={`${tab.id}-history-trips-panel`}'));
   assert.ok(alertsSource.includes('id: "active"'));
-  assert.ok(alertsSource.includes('id: "expired"'));
+  assert.ok(alertsSource.includes('id: "triggered"'));
   assert.ok(alertsSource.includes('id: "all"'));
   assert.ok(alertsSource.includes('id: "newest"'));
   assert.ok(alertsSource.includes('id: "oldest"'));
@@ -15578,7 +15578,7 @@ test("Vietnamese account trips and price alerts render paths resolve without Eng
     "accountDashboard.priceAlerts.title": "Cảnh báo giá",
     "accountDashboard.priceAlerts.description": "Theo dõi giá và nhận thông báo khi giá vé thay đổi.",
     "accountDashboard.priceAlerts.tabs.active": "Đang hoạt động",
-    "accountDashboard.priceAlerts.tabs.expired": "Đã hết hạn",
+    "accountDashboard.priceAlerts.tabs.triggered": "Đã hết hạn",
     "accountDashboard.priceAlerts.tabs.all": "Tất cả",
     "accountDashboard.priceAlerts.sort.label": "Sắp xếp theo",
     "accountDashboard.priceAlerts.sort.newest": "Mới nhất",
@@ -15643,7 +15643,7 @@ test("Vietnamese account trips and price alerts render paths resolve without Eng
 
   assert.ok(alertsPageSource.includes("<PriceAlertsContent"));
   assert.ok(alertsSource.includes('id: "active"'));
-  assert.ok(alertsSource.includes('id: "expired"'));
+  assert.ok(alertsSource.includes('id: "triggered"'));
   assert.ok(alertsSource.includes('id: "all"'));
   assert.ok(alertsSource.includes('count: 0'));
   assert.ok(alertsSource.includes('id: "newest"'));
