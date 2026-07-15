@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   AirVent,
   Armchair,
+  Award,
   Bike,
   Building2,
   BusFront,
@@ -21,6 +22,8 @@ import {
   Heart,
   Laptop,
   MapPin,
+  Star,
+  Tag,
   Trees,
   UtensilsCrossed,
   VolumeX,
@@ -359,11 +362,14 @@ function HotelAmenityList({
   );
 }
 
+type HotelSortBadge = "cheapest" | "bestValue" | "topRated";
+
 type HotelCardProps = {
   hotel: PublicHotelResult;
+  sortBadge?: HotelSortBadge;
 };
 
-export function HotelCard({ hotel }: HotelCardProps) {
+export function HotelCard({ hotel, sortBadge }: HotelCardProps) {
   const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const [isSaved, setIsSaved] = useState(false);
@@ -454,6 +460,33 @@ export function HotelCard({ hotel }: HotelCardProps) {
         "Remove {{name}} from saved hotels"
       : t("hotelResults.saveHotel") || "Save {{name}}"
   ).replace("{{name}}", hotel.name);
+  const sortBadgeConfig = sortBadge
+    ? ({
+        cheapest: {
+          label: t("hotelResults.cheapest") || "Cheapest",
+          Icon: Tag,
+          className: "border-emerald-100 bg-emerald-50 text-emerald-700",
+        },
+        bestValue: {
+          label: t("hotelResults.bestValue") || "Best value",
+          Icon: Award,
+          className: "border-blue-100 bg-blue-50 text-[#004BB8]",
+        },
+        topRated: {
+          label: t("hotelResults.topRated") || "Top rated",
+          Icon: Star,
+          className: "border-amber-100 bg-amber-50 text-amber-700",
+        },
+      } satisfies Record<
+        HotelSortBadge,
+        {
+          label: string;
+          Icon: LucideIcon;
+          className: string;
+        }
+      >)[sortBadge]
+    : null;
+  const SortBadgeIcon = sortBadgeConfig?.Icon;
 
   useEffect(() => {
     let isActive = true;
@@ -634,9 +667,23 @@ export function HotelCard({ hotel }: HotelCardProps) {
           <div className="flex flex-1 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
               <div>
-                <h2 className="text-base font-bold leading-6 text-slate-950 lg:text-[17px]">
-                  {hotel.name}
-                </h2>
+                <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                  <h2 className="min-w-0 text-base font-bold leading-6 text-slate-950 lg:text-[17px]">
+                    {hotel.name}
+                  </h2>
+
+                  {sortBadgeConfig && SortBadgeIcon ? (
+                    <span
+                      className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md border px-2 py-0.5 text-[11px] font-semibold leading-4 ${sortBadgeConfig.className}`}
+                    >
+                      <SortBadgeIcon
+                        className="h-3.5 w-3.5"
+                        aria-hidden="true"
+                      />
+                      {sortBadgeConfig.label}
+                    </span>
+                  ) : null}
+                </div>
 
                 {starRating ? (
                   <div

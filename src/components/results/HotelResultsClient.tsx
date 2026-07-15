@@ -1524,8 +1524,14 @@ export function HotelResultsClient() {
                 </div>
 
                 {sortedVisibleHotels.length ? (
-                  sortedVisibleHotels.map((hotel) => (
-                    <HotelCard key={hotel.id} hotel={hotel} />
+                  sortedVisibleHotels.map((hotel, index) => (
+                    <HotelCard
+                      key={hotel.id}
+                      hotel={hotel}
+                      sortBadge={
+                        index === 0 ? hotelSummarySortMode : undefined
+                      }
+                    />
                   ))
                 ) : showSavedEmptyState ? (
                   <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-muted shadow-sm">
