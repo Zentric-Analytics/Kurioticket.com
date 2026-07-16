@@ -1,5 +1,4 @@
 import { AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
-import { HomepageFaresRefreshCard } from "@/components/admin/HomepageFaresRefreshCard";
 import { getAdminEmails } from "@/lib/env";
 import { withOptionalDb } from "@/lib/prisma";
 
@@ -25,7 +24,6 @@ export default async function AdminSettingsPage() {
           </div>
         </AdminSectionCard>
       </div>
-      <div className="mt-4"><HomepageFaresRefreshCard /></div>
       <AdminSectionCard className="mt-4 p-5">
         <h2 className="font-semibold text-slate-950">Feature flags</h2>
         {flags.length === 0 ? <p className="mt-2 text-sm text-slate-600">No feature flags configured yet.</p> : (

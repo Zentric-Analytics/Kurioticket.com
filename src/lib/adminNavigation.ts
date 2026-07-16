@@ -33,7 +33,7 @@ export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin/searches", label: "Searches", icon: Search, roles: ["ADMIN", "SUPPORT"], section: "observability" },
   { href: "/admin/redirects", label: "Provider Handoffs", icon: ExternalLink, roles: ["ADMIN"], section: "observability" },
   { href: "/admin/logs", label: "Admin Logs", icon: BookOpen, roles: ["ADMIN"], section: "observability" },
-  { href: "/admin/content", label: "Content", icon: FileText, roles: ["ADMIN"], section: "content" },
+  { href: "/admin/content", label: "Content Inventory", icon: FileText, roles: ["ADMIN"], section: "content" },
   { href: "/admin/system", label: "System", icon: LockKeyhole, roles: ["ADMIN"], section: "controls" },
   { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["ADMIN"], section: "controls" },
 ];
