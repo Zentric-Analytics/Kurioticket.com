@@ -22,13 +22,27 @@ import {
 } from "@/lib/i18n/homeDiscovery";
 import { readSavedTripIds, writeSavedTripIds } from "@/lib/saved-trips-local";
 import {
+  parseSavedHotelIds,
+  parseSavedHotelSnapshots,
+  removeSavedHotelSnapshot,
+  SAVED_HOTEL_IDS_CHANGED_EVENT,
+  SAVED_HOTEL_IDS_STORAGE_KEY,
+  SAVED_HOTEL_SNAPSHOTS_STORAGE_KEY,
+  serializeSavedHotelIds,
+  serializeSavedHotelSnapshots,
+  type SavedHotelSnapshot,
+} from "@/components/results/hotelSavedStorage";
+import {
+  deleteBackendHotel,
   deleteBackendSavedSearch,
   deleteBackendTrip,
+  fetchBackendSavedHotels,
   fetchBackendSavedSearches,
   fetchBackendSavedTrips,
   getSavedTripLocalId,
   updateRouteWatch,
   type PublicSavedSearch,
+  type SavedHotelApiItem,
   type SavedTripApiItem,
 } from "@/lib/saved-trips-api";
 import { parseSavedSearchQuery } from "@/lib/saved-searches";
@@ -501,6 +515,8 @@ export function SavedTripsAndRecentSearches({
     Record<string, SavedTripFare>
   >({});
   const [savedSearches, setSavedSearches] = useState<PublicSavedSearch[]>([]);
+  const [guestSavedHotels, setGuestSavedHotels] = useState<SavedHotelSnapshot[]>([]);
+  const [backendSavedHotels, setBackendSavedHotels] = useState<SavedHotelApiItem[]>([]);
   const [savedSearchesLoading, setSavedSearchesLoading] = useState(false);
   const [savedSearchesError, setSavedSearchesError] = useState("");
   const [deletingSavedSearchIds, setDeletingSavedSearchIds] = useState<
@@ -523,6 +539,12 @@ export function SavedTripsAndRecentSearches({
     setBackendSavedTripIds(backendIds);
     setBackendSavedTrips(result.items);
     setSavedIds(localIds);
+  }, []);
+
+  const refreshBackendSavedHotels = useCallback(async (signal?: AbortSignal) => {
+    const result = await fetchBackendSavedHotels(signal);
+    if (!result.ok || !result.items) return;
+    setBackendSavedHotels(result.items);
   }, []);
 
   const refreshBackendSavedSearches = useCallback(
@@ -550,6 +572,7 @@ export function SavedTripsAndRecentSearches({
       const controller = new AbortController();
       const timeoutId = window.setTimeout(() => {
         void refreshBackendSavedTrips(controller.signal);
+        void refreshBackendSavedHotels(controller.signal);
         void refreshBackendSavedSearches(controller.signal);
       }, 0);
       return () => {
@@ -561,12 +584,14 @@ export function SavedTripsAndRecentSearches({
     const timeoutId = window.setTimeout(() => {
       setBackendSavedTripIds({});
       setBackendSavedTrips([]);
+      setBackendSavedHotels([]);
       setSavedSearches([]);
       setSavedSearchesError("");
       setSavedIds(readSavedTripIds());
+      setGuestSavedHotels(parseSavedHotelSnapshots(window.localStorage.getItem(SAVED_HOTEL_SNAPSHOTS_STORAGE_KEY)));
     }, 0);
     return () => window.clearTimeout(timeoutId);
-  }, [refreshBackendSavedSearches, refreshBackendSavedTrips, sessionStatus]);
+  }, [refreshBackendSavedHotels, refreshBackendSavedSearches, refreshBackendSavedTrips, sessionStatus]);
 
   const savedTrips = useMemo(
     () =>
@@ -577,6 +602,44 @@ export function SavedTripsAndRecentSearches({
         : savedIds.map((id) => resolveSavedTrip(id, dictionary)),
     [backendSavedTrips, dictionary, savedIds, sessionStatus],
   );
+
+  const savedHotels = useMemo(() => {
+    if (sessionStatus === "authenticated") {
+      return backendSavedHotels.map((hotel) => {
+        const payload =
+          hotel.payload && typeof hotel.payload === "object"
+            ? (hotel.payload as Record<string, unknown>)
+            : {};
+        const hotelResultId =
+          typeof payload.hotelResultId === "string" ? payload.hotelResultId : hotel.id;
+        return {
+          id: hotelResultId,
+          backendId: hotel.id,
+          title: hotel.hotelName,
+          destination: hotel.destination,
+          checkIn: hotel.checkIn,
+          checkOut: hotel.checkOut,
+          totalPrice: hotel.totalPrice,
+          currency: hotel.currency,
+          image: typeof payload.image === "string" ? payload.image : undefined,
+          href: `/hotels/details/${encodeURIComponent(hotelResultId)}`,
+        };
+      });
+    }
+
+    return guestSavedHotels.map((hotel) => ({
+      id: hotel.id,
+      backendId: undefined,
+      title: hotel.hotelName,
+      destination: hotel.destination,
+      checkIn: hotel.checkIn,
+      checkOut: hotel.checkOut,
+      totalPrice: hotel.totalPrice,
+      currency: hotel.currency,
+      image: hotel.image,
+      href: hotel.href,
+    }));
+  }, [backendSavedHotels, guestSavedHotels, sessionStatus]);
 
   useEffect(() => {
     const pricedRoutes = savedTrips
@@ -679,7 +742,7 @@ export function SavedTripsAndRecentSearches({
     (search) => !linkedSavedSearchIds.has(search.id) && !savedSearchMatchesTrip(search),
   );
 
-  const unifiedSavedTripCount = savedTrips.length + visibleSavedSearches.length;
+  const unifiedSavedTripCount = savedTrips.length + savedHotels.length + visibleSavedSearches.length;
   const savedRoutesCountText =
     unifiedSavedTripCount === 1
       ? "1 saved trip"
@@ -714,6 +777,21 @@ export function SavedTripsAndRecentSearches({
       nextCheckAt: result.watch?.nextCheckAt ?? null,
     } : item));
     setRouteWatchAnnouncement(enabled ? "Route watch enabled." : "Route watch disabled.");
+  };
+
+  const handleUnsaveHotel = async (hotel: { id: string; backendId?: string }) => {
+    if (sessionStatus !== "authenticated") {
+      const nextSnapshots = removeSavedHotelSnapshot(guestSavedHotels, hotel.id);
+      const nextIds = parseSavedHotelIds(window.localStorage.getItem(SAVED_HOTEL_IDS_STORAGE_KEY)).filter((id) => id !== hotel.id);
+      window.localStorage.setItem(SAVED_HOTEL_IDS_STORAGE_KEY, serializeSavedHotelIds(nextIds));
+      window.localStorage.setItem(SAVED_HOTEL_SNAPSHOTS_STORAGE_KEY, serializeSavedHotelSnapshots(nextSnapshots));
+      setGuestSavedHotels(nextSnapshots);
+      window.dispatchEvent(new CustomEvent(SAVED_HOTEL_IDS_CHANGED_EVENT, { detail: serializeSavedHotelIds(nextIds) }));
+      return;
+    }
+    if (!hotel.backendId) return;
+    const result = await deleteBackendHotel(hotel.backendId);
+    if (result.ok) setBackendSavedHotels((current) => current.filter((item) => item.id !== hotel.backendId));
   };
 
   const handleDeleteSavedSearch = async (search: PublicSavedSearch) => {
@@ -975,6 +1053,36 @@ export function SavedTripsAndRecentSearches({
                       </article>
                     );
                   })}
+                  {savedHotels.map((hotel, index) => (
+                    <article
+                      key={`hotel-${hotel.backendId ?? hotel.id}`}
+                      className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] transition duration-300 hover:-translate-y-1 hover:border-slate-300"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleUnsaveHotel(hotel)}
+                        aria-label={`Remove saved hotel ${hotel.title}`}
+                        className="focus-ring absolute end-3 top-3 z-10 flex min-h-11 min-w-11 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-600 shadow-sm transition hover:bg-rose-100"
+                      >
+                        <Heart size={15} className="fill-current" />
+                      </button>
+                      {hotel.image ? (
+                        <SavedCardImage src={hotel.image} alt={hotel.title} priority={index < EAGER_SAVED_TRIP_IMAGE_COUNT} />
+                      ) : (
+                        <div className="flex h-[196px] w-full items-center justify-center bg-gradient-to-br from-blue-100 via-cyan-50 to-teal-50 text-sm font-semibold uppercase tracking-[0.14em] text-slate-600">Hotel</div>
+                      )}
+                      <div className="flex min-w-0 flex-1 flex-col p-4">
+                        <p className="text-xs font-bold uppercase tracking-[0.12em] text-teal-700">Hotel</p>
+                        <h3 className="mt-1 line-clamp-2 pe-10 text-sm font-bold leading-[1.35] text-slate-950 md:text-[0.95rem]">{hotel.title}</h3>
+                        <p className="mt-2 text-sm font-medium text-slate-600">{hotel.destination}</p>
+                        <p className="mt-2 text-xs font-medium text-slate-500">{new Date(hotel.checkIn).toLocaleDateString()} – {new Date(hotel.checkOut).toLocaleDateString()}</p>
+                        <Link href={hotel.href} className="mt-auto inline-flex min-h-11 items-center justify-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-center text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-900">
+                          View hotel
+                          <ExternalLink className="h-4 w-4" />
+                        </Link>
+                      </div>
+                    </article>
+                  ))}
                   {visibleSavedSearches.map((search) => {
                     const parsed = parseSavedSearchQuery(
                       search.searchType,
