@@ -26,6 +26,9 @@ test("admin navigation inventory exposes existing workflows without restoring le
   assert.ok(navLabels.includes("Admin Logs"));
   assert.ok(navLabels.includes("Support"));
   assert.ok(navLabels.includes("Users"));
+  assert.ok(navLabels.includes("Content Inventory"));
+  assert.equal(navLabels.includes("Content"), false);
+  assert.equal(itemByHref("/admin/content").label, "Content Inventory");
 
   assert.equal(navLabels.includes("Bookings"), false);
   assert.equal(navHrefs.includes("/admin/bookings"), false);
@@ -42,11 +45,15 @@ test("admin navigation order and labels preserve ownership boundaries", () => {
   assert.equal(navLabels.indexOf("Account Deletions"), navLabels.indexOf("Support") + 1);
   assert.equal(navLabels.indexOf("Provider Handoffs"), navLabels.indexOf("Searches") + 1);
   assert.equal(navLabels.indexOf("Admin Logs"), navLabels.indexOf("Provider Handoffs") + 1);
+  assert.equal(navLabels.indexOf("Content Inventory"), navLabels.indexOf("Admin Logs") + 1);
+  assert.equal(navLabels.indexOf("System"), navLabels.indexOf("Content Inventory") + 1);
 
   assert.equal(itemByHref("/admin/account-deletions").section, "operations");
   assert.equal(itemByHref("/admin/searches").section, "observability");
   assert.equal(itemByHref("/admin/redirects").section, "observability");
   assert.equal(itemByHref("/admin/logs").section, "observability");
+  assert.equal(itemByHref("/admin/content").section, "content");
+  assert.deepEqual(itemByHref("/admin/content").roles, ["ADMIN"]);
 });
 
 test("admin navigation active matching handles nested routes without unrelated prefix matches", () => {
@@ -54,6 +61,8 @@ test("admin navigation active matching handles nested routes without unrelated p
   assert.equal(isAdminNavItemActive("/admin/account-deletions", "/admin/account-deletions/example-id"), true);
   assert.equal(isAdminNavItemActive("/admin/redirects", "/admin/redirects"), true);
   assert.equal(isAdminNavItemActive("/admin/logs", "/admin/logs"), true);
+  assert.equal(isAdminNavItemActive("/admin/content", "/admin/content"), true);
+  assert.equal(isAdminNavItemActive("/admin/content", "/admin/content/example-id"), true);
   assert.equal(isAdminNavItemActive("/admin/support", "/admin/support/example-id"), true);
   assert.equal(isAdminNavItemActive("/admin/bookings", "/admin/bookings"), true);
 
