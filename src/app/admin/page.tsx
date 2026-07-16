@@ -1,6 +1,3 @@
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-
 import {
   AdminActivityList,
   AdminEmptyState,
@@ -10,7 +7,6 @@ import {
   AdminSectionCard,
   AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
-import { adminNavigation } from "@/lib/adminNavigation";
 import {
   getAdminMetrics,
   getProviderStatuses,
@@ -29,10 +25,6 @@ export default async function AdminPage() {
     getSearchHealth(),
     getRecentAdminActivity(),
   ]);
-
-  const modules = adminNavigation.filter((item) =>
-    ["/admin/users", "/admin/providers", "/admin/searches", "/admin/bookings", "/admin/content", "/admin/support", "/admin/logs", "/admin/system", "/admin/settings"].includes(item.href),
-  );
 
   return (
     <AdminPageShell
@@ -98,28 +90,9 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      <section className="mt-8 grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-950">Admin Activity</h2>
-          <div className="mt-3"><AdminActivityList items={activity} /></div>
-        </div>
-        <div>
-          <h2 className="text-lg font-semibold text-slate-950">Admin Modules</h2>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            {modules.map((module) => (
-              <Link key={module.href} href={module.href} className="group rounded-2xl focus-ring">
-                <AdminSectionCard className="h-full p-4 transition group-hover:border-indigo-200 group-hover:shadow-md">
-                  <div className="flex items-start justify-between gap-3">
-                    <module.icon className="text-indigo-700" size={20} />
-                    <ArrowRight className="text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-indigo-700" size={16} />
-                  </div>
-                  <p className="mt-3 font-semibold text-slate-950">{module.label}</p>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">Open {module.label.toLowerCase()} operations.</p>
-                </AdminSectionCard>
-              </Link>
-            ))}
-          </div>
-        </div>
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold text-slate-950">Admin Activity</h2>
+        <div className="mt-3"><AdminActivityList items={activity} /></div>
       </section>
     </AdminPageShell>
   );
