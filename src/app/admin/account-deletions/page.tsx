@@ -80,7 +80,7 @@ export default async function AdminAccountDeletionsPage({
   }, { open: 0, pending: 0, cancelled: 0, ready: 0, completed: 0, all: 0 });
 
   return (
-    <AdminPageShell title="Account deletion requests" description="Review the full account deletion lifecycle, including pending, cancelled/reactivated, ready-for-review, and completed requests.">
+    <AdminPageShell title="Account Deletions" description="Manage account deletion requests and review lifecycle status.">
       {requests.length === 0 ? <AdminEmptyState title="No deletion requests" message="Account deletion requests will appear here after users submit them." /> : (
         <div className="space-y-4">
           <AdminSectionCard className="p-3">

@@ -12,8 +12,8 @@ export default async function AdminSearchesPage() {
 
   return (
     <AdminPageShell
-      title="Search Operations"
-      description="Real search logs only. If logging is unavailable, this page stays empty rather than inventing search volume."
+      title="Searches"
+      description="Review user search attempts, outcomes, providers, and latency."
     >
       {searches.length === 0 ? (
         <AdminEmptyState

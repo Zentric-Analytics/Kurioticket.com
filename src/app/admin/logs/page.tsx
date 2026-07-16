@@ -22,7 +22,7 @@ export default async function AdminLogsPage({ searchParams }: PageProps) {
   }), []);
 
   return (
-    <AdminPageShell title="Audit Logs" description="Security audit trail for sensitive admin actions and platform operations.">
+    <AdminPageShell title="Admin Logs" description="Review administrative and security-sensitive actions.">
       <AdminFilterBar action="/admin/logs">
         <AdminInput name="action" defaultValue={action} placeholder="Action" />
         <AdminInput name="adminEmail" defaultValue={adminEmail} placeholder="Admin email" />
