@@ -28,10 +28,10 @@ export default function AdminContentPage() {
         {contentAreas.map((area) => (
           <AdminSectionCard key={area.title} className="p-5">
             <div className="flex items-start justify-between gap-3">
-              <h2 className="font-black text-slate-950">{area.title}</h2>
+              <h2 className="font-semibold text-slate-950">{area.title}</h2>
               <AdminStatusBadge tone={area.status === "Read-only" ? "info" : "neutral"}>{area.status}</AdminStatusBadge>
             </div>
-            <p className="mt-4 text-3xl font-black text-slate-950">{area.value}</p>
+            <p className="mt-4 text-3xl font-semibold text-slate-950">{area.value}</p>
             <p className="mt-2 text-sm leading-6 text-slate-600">{area.note}</p>
           </AdminSectionCard>
         ))}

@@ -1,11 +1,14 @@
 import {
+  AdminButton,
+  AdminFilterBar,
+  AdminInput,
   AdminPageShell,
+  AdminSelect,
   EmptyState,
   StatusPill,
+  AdminSectionCard,
 } from "@/components/admin/AdminPageShell";
 import { UserStatusActions } from "@/components/admin/UserStatusActions";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
 import { withOptionalDb } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { getAdminEmails } from "@/lib/env";
@@ -72,48 +75,40 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       title="Users"
       description="View users, filter account status and role, and safely suspend, reactivate, or soft-delete accounts."
     >
-      <Card className="p-4">
-        <form
-          className="grid gap-3 md:grid-cols-[1fr_160px_180px_auto]"
-          action="/admin/users"
-        >
-          <input
+      <AdminFilterBar action="/admin/users">
+          <AdminInput
             name="q"
             defaultValue={q}
             placeholder="Search by email or name"
-            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
           />
-          <select
+          <AdminSelect
             name="role"
             defaultValue={role}
-            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
           >
             <option value="ALL">All roles</option>
             <option value="USER">User</option>
             <option value="SUPPORT">Support</option>
             <option value="ADMIN">Admin</option>
-          </select>
-          <select
+          </AdminSelect>
+          <AdminSelect
             name="status"
             defaultValue={status}
-            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
           >
             <option value="ALL">All statuses</option>
             <option value="ACTIVE">Active</option>
             <option value="SUSPENDED">Suspended</option>
             <option value="DELETED">Deleted</option>
-          </select>
-          <Button type="submit">Filter</Button>
-        </form>
-      </Card>
+          </AdminSelect>
+          <AdminButton type="submit">Filter</AdminButton>
+      </AdminFilterBar>
       {sortedUsers.length === 0 ? (
         <div className="mt-4">
           <EmptyState message="No users match these filters." />
         </div>
       ) : (
-        <Card className="mt-4 overflow-x-auto p-0">
+        <AdminSectionCard className="mt-4 overflow-x-auto p-0">
           <table className="w-full min-w-[1000px] text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-muted">
+            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
               <tr>
                 <th className="p-3">User ID</th>
                 <th className="p-3">Name</th>
@@ -134,12 +129,12 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
                 return (
                   <tr
                     key={user.id}
-                    className="border-t border-border align-top"
+                    className="border-t border-slate-200 align-top"
                   >
-                    <td className="p-3 font-mono text-xs text-muted">
+                    <td className="p-3 font-mono text-xs text-slate-500">
                       {user.id}
                     </td>
-                    <td className="p-3 font-semibold text-navy">
+                    <td className="p-3 font-semibold text-slate-950">
                       {user.name || "—"}
                     </td>
                     <td className="p-3">{user.email || "—"}</td>
@@ -151,7 +146,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
                           {user.role}
                         </StatusPill>
                         {isProtectedAdmin ? (
-                          <span className="text-xs font-semibold text-muted">
+                          <span className="text-xs font-semibold text-slate-500">
                             Protected admin
                           </span>
                         ) : null}
@@ -187,7 +182,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
               })}
             </tbody>
           </table>
-        </Card>
+        </AdminSectionCard>
       )}
     </AdminPageShell>
   );

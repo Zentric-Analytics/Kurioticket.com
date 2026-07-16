@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AccountDeletionManageForm } from "@/components/admin/AccountDeletionManageForm";
-import { AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { AdminLinkButton, AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
 import { getPrisma } from "@/lib/prisma";
 
@@ -24,7 +23,7 @@ function daysRemaining(scheduledAt: Date) {
 function Detail({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-      <p className="text-[11px] font-black uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</p>
       <div className="mt-1 break-words text-sm font-bold text-slate-800">{value || "—"}</div>
     </div>
   );
@@ -56,14 +55,14 @@ export default async function AdminAccountDeletionDetailPage({ params }: PagePro
     <AdminPageShell
       title="Account deletion request"
       description="Review deletion request details and update safe lifecycle metadata without hard-deleting account data."
-      actions={<Link href="/admin/account-deletions" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">Back to requests</Link>}
+      actions={<AdminLinkButton href="/admin/account-deletions" variant="secondary">Back to requests</AdminLinkButton>}
     >
       <div className="grid gap-5 xl:grid-cols-[1fr_420px]">
         <div className="space-y-5">
           <AdminSectionCard className="p-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="text-xs font-black uppercase tracking-wide text-slate-500">Lifecycle state</p>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Lifecycle state</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{lifecycleMessage}</p>
               </div>
               <AdminStatusBadge tone={statusTone(request.status)}>{request.status.replaceAll("_", " ")}</AdminStatusBadge>
@@ -71,7 +70,7 @@ export default async function AdminAccountDeletionDetailPage({ params }: PagePro
           </AdminSectionCard>
 
           <AdminSectionCard className="p-5">
-            <h2 className="text-lg font-black text-slate-950">Request details</h2>
+            <h2 className="text-lg font-semibold text-slate-950">Request details</h2>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               <Detail label="User email" value={request.email || request.user.email} />
               <Detail label="User id" value={request.userId} />
@@ -89,7 +88,7 @@ export default async function AdminAccountDeletionDetailPage({ params }: PagePro
           </AdminSectionCard>
 
           <AdminSectionCard className="p-5">
-            <h2 className="text-lg font-black text-slate-950">Review notes</h2>
+            <h2 className="text-lg font-semibold text-slate-950">Review notes</h2>
             <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">{request.reviewNotes || "No review notes yet."}</p>
           </AdminSectionCard>
         </div>

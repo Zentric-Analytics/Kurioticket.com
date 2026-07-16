@@ -18,7 +18,7 @@ export default async function AdminProvidersPage() {
       <AdminSectionCard className="mt-4 p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="font-black text-slate-950">Provider health retest</h2>
+            <h2 className="font-semibold text-slate-950">Provider health retest</h2>
             <p className="mt-1 text-sm leading-6 text-slate-600">Retesting records real provider health when the backing endpoint and credentials are available.</p>
           </div>
           <ProviderRetestButton />

@@ -40,7 +40,7 @@ export default async function AdminPage() {
       description="Manage Kurioticket operations, users, provider health, searches, support, and audit logs."
     >
       <section>
-        <h2 className="text-lg font-black text-slate-950">Operations Snapshot</h2>
+        <h2 className="text-lg font-semibold text-slate-950">Operations Snapshot</h2>
         <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
           <AdminMetricCard label="Total users" value={metrics.totalUsers} />
           <AdminMetricCard label="Active users" value={metrics.activeUsers} tone="good" />
@@ -52,7 +52,7 @@ export default async function AdminPage() {
       </section>
 
       <section className="mt-8">
-        <h2 className="text-lg font-black text-slate-950">Provider Readiness</h2>
+        <h2 className="text-lg font-semibold text-slate-950">Provider Readiness</h2>
         <div className="mt-3 grid gap-4 xl:grid-cols-3">
           {providers.map((provider) => <AdminProviderStatusCard key={provider.product} {...provider} />)}
         </div>
@@ -60,7 +60,7 @@ export default async function AdminPage() {
 
       <section className="mt-8 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <div>
-          <h2 className="text-lg font-black text-slate-950">Search Health</h2>
+          <h2 className="text-lg font-semibold text-slate-950">Search Health</h2>
           <div className="mt-3">
             {searchHealth.hasLogs ? (
               <AdminSectionCard className="p-5">
@@ -70,7 +70,7 @@ export default async function AdminPage() {
                   <AdminMetricCard label="Failed searches" value={searchHealth.failedSearches} tone="bad" />
                 </div>
                 <div className="mt-5">
-                  <p className="text-sm font-black text-slate-950">Top products searched</p>
+                  <p className="text-sm font-semibold text-slate-950">Top products searched</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {searchHealth.topProducts.map((product) => (
                       <AdminStatusBadge key={product.label} tone="info">{product.label}: {product.count}</AdminStatusBadge>
@@ -85,7 +85,7 @@ export default async function AdminPage() {
         </div>
 
         <div>
-          <h2 className="text-lg font-black text-slate-950">Platform Health</h2>
+          <h2 className="text-lg font-semibold text-slate-950">Platform Health</h2>
           <AdminSectionCard className="mt-3 p-5">
             <div className="grid gap-3">
               <HealthRow label="Database" ok={system.databaseConnected} fallback={system.databaseConfigured ? "Configured, not connected" : "Not configured"} />
@@ -100,11 +100,11 @@ export default async function AdminPage() {
 
       <section className="mt-8 grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
         <div>
-          <h2 className="text-lg font-black text-slate-950">Admin Activity</h2>
+          <h2 className="text-lg font-semibold text-slate-950">Admin Activity</h2>
           <div className="mt-3"><AdminActivityList items={activity} /></div>
         </div>
         <div>
-          <h2 className="text-lg font-black text-slate-950">Admin Modules</h2>
+          <h2 className="text-lg font-semibold text-slate-950">Admin Modules</h2>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {modules.map((module) => (
               <Link key={module.href} href={module.href} className="group rounded-2xl focus-ring">
@@ -113,7 +113,7 @@ export default async function AdminPage() {
                     <module.icon className="text-indigo-700" size={20} />
                     <ArrowRight className="text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-indigo-700" size={16} />
                   </div>
-                  <p className="mt-3 font-black text-slate-950">{module.label}</p>
+                  <p className="mt-3 font-semibold text-slate-950">{module.label}</p>
                   <p className="mt-1 text-sm leading-6 text-slate-600">Open {module.label.toLowerCase()} operations.</p>
                 </AdminSectionCard>
               </Link>
