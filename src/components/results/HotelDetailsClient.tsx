@@ -31,8 +31,10 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
+import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
+import { useRegion } from "@/components/region/RegionProvider";
 import type { PublicHotelResult } from "@/lib/types";
-import { formatCurrency } from "@/lib/utils";
+import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import {
   buildHotelGalleryCandidates,
   getAdjacentHotelGalleryIndex,
@@ -224,6 +226,8 @@ function localizeAmenityItems(items: HotelAmenityPresentationItem[], t: (key: st
 
 export function HotelDetailsClient({ id }: { id: string }) {
   const { locale, t: dictionary } = useLocale();
+  const { selectedOption } = useRegion();
+  const currencyRates = useCurrencyRates();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const [hotel, setHotel] = useState<PublicHotelResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -311,6 +315,22 @@ export function HotelDetailsClient({ id }: { id: string }) {
     );
   }
 
+  const totalDisplayPrice = formatDisplayPrice({
+    amount: hotel.totalPrice,
+    sourceCurrency: hotel.currency,
+    displayCurrency: selectedOption.currency,
+    convertSourceEstimate: true,
+    rates: currencyRates.rates,
+    isFallbackRate: currencyRates.isFallback,
+  });
+  const nightlyDisplayPrice = formatDisplayPrice({
+    amount: hotel.pricePerNight,
+    sourceCurrency: hotel.currency,
+    displayCurrency: selectedOption.currency,
+    convertSourceEstimate: true,
+    rates: currencyRates.rates,
+    isFallbackRate: currencyRates.isFallback,
+  });
   const starRating = getStarRating(hotel.rating);
   const galleryCandidates = buildHotelGalleryCandidates(hotel.imageUrls, hotel.imageUrl);
   const fallbackImage = getFallbackImage(hotel);
@@ -431,10 +451,10 @@ export function HotelDetailsClient({ id }: { id: string }) {
                 <div className="space-y-4">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{t("hotelResults.estimatedStayTotal")}</p>
-                    <p className="mt-1 break-words text-3xl font-bold text-slate-950" dir="ltr">{formatCurrency(hotel.totalPrice, hotel.currency, locale)}</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-700">{t("hotelResults.pricePerNight").replace("{{price}}", formatCurrency(hotel.pricePerNight, hotel.currency, locale))}</p>
+                    <p className="mt-1 break-words text-3xl font-bold text-slate-950" dir="ltr" title={totalDisplayPrice.title} aria-label={totalDisplayPrice.ariaLabel}>{totalDisplayPrice.formatted}</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-700" title={nightlyDisplayPrice.title} aria-label={nightlyDisplayPrice.ariaLabel}>{t("hotelResults.pricePerNight").replace("{{price}}", nightlyDisplayPrice.formatted)}</p>
                     <p className="mt-1 text-xs font-medium text-slate-500">{taxesText}</p>
-                    <p className="mt-2 text-xs font-medium text-slate-500">{hotel.currency}</p>
+                    <p className="mt-2 text-xs font-medium text-slate-500">{totalDisplayPrice.currency}</p>
                   </div>
                   {hotel.provider && hotel.dataSource !== "demo" ? <p className="text-sm font-medium text-slate-700">{t("providedBy")} {hotel.provider}</p> : null}
                   {providerUnavailableText ? <p className="rounded-lg bg-slate-50 p-3 text-sm font-medium text-slate-700">{providerUnavailableText}</p> : null}
