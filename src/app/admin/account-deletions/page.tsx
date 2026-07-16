@@ -107,19 +107,23 @@ export default async function AdminAccountDeletionsPage({
             <AdminEmptyState title="No requests in this view" message="Try another status filter to review other deletion request lifecycle states." />
           ) : (
             <AdminDataTable
-              columns={["Email", "User status", "Request status", "Requested", "Scheduled", "Cancelled / reactivated", "Completed", "Support / admin refs", "Notes", "Action"]}
+              caption="Account deletion requests"
+              density="compact"
+              minWidth="1320px"
+              columns={["Request", "User status", "Request status", "Requested", "Scheduled", "Cancelled / reactivated", "Completed", "Support / admin refs", "Notes", { key: "action", label: "Action", align: "right" }]}
               rows={visibleRequests.map((request) => {
                 const cancellationDetail = getCancellationDetail(request.cancellationMetadata);
                 return {
                   id: request.id,
                   cells: [
-                    <span key="email" className="font-semibold text-slate-950">{request.email || request.user.email}</span>,
+                    <div key="request" className="min-w-0 space-y-1"><p className="truncate font-semibold text-slate-950">{request.email || request.user.email}</p><p className="truncate font-mono text-xs text-slate-500">{request.id}</p></div>,
                     <div key="user-status" className="space-y-1">
                       <AdminStatusBadge tone={request.user.status === "ACTIVE" ? "good" : request.user.status === "PENDING_DELETION" ? "warn" : "neutral"}>{request.user.status}</AdminStatusBadge>
                       <p className="text-xs font-semibold text-slate-500">Role: {request.user.role}</p>
                     </div>,
                     <div key="request-status" className="space-y-1">
                       <AdminStatusBadge tone={getStatusTone(request.status)}>{getStatusLabel(request.status, request.user.status)}</AdminStatusBadge>
+                      {request.status === "READY_FOR_REVIEW" ? <p className="text-xs font-semibold text-amber-700">Action needed</p> : null}
                       {request.status === "CANCELLED" ? <p className="text-xs font-semibold text-emerald-700">Deletion request is no longer pending.</p> : null}
                     </div>,
                     formatDateTime(request.requestedAt),
@@ -135,7 +139,7 @@ export default async function AdminAccountDeletionsPage({
                       {cancellationDetail ? <p>{cancellationDetail}</p> : null}
                       {!request.reviewNotes && !cancellationDetail ? "—" : null}
                     </div>,
-                    <AdminLinkButton key="action" href={`/admin/account-deletions/${request.id}`} size="sm" variant="primary">
+                    <AdminLinkButton key="action" href={`/admin/account-deletions/${request.id}`} size="sm" variant="primary" aria-label={`Manage deletion request for ${request.email || request.user.email}`}>
                       Manage
                     </AdminLinkButton>,
                   ],

@@ -4,9 +4,9 @@ import {
   AdminInput,
   AdminPageShell,
   AdminSelect,
+  AdminDataTable,
   EmptyState,
   StatusPill,
-  AdminSectionCard,
 } from "@/components/admin/AdminPageShell";
 import { UserStatusActions } from "@/components/admin/UserStatusActions";
 import { withOptionalDb } from "@/lib/prisma";
@@ -106,83 +106,45 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
           <EmptyState message="No users match these filters." />
         </div>
       ) : (
-        <AdminSectionCard className="mt-4 overflow-x-auto p-0">
-          <table className="w-full min-w-[1000px] text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-              <tr>
-                <th className="p-3">User ID</th>
-                <th className="p-3">Name</th>
-                <th className="p-3">Email</th>
-                <th className="p-3">Role</th>
-                <th className="p-3">Status</th>
-                <th className="p-3">Created</th>
-                <th className="p-3">Updated</th>
-                <th className="p-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedUsers.map((user) => {
-                const isProtectedAdmin = user.email
-                  ? adminEmails.has(user.email.toLowerCase().trim())
-                  : false;
+        <div className="mt-4">
+          <AdminDataTable
+            caption="Admin users"
+            minWidth="1080px"
+            columns={["User", "Email", "Role", "Status", "Created", "Updated", { key: "actions", label: "Actions", align: "right" }]}
+            rows={sortedUsers.map((user) => {
+              const isProtectedAdmin = user.email
+                ? adminEmails.has(user.email.toLowerCase().trim())
+                : false;
 
-                return (
-                  <tr
-                    key={user.id}
-                    className="border-t border-slate-200 align-top"
-                  >
-                    <td className="p-3 font-mono text-xs text-slate-500">
-                      {user.id}
-                    </td>
-                    <td className="p-3 font-semibold text-slate-950">
-                      {user.name || "—"}
-                    </td>
-                    <td className="p-3">{user.email || "—"}</td>
-                    <td className="p-3">
-                      <div className="grid gap-1">
-                        <StatusPill
-                          tone={user.role === "ADMIN" ? "good" : "neutral"}
-                        >
-                          {user.role}
-                        </StatusPill>
-                        {isProtectedAdmin ? (
-                          <span className="text-xs font-semibold text-slate-500">
-                            Protected admin
-                          </span>
-                        ) : null}
-                      </div>
-                    </td>
-                    <td className="p-3">
-                      <StatusPill
-                        tone={
-                          user.status === "ACTIVE"
-                            ? "good"
-                            : user.status === "SUSPENDED"
-                              ? "warn"
-                              : "bad"
-                        }
-                      >
-                        {user.status}
-                      </StatusPill>
-                    </td>
-                    <td className="p-3">{formatDate(user.createdAt)}</td>
-                    <td className="p-3">{formatDate(user.updatedAt)}</td>
-                    <td className="p-3">
-                      <UserStatusActions
-                        userId={user.id}
-                        email={user.email}
-                        role={user.role}
-                        status={user.status}
-                        isSelf={user.id === session.user.id}
-                        isProtectedAdmin={isProtectedAdmin}
-                      />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </AdminSectionCard>
+              return {
+                id: user.id,
+                cells: [
+                  <div key="user" className="min-w-0 space-y-1">
+                    <p className="truncate font-semibold text-slate-950">{user.name || "Unnamed user"}</p>
+                    <p className="truncate font-mono text-xs text-slate-500">{user.id}</p>
+                  </div>,
+                  <span key="email" className="block max-w-64 truncate">{user.email || "—"}</span>,
+                  <div key="role" className="grid justify-start gap-1">
+                    <StatusPill tone={user.role === "ADMIN" ? "good" : user.role === "SUPPORT" ? "info" : "neutral"}>{user.role}</StatusPill>
+                    {isProtectedAdmin ? <span className="text-xs font-semibold text-slate-500">Protected admin</span> : null}
+                  </div>,
+                  <StatusPill key="status" tone={user.status === "ACTIVE" ? "good" : user.status === "SUSPENDED" ? "warn" : "bad"}>{user.status}</StatusPill>,
+                  formatDate(user.createdAt),
+                  formatDate(user.updatedAt),
+                  <UserStatusActions
+                    key="actions"
+                    userId={user.id}
+                    email={user.email}
+                    role={user.role}
+                    status={user.status}
+                    isSelf={user.id === session.user.id}
+                    isProtectedAdmin={isProtectedAdmin}
+                  />,
+                ],
+              };
+            })}
+          />
+        </div>
       )}
     </AdminPageShell>
   );
