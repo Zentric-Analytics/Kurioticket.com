@@ -336,104 +336,104 @@ export function HotelDetailsClient({ id }: { id: string }) {
   return (
     <main className="flex-1 bg-surface-muted/40">
       <section className="page-shell py-6 sm:py-8 lg:py-10">
-        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
-          <div className="min-w-0 space-y-5">
-            <Card className="min-w-0 rounded-2xl border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-              <div className="min-w-0 space-y-3">
-                {hotel.dataSource === "demo" ? (
-                  <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">
-                    {t("hotelResults.demoDisclaimer")}
-                  </p>
-                ) : null}
-                <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[#004BB8]">
-                  {hotel.badges.map((badge) => (
-                    <span key={badge} className="rounded-full bg-blue-50 px-2.5 py-1">{badge}</span>
-                  ))}
-                </div>
-                <h1 className="break-words text-3xl font-bold leading-tight text-slate-950 sm:text-4xl">{hotel.name}</h1>
-                {starRating ? (
-                  <div aria-label={t("hotelResults.starHotelAria").replace("{{rating}}", formatRating(hotel.rating, locale))} className="text-amber-500">
-                    <span aria-hidden="true">{"★".repeat(starRating)}</span>
-                  </div>
-                ) : null}
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-slate-700">
-                  <MapPin className="h-4 w-4 shrink-0 text-[#004BB8]" aria-hidden="true" />
-                  <span>{hotel.location}</span>
-                  {hotel.neighbourhood ? <span>· {hotel.neighbourhood}</span> : null}
-                  {distanceText ? <span>· {distanceText}</span> : null}
-                </div>
-                {(reviewBand || reviewCountText) ? (
-                  <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-                    {reviewBand ? <span className="rounded-full bg-slate-900 px-3 py-1 text-white">{reviewScore} {reviewLabel}</span> : null}
-                    {reviewCountText ? <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700">{reviewCountText}</span> : null}
-                  </div>
-                ) : null}
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-6">
+          <header className="min-w-0 space-y-3 lg:col-span-2">
+            {hotel.dataSource === "demo" ? (
+              <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">
+                {t("hotelResults.demoDisclaimer")}
+              </p>
+            ) : null}
+            <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[#004BB8]">
+              {hotel.badges.map((badge) => (
+                <span key={badge} className="rounded-full bg-blue-50 px-2.5 py-1">{badge}</span>
+              ))}
+            </div>
+            <h1 className="break-words text-3xl font-bold leading-tight text-slate-950 sm:text-4xl">{hotel.name}</h1>
+            {starRating ? (
+              <div aria-label={t("hotelResults.starHotelAria").replace("{{rating}}", formatRating(hotel.rating, locale))} className="text-amber-500">
+                <span aria-hidden="true">{"★".repeat(starRating)}</span>
               </div>
-            </Card>
+            ) : null}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-slate-700">
+              <MapPin className="h-4 w-4 shrink-0 text-[#004BB8]" aria-hidden="true" />
+              <span>{hotel.location}</span>
+              {hotel.neighbourhood ? <span>· {hotel.neighbourhood}</span> : null}
+              {distanceText ? <span>· {distanceText}</span> : null}
+            </div>
+            {(reviewBand || reviewCountText) ? (
+              <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
+                {reviewBand ? <span className="rounded-full bg-slate-900 px-3 py-1 text-white">{reviewScore} {reviewLabel}</span> : null}
+                {reviewCountText ? <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700">{reviewCountText}</span> : null}
+              </div>
+            ) : null}
+          </header>
 
-            <Card className="overflow-hidden rounded-2xl border-slate-200 bg-white p-0 shadow-sm">
-              <div className="relative h-[260px] bg-slate-100 sm:h-[420px]">
-                {activeUrl ? (
-                  <Image
-                    src={activeUrl}
-                    alt={t("hotelResults.hotelImageAlt").replace("{{name}}", hotel.name).replace("{{location}}", hotel.location ? ` ${t("hotelResults.nearLocation").replace("{{location}}", hotel.location)}` : "")}
-                    fill
-                    className="object-cover"
-                    sizes="(min-width: 1024px) 680px, 100vw"
-                    onError={() => markImageFailed(activeUrl)}
-                    priority
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-[#004BB8]"><Building2 aria-hidden="true" /></div>
-                )}
-                {showGalleryControls ? (
-                  <>
-                    <button type="button" className="absolute left-3 top-1/2 flex min-h-10 min-w-10 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/75 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" aria-label={t("hotelResults.previousPhoto")} onClick={() => selectAdjacentImage(-1)}><ChevronLeft aria-hidden="true" /></button>
-                    <button type="button" className="absolute right-3 top-1/2 flex min-h-10 min-w-10 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/75 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" aria-label={t("hotelResults.nextPhoto")} onClick={() => selectAdjacentImage(1)}><ChevronRight aria-hidden="true" /></button>
-                    <div className="absolute bottom-3 right-3 rounded-full bg-slate-950/75 px-3 py-1 text-xs font-semibold text-white">{photoCounter}</div>
-                  </>
-                ) : null}
-              </div>
+          <Card className="overflow-hidden rounded-2xl border-slate-200 bg-white p-0 shadow-sm lg:col-start-1 lg:row-start-2">
+            <div className="relative h-[260px] bg-slate-100 sm:h-[420px]">
+              {activeUrl ? (
+                <Image
+                  src={activeUrl}
+                  alt={t("hotelResults.hotelImageAlt").replace("{{name}}", hotel.name).replace("{{location}}", hotel.location ? ` ${t("hotelResults.nearLocation").replace("{{location}}", hotel.location)}` : "")}
+                  fill
+                  className="object-cover"
+                  sizes="(min-width: 1024px) 680px, 100vw"
+                  onError={() => markImageFailed(activeUrl)}
+                  priority
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center text-[#004BB8]"><Building2 aria-hidden="true" /></div>
+              )}
               {showGalleryControls ? (
-                <div className="flex max-w-full gap-2 overflow-x-auto p-3">
-                  {usableIndices.map((imageIndex, visibleIndex) => {
-                    const thumbnailUrl = displayCandidates[imageIndex];
-                    return (
-                      <button key={thumbnailUrl} type="button" aria-pressed={activeIndex === imageIndex} aria-label={(t("hotelResults.selectPhoto") || "Show photo {{number}}").replace("{{number}}", String(visibleIndex + 1))} className={activeIndex === imageIndex ? "relative h-16 w-24 shrink-0 overflow-hidden rounded-lg ring-2 ring-[#004BB8] ring-offset-2" : "relative h-16 w-24 shrink-0 overflow-hidden rounded-lg ring-1 ring-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"} onClick={() => setPreferredImageIndex(imageIndex)}>
-                        <Image src={thumbnailUrl} alt="" fill className="object-cover" sizes="96px" onError={() => markImageFailed(thumbnailUrl)} />
-                      </button>
-                    );
-                  })}
-                </div>
+                <>
+                  <button type="button" className="absolute left-3 top-1/2 flex min-h-10 min-w-10 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/75 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" aria-label={t("hotelResults.previousPhoto")} onClick={() => selectAdjacentImage(-1)}><ChevronLeft aria-hidden="true" /></button>
+                  <button type="button" className="absolute right-3 top-1/2 flex min-h-10 min-w-10 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/75 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" aria-label={t("hotelResults.nextPhoto")} onClick={() => selectAdjacentImage(1)}><ChevronRight aria-hidden="true" /></button>
+                  <div className="absolute bottom-3 right-3 rounded-full bg-slate-950/75 px-3 py-1 text-xs font-semibold text-white">{photoCounter}</div>
+                </>
               ) : null}
-            </Card>
+            </div>
+            {showGalleryControls ? (
+              <div className="flex max-w-full gap-2 overflow-x-auto p-3">
+                {usableIndices.map((imageIndex, visibleIndex) => {
+                  const thumbnailUrl = displayCandidates[imageIndex];
+                  return (
+                    <button key={thumbnailUrl} type="button" aria-pressed={activeIndex === imageIndex} aria-label={(t("hotelResults.selectPhoto") || "Show photo {{number}}").replace("{{number}}", String(visibleIndex + 1))} className={activeIndex === imageIndex ? "relative h-16 w-24 shrink-0 overflow-hidden rounded-lg ring-2 ring-[#004BB8] ring-offset-2" : "relative h-16 w-24 shrink-0 overflow-hidden rounded-lg ring-1 ring-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"} onClick={() => setPreferredImageIndex(imageIndex)}>
+                      <Image src={thumbnailUrl} alt="" fill className="object-cover" sizes="96px" onError={() => markImageFailed(thumbnailUrl)} />
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+          </Card>
 
+          <aside className="min-w-0 lg:col-start-2 lg:row-start-2 lg:row-span-2 lg:self-stretch">
+            <div className="lg:sticky lg:top-24">
+              <Card className="rounded-2xl border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{t("hotelResults.estimatedStayTotal")}</p>
+                    <p className="mt-1 break-words text-3xl font-bold text-slate-950" dir="ltr">{formatCurrency(hotel.totalPrice, hotel.currency, locale)}</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-700">{t("hotelResults.pricePerNight").replace("{{price}}", formatCurrency(hotel.pricePerNight, hotel.currency, locale))}</p>
+                    <p className="mt-1 text-xs font-medium text-slate-500">{taxesText}</p>
+                    <p className="mt-2 text-xs font-medium text-slate-500">{hotel.currency}</p>
+                  </div>
+                  {hotel.provider ? <p className="text-sm font-medium text-slate-700">{t("providedBy")} {hotel.provider}</p> : null}
+                  {providerUnavailableText ? <p className="rounded-lg bg-slate-50 p-3 text-sm font-medium text-slate-700">{providerUnavailableText}</p> : null}
+                  {redirectError ? <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">{redirectError}</p> : null}
+                  <Button type="button" variant="accent" className="w-full rounded-lg border border-[#004BB8] bg-[#004BB8] text-white hover:border-[#021C2B] hover:bg-[#021C2B]" disabled={!providerEnabled || redirecting} onClick={continueToProvider}>
+                    {redirecting ? `${t("continueToProvider")}...` : t("continueToProvider")}
+                  </Button>
+                  <p className="text-xs leading-5 text-slate-500">{t("hotelDetails.providerDisclaimer") || enTranslations["hotelDetails.providerDisclaimer"]}</p>
+                </div>
+              </Card>
+            </div>
+          </aside>
+
+          <div className="min-w-0 space-y-5 lg:col-start-1 lg:row-start-3">
             <DetailSection title={t("hotelResults.roomDetails") || "Room"} items={[roomType, mealPlan]} />
             <DetailSection title={t("hotelResults.cancellationDetails") || "Cancellation"} items={[cancellationText]} />
             {amenityItems.length > 0 ? <AmenitySection title={t("hotelResults.amenitiesDetails") || "Amenities"} items={amenityItems} /> : null}
             {hotel.recommendationReasons.length > 0 ? <DetailSection title="Why this hotel" items={hotel.recommendationReasons} /> : null}
           </div>
-
-          <aside className="min-w-0 lg:sticky lg:top-24">
-            <Card className="rounded-2xl border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-              <div className="space-y-4">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{t("hotelResults.estimatedStayTotal")}</p>
-                  <p className="mt-1 break-words text-3xl font-bold text-slate-950" dir="ltr">{formatCurrency(hotel.totalPrice, hotel.currency, locale)}</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-700">{t("hotelResults.pricePerNight").replace("{{price}}", formatCurrency(hotel.pricePerNight, hotel.currency, locale))}</p>
-                  <p className="mt-1 text-xs font-medium text-slate-500">{taxesText}</p>
-                  <p className="mt-2 text-xs font-medium text-slate-500">{hotel.currency}</p>
-                </div>
-                {hotel.provider ? <p className="text-sm font-medium text-slate-700">{t("providedBy")} {hotel.provider}</p> : null}
-                {providerUnavailableText ? <p className="rounded-lg bg-slate-50 p-3 text-sm font-medium text-slate-700">{providerUnavailableText}</p> : null}
-                {redirectError ? <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">{redirectError}</p> : null}
-                <Button type="button" variant="accent" className="w-full rounded-lg border border-[#004BB8] bg-[#004BB8] text-white hover:border-[#021C2B] hover:bg-[#021C2B]" disabled={!providerEnabled || redirecting} onClick={continueToProvider}>
-                  {redirecting ? `${t("continueToProvider")}...` : t("continueToProvider")}
-                </Button>
-                <p className="text-xs leading-5 text-slate-500">{t("hotelDetails.providerDisclaimer") || enTranslations["hotelDetails.providerDisclaimer"]}</p>
-              </div>
-            </Card>
-          </aside>
         </div>
       </section>
     </main>
