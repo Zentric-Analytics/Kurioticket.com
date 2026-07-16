@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Building2, ChevronDown, Loader2, LogOut, Search, Settings, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Bell, Building2, ChevronDown, Inbox, Loader2, LogOut, Search, Settings, ShieldCheck } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatAdminBadgeLabel } from "@/components/admin/adminDesignSystem";
@@ -337,40 +337,154 @@ export function AdminFilterBar({ children, action, className = "" }: { children:
   );
 }
 
-export function AdminEmptyState({ title = "No data available", message, action }: { title?: string; message: string; action?: React.ReactNode }) {
+export function AdminEmptyState({
+  title = "No data available",
+  message,
+  action,
+  variant = "full",
+}: {
+  title?: string;
+  message: string;
+  action?: React.ReactNode;
+  variant?: "full" | "compact";
+}) {
   return (
-    <AdminSectionCard className="p-6">
-      <div className="max-w-2xl">
-        <p className="text-base font-semibold text-slate-950">{title}</p>
-        <p className="mt-2 text-sm leading-6 text-slate-600">{message}</p>
-        {action ? <div className="mt-4">{action}</div> : null}
+    <AdminSectionCard className={cn("p-6", variant === "compact" && "rounded-none border-0 bg-transparent shadow-none")}>
+      <div className={cn("flex gap-4", variant === "compact" ? "items-start" : "max-w-2xl items-start")} role="status" aria-live="polite">
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 ring-1 ring-slate-200">
+          <Inbox className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <div>
+          <p className="text-base font-semibold text-slate-950">{title}</p>
+          <p className="mt-1 text-sm leading-6 text-slate-600">{message}</p>
+          {action ? <div className="mt-4">{action}</div> : null}
+        </div>
       </div>
     </AdminSectionCard>
   );
 }
 
+export function AdminDataErrorState({
+  title = "Unable to load data",
+  message = "Please try again. If the issue continues, contact an administrator.",
+  retry,
+  secondaryAction,
+}: {
+  title?: string;
+  message?: string;
+  retry?: React.ReactNode;
+  secondaryAction?: React.ReactNode;
+}) {
+  return (
+    <AdminSectionCard className="border-rose-100 bg-rose-50/40 p-6">
+      <div className="flex gap-4" role="alert">
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-rose-600 ring-1 ring-rose-200">
+          <AlertTriangle className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <div>
+          <p className="text-base font-semibold text-slate-950">{title}</p>
+          <p className="mt-1 text-sm leading-6 text-slate-600">{message}</p>
+          {retry || secondaryAction ? <div className="mt-4 flex flex-wrap gap-2">{retry}{secondaryAction}</div> : null}
+        </div>
+      </div>
+    </AdminSectionCard>
+  );
+}
+
+type AdminDataColumn = string | { key: string; label: React.ReactNode; align?: "left" | "right" | "center"; className?: string };
+
+type AdminDataRow = { id: string; cells: React.ReactNode[] };
+
+function columnKey(column: AdminDataColumn) {
+  return typeof column === "string" ? column : column.key;
+}
+
+function columnLabel(column: AdminDataColumn) {
+  return typeof column === "string" ? column : column.label;
+}
+
+function columnAlignClass(column: AdminDataColumn) {
+  const align = typeof column === "string" ? undefined : column.align;
+  if (align === "right") return "text-right";
+  if (align === "center") return "text-center";
+  return "text-left";
+}
+
+function columnCustomClass(column: AdminDataColumn) {
+  return typeof column === "string" ? "" : column.className || "";
+}
+
 export function AdminDataTable({
   columns,
   rows,
+  caption,
+  summary,
+  footer,
+  density = "comfortable",
+  minWidth = "900px",
+}: {
+  columns: AdminDataColumn[];
+  rows: AdminDataRow[];
+  caption?: string;
+  summary?: React.ReactNode;
+  footer?: React.ReactNode;
+  density?: "compact" | "comfortable";
+  minWidth?: string;
+}) {
+  const cellPadding = density === "compact" ? "px-4 py-3" : "px-5 py-4";
+
+  return (
+    <AdminSectionCard className="overflow-hidden p-0 shadow-sm">
+      {summary ? <div className="border-b border-slate-200 px-5 py-4 text-sm text-slate-600">{summary}</div> : null}
+      <div className="overflow-x-auto bg-[linear-gradient(to_right,white,white),linear-gradient(to_right,white,white),linear-gradient(to_right,rgba(15,23,42,0.08),rgba(255,255,255,0)),linear-gradient(to_left,rgba(15,23,42,0.08),rgba(255,255,255,0))] bg-[length:24px_100%,24px_100%,12px_100%,12px_100%] bg-[position:left_center,right_center,left_center,right_center] bg-no-repeat [background-attachment:local,local,scroll,scroll]">
+        <table className="w-full border-separate border-spacing-0 text-left text-sm" style={{ minWidth }} aria-label={caption}>
+          {caption ? <caption className="sr-only">{caption}</caption> : null}
+          <thead className="sticky top-0 z-10 bg-slate-50/95 text-xs text-slate-500 backdrop-blur supports-[backdrop-filter]:bg-slate-50/80">
+            <tr>
+              {columns.map((column) => (
+                <th key={columnKey(column)} scope="col" className={cn(cellPadding, "border-b border-slate-200 font-semibold uppercase tracking-wide", columnAlignClass(column), columnCustomClass(column))}>
+                  {columnLabel(column)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100 bg-white">
+            {rows.map((row) => (
+              <tr key={row.id} className="group align-top transition-colors hover:bg-slate-50/80 focus-within:bg-slate-50/80">
+                {row.cells.map((cell, index) => <td key={`${row.id}-${index}`} className={cn(cellPadding, "max-w-[22rem] text-slate-700 first:font-medium first:text-slate-950 [&_a]:focus-ring [&_button]:focus-ring", index === row.cells.length - 1 && "whitespace-nowrap text-right")}>{cell}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {footer ? <div className="border-t border-slate-200 bg-slate-50 px-5 py-3">{footer}</div> : null}
+    </AdminSectionCard>
+  );
+}
+
+export function AdminDataTableSkeleton({
+  columns,
+  rows = 5,
+  caption = "Loading table data",
+  density = "comfortable",
 }: {
   columns: string[];
-  rows: Array<{ id: string; cells: React.ReactNode[] }>;
+  rows?: number;
+  caption?: string;
+  density?: "compact" | "comfortable";
 }) {
   return (
-    <AdminSectionCard className="overflow-x-auto p-0">
-      <table className="w-full min-w-[900px] text-left text-sm">
-        <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-          <tr>{columns.map((column) => <th key={column} className="px-4 py-3 font-semibold">{column}</th>)}</tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.id} className="border-t border-slate-200 align-top">
-              {row.cells.map((cell, index) => <td key={`${row.id}-${index}`} className="px-4 py-3 text-slate-700">{cell}</td>)}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </AdminSectionCard>
+    <AdminDataTable
+      caption={caption}
+      density={density}
+      columns={columns}
+      rows={Array.from({ length: rows }, (_, rowIndex) => ({
+        id: `skeleton-${rowIndex}`,
+        cells: columns.map((column, columnIndex) => (
+          <span key={`${column}-${columnIndex}`} className="block h-4 w-full max-w-32 rounded bg-slate-100 motion-safe:animate-pulse" aria-hidden="true" />
+        )),
+      }))}
+    />
   );
 }
 

@@ -31,9 +31,12 @@ export default async function AdminLogsPage({ searchParams }: PageProps) {
       </AdminFilterBar>
       <div className="mt-4">
         {logs.length === 0 ? (
-          <AdminEmptyState title="No admin audit logs found" message="Audit logs will appear after sensitive admin actions are recorded. TODO: expand this view when additional audit event types are added." />
+          <AdminEmptyState title="No admin audit logs found" message="Audit logs will appear after sensitive admin actions are recorded." />
         ) : (
           <AdminDataTable
+            caption="Admin audit logs"
+            density="compact"
+            minWidth="1120px"
             columns={["Created", "Admin", "Action", "Target", "Target email", "IP", "Metadata"]}
             rows={logs.map((log) => ({
               id: log.id,
@@ -44,7 +47,7 @@ export default async function AdminLogsPage({ searchParams }: PageProps) {
                 `${log.targetType}${log.targetId ? ` / ${log.targetId}` : ""}`,
                 log.targetEmail || "—",
                 log.ipAddress || "—",
-                <span key="metadata" className="font-mono text-xs text-slate-500">{JSON.stringify(log.metadata || {})}</span>,
+                <span key="metadata" className="block max-w-xs truncate font-mono text-xs text-slate-500" title={JSON.stringify(log.metadata || {})}>{JSON.stringify(log.metadata || {})}</span>,
               ],
             }))}
           />
