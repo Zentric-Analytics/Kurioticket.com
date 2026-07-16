@@ -453,14 +453,49 @@ export function HotelDetailsClient({ id }: { id: string }) {
           </aside>
 
           <div className="min-w-0 space-y-5 lg:col-start-1 lg:row-start-3">
-            <DetailSection title={t("hotelResults.roomDetails") || "Room"} items={[roomType, mealPlan]} />
-            <DetailSection title={t("hotelResults.cancellationDetails") || "Cancellation"} items={[cancellationText]} />
+            <StayDetailsSection
+              roomTitle={t("hotelResults.roomDetails") || "Room"}
+              roomItems={[roomType, mealPlan]}
+              cancellationTitle={t("hotelResults.cancellationDetails") || "Cancellation"}
+              cancellationItems={[cancellationText]}
+            />
             {amenityItems.length > 0 ? <AmenitySection title={t("hotelResults.amenitiesDetails") || "Amenities"} items={amenityItems} /> : null}
             {hotel.recommendationReasons.length > 0 ? <DetailSection title="Why this hotel" items={hotel.recommendationReasons} /> : null}
           </div>
         </div>
       </section>
     </main>
+  );
+}
+
+type StayDetailsSectionProps = {
+  roomTitle: string;
+  roomItems: string[];
+  cancellationTitle: string;
+  cancellationItems: string[];
+};
+
+function StayDetailsSection({ roomTitle, roomItems, cancellationTitle, cancellationItems }: StayDetailsSectionProps) {
+  const sections = [
+    { title: roomTitle, items: roomItems.map((item) => item.trim()).filter(Boolean) },
+    { title: cancellationTitle, items: cancellationItems.map((item) => item.trim()).filter(Boolean) },
+  ].filter((section) => section.items.length > 0);
+
+  if (sections.length === 0) return null;
+
+  return (
+    <Card className="rounded-2xl border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <div className={sections.length > 1 ? "grid gap-5 sm:grid-cols-2 sm:gap-6" : ""}>
+        {sections.map((section) => (
+          <section key={section.title}>
+            <h2 className="text-base font-bold text-slate-950">{section.title}</h2>
+            <ul className="mt-3 space-y-2 text-sm font-medium leading-6 text-slate-700">
+              {section.items.map((item) => <li key={item}>{item}</li>)}
+            </ul>
+          </section>
+        ))}
+      </div>
+    </Card>
   );
 }
 
