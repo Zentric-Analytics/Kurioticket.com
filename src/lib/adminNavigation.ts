@@ -4,12 +4,14 @@ import {
   Activity,
   BookOpen,
   ClipboardList,
+  ExternalLink,
   FileText,
   Headphones,
   LayoutDashboard,
   LockKeyhole,
   Search,
   Settings,
+  Trash2,
   Users,
 } from "lucide-react";
 
@@ -20,18 +22,25 @@ export type AdminNavDefinition = {
   label: string;
   icon: React.ComponentType<{ className?: string; size?: number }>;
   roles: AdminRole[];
-  section: "operations" | "readiness" | "content" | "controls";
+  section: "operations" | "readiness" | "observability" | "content" | "controls";
 };
 
 export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, roles: ["ADMIN", "SUPPORT"], section: "operations" },
   { href: "/admin/users", label: "Users", icon: Users, roles: ["ADMIN", "SUPPORT"], section: "operations" },
-  { href: "/admin/providers", label: "Providers", icon: Activity, roles: ["ADMIN"], section: "readiness" },
-  { href: "/admin/searches", label: "Searches", icon: Search, roles: ["ADMIN", "SUPPORT"], section: "operations" },
   { href: "/admin/bookings", label: "Bookings", icon: ClipboardList, roles: ["ADMIN", "SUPPORT"], section: "operations" },
-  { href: "/admin/content", label: "Content", icon: FileText, roles: ["ADMIN"], section: "content" },
   { href: "/admin/support", label: "Support", icon: Headphones, roles: ["ADMIN", "SUPPORT"], section: "operations" },
-  { href: "/admin/logs", label: "Logs", icon: BookOpen, roles: ["ADMIN"], section: "controls" },
+  { href: "/admin/account-deletions", label: "Account Deletions", icon: Trash2, roles: ["ADMIN"], section: "operations" },
+  { href: "/admin/providers", label: "Providers", icon: Activity, roles: ["ADMIN"], section: "readiness" },
+  { href: "/admin/searches", label: "Searches", icon: Search, roles: ["ADMIN", "SUPPORT"], section: "observability" },
+  { href: "/admin/redirects", label: "Provider Handoffs", icon: ExternalLink, roles: ["ADMIN"], section: "observability" },
+  { href: "/admin/logs", label: "Admin Logs", icon: BookOpen, roles: ["ADMIN"], section: "observability" },
+  { href: "/admin/content", label: "Content", icon: FileText, roles: ["ADMIN"], section: "content" },
   { href: "/admin/system", label: "System", icon: LockKeyhole, roles: ["ADMIN"], section: "controls" },
   { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["ADMIN"], section: "controls" },
 ];
+
+export function isAdminNavItemActive(itemHref: string, pathname: string) {
+  if (itemHref === "/admin") return pathname === itemHref;
+  return pathname === itemHref || pathname.startsWith(`${itemHref}/`);
+}

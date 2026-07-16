@@ -6,13 +6,14 @@ import { AlertTriangle, Bell, Building2, ChevronDown, Inbox, Loader2, LogOut, Se
 
 import { cn } from "@/lib/utils";
 import { formatAdminBadgeLabel } from "@/components/admin/adminDesignSystem";
-import { adminNavigation, type AdminNavDefinition, type AdminRole } from "@/lib/adminNavigation";
+import { adminNavigation, isAdminNavItemActive, type AdminNavDefinition, type AdminRole } from "@/lib/adminNavigation";
 
 type StatusTone = "good" | "bad" | "warn" | "neutral" | "info";
 
 const sectionLabels = {
   operations: "Operations",
   readiness: "Provider readiness",
+  observability: "Observability",
   content: "Website content",
   controls: "System & security",
 };
@@ -50,7 +51,7 @@ export function AdminSidebar({ items }: { items: AdminNavDefinition[] }) {
       acc[item.section].push(item);
       return acc;
     },
-    { operations: [], readiness: [], content: [], controls: [] },
+    { operations: [], readiness: [], observability: [], content: [], controls: [] },
   );
 
   return (
@@ -84,7 +85,7 @@ export function AdminSidebar({ items }: { items: AdminNavDefinition[] }) {
 
 export function AdminNavItem({ item }: { item: AdminNavDefinition }) {
   const pathname = usePathname();
-  const active = item.href === "/admin" ? pathname === item.href : pathname.startsWith(item.href);
+  const active = isAdminNavItemActive(item.href, pathname);
   const Icon = item.icon;
 
   return (
@@ -97,8 +98,8 @@ export function AdminNavItem({ item }: { item: AdminNavDefinition }) {
       }`}
       aria-current={active ? "page" : undefined}
     >
-      <Icon className={active ? "text-indigo-700" : "text-slate-400"} size={17} />
-      <span>{item.label}</span>
+      <Icon aria-hidden="true" className={active ? "text-indigo-700" : "text-slate-400"} size={17} />
+      <span className="whitespace-nowrap">{item.label}</span>
     </Link>
   );
 }

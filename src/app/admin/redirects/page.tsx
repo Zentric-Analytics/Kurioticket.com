@@ -2,13 +2,13 @@ import { AdminDataTable, AdminEmptyState, AdminPageShell, AdminStatusBadge } fro
 import { formatDateTime } from "@/lib/admin-data";
 import { withOptionalDb } from "@/lib/prisma";
 
-export const metadata = { title: "Admin Redirects" };
+export const metadata = { title: "Admin Provider Handoffs" };
 
 export default async function AdminRedirectsPage() {
   const redirects = await withOptionalDb((db) => db.redirectLog.findMany({ orderBy: { createdAt: "desc" }, take: 100 }), []);
 
   return (
-    <AdminPageShell title="Redirects" description="Outbound provider handoff attempts and provider redirect logs, when real logs exist.">
+    <AdminPageShell title="Provider Handoffs" description="Review outbound redirects from Kurioticket to external providers.">
       {redirects.length === 0 ? (
         <AdminEmptyState title="No redirect logs" message="Redirect logging is not active yet or no outbound handoffs have been recorded." />
       ) : (
