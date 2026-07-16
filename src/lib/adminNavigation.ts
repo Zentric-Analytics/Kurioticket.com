@@ -3,7 +3,6 @@ import type React from "react";
 import {
   Activity,
   BookOpen,
-  ClipboardList,
   ExternalLink,
   FileText,
   Headphones,
@@ -28,7 +27,6 @@ export type AdminNavDefinition = {
 export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, roles: ["ADMIN", "SUPPORT"], section: "operations" },
   { href: "/admin/users", label: "Users", icon: Users, roles: ["ADMIN", "SUPPORT"], section: "operations" },
-  { href: "/admin/bookings", label: "Bookings", icon: ClipboardList, roles: ["ADMIN", "SUPPORT"], section: "operations" },
   { href: "/admin/support", label: "Support", icon: Headphones, roles: ["ADMIN", "SUPPORT"], section: "operations" },
   { href: "/admin/account-deletions", label: "Account Deletions", icon: Trash2, roles: ["ADMIN"], section: "operations" },
   { href: "/admin/providers", label: "Providers", icon: Activity, roles: ["ADMIN"], section: "readiness" },

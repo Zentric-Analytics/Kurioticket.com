@@ -10,6 +10,7 @@ const shell = readFileSync("src/components/admin/AdminPageShell.tsx", "utf8");
 const accountDeletionsPage = readFileSync("src/app/admin/account-deletions/page.tsx", "utf8");
 const redirectsPage = readFileSync("src/app/admin/redirects/page.tsx", "utf8");
 const logsPage = readFileSync("src/app/admin/logs/page.tsx", "utf8");
+const bookingsPage = readFileSync("src/app/admin/bookings/page.tsx", "utf8");
 
 function itemByHref(href: string) {
   const item = adminNavigation.find((candidate) => candidate.href === href);
@@ -26,12 +27,18 @@ test("admin navigation inventory exposes existing workflows without restoring le
   assert.ok(navLabels.includes("Support"));
   assert.ok(navLabels.includes("Users"));
 
+  assert.equal(navLabels.includes("Bookings"), false);
+  assert.equal(navHrefs.includes("/admin/bookings"), false);
+  assert.match(bookingsPage, /export default function AdminBookingsPage/);
+  assert.match(bookingsPage, /title="Booking Operations"/);
+
   assert.equal(navHrefs.includes("/admin/flights"), false);
   assert.equal(navHrefs.includes("/admin/hotels"), false);
   assert.equal(navHrefs.includes("/admin/cars"), false);
 });
 
 test("admin navigation order and labels preserve ownership boundaries", () => {
+  assert.equal(navLabels.indexOf("Support"), navLabels.indexOf("Users") + 1);
   assert.equal(navLabels.indexOf("Account Deletions"), navLabels.indexOf("Support") + 1);
   assert.equal(navLabels.indexOf("Provider Handoffs"), navLabels.indexOf("Searches") + 1);
   assert.equal(navLabels.indexOf("Admin Logs"), navLabels.indexOf("Provider Handoffs") + 1);
@@ -48,6 +55,7 @@ test("admin navigation active matching handles nested routes without unrelated p
   assert.equal(isAdminNavItemActive("/admin/redirects", "/admin/redirects"), true);
   assert.equal(isAdminNavItemActive("/admin/logs", "/admin/logs"), true);
   assert.equal(isAdminNavItemActive("/admin/support", "/admin/support/example-id"), true);
+  assert.equal(isAdminNavItemActive("/admin/bookings", "/admin/bookings"), true);
 
   assert.equal(isAdminNavItemActive("/admin", "/admin/support"), false);
   assert.equal(isAdminNavItemActive("/admin/support", "/admin/supportive"), false);
