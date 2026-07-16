@@ -29,12 +29,6 @@ import {
   buildHotelFacilityFilterOptions,
   hotelMatchesFacilityFilters,
 } from "@/components/results/hotelFacilityFilter";
-import {
-  filterHotelsBySavedIds,
-  parseSavedHotelIds,
-  SAVED_HOTEL_IDS_CHANGED_EVENT,
-  SAVED_HOTEL_IDS_STORAGE_KEY,
-} from "@/components/results/hotelSavedStorage";
 import { HotelSearchBar } from "@/components/search/HotelSearchBar";
 import { normalizeHotelDestinationSearchValue } from "@/data/hotelDestinations";
 import { translations as enTranslations } from "@/lib/i18n/en";
@@ -350,8 +344,6 @@ export function HotelResultsClient() {
   const [hotelSummarySortMode, setHotelSummarySortMode] =
     useState<HotelSummarySortMode>("cheapest");
   const [hotelSortMenuOpen, setHotelSortMenuOpen] = useState(false);
-  const [savedHotelIds, setSavedHotelIds] = useState<string[]>([]);
-  const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [mobileHotelSearchOpen, setMobileHotelSearchOpen] = useState(false);
   const [showDesktopMinimizedSearch, setShowDesktopMinimizedSearch] =
     useState(false);
@@ -430,58 +422,6 @@ export function HotelResultsClient() {
     activeMobileHotelSearchDraft.rooms,
     body.sort,
   ].join("-");
-
-  useEffect(() => {
-    let isActive = true;
-
-    function updateSavedHotelIds(rawValue: string | null) {
-      if (!isActive) return;
-
-      setSavedHotelIds(parseSavedHotelIds(rawValue));
-    }
-
-    queueMicrotask(() => {
-      try {
-        updateSavedHotelIds(
-          window.localStorage.getItem(SAVED_HOTEL_IDS_STORAGE_KEY),
-        );
-      } catch {
-        updateSavedHotelIds(null);
-      }
-    });
-
-    function handleStorage(event: StorageEvent) {
-      if (event.key !== SAVED_HOTEL_IDS_STORAGE_KEY) return;
-
-      updateSavedHotelIds(event.newValue);
-    }
-
-    function handleSavedHotelIdsChanged(event: Event) {
-      if (!(event instanceof CustomEvent)) return;
-      if (typeof event.detail !== "string") return;
-
-      updateSavedHotelIds(event.detail);
-    }
-
-    window.addEventListener("storage", handleStorage);
-    window.addEventListener(
-      SAVED_HOTEL_IDS_CHANGED_EVENT,
-      handleSavedHotelIdsChanged,
-    );
-
-    return () => {
-      isActive = false;
-      window.removeEventListener("storage", handleStorage);
-      window.removeEventListener(
-        SAVED_HOTEL_IDS_CHANGED_EVENT,
-        handleSavedHotelIdsChanged,
-      );
-    };
-  }, []);
-
-  useEffect(() => {
-    queueMicrotask(() => setShowSavedOnly(false));
-  }, [bodySearchKey]);
 
   const updateMobileHotelSearchDraft = useCallback(
     (nextDraft: HotelMobileSearchDraft) => {
@@ -803,16 +743,9 @@ export function HotelResultsClient() {
   );
 
   const visibleFilteredHotels = resultsApplying ? visibleFiltered : filtered;
-  const savedVisibleHotels = useMemo(
-    () => filterHotelsBySavedIds(visibleFilteredHotels, savedHotelIds),
-    [savedHotelIds, visibleFilteredHotels],
-  );
-  const displayedHotels = showSavedOnly
-    ? savedVisibleHotels
-    : visibleFilteredHotels;
   const sortedVisibleHotels = useMemo(
-    () => sortHotelSummaryResults(displayedHotels, hotelSummarySortMode, currencyRates.rates),
-    [currencyRates.rates, displayedHotels, hotelSummarySortMode],
+    () => sortHotelSummaryResults(visibleFilteredHotels, hotelSummarySortMode, currencyRates.rates),
+    [currencyRates.rates, hotelSummarySortMode, visibleFilteredHotels],
   );
   const hotelSortOptions = useMemo(
     () =>
@@ -839,26 +772,17 @@ export function HotelResultsClient() {
     hotelSortOptions.find((option) => option.value === hotelSummarySortMode)
       ?.label ?? hotelSortOptions[0]?.label ?? "";
   const formattedDisplayedHotelCount = formatHotelCount(
-    displayedHotels.length,
+    visibleFilteredHotels.length,
     locale,
   );
   const resultsHeading = searchedDestination
     ? `${formattedDisplayedHotelCount} ${
-        displayedHotels.length === 1 ? "property" : "properties"
+        visibleFilteredHotels.length === 1 ? "property" : "properties"
       } found in ${searchedDestination}`
     : t("hotelResults.foundPlacesToStay").replace(
         "{{count}}",
         formattedDisplayedHotelCount,
       );
-  const formattedSavedVisibleHotelCount = new Intl.NumberFormat(locale).format(
-    savedVisibleHotels.length,
-  );
-  const showSavedEmptyState =
-    showSavedOnly &&
-    visibleFilteredHotels.length > 0 &&
-    savedVisibleHotels.length === 0 &&
-    !error;
-
   const showFilteredEmptyState =
     !loading &&
     !error &&
@@ -1580,37 +1504,20 @@ export function HotelResultsClient() {
                   t={t}
                 />
 
-                <div className="flex w-full flex-col gap-2 py-1 sm:grid sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center sm:gap-x-6 sm:gap-y-0">
+                <div
+                  role="group"
+                  aria-label={t("hotelResults.summaryAria")}
+                  className="flex w-full flex-col gap-2 py-1 sm:flex-row sm:items-center sm:justify-between"
+                >
                   <h1 className="min-w-0 text-sm font-bold text-navy">
                     {resultsHeading}
                   </h1>
-                  <div className="flex w-full min-w-0 items-center justify-between gap-2 sm:contents">
-                    <div
-                      className="inline-flex shrink-0 items-center gap-4 sm:justify-self-center"
-                      role="group"
-                      aria-label={t("hotelResults.savedHotels") || "Hotel result view"}
-                    >
-                      <button
-                        type="button"
-                        aria-pressed={showSavedOnly}
-                        className={cn(
-                          "relative px-0 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2",
-                          showSavedOnly
-                            ? "text-[#004BB8] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-[#004BB8]"
-                            : "text-slate-600 hover:text-slate-950",
-                        )}
-                        onClick={() => setShowSavedOnly(true)}
-                      >
-                        {t("hotelResults.savedHotels") || "Saved"} (
-                        {formattedSavedVisibleHotelCount})
-                      </button>
-                    </div>
-                    <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-none sm:shrink-0 sm:justify-self-end">
-                      <span className="whitespace-nowrap text-base font-semibold text-slate-700">
-                        {`${t("sortBy") || "Sort by"}:`}
-                      </span>
+                  <div className="flex min-w-0 items-center justify-end gap-2">
+                    <span className="whitespace-nowrap text-base font-semibold text-slate-700">
+                      {`${t("sortBy") || "Sort by"}:`}
+                    </span>
 
-                      <div
+                    <div
                         ref={hotelSortWrapperRef}
                         className="relative inline-flex min-w-0 items-center"
                         onBlur={(event) => {
@@ -1702,7 +1609,6 @@ export function HotelResultsClient() {
                       </div>
                     </div>
                   </div>
-                </div>
 
                 {sortedVisibleHotels.length ? (
                   sortedVisibleHotels.map((hotel, index) => (
@@ -1714,25 +1620,6 @@ export function HotelResultsClient() {
                       }
                     />
                   ))
-                ) : showSavedEmptyState ? (
-                  <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-muted shadow-sm">
-                    <p className="text-base font-bold text-[#021C2B]">
-                      {t("hotelResults.noSavedHotelsTitle") ||
-                        "No saved hotels in these results"}
-                    </p>
-                    <p className="mt-2 max-w-2xl leading-6">
-                      {t("hotelResults.noSavedHotelsBody") ||
-                        "Save a hotel using the heart, or return to all results."}
-                    </p>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="mt-4"
-                      onClick={() => setShowSavedOnly(false)}
-                    >
-                      {t("hotelResults.showAllHotels") || "Show all hotels"}
-                    </Button>
-                  </div>
                 ) : (
                   <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm font-semibold text-muted shadow-sm">
                     {t("hotelResults.noStaysMatchFiltersInline")}
