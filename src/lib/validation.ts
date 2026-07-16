@@ -200,6 +200,14 @@ export const supportTicketSchema = z.object({
   sourceContext: z.record(z.string(), z.unknown()).optional(),
 });
 
+export const adminSupportReplySchema = z.object({
+  body: z.string().trim().min(2).max(4000),
+});
+
+export const adminSupportStatusSchema = z.object({
+  status: z.enum(["OPEN", "WAITING_ON_USER", "WAITING_ON_TEAM", "RESOLVED", "CLOSED"]),
+});
+
 export const newsletterSubscribeSchema = z.object({
   email: emailSchema,
   source: z.string().trim().min(1).max(80).optional(),

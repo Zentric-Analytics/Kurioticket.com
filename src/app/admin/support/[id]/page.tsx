@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { AdminLinkButton, AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { SupportTicketActions } from "@/components/admin/SupportTicketActions";
 import { formatDateTime } from "@/lib/admin-data";
 import { getPrisma } from "@/lib/prisma";
 
@@ -48,6 +49,7 @@ export default async function AdminSupportTicketPage({ params }: PageProps) {
             </div>
           ))}
         </AdminSectionCard>
+        <SupportTicketActions ticketId={ticket.id} status={ticket.status} />
       </div>
     </AdminPageShell>
   );

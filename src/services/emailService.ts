@@ -287,6 +287,19 @@ export function supportTicketEmail(input: { ticketId: string; subject: string })
   `;
 }
 
+export function supportTicketReplyEmail(input: { ticketId: string; subject: string; body: string }) {
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
+      <h1 style="font-size:22px">Kurioticket support replied</h1>
+      <p>Our team added a reply to your support ticket.</p>
+      <p><strong>Ticket:</strong> ${escapeHtml(input.ticketId)}</p>
+      <p><strong>Subject:</strong> ${escapeHtml(input.subject)}</p>
+      <div style="border:1px solid #dbe3ea;border-radius:14px;padding:14px;background:#f8fafc;white-space:pre-wrap">${escapeHtml(input.body)}</div>
+      <p>If you still need help, reply with any additional context and our team will continue reviewing your request.</p>
+    </div>
+  `;
+}
+
 export function verificationCodeEmail(input: {
   code: string;
   name?: string | null;
