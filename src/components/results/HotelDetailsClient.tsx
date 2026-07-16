@@ -96,6 +96,27 @@ function normalizeWhitespace(value: string) {
   return value.trim().replace(/\s+/g, " ");
 }
 
+function getDistinctHotelLocationParts(hotel: PublicHotelResult, distanceText: string) {
+  const parts: string[] = [];
+  const seen = new Set<string>();
+  const mainLocation = normalizeWhitespace(hotel.location || "");
+  const normalizedMainLocation = mainLocation.toLocaleLowerCase();
+
+  for (const value of [mainLocation, hotel.neighbourhood, distanceText]) {
+    const displayText = normalizeWhitespace(value || "");
+    if (!displayText) continue;
+
+    const comparisonText = displayText.toLocaleLowerCase();
+    if (seen.has(comparisonText)) continue;
+    if (parts.length > 0 && normalizedMainLocation.includes(comparisonText)) continue;
+
+    parts.push(displayText);
+    seen.add(comparisonText);
+  }
+
+  return parts;
+}
+
 function toTitleCase(value: string) {
   const normalized = normalizeWhitespace(value);
   if (!normalized) return "";
@@ -309,6 +330,7 @@ export function HotelDetailsClient({ id }: { id: string }) {
   const mealPlan = getMealPlan(hotel, roomType, t);
   const cancellationText = getCancellationText(hotel.cancellationInfo, t);
   const distanceText = meaningfulDistance(hotel.distanceFromCenter);
+  const locationParts = getDistinctHotelLocationParts(hotel, distanceText);
   const amenityItems = localizeAmenityItems(buildHotelAmenityPresentation(hotel.amenities, hotel.amenities.length), t);
   const reviewBand = getHotelReviewBand(hotel.reviewScore);
   const reviewCount = getHotelReviewCount(hotel.reviewCount);
@@ -338,11 +360,6 @@ export function HotelDetailsClient({ id }: { id: string }) {
       <section className="page-shell py-6 sm:py-8 lg:py-10">
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-6">
           <header className="min-w-0 space-y-3 lg:col-span-2">
-            {hotel.dataSource === "demo" ? (
-              <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">
-                {t("hotelResults.demoDisclaimer")}
-              </p>
-            ) : null}
             <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[#004BB8]">
               {hotel.badges.map((badge) => (
                 <span key={badge} className="rounded-full bg-blue-50 px-2.5 py-1">{badge}</span>
@@ -356,9 +373,12 @@ export function HotelDetailsClient({ id }: { id: string }) {
             ) : null}
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-slate-700">
               <MapPin className="h-4 w-4 shrink-0 text-[#004BB8]" aria-hidden="true" />
-              <span>{hotel.location}</span>
-              {hotel.neighbourhood ? <span>· {hotel.neighbourhood}</span> : null}
-              {distanceText ? <span>· {distanceText}</span> : null}
+              {locationParts.map((part, index) => (
+                <span key={`${part}-${index}`}>
+                  {index > 0 ? <span aria-hidden="true"> · </span> : null}
+                  {part}
+                </span>
+              ))}
             </div>
             {(reviewBand || reviewCountText) ? (
               <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
@@ -416,13 +436,17 @@ export function HotelDetailsClient({ id }: { id: string }) {
                     <p className="mt-1 text-xs font-medium text-slate-500">{taxesText}</p>
                     <p className="mt-2 text-xs font-medium text-slate-500">{hotel.currency}</p>
                   </div>
-                  {hotel.provider ? <p className="text-sm font-medium text-slate-700">{t("providedBy")} {hotel.provider}</p> : null}
+                  {hotel.provider && hotel.dataSource !== "demo" ? <p className="text-sm font-medium text-slate-700">{t("providedBy")} {hotel.provider}</p> : null}
                   {providerUnavailableText ? <p className="rounded-lg bg-slate-50 p-3 text-sm font-medium text-slate-700">{providerUnavailableText}</p> : null}
                   {redirectError ? <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">{redirectError}</p> : null}
-                  <Button type="button" variant="accent" className="w-full rounded-lg border border-[#004BB8] bg-[#004BB8] text-white hover:border-[#021C2B] hover:bg-[#021C2B]" disabled={!providerEnabled || redirecting} onClick={continueToProvider}>
-                    {redirecting ? `${t("continueToProvider")}...` : t("continueToProvider")}
-                  </Button>
-                  <p className="text-xs leading-5 text-slate-500">{t("hotelDetails.providerDisclaimer") || enTranslations["hotelDetails.providerDisclaimer"]}</p>
+                  {providerEnabled ? (
+                    <>
+                      <Button type="button" variant="accent" className="w-full rounded-lg border border-[#004BB8] bg-[#004BB8] text-white hover:border-[#021C2B] hover:bg-[#021C2B]" disabled={redirecting} onClick={continueToProvider}>
+                        {redirecting ? `${t("continueToProvider")}...` : t("continueToProvider")}
+                      </Button>
+                      <p className="text-xs leading-5 text-slate-500">{t("hotelDetails.providerDisclaimer") || enTranslations["hotelDetails.providerDisclaimer"]}</p>
+                    </>
+                  ) : null}
                 </div>
               </Card>
             </div>
