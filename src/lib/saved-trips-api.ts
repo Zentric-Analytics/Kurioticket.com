@@ -1,3 +1,17 @@
+export type SavedHotelApiItem = {
+  type: "hotel";
+  id: string;
+  provider: string;
+  hotelName: string;
+  destination: string;
+  checkIn: string;
+  checkOut: string;
+  totalPrice: number;
+  currency: string;
+  payload: unknown;
+  createdAt: string;
+};
+
 export type SavedTripApiItem = {
   type: "trip";
   id: string;
@@ -45,6 +59,15 @@ export type SavedTripApiResult = {
   duplicate?: boolean;
   items?: SavedTripApiItem[];
   item?: SavedTripApiItem;
+  error?: string;
+};
+
+export type SavedHotelApiResult = {
+  ok: boolean;
+  status: number;
+  duplicate?: boolean;
+  items?: SavedHotelApiItem[];
+  item?: SavedHotelApiItem;
   error?: string;
 };
 
@@ -124,6 +147,100 @@ function getError(payload: unknown, fallback: string) {
   }
 
   return fallback;
+}
+
+export async function fetchBackendSavedHotels(
+  signal?: AbortSignal,
+): Promise<SavedHotelApiResult> {
+  try {
+    const response = await fetch("/api/dashboard/saved?type=hotel", {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      signal,
+    });
+    const payload = await readJson(response);
+
+    if (!response.ok) {
+      return { ok: false, status: response.status, error: getError(payload, "Unable to load saved hotels.") };
+    }
+
+    const items =
+      payload &&
+      typeof payload === "object" &&
+      "items" in payload &&
+      Array.isArray(payload.items)
+        ? payload.items.filter((item): item is SavedHotelApiItem =>
+            Boolean(
+              item &&
+                typeof item === "object" &&
+                "type" in item &&
+                item.type === "hotel" &&
+                "id" in item &&
+                typeof item.id === "string" &&
+                "hotelName" in item &&
+                typeof item.hotelName === "string",
+            ),
+          )
+        : [];
+
+    return { ok: true, status: response.status, items };
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") throw error;
+    return { ok: false, status: 0, error: "Unable to load saved hotels." };
+  }
+}
+
+export async function saveBackendHotel(input: {
+  provider: string;
+  hotelName: string;
+  destination: string;
+  checkIn: string;
+  checkOut: string;
+  totalPrice: number;
+  currency: string;
+  payload: Record<string, unknown>;
+}): Promise<SavedHotelApiResult> {
+  try {
+    const response = await fetch("/api/dashboard/saved", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ type: "hotel", ...input }),
+    });
+    const payload = await readJson(response);
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        status: response.status,
+        duplicate: response.status === 409,
+        error: getError(payload, "Unable to save hotel."),
+      };
+    }
+
+    const item = payload && typeof payload === "object" && "item" in payload ? payload.item : undefined;
+    return { ok: true, status: response.status, item: item as SavedHotelApiItem | undefined };
+  } catch {
+    return { ok: false, status: 0, error: "Unable to save hotel." };
+  }
+}
+
+export async function deleteBackendHotel(backendId: string): Promise<SavedHotelApiResult> {
+  try {
+    const response = await fetch("/api/dashboard/saved", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ type: "hotel", id: backendId }),
+    });
+    const payload = await readJson(response);
+
+    if (!response.ok) {
+      return { ok: false, status: response.status, error: getError(payload, "Unable to delete saved hotel.") };
+    }
+
+    return { ok: true, status: response.status };
+  } catch {
+    return { ok: false, status: 0, error: "Unable to delete saved hotel." };
+  }
 }
 
 export async function fetchBackendSavedTrips(
