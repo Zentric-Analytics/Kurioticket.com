@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { AdminDataTable, AdminEmptyState, AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { AdminDataTable, AdminEmptyState, AdminLinkButton, AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
 import { withOptionalDb } from "@/lib/prisma";
 
@@ -91,7 +91,7 @@ export default async function AdminAccountDeletionsPage({
                   <Link
                     key={filter.key}
                     href={filter.key === "open" ? "/admin/account-deletions" : `/admin/account-deletions?status=${filter.key}`}
-                    className={`rounded-full px-3 py-2 text-xs font-black transition ${
+                    className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
                       active ? "bg-slate-950 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-950"
                     }`}
                     aria-current={active ? "page" : undefined}
@@ -113,7 +113,7 @@ export default async function AdminAccountDeletionsPage({
                 return {
                   id: request.id,
                   cells: [
-                    <span key="email" className="font-black text-slate-950">{request.email || request.user.email}</span>,
+                    <span key="email" className="font-semibold text-slate-950">{request.email || request.user.email}</span>,
                     <div key="user-status" className="space-y-1">
                       <AdminStatusBadge tone={request.user.status === "ACTIVE" ? "good" : request.user.status === "PENDING_DELETION" ? "warn" : "neutral"}>{request.user.status}</AdminStatusBadge>
                       <p className="text-xs font-semibold text-slate-500">Role: {request.user.role}</p>
@@ -135,9 +135,9 @@ export default async function AdminAccountDeletionsPage({
                       {cancellationDetail ? <p>{cancellationDetail}</p> : null}
                       {!request.reviewNotes && !cancellationDetail ? "—" : null}
                     </div>,
-                    <Link key="action" href={`/admin/account-deletions/${request.id}`} className="inline-flex rounded-xl bg-indigo-700 px-3 py-2 text-xs font-black text-white transition hover:bg-indigo-800">
+                    <AdminLinkButton key="action" href={`/admin/account-deletions/${request.id}`} size="sm" variant="primary">
                       Manage
-                    </Link>,
+                    </AdminLinkButton>,
                   ],
                 };
               })}

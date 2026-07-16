@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { Button } from "@/components/ui/Button";
+import { AdminButton, AdminInput, AdminSectionCard, AdminTextarea } from "@/components/admin/AdminPageShell";
 
 type Props = {
   requestId: string;
@@ -42,47 +42,47 @@ export function AccountDeletionManageForm({ requestId, status, reviewNotes, admi
   }
 
   return (
-    <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <AdminSectionCard className="space-y-4 p-5">
       <div>
-        <h2 className="text-lg font-black text-slate-950">Safe admin actions</h2>
+        <h2 className="text-lg font-semibold text-slate-950">Safe admin actions</h2>
         <p className="mt-1 text-sm leading-6 text-slate-600">
           These controls update lifecycle tracking only. They do not hard-delete users or automatically anonymize data.
         </p>
       </div>
       <label className="block">
-        <span className="text-xs font-black uppercase tracking-wide text-slate-500">Review notes</span>
-        <textarea
+        <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Review notes</span>
+        <AdminTextarea
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
           rows={5}
-          className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100"
+          className="mt-2"
           placeholder="Document retention/anonymization checks, support context, and next steps."
         />
       </label>
       <label className="block">
-        <span className="text-xs font-black uppercase tracking-wide text-slate-500">Admin reference</span>
-        <input
+        <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Admin reference</span>
+        <AdminInput
           value={reference}
           onChange={(event) => setReference(event.target.value)}
-          className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100"
+          className="mt-2"
           placeholder="Internal review reference or case id"
         />
       </label>
       {message ? <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm font-bold text-emerald-700">{message}</p> : null}
       {error ? <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm font-bold text-rose-700">{error}</p> : null}
       <div className="flex flex-wrap gap-2">
-        <Button type="button" onClick={() => submit("save_notes")} disabled={isPending}>Save notes</Button>
+        <AdminButton type="button" onClick={() => submit("save_notes")} disabled={isPending}>Save notes</AdminButton>
         {status === "PENDING" ? (
-          <Button type="button" variant="secondary" onClick={() => submit("mark_ready_for_review")} disabled={isPending || !readyForReview} title={!readyForReview ? "Available after the 7-day deadline passes" : undefined}>
+          <AdminButton type="button" variant="secondary" onClick={() => submit("mark_ready_for_review")} disabled={isPending || !readyForReview} title={!readyForReview ? "Available after the 7-day deadline passes" : undefined}>
             Mark ready for review
-          </Button>
+          </AdminButton>
         ) : null}
         {canComplete ? (
-          <Button type="button" variant="secondary" onClick={() => submit("mark_completed")} disabled={isPending}>
+          <AdminButton type="button" variant="secondary" onClick={() => submit("mark_completed")} disabled={isPending}>
             Mark completed
-          </Button>
+          </AdminButton>
         ) : null}
       </div>
-    </div>
+    </AdminSectionCard>
   );
 }

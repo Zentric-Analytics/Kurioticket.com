@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Building2, ChevronDown, LogOut, Search, Settings, ShieldCheck } from "lucide-react";
+import { Bell, Building2, ChevronDown, Loader2, LogOut, Search, Settings, ShieldCheck } from "lucide-react";
 
-import { Card } from "@/components/ui/Card";
+import { cn } from "@/lib/utils";
+import { formatAdminBadgeLabel } from "@/components/admin/adminDesignSystem";
 import { adminNavigation, type AdminNavDefinition, type AdminRole } from "@/lib/adminNavigation";
 
 type StatusTone = "good" | "bad" | "warn" | "neutral" | "info";
@@ -57,7 +58,7 @@ export function AdminSidebar({ items }: { items: AdminNavDefinition[] }) {
       <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-4 lg:h-20 lg:px-6">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-700 text-sm font-black text-white">KT</div>
         <div>
-          <p className="text-sm font-black text-slate-950">Kurioticket</p>
+          <p className="text-sm font-bold text-slate-950">Kurioticket</p>
           <p className="text-xs font-semibold text-slate-500">Internal operations</p>
         </div>
       </div>
@@ -65,7 +66,7 @@ export function AdminSidebar({ items }: { items: AdminNavDefinition[] }) {
         {(Object.keys(grouped) as Array<AdminNavDefinition["section"]>).map((section) =>
           grouped[section].length > 0 ? (
             <div key={section} className="min-w-max lg:min-w-0">
-              <p className="mb-2 hidden px-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-400 lg:block">
+              <p className="mb-2 hidden px-2 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400 lg:block">
                 {sectionLabels[section]}
               </p>
               <div className="flex gap-2 lg:grid lg:gap-1">
@@ -89,7 +90,7 @@ export function AdminNavItem({ item }: { item: AdminNavDefinition }) {
   return (
     <Link
       href={item.href}
-      className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold transition lg:w-full ${
+      className={`focus-ring inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition lg:w-full ${
         active
           ? "bg-indigo-50 text-indigo-800 ring-1 ring-indigo-100"
           : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
@@ -118,7 +119,7 @@ export function AdminTopbar({
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-black text-slate-950">Kurioticket Admin</p>
+            <p className="text-sm font-bold text-slate-950">Kurioticket Admin</p>
             <p className="text-xs font-semibold text-slate-500">Secure internal workspace</p>
           </div>
           <AdminProfileMenu className="xl:hidden" adminEmail={adminEmail} displayName={displayName} />
@@ -126,10 +127,10 @@ export function AdminTopbar({
         <div className="flex flex-col gap-3 md:flex-row md:items-center xl:min-w-[760px] xl:justify-end">
           <label className="relative block md:flex-1 xl:max-w-xl">
             <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-            <input
+            <AdminInput
               type="search"
               placeholder="Search users, searches, providers..."
-              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm font-medium outline-none transition placeholder:text-slate-400 focus:border-indigo-300 focus:bg-white focus:ring-4 focus:ring-indigo-100"
+              className="pl-9"
             />
           </label>
           <button
@@ -172,7 +173,7 @@ function AdminProfileMenu({
       </summary>
       <div className="absolute right-0 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white py-2 shadow-xl">
         <div className="border-b border-slate-100 px-4 pb-3 pt-2">
-          <p className="text-sm font-black text-slate-900">Admin profile</p>
+          <p className="text-sm font-bold text-slate-900">Admin profile</p>
           <p className="truncate text-xs font-medium text-slate-500">{adminEmail || "No email available"}</p>
         </div>
         <ProfileLink href="/admin/settings" label="Admin settings" icon={Settings} />
@@ -209,7 +210,7 @@ export function AdminPageShell({
   return (
     <div className="mx-auto max-w-7xl">
       <AdminPageHeader eyebrow={eyebrow} title={title} description={description} actions={actions} />
-      <div className="mt-6">{children}</div>
+      <div className="mt-6 space-y-4">{children}</div>
     </div>
   );
 }
@@ -218,8 +219,8 @@ export function AdminPageHeader({ eyebrow, title, description, actions }: { eyeb
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
       <div>
-        {eyebrow ? <p className="text-xs font-black uppercase tracking-[0.16em] text-indigo-700">{eyebrow}</p> : null}
-        <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">{title}</h1>
+        {eyebrow ? <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-700">{eyebrow}</p> : null}
+        <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">{title}</h1>
         {description ? <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{description}</p> : null}
       </div>
       {actions ? <div className="shrink-0">{actions}</div> : null}
@@ -231,10 +232,10 @@ export function AdminMetricCard({ label, value, hint, tone = "neutral" }: { labe
   return (
     <AdminSectionCard className="p-4">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-black uppercase tracking-wide text-slate-500">{label}</p>
+        <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{label}</p>
         <span className={`h-2.5 w-2.5 rounded-full ${dotClass(tone)}`} />
       </div>
-      <p className="mt-3 text-2xl font-black text-slate-950">{value}</p>
+      <p className="mt-3 text-2xl font-extrabold text-slate-950">{value}</p>
       {hint ? <p className="mt-1 text-xs font-semibold text-slate-500">{hint}</p> : null}
     </AdminSectionCard>
   );
@@ -249,18 +250,98 @@ export function AdminStatusBadge({ children, tone = "neutral" }: { children: Rea
     info: "bg-indigo-50 text-indigo-700 ring-indigo-200",
   }[tone];
 
-  return <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-black ring-1 ${classes}`}>{children}</span>;
+  return <span className={`inline-flex min-h-6 items-center rounded-full px-2.5 py-1 text-xs font-semibold leading-none ring-1 ${classes}`}>{formatAdminBadgeLabel(children)}</span>;
 }
 
 export function AdminSectionCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <Card className={`border-slate-200 bg-white shadow-sm ${className}`}>{children}</Card>;
+  return <section className={cn("rounded-2xl border border-slate-200 bg-white shadow-sm", className)}>{children}</section>;
+}
+
+const adminButtonVariants = {
+  primary: "border border-indigo-700 bg-indigo-700 text-white shadow-sm hover:border-indigo-800 hover:bg-indigo-800",
+  secondary: "border border-slate-200 bg-white text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950",
+  ghost: "border border-transparent bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-950",
+  destructive: "border border-rose-600 bg-rose-600 text-white shadow-sm hover:border-rose-700 hover:bg-rose-700",
+};
+
+const adminButtonSizes = {
+  sm: "h-9 px-3 text-xs",
+  md: "h-10 px-4 text-sm",
+};
+
+type AdminButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: keyof typeof adminButtonVariants;
+  size?: keyof typeof adminButtonSizes;
+  loading?: boolean;
+};
+
+export function AdminButton({ className, variant = "primary", size = "md", loading = false, disabled, children, ...props }: AdminButtonProps) {
+  return (
+    <button
+      className={cn(
+        "focus-ring inline-flex min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl font-semibold transition disabled:cursor-not-allowed disabled:opacity-55",
+        adminButtonVariants[variant],
+        adminButtonSizes[size],
+        className,
+      )}
+      disabled={disabled || loading}
+      {...props}
+    >
+      {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+      {children}
+    </button>
+  );
+}
+
+export function AdminLinkButton({ className, variant = "secondary", size = "md", children, ...props }: React.ComponentProps<typeof Link> & { variant?: keyof typeof adminButtonVariants; size?: keyof typeof adminButtonSizes }) {
+  return (
+    <Link
+      className={cn(
+        "focus-ring inline-flex min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl font-semibold transition",
+        adminButtonVariants[variant],
+        adminButtonSizes[size],
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </Link>
+  );
+}
+
+const adminControlClass = "focus-ring h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-indigo-300 focus:bg-white focus:ring-4 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400";
+
+export function AdminInput({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+  return <input className={cn(adminControlClass, className)} {...props} />;
+}
+
+export function AdminSelect({ className, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  return <select className={cn(adminControlClass, className)} {...props} />;
+}
+
+export function AdminTextarea({ className, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return <textarea className={cn(adminControlClass, "min-h-32 py-2 leading-6", className)} {...props} />;
+}
+
+export function AdminCheckbox({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+  return <input type="checkbox" className={cn("focus-ring h-4 w-4 rounded border-slate-300 text-indigo-700", className)} {...props} />;
+}
+
+export function AdminFilterBar({ children, action, className = "" }: { children: React.ReactNode; action?: string; className?: string }) {
+  return (
+    <AdminSectionCard className={cn("p-4", className)}>
+      <form className="grid gap-3 md:grid-cols-[repeat(auto-fit,minmax(160px,1fr))] md:items-center" action={action}>
+        {children}
+      </form>
+    </AdminSectionCard>
+  );
 }
 
 export function AdminEmptyState({ title = "No data available", message, action }: { title?: string; message: string; action?: React.ReactNode }) {
   return (
     <AdminSectionCard className="p-6">
       <div className="max-w-2xl">
-        <p className="text-base font-black text-slate-950">{title}</p>
+        <p className="text-base font-semibold text-slate-950">{title}</p>
         <p className="mt-2 text-sm leading-6 text-slate-600">{message}</p>
         {action ? <div className="mt-4">{action}</div> : null}
       </div>
@@ -279,7 +360,7 @@ export function AdminDataTable({
     <AdminSectionCard className="overflow-x-auto p-0">
       <table className="w-full min-w-[900px] text-left text-sm">
         <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-          <tr>{columns.map((column) => <th key={column} className="px-4 py-3 font-black">{column}</th>)}</tr>
+          <tr>{columns.map((column) => <th key={column} className="px-4 py-3 font-semibold">{column}</th>)}</tr>
         </thead>
         <tbody>
           {rows.map((row) => (
@@ -318,8 +399,8 @@ export function AdminProviderStatusCard({
     <AdminSectionCard className="p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-black uppercase tracking-wide text-slate-500">{product}</p>
-          <h3 className="mt-1 text-lg font-black text-slate-950">{providerName}</h3>
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{product}</p>
+          <h3 className="mt-1 text-lg font-bold text-slate-950">{providerName}</h3>
         </div>
         <AdminStatusBadge tone={searchEnabled ? "good" : credentialsPresent ? "warn" : "neutral"}>{searchEnabled ? "Search ready" : credentialsPresent ? "Configured" : "Not connected"}</AdminStatusBadge>
       </div>
@@ -345,7 +426,7 @@ export function AdminActivityList({ items }: { items: Array<{ id: string; title:
     <AdminSectionCard className="divide-y divide-slate-100 p-0">
       {items.map((item) => (
         <div key={item.id} className="p-4">
-          <p className="font-black text-slate-950">{item.title}</p>
+          <p className="font-semibold text-slate-950">{item.title}</p>
           <p className="mt-1 text-sm text-slate-600">{item.detail}</p>
           <p className="mt-2 text-xs font-semibold text-slate-400">{item.timestamp}</p>
         </div>
@@ -358,7 +439,7 @@ function StatusLine({ label, value, tone = "neutral" }: { label: string; value: 
   return (
     <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
       <span className="text-slate-500">{label}</span>
-      <span className="inline-flex items-center gap-2 text-right font-black text-slate-800"><span className={`h-2 w-2 rounded-full ${dotClass(tone)}`} />{value}</span>
+      <span className="inline-flex items-center gap-2 text-right font-semibold text-slate-800"><span className={`h-2 w-2 rounded-full ${dotClass(tone)}`} />{value}</span>
     </div>
   );
 }

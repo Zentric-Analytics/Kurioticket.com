@@ -1,6 +1,4 @@
-import Link from "next/link";
-
-import { AdminDataTable, AdminEmptyState, AdminPageShell, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { AdminDataTable, AdminEmptyState, AdminLinkButton, AdminPageShell, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
 import { withOptionalDb } from "@/lib/prisma";
 
@@ -30,7 +28,7 @@ export default async function AdminSupportPage() {
           rows={tickets.map((ticket) => ({
             id: ticket.id,
             cells: [
-              <span key="subject" className="font-black text-slate-950">{ticket.subject}</span>,
+              <span key="subject" className="font-semibold text-slate-950">{ticket.subject}</span>,
               ticket.category,
               ticket.user?.email || ticket.email,
               <AdminStatusBadge key="status" tone={ticket.status === "OPEN" ? "warn" : ticket.status === "RESOLVED" || ticket.status === "CLOSED" ? "good" : "info"}>{ticket.status}</AdminStatusBadge>,
@@ -40,9 +38,9 @@ export default async function AdminSupportPage() {
                 const deletionRequestId = ticket.category === "account_deletion" ? deletionRequestByTicketId.get(ticket.id) : null;
                 const href = deletionRequestId ? `/admin/account-deletions/${deletionRequestId}` : `/admin/support/${ticket.id}`;
                 return (
-                  <Link key="action" href={href} className="inline-flex rounded-xl bg-indigo-700 px-3 py-2 text-xs font-black text-white transition hover:bg-indigo-800">
+                  <AdminLinkButton key="action" href={href} size="sm" variant="primary">
                     {deletionRequestId ? "View request" : "Open"}
-                  </Link>
+                  </AdminLinkButton>
                 );
               })(),
             ],

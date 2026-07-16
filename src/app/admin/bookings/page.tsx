@@ -25,7 +25,7 @@ export default function AdminBookingsPage() {
           {checklist.map((item) => (
             <div key={item} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <AdminStatusBadge tone="neutral">Pending</AdminStatusBadge>
-              <p className="mt-3 text-sm font-black capitalize text-slate-900">{item}</p>
+              <p className="mt-3 text-sm font-semibold capitalize text-slate-900">{item}</p>
             </div>
           ))}
         </div>

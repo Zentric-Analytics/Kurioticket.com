@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject, type ReactNode } from "react";
 import { RefreshCcw } from "lucide-react";
 
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { AdminButton, AdminSectionCard } from "@/components/admin/AdminPageShell";
 import {
   ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE,
   buildAdminHomepageFareAllRoutesGroup,
@@ -579,17 +578,17 @@ export function HomepageFaresRefreshCard() {
 
   return (
     <section className="space-y-5">
-      <Card className="overflow-hidden p-0">
-        <div className="border-b border-border bg-gradient-to-br from-white via-slate-50 to-sky-50/60 p-5">
+      <AdminSectionCard className="overflow-hidden p-0">
+        <div className="border-b border-slate-200 bg-gradient-to-br from-white via-slate-50 to-sky-50/60 p-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-teal-dark">
+              <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-indigo-700">
                 Homepage fare operations
               </p>
-              <h2 className="mt-2 text-2xl font-extrabold text-navy">
+              <h2 className="mt-2 text-2xl font-extrabold text-slate-950">
                 Production readiness dashboard
               </h2>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
                 Monitor provider-backed homepage fare coverage by public market, fallback pool,
                 route health, refresh state, and underfill cause without changing pricing logic.
               </p>
@@ -600,7 +599,7 @@ export function HomepageFaresRefreshCard() {
 
         <div className="space-y-5 p-5">
           {statusState.error ? (
-            <p className="rounded-xl bg-red-50 p-3 text-sm font-semibold text-danger">
+            <p className="rounded-xl bg-rose-50 p-3 text-sm font-semibold text-rose-700">
               {statusState.error}
             </p>
           ) : null}
@@ -674,7 +673,7 @@ export function HomepageFaresRefreshCard() {
 
           <RawDebugDetails statusPayload={statusPayload} refreshCounts={latestCounts} />
         </div>
-      </Card>
+      </AdminSectionCard>
     </section>
   );
 }
@@ -694,18 +693,18 @@ const COUNT_LABELS: Array<{ key: RefreshCountMetricKey; label: string }> = [
 ];
 
 const STATUS_BADGE_STYLES: Record<HomepageFareSnapshotStatus, string> = {
-  fresh: "bg-teal/10 text-teal-dark",
+  fresh: "bg-emerald-50 text-emerald-700",
   last_known_good: "bg-sky-50 text-sky-700",
-  expired: "bg-amber/10 text-amber",
-  unavailable: "bg-slate-100 text-muted",
-  failed: "bg-red-50 text-danger",
-  missing: "bg-slate-100 text-muted",
+  expired: "bg-amber-50 text-amber-700",
+  unavailable: "bg-slate-100 text-slate-500",
+  failed: "bg-rose-50 text-rose-700",
+  missing: "bg-slate-100 text-slate-500",
 };
 
 const HEALTH_SUMMARY_STYLES: Record<HomepageFareHealthStatus, string> = {
-  healthy: "border-teal/20 bg-teal/10 text-teal-dark",
-  warning: "border-amber/20 bg-amber/10 text-amber",
-  attention: "border-red-100 bg-red-50 text-danger",
+  healthy: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  warning: "border-amber/20 bg-amber-50 text-amber-700",
+  attention: "border-red-100 bg-rose-50 text-rose-700",
 };
 
 
@@ -756,23 +755,23 @@ type SummaryTone = "good" | "info" | "warning" | "danger" | "neutral";
 function summaryToneClass(tone: SummaryTone) {
   switch (tone) {
     case "good":
-      return "border-teal/20 bg-teal/10 text-teal-dark";
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
     case "info":
       return "border-sky-100 bg-sky-50 text-sky-700";
     case "warning":
-      return "border-amber/20 bg-amber/10 text-amber";
+      return "border-amber/20 bg-amber-50 text-amber-700";
     case "danger":
-      return "border-red-100 bg-red-50 text-danger";
+      return "border-red-100 bg-rose-50 text-rose-700";
     case "neutral":
-      return "border-border bg-slate-50 text-navy";
+      return "border-slate-200 bg-slate-50 text-slate-950";
   }
 }
 
 function CompactDetail({ label, value }: { label: string; value: string | number }) {
   return (
     <div>
-      <dt className="text-xs font-extrabold uppercase tracking-wide text-muted">{label}</dt>
-      <dd className="mt-1 text-sm font-bold text-navy">{value}</dd>
+      <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500">{label}</dt>
+      <dd className="mt-1 text-sm font-bold text-slate-950">{value}</dd>
     </div>
   );
 }
@@ -851,11 +850,11 @@ function DashboardSection({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-white p-4 shadow-sm">
+    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div>
-        <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-muted">{eyebrow}</p>
-        <h3 className="mt-1 text-lg font-extrabold text-navy">{title}</h3>
-        <p className="mt-1 max-w-4xl text-sm leading-6 text-muted">{description}</p>
+        <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-500">{eyebrow}</p>
+        <h3 className="mt-1 text-lg font-extrabold text-slate-950">{title}</h3>
+        <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-500">{description}</p>
       </div>
       {children}
     </section>
@@ -888,11 +887,11 @@ function RefreshCronPanel({
       description="Run the existing homepage fare coverage executor and reload the current status snapshot from one dedicated operations panel."
     >
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
-        <div className="rounded-xl border border-border bg-slate-50 p-4">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Button
+            <AdminButton
               type="button"
-              variant="accent"
+              variant="primary"
               onClick={onRefresh}
               disabled={refreshing}
               aria-busy={refreshing}
@@ -900,8 +899,8 @@ function RefreshCronPanel({
             >
               <RefreshCcw className={refreshing ? "animate-spin" : ""} size={16} />
               {refreshing ? "Refreshing…" : "Refresh homepage fares"}
-            </Button>
-            <Button
+            </AdminButton>
+            <AdminButton
               type="button"
               variant="secondary"
               onClick={onReload}
@@ -911,15 +910,15 @@ function RefreshCronPanel({
             >
               <RefreshCcw className={loading ? "animate-spin" : ""} size={16} />
               {loading ? "Loading…" : "Reload status"}
-            </Button>
+            </AdminButton>
           </div>
 
           {refreshState.message ? (
             <div
               className={
                 refreshState.status === "error"
-                  ? "mt-4 rounded-lg bg-red-50 p-3 text-sm font-semibold text-danger"
-                  : "mt-4 rounded-lg bg-teal/10 p-3 text-sm font-semibold text-teal-dark"
+                  ? "mt-4 rounded-lg bg-rose-50 p-3 text-sm font-semibold text-rose-700"
+                  : "mt-4 rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-700"
               }
               role="status"
               aria-live="polite"
@@ -937,7 +936,7 @@ function RefreshCronPanel({
           ) : null}
         </div>
 
-        <dl className="grid gap-2 rounded-xl border border-border bg-white p-4 sm:grid-cols-2 lg:grid-cols-1">
+        <dl className="grid gap-2 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-1">
           <CompactDetail label="Last refresh time" value={formatSnapshotTime(statusPayload.lastRefreshAt)} />
           <CompactDetail label="Cron status" value={formatCronStatus(statusPayload)} />
           <CompactDetail label="Cron cadence note" value={statusPayload.nextExpectedCronRefresh ?? "Not configured"} />
@@ -946,7 +945,7 @@ function RefreshCronPanel({
         </dl>
       </div>
       {!statusPayload.cronConfigured ? (
-        <p className="mt-3 rounded-xl border border-amber/20 bg-amber/10 p-3 text-sm font-semibold text-amber">
+        <p className="mt-3 rounded-xl border border-amber/20 bg-amber-50 p-3 text-sm font-semibold text-amber-700">
           Cron is not configured. Set HOMEPAGE_FARES_CRON_SECRET and schedule POST /api/internal/homepage-fares/refresh before relying on unattended production refreshes.
         </p>
       ) : null}
@@ -980,7 +979,7 @@ function MarketReadinessDashboard({
             />
           ))
         ) : (
-          <p className="rounded-xl border border-border bg-slate-50 p-4 text-sm font-semibold text-muted">
+          <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-500">
             No public market readiness metadata was returned.
           </p>
         )}
@@ -1003,16 +1002,16 @@ function MarketReadinessCard({
       type="button"
       onClick={() => onInspectMarket(market.marketCode)}
       aria-pressed={selected}
-      className={`group w-full cursor-pointer rounded-2xl border p-4 text-left shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-dark ${
+      className={`group w-full cursor-pointer rounded-2xl border p-4 text-left shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
         selected
-          ? "border-navy bg-white shadow-md ring-2 ring-navy/15"
-          : "border-border bg-white hover:-translate-y-0.5 hover:border-navy/35 hover:shadow-md"
+          ? "border-indigo-700 bg-white shadow-md ring-2 ring-indigo-700/15"
+          : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-indigo-700/35 hover:shadow-md"
       }`}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h4 className="text-lg font-extrabold text-navy">{market.marketLabel}</h4>
-          <p className="mt-1 text-xs font-bold uppercase tracking-wide text-muted">
+          <h4 className="text-lg font-extrabold text-slate-950">{market.marketLabel}</h4>
+          <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
             {market.marketCode} · {market.marketGroup}
           </p>
         </div>
@@ -1036,11 +1035,11 @@ function MarketReadinessCard({
         <MarketMiniMetric label="Cooldown" value={market.skippedCooldown} />
         <MarketMiniMetric label="Candidates" value={market.candidatePoolSize} />
       </dl>
-      <div className="mt-3 rounded-xl bg-slate-50 p-3 text-sm leading-6 text-muted">
-        <strong className="text-navy">Underfill reason:</strong>{" "}
+      <div className="mt-3 rounded-xl bg-slate-50 p-3 text-sm leading-6 text-slate-500">
+        <strong className="text-slate-950">Underfill reason:</strong>{" "}
         {market.underfillReason ?? (market.targetMet ? "Coverage target met." : "No executor reason returned.")}
       </div>
-      <span className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-teal-dark/30 bg-teal/10 px-4 py-2 text-sm font-extrabold text-teal-dark transition group-hover:border-teal-dark/50 group-hover:bg-teal/15">
+      <span className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-extrabold text-indigo-700 transition group-hover:border-indigo-300 group-hover:bg-indigo-100">
         Inspect {market.marketCode} routes
       </span>
     </button>
@@ -1051,9 +1050,9 @@ function CoverageMetric({ label, current, target }: { label: string; current: nu
   const met = target === 0 ? current === 0 : current >= target;
   return (
     <div className="rounded-xl bg-slate-50 p-3">
-      <dt className="text-xs font-extrabold uppercase tracking-wide text-muted">{label}</dt>
-      <dd className="mt-1 text-xl font-extrabold text-navy">{current} / {target}</dd>
-      <p className={met ? "mt-1 text-xs font-bold text-teal-dark" : "mt-1 text-xs font-bold text-amber"}>
+      <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500">{label}</dt>
+      <dd className="mt-1 text-xl font-extrabold text-slate-950">{current} / {target}</dd>
+      <p className={met ? "mt-1 text-xs font-bold text-indigo-700" : "mt-1 text-xs font-bold text-amber-700"}>
         {met ? "Target met" : "Needs coverage"}
       </p>
     </div>
@@ -1085,17 +1084,17 @@ function DiagnosticsPanel({
         <div className="space-y-2">
           {issues.length ? (
             issues.map((issue) => (
-              <p key={issue} className="rounded-xl border border-border bg-slate-50 p-3 text-sm font-semibold leading-6 text-navy">
+              <p key={issue} className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-semibold leading-6 text-slate-950">
                 {issue}
               </p>
             ))
           ) : (
-            <p className="rounded-xl border border-border bg-teal/10 p-3 text-sm font-semibold text-teal-dark">
+            <p className="rounded-xl border border-slate-200 bg-indigo-50 p-3 text-sm font-semibold text-indigo-700">
               No underfill diagnostics are currently reported for public markets.
             </p>
           )}
         </div>
-        <dl className="grid gap-2 rounded-xl border border-border bg-white p-4 text-sm">
+        <dl className="grid gap-2 rounded-xl border border-slate-200 bg-white p-4 text-sm">
           <CompactDetail label="Provider budget exhausted" value={stoppedReason === "provider_budget_exhausted" ? "Yes" : "No"} />
           <CompactDetail label="Route budget exhausted" value={stoppedReason === "route_budget_exhausted" ? "Yes" : "No"} />
           <CompactDetail label="Candidate pool exhausted" value={stoppedReason === "candidate_pool_exhausted" ? "Yes" : "No"} />
@@ -1139,24 +1138,24 @@ function FallbackPoolsSection({
                 type="button"
                 onClick={() => onInspectMarket(pool.marketCode)}
                 aria-pressed={selected}
-                className={`w-full cursor-pointer rounded-xl border border-dashed p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-dark ${
+                className={`w-full cursor-pointer rounded-xl border border-dashed p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
                   selected
-                    ? "border-navy bg-white shadow-md ring-2 ring-navy/15"
-                    : "border-border bg-slate-50 hover:border-navy/35 hover:bg-white hover:shadow-sm"
+                    ? "border-indigo-700 bg-white shadow-md ring-2 ring-indigo-700/15"
+                    : "border-slate-200 bg-slate-50 hover:border-indigo-700/35 hover:bg-white hover:shadow-sm"
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h4 className="font-extrabold text-navy">{pool.marketLabel}</h4>
-                    <p className="mt-1 text-xs font-bold uppercase tracking-wide text-muted">
+                    <h4 className="font-extrabold text-slate-950">{pool.marketLabel}</h4>
+                    <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
                       {pool.marketCode} · {pool.marketGroup}
                     </p>
                   </div>
-                  <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-extrabold text-muted">
+                  <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-extrabold text-slate-500">
                     Fallback only
                   </span>
                 </div>
-                <p className="mt-3 text-sm font-semibold leading-6 text-muted">
+                <p className="mt-3 text-sm font-semibold leading-6 text-slate-500">
                   No public display target. Coverage is retained for internal routing, replacement, and regional debugging.
                 </p>
                 <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
@@ -1167,14 +1166,14 @@ function FallbackPoolsSection({
                   <MarketMiniMetric label="Attempts" value={pool.routeAttempts} />
                   <MarketMiniMetric label="Timeout" value={pool.timeoutCount ?? 0} />
                 </dl>
-                <span className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-teal-dark/30 bg-teal/10 px-4 py-2 text-sm font-extrabold text-teal-dark">
+                <span className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-extrabold text-indigo-700">
                   Inspect fallback routes
                 </span>
               </button>
             );
           })
         ) : (
-          <p className="rounded-xl border border-border bg-slate-50 p-4 text-sm font-semibold text-muted">
+          <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-500">
             No fallback-only pools were returned.
           </p>
         )}
@@ -1191,8 +1190,8 @@ function RawDebugDetails({
   refreshCounts: RefreshCounts | null;
 }) {
   return (
-    <details className="rounded-2xl border border-border bg-white p-4">
-      <summary className="cursor-pointer text-sm font-extrabold uppercase tracking-wide text-navy">
+    <details className="rounded-2xl border border-slate-200 bg-white p-4">
+      <summary className="cursor-pointer text-sm font-extrabold uppercase tracking-wide text-slate-950">
         Raw debug / View All details
       </summary>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -1245,13 +1244,13 @@ function MarketRouteInspector({
   return (
     <section className="mt-6 rounded-3xl border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-sky-50/40 p-4 shadow-sm sm:p-5">
       <div className="max-w-4xl">
-        <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-teal-dark">
+        <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-indigo-700">
           Route coverage
         </p>
-        <h4 className="mt-2 text-xl font-extrabold text-navy">
+        <h4 className="mt-2 text-xl font-extrabold text-slate-950">
           Grouped Market Route Inspector
         </h4>
-        <p className="mt-2 text-sm leading-6 text-muted">
+        <p className="mt-2 text-sm leading-6 text-slate-500">
           Inspect homepage fare routes by market, status, and coverage. Select a market below to view route details.
         </p>
       </div>
@@ -1263,10 +1262,10 @@ function MarketRouteInspector({
               key={item.key}
               type="button"
               onClick={() => handleFilterChange(item.key)}
-              className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-dark ${
+              className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
                 filter === item.key
-                  ? "border-navy bg-navy text-white shadow-sm"
-                  : "border-slate-200 bg-white/80 text-navy hover:border-navy/40 hover:bg-white"
+                  ? "border-indigo-700 bg-indigo-700 text-white shadow-sm"
+                  : "border-slate-200 bg-white/80 text-slate-950 hover:border-indigo-700/40 hover:bg-white"
               }`}
               aria-pressed={filter === item.key}
             >
@@ -1280,20 +1279,20 @@ function MarketRouteInspector({
         <div>
           <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h5 className="text-sm font-extrabold uppercase tracking-wide text-navy">
+              <h5 className="text-sm font-extrabold uppercase tracking-wide text-slate-950">
                 Public market coverage
               </h5>
-              <p className="mt-1 text-xs font-semibold text-muted">
+              <p className="mt-1 text-xs font-semibold text-slate-500">
                 Country display targets stay separate from fallback-only pools.
               </p>
             </div>
             <button
               type="button"
               onClick={() => handleSelectMarket(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE)}
-              className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-dark ${
+              className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
                 selectedRouteScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
-                  ? "border-navy bg-navy text-white ring-2 ring-navy/15"
-                  : "border-slate-200 bg-white/80 text-navy hover:border-navy/40 hover:bg-white hover:shadow-md"
+                  ? "border-indigo-700 bg-indigo-700 text-white ring-2 ring-indigo-700/15"
+                  : "border-slate-200 bg-white/80 text-slate-950 hover:border-indigo-700/40 hover:bg-white hover:shadow-md"
               }`}
               aria-pressed={selectedRouteScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE}
             >
@@ -1313,7 +1312,7 @@ function MarketRouteInspector({
               ))}
             </div>
           ) : (
-            <p className="rounded-2xl border border-dashed border-slate-300 bg-white/50 p-4 text-sm font-semibold text-muted">
+            <p className="rounded-2xl border border-dashed border-slate-300 bg-white/50 p-4 text-sm font-semibold text-slate-500">
               {loading ? "Loading market route groups…" : "No public market route groups match this filter."}
             </p>
           )}
@@ -1322,10 +1321,10 @@ function MarketRouteInspector({
         {fallbackGroups.length ? (
           <div className="rounded-2xl border border-dashed border-slate-300/90 bg-white/45 p-3">
             <div className="mb-3">
-              <h5 className="text-sm font-extrabold uppercase tracking-wide text-navy">
+              <h5 className="text-sm font-extrabold uppercase tracking-wide text-slate-950">
                 Fallback-only debugging pools
               </h5>
-              <p className="mt-1 text-xs font-semibold text-muted">
+              <p className="mt-1 text-xs font-semibold text-slate-500">
                 These pools have no public display target and are not counted as normal public market readiness.
               </p>
             </div>
@@ -1372,24 +1371,24 @@ function MarketRouteGroupCard({
     <button
       type="button"
       onClick={() => onSelect(group.marketCode)}
-      className={`h-full w-full cursor-pointer rounded-2xl border p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-dark ${
+      className={`h-full w-full cursor-pointer rounded-2xl border p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
         selected
-          ? "border-navy bg-white shadow-md ring-2 ring-navy/15"
-          : "border-slate-200 bg-white/70 hover:-translate-y-0.5 hover:border-navy/35 hover:bg-white hover:shadow-md"
+          ? "border-indigo-700 bg-white shadow-md ring-2 ring-indigo-700/15"
+          : "border-slate-200 bg-white/70 hover:-translate-y-0.5 hover:border-indigo-700/35 hover:bg-white hover:shadow-md"
       }`}
       aria-pressed={selected}
       aria-label={`Inspect ${group.marketCode} routes`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-base font-extrabold text-navy">{group.marketLabel}</p>
-          <p className="mt-1 text-xs font-bold uppercase tracking-wide text-muted">
+          <p className="text-base font-extrabold text-slate-950">{group.marketLabel}</p>
+          <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
             {fallbackOnly ? "Fallback only · No public display target" : group.marketGroup}
           </p>
         </div>
         <MarketGroupStatusBadge status={group.status} />
       </div>
-      <p className="mt-3 text-sm font-semibold text-muted">
+      <p className="mt-3 text-sm font-semibold text-slate-500">
         {group.routes.length} total routes · {group.freshFaresCount} fresh · {group.lastKnownGoodFaresCount} last-known-good
       </p>
       <dl className="mt-4 grid grid-cols-3 gap-2 text-xs">
@@ -1400,7 +1399,7 @@ function MarketRouteGroupCard({
         <MarketMiniMetric label="LKG" value={group.lastKnownGoodFaresCount} />
         <MarketMiniMetric label="Failed/missing" value={group.failedUnavailableRoutesCount + group.missingRoutesCount} />
       </dl>
-      <span className="mt-4 inline-flex min-h-10 items-center justify-center rounded-full border border-teal-dark/30 bg-teal/10 px-4 py-2 text-sm font-extrabold text-teal-dark transition">
+      <span className="mt-4 inline-flex min-h-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-extrabold text-indigo-700 transition">
         Inspect {group.marketCode} routes
       </span>
     </button>
@@ -1427,10 +1426,10 @@ function SelectedRouteDetails({
   if (!selectedRouteScope || !group) {
     return (
       <div ref={routeDetailsRef} className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-white/55 p-6 text-center">
-        <p className="text-sm font-extrabold text-navy">
+        <p className="text-sm font-extrabold text-slate-950">
           Select a market to inspect its routes, or choose View All.
         </p>
-        <p className="mt-2 text-xs font-semibold text-muted">
+        <p className="mt-2 text-xs font-semibold text-slate-500">
           Route rows stay hidden until a market context is selected.
         </p>
       </div>
@@ -1445,22 +1444,22 @@ function SelectedRouteDetails({
       <div className="border-b border-slate-200 bg-slate-50/90 px-4 py-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h5 className="text-base font-extrabold text-navy">
+            <h5 className="text-base font-extrabold text-slate-950">
               {isViewAll ? "All routes" : group.displayName} — {page.totalRoutes} total routes
             </h5>
-            <p className="mt-1 text-sm font-semibold text-muted">
+            <p className="mt-1 text-sm font-semibold text-slate-500">
               Showing {page.start}–{page.end} of {page.totalRoutes}
               {isViewAll ? " · Debug view across all markets" : ` · ${group.marketCode}`}
             </p>
           </div>
           <div className="flex items-center gap-3">
             <MarketGroupStatusBadge status={group.status} />
-            <div className="flex items-center gap-2 text-sm font-bold text-muted">
+            <div className="flex items-center gap-2 text-sm font-bold text-slate-500">
               <button
                 type="button"
                 onClick={onPreviousPage}
                 disabled={!page.hasPreviousPage}
-                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-navy transition disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-950 transition disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Previous
               </button>
@@ -1471,7 +1470,7 @@ function SelectedRouteDetails({
                 type="button"
                 onClick={onNextPage}
                 disabled={!page.hasNextPage}
-                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-navy transition disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-950 transition disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Next
               </button>
@@ -1487,8 +1486,8 @@ function SelectedRouteDetails({
 function MarketMiniMetric({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-lg bg-white/80 p-2 ring-1 ring-slate-100">
-      <dt className="font-bold uppercase tracking-wide text-muted">{label}</dt>
-      <dd className="mt-0.5 font-extrabold text-navy">{value}</dd>
+      <dt className="font-bold uppercase tracking-wide text-slate-500">{label}</dt>
+      <dd className="mt-0.5 font-extrabold text-slate-950">{value}</dd>
     </div>
   );
 }
@@ -1504,7 +1503,7 @@ function RouteDetailsTable({
 }) {
   if (!routes.length) {
     return (
-      <p className="p-4 text-sm font-semibold text-muted">
+      <p className="p-4 text-sm font-semibold text-slate-500">
         {loading ? "Loading homepage fare snapshot status…" : "No routes to display for this market/filter."}
       </p>
     );
@@ -1513,7 +1512,7 @@ function RouteDetailsTable({
   return (
     <div className="overflow-x-auto">
       <table className="min-w-[1120px] divide-y divide-border text-left text-sm">
-        <thead className="bg-white text-xs font-extrabold uppercase tracking-wide text-muted">
+        <thead className="bg-white text-xs font-extrabold uppercase tracking-wide text-slate-500">
           <tr>
             <th className="px-3 py-3">Market</th>
             <th className="px-3 py-3">Route</th>
@@ -1531,28 +1530,28 @@ function RouteDetailsTable({
         <tbody className="divide-y divide-border">
           {routes.map((route) => (
             <tr key={`${group.marketCode}-${route.id}`} className="align-top">
-              <td className="px-3 py-3 font-bold text-navy">{route.market}</td>
-              <td className="px-3 py-3 font-bold text-navy">{route.label}</td>
-              <td className="px-3 py-3 font-semibold text-navy">
+              <td className="px-3 py-3 font-bold text-slate-950">{route.market}</td>
+              <td className="px-3 py-3 font-bold text-slate-950">{route.label}</td>
+              <td className="px-3 py-3 font-semibold text-slate-950">
                 {route.origin}
-                {route.originCity ? <span className="block text-xs font-medium text-muted">{route.originCity}</span> : null}
+                {route.originCity ? <span className="block text-xs font-medium text-slate-500">{route.originCity}</span> : null}
               </td>
-              <td className="px-3 py-3 font-semibold text-navy">
+              <td className="px-3 py-3 font-semibold text-slate-950">
                 {route.destination}
-                {route.destinationCity ? <span className="block text-xs font-medium text-muted">{route.destinationCity}</span> : null}
+                {route.destinationCity ? <span className="block text-xs font-medium text-slate-500">{route.destinationCity}</span> : null}
               </td>
-              <td className="px-3 py-3 capitalize text-navy">{route.section}</td>
+              <td className="px-3 py-3 capitalize text-slate-950">{route.section}</td>
               <td className="px-3 py-3">
                 <StatusBadge status={route.status} />
               </td>
-              <td className="px-3 py-3 font-semibold text-navy">{formatRoutePrice(route)}</td>
-              <td className="px-3 py-3 font-semibold text-navy">{formatProviderNativePrice(route)}</td>
-              <td className="px-3 py-3 text-navy">{route.provider ?? "—"}</td>
-              <td className="px-3 py-3 text-xs font-semibold text-muted">
+              <td className="px-3 py-3 font-semibold text-slate-950">{formatRoutePrice(route)}</td>
+              <td className="px-3 py-3 font-semibold text-slate-950">{formatProviderNativePrice(route)}</td>
+              <td className="px-3 py-3 text-slate-950">{route.provider ?? "—"}</td>
+              <td className="px-3 py-3 text-xs font-semibold text-slate-500">
                 {formatSnapshotTime(route.searchedAt)}
                 {route.expiresAt ? <span className="block">Expires {formatDateTime(route.expiresAt)}</span> : null}
               </td>
-              <td className="max-w-xs px-3 py-3 text-xs font-semibold text-muted">
+              <td className="max-w-xs px-3 py-3 text-xs font-semibold text-slate-500">
                 <SafeFailureReason route={route} />
                 {route.replacementCandidateUsed ? (
                   <span className="block">Replacement: {route.replacementCandidateUsed}</span>
@@ -1575,14 +1574,14 @@ function MarketGroupStatusBadge({
 }) {
   const styles =
     status === "Ready"
-      ? "bg-teal/10 text-teal-dark"
+      ? "bg-indigo-50 text-indigo-700"
       : status === "Fallback only"
-        ? "bg-slate-100 text-muted"
+        ? "bg-slate-100 text-slate-500"
       : status === "Failed"
-        ? "bg-red-50 text-danger"
+        ? "bg-rose-50 text-rose-700"
         : status === "Partially ready"
           ? "bg-sky-50 text-sky-700"
-          : "bg-amber/10 text-amber";
+          : "bg-amber-50 text-amber-700";
 
   return (
     <span className={`inline-flex shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${styles}`}>
@@ -1615,7 +1614,7 @@ function MarketStatusBadge({ status }: { status: MarketReadinessStatus }) {
   return (
     <span
       className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${
-        ready ? "bg-teal/10 text-teal-dark" : "bg-amber/10 text-amber"
+        ready ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
       }`}
     >
       {formatMarketStatus(status)}
@@ -1632,10 +1631,10 @@ function MetricCard({
 }) {
   return (
     <div className="rounded-lg bg-slate-50 p-3">
-      <dt className="text-xs font-bold uppercase tracking-wide text-muted">
+      <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">
         {label}
       </dt>
-      <dd className="mt-1 text-xl font-extrabold text-navy">{value}</dd>
+      <dd className="mt-1 text-xl font-extrabold text-slate-950">{value}</dd>
     </div>
   );
 }
@@ -1985,7 +1984,7 @@ function SafeFailureReason({ route }: { route: { status: HomepageFareSnapshotSta
   }
 
   return (
-    <p className="mt-1 text-xs font-semibold text-muted">
+    <p className="mt-1 text-xs font-semibold text-slate-500">
       Reason: {route.errorReason} · Category: {route.errorCategory}
     </p>
   );

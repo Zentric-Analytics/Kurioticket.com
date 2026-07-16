@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { AdminButton } from "@/components/admin/AdminPageShell";
 
 export function ProviderRetestButton() {
   const [message, setMessage] = useState("");
@@ -23,8 +23,8 @@ export function ProviderRetestButton() {
 
   return (
     <div className="grid gap-2">
-      <Button type="button" onClick={retest} disabled={loading}>{loading ? "Retesting..." : "Retest Duffel"}</Button>
-      {message ? <p className="text-sm font-semibold text-muted">{message}</p> : null}
+      <AdminButton type="button" onClick={retest} disabled={loading}>{loading ? "Retesting..." : "Retest Duffel"}</AdminButton>
+      {message ? <p className="text-sm font-semibold text-slate-500">{message}</p> : null}
     </div>
   );
 }
