@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const contentPage = readFileSync("src/app/admin/content/page.tsx", "utf8");
+const systemPage = readFileSync("src/app/admin/system/page.tsx", "utf8");
 const settingsPage = readFileSync("src/app/admin/settings/page.tsx", "utf8");
 const refreshCard = readFileSync("src/components/admin/HomepageFaresRefreshCard.tsx", "utf8");
 const statusApi = readFileSync("src/app/api/admin/homepage-fares/status/route.ts", "utf8");
@@ -30,12 +31,13 @@ test("Content Inventory page owns homepage fare freshness and preserves inventor
   assert.doesNotMatch(contentPage, /Create content|Edit content|Delete content|Upload image|Approve content/i);
 });
 
-test("Settings page no longer renders a duplicate homepage fare refresh section", () => {
+test("System page owns settings visibility without restoring homepage fare refresh", () => {
+  assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard/);
+  assert.match(systemPage, /Admin Configuration/);
+  assert.match(systemPage, /Feature Flags/);
+  assert.doesNotMatch(systemPage, /homepage fare/i);
+  assert.match(settingsPage, /redirect\("\/admin\/system"\)/);
   assert.doesNotMatch(settingsPage, /HomepageFaresRefreshCard/);
-  assert.match(settingsPage, /Admin email configuration/);
-  assert.match(settingsPage, /Feature flags/);
-  assert.match(settingsPage, /System controls/);
-  assert.doesNotMatch(settingsPage, /homepage fare/i);
 });
 
 test("homepage fare refresh component keeps existing client APIs, scopes, and status messaging", () => {

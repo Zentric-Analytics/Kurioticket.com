@@ -47,6 +47,8 @@ test("admin navigation order and labels preserve ownership boundaries", () => {
   assert.equal(navLabels.indexOf("Admin Logs"), navLabels.indexOf("Provider Handoffs") + 1);
   assert.equal(navLabels.indexOf("Content Inventory"), navLabels.indexOf("Admin Logs") + 1);
   assert.equal(navLabels.indexOf("System"), navLabels.indexOf("Content Inventory") + 1);
+  assert.equal(navLabels.includes("Settings"), false);
+  assert.equal(navHrefs.includes("/admin/settings"), false);
 
   assert.equal(itemByHref("/admin/account-deletions").section, "operations");
   assert.equal(itemByHref("/admin/searches").section, "observability");
