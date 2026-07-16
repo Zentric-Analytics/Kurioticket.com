@@ -64,7 +64,7 @@ test("admin navigation keeps Providers and removes duplicate product destination
   assert.equal(labels.includes("Flights"), false);
   assert.equal(labels.includes("Hotels"), false);
   assert.equal(labels.includes("Cars"), false);
-  assert.deepEqual(labels, ["Overview", "Users", "Support", "Account Deletions", "Providers", "Searches", "Provider Handoffs", "Admin Logs", "Content Inventory", "System", "Settings"]);
+  assert.deepEqual(labels, ["Overview", "Users", "Support", "Account Deletions", "Providers", "Searches", "Provider Handoffs", "Admin Logs", "Content Inventory", "System"]);
 });
 
 test("legacy admin product pages are server redirects and no longer render duplicate provider cards", () => {
@@ -85,7 +85,7 @@ test("provider APIs, retest API, and unrelated admin pages are not edited by pro
   assert.match(providerRetestApi, /writeAdminAuditLog/);
   assert.match(overviewPage, /Operations Dashboard/);
   assert.match(systemPage, /Safe operational status only/);
-  assert.match(settingsPage, /Read-only operational settings/);
+  assert.match(settingsPage, /redirect\("\/admin\/system"\)/);
 });
 
 function provider(product: TestProvider["product"], providerName: string): TestProvider {

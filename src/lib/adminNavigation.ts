@@ -9,7 +9,6 @@ import {
   LayoutDashboard,
   LockKeyhole,
   Search,
-  Settings,
   Trash2,
   Users,
 } from "lucide-react";
@@ -35,7 +34,6 @@ export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin/logs", label: "Admin Logs", icon: BookOpen, roles: ["ADMIN"], section: "observability" },
   { href: "/admin/content", label: "Content Inventory", icon: FileText, roles: ["ADMIN"], section: "content" },
   { href: "/admin/system", label: "System", icon: LockKeyhole, roles: ["ADMIN"], section: "controls" },
-  { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["ADMIN"], section: "controls" },
 ];
 
 export function isAdminNavItemActive(itemHref: string, pathname: string) {
