@@ -37,7 +37,9 @@ import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
+import { useRegion } from "@/components/region/RegionProvider";
+import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import {
   getHotelReviewBand,
   getHotelReviewCount,
@@ -391,6 +393,8 @@ type HotelCardProps = {
 
 export function HotelCard({ hotel, sortBadge }: HotelCardProps) {
   const { locale, t: dictionary } = useLocale();
+  const { selectedOption } = useRegion();
+  const currencyRates = useCurrencyRates();
   const { status: sessionStatus } = useSession();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const [isSaved, setIsSaved] = useState(false);
@@ -508,6 +512,22 @@ export function HotelCard({ hotel, sortBadge }: HotelCardProps) {
       >)[sortBadge]
     : null;
   const SortBadgeIcon = sortBadgeConfig?.Icon;
+  const totalDisplayPrice = formatDisplayPrice({
+    amount: hotel.totalPrice,
+    sourceCurrency: hotel.currency,
+    displayCurrency: selectedOption.currency,
+    convertSourceEstimate: true,
+    rates: currencyRates.rates,
+    isFallbackRate: currencyRates.isFallback,
+  });
+  const nightlyDisplayPrice = formatDisplayPrice({
+    amount: hotel.pricePerNight,
+    sourceCurrency: hotel.currency,
+    displayCurrency: selectedOption.currency,
+    convertSourceEstimate: true,
+    rates: currencyRates.rates,
+    isFallbackRate: currencyRates.isFallback,
+  });
 
   function getHotelSnapshot(): SavedHotelSnapshot {
     const params = new URLSearchParams(window.location.search);
@@ -874,8 +894,10 @@ export function HotelCard({ hotel, sortBadge }: HotelCardProps) {
                 <div
                   className="whitespace-nowrap text-xl font-bold leading-7 tracking-[-0.01em] text-slate-950 tabular-nums"
                   dir="ltr"
+                  title={totalDisplayPrice.title}
+                  aria-label={totalDisplayPrice.ariaLabel}
                 >
-                  {formatCurrency(hotel.totalPrice, hotel.currency, locale)}
+                  {totalDisplayPrice.formatted}
                 </div>
 
                 <div className="mt-1 text-[13px] font-medium leading-5 text-slate-500">
@@ -883,10 +905,14 @@ export function HotelCard({ hotel, sortBadge }: HotelCardProps) {
                 </div>
 
                 <div className="mt-3 space-y-1.5">
-                  <div className="text-sm font-semibold leading-5 text-slate-800 tabular-nums">
+                  <div
+                    className="text-sm font-semibold leading-5 text-slate-800 tabular-nums"
+                    title={nightlyDisplayPrice.title}
+                    aria-label={nightlyDisplayPrice.ariaLabel}
+                  >
                     {t("hotelResults.pricePerNight").replace(
                       "{{price}}",
-                      formatCurrency(hotel.pricePerNight, hotel.currency, locale),
+                      nightlyDisplayPrice.formatted,
                     )}
                   </div>
 

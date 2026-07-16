@@ -1093,7 +1093,7 @@ test("Thai Hotels results page copy resolves through active i18n keys", () => {
   assert.ok(hotelResultsClientSource.includes("hotel.name"));
   assert.ok(hotelResultsClientSource.includes("hotel.location"));
   assert.ok(hotelCardSource.includes("hotel.roomType"));
-  assert.ok(hotelCardSource.includes("formatCurrency(hotel.totalPrice, hotel.currency, locale)"));
+  assert.ok(hotelCardSource.includes("totalDisplayPrice.formatted"));
   assert.ok(hotelResultsClientSource.includes("sortHotelSummaryResults") && hotelResultsClientSource.includes("sortedVisibleHotels.map"));
   assert.ok(hotelResultsClientSource.includes("className="));
   assert.ok(hotelCardSource.includes("aria-label="));
@@ -1192,8 +1192,8 @@ test("Vietnamese Hotels Results page copy resolves through active i18n keys", ()
   assert.ok(hotelResultsClientSource.includes("hotel.location"));
   assert.ok(hotelCardSource.includes("hotel.roomType"));
   assert.ok(hotelCardSource.includes("hotel.id"));
-  assert.ok(hotelCardSource.includes("formatCurrency(hotel.totalPrice, hotel.currency, locale)"));
-  assert.ok(hotelCardSource.includes("formatCurrency(hotel.pricePerNight, hotel.currency, locale)"));
+  assert.ok(hotelCardSource.includes("totalDisplayPrice.formatted"));
+  assert.ok(hotelCardSource.includes("nightlyDisplayPrice.formatted"));
   assert.ok(hotelResultsClientSource.includes("sortHotelSummaryResults") && hotelResultsClientSource.includes("sortedVisibleHotels.map"));
   assert.ok(hotelResultsClientSource.includes("buildHotelFilterOptions") && hotelResultsClientSource.includes("toggleFilter"));
   assert.ok(hotelResultsClientSource.includes("className="));

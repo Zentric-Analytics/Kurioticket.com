@@ -38,7 +38,11 @@ import {
 import { HotelSearchBar } from "@/components/search/HotelSearchBar";
 import { normalizeHotelDestinationSearchValue } from "@/data/hotelDestinations";
 import { translations as enTranslations } from "@/lib/i18n/en";
-import { cn, formatCurrency } from "@/lib/utils";
+import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
+import { useRegion } from "@/components/region/RegionProvider";
+import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import { convertCurrencyAmount, type ExchangeRates } from "@/lib/currency/exchangeRates";
+import { cn } from "@/lib/utils";
 import {
   ALL_HOTEL_STAR_RATINGS,
   countHotelsByStarRating,
@@ -301,19 +305,10 @@ const emptySelections: HotelFilterSelections = {
   bedTypes: [],
 };
 
-function getSingleHotelResultCurrency(results: PublicHotelResult[]) {
-  const currencies = results
-    .map((result) => result.currency?.toUpperCase())
-    .filter(Boolean);
-  const [firstCurrency] = currencies;
-
-  return firstCurrency ?? "USD";
-}
-
-const getResultMaxPrice = (hotels: PublicHotelResult[]) =>
+const getResultMaxPrice = (hotels: PublicHotelResult[], rates?: ExchangeRates) =>
   Math.max(
     300,
-    Math.ceil(Math.max(...hotels.map((hotel) => hotel.totalPrice), 300) / 100) *
+    Math.ceil(Math.max(...hotels.map((hotel) => getHotelComparableTotalUsd(hotel, rates)), 300) / 100) *
       100,
   );
 
@@ -329,6 +324,8 @@ type HotelMobileSearchDraft = {
 
 export function HotelResultsClient() {
   const { locale, t: dictionary } = useLocale();
+  const { selectedOption } = useRegion();
+  const currencyRates = useCurrencyRates();
   const t = useCallback(
     (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
     [dictionary],
@@ -367,12 +364,17 @@ export function HotelResultsClient() {
   const filterApplyingTimeoutRef = useRef<number | null>(null);
   const searchApplyingTimeoutRef = useRef<number | null>(null);
   const filterScrollbarTimeoutRef = useRef<number | null>(null);
+  const currencyRatesRef = useRef(currencyRates.rates);
   const mobileHotelSearchScrollLockRef = useRef<{ restore: () => void } | null>(
     null,
   );
   const mobileFiltersScrollLockRef = useRef<{ restore: () => void } | null>(
     null,
   );
+
+  useEffect(() => {
+    currencyRatesRef.current = currencyRates.rates;
+  }, [currencyRates.rates]);
 
   const body = useMemo(
     () => ({
@@ -677,7 +679,7 @@ export function HotelResultsClient() {
           window.clearTimeout(searchApplyingTimeoutRef.current);
           searchApplyingTimeoutRef.current = null;
         }
-        setMaxPrice(getResultMaxPrice(data.results));
+        setMaxPrice(getResultMaxPrice(data.results, currencyRatesRef.current));
         setSelectedFilters(emptySelections);
         setSelectedStarRating(ALL_HOTEL_STAR_RATINGS);
       })
@@ -718,19 +720,28 @@ export function HotelResultsClient() {
           maxPrice,
           selectedStarRating,
           selectedFilters,
+          currencyRates.rates,
         ),
       ),
-    [maxPrice, results, selectedFilters, selectedStarRating],
+    [currencyRates.rates, maxPrice, results, selectedFilters, selectedStarRating],
   );
 
-  const resultMaxPrice = useMemo(() => getResultMaxPrice(results), [results]);
+  const resultMaxPrice = useMemo(() => getResultMaxPrice(results, currencyRates.rates), [currencyRates.rates, results]);
   const starRatingCounts = useMemo(
     () => countHotelsByStarRating(results),
     [results],
   );
-  const resultCurrency = useMemo(
-    () => getSingleHotelResultCurrency(results),
-    [results],
+  const formatHotelFilterPrice = useCallback(
+    (amountUsd: number) =>
+      formatDisplayPrice({
+        amount: amountUsd,
+        sourceCurrency: "USD",
+        displayCurrency: selectedOption.currency,
+        convertUsdEstimate: true,
+        rates: currencyRates.rates,
+        isFallbackRate: currencyRates.isFallback,
+      }).formatted,
+    [currencyRates.isFallback, currencyRates.rates, selectedOption.currency],
   );
 
   const activeFilterChips = useMemo(
@@ -740,17 +751,17 @@ export function HotelResultsClient() {
         maxPrice,
         resultMaxPrice,
         selectedStarRating,
-        resultCurrency,
+        formatHotelFilterPrice,
         t,
         locale,
         filterOptions.facilities,
         filterOptions.locations,
       ),
     [
+      formatHotelFilterPrice,
       locale,
       maxPrice,
       selectedStarRating,
-      resultCurrency,
       resultMaxPrice,
       selectedFilters,
       t,
@@ -800,8 +811,8 @@ export function HotelResultsClient() {
     ? savedVisibleHotels
     : visibleFilteredHotels;
   const sortedVisibleHotels = useMemo(
-    () => sortHotelSummaryResults(displayedHotels, hotelSummarySortMode),
-    [displayedHotels, hotelSummarySortMode],
+    () => sortHotelSummaryResults(displayedHotels, hotelSummarySortMode, currencyRates.rates),
+    [currencyRates.rates, displayedHotels, hotelSummarySortMode],
   );
   const hotelSortOptions = useMemo(
     () =>
@@ -1455,7 +1466,7 @@ export function HotelResultsClient() {
               maxPrice={maxPrice}
               setMaxPrice={updateMaxPrice}
               resultMaxPrice={resultMaxPrice}
-              priceCurrency={resultCurrency}
+              formatPrice={formatHotelFilterPrice}
               locale={locale}
               selectedRating={selectedStarRating}
               setSelectedRating={updateSelectedStarRating}
@@ -1504,7 +1515,7 @@ export function HotelResultsClient() {
                   maxPrice={maxPrice}
                   setMaxPrice={updateMaxPrice}
                   resultMaxPrice={resultMaxPrice}
-                  priceCurrency={resultCurrency}
+                  formatPrice={formatHotelFilterPrice}
                   locale={locale}
                   selectedRating={selectedStarRating}
                   setSelectedRating={updateSelectedStarRating}
@@ -1771,7 +1782,7 @@ export function HotelResultsClient() {
             maxPrice={maxPrice}
             setMaxPrice={updateMaxPrice}
             resultMaxPrice={resultMaxPrice}
-            priceCurrency={resultCurrency}
+            formatPrice={formatHotelFilterPrice}
             locale={locale}
             selectedRating={selectedStarRating}
             setSelectedRating={updateSelectedStarRating}
@@ -1813,6 +1824,7 @@ export function HotelResultsClient() {
 function sortHotelSummaryResults(
   hotels: PublicHotelResult[],
   sortMode: HotelSummarySortMode,
+  rates?: ExchangeRates,
 ) {
   const indexedHotels = hotels.map((hotel, index) => ({ hotel, index }));
 
@@ -1823,8 +1835,8 @@ function sortHotelSummaryResults(
   indexedHotels.sort((first, second) => {
     if (sortMode === "cheapest") {
       return (
-        getHotelSortablePrice(first.hotel) -
-          getHotelSortablePrice(second.hotel) || first.index - second.index
+        getHotelSortablePrice(first.hotel, rates) -
+          getHotelSortablePrice(second.hotel, rates) || first.index - second.index
       );
     }
 
@@ -1832,8 +1844,8 @@ function sortHotelSummaryResults(
       return (
         getHotelSortableRating(second.hotel) -
           getHotelSortableRating(first.hotel) ||
-        getHotelSortablePrice(first.hotel) -
-          getHotelSortablePrice(second.hotel) ||
+        getHotelSortablePrice(first.hotel, rates) -
+          getHotelSortablePrice(second.hotel, rates) ||
         first.index - second.index
       );
     }
@@ -1850,8 +1862,8 @@ function sortHotelSummaryResults(
 
     return (
       secondScore - firstScore ||
-      getHotelSortablePrice(first.hotel) -
-        getHotelSortablePrice(second.hotel) ||
+      getHotelSortablePrice(first.hotel, rates) -
+        getHotelSortablePrice(second.hotel, rates) ||
       first.index - second.index
     );
   });
@@ -1859,11 +1871,31 @@ function sortHotelSummaryResults(
   return indexedHotels.map(({ hotel }) => hotel);
 }
 
-function getHotelSortablePrice(hotel: PublicHotelResult) {
-  if (Number.isFinite(hotel.totalPrice)) return hotel.totalPrice;
-  if (Number.isFinite(hotel.pricePerNight)) return hotel.pricePerNight;
+function getHotelSortablePrice(hotel: PublicHotelResult, rates?: ExchangeRates) {
+  const comparableTotalUsd = getHotelComparableTotalUsd(hotel, rates);
+  if (Number.isFinite(comparableTotalUsd)) return comparableTotalUsd;
 
   return Number.POSITIVE_INFINITY;
+}
+
+function getHotelComparableTotalUsd(hotel: PublicHotelResult, rates?: ExchangeRates) {
+  const convertedTotal = convertCurrencyAmount(
+    hotel.totalPrice,
+    hotel.currency || "USD",
+    "USD",
+    rates,
+  );
+
+  if (convertedTotal !== null) return convertedTotal;
+
+  // Keep filter/sort behavior usable if an unexpected provider currency is
+  // missing from the FX table; display formatting still preserves the provider
+  // currency instead of relabeling this raw amount.
+  if ((hotel.currency || "USD").toUpperCase() === "USD" && Number.isFinite(hotel.totalPrice)) {
+    return hotel.totalPrice;
+  }
+
+  return Number.isFinite(hotel.totalPrice) ? hotel.totalPrice : Number.POSITIVE_INFINITY;
 }
 
 function getHotelSortableRating(hotel: PublicHotelResult) {
@@ -1957,7 +1989,7 @@ function HotelFilters({
   maxPrice,
   setMaxPrice,
   resultMaxPrice,
-  priceCurrency,
+  formatPrice,
   locale,
   selectedRating,
   setSelectedRating,
@@ -1973,7 +2005,7 @@ function HotelFilters({
   maxPrice: number;
   setMaxPrice: (value: number) => void;
   resultMaxPrice: number;
-  priceCurrency: string;
+  formatPrice: (amountUsd: number) => string;
   locale: string;
   selectedRating: HotelStarRatingSelection;
   setSelectedRating: (value: HotelStarRatingSelection) => void;
@@ -2002,8 +2034,7 @@ function HotelFilters({
           maxPrice={maxPrice}
           setMaxPrice={setMaxPrice}
           resultMaxPrice={resultMaxPrice}
-          priceCurrency={priceCurrency}
-          locale={locale}
+          formatPrice={formatPrice}
           filterRangeClass={filterRangeClass}
         />
       ),
@@ -2134,7 +2165,7 @@ function HotelFilters({
             <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
               {t("hotelResults.totalUpTo")}{" "}
               <span className="font-mono text-[#021C2B]">
-                {formatCurrency(maxPrice, priceCurrency, locale)}
+                {formatPrice(maxPrice)}
               </span>
             </span>
             <input
@@ -2145,6 +2176,7 @@ function HotelFilters({
               step={25}
               value={maxPrice}
               onChange={(event) => setMaxPrice(Number(event.target.value))}
+              aria-valuetext={formatPrice(maxPrice)}
             />
           </label>
         </FilterSection>
@@ -2255,16 +2287,14 @@ function PriceFilterControl({
   maxPrice,
   setMaxPrice,
   resultMaxPrice,
-  priceCurrency,
-  locale,
+  formatPrice,
   filterRangeClass,
 }: {
   t: (key: string) => string;
   maxPrice: number;
   setMaxPrice: (value: number) => void;
   resultMaxPrice: number;
-  priceCurrency: string;
-  locale: string;
+  formatPrice: (amountUsd: number) => string;
   filterRangeClass: string;
 }) {
   return (
@@ -2272,7 +2302,7 @@ function PriceFilterControl({
       <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
         {t("hotelResults.totalUpTo")} {" "}
         <span className="font-mono text-[#021C2B]">
-          {formatCurrency(maxPrice, priceCurrency, locale)}
+          {formatPrice(maxPrice)}
         </span>
       </span>
       <input
@@ -2283,6 +2313,7 @@ function PriceFilterControl({
         step={25}
         value={maxPrice}
         onChange={(event) => setMaxPrice(Number(event.target.value))}
+        aria-valuetext={formatPrice(maxPrice)}
       />
     </label>
   );
@@ -2646,7 +2677,7 @@ function buildActiveFilterChips(
   maxPrice: number,
   resultMaxPrice: number,
   selectedStarRating: HotelStarRatingSelection,
-  priceCurrency: string,
+  formatPrice: (amountUsd: number) => string,
   t: (key: string) => string,
   locale: string,
   facilityOptions: FilterOption[],
@@ -2704,7 +2735,7 @@ function buildActiveFilterChips(
       key: "maxPrice",
       label: t("hotelResults.upToPrice").replace(
         "{{price}}",
-        formatCurrency(maxPrice, priceCurrency, locale),
+        formatPrice(maxPrice),
       ),
       kind: "maxPrice",
     });
@@ -2872,9 +2903,10 @@ function hotelMatchesFilters(
   maxPrice: number,
   selectedStarRating: HotelStarRatingSelection,
   selectedFilters: HotelFilterSelections,
+  rates?: ExchangeRates,
 ) {
   return (
-    hotel.totalPrice <= maxPrice &&
+    getHotelComparableTotalUsd(hotel, rates) <= maxPrice &&
     hotelMatchesStarRating(hotel.rating, selectedStarRating) &&
     matchesTermGroup(
       hotel,

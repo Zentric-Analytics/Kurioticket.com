@@ -1,5 +1,6 @@
 import {
   convertCurrency,
+  convertCurrencyAmount,
   fallbackExchangeRatesFromUsd,
   resolveDisplayCurrency,
   type ExchangeRates,
@@ -71,6 +72,7 @@ export function formatDisplayPrice({
   sourceCurrency,
   displayCurrency,
   convertUsdEstimate = false,
+  convertSourceEstimate = false,
   maximumFractionDigits,
   rates,
   isFallbackRate = rates ? false : true,
@@ -79,6 +81,7 @@ export function formatDisplayPrice({
   sourceCurrency: string;
   displayCurrency: string;
   convertUsdEstimate?: boolean;
+  convertSourceEstimate?: boolean;
   maximumFractionDigits?: number;
   rates?: ExchangeRates;
   isFallbackRate?: boolean;
@@ -86,17 +89,25 @@ export function formatDisplayPrice({
   const activeRates = rates ?? fallbackExchangeRatesFromUsd;
   const normalizedSourceCurrency = sourceCurrency.toUpperCase();
   const normalizedDisplayCurrency = resolveDisplayCurrency(displayCurrency, activeRates);
-  const convertedAmount = normalizedDisplayCurrency
-    ? convertCurrency(amount, normalizedDisplayCurrency, activeRates)
-    : null;
-  const shouldConvertUsdEstimate =
-    convertUsdEstimate &&
-    normalizedSourceCurrency === "USD" &&
+  const conversionRequested =
+    convertSourceEstimate ||
+    (convertUsdEstimate && normalizedSourceCurrency === "USD");
+  const convertedAmount =
+    conversionRequested && normalizedDisplayCurrency
+      ? convertCurrencyAmount(
+          amount,
+          normalizedSourceCurrency,
+          normalizedDisplayCurrency,
+          activeRates,
+        )
+      : null;
+  const shouldUseConvertedEstimate =
+    conversionRequested &&
     normalizedDisplayCurrency !== null &&
     normalizedDisplayCurrency !== normalizedSourceCurrency &&
     convertedAmount !== null;
-  const displayAmount = shouldConvertUsdEstimate ? convertedAmount : amount;
-  const currency = shouldConvertUsdEstimate ? normalizedDisplayCurrency : normalizedSourceCurrency;
+  const displayAmount = shouldUseConvertedEstimate ? convertedAmount : amount;
+  const currency = shouldUseConvertedEstimate ? normalizedDisplayCurrency : normalizedSourceCurrency;
   const formatted = formatCurrency(displayAmount, currency, { maximumFractionDigits });
   const providerFormatted = formatCurrency(amount, normalizedSourceCurrency, {
     maximumFractionDigits,
@@ -109,14 +120,14 @@ export function formatDisplayPrice({
     currency,
     sourceCurrency: normalizedSourceCurrency,
     providerFormatted,
-    isConvertedEstimate: shouldConvertUsdEstimate,
+    isConvertedEstimate: shouldUseConvertedEstimate,
     isFallbackRate,
-    title: shouldConvertUsdEstimate
+    title: shouldUseConvertedEstimate
       ? `Converted display estimate. Provider price: ${providerFormatted}. Final provider price may differ.${rateCopy}`
       : undefined,
-    ariaLabel: shouldConvertUsdEstimate
+    ariaLabel: shouldUseConvertedEstimate
       ? `${formatted}. Display estimate converted from ${providerFormatted}. Final provider price may differ.${rateCopy}`
       : providerFormatted,
-    supportingText: shouldConvertUsdEstimate ? `${estimateCopy} Provider price: ${providerFormatted}.` : undefined,
+    supportingText: shouldUseConvertedEstimate ? `${estimateCopy} Provider price: ${providerFormatted}.` : undefined,
   };
 }
