@@ -90,6 +90,19 @@ const reviewLabelFallbacks: Record<HotelReviewBand, string> = {
   reviewScore: "Review score",
 };
 
+export type HotelDetailsSearchContext = {
+  destination?: string;
+  checkIn?: string;
+  checkOut?: string;
+  guests?: string;
+  rooms?: string;
+};
+
+type HotelDetailsClientProps = {
+  id: string;
+  searchContext?: HotelDetailsSearchContext;
+};
+
 function normalizeWhitespace(value: string) {
   return value.trim().replace(/\s+/g, " ");
 }
@@ -213,7 +226,7 @@ function localizeAmenityItems(items: HotelAmenityPresentationItem[], t: (key: st
   return items.map((item) => ({ ...item, label: item.translationKey ? t(item.translationKey) || item.label : item.label }));
 }
 
-export function HotelDetailsClient({ id }: { id: string }) {
+export function HotelDetailsClient({ id }: HotelDetailsClientProps) {
   const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
