@@ -2,21 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AlertTriangle, Bell, Building2, ChevronDown, Inbox, Loader2, LogOut, Search, Settings, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Building2, ChevronDown, Inbox, Loader2, LogOut, Menu, Settings, ShieldCheck, X } from "lucide-react";
+import { useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { formatAdminBadgeLabel } from "@/components/admin/adminDesignSystem";
-import { adminNavigation, isAdminNavItemActive, type AdminNavDefinition, type AdminRole } from "@/lib/adminNavigation";
+import { getActiveAdminHub, getAdminHubsForRole, type AdminHubDefinition, type AdminRole } from "@/lib/adminNavigation";
 
 type StatusTone = "good" | "bad" | "warn" | "neutral" | "info";
-
-const sectionLabels = {
-  operations: "Operations",
-  readiness: "Provider readiness",
-  observability: "Observability",
-  content: "Website content",
-  controls: "System & security",
-};
 
 export function AdminShell({
   children,
@@ -30,127 +23,89 @@ export function AdminShell({
   adminRole: string;
 }) {
   const safeRole: AdminRole = adminRole === "SUPPORT" || adminRole === "USER" ? adminRole : "ADMIN";
-  const navItems = adminNavigation.filter((item) => item.roles.includes(safeRole));
+  const hubs = getAdminHubsForRole(safeRole);
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-950">
-      <div className="mx-auto grid min-h-screen w-full max-w-[1600px] lg:grid-cols-[280px_1fr]">
-        <AdminSidebar items={navItems} />
-        <div className="min-w-0 border-l border-slate-200 bg-slate-100">
-          <AdminTopbar adminEmail={adminEmail} adminName={adminName} adminRole={safeRole} />
-          <main className="px-4 py-5 sm:px-6 lg:px-8">{children}</main>
-        </div>
+      <div className="mx-auto min-h-screen w-full max-w-[1800px]">
+        <AdminNavbar hubs={hubs} adminEmail={adminEmail} adminName={adminName} adminRole={safeRole} />
+        <main className="px-4 py-5 sm:px-6 lg:px-10">{children}</main>
       </div>
     </div>
   );
 }
 
-export function AdminSidebar({ items }: { items: AdminNavDefinition[] }) {
-  const grouped = items.reduce<Record<AdminNavDefinition["section"], AdminNavDefinition[]>>(
-    (acc, item) => {
-      acc[item.section].push(item);
-      return acc;
-    },
-    { operations: [], readiness: [], observability: [], content: [], controls: [] },
-  );
-
-  return (
-    <aside className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur lg:h-screen lg:border-b-0 lg:bg-white">
-      <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-4 lg:h-20 lg:px-6">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-700 text-sm font-black text-white">KT</div>
-        <div>
-          <p className="text-sm font-bold text-slate-950">Kurioticket</p>
-          <p className="text-xs font-semibold text-slate-500">Internal operations</p>
-        </div>
-      </div>
-      <nav className="flex gap-2 overflow-x-auto px-4 py-3 lg:block lg:h-[calc(100vh-5rem)] lg:space-y-6 lg:overflow-y-auto lg:px-4 lg:py-5" aria-label="Admin navigation">
-        {(Object.keys(grouped) as Array<AdminNavDefinition["section"]>).map((section) =>
-          grouped[section].length > 0 ? (
-            <div key={section} className="min-w-max lg:min-w-0">
-              <p className="mb-2 hidden px-2 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400 lg:block">
-                {sectionLabels[section]}
-              </p>
-              <div className="flex gap-2 lg:grid lg:gap-1">
-                {grouped[section].map((item) => (
-                  <AdminNavItem key={item.href} item={item} />
-                ))}
-              </div>
-            </div>
-          ) : null,
-        )}
-      </nav>
-    </aside>
-  );
-}
-
-export function AdminNavItem({ item }: { item: AdminNavDefinition }) {
-  const pathname = usePathname();
-  const active = isAdminNavItemActive(item.href, pathname);
-  const Icon = item.icon;
-
-  return (
-    <Link
-      href={item.href}
-      className={`focus-ring inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition lg:w-full ${
-        active
-          ? "bg-indigo-50 text-indigo-800 ring-1 ring-indigo-100"
-          : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-      }`}
-      aria-current={active ? "page" : undefined}
-    >
-      <Icon aria-hidden="true" className={active ? "text-indigo-700" : "text-slate-400"} size={17} />
-      <span className="whitespace-nowrap">{item.label}</span>
-    </Link>
-  );
-}
-
-export function AdminTopbar({
+export function AdminNavbar({
+  hubs,
   adminEmail,
   adminName,
   adminRole,
 }: {
+  hubs: AdminHubDefinition[];
   adminEmail?: string | null;
   adminName?: string | null;
   adminRole: AdminRole;
 }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
   const displayName = adminName || adminEmail || "Admin";
 
   return (
-    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:px-6 lg:px-8">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-bold text-slate-950">Kurioticket Admin</p>
-            <p className="text-xs font-semibold text-slate-500">Secure internal workspace</p>
-          </div>
-          <AdminProfileMenu className="xl:hidden" adminEmail={adminEmail} displayName={displayName} />
+    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:px-6 lg:px-10">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-5">
+          <Link href="/admin" className="focus-ring shrink-0 rounded-lg text-sm font-extrabold text-slate-950">
+            Kurioticket Admin
+          </Link>
+          <nav className="hidden items-center gap-1 md:flex" aria-label="Admin navigation">
+            {hubs.map((hub) => <AdminHubNavLink key={hub.key} hub={hub} />)}
+          </nav>
         </div>
-        <div className="flex flex-col gap-3 md:flex-row md:items-center xl:min-w-[760px] xl:justify-end">
-          <label className="relative block md:flex-1 xl:max-w-xl">
-            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-            <AdminInput
-              type="search"
-              placeholder="Search users, searches, providers..."
-              className="pl-9"
-            />
-          </label>
-          <button
-            type="button"
-            disabled
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-bold text-slate-400"
-            aria-label="Notifications unavailable"
-            title="Notifications are not live yet"
-          >
-            <Bell size={16} />
-            <span className="hidden sm:inline">No notifications</span>
-          </button>
-          <div className="hidden items-center gap-2 xl:flex">
-            <AdminStatusBadge tone="info">{adminRole}</AdminStatusBadge>
+        <div className="hidden items-center gap-2 md:flex">
+          <AdminStatusBadge tone="info">{adminRole}</AdminStatusBadge>
+          <AdminProfileMenu adminEmail={adminEmail} displayName={displayName} />
+        </div>
+        <button
+          type="button"
+          className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm md:hidden"
+          aria-expanded={mobileOpen}
+          aria-controls="admin-mobile-menu"
+          onClick={() => setMobileOpen((open) => !open)}
+        >
+          {mobileOpen ? <X size={16} aria-hidden="true" /> : <Menu size={16} aria-hidden="true" />}
+          Menu
+        </button>
+      </div>
+      {mobileOpen ? (
+        <div id="admin-mobile-menu" className="mt-3 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg md:hidden">
+          <nav className="grid gap-1" aria-label="Admin mobile navigation">
+            {hubs.map((hub) => <AdminHubNavLink key={hub.key} hub={hub} onNavigate={() => setMobileOpen(false)} mobile />)}
+          </nav>
+          <div className="mt-2 border-t border-slate-100 pt-2">
             <AdminProfileMenu adminEmail={adminEmail} displayName={displayName} />
           </div>
         </div>
-      </div>
+      ) : null}
     </header>
+  );
+}
+
+function AdminHubNavLink({ hub, mobile = false, onNavigate }: { hub: AdminHubDefinition; mobile?: boolean; onNavigate?: () => void }) {
+  const pathname = usePathname();
+  const active = getActiveAdminHub(pathname) === hub.key;
+
+  return (
+    <Link
+      href={hub.href}
+      onClick={onNavigate}
+      className={cn(
+        "focus-ring inline-flex items-center rounded-xl text-sm font-bold transition",
+        mobile ? "min-h-11 px-3 py-2" : "px-3 py-2",
+        active ? "bg-indigo-50 text-indigo-800 ring-1 ring-indigo-100" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950",
+      )}
+      aria-current={active ? "page" : undefined}
+    >
+      {hub.label}
+    </Link>
   );
 }
 
@@ -177,7 +132,7 @@ function AdminProfileMenu({
           <p className="text-sm font-bold text-slate-900">Admin profile</p>
           <p className="truncate text-xs font-medium text-slate-500">{adminEmail || "No email available"}</p>
         </div>
-        <ProfileLink href="/admin/settings" label="Admin settings" icon={Settings} />
+        <ProfileLink href="/admin/system" label="System" icon={Settings} />
         <ProfileLink href="/admin/logs" label="Audit logs" icon={ShieldCheck} />
         <ProfileLink href="/" label="Switch to public site" icon={Building2} />
         <ProfileLink href="/api/auth/signout" label="Logout" icon={LogOut} />
