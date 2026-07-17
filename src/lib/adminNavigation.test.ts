@@ -2,102 +2,94 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { adminNavigation, isAdminNavItemActive } from "@/lib/adminNavigation";
+import {
+  adminHubs,
+  adminNavigation,
+  getActiveAdminHub,
+  getAdminHubDestinations,
+  getAdminHubsForRole,
+  getAdminNavForRole,
+  isAdminNavItemActive,
+} from "@/lib/adminNavigation";
 
-const navLabels = adminNavigation.map((item) => item.label);
-const navHrefs = adminNavigation.map((item) => item.href);
 const shell = readFileSync("src/components/admin/AdminPageShell.tsx", "utf8");
-const accountDeletionsPage = readFileSync("src/app/admin/account-deletions/page.tsx", "utf8");
-const redirectsPage = readFileSync("src/app/admin/redirects/page.tsx", "utf8");
-const logsPage = readFileSync("src/app/admin/logs/page.tsx", "utf8");
-const bookingsPage = readFileSync("src/app/admin/bookings/page.tsx", "utf8");
+const operationsPage = readFileSync("src/app/admin/operations/page.tsx", "utf8");
+const monitoringPage = readFileSync("src/app/admin/monitoring/page.tsx", "utf8");
+const platformPage = readFileSync("src/app/admin/platform/page.tsx", "utf8");
+const usersPage = readFileSync("src/app/admin/users/page.tsx", "utf8");
 
-function itemByHref(href: string) {
-  const item = adminNavigation.find((candidate) => candidate.href === href);
-  assert.ok(item, `Expected ${href} to be in admin navigation`);
-  return item;
+function labelsForHub(hub: "operations" | "monitoring" | "platform", role: "ADMIN" | "SUPPORT" | "USER") {
+  return getAdminHubDestinations(hub, role).map((item) => item.label);
 }
 
-test("admin navigation inventory exposes existing workflows without restoring legacy product pages", () => {
-  assert.ok(navLabels.includes("Account Deletions"));
-  assert.ok(navLabels.includes("Provider Handoffs"));
-  assert.ok(navLabels.includes("Providers"));
-  assert.ok(navLabels.includes("Searches"));
-  assert.ok(navLabels.includes("Admin Logs"));
-  assert.ok(navLabels.includes("Support"));
-  assert.ok(navLabels.includes("Users"));
-  assert.ok(navLabels.includes("Content Inventory"));
-  assert.equal(navLabels.includes("Content"), false);
-  assert.equal(itemByHref("/admin/content").label, "Content Inventory");
-
-  assert.equal(navLabels.includes("Bookings"), false);
-  assert.equal(navHrefs.includes("/admin/bookings"), false);
-  assert.match(bookingsPage, /export default function AdminBookingsPage/);
-  assert.match(bookingsPage, /title="Booking Operations"/);
-
-  assert.equal(navHrefs.includes("/admin/flights"), false);
-  assert.equal(navHrefs.includes("/admin/hotels"), false);
-  assert.equal(navHrefs.includes("/admin/cars"), false);
+test("admin shell removes the permanent sidebar and 280px reserved desktop grid", () => {
+  assert.doesNotMatch(shell, /AdminSidebar/);
+  assert.doesNotMatch(shell, /<aside/);
+  assert.doesNotMatch(shell, /lg:grid-cols-\[280px_1fr\]/);
+  assert.doesNotMatch(shell, /Search users, searches, providers/);
+  assert.doesNotMatch(shell, /Notifications unavailable/);
+  assert.doesNotMatch(shell, /No notifications/);
 });
 
-test("admin navigation order and labels preserve ownership boundaries", () => {
-  assert.equal(navLabels.indexOf("Support"), navLabels.indexOf("Users") + 1);
-  assert.equal(navLabels.indexOf("Account Deletions"), navLabels.indexOf("Support") + 1);
-  assert.equal(navLabels.indexOf("Provider Handoffs"), navLabels.indexOf("Searches") + 1);
-  assert.equal(navLabels.indexOf("Admin Logs"), navLabels.indexOf("Provider Handoffs") + 1);
-  assert.equal(navLabels.indexOf("Content Inventory"), navLabels.indexOf("Admin Logs") + 1);
-  assert.equal(navLabels.indexOf("System"), navLabels.indexOf("Content Inventory") + 1);
-  assert.equal(navLabels.includes("Settings"), false);
-  assert.equal(navHrefs.includes("/admin/settings"), false);
-
-  assert.equal(itemByHref("/admin/account-deletions").section, "operations");
-  assert.equal(itemByHref("/admin/searches").section, "observability");
-  assert.equal(itemByHref("/admin/redirects").section, "observability");
-  assert.equal(itemByHref("/admin/logs").section, "observability");
-  assert.equal(itemByHref("/admin/content").section, "content");
-  assert.deepEqual(itemByHref("/admin/content").roles, ["ADMIN"]);
-});
-
-test("admin navigation active matching handles nested routes without unrelated prefix matches", () => {
-  assert.equal(isAdminNavItemActive("/admin/account-deletions", "/admin/account-deletions"), true);
-  assert.equal(isAdminNavItemActive("/admin/account-deletions", "/admin/account-deletions/example-id"), true);
-  assert.equal(isAdminNavItemActive("/admin/redirects", "/admin/redirects"), true);
-  assert.equal(isAdminNavItemActive("/admin/logs", "/admin/logs"), true);
-  assert.equal(isAdminNavItemActive("/admin/content", "/admin/content"), true);
-  assert.equal(isAdminNavItemActive("/admin/content", "/admin/content/example-id"), true);
-  assert.equal(isAdminNavItemActive("/admin/support", "/admin/support/example-id"), true);
-  assert.equal(isAdminNavItemActive("/admin/bookings", "/admin/bookings"), true);
-
-  assert.equal(isAdminNavItemActive("/admin", "/admin/support"), false);
-  assert.equal(isAdminNavItemActive("/admin/support", "/admin/supportive"), false);
-  assert.equal(isAdminNavItemActive("/admin/logs", "/admin/logs-export"), false);
-});
-
-test("admin navigation role metadata does not expose admin-only log workflows to users", () => {
-  for (const href of ["/admin/account-deletions", "/admin/redirects", "/admin/logs"]) {
-    assert.deepEqual(itemByHref(href).roles, ["ADMIN"]);
-  }
-
-  const userVisible = adminNavigation.filter((item) => item.roles.includes("USER"));
-  assert.deepEqual(userVisible, []);
-});
-
-test("admin page semantics distinguish lifecycle, provider handoff, and audit responsibilities", () => {
-  assert.match(accountDeletionsPage, /title="Account Deletions"/);
-  assert.match(accountDeletionsPage, /Manage account deletion requests and review lifecycle status\./);
-
-  assert.match(redirectsPage, /title="Provider Handoffs"/);
-  assert.match(redirectsPage, /Review outbound redirects from Kurioticket to external providers\./);
-  assert.doesNotMatch(redirectsPage, /Redirect Management/);
-
-  assert.match(logsPage, /title="Admin Logs"/);
-  assert.match(logsPage, /Review administrative and security-sensitive actions\./);
-});
-
-test("admin sidebar keeps mobile and accessibility affordances for added navigation", () => {
-  assert.match(shell, /overflow-x-auto/);
+test("admin navbar exposes only the four top-level ADMIN destinations", () => {
+  assert.deepEqual(getAdminHubsForRole("ADMIN").map((hub) => hub.label), ["Overview", "Operations", "Monitoring", "Platform"]);
+  assert.match(shell, /Kurioticket Admin/);
   assert.match(shell, /aria-label="Admin navigation"/);
-  assert.match(shell, /aria-current=\{active \? "page" : undefined\}/);
-  assert.match(shell, /aria-hidden="true"/);
-  assert.match(shell, /whitespace-nowrap/);
+  assert.doesNotMatch(shell, /sectionLabels/);
+});
+
+test("hub pages contain the correct destination links and flat row affordance", () => {
+  assert.deepEqual(labelsForHub("operations", "ADMIN"), ["Users", "Support", "Account Deletions"]);
+  assert.deepEqual(labelsForHub("monitoring", "ADMIN"), ["Searches", "Provider Handoffs", "Admin Logs"]);
+  assert.deepEqual(labelsForHub("platform", "ADMIN"), ["Providers", "Content Inventory", "System"]);
+
+  for (const page of [operationsPage, monitoringPage, platformPage]) {
+    assert.match(page, /ArrowRight/);
+    assert.match(page, /border-b border-slate-100/);
+    assert.doesNotMatch(page, /AdminMetricCard/);
+  }
+});
+
+test("active top-level navigation works for hub, child and detail routes", () => {
+  assert.equal(getActiveAdminHub("/admin"), "overview");
+  assert.equal(getActiveAdminHub("/admin/operations"), "operations");
+  assert.equal(getActiveAdminHub("/admin/users"), "operations");
+  assert.equal(getActiveAdminHub("/admin/support/123"), "operations");
+  assert.equal(getActiveAdminHub("/admin/account-deletions/123"), "operations");
+  assert.equal(getActiveAdminHub("/admin/monitoring"), "monitoring");
+  assert.equal(getActiveAdminHub("/admin/searches"), "monitoring");
+  assert.equal(getActiveAdminHub("/admin/redirects"), "monitoring");
+  assert.equal(getActiveAdminHub("/admin/logs"), "monitoring");
+  assert.equal(getActiveAdminHub("/admin/platform"), "platform");
+  assert.equal(getActiveAdminHub("/admin/providers"), "platform");
+  assert.equal(getActiveAdminHub("/admin/content"), "platform");
+  assert.equal(getActiveAdminHub("/admin/system"), "platform");
+  assert.equal(isAdminNavItemActive("/admin/support", "/admin/supportive"), false);
+});
+
+test("role restrictions are preserved and SUPPORT does not see restricted destinations", () => {
+  assert.deepEqual(labelsForHub("operations", "SUPPORT"), ["Users", "Support"]);
+  assert.deepEqual(labelsForHub("monitoring", "SUPPORT"), ["Searches"]);
+  assert.deepEqual(labelsForHub("platform", "SUPPORT"), []);
+  assert.deepEqual(getAdminHubsForRole("SUPPORT").map((hub) => hub.label), ["Overview", "Operations", "Monitoring"]);
+  assert.deepEqual(getAdminHubsForRole("USER"), []);
+  assert.equal(getAdminNavForRole("USER").length, 0);
+});
+
+test("direct existing admin routes remain unchanged while hub routes are added", () => {
+  assert.match(usersPage, /export default async function AdminUsersPage/);
+  assert.ok(adminNavigation.some((item) => item.href === "/admin/users"));
+  assert.ok(adminHubs.some((hub) => hub.href === "/admin/operations"));
+  assert.ok(adminHubs.some((hub) => hub.href === "/admin/monitoring"));
+  assert.ok(adminHubs.some((hub) => hub.href === "/admin/platform"));
+});
+
+test("mobile menu is accessible, closes on navigation and profile uses System link", () => {
+  assert.match(shell, /aria-expanded=\{mobileOpen\}/);
+  assert.match(shell, /aria-controls="admin-mobile-menu"/);
+  assert.match(shell, /onNavigate=\{\(\) => setMobileOpen\(false\)\}/);
+  assert.match(shell, /min-h-11/);
+  assert.match(shell, /AdminProfileMenu/);
+  assert.match(shell, /href="\/admin\/system" label="System"/);
+  assert.doesNotMatch(shell, /href="\/admin\/settings"/);
 });

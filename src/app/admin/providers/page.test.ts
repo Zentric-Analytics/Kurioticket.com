@@ -64,7 +64,7 @@ test("admin navigation keeps Providers and removes duplicate product destination
   assert.equal(labels.includes("Flights"), false);
   assert.equal(labels.includes("Hotels"), false);
   assert.equal(labels.includes("Cars"), false);
-  assert.deepEqual(labels, ["Overview", "Users", "Support", "Account Deletions", "Providers", "Searches", "Provider Handoffs", "Admin Logs", "Content Inventory", "System"]);
+  assert.deepEqual(labels, ["Overview", "Users", "Support", "Account Deletions", "Searches", "Provider Handoffs", "Admin Logs", "Providers", "Content Inventory", "System"]);
 });
 
 test("legacy admin product pages are server redirects and no longer render duplicate provider cards", () => {
