@@ -366,10 +366,11 @@ type HotelSortBadge = "cheapest" | "bestValue" | "topRated";
 
 type HotelCardProps = {
   hotel: PublicHotelResult;
+  detailsHref?: string;
   sortBadge?: HotelSortBadge;
 };
 
-export function HotelCard({ hotel, sortBadge }: HotelCardProps) {
+export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
   const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
@@ -378,6 +379,8 @@ export function HotelCard({ hotel, sortBadge }: HotelCardProps) {
   const [isSaved, setIsSaved] = useState(false);
   const [preferredImageIndex, setPreferredImageIndex] = useState(0);
   const starRating = getHotelStarRating(hotel.rating);
+  const resolvedDetailsHref =
+    detailsHref || `/hotels/details/${encodeURIComponent(hotel.id)}`;
   const explicitGalleryImages = useMemo(
     () => buildHotelGalleryCandidates(hotel.imageUrls, hotel.imageUrl),
     [hotel.imageUrl, hotel.imageUrls],
@@ -518,7 +521,7 @@ export function HotelCard({ hotel, sortBadge }: HotelCardProps) {
       imageAlt: hotel.name,
       location: hotel.location,
       rating: hotel.rating,
-      href: `/hotels/details/${encodeURIComponent(hotel.id)}`,
+      href: resolvedDetailsHref,
       savedAt: new Date().toISOString(),
     };
   }
@@ -895,7 +898,7 @@ export function HotelCard({ hotel, sortBadge }: HotelCardProps) {
               </div>
               <div className="min-[380px]:text-end">
                 <LinkButton
-                  href={`/hotels/details/${encodeURIComponent(hotel.id)}`}
+                  href={resolvedDetailsHref}
                   variant="accent"
                   size="sm"
                   className="w-full whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-3 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] hover:border-[#021C2B] hover:bg-[#021C2B] min-[380px]:w-auto"
