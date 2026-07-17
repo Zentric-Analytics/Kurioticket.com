@@ -8,6 +8,7 @@ import {
   Bike,
   Building2,
   BusFront,
+  CalendarDays,
   ChevronLeft,
   ChevronRight,
   CircleDot,
@@ -21,6 +22,7 @@ import {
   Laptop,
   MapPin,
   Trees,
+  Users,
   UtensilsCrossed,
   VolumeX,
   Waves,
@@ -37,6 +39,7 @@ import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import type { PublicHotelResult } from "@/lib/types";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
 import {
   buildHotelGalleryCandidates,
   getAdjacentHotelGalleryIndex,
@@ -102,6 +105,48 @@ type HotelDetailsClientProps = {
   id: string;
   searchContext?: HotelDetailsSearchContext;
 };
+
+function parseHotelSearchDate(value?: string) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return null;
+  }
+
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+}
+
+function parseHotelSearchCount(
+  value: string | undefined,
+  minimum: number,
+  maximum: number,
+) {
+  if (!value || !/^\d+$/.test(value)) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+
+  if (
+    !Number.isInteger(parsed) ||
+    parsed < minimum ||
+    parsed > maximum
+  ) {
+    return null;
+  }
+
+  return parsed;
+}
 
 function normalizeWhitespace(value: string) {
   return value.trim().replace(/\s+/g, " ");
@@ -226,7 +271,10 @@ function localizeAmenityItems(items: HotelAmenityPresentationItem[], t: (key: st
   return items.map((item) => ({ ...item, label: item.translationKey ? t(item.translationKey) || item.label : item.label }));
 }
 
-export function HotelDetailsClient({ id }: HotelDetailsClientProps) {
+export function HotelDetailsClient({
+  id,
+  searchContext,
+}: HotelDetailsClientProps) {
   const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
@@ -361,6 +409,59 @@ export function HotelDetailsClient({ id }: HotelDetailsClientProps) {
   const taxesText = hotel.taxesAndFeesIncluded === true ? t("hotelResults.taxesFeesIncluded") : hotel.taxesAndFeesIncluded === false ? t("hotelResults.taxesFeesNotIncluded") : "";
   const providerEnabled = canUseProviderLink(hotel);
   const providerUnavailableText = hotel.dataSource === "demo" ? t("hotelDetails.demoBookingUnavailable") : !providerEnabled ? t("hotelDetails.directLinkUnavailable") : "";
+  const staySummary = (() => {
+    const checkInDate = parseHotelSearchDate(searchContext?.checkIn);
+    const checkOutDate = parseHotelSearchDate(searchContext?.checkOut);
+    const guestCount = parseHotelSearchCount(
+      searchContext?.guests,
+      1,
+      12,
+    );
+    const roomCount = parseHotelSearchCount(
+      searchContext?.rooms,
+      1,
+      6,
+    );
+
+    if (
+      checkInDate === null ||
+      checkOutDate === null ||
+      checkOutDate.getTime() <= checkInDate.getTime() ||
+      guestCount === null ||
+      roomCount === null
+    ) {
+      return null;
+    }
+
+    const dateFormatter = new Intl.DateTimeFormat(
+      normalizeHotelCalendarLocale(locale),
+      {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      },
+    );
+
+    const numberFormatter = new Intl.NumberFormat(locale);
+
+    const guestLabel =
+      guestCount === 1
+        ? t("guestSingular") || "guest"
+        : t("guestPlural") || "guests";
+
+    const roomLabel =
+      roomCount === 1
+        ? t("roomSingular") || "room"
+        : t("roomPlural") || "rooms";
+
+    return {
+      dateText:
+        `${dateFormatter.format(checkInDate)} – ${dateFormatter.format(checkOutDate)}`,
+      occupancyText:
+        `${numberFormatter.format(guestCount)} ${guestLabel}, ` +
+        `${numberFormatter.format(roomCount)} ${roomLabel}`,
+    };
+  })();
 
   function markImageFailed(url: string) {
     setFailedImageUrls((current) => {
@@ -472,6 +573,34 @@ export function HotelDetailsClient({ id }: HotelDetailsClientProps) {
                     <p className="mt-1 text-xs font-medium text-slate-500">{taxesText}</p>
                     <p className="mt-2 text-xs font-medium text-slate-500">{totalDisplayPrice.currency}</p>
                   </div>
+                  {staySummary ? (
+                    <Card
+                      variant="subtle"
+                      className="rounded-xl p-3"
+                    >
+                      <div className="space-y-2">
+                        <p className="flex min-w-0 items-start gap-2 text-sm font-semibold leading-5 text-slate-800">
+                          <CalendarDays
+                            className="mt-0.5 h-4 w-4 shrink-0 text-blue"
+                            aria-hidden="true"
+                          />
+                          <span className="min-w-0 break-words">
+                            {staySummary.dateText}
+                          </span>
+                        </p>
+
+                        <p className="flex min-w-0 items-start gap-2 text-sm font-medium leading-5 text-slate-700">
+                          <Users
+                            className="mt-0.5 h-4 w-4 shrink-0 text-blue"
+                            aria-hidden="true"
+                          />
+                          <span className="min-w-0 break-words">
+                            {staySummary.occupancyText}
+                          </span>
+                        </p>
+                      </div>
+                    </Card>
+                  ) : null}
                   {hotel.provider && hotel.dataSource !== "demo" ? <p className="text-sm font-medium text-slate-700">{t("providedBy")} {hotel.provider}</p> : null}
                   {providerUnavailableText ? <p className="rounded-lg bg-slate-50 p-3 text-sm font-medium text-slate-700">{providerUnavailableText}</p> : null}
                   {redirectError ? <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">{redirectError}</p> : null}
