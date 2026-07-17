@@ -381,6 +381,21 @@ export function HotelResultsClient() {
     }),
     [params],
   );
+  const hotelDetailsSearchParams = useMemo(() => {
+    return new URLSearchParams({
+      destination: body.destination,
+      checkIn: body.checkIn,
+      checkOut: body.checkOut,
+      guests: String(body.guests),
+      rooms: String(body.rooms),
+    }).toString();
+  }, [
+    body.checkIn,
+    body.checkOut,
+    body.destination,
+    body.guests,
+    body.rooms,
+  ]);
   const bodySearchKey = [
     body.destination,
     body.checkIn,
@@ -1615,6 +1630,7 @@ export function HotelResultsClient() {
                     <HotelCard
                       key={hotel.id}
                       hotel={hotel}
+                      detailsHref={`/hotels/details/${encodeURIComponent(hotel.id)}?${hotelDetailsSearchParams}`}
                       sortBadge={
                         index === 0 ? hotelSummarySortMode : undefined
                       }
