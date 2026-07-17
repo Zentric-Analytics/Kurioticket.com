@@ -8,6 +8,7 @@ import {
   getActiveAdminHub,
   getAdminHubDestinations,
   getAdminHubsForRole,
+  getAdminNavbarHubsForRole,
   getAdminNavForRole,
   isAdminNavItemActive,
 } from "@/lib/adminNavigation";
@@ -31,11 +32,27 @@ test("admin shell removes the permanent sidebar and 280px reserved desktop grid"
   assert.doesNotMatch(shell, /No notifications/);
 });
 
-test("admin navbar exposes only the four top-level ADMIN destinations", () => {
+test("admin navbar exposes the brand as the only visible Overview destination", () => {
   assert.deepEqual(getAdminHubsForRole("ADMIN").map((hub) => hub.label), ["Overview", "Operations", "Monitoring", "Platform"]);
+  assert.deepEqual(getAdminNavbarHubsForRole("ADMIN").map((hub) => hub.label), ["Operations", "Monitoring", "Platform"]);
+  assert.equal(adminHubs.find((hub) => hub.key === "overview")?.showInNavbar, false);
   assert.match(shell, /Kurioticket Admin/);
+  assert.match(shell, /href="\/admin"/);
+  assert.match(shell, /aria-label="Go to Admin Overview"/);
+  assert.match(shell, /aria-current=\{active \? "page" : undefined\}/);
+  assert.match(shell, /const active = pathname === "\/admin"/);
   assert.match(shell, /aria-label="Admin navigation"/);
   assert.doesNotMatch(shell, /sectionLabels/);
+});
+
+test("desktop and mobile navigation omit the separate visible Overview item", () => {
+  assert.equal(getAdminNavbarHubsForRole("ADMIN").some((hub) => hub.label === "Overview"), false);
+  assert.equal(getAdminNavbarHubsForRole("SUPPORT").some((hub) => hub.label === "Overview"), false);
+  assert.equal(getAdminNavbarHubsForRole("USER").length, 0);
+  assert.match(shell, /const hubs = getAdminNavbarHubsForRole\(safeRole\)/);
+  assert.match(shell, /hubs\.map\(\(hub\) => <AdminHubNavLink key=\{hub\.key\} hub=\{hub\} \/>\)/);
+  assert.match(shell, /hubs\.map\(\(hub\) => <AdminHubNavLink key=\{hub\.key\} hub=\{hub\} onNavigate=\{\(\) => setMobileOpen\(false\)\} mobile \/>\)/);
+  assert.match(shell, /<AdminBrandLink onNavigate=\{\(\) => setMobileOpen\(false\)\} \/>/);
 });
 
 test("hub pages contain the correct destination links and flat row affordance", () => {
@@ -72,12 +89,14 @@ test("role restrictions are preserved and SUPPORT does not see restricted destin
   assert.deepEqual(labelsForHub("monitoring", "SUPPORT"), ["Searches"]);
   assert.deepEqual(labelsForHub("platform", "SUPPORT"), []);
   assert.deepEqual(getAdminHubsForRole("SUPPORT").map((hub) => hub.label), ["Overview", "Operations", "Monitoring"]);
+  assert.deepEqual(getAdminNavbarHubsForRole("SUPPORT").map((hub) => hub.label), ["Operations", "Monitoring"]);
   assert.deepEqual(getAdminHubsForRole("USER"), []);
   assert.equal(getAdminNavForRole("USER").length, 0);
 });
 
 test("direct existing admin routes remain unchanged while hub routes are added", () => {
   assert.match(usersPage, /export default async function AdminUsersPage/);
+  assert.ok(adminNavigation.some((item) => item.href === "/admin" && item.label === "Overview"));
   assert.ok(adminNavigation.some((item) => item.href === "/admin/users"));
   assert.ok(adminHubs.some((hub) => hub.href === "/admin/operations"));
   assert.ok(adminHubs.some((hub) => hub.href === "/admin/monitoring"));

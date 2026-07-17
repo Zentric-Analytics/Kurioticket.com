@@ -30,6 +30,7 @@ export type AdminHubDefinition = {
   label: string;
   description: string;
   destinationHrefs: string[];
+  showInNavbar?: boolean;
 };
 
 export const adminNavigation: AdminNavDefinition[] = [
@@ -46,7 +47,7 @@ export const adminNavigation: AdminNavDefinition[] = [
 ];
 
 export const adminHubs: AdminHubDefinition[] = [
-  { key: "overview", href: "/admin", label: "Overview", description: "Review the admin overview.", destinationHrefs: ["/admin"] },
+  { key: "overview", href: "/admin", label: "Overview", description: "Review the admin overview.", destinationHrefs: ["/admin"], showInNavbar: false },
   { key: "operations", href: "/admin/operations", label: "Operations", description: "Manage customer and support operations.", destinationHrefs: ["/admin/users", "/admin/support", "/admin/account-deletions"] },
   { key: "monitoring", href: "/admin/monitoring", label: "Monitoring", description: "Review search activity, provider handoffs and admin audit trails.", destinationHrefs: ["/admin/searches", "/admin/redirects", "/admin/logs"] },
   { key: "platform", href: "/admin/platform", label: "Platform", description: "Manage provider readiness, content inventory and system controls.", destinationHrefs: ["/admin/providers", "/admin/content", "/admin/system"] },
@@ -85,6 +86,10 @@ export function getAdminHubDestinations(hubKey: AdminHubKey, role: AdminRole) {
 
 export function getAdminHubsForRole(role: AdminRole) {
   return adminHubs.filter((hub) => hub.key === "overview" ? adminNavigation[0].roles.includes(role) : getAdminHubDestinations(hub.key, role).length > 0);
+}
+
+export function getAdminNavbarHubsForRole(role: AdminRole) {
+  return getAdminHubsForRole(role).filter((hub) => hub.showInNavbar !== false);
 }
 
 export function getActiveAdminHub(pathname: string): AdminHubKey | null {
