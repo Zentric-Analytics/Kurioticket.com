@@ -642,6 +642,43 @@ export function HotelDetailsClient({
   const shareActionText =
     t("share") || "Share";
 
+  const mapLocation = normalizeWhitespace(
+    hotel.location ||
+      hotel.neighbourhood ||
+      "",
+  );
+
+  const hasMapLocation =
+    Boolean(mapLocation) &&
+    mapLocation.length <= 240;
+
+  const mapQuery = hasMapLocation
+    ? normalizeWhitespace(
+        `${hotel.name}, ${mapLocation}`,
+      )
+    : "";
+
+  const mapSearchParams = hasMapLocation
+    ? new URLSearchParams({
+        api: "1",
+        query: mapQuery,
+      })
+    : null;
+
+  const mapHref = mapSearchParams
+    ? `https://www.google.com/maps/search/?${mapSearchParams.toString()}`
+    : "";
+
+  const mapActionText =
+    t("hotelDetails.viewMap") ||
+    t("viewMap") ||
+    "View map";
+
+  const mapHotelLabel = (
+    t("hotelDetails.viewHotelOnMap") ||
+    "View {{name}} on map"
+  ).replace("{{name}}", hotel.name);
+
   const shareFeedbackText =
     shareStatus === "shared"
       ? t("hotelDetails.shared") ||
@@ -796,6 +833,24 @@ export function HotelDetailsClient({
                     />
                     <span>{shareActionText}</span>
                   </Button>
+
+                  {mapHref ? (
+                    <LinkButton
+                      href={mapHref}
+                      variant="secondary"
+                      size="sm"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={mapHotelLabel}
+                      title={mapHotelLabel}
+                    >
+                      <MapPin
+                        className="h-4 w-4"
+                        aria-hidden="true"
+                      />
+                      <span>{mapActionText}</span>
+                    </LinkButton>
+                  ) : null}
                 </div>
 
                 {shareStatus !== "idle" ? (
