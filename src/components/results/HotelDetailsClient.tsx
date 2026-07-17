@@ -1013,15 +1013,28 @@ export function HotelDetailsClient({
                     </Card>
                   ) : null}
                   {hotel.provider && hotel.dataSource !== "demo" ? <p className="text-sm font-medium text-slate-700">{t("providedBy")} {hotel.provider}</p> : null}
-                  {providerUnavailableText ? <p className="rounded-lg bg-slate-50 p-3 text-sm font-medium text-slate-700">{providerUnavailableText}</p> : null}
+                  {providerUnavailableText ? (
+                    <p id="hotel-provider-unavailable-message" className="rounded-lg bg-slate-50 p-3 text-sm font-medium text-slate-700">
+                      {providerUnavailableText}
+                    </p>
+                  ) : null}
                   {redirectError ? <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">{redirectError}</p> : null}
+                  <Button
+                    type="button"
+                    variant="accent"
+                    className="w-full"
+                    disabled={!providerEnabled || redirecting}
+                    aria-describedby={
+                      providerUnavailableText
+                        ? "hotel-provider-unavailable-message"
+                        : undefined
+                    }
+                    onClick={continueToProvider}
+                  >
+                    {redirecting ? `${t("continueToProvider")}...` : t("continueToProvider")}
+                  </Button>
                   {providerEnabled ? (
-                    <>
-                      <Button type="button" variant="accent" className="w-full" disabled={redirecting} onClick={continueToProvider}>
-                        {redirecting ? `${t("continueToProvider")}...` : t("continueToProvider")}
-                      </Button>
-                      <p className="text-xs leading-5 text-slate-500">{t("hotelDetails.providerDisclaimer") || enTranslations["hotelDetails.providerDisclaimer"]}</p>
-                    </>
+                    <p className="text-xs leading-5 text-slate-500">{t("hotelDetails.providerDisclaimer") || enTranslations["hotelDetails.providerDisclaimer"]}</p>
                   ) : null}
                 </div>
               </Card>
