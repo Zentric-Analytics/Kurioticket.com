@@ -115,7 +115,6 @@ export type HotelDetailsSearchContext = {
 
 type HotelDetailsClientProps = {
   id: string;
-  initialHotel?: PublicHotelResult | null;
   searchContext?: HotelDetailsSearchContext;
 };
 
@@ -338,23 +337,14 @@ function localizeAmenityItems(items: HotelAmenityPresentationItem[], t: (key: st
 
 export function HotelDetailsClient({
   id,
-  initialHotel,
   searchContext,
 }: HotelDetailsClientProps) {
   const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const matchingInitialHotel =
-    initialHotel?.id === id
-      ? initialHotel
-      : null;
-  const [hotel, setHotel] = useState<PublicHotelResult | null>(
-    matchingInitialHotel,
-  );
-  const [loading, setLoading] = useState(
-    matchingInitialHotel === null,
-  );
+  const [hotel, setHotel] = useState<PublicHotelResult | null>(null);
+  const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [redirectError, setRedirectError] = useState("");
   const [redirecting, setRedirecting] = useState(false);
@@ -365,30 +355,20 @@ export function HotelDetailsClient({
 
   useEffect(() => {
     let active = true;
-    const serverHotel =
-      initialHotel?.id === id
-        ? initialHotel
-        : null;
     const unavailableFallback =
       enTranslations["hotelDetails.unavailableBody"] ||
       "This hotel quote is no longer available. Please search again for current prices.";
 
     queueMicrotask(() => {
       if (!active) return;
-      setLoading(serverHotel === null);
-      setHotel(serverHotel);
+      setLoading(true);
+      setHotel(null);
       setLoadError("");
       setRedirectError("");
       setShareStatus("idle");
       setPreferredImageIndex(0);
       setFailedImageUrls(new Set());
     });
-
-    if (serverHotel) {
-      return () => {
-        active = false;
-      };
-    }
 
     fetch(`/api/hotels/details?id=${encodeURIComponent(id)}`)
       .then(async (response) => {
@@ -412,7 +392,7 @@ export function HotelDetailsClient({
     return () => {
       active = false;
     };
-  }, [id, initialHotel]);
+  }, [id]);
 
   async function continueToProvider() {
     if (!hotel || redirecting || !canUseProviderLink(hotel)) return;
