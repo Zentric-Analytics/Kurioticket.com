@@ -642,15 +642,25 @@ export function HotelDetailsClient({
   const shareActionText =
     t("share") || "Share";
 
-  const mapLocation = normalizeWhitespace(
-    hotel.location ||
-      hotel.neighbourhood ||
-      "",
-  );
+  const normalizedHotelLocation =
+    normalizeWhitespace(hotel.location || "");
+
+  const normalizedNeighbourhood =
+    normalizeWhitespace(
+      hotel.neighbourhood || "",
+    );
+
+  const mapLocation =
+    normalizedHotelLocation &&
+    normalizedHotelLocation.length <= 240
+      ? normalizedHotelLocation
+      : normalizedNeighbourhood &&
+          normalizedNeighbourhood.length <= 240
+        ? normalizedNeighbourhood
+        : "";
 
   const hasMapLocation =
-    Boolean(mapLocation) &&
-    mapLocation.length <= 240;
+    Boolean(mapLocation);
 
   const mapQuery = hasMapLocation
     ? normalizeWhitespace(
