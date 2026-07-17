@@ -381,7 +381,7 @@ export function HotelDetailsClient({ id }: { id: string }) {
     <main className="flex-1 bg-surface-muted/40">
       <section className="page-shell py-6 sm:py-8 lg:py-10">
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-6">
-          <header className="min-w-0 space-y-3 lg:col-span-2">
+          <header className="min-w-0 space-y-3 lg:col-start-1 lg:row-start-1">
             <div className="flex flex-wrap items-center gap-2">
               {hotel.badges.map((badge) => (
                 <Badge key={badge} variant="brand" size="sm">
@@ -457,7 +457,7 @@ export function HotelDetailsClient({ id }: { id: string }) {
             ) : null}
           </Card>
 
-          <aside className="min-w-0 lg:col-start-2 lg:row-start-2 lg:row-span-2 lg:self-stretch">
+          <aside className="min-w-0 lg:col-start-2 lg:row-start-1 lg:row-span-3 lg:self-stretch">
             <div className="lg:sticky lg:top-24">
               <Card variant="elevated" className="p-4 sm:p-5">
                 <div className="space-y-4">
