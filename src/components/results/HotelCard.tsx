@@ -264,28 +264,6 @@ function getMealPlanDisplay(
   return translateKnownHotelLabel(mealText, t);
 }
 
-const fallbackHotelImages = [
-  "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=90",
-  "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1200&q=90",
-  "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=90",
-  "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1200&q=90",
-  "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=90",
-  "https://images.unsplash.com/photo-1445019980597-93fa8acb246c?auto=format&fit=crop&w=1200&q=90",
-  "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1200&q=90",
-  "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=1200&q=90",
-];
-
-function getDeterministicFallbackImage(hotel: PublicHotelResult) {
-  const identity = `${hotel.id || ""}-${hotel.name || ""}-${hotel.location || ""}`;
-  let hash = 0;
-
-  for (let index = 0; index < identity.length; index += 1) {
-    hash = (hash * 31 + identity.charCodeAt(index)) >>> 0;
-  }
-
-  return fallbackHotelImages[hash % fallbackHotelImages.length];
-}
-
 const reviewLabelKeys: Record<HotelReviewBand, string> = {
   exceptional: "hotelResults.review.exceptional",
   veryGood: "hotelResults.review.veryGood",
@@ -400,10 +378,6 @@ export function HotelCard({ hotel, sortBadge }: HotelCardProps) {
   const [isSaved, setIsSaved] = useState(false);
   const [preferredImageIndex, setPreferredImageIndex] = useState(0);
   const starRating = getHotelStarRating(hotel.rating);
-  const fallbackImageUrl = useMemo(
-    () => getDeterministicFallbackImage(hotel),
-    [hotel],
-  );
   const explicitGalleryImages = useMemo(
     () => buildHotelGalleryCandidates(hotel.imageUrls, hotel.imageUrl),
     [hotel.imageUrl, hotel.imageUrls],
@@ -427,11 +401,7 @@ export function HotelCard({ hotel, sortBadge }: HotelCardProps) {
     resolvedActiveImageIndex >= 0
       ? explicitGalleryImages[resolvedActiveImageIndex]
       : "";
-  const displayImageUrl = activeGalleryImageUrl
-    ? activeGalleryImageUrl
-    : failedImageUrls.has(fallbackImageUrl)
-      ? ""
-      : fallbackImageUrl;
+  const displayImageUrl = activeGalleryImageUrl;
   const rawRoomTypeText = hotel.roomType ? toTitleCase(hotel.roomType) : "";
   const roomTypeText = rawRoomTypeText
     ? translateKnownHotelLabel(rawRoomTypeText, t)
@@ -533,7 +503,7 @@ export function HotelCard({ hotel, sortBadge }: HotelCardProps) {
     const params = new URLSearchParams(window.location.search);
     const checkIn = params.get("checkIn") || new Date().toISOString().slice(0, 10);
     const checkOut = params.get("checkOut") || checkIn;
-    const image = displayImageUrl || hotel.imageUrl || hotel.imageUrls?.[0];
+    const image = displayImageUrl || undefined;
 
     return {
       id: hotel.id,
@@ -774,8 +744,8 @@ export function HotelCard({ hotel, sortBadge }: HotelCardProps) {
               ) : null}
             </>
           ) : (
-            <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-[#004BB8]/8 via-white to-[#5CB6B2]/10 px-5 text-center text-[#004BB8]">
-              <Building2 size={36} />
+            <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-blue/10 via-surface to-surface-subtle px-5 text-center">
+              <Building2 size={36} className="text-blue" aria-hidden="true" />
               <span className="max-w-[180px] text-xs font-semibold uppercase tracking-wide text-slate-500">
                 {t("hotelResults.imageUnavailable")}
               </span>

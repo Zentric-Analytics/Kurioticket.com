@@ -53,12 +53,6 @@ import {
   type HotelReviewBand,
 } from "@/components/results/hotelReviewPresentation";
 
-const fallbackHotelImages = [
-  "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=90",
-  "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1200&q=90",
-  "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=90",
-];
-
 const amenityIcons: Record<HotelAmenityIconKey, LucideIcon> = {
   wifi: Wifi,
   breakfast: Coffee,
@@ -215,13 +209,6 @@ function canUseProviderLink(hotel: PublicHotelResult | null) {
   }
 }
 
-function getFallbackImage(hotel: PublicHotelResult) {
-  const identity = `${hotel.id}-${hotel.name}-${hotel.location}`;
-  let hash = 0;
-  for (let index = 0; index < identity.length; index += 1) hash = (hash * 31 + identity.charCodeAt(index)) >>> 0;
-  return fallbackHotelImages[hash % fallbackHotelImages.length];
-}
-
 function localizeAmenityItems(items: HotelAmenityPresentationItem[], t: (key: string) => string) {
   return items.map((item) => ({ ...item, label: item.translationKey ? t(item.translationKey) || item.label : item.label }));
 }
@@ -335,14 +322,13 @@ export function HotelDetailsClient({ id }: { id: string }) {
   });
   const starRating = getStarRating(hotel.rating);
   const galleryCandidates = buildHotelGalleryCandidates(hotel.imageUrls, hotel.imageUrl);
-  const fallbackImage = getFallbackImage(hotel);
-  const displayCandidates = galleryCandidates.length > 0 ? galleryCandidates : [fallbackImage];
+  const displayCandidates = galleryCandidates;
   const activeIndex = resolveHotelGalleryIndex(displayCandidates, failedImageUrls, preferredImageIndex);
   const usableIndices = displayCandidates.reduce<number[]>((indices, url, index) => {
     if (!failedImageUrls.has(url)) indices.push(index);
     return indices;
   }, []);
-  const activeUrl = activeIndex >= 0 ? displayCandidates[activeIndex] : fallbackImage;
+  const activeUrl = activeIndex >= 0 ? displayCandidates[activeIndex] : "";
   const showGalleryControls = usableIndices.length > 1;
   const activePosition = Math.max(0, usableIndices.indexOf(activeIndex));
   const photoCounter = (t("hotelResults.photoCounter") || "{{current}} of {{total}} photos")
@@ -433,7 +419,12 @@ export function HotelDetailsClient({ id }: { id: string }) {
                   priority
                 />
               ) : (
-                <div className="flex h-full items-center justify-center text-blue"><Building2 aria-hidden="true" /></div>
+                <div className="flex h-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-blue/10 via-surface to-surface-subtle px-6 text-center">
+                  <Building2 className="h-11 w-11 text-blue" aria-hidden="true" />
+                  <span className="max-w-xs text-sm font-semibold text-slate-600">
+                    {t("hotelResults.imageUnavailable")}
+                  </span>
+                </div>
               )}
               {showGalleryControls ? (
                 <>
