@@ -27,8 +27,10 @@ import {
   Wifi,
   type LucideIcon,
 } from "lucide-react";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { IconButton } from "@/components/ui/IconButton";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
@@ -380,9 +382,11 @@ export function HotelDetailsClient({ id }: { id: string }) {
       <section className="page-shell py-6 sm:py-8 lg:py-10">
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-6">
           <header className="min-w-0 space-y-3 lg:col-span-2">
-            <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[#004BB8]">
+            <div className="flex flex-wrap items-center gap-2">
               {hotel.badges.map((badge) => (
-                <span key={badge} className="rounded-full bg-blue-50 px-2.5 py-1">{badge}</span>
+                <Badge key={badge} variant="brand" size="sm">
+                  {badge}
+                </Badge>
               ))}
             </div>
             <h1 className="break-words text-3xl font-bold leading-tight text-slate-950 sm:text-4xl">{hotel.name}</h1>
@@ -392,7 +396,7 @@ export function HotelDetailsClient({ id }: { id: string }) {
               </div>
             ) : null}
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-slate-700">
-              <MapPin className="h-4 w-4 shrink-0 text-[#004BB8]" aria-hidden="true" />
+              <MapPin className="h-4 w-4 shrink-0 text-blue" aria-hidden="true" />
               {locationParts.map((part, index) => (
                 <span key={`${part}-${index}`}>
                   {index > 0 ? <span aria-hidden="true"> · </span> : null}
@@ -401,14 +405,22 @@ export function HotelDetailsClient({ id }: { id: string }) {
               ))}
             </div>
             {(reviewBand || reviewCountText) ? (
-              <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-                {reviewBand ? <span className="rounded-full bg-slate-900 px-3 py-1 text-white">{reviewScore} {reviewLabel}</span> : null}
-                {reviewCountText ? <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700">{reviewCountText}</span> : null}
+              <div className="flex flex-wrap items-center gap-2">
+                {reviewBand ? (
+                  <Badge variant="brand" size="md">
+                    {reviewScore} {reviewLabel}
+                  </Badge>
+                ) : null}
+                {reviewCountText ? (
+                  <Badge variant="neutral" size="md">
+                    {reviewCountText}
+                  </Badge>
+                ) : null}
               </div>
             ) : null}
           </header>
 
-          <Card className="overflow-hidden rounded-2xl border-slate-200 bg-white p-0 shadow-sm lg:col-start-1 lg:row-start-2">
+          <Card variant="flat" className="overflow-hidden p-0 lg:col-start-1 lg:row-start-2">
             <div className="relative h-[260px] bg-slate-100 sm:h-[420px]">
               {activeUrl ? (
                 <Image
@@ -421,12 +433,12 @@ export function HotelDetailsClient({ id }: { id: string }) {
                   priority
                 />
               ) : (
-                <div className="flex h-full items-center justify-center text-[#004BB8]"><Building2 aria-hidden="true" /></div>
+                <div className="flex h-full items-center justify-center text-blue"><Building2 aria-hidden="true" /></div>
               )}
               {showGalleryControls ? (
                 <>
-                  <button type="button" className="absolute left-3 top-1/2 flex min-h-10 min-w-10 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/75 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" aria-label={t("hotelResults.previousPhoto")} onClick={() => selectAdjacentImage(-1)}><ChevronLeft aria-hidden="true" /></button>
-                  <button type="button" className="absolute right-3 top-1/2 flex min-h-10 min-w-10 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/75 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" aria-label={t("hotelResults.nextPhoto")} onClick={() => selectAdjacentImage(1)}><ChevronRight aria-hidden="true" /></button>
+                  <IconButton variant="primary" size="md" className="absolute left-3 top-1/2 -translate-y-1/2 shadow-md" aria-label={t("hotelResults.previousPhoto")} onClick={() => selectAdjacentImage(-1)}><ChevronLeft className="h-5 w-5" aria-hidden="true" /></IconButton>
+                  <IconButton variant="primary" size="md" className="absolute right-3 top-1/2 -translate-y-1/2 shadow-md" aria-label={t("hotelResults.nextPhoto")} onClick={() => selectAdjacentImage(1)}><ChevronRight className="h-5 w-5" aria-hidden="true" /></IconButton>
                   <div className="absolute bottom-3 right-3 rounded-full bg-slate-950/75 px-3 py-1 text-xs font-semibold text-white">{photoCounter}</div>
                 </>
               ) : null}
@@ -436,7 +448,7 @@ export function HotelDetailsClient({ id }: { id: string }) {
                 {usableIndices.map((imageIndex, visibleIndex) => {
                   const thumbnailUrl = displayCandidates[imageIndex];
                   return (
-                    <button key={thumbnailUrl} type="button" aria-pressed={activeIndex === imageIndex} aria-label={(t("hotelResults.selectPhoto") || "Show photo {{number}}").replace("{{number}}", String(visibleIndex + 1))} className={activeIndex === imageIndex ? "relative h-16 w-24 shrink-0 overflow-hidden rounded-lg ring-2 ring-[#004BB8] ring-offset-2" : "relative h-16 w-24 shrink-0 overflow-hidden rounded-lg ring-1 ring-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"} onClick={() => setPreferredImageIndex(imageIndex)}>
+                    <button key={thumbnailUrl} type="button" aria-pressed={activeIndex === imageIndex} aria-label={(t("hotelResults.selectPhoto") || "Show photo {{number}}").replace("{{number}}", String(visibleIndex + 1))} className={activeIndex === imageIndex ? "relative h-16 w-24 shrink-0 overflow-hidden rounded-lg ring-2 ring-blue ring-offset-2" : "relative h-16 w-24 shrink-0 overflow-hidden rounded-lg ring-1 ring-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue"} onClick={() => setPreferredImageIndex(imageIndex)}>
                       <Image src={thumbnailUrl} alt="" fill className="object-cover" sizes="96px" onError={() => markImageFailed(thumbnailUrl)} />
                     </button>
                   );
@@ -447,7 +459,7 @@ export function HotelDetailsClient({ id }: { id: string }) {
 
           <aside className="min-w-0 lg:col-start-2 lg:row-start-2 lg:row-span-2 lg:self-stretch">
             <div className="lg:sticky lg:top-24">
-              <Card className="rounded-2xl border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+              <Card variant="elevated" className="p-4 sm:p-5">
                 <div className="space-y-4">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{t("hotelResults.estimatedStayTotal")}</p>
@@ -461,7 +473,7 @@ export function HotelDetailsClient({ id }: { id: string }) {
                   {redirectError ? <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">{redirectError}</p> : null}
                   {providerEnabled ? (
                     <>
-                      <Button type="button" variant="accent" className="w-full rounded-lg border border-[#004BB8] bg-[#004BB8] text-white hover:border-[#021C2B] hover:bg-[#021C2B]" disabled={redirecting} onClick={continueToProvider}>
+                      <Button type="button" variant="accent" className="w-full" disabled={redirecting} onClick={continueToProvider}>
                         {redirecting ? `${t("continueToProvider")}...` : t("continueToProvider")}
                       </Button>
                       <p className="text-xs leading-5 text-slate-500">{t("hotelDetails.providerDisclaimer") || enTranslations["hotelDetails.providerDisclaimer"]}</p>
@@ -504,7 +516,7 @@ function StayDetailsSection({ roomTitle, roomItems, cancellationTitle, cancellat
   if (sections.length === 0) return null;
 
   return (
-    <Card className="rounded-2xl border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+    <Card variant="flat" className="p-4 sm:p-6">
       <div className={sections.length > 1 ? "grid gap-5 sm:grid-cols-2 sm:gap-6" : ""}>
         {sections.map((section) => (
           <section key={section.title}>
@@ -523,7 +535,7 @@ function DetailSection({ title, items }: { title: string; items: string[] }) {
   const visibleItems = items.map((item) => item.trim()).filter(Boolean);
   if (visibleItems.length === 0) return null;
   return (
-    <Card className="rounded-2xl border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+    <Card variant="flat" className="p-4 sm:p-6">
       <h2 className="text-base font-bold text-slate-950">{title}</h2>
       <ul className="mt-3 space-y-2 text-sm font-medium leading-6 text-slate-700">
         {visibleItems.map((item) => <li key={item}>{item}</li>)}
@@ -534,7 +546,7 @@ function DetailSection({ title, items }: { title: string; items: string[] }) {
 
 function AmenitySection({ title, items }: { title: string; items: HotelAmenityPresentationItem[] }) {
   return (
-    <Card className="rounded-2xl border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+    <Card variant="flat" className="p-4 sm:p-6">
       <h2 className="text-base font-bold text-slate-950">{title}</h2>
       <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2" role="list">
         {items.map((item) => {
