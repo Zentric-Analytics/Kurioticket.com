@@ -1,8 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useMemo, useState } from "react";
 import {
   AirVent,
   Armchair,
@@ -50,25 +49,8 @@ import {
   getAdjacentHotelGalleryIndex,
   resolveHotelGalleryIndex,
 } from "@/components/results/hotelGalleryPresentation";
-import {
-  isHotelIdSaved,
-  parseSavedHotelIds,
-  SAVED_HOTEL_IDS_CHANGED_EVENT,
-  SAVED_HOTEL_IDS_STORAGE_KEY,
-  SAVED_HOTEL_SNAPSHOTS_STORAGE_KEY,
-  parseSavedHotelSnapshots,
-  removeSavedHotelSnapshot,
-  serializeSavedHotelIds,
-  serializeSavedHotelSnapshots,
-  upsertSavedHotelSnapshot,
-  type SavedHotelSnapshot,
-} from "@/components/results/hotelSavedStorage";
-import {
-  deleteBackendHotel,
-  fetchBackendSavedHotels,
-  saveBackendHotel,
-  type SavedHotelApiItem,
-} from "@/lib/saved-trips-api";
+import type { SavedHotelSnapshot } from "@/components/results/hotelSavedStorage";
+import { useSavedHotel } from "@/components/results/useSavedHotel";
 import {
   buildHotelAmenityPresentation,
   type HotelAmenityIconKey,
@@ -355,13 +337,6 @@ function HotelAmenityList({
 }
 
 
-function getSavedHotelResultId(item: SavedHotelApiItem): string | null {
-  if (item.payload && typeof item.payload === "object" && "hotelResultId" in item.payload && typeof item.payload.hotelResultId === "string") {
-    return item.payload.hotelResultId;
-  }
-  return null;
-}
-
 type HotelSortBadge = "cheapest" | "bestValue" | "topRated";
 
 type HotelCardProps = {
@@ -374,9 +349,7 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
   const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
-  const { status: sessionStatus } = useSession();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const [isSaved, setIsSaved] = useState(false);
   const [preferredImageIndex, setPreferredImageIndex] = useState(0);
   const starRating = getHotelStarRating(hotel.rating);
   const resolvedDetailsHref =
@@ -452,12 +425,6 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
         ? t("hotelResults.taxesFeesNotIncluded") ||
           "Taxes and fees not included"
         : "";
-  const savedHotelLabel = (
-    isSaved
-      ? t("hotelResults.removeSavedHotel") ||
-        "Remove {{name}} from saved hotels"
-      : t("hotelResults.saveHotel") || "Save {{name}}"
-  ).replace("{{name}}", hotel.name);
   const sortBadgeConfig = sortBadge
     ? ({
         cheapest: {
@@ -526,92 +493,18 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
     };
   }
 
-  function writeLocalHotelSave(nextSaved: boolean) {
-    const savedIds = parseSavedHotelIds(
-      window.localStorage.getItem(SAVED_HOTEL_IDS_STORAGE_KEY),
-    );
-    const nextSavedIds = nextSaved
-      ? Array.from(new Set([...savedIds, hotel.id]))
-      : savedIds.filter((id) => id !== hotel.id);
-    const serializedValue = serializeSavedHotelIds(nextSavedIds);
-    const snapshots = parseSavedHotelSnapshots(
-      window.localStorage.getItem(SAVED_HOTEL_SNAPSHOTS_STORAGE_KEY),
-    );
-    const nextSnapshots = nextSaved
-      ? upsertSavedHotelSnapshot(snapshots, getHotelSnapshot())
-      : removeSavedHotelSnapshot(snapshots, hotel.id);
+  const { isSaved, toggleSavedHotel } = useSavedHotel({
+    hotelId: hotel.id,
+    getSnapshot: getHotelSnapshot,
+  });
 
-    window.localStorage.setItem(SAVED_HOTEL_IDS_STORAGE_KEY, serializedValue);
-    window.localStorage.setItem(
-      SAVED_HOTEL_SNAPSHOTS_STORAGE_KEY,
-      serializeSavedHotelSnapshots(nextSnapshots),
-    );
-    setIsSaved(nextSaved);
-    window.dispatchEvent(
-      new CustomEvent(SAVED_HOTEL_IDS_CHANGED_EVENT, { detail: serializedValue }),
-    );
-  }
+  const savedHotelLabel = (
+    isSaved
+      ? t("hotelResults.removeSavedHotel") ||
+        "Remove {{name}} from saved hotels"
+      : t("hotelResults.saveHotel") || "Save {{name}}"
+  ).replace("{{name}}", hotel.name);
 
-  useEffect(() => {
-    let isActive = true;
-
-    function updateSavedState(rawValue: string | null) {
-      if (!isActive) return;
-
-      setIsSaved(isHotelIdSaved(parseSavedHotelIds(rawValue), hotel.id));
-    }
-
-    queueMicrotask(() => {
-      if (sessionStatus === "authenticated") {
-        void fetchBackendSavedHotels()
-          .then((result) => {
-            if (!result.ok || !result.items) return;
-            const savedHotelIds = result.items
-              .map((item) => getSavedHotelResultId(item))
-              .filter((id): id is string => Boolean(id));
-            updateSavedState(serializeSavedHotelIds(savedHotelIds));
-          })
-          .catch(() => undefined);
-        return;
-      }
-
-      try {
-        updateSavedState(
-          window.localStorage.getItem(SAVED_HOTEL_IDS_STORAGE_KEY),
-        );
-      } catch {
-        updateSavedState(null);
-      }
-    });
-
-    function handleStorage(event: StorageEvent) {
-      if (event.key !== SAVED_HOTEL_IDS_STORAGE_KEY) return;
-
-      updateSavedState(event.newValue);
-    }
-
-    function handleSavedHotelIdsChanged(event: Event) {
-      if (!(event instanceof CustomEvent)) return;
-      if (typeof event.detail !== "string") return;
-
-      updateSavedState(event.detail);
-    }
-
-    window.addEventListener("storage", handleStorage);
-    window.addEventListener(
-      SAVED_HOTEL_IDS_CHANGED_EVENT,
-      handleSavedHotelIdsChanged,
-    );
-
-    return () => {
-      isActive = false;
-      window.removeEventListener("storage", handleStorage);
-      window.removeEventListener(
-        SAVED_HOTEL_IDS_CHANGED_EVENT,
-        handleSavedHotelIdsChanged,
-      );
-    };
-  }, [hotel.id, sessionStatus]);
 
   function markImageFailed(url: string) {
     if (!url) return;
@@ -643,41 +536,6 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
     );
 
     if (nextIndex !== -1) setPreferredImageIndex(nextIndex);
-  }
-
-  async function toggleSavedHotel() {
-    if (sessionStatus === "authenticated") {
-      const result = await fetchBackendSavedHotels();
-      const savedHotel = result.items?.find(
-        (item) => getSavedHotelResultId(item) === hotel.id,
-      );
-
-      if (savedHotel) {
-        const deleteResult = await deleteBackendHotel(savedHotel.id);
-        if (deleteResult.ok) setIsSaved(false);
-        return;
-      }
-
-      const snapshot = getHotelSnapshot();
-      const saveResult = await saveBackendHotel({
-        provider: snapshot.provider,
-        hotelName: snapshot.hotelName,
-        destination: snapshot.destination,
-        checkIn: snapshot.checkIn,
-        checkOut: snapshot.checkOut,
-        totalPrice: snapshot.totalPrice,
-        currency: snapshot.currency,
-        payload: { ...snapshot, hotelResultId: hotel.id },
-      });
-      if (saveResult.ok || saveResult.duplicate) setIsSaved(true);
-      return;
-    }
-
-    try {
-      writeLocalHotelSave(!isSaved);
-    } catch {
-      // Keep the previous visual state if browser storage is unavailable.
-    }
   }
 
 
