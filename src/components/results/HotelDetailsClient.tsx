@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import {
   AirVent,
+  ArrowLeft,
   Armchair,
   Bike,
   Building2,
@@ -30,7 +31,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+import {
+  Button,
+  LinkButton,
+} from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -150,6 +154,52 @@ function parseHotelSearchCount(
 
 function normalizeWhitespace(value: string) {
   return value.trim().replace(/\s+/g, " ");
+}
+
+function buildHotelResultsHref(
+  searchContext?: HotelDetailsSearchContext,
+) {
+  const destination = normalizeWhitespace(
+    searchContext?.destination || "",
+  );
+  const checkInDate = parseHotelSearchDate(
+    searchContext?.checkIn,
+  );
+  const checkOutDate = parseHotelSearchDate(
+    searchContext?.checkOut,
+  );
+  const guestCount = parseHotelSearchCount(
+    searchContext?.guests,
+    1,
+    12,
+  );
+  const roomCount = parseHotelSearchCount(
+    searchContext?.rooms,
+    1,
+    6,
+  );
+
+  if (
+    !destination ||
+    destination.length > 120 ||
+    checkInDate === null ||
+    checkOutDate === null ||
+    checkOutDate.getTime() <= checkInDate.getTime() ||
+    guestCount === null ||
+    roomCount === null
+  ) {
+    return "/hotels/results";
+  }
+
+  const params = new URLSearchParams({
+    destination,
+    checkIn: searchContext?.checkIn || "",
+    checkOut: searchContext?.checkOut || "",
+    guests: String(guestCount),
+    rooms: String(roomCount),
+  });
+
+  return `/hotels/results?${params.toString()}`;
 }
 
 function getDistinctHotelLocationParts(hotel: PublicHotelResult, distanceText: string) {
@@ -409,6 +459,7 @@ export function HotelDetailsClient({
   const taxesText = hotel.taxesAndFeesIncluded === true ? t("hotelResults.taxesFeesIncluded") : hotel.taxesAndFeesIncluded === false ? t("hotelResults.taxesFeesNotIncluded") : "";
   const providerEnabled = canUseProviderLink(hotel);
   const providerUnavailableText = hotel.dataSource === "demo" ? t("hotelDetails.demoBookingUnavailable") : !providerEnabled ? t("hotelDetails.directLinkUnavailable") : "";
+  const resultsHref = buildHotelResultsHref(searchContext);
   const staySummary = (() => {
     const checkInDate = parseHotelSearchDate(searchContext?.checkIn);
     const checkOutDate = parseHotelSearchDate(searchContext?.checkOut);
@@ -482,6 +533,22 @@ export function HotelDetailsClient({
       <section className="page-shell py-6 sm:py-8 lg:py-10">
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-6">
           <header className="min-w-0 space-y-3 lg:col-start-1 lg:row-start-1">
+            <LinkButton
+              href={resultsHref}
+              variant="ghost"
+              size="sm"
+              className="-ml-2 w-fit px-2 text-slate-700 hover:text-navy"
+            >
+              <ArrowLeft
+                className="h-4 w-4 shrink-0"
+                aria-hidden="true"
+              />
+              <span>
+                {t("hotelResults.backToResults") ||
+                  t("back") ||
+                  "Back to results"}
+              </span>
+            </LinkButton>
             <div className="flex flex-wrap items-center gap-2">
               {hotel.badges.map((badge) => (
                 <Badge key={badge} variant="brand" size="sm">
