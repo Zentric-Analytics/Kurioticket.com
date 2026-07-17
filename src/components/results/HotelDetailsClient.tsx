@@ -20,8 +20,10 @@ import {
   CookingPot,
   Dumbbell,
   Flower2,
+  Heart,
   Laptop,
   MapPin,
+  Share2,
   Trees,
   Users,
   UtensilsCrossed,
@@ -38,6 +40,12 @@ import {
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import type {
+  SavedHotelSnapshot,
+} from "@/components/results/hotelSavedStorage";
+import {
+  useSavedHotel,
+} from "@/components/results/useSavedHotel";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -109,6 +117,12 @@ type HotelDetailsClientProps = {
   id: string;
   searchContext?: HotelDetailsSearchContext;
 };
+
+type HotelShareStatus =
+  | "idle"
+  | "shared"
+  | "copied"
+  | "error";
 
 function parseHotelSearchDate(value?: string) {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -336,6 +350,8 @@ export function HotelDetailsClient({
   const [redirecting, setRedirecting] = useState(false);
   const [preferredImageIndex, setPreferredImageIndex] = useState(0);
   const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(() => new Set());
+  const [shareStatus, setShareStatus] =
+    useState<HotelShareStatus>("idle");
 
   useEffect(() => {
     let active = true;
@@ -349,6 +365,7 @@ export function HotelDetailsClient({
       setHotel(null);
       setLoadError("");
       setRedirectError("");
+      setShareStatus("idle");
       setPreferredImageIndex(0);
       setFailedImageUrls(new Set());
     });
@@ -393,6 +410,151 @@ export function HotelDetailsClient({
     } catch (error) {
       setRedirectError(error instanceof Error ? error.message : t("hotelDetails.redirectError"));
       setRedirecting(false);
+    }
+  }
+
+  const savedHotelId = hotel?.id || id;
+
+  function getHotelDetailsSnapshot(): SavedHotelSnapshot {
+    if (!hotel) {
+      throw new Error(
+        "Hotel details are unavailable.",
+      );
+    }
+
+    const parsedCheckIn = parseHotelSearchDate(
+      searchContext?.checkIn,
+    );
+    const parsedCheckOut = parseHotelSearchDate(
+      searchContext?.checkOut,
+    );
+
+    const hasValidStay =
+      parsedCheckIn !== null &&
+      parsedCheckOut !== null &&
+      parsedCheckOut.getTime() >
+        parsedCheckIn.getTime();
+
+    const fallbackDate = new Date()
+      .toISOString()
+      .slice(0, 10);
+
+    const checkIn = hasValidStay
+      ? searchContext?.checkIn || fallbackDate
+      : fallbackDate;
+
+    const checkOut = hasValidStay
+      ? searchContext?.checkOut || checkIn
+      : checkIn;
+
+    const contextualDestination =
+      normalizeWhitespace(
+        searchContext?.destination || "",
+      );
+
+    const destination =
+      contextualDestination &&
+      contextualDestination.length <= 120
+        ? contextualDestination
+        : hotel.location ||
+          hotel.neighbourhood ||
+          hotel.name;
+
+    const snapshotGallery =
+      buildHotelGalleryCandidates(
+        hotel.imageUrls,
+        hotel.imageUrl,
+      );
+
+    const snapshotImageIndex =
+      resolveHotelGalleryIndex(
+        snapshotGallery,
+        failedImageUrls,
+        preferredImageIndex,
+      );
+
+    const image =
+      snapshotImageIndex >= 0
+        ? snapshotGallery[snapshotImageIndex]
+        : undefined;
+
+    const href =
+      `${window.location.pathname}` +
+      `${window.location.search}`;
+
+    return {
+      id: savedHotelId,
+      provider: hotel.provider || "hotel",
+      hotelName: hotel.name,
+      destination,
+      checkIn: `${checkIn}T00:00:00.000Z`,
+      checkOut: `${checkOut}T00:00:00.000Z`,
+      totalPrice: hotel.totalPrice,
+      currency: hotel.currency || "USD",
+      image,
+      imageAlt: hotel.name,
+      location: hotel.location,
+      rating: hotel.rating,
+      href,
+      savedAt: new Date().toISOString(),
+    };
+  }
+
+  const {
+    isSaved,
+    toggleSavedHotel,
+  } = useSavedHotel({
+    hotelId: savedHotelId,
+    getSnapshot: getHotelDetailsSnapshot,
+  });
+
+  async function shareHotel() {
+    if (!hotel) return;
+
+    setShareStatus("idle");
+
+    const url = window.location.href;
+    const text = hotel.location
+      ? `${hotel.name} — ${hotel.location}`
+      : hotel.name;
+
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({
+          title: hotel.name,
+          text,
+          url,
+        });
+
+        setShareStatus("shared");
+        return;
+      } catch (error) {
+        if (
+          error instanceof DOMException &&
+          error.name === "AbortError"
+        ) {
+          return;
+        }
+
+        // Continue to the clipboard fallback.
+      }
+    }
+
+    try {
+      if (
+        !navigator.clipboard ||
+        typeof navigator.clipboard.writeText !==
+          "function"
+      ) {
+        throw new Error(
+          "Clipboard access is unavailable.",
+        );
+      }
+
+      await navigator.clipboard.writeText(url);
+      setShareStatus("copied");
+    } catch {
+      setShareStatus("error");
     }
   }
 
@@ -460,6 +622,38 @@ export function HotelDetailsClient({
   const providerEnabled = canUseProviderLink(hotel);
   const providerUnavailableText = hotel.dataSource === "demo" ? t("hotelDetails.demoBookingUnavailable") : !providerEnabled ? t("hotelDetails.directLinkUnavailable") : "";
   const resultsHref = buildHotelResultsHref(searchContext);
+  const savedHotelLabel = (
+    isSaved
+      ? t("hotelResults.removeSavedHotel") ||
+        "Remove {{name}} from saved hotels"
+      : t("hotelResults.saveHotel") ||
+        "Save {{name}}"
+  ).replace("{{name}}", hotel.name);
+
+  const saveActionText = isSaved
+    ? t("saved") || "Saved"
+    : t("save") || "Save";
+
+  const shareHotelLabel = (
+    t("hotelDetails.shareHotel") ||
+    "Share {{name}}"
+  ).replace("{{name}}", hotel.name);
+
+  const shareActionText =
+    t("share") || "Share";
+
+  const shareFeedbackText =
+    shareStatus === "shared"
+      ? t("hotelDetails.shared") ||
+        "Hotel shared"
+      : shareStatus === "copied"
+        ? t("hotelDetails.linkCopied") ||
+          "Link copied"
+        : shareStatus === "error"
+          ? t("hotelDetails.shareError") ||
+            "Unable to share this hotel"
+          : "";
+
   const staySummary = (() => {
     const checkInDate = parseHotelSearchDate(searchContext?.checkIn);
     const checkOutDate = parseHotelSearchDate(searchContext?.checkOut);
@@ -556,7 +750,72 @@ export function HotelDetailsClient({
                 </Badge>
               ))}
             </div>
-            <h1 className="break-words text-3xl font-bold leading-tight text-slate-950 sm:text-4xl">{hotel.name}</h1>
+            <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <h1 className="min-w-0 break-words text-3xl font-bold leading-tight text-slate-950 sm:text-4xl">
+                {hotel.name}
+              </h1>
+
+              <div className="shrink-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    aria-label={savedHotelLabel}
+                    aria-pressed={isSaved}
+                    title={savedHotelLabel}
+                    onClick={() => {
+                      void toggleSavedHotel();
+                    }}
+                  >
+                    <Heart
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                      fill={
+                        isSaved
+                          ? "currentColor"
+                          : "none"
+                      }
+                    />
+                    <span>{saveActionText}</span>
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    aria-label={shareHotelLabel}
+                    title={shareHotelLabel}
+                    onClick={() => {
+                      void shareHotel();
+                    }}
+                  >
+                    <Share2
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                    />
+                    <span>{shareActionText}</span>
+                  </Button>
+                </div>
+
+                {shareStatus !== "idle" ? (
+                  <p
+                    role={
+                      shareStatus === "error"
+                        ? "alert"
+                        : "status"
+                    }
+                    className={
+                      shareStatus === "error"
+                        ? "mt-2 text-xs font-medium text-red-700"
+                        : "mt-2 text-xs font-medium text-slate-600"
+                    }
+                  >
+                    {shareFeedbackText}
+                  </p>
+                ) : null}
+              </div>
+            </div>
             {starRating ? (
               <div aria-label={t("hotelResults.starHotelAria").replace("{{rating}}", formatRating(hotel.rating, locale))} className="text-amber-500">
                 <span aria-hidden="true">{"★".repeat(starRating)}</span>
