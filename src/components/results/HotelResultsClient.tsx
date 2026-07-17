@@ -11,10 +11,12 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Check,
   ChevronDown,
+  List as ListIcon,
+  Map as MapIcon,
   SlidersHorizontal,
   Star,
   X,
@@ -25,6 +27,7 @@ import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
+import { HotelResultsMap } from "@/components/results/HotelResultsMap";
 import {
   buildHotelFacilityFilterOptions,
   hotelMatchesFacilityFilters,
@@ -307,6 +310,7 @@ const getResultMaxPrice = (hotels: PublicHotelResult[], rates?: ExchangeRates) =
   );
 
 type HotelSummarySortMode = "cheapest" | "bestValue" | "topRated";
+type HotelResultsView = "list" | "map";
 
 type HotelMobileSearchDraft = {
   destination: string;
@@ -325,6 +329,8 @@ export function HotelResultsClient() {
     [dictionary],
   );
   const params = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
 
   const [results, setResults] = useState<PublicHotelResult[]>([]);
   const [visibleFiltered, setVisibleFiltered] = useState<PublicHotelResult[]>(
@@ -368,18 +374,33 @@ export function HotelResultsClient() {
     currencyRatesRef.current = currencyRates.rates;
   }, [currencyRates.rates]);
 
+  const destinationParam = params.get("destination") || "Tokyo";
+  const checkInParam = params.get("checkIn") || nextDate(28);
+  const checkOutParam = params.get("checkOut") || nextDate(35);
+  const guestsParam = params.get("guests") || "2";
+  const roomsParam = params.get("rooms") || "1";
+  const sortParam = params.get("sort") || "cheapest";
+  const resultsView: HotelResultsView =
+    params.get("view") === "map" ? "map" : "list";
+  const requestedSelectedHotelId = params.get("selectedHotel") || "";
+
   const body = useMemo(
     () => ({
-      destination: normalizeHotelDestinationSearchValue(
-        params.get("destination") || "Tokyo",
-      ),
-      checkIn: params.get("checkIn") || nextDate(28),
-      checkOut: params.get("checkOut") || nextDate(35),
-      guests: Number(params.get("guests") || 2),
-      rooms: Number(params.get("rooms") || 1),
-      sort: params.get("sort") || "cheapest",
+      destination: normalizeHotelDestinationSearchValue(destinationParam),
+      checkIn: checkInParam,
+      checkOut: checkOutParam,
+      guests: Number(guestsParam),
+      rooms: Number(roomsParam),
+      sort: sortParam,
     }),
-    [params],
+    [
+      checkInParam,
+      checkOutParam,
+      destinationParam,
+      guestsParam,
+      roomsParam,
+      sortParam,
+    ],
   );
   const hotelDetailsSearchParams = useMemo(() => {
     return new URLSearchParams({
@@ -762,6 +783,34 @@ export function HotelResultsClient() {
     () => sortHotelSummaryResults(visibleFilteredHotels, hotelSummarySortMode, currencyRates.rates),
     [currencyRates.rates, hotelSummarySortMode, visibleFilteredHotels],
   );
+  const activeMapHotelId =
+    sortedVisibleHotels.find((hotel) => hotel.id === requestedSelectedHotelId)
+      ?.id ||
+    sortedVisibleHotels[0]?.id ||
+    "";
+
+  const buildResultsViewHref = useCallback(
+    (view: HotelResultsView, selectedHotelId = "") => {
+      const nextParams = new URLSearchParams(params.toString());
+
+      if (view === "list") {
+        nextParams.delete("view");
+        nextParams.delete("selectedHotel");
+      } else {
+        nextParams.set("view", "map");
+        if (selectedHotelId) {
+          nextParams.set("selectedHotel", selectedHotelId);
+        } else {
+          nextParams.delete("selectedHotel");
+        }
+      }
+
+      const query = nextParams.toString();
+      return query ? `${pathname}?${query}` : pathname;
+    },
+    [params, pathname],
+  );
+
   const hotelSortOptions = useMemo(
     () =>
       [
@@ -1527,7 +1576,43 @@ export function HotelResultsClient() {
                   <h1 className="min-w-0 text-sm font-bold text-navy">
                     {resultsHeading}
                   </h1>
-                  <div className="flex min-w-0 items-center justify-end gap-2">
+                  <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
+                    <div
+                      role="group"
+                      aria-label={
+                        t("hotelResults.viewToggleAria") ||
+                        "Hotel results view"
+                      }
+                      className="inline-flex overflow-hidden rounded-full border border-slate-200 bg-white p-1 shadow-sm"
+                    >
+                      <Link
+                        href={buildResultsViewHref("list")}
+                        aria-current={resultsView === "list" ? "page" : undefined}
+                        className={cn(
+                          "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2",
+                          resultsView === "list"
+                            ? "bg-[#004BB8] text-white"
+                            : "text-slate-700 hover:bg-slate-50 hover:text-[#004BB8]",
+                        )}
+                      >
+                        <ListIcon aria-hidden="true" className="h-4 w-4" />
+                        <span>{t("hotelResults.listView") || "List"}</span>
+                      </Link>
+                      <Link
+                        href={buildResultsViewHref("map", activeMapHotelId)}
+                        aria-current={resultsView === "map" ? "page" : undefined}
+                        className={cn(
+                          "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2",
+                          resultsView === "map"
+                            ? "bg-[#004BB8] text-white"
+                            : "text-slate-700 hover:bg-slate-50 hover:text-[#004BB8]",
+                        )}
+                      >
+                        <MapIcon aria-hidden="true" className="h-4 w-4" />
+                        <span>{t("hotelResults.mapView") || "Map"}</span>
+                      </Link>
+                    </div>
+
                     <span className="whitespace-nowrap text-base font-semibold text-slate-700">
                       {`${t("sortBy") || "Sort by"}:`}
                     </span>
@@ -1626,16 +1711,32 @@ export function HotelResultsClient() {
                   </div>
 
                 {sortedVisibleHotels.length ? (
-                  sortedVisibleHotels.map((hotel, index) => (
-                    <HotelCard
-                      key={hotel.id}
-                      hotel={hotel}
-                      detailsHref={`/hotels/details/${encodeURIComponent(hotel.id)}?${hotelDetailsSearchParams}`}
-                      sortBadge={
-                        index === 0 ? hotelSummarySortMode : undefined
-                      }
+                  resultsView === "list" ? (
+                    sortedVisibleHotels.map((hotel, index) => (
+                      <HotelCard
+                        key={hotel.id}
+                        hotel={hotel}
+                        detailsHref={`/hotels/details/${encodeURIComponent(hotel.id)}?${hotelDetailsSearchParams}`}
+                        sortBadge={
+                          index === 0 ? hotelSummarySortMode : undefined
+                        }
+                      />
+                    ))
+                  ) : (
+                    <HotelResultsMap
+                      hotels={sortedVisibleHotels}
+                      selectedHotelId={activeMapHotelId}
+                      detailsSearchParams={hotelDetailsSearchParams}
+                      onSelectHotel={(hotelId) => {
+                        router.replace(
+                          buildResultsViewHref("map", hotelId),
+                          {
+                            scroll: false,
+                          },
+                        );
+                      }}
                     />
-                  ))
+                  )
                 ) : (
                   <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm font-semibold text-muted shadow-sm">
                     {t("hotelResults.noStaysMatchFiltersInline")}
