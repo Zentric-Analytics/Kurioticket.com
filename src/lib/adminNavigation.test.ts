@@ -32,20 +32,31 @@ test("admin shell removes the permanent sidebar and 280px reserved desktop grid"
   assert.doesNotMatch(shell, /No notifications/);
 });
 
-test("admin navbar exposes the brand as the only visible Overview destination", () => {
+test("admin navbar uses public page-shell alignment with full-width header background", () => {
+  assert.match(shell, /<header className="sticky top-0 z-30 border-b border-\[#DDE7F0\] bg-white\/95 backdrop-blur">/);
+  assert.match(shell, /<div className="page-shell flex min-h-16 items-center justify-between gap-3 py-2 md:min-h-\[68px\] md:gap-8">/);
+  assert.match(shell, /<main className="page-shell py-5 sm:py-6">/);
+  assert.doesNotMatch(shell, /max-w-\[1800px\]/);
+  assert.doesNotMatch(shell, /px-4 py-3 backdrop-blur sm:px-6 lg:px-10/);
+});
+
+test("admin navbar exposes the branded admin link as the only visible Overview destination", () => {
   assert.deepEqual(getAdminHubsForRole("ADMIN").map((hub) => hub.label), ["Overview", "Operations", "Monitoring", "Platform"]);
   assert.deepEqual(getAdminNavbarHubsForRole("ADMIN").map((hub) => hub.label), ["Operations", "Monitoring", "Platform"]);
   assert.equal(adminHubs.find((hub) => hub.key === "overview")?.showInNavbar, false);
-  assert.match(shell, /Kurioticket Admin/);
+  assert.match(shell, /src="\/brand\/kurioticket-logo-primary-light-bg\.svg"/);
+  assert.match(shell, /alt="Kurioticket"/);
+  assert.match(shell, />Admin<\/span>/);
   assert.match(shell, /href="\/admin"/);
   assert.match(shell, /aria-label="Go to Admin Overview"/);
   assert.match(shell, /aria-current=\{active \? "page" : undefined\}/);
   assert.match(shell, /const active = pathname === "\/admin"/);
   assert.match(shell, /aria-label="Admin navigation"/);
+  assert.match(shell, /aria-label="Admin mobile navigation"/);
   assert.doesNotMatch(shell, /sectionLabels/);
 });
 
-test("desktop and mobile navigation omit the separate visible Overview item", () => {
+test("desktop and mobile navigation omit a second row, sidebar and separate visible Overview item", () => {
   assert.equal(getAdminNavbarHubsForRole("ADMIN").some((hub) => hub.label === "Overview"), false);
   assert.equal(getAdminNavbarHubsForRole("SUPPORT").some((hub) => hub.label === "Overview"), false);
   assert.equal(getAdminNavbarHubsForRole("USER").length, 0);
@@ -53,6 +64,9 @@ test("desktop and mobile navigation omit the separate visible Overview item", ()
   assert.match(shell, /hubs\.map\(\(hub\) => <AdminHubNavLink key=\{hub\.key\} hub=\{hub\} \/>\)/);
   assert.match(shell, /hubs\.map\(\(hub\) => <AdminHubNavLink key=\{hub\.key\} hub=\{hub\} onNavigate=\{\(\) => setMobileOpen\(false\)\} mobile \/>\)/);
   assert.match(shell, /<AdminBrandLink onNavigate=\{\(\) => setMobileOpen\(false\)\} \/>/);
+  assert.match(shell, /<nav className="hidden min-w-0 flex-1 items-center gap-1\.5 md:flex"/);
+  assert.doesNotMatch(shell, /<aside/);
+  assert.doesNotMatch(shell, /AdminSidebar/);
 });
 
 test("hub pages contain the correct destination links and flat row affordance", () => {
@@ -109,6 +123,7 @@ test("mobile menu is accessible, closes on navigation and profile uses System li
   assert.match(shell, /onNavigate=\{\(\) => setMobileOpen\(false\)\}/);
   assert.match(shell, /min-h-11/);
   assert.match(shell, /AdminProfileMenu/);
+  assert.match(shell, /aria-controls="admin-mobile-menu"/);
   assert.match(shell, /href="\/admin\/system" label="System"/);
   assert.doesNotMatch(shell, /href="\/admin\/settings"/);
 });
