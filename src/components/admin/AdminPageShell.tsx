@@ -57,7 +57,7 @@ export function AdminNavbar({
         <div className="min-w-0 justify-self-start">
           <AdminBrandLink onNavigate={() => setMobileOpen(false)} />
         </div>
-        <nav className="hidden min-w-0 items-center justify-self-center gap-3 md:flex lg:gap-4" aria-label="Admin navigation">
+        <nav className="hidden min-w-0 items-center justify-self-center gap-3 md:flex md:translate-y-1.5 lg:gap-4" aria-label="Admin navigation">
           {hubs.map((hub) => <AdminHubNavLink key={hub.key} hub={hub} />)}
         </nav>
         <div className="hidden shrink-0 items-center justify-self-end md:flex">
