@@ -33,7 +33,7 @@ export default async function AdminPage() {
     >
       <section>
         <h2 className="text-lg font-semibold text-slate-950">Operations Snapshot</h2>
-        <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <AdminMetricCard label="Total users" value={metrics.totalUsers} />
           <AdminMetricCard label="Active users" value={metrics.activeUsers} tone="good" />
           <AdminMetricCard label="Suspended users" value={metrics.suspendedUsers} tone="warn" />
@@ -45,7 +45,7 @@ export default async function AdminPage() {
 
       <section className="mt-8">
         <h2 className="text-lg font-semibold text-slate-950">Provider Readiness</h2>
-        <div className="mt-3 grid gap-4 xl:grid-cols-3">
+        <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-3">
           {providers.map((provider) => <AdminProviderStatusCard key={provider.product} {...provider} />)}
         </div>
       </section>
