@@ -7,6 +7,7 @@ import {
   canUseHotelDetailsProviderLink,
   getDistinctHotelDetailsLocationParts,
   getHotelDetailsCancellationText,
+  getHotelDetailsNightCount,
   getHotelDetailsStarRating,
   isSafeHotelDetailsHttpUrl,
   parseHotelDetailsSearchCount,
@@ -108,4 +109,68 @@ test("hotel details cancellation text preserves known provider copy precedence",
   assert.equal(getHotelDetailsCancellationText("Free cancellation but non-refundable deposit", t), "Non-refundable");
   assert.equal(getHotelDetailsCancellationText("Pay at the property", t), "Pay at property");
   assert.equal(getHotelDetailsCancellationText("Provider-specific policy", t), "Provider-specific policy");
+});
+
+
+test("hotel details night count returns one night for adjacent calendar dates", () => {
+  assert.equal(
+    getHotelDetailsNightCount(new Date(2026, 6, 18), new Date(2026, 6, 19)),
+    1,
+  );
+});
+
+test("hotel details night count returns multiple nights", () => {
+  assert.equal(
+    getHotelDetailsNightCount(new Date(2026, 6, 18), new Date(2026, 6, 23)),
+    5,
+  );
+});
+
+test("hotel details night count handles month boundaries", () => {
+  assert.equal(
+    getHotelDetailsNightCount(new Date(2026, 6, 31), new Date(2026, 7, 2)),
+    2,
+  );
+});
+
+test("hotel details night count handles year boundaries", () => {
+  assert.equal(
+    getHotelDetailsNightCount(new Date(2026, 11, 31), new Date(2027, 0, 2)),
+    2,
+  );
+});
+
+test("hotel details night count uses calendar days across daylight-saving transitions", () => {
+  assert.equal(
+    getHotelDetailsNightCount(
+      new Date("2026-03-08T08:00:00-08:00"),
+      new Date("2026-03-09T08:00:00-07:00"),
+    ),
+    1,
+  );
+});
+
+test("hotel details night count returns null for same-day stays", () => {
+  assert.equal(
+    getHotelDetailsNightCount(new Date(2026, 6, 18), new Date(2026, 6, 18)),
+    null,
+  );
+});
+
+test("hotel details night count returns null for reversed dates", () => {
+  assert.equal(
+    getHotelDetailsNightCount(new Date(2026, 6, 19), new Date(2026, 6, 18)),
+    null,
+  );
+});
+
+test("hotel details night count returns null for invalid dates", () => {
+  assert.equal(
+    getHotelDetailsNightCount(new Date(Number.NaN), new Date(2026, 6, 18)),
+    null,
+  );
+  assert.equal(
+    getHotelDetailsNightCount(new Date(2026, 6, 18), new Date(Number.POSITIVE_INFINITY)),
+    null,
+  );
 });

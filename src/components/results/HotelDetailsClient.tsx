@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card } from "@/components/ui/Card";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import type {
   SavedHotelSnapshot,
@@ -27,6 +26,10 @@ import {
 import { HotelDetailsBookingPanel } from "@/components/results/hotelDetails/HotelDetailsBookingPanel";
 import { HotelDetailsGallery } from "@/components/results/hotelDetails/HotelDetailsGallery";
 import { HotelDetailsHeader } from "@/components/results/hotelDetails/HotelDetailsHeader";
+import {
+  HotelDetailsLoadingState,
+  HotelDetailsUnavailableState,
+} from "@/components/results/hotelDetails/HotelDetailsPageStates";
 import { HotelDetailsSections } from "@/components/results/hotelDetails/HotelDetailsSections";
 import {
   buildHotelDetailsResultsHref,
@@ -35,6 +38,7 @@ import {
   getDistinctHotelDetailsLocationParts,
   getHotelDetailsCancellationText,
   getHotelDetailsMealPlan,
+  getHotelDetailsNightCount,
   getHotelDetailsStarRating,
   getMeaningfulHotelDistance,
   isSafeHotelDetailsHttpUrl,
@@ -99,6 +103,7 @@ export function HotelDetailsClient({
   const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(() => new Set());
   const [shareStatus, setShareStatus] =
     useState<HotelShareStatus>("idle");
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -112,6 +117,7 @@ export function HotelDetailsClient({
       setHotel(null);
       setLoadError("");
       setRedirectError("");
+      setRedirecting(false);
       setShareStatus("idle");
       setPreferredImageIndex(0);
       setFailedImageUrls(new Set());
@@ -139,7 +145,7 @@ export function HotelDetailsClient({
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, loadAttempt]);
 
   async function continueToProvider() {
     if (!hotel || redirecting || !canUseHotelDetailsProviderLink(hotel)) return;
@@ -310,22 +316,40 @@ export function HotelDetailsClient({
     }
   }
 
+  const resultsHref = buildHotelDetailsResultsHref(searchContext);
+  const backToResultsText =
+    t("hotelResults.backToResults") || t("back") || "Back to results";
+
+  function retryHotelLoad() {
+    setLoadAttempt((attempt) => attempt + 1);
+  }
+
   if (loading) {
     return (
-      <main className="page-shell flex-1 py-10">
-        <Card className="p-6 text-muted">{t("hotelDetails.loading") || enTranslations["hotelDetails.loading"]}</Card>
-      </main>
+      <HotelDetailsLoadingState
+        loadingText={
+          t("hotelDetails.loading") || enTranslations["hotelDetails.loading"]
+        }
+      />
     );
   }
 
   if (loadError || !hotel) {
     return (
-      <main className="page-shell flex-1 py-10">
-        <Card className="p-6">
-          <h1 className="text-xl font-bold text-navy">{t("hotelDetails.unavailableTitle") || enTranslations["hotelDetails.unavailableTitle"]}</h1>
-          <p className="mt-2 text-muted">{t("hotelDetails.unavailableBody") || enTranslations["hotelDetails.unavailableBody"]}</p>
-        </Card>
-      </main>
+      <HotelDetailsUnavailableState
+        title={
+          t("hotelDetails.unavailableTitle") ||
+          enTranslations["hotelDetails.unavailableTitle"]
+        }
+        body={
+          t("hotelDetails.unavailableBody") ||
+          enTranslations["hotelDetails.unavailableBody"]
+        }
+        retryText={t("retry") || "Try again"}
+        backToResultsText={backToResultsText}
+        resultsHref={resultsHref}
+        onRetry={retryHotelLoad}
+      />
     );
   }
 
@@ -396,7 +420,6 @@ export function HotelDetailsClient({
       : !providerEnabled
         ? t("hotelDetails.directLinkUnavailable")
         : "";
-  const resultsHref = buildHotelDetailsResultsHref(searchContext);
   const savedHotelLabel = (
     isSaved
       ? t("hotelResults.removeSavedHotel") ||
@@ -503,10 +526,15 @@ export function HotelDetailsClient({
     if (
       checkInDate === null ||
       checkOutDate === null ||
-      checkOutDate.getTime() <= checkInDate.getTime() ||
       guestCount === null ||
       roomCount === null
     ) {
+      return null;
+    }
+
+    const nightCount = getHotelDetailsNightCount(checkInDate, checkOutDate);
+
+    if (nightCount === null) {
       return null;
     }
 
@@ -531,12 +559,18 @@ export function HotelDetailsClient({
         ? t("roomSingular") || "room"
         : t("roomPlural") || "rooms";
 
+    const nightLabel =
+      nightCount === 1
+        ? t("hotelDetails.nightSingular") || "night"
+        : t("hotelDetails.nightPlural") || "nights";
+
     return {
       dateText:
         `${dateFormatter.format(checkInDate)} – ${dateFormatter.format(checkOutDate)}`,
       occupancyText:
         `${numberFormatter.format(guestCount)} ${guestLabel}, ` +
         `${numberFormatter.format(roomCount)} ${roomLabel}`,
+      nightText: `${numberFormatter.format(nightCount)} ${nightLabel}`,
     };
   })();
 
@@ -557,10 +591,10 @@ export function HotelDetailsClient({
   return (
     <main className="flex-1 bg-surface-muted/40">
       <section className="page-shell py-6 sm:py-8 lg:py-10">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-6">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8">
           <HotelDetailsHeader
             resultsHref={resultsHref}
-            backToResultsText={t("hotelResults.backToResults") || t("back") || "Back to results"}
+            backToResultsText={backToResultsText}
             badges={hotel.badges}
             name={hotel.name}
             savedHotelLabel={savedHotelLabel}
@@ -616,8 +650,19 @@ export function HotelDetailsClient({
             taxesText={taxesText}
             priceUnavailableText={priceUnavailableText}
             liveRateUnavailableText={liveRateUnavailableText}
-            discoveryBookingUnavailableText={discoveryBookingUnavailableText}
             staySummary={staySummary}
+            changeSearchHref={resultsHref}
+            changeSearchText={
+              t("hotelDetails.changeDatesGuests") ||
+              "Change dates and guests"
+            }
+            conversionNoticeText={
+              t("hotelDetails.convertedPriceNotice") ||
+              "Display estimate converted from the provider price. Final provider price may differ."
+            }
+            providerPriceLabel={
+              t("hotelDetails.providerPrice") || "Provider price"
+            }
             providerText={hotel.provider && hotel.dataSource !== "demo" ? `${t("providedBy")} ${hotel.provider}` : ""}
             providerUnavailableText={providerUnavailableText}
             redirectError={redirectError}
