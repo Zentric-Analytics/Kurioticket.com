@@ -7153,7 +7153,7 @@ export function FlightResultsClient() {
                   <div
                     ref={nearbyFareStripScrollRef}
                     onScroll={updateNearbyFareScrollState}
-                    className="fare-strip-scroll grid auto-cols-[minmax(96px,1fr)] grid-flow-col items-center gap-3 overflow-x-auto scroll-smooth px-0 py-1"
+                    className="fare-strip-scroll grid auto-cols-[minmax(128px,144px)] grid-flow-col items-center gap-3 overflow-x-auto scroll-smooth px-0 py-1 sm:auto-cols-[minmax(136px,144px)]"
                     role="list"
                   >
                     {nearbyFares.length
@@ -7165,7 +7165,7 @@ export function FlightResultsClient() {
                               type="button"
                               data-fare-date-cell
                               className={cn(
-                                "flex min-h-[86px] min-w-[96px] flex-col items-center justify-center bg-transparent px-2.5 py-3 text-center text-[#24324A] transition hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30",
+                                "flex min-h-[104px] w-[128px] min-w-0 max-w-[144px] flex-col items-center justify-center bg-transparent px-2.5 py-3 text-center text-[#24324A] transition hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 sm:w-[136px]",
                                 selected ? "text-[#0057FF]" : "text-[#24324A]",
                               )}
                               aria-current={selected ? "date" : undefined}
@@ -7179,19 +7179,30 @@ export function FlightResultsClient() {
                               <span className={cn("text-[13px] font-semibold uppercase leading-5", selected ? "text-[#0057FF]" : "text-[#24324A]")}>
                                 {formatFareStripWeekdayLabel(fare.date, calendarLocale).toUpperCase()}
                               </span>
-                              <span className={cn("mt-1 text-[15px] font-semibold leading-5", selected ? "text-[#0057FF]" : "text-slate-950")} aria-live={fare.status === "loading" ? "polite" : undefined}>
+                              <span className={cn("mt-1 min-w-0 max-w-full text-[15px] font-semibold leading-5", selected ? "text-[#0057FF]" : "text-slate-950")} aria-live={fare.status === "loading" ? "polite" : undefined}>
                                 {fare.status === "loading" ? (
-                                  <span className="block h-4 w-14 animate-pulse rounded-full bg-slate-200" aria-label="Loading fare" />
-                                ) : fare.status === "success" ? (
-                                  formatDisplayPrice({
+                                  <span className="block h-5 w-20 animate-pulse rounded-full bg-slate-200" aria-label="Loading fare" />
+                                ) : fare.status === "success" ? (() => {
+                                  const nearbyDisplayPrice = formatDisplayPrice({
                                     amount: fare.amount,
                                     sourceCurrency: fare.currency,
                                     displayCurrency: selectedCurrency,
                                     convertUsdEstimate: true,
                                     rates: currencyRates.rates,
                                     isFallbackRate: currencyRates.isFallback,
-                                  }).formatted
-                                ) : (
+                                  }).formatted;
+
+                                  return (
+                                    <span
+                                      className="flight-fare-strip-price"
+                                      aria-label={nearbyDisplayPrice}
+                                      title={nearbyDisplayPrice}
+                                      dir="ltr"
+                                    >
+                                      {nearbyDisplayPrice}
+                                    </span>
+                                  );
+                                })() : (
                                   "Unavailable"
                                 )}
                               </span>
@@ -7201,11 +7212,11 @@ export function FlightResultsClient() {
                       : Array.from({ length: nearbyFareRangeSize }).map((_, index) => (
                           <div
                             key={index}
-                            className="flex min-h-[86px] min-w-[96px] flex-col items-center justify-center px-2.5 py-3"
+                            className="flex min-h-[104px] w-[128px] min-w-0 max-w-[144px] flex-col items-center justify-center px-2.5 py-3 sm:w-[136px]"
                           >
                             <div className="h-3 w-14 animate-pulse rounded-full bg-slate-200" />
                             <div className="mt-2 h-3 w-8 animate-pulse rounded-full bg-slate-200" />
-                            <div className="mt-2 h-4 w-14 animate-pulse rounded-full bg-slate-200" />
+                            <div className="mt-2 h-5 w-20 animate-pulse rounded-full bg-slate-200" />
                           </div>
                         ))}
                   </div>
