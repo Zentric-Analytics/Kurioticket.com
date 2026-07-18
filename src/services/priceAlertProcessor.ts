@@ -1,7 +1,8 @@
 import { timingSafeEqual } from "node:crypto";
 
+import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
 import { getPrisma } from "@/lib/prisma";
-import type { FlightSearchParams, HotelSearchParams } from "@/lib/types";
+import type { FlightSearchParams, HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
 import { searchFlights } from "@/services/travel/flightAggregator";
 import { searchHotels } from "@/services/travel/hotelAggregator";
 import { priceAlertEmail, sendOptionalEmail } from "@/services/emailService";
@@ -53,6 +54,29 @@ export type PriceAlertProcessingCounts = {
 
 export type PriceResolver = (alert: PriceAlertRecord) => Promise<ResolvedPrice>;
 export type OptionalEmailSender = typeof sendOptionalEmail;
+
+export function selectHotelPriceAlertResult(
+  hotels: readonly NormalizedHotelResult[],
+): ResolvedPrice | null {
+  for (const hotel of hotels) {
+    if (hotel.inventoryKind === "discovery") continue;
+
+    const priceDetails = getHotelPriceDetails(hotel);
+    if (priceDetails === null) continue;
+
+    return {
+      provider: hotel.provider,
+      price: priceDetails.totalPrice,
+      currency: priceDetails.currency,
+      url: hotel.partnerRedirectUrl || hotel.bookingUrl || undefined,
+      payload: {
+        resultId: hotel.id,
+      },
+    };
+  }
+
+  return null;
+}
 
 export async function processDuePriceAlerts(options: {
   now?: Date;
@@ -156,8 +180,9 @@ export async function resolveAlertPrice(alert: PriceAlertRecord): Promise<Resolv
   const search = alert.query as Partial<HotelSearchParams>;
   const result = await searchHotels(search as HotelSearchParams);
   if (result.servedFromFallback || result.results.length === 0) throw new Error("live_hotel_price_unavailable");
-  const best = result.results[0];
-  return { provider: best.provider, price: best.totalPrice, currency: best.currency, url: best.partnerRedirectUrl || best.bookingUrl, payload: { resultId: best.id } };
+  const selected = selectHotelPriceAlertResult(result.results);
+  if (selected === null) throw new Error("live_hotel_price_unavailable");
+  return selected;
 }
 
 async function recordSuccessfulCheck(db: PriceAlertDb, alert: PriceAlertRecord, resolved: ResolvedPrice, now: Date, nextCheckAt: Date) {
