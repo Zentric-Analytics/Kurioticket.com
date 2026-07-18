@@ -108,7 +108,7 @@ test("desktop and mobile navigation omit a second row, sidebar and separate visi
   assert.match(shell, /hubs\.map\(\(hub\) => <AdminHubNavLink key=\{hub\.key\} hub=\{hub\} \/>\)/);
   assert.match(shell, /hubs\.map\(\(hub\) => <AdminHubNavLink key=\{hub\.key\} hub=\{hub\} onNavigate=\{\(\) => setMobileOpen\(false\)\} mobile \/>\)/);
   assert.match(shell, /<AdminBrandLink onNavigate=\{\(\) => setMobileOpen\(false\)\} \/>/);
-  assert.match(shell, /<nav className="hidden min-w-0 items-center justify-self-center gap-3 md:flex lg:gap-4"/);
+  assert.match(shell, /<nav className="hidden min-w-0 items-center justify-self-center gap-3 md:flex md:translate-y-1.5 lg:gap-4"/);
   assert.doesNotMatch(shell, /<aside/);
   assert.doesNotMatch(shell, /AdminSidebar/);
 });

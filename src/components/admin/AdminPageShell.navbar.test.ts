@@ -9,10 +9,24 @@ test("admin desktop navbar uses a true three-column centered grid", () => {
   assert.match(shell, /md:grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\]/);
   assert.match(shell, /<div className="min-w-0 justify-self-start">/);
   assert.match(shell, /aria-label="Admin navigation"/);
-  assert.match(shell, /justify-self-center gap-3 md:flex lg:gap-4/);
+  assert.match(shell, /justify-self-center gap-3 md:flex md:translate-y-1.5 lg:gap-4/);
   assert.match(shell, /justify-self-end md:flex/);
   assert.doesNotMatch(shell, /justify-between gap-7/);
   assert.doesNotMatch(shell, /fixed inset-y|sidebar|Sidebar/);
+});
+
+
+test("admin desktop center navigation applies only the shared vertical offset", () => {
+  const desktopNav = shell.match(/<nav className="([^"]*)" aria-label="Admin navigation">/)?.[1] ?? "";
+  const mobileMenu = shell.match(/<div id="admin-mobile-menu"[\s\S]*?<\/div>\n      \) : null}/)?.[0] ?? "";
+
+  assert.match(desktopNav, /justify-self-center/);
+  assert.match(desktopNav, /md:translate-y-1\.5/);
+  assert.match(desktopNav, /md:flex/);
+  assert.doesNotMatch(desktopNav, /grid-rows|flex-col|absolute|ml-|pl-/);
+  assert.doesNotMatch(mobileMenu, /translate-y-1\.5/);
+  assert.doesNotMatch(shell, /<div className="min-w-0 justify-self-start[^"]*translate-y/);
+  assert.doesNotMatch(shell, /<div className="hidden shrink-0 items-center justify-self-end[^"]*translate-y/);
 });
 
 test("admin navbar keeps only Operations, Monitoring, and Platform hubs visible", () => {
