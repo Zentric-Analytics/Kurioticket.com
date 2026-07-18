@@ -18,10 +18,12 @@ export function AdminShell({
   adminEmail,
   adminName,
   adminRole,
+  adminImage,
 }: {
   children: React.ReactNode;
   adminEmail?: string | null;
   adminName?: string | null;
+  adminImage?: string | null;
   adminRole: string;
 }) {
   const safeRole: AdminRole = adminRole === "SUPPORT" || adminRole === "USER" ? adminRole : "ADMIN";
@@ -29,7 +31,7 @@ export function AdminShell({
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-950">
-      <AdminNavbar hubs={hubs} adminEmail={adminEmail} adminName={adminName} />
+      <AdminNavbar hubs={hubs} adminEmail={adminEmail} adminName={adminName} adminImage={adminImage} />
       <main className="page-shell py-5 sm:py-6">{children}</main>
     </div>
   );
@@ -39,25 +41,27 @@ export function AdminNavbar({
   hubs,
   adminEmail,
   adminName,
+  adminImage,
 }: {
   hubs: AdminHubDefinition[];
   adminEmail?: string | null;
   adminName?: string | null;
+  adminImage?: string | null;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const displayName = adminName || adminEmail || "Admin";
 
   return (
     <header className="sticky top-0 z-30 border-b border-[#DDE7F0] bg-white/95 backdrop-blur">
-      <div className="page-shell flex min-h-16 items-center justify-between gap-3 py-2 md:min-h-[68px] md:gap-8">
-        <div className="flex min-w-0 flex-1 items-center gap-7 lg:gap-10">
+      <div className="page-shell flex min-h-16 items-center justify-between gap-3 py-2 md:grid md:min-h-[68px] md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:gap-6">
+        <div className="min-w-0 justify-self-start">
           <AdminBrandLink onNavigate={() => setMobileOpen(false)} />
-          <nav className="hidden min-w-0 flex-1 items-center gap-1.5 md:flex" aria-label="Admin navigation">
-            {hubs.map((hub) => <AdminHubNavLink key={hub.key} hub={hub} />)}
-          </nav>
         </div>
-        <div className="hidden shrink-0 items-center md:flex">
-          <AdminProfileMenu adminEmail={adminEmail} displayName={displayName} />
+        <nav className="hidden min-w-0 items-center justify-self-center gap-3 md:flex lg:gap-4" aria-label="Admin navigation">
+          {hubs.map((hub) => <AdminHubNavLink key={hub.key} hub={hub} />)}
+        </nav>
+        <div className="hidden shrink-0 items-center justify-self-end md:flex">
+          <AdminProfileMenu adminEmail={adminEmail} adminImage={adminImage} displayName={displayName} />
         </div>
         <button
           type="button"
@@ -76,7 +80,7 @@ export function AdminNavbar({
             {hubs.map((hub) => <AdminHubNavLink key={hub.key} hub={hub} onNavigate={() => setMobileOpen(false)} mobile />)}
           </nav>
           <div className="mt-2 border-t border-slate-100 pt-2">
-            <AdminProfileMenu adminEmail={adminEmail} displayName={displayName} />
+            <AdminProfileMenu adminEmail={adminEmail} adminImage={adminImage} displayName={displayName} />
           </div>
         </div>
       ) : null}
@@ -117,9 +121,13 @@ function AdminHubNavLink({ hub, mobile = false, onNavigate }: { hub: AdminHubDef
       href={hub.href}
       onClick={onNavigate}
       className={cn(
-        "focus-ring inline-flex items-center rounded-xl text-sm font-bold transition",
-        mobile ? "min-h-11 px-3 py-2" : "px-3 py-2",
-        active ? "border border-[#BFD4EA] bg-[#F3F7FA] text-[#021C2B]" : "border border-transparent text-slate-700 hover:bg-[#F3F7FA] hover:text-[#004BB8]",
+        "focus-ring inline-flex items-center border transition-colors",
+        mobile
+          ? "min-h-11 rounded-xl px-3 py-2 text-sm font-bold"
+          : "min-h-[38px] rounded-full px-3.5 py-2 text-[15px] font-semibold leading-none tracking-[-0.005em] lg:px-4",
+        active
+          ? "border-[#004BB8]/18 bg-[#004BB8]/6 text-[#021C2B]"
+          : "border-[#DDE7F0] bg-[#F3F7FA]/70 text-[#021C2B]/85 hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B]",
       )}
       aria-current={active ? "page" : undefined}
     >
@@ -130,41 +138,67 @@ function AdminHubNavLink({ hub, mobile = false, onNavigate }: { hub: AdminHubDef
 
 function AdminProfileMenu({
   adminEmail,
+  adminImage,
   className = "",
   displayName,
 }: {
   adminEmail?: string | null;
+  adminImage?: string | null;
   className?: string;
   displayName: string;
 }) {
+  const [open, setOpen] = useState(false);
+  const profileLabel = "Open Admin profile menu";
+  const adminInitials = getAccountInitials(displayName, adminEmail);
+
   return (
-    <details className={`relative ${className}`}>
+    <details className={`relative ${className}`} onToggle={(event) => setOpen(event.currentTarget.open)}>
       <summary
-        aria-label="Open Admin profile menu"
-        className="focus-ring inline-flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border border-transparent bg-transparent text-[#021C2B] marker:hidden transition-colors hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B]"
+        aria-label={profileLabel}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title={profileLabel}
+        className="inline-flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-md border border-transparent bg-transparent text-[#021C2B] marker:hidden transition-colors hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
       >
-        <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#F2F7FA] text-[11px] font-black text-[#004BB8] shadow-sm">
-          {displayName.slice(0, 1).toUpperCase()}
+        <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-[#F2F7FA] text-[11px] font-black text-[#004BB8] shadow-sm">
+          {adminImage ? <AdminLogoImage src={adminImage} alt="" className="h-full w-full object-cover" /> : adminInitials}
         </span>
       </summary>
-      <div className="absolute right-0 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white py-2 shadow-xl">
-        <div className="border-b border-slate-100 px-4 pb-3 pt-2">
-          <p className="text-sm font-bold text-slate-900">Admin profile</p>
-          <p className="truncate text-xs font-medium text-slate-500">{adminEmail || "No email available"}</p>
+      <div role="menu" aria-label={profileLabel} className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl ring-1 ring-slate-950/5">
+        <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-3">
+          <p className="truncate text-sm font-semibold text-slate-900">{displayName}</p>
+          <p className="truncate text-xs font-normal text-slate-500">{adminEmail || "No email available"}</p>
         </div>
-        <ProfileLink href="/admin/system" label="System" icon={Settings} />
-        <ProfileLink href="/admin/logs" label="Audit logs" icon={ShieldCheck} />
-        <ProfileLink href="/" label="Switch to public site" icon={Building2} />
-        <ProfileLink href="/api/auth/signout" label="Logout" icon={LogOut} />
+        <div className="grid gap-1 p-2">
+          <ProfileLink href="/admin/system" label="System" icon={Settings} />
+          <ProfileLink href="/admin/logs" label="Audit logs" icon={ShieldCheck} />
+          <ProfileLink href="/" label="Switch to public site" icon={Building2} />
+          <ProfileLink href="/api/auth/signout" label="Logout" icon={LogOut} />
+        </div>
       </div>
     </details>
   );
 }
 
+function getAccountInitials(name?: string | null, email?: string | null) {
+  const source = name?.trim() || email?.trim() || "Admin";
+
+  return (
+    source
+      .split(/[\s@._-]+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join("") || "A"
+  );
+}
+
 function ProfileLink({ href, label, icon: Icon }: { href: string; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }) {
   return (
-    <Link href={href} className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-[#F3F7FA] hover:text-[#004BB8]">
-      <Icon size={16} className="text-slate-500" />
+    <Link href={href} role="menuitem" className="group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-[#F2F7FA] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25">
+      <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#F2F7FA] text-[#004BB8] group-hover:bg-white">
+        <Icon size={17} aria-hidden="true" />
+      </span>
       {label}
     </Link>
   );

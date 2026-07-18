@@ -34,7 +34,7 @@ test("admin shell removes the permanent sidebar and 280px reserved desktop grid"
 
 test("admin navbar uses public page-shell alignment with full-width header background", () => {
   assert.match(shell, /<header className="sticky top-0 z-30 border-b border-\[#DDE7F0\] bg-white\/95 backdrop-blur">/);
-  assert.match(shell, /<div className="page-shell flex min-h-16 items-center justify-between gap-3 py-2 md:min-h-\[68px\] md:gap-8">/);
+  assert.match(shell, /<div className="page-shell flex min-h-16 items-center justify-between gap-3 py-2 md:grid md:min-h-\[68px\] md:grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\] md:gap-6">/);
   assert.match(shell, /<main className="page-shell py-5 sm:py-6">/);
   assert.doesNotMatch(shell, /max-w-\[1800px\]/);
   assert.doesNotMatch(shell, /px-4 py-3 backdrop-blur sm:px-6 lg:px-10/);
@@ -72,25 +72,27 @@ test("admin brand logo link keeps accessibility while removing permanent boxed s
   assert.doesNotMatch(brandLink, /px-[1-9]/);
 });
 
-test("admin top-level hub labels and link styling remain unchanged", () => {
+test("admin top-level hub labels and public header link styling are preserved", () => {
   assert.deepEqual(getAdminNavbarHubsForRole("ADMIN").map((hub) => hub.label), ["Operations", "Monitoring", "Platform"]);
-  assert.match(shell, /active \? "border border-\[#BFD4EA\] bg-\[#F3F7FA\] text-\[#021C2B\]" : "border border-transparent text-slate-700 hover:bg-\[#F3F7FA\] hover:text-\[#004BB8\]"/);
+  assert.match(shell, /min-h-\[38px\] rounded-full px-3\.5 py-2 text-\[15px\] font-semibold leading-none tracking-\[-0\.005em\] lg:px-4/);
+  assert.match(shell, /active\n          \? "border-\[#004BB8\]\/18 bg-\[#004BB8\]\/6 text-\[#021C2B\]"\n          : "border-\[#DDE7F0\] bg-\[#F3F7FA\]\/70 text-\[#021C2B\]\/85 hover:border-\[#004BB8\]\/20 hover:bg-\[#004BB8\]\/5 hover:text-\[#021C2B\]"/);
 });
 
 test("admin navbar removes the permanent role badge and uses an avatar-only profile trigger", () => {
   assert.doesNotMatch(shell, /<AdminStatusBadge tone="info">\{adminRole\}<\/AdminStatusBadge>/);
-  assert.match(shell, /aria-label="Open Admin profile menu"/);
-  assert.match(shell, /inline-flex h-10 w-10 cursor-pointer/);
-  assert.match(shell, /rounded-full border border-transparent bg-transparent/);
+  assert.match(shell, /const profileLabel = "Open Admin profile menu"/);
+  assert.match(shell, /aria-label=\{profileLabel\}/);
+  assert.match(shell, /inline-flex h-9 w-9 cursor-pointer/);
+  assert.match(shell, /rounded-md border border-transparent bg-transparent/);
   assert.match(shell, /hover:border-\[#004BB8\]\/20 hover:bg-\[#004BB8\]\/5/);
-  assert.match(shell, /displayName\.slice\(0, 1\)\.toUpperCase\(\)/);
+  assert.match(shell, /getAccountInitials\(displayName, adminEmail\)/);
   assert.doesNotMatch(shell, /hidden max-w-40 truncate sm:inline/);
   assert.doesNotMatch(shell, /ChevronDown/);
 });
 
 test("admin profile menu still opens with unchanged destinations and account information", () => {
-  assert.match(shell, /<details className=\{`relative \$\{className\}`\}>/);
-  assert.match(shell, /Admin profile/);
+  assert.match(shell, /<details className=\{`relative \$\{className\}`\} onToggle=\{\(event\) => setOpen\(event\.currentTarget\.open\)\}>/);
+  assert.match(shell, /\{displayName\}/);
   assert.match(shell, /\{adminEmail \|\| "No email available"\}/);
   assert.match(shell, /href="\/admin\/system" label="System"/);
   assert.match(shell, /href="\/admin\/logs" label="Audit logs"/);
@@ -106,7 +108,7 @@ test("desktop and mobile navigation omit a second row, sidebar and separate visi
   assert.match(shell, /hubs\.map\(\(hub\) => <AdminHubNavLink key=\{hub\.key\} hub=\{hub\} \/>\)/);
   assert.match(shell, /hubs\.map\(\(hub\) => <AdminHubNavLink key=\{hub\.key\} hub=\{hub\} onNavigate=\{\(\) => setMobileOpen\(false\)\} mobile \/>\)/);
   assert.match(shell, /<AdminBrandLink onNavigate=\{\(\) => setMobileOpen\(false\)\} \/>/);
-  assert.match(shell, /<nav className="hidden min-w-0 flex-1 items-center gap-1\.5 md:flex"/);
+  assert.match(shell, /<nav className="hidden min-w-0 items-center justify-self-center gap-3 md:flex lg:gap-4"/);
   assert.doesNotMatch(shell, /<aside/);
   assert.doesNotMatch(shell, /AdminSidebar/);
 });
