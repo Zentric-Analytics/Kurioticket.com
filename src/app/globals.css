@@ -495,7 +495,7 @@ textarea {
 }
 
 .flight-card-desktop-itinerary {
-  grid-template-columns: minmax(0, 1fr) 136px;
+  grid-template-columns: minmax(0, 1fr) 184px;
   column-gap: 1rem;
 }
 
@@ -507,9 +507,12 @@ textarea {
   gap: 1.25rem;
 }
 
-.flight-card-time,
-.flight-card-price {
+.flight-card-time {
   font-size: 1.375rem;
+}
+
+.flight-card-price {
+  font-size: clamp(1.125rem, 1.75cqi, 1.375rem);
 }
 
 .flight-card-fare-action {
@@ -565,7 +568,7 @@ textarea {
   }
 
   .flight-card-desktop-itinerary {
-    grid-template-columns: minmax(0, 1fr) 126px;
+    grid-template-columns: minmax(0, 1fr) 168px;
     column-gap: 0.75rem;
   }
 
@@ -577,9 +580,12 @@ textarea {
     gap: 0.75rem;
   }
 
-  .flight-card-time,
-  .flight-card-price {
+  .flight-card-time {
     font-size: 1.25rem;
+  }
+
+  .flight-card-price {
+    font-size: clamp(1rem, 2.25cqi, 1.25rem);
   }
 
   .flight-card-fare-action {
@@ -618,7 +624,7 @@ textarea {
 
   .flight-card-fare-action {
     justify-self: end;
-    width: min(144px, 100%);
+    width: min(176px, 100%);
     border-left-width: 0;
     border-top: 1px solid #d8e1ec;
     padding-left: 0;
@@ -695,6 +701,56 @@ textarea {
   .flight-results-right-rail {
     display: block;
   }
+}
+
+.flight-fare-strip-price {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  text-align: center;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  font-size: clamp(0.8125rem, 1.8vw, 0.9375rem);
+  font-variant-numeric: tabular-nums;
+  unicode-bidi: isolate;
+}
+
+.flight-card-price-frame {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.flight-card-price-value {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  text-align: center;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  font-size: clamp(1rem, 5vw, 1.25rem);
+  font-variant-numeric: tabular-nums;
+  unicode-bidi: isolate;
+}
+
+.flight-card-provider-price {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.flight-card-provider-price p {
+  max-width: 100%;
+}
+
+.flight-card-provider-price span[dir="ltr"] {
+  unicode-bidi: isolate;
 }
 
 .fare-strip-scroll {

@@ -499,13 +499,13 @@ function FlightFareAction({
       className={cn(
         desktop
           ? "flight-card-fare-action flex flex-col items-center justify-center border-l border-[#D8E1EC] text-center"
-          : "flex w-[104px] shrink-0 flex-col items-center gap-2.5 rounded-xl px-0 py-0 text-center sm:w-[112px] lg:min-h-[118px] lg:w-auto lg:items-stretch lg:justify-center lg:gap-2 lg:self-stretch lg:px-1 lg:py-3 lg:text-center",
+          : "flex w-[clamp(128px,42vw,152px)] shrink-0 flex-col items-center gap-2.5 rounded-xl px-0 py-0 text-center sm:w-[clamp(140px,34vw,168px)] lg:min-h-[118px] lg:w-auto lg:items-stretch lg:justify-center lg:gap-2 lg:self-stretch lg:px-1 lg:py-3 lg:text-center",
         className,
       )}
     >
       <div
         className={cn(
-          "min-w-0 text-center",
+          "flight-card-price-frame min-w-0 text-center",
           desktop
             ? "flex flex-col items-center justify-center"
             : "lg:flex lg:min-h-[72px] lg:flex-col lg:items-center lg:justify-center lg:text-center",
@@ -513,8 +513,8 @@ function FlightFareAction({
       >
         <div
           className={cn(
-            "font-semibold leading-tight tracking-[-0.025em] text-slate-950",
-            desktop ? "flight-card-price" : "text-lg sm:text-xl",
+            "flight-card-price-value font-semibold leading-tight tracking-[-0.025em] text-slate-950",
+            desktop ? "flight-card-price" : "",
           )}
           aria-label={priceAriaLabel}
           title={priceTitle}
@@ -526,7 +526,7 @@ function FlightFareAction({
           {priceLabel}
         </p>
         {showConvertedProviderPrice ? (
-          <div className="mt-1.5 space-y-0.5 text-xs font-medium leading-4 text-slate-600 lg:text-center">
+          <div className="flight-card-provider-price mt-1.5 space-y-0.5 text-xs font-medium leading-4 text-slate-600 lg:text-center">
             <p>
               <span>{providerPriceLabel}:</span>{" "}
               <span dir="ltr">{providerPrice}</span>
