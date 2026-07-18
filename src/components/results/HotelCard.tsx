@@ -39,6 +39,7 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
 import {
   getHotelReviewBand,
   getHotelReviewCount,
@@ -418,6 +419,16 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
           : t("hotelResults.review.multiple") || "{{count}} reviews"
         ).replace("{{count}}", formattedReviewCount)
       : "";
+  const priceDetails = getHotelPriceDetails(hotel);
+  const hasValidPrice = priceDetails !== null;
+  const priceUnavailableText =
+    t("hotelResults.priceUnavailable") || "Price unavailable";
+  const liveRateUnavailableText =
+    t("hotelResults.liveRateUnavailable") ||
+    "No live room rate is available for the selected dates.";
+  const saveRequiresLiveRateText =
+    t("hotelResults.saveRequiresLiveRate") ||
+    "Saving is available once a live room rate is provided.";
   const taxesAndFeesText =
     hotel.taxesAndFeesIncluded === true
       ? t("hotelResults.taxesFeesIncluded") || "Includes taxes and fees"
@@ -425,7 +436,7 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
         ? t("hotelResults.taxesFeesNotIncluded") ||
           "Taxes and fees not included"
         : "";
-  const sortBadgeConfig = sortBadge
+  const sortBadgeConfig = sortBadge && (sortBadge !== "cheapest" || hasValidPrice)
     ? ({
         cheapest: {
           label: t("hotelResults.cheapest") || "Cheapest",
@@ -452,24 +463,33 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
       >)[sortBadge]
     : null;
   const SortBadgeIcon = sortBadgeConfig?.Icon;
-  const totalDisplayPrice = formatDisplayPrice({
-    amount: hotel.totalPrice,
-    sourceCurrency: hotel.currency,
-    displayCurrency: selectedOption.currency,
-    convertSourceEstimate: true,
-    rates: currencyRates.rates,
-    isFallbackRate: currencyRates.isFallback,
-  });
-  const nightlyDisplayPrice = formatDisplayPrice({
-    amount: hotel.pricePerNight,
-    sourceCurrency: hotel.currency,
-    displayCurrency: selectedOption.currency,
-    convertSourceEstimate: true,
-    rates: currencyRates.rates,
-    isFallbackRate: currencyRates.isFallback,
-  });
+  const totalDisplayPrice = priceDetails
+    ? formatDisplayPrice({
+        amount: priceDetails.totalPrice,
+        sourceCurrency: priceDetails.currency,
+        displayCurrency: selectedOption.currency,
+        convertSourceEstimate: true,
+        rates: currencyRates.rates,
+        isFallbackRate: currencyRates.isFallback,
+      })
+    : null;
+  const nightlyDisplayPrice = priceDetails
+    ? formatDisplayPrice({
+        amount: priceDetails.pricePerNight,
+        sourceCurrency: priceDetails.currency,
+        displayCurrency: selectedOption.currency,
+        convertSourceEstimate: true,
+        rates: currencyRates.rates,
+        isFallbackRate: currencyRates.isFallback,
+      })
+    : null;
 
   function getHotelSnapshot(): SavedHotelSnapshot {
+    const snapshotPrice = getHotelPriceDetails(hotel);
+    if (!snapshotPrice) {
+      throw new Error("Cannot save a hotel without a valid live room rate.");
+    }
+
     const params = new URLSearchParams(window.location.search);
     const checkIn = params.get("checkIn") || new Date().toISOString().slice(0, 10);
     const checkOut = params.get("checkOut") || checkIn;
@@ -482,8 +502,8 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
       destination: hotel.location || hotel.neighbourhood || hotel.name,
       checkIn: `${checkIn}T00:00:00.000Z`,
       checkOut: `${checkOut}T00:00:00.000Z`,
-      totalPrice: hotel.totalPrice,
-      currency: hotel.currency || "USD",
+      totalPrice: snapshotPrice.totalPrice,
+      currency: snapshotPrice.currency,
       image,
       imageAlt: hotel.name,
       location: hotel.location,
@@ -502,7 +522,9 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
     isSaved
       ? t("hotelResults.removeSavedHotel") ||
         "Remove {{name}} from saved hotels"
-      : t("hotelResults.saveHotel") || "Save {{name}}"
+      : hasValidPrice
+        ? t("hotelResults.saveHotel") || "Save {{name}}"
+        : saveRequiresLiveRateText
   ).replace("{{name}}", hotel.name);
 
 
@@ -547,13 +569,16 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
             type="button"
             aria-label={savedHotelLabel}
             aria-pressed={isSaved}
-            title={savedHotelLabel}
+            title={isSaved || hasValidPrice ? savedHotelLabel : saveRequiresLiveRateText}
+            disabled={!isSaved && !hasValidPrice}
             className={
               isSaved
                 ? "absolute right-2 top-2 z-20 flex min-h-10 min-w-10 items-center justify-center rounded-full border border-rose-200 bg-white/95 text-rose-600 shadow-lg transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
                 : "absolute right-2 top-2 z-20 flex min-h-10 min-w-10 items-center justify-center rounded-full border border-white/80 bg-white/90 text-slate-800 shadow-lg transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
             }
-            onClick={toggleSavedHotel}
+            onClick={() => {
+              if (isSaved || hasValidPrice) void toggleSavedHotel();
+            }}
           >
             <Heart
               size={20}
@@ -722,37 +747,50 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
             </div>
             <div className="mt-auto flex flex-col gap-3 min-[380px]:flex-row min-[380px]:items-end min-[380px]:justify-between md:mt-0 lg:w-44 lg:flex-col lg:items-end lg:justify-start lg:text-end">
               <div className="text-start min-[380px]:text-end lg:text-end">
-                <div
-                  className="whitespace-nowrap text-xl font-bold leading-7 tracking-[-0.01em] text-slate-950 tabular-nums"
-                  dir="ltr"
-                  title={totalDisplayPrice.title}
-                  aria-label={totalDisplayPrice.ariaLabel}
-                >
-                  {totalDisplayPrice.formatted}
-                </div>
-
-                <div className="mt-1 text-[13px] font-medium leading-5 text-slate-500">
-                  {t("hotelResults.estimatedStayTotal")}
-                </div>
-
-                <div className="mt-3 space-y-1.5">
-                  <div
-                    className="text-sm font-semibold leading-5 text-slate-800 tabular-nums"
-                    title={nightlyDisplayPrice.title}
-                    aria-label={nightlyDisplayPrice.ariaLabel}
-                  >
-                    {t("hotelResults.pricePerNight").replace(
-                      "{{price}}",
-                      nightlyDisplayPrice.formatted,
-                    )}
-                  </div>
-
-                  {taxesAndFeesText ? (
-                    <div className="text-xs font-medium leading-[18px] text-slate-500">
-                      {taxesAndFeesText}
+                {priceDetails && totalDisplayPrice && nightlyDisplayPrice ? (
+                  <>
+                    <div
+                      className="whitespace-nowrap text-xl font-bold leading-7 tracking-[-0.01em] text-slate-950 tabular-nums"
+                      dir="ltr"
+                      title={totalDisplayPrice.title}
+                      aria-label={totalDisplayPrice.ariaLabel}
+                    >
+                      {totalDisplayPrice.formatted}
                     </div>
-                  ) : null}
-                </div>
+
+                    <div className="mt-1 text-[13px] font-medium leading-5 text-slate-500">
+                      {t("hotelResults.estimatedStayTotal")}
+                    </div>
+
+                    <div className="mt-3 space-y-1.5">
+                      <div
+                        className="text-sm font-semibold leading-5 text-slate-800 tabular-nums"
+                        title={nightlyDisplayPrice.title}
+                        aria-label={nightlyDisplayPrice.ariaLabel}
+                      >
+                        {t("hotelResults.pricePerNight").replace(
+                          "{{price}}",
+                          nightlyDisplayPrice.formatted,
+                        )}
+                      </div>
+
+                      {taxesAndFeesText ? (
+                        <div className="text-xs font-medium leading-[18px] text-slate-500">
+                          {taxesAndFeesText}
+                        </div>
+                      ) : null}
+                    </div>
+                  </>
+                ) : (
+                  <div className="max-w-[12rem] space-y-1 min-[380px]:ml-auto">
+                    <p className="text-lg font-bold leading-6 text-slate-950">
+                      {priceUnavailableText}
+                    </p>
+                    <p className="text-xs font-medium leading-5 text-slate-500">
+                      {liveRateUnavailableText}
+                    </p>
+                  </div>
+                )}
               </div>
               <div className="min-[380px]:text-end">
                 <LinkButton

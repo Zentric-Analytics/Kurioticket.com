@@ -35,7 +35,12 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
-import { convertCurrencyAmount, type ExchangeRates } from "@/lib/currency/exchangeRates";
+import type { ExchangeRates } from "@/lib/currency/exchangeRates";
+import {
+  compareHotelsByAvailablePrice,
+  getComparableHotelTotalUsd,
+  hasHotelPrice,
+} from "@/lib/hotels/hotelResultAvailability";
 import { cn } from "@/lib/utils";
 import {
   ALL_HOTEL_STAR_RATINGS,
@@ -299,12 +304,14 @@ const emptySelections: HotelFilterSelections = {
   bedTypes: [],
 };
 
-const getResultMaxPrice = (hotels: PublicHotelResult[], rates?: ExchangeRates) =>
-  Math.max(
-    300,
-    Math.ceil(Math.max(...hotels.map((hotel) => getHotelComparableTotalUsd(hotel, rates)), 300) / 100) *
-      100,
-  );
+const getResultMaxPrice = (hotels: PublicHotelResult[], rates?: ExchangeRates) => {
+  const pricedTotals = hotels
+    .map((hotel) => getComparableHotelTotalUsd(hotel, rates))
+    .filter((total): total is number => total !== null && Number.isFinite(total) && total > 0);
+  const highestTotal = pricedTotals.length ? Math.max(...pricedTotals) : 300;
+
+  return Math.max(300, Math.ceil(highestTotal / 100) * 100);
+};
 
 type HotelSummarySortMode = "cheapest" | "bestValue" | "topRated";
 
@@ -667,21 +674,28 @@ export function HotelResultsClient() {
     [results, searchedDestination, t],
   );
 
+  const pricedResultCount = useMemo(
+    () => results.filter(hasHotelPrice).length,
+    [results],
+  );
+  const hasPricedResults = pricedResultCount > 0;
+  const resultMaxPrice = useMemo(() => getResultMaxPrice(results, currencyRates.rates), [currencyRates.rates, results]);
+  const priceFilterActive = hasPricedResults && maxPrice < resultMaxPrice;
+
   const filtered = useMemo(
     () =>
       results.filter((hotel) =>
         hotelMatchesFilters(
           hotel,
           maxPrice,
+          priceFilterActive,
           selectedStarRating,
           selectedFilters,
           currencyRates.rates,
         ),
       ),
-    [currencyRates.rates, maxPrice, results, selectedFilters, selectedStarRating],
+    [currencyRates.rates, maxPrice, priceFilterActive, results, selectedFilters, selectedStarRating],
   );
-
-  const resultMaxPrice = useMemo(() => getResultMaxPrice(results, currencyRates.rates), [currencyRates.rates, results]);
   const starRatingCounts = useMemo(
     () => countHotelsByStarRating(results),
     [results],
@@ -705,6 +719,7 @@ export function HotelResultsClient() {
         selectedFilters,
         maxPrice,
         resultMaxPrice,
+        priceFilterActive,
         selectedStarRating,
         formatHotelFilterPrice,
         t,
@@ -718,6 +733,7 @@ export function HotelResultsClient() {
       maxPrice,
       selectedStarRating,
       resultMaxPrice,
+      priceFilterActive,
       selectedFilters,
       t,
       filterOptions.facilities,
@@ -728,14 +744,14 @@ export function HotelResultsClient() {
   const resultsApplying = filterApplying || searchApplying;
 
   const activeFilterCount = useMemo(() => {
-    let count = maxPrice < resultMaxPrice ? 1 : 0;
+    let count = priceFilterActive ? 1 : 0;
     count += selectedStarRating === ALL_HOTEL_STAR_RATINGS ? 0 : 1;
     count += Object.values(selectedFilters).reduce(
       (total, group) => total + group.length,
       0,
     );
     return count;
-  }, [maxPrice, resultMaxPrice, selectedFilters, selectedStarRating]);
+  }, [priceFilterActive, selectedFilters, selectedStarRating]);
   const desktopFilterSidebarRef = useRef<HTMLElement | null>(null);
   const desktopFilterSentinelRef = useRef<HTMLDivElement | null>(null);
   const resultsGridRef = useRef<HTMLDivElement | null>(null);
@@ -1405,6 +1421,7 @@ export function HotelResultsClient() {
               maxPrice={maxPrice}
               setMaxPrice={updateMaxPrice}
               resultMaxPrice={resultMaxPrice}
+              hasPricedResults={hasPricedResults}
               formatPrice={formatHotelFilterPrice}
               locale={locale}
               selectedRating={selectedStarRating}
@@ -1454,6 +1471,7 @@ export function HotelResultsClient() {
                   maxPrice={maxPrice}
                   setMaxPrice={updateMaxPrice}
                   resultMaxPrice={resultMaxPrice}
+                  hasPricedResults={hasPricedResults}
                   formatPrice={formatHotelFilterPrice}
                   locale={locale}
                   selectedRating={selectedStarRating}
@@ -1685,6 +1703,7 @@ export function HotelResultsClient() {
             maxPrice={maxPrice}
             setMaxPrice={updateMaxPrice}
             resultMaxPrice={resultMaxPrice}
+            hasPricedResults={hasPricedResults}
             formatPrice={formatHotelFilterPrice}
             locale={locale}
             selectedRating={selectedStarRating}
@@ -1737,10 +1756,7 @@ function sortHotelSummaryResults(
 
   indexedHotels.sort((first, second) => {
     if (sortMode === "cheapest") {
-      return (
-        getHotelSortablePrice(first.hotel, rates) -
-          getHotelSortablePrice(second.hotel, rates) || first.index - second.index
-      );
+      return compareHotelsByAvailablePrice(first.hotel, second.hotel, rates) || first.index - second.index;
     }
 
     if (sortMode === "topRated") {
@@ -1775,30 +1791,8 @@ function sortHotelSummaryResults(
 }
 
 function getHotelSortablePrice(hotel: PublicHotelResult, rates?: ExchangeRates) {
-  const comparableTotalUsd = getHotelComparableTotalUsd(hotel, rates);
-  if (Number.isFinite(comparableTotalUsd)) return comparableTotalUsd;
-
-  return Number.POSITIVE_INFINITY;
-}
-
-function getHotelComparableTotalUsd(hotel: PublicHotelResult, rates?: ExchangeRates) {
-  const convertedTotal = convertCurrencyAmount(
-    hotel.totalPrice,
-    hotel.currency || "USD",
-    "USD",
-    rates,
-  );
-
-  if (convertedTotal !== null) return convertedTotal;
-
-  // Keep filter/sort behavior usable if an unexpected provider currency is
-  // missing from the FX table; display formatting still preserves the provider
-  // currency instead of relabeling this raw amount.
-  if ((hotel.currency || "USD").toUpperCase() === "USD" && Number.isFinite(hotel.totalPrice)) {
-    return hotel.totalPrice;
-  }
-
-  return Number.isFinite(hotel.totalPrice) ? hotel.totalPrice : Number.POSITIVE_INFINITY;
+  const comparableTotalUsd = getComparableHotelTotalUsd(hotel, rates);
+  return comparableTotalUsd ?? Number.POSITIVE_INFINITY;
 }
 
 function getHotelSortableRating(hotel: PublicHotelResult) {
@@ -1892,6 +1886,7 @@ function HotelFilters({
   maxPrice,
   setMaxPrice,
   resultMaxPrice,
+  hasPricedResults,
   formatPrice,
   locale,
   selectedRating,
@@ -1908,6 +1903,7 @@ function HotelFilters({
   maxPrice: number;
   setMaxPrice: (value: number) => void;
   resultMaxPrice: number;
+  hasPricedResults: boolean;
   formatPrice: (amountUsd: number) => string;
   locale: string;
   selectedRating: HotelStarRatingSelection;
@@ -1930,7 +1926,7 @@ function HotelFilters({
     {
       id: "price",
       title: t("hotelResults.budgetPrice"),
-      selectedCount: maxPrice < resultMaxPrice ? 1 : 0,
+      selectedCount: hasPricedResults && maxPrice < resultMaxPrice ? 1 : 0,
       content: (
         <PriceFilterControl
           t={t}
@@ -1969,7 +1965,9 @@ function HotelFilters({
     selectedCount: number;
     content: ReactNode;
   }>).filter(
-    (section) => section.id !== "meals" || options.meals.length > 0,
+    (section) =>
+      (section.id !== "price" || hasPricedResults) &&
+      (section.id !== "meals" || options.meals.length > 0),
   );
 
   if (layout === "compact") {
@@ -2063,6 +2061,7 @@ function HotelFilters({
           layout === "mobile" ? "space-y-0 bg-white" : "space-y-0 bg-transparent px-3 py-1",
         )}
       >
+        {hasPricedResults ? (
         <FilterSection title={t("hotelResults.budgetPrice")} layout={layout}>
           <label className="block">
             <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
@@ -2083,6 +2082,7 @@ function HotelFilters({
             />
           </label>
         </FilterSection>
+        ) : null}
 
         <FilterSection title={t("hotelResults.starRating")} layout={layout}>
           <StarRatingFilterControl
@@ -2579,6 +2579,7 @@ function buildActiveFilterChips(
   selectedFilters: HotelFilterSelections,
   maxPrice: number,
   resultMaxPrice: number,
+  priceFilterActive: boolean,
   selectedStarRating: HotelStarRatingSelection,
   formatPrice: (amountUsd: number) => string,
   t: (key: string) => string,
@@ -2633,7 +2634,7 @@ function buildActiveFilterChips(
     });
   });
 
-  if (maxPrice < resultMaxPrice) {
+  if (priceFilterActive) {
     chips.push({
       key: "maxPrice",
       label: t("hotelResults.upToPrice").replace(
@@ -2804,12 +2805,13 @@ function hotelMatchesNeighbourhoodFilters(
 function hotelMatchesFilters(
   hotel: PublicHotelResult,
   maxPrice: number,
+  priceFilterActive: boolean,
   selectedStarRating: HotelStarRatingSelection,
   selectedFilters: HotelFilterSelections,
   rates?: ExchangeRates,
 ) {
   return (
-    getHotelComparableTotalUsd(hotel, rates) <= maxPrice &&
+    (!priceFilterActive || ((getComparableHotelTotalUsd(hotel, rates) ?? Number.POSITIVE_INFINITY) <= maxPrice)) &&
     hotelMatchesStarRating(hotel.rating, selectedStarRating) &&
     matchesTermGroup(
       hotel,

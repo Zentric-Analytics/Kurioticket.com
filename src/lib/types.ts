@@ -91,7 +91,29 @@ export type PublicFlightResult = Omit<
   "rawProviderReference"
 >;
 
-export type NormalizedHotelResult = {
+export type HotelInventoryKind = "bookable" | "discovery";
+
+type HotelInventoryBookable = {
+  inventoryKind?: "bookable";
+  pricePerNight: number;
+  totalPrice: number;
+  currency: string;
+  bookingUrl: string;
+  partnerRedirectUrl: string;
+};
+
+type HotelInventoryDiscovery = {
+  inventoryKind: "discovery";
+  pricePerNight?: never;
+  totalPrice?: never;
+  currency?: never;
+  bookingUrl?: never;
+  partnerRedirectUrl?: never;
+};
+
+type HotelInventory = HotelInventoryBookable | HotelInventoryDiscovery;
+
+type NormalizedHotelBase = {
   id: string;
   provider: string;
   name: string;
@@ -103,17 +125,12 @@ export type NormalizedHotelResult = {
   neighbourhood?: string;
   location: string;
   distanceFromCenter?: string;
-  pricePerNight: number;
-  totalPrice: number;
-  currency: string;
   amenities: string[];
   roomType: string;
   cancellationInfo: string;
   taxesAndFeesIncluded?: boolean;
   similarHotelIds?: string[];
   dataSource?: "demo" | "live";
-  bookingUrl: string;
-  partnerRedirectUrl: string;
   valueScore: number;
   travelConfidenceScore: number;
   arrivalSuitabilityScore: number;
@@ -122,10 +139,34 @@ export type NormalizedHotelResult = {
   rawProviderReference?: unknown;
 };
 
-export type PublicHotelResult = Omit<
-  NormalizedHotelResult,
-  "rawProviderReference"
->;
+type PublicHotelBase = {
+  id: string;
+  provider: string;
+  name: string;
+  imageUrl?: string;
+  imageUrls?: string[];
+  rating: number;
+  reviewScore?: number;
+  reviewCount?: number;
+  neighbourhood?: string;
+  location: string;
+  distanceFromCenter?: string;
+  amenities: string[];
+  roomType: string;
+  cancellationInfo: string;
+  taxesAndFeesIncluded?: boolean;
+  similarHotelIds?: string[];
+  dataSource?: "demo" | "live";
+  valueScore: number;
+  travelConfidenceScore: number;
+  arrivalSuitabilityScore: number;
+  recommendationReasons: string[];
+  badges: string[];
+};
+
+export type NormalizedHotelResult = NormalizedHotelBase & HotelInventory;
+
+export type PublicHotelResult = PublicHotelBase & HotelInventory;
 
 export type ProviderErrorCategory =
   | "no_inventory"

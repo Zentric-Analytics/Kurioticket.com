@@ -51,6 +51,7 @@ import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import type { PublicHotelResult } from "@/lib/types";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
 import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
 import {
   buildHotelGalleryCandidates,
@@ -321,7 +322,7 @@ function getCancellationText(value: string, t: (key: string) => string) {
 }
 
 function canUseProviderLink(hotel: PublicHotelResult | null) {
-  if (!hotel || hotel.dataSource === "demo") return false;
+  if (!hotel || hotel.dataSource === "demo" || hotel.inventoryKind === "discovery" || !getHotelPriceDetails(hotel)) return false;
   const candidate = hotel.partnerRedirectUrl || hotel.bookingUrl;
   if (!candidate) return false;
   try {
@@ -422,6 +423,11 @@ export function HotelDetailsClient({
       );
     }
 
+    const snapshotPrice = getHotelPriceDetails(hotel);
+    if (!snapshotPrice) {
+      throw new Error("Cannot save a hotel without a valid live room rate.");
+    }
+
     const parsedCheckIn = parseHotelSearchDate(
       searchContext?.checkIn,
     );
@@ -489,8 +495,8 @@ export function HotelDetailsClient({
       destination,
       checkIn: `${checkIn}T00:00:00.000Z`,
       checkOut: `${checkOut}T00:00:00.000Z`,
-      totalPrice: hotel.totalPrice,
-      currency: hotel.currency || "USD",
+      totalPrice: snapshotPrice.totalPrice,
+      currency: snapshotPrice.currency,
       image,
       imageAlt: hotel.name,
       location: hotel.location,
@@ -577,22 +583,38 @@ export function HotelDetailsClient({
     );
   }
 
-  const totalDisplayPrice = formatDisplayPrice({
-    amount: hotel.totalPrice,
-    sourceCurrency: hotel.currency,
-    displayCurrency: selectedOption.currency,
-    convertSourceEstimate: true,
-    rates: currencyRates.rates,
-    isFallbackRate: currencyRates.isFallback,
-  });
-  const nightlyDisplayPrice = formatDisplayPrice({
-    amount: hotel.pricePerNight,
-    sourceCurrency: hotel.currency,
-    displayCurrency: selectedOption.currency,
-    convertSourceEstimate: true,
-    rates: currencyRates.rates,
-    isFallbackRate: currencyRates.isFallback,
-  });
+  const priceDetails = getHotelPriceDetails(hotel);
+  const hasValidPrice = priceDetails !== null;
+  const totalDisplayPrice = priceDetails
+    ? formatDisplayPrice({
+        amount: priceDetails.totalPrice,
+        sourceCurrency: priceDetails.currency,
+        displayCurrency: selectedOption.currency,
+        convertSourceEstimate: true,
+        rates: currencyRates.rates,
+        isFallbackRate: currencyRates.isFallback,
+      })
+    : null;
+  const nightlyDisplayPrice = priceDetails
+    ? formatDisplayPrice({
+        amount: priceDetails.pricePerNight,
+        sourceCurrency: priceDetails.currency,
+        displayCurrency: selectedOption.currency,
+        convertSourceEstimate: true,
+        rates: currencyRates.rates,
+        isFallbackRate: currencyRates.isFallback,
+      })
+    : null;
+  const priceUnavailableText = t("hotelResults.priceUnavailable") || "Price unavailable";
+  const liveRateUnavailableText =
+    t("hotelResults.liveRateUnavailable") ||
+    "No live room rate is available for the selected dates.";
+  const saveRequiresLiveRateText =
+    t("hotelResults.saveRequiresLiveRate") ||
+    "Saving is available once a live room rate is provided.";
+  const discoveryBookingUnavailableText =
+    t("hotelDetails.discoveryBookingUnavailable") ||
+    "This property is available for discovery, but a live booking quote is not available yet.";
   const starRating = getStarRating(hotel.rating);
   const galleryCandidates = buildHotelGalleryCandidates(hotel.imageUrls, hotel.imageUrl);
   const displayCandidates = galleryCandidates;
@@ -620,14 +642,22 @@ export function HotelDetailsClient({
   const reviewCountText = reviewCount !== null ? (reviewCount === 1 ? t("hotelResults.review.single") || "{{count}} review" : t("hotelResults.review.multiple") || "{{count}} reviews").replace("{{count}}", new Intl.NumberFormat(locale).format(reviewCount)) : "";
   const taxesText = hotel.taxesAndFeesIncluded === true ? t("hotelResults.taxesFeesIncluded") : hotel.taxesAndFeesIncluded === false ? t("hotelResults.taxesFeesNotIncluded") : "";
   const providerEnabled = canUseProviderLink(hotel);
-  const providerUnavailableText = hotel.dataSource === "demo" ? t("hotelDetails.demoBookingUnavailable") : !providerEnabled ? t("hotelDetails.directLinkUnavailable") : "";
+  const providerUnavailableText = hotel.dataSource === "demo"
+    ? t("hotelDetails.demoBookingUnavailable")
+    : hotel.inventoryKind === "discovery" || !hasValidPrice
+      ? discoveryBookingUnavailableText
+      : !providerEnabled
+        ? t("hotelDetails.directLinkUnavailable")
+        : "";
   const resultsHref = buildHotelResultsHref(searchContext);
   const savedHotelLabel = (
     isSaved
       ? t("hotelResults.removeSavedHotel") ||
         "Remove {{name}} from saved hotels"
-      : t("hotelResults.saveHotel") ||
-        "Save {{name}}"
+      : hasValidPrice
+        ? t("hotelResults.saveHotel") ||
+          "Save {{name}}"
+        : saveRequiresLiveRateText
   ).replace("{{name}}", hotel.name);
 
   const saveActionText = isSaved
@@ -810,9 +840,10 @@ export function HotelDetailsClient({
                     size="sm"
                     aria-label={savedHotelLabel}
                     aria-pressed={isSaved}
-                    title={savedHotelLabel}
+                    title={isSaved || hasValidPrice ? savedHotelLabel : saveRequiresLiveRateText}
+                    disabled={!isSaved && !hasValidPrice}
                     onClick={() => {
-                      void toggleSavedHotel();
+                      if (isSaved || hasValidPrice) void toggleSavedHotel();
                     }}
                   >
                     <Heart
@@ -958,11 +989,21 @@ export function HotelDetailsClient({
               <Card variant="elevated" className="p-4 sm:p-5">
                 <div className="space-y-4">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{t("hotelResults.estimatedStayTotal")}</p>
-                    <p className="mt-1 break-words text-3xl font-bold text-slate-950" dir="ltr" title={totalDisplayPrice.title} aria-label={totalDisplayPrice.ariaLabel}>{totalDisplayPrice.formatted}</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-700" title={nightlyDisplayPrice.title} aria-label={nightlyDisplayPrice.ariaLabel}>{t("hotelResults.pricePerNight").replace("{{price}}", nightlyDisplayPrice.formatted)}</p>
-                    <p className="mt-1 text-xs font-medium text-slate-500">{taxesText}</p>
-                    <p className="mt-2 text-xs font-medium text-slate-500">{totalDisplayPrice.currency}</p>
+                    {priceDetails && totalDisplayPrice && nightlyDisplayPrice ? (
+                      <>
+                        <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{t("hotelResults.estimatedStayTotal")}</p>
+                        <p className="mt-1 break-words text-3xl font-bold text-slate-950" dir="ltr" title={totalDisplayPrice.title} aria-label={totalDisplayPrice.ariaLabel}>{totalDisplayPrice.formatted}</p>
+                        <p className="mt-1 text-sm font-semibold text-slate-700" title={nightlyDisplayPrice.title} aria-label={nightlyDisplayPrice.ariaLabel}>{t("hotelResults.pricePerNight").replace("{{price}}", nightlyDisplayPrice.formatted)}</p>
+                        <p className="mt-1 text-xs font-medium text-slate-500">{taxesText}</p>
+                        <p className="mt-2 text-xs font-medium text-slate-500">{totalDisplayPrice.currency}</p>
+                      </>
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-3xl font-bold text-slate-950">{priceUnavailableText}</p>
+                        <p className="text-sm font-semibold text-slate-700">{liveRateUnavailableText}</p>
+                        <p className="rounded-lg bg-slate-50 p-3 text-sm font-medium text-slate-700">{discoveryBookingUnavailableText}</p>
+                      </div>
+                    )}
                   </div>
                   {staySummary ? (
                     <Card
