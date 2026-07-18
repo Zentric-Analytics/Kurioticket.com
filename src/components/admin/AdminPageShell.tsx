@@ -95,8 +95,8 @@ function AdminBrandLink({ onNavigate }: { onNavigate?: () => void }) {
       aria-current={active ? "page" : undefined}
       onClick={onNavigate}
       className={cn(
-        "focus-ring inline-flex shrink-0 items-center gap-2 rounded-lg px-1 py-1 transition hover:bg-[#F3F7FA]",
-        active ? "bg-[#F3F7FA] text-[#021C2B] ring-1 ring-[#DDE7F0]" : "text-[#021C2B]",
+        "focus-ring inline-flex shrink-0 items-center py-1 text-[#021C2B] opacity-95 transition hover:opacity-100",
+        active && "opacity-100",
       )}
     >
       <AdminLogoImage
