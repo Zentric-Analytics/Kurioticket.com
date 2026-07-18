@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import { formatAdminBadgeLabel } from "@/components/admin/adminDesignSystem";
 import { getActiveAdminHub, getAdminNavbarHubsForRole, type AdminHubDefinition, type AdminRole } from "@/lib/adminNavigation";
 
+const AdminLogoImage = "img";
+
 type StatusTone = "good" | "bad" | "warn" | "neutral" | "info";
 
 export function AdminShell({
@@ -27,10 +29,8 @@ export function AdminShell({
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-950">
-      <div className="mx-auto min-h-screen w-full max-w-[1800px]">
-        <AdminNavbar hubs={hubs} adminEmail={adminEmail} adminName={adminName} adminRole={safeRole} />
-        <main className="px-4 py-5 sm:px-6 lg:px-10">{children}</main>
-      </div>
+      <AdminNavbar hubs={hubs} adminEmail={adminEmail} adminName={adminName} adminRole={safeRole} />
+      <main className="page-shell py-5 sm:py-6">{children}</main>
     </div>
   );
 }
@@ -50,21 +50,21 @@ export function AdminNavbar({
   const displayName = adminName || adminEmail || "Admin";
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:px-6 lg:px-10">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-5">
+    <header className="sticky top-0 z-30 border-b border-[#DDE7F0] bg-white/95 backdrop-blur">
+      <div className="page-shell flex min-h-16 items-center justify-between gap-3 py-2 md:min-h-[68px] md:gap-8">
+        <div className="flex min-w-0 flex-1 items-center gap-7 lg:gap-10">
           <AdminBrandLink onNavigate={() => setMobileOpen(false)} />
-          <nav className="hidden items-center gap-1 md:flex" aria-label="Admin navigation">
+          <nav className="hidden min-w-0 flex-1 items-center gap-1.5 md:flex" aria-label="Admin navigation">
             {hubs.map((hub) => <AdminHubNavLink key={hub.key} hub={hub} />)}
           </nav>
         </div>
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden shrink-0 items-center gap-2 md:flex">
           <AdminStatusBadge tone="info">{adminRole}</AdminStatusBadge>
           <AdminProfileMenu adminEmail={adminEmail} displayName={displayName} />
         </div>
         <button
           type="button"
-          className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm md:hidden"
+          className="focus-ring inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border border-[#DDE7F0] bg-white px-3 text-sm font-bold text-[#021C2B] md:hidden"
           aria-expanded={mobileOpen}
           aria-controls="admin-mobile-menu"
           onClick={() => setMobileOpen((open) => !open)}
@@ -74,7 +74,7 @@ export function AdminNavbar({
         </button>
       </div>
       {mobileOpen ? (
-        <div id="admin-mobile-menu" className="mt-3 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg md:hidden">
+        <div id="admin-mobile-menu" className="page-shell mb-3 rounded-2xl border border-[#DDE7F0] bg-white p-2 shadow-lg md:hidden">
           <nav className="grid gap-1" aria-label="Admin mobile navigation">
             {hubs.map((hub) => <AdminHubNavLink key={hub.key} hub={hub} onNavigate={() => setMobileOpen(false)} mobile />)}
           </nav>
@@ -98,11 +98,16 @@ function AdminBrandLink({ onNavigate }: { onNavigate?: () => void }) {
       aria-current={active ? "page" : undefined}
       onClick={onNavigate}
       className={cn(
-        "focus-ring shrink-0 rounded-lg px-1.5 py-1 text-sm font-extrabold transition",
-        active ? "border-b border-indigo-300 bg-indigo-50/70 text-indigo-900" : "text-slate-950 hover:bg-slate-50",
+        "focus-ring inline-flex shrink-0 items-center gap-2 rounded-lg px-1 py-1 transition hover:bg-[#F3F7FA]",
+        active ? "bg-[#F3F7FA] text-[#021C2B] ring-1 ring-[#DDE7F0]" : "text-[#021C2B]",
       )}
     >
-      Kurioticket Admin
+      <AdminLogoImage
+        src="/brand/kurioticket-logo-primary-light-bg.svg"
+        alt="Kurioticket"
+        className="h-8 w-auto md:h-9"
+      />
+      <span className="text-sm font-bold text-[#004BB8]">Admin</span>
     </Link>
   );
 }
@@ -118,7 +123,7 @@ function AdminHubNavLink({ hub, mobile = false, onNavigate }: { hub: AdminHubDef
       className={cn(
         "focus-ring inline-flex items-center rounded-xl text-sm font-bold transition",
         mobile ? "min-h-11 px-3 py-2" : "px-3 py-2",
-        active ? "bg-indigo-50 text-indigo-800 ring-1 ring-indigo-100" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950",
+        active ? "border border-[#BFD4EA] bg-[#F3F7FA] text-[#021C2B]" : "border border-transparent text-slate-700 hover:bg-[#F3F7FA] hover:text-[#004BB8]",
       )}
       aria-current={active ? "page" : undefined}
     >
@@ -138,12 +143,12 @@ function AdminProfileMenu({
 }) {
   return (
     <details className={`relative ${className}`}>
-      <summary className="flex h-10 cursor-pointer list-none items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm marker:hidden">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-50 text-xs font-black text-indigo-800">
+      <summary className="flex h-10 cursor-pointer list-none items-center gap-2 rounded-xl border border-[#DDE7F0] bg-white px-3 text-sm font-bold text-[#021C2B] marker:hidden hover:bg-[#F3F7FA]">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#E6F0FA] text-xs font-black text-[#004BB8]">
           {displayName.slice(0, 1).toUpperCase()}
         </span>
         <span className="hidden max-w-40 truncate sm:inline">{displayName}</span>
-        <ChevronDown size={14} className="text-slate-400" />
+        <ChevronDown size={14} className="text-slate-500" />
       </summary>
       <div className="absolute right-0 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white py-2 shadow-xl">
         <div className="border-b border-slate-100 px-4 pb-3 pt-2">
@@ -161,8 +166,8 @@ function AdminProfileMenu({
 
 function ProfileLink({ href, label, icon: Icon }: { href: string; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }) {
   return (
-    <Link href={href} className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-indigo-800">
-      <Icon size={16} className="text-slate-400" />
+    <Link href={href} className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-[#F3F7FA] hover:text-[#004BB8]">
+      <Icon size={16} className="text-slate-500" />
       {label}
     </Link>
   );
@@ -182,7 +187,7 @@ export function AdminPageShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mx-auto max-w-7xl">
+    <div>
       <AdminPageHeader eyebrow={eyebrow} title={title} description={description} actions={actions} />
       <div className="mt-6 space-y-4">{children}</div>
     </div>
@@ -193,7 +198,7 @@ export function AdminPageHeader({ eyebrow, title, description, actions }: { eyeb
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
       <div>
-        {eyebrow ? <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-700">{eyebrow}</p> : null}
+        {eyebrow ? <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">{eyebrow}</p> : null}
         <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">{title}</h1>
         {description ? <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{description}</p> : null}
       </div>
@@ -221,7 +226,7 @@ export function AdminStatusBadge({ children, tone = "neutral" }: { children: Rea
     bad: "bg-rose-50 text-rose-700 ring-rose-200",
     warn: "bg-amber-50 text-amber-700 ring-amber-200",
     neutral: "bg-slate-100 text-slate-600 ring-slate-200",
-    info: "bg-indigo-50 text-indigo-700 ring-indigo-200",
+    info: "bg-[#F3F7FA] text-[#004BB8] ring-[#DDE7F0]",
   }[tone];
 
   return <span className={`inline-flex min-h-6 items-center rounded-full px-2.5 py-1 text-xs font-semibold leading-none ring-1 ${classes}`}>{formatAdminBadgeLabel(children)}</span>;
