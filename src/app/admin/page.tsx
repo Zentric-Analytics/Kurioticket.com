@@ -50,8 +50,8 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      <section className="mt-8 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <div>
+      <section className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
+        <div className="min-w-0">
           <h2 className="text-lg font-semibold text-slate-950">Search Health</h2>
           <div className="mt-3">
             {searchHealth.hasLogs ? (
@@ -76,7 +76,7 @@ export default async function AdminPage() {
           </div>
         </div>
 
-        <div>
+        <div className="min-w-0">
           <h2 className="text-lg font-semibold text-slate-950">Platform Health</h2>
           <AdminSectionCard className="mt-3 p-5">
             <div className="grid gap-3">
