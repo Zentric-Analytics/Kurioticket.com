@@ -35,6 +35,34 @@ export function parseHotelDetailsSearchCount(value: string | undefined, minimum:
   return parsed;
 }
 
+export function getHotelDetailsNightCount(
+  checkInDate: Date,
+  checkOutDate: Date,
+): number | null {
+  const checkInTime = checkInDate.getTime();
+  const checkOutTime = checkOutDate.getTime();
+
+  if (!Number.isFinite(checkInTime) || !Number.isFinite(checkOutTime)) {
+    return null;
+  }
+
+  const checkInUtc = Date.UTC(
+    checkInDate.getFullYear(),
+    checkInDate.getMonth(),
+    checkInDate.getDate(),
+  );
+  const checkOutUtc = Date.UTC(
+    checkOutDate.getFullYear(),
+    checkOutDate.getMonth(),
+    checkOutDate.getDate(),
+  );
+  const nights = Math.round(
+    (checkOutUtc - checkInUtc) / (24 * 60 * 60 * 1000),
+  );
+
+  return nights > 0 ? nights : null;
+}
+
 export function normalizeHotelDetailsWhitespace(value: string) {
   return value.trim().replace(/\s+/g, " ");
 }

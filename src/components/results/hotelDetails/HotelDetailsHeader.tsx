@@ -4,7 +4,7 @@ import { Button, LinkButton } from "@/components/ui/Button";
 
 type SourceAttribution = { provider: string; providerUri?: string };
 
-export function HotelDetailsHeader({ resultsHref, backToResultsText, badges, name, savedHotelLabel, isSaved, hasValidPrice, saveRequiresLiveRateText, onSave, saveActionText, shareHotelLabel, onShare, shareActionText, mapHref, mapHotelLabel, mapActionText, shareStatus, shareFeedbackText, starRating, starRatingAriaLabel, isGoogleMapsProvider, locationParts, reviewBandVisible, reviewScore, reviewLabel, reviewCountText, sourceAttributions, isSafeAttributionUrl }: {
+type HotelDetailsHeaderProps = {
   resultsHref: string;
   backToResultsText: string;
   badges: string[];
@@ -33,9 +33,40 @@ export function HotelDetailsHeader({ resultsHref, backToResultsText, badges, nam
   reviewCountText: string;
   sourceAttributions: SourceAttribution[];
   isSafeAttributionUrl: (value?: string) => boolean;
-}) {
+};
+
+export function HotelDetailsHeader({
+  resultsHref,
+  backToResultsText,
+  badges,
+  name,
+  savedHotelLabel,
+  isSaved,
+  hasValidPrice,
+  saveRequiresLiveRateText,
+  onSave,
+  saveActionText,
+  shareHotelLabel,
+  onShare,
+  shareActionText,
+  mapHref,
+  mapHotelLabel,
+  mapActionText,
+  shareStatus,
+  shareFeedbackText,
+  starRating,
+  starRatingAriaLabel,
+  isGoogleMapsProvider,
+  locationParts,
+  reviewBandVisible,
+  reviewScore,
+  reviewLabel,
+  reviewCountText,
+  sourceAttributions,
+  isSafeAttributionUrl,
+}: HotelDetailsHeaderProps) {
   return (
-    <header className="min-w-0 space-y-3 lg:col-start-1 lg:row-start-1">
+    <header className="min-w-0 space-y-3 lg:col-span-2 lg:col-start-1 lg:row-start-1">
       <LinkButton href={resultsHref} variant="ghost" size="sm" className="-ml-2 w-fit px-2 text-slate-700 hover:text-navy">
         <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
         <span>{backToResultsText}</span>
