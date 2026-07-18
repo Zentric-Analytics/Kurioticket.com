@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AlertTriangle, Building2, ChevronDown, Inbox, Loader2, LogOut, Menu, Settings, ShieldCheck, X } from "lucide-react";
+import { AlertTriangle, Building2, Inbox, Loader2, LogOut, Menu, Settings, ShieldCheck, X } from "lucide-react";
 import { useState } from "react";
 
 import { cn } from "@/lib/utils";
@@ -29,7 +29,7 @@ export function AdminShell({
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-950">
-      <AdminNavbar hubs={hubs} adminEmail={adminEmail} adminName={adminName} adminRole={safeRole} />
+      <AdminNavbar hubs={hubs} adminEmail={adminEmail} adminName={adminName} />
       <main className="page-shell py-5 sm:py-6">{children}</main>
     </div>
   );
@@ -39,12 +39,10 @@ export function AdminNavbar({
   hubs,
   adminEmail,
   adminName,
-  adminRole,
 }: {
   hubs: AdminHubDefinition[];
   adminEmail?: string | null;
   adminName?: string | null;
-  adminRole: AdminRole;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const displayName = adminName || adminEmail || "Admin";
@@ -58,8 +56,7 @@ export function AdminNavbar({
             {hubs.map((hub) => <AdminHubNavLink key={hub.key} hub={hub} />)}
           </nav>
         </div>
-        <div className="hidden shrink-0 items-center gap-2 md:flex">
-          <AdminStatusBadge tone="info">{adminRole}</AdminStatusBadge>
+        <div className="hidden shrink-0 items-center md:flex">
           <AdminProfileMenu adminEmail={adminEmail} displayName={displayName} />
         </div>
         <button
@@ -107,7 +104,6 @@ function AdminBrandLink({ onNavigate }: { onNavigate?: () => void }) {
         alt="Kurioticket"
         className="h-8 w-auto md:h-9"
       />
-      <span className="text-sm font-bold text-[#004BB8]">Admin</span>
     </Link>
   );
 }
@@ -143,12 +139,13 @@ function AdminProfileMenu({
 }) {
   return (
     <details className={`relative ${className}`}>
-      <summary className="flex h-10 cursor-pointer list-none items-center gap-2 rounded-xl border border-[#DDE7F0] bg-white px-3 text-sm font-bold text-[#021C2B] marker:hidden hover:bg-[#F3F7FA]">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#E6F0FA] text-xs font-black text-[#004BB8]">
+      <summary
+        aria-label="Open Admin profile menu"
+        className="focus-ring inline-flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border border-transparent bg-transparent text-[#021C2B] marker:hidden transition-colors hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B]"
+      >
+        <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#F2F7FA] text-[11px] font-black text-[#004BB8] shadow-sm">
           {displayName.slice(0, 1).toUpperCase()}
         </span>
-        <span className="hidden max-w-40 truncate sm:inline">{displayName}</span>
-        <ChevronDown size={14} className="text-slate-500" />
       </summary>
       <div className="absolute right-0 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white py-2 shadow-xl">
         <div className="border-b border-slate-100 px-4 pb-3 pt-2">

@@ -40,13 +40,13 @@ test("admin navbar uses public page-shell alignment with full-width header backg
   assert.doesNotMatch(shell, /px-4 py-3 backdrop-blur sm:px-6 lg:px-10/);
 });
 
-test("admin navbar exposes the branded admin link as the only visible Overview destination", () => {
+test("admin navbar exposes the branded logo link without visible Admin text", () => {
   assert.deepEqual(getAdminHubsForRole("ADMIN").map((hub) => hub.label), ["Overview", "Operations", "Monitoring", "Platform"]);
   assert.deepEqual(getAdminNavbarHubsForRole("ADMIN").map((hub) => hub.label), ["Operations", "Monitoring", "Platform"]);
   assert.equal(adminHubs.find((hub) => hub.key === "overview")?.showInNavbar, false);
   assert.match(shell, /src="\/brand\/kurioticket-logo-primary-light-bg\.svg"/);
   assert.match(shell, /alt="Kurioticket"/);
-  assert.match(shell, />Admin<\/span>/);
+  assert.doesNotMatch(shell, />Admin<\/span>/);
   assert.match(shell, /href="\/admin"/);
   assert.match(shell, /aria-label="Go to Admin Overview"/);
   assert.match(shell, /aria-current=\{active \? "page" : undefined\}/);
@@ -54,6 +54,27 @@ test("admin navbar exposes the branded admin link as the only visible Overview d
   assert.match(shell, /aria-label="Admin navigation"/);
   assert.match(shell, /aria-label="Admin mobile navigation"/);
   assert.doesNotMatch(shell, /sectionLabels/);
+});
+
+test("admin navbar removes the permanent role badge and uses an avatar-only profile trigger", () => {
+  assert.doesNotMatch(shell, /<AdminStatusBadge tone="info">\{adminRole\}<\/AdminStatusBadge>/);
+  assert.match(shell, /aria-label="Open Admin profile menu"/);
+  assert.match(shell, /inline-flex h-10 w-10 cursor-pointer/);
+  assert.match(shell, /rounded-full border border-transparent bg-transparent/);
+  assert.match(shell, /hover:border-\[#004BB8\]\/20 hover:bg-\[#004BB8\]\/5/);
+  assert.match(shell, /displayName\.slice\(0, 1\)\.toUpperCase\(\)/);
+  assert.doesNotMatch(shell, /hidden max-w-40 truncate sm:inline/);
+  assert.doesNotMatch(shell, /ChevronDown/);
+});
+
+test("admin profile menu still opens with unchanged destinations and account information", () => {
+  assert.match(shell, /<details className=\{`relative \$\{className\}`\}>/);
+  assert.match(shell, /Admin profile/);
+  assert.match(shell, /\{adminEmail \|\| "No email available"\}/);
+  assert.match(shell, /href="\/admin\/system" label="System"/);
+  assert.match(shell, /href="\/admin\/logs" label="Audit logs"/);
+  assert.match(shell, /href="\/" label="Switch to public site"/);
+  assert.match(shell, /href="\/api\/auth\/signout" label="Logout"/);
 });
 
 test("desktop and mobile navigation omit a second row, sidebar and separate visible Overview item", () => {
@@ -117,13 +138,17 @@ test("direct existing admin routes remain unchanged while hub routes are added",
   assert.ok(adminHubs.some((hub) => hub.href === "/admin/platform"));
 });
 
-test("mobile menu is accessible, closes on navigation and profile uses System link", () => {
+test("mobile menu is accessible, keeps logo and Menu, closes on navigation and profile uses System link", () => {
+  assert.match(shell, /<AdminBrandLink onNavigate=\{\(\) => setMobileOpen\(false\)\} \/>/);
+  assert.match(shell, /src="\/brand\/kurioticket-logo-primary-light-bg\.svg"/);
+  assert.match(shell, /\{mobileOpen \? <X size=\{16\} aria-hidden="true" \/> : <Menu size=\{16\} aria-hidden="true" \/>\}/);
+  assert.match(shell, /Menu\n        <\/button>/);
+  assert.doesNotMatch(shell, />Admin<\/span>/);
   assert.match(shell, /aria-expanded=\{mobileOpen\}/);
   assert.match(shell, /aria-controls="admin-mobile-menu"/);
   assert.match(shell, /onNavigate=\{\(\) => setMobileOpen\(false\)\}/);
   assert.match(shell, /min-h-11/);
   assert.match(shell, /AdminProfileMenu/);
-  assert.match(shell, /aria-controls="admin-mobile-menu"/);
   assert.match(shell, /href="\/admin\/system" label="System"/);
   assert.doesNotMatch(shell, /href="\/admin\/settings"/);
 });
