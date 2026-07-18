@@ -4,6 +4,12 @@ import { rememberHotels } from "@/lib/searchCache";
 import { fallbackHotels } from "@/services/travel/fallbackData";
 import { buildDemoHotelResults } from "@/services/travel/demoHotelResults";
 import { searchHotelProvider } from "@/services/travel/providers/hotelProvider";
+import {
+  compareHotelsByAvailablePrice,
+  getComparableHotelTotalUsd,
+  getLowestPricedHotelId,
+  hasHotelPrice,
+} from "@/lib/hotels/hotelResultAvailability";
 
 export async function searchHotels(search: HotelSearchParams): Promise<AggregatedResult<NormalizedHotelResult>> {
   const startedAt = Date.now();
@@ -80,13 +86,40 @@ function sanitizeHotelWarning(error?: string) {
 }
 
 function sortHotels(results: NormalizedHotelResult[], sort: NonNullable<HotelSearchParams["sort"]>) {
-  const sorted = [...results];
-  if (sort === "best") return sorted.sort((a, b) => b.valueScore - a.valueScore || a.totalPrice - b.totalPrice);
-  if (sort === "rating") return sorted.sort((a, b) => b.rating - a.rating || a.totalPrice - b.totalPrice);
-  if (sort === "location") {
-    return sorted.sort((a, b) => b.arrivalSuitabilityScore - a.arrivalSuitabilityScore || a.totalPrice - b.totalPrice);
+  const sorted = results.map((hotel, index) => ({ hotel, index }));
+  const stablePriceTie = (a: NormalizedHotelResult, b: NormalizedHotelResult) =>
+    compareHotelsByAvailablePrice(a, b);
+
+  if (sort === "best") {
+    return sorted
+      .sort((a, b) => b.hotel.valueScore - a.hotel.valueScore || stablePriceTie(a.hotel, b.hotel) || a.index - b.index)
+      .map(({ hotel }) => hotel);
   }
-  return sorted.sort((a, b) => a.totalPrice - b.totalPrice || b.valueScore - a.valueScore);
+  if (sort === "rating") {
+    return sorted
+      .sort((a, b) => b.hotel.rating - a.hotel.rating || stablePriceTie(a.hotel, b.hotel) || a.index - b.index)
+      .map(({ hotel }) => hotel);
+  }
+  if (sort === "location") {
+    return sorted
+      .sort((a, b) => b.hotel.arrivalSuitabilityScore - a.hotel.arrivalSuitabilityScore || stablePriceTie(a.hotel, b.hotel) || a.index - b.index)
+      .map(({ hotel }) => hotel);
+  }
+  return sorted
+    .sort((a, b) => compareHotelsByAvailablePrice(a.hotel, b.hotel) || b.hotel.valueScore - a.hotel.valueScore || a.index - b.index)
+    .map(({ hotel }) => hotel);
+}
+
+function shouldReplaceDuplicate(existing: NormalizedHotelResult, result: NormalizedHotelResult) {
+  const existingPriced = hasHotelPrice(existing);
+  const resultPriced = hasHotelPrice(result);
+  if (!existingPriced && resultPriced) return true;
+  if (existingPriced && !resultPriced) return false;
+  if (!existingPriced && !resultPriced) return false;
+
+  const existingTotal = getComparableHotelTotalUsd(existing);
+  const resultTotal = getComparableHotelTotalUsd(result);
+  return resultTotal !== null && (existingTotal === null || resultTotal < existingTotal);
 }
 
 function dedupeHotels(results: NormalizedHotelResult[]) {
@@ -94,7 +127,7 @@ function dedupeHotels(results: NormalizedHotelResult[]) {
   for (const result of results) {
     const key = `${result.name.toLowerCase()}|${result.location.toLowerCase()}`;
     const existing = seen.get(key);
-    if (!existing || result.totalPrice < existing.totalPrice) {
+    if (!existing || shouldReplaceDuplicate(existing, result)) {
       seen.set(key, result);
     }
   }
@@ -104,7 +137,7 @@ function dedupeHotels(results: NormalizedHotelResult[]) {
 function assignBadges(results: NormalizedHotelResult[]) {
   if (!results.length) return results;
 
-  const cheapest = minBy(results, (hotel) => hotel.totalPrice)?.id;
+  const cheapest = getLowestPricedHotelId(results);
   const bestValue = maxBy(results, (hotel) => hotel.valueScore)?.id;
   const arrival = maxBy(results, (hotel) => hotel.arrivalSuitabilityScore)?.id;
 
@@ -117,10 +150,6 @@ function assignBadges(results: NormalizedHotelResult[]) {
       result.travelConfidenceScore >= 78 ? "Recommended" : "",
     ].filter(Boolean),
   }));
-}
-
-function minBy<T>(items: T[], getter: (item: T) => number) {
-  return items.reduce<T | null>((best, item) => (!best || getter(item) < getter(best) ? item : best), null);
 }
 
 function maxBy<T>(items: T[], getter: (item: T) => number) {
