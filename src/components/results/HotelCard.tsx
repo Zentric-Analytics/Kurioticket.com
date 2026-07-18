@@ -58,6 +58,16 @@ import {
   type HotelAmenityPresentationItem,
 } from "@/components/results/hotelAmenityPresentation";
 
+function isSafeHttpUrl(value?: string) {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function getHotelStarRating(rating: number) {
   if (!Number.isFinite(rating) || rating <= 0) return null;
   return Math.min(Math.max(Math.floor(rating), 1), 5);
@@ -352,7 +362,8 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
   const currencyRates = useCurrencyRates();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const [preferredImageIndex, setPreferredImageIndex] = useState(0);
-  const starRating = getHotelStarRating(hotel.rating);
+  const isDiscoveryHotel = hotel.inventoryKind === "discovery";
+  const starRating = isDiscoveryHotel ? null : getHotelStarRating(hotel.rating);
   const resolvedDetailsHref =
     detailsHref || `/hotels/details/${encodeURIComponent(hotel.id)}`;
   const explicitGalleryImages = useMemo(
@@ -436,7 +447,7 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
         ? t("hotelResults.taxesFeesNotIncluded") ||
           "Taxes and fees not included"
         : "";
-  const sortBadgeConfig = sortBadge && (sortBadge !== "cheapest" || hasValidPrice)
+  const sortBadgeConfig = sortBadge && ((sortBadge !== "cheapest" && sortBadge !== "bestValue") || hasValidPrice)
     ? ({
         cheapest: {
           label: t("hotelResults.cheapest") || "Cheapest",
@@ -463,6 +474,12 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
       >)[sortBadge]
     : null;
   const SortBadgeIcon = sortBadgeConfig?.Icon;
+  const sourceAttributions = (hotel.sourceAttributions || [])
+    .map((attribution) => ({
+      provider: attribution.provider.trim(),
+      providerUri: attribution.providerUri?.trim(),
+    }))
+    .filter((attribution) => attribution.provider);
   const totalDisplayPrice = priceDetails
     ? formatDisplayPrice({
         amount: priceDetails.totalPrice,
@@ -712,6 +729,22 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
                       {reviewCountText}
                     </span>
                   ) : null}
+                </div>
+              ) : null}
+              {sourceAttributions.length ? (
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-slate-600">
+                  {sourceAttributions.map((attribution, index) => (
+                    <span key={`${attribution.provider}-${index}`} className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5">
+                      <span>Data:</span>
+                      {isSafeHttpUrl(attribution.providerUri) ? (
+                        <a href={attribution.providerUri} target="_blank" rel="noopener noreferrer" translate="no" className="text-[#004BB8] hover:underline">
+                          {attribution.provider}
+                        </a>
+                      ) : (
+                        <span translate="no">{attribution.provider}</span>
+                      )}
+                    </span>
+                  ))}
                 </div>
               ) : null}
               {roomTypeText ||

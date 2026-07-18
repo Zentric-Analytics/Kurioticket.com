@@ -93,6 +93,11 @@ export type PublicFlightResult = Omit<
 
 export type HotelInventoryKind = "bookable" | "discovery";
 
+export type HotelSourceAttribution = {
+  provider: string;
+  providerUri?: string;
+};
+
 type HotelInventoryBookable = {
   inventoryKind?: "bookable";
   pricePerNight: number;
@@ -136,6 +141,8 @@ type NormalizedHotelBase = {
   arrivalSuitabilityScore: number;
   recommendationReasons: string[];
   badges: string[];
+  sourceUrl?: string;
+  sourceAttributions?: HotelSourceAttribution[];
   rawProviderReference?: unknown;
 };
 
@@ -162,6 +169,8 @@ type PublicHotelBase = {
   arrivalSuitabilityScore: number;
   recommendationReasons: string[];
   badges: string[];
+  sourceUrl?: string;
+  sourceAttributions?: HotelSourceAttribution[];
 };
 
 export type NormalizedHotelResult = NormalizedHotelBase & HotelInventory;

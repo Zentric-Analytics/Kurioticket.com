@@ -4,6 +4,7 @@ import { rememberHotels } from "@/lib/searchCache";
 import { fallbackHotels } from "@/services/travel/fallbackData";
 import { buildDemoHotelResults } from "@/services/travel/demoHotelResults";
 import { searchHotelProvider } from "@/services/travel/providers/hotelProvider";
+import { isGooglePlacesHotelId } from "@/services/travel/providers/googlePlacesHotelProvider";
 import {
   compareHotelsByAvailablePrice,
   getComparableHotelTotalUsd,
@@ -43,7 +44,13 @@ export async function searchHotels(search: HotelSearchParams): Promise<Aggregate
     .map((provider) => sanitizeHotelWarning(provider.error));
 
   if (deduped.length > 0) {
-    rememberHotels(deduped);
+    const cacheableResults = deduped.filter(
+      (hotel) => !isGooglePlacesHotelId(hotel.id),
+    );
+
+    if (cacheableResults.length) {
+      rememberHotels(cacheableResults);
+    }
     return {
       results: deduped,
       providerStatuses: providers,
@@ -138,8 +145,12 @@ function assignBadges(results: NormalizedHotelResult[]) {
   if (!results.length) return results;
 
   const cheapest = getLowestPricedHotelId(results);
-  const bestValue = maxBy(results, (hotel) => hotel.valueScore)?.id;
-  const arrival = maxBy(results, (hotel) => hotel.arrivalSuitabilityScore)?.id;
+  const pricedHotels = results.filter(hasHotelPrice);
+  const bestValue = maxBy(pricedHotels, (hotel) => hotel.valueScore)?.id;
+  const arrival = maxBy(results, (hotel) => {
+    const score = hotel.arrivalSuitabilityScore;
+    return Number.isFinite(score) && score > 0 ? score : Number.NEGATIVE_INFINITY;
+  })?.id;
 
   return results.map((result) => ({
     ...result,

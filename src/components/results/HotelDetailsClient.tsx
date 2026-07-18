@@ -125,6 +125,16 @@ type HotelShareStatus =
   | "copied"
   | "error";
 
+function isSafeHttpUrl(value?: string) {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function parseHotelSearchDate(value?: string) {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return null;
@@ -615,7 +625,8 @@ export function HotelDetailsClient({
   const discoveryBookingUnavailableText =
     t("hotelDetails.discoveryBookingUnavailable") ||
     "This property is available for discovery, but a live booking quote is not available yet.";
-  const starRating = getStarRating(hotel.rating);
+  const isDiscoveryHotel = hotel.inventoryKind === "discovery";
+  const starRating = isDiscoveryHotel ? null : getStarRating(hotel.rating);
   const galleryCandidates = buildHotelGalleryCandidates(hotel.imageUrls, hotel.imageUrl);
   const displayCandidates = galleryCandidates;
   const activeIndex = resolveHotelGalleryIndex(displayCandidates, failedImageUrls, preferredImageIndex);
@@ -705,9 +716,17 @@ export function HotelDetailsClient({
       })
     : null;
 
-  const mapHref = mapSearchParams
-    ? `https://www.google.com/maps/search/?${mapSearchParams.toString()}`
-    : "";
+  const mapHref = isSafeHttpUrl(hotel.sourceUrl)
+    ? hotel.sourceUrl
+    : mapSearchParams
+      ? `https://www.google.com/maps/search/?${mapSearchParams.toString()}`
+      : "";
+  const sourceAttributions = (hotel.sourceAttributions || [])
+    .map((attribution) => ({
+      provider: attribution.provider.trim(),
+      providerUri: attribution.providerUri?.trim(),
+    }))
+    .filter((attribution) => attribution.provider);
 
   const mapActionText =
     t("hotelDetails.viewMap") ||
@@ -917,6 +936,11 @@ export function HotelDetailsClient({
                 <span aria-hidden="true">{"★".repeat(starRating)}</span>
               </div>
             ) : null}
+            {hotel.provider === "Google Maps" ? (
+              <p className="text-sm font-normal leading-5 text-[#5E5E5E]">
+                Hotel discovery data provided by <span translate="no" className="whitespace-nowrap not-italic font-normal text-sm text-[#5E5E5E]">Google Maps</span>
+              </p>
+            ) : null}
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-slate-700">
               <MapPin className="h-4 w-4 shrink-0 text-blue" aria-hidden="true" />
               {locationParts.map((part, index) => (
@@ -938,6 +962,22 @@ export function HotelDetailsClient({
                     {reviewCountText}
                   </Badge>
                 ) : null}
+              </div>
+            ) : null}
+            {sourceAttributions.length ? (
+              <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-600">
+                {sourceAttributions.map((attribution, index) => (
+                  <span key={`${attribution.provider}-${index}`} className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 ring-1 ring-slate-200">
+                    <span>Data:</span>
+                    {isSafeHttpUrl(attribution.providerUri) ? (
+                      <a href={attribution.providerUri} target="_blank" rel="noopener noreferrer" translate="no" className="text-[#004BB8] hover:underline">
+                        {attribution.provider}
+                      </a>
+                    ) : (
+                      <span translate="no">{attribution.provider}</span>
+                    )}
+                  </span>
+                ))}
               </div>
             ) : null}
           </header>

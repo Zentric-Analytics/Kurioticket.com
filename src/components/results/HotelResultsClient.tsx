@@ -679,6 +679,7 @@ export function HotelResultsClient() {
     [results],
   );
   const hasPricedResults = pricedResultCount > 0;
+  const hasGoogleMapsResults = results.some((hotel) => hotel.provider === "Google Maps");
   const resultMaxPrice = useMemo(() => getResultMaxPrice(results, currencyRates.rates), [currencyRates.rates, results]);
   const priceFilterActive = hasPricedResults && maxPrice < resultMaxPrice;
 
@@ -1643,6 +1644,12 @@ export function HotelResultsClient() {
                     </div>
                   </div>
 
+                {hasGoogleMapsResults ? (
+                  <p className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal leading-5 text-[#5E5E5E] shadow-sm">
+                    Hotel discovery data provided by <span translate="no" className="whitespace-nowrap not-italic font-normal text-sm text-[#5E5E5E]">Google Maps</span>
+                  </p>
+                ) : null}
+
                 {sortedVisibleHotels.length ? (
                   sortedVisibleHotels.map((hotel, index) => (
                     <HotelCard
@@ -1806,6 +1813,7 @@ function hasHotelValueScore(hotel: PublicHotelResult) {
 }
 
 function getHotelValueSortScore(hotel: PublicHotelResult) {
+  if (!hasHotelPrice(hotel)) return null;
   return Number.isFinite(hotel.valueScore) ? hotel.valueScore : null;
 }
 
