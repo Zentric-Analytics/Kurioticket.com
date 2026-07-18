@@ -56,6 +56,27 @@ test("admin navbar exposes the branded logo link without visible Admin text", ()
   assert.doesNotMatch(shell, /sectionLabels/);
 });
 
+test("admin brand logo link keeps accessibility while removing permanent boxed styling", () => {
+  const brandLink = shell.match(/<Link[\s\S]*?href="\/admin"[\s\S]*?<AdminLogoImage/)?.[0] ?? "";
+  assert.match(brandLink, /aria-label="Go to Admin Overview"/);
+  assert.match(brandLink, /aria-current=\{active \? "page" : undefined\}/);
+  assert.match(shell, /const active = pathname === "\/admin"/);
+  assert.match(brandLink, /focus-ring/);
+  assert.match(brandLink, /hover:opacity-100/);
+  assert.match(brandLink, /py-1/);
+  assert.doesNotMatch(brandLink, /bg-\[/);
+  assert.doesNotMatch(brandLink, /hover:bg-/);
+  assert.doesNotMatch(brandLink, /border/);
+  assert.doesNotMatch(brandLink, /ring-1/);
+  assert.doesNotMatch(brandLink, /rounded-(?:lg|xl|2xl|full)/);
+  assert.doesNotMatch(brandLink, /px-[1-9]/);
+});
+
+test("admin top-level hub labels and link styling remain unchanged", () => {
+  assert.deepEqual(getAdminNavbarHubsForRole("ADMIN").map((hub) => hub.label), ["Operations", "Monitoring", "Platform"]);
+  assert.match(shell, /active \? "border border-\[#BFD4EA\] bg-\[#F3F7FA\] text-\[#021C2B\]" : "border border-transparent text-slate-700 hover:bg-\[#F3F7FA\] hover:text-\[#004BB8\]"/);
+});
+
 test("admin navbar removes the permanent role badge and uses an avatar-only profile trigger", () => {
   assert.doesNotMatch(shell, /<AdminStatusBadge tone="info">\{adminRole\}<\/AdminStatusBadge>/);
   assert.match(shell, /aria-label="Open Admin profile menu"/);
