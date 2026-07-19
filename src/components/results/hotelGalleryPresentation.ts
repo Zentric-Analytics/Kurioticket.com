@@ -88,3 +88,35 @@ export function getAdjacentHotelGalleryIndex(
 
   return -1;
 }
+
+export type HotelGalleryDirection = -1 | 1;
+
+export function getHotelGallerySwipeDirection(
+  start: { x: number; y: number },
+  end: { x: number; y: number },
+  minimumDistance = 48,
+): HotelGalleryDirection | null {
+  const horizontalDistance = end.x - start.x;
+  const verticalDistance = end.y - start.y;
+
+  if (
+    Math.abs(horizontalDistance) < minimumDistance ||
+    Math.abs(verticalDistance) >= Math.abs(horizontalDistance)
+  ) {
+    return null;
+  }
+
+  return horizontalDistance < 0 ? 1 : -1;
+}
+
+export function getHotelGalleryPhotoPosition(
+  usableIndices: readonly number[],
+  activeIndex: number,
+): { current: number; total: number } {
+  const visibleIndex = usableIndices.indexOf(activeIndex);
+
+  return {
+    current: visibleIndex >= 0 ? visibleIndex + 1 : 0,
+    total: usableIndices.length,
+  };
+}

@@ -23,6 +23,7 @@ import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
 import {
   buildHotelGalleryCandidates,
   getAdjacentHotelGalleryIndex,
+  getHotelGalleryPhotoPosition,
   resolveHotelGalleryIndex,
 } from "@/components/results/hotelGalleryPresentation";
 import {
@@ -399,10 +400,14 @@ export function HotelDetailsClient({
   }, []);
   const activeUrl = activeIndex >= 0 ? displayCandidates[activeIndex] : "";
   const showGalleryControls = usableIndices.length > 1;
-  const activePosition = Math.max(0, usableIndices.indexOf(activeIndex));
+  const photoPosition = getHotelGalleryPhotoPosition(usableIndices, activeIndex);
+  const activePosition = photoPosition.current;
   const photoCounter = (t("hotelResults.photoCounter") || "{{current}} of {{total}} photos")
-    .replace("{{current}}", String(activePosition + 1))
-    .replace("{{total}}", String(usableIndices.length));
+    .replace("{{current}}", String(activePosition))
+    .replace("{{total}}", String(photoPosition.total));
+  const photoPositionAnnouncement = (t("hotelDetails.photoPositionAnnouncement") || "Photo {{current}} of {{total}}")
+    .replace("{{current}}", String(activePosition))
+    .replace("{{total}}", String(photoPosition.total));
   const roomType = hotel.roomType ? translateKnownHotelDetailsLabel(toHotelDetailsTitleCase(hotel.roomType), t) : "";
   const mealPlan = getHotelDetailsMealPlan(hotel, roomType, t);
   const cancellationText = getHotelDetailsCancellationText(hotel.cancellationInfo, t);
@@ -633,18 +638,25 @@ export function HotelDetailsClient({
 
           <HotelDetailsGallery
             activeUrl={activeUrl}
+            hotelName={hotel.name}
             imageAlt={t("hotelResults.hotelImageAlt").replace("{{name}}", hotel.name).replace("{{location}}", hotel.location ? ` ${t("hotelResults.nearLocation").replace("{{location}}", hotel.location)}` : "")}
             imageUnavailableText={t("hotelResults.imageUnavailable")}
             showGalleryControls={showGalleryControls}
             onPrevious={() => selectAdjacentImage(-1)}
             onNext={() => selectAdjacentImage(1)}
-            previousPhotoLabel={t("hotelResults.previousPhoto")}
-            nextPhotoLabel={t("hotelResults.nextPhoto")}
+            previousPhotoLabel={t("hotelResults.previousPhoto") || "Previous photo"}
+            nextPhotoLabel={t("hotelResults.nextPhoto") || "Next photo"}
             photoCounter={photoCounter}
+            photoPositionAnnouncement={photoPositionAnnouncement}
             usableIndices={usableIndices}
             displayCandidates={displayCandidates}
             activeIndex={activeIndex}
+            activePosition={activePosition}
             selectPhotoLabel={t("hotelResults.selectPhoto") || "Show photo {{number}}"}
+            viewAllPhotosLabel={t("hotelDetails.viewAllPhotos") || "View all photos"}
+            openPhotoViewerLabel={t("hotelDetails.openPhotoViewer") || "Open photo {{current}} of {{total}} for {{hotelName}}"}
+            closePhotoViewerLabel={t("hotelDetails.closePhotoViewer") || "Close photo viewer"}
+            photoViewerTitle={(t("hotelDetails.photoViewerTitle") || "Photos for {{hotelName}}").replace("{{hotelName}}", hotel.name)}
             onSelectImage={setPreferredImageIndex}
             onImageError={markImageFailed}
           />
