@@ -115,7 +115,7 @@ export function normalizeGooglePlacesHotel(place: GooglePlacesHotelPlace): Norma
     name,
     location,
     rating: rating ?? 0,
-    ...(rating !== null ? { reviewScore: rating } : {}),
+    ...(rating !== null ? { reviewScore: rating, reviewScale: 5 as const, reviewSource: "Google Maps" } : {}),
     ...(reviewCount !== undefined ? { reviewCount } : {}),
     roomType: place.primaryTypeDisplayName?.text.trim() || "Hotel",
     amenities: [],

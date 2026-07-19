@@ -1,6 +1,7 @@
 import type { AggregatedResult, HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
 import { canUseDevelopmentFallbacks, getHotelResultsMode } from "@/lib/env";
 import { rememberHotels } from "@/lib/searchCache";
+import { getHotelComparableReviewScore } from "@/lib/hotels/hotelRatingSemantics";
 import { fallbackHotels } from "@/services/travel/fallbackData";
 import { buildDemoHotelResults } from "@/services/travel/demoHotelResults";
 import { searchHotelProvider } from "@/services/travel/providers/hotelProvider";
@@ -104,7 +105,17 @@ function sortHotels(results: NormalizedHotelResult[], sort: NonNullable<HotelSea
   }
   if (sort === "rating") {
     return sorted
-      .sort((a, b) => b.hotel.rating - a.hotel.rating || stablePriceTie(a.hotel, b.hotel) || a.index - b.index)
+      .sort((a, b) => {
+        const aReview = getHotelComparableReviewScore(a.hotel);
+        const bReview = getHotelComparableReviewScore(b.hotel);
+        const reviewComparison = aReview === null
+          ? (bReview === null ? 0 : 1)
+          : (bReview === null ? -1 : bReview - aReview);
+        return reviewComparison ||
+          (b.hotel.classificationStars ?? Number.NEGATIVE_INFINITY) -
+            (a.hotel.classificationStars ?? Number.NEGATIVE_INFINITY) ||
+          stablePriceTie(a.hotel, b.hotel) || a.index - b.index;
+      })
       .map(({ hotel }) => hotel);
   }
   if (sort === "location") {

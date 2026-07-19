@@ -60,6 +60,9 @@ test("normalizes valid discovery hotels truthfully", () => {
   assert.equal(hotel.location, "abc Main Street");
   assert.equal(hotel.rating, 4.6);
   assert.equal(hotel.reviewScore, 4.6);
+  assert.equal(hotel.reviewScale, 5);
+  assert.equal(hotel.reviewSource, "Google Maps");
+  assert.equal(hotel.classificationStars, undefined);
   assert.equal(hotel.reviewCount, 123);
   assert.equal(hotel.inventoryKind, "discovery");
   assert.equal(hotel.sourceUrl, "https://maps.google.com/?cid=abc");
@@ -77,6 +80,9 @@ test("normalizes rating, review count, fallback address, and missing rating", ()
   assert.equal(hotel.location, "fallback Short");
   assert.equal(hotel.rating, 0);
   assert.equal(hotel.reviewScore, undefined);
+  assert.equal(hotel.reviewScale, undefined);
+  assert.equal(hotel.reviewSource, undefined);
+  assert.equal(hotel.classificationStars, undefined);
   assert.equal(hotel.reviewCount, undefined);
 });
 

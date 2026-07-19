@@ -1,5 +1,12 @@
 import { nanoid } from "nanoid";
 import type { HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
+import {
+  normalizeHotelClassificationStars,
+  normalizeHotelReviewCount,
+  normalizeHotelReviewScale,
+  normalizeHotelReviewScore,
+  normalizeHotelReviewSource,
+} from "@/lib/hotels/hotelRatingSemantics";
 import { normalizeHotelImageUrl, normalizeHotelImageUrls } from "@/services/travel/hotelImages";
 import { scoreHotel } from "@/services/travel/scoring";
 
@@ -41,6 +48,7 @@ function normalizeAmadeusHotel(raw: unknown, search: HotelSearchParams): Normali
     name: offer.hotel.name,
     imageUrl: offer.hotel.media?.[0]?.uri,
     rating: Number(offer.hotel.rating || 4),
+    classificationStars: Number(offer.hotel.rating),
     location: offer.hotel.cityCode || search.destination,
     pricePerNight: nightlyPrice(Number(price.total), search),
     totalPrice: Number(price.total),
@@ -81,6 +89,7 @@ function normalizePartnerHotel(raw: unknown, search: HotelSearchParams): Normali
     name,
     imageUrl: item.image,
     rating: item.rating || item.stars || 4,
+    classificationStars: item.stars,
     location: item.location || search.destination,
     pricePerNight: nightly || nightlyPrice(item.total || 0, search),
     totalPrice: item.total || (nightly || 0) * nights(search),
@@ -124,6 +133,7 @@ function normalizeHotelbedsHotel(raw: unknown, search: HotelSearchParams): Norma
     name,
     imageUrl: item.imageUrl,
     rating: categoryToRating(item.categoryName),
+    classificationStars: categoryToRating(item.categoryName),
     location: item.destinationName || search.destination,
     pricePerNight: nightlyPrice(total, search),
     totalPrice: total,
@@ -159,8 +169,11 @@ function normalizeDemoHotel(raw: unknown, search: HotelSearchParams): Normalized
     imageUrl: item.imageUrl,
     imageUrls: item.imageUrls,
     rating: item.rating || 0,
+    classificationStars: item.classificationStars,
     reviewScore: item.reviewScore,
+    reviewScale: item.reviewScale,
     reviewCount: item.reviewCount,
+    reviewSource: item.reviewSource,
     neighbourhood: item.neighbourhood,
     location: item.location || search.destination,
     pricePerNight: item.pricePerNight || 0,
@@ -185,6 +198,7 @@ function normalizeFallbackHotel(raw: unknown, search: HotelSearchParams): Normal
     name: item.name || "Harborline City Hotel",
     imageUrl: item.imageUrl,
     rating: item.rating || 4.4,
+    classificationStars: 4,
     location: item.location || search.destination,
     pricePerNight: item.pricePerNight || 139,
     totalPrice: item.totalPrice || 139 * nights(search),
@@ -204,6 +218,7 @@ function buildHotel(input: {
   name: string;
   imageUrl?: string;
   rating: number;
+  classificationStars?: unknown;
   location: string;
   pricePerNight: number;
   totalPrice: number;
@@ -214,7 +229,9 @@ function buildHotel(input: {
   bookingUrl: string;
   imageUrls?: unknown;
   reviewScore?: unknown;
+  reviewScale?: unknown;
   reviewCount?: unknown;
+  reviewSource?: unknown;
   neighbourhood?: unknown;
   taxesAndFeesIncluded?: unknown;
   similarHotelIds?: unknown;
@@ -242,8 +259,11 @@ function buildHotel(input: {
     }),
     imageUrls: normalizedImageUrls.length ? normalizedImageUrls : undefined,
     rating: input.rating,
-    reviewScore: normalizeReviewScore(input.reviewScore),
-    reviewCount: normalizeReviewCount(input.reviewCount),
+    classificationStars: normalizeHotelClassificationStars(input.classificationStars),
+    reviewScore: normalizeHotelReviewScore(input.reviewScore, input.reviewScale),
+    reviewScale: normalizeHotelReviewScale(input.reviewScale),
+    reviewCount: normalizeHotelReviewCount(input.reviewCount),
+    reviewSource: normalizeHotelReviewSource(input.reviewSource),
     neighbourhood: normalizeOptionalString(input.neighbourhood),
     location: input.location,
     distanceFromCenter: "Central or transit-friendly area",
@@ -281,26 +301,6 @@ function nightlyPrice(total: number, search: HotelSearchParams) {
 function nights(search: HotelSearchParams) {
   const ms = new Date(search.checkOut).getTime() - new Date(search.checkIn).getTime();
   return Math.max(Math.round(ms / 86400000), 1);
-}
-
-function normalizeReviewScore(value: unknown) {
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    return undefined;
-  }
-
-  return value >= 0 && value <= 10 ? value : undefined;
-}
-
-function normalizeReviewCount(value: unknown) {
-  if (
-    typeof value !== "number" ||
-    !Number.isFinite(value) ||
-    value < 0
-  ) {
-    return undefined;
-  }
-
-  return Math.floor(value);
 }
 
 function normalizeOptionalString(value: unknown) {
