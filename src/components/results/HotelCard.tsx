@@ -308,13 +308,24 @@ function resolveAmenityLabels(
   });
 }
 
-function HotelAmenityList({ items }: {
+function HotelAmenityList({
+  items,
+  expanded = false,
+}: {
   items: HotelAmenityPresentationItem[];
+  expanded?: boolean;
 }) {
   if (items.length === 0) return null;
 
   return (
-    <ul role="list" className="mt-2 grid grid-cols-1 gap-y-1.5">
+    <ul
+      role="list"
+      className={
+        expanded
+          ? "mt-2 grid grid-cols-1 gap-x-4 gap-y-1.5 min-[380px]:grid-cols-2"
+          : "mt-2 grid grid-cols-1 gap-x-4 gap-y-1.5 min-[380px]:grid-cols-2"
+      }
+    >
       {items.map((item) => {
         const Icon = hotelAmenityIcons[item.iconKey];
 
@@ -645,7 +656,7 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
           )}
         </div>
         <div className="flex min-h-[200px] flex-col px-3.5 py-3.5 md:min-h-0 md:px-3 md:py-3">
-          <div className="min-w-0 flex-1">
+          <div className="flex flex-1 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
               <div>
                 <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
@@ -742,97 +753,93 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
                   ))}
                 </div>
               ) : null}
+              {roomTypeText ||
+              shouldShowMealPlanText ||
+              collapsedAmenityItems.length > 0 ? (
+                <div className="mt-2 space-y-1">
+                  {roomTypeText ? (
+                    <p className="text-sm font-medium leading-5 text-slate-800">
+                      {roomTypeText}
+                    </p>
+                  ) : null}
+                  {shouldShowMealPlanText ? (
+                    <p className="text-[13px] font-normal leading-5 text-slate-600">
+                      {mealPlanText}
+                    </p>
+                  ) : null}
+                  <HotelAmenityList
+                    items={resolveAmenityLabels(collapsedAmenityItems, t)}
+                  />
+                </div>
+              ) : null}
+              {cancellationDisplay ? (
+                <p
+                  className={
+                    cancellationDisplay.positive
+                      ? "mt-2 text-[13px] font-medium leading-5 text-emerald-700"
+                      : "mt-2 text-[13px] font-medium leading-5 text-slate-600"
+                  }
+                >
+                  {cancellationDisplay.label}
+                </p>
+              ) : null}
             </div>
-            <div className="mt-3 grid grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] border-t border-slate-200/80 pt-3">
-              <div className="min-w-0 pe-3">
-                {roomTypeText ||
-                shouldShowMealPlanText ||
-                collapsedAmenityItems.length > 0 ? (
-                  <div className="space-y-1">
-                    {roomTypeText ? (
-                      <p className="text-sm font-medium leading-5 text-slate-800">
-                        {roomTypeText}
-                      </p>
-                    ) : null}
-                    {shouldShowMealPlanText ? (
-                      <p className="text-[13px] font-normal leading-5 text-slate-600">
-                        {mealPlanText}
-                      </p>
-                    ) : null}
-                    <HotelAmenityList
-                      items={resolveAmenityLabels(collapsedAmenityItems, t)}
-                    />
-                  </div>
-                ) : null}
-                {cancellationDisplay ? (
-                  <p
-                    className={
-                      cancellationDisplay.positive
-                        ? "mt-2 text-[13px] font-medium leading-5 text-emerald-700"
-                        : "mt-2 text-[13px] font-medium leading-5 text-slate-600"
-                    }
-                  >
-                    {cancellationDisplay.label}
-                  </p>
-                ) : null}
-              </div>
-              <div className="flex min-w-0 flex-col items-end gap-3 border-s border-slate-200/80 ps-3 text-end">
-                <div className="min-w-0 max-w-full text-end">
-                  {priceDetails && totalDisplayPrice && nightlyDisplayPrice ? (
-                    <>
-                      <div
-                        className="whitespace-nowrap text-xl font-bold leading-7 tracking-[-0.01em] text-slate-950 tabular-nums"
-                        dir="ltr"
-                        title={totalDisplayPrice.title}
-                        aria-label={totalDisplayPrice.ariaLabel}
-                      >
-                        {totalDisplayPrice.formatted}
-                      </div>
-
-                      <div className="mt-1 text-[13px] font-medium leading-5 text-slate-500">
-                        {t("hotelResults.estimatedStayTotal")}
-                      </div>
-
-                      <div className="mt-3 space-y-1.5">
-                        <div
-                          className="text-sm font-semibold leading-5 text-slate-800 tabular-nums"
-                          title={nightlyDisplayPrice.title}
-                          aria-label={nightlyDisplayPrice.ariaLabel}
-                        >
-                          {t("hotelResults.pricePerNight").replace(
-                            "{{price}}",
-                            nightlyDisplayPrice.formatted,
-                          )}
-                        </div>
-
-                        {taxesAndFeesText ? (
-                          <div className="text-xs font-medium leading-[18px] text-slate-500">
-                            {taxesAndFeesText}
-                          </div>
-                        ) : null}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="max-w-full space-y-1">
-                      <p className="text-lg font-bold leading-6 text-slate-950">
-                        {priceUnavailableText}
-                      </p>
-                      <p className="text-xs font-medium leading-5 text-slate-500">
-                        {liveRateUnavailableText}
-                      </p>
+            <div className="mt-auto flex flex-col gap-3 min-[380px]:flex-row min-[380px]:items-end min-[380px]:justify-between md:mt-0 lg:w-44 lg:flex-col lg:items-end lg:justify-start lg:text-end">
+              <div className="text-start min-[380px]:text-end lg:text-end">
+                {priceDetails && totalDisplayPrice && nightlyDisplayPrice ? (
+                  <>
+                    <div
+                      className="whitespace-nowrap text-xl font-bold leading-7 tracking-[-0.01em] text-slate-950 tabular-nums"
+                      dir="ltr"
+                      title={totalDisplayPrice.title}
+                      aria-label={totalDisplayPrice.ariaLabel}
+                    >
+                      {totalDisplayPrice.formatted}
                     </div>
-                  )}
-                </div>
-                <div className="w-full text-end">
-                  <LinkButton
-                    href={resolvedDetailsHref}
-                    variant="accent"
-                    size="sm"
-                    className="w-full whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-3 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] hover:border-[#021C2B] hover:bg-[#021C2B]"
-                  >
-                    {t("hotelResults.viewHotel") || "View hotel"}
-                  </LinkButton>
-                </div>
+
+                    <div className="mt-1 text-[13px] font-medium leading-5 text-slate-500">
+                      {t("hotelResults.estimatedStayTotal")}
+                    </div>
+
+                    <div className="mt-3 space-y-1.5">
+                      <div
+                        className="text-sm font-semibold leading-5 text-slate-800 tabular-nums"
+                        title={nightlyDisplayPrice.title}
+                        aria-label={nightlyDisplayPrice.ariaLabel}
+                      >
+                        {t("hotelResults.pricePerNight").replace(
+                          "{{price}}",
+                          nightlyDisplayPrice.formatted,
+                        )}
+                      </div>
+
+                      {taxesAndFeesText ? (
+                        <div className="text-xs font-medium leading-[18px] text-slate-500">
+                          {taxesAndFeesText}
+                        </div>
+                      ) : null}
+                    </div>
+                  </>
+                ) : (
+                  <div className="max-w-[12rem] space-y-1 min-[380px]:ml-auto">
+                    <p className="text-lg font-bold leading-6 text-slate-950">
+                      {priceUnavailableText}
+                    </p>
+                    <p className="text-xs font-medium leading-5 text-slate-500">
+                      {liveRateUnavailableText}
+                    </p>
+                  </div>
+                )}
+              </div>
+              <div className="min-[380px]:text-end">
+                <LinkButton
+                  href={resolvedDetailsHref}
+                  variant="accent"
+                  size="sm"
+                  className="w-full whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-3 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] hover:border-[#021C2B] hover:bg-[#021C2B] min-[380px]:w-auto"
+                >
+                  {t("hotelResults.viewHotel") || "View hotel"}
+                </LinkButton>
               </div>
             </div>
           </div>
