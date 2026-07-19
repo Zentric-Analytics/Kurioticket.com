@@ -617,10 +617,14 @@ export function HotelDetailsClient({
             shareHotelLabel={shareHotelLabel}
             onShare={() => { void shareHotel(); }}
             shareActionText={shareActionText}
+            mapHref={mapHref}
+            mapHotelLabel={mapHotelLabel}
+            mapActionText={mapActionText}
             shareStatus={shareStatus}
             shareFeedbackText={shareFeedbackText}
             starRating={starRating}
             starRatingAriaLabel={starRating ? t("hotelResults.starHotelAria").replace("{{rating}}", formatHotelDetailsRating(starRating, locale)) : ""}
+            isGoogleMapsProvider={hotel.provider === "Google Maps"}
             locationParts={locationParts}
             reviewBandVisible={Boolean(reviewBand)}
             reviewScore={reviewScore}
@@ -628,6 +632,8 @@ export function HotelDetailsClient({
             reviewCountText={reviewCountText}
             reviewSourcePrefix={reviewSourcePrefix}
             reviewSource={hotel.reviewSource}
+            sourceAttributions={sourceAttributions}
+            isSafeAttributionUrl={isSafeHotelDetailsHttpUrl}
           />
 
           <HotelDetailsGallery
@@ -688,27 +694,13 @@ export function HotelDetailsClient({
           />
 
           <HotelDetailsSections
-            roomTitle={t("hotelDetails.roomAndStay")}
-            roomType={roomType}
-            mealPlan={mealPlan}
-            cancellationTitle={t("hotelDetails.cancellationAndPayment")}
-            cancellationItems={[cancellationText, taxesText]}
-            cancellationClarification={t("hotelDetails.cancellationPaymentClarification")}
-            amenitiesTitle={t("hotelDetails.popularAmenities")}
+            roomTitle={t("hotelResults.roomDetails") || "Room"}
+            roomItems={[roomType, mealPlan]}
+            cancellationTitle={t("hotelResults.cancellationDetails") || "Cancellation"}
+            cancellationItems={[cancellationText]}
+            amenitiesTitle={t("hotelResults.amenitiesDetails") || "Amenities"}
             amenityItems={amenityItems}
-            locationTitle={t("hotelDetails.location")}
-            locationParts={locationParts}
-            mapHref={mapHref}
-            mapHotelLabel={mapHotelLabel}
-            mapActionText={mapActionText}
-            tripFitTitle={t("hotelDetails.tripFitHighlights")}
-            tripFitDisclosure={t("hotelDetails.tripFitDisclosure")}
             recommendationReasons={hotel.recommendationReasons}
-            sourcesTitle={t("hotelDetails.propertyDataSources")}
-            propertyDataLabel={t("hotelDetails.propertyData")}
-            isGoogleMapsProvider={hotel.provider === "Google Maps"}
-            sourceAttributions={sourceAttributions}
-            isSafeAttributionUrl={isSafeHotelDetailsHttpUrl}
           />
         </div>
       </section>
