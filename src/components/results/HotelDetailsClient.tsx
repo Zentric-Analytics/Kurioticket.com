@@ -14,6 +14,11 @@ import { useRegion } from "@/components/region/RegionProvider";
 import type { PublicHotelResult } from "@/lib/types";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
+import {
+  normalizeHotelClassificationStars,
+  normalizeHotelReviewScale,
+  normalizeHotelReviewScore,
+} from "@/lib/hotels/hotelRatingSemantics";
 import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
 import {
   buildHotelGalleryCandidates,
@@ -39,7 +44,6 @@ import {
   getHotelDetailsCancellationText,
   getHotelDetailsMealPlan,
   getHotelDetailsNightCount,
-  getHotelDetailsStarRating,
   getMeaningfulHotelDistance,
   isSafeHotelDetailsHttpUrl,
   localizeHotelDetailsAmenityItems,
@@ -385,8 +389,7 @@ export function HotelDetailsClient({
   const discoveryBookingUnavailableText =
     t("hotelDetails.discoveryBookingUnavailable") ||
     "This property is available for discovery, but a live booking quote is not available yet.";
-  const isDiscoveryHotel = hotel.inventoryKind === "discovery";
-  const starRating = isDiscoveryHotel ? null : getHotelDetailsStarRating(hotel.rating);
+  const starRating = normalizeHotelClassificationStars(hotel.classificationStars) ?? null;
   const galleryCandidates = buildHotelGalleryCandidates(hotel.imageUrls, hotel.imageUrl);
   const displayCandidates = galleryCandidates;
   const activeIndex = resolveHotelGalleryIndex(displayCandidates, failedImageUrls, preferredImageIndex);
@@ -406,11 +409,14 @@ export function HotelDetailsClient({
   const distanceText = getMeaningfulHotelDistance(hotel.distanceFromCenter);
   const locationParts = getDistinctHotelDetailsLocationParts(hotel, distanceText);
   const amenityItems = localizeHotelDetailsAmenityItems(buildHotelAmenityPresentation(hotel.amenities, hotel.amenities.length), t);
-  const reviewBand = getHotelReviewBand(hotel.reviewScore);
+  const reviewScale = normalizeHotelReviewScale(hotel.reviewScale);
+  const normalizedReviewScore = normalizeHotelReviewScore(hotel.reviewScore, reviewScale);
+  const reviewBand = getHotelReviewBand(normalizedReviewScore, reviewScale);
   const reviewCount = getHotelReviewCount(hotel.reviewCount);
   const reviewLabel = reviewBand ? t(reviewLabelKeys[reviewBand]) || reviewLabelFallbacks[reviewBand] : "";
-  const reviewScore = reviewBand ? new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(hotel.reviewScore || 0) : "";
+  const reviewScore = reviewBand && reviewScale ? `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(normalizedReviewScore ?? 0)} / ${reviewScale}` : "";
   const reviewCountText = reviewCount !== null ? (reviewCount === 1 ? t("hotelResults.review.single") || "{{count}} review" : t("hotelResults.review.multiple") || "{{count}} reviews").replace("{{count}}", new Intl.NumberFormat(locale).format(reviewCount)) : "";
+  const reviewSourcePrefix = hotel.reviewSource ? t("providedBy") || "Provided by" : "";
   const taxesText = hotel.taxesAndFeesIncluded === true ? t("hotelResults.taxesFeesIncluded") : hotel.taxesAndFeesIncluded === false ? t("hotelResults.taxesFeesNotIncluded") : "";
   const providerEnabled = canUseHotelDetailsProviderLink(hotel);
   const providerUnavailableText = hotel.dataSource === "demo"
@@ -612,13 +618,15 @@ export function HotelDetailsClient({
             shareStatus={shareStatus}
             shareFeedbackText={shareFeedbackText}
             starRating={starRating}
-            starRatingAriaLabel={t("hotelResults.starHotelAria").replace("{{rating}}", formatHotelDetailsRating(hotel.rating, locale))}
+            starRatingAriaLabel={starRating ? t("hotelResults.starHotelAria").replace("{{rating}}", formatHotelDetailsRating(starRating, locale)) : ""}
             isGoogleMapsProvider={hotel.provider === "Google Maps"}
             locationParts={locationParts}
             reviewBandVisible={Boolean(reviewBand)}
             reviewScore={reviewScore}
             reviewLabel={reviewLabel}
             reviewCountText={reviewCountText}
+            reviewSourcePrefix={reviewSourcePrefix}
+            reviewSource={hotel.reviewSource}
             sourceAttributions={sourceAttributions}
             isSafeAttributionUrl={isSafeHotelDetailsHttpUrl}
           />

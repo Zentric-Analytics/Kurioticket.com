@@ -41,6 +41,7 @@ import {
   getComparableHotelTotalUsd,
   hasHotelPrice,
 } from "@/lib/hotels/hotelResultAvailability";
+import { getHotelComparableReviewScore } from "@/lib/hotels/hotelRatingSemantics";
 import { cn } from "@/lib/utils";
 import {
   ALL_HOTEL_STAR_RATINGS,
@@ -1767,9 +1768,12 @@ function sortHotelSummaryResults(
     }
 
     if (sortMode === "topRated") {
+      const firstReview = getHotelComparableReviewScore(first.hotel);
+      const secondReview = getHotelComparableReviewScore(second.hotel);
       return (
-        getHotelSortableRating(second.hotel) -
-          getHotelSortableRating(first.hotel) ||
+        compareNullableScoresDescending(firstReview, secondReview) ||
+        getHotelSortableClassification(second.hotel) -
+          getHotelSortableClassification(first.hotel) ||
         getHotelSortablePrice(first.hotel, rates) -
           getHotelSortablePrice(second.hotel, rates) ||
         first.index - second.index
@@ -1802,10 +1806,15 @@ function getHotelSortablePrice(hotel: PublicHotelResult, rates?: ExchangeRates) 
   return comparableTotalUsd ?? Number.POSITIVE_INFINITY;
 }
 
-function getHotelSortableRating(hotel: PublicHotelResult) {
-  return Number.isFinite(hotel.rating)
-    ? hotel.rating
-    : Number.NEGATIVE_INFINITY;
+function compareNullableScoresDescending(first: number | null, second: number | null) {
+  if (first === null && second === null) return 0;
+  if (first === null) return 1;
+  if (second === null) return -1;
+  return second - first;
+}
+
+function getHotelSortableClassification(hotel: PublicHotelResult) {
+  return hotel.classificationStars ?? Number.NEGATIVE_INFINITY;
 }
 
 function hasHotelValueScore(hotel: PublicHotelResult) {
@@ -2820,7 +2829,7 @@ function hotelMatchesFilters(
 ) {
   return (
     (!priceFilterActive || ((getComparableHotelTotalUsd(hotel, rates) ?? Number.POSITIVE_INFINITY) <= maxPrice)) &&
-    hotelMatchesStarRating(hotel.rating, selectedStarRating) &&
+    hotelMatchesStarRating(hotel.classificationStars, selectedStarRating) &&
     matchesTermGroup(
       hotel,
       selectedFilters.propertyTypes,

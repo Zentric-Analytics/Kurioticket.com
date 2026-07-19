@@ -93,6 +93,9 @@ export type PublicFlightResult = Omit<
 
 export type HotelInventoryKind = "bookable" | "discovery";
 
+export type HotelClassificationStars = 1 | 2 | 3 | 4 | 5;
+export type HotelReviewScale = 5 | 10;
+
 export type HotelSourceAttribution = {
   provider: string;
   providerUri?: string;
@@ -124,9 +127,13 @@ type NormalizedHotelBase = {
   name: string;
   imageUrl?: string;
   imageUrls?: string[];
+  /** Legacy provider/scoring value; use classificationStars for classification and reviewScale with reviewScore. */
   rating: number;
+  classificationStars?: HotelClassificationStars;
   reviewScore?: number;
+  reviewScale?: HotelReviewScale;
   reviewCount?: number;
+  reviewSource?: string;
   neighbourhood?: string;
   location: string;
   distanceFromCenter?: string;
@@ -152,9 +159,13 @@ type PublicHotelBase = {
   name: string;
   imageUrl?: string;
   imageUrls?: string[];
+  /** Legacy provider/scoring value; use classificationStars for classification and reviewScale with reviewScore. */
   rating: number;
+  classificationStars?: HotelClassificationStars;
   reviewScore?: number;
+  reviewScale?: HotelReviewScale;
   reviewCount?: number;
+  reviewSource?: string;
   neighbourhood?: string;
   location: string;
   distanceFromCenter?: string;

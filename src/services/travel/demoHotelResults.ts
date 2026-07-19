@@ -1,4 +1,5 @@
 import type { HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
+import { normalizeHotelClassificationStars } from "@/lib/hotels/hotelRatingSemantics";
 import { demoHotelCatalog, getDemoHotelResultId } from "@/services/travel/demoHotelCatalog";
 import { normalizeHotelImageUrls } from "@/services/travel/hotelImages";
 import { normalizeHotelResult } from "@/services/travel/normalizeHotelResult";
@@ -15,8 +16,11 @@ export function buildDemoHotelResults(search: HotelSearchParams): NormalizedHote
           imageUrl: imageUrls[0],
           imageUrls,
           rating: hotel.rating,
+          classificationStars: normalizeHotelClassificationStars(Math.floor(hotel.rating)),
           reviewScore: hotel.reviewScore,
+          reviewScale: 10,
           reviewCount: hotel.reviewCount,
+          reviewSource: "Demo Hotel Catalogue",
           neighbourhood: hotel.areaLabel,
           location: `${hotel.areaLabel}, ${search.destination}`,
           pricePerNight: hotel.nightlyPrice,

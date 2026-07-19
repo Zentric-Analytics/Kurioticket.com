@@ -41,6 +41,11 @@ import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
 import {
+  normalizeHotelClassificationStars,
+  normalizeHotelReviewScale,
+  normalizeHotelReviewScore,
+} from "@/lib/hotels/hotelRatingSemantics";
+import {
   getHotelReviewBand,
   getHotelReviewCount,
   type HotelReviewBand,
@@ -66,11 +71,6 @@ function isSafeHttpUrl(value?: string) {
   } catch {
     return false;
   }
-}
-
-function getHotelStarRating(rating: number) {
-  if (!Number.isFinite(rating) || rating <= 0) return null;
-  return Math.min(Math.max(Math.floor(rating), 1), 5);
 }
 
 function formatHotelRating(rating: number, locale: string) {
@@ -362,8 +362,7 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
   const currencyRates = useCurrencyRates();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const [preferredImageIndex, setPreferredImageIndex] = useState(0);
-  const isDiscoveryHotel = hotel.inventoryKind === "discovery";
-  const starRating = isDiscoveryHotel ? null : getHotelStarRating(hotel.rating);
+  const starRating = normalizeHotelClassificationStars(hotel.classificationStars);
   const resolvedDetailsHref =
     detailsHref || `/hotels/details/${encodeURIComponent(hotel.id)}`;
   const explicitGalleryImages = useMemo(
@@ -408,8 +407,9 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
   const shouldShowMealPlanText =
     Boolean(mealPlanText) &&
     (!hasBreakfastAmenity || !/^breakfast/i.test(mealPlanText));
-  const reviewScore = hotel.reviewScore;
-  const reviewBand = getHotelReviewBand(reviewScore);
+  const reviewScale = normalizeHotelReviewScale(hotel.reviewScale);
+  const reviewScore = normalizeHotelReviewScore(hotel.reviewScore, reviewScale);
+  const reviewBand = getHotelReviewBand(reviewScore, reviewScale);
   const reviewCount = getHotelReviewCount(hotel.reviewCount);
   const reviewLabel = reviewBand
     ? t(reviewLabelKeys[reviewBand]) || reviewLabelFallbacks[reviewBand]
@@ -682,11 +682,11 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
                     className="mt-1 flex items-center"
                     aria-label={t("hotelResults.starHotelAria").replace(
                       "{{rating}}",
-                      formatHotelRating(hotel.rating, locale),
+                      formatHotelRating(starRating, locale),
                     )}
                     title={t("hotelResults.starHotelAria").replace(
                       "{{rating}}",
-                      formatHotelRating(hotel.rating, locale),
+                      formatHotelRating(starRating, locale),
                     )}
                   >
                     <span
@@ -716,17 +716,23 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
                   ) : null}
                 </p>
               </div>
-              {reviewBand || reviewCountText ? (
+              {reviewBand || reviewCountText || hotel.reviewSource ? (
                 <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-slate-600">
                   {reviewBand ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2 py-0.5 text-white">
-                      <span>{formattedReviewScore}</span>
+                      <span>{formattedReviewScore} / {reviewScale}</span>
                       <span>{reviewLabel}</span>
                     </span>
                   ) : null}
                   {reviewCountText ? (
                     <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">
                       {reviewCountText}
+                    </span>
+                  ) : null}
+                  {hotel.reviewSource ? (
+                    <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">
+                      {t("providedBy") || "Provided by"}{" "}
+                      <span translate="no">{hotel.reviewSource}</span>
                     </span>
                   ) : null}
                 </div>
