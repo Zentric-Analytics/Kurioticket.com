@@ -31,8 +31,6 @@ type HotelDetailsHeaderProps = {
   reviewScore: string;
   reviewLabel: string;
   reviewCountText: string;
-  reviewSourcePrefix: string;
-  reviewSource?: string;
   sourceAttributions: SourceAttribution[];
   isSafeAttributionUrl: (value?: string) => boolean;
 };
@@ -64,8 +62,6 @@ export function HotelDetailsHeader({
   reviewScore,
   reviewLabel,
   reviewCountText,
-  reviewSourcePrefix,
-  reviewSource,
   sourceAttributions,
   isSafeAttributionUrl,
 }: HotelDetailsHeaderProps) {
@@ -96,7 +92,7 @@ export function HotelDetailsHeader({
       {starRating ? <div aria-label={starRatingAriaLabel} className="text-amber-500"><span aria-hidden="true">{"★".repeat(starRating)}</span></div> : null}
       {isGoogleMapsProvider ? <p className="text-sm font-normal leading-5 text-[#5E5E5E]">Hotel discovery data provided by <span translate="no" className="whitespace-nowrap not-italic font-normal text-sm text-[#5E5E5E]">Google Maps</span></p> : null}
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-slate-700"><MapPin className="h-4 w-4 shrink-0 text-blue" aria-hidden="true" />{locationParts.map((part, index) => <span key={`${part}-${index}`}>{index > 0 ? <span aria-hidden="true"> · </span> : null}{part}</span>)}</div>
-      {reviewBandVisible || reviewCountText || reviewSource ? (
+      {reviewBandVisible || reviewCountText ? (
         <div className="flex flex-wrap items-center gap-2">
           {reviewBandVisible ? (
             <Badge variant="brand" size="md">
@@ -105,12 +101,6 @@ export function HotelDetailsHeader({
           ) : null}
           {reviewCountText ? (
             <Badge variant="neutral" size="md">{reviewCountText}</Badge>
-          ) : null}
-          {reviewSource ? (
-            <span className="text-xs font-medium text-slate-600">
-              {reviewSourcePrefix}{" "}
-              <span translate="no">{reviewSource}</span>
-            </span>
           ) : null}
         </div>
       ) : null}

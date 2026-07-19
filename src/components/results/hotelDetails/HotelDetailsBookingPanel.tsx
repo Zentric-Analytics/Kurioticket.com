@@ -31,7 +31,6 @@ type HotelDetailsBookingPanelProps = {
   staySummary: StaySummary | null;
   changeSearchHref: string;
   changeSearchText: string;
-  conversionNoticeText: string;
   providerPriceLabel: string;
   providerText: string;
   providerUnavailableText: string;
@@ -55,7 +54,6 @@ export function HotelDetailsBookingPanel({
   staySummary,
   changeSearchHref,
   changeSearchText,
-  conversionNoticeText,
   providerPriceLabel,
   providerText,
   providerUnavailableText,
@@ -102,8 +100,7 @@ export function HotelDetailsBookingPanel({
                   ) : null}
                   {totalDisplayPrice.isConvertedEstimate ? (
                     <div className="mt-3 rounded-lg bg-blue/5 p-3 text-xs leading-5 text-slate-700 ring-1 ring-blue/10">
-                      <p>{conversionNoticeText}</p>
-                      <p className="mt-1 font-semibold">
+                      <p className="font-semibold">
                         {providerPriceLabel}: {totalDisplayPrice.providerFormatted}
                       </p>
                     </div>
