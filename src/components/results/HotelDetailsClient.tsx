@@ -421,7 +421,6 @@ export function HotelDetailsClient({
   const reviewLabel = reviewBand ? t(reviewLabelKeys[reviewBand]) || reviewLabelFallbacks[reviewBand] : "";
   const reviewScore = reviewBand && reviewScale ? `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(normalizedReviewScore ?? 0)} / ${reviewScale}` : "";
   const reviewCountText = reviewCount !== null ? (reviewCount === 1 ? t("hotelResults.review.single") || "{{count}} review" : t("hotelResults.review.multiple") || "{{count}} reviews").replace("{{count}}", new Intl.NumberFormat(locale).format(reviewCount)) : "";
-  const reviewSourcePrefix = hotel.reviewSource ? t("providedBy") || "Provided by" : "";
   const taxesText = hotel.taxesAndFeesIncluded === true ? t("hotelResults.taxesFeesIncluded") : hotel.taxesAndFeesIncluded === false ? t("hotelResults.taxesFeesNotIncluded") : "";
   const providerEnabled = canUseHotelDetailsProviderLink(hotel);
   const providerUnavailableText = hotel.dataSource === "demo"
@@ -630,8 +629,6 @@ export function HotelDetailsClient({
             reviewScore={reviewScore}
             reviewLabel={reviewLabel}
             reviewCountText={reviewCountText}
-            reviewSourcePrefix={reviewSourcePrefix}
-            reviewSource={hotel.reviewSource}
             sourceAttributions={sourceAttributions}
             isSafeAttributionUrl={isSafeHotelDetailsHttpUrl}
           />
