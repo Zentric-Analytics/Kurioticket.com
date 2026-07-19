@@ -3,6 +3,8 @@ import test from "node:test";
 import {
   buildHotelGalleryCandidates,
   getAdjacentHotelGalleryIndex,
+  getHotelGalleryPhotoPosition,
+  getHotelGallerySwipeDirection,
   resolveHotelGalleryIndex,
 } from "./hotelGalleryPresentation";
 import { CURATED_HOTEL_FALLBACK_IMAGES } from "@/services/travel/hotelImages";
@@ -190,4 +192,52 @@ test("getAdjacentHotelGalleryIndex never returns a failed index", () => {
   const result = getAdjacentHotelGalleryIndex([a, b, c], new Set([b]), 0, 1);
   assert.notEqual(result, 1);
   assert.equal(result, 2);
+});
+
+test("getHotelGallerySwipeDirection maps a clear left swipe to next", () => {
+  assert.equal(getHotelGallerySwipeDirection({ x: 100, y: 20 }, { x: 30, y: 25 }), 1);
+});
+
+test("getHotelGallerySwipeDirection maps a clear right swipe to previous", () => {
+  assert.equal(getHotelGallerySwipeDirection({ x: 20, y: 20 }, { x: 90, y: 25 }), -1);
+});
+
+test("getHotelGallerySwipeDirection ignores movement below the threshold", () => {
+  assert.equal(getHotelGallerySwipeDirection({ x: 20, y: 20 }, { x: 67, y: 20 }), null);
+});
+
+test("getHotelGallerySwipeDirection accepts movement exactly at the threshold", () => {
+  assert.equal(getHotelGallerySwipeDirection({ x: 68, y: 20 }, { x: 20, y: 20 }), 1);
+});
+
+test("getHotelGallerySwipeDirection ignores vertical-dominant movement", () => {
+  assert.equal(getHotelGallerySwipeDirection({ x: 20, y: 20 }, { x: 75, y: 90 }), null);
+});
+
+test("a caller suppresses swipe navigation when only one image is usable", () => {
+  const usableCount = 1;
+  const direction = usableCount > 1
+    ? getHotelGallerySwipeDirection({ x: 100, y: 20 }, { x: 20, y: 20 })
+    : null;
+  assert.equal(direction, null);
+});
+
+test("getHotelGalleryPhotoPosition reports the active visible position", () => {
+  assert.deepEqual(getHotelGalleryPhotoPosition([0, 1, 2], 1), { current: 2, total: 3 });
+});
+
+test("getHotelGalleryPhotoPosition excludes failed source indexes", () => {
+  assert.deepEqual(getHotelGalleryPhotoPosition([0, 2], 2), { current: 2, total: 2 });
+});
+
+test("getHotelGalleryPhotoPosition maps an index after failures", () => {
+  assert.deepEqual(getHotelGalleryPhotoPosition([1, 3, 4], 4), { current: 3, total: 3 });
+});
+
+test("getHotelGalleryPhotoPosition safely represents an empty gallery", () => {
+  assert.deepEqual(getHotelGalleryPhotoPosition([], -1), { current: 0, total: 0 });
+});
+
+test("keyboard-style adjacent navigation returns -1 without candidates", () => {
+  assert.equal(getAdjacentHotelGalleryIndex([], new Set(), -1, 1), -1);
 });

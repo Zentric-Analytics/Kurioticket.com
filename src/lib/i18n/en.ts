@@ -3231,6 +3231,12 @@ export const translations: TranslationDictionary = {
   "hotelDetails.demoBookingUnavailable": "This illustrative demo listing cannot be booked with an external provider.",
   "hotelDetails.directLinkUnavailable": "A provider link is not available for this hotel right now.",
   "hotelDetails.redirectError": "We could not open the provider right now. Please try again.",
+  "hotelDetails.viewAllPhotos": "View all photos",
+  "hotelDetails.viewPhoto": "View photo",
+  "hotelDetails.closePhotoViewer": "Close photo viewer",
+  "hotelDetails.photoViewerTitle": "Photos for {{hotelName}}",
+  "hotelDetails.openPhotoViewer": "Open photo {{current}} of {{total}} for {{hotelName}}",
+  "hotelDetails.photoPositionAnnouncement": "Photo {{current}} of {{total}}",
 
   "flightResults.loading.title": "Searching the best flights for you",
   "flightResults.loading.checkingAirlinesAndFares": "Checking airlines and fares...",
