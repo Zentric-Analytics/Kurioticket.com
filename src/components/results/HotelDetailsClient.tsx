@@ -424,7 +424,7 @@ export function HotelDetailsClient({
   const taxesText = hotel.taxesAndFeesIncluded === true ? t("hotelResults.taxesFeesIncluded") : hotel.taxesAndFeesIncluded === false ? t("hotelResults.taxesFeesNotIncluded") : "";
   const providerEnabled = canUseHotelDetailsProviderLink(hotel);
   const providerUnavailableText = hotel.dataSource === "demo"
-    ? t("hotelDetails.demoBookingUnavailable")
+    ? ""
     : hotel.inventoryKind === "discovery" || !hasValidPrice
       ? discoveryBookingUnavailableText
       : !providerEnabled
@@ -672,10 +672,6 @@ export function HotelDetailsClient({
             changeSearchText={
               t("hotelDetails.changeDatesGuests") ||
               "Change dates and guests"
-            }
-            conversionNoticeText={
-              t("hotelDetails.convertedPriceNotice") ||
-              "Display estimate converted from the provider price. Final provider price may differ."
             }
             providerPriceLabel={
               t("hotelDetails.providerPrice") || "Provider price"
