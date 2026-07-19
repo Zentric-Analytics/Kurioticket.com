@@ -1542,19 +1542,19 @@ export function HotelResultsClient() {
                 <div
                   role="group"
                   aria-label={t("hotelResults.summaryAria")}
-                  className="flex w-full flex-col gap-2 py-1 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex w-full flex-nowrap items-center justify-between gap-2 py-1"
                 >
-                  <h1 className="min-w-0 text-sm font-bold text-navy">
+                  <h1 className="whitespace-nowrap text-[clamp(0.68rem,3vw,0.875rem)] font-bold leading-5 text-navy sm:text-sm">
                     {resultsHeading}
                   </h1>
-                  <div className="flex min-w-0 items-center justify-end gap-2">
-                    <span className="whitespace-nowrap text-base font-semibold text-slate-700">
+                  <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2">
+                    <span className="whitespace-nowrap text-[clamp(0.68rem,3vw,0.875rem)] font-semibold text-slate-700 sm:text-base">
                       {`${t("sortBy") || "Sort by"}:`}
                     </span>
 
                     <div
                         ref={hotelSortWrapperRef}
-                        className="relative inline-flex min-w-0 items-center"
+                        className="relative inline-flex shrink-0 items-center whitespace-nowrap"
                         onBlur={(event) => {
                           if (
                             !event.currentTarget.contains(
@@ -1571,14 +1571,14 @@ export function HotelResultsClient() {
                           aria-haspopup="listbox"
                           aria-expanded={hotelSortMenuOpen}
                           aria-controls="hotel-results-sort-menu"
-                          className="inline-flex h-10 items-center gap-2 bg-transparent py-1 pl-1 text-lg font-bold text-slate-950 outline-none transition-colors hover:text-[#004BB8] focus-visible:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2"
+                          className="inline-flex h-10 shrink-0 items-center gap-1 whitespace-nowrap bg-transparent py-1 text-[clamp(0.75rem,3.3vw,1rem)] font-bold text-slate-950 outline-none transition-colors hover:text-[#004BB8] focus-visible:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2 sm:gap-2 sm:pl-1 sm:text-lg"
                           onClick={handleHotelSortTriggerClick}
                         >
                           <span>{currentSortLabel}</span>
                           <ChevronDown
                             aria-hidden="true"
                             className={cn(
-                              "h-[18px] w-[18px] text-slate-700 transition-transform",
+                              "h-4 w-4 text-slate-700 transition-transform sm:h-[18px] sm:w-[18px]",
                               hotelSortMenuOpen && "rotate-180",
                             )}
                             strokeWidth={2.25}
