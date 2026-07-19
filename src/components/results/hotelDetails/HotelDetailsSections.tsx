@@ -6,20 +6,18 @@ const amenityIcons: Record<HotelAmenityIconKey, LucideIcon> = {
   wifi: Wifi, breakfast: Coffee, pool: Waves, spa: Flower2, airportShuttle: BusFront, parking: CircleParking, fitness: Dumbbell, workspace: Laptop, quietRooms: VolumeX, frontDesk: ConciergeBell, lateCheckIn: Clock3, kitchenette: CookingPot, bikeStorage: Bike, courtyard: Trees, lounge: Armchair, restaurant: UtensilsCrossed, airConditioning: AirVent, generic: CircleDot,
 };
 
-export function HotelDetailsSections({ roomTitle, roomItems, cancellationTitle, cancellationItems, amenitiesTitle, amenityItems, recommendationReasons }: {
+export function HotelDetailsSections({ roomTitle, roomItems, cancellationTitle, cancellationItems, amenitiesTitle, amenityItems }: {
   roomTitle: string;
   roomItems: string[];
   cancellationTitle: string;
   cancellationItems: string[];
   amenitiesTitle: string;
   amenityItems: HotelAmenityPresentationItem[];
-  recommendationReasons: string[];
 }) {
   return (
     <div className="min-w-0 space-y-5 lg:col-start-1 lg:row-start-3">
       <StayDetailsSection roomTitle={roomTitle} roomItems={roomItems} cancellationTitle={cancellationTitle} cancellationItems={cancellationItems} />
       {amenityItems.length > 0 ? <AmenitySection title={amenitiesTitle} items={amenityItems} /> : null}
-      {recommendationReasons.length > 0 ? <DetailSection title="Why this hotel" items={recommendationReasons} /> : null}
     </div>
   );
 }
@@ -33,12 +31,6 @@ function StayDetailsSection({ roomTitle, roomItems, cancellationTitle, cancellat
   ].filter((section) => section.items.length > 0);
   if (sections.length === 0) return null;
   return <Card variant="flat" className="p-4 sm:p-6"><div className={sections.length > 1 ? "grid gap-5 sm:grid-cols-2 sm:gap-6" : ""}>{sections.map((section) => <section key={section.title}><h2 className="text-base font-bold text-slate-950">{section.title}</h2><ul className="mt-3 space-y-2 text-sm font-medium leading-6 text-slate-700">{section.items.map((item) => <li key={item}>{item}</li>)}</ul></section>)}</div></Card>;
-}
-
-function DetailSection({ title, items }: { title: string; items: string[] }) {
-  const visibleItems = items.map((item) => item.trim()).filter(Boolean);
-  if (visibleItems.length === 0) return null;
-  return <Card variant="flat" className="p-4 sm:p-6"><h2 className="text-base font-bold text-slate-950">{title}</h2><ul className="mt-3 space-y-2 text-sm font-medium leading-6 text-slate-700">{visibleItems.map((item) => <li key={item}>{item}</li>)}</ul></Card>;
 }
 
 function AmenitySection({ title, items }: { title: string; items: HotelAmenityPresentationItem[] }) {

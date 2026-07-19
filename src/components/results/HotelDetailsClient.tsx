@@ -700,7 +700,6 @@ export function HotelDetailsClient({
             cancellationItems={[cancellationText]}
             amenitiesTitle={t("hotelResults.amenitiesDetails") || "Amenities"}
             amenityItems={amenityItems}
-            recommendationReasons={hotel.recommendationReasons}
           />
         </div>
       </section>
