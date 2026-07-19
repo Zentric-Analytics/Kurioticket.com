@@ -127,7 +127,7 @@ export function HotelDetailsGallery({
   return (
     <Card variant="flat" className="min-w-0 overflow-hidden p-0 lg:col-start-1 lg:row-start-2" onKeyDown={handleGalleryKeyDown}>
       <div
-        className="relative aspect-[4/3] max-h-[420px] min-h-[240px] overflow-hidden bg-slate-100 sm:aspect-[16/10] sm:min-h-0"
+        className="relative w-full aspect-[4/3] max-h-[420px] min-h-[240px] overflow-hidden bg-slate-100 sm:aspect-[16/10] sm:min-h-0"
         style={{ touchAction: "pan-y" }}
         onPointerDown={(event) => {
           if (event.pointerType !== "mouse") pointerStartRef.current = { x: event.clientX, y: event.clientY };
