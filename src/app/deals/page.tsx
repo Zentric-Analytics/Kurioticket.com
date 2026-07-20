@@ -1,1606 +1,319 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
-import {
-  type FormEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { useRouter } from "next/navigation";
-import { Calendar, ChevronDown, Minus, Plus, X } from "lucide-react";
-
+import { type FormEvent, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
-import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
-import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
-import {
-  formatFlightsMonthHeading,
-  formatFlightsWeekdays,
-  normalizeFlightsCalendarLocale,
-} from "@/lib/flights/dateFormatting";
-import { cn } from "@/lib/utils";
-import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { useLocale } from "@/components/layout/LocaleProvider";
-import { useRouteProgress } from "@/components/layout/RouteProgress";
-import { translations as enTranslations } from "@/lib/i18n/en";
-import { formatAirportLabel, type AirportOption } from "@/data/airports";
+import { translations as en } from "@/lib/i18n/en";
+import {
+  buildDealsResultsUrl,
+  dealsModes,
+  getDealsProducts,
+  parseDealsSearchParams,
+  validateDealsSearch,
+  type DealsPackageMode,
+  type DealsSearch,
+} from "@/lib/deals/dealsSearchParams";
 
-type PackageMode =
-  | "hotel-flight"
-  | "hotel-flight-car"
-  | "flight-car"
-  | "hotel-car";
-type CabinClass = "economy" | "business" | "first";
-type AirportField = "origin" | "destination";
-
-type PlacesApiResponse = {
-  suggestions?: AirportOption[];
+const modeKeys: Record<DealsPackageMode, string> = {
+  "hotel-flight": "deals.package.hotelFlight",
+  "hotel-flight-car": "deals.package.hotelFlightCar",
+  "flight-car": "deals.package.flightCar",
+  "hotel-car": "deals.package.hotelCar",
 };
-
-const packageModes: Array<{
-  value: PackageMode;
-  labelKey: string;
-  includesFlight: boolean;
-  includesHotel: boolean;
-  includesCar: boolean;
-}> = [
-  {
-    value: "hotel-flight",
-    labelKey: "deals.package.hotelFlight",
-    includesFlight: true,
-    includesHotel: true,
-    includesCar: false,
-  },
-  {
-    value: "hotel-flight-car",
-    labelKey: "deals.package.hotelFlightCar",
-    includesFlight: true,
-    includesHotel: true,
-    includesCar: true,
-  },
-  {
-    value: "flight-car",
-    labelKey: "deals.package.flightCar",
-    includesFlight: true,
-    includesHotel: false,
-    includesCar: true,
-  },
-  {
-    value: "hotel-car",
-    labelKey: "deals.package.hotelCar",
-    includesFlight: false,
-    includesHotel: true,
-    includesCar: true,
-  },
-];
-
-const dealsHeroImage =
-  "https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?auto=format&fit=crop&w=1200&q=80";
-
-const dealsSearchFieldShellClassName =
-  "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 lg:min-h-[72px] lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:px-5 lg:py-3 lg:shadow-none lg:hover:border-[#004BB8]/20 lg:focus-within:border-[#004BB8]/20 lg:focus-within:bg-[#004BB8]/[0.03] lg:focus-within:ring-1 lg:focus-within:ring-inset lg:focus-within:ring-[#004BB8]/20";
-const dealsSearchFieldLabelClassName =
-  "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 lg:text-[11px] lg:tracking-[0.12em] lg:text-slate-700";
-const dealsSearchFieldControlClassName =
-  "flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-0 lg:h-8 lg:text-[15px]";
-const dealsMobileDoneButtonClassName =
-  "focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-bold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35";
-
-const normalizeSuggestionText = (value: string) =>
-  value.normalize("NFKD").replace(/\p{M}/gu, "").trim().toLowerCase();
-
-const dedupeSuggestions = (suggestions: AirportOption[]) => {
-  const seenCodes = new Set<string>();
-  const seenNames = new Set<string>();
-  const deduped: AirportOption[] = [];
-
-  for (const suggestion of suggestions) {
-    const codeKey = suggestion.code.trim().toUpperCase();
-    if (!codeKey || seenCodes.has(codeKey)) continue;
-
-    const nameKey = `${normalizeSuggestionText(suggestion.city)}|${normalizeSuggestionText(suggestion.airport)}`;
-    if (seenNames.has(nameKey)) continue;
-
-    seenCodes.add(codeKey);
-    seenNames.add(nameKey);
-    deduped.push(suggestion);
-  }
-
-  return deduped;
-};
-
-const cabinClasses: Array<{ value: CabinClass; labelKey: string }> = [
-  { value: "economy", labelKey: "deals.cabin.economy" },
-  { value: "business", labelKey: "deals.cabin.business" },
-  { value: "first", labelKey: "deals.cabin.first" },
-];
-
-const destinationIdeas = [
-  {
-    city: "Tokyo",
-    cityKey: "deals.destination.tokyo.city",
-    countryKey: "deals.destination.tokyo.country",
-    destinationQuery: "Tokyo",
-    image:
-      "https://images.pexels.com/photos/31344755/pexels-photo-31344755.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAltKey: "deals.destination.tokyo.imageAlt",
-  },
-  {
-    city: "London",
-    cityKey: "deals.destination.london.city",
-    countryKey: "deals.destination.london.country",
-    destinationQuery: "London",
-    image:
-      "https://images.pexels.com/photos/33843218/pexels-photo-33843218.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAltKey: "deals.destination.london.imageAlt",
-  },
-  {
-    city: "Paris",
-    cityKey: "deals.destination.paris.city",
-    countryKey: "deals.destination.paris.country",
-    destinationQuery: "Paris",
-    image:
-      "https://images.pexels.com/photos/2082103/pexels-photo-2082103.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAltKey: "deals.destination.paris.imageAlt",
-  },
-  {
-    city: "Dubai",
-    cityKey: "deals.destination.dubai.city",
-    countryKey: "deals.destination.dubai.country",
-    destinationQuery: "Dubai",
-    image:
-      "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAltKey: "deals.destination.dubai.imageAlt",
-  },
-  {
-    city: "Cancun",
-    cityKey: "deals.destination.cancun.city",
-    countryKey: "deals.destination.cancun.country",
-    destinationQuery: "Cancun",
-    image:
-      "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?auto=format&fit=crop&w=1200&q=80",
-    imageAltKey: "deals.destination.cancun.imageAlt",
-  },
-  {
-    city: "Rome",
-    cityKey: "deals.destination.rome.city",
-    countryKey: "deals.destination.rome.country",
-    destinationQuery: "Rome",
-    image:
-      "https://images.pexels.com/photos/1701595/pexels-photo-1701595.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAltKey: "deals.destination.rome.imageAlt",
-  },
-];
-
-const parseIsoDate = (value: string) => {
-  if (!value) return null;
-
-  const [year, month, day] = value.split("-").map(Number);
-  if (!year || !month || !day) return null;
-
-  const parsedDate = new Date(year, month - 1, day);
-  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
-};
-
-const toIsoDate = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-};
-
-const addDays = (date: Date, days: number) => {
-  const nextDate = new Date(date);
-  nextDate.setDate(nextDate.getDate() + days);
-  return toIsoDate(nextDate);
-};
-
-const startOfLocalDay = (date: Date) =>
-  new Date(date.getFullYear(), date.getMonth(), date.getDate());
-const todayLocal = () => startOfLocalDay(new Date());
-const isBeforeToday = (date: Date) =>
-  startOfLocalDay(date).getTime() < todayLocal().getTime();
-const addMonths = (date: Date, offset: number) =>
-  new Date(date.getFullYear(), date.getMonth() + offset, 1);
-
-const buildMonthCells = (monthDate: Date) => {
-  const firstDay = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
-  const startOffset = firstDay.getDay();
-  const startDate = new Date(
-    monthDate.getFullYear(),
-    monthDate.getMonth(),
-    1 - startOffset,
-  );
-
-  return Array.from({ length: 42 }, (_, index) => {
-    const date = new Date(
-      startDate.getFullYear(),
-      startDate.getMonth(),
-      startDate.getDate() + index,
-    );
-
-    return {
-      date,
-      isCurrentMonth: date.getMonth() === monthDate.getMonth(),
-    };
-  });
-};
-
-const formatShortDate = (value: string, locale: string) => {
-  const parsedDate = parseIsoDate(value);
-  if (!parsedDate) return "";
-
-  return new Intl.DateTimeFormat(locale, {
-    month: "short",
-    day: "numeric",
-  }).format(parsedDate);
-};
-
-const clampCount = (value: number, minimum: number, maximum: number) => {
-  if (!Number.isFinite(value)) return minimum;
-  return Math.max(minimum, Math.min(maximum, value));
-};
-
-const formatDealsCountLabel = (
-  template: string,
-  values: Record<string, string | number>,
-) =>
-  Object.entries(values).reduce(
-    (summary, [key, value]) =>
-      summary.replaceAll(`{{${key}}}`, String(value)),
-    template,
-  );
+const fieldClass =
+  "min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-slate-950 focus:border-[#004BB8] focus:outline-none focus:ring-2 focus:ring-[#004BB8]/20";
+const labelClass = "grid gap-1 text-sm font-semibold text-slate-700";
 
 export default function DealsPage() {
-  const { locale, t: dictionary } = useLocale();
+  const query = useSearchParams();
   const router = useRouter();
-  const { start: startRouteProgress } = useRouteProgress();
-  const t = useCallback(
-    (key: string) => dictionary[key] ?? enTranslations[key] ?? key,
-    [dictionary],
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? en[key] ?? key;
+  const [search, setSearch] = useState<DealsSearch>(() =>
+    parseDealsSearchParams(query),
   );
-  const tWithLabel = useCallback(
-    (key: string, label: string) => t(key).replace("{{label}}", label),
-    [t],
-  );
-  const airportPickerLabels = useMemo(
-    () => ({
-      clear: t("clear"),
-      done: t("done"),
-      chooseOrigin: t("chooseOrigin"),
-      clearOrigin: t("clearOrigin"),
-      clearDestination: t("clearDestination"),
-      searchAirportsAndCities: t("searchAirportsAndCities"),
-      searchAirportsOrCities: t("searchAirportsOrCities"),
-      startTypingCityOrAirport: t("startTypingCityOrAirport"),
-      searchingAirportsAndCities: t("searchingAirportsAndCities"),
-      noMatchingAirportsOrCities: t("noMatchingAirportsOrCities"),
-    }),
-    [t],
-  );
-
-  const [packageMode, setPackageMode] = useState<PackageMode>("hotel-flight");
-  const [origin, setOrigin] = useState("");
-  const [destination, setDestination] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [adults, setAdults] = useState(1);
-  const [children, setChildren] = useState(0);
-  const [rooms, setRooms] = useState(1);
-  const [driverAge, setDriverAge] = useState(30);
-  const [cabinClass, setCabinClass] = useState<CabinClass>("economy");
-  const [datesOpen, setDatesOpen] = useState(false);
-  const [travelersOpen, setTravelersOpen] = useState(false);
-  const [activeMobileAirportPicker, setActiveMobileAirportPicker] =
-    useState<AirportField | null>(null);
-  const [originSuggestions, setOriginSuggestions] = useState<AirportOption[]>(
-    [],
-  );
-  const [destinationSuggestions, setDestinationSuggestions] = useState<
-    AirportOption[]
-  >([]);
-  const [originLoading, setOriginLoading] = useState(false);
-  const [destinationLoading, setDestinationLoading] = useState(false);
-  const [visibleMonthDate, setVisibleMonthDate] = useState(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 1);
-  });
-  const [error, setError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const originInputRef = useRef<HTMLInputElement>(null);
-  const originMobileLauncherRef = useRef<HTMLButtonElement>(null);
-  const destinationInputRef = useRef<HTMLInputElement>(null);
-  const destinationMobileLauncherRef = useRef<HTMLButtonElement>(null);
-  const datesWrapperRef = useRef<HTMLDivElement>(null);
-  const datesMobileLauncherRef = useRef<HTMLButtonElement>(null);
-  const travelersWrapperRef = useRef<HTMLDivElement>(null);
-  const travelersMobileLauncherRef = useRef<HTMLButtonElement>(null);
-
-  const selectedMode =
-    packageModes.find((mode) => mode.value === packageMode) ?? packageModes[0];
-  const includesFlight = selectedMode.includesFlight;
-  const includesHotel = selectedMode.includesHotel;
-  const includesCar = selectedMode.includesCar;
-  const checkInParsed = parseIsoDate(startDate);
-  const checkOutParsed = parseIsoDate(endDate);
-
-  const dateSummary = useMemo(() => {
-    const formattedStart = formatShortDate(startDate, locale);
-    const formattedEnd = formatShortDate(endDate, locale);
-
-    if (!formattedStart) {
-      return includesHotel
-        ? t("deals.dateHotelPlaceholder")
-        : t("deals.dateFlightPlaceholder");
-    }
-
-    return formattedEnd
-      ? `${formattedStart} — ${formattedEnd}`
-      : formattedStart;
-  }, [endDate, includesHotel, locale, startDate, t]);
-
-  const travelersFieldLabelKey = includesHotel
-    ? includesCar
-      ? "deals.travelersRoomsCarLabel"
-      : "deals.travelersRoomsLabel"
-    : includesCar
-      ? "deals.travelersCarsLabel"
-      : includesFlight
-        ? "deals.travelersCabinLabel"
-        : "deals.travelersDetailsLabel";
-  const travelersFieldLabel = t(travelersFieldLabelKey);
-
-  const travelersSummary = useMemo(() => {
-    const normalizedAdults = clampCount(adults, 1, 12);
-    const normalizedChildren = clampCount(children, 0, 12 - normalizedAdults);
-    const travelerCount = normalizedAdults + normalizedChildren;
-    const travelerLabel =
-      travelerCount === 1
-        ? t("deals.travelerSingular")
-        : t("deals.travelerPlural");
-    const cabinLabel = t(
-      cabinClasses.find((cabin) => cabin.value === cabinClass)?.labelKey ??
-        "deals.cabin.economy",
-    );
-
-    if (includesHotel && includesFlight) {
-      const normalizedRooms = clampCount(rooms, 1, 6);
-      const roomLabel =
-        normalizedRooms === 1 ? t("deals.roomSingular") : t("deals.roomPlural");
-      return formatDealsCountLabel(t("deals.countSummary.list"), {
-        items: [
-          formatDealsCountLabel(t("deals.countSummary.travelers"), {
-            count: travelerCount,
-            label: travelerLabel,
-          }),
-          formatDealsCountLabel(t("deals.countSummary.rooms"), {
-            count: normalizedRooms,
-            label: roomLabel,
-          }),
-        ].join(", "),
-      });
-    }
-
-    if (includesHotel) {
-      const normalizedRooms = clampCount(rooms, 1, 6);
-      const roomLabel =
-        normalizedRooms === 1 ? t("deals.roomSingular") : t("deals.roomPlural");
-      return formatDealsCountLabel(t("deals.countSummary.list"), {
-        items: [
-          formatDealsCountLabel(t("deals.countSummary.travelers"), {
-            count: travelerCount,
-            label: travelerLabel,
-          }),
-          formatDealsCountLabel(t("deals.countSummary.rooms"), {
-            count: normalizedRooms,
-            label: roomLabel,
-          }),
-        ].join(", "),
-      });
-    }
-
-    const formattedTravelers = formatDealsCountLabel(
-      t("deals.countSummary.travelers"),
-      {
-        count: travelerCount,
-        label: travelerLabel,
-      },
-    );
-
-    return includesFlight
-      ? formatDealsCountLabel(t("deals.countSummary.list"), {
-          items: [formattedTravelers, cabinLabel].join(", "),
-        })
-      : formattedTravelers;
-  }, [
-    adults,
-    cabinClass,
-    children,
-    includesFlight,
-    includesHotel,
-    rooms,
-    t,
-  ]);
-
-  const destinationIdeaHref = useMemo(() => {
-    const baseDate = new Date();
-    const defaultCheckIn = addDays(baseDate, 21);
-    const defaultCheckOut = addDays(baseDate, 24);
-
-    return (destinationQuery: string) =>
-      `/hotels/results?${new URLSearchParams({
-        destination: destinationQuery,
-        checkIn: defaultCheckIn,
-        checkOut: defaultCheckOut,
-        guests: "2",
-        rooms: "1",
-      }).toString()}`;
-  }, []);
-
-  const buildPlacesUrl = useCallback((query: string, context: AirportField) => {
-    const params = new URLSearchParams();
-    if (query.length >= 2) params.set("q", query);
-    params.set("context", context);
-    if (typeof navigator !== "undefined" && navigator.language) {
-      params.set("locale", navigator.language);
-    }
-
-    return `/api/flights/places?${params.toString()}`;
-  }, []);
-
-  useAirportSuggestions({
-    query: origin,
-    context: "origin",
-    buildPlacesUrl,
-    setLoading: setOriginLoading,
-    setSuggestions: setOriginSuggestions,
-  });
-  useAirportSuggestions({
-    query: destination,
-    context: "destination",
-    buildPlacesUrl,
-    setLoading: setDestinationLoading,
-    setSuggestions: setDestinationSuggestions,
-  });
-
-  const destinationIdeaCards = useMemo(
-    () =>
-      destinationIdeas.map((idea) => ({
-        ...idea,
-        href: destinationIdeaHref(idea.destinationQuery),
-      })),
-    [destinationIdeaHref],
-  );
-
-  useEffect(() => {
-    const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target;
-
-      if (!(target instanceof Node)) return;
-
-      if (
-        target instanceof Element &&
-        target.closest("[data-flight-mobile-picker-shell]")
-      ) {
-        return;
-      }
-
-      if (!datesWrapperRef.current?.contains(target)) {
-        setDatesOpen(false);
-      }
-
-      if (!travelersWrapperRef.current?.contains(target)) {
-        setTravelersOpen(false);
-      }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-
-      setDatesOpen(false);
-      setTravelersOpen(false);
-      setActiveMobileAirportPicker(null);
-    };
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, []);
-
-  const handleModeChange = (mode: PackageMode) => {
-    setPackageMode(mode);
-    setDatesOpen(false);
-    setTravelersOpen(false);
-    setActiveMobileAirportPicker(null);
-    setError("");
-  };
-
-  const handleToggleDates = () => {
-    setDatesOpen((previousOpen) => {
-      const nextOpen = !previousOpen;
-      if (nextOpen) {
-        setTravelersOpen(false);
-        setActiveMobileAirportPicker(null);
-      }
-      return nextOpen;
-    });
-  };
-
-  const handleToggleTravelers = () => {
-    setTravelersOpen((previousOpen) => {
-      const nextOpen = !previousOpen;
-      if (nextOpen) {
-        setDatesOpen(false);
-        setActiveMobileAirportPicker(null);
-      }
-      return nextOpen;
-    });
-  };
-
-  const handleSelectDate = (date: Date) => {
-    if (isBeforeToday(date)) return;
-
-    const selectedIso = toIsoDate(date);
-
-    if (!startDate || (startDate && endDate)) {
-      setStartDate(selectedIso);
-      setEndDate("");
-      setError("");
-      return;
-    }
-
-    if (selectedIso <= startDate) {
-      setStartDate(selectedIso);
-      setEndDate("");
-      setError("");
-      return;
-    }
-
-    setEndDate(selectedIso);
-    setError("");
-  };
-
-  const adjustAdults = (offset: number) => {
-    setAdults((current) => clampCount(current + offset, 1, 12 - children));
-  };
-
-  const adjustChildren = (offset: number) => {
-    setChildren((current) => clampCount(current + offset, 0, 12 - adults));
-  };
-
-  const adjustRooms = (offset: number) => {
-    setRooms((current) => clampCount(current + offset, 1, 6));
-  };
-
-  const adjustDriverAge = (offset: number) => {
-    setDriverAge((current) => clampCount(current + offset, 18, 99));
-  };
-
-  const openMobileAirportPicker = (field: AirportField) => {
-    setDatesOpen(false);
-    setTravelersOpen(false);
-    setError("");
-    setActiveMobileAirportPicker(field);
-  };
-
-  const clearAirport = (field: AirportField) => {
-    if (field === "origin") {
-      setOrigin("");
-      setOriginSuggestions([]);
-      setOriginLoading(false);
-      setError("");
-      return;
-    }
-
-    setDestination("");
-    setDestinationSuggestions([]);
-    setDestinationLoading(false);
-    setError("");
-  };
-
-  const selectAirport = (field: AirportField, option: AirportOption) => {
-    const formattedLabel = formatAirportLabel(option, locale);
-
-    if (field === "origin") {
-      setOrigin(formattedLabel);
-    } else {
-      setDestination(formattedLabel);
-    }
-
-    setError("");
-  };
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (isSubmitting) {
-      return;
-    }
-
-    const trimmedOrigin = origin.trim();
-    const trimmedDestination = destination.trim();
-    const normalizedAdults = clampCount(adults, 1, 12);
-    const normalizedChildren = clampCount(children, 0, 12 - normalizedAdults);
-    const normalizedRooms = clampCount(rooms, 1, 6);
-    const normalizedDriverAge = clampCount(driverAge, 18, 99);
-
-    setAdults(normalizedAdults);
-    setChildren(normalizedChildren);
-    setRooms(normalizedRooms);
-    setDriverAge(normalizedDriverAge);
-
-    if (includesFlight && !trimmedOrigin) {
-      setError(t("deals.error.origin"));
-      return;
-    }
-
-    if (!trimmedDestination) {
-      setError(t("deals.error.destination"));
-      return;
-    }
-
-    if (!startDate) {
-      setError(t("deals.error.startDate"));
-      return;
-    }
-
-    if (!endDate) {
-      setError(t("deals.error.endDate"));
-      return;
-    }
-
-    if (endDate <= startDate) {
-      setError(t("deals.error.dateOrder"));
-      return;
-    }
-
-    if (normalizedAdults < 1) {
-      setError(t("deals.error.adults"));
-      return;
-    }
-
-    if (normalizedChildren < 0) {
-      setError(t("deals.error.children"));
-      return;
-    }
-
-    if (!includesFlight && normalizedAdults + normalizedChildren < 1) {
-      setError(t("deals.error.guests"));
-      return;
-    }
-
-    if (includesHotel && normalizedRooms < 1) {
-      setError(t("deals.error.rooms"));
-      return;
-    }
-
-    setError("");
-
-    if (includesFlight) {
-      const travelers = normalizedAdults + normalizedChildren;
-      const params = new URLSearchParams({
-        tripType: "round-trip",
-        origin: trimmedOrigin,
-        destination: trimmedDestination,
-        departureDate: startDate,
-        returnDate: endDate,
-        adults: String(normalizedAdults),
-        children: String(normalizedChildren),
-        infants: "0",
-        travelers: String(travelers),
-        cabinClass,
-      });
-
-      setIsSubmitting(true);
-      startRouteProgress();
-      router.push(`/flights/results?${params.toString()}`);
-      return;
-    }
-
-    const guests = normalizedAdults + normalizedChildren;
-    const params = new URLSearchParams({
-      destination: trimmedDestination,
-      checkIn: startDate,
-      checkOut: endDate,
-      guests: String(guests),
-      rooms: String(normalizedRooms),
-    });
-
-    setIsSubmitting(true);
-    startRouteProgress();
-    router.push(`/hotels/results?${params.toString()}`);
-  };
-
-  const calendarLocale = useMemo(
-    () => normalizeFlightsCalendarLocale(locale),
-    [locale],
-  );
-  const accessibleDateFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(calendarLocale, {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      }),
-    [calendarLocale],
-  );
-  const weekdays = useMemo(
-    () => formatFlightsWeekdays(calendarLocale),
-    [calendarLocale],
-  );
-
-  const renderDateCalendar = (compact = false) => {
-    const months = compact
-      ? Array.from({ length: 12 }, (_, monthOffset) =>
-          addMonths(todayLocal(), monthOffset),
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof DealsSearch, string>>
+  >({});
+  const [carOpen, setCarOpen] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => setSearch(parseDealsSearchParams(query)), [query]);
+  const products = getDealsProducts(search.mode);
+  const set = <K extends keyof DealsSearch>(key: K, value: DealsSearch[K]) =>
+    setSearch((previous) => {
+      const next = { ...previous, [key]: value };
+      if (key === "destination") {
+        if (
+          !previous.carPickupLocation ||
+          previous.carPickupLocation === previous.destination
         )
-      : [0, 1].map((monthOffset) => addMonths(visibleMonthDate, monthOffset));
-
-    return (
-      <div
-        className={cn(
-          compact
-            ? "mx-auto w-full max-w-xl space-y-8 pb-2"
-            : "grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4",
-        )}
-      >
-        {months.map((monthDate) => {
-          const cells = buildMonthCells(monthDate);
-          const monthKey = `${monthDate.getFullYear()}-${monthDate.getMonth()}`;
-
-          return (
-            <section
-              key={monthKey}
-              aria-label={formatFlightsMonthHeading(monthDate, calendarLocale)}
-              className={cn("min-w-0", compact ? "space-y-2.5" : "")}
-            >
-              <h3
-                className={cn(
-                  compact
-                    ? "text-start text-[17px] font-bold tracking-tight text-slate-950"
-                    : "mb-1.5 text-center text-sm font-semibold text-slate-800",
-                )}
-              >
-                {formatFlightsMonthHeading(monthDate, calendarLocale)}
-              </h3>
-              <div
-                className={cn(
-                  "grid grid-cols-7 text-center text-slate-500",
-                  compact
-                    ? "text-[12px] font-semibold tracking-[0.08em]"
-                    : "mb-1.5 text-xs font-semibold",
-                )}
-              >
-                {weekdays.map((weekday) => (
-                  <span key={weekday} className={compact ? "py-2" : ""}>
-                    {weekday}
-                  </span>
+          next.carPickupLocation = String(value);
+        if (
+          !previous.carDropoffLocation ||
+          previous.carDropoffLocation === previous.destination
+        )
+          next.carDropoffLocation = String(value);
+      }
+      if (key === "startDate") {
+        if (previous.hotelStayMode === "match-trip")
+          next.hotelCheckIn = String(value);
+        if (
+          !previous.carPickupDate ||
+          previous.carPickupDate === previous.startDate
+        )
+          next.carPickupDate = String(value);
+      }
+      if (key === "endDate") {
+        if (previous.hotelStayMode === "match-trip")
+          next.hotelCheckOut = String(value);
+        if (
+          !previous.carDropoffDate ||
+          previous.carDropoffDate === previous.endDate
+        )
+          next.carDropoffDate = String(value);
+      }
+      return next;
+    });
+  const changeMode = (mode: DealsPackageMode) => {
+    setSearch((previous) => ({ ...previous, mode }));
+    setErrors({});
+  };
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    const next = validateDealsSearch(search);
+    setErrors(next);
+    const first = Object.keys(next)[0];
+    if (first) {
+      formRef.current?.querySelector<HTMLElement>(`[name="${first}"]`)?.focus();
+      return;
+    }
+    router.push(buildDealsResultsUrl(search));
+  };
+  const input = (name: keyof DealsSearch, label: string, type = "text") => (
+    <label className={labelClass}>
+      {label}
+      <input
+        className={fieldClass}
+        name={name}
+        type={type}
+        value={String(search[name])}
+        aria-invalid={Boolean(errors[name])}
+        aria-describedby={errors[name] ? `${name}-error` : undefined}
+        onChange={(e) =>
+          set(
+            name,
+            (typeof search[name] === "number"
+              ? Number(e.target.value)
+              : e.target.value) as never,
+          )
+        }
+      />
+      {errors[name] && (
+        <span
+          id={`${name}-error`}
+          role="alert"
+          className="text-xs text-red-700"
+        >
+          {t(errors[name]!)}
+        </span>
+      )}
+    </label>
+  );
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <AppHeader />
+      <main>
+        <section className="bg-[#021C2B] px-4 py-12 text-white">
+          <div className="mx-auto max-w-7xl">
+            <p className="text-sm font-bold uppercase tracking-widest text-sky-300">
+              {t("deals")}
+            </p>
+            <h1 className="mt-2 text-3xl font-bold md:text-5xl">
+              {t("deals.heroTitle")}
+            </h1>
+            <p className="mt-3 max-w-2xl text-slate-200">
+              {t("deals.heroSubtitle")}
+            </p>
+          </div>
+        </section>
+        <section className="mx-auto max-w-7xl px-4 py-8">
+          <form
+            ref={formRef}
+            onSubmit={submit}
+            noValidate
+            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-6"
+          >
+            <fieldset>
+              <legend className="mb-3 font-bold text-slate-900">
+                {t("deals.packageLegend")}
+              </legend>
+              <div className="flex flex-wrap gap-2">
+                {dealsModes.map((mode) => (
+                  <label
+                    key={mode}
+                    className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-semibold ${search.mode === mode ? "border-[#004BB8] bg-blue-50 text-[#004BB8]" : "border-slate-300 text-slate-700"}`}
+                  >
+                    <input
+                      className="sr-only"
+                      type="radio"
+                      name="mode"
+                      checked={search.mode === mode}
+                      onChange={() => changeMode(mode)}
+                    />
+                    {t(modeKeys[mode])}
+                  </label>
                 ))}
               </div>
-              <div
-                className={cn(
-                  "grid grid-cols-7",
-                  compact ? "gap-y-1.5" : "gap-1",
+            </fieldset>
+            <fieldset className="mt-6">
+              <legend className="sr-only">
+                {t("deals.results.tripSummary")}
+              </legend>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {products.flight && input("origin", t("deals.originLabel"))}
+                {input("destination", t("deals.destinationLabel"))}
+                {input(
+                  "startDate",
+                  products.flight
+                    ? t("deals.departDate")
+                    : t("deals.results.hotelCheckIn"),
+                  "date",
                 )}
-              >
-                {cells.map((cell) => {
-                  const day = cell.date;
-                  const iso = toIsoDate(day);
-                  const isStart = iso === startDate;
-                  const isEnd = iso === endDate;
-                  const isPastDate = isBeforeToday(day);
-                  const isToday = toIsoDate(new Date()) === iso;
-                  const isInRange = Boolean(
-                    checkInParsed &&
-                    checkOutParsed &&
-                    !isPastDate &&
-                    day > checkInParsed &&
-                    day < checkOutParsed,
-                  );
-
-                  if (!cell.isCurrentMonth) {
-                    return (
-                      <span
-                        key={`placeholder-${iso}`}
-                        aria-hidden="true"
-                        className={
-                          compact
-                            ? "h-11 w-full"
-                            : "h-8 w-8 justify-self-center"
-                        }
-                      />
-                    );
-                  }
-
-                  return (
-                    <button
-                      key={iso}
-                      type="button"
-                      aria-label={`${t("deals.selectDateAriaPrefix")} ${accessibleDateFormatter.format(day)}`}
-                      aria-pressed={isStart || isEnd}
-                      onClick={() => handleSelectDate(day)}
-                      disabled={isPastDate}
-                      aria-disabled={isPastDate}
-                      className={cn(
-                        "focus-ring relative flex items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed",
-                        compact
-                          ? "mx-auto h-11 w-full max-w-11 text-[15px] font-semibold"
-                          : "h-8 w-8 justify-self-center text-sm",
-                        isPastDate
-                          ? "text-slate-300"
-                          : "text-slate-800 hover:bg-[#004BB8]/8 hover:text-[#004BB8]",
-                        isToday &&
-                          !isPastDate &&
-                          "ring-1 ring-inset ring-[#004BB8]/20",
-                        isInRange &&
-                          "bg-[#004BB8]/10 text-[#021C2B] hover:bg-[#004BB8]/10",
-                        (isStart || isEnd) &&
-                          "bg-[#004BB8] text-white shadow-none ring-0 hover:bg-[#004BB8] hover:text-white",
-                      )}
+                {input(
+                  "endDate",
+                  products.flight
+                    ? t("deals.returnDate")
+                    : t("deals.results.hotelCheckOut"),
+                  "date",
+                )}
+                {input("adults", t("deals.results.adults"), "number")}
+                {input("children", t("deals.results.children"), "number")}
+                {products.hotel && input("rooms", t("rooms"), "number")}
+                {products.flight && (
+                  <label className={labelClass}>
+                    {t("deals.cabinClass")}
+                    <select
+                      name="cabinClass"
+                      className={fieldClass}
+                      value={search.cabinClass}
+                      onChange={(e) =>
+                        set(
+                          "cabinClass",
+                          e.target.value as DealsSearch["cabinClass"],
+                        )
+                      }
                     >
-                      {day.getDate()}
-                      {isToday && !isStart && !isEnd ? (
-                        <span
-                          className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#004BB8]"
-                          aria-hidden="true"
-                        />
-                      ) : null}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          );
-        })}
-      </div>
-    );
-  };
-
-  if (isSubmitting) {
-    return (
-      <>
-        <AppHeader />
-        <main className="min-h-[calc(100svh-5rem)] bg-[radial-gradient(circle_at_top_left,rgba(92,182,178,0.11),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(0,75,184,0.09),transparent_36%),linear-gradient(180deg,#F2F7FA_0%,#FFFFFF_58%,#FFFFFF_100%)]">
-          <BrandedLoading
-            variant="fullscreen"
-            visual="logoPulse"
-            showProgress={false}
-            searchType="deals"
-            className="min-h-[calc(100svh-5rem)] bg-transparent px-5"
-            contentClassName="max-w-md text-center"
-          />
-        </main>
-        <Footer />
-      </>
-    );
-  }
-
-  const countRows = [
-    {
-      key: "adults",
-      label: t("adults"),
-      value: clampCount(adults, 1, 12 - children),
-      min: 1,
-      max: 12 - children,
-      onDecrement: () => adjustAdults(-1),
-      onIncrement: () => adjustAdults(1),
-    },
-    {
-      key: "children",
-      label: t("children"),
-      value: clampCount(children, 0, 12 - adults),
-      min: 0,
-      max: 12 - adults,
-      onDecrement: () => adjustChildren(-1),
-      onIncrement: () => adjustChildren(1),
-    },
-    ...(includesHotel
-      ? [
-          {
-            key: "rooms",
-            label: t("rooms"),
-            value: clampCount(rooms, 1, 6),
-            min: 1,
-            max: 6,
-            onDecrement: () => adjustRooms(-1),
-            onIncrement: () => adjustRooms(1),
-          },
-        ]
-      : []),
-    ...(includesCar
-      ? [
-          {
-            key: "driverAge",
-            label: t("deals.driverAge"),
-            value: clampCount(driverAge, 18, 99),
-            min: 18,
-            max: 99,
-            onDecrement: () => adjustDriverAge(-1),
-            onIncrement: () => adjustDriverAge(1),
-          },
-        ]
-      : []),
-  ];
-
-
-  const renderTravelersPicker = (compact = true) => (
-    <div
-      className={cn(
-        "mx-auto w-full",
-        compact ? "max-w-xl space-y-4" : "space-y-3",
-      )}
-    >
-      <div>
-        <p className="mb-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
-          {travelersFieldLabel}
-        </p>
-        {!compact ? (
-          <h2 className="mb-2 text-lg font-extrabold tracking-tight text-slate-950">
-            {travelersSummary}
-          </h2>
-        ) : null}
-        <div
-          className={cn(
-            "overflow-hidden",
-            compact
-              ? "rounded-3xl border border-slate-200 bg-white shadow-[0_14px_38px_rgba(15,23,42,0.07)]"
-              : "rounded-none border-y border-slate-100 bg-transparent",
-          )}
-        >
-          {countRows.map((row) => {
-            const canDecrement = row.value > row.min;
-            const canIncrement = row.value < row.max;
-
-            return (
-              <div
-                key={row.key}
-                className={cn(
-                  "flex items-center justify-between gap-4 border-b border-slate-100 last:border-b-0",
-                  compact ? "px-4 py-4 sm:px-5" : "py-3",
+                      <option value="economy">
+                        {t("deals.cabin.economy")}
+                      </option>
+                      <option value="business">
+                        {t("deals.cabin.business")}
+                      </option>
+                      <option value="first">{t("deals.cabin.first")}</option>
+                    </select>
+                  </label>
                 )}
-              >
-                <span className="min-w-0 text-sm font-bold text-slate-950">
-                  {row.label}
-                </span>
-                <div className="flex shrink-0 items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={row.onDecrement}
-                    disabled={!canDecrement}
-                    aria-label={tWithLabel("deals.decreaseCountAria", row.label)}
-                    className={cn(
-                      "focus-ring inline-flex items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition-colors hover:border-[#004BB8]/25 hover:bg-[#004BB8]/8 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300",
-                      compact ? "h-10 w-10 shadow-sm" : "h-8 w-8",
-                    )}
-                  >
-                    <Minus className="h-3.5 w-3.5" aria-hidden="true" />
-                  </button>
-                  <span className="min-w-8 text-center text-base font-extrabold tabular-nums text-slate-950">
-                    {row.value}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={row.onIncrement}
-                    disabled={!canIncrement}
-                    aria-label={tWithLabel("deals.increaseCountAria", row.label)}
-                    className={cn(
-                      "focus-ring inline-flex items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition-colors hover:border-[#004BB8]/25 hover:bg-[#004BB8]/8 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300",
-                      compact ? "h-10 w-10 shadow-sm" : "h-8 w-8",
-                    )}
-                  >
-                    <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                  </button>
-                </div>
               </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {includesFlight ? (
-        <div
-          className={cn(
-            compact
-              ? "rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_14px_38px_rgba(15,23,42,0.07)]"
-              : "pt-1",
-          )}
-        >
-          <p className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
-            {t("deals.cabinClass")}
-          </p>
-          <div className="grid grid-cols-3 gap-2">
-            {cabinClasses.map((cabin) => (
-              <button
-                key={cabin.value}
-                type="button"
-                onClick={() => setCabinClass(cabin.value)}
-                className={cn(
-                  "focus-ring border px-2 text-center text-sm leading-4 transition-all",
-                  compact ? "min-h-11 rounded-2xl" : "min-h-9 rounded-xl",
-                  cabinClass === cabin.value
-                    ? "border-[#004BB8] bg-[#004BB8] font-extrabold text-white shadow-[0_10px_22px_rgba(0,75,184,0.22)]"
-                    : "border-slate-200 bg-slate-50/80 font-bold text-slate-700 hover:border-[#004BB8]/20 hover:bg-[#004BB8]/8 hover:text-[#004BB8]",
+            </fieldset>
+            {products.hotel && products.flight && (
+              <fieldset className="mt-5">
+                <legend className="sr-only">
+                  {t("deals.results.hotelDates")}
+                </legend>
+                <label className="flex min-h-11 items-center gap-3 font-semibold text-slate-800">
+                  <input
+                    type="checkbox"
+                    checked={search.hotelStayMode === "custom"}
+                    onChange={(e) => {
+                      set(
+                        "hotelStayMode",
+                        e.target.checked ? "custom" : "match-trip",
+                      );
+                      if (!e.target.checked)
+                        setSearch((p) => ({
+                          ...p,
+                          hotelStayMode: "match-trip",
+                          hotelCheckIn: p.startDate,
+                          hotelCheckOut: p.endDate,
+                        }));
+                    }}
+                  />
+                  {t("deals.results.customHotelDates")}
+                </label>
+                {search.hotelStayMode === "custom" && (
+                  <div className="mt-3 grid gap-4 md:grid-cols-2">
+                    {input(
+                      "hotelCheckIn",
+                      t("deals.results.hotelCheckIn"),
+                      "date",
+                    )}
+                    {input(
+                      "hotelCheckOut",
+                      t("deals.results.hotelCheckOut"),
+                      "date",
+                    )}
+                  </div>
                 )}
-              >
-                {t(cabin.labelKey)}
+              </fieldset>
+            )}
+            {products.car && (
+              <fieldset className="mt-5 rounded-xl bg-slate-50 p-4">
+                <legend className="font-bold text-slate-900">
+                  {t("deals.results.carDetails")}
+                </legend>
+                <p className="mt-1 text-sm text-slate-600">
+                  {search.carPickupLocation || search.destination} ·{" "}
+                  {search.carPickupDate || search.startDate}{" "}
+                  {search.carPickupTime}
+                </p>
+                <button
+                  type="button"
+                  aria-expanded={carOpen}
+                  onClick={() => setCarOpen((v) => !v)}
+                  className="mt-2 min-h-11 font-bold text-[#004BB8]"
+                >
+                  {t("deals.results.customizeCar")}
+                </button>
+                {carOpen && (
+                  <div className="mt-3 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    {input("carPickupLocation", t("deals.results.carPickup"))}
+                    {input("carDropoffLocation", t("deals.results.carDropoff"))}
+                    {input(
+                      "carPickupDate",
+                      t("deals.results.pickupDate"),
+                      "date",
+                    )}
+                    {input(
+                      "carDropoffDate",
+                      t("deals.results.dropoffDate"),
+                      "date",
+                    )}
+                    {input(
+                      "carPickupTime",
+                      t("deals.results.pickupTime"),
+                      "time",
+                    )}
+                    {input(
+                      "carDropoffTime",
+                      t("deals.results.dropoffTime"),
+                      "time",
+                    )}
+                    {input("driverAge", t("deals.driverAge"))}
+                  </div>
+                )}
+              </fieldset>
+            )}
+            <div className="mt-6 flex justify-end">
+              <button className="min-h-12 rounded-xl bg-[#004BB8] px-8 font-bold text-white hover:bg-[#003b91]">
+                {t("deals.searchButton")}
               </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
-    </div>
-  );
-
-  return (
-    <>
-      <AppHeader />
-
-      <main className="flex-1 bg-slate-50 pb-12">
-        <section className="relative overflow-visible border-b border-transparent bg-[#F6F9FC] pb-14 shadow-[0_18px_45px_rgba(15,23,42,0.06)] sm:pb-20 lg:min-h-[31rem] xl:min-h-[34rem]">
-          <div className="absolute inset-0 overflow-hidden">
-            <Image
-              src={dealsHeroImage}
-              alt=""
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover object-[center_52%]"
-            />
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-950/25 via-slate-100/20 to-sky-100/10" />
-            <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(248,250,252,0.78)_0%,rgba(248,250,252,0.46)_42%,rgba(248,250,252,0.12)_72%,rgba(248,250,252,0)_100%)]" />
-            <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-slate-50 via-slate-50/85 to-transparent" />
-          </div>
-
-          <div className="page-shell relative z-10 pt-8 sm:pt-14">
-            <div className="max-w-[1040px]">
-              <h1 className="max-w-none text-balance text-3xl font-semibold leading-[1.12] tracking-[-0.015em] text-slate-800 sm:text-4xl lg:whitespace-nowrap lg:text-4xl lg:leading-[1.08]">
-                {t("deals.heroTitle")}
-              </h1>
-              <p className="mt-3 max-w-2xl text-base font-medium leading-7 text-slate-700">
-                {t("deals.heroSubtitle")}
-              </p>
             </div>
-          </div>
-
-          <div className="page-shell relative z-20 pt-6 sm:pt-10 lg:absolute lg:inset-x-0 lg:bottom-0 lg:translate-y-[32%] lg:pt-0 xl:translate-y-[35%]">
-            <div className="mx-auto w-full max-w-[1120px] space-y-4">
-              <div className="px-1">
-                <fieldset
-                  className="min-w-0"
-                  aria-label={t("deals.packageLegend")}
-                >
-                  <legend className="sr-only">
-                    {t("deals.packageLegend")}
-                  </legend>
-                  <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
-                    {packageModes.map((mode) => (
-                      <label
-                        key={mode.value}
-                        className={`shrink-0 cursor-pointer rounded-full border px-3.5 py-2 text-sm font-extrabold shadow-sm backdrop-blur transition focus-within:outline-none focus-within:ring-2 focus-within:ring-[#004BB8]/25 focus-within:ring-offset-2 ${
-                          packageMode === mode.value
-                            ? "border-[#004BB8]/20 bg-[#004BB8]/7 text-[#021C2B]"
-                            : "border-white/80 bg-white/80 text-slate-700 hover:border-[#004BB8]/25 hover:bg-white"
-                        }`}
-                      >
-                        <input
-                          className="sr-only"
-                          type="radio"
-                          name="packageMode"
-                          value={mode.value}
-                          checked={packageMode === mode.value}
-                          onChange={() => handleModeChange(mode.value)}
-                        />
-                        {t(mode.labelKey)}
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-                <div className="overflow-visible rounded-3xl border border-slate-200 bg-white p-3 shadow-[0_18px_46px_rgba(15,23,42,0.10)] sm:p-4 lg:p-3">
-                  <div
-                    className={`grid grid-cols-1 gap-3 sm:grid-cols-2 lg:gap-0 ${
-                      includesFlight
-                        ? "lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.25fr)_minmax(0,1.35fr)_minmax(0,1.3fr)_140px]"
-                        : "lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1.45fr)_minmax(0,1.3fr)_140px]"
-                    }`}
-                  >
-                    {includesFlight ? (
-                      <div
-                        className={cn(
-                          dealsSearchFieldShellClassName,
-                          "lg:rounded-s-2xl",
-                        )}
-                      >
-                        <label className={dealsSearchFieldLabelClassName}>
-                          {t("deals.originLabel")}
-                        </label>
-                        <button
-                          ref={originMobileLauncherRef}
-                          type="button"
-                          aria-expanded={activeMobileAirportPicker === "origin"}
-                          aria-haspopup="dialog"
-                          onClick={() => openMobileAirportPicker("origin")}
-                          className={cn(
-                            dealsSearchFieldControlClassName,
-                            "justify-between sm:hidden",
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              "truncate",
-                              !origin && "text-slate-400",
-                            )}
-                          >
-                            {origin || t("deals.originPlaceholder")}
-                          </span>
-                          <ChevronDown
-                            className="h-4 w-4 shrink-0 text-slate-500"
-                            aria-hidden="true"
-                          />
-                        </button>
-                        <div className="relative hidden sm:block">
-                          <input
-                            ref={originInputRef}
-                            id="package-origin"
-                            value={origin}
-                            onChange={(event) => setOrigin(event.target.value)}
-                            placeholder={t("deals.originPlaceholder")}
-                            className={cn(
-                              dealsSearchFieldControlClassName,
-                              "pe-9",
-                            )}
-                            autoComplete="address-level2"
-                            required={includesFlight}
-                          />
-                          {origin ? (
-                            <button
-                              type="button"
-                              aria-label={t("deals.clearOrigin")}
-                              onPointerDown={(event) => event.stopPropagation()}
-                              onClick={() => {
-                                setOrigin("");
-                                setError("");
-                                originInputRef.current?.focus();
-                              }}
-                              className="absolute end-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1"
-                            >
-                              <X className="h-4 w-4" aria-hidden="true" />
-                            </button>
-                          ) : null}
-                        </div>
-                      </div>
-                    ) : null}
-
-                    <div
-                      className={cn(
-                        dealsSearchFieldShellClassName,
-                        !includesFlight && "lg:rounded-s-2xl",
-                      )}
-                    >
-                      <label className={dealsSearchFieldLabelClassName}>
-                        {t("deals.destinationLabel")}
-                      </label>
-                      <button
-                        ref={destinationMobileLauncherRef}
-                        type="button"
-                        aria-expanded={
-                          activeMobileAirportPicker === "destination"
-                        }
-                        aria-haspopup="dialog"
-                        onClick={() => openMobileAirportPicker("destination")}
-                        className={cn(
-                          dealsSearchFieldControlClassName,
-                          "justify-between sm:hidden",
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            "truncate",
-                            !destination && "text-slate-400",
-                          )}
-                        >
-                          {destination || t("deals.destinationPlaceholder")}
-                        </span>
-                        <ChevronDown
-                          className="h-4 w-4 shrink-0 text-slate-500"
-                          aria-hidden="true"
-                        />
-                      </button>
-                      <div className="relative hidden sm:block">
-                        <input
-                          ref={destinationInputRef}
-                          id="package-destination"
-                          value={destination}
-                          onChange={(event) =>
-                            setDestination(event.target.value)
-                          }
-                          placeholder={t("deals.destinationPlaceholder")}
-                          className={cn(
-                            dealsSearchFieldControlClassName,
-                            "pe-9",
-                          )}
-                          autoComplete="address-level2"
-                          required
-                        />
-                        {destination ? (
-                          <button
-                            type="button"
-                            aria-label={t("deals.clearDestination")}
-                            onPointerDown={(event) => event.stopPropagation()}
-                            onClick={() => {
-                              setDestination("");
-                              setError("");
-                              destinationInputRef.current?.focus();
-                            }}
-                            className="absolute end-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1"
-                          >
-                            <X className="h-4 w-4" aria-hidden="true" />
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    <div
-                      ref={datesWrapperRef}
-                      className={dealsSearchFieldShellClassName}
-                    >
-                      <span className={dealsSearchFieldLabelClassName}>
-                        {t("deals.datesLabel")}
-                      </span>
-                      <button
-                        ref={datesMobileLauncherRef}
-                        type="button"
-                        onClick={handleToggleDates}
-                        aria-expanded={datesOpen}
-                        aria-haspopup="dialog"
-                        aria-label={t("deals.dateDialog")}
-                        className={dealsSearchFieldControlClassName}
-                      >
-                        <Calendar
-                          size={16}
-                          className="shrink-0 text-slate-500"
-                        />
-                        <span className="truncate">{dateSummary}</span>
-                      </button>
-                      {datesOpen ? (
-                        <>
-                          <FlightMobilePickerShell
-                            open={datesOpen}
-                            title={t("deals.dateDialog")}
-                            titleId="deals-mobile-dates-title"
-                            launcherRef={datesMobileLauncherRef}
-                            onClose={() => setDatesOpen(false)}
-                            contentClassName="px-4 py-4"
-                            footer={(requestClose) => (
-                              <div className="flex items-center justify-between gap-3">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setStartDate("");
-                                    setEndDate("");
-                                  }}
-                                  className="focus-ring min-h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
-                                >
-                                  {t("clear")}
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={requestClose}
-                                  className={dealsMobileDoneButtonClassName}
-                                >
-                                  {t("done")}
-                                </button>
-                              </div>
-                            )}
-                          >
-                            {renderDateCalendar(true)}
-                          </FlightMobilePickerShell>
-
-                          <div className="absolute inset-x-0 top-[calc(100%+10px)] z-[200] hidden w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:block sm:inset-inline-end-auto sm:w-[min(92vw,620px)] sm:p-4">
-                            <p className="mb-3 text-base font-semibold text-slate-900">
-                              {t("deals.dateDialog")}
-                            </p>
-                            <div className="mb-3 flex items-center justify-between">
-                              <button
-                                type="button"
-                                aria-label={t("deals.previous")}
-                                onClick={() =>
-                                  setVisibleMonthDate((previousMonth) =>
-                                    addMonths(previousMonth, -1),
-                                  )
-                                }
-                                className="focus-ring rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:border-[#004BB8]/20 hover:bg-[#004BB8]/8 hover:text-[#004BB8]"
-                              >
-                                {t("deals.previous")}
-                              </button>
-                              <button
-                                type="button"
-                                aria-label={t("deals.next")}
-                                onClick={() =>
-                                  setVisibleMonthDate((previousMonth) =>
-                                    addMonths(previousMonth, 1),
-                                  )
-                                }
-                                className="focus-ring rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:border-[#004BB8]/20 hover:bg-[#004BB8]/8 hover:text-[#004BB8]"
-                              >
-                                {t("deals.next")}
-                              </button>
-                            </div>
-                            {renderDateCalendar(false)}
-                            <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setStartDate("");
-                                  setEndDate("");
-                                }}
-                                className="focus-ring rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
-                              >
-                                {t("clear")}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setDatesOpen(false)}
-                                className="focus-ring rounded-xl bg-[#004BB8] px-4 py-2 text-sm font-bold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B]"
-                              >
-                                {t("done")}
-                              </button>
-                            </div>
-                          </div>
-                        </>
-                      ) : null}
-                    </div>
-
-                    <div
-                      ref={travelersWrapperRef}
-                      className={dealsSearchFieldShellClassName}
-                    >
-                      <span className={dealsSearchFieldLabelClassName}>
-                        {travelersFieldLabel}
-                      </span>
-                      <button
-                        ref={travelersMobileLauncherRef}
-                        type="button"
-                        onClick={handleToggleTravelers}
-                        aria-expanded={travelersOpen}
-                        aria-haspopup="dialog"
-                        aria-label={travelersFieldLabel}
-                        className={cn(
-                          dealsSearchFieldControlClassName,
-                          "justify-between",
-                        )}
-                      >
-                        <span className="truncate">{travelersSummary}</span>
-                        <ChevronDown
-                          size={16}
-                          className={`shrink-0 text-slate-500 transition-transform ${travelersOpen ? "rotate-180" : ""}`}
-                        />
-                      </button>
-                      {travelersOpen ? (
-                        <>
-                          <FlightMobilePickerShell
-                            open={travelersOpen}
-                            title={travelersFieldLabel}
-                            titleId="deals-mobile-travelers-title"
-                            launcherRef={travelersMobileLauncherRef}
-                            onClose={() => setTravelersOpen(false)}
-                            contentClassName="px-4 py-5"
-                            footer={(requestClose) => (
-                              <div className="flex justify-end">
-                                <button
-                                  type="button"
-                                  onClick={requestClose}
-                                  className={cn(
-                                    dealsMobileDoneButtonClassName,
-                                    "px-6 py-3",
-                                  )}
-                                >
-                                  {t("done")}
-                                </button>
-                              </div>
-                            )}
-                          >
-                            {renderTravelersPicker()}
-                          </FlightMobilePickerShell>
-
-                          <div className="absolute inset-x-0 top-[calc(100%+8px)] z-[200] hidden w-[calc(100vw-24px)] max-w-[360px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:inset-inline-end-auto sm:block sm:w-[min(92vw,360px)]">
-                            {renderTravelersPicker(false)}
-                            <div className="mt-4 border-t border-slate-200 pt-4">
-                              <button
-                                type="button"
-                                onClick={() => setTravelersOpen(false)}
-                                className="w-full rounded-lg bg-[#004BB8] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
-                              >
-                                {t("done")}
-                              </button>
-                            </div>
-                          </div>
-                        </>
-                      ) : null}
-                    </div>
-
-                    <div className="flex min-h-[58px] items-stretch lg:min-h-[72px]">
-                      <button
-                        type="submit"
-                        className="h-12 w-full whitespace-nowrap rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 transition-colors enabled:hover:bg-[#021C2B] enabled:active:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2 disabled:bg-[#004BB8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#004BB8]/20 lg:h-full lg:min-h-[72px] lg:rounded-none lg:rounded-e-2xl lg:border lg:border-s-0 lg:border-[#004BB8]/20 lg:px-5 lg:text-[15px] lg:font-bold lg:shadow-[0_10px_22px_rgba(0,75,184,0.22)] lg:disabled:shadow-[0_10px_22px_rgba(0,75,184,0.22)]"
-                        disabled={isSubmitting}
-                        aria-busy={isSubmitting}
-                      >
-                        {isSubmitting
-                          ? includesFlight
-                            ? t("searchingFlights")
-                            : t("searchingHotels")
-                          : t("deals.searchButton")}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="min-h-6" aria-live="polite">
-                  {error ? (
-                    <p
-                      className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700"
-                      role="alert"
-                    >
-                      {error}
-                    </p>
-                  ) : null}
-                </div>
-
-                <MobileAirportPicker
-                  open={activeMobileAirportPicker === "origin"}
-                  title={t("chooseOrigin")}
-                  inputId="deals-origin-mobile-search"
-                  value={origin}
-                  suggestions={originSuggestions}
-                  isLoading={origin.trim().length >= 2 && originLoading}
-                  launcherRef={originMobileLauncherRef}
-                  labels={airportPickerLabels}
-                  locale={locale}
-                  onChange={(nextValue) => {
-                    setOrigin(nextValue);
-                    setError("");
-                    if (nextValue.trim().length < 2) {
-                      setOriginSuggestions([]);
-                      setOriginLoading(false);
-                    }
-                  }}
-                  onClear={() => clearAirport("origin")}
-                  onSelect={(option) => selectAirport("origin", option)}
-                  onClose={() => setActiveMobileAirportPicker(null)}
-                />
-                <MobileAirportPicker
-                  open={activeMobileAirportPicker === "destination"}
-                  title={t("chooseDestination")}
-                  inputId="deals-destination-mobile-search"
-                  value={destination}
-                  suggestions={destinationSuggestions}
-                  isLoading={
-                    destination.trim().length >= 2 && destinationLoading
-                  }
-                  launcherRef={destinationMobileLauncherRef}
-                  labels={airportPickerLabels}
-                  locale={locale}
-                  onChange={(nextValue) => {
-                    setDestination(nextValue);
-                    setError("");
-                    if (nextValue.trim().length < 2) {
-                      setDestinationSuggestions([]);
-                      setDestinationLoading(false);
-                    }
-                  }}
-                  onClear={() => clearAirport("destination")}
-                  onSelect={(option) => selectAirport("destination", option)}
-                  onClose={() => setActiveMobileAirportPicker(null)}
-                />
-              </form>
-            </div>
-          </div>
-        </section>
-
-        <section className="page-shell pt-12 sm:pt-16 lg:pt-20">
-          <div className="border-t border-transparent pt-8 sm:pt-10">
-            <div className="max-w-2xl">
-              <h2 className="text-xl font-extrabold [letter-spacing:-0.025em] text-slate-950 sm:text-2xl">
-                {t("deals.destinationIdeasTitle")}
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {t("deals.destinationIdeasSubtitle")}
-              </p>
-            </div>
-
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
-              {destinationIdeaCards.map((idea) => (
-                <Link
-                  key={t(idea.cityKey)}
-                  href={idea.href}
-                  aria-label={`${t("deals.destinationCardAriaPrefix")} ${t(idea.cityKey)}, ${t(idea.countryKey)}`}
-                  className="group block overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm shadow-slate-950/5 transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-xl hover:shadow-[#004BB8]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
-                >
-                  <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-                    <Image
-                      src={idea.image}
-                      alt={t(idea.imageAltKey)}
-                      fill
-                      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 50vw"
-                      className="object-cover transition duration-300 group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="p-3.5 sm:p-4">
-                    <p className="text-sm font-extrabold text-slate-950 sm:text-base">
-                      {t(idea.cityKey)}
-                    </p>
-                    <p className="mt-1 text-sm font-medium text-slate-600">
-                      {t(idea.countryKey)}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
+          </form>
         </section>
       </main>
-
       <Footer />
-    </>
+    </div>
   );
-}
-
-function useAirportSuggestions({
-  query,
-  context,
-  buildPlacesUrl,
-  setLoading,
-  setSuggestions,
-}: {
-  query: string;
-  context: AirportField;
-  buildPlacesUrl: (query: string, context: AirportField) => string;
-  setLoading: (loading: boolean) => void;
-  setSuggestions: (suggestions: AirportOption[]) => void;
-}) {
-  useEffect(() => {
-    const trimmedQuery = query.trim();
-    if (trimmedQuery.length < 2) return;
-
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(buildPlacesUrl(trimmedQuery, context), {
-          signal: controller.signal,
-          cache: "no-store",
-        });
-        if (!response.ok) throw new Error("Failed to load suggestions");
-
-        const payload = (await response.json()) as PlacesApiResponse;
-        const suggestions = Array.isArray(payload.suggestions)
-          ? dedupeSuggestions(payload.suggestions)
-              .filter((item) => !!item?.code && !!item?.city && !!item?.airport)
-              .slice(0, 7)
-          : [];
-        setSuggestions(suggestions);
-      } catch {
-        if (!controller.signal.aborted) setSuggestions([]);
-      } finally {
-        if (!controller.signal.aborted) setLoading(false);
-      }
-    }, 300);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-      controller.abort();
-    };
-  }, [buildPlacesUrl, context, query, setLoading, setSuggestions]);
 }
