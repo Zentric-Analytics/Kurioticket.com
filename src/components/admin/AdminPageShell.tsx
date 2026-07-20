@@ -35,7 +35,7 @@ export function AdminShell({
   return (
     <div className="min-h-screen bg-slate-100 text-slate-950">
       <AdminNavbar hubs={hubs} adminEmail={adminEmail} adminName={adminName} adminImage={adminImage} />
-      <div className={cn(isAdminHome && "min-h-[calc(100vh-4rem)] bg-[#E8E3DB] sm:min-h-[calc(100vh-68px)]")}>
+      <div className={cn(isAdminHome && "min-h-[calc(100vh-4rem)] bg-[#F7F6F2] sm:min-h-[calc(100vh-68px)]")}>
         <main className="page-shell py-5 sm:py-6">
           {children}
         </main>

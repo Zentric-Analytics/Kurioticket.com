@@ -195,19 +195,20 @@ test("existing admin home data helpers remain unchanged and admin shell navbar a
   assert.doesNotMatch(adminOverviewPage, /from "@\/lib\/admin-data";[\s\S]*get[A-Z][A-Za-z]+Extra/);
 });
 
-test("admin home applies warm stone to a full-width wrapper while preserving the navbar", () => {
+test("admin home applies off-white to a full-width wrapper while preserving the navbar and transparent page shell", () => {
   assert.match(adminShell, /const pathname = usePathname\(\)/);
   assert.match(adminShell, /const isAdminHome = pathname === "\/admin"/);
-  assert.match(adminShell, /<div className=\{cn\(isAdminHome && "min-h-\[calc\(100vh-4rem\)\] bg-\[#E8E3DB\] sm:min-h-\[calc\(100vh-68px\)\]"\)\}>/);
+  assert.match(adminShell, /<div className=\{cn\(isAdminHome && "min-h-\[calc\(100vh-4rem\)\] bg-\[#F7F6F2\] sm:min-h-\[calc\(100vh-68px\)\]"\)\}>/);
+  assert.doesNotMatch(adminShell, /bg-\[#E8E3DB\]/);
   assert.match(adminShell, /min-h-\[calc\(100vh-4rem\)\]/);
   assert.match(adminShell, /sm:min-h-\[calc\(100vh-68px\)\]/);
   assert.match(adminShell, /<main className="page-shell py-5 sm:py-6">/);
-  assert.doesNotMatch(adminShell, /<main[^>]*bg-\[#E8E3DB\]/);
+  assert.doesNotMatch(adminShell, /<main[^>]*bg-\[#F7F6F2\]|<main[^>]*bg-\[#E8E3DB\]/);
   assert.match(adminShell, /<header className="sticky top-0 z-30 border-b border-\[#DDE7F0\] bg-white\/95 backdrop-blur">/);
   assert.doesNotMatch(adminOverviewPage, /bg-\[#E8E3DB\]/);
 });
 
-test("other admin routes are not hard-coded to the warm stone background", () => {
+test("other admin routes are not hard-coded to the Admin Home background colours", () => {
   const otherAdminRoutes = [
     "src/app/admin/operations/page.tsx",
     "src/app/admin/monitoring/page.tsx",
@@ -215,6 +216,6 @@ test("other admin routes are not hard-coded to the warm stone background", () =>
   ];
 
   for (const route of otherAdminRoutes) {
-    assert.doesNotMatch(readFileSync(route, "utf8"), /#E8E3DB|bg-\[#E8E3DB\]/, `${route} should not use the Admin Home background`);
+    assert.doesNotMatch(readFileSync(route, "utf8"), /#F7F6F2|bg-\[#F7F6F2\]|#E8E3DB|bg-\[#E8E3DB\]/, `${route} should not use the Admin Home background`);
   }
 });
