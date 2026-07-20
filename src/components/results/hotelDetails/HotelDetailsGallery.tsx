@@ -125,7 +125,7 @@ export function HotelDetailsGallery({
     .replace("{{hotelName}}", hotelName);
 
   return (
-    <Card variant="flat" className="min-w-0 overflow-hidden p-0 lg:col-start-1 lg:row-start-2" onKeyDown={handleGalleryKeyDown}>
+    <Card variant="flat" className="min-w-0 overflow-hidden p-0 lg:shadow-[0_12px_32px_-24px_rgba(2,28,43,0.32)]" onKeyDown={handleGalleryKeyDown}>
       <div
         className="relative w-full aspect-[4/3] max-h-[420px] min-h-[240px] overflow-hidden bg-slate-100 sm:aspect-[16/10] sm:min-h-0"
         style={{ touchAction: "pan-y" }}
@@ -164,7 +164,7 @@ export function HotelDetailsGallery({
       </div>
 
       {showGalleryControls ? (
-        <div ref={thumbnailStripRef} className="flex w-full max-w-full gap-2 overflow-x-auto overscroll-x-contain p-3">
+        <div ref={thumbnailStripRef} className="flex w-full max-w-full gap-2 overflow-x-auto overscroll-x-contain border-t border-border p-3">
           {usableIndices.map((imageIndex, visibleIndex) => {
             const thumbnailUrl = displayCandidates[imageIndex];
             return (

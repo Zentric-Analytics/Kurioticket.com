@@ -15,7 +15,7 @@ export function HotelDetailsSections({ roomTitle, roomItems, cancellationTitle, 
   amenityItems: HotelAmenityPresentationItem[];
 }) {
   return (
-    <div className="min-w-0 space-y-5 lg:col-start-1 lg:row-start-3">
+    <div className={amenityItems.length > 0 ? "grid min-w-0 gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-8" : "min-w-0"}>
       <StayDetailsSection roomTitle={roomTitle} roomItems={roomItems} cancellationTitle={cancellationTitle} cancellationItems={cancellationItems} />
       {amenityItems.length > 0 ? <AmenitySection title={amenitiesTitle} items={amenityItems} /> : null}
     </div>
@@ -30,9 +30,9 @@ function StayDetailsSection({ roomTitle, roomItems, cancellationTitle, cancellat
     { title: cancellationTitle, items: cancellationItems.map((item) => item.trim()).filter(Boolean) },
   ].filter((section) => section.items.length > 0);
   if (sections.length === 0) return null;
-  return <Card variant="flat" className="p-4 sm:p-6"><div className={sections.length > 1 ? "grid gap-5 sm:grid-cols-2 sm:gap-6" : ""}>{sections.map((section) => <section key={section.title}><h2 className="text-base font-bold text-slate-950">{section.title}</h2><ul className="mt-3 space-y-2 text-sm font-medium leading-6 text-slate-700">{section.items.map((item) => <li key={item}>{item}</li>)}</ul></section>)}</div></Card>;
+  return <Card variant="flat" className="p-4 sm:p-6 lg:h-full lg:p-6"><div className={sections.length > 1 ? "grid gap-5 sm:grid-cols-2 sm:gap-6 lg:divide-x lg:divide-border" : ""}>{sections.map((section, index) => <section key={section.title} className={index > 0 ? "lg:pl-6" : ""}><h2 className="text-base font-bold text-slate-950">{section.title}</h2><ul className="mt-3 space-y-2 text-sm font-medium leading-6 text-slate-700">{section.items.map((item) => <li key={item}>{item}</li>)}</ul></section>)}</div></Card>;
 }
 
 function AmenitySection({ title, items }: { title: string; items: HotelAmenityPresentationItem[] }) {
-  return <Card variant="flat" className="p-4 sm:p-6"><h2 className="text-base font-bold text-slate-950">{title}</h2><ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2" role="list">{items.map((item) => { const Icon = amenityIcons[item.iconKey]; return <li key={item.key} className="flex min-w-0 items-center gap-2 text-sm font-medium text-slate-700"><Icon className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" /><span>{item.label}</span></li>; })}</ul></Card>;
+  return <Card variant="flat" className="p-4 sm:p-6 lg:h-full lg:p-6"><h2 className="text-base font-bold text-slate-950">{title}</h2><ul className="mt-3 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-2" role="list">{items.map((item) => { const Icon = amenityIcons[item.iconKey]; return <li key={item.key} className="flex min-w-0 items-center gap-2 text-sm font-medium text-slate-700"><Icon className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" /><span>{item.label}</span></li>; })}</ul></Card>;
 }
