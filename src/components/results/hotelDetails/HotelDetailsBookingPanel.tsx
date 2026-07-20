@@ -67,16 +67,21 @@ export function HotelDetailsBookingPanel({
   return (
     <aside className="min-w-0">
       <div className="lg:sticky lg:top-24">
-        <Card variant="flat" className="p-4 sm:p-5 lg:p-6 lg:shadow-[0_12px_32px_-24px_rgba(2,28,43,0.32)]">
-          <div className="space-y-4">
+        <Card
+          variant="flat"
+          className="p-5 shadow-[0_12px_32px_-26px_rgba(2,28,43,0.32)] sm:p-6"
+        >
+          <div className="space-y-5">
             <div>
-              {priceDetailsAvailable && totalDisplayPrice && nightlyDisplayPrice ? (
+              {priceDetailsAvailable &&
+              totalDisplayPrice &&
+              nightlyDisplayPrice ? (
                 <>
                   <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
                     {estimatedStayTotalText}
                   </p>
                   <p
-                    className="mt-1 break-words text-3xl font-bold text-slate-950"
+                    className="mt-1 break-words text-3xl font-bold tracking-tight text-slate-950 sm:text-[2rem]"
                     dir="ltr"
                     title={totalDisplayPrice.title}
                     aria-label={totalDisplayPrice.ariaLabel}
@@ -99,9 +104,10 @@ export function HotelDetailsBookingPanel({
                     </p>
                   ) : null}
                   {totalDisplayPrice.isConvertedEstimate ? (
-                    <div className="mt-3 rounded-lg bg-blue/5 p-3 text-xs leading-5 text-slate-700 ring-1 ring-blue/10">
+                    <div className="mt-3 border-s-2 border-blue ps-3 text-xs leading-5 text-slate-700">
                       <p className="font-semibold">
-                        {providerPriceLabel}: {totalDisplayPrice.providerFormatted}
+                        {providerPriceLabel}:{" "}
+                        {totalDisplayPrice.providerFormatted}
                       </p>
                     </div>
                   ) : null}
@@ -124,8 +130,8 @@ export function HotelDetailsBookingPanel({
             </div>
 
             {staySummary ? (
-              <div className="rounded-xl border border-border bg-surface-subtle p-3 lg:p-4">
-                <div className="space-y-2">
+              <div className="rounded-xl border border-border bg-surface-subtle p-4">
+                <div className="space-y-2.5">
                   <p className="flex min-w-0 items-start gap-2 text-sm font-semibold leading-5 text-slate-800">
                     <CalendarDays
                       className="mt-0.5 h-4 w-4 shrink-0 text-blue"
@@ -157,53 +163,56 @@ export function HotelDetailsBookingPanel({
               </div>
             ) : null}
 
-            <LinkButton
-              href={changeSearchHref}
-              variant="secondary"
-              className="w-full"
-            >
-              {changeSearchText}
-            </LinkButton>
-
-            {providerUnavailableText ? (
-              <p
-                id="hotel-provider-unavailable-message"
-                className="rounded-lg bg-slate-50 p-3 text-sm font-medium text-slate-700"
-              >
-                {providerUnavailableText}
-              </p>
-            ) : null}
-            {redirectError ? (
-              <p
-                role="alert"
-                className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700"
-              >
-                {redirectError}
-              </p>
-            ) : null}
-            <div aria-busy={redirecting}>
-              <Button
-                type="button"
-                variant="accent"
+            <div className="space-y-4 border-t border-border pt-5">
+              <LinkButton
+                href={changeSearchHref}
+                variant="secondary"
                 className="w-full"
-                disabled={!providerEnabled || redirecting}
-                aria-describedby={
-                  providerUnavailableText
-                    ? "hotel-provider-unavailable-message"
-                    : undefined
-                }
-                onClick={onContinue}
               >
-                {redirecting
-                  ? `${continueToProviderText}...`
-                  : continueToProviderText}
-              </Button>
+                {changeSearchText}
+              </LinkButton>
+
+              {providerUnavailableText ? (
+                <p
+                  id="hotel-provider-unavailable-message"
+                  className="rounded-lg bg-slate-50 p-3 text-sm font-medium text-slate-700"
+                >
+                  {providerUnavailableText}
+                </p>
+              ) : null}
+              {redirectError ? (
+                <p
+                  role="alert"
+                  className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700"
+                >
+                  {redirectError}
+                </p>
+              ) : null}
+              <div aria-busy={redirecting}>
+                <Button
+                  type="button"
+                  variant="accent"
+                  size="lg"
+                  className="w-full"
+                  disabled={!providerEnabled || redirecting}
+                  aria-describedby={
+                    providerUnavailableText
+                      ? "hotel-provider-unavailable-message"
+                      : undefined
+                  }
+                  onClick={onContinue}
+                >
+                  {redirecting
+                    ? `${continueToProviderText}...`
+                    : continueToProviderText}
+                </Button>
+              </div>
+              {providerEnabled ? (
+                <p className="text-xs leading-5 text-slate-500">
+                  {providerDisclaimerText}
+                </p>
+              ) : null}
             </div>
-            {providerEnabled ? (
-              <p className="text-xs leading-5 text-slate-500">
-                {providerDisclaimerText}
-              </p>
-            ) : null}
           </div>
         </Card>
       </div>
