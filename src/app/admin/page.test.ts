@@ -16,6 +16,19 @@ function labelsFor(component: string, block = adminOverviewPage): string[] {
   return Array.from(block.matchAll(new RegExp(`<${component}[^>]* label="([^"]+)"`, "g")), (match) => match[1]);
 }
 
+function openingTagForSurface(surface: string): string {
+  const match = adminOverviewPage.match(new RegExp(`<section[^>]*data-admin-home-surface="${surface}"[^>]*>`));
+  assert.ok(match, `${surface} section wrapper should exist`);
+  return match[0];
+}
+
+function assertNoOuterCardClasses(openingTag: string): void {
+  assert.doesNotMatch(openingTag, /bg-white/);
+  assert.doesNotMatch(openingTag, /rounded-2xl/);
+  assert.doesNotMatch(openingTag, /(?:^|\s)border(?:\s|$)|border-\[|border-slate|border-[#]/);
+  assert.doesNotMatch(openingTag, /shadow/);
+}
+
 test("admin home header keeps the approved title and description without fake controls", () => {
   assert.match(adminOverviewPage, /title="Admin Home"/);
   assert.match(adminOverviewPage, /Monitor Kurioticket activity, provider readiness, search health, system status and recent administrative actions\./);
@@ -65,6 +78,8 @@ test("at a glance preserves all six metrics in order as a flat responsive metric
 
 test("provider readiness large-card section is absent but providers remain represented in service status", () => {
   assert.doesNotMatch(adminOverviewPage, /<SectionHeading[^>]*>Provider Readiness<\/SectionHeading>|AdminProviderStatusCard|Operations Snapshot/);
+  const serviceOpeningTag = openingTagForSurface("service-status");
+  assertNoOuterCardClasses(serviceOpeningTag);
   const serviceBlock = blockBetween("data-admin-home-surface=\"service-status\"", "Recent Admin Activity");
   assert.match(serviceBlock, /providers\.map/);
   assert.match(serviceBlock, /provider\.product/);
@@ -74,7 +89,9 @@ test("provider readiness large-card section is absent but providers remain repre
   assert.match(adminData, /product: "Cars"/);
 });
 
-test("search activity has one outer surface, flat metrics, preserved data and a decorative motif", () => {
+test("search activity has no outer card surface while preserving flat metrics, data and decorations", () => {
+  const searchOpeningTag = openingTagForSurface("search-activity");
+  assertNoOuterCardClasses(searchOpeningTag);
   const searchBlock = blockBetween("data-admin-home-surface=\"search-activity\"", "data-admin-home-surface=\"service-status\"");
   assert.deepEqual(labelsFor("PanelMetric", searchBlock), ["Total recent searches", "No-result searches", "Failed searches"]);
   assert.match(searchBlock, /<PanelHeading id="search-activity-heading"[^>]*>Search Activity<\/PanelHeading>/);
@@ -94,7 +111,9 @@ test("search activity has one outer surface, flat metrics, preserved data and a 
   assert.doesNotMatch(searchBlock, /AdminMetricCard|chart|rounded-2xl border border-slate-200 bg-white shadow-sm/i);
 });
 
-test("service status has one outer surface, two flat status columns and all required links", () => {
+test("service status has no outer card surface while preserving two flat status columns and links", () => {
+  const serviceOpeningTag = openingTagForSurface("service-status");
+  assertNoOuterCardClasses(serviceOpeningTag);
   const serviceBlock = blockBetween("data-admin-home-surface=\"service-status\"", "Recent Admin Activity");
   assert.match(serviceBlock, /data-admin-home-surface="service-status"/);
   assert.equal((serviceBlock.match(/data-admin-home-surface="service-status"/g) || []).length, 1);
