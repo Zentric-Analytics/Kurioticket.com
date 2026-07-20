@@ -1,0 +1,6 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { dictionaries } from "@/lib/i18n";
+const keys = ["deals.results.title", "deals.results.explanation", "deals.results.modify", "deals.results.viewFlights", "deals.results.viewHotels", "deals.results.viewCars", "deals.results.invalidTitle", "deals.results.invalidMessage", "deals.results.noResults", "deals.results.providerUnavailable", "deals.results.rateLimited", "deals.results.unsupportedDestination", "deals.error.flightOriginCode", "deals.error.flightDestinationCode", "deals.error.flightPassengers", "deals.error.flightInfants", "deals.error.flightDates", "deals.error.hotelDestination", "deals.error.hotelGuests", "deals.error.hotelRooms", "deals.error.hotelDates", "deals.results.separateBooking"];
+test("every Deals key exists in every locale", () => { for (const [locale, dictionary] of Object.entries(dictionaries)) for (const key of keys) assert.ok(dictionary[key]?.trim(), `${locale}: ${key}`); });
+test("new non-English dictionaries are not wholesale English copies", () => { const english = dictionaries["en-us"]; for (const [locale, dictionary] of Object.entries(dictionaries)) { if (locale.startsWith("en-")) continue; assert.ok(keys.some((key) => dictionary[key] !== english[key]), `${locale} copied every Deals value`); } });
