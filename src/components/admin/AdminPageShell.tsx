@@ -29,10 +29,20 @@ export function AdminShell({
   const safeRole: AdminRole = adminRole === "SUPPORT" || adminRole === "USER" ? adminRole : "ADMIN";
   const hubs = getAdminNavbarHubsForRole(safeRole);
 
+  const pathname = usePathname();
+  const isAdminHome = pathname === "/admin";
+
   return (
     <div className="min-h-screen bg-slate-100 text-slate-950">
       <AdminNavbar hubs={hubs} adminEmail={adminEmail} adminName={adminName} adminImage={adminImage} />
-      <main className="page-shell py-5 sm:py-6">{children}</main>
+      <main
+        className={cn(
+          "page-shell py-5 sm:py-6",
+          isAdminHome && "min-h-[calc(100vh-4rem)] bg-[#E8E3DB] sm:min-h-[calc(100vh-68px)]",
+        )}
+      >
+        {children}
+      </main>
     </div>
   );
 }

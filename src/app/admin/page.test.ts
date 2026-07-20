@@ -4,6 +4,8 @@ import test from "node:test";
 
 const adminOverviewPage = readFileSync("src/app/admin/page.tsx", "utf8");
 
+const adminShell = readFileSync("src/components/admin/AdminPageShell.tsx", "utf8");
+
 function blockBetween(start: string, end: string): string {
   const startIndex = adminOverviewPage.indexOf(start);
   assert.notEqual(startIndex, -1, `${start} should exist`);
@@ -191,4 +193,26 @@ test("existing admin home data helpers remain unchanged and admin shell navbar a
   assert.match(adminOverviewPage, /getRecentAdminActivity\(\)/);
   assert.doesNotMatch(adminOverviewPage, /AdminShell|AdminNavbar/);
   assert.doesNotMatch(adminOverviewPage, /from "@\/lib\/admin-data";[\s\S]*get[A-Z][A-Za-z]+Extra/);
+});
+
+test("admin home applies warm stone only to the page canvas while preserving the navbar", () => {
+  assert.match(adminShell, /const pathname = usePathname\(\)/);
+  assert.match(adminShell, /const isAdminHome = pathname === "\/admin"/);
+  assert.match(adminShell, /isAdminHome && "min-h-\[calc\(100vh-4rem\)\] bg-\[#E8E3DB\] sm:min-h-\[calc\(100vh-68px\)\]"/);
+  assert.match(adminShell, /min-h-\[calc\(100vh-4rem\)\]/);
+  assert.match(adminShell, /sm:min-h-\[calc\(100vh-68px\)\]/);
+  assert.match(adminShell, /<header className="sticky top-0 z-30 border-b border-\[#DDE7F0\] bg-white\/95 backdrop-blur">/);
+  assert.doesNotMatch(adminOverviewPage, /bg-\[#E8E3DB\]/);
+});
+
+test("other admin routes are not hard-coded to the warm stone background", () => {
+  const otherAdminRoutes = [
+    "src/app/admin/operations/page.tsx",
+    "src/app/admin/monitoring/page.tsx",
+    "src/app/admin/platform/page.tsx",
+  ];
+
+  for (const route of otherAdminRoutes) {
+    assert.doesNotMatch(readFileSync(route, "utf8"), /#E8E3DB|bg-\[#E8E3DB\]/, `${route} should not use the Admin Home background`);
+  }
 });
