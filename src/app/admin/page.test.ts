@@ -195,12 +195,14 @@ test("existing admin home data helpers remain unchanged and admin shell navbar a
   assert.doesNotMatch(adminOverviewPage, /from "@\/lib\/admin-data";[\s\S]*get[A-Z][A-Za-z]+Extra/);
 });
 
-test("admin home applies warm stone only to the page canvas while preserving the navbar", () => {
+test("admin home applies warm stone to a full-width wrapper while preserving the navbar", () => {
   assert.match(adminShell, /const pathname = usePathname\(\)/);
   assert.match(adminShell, /const isAdminHome = pathname === "\/admin"/);
-  assert.match(adminShell, /isAdminHome && "min-h-\[calc\(100vh-4rem\)\] bg-\[#E8E3DB\] sm:min-h-\[calc\(100vh-68px\)\]"/);
+  assert.match(adminShell, /<div className=\{cn\(isAdminHome && "min-h-\[calc\(100vh-4rem\)\] bg-\[#E8E3DB\] sm:min-h-\[calc\(100vh-68px\)\]"\)\}>/);
   assert.match(adminShell, /min-h-\[calc\(100vh-4rem\)\]/);
   assert.match(adminShell, /sm:min-h-\[calc\(100vh-68px\)\]/);
+  assert.match(adminShell, /<main className="page-shell py-5 sm:py-6">/);
+  assert.doesNotMatch(adminShell, /<main[^>]*bg-\[#E8E3DB\]/);
   assert.match(adminShell, /<header className="sticky top-0 z-30 border-b border-\[#DDE7F0\] bg-white\/95 backdrop-blur">/);
   assert.doesNotMatch(adminOverviewPage, /bg-\[#E8E3DB\]/);
 });

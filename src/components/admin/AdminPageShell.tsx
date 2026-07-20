@@ -35,14 +35,11 @@ export function AdminShell({
   return (
     <div className="min-h-screen bg-slate-100 text-slate-950">
       <AdminNavbar hubs={hubs} adminEmail={adminEmail} adminName={adminName} adminImage={adminImage} />
-      <main
-        className={cn(
-          "page-shell py-5 sm:py-6",
-          isAdminHome && "min-h-[calc(100vh-4rem)] bg-[#E8E3DB] sm:min-h-[calc(100vh-68px)]",
-        )}
-      >
-        {children}
-      </main>
+      <div className={cn(isAdminHome && "min-h-[calc(100vh-4rem)] bg-[#E8E3DB] sm:min-h-[calc(100vh-68px)]")}>
+        <main className="page-shell py-5 sm:py-6">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
