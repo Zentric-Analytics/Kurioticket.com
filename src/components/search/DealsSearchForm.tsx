@@ -143,15 +143,49 @@ export function DealsSearchForm() {
   const calendarLocale = useMemo(() => normalizeFlightsCalendarLocale(locale), [locale]);
   const accessibleDateFormatter = useMemo(() => new Intl.DateTimeFormat(calendarLocale, { month: "long", day: "numeric", year: "numeric" }), [calendarLocale]);
   const weekdays = useMemo(() => formatFlightsWeekdays(calendarLocale), [calendarLocale]);
-  const todayLocal = useMemo(() => startOfLocalDay(new Date()), []);
+  const [todayLocal, setTodayLocal] = useState(() => startOfLocalDay(new Date()));
   const isBeforeToday = useCallback((date: Date) => startOfLocalDay(date).getTime() < todayLocal.getTime(), [todayLocal]);
+  useEffect(() => {
+    let midnightTimeout: number | undefined;
+
+    const refreshTodayLocal = () => {
+      const nextToday = startOfLocalDay(new Date());
+      setTodayLocal((current) => current.getTime() === nextToday.getTime() ? current : nextToday);
+    };
+    const scheduleMidnightRefresh = () => {
+      if (midnightTimeout !== undefined) window.clearTimeout(midnightTimeout);
+      const now = new Date();
+      const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      midnightTimeout = window.setTimeout(() => {
+        refreshTodayLocal();
+        scheduleMidnightRefresh();
+      }, nextMidnight.getTime() - now.getTime() + 1_000);
+    };
+    const refreshAndReschedule = () => {
+      refreshTodayLocal();
+      scheduleMidnightRefresh();
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") refreshAndReschedule();
+    };
+
+    scheduleMidnightRefresh();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", refreshAndReschedule);
+
+    return () => {
+      if (midnightTimeout !== undefined) window.clearTimeout(midnightTimeout);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", refreshAndReschedule);
+    };
+  }, []);
   const flightDatesSummary = useMemo(() => { const departure = parseIsoDate(search.flightDepartureDate); const returning = parseIsoDate(search.flightReturnDate); return departure && returning && !isBeforeToday(departure) && !isBeforeToday(returning) && returning >= departure ? formatFlightsDateSummary(departure, returning, calendarLocale) : t("travelDates"); }, [calendarLocale, isBeforeToday, search.flightDepartureDate, search.flightReturnDate, t]);
   const resetFlightDatesDraft = useCallback(() => { setDraftFlightDepartureDate(search.flightDepartureDate); setDraftFlightReturnDate(search.flightReturnDate); }, [search.flightDepartureDate, search.flightReturnDate]);
   const restoreFlightDatesFocus = () => requestAnimationFrame(() => flightDatesLauncherRef.current?.focus({ preventScroll: true }));
   const openFlightDates = () => { resetFlightDatesDraft(); const departure = parseIsoDate(search.flightDepartureDate); const validVisibleDeparture = departure && !isBeforeToday(departure) ? departure : todayLocal; setVisibleFlightMonth(new Date(validVisibleDeparture.getFullYear(), validVisibleDeparture.getMonth(), 1)); if (window.matchMedia("(max-width: 639px)").matches) setMobileFlightDatesOpen(true); else setFlightDatesOpen(true); };
   const dismissDesktopFlightDates = useCallback((restoreFocus = false) => { resetFlightDatesDraft(); setFlightDatesOpen(false); if (restoreFocus) restoreFlightDatesFocus(); }, [resetFlightDatesDraft]);
   const validDraftFlightRange = useMemo(() => { const departure = parseIsoDate(draftFlightDepartureDate); const returning = parseIsoDate(draftFlightReturnDate); return Boolean(departure && returning && !isBeforeToday(departure) && !isBeforeToday(returning) && returning >= departure); }, [draftFlightDepartureDate, draftFlightReturnDate, isBeforeToday]);
-  const selectDraftFlightDate = (date: Date) => { if (isBeforeToday(date)) return; const selected = toIsoDate(date); if (!draftFlightDepartureDate || draftFlightReturnDate || !parseIsoDate(draftFlightDepartureDate)) { setDraftFlightDepartureDate(selected); setDraftFlightReturnDate(""); } else if (selected < draftFlightDepartureDate) { setDraftFlightDepartureDate(selected); setDraftFlightReturnDate(""); } else setDraftFlightReturnDate(selected); };
+  const selectDraftFlightDate = (date: Date) => { if (isBeforeToday(date)) return; const selected = toIsoDate(date); const departure = parseIsoDate(draftFlightDepartureDate); if (!departure || isBeforeToday(departure) || draftFlightReturnDate) { setDraftFlightDepartureDate(selected); setDraftFlightReturnDate(""); } else if (selected < draftFlightDepartureDate) { setDraftFlightDepartureDate(selected); setDraftFlightReturnDate(""); } else setDraftFlightReturnDate(selected); };
   const commitFlightDates = (mobile = false) => { const departure = parseIsoDate(draftFlightDepartureDate); const returning = parseIsoDate(draftFlightReturnDate); if (!departure || !returning || isBeforeToday(departure) || isBeforeToday(returning) || returning < departure) return; const normalizedDeparture = toIsoDate(departure); const normalizedReturn = toIsoDate(returning); setSearch((current) => ({ ...current, flightDepartureDate: normalizedDeparture, flightReturnDate: normalizedReturn, ...!dirty.current.hotelDates ? { hotelCheckIn: normalizedDeparture, hotelCheckOut: normalizedReturn } : {}, ...!dirty.current.carDates ? { carPickupDate: normalizedDeparture, carReturnDate: normalizedReturn } : {} })); if (mobile) mobileFlightDatesCommittedRef.current = true; else { setFlightDatesOpen(false); restoreFlightDatesFocus(); } };
   const closeMobileFlightDates = useCallback(() => { if (!mobileFlightDatesCommittedRef.current) resetFlightDatesDraft(); mobileFlightDatesCommittedRef.current = false; setMobileFlightDatesOpen(false); restoreFlightDatesFocus(); }, [resetFlightDatesDraft]);
 
