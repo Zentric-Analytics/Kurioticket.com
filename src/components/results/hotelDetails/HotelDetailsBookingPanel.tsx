@@ -65,9 +65,9 @@ export function HotelDetailsBookingPanel({
   providerDisclaimerText,
 }: HotelDetailsBookingPanelProps) {
   return (
-    <aside className="min-w-0 lg:col-start-2 lg:row-start-2 lg:row-span-2 lg:self-stretch">
+    <aside className="min-w-0">
       <div className="lg:sticky lg:top-24">
-        <Card variant="elevated" className="p-4 sm:p-5">
+        <Card variant="flat" className="p-4 sm:p-5 lg:p-6 lg:shadow-[0_12px_32px_-24px_rgba(2,28,43,0.32)]">
           <div className="space-y-4">
             <div>
               {priceDetailsAvailable && totalDisplayPrice && nightlyDisplayPrice ? (
@@ -124,7 +124,7 @@ export function HotelDetailsBookingPanel({
             </div>
 
             {staySummary ? (
-              <Card variant="subtle" className="rounded-xl p-3">
+              <div className="rounded-xl border border-border bg-surface-subtle p-3 lg:p-4">
                 <div className="space-y-2">
                   <p className="flex min-w-0 items-start gap-2 text-sm font-semibold leading-5 text-slate-800">
                     <CalendarDays
@@ -154,7 +154,7 @@ export function HotelDetailsBookingPanel({
                     </span>
                   </p>
                 </div>
-              </Card>
+              </div>
             ) : null}
 
             <LinkButton

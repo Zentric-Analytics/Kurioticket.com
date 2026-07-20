@@ -601,7 +601,7 @@ export function HotelDetailsClient({
   return (
     <main className="flex-1 bg-surface-muted/40">
       <section className="page-shell py-6 sm:py-8 lg:py-10">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8">
+        <div className="space-y-5 lg:space-y-8">
           <HotelDetailsHeader
             resultsHref={resultsHref}
             backToResultsText={backToResultsText}
@@ -633,7 +633,8 @@ export function HotelDetailsClient({
             isSafeAttributionUrl={isSafeHotelDetailsHttpUrl}
           />
 
-          <HotelDetailsGallery
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8">
+            <HotelDetailsGallery
             activeUrl={activeUrl}
             hotelName={hotel.name}
             imageAlt={t("hotelResults.hotelImageAlt").replace("{{name}}", hotel.name).replace("{{location}}", hotel.location ? ` ${t("hotelResults.nearLocation").replace("{{location}}", hotel.location)}` : "")}
@@ -656,9 +657,9 @@ export function HotelDetailsClient({
             photoViewerTitle={(t("hotelDetails.photoViewerTitle") || "Photos for {{hotelName}}").replace("{{hotelName}}", hotel.name)}
             onSelectImage={setPreferredImageIndex}
             onImageError={markImageFailed}
-          />
+            />
 
-          <HotelDetailsBookingPanel
+            <HotelDetailsBookingPanel
             priceDetailsAvailable={Boolean(priceDetails)}
             totalDisplayPrice={totalDisplayPrice}
             nightlyDisplayPrice={nightlyDisplayPrice}
@@ -684,7 +685,8 @@ export function HotelDetailsClient({
             continueToProviderText={t("continueToProvider")}
             onContinue={continueToProvider}
             providerDisclaimerText={t("hotelDetails.providerDisclaimer") || enTranslations["hotelDetails.providerDisclaimer"]}
-          />
+            />
+          </div>
 
           <HotelDetailsSections
             roomTitle={t("hotelResults.roomDetails") || "Room"}
