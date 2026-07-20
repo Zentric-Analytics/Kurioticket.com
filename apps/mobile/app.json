@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "Kurioticket",
+    "slug": "kurioticket-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "kurioticket",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kurioticket.mobile"
+    },
+    "android": {
+      "package": "com.kurioticket.mobile"
+    },
+    "plugins": ["expo-router"]
+  }
+}
