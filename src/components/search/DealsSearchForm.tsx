@@ -7,6 +7,7 @@ import { BedDouble, Car, ChevronDown, Minus, Plane, Plus, Search } from "lucide-
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
+import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import { translations as en } from "@/lib/i18n/en";
 import { driverAgeOptions, timeOptions } from "@/lib/cars/carsSearchUtils";
 import {
@@ -20,10 +21,6 @@ type HotelSuggestion = { id: string; name: string; country: string; searchValue:
 const modeKeys: Record<DealsPackageMode, string> = { "hotel-flight": "deals.package.hotelFlight", "hotel-flight-car": "deals.package.hotelFlightCar", "flight-car": "deals.package.flightCar", "hotel-car": "deals.package.hotelCar" };
 const field = "min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-base font-medium text-slate-900 outline-none focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20";
 const label = "mb-1.5 block text-xs font-bold uppercase tracking-[0.1em] text-slate-600";
-
-function Counter({ value, onChange, min = 0, max = 12, text }: { value: number; onChange: (value: number) => void; min?: number; max?: number; text: string }) {
-  return <div className="flex min-h-11 items-center justify-between rounded-xl border border-slate-300 px-3"><span className="text-sm font-semibold text-slate-700">{text}: {value}</span><span className="flex gap-2"><button type="button" aria-label={`${text} −`} disabled={value <= min} onClick={() => onChange(value - 1)} className="focus-ring h-8 w-8 rounded-full border disabled:opacity-40">−</button><button type="button" aria-label={`${text} +`} disabled={value >= max} onClick={() => onChange(value + 1)} className="focus-ring h-8 w-8 rounded-full border disabled:opacity-40">+</button></span></div>;
-}
 
 function DealsFlightPopover({ open, anchorRef, children }: { open: boolean; anchorRef: RefObject<HTMLElement | null>; children: ReactNode }) {
   const [position, setPosition] = useState<{ left: number; top: number; width: number } | null>(null);
@@ -44,6 +41,25 @@ function DealsFlightPopover({ open, anchorRef, children }: { open: boolean; anch
   return createPortal(<div data-deals-flight-travellers-popover className="fixed z-[1000] max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_44px_rgba(15,23,42,0.18)]" style={position}>{children}</div>, document.body);
 }
 
+function DealsHotelPopover({ open, anchorRef, children }: { open: boolean; anchorRef: RefObject<HTMLElement | null>; children: ReactNode }) {
+  const [position, setPosition] = useState<{ left: number; top: number; width: number } | null>(null);
+
+  useEffect(() => {
+    if (!open || typeof window === "undefined") return;
+    const desktop = window.matchMedia("(min-width: 640px)");
+    const updatePosition = () => {
+      if (!desktop.matches || !anchorRef.current) return setPosition(null);
+      const gutter = 16; const rect = anchorRef.current.getBoundingClientRect(); const width = Math.min(360, window.innerWidth - gutter * 2); const expectedHeight = Math.min(480, window.innerHeight - gutter * 2);
+      setPosition({ left: Math.min(Math.max(gutter, rect.right - width), window.innerWidth - width - gutter), top: Math.max(gutter, Math.min(rect.bottom + 10, window.innerHeight - gutter - expectedHeight)), width });
+    };
+    updatePosition(); window.addEventListener("resize", updatePosition); window.addEventListener("scroll", updatePosition, true); desktop.addEventListener("change", updatePosition);
+    return () => { window.removeEventListener("resize", updatePosition); window.removeEventListener("scroll", updatePosition, true); desktop.removeEventListener("change", updatePosition); };
+  }, [anchorRef, open]);
+
+  if (!open || !position || typeof document === "undefined") return null;
+  return createPortal(<div data-deals-hotel-guests-popover className="fixed z-[1000] max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_44px_rgba(15,23,42,0.18)]" style={position}>{children}</div>, document.body);
+}
+
 export function DealsSearchForm() {
   const params = useSearchParams(); const router = useRouter(); const { start } = useRouteProgress();
   const { t: dictionary, locale } = useLocale(); const t = useCallback((key: string) => dictionary[key] ?? en[key] ?? key, [dictionary]);
@@ -61,6 +77,14 @@ export function DealsSearchForm() {
   const [draftChildren, setDraftChildren] = useState(search.flightChildren);
   const [draftInfants, setDraftInfants] = useState(search.flightInfants);
   const [draftCabin, setDraftCabin] = useState<DealsSearch["flightCabinClass"]>(search.flightCabinClass);
+  const hotelGuestsLauncherRef = useRef<HTMLButtonElement>(null);
+  const mobileHotelGuestsCommittedRef = useRef(false);
+  const [hotelGuestsOpen, setHotelGuestsOpen] = useState(false);
+  const [mobileHotelGuestsOpen, setMobileHotelGuestsOpen] = useState(false);
+  const [draftHotelAdults, setDraftHotelAdults] = useState(search.hotelAdults);
+  const [draftHotelChildren, setDraftHotelChildren] = useState(search.hotelChildren);
+  const [draftHotelRooms, setDraftHotelRooms] = useState(search.hotelRooms);
+  const [draftHotelPetFriendly, setDraftHotelPetFriendly] = useState(search.hotelPetFriendly);
   const included = getIncludedProducts(search.mode);
   const update = <K extends keyof DealsSearch>(key: K, value: DealsSearch[K]) => setSearch((current) => ({ ...current, [key]: value }));
 
@@ -81,6 +105,20 @@ export function DealsSearchForm() {
   const commitTravelers = (mobile = false) => { const normalized = normalizeTravelersDraft(); setSearch((current) => ({ ...current, flightAdults: normalized.adults, flightChildren: normalized.children, flightInfants: normalized.infants, flightCabinClass: normalized.cabin })); if (mobile) mobileTravelersCommittedRef.current = true; else { setTravelersOpen(false); restoreTravelersFocus(); } };
   const closeMobileTravelers = useCallback(() => { if (!mobileTravelersCommittedRef.current) resetTravelersDraft(); mobileTravelersCommittedRef.current = false; setMobileTravelersOpen(false); restoreTravelersFocus(); }, [resetTravelersDraft]);
 
+  const hotelGuestsSummary = useMemo(() => {
+    const guests = Math.max(1, Math.min(12, search.hotelAdults + search.hotelChildren));
+    const rooms = Math.max(1, Math.min(6, search.hotelRooms));
+    const values = { guests, guestLabel: t(guests === 1 ? "guestSingular" : "guestPlural"), rooms, roomLabel: t(rooms === 1 ? "roomSingular" : "roomPlural") };
+    const summary = Object.entries(values).reduce((text, [key, value]) => text.replaceAll(`{{${key}}}`, String(value)), t("hotelSearch.guestsRoomsSummary"));
+    return search.hotelPetFriendly ? t("hotelSearch.guestsRoomsPetsSummary").replace("{{guests}}", String(guests)).replace("{{guestLabel}}", values.guestLabel).replace("{{rooms}}", String(rooms)).replace("{{roomLabel}}", values.roomLabel).replace("{{pets}}", t("petFriendly")) : summary;
+  }, [search.hotelAdults, search.hotelChildren, search.hotelPetFriendly, search.hotelRooms, t]);
+  const restoreHotelGuestsFocus = () => requestAnimationFrame(() => hotelGuestsLauncherRef.current?.focus({ preventScroll: true }));
+  const resetHotelGuestsDraft = useCallback(() => { setDraftHotelAdults(search.hotelAdults); setDraftHotelChildren(search.hotelChildren); setDraftHotelRooms(search.hotelRooms); setDraftHotelPetFriendly(search.hotelPetFriendly); }, [search.hotelAdults, search.hotelChildren, search.hotelPetFriendly, search.hotelRooms]);
+  const openHotelGuests = () => { resetHotelGuestsDraft(); if (window.matchMedia("(max-width: 639px)").matches) setMobileHotelGuestsOpen(true); else setHotelGuestsOpen(true); };
+  const dismissDesktopHotelGuests = useCallback((restoreFocus = false) => { resetHotelGuestsDraft(); setHotelGuestsOpen(false); if (restoreFocus) restoreHotelGuestsFocus(); }, [resetHotelGuestsDraft]);
+  const commitHotelGuests = (mobile = false) => { const adults = Math.max(1, Math.min(12, draftHotelAdults)); const children = Math.max(0, Math.min(12 - adults, draftHotelChildren)); const rooms = Math.max(1, Math.min(6, draftHotelRooms)); setSearch((current) => ({ ...current, hotelAdults: adults, hotelChildren: children, hotelRooms: rooms, hotelPetFriendly: draftHotelPetFriendly })); if (mobile) mobileHotelGuestsCommittedRef.current = true; else { setHotelGuestsOpen(false); restoreHotelGuestsFocus(); } };
+  const closeMobileHotelGuests = useCallback(() => { if (!mobileHotelGuestsCommittedRef.current) resetHotelGuestsDraft(); mobileHotelGuestsCommittedRef.current = false; setMobileHotelGuestsOpen(false); restoreHotelGuestsFocus(); }, [resetHotelGuestsDraft]);
+
   useEffect(() => {
     if (!travelersOpen) return;
     const dismissOnPointer = (event: MouseEvent) => { const target = event.target; if (target instanceof Node && !travelersLauncherRef.current?.contains(target) && !(target instanceof Element && target.closest("[data-deals-flight-travellers-popover]"))) dismissDesktopTravelers(); };
@@ -88,6 +126,14 @@ export function DealsSearchForm() {
     document.addEventListener("mousedown", dismissOnPointer); document.addEventListener("keydown", dismissOnEscape);
     return () => { document.removeEventListener("mousedown", dismissOnPointer); document.removeEventListener("keydown", dismissOnEscape); };
   }, [dismissDesktopTravelers, travelersOpen]);
+
+  useEffect(() => {
+    if (!hotelGuestsOpen) return;
+    const dismissOnPointer = (event: PointerEvent) => { const target = event.target; if (target instanceof Node && !hotelGuestsLauncherRef.current?.contains(target) && !(target instanceof Element && target.closest("[data-deals-hotel-guests-popover]"))) dismissDesktopHotelGuests(); };
+    const dismissOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") { event.preventDefault(); dismissDesktopHotelGuests(true); } };
+    document.addEventListener("pointerdown", dismissOnPointer); document.addEventListener("keydown", dismissOnEscape);
+    return () => { document.removeEventListener("pointerdown", dismissOnPointer); document.removeEventListener("keydown", dismissOnEscape); };
+  }, [dismissDesktopHotelGuests, hotelGuestsOpen]);
 
   const loadAirports = useCallback(async (kind: "origin" | "destination", query: string) => {
     if (query.trim().length < 2) return setAirportLists((all) => ({ ...all, [kind]: [] }));
@@ -131,6 +177,30 @@ export function DealsSearchForm() {
     </div>
     <div><p className="mb-2 text-xs font-extrabold uppercase tracking-[0.1em] text-slate-600">{t("cabinClass")}</p><div className="grid grid-cols-3 gap-2">{(["economy", "business", "first"] as const).map((cabin) => <button key={cabin} type="button" aria-pressed={draftCabin === cabin} onClick={() => setDraftCabin(cabin)} className={`focus-ring min-h-11 rounded-xl border px-2 text-sm font-bold transition-colors ${draftCabin === cabin ? "border-[#004BB8] bg-[#004BB8] text-white" : "border-slate-200 bg-slate-50 text-slate-700 hover:border-[#004BB8] hover:text-[#004BB8]"}`}>{t(cabin)}</button>)}</div></div>
   </div>;
+  const hotelGuestsPicker = <div className="w-full space-y-4">
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      {([
+        ["adults", t("adults"), t("adultAgeRange"), draftHotelAdults, 1],
+        ["children", t("children"), t("childAgeRange"), draftHotelChildren, 0],
+        ["rooms", t("rooms"), t("hotelRoomsHelper"), draftHotelRooms, 1],
+      ] as const).map(([key, rowLabel, description, count, minimum]) => {
+        const canDecrease = count > minimum; const canIncrease = key === "rooms" ? count < 6 : draftHotelAdults + draftHotelChildren < 12;
+        const ariaName = (translationKey: string) => t(translationKey).replace("{{label}}", rowLabel);
+        return <div key={key} className="flex items-center justify-between gap-3 border-b border-slate-100 px-3 py-3 last:border-b-0">
+          <span className="min-w-0"><span className="block font-extrabold text-slate-950">{rowLabel}</span><span className="block text-xs font-medium text-slate-500">{description}</span></span>
+          <span className="flex shrink-0 items-center gap-2">
+            <button type="button" aria-label={ariaName("deals.decreaseCountAria")} disabled={!canDecrease} onClick={() => { if (key === "adults") setDraftHotelAdults((current) => Math.max(1, current - 1)); else if (key === "children") setDraftHotelChildren((current) => Math.max(0, current - 1)); else setDraftHotelRooms((current) => Math.max(1, current - 1)); }} className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-[#004BB8] hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300 sm:h-10 sm:w-10"><Minus className="h-4 w-4" aria-hidden="true" /></button>
+            <span className="min-w-7 text-center font-extrabold tabular-nums text-slate-950">{count}</span>
+            <button type="button" aria-label={ariaName("deals.increaseCountAria")} disabled={!canIncrease} onClick={() => { if (!canIncrease) return; if (key === "adults") setDraftHotelAdults((current) => current + 1); else if (key === "children") setDraftHotelChildren((current) => current + 1); else setDraftHotelRooms((current) => current + 1); }} className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-[#004BB8] hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300 sm:h-10 sm:w-10"><Plus className="h-4 w-4" aria-hidden="true" /></button>
+          </span>
+        </div>;
+      })}
+    </div>
+    <label className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+      <span className="min-w-0"><span className="block font-extrabold text-slate-950">{t("petFriendly")}</span><span className="block text-xs font-medium text-slate-500">{t("onlyShowPetFriendlyStays")}</span></span>
+      <input type="checkbox" checked={draftHotelPetFriendly} onChange={(event) => setDraftHotelPetFriendly(event.target.checked)} className="focus-ring h-6 w-6 shrink-0 rounded border-slate-300 text-[#004BB8]" />
+    </label>
+  </div>;
 
   return <form onSubmit={submit} noValidate className="mx-auto w-full max-w-[1120px] rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_18px_46px_rgba(15,23,42,0.12)] sm:p-6">
     <fieldset><legend className="sr-only">{t("deals.packageLegend")}</legend><div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-4">{dealsPackageModes.map((mode) => <label key={mode} className={`shrink-0 cursor-pointer rounded-full border px-4 py-2 text-sm font-extrabold ${search.mode === mode ? "border-[#004BB8] bg-[#004BB8]/10 text-[#004BB8]" : "border-slate-200 text-slate-700"}`}><input className="sr-only" type="radio" name="packageMode" checked={search.mode === mode} onChange={() => update("mode", mode)} />{t(modeKeys[mode])}</label>)}</div></fieldset>
@@ -139,10 +209,12 @@ export function DealsSearchForm() {
       <div className="grid grid-cols-2 gap-2"><label><span className={label}>{t("departureDate")}</span><input type="date" value={search.flightDepartureDate} onChange={(e) => syncFlightDates("flightDepartureDate", e.target.value)} className={field} /></label><label><span className={label}>{t("returnDate")}</span><input type="date" value={search.flightReturnDate} onChange={(e) => syncFlightDates("flightReturnDate", e.target.value)} className={field} /></label></div>
       <div className="min-w-0"><span className={label}>{t("deals.travelersCabinLabel")}</span><button ref={travelersLauncherRef} type="button" aria-expanded={travelersOpen || mobileTravelersOpen} aria-haspopup="dialog" aria-controls={mobileTravelersOpen ? "deals-flight-mobile-travelers" : "deals-flight-desktop-travelers"} onClick={() => travelersOpen ? dismissDesktopTravelers() : openTravelers()} className={`${field} flex items-center justify-between gap-2 text-start`}><span className="min-w-0 truncate">{travelerSummary}</span><ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${travelersOpen || mobileTravelersOpen ? "rotate-180" : ""}`} /></button></div>
     </div>{errorBlock("flight")}</section>}
-    {included.hotel && <section aria-labelledby="deals-hotel-heading" className="border-t border-slate-200 py-5"><h2 id="deals-hotel-heading" className="mb-4 flex items-center gap-2 text-base font-extrabold text-[#021C2B]"><BedDouble className="h-5 w-5 text-[#004BB8]" />{t("hotels")}</h2><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><div className="relative"><label className={label} htmlFor="hotel-destination">{t("deals.destinationLabel")}</label><input id="hotel-destination" role="combobox" aria-controls="hotel-destination-options" aria-expanded={hotelSuggestions.length > 0} value={search.hotelDestination} onChange={(e) => { dirty.current.hotelDestination = true; update("hotelDestination", e.target.value); }} className={field} autoComplete="off" />{hotelSuggestions.length > 0 && <ul id="hotel-destination-options" role="listbox" className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-xl border bg-white p-1 shadow-xl">{hotelSuggestions.map((option) => <li key={option.id}><button type="button" className="w-full rounded-lg p-2 text-start text-sm hover:bg-slate-100" onClick={() => { dirty.current.hotelDestination = true; update("hotelDestination", option.searchValue); setHotelSuggestions([]); }}>{option.name}, {option.country}</button></li>)}</ul>}</div><div className="grid grid-cols-2 gap-2"><label><span className={label}>{t("checkIn")}</span><input type="date" value={search.hotelCheckIn} onChange={(e) => { dirty.current.hotelDates = true; update("hotelCheckIn", e.target.value); }} className={field} /></label><label><span className={label}>{t("checkOut")}</span><input type="date" value={search.hotelCheckOut} onChange={(e) => { dirty.current.hotelDates = true; update("hotelCheckOut", e.target.value); }} className={field} /></label></div><div className="grid grid-cols-2 gap-2"><Counter text={t("adults")} value={search.hotelAdults} min={1} onChange={(v) => update("hotelAdults", v)} /><Counter text={t("children")} value={search.hotelChildren} onChange={(v) => update("hotelChildren", v)} /></div><div><Counter text={t("rooms")} value={search.hotelRooms} min={1} max={6} onChange={(v) => update("hotelRooms", v)} /><label className="mt-2 flex min-h-11 items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={search.hotelPetFriendly} onChange={(e) => update("hotelPetFriendly", e.target.checked)} />{t("petFriendly")}</label></div></div>{errorBlock("hotel")}</section>}
+    {included.hotel && <section aria-labelledby="deals-hotel-heading" className="border-t border-slate-200 py-5"><h2 id="deals-hotel-heading" className="mb-4 flex items-center gap-2 text-base font-extrabold text-[#021C2B]"><BedDouble className="h-5 w-5 text-[#004BB8]" />{t("hotels")}</h2><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><div className="relative"><label className={label} htmlFor="hotel-destination">{t("deals.destinationLabel")}</label><input id="hotel-destination" role="combobox" aria-controls="hotel-destination-options" aria-expanded={hotelSuggestions.length > 0} value={search.hotelDestination} onChange={(e) => { dirty.current.hotelDestination = true; update("hotelDestination", e.target.value); }} className={field} autoComplete="off" />{hotelSuggestions.length > 0 && <ul id="hotel-destination-options" role="listbox" className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-xl border bg-white p-1 shadow-xl">{hotelSuggestions.map((option) => <li key={option.id}><button type="button" className="w-full rounded-lg p-2 text-start text-sm hover:bg-slate-100" onClick={() => { dirty.current.hotelDestination = true; update("hotelDestination", option.searchValue); setHotelSuggestions([]); }}>{option.name}, {option.country}</button></li>)}</ul>}</div><div className="grid grid-cols-2 gap-2"><label><span className={label}>{t("checkIn")}</span><input type="date" value={search.hotelCheckIn} onChange={(e) => { dirty.current.hotelDates = true; update("hotelCheckIn", e.target.value); }} className={field} /></label><label><span className={label}>{t("checkOut")}</span><input type="date" value={search.hotelCheckOut} onChange={(e) => { dirty.current.hotelDates = true; update("hotelCheckOut", e.target.value); }} className={field} /></label></div><div className="min-w-0"><span className={label}>{t("hotelSearchGuestsLabel")}</span><button ref={hotelGuestsLauncherRef} type="button" aria-expanded={hotelGuestsOpen || mobileHotelGuestsOpen} aria-haspopup="dialog" aria-controls={mobileHotelGuestsOpen ? "deals-hotel-mobile-guests" : "deals-hotel-desktop-guests"} aria-label={t("chooseGuestsAndRooms")} onClick={() => hotelGuestsOpen ? dismissDesktopHotelGuests(true) : openHotelGuests()} className={`${field} flex items-center justify-between gap-2 text-start`}><span className="min-w-0 truncate">{hotelGuestsSummary}</span><ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${hotelGuestsOpen || mobileHotelGuestsOpen ? "rotate-180" : ""}`} /></button></div></div>{errorBlock("hotel")}</section>}
     {included.car && <section aria-labelledby="deals-car-heading" className="border-t border-slate-200 py-5"><h2 id="deals-car-heading" className="mb-4 flex items-center gap-2 text-base font-extrabold text-[#021C2B]"><Car className="h-5 w-5 text-[#004BB8]" />{t("cars")}</h2><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><label><span className={label}>{t("carsSearch.pickupLocationLabel")}</span><input value={search.carPickupLocation} onChange={(e) => { dirty.current.carLocation = true; update("carPickupLocation", e.target.value); }} className={field} /></label><div className="grid grid-cols-2 gap-2"><label><span className={label}>{t("departureDate")}</span><input type="date" value={search.carPickupDate} onChange={(e) => { dirty.current.carDates = true; update("carPickupDate", e.target.value); }} className={field} /></label><label><span className={label}>{t("returnDate")}</span><input type="date" value={search.carReturnDate} onChange={(e) => { dirty.current.carDates = true; update("carReturnDate", e.target.value); }} className={field} /></label></div><div className="grid grid-cols-2 gap-2"><label><span className={label}>{t("carsSearch.pickupTimeLabel")}</span><select value={search.carPickupTime} onChange={(e) => update("carPickupTime", e.target.value)} className={field}>{timeOptions.map((v) => <option key={v}>{v}</option>)}</select></label><label><span className={label}>{t("carsSearch.returnTimeLabel")}</span><select value={search.carReturnTime} onChange={(e) => update("carReturnTime", e.target.value)} className={field}>{timeOptions.map((v) => <option key={v}>{v}</option>)}</select></label></div><label><span className={label}>{t("carsSearch.driverAgeLabel")}</span><select value={search.carDriverAge} onChange={(e) => update("carDriverAge", e.target.value)} className={field}>{driverAgeOptions.map((v) => <option key={v}>{v === "18-70" ? t("carsSearch.driverAgeAnyAgeRange") : v}</option>)}</select></label></div><label className="mt-3 flex min-h-11 items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={search.carReturnToDifferentLocation} onChange={(e) => update("carReturnToDifferentLocation", e.target.checked)} />{t("carsSearch.differentReturnLocation")}</label>{search.carReturnToDifferentLocation && <label className="mt-2 block max-w-md"><span className={label}>{t("carsSearch.returnLocationPlaceholder")}</span><input value={search.carReturnLocation} onChange={(e) => update("carReturnLocation", e.target.value)} className={field} /></label>}{errorBlock("car")}</section>}
     <div className="flex justify-end border-t border-slate-200 pt-5"><button type="submit" disabled={submitting} aria-busy={submitting} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-8 text-sm font-extrabold text-white shadow-lg shadow-blue-900/20 hover:bg-[#021C2B] disabled:opacity-70 sm:w-auto"><Search className="h-4 w-4" />{t("deals.searchButton")}</button></div>
     <DealsFlightPopover open={travelersOpen} anchorRef={travelersLauncherRef}><div id="deals-flight-desktop-travelers" role="dialog" aria-modal="false" aria-label={t("travelersCabinDialogLabel")}>{travelersPicker}<div className="mt-4 flex justify-end border-t border-slate-100 pt-3"><button type="button" onClick={() => commitTravelers()} className="focus-ring min-h-10 rounded-xl bg-[#004BB8] px-5 text-sm font-extrabold text-white hover:bg-[#021C2B]">{t("done")}</button></div></div></DealsFlightPopover>
     <FlightMobilePickerShell open={mobileTravelersOpen} title={t("travelersCabinDialogLabel")} titleId="deals-flight-mobile-travelers" launcherRef={travelersLauncherRef} onClose={closeMobileTravelers} pickerMarker="traveler-cabin" contentClassName="px-4 py-5" footer={(requestClose) => <div className="flex justify-end"><button type="button" onClick={() => { commitTravelers(true); requestClose(); }} className="focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 py-3 text-sm font-extrabold text-white hover:bg-[#021C2B]">{t("done")}</button></div>}>{travelersPicker}</FlightMobilePickerShell>
+    <DealsHotelPopover open={hotelGuestsOpen} anchorRef={hotelGuestsLauncherRef}><div id="deals-hotel-desktop-guests" role="dialog" aria-modal="false" aria-label={t("guestsAndRooms")}>{hotelGuestsPicker}<div className="mt-4 flex justify-end border-t border-slate-100 pt-3"><button type="button" onClick={() => commitHotelGuests()} className="focus-ring min-h-10 rounded-xl bg-[#004BB8] px-5 text-sm font-extrabold text-white hover:bg-[#021C2B]">{t("done")}</button></div></div></DealsHotelPopover>
+    <HotelMobilePickerShell open={mobileHotelGuestsOpen} title={t("guestsAndRooms")} titleId="deals-hotel-mobile-guests" launcherRef={hotelGuestsLauncherRef} onClose={closeMobileHotelGuests} contentClassName="px-4 py-5" footer={(requestClose) => <div className="flex justify-end"><button type="button" onClick={() => { commitHotelGuests(true); requestClose(); }} className="focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 py-3 text-sm font-extrabold text-white hover:bg-[#021C2B]">{t("done")}</button></div>}>{hotelGuestsPicker}</HotelMobilePickerShell>
   </form>;
 }
