@@ -109,7 +109,7 @@ export default async function AdminPage() {
       </section>
 
       <section aria-label="Search Activity and Service Status" className="mt-7 grid items-start gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]">
-        <section data-admin-home-surface="search-activity" className="relative min-h-[17rem] overflow-hidden rounded-2xl border border-[#C9D8EA] bg-white p-6 shadow-[0_10px_30px_rgba(2,28,43,0.07)]" aria-labelledby="search-activity-heading">
+        <section data-admin-home-surface="search-activity" className="relative min-h-[17rem] overflow-hidden p-6" aria-labelledby="search-activity-heading">
           <SearchPanelDecoration />
           <div className="relative z-10">
             <PanelHeading id="search-activity-heading" icon={Activity}>Search Activity</PanelHeading>
@@ -142,7 +142,7 @@ export default async function AdminPage() {
           </div>
         </section>
 
-        <section data-admin-home-surface="service-status" className="relative min-h-[17rem] overflow-hidden rounded-2xl border border-[#C9D8EA] bg-white p-6 shadow-[0_10px_30px_rgba(2,28,43,0.07)]" aria-labelledby="service-status-heading">
+        <section data-admin-home-surface="service-status" className="relative min-h-[17rem] overflow-hidden p-6" aria-labelledby="service-status-heading">
           <ServicePanelDecoration />
           <div className="relative z-10">
             <PanelHeading id="service-status-heading" icon={Gauge}>Service Status</PanelHeading>
