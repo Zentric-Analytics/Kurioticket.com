@@ -30,6 +30,45 @@ test("admin home sections appear in the required operational order", () => {
   assert.deepEqual([...indexes].sort((a, b) => a - b), indexes);
 });
 
+test("admin home major sections share one subtle white surface treatment", () => {
+  assert.match(adminOverviewPage, /const adminHomeSectionSurfaceClass = "rounded-2xl border border-slate-200\/70 bg-white\/80 p-6"/);
+  const sectionSurfaceMatches = Array.from(adminOverviewPage.matchAll(/data-admin-home-section-surface="([^"]+)"/g), (match) => match[1]);
+  assert.deepEqual(sectionSurfaceMatches, ["needs-attention", "at-a-glance", "search-activity", "service-status", "recent-admin-activity"]);
+
+  for (const [index, surface] of sectionSurfaceMatches.entries()) {
+    const start = adminOverviewPage.indexOf(`data-admin-home-section-surface="${surface}"`);
+    const end = index === sectionSurfaceMatches.length - 1
+      ? adminOverviewPage.indexOf("function HeroRouteArtwork", start)
+      : adminOverviewPage.indexOf("data-admin-home-section-surface=", start + 1);
+    assert.notEqual(end, -1, `${surface} should have a following boundary`);
+    const surfaceBlock = adminOverviewPage.slice(start, end);
+    assert.match(surfaceBlock, /adminHomeSectionSurfaceClass/);
+    assert.equal((surfaceBlock.match(/adminHomeSectionSurfaceClass/g) || []).length, 1, `${surface} should use exactly one shared section surface`);
+  }
+
+  assert.doesNotMatch(adminOverviewPage, /data-admin-home-surface=/);
+  assert.doesNotMatch(adminOverviewPage, /shadow-\[0_10px_30px_rgba\(2,28,43,0\.07\)\]/);
+});
+
+test("admin home rows and metric items remain flat without separate card surfaces", () => {
+  const flatElementNames = [
+    "data-admin-home-attention-item=\"flat\"",
+    "data-admin-home-metric-item=\"flat\"",
+    "data-admin-home-search-metric=\"flat-icon\"",
+    "data-admin-home-status-row=\"flat\"",
+  ];
+
+  for (const marker of flatElementNames) {
+    const start = adminOverviewPage.indexOf(marker);
+    assert.notEqual(start, -1, `${marker} should exist`);
+    const elementSnippet = adminOverviewPage.slice(start, adminOverviewPage.indexOf(">", start));
+    assert.doesNotMatch(elementSnippet, /bg-white|border border-slate-200\/70|rounded-2xl|shadow/);
+  }
+
+  const timelineRowSnippet = blockBetween("items.map((item)", "data-admin-home-timeline-icon-column");
+  assert.doesNotMatch(timelineRowSnippet, /bg-white|border border-slate-200\/70|rounded-2xl|shadow/);
+});
+
 test("needs attention derives rows only from provider, system, and search health data", () => {
   const attentionLogic = blockBetween("function getAttentionIssues", "function providerReadinessLabel");
   assert.match(adminOverviewPage, /const attentionIssues = getAttentionIssues\(providers, system, searchHealth\)/);
@@ -53,7 +92,7 @@ test("needs attention uses a flat rail instead of nested cards", () => {
 });
 
 test("at a glance preserves all six metrics in order as a flat responsive metric rail", () => {
-  const glanceBlock = blockBetween("At a Glance", "data-admin-home-surface=\"search-activity\"");
+  const glanceBlock = blockBetween("At a Glance", "data-admin-home-section-surface=\"search-activity\"");
   assert.deepEqual(labelsFor("OverviewMetric", glanceBlock), ["Total users", "Active users", "Suspended users", "Admin users", "Recent searches", "Recent admin actions"]);
   assert.match(glanceBlock, /data-admin-home-metric-rail="flat"/);
   assert.match(glanceBlock, /grid-cols-2/);
@@ -65,7 +104,7 @@ test("at a glance preserves all six metrics in order as a flat responsive metric
 
 test("provider readiness large-card section is absent but providers remain represented in service status", () => {
   assert.doesNotMatch(adminOverviewPage, /<SectionHeading[^>]*>Provider Readiness<\/SectionHeading>|AdminProviderStatusCard|Operations Snapshot/);
-  const serviceBlock = blockBetween("data-admin-home-surface=\"service-status\"", "Recent Admin Activity");
+  const serviceBlock = blockBetween("data-admin-home-section-surface=\"service-status\"", "Recent Admin Activity");
   assert.match(serviceBlock, /providers\.map/);
   assert.match(serviceBlock, /provider\.product/);
   const adminData = readFileSync("src/lib/admin-data.ts", "utf8");
@@ -75,7 +114,7 @@ test("provider readiness large-card section is absent but providers remain repre
 });
 
 test("search activity has one outer surface, flat metrics, preserved data and a decorative motif", () => {
-  const searchBlock = blockBetween("data-admin-home-surface=\"search-activity\"", "data-admin-home-surface=\"service-status\"");
+  const searchBlock = blockBetween("data-admin-home-section-surface=\"search-activity\"", "data-admin-home-section-surface=\"service-status\"");
   assert.deepEqual(labelsFor("PanelMetric", searchBlock), ["Total recent searches", "No-result searches", "Failed searches"]);
   assert.match(searchBlock, /<PanelHeading id="search-activity-heading"[^>]*>Search Activity<\/PanelHeading>/);
   assert.doesNotMatch(searchBlock, /<SectionHeading id="search-activity-heading"/);
@@ -85,8 +124,8 @@ test("search activity has one outer surface, flat metrics, preserved data and a 
   assert.match(searchBlock, /icon=\{SearchX\}/);
   assert.match(searchBlock, /icon=\{XCircle\}/);
   assert.match(adminOverviewPage, /data-admin-home-search-metric="flat-icon"/);
-  assert.match(searchBlock, /data-admin-home-surface="search-activity"/);
-  assert.equal((searchBlock.match(/data-admin-home-surface="search-activity"/g) || []).length, 1);
+  assert.match(searchBlock, /data-admin-home-section-surface="search-activity"/);
+  assert.equal((searchBlock.match(/data-admin-home-section-surface="search-activity"/g) || []).length, 1);
   assert.match(searchBlock, /Top products searched/);
   assert.match(searchBlock, /Search analytics unavailable/);
   assert.match(searchBlock, /href="\/admin\/searches"/);
@@ -95,9 +134,9 @@ test("search activity has one outer surface, flat metrics, preserved data and a 
 });
 
 test("service status has one outer surface, two flat status columns and all required links", () => {
-  const serviceBlock = blockBetween("data-admin-home-surface=\"service-status\"", "Recent Admin Activity");
-  assert.match(serviceBlock, /data-admin-home-surface="service-status"/);
-  assert.equal((serviceBlock.match(/data-admin-home-surface="service-status"/g) || []).length, 1);
+  const serviceBlock = blockBetween("data-admin-home-section-surface=\"service-status\"", "Recent Admin Activity");
+  assert.match(serviceBlock, /data-admin-home-section-surface="service-status"/);
+  assert.equal((serviceBlock.match(/data-admin-home-section-surface="service-status"/g) || []).length, 1);
   assert.match(serviceBlock, /<PanelHeading id="service-status-heading"[^>]*>Service Status<\/PanelHeading>/);
   assert.doesNotMatch(serviceBlock, /<SectionHeading id="service-status-heading"/);
   assert.match(serviceBlock, /Provider statuses/);
