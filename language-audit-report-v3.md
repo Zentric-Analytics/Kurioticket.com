@@ -1,211 +1,192 @@
-# Kurioticket full language coverage audit v3
+# Kurioticket full language coverage audit v3 — corrected scanner
 
 ## Executive summary
 
-- **Audit date:** 2026-07-20 (UTC).
-- **Requested base:** latest `dev`; neither an `origin` remote nor a local `dev` ref exists in this checkout. The actual starting point is **`d6857b296408d9b37df27692a60ac330ee34cc55` — `Merge pull request #3095 from Zentric-Analytics/codex/fix-admin-home-ui-issues`**.
-- **Branch:** `audit/general-language-coverage-v3`.
-- **Scope:** report-only static audit. No application, locale, package, lockfile, or dependency file was changed.
-- **Active locales:** 18.
-- **Discovered route patterns:** 76; route-matrix route patterns: 76; **unmapped: 0**.
-- **Route/locale rows:** 1,368 (one route pattern × audience/auth state × locale).
-- **Shared components reached through route import graphs:** 84.
-- **Canonical English keys:** 3,146; statically observed candidate translation keys: 1,249; effective used English keys: 1,209; unused English keys: 1,937. The difference between candidate and effective keys is retained as a manual-review family because generic `t` member access can include typed/non-dictionary objects.
-- **Visible/accessibility literal hits:** 371 AST hits, compacted into 46 source-file review findings.
-- **Issues:** 428 confirmed and 46 manual-review findings (474 total); severity: 5 high, 469 medium, 0 low, 0 blocker.
-- **Runtime:** unavailable. No browser tool or safe authenticated/admin session was supplied, so all rows are `RUNTIME_UNVERIFIED`; no screenshot is claimed or committed.
+- **Audit date:** 2026-07-20 UTC.
+- **Audit base:** `d6857b296408d9b37df27692a60ac330ee34cc55` — `Merge pull request #3095 from Zentric-Analytics/codex/fix-admin-home-ui-issues`.
+- **Existing hosted PR:** #3096, `docs(i18n): refresh full language coverage audit`; previous hosted head supplied by the user: `4a10644ea62a637d3eecf3df04b8b5296c425c25`; target: `dev`.
+- **Scope:** report-only. No application, locale dictionary, package, lockfile, generated application source, test, fixture, or dependency file is changed.
+- **Available locales:** 18.
+- **Production TypeScript/TSX source files traversed:** 485.
+- **Excluded test/spec/fixture/mock/story/generated source files:** 115. These files do not contribute strings, keys, fallbacks, routes, or coverage counts.
+- **Route patterns:** 76; route/locale rows: 1,368; unmapped routes: 0.
+- **Canonical English keys:** 3,146; binding-resolved used-key candidates: 1,096; effective English used keys: 1,056; finite dynamically resolved keys: 6; unresolved dynamic candidates: 208; generic `t` false-positive candidates: 331.
+- **UI-sink/context literal hits:** 1,772.
+- **Fallbacks:** 168 confirmed visible, 172 manual/likely, and 55 operational fallbacks excluded from UI defect totals.
+- **RTL:** 146 source-level manual-review candidates, compacted into 36 source-file issues.
+- **Placeholder defects:** 14 independently reviewable issue rows with exact English/locale values, tokens, brace styles, dictionary lines, and source excerpts.
+- **Issues:** 248 confirmed source defects and 288 manual-review findings; severity totals are 15 high, 478 medium, and 43 low.
+- **Runtime:** no browser tooling or safe logged-in/admin session was supplied. No end-to-end route or conditional state is claimed as runtime verified.
 
-Most importantly, this audit counts a key as explicit only when its locale module contains an AST-observed property override. A value supplied by `...en` is counted as **inherited English**, even though it exists in the effective runtime dictionary. `translationStatus` is registry metadata only and is never treated as coverage proof.
+These corrected counts supersede the first v3 output. In particular, the old scanner counted any identifier named `t`, included test source, treated every English `??`/`||` fallback as confirmed visible, implied render-state verification from file traversal, and forced RTL counts to zero. The corrected scanner does none of those things.
 
-## Methodology
+## Corrected methodology and proof boundaries
 
-The v3 script uses the installed TypeScript compiler API to parse all TypeScript/TSX in `src/app`, `src/components`, `src/content`, `src/data`, `src/lib`, and `src/services`. It dynamically imports the live registries, derives available locales, parses dictionary-module resolution from `src/lib/i18n/index.ts`, flattens effective dictionaries, and separately walks each locale's `translations` object without treating spread assignments as explicit overrides.
+The script uses the installed TypeScript compiler API and the live locale/i18n registries. It parses production `.ts`/`.tsx` source under `src/app`, `src/components`, `src/content`, `src/data`, `src/lib`, and `src/services`. Before analysis it excludes `*.test.*`, `*.spec.*`, `__tests__`, fixtures, mocks, stories, and generated trees. Excluded tests are used only for the separately reported validation run.
 
-It discovers all `page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`, `not-found.tsx`, and `default.tsx` files. Route groups and parallel-route labels are removed from URL patterns; dynamic segments are retained. Relative and `@/` imports are resolved recursively, applicable parent layouts are included, and external packages are stopped. Each route row aggregates its reachable user-facing graph rather than assuming a text-free page is translated.
+### Translation usage
 
-Source inspection covers property, element, call and translation-prop key forms; unresolved computed families are counted rather than silently accepted. JSX text and literal `placeholder`, `title`, `alt`, `aria-label`, and `aria-description` attributes are inspected. `??` and `||` literal fallbacks are recorded. Placeholder parity distinguishes `{{name}}` from `{name}`, checks names/styles, and retains complete key-level evidence only under `/tmp/kurioticket-i18n-audit-v3`.
+The scanner tracks dictionary/function bindings established by i18n imports, `getTranslations()`, `useLocale()` destructuring, imported English dictionaries, and local helper functions whose body reads a dictionary. It does **not** automatically treat every `t` call as translation usage. Unbound `t` calls are retained as generic false-positive candidates in `/tmp`, outside confirmed coverage.
 
-The committed CSVs are deliberately compact: the route matrix has no source-usage Cartesian product, and the issue matrix deduplicates literal hits by source file. Successful key-level evidence is not committed.
+It resolves literal keys and attempts finite evaluation through constants, literal/as-const arrays, object maps, parentheses/assertions, ternaries, and nullish/boolean alternatives. It reports four separate totals: binding-confirmed keys, finite dynamic keys, unresolved dynamic candidates, and generic identifier candidates. String-literal unions and values passed through another module or prop can still require review; the scanner does not claim full TypeScript data-flow analysis.
+
+### Visible text and fallback classification
+
+Visible text analysis is sink/context based. It covers JSX text, string/template/conditional JSX expressions, accessibility/title/placeholder attributes, common UI configuration fields, metadata-shaped title/description fields, and message sinks such as toast, alert, confirm, `setError`, `setStatus`, `setMessage`, and `setSuccess`. It does not classify every arbitrary source literal as visible.
+
+A literal at a direct UI sink is confirmed source evidence. Template/configuration propagation that cannot be proven to render is a candidate. Nullish/boolean fallbacks are classified as `confirmed_visible_fallback`, `manual_review`, or `operational_fallback`; the 55 operational provider/route/code/logging-style cases are excluded from confirmed UI issue totals. “Confirmed” proves a source path to a recognized UI sink, not that the runtime branch was exercised.
+
+### Route graph and render states
+
+Routes are derived from current `src/app` `page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`, `not-found.tsx`, and `default.tsx` files. Route groups are removed and dynamic segments retained. Relative and `@/` imports and applicable layouts are followed through production source only.
+
+The route CSV now separates:
+
+- `special_route_files_discovered`: special files found on disk;
+- `conditional_state_candidates`: static state-like identifiers found in reachable code;
+- `runtime_states_verified`: always `none` in this environment.
+
+A traversed conditional is not described as a checked/rendered state. Audience/auth classification uses route location plus reachable session calls, redirects, and auth/admin guards. Four customer routes without conclusive static guard evidence are explicitly `auth_state_requires_runtime_review`; public routes that consume optional session state are `optional_session`.
+
+### RTL review
+
+Arabic is the available RTL locale. The scanner finds physical margin/padding/left/right/border utilities, inline direction assumptions, directional transforms/icons, and full-text `dir="ltr"`. It filters recognizable numeric, time, price, currency, airport/flight-number, map, and coordinate contexts. Every retained item is `manual_review` unless static breakage can actually be proven; evidence contains file, line, context, reason, and affected routes through the import graph.
 
 ## Locale registry and explicit coverage
 
-`selector` is “yes” for every row because `availableLocaleOptions` is filtered from the same dynamically discovered registry. Resolution is via `normalizeLanguage` followed by `getTranslations`; unknown input falls back to `en-us`. Aliases below are derived from the current normalization/dictionary registry behavior.
+`translationStatus` is registry metadata, not coverage proof. A property supplied through `...en` is inherited English even when present in the effective runtime dictionary. An explicit override identical to English is reported separately and is not automatically considered native translation.
 
-| Code | Canonical tag | Module | Dir | translationStatus | Aliases / normalization | Selector | Used effective | Explicit | Explicit % | Inherited English | Inherited % | Blank | Identical explicit | Placeholder defects |
-|---|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| en-us | en-US | en.ts | ltr | ready | en, en-us → en-us | yes | 1,209 | 1,209 | 100.0% | 0 | 0.0% | 0 | 0 | 0 |
-| es-es | es-ES | es.ts | ltr | ready | es, es-es → es-es | yes | 1,209 | 1,141 | 94.4% | 68 | 5.6% | 0 | 36 | 0 |
-| fr | fr | fr.ts | ltr | partial | fr, fr-fr → fr | yes | 1,209 | 1,137 | 94.0% | 72 | 6.0% | 0 | 41 | 0 |
-| de-de | de-DE | de.ts | ltr | ready | de, de-de → language de-de / dictionary de | yes | 1,211 | 1,122 | 92.7% | 89 | 7.3% | 0 | 41 | 0 |
-| it-it | it-IT | it.ts | ltr | partial | it, it-it → language it-it / dictionary it | yes | 1,209 | 1,125 | 93.1% | 84 | 6.9% | 0 | 40 | 0 |
-| pt-br | pt-BR | pt-br.ts | ltr | partial | pt, pt-br → pt-br | yes | 1,209 | 1,104 | 91.3% | 105 | 8.7% | 0 | 39 | 0 |
-| nl | nl-NL | nl.ts | ltr | partial | nl, nl-nl → nl | yes | 1,209 | 1,109 | 91.7% | 100 | 8.3% | 0 | 61 | 5 |
-| ar | ar | ar.ts | rtl | partial | ar, ar-sa, ar-ae, ar-eg → ar | yes | 1,209 | 973 | 80.5% | 236 | 19.5% | 0 | 30 | 0 |
-| zh-cn | zh-CN | zh-cn.ts | ltr | partial | zh, zh-cn → zh-cn | yes | 1,212 | 986 | 81.4% | 226 | 18.6% | 0 | 31 | 0 |
-| ja | ja | ja.ts | ltr | partial | ja, ja-jp → ja | yes | 1,210 | 977 | 80.7% | 233 | 19.3% | 0 | 30 | 4 |
-| ko | ko | ko.ts | ltr | partial | ko, ko-kr → ko | yes | 1,210 | 962 | 79.5% | 248 | 20.5% | 0 | 31 | 3 |
-| hi | hi-IN | hi.ts | ltr | partial | hi, hi-in → hi | yes | 1,211 | 959 | 79.2% | 252 | 20.8% | 0 | 38 | 0 |
-| tr | tr-TR | tr.ts | ltr | partial | tr, tr-tr → tr | yes | 1,209 | 991 | 82.0% | 218 | 18.0% | 0 | 39 | 0 |
-| pl | pl-PL | pl.ts | ltr | partial | pl, pl-pl → pl | yes | 1,210 | 927 | 76.6% | 283 | 23.4% | 0 | 37 | 0 |
-| sv | sv-SE | sv.ts | ltr | partial | sv, sv-se → sv | yes | 1,209 | 917 | 75.8% | 292 | 24.2% | 0 | 40 | 0 |
-| id | id-ID | id.ts | ltr | partial | id, id-id → id | yes | 1,210 | 885 | 73.1% | 325 | 26.9% | 0 | 47 | 0 |
-| th | th-TH | th.ts | ltr | partial | th, th-th → th | yes | 1,209 | 890 | 73.6% | 319 | 26.4% | 1 | 28 | 3 |
-| vi | vi-VN | vi.ts | ltr | partial | vi, vi-vn → vi | yes | 1,210 | 881 | 72.8% | 329 | 27.2% | 0 | 43 | 0 |
+| Code | Tag | Module | Dir | Registry status | Effective used | Explicit | Explicit % | Inherited English | Inherited % | Blank | Identical explicit | Placeholder defects |
+|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| en-us | en-US | en.ts | ltr | ready | 1,056 | 1,056 | 100.0% | 0 | 0.0% | 0 | 0 | 0 |
+| es-es | es-ES | es.ts | ltr | ready | 1,056 | 988 | 93.6% | 68 | 6.4% | 0 | 28 | 0 |
+| fr | fr | fr.ts | ltr | partial | 1,056 | 984 | 93.2% | 72 | 6.8% | 0 | 33 | 0 |
+| de-de | de-DE | de.ts | ltr | ready | 1,058 | 978 | 92.4% | 80 | 7.6% | 0 | 33 | 0 |
+| it-it | it-IT | it.ts | ltr | partial | 1,056 | 981 | 92.9% | 75 | 7.1% | 0 | 33 | 0 |
+| pt-br | pt-BR | pt-br.ts | ltr | partial | 1,056 | 960 | 90.9% | 96 | 9.1% | 0 | 30 | 0 |
+| nl | nl-NL | nl.ts | ltr | partial | 1,056 | 957 | 90.6% | 99 | 9.4% | 0 | 54 | 5 |
+| ar | ar | ar.ts | rtl | partial | 1,056 | 852 | 80.7% | 204 | 19.3% | 0 | 26 | 1 |
+| zh-cn | zh-CN | zh-cn.ts | ltr | partial | 1,059 | 862 | 81.4% | 197 | 18.6% | 0 | 27 | 0 |
+| ja | ja | ja.ts | ltr | partial | 1,057 | 853 | 80.7% | 204 | 19.3% | 0 | 26 | 4 |
+| ko | ko | ko.ts | ltr | partial | 1,057 | 840 | 79.5% | 217 | 20.5% | 0 | 27 | 3 |
+| hi | hi-IN | hi.ts | ltr | partial | 1,058 | 825 | 78.0% | 233 | 22.0% | 0 | 30 | 0 |
+| tr | tr-TR | tr.ts | ltr | partial | 1,056 | 854 | 80.9% | 202 | 19.1% | 0 | 30 | 0 |
+| pl | pl-PL | pl.ts | ltr | partial | 1,057 | 795 | 75.2% | 262 | 24.8% | 0 | 30 | 0 |
+| sv | sv-SE | sv.ts | ltr | partial | 1,056 | 785 | 74.3% | 271 | 25.7% | 0 | 32 | 0 |
+| id | id-ID | id.ts | ltr | partial | 1,057 | 766 | 72.5% | 291 | 27.5% | 0 | 38 | 0 |
+| th | th-TH | th.ts | ltr | partial | 1,056 | 784 | 74.2% | 272 | 25.8% | 1 | 22 | 1 |
+| vi | vi-VN | vi.ts | ltr | partial | 1,057 | 761 | 72.0% | 296 | 28.0% | 0 | 34 | 0 |
 
-Counts above are unique used/effective keys, not route-weighted successes. The route CSV contains route-specific counts. An explicit value identical to English is reported separately and is not automatically called native translation.
+Aliases/normalization remain derived from the live registries: `en→en-us`, `es→es-es`, `de→de-de` (dictionary `de`), `it→it-it` (dictionary `it`), `pt→pt-br`, `zh→zh-cn`, regional Japanese/Korean/Hindi/Turkish/Polish/Indonesian/Thai/Vietnamese forms to their internal codes, and `ar-SA`/`ar-AE`/`ar-EG→ar`. All 18 are selector-available and resolve through the runtime dictionary registry.
 
-## Complete route inventory
+## Complete route inventory and audience review
 
-All discovered patterns appear for all 18 locales. Parent layouts and special render files are captured in `page_files`, `layout_files`, and `render_states_checked` in the route matrix.
+| Area | Routes | Static auth classification |
+|---|---|---|
+| Public/search/content | `/`, `/about`, `/cars`, `/cars/results`, `/contact`, `/deals`, `/destinations`, `/explore`, `/faq`, `/flights`, `/flights/[slug]`, `/flights/details/[id]`, `/flights/results`, `/guides`, `/guides/[slug]`, `/hotels`, `/hotels/[slug]`, `/hotels/details/[id]`, `/hotels/results`, `/how-it-works`, `/legal`, `/legal/[slug]`, `/legal-center`, `/more-service-info`, `/privacy`, `/redirect`, `/service-guarantee`, `/support`, `/terms` | 29 `optional_session` because shared session-aware navigation is reachable. |
+| Authentication | `/auth/forgot-password`, `/auth/reset-password`, `/auth/signin`, `/auth/signup`, `/auth/two-factor`, `/auth/verify-email`, `/auth/verify-login` | logged out |
+| Authenticated customer | `/account/pending-deletion`, `/dashboard`, `/dashboard/account`, `/dashboard/alerts`, `/dashboard/preferences`, `/dashboard/preferences/booking`, `/dashboard/preferences/customization`, `/dashboard/preferences/email`, `/dashboard/preferences/travel`, `/dashboard/recent-searches`, `/dashboard/saved`, `/dashboard/security`, `/dashboard/settings`, `/dashboard/support`, `/dashboard/trips`, `/dashboard/trips`, `/email/preferences`, `/onboarding`, `/onboarding/security`, `/recent-searches`, `/saved` | 16 statically guarded; 4 require runtime auth-state review. Exact row classification is in the route CSV. |
+| Admin | `/admin` plus account-deletions, bookings, cars, content, flights, hotels, logs, monitoring, operations, platform, providers, redirects, searches, settings, support, system, and users, including dynamic detail routes | 20 statically admin-authenticated patterns. |
 
-| Coverage area | Route patterns |
-|---|---|
-| Public core/search | `/`, `/flights`, `/flights/[slug]`, `/flights/details/[id]`, `/flights/results`, `/hotels`, `/hotels/[slug]`, `/hotels/details/[id]`, `/hotels/results`, `/cars`, `/cars/results`, `/deals`, `/destinations`, `/explore` |
-| Public content/legal/support | `/about`, `/contact`, `/faq`, `/guides`, `/guides/[slug]`, `/how-it-works`, `/legal`, `/legal/[slug]`, `/legal-center`, `/more-service-info`, `/privacy`, `/service-guarantee`, `/support`, `/terms`, `/redirect` |
-| Authentication | `/auth/signin`, `/auth/signup`, `/auth/forgot-password`, `/auth/reset-password`, `/auth/two-factor`, `/auth/verify-email`, `/auth/verify-login` |
-| Logged-in/account | `/dashboard`, `/dashboard/account`, `/dashboard/alerts`, `/dashboard/preferences`, `/dashboard/preferences/booking`, `/dashboard/preferences/customization`, `/dashboard/preferences/email`, `/dashboard/preferences/travel`, `/dashboard/recent-searches`, `/dashboard/saved`, `/dashboard/security`, `/dashboard/settings`, `/dashboard/support`, `/dashboard/trips`, `/saved`, `/recent-searches`, `/email/preferences`, `/account/pending-deletion` |
-| Onboarding | `/onboarding`, `/onboarding/security` |
-| Admin | `/admin`, `/admin/account-deletions`, `/admin/account-deletions/[id]`, `/admin/bookings`, `/admin/cars`, `/admin/content`, `/admin/flights`, `/admin/hotels`, `/admin/logs`, `/admin/monitoring`, `/admin/operations`, `/admin/platform`, `/admin/providers`, `/admin/redirects`, `/admin/searches`, `/admin/settings`, `/admin/support`, `/admin/support/[id]`, `/admin/system`, `/admin/users` |
+Hotel Details is explicitly covered at `/hotels/details/[id]` and `/hotels/[slug]`. Header, Footer, language and country/currency selectors, mobile navigation, account/preference/admin navigation, cards, filters, sort controls, pickers, pagination, saved/share actions, dialogs, galleries, loading/error/empty forms and message components are mapped through production import graphs.
 
-Hotel Details is explicitly present as `/hotels/details/[id]` and the newer discovery detail route `/hotels/[slug]`. Header, Footer, locale selector, country/currency selector, mobile navigation, account menus, dashboard/preference navigation, admin navigation, cards, filters, pickers, dialogs, gallery/loading/empty/error components, forms and toast-related modules are mapped through imports and listed per row.
+## Static route status answers
 
-## Route status findings
+- **Statically fully explicitly translated:** none. No route/locale row satisfies explicit-only coverage after reachable shared UI, literal candidates, dynamic candidates, placeholders, and inherited English are considered. This is a static finding, not an end-to-end judgment.
+- **Routes with inherited English:** 49 of 76 patterns in at least one locale.
+- **Routes with confirmed source hardcoded English:** 76 of 76 patterns because confirmed shared/root UI sinks propagate through applicable layout graphs.
+- **Routes with candidate hardcoded English:** 76 of 76 patterns because unresolved configuration/template candidates also propagate through shared graphs.
+- **Placeholder locales:** Dutch (5), Arabic (1), Japanese (4), Korean (3), Thai (1).
+- **Runtime verification required:** all 76 patterns. Four customer patterns also require auth-state classification at runtime.
 
-### Fully explicitly translated routes
+The route matrix reports route-local counts. It does not claim a visible literal or fallback branch necessarily executes for every locale; `confirmed` means the source reaches a recognized UI sink, while `runtime_status` remains `RUNTIME_UNVERIFIED`.
 
-No route is certified `FULLY_EXPLICITLY_TRANSLATED` across every active locale. Runtime is unverified for every route, and every non-English locale has inherited-English used keys at application level. Individual route/locale rows may include the status only when the static graph has no inherited key, literal, blank, placeholder, or dynamic finding; `RUNTIME_UNVERIFIED` remains alongside it and prevents an end-to-end certification.
+## Placeholder evidence
 
-### Partially translated and English-fallback routes
+The issue CSV contains one row per defect, not one aggregate locale row. IDs `GLV3-001`–`GLV3-014` include exact English and locale excerpts, dictionary file/line, expected and actual token signatures, and brace style. Findings cover Dutch language/preferences/cars/recent-search tokens; Arabic `resultFound`; Japanese baggage tokens; Korean destination/baggage tokens; and Thai unavailable-language text. This critical evidence remains independently reviewable after `/tmp` is deleted.
 
-All major route groups are partially translated in at least one locale. The largest unique inherited-English proportions are Vietnamese 27.2%, Indonesian 26.9%, Thai 26.4%, Swedish 24.2%, Polish 23.4%, Hindi 20.8%, Korean 20.5%, Arabic 19.5%, Japanese 19.3%, and Simplified Chinese 18.6%. Scoped helper fallback, hardcoded fallback, raw-key/undefined candidates, and blanks are distinct `failure_type`/`fallback_type` values in the issue CSV; they are not collapsed into effective-dictionary presence.
+## Fallback, visible text, metadata, and accessibility
 
-### Hardcoded visible text
+- 168 fallbacks are confirmed to reach JSX or a recognized message/visible sink.
+- 172 are manual/likely because propagation cannot be proven locally.
+- 55 operational fallbacks are counted for transparency but excluded from UI defects.
+- 1,772 visible-literal hits are grouped by production source file and distinguish direct sink evidence from candidates.
+- Metadata-shaped title/description and accessibility attributes are included; route rows retain metadata/accessibility counts.
+- Operational provider names, routes, codes, identifiers, internal logging, currency/airport codes, prices, dates, emails, legal identifiers, and user data are not automatically treated as localized UI.
 
-The audit found 371 literal hits and reports 46 compact source-file review rows rather than repeating them by locale or route usage. Separately, 423 reachable `??`/`||` English fallback expressions are confirmed rows because each represents a distinct source behavior. Operational names and values are filtered as described under Known non-issues. The imported-route mapping in the route CSV shows affected route groups; shared defects propagate to every route graph that imports them.
+## RTL and formatting
 
-### Placeholder defects
+The 146 retained RTL candidates cover physical spacing/borders/positions, directional transforms/icons, and unsafe-looking full-text LTR declarations after filtering recognizable safe numeric/time/price/airport/map contexts. They are compacted into 36 source-file manual-review issues with exact line/context/reason. Static review cannot prove visual breakage, so the report does not call them confirmed RTL defects. Arabic desktop/mobile menus, filters, cards, galleries, dialogs, date ranges, plural ordering, and sentence/value order remain a priority runtime queue.
 
-Five compact confirmed locale findings cover used-key placeholder discrepancies: Dutch (5 unique keys), Japanese (4), Korean (3), and Thai (3), plus the high-level used-key resolution review. Token matching distinguishes single/double braces and catches removed, extra and renamed tokens. Full expected/actual signatures are temporary-only.
+## Conditional states and runtime honesty
 
-## Audience and state coverage
+Fifteen route patterns have one or more special route files discovered. Component identifiers suggest loading, error, empty, unavailable, success, authenticated/unauthenticated, dialog-open, and mobile-menu-open candidates. These appear only in `conditional_state_candidates`; `runtime_states_verified` is `none` everywhere. Logged-in empty/success/error, onboarding, account deletion, provider unavailable, discovery/priced hotel, missing image, filter/dialog-open, and admin states require a safe runtime session and are not claimed as checked.
 
-### Logged-out findings
+## Language-test failure reconciliation
 
-Thirty-one public patterns plus seven authentication routes were statically traversed. Coverage includes home, desktop/mobile header, Footer, selectors, navigation, all flight/hotel/car surfaces (including Hotel Details), marketing/content/legal/support routes, password reset, email/login verification and two-factor authentication. Loaded branches and all discovered special route files are mapped. Literal, fallback, metadata and accessibility hits are in the issue CSV.
+The required language test currently has 208 tests: 172 pass and 36 fail. All failures inspect exact source text, component names, Tailwind classes, configuration snippets, helper calls, or template shapes; none renders the UI. They are excluded from production coverage and reconciled as validation-only manual issues:
 
-### Logged-in findings
+| Failing assertion group | Count | Locale/source area | GLV3 issue | Status |
+|---|---:|---|---|---|
+| Saved/search-history exact `t(...)` and aria-label snippets | 5 | vi, pl, id, sv; saved/recent searches | GLV3-530 | stale/source-shape assertion; runtime localization not proven by this test |
+| Preference component names and layout classes | 5 | th, pl, id, vi, sv; account preferences | GLV3-531 | stale/source-shape assertion |
+| Dashboard/alerts/trips exact href, config, count, and template snippets | 9 | th, vi, tr, pl, id, sv | GLV3-532 | stale/source-shape assertion |
+| Cars key reads, operational fixtures, classes, and time-format snippets | 8 | sv, pl, id, tr, th | GLV3-533 | stale/source-shape assertion |
+| Hotel-results exact key-read assertion | 1 | sv; hotel results | GLV3-534 | stale/source-shape assertion |
+| Homepage newsletter class and FAQ-key snippets | 3 | sv, pl; home | GLV3-535 | stale/source-shape assertion |
+| Flight price-helper and details-link template snippets | 5 | pl, sv, th, id; flights | GLV3-536 | stale/source-shape assertion |
+| **Total** | **36** | | | **all reconciled** |
 
-Twenty-five customer/authenticated patterns cover dashboard/account/security/settings, customization/booking/travel/email preferences, saved items, recent searches, trips, alerts, support, account deletion, and email preference management. Empty/loading/error/success/session branches reachable in imports were inspected statically. No credentials or safe existing session were available, so signed-in display-name, no-content, pending deletion and destructive-dialog behavior remain runtime-unverified.
-
-### Onboarding findings
-
-`/onboarding` and `/onboarding/security` are present for all locales and are no longer excluded as they were in v2. Their shared auth/account graph is analyzed, but completion, validation, unverified-account and success transitions need a safe session.
-
-### Admin findings
-
-All 20 current admin patterns and shared admin imports are included. Admin currently participates in the application locale/shared-component graph in places, but substantial admin literal/fallback findings mean it cannot be characterized as intentionally English-only or fully locale-aware. Language switching and locale inheritance need authenticated runtime verification; hardcoded customer/operator-visible English is listed rather than silently excluded.
-
-### Header, Footer and navigation
-
-The root layout import graph maps `AppHeader`, `Footer`, language selector, country/currency selector and mobile navigation into applicable public/customer routes. Authenticated account menus, dashboard/preferences navigation and admin navigation are included through their route layouts. Shared-component defects are aggregated once in issues and linked to all reachable route rows.
-
-### Loading, error, empty and dialog states
-
-Every discovered `loading`, `error`, `not-found`, and `default` file is attached to its route pattern. Static conditional branches additionally cover loading/loaded, empty/partial/unavailable, API and validation errors, success/disabled, logged-out/in, verification/2FA, pending deletion, no saved/recent/alert/trip content, provider availability, discovery/priced hotel, missing images, mobile/filter panels and dialogs. Branch reachability is not claimed as runtime proof.
-
-## Metadata and accessibility
-
-Metadata/Open Graph literals are inspected where statically reachable; route rows include `metadata_issue_count`. Current dictionary metadata keys resolve some v2 findings, while remaining source-level hardcoded metadata and fallback behavior is retained for review. Accessibility inspection covers literal alt text, `aria-label`, `aria-description`, title attributes and screen-reader-facing JSX; route rows provide `accessibility_issue_count`, and issue rows distinguish `accessibility_only`.
-
-## RTL, directionality and formatting
-
-Arabic is the only available RTL locale; all other registry entries are LTR. `applyLanguageToDocument` sets both canonical `lang` and registry direction. The static audit reviewed locale-sensitive date/number/currency use, counts/plural wording, physical left/right classes, and full-text `dir="ltr"` risks. Numeric-only LTR isolation is a known non-issue. No RTL issue is auto-confirmed solely from a physical utility class because visual context is required; Arabic rows remain runtime-unverified and manual visual review is required for date ranges, sentence order, panels, galleries and menus.
-
-## Issue distribution
-
-| Measure | Count |
-|---|---:|
-| Confirmed | 428 |
-| Manual review | 46 |
-| High | 5 |
-| Medium | 469 |
-| Placeholder defect groups | 4 |
-| Used-key resolution group | 1 |
-| Hardcoded literal review groups | 46 |
-| Hardcoded English fallback expressions | 423 |
-
-Because shared/fallback findings usually affect every non-English locale, issue counts are 470 each for `es-es`, `fr`, `de-de`, `it-it`, `pt-br`, `ar`, `zh-cn`, `hi`, `tr`, `pl`, `sv`, `id`, `vi`; 471 for `ja`, `ko`, `th`, and `nl`; and 1 English manual key-resolution finding. Route-group totals are best read from `confirmed_issue_ids` in the route matrix: issues are deduplicated at component/source behavior level rather than multiplied by every importing route.
+This classification does not declare the corresponding UI correct. It says the failed assertion does not prove a current translation defect because it asserts implementation text rather than output. Relevant routes remain covered by inherited/literal/fallback/dynamic issues and remain runtime-unverified.
 
 ## V2 reconciliation
 
-| V2 ID | Current classification | Current evidence |
-|---|---|---|
-| GLV2-001 | fixed | Vietnamese `loginCodeInstructions` now contains both `{{email}}` and `{{minutes}}`; no current VI mismatch. |
-| GLV2-002 | obsolete | Hotel landing/detail architecture changed; v3 re-audits current Hotel Details and literal alts independently rather than carrying old line references. |
-| GLV2-003 | still_present | Dutch `openLanguagePreferences` remains in the Dutch placeholder group. |
-| GLV2-004 | still_present | Dutch `removeRecentSearch` remains in the Dutch placeholder group. |
-| GLV2-005 | still_present | Dutch `carsResults` single/double-brace discrepancies remain. |
-| GLV2-006 | fixed | Thai selector value now contains country, code and currency tokens. |
-| GLV2-007 | still_present | Thai unavailable-language text still omits `{{language}}`. |
-| GLV2-008 | still_present | Korean `homeSaveDestination` still renames English `{{city}}` to `{{destination}}`. |
-| GLV2-009 | still_present | Arabic singular `optionFound`/`resultFound` values still omit `{{count}}`; they were not counted as used by the conservative static family resolver and remain confirmed by direct current source reconciliation. |
-| GLV2-010 | partially_fixed | Flight metadata dictionary keys now exist; runtime locale selection for metadata remains unverified. |
-| GLV2-011 | partially_fixed | Hotel metadata dictionary keys now exist; runtime locale selection remains unverified. |
-| GLV2-012 | partially_fixed | Static content has broad dictionary coverage; metadata/runtime locale resolution still needs browser verification. |
-| GLV2-013 | fixed | The former exact Thai Footer-class failure is absent from the current 36 failures. |
-| GLV2-014 | fixed | The former Vietnamese hotel-budget expected-value failure is absent from the current 36 failures. |
-| MR-001 | cannot_verify | Empty signed-in profile requires a supplied safe authenticated session. |
-| MR-002 | still_present | Identical-explicit and inherited-English totals remain material, but only contextual hits are issues. |
-| MR-003 | cannot_verify | Missing legal-document metadata branch requires runtime generation/invalid slug behavior. |
-| MR-004 | obsolete | Admin, onboarding and pending-deletion routes are now explicitly within v3 scope. |
+| Classification | Items |
+|---|---|
+| still present | GLV2-003, -004, -005, -007, -008, -009 |
+| fixed | GLV2-001, -006, -013, -014 |
+| partially fixed/runtime-unverified | GLV2-010, -011, -012 |
+| obsolete architecture/scope | GLV2-002; MR-004 |
+| still a coverage risk | MR-002 |
+| cannot verify without runtime | MR-001, MR-003 |
 
-Totals: **6 still_present, 4 fixed, 1 obsolete, 3 partially_fixed, 0 false_positive, 0 cannot_verify; MR: 1 still_present, 1 obsolete, 2 cannot_verify.**
+Current exact placeholder evidence supersedes v2 line references. Admin, onboarding, Hotel Details, pending deletion, preferences and recent-search routes are no longer excluded.
 
 ## Manual runtime-review queue
 
-1. All 31 public, 25 logged-in/customer, and 20 admin route patterns: validate document `lang`/`dir` across all 18 selectors.
-2. Desktop/mobile AppHeader, Footer, language/country/currency selectors, account menu, filter panels and dialogs in Arabic and representative LTR locales.
-3. Hotel discovery-only, priced and unavailable Hotel Details; flight/car provider unavailable and API-error states.
-4. Empty saved/recent/trips/alerts, unverified/2FA/pending-deletion, onboarding validation/success and sign-out/session expiry.
-5. Metadata/Open Graph for every public route and legal slug.
-6. Admin locale inheritance, switching and operator-visible literals using only a supplied safe session.
+1. Switch all 18 available selectors across representative public pages and verify document `lang`/`dir`, explicit versus fallback copy, and metadata/Open Graph.
+2. Inspect desktop/mobile header, Footer, selectors, menus, filters, dialogs, galleries and cards, especially Arabic.
+3. Exercise public loading/error/empty/unavailable and provider states without purchases or destructive actions.
+4. With a supplied safe session, inspect authenticated dashboard/preferences/trips/alerts/saved/recent/account-deletion/onboarding/session states.
+5. With a supplied safe admin session, verify locale inheritance/switching and operator-visible text across all 20 admin patterns.
+6. Replace source-shape language tests with rendered/behavioral assertions before using them as localization proof.
 
-## Recommended repair order
+## Known non-issues
 
-1. Correct confirmed placeholder parity without changing product wording or behavior.
-2. Centralize/deduplicate confirmed hardcoded English fallback expressions, starting with shared header/auth/search/detail components.
-3. Review the 46 literal source groups, prioritizing accessibility, Hotel Details, authentication, account deletion/onboarding and admin.
-4. Fill explicit native overrides in the highest inherited-English locales; do not use effective dictionary presence as completion.
-5. Localize metadata and validate locale-aware formatting/pluralization/RTL visually.
-6. Execute the runtime queue with safe sessions and convert manual findings to confirmed/fixed outcomes.
+Kurioticket branding; company registration data; route/API/query names; internal identifiers and logging; provider, airline, airport, hotel and supplier names; user data; currency/airport codes; prices; dates; support emails; legal identifiers; deliberate map/graph coordinates; and numeric/time/price/airport LTR isolation are not localization defects by themselves. Explicit strings identical to English are risk indicators, not automatically defects.
 
-## Known non-issues and ignored categories
+## Completeness and validation
 
-The scanner intentionally ignores Kurioticket branding; company registration and legal identifiers; route/API paths and query names; code identifiers; provider, airline, airport, hotel and supplier names; user data; currency/airport codes; prices and dates; support email addresses; and operational IDs. Numeric-only LTR isolation is not an RTL defect. Identical-to-English explicit values are risk totals, not automatic defects. Raw API payloads are flagged only when a reachable display/fallback expression suggests customer visibility.
+- Available locales: 18/18 in the matrix.
+- Routes: 76 discovered, 76 mapped, 0 unmapped.
+- Production/test exclusion: 485 included, 115 excluded.
+- Special route files, Hotel Details, header/Footer/selectors, logged-out/authenticated/onboarding/admin/account-deletion/email-preference/recent-search coverage: present.
+- Inherited English is not counted as native translation.
+- No runtime behavior is claimed without browser/session evidence.
+- Detailed temporary evidence is written only beneath `/tmp/kurioticket-i18n-audit-v3`.
 
-## Completeness and validation results
+Validation command outcomes are updated after the final regenerated artifacts are checked and committed.
 
-- Every available locale appears in the matrix: yes (18/18).
-- Every discovered route appears: yes (76/76); unmapped routes: 0.
-- All discovered special route files are mapped: yes.
-- Hotel Details, AppHeader, Footer, selectors, logged-out/authenticated/onboarding/admin, pending deletion, email preferences and recent searches: present.
-- Metadata and accessibility inspection: present.
-- English inheritance distinguished from explicit translation: yes.
-- V2 GLV2-001…014 and MR-001…004 reconciled: yes.
-- Browser/runtime: unavailable; every row is `RUNTIME_UNVERIFIED`.
-
-Validation outcomes:
+## Final validation results
 
 | Command | Result |
 |---|---|
-| `JITI_TSCONFIG_PATHS=true node scripts/audit-i18n-coverage-v3.mjs` | PASS; 18 locales, 76/76 routes, 0 unmapped, 428 confirmed and 46 manual-review issues. |
-| `npm run audit:i18n` | PASS; historical comparison reports 3,146 English keys. |
-| `JITI_TSCONFIG_PATHS=true node --test --import jiti/register src/lib/__tests__/language.test.ts` | FAIL; 172 passed and 36 failed out of 208. Failures are current pre-existing localization/render-source assertions; this report-only audit did not alter them. |
-| `./node_modules/.bin/eslint scripts/audit-i18n-coverage-v3.mjs` | PASS, no warnings. |
+| `JITI_TSCONFIG_PATHS=true node scripts/audit-i18n-coverage-v3.mjs` | PASS — 18 locales, 485 production files, 115 excluded files, 76/76 routes, 0 unmapped. |
+| `npm run audit:i18n` | PASS — historical comparison completed. |
+| `JITI_TSCONFIG_PATHS=true node --test --import jiti/register src/lib/__tests__/language.test.ts` | FAIL — 172 pass, 36 fail; all 36 are grouped and reconciled above and in GLV3-530–536. |
+| `./node_modules/.bin/eslint scripts/audit-i18n-coverage-v3.mjs` | PASS — no findings. |
 | `git diff --check` | PASS. |
-| conflict-marker grep | PASS (exit 1 means no matches). |
+| `git grep -n -E '^(<<<<<<<|=======|>>>>>>>)' -- .` | PASS — exit 1, no matches. |
 | `npm run check:conflicts --if-present` | PASS. |
-| `npm run build` | PASS. |
+| `npm run build` | PASS — production build completed and emitted `.next/BUILD_ID`. |
 | `npm run lint` | PASS with 7 existing warnings and 0 errors. |
-
-Temporary detailed JSON remains only in `/tmp/kurioticket-i18n-audit-v3` and is not committed.
