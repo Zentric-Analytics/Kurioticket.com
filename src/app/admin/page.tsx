@@ -7,15 +7,18 @@ import {
   CheckCircle2,
   CircleDot,
   Database,
+  Gauge,
   Hotel,
   KeyRound,
   Mail,
   Plane,
   Search,
+  SearchX,
   ShieldCheck,
   UserCog,
   UsersRound,
   Webhook,
+  XCircle,
   Zap,
   type LucideIcon,
 } from "lucide-react";
@@ -23,7 +26,6 @@ import {
 import {
   AdminEmptyState,
   AdminPageShell,
-  AdminSectionCard,
   AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
 import {
@@ -106,63 +108,65 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      <section aria-label="Search Activity and Service Status" className="mt-7 grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="min-w-0">
-          <SectionHeading id="search-activity-heading">Search Activity</SectionHeading>
-          {searchHealth.hasLogs ? (
-            <AdminSectionCard data-admin-home-surface="search-activity" className="relative mt-3 overflow-hidden rounded-[1.5rem] border-slate-200 bg-white/95 p-0 shadow-sm" aria-labelledby="search-activity-heading">
-              <PanelRouteMotif />
-              <div className="relative z-10 grid grid-cols-1 divide-y divide-slate-200 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-                <PanelMetric label="Total recent searches" value={searchHealth.totalRecentSearches} />
-                <PanelMetric label="No-result searches" value={searchHealth.noResultSearches} />
-                <PanelMetric label="Failed searches" value={searchHealth.failedSearches} />
+      <section aria-label="Search Activity and Service Status" className="mt-7 grid items-start gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]">
+        <section data-admin-home-surface="search-activity" className="relative min-h-[17rem] overflow-hidden rounded-2xl border border-[#C9D8EA] bg-white p-6 shadow-[0_10px_30px_rgba(2,28,43,0.07)]" aria-labelledby="search-activity-heading">
+          <SearchPanelDecoration />
+          <div className="relative z-10">
+            <PanelHeading id="search-activity-heading" icon={Activity}>Search Activity</PanelHeading>
+            {searchHealth.hasLogs ? (
+              <>
+                <div data-admin-home-search-metrics="icon-divider-rail" className="mt-6 grid grid-cols-1 divide-y divide-slate-200 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+                  <PanelMetric icon={Search} tone="blue" label="Total recent searches" value={searchHealth.totalRecentSearches} />
+                  <PanelMetric icon={SearchX} tone="amber" label="No-result searches" value={searchHealth.noResultSearches} />
+                  <PanelMetric icon={XCircle} tone="rose" label="Failed searches" value={searchHealth.failedSearches} />
+                </div>
+                <div className="mt-6">
+                  <p className="text-sm font-bold text-[#021C2B]">Top products searched</p>
+                  {searchHealth.topProducts.length > 0 ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {searchHealth.topProducts.map((product) => (
+                        <AdminStatusBadge key={product.label} tone="info">{product.label}: {product.count}</AdminStatusBadge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-sm text-slate-600">No product search breakdown is available yet.</p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="mt-5">
+                <AdminEmptyState title="Search analytics unavailable" message="Search analytics will appear after search logging records real user searches. No search counts are mocked." />
               </div>
-              <div className="relative z-10 border-t border-slate-200 p-5">
-                <p className="text-sm font-semibold text-slate-950">Top products searched</p>
-                {searchHealth.topProducts.length > 0 ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {searchHealth.topProducts.map((product) => (
-                      <AdminStatusBadge key={product.label} tone="info">{product.label}: {product.count}</AdminStatusBadge>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-2 text-sm text-slate-600">No product search breakdown is available yet.</p>
-                )}
-                <TextLink href="/admin/searches" className="mt-5">View Searches →</TextLink>
-              </div>
-            </AdminSectionCard>
-          ) : (
-            <div className="mt-3">
-              <AdminEmptyState title="Search analytics unavailable" message="Search analytics will appear after search logging records real user searches. No search counts are mocked." />
-              <TextLink href="/admin/searches" className="mt-3">View Searches →</TextLink>
-            </div>
-          )}
-        </div>
+            )}
+            <div className="mt-6 flex justify-end"><TextLink href="/admin/searches">View Searches →</TextLink></div>
+          </div>
+        </section>
 
-        <div className="min-w-0">
-          <SectionHeading id="service-status-heading">Service Status</SectionHeading>
-          <AdminSectionCard data-admin-home-surface="service-status" className="relative mt-3 overflow-hidden rounded-[1.5rem] border-slate-200 bg-white/95 p-0 shadow-sm" aria-labelledby="service-status-heading">
-            <StatusCornerMotif />
-            <div className="relative z-10 grid md:grid-cols-2">
-              <div className="p-5">
-                <p className="mb-2 text-sm font-semibold text-slate-950">Provider statuses</p>
+        <section data-admin-home-surface="service-status" className="relative min-h-[17rem] overflow-hidden rounded-2xl border border-[#C9D8EA] bg-white p-6 shadow-[0_10px_30px_rgba(2,28,43,0.07)]" aria-labelledby="service-status-heading">
+          <ServicePanelDecoration />
+          <div className="relative z-10">
+            <PanelHeading id="service-status-heading" icon={Gauge}>Service Status</PanelHeading>
+            <div data-admin-home-service-groups="provider-system" className="mt-5 grid gap-5 md:grid-cols-[minmax(0,0.9fr)_auto_minmax(0,1.1fr)] md:gap-6">
+              <div className="min-w-0">
+                <p className="mb-3 text-sm font-bold text-[#021C2B]">Provider statuses</p>
                 {providers.map((provider) => (
                   <StatusRow key={provider.product} icon={provider.product} label={provider.product} status={providerReadinessLabel(provider)} tone={provider.searchEnabled ? "good" : provider.credentialsPresent ? "warn" : "neutral"} />
                 ))}
-                <TextLink href="/admin/providers" className="mt-4">View Providers →</TextLink>
+                <TextLink href="/admin/providers" className="mt-5">View Providers →</TextLink>
               </div>
-              <div className="border-t border-slate-200 p-5 md:border-l md:border-t-0">
-                <p className="mb-2 text-sm font-semibold text-slate-950">System statuses</p>
+              <div data-admin-home-service-divider="responsive" aria-hidden="true" className="h-px bg-slate-200 md:h-auto md:w-px" />
+              <div className="min-w-0">
+                <p className="mb-3 text-sm font-bold text-[#021C2B]">System statuses</p>
                 <StatusRow icon="Database" label="Database" status={system.databaseConnected ? "Available" : system.databaseConfigured ? "Configured, not connected" : "Not configured"} tone={system.databaseConnected ? "good" : "bad"} />
                 <StatusRow icon="Authentication" label="Authentication" status={system.authConfigured && system.sessionConfigured ? "Available" : "Not fully configured"} tone={system.authConfigured && system.sessionConfigured ? "good" : "warn"} />
                 <StatusRow icon="Email" label="Email" status={system.emailConfigured ? "Available" : "Unavailable"} tone={system.emailConfigured ? "good" : "warn"} />
                 <StatusRow icon="Provider credentials" label="Provider credentials" status={system.providerCredentialsPresent ? "Present" : "Not present"} tone={system.providerCredentialsPresent ? "good" : "warn"} />
                 <StatusRow icon="Webhooks" label="Webhooks" status={system.webhookConfigured ? "Available" : "Unavailable"} tone={system.webhookConfigured ? "good" : "warn"} />
-                <TextLink href="/admin/system" className="mt-4">View System →</TextLink>
+                <TextLink href="/admin/system" className="mt-5">View System →</TextLink>
               </div>
             </div>
-          </AdminSectionCard>
-        </div>
+          </div>
+        </section>
       </section>
 
       <section aria-labelledby="recent-admin-activity-heading" className="mt-7">
@@ -188,12 +192,12 @@ function HeroRouteArtwork() {
   );
 }
 
-function PanelRouteMotif() {
-  return <svg data-admin-home-decoration="search-route" aria-hidden="true" className="pointer-events-none absolute -bottom-8 right-0 h-32 w-56 text-[#004BB8] opacity-20" viewBox="0 0 240 140" fill="none"><path d="M10 120C78 52 142 152 232 48" stroke="currentColor"/><path d="M0 96C74 38 132 116 226 20" stroke="#8B5CF6" opacity=".45"/><path d="M40 132C108 88 154 114 232 78" stroke="#93C5FD" opacity=".6"/></svg>;
+function SearchPanelDecoration() {
+  return <svg data-admin-home-decoration="search-route" aria-hidden="true" className="pointer-events-none absolute inset-0 hidden h-full w-full text-[#004BB8] opacity-35 sm:block" viewBox="0 0 720 280" preserveAspectRatio="none" fill="none"><path d="M2 74V18C2 9 9 2 18 2h230" stroke="url(#searchAccent)" strokeWidth="3"/><circle cx="248" cy="2" r="5" fill="#6D5DF6"/><path d="M410 258C490 190 560 292 710 178" stroke="#6D5DF6" opacity=".26"/><path d="M430 276C500 218 594 278 720 205" stroke="#004BB8" opacity=".22"/><path d="M470 250C548 210 610 230 720 150" stroke="#93C5FD" opacity=".32"/><path d="M520 280C585 236 650 260 720 224" stroke="#6D5DF6" opacity=".14"/><defs><linearGradient id="searchAccent" x1="0" y1="70" x2="250" y2="0" gradientUnits="userSpaceOnUse"><stop stopColor="#8B5CF6"/><stop offset="1" stopColor="#004BB8"/></linearGradient></defs></svg>;
 }
 
-function StatusCornerMotif() {
-  return <svg data-admin-home-decoration="status-corner" aria-hidden="true" className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-[#004BB8] opacity-20" viewBox="0 0 90 90" fill="none"><path d="M76 12C48 10 20 30 14 64" stroke="currentColor" strokeDasharray="2 5"/><circle cx="62" cy="24" r="3" fill="currentColor"/><circle cx="24" cy="62" r="2.5" fill="#8B5CF6"/></svg>;
+function ServicePanelDecoration() {
+  return <svg data-admin-home-decoration="status-corner" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full text-[#004BB8] opacity-30" viewBox="0 0 520 280" preserveAspectRatio="none" fill="none"><path d="M518 112v148c0 10-8 18-18 18H326" stroke="#004BB8" strokeWidth="3" opacity=".55"/><circle cx="326" cy="278" r="5" fill="#004BB8"/><g opacity=".38">{Array.from({ length: 24 }).map((_, index) => <circle key={index} cx={430 + (index % 6) * 14} cy={18 + Math.floor(index / 6) * 14} r="1.4" fill="currentColor" />)}</g><path d="M390 250C438 212 478 222 516 182" stroke="#93C5FD" opacity=".28"/><path d="M418 278C462 246 490 252 520 220" stroke="#6D5DF6" opacity=".18"/></svg>;
 }
 
 function SectionHeading({ id, children }: { id: string; children: React.ReactNode }) {
@@ -207,8 +211,14 @@ function OverviewMetric({ label, value, hint, icon }: { label: string; value: st
 
 const metricIcons = { users: UsersRound, active: CheckCircle2, suspended: AlertTriangle, admin: ShieldCheck, search: Search, activity: Zap };
 
-function PanelMetric({ label, value }: { label: string; value: string | number }) {
-  return <div className="min-w-0 px-5 py-5"><p className="text-sm font-semibold text-slate-600">{label}</p><p className="mt-1 text-3xl font-extrabold tracking-tight text-[#021C2B]">{value}</p></div>;
+
+function PanelHeading({ id, icon: Icon, children }: { id: string; icon: LucideIcon; children: React.ReactNode }) {
+  return <h2 id={id} className="flex items-center gap-2 text-base font-extrabold tracking-tight text-[#021C2B]"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F0F6FF] text-[#004BB8] ring-1 ring-[#C9D8EA]"><Icon className="h-4 w-4" aria-hidden="true" /></span>{children}</h2>;
+}
+
+function PanelMetric({ label, value, icon: Icon, tone }: { label: string; value: string | number; icon: LucideIcon; tone: "blue" | "amber" | "rose" }) {
+  const toneClass = { blue: "bg-[#EEF4FF] text-[#004BB8] ring-[#C9D8EA]", amber: "bg-amber-50 text-amber-600 ring-amber-200", rose: "bg-rose-50 text-rose-600 ring-rose-200" }[tone];
+  return <div data-admin-home-search-metric="flat-icon" className="min-w-0 py-4 sm:px-5 sm:first:pl-0 sm:last:pr-0"><div className="flex items-start gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ring-1 ${toneClass}`}><Icon className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="text-sm font-semibold text-slate-600">{label}</p><p className="mt-1 text-3xl font-extrabold tracking-tight text-[#021C2B]">{value}</p></div></div></div>;
 }
 
 function AttentionRow({ issue }: { issue: AttentionIssue }) {

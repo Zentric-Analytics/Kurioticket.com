@@ -53,7 +53,7 @@ test("needs attention uses a flat rail instead of nested cards", () => {
 });
 
 test("at a glance preserves all six metrics in order as a flat responsive metric rail", () => {
-  const glanceBlock = blockBetween("At a Glance", "Search Activity");
+  const glanceBlock = blockBetween("At a Glance", "data-admin-home-surface=\"search-activity\"");
   assert.deepEqual(labelsFor("OverviewMetric", glanceBlock), ["Total users", "Active users", "Suspended users", "Admin users", "Recent searches", "Recent admin actions"]);
   assert.match(glanceBlock, /data-admin-home-metric-rail="flat"/);
   assert.match(glanceBlock, /grid-cols-2/);
@@ -65,7 +65,7 @@ test("at a glance preserves all six metrics in order as a flat responsive metric
 
 test("provider readiness large-card section is absent but providers remain represented in service status", () => {
   assert.doesNotMatch(adminOverviewPage, /<SectionHeading[^>]*>Provider Readiness<\/SectionHeading>|AdminProviderStatusCard|Operations Snapshot/);
-  const serviceBlock = blockBetween("<SectionHeading id=\"service-status-heading\">Service Status", "Recent Admin Activity");
+  const serviceBlock = blockBetween("data-admin-home-surface=\"service-status\"", "Recent Admin Activity");
   assert.match(serviceBlock, /providers\.map/);
   assert.match(serviceBlock, /provider\.product/);
   const adminData = readFileSync("src/lib/admin-data.ts", "utf8");
@@ -75,28 +75,44 @@ test("provider readiness large-card section is absent but providers remain repre
 });
 
 test("search activity has one outer surface, flat metrics, preserved data and a decorative motif", () => {
-  const searchBlock = blockBetween("<SectionHeading id=\"search-activity-heading\">Search Activity", "<SectionHeading id=\"service-status-heading\">Service Status");
+  const searchBlock = blockBetween("data-admin-home-surface=\"search-activity\"", "data-admin-home-surface=\"service-status\"");
   assert.deepEqual(labelsFor("PanelMetric", searchBlock), ["Total recent searches", "No-result searches", "Failed searches"]);
+  assert.match(searchBlock, /<PanelHeading id="search-activity-heading"[^>]*>Search Activity<\/PanelHeading>/);
+  assert.doesNotMatch(searchBlock, /<SectionHeading id="search-activity-heading"/);
+  assert.match(searchBlock, /data-admin-home-search-metrics="icon-divider-rail"/);
+  assert.match(searchBlock, /sm:divide-x/);
+  assert.match(searchBlock, /icon=\{Search\}/);
+  assert.match(searchBlock, /icon=\{SearchX\}/);
+  assert.match(searchBlock, /icon=\{XCircle\}/);
+  assert.match(adminOverviewPage, /data-admin-home-search-metric="flat-icon"/);
   assert.match(searchBlock, /data-admin-home-surface="search-activity"/);
   assert.equal((searchBlock.match(/data-admin-home-surface="search-activity"/g) || []).length, 1);
   assert.match(searchBlock, /Top products searched/);
   assert.match(searchBlock, /Search analytics unavailable/);
   assert.match(searchBlock, /href="\/admin\/searches"/);
   assert.match(adminOverviewPage, /data-admin-home-decoration="search-route"/);
-  assert.doesNotMatch(searchBlock, /AdminMetricCard|chart/i);
+  assert.doesNotMatch(searchBlock, /AdminMetricCard|chart|rounded-2xl border border-slate-200 bg-white shadow-sm/i);
 });
 
 test("service status has one outer surface, two flat status columns and all required links", () => {
-  const serviceBlock = blockBetween("<SectionHeading id=\"service-status-heading\">Service Status", "Recent Admin Activity");
+  const serviceBlock = blockBetween("data-admin-home-surface=\"service-status\"", "Recent Admin Activity");
   assert.match(serviceBlock, /data-admin-home-surface="service-status"/);
   assert.equal((serviceBlock.match(/data-admin-home-surface="service-status"/g) || []).length, 1);
+  assert.match(serviceBlock, /<PanelHeading id="service-status-heading"[^>]*>Service Status<\/PanelHeading>/);
+  assert.doesNotMatch(serviceBlock, /<SectionHeading id="service-status-heading"/);
   assert.match(serviceBlock, /Provider statuses/);
   assert.match(serviceBlock, /System statuses/);
+  assert.match(serviceBlock, /data-admin-home-service-groups="provider-system"/);
+  assert.match(serviceBlock, /data-admin-home-service-divider="responsive"/);
+  assert.match(serviceBlock, /md:w-px/);
+  assert.match(serviceBlock, /h-px bg-slate-200/);
   assert.deepEqual(labelsFor("StatusRow", serviceBlock).slice(-5), ["Database", "Authentication", "Email", "Provider credentials", "Webhooks"]);
   assert.match(serviceBlock, /providerReadinessLabel\(provider\)/);
   assert.match(serviceBlock, /href="\/admin\/providers"/);
   assert.match(serviceBlock, /href="\/admin\/system"/);
   assert.match(adminOverviewPage, /data-admin-home-decoration="status-corner"/);
+  assert.match(serviceBlock, /providers\.map/);
+  assert.match(serviceBlock, /provider\.product/);
   assert.match(adminOverviewPage, /data-admin-home-status-row="flat"/);
 });
 
