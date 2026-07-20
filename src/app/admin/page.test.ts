@@ -9,33 +9,29 @@ function blockBetween(start: string, end: string): string {
   assert.notEqual(startIndex, -1, `${start} should exist`);
   const endIndex = adminOverviewPage.indexOf(end, startIndex);
   assert.notEqual(endIndex, -1, `${end} should exist after ${start}`);
-
   return adminOverviewPage.slice(startIndex, endIndex);
 }
 
 function labelsFor(component: string, block = adminOverviewPage): string[] {
-  return Array.from(block.matchAll(new RegExp(`<${component} label="([^"]+)"`, "g")), (match) => match[1]);
+  return Array.from(block.matchAll(new RegExp(`<${component}[^>]* label="([^"]+)"`, "g")), (match) => match[1]);
 }
 
-test("admin home header replaces operations dashboard without the admin operations eyebrow", () => {
+test("admin home header keeps the approved title and description without fake controls", () => {
   assert.match(adminOverviewPage, /title="Admin Home"/);
   assert.match(adminOverviewPage, /Monitor Kurioticket activity, provider readiness, search health, system status and recent administrative actions\./);
-  assert.doesNotMatch(adminOverviewPage, /Operations Dashboard/);
-  assert.doesNotMatch(adminOverviewPage, /ADMIN OPERATIONS/i);
   assert.match(adminOverviewPage, /eyebrow=""/);
+  assert.doesNotMatch(adminOverviewPage, /Welcome back|Bisola|date picker|export button|global search|notifications/i);
 });
 
 test("admin home sections appear in the required operational order", () => {
   const sectionOrder = ["Needs Attention", "At a Glance", "Search Activity", "Service Status", "Recent Admin Activity"];
   const indexes = sectionOrder.map((heading) => adminOverviewPage.indexOf(heading));
-
   indexes.forEach((index, position) => assert.notEqual(index, -1, `${sectionOrder[position]} should exist`));
   assert.deepEqual([...indexes].sort((a, b) => a - b), indexes);
 });
 
 test("needs attention derives rows only from provider, system, and search health data", () => {
   const attentionLogic = blockBetween("function getAttentionIssues", "function providerReadinessLabel");
-
   assert.match(adminOverviewPage, /const attentionIssues = getAttentionIssues\(providers, system, searchHealth\)/);
   assert.match(attentionLogic, /provider\.providerName === "Not connected"/);
   assert.match(attentionLogic, /!provider\.credentialsPresent/);
@@ -49,26 +45,27 @@ test("needs attention derives rows only from provider, system, and search health
   assert.match(adminOverviewPage, /No urgent issues require attention\./);
 });
 
-test("at a glance preserves all six metrics in order and a one, two, then three column grid", () => {
-  const glanceBlock = blockBetween("At a Glance", "Search Activity");
+test("needs attention uses a flat rail instead of nested cards", () => {
+  const attentionBlock = blockBetween("<SectionHeading id=\"needs-attention-heading\">Needs Attention", "<SectionHeading id=\"at-a-glance-heading\">At a Glance");
+  assert.match(attentionBlock, /data-admin-home-attention-rail="flat"/);
+  assert.match(adminOverviewPage, /data-admin-home-attention-item="flat"/);
+  assert.doesNotMatch(attentionBlock, /AdminSectionCard/);
+});
 
-  assert.deepEqual(labelsFor("OverviewMetric", glanceBlock), [
-    "Total users",
-    "Active users",
-    "Suspended users",
-    "Admin users",
-    "Recent searches",
-    "Recent admin actions",
-  ]);
-  assert.match(glanceBlock, /grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3/);
-  assert.doesNotMatch(glanceBlock, /xl:grid-cols-6|grid-cols-6/);
+test("at a glance preserves all six metrics in order as a flat responsive metric rail", () => {
+  const glanceBlock = blockBetween("At a Glance", "Search Activity");
+  assert.deepEqual(labelsFor("OverviewMetric", glanceBlock), ["Total users", "Active users", "Suspended users", "Admin users", "Recent searches", "Recent admin actions"]);
+  assert.match(glanceBlock, /data-admin-home-metric-rail="flat"/);
+  assert.match(glanceBlock, /grid-cols-2/);
+  assert.match(glanceBlock, /md:grid-cols-3/);
+  assert.match(glanceBlock, /xl:grid-cols-6/);
   assert.match(glanceBlock, /hint="Last 7 days"/);
+  assert.doesNotMatch(glanceBlock, /AdminSectionCard|AdminMetricCard/);
 });
 
 test("provider readiness large-card section is absent but providers remain represented in service status", () => {
   assert.doesNotMatch(adminOverviewPage, /<SectionHeading[^>]*>Provider Readiness<\/SectionHeading>|AdminProviderStatusCard|Operations Snapshot/);
-
-  const serviceBlock = blockBetween("Service Status", "Recent Admin Activity");
+  const serviceBlock = blockBetween("<SectionHeading id=\"service-status-heading\">Service Status", "Recent Admin Activity");
   assert.match(serviceBlock, /providers\.map/);
   assert.match(serviceBlock, /provider\.product/);
   const adminData = readFileSync("src/lib/admin-data.ts", "utf8");
@@ -77,29 +74,36 @@ test("provider readiness large-card section is absent but providers remain repre
   assert.match(adminData, /product: "Cars"/);
 });
 
-test("search activity uses flat metrics and does not nest AdminMetricCard inside AdminSectionCard", () => {
+test("search activity has one outer surface, flat metrics, preserved data and a decorative motif", () => {
   const searchBlock = blockBetween("<SectionHeading id=\"search-activity-heading\">Search Activity", "<SectionHeading id=\"service-status-heading\">Service Status");
-
-  assert.deepEqual(labelsFor("OverviewMetric", searchBlock), ["Total recent searches", "No-result searches", "Failed searches"]);
+  assert.deepEqual(labelsFor("PanelMetric", searchBlock), ["Total recent searches", "No-result searches", "Failed searches"]);
+  assert.match(searchBlock, /data-admin-home-surface="search-activity"/);
+  assert.equal((searchBlock.match(/data-admin-home-surface="search-activity"/g) || []).length, 1);
   assert.match(searchBlock, /Top products searched/);
   assert.match(searchBlock, /Search analytics unavailable/);
-  assert.doesNotMatch(searchBlock, /AdminMetricCard/);
   assert.match(searchBlock, /href="\/admin\/searches"/);
+  assert.match(adminOverviewPage, /data-admin-home-decoration="search-route"/);
+  assert.doesNotMatch(searchBlock, /AdminMetricCard|chart/i);
 });
 
-test("service status combines providers and all five system checks with links", () => {
-  const serviceBlock = blockBetween("Service Status", "Recent Admin Activity");
-
+test("service status has one outer surface, two flat status columns and all required links", () => {
+  const serviceBlock = blockBetween("<SectionHeading id=\"service-status-heading\">Service Status", "Recent Admin Activity");
+  assert.match(serviceBlock, /data-admin-home-surface="service-status"/);
+  assert.equal((serviceBlock.match(/data-admin-home-surface="service-status"/g) || []).length, 1);
+  assert.match(serviceBlock, /Provider statuses/);
+  assert.match(serviceBlock, /System statuses/);
   assert.deepEqual(labelsFor("StatusRow", serviceBlock).slice(-5), ["Database", "Authentication", "Email", "Provider credentials", "Webhooks"]);
   assert.match(serviceBlock, /providerReadinessLabel\(provider\)/);
   assert.match(serviceBlock, /href="\/admin\/providers"/);
   assert.match(serviceBlock, /href="\/admin\/system"/);
+  assert.match(adminOverviewPage, /data-admin-home-decoration="status-corner"/);
+  assert.match(adminOverviewPage, /data-admin-home-status-row="flat"/);
 });
 
-test("recent admin activity remains compact and humanizes labels only at presentation level", () => {
-  const activityBlock = blockBetween("Recent Admin Activity", "function SectionHeading");
-
+test("recent admin activity uses timeline markup and humanizes labels only at presentation level", () => {
+  const activityBlock = blockBetween("Recent Admin Activity", "function HeroRouteArtwork");
   assert.match(activityBlock, /RecentActivityList items=\{activity\}/);
+  assert.match(adminOverviewPage, /data-admin-home-timeline="true"/);
   assert.match(adminOverviewPage, /humanizeAuditAction\(item\.title\)/);
   assert.match(adminOverviewPage, /HOMEPAGE_FARES_REFRESHED: "Homepage fares refreshed"/);
   assert.match(adminOverviewPage, /"support_ticket\.reply": "Support ticket reply sent"/);
@@ -108,15 +112,22 @@ test("recent admin activity remains compact and humanizes labels only at present
   assert.match(adminOverviewPage, /No admin activity yet/);
 });
 
-test("forbidden dashboard concepts and controls are not introduced", () => {
-  assert.doesNotMatch(adminOverviewPage, /bookings|revenue|payments|Export button|chart|percentage change|fake percentage|notification icon|global search/i);
+test("decorative elements are aria-hidden and pointer-events-none", () => {
+  assert.match(adminOverviewPage, /data-admin-home-hero-artwork="route-lines"[^>]*aria-hidden="true"[^>]*className="pointer-events-none/);
+  assert.match(adminOverviewPage, /data-admin-home-decoration="search-route"[^>]*aria-hidden="true"[^>]*className="pointer-events-none/);
+  assert.match(adminOverviewPage, /data-admin-home-decoration="status-corner"[^>]*aria-hidden="true"[^>]*className="pointer-events-none/);
 });
 
-test("existing admin home data helpers remain unchanged and admin shell/navbar are not imported", () => {
+test("forbidden dashboard concepts and controls are not introduced", () => {
+  assert.doesNotMatch(adminOverviewPage, /bookings|revenue|payments|refunds|percentage change|fake percentage|Admin Home navbar|sidebar|second navbar/i);
+});
+
+test("existing admin home data helpers remain unchanged and admin shell navbar are not imported", () => {
   assert.match(adminOverviewPage, /getAdminMetrics\(\)/);
   assert.match(adminOverviewPage, /getProviderStatuses\(\)/);
   assert.match(adminOverviewPage, /getSafeSystemStatus\(\)/);
   assert.match(adminOverviewPage, /getSearchHealth\(\)/);
   assert.match(adminOverviewPage, /getRecentAdminActivity\(\)/);
   assert.doesNotMatch(adminOverviewPage, /AdminShell|AdminNavbar/);
+  assert.doesNotMatch(adminOverviewPage, /from "@\/lib\/admin-data";[\s\S]*get[A-Z][A-Za-z]+Extra/);
 });
