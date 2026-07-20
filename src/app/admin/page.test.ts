@@ -4,18 +4,6 @@ import test from "node:test";
 
 const adminOverviewPage = readFileSync("src/app/admin/page.tsx", "utf8");
 
-
-function sectionClassNameBefore(heading: string): string {
-  const headingIndex = adminOverviewPage.indexOf(heading);
-  assert.notEqual(headingIndex, -1, `${heading} heading should exist`);
-
-  const prefix = adminOverviewPage.slice(0, headingIndex);
-  const sectionMatches = Array.from(prefix.matchAll(/<section className="([^"]+)"/g));
-  assert.ok(sectionMatches.length > 0, `${heading} wrapper section className should exist`);
-
-  return sectionMatches.at(-1)![1];
-}
-
 function blockBetween(start: string, end: string): string {
   const startIndex = adminOverviewPage.indexOf(start);
   assert.notEqual(startIndex, -1, `${start} should exist`);
@@ -25,32 +13,46 @@ function blockBetween(start: string, end: string): string {
   return adminOverviewPage.slice(startIndex, endIndex);
 }
 
-function classNameAfter(heading: string): string {
-  const headingIndex = adminOverviewPage.indexOf(heading);
-  assert.notEqual(headingIndex, -1, `${heading} heading should exist`);
-
-  const classNameMatch = adminOverviewPage.slice(headingIndex).match(/<div className="([^"]+)"/);
-  assert.ok(classNameMatch, `${heading} grid className should exist`);
-
-  return classNameMatch[1];
+function labelsFor(component: string, block = adminOverviewPage): string[] {
+  return Array.from(block.matchAll(new RegExp(`<${component} label="([^"]+)"`, "g")), (match) => match[1]);
 }
 
-test("admin overview operations snapshot keeps a stable one, two, then three column grid", () => {
-  const operationsGrid = classNameAfter("Operations Snapshot");
-
-  assert.match(operationsGrid, /\bgrid-cols-1\b/);
-  assert.match(operationsGrid, /\bsm:grid-cols-2\b/);
-  assert.match(operationsGrid, /\blg:grid-cols-3\b/);
-  assert.doesNotMatch(operationsGrid, /\bxl:grid-cols-6\b/);
+test("admin home header replaces operations dashboard without the admin operations eyebrow", () => {
+  assert.match(adminOverviewPage, /title="Admin Home"/);
+  assert.match(adminOverviewPage, /Monitor Kurioticket activity, provider readiness, search health, system status and recent administrative actions\./);
+  assert.doesNotMatch(adminOverviewPage, /Operations Dashboard/);
+  assert.doesNotMatch(adminOverviewPage, /ADMIN OPERATIONS/i);
+  assert.match(adminOverviewPage, /eyebrow=""/);
 });
 
-test("admin overview operations snapshot preserves the six metric cards in order", () => {
-  const metricLabels = Array.from(
-    adminOverviewPage.matchAll(/<AdminMetricCard label="([^"]+)" value=\{metrics\.[^}]+\}/g),
-    (match) => match[1],
-  );
+test("admin home sections appear in the required operational order", () => {
+  const sectionOrder = ["Needs Attention", "At a Glance", "Search Activity", "Service Status", "Recent Admin Activity"];
+  const indexes = sectionOrder.map((heading) => adminOverviewPage.indexOf(heading));
 
-  assert.deepEqual(metricLabels, [
+  indexes.forEach((index, position) => assert.notEqual(index, -1, `${sectionOrder[position]} should exist`));
+  assert.deepEqual([...indexes].sort((a, b) => a - b), indexes);
+});
+
+test("needs attention derives rows only from provider, system, and search health data", () => {
+  const attentionLogic = blockBetween("function getAttentionIssues", "function providerReadinessLabel");
+
+  assert.match(adminOverviewPage, /const attentionIssues = getAttentionIssues\(providers, system, searchHealth\)/);
+  assert.match(attentionLogic, /provider\.providerName === "Not connected"/);
+  assert.match(attentionLogic, /!provider\.credentialsPresent/);
+  assert.match(attentionLogic, /!provider\.searchEnabled/);
+  assert.match(attentionLogic, /!system\.databaseConnected/);
+  assert.match(attentionLogic, /!\(system\.authConfigured && system\.sessionConfigured\)/);
+  assert.match(attentionLogic, /!system\.emailConfigured/);
+  assert.match(attentionLogic, /!system\.webhookConfigured/);
+  assert.match(attentionLogic, /Number\(searchHealth\.failedSearches\) > 0/);
+  assert.match(attentionLogic, /Number\(searchHealth\.noResultSearches\) > 0/);
+  assert.match(adminOverviewPage, /No urgent issues require attention\./);
+});
+
+test("at a glance preserves all six metrics in order and a one, two, then three column grid", () => {
+  const glanceBlock = blockBetween("At a Glance", "Search Activity");
+
+  assert.deepEqual(labelsFor("OverviewMetric", glanceBlock), [
     "Total users",
     "Active users",
     "Suspended users",
@@ -58,61 +60,63 @@ test("admin overview operations snapshot preserves the six metric cards in order
     "Recent searches",
     "Recent admin actions",
   ]);
+  assert.match(glanceBlock, /grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3/);
+  assert.doesNotMatch(glanceBlock, /xl:grid-cols-6|grid-cols-6/);
+  assert.match(glanceBlock, /hint="Last 7 days"/);
 });
 
-test("admin overview provider readiness uses one column until the laptop three column breakpoint", () => {
-  const providerGrid = classNameAfter("Provider Readiness");
+test("provider readiness large-card section is absent but providers remain represented in service status", () => {
+  assert.doesNotMatch(adminOverviewPage, /<SectionHeading[^>]*>Provider Readiness<\/SectionHeading>|AdminProviderStatusCard|Operations Snapshot/);
 
-  assert.match(providerGrid, /\bgrid-cols-1\b/);
-  assert.match(providerGrid, /\blg:grid-cols-3\b/);
-  assert.doesNotMatch(providerGrid, /\bxl:grid-cols-3\b/);
-  assert.match(adminOverviewPage, /providers\.map\(\(provider\) => <AdminProviderStatusCard key=\{provider\.product\} \{\.\.\.provider\} \/>\)/);
+  const serviceBlock = blockBetween("Service Status", "Recent Admin Activity");
+  assert.match(serviceBlock, /providers\.map/);
+  assert.match(serviceBlock, /provider\.product/);
+  const adminData = readFileSync("src/lib/admin-data.ts", "utf8");
+  assert.match(adminData, /product: "Flights"/);
+  assert.match(adminData, /product: "Hotels"/);
+  assert.match(adminData, /product: "Cars"/);
 });
 
-test("admin overview search and platform health use a laptop-safe two column wrapper", () => {
-  const healthWrapper = sectionClassNameBefore("Search Health");
+test("search activity uses flat metrics and does not nest AdminMetricCard inside AdminSectionCard", () => {
+  const searchBlock = blockBetween("<SectionHeading id=\"search-activity-heading\">Search Activity", "<SectionHeading id=\"service-status-heading\">Service Status");
 
-  assert.match(healthWrapper, /\bmt-8\b/);
-  assert.match(healthWrapper, /\bgrid\b/);
-  assert.match(healthWrapper, /\bgap-4\b/);
-  assert.match(healthWrapper, /\blg:grid-cols-\[minmax\(0,1\.2fr\)_minmax\(280px,0\.8fr\)\]/);
-  assert.doesNotMatch(healthWrapper, /\bxl:grid-cols-\[1\.2fr_0\.8fr\]/);
-  assert.doesNotMatch(adminOverviewPage, /xl:grid-cols-\[1\.2fr_0\.8fr\]/);
+  assert.deepEqual(labelsFor("OverviewMetric", searchBlock), ["Total recent searches", "No-result searches", "Failed searches"]);
+  assert.match(searchBlock, /Top products searched/);
+  assert.match(searchBlock, /Search analytics unavailable/);
+  assert.doesNotMatch(searchBlock, /AdminMetricCard/);
+  assert.match(searchBlock, /href="\/admin\/searches"/);
 });
 
-test("admin overview health columns can shrink without horizontal overflow", () => {
-  assert.match(adminOverviewPage, /<div className="min-w-0">\n          <h2 className="text-lg font-semibold text-slate-950">Search Health<\/h2>/);
-  assert.match(adminOverviewPage, /<div className="min-w-0">\n          <h2 className="text-lg font-semibold text-slate-950">Platform Health<\/h2>/);
+test("service status combines providers and all five system checks with links", () => {
+  const serviceBlock = blockBetween("Service Status", "Recent Admin Activity");
+
+  assert.deepEqual(labelsFor("StatusRow", serviceBlock).slice(-5), ["Database", "Authentication", "Email", "Provider credentials", "Webhooks"]);
+  assert.match(serviceBlock, /providerReadinessLabel\(provider\)/);
+  assert.match(serviceBlock, /href="\/admin\/providers"/);
+  assert.match(serviceBlock, /href="\/admin\/system"/);
 });
 
-test("admin overview search health content remains unchanged", () => {
-  const searchHealthBlock = blockBetween("Search Health", "Platform Health");
+test("recent admin activity remains compact and humanizes labels only at presentation level", () => {
+  const activityBlock = blockBetween("Recent Admin Activity", "function SectionHeading");
 
-  assert.match(searchHealthBlock, /<AdminMetricCard label="Total recent searches" value=\{searchHealth\.totalRecentSearches\} \/>/);
-  assert.match(searchHealthBlock, /<AdminMetricCard label="No-result searches" value=\{searchHealth\.noResultSearches\} tone="warn" \/>/);
-  assert.match(searchHealthBlock, /<AdminMetricCard label="Failed searches" value=\{searchHealth\.failedSearches\} tone="bad" \/>/);
-  assert.match(searchHealthBlock, /<div className="grid gap-4 sm:grid-cols-3">/);
-  assert.match(searchHealthBlock, /Top products searched/);
-  assert.match(searchHealthBlock, /AdminEmptyState title="Search analytics unavailable" message="Search analytics will appear after search logging records real user searches\. No search counts are mocked\."/);
+  assert.match(activityBlock, /RecentActivityList items=\{activity\}/);
+  assert.match(adminOverviewPage, /humanizeAuditAction\(item\.title\)/);
+  assert.match(adminOverviewPage, /HOMEPAGE_FARES_REFRESHED: "Homepage fares refreshed"/);
+  assert.match(adminOverviewPage, /"support_ticket\.reply": "Support ticket reply sent"/);
+  assert.match(adminOverviewPage, /"account_deletion\.save_notes": "Account deletion notes updated"/);
+  assert.match(activityBlock, /href="\/admin\/logs"/);
+  assert.match(adminOverviewPage, /No admin activity yet/);
 });
 
-test("admin overview platform health content remains unchanged", () => {
-  const platformHealthBlock = blockBetween("Platform Health", "Admin Activity");
-
-  assert.match(platformHealthBlock, /<HealthRow label="Database" ok=\{system\.databaseConnected\} fallback=\{system\.databaseConfigured \? "Configured, not connected" : "Not configured"\} \/>/);
-  assert.match(platformHealthBlock, /<HealthRow label="Auth\/session" ok=\{system\.authConfigured && system\.sessionConfigured\} fallback="Not fully configured" \/>/);
-  assert.match(platformHealthBlock, /<HealthRow label="Email \/ Resend" ok=\{system\.emailConfigured\} fallback="Unavailable" \/>/);
-  assert.match(platformHealthBlock, /<HealthRow label="Provider credentials" ok=\{system\.providerCredentialsPresent\} fallback="Not present" \/>/);
-  assert.match(platformHealthBlock, /<HealthRow label="Webhooks" ok=\{system\.webhookConfigured\} fallback="Unavailable" \/>/);
+test("forbidden dashboard concepts and controls are not introduced", () => {
+  assert.doesNotMatch(adminOverviewPage, /bookings|revenue|payments|Export button|chart|percentage change|fake percentage|notification icon|global search/i);
 });
 
-test("admin overview data helpers, queries, and other sections remain unchanged", () => {
+test("existing admin home data helpers remain unchanged and admin shell/navbar are not imported", () => {
   assert.match(adminOverviewPage, /getAdminMetrics\(\)/);
   assert.match(adminOverviewPage, /getProviderStatuses\(\)/);
   assert.match(adminOverviewPage, /getSafeSystemStatus\(\)/);
   assert.match(adminOverviewPage, /getSearchHealth\(\)/);
   assert.match(adminOverviewPage, /getRecentAdminActivity\(\)/);
-  assert.match(adminOverviewPage, /<h2 className="text-lg font-semibold text-slate-950">Search Health<\/h2>/);
-  assert.match(adminOverviewPage, /<h2 className="text-lg font-semibold text-slate-950">Platform Health<\/h2>/);
-  assert.match(adminOverviewPage, /<h2 className="text-lg font-semibold text-slate-950">Admin Activity<\/h2>/);
+  assert.doesNotMatch(adminOverviewPage, /AdminShell|AdminNavbar/);
 });
