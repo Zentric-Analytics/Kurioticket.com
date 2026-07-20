@@ -128,6 +128,32 @@ test("recent admin activity uses timeline markup and humanizes labels only at pr
   assert.match(adminOverviewPage, /No admin activity yet/);
 });
 
+
+test("service status badges use non-wrapping shrink-safe spacing", () => {
+  const statusRowBlock = blockBetween("function StatusRow", "const statusIcons");
+  assert.match(statusRowBlock, /gap-5/);
+  assert.match(statusRowBlock, /flex-1/);
+  assert.match(statusRowBlock, /shrink-0 whitespace-nowrap/);
+  assert.match(statusRowBlock, /<AdminStatusBadge tone=\{tone\}>\{status\}<\/AdminStatusBadge>/);
+  assert.match(adminOverviewPage, /if \(provider\.searchEnabled\) return "Search ready"/);
+  assert.match(adminOverviewPage, /if \(provider\.providerName === "Not connected"\) return "Not connected"/);
+  assert.match(adminOverviewPage, /return "Search unavailable"/);
+});
+
+test("recent admin activity separates timeline icons from text and preserves content columns", () => {
+  const timelineBlock = blockBetween("function RecentActivityList", "function TextLink");
+  assert.match(timelineBlock, /grid-cols-\[2\.25rem_minmax\(0,1fr\)\]/);
+  assert.match(timelineBlock, /sm:grid-cols-\[2\.25rem_minmax\(0,1fr\)_auto\]/);
+  assert.match(timelineBlock, /gap-x-4/);
+  assert.match(timelineBlock, /sm:gap-x-6/);
+  assert.match(timelineBlock, /data-admin-home-timeline-icon-column="fixed"/);
+  assert.match(timelineBlock, /className="relative flex w-9 justify-center"/);
+  assert.match(timelineBlock, /absolute bottom-\[-1rem\] top-0 w-px/);
+  assert.match(timelineBlock, /<p className="font-semibold text-slate-950">\{humanizeAuditAction\(item\.title\)\}<\/p>/);
+  assert.match(timelineBlock, /<p className="mt-1 break-words text-slate-600">\{item\.detail\}<\/p>/);
+  assert.match(timelineBlock, /<p className="col-start-2 text-xs font-semibold text-slate-500 sm:col-start-3 sm:text-right">\{item\.timestamp\}<\/p>/);
+});
+
 test("decorative elements are aria-hidden and pointer-events-none", () => {
   assert.match(adminOverviewPage, /data-admin-home-hero-artwork="route-lines"[^>]*aria-hidden="true"[^>]*className="pointer-events-none/);
   assert.match(adminOverviewPage, /data-admin-home-decoration="search-route"[^>]*aria-hidden="true"[^>]*className="pointer-events-none/);
