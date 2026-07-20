@@ -66,7 +66,7 @@ Requires macOS and Xcode. iOS simulators can usually reach `http://localhost:300
 
 ## Current milestone scope
 
-- Launch screen, welcome screen, home shell, and connection-status screen.
+- Production home screen with legacy welcome and connection-status routes redirected back to `/`.
 - Calls only `GET /api/mobile/v1/health` and `GET /api/mobile/v1/config`.
 - Flights shown as available; hotels, cars, push notifications, social authentication, and premium subscriptions shown as disabled or coming later.
 
@@ -81,14 +81,10 @@ Authentication, Prisma/database work, travel search, booking, payments, push not
 3. Set `EXPO_PUBLIC_API_BASE_URL`.
 4. Start Expo.
 5. Open the app on a device or emulator.
-6. Confirm the welcome screen renders.
-7. Tap `Continue`.
-8. Open `Connection Status`.
-9. Confirm backend shows connected.
-10. Confirm flights are enabled.
-11. Confirm hotels and cars are disabled.
-12. Turn off the backend temporarily and confirm the safe disconnected state appears.
-13. Restart the backend and use Refresh to confirm reconnection.
+6. Confirm the production Home screen appears.
+7. If a device has a cached deep link to `/welcome` or `/connection-status`, confirm it redirects back to `/`.
+8. Confirm flights are enabled.
+9. Confirm hotels and cars are marked as coming soon.
 
 ## Assets needing final review
 
