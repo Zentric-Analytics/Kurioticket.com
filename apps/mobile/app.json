@@ -12,8 +12,20 @@
       "bundleIdentifier": "com.kurioticket.mobile"
     },
     "android": {
-      "package": "com.kurioticket.mobile"
+      "package": "com.kurioticket.mobile",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/kurioticket-icon-blue.svg",
+        "backgroundColor": "#F2F6FA"
+      }
     },
-    "plugins": ["expo-router"]
+    "plugins": [
+      "expo-router"
+    ],
+    "icon": "./assets/kurioticket-icon-blue.svg",
+    "splash": {
+      "image": "./assets/kurioticket-logo-primary-light-bg.svg",
+      "resizeMode": "contain",
+      "backgroundColor": "#F2F6FA"
+    }
   }
 }
