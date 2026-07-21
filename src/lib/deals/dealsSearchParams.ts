@@ -18,6 +18,7 @@ export type DealsProduct = "flight" | "hotel" | "car";
 
 export type DealsSearch = {
   mode: DealsPackageMode;
+  flightTripType: DealsFlightTripType;
   flightOriginText: string; flightOriginCode: string;
   flightDestinationText: string; flightDestinationCode: string;
   flightTripType: DealsFlightTripType;
@@ -72,6 +73,7 @@ export function parseDealsSearchParams(input: QueryInput): DealsSearch {
   const flightTripType = tripTypeValue === "one-way" ? "one-way" : defaults.flightTripType;
   return {
     mode: isDealsPackageMode(modeValue) ? modeValue : defaults.mode,
+    flightTripType,
     flightOriginText: get(input, "flightOriginText"), flightOriginCode: normalizeIataCode(get(input, "flightOriginCode")),
     flightDestinationText: get(input, "flightDestinationText"), flightDestinationCode: normalizeIataCode(get(input, "flightDestinationCode")),
     flightTripType, flightDepartureDate: date(get(input, "flightDepartureDate")), flightReturnDate: flightTripType === "one-way" ? "" : date(get(input, "flightReturnDate")),
