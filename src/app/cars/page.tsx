@@ -761,7 +761,18 @@ function CarsSearchBar({
         <input type="hidden" name="pickupTime" value={values.pickupTime} />
         <input type="hidden" name="dropoffTime" value={values.dropoffTime} />
 
-        <div className="relative z-20 order-1 overflow-visible rounded-none border-0 bg-transparent p-0 shadow-none sm:order-2 sm:rounded-[1.35rem] sm:bg-white">
+        <div className="hidden items-center sm:flex">
+          <span className="inline-flex items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3.5 py-1.5 text-[0.925rem] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10">
+            <CarFront
+              aria-hidden="true"
+              className="h-[1.125rem] w-[1.125rem] text-[#004BB8]"
+              strokeWidth={2.15}
+            />
+            {t("cars")}
+          </span>
+        </div>
+
+        <div className="relative z-20 overflow-visible rounded-none border-0 bg-transparent p-0 shadow-none sm:rounded-[1.35rem] sm:bg-white">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-0 sm:rounded-2xl sm:border sm:border-slate-200/85 sm:bg-white lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1.45fr)_minmax(0,1.1fr)_minmax(6.8rem,0.62fr)_118px] lg:gap-0">
             <SearchCell
               label={t("carsSearch.pickupLocationLabel")}
@@ -955,29 +966,18 @@ function CarsSearchBar({
           </div>
         </div>
 
-        <div className="relative z-0 order-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 sm:order-1 sm:min-h-9 sm:border-0 sm:bg-transparent sm:px-1 sm:py-0 sm:shadow-none sm:ring-0">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="hidden items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3.5 py-1.5 text-[0.925rem] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10 sm:inline-flex">
-              <CarFront
-                aria-hidden="true"
-                className="h-[1.125rem] w-[1.125rem] text-[#004BB8]"
-                strokeWidth={2.15}
-              />
-              {t("cars")}
-            </span>
-
-            <label className="focus-within:ring-ring inline-flex min-h-8 cursor-pointer items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-slate-900 sm:min-h-9">
-              <input
-                type="checkbox"
-                checked={values.returnToDifferentLocation}
-                onChange={(event) =>
-                  updateValue("returnToDifferentLocation", event.target.checked)
-                }
-                className="h-4 w-4 rounded border-slate-300 text-[#004BB8] focus:ring-[#004BB8]/35"
-              />
-              {t("carsSearch.differentReturnLocation")}
-            </label>
-          </div>
+        <div className="relative z-0 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 sm:min-h-9 sm:border-0 sm:bg-transparent sm:px-1 sm:py-0 sm:shadow-none sm:ring-0">
+          <label className="focus-within:ring-ring inline-flex min-h-8 cursor-pointer items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-slate-900 sm:min-h-9">
+            <input
+              type="checkbox"
+              checked={values.returnToDifferentLocation}
+              onChange={(event) =>
+                updateValue("returnToDifferentLocation", event.target.checked)
+              }
+              className="h-4 w-4 rounded border-slate-300 text-[#004BB8] focus:ring-[#004BB8]/35"
+            />
+            {t("carsSearch.differentReturnLocation")}
+          </label>
 
           {hasActiveSearch ? (
             <button
