@@ -54,6 +54,8 @@ type SearchHealth = Awaited<ReturnType<typeof getSearchHealth>>;
 
 type MetricIcon = "users" | "active" | "suspended" | "admin" | "search" | "activity";
 
+const adminHomeSurfaceClass = "rounded-[20px] border border-[#E4E9EF] bg-white p-6 shadow-[0_8px_28px_rgba(2,28,43,0.05)] sm:p-7";
+
 export default async function AdminPage() {
   const [metrics, providers, system, searchHealth, activity] = await Promise.all([
     getAdminMetrics(),
@@ -71,7 +73,8 @@ export default async function AdminPage() {
       description="Monitor Kurioticket activity, provider readiness, search health, system status and recent administrative actions."
       actions={<HeroRouteArtwork />}
     >
-      <section aria-labelledby="needs-attention-heading" className="border-b border-slate-200 pb-6">
+      <div className="space-y-6 lg:space-y-8">
+      <section data-admin-home-main-surface="needs-attention" aria-labelledby="needs-attention-heading" className={adminHomeSurfaceClass}>
         <div className="flex flex-wrap items-center gap-3">
           <SectionHeading id="needs-attention-heading">Needs Attention</SectionHeading>
           <span className="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-600" aria-label={`${attentionIssues.length} issues`}>
@@ -94,9 +97,9 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      <section aria-labelledby="at-a-glance-heading" className="mt-7">
+      <section data-admin-home-main-surface="at-a-glance" aria-labelledby="at-a-glance-heading" className={adminHomeSurfaceClass}>
         <SectionHeading id="at-a-glance-heading">At a Glance</SectionHeading>
-        <div data-admin-home-metric-rail="flat" className="mt-4 border-l-4 border-[#6B7CFF] pl-5">
+        <div data-admin-home-metric-rail="flat" className="mt-4">
           <div className="grid grid-cols-2 divide-x divide-y divide-slate-200 border-y border-slate-200 md:grid-cols-3 xl:grid-cols-6 xl:divide-y-0">
             <OverviewMetric icon="users" label="Total users" value={metrics.totalUsers} />
             <OverviewMetric icon="active" label="Active users" value={metrics.activeUsers} />
@@ -108,8 +111,9 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      <section aria-label="Search Activity and Service Status" className="mt-7 grid items-start gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]">
-        <section data-admin-home-surface="search-activity" className="relative min-h-[17rem] overflow-hidden p-6" aria-labelledby="search-activity-heading">
+      <section aria-label="Search Activity and Service Status" data-admin-home-main-surface="operations" className={adminHomeSurfaceClass}>
+        <div data-admin-home-operations-layout="shared" className="grid gap-0 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+        <section data-admin-home-surface="search-activity" className="relative min-h-[17rem] overflow-hidden pb-6 xl:pr-7 xl:pb-0" aria-labelledby="search-activity-heading">
           <SearchPanelDecoration />
           <div className="relative z-10">
             <PanelHeading id="search-activity-heading" icon={Activity}>Search Activity</PanelHeading>
@@ -142,7 +146,7 @@ export default async function AdminPage() {
           </div>
         </section>
 
-        <section data-admin-home-surface="service-status" className="relative min-h-[17rem] overflow-hidden p-6" aria-labelledby="service-status-heading">
+        <section data-admin-home-surface="service-status" className="relative min-h-[17rem] overflow-hidden border-t border-[#E4E9EF] pt-6 xl:border-l xl:border-t-0 xl:pl-7 xl:pt-0" aria-labelledby="service-status-heading">
           <ServicePanelDecoration />
           <div className="relative z-10">
             <PanelHeading id="service-status-heading" icon={Gauge}>Service Status</PanelHeading>
@@ -167,15 +171,17 @@ export default async function AdminPage() {
             </div>
           </div>
         </section>
+        </div>
       </section>
 
-      <section aria-labelledby="recent-admin-activity-heading" className="mt-7">
+      <section data-admin-home-main-surface="recent-admin-activity" aria-labelledby="recent-admin-activity-heading" className={adminHomeSurfaceClass}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <SectionHeading id="recent-admin-activity-heading">Recent Admin Activity</SectionHeading>
           <TextLink href="/admin/logs">View Admin Logs →</TextLink>
         </div>
         <div className="mt-3"><RecentActivityList items={activity} /></div>
       </section>
+      </div>
     </AdminPageShell>
   );
 }
