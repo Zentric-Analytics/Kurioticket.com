@@ -75,7 +75,7 @@ test("at a glance preserves all six metrics in order as a flat responsive metric
   assert.match(glanceBlock, /md:grid-cols-3/);
   assert.match(glanceBlock, /xl:grid-cols-6/);
   assert.match(glanceBlock, /hint="Last 7 days"/);
-  assert.doesNotMatch(glanceBlock, /AdminSectionCard|AdminMetricCard/);
+  assert.doesNotMatch(glanceBlock, /AdminSectionCard|AdminMetricCard|border-l-4|#6B7CFF/);
 });
 
 test("provider readiness large-card section is absent but providers remain represented in service status", () => {
@@ -107,6 +107,7 @@ test("search activity has no outer card surface while preserving flat metrics, d
   assert.match(searchBlock, /data-admin-home-surface="search-activity"/);
   assert.equal((searchBlock.match(/data-admin-home-surface="search-activity"/g) || []).length, 1);
   assert.match(searchBlock, /Top products searched/);
+  assert.match(searchBlock, /formatProductSearchLabel\(product.label\)/);
   assert.match(searchBlock, /Search analytics unavailable/);
   assert.match(searchBlock, /href="\/admin\/searches"/);
   assert.match(adminOverviewPage, /data-admin-home-decoration="search-route"/);
@@ -125,8 +126,8 @@ test("service status has no outer card surface while preserving two flat status 
   assert.match(serviceBlock, /System statuses/);
   assert.match(serviceBlock, /data-admin-home-service-groups="provider-system"/);
   assert.match(serviceBlock, /data-admin-home-service-divider="responsive"/);
-  assert.match(serviceBlock, /md:w-px/);
-  assert.match(serviceBlock, /h-px bg-slate-200/);
+  assert.match(serviceBlock, /2xl:w-px/);
+  assert.match(serviceBlock, /h-px bg-\[#DDE7F0\]/);
   assert.deepEqual(labelsFor("StatusRow", serviceBlock).slice(-5), ["Database", "Authentication", "Email", "Provider credentials", "Webhooks"]);
   assert.match(serviceBlock, /providerReadinessLabel\(provider\)/);
   assert.match(serviceBlock, /href="\/admin\/providers"/);
@@ -168,11 +169,29 @@ test("recent admin activity separates timeline icons from text and preserves con
   assert.match(timelineBlock, /gap-x-4/);
   assert.match(timelineBlock, /sm:gap-x-6/);
   assert.match(timelineBlock, /data-admin-home-timeline-icon-column="fixed"/);
+  assert.match(timelineBlock, /activityToneClass\(item.title\)/);
+  assert.match(adminOverviewPage, /bg-rose-50 text-rose-600/);
+  assert.match(adminOverviewPage, /bg-emerald-50 text-emerald-600/);
+  assert.match(adminOverviewPage, /bg-amber-50 text-amber-600/);
   assert.match(timelineBlock, /className="relative flex w-9 justify-center"/);
-  assert.match(timelineBlock, /absolute bottom-\[-1rem\] top-0 w-px/);
-  assert.match(timelineBlock, /<p className="font-semibold text-slate-950">\{humanizeAuditAction\(item\.title\)\}<\/p>/);
-  assert.match(timelineBlock, /<p className="mt-1 break-words text-slate-600">\{item\.detail\}<\/p>/);
-  assert.match(timelineBlock, /<p className="col-start-2 text-xs font-semibold text-slate-500 sm:col-start-3 sm:text-right">\{item\.timestamp\}<\/p>/);
+  assert.match(timelineBlock, /absolute bottom-\[-0\.875rem\] top-0 w-px/);
+  assert.match(timelineBlock, /<p className="text-sm font-semibold leading-5 text-\[#021C2B\]">\{humanizeAuditAction\(item\.title\)\}<\/p>/);
+  assert.match(timelineBlock, /<p className="mt-1 break-words text-\[13px\] leading-5 text-slate-600">\{item\.detail\}<\/p>/);
+  assert.match(timelineBlock, /<p className="col-start-2 text-xs font-semibold leading-5 text-slate-500 sm:col-start-3 sm:text-right">\{item\.timestamp\}<\/p>/);
+});
+
+test("admin home responsive layout avoids compressed status columns and horizontal overflow risks", () => {
+  const combinedOpening = adminOverviewPage.match(/<section aria-label="Search Activity and Service Status" className="([^"]+)"/);
+  assert.ok(combinedOpening, "combined search/status layout should exist");
+  assert.match(combinedOpening[1], /grid/);
+  assert.match(combinedOpening[1], /xl:grid-cols-\[minmax\(0,1\.18fr\)_1px_minmax\(360px,0\.82fr\)\]/);
+  assert.doesNotMatch(combinedOpening[1], /lg:grid-cols/);
+  assert.match(adminOverviewPage, /data-admin-home-layout-divider="search-status"/);
+  assert.match(adminOverviewPage, /hidden h-full w-px bg-\[#DDE7F0\] xl:block/);
+  assert.match(adminOverviewPage, /grid-cols-2/);
+  assert.match(adminOverviewPage, /md:grid-cols-3/);
+  assert.match(adminOverviewPage, /xl:grid-cols-6/);
+  assert.match(adminOverviewPage, /2xl:grid-cols-4/);
 });
 
 test("decorative elements are aria-hidden and pointer-events-none", () => {
@@ -202,9 +221,9 @@ test("admin home applies off-white to a full-width wrapper while preserving the 
   assert.doesNotMatch(adminShell, /bg-\[#E8E3DB\]/);
   assert.match(adminShell, /min-h-\[calc\(100vh-4rem\)\]/);
   assert.match(adminShell, /sm:min-h-\[calc\(100vh-68px\)\]/);
-  assert.match(adminShell, /<main className="page-shell py-5 sm:py-6">/);
+  assert.match(adminShell, /<main className="page-shell py-8 sm:py-10">/);
   assert.doesNotMatch(adminShell, /<main[^>]*bg-\[#F7F6F2\]|<main[^>]*bg-\[#E8E3DB\]/);
-  assert.match(adminShell, /<header className="sticky top-0 z-30 border-b border-\[#DDE7F0\] bg-white\/95 backdrop-blur">/);
+  assert.match(adminShell, /<header className="sticky top-0 z-30 border-b border-\[#DDE7F0\] bg-white\/95 shadow-\[0_1px_12px_rgba\(2,28,43,0\.04\)\] backdrop-blur">/);
   assert.doesNotMatch(adminOverviewPage, /bg-\[#E8E3DB\]/);
 });
 

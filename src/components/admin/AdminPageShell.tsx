@@ -36,7 +36,7 @@ export function AdminShell({
     <div className="min-h-screen bg-slate-100 text-slate-950">
       <AdminNavbar hubs={hubs} adminEmail={adminEmail} adminName={adminName} adminImage={adminImage} />
       <div className={cn(isAdminHome && "min-h-[calc(100vh-4rem)] bg-[#F7F6F2] sm:min-h-[calc(100vh-68px)]")}>
-        <main className="page-shell py-5 sm:py-6">
+        <main className="page-shell py-8 sm:py-10">
           {children}
         </main>
       </div>
@@ -59,12 +59,12 @@ export function AdminNavbar({
   const displayName = adminName || adminEmail || "Admin";
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[#DDE7F0] bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-[#DDE7F0] bg-white/95 shadow-[0_1px_12px_rgba(2,28,43,0.04)] backdrop-blur">
       <div className="page-shell flex min-h-16 items-center justify-between gap-3 py-2 md:grid md:min-h-[68px] md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:gap-6">
         <div className="min-w-0 justify-self-start">
           <AdminBrandLink onNavigate={() => setMobileOpen(false)} />
         </div>
-        <nav className="hidden min-w-0 items-center justify-self-center gap-3 md:flex md:translate-y-1.5 lg:gap-4" aria-label="Admin navigation">
+        <nav className="hidden min-w-0 items-center justify-self-center gap-3 md:flex lg:gap-4" aria-label="Admin navigation">
           {hubs.map((hub) => <AdminHubNavLink key={hub.key} hub={hub} />)}
         </nav>
         <div className="hidden shrink-0 items-center justify-self-end md:flex">
@@ -133,8 +133,8 @@ function AdminHubNavLink({ hub, mobile = false, onNavigate }: { hub: AdminHubDef
           ? "min-h-11 rounded-xl px-3 py-2 text-sm font-bold"
           : "min-h-[38px] rounded-full px-3.5 py-2 text-[15px] font-semibold leading-none tracking-[-0.005em] lg:px-4",
         active
-          ? "border-[#004BB8]/18 bg-[#004BB8]/6 text-[#021C2B]"
-          : "border-[#DDE7F0] bg-[#F3F7FA]/70 text-[#021C2B]/85 hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B]",
+          ? "border-[#004BB8]/25 bg-[#EEF4FF] text-[#021C2B]"
+          : "border-transparent bg-transparent text-[#021C2B]/85 hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B]",
       )}
       aria-current={active ? "page" : undefined}
     >
@@ -165,9 +165,9 @@ function AdminProfileMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         title={profileLabel}
-        className="inline-flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-md border border-transparent bg-transparent text-[#021C2B] marker:hidden transition-colors hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
+        className="inline-flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-xl border border-transparent bg-transparent text-[#021C2B] marker:hidden transition-colors hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
       >
-        <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-[#F2F7FA] text-[11px] font-black text-[#004BB8] shadow-sm">
+        <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#F2F7FA] text-[11px] font-black text-[#004BB8] shadow-sm">
           {adminImage ? <AdminLogoImage src={adminImage} alt="" className="h-full w-full object-cover" /> : adminInitials}
         </span>
       </summary>
@@ -227,20 +227,20 @@ export function AdminPageShell({
   return (
     <div>
       <AdminPageHeader eyebrow={eyebrow} title={title} description={description} actions={actions} />
-      <div className="mt-6 space-y-4">{children}</div>
+      <div className="mt-8">{children}</div>
     </div>
   );
 }
 
 export function AdminPageHeader({ eyebrow, title, description, actions }: { eyebrow?: string; title: string; description?: string; actions?: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-      <div>
+    <div className="grid gap-6 md:grid-cols-[minmax(0,560px)_minmax(260px,1fr)] md:items-center md:justify-between">
+      <div className="min-w-0">
         {eyebrow ? <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">{eyebrow}</p> : null}
-        <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">{title}</h1>
-        {description ? <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{description}</p> : null}
+        <h1 className="mt-2 text-[30px] font-extrabold leading-tight tracking-[-0.03em] text-[#021C2B] sm:text-[32px]">{title}</h1>
+        {description ? <p className="mt-3 max-w-[560px] text-[15px] leading-6 text-slate-600">{description}</p> : null}
       </div>
-      {actions ? <div className="shrink-0">{actions}</div> : null}
+      {actions ? <div className="hidden min-w-0 justify-self-end md:block">{actions}</div> : null}
     </div>
   );
 }
