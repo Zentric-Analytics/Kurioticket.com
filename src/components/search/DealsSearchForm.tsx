@@ -16,7 +16,7 @@ import {
   getIncludedProducts, parseDealsSearchParams, validateDealsSearch,
   type DealsFlightTripType, type DealsPackageMode, type DealsSearch, type DealsProduct,
 } from "@/lib/deals/dealsSearchParams";
-import { formatAirportLabel, getLocalizedAirportCountryName, getLocalizedCityName, type AirportOption } from "@/data/airports";
+import { formatAirportLabel, getAirportByCode, getLocalizedAirportCountryName, getLocalizedCityName, type AirportOption } from "@/data/airports";
 import { getLocalizedHotelDestinationCityName, getLocalizedHotelDestinationDetail } from "@/data/hotelDestinations";
 import { formatFlightsDateSummary, formatFlightsMonthHeading, formatFlightsWeekdays, normalizeFlightsCalendarLocale } from "@/lib/flights/dateFormatting";
 import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
@@ -210,13 +210,20 @@ export function DealsSearchForm() {
   const included = getIncludedProducts(search.mode);
   const update = <K extends keyof DealsSearch>(key: K, value: DealsSearch[K]) => setSearch((current) => ({ ...current, [key]: value }));
   const swapDealsFlightAirports = () => {
-    setSearch((current) => ({
-      ...current,
-      flightOriginText: current.flightDestinationText,
-      flightOriginCode: current.flightDestinationCode,
-      flightDestinationText: current.flightOriginText,
-      flightDestinationCode: current.flightOriginCode,
-    }));
+    setSearch((current) => {
+      const currentIncluded = getIncludedProducts(current.mode);
+      const newDestination = getAirportByCode(current.flightOriginCode)?.city ?? current.flightOriginText;
+
+      return {
+        ...current,
+        flightOriginText: current.flightDestinationText,
+        flightOriginCode: current.flightDestinationCode,
+        flightDestinationText: current.flightOriginText,
+        flightDestinationCode: current.flightOriginCode,
+        ...currentIncluded.hotel && !dirty.current.hotelDestination ? { hotelDestination: newDestination } : {},
+        ...currentIncluded.car && !dirty.current.carLocation ? { carPickupLocation: newDestination } : {},
+      };
+    });
     setFlightOriginOpen(false); setFlightDestinationOpen(false); setFlightMobileAirport(null);
     setFlightOriginHighlight(0); setFlightDestinationHighlight(0);
     setFlightOriginLoading(false); setFlightDestinationLoading(false);
