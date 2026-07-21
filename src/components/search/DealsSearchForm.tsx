@@ -210,13 +210,18 @@ export function DealsSearchForm() {
   const included = getIncludedProducts(search.mode);
   const update = <K extends keyof DealsSearch>(key: K, value: DealsSearch[K]) => setSearch((current) => ({ ...current, [key]: value }));
   const swapDealsFlightAirports = () => {
-    setSearch((current) => ({
-      ...current,
-      flightOriginText: current.flightDestinationText,
-      flightOriginCode: current.flightDestinationCode,
-      flightDestinationText: current.flightOriginText,
-      flightDestinationCode: current.flightOriginCode,
-    }));
+    setSearch((current) => {
+      const destination = current.flightOriginText.replace(/\s+\([A-Z]{3}\)$/, "");
+      return {
+        ...current,
+        flightOriginText: current.flightDestinationText,
+        flightOriginCode: current.flightDestinationCode,
+        flightDestinationText: current.flightOriginText,
+        flightDestinationCode: current.flightOriginCode,
+        ...included.hotel && !dirty.current.hotelDestination ? { hotelDestination: destination } : {},
+        ...included.car && !dirty.current.carLocation ? { carPickupLocation: destination } : {},
+      };
+    });
     setFlightOriginOpen(false); setFlightDestinationOpen(false); setFlightMobileAirport(null);
     setFlightOriginHighlight(0); setFlightDestinationHighlight(0);
     setFlightOriginLoading(false); setFlightDestinationLoading(false);
