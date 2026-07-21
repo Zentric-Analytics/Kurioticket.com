@@ -1,17 +1,74 @@
+import { cookies } from "next/headers";
+import { getServerSession } from "next-auth";
 import { AccountMenuPage } from "@/components/dashboard/DashboardGrid";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
+import { authOptions } from "@/lib/auth";
+import { getOptionalPrisma } from "@/lib/prisma";
+import { getTranslations } from "@/lib/i18n";
+import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
 
-export const metadata = {
-  title: "My Account",
-};
+export async function generateMetadata() {
+  const cookieStore = await cookies();
+  const t = getTranslations(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
 
-export default function AccountPage() {
+  return { title: t["accountDashboard.hub.title"] };
+}
+
+function getInitials(name?: string | null, email?: string | null) {
+  const label = name?.trim() || email?.split("@")[0] || "Kurioticket traveler";
+  const parts = label.split(/\s+/).filter(Boolean);
+
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+
+  return label.slice(0, 2).toUpperCase();
+}
+
+function getSafeDisplayName(name?: string | null, email?: string | null) {
+  const firstName = name?.trim().split(/\s+/).filter(Boolean)[0];
+
+  if (firstName) {
+    return firstName;
+  }
+
+  const emailUsername = email?.trim().split("@")[0];
+  const shortUsername = emailUsername?.split(/[._+-]+/).find((part) => part.length >= 2) || emailUsername;
+
+  if (!shortUsername) {
+    return "traveler";
+  }
+
+  return shortUsername.length > 14 ? shortUsername.slice(0, 14) : shortUsername;
+}
+
+export default async function AccountPage() {
+  const session = await getServerSession(authOptions);
+  const sessionUserName = session?.user?.name?.trim();
+  const userEmail = session?.user?.email?.trim();
+  const db = getOptionalPrisma();
+  const storedProfile =
+    session?.user?.id && db
+      ? await db.userProfile.findUnique({
+          where: { userId: session.user.id },
+          select: { fullName: true },
+        })
+      : null;
+  const userName = storedProfile?.fullName?.trim() || sessionUserName;
+  const displayName = getSafeDisplayName(userName, userEmail);
+  const initials = getInitials(userName, userEmail);
   return (
     <>
-      <AppHeader />
-      <main className="flex-1 bg-slate-50 pb-16 lg:pb-20">
-        <AccountMenuPage />
+      <div className="[&>header]:!border-b-0 [&>header]:!shadow-none">
+        <AppHeader />
+      </div>
+      <main className="flex-1 bg-[#f3f7fc] pb-16 lg:pb-20">
+        <AccountMenuPage
+          initials={initials}
+          displayName={displayName}
+          userEmail={userEmail}
+        />
       </main>
       <Footer />
     </>

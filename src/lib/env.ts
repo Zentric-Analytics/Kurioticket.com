@@ -25,12 +25,14 @@ export function getGoogleClientSecret() {
 
 export type TravelProviderMode = "local" | "staging" | "production";
 export type FlightProviderPrimary = "duffel" | "none";
+export type HotelResultsMode = "demo" | "live";
 export type HotelProviderPrimary =
   | "none"
   | "kayak_sandbox"
   | "hotelbeds"
   | "amadeus_hotels"
-  | "generic_partner";
+  | "generic_partner"
+  | "google_places";
 export type DuffelApiMode = "live" | "test";
 export type KayakApiMode = "sandbox" | "live";
 export type HotelbedsApiMode = "test" | "live";
@@ -74,10 +76,17 @@ export function getFlightProviderPrimary(): FlightProviderPrimary {
   return readEnum("FLIGHT_PROVIDER_PRIMARY", ["duffel", "none"] as const, "duffel");
 }
 
+export function getHotelResultsMode(): HotelResultsMode {
+  // Demo is an intentional temporary Hotels product source. Live must be
+  // selected when a verified live provider is ready. This mode is separate
+  // from emergency/local development fallbacks.
+  return readEnum("HOTEL_RESULTS_MODE", ["demo", "live"] as const, "demo");
+}
+
 export function getHotelProviderPrimary(): HotelProviderPrimary {
   return readEnum(
     "HOTEL_PROVIDER_PRIMARY",
-    ["none", "kayak_sandbox", "hotelbeds", "amadeus_hotels", "generic_partner"] as const,
+    ["none", "kayak_sandbox", "hotelbeds", "amadeus_hotels", "generic_partner", "google_places"] as const,
     "none",
   );
 }
@@ -88,6 +97,10 @@ export function getDuffelApiMode(): DuffelApiMode {
 
 export function getKayakApiMode(): KayakApiMode {
   return readEnum("KAYAK_API_MODE", ["sandbox", "live"] as const, "sandbox");
+}
+
+export function getGooglePlacesApiKey() {
+  return process.env.GOOGLE_PLACES_API_KEY?.trim() || "";
 }
 
 export function getHotelbedsApiMode(): HotelbedsApiMode {
@@ -116,7 +129,8 @@ export function hasTravelProviderKeys() {
       process.env.AMADEUS_CLIENT_SECRET
     ) ||
       process.env.DUFFEL_API_KEY ||
-      process.env.KIWI_API_KEY
+      process.env.KIWI_API_KEY ||
+      process.env.GOOGLE_PLACES_API_KEY
   );
 }
 

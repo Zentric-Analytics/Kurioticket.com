@@ -1,24 +1,50 @@
+import { cookies } from "next/headers";
+
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/Card";
+import { getTranslations } from "@/lib/i18n";
+import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
+
+const GUIDE_METADATA_SLUGS = [
+  "best-time-to-book-flights",
+  "how-to-avoid-risky-layovers",
+  "how-to-compare-baggage-inclusive-fares",
+] as const;
+
+type GuideMetadataSlug = (typeof GUIDE_METADATA_SLUGS)[number];
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  return { title: titleize(slug) };
+
+  if (!isGuideMetadataSlug(slug)) {
+    return { title: titleize(slug) };
+  }
+
+  const cookieStore = await cookies();
+  const t = getTranslations(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
+
+  return {
+    title: t[`guides.metadata.${slug}.title`],
+    description: t[`guides.metadata.${slug}.description`],
+  };
 }
 
 export default async function GuidePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const cookieStore = await cookies();
+  const t = getTranslations(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
+
   return (
     <>
       <AppHeader />
       <main className="page-shell flex-1 pt-24 pb-8 sm:pt-28 lg:pt-28">
         <article className="mx-auto max-w-3xl">
-          <p className="text-sm font-semibold text-teal-dark">Travel planning article</p>
+          <p className="text-sm font-semibold text-teal-dark">{t["guides.articleEyebrow"]}</p>
           <h1 className="mt-2 text-3xl font-bold text-navy">{titleize(slug)}</h1>
           <Card className="mt-6 p-6">
             <p className="leading-7 text-muted">
-              Use this guide to organize trip planning details, compare travel considerations, and continue into Kurioticket flight and hotel search tools.
+              {t["guides.articleBody"]}
             </p>
           </Card>
         </article>
@@ -26,6 +52,10 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
       <Footer />
     </>
   );
+}
+
+function isGuideMetadataSlug(slug: string): slug is GuideMetadataSlug {
+  return GUIDE_METADATA_SLUGS.includes(slug as GuideMetadataSlug);
 }
 
 function titleize(slug: string) {

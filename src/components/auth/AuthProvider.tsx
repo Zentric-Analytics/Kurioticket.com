@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { SessionProvider, signOut, useSession } from "next-auth/react";
+import { revokeCurrentSessionRecord } from "@/lib/currentSessionRevocation";
 
 const inactivityTimeoutMs = 15 * 60 * 1000;
 const activityStorageKey = "kurioticket:last-authenticated-activity";
@@ -49,6 +50,7 @@ function InactivitySignOut() {
     writeStorageValue(logoutStorageKey, String(Date.now()));
 
     try {
+      await revokeCurrentSessionRecord();
       await signOut({ redirect: false, callbackUrl: "/" });
     } finally {
       window.location.assign("/");

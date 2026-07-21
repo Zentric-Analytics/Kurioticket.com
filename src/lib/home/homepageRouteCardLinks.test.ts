@@ -72,3 +72,27 @@ test("incomplete homepage card data does not create fake booking links", () => {
     null,
   );
 });
+
+
+test("mismatched fare search route cannot override the card route", () => {
+  const href = buildHomepageRouteCardFlightHref({
+    fareSearch: {
+      origin: "JFK",
+      destination: "LAX",
+      departureDate: "2026-08-15",
+      travelers: 2,
+      adults: 2,
+    },
+    route: { originCode: "ATL", destinationCode: "MCO" },
+    displayCurrency: "USD",
+    market: "US",
+    now: new Date("2026-06-09T00:00:00.000Z"),
+  });
+
+  assert.ok(href && typeof href === "object" && "query" in href);
+  const query = href.query as Record<string, string>;
+  assert.equal(query.origin, "ATL");
+  assert.equal(query.destination, "MCO");
+  assert.equal(query.departureDate, "2026-07-24");
+  assert.equal(query.travelers, "1");
+});

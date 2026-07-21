@@ -16,12 +16,14 @@ import {
 } from "react";
 
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { createPortal } from "react-dom";
 
 import {
   ArrowRightLeft,
   BedDouble,
   Calendar,
+  CarFront,
   MapPin,
   ChevronDown,
   Minus,
@@ -41,10 +43,13 @@ import { cn } from "@/lib/utils";
 import {
   buildFlightRecentSearch,
   buildHotelRecentSearch,
+  syncBackendRecentSearch,
   upsertRecentSearch,
 } from "@/lib/recent-searches";
 import {
   formatAirportLabel,
+  getLocalizedAirportCountryName,
+  getLocalizedCityName,
   type AirportOption,
 } from "@/data/airports";
 import { getHomeDiscoveryByRegion, homeDiscoveryByRegion } from "@/data/homeDiscovery";
@@ -55,10 +60,25 @@ import {
   markOriginManualInput,
   type OriginFieldState,
 } from "@/lib/flights/defaultOrigin";
+import {
+  formatFlightsDateSummary,
+  formatFlightsMonthHeading,
+  normalizeFlightsCalendarLocale,
+} from "@/lib/flights/dateFormatting";
+import {
+  defaultDriverAge,
+  driverAgeOptions,
+  timeOptions,
+  toIsoDate as toCarsIsoDate,
+  validateCarsForm,
+  type CarsFormErrors,
+  type CarsFormValues,
+} from "@/lib/cars/carsSearchUtils";
 
 type TabMode =
   | "flights"
-  | "hotels";
+  | "hotels"
+  | "cars";
 
 type TripType =
   | "round-trip"
@@ -75,56 +95,7 @@ type SearchTabsProps = {
   locale?: string;
 };
 
-const normalizeHomepageCalendarLocale = (
-  locale: string | null | undefined
-) => {
-  const normalized =
-    locale?.trim().replace("_", "-").toLowerCase() ?? "";
-
-  if (
-    normalized === "fr" ||
-    normalized.startsWith("fr-")
-  ) {
-    return "fr-FR";
-  }
-
-  if (
-    normalized === "es" ||
-    normalized.startsWith("es-")
-  ) {
-    return "es-ES";
-  }
-
-  if (
-    normalized === "de" ||
-    normalized.startsWith("de-")
-  ) {
-    return "de-DE";
-  }
-
-  if (
-    normalized === "it" ||
-    normalized.startsWith("it-")
-  ) {
-    return "it-IT";
-  }
-
-  if (
-    normalized === "nl" ||
-    normalized.startsWith("nl-")
-  ) {
-    return "nl-NL";
-  }
-
-  if (
-    normalized === "pt" ||
-    normalized.startsWith("pt-")
-  ) {
-    return "pt-BR";
-  }
-
-  return "en-US";
-};
+const normalizeHomepageCalendarLocale = normalizeFlightsCalendarLocale;
 
 type PlacesApiResponse = {
   suggestions?: AirportOption[];
@@ -138,23 +109,6 @@ type LocationApiResponse = {
   countryCode?: string | null;
 };
 
-const formatCalendarHeading = (
-  formatter: Intl.DateTimeFormat,
-  date: Date,
-  calendarLocale: string
-) => {
-  const formatted = formatter.format(date);
-
-  if (calendarLocale !== "fr-FR") {
-    return formatted;
-  }
-
-  return (
-    formatted.charAt(0).toLocaleUpperCase("fr-FR") +
-    formatted.slice(1)
-  );
-};
-
 const formatCalendarWeekday = (
   formatter: Intl.DateTimeFormat,
   date: Date,
@@ -164,6 +118,10 @@ const formatCalendarWeekday = (
 
   if (calendarLocale === "de-DE") {
     return `${formatted.replace(/\.$/, "")}.`;
+  }
+
+  if (calendarLocale === "th-TH-u-ca-gregory") {
+    return ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"][date.getDay()] ?? formatted;
   }
 
   if (calendarLocale !== "fr-FR") {
@@ -272,7 +230,7 @@ const desktopPopoverPanelClassName = "z-[2147483400]";
 const desktopTravelersFieldClassName = "z-[2147483500]";
 const desktopTravelersPopoverClassName = "z-[2147483600]";
 const mobileDoneButtonClassName =
-  "focus-ring min-h-11 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-6 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition-colors hover:from-indigo-600 hover:to-violet-500 active:from-indigo-800 active:to-violet-700";
+  "focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-bold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35";
 
 type DesktopTopLayerPopoverProps = {
   open: boolean;
@@ -395,6 +353,7 @@ export function SearchTabs({
     locale: activeLocale,
     t: localeTranslations,
   } = useLocale();
+  const { status: sessionStatus } = useSession();
 
   const t = useMemo(
     () =>
@@ -414,18 +373,20 @@ export function SearchTabs({
       t[key] || localeTranslations[key] || enTranslations[key] || "",
     [localeTranslations, t]
   );
+  const translateHotelTravelDateText = useCallback(
+    (key: string) =>
+      localeTranslations[key] || t[key] || enTranslations[key] || "",
+    [localeTranslations, t]
+  );
+  const translateFlightCalendarNavText = useCallback(
+    (key: string) =>
+      localeTranslations[key] || t[key] || enTranslations[key] || "",
+    [localeTranslations, t]
+  );
 
   const calendarLocale = useMemo(
     () => normalizeHomepageCalendarLocale(locale ?? activeLocale),
     [activeLocale, locale]
-  );
-  const monthYearFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(calendarLocale, {
-        month: "long",
-        year: "numeric",
-      }),
-    [calendarLocale]
   );
   const accessibleDateFormatter = useMemo(
     () =>
@@ -433,14 +394,6 @@ export function SearchTabs({
         month: "long",
         day: "numeric",
         year: "numeric",
-      }),
-    [calendarLocale]
-  );
-  const shortDateFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(calendarLocale, {
-        month: "short",
-        day: "numeric",
       }),
     [calendarLocale]
   );
@@ -507,6 +460,19 @@ export function SearchTabs({
     useState(false);
   const [isHotelSubmitting, setIsHotelSubmitting] =
     useState(false);
+  const [isCarsSubmitting, setIsCarsSubmitting] =
+    useState(false);
+  const [carsValues, setCarsValues] = useState<CarsFormValues>({
+    pickupLocation: "",
+    pickupDate: "",
+    pickupTime: "10:00",
+    dropoffDate: "",
+    dropoffTime: "10:00",
+    driverAge: defaultDriverAge,
+    returnToDifferentLocation: false,
+    dropoffLocation: "",
+  });
+  const [carsErrors, setCarsErrors] = useState<CarsFormErrors>({});
 
   const [tripType, setTripType] =
     useState<TripType>(
@@ -702,7 +668,7 @@ export function SearchTabs({
       : "gap-1.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_112px]"
   );
   const joinedFieldClassName = cn(
-    "transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
+    "transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/30 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
     compactHero ? "min-h-[50px] px-3 py-1 lg:min-h-[56px] lg:px-4 lg:py-2" : "min-h-[54px] px-3 py-1.5"
   );
   const flightJoinedFieldClassName = cn(
@@ -718,11 +684,11 @@ export function SearchTabs({
     compactHero && "lg:text-[10px] lg:font-semibold lg:tracking-[0.10em] lg:text-slate-600"
   );
   const flightFieldValueClassName = cn(
-    "focus-ring hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block sm:focus-visible:shadow-none md:text-sm lg:placeholder:text-slate-500",
+    "focus-ring hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 ps-0 pe-11 text-[16px] font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block sm:focus-visible:shadow-none md:text-sm lg:placeholder:text-slate-500",
     compactHero && "lg:text-[15px] lg:font-medium lg:tracking-[-0.01em] lg:text-slate-900"
   );
   const flightFieldButtonClassName = cn(
-    "focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 pr-8 text-left text-[16px] font-medium text-slate-900 outline-none transition-colors sm:focus-visible:shadow-none md:text-sm",
+    "focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 pe-8 text-start text-[16px] font-medium text-slate-900 outline-none transition-colors sm:focus-visible:shadow-none md:text-sm",
     compactHero && "lg:text-[15px] lg:font-medium lg:tracking-[-0.01em] lg:text-slate-900"
   );
   const hotelFieldLabelClassName = cn(
@@ -730,25 +696,25 @@ export function SearchTabs({
     compactHero && "lg:text-[10px] lg:font-semibold lg:tracking-[0.10em] lg:text-slate-600"
   );
   const hotelFieldValueClassName = cn(
-    "focus-ring flex w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left font-medium leading-6 text-slate-950 outline-none transition-colors placeholder:text-slate-400",
+    "focus-ring flex w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start font-medium leading-6 text-slate-950 outline-none transition-colors placeholder:text-slate-400",
     compactHero ? "min-h-9 text-[17px] sm:text-[16px] lg:text-[15px] lg:tracking-[-0.01em] lg:text-slate-900 lg:placeholder:text-slate-500" : "min-h-8 text-[16px] sm:text-[15px]"
   );
   const flightRouteGroupClassName = compactHero
-    ? "grid grid-cols-1 gap-1 rounded-xl bg-transparent transition-colors sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch sm:border sm:border-slate-300 sm:bg-white sm:px-3.5 sm:py-1.5 sm:hover:border-slate-400 sm:focus-within:border-indigo-500 sm:focus-within:ring-2 sm:focus-within:ring-indigo-500/40 lg:grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)] lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:px-4 lg:py-2 lg:hover:border-slate-200 lg:focus-within:border-indigo-500 lg:focus-within:bg-white lg:focus-within:ring-2 lg:focus-within:ring-indigo-500/25"
-    : cn("grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white lg:rounded-l-xl", flightJoinedFieldClassName);
+    ? "grid grid-cols-1 gap-1 rounded-xl bg-transparent transition-colors sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch sm:border sm:border-slate-300 sm:bg-white sm:px-3.5 sm:py-1.5 sm:hover:border-slate-400 sm:focus-within:border-[#004BB8]/35 sm:focus-within:ring-2 sm:focus-within:ring-[#004BB8]/20 lg:grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)] lg:rounded-none lg:rounded-s-xl lg:border-0 lg:border-e lg:border-slate-200 lg:px-4 lg:py-2 lg:hover:border-slate-200 lg:focus-within:border-[#004BB8]/35 lg:focus-within:bg-white lg:focus-within:ring-2 lg:focus-within:ring-[#004BB8]/20"
+    : cn("grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white lg:rounded-s-xl", flightJoinedFieldClassName);
   const flightRouteFieldClassName = (side: "origin" | "destination") =>
     compactHero
       ? cn(
           "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 transition-colors sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 lg:flex lg:flex-col lg:justify-center lg:rounded-lg",
-          side === "origin" ? "sm:pr-3" : "sm:pl-3"
+          side === "origin" ? "sm:pe-3" : "sm:ps-3"
         )
-      : cn("relative px-0 py-0 transition-colors lg:rounded-lg", side === "origin" ? "pr-3" : "pl-3");
+      : cn("relative px-0 py-0 transition-colors lg:rounded-lg", side === "origin" ? "pe-3" : "ps-3");
   const submitWrapClassName = cn(
     "sm:col-span-2 lg:col-span-1 lg:self-stretch",
     compactHero ? "lg:min-h-[58px]" : "lg:min-h-[58px]"
   );
   const submitButtonClassName = cn(
-    "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 enabled:hover:from-indigo-600 enabled:hover:to-violet-500 enabled:active:from-indigo-800 enabled:active:to-violet-700 disabled:from-indigo-700 disabled:to-violet-600 disabled:opacity-100 disabled:shadow-md disabled:shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20 lg:text-[15px] lg:shadow-[0_10px_22px_rgba(67,56,202,0.22)] lg:disabled:shadow-[0_10px_22px_rgba(67,56,202,0.22)]",
+    "w-full rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] enabled:hover:bg-[#021C2B] enabled:active:bg-[#021C2B] disabled:bg-[#004BB8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#004BB8]/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20 lg:text-[15px] lg:shadow-[0_10px_22px_rgba(2,28,43,0.14)] lg:disabled:shadow-[0_10px_22px_rgba(2,28,43,0.14)]",
     compactHero ? "h-12 lg:min-h-[58px]" : "h-12 lg:min-h-[58px]"
   );
   const hotelSubmitWrapClassName = cn(
@@ -756,7 +722,7 @@ export function SearchTabs({
     compactHero ? "lg:min-h-[58px]" : "lg:min-h-[58px]"
   );
   const hotelSubmitButtonClassName = cn(
-    "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 enabled:hover:from-indigo-600 enabled:hover:to-violet-500 enabled:active:from-indigo-800 enabled:active:to-violet-700 disabled:from-indigo-700 disabled:to-violet-600 disabled:opacity-100 disabled:shadow-md disabled:shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20 lg:text-[15px] lg:shadow-[0_10px_22px_rgba(67,56,202,0.22)] lg:disabled:shadow-[0_10px_22px_rgba(67,56,202,0.22)]",
+    "w-full rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] enabled:hover:bg-[#021C2B] enabled:active:bg-[#021C2B] disabled:bg-[#004BB8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#004BB8]/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20 lg:text-[15px] lg:shadow-[0_10px_22px_rgba(2,28,43,0.14)] lg:disabled:shadow-[0_10px_22px_rgba(2,28,43,0.14)]",
     compactHero ? "h-[54px] lg:min-h-[58px]" : "h-12 lg:min-h-[58px]"
   );
 
@@ -820,7 +786,8 @@ export function SearchTabs({
     nextAdults: number,
     nextChildren: number,
     nextInfants: number,
-    nextCabinClass: string
+    nextCabinClass: string,
+    closePicker = true
   ) => {
     const normalized = normalizePassengerDraft(
       nextAdults,
@@ -831,15 +798,16 @@ export function SearchTabs({
     setChildCount(normalized.children);
     setInfantCount(normalized.infants);
     setCabinClass(normalizeCabinClass(nextCabinClass));
-    setTravelersMenuOpen(false);
+    if (closePicker) setTravelersMenuOpen(false);
   }, [normalizePassengerDraft]);
 
-  const applyTravelersDraft = useCallback(() => {
+  const applyTravelersDraft = useCallback((closePicker = true) => {
     applyTravelersFromValues(
       draftAdultCount,
       draftChildCount,
       draftInfantCount,
-      draftCabinClass
+      draftCabinClass,
+      closePicker
     );
   }, [applyTravelersFromValues, draftAdultCount, draftChildCount, draftInfantCount, draftCabinClass]);
 
@@ -909,7 +877,7 @@ export function SearchTabs({
 
         const payload = (await response.json()) as PlacesApiResponse;
         const defaultAirport = payload.defaultOriginAirport ?? null;
-        setFromState((current) => applyDefaultOrigin(current, defaultAirport));
+        setFromState((current) => applyDefaultOrigin(current, defaultAirport, locale));
         if (Array.isArray(payload.suggestions)) {
           setFromLiveSuggestions(
             dedupeSuggestions(payload.suggestions)
@@ -925,7 +893,7 @@ export function SearchTabs({
     void loadDefaultOrigin();
 
     return () => controller.abort();
-  }, [buildPlacesUrl, fromState]);
+  }, [buildPlacesUrl, fromState, locale]);
 
   useEffect(() => {
     const query = from.trim();
@@ -1189,7 +1157,33 @@ export function SearchTabs({
 
 
   const guests = String(hotelAdultCount + hotelChildCount);
-  const hotelGuestsRoomsSummary = `${guests} ${Number(guests) === 1 ? t.guestSingular || "guest" : t.guestPlural || "guests"}, ${rooms} ${Number(rooms) === 1 ? t.roomSingular || "room" : t.roomPlural || "rooms"}`;
+  const normalizedSummaryLocale = (locale ?? activeLocale)
+    ?.trim()
+    .replace("_", "-")
+    .toLowerCase();
+  const isArabicLocale = normalizedSummaryLocale?.startsWith("ar");
+  const isSimplifiedChineseLocale = normalizedSummaryLocale === "zh-cn";
+  const isJapaneseLocale = normalizedSummaryLocale === "ja";
+  const isKoreanLocale = normalizedSummaryLocale === "ko";
+  const isThaiLocale = normalizedSummaryLocale?.startsWith("th");
+  const summarySeparator = isSimplifiedChineseLocale ? "，" : ", ";
+  const hotelGuestsRoomsSummary = isArabicLocale
+    ? `${Number(guests) === 1 ? `${translate("guestSingular")} واحد` : `${guests} ${translate("guestPlural")}`}، ${Number(rooms) === 1 ? `${translate("roomSingular")} واحدة` : `${rooms} ${translate("roomPlural")}`}`
+    : isJapaneseLocale
+      ? `${translate("guestSingular") || "宿泊者"}${guests}名、${rooms}${translate("roomSingular") || "室"}`
+    : isKoreanLocale
+      ? `${translate("guestSingular") || "투숙객"} ${guests}명, ${translate("roomSingular") || "객실"} ${rooms}개`
+    : isThaiLocale
+      ? `${translate("guestSingular") || "ผู้เข้าพัก"} ${guests} คน, ${translate("roomSingular") || "ห้อง"} ${rooms} ห้อง`
+    : `${guests} ${
+        Number(guests) === 1
+          ? translate("guestSingular") || "guest"
+          : translate("guestPlural") || "guests"
+      }${summarySeparator}${rooms} ${
+        Number(rooms) === 1
+          ? translate("roomSingular") || "room"
+          : translate("roomPlural") || "rooms"
+      }`;
 
   const formatShortDate = useCallback((
     isoDate: string
@@ -1223,8 +1217,8 @@ export function SearchTabs({
       return "";
     }
 
-    return shortDateFormatter.format(parsedDate);
-  }, [shortDateFormatter]);
+    return formatFlightsDateSummary(parsedDate, null, calendarLocale);
+  }, [calendarLocale]);
 
   const dateSummary = useMemo(
     () => {
@@ -1506,24 +1500,41 @@ export function SearchTabs({
         : t.economy || "Economy";
 
   const travelerSummary = useMemo(() => {
+    const normalizedLocale = (locale ?? activeLocale).toLowerCase();
+    const isJapanese = normalizedLocale.startsWith("ja");
+    const isKorean = normalizedLocale.startsWith("ko");
+    const separator = isJapanese ? "、" : ", ";
+    const formatTravelerPart = (
+      count: number,
+      singularLabel: string,
+      pluralLabel: string,
+    ) => {
+      if (isJapanese) return `${singularLabel}${count}名`;
+      if (isKorean) return `${singularLabel} ${count}명`;
+      return `${count} ${count === 1 ? singularLabel : pluralLabel}`;
+    };
     const parts: string[] = [];
 
     if (adultCount > 0) {
-      parts.push(`${adultCount} ${adultCount === 1 ? t.adultSingular || "adult" : t.adultPlural || "adults"}`);
+      parts.push(formatTravelerPart(adultCount, t.adultSingular || "adult", t.adultPlural || "adults"));
     }
     if (childCount > 0) {
-      parts.push(`${childCount} ${childCount === 1 ? t.childSingular || "child" : t.childPlural || "children"}`);
+      parts.push(formatTravelerPart(childCount, t.childSingular || "child", t.childPlural || "children"));
     }
     if (infantCount > 0) {
-      parts.push(`${infantCount} ${infantCount === 1 ? t.infantSingular || "infant" : t.infantPlural || "infants"}`);
+      parts.push(formatTravelerPart(infantCount, t.infantSingular || "infant", t.infantPlural || "infants"));
     }
 
     const baseSummary =
       parts.length > 0
-        ? parts.join(", ")
-        : `${travelerCount} ${travelerCount === 1 ? t.travelerSingular || "traveler" : t.travelerPlural || t.travelers || "travelers"}`;
-    return `${baseSummary}, ${cabinClassLabel}`;
-  }, [adultCount, childCount, infantCount, travelerCount, cabinClassLabel, t]);
+        ? parts.join(separator)
+        : formatTravelerPart(
+            travelerCount,
+            t.travelerSingular || "traveler",
+            t.travelerPlural || t.travelers || "travelers",
+          );
+    return `${baseSummary}${separator}${cabinClassLabel}`;
+  }, [activeLocale, adultCount, childCount, infantCount, travelerCount, cabinClassLabel, locale, t]);
 
   const onKeyNav = (
     event: ReactKeyboardEvent<HTMLInputElement>,
@@ -1582,13 +1593,14 @@ export function SearchTabs({
       if (isFrom) {
         setFromState((current) => markOriginManualInput(
           current,
-          formatAirportLabel(list[active]),
+          formatAirportLabel(list[active], locale),
           list[active].code
         ));
       } else {
         setTo(
           formatAirportLabel(
-            list[active]
+            list[active],
+            locale
           )
         );
         setToCode(
@@ -1736,8 +1748,7 @@ export function SearchTabs({
         params.get("origin") ?? "",
         params.get("destination") ?? ""
       );
-      upsertRecentSearch(
-        buildFlightRecentSearch({
+      const recentSearch = buildFlightRecentSearch({
           tripType: (params.get("tripType") as "round-trip" | "one-way") ?? "round-trip",
           origin: params.get("origin") ?? "",
           destination: params.get("destination") ?? "",
@@ -1748,8 +1759,12 @@ export function SearchTabs({
           infants: Number(params.get("infants") ?? "0"),
           travelers: Number(params.get("travelers") ?? "1"),
           cabinClass: params.get("cabinClass") ?? "economy",
-        }, matchedFlightImage ? { image: matchedFlightImage.image, imageAlt: matchedFlightImage.imageAlt } : undefined)
-      );
+        }, matchedFlightImage ? { image: matchedFlightImage.image, imageAlt: matchedFlightImage.imageAlt } : undefined);
+      if (sessionStatus === "authenticated") {
+        void syncBackendRecentSearch(recentSearch);
+      } else {
+        upsertRecentSearch(recentSearch);
+      }
     } catch {
       // best effort only
     }
@@ -1805,15 +1820,18 @@ export function SearchTabs({
 
     try {
       const matchedHotelImage = findDiscoveryImageForHotel(params.get("destination") ?? "");
-      upsertRecentSearch(
-        buildHotelRecentSearch({
+      const recentSearch = buildHotelRecentSearch({
           destination: params.get("destination") ?? "",
           checkIn: params.get("checkIn") ?? "",
           checkOut: params.get("checkOut") ?? "",
           guests: Number(params.get("guests") ?? "1"),
           rooms: Number(params.get("rooms") ?? "1"),
-        }, matchedHotelImage ? { image: matchedHotelImage.image, imageAlt: matchedHotelImage.imageAlt } : undefined)
-      );
+        }, matchedHotelImage ? { image: matchedHotelImage.image, imageAlt: matchedHotelImage.imageAlt } : undefined);
+      if (sessionStatus === "authenticated") {
+        void syncBackendRecentSearch(recentSearch);
+      } else {
+        upsertRecentSearch(recentSearch);
+      }
     } catch {
       // best effort only
     }
@@ -1822,6 +1840,78 @@ export function SearchTabs({
     startRouteProgress();
     router.push(href);
   };
+
+
+  const updateCarsValue = <Key extends keyof CarsFormValues>(
+    key: Key,
+    value: CarsFormValues[Key],
+  ) => {
+    setCarsValues((current) => {
+      const next = { ...current, [key]: value };
+
+      if (key === "returnToDifferentLocation" && value === false) {
+        next.dropoffLocation = "";
+      }
+
+      return next;
+    });
+    setCarsErrors((current) => ({
+      ...current,
+      [key]: undefined,
+      dateRange: undefined,
+      ...(key === "returnToDifferentLocation"
+        ? { dropoffLocation: undefined }
+        : {}),
+    }));
+  };
+
+  const translateCarsFormErrors = (errors: CarsFormErrors): CarsFormErrors =>
+    Object.fromEntries(
+      Object.entries(errors).map(([field, errorKey]) => [
+        field,
+        errorKey ? translate(errorKey) : errorKey,
+      ]),
+    ) as CarsFormErrors;
+
+  const onCarsSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (isCarsSubmitting) return;
+
+    const nextErrors = validateCarsForm(carsValues, toCarsIsoDate(new Date()));
+    setCarsErrors(translateCarsFormErrors(nextErrors));
+
+    if (Object.values(nextErrors).some(Boolean)) {
+      return;
+    }
+
+    const pickupLocation = carsValues.pickupLocation.trim();
+    const dropoffLocation = carsValues.returnToDifferentLocation
+      ? carsValues.dropoffLocation.trim()
+      : pickupLocation;
+    const params = new URLSearchParams({
+      pickupLocation,
+      pickupDate: carsValues.pickupDate,
+      pickupTime: carsValues.pickupTime,
+      dropoffDate: carsValues.dropoffDate,
+      dropoffTime: carsValues.dropoffTime,
+      driverAge: carsValues.driverAge,
+      dropoffLocation,
+    });
+
+    setIsCarsSubmitting(true);
+    startRouteProgress();
+    router.push(`/cars/results?${params.toString()}`);
+  };
+
+  const isCarsSearchDisabled =
+    isCarsSubmitting ||
+    !carsValues.pickupLocation.trim() ||
+    !carsValues.pickupDate ||
+    !carsValues.dropoffDate ||
+    !carsValues.pickupTime ||
+    !carsValues.dropoffTime ||
+    (carsValues.returnToDifferentLocation && !carsValues.dropoffLocation.trim());
 
   const hotelDateSummary = useMemo(
     () => {
@@ -1832,8 +1922,8 @@ export function SearchTabs({
 
       if (!checkInSummary) {
         return (
-          t.hotelSearchDatePlaceholder ||
-          enTranslations.hotelSearchDatePlaceholder
+          translateHotelTravelDateText("hotelSearchDatePlaceholder") ||
+          "Check-in — Check-out"
         );
       }
 
@@ -1843,7 +1933,7 @@ export function SearchTabs({
 
       return checkInSummary;
     },
-    [checkIn, checkOut, formatShortDate, t.hotelSearchDatePlaceholder]
+    [checkIn, checkOut, formatShortDate, translateHotelTravelDateText]
   );
 
   const checkInParsed =
@@ -1895,19 +1985,11 @@ export function SearchTabs({
           return (
             <section
               key={monthKey}
-              aria-label={formatCalendarHeading(
-                monthYearFormatter,
-                monthDate,
-                calendarLocale
-              )}
+              aria-label={formatFlightsMonthHeading(monthDate, calendarLocale)}
               className="space-y-2.5"
             >
-              <h3 className="text-left text-[17px] font-bold tracking-tight text-slate-950">
-                {formatCalendarHeading(
-                  monthYearFormatter,
-                  monthDate,
-                  calendarLocale
-                )}
+              <h3 className="text-start text-[17px] font-bold tracking-tight text-slate-950">
+                {formatFlightsMonthHeading(monthDate, calendarLocale)}
               </h3>
               <div className="grid grid-cols-7 text-center text-[12px] font-semibold tracking-[0.08em] text-slate-500">
                 {weekdays.map((weekday) => (
@@ -1956,15 +2038,15 @@ export function SearchTabs({
                         "focus-ring relative mx-auto flex h-11 w-full max-w-11 items-center justify-center rounded-full text-[15px] font-semibold transition-colors disabled:cursor-not-allowed",
                         isDisabledDate
                           ? "text-slate-300"
-                          : "text-slate-800 hover:bg-indigo-50 hover:text-indigo-800",
-                        isToday && !isDisabledDate && "ring-1 ring-inset ring-indigo-300",
-                        isInRange && "bg-indigo-50 text-indigo-900 hover:bg-indigo-100",
-                        (isDeparture || isReturn) && "bg-indigo-700 text-white shadow-sm hover:bg-indigo-700 hover:text-white ring-0"
+                          : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
+                        isToday && !isDisabledDate && "ring-1 ring-inset ring-[#004BB8]/25",
+                        isInRange && "bg-[#004BB8]/7 text-[#021C2B] hover:bg-[#004BB8]/10",
+                        (isDeparture || isReturn) && "bg-[#004BB8] text-white shadow-sm hover:bg-[#004BB8] hover:text-white ring-0"
                       )}
                     >
                       {day.getDate()}
                       {isToday && !isDeparture && !isReturn ? (
-                        <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-indigo-500" aria-hidden="true" />
+                        <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#004BB8]" aria-hidden="true" />
                       ) : null}
                     </button>
                   );
@@ -1992,19 +2074,11 @@ export function SearchTabs({
           return (
             <section
               key={monthKey}
-              aria-label={formatCalendarHeading(
-                monthYearFormatter,
-                monthDate,
-                calendarLocale
-              )}
+              aria-label={formatFlightsMonthHeading(monthDate, calendarLocale)}
               className="space-y-2.5"
             >
-              <h3 className="text-left text-[17px] font-bold tracking-tight text-slate-950">
-                {formatCalendarHeading(
-                  monthYearFormatter,
-                  monthDate,
-                  calendarLocale
-                )}
+              <h3 className="text-start text-[17px] font-bold tracking-tight text-slate-950">
+                {formatFlightsMonthHeading(monthDate, calendarLocale)}
               </h3>
               <div className="grid grid-cols-7 text-center text-[12px] font-semibold tracking-[0.08em] text-slate-500">
                 {weekdays.map((weekday) => (
@@ -2054,15 +2128,15 @@ export function SearchTabs({
                         "focus-ring relative mx-auto flex h-11 w-full max-w-11 items-center justify-center rounded-full text-[15px] font-semibold transition-colors disabled:cursor-not-allowed",
                         isDisabledDate
                           ? "text-slate-300"
-                          : "text-slate-800 hover:bg-indigo-50 hover:text-indigo-800",
-                        isToday && !isDisabledDate && "ring-1 ring-inset ring-indigo-300",
-                        isInRange && "bg-indigo-50 text-indigo-900 hover:bg-indigo-100",
-                        (isCheckIn || isCheckOut) && "bg-indigo-700 text-white shadow-sm hover:bg-indigo-700 hover:text-white ring-0"
+                          : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
+                        isToday && !isDisabledDate && "ring-1 ring-inset ring-[#004BB8]/25",
+                        isInRange && "bg-[#004BB8]/7 text-[#021C2B] hover:bg-[#004BB8]/10",
+                        (isCheckIn || isCheckOut) && "bg-[#004BB8] text-white shadow-sm hover:bg-[#004BB8] hover:text-white ring-0"
                       )}
                     >
                       {day.getDate()}
                       {isToday && !isCheckIn && !isCheckOut ? (
-                        <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-indigo-500" aria-hidden="true" />
+                        <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#004BB8]" aria-hidden="true" />
                       ) : null}
                     </button>
                   );
@@ -2075,7 +2149,7 @@ export function SearchTabs({
     );
   };
 
-  const flightDatesFooter = (
+  const flightDatesFooter = (requestClose: () => void) => (
     <div className="flex items-center justify-between gap-3">
       <button
         type="button"
@@ -2089,7 +2163,7 @@ export function SearchTabs({
       </button>
       <button
         type="button"
-        onClick={() => setFlightDatesOpen(false)}
+        onClick={requestClose}
         className={cn(mobileDoneButtonClassName, "px-4 py-2")}
       >
         {translate("done") || "Done"}
@@ -2142,7 +2216,7 @@ export function SearchTabs({
         launcherRef={launcherRef}
         onClose={onClose}
         contentClassName="bg-slate-50 px-4 py-5"
-        footer={(
+        footer={(requestClose) => (
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
@@ -2156,7 +2230,7 @@ export function SearchTabs({
             </button>
             <button
               type="button"
-              onClick={onClose}
+              onClick={requestClose}
               className={mobileDoneButtonClassName}
             >
               {t.done || "Done"}
@@ -2164,6 +2238,7 @@ export function SearchTabs({
           </div>
         )}
       >
+        {(requestClose) => (
         <div className="mx-auto w-full max-w-xl space-y-5">
           <div className="space-y-2">
             <label className="block text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-500" htmlFor={inputId}>
@@ -2178,7 +2253,7 @@ export function SearchTabs({
                 onChange={(event) => onChange(event.target.value)}
                 placeholder={translate("cityAirportOrCode")}
                 autoComplete="off"
-                className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 pl-4 pr-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
+                className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 ps-4 pe-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/25"
               />
               {value.trim() ? (
                 <button
@@ -2188,7 +2263,7 @@ export function SearchTabs({
                     onClear();
                     focusInput();
                   }}
-                  className="focus-ring absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
+                  className="focus-ring absolute end-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
                 >
                   <X className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -2210,21 +2285,24 @@ export function SearchTabs({
                 <button
                   key={`${option.code}-${option.airport}-${inputId}`}
                   type="button"
-                  onClick={() => onSelect(option)}
-                  className="focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3.5 text-left transition-colors last:border-b-0 hover:bg-slate-50 focus-visible:bg-slate-50"
+                  onClick={() => {
+                    onSelect(option);
+                    requestClose();
+                  }}
+                  className="focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3.5 text-start transition-colors last:border-b-0 hover:bg-slate-50 focus-visible:bg-slate-50"
                 >
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500" aria-hidden="true">
                     <Plane className="h-4 w-4" />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-base font-extrabold leading-5 tracking-tight text-slate-950">
-                      {option.city}
+                      {getLocalizedCityName(option.city, locale)}
                     </span>
                     <span className="mt-1 block truncate text-sm font-medium leading-5 text-slate-500">
                       {option.airport}
                     </span>
                   </span>
-                  <span className="shrink-0 pl-2 text-right text-sm font-extrabold tracking-[0.12em] text-slate-700">
+                  <span className="shrink-0 ps-2 text-end text-sm font-extrabold tracking-[0.12em] text-slate-700">
                     {option.code}
                   </span>
                 </button>
@@ -2236,6 +2314,7 @@ export function SearchTabs({
             )}
           </div>
         </div>
+        )}
       </FlightMobilePickerShell>
     );
   };
@@ -2257,7 +2336,7 @@ export function SearchTabs({
   }) => (
     <div
       className={cn(
-        "absolute left-0 top-[calc(100%+10px)] hidden w-[min(92vw,520px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block lg:w-[520px]",
+        "absolute start-0 top-[calc(100%+10px)] hidden w-[min(92vw,520px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block lg:w-[520px]",
         desktopPopoverPanelClassName
       )}
     >
@@ -2269,7 +2348,7 @@ export function SearchTabs({
       <div className="max-h-[min(52vh,360px)] overflow-y-auto py-1">
         {isLoading ? (
           <div className="flex items-center gap-3 px-4 py-4 text-sm font-medium text-slate-500">
-            <span className="h-2 w-2 rounded-full bg-indigo-500 shadow-[0_0_0_4px_rgba(99,102,241,0.12)]" aria-hidden="true" />
+            <span className="h-2 w-2 rounded-full bg-[#004BB8] shadow-[0_0_0_4px_rgba(0,75,184,0.18)]" aria-hidden="true" />
             {translate("searchingAirportsAndCities")}
           </div>
         ) : suggestions.length ? suggestions.map((option, index) => (
@@ -2279,8 +2358,8 @@ export function SearchTabs({
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => onSelect(option)}
             className={cn(
-              "focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-2.5 text-left transition-colors last:border-b-0 hover:bg-indigo-50/60 focus-visible:bg-indigo-50/60",
-              highlight === index && "bg-indigo-50 text-indigo-950"
+              "focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-2.5 text-start transition-colors last:border-b-0 hover:bg-[#004BB8]/10 focus-visible:bg-[#004BB8]/10",
+              highlight === index && "bg-[#004BB8]/10 text-[#021C2B]"
             )}
           >
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-400 ring-1 ring-slate-200/70" aria-hidden="true">
@@ -2288,13 +2367,13 @@ export function SearchTabs({
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-medium leading-5 tracking-tight text-slate-900">
-                {option.city}
+                {getLocalizedCityName(option.city, locale)}
               </span>
               <span className="mt-0.5 block truncate text-xs font-normal leading-5 text-slate-500">
-                {option.airport}{option.country ? ` · ${option.country}` : ""}
+                {option.airport}{option.country ? ` · ${getLocalizedAirportCountryName(option, locale)}` : ""}
               </span>
             </span>
-            <span className="shrink-0 pl-3 text-right text-sm font-medium tracking-[0.08em] text-slate-600">
+            <span className="shrink-0 ps-3 text-end text-sm font-medium tracking-[0.08em] text-slate-600">
               {option.code}
             </span>
           </button>
@@ -2321,19 +2400,11 @@ export function SearchTabs({
 
     return (
       <section
-        aria-label={formatCalendarHeading(
-          monthYearFormatter,
-          monthDate,
-          calendarLocale
-        )}
+        aria-label={formatFlightsMonthHeading(monthDate, calendarLocale)}
         className="min-w-0"
       >
         <h3 className="mb-2.5 text-center text-sm font-medium tracking-tight text-slate-900">
-          {formatCalendarHeading(
-            monthYearFormatter,
-            monthDate,
-            calendarLocale
-          )}
+          {formatFlightsMonthHeading(monthDate, calendarLocale)}
         </h3>
         <div className="mb-1.5 grid grid-cols-7 text-center text-[10px] font-medium tracking-[0.09em] text-slate-500">
           {weekdays.map((weekday) => (
@@ -2367,7 +2438,11 @@ export function SearchTabs({
               <button
                 key={`${mode}-${iso}`}
                 type="button"
-                aria-label={`${translate("selectDateAriaPrefix")} ${accessibleDateFormatter.format(day)}`}
+                aria-label={`${
+                  isFlightMode
+                    ? translate("selectDateAriaPrefix")
+                    : translateHotelTravelDateText("selectDateAriaPrefix")
+                } ${accessibleDateFormatter.format(day)}`}
                 aria-pressed={isStart || isEnd}
                 onClick={() => {
                   if (isDisabledDate) return;
@@ -2380,15 +2455,15 @@ export function SearchTabs({
                   "focus-ring relative mx-auto flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-colors disabled:cursor-not-allowed",
                   isDisabledDate
                     ? "text-slate-300"
-                    : "text-slate-800 hover:bg-indigo-50/80 hover:text-indigo-800",
-                  isToday && !isDisabledDate && "ring-1 ring-inset ring-indigo-200",
-                  isInRange && "rounded-xl bg-indigo-50/80 text-indigo-800 hover:bg-indigo-100",
-                  (isStart || isEnd) && "bg-indigo-600 text-white shadow-none hover:bg-indigo-600 hover:text-white ring-0"
+                    : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
+                  isToday && !isDisabledDate && "ring-1 ring-inset ring-[#004BB8]/25",
+                  isInRange && "rounded-xl bg-[#004BB8]/7 text-[#021C2B] hover:bg-[#004BB8]/10",
+                  (isStart || isEnd) && "bg-[#004BB8] text-white shadow-none hover:bg-[#021C2B] hover:text-white ring-0"
                 )}
               >
                 {day.getDate()}
                 {isToday && !isStart && !isEnd ? (
-                  <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-indigo-500" aria-hidden="true" />
+                  <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#004BB8]" aria-hidden="true" />
                 ) : null}
               </button>
             );
@@ -2425,7 +2500,9 @@ export function SearchTabs({
     >
     <div
       role="dialog"
-      aria-label={translate("chooseTravelDates") || "Choose travel dates"}
+      aria-label={mode === "hotels"
+        ? (translateHotelTravelDateText("chooseTravelDates") || "Choose travel dates")
+        : (translate("chooseTravelDates") || "Choose travel dates")}
       className="bg-white"
     >
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -2433,28 +2510,38 @@ export function SearchTabs({
           <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
             {mode === "flights"
               ? (translate("travelDates") || "Travel dates")
-              : (translate("hotelSearchTravelDatesLabel") || "Travel dates")}
+              : (translateHotelTravelDateText("hotelSearchTravelDatesLabel") || "Travel dates")}
           </p>
           <h3 className="mt-1 text-[15px] font-medium tracking-tight text-slate-950">
-            {translate("chooseTravelDates") || "Choose travel dates"}
+            {mode === "hotels"
+              ? (translateHotelTravelDateText("chooseTravelDates") || "Choose travel dates")
+              : (translate("chooseTravelDates") || "Choose travel dates")}
           </h3>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
-            aria-label={translate("previousMonth") || "Previous month"}
+            aria-label={mode === "hotels"
+              ? (translateHotelTravelDateText("previousMonth") || "Previous month")
+              : (translateFlightCalendarNavText("previousMonth") || "Previous month")}
             onClick={() => setVisibleMonth((prev) => addMonths(prev, -1))}
             className="focus-ring rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
           >
-            {translate("previousMonthShort") || "Prev"}
+            {mode === "hotels"
+              ? (translateHotelTravelDateText("previousMonthShort") || "Prev")
+              : (translateFlightCalendarNavText("previousMonthShort") || "Prev")}
           </button>
           <button
             type="button"
-            aria-label={translate("nextMonth") || "Next month"}
+            aria-label={mode === "hotels"
+              ? (translateHotelTravelDateText("nextMonth") || "Next month")
+              : (translateFlightCalendarNavText("nextMonth") || "Next month")}
             onClick={() => setVisibleMonth((prev) => addMonths(prev, 1))}
             className="focus-ring rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
           >
-            {translate("nextMonthShort") || "Next"}
+            {mode === "hotels"
+              ? (translateHotelTravelDateText("nextMonthShort") || "Next")
+              : (translateFlightCalendarNavText("nextMonthShort") || "Next")}
           </button>
         </div>
       </div>
@@ -2470,12 +2557,14 @@ export function SearchTabs({
           onClick={onClear}
           className="focus-ring rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
         >
-          {translate("clear") || "Clear"}
+          {mode === "hotels"
+            ? (translateHotelTravelDateText("clear") || "Clear")
+            : (translate("clear") || "Clear")}
         </button>
         <button
           type="button"
           onClick={onDone}
-          className="focus-ring rounded-lg bg-gradient-to-r from-indigo-700 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-700/20 transition-colors hover:from-indigo-600 hover:to-violet-500"
+          className="focus-ring rounded-lg bg-[#004BB8] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
         >
           {translate("done") || "Done"}
         </button>
@@ -2485,9 +2574,9 @@ export function SearchTabs({
   );
 
   const passengerRows = [
-    { key: "adults", label: translate("adults") || "Adults", subtitle: "18+", count: draftAdultCount, min: 1 },
+    { key: "adults", label: translate("adults") || "Adults", subtitle: translate("adultAgeRange") || "18+", count: draftAdultCount, min: 1 },
     { key: "children", label: translate("children") || "Children", subtitle: translate("childAgeRange") || "Ages 2–17", count: draftChildCount, min: 0 },
-    { key: "infants", label: translate("infants") || "Infants", subtitle: translate("under2") || "Under 2", count: draftInfantCount, min: 0 },
+    { key: "infants", label: translate("infantsOnLap") || translate("infants") || enTranslations.infantsOnLap, subtitle: translate("under2") || "Under 2", count: draftInfantCount, min: 0 },
   ];
   const cabinOptions = [
     ["economy", translate("economy") || "Economy"],
@@ -2546,7 +2635,7 @@ export function SearchTabs({
                 disabled={!canDecrement}
                 className={cn(
                   "focus-ring inline-flex items-center justify-center rounded-full border bg-white text-slate-700 shadow-sm transition-colors disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none",
-                  compact ? "h-8 w-8 border-slate-200 text-slate-600 shadow-none hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800" : "h-10 w-10 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
+                  compact ? "h-8 w-8 border-slate-200 text-slate-600 shadow-none hover:border-[#004BB8]/30 hover:bg-[#004BB8]/10 hover:text-[#004BB8]" : "h-10 w-10 hover:border-[#004BB8]/30 hover:bg-[#004BB8]/10 hover:text-[#004BB8]"
                 )}
               >
                 <Minus className="h-3.5 w-3.5" />
@@ -2580,7 +2669,7 @@ export function SearchTabs({
                 disabled={!canIncrement}
                 className={cn(
                   "focus-ring inline-flex items-center justify-center rounded-full border bg-white text-slate-700 shadow-sm transition-colors disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none",
-                  compact ? "h-8 w-8 border-slate-200 text-slate-600 shadow-none hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800" : "h-10 w-10 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
+                  compact ? "h-8 w-8 border-slate-200 text-slate-600 shadow-none hover:border-[#004BB8]/30 hover:bg-[#004BB8]/10 hover:text-[#004BB8]" : "h-10 w-10 hover:border-[#004BB8]/30 hover:bg-[#004BB8]/10 hover:text-[#004BB8]"
                 )}
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -2614,10 +2703,10 @@ export function SearchTabs({
               "focus-ring min-h-11 rounded-2xl border px-2 text-center text-sm leading-4 transition-all",
               draftCabinClass === value
                 ? cn(
-                    "border-indigo-500 bg-indigo-700 text-white shadow-[0_10px_22px_rgba(67,56,202,0.22)]",
-                    compact && "border-indigo-600 bg-indigo-600 shadow-none"
+                    "border-[#004BB8]/20 bg-[#004BB8]/7 text-[#021C2B] shadow-none",
+                    compact && "border-[#004BB8]/20 bg-[#004BB8]/7 shadow-none"
                   )
-                : "border-slate-200 bg-slate-50/80 text-slate-700 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800",
+                : "border-slate-200 bg-slate-50/80 text-slate-700 hover:border-[#004BB8]/30 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
               compact ? "min-h-9 rounded-xl text-xs font-medium" : "font-extrabold"
             )}
           >
@@ -2682,6 +2771,24 @@ export function SearchTabs({
           <BedDouble className="h-4 w-4" />
           {t.hotels}
         </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            setTab("cars")
+          }
+          className={cn(
+            "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
+            compactHero && "lg:px-3.5 lg:py-2 lg:text-[15px]",
+            tab === "cars"
+              ? "bg-white text-navy shadow-sm"
+              : "text-slate-600 hover:text-slate-800",
+            compactHero && tab === "cars" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
+          )}
+        >
+          <CarFront className="h-4 w-4" />
+          {t.cars}
+        </button>
       </div>
 
       {tab === "flights" ? (
@@ -2735,13 +2842,13 @@ export function SearchTabs({
                           className={cn(
                             "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors lg:h-[15px] lg:w-[15px]",
                             selected
-                              ? "border-indigo-600 bg-white"
+                              ? "border-[#004BB8] bg-white"
                               : "border-slate-300 bg-white group-hover:border-slate-400"
                           )}
                         >
                           <span
                             className={cn(
-                              "h-1.5 w-1.5 rounded-full bg-indigo-600 transition-opacity",
+                              "h-1.5 w-1.5 rounded-full bg-[#004BB8] transition-opacity",
                               selected ? "opacity-100" : "opacity-0"
                             )}
                           />
@@ -2785,7 +2892,7 @@ export function SearchTabs({
                   {tripTypeOpen && (
                     <div
                       role="listbox"
-                      className="absolute left-0 top-full z-30 mt-1 min-w-[210px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
+                      className="absolute start-0 top-full z-30 mt-1 min-w-[210px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
                     >
                       {(
                         [
@@ -2798,7 +2905,7 @@ export function SearchTabs({
                           type="button"
                           onClick={() => onSelectTripType(mode)}
                           className={cn(
-                            "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
+                            "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-start text-sm font-medium transition-colors",
                             tripType ===
                               mode
                               ? "bg-slate-900 text-white"
@@ -2813,7 +2920,7 @@ export function SearchTabs({
                       <button
                         type="button"
                         disabled
-                        className="mt-0.5 flex w-full cursor-not-allowed items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium text-slate-500"
+                        className="mt-0.5 flex w-full cursor-not-allowed items-center rounded-lg px-2.5 py-1.5 text-start text-sm font-medium text-slate-500"
                       >
                         {t.multiCity || "Multi-city"} —
                         {t.useOneWayOrRoundTripSearch || "Use one-way or round-trip search"}
@@ -2849,7 +2956,7 @@ export function SearchTabs({
                       setToOpen(false);
                       setActiveMobileAirportPicker("origin");
                     }}
-                    className="focus-ring flex h-full w-full min-w-0 items-center rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-left text-[16px] text-slate-900 outline-none transition-colors sm:hidden"
+                    className="focus-ring flex h-full w-full min-w-0 items-center rounded-md border-0 bg-transparent py-0 ps-0 pe-11 text-start text-[16px] text-slate-900 outline-none transition-colors sm:hidden"
                   >
                     <span className={cn("truncate", !from.trim() && "text-slate-400")}>
                       {from.trim() || t.fromPlaceholder || "From?"}
@@ -2902,7 +3009,7 @@ export function SearchTabs({
                       onClick={onClearOrigin}
                       onMouseDown={(event) => event.preventDefault()}
                       aria-label={t.clearOrigin || "Clear origin"}
-                      className="focus-ring absolute right-0 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95 sm:inline-flex sm:h-8 sm:w-8"
+                      className="focus-ring absolute end-0 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 active:scale-95 sm:inline-flex sm:h-8 sm:w-8"
                     >
                       <X size={15} />
                     </button>
@@ -2917,7 +3024,7 @@ export function SearchTabs({
                   onSelect: (option) => {
                     setFromState((current) => markOriginManualInput(
                       current,
-                      formatAirportLabel(option),
+                      formatAirportLabel(option, locale),
                       option.code
                     ));
                     setFromOpen(false);
@@ -2928,7 +3035,7 @@ export function SearchTabs({
                 <button
                   type="button"
                   onClick={onSwapAirports}
-                  className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40 sm:shadow-none lg:h-9 lg:w-9 lg:shadow-[0_1px_3px_rgba(15,23,42,0.10)]"
+                  className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 sm:shadow-none lg:h-9 lg:w-9 lg:shadow-[0_1px_3px_rgba(15,23,42,0.10)]"
                   aria-label={t.swapOriginDestination || "Swap origin and destination"}
                 >
                   <ArrowRightLeft size={14} />
@@ -2956,7 +3063,7 @@ export function SearchTabs({
                       setToOpen(false);
                       setActiveMobileAirportPicker("destination");
                     }}
-                    className="focus-ring flex h-full w-full min-w-0 items-center rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-left text-[16px] text-slate-900 outline-none transition-colors sm:hidden"
+                    className="focus-ring flex h-full w-full min-w-0 items-center rounded-md border-0 bg-transparent py-0 ps-0 pe-11 text-start text-[16px] text-slate-900 outline-none transition-colors sm:hidden"
                   >
                     <span className={cn("truncate", !to.trim() && "text-slate-400")}>
                       {to.trim() || t.toPlaceholder || "To?"}
@@ -3003,7 +3110,7 @@ export function SearchTabs({
                       onClick={onClearDestination}
                       onMouseDown={(event) => event.preventDefault()}
                       aria-label={t.clearDestination || "Clear destination"}
-                      className="focus-ring absolute right-0 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95 sm:inline-flex sm:h-8 sm:w-8"
+                      className="focus-ring absolute end-0 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 active:scale-95 sm:inline-flex sm:h-8 sm:w-8"
                     >
                       <X size={15} />
                     </button>
@@ -3016,7 +3123,7 @@ export function SearchTabs({
                   isLoading: isToLoadingVisible,
                   sectionLabel: translate("airportsAndCities"),
                   onSelect: (option) => {
-                    setTo(formatAirportLabel(option));
+                    setTo(formatAirportLabel(option, locale));
                     setToCode(option.code);
                     setToOpen(false);
                   },
@@ -3067,7 +3174,7 @@ export function SearchTabs({
                     onClick={onClearTravelDates}
                     onMouseDown={(event) => event.preventDefault()}
                     aria-label={t.clearTravelDates || "Clear travel dates"}
-                    className="focus-ring absolute right-2 top-6 inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-700 active:scale-95"
+                    className="focus-ring absolute end-2 top-6 inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-700 active:scale-95"
                   >
                     <X size={14} />
                   </button>
@@ -3126,7 +3233,7 @@ export function SearchTabs({
                     }
                     openTravelersMenu();
                   }}
-                  className={cn(flightFieldButtonClassName, "justify-between pr-0")}
+                  className={cn(flightFieldButtonClassName, "justify-between pe-0")}
                 >
                   <span className="block min-w-0 truncate">
                       {
@@ -3148,17 +3255,20 @@ export function SearchTabs({
                       title={translate("passengers") || t.travelers || "Travelers"}
                       titleId="homepage-flight-travelers-title"
                       launcherRef={travelersLauncherRef}
-                      footer={
+                      footer={(requestClose) => (
                         <div className="flex items-center justify-end">
                           <button
                             type="button"
-                            onClick={applyTravelersDraft}
+                            onClick={() => {
+                              applyTravelersDraft(false);
+                              requestClose();
+                            }}
                             className={cn(mobileDoneButtonClassName, "px-5 py-3")}
                           >
                             {t.done || "Done"}
                           </button>
                         </div>
-                      }
+                      )}
                       onClose={cancelTravelersDraft}
                       contentClassName="px-4 py-5"
                     >
@@ -3173,7 +3283,7 @@ export function SearchTabs({
                     >
                     <div
                       role="dialog"
-                      aria-label="Travelers and cabin"
+                      aria-label={translate("travelersCabinDialogLabel")}
                       className="bg-white"
                     >
                       <div>
@@ -3194,7 +3304,7 @@ export function SearchTabs({
                         </div>
                       </div>
                       <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
-                        <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-indigo-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-600">{t.done || "Done"}</button>
+                        <button type="button" onClick={() => applyTravelersDraft()} className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-medium text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35">{t.done || "Done"}</button>
                       </div>
                     </div>
                     </DesktopTopLayerPopover>
@@ -3257,8 +3367,7 @@ export function SearchTabs({
               setFromHighlight(0);
             },
             onSelect: (option) => {
-              setFromState((current) => markOriginManualInput(current, formatAirportLabel(option), option.code));
-              setActiveMobileAirportPicker(null);
+              setFromState((current) => markOriginManualInput(current, formatAirportLabel(option, locale), option.code));
             },
             onClose: () => setActiveMobileAirportPicker(null),
           })}
@@ -3288,14 +3397,13 @@ export function SearchTabs({
               setToHighlight(0);
             },
             onSelect: (option) => {
-              setTo(formatAirportLabel(option));
+              setTo(formatAirportLabel(option, locale));
               setToCode(option.code);
-              setActiveMobileAirportPicker(null);
             },
             onClose: () => setActiveMobileAirportPicker(null),
           })}
         </form>
-      ) : (
+      ) : tab === "hotels" ? (
         <form
           onSubmit={
             onHotelSubmit
@@ -3304,9 +3412,9 @@ export function SearchTabs({
         >
           <div className={fieldCardClassName}>
             <div className={hotelGridClassName}>
-              <div className={cn("relative rounded-xl border border-slate-300 bg-white lg:rounded-l-xl", hotelJoinedFieldClassName)}>
+              <div className={cn("relative rounded-xl border border-slate-300 bg-white lg:rounded-s-xl", hotelJoinedFieldClassName)}>
                 <label className={hotelFieldLabelClassName}>
-                  {t.destination || "Destination"}
+                  {t.hotelSearchDestinationLabel || t.destination || "Destination"}
                 </label>
                 <button
                   ref={hotelDestinationMobileLauncherRef}
@@ -3360,8 +3468,8 @@ export function SearchTabs({
                 )}
               >
                 <label className={hotelFieldLabelClassName}>
-                  {t.hotelSearchTravelDatesLabel ||
-                    t.travelDates || "Travel dates"}
+                  {translateHotelTravelDateText("hotelSearchTravelDatesLabel") ||
+                    translateHotelTravelDateText("travelDates") || "Travel dates"}
                 </label>
                 <button
                   ref={hotelDatesMobileLauncherRef}
@@ -3375,7 +3483,7 @@ export function SearchTabs({
                     hotelDatesOpen
                   }
                   aria-haspopup="dialog"
-                  aria-label={translate("chooseTravelDates") || "Choose travel dates"}
+                  aria-label={translateHotelTravelDateText("chooseTravelDates") || "Choose travel dates"}
                   className={cn(hotelFieldValueClassName, "items-center")}
                 >
                   <Calendar
@@ -3413,8 +3521,8 @@ export function SearchTabs({
                 )}
               >
                 <label className={hotelFieldLabelClassName}>
-                  {t.hotelSearchGuestsLabel ||
-                    t.guests ||
+                  {translate("hotelSearchGuestsLabel") ||
+                    translate("guests") ||
                     "Guests"}
                 </label>
                 <button
@@ -3458,7 +3566,7 @@ export function SearchTabs({
                   >
                     <div className="mb-3">
                       <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
-                        {translate("hotelStayDetails") || "Stay details"}
+                        {translate("stayDetails") || "Stay details"}
                       </p>
                       <h3 className="mt-1 text-[15px] font-medium tracking-tight text-slate-950">
                         {translate("guestsAndRooms") || "Guests and rooms"}
@@ -3546,7 +3654,7 @@ export function SearchTabs({
                                 type="button"
                                 onClick={row.onDecrement}
                                 disabled={!canDecrement}
-                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
+                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-[#004BB8]/30 hover:bg-[#004BB8]/10 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
                               >
                                 <Minus className="h-3.5 w-3.5" />
                               </button>
@@ -3557,7 +3665,7 @@ export function SearchTabs({
                                 type="button"
                                 onClick={row.onIncrement}
                                 disabled={!canIncrement}
-                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
+                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-[#004BB8]/30 hover:bg-[#004BB8]/10 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
                               >
                                 <Plus className="h-3.5 w-3.5" />
                               </button>
@@ -3590,7 +3698,7 @@ export function SearchTabs({
                             className={cn(
                               "focus-ring relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors",
                               hotelPetFriendly
-                                ? "border-indigo-600 bg-indigo-600"
+                                ? "border-[#004BB8] bg-[#004BB8]"
                                 : "border-slate-300 bg-slate-200"
                             )}
                           >
@@ -3641,12 +3749,12 @@ export function SearchTabs({
 
           <HotelMobilePickerShell
             open={hotelDatesOpen}
-            title={translate("chooseTravelDates") || "Choose travel dates"}
+            title={translateHotelTravelDateText("chooseTravelDates") || "Choose travel dates"}
             titleId="homepage-hotel-mobile-dates-title"
             launcherRef={hotelDatesMobileLauncherRef}
             onClose={() => setHotelDatesOpen(false)}
             contentClassName="px-3 py-3"
-            footer={
+            footer={(requestClose) => (
               <div className="flex items-center justify-between gap-3">
                 <button
                   type="button"
@@ -3656,17 +3764,17 @@ export function SearchTabs({
                   }}
                   className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                 >
-                  {translate("clear") || "Clear"}
+                  {translateHotelTravelDateText("clear") || "Clear"}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setHotelDatesOpen(false)}
+                  onClick={requestClose}
                   className={cn(mobileDoneButtonClassName, "px-4 py-2")}
                 >
                   {translate("done") || "Done"}
                 </button>
               </div>
-            }
+            )}
           >
             {renderHotelDateCalendar()}
           </HotelMobilePickerShell>
@@ -3677,17 +3785,17 @@ export function SearchTabs({
             titleId="homepage-hotel-mobile-guests-title"
             launcherRef={hotelGuestsRoomsMobileLauncherRef}
             onClose={() => setHotelGuestsRoomsOpen(false)}
-            footer={
+            footer={(requestClose) => (
               <div className="flex justify-end">
                 <button
                   type="button"
-                  onClick={() => setHotelGuestsRoomsOpen(false)}
+                  onClick={requestClose}
                   className={cn(mobileDoneButtonClassName, "px-4 py-2")}
                 >
                   {t.done || "Done"}
                 </button>
               </div>
-            }
+            )}
           >
             <div className="mx-auto w-full max-w-xl divide-y divide-slate-200/80">
               {[
@@ -3776,7 +3884,7 @@ export function SearchTabs({
                   className={cn(
                     "focus-ring relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors",
                     hotelPetFriendly
-                      ? "border-indigo-600 bg-indigo-600"
+                      ? "border-[#004BB8] bg-[#004BB8]"
                       : "border-slate-300 bg-slate-200",
                   )}
                 >
@@ -3790,6 +3898,48 @@ export function SearchTabs({
               </div>
             </div>
           </HotelMobilePickerShell>
+        </form>
+      ) : (
+        <form onSubmit={onCarsSubmit} className={formClassName} noValidate>
+          <div className={fieldCardClassName}>
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_112px]">
+              <div className="relative rounded-xl border border-slate-300 bg-white p-3">
+                <label className={hotelFieldLabelClassName}>{translate("carsSearch.pickupLocationLabel") || "Pickup location"}</label>
+                <input className={cn(hotelFieldValueClassName, "w-full")} value={carsValues.pickupLocation} onChange={(e) => updateCarsValue("pickupLocation", e.target.value)} placeholder={translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"} />
+                {carsErrors.pickupLocation ? <p className="mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupLocation}</p> : null}
+              </div>
+              <div className="relative rounded-xl border border-slate-300 bg-white p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <label className={hotelFieldLabelClassName}>{translate("carsSearch.differentReturnLocation") || "Different return location"}</label>
+                  <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-[#004BB8]" checked={carsValues.returnToDifferentLocation} onChange={(e) => updateCarsValue("returnToDifferentLocation", e.target.checked)} aria-label={translate("carsSearch.differentReturnLocation") || "Different return location"} />
+                </div>
+                <input className={cn(hotelFieldValueClassName, "mt-1 w-full disabled:text-slate-400")} value={carsValues.returnToDifferentLocation ? carsValues.dropoffLocation : carsValues.pickupLocation} onChange={(e) => updateCarsValue("dropoffLocation", e.target.value)} placeholder={translate("carsSearch.returnLocationPlaceholder") || "Return city, airport or address"} disabled={!carsValues.returnToDifferentLocation} />
+                {carsErrors.dropoffLocation ? <p className="mt-1 text-xs font-semibold text-red-600">{carsErrors.dropoffLocation}</p> : null}
+              </div>
+              <div className="relative rounded-xl border border-slate-300 bg-white p-3">
+                <label className={hotelFieldLabelClassName}>{translate("carsSearch.rentalDatesLabel") || "Rental dates"}</label>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                  <input type="date" className="focus-ring min-h-11 rounded-lg border border-slate-200 px-2 text-sm font-semibold" value={carsValues.pickupDate} onChange={(e) => updateCarsValue("pickupDate", e.target.value)} aria-label="Pickup date" />
+                  <input type="date" className="focus-ring min-h-11 rounded-lg border border-slate-200 px-2 text-sm font-semibold" value={carsValues.dropoffDate} onChange={(e) => updateCarsValue("dropoffDate", e.target.value)} aria-label="Return date" />
+                </div>
+                {carsErrors.pickupDate || carsErrors.dropoffDate || carsErrors.dateRange ? <p className="mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupDate || carsErrors.dropoffDate || carsErrors.dateRange}</p> : null}
+              </div>
+              <div className="relative rounded-xl border border-slate-300 bg-white p-3">
+                <label className={hotelFieldLabelClassName}>{translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"}</label>
+                <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+                  <select className="focus-ring min-h-11 rounded-lg border border-slate-200 px-2 text-sm font-semibold" value={carsValues.pickupTime} onChange={(e) => updateCarsValue("pickupTime", e.target.value)} aria-label={translate("carsSearch.pickupTimeLabel") || "Pickup time"}>{timeOptions.map((time) => <option key={time} value={time}>{time}</option>)}</select>
+                  <select className="focus-ring min-h-11 rounded-lg border border-slate-200 px-2 text-sm font-semibold" value={carsValues.dropoffTime} onChange={(e) => updateCarsValue("dropoffTime", e.target.value)} aria-label={translate("carsSearch.returnTimeLabel") || "Return time"}>{timeOptions.map((time) => <option key={time} value={time}>{time}</option>)}</select>
+                  <select className="focus-ring min-h-11 rounded-lg border border-slate-200 px-2 text-sm font-semibold" value={carsValues.driverAge} onChange={(e) => updateCarsValue("driverAge", e.target.value)} aria-label={translate("carsSearch.driverAgeLabel") || "Driver age"}>{driverAgeOptions.map((age) => <option key={age} value={age}>{age === defaultDriverAge ? translate("carsSearch.driverAgeAnyAgeRange") || age : age}</option>)}</select>
+                </div>
+                {carsErrors.pickupTime || carsErrors.dropoffTime || carsErrors.driverAge ? <p className="mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupTime || carsErrors.dropoffTime || carsErrors.driverAge}</p> : null}
+              </div>
+              <div className={hotelSubmitWrapClassName}>
+                <Button type="submit" disabled={isCarsSearchDisabled} aria-busy={isCarsSubmitting} aria-label={translate("searchCars") || "Search cars"} className={hotelSubmitButtonClassName}>
+                  {isCarsSubmitting ? translate("carsSearchPreparing") || "Preparing car search..." : translate("searchCars") || "Search cars"}
+                </Button>
+              </div>
+            </div>
+          </div>
         </form>
       )}
       </section>

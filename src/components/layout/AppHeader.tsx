@@ -11,9 +11,10 @@ import {
 } from "react";
 
 import { signOut, useSession } from "next-auth/react";
+import { revokeCurrentSessionRecord } from "@/lib/currentSessionRevocation";
 import Link from "next/link";
 import { createPortal } from "react-dom";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
   Bed,
@@ -32,7 +33,7 @@ import {
   Plane,
   Scale,
   Search,
-  Settings,
+  Clock,
   ShieldCheck,
   Tag,
   UserCircle,
@@ -40,8 +41,8 @@ import {
 } from "lucide-react";
 
 import { useLocale } from "@/components/layout/LocaleProvider";
-import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { CountryCurrencySelector } from "@/components/region/CountryCurrencySelector";
+import { cn } from "@/lib/utils";
 
 const RawImage = "img";
 
@@ -73,35 +74,36 @@ function SavedHeartIcon({
 
 type AppHeaderProps = {
   hideMobileSecondaryNavLinks?: boolean;
-  showAccountBackLink?: boolean;
-  accountBackHref?: string;
-  accountBackLabel?: string;
+  mobileHeroOverlay?: boolean;
+  mobileHeroOverlayLowered?: boolean;
+  hideMobileCategoryTabs?: boolean;
+  hideTravelNav?: boolean;
+  hideDesktopTravelNav?: boolean;
+  simpleHeader?: boolean;
+  flushDesktopBottom?: boolean;
+  flushMobileBottom?: boolean;
 };
 
 const signedInAccountMenuItems = [
   {
     href: "/dashboard/account",
     labelKey: "accountMenu.myAccount.label",
-    descriptionKey: "accountMenu.myAccount.description",
     icon: LayoutDashboard,
   },
   {
-    href: "/saved",
+    href: "/saved?from=account",
     labelKey: "accountMenu.savedTrips.label",
-    descriptionKey: "accountMenu.savedTrips.description",
     icon: SavedHeartIcon,
   },
   {
-    href: "/dashboard/alerts",
+    href: "/dashboard/alerts?from=account",
     labelKey: "accountMenu.priceAlerts.label",
-    descriptionKey: "accountMenu.priceAlerts.description",
     icon: Tag,
   },
   {
-    href: "/dashboard/settings",
-    labelKey: "accountMenu.accountSettings.label",
-    descriptionKey: "accountMenu.accountSettings.description",
-    icon: Settings,
+    href: "/recent-searches",
+    labelKey: "accountMenu.recentSearches.label",
+    icon: Clock,
   },
 ];
 
@@ -109,7 +111,6 @@ const mobileSignedInAccountMenuItems = [
   {
     href: "/dashboard/account",
     labelKey: "accountMenu.myAccount.label",
-    descriptionKey: "accountMenu.mobileMyAccount.description",
     icon: LayoutDashboard,
   },
   ...signedInAccountMenuItems.slice(1),
@@ -145,9 +146,13 @@ const mobileInfoLegalMenuItems = [
 
 export function AppHeader({
   hideMobileSecondaryNavLinks = false,
-  showAccountBackLink = false,
-  accountBackHref = "/dashboard/account",
-  accountBackLabel = "My Account",
+  mobileHeroOverlay = false,
+  hideMobileCategoryTabs = false,
+  hideTravelNav = false,
+  hideDesktopTravelNav = false,
+  simpleHeader = false,
+  flushDesktopBottom = false,
+  flushMobileBottom = false,
 }: AppHeaderProps = {}) {
   const { data: session } = useSession();
 
@@ -164,8 +169,8 @@ export function AppHeader({
   const { locale, setLocale, t, locales } = useLocale();
 
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
-  const { start: startRouteProgress } = useRouteProgress();
 
   const languageRef = useRef<HTMLDivElement | null>(null);
   const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -175,7 +180,6 @@ export function AppHeader({
   const accountRef = useRef<HTMLDivElement | null>(null);
   const languageDialogId = useId();
   const languageTitleId = useId();
-  const languageDescriptionId = useId();
   const languageSearchId = useId();
 
   const closeLanguageDialog = useCallback(() => {
@@ -353,6 +357,12 @@ export function AppHeader({
     );
   }, [session?.user?.email, session?.user?.name, t.account]);
 
+  const getLanguageDescriptionLabel = useCallback(
+    (option: (typeof locales)[number]) =>
+      option.localizedLabels?.[locale] ?? option.label,
+    [locale],
+  );
+
   const filteredLanguages = useMemo(() => {
     const query = languageQuery.trim().toLowerCase();
 
@@ -361,21 +371,23 @@ export function AppHeader({
     }
 
     return locales.filter((option) => {
+      const descriptionLabel = getLanguageDescriptionLabel(option);
+
       return (
         option.label.toLowerCase().includes(query) ||
         option.nativeLabel.toLowerCase().includes(query) ||
+        descriptionLabel.toLowerCase().includes(query) ||
         option.locale.toLowerCase().includes(query) ||
         option.code.toLowerCase().includes(query)
       );
     });
-  }, [languageQuery, locales]);
+  }, [getLanguageDescriptionLabel, languageQuery, locales]);
 
   const translatedSignedInAccountMenuItems = useMemo(
     () =>
       signedInAccountMenuItems.map((item) => ({
         ...item,
         label: t[item.labelKey],
-        description: t[item.descriptionKey],
       })),
     [t],
   );
@@ -385,7 +397,6 @@ export function AppHeader({
       mobileSignedInAccountMenuItems.map((item) => ({
         ...item,
         label: t[item.labelKey],
-        description: t[item.descriptionKey],
       })),
     [t],
   );
@@ -468,7 +479,26 @@ export function AppHeader({
     return pathname === href;
   };
 
+  const shouldHideDesktopTravelNavLinks = useMemo(() => {
+    if (pathname.startsWith("/dashboard")) {
+      return true;
+    }
+
+    const isAccountSource = searchParams?.get("from") === "account";
+
+    return (pathname === "/saved" || pathname === "/faq") && isAccountSource;
+  }, [pathname, searchParams]);
+
   const desktopPrimaryNavItems = useMemo(() => {
+    if (
+      simpleHeader ||
+      hideTravelNav ||
+      hideDesktopTravelNav ||
+      shouldHideDesktopTravelNavLinks
+    ) {
+      return [];
+    }
+
     const desktopPrimaryHrefs = new Set([
       "/flights",
       "/hotels",
@@ -477,7 +507,13 @@ export function AppHeader({
     ]);
 
     return navItems.filter((item) => desktopPrimaryHrefs.has(item.href));
-  }, [navItems]);
+  }, [
+    hideDesktopTravelNav,
+    hideTravelNav,
+    navItems,
+    shouldHideDesktopTravelNavLinks,
+    simpleHeader,
+  ]);
 
   const mobilePrimaryNavItems = useMemo(() => {
     const mobilePrimaryHrefs = new Set([
@@ -492,13 +528,29 @@ export function AppHeader({
     );
   }, [navItems]);
 
-  const visibleMobilePrimaryNavItems = useMemo(
-    () => mobilePrimaryNavItems,
+  const visibleMobilePrimaryNavItems = useMemo(() => {
+    if (
+      simpleHeader ||
+      hideTravelNav ||
+      hideMobileCategoryTabs ||
+      shouldHideDesktopTravelNavLinks
+    ) {
+      return [];
+    }
+
+    return mobilePrimaryNavItems;
     // hideMobileSecondaryNavLinks is retained for the current header API even though
     // mobile secondary links now live in the overlay drawer instead of this rail.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [hideMobileSecondaryNavLinks, mobilePrimaryNavItems],
-  );
+  }, [
+    hideMobileCategoryTabs,
+    hideMobileSecondaryNavLinks,
+    hideTravelNav,
+    mobileHeroOverlay,
+    mobilePrimaryNavItems,
+    shouldHideDesktopTravelNavLinks,
+    simpleHeader,
+  ]);
 
   const mobileTravelDrawerHrefs = useMemo(
     () => new Set(["/flights", "/hotels", "/cars", "/deals"]),
@@ -557,7 +609,7 @@ export function AppHeader({
     countryCode: string | undefined,
     fallbackText: string | undefined,
   ) => (
-    <span className="inline-flex h-[18px] w-6 items-center justify-center overflow-hidden rounded-[3px] border border-white/35 bg-white/15 shadow-[0_1px_1px_rgba(30,27,75,0.14)]">
+    <span className="inline-flex h-[18px] w-6 items-center justify-center overflow-hidden rounded-[3px] border border-slate-200 bg-white shadow-[0_1px_1px_rgba(2,28,43,0.12)]">
       {countryCode ? (
         <RawImage
           src={`https://flagcdn.com/${countryCode.toLowerCase()}.svg`}
@@ -576,7 +628,7 @@ export function AppHeader({
         />
       ) : null}
 
-      <span className="hidden h-full w-full items-center justify-center bg-white text-[8px] font-bold leading-none text-indigo-700">
+      <span className="hidden h-full w-full items-center justify-center bg-white text-[8px] font-bold leading-none text-[#004BB8]">
         {fallbackText ?? "US"}
       </span>
     </span>
@@ -614,7 +666,6 @@ export function AppHeader({
       return;
     }
 
-    startRouteProgress();
     afterStart?.();
   };
 
@@ -665,6 +716,7 @@ export function AppHeader({
     setMobileMenuOpen(false);
 
     try {
+      await revokeCurrentSessionRecord();
       await signOut({ redirect: false, callbackUrl: "/" });
       window.location.assign("/");
     } catch {
@@ -674,7 +726,14 @@ export function AppHeader({
 
   return (
     <>
-      <header className="relative z-50 border-b border-white/10 bg-[#4338CA] text-white shadow-[0_8px_24px_rgba(49,46,129,0.16)]">
+      <header
+        className={cn(
+          "relative z-50 border-b border-[#D8E1EC] bg-white text-[#021C2B] shadow-[0_8px_24px_rgba(2,28,43,0.05)]",
+          flushMobileBottom &&
+            "border-b-0 shadow-none sm:border-b sm:shadow-[0_8px_24px_rgba(2,28,43,0.05)]",
+          flushDesktopBottom && "sm:border-b-0 sm:shadow-none",
+        )}
+      >
         <div className="page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3">
           <div className="flex min-h-[52px] items-center justify-between gap-3 md:min-h-[48px] md:gap-8">
             <Link
@@ -683,16 +742,15 @@ export function AppHeader({
               onClick={(event) => handleRouteLinkClick(event, "/")}
               className="shrink-0"
             >
-              <span className="block text-[22px] font-black leading-none tracking-[-0.04em] text-white md:hidden">
-                Kurioticket
-              </span>
-              <span className="hidden text-[28px] font-black leading-none tracking-[-0.055em] text-white drop-shadow-sm md:block lg:text-[30px]">
-                Kurioticket
-              </span>
+              <RawImage
+                src="/brand/kurioticket-logo-primary-light-bg.svg"
+                alt="Kurioticket"
+                className="h-8 w-auto md:h-9 lg:h-9"
+              />
             </Link>
 
             <div className="hidden min-w-0 flex-1 items-center justify-end gap-3.5 md:flex lg:gap-4">
-              <div className="[&>button]:!h-10 [&>button]:!rounded-md [&>button]:!border-transparent [&>button]:!bg-transparent [&>button]:!px-3 [&>button]:!text-[15px] [&>button]:!font-semibold [&>button]:!text-indigo-50/90 [&>button]:!shadow-none [&>button]:!backdrop-blur-0 [&>button]:hover:!bg-white/10 [&>button]:hover:!text-white">
+              <div className="[&>button]:!h-10 [&>button]:!gap-1 [&>button]:!rounded-md [&>button]:!border-transparent [&>button]:!bg-transparent [&>button]:!px-2.5 [&>button]:!text-[15px] [&>button]:!font-semibold [&>button]:!text-[#021C2B]/85 [&>button]:!shadow-none [&>button]:!backdrop-blur-0 [&>button]:hover:!bg-[#F2F7FA] [&>button]:hover:!text-[#004BB8] [&>button>svg]:!text-[#334155] [&>button>svg]:!opacity-80">
                 <CountryCurrencySelector variant="header" grouped />
               </div>
 
@@ -712,7 +770,7 @@ export function AppHeader({
                     "{{language}}",
                     selectedLanguageDisplayName,
                   )}
-                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-transparent bg-transparent text-indigo-50/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-transparent bg-transparent text-[#021C2B]/85 transition-colors hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
                 >
                   {renderDesktopHeaderFlag(
                     selectedLanguage?.countryCode,
@@ -731,9 +789,9 @@ export function AppHeader({
                       aria-label={t.openAccountMenu}
                       title={t.openAccountMenu}
                       onClick={() => setAccountOpen((value) => !value)}
-                      className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-transparent bg-transparent text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                      className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-transparent bg-transparent text-[#021C2B] transition-colors hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
                     >
-                      <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-white text-[11px] font-black text-indigo-700 shadow-sm">
+                      <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-[#F2F7FA] text-[11px] font-black text-[#004BB8] shadow-sm">
                         {session?.user?.image ? (
                           <RawImage
                             src={session.user.image}
@@ -750,17 +808,14 @@ export function AppHeader({
                       <div
                         role="menu"
                         aria-label={t.openAccountMenu}
-                        className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl ring-1 ring-slate-950/5"
+                        className="absolute end-0 top-[calc(100%+0.5rem)] z-50 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl ring-1 ring-slate-950/5"
                       >
                         <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-3">
-                          <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">
-                            {t["accountMenu.eyebrow"]}
-                          </p>
-                          <p className="mt-1 truncate text-sm font-black text-slate-950">
+                          <p className="truncate text-sm font-semibold text-slate-900">
                             {session?.user?.name || accountDisplayName}
                           </p>
                           {session?.user?.email ? (
-                            <p className="truncate text-xs font-semibold text-slate-500">
+                            <p className="truncate text-xs font-normal text-slate-500">
                               {session.user.email}
                             </p>
                           ) : null}
@@ -780,18 +835,15 @@ export function AppHeader({
                                     setAccountOpen(false),
                                   )
                                 }
-                                className="group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                className="group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-start transition-colors hover:bg-[#F2F7FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                               >
-                                <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 group-hover:bg-white">
+                                <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#F2F7FA] text-[#004BB8] group-hover:bg-white">
                                   <Icon size={17} aria-hidden="true" />
                                 </span>
 
                                 <span className="min-w-0 flex-1">
-                                  <span className="block break-words text-sm font-bold text-slate-950">
+                                  <span className="block break-words text-sm font-semibold text-slate-800">
                                     {item.label}
-                                  </span>
-                                  <span className="block whitespace-normal break-words text-xs font-medium text-slate-500">
-                                    {item.description}
                                   </span>
                                 </span>
                               </Link>
@@ -806,7 +858,7 @@ export function AppHeader({
                             onClick={handleSignOut}
                             disabled={isSigningOut}
                             aria-busy={isSigningOut}
-                            className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
+                            className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-start text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
                           >
                             <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
                               <LogOut size={17} aria-hidden="true" />
@@ -824,7 +876,7 @@ export function AppHeader({
                       onClick={(event) =>
                         handleRouteLinkClick(event, "/auth/signin")
                       }
-                      className="inline-flex h-10 cursor-pointer items-center rounded-md px-3 text-[15px] font-semibold leading-none text-indigo-50/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                      className="inline-flex h-10 cursor-pointer items-center rounded-md px-3 text-[15px] font-semibold leading-none text-[#021C2B]/85 transition-colors hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
                     >
                       {t.login}
                     </Link>
@@ -834,7 +886,7 @@ export function AppHeader({
                       onClick={(event) =>
                         handleRouteLinkClick(event, "/auth/signup")
                       }
-                      className="inline-flex h-10 cursor-pointer items-center rounded-md bg-white px-3 text-[15px] font-semibold leading-none text-indigo-700 shadow-[0_1px_2px_rgba(49,46,129,0.12)] transition-colors hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                      className="inline-flex h-10 cursor-pointer items-center rounded-md bg-[#004BB8] px-3 text-[15px] font-semibold leading-none text-white shadow-[0_1px_2px_rgba(0,75,184,0.16)] transition-colors hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
                     >
                       {t.signUp}
                     </Link>
@@ -855,9 +907,9 @@ export function AppHeader({
                     setMobileMenuOpen(false);
                     setMobileAccountOpen((value) => !value);
                   }}
-                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-transparent bg-transparent text-xs font-black text-white/95 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#DDE7F0] bg-[#F3F7FA]/70 text-xs font-black text-[#021C2B] transition-colors hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
                 >
-                  <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-white text-[11px] font-black text-indigo-700 shadow-sm">
+                  <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-transparent text-[11px] font-black text-[#004BB8]">
                     {session?.user?.image ? (
                       <RawImage
                         src={session.user.image}
@@ -876,7 +928,7 @@ export function AppHeader({
                   onClick={(event) =>
                     handleRouteLinkClick(event, "/auth/signin")
                   }
-                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/95 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#DDE7F0] bg-[#F3F7FA]/70 text-[#021C2B] transition-colors hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
                 >
                   <UserCircle size={18} />
                 </Link>
@@ -889,7 +941,7 @@ export function AppHeader({
                 }
                 aria-expanded={mobileMenuOpen}
                 aria-controls="mobile-menu-drawer"
-                className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/95 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#DDE7F0] bg-[#F3F7FA]/70 text-[#021C2B] transition-colors hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
                 onClick={() => {
                   setMobileAccountOpen(false);
                   setMobileMenuOpen((value) => !value);
@@ -913,12 +965,11 @@ export function AppHeader({
                       role="dialog"
                       aria-modal="true"
                       aria-labelledby={languageTitleId}
-                      aria-describedby={languageDescriptionId}
                       className="fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-auto rounded-none border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl md:inset-x-0 md:bottom-auto md:top-[max(64px,6vh)] md:mx-auto md:w-[min(980px,96vw)] md:rounded-3xl md:p-7"
                     >
                       <div className="mb-5 flex items-start justify-between gap-4">
                         <div className="min-w-0">
-                          <p className="break-words text-xs font-black uppercase tracking-[0.2em] text-violet-600">
+                          <p className="break-words text-xs font-black uppercase tracking-[0.2em] text-[#004BB8]">
                             {t.globalLanguage}
                           </p>
                           <h2
@@ -927,34 +978,16 @@ export function AppHeader({
                           >
                             {t.websiteLanguageTitle}
                           </h2>
-                          <p
-                            id={languageDescriptionId}
-                            className="mt-1 max-w-2xl break-words text-sm leading-6 text-slate-600"
-                          >
-                            {t.websiteLanguageDescription}
-                          </p>
                         </div>
 
                         <button
                           type="button"
                           onClick={closeLanguageDialog}
-                          className="shrink-0 cursor-pointer rounded-none p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                          className="shrink-0 cursor-pointer rounded-none p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                           aria-label={t.closeLanguageSelector}
                         >
                           <X size={18} aria-hidden="true" />
                         </button>
-                      </div>
-
-                      <div className="mb-4 rounded-none border border-slate-200 bg-slate-50 px-4 py-3">
-                        <p className="break-words text-sm font-bold text-slate-950">
-                          {t.currentLanguage.replace(
-                            "{{language}}",
-                            selectedLanguageDisplayName,
-                          )}
-                        </p>
-                        <p className="mt-1 break-words text-xs font-medium text-slate-600">
-                          {t.languagePreparingNotice}
-                        </p>
                       </div>
 
                       <label
@@ -964,7 +997,7 @@ export function AppHeader({
                         {t.languageSearchLabel}
                       </label>
 
-                      <div className="mb-4 flex items-center gap-2 rounded-none border border-slate-200 px-3 py-2 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100">
+                      <div className="mb-4 flex items-center gap-2 rounded-none border border-slate-200 px-3 py-2 focus-within:border-[#004BB8]/25 focus-within:ring-2 focus-within:ring-[#004BB8]/20">
                         <Search
                           size={16}
                           className="text-slate-500"
@@ -1021,11 +1054,11 @@ export function AppHeader({
                                     )
                               }
                               onClick={() => handleLanguageSelect(option)}
-                              className={`flex min-h-[4.25rem] cursor-pointer items-start justify-between gap-3 rounded-none border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
+                              className={`flex min-h-[4.25rem] cursor-pointer items-start justify-between gap-3 rounded-none border px-3 py-2.5 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 ${
                                 active
-                                  ? "border-violet-500 bg-violet-50 ring-2 ring-violet-100"
+                                  ? "border-[#004BB8]/18 bg-[#004BB8]/6 ring-2 ring-[#004BB8]/8"
                                   : available
-                                    ? "border-slate-200 hover:border-violet-300 hover:bg-violet-50"
+                                    ? "border-slate-200 hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5"
                                     : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300"
                               }`}
                             >
@@ -1043,7 +1076,7 @@ export function AppHeader({
                                     {option.nativeLabel}
                                   </span>
                                   <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">
-                                    {option.label} · {option.locale}
+                                    {getLanguageDescriptionLabel(option)}
                                   </span>
                                   {!available ? (
                                     <span className="mt-1 inline-flex rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-bold text-slate-500">
@@ -1056,7 +1089,7 @@ export function AppHeader({
                               {active ? (
                                 <Check
                                   size={16}
-                                  className="mt-0.5 shrink-0 text-violet-600"
+                                  className="mt-0.5 shrink-0 text-[#004BB8]"
                                   aria-hidden="true"
                                 />
                               ) : null}
@@ -1071,109 +1104,80 @@ export function AppHeader({
               : null}
           </div>
 
-          <nav className="hidden md:block" aria-label="Primary">
-            <div className="relative flex min-h-[44px] items-center justify-start pt-1.5 md:pl-[8.5rem] lg:pl-[9.75rem] xl:pl-[10.5rem]">
-              {showAccountBackLink ? (
-                <Link
-                  href={accountBackHref}
-                  onClick={(event) =>
-                    handleRouteLinkClick(event, accountBackHref)
-                  }
-                  className="absolute left-0 top-1/2 inline-flex -translate-y-1/2 items-center gap-1.5 rounded-md text-sm font-semibold text-white/90 transition hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
-                >
-                  <span className="text-lg leading-none" aria-hidden="true">
-                    ‹
-                  </span>
-                  <span>{accountBackLabel}</span>
-                </Link>
-              ) : null}
+          {desktopPrimaryNavItems.length > 0 ? (
+            <nav className="hidden md:block" aria-label="Primary">
+              <div className="relative flex min-h-[44px] items-center justify-start pt-1.5 md:ps-[8.5rem] lg:ps-[9.75rem] xl:ps-[10.5rem]">
+                <div className="flex min-w-0 items-center justify-start gap-3 whitespace-nowrap lg:gap-4">
+                  {desktopPrimaryNavItems.map((item) => {
+                    const Icon = item.icon;
+                    const active = isNavItemActive(item.href);
 
-              <div className="flex min-w-0 items-center justify-start gap-3 whitespace-nowrap lg:gap-4">
-                {desktopPrimaryNavItems.map((item) => {
-                  const Icon = item.icon;
-                  const active = isNavItemActive(item.href);
-
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={(event) =>
-                        handleRouteLinkClick(event, item.href)
-                      }
-                      className={`inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-[15px] font-semibold leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 lg:px-5 ${
-                        active
-                          ? "border-white/90 bg-white text-indigo-700 shadow-[0_6px_16px_rgba(49,46,129,0.16)]"
-                          : "border-white/10 bg-transparent text-indigo-50/95 hover:border-white/30 hover:bg-white/10 hover:text-white"
-                      }`}
-                    >
-                      {Icon ? (
-                        <Icon
-                          size={17}
-                          className="shrink-0"
-                          aria-hidden="true"
-                        />
-                      ) : null}
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={(event) =>
+                          handleRouteLinkClick(event, item.href)
+                        }
+                        className={`inline-flex min-h-[38px] cursor-pointer items-center gap-2 rounded-full border px-3.5 py-2 text-[15px] font-semibold leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2 lg:px-4 ${
+                          active
+                            ? "border-[#004BB8]/18 bg-[#004BB8]/6 text-[#021C2B]"
+                            : "border-[#DDE7F0] bg-[#F3F7FA]/70 text-[#021C2B]/85 hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B]"
+                        }`}
+                      >
+                        {Icon ? (
+                          <Icon
+                            size={17}
+                            className="shrink-0"
+                            aria-hidden="true"
+                          />
+                        ) : null}
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          </nav>
+            </nav>
+          ) : null}
 
-          <nav className="md:hidden" aria-label="Primary">
-            <div className="pb-1 pt-2.5">
-              <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {visibleMobilePrimaryNavItems.map((item) => {
-                  const Icon = item.icon;
-                  const active = isNavItemActive(item.href);
+          {visibleMobilePrimaryNavItems.length > 0 ? (
+            <nav className="md:hidden" aria-label="Primary">
+              <div className="pb-1 pt-2.5">
+                <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {visibleMobilePrimaryNavItems.map((item) => {
+                    const Icon = item.icon;
+                    const active = isNavItemActive(item.href);
 
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={(event) =>
-                        handleRouteLinkClick(event, item.href)
-                      }
-                      className={`inline-flex min-h-10 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-full border px-3.5 py-2 text-[15px] font-black leading-none tracking-[-0.01em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
-                        active
-                          ? "border-white/55 bg-white/90 text-indigo-700 shadow-[0_4px_10px_rgba(49,46,129,0.12)]"
-                          : "border-white/10 bg-transparent text-indigo-50/95 hover:border-white/25 hover:bg-white/10 hover:text-white"
-                      }`}
-                    >
-                      {Icon ? (
-                        <Icon
-                          size={18}
-                          className="shrink-0"
-                          aria-hidden="true"
-                        />
-                      ) : null}
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={(event) =>
+                          handleRouteLinkClick(event, item.href)
+                        }
+                        className={`inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full border leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2 ${
+                          active
+                            ? "min-h-[38px] gap-1.5 border-[#004BB8]/18 bg-[#004BB8]/6 px-3 py-2 text-[14px] font-semibold tracking-[-0.005em] text-[#021C2B]"
+                            : "min-h-[38px] gap-1.5 border-[#DDE7F0] bg-[#F3F7FA]/70 px-3 py-2 text-[14px] font-semibold tracking-[-0.005em] text-[#021C2B]/85 hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B]"
+                        }`}
+                      >
+                        {Icon ? (
+                          <Icon
+                            size={18}
+                            className="shrink-0"
+                            aria-hidden="true"
+                          />
+                        ) : null}
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-
-            {showAccountBackLink ? (
-              <div className="pb-1 pt-0.5">
-                <Link
-                  href={accountBackHref}
-                  onClick={(event) =>
-                    handleRouteLinkClick(event, accountBackHref)
-                  }
-                  className="inline-flex min-h-7 items-center gap-1.5 rounded-md text-sm font-semibold text-white/90 transition hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
-                >
-                  <span className="text-lg leading-none" aria-hidden="true">
-                    ‹
-                  </span>
-                  <span>{accountBackLabel}</span>
-                </Link>
-              </div>
-            ) : null}
-          </nav>
+            </nav>
+          ) : null}
         </div>
-
 
         {mobileMenuOpen && typeof document !== "undefined"
           ? createPortal(
@@ -1193,7 +1197,7 @@ export function AppHeader({
                   role="dialog"
                   aria-modal="true"
                   aria-label={t.menu}
-                  className="fixed inset-y-0 right-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
+                  className="fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
                 >
                   <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
                     <div className="min-w-0">
@@ -1205,7 +1209,7 @@ export function AppHeader({
                     <button
                       type="button"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                      className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                       aria-label={t.closeMobileMenu}
                     >
                       <X size={18} aria-hidden="true" />
@@ -1218,7 +1222,7 @@ export function AppHeader({
                         id="mobile-menu-preferences-heading"
                         className="px-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500"
                       >
-                        Preferences
+                        {t.mobilePreferencesHeading || "Preferences"}
                       </p>
 
                       <div className="mt-2 flex flex-col items-start gap-2">
@@ -1239,7 +1243,7 @@ export function AppHeader({
                             "{{language}}",
                             selectedLanguageDisplayName,
                           )}
-                          className="inline-flex h-10 w-auto max-w-full cursor-pointer items-center justify-between gap-2 rounded-full border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 transition-colors hover:border-violet-300 hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                          className="inline-flex h-10 w-auto max-w-full cursor-pointer items-center justify-between gap-2 rounded-full border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 transition-colors hover:border-[#004BB8]/30 hover:bg-[#F2F7FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                         >
                           <span className="inline-flex min-w-0 items-center gap-2">
                             <span
@@ -1260,7 +1264,7 @@ export function AppHeader({
                           />
                         </button>
 
-                        <div className="[&>button]:!inline-flex [&>button]:!h-10 [&>button]:!w-auto [&>button]:!rounded-full [&>button]:!border-slate-200 [&>button]:!bg-white [&>button]:!px-3 [&>button]:!text-sm [&>button]:!shadow-none [&>button:hover]:!border-violet-300 [&>button:hover]:!bg-violet-50 [&>button>span>span:first-child]:sr-only [&>button>span>span:last-child]:!mt-0 [&>button>span>span:last-child]:!text-sm">
+                        <div className="[&>button]:!inline-flex [&>button]:!h-10 [&>button]:!w-auto [&>button]:!rounded-full [&>button]:!border-slate-200 [&>button]:!bg-white [&>button]:!px-3 [&>button]:!text-sm [&>button]:!shadow-none [&>button:hover]:!border-[#004BB8]/30 [&>button:hover]:!bg-[#F2F7FA] [&>button>span>span:first-child]:sr-only [&>button>span>span:last-child]:!mt-0 [&>button>span>span:last-child]:!text-sm">
                           <CountryCurrencySelector
                             variant="mobile"
                             onBeforeOpen={handleMobileCountryCurrencyBeforeOpen}
@@ -1269,43 +1273,45 @@ export function AppHeader({
                       </div>
                     </section>
 
-                    <section
-                      aria-labelledby="mobile-menu-travel-heading"
-                      className="mt-4 border-t border-slate-100 pt-3"
-                    >
-                      <p
-                        id="mobile-menu-travel-heading"
-                        className="px-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-500"
+                    {!simpleHeader ? (
+                      <section
+                        aria-labelledby="mobile-menu-travel-heading"
+                        className="mt-4 border-t border-slate-100 pt-3"
                       >
-                        {t.mobileTravelHeading || "Travel"}
-                      </p>
+                        <p
+                          id="mobile-menu-travel-heading"
+                          className="px-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-500"
+                        >
+                          {t.mobileTravelHeading || "Travel"}
+                        </p>
 
-                      <div className="mt-1.5 grid">
-                        {mobileTravelMenuNavItems.map((item) => {
-                          const Icon = item.icon;
+                        <div className="mt-1.5 grid">
+                          {mobileTravelMenuNavItems.map((item) => {
+                            const Icon = item.icon;
 
-                          return (
-                            <Link
-                              key={item.href}
-                              href={item.href}
-                              onClick={(event) =>
-                                handleRouteLinkClick(event, item.href, () =>
-                                  setMobileMenuOpen(false),
-                                )
-                              }
-                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                            >
-                              {Icon ? (
-                                <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-indigo-700">
-                                  <Icon size={19} aria-hidden="true" />
-                                </span>
-                              ) : null}
-                              <span className="truncate">{item.label}</span>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </section>
+                            return (
+                              <Link
+                                key={item.href}
+                                href={item.href}
+                                onClick={(event) =>
+                                  handleRouteLinkClick(event, item.href, () =>
+                                    setMobileMenuOpen(false),
+                                  )
+                                }
+                                className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                              >
+                                {Icon ? (
+                                  <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-[#004BB8]">
+                                    <Icon size={19} aria-hidden="true" />
+                                  </span>
+                                ) : null}
+                                <span className="truncate">{item.label}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </section>
+                    ) : null}
 
                     <section
                       aria-labelledby="mobile-menu-explore-heading"
@@ -1331,10 +1337,10 @@ export function AppHeader({
                                   setMobileMenuOpen(false),
                                 )
                               }
-                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                             >
                               {Icon ? (
-                                <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-indigo-700">
+                                <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-[#004BB8]">
                                   <Icon size={19} aria-hidden="true" />
                                 </span>
                               ) : null}
@@ -1368,12 +1374,14 @@ export function AppHeader({
                                   setMobileMenuOpen(false),
                                 )
                               }
-                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                             >
-                              <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-indigo-700">
+                              <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-[#004BB8]">
                                 <Icon size={19} aria-hidden="true" />
                               </span>
-                              <span className="truncate">{t[item.labelKey] || item.labelKey}</span>
+                              <span className="truncate">
+                                {t[item.labelKey] || item.labelKey}
+                              </span>
                             </Link>
                           );
                         })}
@@ -1404,87 +1412,83 @@ export function AppHeader({
                   role="dialog"
                   aria-modal="true"
                   aria-label={t.openAccountMenu}
-                  className="fixed inset-y-0 right-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
+                  className="fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
                 >
-                  <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600">
-                        {t["accountMenu.mobileEyebrow"]}
-                      </p>
-                      <h2 className="truncate text-xl font-black tracking-[-0.03em] text-slate-950">
-                        {t.myAccount}
-                      </h2>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setMobileAccountOpen(false)}
-                      className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                      aria-label={t["accountMenu.closeAccountMenu"]}
-                    >
-                      <X size={18} aria-hidden="true" />
-                    </button>
-                  </div>
-
                   <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
                     <section aria-label="Account">
-                      <div className="flex items-center gap-3.5 border-b border-slate-100 pb-5">
-                        <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-base font-black text-white shadow-sm ring-4 ring-indigo-50">
-                          {session?.user?.image ? (
-                            <RawImage
-                              src={session.user.image}
-                              alt=""
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            accountInitials
-                          )}
+                      <div className="flex items-center gap-3 px-2.5 pb-5">
+                        <span className="relative inline-flex h-10 w-10 shrink-0 items-center overflow-visible">
+                          <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#004BB8] text-base font-semibold text-white shadow-sm ring-4 ring-[#004BB8]/10">
+                            {session?.user?.image ? (
+                              <RawImage
+                                src={session.user.image}
+                                alt=""
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              accountInitials
+                            )}
+                          </span>
                         </span>
 
-                        <span className="min-w-0">
-                          <span className="block truncate text-lg font-black tracking-[-0.02em] text-slate-950">
+                        <div
+                          className="min-w-0 flex-1 no-underline [text-decoration:none] [&_*]:no-underline [&_*]:[text-decoration:none]"
+                          style={{ textDecoration: "none" }}
+                        >
+                          <div className="block truncate text-lg font-semibold text-slate-950">
                             {session?.user?.name || accountDisplayName}
-                          </span>
-                          <span className="mt-0.5 block truncate text-sm font-semibold text-slate-500">
-                            {session?.user?.email || t["accountMenu.fallbackAccount"]}
-                          </span>
-                        </span>
+                          </div>
+                          <div className="mt-0.5 block truncate text-sm font-medium text-slate-500">
+                            {session?.user?.email ||
+                              t["accountMenu.fallbackAccount"]}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setMobileAccountOpen(false)}
+                          className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                          aria-label={t["accountMenu.closeAccountMenu"]}
+                        >
+                          <X size={18} aria-hidden="true" />
+                        </button>
                       </div>
 
-                      <div className="grid gap-1 py-4">
-                        {translatedMobileSignedInAccountMenuItems.map((item) => {
-                          const Icon = item.icon;
+                      <div className="border-t border-slate-100" />
 
-                          return (
-                            <Link
-                              key={item.href}
-                              href={item.href}
-                              onClick={(event) =>
-                                handleRouteLinkClick(event, item.href, () =>
-                                  setMobileAccountOpen(false),
-                                )
-                              }
-                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-base font-bold text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                            >
-                              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition-colors group-hover:bg-indigo-50 group-hover:text-indigo-700">
-                                <Icon size={18} aria-hidden="true" />
-                              </span>
-                              <span className="min-w-0 flex-1">
-                                <span className="block whitespace-normal break-words">
-                                  {item.label}
+                      <div className="grid gap-1 py-4">
+                        {translatedMobileSignedInAccountMenuItems.map(
+                          (item) => {
+                            const Icon = item.icon;
+
+                            return (
+                              <Link
+                                key={item.href}
+                                href={item.href}
+                                onClick={(event) =>
+                                  handleRouteLinkClick(event, item.href, () =>
+                                    setMobileAccountOpen(false),
+                                  )
+                                }
+                                className="group inline-flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-base font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                              >
+                                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition-colors group-hover:border-[#004BB8]/15 group-hover:bg-[#F2F7FA] group-hover:text-[#004BB8]">
+                                  <Icon size={18} aria-hidden="true" />
                                 </span>
-                                <span className="mt-0.5 block whitespace-normal break-words text-xs font-semibold text-slate-500">
-                                  {item.description}
+                                <span className="min-w-0 flex-1">
+                                  <span className="block whitespace-normal break-words">
+                                    {item.label}
+                                  </span>
                                 </span>
-                              </span>
-                              <ChevronRight
-                                size={18}
-                                className="shrink-0 text-slate-400 transition-colors group-hover:text-indigo-700"
-                                aria-hidden="true"
-                              />
-                            </Link>
-                          );
-                        })}
+                                <ChevronRight
+                                  size={18}
+                                  className="ml-auto shrink-0 text-slate-400 transition-colors group-hover:text-[#004BB8]"
+                                  aria-hidden="true"
+                                />
+                              </Link>
+                            );
+                          },
+                        )}
                       </div>
 
                       <div className="border-t border-slate-100 pt-3">
@@ -1493,9 +1497,9 @@ export function AppHeader({
                           onClick={handleSignOut}
                           disabled={isSigningOut}
                           aria-busy={isSigningOut}
-                          className="group inline-flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-left text-base font-bold text-rose-700 transition-colors hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
+                          className="group inline-flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-start text-base font-semibold text-rose-700 transition-colors hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
                         >
-                          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition-colors group-hover:bg-white">
+                          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-rose-100 bg-rose-50 text-rose-700 transition-colors group-hover:bg-white">
                             <LogOut size={18} aria-hidden="true" />
                           </span>
                           {isSigningOut ? t.signingOut : t.logout}

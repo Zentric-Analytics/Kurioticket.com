@@ -1,11 +1,13 @@
 import {
   assertSandboxProviderAllowed,
+  getGooglePlacesApiKey,
   getHotelProviderPrimary,
   getKayakApiMode,
   isProductionProviderMode,
 } from "@/lib/env";
 import type { HotelSearchParams, NormalizedHotelResult, ProviderResult } from "@/lib/types";
 import { sanitizeAirportCode } from "@/lib/utils";
+import { searchGooglePlacesHotels } from "@/services/travel/providers/googlePlacesHotelProvider";
 import { searchHotelbedsHotels } from "@/services/travel/providers/hotelbedsProvider";
 import { normalizeHotelResult } from "@/services/travel/normalizeHotelResult";
 import { getAmadeusAccessToken } from "@/services/travel/providers/amadeusAuth";
@@ -20,6 +22,14 @@ export function searchHotelProvider(search: HotelSearchParams): Promise<Provider
 
   if (primaryProvider === "kayak_sandbox") {
     return Promise.resolve(searchKayakSandboxPlaceholder());
+  }
+
+  if (primaryProvider === "google_places") {
+    if (!getGooglePlacesApiKey()) {
+      return Promise.resolve(skippedProvider("Google Maps", "no_live_hotel_provider"));
+    }
+
+    return searchGooglePlacesHotels(search);
   }
 
   if (primaryProvider === "hotelbeds") {

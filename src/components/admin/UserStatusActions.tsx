@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { AdminButton, AdminInput } from "@/components/admin/AdminPageShell";
 
 type UserStatusActionsProps = {
   userId: string;
@@ -114,12 +114,12 @@ export function UserStatusActions({
 
   if (isSelf)
     return (
-      <span className="text-xs font-semibold text-muted">Current admin</span>
+      <span className="text-xs font-semibold text-slate-500">Current admin</span>
     );
 
   if (isProtectedAdmin) {
     return (
-      <span className="text-xs font-semibold text-muted">Protected admin</span>
+      <span className="text-xs font-semibold text-slate-500">Protected admin</span>
     );
   }
 
@@ -128,7 +128,7 @@ export function UserStatusActions({
       <div className="flex flex-wrap gap-2">
         {canChangeRole
           ? editableRoles.map((editableRole) => (
-              <Button
+              <AdminButton
                 key={editableRole}
                 size="sm"
                 variant={editableRole === "USER" ? "secondary" : "ghost"}
@@ -140,48 +140,48 @@ export function UserStatusActions({
                   : editableRole === "USER"
                     ? "Demote to User"
                     : `Make ${editableRole}`}
-              </Button>
+              </AdminButton>
             ))
           : null}
         {canChangeStatus && status !== "ACTIVE" ? (
-          <Button
+          <AdminButton
             size="sm"
             variant="secondary"
             disabled={Boolean(loading)}
             onClick={() => updateStatus("ACTIVE")}
           >
             {loading === "ACTIVE" ? "..." : "Reactivate"}
-          </Button>
+          </AdminButton>
         ) : null}
         {canChangeStatus && status !== "SUSPENDED" ? (
-          <Button
+          <AdminButton
             size="sm"
             variant="secondary"
             disabled={Boolean(loading)}
             onClick={() => updateStatus("SUSPENDED")}
           >
             {loading === "SUSPENDED" ? "..." : "Suspend"}
-          </Button>
+          </AdminButton>
         ) : null}
         {canChangeStatus && status !== "DELETED" ? (
-          <Button
+          <AdminButton
             size="sm"
             variant="ghost"
             disabled={Boolean(loading)}
             onClick={() => updateStatus("DELETED")}
           >
             {loading === "DELETED" ? "..." : "Soft delete"}
-          </Button>
+          </AdminButton>
         ) : null}
         {role === "ADMIN" ? (
-          <span className="text-xs font-semibold text-muted">
+          <span className="text-xs font-semibold text-slate-500">
             Demote before status changes or permanent deletion.
           </span>
         ) : null}
         {canHardDelete ? (
-          <Button
+          <AdminButton
             size="sm"
-            variant="danger"
+            variant="destructive"
             disabled={Boolean(loading)}
             onClick={() => {
               setMessage("");
@@ -189,11 +189,11 @@ export function UserStatusActions({
             }}
           >
             Permanent delete
-          </Button>
+          </AdminButton>
         ) : null}
       </div>
       {showPermanentDelete && canHardDelete ? (
-        <div className="grid gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-950">
+        <div className="grid gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-950">
           <p className="font-semibold">
             This permanently removes the user record and cannot be undone.
           </p>
@@ -201,40 +201,40 @@ export function UserStatusActions({
             <span>
               Type {email?.trim() ? "this email" : "this user id"} to confirm:
             </span>
-            <code className="break-all rounded bg-white px-2 py-1 font-mono text-[11px] text-red-900">
+            <code className="break-all rounded bg-white px-2 py-1 font-mono text-[11px] text-rose-900">
               {confirmationTarget}
             </code>
-            <input
+            <AdminInput
               value={confirmation}
               onChange={(event) => setConfirmation(event.target.value)}
-              className="rounded-md border border-red-200 px-2 py-1 text-sm text-navy"
+              className="h-9 bg-white text-sm"
               autoComplete="off"
             />
           </label>
           <div className="flex flex-wrap gap-2">
-            <Button
+            <AdminButton
               size="sm"
-              variant="danger"
+              variant="destructive"
               disabled={loading === "PERMANENT_DELETE" || !confirmationMatches}
               onClick={permanentlyDeleteUser}
             >
               {loading === "PERMANENT_DELETE"
                 ? "Deleting..."
                 : "Confirm permanent delete"}
-            </Button>
-            <Button
+            </AdminButton>
+            <AdminButton
               size="sm"
               variant="secondary"
               disabled={Boolean(loading)}
               onClick={() => setShowPermanentDelete(false)}
             >
               Cancel
-            </Button>
+            </AdminButton>
           </div>
         </div>
       ) : null}
       {message ? (
-        <p className="text-xs font-semibold text-muted">{message}</p>
+        <p className="text-xs font-semibold text-slate-500">{message}</p>
       ) : null}
     </div>
   );

@@ -1,11 +1,42 @@
 import type { AggregatedResult, HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
-import { canUseDevelopmentFallbacks } from "@/lib/env";
+import { canUseDevelopmentFallbacks, getHotelResultsMode } from "@/lib/env";
 import { rememberHotels } from "@/lib/searchCache";
+import { getHotelComparableReviewScore } from "@/lib/hotels/hotelRatingSemantics";
 import { fallbackHotels } from "@/services/travel/fallbackData";
+import { buildDemoHotelResults } from "@/services/travel/demoHotelResults";
 import { searchHotelProvider } from "@/services/travel/providers/hotelProvider";
+import { isGooglePlacesHotelId } from "@/services/travel/providers/googlePlacesHotelProvider";
+import {
+  compareHotelsByAvailablePrice,
+  getComparableHotelTotalUsd,
+  getLowestPricedHotelId,
+  hasHotelPrice,
+} from "@/lib/hotels/hotelResultAvailability";
 
 export async function searchHotels(search: HotelSearchParams): Promise<AggregatedResult<NormalizedHotelResult>> {
   const startedAt = Date.now();
+  const hotelResultsMode = getHotelResultsMode();
+
+  if (hotelResultsMode === "demo") {
+    const results = assignBadges(sortHotels(buildDemoHotelResults(search), search.sort || "cheapest"));
+    rememberHotels(results);
+
+    return {
+      results,
+      providerStatuses: [
+        {
+          provider: "Demo Hotel Catalogue",
+          results,
+          status: "success",
+          latencyMs: Date.now() - startedAt,
+        },
+      ],
+      warnings: ["Demo hotel listings are illustrative and are not live inventory."],
+      servedFromFallback: false,
+      latencyMs: Date.now() - startedAt,
+    };
+  }
+
   const providers = await Promise.all([searchHotelProvider(search)]);
   const merged = providers.flatMap((provider) => provider.results);
   const deduped = assignBadges(sortHotels(dedupeHotels(merged), search.sort || "cheapest"));
@@ -14,7 +45,13 @@ export async function searchHotels(search: HotelSearchParams): Promise<Aggregate
     .map((provider) => sanitizeHotelWarning(provider.error));
 
   if (deduped.length > 0) {
-    rememberHotels(deduped);
+    const cacheableResults = deduped.filter(
+      (hotel) => !isGooglePlacesHotelId(hotel.id),
+    );
+
+    if (cacheableResults.length) {
+      rememberHotels(cacheableResults);
+    }
     return {
       results: deduped,
       providerStatuses: providers,
@@ -57,13 +94,50 @@ function sanitizeHotelWarning(error?: string) {
 }
 
 function sortHotels(results: NormalizedHotelResult[], sort: NonNullable<HotelSearchParams["sort"]>) {
-  const sorted = [...results];
-  if (sort === "best") return sorted.sort((a, b) => b.valueScore - a.valueScore || a.totalPrice - b.totalPrice);
-  if (sort === "rating") return sorted.sort((a, b) => b.rating - a.rating || a.totalPrice - b.totalPrice);
-  if (sort === "location") {
-    return sorted.sort((a, b) => b.arrivalSuitabilityScore - a.arrivalSuitabilityScore || a.totalPrice - b.totalPrice);
+  const sorted = results.map((hotel, index) => ({ hotel, index }));
+  const stablePriceTie = (a: NormalizedHotelResult, b: NormalizedHotelResult) =>
+    compareHotelsByAvailablePrice(a, b);
+
+  if (sort === "best") {
+    return sorted
+      .sort((a, b) => b.hotel.valueScore - a.hotel.valueScore || stablePriceTie(a.hotel, b.hotel) || a.index - b.index)
+      .map(({ hotel }) => hotel);
   }
-  return sorted.sort((a, b) => a.totalPrice - b.totalPrice || b.valueScore - a.valueScore);
+  if (sort === "rating") {
+    return sorted
+      .sort((a, b) => {
+        const aReview = getHotelComparableReviewScore(a.hotel);
+        const bReview = getHotelComparableReviewScore(b.hotel);
+        const reviewComparison = aReview === null
+          ? (bReview === null ? 0 : 1)
+          : (bReview === null ? -1 : bReview - aReview);
+        return reviewComparison ||
+          (b.hotel.classificationStars ?? Number.NEGATIVE_INFINITY) -
+            (a.hotel.classificationStars ?? Number.NEGATIVE_INFINITY) ||
+          stablePriceTie(a.hotel, b.hotel) || a.index - b.index;
+      })
+      .map(({ hotel }) => hotel);
+  }
+  if (sort === "location") {
+    return sorted
+      .sort((a, b) => b.hotel.arrivalSuitabilityScore - a.hotel.arrivalSuitabilityScore || stablePriceTie(a.hotel, b.hotel) || a.index - b.index)
+      .map(({ hotel }) => hotel);
+  }
+  return sorted
+    .sort((a, b) => compareHotelsByAvailablePrice(a.hotel, b.hotel) || b.hotel.valueScore - a.hotel.valueScore || a.index - b.index)
+    .map(({ hotel }) => hotel);
+}
+
+function shouldReplaceDuplicate(existing: NormalizedHotelResult, result: NormalizedHotelResult) {
+  const existingPriced = hasHotelPrice(existing);
+  const resultPriced = hasHotelPrice(result);
+  if (!existingPriced && resultPriced) return true;
+  if (existingPriced && !resultPriced) return false;
+  if (!existingPriced && !resultPriced) return false;
+
+  const existingTotal = getComparableHotelTotalUsd(existing);
+  const resultTotal = getComparableHotelTotalUsd(result);
+  return resultTotal !== null && (existingTotal === null || resultTotal < existingTotal);
 }
 
 function dedupeHotels(results: NormalizedHotelResult[]) {
@@ -71,7 +145,7 @@ function dedupeHotels(results: NormalizedHotelResult[]) {
   for (const result of results) {
     const key = `${result.name.toLowerCase()}|${result.location.toLowerCase()}`;
     const existing = seen.get(key);
-    if (!existing || result.totalPrice < existing.totalPrice) {
+    if (!existing || shouldReplaceDuplicate(existing, result)) {
       seen.set(key, result);
     }
   }
@@ -81,9 +155,13 @@ function dedupeHotels(results: NormalizedHotelResult[]) {
 function assignBadges(results: NormalizedHotelResult[]) {
   if (!results.length) return results;
 
-  const cheapest = minBy(results, (hotel) => hotel.totalPrice)?.id;
-  const bestValue = maxBy(results, (hotel) => hotel.valueScore)?.id;
-  const arrival = maxBy(results, (hotel) => hotel.arrivalSuitabilityScore)?.id;
+  const cheapest = getLowestPricedHotelId(results);
+  const pricedHotels = results.filter(hasHotelPrice);
+  const bestValue = maxBy(pricedHotels, (hotel) => hotel.valueScore)?.id;
+  const arrival = maxBy(results, (hotel) => {
+    const score = hotel.arrivalSuitabilityScore;
+    return Number.isFinite(score) && score > 0 ? score : Number.NEGATIVE_INFINITY;
+  })?.id;
 
   return results.map((result) => ({
     ...result,
@@ -94,10 +172,6 @@ function assignBadges(results: NormalizedHotelResult[]) {
       result.travelConfidenceScore >= 78 ? "Recommended" : "",
     ].filter(Boolean),
   }));
-}
-
-function minBy<T>(items: T[], getter: (item: T) => number) {
-  return items.reduce<T | null>((best, item) => (!best || getter(item) < getter(best) ? item : best), null);
 }
 
 function maxBy<T>(items: T[], getter: (item: T) => number) {

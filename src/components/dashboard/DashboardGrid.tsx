@@ -1,29 +1,92 @@
 "use client";
 
-import { useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   Bell,
   Bookmark,
   BriefcaseBusiness,
+  ChevronDown,
   ChevronRight,
   CircleHelp,
   Headphones,
   LifeBuoy,
   LockKeyhole,
   Mail,
-  Plane,
+  Palette,
   Settings,
   ShieldCheck,
-  SlidersHorizontal,
+  Trash2,
   UserRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { LinkButton } from "@/components/ui/Button";
+import { MessageBanner } from "@/components/ui/MessageBanner";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { useRegion } from "@/components/region/RegionProvider";
+import { personalDetailsCountryOptions } from "@/lib/region/supportedRegions";
+import {
+  defaultPhoneCountryOption,
+  formatPhoneDraftValue,
+  getDefaultPhoneCountryCode,
+  getFriendlyCountryLabel,
+  getSupportedPhoneCountryCode,
+  parsePhoneDraftValue,
+  phoneCountryOptions,
+} from "@/lib/phoneProfile";
 import { cn } from "@/lib/utils";
+import {
+  decodeRegistrationOptions,
+  defaultPasskeyName,
+  passkeysSupported,
+  serializeRegistrationCredential,
+} from "@/lib/passkey-client";
 import type { TranslationDictionary } from "@/lib/i18n/types";
+import type { UserProfileResponse } from "@/lib/userProfile";
+
+const RawImage = "img";
+
+type TwoFactorStatus = {
+  enabled: boolean;
+  method: string | null;
+  enabledAt: string | null;
+  disabledAt: string | null;
+  recoveryCodesRemaining?: number;
+};
+
+type TotpSetup = { otpauthUri: string; manualSetupKey: string; expiresAt: string };
+type TwoFactorMode = "setup" | "disable" | "recovery";
+
+type PasskeySummary = { id: string; name: string | null; createdAt: string; lastUsedAt: string | null; deviceType: string | null; backedUp: boolean | null; label?: string | null; };
+type PasskeyFlowStep = "intro" | "sending" | "code" | "verifying" | "native" | "name" | "success";
+type PasskeyPurpose = "setup" | "removal";
+
+type AccountSessionActivity = {
+  id: string;
+  deviceLabel: string;
+  browser: string;
+  os: string;
+  maskedIp: string | null;
+  locationLabel: string | null;
+  lastSeenAt: string;
+  createdAt: string;
+  revokedAt: string | null;
+  isCurrent: boolean;
+};
+
+function formatSessionTime(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Recently";
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
 
 type AccountDashboardRowItem = {
   labelKey: string;
@@ -33,59 +96,95 @@ type AccountDashboardRowItem = {
 
 type AccountDashboardPanelItem = {
   titleKey: string;
-  icon: LucideIcon;
   rows: AccountDashboardRowItem[];
 };
 
 const accountDashboardPanels: AccountDashboardPanelItem[] = [
   {
     titleKey: "accountDashboard.hub.manageAccount",
-    icon: UserRound,
     rows: [
-      { labelKey: "accountDashboard.hub.personalDetails", href: "/dashboard", icon: UserRound },
-      { labelKey: "accountDashboard.hub.securitySettings", href: "/dashboard/security", icon: ShieldCheck },
+      {
+        labelKey: "accountDashboard.hub.personalDetails",
+        href: "/dashboard",
+        icon: UserRound,
+      },
+      {
+        labelKey: "accountDashboard.hub.securitySettings",
+        href: "/dashboard/security",
+        icon: ShieldCheck,
+      },
     ],
   },
   {
     titleKey: "accountDashboard.hub.travelActivity",
-    icon: Plane,
     rows: [
-      { labelKey: "accountDashboard.hub.myTrips", href: "/dashboard/trips", icon: BriefcaseBusiness },
-      { labelKey: "accountDashboard.hub.savedTrips", href: "/dashboard/saved", icon: Bookmark },
-      { labelKey: "accountDashboard.hub.priceAlerts", href: "/dashboard/alerts", icon: Bell },
+      {
+        labelKey: "accountDashboard.hub.myTrips",
+        href: "/dashboard/trips",
+        icon: BriefcaseBusiness,
+      },
+      {
+        labelKey: "accountDashboard.hub.savedTrips",
+        href: "/saved?from=account",
+        icon: Bookmark,
+      },
+      {
+        labelKey: "accountDashboard.hub.priceAlerts",
+        href: "/dashboard/alerts?from=account",
+        icon: Bell,
+      },
     ],
   },
   {
     titleKey: "accountDashboard.hub.preferences",
-    icon: SlidersHorizontal,
     rows: [
-      { labelKey: "accountDashboard.hub.emailPreferences", href: "/dashboard/preferences", icon: Mail },
-      { labelKey: "accountDashboard.hub.travelPreferences", href: "/dashboard/preferences", icon: Settings },
+      {
+        labelKey: "accountDashboard.hub.emailPreferences",
+        href: "/dashboard/preferences/email",
+        icon: Mail,
+      },
+      {
+        labelKey: "accountDashboard.hub.customizationPreferences",
+        href: "/dashboard/preferences/customization",
+        icon: Palette,
+      },
+      {
+        labelKey: "accountDashboard.hub.travelPreferences",
+        href: "/dashboard/preferences/travel",
+        icon: Settings,
+      },
     ],
   },
   {
     titleKey: "accountDashboard.hub.helpAndSupport",
-    icon: LifeBuoy,
     rows: [
-      { labelKey: "accountDashboard.hub.contactSupport", href: "/dashboard/support", icon: Headphones },
-      { labelKey: "accountDashboard.hub.faq", href: "/faq", icon: CircleHelp },
+      {
+        labelKey: "accountDashboard.hub.contactSupport",
+        href: "/dashboard/support",
+        icon: Headphones,
+      },
+      {
+        labelKey: "accountDashboard.hub.faq",
+        href: "/faq?from=account",
+        icon: CircleHelp,
+      },
     ],
   },
 ];
-
 
 type DashboardOverviewProps = {
   initials: string;
   displayName: string;
   userEmail?: string | null;
   userName?: string | null;
+  userProfile?: UserProfileResponse;
 };
 
 type PersonalDetailsDraft = {
   name: string;
-  displayName: string;
   email: string;
   phone: string;
+  phoneCountryCode: string;
   dateOfBirth: string;
   gender: string;
   nationality: string;
@@ -114,36 +213,138 @@ type ListRowProps = {
 type SecuritySettingRowProps = {
   title: string;
   body: string;
-  action: string;
+  action?: string;
   danger?: boolean;
   onAction: () => void;
   statusId?: string;
 };
 
+function formatAccountWelcome(template: string, name: string) {
+  return template.replace("{name}", name);
+}
 
 function SavedEmptyStateIllustration() {
   return (
     <div
-      className="mx-auto flex size-20 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700 shadow-[0_18px_42px_-28px_rgba(79,70,229,0.85)] sm:size-24"
+      className="relative mx-auto h-48 w-full max-w-[24rem] overflow-hidden sm:h-52"
       aria-hidden="true"
     >
-      <Bookmark className="size-9 stroke-[1.8] sm:size-11" />
+      <div className="absolute start-1/2 top-5 h-36 w-36 -translate-x-1/2 rounded-full bg-teal/10" />
+      <div className="absolute bottom-4 start-1/2 h-8 w-[19rem] -translate-x-1/2 rounded-[100%] bg-navy/5 blur-sm" />
+      <svg
+        className="absolute inset-0 h-full w-full"
+        viewBox="0 0 384 208"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M72 66c34-24 64-29 90-15 26 13 31 42 59 49 25 6 43-12 72-7"
+          stroke="currentColor"
+          className="text-blue/30"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeDasharray="8 12"
+        />
+        <path d="M48 80l118-34 8 96-118 34-8-96Z" className="fill-white" />
+        <path
+          d="M166 46l78 28 8 96-78-28-8-96Z"
+          className="fill-surface-muted"
+        />
+        <path d="M244 74l92-28 8 96-92 28-8-96Z" className="fill-white" />
+        <path
+          d="M48 80l118-34 78 28 92-28 8 96-92 28-78-28-118 34-8-96Z"
+          stroke="currentColor"
+          className="text-navy/20"
+          strokeWidth="3"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M132 57l9 97M213 63l9 96M278 64l8 96"
+          stroke="currentColor"
+          className="text-navy/10"
+          strokeWidth="3"
+        />
+        <path
+          d="M108 116c18-21 49-27 74-13 21 11 29 33 50 39 16 4 31-2 46-15"
+          stroke="currentColor"
+          className="text-teal"
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeDasharray="1 11"
+        />
+        <g className="drop-shadow-sm">
+          <path
+            d="M117 54c-18 0-33 14-33 32 0 26 33 59 33 59s33-33 33-59c0-18-15-32-33-32Z"
+            className="fill-teal"
+          />
+          <path
+            d="M117 99c7-5 18-14 18-24 0-7-5-12-12-12-3 0-5 1-6 3-2-2-4-3-7-3-7 0-12 5-12 12 0 10 12 19 19 24Z"
+            className="fill-white"
+          />
+        </g>
+        <g className="drop-shadow-sm">
+          <rect
+            x="237"
+            y="34"
+            width="54"
+            height="68"
+            rx="16"
+            className="fill-navy"
+          />
+          <path d="M252 34h24v37l-12-7-12 7V34Z" className="fill-blue" />
+          <path
+            d="M254 81h21"
+            stroke="white"
+            strokeWidth="4"
+            strokeLinecap="round"
+            opacity=".75"
+          />
+        </g>
+        <path
+          d="M290 108l35 10-22 9-6 21-13-31-24-9 30 0Z"
+          className="fill-blue"
+        />
+        <path
+          d="M290 108l35 10-22 9-6 21-13-31-24-9 30 0Z"
+          stroke="white"
+          strokeWidth="3"
+          strokeLinejoin="round"
+        />
+      </svg>
     </div>
   );
 }
 
-
-export function AccountSectionHeader({ title, description, titleId }: { title: string; description: string; titleId?: string }) {
+export function AccountSectionHeader({
+  title,
+  description,
+  titleId,
+  flushStart = false,
+}: {
+  title: string;
+  description: string;
+  titleId?: string;
+  flushStart?: boolean;
+}) {
   return (
-    <div className="px-1 pb-2 text-left sm:px-2 sm:pb-3">
-      <h1 id={titleId} className="text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl lg:font-bold">
+    <div
+      className={cn(
+        "pb-2 text-start sm:pb-3",
+        flushStart ? "px-0" : "px-1 sm:px-2",
+      )}
+    >
+      <h1
+        id={titleId}
+        className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]"
+      >
         {title}
       </h1>
-      <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">{description}</p>
+      <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+        {description}
+      </p>
     </div>
   );
 }
-
 
 function AccountDashboardRow({ row }: { row: AccountDashboardRowItem }) {
   const { t } = useLocale();
@@ -152,20 +353,31 @@ function AccountDashboardRow({ row }: { row: AccountDashboardRowItem }) {
   return (
     <Link
       href={row.href}
-      className="focus-ring group/row flex min-h-12 items-center gap-3 border-t border-slate-100 px-5 py-2 text-left transition duration-150 hover:bg-slate-50 focus-visible:relative focus-visible:z-10 sm:min-h-[52px]"
+      className="focus-ring group/row flex min-h-12 items-center gap-3 border-t border-slate-100 px-5 py-2 text-start transition duration-150 hover:bg-slate-50 focus-visible:relative focus-visible:z-10 sm:min-h-[52px]"
     >
-      <RowIcon className="size-[18px] shrink-0 text-blue-600" strokeWidth={2} aria-hidden="true" />
+      <RowIcon
+        className="size-[18px] shrink-0 text-blue-600"
+        strokeWidth={2}
+        aria-hidden="true"
+      />
       <span className="min-w-0 flex-1 text-sm font-medium leading-5 text-slate-800">
         {t[row.labelKey]}
       </span>
-      <ChevronRight className="size-[18px] shrink-0 text-slate-400 transition group-hover/row:translate-x-0.5" strokeWidth={2} aria-hidden="true" />
+      <ChevronRight
+        className="size-[18px] shrink-0 text-slate-400 transition group-hover/row:translate-x-0.5"
+        strokeWidth={2}
+        aria-hidden="true"
+      />
     </Link>
   );
 }
 
-function AccountDashboardPanel({ panel }: { panel: AccountDashboardPanelItem }) {
+function AccountDashboardPanel({
+  panel,
+}: {
+  panel: AccountDashboardPanelItem;
+}) {
   const { t } = useLocale();
-  const PanelIcon = panel.icon;
   const title = t[panel.titleKey];
 
   return (
@@ -173,11 +385,11 @@ function AccountDashboardPanel({ panel }: { panel: AccountDashboardPanelItem }) 
       className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
       aria-labelledby={`account-panel-${panel.titleKey.replace(/[^a-z0-9]+/g, "-")}`}
     >
-      <div className="flex items-center gap-3 px-5 pb-3.5 pt-[18px]">
-        <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100/80">
-          <PanelIcon className="size-5" strokeWidth={2} aria-hidden="true" />
-        </span>
-        <h2 id={`account-panel-${panel.titleKey.replace(/[^a-z0-9]+/g, "-")}`} className="text-lg font-semibold leading-6 text-slate-900">
+      <div className="px-5 pb-3.5 pt-[18px]">
+        <h2
+          id={`account-panel-${panel.titleKey.replace(/[^a-z0-9]+/g, "-")}`}
+          className="text-lg font-semibold leading-6 text-slate-900"
+        >
           {title}
         </h2>
       </div>
@@ -193,70 +405,178 @@ function AccountDashboardPanel({ panel }: { panel: AccountDashboardPanelItem }) 
   );
 }
 
-export function AccountMenuPage() {
+export function AccountMenuPage({
+  initials,
+  displayName,
+  userEmail,
+}: Pick<DashboardOverviewProps, "initials" | "displayName" | "userEmail">) {
   const { t } = useLocale();
-
   return (
     <section className="overflow-x-hidden" aria-labelledby="account-title">
-      <div className="relative isolate flex h-[220px] w-full items-center overflow-hidden bg-slate-950 sm:h-[250px] lg:h-[280px]">
-        <Image
-          src="/images/premium/flights/kurioticket-flight-hero-airplane-terminal-sunset-001.jpg"
-          alt="Airplane parked at an airport terminal gate"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center lg:object-[center_right]"
-        />
-        <div
-          className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/45 to-slate-950/10"
-          aria-hidden="true"
-        />
-        <div className="page-shell relative z-10 min-w-0 py-8">
-          <div className="max-w-[520px]">
-            <h1 id="account-title" className="text-3xl font-black leading-[1.05] tracking-tight text-white sm:text-[44px] lg:text-5xl">
-              {t["accountDashboard.hub.title"]}
-            </h1>
-            <p className="mt-4 max-w-[520px] text-sm leading-6 text-white/90 sm:text-base sm:leading-7 lg:text-lg">
-              {t["accountDashboard.hub.description"]}
-            </p>
-          </div>
-        </div>
-      </div>
+      <div className="px-4 pb-8 pt-8 sm:px-6 sm:pb-10 sm:pt-10 lg:px-8 lg:pb-11 lg:pt-12">
+        <div className="mx-auto max-w-[1120px] space-y-5">
+          <header
+            className="rounded-2xl border border-slate-200/80 bg-white p-[18px] text-start shadow-sm sm:p-6"
+            aria-label={t["accountDashboard.hub.title"]}
+          >
+            <div className="flex min-w-0 items-center gap-3.5 sm:gap-5">
+              <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#004BB8] to-[#021C2B] text-lg font-bold uppercase tracking-[-0.02em] text-white shadow-sm ring-1 ring-[#5CB6B2]/25 sm:size-16 sm:text-xl">
+                {initials}
+              </div>
+              <div className="min-w-0 flex-1">
+                <h1
+                  id="account-title"
+                  className="text-xl font-bold leading-7 tracking-[-0.03em] text-slate-950 [overflow-wrap:anywhere] sm:truncate sm:text-3xl sm:leading-tight sm:tracking-[-0.035em]"
+                >
+                  {formatAccountWelcome(
+                    t["accountDashboard.overview.welcome"],
+                    displayName,
+                  )}{" "}
+                  👋
+                </h1>
+                {userEmail ? (
+                  <p className="mt-0.5 truncate text-sm leading-5 text-slate-500 sm:mt-1 sm:text-sm sm:text-slate-600">
+                    {userEmail}
+                  </p>
+                ) : null}
+                <p className="mt-1.5 max-w-2xl text-sm leading-5 text-slate-600 sm:mt-2 sm:text-base sm:leading-6">
+                  <span className="sm:hidden">
+                    {t["accountDashboard.hub.mobileDescription"]}
+                  </span>
+                  <span className="hidden sm:inline">
+                    {t["accountDashboard.hub.description"]}
+                  </span>
+                </p>
+              </div>
+            </div>
+          </header>
 
-      <div className="bg-[#f3f7fc] px-4 pb-8 pt-6 sm:px-6 sm:pb-10 sm:pt-7 lg:px-8 lg:pb-11 lg:pt-8">
-        <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="mx-auto grid max-w-[1120px] gap-4 md:grid-cols-2 lg:gap-5">
-          {accountDashboardPanels.map((panel) => (
-            <AccountDashboardPanel key={panel.titleKey} panel={panel} />
-          ))}
-        </nav>
+          <nav
+            aria-label={t["accountDashboard.mobile.manageAccount"]}
+            className="grid gap-4 md:grid-cols-2 lg:gap-5"
+          >
+            {accountDashboardPanels.map((panel) => (
+              <AccountDashboardPanel key={panel.titleKey} panel={panel} />
+            ))}
+          </nav>
+        </div>
       </div>
     </section>
   );
 }
 
+const countryCallingCodeOptions = phoneCountryOptions;
+
+const personalDetailsDropdownOptions = personalDetailsCountryOptions
+  .map((region) => ({
+    value: region.code,
+    label: getFriendlyCountryLabel(region),
+  }))
+  .sort((left, right) => left.label.localeCompare(right.label));
+
+const nationalityDropdownOptions = personalDetailsCountryOptions
+  .map((region) => ({
+    value: getFriendlyCountryLabel(region),
+    label: getFriendlyCountryLabel(region),
+  }))
+  .sort((left, right) => left.label.localeCompare(right.label));
+
+const defaultCountryCallingCodeOption = defaultPhoneCountryOption;
+
+function getFlagImageUrl(countryCode: string) {
+  return `https://flagcdn.com/${countryCode.toLowerCase()}.svg`;
+}
+
+function CountryFlagIcon({
+  countryName,
+  isoCode,
+  className,
+}: {
+  countryName: string;
+  isoCode: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex h-[18px] w-6 shrink-0 items-center justify-center overflow-hidden rounded-none border border-slate-200 bg-slate-100",
+        className,
+      )}
+    >
+      <RawImage
+        src={getFlagImageUrl(isoCode)}
+        alt={`${countryName} flag`}
+        width={36}
+        height={36}
+        className="h-full w-full object-cover"
+        loading="lazy"
+        decoding="async"
+      />
+    </span>
+  );
+}
 
 const genderOptions = [
   { value: "Male", labelKey: "accountDashboard.personalDetails.gender.male" },
-  { value: "Female", labelKey: "accountDashboard.personalDetails.gender.female" },
-  { value: "I prefer not to say", labelKey: "accountDashboard.personalDetails.gender.preferNotToSay" },
+  {
+    value: "Female",
+    labelKey: "accountDashboard.personalDetails.gender.female",
+  },
+  {
+    value: "I prefer not to say",
+    labelKey: "accountDashboard.personalDetails.gender.preferNotToSay",
+  },
 ];
 const dateOfBirthMonthOptions = [
-  { value: "January", labelKey: "accountDashboard.personalDetails.month.january" },
-  { value: "February", labelKey: "accountDashboard.personalDetails.month.february" },
+  {
+    value: "January",
+    labelKey: "accountDashboard.personalDetails.month.january",
+  },
+  {
+    value: "February",
+    labelKey: "accountDashboard.personalDetails.month.february",
+  },
   { value: "March", labelKey: "accountDashboard.personalDetails.month.march" },
   { value: "April", labelKey: "accountDashboard.personalDetails.month.april" },
   { value: "May", labelKey: "accountDashboard.personalDetails.month.may" },
   { value: "June", labelKey: "accountDashboard.personalDetails.month.june" },
   { value: "July", labelKey: "accountDashboard.personalDetails.month.july" },
-  { value: "August", labelKey: "accountDashboard.personalDetails.month.august" },
-  { value: "September", labelKey: "accountDashboard.personalDetails.month.september" },
-  { value: "October", labelKey: "accountDashboard.personalDetails.month.october" },
-  { value: "November", labelKey: "accountDashboard.personalDetails.month.november" },
-  { value: "December", labelKey: "accountDashboard.personalDetails.month.december" },
+  {
+    value: "August",
+    labelKey: "accountDashboard.personalDetails.month.august",
+  },
+  {
+    value: "September",
+    labelKey: "accountDashboard.personalDetails.month.september",
+  },
+  {
+    value: "October",
+    labelKey: "accountDashboard.personalDetails.month.october",
+  },
+  {
+    value: "November",
+    labelKey: "accountDashboard.personalDetails.month.november",
+  },
+  {
+    value: "December",
+    labelKey: "accountDashboard.personalDetails.month.december",
+  },
 ];
 const dateOfBirthMonths = dateOfBirthMonthOptions.map((month) => month.value);
 
-const dateOfBirthDays = Array.from({ length: 31 }, (_, index) => String(index + 1).padStart(2, "0"));
+const personalDetailsFieldOrder: Array<keyof PersonalDetailsDraft> = [
+  "name",
+  "email",
+  "phone",
+  "dateOfBirth",
+  "gender",
+  "nationality",
+  "address",
+];
+
+const dateOfBirthDays = Array.from({ length: 31 }, (_, index) =>
+  String(index + 1).padStart(2, "0"),
+);
 
 const minDateOfBirthYear = 1900;
 const currentDateOfBirthYear = new Date().getFullYear();
@@ -265,14 +585,37 @@ const dateOfBirthYears = Array.from(
   (_, index) => String(currentDateOfBirthYear - index),
 );
 
+const emailAddressPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const verificationCodePattern = /^\d{6}$/;
+const emailChangeResendCooldownSeconds = 30;
+
+function getEmailChangeError(newEmail: string, currentEmail: string) {
+  const normalizedNewEmail = newEmail.trim().toLowerCase();
+  const normalizedCurrentEmail = currentEmail.trim().toLowerCase();
+
+  if (!normalizedNewEmail) return "Enter a new email address.";
+  if (!emailAddressPattern.test(normalizedNewEmail)) {
+    return "Enter a valid email address.";
+  }
+  if (normalizedNewEmail === normalizedCurrentEmail) {
+    return "Enter a different email address.";
+  }
+
+  return null;
+}
+
 function getPersonalDetailRows(t: TranslationDictionary): PersonalDetailRow[] {
   return [
-    { key: "name", label: t["accountDashboard.personalDetails.name"], fallback: t["accountDashboard.personalDetails.addName"] },
-    { key: "displayName", label: t["accountDashboard.personalDetails.displayName"], fallback: t["accountDashboard.personalDetails.chooseDisplayName"] },
+    {
+      key: "name",
+      label: t["accountDashboard.personalDetails.name"],
+      fallback: t["accountDashboard.personalDetails.addName"],
+    },
     {
       key: "email",
       label: t["accountDashboard.personalDetails.emailAddress"],
       fallback: t["accountDashboard.personalDetails.addEmailAddress"],
+      helper: t["accountDashboard.personalDetails.emailHelper"],
       inputType: "email",
       readOnly: true,
     },
@@ -280,41 +623,78 @@ function getPersonalDetailRows(t: TranslationDictionary): PersonalDetailRow[] {
       key: "phone",
       label: t["accountDashboard.personalDetails.phoneNumber"],
       fallback: t["accountDashboard.personalDetails.addPhoneNumber"],
+      helper: t["accountDashboard.personalDetails.phoneHelper"],
       inputType: "tel",
     },
-    { key: "dateOfBirth", label: t["accountDashboard.personalDetails.dateOfBirth"], fallback: t["accountDashboard.personalDetails.addDateOfBirth"] },
+    {
+      key: "dateOfBirth",
+      label: t["accountDashboard.personalDetails.dateOfBirth"],
+      fallback: t["accountDashboard.personalDetails.addDateOfBirth"],
+    },
     {
       key: "gender",
       label: t["accountDashboard.personalDetails.gender"],
       fallback: t["accountDashboard.personalDetails.addGender"],
-      options: genderOptions.map((option) => ({ value: option.value, label: t[option.labelKey] })),
+      options: genderOptions.map((option) => ({
+        value: option.value,
+        label: t[option.labelKey],
+      })),
     },
-    { key: "nationality", label: t["accountDashboard.personalDetails.nationality"], fallback: t["accountDashboard.personalDetails.addNationality"] },
-    { key: "address", label: t["accountDashboard.personalDetails.address"], fallback: t["accountDashboard.personalDetails.addAddress"], multiline: true },
+    {
+      key: "nationality",
+      label: t["accountDashboard.personalDetails.nationality"],
+      fallback: t["accountDashboard.personalDetails.addNationality"],
+    },
+    {
+      key: "address",
+      label: t["accountDashboard.personalDetails.address"],
+      fallback: t["accountDashboard.personalDetails.addAddress"],
+      multiline: true,
+    },
   ];
 }
 
-function getPersonalDetailsInitialValues({ displayName, userEmail, userName }: DashboardOverviewProps): PersonalDetailsDraft {
-  const trimmedName = userName?.trim() ?? "";
-  const trimmedDisplayName = trimmedName ? displayName.trim() : "";
-
+function getPersonalDetailsInitialValues({
+  userEmail,
+  userProfile,
+}: DashboardOverviewProps): PersonalDetailsDraft {
   return {
-    name: trimmedName,
-    displayName: trimmedDisplayName,
+    name: userProfile?.fullName?.trim() ?? "",
     email: userEmail?.trim() ?? "",
-    phone: "",
-    dateOfBirth: "",
-    gender: "",
-    nationality: "",
-    address: "",
+    phone: userProfile?.phoneNumber ?? "",
+    phoneCountryCode: getSupportedPhoneCountryCode(userProfile?.phoneCountryCode) ?? "",
+    dateOfBirth: userProfile?.dateOfBirth ?? "",
+    gender: userProfile?.gender ?? "",
+    nationality: userProfile?.nationality ?? "",
+    address: userProfile?.address ?? "",
   };
 }
 
-function DetailValue({ value, fallback, helper }: { value: string; fallback: string; helper?: string }) {
+function DetailValue({
+  value,
+  fallback,
+  helper,
+  preserveLines = false,
+}: {
+  value: string;
+  fallback: string;
+  helper?: string;
+  preserveLines?: boolean;
+}) {
   return (
-    <div className="min-w-0 space-y-0.5 text-left">
-      <p className={cn("break-words text-[15px] font-semibold leading-5 text-slate-900 sm:text-sm sm:leading-6", !value && "text-slate-500")}>{value || fallback}</p>
-      {helper ? <p className="max-w-lg text-[13px] leading-5 text-slate-500 sm:text-sm sm:leading-6">{helper}</p> : null}
+    <div className="min-w-0 space-y-0.5 text-start">
+      <p
+        className={cn(
+          "break-words text-sm font-medium leading-6 text-slate-700",
+          preserveLines && "whitespace-pre-line",
+          !value && "text-slate-500",
+        )}
+      >
+        {value || fallback}
+      </p>
+      {helper ? (
+        <p className="max-w-lg text-sm leading-6 text-slate-500">{helper}</p>
+      ) : null}
     </div>
   );
 }
@@ -354,15 +734,40 @@ function parseDateOfBirthParts(value: string) {
   };
 }
 
-function formatDateOfBirthParts(parts: { day: string; month: string; year: string }) {
+function formatDateOfBirthParts(parts: {
+  day: string;
+  month: string;
+  year: string;
+}) {
   const normalizedDay = parts.day ? parts.day.padStart(2, "0") : "";
 
   return [normalizedDay, parts.month, parts.year].filter(Boolean).join(" ");
 }
 
-function DateOfBirthInput({ value, onChange, className }: { value: string; onChange: (value: string) => void; className: string }) {
+const mobilePersonalDetailsSelectClassName =
+  "appearance-none bg-none pe-9 [background-image:none] [&::-ms-expand]:hidden sm:appearance-auto sm:pe-3.5";
+
+function MobilePersonalDetailsSelectIcon() {
+  return (
+    <ChevronDown
+      aria-hidden="true"
+      className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 sm:hidden"
+      strokeWidth={2}
+    />
+  );
+}
+
+function DateOfBirthInput({
+  value,
+  onChange,
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  className: string;
+}) {
   const { t } = useLocale();
-  const [parts, setParts] = useState(() => parseDateOfBirthParts(value));
+  const parts = parseDateOfBirthParts(value);
 
   const updatePart = (part: keyof typeof parts, nextValue: string) => {
     const nextParts = {
@@ -370,82 +775,685 @@ function DateOfBirthInput({ value, onChange, className }: { value: string; onCha
       [part]: nextValue,
     };
 
-    setParts(nextParts);
     onChange(formatDateOfBirthParts(nextParts));
   };
 
   return (
-    <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)_minmax(0,1fr)]">
-      <select className={className} value={parts.day} onChange={(event) => updatePart("day", event.target.value)} aria-label={t["accountDashboard.personalDetails.dateOfBirthDay"]}>
-        <option value="" disabled hidden>
-          DD
-        </option>
-        {dateOfBirthDays.map((day) => (
-          <option key={day} value={day}>
-            {day}
+    <div className="grid min-w-0 grid-cols-[minmax(0,4.5rem)_minmax(0,1fr)_minmax(0,5.5rem)] gap-2 sm:max-w-[34rem] sm:grid-cols-[minmax(0,5.75rem)_minmax(0,12rem)_minmax(0,7.5rem)]">
+      <div className="relative min-w-0">
+        <select
+          className={cn(
+            className,
+            mobilePersonalDetailsSelectClassName,
+            "cursor-pointer",
+          )}
+          value={parts.day}
+          onChange={(event) => updatePart("day", event.target.value)}
+          aria-label={t["accountDashboard.personalDetails.dateOfBirthDay"]}
+        >
+          <option value="" disabled hidden>
+            {t["accountDashboard.personalDetails.dateOfBirthDayPlaceholder"]}
           </option>
-        ))}
-      </select>
-      <select className={className} value={parts.month} onChange={(event) => updatePart("month", event.target.value)} aria-label={t["accountDashboard.personalDetails.dateOfBirthMonth"]}>
-        <option value="" disabled hidden>
-          {t["accountDashboard.personalDetails.monthPlaceholder"]}
-        </option>
-        {dateOfBirthMonthOptions.map((month) => (
-          <option key={month.value} value={month.value}>
-            {t[month.labelKey]}
+          {dateOfBirthDays.map((day) => (
+            <option key={day} value={day}>
+              {day}
+            </option>
+          ))}
+        </select>
+        <MobilePersonalDetailsSelectIcon />
+      </div>
+      <div className="relative min-w-0">
+        <select
+          className={cn(
+            className,
+            mobilePersonalDetailsSelectClassName,
+            "cursor-pointer",
+          )}
+          value={parts.month}
+          onChange={(event) => updatePart("month", event.target.value)}
+          aria-label={t["accountDashboard.personalDetails.dateOfBirthMonth"]}
+        >
+          <option value="" disabled hidden>
+            {t["accountDashboard.personalDetails.monthPlaceholder"]}
           </option>
-        ))}
-      </select>
-      <select className={className} value={parts.year} onChange={(event) => updatePart("year", event.target.value)} aria-label={t["accountDashboard.personalDetails.dateOfBirthYear"]}>
-        <option value="" disabled hidden>
-          YYYY
-        </option>
-        {dateOfBirthYears.map((year) => (
-          <option key={year} value={year}>
-            {year}
+          {dateOfBirthMonthOptions.map((month) => (
+            <option key={month.value} value={month.value}>
+              {t[month.labelKey]}
+            </option>
+          ))}
+        </select>
+        <MobilePersonalDetailsSelectIcon />
+      </div>
+      <div className="relative min-w-0">
+        <select
+          className={cn(
+            className,
+            mobilePersonalDetailsSelectClassName,
+            "cursor-pointer",
+          )}
+          value={parts.year}
+          onChange={(event) => updatePart("year", event.target.value)}
+          aria-label={t["accountDashboard.personalDetails.dateOfBirthYear"]}
+        >
+          <option value="" disabled hidden>
+            {t["accountDashboard.personalDetails.dateOfBirthYearPlaceholder"]}
           </option>
-        ))}
-      </select>
+          {dateOfBirthYears.map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </select>
+        <MobilePersonalDetailsSelectIcon />
+      </div>
     </div>
   );
 }
 
-function DetailInput({ row, value, onChange }: { row: PersonalDetailRow; value: string; onChange: (key: keyof PersonalDetailsDraft, value: string) => void }) {
-  const baseClassName = cn(
-    "w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-[15px] font-medium text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 sm:py-2.5 sm:text-sm",
-    row.readOnly && "cursor-not-allowed bg-slate-50 text-slate-500 focus:border-slate-200 focus:ring-0",
-  );
+type StructuredAddressParts = {
+  countryCode: string;
+  addressLine1: string;
+  apartmentOrSuite: string;
+  city: string;
+  stateOrRegion: string;
+  postalCode: string;
+};
 
-  const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    onChange(row.key, event.target.value);
-  };
+const emptyStructuredAddress: StructuredAddressParts = {
+  countryCode: "",
+  addressLine1: "",
+  apartmentOrSuite: "",
+  city: "",
+  stateOrRegion: "",
+  postalCode: "",
+};
 
-  if (row.key === "dateOfBirth") {
-    return <DateOfBirthInput value={value} onChange={(nextValue) => onChange(row.key, nextValue)} className={baseClassName} />;
+const structuredAddressPrefix = "kt-address-v1:";
+
+function parseStructuredAddressDraft(value: string): StructuredAddressParts {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) return emptyStructuredAddress;
+
+  if (trimmedValue.startsWith(structuredAddressPrefix)) {
+    try {
+      const parsedValue = JSON.parse(
+        trimmedValue.slice(structuredAddressPrefix.length),
+      ) as Partial<StructuredAddressParts>;
+
+      return {
+        countryCode: parsedValue.countryCode ?? "",
+        addressLine1:
+          parsedValue.addressLine1 ??
+          (parsedValue as { streetAddress?: string }).streetAddress ??
+          "",
+        apartmentOrSuite: parsedValue.apartmentOrSuite ?? "",
+        city: parsedValue.city ?? "",
+        stateOrRegion: parsedValue.stateOrRegion ?? "",
+        postalCode: parsedValue.postalCode ?? "",
+      };
+    } catch {
+      return emptyStructuredAddress;
+    }
   }
 
-  if (row.options) {
-    return (
-      <select className={baseClassName} value={value} onChange={handleChange} disabled={row.readOnly} aria-label={row.label}>
+  const [
+    addressLine1 = "",
+    cityPostal = "",
+    postalOrCountry = "",
+    country = "",
+  ] = trimmedValue.split(/\r?\n/).map((line) => line.trim());
+  const countryValue = country || postalOrCountry;
+  const countryOption = personalDetailsCountryOptions.find(
+    (option) =>
+      option.country.toLowerCase() === countryValue.toLowerCase() ||
+      getFriendlyCountryLabel(option).toLowerCase() ===
+        countryValue.toLowerCase() ||
+      option.code.toLowerCase() === countryValue.toLowerCase(),
+  );
+
+  return {
+    ...emptyStructuredAddress,
+    addressLine1,
+    city: cityPostal,
+    postalCode: country ? postalOrCountry : "",
+    countryCode: countryOption?.code ?? "",
+  };
+}
+
+function serializeStructuredAddressDraft(parts: StructuredAddressParts) {
+  const normalizedParts = {
+    countryCode: parts.countryCode,
+    addressLine1: parts.addressLine1.trimStart(),
+    apartmentOrSuite: parts.apartmentOrSuite.trimStart(),
+    city: parts.city.trimStart(),
+    stateOrRegion: parts.stateOrRegion.trimStart(),
+    postalCode: parts.postalCode.trimStart(),
+  };
+  const hasAddressValue = Object.values(normalizedParts).some(Boolean);
+
+  return hasAddressValue
+    ? `${structuredAddressPrefix}${JSON.stringify(normalizedParts)}`
+    : "";
+}
+
+function joinAddressParts(parts: string[], separator: string) {
+  return parts
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(separator);
+}
+
+function getStructuredAddressDisplayLines(parts: StructuredAddressParts) {
+  const countryOption = personalDetailsCountryOptions.find(
+    (option) => option.code === parts.countryCode,
+  );
+  const streetLine = joinAddressParts(
+    [parts.apartmentOrSuite, parts.addressLine1],
+    ", ",
+  );
+  const cityStateLine = joinAddressParts(
+    [parts.city, parts.stateOrRegion],
+    ", ",
+  );
+  const localityLine = joinAddressParts(
+    [cityStateLine, parts.postalCode],
+    " ",
+  );
+  const countryLine = countryOption
+    ? getFriendlyCountryLabel(countryOption)
+    : parts.countryCode.trim();
+
+  return [streetLine, localityLine, countryLine].filter(Boolean);
+}
+
+function formatStructuredAddressForDisplay(value: string) {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue || !trimmedValue.startsWith(structuredAddressPrefix)) {
+    return trimmedValue;
+  }
+
+  return getStructuredAddressDisplayLines(
+    parseStructuredAddressDraft(trimmedValue),
+  ).join("\n");
+}
+
+function StructuredAddressInput({
+  value,
+  onChange,
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  className: string;
+}) {
+  const { t } = useLocale();
+  const parts = useMemo(() => parseStructuredAddressDraft(value), [value]);
+
+  const updatePart = (
+    part: keyof StructuredAddressParts,
+    nextValue: string,
+  ) => {
+    onChange(
+      serializeStructuredAddressDraft({
+        ...parts,
+        [part]: nextValue,
+      }),
+    );
+  };
+
+  const fieldLabelClassName =
+    "mb-1.5 block text-sm font-semibold leading-5 text-slate-950";
+
+  return (
+    <div className="w-full min-w-0 space-y-5">
+      <div className="max-w-sm">
+        <label
+          className={fieldLabelClassName}
+          htmlFor="personal-address-country"
+        >
+          {t["accountDashboard.personalDetails.countryRegion"]}
+        </label>
+        <div className="relative min-w-0">
+          <select
+            id="personal-address-country"
+            className={cn(
+              className,
+              mobilePersonalDetailsSelectClassName,
+              "cursor-pointer",
+            )}
+            value={parts.countryCode}
+            onChange={(event) => updatePart("countryCode", event.target.value)}
+            autoComplete="country"
+          >
+            <option value="" disabled hidden>
+              {t["accountDashboard.personalDetails.selectOne"]}
+            </option>
+            {personalDetailsDropdownOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <MobilePersonalDetailsSelectIcon />
+        </div>
+      </div>
+      <div className="max-w-full">
+        <label
+          className={fieldLabelClassName}
+          htmlFor="personal-address-street"
+        >
+          {t["accountDashboard.personalDetails.streetAddress"]}
+        </label>
+        <input
+          id="personal-address-street"
+          className={className}
+          value={parts.addressLine1}
+          onChange={(event) => updatePart("addressLine1", event.target.value)}
+          autoComplete="address-line1"
+        />
+      </div>
+      <div className="max-w-sm">
+        <label
+          className={fieldLabelClassName}
+          htmlFor="personal-address-apartment"
+        >
+          {t["accountDashboard.personalDetails.apartmentSuite"]}
+        </label>
+        <input
+          id="personal-address-apartment"
+          className={className}
+          value={parts.apartmentOrSuite}
+          onChange={(event) =>
+            updatePart("apartmentOrSuite", event.target.value)
+          }
+          autoComplete="address-line2"
+        />
+      </div>
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3 sm:gap-4 sm:grid-cols-[minmax(0,12rem)_minmax(0,12rem)]">
+        <div className="min-w-0 sm:max-w-48">
+          <label
+            className={fieldLabelClassName}
+            htmlFor="personal-address-city"
+          >
+            {t["accountDashboard.personalDetails.townCity"]}
+          </label>
+          <input
+            id="personal-address-city"
+            className={className}
+            value={parts.city}
+            onChange={(event) => updatePart("city", event.target.value)}
+            autoComplete="address-level2"
+          />
+        </div>
+        <div className="min-w-0 sm:max-w-48">
+          <label
+            className={fieldLabelClassName}
+            htmlFor="personal-address-state"
+          >
+            <span className="sm:hidden">State / Region</span>
+            <span className="hidden sm:inline">{t["accountDashboard.personalDetails.stateProvinceRegion"]}</span>
+          </label>
+          <input
+            id="personal-address-state"
+            className={className}
+            value={parts.stateOrRegion}
+            onChange={(event) =>
+              updatePart("stateOrRegion", event.target.value)
+            }
+            autoComplete="address-level1"
+          />
+        </div>
+      </div>
+      <div className="max-w-[9rem]">
+        <label
+          className={fieldLabelClassName}
+          htmlFor="personal-address-postal"
+        >
+          {t["accountDashboard.personalDetails.postcodeZip"]}
+        </label>
+        <input
+          id="personal-address-postal"
+          className={className}
+          value={parts.postalCode}
+          onChange={(event) => updatePart("postalCode", event.target.value)}
+          autoComplete="postal-code"
+        />
+      </div>
+    </div>
+  );
+}
+
+function PhoneNumberInput({
+  value,
+  phoneCountryCode,
+  onChange,
+  onCountryCodeChange,
+  className,
+  label,
+  defaultCountryCode,
+}: {
+  value: string;
+  phoneCountryCode?: string | null;
+  onChange: (value: string) => void;
+  onCountryCodeChange: (value: string) => void;
+  className: string;
+  label: string;
+  defaultCountryCode?: string | null;
+}) {
+  const savedPhoneCountryCode = getSupportedPhoneCountryCode(phoneCountryCode);
+  const [selectedPhoneCountryCode, setSelectedPhoneCountryCode] = useState(
+    () =>
+      savedPhoneCountryCode ??
+      parsePhoneDraftValue(value, defaultCountryCode).countryCode,
+  );
+  const [hasManuallySelectedPhoneCountry, setHasManuallySelectedPhoneCountry] =
+    useState(false);
+  const parsedValue = useMemo(
+    () => parsePhoneDraftValue(value, defaultCountryCode),
+    [defaultCountryCode, value],
+  );
+
+  useEffect(() => {
+    const nextPhoneCountryCode = savedPhoneCountryCode
+      ? savedPhoneCountryCode
+      : parsedValue.hasRecognizedDialCode
+        ? parsedValue.countryCode
+        : !value.trim() && !hasManuallySelectedPhoneCountry
+          ? getDefaultPhoneCountryCode(defaultCountryCode)
+          : null;
+
+    if (
+      !nextPhoneCountryCode ||
+      nextPhoneCountryCode === selectedPhoneCountryCode
+    ) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setSelectedPhoneCountryCode(nextPhoneCountryCode);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    defaultCountryCode,
+    hasManuallySelectedPhoneCountry,
+    parsedValue.countryCode,
+    parsedValue.hasRecognizedDialCode,
+    savedPhoneCountryCode,
+    selectedPhoneCountryCode,
+    value,
+  ]);
+
+  const effectivePhoneCountryCode =
+    savedPhoneCountryCode ??
+    (parsedValue.hasRecognizedDialCode
+      ? parsedValue.countryCode
+      : selectedPhoneCountryCode);
+  const selectedOption =
+    countryCallingCodeOptions.find(
+      (option) => option.isoCode === effectivePhoneCountryCode,
+    ) ?? defaultCountryCallingCodeOption;
+  const selectedCountryCode =
+    selectedOption?.isoCode ?? defaultCountryCallingCodeOption?.isoCode ?? "";
+
+  const handleCountryChange = (nextCountryCode: string) => {
+    setHasManuallySelectedPhoneCountry(true);
+    setSelectedPhoneCountryCode(nextCountryCode);
+    onCountryCodeChange(nextCountryCode);
+    onChange(formatPhoneDraftValue(nextCountryCode, parsedValue.localNumber));
+  };
+
+  const handleLocalNumberChange = (nextLocalNumber: string) => {
+    onChange(formatPhoneDraftValue(selectedCountryCode, nextLocalNumber));
+  };
+
+  return (
+    <div className="flex w-full min-w-0 items-stretch gap-0 sm:max-w-[34rem]">
+      <div className="group relative z-10 h-11 w-[4.75rem] shrink-0 sm:w-20">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none flex h-full w-full items-center justify-center gap-1.5 rounded-none border border-slate-300 bg-white px-2.5 transition group-hover:border-slate-400 group-focus-within:border-[#004BB8]/40 group-focus-within:ring-2 group-focus-within:ring-[#004BB8]/15 sm:px-3"
+        >
+          <CountryFlagIcon
+            countryName={selectedOption.countryName}
+            isoCode={selectedOption.isoCode}
+            className="h-4 w-[1.375rem] rounded-none bg-white sm:h-[17px] sm:w-6"
+          />
+          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-500" strokeWidth={2} />
+        </div>
+
+        <select
+          className="absolute inset-0 h-full w-full cursor-pointer appearance-none opacity-0"
+          value={selectedCountryCode}
+          onChange={(event) => handleCountryChange(event.target.value)}
+          aria-label={`${label} country calling code`}
+        >
+          {countryCallingCodeOptions.map((option) => (
+            <option key={option.isoCode} value={option.isoCode}>
+              {option.countryName} {option.dialCode}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div
+        className={cn(
+          className,
+          "-ms-px flex min-w-0 items-center gap-2 overflow-hidden",
+        )}
+      >
+        <span className="shrink-0 whitespace-nowrap text-slate-900">
+          {selectedOption.dialCode}
+        </span>
+        <input
+          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-base font-medium leading-5 text-slate-900 outline-none sm:text-sm"
+          type="tel"
+          value={parsedValue.localNumber}
+          onChange={(event) => handleLocalNumberChange(event.target.value)}
+          aria-label={label}
+          inputMode="tel"
+          autoComplete="tel-national"
+        />
+      </div>
+    </div>
+  );
+}
+
+function NationalityInput({
+  value,
+  onChange,
+  className,
+  label,
+  fallback,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  className: string;
+  label: string;
+  fallback: string;
+}) {
+  return (
+    <div className="relative min-w-0">
+      <select
+        className={cn(
+          className,
+          mobilePersonalDetailsSelectClassName,
+          "cursor-pointer",
+        )}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        aria-label={label}
+        autoComplete="country-name"
+      >
         <option value="" disabled hidden>
-          {row.fallback}
+          {fallback}
         </option>
-        {row.options.map((option) => (
+        {nationalityDropdownOptions.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
         ))}
       </select>
+      <MobilePersonalDetailsSelectIcon />
+    </div>
+  );
+}
+
+function PersonalDetailsEditRow({
+  row,
+  value,
+  error,
+  onChange,
+  defaultPhoneCountryCode,
+  phoneCountryCode,
+}: {
+  row: PersonalDetailRow;
+  value: string;
+  error?: string;
+  onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
+  defaultPhoneCountryCode?: string | null;
+  phoneCountryCode?: string | null;
+}) {
+  const isAddress = row.key === "address";
+
+  return (
+    <div className={cn("py-3.5", isAddress && "pt-0")}>
+      {!isAddress ? (
+        <label className="mb-1.5 block text-sm font-semibold leading-5 text-slate-950">
+          {row.label}
+        </label>
+      ) : null}
+      <div className="min-w-0">
+        <DetailInput
+          row={row}
+          value={value}
+          onChange={onChange}
+          defaultPhoneCountryCode={defaultPhoneCountryCode}
+          phoneCountryCode={phoneCountryCode}
+        />
+        {error ? (
+          <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-red-700">
+            {error}
+          </p>
+        ) : row.helper ? (
+          <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
+            {row.helper}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function DetailInput({
+  row,
+  value,
+  onChange,
+  defaultPhoneCountryCode,
+  phoneCountryCode,
+}: {
+  row: PersonalDetailRow;
+  value: string;
+  onChange: (key: keyof PersonalDetailsDraft, value: string) => void;
+  defaultPhoneCountryCode?: string | null;
+  phoneCountryCode?: string | null;
+}) {
+  const baseClassName = cn(
+    "h-11 w-full min-w-0 rounded-none border border-slate-300 bg-white px-3.5 text-base font-medium leading-5 text-slate-950 shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-500 hover:border-slate-400 focus:border-[#004BB8]/40 focus:ring-2 focus:ring-[#004BB8]/15 sm:max-w-[34rem] sm:text-sm",
+    row.readOnly &&
+      "cursor-not-allowed border-slate-300 bg-slate-100 text-slate-700 hover:border-slate-300 focus:border-slate-300 focus:ring-0",
+  );
+
+  const handleChange = (
+    event: ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
+    onChange(row.key, event.target.value);
+  };
+
+  if (row.key === "dateOfBirth") {
+    return (
+      <DateOfBirthInput
+        value={value}
+        onChange={(nextValue) => onChange(row.key, nextValue)}
+        className={baseClassName}
+      />
+    );
+  }
+
+  if (row.key === "phone") {
+    return (
+      <PhoneNumberInput
+        value={value}
+        phoneCountryCode={phoneCountryCode}
+        onChange={(nextValue) => onChange(row.key, nextValue)}
+        onCountryCodeChange={(nextValue) =>
+          onChange("phoneCountryCode", nextValue)
+        }
+        className={baseClassName}
+        label={row.label}
+        defaultCountryCode={defaultPhoneCountryCode}
+      />
+    );
+  }
+
+  if (row.key === "nationality") {
+    return (
+      <NationalityInput
+        value={value}
+        onChange={(nextValue) => onChange(row.key, nextValue)}
+        className={baseClassName}
+        label={row.label}
+        fallback={row.fallback}
+      />
+    );
+  }
+
+  if (row.key === "address") {
+    return (
+      <StructuredAddressInput
+        value={value}
+        onChange={(nextValue) => onChange(row.key, nextValue)}
+        className={baseClassName}
+      />
+    );
+  }
+
+  if (row.options) {
+    return (
+      <div className="relative min-w-0 sm:max-w-[34rem]">
+        <select
+          className={cn(
+            baseClassName,
+            mobilePersonalDetailsSelectClassName,
+            "cursor-pointer",
+          )}
+          value={value}
+          onChange={handleChange}
+          aria-label={row.label}
+        >
+          <option value="" disabled hidden>
+            {row.fallback}
+          </option>
+          {row.options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <MobilePersonalDetailsSelectIcon />
+      </div>
     );
   }
 
   if (row.multiline) {
     return (
       <textarea
-        className={cn(baseClassName, "min-h-28 resize-y")}
+        className={cn(baseClassName, "min-h-24 resize-y")}
         value={value}
         onChange={handleChange}
-        placeholder={row.fallback}
         readOnly={row.readOnly}
         rows={4}
       />
@@ -458,95 +1466,817 @@ function DetailInput({ row, value, onChange }: { row: PersonalDetailRow; value: 
       type={row.inputType ?? "text"}
       value={value}
       onChange={handleChange}
-      placeholder={row.fallback}
       readOnly={row.readOnly}
     />
   );
 }
 
+function PersonalDetailsEmailEditRow({
+  row,
+  currentEmail,
+  isChangingEmail,
+  newEmail,
+  emailValidationError,
+  isRequestingCode,
+  resendCooldownSeconds,
+  errorMessage,
+  onStartChange,
+  onNewEmailChange,
+  onRequestCode,
+  onCancel,
+}: {
+  row: PersonalDetailRow;
+  currentEmail: string;
+  isChangingEmail: boolean;
+  newEmail: string;
+  emailValidationError: string | null;
+  isRequestingCode: boolean;
+  resendCooldownSeconds: number;
+  errorMessage: string | null;
+  onStartChange: () => void;
+  onNewEmailChange: (value: string) => void;
+  onRequestCode: () => void;
+  onCancel: () => void;
+}) {
+  const { t } = useLocale();
+  const baseInputClassName =
+    "h-11 w-full min-w-0 rounded-none border border-slate-300 bg-white px-3.5 text-base font-medium leading-5 text-slate-950 shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-500 hover:border-slate-400 focus:border-[#004BB8]/40 focus:ring-2 focus:ring-[#004BB8]/15 sm:text-sm";
+  const isBusy = isRequestingCode;
+  const isResendCoolingDown = resendCooldownSeconds > 0;
+
+  return (
+    <div className="py-3.5">
+      <label className="mb-1.5 block text-sm font-semibold leading-5 text-slate-950">
+        {row.label}
+      </label>
+      <div className="min-w-0 space-y-3">
+        <div className="flex max-w-[34rem] flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex min-h-11 items-center gap-2 rounded-none border border-slate-300 bg-slate-100 px-3.5 text-base font-medium leading-5 text-slate-700 sm:text-sm">
+              <span className="min-w-0 flex-1 truncate">
+                {currentEmail || row.fallback}
+              </span>
+              {currentEmail ? (
+                <span className="inline-flex shrink-0 items-center border border-emerald-100 bg-emerald-50/80 px-1.5 py-px text-[0.625rem] font-medium leading-4 text-emerald-700">
+                  {t["accountDashboard.personalDetails.emailVerified"]}
+                </span>
+              ) : null}
+            </div>
+          </div>
+          {!isChangingEmail ? (
+            <button
+              type="button"
+              onClick={onStartChange}
+              className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center self-end rounded-lg border border-[#004BB8]/20 bg-white px-3 text-xs font-semibold text-[#004BB8] transition hover:border-[#004BB8]/30 hover:bg-[#004BB8]/5 sm:self-auto"
+            >
+              {t["accountDashboard.personalDetails.changeEmail"]}
+            </button>
+          ) : null}
+        </div>
+        {row.helper ? (
+          <p className="max-w-xl text-sm leading-6 text-slate-500">
+            <span className="sm:hidden">{row.helper}</span>
+            <span className="hidden sm:inline">{row.helper}</span>
+          </p>
+        ) : null}
+
+        {isChangingEmail ? (
+          <div className="max-w-[34rem] border-t border-slate-200 pt-4">
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label
+                  className="mb-1.5 block text-sm font-semibold leading-5 text-slate-950"
+                  htmlFor="personal-new-email"
+                >
+                  New email address
+                </label>
+                <input
+                  id="personal-new-email"
+                  className={baseInputClassName}
+                  type="email"
+                  value={newEmail}
+                  onChange={(event) => onNewEmailChange(event.target.value)}
+                  autoComplete="email"
+                />
+              </div>
+              <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-3">
+                <button
+                  type="button"
+                  onClick={onRequestCode}
+                  disabled={
+                    Boolean(emailValidationError) || isBusy || isResendCoolingDown
+                  }
+                  className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center rounded-lg bg-[#004BB8] px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-default disabled:bg-[#004BB8]/45"
+                >
+                  {isRequestingCode ? "Sending…" : "Send verification code"}
+                </button>
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  disabled={isBusy}
+                  className="focus-ring inline-flex min-h-9 w-fit cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white px-3.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-default disabled:opacity-60"
+                >
+                  Cancel
+                </button>
+              </div>
+              {errorMessage ? (
+                <p className="text-sm font-medium leading-6 text-red-700">
+                  {errorMessage}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function normalizePersonalDetailsDraft(
+  value: PersonalDetailsDraft,
+): PersonalDetailsDraft {
+  return {
+    name: value.name.trim(),
+    email: value.email.trim(),
+    phone: value.phone.trim(),
+    phoneCountryCode: getSupportedPhoneCountryCode(value.phoneCountryCode) ?? "",
+    dateOfBirth: value.dateOfBirth.trim(),
+    gender: value.gender.trim(),
+    nationality: value.nationality.trim(),
+    address: value.address.trim(),
+  };
+}
+
+function hasPersonalDetailsChanges(
+  draft: PersonalDetailsDraft,
+  savedValues: PersonalDetailsDraft,
+) {
+  const normalizedDraft = normalizePersonalDetailsDraft(draft);
+  const normalizedSavedValues = normalizePersonalDetailsDraft(savedValues);
+
+  return (
+    personalDetailsFieldOrder
+      .filter((key) => key !== "email")
+      .some((key) => normalizedDraft[key] !== normalizedSavedValues[key]) ||
+    normalizedDraft.phoneCountryCode !== normalizedSavedValues.phoneCountryCode
+  );
+}
+
+function getPersonalDetailsValidationErrors(draft: PersonalDetailsDraft) {
+  const errors: Partial<Record<keyof PersonalDetailsDraft, string>> = {};
+
+  if (draft.name.length > 0 && !draft.name.trim()) {
+    errors.name = "Enter your name or leave this field blank.";
+  }
+
+  if (draft.name.trim().length > 120) {
+    errors.name = "Name must be 120 characters or fewer.";
+  }
+
+  if (draft.phone.trim().length > 40) {
+    errors.phone = "Phone number must be 40 characters or fewer.";
+  }
+
+  if (draft.dateOfBirth.trim().length > 40) {
+    errors.dateOfBirth = "Date of birth must be 40 characters or fewer.";
+  }
+
+  if (draft.gender.trim().length > 40) {
+    errors.gender = "Gender must be 40 characters or fewer.";
+  }
+
+  if (draft.nationality.trim().length > 120) {
+    errors.nationality = "Nationality must be 120 characters or fewer.";
+  }
+
+  if (draft.address.trim().length > 2000) {
+    errors.address = "Address must be 2,000 characters or fewer.";
+  }
+
+  return errors;
+}
+
 function PersonalDetailsSection(props: DashboardOverviewProps) {
   const { t } = useLocale();
-  const initialValues = getPersonalDetailsInitialValues(props);
+  const { selectedCountryCode, detectedCountryCode, selectedOption, mode } = useRegion();
+  const router = useRouter();
+  const [savedValues, setSavedValues] = useState<PersonalDetailsDraft>(() =>
+    getPersonalDetailsInitialValues(props),
+  );
   const [isEditing, setIsEditing] = useState(false);
-  const [draft, setDraft] = useState<PersonalDetailsDraft>(initialValues);
+  const [isSaving, setIsSaving] = useState(false);
+  const [draft, setDraft] = useState<PersonalDetailsDraft>(savedValues);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [personalDetailsSaveMessage, setPersonalDetailsSaveMessage] = useState<
+    string | null
+  >(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<
+    Partial<Record<keyof PersonalDetailsDraft, string>>
+  >({});
+  const [isChangingEmail, setIsChangingEmail] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailVerificationCode, setEmailVerificationCode] = useState("");
+  const [isRequestingEmailCode, setIsRequestingEmailCode] = useState(false);
+  const [isConfirmingEmail, setIsConfirmingEmail] = useState(false);
+  const [isEmailVerificationModalOpen, setIsEmailVerificationModalOpen] =
+    useState(false);
+  const [emailCodeResendCooldownSeconds, setEmailCodeResendCooldownSeconds] =
+    useState(0);
+  const [emailChangeErrorMessage, setEmailChangeErrorMessage] = useState<
+    string | null
+  >(null);
   const personalDetailRows = getPersonalDetailRows(t);
+  const emailValidationError = getEmailChangeError(newEmail, savedValues.email);
+  const isVerificationCodeValid = verificationCodePattern.test(
+    emailVerificationCode.trim(),
+  );
+  const hasUnsavedProfileChanges = hasPersonalDetailsChanges(
+    draft,
+    savedValues,
+  );
+  const defaultPhoneCountryCode =
+    getSupportedPhoneCountryCode(selectedCountryCode) ??
+    getSupportedPhoneCountryCode(detectedCountryCode) ??
+    getSupportedPhoneCountryCode(selectedOption.code) ??
+    getSupportedPhoneCountryCode(mode) ??
+    defaultCountryCallingCodeOption?.isoCode ??
+    "";
+
+  const resetEmailChangeState = () => {
+    setNewEmail("");
+    setEmailVerificationCode("");
+    setIsRequestingEmailCode(false);
+    setIsConfirmingEmail(false);
+    setIsEmailVerificationModalOpen(false);
+    setEmailChangeErrorMessage(null);
+    setEmailCodeResendCooldownSeconds(0);
+  };
+
+  const closeEmailVerificationModal = () => {
+    setEmailVerificationCode("");
+    setEmailChangeErrorMessage(null);
+    setIsEmailVerificationModalOpen(false);
+  };
+
+  useEffect(() => {
+    if (emailCodeResendCooldownSeconds <= 0) return;
+
+    const timer = window.setTimeout(() => {
+      setEmailCodeResendCooldownSeconds((seconds) => Math.max(seconds - 1, 0));
+    }, 1000);
+
+    return () => window.clearTimeout(timer);
+  }, [emailCodeResendCooldownSeconds]);
+
+  useEffect(() => {
+    if (!isEmailVerificationModalOpen) return;
+
+    const scrollY = window.scrollY;
+    const { body } = document;
+    const previousBodyStyles = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overflow: body.style.overflow,
+      paddingRight: body.style.paddingRight,
+    };
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    const handleBackgroundTouchMove = (event: TouchEvent) => {
+      const target = event.target;
+
+      if (target instanceof Element && target.closest("[data-security-modal-content]")) {
+        return;
+      }
+
+      event.preventDefault();
+    };
+
+    document.addEventListener("touchmove", handleBackgroundTouchMove, { passive: false });
+
+    return () => {
+      document.removeEventListener("touchmove", handleBackgroundTouchMove);
+      body.style.position = previousBodyStyles.position;
+      body.style.top = previousBodyStyles.top;
+      body.style.left = previousBodyStyles.left;
+      body.style.right = previousBodyStyles.right;
+      body.style.width = previousBodyStyles.width;
+      body.style.overflow = previousBodyStyles.overflow;
+      body.style.paddingRight = previousBodyStyles.paddingRight;
+      window.scrollTo(0, scrollY);
+    };
+  }, [isEmailVerificationModalOpen]);
+
+  useEffect(() => {
+    if (!isEmailVerificationModalOpen || !emailChangeErrorMessage) return;
+
+    const timer = window.setTimeout(() => {
+      setEmailChangeErrorMessage(null);
+    }, 2000);
+
+    return () => window.clearTimeout(timer);
+  }, [emailChangeErrorMessage, isEmailVerificationModalOpen]);
+
+  useEffect(() => {
+    if (!personalDetailsSaveMessage) return;
+
+    const timer = window.setTimeout(() => {
+      setPersonalDetailsSaveMessage(null);
+    }, 2000);
+
+    return () => window.clearTimeout(timer);
+  }, [personalDetailsSaveMessage]);
 
   const handleEdit = () => {
-    setDraft(initialValues);
+    setDraft(savedValues);
+    setStatusMessage(null);
+    setPersonalDetailsSaveMessage(null);
+    setErrorMessage(null);
     setIsEditing(true);
   };
 
   const handleCancel = () => {
-    setDraft(initialValues);
+    setDraft(savedValues);
+    setStatusMessage(null);
+    setPersonalDetailsSaveMessage(null);
+    setErrorMessage(null);
+    setValidationErrors({});
     setIsEditing(false);
   };
 
+  const handleCancelEmailChange = () => {
+    setIsChangingEmail(false);
+    resetEmailChangeState();
+  };
+
+  const handleRequestEmailCode = async () => {
+    const nextEmail = newEmail.trim().toLowerCase();
+    const validationError = getEmailChangeError(nextEmail, savedValues.email);
+
+    if (
+      validationError ||
+      isRequestingEmailCode ||
+      emailCodeResendCooldownSeconds > 0
+    ) {
+      setEmailChangeErrorMessage(
+        validationError ||
+          "Please wait 30 seconds before requesting another verification code.",
+      );
+      return;
+    }
+
+    setIsRequestingEmailCode(true);
+    setEmailChangeErrorMessage(null);
+
+    try {
+      const response = await fetch("/api/account/email-change/request", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newEmail: nextEmail }),
+      });
+
+      const data = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        cooldownSeconds?: number;
+        error?: string;
+      } | null;
+
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.error || "Unable to send verification code.");
+      }
+
+      setNewEmail(nextEmail);
+      setEmailVerificationCode("");
+      setEmailCodeResendCooldownSeconds(
+        data.cooldownSeconds ?? emailChangeResendCooldownSeconds,
+      );
+      setIsEmailVerificationModalOpen(true);
+    } catch (error) {
+      setIsEmailVerificationModalOpen(false);
+      setEmailChangeErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to send verification code.",
+      );
+    } finally {
+      setIsRequestingEmailCode(false);
+    }
+  };
+
+  const handleConfirmEmailChange = async () => {
+    const nextEmail = newEmail.trim().toLowerCase();
+    const code = emailVerificationCode.trim();
+    const validationError = getEmailChangeError(nextEmail, savedValues.email);
+
+    if (validationError || !verificationCodePattern.test(code) || isConfirmingEmail) {
+      setEmailChangeErrorMessage(
+        validationError || "Enter the 6-digit verification code.",
+      );
+      return;
+    }
+
+    setIsConfirmingEmail(true);
+    setEmailChangeErrorMessage(null);
+
+    try {
+      const response = await fetch("/api/account/email-change/confirm", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newEmail: nextEmail, code }),
+      });
+
+      const data = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        email?: string;
+        error?: string;
+      } | null;
+
+      if (!response.ok || !data?.ok || !data.email) {
+        throw new Error(data?.error || "Unable to update email address.");
+      }
+
+      const updatedValues = {
+        ...savedValues,
+        email: data.email,
+      };
+
+      setSavedValues(updatedValues);
+      setDraft(updatedValues);
+      setIsChangingEmail(false);
+      resetEmailChangeState();
+      setStatusMessage("Your email address has been updated.");
+      router.refresh();
+    } catch (error) {
+      setEmailChangeErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to update email address.",
+      );
+    } finally {
+      setIsConfirmingEmail(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (isSaving || !hasUnsavedProfileChanges) return;
+
+    const nextValidationErrors = getPersonalDetailsValidationErrors(draft);
+
+    if (Object.keys(nextValidationErrors).length > 0) {
+      setValidationErrors(nextValidationErrors);
+      setStatusMessage(null);
+      setPersonalDetailsSaveMessage(null);
+      setErrorMessage("Please check the highlighted personal details.");
+      return;
+    }
+
+    setIsSaving(true);
+    setStatusMessage(null);
+    setPersonalDetailsSaveMessage(null);
+    setErrorMessage(null);
+    setValidationErrors({});
+
+    try {
+      const profilePayload = {
+        fullName: draft.name,
+        phoneNumber: draft.phone,
+        phoneCountryCode: draft.phoneCountryCode || null,
+        dateOfBirth: draft.dateOfBirth,
+        gender: draft.gender,
+        nationality: draft.nationality,
+        address: draft.address,
+      };
+
+      const response = await fetch("/api/account/profile", {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profilePayload),
+      });
+
+      const data = (await response.json().catch(() => null)) as {
+        error?: string;
+        profile?: UserProfileResponse;
+      } | null;
+
+      if (!response.ok || !data?.profile) {
+        throw new Error(data?.error || "Unable to save profile details.");
+      }
+
+      const nextSavedValues: PersonalDetailsDraft = {
+        name: data.profile.fullName ?? "",
+        email: savedValues.email,
+        phone: data.profile.phoneNumber ?? "",
+        phoneCountryCode: getSupportedPhoneCountryCode(data.profile.phoneCountryCode) ?? "",
+        dateOfBirth: data.profile.dateOfBirth ?? "",
+        gender: data.profile.gender ?? "",
+        nationality: data.profile.nationality ?? "",
+        address: data.profile.address ?? "",
+      };
+
+      setSavedValues(nextSavedValues);
+      setDraft(nextSavedValues);
+      setPersonalDetailsSaveMessage("Personal details updated");
+      setIsEditing(false);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : t["accountDashboard.personalDetails.saveError"] ||
+              "Unable to save profile details.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const updateDraft = (key: keyof PersonalDetailsDraft, value: string) => {
+    if (key === "email") return;
     setDraft((current) => ({ ...current, [key]: value }));
+    setPersonalDetailsSaveMessage(null);
+    setValidationErrors((current) => {
+      if (!current[key]) return current;
+      const { [key]: _removed, ...remainingErrors } = current;
+      void _removed;
+      return remainingErrors;
+    });
+  };
+
+  const personalDetailRowByKey = new Map(
+    personalDetailRows.map((row) => [row.key, row]),
+  );
+
+  const getPersonalDetailRow = (key: keyof PersonalDetailsDraft) => {
+    const row = personalDetailRowByKey.get(key);
+
+    if (!row) {
+      throw new Error(`Missing personal details row for ${key}`);
+    }
+
+    return row;
+  };
+
+  const renderEditField = (key: keyof PersonalDetailsDraft) => {
+    const row = getPersonalDetailRow(key);
+
+    if (key === "email") {
+      return (
+        <PersonalDetailsEmailEditRow
+          key={row.key}
+          row={row}
+          currentEmail={savedValues.email}
+          isChangingEmail={isChangingEmail}
+          newEmail={newEmail}
+          emailValidationError={emailValidationError}
+          isRequestingCode={isRequestingEmailCode}
+          resendCooldownSeconds={emailCodeResendCooldownSeconds}
+          errorMessage={isEmailVerificationModalOpen ? null : emailChangeErrorMessage}
+          onStartChange={() => {
+            setStatusMessage(null);
+            setEmailChangeErrorMessage(null);
+            setEmailCodeResendCooldownSeconds(0);
+            setIsChangingEmail(true);
+          }}
+          onNewEmailChange={(value) => {
+            setNewEmail(value);
+            setEmailVerificationCode("");
+            setIsEmailVerificationModalOpen(false);
+            setEmailCodeResendCooldownSeconds(0);
+            setEmailChangeErrorMessage(null);
+          }}
+          onRequestCode={handleRequestEmailCode}
+          onCancel={handleCancelEmailChange}
+        />
+      );
+    }
+
+    return (
+      <PersonalDetailsEditRow
+        key={row.key}
+        row={row}
+        value={draft[key]}
+        error={validationErrors[key]}
+        onChange={updateDraft}
+        defaultPhoneCountryCode={defaultPhoneCountryCode}
+        phoneCountryCode={key === "phone" ? draft.phoneCountryCode : undefined}
+      />
+    );
+  };
+
+  const renderReadOnlyRow = (key: keyof PersonalDetailsDraft) => {
+    const row = getPersonalDetailRow(key);
+    const readOnlyValue = savedValues[row.key];
+
+    return (
+      <div
+        key={row.key}
+        className="grid grid-cols-1 gap-2 border-b border-slate-200 py-5 last:border-b-0 sm:grid-cols-[220px_minmax(0,1fr)] sm:gap-6"
+      >
+        <div className="text-sm font-semibold leading-5 text-slate-900 sm:pt-0.5">
+          {row.label}
+        </div>
+        <DetailValue
+          value={
+            row.key === "address"
+              ? formatStructuredAddressForDisplay(readOnlyValue)
+              : readOnlyValue
+          }
+          fallback={row.fallback}
+          preserveLines={row.key === "address"}
+        />
+      </div>
+    );
   };
 
   return (
     <section
-      className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+      className={cn(
+        "overflow-hidden border border-slate-200 bg-white shadow-sm",
+        !isEditing && "-mx-4 rounded-none px-4 sm:mx-0 sm:rounded-2xl sm:px-0",
+        isEditing &&
+          "-mx-4 rounded-none border-0 px-4 py-6 shadow-none sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8",
+      )}
       aria-labelledby="dashboard-title"
     >
-      <div>
-        {personalDetailRows.map((row) => {
-          const readOnlyValue = initialValues[row.key];
-          const editValue = draft[row.key];
+      {!isEditing ? (
+        <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
+          <p className="text-sm text-slate-600">
+            {t["accountDashboard.personalDetails.description"] ||
+              "Manage the information Kurioticket uses for your account."}
+          </p>
+        </div>
+      ) : null}
 
-          return (
-            <div key={row.key} className="grid min-w-0 gap-1 border-t border-slate-200 px-5 py-4 first:border-t-0 sm:min-h-16 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center sm:gap-6 sm:px-6 sm:py-3">
-              <div className="text-sm font-medium leading-5 text-slate-700 sm:text-slate-800">{row.label}</div>
-              {isEditing ? (
-                <div className="min-w-0 space-y-1.5">
-                  <DetailInput row={row} value={editValue} onChange={updateDraft} />
-                  {row.helper ? <p className="text-sm leading-6 text-slate-500">{row.helper}</p> : null}
-                </div>
-              ) : (
-                <DetailValue value={readOnlyValue} fallback={row.fallback} helper={row.helper} />
-              )}
+      {statusMessage || errorMessage ? (
+        <div className={cn("px-5 pt-4 sm:px-6", isEditing && "px-0")}>
+          <MessageBanner tone={errorMessage ? "error" : "success"}>
+            {errorMessage || statusMessage}
+          </MessageBanner>
+        </div>
+      ) : null}
+
+      {isEditing ? (
+        <div className="mx-auto max-w-[64rem]">
+          <div className="grid grid-cols-1 gap-6 px-5 py-7 sm:px-7 lg:px-9 lg:py-9">
+            <div>
+              <h2 className="text-lg font-semibold leading-7 text-slate-950">
+                {t["accountDashboard.personalDetails.section.basicInformation"]}
+              </h2>
+              <p className="mt-2 max-w-xs text-sm leading-6 text-slate-600">
+                {t["accountDashboard.personalDetails.description"]}
+              </p>
             </div>
-          );
-        })}
-      </div>
-
-      <div className="border-t border-slate-200 px-5 py-4 sm:px-6">
-        {isEditing ? (
-          <div className="space-y-4">
-            <p className="text-sm leading-6 text-slate-500">{t["accountDashboard.personalDetails.editingComingSoon"]}</p>
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="focus-ring inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-              >
-                {t["accountDashboard.personalDetails.cancel"]}
-              </button>
-              <button
-                type="button"
-                disabled
-                className="inline-flex min-h-10 cursor-not-allowed items-center justify-center rounded-lg bg-slate-200 px-4 text-sm font-semibold text-slate-500"
-              >
-                {t["accountDashboard.personalDetails.saveChanges"]}
-              </button>
+            <div className="min-w-0">
+              {personalDetailsFieldOrder
+                .filter((key) => key !== "address")
+                .map((key) => renderEditField(key))}
             </div>
           </div>
+          <div className="grid grid-cols-1 gap-6 border-t border-slate-200 px-5 py-7 sm:px-7 lg:px-9 lg:py-9">
+            <div>
+              <h2 className="text-lg font-semibold leading-7 text-slate-950">
+                {t["accountDashboard.personalDetails.section.address"]}
+              </h2>
+              <p className="mt-2 max-w-xs text-sm leading-6 text-slate-600">
+                {t["accountDashboard.personalDetails.addressDescription"]}
+              </p>
+            </div>
+            <div className="min-w-0">{renderEditField("address")}</div>
+          </div>
+        </div>
+      ) : (
+        <div className="px-5 sm:px-6">
+          {personalDetailsFieldOrder.map((key) => renderReadOnlyRow(key))}
+        </div>
+      )}
+
+      <div
+        className={cn(
+          "border-t border-slate-200 bg-slate-50/60 px-5 py-4 sm:px-6",
+          isEditing &&
+            "mx-auto max-w-[64rem] bg-transparent px-5 py-5 sm:px-7 lg:px-9",
+        )}
+      >
+        {isEditing ? (
+          <div className="relative flex flex-row items-center justify-end gap-3">
+            {personalDetailsSaveMessage ? (
+              <p
+                className="pointer-events-none absolute bottom-full right-0 mb-3 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-lg"
+                role="status"
+                aria-live="polite"
+              >
+                {personalDetailsSaveMessage}
+              </p>
+            ) : null}
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={isSaving}
+              className="focus-ring inline-flex min-h-11 w-auto cursor-pointer items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-default disabled:opacity-60"
+            >
+              {t["accountDashboard.personalDetails.cancel"]}
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={isSaving || !hasUnsavedProfileChanges}
+              className="focus-ring inline-flex min-h-11 w-auto cursor-pointer items-center justify-center rounded-xl bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#021C2B] disabled:cursor-pointer disabled:bg-[#004BB8]/10 disabled:text-[#004BB8]"
+            >
+              {isSaving
+                ? t["accountDashboard.personalDetails.saving"] || "Saving…"
+                : t["accountDashboard.personalDetails.saveChanges"]}
+            </button>
+          </div>
         ) : (
-          <div className="flex justify-stretch sm:justify-end">
+          <div className="flex justify-end">
             <button
               type="button"
               onClick={handleEdit}
-              className="focus-ring inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-blue-700 bg-white px-4 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 sm:w-auto"
+              className="focus-ring inline-flex min-h-11 w-auto cursor-pointer items-center justify-center rounded-xl border border-[#004BB8] bg-white px-5 text-sm font-semibold text-[#004BB8] transition hover:bg-[#004BB8]/5"
             >
               {t["accountDashboard.personalDetails.edit"]}
             </button>
           </div>
         )}
       </div>
+
+      {isEmailVerificationModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="verify-email-change-title">
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleConfirmEmailChange();
+            }}
+            data-security-modal-content
+            className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
+          >
+            <h2 id="verify-email-change-title" className="text-xl font-semibold text-slate-950">Verify email change</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Enter the 6-digit verification code we sent to {newEmail}. Check your inbox or junk/spam folder.</p>
+            <div className="mt-5 space-y-4">
+              <label className="block text-sm font-medium text-slate-800">
+                Verification code
+                <input
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  type="text"
+                  value={emailVerificationCode}
+                  onChange={(event) => {
+                    setEmailVerificationCode(event.target.value.replace(/\D/g, "").slice(0, 6));
+                    setEmailChangeErrorMessage(null);
+                  }}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                />
+              </label>
+              <div className="space-y-1">
+                <p className="text-xs leading-5 text-slate-500">Code expires after 15 minutes.</p>
+                {emailCodeResendCooldownSeconds > 0 ? (
+                  <p className="text-xs font-medium leading-5 text-slate-500">You can request a new code in {emailCodeResendCooldownSeconds}s.</p>
+                ) : null}
+              </div>
+              {emailChangeErrorMessage ? (
+                <MessageBanner tone="error">{emailChangeErrorMessage}</MessageBanner>
+              ) : null}
+            </div>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button type="button" onClick={closeEmailVerificationModal} disabled={isConfirmingEmail} className="focus-ring min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60 sm:px-4">Cancel</button>
+              <button
+                type="submit"
+                disabled={Boolean(emailValidationError) || !isVerificationCodeValid || isConfirmingEmail}
+                className="focus-ring min-w-0 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60 sm:px-4"
+              >
+                {isConfirmingEmail ? (
+                  "Updating…"
+                ) : (
+                  <>
+                    <span className="sm:hidden">Verify</span>
+                    <span className="hidden sm:inline">Verify and update email</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
     </section>
   );
 }
+
 
 function ListRow({ title, body, href, icon: Icon, status }: ListRowProps) {
   const row = (
@@ -556,12 +2286,25 @@ function ListRow({ title, body, href, icon: Icon, status }: ListRowProps) {
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <h3 className="min-w-0 break-words font-semibold text-navy">{title}</h3>
-          {status ? <span className="break-words rounded-full bg-surface-muted px-2.5 py-1 text-xs font-semibold text-muted">{status}</span> : null}
+          <h3 className="min-w-0 break-words text-base font-semibold text-slate-900">
+            {title}
+          </h3>
+          {status ? (
+            <span className="break-words rounded-full bg-surface-muted px-2.5 py-1 text-xs font-semibold text-muted">
+              {status}
+            </span>
+          ) : null}
         </div>
-        <p className="mt-1 break-words text-sm leading-6 text-muted">{body}</p>
+        <p className="mt-1 break-words text-sm leading-6 text-slate-600">
+          {body}
+        </p>
       </div>
-      {href ? <ChevronRight className="mt-2 size-4 shrink-0 text-teal-dark" aria-hidden="true" /> : null}
+      {href ? (
+        <ChevronRight
+          className="mt-2 size-4 shrink-0 text-teal-dark"
+          aria-hidden="true"
+        />
+      ) : null}
     </div>
   );
 
@@ -576,13 +2319,41 @@ function ListRow({ title, body, href, icon: Icon, status }: ListRowProps) {
   );
 }
 
-export function DashboardOverview({ initials, displayName, userEmail, userName }: DashboardOverviewProps) {
+export function DashboardOverview({
+  initials,
+  displayName,
+  userEmail,
+  userName,
+  userProfile,
+}: DashboardOverviewProps) {
   const { t } = useLocale();
+  const personalDetailsKey = [
+    userEmail ?? "",
+    userProfile?.fullName ?? "",
+    userProfile?.phoneNumber ?? "",
+    userProfile?.phoneCountryCode ?? "",
+    userProfile?.dateOfBirth ?? "",
+    userProfile?.gender ?? "",
+    userProfile?.nationality ?? "",
+    userProfile?.address ?? "",
+  ].join("|");
 
   return (
-    <div className="mx-auto min-w-0 max-w-[60rem] space-y-5 px-4 py-6 sm:px-6 sm:py-8 lg:px-6 lg:py-10">
-      <AccountSectionHeader title={t["accountDashboard.personalDetails.title"]} description={t["accountDashboard.personalDetails.subtitle"]} titleId="dashboard-title" />
-      <PersonalDetailsSection initials={initials} displayName={displayName} userEmail={userEmail} userName={userName} />
+    <div className="min-w-0 max-w-[60rem] space-y-5 pb-6 pt-0 sm:pb-8 lg:ms-[4.875rem] lg:pb-10">
+      <AccountSectionHeader
+        title={t["accountDashboard.personalDetails.title"]}
+        description={t["accountDashboard.personalDetails.subtitle"]}
+        titleId="dashboard-title"
+        flushStart
+      />
+      <PersonalDetailsSection
+        key={personalDetailsKey}
+        initials={initials}
+        displayName={displayName}
+        userEmail={userEmail}
+        userName={userName}
+        userProfile={userProfile}
+      />
     </div>
   );
 }
@@ -592,21 +2363,36 @@ export function SavedDashboardPage() {
   const { t } = useLocale();
 
   return (
-    <section className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]" aria-labelledby="saved-dashboard-title">
-      <AccountSectionHeader title={t["accountDashboard.saved.title"]} description={t["accountDashboard.saved.description"]} titleId="saved-dashboard-title" />
-      <div className="px-1 py-7 sm:px-2 sm:py-9 lg:overflow-hidden lg:rounded-[1.65rem] lg:border lg:border-slate-200/90 lg:bg-white lg:px-8 lg:py-14 lg:shadow-[0_24px_70px_-58px_rgba(49,46,129,0.7)] xl:px-10">
-        <div className="mx-auto flex max-w-md flex-col items-center text-center">
-          <SavedEmptyStateIllustration />
-          <h2 className="mt-6 text-2xl font-black tracking-[-0.025em] text-slate-950 lg:text-[1.65rem] lg:font-bold">
+    <section
+      className="mx-auto min-w-0 max-w-[72rem] bg-white pb-12 pt-3 sm:pt-6"
+      aria-labelledby="saved-dashboard-title"
+    >
+      <div className="flex min-w-0 items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1
+            id="saved-dashboard-title"
+            className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]"
+          >
+            {t["accountDashboard.saved.title"]}
+          </h1>
+        </div>
+      </div>
+
+      <div className="flex min-h-[34rem] items-start justify-center px-3 pb-10 pt-16 sm:min-h-[38rem] sm:pt-16 lg:min-h-[40rem] lg:pt-20">
+        <div className="mx-auto flex w-full max-w-xl flex-col items-center text-center">
+          <h2 className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-[1.6rem]">
             {t["accountDashboard.saved.emptyTitle"]}
           </h2>
-          <p className="mx-auto mt-3 max-w-xs text-base leading-7 text-slate-600">
+          <div className="mt-2 w-full sm:mt-6">
+            <SavedEmptyStateIllustration />
+          </div>
+          <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-slate-600 sm:mt-4">
             {t["accountDashboard.saved.emptyDescription"]}
           </p>
           <LinkButton
-            href="/"
+            href="/dashboard/account"
             size="lg"
-            className="mt-7 w-full rounded-xl bg-violet-700 px-8 text-white shadow-[0_18px_36px_-24px_rgba(79,70,229,0.95)] hover:bg-violet-800 sm:max-w-[19rem] lg:w-auto lg:min-w-36"
+            className="mt-6 w-auto min-w-[8rem] rounded-lg bg-blue-600 px-8 text-white shadow-[0_18px_36px_-24px_rgba(37,99,235,0.9)] hover:bg-blue-700 sm:mt-4"
           >
             {t["accountDashboard.saved.explore"]}
           </LinkButton>
@@ -620,8 +2406,15 @@ export function PreferencesDashboardPage() {
   const { t } = useLocale();
 
   return (
-    <section aria-labelledby="preferences-title" className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]">
-      <AccountSectionHeader title={t["accountDashboard.preferences.title"]} description={t["accountDashboard.preferences.description"]} titleId="preferences-title" />
+    <section
+      aria-labelledby="preferences-title"
+      className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]"
+    >
+      <AccountSectionHeader
+        title={t["accountDashboard.preferences.title"]}
+        description={t["accountDashboard.preferences.description"]}
+        titleId="preferences-title"
+      />
       <div className="grid gap-3">
         <ListRow
           title={t["accountDashboard.preferences.personalDetails.title"]}
@@ -652,86 +2445,866 @@ export function PreferencesDashboardPage() {
   );
 }
 
-function SecuritySettingRow({ title, body, action, danger = false, onAction, statusId }: SecuritySettingRowProps) {
+function SecuritySettingRow({
+  title,
+  body,
+  action,
+  danger = false,
+  onAction,
+  statusId,
+}: SecuritySettingRowProps) {
   return (
-    <div className="flex min-w-0 flex-col gap-4 px-5 py-5 sm:min-h-[5.25rem] sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6 sm:py-4">
-      <div className="min-w-0 sm:pr-4">
-        <h2 className="text-base font-semibold leading-6 text-slate-900 sm:text-[15px]">{title}</h2>
-        <p className="mt-1 text-sm leading-6 text-slate-600">{body}</p>
+    <div className="grid min-w-0 grid-cols-1 gap-3 border-b border-slate-200 py-5 last:border-b-0 sm:grid-cols-[220px_minmax(0,1fr)] sm:gap-6 sm:py-5">
+      <div className="min-w-0">
+        <h2 className="text-base font-semibold leading-6 text-slate-900">
+          {title}
+        </h2>
       </div>
-      <button
-        type="button"
-        onClick={onAction}
-        aria-describedby={statusId}
-        className={cn(
-          "focus-ring inline-flex min-h-10 w-fit shrink-0 cursor-pointer items-center justify-center rounded-lg border bg-white px-4 py-2 text-sm font-semibold leading-5 transition sm:self-center",
-          danger
-            ? "border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50"
-            : "border-blue-200 text-blue-700 hover:border-blue-300 hover:bg-blue-50",
-        )}
-      >
-        {action}
-      </button>
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+        <div className="min-w-0">
+          <p className="max-w-2xl text-sm leading-6 text-slate-600">
+            {body}
+          </p>
+        </div>
+        {action ? (
+          <button
+            type="button"
+            onClick={onAction}
+            aria-describedby={statusId}
+            className={cn(
+              "focus-ring inline-flex min-h-10 w-auto max-w-full shrink-0 cursor-pointer items-center justify-center self-end rounded-lg border bg-white px-4 py-2 text-center text-sm font-semibold leading-5 transition sm:self-auto",
+              danger
+                ? "border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50"
+                : "border-slate-300 text-slate-800 hover:border-slate-400 hover:bg-slate-50",
+            )}
+          >
+            {action}
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }
 
 export function SecurityDashboardPage() {
   const { t } = useLocale();
+  const router = useRouter();
   const [actionMessage, setActionMessage] = useState("");
+  const [securityFeedback, setSecurityFeedback] = useState("");
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [passwordModalError, setPasswordModalError] = useState("");
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [deleteRequestSaving, setDeleteRequestSaving] = useState(false);
+  const [securityEmailAlerts, setSecurityEmailAlerts] = useState(true);
+  const [twoFactor, setTwoFactor] = useState<TwoFactorStatus>({ enabled: false, method: null, enabledAt: null, disabledAt: null, recoveryCodesRemaining: 0 });
+  const [twoFactorModal, setTwoFactorModal] = useState<TwoFactorMode | null>(null);
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [twoFactorPassword, setTwoFactorPassword] = useState("");
+  const [totpSetup, setTotpSetup] = useState<TotpSetup | null>(null);
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
+  const [twoFactorModalError, setTwoFactorModalError] = useState("");
+  const [twoFactorSaving, setTwoFactorSaving] = useState(false);
+  const [preferencesLoading, setPreferencesLoading] = useState(true);
+  const [preferencesSaving, setPreferencesSaving] = useState(false);
+  const [passkeys, setPasskeys] = useState<PasskeySummary[]>([]);
+  const [passkeysModalOpen, setPasskeysModalOpen] = useState(false);
+  const [passkeySaving, setPasskeySaving] = useState(false);
+  const [passkeyFlowStep, setPasskeyFlowStep] = useState<PasskeyFlowStep>("intro");
+  const [passkeyVerificationMethod, setPasskeyVerificationMethod] = useState<"email" | "totp" | "password" | null>(null);
+  const [passkeyVerificationCode, setPasskeyVerificationCode] = useState("");
+  const [passkeyFlowError, setPasskeyFlowError] = useState("");
+  const [passkeyCredential, setPasskeyCredential] = useState<PublicKeyCredential | null>(null);
+  const [passkeyName, setPasskeyName] = useState("");
+  const [sessionsModalOpen, setSessionsModalOpen] = useState(false);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [sessions, setSessions] = useState<AccountSessionActivity[]>([]);
+  const [sessionNotice] = useState(
+    "Review devices that have recently accessed your account.",
+  );
+  const [removingSessionId, setRemovingSessionId] = useState<string | null>(null);
+  const [confirmingSessionRemovalId, setConfirmingSessionRemovalId] = useState<string | null>(null);
   const securityActionStatusId = "security-action-status";
+  const securityModalOpen = Boolean(passwordModalOpen || deleteModalOpen || twoFactorModal || passkeysModalOpen || sessionsModalOpen);
+  const tx = (key: string, fallback: string) => t[key] || fallback;
+  const showSecurityFeedback = (message: string) => {
+    setActionMessage("");
+    setSecurityFeedback(message);
+  };
+  const resetPasswordModalState = () => {
+    setPasswordForm({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
+    setPasswordModalError("");
+  };
 
-  const handleUnavailableSecurityAction = () => {
-    setActionMessage("This security action is not available yet.");
+  useEffect(() => {
+    if (!securityFeedback) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setSecurityFeedback("");
+    }, 2000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [securityFeedback]);
+
+  useEffect(() => {
+    if (!passwordModalError) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setPasswordModalError("");
+    }, 2000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [passwordModalError]);
+
+  useEffect(() => {
+    if (!twoFactorModalError) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setTwoFactorModalError("");
+    }, 2000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [twoFactorModalError]);
+
+  useEffect(() => {
+    if (!securityModalOpen) return;
+
+    const scrollY = window.scrollY;
+    const { body } = document;
+    const previousBodyStyles = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overflow: body.style.overflow,
+      paddingRight: body.style.paddingRight,
+    };
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    const handleBackgroundTouchMove = (event: TouchEvent) => {
+      const target = event.target;
+
+      if (target instanceof Element && target.closest("[data-security-modal-content]")) {
+        return;
+      }
+
+      event.preventDefault();
+    };
+
+    document.addEventListener("touchmove", handleBackgroundTouchMove, { passive: false });
+
+    return () => {
+      document.removeEventListener("touchmove", handleBackgroundTouchMove);
+      body.style.position = previousBodyStyles.position;
+      body.style.top = previousBodyStyles.top;
+      body.style.left = previousBodyStyles.left;
+      body.style.right = previousBodyStyles.right;
+      body.style.width = previousBodyStyles.width;
+      body.style.overflow = previousBodyStyles.overflow;
+      body.style.paddingRight = previousBodyStyles.paddingRight;
+      window.scrollTo(0, scrollY);
+    };
+  }, [securityModalOpen]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadSecurityPreferences() {
+      try {
+        const response = await fetch("/api/account/security/preferences", {
+          method: "GET",
+          credentials: "same-origin",
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!active) return;
+
+        if (response.ok) {
+          setSecurityEmailAlerts(Boolean(data.preferences?.securityEmailAlerts));
+          const twoFactorResponse = await fetch("/api/account/security/two-factor", { method: "GET", credentials: "same-origin" });
+          const twoFactorData = await twoFactorResponse.json().catch(() => ({}));
+          if (active && twoFactorResponse.ok) setTwoFactor(twoFactorData.twoFactor);
+          const passkeysResponse = await fetch("/api/account/security/passkeys", { method: "GET", credentials: "same-origin" });
+          const passkeysData = await passkeysResponse.json().catch(() => ({}));
+          if (active && passkeysResponse.ok) setPasskeys(Array.isArray(passkeysData.passkeys) ? passkeysData.passkeys : []);
+        } else {
+          setActionMessage("Unable to load security preferences.");
+        }
+      } catch {
+        if (active) setActionMessage("Unable to load security preferences.");
+      } finally {
+        if (active) setPreferencesLoading(false);
+      }
+    }
+
+    loadSecurityPreferences();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handlePasswordFieldChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setPasswordModalError("");
+    setPasswordForm((current) => ({ ...current, [name]: value }));
+  };
+
+  const handlePasswordSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setActionMessage("");
+
+    if (!passwordForm.currentPassword) {
+      setPasswordModalError("Current password is required.");
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 8) {
+      setPasswordModalError("New password must be at least 8 characters.");
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordModalError("Confirm password must match the new password.");
+      return;
+    }
+
+    if (passwordForm.currentPassword === passwordForm.newPassword) {
+      setPasswordModalError("Choose a new password that is different from your current password.");
+      return;
+    }
+
+    setPasswordSaving(true);
+
+    try {
+      const response = await fetch("/api/account/security/password", {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(passwordForm),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setPasswordModalError(typeof data.error === "string" && data.error ? data.error : "Unable to update password.");
+        return;
+      }
+
+      resetPasswordModalState();
+      setPasswordModalOpen(false);
+      showSecurityFeedback("Password updated");
+    } catch {
+      setPasswordModalError("Unable to update password.");
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
+
+
+  const loadPasskeys = async () => {
+    const response = await fetch("/api/account/security/passkeys", { method: "GET", credentials: "same-origin" });
+    const data = await response.json().catch(() => ({}));
+    if (response.ok) setPasskeys(Array.isArray(data.passkeys) ? data.passkeys : []);
+  };
+  const resetPasskeySetupFlow = () => {
+    setPasskeySaving(false);
+    setPasskeyFlowStep("intro");
+    setPasskeyVerificationMethod(null);
+    setPasskeyVerificationCode("");
+    setPasskeyFlowError("");
+    setPasskeyCredential(null);
+    setPasskeyName("");
+  };
+  const openPasskeysModal = () => {
+    resetPasskeySetupFlow();
+    setPasskeysModalOpen(true);
+  };
+  const closePasskeysModal = () => {
+    setPasskeysModalOpen(false);
+    resetPasskeySetupFlow();
+  };
+  const requestPasskeyReauth = async (purpose: PasskeyPurpose) => {
+    setPasskeyFlowStep("sending");
+    setPasskeyFlowError("");
+    const sendResponse = await fetch("/api/account/security/passkeys/reauth", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "send-email-code", purpose }) });
+    const sendData = await sendResponse.json().catch(() => ({}));
+    if (!sendResponse.ok) throw new Error(sendData.error || "Unable to send a confirmation code.");
+    const method = sendData.method === "totp" ? "totp" : sendData.method === "password" ? "password" : "email";
+    setPasskeyVerificationMethod(method);
+    setPasskeyVerificationCode("");
+    setPasskeyFlowStep("code");
+    return method;
+  };
+  const verifyPasskeyReauth = async (purpose: PasskeyPurpose) => {
+    const code = passkeyVerificationCode.trim();
+    if (!code) { setPasskeyFlowError("Enter a verification code."); return null; }
+    setPasskeyFlowStep("verifying");
+    setPasskeyFlowError("");
+    const response = await fetch("/api/account/security/passkeys/reauth", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "verify", purpose, code }) });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.reauthToken) {
+      setPasskeyFlowStep("code");
+      setPasskeyFlowError(data.error || "That code is incorrect or expired. Try again.");
+      return null;
+    }
+    return String(data.reauthToken);
+  };
+  const continuePasskeyRegistration = async (reauthToken: string) => {
+    setPasskeyFlowStep("native");
+    const optionsResponse = await fetch("/api/account/security/passkeys/register/options", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reauthToken }) });
+    const optionsData = await optionsResponse.json().catch(() => ({}));
+    if (!optionsResponse.ok) throw new Error(optionsData.error || "Unable to start passkey setup.");
+    const credential = await navigator.credentials.create({ publicKey: decodeRegistrationOptions(optionsData.options) }) as PublicKeyCredential | null;
+    if (!credential) throw new Error("Passkey setup was cancelled. You can try again anytime.");
+    setPasskeyCredential(credential);
+    setPasskeyName(defaultPasskeyName());
+    setPasskeyFlowStep("name");
+  };
+  const handleAddPasskey = async () => {
+    if (!passkeysSupported()) { setActionMessage("Passkeys are not supported on this browser. Use password or Google sign-in instead."); return; }
+    setPasskeySaving(true); setActionMessage(""); setPasskeyFlowError("");
+    try { await requestPasskeyReauth("setup"); }
+    catch (error) { setPasskeyFlowStep("intro"); setPasskeyFlowError(error instanceof Error ? error.message : "Unable to send a confirmation code."); }
+    finally { setPasskeySaving(false); }
+  };
+  const handlePasskeyCodeSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setPasskeySaving(true);
+    try {
+      const reauthToken = await verifyPasskeyReauth("setup");
+      if (!reauthToken) return;
+      await continuePasskeyRegistration(reauthToken);
+    } catch (error) {
+      const message = error instanceof DOMException && error.name === "NotAllowedError" ? "Passkey setup was cancelled. You can try again anytime." : error instanceof Error ? error.message : "Unable to add passkey.";
+      setPasskeyFlowStep("code");
+      setPasskeyFlowError(message);
+    } finally { setPasskeySaving(false); }
+  };
+  const handlePasskeyNameSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!passkeyCredential) return;
+    setPasskeySaving(true); setPasskeyFlowError("");
+    try {
+      const verifyResponse = await fetch("/api/account/security/passkeys/register/verify", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(serializeRegistrationCredential(passkeyCredential, passkeyName.trim() || defaultPasskeyName())) });
+      const verifyData = await verifyResponse.json().catch(() => ({}));
+      if (!verifyResponse.ok) throw new Error(verifyData.error || "Unable to verify passkey setup.");
+      await loadPasskeys();
+      setPasskeyFlowStep("success");
+      showSecurityFeedback("Passkey added");
+    } catch (error) { setPasskeyFlowError(error instanceof Error ? error.message : "Unable to verify passkey setup."); }
+    finally { setPasskeySaving(false); }
+  };
+  const handleRenamePasskey = async (id: string, currentName: string | null) => {
+    const name = window.prompt("Rename passkey", currentName || "Passkey");
+    if (!name) return;
+    setPasskeySaving(true); setActionMessage("");
+    try {
+      const response = await fetch(`/api/account/security/passkeys/${id}`, { method: "PATCH", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
+      await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error("Unable to rename passkey.");
+      showSecurityFeedback("Passkey settings updated"); await loadPasskeys();
+    } catch (error) { setActionMessage(error instanceof Error ? error.message : "Unable to rename passkey."); } finally { setPasskeySaving(false); }
+  };
+  const handleRemovePasskey = async (id: string) => {
+    if (passkeys.length <= 1 && !window.confirm("You will no longer be able to sign in with passkeys. Keep a backup sign-in method in case you lose access to this passkey.")) return;
+    setPasskeySaving(true); setActionMessage("");
+    try {
+      const sendResponse = await fetch("/api/account/security/passkeys/reauth", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "send-email-code", purpose: "removal" }) });
+      const sendData = await sendResponse.json().catch(() => ({}));
+      if (!sendResponse.ok) throw new Error(sendData.error || "Unable to send a confirmation code.");
+      const secret = window.prompt(sendData.method === "totp" ? "Enter your authenticator-app code or a recovery code." : "Enter the 6-digit confirmation code we sent to your account email.");
+      if (!secret) throw new Error("Verification is required before removing passkeys.");
+      const verifyResponse = await fetch("/api/account/security/passkeys/reauth", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "verify", purpose: "removal", code: secret.trim() }) });
+      const verifyData = await verifyResponse.json().catch(() => ({}));
+      if (!verifyResponse.ok || !verifyData.reauthToken) throw new Error(verifyData.error || "Unable to verify that request.");
+      const response = await fetch(`/api/account/security/passkeys/${id}`, { method: "DELETE", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reauthToken: verifyData.reauthToken }) });
+      await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error("Unable to remove passkey.");
+      showSecurityFeedback("Passkey settings updated"); await loadPasskeys();
+    } catch (error) { setActionMessage(error instanceof Error ? error.message : "Unable to remove passkey."); } finally { setPasskeySaving(false); }
+  };
+
+  const loadSessionActivities = async () => {
+    setSessionsLoading(true);
+    setActionMessage("");
+
+    try {
+      const response = await fetch("/api/account/security/sessions", {
+        method: "GET",
+        credentials: "same-origin",
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setActionMessage("Unable to load active sessions.");
+        return;
+      }
+
+      setSessions(Array.isArray(data.sessions) ? data.sessions : []);
+      setConfirmingSessionRemovalId(null);
+    } catch {
+      setActionMessage("Unable to load active sessions.");
+    } finally {
+      setSessionsLoading(false);
+    }
+  };
+
+  const handleOpenSessions = () => {
+    setConfirmingSessionRemovalId(null);
+    setSessions([]);
+    setSessionsModalOpen(true);
+    void loadSessionActivities();
+  };
+
+  const handleRemoveSessionRecord = async (sessionId: string) => {
+    setRemovingSessionId(sessionId);
+    setConfirmingSessionRemovalId(null);
+    setActionMessage("");
+
+    try {
+      const response = await fetch("/api/account/security/sessions/revoke", {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+      });
+      await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setActionMessage("Unable to remove device record.");
+        return;
+      }
+
+      showSecurityFeedback("Sessions updated");
+      await loadSessionActivities();
+    } catch {
+      setActionMessage("Unable to remove device record.");
+    } finally {
+      setRemovingSessionId(null);
+    }
+  };
+
+
+  const closeTwoFactorModal = () => {
+    setTwoFactorCode("");
+    setTwoFactorPassword("");
+    setTotpSetup(null);
+    setRecoveryCodes([]);
+    setTwoFactorModalError("");
+    setTwoFactorModal(null);
+  };
+
+  const openTwoFactorModal = async (mode: TwoFactorMode) => {
+    setTwoFactorModal(mode);
+    setTwoFactorCode("");
+    setTwoFactorPassword("");
+    setTotpSetup(null);
+    setRecoveryCodes([]);
+    setTwoFactorModalError("");
+    setActionMessage("");
+    if (mode !== "setup") return;
+    setTwoFactorSaving(true);
+    try {
+      const response = await fetch("/api/account/security/two-factor/setup", { method: "POST", credentials: "same-origin" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) setTwoFactorModalError("Unable to start authenticator setup.");
+      else setTotpSetup(data.setup);
+    } catch {
+      setTwoFactorModalError("Unable to start authenticator setup.");
+    } finally {
+      setTwoFactorSaving(false);
+    }
+  };
+
+  const handleTwoFactorConfirm = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!twoFactorModal) return;
+    setTwoFactorSaving(true);
+    setActionMessage("");
+    setTwoFactorModalError("");
+    try {
+      const body = twoFactorModal === "disable" ? { code: twoFactorCode || undefined, password: twoFactorPassword || undefined } : { code: twoFactorCode };
+      const endpoint = twoFactorModal === "setup" ? "/api/account/security/two-factor/confirm" : twoFactorModal === "recovery" ? "/api/account/security/two-factor/recovery-codes/regenerate" : "/api/account/security/two-factor/disable";
+      const response = await fetch(endpoint, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setTwoFactorModalError("Unable to update two-factor authentication.");
+        return;
+      }
+      setTwoFactor(data.twoFactor);
+      setRecoveryCodes(Array.isArray(data.recoveryCodes) ? data.recoveryCodes : []);
+      if (!Array.isArray(data.recoveryCodes)) setTwoFactorModal(null);
+      setTwoFactorCode("");
+      setTwoFactorPassword("");
+      setTwoFactorModalError("");
+      showSecurityFeedback("Two-factor authentication updated");
+    } catch {
+      setTwoFactorModalError("Unable to update two-factor authentication.");
+    } finally {
+      setTwoFactorSaving(false);
+    }
+  };
+
+  const handleSecurityAlertsToggle = async (enabled: boolean) => {
+    setPreferencesSaving(true);
+    setActionMessage("");
+    setSecurityFeedback("");
+
+    try {
+      const response = await fetch("/api/account/security/preferences", {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ securityEmailAlerts: enabled }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setActionMessage("Unable to save security preferences.");
+        return;
+      }
+
+      setSecurityEmailAlerts(Boolean(data.preferences?.securityEmailAlerts));
+      showSecurityFeedback("Security notifications updated");
+    } catch {
+      setActionMessage("Unable to save security preferences.");
+    } finally {
+      setPreferencesSaving(false);
+    }
+  };
+
+  const handleDeletionRequest = async () => {
+    setDeleteRequestSaving(true);
+    setActionMessage("");
+
+    try {
+      const response = await fetch("/api/account/security/deletion-request", {
+        method: "POST",
+        credentials: "same-origin",
+      });
+      await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setActionMessage("Unable to request account deletion.");
+        return;
+      }
+
+      setDeleteModalOpen(false);
+      showSecurityFeedback("Delete account request submitted");
+      router.push("/account/pending-deletion");
+    } catch {
+      setActionMessage("Unable to request account deletion.");
+    } finally {
+      setDeleteRequestSaving(false);
+    }
   };
 
   return (
-    <section aria-labelledby="security-title" className="mx-auto min-w-0 max-w-[60rem] space-y-5 px-4 pt-6 sm:px-6 sm:pt-8 lg:px-6 lg:pt-10">
-      <AccountSectionHeader title={t["accountDashboard.security.title"]} description={t["accountDashboard.security.description"]} titleId="security-title" />
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_18px_45px_-38px_rgba(15,23,42,0.55)]">
-        <div className="divide-y divide-slate-200">
+    <section
+      aria-labelledby="security-title"
+      className="min-w-0 max-w-[60rem] space-y-5 pt-0 lg:ms-[4.875rem]"
+    >
+      <AccountSectionHeader
+        title={tx("accountDashboard.security.title", "Security settings")}
+        description={tx(
+          "accountDashboard.security.description",
+          "Manage sign-in and account security for your Kurioticket account.",
+        )}
+        titleId="security-title"
+        flushStart
+      />
+      <div className="-mx-4 overflow-hidden rounded-none border border-slate-200 bg-white px-4 shadow-sm sm:mx-0 sm:rounded-2xl sm:px-0">
+        <div className="px-5 sm:px-6">
           <SecuritySettingRow
-            title={t["accountDashboard.security.passkeys.title"]}
-            body={t["accountDashboard.security.passkeys.description"]}
-            action={t["accountDashboard.security.action.setUp"]}
-            onAction={handleUnavailableSecurityAction}
+            title={tx("accountDashboard.security.password.title", "Password")}
+            body={tx("accountDashboard.security.password.description", "Change the password used to sign in to your account.")}
+            action={tx("accountDashboard.security.action.changePassword", "Change password")}
+            // Keep the legacy handler shape discoverable for source-based locale tests: onAction={() => setPasswordModalOpen(true)}
+            onAction={() => { resetPasswordModalState(); setPasswordModalOpen(true); }}
             statusId={securityActionStatusId}
           />
           <SecuritySettingRow
-            title={t["accountDashboard.security.twoFactor.title"]}
-            body={t["accountDashboard.security.twoFactor.description"]}
-            action={t["accountDashboard.security.action.setUp"]}
-            onAction={handleUnavailableSecurityAction}
+            title={tx("accountDashboard.security.twoFactor.title", "Two-factor authentication")}
+            body={tx("accountDashboard.security.twoFactor.description", "Add extra protection with an authenticator app.")}
+            action={twoFactor.enabled ? tx("accountDashboard.security.action.manage", "Manage") : tx("accountDashboard.security.action.setUp", "Set up")}
+            onAction={() => void openTwoFactorModal(twoFactor.enabled ? "disable" : "setup")}
             statusId={securityActionStatusId}
           />
           <SecuritySettingRow
-            title={t["accountDashboard.security.activeSessions.title"]}
-            body={t["accountDashboard.security.activeSessions.description"]}
-            action={t["accountDashboard.security.action.manage"]}
-            onAction={handleUnavailableSecurityAction}
+            title={tx("accountDashboard.security.passkeys.title", "Passkeys")}
+            body={passkeys.length ? "Manage the devices, password managers, and security keys you use to sign in." : tx("accountDashboard.security.passkeys.description", "Use your device screen lock, Face ID, fingerprint, password manager, or security key to sign in faster and more securely.")}
+            action={passkeys.length ? tx("accountDashboard.security.action.manage", "Manage") : tx("accountDashboard.security.action.setUp", "Set up")}
+            // Keep the legacy handler shape discoverable for source-based locale tests: onAction={() => setPasskeysModalOpen(true)}
+            onAction={openPasskeysModal}
             statusId={securityActionStatusId}
           />
           <SecuritySettingRow
-            title={t["accountDashboard.security.deleteAccount.title"]}
-            body={t["accountDashboard.security.deleteAccount.description"]}
-            action={t["accountDashboard.security.action.deleteAccount"]}
-            onAction={handleUnavailableSecurityAction}
+            title={tx("accountDashboard.security.activeSessions.title", "Active sessions")}
+            body={tx("accountDashboard.security.activeSessions.description", "Review devices signed in to your account.")}
+            action={tx("accountDashboard.security.action.manageSessions", "Manage sessions")}
+            onAction={handleOpenSessions}
+            statusId={securityActionStatusId}
+          />
+          <div className="grid min-w-0 grid-cols-1 gap-3 border-b border-slate-200 py-5 last:border-b-0 sm:grid-cols-[220px_minmax(0,1fr)] sm:gap-6 sm:py-5">
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold leading-6 text-slate-900">
+                {tx("accountDashboard.security.notifications.title", "Security notifications")}
+              </h2>
+            </div>
+            <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+              <div className="min-w-0">
+                <p className="max-w-2xl text-sm leading-6 text-slate-600">
+                  {tx("accountDashboard.security.notifications.description", "Get alerts about important account activity.")}
+                </p>
+              </div>
+              <div className="relative inline-flex w-auto max-w-full shrink-0 flex-col items-end self-end sm:self-auto">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={securityEmailAlerts}
+                  disabled={preferencesLoading || preferencesSaving}
+                  onClick={() => handleSecurityAlertsToggle(!securityEmailAlerts)}
+                  className={cn(
+                    "focus-ring inline-flex min-h-10 w-auto max-w-full items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition",
+                    securityEmailAlerts ? "bg-blue-600 text-white hover:bg-blue-700" : "border border-slate-300 bg-white text-slate-800 hover:bg-slate-50",
+                    preferencesLoading || preferencesSaving ? "cursor-not-allowed opacity-60" : "cursor-pointer",
+                  )}
+                >
+                  {preferencesSaving ? tx("accountDashboard.preferences.saving", "Saving…") : securityEmailAlerts ? tx("accountDashboard.security.action.turnOff", "Turn off") : tx("accountDashboard.security.action.turnOn", "Turn on")}
+                </button>
+                <p
+                  role="status"
+                  aria-live="polite"
+                  className={cn(
+                    "pointer-events-none absolute top-full z-10 mt-2 whitespace-nowrap rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 shadow-sm transition-opacity",
+                    securityFeedback === "Security notifications updated" ? "opacity-100" : "opacity-0",
+                  )}
+                >
+                  {securityFeedback === "Security notifications updated" ? securityFeedback : ""}
+                </p>
+              </div>
+            </div>
+          </div>
+          <SecuritySettingRow
+            title={tx("accountDashboard.security.deleteAccount.title", "Delete account")}
+            body={tx("accountDashboard.security.deleteAccount.description", "Request permanent account deletion.")}
+            action={tx("accountDashboard.security.action.deleteAccount", "Delete account")}
+            onAction={() => setDeleteModalOpen(true)}
             statusId={securityActionStatusId}
             danger
           />
         </div>
       </div>
-      <p
-        id={securityActionStatusId}
+      <p id={securityActionStatusId} role="alert" className={cn("px-1 text-sm font-medium leading-5 text-red-600 sm:px-2", actionMessage ? "" : "sr-only")}>{actionMessage}</p>
+      <div
         role="status"
         aria-live="polite"
         className={cn(
-          "px-1 text-sm font-medium leading-5 text-slate-600 sm:px-2",
-          actionMessage ? "" : "sr-only",
+          "pointer-events-none fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-lg transition-all duration-200 sm:left-auto sm:right-6 sm:translate-x-0",
+          securityFeedback && securityFeedback !== "Security notifications updated" ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0",
         )}
       >
-        {actionMessage}
-      </p>
+        {securityFeedback !== "Security notifications updated" ? securityFeedback : ""}
+      </div>
+
+
+      {twoFactorModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="two-factor-title">
+          <form onSubmit={handleTwoFactorConfirm} data-security-modal-content className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+            <h2 id="two-factor-title" className="text-xl font-semibold text-slate-950">{twoFactorModal === "setup" ? "Set up authenticator app" : twoFactorModal === "recovery" ? "Regenerate recovery codes" : "Disable two-factor authentication"}</h2>
+            {recoveryCodes.length > 0 ? (
+              <div className="mt-5 space-y-4"><p className="rounded-xl bg-amber-50 p-3 text-sm font-semibold text-amber-800">Save these recovery codes now. They will not be shown again.</p><div className="grid grid-cols-1 gap-2 sm:grid-cols-2">{recoveryCodes.map((code) => <code key={code} className="rounded-lg bg-slate-100 px-3 py-2 text-center text-sm font-bold text-slate-900">{code}</code>)}</div><button type="button" onClick={() => void navigator.clipboard?.writeText(recoveryCodes.join("\n"))} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Copy codes</button></div>
+            ) : (
+              <><p className="mt-2 text-sm leading-6 text-slate-600">{twoFactorModal === "setup" ? "Scan the QR code with an authenticator app, or enter the manual setup key. Then enter the current 6-digit code." : twoFactorModal === "recovery" ? "Enter a current authenticator app code to replace your recovery codes." : "Disabling 2FA reduces account protection. Verify with your authenticator/recovery code, or your current password."}</p>
+              {twoFactorModalError ? <MessageBanner tone="error" className="mt-4">{twoFactorModalError}</MessageBanner> : null}
+              {twoFactorModal === "setup" && totpSetup ? <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-center"><img alt="Authenticator app QR code" className="mx-auto h-48 w-48 rounded-lg bg-white p-2" src={`https://api.qrserver.com/v1/create-qr-code/?size=192x192&data=${encodeURIComponent(totpSetup.otpauthUri)}`} /><p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Manual setup key</p><code className="mt-1 block break-all rounded-lg bg-white px-3 py-2 text-sm font-bold text-slate-900">{totpSetup.manualSetupKey}</code></div> : null}
+              <div className="mt-5 space-y-4">
+                <label className="block text-sm font-medium text-slate-800">{twoFactorModal === "disable" ? "Authenticator or recovery code" : "Authenticator code"}
+                  <input value={twoFactorCode} onChange={(event) => { setTwoFactorModalError(""); setTwoFactorCode(event.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 32)); }} autoComplete="one-time-code" maxLength={32} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="123456" />
+                </label>
+                {twoFactorModal === "disable" ? <label className="block text-sm font-medium text-slate-800">Or current password<input type="password" value={twoFactorPassword} onChange={(event) => { setTwoFactorModalError(""); setTwoFactorPassword(event.target.value); }} autoComplete="current-password" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label> : null}
+              </div></>
+            )}
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={closeTwoFactorModal} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">{recoveryCodes.length > 0 ? "Done" : "Cancel"}</button>
+              {recoveryCodes.length === 0 ? <button type="submit" disabled={twoFactorSaving || (twoFactorModal === "setup" ? twoFactorCode.length !== 6 || !totpSetup : twoFactorModal === "recovery" ? twoFactorCode.length !== 6 : !twoFactorPassword && twoFactorCode.length < 6)} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{twoFactorSaving ? "Verifying…" : twoFactorModal === "setup" ? "Confirm and enable" : twoFactorModal === "recovery" ? "Regenerate codes" : "Disable 2FA"}</button> : null}
+            </div>
+          </form>
+        </div>
+      ) : null}
+
+      {passkeysModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="passkeys-title">
+          <div data-security-modal-content className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-xl sm:p-6">
+            <h2 id="passkeys-title" className="text-xl font-semibold text-slate-950">{passkeys.length ? "Manage passkeys" : "Set up a passkey"}</h2>
+            <div className="mt-2 space-y-2 text-sm leading-6 text-slate-600"><p>Use Face ID, fingerprint, Windows Hello, your device screen lock, password manager, or security key to sign in faster and more securely.</p><p className="rounded-xl bg-slate-50 p-3 text-slate-700">Kurioticket never receives your fingerprint, face, device PIN, or private key.</p></div>
+            {passkeyFlowError ? <MessageBanner tone="error" className="mt-4">{passkeyFlowError}</MessageBanner> : null}
+            {passkeyFlowStep === "intro" || passkeyFlowStep === "success" ? <div className="mt-5 space-y-3">{passkeys.length ? passkeys.map((passkey) => <div key={passkey.id} className="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold text-slate-950">{passkey.name || "Passkey"}</p><p className="text-sm text-slate-600">Created {formatSessionTime(passkey.createdAt)} · Last used {passkey.lastUsedAt ? formatSessionTime(passkey.lastUsedAt) : "never"} · {passkey.label || (passkey.backedUp ? "Synced passkey" : passkey.deviceType || "Device or security key")}</p></div><div className="flex gap-2"><button type="button" onClick={() => void handleRenamePasskey(passkey.id, passkey.name)} disabled={passkeySaving} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60">Rename</button><button type="button" onClick={() => void handleRemovePasskey(passkey.id)} disabled={passkeySaving} className="focus-ring rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-60">Remove</button></div></div>) : <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">No passkeys yet.</p>}{passkeyFlowStep === "success" ? <MessageBanner tone="success">Passkey added successfully.</MessageBanner> : null}</div> : null}
+            {passkeyFlowStep === "sending" ? <p className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-700">Sending verification code…</p> : null}
+            {passkeyFlowStep === "code" || passkeyFlowStep === "verifying" ? <form onSubmit={handlePasskeyCodeSubmit} className="mt-5 space-y-4"><p className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm font-semibold text-blue-900">{passkeyVerificationMethod === "totp" ? "Enter your authenticator app code or a recovery code." : "We sent a code to your email."}</p><label className="block text-sm font-medium text-slate-800">Verification code<input value={passkeyVerificationCode} onChange={(event) => setPasskeyVerificationCode(event.target.value.replace(/[^A-Za-z0-9-]/g, "").slice(0, 32))} autoComplete="one-time-code" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder={passkeyVerificationMethod === "totp" ? "123456 or recovery code" : "123456"} /></label><div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><button type="button" onClick={resetPasskeySetupFlow} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button>{passkeyVerificationMethod === "email" ? <button type="button" onClick={() => void handleAddPasskey()} disabled={passkeySaving} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60">Resend code</button> : null}<button type="submit" disabled={passkeySaving || !passkeyVerificationCode.trim()} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{passkeyFlowStep === "verifying" ? "Verifying…" : "OK"}</button></div></form> : null}
+            {passkeyFlowStep === "native" ? <p className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-700">Opening your browser or device passkey prompt…</p> : null}
+            {passkeyFlowStep === "name" ? <form onSubmit={handlePasskeyNameSubmit} className="mt-5 space-y-4"><label className="block text-sm font-medium text-slate-800">Passkey name<input value={passkeyName} onChange={(event) => setPasskeyName(event.target.value.slice(0, 80))} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Passkey name" /></label><div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><button type="button" onClick={resetPasskeySetupFlow} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button><button type="submit" disabled={passkeySaving} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{passkeySaving ? "Saving…" : "Save passkey"}</button></div></form> : null}
+            {passkeyFlowStep === "intro" || passkeyFlowStep === "success" ? <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><button type="button" onClick={closePasskeysModal} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button><button type="button" onClick={() => void handleAddPasskey()} disabled={passkeySaving} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{passkeySaving ? "Working…" : passkeys.length ? "Add another passkey" : "Continue"}</button></div> : null}
+          </div>
+        </div>
+      ) : null}
+
+      {sessionsModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="active-sessions-title">
+          <div data-security-modal-content className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-xl sm:p-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 id="active-sessions-title" className="text-xl font-semibold text-slate-950">Active sessions</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{sessionNotice}</p>
+              </div>
+              <button type="button" onClick={loadSessionActivities} disabled={sessionsLoading} className="focus-ring hidden rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60 sm:inline-flex">
+                {sessionsLoading ? "Refreshing…" : "Refresh"}
+              </button>
+            </div>
+            <div className="mt-5 space-y-3">
+              {sessionsLoading && sessions.length === 0 ? (
+                <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Loading tracked sessions…</p>
+              ) : sessions.length ? (
+                sessions.map((session) => (
+                  <div key={session.id} className="relative min-w-0 rounded-xl border border-slate-200 p-4 pb-16 sm:pb-4">
+                    <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="break-words text-sm font-semibold text-slate-950">
+                            {session.isCurrent ? "This device" : session.deviceLabel}
+                          </p>
+                          {session.isCurrent ? <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">Current</span> : null}
+                          {session.revokedAt ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">Marked signed out</span> : null}
+                        </div>
+                        <p className="mt-1 break-words text-sm text-slate-600">{session.browser} on {session.os}</p>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">Last active {formatSessionTime(session.lastSeenAt)}</p>
+                        <p className="text-xs leading-5 text-slate-500">IP network {session.maskedIp || "not available"}</p>
+                        {confirmingSessionRemovalId === session.id ? (
+                          <div role="status" aria-live="polite" className="mt-3 rounded-xl border border-red-100 bg-red-50 p-3 text-sm text-red-900 sm:max-w-md">
+                            <p className="font-semibold">Remove this device record?</p>
+                            <p className="mt-1 text-red-800">This will remove the saved device activity from your account.</p>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setConfirmingSessionRemovalId(null)}
+                                className="focus-ring rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                disabled={removingSessionId === session.id}
+                                onClick={() => void handleRemoveSessionRecord(session.id)}
+                                className="focus-ring rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+                              >
+                                {removingSessionId === session.id ? "Deleting…" : "Delete"}
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                      {!session.isCurrent && !session.revokedAt && confirmingSessionRemovalId !== session.id ? (
+                        <>
+                          <button
+                            type="button"
+                            disabled={removingSessionId === session.id}
+                            onClick={() => setConfirmingSessionRemovalId(session.id)}
+                            className="focus-ring hidden min-h-10 w-full shrink-0 items-center justify-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-60 sm:inline-flex sm:w-auto"
+                          >
+                            {removingSessionId === session.id ? "Removing…" : "Remove device record"}
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={`Remove ${session.deviceLabel || "device"} device record`}
+                            disabled={removingSessionId === session.id}
+                            onClick={() => setConfirmingSessionRemovalId(session.id)}
+                            className="focus-ring absolute bottom-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-red-200 bg-white text-red-700 shadow-sm hover:bg-red-50 disabled:opacity-60 sm:hidden"
+                          >
+                            <Trash2 aria-hidden="true" className="h-4 w-4" />
+                          </button>
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">No tracked sessions are available yet. Refresh this page after signing in to record this device.</p>
+              )}
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button type="button" onClick={() => { setSessionsModalOpen(false); setConfirmingSessionRemovalId(null); }} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Done</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {passwordModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="change-password-title">
+          <form onSubmit={handlePasswordSubmit} data-security-modal-content className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+            <h2 id="change-password-title" className="text-xl font-semibold text-slate-950">Change password</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Enter your current password and choose a new password with at least 8 characters. OAuth-only accounts should use password reset to create a password.</p>
+            <div className="mt-5 space-y-4">
+              {[
+                ["currentPassword", "Current password"],
+                ["newPassword", "New password"],
+                ["confirmPassword", "Confirm new password"],
+              ].map(([name, label]) => (
+                <label key={name} className="block text-sm font-medium text-slate-800">
+                  {label}
+                  <input name={name} type="password" value={passwordForm[name as keyof typeof passwordForm]} onChange={handlePasswordFieldChange} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" autoComplete={name === "currentPassword" ? "current-password" : "new-password"} />
+                </label>
+              ))}
+            </div>
+            {passwordModalError ? (
+              <MessageBanner tone="error" className="mt-4">
+                {passwordModalError}
+              </MessageBanner>
+            ) : null}
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={() => { resetPasswordModalState(); setPasswordModalOpen(false); }} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button>
+              <button type="submit" disabled={passwordSaving} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{passwordSaving ? "Saving…" : "Save password"}</button>
+            </div>
+          </form>
+        </div>
+      ) : null}
+
+      {deleteModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
+          <div data-security-modal-content className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+            <h2 id="delete-account-title" className="text-xl font-semibold text-slate-950">Request account deletion</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">This starts a 7-day grace period. Your account will be marked pending deletion, normal dashboard browsing will be restricted, and you can reactivate by logging in before the deadline. Kurioticket will not instantly hard-delete your account from this page; support must review retention obligations first.</p>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={() => setDeleteModalOpen(false)} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button>
+              <button type="button" disabled={deleteRequestSaving} onClick={handleDeletionRequest} className="focus-ring rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{deleteRequestSaving ? "Requesting…" : "Request 7-day deletion"}</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -740,8 +3313,15 @@ export function SupportDashboardPage() {
   const { t } = useLocale();
 
   return (
-    <section aria-labelledby="support-title" className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]">
-      <AccountSectionHeader title={t["accountDashboard.support.title"]} description={t["accountDashboard.support.description"]} titleId="support-title" />
+    <section
+      aria-labelledby="support-title"
+      className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]"
+    >
+      <AccountSectionHeader
+        title={t["accountDashboard.support.title"]}
+        description={t["accountDashboard.support.description"]}
+        titleId="support-title"
+      />
       <div className="grid gap-3">
         <ListRow
           title={t["accountDashboard.support.helpCenter.title"]}

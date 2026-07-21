@@ -1,16 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 
 import { X } from "lucide-react";
 
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
+import {
+  getLocalizedHotelDestinationCityName,
+  getLocalizedHotelDestinationDetail,
+} from "@/data/hotelDestinations";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 
 const mobileDoneButtonClassName =
-  "focus-ring min-h-11 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-6 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition-colors hover:from-indigo-600 hover:to-violet-500 active:from-indigo-800 active:to-violet-700 disabled:cursor-not-allowed disabled:opacity-50";
+  "focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-bold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35 disabled:cursor-not-allowed disabled:opacity-50";
 
 export type HotelDestinationSuggestion = {
   id: string;
@@ -72,7 +76,7 @@ export function HotelDestinationMobilePicker({
   onClose,
   onClear,
 }: HotelDestinationMobilePickerProps) {
-  const { t: dictionary } = useLocale();
+  const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const getDestinationKindLabel = (kind: HotelDestinationSuggestion["kind"]) =>
     t(hotelDestinationKindTranslationKeys[kind]) ||
@@ -182,9 +186,9 @@ export function HotelDestinationMobilePicker({
     trimmedQuery,
   ]);
 
-  const applyValue = (nextValue: string) => {
+  const applyValue = (nextValue: string, requestClose: () => void) => {
     onChange(nextValue);
-    onClose();
+    requestClose();
   };
 
   const clearValue = () => {
@@ -197,29 +201,6 @@ export function HotelDestinationMobilePicker({
     window.requestAnimationFrame(() => inputRef.current?.focus());
   };
 
-  const footer = useMemo(
-    () => (
-      <div className="flex items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={clearValue}
-          className="focus-ring min-h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
-        >
-          {t("clear")}
-        </button>
-        <button
-          type="button"
-          onClick={() => applyValue(trimmedQuery)}
-          className={mobileDoneButtonClassName}
-        >
-          {t("done")}
-        </button>
-      </div>
-    ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [trimmedQuery],
-  );
-
   return (
     <HotelMobilePickerShell
       open={open}
@@ -227,9 +208,27 @@ export function HotelDestinationMobilePicker({
       titleId={titleId}
       launcherRef={launcherRef}
       onClose={onClose}
-      footer={footer}
+      footer={(requestClose) => (
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={clearValue}
+            className="focus-ring min-h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+          >
+            {t("clear")}
+          </button>
+          <button
+            type="button"
+            onClick={() => applyValue(trimmedQuery, requestClose)}
+            className={mobileDoneButtonClassName}
+          >
+            {t("done")}
+          </button>
+        </div>
+      )}
       contentClassName="bg-slate-50 px-4 py-5"
     >
+      {(requestClose) => (
       <div className="mx-auto w-full max-w-xl space-y-5">
         <div className="space-y-2">
           <label
@@ -265,18 +264,19 @@ export function HotelDestinationMobilePicker({
                   const highlightedSuggestion = visibleSuggestions[highlight];
                   applyValue(
                     highlightedSuggestion?.searchValue ?? trimmedQuery,
+                    requestClose,
                   );
                 }
               }}
               placeholder={t("hotelSearchDestinationPlaceholder")}
-              className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 pl-4 pr-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
+              className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 ps-4 pe-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
             />
             {query ? (
               <button
                 type="button"
                 onClick={clearValue}
                 aria-label={t("clearDestination")}
-                className="focus-ring absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
+                className="focus-ring absolute end-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -292,23 +292,28 @@ export function HotelDestinationMobilePicker({
           ) : visibleSuggestions.length ? (
             <div className="divide-y divide-slate-100">
               {visibleSuggestions.map((suggestion, index) => {
-                const detail = [suggestion.region, suggestion.country]
-                  .filter(Boolean)
-                  .join(", ");
+                const detail = getLocalizedHotelDestinationDetail(
+                  suggestion,
+                  locale,
+                );
+                const localizedName = getLocalizedHotelDestinationCityName(
+                  suggestion.name,
+                  locale,
+                );
 
                 return (
                   <button
                     key={suggestion.id}
                     type="button"
-                    onClick={() => applyValue(suggestion.searchValue)}
+                    onClick={() => applyValue(suggestion.searchValue, requestClose)}
                     className={cn(
-                      "focus-ring flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors hover:bg-slate-50 focus-visible:bg-slate-50",
+                      "focus-ring flex w-full items-center justify-between gap-3 px-4 py-3.5 text-start transition-colors hover:bg-slate-50 focus-visible:bg-slate-50",
                       highlight === index && "bg-indigo-50",
                     )}
                   >
                     <span className="min-w-0">
                       <span className="block truncate text-base font-black text-slate-950">
-                        {suggestion.name}
+                        {localizedName}
                       </span>
                       <span className="mt-0.5 block truncate text-sm font-medium text-slate-500">
                         {detail || suggestion.country}
@@ -330,6 +335,7 @@ export function HotelDestinationMobilePicker({
           )}
         </div>
       </div>
+      )}
     </HotelMobilePickerShell>
   );
 }

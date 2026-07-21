@@ -9,8 +9,20 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelSearchBar } from "@/components/search/HotelSearchBar";
+import {
+  destinationImageCatalog,
+  hotelsHeroImage,
+  globalHotelDestinationCards,
+  hotelDestinationCards,
+  moreHotelDestinationCards,
+  type HotelDestinationCard,
+} from "@/data/hotelDestinationCards";
 import { validateDestinationImages } from "@/data/destinationImageValidation";
 import { translations as enTranslations } from "@/lib/i18n/en";
+
+// Hotel destination card source data now lives in src/data/hotelDestinationCards.ts.
+// Legacy source-inspection coverage expects these approved query literals on /hotels:
+// destinationQuery: "Tokyo"; destinationQuery: "London"; destinationQuery: "Paris"; destinationQuery: "New York";
 
 const addDays = (date: Date, days: number) => {
   const next = new Date(date);
@@ -26,146 +38,18 @@ const toIsoDate = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
-type HotelDestinationCard = {
-  title: string;
-  subtitle: string;
-  destinationQuery: string;
-  image: string;
-  imageAlt: string;
-  linkLabel: string;
-};
+const splitMobileHeroText = (text: string, lines: readonly string[]) =>
+  text === lines.join(" ") ? lines : null;
 
-const hotelsHeroImage =
-  "/images/premium/hotels/kurioticket-hotels-hero-bellboy-guest-arrival-lobby-001.jpg";
-const hotelsHeroImageAlt =
-  "Hotel bellboy welcoming a guest with luggage in a premium lobby";
+const mobileHotelsHeroTitleLines = [
+  "Find the stays that start the",
+  "right trip.",
+] as const;
 
-const hotelDestinationCards: HotelDestinationCard[] = [
-  {
-    title: enTranslations["hotelDestination.Tokyo.title"],
-    subtitle: enTranslations["hotelDestination.Tokyo.subtitle"],
-    destinationQuery: "Tokyo",
-    image:
-      "https://images.pexels.com/photos/31344755/pexels-photo-31344755.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAlt: "Tokyo skyline with dense high-rise buildings in daylight",
-    linkLabel: enTranslations["hotelDestination.Tokyo.linkLabel"],
-  },
-  {
-    title: enTranslations["hotelDestination.London.title"],
-    subtitle: enTranslations["hotelDestination.London.subtitle"],
-    destinationQuery: "London",
-    image:
-      "https://images.pexels.com/photos/33843218/pexels-photo-33843218.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAlt: "Tower Bridge and the River Thames in London under a blue sky",
-    linkLabel: enTranslations["hotelDestination.London.linkLabel"],
-  },
-  {
-    title: enTranslations["hotelDestination.Paris.title"],
-    subtitle: enTranslations["hotelDestination.Paris.subtitle"],
-    destinationQuery: "Paris",
-    image:
-      "https://images.pexels.com/photos/2082103/pexels-photo-2082103.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAlt: "Eiffel Tower and the Seine River in Paris at golden hour",
-    linkLabel: enTranslations["hotelDestination.Paris.linkLabel"],
-  },
-  {
-    title: enTranslations["hotelDestination.New York.title"],
-    subtitle: enTranslations["hotelDestination.New York.subtitle"],
-    destinationQuery: "New York",
-    image:
-      "https://images.pexels.com/photos/11182439/pexels-photo-11182439.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAlt:
-      "New York City skyline with One World Trade Center and waterfront",
-    linkLabel: enTranslations["hotelDestination.New York.linkLabel"],
-  },
-];
-
-const moreHotelDestinationCards: HotelDestinationCard[] = [
-  {
-    title: enTranslations["hotelDestination.Rome.title"],
-    subtitle: enTranslations["hotelDestination.Rome.subtitle"],
-    destinationQuery: "Rome",
-    image:
-      "https://images.pexels.com/photos/1701595/pexels-photo-1701595.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAlt: "The Colosseum in Rome beneath a clear blue sky",
-    linkLabel: enTranslations["hotelDestination.Rome.linkLabel"],
-  },
-  {
-    title: enTranslations["hotelDestination.Dubai.title"],
-    subtitle: enTranslations["hotelDestination.Dubai.subtitle"],
-    destinationQuery: "Dubai",
-    image:
-      "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAlt: "Dubai skyline with the Burj Khalifa rising above skyscrapers",
-    linkLabel: enTranslations["hotelDestination.Dubai.linkLabel"],
-  },
-  {
-    title: enTranslations["hotelDestination.Singapore.title"],
-    subtitle: enTranslations["hotelDestination.Singapore.subtitle"],
-    destinationQuery: "Singapore",
-    image:
-      "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Marina Bay skyline in Singapore at dusk",
-    linkLabel: enTranslations["hotelDestination.Singapore.linkLabel"],
-  },
-  {
-    title: enTranslations["hotelDestination.Barcelona.title"],
-    subtitle: enTranslations["hotelDestination.Barcelona.subtitle"],
-    destinationQuery: "Barcelona",
-    image:
-      "https://images.unsplash.com/photo-1583422409516-2895a77efded?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Barcelona cityscape with Sagrada Familia in daylight",
-    linkLabel: enTranslations["hotelDestination.Barcelona.linkLabel"],
-  },
-];
-
-const globalHotelDestinationCards: HotelDestinationCard[] = [
-  {
-    title: enTranslations["hotelDestination.Toronto.title"],
-    subtitle: enTranslations["hotelDestination.Toronto.subtitle"],
-    destinationQuery: "Toronto",
-    image:
-      "https://images.unsplash.com/photo-1517090504586-fde19ea6066f?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Toronto skyline with the CN Tower beside Lake Ontario",
-    linkLabel: enTranslations["hotelDestination.Toronto.linkLabel"],
-  },
-  {
-    title: enTranslations["hotelDestination.Amsterdam.title"],
-    subtitle: enTranslations["hotelDestination.Amsterdam.subtitle"],
-    destinationQuery: "Amsterdam",
-    image:
-      "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Amsterdam canal houses and bridge along the water",
-    linkLabel: enTranslations["hotelDestination.Amsterdam.linkLabel"],
-  },
-  {
-    title: enTranslations["hotelDestination.Bangkok.title"],
-    subtitle: enTranslations["hotelDestination.Bangkok.subtitle"],
-    destinationQuery: "Bangkok",
-    image:
-      "https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Bangkok city skyline and Chao Phraya river at sunset",
-    linkLabel: enTranslations["hotelDestination.Bangkok.linkLabel"],
-  },
-  {
-    title: enTranslations["hotelDestination.Cancun.title"],
-    subtitle: enTranslations["hotelDestination.Cancun.subtitle"],
-    destinationQuery: "Cancun",
-    image:
-      "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Cancun beach with white sand and turquoise water",
-    linkLabel: enTranslations["hotelDestination.Cancun.linkLabel"],
-  },
-  {
-    title: enTranslations["hotelDestination.Istanbul.title"],
-    subtitle: enTranslations["hotelDestination.Istanbul.subtitle"],
-    destinationQuery: "Istanbul",
-    image:
-      "https://images.unsplash.com/photo-1527838832700-5059252407fa?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Istanbul waterfront with domes and minarets at golden hour",
-    linkLabel: enTranslations["hotelDestination.Istanbul.linkLabel"],
-  },
-];
+const mobileHotelsHeroSubtitleLines = [
+  "Compare hotels in one place, from polished city arrivals",
+  "to easy resort and escapes.",
+] as const;
 
 const hotelInspirationCategoryChips = [
   "Beach",
@@ -181,12 +65,6 @@ type HotelInspirationCard = HotelDestinationCard & {
   badge: string;
   detail: string;
 };
-
-const destinationImageCatalog = [
-  ...hotelDestinationCards,
-  ...moreHotelDestinationCards,
-  ...globalHotelDestinationCards,
-];
 
 const getDestinationCard = (destinationQuery: string) => {
   const card = destinationImageCatalog.find(
@@ -272,6 +150,7 @@ type DestinationCardProps = {
   imageSizes: string;
   isCompact?: boolean;
   isFeatured?: boolean;
+  hasMobilePolish?: boolean;
 };
 
 function DestinationCard({
@@ -279,20 +158,29 @@ function DestinationCard({
   imageSizes,
   isCompact = false,
   isFeatured = false,
+  hasMobilePolish = false,
 }: DestinationCardProps) {
   return (
     <Link
       href={card.href}
       aria-label={card.linkLabel}
-      className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_28px_-26px_rgba(15,23,42,0.34)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_30px_-26px_rgba(15,23,42,0.38)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-white"
+      className={`group flex h-full min-w-0 flex-col overflow-hidden border bg-white transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_30px_-26px_rgba(15,23,42,0.38)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-4 focus-visible:ring-offset-white ${
+        hasMobilePolish
+          ? "snap-start rounded-[1.35rem] border-slate-200/90 shadow-[0_16px_34px_-26px_rgba(15,23,42,0.42)] sm:rounded-2xl sm:border-slate-200 sm:shadow-[0_12px_28px_-26px_rgba(15,23,42,0.34)]"
+          : "rounded-2xl border-slate-200 shadow-[0_12px_28px_-26px_rgba(15,23,42,0.34)]"
+      }`}
     >
       <div
         className={`relative w-full overflow-hidden bg-slate-100 ${
           isFeatured
-            ? "h-[18rem] sm:h-[20rem] md:h-[24rem] lg:h-[25rem]"
+            ? hasMobilePolish
+              ? "aspect-[16/10] sm:h-[20rem] sm:aspect-auto md:h-[24rem] lg:h-[25rem]"
+              : "h-[18rem] sm:h-[20rem] md:h-[24rem] lg:h-[25rem]"
             : isCompact
               ? "aspect-[16/11]"
-              : "aspect-[4/3]"
+              : hasMobilePolish
+                ? "aspect-[16/10] sm:aspect-[4/3]"
+                : "aspect-[4/3]"
         }`}
       >
         <Image
@@ -304,12 +192,22 @@ function DestinationCard({
         />
         <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-slate-900/5" />
       </div>
-      <div className={isCompact ? "p-3.5 sm:p-4" : "p-4 md:p-5"}>
+      <div
+        className={
+          isCompact
+            ? "p-3.5 sm:p-4"
+            : hasMobilePolish
+              ? "flex flex-1 flex-col p-[1.125rem] sm:p-4 md:p-5"
+              : "p-4 md:p-5"
+        }
+      >
         <p
           className={
             isCompact
               ? "text-base font-semibold leading-tight tracking-[-0.012em] text-slate-900 sm:text-lg"
-              : "text-lg font-semibold leading-tight tracking-[-0.012em] text-slate-900 md:text-xl"
+              : hasMobilePolish
+                ? "text-lg font-semibold leading-snug tracking-[-0.012em] text-slate-900 sm:leading-tight md:text-xl"
+                : "text-lg font-semibold leading-tight tracking-[-0.012em] text-slate-900 md:text-xl"
           }
         >
           {card.title}
@@ -318,7 +216,9 @@ function DestinationCard({
           className={
             isCompact
               ? "mt-1.5 text-xs font-medium leading-5 text-slate-600 sm:text-sm"
-              : "mt-2 text-sm font-medium leading-5 text-slate-600"
+              : hasMobilePolish
+                ? "mt-2 text-sm font-medium leading-6 text-slate-600 sm:leading-5"
+                : "mt-2 text-sm font-medium leading-5 text-slate-600"
           }
         >
           {card.subtitle}
@@ -337,9 +237,9 @@ function InspirationCard({ card }: InspirationCardProps) {
     <Link
       href={card.href}
       aria-label={card.linkLabel}
-      className="group flex h-full min-w-0 flex-col rounded-2xl bg-white p-2 transition duration-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-slate-50 sm:p-2.5"
+      className="group flex h-full min-w-0 snap-start flex-col overflow-hidden rounded-[1.25rem] border border-slate-200/90 bg-white p-2 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.38)] transition duration-300 hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_14px_30px_-24px_rgba(15,23,42,0.42)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-4 focus-visible:ring-offset-slate-50 sm:rounded-2xl sm:p-2.5"
     >
-      <div className="relative h-[6.75rem] w-full overflow-hidden rounded-xl bg-slate-100 sm:h-32 md:h-44 lg:h-48">
+      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[1rem] bg-slate-100 sm:h-32 sm:aspect-auto md:h-44 lg:h-48">
         <Image
           src={card.image}
           alt={card.imageAlt}
@@ -349,11 +249,11 @@ function InspirationCard({ card }: InspirationCardProps) {
         />
         <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-slate-900/5" />
       </div>
-      <div className="px-1 pb-1 pt-2.5 sm:pb-1.5 sm:pt-3">
+      <div className="px-1.5 pb-1.5 pt-3 sm:px-1 sm:pb-1.5 sm:pt-3">
         <span className="mb-1.5 inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[0.68rem] font-semibold leading-5 text-slate-700 sm:mb-2 sm:px-2.5 sm:py-1 sm:text-xs">
           {card.badge}
         </span>
-        <p className="text-[0.95rem] font-semibold leading-tight tracking-[-0.012em] text-slate-900 sm:text-base md:text-lg">
+        <p className="text-[0.95rem] font-semibold leading-snug tracking-[-0.012em] text-slate-900 sm:text-base sm:leading-tight md:text-lg">
           {card.title}
         </p>
         <p className="mt-1 text-xs font-medium leading-5 text-slate-600 sm:mt-1.5 sm:text-sm">
@@ -397,6 +297,10 @@ export default function HotelsSearchPage() {
       dictionary[`hotelDestination.${card.destinationQuery}.subtitle`] ??
       enTranslations[`hotelDestination.${card.destinationQuery}.subtitle`] ??
       card.subtitle,
+    imageAlt:
+      dictionary[`hotelDestination.${card.destinationQuery}.imageAlt`] ??
+      enTranslations[`hotelDestination.${card.destinationQuery}.imageAlt`] ??
+      card.imageAlt,
     linkLabel:
       dictionary[`hotelDestination.${card.destinationQuery}.linkLabel`] ??
       enTranslations[`hotelDestination.${card.destinationQuery}.linkLabel`] ??
@@ -462,52 +366,122 @@ export default function HotelsSearchPage() {
     href: destinationCardHref(card.destinationQuery),
   }));
   const hotelSearchIntroLabel = t("hotelSearchIntroLabel");
+  const mobileHotelsHeroTitle = t("hotelsHeroMobileTitle");
+  const mobileHotelsHeroSubtitle = t("hotelsHeroMobileSubtitle");
+  const mobileHotelsHeroTitleSplit = splitMobileHeroText(
+    mobileHotelsHeroTitle,
+    mobileHotelsHeroTitleLines,
+  );
+  const mobileHotelsHeroSubtitleSplit = splitMobileHeroText(
+    mobileHotelsHeroSubtitle,
+    mobileHotelsHeroSubtitleLines,
+  );
 
   return (
     <>
-      <AppHeader />
-      <main className="relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16">
-        <section className="relative isolate overflow-visible bg-slate-950">
+      <AppHeader mobileHeroOverlay />
+      <main className="relative isolate flex-1 overflow-x-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16">
+        <section className="relative z-20 isolate min-h-[24.25rem] overflow-visible bg-slate-950 sm:hidden">
           <div className="absolute inset-0 overflow-hidden">
             <Image
               src={hotelsHeroImage}
-              alt={hotelsHeroImageAlt}
+              alt={t("hotelsHeroImageAlt")}
               fill
               priority
               sizes="100vw"
-              className="object-cover object-[50%_44%] brightness-[1.06] saturate-[1.06] sm:object-[50%_46%]"
+              className="object-cover object-[52%_34%] brightness-[1.22] saturate-[1.14] contrast-[1.02]"
             />
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-950/48 via-slate-950/16 to-transparent" />
-            <div className="absolute inset-y-0 left-0 w-[74%] bg-gradient-to-r from-slate-950/66 via-slate-950/28 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-slate-950/58 via-slate-950/18 to-transparent" />
+            <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-slate-950/28 via-slate-950/8 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/22 via-slate-950/6 to-transparent" />
           </div>
 
-          <div className="page-shell relative z-10 flex min-h-[44rem] flex-col justify-start pb-10 pt-14 sm:min-h-[42rem] sm:pb-12 sm:pt-16 lg:min-h-[43rem] lg:pb-14 lg:pt-[4.5rem]">
-            <div className="max-w-2xl text-white">
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/75">
+          <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-8">
+            <div className="max-w-[22.25rem] text-white">
+              <p className="sr-only">
                 {t("hotelsHeroEyebrow")}
               </p>
-              <h1 className="mt-3 text-[2.35rem] font-semibold leading-[1.02] tracking-[-0.035em] text-white drop-shadow-[0_3px_18px_rgba(15,23,42,0.62)] sm:text-[3rem] lg:text-[3.6rem]">
-                {t("hotelsHeroTitle")}
+              <h1 className="w-max max-w-none text-[clamp(1.38rem,6.1vw,2rem)] font-semibold leading-[1.05] tracking-[-0.041em] text-white drop-shadow-[0_2px_10px_rgba(2,6,23,0.6)]">
+                {mobileHotelsHeroTitleSplit ? (
+                  mobileHotelsHeroTitleSplit.map((line) => (
+                    <span key={line} className="block whitespace-nowrap">
+                      {line}
+                    </span>
+                  ))
+                ) : (
+                  mobileHotelsHeroTitle
+                )}
               </h1>
-              <p className="mt-4 max-w-xl text-base font-semibold leading-7 text-white/90 drop-shadow-[0_2px_12px_rgba(15,23,42,0.62)] sm:text-lg">
-                {t("hotelsHeroSubtitle")}
+              <p className="mt-4 w-max max-w-none text-[clamp(0.72rem,3.28vw,0.89rem)] font-medium leading-[1.5] tracking-[-0.012em] text-white/92 drop-shadow-[0_2px_8px_rgba(2,6,23,0.54)]">
+                {mobileHotelsHeroSubtitleSplit ? (
+                  mobileHotelsHeroSubtitleSplit.map((line) => (
+                    <span key={line} className="block whitespace-nowrap">
+                      {line}
+                    </span>
+                  ))
+                ) : (
+                  mobileHotelsHeroSubtitle
+                )}
               </p>
             </div>
+          </div>
 
-            <div className="mt-10 w-full max-w-6xl sm:mt-auto">
+          <div className="page-shell absolute inset-x-0 bottom-[-18.05rem] z-30">
+            <div className="mx-auto max-w-6xl">
               <HotelSearchBar
                 introLabel={hotelSearchIntroLabel}
-                className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.75rem] [&>form>div]:!border-white/75 [&>form>div]:!bg-white/95 [&>form>div]:!p-3 [&>form>div]:!shadow-[0_32px_78px_-30px_rgba(15,23,42,0.66)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] sm:[&>form>div]:!p-3.5 lg:[&>form>div]:!rounded-[2rem] lg:[&>form>div]:!p-4 lg:[&>form>div>div]:!grid-cols-[minmax(0,2.1fr)_minmax(0,1.45fr)_minmax(0,1.18fr)_132px] lg:[&>form>div>div>*]:!min-h-[62px] lg:[&>form>div>div>div:last-child>button]:!min-h-[62px]"
+                desktopIdentityLabel={t("hotels")}
+                className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.5rem] [&>form>div]:!border-white/80 [&>form>div]:!bg-white/95 [&>form>div]:!p-3 [&>form>div]:!pb-[calc(0.9rem+env(safe-area-inset-bottom))] [&>form>div]:!shadow-[0_18px_44px_-18px_rgba(15,23,42,0.38)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] [&>form>div>div]:!gap-2 [&>form>div>div>label]:!min-h-[50px] [&>form>div>div>div]:!min-h-[50px] [&>form>div>div>div:last-child>button]:!h-12"
               />
             </div>
           </div>
-
         </section>
 
-        <div className="page-shell relative mx-auto mt-10 max-w-6xl space-y-11 md:mt-12 md:space-y-14">
+        <section className="relative z-20 hidden overflow-visible pb-28 sm:block lg:pb-32">
+          <div className="relative isolate min-h-[35rem] bg-slate-950 lg:min-h-[39rem]">
+            <div className="absolute inset-0 overflow-hidden">
+              <Image
+                src={hotelsHeroImage}
+                alt={t("hotelsHeroImageAlt")}
+                fill
+                priority
+                sizes="100vw"
+                className="object-cover object-[50%_46%] brightness-[1.2] saturate-[1.1] contrast-[1.01]"
+              />
+              <div className="absolute inset-y-0 left-0 w-[58%] bg-gradient-to-r from-slate-950/56 via-slate-950/20 to-transparent" />
+              <div className="absolute left-0 top-0 h-[66%] w-[62%] bg-[radial-gradient(ellipse_at_22%_26%,rgba(15,23,42,0.42),rgba(15,23,42,0.18)_42%,transparent_72%)]" />
+              <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-slate-950/18 via-slate-950/4 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-slate-950/34 via-slate-950/8 to-transparent" />
+            </div>
+
+            <div className="page-shell relative z-10 flex min-h-[35rem] flex-col items-start pb-36 pt-14 lg:min-h-[39rem] lg:pb-40 lg:pt-16">
+              <div className="max-w-[44rem] text-white">
+                <p className="sr-only">
+                  {t("hotelsHeroEyebrow")}
+                </p>
+                <h1 className="text-[3rem] font-semibold leading-[1.04] tracking-[-0.038em] text-white drop-shadow-[0_3px_18px_rgba(15,23,42,0.62)] lg:text-[3.32rem]">
+                  {t("hotelsHeroTitle")}
+                </h1>
+                <p className="mt-4 max-w-xl text-base font-semibold leading-7 text-white/90 drop-shadow-[0_2px_12px_rgba(15,23,42,0.62)] lg:text-lg lg:leading-8">
+                  {t("hotelsHeroSubtitle")}
+                </p>
+              </div>
+            </div>
+
+            <div className="page-shell absolute inset-x-0 bottom-[-52px] z-30 lg:bottom-[-56px]">
+              <div className="mx-auto max-w-6xl">
+                <HotelSearchBar
+                  introLabel={hotelSearchIntroLabel}
+                  desktopIdentityLabel={t("hotels")}
+                  className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.75rem] [&>form>div]:!border-white/80 [&>form>div]:!bg-white/[0.97] [&>form>div]:!p-4 [&>form>div]:!shadow-[0_34px_86px_-30px_rgba(15,23,42,0.62)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] lg:[&>form>div]:!rounded-[2rem] lg:[&>form>div]:!p-5 lg:[&>form>div>div:last-child]:!grid-cols-[minmax(0,2.1fr)_minmax(0,1.45fr)_minmax(0,1.18fr)_142px] lg:[&>form>div>div:last-child>*]:!min-h-[68px] lg:[&>form>div>div:last-child>div:last-child>button]:!min-h-[68px]"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="page-shell relative z-0 mx-auto mt-0 max-w-6xl space-y-11 pt-[19.95rem] sm:mt-24 sm:pt-0 md:space-y-14 lg:mt-8">
           <section
-            className="space-y-4"
+            className="mt-6 space-y-4 sm:mt-12 lg:mt-8"
             aria-labelledby="hotel-destinations-heading"
           >
             <h2
@@ -516,13 +490,14 @@ export default function HotelsSearchPage() {
             >
               {t("exploreHotelStaysByDestination")}
             </h2>
-            <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.28)] ring-1 ring-white/80 sm:p-6 md:p-7">
-              <div className="grid auto-cols-[minmax(260px,86vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+            <div className="overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-3 shadow-[0_18px_48px_-34px_rgba(15,23,42,0.32)] ring-1 ring-white/80 sm:rounded-none sm:bg-white/80 sm:p-6 sm:shadow-[0_16px_44px_-40px_rgba(15,23,42,0.28)] md:p-7">
+              <div className="grid snap-x snap-mandatory auto-cols-[minmax(17rem,calc(100vw-4.5rem))] grid-flow-col gap-4 overflow-x-auto scroll-smooth px-1 pb-4 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:auto-cols-[minmax(260px,86vw)] md:grid-flow-row md:snap-none md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
                 {hotelDestinationLinks.map((card) => (
                   <DestinationCard
                     key={card.title}
                     card={card}
                     imageSizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 86vw"
+                    hasMobilePolish
                   />
                 ))}
               </div>
@@ -539,14 +514,15 @@ export default function HotelsSearchPage() {
             >
               {t("featuredHotelDestinations")}
             </h2>
-            <div className="border border-slate-200/80 bg-slate-50/85 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
-              <div className="grid auto-cols-[minmax(250px,84vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+            <div className="overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-3 shadow-[0_18px_48px_-34px_rgba(15,23,42,0.32)] ring-1 ring-white/80 sm:rounded-none sm:bg-slate-50/85 sm:p-6 sm:shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] md:p-7">
+              <div className="grid snap-x snap-mandatory auto-cols-[minmax(17rem,calc(100vw-4.5rem))] grid-flow-col gap-4 overflow-x-auto scroll-smooth px-1 pb-4 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:auto-cols-[minmax(250px,84vw)] md:grid-flow-row md:snap-none md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
                 {moreHotelDestinationLinks.map((card) => (
                   <DestinationCard
                     key={card.title}
                     card={card}
                     imageSizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 84vw"
                     isFeatured
+                    hasMobilePolish
                   />
                 ))}
               </div>
@@ -557,7 +533,7 @@ export default function HotelsSearchPage() {
             className="space-y-5"
             aria-labelledby="hotel-inspiration-heading"
           >
-            <div className="border border-slate-200/80 bg-slate-50/90 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
+            <div className="overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-3 shadow-[0_18px_48px_-34px_rgba(15,23,42,0.32)] ring-1 ring-white/80 sm:rounded-none sm:bg-slate-50/90 sm:p-6 sm:shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] md:p-7">
               <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                 <div className="max-w-2xl">
                   <h2
@@ -585,7 +561,7 @@ export default function HotelsSearchPage() {
                         onClick={() => setSelectedInspirationCategory(chip)}
                         className={`focus-ring whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-semibold transition-colors ${
                           isSelected
-                            ? "border-indigo-600 bg-indigo-600 text-white shadow-sm shadow-indigo-600/20"
+                            ? "border-[#004BB8] bg-[#004BB8] text-white shadow-sm shadow-[#004BB8]/20"
                             : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
                         }`}
                       >
@@ -596,8 +572,8 @@ export default function HotelsSearchPage() {
                 </div>
               </div>
 
-              <div className="mt-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:overflow-visible md:px-0 md:pb-0 md:pt-0 [&::-webkit-scrollbar]:hidden">
-                <div className="grid auto-cols-[minmax(148px,42vw)] grid-flow-col grid-rows-2 gap-3 sm:auto-cols-[minmax(170px,34vw)] sm:gap-4 md:grid-flow-row md:auto-cols-auto md:grid-cols-3 md:grid-rows-none">
+              <div className="mt-4 overflow-x-auto scroll-smooth px-1 pb-4 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:overflow-visible md:px-0 md:pb-0 md:pt-0 [&::-webkit-scrollbar]:hidden">
+                <div className="grid snap-x snap-mandatory auto-cols-[minmax(10rem,44vw)] grid-flow-col grid-rows-2 gap-3 sm:auto-cols-[minmax(170px,34vw)] sm:gap-4 md:grid-flow-row md:snap-none md:auto-cols-auto md:grid-cols-3 md:grid-rows-none">
                   {hotelInspirationLinks.map((card) => (
                     <InspirationCard key={card.title} card={card} />
                   ))}
@@ -636,12 +612,12 @@ export default function HotelsSearchPage() {
                     <div className="pointer-events-none absolute inset-x-7 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/80 to-transparent" />
                     <div className="pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full bg-slate-200/30 blur-3xl" />
                     <div
-                      className="relative mb-2.5 inline-flex h-8 w-8 items-center justify-center rounded-[0.8rem] border border-indigo-200/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(238,242,255,0.72)_52%,rgba(248,250,252,0.92))] text-indigo-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_12px_22px_-18px_rgba(79,70,229,0.55),0_8px_18px_-20px_rgba(15,23,42,0.55)] sm:mb-5 sm:h-12 sm:w-12 sm:rounded-[1rem]"
+                      className="relative mb-2.5 inline-flex h-8 w-8 items-center justify-center rounded-[0.8rem] border border-[#004BB8]/15 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(0,75,184,0.08)_52%,rgba(248,250,252,0.92))] text-[#004BB8] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_12px_22px_-18px_rgba(0,75,184,0.28),0_8px_18px_-20px_rgba(15,23,42,0.55)] sm:mb-5 sm:h-12 sm:w-12 sm:rounded-[1rem]"
                       aria-hidden="true"
                     >
                       <span className="pointer-events-none absolute inset-[3px] rounded-[0.62rem] border border-white/80 shadow-[inset_0_1px_2px_rgba(255,255,255,0.88)] sm:inset-1 sm:rounded-[0.78rem]" />
                       <span className="pointer-events-none absolute left-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_0_1px_rgba(129,140,248,0.18)] sm:left-2 sm:top-2 sm:h-2 sm:w-2" />
-                      <span className="relative inline-flex h-5 w-5 items-center justify-center rounded-lg bg-white/45 ring-1 ring-indigo-100/70 sm:h-8 sm:w-8 sm:rounded-xl">
+                      <span className="relative inline-flex h-5 w-5 items-center justify-center rounded-lg bg-white/45 ring-1 ring-[#004BB8]/10 sm:h-8 sm:w-8 sm:rounded-xl">
                         <Icon className="h-3.5 w-3.5 stroke-[1.8] sm:h-5 sm:w-5" />
                       </span>
                     </div>

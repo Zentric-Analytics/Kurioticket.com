@@ -10,7 +10,9 @@ import {
   useState,
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
+  BedDouble,
   Calendar,
   ChevronDown,
   Minus,
@@ -24,9 +26,21 @@ import {
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
+import { MessageBanner } from "@/components/ui/MessageBanner";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import { useRegion } from "@/components/region/RegionProvider";
+import {
+  getLocalizedHotelDestinationCityName,
+  getLocalizedHotelDestinationDetail,
+  normalizeHotelDestinationSearchValue,
+} from "@/data/hotelDestinations";
 import { translations as enTranslations } from "@/lib/i18n/en";
+import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
+import {
+  buildHotelRecentSearch,
+  syncBackendRecentSearch,
+  upsertRecentSearch,
+} from "@/lib/recent-searches";
 import { cn } from "@/lib/utils";
 
 const parseIsoDate = (value: string) => {
@@ -91,38 +105,17 @@ const buildMonthCells = (monthDate: Date): MonthCell[] => {
   });
 };
 
-const normalizeHotelCalendarLocale = (locale: string | null | undefined) => {
-  const normalized = locale?.trim().replace("_", "-").toLowerCase() ?? "";
-
-  if (normalized === "fr" || normalized.startsWith("fr-")) {
-    return "fr-FR";
+const formatWeekdays = (locale: string) => {
+  if (locale === "th-TH-u-ca-gregory") {
+    return ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
   }
 
-  if (normalized === "es" || normalized.startsWith("es-")) {
-    return "es-ES";
-  }
-
-  if (normalized === "de" || normalized.startsWith("de-")) {
-    return "de-DE";
-  }
-
-  if (normalized === "it" || normalized.startsWith("it-")) {
-    return "it-IT";
-  }
-
-  if (normalized === "pt" || normalized.startsWith("pt-")) {
-    return "pt-BR";
-  }
-
-  return "en-US";
-};
-
-const formatWeekdays = (locale: string) =>
-  Array.from({ length: 7 }, (_, day) =>
+  return Array.from({ length: 7 }, (_, day) =>
     new Intl.DateTimeFormat(locale, { weekday: "short" }).format(
       new Date(2024, 0, 7 + day),
     ),
   );
+};
 
 const formatShortDate = (value: string, locale: string) => {
   if (!value) return "";
@@ -147,6 +140,16 @@ const normalizeGuestCount = (value: string | number | undefined) => {
   if (Number.isNaN(parsed)) return 1;
   return Math.max(1, Math.min(12, parsed));
 };
+
+const formatHotelSearchTemplate = (
+  template: string,
+  values: Record<string, string | number>,
+) =>
+  Object.entries(values).reduce(
+    (formatted, [key, value]) =>
+      formatted.replaceAll(`{{${key}}}`, String(value)),
+    template,
+  );
 
 type HotelDestinationSuggestion = {
   id: string;
@@ -205,6 +208,7 @@ export type HotelSearchBarProps = {
   initialRooms?: string | number;
   initialSort?: string | null;
   introLabel?: string;
+  desktopIdentityLabel?: string;
   errorRole?: "alert" | "status";
   compact?: boolean;
   mobileLayout?: "default" | "controls" | "drawer";
@@ -212,6 +216,7 @@ export type HotelSearchBarProps = {
   onOpenMobileSearch?: () => void;
   onCloseMobileSearch?: () => void;
   onMobileDraftChange?: (draft: HotelSearchDraft) => void;
+  onDesktopDraftChange?: (draft: HotelSearchDraft) => void;
   onSubmitStart?: () => void;
   className?: string;
 };
@@ -224,6 +229,7 @@ export function HotelSearchBar({
   initialRooms = "1",
   initialSort = null,
   introLabel,
+  desktopIdentityLabel,
   errorRole,
   compact = false,
   mobileLayout = "default",
@@ -231,10 +237,12 @@ export function HotelSearchBar({
   onOpenMobileSearch,
   onCloseMobileSearch,
   onMobileDraftChange,
+  onDesktopDraftChange,
   onSubmitStart,
   className,
 }: HotelSearchBarProps) {
   const { locale, t: dictionary } = useLocale();
+  const { status: sessionStatus } = useSession();
   const t = useCallback(
     (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
     [dictionary],
@@ -327,7 +335,10 @@ export function HotelSearchBar({
     }
 
     if (formattedCheckOut) {
-      return `${formattedCheckIn} — ${formattedCheckOut}`;
+      return formatHotelSearchTemplate(t("hotelSearch.dateRange"), {
+        checkIn: formattedCheckIn,
+        checkOut: formattedCheckOut,
+      });
     }
 
     return formattedCheckIn;
@@ -344,15 +355,34 @@ export function HotelSearchBar({
     );
     const roomLabel = t(normalizedRooms === 1 ? "roomSingular" : "roomPlural");
 
-    return `${normalizedGuests} ${guestLabel}, ${normalizedRooms} ${roomLabel}`;
+    return formatHotelSearchTemplate(t("hotelSearch.guestsRoomsSummary"), {
+      guests: normalizedGuests,
+      guestLabel,
+      rooms: normalizedRooms,
+      roomLabel,
+    });
   }, [rooms, t, totalHotelGuests]);
 
   const hotelSearchIntroLabel = introLabel ?? t("hotelSearchIntroLabel");
+  const hotelSearchIdentityLabel = desktopIdentityLabel ?? t("hotels");
 
   const mobileSearchSummary = useMemo(() => {
     const trimmedDestination = destination.trim() || t("destination");
-    return `${trimmedDestination} · ${dateSummary} · ${guestsRoomsSummary}`;
+    return formatHotelSearchTemplate(t("hotelSearch.mobileSummary"), {
+      destination: trimmedDestination,
+      dates: dateSummary,
+      summary: guestsRoomsSummary,
+    });
   }, [dateSummary, destination, guestsRoomsSummary, t]);
+
+  const resultsSearchSummary = useMemo(
+    () =>
+      formatHotelSearchTemplate(t("hotelSearch.resultsSummary"), {
+        dates: dateSummary,
+        summary: guestsRoomsSummary,
+      }),
+    [dateSummary, guestsRoomsSummary, t],
+  );
 
   const checkInParsed = parseIsoDate(checkIn);
   const checkOutParsed = parseIsoDate(checkOut);
@@ -402,6 +432,29 @@ export function HotelSearchBar({
     destination,
     mobileLayout,
     onMobileDraftChange,
+    rooms,
+    totalHotelGuests,
+  ]);
+
+  useEffect(() => {
+    if (!compact || mobileLayout !== "default" || !onDesktopDraftChange) {
+      return;
+    }
+
+    onDesktopDraftChange({
+      destination,
+      checkIn,
+      checkOut,
+      guests: Math.max(1, Math.min(12, totalHotelGuests)),
+      rooms: clampCount(rooms, 1, 6),
+    });
+  }, [
+    checkIn,
+    checkOut,
+    compact,
+    destination,
+    mobileLayout,
+    onDesktopDraftChange,
     rooms,
     totalHotelGuests,
   ]);
@@ -865,8 +918,11 @@ export function HotelSearchBar({
       return;
     }
 
+    const searchDestination =
+      normalizeHotelDestinationSearchValue(trimmedDestination);
+
     const params = new URLSearchParams({
-      destination: trimmedDestination,
+      destination: searchDestination,
       checkIn,
       checkOut,
       guests: String(normalizedGuests),
@@ -899,18 +955,34 @@ export function HotelSearchBar({
     }, 15000);
 
     startRouteProgress();
+    try {
+      const recentSearch = buildHotelRecentSearch({
+        destination: searchDestination,
+        checkIn,
+        checkOut,
+        guests: normalizedGuests,
+        rooms: normalizedRooms,
+      });
+      if (sessionStatus === "authenticated") {
+        void syncBackendRecentSearch(recentSearch);
+      } else {
+        upsertRecentSearch(recentSearch);
+      }
+    } catch {
+      // best effort only
+    }
     router.push(nextUrl);
   };
 
   const fieldClassName = cn(
-    "relative rounded-xl border border-slate-300 bg-white transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40",
+    "relative rounded-xl border border-slate-300 bg-white transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25",
     compact
       ? cn(
-          "min-h-[56px] px-3 py-2 sm:min-h-[54px] sm:px-3 sm:py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
+          "min-h-[56px] px-3 py-2 sm:min-h-[54px] sm:px-3 sm:py-1.5 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
           mobileSearchOpen &&
-            "min-h-[74px] rounded-3xl border-slate-200 px-4 py-3.5 shadow-sm shadow-slate-900/[0.03] sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:px-3 sm:py-1.5 sm:shadow-none lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200",
+            "min-h-[74px] rounded-3xl border-slate-200 px-4 py-3.5 shadow-sm shadow-slate-900/[0.03] sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:px-3 sm:py-1.5 sm:shadow-none lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200",
         )
-      : "min-h-[54px] px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
+      : "min-h-[54px] px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
   );
   const valueControlClassName = cn(
     "focus-ring w-full rounded-md border-0 bg-transparent px-0 outline-none transition-colors",
@@ -921,6 +993,8 @@ export function HotelSearchBar({
         )
       : "h-8 text-[16px] text-slate-900 md:text-sm",
   );
+  const desktopPopoverClassName =
+    "absolute top-[calc(100%+10px)] z-[1000] hidden border border-slate-200 bg-white shadow-[0_24px_56px_rgba(15,23,42,0.20)] ring-1 ring-slate-950/[0.04] sm:block";
   const fieldLabelClassName = cn(
     "block font-semibold uppercase",
     compact
@@ -948,11 +1022,11 @@ export function HotelSearchBar({
                 type="button"
                 aria-label={t("hotelResults.openFilters")}
                 onClick={onOpenFilters}
-                className="focus-ring relative inline-flex h-16 w-[72px] shrink-0 items-center justify-center rounded-md border border-indigo-100/90 bg-white px-2 text-[11px] font-semibold text-slate-800 shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-indigo-200 hover:text-slate-950 hover:shadow-[0_8px_18px_rgba(79,70,229,0.12)] focus-visible:border-indigo-300"
+                className="focus-ring relative inline-flex h-16 w-[72px] shrink-0 items-center justify-center rounded-md border border-[#004BB8]/12 bg-white px-2 text-[11px] font-semibold text-slate-800 shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-[#004BB8]/20 hover:text-slate-950 hover:shadow-[0_8px_18px_rgba(0,75,184,0.12)] focus-visible:border-[#004BB8]"
               >
                 <span className="flex flex-col items-center justify-center gap-1 leading-none">
                   <SlidersHorizontal
-                    className="text-indigo-700"
+                    className="text-[#004BB8]"
                     size={17}
                     strokeWidth={2.3}
                   />
@@ -963,19 +1037,19 @@ export function HotelSearchBar({
               <button
                 type="button"
                 onClick={openMobileSearchPanel}
-                className="focus-ring flex h-16 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-md border border-indigo-100/90 bg-white px-4 py-0 text-left shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-indigo-200 hover:shadow-[0_8px_18px_rgba(79,70,229,0.12)] focus-visible:border-indigo-300"
+                className="focus-ring flex h-16 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-md border border-[#004BB8]/12 bg-white px-4 py-0 text-start shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-[#004BB8]/20 hover:shadow-[0_8px_18px_rgba(0,75,184,0.12)] focus-visible:border-[#004BB8]"
               >
                 <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
                   <span className="block truncate text-[15px] font-bold leading-5 text-slate-950">
                     {destination.trim() || t("destination")}
                   </span>
                   <span className="mt-1 block truncate text-[12px] font-semibold leading-4 text-slate-700">
-                    {dateSummary} · {guestsRoomsSummary}
+                    {resultsSearchSummary}
                   </span>
                 </span>
                 <span
                   aria-hidden="true"
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-indigo-100 bg-indigo-50/80 text-indigo-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[#004BB8]/12 bg-[#004BB8]/8 text-[#004BB8] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]"
                 >
                   <PencilLine size={16} strokeWidth={2.1} />
                 </span>
@@ -985,7 +1059,7 @@ export function HotelSearchBar({
             <button
               type="button"
               onClick={openMobileSearchPanel}
-              className="focus-ring w-full rounded-xl border border-indigo-100 bg-white px-4 py-4 text-left shadow-[0_12px_26px_rgba(15,23,42,0.10)] transition hover:border-indigo-200 focus-visible:border-indigo-300"
+              className="focus-ring w-full rounded-xl border border-[#004BB8]/12 bg-white px-4 py-4 text-start shadow-[0_12px_26px_rgba(15,23,42,0.10)] transition hover:border-[#004BB8]/20 focus-visible:border-[#004BB8]"
             >
               <span className="block truncate text-sm font-semibold text-slate-950">
                 {mobileSearchSummary}
@@ -1022,7 +1096,7 @@ export function HotelSearchBar({
                 type="button"
                 aria-label={t("closeSearchForm")}
                 onClick={closeMobileSearchPanel}
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-base font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-base font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
               >
                 ×
               </button>
@@ -1035,13 +1109,37 @@ export function HotelSearchBar({
             "overflow-visible",
             compact
               ? cn(
-                  "rounded-xl border border-slate-300 bg-slate-50 p-2 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:rounded-2xl sm:border-slate-200 sm:bg-white sm:p-1 sm:shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
+                  "rounded-xl border border-slate-300 bg-slate-50 p-2 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:rounded-[1.35rem] sm:border-slate-200/90 sm:bg-white sm:p-1.5 sm:shadow-[0_16px_36px_-24px_rgba(15,23,42,0.32)] sm:ring-1 sm:ring-slate-950/[0.02] lg:p-1",
                   mobileSearchOpen &&
                     "min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-none border-0 bg-slate-50 px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-none",
                 )
               : "rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
           )}
         >
+          {!compact && desktopIdentityLabel ? (
+            <div className="flex items-center px-1 pb-2 sm:hidden">
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#004BB8]/8 px-3 py-1.5 text-[0.86rem] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10">
+                <BedDouble
+                  aria-hidden="true"
+                  className="h-4 w-4 text-[#004BB8]"
+                  strokeWidth={2.15}
+                />
+                {hotelSearchIdentityLabel}
+              </span>
+            </div>
+          ) : null}
+          {!compact && desktopIdentityLabel ? (
+            <div className="hidden items-center px-1 pb-2 sm:flex lg:pb-2.5">
+              <span className="inline-flex items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3.5 py-1.5 text-[0.925rem] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10">
+                <BedDouble
+                  aria-hidden="true"
+                  className="h-[1.125rem] w-[1.125rem] text-[#004BB8]"
+                  strokeWidth={2.15}
+                />
+                {hotelSearchIdentityLabel}
+              </span>
+            </div>
+          ) : null}
           <div
             className={cn(
               "grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:gap-0",
@@ -1056,7 +1154,11 @@ export function HotelSearchBar({
           >
             <label
               ref={destinationWrapperRef}
-              className={cn(fieldClassName, "lg:rounded-l-xl")}
+              className={cn(
+                fieldClassName,
+                "lg:rounded-s-xl",
+                shouldShowDestinationSuggestions && "z-[1000]",
+              )}
             >
               <span className={fieldLabelClassName}>
                 {t("hotelSearchDestinationLabel")}
@@ -1076,7 +1178,7 @@ export function HotelSearchBar({
                   aria-label={t("chooseHotelDestination")}
                   className={cn(
                     valueControlClassName,
-                    "flex items-center justify-between gap-2 pr-2 text-left sm:hidden",
+                    "flex items-center justify-between gap-2 pe-2 text-start sm:hidden",
                   )}
                 >
                   <span
@@ -1131,7 +1233,7 @@ export function HotelSearchBar({
                     onClick={handleClearDestination}
                     onMouseDown={(event) => event.preventDefault()}
                     aria-label={t("clearDestination")}
-                    className="focus-ring absolute right-0 top-1/2 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 sm:inline-flex"
+                    className="focus-ring absolute end-0 top-1/2 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 sm:inline-flex"
                   >
                     <X className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -1142,7 +1244,10 @@ export function HotelSearchBar({
                   id="hotel-destination-suggestions"
                   role="listbox"
                   aria-label={t("hotelDestinationSuggestions")}
-                  className="absolute left-0 top-[calc(100%+8px)] z-50 hidden max-h-[min(68vh,360px)] w-[min(92vw,420px)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_42px_rgba(15,23,42,0.18)] sm:block lg:w-[min(42vw,440px)]"
+                  className={cn(
+                    desktopPopoverClassName,
+                    "start-0 max-h-[min(68vh,360px)] w-[min(92vw,420px)] overflow-y-auto rounded-2xl p-1.5 lg:w-[min(42vw,440px)]",
+                  )}
                 >
                   {destinationSuggestionsLoading ? (
                     <div className="px-3 py-2.5 text-sm font-medium text-slate-500">
@@ -1151,9 +1256,15 @@ export function HotelSearchBar({
                   ) : visibleDestinationSuggestions.length ? (
                     visibleDestinationSuggestions.map((suggestion, index) => {
                       const isActive = destinationHighlight === index;
-                      const detail = [suggestion.region, suggestion.country]
-                        .filter(Boolean)
-                        .join(", ");
+                      const detail = getLocalizedHotelDestinationDetail(
+                        suggestion,
+                        locale,
+                      );
+                      const localizedName =
+                        getLocalizedHotelDestinationCityName(
+                          suggestion.name,
+                          locale,
+                        );
 
                       return (
                         <button
@@ -1168,13 +1279,13 @@ export function HotelSearchBar({
                           onMouseDown={(event) => event.preventDefault()}
                           onMouseEnter={() => setDestinationHighlight(index)}
                           className={cn(
-                            "flex w-full items-start justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition-colors",
-                            isActive ? "bg-indigo-50" : "hover:bg-slate-50",
+                            "flex w-full items-start justify-between gap-3 rounded-xl px-3 py-2.5 text-start transition-colors",
+                            isActive ? "bg-[#004BB8]/8" : "hover:bg-slate-50",
                           )}
                         >
                           <span className="min-w-0">
                             <span className="block truncate text-sm font-semibold text-slate-950">
-                              {suggestion.name}
+                              {localizedName}
                             </span>
                             <span className="mt-0.5 block truncate text-xs font-medium text-slate-600">
                               {detail || suggestion.country}
@@ -1195,7 +1306,10 @@ export function HotelSearchBar({
               ) : null}
             </label>
 
-            <div ref={datesWrapperRef} className={fieldClassName}>
+            <div
+              ref={datesWrapperRef}
+              className={cn(fieldClassName, datesOpen && "z-[1000]")}
+            >
               <span className={fieldLabelClassName}>
                 {t("hotelSearchTravelDatesLabel")}
               </span>
@@ -1208,20 +1322,25 @@ export function HotelSearchBar({
                 aria-label={t("chooseTravelDates")}
                 className={cn(
                   valueControlClassName,
-                  "flex items-center gap-1.5 text-left",
+                  "flex items-center gap-1.5 text-start",
                 )}
               >
                 <Calendar
                   size={16}
                   className={cn(
                     "shrink-0",
-                    compact ? "text-indigo-700" : "text-slate-500",
+                    compact ? "text-[#004BB8]" : "text-slate-500",
                   )}
                 />
                 <span className="truncate">{dateSummary}</span>
               </button>
               {datesOpen ? (
-                <div className="absolute left-0 top-[calc(100%+8px)] z-[200] hidden w-[min(92vw,580px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
+                <div
+                  className={cn(
+                    desktopPopoverClassName,
+                    "end-0 w-[min(92vw,580px)] rounded-2xl p-3 lg:end-auto lg:start-0",
+                  )}
+                >
                   <p className="mb-2.5 text-sm font-semibold text-slate-900">
                     {t("chooseTravelDates")}
                   </p>
@@ -1309,14 +1428,14 @@ export function HotelSearchBar({
                                   className={`focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed ${
                                     isPastDate
                                       ? "text-slate-300 hover:bg-transparent"
-                                      : "text-slate-900 hover:bg-indigo-50"
+                                      : "text-slate-900 hover:bg-[#004BB8]/8"
                                   } ${
                                     isInRange
-                                      ? "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100"
+                                      ? "rounded-md bg-[#004BB8]/10 text-[#021C2B] hover:bg-[#004BB8]/10"
                                       : ""
                                   } ${
                                     isCheckIn || isCheckOut
-                                      ? "bg-indigo-700 text-white hover:bg-indigo-700"
+                                      ? "bg-[#004BB8] text-white hover:bg-[#004BB8]"
                                       : ""
                                   }`}
                                 >
@@ -1343,7 +1462,7 @@ export function HotelSearchBar({
                     <button
                       type="button"
                       onClick={() => setDatesOpen(false)}
-                      className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+                      className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
                     >
                       {t("done")}
                     </button>
@@ -1352,7 +1471,10 @@ export function HotelSearchBar({
               ) : null}
             </div>
 
-            <div ref={guestsRoomsWrapperRef} className={fieldClassName}>
+            <div
+              ref={guestsRoomsWrapperRef}
+              className={cn(fieldClassName, guestsRoomsOpen && "z-[1000]")}
+            >
               <span className={fieldLabelClassName}>
                 {t("hotelSearchGuestsLabel")}
               </span>
@@ -1365,7 +1487,7 @@ export function HotelSearchBar({
                 aria-label={t("chooseGuestsAndRooms")}
                 className={cn(
                   valueControlClassName,
-                  "flex items-center justify-between gap-1.5 text-left",
+                  "flex items-center justify-between gap-1.5 text-start",
                 )}
               >
                 <span className="truncate">{guestsRoomsSummary}</span>
@@ -1377,7 +1499,12 @@ export function HotelSearchBar({
                 />
               </button>
               {guestsRoomsOpen ? (
-                <div className="absolute left-0 top-[calc(100%+8px)] z-30 hidden w-[min(92vw,320px)] rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:block">
+                <div
+                  className={cn(
+                    desktopPopoverClassName,
+                    "start-0 w-[min(92vw,320px)] rounded-xl p-3 lg:end-0 lg:start-auto",
+                  )}
+                >
                   <div className="space-y-3">
                     {[
                       {
@@ -1476,7 +1603,7 @@ export function HotelSearchBar({
                             onClick={() => setHotelPetFriendly((prev) => !prev)}
                             className={`focus-ring relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors ${
                               hotelPetFriendly
-                                ? "border-indigo-600 bg-indigo-600"
+                                ? "border-[#004BB8] bg-[#004BB8]"
                                 : "border-slate-300 bg-slate-200"
                             }`}
                           >
@@ -1505,19 +1632,25 @@ export function HotelSearchBar({
               <button
                 type="submit"
                 className={cn(
-                  "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 disabled:cursor-not-allowed disabled:opacity-75 lg:h-full lg:self-stretch lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20",
+                  compact
+                    ? "w-full rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_12px_24px_rgba(0,75,184,0.18)] transition hover:bg-[#021C2B] hover:shadow-[0_14px_28px_rgba(0,75,184,0.24)] disabled:cursor-not-allowed disabled:opacity-75 lg:h-full lg:self-stretch lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20"
+                    : "h-12 w-full whitespace-nowrap rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 enabled:hover:bg-[#021C2B] enabled:active:bg-[#021C2B] disabled:bg-[#004BB8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#004BB8]/20 lg:h-full lg:self-stretch lg:min-h-[58px] lg:rounded-none lg:rounded-e-2xl lg:border lg:border-s-0 lg:border-[#004BB8]/20 lg:px-5 lg:text-[15px] lg:font-bold lg:shadow-[0_10px_22px_rgba(0,75,184,0.22)] lg:disabled:shadow-[0_10px_22px_rgba(0,75,184,0.22)]",
                   compact
                     ? cn(
-                        "h-[54px] shadow-lg sm:min-h-[54px] lg:min-w-[112px] lg:rounded-l-none",
+                        "h-[54px] shadow-lg sm:min-h-[54px] lg:min-w-[112px] lg:rounded-s-none",
                         mobileSearchOpen &&
-                          "mt-1 h-[52px] rounded-2xl text-base sm:mt-0 sm:h-[54px] sm:rounded-xl lg:rounded-l-none",
+                          "mt-1 h-[52px] rounded-2xl text-base sm:mt-0 sm:h-[54px] sm:rounded-xl lg:rounded-s-none",
                       )
                     : "h-12 lg:min-h-[54px] lg:rounded-none",
                 )}
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}
               >
-                {isSubmitting ? t("searchingHotels") : t("search")}
+                {isSubmitting
+                  ? t("searchingHotels")
+                  : compact
+                    ? t("search")
+                    : t("searchHotels")}
               </button>
             </div>
           </div>
@@ -1537,12 +1670,9 @@ export function HotelSearchBar({
         ) : null}
 
         {error ? (
-          <p
-            className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700"
-            role={errorRole}
-          >
+          <MessageBanner tone="error" role={errorRole}>
             {error}
-          </p>
+          </MessageBanner>
         ) : null}
       </form>
 
@@ -1568,8 +1698,8 @@ export function HotelSearchBar({
         titleId="hotel-results-mobile-dates-title"
         launcherRef={datesMobileLauncherRef}
         onClose={() => setDatesOpen(false)}
-        contentClassName="px-3 py-3"
-        footer={
+        contentClassName="px-4 py-4"
+        footer={(requestClose) => (
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
@@ -1583,118 +1713,112 @@ export function HotelSearchBar({
             </button>
             <button
               type="button"
-              onClick={() => setDatesOpen(false)}
-              className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+              onClick={requestClose}
+              className="focus-ring min-h-11 rounded-xl bg-[#004BB8] px-4 py-2 text-sm font-bold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
             >
               {t("done")}
             </button>
           </div>
-        }
+        )}
       >
-        <div className="mx-auto flex w-full max-w-xl flex-col gap-3 rounded-2xl bg-white p-3 shadow-sm">
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              aria-label={t("previousMonth")}
-              onClick={() =>
-                setHotelVisibleMonthDate((prev) => addMonths(prev, -1))
-              }
-              className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-            >
-              {t("previousMonthShort")}
-            </button>
-            <button
-              type="button"
-              aria-label={t("nextMonth")}
-              onClick={() =>
-                setHotelVisibleMonthDate((prev) => addMonths(prev, 1))
-              }
-              className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-            >
-              {t("nextMonthShort")}
-            </button>
-          </div>
-          <div className="grid grid-cols-1 gap-3">
-            {[0, 1].map((monthOffset) => {
-              const monthDate = addMonths(hotelVisibleMonthDate, monthOffset);
-              const cells = buildMonthCells(monthDate);
+        <div className="mx-auto w-full max-w-xl space-y-8 pb-2">
+          {Array.from({ length: 12 }, (_, monthOffset) =>
+            addMonths(hotelVisibleMonthDate, monthOffset),
+          ).map((monthDate) => {
+            const monthKey = `${monthDate.getFullYear()}-${monthDate.getMonth()}`;
+            const cells = buildMonthCells(monthDate);
 
-              return (
-                <div key={monthOffset}>
-                  <p className="mb-1 text-center text-sm font-black text-slate-900">
-                    {monthDate.toLocaleDateString(calendarLocale, {
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </p>
-                  <div className="mb-1 grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-500">
-                    {weekdays.map((weekday) => (
-                      <span key={weekday}>{weekday}</span>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-7 gap-1">
-                    {cells.map((cell) => {
-                      const day = cell.date;
-                      const iso = toIsoDate(day);
-                      const isCheckIn = iso === checkIn;
-                      const isCheckOut = iso === checkOut;
-                      const isPastDate = isBeforeToday(day);
-                      const isInvalidCheckOut = Boolean(
-                        checkIn && !checkOut && iso <= checkIn,
-                      );
-                      const isDisabledDate = isPastDate || isInvalidCheckOut;
-                      const isInRange = Boolean(
-                        checkInParsed &&
-                        checkOutParsed &&
-                        !isPastDate &&
-                        day > checkInParsed &&
-                        day < checkOutParsed,
-                      );
-
-                      if (!cell.isCurrentMonth) {
-                        return (
-                          <span
-                            key={`mobile-placeholder-${iso}`}
-                            aria-hidden="true"
-                            className="h-8 w-8 justify-self-center min-[390px]:h-9 min-[390px]:w-9"
-                          />
-                        );
-                      }
-
-                      return (
-                        <button
-                          key={iso}
-                          type="button"
-                          aria-label={`${t(
-                            "hotelResults.selectDateAriaPrefix",
-                          )} ${day.toLocaleDateString(calendarLocale, {
-                            month: "long",
-                            day: "numeric",
-                            year: "numeric",
-                          })}`}
-                          onClick={() => handleSelectHotelDate(day)}
-                          disabled={isDisabledDate}
-                          aria-disabled={isDisabledDate}
-                          className={cn(
-                            "focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm font-semibold transition-colors disabled:cursor-not-allowed min-[390px]:h-9 min-[390px]:w-9",
-                            isDisabledDate
-                              ? "text-slate-300 hover:bg-transparent"
-                              : "text-slate-900 hover:bg-indigo-50",
-                            isInRange &&
-                              "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100",
-                            (isCheckIn || isCheckOut) &&
-                              "bg-indigo-700 text-white hover:bg-indigo-700",
-                          )}
-                        >
-                          {day.getDate()}
-                        </button>
-                      );
-                    })}
-                  </div>
+            return (
+              <section
+                key={monthKey}
+                aria-label={monthDate.toLocaleDateString(calendarLocale, {
+                  month: "long",
+                  year: "numeric",
+                })}
+                className="space-y-2.5"
+              >
+                <h3 className="text-start text-[17px] font-bold tracking-tight text-slate-950">
+                  {monthDate.toLocaleDateString(calendarLocale, {
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </h3>
+                <div className="grid grid-cols-7 text-center text-[12px] font-semibold tracking-[0.08em] text-slate-500">
+                  {weekdays.map((weekday) => (
+                    <span key={weekday} className="py-2">
+                      {weekday}
+                    </span>
+                  ))}
                 </div>
-              );
-            })}
-          </div>
+                <div className="grid grid-cols-7 gap-y-1.5">
+                  {cells.map((cell) => {
+                    const day = cell.date;
+                    const iso = toIsoDate(day);
+                    const isCheckIn = iso === checkIn;
+                    const isCheckOut = iso === checkOut;
+                    const isPastDate = isBeforeToday(day);
+                    const isToday = toIsoDate(new Date()) === iso;
+                    const isInRange = Boolean(
+                      checkInParsed &&
+                      checkOutParsed &&
+                      !isPastDate &&
+                      day > checkInParsed &&
+                      day < checkOutParsed,
+                    );
+
+                    if (!cell.isCurrentMonth) {
+                      return (
+                        <span
+                          key={`mobile-placeholder-${iso}`}
+                          aria-hidden="true"
+                          className="h-11 w-full"
+                        />
+                      );
+                    }
+
+                    return (
+                      <button
+                        key={iso}
+                        type="button"
+                        aria-label={`${t(
+                          "hotelResults.selectDateAriaPrefix",
+                        )} ${day.toLocaleDateString(calendarLocale, {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })}`}
+                        aria-pressed={isCheckIn || isCheckOut}
+                        onClick={() => handleSelectHotelDate(day)}
+                        disabled={isPastDate}
+                        aria-disabled={isPastDate}
+                        className={cn(
+                          "focus-ring relative mx-auto flex h-11 w-full max-w-11 items-center justify-center rounded-full text-[15px] font-semibold transition-colors disabled:cursor-not-allowed",
+                          isPastDate
+                            ? "text-slate-300"
+                            : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
+                          isToday &&
+                            !isPastDate &&
+                            "ring-1 ring-inset ring-[#004BB8]/25",
+                          isInRange &&
+                            "bg-[#004BB8]/7 text-[#021C2B] hover:bg-[#004BB8]/10",
+                          (isCheckIn || isCheckOut) &&
+                            "bg-[#004BB8] text-white shadow-sm ring-0 hover:bg-[#004BB8] hover:text-white",
+                        )}
+                      >
+                        {day.getDate()}
+                        {isToday && !isCheckIn && !isCheckOut ? (
+                          <span
+                            className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#004BB8]"
+                            aria-hidden="true"
+                          />
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
         </div>
       </HotelMobilePickerShell>
 
@@ -1704,17 +1828,17 @@ export function HotelSearchBar({
         titleId="hotel-results-mobile-guests-title"
         launcherRef={guestsRoomsMobileLauncherRef}
         onClose={() => setGuestsRoomsOpen(false)}
-        footer={
+        footer={(requestClose) => (
           <div className="flex justify-end">
             <button
               type="button"
-              onClick={() => setGuestsRoomsOpen(false)}
-              className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+              onClick={requestClose}
+              className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
             >
               {t("done")}
             </button>
           </div>
-        }
+        )}
       >
         <div className="mx-auto w-full max-w-xl space-y-4 rounded-2xl bg-white p-4 shadow-sm">
           {[

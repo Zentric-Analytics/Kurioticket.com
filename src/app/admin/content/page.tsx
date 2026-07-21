@@ -1,10 +1,11 @@
 import { AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { HomepageFaresRefreshCard } from "@/components/admin/HomepageFaresRefreshCard";
 import { generalFaqs } from "@/content/faqs";
 import { getDefaultHomeDiscoveryPriceRoutes } from "@/data/homeDiscovery";
 import { hotelDestinations } from "@/data/hotelDestinations";
 import { popularDestinationsByMarket } from "@/data/marketHomeContent";
 
-export const metadata = { title: "Admin Content" };
+export const metadata = { title: "Admin Content Inventory" };
 
 const homepageDestinationCount = Object.values(popularDestinationsByMarket).reduce((count, items) => count + items.length, 0);
 const flightRouteCount = getDefaultHomeDiscoveryPriceRoutes().length;
@@ -21,17 +22,18 @@ const contentAreas = [
 export default function AdminContentPage() {
   return (
     <AdminPageShell
-      title="Public Content Management"
-      description="Structure for managing public website content. This page only displays existing content/configuration counts or explicit placeholders."
+      title="Content Inventory"
+      description="Review the public content currently available across Kurioticket and manage homepage fare freshness."
     >
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <HomepageFaresRefreshCard />
+      <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {contentAreas.map((area) => (
           <AdminSectionCard key={area.title} className="p-5">
             <div className="flex items-start justify-between gap-3">
-              <h2 className="font-black text-slate-950">{area.title}</h2>
+              <h2 className="font-semibold text-slate-950">{area.title}</h2>
               <AdminStatusBadge tone={area.status === "Read-only" ? "info" : "neutral"}>{area.status}</AdminStatusBadge>
             </div>
-            <p className="mt-4 text-3xl font-black text-slate-950">{area.value}</p>
+            <p className="mt-4 text-3xl font-semibold text-slate-950">{area.value}</p>
             <p className="mt-2 text-sm leading-6 text-slate-600">{area.note}</p>
           </AdminSectionCard>
         ))}

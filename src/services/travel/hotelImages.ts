@@ -44,6 +44,23 @@ export function normalizeHotelImageUrl(candidate: unknown, context: HotelImageCo
   return selectCuratedHotelFallbackImage(context);
 }
 
+export function normalizeHotelImageUrls(candidates: unknown): string[] {
+  if (!Array.isArray(candidates)) return [];
+
+  const seen = new Set<string>();
+  const urls: string[] = [];
+
+  for (const candidate of candidates) {
+    if (typeof candidate !== "string") continue;
+    const trimmed = candidate.trim();
+    if (!isSafeHttpsImageUrl(trimmed) || seen.has(trimmed)) continue;
+    seen.add(trimmed);
+    urls.push(trimmed);
+  }
+
+  return urls;
+}
+
 export function isSafeHttpsImageUrl(candidate: string): boolean {
   if (!candidate) return false;
 

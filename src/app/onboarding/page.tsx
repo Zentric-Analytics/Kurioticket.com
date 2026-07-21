@@ -1,62 +1,42 @@
+"use client";
+
 import { AppHeader } from "@/components/layout/AppHeader";
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { Footer } from "@/components/layout/Footer";
 import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Field, Input, Select } from "@/components/ui/Input";
-
-export const metadata = {
-  title: "Onboarding",
-};
+import { Field, Input } from "@/components/ui/Input";
 
 export default function OnboardingPage() {
+  const { t } = useLocale();
+
   return (
     <>
       <AppHeader />
       <main className="page-shell flex-1 pt-24 pb-8 sm:pt-28 lg:pt-28">
         <Card className="mx-auto max-w-3xl p-5">
-          <p className="text-sm font-semibold text-teal-dark">Optional smart onboarding</p>
-          <h1 className="mt-1 text-3xl font-bold text-navy">Tune your travel preferences</h1>
-          <p className="mt-2 text-muted">You can skip this now and update preferences later.</p>
+          <p className="text-sm font-semibold text-teal-dark">
+            {t["onboarding.eyebrow"]}
+          </p>
+          <h1 className="mt-1 text-3xl font-bold text-navy">
+            {t["onboarding.title"]}
+          </h1>
+          <p className="mt-2 text-muted">{t["onboarding.description"]}</p>
           <form className="mt-6 grid gap-4 md:grid-cols-2">
-            <Field label="Preferred home airport">
+            <Field label={t["onboarding.homeAirport"]}>
               <Input name="homeAirport" placeholder="IAH" />
             </Field>
-            <Field label="Preferred airlines">
+            <Field label={t["onboarding.preferredAirlines"]}>
               <Input name="airlines" placeholder="Delta, United" />
-            </Field>
-            <Field label="Budget style">
-              <Select name="budgetStyle">
-                <option>Lowest reasonable fare</option>
-                <option>Balanced value</option>
-                <option>Comfort when it matters</option>
-              </Select>
-            </Field>
-            <Field label="Direct vs cheaper">
-              <Select name="directVsCheaper">
-                <option>Prefer direct when close</option>
-                <option>Choose cheaper if layover is good</option>
-                <option>Always minimize travel effort</option>
-              </Select>
-            </Field>
-            <Field label="Travel frequency">
-              <Select name="travelFrequency">
-                <option>A few times a year</option>
-                <option>Monthly</option>
-                <option>Often for work</option>
-              </Select>
-            </Field>
-            <Field label="Travel purpose">
-              <Select name="travelPurpose">
-                <option>Leisure</option>
-                <option>Family</option>
-                <option>Business</option>
-                <option>Mixed</option>
-              </Select>
             </Field>
           </form>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <LinkButton href="/dashboard" variant="accent">Save preferences later</LinkButton>
-            <LinkButton href="/dashboard" variant="secondary">Skip</LinkButton>
+            <LinkButton href="/dashboard" variant="accent">
+              {t["onboarding.savePreferencesLater"]}
+            </LinkButton>
+            <LinkButton href="/dashboard" variant="secondary">
+              {t["onboarding.skip"]}
+            </LinkButton>
           </div>
         </Card>
       </main>

@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { getFlightFromCache, getHotelFromCache } from "@/lib/searchCache";
 import { withOptionalDb } from "@/lib/prisma";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
+import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
+import type { NormalizedHotelResult } from "@/lib/types";
 
 export async function POST(request: Request) {
   const body = (await request.json()) as { id?: string; type?: "flight" | "hotel"; sourcePage?: string };
@@ -19,25 +21,41 @@ export async function POST(request: Request) {
     );
   }
 
-  const redirectTarget = body.type === "flight"
-    ? getFlightRedirectUrl("originAirport" in target ? target : null)
-    : getGenericRedirectUrl("location" in target ? target : null);
-  if (!redirectTarget.ok) {
-    await logRejectedRedirect(body, target, redirectTarget.reason);
-    const status = redirectTarget.reason === "unsafe_redirect_target" ? 400 : 409;
+  const hotelTarget = body.type === "hotel" ? (target as NormalizedHotelResult) : null;
+  const hotelPriceDetails = hotelTarget ? getHotelPriceDetails(hotelTarget) : null;
+
+  if (body.type === "hotel" && "dataSource" in target && target.dataSource === "demo") {
     return NextResponse.json(
       {
-        error: body.type === "flight"
-          ? "This fare can’t be continued to the provider anymore. Please search again for current live fares."
-          : "No external provider link is available for this result right now. Please choose another option.",
+        error:
+          "This illustrative demo hotel cannot be opened with an external provider.",
       },
-      { status },
+      { status: 409 },
     );
   }
 
-  const url = redirectTarget.url;
+  if (hotelTarget && (!hotelPriceDetails || hotelTarget.inventoryKind === "discovery")) {
+    return NextResponse.json(
+      { error: "A live booking quote is not available for this hotel." },
+      { status: 409 },
+    );
+  }
 
-  const session = await getOptionalServerSession();
+  if (!target.partnerRedirectUrl && !target.bookingUrl) {
+    return NextResponse.json(
+      {
+        error: "No external provider link is available for this result right now. Please choose another flight option.",
+      },
+      { status: 409 },
+    );
+  }
+
+  const url = new URL(target.partnerRedirectUrl || target.bookingUrl);
+  if (!["http:", "https:"].includes(url.protocol)) {
+    return NextResponse.json({ error: "Unsafe redirect target." }, { status: 400 });
+  }
+
+  const session = await getServerSession(authOptions);
   const route =
     body.type === "flight" && "originAirport" in target
       ? `${target.originAirport}-${target.destinationAirport}`
@@ -54,8 +72,8 @@ export async function POST(request: Request) {
             type: body.type === "flight" ? "FLIGHT" : "HOTEL",
             provider: target.provider,
             route,
-            price: "price" in target ? target.price : target.totalPrice,
-            currency: target.currency,
+            price: "price" in target ? target.price : hotelPriceDetails?.totalPrice,
+            currency: "price" in target ? target.currency : hotelPriceDetails?.currency,
             destinationUrl: url.toString(),
             userType: session?.user ? "user" : "guest",
             sourcePage: body.sourcePage || "unknown",
@@ -75,78 +93,4 @@ export async function POST(request: Request) {
   ]);
 
   return NextResponse.json({ url: url.toString() });
-}
-
-
-type RedirectUrlResult =
-  | { ok: true; url: URL }
-  | { ok: false; reason: "missing_exact_handoff" | "unsafe_redirect_target" };
-
-function getFlightRedirectUrl(target: ReturnType<typeof getFlightFromCache>): RedirectUrlResult {
-  if (!target || target.handoffType !== "exact_provider_link" || !target.handoffUrl) {
-    return { ok: false, reason: "missing_exact_handoff" };
-  }
-  return parseSafeRedirectUrl(target.handoffUrl);
-}
-
-function getGenericRedirectUrl(target: { partnerRedirectUrl?: string; bookingUrl?: string } | null): RedirectUrlResult {
-  const value = target?.partnerRedirectUrl || target?.bookingUrl;
-  if (!value) return { ok: false, reason: "missing_exact_handoff" };
-  return parseSafeRedirectUrl(value);
-}
-
-function parseSafeRedirectUrl(value: string): RedirectUrlResult {
-  try {
-    const url = new URL(value);
-    if (!["http:", "https:"].includes(url.protocol)) return { ok: false, reason: "unsafe_redirect_target" };
-    if (isGeneratedRouteSearchUrl(url)) return { ok: false, reason: "missing_exact_handoff" };
-    return { ok: true, url };
-  } catch {
-    return { ok: false, reason: "unsafe_redirect_target" };
-  }
-}
-
-function isGeneratedRouteSearchUrl(url: URL) {
-  const hostname = url.hostname.replace(/^www\./, "").toLowerCase();
-  if (hostname === "aviasales.com" && url.pathname.startsWith("/search")) return true;
-  return Boolean(
-    url.searchParams.get("sub_id")?.toLowerCase().includes("metasearch") ||
-      (url.searchParams.has("origin_iata") && url.searchParams.has("destination_iata")),
-  );
-}
-
-async function logRejectedRedirect(
-  body: { id?: string; type?: "flight" | "hotel"; sourcePage?: string },
-  target: NonNullable<ReturnType<typeof getFlightFromCache>> | NonNullable<ReturnType<typeof getHotelFromCache>>,
-  reason: string,
-) {
-  await withOptionalDb(
-    async (db) => {
-      await db.redirectLog.create({
-        data: {
-          type: body.type === "flight" ? "FLIGHT" : "HOTEL",
-          provider: target.provider,
-          route: body.type === "flight" && "originAirport" in target
-            ? `${target.originAirport}-${target.destinationAirport}`
-            : "location" in target ? target.location : undefined,
-          price: "price" in target ? target.price : target.totalPrice,
-          currency: target.currency,
-          destinationUrl: "",
-          userType: "unknown",
-          sourcePage: body.sourcePage || "unknown",
-          metadata: { resultId: body.id, reason } as never,
-        },
-      });
-      return true;
-    },
-    false,
-  );
-}
-
-async function getOptionalServerSession() {
-  try {
-    return await getServerSession(authOptions);
-  } catch {
-    return null;
-  }
 }

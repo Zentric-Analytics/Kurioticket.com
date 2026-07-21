@@ -1,7 +1,59 @@
 import type { LegalDocument } from "@/lib/types";
 import { translations as enTranslations } from "@/lib/i18n/en";
+import {
+  getCaliforniaSellerOfTravelNotice,
+  getCompanyContactSummary,
+  getProviderBoundarySummary,
+  legalProfile,
+} from "./legalProfile";
 
 const lastUpdated = "May 11, 2026";
+const legalNoticeLastUpdated = "June 28, 2026";
+
+const legalMonthNames: Record<string, string> = {
+  "01": "January",
+  "02": "February",
+  "03": "March",
+  "04": "April",
+  "05": "May",
+  "06": "June",
+  "07": "July",
+  "08": "August",
+  "09": "September",
+  "10": "October",
+  "11": "November",
+  "12": "December",
+};
+
+function formatLegalProfileDate(value: string) {
+  const [year, month, day] = value.split("-");
+
+  if (!year || !month || !day) {
+    return value;
+  }
+
+  return `${legalMonthNames[month] || month} ${day}, ${year}`;
+}
+
+function formatProductScope(products: string[]) {
+  if (products.length <= 1) {
+    return products.join("");
+  }
+
+  return `${products.slice(0, -1).join(", ")}, and ${products[products.length - 1]}`;
+}
+
+const californiaSellerOfTravel = legalProfile.californiaSellerOfTravel;
+const californiaSellerOfTravelNotice = getCaliforniaSellerOfTravelNotice();
+const californiaSellerOfTravelValidFrom = formatLegalProfileDate(
+  californiaSellerOfTravel.validFrom,
+);
+const californiaSellerOfTravelExpires = formatLegalProfileDate(
+  californiaSellerOfTravel.expires,
+);
+const companyContactSummary = getCompanyContactSummary();
+const providerBoundarySummary = getProviderBoundarySummary();
+const productScopeSummary = formatProductScope(legalProfile.productScope);
 
 export const legalDocuments: LegalDocument[] = [
   {
@@ -108,6 +160,38 @@ export const legalDocuments: LegalDocument[] = [
     ],
   },
   {
+    slug: "privacy-choices",
+    title: "Privacy Choices",
+    summary: "Privacy and account choices currently available for Kurioticket users.",
+    lastUpdated: legalNoticeLastUpdated,
+    sections: [
+      {
+        id: "requests",
+        title: "Privacy Requests",
+        paragraphs: [
+          `You can contact ${legalProfile.contact.privacyEmail} for privacy requests, account-data questions, and requests involving personal information handled by Kurioticket.`,
+          "You may request access, correction, deletion, or ask questions about account or personal data. Kurioticket may need to verify your identity and may retain limited records where required for security, legal, fraud-prevention, dispute-resolution, or legitimate business purposes.",
+        ],
+      },
+      {
+        id: "account-alerts",
+        title: "Account and Alert Choices",
+        paragraphs: [
+          "Where account settings are available, users can manage account details, saved travel features, alerts, and communication preferences.",
+          `For email or alert preferences, use unsubscribe or preference-management links where provided, adjust available account settings, or contact ${legalProfile.contact.supportEmail} for help.`,
+        ],
+      },
+      {
+        id: "tracking-choices",
+        title: "Ads and Analytics Choices",
+        paragraphs: [
+          `${legalProfile.company.legalName} does not currently use active ads or third-party analytics tracking tools.`,
+          "If ads or third-party analytics tracking tools are added later, Kurioticket should update applicable policies and provide privacy choices where required by law.",
+        ],
+      },
+    ],
+  },
+  {
     slug: "affiliate-disclosure",
     title: "Affiliate Disclosure",
     summary: "How Kurioticket may earn commissions when users click or book through trusted partners.",
@@ -150,6 +234,140 @@ export const legalDocuments: LegalDocument[] = [
         paragraphs: [
           "Refunds, credits, schedule changes, cancellations, missed connections, check-in issues, baggage disputes, and purchase problems are handled by the external airline, hotel, or travel provider.",
           "Kurioticket support can help you understand platform usage and travel guidance boundaries, but cannot override partner or airline policies.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "price-availability-disclaimer",
+    title: "Price & Availability Disclaimer",
+    summary: "Explains why travel prices, fare rules, room rates, and availability can change.",
+    lastUpdated,
+    sections: [
+      {
+        id: "change",
+        title: "Prices Can Change",
+        paragraphs: [
+          "Flight and hotel prices, taxes, fees, baggage rules, cabin availability, rooms, schedules, and policies can change quickly and may differ by the time you reach a provider purchase page.",
+          "Kurioticket aims to compare current provider data, but provider delays, rate limits, cache windows, currency conversion, partner rules, and user selections can affect displayed information.",
+        ],
+      },
+      {
+        id: "verify",
+        title: "Verify Before Payment",
+        paragraphs: [
+          "Always review the external provider site before purchase. The external provider site is the authoritative source for final price, availability, fare conditions, room conditions, and purchase terms.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "partner-redirect-disclaimer",
+    title: "Partner Redirect Disclaimer",
+    summary: "What happens when Kurioticket redirects users to airlines, hotels, affiliate partners, or travel providers.",
+    lastUpdated,
+    sections: [
+      {
+        id: "redirect",
+        title: "Secure Redirects",
+        paragraphs: [
+          "When you continue to an external provider, Kurioticket redirects you to an airline, hotel, affiliate partner, or travel provider. We may log redirect metadata such as provider, route, price, timestamp, user type, and source page for analytics, support, abuse prevention, and affiliate tracking.",
+          "Kurioticket does not auto-fill airline websites, scrape airline websites, or complete partner purchases on your behalf.",
+        ],
+      },
+      {
+        id: "external-terms",
+        title: "External Terms",
+        paragraphs: [
+          "External partner sites are governed by their own terms, privacy policies, refund policies, cookies, accessibility practices, and customer support processes.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "california-seller-of-travel-notice",
+    title: "California Seller of Travel Notice",
+    summary: "California Seller of Travel registration notice for Kurioticket’s travel search and redirect platform.",
+    lastUpdated: legalNoticeLastUpdated,
+    sections: [
+      {
+        id: "registration",
+        title: "Registration Information",
+        paragraphs: [
+          `${legalProfile.company.legalName} is registered as a California Seller of Travel under Registration No. ${californiaSellerOfTravel.registrationNumber}.`,
+          `Registration valid from ${californiaSellerOfTravelValidFrom}. Registration expires ${californiaSellerOfTravelExpires}.`,
+          californiaSellerOfTravelNotice,
+        ],
+      },
+      {
+        id: "platform-model",
+        title: "Search and Redirect Model",
+        paragraphs: [
+          `${legalProfile.company.legalName} operates a travel search, comparison, and redirect platform for ${productScopeSummary}. Kurioticket helps users compare travel options and continue to external providers for final booking steps.`,
+          providerBoundarySummary,
+        ],
+      },
+      {
+        id: "provider-responsibilities",
+        title: "External Provider Responsibilities",
+        paragraphs: [
+          "External providers handle final booking, payment, confirmation, cancellation, refunds, changes, baggage, check-in, and reservation support after you continue from Kurioticket to a provider site.",
+          "Review the external provider’s final price, availability, fare rules, room or vehicle terms, cancellation policy, refund policy, baggage rules, check-in requirements, and customer support terms before completing any purchase.",
+        ],
+      },
+      {
+        id: "contact",
+        title: "Contact",
+        paragraphs: [
+          companyContactSummary,
+          `For platform support, contact ${legalProfile.contact.supportEmail}. For legal questions, contact ${legalProfile.contact.legalEmail}. For privacy questions, contact ${legalProfile.contact.privacyEmail}.`,
+        ],
+      },
+    ],
+  },
+  {
+    slug: "legal-notice-company-information",
+    title: "Legal Notice & Company Information",
+    summary: "Company, contact, product-scope, and provider-boundary information for Kurioticket.",
+    lastUpdated: legalNoticeLastUpdated,
+    sections: [
+      {
+        id: "company-information",
+        title: "Company Information",
+        paragraphs: [
+          companyContactSummary,
+          `Legal name: ${legalProfile.company.legalName}. Address: ${legalProfile.company.formattedAddress}. Business phone: ${legalProfile.contact.businessPhone}.`,
+        ],
+      },
+      {
+        id: "contacts",
+        title: "Contact Emails",
+        paragraphs: [
+          `Support: ${legalProfile.contact.supportEmail}. Legal: ${legalProfile.contact.legalEmail}. Privacy: ${legalProfile.contact.privacyEmail}.`,
+        ],
+      },
+      {
+        id: "product-scope",
+        title: "Product Scope and Business Model",
+        paragraphs: [
+          `Kurioticket’s product scope includes ${productScopeSummary}.`,
+          `Business model: ${legalProfile.businessModel.platformDescription} Kurioticket helps users search, compare, and continue to external travel providers.`,
+        ],
+      },
+      {
+        id: "provider-payment-boundary",
+        title: "Provider and Payment Boundary",
+        paragraphs: [
+          providerBoundarySummary,
+          "The external provider that accepts payment is responsible for final booking terms, final price, payment processing, confirmation, cancellation, refunds, changes, baggage, check-in, and reservation support.",
+        ],
+      },
+      {
+        id: "california-registration",
+        title: "California Seller of Travel Reference",
+        paragraphs: [
+          californiaSellerOfTravelNotice,
+          `Registration valid from ${californiaSellerOfTravelValidFrom}. Registration expires ${californiaSellerOfTravelExpires}.`,
         ],
       },
     ],
@@ -200,47 +418,72 @@ export const legalDocuments: LegalDocument[] = [
     ],
   },
   {
-    slug: "price-availability-disclaimer",
-    title: "Price & Availability Disclaimer",
-    summary: "Explains why travel prices, fare rules, room rates, and availability can change.",
-    lastUpdated,
+    slug: "security-statement",
+    title: "Security Statement",
+    summary: "High-level security practices and user responsibilities for Kurioticket accounts and provider redirects.",
+    lastUpdated: legalNoticeLastUpdated,
     sections: [
       {
-        id: "change",
-        title: "Prices Can Change",
+        id: "account-security",
+        title: "Account Security",
         paragraphs: [
-          "Flight and hotel prices, taxes, fees, baggage rules, cabin availability, rooms, schedules, and policies can change quickly and may differ by the time you reach a provider purchase page.",
-          "Kurioticket aims to compare current provider data, but provider delays, rate limits, cache windows, currency conversion, partner rules, and user selections can affect displayed information.",
+          "Kurioticket uses account authentication and session protections to help protect account access and platform features.",
+          "Users should protect passwords, avoid reusing credentials across services, keep account contact information current, and contact support if they suspect unauthorized account access.",
         ],
       },
       {
-        id: "verify",
-        title: "Verify Before Payment",
+        id: "provider-pages",
+        title: "External Provider Pages",
         paragraphs: [
-          "Always review the external provider site before purchase. The external provider site is the authoritative source for final price, availability, fare conditions, room conditions, and purchase terms.",
+          "Before entering payment or traveler information after a redirect, verify that you are on the expected external provider page and review that provider’s terms, privacy policy, refund rules, and support process.",
+          providerBoundarySummary,
+        ],
+      },
+      {
+        id: "support-boundaries",
+        title: "Support Boundaries",
+        paragraphs: [
+          "Kurioticket support can help with platform access, account issues, saved travel tools, alerts, and provider-redirect questions.",
+          "Kurioticket cannot override external provider account controls, payment systems, fare rules, booking confirmations, cancellations, refunds, changes, baggage, check-in, or reservation support decisions.",
+        ],
+      },
+      {
+        id: "reporting",
+        title: "Report Security Concerns",
+        paragraphs: [
+          `Report security concerns, suspicious account activity, or platform safety issues to ${legalProfile.contact.legalEmail} or ${legalProfile.contact.supportEmail}.`,
         ],
       },
     ],
   },
   {
-    slug: "partner-redirect-disclaimer",
-    title: "Partner Redirect Disclaimer",
-    summary: "What happens when Kurioticket redirects users to airlines, hotels, affiliate partners, or travel providers.",
-    lastUpdated,
+    slug: "accessibility-statement",
+    title: "Accessibility Statement",
+    summary: "Kurioticket’s accessibility commitment for travel search, account, and support experiences.",
+    lastUpdated: legalNoticeLastUpdated,
     sections: [
       {
-        id: "redirect",
-        title: "Secure Redirects",
+        id: "commitment",
+        title: "Our Accessibility Aim",
         paragraphs: [
-          "When you continue to an external provider, Kurioticket redirects you to an airline, hotel, affiliate partner, or travel provider. We may log redirect metadata such as provider, route, price, timestamp, user type, and source page for analytics, support, abuse prevention, and affiliate tracking.",
-          "Kurioticket does not auto-fill airline websites, scrape airline websites, or complete partner purchases on your behalf.",
+          "Kurioticket aims to provide accessible travel search, comparison, account, alert, and support experiences for users with different needs, devices, and assistive technologies.",
+          "Accessibility work is part of ongoing product quality, design, engineering, and support review as Kurioticket grows.",
         ],
       },
       {
-        id: "external-terms",
-        title: "External Terms",
+        id: "feedback",
+        title: "Accessibility Feedback",
         paragraphs: [
-          "External partner sites are governed by their own terms, privacy policies, refund policies, cookies, accessibility practices, and customer support processes.",
+          `If you experience an accessibility issue while using Kurioticket, contact ${legalProfile.contact.supportEmail} and include the page, feature, browser or device, assistive technology if relevant, and a description of the issue.`,
+          `For legal accessibility questions, contact ${legalProfile.contact.legalEmail}.`,
+        ],
+      },
+      {
+        id: "external-providers",
+        title: "External Provider Sites",
+        paragraphs: [
+          "External provider websites, booking flows, payment pages, mobile apps, and customer support channels are controlled by those providers and may follow their own accessibility practices.",
+          "If an accessibility issue occurs after you leave Kurioticket, contact the external provider responsible for that page or booking flow.",
         ],
       },
     ],

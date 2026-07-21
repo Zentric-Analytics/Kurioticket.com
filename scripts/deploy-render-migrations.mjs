@@ -7,6 +7,20 @@ const { Client } = pg;
 const databaseUrlEnvNames = ["DATABASE_URL", "POSTGRES_URL", "POSTGRES_PRISMA_URL", "POSTGRES_URL_NON_POOLING"];
 const initialMigrationName = "20260517000000_initial_auth_foundation";
 const adminMigrationName = "20260518000000_admin_users_audit";
+const userProfileMigrationName = "20260628000000_add_user_profile";
+const renderStagingDatabaseName = "curioticket_web_staging_2489";
+const expectedUserProfileColumns = [
+  "id",
+  "userId",
+  "fullName",
+  "phoneNumber",
+  "dateOfBirth",
+  "gender",
+  "nationality",
+  "address",
+  "createdAt",
+  "updatedAt",
+];
 
 function getDatabaseUrl() {
   for (const name of databaseUrlEnvNames) {
@@ -39,6 +53,19 @@ function isMigrationApplied(migration) {
 
 function isMigrationFailed(migration) {
   return Boolean(migration && !migration.finished_at && !migration.rolled_back_at);
+}
+
+function getDatabaseName(connectionString) {
+  try {
+    return new URL(connectionString).pathname.replace(/^\//, "");
+  } catch {
+    return "";
+  }
+}
+
+function hasExpectedUserProfileColumns(columns) {
+  const presentColumns = new Set(columns);
+  return expectedUserProfileColumns.every((column) => presentColumns.has(column));
 }
 
 async function getMigrationRecord(client, migrationName) {
@@ -95,9 +122,26 @@ async function getDatabaseState(connectionString) {
           AND table_name = 'AdminAuditLog'
       ) AS "exists"
     `);
+    const userProfileTableResult = await client.query(`
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
+          AND table_name = 'UserProfile'
+      ) AS "exists"
+    `);
+    const userProfileColumnResult = await client.query(`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'UserProfile'
+      ORDER BY ordinal_position
+    `);
 
     const initialMigration = hasMigrationTable ? await getMigrationRecord(client, initialMigrationName) : null;
     const adminMigration = hasMigrationTable ? await getMigrationRecord(client, adminMigrationName) : null;
+    const userProfileMigration = hasMigrationTable ? await getMigrationRecord(client, userProfileMigrationName) : null;
+    const userProfileColumns = userProfileColumnResult.rows.map((row) => row.column_name);
 
     return {
       adminMigrationApplied: isMigrationApplied(adminMigration),
@@ -106,6 +150,13 @@ async function getDatabaseState(connectionString) {
       appTableCount: Number(appTableResult.rows[0]?.count ?? 0),
       initialMigrationApplied: isMigrationApplied(initialMigration),
       initialMigrationFailed: isMigrationFailed(initialMigration),
+      userProfileColumns,
+      userProfileMigrationApplied: isMigrationApplied(userProfileMigration),
+      userProfileMigrationFailed: isMigrationFailed(userProfileMigration),
+      userProfileSchemaMatches: Boolean(
+        userProfileTableResult.rows[0]?.exists && hasExpectedUserProfileColumns(userProfileColumns),
+      ),
+      userProfileTableExists: Boolean(userProfileTableResult.rows[0]?.exists),
     };
   } finally {
     await client.end();
@@ -122,10 +173,24 @@ async function main() {
   }
 
   console.log(`[render-migrate] Checking Prisma migration state using ${databaseUrl.name}.`);
+  runPrisma(["generate"]);
 
+  const databaseName = getDatabaseName(databaseUrl.value);
+  const isRenderStagingDatabase = databaseName === renderStagingDatabaseName;
   const state = await getDatabaseState(databaseUrl.value);
   const shouldBaselineInitialMigration = state.appTableCount > 0 && !state.initialMigrationApplied;
   const shouldBaselineAdminMigration = state.adminSchemaPresent && !state.adminMigrationApplied;
+  const shouldResolveUserProfileMigration =
+    isRenderStagingDatabase &&
+    state.userProfileMigrationFailed &&
+    state.userProfileTableExists &&
+    state.userProfileSchemaMatches;
+
+  if (isRenderStagingDatabase) {
+    console.log(`[render-migrate] Confirmed target database: ${renderStagingDatabaseName}.`);
+    console.log(`[render-migrate] UserProfile table exists: ${state.userProfileTableExists ? "yes" : "no"}.`);
+    console.log(`[render-migrate] UserProfile columns: ${state.userProfileColumns.join(", ") || "none"}.`);
+  }
 
   if (state.initialMigrationFailed) {
     console.log(`[render-migrate] Marking failed baseline migration ${initialMigrationName} as rolled back.`);
@@ -149,6 +214,20 @@ async function main() {
       `[render-migrate] Admin schema detected without applied Prisma history; marking ${adminMigrationName} as applied.`,
     );
     runPrisma(["migrate", "resolve", "--applied", adminMigrationName]);
+  }
+
+  if (state.userProfileMigrationFailed && isRenderStagingDatabase && !state.userProfileSchemaMatches) {
+    console.error(
+      `[render-migrate] ${userProfileMigrationName} failed on staging, but UserProfile does not match the current schema. Manual review required; refusing to drop or alter staging data automatically.`,
+    );
+    process.exit(1);
+  }
+
+  if (shouldResolveUserProfileMigration) {
+    console.log(
+      `[render-migrate] Existing UserProfile schema matches Prisma on staging; marking failed migration ${userProfileMigrationName} as applied.`,
+    );
+    runPrisma(["migrate", "resolve", "--applied", userProfileMigrationName]);
   }
 
   console.log("[render-migrate] Applying pending Prisma migrations.");

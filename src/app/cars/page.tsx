@@ -1,22 +1,27 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import {
   FormEvent,
+  CSSProperties,
   ReactNode,
   RefObject,
   Suspense,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRight,
   Calendar,
   CalendarClock,
+  CarFront,
   CheckCircle2,
   ChevronDown,
   Clock,
@@ -26,6 +31,7 @@ import {
 } from "lucide-react";
 
 import { AppHeader } from "@/components/layout/AppHeader";
+import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { Footer } from "@/components/layout/Footer";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
@@ -55,6 +61,24 @@ import {
   type CarImageCard,
   type CarPickupCard,
 } from "@/data/carsLandingContent";
+
+const getCarsIntlLocale = (locale: string) => {
+  const normalizedLocale = locale.toLowerCase();
+
+  if (normalizedLocale.startsWith("hi")) {
+    return "hi-IN";
+  }
+
+  if (normalizedLocale.startsWith("tr")) {
+    return "tr-TR";
+  }
+
+  if (normalizedLocale.startsWith("pl")) {
+    return "pl-PL";
+  }
+
+  return locale;
+};
 
 const formatCarDisplayDate = (isoDate: string, locale: string) => {
   if (!isoDate) {
@@ -96,6 +120,21 @@ const formatTimeRangeSummary = (
     .replace("{pickupTime}", pickupTime)
     .replace("{returnTime}", returnTime);
 
+const formatCarTimeLabel = (time: string, locale: string) => {
+  const [hourValue, minuteValue] = time.split(":").map(Number);
+
+  if (Number.isNaN(hourValue) || Number.isNaN(minuteValue)) {
+    return time;
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(2024, 0, 1, hourValue, minuteValue));
+};
+
+const carsHeroImage = tripStyleCards[1].image;
+
 const trustCards = [
   {
     key: "carsTrust.0",
@@ -110,6 +149,14 @@ const trustCards = [
     icon: ShieldCheck,
   },
 ];
+
+type CarsMobilePicker =
+  | "pickupLocation"
+  | "dropoffLocation"
+  | "dates"
+  | "times"
+  | "driverAge"
+  | null;
 
 type TranslatedCarImageCard = CarImageCard & {
   title: string;
@@ -126,6 +173,17 @@ function useCarsLandingTranslations() {
 
   return { locale, t, dictionary };
 }
+
+const translateCarsFormErrors = (
+  errors: CarsFormErrors,
+  t: (key: string) => string,
+): CarsFormErrors =>
+  Object.fromEntries(
+    Object.entries(errors).map(([field, errorKey]) => [
+      field,
+      errorKey ? t(errorKey) : errorKey,
+    ]),
+  ) as CarsFormErrors;
 
 export default function CarsPage() {
   return (
@@ -173,7 +231,6 @@ function CarsSearchPage() {
   const [values, setValues] = useState<CarsFormValues>(initialValues);
   const [errors, setErrors] = useState<CarsFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const hasActiveSearch =
     values.pickupLocation.trim() ||
     values.pickupDate ||
@@ -228,7 +285,7 @@ function CarsSearchPage() {
     }
 
     const nextErrors = validateCarsForm(values, todayIso);
-    setErrors(nextErrors);
+    setErrors(translateCarsFormErrors(nextErrors, t));
 
     if (Object.values(nextErrors).some(Boolean)) {
       return;
@@ -256,132 +313,205 @@ function CarsSearchPage() {
 
   return (
     <>
-      <AppHeader />
-      <main className="page-shell relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16 pt-8 sm:pt-10 lg:pt-12">
-        <div className="pointer-events-none absolute left-1/2 top-10 -z-10 h-64 w-[min(50rem,88vw)] -translate-x-1/2 rounded-full bg-white/55 blur-3xl" />
+      <AppHeader mobileHeroOverlay mobileHeroOverlayLowered />
+      <main className="relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16">
+        <div className="pointer-events-none absolute start-1/2 top-10 -z-10 h-64 w-[min(50rem,88vw)] -translate-x-1/2 rounded-full bg-white/55 blur-3xl" />
         <div className="pointer-events-none absolute -right-28 bottom-28 -z-10 h-80 w-80 rounded-full bg-slate-200/14 blur-3xl" />
 
-        <div className="relative mx-auto max-w-6xl space-y-8 md:space-y-10">
-          <section className="space-y-4" aria-labelledby="cars-search-heading">
-            <div className="px-1">
-              <h1
-                id="cars-search-heading"
-                className="text-[1.5rem] font-semibold leading-[1.12] tracking-[-0.02em] text-slate-900 md:text-[1.8rem] lg:whitespace-nowrap lg:text-[2rem] xl:text-[2.1rem]"
-              >
-                {t("searchRentalCarsEveryPartTrip")}
-              </h1>
-            </div>
-
-            <CarsSearchBar
-              errors={errors}
-              hasActiveSearch={Boolean(hasActiveSearch)}
-              onClearSearch={clearSearch}
-              onSubmit={handleSubmit}
-              isSubmitting={isSubmitting}
-              updateValue={updateValue}
-              values={values}
-            />
-          </section>
-
+        <div className="relative mx-auto max-w-6xl sm:max-w-none">
           <section
-            className="space-y-4"
-            aria-labelledby="car-trip-style-heading"
+            className="relative isolate z-20 min-h-[24.25rem] overflow-visible bg-slate-950 sm:hidden"
+            aria-labelledby="cars-mobile-search-heading"
           >
-            <div className="flex flex-col gap-2 px-1 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h2
-                  id="car-trip-style-heading"
-                  className="text-lg font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-2xl"
+            <div className="absolute inset-0 overflow-hidden">
+              <Image
+                src={carsHeroImage}
+                alt=""
+                fill
+                priority
+                sizes="100vw"
+                className="object-cover object-[54%_45%] brightness-[1.03] saturate-[1.08] contrast-[1.03]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-950/52 via-slate-950/18 to-slate-950/6" />
+              <div className="absolute inset-y-0 start-0 w-[84%] bg-gradient-to-r from-slate-950/62 via-slate-950/24 to-transparent" />
+              <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-slate-950/36 via-slate-950/10 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/44 via-slate-950/12 to-transparent" />
+            </div>
+
+            <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-8">
+              <div className="max-w-[22.5rem] pe-2 text-start text-white">
+                <h1
+                  id="cars-mobile-search-heading"
+                  className="text-[clamp(1.38rem,6.1vw,2rem)] font-semibold leading-[1.05] tracking-[-0.041em] text-white text-balance drop-shadow-[0_2px_10px_rgba(2,6,23,0.62)]"
                 >
-                  {t("exploreCarsByTripStyle")}
-                </h2>
-                <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-600 md:text-base">
-                  {t("carsTripStyleBody")}
-                </p>
+                  {t("searchRentalCarsEveryPartTrip")}
+                </h1>
               </div>
             </div>
 
-            <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
-              <div className="grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
-                {tripStyleCards.map((card) => (
-                  <CarImageCardLink
-                    key={card.translationKey}
-                    card={translateCarImageCard(card)}
-                  />
-                ))}
+            <div className="page-shell absolute inset-x-0 bottom-[-23rem] z-30">
+              <div className="mx-auto max-w-6xl">
+                <CarsSearchBar
+                  errors={errors}
+                  hasActiveSearch={Boolean(hasActiveSearch)}
+                  onClearSearch={clearSearch}
+                  onSubmit={handleSubmit}
+                  isSubmitting={isSubmitting}
+                  updateValue={updateValue}
+                  values={values}
+                />
               </div>
             </div>
           </section>
 
-          <section className="relative isolate rounded-[1.5rem] border border-slate-200/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(248,250,252,0.72)_54%,rgba(241,245,249,0.58))] p-2 shadow-[0_24px_64px_-52px_rgba(15,23,42,0.34)] ring-1 ring-white/80 sm:rounded-[2rem] sm:p-4">
-            <div className="grid gap-2.5 sm:gap-4 md:grid-cols-3">
-              {trustCards.map((card) => {
-                const Icon = card.icon;
-                const translatedTitle =
-                  dictionary[`${card.key}.title`] ??
-                  enTranslations[`${card.key}.title`] ??
-                  "";
-                const translatedDescription =
-                  dictionary[`${card.key}.description`] ??
-                  enTranslations[`${card.key}.description`] ??
-                  "";
+          <div className="mx-auto mt-8 w-[min(1180px,calc(100%-32px))] space-y-8 sm:mt-0 sm:w-full md:space-y-10">
+            <section
+              className="relative hidden overflow-visible pb-28 sm:block lg:pb-32"
+              aria-labelledby="cars-search-heading"
+            >
+              <div className="relative isolate min-h-[32rem] bg-slate-950 lg:min-h-[36rem]">
+                <div className="absolute inset-0 overflow-hidden">
+                  <Image
+                    src={carsHeroImage}
+                    alt=""
+                    fill
+                    priority
+                    sizes="100vw"
+                    className="object-cover object-[56%_45%] brightness-[1.04] saturate-[1.08] contrast-[1.03]"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-950/70 via-slate-950/28 to-slate-950/8" />
+                  <div className="absolute inset-y-0 start-0 w-[78%] bg-gradient-to-r from-slate-950/76 via-slate-950/34 to-transparent" />
+                  <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-slate-950/42 via-slate-950/12 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-slate-950/72 via-slate-950/24 to-transparent" />
+                </div>
 
-                return (
-                  <article
-                    key={card.key}
-                    className="relative isolate cursor-default overflow-hidden rounded-[1rem] border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.82),rgba(248,250,252,0.7)_58%,rgba(241,245,249,0.78))] p-4 shadow-[0_14px_34px_-32px_rgba(15,23,42,0.38)] ring-1 ring-white/70 backdrop-blur-sm sm:rounded-[1.5rem] sm:p-6"
-                  >
-                    <div className="pointer-events-none absolute inset-x-7 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/80 to-transparent" />
-                    <div className="pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full bg-slate-200/30 blur-3xl" />
-                    <div
-                      className="relative mb-4 inline-flex h-11 w-11 items-center justify-center rounded-[1rem] border border-indigo-200/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(238,242,255,0.72)_52%,rgba(248,250,252,0.92))] text-indigo-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_12px_22px_-18px_rgba(79,70,229,0.55),0_8px_18px_-20px_rgba(15,23,42,0.55)] sm:mb-5 sm:h-12 sm:w-12"
-                      aria-hidden="true"
+                <div className="page-shell relative z-10 flex min-h-[32rem] flex-col items-start pb-36 pt-10 lg:min-h-[36rem] lg:pb-40 lg:pt-14">
+                  <div className="max-w-3xl text-start text-white">
+                    <h1
+                      id="cars-search-heading"
+                      className="max-w-[50rem] text-[2.65rem] font-semibold leading-[1.02] tracking-[-0.045em] text-white drop-shadow-[0_3px_18px_rgba(15,23,42,0.62)] lg:text-[3.3rem]"
                     >
-                      <Icon className="h-5 w-5 stroke-[1.8]" />
-                    </div>
-                    <h2 className="relative text-base font-semibold leading-snug tracking-[-0.01em] text-slate-800">
-                      {translatedTitle}
-                    </h2>
-                    <p className="relative mt-2 text-sm leading-6 text-slate-700">
-                      {translatedDescription}
-                    </p>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
+                      {t("searchRentalCarsEveryPartTrip")}
+                    </h1>
+                  </div>
+                </div>
 
-          <section
-            className="space-y-4"
-            aria-labelledby="car-pickup-ideas-heading"
-          >
-            <div className="flex flex-col gap-2 px-1 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h2
-                  id="car-pickup-ideas-heading"
-                  className="text-lg font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-2xl"
-                >
-                  {t("carsPickupPointsTitle")}
-                </h2>
-                <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-600 md:text-base">
-                  {t("carsPickupPointsBody")}
-                </p>
+                <div className="page-shell absolute inset-x-0 bottom-[-52px] z-30 lg:bottom-[-56px]">
+                  <div className="mx-auto max-w-6xl">
+                    <CarsSearchBar
+                      errors={errors}
+                      hasActiveSearch={Boolean(hasActiveSearch)}
+                      onClearSearch={clearSearch}
+                      onSubmit={handleSubmit}
+                      isSubmitting={isSubmitting}
+                      updateValue={updateValue}
+                      values={values}
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
+            </section>
 
-            <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
-              <div className="grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
-                {pickupCards.map((card) => (
-                  <CarPickupCardLink
-                    key={card.translationKey}
-                    card={translateCarImageCard(card)}
-                  />
-                ))}
+            <section
+              className="mx-auto max-w-6xl space-y-4 pt-[25rem] sm:pt-0"
+              aria-labelledby="car-trip-style-heading"
+            >
+              <div className="flex flex-col gap-2 px-1 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <h2
+                    id="car-trip-style-heading"
+                    className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl"
+                  >
+                    {t("exploreCarsByTripStyle")}
+                  </h2>
+                  <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-slate-600 sm:text-base">
+                    {t("carsTripStyleBody")}
+                  </p>
+                </div>
               </div>
-            </div>
-          </section>
 
-          <CarsFaqSection />
+              <div className="overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-3 shadow-[0_18px_48px_-34px_rgba(15,23,42,0.32)] ring-1 ring-white/80 sm:rounded-none sm:bg-white/80 sm:p-6 sm:shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] md:p-7">
+                <div className="grid snap-x snap-mandatory auto-cols-[minmax(17rem,calc(100vw-4.5rem))] grid-flow-col gap-4 overflow-x-auto scroll-smooth px-1 pb-4 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:auto-cols-[minmax(240px,82vw)] md:grid-flow-row md:snap-none md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+                  {tripStyleCards.map((card) => (
+                    <CarImageCardLink
+                      key={card.translationKey}
+                      card={translateCarImageCard(card)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            <section className="relative isolate mx-auto max-w-6xl border-0 bg-transparent p-0 shadow-none ring-0 sm:rounded-[2rem] sm:border sm:border-slate-200/75 sm:bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(248,250,252,0.72)_54%,rgba(241,245,249,0.58))] sm:p-4 sm:shadow-[0_24px_64px_-52px_rgba(15,23,42,0.34)] sm:ring-1 sm:ring-white/80">
+              <div className="grid gap-2.5 sm:gap-4 md:grid-cols-3">
+                {trustCards.map((card) => {
+                  const Icon = card.icon;
+                  const translatedTitle =
+                    dictionary[`${card.key}.title`] ??
+                    enTranslations[`${card.key}.title`] ??
+                    "";
+                  const translatedDescription =
+                    dictionary[`${card.key}.description`] ??
+                    enTranslations[`${card.key}.description`] ??
+                    "";
+
+                  return (
+                    <article
+                      key={card.key}
+                      className="relative isolate cursor-default overflow-hidden rounded-[1rem] border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.82),rgba(248,250,252,0.7)_58%,rgba(241,245,249,0.78))] p-2.5 shadow-[0_14px_34px_-32px_rgba(15,23,42,0.38)] ring-1 ring-white/70 backdrop-blur-sm sm:rounded-[1.5rem] sm:p-6"
+                    >
+                      <div className="pointer-events-none absolute inset-x-7 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/80 to-transparent" />
+                      <div className="pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full bg-slate-200/30 blur-3xl" />
+                      <div
+                        className="relative mb-2.5 inline-flex h-8 w-8 items-center justify-center rounded-[0.8rem] border border-[#004BB8]/15 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(0,75,184,0.08)_52%,rgba(248,250,252,0.92))] text-[#004BB8] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_12px_22px_-18px_rgba(0,75,184,0.28),0_8px_18px_-20px_rgba(15,23,42,0.55)] sm:mb-5 sm:h-12 sm:w-12 sm:rounded-[1rem]"
+                        aria-hidden="true"
+                      >
+                        <Icon className="h-3.5 w-3.5 stroke-[1.8] sm:h-5 sm:w-5" />
+                      </div>
+                      <h2 className="relative text-base font-bold leading-6 text-slate-950">
+                        {translatedTitle}
+                      </h2>
+                      <p className="relative mt-1 text-sm font-medium leading-6 text-slate-700">
+                        {translatedDescription}
+                      </p>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section
+              className="mx-auto max-w-6xl space-y-4"
+              aria-labelledby="car-pickup-ideas-heading"
+            >
+              <div className="flex flex-col gap-2 px-1 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <h2
+                    id="car-pickup-ideas-heading"
+                    className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl"
+                  >
+                    {t("carsPickupPointsTitle")}
+                  </h2>
+                  <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-slate-600 sm:text-base">
+                    {t("carsPickupPointsBody")}
+                  </p>
+                </div>
+              </div>
+
+              <div className="overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-3 shadow-[0_18px_48px_-34px_rgba(15,23,42,0.32)] ring-1 ring-white/80 sm:rounded-none sm:bg-white/80 sm:p-6 sm:shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] md:p-7">
+                <div className="grid snap-x snap-mandatory auto-cols-[minmax(17rem,calc(100vw-4.5rem))] grid-flow-col gap-4 overflow-x-auto scroll-smooth px-1 pb-4 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:auto-cols-[minmax(240px,82vw)] md:grid-flow-row md:snap-none md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+                  {pickupCards.map((card) => (
+                    <CarPickupCardLink
+                      key={card.translationKey}
+                      card={translateCarImageCard(card)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            <CarsFaqSection />
+          </div>
         </div>
       </main>
       <Footer />
@@ -393,11 +523,11 @@ function CarsFaqSection() {
   const { dictionary, t } = useCarsLandingTranslations();
 
   return (
-    <section className="space-y-4 px-1" aria-labelledby="cars-faq-heading">
+    <section className="mx-auto max-w-6xl space-y-4 px-1" aria-labelledby="cars-faq-heading">
       <div className="max-w-2xl">
         <h2
           id="cars-faq-heading"
-          className="text-lg font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-2xl"
+          className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl"
         >
           {t("carsFaq.heading")}
         </h2>
@@ -415,18 +545,18 @@ function CarsFaqSection() {
           return (
             <details
               key={item.id}
-              className="group rounded-2xl border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(248,250,252,0.74))] px-4 py-4 shadow-[0_14px_34px_-30px_rgba(15,23,42,0.34)] ring-1 ring-white/70 transition open:border-indigo-200/80 open:bg-white open:shadow-[0_18px_38px_-32px_rgba(79,70,229,0.36)] sm:px-5"
+              className="group rounded-2xl border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(248,250,252,0.74))] px-3.5 py-3 shadow-[0_14px_34px_-30px_rgba(15,23,42,0.34)] ring-1 ring-white/70 transition open:border-[#004BB8]/25 open:bg-white open:shadow-[0_18px_38px_-32px_rgba(0,75,184,0.20)] sm:px-5 sm:py-4"
             >
-              <summary className="flex min-h-12 cursor-pointer list-none items-start justify-between gap-3 text-sm font-semibold leading-5 text-slate-900 marker:hidden [&::-webkit-details-marker]:hidden">
+              <summary className="flex min-h-10 cursor-pointer list-none items-start justify-between gap-3 text-sm font-bold leading-5 text-slate-950 marker:hidden sm:min-h-12 [&::-webkit-details-marker]:hidden">
                 <span>{translatedQuestion}</span>
                 <span
-                  className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-sm leading-none text-slate-500 shadow-sm transition group-open:rotate-45 group-open:border-indigo-200 group-open:text-indigo-600"
+                  className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-sm leading-none text-slate-500 shadow-sm transition group-open:rotate-45 group-open:border-[#004BB8]/25 group-open:text-[#004BB8]"
                   aria-hidden="true"
                 >
                   +
                 </span>
               </summary>
-              <p className="mt-2.5 text-sm leading-6 text-slate-600">
+              <p className="mt-2 text-sm font-medium leading-6 text-slate-600 sm:mt-2.5">
                 {translatedAnswer}
               </p>
             </details>
@@ -460,10 +590,19 @@ function CarsSearchBar({
   const { t } = useCarsLandingTranslations();
   const pickupLocationRef = useRef<HTMLInputElement | null>(null);
   const dropoffLocationRef = useRef<HTMLInputElement | null>(null);
+  const pickupLocationLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const dropoffLocationLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const datesLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const timesLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const driverAgeLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const pickupMobileInputRef = useRef<HTMLInputElement | null>(null);
+  const dropoffMobileInputRef = useRef<HTMLInputElement | null>(null);
   const dateWrapRef = useRef<HTMLDivElement | null>(null);
   const timeWrapRef = useRef<HTMLDivElement | null>(null);
   const [datesOpen, setDatesOpen] = useState(false);
   const [timesOpen, setTimesOpen] = useState(false);
+  const [activeMobilePicker, setActiveMobilePicker] =
+    useState<CarsMobilePicker>(null);
   const [visibleMonthDate, setVisibleMonthDate] = useState(() => {
     const parsedPickup = parseIsoDate(values.pickupDate);
 
@@ -479,6 +618,14 @@ function CarsSearchBar({
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
 
+      if (
+        target instanceof Element &&
+        (target.closest("[data-flight-mobile-picker-shell]") ||
+          target.closest("[data-cars-desktop-popover]"))
+      ) {
+        return;
+      }
+
       if (datesOpen && !dateWrapRef.current?.contains(target)) {
         setDatesOpen(false);
       }
@@ -492,6 +639,7 @@ function CarsSearchBar({
       if (event.key === "Escape") {
         setDatesOpen(false);
         setTimesOpen(false);
+        setActiveMobilePicker(null);
       }
     };
 
@@ -504,7 +652,45 @@ function CarsSearchBar({
     };
   }, [datesOpen, timesOpen]);
 
+  const isMobilePickerViewport = () =>
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 639px)").matches;
+
+  const openMobilePicker = (picker: Exclude<CarsMobilePicker, null>) => {
+    setDatesOpen(false);
+    setTimesOpen(false);
+    setActiveMobilePicker(picker);
+  };
+
+  useEffect(() => {
+    if (
+      (activeMobilePicker !== "pickupLocation" &&
+        activeMobilePicker !== "dropoffLocation") ||
+      typeof window === "undefined"
+    ) {
+      return;
+    }
+
+    const focusId = window.setTimeout(() => {
+      const inputRef =
+        activeMobilePicker === "pickupLocation"
+          ? pickupMobileInputRef
+          : dropoffMobileInputRef;
+
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }, 80);
+
+    return () => window.clearTimeout(focusId);
+  }, [activeMobilePicker]);
+
+
   const toggleDates = () => {
+    if (isMobilePickerViewport()) {
+      openMobilePicker("dates");
+      return;
+    }
+
     setDatesOpen((current) => {
       const nextOpen = !current;
 
@@ -517,6 +703,11 @@ function CarsSearchBar({
   };
 
   const toggleTimes = () => {
+    if (isMobilePickerViewport()) {
+      openMobilePicker("times");
+      return;
+    }
+
     setTimesOpen((current) => {
       const nextOpen = !current;
 
@@ -559,22 +750,50 @@ function CarsSearchBar({
   const timeError = errors.pickupTime || errors.dropoffTime;
 
   return (
-    <section className="border border-slate-200/80 bg-white/80 p-2.5 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.28)] ring-1 ring-white/80 sm:p-4">
-      <form onSubmit={onSubmit} className="space-y-2 sm:space-y-3" noValidate>
+    <section className="overflow-visible rounded-[1.5rem] border border-white/80 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.04] sm:rounded-[1.35rem] sm:border-slate-200/80 sm:bg-white sm:p-4 sm:shadow-[0_18px_42px_-28px_rgba(15,23,42,0.42)] sm:ring-1 sm:ring-white/70">
+      <form
+        onSubmit={onSubmit}
+        className="relative flex flex-col gap-3 overflow-visible"
+        noValidate
+      >
         <input type="hidden" name="pickupDate" value={values.pickupDate} />
         <input type="hidden" name="dropoffDate" value={values.dropoffDate} />
         <input type="hidden" name="pickupTime" value={values.pickupTime} />
         <input type="hidden" name="dropoffTime" value={values.dropoffTime} />
 
-        <div className="overflow-visible border border-slate-200 bg-white p-0.5 shadow-[0_10px_28px_rgba(15,23,42,0.08)] sm:p-1">
-          <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 sm:gap-1.5 lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1.45fr)_minmax(0,1.1fr)_minmax(5.8rem,0.55fr)_104px] lg:gap-0">
+        <div className="hidden items-center sm:flex">
+          <span className="inline-flex items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3.5 py-1.5 text-[0.925rem] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10">
+            <CarFront
+              aria-hidden="true"
+              className="h-[1.125rem] w-[1.125rem] text-[#004BB8]"
+              strokeWidth={2.15}
+            />
+            {t("cars")}
+          </span>
+        </div>
+
+        <div className="relative z-20 overflow-visible rounded-none border-0 bg-transparent p-0 shadow-none sm:rounded-[1.35rem] sm:bg-white">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-0 sm:rounded-2xl sm:border sm:border-slate-200/85 sm:bg-white lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1.45fr)_minmax(0,1.1fr)_minmax(6.8rem,0.62fr)_118px] lg:gap-0">
             <SearchCell
               label={t("carsSearch.pickupLocationLabel")}
               error={errors.pickupLocation || errors.dropoffLocation}
-              className="lg:border-r lg:border-r-slate-200/80"
+              className="sm:border-e sm:border-b sm:border-slate-200/80 lg:border-b-0"
             >
               <div className="grid gap-2">
                 <div className="relative">
+                  <button
+                    ref={pickupLocationLauncherRef}
+                    type="button"
+                    onClick={() => openMobilePicker("pickupLocation")}
+                    className={`flex h-7 w-full items-center border-none bg-transparent py-0 ps-0 pe-9 text-start text-[16px] font-semibold focus:outline-none sm:hidden ${
+                      values.pickupLocation ? "text-slate-950" : "text-slate-400"
+                    }`}
+                  >
+                    <span className="truncate">
+                      {values.pickupLocation ||
+                        t("carsSearch.pickupLocationPlaceholder")}
+                    </span>
+                  </button>
                   <input
                     ref={pickupLocationRef}
                     id="pickupLocation"
@@ -585,7 +804,7 @@ function CarsSearchBar({
                       updateValue("pickupLocation", event.target.value)
                     }
                     placeholder={t("carsSearch.pickupLocationPlaceholder")}
-                    className="h-7 w-full border-none bg-transparent py-0 pl-0 pr-9 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none md:text-sm lg:h-8"
+                    className="hidden h-7 w-full border-none bg-transparent py-0 ps-0 pe-9 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-8"
                     autoComplete="off"
                   />
 
@@ -597,7 +816,7 @@ function CarsSearchBar({
                         updateValue("pickupLocation", "");
                         pickupLocationRef.current?.focus();
                       }}
-                      className="absolute right-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 lg:h-8 lg:w-8"
+                      className="absolute end-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 lg:h-8 lg:w-8"
                     >
                       <X className="h-4 w-4" aria-hidden="true" />
                     </button>
@@ -606,6 +825,21 @@ function CarsSearchBar({
 
                 {values.returnToDifferentLocation ? (
                   <div className="relative">
+                    <button
+                      ref={dropoffLocationLauncherRef}
+                      type="button"
+                      onClick={() => openMobilePicker("dropoffLocation")}
+                      className={`flex h-7 w-full items-center border-t border-slate-100 bg-transparent py-0 ps-0 pe-9 pt-1.5 text-start text-[16px] font-semibold focus:outline-none sm:hidden ${
+                        values.dropoffLocation
+                          ? "text-slate-950"
+                          : "text-slate-400"
+                      }`}
+                    >
+                      <span className="truncate">
+                        {values.dropoffLocation ||
+                          t("carsSearch.returnLocationPlaceholder")}
+                      </span>
+                    </button>
                     <input
                       ref={dropoffLocationRef}
                       id="dropoffLocation"
@@ -616,7 +850,7 @@ function CarsSearchBar({
                         updateValue("dropoffLocation", event.target.value)
                       }
                       placeholder={t("carsSearch.returnLocationPlaceholder")}
-                      className="h-7 w-full border-t border-slate-100 bg-transparent py-0 pl-0 pr-9 pt-1.5 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none md:text-sm lg:h-8 lg:pt-2"
+                      className="hidden h-7 w-full border-t border-slate-100 bg-transparent py-0 ps-0 pe-9 pt-1.5 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-8 lg:pt-1.5"
                       autoComplete="off"
                     />
 
@@ -628,24 +862,22 @@ function CarsSearchBar({
                           updateValue("dropoffLocation", "");
                           dropoffLocationRef.current?.focus();
                         }}
-                        className="absolute right-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 lg:h-8 lg:w-8"
+                        className="absolute end-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 lg:h-8 lg:w-8"
                       >
                         <X className="h-4 w-4" aria-hidden="true" />
                       </button>
                     ) : null}
                   </div>
-                ) : (
-                  <p className="truncate border-t border-slate-100 pt-1.5 text-sm font-semibold text-slate-500 lg:pt-2">
-                    {t("carsSearch.returnToSameLocation")}
-                  </p>
-                )}
+                ) : null}
               </div>
             </SearchCell>
 
             <SearchCell
               label={t("carsSearch.rentalDatesLabel")}
               error={dateError}
-              className="relative lg:border-r lg:border-r-slate-200/80"
+              className={`relative sm:border-b sm:border-slate-200/80 lg:border-b-0 lg:border-e ${
+                datesOpen ? "z-[260]" : "z-10"
+              }`}
             >
               <RentalDatesField
                 dropoffDate={values.dropoffDate}
@@ -662,6 +894,7 @@ function CarsSearchBar({
                 onToggle={toggleDates}
                 pickupDate={values.pickupDate}
                 visibleMonthDate={visibleMonthDate}
+                launcherRef={datesLauncherRef}
                 wrapRef={dateWrapRef}
               />
             </SearchCell>
@@ -669,7 +902,9 @@ function CarsSearchBar({
             <SearchCell
               label={t("carsSearch.pickupReturnTimeLabel")}
               error={timeError}
-              className="relative lg:border-r lg:border-r-slate-200/80"
+              className={`relative sm:border-e sm:border-slate-200/80 ${
+                timesOpen ? "z-[250]" : "z-10"
+              }`}
             >
               <TimeRangeField
                 isOpen={timesOpen}
@@ -677,6 +912,7 @@ function CarsSearchBar({
                 pickupTime={values.pickupTime}
                 returnTime={values.dropoffTime}
                 updateValue={updateValue}
+                launcherRef={timesLauncherRef}
                 wrapRef={timeWrapRef}
               />
             </SearchCell>
@@ -685,6 +921,19 @@ function CarsSearchBar({
               label={t("carsSearch.driverAgeLabel")}
               error={errors.driverAge}
             >
+              <button
+                ref={driverAgeLauncherRef}
+                type="button"
+                onClick={() => openMobilePicker("driverAge")}
+                className="flex h-7 w-full items-center justify-between gap-2 border-none bg-transparent p-0 text-start text-[16px] font-semibold text-slate-950 focus:outline-none sm:hidden"
+              >
+                <span className="truncate">
+                  {values.driverAge === defaultDriverAge
+                    ? t("carsSearch.driverAgeAnyAgeRange")
+                    : getDriverAgeOptionLabel(values.driverAge)}
+                </span>
+                <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+              </button>
               <select
                 id="driverAge"
                 name="driverAge"
@@ -692,12 +941,12 @@ function CarsSearchBar({
                 onChange={(event) =>
                   updateValue("driverAge", event.target.value)
                 }
-                className="h-7 w-full border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none md:text-sm lg:h-8"
+                className="hidden h-7 w-full border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none sm:block md:text-[15px] lg:h-8"
               >
                 {driverAgeOptions.map((age) => (
                   <option key={age} value={age}>
                     {age === defaultDriverAge
-                      ? t("carsSearch.driverAgeAnyAge")
+                      ? t("carsSearch.driverAgeAnyAgeRange")
                       : getDriverAgeOptionLabel(age)}
                   </option>
                 ))}
@@ -707,26 +956,25 @@ function CarsSearchBar({
             <div className="sm:col-span-2 lg:col-span-1">
               <button
                 type="submit"
-                className="focus-ring inline-flex h-full min-h-11 w-full items-center justify-center gap-2 bg-indigo-600 px-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 active:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-75 disabled:hover:bg-indigo-600 lg:min-h-12"
+                className="focus-ring inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 enabled:hover:bg-[#021C2B] enabled:active:bg-[#021C2B] disabled:bg-[#004BB8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#004BB8]/20 sm:h-full sm:min-h-[58px] sm:rounded-none sm:rounded-e-2xl sm:border sm:border-s-0 sm:border-[#004BB8]/20 sm:px-5 sm:text-[15px] sm:font-bold sm:shadow-[0_10px_22px_rgba(0,75,184,0.22)] sm:disabled:shadow-[0_10px_22px_rgba(0,75,184,0.22)] lg:h-full"
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}
               >
-                {isSubmitting ? t("searchingCars") : t("search")}
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                {isSubmitting ? t("searchingCars") : t("searchCars")}
               </button>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-          <label className="focus-within:ring-ring inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-slate-900">
+        <div className="relative z-0 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 sm:min-h-9 sm:border-0 sm:bg-transparent sm:px-1 sm:py-0 sm:shadow-none sm:ring-0">
+          <label className="focus-within:ring-ring inline-flex min-h-8 cursor-pointer items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-slate-900 sm:min-h-9">
             <input
               type="checkbox"
               checked={values.returnToDifferentLocation}
               onChange={(event) =>
                 updateValue("returnToDifferentLocation", event.target.checked)
               }
-              className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+              className="h-4 w-4 rounded border-slate-300 text-[#004BB8] focus:ring-[#004BB8]/35"
             />
             {t("carsSearch.differentReturnLocation")}
           </label>
@@ -735,15 +983,319 @@ function CarsSearchBar({
             <button
               type="button"
               onClick={onClearSearch}
-              className="focus-ring inline-flex items-center gap-1.5 px-2 py-1 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+              className="focus-ring inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 sm:min-h-9"
             >
               <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
               {t("clearAll")}
             </button>
           ) : null}
         </div>
+
+        <CarsMobilePickerDialogs
+          activeMobilePicker={activeMobilePicker}
+          clearRentalDates={clearRentalDates}
+          dropoffMobileInputRef={dropoffMobileInputRef}
+          driverAgeLauncherRef={driverAgeLauncherRef}
+          pickupMobileInputRef={pickupMobileInputRef}
+          pickupLocationLauncherRef={pickupLocationLauncherRef}
+          dropoffLocationLauncherRef={dropoffLocationLauncherRef}
+          datesLauncherRef={datesLauncherRef}
+          timesLauncherRef={timesLauncherRef}
+          onClose={() => setActiveMobilePicker(null)}
+          onNextMonth={() =>
+            setVisibleMonthDate((current) => addMonths(current, 1))
+          }
+          onPreviousMonth={() =>
+            setVisibleMonthDate((current) => addMonths(current, -1))
+          }
+          onSelectDate={selectRentalDate}
+          updateValue={updateValue}
+          values={values}
+          visibleMonthDate={visibleMonthDate}
+        />
+
       </form>
     </section>
+  );
+}
+
+
+function CarsMobilePickerDialogs({
+  activeMobilePicker,
+  clearRentalDates,
+  datesLauncherRef,
+  driverAgeLauncherRef,
+  dropoffLocationLauncherRef,
+  dropoffMobileInputRef,
+  pickupLocationLauncherRef,
+  pickupMobileInputRef,
+  timesLauncherRef,
+  onClose,
+  onNextMonth,
+  onPreviousMonth,
+  onSelectDate,
+  updateValue,
+  values,
+  visibleMonthDate,
+}: {
+  activeMobilePicker: CarsMobilePicker;
+  clearRentalDates: () => void;
+  datesLauncherRef: RefObject<HTMLButtonElement | null>;
+  driverAgeLauncherRef: RefObject<HTMLButtonElement | null>;
+  dropoffLocationLauncherRef: RefObject<HTMLButtonElement | null>;
+  dropoffMobileInputRef: RefObject<HTMLInputElement | null>;
+  pickupLocationLauncherRef: RefObject<HTMLButtonElement | null>;
+  pickupMobileInputRef: RefObject<HTMLInputElement | null>;
+  timesLauncherRef: RefObject<HTMLButtonElement | null>;
+  onClose: () => void;
+  onNextMonth: () => void;
+  onPreviousMonth: () => void;
+  onSelectDate: (date: Date) => void;
+  updateValue: <Key extends keyof CarsFormValues>(
+    key: Key,
+    value: CarsFormValues[Key],
+  ) => void;
+  values: CarsFormValues;
+  visibleMonthDate: Date;
+}) {
+  const { locale, t } = useCarsLandingTranslations();
+  const intlLocale = getCarsIntlLocale(locale);
+  const weekdays = useMemo(() => formatCarWeekdays(intlLocale), [intlLocale]);
+  const pickupParsed = parseIsoDate(values.pickupDate);
+  const dropoffParsed = parseIsoDate(values.dropoffDate);
+  const timeListClass =
+    "grid max-h-72 gap-2 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2";
+
+  return (
+    <>
+      <FlightMobilePickerShell
+        open={activeMobilePicker === "pickupLocation"}
+        title={t("carsSearch.pickupLocationLabel")}
+        titleId="cars-mobile-pickup-location-title"
+        launcherRef={pickupLocationLauncherRef}
+        onClose={onClose}
+        footer={(requestClose) => (
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => updateValue("pickupLocation", "")}
+              className="focus-ring rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700"
+            >
+              {t("clear")}
+            </button>
+            <button
+              type="button"
+              onClick={requestClose}
+              className="focus-ring rounded-full bg-[#004BB8] px-5 py-2 text-sm font-bold text-white"
+            >
+              {t("done")}
+            </button>
+          </div>
+        )}
+      >
+        <input
+          ref={pickupMobileInputRef}
+          id="pickupLocationMobile"
+          type="text"
+          value={values.pickupLocation}
+          onChange={(event) =>
+            updateValue("pickupLocation", event.target.value)
+          }
+          placeholder={t("carsSearch.pickupLocationPlaceholder")}
+          className="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400"
+          autoComplete="off"
+        />
+      </FlightMobilePickerShell>
+
+      <FlightMobilePickerShell
+        open={activeMobilePicker === "dropoffLocation"}
+        title={t("carsSearch.returnLocationPlaceholder")}
+        titleId="cars-mobile-dropoff-location-title"
+        launcherRef={dropoffLocationLauncherRef}
+        onClose={onClose}
+        footer={(requestClose) => (
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => updateValue("dropoffLocation", "")}
+              className="focus-ring rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700"
+            >
+              {t("clear")}
+            </button>
+            <button
+              type="button"
+              onClick={requestClose}
+              className="focus-ring rounded-full bg-[#004BB8] px-5 py-2 text-sm font-bold text-white"
+            >
+              {t("done")}
+            </button>
+          </div>
+        )}
+      >
+        <input
+          ref={dropoffMobileInputRef}
+          id="dropoffLocationMobile"
+          type="text"
+          value={values.dropoffLocation}
+          onChange={(event) =>
+            updateValue("dropoffLocation", event.target.value)
+          }
+          placeholder={t("carsSearch.returnLocationPlaceholder")}
+          className="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400"
+          autoComplete="off"
+        />
+      </FlightMobilePickerShell>
+
+      <FlightMobilePickerShell
+        open={activeMobilePicker === "dates"}
+        title={t("carsSearch.chooseRentalDates")}
+        titleId="cars-mobile-rental-dates-title"
+        launcherRef={datesLauncherRef}
+        onClose={onClose}
+        footer={(requestClose) => (
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={clearRentalDates}
+              className="focus-ring rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700"
+            >
+              {t("clear")}
+            </button>
+            <button
+              type="button"
+              onClick={requestClose}
+              className="focus-ring rounded-full bg-[#004BB8] px-5 py-2 text-sm font-bold text-white"
+            >
+              {t("done")}
+            </button>
+          </div>
+        )}
+      >
+        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <button type="button" onClick={onPreviousMonth} className="focus-ring rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700">{t("carsSearch.previousMonthShort")}</button>
+            <button type="button" onClick={onNextMonth} className="focus-ring rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700">{t("carsSearch.nextMonthShort")}</button>
+          </div>
+          <div className="grid gap-5">
+            {[0, 1].map((monthOffset) => {
+              const monthDate = addMonths(visibleMonthDate, monthOffset);
+              const cells = buildMonthCells(monthDate);
+
+              return (
+                <div key={monthOffset}>
+                  <p className="mb-2 text-center text-sm font-bold text-slate-900">
+                    {monthDate.toLocaleDateString(intlLocale, { month: "long", year: "numeric" })}
+                  </p>
+                  <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-500">
+                    {weekdays.map((weekday) => <span key={weekday}>{weekday}</span>)}
+                  </div>
+                  <div className="grid grid-cols-7 gap-1.5">
+                    {cells.map((cell) => {
+                      const day = cell.date;
+                      const iso = toIsoDate(day);
+                      const isPickup = iso === values.pickupDate;
+                      const isDropoff = iso === values.dropoffDate;
+                      const isPastDate = isBeforeToday(day);
+                      const isInRange = Boolean(pickupParsed && dropoffParsed && !isPastDate && day > pickupParsed && day < dropoffParsed);
+
+                      if (!cell.isCurrentMonth) {
+                        return <span key={`mobile-placeholder-${iso}`} aria-hidden="true" className="h-10" />;
+                      }
+
+                      return (
+                        <button
+                          key={iso}
+                          type="button"
+                          aria-label={`${t("carsSearch.selectDateAriaPrefix")} ${formatCarFullDate(day, intlLocale)}`}
+                          onClick={() => onSelectDate(day)}
+                          disabled={isPastDate}
+                          className={`focus-ring flex h-10 items-center justify-center rounded-full text-sm font-semibold disabled:cursor-not-allowed ${
+                            isPastDate ? "text-slate-300" : "text-slate-900 hover:bg-[#004BB8]/8"
+                          } ${isInRange ? "rounded-xl bg-[#004BB8]/10 text-[#021C2B]" : ""} ${
+                            isPickup || isDropoff ? "bg-[#004BB8] text-white hover:bg-[#004BB8]" : ""
+                          }`}
+                        >
+                          {day.getDate()}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </FlightMobilePickerShell>
+
+      <FlightMobilePickerShell
+        open={activeMobilePicker === "times"}
+        title={t("carsSearch.pickupReturnTimeLabel")}
+        titleId="cars-mobile-times-title"
+        launcherRef={timesLauncherRef}
+        onClose={onClose}
+        footer={(requestClose) => (
+          <button type="button" onClick={requestClose} className="focus-ring w-full rounded-full bg-[#004BB8] px-5 py-3 text-sm font-bold text-white">{t("done")}</button>
+        )}
+      >
+        <div className="grid gap-5">
+          {[
+            ["pickupTime", t("carsSearch.pickupTimeLabel"), values.pickupTime],
+            ["dropoffTime", t("carsSearch.returnTimeLabel"), values.dropoffTime],
+          ].map(([field, label, selectedTime]) => (
+            <section key={field} className="space-y-2">
+              <h3 className="px-1 text-xs font-bold uppercase tracking-wide text-slate-500">{label}</h3>
+              <div className={timeListClass}>
+                {timeOptions.map((time) => (
+                  <button
+                    key={`${field}-${time}`}
+                    type="button"
+                    onClick={() => updateValue(field as "pickupTime" | "dropoffTime", time)}
+                    className={`focus-ring flex min-h-11 items-center justify-between rounded-xl px-3 text-sm font-bold ${
+                      selectedTime === time ? "bg-[#004BB8] text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"
+                    }`}
+                  >
+                    {formatCarTimeLabel(time, intlLocale)}
+                    {selectedTime === time ? <span aria-hidden="true">✓</span> : null}
+                  </button>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </FlightMobilePickerShell>
+
+      <FlightMobilePickerShell
+        open={activeMobilePicker === "driverAge"}
+        title={t("carsSearch.driverAgeLabel")}
+        titleId="cars-mobile-driver-age-title"
+        launcherRef={driverAgeLauncherRef}
+        onClose={onClose}
+        footer={(requestClose) => (
+          <button type="button" onClick={requestClose} className="focus-ring w-full rounded-full bg-[#004BB8] px-5 py-3 text-sm font-bold text-white">{t("done")}</button>
+        )}
+      >
+        <div className="grid gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm">
+          {driverAgeOptions.map((age) => {
+            const label = age === defaultDriverAge ? t("carsSearch.driverAgeAnyAgeRange") : getDriverAgeOptionLabel(age);
+            const selected = values.driverAge === age;
+
+            return (
+              <button
+                key={age}
+                type="button"
+                onClick={() => updateValue("driverAge", age)}
+                className={`focus-ring flex min-h-12 items-center justify-between rounded-2xl px-4 text-start text-sm font-bold ${
+                  selected ? "bg-[#004BB8] text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"
+                }`}
+              >
+                {label}
+                {selected ? <span aria-hidden="true">✓</span> : null}
+              </button>
+            );
+          })}
+        </div>
+      </FlightMobilePickerShell>
+    </>
   );
 }
 
@@ -757,7 +1309,7 @@ function CarsPageShell() {
         <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
           <div className="flex items-center gap-3 text-slate-600">
             <Clock
-              className="h-5 w-5 animate-pulse text-indigo-600"
+              className="h-5 w-5 animate-pulse text-[#004BB8]"
               aria-hidden="true"
             />
             {t("carsSearchPreparing")}
@@ -781,9 +1333,9 @@ function CarImageCardLink({ card }: { card: TranslatedCarImageCard }) {
           : buildPickupHref(card.pickupLocation)
       }
       aria-label={card.ariaLabel}
-      className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_28px_-26px_rgba(15,23,42,0.34)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_30px_-26px_rgba(15,23,42,0.38)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-white"
+      className="group flex h-full min-w-0 snap-start flex-col overflow-hidden rounded-[1.35rem] border border-slate-200/90 bg-white shadow-[0_16px_34px_-26px_rgba(15,23,42,0.42)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_30px_-26px_rgba(15,23,42,0.38)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-4 focus-visible:ring-offset-white sm:rounded-2xl sm:border-slate-200 sm:shadow-[0_12px_28px_-26px_rgba(15,23,42,0.34)]"
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100 sm:aspect-[4/3]">
         <img
           src={card.image}
           alt={card.imageAlt}
@@ -791,15 +1343,15 @@ function CarImageCardLink({ card }: { card: TranslatedCarImageCard }) {
         />
         <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-slate-900/5" />
       </div>
-      <div className="flex flex-1 flex-col p-4 md:p-5">
-        <p className="text-base font-semibold leading-tight tracking-[-0.012em] text-slate-900 md:text-lg">
+      <div className="flex flex-1 flex-col p-[1.125rem] sm:p-4 md:p-5">
+        <p className="text-lg font-bold leading-snug tracking-tight text-slate-950 sm:leading-tight">
           {card.title}
         </p>
-        <p className="mt-2 text-sm font-medium leading-5 text-slate-600">
+        <p className="mt-2 text-sm font-medium leading-6 text-slate-600">
           {card.subtitle}
         </p>
         {card.cta ? (
-          <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-700 transition-colors group-hover:text-indigo-800">
+          <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-[#004BB8] transition-colors group-hover:text-[#021C2B]">
             {card.cta}
             <ArrowRight
               className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
@@ -823,6 +1375,76 @@ function CarPickupCardLink({ card }: { card: TranslatedCarImageCard }) {
   );
 }
 
+type DesktopPopoverPlacement = "above" | "below";
+
+const desktopPopoverViewportPadding = 16;
+const desktopPopoverOffset = 14;
+
+function useDesktopPopoverPosition(
+  isOpen: boolean,
+  launcherRef: RefObject<HTMLButtonElement | null> | undefined,
+  preferredWidth: number,
+) {
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+  const [style, setStyle] = useState<CSSProperties | null>(null);
+  const [placement, setPlacement] = useState<DesktopPopoverPlacement>("above");
+
+  useLayoutEffect(() => {
+    if (!isOpen || !launcherRef?.current || typeof window === "undefined") {
+      return;
+    }
+
+    const updatePosition = () => {
+      const launcherRect = launcherRef.current?.getBoundingClientRect();
+
+      if (!launcherRect) {
+        return;
+      }
+
+      const popoverRect = popoverRef.current?.getBoundingClientRect();
+      const popoverWidth = Math.min(
+        preferredWidth,
+        window.innerWidth - desktopPopoverViewportPadding * 2,
+      );
+      const popoverHeight = popoverRect?.height ?? 420;
+      const centeredLeft =
+        launcherRect.left + launcherRect.width / 2 - popoverWidth / 2;
+      const left = Math.min(
+        Math.max(centeredLeft, desktopPopoverViewportPadding),
+        window.innerWidth - popoverWidth - desktopPopoverViewportPadding,
+      );
+      const spaceBelow =
+        window.innerHeight - launcherRect.bottom - desktopPopoverOffset;
+      const shouldOpenBelow =
+        spaceBelow >= popoverHeight + desktopPopoverViewportPadding;
+      const nextTop = shouldOpenBelow
+        ? launcherRect.bottom + desktopPopoverOffset
+        : Math.max(
+            desktopPopoverViewportPadding,
+            launcherRect.top - popoverHeight - desktopPopoverOffset,
+          );
+
+      setPlacement(shouldOpenBelow ? "below" : "above");
+      setStyle({
+        left,
+        top: nextTop,
+        width: popoverWidth,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [isOpen, launcherRef, preferredWidth]);
+
+  return { placement, popoverRef, style };
+}
+
 function RentalDatesField({
   dropoffDate,
   isOpen,
@@ -834,6 +1456,7 @@ function RentalDatesField({
   onToggle,
   pickupDate,
   visibleMonthDate,
+  launcherRef,
   wrapRef,
 }: {
   dropoffDate: string;
@@ -845,13 +1468,15 @@ function RentalDatesField({
   onSelectDate: (date: Date) => void;
   onToggle: () => void;
   pickupDate: string;
+  launcherRef?: RefObject<HTMLButtonElement | null>;
   visibleMonthDate: Date;
   wrapRef: RefObject<HTMLDivElement | null>;
 }) {
   const { locale, t } = useCarsLandingTranslations();
-  const weekdays = useMemo(() => formatCarWeekdays(locale), [locale]);
-  const pickupDisplay = formatCarDisplayDate(pickupDate, locale);
-  const dropoffDisplay = formatCarDisplayDate(dropoffDate, locale);
+  const intlLocale = getCarsIntlLocale(locale);
+  const weekdays = useMemo(() => formatCarWeekdays(intlLocale), [intlLocale]);
+  const pickupDisplay = formatCarDisplayDate(pickupDate, intlLocale);
+  const dropoffDisplay = formatCarDisplayDate(dropoffDate, intlLocale);
   const pickupParsed = parseIsoDate(pickupDate);
   const dropoffParsed = parseIsoDate(dropoffDate);
   const dateSummary = pickupDisplay
@@ -859,16 +1484,22 @@ function RentalDatesField({
       ? `${pickupDisplay} — ${dropoffDisplay}`
       : pickupDisplay
     : t("carsSearch.rentalDatePlaceholder");
+  const { placement, popoverRef, style } = useDesktopPopoverPosition(
+    isOpen,
+    launcherRef,
+    620,
+  );
 
   return (
-    <div ref={wrapRef}>
+    <div ref={wrapRef} className="relative overflow-visible">
       <button
+        ref={launcherRef}
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
         aria-label={t("carsSearch.chooseRentalDatesAria")}
-        className="focus-ring flex h-7 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-sm lg:h-8"
+        className="focus-ring flex h-7 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-[15px] lg:h-8"
       >
         <Calendar
           className="h-4 w-4 shrink-0 text-slate-500"
@@ -881,12 +1512,17 @@ function RentalDatesField({
         </span>
       </button>
 
-      {isOpen ? (
-        <div
-          role="dialog"
-          aria-label={t("carsSearch.rentalDatePickerAria")}
-          className="absolute left-0 right-0 top-[calc(100%+10px)] z-[200] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4"
-        >
+      {isOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              ref={popoverRef}
+              role="dialog"
+              aria-label={t("carsSearch.rentalDatePickerAria")}
+              data-cars-desktop-popover="dates"
+              data-placement={placement}
+              style={style ?? undefined}
+              className="fixed z-[1000] hidden rounded-[1.35rem] border border-slate-200/95 bg-white p-4 shadow-[0_30px_90px_-30px_rgba(15,23,42,0.52),0_16px_36px_-22px_rgba(15,23,42,0.34)] ring-1 ring-slate-950/[0.08] sm:block"
+            >
           <p className="mb-3 text-base font-semibold text-slate-900">
             {t("carsSearch.chooseRentalDates")}
           </p>
@@ -916,7 +1552,7 @@ function RentalDatesField({
               return (
                 <div key={monthOffset}>
                   <p className="mb-1.5 text-center text-sm font-semibold text-slate-800">
-                    {monthDate.toLocaleDateString(locale, {
+                    {monthDate.toLocaleDateString(intlLocale, {
                       month: "long",
                       year: "numeric",
                     })}
@@ -958,7 +1594,7 @@ function RentalDatesField({
                         <button
                           key={iso}
                           type="button"
-                          aria-label={`${t("carsSearch.selectDateAriaPrefix")} ${formatCarFullDate(day, locale)}${
+                          aria-label={`${t("carsSearch.selectDateAriaPrefix")} ${formatCarFullDate(day, intlLocale)}${
                             isBeforePickup
                               ? `; ${t("carsSearch.startsNewPickupDate")}`
                               : ""
@@ -969,15 +1605,15 @@ function RentalDatesField({
                             isPastDate
                               ? "text-slate-300 hover:bg-transparent"
                               : isBeforePickup
-                                ? "text-slate-500 hover:bg-indigo-50"
-                                : "text-slate-900 hover:bg-indigo-50"
+                                ? "text-slate-500 hover:bg-[#004BB8]/8"
+                                : "text-slate-900 hover:bg-[#004BB8]/8"
                           } ${
                             isInRange
-                              ? "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100"
+                              ? "rounded-md bg-[#004BB8]/10 text-[#021C2B] hover:bg-[#004BB8]/10"
                               : ""
                           } ${
                             isPickup || isDropoff
-                              ? "bg-indigo-700 text-white hover:bg-indigo-700"
+                              ? "bg-[#004BB8] text-white hover:bg-[#004BB8]"
                               : ""
                           }`}
                         >
@@ -1001,13 +1637,15 @@ function RentalDatesField({
             <button
               type="button"
               onClick={onDone}
-              className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+              className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
             >
               {t("done")}
             </button>
           </div>
-        </div>
-      ) : null}
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
@@ -1018,34 +1656,43 @@ function TimeRangeField({
   pickupTime,
   returnTime,
   updateValue,
+  launcherRef,
   wrapRef,
 }: {
   isOpen: boolean;
   onToggle: () => void;
   pickupTime: string;
   returnTime: string;
+  launcherRef?: RefObject<HTMLButtonElement | null>;
   updateValue: <Key extends keyof CarsFormValues>(
     key: Key,
     value: CarsFormValues[Key],
   ) => void;
   wrapRef: RefObject<HTMLDivElement | null>;
 }) {
-  const { t } = useCarsLandingTranslations();
+  const { locale, t } = useCarsLandingTranslations();
+  const intlLocale = getCarsIntlLocale(locale);
   const timeSummary = formatTimeRangeSummary(
     t("carsSearch.pickupReturnTimeSummary"),
-    pickupTime,
-    returnTime,
+    formatCarTimeLabel(pickupTime, intlLocale),
+    formatCarTimeLabel(returnTime, intlLocale),
+  );
+  const { placement, popoverRef, style } = useDesktopPopoverPosition(
+    isOpen,
+    launcherRef,
+    320,
   );
 
   return (
-    <div ref={wrapRef}>
+    <div ref={wrapRef} className="relative overflow-visible">
       <button
+        ref={launcherRef}
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-haspopup="menu"
         aria-label={t("carsSearch.choosePickupReturnTimesAria")}
-        className="focus-ring flex h-7 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-sm lg:h-8"
+        className="focus-ring flex h-7 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-[15px] lg:h-8"
       >
         <span className="truncate">{timeSummary}</span>
         <ChevronDown
@@ -1054,12 +1701,17 @@ function TimeRangeField({
         />
       </button>
 
-      {isOpen ? (
-        <div
-          role="menu"
-          aria-label={t("carsSearch.pickupReturnTimeSelectorAria")}
-          className="absolute left-0 right-0 top-[calc(100%+8px)] z-[180] w-full rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:right-auto sm:w-[min(92vw,320px)]"
-        >
+      {isOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              ref={popoverRef}
+              role="menu"
+              aria-label={t("carsSearch.pickupReturnTimeSelectorAria")}
+              data-cars-desktop-popover="times"
+              data-placement={placement}
+              style={style ?? undefined}
+              className="fixed z-[990] hidden rounded-2xl border border-slate-200/95 bg-white p-3 shadow-[0_26px_70px_-28px_rgba(15,23,42,0.48),0_12px_28px_-20px_rgba(15,23,42,0.32)] ring-1 ring-slate-950/[0.08] sm:block"
+            >
           <div className="grid gap-3">
             <label className="block">
               <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -1071,11 +1723,11 @@ function TimeRangeField({
                 onChange={(event) =>
                   updateValue("pickupTime", event.target.value)
                 }
-                className="focus-ring h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-950 outline-none transition focus:border-indigo-300 md:text-sm"
+                className="focus-ring h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-950 outline-none transition focus:border-[#004BB8] md:text-sm"
               >
                 {timeOptions.map((time) => (
                   <option key={`pickup-${time}`} value={time}>
-                    {time}
+                    {formatCarTimeLabel(time, intlLocale)}
                   </option>
                 ))}
               </select>
@@ -1091,18 +1743,20 @@ function TimeRangeField({
                 onChange={(event) =>
                   updateValue("dropoffTime", event.target.value)
                 }
-                className="focus-ring h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-950 outline-none transition focus:border-indigo-300 md:text-sm"
+                className="focus-ring h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-950 outline-none transition focus:border-[#004BB8] md:text-sm"
               >
                 {timeOptions.map((time) => (
                   <option key={`return-${time}`} value={time}>
-                    {time}
+                    {formatCarTimeLabel(time, intlLocale)}
                   </option>
                 ))}
               </select>
             </label>
           </div>
-        </div>
-      ) : null}
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
@@ -1120,9 +1774,9 @@ function SearchCell({
 }) {
   return (
     <div
-      className={`min-h-[58px] border border-transparent bg-white px-2.5 py-1.5 transition hover:border-slate-200 focus-within:border-indigo-200 focus-within:bg-indigo-50/20 lg:min-h-[66px] lg:px-3 lg:py-2 ${className}`}
+      className={`min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-slate-400 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:bg-transparent sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-slate-200/80 sm:focus-within:bg-white sm:focus-within:ring-0 lg:px-4 lg:py-2 ${className}`}
     >
-      <label className="mb-0.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 lg:mb-1">
+      <label className="mb-1 block text-xs font-bold uppercase leading-4 tracking-[0.12em] text-slate-600 sm:mb-0.5 sm:text-[0.66rem] sm:text-slate-500 lg:mb-0.5">
         {label}
       </label>
       {children}

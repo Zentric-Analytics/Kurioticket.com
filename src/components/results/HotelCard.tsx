@@ -2,21 +2,82 @@
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
-import { Building2, MapPin } from "lucide-react";
+import {
+  AirVent,
+  Armchair,
+  Award,
+  Bike,
+  Building2,
+  BusFront,
+  ChevronLeft,
+  ChevronRight,
+  CircleDot,
+  CircleParking,
+  Clock3,
+  Coffee,
+  ConciergeBell,
+  CookingPot,
+  Dumbbell,
+  Flower2,
+  Heart,
+  Laptop,
+  MapPin,
+  Star,
+  Tag,
+  Trees,
+  UtensilsCrossed,
+  VolumeX,
+  Waves,
+  Wifi,
+  type LucideIcon,
+} from "lucide-react";
 import type { PublicHotelResult } from "@/lib/types";
-import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
+import { useRegion } from "@/components/region/RegionProvider";
+import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
+import {
+  normalizeHotelClassificationStars,
+  normalizeHotelReviewScale,
+  normalizeHotelReviewScore,
+} from "@/lib/hotels/hotelRatingSemantics";
+import {
+  getHotelReviewBand,
+  getHotelReviewCount,
+  type HotelReviewBand,
+} from "@/components/results/hotelReviewPresentation";
+import {
+  buildHotelGalleryCandidates,
+  getAdjacentHotelGalleryIndex,
+  resolveHotelGalleryIndex,
+} from "@/components/results/hotelGalleryPresentation";
+import type { SavedHotelSnapshot } from "@/components/results/hotelSavedStorage";
+import { useSavedHotel } from "@/components/results/useSavedHotel";
+import {
+  buildHotelAmenityPresentation,
+  type HotelAmenityIconKey,
+  type HotelAmenityPresentationItem,
+} from "@/components/results/hotelAmenityPresentation";
 
-function getHotelStarRating(rating: number) {
-  if (!Number.isFinite(rating) || rating <= 0) return null;
-  return Math.min(Math.max(Math.floor(rating), 1), 5);
+function isSafeHttpUrl(value?: string) {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
-function formatHotelRating(rating: number) {
-  return Number.isInteger(rating) ? String(rating) : rating.toFixed(1);
+function formatHotelRating(rating: number, locale: string) {
+  return new Intl.NumberFormat(locale, {
+    maximumFractionDigits: Number.isInteger(rating) ? 0 : 1,
+    minimumFractionDigits: Number.isInteger(rating) ? 0 : 1,
+  }).format(rating);
 }
 
 function normalizeWhitespace(value: string) {
@@ -57,10 +118,6 @@ function toSentenceCase(value: string) {
   return `${sentence.charAt(0).toLocaleUpperCase()}${sentence.slice(1)}`;
 }
 
-function isCancellationText(value: string) {
-  return /cancellation|cancel|policy|refund|prepayment/i.test(value);
-}
-
 function isMealPlanText(value: string) {
   return /breakfast|room only|accommodation only|half board|full board|all[-\s]?inclusive/i.test(
     value,
@@ -83,16 +140,20 @@ function getCancellationDisplay(
     return { label: t("hotelResults.filter.freeCancellation"), positive: true };
   }
 
-  if (/\bpay (?:at|on) (?:the )?property\b|\bpay later\b/i.test(policyText)) {
-    return { label: toSentenceCase(policyText), positive: true };
+  if (/\bpay (?:at|on) (?:the )?property\b/i.test(policyText)) {
+    return { label: t("hotelResults.payAtProperty"), positive: true };
+  }
+
+  if (/\bpay later\b/i.test(policyText)) {
+    return { label: t("hotelResults.payLater"), positive: true };
   }
 
   if (/\bno prepayment\b/i.test(policyText)) {
-    return { label: toSentenceCase(policyText), positive: true };
+    return { label: t("hotelResults.noPrepayment"), positive: true };
   }
 
   if (/\brefundable\b/i.test(policyText)) {
-    return { label: toSentenceCase(policyText), positive: true };
+    return { label: t("hotelResults.refundable"), positive: true };
   }
 
   return null;
@@ -119,8 +180,28 @@ function getDistanceDisplay(distanceFromCenter?: string) {
 function translateKnownHotelLabel(value: string, t: (key: string) => string) {
   const normalized = normalizeWhitespace(value).toLocaleLowerCase();
 
+  if (/^half board$/.test(normalized)) {
+    return t("hotelResults.filter.halfBoard");
+  }
+
+  if (/^full board$/.test(normalized)) {
+    return t("hotelResults.filter.fullBoard");
+  }
+
+  if (/^all[-\s]?inclusive$/.test(normalized)) {
+    return t("hotelResults.filter.allInclusive");
+  }
+
+  if (/^double business$/.test(normalized)) {
+    return t("hotelResults.filter.doubleBusiness");
+  }
+
   if (/^bed and breakfast$/.test(normalized)) {
     return t("hotelResults.filter.bedAndBreakfast");
+  }
+
+  if (/^breakfast$/.test(normalized)) {
+    return t("hotelResults.filter.breakfastIncludedAvailable");
   }
 
   if (/^(room only|accommodation only)$/.test(normalized)) {
@@ -129,6 +210,34 @@ function translateKnownHotelLabel(value: string, t: (key: string) => string) {
 
   if (/^double room$/.test(normalized)) {
     return t("hotelResults.filter.doubleRoom");
+  }
+
+  if (/^king bed$/.test(normalized)) {
+    return t("hotelResults.filter.kingBed");
+  }
+
+  if (/^deluxe king room$/.test(normalized)) {
+    return t("hotelResults.filter.deluxeKingRoom");
+  }
+
+  if (/^classic room$/.test(normalized)) {
+    return t("hotelResults.filter.classicRoom");
+  }
+
+  if (/^luxury king$/.test(normalized)) {
+    return t("hotelResults.filter.luxuryKing");
+  }
+
+  if (/^single standard$/.test(normalized)) {
+    return t("hotelResults.filter.singleStandard");
+  }
+
+  if (/^superior room$/.test(normalized)) {
+    return t("hotelResults.filter.superiorRoom");
+  }
+
+  if (/^superior double room$/.test(normalized)) {
+    return t("hotelResults.filter.superiorDoubleRoom");
   }
 
   return value;
@@ -148,79 +257,138 @@ function getMealPlanDisplay(
   return translateKnownHotelLabel(mealText, t);
 }
 
-function getAmenityDisplay(amenities: string[], mealPlanText: string) {
-  const seen = new Set<string>();
-  const mealPlanKey = mealPlanText.toLocaleLowerCase();
+const reviewLabelKeys: Record<HotelReviewBand, string> = {
+  exceptional: "hotelResults.review.exceptional",
+  veryGood: "hotelResults.review.veryGood",
+  good: "hotelResults.review.good",
+  pleasant: "hotelResults.review.pleasant",
+  reviewScore: "hotelResults.review.score",
+};
 
-  return amenities
-    .map((amenity) => toSentenceCase(amenity))
-    .filter((amenity) => {
-      if (
-        !amenity ||
-        isCancellationText(amenity) ||
-        isMealPlanText(amenity) ||
-        /verified partner inventory/i.test(amenity) ||
-        /^(central|transit-friendly area|central or transit-friendly area)$/i.test(
-          amenity,
-        )
-      ) {
-        return false;
+const reviewLabelFallbacks: Record<HotelReviewBand, string> = {
+  exceptional: "Exceptional",
+  veryGood: "Very good",
+  good: "Good",
+  pleasant: "Pleasant",
+  reviewScore: "Review score",
+};
+
+const hotelAmenityIcons: Record<HotelAmenityIconKey, LucideIcon> = {
+  wifi: Wifi,
+  breakfast: Coffee,
+  pool: Waves,
+  spa: Flower2,
+  airportShuttle: BusFront,
+  parking: CircleParking,
+  fitness: Dumbbell,
+  workspace: Laptop,
+  quietRooms: VolumeX,
+  frontDesk: ConciergeBell,
+  lateCheckIn: Clock3,
+  kitchenette: CookingPot,
+  bikeStorage: Bike,
+  courtyard: Trees,
+  lounge: Armchair,
+  restaurant: UtensilsCrossed,
+  airConditioning: AirVent,
+  generic: CircleDot,
+};
+
+function resolveAmenityLabels(
+  items: HotelAmenityPresentationItem[],
+  t: (key: string) => string,
+) {
+  return items.map((item) => {
+    const translatedLabel = item.translationKey ? t(item.translationKey) : "";
+
+    return {
+      ...item,
+      label: translatedLabel.trim() || item.label,
+    };
+  });
+}
+
+function HotelAmenityList({
+  items,
+  expanded = false,
+}: {
+  items: HotelAmenityPresentationItem[];
+  expanded?: boolean;
+}) {
+  if (items.length === 0) return null;
+
+  return (
+    <ul
+      role="list"
+      className={
+        expanded
+          ? "mt-2 grid grid-cols-1 gap-y-1.5"
+          : "mt-2 grid grid-cols-1 gap-y-1.5"
       }
+    >
+      {items.map((item) => {
+        const Icon = hotelAmenityIcons[item.iconKey];
 
-      const key = amenity.toLocaleLowerCase();
-      if (mealPlanKey && key === mealPlanKey) return false;
-      if (seen.has(key)) return false;
-
-      seen.add(key);
-      return true;
-    })
-    .slice(0, 3);
+        return (
+          <li
+            key={item.key}
+            className="flex min-w-0 items-start gap-1.5 text-[12px] font-medium leading-4 text-slate-600"
+          >
+            <Icon
+              className="h-4 w-4 shrink-0 text-slate-500"
+              strokeWidth={1.8}
+              aria-hidden="true"
+            />
+            <span className="min-w-0">{item.label}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
-const fallbackHotelImages = [
-  "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=90",
-  "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1200&q=90",
-  "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=90",
-  "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1200&q=90",
-  "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=90",
-  "https://images.unsplash.com/photo-1445019980597-93fa8acb246c?auto=format&fit=crop&w=1200&q=90",
-  "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1200&q=90",
-  "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=1200&q=90",
-];
 
-function getDeterministicFallbackImage(hotel: PublicHotelResult) {
-  const identity = `${hotel.id || ""}-${hotel.name || ""}-${hotel.location || ""}`;
-  let hash = 0;
-
-  for (let index = 0; index < identity.length; index += 1) {
-    hash = (hash * 31 + identity.charCodeAt(index)) >>> 0;
-  }
-
-  return fallbackHotelImages[hash % fallbackHotelImages.length];
-}
+type HotelSortBadge = "cheapest" | "bestValue" | "topRated";
 
 type HotelCardProps = {
   hotel: PublicHotelResult;
+  detailsHref?: string;
+  sortBadge?: HotelSortBadge;
 };
 
-export function HotelCard({ hotel }: HotelCardProps) {
-  const { t: dictionary } = useLocale();
+export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
+  const { locale, t: dictionary } = useLocale();
+  const { selectedOption } = useRegion();
+  const currencyRates = useCurrencyRates();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const starRating = getHotelStarRating(hotel.rating);
-  const fallbackImageUrl = useMemo(
-    () => getDeterministicFallbackImage(hotel),
-    [hotel],
+  const [preferredImageIndex, setPreferredImageIndex] = useState(0);
+  const starRating = normalizeHotelClassificationStars(hotel.classificationStars);
+  const resolvedDetailsHref =
+    detailsHref || `/hotels/details/${encodeURIComponent(hotel.id)}`;
+  const explicitGalleryImages = useMemo(
+    () => buildHotelGalleryCandidates(hotel.imageUrls, hotel.imageUrl),
+    [hotel.imageUrl, hotel.imageUrls],
   );
-  const supplierImageUrl = hotel.imageUrl?.trim();
   const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(
     () => new Set(),
   );
-  const imageUrl =
-    supplierImageUrl && !failedImageUrls.has(supplierImageUrl)
-      ? supplierImageUrl
-      : failedImageUrls.has(fallbackImageUrl)
-        ? ""
-        : fallbackImageUrl;
+  const resolvedActiveImageIndex = resolveHotelGalleryIndex(
+    explicitGalleryImages,
+    failedImageUrls,
+    preferredImageIndex,
+  );
+  const availableImageIndices = explicitGalleryImages.reduce<number[]>(
+    (indices, url, index) => {
+      if (!failedImageUrls.has(url)) indices.push(index);
+      return indices;
+    },
+    [],
+  );
+  const activeGalleryImageUrl =
+    resolvedActiveImageIndex >= 0
+      ? explicitGalleryImages[resolvedActiveImageIndex]
+      : "";
+  const displayImageUrl = activeGalleryImageUrl;
   const rawRoomTypeText = hotel.roomType ? toTitleCase(hotel.roomType) : "";
   const roomTypeText = rawRoomTypeText
     ? translateKnownHotelLabel(rawRoomTypeText, t)
@@ -228,43 +396,259 @@ export function HotelCard({ hotel }: HotelCardProps) {
   const distanceText = getDistanceDisplay(hotel.distanceFromCenter);
   const mealPlanText = getMealPlanDisplay(hotel, rawRoomTypeText, t);
   const cancellationDisplay = getCancellationDisplay(hotel.cancellationInfo, t);
-  const amenityDisplay = getAmenityDisplay(hotel.amenities, mealPlanText);
+  const expandedAmenityItems = buildHotelAmenityPresentation(
+    hotel.amenities,
+    8,
+  );
+  const collapsedAmenityItems = expandedAmenityItems.slice(0, 4);
+  const hasBreakfastAmenity = expandedAmenityItems.some(
+    (item) => item.iconKey === "breakfast",
+  );
+  const shouldShowMealPlanText =
+    Boolean(mealPlanText) &&
+    (!hasBreakfastAmenity || !/^breakfast/i.test(mealPlanText));
+  const reviewScale = normalizeHotelReviewScale(hotel.reviewScale);
+  const reviewScore = normalizeHotelReviewScore(hotel.reviewScore, reviewScale);
+  const reviewBand = getHotelReviewBand(reviewScore, reviewScale);
+  const reviewCount = getHotelReviewCount(hotel.reviewCount);
+  const reviewLabel = reviewBand
+    ? t(reviewLabelKeys[reviewBand]) || reviewLabelFallbacks[reviewBand]
+    : "";
+  const formattedReviewScore = reviewBand
+    ? new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(
+        typeof reviewScore === "number" ? reviewScore : 0,
+      )
+    : "";
+  const formattedReviewCount =
+    reviewCount !== null
+      ? new Intl.NumberFormat(locale).format(reviewCount)
+      : "";
+  const reviewCountText =
+    reviewCount !== null
+      ? (reviewCount === 1
+          ? t("hotelResults.review.single") || "{{count}} review"
+          : t("hotelResults.review.multiple") || "{{count}} reviews"
+        ).replace("{{count}}", formattedReviewCount)
+      : "";
+  const priceDetails = getHotelPriceDetails(hotel);
+  const hasValidPrice = priceDetails !== null;
+  const priceUnavailableText =
+    t("hotelResults.priceUnavailable") || "Price unavailable";
+  const liveRateUnavailableText =
+    t("hotelResults.liveRateUnavailable") ||
+    "No live room rate is available for the selected dates.";
+  const saveRequiresLiveRateText =
+    t("hotelResults.saveRequiresLiveRate") ||
+    "Saving is available once a live room rate is provided.";
+  const taxesAndFeesText =
+    hotel.taxesAndFeesIncluded === true
+      ? t("hotelResults.taxesFeesIncluded") || "Includes taxes and fees"
+      : hotel.taxesAndFeesIncluded === false
+        ? t("hotelResults.taxesFeesNotIncluded") ||
+          "Taxes and fees not included"
+        : "";
+  const sortBadgeConfig = sortBadge && ((sortBadge !== "cheapest" && sortBadge !== "bestValue") || hasValidPrice)
+    ? ({
+        cheapest: {
+          label: t("hotelResults.cheapest") || "Cheapest",
+          Icon: Tag,
+          className: "border-emerald-100 bg-emerald-50 text-emerald-700",
+        },
+        bestValue: {
+          label: t("hotelResults.bestValue") || "Best value",
+          Icon: Award,
+          className: "border-blue-100 bg-blue-50 text-[#004BB8]",
+        },
+        topRated: {
+          label: t("hotelResults.topRated") || "Top rated",
+          Icon: Star,
+          className: "border-amber-100 bg-amber-50 text-amber-700",
+        },
+      } satisfies Record<
+        HotelSortBadge,
+        {
+          label: string;
+          Icon: LucideIcon;
+          className: string;
+        }
+      >)[sortBadge]
+    : null;
+  const SortBadgeIcon = sortBadgeConfig?.Icon;
+  const sourceAttributions = (hotel.sourceAttributions || [])
+    .map((attribution) => ({
+      provider: attribution.provider.trim(),
+      providerUri: attribution.providerUri?.trim(),
+    }))
+    .filter((attribution) => attribution.provider);
+  const totalDisplayPrice = priceDetails
+    ? formatDisplayPrice({
+        amount: priceDetails.totalPrice,
+        sourceCurrency: priceDetails.currency,
+        displayCurrency: selectedOption.currency,
+        convertSourceEstimate: true,
+        rates: currencyRates.rates,
+        isFallbackRate: currencyRates.isFallback,
+      })
+    : null;
+  const nightlyDisplayPrice = priceDetails
+    ? formatDisplayPrice({
+        amount: priceDetails.pricePerNight,
+        sourceCurrency: priceDetails.currency,
+        displayCurrency: selectedOption.currency,
+        convertSourceEstimate: true,
+        rates: currencyRates.rates,
+        isFallbackRate: currencyRates.isFallback,
+      })
+    : null;
 
-  async function redirectToHotel() {
-    const response = await fetch("/api/redirect", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: hotel.id,
-        type: "hotel",
-        sourcePage: "hotel_results",
-      }),
-    });
-    const data = (await response.json()) as { url?: string; error?: string };
-    if (data.url) window.location.href = data.url;
-    if (data.error) window.alert(data.error);
+  function getHotelSnapshot(): SavedHotelSnapshot {
+    const snapshotPrice = getHotelPriceDetails(hotel);
+    if (!snapshotPrice) {
+      throw new Error("Cannot save a hotel without a valid live room rate.");
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const checkIn = params.get("checkIn") || new Date().toISOString().slice(0, 10);
+    const checkOut = params.get("checkOut") || checkIn;
+    const image = displayImageUrl || undefined;
+
+    return {
+      id: hotel.id,
+      provider: hotel.provider || "hotel",
+      hotelName: hotel.name,
+      destination: hotel.location || hotel.neighbourhood || hotel.name,
+      checkIn: `${checkIn}T00:00:00.000Z`,
+      checkOut: `${checkOut}T00:00:00.000Z`,
+      totalPrice: snapshotPrice.totalPrice,
+      currency: snapshotPrice.currency,
+      image,
+      imageAlt: hotel.name,
+      location: hotel.location,
+      rating: hotel.rating,
+      href: resolvedDetailsHref,
+      savedAt: new Date().toISOString(),
+    };
   }
 
+  const { isSaved, toggleSavedHotel } = useSavedHotel({
+    hotelId: hotel.id,
+    getSnapshot: getHotelSnapshot,
+  });
+
+  const savedHotelLabel = (
+    isSaved
+      ? t("hotelResults.removeSavedHotel") ||
+        "Remove {{name}} from saved hotels"
+      : hasValidPrice
+        ? t("hotelResults.saveHotel") || "Save {{name}}"
+        : saveRequiresLiveRateText
+  ).replace("{{name}}", hotel.name);
+
+
+  function markImageFailed(url: string) {
+    if (!url) return;
+
+    setFailedImageUrls((current) => {
+      if (current.has(url)) return current;
+      const next = new Set(current);
+      next.add(url);
+      return next;
+    });
+  }
+
+  const showGalleryControls = availableImageIndices.length > 1;
+  const activeGalleryPosition = availableImageIndices.indexOf(
+    resolvedActiveImageIndex,
+  );
+  const photoCounterText = (
+    t("hotelResults.photoCounter") || "{{current}} of {{total}} photos"
+  )
+    .replace("{{current}}", String(activeGalleryPosition + 1))
+    .replace("{{total}}", String(availableImageIndices.length));
+
+  function selectAdjacentImage(direction: -1 | 1) {
+    const nextIndex = getAdjacentHotelGalleryIndex(
+      explicitGalleryImages,
+      failedImageUrls,
+      resolvedActiveImageIndex,
+      direction,
+    );
+
+    if (nextIndex !== -1) setPreferredImageIndex(nextIndex);
+  }
+
+
   return (
-    <Card className="mx-auto w-full max-w-[800px] overflow-hidden border-indigo-100 bg-white shadow-[0_16px_38px_-26px_rgba(30,27,75,0.5)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(30,27,75,0.55)]">
+    <Card className="mx-auto w-full max-w-[800px] overflow-hidden border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(2,28,43,0.26)]">
       <div className="grid md:grid-cols-[40%_minmax(0,1fr)]">
         <div className="relative h-[clamp(280px,78vw,340px)] bg-surface-muted md:aspect-auto md:h-auto md:min-h-[230px] lg:min-h-[240px]">
-          {imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt={t("hotelResults.hotelImageAlt")
-                .replace("{{name}}", hotel.name)
-                .replace("{{location}}", hotel.location ? ` ${t("hotelResults.nearLocation").replace("{{location}}", hotel.location)}` : "")}
-              fill
-              className="object-cover"
-              sizes="(min-width: 768px) 40vw, 100vw"
-              onError={() => {
-                setFailedImageUrls((current) => new Set(current).add(imageUrl));
-              }}
+          <button
+            type="button"
+            aria-label={savedHotelLabel}
+            aria-pressed={isSaved}
+            title={isSaved || hasValidPrice ? savedHotelLabel : saveRequiresLiveRateText}
+            disabled={!isSaved && !hasValidPrice}
+            className={
+              isSaved
+                ? "absolute right-2 top-2 z-20 flex min-h-10 min-w-10 items-center justify-center rounded-full border border-rose-200 bg-white/95 text-rose-600 shadow-lg transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
+                : "absolute right-2 top-2 z-20 flex min-h-10 min-w-10 items-center justify-center rounded-full border border-white/80 bg-white/90 text-slate-800 shadow-lg transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
+            }
+            onClick={() => {
+              if (isSaved || hasValidPrice) void toggleSavedHotel();
+            }}
+          >
+            <Heart
+              size={20}
+              aria-hidden="true"
+              fill={isSaved ? "currentColor" : "none"}
             />
+          </button>
+          {displayImageUrl ? (
+            <>
+              <Image
+                src={displayImageUrl}
+                alt={t("hotelResults.hotelImageAlt")
+                  .replace("{{name}}", hotel.name)
+                  .replace(
+                    "{{location}}",
+                    hotel.location
+                      ? ` ${t("hotelResults.nearLocation").replace("{{location}}", hotel.location)}`
+                      : "",
+                  )}
+                fill
+                className="object-cover"
+                sizes="(min-width: 768px) 40vw, 100vw"
+                onError={() => markImageFailed(displayImageUrl)}
+              />
+              {showGalleryControls ? (
+                <>
+                  <button
+                    type="button"
+                    className="absolute left-2 top-1/2 flex min-h-10 min-w-10 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/75 text-white shadow-lg ring-1 ring-white/40 transition hover:bg-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                    aria-label={
+                      t("hotelResults.previousPhoto") || "Previous photo"
+                    }
+                    onClick={() => selectAdjacentImage(-1)}
+                  >
+                    <ChevronLeft size={20} aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    className="absolute right-2 top-1/2 flex min-h-10 min-w-10 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/75 text-white shadow-lg ring-1 ring-white/40 transition hover:bg-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                    aria-label={t("hotelResults.nextPhoto") || "Next photo"}
+                    onClick={() => selectAdjacentImage(1)}
+                  >
+                    <ChevronRight size={20} aria-hidden="true" />
+                  </button>
+                  <div className="absolute bottom-2 right-2 rounded-full bg-slate-950/75 px-2.5 py-1 text-xs font-semibold text-white shadow-lg ring-1 ring-white/30">
+                    {photoCounterText}
+                  </div>
+                </>
+              ) : null}
+            </>
           ) : (
-            <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-indigo-50 via-white to-violet-50 px-5 text-center text-indigo-700">
-              <Building2 size={36} />
+            <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-blue/10 via-surface to-surface-subtle px-5 text-center">
+              <Building2 size={36} className="text-blue" aria-hidden="true" />
               <span className="max-w-[180px] text-xs font-semibold uppercase tracking-wide text-slate-500">
                 {t("hotelResults.imageUnavailable")}
               </span>
@@ -272,94 +656,188 @@ export function HotelCard({ hotel }: HotelCardProps) {
           )}
         </div>
         <div className="flex min-h-[200px] flex-col px-3.5 py-3.5 md:min-h-0 md:px-3 md:py-3">
-          <div className="flex flex-1 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex flex-1 flex-col">
             <div className="min-w-0">
               <div>
+                <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                  <h2 className="min-w-0 text-base font-bold leading-6 text-slate-950 lg:text-[17px]">
+                    {hotel.name}
+                  </h2>
+
+                  {sortBadgeConfig && SortBadgeIcon ? (
+                    <span
+                      className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md border px-2 py-0.5 text-[11px] font-semibold leading-4 ${sortBadgeConfig.className}`}
+                    >
+                      <SortBadgeIcon
+                        className="h-3.5 w-3.5"
+                        aria-hidden="true"
+                      />
+                      {sortBadgeConfig.label}
+                    </span>
+                  ) : null}
+                </div>
+
                 {starRating ? (
                   <div
-                    className="mb-1 inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-500 ring-1 ring-amber-100"
+                    className="mt-1 flex items-center"
                     aria-label={t("hotelResults.starHotelAria").replace(
                       "{{rating}}",
-                      formatHotelRating(hotel.rating),
+                      formatHotelRating(starRating, locale),
                     )}
                     title={t("hotelResults.starHotelAria").replace(
                       "{{rating}}",
-                      formatHotelRating(hotel.rating),
+                      formatHotelRating(starRating, locale),
                     )}
                   >
-                    <span aria-hidden="true" className="tracking-[0.08em]">
+                    <span
+                      aria-hidden="true"
+                      className="text-[14px] leading-5 tracking-[0.08em] text-amber-500"
+                    >
                       {"★".repeat(starRating)}
                     </span>
                   </div>
                 ) : null}
-                <h2 className="text-base font-bold leading-6 text-slate-950 lg:text-[17px]">
-                  {hotel.name}
-                </h2>
-                <p className="mt-1 flex items-center gap-1.5 text-[13px] font-semibold leading-5 text-indigo-700 lg:text-sm">
-                  <MapPin size={15} className="shrink-0 text-indigo-700" />
-                  <span>{hotel.location}</span>
+
+                <p className="mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[13px] font-semibold leading-5 text-[#004BB8] lg:text-sm">
+                  <MapPin size={15} className="shrink-0 text-[#004BB8]" />
+                  <span className="min-w-0">{hotel.location}</span>
+                  {distanceText ? (
+                    <>
+                      <span
+                        aria-hidden="true"
+                        className="shrink-0 font-normal text-slate-400"
+                      >
+                        ·
+                      </span>
+                      <span className="font-normal text-slate-600">
+                        {distanceText}
+                      </span>
+                    </>
+                  ) : null}
                 </p>
               </div>
-              {distanceText ? (
-                <p className="mt-1 text-[13px] font-normal leading-5 text-slate-600 lg:text-sm">
-                  {distanceText}
-                </p>
-              ) : null}
-              {roomTypeText || mealPlanText || amenityDisplay.length > 0 ? (
-                <div className="mt-2 space-y-1">
-                  {roomTypeText ? (
-                    <p className="text-sm font-medium leading-5 text-slate-800">
-                      {roomTypeText}
-                    </p>
+              {reviewBand || reviewCountText ? (
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-slate-600">
+                  {reviewBand ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2 py-0.5 text-white">
+                      <span>{formattedReviewScore} / {reviewScale}</span>
+                      <span>{reviewLabel}</span>
+                    </span>
                   ) : null}
-                  {mealPlanText ? (
-                    <p className="text-[13px] font-normal leading-5 text-slate-600">
-                      {mealPlanText}
-                    </p>
-                  ) : null}
-                  {amenityDisplay.length > 0 ? (
-                    <p className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-normal leading-5 text-slate-600">
-                      {amenityDisplay.join(" · ")}
-                    </p>
+                  {reviewCountText ? (
+                    <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">
+                      {reviewCountText}
+                    </span>
                   ) : null}
                 </div>
               ) : null}
-              {cancellationDisplay ? (
-                <p
-                  className={
-                    cancellationDisplay.positive
-                      ? "mt-2 text-[13px] font-medium leading-5 text-emerald-700"
-                      : "mt-2 text-[13px] font-medium leading-5 text-slate-600"
-                  }
-                >
-                  {cancellationDisplay.label}
-                </p>
+              {sourceAttributions.length ? (
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-slate-600">
+                  {sourceAttributions.map((attribution, index) => (
+                    <span key={`${attribution.provider}-${index}`} className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5">
+                      <span>Data:</span>
+                      {isSafeHttpUrl(attribution.providerUri) ? (
+                        <a href={attribution.providerUri} target="_blank" rel="noopener noreferrer" translate="no" className="text-[#004BB8] hover:underline">
+                          {attribution.provider}
+                        </a>
+                      ) : (
+                        <span translate="no">{attribution.provider}</span>
+                      )}
+                    </span>
+                  ))}
+                </div>
               ) : null}
             </div>
-            <div className="mt-auto flex flex-col gap-3 min-[380px]:flex-row min-[380px]:items-end min-[380px]:justify-between md:mt-0 lg:w-40 lg:flex-col lg:items-end lg:justify-start lg:text-right">
-              <div className="text-left min-[380px]:text-right lg:text-right">
-                <div className="text-xl font-bold tracking-[-0.01em] text-slate-950">
-                  {formatCurrency(hotel.totalPrice, hotel.currency)}
-                </div>
-                <div className="text-xs font-medium leading-4 text-slate-500">
-                  {t("hotelResults.estimatedStayTotal")}
-                </div>
-                <div className="text-xs font-medium leading-4 text-slate-500">
-                  {t("hotelResults.pricePerNight").replace(
-                    "{{price}}",
-                    formatCurrency(hotel.pricePerNight, hotel.currency),
+            <div className="mt-3 grid grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] border-t border-slate-200 pt-3">
+              <div className="min-w-0 pe-2.5 md:pe-3">
+                {roomTypeText ||
+                shouldShowMealPlanText ||
+                collapsedAmenityItems.length > 0 ? (
+                  <div className="space-y-1">
+                    {roomTypeText ? (
+                      <p className="text-sm font-medium leading-5 text-slate-800">
+                        {roomTypeText}
+                      </p>
+                    ) : null}
+                    {shouldShowMealPlanText ? (
+                      <p className="text-[13px] font-normal leading-5 text-slate-600">
+                        {mealPlanText}
+                      </p>
+                    ) : null}
+                    <HotelAmenityList
+                      items={resolveAmenityLabels(collapsedAmenityItems, t)}
+                    />
+                  </div>
+                ) : null}
+                {cancellationDisplay ? (
+                  <p
+                    className={
+                      cancellationDisplay.positive
+                        ? "mt-2 text-[13px] font-medium leading-5 text-emerald-700"
+                        : "mt-2 text-[13px] font-medium leading-5 text-slate-600"
+                    }
+                  >
+                    {cancellationDisplay.label}
+                  </p>
+                ) : null}
+              </div>
+              <div className="flex min-w-0 flex-col border-s border-slate-200 ps-2.5 text-end md:ps-3">
+                <div className="min-w-0 text-end">
+                  {priceDetails && totalDisplayPrice && nightlyDisplayPrice ? (
+                    <>
+                      <div
+                        className="text-lg font-bold leading-7 tracking-[-0.01em] text-slate-950 tabular-nums min-[380px]:whitespace-nowrap md:text-xl"
+                        dir="ltr"
+                        title={totalDisplayPrice.title}
+                        aria-label={totalDisplayPrice.ariaLabel}
+                      >
+                        {totalDisplayPrice.formatted}
+                      </div>
+
+                    <div className="mt-1 text-[13px] font-medium leading-5 text-slate-500">
+                      {t("hotelResults.estimatedStayTotal")}
+                    </div>
+
+                    <div className="mt-3 space-y-1.5">
+                      <div
+                        className="text-sm font-semibold leading-5 text-slate-800 tabular-nums"
+                        title={nightlyDisplayPrice.title}
+                        aria-label={nightlyDisplayPrice.ariaLabel}
+                      >
+                        {t("hotelResults.pricePerNight").replace(
+                          "{{price}}",
+                          nightlyDisplayPrice.formatted,
+                        )}
+                      </div>
+
+                      {taxesAndFeesText ? (
+                        <div className="text-xs font-medium leading-[18px] text-slate-500">
+                          {taxesAndFeesText}
+                        </div>
+                      ) : null}
+                    </div>
+                    </>
+                  ) : (
+                    <div className="min-w-0 space-y-1">
+                      <p className="text-lg font-bold leading-6 text-slate-950">
+                        {priceUnavailableText}
+                      </p>
+                      <p className="text-xs font-medium leading-5 text-slate-500">
+                        {liveRateUnavailableText}
+                      </p>
+                    </div>
                   )}
                 </div>
-              </div>
-              <div className="min-[380px]:text-right">
-                <Button
-                  variant="accent"
-                  size="sm"
-                  className="w-full whitespace-nowrap rounded-lg border border-indigo-700 bg-indigo-700 px-3 text-sm font-semibold text-white shadow-sm shadow-indigo-700/20 hover:border-indigo-800 hover:bg-indigo-800 min-[380px]:w-auto"
-                  onClick={redirectToHotel}
-                >
-                  {t("hotelResults.viewHotel")}
-                </Button>
+                <div className="mt-3 text-end">
+                  <LinkButton
+                    href={resolvedDetailsHref}
+                    variant="accent"
+                    size="sm"
+                    className="w-full whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] hover:border-[#021C2B] hover:bg-[#021C2B] md:px-3"
+                  >
+                    {t("hotelResults.viewHotel") || "View hotel"}
+                  </LinkButton>
+                </div>
               </div>
             </div>
           </div>

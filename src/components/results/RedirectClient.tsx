@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import { Card } from "@/components/ui/Card";
+import { useLocale } from "@/components/layout/LocaleProvider";
 
 export function RedirectClient() {
   const params = useSearchParams();
-  const [message, setMessage] = useState("Preparing secure external provider redirect...");
+  const { t } = useLocale();
+  const [message, setMessage] = useState(t["redirect.loading"]);
   const id = params.get("id");
   const type = params.get("type") as "flight" | "hotel" | null;
   const missingTarget = !id || !type;
@@ -25,12 +27,12 @@ export function RedirectClient() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        setMessage(data.error || "Partner redirect is unavailable. Please search again.");
+        setMessage(data.error || t["redirect.missingTarget"]);
       }
     }, 1500);
 
     return () => window.clearTimeout(timeout);
-  }, [id, missingTarget, type]);
+  }, [id, missingTarget, t, type]);
 
   return (
     <main className="page-shell flex flex-1 items-center justify-center py-12">
@@ -38,12 +40,12 @@ export function RedirectClient() {
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-teal/10 text-teal">
           <ShieldCheck size={24} />
         </div>
-        <h1 className="mt-4 text-2xl font-bold text-navy">Secure partner redirect</h1>
+        <h1 className="mt-4 text-2xl font-bold text-navy">{t["redirect.title"]}</h1>
         <p className="mt-3 text-muted">
-          You are leaving Kurioticket for an external provider where pricing, availability, fare rules, and purchase steps are confirmed.
+          {t["redirect.description"]}
         </p>
         <p className="mt-4 text-sm font-semibold text-teal-dark">
-          {missingTarget ? "Redirect link is missing. Please search again." : message}
+          {missingTarget ? t["redirect.missingTarget"] : message}
         </p>
       </Card>
     </main>

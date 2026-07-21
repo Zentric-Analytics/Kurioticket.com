@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
 import type { Adapter } from "next-auth/adapters";
@@ -28,6 +29,7 @@ import {
 } from "@/lib/prisma";
 
 import { signinSchema } from "@/lib/validation";
+import { isPasskeyLoginToken, passkeyStrongAuthNote } from "@/lib/passkeys";
 
 import {
   EmailVerificationCooldownError,
@@ -42,7 +44,39 @@ type SessionAugmentedUser = {
   role?: string;
   status?: string;
   emailVerified?: Date | string | null;
+  passkeyStrongAuth?: boolean;
 };
+
+type JwtUpdateSession = {
+  twoFactorVerified?: boolean;
+};
+
+async function isPendingDeletionLoginAllowed(userId: string) {
+  const request = await getPrisma().accountDeletionRequest.findFirst({
+    where: {
+      userId,
+      status: { in: ["PENDING", "READY_FOR_REVIEW"] },
+      cancelledAt: null,
+      completedAt: null,
+      deletionScheduledAt: { gt: new Date() },
+    },
+    select: { id: true },
+  });
+
+  return Boolean(request);
+}
+
+async function isAuthenticatableUserStatus(user: { id: string; status: string }) {
+  if (user.status === "ACTIVE") {
+    return true;
+  }
+
+  if (user.status === "PENDING_DELETION") {
+    return isPendingDeletionLoginAllowed(user.id);
+  }
+
+  return false;
+}
 
 const providers: NextAuthOptions["providers"] = [
   CredentialsProvider({
@@ -63,6 +97,11 @@ const providers: NextAuthOptions["providers"] = [
         label: "Login code",
         type: "text",
       },
+
+      passkeyLoginToken: {
+        label: "Passkey login token",
+        type: "text",
+      },
     },
 
     async authorize(
@@ -77,6 +116,25 @@ const providers: NextAuthOptions["providers"] = [
               ),
             } as Request)
           : undefined;
+
+      const passkeyLoginToken = String(credentials?.passkeyLoginToken || "").trim();
+
+      if (passkeyLoginToken && isPasskeyLoginToken(passkeyLoginToken)) {
+        const challenge = await getPrisma().webAuthnChallenge.findFirst({
+          where: { loginToken: passkeyLoginToken, type: "authentication", consumedAt: { not: null }, expiresAt: { gt: new Date() } },
+          include: { user: true },
+        });
+
+        if (!challenge?.user || !(await isAuthenticatableUserStatus(challenge.user)) || !challenge.user.emailVerified) return null;
+
+        await getPrisma().webAuthnChallenge.update({ where: { id: challenge.id }, data: { expiresAt: new Date() } });
+        logAuthEvent("passkey-login-strong-auth", { userId: challenge.user.id, note: passkeyStrongAuthNote });
+
+        return {
+          id: challenge.user.id, email: challenge.user.email, name: challenge.user.name, image: challenge.user.image,
+          role: challenge.user.role, status: challenge.user.status, emailVerified: challenge.user.emailVerified, passkeyStrongAuth: true,
+        };
+      }
 
       const loginCode = String(
         credentials?.loginCode || ""
@@ -142,8 +200,7 @@ const providers: NextAuthOptions["providers"] = [
 
         if (
           !user ||
-          user.status !==
-            "ACTIVE" ||
+          !(await isAuthenticatableUserStatus(user)) ||
           !user.emailVerified
         ) {
           return null;
@@ -219,7 +276,7 @@ const providers: NextAuthOptions["providers"] = [
       }
 
       if (
-        user.status !== "ACTIVE"
+        !(await isAuthenticatableUserStatus(user))
       ) {
         throw new Error(
           "AccountUnavailable"
@@ -377,10 +434,13 @@ export const authOptions: NextAuthOptions =
 
         if (
           dbUser?.status &&
-          dbUser.status !==
-            "ACTIVE"
+          !(await isAuthenticatableUserStatus(dbUser))
         ) {
           return "/auth/signin?error=AccountUnavailable";
+        }
+
+        if (dbUser?.status === "PENDING_DELETION") {
+          return "/account/pending-deletion";
         }
 
         const isGoogleSignIn =
@@ -474,7 +534,20 @@ export const authOptions: NextAuthOptions =
       async jwt({
         token,
         user,
+        trigger,
+        session,
       }) {
+        if (!token.sessionActivityId) {
+          token.sessionActivityId = randomUUID();
+        }
+
+        if (trigger === "update") {
+          const updateSession = session as JwtUpdateSession | undefined;
+          if (updateSession?.twoFactorVerified === true) {
+            token.twoFactorVerified = true;
+          }
+        }
+
         if (user) {
           const authUser =
             user as typeof user &
@@ -493,18 +566,26 @@ export const authOptions: NextAuthOptions =
             Boolean(
               authUser.emailVerified
             );
+
+          token.twoFactorVerified = true;
         }
 
         if (
-          token.email &&
+          (token.id || token.email) &&
           isDatabaseConfigured()
         ) {
           const dbUser =
             await getPrisma().user.findUnique(
               {
-                where: {
-                  email:
-                    token.email.toLowerCase(),
+                where: token.id
+                  ? { id: String(token.id) }
+                  : { email: String(token.email).toLowerCase() },
+                include: {
+                  securitySettings: {
+                    select: {
+                      twoFactorEnabled: true,
+                    },
+                  },
                 },
               }
             );
@@ -519,10 +600,27 @@ export const authOptions: NextAuthOptions =
             token.status =
               dbUser.status;
 
+            token.email =
+              dbUser.email ||
+              undefined;
+
             token.emailVerified =
               Boolean(
                 dbUser.emailVerified
               );
+
+            token.twoFactorEnabled =
+              Boolean(
+                dbUser.securitySettings?.twoFactorEnabled
+              );
+
+            if (token.twoFactorEnabled && user && !(user as SessionAugmentedUser).passkeyStrongAuth) {
+              token.twoFactorVerified = false;
+            }
+
+            if (!token.twoFactorEnabled) {
+              token.twoFactorVerified = true;
+            }
           }
         }
 
@@ -539,6 +637,11 @@ export const authOptions: NextAuthOptions =
               token.id || ""
             );
 
+          session.user.email =
+            typeof token.email === "string"
+              ? token.email
+              : session.user.email;
+
           session.user.role =
             String(
               token.role ||
@@ -554,6 +657,16 @@ export const authOptions: NextAuthOptions =
           session.user.emailVerified =
             Boolean(
               token.emailVerified
+            );
+
+          session.user.twoFactorEnabled =
+            Boolean(
+              token.twoFactorEnabled
+            );
+
+          session.user.twoFactorVerified =
+            Boolean(
+              token.twoFactorVerified
             );
         }
 

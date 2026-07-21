@@ -1,5 +1,6 @@
 import { getOptionalPrisma, getPrisma } from "@/lib/prisma";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
+import { flightPriceAlertDuplicateKey } from "@/lib/price-alerts/flightPriceAlerts";
 
 export type AccountPriceAlert = {
   id: string;
@@ -11,7 +12,20 @@ export type AccountPriceAlert = {
   status: "ACTIVE" | "PAUSED" | "TRIGGERED" | "EXPIRED" | "DELETED";
   createdAt: string;
   updatedAt: string;
+  lastSeenPrice: string | null;
+  lastCheckedAt: string | null;
+  query: Record<string, unknown>;
 };
+
+export class DuplicatePriceAlertError extends Error {
+  alert: AccountPriceAlert;
+
+  constructor(alert: AccountPriceAlert) {
+    super("You already have this price alert.");
+    this.name = "DuplicatePriceAlertError";
+    this.alert = alert;
+  }
+}
 
 export class PriceAlertUnavailableError extends Error {
   constructor(message = "Price alerts are unavailable right now.") {
@@ -30,6 +44,9 @@ function serializePriceAlert(alert: {
   status: "ACTIVE" | "PAUSED" | "TRIGGERED" | "EXPIRED" | "DELETED";
   createdAt: Date;
   updatedAt: Date;
+  lastSeenPrice?: { toString: () => string } | number | string | null;
+  lastCheckedAt?: Date | null;
+  query?: unknown;
 }): AccountPriceAlert {
   return {
     id: alert.id,
@@ -41,6 +58,9 @@ function serializePriceAlert(alert: {
     status: alert.status,
     createdAt: alert.createdAt.toISOString(),
     updatedAt: alert.updatedAt.toISOString(),
+    lastSeenPrice: alert.lastSeenPrice == null ? null : alert.lastSeenPrice.toString(),
+    lastCheckedAt: alert.lastCheckedAt?.toISOString() ?? null,
+    query: typeof alert.query === "object" && alert.query !== null && !Array.isArray(alert.query) ? alert.query as Record<string, unknown> : {},
   };
 }
 
@@ -72,6 +92,9 @@ export async function listUserPriceAlerts(userId: string): Promise<AccountPriceA
         status: true,
         createdAt: true,
         updatedAt: true,
+        lastSeenPrice: true,
+        lastCheckedAt: true,
+        query: true,
       },
     });
 
@@ -93,6 +116,34 @@ export async function createPriceAlert(input: {
 }) {
   try {
     const db = getPrisma();
+    if (input.type === "FLIGHT") {
+      const requestedKey = flightPriceAlertDuplicateKey({
+        origin: input.origin ?? null,
+        destination: input.destination,
+        targetPrice: input.targetPrice ?? null,
+        currency: input.currency,
+        query: input.query,
+      });
+
+      if (requestedKey) {
+        const existingAlerts = await db.priceAlert.findMany({
+          where: {
+            userId: input.userId,
+            type: "FLIGHT",
+            status: { in: ["ACTIVE", "PAUSED"] },
+            origin: input.origin,
+            destination: input.destination,
+            currency: input.currency,
+          },
+          select: {
+            id: true, type: true, origin: true, destination: true, targetPrice: true, currency: true, status: true, query: true, createdAt: true, updatedAt: true,
+          },
+        });
+        const duplicate = existingAlerts.find((alert) => flightPriceAlertDuplicateKey(alert) === requestedKey);
+        if (duplicate) throw new DuplicatePriceAlertError(serializePriceAlert(duplicate));
+      }
+    }
+
     const alert = await db.priceAlert.create({
       data: {
         userId: input.userId,
@@ -114,6 +165,9 @@ export async function createPriceAlert(input: {
         status: true,
         createdAt: true,
         updatedAt: true,
+        lastSeenPrice: true,
+        lastCheckedAt: true,
+        query: true,
       },
     });
 
@@ -126,6 +180,7 @@ export async function createPriceAlert(input: {
 
     return serializePriceAlert(alert);
   } catch (error) {
+    if (error instanceof DuplicatePriceAlertError) throw error;
     console.error("[price-alerts:create-failed]", error);
     throw new PriceAlertUnavailableError("Unable to create price alert.");
   }

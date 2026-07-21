@@ -7,6 +7,7 @@ import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
+import { MessageBanner } from "@/components/ui/MessageBanner";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { signinSchema } from "@/lib/validation";
 
@@ -54,6 +55,8 @@ export function SigninForm({
   );
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+  const conditionalStartedRef = useRef(false);
+  const passkeyAbortControllerRef = useRef<AbortController | null>(null);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [isPending, startTransition] = useTransition();
   const credentialsInFlightRef = useRef(false);
@@ -228,6 +231,49 @@ export function SigninForm({
     setResending(false);
   }
 
+
+  async function startSilentConditionalPasskeySignIn() {
+    if (!window.PublicKeyCredential || !navigator.credentials) return;
+
+    passkeyAbortControllerRef.current?.abort();
+    const abortController = new AbortController();
+    passkeyAbortControllerRef.current = abortController;
+
+    try {
+      const optionsResponse = await fetch("/api/auth/passkey/options", { method: "POST", credentials: "same-origin", signal: abortController.signal });
+      const optionsData = await optionsResponse.json();
+      if (!optionsResponse.ok) return;
+
+      const publicKey = decodePublicKeyOptions(optionsData.options);
+      const credential = await navigator.credentials.get({ publicKey, mediation: "conditional" }) as PublicKeyCredential | null;
+      if (!credential) return;
+
+      const verifyResponse = await fetch("/api/auth/passkey/verify", { method: "POST", credentials: "same-origin", signal: abortController.signal, headers: { "Content-Type": "application/json" }, body: JSON.stringify(serializeCredential(credential)) });
+      const verifyData = await verifyResponse.json().catch(() => ({}));
+      if (!verifyResponse.ok || !verifyData.loginToken) return;
+
+      const result = await signIn("credentials", { redirect: false, passkeyLoginToken: verifyData.loginToken, callbackUrl });
+      if (result?.ok) window.location.href = verifyData.redirectTo || result.url || callbackUrl;
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+    } finally {
+      if (passkeyAbortControllerRef.current === abortController) passkeyAbortControllerRef.current = null;
+    }
+  }
+
+  async function startConditionalPasskeySignIn() {
+    if (conditionalStartedRef.current || step !== "credentials") return;
+    if (!window.PublicKeyCredential || !navigator.credentials) return;
+    const supported = await PublicKeyCredential.isConditionalMediationAvailable?.().catch(() => false);
+    if (!supported) return;
+    conditionalStartedRef.current = true;
+    void startSilentConditionalPasskeySignIn();
+  }
+
+  useEffect(() => () => {
+    passkeyAbortControllerRef.current?.abort();
+  }, []);
+
   async function requestLoginCode(credentials: Credentials) {
     const response = await fetch("/api/auth/request-login-code", {
       method: "POST",
@@ -274,9 +320,10 @@ export function SigninForm({
             <Input
               name="email"
               type="email"
-              autoComplete="email"
+              autoComplete="username webauthn"
               required
               disabled={busy}
+              onFocus={() => void startConditionalPasskeySignIn()}
             />
           </Field>
 
@@ -291,7 +338,7 @@ export function SigninForm({
           </Field>
 
           <Link
-            className="cursor-pointer text-sm font-semibold text-teal-dark transition-colors hover:text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
+            className="cursor-pointer text-sm font-semibold text-blue transition-colors hover:text-navy hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/30 focus-visible:ring-offset-2"
             href="/auth/forgot-password"
           >
             {t.loginForgotPassword}
@@ -310,12 +357,12 @@ export function SigninForm({
         </form>
       ) : (
         <form action={submitCode} className="mt-5 grid gap-4">
-          <div className="rounded-md bg-teal/10 px-3 py-2 text-sm text-teal-dark">
+          <div className="rounded-xl border border-success-border bg-success-surface px-3.5 py-3 text-sm text-success-text">
             <p className="font-semibold">{t.loginCodeSent}</p>
-            <p className="mt-1 text-teal-dark/80">
+            <p className="mt-1 text-success-text/80">
               {formatTranslation(t, {
                 key: "loginCodeInstructions",
-                params: { email: emailForCode },
+                params: { email: emailForCode, minutes: 10 },
               })}
             </p>
           </div>
@@ -351,7 +398,7 @@ export function SigninForm({
           <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
             <button
               type="button"
-              className="cursor-pointer font-semibold text-teal-dark transition-colors hover:text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:text-muted disabled:no-underline"
+              className="cursor-pointer font-semibold text-blue transition-colors hover:text-navy hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/30 disabled:cursor-not-allowed disabled:text-muted disabled:no-underline"
               onClick={resendCode}
               disabled={busy || resending || cooldownSeconds > 0}
             >
@@ -367,7 +414,7 @@ export function SigninForm({
 
             <button
               type="button"
-              className="cursor-pointer font-semibold text-teal-dark transition-colors hover:text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:text-muted disabled:no-underline"
+              className="cursor-pointer font-semibold text-blue transition-colors hover:text-navy hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/30 disabled:cursor-not-allowed disabled:text-muted disabled:no-underline"
               onClick={startOver}
               disabled={busy || resending}
             >
@@ -377,26 +424,35 @@ export function SigninForm({
         </form>
       )}
 
-      {googleEnabled && step === "credentials" ? (
-        <Button
-          variant="secondary"
-          className="mt-3 w-full hover:border-slate-300 hover:bg-slate-50 focus-visible:ring-violet-500"
-          onClick={() =>
-            signIn("google", {
-              callbackUrl: callbackUrl || "/",
-              prompt: "select_account",
-            })
-          }
-          disabled={busy}
-        >
-          {t.loginGoogle}
-        </Button>
+      {step === "credentials" && googleEnabled ? (
+        <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
+          <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+            <span className="h-px flex-1 bg-slate-100" aria-hidden="true" />
+            <span>{t.loginDivider}</span>
+            <span className="h-px flex-1 bg-slate-100" aria-hidden="true" />
+          </div>
+
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full focus-visible:ring-blue/30"
+            onClick={() =>
+              signIn("google", {
+                callbackUrl: callbackUrl || "/",
+                prompt: "select_account",
+              })
+            }
+            disabled={busy}
+          >
+            {t.loginGoogle}
+          </Button>
+        </div>
       ) : null}
 
       <p className="mt-4 text-sm text-muted">
         {t.loginSignupPrompt}{" "}
         <Link
-          className="cursor-pointer font-semibold text-teal-dark transition-colors hover:text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
+          className="cursor-pointer font-semibold text-blue transition-colors hover:text-navy hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/30 focus-visible:ring-offset-2"
           href="/auth/signup"
         >
           {t.loginCreateAccount}
@@ -410,7 +466,7 @@ function formatTranslation(
   translations: Record<string, string>,
   message: MessageState,
 ) {
-  const template = translations[message.key] ?? message.key;
+  const template = translations[message.key] ?? translations[invalidLoginKey] ?? "";
 
   if (!message.params) {
     return template;
@@ -437,20 +493,17 @@ function getLoginErrorKey(error: unknown) {
 
 function StatusMessage({ children }: { children: string }) {
   return (
-    <p
-      className="rounded-md bg-teal/10 px-3 py-2 text-sm font-semibold text-teal-dark"
-      aria-live="polite"
-    >
+    <MessageBanner tone="success" aria-live="polite">
       {children}
-    </p>
+    </MessageBanner>
   );
 }
 
 function ErrorMessage({ children }: { children: string }) {
   return (
-    <p className="text-sm text-danger" aria-live="polite">
+    <MessageBanner tone="error" aria-live="polite">
       {children}
-    </p>
+    </MessageBanner>
   );
 }
 
@@ -471,4 +524,23 @@ function parseCooldownSeconds(data: unknown, fallback: number) {
   }
 
   return Math.ceil(cooldownSeconds);
+}
+
+function toBase64url(buffer: ArrayBuffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+function fromBase64url(value: string) {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+  return Uint8Array.from(atob(padded), (char) => char.charCodeAt(0)).buffer;
+}
+function decodePublicKeyOptions(options: PublicKeyCredentialRequestOptions & { challenge: string }) {
+  return { ...options, challenge: fromBase64url(options.challenge), allowCredentials: options.allowCredentials?.map((credential) => ({ ...credential, id: fromBase64url(String(credential.id)) })) };
+}
+function serializeCredential(credential: PublicKeyCredential) {
+  const response = credential.response as AuthenticatorAssertionResponse;
+  return { id: credential.id, rawId: toBase64url(credential.rawId), type: credential.type, response: { authenticatorData: toBase64url(response.authenticatorData), clientDataJSON: toBase64url(response.clientDataJSON), signature: toBase64url(response.signature), userHandle: response.userHandle ? toBase64url(response.userHandle) : null } };
 }

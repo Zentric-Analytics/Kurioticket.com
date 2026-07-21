@@ -1,16 +1,24 @@
 import { nanoid } from "nanoid";
 import type { HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
-import { normalizeHotelImageUrl } from "@/services/travel/hotelImages";
+import {
+  normalizeHotelClassificationStars,
+  normalizeHotelReviewCount,
+  normalizeHotelReviewScale,
+  normalizeHotelReviewScore,
+  normalizeHotelReviewSource,
+} from "@/lib/hotels/hotelRatingSemantics";
+import { normalizeHotelImageUrl, normalizeHotelImageUrls } from "@/services/travel/hotelImages";
 import { scoreHotel } from "@/services/travel/scoring";
 
 export function normalizeHotelResult(
-  provider: "Amadeus Hotels" | "Hotel Partner" | "Hotelbeds" | "Development Fallback",
+  provider: "Amadeus Hotels" | "Hotel Partner" | "Hotelbeds" | "Development Fallback" | "Demo Hotel Catalogue",
   raw: unknown,
   search: HotelSearchParams,
 ): NormalizedHotelResult | null {
   if (provider === "Amadeus Hotels") return normalizeAmadeusHotel(raw, search);
   if (provider === "Hotel Partner") return normalizePartnerHotel(raw, search);
   if (provider === "Hotelbeds") return normalizeHotelbedsHotel(raw, search);
+  if (provider === "Demo Hotel Catalogue") return normalizeDemoHotel(raw, search);
   return normalizeFallbackHotel(raw, search);
 }
 
@@ -40,6 +48,7 @@ function normalizeAmadeusHotel(raw: unknown, search: HotelSearchParams): Normali
     name: offer.hotel.name,
     imageUrl: offer.hotel.media?.[0]?.uri,
     rating: Number(offer.hotel.rating || 4),
+    classificationStars: Number(offer.hotel.rating),
     location: offer.hotel.cityCode || search.destination,
     pricePerNight: nightlyPrice(Number(price.total), search),
     totalPrice: Number(price.total),
@@ -49,6 +58,7 @@ function normalizeAmadeusHotel(raw: unknown, search: HotelSearchParams): Normali
     cancellationInfo: offer.offers?.[0]?.policies?.cancellations ? "Cancellation policy available" : "Cancellation rules reviewed on external provider site",
     bookingUrl: `https://www.google.com/travel/hotels/${encodeURIComponent(search.destination)}`,
     rawProviderReference: { provider: "amadeus-hotels", id: offer.hotel.hotelId },
+    dataSource: "live",
   });
 }
 
@@ -79,6 +89,7 @@ function normalizePartnerHotel(raw: unknown, search: HotelSearchParams): Normali
     name,
     imageUrl: item.image,
     rating: item.rating || item.stars || 4,
+    classificationStars: item.stars,
     location: item.location || search.destination,
     pricePerNight: nightly || nightlyPrice(item.total || 0, search),
     totalPrice: item.total || (nightly || 0) * nights(search),
@@ -88,6 +99,7 @@ function normalizePartnerHotel(raw: unknown, search: HotelSearchParams): Normali
     cancellationInfo: "Policy shown by external provider",
     bookingUrl: item.url || `https://www.google.com/travel/hotels/${encodeURIComponent(search.destination)}`,
     rawProviderReference: { provider: "hotel-partner", id: item.id },
+    dataSource: "live",
   });
 }
 
@@ -121,6 +133,7 @@ function normalizeHotelbedsHotel(raw: unknown, search: HotelSearchParams): Norma
     name,
     imageUrl: item.imageUrl,
     rating: categoryToRating(item.categoryName),
+    classificationStars: categoryToRating(item.categoryName),
     location: item.destinationName || search.destination,
     pricePerNight: nightlyPrice(total, search),
     totalPrice: total,
@@ -129,6 +142,7 @@ function normalizeHotelbedsHotel(raw: unknown, search: HotelSearchParams): Norma
     roomType: room?.name || "Room details unavailable",
     cancellationInfo: rate?.rateComments || "Cancellation details provided during booking",
     bookingUrl: `https://www.google.com/travel/hotels/${encodeURIComponent(search.destination)}`,
+    dataSource: "live",
     rawProviderReference: {
       provider: "hotelbeds",
       id: item.code,
@@ -145,6 +159,37 @@ function categoryToRating(categoryName?: string) {
   return match ? Number(match[1]) : 0;
 }
 
+function normalizeDemoHotel(raw: unknown, search: HotelSearchParams): NormalizedHotelResult {
+  const item = raw as Partial<NormalizedHotelResult>;
+  return buildHotel({
+    provider: "Demo Hotel Catalogue",
+    id: item.id,
+    providerId: item.id,
+    name: item.name || "Demo hotel",
+    imageUrl: item.imageUrl,
+    imageUrls: item.imageUrls,
+    rating: item.rating || 0,
+    classificationStars: item.classificationStars,
+    reviewScore: item.reviewScore,
+    reviewScale: item.reviewScale,
+    reviewCount: item.reviewCount,
+    reviewSource: item.reviewSource,
+    neighbourhood: item.neighbourhood,
+    location: item.location || search.destination,
+    pricePerNight: item.pricePerNight || 0,
+    totalPrice: item.totalPrice || 0,
+    currency: item.currency || "USD",
+    amenities: item.amenities || [],
+    roomType: item.roomType || "Standard room",
+    cancellationInfo: item.cancellationInfo || "Cancellation details unavailable",
+    taxesAndFeesIncluded: item.taxesAndFeesIncluded,
+    similarHotelIds: item.similarHotelIds,
+    dataSource: item.dataSource,
+    bookingUrl: item.bookingUrl || `https://www.google.com/travel/hotels/${encodeURIComponent(search.destination)}`,
+    rawProviderReference: { provider: "demo-hotel-catalogue", id: item.id },
+  });
+}
+
 function normalizeFallbackHotel(raw: unknown, search: HotelSearchParams): NormalizedHotelResult {
   const item = raw as Partial<NormalizedHotelResult>;
   return buildHotel({
@@ -153,6 +198,7 @@ function normalizeFallbackHotel(raw: unknown, search: HotelSearchParams): Normal
     name: item.name || "Harborline City Hotel",
     imageUrl: item.imageUrl,
     rating: item.rating || 4.4,
+    classificationStars: 4,
     location: item.location || search.destination,
     pricePerNight: item.pricePerNight || 139,
     totalPrice: item.totalPrice || 139 * nights(search),
@@ -166,11 +212,13 @@ function normalizeFallbackHotel(raw: unknown, search: HotelSearchParams): Normal
 }
 
 function buildHotel(input: {
+  id?: string;
   provider: NormalizedHotelResult["provider"];
   providerId?: string;
   name: string;
   imageUrl?: string;
   rating: number;
+  classificationStars?: unknown;
   location: string;
   pricePerNight: number;
   totalPrice: number;
@@ -179,6 +227,15 @@ function buildHotel(input: {
   roomType: string;
   cancellationInfo: string;
   bookingUrl: string;
+  imageUrls?: unknown;
+  reviewScore?: unknown;
+  reviewScale?: unknown;
+  reviewCount?: unknown;
+  reviewSource?: unknown;
+  neighbourhood?: unknown;
+  taxesAndFeesIncluded?: unknown;
+  similarHotelIds?: unknown;
+  dataSource?: unknown;
   rawProviderReference?: unknown;
 }): NormalizedHotelResult {
   const scores = scoreHotel({
@@ -188,8 +245,10 @@ function buildHotel(input: {
     arrivalFriendly: input.amenities.some((amenity) => /late|airport|transit|shuttle/i.test(amenity)),
   });
 
+  const normalizedImageUrls = normalizeHotelImageUrls(input.imageUrls);
+
   return {
-    id: `${input.provider.toLowerCase().replace(/\s+/g, "-")}-${input.providerId || nanoid(10)}`,
+    id: input.id || `${input.provider.toLowerCase().replace(/\s+/g, "-")}-${input.providerId || nanoid(10)}`,
     provider: input.provider,
     name: input.name,
     imageUrl: normalizeHotelImageUrl(input.imageUrl, {
@@ -198,7 +257,14 @@ function buildHotel(input: {
       hotelName: input.name,
       providerId: input.providerId,
     }),
+    imageUrls: normalizedImageUrls.length ? normalizedImageUrls : undefined,
     rating: input.rating,
+    classificationStars: normalizeHotelClassificationStars(input.classificationStars),
+    reviewScore: normalizeHotelReviewScore(input.reviewScore, input.reviewScale),
+    reviewScale: normalizeHotelReviewScale(input.reviewScale),
+    reviewCount: normalizeHotelReviewCount(input.reviewCount),
+    reviewSource: normalizeHotelReviewSource(input.reviewSource),
+    neighbourhood: normalizeOptionalString(input.neighbourhood),
     location: input.location,
     distanceFromCenter: "Central or transit-friendly area",
     pricePerNight: Number(input.pricePerNight.toFixed(2)),
@@ -207,6 +273,9 @@ function buildHotel(input: {
     amenities: input.amenities,
     roomType: input.roomType,
     cancellationInfo: input.cancellationInfo,
+    taxesAndFeesIncluded: typeof input.taxesAndFeesIncluded === "boolean" ? input.taxesAndFeesIncluded : undefined,
+    similarHotelIds: normalizeSimilarHotelIds(input.similarHotelIds),
+    dataSource: input.dataSource === "demo" || input.dataSource === "live" ? input.dataSource : undefined,
     bookingUrl: input.bookingUrl,
     partnerRedirectUrl: input.bookingUrl,
     ...scores,
@@ -232,4 +301,24 @@ function nightlyPrice(total: number, search: HotelSearchParams) {
 function nights(search: HotelSearchParams) {
   const ms = new Date(search.checkOut).getTime() - new Date(search.checkIn).getTime();
   return Math.max(Math.round(ms / 86400000), 1);
+}
+
+function normalizeOptionalString(value: unknown) {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed || undefined;
+}
+
+function normalizeSimilarHotelIds(value: unknown) {
+  if (!Array.isArray(value)) return undefined;
+  const seen = new Set<string>();
+  const ids: string[] = [];
+  for (const item of value) {
+    if (typeof item !== "string") continue;
+    const trimmed = item.trim();
+    if (!trimmed || seen.has(trimmed)) continue;
+    seen.add(trimmed);
+    ids.push(trimmed);
+  }
+  return ids.length ? ids : undefined;
 }

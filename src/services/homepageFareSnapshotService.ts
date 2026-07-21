@@ -13,6 +13,7 @@ import {
 import { popularDestinationsByMarket } from "@/data/marketHomeContent";
 import { HOMEPAGE_REFRESH_MARKET_CODES } from "@/lib/market/resolveMarket";
 import { getOptionalPrisma } from "@/lib/prisma";
+import { PUBLIC_HOMEPAGE_FARE_TTL_MS } from "@/lib/homepageFareDisplay";
 import type {
   FlightSearchParams,
   NormalizedFlightResult,
@@ -2427,17 +2428,71 @@ function isFreshHomepageFareSnapshotRecord({
   currency: string;
 }) {
   const price = readFinitePrice(snapshot?.price);
+  const searchedAtMs = snapshot?.searchedAt.getTime();
+  const nowMs = now.getTime();
 
   return Boolean(
     snapshot &&
       snapshot.providerBacked === true &&
       snapshot.status === HomepageFareSnapshotStatus.ACTIVE &&
-      snapshot.expiresAt.getTime() > now.getTime() &&
+      searchedAtMs !== undefined &&
+      searchedAtMs <= nowMs &&
+      nowMs - searchedAtMs <= PUBLIC_HOMEPAGE_FARE_TTL_MS &&
+      snapshot.expiresAt.getTime() > nowMs &&
       price &&
       normalizeHomepageFareCurrency(snapshot.currency) === currency,
   );
 }
 
+function hasHomepageFareDateFallbackPayload(payload: unknown) {
+  return Boolean(
+    payload &&
+      typeof payload === "object" &&
+      !Array.isArray(payload) &&
+      (payload as { dateFallbackUsed?: unknown }).dateFallbackUsed === true,
+  );
+}
+
+function isExactProviderResultForHomepageFareSnapshot({
+  result,
+  origin,
+  destination,
+  currency,
+}: {
+  result: NormalizedFlightResult;
+  origin: string;
+  destination: string;
+  currency: string;
+}) {
+  const expectedOrigin = normalizeHomepageFareCode(origin);
+  const expectedDestination = normalizeHomepageFareCode(destination);
+  const resultOrigin = normalizeHomepageFareCode(result.originAirport);
+  const resultDestination = normalizeHomepageFareCode(result.destinationAirport);
+  const resultCurrency = normalizeHomepageFareCurrency(result.currency);
+
+  if (!expectedOrigin || !expectedDestination || resultCurrency !== currency) {
+    return false;
+  }
+
+  if (!resultOrigin || !resultDestination) return false;
+  if (resultOrigin !== expectedOrigin || resultDestination !== expectedDestination) {
+    return false;
+  }
+
+  if (Array.isArray(result.legs) && result.legs.length > 0) {
+    const firstLeg = result.legs[0];
+    const firstLegOrigin = normalizeHomepageFareCode(firstLeg?.originAirport);
+    const lastLeg = result.legs[result.legs.length - 1];
+    const lastLegDestination = normalizeHomepageFareCode(lastLeg?.destinationAirport);
+
+    if (!firstLegOrigin || !lastLegDestination) return false;
+    if (firstLegOrigin !== expectedOrigin || lastLegDestination !== expectedDestination) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 function isLastKnownGoodHomepageFareSnapshotRecord({
   snapshot,
@@ -2546,6 +2601,7 @@ export async function readHomepageFareSnapshotResponseEntries({
           searchedAt: Date;
           expiresAt: Date;
           status: HomepageFareSnapshotStatus;
+          payload?: unknown;
         }
       | undefined;
 
@@ -2617,12 +2673,12 @@ export async function readHomepageDiscoveryFareCards({
   });
   const requestedFreshCount = pooledResult.cards.filter(
     (card) =>
-      (card.priceState === "fresh" || card.priceState === "last_known_good") &&
+      card.priceState === "fresh" &&
       requestedCandidates.some((candidate) => candidate.id === card.item.id),
   ).length;
   const regionalFreshCount = pooledResult.cards.filter(
     (card) =>
-      (card.priceState === "fresh" || card.priceState === "last_known_good") &&
+      card.priceState === "fresh" &&
       regionalCandidates.some((candidate) => candidate.id === card.item.id),
   ).length;
   const fallbackReason: HomepageDiscoveryFareFallbackReason =
@@ -2715,10 +2771,9 @@ async function buildHomepageDiscoveryFareCardsForCandidates({
           searchedAt: fare.searchedAt,
           expiresAt: fare.expiresAt,
           search: fare.search,
-          priceState: fare.priceState,
-          cachedProviderBacked: fare.cachedProviderBacked,
+          priceState: "fresh",
         },
-        priceState: fare.priceState === "last_known_good" ? "last_known_good" : "fresh",
+        priceState: "fresh",
       });
       continue;
     }
@@ -2734,7 +2789,7 @@ async function buildHomepageDiscoveryFareCardsForCandidates({
   return {
     cards,
     candidateCount: candidates.length,
-    freshCount: cards.filter((card) => card.priceState === "fresh" || card.priceState === "last_known_good").length,
+    freshCount: cards.filter((card) => card.priceState === "fresh").length,
   };
 }
 
@@ -2802,9 +2857,7 @@ function buildHomepageDiscoveryFareCardsResponse({
   currencyRequested: string;
   snapshotCurrency: string;
 }): HomepageDiscoveryFareCardsResponse {
-  const freshCount = cards.filter(
-    (card) => card.priceState === "fresh" || card.priceState === "last_known_good",
-  ).length;
+  const freshCount = cards.filter((card) => card.priceState === "fresh").length;
   const neutralCount = cards.length - freshCount;
 
   const fallbackLevel = getHomepageDiscoveryFallbackLevel(fallbackScope);
@@ -3195,12 +3248,33 @@ export async function upsertActiveHomepageFareSnapshot({
 }) {
   const price = readFinitePrice(result.price);
   const normalizedCurrency =
-    normalizeHomepageFareCurrency(result.currency) ?? currency;
+    normalizeHomepageFareCurrency(result.currency) ??
+    normalizeHomepageFareCurrency(currency) ??
+    DEFAULT_CURRENCY;
 
   if (!price) {
     throw new Error(
       "Active homepage fare snapshots require a finite provider price.",
     );
+  }
+
+  if (
+    !isExactProviderResultForHomepageFareSnapshot({
+      result,
+      origin,
+      destination,
+      currency: normalizedCurrency,
+    })
+  ) {
+    return upsertUnavailableHomepageFareSnapshot({
+      origin,
+      destination,
+      departureDate,
+      currency: normalizedCurrency,
+      provider,
+      searchedAt,
+      reason: "provider_invalid_response",
+    });
   }
 
   return upsertHomepageFareSnapshot({
@@ -3563,12 +3637,7 @@ function formatHomepageFareSnapshotStatusRoute({
   const price = readFinitePrice(snapshot.price);
   const expiresAtMs = snapshot.expiresAt.getTime();
   const isExpired = expiresAtMs <= now.getTime();
-  const isFresh =
-    snapshot.providerBacked === true &&
-    snapshot.status === HomepageFareSnapshotStatus.ACTIVE &&
-    !isExpired &&
-    Boolean(price) &&
-    normalizeHomepageFareCurrency(snapshot.currency) === currency;
+  const isFresh = isFreshHomepageFareSnapshotRecord({ snapshot, now, currency });
   const isLastKnownGood = isLastKnownGoodHomepageFareSnapshotRecord({
     snapshot,
     now,
@@ -3755,6 +3824,7 @@ function formatHomepageFareSnapshotResponseEntry({
     searchedAt: Date;
     expiresAt: Date;
     status: HomepageFareSnapshotStatus;
+    payload?: unknown;
   };
   now: Date;
   currency: string;
@@ -3784,28 +3854,29 @@ function formatHomepageFareSnapshotResponseEntry({
 
   const price = readFinitePrice(snapshot.price);
   const expiresAtMs = snapshot.expiresAt.getTime();
+  const searchedAtMs = snapshot.searchedAt.getTime();
+  const nowMs = now.getTime();
   const normalizedSnapshotCurrency = normalizeHomepageFareCurrency(snapshot.currency);
+  const snapshotDepartureDate = formatDateKey(snapshot.departureDate);
   const providerBacked =
     snapshot.providerBacked === true &&
     snapshot.status === HomepageFareSnapshotStatus.ACTIVE &&
     Boolean(price) &&
     normalizedSnapshotCurrency === currency;
-  const isFresh = providerBacked && expiresAtMs > now.getTime();
-  const isLastKnownGood =
+  const isFreshExactPublicFare =
     providerBacked &&
-    !isFresh &&
-    isLastKnownGoodHomepageFareSnapshotRecord({
-      snapshot,
-      now,
-      currency,
-    });
+    searchedAtMs <= nowMs &&
+    nowMs - searchedAtMs <= PUBLIC_HOMEPAGE_FARE_TTL_MS &&
+    expiresAtMs > now.getTime() &&
+    snapshotDepartureDate === departureDate &&
+    !hasHomepageFareDateFallbackPayload(snapshot.payload);
 
-  if ((!isFresh && !isLastKnownGood) || !price) return unavailableEntry;
+  if (!isFreshExactPublicFare || !price) return unavailableEntry;
 
   const search = buildHomepageFareSearch({
     origin: route.origin,
     destination: route.destination,
-    departureDate: formatDateKey(snapshot.departureDate) || departureDate,
+    departureDate,
     currency: snapshot.currency,
   });
 
@@ -3819,8 +3890,7 @@ function formatHomepageFareSnapshotResponseEntry({
     searchedAt: snapshot.searchedAt.toISOString(),
     expiresAt: snapshot.expiresAt.toISOString(),
     search,
-    priceState: isLastKnownGood ? "last_known_good" : "fresh",
-    ...(isLastKnownGood ? { cachedProviderBacked: true } : {}),
+    priceState: "fresh",
   };
 }
 
@@ -3890,6 +3960,56 @@ function parseDateKey(value: string | Date) {
   return new Date(`${value.slice(0, 10)}T00:00:00.000Z`);
 }
 
+export type SafeHomepageFareRefreshErrorResponse = {
+  error: "Homepage fare refresh failed.";
+  errorCode: "homepage_fare_refresh_failed";
+  safeReason: string;
+  counts?: Partial<HomepageFareRefreshCounts>;
+};
+
+export function buildSafeHomepageFareRefreshErrorResponse(
+  error?: unknown,
+  counts?: Partial<HomepageFareRefreshCounts>,
+): SafeHomepageFareRefreshErrorResponse {
+  return {
+    error: "Homepage fare refresh failed.",
+    errorCode: "homepage_fare_refresh_failed",
+    safeReason: getSafeHomepageFareRefreshFailureReason(error),
+    ...(counts ? { counts } : {}),
+  };
+}
+
+function getSafeHomepageFareRefreshFailureReason(error: unknown) {
+  if (isPrismaInitializationLikeError(error)) {
+    return "Database is unavailable or misconfigured. Check DATABASE_URL and database connectivity.";
+  }
+
+  if (isPrismaKnownRequestLikeError(error)) {
+    return "Database rejected the homepage fare refresh operation.";
+  }
+
+  return "The refresh service failed before completing. Check server logs for the internal incident details.";
+}
+
+function isPrismaInitializationLikeError(error: unknown) {
+  return Boolean(
+    error &&
+      typeof error === "object" &&
+      "name" in error &&
+      typeof (error as { name?: unknown }).name === "string" &&
+      (error as { name: string }).name.includes("PrismaClientInitializationError"),
+  );
+}
+
+function isPrismaKnownRequestLikeError(error: unknown) {
+  return Boolean(
+    error &&
+      typeof error === "object" &&
+      "name" in error &&
+      typeof (error as { name?: unknown }).name === "string" &&
+      (error as { name: string }).name.includes("PrismaClientKnownRequestError"),
+  );
+}
 
 export const __homepageFareCoverageTest = {
   getRefreshRoutes,
@@ -3904,5 +4024,7 @@ export const __homepageFareCoverageTest = {
   getHomepageFareRefreshPriorityScore,
   prioritizeHomepageFareRefreshRoutes,
   formatHomepageFareSnapshotResponseEntry,
+  hasHomepageFareDateFallbackPayload,
+  isExactProviderResultForHomepageFareSnapshot,
   updateHomepageFareUnderfillExecutionMetadata,
 };

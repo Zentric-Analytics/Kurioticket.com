@@ -42,25 +42,36 @@ export function buildHomepageRouteCardFlightHref({
   market,
   now = new Date(),
 }: HomepageRouteCardHrefOptions): ComponentProps<typeof Link>["href"] | null {
-  const origin = normalizeAirportOrCityCode(fareSearch?.origin) ?? normalizeAirportOrCityCode(route?.originCode);
-  const destination = normalizeAirportOrCityCode(fareSearch?.destination) ?? normalizeAirportOrCityCode(route?.destinationCode);
+  const routeOrigin = normalizeAirportOrCityCode(route?.originCode);
+  const routeDestination = normalizeAirportOrCityCode(route?.destinationCode);
+  const fareOrigin = normalizeAirportOrCityCode(fareSearch?.origin);
+  const fareDestination = normalizeAirportOrCityCode(fareSearch?.destination);
+  const fareSearchMatchesRoute = Boolean(
+    routeOrigin &&
+      routeDestination &&
+      fareOrigin === routeOrigin &&
+      fareDestination === routeDestination,
+  );
+  const trustedFareSearch = fareSearchMatchesRoute ? fareSearch : undefined;
+  const origin = routeOrigin ?? fareOrigin;
+  const destination = routeDestination ?? fareDestination;
 
   if (!origin || !destination || origin === destination) return null;
 
-  const departureDate = isValidDateKey(fareSearch?.departureDate)
-    ? fareSearch.departureDate
+  const departureDate = isValidDateKey(trustedFareSearch?.departureDate)
+    ? trustedFareSearch.departureDate
     : getDefaultHomepageRouteCardDepartureDate(now);
-  const tripType = fareSearch?.tripType === "round-trip" ? "round-trip" : DEFAULT_TRIP_TYPE;
-  const adults = readPositiveInteger(fareSearch?.adults) ?? DEFAULT_TRAVELERS;
-  const children = readNonNegativeInteger(fareSearch?.children) ?? 0;
-  const infants = readNonNegativeInteger(fareSearch?.infants) ?? 0;
+  const tripType = trustedFareSearch?.tripType === "round-trip" ? "round-trip" : DEFAULT_TRIP_TYPE;
+  const adults = readPositiveInteger(trustedFareSearch?.adults) ?? DEFAULT_TRAVELERS;
+  const children = readNonNegativeInteger(trustedFareSearch?.children) ?? 0;
+  const infants = readNonNegativeInteger(trustedFareSearch?.infants) ?? 0;
   const travelers = Math.max(
     DEFAULT_TRAVELERS,
-    readPositiveInteger(fareSearch?.travelers) ?? adults + children + infants,
+    readPositiveInteger(trustedFareSearch?.travelers) ?? adults + children + infants,
   );
   const currency =
-    normalizeCurrency(displayCurrency) ?? normalizeCurrency(fareSearch?.currency) ?? DEFAULT_CURRENCY;
-  const cabinClass = normalizeCabinClass(fareSearch?.cabinClass);
+    normalizeCurrency(displayCurrency) ?? normalizeCurrency(trustedFareSearch?.currency) ?? DEFAULT_CURRENCY;
+  const cabinClass = normalizeCabinClass(trustedFareSearch?.cabinClass);
   const query: Record<string, string> = {
     tripType,
     origin,
@@ -74,8 +85,8 @@ export function buildHomepageRouteCardFlightHref({
     currency,
   };
 
-  if (tripType === "round-trip" && isValidDateKey(fareSearch?.returnDate)) {
-    query.returnDate = fareSearch.returnDate;
+  if (tripType === "round-trip" && isValidDateKey(trustedFareSearch?.returnDate)) {
+    query.returnDate = trustedFareSearch.returnDate;
   }
 
   const normalizedMarket = normalizeMarketCode(market);

@@ -27,3 +27,27 @@ export function translateHomeDiscoveryCopy<
     routeNote: translateHomeDiscoveryField(dictionary, item, "routeNote"),
   };
 }
+
+export function translateHomeDiscoveryCity(
+  dictionary: TranslationDictionary | Record<string, string>,
+  city: string,
+) {
+  const key = `flightLandingCity.${city}`;
+
+  return dictionary[key] ?? enTranslations[key] ?? city;
+}
+
+export function formatHomeDiscoveryRoute(
+  dictionary: TranslationDictionary | Record<string, string>,
+  origin: string,
+  destination: string,
+) {
+  const template =
+    dictionary.flightLandingRouteTemplate ??
+    enTranslations.flightLandingRouteTemplate ??
+    "{{origin}} to {{destination}}";
+
+  return template
+    .replace("{{origin}}", origin)
+    .replace("{{destination}}", destination);
+}

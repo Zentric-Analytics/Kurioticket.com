@@ -12,6 +12,7 @@ export type LanguageOption = {
   locale: string;
   label: string;
   nativeLabel: string;
+  localizedLabels?: Partial<Record<string, string>>;
   direction: LanguageDirection;
   status: LanguageStatus;
   dir: LanguageDirection;
@@ -24,6 +25,7 @@ export const languageOptions: LanguageOption[] = localeOptions.map((item) => ({
   locale: item.locale,
   label: item.label,
   nativeLabel: item.nativeLabel,
+  localizedLabels: item.localizedLabels,
   direction: item.direction,
   status: item.status,
   dir: item.direction,
@@ -32,7 +34,7 @@ export const languageOptions: LanguageOption[] = localeOptions.map((item) => ({
 }));
 
 export const availableLanguageOptions = languageOptions.filter(
-  (option) => option.status === "available"
+  (option) => option.status === "available",
 );
 
 export function getDefaultLanguage(): LanguageCode {
@@ -40,28 +42,34 @@ export function getDefaultLanguage(): LanguageCode {
 }
 
 export function isAvailableLanguage(value?: string | null): boolean {
-  const normalized = String(value ?? "").trim().toLowerCase();
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase();
 
   return availableLanguageOptions.some(
     (option) =>
-      option.code === normalized || option.locale.toLowerCase() === normalized
+      option.code === normalized || option.locale.toLowerCase() === normalized,
   );
 }
 
 export function findLanguageOption(value?: string | null) {
-  const normalized = String(value ?? "").trim().toLowerCase();
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase();
 
   return languageOptions.find(
     (option) =>
-      option.code === normalized || option.locale.toLowerCase() === normalized
+      option.code === normalized || option.locale.toLowerCase() === normalized,
   );
 }
 
 export function normalizeLanguage(value?: string | null): LanguageCode {
-  const normalized = String(value ?? "").trim().toLowerCase();
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase();
   const exactAvailableMatch = availableLanguageOptions.find(
     (option) =>
-      option.code === normalized || option.locale.toLowerCase() === normalized
+      option.code === normalized || option.locale.toLowerCase() === normalized,
   );
 
   if (exactAvailableMatch) {
@@ -73,12 +81,23 @@ export function normalizeLanguage(value?: string | null): LanguageCode {
   if (normalized === "de") return "de-de";
   if (normalized === "it") return "it-it";
   if (normalized === "pt") return "pt-br";
+  if (normalized === "zh") return "zh-cn";
+  if (normalized === "ja-jp") return "ja";
+  if (normalized === "ko-kr") return "ko";
+  if (normalized === "hi-in") return "hi";
+  if (normalized === "tr-tr") return "tr";
+  if (normalized === "pl-pl") return "pl";
+  if (normalized === "id-id") return "id";
+  if (normalized === "vi-vn") return "vi";
+  if (["ar-sa", "ar-ae", "ar-eg"].includes(normalized)) return "ar";
 
   return getDefaultLanguage();
 }
 
 export function getLanguageOption(code?: string | null) {
-  return findLanguageOption(code) ?? findLanguageOption(normalizeLanguage(code));
+  return (
+    findLanguageOption(code) ?? findLanguageOption(normalizeLanguage(code))
+  );
 }
 
 export function getLanguageFromStorage(): LanguageCode {
@@ -108,7 +127,7 @@ export function setLanguageInStorage(code: LanguageCode) {
   window.localStorage.setItem(LANGUAGE_STORAGE_KEY, normalized);
   applyLanguageToDocument(normalized);
   window.dispatchEvent(
-    new CustomEvent(LANGUAGE_CHANGE_EVENT, { detail: { code: normalized } })
+    new CustomEvent(LANGUAGE_CHANGE_EVENT, { detail: { code: normalized } }),
   );
 }
 

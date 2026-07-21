@@ -3,11 +3,11 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const variants = {
-  primary: "bg-navy text-white hover:bg-navy-soft",
-  accent: "bg-teal text-white hover:bg-teal-dark",
-  secondary: "border border-border bg-white text-navy hover:bg-surface-muted",
+  primary: "bg-navy text-white hover:bg-blue",
+  accent: "bg-teal-dark text-white hover:bg-navy",
+  secondary: "border border-border bg-surface text-navy hover:border-border-strong hover:bg-surface-muted",
   ghost: "text-navy hover:bg-surface-muted",
-  danger: "bg-danger text-white hover:bg-red-800",
+  danger: "bg-danger text-white hover:bg-danger-hover",
 };
 
 const sizes = {

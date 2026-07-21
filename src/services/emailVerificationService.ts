@@ -4,7 +4,9 @@ import { getPrisma } from "@/lib/prisma";
 import { EmailDeliveryError, loginVerificationCodeEmail, sendTransactionalEmail, verificationCodeEmail } from "@/services/emailService";
 
 const verificationCodeTtlMinutes = 10;
+const accountEmailChangeCodeTtlMinutes = 15;
 const resendCooldownMs = 60 * 1000;
+const accountEmailChangeResendCooldownMs = 30 * 1000;
 const resendCooldowns = new Map<string, number>();
 
 type SendCodeResult = {
@@ -138,8 +140,101 @@ export async function verifyEmailCode(input: { email: string; code: string }) {
   return verified;
 }
 
-function reserveResendCooldown(key: string) {
-  const retryAfterSeconds = getRemainingCooldownSeconds(key);
+export async function sendAccountEmailChangeCode(input: { userId: string; newEmail: string; name?: string | null; enforceCooldown?: boolean }): Promise<SendCodeResult> {
+  const newEmail = input.newEmail.toLowerCase().trim();
+  const identifier = getAccountEmailChangeIdentifier(input.userId, newEmail);
+  const latestPendingCode = await getPrisma().verificationToken.findFirst({
+    where: { identifier },
+    orderBy: { expires: "desc" },
+    select: { expires: true },
+  });
+
+  if (latestPendingCode && latestPendingCode.expires <= new Date()) {
+    clearResendCooldown(identifier);
+  }
+
+  if (input.enforceCooldown) {
+    reserveResendCooldown(identifier, accountEmailChangeResendCooldownMs);
+  }
+
+  const code = randomInt(100000, 1000000).toString();
+  const token = hashVerificationCode(identifier, code);
+  const expires = new Date(Date.now() + accountEmailChangeCodeTtlMinutes * 60 * 1000);
+
+  try {
+    await getPrisma().verificationToken.deleteMany({ where: { identifier } });
+    await getPrisma().verificationToken.create({
+      data: { identifier, token, expires },
+    });
+
+    await sendTransactionalEmail({
+      to: newEmail,
+      subject: "Confirm your new Kurioticket email address",
+      html: verificationCodeEmail({
+        code,
+        name: input.name,
+        expiresInMinutes: accountEmailChangeCodeTtlMinutes,
+        verifyUrl: `${getBaseUrl()}/dashboard/account`,
+      }),
+      idempotencyKey: `account-email-change-${input.userId}-${newEmail}-${token.slice(0, 16)}`,
+      requireConfigured: true,
+    });
+
+    console.info("[account-email-change:sent]", { userId: input.userId, newEmail });
+
+    return {
+      cooldownSeconds: input.enforceCooldown
+        ? getRemainingCooldownSeconds(identifier, accountEmailChangeResendCooldownMs) || getCooldownSeconds(accountEmailChangeResendCooldownMs)
+        : 0,
+    };
+  } catch (error) {
+    if (input.enforceCooldown) {
+      clearResendCooldown(identifier);
+    }
+
+    console.error("[account-email-change:failed]", {
+      userId: input.userId,
+      newEmail,
+      message: error instanceof Error ? error.message : String(error),
+      status: error instanceof EmailDeliveryError ? error.statusCode : undefined,
+    });
+
+    throw new EmailVerificationError("Unable to send verification code right now.");
+  }
+}
+
+export type AccountEmailChangeCodeVerificationResult = "valid" | "invalid" | "expired";
+
+export async function verifyAccountEmailChangeCode(input: { userId: string; newEmail: string; code: string }): Promise<AccountEmailChangeCodeVerificationResult> {
+  const newEmail = input.newEmail.toLowerCase().trim();
+  const code = input.code.trim();
+  if (!/^\d{6}$/.test(code)) return "invalid";
+
+  const identifier = getAccountEmailChangeIdentifier(input.userId, newEmail);
+  const token = hashVerificationCode(identifier, code);
+  const verificationToken = await getPrisma().verificationToken.findUnique({
+    where: { identifier_token: { identifier, token } },
+  });
+
+  if (!verificationToken) {
+    return "invalid";
+  }
+
+  if (verificationToken.expires <= new Date()) {
+    await getPrisma().verificationToken.deleteMany({ where: { identifier, token } });
+    return "expired";
+  }
+
+  return "valid";
+}
+
+export async function consumeAccountEmailChangeCode(input: { userId: string; newEmail: string }) {
+  const identifier = getAccountEmailChangeIdentifier(input.userId, input.newEmail.toLowerCase().trim());
+  await getPrisma().verificationToken.deleteMany({ where: { identifier } });
+}
+
+function reserveResendCooldown(key: string, cooldownMs = resendCooldownMs) {
+  const retryAfterSeconds = getRemainingCooldownSeconds(key, cooldownMs);
 
   if (retryAfterSeconds > 0) {
     throw new EmailVerificationCooldownError(retryAfterSeconds);
@@ -152,19 +247,19 @@ function clearResendCooldown(key: string) {
   resendCooldowns.delete(key);
 }
 
-function getRemainingCooldownSeconds(key: string) {
+function getRemainingCooldownSeconds(key: string, cooldownMs = resendCooldownMs) {
   const lastSentAt = resendCooldowns.get(key);
   const now = Date.now();
 
-  if (!lastSentAt || now - lastSentAt >= resendCooldownMs) {
+  if (!lastSentAt || now - lastSentAt >= cooldownMs) {
     return 0;
   }
 
-  return Math.ceil((resendCooldownMs - (now - lastSentAt)) / 1000);
+  return Math.ceil((cooldownMs - (now - lastSentAt)) / 1000);
 }
 
-function getCooldownSeconds() {
-  return Math.ceil(resendCooldownMs / 1000);
+function getCooldownSeconds(cooldownMs = resendCooldownMs) {
+  return Math.ceil(cooldownMs / 1000);
 }
 
 function getVerificationIdentifier(email: string) {
@@ -253,4 +348,8 @@ export async function verifyLoginCode(input: { email: string; code: string }) {
 
 function getLoginVerificationIdentifier(email: string) {
   return `login-verification:${email}`;
+}
+
+export function getAccountEmailChangeIdentifier(userId: string, newEmail: string) {
+  return `email-change:${userId}:${newEmail.toLowerCase().trim()}`;
 }

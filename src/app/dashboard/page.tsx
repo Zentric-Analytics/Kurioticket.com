@@ -1,12 +1,21 @@
+import { cookies } from "next/headers";
 import { getServerSession } from "next-auth";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
+import { AccountDetailShell } from "@/components/dashboard/AccountDetailShell";
 import { DashboardOverview } from "@/components/dashboard/DashboardGrid";
 import { authOptions } from "@/lib/auth";
+import { getOptionalPrisma } from "@/lib/prisma";
+import { serializeUserProfile } from "@/lib/userProfile";
+import { getTranslations } from "@/lib/i18n";
+import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
 
-export const metadata = {
-  title: "Personal details",
-};
+export async function generateMetadata() {
+  const cookieStore = await cookies();
+  const t = getTranslations(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
+
+  return { title: t["accountDashboard.personalDetails.title"] };
+}
 
 function getInitials(name?: string | null, email?: string | null) {
   const label = name?.trim() || email?.split("@")[0] || "Kurioticket traveler";
@@ -21,17 +30,44 @@ function getInitials(name?: string | null, email?: string | null) {
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
-  const userName = session?.user?.name?.trim();
+  const sessionUserName = session?.user?.name?.trim();
   const userEmail = session?.user?.email?.trim();
+  const db = getOptionalPrisma();
+  const storedProfile =
+    session?.user?.id && db
+      ? await db.userProfile.findUnique({
+          where: { userId: session.user.id },
+          select: {
+            fullName: true,
+            phoneNumber: true,
+            phoneCountryCode: true,
+            dateOfBirth: true,
+            gender: true,
+            nationality: true,
+            address: true,
+          },
+        })
+      : null;
+  const userProfile = serializeUserProfile(storedProfile);
+  const savedProfileName = userProfile.fullName.trim();
+  const userName = savedProfileName || sessionUserName;
   const firstName = userName?.split(/\s+/).filter(Boolean)[0];
   const displayName = firstName || "traveler";
   const initials = getInitials(userName, userEmail);
 
   return (
     <>
-      <AppHeader showAccountBackLink />
+      <AppHeader />
       <main className="flex-1 bg-[#f3f7fc] pb-10 pt-0">
-        <DashboardOverview initials={initials} displayName={displayName} userEmail={userEmail} userName={userName} />
+        <AccountDetailShell>
+          <DashboardOverview
+            initials={initials}
+            displayName={displayName}
+            userEmail={userEmail}
+            userName={userName}
+            userProfile={userProfile}
+          />
+        </AccountDetailShell>
       </main>
       <Footer />
     </>

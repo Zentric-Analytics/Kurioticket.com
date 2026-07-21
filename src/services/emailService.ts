@@ -1,7 +1,19 @@
 import { Resend } from "resend";
 import type { ErrorResponse } from "resend";
+import { canSendOptionalEmail, type OptionalEmailCategory } from "@/services/emailPreferencesService";
+
+import {
+  createEmailDeliveryRecord,
+  escapeHtml,
+  htmlToText,
+  markEmailDeliveryFailed,
+  isEmailSuppressed,
+  markEmailDeliverySent,
+  type EmailTemplateKey,
+} from "@/services/emailDeliveryService";
 
 let resendClient: Resend | null = null;
+let sendTransactionalEmailForTesting: typeof sendTransactionalEmail | null = null;
 
 export class EmailDeliveryError extends Error {
   statusCode?: number | null;
@@ -23,19 +35,38 @@ export async function sendTransactionalEmail(input: {
   to: string;
   subject: string;
   html: string;
+  text?: string;
+  template?: EmailTemplateKey;
   from?: string;
   replyTo?: string;
   idempotencyKey?: string;
   requireConfigured?: boolean;
+  metadata?: Record<string, unknown>;
 }) {
   const resend = getResend();
   const from = input.from || process.env.RESEND_FROM_EMAIL || "";
+  const template = input.template || "notification";
+  const strictDelivery = input.requireConfigured || process.env.NODE_ENV === "production";
+  const deliveryId = from
+    ? await createEmailDeliveryRecord({
+        toEmail: input.to,
+        fromEmail: from,
+        subject: input.subject,
+        template,
+        idempotencyKey: input.idempotencyKey,
+        metadata: input.metadata,
+      })
+    : null;
 
   if (!resend || !from) {
-    if (input.requireConfigured) {
-      throw new EmailDeliveryError(
-        !resend ? "Resend API key is not configured." : "Resend sender email is not configured.",
-      );
+    const message = !resend
+      ? "Resend API key is not configured."
+      : "Resend sender email is not configured.";
+
+    await markEmailDeliveryFailed({ deliveryId, message });
+
+    if (strictDelivery) {
+      throw new EmailDeliveryError(message);
     }
 
     console.info("[email:fallback]", input.subject, input.to);
@@ -48,26 +79,198 @@ export async function sendTransactionalEmail(input: {
       to: input.to,
       subject: input.subject,
       html: input.html,
+      text: input.text || htmlToText(input.html),
       ...(input.replyTo ? { replyTo: input.replyTo } : {}),
     },
-    input.idempotencyKey ? { headers: { "Idempotency-Key": input.idempotencyKey } } : undefined,
+    input.idempotencyKey
+      ? { headers: { "Idempotency-Key": input.idempotencyKey } }
+      : undefined,
   );
 
-  if (error) throw new EmailDeliveryError(error.message, getResendStatusCode(error));
+  if (error) {
+    const statusCode = getResendStatusCode(error);
+    await markEmailDeliveryFailed({
+      deliveryId,
+      message: error.message,
+      statusCode,
+    });
+    throw new EmailDeliveryError(error.message, statusCode);
+  }
+
+  await markEmailDeliverySent({ deliveryId, providerMessageId: data?.id });
   return { id: data?.id };
+}
+
+export async function sendOptionalEmail(input: {
+  userId: string;
+  category: OptionalEmailCategory;
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+  template?: EmailTemplateKey;
+  from?: string;
+  replyTo?: string;
+  idempotencyKey?: string;
+  requireConfigured?: boolean;
+  metadata?: Record<string, unknown>;
+}) {
+  const allowed = await canSendOptionalEmail(input.userId, input.category);
+
+  if (!allowed) {
+    console.info("[email:optional-skipped]", {
+      userId: input.userId,
+      category: input.category,
+      template: input.template || "notification",
+    });
+    return { skipped: true as const, reason: "preferences_disabled" as const };
+  }
+
+  if (await isEmailSuppressed(input.to)) {
+    console.info("[email:optional-skipped]", {
+      userId: input.userId,
+      category: input.category,
+      template: input.template || "notification",
+      reason: "email_suppressed",
+    });
+    return { skipped: true as const, reason: "email_suppressed" as const };
+  }
+
+  const sendEmail = sendTransactionalEmailForTesting ?? sendTransactionalEmail;
+  const result = await sendEmail({
+    to: input.to,
+    subject: input.subject,
+    html: input.html,
+    text: input.text,
+    template: input.template,
+    from: input.from,
+    replyTo: input.replyTo,
+    idempotencyKey: input.idempotencyKey,
+    requireConfigured: input.requireConfigured,
+    metadata: {
+      ...(input.metadata || {}),
+      optionalEmailCategory: input.category,
+    },
+  });
+
+  return { skipped: false as const, ...result };
 }
 
 function getResendStatusCode(error: ErrorResponse) {
   return typeof error.statusCode === "number" ? error.statusCode : null;
 }
 
-export function priceAlertEmail(input: { name?: string | null; route: string; price: string; url: string }) {
+export function priceAlertEmail(input: {
+  name?: string | null;
+  route: string;
+  price: string;
+  url: string;
+}) {
+  const name = escapeHtml(input.name);
+  const route = escapeHtml(input.route);
+  const price = escapeHtml(input.price);
+  const url = escapeHtml(input.url);
+
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
       <h1 style="font-size:22px">A meaningful price change was found</h1>
-      <p>${input.name ? `Hi ${input.name},` : "Hi,"} Kurioticket found an option for ${input.route} at ${input.price}.</p>
+      <p>${name ? `Hi ${name},` : "Hi,"} Kurioticket found an option for ${route} at ${price}.</p>
       <p>Review the route on Kurioticket, then confirm current price, availability, and fare rules on the external provider site.</p>
-      <p><a href="${input.url}" style="color:#0f766e">View alert</a></p>
+      <p><a href="${url}" style="color:#0f766e">View alert</a></p>
+    </div>
+  `;
+}
+
+
+export function savedTripReminderEmail(input: {
+  name?: string | null;
+  title: string;
+  destination: string;
+  anchorAt: Date;
+  endAt?: Date;
+  provider?: string;
+  ctaUrl: string;
+  window: "7d" | "24h";
+}) {
+  const name = escapeHtml(input.name);
+  const title = escapeHtml(input.title);
+  const destination = escapeHtml(input.destination);
+  const ctaUrl = escapeHtml(input.ctaUrl);
+  const provider = input.provider ? escapeHtml(input.provider) : "";
+  const when = escapeHtml(formatSavedTripReminderDate(input.anchorAt));
+  const end = input.endAt ? escapeHtml(formatSavedTripReminderDate(input.endAt)) : "";
+  const intro = input.window === "7d" ? "Your saved travel plan is coming up in 7 days." : "Your saved travel plan is coming up in about 24 hours.";
+
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a;max-width:560px;margin:0 auto">
+      <h1 style="font-size:22px;margin:0 0 12px">Saved trip reminder</h1>
+      <p style="margin:0 0 12px">${name ? `Hi ${name},` : "Hi,"} ${intro}</p>
+      <div style="border:1px solid #dbe3ea;border-radius:18px;padding:16px;margin:0 0 16px;background:#f8fafc">
+        <p style="margin:0 0 6px;font-weight:700;color:#0f172a">${title}</p>
+        <p style="margin:0;color:#334155">${destination}</p>
+        <p style="margin:8px 0 0;color:#334155">Starts ${when}${end ? ` · Ends ${end}` : ""}</p>
+        ${provider ? `<p style="margin:8px 0 0;color:#64748b">Provider: ${provider}</p>` : ""}
+      </div>
+      <p style="margin:0 0 16px">Review current availability, details, and provider terms before you travel.</p>
+      <p style="margin:0"><a href="${ctaUrl}" style="display:inline-block;border-radius:999px;background:#0f766e;color:#ffffff;text-decoration:none;font-weight:700;padding:11px 16px">Review saved trip</a></p>
+    </div>
+  `;
+}
+
+function formatSavedTripReminderDate(date: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "UTC",
+    timeZoneName: "short",
+  }).format(date);
+}
+
+export function routeWatchUpdateEmail(input: {
+  name?: string | null;
+  origin: string;
+  destination: string;
+  departureDate: string;
+  returnDate?: string | null;
+  previousPrice: string;
+  currentPrice: string;
+  decreasePercent: string;
+  currency: string;
+  ctaUrl: string;
+  preferencesUrl: string;
+}) {
+  const name = escapeHtml(input.name);
+  const origin = escapeHtml(input.origin);
+  const destination = escapeHtml(input.destination);
+  const departureDate = escapeHtml(input.departureDate);
+  const returnDate = input.returnDate ? escapeHtml(input.returnDate) : "";
+  const previousPrice = escapeHtml(input.previousPrice);
+  const currentPrice = escapeHtml(input.currentPrice);
+  const decreasePercent = escapeHtml(input.decreasePercent);
+  const currency = escapeHtml(input.currency);
+  const ctaUrl = escapeHtml(input.ctaUrl);
+  const preferencesUrl = escapeHtml(input.preferencesUrl);
+
+  return `
+    <div style="margin:0;background:#f8fafc;padding:16px;font-family:Arial,sans-serif;color:#0f172a">
+      <div style="max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;padding:22px;line-height:1.45">
+        <h1 style="font-size:24px;line-height:1.2;margin:0 0 12px;color:#0f172a">A lower fare is available for a route you’re watching.</h1>
+        <p style="margin:0 0 12px">${name ? `Hi ${name},` : "Hi,"} Kurioticket found a lower observed fare for ${origin} to ${destination}.</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;margin:0 0 16px">
+          <tr><td style="padding:8px 0;color:#334155">Departure</td><td align="right" style="padding:8px 0;font-weight:700;color:#0f172a">${departureDate}</td></tr>
+          ${returnDate ? `<tr><td style="padding:8px 0;color:#334155">Return</td><td align="right" style="padding:8px 0;font-weight:700;color:#0f172a">${returnDate}</td></tr>` : ""}
+          <tr><td style="padding:8px 0;color:#334155">Previous comparison price</td><td align="right" style="padding:8px 0;font-weight:700;color:#0f172a">${previousPrice}</td></tr>
+          <tr><td style="padding:8px 0;color:#334155">Current observed price</td><td align="right" style="padding:8px 0;font-weight:700;color:#0f766e">${currentPrice}</td></tr>
+          <tr><td style="padding:8px 0;color:#334155">Decrease</td><td align="right" style="padding:8px 0;font-weight:700;color:#0f172a">${decreasePercent} in ${currency}</td></tr>
+        </table>
+        <p style="margin:0 0 16px"><a href="${ctaUrl}" style="display:block;text-align:center;background:#0f766e;color:#ffffff;text-decoration:none;font-weight:700;border-radius:999px;padding:11px 16px">Compare current options</a></p>
+        <p style="margin:0 0 14px;color:#334155">Kurioticket helps you search and compare travel options. Fares and availability may change, and you must confirm current prices, availability, fare rules, and provider terms on the external provider site before booking.</p>
+        <p style="margin:0 0 16px"><a href="${preferencesUrl}" style="color:#0f766e">Manage email preferences</a></p>
+        <p style="margin:0;font-size:12px;line-height:1.4;color:#64748b">You received this because Route watch updates and optional emails are enabled in your Kurioticket account.</p>
+      </div>
     </div>
   `;
 }
@@ -77,57 +280,340 @@ export function supportTicketEmail(input: { ticketId: string; subject: string })
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
       <h1 style="font-size:22px">We received your request</h1>
       <p>Your Kurioticket support ticket is open.</p>
-      <p><strong>Ticket:</strong> ${input.ticketId}</p>
-      <p><strong>Subject:</strong> ${input.subject}</p>
+      <p><strong>Ticket:</strong> ${escapeHtml(input.ticketId)}</p>
+      <p><strong>Subject:</strong> ${escapeHtml(input.subject)}</p>
       <p>Our team can help with Kurioticket searches, alerts, account tools, and travel guidance. External providers handle purchases, check-in, changes, cancellations, and refunds.</p>
     </div>
   `;
 }
 
-export function verificationCodeEmail(input: { code: string; name?: string | null; expiresInMinutes: number; verifyUrl: string }) {
+export function supportTicketReplyEmail(input: { ticketId: string; subject: string; body: string }) {
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
+      <h1 style="font-size:22px">Kurioticket support replied</h1>
+      <p>Our team added a reply to your support ticket.</p>
+      <p><strong>Ticket:</strong> ${escapeHtml(input.ticketId)}</p>
+      <p><strong>Subject:</strong> ${escapeHtml(input.subject)}</p>
+      <div style="border:1px solid #dbe3ea;border-radius:14px;padding:14px;background:#f8fafc;white-space:pre-wrap">${escapeHtml(input.body)}</div>
+      <p>If you still need help, reply with any additional context and our team will continue reviewing your request.</p>
+    </div>
+  `;
+}
+
+export function verificationCodeEmail(input: {
+  code: string;
+  name?: string | null;
+  expiresInMinutes: number;
+  verifyUrl: string;
+}) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
       <h1 style="font-size:22px">Your Kurioticket verification code</h1>
-      <p>${input.name ? `Hi ${input.name},` : "Hi,"} use this code to verify your email address:</p>
-      <p style="display:inline-block;font-size:32px;font-weight:700;letter-spacing:7px;color:#0f766e;background:#eef4f7;border-radius:12px;padding:12px 16px">${input.code}</p>
-      <p>This code expires in ${input.expiresInMinutes} minutes.</p>
-      <p><a href="${input.verifyUrl}" style="color:#0f766e">Enter verification code</a></p>
+      <p>${input.name ? `Hi ${escapeHtml(input.name)},` : "Hi,"} use this code to verify your email address:</p>
+      <p style="display:inline-block;font-size:32px;font-weight:700;letter-spacing:7px;color:#0f766e;background:#eef4f7;border-radius:12px;padding:12px 16px">${escapeHtml(input.code)}</p>
+      <p>This code expires in ${escapeHtml(input.expiresInMinutes)} minutes.</p>
+      <p><a href="${escapeHtml(input.verifyUrl)}" style="color:#0f766e">Enter verification code</a></p>
       <p>If you did not request this Kurioticket email verification, you can ignore this email.</p>
     </div>
   `;
 }
 
-export function passwordResetEmail(input: { name?: string | null; expiresInMinutes: number; resetUrl: string }) {
+export function passwordResetEmail(input: {
+  name?: string | null;
+  expiresInMinutes: number;
+  resetUrl: string;
+}) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
       <h1 style="font-size:22px">Reset your Kurioticket password</h1>
-      <p>${input.name ? `Hi ${input.name},` : "Hi,"} click the link below to reset your password.</p>
-      <p><a href="${input.resetUrl}" style="color:#0f766e">Reset your password</a></p>
-      <p>This link expires in ${input.expiresInMinutes} minutes.</p>
+      <p>${input.name ? `Hi ${escapeHtml(input.name)},` : "Hi,"} click the link below to reset your password.</p>
+      <p><a href="${escapeHtml(input.resetUrl)}" style="color:#0f766e">Reset your password</a></p>
+      <p>This link expires in ${escapeHtml(input.expiresInMinutes)} minutes.</p>
       <p>If you did not request a Kurioticket password reset, you can ignore this email.</p>
     </div>
   `;
 }
 
-export function loginVerificationCodeEmail(input: { code: string; name?: string | null; expiresInMinutes: number }) {
+export function loginVerificationCodeEmail(input: {
+  code: string;
+  name?: string | null;
+  expiresInMinutes: number;
+}) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
       <h1 style="font-size:22px">Your Kurioticket login verification code</h1>
-      <p>${input.name ? `Hi ${input.name},` : "Hi,"} use this code to finish logging in to Kurioticket:</p>
-      <p style="display:inline-block;font-size:32px;font-weight:700;letter-spacing:7px;color:#0f766e;background:#eef4f7;border-radius:12px;padding:12px 16px">${input.code}</p>
-      <p>This code expires in ${input.expiresInMinutes} minutes.</p>
+      <p>${input.name ? `Hi ${escapeHtml(input.name)},` : "Hi,"} use this code to finish logging in to Kurioticket:</p>
+      <p style="display:inline-block;font-size:32px;font-weight:700;letter-spacing:7px;color:#0f766e;background:#eef4f7;border-radius:12px;padding:12px 16px">${escapeHtml(input.code)}</p>
+      <p>This code expires in ${escapeHtml(input.expiresInMinutes)} minutes.</p>
       <p>If you did not try to log in to Kurioticket, you can ignore this email.</p>
     </div>
   `;
 }
 
-export function newsletterWelcomeEmail() {
+export function twoFactorCodeEmail(input: {
+  code: string;
+  name?: string | null;
+  purpose: "enable" | "disable" | "login";
+  expiresInMinutes: number;
+}) {
+  const action =
+    input.purpose === "disable"
+      ? "disable two-factor authentication"
+      : input.purpose === "enable"
+        ? "enable two-factor authentication"
+        : "finish signing in";
+
+  const safety =
+    input.purpose === "disable"
+      ? "If you did not request disabling two-factor authentication, keep 2FA enabled and contact support."
+      : "If you did not request this code, you can ignore this email.";
+
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
+      <h1 style="font-size:22px">Your Kurioticket two-factor authentication code</h1>
+      <p>${input.name ? `Hi ${escapeHtml(input.name)},` : "Hi,"} use this code to ${escapeHtml(action)}:</p>
+      <p style="display:inline-block;font-size:32px;font-weight:700;letter-spacing:7px;color:#0f766e;background:#eef4f7;border-radius:12px;padding:12px 16px">${escapeHtml(input.code)}</p>
+      <p>This code expires in ${escapeHtml(input.expiresInMinutes)} minutes.</p>
+      <p>${safety}</p>
+    </div>
+  `;
+}
+
+export function newsletterWelcomeEmail(input?: { preferencesUrl?: string }) {
+  const preferencesUrl = input?.preferencesUrl
+    ? escapeHtml(input.preferencesUrl)
+    : "";
+
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
       <h1 style="font-size:22px">You’re subscribed to Kurioticket updates</h1>
       <p>Thanks for subscribing. We’ll send occasional Kurioticket updates to help you compare travel options more calmly.</p>
       <p>We will not ask you for payment details by email, and booking decisions should always be confirmed on Kurioticket or the provider site.</p>
-      <p>You can unsubscribe anytime from future newsletter emails.</p>
+      ${preferencesUrl ? `<p><a href="${preferencesUrl}" style="color:#0f766e">Manage your Kurioticket email preferences</a></p>` : ""}
+      <p style="font-size:12px;color:#64748b">Opening the preferences page does not unsubscribe you. You can stop updates from that page whenever you choose.</p>
     </div>
   `;
 }
+
+export function newsletterUnsubscribedEmail(input?: { preferencesUrl?: string }) {
+  const preferencesUrl = input?.preferencesUrl
+    ? escapeHtml(input.preferencesUrl)
+    : "";
+
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
+      <h1 style="font-size:22px">You’re unsubscribed from Kurioticket updates</h1>
+      <p>You will no longer receive Kurioticket marketing newsletters, travel inspiration, or product update emails.</p>
+      <p>Important account, security, password reset, login verification, and support emails may still be sent when needed.</p>
+      ${preferencesUrl ? `<p><a href="${preferencesUrl}" style="color:#0f766e">Resubscribe or manage email preferences</a></p>` : ""}
+    </div>
+  `;
+}
+
+function getUsableGivenName(name?: string | null) {
+  const trimmed = name?.trim();
+  if (!trimmed || trimmed.includes("@")) return "";
+
+  const firstToken = trimmed.split(/\s+/)[0]?.replace(/^[^\p{L}]+|[^\p{L}'’-]+$/gu, "") || "";
+  if (!firstToken || !/\p{L}/u.test(firstToken) || /\d/u.test(firstToken)) return "";
+
+  return firstToken
+    .toLocaleLowerCase("en")
+    .replace(/(^|[-'’])\p{L}/gu, (match) => match.toLocaleUpperCase("en"));
+}
+
+function formatEmailPreferenceChangedAt(changedAt: Date) {
+  const parts = new Intl.DateTimeFormat("en", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).formatToParts(changedAt);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((datePart) => datePart.type === type)?.value || "";
+
+  return `Changed ${part("month")} ${part("day")}, ${part("year")} at ${part("hour")}:${part("minute")} ${part("dayPeriod")}`;
+}
+
+function emailPreferenceStatusRows(labels: string[], status: "On" | "Off") {
+  return labels
+    .map(
+      (label) => `
+        <tr>
+          <td style="padding:6px 0;color:#334155">${escapeHtml(label)}</td>
+          <td align="right" style="padding:6px 0;font-weight:700;color:#0f172a">${status}</td>
+        </tr>`,
+    )
+    .join("");
+}
+
+export function emailPreferencesUpdatedEmail(input: {
+  name?: string | null;
+  enabledLabels: string[];
+  disabledLabels: string[];
+  changedAt: Date;
+  preferencesUrl: string;
+  masterStatusChange?: "disabled" | "enabled";
+  masterDisabled: boolean;
+}) {
+  const givenName = getUsableGivenName(input.name);
+  const greeting = givenName ? `Hi ${escapeHtml(givenName)},` : "Hi,";
+  const preferencesUrl = escapeHtml(input.preferencesUrl);
+  const changedAt = escapeHtml(formatEmailPreferenceChangedAt(input.changedAt));
+  const enabledRows = emailPreferenceStatusRows(input.enabledLabels, "On");
+  const disabledRows = emailPreferenceStatusRows(input.disabledLabels, "Off");
+  const changeRows = `${disabledRows}${enabledRows}`;
+  const hasMasterChange = Boolean(input.masterStatusChange);
+  const heading =
+    input.masterStatusChange === "disabled"
+      ? "You’re unsubscribed"
+      : input.masterStatusChange === "enabled"
+        ? "You’re resubscribed"
+        : "Your email preferences were updated";
+  const summary =
+    input.masterStatusChange === "disabled"
+      ? "You’ll no longer receive optional Kurioticket emails."
+      : input.masterStatusChange === "enabled"
+        ? "Optional emails are enabled again. You’ll receive only the categories you have turned on."
+        : "We saved your latest optional email choices.";
+
+  return `
+    <div style="margin:0;background:#f8fafc;padding:16px;font-family:Arial,sans-serif;color:#0f172a">
+      <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:22px;line-height:1.45">
+        <h1 style="font-size:24px;line-height:1.2;margin:0 0 12px;color:#0f172a">${heading}</h1>
+        <p style="margin:0 0 10px">${greeting}</p>
+        <p style="margin:0 0 14px">${summary}</p>
+        ${
+          input.masterStatusChange === "disabled"
+            ? '<p style="margin:0 0 14px">Your category choices are saved and will become active again if you resubscribe.</p>'
+            : ""
+        }
+        ${
+          changeRows
+            ? `<h2 style="font-size:15px;margin:16px 0 6px;color:#0f172a">${hasMasterChange ? "Other changes" : "Changes"}</h2>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;margin:0 0 16px">${changeRows}</table>`
+            : ""
+        }
+        <p style="margin:0 0 16px;font-size:12px;color:#64748b">${changedAt}</p>
+        <p style="margin:0 0 16px"><a href="${preferencesUrl}" style="display:block;text-align:center;background:#0f766e;color:#ffffff;text-decoration:none;font-weight:700;border-radius:999px;padding:11px 16px">Manage email preferences</a></p>
+        <p style="margin:0;font-size:12px;line-height:1.4;color:#64748b">If you didn’t make this change, review your account security or contact Kurioticket support.</p>
+      </div>
+    </div>
+  `;
+}
+
+export function travelInspirationDigestEmail(input: {
+  name?: string | null;
+  heading: string;
+  intro: string;
+  preheader: string;
+  destinations: Array<{
+    title: string;
+    description: string;
+    image: string;
+    imageAlt: string;
+    ctaUrl: string;
+  }>;
+  preferencesUrl: string;
+}) {
+  const givenName = getUsableGivenName(input.name);
+  const greeting = givenName ? `Hi ${escapeHtml(givenName)},` : "Hi,";
+  const heading = escapeHtml(input.heading);
+  const intro = escapeHtml(input.intro);
+  const preheader = escapeHtml(input.preheader);
+  const preferencesUrl = escapeHtml(input.preferencesUrl);
+  const destinationCards = input.destinations
+    .map((destination) => {
+      const title = escapeHtml(destination.title);
+      const description = escapeHtml(destination.description);
+      const image = escapeHtml(destination.image);
+      const imageAlt = escapeHtml(destination.imageAlt);
+      const ctaUrl = escapeHtml(destination.ctaUrl);
+
+      return `
+        <tr>
+          <td style="padding:0 0 18px">
+            <div style="border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;background:#ffffff">
+              <img src="${image}" alt="${imageAlt}" width="560" style="display:block;width:100%;max-width:560px;height:auto;border:0" />
+              <div style="padding:16px">
+                <h2 style="font-size:18px;line-height:1.25;margin:0 0 8px;color:#0f172a">${title}</h2>
+                <p style="margin:0 0 14px;color:#334155;font-size:14px;line-height:1.5">${description}</p>
+                <a href="${ctaUrl}" style="display:inline-block;border-radius:999px;background:#0f766e;color:#ffffff;text-decoration:none;font-weight:700;padding:10px 15px">Explore destination</a>
+              </div>
+            </div>
+          </td>
+        </tr>`;
+    })
+    .join("");
+
+  return `
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">${preheader}</div>
+    <div style="margin:0;background:#f8fafc;padding:16px;font-family:Arial,sans-serif;color:#0f172a">
+      <div style="max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;padding:22px;line-height:1.45">
+        <h1 style="font-size:24px;line-height:1.2;margin:0 0 12px;color:#0f172a">${heading}</h1>
+        <p style="margin:0 0 10px">${greeting}</p>
+        <p style="margin:0 0 18px;color:#334155">${intro}</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">${destinationCards}</table>
+        <p style="margin:2px 0 16px;color:#334155">Kurioticket helps you search and compare travel options. We are not an airline, hotel, tour operator, or booking provider. Always confirm current prices, availability, and provider terms before booking.</p>
+        <p style="margin:0 0 16px"><a href="${preferencesUrl}" style="display:block;text-align:center;background:#0f766e;color:#ffffff;text-decoration:none;font-weight:700;border-radius:999px;padding:11px 16px">Manage email preferences</a></p>
+        <p style="margin:0;font-size:12px;line-height:1.4;color:#64748b">You received this because Travel inspiration and optional emails are enabled in your Kurioticket account. You can turn them off from email preferences.</p>
+      </div>
+    </div>
+  `;
+}
+
+export function accountDeletionRequestEmail(input: { deadline: Date }) {
+  const deadline = escapeHtml(
+    new Intl.DateTimeFormat("en", {
+      dateStyle: "full",
+      timeStyle: "short",
+    }).format(input.deadline),
+  );
+
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
+      <h1 style="font-size:22px">Account deletion request received</h1>
+      <p>We received your Kurioticket account deletion request.</p>
+      <p>Your account is scheduled for permanent deletion review on <strong>${deadline}</strong>.</p>
+      <p>You can reactivate your account by logging in before this deadline and choosing Reactivate account.</p>
+      <p>Some records may be retained where legally required for tax, fraud prevention, booking, payment, support, security, or compliance obligations.</p>
+    </div>
+  `;
+}
+
+export function accountDeletionRequestAdminEmail(input: {
+  userId: string;
+  email: string;
+  requestedAt: Date;
+  deadline: Date;
+  supportTicketId?: string | null;
+}) {
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
+      <h1 style="font-size:22px">Account deletion request</h1>
+      <p><strong>User id:</strong> ${escapeHtml(input.userId)}</p>
+      <p><strong>Email:</strong> ${escapeHtml(input.email)}</p>
+      <p><strong>Requested:</strong> ${escapeHtml(input.requestedAt.toISOString())}</p>
+      <p><strong>Scheduled deletion review:</strong> ${escapeHtml(input.deadline.toISOString())}</p>
+      <p><strong>Support ticket:</strong> ${escapeHtml(input.supportTicketId || "not available")}</p>
+      <p>Do not hard-delete before reviewing legal, tax, fraud, booking, payment, support, and compliance retention obligations.</p>
+    </div>
+  `;
+}
+
+export function accountDeletionCancelledEmail() {
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
+      <h1 style="font-size:22px">Account deletion cancelled</h1>
+      <p>Your Kurioticket account deletion request has been cancelled.</p>
+      <p>Your account has been reactivated and access is restored.</p>
+    </div>
+  `;
+}
+
+export const __emailServiceTest = {
+  setSendTransactionalEmailForTesting(sendEmail: typeof sendTransactionalEmail | null) {
+    sendTransactionalEmailForTesting = sendEmail;
+  },
+};

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { buildFlightPriceAlertPayload } from "@/lib/price-alerts/flightPriceAlerts";
 
 const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -199,6 +200,14 @@ export const supportTicketSchema = z.object({
   sourceContext: z.record(z.string(), z.unknown()).optional(),
 });
 
+export const adminSupportReplySchema = z.object({
+  body: z.string().trim().min(2).max(4000),
+});
+
+export const adminSupportStatusSchema = z.object({
+  status: z.enum(["OPEN", "WAITING_ON_USER", "WAITING_ON_TEAM", "RESOLVED", "CLOSED"]),
+});
+
 export const newsletterSubscribeSchema = z.object({
   email: emailSchema,
   source: z.string().trim().min(1).max(80).optional(),
@@ -206,11 +215,36 @@ export const newsletterSubscribeSchema = z.object({
   regionCode: z.string().trim().min(2).max(16).optional(),
 });
 
-export const priceAlertSchema = z.object({
-  type: z.enum(["FLIGHT", "HOTEL"]),
+const hotelPriceAlertSchema = z.object({
+  type: z.literal("HOTEL"),
   origin: z.string().trim().max(80).optional(),
   destination: z.string().trim().min(2).max(120),
   targetPrice: z.coerce.number().positive().optional(),
-  currency: z.string().trim().length(3).default("USD"),
+  currency: z.string().trim().length(3).transform((value) => value.toUpperCase()).default("USD"),
   query: z.record(z.string(), z.unknown()),
 });
+
+const flightPriceAlertSchema = z.object({
+  type: z.literal("FLIGHT"),
+  origin: z.string().trim().min(1),
+  destination: z.string().trim().min(1),
+  targetPrice: z.coerce.number(),
+  currency: z.string().trim().length(3),
+  query: z.record(z.string(), z.unknown()),
+}).transform((value, context) => {
+  try {
+    return buildFlightPriceAlertPayload(value);
+  } catch (error) {
+    context.addIssue({
+      code: "custom",
+      path: ["query"],
+      message: error instanceof Error ? error.message : "Invalid flight price alert.",
+    });
+    return z.NEVER;
+  }
+});
+
+export const priceAlertSchema = z.discriminatedUnion("type", [
+  flightPriceAlertSchema,
+  hotelPriceAlertSchema,
+]);

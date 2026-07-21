@@ -54,8 +54,6 @@ export type FlightLeg = {
   segments: FlightSegment[];
 };
 
-export type FlightHandoffType = "exact_provider_link" | "none";
-
 export type NormalizedFlightResult = {
   id: string;
   provider: string;
@@ -78,10 +76,6 @@ export type NormalizedFlightResult = {
   currency: string;
   bookingUrl: string;
   partnerRedirectUrl: string;
-  handoffType: FlightHandoffType;
-  handoffUrl?: string;
-  handoffProvider?: string;
-  handoffVerifiedAt?: string;
   valueScore: number;
   riskScore: number;
   comfortScore: number;
@@ -97,34 +91,102 @@ export type PublicFlightResult = Omit<
   "rawProviderReference"
 >;
 
-export type NormalizedHotelResult = {
+export type HotelInventoryKind = "bookable" | "discovery";
+
+export type HotelClassificationStars = 1 | 2 | 3 | 4 | 5;
+export type HotelReviewScale = 5 | 10;
+
+export type HotelSourceAttribution = {
+  provider: string;
+  providerUri?: string;
+};
+
+type HotelInventoryBookable = {
+  inventoryKind?: "bookable";
+  pricePerNight: number;
+  totalPrice: number;
+  currency: string;
+  bookingUrl: string;
+  partnerRedirectUrl: string;
+};
+
+type HotelInventoryDiscovery = {
+  inventoryKind: "discovery";
+  pricePerNight?: never;
+  totalPrice?: never;
+  currency?: never;
+  bookingUrl?: never;
+  partnerRedirectUrl?: never;
+};
+
+type HotelInventory = HotelInventoryBookable | HotelInventoryDiscovery;
+
+type NormalizedHotelBase = {
   id: string;
   provider: string;
   name: string;
   imageUrl?: string;
+  imageUrls?: string[];
+  /** Legacy provider/scoring value; use classificationStars for classification and reviewScale with reviewScore. */
   rating: number;
+  classificationStars?: HotelClassificationStars;
+  reviewScore?: number;
+  reviewScale?: HotelReviewScale;
+  reviewCount?: number;
+  reviewSource?: string;
+  neighbourhood?: string;
   location: string;
   distanceFromCenter?: string;
-  pricePerNight: number;
-  totalPrice: number;
-  currency: string;
   amenities: string[];
   roomType: string;
   cancellationInfo: string;
-  bookingUrl: string;
-  partnerRedirectUrl: string;
+  taxesAndFeesIncluded?: boolean;
+  similarHotelIds?: string[];
+  dataSource?: "demo" | "live";
   valueScore: number;
   travelConfidenceScore: number;
   arrivalSuitabilityScore: number;
   recommendationReasons: string[];
   badges: string[];
+  sourceUrl?: string;
+  sourceAttributions?: HotelSourceAttribution[];
   rawProviderReference?: unknown;
 };
 
-export type PublicHotelResult = Omit<
-  NormalizedHotelResult,
-  "rawProviderReference"
->;
+type PublicHotelBase = {
+  id: string;
+  provider: string;
+  name: string;
+  imageUrl?: string;
+  imageUrls?: string[];
+  /** Legacy provider/scoring value; use classificationStars for classification and reviewScale with reviewScore. */
+  rating: number;
+  classificationStars?: HotelClassificationStars;
+  reviewScore?: number;
+  reviewScale?: HotelReviewScale;
+  reviewCount?: number;
+  reviewSource?: string;
+  neighbourhood?: string;
+  location: string;
+  distanceFromCenter?: string;
+  amenities: string[];
+  roomType: string;
+  cancellationInfo: string;
+  taxesAndFeesIncluded?: boolean;
+  similarHotelIds?: string[];
+  dataSource?: "demo" | "live";
+  valueScore: number;
+  travelConfidenceScore: number;
+  arrivalSuitabilityScore: number;
+  recommendationReasons: string[];
+  badges: string[];
+  sourceUrl?: string;
+  sourceAttributions?: HotelSourceAttribution[];
+};
+
+export type NormalizedHotelResult = NormalizedHotelBase & HotelInventory;
+
+export type PublicHotelResult = PublicHotelBase & HotelInventory;
 
 export type ProviderErrorCategory =
   | "no_inventory"
@@ -134,7 +196,8 @@ export type ProviderErrorCategory =
   | "auth"
   | "server"
   | "invalid_response"
-  | "failed";
+  | "failed"
+  | "skipped";
 
 export type ProviderErrorReason =
   | "provider_no_inventory"
@@ -144,7 +207,8 @@ export type ProviderErrorReason =
   | "provider_auth_error"
   | "provider_server_error"
   | "provider_invalid_response"
-  | "provider_failed";
+  | "provider_failed"
+  | "provider_skipped";
 
 export type ProviderResult<T> = {
   provider: string;

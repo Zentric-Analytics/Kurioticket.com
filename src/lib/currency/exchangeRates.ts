@@ -207,19 +207,44 @@ export function getFallbackRatePayload({
   };
 }
 
+function isUsableRate(rate: number | undefined) {
+  return typeof rate === "number" && Number.isFinite(rate) && rate > 0;
+}
+
+export function convertCurrencyAmount(
+  amount: number,
+  sourceCurrency: string,
+  targetCurrency: string,
+  rates: ExchangeRates = fallbackExchangeRatesFromUsd,
+): number | null {
+  if (!Number.isFinite(amount)) {
+    return null;
+  }
+
+  const normalizedSourceCurrency = sourceCurrency.toUpperCase();
+  const normalizedTargetCurrency = targetCurrency.toUpperCase();
+
+  if (normalizedSourceCurrency === normalizedTargetCurrency) {
+    return amount;
+  }
+
+  const sourceRate = rates[normalizedSourceCurrency];
+  const targetRate = rates[normalizedTargetCurrency];
+
+  if (!isUsableRate(sourceRate) || !isUsableRate(targetRate)) {
+    return null;
+  }
+
+  const amountInUsd = amount / sourceRate;
+  return amountInUsd * targetRate;
+}
+
 export function convertCurrency(
   amountUsd: number,
   targetCurrency: string,
   rates: ExchangeRates = fallbackExchangeRatesFromUsd
 ) {
-  const normalizedCurrency = targetCurrency.toUpperCase();
-  const rate = rates[normalizedCurrency];
-
-  if (rate === undefined) {
-    return null;
-  }
-
-  return amountUsd * rate;
+  return convertCurrencyAmount(amountUsd, FX_BASE_CURRENCY, targetCurrency, rates);
 }
 
 export function resolveDisplayCurrency(

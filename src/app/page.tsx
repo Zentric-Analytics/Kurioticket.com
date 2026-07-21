@@ -3,10 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { hasFreshProviderPrice } from "@/lib/homepageFareDisplay";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   ChevronLeft,
+  ChevronDown,
   ChevronRight,
   CircleDollarSign,
   Compass,
@@ -14,10 +16,8 @@ import {
   Hotel,
   Plane,
   Sparkles,
-  Mail,
 } from "lucide-react";
 
-import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
@@ -26,24 +26,45 @@ import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
 import { LinkButton } from "@/components/ui/Button";
 import {
-  HOME_DISCOVERY_VISIBLE_CARD_COUNT,
-  getHomeDiscoveryByRegion,
+  HOME_DISCOVERY_IMAGE_CARD_COUNT,
+  getHomeDiscoveryImageCardsByRegion,
+  getHomepageRegionalRouteCards,
 } from "@/data/homeDiscovery";
+import { getHomepageHeroImageForMarket } from "@/data/images/homepageHeroImage";
+import {
+  distributeCountryDirectoryColumns,
+  getCountryDirectoryLabel,
+  getSortedCountryDirectoryCountries,
+  type CountryDirectoryCategory,
+} from "@/data/homepageCountryDirectory";
+import { CountryFlag } from "@/components/home/CountryFlag";
 import {
   getPopularDestinationFareCandidatesByRegion,
   getPopularDestinationsByRegion,
 } from "@/data/marketHomeContent";
-import { getGeneralFaqs, homepageMobileFaqLimit } from "@/content/faqs";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { buildHomepageRouteCardFlightHref } from "@/lib/home/homepageRouteCardLinks";
+import {
+  getCarouselArrowRenderState,
+  getCarouselStartScrollLeft,
+  getLogicalCarouselScrollState,
+} from "@/lib/home/homepageCarouselScroll";
 import { translateHomeDiscoveryField } from "@/lib/i18n/homeDiscovery";
+import { applyHomepageRecommendationOrder } from "@/lib/recommendations/homepagePersonalization";
 import { translations as enTranslations } from "@/lib/i18n/en";
+import { useSession } from "next-auth/react";
 import {
   readSavedTripIds,
   toggleSavedTripId,
   writeSavedTripIds,
 } from "@/lib/saved-trips-local";
-
+import {
+  deleteBackendTrip,
+  fetchBackendSavedTrips,
+  getSavedTripLocalId,
+  saveBackendTrip,
+  type SavedTripDisplayDetails,
+} from "@/lib/saved-trips-api";
 
 function CompareOffersIllustration() {
   return (
@@ -56,16 +77,16 @@ function CompareOffersIllustration() {
     >
       <rect width="64" height="64" rx="18" fill="url(#compareTile)" />
       <rect x="13" y="18" width="24" height="17" rx="5" fill="white" />
-      <rect x="17" y="23" width="12" height="3" rx="1.5" fill="#4F46E5" />
-      <rect x="17" y="29" width="16" height="2" rx="1" fill="#C7D2FE" />
+      <rect x="17" y="23" width="12" height="3" rx="1.5" fill="#004BB8" />
+      <rect x="17" y="29" width="16" height="2" rx="1" fill="#D8E7F8" />
       <rect x="29" y="25" width="23" height="18" rx="5" fill="#F8FAFC" />
       <rect x="34" y="30" width="10" height="3" rx="1.5" fill="#0D9488" />
       <rect x="34" y="36" width="13" height="2" rx="1" fill="#99F6E4" />
-      <circle cx="29" cy="34" r="11" fill="#EEF2FF" fillOpacity="0.78" />
-      <circle cx="29" cy="34" r="8" stroke="#312E81" strokeWidth="3" />
+      <circle cx="29" cy="34" r="11" fill="#F2F7FA" fillOpacity="0.78" />
+      <circle cx="29" cy="34" r="8" stroke="#021C2B" strokeWidth="3" />
       <path
         d="M35 40L43 48"
-        stroke="#312E81"
+        stroke="#021C2B"
         strokeWidth="4"
         strokeLinecap="round"
       />
@@ -77,8 +98,15 @@ function CompareOffersIllustration() {
         strokeLinejoin="round"
       />
       <defs>
-        <linearGradient id="compareTile" x1="6" y1="5" x2="58" y2="59" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#EEF2FF" />
+        <linearGradient
+          id="compareTile"
+          x1="6"
+          y1="5"
+          x2="58"
+          y2="59"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor="#F2F7FA" />
           <stop offset="1" stopColor="#ECFEFF" />
         </linearGradient>
       </defs>
@@ -100,9 +128,9 @@ function PricingContextIllustration() {
         d="M19 13H43C45.2091 13 47 14.7909 47 17V49L42.5 46.5L38 49L33.5 46.5L29 49L24.5 46.5L19 49V13Z"
         fill="white"
       />
-      <rect x="24" y="21" width="17" height="3" rx="1.5" fill="#7C3AED" />
-      <rect x="24" y="29" width="12" height="2.5" rx="1.25" fill="#DDD6FE" />
-      <rect x="24" y="36" width="15" height="2.5" rx="1.25" fill="#DDD6FE" />
+      <rect x="24" y="21" width="17" height="3" rx="1.5" fill="#5CB6B2" />
+      <rect x="24" y="29" width="12" height="2.5" rx="1.25" fill="#CFEAE8" />
+      <rect x="24" y="36" width="15" height="2.5" rx="1.25" fill="#CFEAE8" />
       <circle cx="43" cy="41" r="9" fill="#CCFBF1" />
       <path
         d="M39.5 41.5L42 44L47 38.5"
@@ -112,11 +140,23 @@ function PricingContextIllustration() {
         strokeLinejoin="round"
       />
       <circle cx="18" cy="20" r="5" fill="#FDE68A" />
-      <path d="M18 17.6V22.4" stroke="#A16207" strokeWidth="1.8" strokeLinecap="round" />
+      <path
+        d="M18 17.6V22.4"
+        stroke="#A16207"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
       <defs>
-        <linearGradient id="pricingTile" x1="5" y1="5" x2="59" y2="59" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#F5F3FF" />
-          <stop offset="1" stopColor="#EFF6FF" />
+        <linearGradient
+          id="pricingTile"
+          x1="5"
+          y1="5"
+          x2="59"
+          y2="59"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor="#F2F7FA" />
+          <stop offset="1" stopColor="#EAF7F6" />
         </linearGradient>
       </defs>
     </svg>
@@ -134,12 +174,12 @@ function SecureHandoffIllustration() {
     >
       <rect width="64" height="64" rx="18" fill="url(#handoffTile)" />
       <rect x="30" y="16" width="22" height="18" rx="5" fill="white" />
-      <rect x="34" y="21" width="11" height="3" rx="1.5" fill="#2563EB" />
-      <rect x="34" y="28" width="14" height="2" rx="1" fill="#BFDBFE" />
+      <rect x="34" y="21" width="11" height="3" rx="1.5" fill="#004BB8" />
+      <rect x="34" y="28" width="14" height="2" rx="1" fill="#D8E7F8" />
       <path
         d="M15 20L29 15L43 20V31C43 41.5 36 47.5 29 50C22 47.5 15 41.5 15 31V20Z"
-        fill="#EEF2FF"
-        stroke="#312E81"
+        fill="#F2F7FA"
+        stroke="#021C2B"
         strokeWidth="2.8"
         strokeLinejoin="round"
       />
@@ -152,14 +192,21 @@ function SecureHandoffIllustration() {
       />
       <path
         d="M41 42H50M50 42L46 38M50 42L46 46"
-        stroke="#2563EB"
+        stroke="#004BB8"
         strokeWidth="2.8"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <defs>
-        <linearGradient id="handoffTile" x1="6" y1="5" x2="58" y2="59" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#EFF6FF" />
+        <linearGradient
+          id="handoffTile"
+          x1="6"
+          y1="5"
+          x2="58"
+          y2="59"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor="#F2F7FA" />
           <stop offset="1" stopColor="#F0FDFA" />
         </linearGradient>
       </defs>
@@ -167,12 +214,8 @@ function SecureHandoffIllustration() {
   );
 }
 
-const heroImage =
-  "/images/premium/homepage/kurioticket-homepage-hero-businesswoman-modern-city-luggage-001.jpg";
-
 const POPULAR_DESTINATION_VISIBLE_CARD_COUNT = 8;
-const HOME_DISCOVERY_MOBILE_VISIBLE_CARD_COUNT =
-  HOME_DISCOVERY_VISIBLE_CARD_COUNT + 2;
+const HOME_DISCOVERY_FARE_FETCH_CARD_COUNT = 24;
 
 const destinationImageFallback =
   "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95";
@@ -351,6 +394,9 @@ type DiscoveryFareCardState = {
   cards: HomeDiscoveryFareCard[];
 };
 
+type HomepageRecommendationSurface = "popular" | "discovery" | "regionalRoutes";
+type HomepageRecommendationOrder = Partial<Record<HomepageRecommendationSurface, string[]>>;
+
 type NewsletterStatus = "idle" | "success" | "error";
 
 function isNewsletterEmail(value: string) {
@@ -363,6 +409,10 @@ function isNewsletterEmail(value: string) {
   );
 }
 
+// Production rule: the public homepage must never initiate passkey setup,
+// passkey authentication, or passkey setup-state fetches. Optional account-security
+// onboarding belongs on /auth/signin, /onboarding/security, /dashboard/security,
+// and passkey API routes only.
 export default function Home() {
   const { locale, t: dictionary } = useLocale();
   const { mode: regionCode, selectedOption } = useRegion();
@@ -371,7 +421,12 @@ export default function Home() {
   const [newsletterStatus, setNewsletterStatus] =
     useState<NewsletterStatus>("idle");
   const [newsletterPending, setNewsletterPending] = useState(false);
+  const { status: sessionStatus } = useSession();
   const [savedTripIds, setSavedTripIds] = useState<string[]>([]);
+  const [backendSavedTripIds, setBackendSavedTripIds] = useState<
+    Record<string, string>
+  >({});
+  const [savedTripError, setSavedTripError] = useState("");
   const [destinationPriceState, setDestinationPriceState] =
     useState<DestinationPriceState>({
       loading: true,
@@ -382,27 +437,129 @@ export default function Home() {
       loading: true,
       cards: [],
     });
+  const [homepageRecommendationOrder, setHomepageRecommendationOrder] =
+    useState<HomepageRecommendationOrder>({});
+  const effectiveHomepageRecommendationOrder =
+    sessionStatus === "authenticated" ? homepageRecommendationOrder : {};
   const destinationsRailRef = useRef<HTMLDivElement>(null);
+  const [canScrollDestinationsLeft, setCanScrollDestinationsLeft] =
+    useState(false);
+  const [canScrollDestinationsRight, setCanScrollDestinationsRight] =
+    useState(false);
+  const [, setHasAdvancedWithNextArrowState] = useState(false);
+  const hasAdvancedWithNextArrowRef = useRef(false);
+  const programmaticDestinationScrollCleanupRef = useRef<(() => void) | null>(
+    null,
+  );
+  const [expandedCountryDirectoryId, setExpandedCountryDirectoryId] = useState<
+    string | null
+  >(null);
+
+  const setHasAdvancedWithNextArrow = useCallback((value: boolean) => {
+    hasAdvancedWithNextArrowRef.current = value;
+    setHasAdvancedWithNextArrowState(value);
+  }, []);
+
+  const measureDestinationRailState = useCallback(() => {
+    const rail = destinationsRailRef.current;
+    if (!rail) return null;
+    return getLogicalCarouselScrollState({
+      scrollLeft: rail.scrollLeft,
+      scrollWidth: rail.scrollWidth,
+      clientWidth: rail.clientWidth,
+      direction: window.getComputedStyle(rail).direction,
+    });
+  }, []);
+
+  const updateDestinationArrowState = useCallback(() => {
+    const state = measureDestinationRailState();
+    if (!state) return null;
+    if (state.isAtStart && hasAdvancedWithNextArrowRef.current) {
+      setHasAdvancedWithNextArrow(false);
+    }
+    const arrows = getCarouselArrowRenderState(
+      state,
+      hasAdvancedWithNextArrowRef.current,
+    );
+    setCanScrollDestinationsLeft(arrows.shouldRenderPreviousArrow);
+    setCanScrollDestinationsRight(arrows.canScrollToNext);
+    return state;
+  }, [measureDestinationRailState, setHasAdvancedWithNextArrow]);
 
   const scrollDestinationsRail = (direction: "left" | "right") => {
     const rail = destinationsRailRef.current;
 
     if (!rail) return;
 
-    const amount = Math.round(rail.clientWidth * 0.85);
+    programmaticDestinationScrollCleanupRef.current?.();
+    const beforeState = measureDestinationRailState();
+    if (!beforeState) return;
+    const targetLogical = getDestinationRailTargetLogicalScroll(
+      rail,
+      beforeState.logicalScrollLeft,
+      direction,
+    );
+    const directionStyle = window.getComputedStyle(rail).direction;
+    const targetIsStart = targetLogical <= 2;
 
-    rail.scrollBy({
-      left: direction === "left" ? -amount : amount,
+    const finalizeProgrammaticScroll = () => {
+      const finalState = measureDestinationRailState();
+      if (!finalState) return;
+
+      if (
+        direction === "right" &&
+        finalState.logicalScrollLeft > beforeState.logicalScrollLeft + 2
+      ) {
+        setHasAdvancedWithNextArrow(true);
+      }
+
+      if (targetIsStart && finalState.logicalScrollLeft <= 2) {
+        rail.scrollTo({
+          left: getCarouselStartScrollLeft(
+            directionStyle,
+            finalState.maxScrollLeft,
+          ),
+          behavior: "instant",
+        });
+        setHasAdvancedWithNextArrow(false);
+        setCanScrollDestinationsLeft(false);
+        setCanScrollDestinationsRight(finalState.maxScrollLeft > 2);
+        return;
+      }
+
+      updateDestinationArrowState();
+    };
+
+    rail.scrollTo({
+      left: getPhysicalScrollLeftForLogicalTarget(
+        targetLogical,
+        beforeState.maxScrollLeft,
+        directionStyle,
+        rail.scrollLeft,
+      ),
       behavior: "smooth",
     });
+
+    programmaticDestinationScrollCleanupRef.current =
+      observeProgrammaticCarouselScroll(
+        rail,
+        measureDestinationRailState,
+        finalizeProgrammaticScroll,
+      );
   };
 
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const t = useCallback(
+    (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
+    [dictionary],
+  );
   const translateDiscoveryItemCopy = (
     item: HomeDiscoveryCardItem,
     field: "title" | "routeNote",
   ) => translateHomeDiscoveryField(dictionary, item, field);
-  const translatedFaqs = getGeneralFaqs(t);
+  const homepageHeroImage = useMemo(
+    () => getHomepageHeroImageForMarket(regionCode),
+    [regionCode],
+  );
 
   const popularDestinationResolution = useMemo(
     () => getPopularDestinationsByRegion(regionCode),
@@ -434,32 +591,57 @@ export default function Home() {
       },
     );
 
-    if (destinationPriceState.loading) {
-      return destinationsWithIndex
-        .slice(0, POPULAR_DESTINATION_VISIBLE_CARD_COUNT)
-        .map(({ destination }) => destination);
-    }
+    const homepageOrderedDestinations = destinationPriceState.loading
+      ? destinationsWithIndex.map(({ destination }) => destination)
+      : destinationsWithIndex
+          .sort(
+            (first, second) =>
+              Number(second.hasFreshPrice) - Number(first.hasFreshPrice) ||
+              first.index - second.index,
+          )
+          .map(({ destination }) => destination);
 
-    return destinationsWithIndex
-      .sort(
-        (first, second) =>
-          Number(second.hasFreshPrice) - Number(first.hasFreshPrice) ||
-          first.index - second.index,
-      )
-      .slice(0, POPULAR_DESTINATION_VISIBLE_CARD_COUNT)
-      .map(({ destination }) => destination);
+    return applyHomepageRecommendationOrder(
+      homepageOrderedDestinations,
+      effectiveHomepageRecommendationOrder.popular,
+      (destination) => destination.id,
+    ).slice(0, POPULAR_DESTINATION_VISIBLE_CARD_COUNT);
   }, [
     destinationPriceState.loading,
     destinationPriceState.prices,
+    effectiveHomepageRecommendationOrder.popular,
     popularDestinationFareCandidates,
     popularDestinations,
   ]);
 
-  const fallbackDiscoveryCards = useMemo<HomeDiscoveryFareCard[]>(
+  const genericCuratedDiscoveryItems = useMemo(
+    () => getHomeDiscoveryImageCardsByRegion(regionCode),
+    [regionCode],
+  );
+  const curatedDiscoveryItems = useMemo(
     () =>
-      getHomeDiscoveryByRegion(regionCode)
-        .slice(0, HOME_DISCOVERY_MOBILE_VISIBLE_CARD_COUNT)
-        .map((item) => ({
+      applyHomepageRecommendationOrder(
+        genericCuratedDiscoveryItems,
+        effectiveHomepageRecommendationOrder.discovery,
+        (item) => item.id,
+      ),
+    [genericCuratedDiscoveryItems, effectiveHomepageRecommendationOrder.discovery],
+  );
+  const discoveryFareCardsById = useMemo(() => {
+    const cardsById = new Map<string, HomeDiscoveryFareCard>();
+
+    for (const card of discoveryFareCardState.cards) {
+      cardsById.set(card.item.id, card);
+    }
+
+    return cardsById;
+  }, [discoveryFareCardState.cards]);
+  const discoveryCards = useMemo<HomeDiscoveryFareCard[]>(
+    () =>
+      curatedDiscoveryItems.map((item) => {
+        const fareCard = discoveryFareCardsById.get(item.id);
+
+        return {
           item: {
             id: item.id,
             title: item.title,
@@ -471,26 +653,124 @@ export default function Home() {
             image: item.image,
             imageAlt: item.imageAlt,
           },
-          priceState: "none",
-        })),
-    [regionCode],
+          fare: fareCard?.fare,
+          priceState: fareCard?.priceState ?? "none",
+        };
+      }),
+    [curatedDiscoveryItems, discoveryFareCardsById],
   );
-  const discoveryCards = discoveryFareCardState.cards.length
-    ? discoveryFareCardState.cards
-    : fallbackDiscoveryCards;
   const desktopDiscoveryCards = useMemo(
-    () => discoveryCards.slice(0, HOME_DISCOVERY_VISIBLE_CARD_COUNT),
+    () => discoveryCards.slice(0, HOME_DISCOVERY_IMAGE_CARD_COUNT),
     [discoveryCards],
   );
-  const mobileDiscoveryGroups = useMemo(() => {
-    const groups = [];
+  const mobileDiscoveryCards = useMemo(
+    () => discoveryCards.slice(0, HOME_DISCOVERY_IMAGE_CARD_COUNT),
+    [discoveryCards],
+  );
+  const topRowDiscoveryCards = useMemo(
+    () => mobileDiscoveryCards.filter((_, index) => index % 2 === 0),
+    [mobileDiscoveryCards],
+  );
+  const bottomRowDiscoveryCards = useMemo(
+    () => mobileDiscoveryCards.filter((_, index) => index % 2 === 1),
+    [mobileDiscoveryCards],
+  );
+  const genericRegionalRouteItems = useMemo(
+    () => getHomepageRegionalRouteCards(regionCode, genericCuratedDiscoveryItems),
+    [genericCuratedDiscoveryItems, regionCode],
+  );
+  const regionalRouteItems = useMemo(
+    () =>
+      applyHomepageRecommendationOrder(
+        genericRegionalRouteItems,
+        effectiveHomepageRecommendationOrder.regionalRoutes,
+        (item) => item.id,
+      ),
+    [genericRegionalRouteItems, effectiveHomepageRecommendationOrder.regionalRoutes],
+  );
+  useEffect(() => {
+    if (sessionStatus !== "authenticated") return;
 
-    for (let index = 0; index < discoveryCards.length; index += 6) {
-      groups.push(discoveryCards.slice(index, index + 6));
+    let active = true;
+
+    async function loadHomepageRecommendationOrder() {
+      try {
+        const response = await fetch("/api/homepage/recommendations", {
+          method: "POST",
+          cache: "no-store",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            surfaces: {
+              popular: popularDestinationFareCandidates.map((destination) => ({
+                id: destination.id,
+                destinationCode: destination.code,
+              })),
+              discovery: genericCuratedDiscoveryItems.map((item) => ({
+                id: item.id,
+                destinationCode: item.destinationCode,
+              })),
+              regionalRoutes: genericRegionalRouteItems.map((item) => ({
+                id: item.id,
+                destinationCode: item.destinationCode,
+              })),
+            },
+          }),
+        });
+
+        if (!active) return;
+
+        if (!response.ok) {
+          setHomepageRecommendationOrder({});
+          return;
+        }
+
+        const data = (await response.json()) as {
+          order?: HomepageRecommendationOrder;
+        };
+
+        setHomepageRecommendationOrder(data.order ?? {});
+      } catch {
+        if (active) setHomepageRecommendationOrder({});
+      }
     }
 
-    return groups;
-  }, [discoveryCards]);
+    void loadHomepageRecommendationOrder();
+
+    return () => {
+      active = false;
+    };
+  }, [
+    genericCuratedDiscoveryItems,
+    genericRegionalRouteItems,
+    popularDestinationFareCandidates,
+    sessionStatus,
+  ]);
+
+  const fareCardsByExactRoute = useMemo(() => {
+    const cardsByRoute = new Map<string, HomeDiscoveryFareCard>();
+
+    for (const card of discoveryFareCardState.cards) {
+      const routeKey = getRouteKey(
+        card.item.originCode,
+        card.item.destinationCode,
+      );
+      if (routeKey && !cardsByRoute.has(routeKey))
+        cardsByRoute.set(routeKey, card);
+    }
+
+    return cardsByRoute;
+  }, [discoveryFareCardState.cards]);
+  const sortedCountryDirectoryCountries = useMemo(
+    () => getSortedCountryDirectoryCountries(locale, t),
+    [locale, t],
+  );
+  const countryDirectoryColumns = useMemo(
+    () => distributeCountryDirectoryColumns(sortedCountryDirectoryCountries, 4),
+    [sortedCountryDirectoryCountries],
+  );
 
   const handleNewsletterSubmit = async (
     event: React.FormEvent<HTMLFormElement>,
@@ -543,13 +823,85 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    const frameId = window.requestAnimationFrame(() => {
-      setSavedTripIds(readSavedTripIds());
+  const refreshBackendSavedTrips = useCallback(async (signal?: AbortSignal) => {
+    const result = await fetchBackendSavedTrips(signal);
+    if (!result.ok || !result.items) return;
+
+    const backendIds: Record<string, string> = {};
+    const localIds = result.items.map((item) => {
+      const localId = getSavedTripLocalId(item);
+      backendIds[localId] = item.id;
+      return localId;
     });
 
-    return () => window.cancelAnimationFrame(frameId);
+    setBackendSavedTripIds(backendIds);
+    setSavedTripIds(localIds);
   }, []);
+
+  useEffect(() => {
+    if (sessionStatus === "loading") return;
+
+    if (sessionStatus === "authenticated") {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => {
+        void refreshBackendSavedTrips(controller.signal);
+      }, 0);
+      return () => {
+        window.clearTimeout(timeoutId);
+        controller.abort();
+      };
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setBackendSavedTripIds({});
+      setSavedTripIds(readSavedTripIds());
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [refreshBackendSavedTrips, sessionStatus]);
+
+  useEffect(() => {
+    const rail = destinationsRailRef.current;
+    if (!rail) return;
+
+    const measure = () => updateDestinationArrowState();
+    const resetToStart = () => {
+      const maxScrollLeft = Math.max(0, rail.scrollWidth - rail.clientWidth);
+      const direction = window.getComputedStyle(rail).direction;
+      rail.scrollTo({
+        left: getCarouselStartScrollLeft(direction, maxScrollLeft),
+        behavior: "instant",
+      });
+      setHasAdvancedWithNextArrow(false);
+      setCanScrollDestinationsLeft(false);
+      measure();
+    };
+
+    setCanScrollDestinationsLeft(false);
+    const firstFrame = window.requestAnimationFrame(() => {
+      resetToStart();
+      window.requestAnimationFrame(measure);
+    });
+
+    const resizeObserver = new ResizeObserver(() => {
+      window.requestAnimationFrame(measure);
+    });
+    resizeObserver.observe(rail);
+    rail.addEventListener("scroll", measure, { passive: true });
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      programmaticDestinationScrollCleanupRef.current?.();
+      programmaticDestinationScrollCleanupRef.current = null;
+      resizeObserver.disconnect();
+      rail.removeEventListener("scroll", measure);
+    };
+  }, [
+    measureDestinationRailState,
+    popularDestinationMarket,
+    visiblePopularDestinations,
+    setHasAdvancedWithNextArrow,
+    updateDestinationArrowState,
+  ]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -618,7 +970,7 @@ export default function Home() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             regionCode,
-            limit: HOME_DISCOVERY_MOBILE_VISIBLE_CARD_COUNT,
+            limit: HOME_DISCOVERY_FARE_FETCH_CARD_COUNT,
             currency: "USD",
           }),
           signal: controller.signal,
@@ -647,18 +999,56 @@ export default function Home() {
     return () => controller.abort();
   }, [regionCode]);
 
-  const handleSavedTripToggle = (
+  const handleSavedTripToggle = async (
     event: React.MouseEvent<HTMLButtonElement>,
     itemId: string,
+    display?: SavedTripDisplayDetails,
   ) => {
     event.preventDefault();
     event.stopPropagation();
 
-    setSavedTripIds((current) => {
-      const next = toggleSavedTripId(current, itemId);
-      writeSavedTripIds(next);
-      return next;
-    });
+    if (sessionStatus !== "authenticated") {
+      setSavedTripError("");
+      setSavedTripIds((current) => {
+        const next = toggleSavedTripId(current, itemId);
+        writeSavedTripIds(next);
+        return next;
+      });
+      return;
+    }
+
+    if (savedTripIds.includes(itemId)) {
+      const backendId = backendSavedTripIds[itemId];
+      if (!backendId) {
+        await refreshBackendSavedTrips();
+        return;
+      }
+
+      const result = await deleteBackendTrip(backendId);
+      if (result.ok) {
+        setSavedTripError("");
+        setSavedTripIds((current) => current.filter((id) => id !== itemId));
+        setBackendSavedTripIds((current) => {
+          const next = { ...current };
+          delete next[itemId];
+          return next;
+        });
+      } else {
+        setSavedTripError(
+          result.error ?? "Unable to update saved trips right now.",
+        );
+        await refreshBackendSavedTrips();
+      }
+      return;
+    }
+
+    const result = await saveBackendTrip(itemId, display);
+    if (result.ok || result.duplicate) {
+      setSavedTripError("");
+      await refreshBackendSavedTrips();
+    } else {
+      setSavedTripError(result.error ?? "Unable to save trip right now.");
+    }
   };
 
   return (
@@ -669,7 +1059,7 @@ export default function Home() {
         <section className="relative min-h-[420px] overflow-visible bg-slate-950 sm:min-h-[550px] lg:min-h-[610px]">
           <div className="absolute inset-0">
             <Image
-              src={heroImage}
+              src={homepageHeroImage.url}
               alt={t("homeHeroImageAlt")}
               fill
               priority
@@ -677,7 +1067,7 @@ export default function Home() {
               className="object-cover object-[62%_center] sm:object-[60%_center] lg:object-[58%_48%]"
             />
           </div>
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-[88%] bg-gradient-to-r from-slate-950/68 via-slate-950/28 to-transparent sm:w-[72%] lg:w-[62%]" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-[88%] bg-gradient-to-r from-slate-950/68 via-slate-950/28 to-transparent rtl:left-auto rtl:right-0 rtl:bg-gradient-to-l sm:w-[72%] lg:w-[62%]" />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/22 via-transparent to-slate-950/30" />
 
           <div className="page-shell relative z-10 pb-0 pt-8 sm:pb-44 sm:pt-10 lg:pb-48 lg:pt-12">
@@ -723,23 +1113,27 @@ export default function Home() {
             </div>
 
             <div className="relative mt-6">
-              <button
-                type="button"
-                aria-label={t("homePreviousDestinations")}
-                onClick={() => scrollDestinationsRail("left")}
-                className="focus-ring absolute -left-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
-              >
-                <ChevronLeft size={18} />
-              </button>
+              {canScrollDestinationsLeft ? (
+                <button
+                  type="button"
+                  aria-label={t("homePreviousDestinations")}
+                  onClick={() => scrollDestinationsRail("left")}
+                  className="focus-ring absolute -left-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+              ) : null}
 
-              <button
-                type="button"
-                aria-label={t("homeNextDestinations")}
-                onClick={() => scrollDestinationsRail("right")}
-                className="focus-ring absolute -right-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
-              >
-                <ChevronRight size={18} />
-              </button>
+              {canScrollDestinationsRight ? (
+                <button
+                  type="button"
+                  aria-label={t("homeNextDestinations")}
+                  onClick={() => scrollDestinationsRail("right")}
+                  className="focus-ring absolute -right-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              ) : null}
 
               <div
                 ref={destinationsRailRef}
@@ -772,6 +1166,7 @@ export default function Home() {
                       originCode={destination.originCode}
                       destinationCode={destination.code}
                       href={buildDestinationCardHref(price, {
+                        city: destination.city,
                         originCode: destination.originCode,
                         destinationCode: destination.code,
                         displayCurrency: selectedOption.currency,
@@ -789,7 +1184,10 @@ export default function Home() {
         </section>
 
         <section className="page-shell bg-white py-7 sm:bg-transparent sm:py-6">
-          <div className="space-y-4 sm:space-y-5">
+          <p className="sr-only" aria-live="polite">
+            {savedTripError}
+          </p>
+          <div className="space-y-3 sm:space-y-5">
             <div className="space-y-2">
               <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
                 {t("homeDiscoveryTitle")}
@@ -798,52 +1196,62 @@ export default function Home() {
                 {t("homeDiscoverySubtitle")}
               </p>
             </div>
-            <div className="flex items-center justify-end sm:hidden">
-              <div className="pointer-events-none mb-2 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/95 px-2.5 py-1 text-xs font-semibold text-slate-600 shadow-sm">
-                {t("homeDiscoverySwipeMore")}
-                <ChevronRight size={13} className="text-slate-500" />
-              </div>
-            </div>
-            <div className="-mx-1.5 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-1.5 pb-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden">
-              {mobileDiscoveryGroups.map((group, groupIndex) => (
-                <div
-                  key={`group-${groupIndex}`}
-                  className="grid min-w-full snap-start grid-cols-2 gap-2.5"
-                >
-                  {group.map((card) => {
-                    return (
-                      <DiscoverySuggestionCard
-                        key={card.item.id}
-                        href={buildDiscoveryCardHref(card.fare, {
-                          originCode: card.item.originCode,
-                          destinationCode: card.item.destinationCode,
-                          displayCurrency: selectedOption.currency,
-                          market: regionCode,
-                        })}
-                        itemId={card.item.id}
-                        image={card.item.image}
-                        imageAlt={card.item.imageAlt}
-                        destinationCode={card.item.destinationCode}
-                        title={translateDiscoveryItemCopy(card.item, "title")}
-                        originCode={card.item.originCode}
-                        destinationCodeLabel={card.item.destinationCode}
-                        routeNote={translateDiscoveryItemCopy(
-                          card.item,
-                          "routeNote",
-                        )}
-                        compact
-                        price={card.fare}
-                        displayCurrency={selectedOption.currency}
-                        expectedOriginCode={card.item.originCode}
-                        expectedDestinationCode={card.item.destinationCode}
-                        isPriceLoading={discoveryFareCardState.loading}
-                        isSaved={savedTripIds.includes(card.item.id)}
-                        onHeartToggle={handleSavedTripToggle}
-                      />
-                    );
-                  })}
-                </div>
-              ))}
+            <div className="space-y-3 sm:hidden">
+              {[topRowDiscoveryCards, bottomRowDiscoveryCards].map(
+                (rowCards, rowIndex) => (
+                  <div
+                    key={rowIndex === 0 ? "top-row" : "bottom-row"}
+                    className={`-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+                      rowIndex === 0 ? "pb-1" : "pb-2"
+                    }`}
+                  >
+                    <div className="flex w-max gap-3 pr-10">
+                      {rowCards.map((card) => {
+                        return (
+                          <div
+                            key={card.item.id}
+                            className="w-[44vw] min-w-[170px] max-w-[210px] shrink-0"
+                          >
+                            <DiscoverySuggestionCard
+                              href={buildDiscoveryCardHref(card.fare, {
+                                originCode: card.item.originCode,
+                                destinationCode: card.item.destinationCode,
+                                displayCurrency: selectedOption.currency,
+                                market: regionCode,
+                              })}
+                              itemId={card.item.id}
+                              image={card.item.image}
+                              imageAlt={card.item.imageAlt}
+                              destinationCode={card.item.destinationCode}
+                              title={translateDiscoveryItemCopy(
+                                card.item,
+                                "title",
+                              )}
+                              originCode={card.item.originCode}
+                              destinationCodeLabel={card.item.destinationCode}
+                              routeNote={translateDiscoveryItemCopy(
+                                card.item,
+                                "routeNote",
+                              )}
+                              compact
+                              mobileBoardCard
+                              price={card.fare}
+                              displayCurrency={selectedOption.currency}
+                              expectedOriginCode={card.item.originCode}
+                              expectedDestinationCode={
+                                card.item.destinationCode
+                              }
+                              isPriceLoading={discoveryFareCardState.loading}
+                              isSaved={savedTripIds.includes(card.item.id)}
+                              onHeartToggle={handleSavedTripToggle}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ),
+              )}
             </div>
 
             <div className="hidden grid-cols-3 gap-3 sm:grid md:grid-cols-4 lg:grid-cols-4">
@@ -882,68 +1290,118 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mt-6 border-y border-slate-300/80 bg-gradient-to-b from-slate-50/90 via-indigo-50/35 to-slate-50/80 sm:mt-9">
-          <div className="page-shell py-9 sm:py-11">
-            <div className="space-y-4">
-              <div className="max-w-3xl space-y-1.5">
-                <h2 className="text-xl font-semibold tracking-[-0.02em] text-slate-900 sm:text-2xl">
-                  {t("homeTrustTitle")}
-                </h2>
-                <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
-                  {t("homeTrustSubtitle")}
-                </p>
+        <section className="page-shell mt-4 sm:mt-6">
+          <div className="border-y border-slate-300/80 bg-gradient-to-b from-slate-50/90 via-[#F2F7FA]/45 to-slate-50/80 py-5 sm:py-7">
+            <div className="px-0">
+              <div className="space-y-4">
+                <div className="max-w-3xl space-y-1.5">
+                  <h2 className="text-xl font-semibold tracking-[-0.02em] text-slate-900 sm:text-2xl">
+                    {t("homeTrustTitle")}
+                  </h2>
+                  <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
+                    {t("homeTrustSubtitle")}
+                  </p>
+                </div>
+
+                <div className="mt-3 divide-y divide-slate-200/70 md:grid md:grid-cols-3 md:gap-6 md:divide-y-0 md:[&>article+article]:border-l md:[&>article+article]:border-slate-200/70 md:[&>article+article]:pl-6 md:rtl:[&>article+article]:border-l-0 md:rtl:[&>article+article]:border-r md:rtl:[&>article+article]:pl-0 md:rtl:[&>article+article]:pr-6">
+                  <article className="flex items-start gap-3 py-2.5 first:pt-1 last:pb-1 md:px-2 md:py-1.5">
+                    <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-[#004BB8]/10">
+                      <CompareOffersIllustration />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold leading-6 text-slate-900">
+                        {t("homeTrustCompareTitle")}
+                      </h3>
+                      <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                        {t("homeTrustCompareBody")}
+                      </p>
+                    </div>
+                  </article>
+
+                  <article className="flex items-start gap-3 py-2.5 first:pt-1 last:pb-1 md:px-2 md:py-1.5">
+                    <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-[#5CB6B2]/18">
+                      <PricingContextIllustration />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold leading-6 text-slate-900">
+                        {t("homeTrustPricingTitle")}
+                      </h3>
+                      <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                        {t("homeTrustPricingBody")}
+                      </p>
+                    </div>
+                  </article>
+
+                  <article className="flex items-start gap-3 py-2.5 first:pt-1 last:pb-1 md:px-2 md:py-1.5">
+                    <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-[#021C2B]/10">
+                      <SecureHandoffIllustration />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold leading-6 text-slate-900">
+                        {t("homeTrustHandoffTitle")}
+                      </h3>
+                      <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                        {t("homeTrustHandoffBody")}
+                      </p>
+                    </div>
+                  </article>
+                </div>
               </div>
+            </div>
+          </div>
+        </section>
 
-              <div className="mt-4 divide-y divide-slate-200/70 md:grid md:grid-cols-3 md:gap-6 md:divide-y-0 md:[&>article+article]:border-l md:[&>article+article]:border-slate-200/70 md:[&>article+article]:pl-6">
-                <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
-                  <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-indigo-100/80">
-                    <CompareOffersIllustration />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold leading-6 text-slate-900">
-                      {t("homeTrustCompareTitle")}
-                    </h3>
-                    <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
-                      {t("homeTrustCompareBody")}
-                    </p>
-                  </div>
-                </article>
+        <section
+          className="page-shell bg-white pb-8 pt-8 sm:bg-transparent sm:pb-9 sm:pt-11"
+          aria-labelledby="regional-routes-heading"
+        >
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <h2
+              id="regional-routes-heading"
+              className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl"
+            >
+              {t("homeRegionalRoutesTitle") ||
+                "Discover destinations from your region"}
+            </h2>
+            <Link
+              href="/flights"
+              className="focus-ring hidden items-center gap-1.5 rounded-full px-2 py-1 text-sm font-bold text-[#004BB8] hover:text-[#021C2B] sm:inline-flex"
+            >
+              {t("homeRegionalRoutesViewAll") || "View all route ideas"}
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
+          <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
+            <div className="flex snap-x snap-mandatory gap-4 sm:grid sm:grid-cols-5 sm:gap-5">
+              {regionalRouteItems.map((item) => {
+                const fareCard = fareCardsByExactRoute.get(
+                  getRouteKey(item.originCode, item.destinationCode) ?? "",
+                );
 
-                <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
-                  <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-violet-100/80">
-                    <PricingContextIllustration />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold leading-6 text-slate-900">
-                      {t("homeTrustPricingTitle")}
-                    </h3>
-                    <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
-                      {t("homeTrustPricingBody")}
-                    </p>
-                  </div>
-                </article>
-
-                <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
-                  <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-blue-100/80">
-                    <SecureHandoffIllustration />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold leading-6 text-slate-900">
-                      {t("homeTrustHandoffTitle")}
-                    </h3>
-                    <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
-                      {t("homeTrustHandoffBody")}
-                    </p>
-                  </div>
-                </article>
-              </div>
+                return (
+                  <RegionalRouteCard
+                    key={`regional-${item.id}`}
+                    href={buildDiscoveryCardHref(fareCard?.fare, {
+                      originCode: item.originCode,
+                      destinationCode: item.destinationCode,
+                      displayCurrency: selectedOption.currency,
+                      market: regionCode,
+                    })}
+                    originCity={item.originCity}
+                    destinationCity={item.destinationCity}
+                    image={item.image}
+                    imageAlt={item.imageAlt}
+                    destinationCode={item.destinationCode}
+                  />
+                );
+              })}
             </div>
           </div>
         </section>
 
         <section className="page-shell grid gap-5 py-9 lg:grid-cols-2">
           <PromoPanel
-            tone="violet"
+            tone="blue"
             title={t("homePromoFlightsTitle")}
             body={t("homePromoFlightsBody")}
             cta={t("homePromoFlightsCta")}
@@ -952,7 +1410,7 @@ export default function Home() {
           />
 
           <PromoPanel
-            tone="amber"
+            tone="teal"
             title={t("homePromoHotelsTitle")}
             body={t("homePromoHotelsBody")}
             cta={t("homePromoHotelsCta")}
@@ -961,103 +1419,282 @@ export default function Home() {
           />
         </section>
 
-        <section className="page-shell pb-12 pt-2 sm:pt-3">
-          <div className="max-w-3xl space-y-2">
-            <h2 className="text-xl font-semibold tracking-normal text-slate-800 sm:font-bold sm:text-slate-900">
-              {t("faqHeading")}
-            </h2>
-            <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
-              {t("faqIntro")}
-            </p>
+        <section
+          className="page-shell bg-white pb-7 pt-2 sm:pb-8 sm:pt-3"
+          aria-labelledby="homepage-country-directory-heading"
+          data-country-directory
+        >
+          <div className="mb-5 flex flex-col gap-3 sm:mb-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl space-y-2">
+              <h2
+                id="homepage-country-directory-heading"
+                className="text-xl font-bold tracking-tight text-[#07133F] sm:text-2xl"
+              >
+                {t("homeTripPlanningDirectoryTitle")}
+              </h2>
+              <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
+                {t("homeTripPlanningDirectorySubtitle")}
+              </p>
+            </div>
           </div>
 
-          <FaqAccordion
-            items={translatedFaqs}
-            mobileLimit={homepageMobileFaqLimit}
-            className="mt-5"
-          />
-
-          <Link
-            href="/faq"
-            className="mt-4 inline-flex text-sm font-bold text-indigo-700 underline-offset-4 hover:text-indigo-900 hover:underline sm:hidden"
+          <div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+            data-country-directory-columns="4"
+            data-independent-country-columns
           >
-            {t("faqViewAll")}
-          </Link>
+            {countryDirectoryColumns.map((columnCountries, columnIndex) => (
+              <div
+                key={`country-directory-column-${columnIndex}`}
+                className={`${columnIndex % 2 === 1 ? "sm:border-l sm:border-slate-100" : ""} ${columnIndex > 0 ? "lg:border-l lg:border-slate-100" : ""}`}
+                data-country-directory-column
+              >
+                {columnCountries.map((country) => {
+                  const isExpanded = expandedCountryDirectoryId === country.id;
+                  const panelId = `country-directory-${country.id}`;
+                  const countryName = getCountryDirectoryLabel(country, t);
+
+                  return (
+                    <article
+                      key={country.id}
+                      className="border-b border-slate-100 bg-transparent"
+                      data-country-row
+                      data-expanded={isExpanded ? "true" : "false"}
+                    >
+                      <div className="group relative flex min-h-[76px] items-start gap-3 px-1 py-4 sm:px-4">
+                        <CountryFlag
+                          countryCode={country.countryCode}
+                          countryName={countryName}
+                          size="md"
+                        />
+                        <div className="min-w-0 flex-1 pr-8">
+                          <button
+                            type="button"
+                            className="focus-ring block max-w-full text-left text-[15px] font-semibold leading-6 tracking-[-0.01em] text-[#07133F] transition hover:text-[#004BB8] sm:text-base"
+                            aria-expanded={isExpanded}
+                            aria-controls={panelId}
+                            onClick={() =>
+                              setExpandedCountryDirectoryId((current) =>
+                                current === country.id ? null : country.id,
+                              )
+                            }
+                          >
+                            <span className="truncate">{countryName}</span>
+                          </button>
+                          <nav
+                            className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-semibold uppercase leading-4 tracking-[0.07em] text-[#004BB8] sm:text-xs"
+                            aria-label={`${countryName} travel products`}
+                          >
+                            {(
+                              [
+                                "Cars",
+                                "Flights",
+                                "Hotels",
+                              ] as CountryDirectoryCategory[]
+                            ).map((category, categoryIndex) => (
+                              <span
+                                key={`${country.id}-${category}-quick`}
+                                className="inline-flex items-center gap-2"
+                              >
+                                {categoryIndex > 0 ? (
+                                  <span
+                                    aria-hidden="true"
+                                    className="text-[#004BB8]/70"
+                                  >
+                                    ·
+                                  </span>
+                                ) : null}
+                                <Link
+                                  href={country.links[category][0].href}
+                                  className="focus-ring rounded-sm hover:text-[#00327A]"
+                                  onClick={(event) => event.stopPropagation()}
+                                >
+                                  {category.toUpperCase()}
+                                </Link>
+                              </span>
+                            ))}
+                          </nav>
+                        </div>
+                        <button
+                          type="button"
+                          className="focus-ring absolute right-3 top-4 rounded-full p-1 text-[#07133F] transition hover:text-[#004BB8] sm:right-4"
+                          aria-label={`${isExpanded ? "Collapse" : "Expand"} ${countryName}`}
+                          aria-expanded={isExpanded}
+                          aria-controls={panelId}
+                          onClick={() =>
+                            setExpandedCountryDirectoryId((current) =>
+                              current === country.id ? null : country.id,
+                            )
+                          }
+                        >
+                          <ChevronDown
+                            className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                            aria-hidden="true"
+                          />
+                        </button>
+                      </div>
+
+                      {isExpanded ? (
+                        <div
+                          id={panelId}
+                          className="border-t border-slate-100 bg-slate-50/45 pb-4 pl-9 pr-1 pt-3 sm:pl-[4.05rem] sm:pr-4"
+                          data-inline-country-panel
+                        >
+                          <div
+                            className="space-y-4"
+                            data-product-sections="vertical"
+                          >
+                            {(
+                              [
+                                "Hotels",
+                                "Flights",
+                                "Cars",
+                              ] as CountryDirectoryCategory[]
+                            ).map((category) => (
+                              <section
+                                key={`${country.id}-${category}`}
+                                data-product-section={category.toLowerCase()}
+                              >
+                                <h3 className="text-xs font-bold uppercase leading-4 tracking-[0.08em] text-slate-900">
+                                  {category}
+                                </h3>
+                                <div className="mt-2 space-y-1.5">
+                                  {country.links[category]
+                                    .slice(0, 5)
+                                    .map((link) => {
+                                      const fareCard = link.routeKey
+                                        ? fareCardsByExactRoute.get(
+                                            link.routeKey,
+                                          )
+                                        : undefined;
+                                      const displayPrice =
+                                        fareCard &&
+                                        hasFreshProviderPrice(fareCard.fare, {
+                                          originCode: fareCard.item.originCode,
+                                          destinationCode:
+                                            fareCard.item.destinationCode,
+                                        })
+                                          ? formatDisplayPrice({
+                                              amount: fareCard.fare.price,
+                                              sourceCurrency:
+                                                fareCard.fare.currency,
+                                              displayCurrency:
+                                                selectedOption.currency,
+                                            }).formatted
+                                          : "";
+
+                                      return (
+                                        <Link
+                                          key={link.label}
+                                          href={link.href}
+                                          className="focus-ring group flex items-center justify-between gap-3 rounded-sm py-1.5 text-sm font-normal leading-5 text-slate-800 transition hover:text-[#004BB8] focus-visible:text-[#004BB8]"
+                                        >
+                                          <span>{link.label}</span>
+                                          <span className="flex shrink-0 items-center gap-2 text-[#004BB8]">
+                                            {displayPrice ? (
+                                              <span className="text-xs font-semibold">
+                                                {displayPrice}
+                                              </span>
+                                            ) : null}
+                                            <ArrowRight
+                                              className="h-3.5 w-3.5 transition group-hover:translate-x-0.5"
+                                              aria-hidden="true"
+                                            />
+                                          </span>
+                                        </Link>
+                                      );
+                                    })}
+                                </div>
+                              </section>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </article>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
         </section>
 
-        <section className="page-shell pb-6 pt-0 sm:pb-8 lg:pb-9">
-          <div className="mx-auto max-w-[800px] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_14px_38px_rgba(15,23,42,0.09)] ring-1 ring-slate-950/[0.03]">
-            <div className="h-0.5 bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-400" />
-            <div className="space-y-3 p-3.5 sm:p-4 lg:p-5">
-              <div className="flex items-start gap-2.5 sm:gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 shadow-sm ring-1 ring-indigo-100 sm:h-10 sm:w-10">
-                  <Mail className="size-4 sm:size-5" />
-                </span>
-
-                <div className="max-w-2xl space-y-1">
-                  <h2 className="text-base font-bold tracking-tight text-slate-950 sm:text-xl sm:leading-tight">
-                    {t("homeNewsletterTitle")}
-                  </h2>
-
-                  <p className="text-xs font-medium leading-5 text-slate-700 sm:text-sm sm:leading-5">
-                    {t("homeNewsletterBody")}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2 sm:pl-[3.25rem]">
-                <form
-                  className="flex flex-col gap-2 sm:max-w-[34rem] sm:flex-row"
-                  onSubmit={handleNewsletterSubmit}
+        <section className="page-shell pb-5 pt-1 sm:pb-7 sm:pt-2">
+          <div className="overflow-hidden rounded-2xl bg-[#062B63] px-5 py-4 text-white shadow-[0_22px_50px_-30px_rgba(2,28,43,0.7)] sm:rounded-3xl sm:px-7 sm:py-5 lg:grid lg:grid-cols-[150px_minmax(0,1fr)_minmax(360px,0.9fr)] lg:items-center lg:gap-6">
+            <div
+              className="mx-auto mb-3 h-16 w-36 text-white/90 lg:mb-0 lg:mx-0"
+              aria-hidden="true"
+            >
+              <svg viewBox="0 0 180 90" fill="none" className="h-full w-full">
+                <path
+                  d="M2 62C32 36 46 87 68 55C84 31 103 40 121 22"
+                  stroke="white"
+                  strokeOpacity="0.62"
+                  strokeWidth="2"
+                  strokeDasharray="6 7"
+                  strokeLinecap="round"
+                />
+                <path d="M83 36L160 8L132 76L116 49L83 36Z" fill="#EAF7FF" />
+                <path
+                  d="M116 49L160 8L102 43"
+                  stroke="#94DFF0"
+                  strokeWidth="3"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <div className="text-center lg:text-start">
+              <h2 className="text-xl font-extrabold tracking-tight sm:text-2xl">
+                {t("homeNewsletterTitle")}
+              </h2>
+              <p className="mt-1.5 text-sm font-medium leading-6 text-white/82">
+                {t("homeNewsletterBody")}
+              </p>
+            </div>
+            <div className="mt-4 lg:mt-0">
+              <form
+                className="flex flex-col gap-2 sm:flex-row sm:gap-0"
+                onSubmit={handleNewsletterSubmit}
+                aria-busy={newsletterPending}
+              >
+                <input
+                  type="email"
+                  value={newsletterEmail}
+                  onChange={(event) => {
+                    setNewsletterEmail(event.target.value);
+                    if (newsletterStatus !== "idle") {
+                      setNewsletterStatus("idle");
+                      setNewsletterMessage("");
+                    }
+                  }}
+                  placeholder={t("homeNewsletterPlaceholder")}
+                  className="focus-ring h-12 min-w-0 flex-1 rounded-xl border-0 bg-white px-4 text-base font-semibold text-slate-950 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 sm:rounded-e-none"
+                  aria-label={t("homeEmailAddress")}
+                  disabled={newsletterPending}
+                  required
+                />
+                <button
+                  type="submit"
+                  className="focus-ring h-12 shrink-0 rounded-xl bg-[#5CB6B2] px-5 text-sm font-extrabold text-white transition hover:bg-[#48a5a1] disabled:cursor-not-allowed disabled:bg-slate-500 sm:rounded-s-none"
                   aria-busy={newsletterPending}
+                  disabled={newsletterPending}
                 >
-                  <input
-                    type="email"
-                    value={newsletterEmail}
-                    onChange={(event) => {
-                      setNewsletterEmail(event.target.value);
-                      if (newsletterStatus !== "idle") {
-                        setNewsletterStatus("idle");
-                        setNewsletterMessage("");
-                      }
-                    }}
-                    placeholder={t("homeNewsletterPlaceholder")}
-                    className="focus-ring h-12 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50/70 px-4 text-base font-semibold text-slate-950 shadow-inner shadow-slate-200/50 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 sm:h-10 sm:min-w-[11rem] sm:rounded-lg sm:px-3.5 sm:text-sm"
-                    aria-label={t("homeEmailAddress")}
-                    disabled={newsletterPending}
-                    required
-                  />
-
-                  <button
-                    type="submit"
-                    className="focus-ring h-12 shrink-0 whitespace-nowrap rounded-xl bg-indigo-700 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition hover:bg-indigo-800 disabled:cursor-not-allowed disabled:bg-slate-500 disabled:shadow-none sm:h-10 sm:rounded-lg sm:px-4"
-                    aria-busy={newsletterPending}
-                    disabled={newsletterPending}
-                  >
-                    {newsletterPending
-                      ? t("homeSubscribing")
-                      : t("homeSubscribe")}
-                  </button>
-                </form>
-
-                <p className="text-xs font-medium leading-5 text-slate-600">
-                  {t("homeNewsletterConsent")}
+                  {newsletterPending
+                    ? t("homeSubscribing")
+                    : t("homeSubscribe")}
+                </button>
+              </form>
+              <p className="mt-1.5 text-xs font-medium leading-5 text-white/72">
+                {t("homeNewsletterConsent")}
+              </p>
+              {newsletterMessage ? (
+                <p
+                  className={`mt-1.5 text-xs font-semibold ${newsletterStatus === "error" ? "text-red-200" : "text-teal-100"}`}
+                  role="status"
+                  aria-live="polite"
+                >
+                  {newsletterMessage}
                 </p>
-
-                {newsletterMessage ? (
-                  <p
-                    className={`text-xs font-semibold sm:text-sm ${
-                      newsletterStatus === "error"
-                        ? "text-red-700"
-                        : "text-slate-700"
-                    }`}
-                    role="status"
-                    aria-live="polite"
-                  >
-                    {newsletterMessage}
-                  </p>
-                ) : null}
-              </div>
+              ) : null}
             </div>
           </div>
         </section>
@@ -1068,23 +1705,180 @@ export default function Home() {
   );
 }
 
+function observeProgrammaticCarouselScroll(
+  rail: HTMLDivElement,
+  measure: () => ReturnType<typeof getLogicalCarouselScrollState> | null,
+  onSettled: () => void,
+) {
+  let rafId = 0;
+  let fallbackId = 0;
+  let lastLogicalPosition: number | null = null;
+  let stableFrameCount = 0;
+  let cleanedUp = false;
+  const settleTolerance = 0.5;
+  const requiredStableFrames = 2;
+
+  const cleanup = () => {
+    if (cleanedUp) return;
+    cleanedUp = true;
+    window.cancelAnimationFrame(rafId);
+    window.clearTimeout(fallbackId);
+    rail.removeEventListener("scroll", onScrollActivity);
+    rail.removeEventListener("scrollend", settleNow);
+  };
+
+  const settleNow = () => {
+    if (cleanedUp) return;
+    cleanup();
+    onSettled();
+  };
+
+  const checkForSettledPosition = () => {
+    if (cleanedUp) return;
+    const state = measure();
+    if (!state) {
+      settleNow();
+      return;
+    }
+
+    if (
+      lastLogicalPosition !== null &&
+      Math.abs(state.logicalScrollLeft - lastLogicalPosition) <= settleTolerance
+    ) {
+      stableFrameCount += 1;
+    } else {
+      stableFrameCount = 0;
+    }
+
+    lastLogicalPosition = state.logicalScrollLeft;
+
+    if (stableFrameCount >= requiredStableFrames) {
+      settleNow();
+      return;
+    }
+
+    rafId = window.requestAnimationFrame(checkForSettledPosition);
+  };
+
+  function onScrollActivity() {
+    stableFrameCount = 0;
+  }
+
+  rail.addEventListener("scroll", onScrollActivity, { passive: true });
+  rail.addEventListener("scrollend", settleNow, { passive: true });
+  rafId = window.requestAnimationFrame(checkForSettledPosition);
+  fallbackId = window.setTimeout(settleNow, 1200);
+
+  return cleanup;
+}
+
+function getDestinationRailTargetLogicalScroll(
+  rail: HTMLDivElement,
+  currentLogicalScrollLeft: number,
+  direction: "left" | "right",
+) {
+  const state = getLogicalCarouselScrollState({
+    scrollLeft: rail.scrollLeft,
+    scrollWidth: rail.scrollWidth,
+    clientWidth: rail.clientWidth,
+    direction: window.getComputedStyle(rail).direction,
+  });
+  const tolerance = 2;
+  const childStarts = Array.from(rail.children)
+    .map((child) =>
+      child instanceof HTMLElement ? child.offsetLeft - rail.offsetLeft : null,
+    )
+    .filter((value): value is number => typeof value === "number")
+    .map((value) => Math.min(state.maxScrollLeft, Math.max(0, value)))
+    .sort((first, second) => first - second);
+
+  if (direction === "right") {
+    return (
+      childStarts.find(
+        (start) => start > currentLogicalScrollLeft + tolerance,
+      ) ?? state.maxScrollLeft
+    );
+  }
+
+  return (
+    [...childStarts]
+      .reverse()
+      .find((start) => start < currentLogicalScrollLeft - tolerance) ?? 0
+  );
+}
+
+function getPhysicalScrollLeftForLogicalTarget(
+  logicalTarget: number,
+  maxScrollLeft: number,
+  direction: string,
+  currentScrollLeft: number,
+) {
+  const target = Math.min(maxScrollLeft, Math.max(0, logicalTarget));
+  if (direction !== "rtl") return target;
+
+  return currentScrollLeft < 0 ? -target : maxScrollLeft - target;
+}
+
+function RegionalRouteCard({
+  href,
+  originCity,
+  destinationCity,
+  image,
+  imageAlt,
+  destinationCode,
+}: {
+  href: ComponentProps<typeof Link>["href"];
+  originCity: string;
+  destinationCity: string;
+  image: string;
+  imageAlt: string;
+  destinationCode: string;
+}) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const routeLabel = `${originCity} → ${destinationCity}`;
+
+  return (
+    <Link
+      href={href}
+      aria-label={`${originCity} to ${destinationCity} flight search.`}
+      className="focus-ring group relative flex aspect-[4/3] w-[min(78vw,250px)] shrink-0 snap-start overflow-hidden rounded-2xl bg-slate-900 shadow-[0_18px_36px_-24px_rgba(15,23,42,0.72)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_44px_-24px_rgba(15,23,42,0.78)] sm:w-auto sm:min-w-0"
+    >
+      <DiscoveryCardImage
+        image={image}
+        imageAlt={imageAlt}
+        destinationCode={destinationCode}
+        destinationFallbackLabel={t("destinationImageFallback")}
+        sizes="(min-width: 1280px) 14rem, (min-width: 640px) 20vw, 78vw"
+      />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/78 via-slate-950/34 to-transparent px-4 pb-5 pt-16">
+        <p className="text-base font-semibold leading-5 text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.55)]">
+          {routeLabel}
+        </p>
+      </div>
+    </Link>
+  );
+}
+
 function DiscoveryCardImage({
   image,
   imageAlt,
   destinationCode,
   destinationFallbackLabel,
+  sizes = "(min-width: 1280px) 7rem, (min-width: 640px) 6.5rem, 5rem",
 }: {
   image: string;
   imageAlt: string;
   destinationCode: string;
   destinationFallbackLabel: string;
+  sizes?: string;
 }) {
   const [hasError, setHasError] = useState(false);
   const hasImage = Boolean(image?.trim());
 
   if (!hasImage || hasError) {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gradient-to-br from-violet-200 via-fuchsia-100 to-cyan-100 text-slate-700">
+      <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gradient-to-br from-[#F2F7FA] via-[#EAF2FF] to-[#EAF7F6] text-slate-700">
         <Compass size={14} className="opacity-80" aria-hidden />
         <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">
           {destinationFallbackLabel}
@@ -1101,7 +1895,7 @@ function DiscoveryCardImage({
       src={image}
       alt={imageAlt}
       fill
-      sizes="(min-width: 1280px) 7rem, (min-width: 640px) 6.5rem, 5rem"
+      sizes={sizes}
       className="object-cover transition duration-500 group-hover:scale-[1.03]"
       onError={() => setHasError(true)}
     />
@@ -1119,6 +1913,7 @@ function DiscoverySuggestionCard({
   destinationCodeLabel,
   routeNote,
   compact,
+  mobileBoardCard,
   price,
   displayCurrency,
   expectedOriginCode,
@@ -1137,6 +1932,7 @@ function DiscoverySuggestionCard({
   destinationCodeLabel: string;
   routeNote: string;
   compact?: boolean;
+  mobileBoardCard?: boolean;
   price?: HomepageFare;
   displayCurrency: string;
   expectedOriginCode: string;
@@ -1146,30 +1942,68 @@ function DiscoverySuggestionCard({
   onHeartToggle: (
     event: React.MouseEvent<HTMLButtonElement>,
     itemId: string,
+    display?: SavedTripDisplayDetails,
   ) => void;
 }) {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const currencyRates = useCurrencyRates();
+  const hasProviderPrice = hasFreshProviderPrice(price, {
+    originCode: expectedOriginCode,
+    destinationCode: expectedDestinationCode,
+  });
+  const displayPrice =
+    hasProviderPrice && typeof price?.price === "number" && price.currency
+      ? formatDisplayPrice({
+          amount: price.price,
+          sourceCurrency: price.currency,
+          displayCurrency,
+          convertUsdEstimate: true,
+          maximumFractionDigits: 0,
+          rates: currencyRates.rates,
+          isFallbackRate: currencyRates.isFallback,
+        })
+      : null;
+  const tripSummary = `${t("oneWay")} · ${t("economy")} · ${t("homeDiscoveryTravelerCountOne")}`;
 
   return (
     <Link
       href={href}
-      className="group relative flex min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-transparent shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)] active:-translate-y-0.5"
+      aria-label={`${title}. ${originCode} to ${destinationCodeLabel}.${displayPrice ? ` ${t("fromPrice")} ${displayPrice.formatted}.` : ""}`}
+      className={`group relative flex min-w-0 flex-col overflow-hidden border border-slate-200 bg-white transition duration-300 hover:-translate-y-1 hover:border-slate-300 active:-translate-y-0.5 ${mobileBoardCard ? "h-[300px] rounded-2xl border-slate-200/80 shadow-[0_18px_35px_-24px_rgba(15,23,42,0.72)] hover:shadow-[0_24px_42px_-24px_rgba(15,23,42,0.72)]" : "rounded-xl shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)]"}`}
     >
       <button
         type="button"
-        onClick={(event) => onHeartToggle(event, itemId)}
+        onClick={(event) =>
+          onHeartToggle(event, itemId, {
+            title,
+            route: `${originCode} → ${destinationCodeLabel}`,
+            note: routeNote,
+            originCode,
+            destinationCode: destinationCodeLabel,
+            image,
+            imageAlt,
+            href,
+            search: {
+              tripType: "one-way",
+              cabinClass: "economy",
+              travelerCount: 1,
+              currency: displayCurrency,
+              price: price?.price,
+            },
+          })
+        }
         aria-label={
           isSaved ? t("homeRemoveFromSavedRoutes") : t("homeSaveRoute")
         }
         aria-pressed={isSaved}
-        className={`focus-ring absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border shadow-sm backdrop-blur-sm transition ${isSaved ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100" : "border-white/80 bg-white/90 text-slate-500 hover:border-slate-200 hover:text-slate-800"}`}
+        className={`focus-ring absolute right-3 top-3 rtl:left-3 rtl:right-auto z-10 flex h-8 w-8 items-center justify-center rounded-full border shadow-sm backdrop-blur-sm transition ${isSaved ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100" : "border-white/80 bg-white/90 text-slate-500 hover:border-slate-200 hover:text-slate-800"}`}
       >
         <Heart size={15} className={isSaved ? "fill-current" : ""} />
       </button>
 
       <div
-        className={`relative w-full shrink-0 overflow-hidden ${compact ? "h-[148px]" : "h-[196px] md:h-[190px] lg:h-[198px]"}`}
+        className={`relative w-full shrink-0 overflow-hidden ${mobileBoardCard ? "h-[135px]" : compact ? "h-[148px]" : "h-[196px] md:h-[150px] lg:h-[154px]"}`}
       >
         <DiscoveryCardImage
           image={image}
@@ -1180,105 +2014,79 @@ function DiscoverySuggestionCard({
       </div>
 
       <div
-        className={`min-w-0 flex-1 bg-white ${compact ? "space-y-1.5 px-2.5 pt-2.5" : "space-y-2 px-3 pt-3"}`}
+        className={`min-w-0 flex-1 bg-white ${mobileBoardCard ? "flex flex-col px-3 pb-3 pt-3" : compact ? "space-y-2 px-2.5 py-3" : "space-y-2 px-3 py-3"}`}
       >
         <p
-          className={`line-clamp-2 break-words text-slate-950 ${compact ? "pr-10 text-sm font-bold leading-[1.32]" : "pr-10 text-sm font-bold leading-[1.35] md:text-[0.95rem]"}`}
+          className={`line-clamp-2 break-words text-slate-950 ${mobileBoardCard ? "text-sm font-semibold leading-[1.28] tracking-[-0.01em]" : compact ? "pr-10 rtl:pl-10 rtl:pr-0 text-sm font-semibold leading-[1.32]" : "pr-10 rtl:pl-10 rtl:pr-0 text-sm font-semibold leading-[1.35] md:text-[0.95rem]"}`}
         >
           {title}
         </p>
-        <p
-          className={`line-clamp-2 text-slate-600 ${compact ? "text-xs font-medium leading-5" : "text-xs font-medium leading-5 md:text-sm"}`}
-        >
-          {originCode} → {destinationCodeLabel} · {routeNote}
+        <p className="text-xs font-semibold leading-5 text-slate-700">
+          {originCode} → {destinationCodeLabel}
         </p>
-        <div className="flex flex-wrap items-center gap-2 pt-0.5">
-          <span className="rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-violet-700">
-            {t("homeDiscoveryRouteIdeaBadge")}
-          </span>
-          <p
-            className={`font-semibold uppercase tracking-[0.08em] text-slate-500 ${compact ? "text-[11px]" : "text-[11px] md:text-xs"}`}
-          >
-            {t("oneWay")} · {t("economy")} · 1 {t("travelerSingular")}
-          </p>
-        </div>
-      </div>
-
-      <div
-        className={`border-t border-slate-200/90 bg-white ${compact ? "px-2.5 pb-2.5 pt-2.5" : "px-3 pb-3 pt-3"}`}
-      >
-        <DiscoveryPricePill
-          price={price}
-          displayCurrency={displayCurrency}
-          expectedOriginCode={expectedOriginCode}
-          expectedDestinationCode={expectedDestinationCode}
-          isLoading={Boolean(isPriceLoading)}
-        />
+        <p
+          className={`font-semibold uppercase leading-4 tracking-[0.08em] text-slate-500 ${compact ? "text-[10px]" : "text-[10px] md:text-[11px]"}`}
+        >
+          {tripSummary}
+        </p>
+        {isPriceLoading ? (
+          <span
+            className="mt-auto block h-8 w-16 animate-pulse rounded bg-slate-200"
+            aria-label={t("homeCheckingProviderRoutePricing")}
+          />
+        ) : (
+          <div className="mt-auto flex items-baseline gap-1.5 pt-2">
+            <span className="text-sm font-semibold leading-5 text-slate-700">
+              {t("fromPrice")}
+            </span>
+            {displayPrice ? (
+              <span
+                className="text-base font-bold leading-5 tracking-tight text-slate-950"
+                title={displayPrice.title}
+              >
+                {displayPrice.formatted}
+              </span>
+            ) : null}
+          </div>
+        )}
       </div>
     </Link>
   );
 }
 
-type ProviderBackedHomepageFare = HomepageFare & {
-  price: number;
-  currency: string;
-  search: DestinationPriceSearch;
-  expiresAt: string;
-};
-
-function hasFreshProviderPrice(
-  price?: HomepageFare,
-  expectedRoute?: { originCode?: string; destinationCode?: string },
-): price is ProviderBackedHomepageFare {
-  if (
-    price?.providerBacked !== true ||
-    typeof price.price !== "number" ||
-    !Number.isFinite(price.price) ||
-    !price.currency ||
-    !price.search ||
-    !price.expiresAt
-  ) {
-    return false;
-  }
-
-  if (price.search.currency !== price.currency) return false;
-
-  if (
-    expectedRoute?.originCode &&
-    price.search.origin.toUpperCase() !== expectedRoute.originCode.toUpperCase()
-  ) {
-    return false;
-  }
-
-  if (
-    expectedRoute?.destinationCode &&
-    price.search.destination.toUpperCase() !==
-      expectedRoute.destinationCode.toUpperCase()
-  ) {
-    return false;
-  }
-
-  if (
-    price.priceState === "last_known_good" ||
-    price.cachedProviderBacked === true
-  ) {
-    return true;
-  }
-
-  const expiresAtMs = Date.parse(price.expiresAt);
-  return Number.isFinite(expiresAtMs) && expiresAtMs > Date.now();
-}
-
 function buildDestinationCardHref(
   price: HomepageFare | undefined,
   options: {
+    city: string;
     originCode: string;
     destinationCode: string;
     displayCurrency: string;
     market: string;
   },
-) {
-  return buildRouteCardHref(price, options);
+): ComponentProps<typeof Link>["href"] {
+  void price;
+  void options.originCode;
+  void options.destinationCode;
+  void options.displayCurrency;
+  void options.market;
+
+  return {
+    pathname: "/hotels/results",
+    query: {
+      destination: options.city,
+    },
+  };
+}
+
+function getRouteKey(originCode: string, destinationCode: string) {
+  const origin = originCode.trim().toUpperCase();
+  const destination = destinationCode.trim().toUpperCase();
+
+  return /^[A-Z]{3}$/.test(origin) &&
+    /^[A-Z]{3}$/.test(destination) &&
+    origin !== destination
+    ? `${origin}-${destination}`
+    : null;
 }
 
 function buildDiscoveryCardHref(
@@ -1320,84 +2128,6 @@ function buildRouteCardHref(
   );
 }
 
-function DiscoveryPricePill({
-  price,
-  displayCurrency,
-  expectedOriginCode,
-  expectedDestinationCode,
-  isLoading,
-}: {
-  price?: HomepageFare;
-  displayCurrency: string;
-  expectedOriginCode?: string;
-  expectedDestinationCode?: string;
-  isLoading: boolean;
-}) {
-  const { t: dictionary } = useLocale();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const currencyRates = useCurrencyRates();
-  const hasProviderPrice = hasFreshProviderPrice(price, {
-    originCode: expectedOriginCode,
-    destinationCode: expectedDestinationCode,
-  });
-
-  if (isLoading) {
-    return (
-      <span
-        className="inline-flex h-10 w-[9rem] animate-pulse rounded-full border border-slate-300 bg-white shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:h-11 sm:w-[10rem]"
-        aria-label={t("homeCheckingProviderRoutePricing")}
-      />
-    );
-  }
-
-  if (!hasProviderPrice) {
-    return (
-      <span className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold leading-5 tracking-tight text-slate-900 shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:text-base sm:leading-6">
-        {t("homeCompareOptions")}
-      </span>
-    );
-  }
-
-  const amount = price.price;
-  const currency = price.currency;
-
-  if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
-    return (
-      <span className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold leading-5 tracking-tight text-slate-900 shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:text-base sm:leading-6">
-        {t("homeCompareOptions")}
-      </span>
-    );
-  }
-
-  const displayPrice = formatDisplayPrice({
-    amount,
-    sourceCurrency: currency,
-    displayCurrency,
-    convertUsdEstimate: true,
-    maximumFractionDigits: 0,
-    rates: currencyRates.rates,
-    isFallbackRate: currencyRates.isFallback,
-  });
-  const estimateCopy = displayPrice.isConvertedEstimate
-    ? ` ${t("displayEstimateFinalProviderMayDiffer")}`
-    : ` ${t("finalPriceConfirmedByProvider")}`;
-
-  return (
-    <span
-      className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-300 bg-white px-4 py-2 leading-6 tracking-tight text-slate-950 shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:leading-7"
-      aria-label={`Provider-backed route price from ${displayPrice.formatted}.${estimateCopy}`}
-      title={displayPrice.title}
-    >
-      <span className="text-sm font-semibold text-slate-600 sm:text-base">
-        {t("fromPrice").toLowerCase()}
-      </span>
-      <span className="text-base font-bold text-slate-950 sm:text-lg">
-        {displayPrice.formatted}
-      </span>
-    </span>
-  );
-}
-
 function DestinationCard({
   city,
   country,
@@ -1430,12 +2160,15 @@ function DestinationCard({
   onHeartToggle: (
     event: React.MouseEvent<HTMLButtonElement>,
     itemId: string,
+    display?: SavedTripDisplayDetails,
   ) => void;
 }) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const [imageSource, setImageSource] = useState(image);
 
   return (
-    <article className="group min-w-[18.5rem] flex-[0_0_18.5rem] snap-start overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_32px_-24px_rgba(15,23,42,0.65)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-26px_rgba(15,23,42,0.75)] sm:min-w-[22rem] sm:flex-[0_0_22rem]">
+    <article className="group min-w-[17.25rem] flex-[0_0_17.25rem] snap-start overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_32px_-24px_rgba(15,23,42,0.65)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-26px_rgba(15,23,42,0.75)] sm:min-w-[20.5rem] sm:flex-[0_0_20.5rem]">
       <Link href={href} className="focus-ring block">
         <div className="relative h-72 sm:h-80">
           <Image
@@ -1443,7 +2176,7 @@ function DestinationCard({
             alt={imageAlt}
             fill
             quality={92}
-            sizes="(min-width: 1280px) 22rem, (min-width: 640px) 22rem, 18.5rem"
+            sizes="(min-width: 1280px) 20.5rem, (min-width: 640px) 20.5rem, 17.25rem"
             className="object-cover transition duration-500 group-hover:scale-105"
             onError={() => {
               if (imageSource !== destinationImageFallback) {
@@ -1456,25 +2189,42 @@ function DestinationCard({
 
           <button
             type="button"
-            className={`focus-ring absolute right-3 top-3 z-0 flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur transition duration-200 ${
+            className={`focus-ring absolute right-3 top-3 rtl:left-3 rtl:right-auto z-0 flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur transition duration-200 ${
               isSaved
                 ? "border-rose-200/90 bg-rose-500/90 text-white shadow-sm shadow-rose-900/20 hover:bg-rose-500"
                 : "border-white/30 bg-white/20 text-white hover:bg-white/30"
             }`}
             aria-label={saveLabelTemplate.replace("{{city}}", city)}
             aria-pressed={isSaved}
-            onClick={(event) => onHeartToggle(event, destinationId)}
+            onClick={(event) =>
+              onHeartToggle(event, destinationId, {
+                title: city,
+                route: `${originCode} → ${destinationCode}`,
+                note: country,
+                originCode,
+                destinationCode,
+                destinationCity: city,
+                image,
+                imageAlt,
+                href,
+                search: {
+                  tripType: "one-way",
+                  cabinClass: "economy",
+                  travelerCount: 1,
+                  currency: displayCurrency,
+                  price: price?.price,
+                },
+              })
+            }
           >
             <Heart size={17} className={isSaved ? "fill-current" : ""} />
           </button>
 
-          <div className="absolute bottom-4 left-4 z-10 pr-4 text-white [text-shadow:0_2px_12px_rgba(15,23,42,0.55)]">
+          <div className="absolute bottom-4 left-4 z-10 pr-4 rtl:left-auto rtl:right-4 rtl:pl-4 rtl:pr-0 text-white [text-shadow:0_2px_12px_rgba(15,23,42,0.55)]">
             <h3 className="text-xl font-black tracking-tight sm:text-2xl">
               {city}
             </h3>
-            <p className="text-sm font-semibold text-white/95">
-              {country}
-            </p>
+            <p className="text-sm font-semibold text-white/95">{country}</p>
           </div>
         </div>
 
@@ -1485,6 +2235,8 @@ function DestinationCard({
             expectedOriginCode={originCode}
             expectedDestinationCode={destinationCode}
             isLoading={isPriceLoading}
+            ctaLabel={t("homeExploreFares")}
+            suppressPrice
           />
         </div>
       </Link>
@@ -1498,12 +2250,16 @@ function DestinationPricePill({
   expectedOriginCode,
   expectedDestinationCode,
   isLoading,
+  ctaLabel,
+  suppressPrice,
 }: {
   price?: DestinationPrice;
   displayCurrency: string;
   expectedOriginCode?: string;
   expectedDestinationCode?: string;
   isLoading: boolean;
+  ctaLabel?: string;
+  suppressPrice?: boolean;
 }) {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -1512,6 +2268,16 @@ function DestinationPricePill({
     originCode: expectedOriginCode,
     destinationCode: expectedDestinationCode,
   });
+
+  const fallbackCtaLabel = ctaLabel ?? t("homeExploreFares");
+
+  if (suppressPrice) {
+    return (
+      <span className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]">
+        {fallbackCtaLabel}
+      </span>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -1525,7 +2291,7 @@ function DestinationPricePill({
   if (!hasProviderPrice) {
     return (
       <span className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]">
-        {t("homeExploreFares")}
+        {fallbackCtaLabel}
       </span>
     );
   }
@@ -1536,7 +2302,7 @@ function DestinationPricePill({
   if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
     return (
       <span className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]">
-        {t("homeExploreFares")}
+        {fallbackCtaLabel}
       </span>
     );
   }
@@ -1578,19 +2344,19 @@ function PromoPanel({
   href,
   icon,
 }: {
-  tone: "violet" | "amber";
+  tone: "blue" | "teal";
   title: string;
   body: string;
   cta: string;
   href: string;
   icon: ReactNode;
 }) {
-  const isViolet = tone === "violet";
+  const isBlue = tone === "blue";
 
   return (
     <article
       className={`relative min-h-56 overflow-hidden rounded-xl p-8 ${
-        isViolet ? "bg-[#f1e8ff]" : "bg-[#eaf2ff]"
+        isBlue ? "bg-[#EAF2FF]" : "bg-[#EAF7F6]"
       }`}
     >
       <div className="relative z-10 max-w-xs">
@@ -1606,11 +2372,7 @@ function PromoPanel({
           href={href}
           variant="primary"
           size="md"
-          className={`mt-5 font-semibold ${
-            isViolet
-              ? "bg-violet-600 hover:bg-violet-700"
-              : "bg-[#2563eb] hover:bg-[#1d4ed8]"
-          }`}
+          className="mt-5 bg-[#004BB8] font-semibold hover:bg-[#021C2B]"
         >
           {cta}
           <ArrowRight size={16} />
@@ -1619,9 +2381,7 @@ function PromoPanel({
 
       <div
         className={`absolute bottom-5 right-6 flex h-40 w-40 items-center justify-center rounded-full ${
-          isViolet
-            ? "bg-white/55 text-violet-600"
-            : "bg-white/70 text-[#2563eb]"
+          isBlue ? "bg-white/55 text-[#004BB8]" : "bg-white/70 text-[#004BB8]"
         }`}
       >
         <Sparkles className="absolute left-5 top-5 opacity-40" size={24} />

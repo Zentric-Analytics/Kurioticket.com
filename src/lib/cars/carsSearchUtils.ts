@@ -14,7 +14,6 @@ export type CarsFormErrors = Partial<
 >;
 
 export const defaultDriverAge = "18-70";
-const defaultDriverAgeLabel = "Any age 18–70";
 const minimumDriverAge = 18;
 const maximumDriverAge = 70;
 
@@ -43,7 +42,7 @@ export const toIsoDate = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
-export const formatDisplayDate = (isoDate: string) => {
+export const formatDisplayDate = (isoDate: string, locale?: string) => {
   if (!isoDate) {
     return "";
   }
@@ -54,7 +53,7 @@ export const formatDisplayDate = (isoDate: string) => {
     return "";
   }
 
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(locale, {
     month: "short",
     day: "numeric",
   }).format(new Date(year, month - 1, day));
@@ -113,7 +112,12 @@ export const buildMonthCells = (monthDate: Date): MonthCell[] => {
   });
 };
 
-export const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+export const getLocalizedWeekdays = (locale?: string) =>
+  Array.from({ length: 7 }, (_, day) =>
+    new Intl.DateTimeFormat(locale, { weekday: "short" }).format(
+      new Date(2024, 0, 7 + day),
+    ),
+  );
 
 const addDays = (date: Date, days: number) => {
   const next = new Date(date);
@@ -130,8 +134,7 @@ const normalizeDriverAge = (value: string) => {
     : defaultDriverAge;
 };
 
-export const getDriverAgeOptionLabel = (age: string) =>
-  age === defaultDriverAge ? defaultDriverAgeLabel : age;
+export const getDriverAgeOptionLabel = (age: string) => age;
 
 export const buildCarResultsHref = ({
   pickupLocation,
@@ -195,27 +198,27 @@ export const validateCarsForm = (
   const hasDefaultDriverAge = values.driverAge === defaultDriverAge;
 
   if (!pickupLocation) {
-    errors.pickupLocation = "Enter a pickup location.";
+    errors.pickupLocation = "carsSearch.error.pickupLocationRequired";
   }
 
   if (!values.pickupDate) {
-    errors.pickupDate = "Select a pickup date.";
+    errors.pickupDate = "carsSearch.error.pickupDateRequired";
   } else if (values.pickupDate < todayIso) {
-    errors.pickupDate = "Pickup date cannot be in the past.";
+    errors.pickupDate = "carsSearch.error.pickupDatePast";
   }
 
   if (!values.pickupTime) {
-    errors.pickupTime = "Select a pickup time.";
+    errors.pickupTime = "carsSearch.error.pickupTimeRequired";
   }
 
   if (!values.dropoffDate) {
-    errors.dropoffDate = "Select a drop-off date.";
+    errors.dropoffDate = "carsSearch.error.dropoffDateRequired";
   } else if (values.dropoffDate < todayIso) {
-    errors.dropoffDate = "Drop-off date cannot be in the past.";
+    errors.dropoffDate = "carsSearch.error.dropoffDatePast";
   }
 
   if (!values.dropoffTime) {
-    errors.dropoffTime = "Select a drop-off time.";
+    errors.dropoffTime = "carsSearch.error.dropoffTimeRequired";
   }
 
   if (
@@ -226,16 +229,16 @@ export const validateCarsForm = (
       driverAge < minimumDriverAge ||
       driverAge > maximumDriverAge)
   ) {
-    errors.driverAge = "Select Any age 18–70 or a driver age from 18 to 70.";
+    errors.driverAge = "carsSearch.error.driverAgeInvalid";
   }
 
   if (values.returnToDifferentLocation && !dropoffLocation) {
-    errors.dropoffLocation = "Enter a drop-off location.";
+    errors.dropoffLocation = "carsSearch.error.dropoffLocationRequired";
   }
 
   if (values.pickupDate && values.dropoffDate) {
     if (values.dropoffDate < values.pickupDate) {
-      errors.dateRange = "Drop-off date cannot be before pickup date.";
+      errors.dateRange = "carsSearch.error.dropoffBeforePickup";
     } else if (
       values.dropoffDate === values.pickupDate &&
       values.pickupTime &&
@@ -243,7 +246,7 @@ export const validateCarsForm = (
       values.dropoffTime <= values.pickupTime
     ) {
       errors.dateRange =
-        "For same-day returns, drop-off time must be after pickup time.";
+        "carsSearch.error.sameDayDropoffAfterPickup";
     }
   }
 

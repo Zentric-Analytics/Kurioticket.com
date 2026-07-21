@@ -2,15 +2,15 @@
 
 import { type ReactNode, type RefObject } from "react";
 
-import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
+import { FlightMobilePickerShell, type FlightMobilePickerRequestClose } from "@/components/search/FlightMobilePickerShell";
 
 type HotelMobilePickerShellProps = {
   open: boolean;
   title: string;
   titleId: string;
   launcherRef?: RefObject<HTMLElement | null>;
-  children: ReactNode;
-  footer?: ReactNode;
+  children: ReactNode | ((requestClose: FlightMobilePickerRequestClose) => ReactNode);
+  footer?: ReactNode | ((requestClose: FlightMobilePickerRequestClose) => ReactNode);
   onClose: () => void;
   className?: string;
   contentClassName?: string;

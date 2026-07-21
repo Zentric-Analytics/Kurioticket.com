@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { Button } from "@/components/ui/Button";
+import { MessageBanner } from "@/components/ui/MessageBanner";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
 
@@ -35,7 +36,7 @@ export function VerifyEmailForm({ email }: { email: string }) {
 
     setMessage(t.verifyEmailSuccess);
     window.setTimeout(() => {
-      window.location.href = "/auth/signin?callbackUrl=/dashboard";
+      window.location.href = "/auth/signin?callbackUrl=/onboarding/security";
     }, 900);
   }
 
@@ -71,8 +72,10 @@ export function VerifyEmailForm({ email }: { email: string }) {
             }
           />
         </Field>
-        {error ? <p className="text-sm text-danger">{error}</p> : null}
-        {message ? <p className="text-sm text-teal-dark">{message}</p> : null}
+        {error ? <MessageBanner tone="error">{error}</MessageBanner> : null}
+        {message ? (
+          <MessageBanner tone="success">{message}</MessageBanner>
+        ) : null}
         <Button disabled={loading || code.length !== 6}>
           {loading ? t.verifyEmailVerifying : t.verifyEmailSubmit}
         </Button>

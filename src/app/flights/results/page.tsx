@@ -1,18 +1,28 @@
 import { Suspense } from "react";
+import { cookies } from "next/headers";
+
 import { redirect } from "next/navigation";
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
+import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { FlightResultsClient } from "@/components/results/FlightResultsClient";
-import { FlightCardSkeleton } from "@/components/ui/Skeleton";
+import { getTranslations } from "@/lib/i18n";
+import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
 
 type FlightResultsSearchParams = Promise<
   Record<string, string | string[] | undefined>
 >;
 
-export const metadata = {
-  title: "Flight Results",
-};
+export async function generateMetadata() {
+  const cookieStore = await cookies();
+  const t = getTranslations(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
+
+  return {
+    title: t["metadata.flightResults.title"],
+    description: t["metadata.flightResults.description"],
+  };
+}
 
 const getParamValue = (
   params: Awaited<FlightResultsSearchParams>,
@@ -80,9 +90,9 @@ const hasValidFlightSearchParams = (
 
   return Boolean(
     parsedDepartureDate &&
-      parsedReturnDate &&
-      parsedReturnDate >= parsedDepartureDate &&
-      isValidFutureOrTodayDate(returnDate),
+    parsedReturnDate &&
+    parsedReturnDate >= parsedDepartureDate &&
+    isValidFutureOrTodayDate(returnDate),
   );
 };
 
@@ -97,10 +107,24 @@ export default async function FlightResultsPage({
     redirect("/flights");
   }
 
+  const t = getTranslations((await cookies()).get(LOCALE_COOKIE_KEY)?.value);
+
   return (
     <>
-      <AppHeader />
-      <Suspense fallback={<ResultsFallback />}>
+      <AppHeader
+        flushDesktopBottom
+        flushMobileBottom
+        hideDesktopTravelNav
+        hideMobileCategoryTabs
+      />
+      <Suspense
+        fallback={
+          <ResultsFallback
+            title={t["flightResults.loading.title"]}
+            description={t["flightResults.loading.checkingAirlinesAndFares"]}
+          />
+        }
+      >
         <FlightResultsClient />
       </Suspense>
       <Footer />
@@ -108,10 +132,24 @@ export default async function FlightResultsPage({
   );
 }
 
-function ResultsFallback() {
+function ResultsFallback({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
   return (
-    <main className="page-shell flex-1 py-6">
-      <FlightCardSkeleton />
+    <main className="min-h-[100svh] bg-white">
+      <BrandedLoading
+        variant="fullscreen"
+        visual="logoPulse"
+        showProgress={false}
+        className="min-h-[100svh] bg-transparent px-5"
+        contentClassName="max-w-md text-center"
+        title={title}
+        description={description}
+      />
     </main>
   );
 }

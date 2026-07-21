@@ -12,8 +12,8 @@ export default async function AdminSearchesPage() {
 
   return (
     <AdminPageShell
-      title="Search Operations"
-      description="Real search logs only. If logging is unavailable, this page stays empty rather than inventing search volume."
+      title="Searches"
+      description="Review user search attempts, outcomes, providers, and latency."
     >
       {searches.length === 0 ? (
         <AdminEmptyState
@@ -22,17 +22,20 @@ export default async function AdminSearchesPage() {
         />
       ) : (
         <AdminDataTable
-          columns={["Date/time", "Product", "Query / route / destination", "Country / currency", "Result count", "Provider", "Status", "Duration"]}
+          caption="Search operations"
+          density="compact"
+          minWidth="1040px"
+          columns={["Created", "Type", "Route / stay", "Market", "Results", "Provider", "Status", "Latency"]}
           rows={searches.map((search) => {
             const query = normalizeQuery(search.query);
             return {
               id: search.id,
               cells: [
                 formatDateTime(search.createdAt),
-                search.type,
-                query.route || `${search.origin || "—"}${search.destination ? ` → ${search.destination}` : ""}`,
+                <AdminStatusBadge key="type" tone="info">{search.type}</AdminStatusBadge>,
+                <div key="query" className="min-w-0 space-y-1"><p className="truncate font-semibold text-slate-950">{query.route || `${search.origin || "—"}${search.destination ? ` → ${search.destination}` : ""}`}</p><p className="truncate text-xs text-slate-500">Raw query summarized for operations</p></div>,
                 `${query.country || "—"} / ${query.currency || "—"}`,
-                search.resultCount,
+                <span key="results" className="font-semibold text-slate-950">{search.resultCount}</span>,
                 query.provider || providerForProduct(search.type),
                 <AdminStatusBadge key="status" tone={search.status === "SUCCESS" ? "good" : search.status === "FAILED" ? "bad" : "warn"}>{search.status}</AdminStatusBadge>,
                 search.latencyMs ? `${search.latencyMs}ms` : "—",

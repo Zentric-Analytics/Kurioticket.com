@@ -1,21 +1,15 @@
-import { AppHeader } from "@/components/layout/AppHeader";
-import { Footer } from "@/components/layout/Footer";
-import { SupportDashboardPage } from "@/components/dashboard/DashboardGrid";
+import { cookies } from "next/headers";
+import { SupportContent } from "@/app/support/SupportContent";
+import { getTranslations } from "@/lib/i18n";
+import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
 
-export const metadata = {
-  title: "Support",
-};
+export async function generateMetadata() {
+  const cookieStore = await cookies();
+  const t = getTranslations(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
+
+  return { title: t["accountDashboard.support.title"] };
+}
 
 export default function SupportPage() {
-  return (
-    <>
-      <AppHeader showAccountBackLink />
-      <main className="flex-1 bg-white pb-10 pt-0 sm:pt-5 lg:pt-5">
-        <div className="page-shell min-w-0">
-          <SupportDashboardPage />
-        </div>
-      </main>
-      <Footer />
-    </>
-  );
+  return <SupportContent dashboardFlow showFaq={false} />;
 }

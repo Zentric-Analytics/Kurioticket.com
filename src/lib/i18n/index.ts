@@ -47,7 +47,7 @@ import { translations as zhTw } from "./zh-tw";
 
 export const dictionaries: Record<string, TranslationDictionary> = {
   "en-us": en, "en-gb": en, fr, de, "es-es": es, it, nl, "pt-br": ptBr, "pt-pt": ptPt,
-  pl, ru, uk, tr, "ar-sa": ar, he, "zh-cn": zhCn, "zh-tw": zhTw, ja, ko, hi, id, ms, th, vi, cs, da,
+  pl, ru, uk, tr, ar, he, "zh-cn": zhCn, "zh-tw": zhTw, ja, ko, hi, id, ms, th, vi, cs, da,
   fi, el, hu, no, ro, sk, sv, bg, hr, lt, lv, et, sl, sr, sw, yo, ig, ha, ur,
 };
 
@@ -69,8 +69,10 @@ const localeAliases: Record<string, string> = {
   "it-it": "it",
   nl: "nl",
   "nl-nl": "nl",
-  ar: "ar-sa",
-  "ar-sa": "ar-sa",
+  ar: "ar",
+  "ar-sa": "ar",
+  "ar-ae": "ar",
+  "ar-eg": "ar",
   pt: "pt-br",
   "pt-pt": "pt-pt",
   "pt-br": "pt-br",
@@ -105,7 +107,7 @@ export function getTranslations(locale?: string | null): TranslationDictionary {
 export function getLocaleCountryCode(code: string): string {
   const map: Record<string, string> = {
     "en-us": "US", "en-gb": "GB", fr: "FR", de: "DE", "es-es": "ES", it: "IT", nl: "NL", "pt-br": "BR", "pt-pt": "PT",
-    pl: "PL", ru: "RU", uk: "UA", tr: "TR", "ar-sa": "SA", he: "IL", "zh-cn": "CN", "zh-tw": "TW", ja: "JP", ko: "KR", hi: "IN",
+    pl: "PL", ru: "RU", uk: "UA", tr: "TR", ar: "SA", "ar-sa": "SA", "ar-ae": "AE", "ar-eg": "EG", he: "IL", "zh-cn": "CN", "zh-tw": "TW", ja: "JP", ko: "KR", hi: "IN",
     id: "ID", ms: "MY", th: "TH", vi: "VN", cs: "CZ", da: "DK", fi: "FI", el: "GR", hu: "HU", no: "NO", ro: "RO", sk: "SK", sv: "SE",
     bg: "BG", hr: "HR", lt: "LT", lv: "LV", et: "EE", sl: "SI", sr: "RS", sw: "KE", yo: "NG", ig: "NG", ha: "NG", ur: "PK",
   };

@@ -1,4 +1,85 @@
 services:
+  - type: cron
+    name: kurioticket-price-alerts
+    runtime: node
+    plan: starter
+    branch: main
+    autoDeploy: true
+    schedule: '0 * * * *'
+    buildCommand: 'true'
+    startCommand: >-
+      curl -fsS -X POST "https://kurioticket.com/api/cron/price-alerts"
+      -H "Authorization: Bearer $PRICE_ALERTS_CRON_SECRET"
+      -H "Content-Type: application/json"
+    envVars:
+      - key: PRICE_ALERTS_CRON_SECRET
+        sync: false
+
+  - type: cron
+    name: kurioticket-saved-trip-reminders
+    runtime: node
+    plan: starter
+    branch: main
+    autoDeploy: true
+    schedule: '0 * * * *'
+    buildCommand: 'true'
+    startCommand: >-
+      curl -fsS -X POST "https://kurioticket.com/api/cron/saved-trip-reminders"
+      -H "Authorization: Bearer $SAVED_TRIP_REMINDERS_CRON_SECRET"
+      -H "Content-Type: application/json"
+    envVars:
+      - key: SAVED_TRIP_REMINDERS_CRON_SECRET
+        sync: false
+
+  - type: cron
+    name: kurioticket-travel-inspiration
+    runtime: node
+    plan: starter
+    branch: main
+    autoDeploy: true
+    schedule: '0 * * * *'
+    buildCommand: 'true'
+    startCommand: >-
+      curl -fsS -X POST "https://kurioticket.com/api/cron/travel-inspiration"
+      -H "Authorization: Bearer $TRAVEL_INSPIRATION_CRON_SECRET"
+      -H "Content-Type: application/json"
+    envVars:
+      - key: TRAVEL_INSPIRATION_CRON_SECRET
+        sync: false
+
+
+  - type: cron
+    name: kurioticket-route-watch-updates
+    runtime: node
+    plan: starter
+    branch: main
+    autoDeploy: true
+    schedule: '0 * * * *'
+    buildCommand: 'true'
+    startCommand: >-
+      curl -fsS -X POST "https://kurioticket.com/api/cron/route-watch-updates"
+      -H "Authorization: Bearer $ROUTE_WATCH_UPDATES_CRON_SECRET"
+      -H "Content-Type: application/json"
+    envVars:
+      - key: ROUTE_WATCH_UPDATES_CRON_SECRET
+        sync: false
+
+  - type: cron
+    name: kurioticket-homepage-fares-refresh
+    runtime: node
+    plan: starter
+    branch: main
+    autoDeploy: true
+    schedule: '0 */4 * * *'
+    buildCommand: 'true'
+    startCommand: >-
+      curl -fsS -X POST "https://kurioticket.com/api/internal/homepage-fares/refresh"
+      -H "Authorization: Bearer $HOMEPAGE_FARES_CRON_SECRET"
+      -H "Content-Type: application/json"
+    envVars:
+      - key: HOMEPAGE_FARES_CRON_SECRET
+        sync: false
+
   - type: web
     name: kurioticket-web
     runtime: node
@@ -31,6 +112,8 @@ services:
         sync: false
       - key: RESEND_FROM_EMAIL
         sync: false
+      - key: SAVED_TRIP_REMINDERS_CRON_SECRET
+        sync: false
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
@@ -60,6 +143,12 @@ services:
       - key: HOTEL_API_KEY
         sync: false
       - key: ADMIN_EMAILS
+        sync: false
+      - key: HOMEPAGE_FARES_CRON_SECRET
+        sync: false
+      - key: PRICE_ALERTS_CRON_SECRET
+        sync: false
+      - key: ROUTE_WATCH_UPDATES_CRON_SECRET
         sync: false
 
   - type: web
@@ -94,6 +183,8 @@ services:
         sync: false
       - key: RESEND_FROM_EMAIL
         sync: false
+      - key: SAVED_TRIP_REMINDERS_CRON_SECRET
+        sync: false
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
@@ -123,6 +214,12 @@ services:
       - key: HOTEL_API_KEY
         sync: false
       - key: ADMIN_EMAILS
+        sync: false
+      - key: HOMEPAGE_FARES_CRON_SECRET
+        sync: false
+      - key: PRICE_ALERTS_CRON_SECRET
+        sync: false
+      - key: ROUTE_WATCH_UPDATES_CRON_SECRET
         sync: false
 
 databases:

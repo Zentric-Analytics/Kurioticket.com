@@ -1,6 +1,7 @@
 "use client";
 
 import { HelpCircle } from "lucide-react";
+import { AccountDetailShell } from "@/components/dashboard/AccountDetailShell";
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -39,41 +40,85 @@ const supportFaqKeys = [
   },
 ];
 
-export function SupportContent() {
+type SupportContentProps = {
+  dashboardFlow?: boolean;
+  showFaq?: boolean;
+};
+
+export function SupportContent({
+  dashboardFlow = false,
+  showFaq = true,
+}: SupportContentProps) {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
 
-  return (
+  const beforeContactDescription = dashboardFlow
+    ? t("supportBeforeContactDashboardDescription")
+    : t("supportBeforeContactDescription");
+
+  const content = (
     <>
-      <AppHeader />
-      <main className="page-shell flex-1 pt-8 pb-10 sm:pt-10 lg:pt-12">
-        <section className="max-w-3xl">
-          <p className="text-sm font-semibold text-teal-dark">{t("supportEyebrow")}</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-navy sm:text-4xl">
-            {t("supportTitle")}
-          </h1>
-        </section>
+      <section className="max-w-3xl">
+        {dashboardFlow ? null : (
+          <p className="text-sm font-semibold text-teal-dark">
+            {t("supportEyebrow")}
+          </p>
+        )}
+        <h1
+          className={
+            dashboardFlow
+              ? "text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]"
+              : "mt-2 text-3xl font-bold tracking-tight text-navy sm:text-4xl"
+          }
+        >
+          {t("supportTitle")}
+        </h1>
+      </section>
 
-        <section className="mt-6 max-w-3xl">
-          <div className="flex items-start gap-3">
-            <div className="mt-1 rounded-full bg-teal/10 p-2 text-teal">
-              <HelpCircle size={22} />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-navy">{t("supportBeforeContactHeading")}</h2>
-              <p className="mt-2 text-sm leading-6 text-muted sm:text-base">
-                {t("supportBeforeContactDescription")}
-              </p>
-            </div>
+      <section className="mt-6 max-w-3xl">
+        <div className="flex items-start gap-3">
+          <div className="mt-1 rounded-full bg-teal/10 p-2 text-teal">
+            <HelpCircle size={22} />
           </div>
-        </section>
+          <div>
+            <h2
+              className={
+                dashboardFlow
+                  ? "text-lg font-semibold text-slate-900"
+                  : "text-xl font-bold text-navy"
+              }
+            >
+              {t("supportBeforeContactHeading")}
+            </h2>
+            <p
+              className={
+                dashboardFlow
+                  ? "mt-2 text-sm leading-6 text-slate-600 sm:text-base sm:leading-7"
+                  : "mt-2 text-sm leading-6 text-muted sm:text-base"
+              }
+            >
+              {beforeContactDescription}
+            </p>
+          </div>
+        </div>
+      </section>
 
-        <section aria-label={t("supportTicketHeading")} className="mx-auto mt-8 w-full max-w-2xl">
-          <SupportForm />
-        </section>
+      <section
+        aria-label={t("supportTicketHeading")}
+        className="mx-auto mt-8 w-full max-w-2xl"
+      >
+        <SupportForm />
+      </section>
 
-        <section aria-labelledby="support-faq-heading" className="mt-10 max-w-3xl">
-          <h2 id="support-faq-heading" className="text-xl font-bold tracking-tight text-navy sm:text-2xl">
+      {showFaq ? (
+        <section
+          aria-labelledby="support-faq-heading"
+          className="mt-10 max-w-3xl"
+        >
+          <h2
+            id="support-faq-heading"
+            className="text-xl font-bold tracking-tight text-navy sm:text-2xl"
+          >
             {t("supportFaqHeading")}
           </h2>
 
@@ -82,7 +127,10 @@ export function SupportContent() {
               const question = t(item.question);
 
               return (
-                <details key={item.question} className="group border-b border-border py-4">
+                <details
+                  key={item.question}
+                  className="group border-b border-border py-4"
+                >
                   <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-sm font-semibold leading-6 text-navy marker:hidden sm:text-base">
                     <span>{question}</span>
                     <span
@@ -92,12 +140,35 @@ export function SupportContent() {
                       +
                     </span>
                   </summary>
-                  <p className="mt-2 text-sm leading-6 text-muted sm:text-base">{t(item.answer)}</p>
+                  <p className="mt-2 text-sm leading-6 text-muted sm:text-base">
+                    {t(item.answer)}
+                  </p>
                 </details>
               );
             })}
           </div>
         </section>
+      ) : null}
+    </>
+  );
+
+  return (
+    <>
+      <AppHeader />
+      <main
+        className={
+          dashboardFlow
+            ? "flex-1 bg-white pb-10 pt-0"
+            : "page-shell flex-1 pb-10 pt-8 sm:pt-10 lg:pt-12"
+        }
+      >
+        {dashboardFlow ? (
+          <AccountDetailShell>
+            {content}
+          </AccountDetailShell>
+        ) : (
+          content
+        )}
       </main>
       <Footer />
     </>

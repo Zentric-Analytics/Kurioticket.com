@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Heart, X } from "lucide-react";
 
+import { useLocale } from "@/components/layout/LocaleProvider";
+
 import {
   clearRecentSearches,
   readRecentSearches,
@@ -120,6 +122,7 @@ const resolveCardImage = (entry: RecentSearchEntry): string => {
 };
 
 export function RecentSearches() {
+  const { t } = useLocale();
   const [entries, setEntries] = useState<RecentSearchEntry[]>([]);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
@@ -191,15 +194,15 @@ export function RecentSearches() {
     <section className="mx-auto w-full max-w-6xl px-1">
       <div className="mb-2 flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold leading-tight text-slate-900 md:text-base">Recent searches</h2>
-          <p className="text-[13px] leading-5 text-slate-600">Quick routes from your latest searches.</p>
+          <h2 className="text-sm font-semibold leading-tight text-slate-900 md:text-base">{t["recentSearches.title"]}</h2>
+          <p className="text-[13px] leading-5 text-slate-600">{t["recentSearches.subtitle"]}</p>
         </div>
         <button
           type="button"
           onClick={handleClearAll}
           className="focus-ring rounded-full px-2 py-1 text-xs font-semibold text-slate-500 transition-colors hover:bg-white/70 hover:text-slate-800"
         >
-          Clear all
+          {t["recentSearches.clearAll"]}
         </button>
       </div>
 
@@ -208,13 +211,13 @@ export function RecentSearches() {
           <article key={entry.id} className="h-full min-w-0">
             <Link
               href={entry.href}
-              className="focus-ring group relative flex h-full min-h-[150px] flex-col overflow-hidden rounded-xl border border-slate-200/70 bg-white/65 shadow-none backdrop-blur transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-white/85"
+              className="focus-ring group relative flex h-full min-h-[150px] flex-col overflow-hidden rounded-xl border border-slate-200/70 bg-white/65 shadow-none backdrop-blur transition-all hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:bg-white/85"
             >
               <img src={resolveCardImage(entry)} alt={entry.label} className="h-14 w-full object-cover opacity-90 transition group-hover:opacity-100" loading="lazy" />
               <div className="absolute right-2 top-2 flex items-center gap-1.5">
                 <button
                   type="button"
-                  aria-label={savedIds.has(entry.id) ? "Unsave recent search" : "Save recent search"}
+                  aria-label={savedIds.has(entry.id) ? t["recentSearches.unsaveAria"] : t["recentSearches.saveAria"]}
                   onClick={(event) => {
                     event.preventDefault();
                     event.stopPropagation();
@@ -230,7 +233,7 @@ export function RecentSearches() {
                 </button>
                 <button
                   type="button"
-                  aria-label="Remove recent search"
+                  aria-label={t["recentSearches.removeAria"]}
                   onClick={(event) => {
                     event.preventDefault();
                     event.stopPropagation();

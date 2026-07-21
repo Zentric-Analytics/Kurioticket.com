@@ -52,7 +52,7 @@ const stableJson = (value: Record<string, unknown>) =>
           acc[key] = nextValue;
         }
         return acc;
-      }, {})
+      }, {}),
   );
 
 const buildId = (type: RecentSearchType, params: Record<string, unknown>) =>
@@ -67,11 +67,14 @@ export const readRecentSearches = (): RecentSearchEntry[] => {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
     return parsed
-      .filter((entry): entry is RecentSearchEntry => Boolean(entry?.id && entry?.href && entry?.label))
+      .filter((entry): entry is RecentSearchEntry =>
+        Boolean(entry?.id && entry?.href && entry?.label),
+      )
       .map((entry) => ({
         ...entry,
         image: typeof entry.image === "string" ? entry.image : undefined,
-        imageAlt: typeof entry.imageAlt === "string" ? entry.imageAlt : undefined,
+        imageAlt:
+          typeof entry.imageAlt === "string" ? entry.imageAlt : undefined,
       }));
   } catch {
     return [];
@@ -88,11 +91,113 @@ export const writeRecentSearches = (entries: RecentSearchEntry[]): void => {
   }
 };
 
-export const upsertRecentSearch = (entry: RecentSearchEntry, max = 5): RecentSearchEntry[] => {
+export const upsertRecentSearch = (
+  entry: RecentSearchEntry,
+  max = 5,
+): RecentSearchEntry[] => {
   const existing = readRecentSearches();
-  const deduped = [entry, ...existing.filter((item) => item.id !== entry.id)].slice(0, max);
+  const deduped = [
+    entry,
+    ...existing.filter((item) => item.id !== entry.id),
+  ].slice(0, max);
   writeRecentSearches(deduped);
   return deduped;
+};
+
+const RECENT_SEARCHES_API = "/api/account/recent-searches";
+
+const isRecentSearchEntry = (entry: unknown): entry is RecentSearchEntry => {
+  if (!entry || typeof entry !== "object") return false;
+  const candidate = entry as Partial<RecentSearchEntry>;
+  return Boolean(
+    candidate.id &&
+    (candidate.type === "flight" || candidate.type === "hotel") &&
+    candidate.createdAt &&
+    candidate.label &&
+    candidate.subtitle &&
+    candidate.href &&
+    candidate.params &&
+    typeof candidate.params === "object",
+  );
+};
+
+export const fetchBackendRecentSearches = async (
+  signal?: AbortSignal,
+): Promise<{ ok: boolean; items?: RecentSearchEntry[] }> => {
+  try {
+    const response = await fetch(RECENT_SEARCHES_API, {
+      method: "GET",
+      credentials: "same-origin",
+      signal,
+    });
+
+    if (!response.ok) return { ok: false };
+
+    const payload = (await response.json()) as { items?: unknown[] };
+    const items = Array.isArray(payload.items)
+      ? payload.items.filter(isRecentSearchEntry)
+      : [];
+
+    return { ok: true, items };
+  } catch {
+    if (signal?.aborted) return { ok: false };
+    return { ok: false };
+  }
+};
+
+export const syncBackendRecentSearch = async (
+  entry: RecentSearchEntry,
+): Promise<{ ok: boolean; item?: RecentSearchEntry }> => {
+  try {
+    const response = await fetch(RECENT_SEARCHES_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify(entry),
+    });
+
+    if (!response.ok) return { ok: false };
+
+    const payload = (await response.json()) as { item?: unknown };
+    return {
+      ok: true,
+      item: isRecentSearchEntry(payload.item) ? payload.item : undefined,
+    };
+  } catch {
+    return { ok: false };
+  }
+};
+
+export const deleteBackendRecentSearch = async (
+  id: string,
+): Promise<{ ok: boolean }> => {
+  try {
+    const response = await fetch(RECENT_SEARCHES_API, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ id }),
+    });
+
+    return { ok: response.ok };
+  } catch {
+    return { ok: false };
+  }
+};
+
+export const clearBackendRecentSearches = async (): Promise<{
+  ok: boolean;
+}> => {
+  try {
+    const response = await fetch(`${RECENT_SEARCHES_API}?clear=all`, {
+      method: "DELETE",
+      credentials: "same-origin",
+    });
+
+    return { ok: response.ok };
+  } catch {
+    return { ok: false };
+  }
 };
 
 export const removeRecentSearch = (id: string): RecentSearchEntry[] => {
@@ -116,7 +221,10 @@ type SearchImageMeta = {
   imageAlt?: string;
 };
 
-export const buildHotelRecentSearch = (params: RecentHotelParams, imageMeta?: SearchImageMeta): RecentSearchEntry => {
+export const buildHotelRecentSearch = (
+  params: RecentHotelParams,
+  imageMeta?: SearchImageMeta,
+): RecentSearchEntry => {
   const id = buildId("hotel", params);
   const label = params.destination;
   const subtitle = `${formatIsoDate(params.checkIn) || params.checkIn} – ${formatIsoDate(params.checkOut) || params.checkOut} · ${params.guests} guest${params.guests === 1 ? "" : "s"} · ${params.rooms} room${params.rooms === 1 ? "" : "s"}`;
@@ -143,12 +251,14 @@ export const buildHotelRecentSearch = (params: RecentHotelParams, imageMeta?: Se
 
 export const buildFlightRecentSearch = (
   params: RecentFlightParams,
-  imageMeta?: SearchImageMeta
+  imageMeta?: SearchImageMeta,
 ): RecentSearchEntry => {
   const id = buildId("flight", params);
   const label = `${params.origin} → ${params.destination}`;
   const outbound = formatIsoDate(params.departureDate) || params.departureDate;
-  const inbound = params.returnDate ? formatIsoDate(params.returnDate) || params.returnDate : "One-way";
+  const inbound = params.returnDate
+    ? formatIsoDate(params.returnDate) || params.returnDate
+    : "One-way";
   const subtitle = `${outbound}${params.returnDate ? ` – ${inbound}` : ""} · ${params.travelers} traveler${params.travelers === 1 ? "" : "s"} · ${params.cabinClass}`;
   const query = new URLSearchParams({
     tripType: params.tripType,
