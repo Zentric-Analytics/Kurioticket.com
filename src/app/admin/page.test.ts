@@ -51,7 +51,7 @@ test("admin home uses a full-bleed decorative workspace background while contain
   assert.match(workspaceBlock, /className="relative isolate"/);
   assert.match(workspaceBlock, /data-admin-home-workspace-background="full-bleed"/);
   assert.match(workspaceBlock, /aria-hidden="true"/);
-  assert.match(workspaceBlock, /className="pointer-events-none absolute inset-y-0 left-1\/2 -z-10 w-screen -translate-x-1\/2 border-y border-\[#E4E9EF\] bg-white shadow-\[0_10px_36px_rgba\(2,28,43,0\.06\)\]"/);
+  assert.match(workspaceBlock, /className="pointer-events-none absolute inset-y-0 left-1\/2 -z-10 w-screen -translate-x-1\/2 border-y border-\[#E4E9EF\] bg-\[#FBFAF7\] shadow-\[0_10px_36px_rgba\(2,28,43,0\.06\)\]"/);
   assert.match(workspaceBlock, /data-admin-home-workspace-background="full-bleed"[\s\S]*\/>[\s\S]*<div className="px-5 py-6 sm:px-6 lg:px-8 lg:py-8">/);
   assert.match(workspaceBlock, /<AdminPageHeader[\s\S]*title="Admin Home"/);
   assert.match(workspaceBlock, /actions=\{<HeroRouteArtwork \/>\}/);
