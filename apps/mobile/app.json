@@ -14,16 +14,16 @@
     "android": {
       "package": "com.kurioticket.mobile",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/kurioticket-icon-blue.svg",
+        "foregroundImage": "./assets/kurioticket-icon-blue.png",
         "backgroundColor": "#F2F6FA"
       }
     },
     "plugins": [
       "expo-router"
     ],
-    "icon": "./assets/kurioticket-icon-blue.svg",
+    "icon": "./assets/kurioticket-icon-blue.png",
     "splash": {
-      "image": "./assets/kurioticket-logo-primary-light-bg.svg",
+      "image": "./assets/kurioticket-logo-primary-light-bg.png",
       "resizeMode": "contain",
       "backgroundColor": "#F2F6FA"
     }
