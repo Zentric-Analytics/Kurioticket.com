@@ -27,7 +27,6 @@ function openingTagForSurface(surface: string): string {
 function assertNoOuterCardClasses(openingTag: string): void {
   assert.doesNotMatch(openingTag, /bg-white/);
   assert.doesNotMatch(openingTag, /rounded-2xl/);
-  assert.doesNotMatch(openingTag, /(?:^|\s)border(?:\s|$)|border-\[|border-slate|border-[#]/);
   assert.doesNotMatch(openingTag, /shadow/);
 }
 
@@ -43,6 +42,25 @@ test("admin home sections appear in the required operational order", () => {
   const indexes = sectionOrder.map((heading) => adminOverviewPage.indexOf(heading));
   indexes.forEach((index, position) => assert.notEqual(index, -1, `${sectionOrder[position]} should exist`));
   assert.deepEqual([...indexes].sort((a, b) => a - b), indexes);
+});
+
+
+test("admin home uses exactly four purposeful soft surfaces", () => {
+  assert.equal((adminOverviewPage.match(/data-admin-home-main-surface=/g) || []).length, 4);
+  for (const surface of ["needs-attention", "at-a-glance", "operations", "recent-admin-activity"]) {
+    assert.match(adminOverviewPage, new RegExp(`data-admin-home-main-surface="${surface}"[^>]*className=\{adminHomeSurfaceClass\}`));
+  }
+  assert.match(adminOverviewPage, /const adminHomeSurfaceClass = "rounded-\[20px\] border border-\[#E4E9EF\] bg-white p-6 shadow-\[0_8px_28px_rgba\(2,28,43,0\.05\)\] sm:p-7"/);
+});
+
+test("search activity and service status share one soft operational surface", () => {
+  const operationsBlock = blockBetween('data-admin-home-main-surface="operations"', 'data-admin-home-main-surface="recent-admin-activity"');
+  assert.match(operationsBlock, /data-admin-home-operations-layout="shared"/);
+  assert.match(operationsBlock, /xl:grid-cols-\[minmax\(0,1\.15fr\)_minmax\(320px,0\.85fr\)\]/);
+  assert.match(operationsBlock, /data-admin-home-surface="search-activity"/);
+  assert.match(operationsBlock, /data-admin-home-surface="service-status"/);
+  assert.equal((operationsBlock.match(/className=\{adminHomeSurfaceClass\}/g) || []).length, 1);
+  assert.match(operationsBlock, /border-t border-\[#E4E9EF\].*xl:border-l xl:border-t-0/s);
 });
 
 test("needs attention derives rows only from provider, system, and search health data", () => {
@@ -68,9 +86,10 @@ test("needs attention uses a flat rail instead of nested cards", () => {
 });
 
 test("at a glance preserves all six metrics in order as a flat responsive metric rail", () => {
-  const glanceBlock = blockBetween("At a Glance", "data-admin-home-surface=\"search-activity\"");
+  const glanceBlock = blockBetween("At a Glance", "data-admin-home-main-surface=\"operations\"");
   assert.deepEqual(labelsFor("OverviewMetric", glanceBlock), ["Total users", "Active users", "Suspended users", "Admin users", "Recent searches", "Recent admin actions"]);
   assert.match(glanceBlock, /data-admin-home-metric-rail="flat"/);
+  assert.doesNotMatch(glanceBlock, /border-l-4 border-\[#6B7CFF\]/);
   assert.match(glanceBlock, /grid-cols-2/);
   assert.match(glanceBlock, /md:grid-cols-3/);
   assert.match(glanceBlock, /xl:grid-cols-6/);
