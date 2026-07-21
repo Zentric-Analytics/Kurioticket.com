@@ -1,15 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
+import * as SplashScreen from "expo-splash-screen";
 import { runBootstrap, type BootstrapState } from "../src/launch/bootstrap";
 import { GuestAppScreen, LoadingScreen, OnboardingScreen, RecoveryScreen } from "../src/features/launch/LaunchScreens";
-import { loadOptionalModule } from "../src/native/optionalModules";
 
-type SplashScreenLike = {
-  preventAutoHideAsync: () => Promise<boolean>;
-  hideAsync: () => Promise<boolean>;
-};
-
-const SplashScreen = loadOptionalModule<SplashScreenLike>("expo-splash-screen");
-void SplashScreen?.preventAutoHideAsync().catch(() => undefined);
+void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export default function Index() {
   const [state, setState] = useState<BootstrapState>({ status: "initializing" });
@@ -21,13 +15,16 @@ export default function Index() {
       .catch((error) => {
         if (process.env.NODE_ENV !== "production") console.warn("[mobile-bootstrap] unexpected bootstrap failure", error);
         setState({ status: "offline" });
-      })
-      .finally(() => {
-        void SplashScreen?.hideAsync().catch(() => undefined);
       });
   }, []);
 
   useEffect(() => { bootstrap(); }, [bootstrap]);
+
+  useEffect(() => {
+    if (state.status !== "initializing") {
+      void SplashScreen.hideAsync().catch(() => undefined);
+    }
+  }, [state.status]);
 
   if (state.status === "initializing") return <LoadingScreen />;
   if (state.status === "ready-first-run") return <OnboardingScreen onGuest={() => setState({ status: "ready-guest", config: state.config })} />;
