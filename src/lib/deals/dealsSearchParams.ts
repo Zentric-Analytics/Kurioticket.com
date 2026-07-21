@@ -21,7 +21,6 @@ export type DealsSearch = {
   flightTripType: DealsFlightTripType;
   flightOriginText: string; flightOriginCode: string;
   flightDestinationText: string; flightDestinationCode: string;
-  flightTripType: DealsFlightTripType;
   flightDepartureDate: string; flightReturnDate: string;
   flightAdults: number; flightChildren: number; flightInfants: number;
   flightCabinClass: DealsCabinClass;
@@ -76,7 +75,7 @@ export function parseDealsSearchParams(input: QueryInput): DealsSearch {
     flightTripType,
     flightOriginText: get(input, "flightOriginText"), flightOriginCode: normalizeIataCode(get(input, "flightOriginCode")),
     flightDestinationText: get(input, "flightDestinationText"), flightDestinationCode: normalizeIataCode(get(input, "flightDestinationCode")),
-    flightTripType, flightDepartureDate: date(get(input, "flightDepartureDate")), flightReturnDate: flightTripType === "one-way" ? "" : date(get(input, "flightReturnDate")),
+    flightDepartureDate: date(get(input, "flightDepartureDate")), flightReturnDate: flightTripType === "one-way" ? "" : date(get(input, "flightReturnDate")),
     flightAdults: integer(get(input, "flightAdults"), defaults.flightAdults), flightChildren: integer(get(input, "flightChildren"), defaults.flightChildren), flightInfants: integer(get(input, "flightInfants"), defaults.flightInfants),
     flightCabinClass: cabin === "business" || cabin === "first" ? cabin : "economy",
     hotelDestination: get(input, "hotelDestination"), hotelCheckIn: date(get(input, "hotelCheckIn")), hotelCheckOut: date(get(input, "hotelCheckOut")),
