@@ -69,8 +69,13 @@ export default async function AdminPage() {
   return (
     <div
       data-admin-home-workspace="single-card"
-      className="overflow-hidden rounded-[20px] border border-[#E4E9EF] bg-white shadow-[0_10px_36px_rgba(2,28,43,0.06)] sm:rounded-[24px]"
+      className="relative isolate"
     >
+      <div
+        data-admin-home-workspace-background="full-bleed"
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 w-screen -translate-x-1/2 border-y border-[#E4E9EF] bg-white shadow-[0_10px_36px_rgba(2,28,43,0.06)]"
+      />
       <div className="px-5 py-6 sm:px-6 lg:px-8 lg:py-8">
         <AdminPageHeader
           eyebrow=""
