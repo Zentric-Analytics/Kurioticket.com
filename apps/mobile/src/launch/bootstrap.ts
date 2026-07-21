@@ -10,20 +10,25 @@ function devLog(message: string, details?: unknown) { if (process.env.NODE_ENV !
 function failedState(error: ApiError): BootstrapState { return { status: error.code === "configuration" ? "configuration-error" : "offline" }; }
 
 export async function runBootstrap(deps: BootstrapDependencies = {}): Promise<BootstrapState> {
-  const fetcher = deps.fetcher;
-  const health = await getMobileHealth(fetcher);
-  if (!health.ok) { devLog("health check failed", health.error); return failedState(health.error); }
-  if (!health.data.data.available) { devLog("health check unavailable"); return { status: "offline" }; }
+  try {
+    const fetcher = deps.fetcher;
+    const health = await getMobileHealth(fetcher);
+    if (!health.ok) { devLog("health check failed", health.error); return failedState(health.error); }
+    if (!health.data.data.available) { devLog("health check unavailable"); return { status: "offline" }; }
 
-  const config = await getMobileConfig(fetcher);
-  if (!config.ok) { devLog("config load failed", config.error); return failedState(config.error); }
-  if (config.data.data.maintenanceMode) { devLog("maintenance mode enabled"); return { status: "offline", config: config.data.data }; }
+    const config = await getMobileConfig(fetcher);
+    if (!config.ok) { devLog("config load failed", config.error); return failedState(config.error); }
+    if (config.data.data.maintenanceMode) { devLog("maintenance mode enabled"); return { status: "offline", config: config.data.data }; }
 
-  let onboardingCompleted = false;
-  try { onboardingCompleted = await (deps.readOnboardingCompleted ?? readOnboardingCompleted)(); }
-  catch (error) { devLog("onboarding storage read failed", error); }
-  if (!onboardingCompleted) return { status: "ready-first-run", config: config.data.data };
+    let onboardingCompleted = false;
+    try { onboardingCompleted = await (deps.readOnboardingCompleted ?? readOnboardingCompleted)(); }
+    catch (error) { devLog("onboarding storage read failed", error); }
+    if (!onboardingCompleted) return { status: "ready-first-run", config: config.data.data };
 
-  const hasSession = deps.restoreAuthenticatedSession ? await deps.restoreAuthenticatedSession().catch((error) => { devLog("session restore reserved path failed", error); return false; }) : false;
-  return { status: hasSession ? "ready-authenticated-reserved" : "ready-guest", config: config.data.data };
+    const hasSession = deps.restoreAuthenticatedSession ? await deps.restoreAuthenticatedSession().catch((error) => { devLog("session restore reserved path failed", error); return false; }) : false;
+    return { status: hasSession ? "ready-authenticated-reserved" : "ready-guest", config: config.data.data };
+  } catch (error) {
+    devLog("unexpected bootstrap failure", error);
+    return { status: "offline" };
+  }
 }
