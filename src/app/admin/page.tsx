@@ -25,7 +25,7 @@ import {
 
 import {
   AdminEmptyState,
-  AdminPageShell,
+  AdminPageHeader,
   AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
 import {
@@ -54,7 +54,7 @@ type SearchHealth = Awaited<ReturnType<typeof getSearchHealth>>;
 
 type MetricIcon = "users" | "active" | "suspended" | "admin" | "search" | "activity";
 
-const adminHomeSurfaceClass = "rounded-[20px] border border-[#E4E9EF] bg-white p-6 shadow-[0_8px_28px_rgba(2,28,43,0.05)] sm:p-7";
+const adminHomeSectionClass = "border-t border-[#E4E9EF] px-5 py-6 sm:px-6 lg:px-8 lg:py-8";
 
 export default async function AdminPage() {
   const [metrics, providers, system, searchHealth, activity] = await Promise.all([
@@ -67,14 +67,19 @@ export default async function AdminPage() {
   const attentionIssues = getAttentionIssues(providers, system, searchHealth);
 
   return (
-    <AdminPageShell
-      eyebrow=""
-      title="Admin Home"
-      description="Monitor Kurioticket activity, provider readiness, search health, system status and recent administrative actions."
-      actions={<HeroRouteArtwork />}
+    <div
+      data-admin-home-workspace="single-card"
+      className="overflow-hidden rounded-[20px] border border-[#E4E9EF] bg-white shadow-[0_10px_36px_rgba(2,28,43,0.06)] sm:rounded-[24px]"
     >
-      <div className="space-y-6 lg:space-y-8">
-      <section data-admin-home-main-surface="needs-attention" aria-labelledby="needs-attention-heading" className={adminHomeSurfaceClass}>
+      <div className="px-5 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <AdminPageHeader
+          eyebrow=""
+          title="Admin Home"
+          description="Monitor Kurioticket activity, provider readiness, search health, system status and recent administrative actions."
+          actions={<HeroRouteArtwork />}
+        />
+      </div>
+      <section data-admin-home-section="needs-attention" aria-labelledby="needs-attention-heading" className={adminHomeSectionClass}>
         <div className="flex flex-wrap items-center gap-3">
           <SectionHeading id="needs-attention-heading">Needs Attention</SectionHeading>
           <span className="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-600" aria-label={`${attentionIssues.length} issues`}>
@@ -97,7 +102,7 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      <section data-admin-home-main-surface="at-a-glance" aria-labelledby="at-a-glance-heading" className={adminHomeSurfaceClass}>
+      <section data-admin-home-section="at-a-glance" aria-labelledby="at-a-glance-heading" className={adminHomeSectionClass}>
         <SectionHeading id="at-a-glance-heading">At a Glance</SectionHeading>
         <div data-admin-home-metric-rail="flat" className="mt-4">
           <div className="grid grid-cols-2 divide-x divide-y divide-slate-200 border-y border-slate-200 md:grid-cols-3 xl:grid-cols-6 xl:divide-y-0">
@@ -111,9 +116,9 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      <section aria-label="Search Activity and Service Status" data-admin-home-main-surface="operations" className={adminHomeSurfaceClass}>
+      <section aria-label="Search Activity and Service Status" data-admin-home-section="operations" className="border-t border-[#E4E9EF]">
         <div data-admin-home-operations-layout="shared" className="grid gap-0 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-        <section data-admin-home-surface="search-activity" className="relative min-h-[17rem] overflow-hidden pb-6 xl:pr-7 xl:pb-0" aria-labelledby="search-activity-heading">
+        <section data-admin-home-surface="search-activity" className="relative min-h-[17rem] overflow-hidden px-5 py-6 sm:px-6 lg:px-8 lg:py-8 xl:pr-8" aria-labelledby="search-activity-heading">
           <SearchPanelDecoration />
           <div className="relative z-10">
             <PanelHeading id="search-activity-heading" icon={Activity}>Search Activity</PanelHeading>
@@ -139,14 +144,14 @@ export default async function AdminPage() {
               </>
             ) : (
               <div className="mt-5">
-                <AdminEmptyState title="Search analytics unavailable" message="Search analytics will appear after search logging records real user searches. No search counts are mocked." />
+                <AdminEmptyState variant="compact" title="Search analytics unavailable" message="Search analytics will appear after search logging records real user searches. No search counts are mocked." />
               </div>
             )}
             <div className="mt-6 flex justify-end"><TextLink href="/admin/searches">View Searches →</TextLink></div>
           </div>
         </section>
 
-        <section data-admin-home-surface="service-status" className="relative min-h-[17rem] overflow-hidden border-t border-[#E4E9EF] pt-6 xl:border-l xl:border-t-0 xl:pl-7 xl:pt-0" aria-labelledby="service-status-heading">
+        <section data-admin-home-surface="service-status" className="relative min-h-[17rem] overflow-hidden border-t border-[#E4E9EF] px-5 py-6 sm:px-6 lg:px-8 lg:py-8 xl:border-l xl:border-t-0 xl:pl-8" aria-labelledby="service-status-heading">
           <ServicePanelDecoration />
           <div className="relative z-10">
             <PanelHeading id="service-status-heading" icon={Gauge}>Service Status</PanelHeading>
@@ -174,15 +179,14 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      <section data-admin-home-main-surface="recent-admin-activity" aria-labelledby="recent-admin-activity-heading" className={adminHomeSurfaceClass}>
+      <section data-admin-home-section="recent-admin-activity" aria-labelledby="recent-admin-activity-heading" className={adminHomeSectionClass}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <SectionHeading id="recent-admin-activity-heading">Recent Admin Activity</SectionHeading>
           <TextLink href="/admin/logs">View Admin Logs →</TextLink>
         </div>
         <div className="mt-3"><RecentActivityList items={activity} /></div>
       </section>
-      </div>
-    </AdminPageShell>
+    </div>
   );
 }
 
@@ -241,7 +245,7 @@ function StatusRow({ label, status, tone, icon }: { label: string; status: strin
 const statusIcons: Record<string, LucideIcon> = { Flights: Plane, Hotels: Hotel, Cars: Car, Database, Authentication: UserCog, Email: Mail, "Provider credentials": KeyRound, Webhooks: Webhook };
 
 function RecentActivityList({ items }: { items: Array<{ id: string; title: string; detail: string; timestamp: string }> }) {
-  if (items.length === 0) return <AdminEmptyState title="No admin activity yet" message="Audit log entries will appear here after admin actions are recorded." />;
+  if (items.length === 0) return <AdminEmptyState variant="compact" title="No admin activity yet" message="Audit log entries will appear here after admin actions are recorded." />;
   return <div data-admin-home-timeline="true" className="border-y border-slate-200"><div>{items.map((item) => <div key={item.id} className="grid grid-cols-[2.25rem_minmax(0,1fr)] gap-x-4 gap-y-2 border-b border-slate-200 py-4 pr-0 text-sm last:border-b-0 sm:grid-cols-[2.25rem_minmax(0,1fr)_auto] sm:gap-x-6"><div data-admin-home-timeline-icon-column="fixed" className="relative flex w-9 justify-center"><div aria-hidden="true" className="pointer-events-none absolute bottom-[-1rem] top-0 w-px bg-[#004BB8]/25" /><span className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#004BB8] ring-4 ring-white"><Activity className="h-4 w-4" aria-hidden="true" /></span></div><div className="min-w-0"><p className="font-semibold text-slate-950">{humanizeAuditAction(item.title)}</p><p className="mt-1 break-words text-slate-600">{item.detail}</p></div><p className="col-start-2 text-xs font-semibold text-slate-500 sm:col-start-3 sm:text-right">{item.timestamp}</p></div>)}</div></div>;
 }
 

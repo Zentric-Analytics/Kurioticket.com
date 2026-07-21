@@ -45,21 +45,32 @@ test("admin home sections appear in the required operational order", () => {
 });
 
 
-test("admin home uses exactly four purposeful soft surfaces", () => {
-  assert.equal((adminOverviewPage.match(/data-admin-home-main-surface=/g) || []).length, 4);
-  for (const surface of ["needs-attention", "at-a-glance", "operations", "recent-admin-activity"]) {
-    assert.match(adminOverviewPage, new RegExp(`data-admin-home-main-surface="${surface}"[^>]*className=\{adminHomeSurfaceClass\}`));
-  }
-  assert.match(adminOverviewPage, /const adminHomeSurfaceClass = "rounded-\[20px\] border border-\[#E4E9EF\] bg-white p-6 shadow-\[0_8px_28px_rgba\(2,28,43,0\.05\)\] sm:p-7"/);
+test("admin home uses exactly one cohesive workspace card containing the header", () => {
+  assert.equal((adminOverviewPage.match(/data-admin-home-workspace="single-card"/g) || []).length, 1);
+  const workspaceBlock = blockBetween('data-admin-home-workspace="single-card"', 'function HeroRouteArtwork');
+  assert.match(workspaceBlock, /className="[^"]*rounded-\[20px\][^"]*border border-\[#E4E9EF\][^"]*bg-white[^"]*shadow-\[0_10px_36px_rgba\(2,28,43,0\.06\)\][^"]*sm:rounded-\[24px\]/);
+  assert.match(workspaceBlock, /<AdminPageHeader[\s\S]*title="Admin Home"/);
+  assert.match(workspaceBlock, /actions=\{<HeroRouteArtwork \/>\}/);
+  assert.equal((adminOverviewPage.match(/data-admin-home-main-surface=/g) || []).length, 0);
+  assert.doesNotMatch(adminOverviewPage, /adminHomeSurfaceClass/);
 });
 
-test("search activity and service status share one soft operational surface", () => {
-  const operationsBlock = blockBetween('data-admin-home-main-surface="operations"', 'data-admin-home-main-surface="recent-admin-activity"');
+test("admin home sections are transparent workspace regions separated by internal dividers", () => {
+  assert.match(adminOverviewPage, /const adminHomeSectionClass = "border-t border-\[#E4E9EF\] px-5 py-6 sm:px-6 lg:px-8 lg:py-8"/);
+  for (const section of ["needs-attention", "at-a-glance", "recent-admin-activity"]) {
+    assert.match(adminOverviewPage, new RegExp(`data-admin-home-section="${section}"[^>]*className=\{adminHomeSectionClass\}`));
+  }
+  assert.match(adminOverviewPage, /data-admin-home-section="operations"[^>]*className="border-t border-\[#E4E9EF\]"/);
+  assert.equal((adminOverviewPage.match(/data-admin-home-section=/g) || []).length, 4);
+});
+
+test("search activity and service status are flat operational sections in the single workspace", () => {
+  const operationsBlock = blockBetween('data-admin-home-section="operations"', 'data-admin-home-section="recent-admin-activity"');
   assert.match(operationsBlock, /data-admin-home-operations-layout="shared"/);
   assert.match(operationsBlock, /xl:grid-cols-\[minmax\(0,1\.15fr\)_minmax\(320px,0\.85fr\)\]/);
   assert.match(operationsBlock, /data-admin-home-surface="search-activity"/);
   assert.match(operationsBlock, /data-admin-home-surface="service-status"/);
-  assert.equal((operationsBlock.match(/className=\{adminHomeSurfaceClass\}/g) || []).length, 1);
+  assert.equal((operationsBlock.match(/bg-white|shadow-\[|rounded-\[/g) || []).length, 0);
   assert.match(operationsBlock, /border-t border-\[#E4E9EF\].*xl:border-l xl:border-t-0/s);
 });
 
@@ -86,7 +97,7 @@ test("needs attention uses a flat rail instead of nested cards", () => {
 });
 
 test("at a glance preserves all six metrics in order as a flat responsive metric rail", () => {
-  const glanceBlock = blockBetween("At a Glance", "data-admin-home-main-surface=\"operations\"");
+  const glanceBlock = blockBetween("At a Glance", "data-admin-home-section=\"operations\"");
   assert.deepEqual(labelsFor("OverviewMetric", glanceBlock), ["Total users", "Active users", "Suspended users", "Admin users", "Recent searches", "Recent admin actions"]);
   assert.match(glanceBlock, /data-admin-home-metric-rail="flat"/);
   assert.doesNotMatch(glanceBlock, /border-l-4 border-\[#6B7CFF\]/);
