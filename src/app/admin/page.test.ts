@@ -45,14 +45,29 @@ test("admin home sections appear in the required operational order", () => {
 });
 
 
-test("admin home uses exactly one cohesive workspace card containing the header", () => {
+test("admin home uses a full-bleed decorative workspace background while containing the header", () => {
   assert.equal((adminOverviewPage.match(/data-admin-home-workspace="single-card"/g) || []).length, 1);
   const workspaceBlock = blockBetween('data-admin-home-workspace="single-card"', 'function HeroRouteArtwork');
-  assert.match(workspaceBlock, /className="[^"]*rounded-\[20px\][^"]*border border-\[#E4E9EF\][^"]*bg-white[^"]*shadow-\[0_10px_36px_rgba\(2,28,43,0\.06\)\][^"]*sm:rounded-\[24px\]/);
+  assert.match(workspaceBlock, /className="relative isolate"/);
+  assert.match(workspaceBlock, /data-admin-home-workspace-background="full-bleed"/);
+  assert.match(workspaceBlock, /aria-hidden="true"/);
+  assert.match(workspaceBlock, /className="pointer-events-none absolute inset-y-0 left-1\/2 -z-10 w-screen -translate-x-1\/2 border-y border-\[#E4E9EF\] bg-white shadow-\[0_10px_36px_rgba\(2,28,43,0\.06\)\]"/);
+  assert.match(workspaceBlock, /data-admin-home-workspace-background="full-bleed"[\s\S]*\/>[\s\S]*<div className="px-5 py-6 sm:px-6 lg:px-8 lg:py-8">/);
   assert.match(workspaceBlock, /<AdminPageHeader[\s\S]*title="Admin Home"/);
   assert.match(workspaceBlock, /actions=\{<HeroRouteArtwork \/>\}/);
   assert.equal((adminOverviewPage.match(/data-admin-home-main-surface=/g) || []).length, 0);
   assert.doesNotMatch(adminOverviewPage, /adminHomeSurfaceClass/);
+});
+
+
+test("admin home full-bleed background does not alter content constraints or introduce a full-width content wrapper", () => {
+  const workspaceBlock = blockBetween('data-admin-home-workspace="single-card"', 'function HeroRouteArtwork');
+  assert.match(adminShell, /<main className="page-shell py-5 sm:py-6">/);
+  assert.match(workspaceBlock, /<div className="px-5 py-6 sm:px-6 lg:px-8 lg:py-8">/);
+  assert.match(adminOverviewPage, /const adminHomeSectionClass = "border-t border-\[#E4E9EF\] px-5 py-6 sm:px-6 lg:px-8 lg:py-8"/);
+  assert.doesNotMatch(workspaceBlock, /max-w-none|w-full|container|mx-0|px-0/);
+  assert.equal((workspaceBlock.match(/w-screen/g) || []).length, 1);
+  assert.match(workspaceBlock, /data-admin-home-workspace-background="full-bleed"[\s\S]*aria-hidden="true"[\s\S]*\/>/);
 });
 
 test("admin home sections are transparent workspace regions separated by internal dividers", () => {
