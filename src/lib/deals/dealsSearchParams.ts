@@ -21,6 +21,7 @@ export type DealsSearch = {
   flightTripType: DealsFlightTripType;
   flightOriginText: string; flightOriginCode: string;
   flightDestinationText: string; flightDestinationCode: string;
+  flightTripType: DealsFlightTripType;
   flightDepartureDate: string; flightReturnDate: string;
   flightAdults: number; flightChildren: number; flightInfants: number;
   flightCabinClass: DealsCabinClass;
@@ -49,8 +50,8 @@ export const getIncludedProducts = (mode: DealsPackageMode): Record<DealsProduct
 });
 
 export const createDefaultDealsSearch = (): DealsSearch => ({
-  mode: "hotel-flight", flightTripType: "round-trip", flightOriginText: "", flightOriginCode: "", flightDestinationText: "", flightDestinationCode: "",
-  flightDepartureDate: "", flightReturnDate: "", flightAdults: 1, flightChildren: 0, flightInfants: 0, flightCabinClass: "economy",
+  mode: "hotel-flight", flightOriginText: "", flightOriginCode: "", flightDestinationText: "", flightDestinationCode: "",
+  flightTripType: "round-trip", flightDepartureDate: "", flightReturnDate: "", flightAdults: 1, flightChildren: 0, flightInfants: 0, flightCabinClass: "economy",
   hotelDestination: "", hotelCheckIn: "", hotelCheckOut: "", hotelAdults: 2, hotelChildren: 0, hotelRooms: 1, hotelPetFriendly: false,
   carPickupLocation: "", carReturnToDifferentLocation: false, carReturnLocation: "", carPickupDate: "", carReturnDate: "", carPickupTime: "10:00", carReturnTime: "10:00", carDriverAge: defaultDriverAge,
 });
@@ -68,13 +69,14 @@ export function parseDealsSearchParams(input: QueryInput): DealsSearch {
   const defaults = createDefaultDealsSearch();
   const modeValue = get(input, "mode");
   const cabin = get(input, "flightCabinClass");
-  const flightTripType: DealsFlightTripType = get(input, "flightTripType") === "one-way" ? "one-way" : "round-trip";
+  const tripTypeValue = get(input, "flightTripType") || get(input, "tripType");
+  const flightTripType = tripTypeValue === "one-way" ? "one-way" : defaults.flightTripType;
   return {
     mode: isDealsPackageMode(modeValue) ? modeValue : defaults.mode,
     flightTripType,
     flightOriginText: get(input, "flightOriginText"), flightOriginCode: normalizeIataCode(get(input, "flightOriginCode")),
     flightDestinationText: get(input, "flightDestinationText"), flightDestinationCode: normalizeIataCode(get(input, "flightDestinationCode")),
-    flightDepartureDate: date(get(input, "flightDepartureDate")), flightReturnDate: flightTripType === "one-way" ? "" : date(get(input, "flightReturnDate")),
+    flightTripType, flightDepartureDate: date(get(input, "flightDepartureDate")), flightReturnDate: flightTripType === "one-way" ? "" : date(get(input, "flightReturnDate")),
     flightAdults: integer(get(input, "flightAdults"), defaults.flightAdults), flightChildren: integer(get(input, "flightChildren"), defaults.flightChildren), flightInfants: integer(get(input, "flightInfants"), defaults.flightInfants),
     flightCabinClass: cabin === "business" || cabin === "first" ? cabin : "economy",
     hotelDestination: get(input, "hotelDestination"), hotelCheckIn: date(get(input, "hotelCheckIn")), hotelCheckOut: date(get(input, "hotelCheckOut")),
@@ -97,11 +99,11 @@ export const buildDealsModifyUrl = (search: DealsSearch) => `/deals?${serializeD
 
 export const buildFlightResultsUrl = (search: DealsSearch) => {
   const travelers = search.flightAdults + search.flightChildren + search.flightInfants;
-  return `/flights/results?${new URLSearchParams({ tripType: search.flightTripType, origin: normalizeIataCode(search.flightOriginCode), destination: normalizeIataCode(search.flightDestinationCode), departureDate: search.flightDepartureDate, ...(search.flightTripType === "round-trip" ? { returnDate: search.flightReturnDate } : {}), adults: String(search.flightAdults), children: String(search.flightChildren), infants: String(search.flightInfants), travelers: String(travelers), cabinClass: search.flightCabinClass })}`;
+  return `/flights/results?${new URLSearchParams({ tripType: search.flightTripType, origin: normalizeIataCode(search.flightOriginCode), destination: normalizeIataCode(search.flightDestinationCode), departureDate: search.flightDepartureDate, ...search.flightTripType === "round-trip" ? { returnDate: search.flightReturnDate } : {}, adults: String(search.flightAdults), children: String(search.flightChildren), infants: String(search.flightInfants), travelers: String(travelers), cabinClass: search.flightCabinClass })}`;
 };
 export const buildHotelResultsUrl = (search: DealsSearch) => `/hotels/results?${new URLSearchParams({ destination: search.hotelDestination.trim(), checkIn: search.hotelCheckIn, checkOut: search.hotelCheckOut, guests: String(search.hotelAdults + search.hotelChildren), rooms: String(search.hotelRooms) })}`;
 export const buildCarResultsUrl = (search: DealsSearch) => `/cars/results?${new URLSearchParams({ pickupLocation: search.carPickupLocation.trim(), dropoffLocation: search.carReturnToDifferentLocation ? search.carReturnLocation.trim() : search.carPickupLocation.trim(), pickupDate: search.carPickupDate, pickupTime: search.carPickupTime, dropoffDate: search.carReturnDate, dropoffTime: search.carReturnTime, driverAge: search.carDriverAge })}`;
-export const buildFlightApiPayload = (search: DealsSearch) => ({ tripType: search.flightTripType, origin: normalizeIataCode(search.flightOriginCode), destination: normalizeIataCode(search.flightDestinationCode), departureDate: search.flightDepartureDate, ...(search.flightTripType === "round-trip" ? { returnDate: search.flightReturnDate } : {}), travelers: search.flightAdults + search.flightChildren + search.flightInfants, adults: search.flightAdults, children: search.flightChildren, infants: search.flightInfants, cabinClass: search.flightCabinClass });
+export const buildFlightApiPayload = (search: DealsSearch) => ({ tripType: search.flightTripType, origin: normalizeIataCode(search.flightOriginCode), destination: normalizeIataCode(search.flightDestinationCode), departureDate: search.flightDepartureDate, ...search.flightTripType === "round-trip" ? { returnDate: search.flightReturnDate } : {}, travelers: search.flightAdults + search.flightChildren + search.flightInfants, adults: search.flightAdults, children: search.flightChildren, infants: search.flightInfants, cabinClass: search.flightCabinClass });
 export const buildHotelApiPayload = (search: DealsSearch) => ({ destination: search.hotelDestination.trim(), checkIn: search.hotelCheckIn, checkOut: search.hotelCheckOut, guests: search.hotelAdults + search.hotelChildren, rooms: search.hotelRooms });
 
 export function validateFlightSearch(search: DealsSearch, today = todayIso()) {
@@ -134,7 +136,7 @@ export function validateDealsSearch(search: DealsSearch, today = todayIso()): De
   return errors;
 }
 export const getDealsSummaries = (search: DealsSearch) => ({
-  flight: `${search.flightOriginCode}–${search.flightDestinationCode} · ${search.flightDepartureDate}${search.flightTripType === "round-trip" ? `–${search.flightReturnDate}` : ""}`,
-  hotel: `${search.hotelDestination} · ${search.hotelCheckIn}–${search.hotelCheckOut}`,
-  car: `${search.carPickupLocation} · ${search.carPickupDate}–${search.carReturnDate}`,
+  flight: search.flightDepartureDate && (search.flightTripType === "one-way" || search.flightReturnDate) ? `${search.flightOriginCode}–${search.flightDestinationCode} · ${search.flightDepartureDate}${search.flightReturnDate ? `–${search.flightReturnDate}` : ""}` : "Travel dates",
+  hotel: search.hotelCheckIn && search.hotelCheckOut ? `${search.hotelDestination} · ${search.hotelCheckIn}–${search.hotelCheckOut}` : "Check-in — Check-out",
+  car: search.carPickupDate && search.carReturnDate ? `${search.carPickupLocation} · ${search.carPickupDate}–${search.carReturnDate}` : "Pickup date — Return date",
 });
