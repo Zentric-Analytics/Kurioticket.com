@@ -750,10 +750,10 @@ function CarsSearchBar({
   const timeError = errors.pickupTime || errors.dropoffTime;
 
   return (
-    <section className="overflow-visible rounded-[1.5rem] border border-white/80 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.04] sm:rounded-[1.35rem] sm:border-slate-200/80 sm:bg-white sm:p-0 sm:shadow-[0_18px_42px_-28px_rgba(15,23,42,0.42)] sm:ring-1 sm:ring-white/70">
+    <section className="overflow-visible rounded-[1.5rem] border border-white/80 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.04] sm:rounded-[1.35rem] sm:border-slate-200/80 sm:bg-white sm:p-4 sm:shadow-[0_18px_42px_-28px_rgba(15,23,42,0.42)] sm:ring-1 sm:ring-white/70">
       <form
         onSubmit={onSubmit}
-        className="relative space-y-3 overflow-visible sm:space-y-0"
+        className="relative flex flex-col gap-3 overflow-visible"
         noValidate
       >
         <input type="hidden" name="pickupDate" value={values.pickupDate} />
@@ -761,18 +761,8 @@ function CarsSearchBar({
         <input type="hidden" name="pickupTime" value={values.pickupTime} />
         <input type="hidden" name="dropoffTime" value={values.dropoffTime} />
 
-        <div className="relative z-20 overflow-visible rounded-none border-0 bg-transparent p-0 shadow-none sm:rounded-[1.35rem] sm:bg-white">
-          <div className="hidden items-center px-1 pb-2 sm:flex lg:pb-2.5">
-            <span className="inline-flex items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3.5 py-1.5 text-[0.925rem] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10">
-              <CarFront
-                aria-hidden="true"
-                className="h-[1.125rem] w-[1.125rem] text-[#004BB8]"
-                strokeWidth={2.15}
-              />
-              {t("cars")}
-            </span>
-          </div>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-0 sm:rounded-b-[1.35rem] sm:rounded-tr-[1.35rem] sm:border sm:border-slate-200/85 sm:bg-white lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1.45fr)_minmax(0,1.1fr)_minmax(6.8rem,0.62fr)_118px] lg:gap-0">
+        <div className="relative z-20 order-1 overflow-visible rounded-none border-0 bg-transparent p-0 shadow-none sm:order-2 sm:rounded-[1.35rem] sm:bg-white">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-0 sm:rounded-2xl sm:border sm:border-slate-200/85 sm:bg-white lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1.45fr)_minmax(0,1.1fr)_minmax(6.8rem,0.62fr)_118px] lg:gap-0">
             <SearchCell
               label={t("carsSearch.pickupLocationLabel")}
               error={errors.pickupLocation || errors.dropoffLocation}
@@ -867,11 +857,7 @@ function CarsSearchBar({
                       </button>
                     ) : null}
                   </div>
-                ) : (
-                  <p className="truncate border-t border-slate-100 pt-1.5 text-sm font-semibold text-slate-500 lg:pt-2">
-                    {t("carsSearch.returnToSameLocation")}
-                  </p>
-                )}
+                ) : null}
               </div>
             </SearchCell>
 
@@ -969,29 +955,40 @@ function CarsSearchBar({
           </div>
         </div>
 
-        <div className="relative z-0 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 sm:border-0 sm:border-t sm:border-slate-100 sm:bg-white sm:px-5 sm:py-3 sm:shadow-none sm:ring-0">
-          <label className="focus-within:ring-ring inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-slate-900">
-            <input
-              type="checkbox"
-              checked={values.returnToDifferentLocation}
-              onChange={(event) =>
-                updateValue("returnToDifferentLocation", event.target.checked)
-              }
-              className="h-4 w-4 rounded border-slate-300 text-[#004BB8] focus:ring-[#004BB8]/35"
+        <div className="relative z-0 order-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 sm:order-1 sm:min-h-9 sm:border-0 sm:bg-transparent sm:px-1 sm:py-0 sm:shadow-none sm:ring-0">
+          <span className="hidden items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3.5 py-1.5 text-[0.925rem] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10 sm:inline-flex">
+            <CarFront
+              aria-hidden="true"
+              className="h-[1.125rem] w-[1.125rem] text-[#004BB8]"
+              strokeWidth={2.15}
             />
-            {t("carsSearch.differentReturnLocation")}
-          </label>
+            {t("cars")}
+          </span>
 
-          {hasActiveSearch ? (
-            <button
-              type="button"
-              onClick={onClearSearch}
-              className="focus-ring inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
-            >
-              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-              {t("clearAll")}
-            </button>
-          ) : null}
+          <div className="flex flex-wrap items-center gap-2 sm:ms-auto sm:justify-end">
+            <label className="focus-within:ring-ring inline-flex min-h-8 cursor-pointer items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-slate-900 sm:min-h-9">
+              <input
+                type="checkbox"
+                checked={values.returnToDifferentLocation}
+                onChange={(event) =>
+                  updateValue("returnToDifferentLocation", event.target.checked)
+                }
+                className="h-4 w-4 rounded border-slate-300 text-[#004BB8] focus:ring-[#004BB8]/35"
+              />
+              {t("carsSearch.differentReturnLocation")}
+            </label>
+
+            {hasActiveSearch ? (
+              <button
+                type="button"
+                onClick={onClearSearch}
+                className="focus-ring inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 sm:min-h-9"
+              >
+                <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                {t("clearAll")}
+              </button>
+            ) : null}
+          </div>
         </div>
 
         <CarsMobilePickerDialogs
@@ -1777,7 +1774,7 @@ function SearchCell({
 }) {
   return (
     <div
-      className={`min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-slate-400 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:bg-transparent sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-slate-200/80 sm:focus-within:bg-white sm:focus-within:ring-0 lg:min-h-[60px] lg:px-4 lg:py-2 ${className}`}
+      className={`min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-slate-400 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:bg-transparent sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-slate-200/80 sm:focus-within:bg-white sm:focus-within:ring-0 lg:px-4 lg:py-2 ${className}`}
     >
       <label className="mb-1 block text-xs font-bold uppercase leading-4 tracking-[0.12em] text-slate-600 sm:mb-0.5 sm:text-[0.66rem] sm:text-slate-500 lg:mb-0.5">
         {label}
