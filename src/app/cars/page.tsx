@@ -956,16 +956,16 @@ function CarsSearchBar({
         </div>
 
         <div className="relative z-0 order-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 sm:order-1 sm:min-h-9 sm:border-0 sm:bg-transparent sm:px-1 sm:py-0 sm:shadow-none sm:ring-0">
-          <span className="hidden items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3.5 py-1.5 text-[0.925rem] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10 sm:inline-flex">
-            <CarFront
-              aria-hidden="true"
-              className="h-[1.125rem] w-[1.125rem] text-[#004BB8]"
-              strokeWidth={2.15}
-            />
-            {t("cars")}
-          </span>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="hidden items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3.5 py-1.5 text-[0.925rem] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10 sm:inline-flex">
+              <CarFront
+                aria-hidden="true"
+                className="h-[1.125rem] w-[1.125rem] text-[#004BB8]"
+                strokeWidth={2.15}
+              />
+              {t("cars")}
+            </span>
 
-          <div className="flex flex-wrap items-center gap-2 sm:ms-auto sm:justify-end">
             <label className="focus-within:ring-ring inline-flex min-h-8 cursor-pointer items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-slate-900 sm:min-h-9">
               <input
                 type="checkbox"
@@ -977,18 +977,18 @@ function CarsSearchBar({
               />
               {t("carsSearch.differentReturnLocation")}
             </label>
-
-            {hasActiveSearch ? (
-              <button
-                type="button"
-                onClick={onClearSearch}
-                className="focus-ring inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 sm:min-h-9"
-              >
-                <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-                {t("clearAll")}
-              </button>
-            ) : null}
           </div>
+
+          {hasActiveSearch ? (
+            <button
+              type="button"
+              onClick={onClearSearch}
+              className="focus-ring inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 sm:min-h-9"
+            >
+              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+              {t("clearAll")}
+            </button>
+          ) : null}
         </div>
 
         <CarsMobilePickerDialogs
