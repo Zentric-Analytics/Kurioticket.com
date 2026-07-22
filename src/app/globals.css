@@ -737,6 +737,13 @@ textarea {
   unicode-bidi: isolate;
 }
 
+.flight-card-price-value.flight-card-price {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  font-size: clamp(0.8125rem, 2.05cqi, 1.125rem);
+}
+
 .flight-card-provider-price {
   width: 100%;
   max-width: 100%;
