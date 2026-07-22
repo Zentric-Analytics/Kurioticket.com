@@ -1,0 +1,32 @@
+import type { NormalizedCarResult } from "@/lib/cars/types";
+
+type DemoCarTemplate = Omit<NormalizedCarResult, "id" | "pickupLocation" | "returnLocation" | "offers"> & {
+  id: string;
+  dailyPrices: number[];
+};
+
+const base = {
+  orSimilar: true,
+  airConditioning: true,
+  shuttleRequired: false,
+  requiredDocuments: ["Valid driving licence", "Passport or government-issued ID", "Payment card in the main driver's name"],
+  includedItems: ["Local taxes shown in the offer", "Standard roadside assistance"],
+  importantInformation: ["Vehicle model is representative; the category and core specifications apply.", "Prices and conditions are illustrative demo content, not live availability."],
+  isDemo: true as const,
+};
+
+export const demoCarCatalog: readonly DemoCarTemplate[] = [
+  { ...base, id:"city-mini", category:"mini", categoryLabel:"Mini", modelName:"Fiat 500", imageAlt:"Generic compact city car illustration", passengers:4,bags:1,doors:3,transmission:"manual",fuelPolicy:"full-to-full",mileagePolicy:"limited",limitedMileageKm:600,pickupType:"city-location",rentalCompanyName:"Northstar Demo Rentals",supplierRating:8.1,supplierReviewCount:214,recommendationScore:77,depositAmount:350,excessAmount:900,minimumDriverAge:21,dailyPrices:[31],pickupInstructions:"Visit the clearly marked demo service desk in the city branch." },
+  { ...base, id:"economy-flex", category:"economy", categoryLabel:"Economy", modelName:"Toyota Yaris", imageAlt:"Generic economy hatchback illustration", passengers:5,bags:2,doors:5,transmission:"automatic",fuelPolicy:"same-to-same",mileagePolicy:"unlimited",pickupType:"airport-counter",rentalCompanyName:"Waypoint Demo Mobility",supplierRating:8.7,supplierReviewCount:482,recommendationScore:89,depositAmount:300,excessAmount:750,minimumDriverAge:20,dailyPrices:[38,41] },
+  { ...base, id:"compact-golf", category:"compact", categoryLabel:"Compact", modelName:"Volkswagen Golf", imageAlt:"Generic compact hatchback illustration", passengers:5,bags:3,doors:5,transmission:"manual",fuelPolicy:"full-to-full",mileagePolicy:"unlimited",pickupType:"shuttle",shuttleRequired:true,rentalCompanyName:"Bluebird Demo Cars",supplierRating:8.4,supplierReviewCount:306,recommendationScore:84,depositAmount:400,excessAmount:800,minimumDriverAge:21,dailyPrices:[43],pickupInstructions:"Use the complimentary demo shuttle collection point described at the service desk." },
+  { ...base, id:"compact-corolla", category:"compact", categoryLabel:"Compact", modelName:"Toyota Corolla", imageAlt:"Generic compact saloon car illustration", passengers:5,bags:3,doors:4,transmission:"automatic",fuelPolicy:"full-to-full",mileagePolicy:"unlimited",pickupType:"airport-counter",rentalCompanyName:"Harbour Demo Rental Co.",supplierRating:9.1,supplierReviewCount:691,recommendationScore:93,depositAmount:450,excessAmount:700,minimumDriverAge:21,dailyPrices:[49,52] },
+  { ...base, id:"intermediate-comfort", category:"intermediate", categoryLabel:"Intermediate", modelName:"Skoda Octavia", imageAlt:"Generic intermediate saloon car illustration", passengers:5,bags:4,doors:4,transmission:"automatic",fuelPolicy:"same-to-same",mileagePolicy:"limited",limitedMileageKm:900,pickupType:"city-location",rentalCompanyName:"Compass Demo Hire",supplierRating:7.9,supplierReviewCount:128,recommendationScore:73,depositAmount:500,excessAmount:1000,minimumDriverAge:23,dailyPrices:[55] },
+  { ...base, id:"fullsize-road", category:"full-size", categoryLabel:"Full-size", modelName:"Toyota Camry", imageAlt:"Generic full-size saloon car illustration", passengers:5,bags:4,doors:4,transmission:"automatic",fuelPolicy:"full-to-full",mileagePolicy:"unlimited",pickupType:"airport-counter",rentalCompanyName:"Open Road Demo Rentals",supplierRating:8.5,supplierReviewCount:367,recommendationScore:86,depositAmount:550,excessAmount:950,minimumDriverAge:23,dailyPrices:[64,68] },
+  { ...base, id:"suv-qashqai", category:"suv", categoryLabel:"SUV", modelName:"Nissan Qashqai", imageAlt:"Generic medium SUV illustration", passengers:5,bags:4,doors:5,transmission:"automatic",fuelPolicy:"full-to-full",mileagePolicy:"unlimited",pickupType:"shuttle",shuttleRequired:true,rentalCompanyName:"Trailhead Demo Mobility",supplierRating:8.9,supplierReviewCount:521,recommendationScore:91,depositAmount:650,excessAmount:1100,minimumDriverAge:25,dailyPrices:[72,76] },
+  { ...base, id:"suv-manual", category:"suv", categoryLabel:"SUV", modelName:"Dacia Duster", imageAlt:"Generic practical SUV illustration", passengers:5,bags:3,doors:5,transmission:"manual",fuelPolicy:"same-to-same",mileagePolicy:"limited",limitedMileageKm:700,pickupType:"city-location",rentalCompanyName:"Juniper Demo Cars",supplierRating:7.7,recommendationScore:69,depositAmount:600,excessAmount:1200,minimumDriverAge:23,dailyPrices:[58] },
+  { ...base, id:"luxury-class", category:"luxury", categoryLabel:"Luxury", modelName:"Mercedes-Benz C-Class", imageAlt:"Generic premium saloon car illustration", passengers:5,bags:3,doors:4,transmission:"automatic",fuelPolicy:"full-to-full",mileagePolicy:"limited",limitedMileageKm:500,pickupType:"meet-and-greet",rentalCompanyName:"Meridian Demo Collection",supplierRating:9.3,supplierReviewCount:94,recommendationScore:88,depositAmount:1200,excessAmount:1800,minimumDriverAge:28,dailyPrices:[118,126] },
+  { ...base, id:"van-seven", category:"van", categoryLabel:"People carrier", modelName:"Volkswagen Touran", imageAlt:"Generic seven-seat people carrier illustration", passengers:7,bags:4,doors:5,transmission:"automatic",fuelPolicy:"full-to-full",mileagePolicy:"unlimited",pickupType:"airport-counter",rentalCompanyName:"Together Demo Transport",supplierRating:8.6,supplierReviewCount:243,recommendationScore:87,depositAmount:700,excessAmount:1250,minimumDriverAge:25,dailyPrices:[83,88] },
+  { ...base, id:"van-manual", category:"van", categoryLabel:"Van", modelName:"Ford Tourneo", imageAlt:"Generic passenger van illustration", passengers:7,bags:5,doors:5,transmission:"manual",fuelPolicy:"same-to-same",mileagePolicy:"limited",limitedMileageKm:1000,pickupType:"shuttle",shuttleRequired:true,rentalCompanyName:"Atlas Demo Vehicle Hire",supplierRating:8.0,supplierReviewCount:176,recommendationScore:75,depositAmount:750,excessAmount:1400,minimumDriverAge:25,dailyPrices:[78] },
+];
+
+export const getDemoCarId = (id: string) => `demo-car-${id}`;

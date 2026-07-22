@@ -1,16 +1,2 @@
-import { BrandedLoading } from "@/components/layout/BrandedLoading";
-
-export default function CarsResultsLoading() {
-  return (
-    <main className="min-h-[100svh] bg-[radial-gradient(circle_at_top_left,rgba(92,182,178,0.06),transparent_38%),radial-gradient(circle_at_bottom_right,rgba(0,75,184,0.05),transparent_40%),linear-gradient(180deg,#F8FAFC_0%,#FFFFFF_100%)]">
-      <BrandedLoading
-        variant="fullscreen"
-        visual="logoPulse"
-        showProgress={false}
-        searchType="car"
-        className="min-h-[100svh] bg-transparent px-5"
-        contentClassName="max-w-md text-center"
-      />
-    </main>
-  );
-}
+import { CarCardSkeleton, Skeleton } from "@/components/ui/Skeleton";
+export default function Loading(){return <main role="status" aria-label="Loading car results" className="flex-1 bg-[#f6f8fb] pb-8"><div className="page-shell py-5"><Skeleton className="h-20 w-full"/><div className="mt-5 grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]"><Skeleton className="hidden h-[620px] lg:block"/><div className="space-y-4"><Skeleton className="h-20"/>{[0,1,2].map(i=><CarCardSkeleton key={i}/>)}</div></div></div></main>}

@@ -26,6 +26,10 @@ import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
+import { CarResultCard } from "@/components/results/CarResultCard";
+import { CarCardSkeleton } from "@/components/ui/Skeleton";
+import { assignCarBadges, buildCarDetailsHref, filterCarResults, sortCarResults, type CarSort, type SelectedCarFilters } from "@/lib/cars/carResults";
+import type { CarInventoryStatus, CarResultsMode, CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 
 function useDesktopFilterShortcut(topOffset = 116) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -130,7 +134,7 @@ function DesktopFilterShortcut({
   );
 }
 
-type CarsResultsValues = {
+type CarsResultsValues = CarSearchParams & {
   pickupLocation: string;
   dropoffLocation: string;
   pickupDate: string;
@@ -150,8 +154,6 @@ type CarFilterGroup = {
   titleKey: string;
   options: CarFilterOption[];
 };
-
-type SelectedCarFilters = Record<string, string[]>;
 
 const defaultDriverAge = "18-70";
 const minimumDriverAge = 18;
@@ -565,7 +567,7 @@ const fieldLabelClass =
 const fieldInputClass =
   "focus-ring h-8 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 md:text-sm";
 
-export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
+export function CarsResultsClient({ values, initialResults, resultsMode, inventoryStatus }: { values: CarsResultsValues; initialResults: NormalizedCarResult[]; resultsMode: CarResultsMode; inventoryStatus: CarInventoryStatus }) {
   const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const intlLocale = getCarsResultsIntlLocale(locale);
@@ -573,6 +575,9 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [selectedCarFilters, setSelectedCarFilters] =
     useState<SelectedCarFilters>({});
+  const [sort, setSort] = useState<CarSort>("recommended");
+  const [resultsTransitioning, setResultsTransitioning] = useState(false);
+  const resultsTransitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
   const [isSearchExpandedWhileSticky, setIsSearchExpandedWhileSticky] =
     useState(false);
@@ -638,6 +643,8 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   const activeFilterLabel = interpolate(t("carsResults.activeFilterCount"), {
     count: String(activeFilterCount),
   });
+  const badges = useMemo(() => assignCarBadges(initialResults), [initialResults]);
+  const visibleResults = useMemo(() => sortCarResults(filterCarResults(initialResults, selectedCarFilters), sort), [initialResults, selectedCarFilters, sort]);
   const {
     containerRef: desktopFilterContainerRef,
     contentRef: desktopFilterContentRef,
@@ -684,6 +691,9 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   }, []);
 
   const toggleCarFilter = (groupId: string, option: string) => {
+    setResultsTransitioning(true);
+    if (resultsTransitionTimerRef.current) clearTimeout(resultsTransitionTimerRef.current);
+    resultsTransitionTimerRef.current = setTimeout(() => setResultsTransitioning(false), 160);
     setSelectedCarFilters((current) => {
       const currentGroupSelections = current[groupId] ?? [];
       const isSelected = currentGroupSelections.includes(option);
@@ -702,7 +712,12 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
     });
   };
 
-  const clearCarFilters = () => setSelectedCarFilters({});
+  const clearCarFilters = () => {
+    setResultsTransitioning(true);
+    setSelectedCarFilters({});
+    if (resultsTransitionTimerRef.current) clearTimeout(resultsTransitionTimerRef.current);
+    resultsTransitionTimerRef.current = setTimeout(() => setResultsTransitioning(false), 160);
+  };
 
   useEffect(() => {
     const releaseExistingLock = () => {
@@ -1276,7 +1291,16 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             </Button>
           </div>
 
-          <CarsResultsShell hasSearchContext={hasSearchContext} t={t} />
+          {resultsMode === "demo" && initialResults.length > 0 ? <div className="rounded-lg border border-[#004BB8]/20 bg-[#eaf2fb] px-4 py-3 text-sm font-semibold text-[#021C2B]" role="note">Demo inventory — vehicles and prices are illustrative and are not live availability.</div> : null}
+          {initialResults.length > 0 ? (
+            <>
+              <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <p className="font-bold text-slate-950">{visibleResults.length} {visibleResults.length === 1 ? "car" : "cars"}</p>
+                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700"><span>Sort by</span><select value={sort} onChange={(event) => { setResultsTransitioning(true); setSort(event.target.value as CarSort); if (resultsTransitionTimerRef.current) clearTimeout(resultsTransitionTimerRef.current); resultsTransitionTimerRef.current = setTimeout(() => setResultsTransitioning(false), 160); }} className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"><option value="recommended">Recommended</option><option value="lowestTotal">Lowest total price</option><option value="lowestDaily">Lowest daily price</option><option value="topRated">Top rated</option></select></label>
+              </div>
+              {resultsTransitioning ? <div className="space-y-4">{[0,1,2].map((item) => <CarCardSkeleton key={item} />)}</div> : visibleResults.length ? <div className="space-y-4">{visibleResults.map((car) => <CarResultCard key={car.id} car={car} badge={badges.get(car.id)} detailsHref={buildCarDetailsHref(car.id, values)} />)}</div> : <div role="status" className="rounded-xl border border-slate-200 bg-white p-8 text-center"><p className="font-bold text-slate-950">No cars match these filters.</p><Button type="button" variant="secondary" className="mt-4" onClick={clearCarFilters}>Clear filters</Button></div>}
+            </>
+          ) : <CarsResultsShell hasSearchContext={hasSearchContext} inventoryStatus={inventoryStatus} t={t} />}
         </section>
       </div>
 
@@ -1815,9 +1839,11 @@ function DriverAgeCell({
 
 function CarsResultsShell({
   hasSearchContext,
+  inventoryStatus,
   t,
 }: {
   hasSearchContext: boolean;
+  inventoryStatus: CarInventoryStatus;
   t: (key: string) => string;
 }) {
   return (
@@ -1825,7 +1851,7 @@ function CarsResultsShell({
       className="rounded-xl border border-slate-200 bg-white p-5 text-sm font-semibold text-muted shadow-sm"
       role="status"
     >
-      {hasSearchContext
+      {hasSearchContext && inventoryStatus !== "invalid-search"
         ? t("carsResults.emptyInventory")
         : t("carsResults.enterPickupDetails")}
     </div>
