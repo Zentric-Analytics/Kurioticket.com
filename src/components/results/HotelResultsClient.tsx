@@ -1414,7 +1414,7 @@ export function HotelResultsClient() {
       >
         <aside
           ref={desktopFilterSidebarRef}
-          className="relative hidden self-stretch lg:block"
+          className="relative hidden self-stretch lg:block lg:w-[268px] lg:justify-self-end xl:w-[272px]"
         >
           <div>
             <HotelFilters
