@@ -86,23 +86,39 @@ export default async function AdminPage() {
         />
       </section>
       <section data-admin-home-section="needs-attention" aria-labelledby="needs-attention-heading" className={adminHomeSectionClass}>
-        <div className="flex flex-wrap items-center gap-3">
-          <SectionHeading id="needs-attention-heading">Needs Attention</SectionHeading>
-          <span className="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-600" aria-label={`${attentionIssues.length} issues`}>
-            {attentionIssues.length}
-          </span>
-        </div>
-        <div data-admin-home-attention-rail="flat" className="mt-4">
+        <div data-admin-home-attention-outline="true" className="overflow-hidden rounded-none border border-[#7B8794] bg-transparent">
           {attentionIssues.length > 0 ? (
-            <div className="grid gap-x-6 gap-y-5 md:grid-cols-2 xl:grid-cols-4">
-              {attentionIssues.map((issue) => <AttentionRow key={issue.key} issue={issue} />)}
+            <div data-admin-home-attention-rail="outlined-grid" className="grid md:grid-cols-2">
+              {attentionIssues.map((issue, index) => (
+                <AttentionRow
+                  key={issue.key}
+                  issue={issue}
+                  heading={index === 0 ? (
+                    <div data-admin-home-attention-heading="in-first-cell" className="mb-5 flex flex-wrap items-center gap-3">
+                      <SectionHeading id="needs-attention-heading">Needs Attention</SectionHeading>
+                      <span className="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-600" aria-label={`${attentionIssues.length} issues`}>
+                        {attentionIssues.length}
+                      </span>
+                    </div>
+                  ) : null}
+                  className={attentionCellBorderClass(index, attentionIssues.length)}
+                />
+              ))}
             </div>
           ) : (
-            <div className="flex items-start gap-3 py-4 text-sm" role="status">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-                <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-              </span>
-              <p className="pt-2 font-medium text-slate-700">No urgent issues require attention.</p>
+            <div className="p-5 sm:p-6">
+              <div data-admin-home-attention-heading="empty-state" className="flex flex-wrap items-center gap-3">
+                <SectionHeading id="needs-attention-heading">Needs Attention</SectionHeading>
+                <span className="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-600" aria-label={`${attentionIssues.length} issues`}>
+                  {attentionIssues.length}
+                </span>
+              </div>
+              <div className="mt-4 flex items-start gap-3 text-sm" role="status">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                  <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                </span>
+                <p className="pt-2 font-medium text-slate-700">No urgent issues require attention.</p>
+              </div>
             </div>
           )}
         </div>
@@ -236,10 +252,23 @@ function PanelMetric({ label, value, icon: Icon, tone }: { label: string; value:
   return <div data-admin-home-search-metric="flat-icon" className="min-w-0 py-4 sm:px-5 sm:first:pl-0 sm:last:pr-0"><div className="flex items-start gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ring-1 ${toneClass}`}><Icon className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="text-sm font-semibold text-slate-600">{label}</p><p className="mt-1 text-3xl font-extrabold tracking-tight text-[#021C2B]">{value}</p></div></div></div>;
 }
 
-function AttentionRow({ issue }: { issue: AttentionIssue }) {
+function attentionCellBorderClass(index: number, total: number) {
+  const isRightColumn = index % 2 === 1;
+  const hasMobileDivider = index < total - 1;
+  const hasDesktopRowDivider = index < Math.ceil(total / 2) * 2 - 2;
+
+  return [
+    hasMobileDivider ? "border-b border-[#7B8794]" : "",
+    isRightColumn ? "md:border-l" : "",
+    hasDesktopRowDivider ? "md:border-b" : "md:border-b-0",
+    "md:border-[#7B8794]",
+  ].filter(Boolean).join(" ");
+}
+
+function AttentionRow({ issue, heading, className = "" }: { issue: AttentionIssue; heading?: React.ReactNode; className?: string }) {
   const Icon = issue.icon === "alert" ? AlertCircle : AlertTriangle;
   const iconClassName = issue.tone === "bad" ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600";
-  return <div data-admin-home-attention-item="flat" className="flex min-w-0 items-start gap-4 py-5"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${iconClassName}`}><Icon className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="font-semibold text-slate-950">{issue.message}</p><TextLink href={issue.href} className="mt-2">{issue.linkLabel}</TextLink></div></div>;
+  return <div data-admin-home-attention-item="outlined-grid-cell" className={`min-w-0 p-5 sm:p-6 ${className}`}>{heading}<div className="flex min-w-0 items-start gap-4"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${iconClassName}`}><Icon className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="font-semibold text-slate-950">{issue.message}</p><TextLink href={issue.href} className="mt-2">{issue.linkLabel}</TextLink></div></div></div>;
 }
 
 function StatusRow({ label, status, tone, icon }: { label: string; status: string; tone: StatusTone; icon: string }) {

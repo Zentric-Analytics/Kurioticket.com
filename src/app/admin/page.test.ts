@@ -23,7 +23,7 @@ function sectionOpening(section: string): string {
   return match[0];
 }
 
-test("admin home creates exactly five borderless sections in the requested order", () => {
+test("admin home creates exactly five sections in the requested order", () => {
   assert.deepEqual(
     Array.from(adminOverviewPage.matchAll(/data-admin-home-section="([^"]+)"/g), (match) => match[1]),
     ["header", "needs-attention", "at-a-glance", "operations", "recent-admin-activity"],
@@ -55,14 +55,38 @@ test("header section preserves the Admin Home header content and artwork", () =>
   assert.doesNotMatch(headerBlock, /border-t|border-b|border-y|divide-x|divide-y/);
 });
 
-test("needs attention is borderless with warning items and gap-based columns", () => {
+test("needs attention uses one outlined responsive grid without card styling", () => {
   const attentionBlock = blockBetween('data-admin-home-section="needs-attention"', 'data-admin-home-section="at-a-glance"');
-  assert.match(attentionBlock, /Needs Attention/);
+  assert.match(attentionBlock, /data-admin-home-attention-outline="true" className="overflow-hidden rounded-none border border-\[#7B8794\] bg-transparent"/);
+  assert.match(attentionBlock, /data-admin-home-attention-rail="outlined-grid" className="grid md:grid-cols-2"/);
+  assert.doesNotMatch(attentionBlock, /xl:grid-cols-4/);
+  assert.match(attentionBlock, /attentionIssues\.map\(\(issue, index\) =>/);
+  assert.match(attentionBlock, /heading=\{index === 0 \? \(/);
+  assert.match(attentionBlock, /data-admin-home-attention-heading="in-first-cell" className="mb-5 flex flex-wrap items-center gap-3"/);
   assert.match(attentionBlock, /aria-label=\{`\$\{attentionIssues.length\} issues`\}/);
-  assert.match(attentionBlock, /data-admin-home-attention-rail="flat" className="mt-4"/);
-  assert.match(attentionBlock, /className="grid gap-x-6 gap-y-5 md:grid-cols-2 xl:grid-cols-4"/);
-  assert.doesNotMatch(attentionBlock, /border-t|border-b|border-y|border-l|border-r|divide-x|divide-y|border-\[#A7B2BE\]/);
-  assert.match(adminOverviewPage, /data-admin-home-attention-item="flat" className="flex min-w-0 items-start gap-4 py-5"/);
+  assert.doesNotMatch(attentionBlock, /data-admin-home-attention-heading-row|border-b[^\n]*needs-attention-heading/);
+  assert.match(adminOverviewPage, /data-admin-home-attention-item="outlined-grid-cell" className=\{`min-w-0 p-5 sm:p-6 \$\{className\}`\}/);
+  assert.doesNotMatch(attentionBlock, /data-admin-home-attention-item="card"|shadow|bg-white|rounded-2xl|rounded-xl/);
+});
+
+test("needs attention cell borders create vertical and horizontal dividers dynamically", () => {
+  const borderHelperBlock = blockBetween('function attentionCellBorderClass', 'function AttentionRow');
+  assert.match(borderHelperBlock, /const isRightColumn = index % 2 === 1/);
+  assert.match(borderHelperBlock, /const hasMobileDivider = index < total - 1/);
+  assert.match(borderHelperBlock, /const hasDesktopRowDivider = index < Math\.ceil\(total \/ 2\) \* 2 - 2/);
+  assert.match(borderHelperBlock, /hasMobileDivider \? "border-b border-\[#7B8794\]" : ""/);
+  assert.match(borderHelperBlock, /isRightColumn \? "md:border-l" : ""/);
+  assert.match(borderHelperBlock, /hasDesktopRowDivider \? "md:border-b" : "md:border-b-0"/);
+  assert.match(borderHelperBlock, /"md:border-\[#7B8794\]"/);
+});
+
+test("needs attention empty state keeps the outline without internal grid dividers", () => {
+  const attentionBlock = blockBetween('data-admin-home-section="needs-attention"', 'data-admin-home-section="at-a-glance"');
+  const emptyStateBlock = blockBetween('data-admin-home-attention-heading="empty-state"', 'data-admin-home-section="at-a-glance"');
+  assert.match(emptyStateBlock, /data-admin-home-attention-heading="empty-state"/);
+  assert.match(emptyStateBlock, /No urgent issues require attention\./);
+  assert.doesNotMatch(emptyStateBlock, /data-admin-home-attention-rail="outlined-grid"|md:border-l|md:border-b|border-b border-\[#7B8794\]/);
+  assert.match(attentionBlock, /data-admin-home-attention-outline="true"/);
 });
 
 test("at a glance keeps six metrics and removes all metric grid dividers", () => {
@@ -99,8 +123,9 @@ test("recent admin activity uses spacing, not row borders or a timeline connecti
   assert.doesNotMatch(timelineBlock, /border-y|border-b|last:border-b-0|bottom-\[-1rem\]|top-0 w-px|bg-\[#004BB8\]\/25/);
 });
 
-test("admin home has no internal structural divider classes or legacy divider colors", () => {
-  assert.doesNotMatch(adminOverviewPage, /border-t|border-b|border-y|border-l|border-r|divide-x|divide-y|divide-\[#A7B2BE\]|border-\[#A7B2BE\]|border-slate-200|divide-slate-200/);
+test("all admin home sections other than needs attention remain free of new structural dividers", () => {
+  const homeMarkupWithoutAttention = blockBetween('data-admin-home-workspace="single-card"', 'function HeroRouteArtwork').replace(blockBetween('data-admin-home-section="needs-attention"', 'data-admin-home-section="at-a-glance"'), "");
+  assert.doesNotMatch(homeMarkupWithoutAttention, /border-t|border-b|border-y|border-l|border-r|divide-x|divide-y|divide-\[#A7B2BE\]|border-\[#A7B2BE\]|border-\[#7B8794\]|border-slate-200|divide-slate-200/);
 });
 
 test("required data, links, icons, badges, and presentation-only labels are preserved", () => {
@@ -122,7 +147,7 @@ test("required data, links, icons, badges, and presentation-only labels are pres
 
 test("responsive layout breakpoints remain aligned to the requested widths", () => {
   assert.match(adminOverviewPage, /gap-5 md:gap-6 xl:gap-7/); // 390px uses base gap; 768px uses md; 1280px and 1440px use xl.
-  assert.match(adminOverviewPage, /md:grid-cols-2 xl:grid-cols-4/); // Needs Attention: 390 one column, 768 two, 1280+ four.
+  assert.match(adminOverviewPage, /data-admin-home-attention-rail="outlined-grid" className="grid md:grid-cols-2"/); // Needs Attention: 390 one column, 768+ two columns; never four.
   assert.match(adminOverviewPage, /grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-3 xl:grid-cols-6/); // At a Glance: 390 two, 768 three, 1280+ six.
   assert.match(adminOverviewPage, /grid gap-0 xl:grid-cols-\[minmax\(0,1\.15fr\)_minmax\(320px,0\.85fr\)\]/); // Operations: stacked through 1024, side-by-side at 1280+.
   assert.match(adminOverviewPage, /sm:grid-cols-3/); // Search metrics: one column at 390, three by 768+.
