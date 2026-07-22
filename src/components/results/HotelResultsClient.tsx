@@ -23,6 +23,7 @@ import {
 import type { PublicHotelResult } from "@/lib/types";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { Button } from "@/components/ui/Button";
+import { HotelCardSkeleton } from "@/components/ui/Skeleton";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
 import {
@@ -1526,12 +1527,7 @@ export function HotelResultsClient() {
             </div>
           ) : (
             <div className={cn(hotelResultStackClass, "space-y-4")}>
-              <div
-                className={cn(
-                  "space-y-3 transition-opacity",
-                  resultsApplying ? "animate-pulse opacity-80" : undefined,
-                )}
-              >
+              <div className="space-y-3">
                 <ActiveHotelFilterChips
                   chips={activeFilterChips}
                   onRemove={removeFilterChip}
@@ -1651,7 +1647,19 @@ export function HotelResultsClient() {
                   </p>
                 ) : null}
 
-                {sortedVisibleHotels.length ? (
+                {filterApplying ? (
+                  <div className="space-y-4">
+                    <div
+                      role="status"
+                      aria-live="polite"
+                      className="rounded-xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-700 shadow-sm"
+                    >
+                      {t("updatingResults")}
+                    </div>
+                    <HotelCardSkeleton />
+                    <HotelCardSkeleton />
+                  </div>
+                ) : sortedVisibleHotels.length ? (
                   sortedVisibleHotels.map((hotel, index) => (
                     <HotelCard
                       key={hotel.id}
