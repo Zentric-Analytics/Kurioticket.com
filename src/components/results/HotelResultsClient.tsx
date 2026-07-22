@@ -1932,8 +1932,11 @@ function HotelFilters({
   activeFilterCount: number;
   onClear: () => void;
 }) {
-  const filterRangeClass =
-    "h-2 w-full cursor-pointer appearance-none rounded-full bg-border outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[#2F73C8] [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#2F73C8] [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-border [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#2F73C8] [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#2F73C8] [&::-moz-range-thumb]:shadow-md";
+  const filterRangeClass = cn(
+    layout === "desktop"
+      ? "h-1.5 w-full cursor-pointer appearance-none rounded-full bg-[#D7E5F8] accent-[#0067DB] disabled:cursor-not-allowed disabled:opacity-60"
+      : "h-2 w-full cursor-pointer appearance-none rounded-full bg-border outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[#2F73C8] [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-[#2F73C8] [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-border [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[#2F73C8] [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-[#2F73C8] [&::-moz-range-thumb]:shadow-md",
+  );
 
   const [openCompactSection, setOpenCompactSection] =
     useState<CompactHotelFilterSectionId>("price");
@@ -1966,16 +1969,17 @@ function HotelFilters({
           counts={starRatingCounts}
           locale={locale}
           t={t}
+          layout="compact"
         />
       ),
     },
-    { id: "locations", title: t("hotelResults.locationArea"), selectedCount: getSelectedCount("locations"), content: <CheckboxFilterOptions options={options.locations} selected={selectedFilters.locations} onToggle={(value) => toggleFilter("locations", value)} t={t} locale={locale} /> },
-    { id: "propertyTypes", title: t("hotelResults.propertyType"), selectedCount: getSelectedCount("propertyTypes"), content: <CheckboxFilterOptions options={options.propertyTypes} selected={selectedFilters.propertyTypes} onToggle={(value) => toggleFilter("propertyTypes", value)} allOption={{ label: "Any property type", count: options.totalCount, onSelect: () => toggleFilter("propertyTypes") }} t={t} locale={locale} /> },
-    { id: "roomTypes", title: t("hotelResults.roomType"), selectedCount: getSelectedCount("roomTypes"), content: <CheckboxFilterOptions options={options.roomTypes} selected={selectedFilters.roomTypes} onToggle={(value) => toggleFilter("roomTypes", value)} allOption={{ label: "Any room type", count: options.totalCount, onSelect: () => toggleFilter("roomTypes") }} t={t} locale={locale} /> },
-    { id: "bedTypes", title: t("hotelResults.bedType"), selectedCount: getSelectedCount("bedTypes"), content: <CheckboxFilterOptions options={options.bedTypes} selected={selectedFilters.bedTypes} onToggle={(value) => toggleFilter("bedTypes", value)} t={t} locale={locale} /> },
-    { id: "meals", title: t("hotelResults.meals"), selectedCount: getSelectedCount("meals"), content: <CheckboxFilterOptions options={options.meals} selected={selectedFilters.meals} onToggle={(value) => toggleFilter("meals", value)} t={t} locale={locale} /> },
-    { id: "cancellationPolicies", title: t("hotelResults.cancellationPolicy"), selectedCount: getSelectedCount("cancellationPolicies"), content: <CheckboxFilterOptions options={options.cancellationPolicies} selected={selectedFilters.cancellationPolicies} onToggle={(value) => toggleFilter("cancellationPolicies", value)} t={t} locale={locale} /> },
-    { id: "facilities", title: t("hotelResults.facilities"), selectedCount: getSelectedCount("facilities"), content: <CheckboxFilterOptions options={options.facilities} selected={selectedFilters.facilities} onToggle={(value) => toggleFilter("facilities", value)} t={t} locale={locale} /> },
+    { id: "locations", title: t("hotelResults.locationArea"), selectedCount: getSelectedCount("locations"), content: <CheckboxFilterOptions layout="compact" options={options.locations} selected={selectedFilters.locations} onToggle={(value) => toggleFilter("locations", value)} t={t} locale={locale} /> },
+    { id: "propertyTypes", title: t("hotelResults.propertyType"), selectedCount: getSelectedCount("propertyTypes"), content: <CheckboxFilterOptions layout="compact" options={options.propertyTypes} selected={selectedFilters.propertyTypes} onToggle={(value) => toggleFilter("propertyTypes", value)} allOption={{ label: "Any property type", count: options.totalCount, onSelect: () => toggleFilter("propertyTypes") }} t={t} locale={locale} /> },
+    { id: "roomTypes", title: t("hotelResults.roomType"), selectedCount: getSelectedCount("roomTypes"), content: <CheckboxFilterOptions layout="compact" options={options.roomTypes} selected={selectedFilters.roomTypes} onToggle={(value) => toggleFilter("roomTypes", value)} allOption={{ label: "Any room type", count: options.totalCount, onSelect: () => toggleFilter("roomTypes") }} t={t} locale={locale} /> },
+    { id: "bedTypes", title: t("hotelResults.bedType"), selectedCount: getSelectedCount("bedTypes"), content: <CheckboxFilterOptions layout="compact" options={options.bedTypes} selected={selectedFilters.bedTypes} onToggle={(value) => toggleFilter("bedTypes", value)} t={t} locale={locale} /> },
+    { id: "meals", title: t("hotelResults.meals"), selectedCount: getSelectedCount("meals"), content: <CheckboxFilterOptions layout="compact" options={options.meals} selected={selectedFilters.meals} onToggle={(value) => toggleFilter("meals", value)} t={t} locale={locale} /> },
+    { id: "cancellationPolicies", title: t("hotelResults.cancellationPolicy"), selectedCount: getSelectedCount("cancellationPolicies"), content: <CheckboxFilterOptions layout="compact" options={options.cancellationPolicies} selected={selectedFilters.cancellationPolicies} onToggle={(value) => toggleFilter("cancellationPolicies", value)} t={t} locale={locale} /> },
+    { id: "facilities", title: t("hotelResults.facilities"), selectedCount: getSelectedCount("facilities"), content: <CheckboxFilterOptions layout="compact" options={options.facilities} selected={selectedFilters.facilities} onToggle={(value) => toggleFilter("facilities", value)} t={t} locale={locale} /> },
   ] satisfies Array<{
     id: Exclude<CompactHotelFilterSectionId, null>;
     title: string;
@@ -2042,46 +2046,53 @@ function HotelFilters({
   return (
     <div
       className={cn(
-        layout === "mobile" ? "bg-white" : "desktop-filter-sidebar border border-slate-200/80 bg-transparent p-0 shadow-none rounded-none",
+        layout === "mobile"
+          ? "bg-white"
+          : "rounded-[10px] border border-[#D8E1EC] bg-[#F5F8FC] px-4 py-4 shadow-[0_10px_26px_-24px_rgba(15,23,42,0.5)] xl:px-5",
       )}
     >
       {layout === "desktop" ? (
-        <div className="desktop-filter-sidebar__header border-b border-slate-200/70 px-3 py-3">
+        <div className="mb-4 border-b border-[#C7D5E6]/80 pb-3">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="desktop-filter-sidebar__title truncate text-base font-bold text-slate-950">
-              {t("hotelResults.filterBy")}
-            </h2>
-            <SlidersHorizontal
-              className="desktop-filter-sidebar__icon shrink-0 text-[#004BB8]"
-              size={18}
-            />
-          </div>
-          {activeFilterCount > 0 ? (
-            <div className="mt-2 flex items-center justify-between gap-3">
-              <span className="desktop-filter-sidebar__count rounded-full bg-[#EAF2FB] px-2 py-0.5 text-[11px] font-semibold text-[#235A9F] ring-1 ring-[#004BB8]/8">
-                {t("activeFilterCount").replace("{{count}}", String(activeFilterCount))}
-              </span>
+            <div className="flex items-center gap-2">
+              <SlidersHorizontal
+                aria-hidden="true"
+                className="h-4 w-4 text-[#004BB8]"
+                strokeWidth={2.2}
+              />
+              <h2 className="truncate text-[16px] font-semibold tracking-[-0.01em] text-slate-950">
+                {t("hotelResults.filterBy")}
+              </h2>
+            </div>
+            {activeFilterCount > 0 ? (
               <button
                 type="button"
-                className="rounded-full px-1.5 py-0.5 text-[11px] font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-[#235A9F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                className="rounded-md px-1.5 py-1 text-xs font-semibold text-[#004BB8] transition hover:bg-[#EAF2FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
                 onClick={onClear}
               >
                 Clear all
               </button>
-            </div>
-          ) : null}
+            ) : null}
+          </div>
         </div>
       ) : null}
 
       <div
         className={cn(
-          layout === "mobile" ? "space-y-0 bg-white" : "space-y-0 bg-transparent px-3 py-1",
+          layout === "mobile" ? "space-y-0 bg-white" : "space-y-5 bg-transparent",
         )}
       >
         {hasPricedResults ? (
         <FilterSection title={t("hotelResults.budgetPrice")} layout={layout}>
           <label className="block">
-            <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
+            <span
+        className={cn(
+          "mb-1.5 flex items-center justify-between",
+          layout === "desktop"
+            ? "text-[12px] font-semibold text-slate-950"
+            : "text-[11px] font-medium text-muted",
+        )}
+      >
               {t("hotelResults.totalUpTo")}{" "}
               <span className="font-mono text-[#021C2B]">
                 {formatPrice(maxPrice)}
@@ -2108,6 +2119,7 @@ function HotelFilters({
             counts={starRatingCounts}
             locale={locale}
             t={t}
+            layout={layout}
           />
         </FilterSection>
 
@@ -2245,12 +2257,14 @@ function StarRatingFilterControl({
   counts,
   locale,
   t,
+  layout = "desktop",
 }: {
   selectedRating: HotelStarRatingSelection;
   onChange: (rating: HotelStarRatingSelection) => void;
   counts: Record<HotelStarRatingSelection, number>;
   locale: string;
   t: (key: string) => string;
+  layout?: "desktop" | "compact" | "mobile";
 }) {
   const groupId = useId();
   const options: HotelStarRatingSelection[] = [
@@ -2276,7 +2290,12 @@ function StarRatingFilterControl({
         return (
           <label
             key={rating}
-            className="group flex min-h-9 cursor-pointer items-center justify-between gap-3 rounded-md px-1.5 py-1.5 text-sm text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-950"
+            className={cn(
+              "group flex min-h-9 cursor-pointer justify-between gap-3 rounded-md text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-950",
+              layout === "desktop"
+                ? "items-start px-0.5 py-1 text-[12px] font-medium leading-5"
+                : "items-center px-1.5 py-1.5 text-sm",
+            )}
           >
             <span className="flex min-w-0 items-center gap-2">
               <input
@@ -2292,16 +2311,17 @@ function StarRatingFilterControl({
               <span
                 aria-hidden="true"
                 className={cn(
-                  "flex h-4 w-4 shrink-0 items-center justify-center rounded-[2px] border transition-colors",
+                  "flex shrink-0 items-center justify-center rounded-[2px] border transition-colors",
+                  layout === "desktop" ? "mt-0.5 h-[14px] w-[14px]" : "h-4 w-4",
                   selected
-                    ? "border-[#0057B8] bg-[#0057B8] text-white"
+                    ? "border-[#0067DB] bg-[#0067DB] text-white"
                     : "border-slate-300 bg-white group-hover:border-slate-400",
                   "peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8]/30 peer-focus-visible:ring-offset-2",
                 )}
               >
                 {selected ? (
                   <Check
-                    className="h-3 w-3"
+                    className={cn(layout === "desktop" ? "h-2.5 w-2.5" : "h-3 w-3")}
                     strokeWidth={3}
                     aria-hidden="true"
                   />
@@ -2333,7 +2353,12 @@ function StarRatingFilterControl({
               )}
             </span>
 
-            <span className="min-w-6 shrink-0 text-right text-[11px] font-medium tabular-nums text-slate-500">
+            <span
+              className={cn(
+                "min-w-6 shrink-0 text-right font-medium tabular-nums text-slate-500",
+                layout === "desktop" ? "text-[12px] leading-5" : "text-[11px]",
+              )}
+            >
               {formatHotelCount(counts[rating] ?? 0, locale)}
             </span>
           </label>
@@ -2393,6 +2418,7 @@ function CheckboxFilterOptions({
   t,
   collapsedCount = 4,
   locale,
+  layout = "desktop",
 }: {
   options: FilterOption[];
   selected: string[];
@@ -2405,6 +2431,7 @@ function CheckboxFilterOptions({
   t: (key: string) => string;
   collapsedCount?: number;
   locale: string;
+  layout?: "desktop" | "compact" | "mobile";
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -2413,12 +2440,32 @@ function CheckboxFilterOptions({
   const allOptionChecked = Boolean(allOption) && selected.length === 0;
   const visibleOptions = expanded ? options : options.slice(0, collapsedCount);
   const hasMore = options.length > collapsedCount;
+  const optionRowClass = cn(
+    "group flex min-h-9 min-w-0 cursor-pointer items-start justify-between gap-3 transition hover:bg-slate-50 hover:text-slate-950",
+    layout === "desktop"
+      ? "rounded-md px-0.5 py-1 text-[12px] font-medium leading-5 text-slate-700"
+      : "rounded-lg px-1.5 py-1.5 text-sm font-medium text-slate-600",
+  );
+  const controlClass = (checked: boolean) =>
+    cn(
+      "mt-0.5 flex shrink-0 items-center justify-center rounded-[2px] border transition-colors",
+      layout === "desktop" ? "h-[14px] w-[14px]" : "h-4 w-4",
+      checked
+        ? "border-[#0067DB] bg-[#0067DB] text-white"
+        : "border-slate-300 bg-white group-hover:border-slate-400",
+      "peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8]/30 peer-focus-visible:ring-offset-2",
+    );
+  const checkClass = layout === "desktop" ? "h-2.5 w-2.5" : "h-3 w-3";
+  const countClass = cn(
+    "min-w-6 shrink-0 text-right font-medium tabular-nums text-slate-500",
+    layout === "desktop" ? "text-[12px] leading-5" : "text-xs",
+  );
 
   return (
     <>
       <div className="grid gap-0.5">
         {allOption ? (
-          <label className="group flex min-h-9 min-w-0 cursor-pointer items-start justify-between gap-3 rounded-lg px-1.5 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950">
+          <label className={optionRowClass}>
             <span className="flex min-w-0 flex-1 items-start gap-2">
               <input
                 className="peer sr-only"
@@ -2430,17 +2477,11 @@ function CheckboxFilterOptions({
               />
               <span
                 aria-hidden="true"
-                className={cn(
-                  "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-[2px] border transition-colors",
-                  allOptionChecked
-                    ? "border-[#0057B8] bg-[#0057B8] text-white"
-                    : "border-slate-300 bg-white group-hover:border-slate-400",
-                  "peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8]/30 peer-focus-visible:ring-offset-2",
-                )}
+                className={controlClass(allOptionChecked)}
               >
                 {allOptionChecked ? (
                   <Check
-                    className="h-3 w-3"
+                    className={checkClass}
                     strokeWidth={3}
                     aria-hidden="true"
                   />
@@ -2455,7 +2496,7 @@ function CheckboxFilterOptions({
                 {allOption.label}
               </span>
             </span>
-            <span className="min-w-6 shrink-0 text-right text-xs font-medium tabular-nums text-slate-500">
+            <span className={countClass}>
               {formatHotelCount(allOption.count, locale)}
             </span>
           </label>
@@ -2466,7 +2507,7 @@ function CheckboxFilterOptions({
           return (
             <label
               key={option.value}
-              className="group flex min-h-9 min-w-0 cursor-pointer items-start justify-between gap-3 rounded-lg px-1.5 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
+              className={optionRowClass}
             >
               <span className="flex min-w-0 flex-1 items-start gap-2">
                 <input
@@ -2477,17 +2518,11 @@ function CheckboxFilterOptions({
                 />
                 <span
                   aria-hidden="true"
-                  className={cn(
-                    "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-[2px] border transition-colors",
-                    checked
-                      ? "border-[#0057B8] bg-[#0057B8] text-white"
-                      : "border-slate-300 bg-white group-hover:border-slate-400",
-                    "peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8]/30 peer-focus-visible:ring-offset-2",
-                  )}
+                  className={controlClass(checked)}
                 >
                   {checked ? (
                     <Check
-                      className="h-3 w-3"
+                      className={checkClass}
                       strokeWidth={3}
                       aria-hidden="true"
                     />
@@ -2502,7 +2537,7 @@ function CheckboxFilterOptions({
                   {option.label}
                 </span>
               </span>
-              <span className="min-w-6 shrink-0 text-right text-xs font-medium tabular-nums text-slate-500">
+              <span className={countClass}>
                 {formatHotelCount(option.count, locale)}
               </span>
             </label>
@@ -2541,10 +2576,20 @@ function FilterSection({
     <section
       className={cn(
         "border-t border-slate-200/75 first:border-t-0",
-        layout === "mobile" ? "py-4" : "py-4",
+        layout === "desktop"
+          ? "border-t-0 py-0"
+          : layout === "mobile"
+            ? "py-4"
+            : "py-4",
       )}
     >
-      <h3 className="mb-2 text-sm font-extrabold uppercase leading-5 tracking-[0.14em] text-slate-950">
+      <h3
+        className={cn(
+          layout === "desktop"
+            ? "mb-3 text-[12px] font-extrabold uppercase leading-4 tracking-[0.12em] text-slate-950"
+            : "mb-2 text-sm font-extrabold uppercase leading-5 tracking-[0.14em] text-slate-950",
+        )}
+      >
         {title}
       </h3>
       <div className="grid gap-0.5">{children}</div>
@@ -2587,6 +2632,7 @@ function CheckboxFilterSection({
         t={t}
         collapsedCount={collapsedCount}
         locale={locale}
+        layout={layout}
       />
     </FilterSection>
   );
