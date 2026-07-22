@@ -399,7 +399,7 @@ test("search activity metric grid has responsive dividers and preserves metric o
   );
 });
 
-test("service status and operations parent remain free of new outlines or dividers", () => {
+test("service status has a borderless parent with two independent outlined groups", () => {
   const operationsOpening = sectionOpening("operations");
   const operationsLayout = blockBetween(
     'data-admin-home-operations-layout="shared"',
@@ -407,6 +407,18 @@ test("service status and operations parent remain free of new outlines or divide
   );
   const serviceBlock = blockBetween(
     'data-admin-home-surface="service-status"',
+    'data-admin-home-section="recent-admin-activity"',
+  );
+  const serviceOpening = blockBetween(
+    'data-admin-home-surface="service-status"',
+    '<ServicePanelDecoration />',
+  );
+  const providerBlock = blockBetween(
+    'data-admin-home-provider-status-outline="true"',
+    'data-admin-home-system-status-outline="true"',
+  );
+  const systemBlock = blockBetween(
+    'data-admin-home-system-status-outline="true"',
     'data-admin-home-section="recent-admin-activity"',
   );
 
@@ -424,17 +436,39 @@ test("service status and operations parent remain free of new outlines or divide
     /border|divide|shadow|bg-white|rounded/,
   );
   assert.match(
+    serviceOpening,
+    /className="relative min-h-\[17rem\] overflow-hidden px-5 py-6 sm:px-6 lg:px-8 lg:py-8 xl:pl-8"/,
+  );
+  assert.doesNotMatch(serviceOpening, /border|divide|shadow|bg-white|rounded/);
+  assert.match(
     serviceBlock,
-    /data-admin-home-surface="service-status"[\s\S]*?className="relative min-h-\[17rem\] overflow-hidden px-5 py-6 sm:px-6 lg:px-8 lg:py-8 xl:pl-8"/,
+    /<PanelHeading id="service-status-heading" icon=\{Gauge\}>Service Status<\/PanelHeading>[\s\S]*?data-admin-home-service-groups="provider-system"/,
   );
   assert.match(
     serviceBlock,
     /data-admin-home-service-groups="provider-system"[\s\S]*?className="mt-5 grid gap-5 md:grid-cols-\[minmax\(0,0\.9fr\)_minmax\(0,1\.1fr\)\] md:gap-6"/,
   );
-  assert.doesNotMatch(
-    serviceBlock,
-    /data-admin-home-service-divider|border|divide|shadow|bg-white|rounded-none/,
+  assert.match(
+    providerBlock,
+    /className="min-w-0 border border-\[#7B8794\] bg-transparent p-5 sm:p-6 rounded-none"/,
   );
+  assert.match(providerBlock, /Provider statuses/);
+  assert.match(providerBlock, /providers\.map\(\(provider\) =>/);
+  assert.match(providerBlock, /href="\/admin\/providers"/);
+  assert.match(
+    systemBlock,
+    /className="min-w-0 border border-\[#7B8794\] bg-transparent p-5 sm:p-6 rounded-none"/,
+  );
+  assert.match(systemBlock, /System statuses/);
+  assert.deepEqual(labelsFor("StatusRow", systemBlock), [
+    "Database",
+    "Authentication",
+    "Email",
+    "Provider credentials",
+    "Webhooks",
+  ]);
+  assert.match(systemBlock, /href="\/admin\/system"/);
+  assert.doesNotMatch(serviceBlock, /data-admin-home-service-divider|divide-x|border-l|gap-0/);
   assert.match(adminOverviewPage, /data-admin-home-decoration="status-routes"/);
 });
 
