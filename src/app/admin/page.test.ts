@@ -51,7 +51,7 @@ test("admin home uses a full-bleed decorative workspace background while contain
   assert.match(workspaceBlock, /className="relative isolate"/);
   assert.match(workspaceBlock, /data-admin-home-workspace-background="full-bleed"/);
   assert.match(workspaceBlock, /aria-hidden="true"/);
-  assert.match(workspaceBlock, /className="pointer-events-none absolute inset-y-0 left-1\/2 -z-10 w-screen -translate-x-1\/2 border-y border-\[#E4E9EF\] bg-\[#F7F6F2\] shadow-\[0_10px_36px_rgba\(2,28,43,0\.06\)\]"/);
+  assert.match(workspaceBlock, /className="pointer-events-none absolute inset-y-0 left-1\/2 -z-10 w-screen -translate-x-1\/2 border-y border-\[#A7B2BE\] bg-\[#F7F6F2\] shadow-\[0_10px_36px_rgba\(2,28,43,0\.06\)\]"/);
   assert.match(workspaceBlock, /data-admin-home-workspace-background="full-bleed"[\s\S]*\/>[\s\S]*<div className="px-5 py-6 sm:px-6 lg:px-8 lg:py-8">/);
   assert.match(workspaceBlock, /<AdminPageHeader[\s\S]*title="Admin Home"/);
   assert.match(workspaceBlock, /actions=\{<HeroRouteArtwork \/>\}/);
@@ -64,18 +64,18 @@ test("admin home full-bleed background does not alter content constraints or int
   const workspaceBlock = blockBetween('data-admin-home-workspace="single-card"', 'function HeroRouteArtwork');
   assert.match(adminShell, /<main className="page-shell py-5 sm:py-6">/);
   assert.match(workspaceBlock, /<div className="px-5 py-6 sm:px-6 lg:px-8 lg:py-8">/);
-  assert.match(adminOverviewPage, /const adminHomeSectionClass = "border-t border-\[#E4E9EF\] px-5 py-6 sm:px-6 lg:px-8 lg:py-8"/);
+  assert.match(adminOverviewPage, /const adminHomeSectionClass = "border-t border-\[#A7B2BE\] px-5 py-6 sm:px-6 lg:px-8 lg:py-8"/);
   assert.doesNotMatch(workspaceBlock, /max-w-none|w-full|container|mx-0|px-0/);
   assert.equal((workspaceBlock.match(/w-screen/g) || []).length, 1);
   assert.match(workspaceBlock, /data-admin-home-workspace-background="full-bleed"[\s\S]*aria-hidden="true"[\s\S]*\/>/);
 });
 
 test("admin home sections are transparent workspace regions separated by internal dividers", () => {
-  assert.match(adminOverviewPage, /const adminHomeSectionClass = "border-t border-\[#E4E9EF\] px-5 py-6 sm:px-6 lg:px-8 lg:py-8"/);
+  assert.match(adminOverviewPage, /const adminHomeSectionClass = "border-t border-\[#A7B2BE\] px-5 py-6 sm:px-6 lg:px-8 lg:py-8"/);
   for (const section of ["needs-attention", "at-a-glance", "recent-admin-activity"]) {
     assert.match(adminOverviewPage, new RegExp(`data-admin-home-section="${section}"[^>]*className=\{adminHomeSectionClass\}`));
   }
-  assert.match(adminOverviewPage, /data-admin-home-section="operations"[^>]*className="border-t border-\[#E4E9EF\]"/);
+  assert.match(adminOverviewPage, /data-admin-home-section="operations"[^>]*className="border-t border-\[#A7B2BE\]"/);
   assert.equal((adminOverviewPage.match(/data-admin-home-section=/g) || []).length, 4);
 });
 
@@ -86,7 +86,7 @@ test("search activity and service status are flat operational sections in the si
   assert.match(operationsBlock, /data-admin-home-surface="search-activity"/);
   assert.match(operationsBlock, /data-admin-home-surface="service-status"/);
   assert.equal((operationsBlock.match(/bg-white|shadow-\[|rounded-\[/g) || []).length, 0);
-  assert.match(operationsBlock, /border-t border-\[#E4E9EF\].*xl:border-l xl:border-t-0/s);
+  assert.match(operationsBlock, /border-t border-\[#A7B2BE\].*xl:border-l xl:border-t-0/s);
 });
 
 test("needs attention derives rows only from provider, system, and search health data", () => {
@@ -171,7 +171,7 @@ test("service status has no outer card surface while preserving two flat status 
   assert.match(serviceBlock, /data-admin-home-service-groups="provider-system"/);
   assert.match(serviceBlock, /data-admin-home-service-divider="responsive"/);
   assert.match(serviceBlock, /md:w-px/);
-  assert.match(serviceBlock, /h-px bg-slate-200/);
+  assert.match(serviceBlock, /h-px bg-\[#A7B2BE\]/);
   assert.deepEqual(labelsFor("StatusRow", serviceBlock).slice(-5), ["Database", "Authentication", "Email", "Provider credentials", "Webhooks"]);
   assert.match(serviceBlock, /providerReadinessLabel\(provider\)/);
   assert.match(serviceBlock, /href="\/admin\/providers"/);
