@@ -85,3 +85,16 @@ export function HotelCardSkeleton() {
     </div>
   );
 }
+
+export function CarCardSkeleton() {
+  return (
+    <div role="status" aria-label="Loading car result" className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <span className="sr-only">Loading car result</span>
+      <div className="grid md:grid-cols-[210px_minmax(0,1fr)_190px]">
+        <Skeleton className="h-48 rounded-none md:h-auto" />
+        <div className="space-y-4 p-4"><Skeleton className="h-3 w-24" /><Skeleton className="h-6 w-2/3" /><div className="flex gap-2"><Skeleton className="h-5 w-20" /><Skeleton className="h-5 w-20" /><Skeleton className="h-5 w-20" /></div><Skeleton className="h-4 w-4/5" /><Skeleton className="h-4 w-3/5" /></div>
+        <div className="space-y-3 border-t border-slate-200 p-4 md:border-s md:border-t-0"><Skeleton className="h-4 w-20 ms-auto" /><Skeleton className="h-8 w-28 ms-auto" /><Skeleton className="h-11 w-full" /></div>
+      </div>
+    </div>
+  );
+}

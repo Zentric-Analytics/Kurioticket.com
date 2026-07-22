@@ -1,6 +1,8 @@
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { CarsResultsClient } from "@/components/results/CarsResultsClient";
+import type { CarSearchParams } from "@/lib/cars/types";
+import { searchCars } from "@/services/travel/carAggregator";
 
 type CarsResultsSearchParams = Promise<
   Record<string, string | string[] | undefined>
@@ -41,20 +43,25 @@ export default async function CarsResultsPage({
   const params = await searchParams;
   const pickupLocation = getParamValue(params, "pickupLocation");
   const dropoffLocation = getParamValue(params, "dropoffLocation");
+  const values: CarSearchParams = {
+    pickupLocation,
+    dropoffLocation: dropoffLocation || pickupLocation,
+    pickupDate: getParamValue(params, "pickupDate"),
+    pickupTime: getParamValue(params, "pickupTime") || "10:00",
+    dropoffDate: getParamValue(params, "dropoffDate"),
+    dropoffTime: getParamValue(params, "dropoffTime") || "10:00",
+    driverAge: normalizeDriverAge(getParamValue(params, "driverAge")),
+  };
+  const inventory = await searchCars(values);
 
   return (
     <>
       <AppHeader />
       <CarsResultsClient
-        values={{
-          pickupLocation,
-          dropoffLocation: dropoffLocation || pickupLocation,
-          pickupDate: getParamValue(params, "pickupDate"),
-          pickupTime: getParamValue(params, "pickupTime") || "10:00",
-          dropoffDate: getParamValue(params, "dropoffDate"),
-          dropoffTime: getParamValue(params, "dropoffTime") || "10:00",
-          driverAge: normalizeDriverAge(getParamValue(params, "driverAge")),
-        }}
+        values={values}
+        initialResults={inventory.results}
+        resultsMode={inventory.mode}
+        inventoryStatus={inventory.status}
       />
       <Footer />
     </>
