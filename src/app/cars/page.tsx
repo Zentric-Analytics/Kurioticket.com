@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 
 import { AppHeader } from "@/components/layout/AppHeader";
+import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { Footer } from "@/components/layout/Footer";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -567,6 +568,23 @@ function CarsFaqSection() {
   );
 }
 
+function getCarLocationAutocompleteStrings(t: (key: string) => string) {
+  return {
+    locationSuggestions: t("carsSearch.locationSuggestions"),
+    popularLocations: t("carsSearch.popularLocations"),
+    loadingSuggestions: t("carsSearch.loadingSuggestions"),
+    noMatchingLocations: t("carsSearch.noMatchingLocations"),
+    suggestionsUnavailable: t("carsSearch.suggestionsUnavailable"),
+    continueTypingManually: t("carsSearch.continueTypingManually"),
+    useTypedLocation: t("carsSearch.useTypedLocation"),
+    unverifiedTypedLocation: t("carsSearch.unverifiedTypedLocation"),
+    airport: t("carsSearch.type.airport"),
+    city: t("carsSearch.type.city"),
+    area: t("carsSearch.type.area"),
+    customLocation: t("carsSearch.type.customLocation"),
+  };
+}
+
 function CarsSearchBar({
   errors,
   hasActiveSearch,
@@ -748,6 +766,7 @@ function CarsSearchBar({
 
   const dateError = errors.pickupDate || errors.dropoffDate || errors.dateRange;
   const timeError = errors.pickupTime || errors.dropoffTime;
+  const locationAutocompleteStrings = getCarLocationAutocompleteStrings(t);
 
   return (
     <section className="overflow-visible rounded-[1.5rem] border border-white/80 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.04] sm:rounded-[1.35rem] sm:border-slate-200/80 sm:bg-white sm:p-4 sm:shadow-[0_18px_42px_-28px_rgba(15,23,42,0.42)] sm:ring-1 sm:ring-white/70">
@@ -794,18 +813,18 @@ function CarsSearchBar({
                         t("carsSearch.pickupLocationPlaceholder")}
                     </span>
                   </button>
-                  <input
-                    ref={pickupLocationRef}
+                  <CarLocationAutocomplete
                     id="pickupLocation"
                     name="pickupLocation"
-                    type="text"
                     value={values.pickupLocation}
-                    onChange={(event) =>
-                      updateValue("pickupLocation", event.target.value)
+                    onValueChange={(nextValue) =>
+                      updateValue("pickupLocation", nextValue)
                     }
                     placeholder={t("carsSearch.pickupLocationPlaceholder")}
-                    className="hidden h-7 w-full border-none bg-transparent py-0 ps-0 pe-9 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-8"
-                    autoComplete="off"
+                    inputRef={pickupLocationRef}
+                    inputClassName="hidden h-7 w-full border-none bg-transparent py-0 ps-0 pe-9 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-8"
+                    presentation="desktop"
+                    strings={locationAutocompleteStrings}
                   />
 
                   {values.pickupLocation ? (
@@ -840,18 +859,18 @@ function CarsSearchBar({
                           t("carsSearch.returnLocationPlaceholder")}
                       </span>
                     </button>
-                    <input
-                      ref={dropoffLocationRef}
+                    <CarLocationAutocomplete
                       id="dropoffLocation"
                       name="dropoffLocation"
-                      type="text"
                       value={values.dropoffLocation}
-                      onChange={(event) =>
-                        updateValue("dropoffLocation", event.target.value)
+                      onValueChange={(nextValue) =>
+                        updateValue("dropoffLocation", nextValue)
                       }
                       placeholder={t("carsSearch.returnLocationPlaceholder")}
-                      className="hidden h-7 w-full border-t border-slate-100 bg-transparent py-0 ps-0 pe-9 pt-1.5 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-8 lg:pt-1.5"
-                      autoComplete="off"
+                      inputRef={dropoffLocationRef}
+                      inputClassName="hidden h-7 w-full border-t border-slate-100 bg-transparent py-0 ps-0 pe-9 pt-1.5 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-8 lg:pt-1.5"
+                      presentation="desktop"
+                      strings={locationAutocompleteStrings}
                     />
 
                     {values.dropoffLocation ? (
@@ -1065,6 +1084,7 @@ function CarsMobilePickerDialogs({
   const dropoffParsed = parseIsoDate(values.dropoffDate);
   const timeListClass =
     "grid max-h-72 gap-2 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2";
+  const locationAutocompleteStrings = getCarLocationAutocompleteStrings(t);
 
   return (
     <>
@@ -1093,17 +1113,16 @@ function CarsMobilePickerDialogs({
           </div>
         )}
       >
-        <input
-          ref={pickupMobileInputRef}
+        <CarLocationAutocomplete
           id="pickupLocationMobile"
-          type="text"
           value={values.pickupLocation}
-          onChange={(event) =>
-            updateValue("pickupLocation", event.target.value)
-          }
+          onValueChange={(nextValue) => updateValue("pickupLocation", nextValue)}
           placeholder={t("carsSearch.pickupLocationPlaceholder")}
-          className="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400"
-          autoComplete="off"
+          inputRef={pickupMobileInputRef}
+          inputClassName="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400"
+          presentation="mobile"
+          strings={locationAutocompleteStrings}
+          onRequestClose={onClose}
         />
       </FlightMobilePickerShell>
 
@@ -1132,17 +1151,16 @@ function CarsMobilePickerDialogs({
           </div>
         )}
       >
-        <input
-          ref={dropoffMobileInputRef}
+        <CarLocationAutocomplete
           id="dropoffLocationMobile"
-          type="text"
           value={values.dropoffLocation}
-          onChange={(event) =>
-            updateValue("dropoffLocation", event.target.value)
-          }
+          onValueChange={(nextValue) => updateValue("dropoffLocation", nextValue)}
           placeholder={t("carsSearch.returnLocationPlaceholder")}
-          className="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400"
-          autoComplete="off"
+          inputRef={dropoffMobileInputRef}
+          inputClassName="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400"
+          presentation="mobile"
+          strings={locationAutocompleteStrings}
+          onRequestClose={onClose}
         />
       </FlightMobilePickerShell>
 
