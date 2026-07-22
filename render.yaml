@@ -150,6 +150,8 @@ services:
         sync: false
       - key: ROUTE_WATCH_UPDATES_CRON_SECRET
         sync: false
+      - key: CARS_RESULTS_MODE
+        value: live
 
   - type: web
     name: kurioticket-web-staging
@@ -221,6 +223,8 @@ services:
         sync: false
       - key: ROUTE_WATCH_UPDATES_CRON_SECRET
         sync: false
+      - key: CARS_RESULTS_MODE
+        value: demo
 
 databases:
   - name: kurioticket-postgres
