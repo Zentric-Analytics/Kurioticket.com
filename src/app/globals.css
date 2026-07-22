@@ -710,9 +710,10 @@ textarea {
   min-width: 0;
   text-align: center;
   line-height: 1.15;
-  overflow-wrap: anywhere;
-  word-break: normal;
-  font-size: clamp(0.8125rem, 1.8vw, 0.9375rem);
+  overflow-wrap: normal;
+  word-break: keep-all;
+  white-space: nowrap;
+  font-size: clamp(0.8125rem, 1.2vw, 0.875rem);
   font-variant-numeric: tabular-nums;
   unicode-bidi: isolate;
 }
