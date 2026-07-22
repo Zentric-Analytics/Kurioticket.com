@@ -54,7 +54,7 @@ type SearchHealth = Awaited<ReturnType<typeof getSearchHealth>>;
 
 type MetricIcon = "users" | "active" | "suspended" | "admin" | "search" | "activity";
 
-const adminHomeSectionClass = "border-t border-[#E4E9EF] px-5 py-6 sm:px-6 lg:px-8 lg:py-8";
+const adminHomeSectionClass = "border-t-2 border-[#AAB6C2] px-5 py-6 sm:px-6 lg:px-8 lg:py-8";
 
 export default async function AdminPage() {
   const [metrics, providers, system, searchHealth, activity] = await Promise.all([
@@ -121,7 +121,7 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      <section aria-label="Search Activity and Service Status" data-admin-home-section="operations" className="border-t border-[#E4E9EF]">
+      <section aria-label="Search Activity and Service Status" data-admin-home-section="operations" className="border-t-2 border-[#AAB6C2]">
         <div data-admin-home-operations-layout="shared" className="grid gap-0 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
         <section data-admin-home-surface="search-activity" className="relative min-h-[17rem] overflow-hidden px-5 py-6 sm:px-6 lg:px-8 lg:py-8 xl:pr-8" aria-labelledby="search-activity-heading">
           <SearchPanelDecoration />
