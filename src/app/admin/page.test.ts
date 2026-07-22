@@ -23,7 +23,7 @@ function sectionOpening(section: string): string {
   return match[0];
 }
 
-test("admin home creates exactly five outlined sections in the requested order", () => {
+test("admin home creates exactly five borderless sections in the requested order", () => {
   assert.deepEqual(
     Array.from(adminOverviewPage.matchAll(/data-admin-home-section="([^"]+)"/g), (match) => match[1]),
     ["header", "needs-attention", "at-a-glance", "operations", "recent-admin-activity"],
@@ -33,7 +33,7 @@ test("admin home creates exactly five outlined sections in the requested order",
     assert.match(sectionOpening(section), /className=\{adminHomeSectionClass\}/);
   }
 
-  assert.match(adminOverviewPage, /const adminHomeSectionClass = "border-2 border-\[#8F9BA8\] bg-transparent px-5 py-6 sm:px-6 lg:px-8 lg:py-8"/);
+  assert.match(adminOverviewPage, /const adminHomeSectionClass = "bg-transparent px-5 py-6 sm:px-6 lg:px-8 lg:py-8"/);
   assert.match(adminOverviewPage, /className="relative isolate grid gap-5 md:gap-6 xl:gap-7"/);
 });
 
@@ -45,7 +45,7 @@ test("full-bleed workspace background keeps #F7F6F2 and has no border or shadow"
   assert.match(adminShell, /isAdminHome && "min-h-\[calc\(100vh-4rem\)\] bg-\[#F7F6F2\] sm:min-h-\[calc\(100vh-68px\)\]"/);
 });
 
-test("header rectangle preserves the Admin Home header content and artwork", () => {
+test("header section preserves the Admin Home header content and artwork", () => {
   const headerBlock = blockBetween('data-admin-home-section="header"', 'data-admin-home-section="needs-attention"');
   assert.match(headerBlock, /<AdminPageHeader/);
   assert.match(headerBlock, /title="Admin Home"/);
@@ -55,7 +55,7 @@ test("header rectangle preserves the Admin Home header content and artwork", () 
   assert.doesNotMatch(headerBlock, /border-t|border-b|border-y|divide-x|divide-y/);
 });
 
-test("needs attention is one outline with borderless warning items and gap-based columns", () => {
+test("needs attention is borderless with warning items and gap-based columns", () => {
   const attentionBlock = blockBetween('data-admin-home-section="needs-attention"', 'data-admin-home-section="at-a-glance"');
   assert.match(attentionBlock, /Needs Attention/);
   assert.match(attentionBlock, /aria-label=\{`\$\{attentionIssues.length\} issues`\}/);
@@ -73,7 +73,7 @@ test("at a glance keeps six metrics and removes all metric grid dividers", () =>
   assert.doesNotMatch(glanceBlock, /border-t|border-b|border-y|border-l|border-r|divide-x|divide-y|border-\[#A7B2BE\]/);
 });
 
-test("search activity and service status share one outline with no internal structural dividers", () => {
+test("search activity and service status share one borderless section with no internal structural dividers", () => {
   const operationsBlock = blockBetween('data-admin-home-section="operations"', 'data-admin-home-section="recent-admin-activity"');
   assert.match(adminOverviewPage, /<section aria-label="Search Activity and Service Status" data-admin-home-section="operations" className=\{adminHomeSectionClass\}>/);
   assert.match(operationsBlock, /data-admin-home-operations-layout="shared"/);

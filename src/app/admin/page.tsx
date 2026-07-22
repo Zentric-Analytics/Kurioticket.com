@@ -54,7 +54,7 @@ type SearchHealth = Awaited<ReturnType<typeof getSearchHealth>>;
 
 type MetricIcon = "users" | "active" | "suspended" | "admin" | "search" | "activity";
 
-const adminHomeSectionClass = "border-2 border-[#8F9BA8] bg-transparent px-5 py-6 sm:px-6 lg:px-8 lg:py-8";
+const adminHomeSectionClass = "bg-transparent px-5 py-6 sm:px-6 lg:px-8 lg:py-8";
 
 export default async function AdminPage() {
   const [metrics, providers, system, searchHealth, activity] = await Promise.all([
