@@ -125,15 +125,17 @@ export default async function AdminPage() {
       </section>
 
       <section data-admin-home-section="at-a-glance" aria-labelledby="at-a-glance-heading" className={adminHomeSectionClass}>
-        <SectionHeading id="at-a-glance-heading">At a Glance</SectionHeading>
-        <div data-admin-home-metric-rail="flat" className="mt-4">
-          <div className="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-3 xl:grid-cols-6">
-            <OverviewMetric icon="users" label="Total users" value={metrics.totalUsers} />
-            <OverviewMetric icon="active" label="Active users" value={metrics.activeUsers} />
-            <OverviewMetric icon="suspended" label="Suspended users" value={metrics.suspendedUsers} />
-            <OverviewMetric icon="admin" label="Admin users" value={metrics.adminUsers} />
-            <OverviewMetric icon="search" label="Recent searches" value={metrics.recentSearches} hint="Last 7 days" />
-            <OverviewMetric icon="activity" label="Recent admin actions" value={metrics.recentAdminActions} hint="Last 7 days" />
+        <div data-admin-home-glance-outline="true" className="overflow-hidden rounded-none border border-[#7B8794] bg-transparent">
+          <div className="px-5 pt-5 sm:px-6 sm:pt-6">
+            <SectionHeading id="at-a-glance-heading">At a Glance</SectionHeading>
+          </div>
+          <div data-admin-home-glance-grid="outlined" className="mt-4 grid grid-cols-2 md:grid-cols-3">
+            <OverviewMetric icon="users" label="Total users" value={metrics.totalUsers} className={overviewMetricCellBorderClass(0)} />
+            <OverviewMetric icon="active" label="Active users" value={metrics.activeUsers} className={overviewMetricCellBorderClass(1)} />
+            <OverviewMetric icon="suspended" label="Suspended users" value={metrics.suspendedUsers} className={overviewMetricCellBorderClass(2)} />
+            <OverviewMetric icon="admin" label="Admin users" value={metrics.adminUsers} className={overviewMetricCellBorderClass(3)} />
+            <OverviewMetric icon="search" label="Recent searches" value={metrics.recentSearches} hint="Last 7 days" className={overviewMetricCellBorderClass(4)} />
+            <OverviewMetric icon="activity" label="Recent admin actions" value={metrics.recentAdminActions} hint="Last 7 days" className={overviewMetricCellBorderClass(5)} />
           </div>
         </div>
       </section>
@@ -235,9 +237,24 @@ function SectionHeading({ id, children }: { id: string; children: React.ReactNod
   return <h2 id={id} className="text-base font-semibold text-slate-950">{children}</h2>;
 }
 
-function OverviewMetric({ label, value, hint, icon }: { label: string; value: string | number; hint?: string; icon: MetricIcon }) {
+function OverviewMetric({ label, value, hint, icon, className = "" }: { label: string; value: string | number; hint?: string; icon: MetricIcon; className?: string }) {
   const Icon = metricIcons[icon];
-  return <div data-admin-home-metric-item="flat" className="min-w-0 px-4 py-5"><div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#004BB8]"><Icon className="h-5 w-5" aria-hidden="true" /></span><div><p className="text-sm font-semibold text-slate-600">{label}</p><p className="mt-1 text-3xl font-extrabold tracking-tight text-[#021C2B]">{value}</p>{hint ? <p className="mt-1 text-xs font-medium text-slate-500">{hint}</p> : null}</div></div></div>;
+  return <div data-admin-home-metric-item="flat" className={`min-w-0 px-4 py-5 ${className}`}><div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#004BB8]"><Icon className="h-5 w-5" aria-hidden="true" /></span><div><p className="text-sm font-semibold text-slate-600">{label}</p><p className="mt-1 text-3xl font-extrabold tracking-tight text-[#021C2B]">{value}</p>{hint ? <p className="mt-1 text-xs font-medium text-slate-500">{hint}</p> : null}</div></div></div>;
+}
+
+function overviewMetricCellBorderClass(index: number) {
+  const isMobileLeftColumn = index % 2 === 0;
+  const isMobileLastRow = index >= 4;
+  const isDesktopLastColumn = index % 3 === 2;
+  const isDesktopFirstRow = index < 3;
+
+  return [
+    isMobileLeftColumn ? "border-r border-[#7B8794]" : "",
+    !isMobileLastRow ? "border-b border-[#7B8794]" : "",
+    isDesktopLastColumn ? "md:border-r-0" : "md:border-r",
+    isDesktopFirstRow ? "md:border-b" : "md:border-b-0",
+    "md:border-[#7B8794]",
+  ].filter(Boolean).join(" ");
 }
 
 const metricIcons = { users: UsersRound, active: CheckCircle2, suspended: AlertTriangle, admin: ShieldCheck, search: Search, activity: Zap };

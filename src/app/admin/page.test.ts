@@ -89,12 +89,42 @@ test("needs attention empty state keeps the outline without internal grid divide
   assert.match(attentionBlock, /data-admin-home-attention-outline="true"/);
 });
 
-test("at a glance keeps six metrics and removes all metric grid dividers", () => {
+test("at a glance uses one outlined metric grid with the heading inside the outline", () => {
+  const glanceBlock = blockBetween('data-admin-home-section="at-a-glance"', 'data-admin-home-section="operations"');
+  const outlineIndex = glanceBlock.indexOf('data-admin-home-glance-outline="true"');
+  const headingIndex = glanceBlock.indexOf('<SectionHeading id="at-a-glance-heading">At a Glance</SectionHeading>');
+  const gridIndex = glanceBlock.indexOf('data-admin-home-glance-grid="outlined"');
+
+  assert.notEqual(outlineIndex, -1);
+  assert.ok(headingIndex > outlineIndex, "heading should be inside the outline");
+  assert.ok(gridIndex > headingIndex, "heading should be above the metric grid");
+  assert.match(glanceBlock, /data-admin-home-glance-outline="true" className="overflow-hidden rounded-none border border-\[#7B8794\] bg-transparent"/);
+  assert.match(glanceBlock, /<div className="px-5 pt-5 sm:px-6 sm:pt-6">\s*<SectionHeading id="at-a-glance-heading">At a Glance<\/SectionHeading>\s*<\/div>/);
+  assert.doesNotMatch(glanceBlock, /data-admin-home-metric-item="flat"[^>]*At a Glance|data-admin-home-glance-heading-outline|border-b[^\n]*at-a-glance-heading/);
+});
+
+test("at a glance keeps six metrics in order with two columns by default and three at md", () => {
   const glanceBlock = blockBetween('data-admin-home-section="at-a-glance"', 'data-admin-home-section="operations"');
   assert.deepEqual(labelsFor("OverviewMetric", glanceBlock), ["Total users", "Active users", "Suspended users", "Admin users", "Recent searches", "Recent admin actions"]);
-  assert.match(glanceBlock, /data-admin-home-metric-rail="flat"/);
-  assert.match(glanceBlock, /grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-3 xl:grid-cols-6/);
-  assert.doesNotMatch(glanceBlock, /border-t|border-b|border-y|border-l|border-r|divide-x|divide-y|border-\[#A7B2BE\]/);
+  assert.match(glanceBlock, /data-admin-home-glance-grid="outlined" className="mt-4 grid grid-cols-2 md:grid-cols-3"/);
+  assert.doesNotMatch(glanceBlock, /xl:grid-cols-6|gap-x-6|gap-y-5|divide-x|divide-y|shadow|bg-white|rounded-2xl|rounded-xl/);
+  assert.match(adminOverviewPage, /data-admin-home-metric-item="flat" className=\{`min-w-0 px-4 py-5 \$\{className\}`\}/);
+});
+
+test("at a glance metric cell borders create responsive vertical and horizontal dividers", () => {
+  const glanceBlock = blockBetween('data-admin-home-section="at-a-glance"', 'data-admin-home-section="operations"');
+  const borderHelperBlock = blockBetween('function overviewMetricCellBorderClass', 'const metricIcons');
+  assert.match(glanceBlock, /className=\{overviewMetricCellBorderClass\(0\)\}/);
+  assert.match(glanceBlock, /className=\{overviewMetricCellBorderClass\(5\)\}/);
+  assert.match(borderHelperBlock, /const isMobileLeftColumn = index % 2 === 0/);
+  assert.match(borderHelperBlock, /const isMobileLastRow = index >= 4/);
+  assert.match(borderHelperBlock, /const isDesktopLastColumn = index % 3 === 2/);
+  assert.match(borderHelperBlock, /const isDesktopFirstRow = index < 3/);
+  assert.match(borderHelperBlock, /isMobileLeftColumn \? "border-r border-\[#7B8794\]" : ""/);
+  assert.match(borderHelperBlock, /!isMobileLastRow \? "border-b border-\[#7B8794\]" : ""/);
+  assert.match(borderHelperBlock, /isDesktopLastColumn \? "md:border-r-0" : "md:border-r"/);
+  assert.match(borderHelperBlock, /isDesktopFirstRow \? "md:border-b" : "md:border-b-0"/);
+  assert.match(borderHelperBlock, /"md:border-\[#7B8794\]"/);
 });
 
 test("search activity and service status share one borderless section with no internal structural dividers", () => {
@@ -123,9 +153,10 @@ test("recent admin activity uses spacing, not row borders or a timeline connecti
   assert.doesNotMatch(timelineBlock, /border-y|border-b|last:border-b-0|bottom-\[-1rem\]|top-0 w-px|bg-\[#004BB8\]\/25/);
 });
 
-test("all admin home sections other than needs attention remain free of new structural dividers", () => {
-  const homeMarkupWithoutAttention = blockBetween('data-admin-home-workspace="single-card"', 'function HeroRouteArtwork').replace(blockBetween('data-admin-home-section="needs-attention"', 'data-admin-home-section="at-a-glance"'), "");
-  assert.doesNotMatch(homeMarkupWithoutAttention, /border-t|border-b|border-y|border-l|border-r|divide-x|divide-y|divide-\[#A7B2BE\]|border-\[#A7B2BE\]|border-\[#7B8794\]|border-slate-200|divide-slate-200/);
+test("all admin home sections other than needs attention and at a glance remain free of new structural dividers", () => {
+  const withoutAttention = blockBetween('data-admin-home-workspace="single-card"', 'function HeroRouteArtwork').replace(blockBetween('data-admin-home-section="needs-attention"', 'data-admin-home-section="at-a-glance"'), "");
+  const withoutOutlinedSections = withoutAttention.replace(blockBetween('data-admin-home-section="at-a-glance"', 'data-admin-home-section="operations"'), "");
+  assert.doesNotMatch(withoutOutlinedSections, /border-t|border-b|border-y|border-l|border-r|divide-x|divide-y|divide-\[#A7B2BE\]|border-\[#A7B2BE\]|border-\[#7B8794\]|border-slate-200|divide-slate-200/);
 });
 
 test("required data, links, icons, badges, and presentation-only labels are preserved", () => {
@@ -148,7 +179,7 @@ test("required data, links, icons, badges, and presentation-only labels are pres
 test("responsive layout breakpoints remain aligned to the requested widths", () => {
   assert.match(adminOverviewPage, /gap-5 md:gap-6 xl:gap-7/); // 390px uses base gap; 768px uses md; 1280px and 1440px use xl.
   assert.match(adminOverviewPage, /data-admin-home-attention-rail="outlined-grid" className="grid md:grid-cols-2"/); // Needs Attention: 390 one column, 768+ two columns; never four.
-  assert.match(adminOverviewPage, /grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-3 xl:grid-cols-6/); // At a Glance: 390 two, 768 three, 1280+ six.
+  assert.match(adminOverviewPage, /data-admin-home-glance-grid="outlined" className="mt-4 grid grid-cols-2 md:grid-cols-3"/); // At a Glance: 390 two, 768+ three.
   assert.match(adminOverviewPage, /grid gap-0 xl:grid-cols-\[minmax\(0,1\.15fr\)_minmax\(320px,0\.85fr\)\]/); // Operations: stacked through 1024, side-by-side at 1280+.
   assert.match(adminOverviewPage, /sm:grid-cols-3/); // Search metrics: one column at 390, three by 768+.
 });
