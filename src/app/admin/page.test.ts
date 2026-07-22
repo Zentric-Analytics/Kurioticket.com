@@ -64,18 +64,18 @@ test("admin home full-bleed background does not alter content constraints or int
   const workspaceBlock = blockBetween('data-admin-home-workspace="single-card"', 'function HeroRouteArtwork');
   assert.match(adminShell, /<main className="page-shell py-5 sm:py-6">/);
   assert.match(workspaceBlock, /<div className="px-5 py-6 sm:px-6 lg:px-8 lg:py-8">/);
-  assert.match(adminOverviewPage, /const adminHomeSectionClass = "border-t-2 border-\[#AAB6C2\] px-5 py-6 sm:px-6 lg:px-8 lg:py-8"/);
+  assert.match(adminOverviewPage, /const adminHomeSectionClass = "border-t border-\[#E4E9EF\] px-5 py-6 sm:px-6 lg:px-8 lg:py-8"/);
   assert.doesNotMatch(workspaceBlock, /max-w-none|w-full|container|mx-0|px-0/);
   assert.equal((workspaceBlock.match(/w-screen/g) || []).length, 1);
   assert.match(workspaceBlock, /data-admin-home-workspace-background="full-bleed"[\s\S]*aria-hidden="true"[\s\S]*\/>/);
 });
 
-test("admin home sections are transparent workspace regions separated by strong major dividers", () => {
-  assert.match(adminOverviewPage, /const adminHomeSectionClass = "border-t-2 border-\[#AAB6C2\] px-5 py-6 sm:px-6 lg:px-8 lg:py-8"/);
+test("admin home sections are transparent workspace regions separated by internal dividers", () => {
+  assert.match(adminOverviewPage, /const adminHomeSectionClass = "border-t border-\[#E4E9EF\] px-5 py-6 sm:px-6 lg:px-8 lg:py-8"/);
   for (const section of ["needs-attention", "at-a-glance", "recent-admin-activity"]) {
     assert.match(adminOverviewPage, new RegExp(`data-admin-home-section="${section}"[^>]*className=\{adminHomeSectionClass\}`));
   }
-  assert.match(adminOverviewPage, /data-admin-home-section="operations"[^>]*className="border-t-2 border-\[#AAB6C2\]"/);
+  assert.match(adminOverviewPage, /data-admin-home-section="operations"[^>]*className="border-t border-\[#E4E9EF\]"/);
   assert.equal((adminOverviewPage.match(/data-admin-home-section=/g) || []).length, 4);
 });
 
