@@ -150,8 +150,9 @@ services:
         sync: false
       - key: ROUTE_WATCH_UPDATES_CRON_SECRET
         sync: false
+      # Return production to exact `live` when an approved Cars provider is connected.
       - key: CARS_RESULTS_MODE
-        value: live
+        value: demo
 
   - type: web
     name: kurioticket-web-staging
