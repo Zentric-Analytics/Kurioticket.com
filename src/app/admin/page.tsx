@@ -185,14 +185,14 @@ export default async function AdminPage() {
           <div className="relative z-10">
             <PanelHeading id="service-status-heading" icon={Gauge}>Service Status</PanelHeading>
             <div data-admin-home-service-groups="provider-system" className="mt-5 grid gap-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
-              <div className="min-w-0">
+              <div data-admin-home-provider-status-outline="true" className="min-w-0 border border-[#7B8794] bg-transparent p-5 sm:p-6 rounded-none">
                 <p className="mb-3 text-sm font-bold text-[#021C2B]">Provider statuses</p>
                 {providers.map((provider) => (
                   <StatusRow key={provider.product} icon={provider.product} label={provider.product} status={providerReadinessLabel(provider)} tone={provider.searchEnabled ? "good" : provider.credentialsPresent ? "warn" : "neutral"} />
                 ))}
                 <TextLink href="/admin/providers" className="mt-5">View Providers →</TextLink>
               </div>
-              <div className="min-w-0">
+              <div data-admin-home-system-status-outline="true" className="min-w-0 border border-[#7B8794] bg-transparent p-5 sm:p-6 rounded-none">
                 <p className="mb-3 text-sm font-bold text-[#021C2B]">System statuses</p>
                 <StatusRow icon="Database" label="Database" status={system.databaseConnected ? "Available" : system.databaseConfigured ? "Configured, not connected" : "Not configured"} tone={system.databaseConnected ? "good" : "bad"} />
                 <StatusRow icon="Authentication" label="Authentication" status={system.authConfigured && system.sessionConfigured ? "Available" : "Not fully configured"} tone={system.authConfigured && system.sessionConfigured ? "good" : "warn"} />
