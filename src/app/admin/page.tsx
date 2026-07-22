@@ -54,7 +54,7 @@ type SearchHealth = Awaited<ReturnType<typeof getSearchHealth>>;
 
 type MetricIcon = "users" | "active" | "suspended" | "admin" | "search" | "activity";
 
-const adminHomeSectionClass = "border-t border-[#E4E9EF] px-5 py-6 sm:px-6 lg:px-8 lg:py-8";
+const adminHomeSectionClass = "border-t border-[#A7B2BE] px-5 py-6 sm:px-6 lg:px-8 lg:py-8";
 
 export default async function AdminPage() {
   const [metrics, providers, system, searchHealth, activity] = await Promise.all([
@@ -74,7 +74,7 @@ export default async function AdminPage() {
       <div
         data-admin-home-workspace-background="full-bleed"
         aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 w-screen -translate-x-1/2 border-y border-[#E4E9EF] bg-[#F7F6F2] shadow-[0_10px_36px_rgba(2,28,43,0.06)]"
+        className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 w-screen -translate-x-1/2 border-y border-[#A7B2BE] bg-[#F7F6F2] shadow-[0_10px_36px_rgba(2,28,43,0.06)]"
       />
       <div className="px-5 py-6 sm:px-6 lg:px-8 lg:py-8">
         <AdminPageHeader
@@ -91,9 +91,9 @@ export default async function AdminPage() {
             {attentionIssues.length}
           </span>
         </div>
-        <div data-admin-home-attention-rail="flat" className="mt-4 border-t border-slate-200">
+        <div data-admin-home-attention-rail="flat" className="mt-4 border-t border-[#A7B2BE]">
           {attentionIssues.length > 0 ? (
-            <div className="grid divide-y divide-slate-200 md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+            <div className="grid divide-y divide-[#A7B2BE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
               {attentionIssues.map((issue) => <AttentionRow key={issue.key} issue={issue} />)}
             </div>
           ) : (
@@ -110,7 +110,7 @@ export default async function AdminPage() {
       <section data-admin-home-section="at-a-glance" aria-labelledby="at-a-glance-heading" className={adminHomeSectionClass}>
         <SectionHeading id="at-a-glance-heading">At a Glance</SectionHeading>
         <div data-admin-home-metric-rail="flat" className="mt-4">
-          <div className="grid grid-cols-2 divide-x divide-y divide-slate-200 border-y border-slate-200 md:grid-cols-3 xl:grid-cols-6 xl:divide-y-0">
+          <div className="grid grid-cols-2 divide-x divide-y divide-[#A7B2BE] border-y border-[#A7B2BE] md:grid-cols-3 xl:grid-cols-6 xl:divide-y-0">
             <OverviewMetric icon="users" label="Total users" value={metrics.totalUsers} />
             <OverviewMetric icon="active" label="Active users" value={metrics.activeUsers} />
             <OverviewMetric icon="suspended" label="Suspended users" value={metrics.suspendedUsers} />
@@ -121,7 +121,7 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      <section aria-label="Search Activity and Service Status" data-admin-home-section="operations" className="border-t border-[#E4E9EF]">
+      <section aria-label="Search Activity and Service Status" data-admin-home-section="operations" className="border-t border-[#A7B2BE]">
         <div data-admin-home-operations-layout="shared" className="grid gap-0 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
         <section data-admin-home-surface="search-activity" className="relative min-h-[17rem] overflow-hidden px-5 py-6 sm:px-6 lg:px-8 lg:py-8 xl:pr-8" aria-labelledby="search-activity-heading">
           <SearchPanelDecoration />
@@ -129,7 +129,7 @@ export default async function AdminPage() {
             <PanelHeading id="search-activity-heading" icon={Activity}>Search Activity</PanelHeading>
             {searchHealth.hasLogs ? (
               <>
-                <div data-admin-home-search-metrics="icon-divider-rail" className="mt-6 grid grid-cols-1 divide-y divide-slate-200 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+                <div data-admin-home-search-metrics="icon-divider-rail" className="mt-6 grid grid-cols-1 divide-y divide-[#A7B2BE] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
                   <PanelMetric icon={Search} tone="blue" label="Total recent searches" value={searchHealth.totalRecentSearches} />
                   <PanelMetric icon={SearchX} tone="amber" label="No-result searches" value={searchHealth.noResultSearches} />
                   <PanelMetric icon={XCircle} tone="rose" label="Failed searches" value={searchHealth.failedSearches} />
@@ -156,7 +156,7 @@ export default async function AdminPage() {
           </div>
         </section>
 
-        <section data-admin-home-surface="service-status" className="relative min-h-[17rem] overflow-hidden border-t border-[#E4E9EF] px-5 py-6 sm:px-6 lg:px-8 lg:py-8 xl:border-l xl:border-t-0 xl:pl-8" aria-labelledby="service-status-heading">
+        <section data-admin-home-surface="service-status" className="relative min-h-[17rem] overflow-hidden border-t border-[#A7B2BE] px-5 py-6 sm:px-6 lg:px-8 lg:py-8 xl:border-l xl:border-t-0 xl:pl-8" aria-labelledby="service-status-heading">
           <ServicePanelDecoration />
           <div className="relative z-10">
             <PanelHeading id="service-status-heading" icon={Gauge}>Service Status</PanelHeading>
@@ -168,7 +168,7 @@ export default async function AdminPage() {
                 ))}
                 <TextLink href="/admin/providers" className="mt-5">View Providers →</TextLink>
               </div>
-              <div data-admin-home-service-divider="responsive" aria-hidden="true" className="h-px bg-slate-200 md:h-auto md:w-px" />
+              <div data-admin-home-service-divider="responsive" aria-hidden="true" className="h-px bg-[#A7B2BE] md:h-auto md:w-px" />
               <div className="min-w-0">
                 <p className="mb-3 text-sm font-bold text-[#021C2B]">System statuses</p>
                 <StatusRow icon="Database" label="Database" status={system.databaseConnected ? "Available" : system.databaseConfigured ? "Configured, not connected" : "Not configured"} tone={system.databaseConnected ? "good" : "bad"} />
@@ -251,7 +251,7 @@ const statusIcons: Record<string, LucideIcon> = { Flights: Plane, Hotels: Hotel,
 
 function RecentActivityList({ items }: { items: Array<{ id: string; title: string; detail: string; timestamp: string }> }) {
   if (items.length === 0) return <AdminEmptyState variant="compact" title="No admin activity yet" message="Audit log entries will appear here after admin actions are recorded." />;
-  return <div data-admin-home-timeline="true" className="border-y border-slate-200"><div>{items.map((item) => <div key={item.id} className="grid grid-cols-[2.25rem_minmax(0,1fr)] gap-x-4 gap-y-2 border-b border-slate-200 py-4 pr-0 text-sm last:border-b-0 sm:grid-cols-[2.25rem_minmax(0,1fr)_auto] sm:gap-x-6"><div data-admin-home-timeline-icon-column="fixed" className="relative flex w-9 justify-center"><div aria-hidden="true" className="pointer-events-none absolute bottom-[-1rem] top-0 w-px bg-[#004BB8]/25" /><span className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#004BB8] ring-4 ring-white"><Activity className="h-4 w-4" aria-hidden="true" /></span></div><div className="min-w-0"><p className="font-semibold text-slate-950">{humanizeAuditAction(item.title)}</p><p className="mt-1 break-words text-slate-600">{item.detail}</p></div><p className="col-start-2 text-xs font-semibold text-slate-500 sm:col-start-3 sm:text-right">{item.timestamp}</p></div>)}</div></div>;
+  return <div data-admin-home-timeline="true" className="border-y border-[#A7B2BE]"><div>{items.map((item) => <div key={item.id} className="grid grid-cols-[2.25rem_minmax(0,1fr)] gap-x-4 gap-y-2 border-b border-[#A7B2BE] py-4 pr-0 text-sm last:border-b-0 sm:grid-cols-[2.25rem_minmax(0,1fr)_auto] sm:gap-x-6"><div data-admin-home-timeline-icon-column="fixed" className="relative flex w-9 justify-center"><div aria-hidden="true" className="pointer-events-none absolute bottom-[-1rem] top-0 w-px bg-[#004BB8]/25" /><span className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#004BB8] ring-4 ring-white"><Activity className="h-4 w-4" aria-hidden="true" /></span></div><div className="min-w-0"><p className="font-semibold text-slate-950">{humanizeAuditAction(item.title)}</p><p className="mt-1 break-words text-slate-600">{item.detail}</p></div><p className="col-start-2 text-xs font-semibold text-slate-500 sm:col-start-3 sm:text-right">{item.timestamp}</p></div>)}</div></div>;
 }
 
 function TextLink({ href, className = "", children }: { href: string; className?: string; children: React.ReactNode }) {
