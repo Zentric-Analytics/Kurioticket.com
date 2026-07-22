@@ -85,7 +85,10 @@ export function getHotelResultsMode(): HotelResultsMode {
 }
 
 export function getCarResultsMode(): CarResultsMode {
-  return process.env.CARS_RESULTS_MODE === "demo" ? "demo" : "live";
+  // No approved live Cars provider exists yet, so the visibly labelled catalogue
+  // (whose offers have no external booking URLs) is the temporary product source.
+  // Production should use exact `live` only after a verified adapter is connected.
+  return process.env.CARS_RESULTS_MODE === "live" ? "live" : "demo";
 }
 
 export function getHotelProviderPrimary(): HotelProviderPrimary {
