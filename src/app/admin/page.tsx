@@ -142,36 +142,41 @@ export default async function AdminPage() {
 
       <section aria-label="Search Activity and Service Status" data-admin-home-section="operations" className={adminHomeSectionClass}>
         <div data-admin-home-operations-layout="shared" className="grid gap-0 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-        <section data-admin-home-surface="search-activity" className="relative min-h-[17rem] overflow-hidden px-5 py-6 sm:px-6 lg:px-8 lg:py-8 xl:pr-8" aria-labelledby="search-activity-heading">
+        <section data-admin-home-surface="search-activity" className="relative min-h-[17rem] overflow-hidden rounded-none border border-[#7B8794] bg-transparent" aria-labelledby="search-activity-heading">
           <SearchPanelDecoration />
           <div className="relative z-10">
-            <PanelHeading id="search-activity-heading" icon={Activity}>Search Activity</PanelHeading>
+            <div className="px-5 pt-6 sm:px-6 lg:px-8 lg:pt-8"><PanelHeading id="search-activity-heading" icon={Activity}>Search Activity</PanelHeading></div>
             {searchHealth.hasLogs ? (
               <>
-                <div data-admin-home-search-metrics="icon-divider-rail" className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-3">
-                  <PanelMetric icon={Search} tone="blue" label="Total recent searches" value={searchHealth.totalRecentSearches} />
-                  <PanelMetric icon={SearchX} tone="amber" label="No-result searches" value={searchHealth.noResultSearches} />
-                  <PanelMetric icon={XCircle} tone="rose" label="Failed searches" value={searchHealth.failedSearches} />
+                <div data-admin-home-search-metrics="outlined-grid" className="mt-6 grid grid-cols-1 sm:grid-cols-3">
+                  <PanelMetric icon={Search} tone="blue" label="Total recent searches" value={searchHealth.totalRecentSearches} className={searchMetricBorderClass(0)} />
+                  <PanelMetric icon={SearchX} tone="amber" label="No-result searches" value={searchHealth.noResultSearches} className={searchMetricBorderClass(1)} />
+                  <PanelMetric icon={XCircle} tone="rose" label="Failed searches" value={searchHealth.failedSearches} className={searchMetricBorderClass(2)} />
                 </div>
-                <div className="mt-6">
-                  <p className="text-sm font-bold text-[#021C2B]">Top products searched</p>
-                  {searchHealth.topProducts.length > 0 ? (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {searchHealth.topProducts.map((product) => (
-                        <AdminStatusBadge key={product.label} tone="info">{product.label}: {product.count}</AdminStatusBadge>
-                      ))}
+                <div data-admin-home-search-lower="products-link" className="border-t border-[#7B8794] px-5 py-5 sm:px-6 lg:px-8">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-[#021C2B]">Top products searched</p>
+                      {searchHealth.topProducts.length > 0 ? (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {searchHealth.topProducts.map((product) => (
+                            <AdminStatusBadge key={product.label} tone="info">{product.label}: {product.count}</AdminStatusBadge>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-2 text-sm text-slate-600">No product search breakdown is available yet.</p>
+                      )}
                     </div>
-                  ) : (
-                    <p className="mt-2 text-sm text-slate-600">No product search breakdown is available yet.</p>
-                  )}
+                    <div className="flex justify-end"><TextLink href="/admin/searches">View Searches →</TextLink></div>
+                  </div>
                 </div>
               </>
             ) : (
-              <div className="mt-5">
+              <div className="mt-5 px-5 pb-6 sm:px-6 lg:px-8 lg:pb-8">
                 <AdminEmptyState variant="compact" title="Search analytics unavailable" message="Search analytics will appear after search logging records real user searches. No search counts are mocked." />
+                <div className="mt-6 flex justify-end"><TextLink href="/admin/searches">View Searches →</TextLink></div>
               </div>
             )}
-            <div className="mt-6 flex justify-end"><TextLink href="/admin/searches">View Searches →</TextLink></div>
           </div>
         </section>
 
@@ -264,9 +269,17 @@ function PanelHeading({ id, icon: Icon, children }: { id: string; icon: LucideIc
   return <h2 id={id} className="flex items-center gap-2 text-base font-extrabold tracking-tight text-[#021C2B]"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F0F6FF] text-[#004BB8] ring-1 ring-[#C9D8EA]"><Icon className="h-4 w-4" aria-hidden="true" /></span>{children}</h2>;
 }
 
-function PanelMetric({ label, value, icon: Icon, tone }: { label: string; value: string | number; icon: LucideIcon; tone: "blue" | "amber" | "rose" }) {
+function PanelMetric({ label, value, icon: Icon, tone, className = "" }: { label: string; value: string | number; icon: LucideIcon; tone: "blue" | "amber" | "rose"; className?: string }) {
   const toneClass = { blue: "bg-[#EEF4FF] text-[#004BB8] ring-[#C9D8EA]", amber: "bg-amber-50 text-amber-600 ring-amber-200", rose: "bg-rose-50 text-rose-600 ring-rose-200" }[tone];
-  return <div data-admin-home-search-metric="flat-icon" className="min-w-0 py-4 sm:px-5 sm:first:pl-0 sm:last:pr-0"><div className="flex items-start gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ring-1 ${toneClass}`}><Icon className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="text-sm font-semibold text-slate-600">{label}</p><p className="mt-1 text-3xl font-extrabold tracking-tight text-[#021C2B]">{value}</p></div></div></div>;
+  return <div data-admin-home-search-metric="flat-icon" className={`min-w-0 px-5 py-4 sm:px-6 lg:px-8 ${className}`}><div className="flex items-start gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ring-1 ${toneClass}`}><Icon className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="text-sm font-semibold text-slate-600">{label}</p><p className="mt-1 text-3xl font-extrabold tracking-tight text-[#021C2B]">{value}</p></div></div></div>;
+}
+
+function searchMetricBorderClass(index: number) {
+  return [
+    index < 2 ? "border-b border-[#7B8794]" : "",
+    index < 2 ? "sm:border-r" : "",
+    "sm:border-b-0 sm:border-[#7B8794]",
+  ].filter(Boolean).join(" ");
 }
 
 function attentionCellBorderClass(index: number, total: number) {
