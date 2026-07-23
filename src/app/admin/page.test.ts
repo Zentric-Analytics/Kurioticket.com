@@ -6,6 +6,26 @@ import test from "node:test";
 const adminOverviewPage = readFileSync("src/app/admin/page.tsx", "utf8");
 const adminShell = readFileSync("src/components/admin/AdminPageShell.tsx", "utf8");
 
+
+
+test("Admin Home distinguishes explicit helper failures from legitimate empty states", () => {
+  assert.match(adminOverviewPage, /User and activity metrics could not be loaded\./);
+  assert.match(adminOverviewPage, /Search analytics could not be loaded\./);
+  assert.match(adminOverviewPage, /Search analytics unavailable/);
+  assert.match(adminOverviewPage, /Provider readiness could not be checked\./);
+  assert.match(adminOverviewPage, /System configuration status could not be checked\./);
+  assert.match(adminOverviewPage, /Recent admin activity could not be loaded\./);
+  assert.match(adminOverviewPage, /No admin activity yet/);
+  assert.notEqual(
+    adminOverviewPage.indexOf("Search analytics could not be loaded."),
+    adminOverviewPage.indexOf("Search analytics unavailable"),
+  );
+  assert.notEqual(
+    adminOverviewPage.indexOf("Recent admin activity could not be loaded."),
+    adminOverviewPage.indexOf("No admin activity yet"),
+  );
+});
+
 function blockBetween(start: string, end: string): string {
   const startIndex = adminOverviewPage.indexOf(start);
   assert.notEqual(startIndex, -1, `${start} should exist`);
@@ -159,11 +179,11 @@ test("header, background, data loading, status row order, and navbar remain unch
   assert.match(adminOverviewPage, /title="Admin Home"/);
   assert.match(adminOverviewPage, /bg-\[#F7F6F2\]/);
   assert.match(adminShell, /isAdminHome && "min-h-\[calc\(100vh-4rem\)\] bg-\[#F7F6F2\] sm:min-h-\[calc\(100vh-68px\)\]"/);
-  assert.match(adminOverviewPage, /getAdminMetrics\(\)/);
-  assert.match(adminOverviewPage, /getProviderStatuses\(\)/);
-  assert.match(adminOverviewPage, /getSafeSystemStatus\(\)/);
-  assert.match(adminOverviewPage, /getSearchHealth\(\)/);
-  assert.match(adminOverviewPage, /getRecentAdminActivity\(\)/);
+  assert.match(adminOverviewPage, /getMetrics: getAdminMetrics/);
+  assert.match(adminOverviewPage, /getProviders: getProviderStatuses/);
+  assert.match(adminOverviewPage, /getSystem: getSafeSystemStatus/);
+  assert.match(adminOverviewPage, /getSearch: getSearchHealth/);
+  assert.match(adminOverviewPage, /getActivity: getRecentAdminActivity/);
   assert.match(
     adminOverviewPage,
     /data-admin-home-status-row="aligned"[\s\S]*?<Icon[\s\S]*?<span className="min-w-0 font-medium text-slate-700">\{label\}<\/span>[\s\S]*?<span className="justify-self-end whitespace-nowrap">/,
