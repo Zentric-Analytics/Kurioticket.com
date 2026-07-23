@@ -11,8 +11,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Logo } from "../../components/Logo";
 import { colors, spacing } from "../../theme/tokens";
-import { ComingSoonCard } from "./ComingSoonCard";
 import { ProductTabs, type SearchProduct } from "./ProductTabs";
+import { HotelSearchForm } from "./HotelSearchForm";
+import { CarSearchForm } from "./CarSearchForm";
+import { DealsSearchForm } from "./DealsSearchForm";
 
 type TripType = "round-trip" | "one-way";
 
@@ -265,12 +267,9 @@ function SearchProductContent({
 }: {
   selectedProduct: SearchProduct;
 }) {
-  if (selectedProduct === "hotels")
-    return <ComingSoonCard title="Hotels coming soon" />;
-  if (selectedProduct === "cars")
-    return <ComingSoonCard title="Car rentals coming soon" />;
-  if (selectedProduct === "deals")
-    return <ComingSoonCard title="Travel deals coming soon" />;
+  if (selectedProduct === "hotels") return <HotelSearchForm />;
+  if (selectedProduct === "cars") return <CarSearchForm />;
+  if (selectedProduct === "deals") return <DealsSearchForm />;
 
   return (
     <>
