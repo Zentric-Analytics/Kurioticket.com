@@ -809,14 +809,9 @@ export function HotelResultsClient() {
     visibleFilteredHotels.length,
     locale,
   );
-  const resultsHeading = searchedDestination
-    ? `${formattedDisplayedHotelCount} ${
-        visibleFilteredHotels.length === 1 ? "property" : "properties"
-      } found in ${searchedDestination}`
-    : t("hotelResults.foundPlacesToStay").replace(
-        "{{count}}",
-        formattedDisplayedHotelCount,
-      );
+  const resultsHeading = t(
+    visibleFilteredHotels.length === 1 ? "resultFound" : "resultsFound",
+  ).replace("{{count}}", formattedDisplayedHotelCount);
   const showFilteredEmptyState =
     !loading &&
     !error &&
@@ -1540,7 +1535,7 @@ export function HotelResultsClient() {
                   aria-label={t("hotelResults.summaryAria")}
                   className="flex w-full flex-nowrap items-center justify-between gap-2 py-1"
                 >
-                  <h1 className="whitespace-nowrap text-[clamp(0.68rem,3vw,0.875rem)] font-bold leading-5 text-navy sm:text-sm">
+                  <h1 className="whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">
                     {resultsHeading}
                   </h1>
                   <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2">
