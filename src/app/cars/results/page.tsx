@@ -56,7 +56,7 @@ export default async function CarsResultsPage({
 
   return (
     <>
-      <AppHeader />
+      <AppHeader flushDesktopBottom hideDesktopTravelNav />
       <CarsResultsClient
         values={values}
         initialResults={inventory.results}
