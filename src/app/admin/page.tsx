@@ -55,10 +55,10 @@ type SearchHealth = Awaited<ReturnType<typeof getSearchHealth>>;
 
 type MetricIcon = "users" | "active" | "suspended" | "admin" | "search" | "activity";
 
-const adminHomeSectionClass = "border-2 border-[#8F9BA8] bg-transparent px-5 py-6 sm:px-6 md:border-0 lg:px-8 lg:py-8";
+const adminHomeSectionClass = "border-t border-[#A7B2BE] px-5 py-6 sm:px-6 md:border-0 lg:px-8 lg:py-8";
 
-// Mobile layout reference: a392740a44882ef439b3f681ed28a470d4b98842
-// (the src/app/admin/page.tsx revision immediately before f157bfa517c159cc5023888e8866bf3949466c39).
+// Mobile layout reference: 3006d4ce48b709560aae7ac5728de057aefa4428
+// (the src/app/admin/page.tsx revision immediately before a392740a44882ef439b3f681ed28a470d4b98842).
 
 export default async function AdminPage() {
   const [metrics, providers, system, searchHealth, activity] = await Promise.all([
@@ -73,14 +73,14 @@ export default async function AdminPage() {
   return (
     <div
       data-admin-home-workspace="single-card"
-      className="relative isolate grid gap-5 md:gap-6 xl:gap-7"
+      className="relative isolate md:grid md:gap-6 xl:gap-7"
     >
       <div
         data-admin-home-workspace-background="full-bleed"
         aria-hidden="true"
         className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 w-screen -translate-x-1/2 bg-[#F7F6F2]"
       />
-      <section data-admin-home-section="header" aria-labelledby="admin-home-heading" className={adminHomeSectionClass}>
+      <section data-admin-home-section="header" aria-labelledby="admin-home-heading" className="px-5 py-6 sm:px-6 lg:px-8 lg:py-8">
         <AdminPageHeader
           eyebrow=""
           title="Admin Home"
@@ -100,7 +100,7 @@ export default async function AdminPage() {
             </div>
           </div>
           {attentionIssues.length > 0 ? (
-            <div data-admin-home-attention-rail="outlined-grid" className="mt-4 grid gap-x-6 gap-y-5 md:mt-6 md:grid-cols-2 md:gap-0">
+            <div data-admin-home-attention-rail="outlined-grid" className="mt-4 grid divide-y divide-[#A7B2BE] border-t border-[#A7B2BE] md:mt-6 md:grid-cols-2 md:divide-y-0 md:border-t-0 md:gap-0">
               {attentionIssues.map((issue, index) => (
                 <AttentionRow
                   key={issue.key}
@@ -127,7 +127,7 @@ export default async function AdminPage() {
           <div data-admin-home-glance-heading="section-header" className="md:px-6 md:pt-6 lg:px-8 lg:pt-8">
             <SectionHeading id="at-a-glance-heading">At a Glance</SectionHeading>
           </div>
-          <div data-admin-home-glance-grid="outlined" className="mt-4 grid grid-cols-2 gap-x-6 gap-y-5 md:mt-6 md:grid-cols-3 md:gap-0">
+          <div data-admin-home-glance-grid="outlined" className="mt-4 grid grid-cols-2 divide-x divide-y divide-[#A7B2BE] border-y border-[#A7B2BE] md:mt-6 md:grid-cols-3 md:gap-0 md:divide-x-0 md:divide-y-0 md:border-y-0">
             <OverviewMetric icon="users" label="Total users" value={metrics.totalUsers} className={overviewMetricCellBorderClass(0)} />
             <OverviewMetric icon="active" label="Active users" value={metrics.activeUsers} className={overviewMetricCellBorderClass(1)} />
             <OverviewMetric icon="suspended" label="Suspended users" value={metrics.suspendedUsers} className={overviewMetricCellBorderClass(2)} />
@@ -146,7 +146,7 @@ export default async function AdminPage() {
             <div data-admin-home-search-heading="section-header" className="md:px-6 md:pt-6 lg:px-8 lg:pt-8"><PanelHeading id="search-activity-heading" icon={Activity}>Search Activity</PanelHeading></div>
             {searchHealth.hasLogs ? (
               <>
-                <div data-admin-home-search-metrics="outlined-grid" className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-3 md:gap-0">
+                <div data-admin-home-search-metrics="outlined-grid" className="mt-6 grid grid-cols-1 divide-y divide-[#A7B2BE] sm:grid-cols-3 sm:divide-x sm:divide-y-0 md:gap-0 md:divide-x-0">
                   <PanelMetric icon={Search} tone="blue" label="Total recent searches" value={searchHealth.totalRecentSearches} className={searchMetricBorderClass(0)} />
                   <PanelMetric icon={SearchX} tone="amber" label="No-result searches" value={searchHealth.noResultSearches} className={searchMetricBorderClass(1)} />
                   <PanelMetric icon={XCircle} tone="rose" label="Failed searches" value={searchHealth.failedSearches} className={searchMetricBorderClass(2)} />
@@ -178,7 +178,7 @@ export default async function AdminPage() {
           </div>
         </section>
 
-        <section data-admin-home-surface="service-status" className="relative min-h-[17rem] overflow-hidden px-5 py-6 sm:px-6 md:px-0 md:py-0" aria-labelledby="service-status-heading">
+        <section data-admin-home-surface="service-status" className="relative min-h-[17rem] overflow-hidden border-t border-[#A7B2BE] px-5 py-6 sm:px-6 md:border-t-0 md:px-0 md:py-0" aria-labelledby="service-status-heading">
           <ServicePanelDecoration />
           <div className="relative z-10">
             <div data-admin-home-service-heading="section-header" className="md:px-6 md:pt-6 lg:px-8 lg:pt-8">
@@ -254,7 +254,7 @@ function SectionHeading({ id, children }: { id: string; children: React.ReactNod
 
 function OverviewMetric({ label, value, hint, icon, className = "" }: { label: string; value: string | number; hint?: string; icon: MetricIcon; className?: string }) {
   const Icon = metricIcons[icon];
-  return <div data-admin-home-metric-item="flat" className={`min-w-0 px-4 py-5 ${className}`}><div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#004BB8]"><Icon className="h-5 w-5" aria-hidden="true" /></span><div><p className="text-sm font-semibold text-slate-600">{label}</p><p className="mt-1 text-3xl font-extrabold tracking-tight text-[#021C2B]">{value}</p>{hint ? <p className="mt-1 text-xs font-medium text-slate-500">{hint}</p> : null}</div></div></div>;
+  return <div data-admin-home-metric-item="flat" className={`min-w-0 px-4 py-5 md:px-4 ${className}`}><div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#004BB8]"><Icon className="h-5 w-5" aria-hidden="true" /></span><div><p className="text-sm font-semibold text-slate-600">{label}</p><p className="mt-1 text-3xl font-extrabold tracking-tight text-[#021C2B]">{value}</p>{hint ? <p className="mt-1 text-xs font-medium text-slate-500">{hint}</p> : null}</div></div></div>;
 }
 
 function overviewMetricCellBorderClass(index: number) {
@@ -277,7 +277,7 @@ function PanelHeading({ id, icon: Icon, children }: { id: string; icon: LucideIc
 
 function PanelMetric({ label, value, icon: Icon, tone, className = "" }: { label: string; value: string | number; icon: LucideIcon; tone: "blue" | "amber" | "rose"; className?: string }) {
   const toneClass = { blue: "bg-[#EEF4FF] text-[#004BB8] ring-[#C9D8EA]", amber: "bg-amber-50 text-amber-600 ring-amber-200", rose: "bg-rose-50 text-rose-600 ring-rose-200" }[tone];
-  return <div data-admin-home-search-metric="flat-icon" className={`min-w-0 py-4 sm:px-5 sm:first:pl-0 sm:last:pr-0 md:px-6 md:first:pl-6 md:last:pr-6 lg:px-8 ${className}`}><div className="flex items-start gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ring-1 ${toneClass}`}><Icon className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="text-sm font-semibold text-slate-600">{label}</p><p className="mt-1 text-3xl font-extrabold tracking-tight text-[#021C2B]">{value}</p></div></div></div>;
+  return <div data-admin-home-search-metric="flat-icon" className={`min-w-0 py-4 sm:px-5 sm:first:pl-0 sm:last:pr-0 md:px-6 md:first:pl-6 md:last:pr-6 md:divide-y-0 lg:px-8 ${className}`}><div className="flex items-start gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ring-1 ${toneClass}`}><Icon className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="text-sm font-semibold text-slate-600">{label}</p><p className="mt-1 text-3xl font-extrabold tracking-tight text-[#021C2B]">{value}</p></div></div></div>;
 }
 
 function searchMetricBorderClass(index: number) {
@@ -301,7 +301,7 @@ function attentionCellBorderClass(index: number, total: number) {
 function AttentionRow({ issue, className = "" }: { issue: AttentionIssue; className?: string }) {
   const Icon = issue.icon === "alert" ? AlertCircle : AlertTriangle;
   const iconClassName = issue.tone === "bad" ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600";
-  return <div data-admin-home-attention-item="outlined-grid-cell" className={`flex min-w-0 items-start gap-4 py-5 md:h-full md:flex-col md:gap-0 md:p-6 ${className}`}><div className="flex min-w-0 flex-1 items-start gap-4 md:flex-none"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${iconClassName}`}><Icon className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="font-semibold text-slate-950">{issue.message}</p></div></div><div data-admin-home-attention-footer="action" className="ml-auto mt-2 flex justify-end md:ml-0 md:mt-auto md:pt-3"><TextLink href={issue.href}>{issue.linkLabel}</TextLink></div></div>;
+  return <div data-admin-home-attention-item="outlined-grid-cell" className={`flex min-w-0 items-start gap-4 py-5 md:h-full md:flex-col md:gap-0 md:border-b-0 md:p-6 ${className}`}><div className="flex min-w-0 flex-1 items-start gap-4 md:flex-none"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${iconClassName}`}><Icon className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="font-semibold text-slate-950">{issue.message}</p></div></div><div data-admin-home-attention-footer="action" className="ml-auto mt-2 flex justify-end md:ml-0 md:mt-auto md:pt-3"><TextLink href={issue.href}>{issue.linkLabel}</TextLink></div></div>;
 }
 
 function AdminHomeActionButton({ href, action, children }: { href: string; action: string; children: React.ReactNode }) {
@@ -317,7 +317,7 @@ const statusIcons: Record<string, LucideIcon> = { Flights: Plane, Hotels: Hotel,
 
 function RecentActivityList({ items }: { items: Array<{ id: string; title: string; detail: string; timestamp: string }> }) {
   if (items.length === 0) return <AdminEmptyState variant="compact" title="No admin activity yet" message="Audit log entries will appear here after admin actions are recorded." />;
-  return <div data-admin-home-timeline="true"><div className="space-y-5">{items.map((item) => <div key={item.id} className="grid grid-cols-[2.25rem_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm sm:grid-cols-[2.25rem_minmax(0,1fr)_auto] sm:gap-x-6"><div data-admin-home-timeline-icon-column="fixed" className="relative flex w-9 justify-center"><span className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#004BB8] ring-4 ring-white"><Activity className="h-4 w-4" aria-hidden="true" /></span></div><div className="min-w-0"><p className="font-semibold text-slate-950">{humanizeAuditAction(item.title)}</p><p className="mt-1 break-words text-slate-600">{item.detail}</p></div><p className="col-start-2 text-xs font-semibold text-slate-500 sm:col-start-3 sm:text-right">{item.timestamp}</p></div>)}</div></div>;
+  return <div data-admin-home-timeline="true" className="border-y border-[#A7B2BE] md:border-y-0"><div>{items.map((item) => <div key={item.id} className="grid grid-cols-[2.25rem_minmax(0,1fr)] gap-x-4 gap-y-2 border-b border-[#A7B2BE] py-4 pr-0 text-sm last:border-b-0 md:border-b-0 sm:grid-cols-[2.25rem_minmax(0,1fr)_auto] sm:gap-x-6"><div data-admin-home-timeline-icon-column="fixed" className="relative flex w-9 justify-center"><div aria-hidden="true" className="pointer-events-none absolute bottom-[-1rem] top-0 w-px bg-[#004BB8]/25 md:hidden" /><span className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#004BB8] ring-4 ring-white"><Activity className="h-4 w-4" aria-hidden="true" /></span></div><div className="min-w-0"><p className="font-semibold text-slate-950">{humanizeAuditAction(item.title)}</p><p className="mt-1 break-words text-slate-600">{item.detail}</p></div><p className="col-start-2 text-xs font-semibold text-slate-500 sm:col-start-3 sm:text-right">{item.timestamp}</p></div>)}</div></div>;
 }
 
 function TextLink({ href, className = "", children }: { href: string; className?: string; children: React.ReactNode }) {
