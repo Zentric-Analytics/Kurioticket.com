@@ -8,6 +8,7 @@ import {
   useState,
   type RefObject,
 } from "react";
+import Link from "next/link";
 import {
   CalendarDays,
   CheckCircle2,
@@ -1230,6 +1231,43 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
           {!mobileSearchOpen ? renderCarsSearchForm("desktop") : null}
         </div>
       </section>
+
+      <nav
+        aria-label="Breadcrumb"
+        className="page-shell hidden pt-12 sm:block lg:pt-14"
+      >
+        <ol className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
+          <li>
+            <Link
+              href="/"
+              className="transition-colors hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+            >
+              Home
+            </Link>
+          </li>
+
+          <li className="text-slate-300" aria-hidden="true">
+            &gt;
+          </li>
+
+          <li>
+            <Link
+              href="/cars"
+              className="transition-colors hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+            >
+              Cars
+            </Link>
+          </li>
+
+          <li className="text-slate-300" aria-hidden="true">
+            &gt;
+          </li>
+
+          <li className="text-slate-700" aria-current="page">
+            Car results
+          </li>
+        </ol>
+      </nav>
 
       <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[256px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="hidden lg:sticky lg:top-[7.5rem] lg:block lg:self-start">
