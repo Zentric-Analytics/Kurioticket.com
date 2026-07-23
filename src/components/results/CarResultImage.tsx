@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { Car, Truck } from "lucide-react";
 import { useState } from "react";
+import { resolveCarResultImageSource } from "@/lib/cars/carResultImage";
 import type { CarCategory } from "@/lib/cars/types";
 
 type CarResultImageProps = {
@@ -14,7 +15,8 @@ type CarResultImageProps = {
 
 export function CarResultImage({ imageUrl, imageAlt, modelName, category }: CarResultImageProps) {
   const [failedUrl, setFailedUrl] = useState<string>();
-  const hasImage = Boolean(imageUrl && failedUrl !== imageUrl);
+  const resolvedImageUrl = resolveCarResultImageSource(imageUrl);
+  const hasImage = Boolean(resolvedImageUrl && failedUrl !== resolvedImageUrl);
   const FallbackIcon = category === "van" ? Truck : Car;
 
   if (!hasImage) {
@@ -31,7 +33,7 @@ export function CarResultImage({ imageUrl, imageAlt, modelName, category }: CarR
 
   return (
     <Image
-      src={imageUrl!}
+      src={resolvedImageUrl!}
       alt={imageAlt}
       fill
       sizes="(min-width: 1280px) 276px, (min-width: 768px) 256px, 100vw"
@@ -41,8 +43,8 @@ export function CarResultImage({ imageUrl, imageAlt, modelName, category }: CarR
         objectFit: "cover",
         objectPosition: "center",
       }}
-      onLoad={() => setFailedUrl((currentUrl) => currentUrl === imageUrl ? undefined : currentUrl)}
-      onError={() => setFailedUrl(imageUrl)}
+      onLoad={() => setFailedUrl((currentUrl) => currentUrl === resolvedImageUrl ? undefined : currentUrl)}
+      onError={() => setFailedUrl(resolvedImageUrl)}
     />
   );
 }

@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test, { afterEach } from "node:test";
+import sharp from "sharp";
+import nextConfig from "../../../next.config";
+import { resolveCarResultImageSource } from "@/lib/cars/carResultImage";
 import { getCarResultsMode } from "@/lib/env";
 import type { CarSearchParams } from "@/lib/cars/types";
 import { getCarDetails, searchCars } from "@/services/travel/carAggregator";
@@ -23,6 +26,31 @@ function setMode(value: string | undefined) {
 }
 
 afterEach(() => setMode(originalMode));
+
+test("Cars Results image versioning matches the permitted local image patterns", () => {
+  assert.equal(
+    resolveCarResultImageSource("/images/cars/results/toyota-corolla.webp"),
+    "/images/cars/results/toyota-corolla.webp?v=4x3-20260723",
+  );
+  assert.equal(
+    resolveCarResultImageSource("https://images.example.com/toyota-corolla.webp"),
+    "https://images.example.com/toyota-corolla.webp",
+  );
+  assert.equal(
+    resolveCarResultImageSource("/images/hotels/example.webp"),
+    "/images/hotels/example.webp",
+  );
+  assert.deepEqual(nextConfig.images?.localPatterns, [
+    {
+      pathname: "/images/cars/results/**",
+      search: "?v=4x3-20260723",
+    },
+    {
+      pathname: "/**",
+      search: "",
+    },
+  ]);
+});
 
 test("Cars mode defaults to demo and only exact live enables live", () => {
   for (const [value, expected] of [
@@ -62,6 +90,11 @@ test("default mode returns provider-safe demo inventory", async () => {
       const imageBytes = await readFile(imagePath);
       assert.equal(imageBytes.subarray(0, 4).toString("ascii"), "RIFF");
       assert.equal(imageBytes.subarray(8, 12).toString("ascii"), "WEBP");
+      const metadata = await sharp(imageBytes).metadata();
+      assert.equal(metadata.format, "webp");
+      assert.equal(metadata.width, 1200);
+      assert.equal(metadata.height, 900);
+      assert.equal(metadata.width * 3, metadata.height * 4);
     }),
   );
   assert.ok(
