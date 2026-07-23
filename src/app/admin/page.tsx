@@ -87,33 +87,27 @@ export default async function AdminPage() {
       </section>
       <section data-admin-home-section="needs-attention" aria-labelledby="needs-attention-heading" className={adminHomeSectionClass}>
         <div data-admin-home-attention-outline="true" className="overflow-hidden rounded-none border border-[#7B8794] bg-transparent">
+          <div data-admin-home-attention-heading="section-header" className="px-5 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8">
+            <div className="flex flex-wrap items-center gap-3">
+              <SectionHeading id="needs-attention-heading">Needs Attention</SectionHeading>
+              <span className="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-600" aria-label={`${attentionIssues.length} issues`}>
+                {attentionIssues.length}
+              </span>
+            </div>
+          </div>
           {attentionIssues.length > 0 ? (
-            <div data-admin-home-attention-rail="outlined-grid" className="grid md:grid-cols-2">
+            <div data-admin-home-attention-rail="outlined-grid" className="mt-6 grid md:grid-cols-2">
               {attentionIssues.map((issue, index) => (
                 <AttentionRow
                   key={issue.key}
                   issue={issue}
-                  heading={index === 0 ? (
-                    <div data-admin-home-attention-heading="in-first-cell" className="mb-5 flex flex-wrap items-center gap-3">
-                      <SectionHeading id="needs-attention-heading">Needs Attention</SectionHeading>
-                      <span className="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-600" aria-label={`${attentionIssues.length} issues`}>
-                        {attentionIssues.length}
-                      </span>
-                    </div>
-                  ) : null}
                   className={attentionCellBorderClass(index, attentionIssues.length)}
                 />
               ))}
             </div>
           ) : (
-            <div className="p-5 sm:p-6">
-              <div data-admin-home-attention-heading="empty-state" className="flex flex-wrap items-center gap-3">
-                <SectionHeading id="needs-attention-heading">Needs Attention</SectionHeading>
-                <span className="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-600" aria-label={`${attentionIssues.length} issues`}>
-                  {attentionIssues.length}
-                </span>
-              </div>
-              <div className="mt-4 flex items-start gap-3 text-sm" role="status">
+            <div className="mt-6 px-5 pb-6 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
+              <div className="flex items-start gap-3 text-sm" role="status">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
                   <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                 </span>
@@ -126,10 +120,10 @@ export default async function AdminPage() {
 
       <section data-admin-home-section="at-a-glance" aria-labelledby="at-a-glance-heading" className={adminHomeSectionClass}>
         <div data-admin-home-glance-outline="true" className="overflow-hidden rounded-none border border-[#7B8794] bg-transparent">
-          <div className="px-5 pt-5 sm:px-6 sm:pt-6">
+          <div data-admin-home-glance-heading="section-header" className="px-5 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8">
             <SectionHeading id="at-a-glance-heading">At a Glance</SectionHeading>
           </div>
-          <div data-admin-home-glance-grid="outlined" className="mt-4 grid grid-cols-2 md:grid-cols-3">
+          <div data-admin-home-glance-grid="outlined" className="mt-6 grid grid-cols-2 md:grid-cols-3">
             <OverviewMetric icon="users" label="Total users" value={metrics.totalUsers} className={overviewMetricCellBorderClass(0)} />
             <OverviewMetric icon="active" label="Active users" value={metrics.activeUsers} className={overviewMetricCellBorderClass(1)} />
             <OverviewMetric icon="suspended" label="Suspended users" value={metrics.suspendedUsers} className={overviewMetricCellBorderClass(2)} />
@@ -145,7 +139,7 @@ export default async function AdminPage() {
         <section data-admin-home-surface="search-activity" className="relative min-h-[17rem] overflow-hidden rounded-none border border-[#7B8794] bg-transparent" aria-labelledby="search-activity-heading">
           <SearchPanelDecoration />
           <div className="relative z-10">
-            <div className="px-5 pt-6 sm:px-6 lg:px-8 lg:pt-8"><PanelHeading id="search-activity-heading" icon={Activity}>Search Activity</PanelHeading></div>
+            <div data-admin-home-search-heading="section-header" className="px-5 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8"><PanelHeading id="search-activity-heading" icon={Activity}>Search Activity</PanelHeading></div>
             {searchHealth.hasLogs ? (
               <>
                 <div data-admin-home-search-metrics="outlined-grid" className="mt-6 grid grid-cols-1 sm:grid-cols-3">
@@ -180,11 +174,14 @@ export default async function AdminPage() {
           </div>
         </section>
 
-        <section data-admin-home-surface="service-status" className="relative min-h-[17rem] overflow-hidden px-5 py-6 sm:px-6 lg:px-8 lg:py-8 xl:pl-8" aria-labelledby="service-status-heading">
+        <section data-admin-home-surface="service-status" className="relative min-h-[17rem] overflow-hidden" aria-labelledby="service-status-heading">
           <ServicePanelDecoration />
           <div className="relative z-10">
-            <PanelHeading id="service-status-heading" icon={Gauge}>Service Status</PanelHeading>
-            <div data-admin-home-service-groups="provider-system" className="mt-5 grid gap-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
+            <div data-admin-home-service-heading="section-header" className="px-5 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8">
+              <PanelHeading id="service-status-heading" icon={Gauge}>Service Status</PanelHeading>
+            </div>
+            <div className="mt-6 px-5 pb-6 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
+              <div data-admin-home-service-groups="provider-system" className="grid gap-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
               <div data-admin-home-provider-status-outline="true" className="min-w-0 border border-[#7B8794] bg-transparent p-5 sm:p-6 rounded-none">
                 <p className="mb-3 text-sm font-bold text-[#021C2B]">Provider statuses</p>
                 {providers.map((provider) => (
@@ -202,6 +199,7 @@ export default async function AdminPage() {
                 <TextLink href="/admin/system" className="mt-5">View System →</TextLink>
               </div>
             </div>
+          </div>
           </div>
         </section>
         </div>
@@ -295,10 +293,10 @@ function attentionCellBorderClass(index: number, total: number) {
   ].filter(Boolean).join(" ");
 }
 
-function AttentionRow({ issue, heading, className = "" }: { issue: AttentionIssue; heading?: React.ReactNode; className?: string }) {
+function AttentionRow({ issue, className = "" }: { issue: AttentionIssue; className?: string }) {
   const Icon = issue.icon === "alert" ? AlertCircle : AlertTriangle;
   const iconClassName = issue.tone === "bad" ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600";
-  return <div data-admin-home-attention-item="outlined-grid-cell" className={`min-w-0 p-5 sm:p-6 ${className}`}>{heading}<div className="flex min-w-0 items-start gap-4"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${iconClassName}`}><Icon className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="font-semibold text-slate-950">{issue.message}</p><TextLink href={issue.href} className="mt-2">{issue.linkLabel}</TextLink></div></div></div>;
+  return <div data-admin-home-attention-item="outlined-grid-cell" className={`min-w-0 p-5 sm:p-6 ${className}`}><div className="flex min-w-0 items-start gap-4"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${iconClassName}`}><Icon className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="font-semibold text-slate-950">{issue.message}</p><TextLink href={issue.href} className="mt-2">{issue.linkLabel}</TextLink></div></div></div>;
 }
 
 function StatusRow({ label, status, tone, icon }: { label: string; status: string; tone: StatusTone; icon: string }) {
