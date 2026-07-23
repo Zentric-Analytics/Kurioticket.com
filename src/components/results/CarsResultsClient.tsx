@@ -1190,45 +1190,54 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
       <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
       <section
         className={cn(
-          "sticky top-0 z-40 hidden border-b border-transparent bg-[#f6f8fb]/95 backdrop-blur transition-[padding,border-color] duration-200 sm:block",
-          showCompactSearchSummary ? "py-1.5" : "py-3",
+          "sticky top-0 z-40 hidden border-b border-transparent transition-[padding,background-color] duration-200 sm:block",
+          showCompactSearchSummary
+            ? "border-transparent bg-white/95 py-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.05)] backdrop-blur"
+            : "border-transparent bg-white pb-0 pt-7",
         )}
         aria-labelledby="cars-results-heading"
       >
         <div className="page-shell">
           <div
             className={cn(
-              "mb-2 flex items-center justify-between gap-3 lg:hidden",
-              showCompactSearchSummary && "hidden",
+              "relative z-10 min-w-0",
+              !showCompactSearchSummary && "translate-y-5",
             )}
           >
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">
-              {t("carsResults.resultsLabel")}
-            </p>
-            <Button
-              type="button"
-              variant="secondary"
-              aria-label={
-                activeFilterCount > 0
-                  ? interpolate(t("carsResults.openFiltersWithCount"), {
-                      count: String(activeFilterCount),
-                    })
-                  : t("carsResults.openFilters")
-              }
-              className="relative h-10 rounded-md border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm"
-              onClick={() => setFiltersOpen(true)}
+            <div
+              className={cn(
+                "mb-2 flex items-center justify-between gap-3 lg:hidden",
+                showCompactSearchSummary && "hidden",
+              )}
             >
-              <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-              {t("filters")}
-              {activeFilterCount > 0 ? (
-                <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] font-bold leading-none text-[#004BB8] ring-1 ring-[#004BB8]/10">
-                  {activeFilterCount}
-                </span>
-              ) : null}
-            </Button>
-          </div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">
+                {t("carsResults.resultsLabel")}
+              </p>
+              <Button
+                type="button"
+                variant="secondary"
+                aria-label={
+                  activeFilterCount > 0
+                    ? interpolate(t("carsResults.openFiltersWithCount"), {
+                        count: String(activeFilterCount),
+                      })
+                    : t("carsResults.openFilters")
+                }
+                className="relative h-10 rounded-md border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm"
+                onClick={() => setFiltersOpen(true)}
+              >
+                <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                {t("filters")}
+                {activeFilterCount > 0 ? (
+                  <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] font-bold leading-none text-[#004BB8] ring-1 ring-[#004BB8]/10">
+                    {activeFilterCount}
+                  </span>
+                ) : null}
+              </Button>
+            </div>
 
-          {!mobileSearchOpen ? renderCarsSearchForm("desktop") : null}
+            {!mobileSearchOpen ? renderCarsSearchForm("desktop") : null}
+          </div>
         </div>
       </section>
 
