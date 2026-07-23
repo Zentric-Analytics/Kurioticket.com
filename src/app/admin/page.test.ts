@@ -24,22 +24,22 @@ function labelsFor(component: string, block = adminOverviewPage): string[] {
 test("documents the historical mobile reference commit", () => {
   assert.match(
     adminOverviewPage,
-    /Mobile layout reference: a392740a44882ef439b3f681ed28a470d4b98842\n\/\/ \(the src\/app\/admin\/page\.tsx revision immediately before f157bfa517c159cc5023888e8866bf3949466c39\)\./,
+    /Mobile layout reference: 3006d4ce48b709560aae7ac5728de057aefa4428\n\/\/ \(the src\/app\/admin\/page\.tsx revision immediately before a392740a44882ef439b3f681ed28a470d4b98842\)\./,
   );
   const fileHistory = execSync(
     `git log --follow --format="%H" -- src/app/admin/page.tsx`,
     { encoding: "utf8" },
   ).trim().split("\n");
-  const previousReferenceIndex = fileHistory.indexOf("f157bfa517c159cc5023888e8866bf3949466c39");
+  const currentReferenceIndex = fileHistory.indexOf("a392740a44882ef439b3f681ed28a470d4b98842");
 
-  assert.notEqual(previousReferenceIndex, -1);
-  assert.equal(fileHistory[previousReferenceIndex + 1], "a392740a44882ef439b3f681ed28a470d4b98842");
+  assert.notEqual(currentReferenceIndex, -1);
+  assert.equal(fileHistory[currentReferenceIndex + 1], "3006d4ce48b709560aae7ac5728de057aefa4428");
 });
 
-test("mobile base classes restore the immediately older section rectangles", () => {
+test("mobile base classes restore the immediately older section dividers", () => {
   assert.match(
     adminOverviewPage,
-    /const adminHomeSectionClass = "border-2 border-\[#8F9BA8\] bg-transparent px-5 py-6 sm:px-6 md:border-0 lg:px-8 lg:py-8";/,
+    /const adminHomeSectionClass = "border-t border-\[#A7B2BE\] px-5 py-6 sm:px-6 md:border-0 lg:px-8 lg:py-8";/,
   );
 });
 
@@ -63,13 +63,10 @@ test("mobile base classes restore the pre-outline Needs Attention layout", () =>
     attentionBlock,
     /data-admin-home-attention-heading="section-header"[\s\S]*?className="md:px-6 md:pt-6 lg:px-8 lg:pt-8"/,
   );
-  assert.match(
-    attentionBlock,
-    /data-admin-home-attention-rail="outlined-grid"[\s\S]*?className="mt-4 grid gap-x-6 gap-y-5 md:mt-6 md:grid-cols-2 md:gap-0"/,
-  );
+  assert.ok(attentionBlock.includes('data-admin-home-attention-rail="outlined-grid" className="mt-4 grid divide-y divide-[#A7B2BE] border-t border-[#A7B2BE] md:mt-6 md:grid-cols-2 md:divide-y-0 md:border-t-0 md:gap-0"'));
   assert.match(
     adminOverviewPage,
-    /data-admin-home-attention-item="outlined-grid-cell"[\s\S]*?className=\{`flex min-w-0 items-start gap-4 py-5 md:h-full md:flex-col md:gap-0 md:p-6 \$\{className\}`\}/,
+    /data-admin-home-attention-item="outlined-grid-cell"[\s\S]*?className=\{`flex min-w-0 items-start gap-4 py-5 md:h-full md:flex-col md:gap-0 md:border-b-0 md:p-6 \$\{className\}`\}/,
   );
   assert.doesNotMatch(borderHelperBlock, /border-b border-\[#7B8794\]|border-r border-\[#7B8794\]/);
   assert.match(borderHelperBlock, /md:border-l/);
@@ -104,10 +101,7 @@ test("mobile base classes restore the pre-outline At a Glance metric layout", ()
     glanceBlock,
     /data-admin-home-glance-heading="section-header"[\s\S]*?className="md:px-6 md:pt-6 lg:px-8 lg:pt-8"/,
   );
-  assert.match(
-    glanceBlock,
-    /data-admin-home-glance-grid="outlined"[\s\S]*?className="mt-4 grid grid-cols-2 gap-x-6 gap-y-5 md:mt-6 md:grid-cols-3 md:gap-0"/,
-  );
+  assert.ok(glanceBlock.includes('data-admin-home-glance-grid="outlined" className="mt-4 grid grid-cols-2 divide-x divide-y divide-[#A7B2BE] border-y border-[#A7B2BE] md:mt-6 md:grid-cols-3 md:gap-0 md:divide-x-0 md:divide-y-0 md:border-y-0"'));
   assert.doesNotMatch(borderHelperBlock, /isMobile|border-r border-\[#7B8794\]|border-b border-\[#7B8794\]/);
   assert.match(borderHelperBlock, /md:border-r/);
   assert.match(borderHelperBlock, /md:border-b/);
@@ -137,10 +131,7 @@ test("mobile base classes restore the pre-outline Search Activity layout", () =>
     searchBlock,
     /data-admin-home-search-heading="section-header"[\s\S]*?className="md:px-6 md:pt-6 lg:px-8 lg:pt-8"/,
   );
-  assert.match(
-    searchBlock,
-    /data-admin-home-search-metrics="outlined-grid"[\s\S]*?className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-3 md:gap-0"/,
-  );
+  assert.ok(searchBlock.includes('data-admin-home-search-metrics="outlined-grid" className="mt-6 grid grid-cols-1 divide-y divide-[#A7B2BE] sm:grid-cols-3 sm:divide-x sm:divide-y-0 md:gap-0 md:divide-x-0"'));
   assert.match(
     searchBlock,
     /data-admin-home-search-lower="products-link"[\s\S]*?className="mt-6 md:mt-0 md:border-t md:border-\[#7B8794\] md:px-6 md:py-5 lg:px-8"/,
@@ -157,7 +148,7 @@ test("mobile base classes restore the pre-outline Service Status grouping", () =
 
   assert.match(
     serviceBlock,
-    /className="relative min-h-\[17rem\] overflow-hidden px-5 py-6 sm:px-6 md:px-0 md:py-0"/,
+    /className="relative min-h-\[17rem\] overflow-hidden border-t border-\[#A7B2BE\] px-5 py-6 sm:px-6 md:border-t-0 md:px-0 md:py-0"/,
   );
   assert.match(
     serviceBlock,
@@ -200,7 +191,7 @@ test("mobile lines are not newly invented and strong outlines are gated to md", 
 });
 
 test("desktop outlined design, actions, and content remain preserved", () => {
-  assert.match(adminOverviewPage, /md:grid-cols-2 md:gap-0/);
+  assert.match(adminOverviewPage, /md:grid-cols-2[^"]*md:gap-0/);
   assert.match(adminOverviewPage, /md:grid-cols-3 md:gap-0/);
   assert.match(adminOverviewPage, /md:border-t md:border-\[#7B8794\]/);
   assert.match(adminOverviewPage, /md:grid-cols-\[minmax\(0,0\.9fr\)_minmax\(0,1\.1fr\)\] md:gap-6/);
