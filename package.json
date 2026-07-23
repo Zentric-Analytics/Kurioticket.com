@@ -5,7 +5,6 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "prestart": "npm run db:deploy:render",
     "start": "next start",
     "lint": "eslint",
     "test": "JITI_TSCONFIG_PATHS=true node --test --import jiti/register \"src/**/*.test.ts\"",
@@ -17,7 +16,8 @@
     "postinstall": "prisma generate",
     "db:deploy:render": "node scripts/deploy-render-migrations.mjs",
     "check:conflicts": "node scripts/check-conflicts.mjs",
-    "prebuild": "npm run check:conflicts",
+    "check:migration-timestamps": "node scripts/check-prisma-migration-timestamps.mjs",
+    "prebuild": "npm run check:conflicts && npm run check:migration-timestamps",
     "check:homepage-destination-prices": "node scripts/check-homepage-destination-prices.mjs",
     "verify:currencies": "node scripts/verify-currency-coverage.mjs",
     "audit:i18n": "JITI_TSCONFIG_PATHS=true node scripts/audit-i18n-coverage-v2.mjs",
