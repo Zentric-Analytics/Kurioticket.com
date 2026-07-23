@@ -1,12 +1,30 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 
-const trackedFiles = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard"], {
-  encoding: "utf8",
-})
-  .split(/\r?\n/)
-  .filter(Boolean);
+const gitFileListMaxBuffer = 64 * 1024 * 1024;
 
+function getScannableFiles() {
+  try {
+    const output = execFileSync("git", ["ls-files", "-z", "--cached", "--others", "--exclude-standard"], {
+      encoding: "utf8",
+      maxBuffer: gitFileListMaxBuffer,
+    });
+
+    return output.split("\0").filter(Boolean);
+  } catch (error) {
+    console.error("Secret verification failed: unable to enumerate repository files with git.");
+    if (error?.code === "ENOBUFS") {
+      console.error(`Git file enumeration exceeded the ${gitFileListMaxBuffer / 1024 / 1024} MiB output buffer. Check ignore rules for generated dependency directories and other large untracked trees.`);
+    } else if (error instanceof Error) {
+      console.error(error.message);
+    } else {
+      console.error(String(error));
+    }
+    process.exit(1);
+  }
+}
+
+const trackedFiles = getScannableFiles();
 const blockedEnvFiles = trackedFiles.filter((file) => /^\.env(\.|$)/.test(file) && file !== ".env.example");
 const secretTokenPatterns = [
   /sk_live_[A-Za-z0-9_]+/g,
@@ -40,7 +58,15 @@ for (const file of trackedFiles) {
   if (!existsSync(file)) continue;
   if (/\.(png|jpg|jpeg|gif|ico|webp|lock)$/i.test(file)) continue;
 
-  const content = readFileSync(file, "utf8");
+  let content;
+  try {
+    content = readFileSync(file, "utf8");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    findings.push(`${file}: could not be read for secret scanning (${message})`);
+    continue;
+  }
+
   for (const pattern of secretTokenPatterns) {
     const matches = content.match(pattern);
     if (matches?.length) {
@@ -65,4 +91,4 @@ if (findings.length) {
   process.exit(1);
 }
 
-console.log("Secret verification passed: no tracked env files or obvious secret tokens found.");
+console.log(`Secret verification passed: scanned ${trackedFiles.length} tracked and non-ignored untracked files; no tracked env files or obvious secret tokens found.`);

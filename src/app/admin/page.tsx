@@ -36,6 +36,7 @@ import {
   getSafeSystemStatus,
   getSearchHealth,
 } from "@/lib/admin-data";
+import { requireAdminSession } from "@/lib/auth-guards";
 
 export const metadata = { title: "Admin" };
 
@@ -49,9 +50,22 @@ type AttentionIssue = {
   icon: "alert" | "warning";
 };
 
+type AdminMetrics = Awaited<ReturnType<typeof getAdminMetrics>>;
 type ProviderStatus = Awaited<ReturnType<typeof getProviderStatuses>>[number];
+type ProviderStatuses = Awaited<ReturnType<typeof getProviderStatuses>>;
 type SystemStatus = Awaited<ReturnType<typeof getSafeSystemStatus>>;
 type SearchHealth = Awaited<ReturnType<typeof getSearchHealth>>;
+type RecentAdminActivity = Awaited<ReturnType<typeof getRecentAdminActivity>>;
+
+export type AdminHomeResource<T> = { status: "success"; data: T } | { status: "error" };
+type AdminHomeResourceName = "metrics" | "providers" | "system" | "search" | "activity";
+type AdminHomeResources = {
+  metrics: AdminHomeResource<AdminMetrics>;
+  providers: AdminHomeResource<ProviderStatuses>;
+  system: AdminHomeResource<SystemStatus>;
+  searchHealth: AdminHomeResource<SearchHealth>;
+  activity: AdminHomeResource<RecentAdminActivity>;
+};
 
 type MetricIcon = "users" | "active" | "suspended" | "admin" | "search" | "activity";
 
@@ -61,15 +75,50 @@ const adminHomeSectionClass = "py-2 md:px-6 md:py-6 lg:px-8 lg:py-8";
 // Mobile layout reference: 862fa27e580571298107bc291dd8fdcb0806dfb7
 // Desktop restoration must not alter rendering below the md breakpoint.
 
-export default async function AdminPage() {
+type AdminHomeDataDependencies = {
+  requireAdmin: typeof requireAdminSession;
+  getMetrics: typeof getAdminMetrics;
+  getProviders: typeof getProviderStatuses;
+  getSystem: typeof getSafeSystemStatus;
+  getSearch: typeof getSearchHealth;
+  getActivity: typeof getRecentAdminActivity;
+};
+
+const adminHomeDataDependencies: AdminHomeDataDependencies = {
+  requireAdmin: requireAdminSession,
+  getMetrics: getAdminMetrics,
+  getProviders: getProviderStatuses,
+  getSystem: getSafeSystemStatus,
+  getSearch: getSearchHealth,
+  getActivity: getRecentAdminActivity,
+};
+
+async function settleAdminHomeResource<T>(name: AdminHomeResourceName, task: () => Promise<T>): Promise<AdminHomeResource<T>> {
+  try {
+    return { status: "success", data: await task() };
+  } catch (error) {
+    console.error(`[admin-home:${name}]`, error);
+    return { status: "error" };
+  }
+}
+
+export async function loadAdminHomeData(dependencies = adminHomeDataDependencies): Promise<AdminHomeResources> {
+  await dependencies.requireAdmin("/admin");
+
   const [metrics, providers, system, searchHealth, activity] = await Promise.all([
-    getAdminMetrics(),
-    getProviderStatuses(),
-    getSafeSystemStatus(),
-    getSearchHealth(),
-    getRecentAdminActivity(),
+    settleAdminHomeResource("metrics", dependencies.getMetrics),
+    settleAdminHomeResource("providers", dependencies.getProviders),
+    settleAdminHomeResource("system", dependencies.getSystem),
+    settleAdminHomeResource("search", dependencies.getSearch),
+    settleAdminHomeResource("activity", dependencies.getActivity),
   ]);
-  const attentionIssues = getAttentionIssues(providers, system, searchHealth);
+
+  return { metrics, providers, system, searchHealth, activity };
+}
+
+export default async function AdminPage() {
+  const resources = await loadAdminHomeData();
+  const attentionIssues = getAttentionIssuesForResources(resources.providers, resources.system, resources.searchHealth);
 
   return (
     <div
@@ -128,14 +177,20 @@ export default async function AdminPage() {
           <div data-admin-home-glance-heading="section-header" className="px-5 py-5 md:px-6 md:pb-0 md:pt-6 lg:px-8 lg:pt-8">
             <SectionHeading id="at-a-glance-heading">At a Glance</SectionHeading>
           </div>
-          <div data-admin-home-glance-grid="outlined" className="grid grid-cols-2 border-t border-[#A7B2BE] md:mt-6 md:grid-cols-3 md:gap-0 md:border-t-0">
-            <OverviewMetric icon="users" label="Total users" value={metrics.totalUsers} className={overviewMetricCellBorderClass(0)} />
-            <OverviewMetric icon="active" label="Active users" value={metrics.activeUsers} className={overviewMetricCellBorderClass(1)} />
-            <OverviewMetric icon="suspended" label="Suspended users" value={metrics.suspendedUsers} className={overviewMetricCellBorderClass(2)} />
-            <OverviewMetric icon="admin" label="Admin users" value={metrics.adminUsers} className={overviewMetricCellBorderClass(3)} />
-            <OverviewMetric icon="search" label="Recent searches" value={metrics.recentSearches} hint="Last 7 days" className={overviewMetricCellBorderClass(4)} />
-            <OverviewMetric icon="activity" label="Recent admin actions" value={metrics.recentAdminActions} hint="Last 7 days" className={overviewMetricCellBorderClass(5)} />
+          {resources.metrics.status === "success" ? (
+            <div data-admin-home-glance-grid="outlined" className="grid grid-cols-2 border-t border-[#A7B2BE] md:mt-6 md:grid-cols-3 md:gap-0 md:border-t-0">
+            <OverviewMetric icon="users" label="Total users" value={resources.metrics.data.totalUsers} className={overviewMetricCellBorderClass(0)} />
+            <OverviewMetric icon="active" label="Active users" value={resources.metrics.data.activeUsers} className={overviewMetricCellBorderClass(1)} />
+            <OverviewMetric icon="suspended" label="Suspended users" value={resources.metrics.data.suspendedUsers} className={overviewMetricCellBorderClass(2)} />
+            <OverviewMetric icon="admin" label="Admin users" value={resources.metrics.data.adminUsers} className={overviewMetricCellBorderClass(3)} />
+            <OverviewMetric icon="search" label="Recent searches" value={resources.metrics.data.recentSearches} hint="Last 7 days" className={overviewMetricCellBorderClass(4)} />
+            <OverviewMetric icon="activity" label="Recent admin actions" value={resources.metrics.data.recentAdminActions} hint="Last 7 days" className={overviewMetricCellBorderClass(5)} />
           </div>
+          ) : (
+            <div className="border-t border-[#A7B2BE] px-5 py-5 md:mt-6 md:border-t-0 md:px-6 md:pb-6 md:pt-0 lg:px-8 lg:pb-8">
+              <AdminEmptyState variant="compact" title="User and activity metrics could not be loaded." message="Refresh the page or check the database connection." />
+            </div>
+          )}
         </div>
       </section>
 
@@ -145,20 +200,25 @@ export default async function AdminPage() {
           <SearchPanelDecoration />
           <div className="relative z-10">
             <div data-admin-home-search-heading="section-header" className="px-5 py-5 md:px-6 md:pb-0 md:pt-6 lg:px-8 lg:pt-8"><PanelHeading id="search-activity-heading" icon={Activity}>Search Activity</PanelHeading></div>
-            {searchHealth.hasLogs ? (
+            {resources.searchHealth.status === "error" ? (
+              <div className="mt-5 md:px-6 md:pb-6 lg:px-8 lg:pb-8">
+                <AdminEmptyState variant="compact" title="Search analytics could not be loaded." message="Refresh the page or check the database connection." />
+                <div className="mt-6 flex justify-end"><AdminHomeActionButton href="/admin/searches" action="view-searches">View Searches</AdminHomeActionButton></div>
+              </div>
+            ) : resources.searchHealth.data.hasLogs ? (
               <>
                 <div data-admin-home-search-metrics="outlined-grid" className="grid grid-cols-1 divide-y divide-[#A7B2BE] border-t border-[#A7B2BE] md:mt-6 md:grid-cols-3 md:gap-0 md:divide-x-0 md:divide-y-0 md:border-t-0">
-                  <PanelMetric icon={Search} tone="blue" label="Total recent searches" value={searchHealth.totalRecentSearches} className={searchMetricBorderClass(0)} />
-                  <PanelMetric icon={SearchX} tone="amber" label="No-result searches" value={searchHealth.noResultSearches} className={searchMetricBorderClass(1)} />
-                  <PanelMetric icon={XCircle} tone="rose" label="Failed searches" value={searchHealth.failedSearches} className={searchMetricBorderClass(2)} />
+                  <PanelMetric icon={Search} tone="blue" label="Total recent searches" value={resources.searchHealth.data.totalRecentSearches} className={searchMetricBorderClass(0)} />
+                  <PanelMetric icon={SearchX} tone="amber" label="No-result searches" value={resources.searchHealth.data.noResultSearches} className={searchMetricBorderClass(1)} />
+                  <PanelMetric icon={XCircle} tone="rose" label="Failed searches" value={resources.searchHealth.data.failedSearches} className={searchMetricBorderClass(2)} />
                 </div>
                 <div data-admin-home-search-lower="products-link" className="border-t border-[#A7B2BE] px-5 py-5 md:mt-0 md:border-t md:border-[#7B8794] md:px-6 md:py-5 lg:px-8">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div className="min-w-0">
                       <p className="text-sm font-bold text-[#021C2B]">Top products searched</p>
-                      {searchHealth.topProducts.length > 0 ? (
+                      {resources.searchHealth.data.topProducts.length > 0 ? (
                         <div className="mt-3 flex flex-wrap gap-2">
-                          {searchHealth.topProducts.map((product) => (
+                          {resources.searchHealth.data.topProducts.map((product) => (
                             <AdminStatusBadge key={product.label} tone="info">{product.label}: {product.count}</AdminStatusBadge>
                           ))}
                         </div>
@@ -193,9 +253,9 @@ export default async function AdminPage() {
                   <p className="mt-1 text-xs leading-5 text-slate-500">Search availability by product</p>
                 </div>
                 <div data-admin-home-provider-status-rows="aligned" className="mt-4 space-y-1">
-                  {providers.map((provider) => (
+                  {resources.providers.status === "success" ? resources.providers.data.map((provider) => (
                     <StatusRow key={provider.product} icon={provider.product} label={`${provider.product} search`} status={providerReadinessLabel(provider)} tone={provider.searchEnabled ? "good" : provider.credentialsPresent ? "warn" : "neutral"} />
-                  ))}
+                  )) : <AdminEmptyState variant="compact" title="Provider readiness could not be checked." message="Refresh the page or check provider health logs." />}
                 </div>
                 <div data-admin-home-provider-footer="actions" className="mt-5 flex justify-end"><AdminHomeActionButton href="/admin/providers" action="view-providers">View Providers</AdminHomeActionButton></div>
               </div>
@@ -205,11 +265,13 @@ export default async function AdminPage() {
                   <p className="mt-1 text-xs leading-5 text-slate-500">Core platform services and integrations</p>
                 </div>
                 <div data-admin-home-system-status-rows="aligned" className="mt-4 space-y-1">
-                  <StatusRow icon="Database" label="Database connection" status={system.databaseConnected ? "Connected" : system.databaseConfigured ? "Configured, not connected" : "Not configured"} tone={system.databaseConnected ? "good" : "bad"} />
-                  <StatusRow icon="Authentication" label="Authentication" status={system.authConfigured && system.sessionConfigured ? "Configured" : "Needs setup"} tone={system.authConfigured && system.sessionConfigured ? "good" : "warn"} />
-                  <StatusRow icon="Email" label="Email service" status={system.emailConfigured ? "Configured" : "Not configured"} tone={system.emailConfigured ? "good" : "warn"} />
-                  <StatusRow icon="Provider credentials" label="Provider credentials" status={system.providerCredentialsPresent ? "Present" : "Missing"} tone={system.providerCredentialsPresent ? "good" : "warn"} />
-                  <StatusRow icon="Webhooks" label="Webhooks" status={system.webhookConfigured ? "Configured" : "Not configured"} tone={system.webhookConfigured ? "good" : "warn"} />
+                  {resources.system.status === "success" ? (<>
+                  <StatusRow icon="Database" label="Database connection" status={resources.system.data.databaseConnected ? "Connected" : resources.system.data.databaseConfigured ? "Configured, not connected" : "Not configured"} tone={resources.system.data.databaseConnected ? "good" : "bad"} />
+                  <StatusRow icon="Authentication" label="Authentication" status={resources.system.data.authConfigured && resources.system.data.sessionConfigured ? "Configured" : "Needs setup"} tone={resources.system.data.authConfigured && resources.system.data.sessionConfigured ? "good" : "warn"} />
+                  <StatusRow icon="Email" label="Email service" status={resources.system.data.emailConfigured ? "Configured" : "Not configured"} tone={resources.system.data.emailConfigured ? "good" : "warn"} />
+                  <StatusRow icon="Provider credentials" label="Provider credentials" status={resources.system.data.providerCredentialsPresent ? "Present" : "Missing"} tone={resources.system.data.providerCredentialsPresent ? "good" : "warn"} />
+                  <StatusRow icon="Webhooks" label="Webhooks" status={resources.system.data.webhookConfigured ? "Configured" : "Not configured"} tone={resources.system.data.webhookConfigured ? "good" : "warn"} />
+                  </>) : <AdminEmptyState variant="compact" title="System configuration status could not be checked." message="Refresh the page or check the database connection." />}
                 </div>
                 <div data-admin-home-system-footer="actions" className="mt-5 flex justify-end"><AdminHomeActionButton href="/admin/system" action="view-system">View System</AdminHomeActionButton></div>
               </div>
@@ -225,7 +287,7 @@ export default async function AdminPage() {
           <div data-admin-home-activity-heading="section-header" className="px-5 py-5 md:px-0 md:py-0">
             <SectionHeading id="recent-admin-activity-heading">Recent Admin Activity</SectionHeading>
           </div>
-          <div className="border-t border-[#A7B2BE] md:mt-3 md:border-t-0"><RecentActivityList items={activity} /></div>
+          <div className="border-t border-[#A7B2BE] md:mt-3 md:border-t-0">{resources.activity.status === "success" ? <RecentActivityList items={resources.activity.data} /> : <AdminEmptyState variant="compact" title="Recent admin activity could not be loaded." message="Refresh the page or check the audit log connection." />}</div>
           <div data-admin-home-activity-footer="actions" className="flex justify-end border-t border-[#A7B2BE] px-5 py-5 md:mt-6 md:border-t-0 md:px-0 md:py-0"><AdminHomeActionButton href="/admin/logs" action="view-admin-logs">View Admin Logs</AdminHomeActionButton></div>
         </div>
       </section>
@@ -334,28 +396,46 @@ function TextLink({ href, className = "", children }: { href: string; className?
   return <Link href={href} className={`focus-ring inline-flex text-sm font-semibold text-[#004BB8] hover:text-[#021C2B] ${className}`}>{children}</Link>;
 }
 
-function getAttentionIssues(providers: ProviderStatus[], system: SystemStatus, searchHealth: SearchHealth): AttentionIssue[] {
-  const providerIssues = providers.flatMap((provider) => {
+export function getAttentionIssuesForResources(
+  providers: AdminHomeResource<ProviderStatuses>,
+  system: AdminHomeResource<SystemStatus>,
+  searchHealth: AdminHomeResource<SearchHealth>,
+): AttentionIssue[] {
+  return [
+    ...(providers.status === "success" ? getProviderAttentionIssues(providers.data) : [helperFailureIssue("provider-readiness-unavailable", "Provider readiness could not be checked", "/admin/providers", "View Providers →")]),
+    ...(system.status === "success" ? getSystemAttentionIssues(system.data) : [helperFailureIssue("system-status-unavailable", "System status could not be checked", "/admin/system", "View System →")]),
+    ...(searchHealth.status === "success" ? getSearchAttentionIssues(searchHealth.data) : [helperFailureIssue("search-health-unavailable", "Search health could not be checked", "/admin/searches", "View Searches →")]),
+  ];
+}
+
+function getProviderAttentionIssues(providers: ProviderStatus[]): AttentionIssue[] {
+  return providers.flatMap((provider) => {
     const issues: AttentionIssue[] = [];
     if (provider.providerName === "Not connected") issues.push({ key: `${provider.product}-not-connected`, message: `${provider.product} provider is not connected`, href: "/admin/providers", linkLabel: "View Providers →", tone: "warn", icon: "warning" });
     if (!provider.credentialsPresent) issues.push({ key: `${provider.product}-credentials-missing`, message: `${provider.product} provider credentials are missing`, href: "/admin/providers", linkLabel: "View Providers →", tone: "warn", icon: "warning" });
     if (!provider.searchEnabled) issues.push({ key: `${provider.product}-search-unavailable`, message: `${provider.product} provider search is unavailable`, href: "/admin/providers", linkLabel: "View Providers →", tone: "warn", icon: "warning" });
     return issues;
   });
+}
 
-  const systemIssues: AttentionIssue[] = [
+function getSystemAttentionIssues(system: SystemStatus): AttentionIssue[] {
+  return [
     ...(!system.databaseConnected ? [{ key: "database-unavailable", message: system.databaseConfigured ? "Database is configured but unavailable" : "Database is not configured", href: "/admin/system" as const, linkLabel: "View System →", tone: "bad" as const, icon: "alert" as const }] : []),
     ...(!(system.authConfigured && system.sessionConfigured) ? [{ key: "auth-session-unconfigured", message: "Authentication/session is not fully configured", href: "/admin/system" as const, linkLabel: "View System →", tone: "warn" as const, icon: "warning" as const }] : []),
     ...(!system.emailConfigured ? [{ key: "email-unavailable", message: "Email is unavailable", href: "/admin/system" as const, linkLabel: "View System →", tone: "warn" as const, icon: "warning" as const }] : []),
     ...(!system.webhookConfigured ? [{ key: "webhooks-unavailable", message: "Webhooks are unavailable", href: "/admin/system" as const, linkLabel: "View System →", tone: "warn" as const, icon: "warning" as const }] : []),
   ];
+}
 
-  const searchIssues: AttentionIssue[] = [
+function getSearchAttentionIssues(searchHealth: SearchHealth): AttentionIssue[] {
+  return [
     ...(Number(searchHealth.failedSearches) > 0 ? [{ key: "failed-searches", message: `${searchHealth.failedSearches} failed searches in the last 7 days`, href: "/admin/searches" as const, linkLabel: "View Searches →", tone: "bad" as const, icon: "alert" as const }] : []),
     ...(Number(searchHealth.noResultSearches) > 0 ? [{ key: "no-result-searches", message: `${searchHealth.noResultSearches} no-result searches in the last 7 days`, href: "/admin/searches" as const, linkLabel: "View Searches →", tone: "warn" as const, icon: "warning" as const }] : []),
   ];
+}
 
-  return [...providerIssues, ...systemIssues, ...searchIssues];
+function helperFailureIssue(key: string, message: string, href: AttentionIssue["href"], linkLabel: string): AttentionIssue {
+  return { key, message, href, linkLabel, tone: "warn", icon: "warning" };
 }
 
 function providerReadinessLabel(provider: ProviderStatus) {
