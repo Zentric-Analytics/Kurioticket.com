@@ -671,10 +671,6 @@ export function CarsResultsClient({ values, initialResults, resultsMode, invento
         )}`
       : formatCompactDate(pickupDate, intlLocale, t("carsResults.selectDates"))
     : t("carsResults.selectRentalDates");
-  const timeSummary = `${formatTimeLabel(pickupTime, intlLocale)} — ${formatTimeLabel(
-    dropoffTime,
-    intlLocale,
-  )}`;
   const driverAgeSummary = getDriverAgeOptionLabel(driverAge, t);
   const isExpandedStickySearchActive =
     isSearchBarCompact && isSearchExpandedWhileSticky;
@@ -1263,40 +1259,28 @@ export function CarsResultsClient({ values, initialResults, resultsMode, invento
             })}
           </h1>
 
-          <div className="hidden w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <h2 className="truncate text-sm font-bold text-navy">
-                {interpolate(t("carsResults.resultsFor"), {
-                  location: locationSummary,
-                })}
-              </h2>
-              <p className="mt-1 text-xs font-semibold text-slate-500">
-                {rentalDateSummary} · {timeSummary} · {driverAgeSummary}
-              </p>
-            </div>
-
-            <Button
-              type="button"
-              variant="secondary"
-              className="h-10 rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:hidden"
-              onClick={() => setFiltersOpen(true)}
-            >
-              <SlidersHorizontal size={17} aria-hidden="true" />
-              {activeFilterCount > 0
-                ? t("filtersWithCount").replace(
-                    "{{count}}",
-                    String(activeFilterCount),
-                  )
-                : t("filters")}
-            </Button>
-          </div>
-
           {resultsMode === "demo" && initialResults.length > 0 ? <div className="rounded-lg border border-[#004BB8]/20 bg-[#eaf2fb] px-4 py-3 text-sm font-semibold text-[#021C2B]" role="note">Demo inventory — vehicles and prices are illustrative and are not live availability.</div> : null}
           {initialResults.length > 0 ? (
             <>
               <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                 <p className="font-bold text-slate-950">{visibleResults.length} {visibleResults.length === 1 ? "car" : "cars"}</p>
-                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700"><span>Sort by</span><select value={sort} onChange={(event) => { setResultsTransitioning(true); setSort(event.target.value as CarSort); if (resultsTransitionTimerRef.current) clearTimeout(resultsTransitionTimerRef.current); resultsTransitionTimerRef.current = setTimeout(() => setResultsTransitioning(false), 160); }} className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"><option value="recommended">Recommended</option><option value="lowestTotal">Lowest total price</option><option value="lowestDaily">Lowest daily price</option><option value="topRated">Top rated</option></select></label>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="h-10 rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:hidden"
+                    onClick={() => setFiltersOpen(true)}
+                  >
+                    <SlidersHorizontal size={17} aria-hidden="true" />
+                    {activeFilterCount > 0
+                      ? t("filtersWithCount").replace(
+                          "{{count}}",
+                          String(activeFilterCount),
+                        )
+                      : t("filters")}
+                  </Button>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-slate-700"><span>Sort by</span><select value={sort} onChange={(event) => { setResultsTransitioning(true); setSort(event.target.value as CarSort); if (resultsTransitionTimerRef.current) clearTimeout(resultsTransitionTimerRef.current); resultsTransitionTimerRef.current = setTimeout(() => setResultsTransitioning(false), 160); }} className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"><option value="recommended">Recommended</option><option value="lowestTotal">Lowest total price</option><option value="lowestDaily">Lowest daily price</option><option value="topRated">Top rated</option></select></label>
+                </div>
               </div>
               {resultsTransitioning ? <div className="space-y-4">{[0,1,2].map((item) => <CarCardSkeleton key={item} />)}</div> : visibleResults.length ? <div className="space-y-4">{visibleResults.map((car) => <CarResultCard key={car.id} car={car} badge={badges.get(car.id)} detailsHref={buildCarDetailsHref(car.id, values)} />)}</div> : <div role="status" className="rounded-xl border border-slate-200 bg-white p-8 text-center"><p className="font-bold text-slate-950">No cars match these filters.</p><Button type="button" variant="secondary" className="mt-4" onClick={clearCarFilters}>Clear filters</Button></div>}
             </>
