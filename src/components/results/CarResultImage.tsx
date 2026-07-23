@@ -19,7 +19,7 @@ export function CarResultImage({ imageUrl, imageAlt, modelName, category }: CarR
 
   if (!hasImage) {
     return (
-      <div className="relative flex h-full min-h-[210px] w-full items-center justify-center" role="img" aria-label={`${modelName} vehicle image unavailable`}>
+      <div className="relative flex h-full w-full items-center justify-center" role="img" aria-label={`${modelName} vehicle image unavailable`}>
         <div className="absolute h-32 w-32 rounded-full bg-white/70 blur-sm" aria-hidden="true" />
         <div className="relative flex flex-col items-center gap-2 text-[#315A7D]">
           <FallbackIcon className="h-20 w-20" strokeWidth={1.25} aria-hidden="true" />
@@ -34,9 +34,13 @@ export function CarResultImage({ imageUrl, imageAlt, modelName, category }: CarR
       src={imageUrl!}
       alt={imageAlt}
       fill
-      sizes="(min-width: 1280px) 280px, (min-width: 768px) 250px, 100vw"
+      sizes="(min-width: 1280px) 276px, (min-width: 768px) 256px, 100vw"
       quality={92}
-      className="object-cover object-center"
+      className="h-full w-full"
+      style={{
+        objectFit: "cover",
+        objectPosition: "center",
+      }}
       onLoad={() => setFailedUrl((currentUrl) => currentUrl === imageUrl ? undefined : currentUrl)}
       onError={() => setFailedUrl(imageUrl)}
     />
