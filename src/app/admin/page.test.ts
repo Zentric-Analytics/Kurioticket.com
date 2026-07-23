@@ -126,14 +126,14 @@ test("needs attention uses one outlined responsive grid without card styling", (
   );
   assert.match(
     attentionBlock,
-    /data-admin-home-attention-rail="outlined-grid"[\s\S]*?className="grid md:grid-cols-2"/,
+    /data-admin-home-attention-rail="outlined-grid"[\s\S]*?className="mt-6 grid md:grid-cols-2"/,
   );
   assert.doesNotMatch(attentionBlock, /xl:grid-cols-4/);
   assert.match(attentionBlock, /attentionIssues\.map\(\(issue, index\) =>/);
-  assert.match(attentionBlock, /heading=\{\s*index === 0 \? \(/);
+  assert.doesNotMatch(attentionBlock, /\n\s+heading=|index === 0|data-admin-home-attention-heading="in-first-cell"/);
   assert.match(
     attentionBlock,
-    /data-admin-home-attention-heading="in-first-cell"[\s\S]*?className="mb-5 flex flex-wrap items-center gap-3"/,
+    /data-admin-home-attention-heading="section-header"[\s\S]*?className="px-5 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8"/,
   );
   assert.match(
     attentionBlock,
@@ -182,12 +182,12 @@ test("needs attention empty state keeps the outline without internal grid divide
     'data-admin-home-section="at-a-glance"',
   );
   const emptyStateBlock = blockBetween(
-    'data-admin-home-attention-heading="empty-state"',
+    ') : (',
     'data-admin-home-section="at-a-glance"',
   );
   assert.match(
-    emptyStateBlock,
-    /data-admin-home-attention-heading="empty-state"/,
+    attentionBlock,
+    /data-admin-home-attention-heading="section-header"/,
   );
   assert.match(emptyStateBlock, /No urgent issues require attention\./);
   assert.doesNotMatch(
@@ -227,7 +227,7 @@ test("at a glance uses one outlined metric grid with the heading inside the outl
   );
   assert.match(
     glanceBlock,
-    /className="px-5 pt-5 sm:px-6 sm:pt-6"[\s\S]*?<SectionHeading id="at-a-glance-heading">[\s\S]*?At a Glance[\s\S]*?<\/SectionHeading>/,
+    /data-admin-home-glance-heading="section-header"[\s\S]*?className="px-5 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8"[\s\S]*?<SectionHeading id="at-a-glance-heading">[\s\S]*?At a Glance[\s\S]*?<\/SectionHeading>/,
   );
   assert.doesNotMatch(
     glanceBlock,
@@ -250,7 +250,7 @@ test("at a glance keeps six metrics in order with two columns by default and thr
   ]);
   assert.match(
     glanceBlock,
-    /data-admin-home-glance-grid="outlined"[\s\S]*?className="mt-4 grid grid-cols-2 md:grid-cols-3"/,
+    /data-admin-home-glance-grid="outlined"[\s\S]*?className="mt-6 grid grid-cols-2 md:grid-cols-3"/,
   );
   assert.doesNotMatch(
     glanceBlock,
@@ -437,16 +437,16 @@ test("service status has a borderless parent with two independent outlined group
   );
   assert.match(
     serviceOpening,
-    /className="relative min-h-\[17rem\] overflow-hidden px-5 py-6 sm:px-6 lg:px-8 lg:py-8 xl:pl-8"/,
+    /className="relative min-h-\[17rem\] overflow-hidden"/,
   );
   assert.doesNotMatch(serviceOpening, /border|divide|shadow|bg-white|rounded/);
   assert.match(
     serviceBlock,
-    /<PanelHeading id="service-status-heading" icon=\{Gauge\}>Service Status<\/PanelHeading>[\s\S]*?data-admin-home-service-groups="provider-system"/,
+    /data-admin-home-service-heading="section-header"[\s\S]*?className="px-5 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8"[\s\S]*?<PanelHeading id="service-status-heading" icon=\{Gauge\}>Service Status<\/PanelHeading>[\s\S]*?data-admin-home-service-groups="provider-system"/,
   );
   assert.match(
     serviceBlock,
-    /data-admin-home-service-groups="provider-system"[\s\S]*?className="mt-5 grid gap-5 md:grid-cols-\[minmax\(0,0\.9fr\)_minmax\(0,1\.1fr\)\] md:gap-6"/,
+    /className="mt-6 px-5 pb-6 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8"[\s\S]*?data-admin-home-service-groups="provider-system"[\s\S]*?className="grid gap-5 md:grid-cols-\[minmax\(0,0\.9fr\)_minmax\(0,1\.1fr\)\] md:gap-6"/,
   );
   assert.match(
     providerBlock,
@@ -468,7 +468,7 @@ test("service status has a borderless parent with two independent outlined group
     "Webhooks",
   ]);
   assert.match(systemBlock, /href="\/admin\/system"/);
-  assert.doesNotMatch(serviceBlock, /data-admin-home-service-divider|divide-x|border-l|gap-0/);
+  assert.doesNotMatch(serviceBlock, /data-admin-home-service-divider|divide-x|border-l/);
   assert.match(adminOverviewPage, /data-admin-home-decoration="status-routes"/);
 });
 
@@ -554,11 +554,11 @@ test("responsive layout breakpoints remain aligned to the requested widths", () 
   assert.match(adminOverviewPage, /gap-5 md:gap-6 xl:gap-7/); // 390px uses base gap; 768px uses md; 1280px and 1440px use xl.
   assert.match(
     adminOverviewPage,
-    /data-admin-home-attention-rail="outlined-grid"[\s\S]*?className="grid md:grid-cols-2"/,
+    /data-admin-home-attention-rail="outlined-grid"[\s\S]*?className="mt-6 grid md:grid-cols-2"/,
   ); // Needs Attention: 390 one column, 768+ two columns; never four.
   assert.match(
     adminOverviewPage,
-    /data-admin-home-glance-grid="outlined"[\s\S]*?className="mt-4 grid grid-cols-2 md:grid-cols-3"/,
+    /data-admin-home-glance-grid="outlined"[\s\S]*?className="mt-6 grid grid-cols-2 md:grid-cols-3"/,
   ); // At a Glance: 390 two, 768+ three.
   assert.match(
     adminOverviewPage,
