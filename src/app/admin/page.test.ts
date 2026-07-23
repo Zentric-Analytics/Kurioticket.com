@@ -64,7 +64,9 @@ test("documents the historical desktop and frozen mobile reference commits", () 
 });
 
 test("mobile major sections use full-width square #A7B2BE boxes while the header remains unboxed", () => {
-  assert.match(adminOverviewPage, /const adminHomeSectionClass = "py-2 md:px-6 md:py-6 lg:px-8 lg:py-8";/);
+  assert.match(adminOverviewPage, /const adminHomeSectionClass = "py-2 md:px-4 md:py-3 lg:px-5 lg:py-4";/);
+  assert.doesNotMatch(adminOverviewPage, /const adminHomeSectionClass = "[^"]* md:px-6 md:py-6 lg:px-8 lg:py-8";/);
+  assert.doesNotMatch(adminOverviewPage, /const adminHomeSectionClass = "[^"]*(?:^| )px-[^m][^ ]*/);
 
   const headerBlock = blockBetween('data-admin-home-section="header"', 'data-admin-home-section="needs-attention"');
   assert.doesNotMatch(headerBlock, /border border-\[#A7B2BE\]|data-admin-home-[a-z-]+-outline="true"/);
@@ -101,6 +103,26 @@ test("full-width mobile dividers sit outside horizontal padding", () => {
   assert.match(activityBlock, /className="border-t border-\[#A7B2BE\] md:mt-3 md:border-t-0"/);
   assert.match(activityBlock, /data-admin-home-activity-footer="actions" className="flex justify-end border-t border-\[#A7B2BE\] px-5 py-5/);
   assert.match(adminOverviewPage, /border-b border-\[#A7B2BE\] px-5 py-4 text-sm last:border-b-0/);
+});
+
+
+test("Admin Home desktop shell spacing is tightened without changing mobile spacing", () => {
+  assert.match(adminOverviewPage, /className="relative isolate md:grid md:gap-0"/);
+  assert.doesNotMatch(adminOverviewPage, /className="relative isolate md:grid md:gap-6 xl:gap-7"/);
+  assert.doesNotMatch(adminOverviewPage, /md:gap-6 xl:gap-7/);
+
+  assert.match(adminOverviewPage, /const adminHomeSectionClass = "py-2 md:px-4 md:py-3 lg:px-5 lg:py-4";/);
+  assert.match(adminOverviewPage, /const adminHomeSectionClass = "py-2 [^"]*md:px-4[^"]*md:py-3[^"]*lg:px-5[^"]*lg:py-4";/);
+  assert.doesNotMatch(adminOverviewPage, /const adminHomeSectionClass = "[^"]*md:px-6|const adminHomeSectionClass = "[^"]*lg:px-8/);
+  assert.doesNotMatch(adminOverviewPage, /const adminHomeSectionClass = "[^"]*md:py-6|const adminHomeSectionClass = "[^"]*lg:py-8/);
+
+  const sectionClass = adminOverviewPage.match(/const adminHomeSectionClass = "([^"]+)";/)?.[1];
+  assert.equal(sectionClass?.split(" ")[0], "py-2");
+  assert.equal(sectionClass?.split(" ").some((className) => /^px-/.test(className)), false);
+
+  const headerBlock = blockBetween('data-admin-home-section="header"', 'data-admin-home-section="needs-attention"');
+  assert.match(headerBlock, /className="px-5 py-6 sm:px-6 md:px-4 md:py-4 lg:px-5 lg:py-5"/);
+  assert.doesNotMatch(headerBlock, /lg:px-8|lg:py-8/);
 });
 
 test("At a Glance preserves mobile cell rules and desktop #7B8794 grid rules", () => {
