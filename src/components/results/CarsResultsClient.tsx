@@ -554,18 +554,19 @@ const getDriverAgeOptionLabel = (age: string, t: (key: string) => string) => {
 };
 
 const fieldShellClass =
-  "relative min-h-[50px] rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 shadow-sm shadow-slate-900/[0.025] transition-[min-height,padding,border-color,box-shadow] duration-200 hover:border-slate-300 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[54px] sm:px-3 sm:py-1.5 lg:flex lg:min-h-[54px] lg:flex-col lg:justify-center lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:bg-transparent lg:shadow-none lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0";
+  "relative min-h-[50px] rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 shadow-sm shadow-slate-900/[0.025] transition-[min-height,padding,border-color,box-shadow] duration-200 hover:border-slate-300 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[54px] sm:px-3 sm:py-1.5 lg:flex lg:min-h-[58px] lg:min-w-0 lg:flex-col lg:justify-center lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/80 lg:bg-transparent lg:px-4 lg:py-2.5 lg:shadow-none lg:hover:border-slate-200/80 lg:focus-within:border-slate-200/80 lg:focus-within:ring-0";
 
 const searchFormGridClass =
-  "grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.14fr)_minmax(0,1.04fr)_minmax(0,1.55fr)_minmax(0,1fr)_minmax(6.75rem,0.58fr)_112px] lg:items-stretch lg:gap-0";
+  "grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.18fr)_minmax(0,1.08fr)_minmax(0,1.48fr)_minmax(0,1.06fr)_118px_116px] lg:items-stretch lg:gap-0";
 
-const compactFieldShellClass = "min-h-[46px] py-1 lg:min-h-[54px] lg:py-1.5";
+const compactFieldShellClass =
+  "min-h-[46px] py-1 lg:min-h-[54px] lg:py-1.5";
 
 const fieldLabelClass =
-  "mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600";
+  "mb-1.5 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600 lg:text-[0.66rem] lg:leading-3 lg:tracking-[0.13em] lg:text-slate-500";
 
 const fieldInputClass =
-  "focus-ring h-8 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 md:text-sm";
+  "focus-ring h-8 min-w-0 w-full truncate border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 md:text-sm lg:font-semibold lg:leading-6";
 
 export function CarsResultsClient({ values, initialResults, inventoryStatus }: { values: CarsResultsValues; initialResults: NormalizedCarResult[]; resultsMode: CarResultsMode; inventoryStatus: CarInventoryStatus }) {
   const { locale, t: dictionary } = useLocale();
@@ -988,7 +989,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
         ref={searchFormRef}
         action="/cars/results"
         method="get"
-        className="mx-auto w-full min-w-0 max-w-[72rem] sm:max-w-5xl"
+        className="mx-auto w-full min-w-0 max-w-5xl"
         onFocusCapture={markExpandedSearchInteraction}
         onChangeCapture={markExpandedSearchInteraction}
         onSubmit={() => {
@@ -1001,7 +1002,12 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
         <input type="hidden" name="pickupTime" value={pickupTime} />
         <input type="hidden" name="dropoffTime" value={dropoffTime} />
         <input type="hidden" name="driverAge" value={driverAge} />
-        <div className="overflow-visible rounded-[1.35rem] border border-slate-200/90 bg-white p-1 shadow-[0_16px_36px_-24px_rgba(15,23,42,0.32)] ring-1 ring-slate-950/[0.02] transition-[padding,border-color,box-shadow,border-eadius] duration-200">
+        <div
+          className={cn(
+            "overflow-visible rounded-[1.15rem] border border-slate-200/90 bg-white shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-slate-950/[0.025] transition-[padding,border-color,box-shadow,border-radius] duration-200",
+            isCompactSearch ? "p-1" : "p-1.5",
+          )}
+        >
           <div className={searchFormGridClass}>
             <SearchInputCell
               icon={MapPin}
@@ -1127,7 +1133,8 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
             <Button
               type="submit"
               className={cn(
-                "mt-2 h-12 w-full rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_12px_24px_rgba(0,75,184,0.18)] transition-[min-height,height,box-shadow,background-color] duration-200 hover:bg-[#021C2B] hover:shadow-[0_14px_28px_rgba(0,75,184,0.24)] sm:mt-3 lg:mt-0 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20",
+                "mt-2 h-12 w-full rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] transition-[min-height,height,box-shadow,background-color] duration-200 hover:bg-[#021C2B] hover:shadow-[0_12px_24px_rgba(2,28,43,0.18)] sm:mt-3 lg:mt-0 lg:h-full lg:self-stretch lg:rounded-[0.8rem] lg:ring-1 lg:ring-[#004BB8]/12",
+                isCompactSearch ? "lg:min-h-[54px]" : "lg:min-h-[58px]",
               )}
             >
               {t("search")}
@@ -1386,8 +1393,11 @@ function SearchInputCell({
       )}
     >
       <label htmlFor={name} className={fieldLabelClass}>
-        <Icon className="h-3.5 w-3.5 text-[#5CB6B2]" aria-hidden="true" />
-        {label}
+        <Icon
+          className="h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden"
+          aria-hidden="true"
+        />
+        <span className="min-w-0 truncate">{label}</span>
       </label>
       <div className="relative">
         <input
@@ -1475,17 +1485,19 @@ function SearchDateCell({
     >
       <div className={fieldLabelClass}>
         <CalendarDays
-          className="h-3.5 w-3.5 text-[#5CB6B2]"
+          className="h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden"
           aria-hidden="true"
         />
-        {t("carsResults.rentalDatesLabel") || t("carsResults.rentalDates")}
+        <span className="min-w-0 truncate">
+          {t("carsResults.rentalDatesLabel") || t("carsResults.rentalDates")}
+        </span>
       </div>
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
-        className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm"
+        className="focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
       >
         <span className={cn("truncate", !pickupDate && "text-slate-400")}>
           {summary}
@@ -1668,16 +1680,21 @@ function SearchTimeCell({
       className={cn(fieldShellClass, isCompact && compactFieldShellClass)}
     >
       <div className={fieldLabelClass}>
-        <Clock3 className="h-3.5 w-3.5 text-[#5CB6B2]" aria-hidden="true" />
-        {t("carsResults.pickupReturnTimeLabel") ||
-          t("carsResults.pickupReturnTime")}
+        <Clock3
+          className="h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden"
+          aria-hidden="true"
+        />
+        <span className="min-w-0 truncate">
+          {t("carsResults.pickupReturnTimeLabel") ||
+            t("carsResults.pickupReturnTime")}
+        </span>
       </div>
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm"
+        className="focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
       >
         <span className="truncate">
           {formatTimeLabel(pickupTime, intlLocale)} —{" "}
@@ -1763,15 +1780,20 @@ function DriverAgeCell({
       className={cn(fieldShellClass, isCompact && compactFieldShellClass)}
     >
       <div className={fieldLabelClass}>
-        <Users className="h-3.5 w-3.5 text-[#5CB6B2]" aria-hidden="true" />
-        {t("carsResults.driverAgeLabel") || t("carsResults.driverAge")}
+        <Users
+          className="h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden"
+          aria-hidden="true"
+        />
+        <span className="min-w-0 truncate">
+          {t("carsResults.driverAgeLabel") || t("carsResults.driverAge")}
+        </span>
       </div>
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
-        className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm"
+        className="focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
       >
         <span className="truncate">
           {getDriverAgeOptionLabel(driverAge, t)}
