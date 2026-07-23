@@ -57,6 +57,9 @@ type MetricIcon = "users" | "active" | "suspended" | "admin" | "search" | "activ
 
 const adminHomeSectionClass = "bg-transparent px-5 py-6 sm:px-6 lg:px-8 lg:py-8";
 
+// Mobile layout reference: f157bfa517c159cc5023888e8866bf3949466c39
+// (last src/app/admin/page.tsx version before the Admin Home rectangular outline/grid redesign).
+
 export default async function AdminPage() {
   const [metrics, providers, system, searchHealth, activity] = await Promise.all([
     getAdminMetrics(),
@@ -87,8 +90,8 @@ export default async function AdminPage() {
         />
       </section>
       <section data-admin-home-section="needs-attention" aria-labelledby="needs-attention-heading" className={adminHomeSectionClass}>
-        <div data-admin-home-attention-outline="true" className="overflow-hidden rounded-none border border-[#7B8794] bg-transparent">
-          <div data-admin-home-attention-heading="section-header" className="px-5 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8">
+        <div data-admin-home-attention-outline="true" className="overflow-hidden rounded-none bg-transparent md:border md:border-[#7B8794]">
+          <div data-admin-home-attention-heading="section-header" className="md:px-6 md:pt-6 lg:px-8 lg:pt-8">
             <div className="flex flex-wrap items-center gap-3">
               <SectionHeading id="needs-attention-heading">Needs Attention</SectionHeading>
               <span className="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-600" aria-label={`${attentionIssues.length} issues`}>
@@ -97,7 +100,7 @@ export default async function AdminPage() {
             </div>
           </div>
           {attentionIssues.length > 0 ? (
-            <div data-admin-home-attention-rail="outlined-grid" className="mt-6 grid md:grid-cols-2">
+            <div data-admin-home-attention-rail="outlined-grid" className="mt-4 grid gap-x-6 gap-y-5 md:mt-6 md:grid-cols-2 md:gap-0">
               {attentionIssues.map((issue, index) => (
                 <AttentionRow
                   key={issue.key}
@@ -107,7 +110,7 @@ export default async function AdminPage() {
               ))}
             </div>
           ) : (
-            <div className="mt-6 px-5 pb-6 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
+            <div className="mt-4 md:mt-6 md:px-6 md:pb-6 lg:px-8 lg:pb-8">
               <div className="flex items-start gap-3 text-sm" role="status">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
                   <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
@@ -120,11 +123,11 @@ export default async function AdminPage() {
       </section>
 
       <section data-admin-home-section="at-a-glance" aria-labelledby="at-a-glance-heading" className={adminHomeSectionClass}>
-        <div data-admin-home-glance-outline="true" className="overflow-hidden rounded-none border border-[#7B8794] bg-transparent">
-          <div data-admin-home-glance-heading="section-header" className="px-5 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8">
+        <div data-admin-home-glance-outline="true" className="overflow-hidden rounded-none bg-transparent md:border md:border-[#7B8794]">
+          <div data-admin-home-glance-heading="section-header" className="md:px-6 md:pt-6 lg:px-8 lg:pt-8">
             <SectionHeading id="at-a-glance-heading">At a Glance</SectionHeading>
           </div>
-          <div data-admin-home-glance-grid="outlined" className="mt-6 grid grid-cols-2 md:grid-cols-3">
+          <div data-admin-home-glance-grid="outlined" className="mt-4 grid grid-cols-2 gap-x-6 gap-y-5 md:mt-6 md:grid-cols-3 md:gap-0">
             <OverviewMetric icon="users" label="Total users" value={metrics.totalUsers} className={overviewMetricCellBorderClass(0)} />
             <OverviewMetric icon="active" label="Active users" value={metrics.activeUsers} className={overviewMetricCellBorderClass(1)} />
             <OverviewMetric icon="suspended" label="Suspended users" value={metrics.suspendedUsers} className={overviewMetricCellBorderClass(2)} />
@@ -137,18 +140,18 @@ export default async function AdminPage() {
 
       <section aria-label="Search Activity and Service Status" data-admin-home-section="operations" className={adminHomeSectionClass}>
         <div data-admin-home-operations-layout="shared" className="grid gap-0 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-        <section data-admin-home-surface="search-activity" className="relative min-h-[17rem] overflow-hidden rounded-none border border-[#7B8794] bg-transparent" aria-labelledby="search-activity-heading">
+        <section data-admin-home-surface="search-activity" className="relative min-h-[17rem] overflow-hidden px-5 py-6 sm:px-6 md:rounded-none md:border md:border-[#7B8794] md:bg-transparent md:px-0 md:py-0 lg:px-0 lg:py-0" aria-labelledby="search-activity-heading">
           <SearchPanelDecoration />
           <div className="relative z-10">
-            <div data-admin-home-search-heading="section-header" className="px-5 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8"><PanelHeading id="search-activity-heading" icon={Activity}>Search Activity</PanelHeading></div>
+            <div data-admin-home-search-heading="section-header" className="md:px-6 md:pt-6 lg:px-8 lg:pt-8"><PanelHeading id="search-activity-heading" icon={Activity}>Search Activity</PanelHeading></div>
             {searchHealth.hasLogs ? (
               <>
-                <div data-admin-home-search-metrics="outlined-grid" className="mt-6 grid grid-cols-1 sm:grid-cols-3">
+                <div data-admin-home-search-metrics="outlined-grid" className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-3 md:gap-0">
                   <PanelMetric icon={Search} tone="blue" label="Total recent searches" value={searchHealth.totalRecentSearches} className={searchMetricBorderClass(0)} />
                   <PanelMetric icon={SearchX} tone="amber" label="No-result searches" value={searchHealth.noResultSearches} className={searchMetricBorderClass(1)} />
                   <PanelMetric icon={XCircle} tone="rose" label="Failed searches" value={searchHealth.failedSearches} className={searchMetricBorderClass(2)} />
                 </div>
-                <div data-admin-home-search-lower="products-link" className="border-t border-[#7B8794] px-5 py-5 sm:px-6 lg:px-8">
+                <div data-admin-home-search-lower="products-link" className="mt-6 md:mt-0 md:border-t md:border-[#7B8794] md:px-6 md:py-5 lg:px-8">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div className="min-w-0">
                       <p className="text-sm font-bold text-[#021C2B]">Top products searched</p>
@@ -167,7 +170,7 @@ export default async function AdminPage() {
                 </div>
               </>
             ) : (
-              <div className="mt-5 px-5 pb-6 sm:px-6 lg:px-8 lg:pb-8">
+              <div className="mt-5 md:px-6 md:pb-6 lg:px-8 lg:pb-8">
                 <AdminEmptyState variant="compact" title="Search analytics unavailable" message="Search analytics will appear after search logging records real user searches. No search counts are mocked." />
                 <div className="mt-6 flex justify-end"><AdminHomeActionButton href="/admin/searches" action="view-searches">View Searches</AdminHomeActionButton></div>
               </div>
@@ -175,15 +178,15 @@ export default async function AdminPage() {
           </div>
         </section>
 
-        <section data-admin-home-surface="service-status" className="relative min-h-[17rem] overflow-hidden" aria-labelledby="service-status-heading">
+        <section data-admin-home-surface="service-status" className="relative min-h-[17rem] overflow-hidden px-5 py-6 sm:px-6 md:px-0 md:py-0" aria-labelledby="service-status-heading">
           <ServicePanelDecoration />
           <div className="relative z-10">
-            <div data-admin-home-service-heading="section-header" className="px-5 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8">
+            <div data-admin-home-service-heading="section-header" className="md:px-6 md:pt-6 lg:px-8 lg:pt-8">
               <PanelHeading id="service-status-heading" icon={Gauge}>Service Status</PanelHeading>
             </div>
-            <div className="mt-6 px-5 pb-6 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
+            <div className="mt-5 md:mt-6 md:px-6 md:pb-6 lg:px-8 lg:pb-8">
               <div data-admin-home-service-groups="provider-system" className="grid items-start gap-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
-              <div data-admin-home-provider-status-outline="true" className="flex min-w-0 flex-col border border-[#7B8794] bg-transparent p-5 sm:p-6 rounded-none">
+              <div data-admin-home-provider-status-outline="true" className="flex min-w-0 flex-col md:rounded-none md:border md:border-[#7B8794] md:bg-transparent md:p-6">
                 <div data-admin-home-status-group-heading="provider">
                   <h3 className="text-sm font-bold text-[#021C2B]">Provider Readiness</h3>
                   <p className="mt-1 text-xs leading-5 text-slate-500">Search availability by product</p>
@@ -195,7 +198,7 @@ export default async function AdminPage() {
                 </div>
                 <div data-admin-home-provider-footer="actions" className="mt-5 flex justify-end"><AdminHomeActionButton href="/admin/providers" action="view-providers">View Providers</AdminHomeActionButton></div>
               </div>
-              <div data-admin-home-system-status-outline="true" className="flex min-w-0 flex-col border border-[#7B8794] bg-transparent p-5 sm:p-6 rounded-none">
+              <div data-admin-home-system-status-outline="true" className="flex min-w-0 flex-col md:rounded-none md:border md:border-[#7B8794] md:bg-transparent md:p-6">
                 <div data-admin-home-status-group-heading="system">
                   <h3 className="text-sm font-bold text-[#021C2B]">System Configuration</h3>
                   <p className="mt-1 text-xs leading-5 text-slate-500">Core platform services and integrations</p>
@@ -255,14 +258,10 @@ function OverviewMetric({ label, value, hint, icon, className = "" }: { label: s
 }
 
 function overviewMetricCellBorderClass(index: number) {
-  const isMobileLeftColumn = index % 2 === 0;
-  const isMobileLastRow = index >= 4;
   const isDesktopLastColumn = index % 3 === 2;
   const isDesktopFirstRow = index < 3;
 
   return [
-    isMobileLeftColumn ? "border-r border-[#7B8794]" : "",
-    !isMobileLastRow ? "border-b border-[#7B8794]" : "",
     isDesktopLastColumn ? "md:border-r-0" : "md:border-r",
     isDesktopFirstRow ? "md:border-b" : "md:border-b-0",
     "md:border-[#7B8794]",
@@ -278,24 +277,21 @@ function PanelHeading({ id, icon: Icon, children }: { id: string; icon: LucideIc
 
 function PanelMetric({ label, value, icon: Icon, tone, className = "" }: { label: string; value: string | number; icon: LucideIcon; tone: "blue" | "amber" | "rose"; className?: string }) {
   const toneClass = { blue: "bg-[#EEF4FF] text-[#004BB8] ring-[#C9D8EA]", amber: "bg-amber-50 text-amber-600 ring-amber-200", rose: "bg-rose-50 text-rose-600 ring-rose-200" }[tone];
-  return <div data-admin-home-search-metric="flat-icon" className={`min-w-0 px-5 py-4 sm:px-6 lg:px-8 ${className}`}><div className="flex items-start gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ring-1 ${toneClass}`}><Icon className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="text-sm font-semibold text-slate-600">{label}</p><p className="mt-1 text-3xl font-extrabold tracking-tight text-[#021C2B]">{value}</p></div></div></div>;
+  return <div data-admin-home-search-metric="flat-icon" className={`min-w-0 py-4 sm:px-5 sm:first:pl-0 sm:last:pr-0 md:px-6 md:first:pl-6 md:last:pr-6 lg:px-8 ${className}`}><div className="flex items-start gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ring-1 ${toneClass}`}><Icon className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="text-sm font-semibold text-slate-600">{label}</p><p className="mt-1 text-3xl font-extrabold tracking-tight text-[#021C2B]">{value}</p></div></div></div>;
 }
 
 function searchMetricBorderClass(index: number) {
   return [
-    index < 2 ? "border-b border-[#7B8794]" : "",
-    index < 2 ? "sm:border-r" : "",
-    "sm:border-b-0 sm:border-[#7B8794]",
+    index < 2 ? "md:border-r" : "",
+    "md:border-b-0 md:border-[#7B8794]",
   ].filter(Boolean).join(" ");
 }
 
 function attentionCellBorderClass(index: number, total: number) {
   const isRightColumn = index % 2 === 1;
-  const hasMobileDivider = index < total - 1;
   const hasDesktopRowDivider = index < Math.ceil(total / 2) * 2 - 2;
 
   return [
-    hasMobileDivider ? "border-b border-[#7B8794]" : "",
     isRightColumn ? "md:border-l" : "",
     hasDesktopRowDivider ? "md:border-b" : "md:border-b-0",
     "md:border-[#7B8794]",
@@ -305,7 +301,7 @@ function attentionCellBorderClass(index: number, total: number) {
 function AttentionRow({ issue, className = "" }: { issue: AttentionIssue; className?: string }) {
   const Icon = issue.icon === "alert" ? AlertCircle : AlertTriangle;
   const iconClassName = issue.tone === "bad" ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600";
-  return <div data-admin-home-attention-item="outlined-grid-cell" className={`flex h-full min-w-0 flex-col p-5 sm:p-6 ${className}`}><div className="flex min-w-0 items-start gap-4"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${iconClassName}`}><Icon className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="font-semibold text-slate-950">{issue.message}</p></div></div><div data-admin-home-attention-footer="action" className="mt-auto flex justify-end pt-3"><TextLink href={issue.href}>{issue.linkLabel}</TextLink></div></div>;
+  return <div data-admin-home-attention-item="outlined-grid-cell" className={`flex min-w-0 items-start gap-4 py-5 md:h-full md:flex-col md:gap-0 md:p-6 ${className}`}><div className="flex min-w-0 flex-1 items-start gap-4 md:flex-none"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${iconClassName}`}><Icon className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="font-semibold text-slate-950">{issue.message}</p></div></div><div data-admin-home-attention-footer="action" className="ml-auto mt-2 flex justify-end md:ml-0 md:mt-auto md:pt-3"><TextLink href={issue.href}>{issue.linkLabel}</TextLink></div></div>;
 }
 
 function AdminHomeActionButton({ href, action, children }: { href: string; action: string; children: React.ReactNode }) {
