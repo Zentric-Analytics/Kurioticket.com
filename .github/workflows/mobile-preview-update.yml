@@ -1,0 +1,22 @@
+name: Publish mobile preview update
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - "apps/mobile/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/mobile-preview-update.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: mobile-preview-update
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish-preview-update
