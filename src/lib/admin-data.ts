@@ -8,7 +8,7 @@ import {
   getKayakApiMode,
   getTravelProviderMode,
 } from "@/lib/env";
-import { getOptionalPrisma, isDatabaseConfigured, withOptionalDb } from "@/lib/prisma";
+import { DatabaseUnavailableError, getPrisma, getOptionalPrisma, isDatabaseConfigured, withOptionalDb } from "@/lib/prisma";
 
 type ProviderStatus = {
   product: "Flights" | "Hotels" | "Cars";
@@ -58,7 +58,7 @@ type AdminMetrics = {
 };
 
 export async function getAdminMetrics(): Promise<AdminMetrics> {
-  return withOptionalDb<AdminMetrics>(async (db) => {
+  return withRequiredAdminDb<AdminMetrics>(async (db) => {
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const [totalUsers, activeUsers, suspendedUsers, adminUsers, recentSearches, recentAdminActions] = await Promise.all([
       db.user.count(),
@@ -70,7 +70,7 @@ export async function getAdminMetrics(): Promise<AdminMetrics> {
     ]);
 
     return { totalUsers, activeUsers, suspendedUsers, adminUsers, recentSearches, recentAdminActions };
-  }, unavailableMetrics());
+  });
 }
 
 type SearchHealth = {
@@ -82,7 +82,7 @@ type SearchHealth = {
 };
 
 export async function getSearchHealth(): Promise<SearchHealth> {
-  return withOptionalDb<SearchHealth>(async (db) => {
+  return withRequiredAdminDb<SearchHealth>(async (db) => {
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const [totalRecentSearches, noResultSearches, failedSearches, topProducts] = await Promise.all([
       db.searchHistory.count({ where: { createdAt: { gte: since } } }),
@@ -104,11 +104,11 @@ export async function getSearchHealth(): Promise<SearchHealth> {
       failedSearches,
       topProducts: topProducts.map((item) => ({ label: item.type, count: item._count._all })),
     };
-  }, { hasLogs: false, totalRecentSearches: "—", noResultSearches: "—", failedSearches: "—", topProducts: [] } satisfies SearchHealth);
+  });
 }
 
 export async function getRecentAdminActivity(limit = 6) {
-  return withOptionalDb(async (db) => {
+  return withRequiredAdminDb(async (db) => {
     const logs = await db.adminAuditLog.findMany({ orderBy: { createdAt: "desc" }, take: limit });
     return logs.map((log) => ({
       id: log.id,
@@ -116,7 +116,7 @@ export async function getRecentAdminActivity(limit = 6) {
       detail: `${log.adminEmail} ${log.targetType ? `on ${log.targetType}` : ""}${log.targetEmail ? ` (${log.targetEmail})` : ""}`,
       timestamp: formatDateTime(log.createdAt),
     }));
-  }, []);
+  });
 }
 
 export async function getProviderStatuses(): Promise<ProviderStatus[]> {
@@ -210,15 +210,12 @@ export const pausedProviderRows = [
   { name: "Car providers", status: "Provider-ready", note: "Enable only after an approved provider is configured for the environment." },
 ];
 
-function unavailableMetrics(): AdminMetrics {
-  return {
-    totalUsers: "—",
-    activeUsers: "—",
-    suspendedUsers: "—",
-    adminUsers: "—",
-    recentSearches: "—",
-    recentAdminActions: "—",
-  };
+async function withRequiredAdminDb<T>(task: (db: ReturnType<typeof getPrisma>) => Promise<T>) {
+  if (!isDatabaseConfigured()) {
+    throw new DatabaseUnavailableError("Admin Home requires a configured database for this dashboard resource.");
+  }
+
+  return task(getPrisma());
 }
 
 function hasAnyProviderCredentials() {

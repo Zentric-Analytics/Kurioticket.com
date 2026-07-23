@@ -176,3 +176,43 @@ test("Needs Attention uses only successful resource data and does not pass faile
     "1 no-result searches in the last 7 days",
   ]));
 });
+
+test("Admin Home keeps legitimate empty activity as a successful resource", async () => {
+  const { loadAdminHomeData } = loadPageModule();
+  const calls: Calls = [];
+  const dependencies = {
+    ...createDependencies(calls),
+    getActivity: async () => {
+      calls.push("activity");
+      return [];
+    },
+  };
+
+  const result = await loadAdminHomeData(dependencies);
+
+  assert.equal(result.activity.status, "success");
+  if (result.activity.status === "success") assert.deepEqual(result.activity.data, []);
+});
+
+test("Admin Home distinguishes legitimate zero search data from a rejected search helper", async () => {
+  const { loadAdminHomeData } = loadPageModule();
+  const calls: Calls = [];
+  const zeroSearch = { hasLogs: false, totalRecentSearches: 0, noResultSearches: 0, failedSearches: 0, topProducts: [] };
+  const successResult = await loadAdminHomeData({
+    ...createDependencies(calls),
+    getSearch: async () => {
+      calls.push("search");
+      return zeroSearch;
+    },
+  });
+
+  assert.equal(successResult.searchHealth.status, "success");
+  if (successResult.searchHealth.status === "success") assert.deepEqual(successResult.searchHealth.data, zeroSearch);
+
+  const rejectedCalls: Calls = [];
+  const rejectedResult = await loadAdminHomeData(createDependencies(rejectedCalls, { search: true }));
+
+  assert.equal(rejectedResult.searchHealth.status, "error");
+  assert.equal(rejectedResult.providers.status, "success");
+  assert.equal(rejectedResult.system.status, "success");
+});
