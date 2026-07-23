@@ -1306,9 +1306,12 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
 
           {initialResults.length > 0 ? (
             <>
-              <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-                <p className="font-bold text-slate-950">{visibleResults.length} {visibleResults.length === 1 ? "car" : "cars"}</p>
-                <div className="flex items-center gap-2">
+              <div className="flex w-full flex-col gap-2 py-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                <p className="whitespace-nowrap text-[clamp(0.68rem,3vw,0.875rem)] font-bold leading-5 text-[#021C2B] sm:text-sm">
+                  {visibleResults.length}{" "}
+                  {visibleResults.length === 1 ? "car" : "cars"}
+                </p>
+                <div className="flex min-w-0 shrink-0 flex-nowrap items-center justify-between gap-2 sm:justify-end">
                   <Button
                     type="button"
                     variant="secondary"
@@ -1323,7 +1326,36 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
                         )
                       : t("filters")}
                   </Button>
-                  <label className="flex items-center gap-2 text-sm font-semibold text-slate-700"><span>Sort by</span><select value={sort} onChange={(event) => { setResultsTransitioning(true); setSort(event.target.value as CarSort); if (resultsTransitionTimerRef.current) clearTimeout(resultsTransitionTimerRef.current); resultsTransitionTimerRef.current = setTimeout(() => setResultsTransitioning(false), 160); }} className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"><option value="recommended">Recommended</option><option value="lowestTotal">Lowest total price</option><option value="lowestDaily">Lowest daily price</option><option value="topRated">Top rated</option></select></label>
+                  <label className="flex min-w-0 items-center gap-1 whitespace-nowrap sm:gap-2">
+                    <span className="whitespace-nowrap text-[clamp(0.68rem,3vw,0.875rem)] font-semibold text-slate-700 sm:text-base">
+                      Sort by:
+                    </span>
+                    <span className="relative inline-flex min-w-0 shrink items-center whitespace-nowrap">
+                      <select
+                        value={sort}
+                        onChange={(event) => {
+                          setResultsTransitioning(true);
+                          setSort(event.target.value as CarSort);
+                          if (resultsTransitionTimerRef.current)
+                            clearTimeout(resultsTransitionTimerRef.current);
+                          resultsTransitionTimerRef.current = setTimeout(
+                            () => setResultsTransitioning(false),
+                            160,
+                          );
+                        }}
+                        className="h-10 min-w-0 cursor-pointer appearance-none border-0 bg-transparent py-1 pe-6 ps-1 text-[clamp(0.75rem,3.3vw,1rem)] font-bold text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2 sm:text-lg"
+                      >
+                        <option value="recommended">Recommended</option>
+                        <option value="lowestTotal">Lowest total price</option>
+                        <option value="lowestDaily">Lowest daily price</option>
+                        <option value="topRated">Top rated</option>
+                      </select>
+                      <ChevronDown
+                        className="pointer-events-none absolute end-1 h-4 w-4 text-slate-700"
+                        aria-hidden="true"
+                      />
+                    </span>
+                  </label>
                 </div>
               </div>
               {resultsTransitioning ? <div className="space-y-4">{[0,1,2].map((item) => <CarCardSkeleton key={item} />)}</div> : visibleResults.length ? <div className="space-y-4">{visibleResults.map((car) => <CarResultCard key={car.id} car={car} badge={badges.get(car.id)} detailsHref={buildCarDetailsHref(car.id, values)} />)}</div> : <div role="status" className="rounded-xl border border-slate-200 bg-white p-8 text-center"><p className="font-bold text-slate-950">No cars match these filters.</p><Button type="button" variant="secondary" className="mt-4" onClick={clearCarFilters}>Clear filters</Button></div>}
