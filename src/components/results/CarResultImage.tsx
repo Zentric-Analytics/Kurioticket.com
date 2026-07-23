@@ -34,9 +34,10 @@ export function CarResultImage({ imageUrl, imageAlt, modelName, category }: CarR
       src={imageUrl!}
       alt={imageAlt}
       fill
-      sizes="(min-width: 1280px) 240px, (min-width: 768px) 220px, 100vw"
+      sizes="(min-width: 1280px) 280px, (min-width: 768px) 250px, 100vw"
       quality={92}
-      className="object-contain p-4 sm:p-5"
+      className="object-cover object-center"
+      onLoad={() => setFailedUrl((currentUrl) => currentUrl === imageUrl ? undefined : currentUrl)}
       onError={() => setFailedUrl(imageUrl)}
     />
   );
