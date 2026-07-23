@@ -20,9 +20,6 @@ jobs:
   publish-preview-update:
     name: Publish Android preview update
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/mobile
 
     steps:
       - name: Check for EXPO_TOKEN
@@ -50,12 +47,15 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Install mobile dependencies
+        working-directory: apps/mobile
         run: npm ci
 
       - name: Type-check mobile app
+        working-directory: apps/mobile
         run: npm run typecheck
 
       - name: Publish update to preview channel
+        working-directory: apps/mobile
         run: >-
           eas update
           --channel preview
