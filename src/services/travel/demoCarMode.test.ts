@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { access } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test, { afterEach } from "node:test";
 import { getCarResultsMode } from "@/lib/env";
@@ -56,10 +56,12 @@ test("default mode returns provider-safe demo inventory", async () => {
   await Promise.all(
     result.results.map(async (car) => {
       assert.ok(car.imageUrl);
-      assert.equal(car.imageUrl.endsWith(".svg"), false);
+      assert.equal(car.imageUrl.endsWith(".webp"), true);
       assert.match(car.imageAlt.toLowerCase(), new RegExp(car.modelName.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
       const imagePath = path.join(process.cwd(), "public", car.imageUrl);
-      await access(imagePath);
+      const imageBytes = await readFile(imagePath);
+      assert.equal(imageBytes.subarray(0, 4).toString("ascii"), "RIFF");
+      assert.equal(imageBytes.subarray(8, 12).toString("ascii"), "WEBP");
     }),
   );
   assert.ok(
