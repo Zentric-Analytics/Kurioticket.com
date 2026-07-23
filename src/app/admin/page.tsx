@@ -127,7 +127,7 @@ export default async function AdminPage() {
           <div data-admin-home-glance-heading="section-header" className="md:px-6 md:pt-6 lg:px-8 lg:pt-8">
             <SectionHeading id="at-a-glance-heading">At a Glance</SectionHeading>
           </div>
-          <div data-admin-home-glance-grid="outlined" className="mt-4 grid grid-cols-2 divide-x divide-y divide-[#A7B2BE] border-y border-[#A7B2BE] md:mt-6 md:grid-cols-3 md:gap-0 md:divide-x-0 md:divide-y-0 md:border-y-0">
+          <div data-admin-home-glance-grid="outlined" className="mt-4 grid grid-cols-2 md:mt-6 md:grid-cols-3 md:gap-0">
             <OverviewMetric icon="users" label="Total users" value={metrics.totalUsers} className={overviewMetricCellBorderClass(0)} />
             <OverviewMetric icon="active" label="Active users" value={metrics.activeUsers} className={overviewMetricCellBorderClass(1)} />
             <OverviewMetric icon="suspended" label="Suspended users" value={metrics.suspendedUsers} className={overviewMetricCellBorderClass(2)} />
@@ -151,7 +151,7 @@ export default async function AdminPage() {
                   <PanelMetric icon={SearchX} tone="amber" label="No-result searches" value={searchHealth.noResultSearches} className={searchMetricBorderClass(1)} />
                   <PanelMetric icon={XCircle} tone="rose" label="Failed searches" value={searchHealth.failedSearches} className={searchMetricBorderClass(2)} />
                 </div>
-                <div data-admin-home-search-lower="products-link" className="mt-6 md:mt-0 md:border-t md:border-[#7B8794] md:px-6 md:py-5 lg:px-8">
+                <div data-admin-home-search-lower="products-link" className="mt-6 border-t border-[#A7B2BE] pt-6 md:mt-0 md:border-t md:border-[#7B8794] md:px-6 md:py-5 lg:px-8">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div className="min-w-0">
                       <p className="text-sm font-bold text-[#021C2B]">Top products searched</p>
@@ -185,7 +185,7 @@ export default async function AdminPage() {
               <PanelHeading id="service-status-heading" icon={Gauge}>Service Status</PanelHeading>
             </div>
             <div className="mt-5 md:mt-6 md:px-6 md:pb-6 lg:px-8 lg:pb-8">
-              <div data-admin-home-service-groups="provider-system" className="grid items-start gap-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
+              <div data-admin-home-service-groups="provider-system" className="grid items-start gap-0 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
               <div data-admin-home-provider-status-outline="true" className="flex min-w-0 flex-col md:rounded-none md:border md:border-[#7B8794] md:bg-transparent md:p-6">
                 <div data-admin-home-status-group-heading="provider">
                   <h3 className="text-sm font-bold text-[#021C2B]">Provider Readiness</h3>
@@ -198,7 +198,7 @@ export default async function AdminPage() {
                 </div>
                 <div data-admin-home-provider-footer="actions" className="mt-5 flex justify-end"><AdminHomeActionButton href="/admin/providers" action="view-providers">View Providers</AdminHomeActionButton></div>
               </div>
-              <div data-admin-home-system-status-outline="true" className="flex min-w-0 flex-col md:rounded-none md:border md:border-[#7B8794] md:bg-transparent md:p-6">
+              <div data-admin-home-system-status-outline="true" className="mt-7 flex min-w-0 flex-col border-t border-[#A7B2BE] pt-7 md:mt-0 md:rounded-none md:border md:border-[#7B8794] md:bg-transparent md:p-6">
                 <div data-admin-home-status-group-heading="system">
                   <h3 className="text-sm font-bold text-[#021C2B]">System Configuration</h3>
                   <p className="mt-1 text-xs leading-5 text-slate-500">Core platform services and integrations</p>
@@ -258,10 +258,15 @@ function OverviewMetric({ label, value, hint, icon, className = "" }: { label: s
 }
 
 function overviewMetricCellBorderClass(index: number) {
+  const isMobileLeftColumn = index % 2 === 0;
+  const isMobileBeforeLastRow = index < 4;
   const isDesktopLastColumn = index % 3 === 2;
   const isDesktopFirstRow = index < 3;
 
   return [
+    isMobileLeftColumn ? "border-r border-[#A7B2BE]" : "",
+    isMobileBeforeLastRow ? "border-b border-[#A7B2BE]" : "",
+    "md:border-r-0 md:border-b-0",
     isDesktopLastColumn ? "md:border-r-0" : "md:border-r",
     isDesktopFirstRow ? "md:border-b" : "md:border-b-0",
     "md:border-[#7B8794]",

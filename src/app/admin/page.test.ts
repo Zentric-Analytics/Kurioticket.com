@@ -73,9 +73,7 @@ test("mobile base classes restore the pre-outline Needs Attention layout", () =>
   assert.match(borderHelperBlock, /md:border-\[#7B8794\]/);
 });
 
-test("mobile base classes restore the pre-outline At a Glance metric layout", () => {
-  // Historical reference a392740a44882ef439b3f681ed28a470d4b98842 used a two-column
-  // mobile metric rail with gap-x-6 gap-y-5 and no base #7B8794 cell dividers.
+test("At a Glance uses deliberate mobile cell dividers without container outer edges", () => {
   const glanceBlock = blockBetween(
     'data-admin-home-section="at-a-glance"',
     'data-admin-home-section="operations"',
@@ -101,14 +99,19 @@ test("mobile base classes restore the pre-outline At a Glance metric layout", ()
     glanceBlock,
     /data-admin-home-glance-heading="section-header"[\s\S]*?className="md:px-6 md:pt-6 lg:px-8 lg:pt-8"/,
   );
-  assert.ok(glanceBlock.includes('data-admin-home-glance-grid="outlined" className="mt-4 grid grid-cols-2 divide-x divide-y divide-[#A7B2BE] border-y border-[#A7B2BE] md:mt-6 md:grid-cols-3 md:gap-0 md:divide-x-0 md:divide-y-0 md:border-y-0"'));
-  assert.doesNotMatch(borderHelperBlock, /isMobile|border-r border-\[#7B8794\]|border-b border-\[#7B8794\]/);
-  assert.match(borderHelperBlock, /md:border-r/);
-  assert.match(borderHelperBlock, /md:border-b/);
+  assert.ok(glanceBlock.includes('data-admin-home-glance-grid="outlined" className="mt-4 grid grid-cols-2 md:mt-6 md:grid-cols-3 md:gap-0"'));
+  assert.doesNotMatch(glanceBlock, /data-admin-home-glance-grid="outlined" className="[^"]*(?:divide-x|divide-y|border-y)/);
+  assert.match(borderHelperBlock, /isMobileLeftColumn = index % 2 === 0/);
+  assert.match(borderHelperBlock, /isMobileBeforeLastRow = index < 4/);
+  assert.match(borderHelperBlock, /isMobileLeftColumn \? "border-r border-\[#A7B2BE\]" : ""/);
+  assert.match(borderHelperBlock, /isMobileBeforeLastRow \? "border-b border-\[#A7B2BE\]" : ""/);
+  assert.match(borderHelperBlock, /"md:border-r-0 md:border-b-0"/);
+  assert.match(borderHelperBlock, /isDesktopLastColumn \? "md:border-r-0" : "md:border-r"/);
+  assert.match(borderHelperBlock, /isDesktopFirstRow \? "md:border-b" : "md:border-b-0"/);
   assert.match(borderHelperBlock, /md:border-\[#7B8794\]/);
 });
 
-test("mobile base classes restore the pre-outline Search Activity layout", () => {
+test("Search Activity keeps metric dividers and adds one mobile products separator", () => {
   const searchBlock = blockBetween(
     'data-admin-home-surface="search-activity"',
     'data-admin-home-surface="service-status"',
@@ -134,13 +137,13 @@ test("mobile base classes restore the pre-outline Search Activity layout", () =>
   assert.ok(searchBlock.includes('data-admin-home-search-metrics="outlined-grid" className="mt-6 grid grid-cols-1 divide-y divide-[#A7B2BE] sm:grid-cols-3 sm:divide-x sm:divide-y-0 md:gap-0 md:divide-x-0"'));
   assert.match(
     searchBlock,
-    /data-admin-home-search-lower="products-link"[\s\S]*?className="mt-6 md:mt-0 md:border-t md:border-\[#7B8794\] md:px-6 md:py-5 lg:px-8"/,
+    /data-admin-home-search-lower="products-link"[\s\S]*?className="mt-6 border-t border-\[#A7B2BE\] pt-6 md:mt-0 md:border-t md:border-\[#7B8794\] md:px-6 md:py-5 lg:px-8"/,
   );
   assert.doesNotMatch(borderHelperBlock, /border-b border-\[#7B8794\]|sm:border-\[#7B8794\]/);
   assert.match(borderHelperBlock, /md:border-r/);
 });
 
-test("mobile base classes restore the pre-outline Service Status grouping", () => {
+test("Service Status keeps the major separator and separates provider from system on mobile", () => {
   const serviceBlock = blockBetween(
     'data-admin-home-surface="service-status"',
     'data-admin-home-section="recent-admin-activity"',
@@ -156,7 +159,7 @@ test("mobile base classes restore the pre-outline Service Status grouping", () =
   );
   assert.match(
     serviceBlock,
-    /className="mt-5 md:mt-6 md:px-6 md:pb-6 lg:px-8 lg:pb-8"[\s\S]*?data-admin-home-service-groups="provider-system"[\s\S]*?className="grid items-start gap-5 md:grid-cols-\[minmax\(0,0\.9fr\)_minmax\(0,1\.1fr\)\] md:gap-6"/,
+    /className="mt-5 md:mt-6 md:px-6 md:pb-6 lg:px-8 lg:pb-8"[\s\S]*?data-admin-home-service-groups="provider-system"[\s\S]*?className="grid items-start gap-0 md:grid-cols-\[minmax\(0,0\.9fr\)_minmax\(0,1\.1fr\)\] md:gap-6"/,
   );
   assert.match(serviceBlock, /Provider Readiness/);
   assert.match(serviceBlock, /Search availability by product/);
@@ -168,7 +171,7 @@ test("mobile base classes restore the pre-outline Service Status grouping", () =
   );
   assert.match(
     serviceBlock,
-    /data-admin-home-system-status-outline="true"[\s\S]*?className="flex min-w-0 flex-col md:rounded-none md:border md:border-\[#7B8794\] md:bg-transparent md:p-6"/,
+    /data-admin-home-system-status-outline="true"[\s\S]*?className="mt-7 flex min-w-0 flex-col border-t border-\[#A7B2BE\] pt-7 md:mt-0 md:rounded-none md:border md:border-\[#7B8794\] md:bg-transparent md:p-6"/,
   );
 });
 
