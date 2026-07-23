@@ -1353,9 +1353,17 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
           {initialResults.length > 0 ? (
             <>
               <div className="flex w-full flex-col gap-2 py-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-                <p className="whitespace-nowrap text-[clamp(0.68rem,3vw,0.875rem)] font-bold leading-5 text-[#021C2B] sm:text-sm">
-                  {visibleResults.length}{" "}
-                  {visibleResults.length === 1 ? "car" : "cars"}
+                <p className="whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">
+                  {t(
+                    visibleResults.length === 1
+                      ? "resultFound"
+                      : "resultsFound",
+                  ).replace(
+                    "{{count}}",
+                    new Intl.NumberFormat(intlLocale, {
+                      maximumFractionDigits: 0,
+                    }).format(visibleResults.length),
+                  )}
                 </p>
                 <div className="flex min-w-0 shrink-0 flex-nowrap items-center justify-between gap-2 sm:justify-end">
                   <Button
