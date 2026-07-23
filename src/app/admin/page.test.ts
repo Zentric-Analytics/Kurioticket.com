@@ -145,7 +145,7 @@ test("needs attention uses one outlined responsive grid without card styling", (
   );
   assert.match(
     adminOverviewPage,
-    /data-admin-home-attention-item="outlined-grid-cell"[\s\S]*?className=\{`min-w-0 p-5 sm:p-6 \$\{className\}`\}/,
+    /data-admin-home-attention-item="outlined-grid-cell"[\s\S]*?className=\{`flex h-full min-w-0 flex-col p-5 sm:p-6 \$\{className\}`\}/,
   );
   assert.doesNotMatch(
     attentionBlock,
@@ -450,14 +450,15 @@ test("service status has a borderless parent with two independent outlined group
   );
   assert.match(
     providerBlock,
-    /className="min-w-0 border border-\[#7B8794\] bg-transparent p-5 sm:p-6 rounded-none"/,
+    /className="flex h-full min-w-0 flex-col border border-\[#7B8794\] bg-transparent p-5 sm:p-6 rounded-none"/,
   );
   assert.match(providerBlock, /Provider statuses/);
   assert.match(providerBlock, /providers\.map\(\(provider\) =>/);
-  assert.match(providerBlock, /href="\/admin\/providers"/);
+  assert.match(providerBlock, /data-admin-home-provider-footer="actions"[\s\S]*?className="mt-auto flex justify-end pt-5"/);
+  assert.match(providerBlock, /<AdminHomeActionButton href="\/admin\/providers" action="view-providers">View Providers<\/AdminHomeActionButton>/);
   assert.match(
     systemBlock,
-    /className="min-w-0 border border-\[#7B8794\] bg-transparent p-5 sm:p-6 rounded-none"/,
+    /className="flex h-full min-w-0 flex-col border border-\[#7B8794\] bg-transparent p-5 sm:p-6 rounded-none"/,
   );
   assert.match(systemBlock, /System statuses/);
   assert.deepEqual(labelsFor("StatusRow", systemBlock), [
@@ -467,7 +468,8 @@ test("service status has a borderless parent with two independent outlined group
     "Provider credentials",
     "Webhooks",
   ]);
-  assert.match(systemBlock, /href="\/admin\/system"/);
+  assert.match(systemBlock, /data-admin-home-system-footer="actions"[\s\S]*?className="mt-auto flex justify-end pt-5"/);
+  assert.match(systemBlock, /<AdminHomeActionButton href="\/admin\/system" action="view-system">View System<\/AdminHomeActionButton>/);
   assert.doesNotMatch(serviceBlock, /data-admin-home-service-divider|divide-x|border-l/);
   assert.match(adminOverviewPage, /data-admin-home-decoration="status-routes"/);
 });
@@ -482,7 +484,15 @@ test("recent admin activity uses spacing, not row borders or a timeline connecti
     "function TextLink",
   );
   assert.match(activityBlock, /Recent Admin Activity/);
-  assert.match(activityBlock, /href="\/admin\/logs"/);
+  const headingIndex = activityBlock.indexOf('<SectionHeading id="recent-admin-activity-heading">Recent Admin Activity<\/SectionHeading>');
+  const listIndex = activityBlock.indexOf('<RecentActivityList items={activity} />');
+  const footerIndex = activityBlock.indexOf('data-admin-home-activity-footer="actions"');
+  assert.notEqual(headingIndex, -1);
+  assert.ok(listIndex > headingIndex, "activity list should appear below heading");
+  assert.ok(footerIndex > listIndex, "admin logs button should appear after activity list");
+  assert.match(activityBlock, /data-admin-home-activity-footer="actions"[\s\S]*?className="mt-6 flex justify-end"/);
+  assert.match(activityBlock, /<AdminHomeActionButton href="\/admin\/logs" action="view-admin-logs">View Admin Logs<\/AdminHomeActionButton>/);
+  assert.doesNotMatch(blockBetween('data-admin-home-section="recent-admin-activity"', '<div className="mt-3"><RecentActivityList items={activity} /></div>'), /View Admin Logs|href="\/admin\/logs"/);
   assert.match(timelineBlock, /data-admin-home-timeline="true"/);
   assert.match(timelineBlock, /className="space-y-5"/);
   assert.match(timelineBlock, /grid-cols-\[2\.25rem_minmax\(0,1fr\)\]/);
@@ -491,6 +501,43 @@ test("recent admin activity uses spacing, not row borders or a timeline connecti
     timelineBlock,
     /border-y|border-b|last:border-b-0|bottom-\[-1rem\]|top-0 w-px|bg-\[#004BB8\]\/25/,
   );
+});
+
+test("admin home main actions use consistent outlined buttons while attention actions stay text links", () => {
+  const actionButtonBlock = blockBetween(
+    "function AdminHomeActionButton",
+    "function StatusRow",
+  );
+  const approvedClass = "focus-ring inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#004BB8] bg-transparent px-4 py-2 text-sm font-semibold text-[#004BB8] transition-colors hover:bg-[#004BB8] hover:text-white";
+
+  assert.match(actionButtonBlock, /data-admin-home-action-button=\{action\}/);
+  assert.match(actionButtonBlock, /<ArrowRight className="h-4 w-4" aria-hidden="true" \/>/);
+  assert.match(actionButtonBlock, new RegExp(`className="${approvedClass.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`));
+
+  for (const [action, href, label] of [
+    ["view-searches", "/admin/searches", "View Searches"],
+    ["view-providers", "/admin/providers", "View Providers"],
+    ["view-system", "/admin/system", "View System"],
+    ["view-admin-logs", "/admin/logs", "View Admin Logs"],
+  ]) {
+    assert.match(
+      adminOverviewPage,
+      new RegExp(`<AdminHomeActionButton href="${href}" action="${action}">${label}<\/AdminHomeActionButton>`),
+    );
+    assert.doesNotMatch(adminOverviewPage, new RegExp(`${label} →<\/AdminHomeActionButton>`));
+  }
+
+  const attentionRowBlock = blockBetween(
+    "function AttentionRow",
+    "function AdminHomeActionButton",
+  );
+  assert.match(attentionRowBlock, /className=\{`flex h-full min-w-0 flex-col p-5 sm:p-6 \$\{className\}`\}/);
+  assert.match(attentionRowBlock, /<p className="font-semibold text-slate-950">\{issue.message\}<\/p>[\s\S]*data-admin-home-attention-footer="action"/);
+  assert.match(attentionRowBlock, /data-admin-home-attention-footer="action"[\s\S]*?className="mt-auto flex justify-end pt-3"[\s\S]*?<TextLink href=\{issue.href\}>\{issue.linkLabel\}<\/TextLink>/);
+  assert.doesNotMatch(attentionRowBlock, /AdminHomeActionButton/);
+  assert.match(adminOverviewPage, /linkLabel: "View Providers →"/);
+  assert.match(adminOverviewPage, /linkLabel: "View System →"/);
+  assert.match(adminOverviewPage, /linkLabel: "View Searches →"/);
 });
 
 test("admin home sections outside the intentionally outlined areas remain free of new structural dividers", () => {

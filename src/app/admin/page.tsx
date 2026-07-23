@@ -3,6 +3,7 @@ import {
   Activity,
   AlertCircle,
   AlertTriangle,
+  ArrowRight,
   Car,
   CheckCircle2,
   CircleDot,
@@ -161,14 +162,14 @@ export default async function AdminPage() {
                         <p className="mt-2 text-sm text-slate-600">No product search breakdown is available yet.</p>
                       )}
                     </div>
-                    <div className="flex justify-end"><TextLink href="/admin/searches">View Searches →</TextLink></div>
+                    <div className="flex justify-end"><AdminHomeActionButton href="/admin/searches" action="view-searches">View Searches</AdminHomeActionButton></div>
                   </div>
                 </div>
               </>
             ) : (
               <div className="mt-5 px-5 pb-6 sm:px-6 lg:px-8 lg:pb-8">
                 <AdminEmptyState variant="compact" title="Search analytics unavailable" message="Search analytics will appear after search logging records real user searches. No search counts are mocked." />
-                <div className="mt-6 flex justify-end"><TextLink href="/admin/searches">View Searches →</TextLink></div>
+                <div className="mt-6 flex justify-end"><AdminHomeActionButton href="/admin/searches" action="view-searches">View Searches</AdminHomeActionButton></div>
               </div>
             )}
           </div>
@@ -182,21 +183,21 @@ export default async function AdminPage() {
             </div>
             <div className="mt-6 px-5 pb-6 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
               <div data-admin-home-service-groups="provider-system" className="grid gap-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
-              <div data-admin-home-provider-status-outline="true" className="min-w-0 border border-[#7B8794] bg-transparent p-5 sm:p-6 rounded-none">
+              <div data-admin-home-provider-status-outline="true" className="flex h-full min-w-0 flex-col border border-[#7B8794] bg-transparent p-5 sm:p-6 rounded-none">
                 <p className="mb-3 text-sm font-bold text-[#021C2B]">Provider statuses</p>
                 {providers.map((provider) => (
                   <StatusRow key={provider.product} icon={provider.product} label={provider.product} status={providerReadinessLabel(provider)} tone={provider.searchEnabled ? "good" : provider.credentialsPresent ? "warn" : "neutral"} />
                 ))}
-                <TextLink href="/admin/providers" className="mt-5">View Providers →</TextLink>
+                <div data-admin-home-provider-footer="actions" className="mt-auto flex justify-end pt-5"><AdminHomeActionButton href="/admin/providers" action="view-providers">View Providers</AdminHomeActionButton></div>
               </div>
-              <div data-admin-home-system-status-outline="true" className="min-w-0 border border-[#7B8794] bg-transparent p-5 sm:p-6 rounded-none">
+              <div data-admin-home-system-status-outline="true" className="flex h-full min-w-0 flex-col border border-[#7B8794] bg-transparent p-5 sm:p-6 rounded-none">
                 <p className="mb-3 text-sm font-bold text-[#021C2B]">System statuses</p>
                 <StatusRow icon="Database" label="Database" status={system.databaseConnected ? "Available" : system.databaseConfigured ? "Configured, not connected" : "Not configured"} tone={system.databaseConnected ? "good" : "bad"} />
                 <StatusRow icon="Authentication" label="Authentication" status={system.authConfigured && system.sessionConfigured ? "Available" : "Not fully configured"} tone={system.authConfigured && system.sessionConfigured ? "good" : "warn"} />
                 <StatusRow icon="Email" label="Email" status={system.emailConfigured ? "Available" : "Unavailable"} tone={system.emailConfigured ? "good" : "warn"} />
                 <StatusRow icon="Provider credentials" label="Provider credentials" status={system.providerCredentialsPresent ? "Present" : "Not present"} tone={system.providerCredentialsPresent ? "good" : "warn"} />
                 <StatusRow icon="Webhooks" label="Webhooks" status={system.webhookConfigured ? "Available" : "Unavailable"} tone={system.webhookConfigured ? "good" : "warn"} />
-                <TextLink href="/admin/system" className="mt-5">View System →</TextLink>
+                <div data-admin-home-system-footer="actions" className="mt-auto flex justify-end pt-5"><AdminHomeActionButton href="/admin/system" action="view-system">View System</AdminHomeActionButton></div>
               </div>
             </div>
           </div>
@@ -206,11 +207,9 @@ export default async function AdminPage() {
       </section>
 
       <section data-admin-home-section="recent-admin-activity" aria-labelledby="recent-admin-activity-heading" className={adminHomeSectionClass}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <SectionHeading id="recent-admin-activity-heading">Recent Admin Activity</SectionHeading>
-          <TextLink href="/admin/logs">View Admin Logs →</TextLink>
-        </div>
+        <SectionHeading id="recent-admin-activity-heading">Recent Admin Activity</SectionHeading>
         <div className="mt-3"><RecentActivityList items={activity} /></div>
+        <div data-admin-home-activity-footer="actions" className="mt-6 flex justify-end"><AdminHomeActionButton href="/admin/logs" action="view-admin-logs">View Admin Logs</AdminHomeActionButton></div>
       </section>
     </div>
   );
@@ -296,7 +295,11 @@ function attentionCellBorderClass(index: number, total: number) {
 function AttentionRow({ issue, className = "" }: { issue: AttentionIssue; className?: string }) {
   const Icon = issue.icon === "alert" ? AlertCircle : AlertTriangle;
   const iconClassName = issue.tone === "bad" ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600";
-  return <div data-admin-home-attention-item="outlined-grid-cell" className={`min-w-0 p-5 sm:p-6 ${className}`}><div className="flex min-w-0 items-start gap-4"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${iconClassName}`}><Icon className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="font-semibold text-slate-950">{issue.message}</p><TextLink href={issue.href} className="mt-2">{issue.linkLabel}</TextLink></div></div></div>;
+  return <div data-admin-home-attention-item="outlined-grid-cell" className={`flex h-full min-w-0 flex-col p-5 sm:p-6 ${className}`}><div className="flex min-w-0 items-start gap-4"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${iconClassName}`}><Icon className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="font-semibold text-slate-950">{issue.message}</p></div></div><div data-admin-home-attention-footer="action" className="mt-auto flex justify-end pt-3"><TextLink href={issue.href}>{issue.linkLabel}</TextLink></div></div>;
+}
+
+function AdminHomeActionButton({ href, action, children }: { href: string; action: string; children: React.ReactNode }) {
+  return <Link href={href} data-admin-home-action-button={action} className="focus-ring inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#004BB8] bg-transparent px-4 py-2 text-sm font-semibold text-[#004BB8] transition-colors hover:bg-[#004BB8] hover:text-white"><span>{children}</span><ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>;
 }
 
 function StatusRow({ label, status, tone, icon }: { label: string; status: string; tone: StatusTone; icon: string }) {
