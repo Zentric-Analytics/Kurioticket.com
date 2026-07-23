@@ -613,12 +613,18 @@ function CarsSearchBar({
   const datesLauncherRef = useRef<HTMLButtonElement | null>(null);
   const timesLauncherRef = useRef<HTMLButtonElement | null>(null);
   const driverAgeLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const desktopDriverAgeLauncherRef = useRef<HTMLButtonElement | null>(null);
   const pickupMobileInputRef = useRef<HTMLInputElement | null>(null);
   const dropoffMobileInputRef = useRef<HTMLInputElement | null>(null);
   const dateWrapRef = useRef<HTMLDivElement | null>(null);
   const timeWrapRef = useRef<HTMLDivElement | null>(null);
+  const driverAgeWrapRef = useRef<HTMLDivElement | null>(null);
+  const driverAgePopoverRef = useRef<HTMLDivElement | null>(null);
   const [datesOpen, setDatesOpen] = useState(false);
   const [timesOpen, setTimesOpen] = useState(false);
+  const [driverAgeOpen, setDriverAgeOpen] = useState(false);
+  const [focusedDriverAgeIndex, setFocusedDriverAgeIndex] = useState(0);
+  const driverAgeOptionRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [activeMobilePicker, setActiveMobilePicker] =
     useState<CarsMobilePicker>(null);
   const [visibleMonthDate, setVisibleMonthDate] = useState(() => {
@@ -651,12 +657,26 @@ function CarsSearchBar({
       if (timesOpen && !timeWrapRef.current?.contains(target)) {
         setTimesOpen(false);
       }
+
+      if (
+        driverAgeOpen &&
+        !driverAgeWrapRef.current?.contains(target) &&
+        !driverAgePopoverRef.current?.contains(target)
+      ) {
+        setDriverAgeOpen(false);
+      }
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        if (datesOpen) {
+          datesLauncherRef.current?.focus({ preventScroll: true });
+        } else if (driverAgeOpen) {
+          desktopDriverAgeLauncherRef.current?.focus({ preventScroll: true });
+        }
         setDatesOpen(false);
         setTimesOpen(false);
+        setDriverAgeOpen(false);
         setActiveMobilePicker(null);
       }
     };
@@ -668,7 +688,7 @@ function CarsSearchBar({
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [datesOpen, timesOpen]);
+  }, [datesOpen, driverAgeOpen, timesOpen]);
 
   const isMobilePickerViewport = () =>
     typeof window !== "undefined" &&
@@ -677,8 +697,27 @@ function CarsSearchBar({
   const openMobilePicker = (picker: Exclude<CarsMobilePicker, null>) => {
     setDatesOpen(false);
     setTimesOpen(false);
+    setDriverAgeOpen(false);
     setActiveMobilePicker(picker);
   };
+
+  useEffect(() => {
+    if (!datesOpen && !timesOpen && !driverAgeOpen) {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia("(max-width: 639px)");
+    const closeDesktopPickers = () => {
+      if (mediaQuery.matches) {
+        setDatesOpen(false);
+        setTimesOpen(false);
+        setDriverAgeOpen(false);
+      }
+    };
+
+    mediaQuery.addEventListener("change", closeDesktopPickers);
+    return () => mediaQuery.removeEventListener("change", closeDesktopPickers);
+  }, [datesOpen, driverAgeOpen, timesOpen]);
 
   useEffect(() => {
     if (
@@ -714,6 +753,7 @@ function CarsSearchBar({
 
       if (nextOpen) {
         setTimesOpen(false);
+        setDriverAgeOpen(false);
       }
 
       return nextOpen;
@@ -731,6 +771,26 @@ function CarsSearchBar({
 
       if (nextOpen) {
         setDatesOpen(false);
+        setDriverAgeOpen(false);
+      }
+
+      return nextOpen;
+    });
+  };
+
+  const toggleDriverAge = () => {
+    const selectedIndex = Math.max(
+      0,
+      driverAgeOptions.indexOf(values.driverAge),
+    );
+
+    setDriverAgeOpen((current) => {
+      const nextOpen = !current;
+
+      if (nextOpen) {
+        setDatesOpen(false);
+        setTimesOpen(false);
+        setFocusedDriverAgeIndex(selectedIndex);
       }
 
       return nextOpen;
@@ -940,36 +1000,58 @@ function CarsSearchBar({
               label={t("carsSearch.driverAgeLabel")}
               error={errors.driverAge}
             >
-              <button
-                ref={driverAgeLauncherRef}
-                type="button"
-                onClick={() => openMobilePicker("driverAge")}
-                className="flex h-7 w-full items-center justify-between gap-2 border-none bg-transparent p-0 text-start text-[16px] font-semibold text-slate-950 focus:outline-none sm:hidden"
-              >
-                <span className="truncate">
-                  {values.driverAge === defaultDriverAge
-                    ? t("carsSearch.driverAgeAnyAgeRange")
-                    : getDriverAgeOptionLabel(values.driverAge)}
-                </span>
-                <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
-              </button>
-              <select
-                id="driverAge"
-                name="driverAge"
-                value={values.driverAge}
-                onChange={(event) =>
-                  updateValue("driverAge", event.target.value)
-                }
-                className="hidden h-7 w-full border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none sm:block md:text-[15px] lg:h-8"
-              >
-                {driverAgeOptions.map((age) => (
-                  <option key={age} value={age}>
-                    {age === defaultDriverAge
+              <div ref={driverAgeWrapRef}>
+                <button
+                  ref={driverAgeLauncherRef}
+                  type="button"
+                  onClick={() => openMobilePicker("driverAge")}
+                  className="flex h-7 w-full items-center justify-between gap-2 border-none bg-transparent p-0 text-start text-[16px] font-semibold text-slate-950 focus:outline-none sm:hidden"
+                >
+                  <span className="truncate">
+                    {values.driverAge === defaultDriverAge
                       ? t("carsSearch.driverAgeAnyAgeRange")
-                      : getDriverAgeOptionLabel(age)}
-                  </option>
-                ))}
-              </select>
+                      : getDriverAgeOptionLabel(values.driverAge)}
+                  </span>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+                </button>
+                <button
+                  ref={desktopDriverAgeLauncherRef}
+                  type="button"
+                  aria-haspopup="listbox"
+                  aria-expanded={driverAgeOpen}
+                  aria-controls="cars-desktop-driver-age-listbox"
+                  onClick={toggleDriverAge}
+                  className="hidden h-7 w-full items-center justify-between gap-2 border-0 bg-transparent p-0 text-start text-[16px] font-semibold text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 sm:flex md:text-[15px] lg:h-8"
+                >
+                  <span className="truncate">
+                    {values.driverAge === defaultDriverAge
+                      ? t("carsSearch.driverAgeAnyAgeRange")
+                      : getDriverAgeOptionLabel(values.driverAge)}
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 text-slate-500 transition-transform duration-150 ${driverAgeOpen ? "rotate-180" : ""}`}
+                    aria-hidden="true"
+                  />
+                </button>
+                <DriverAgeDesktopPopover
+                  focusedIndex={focusedDriverAgeIndex}
+                  isOpen={driverAgeOpen}
+                  launcherRef={desktopDriverAgeLauncherRef}
+                  onFocusedIndexChange={setFocusedDriverAgeIndex}
+                  onSelect={(age) => {
+                    updateValue("driverAge", age);
+                    setDriverAgeOpen(false);
+                    requestAnimationFrame(() =>
+                      desktopDriverAgeLauncherRef.current?.focus({
+                        preventScroll: true,
+                      }),
+                    );
+                  }}
+                  optionRefs={driverAgeOptionRefs}
+                  popoverRef={driverAgePopoverRef}
+                  selectedAge={values.driverAge}
+                />
+              </div>
             </SearchCell>
 
             <div className="sm:col-span-2 lg:col-span-1">
@@ -1394,6 +1476,8 @@ function CarPickupCardLink({ card }: { card: TranslatedCarImageCard }) {
 }
 
 type DesktopPopoverPlacement = "above" | "below";
+type DesktopPopoverPlacementMode = "auto" | "below";
+type DesktopPopoverAlignment = "center" | "end";
 
 const desktopPopoverViewportPadding = 16;
 const desktopPopoverOffset = 14;
@@ -1402,10 +1486,17 @@ function useDesktopPopoverPosition(
   isOpen: boolean,
   launcherRef: RefObject<HTMLButtonElement | null> | undefined,
   preferredWidth: number,
+  placementMode: DesktopPopoverPlacementMode = "auto",
+  alignment: DesktopPopoverAlignment = "center",
+  maximumHeight?: number,
+  providedPopoverRef?: RefObject<HTMLDivElement | null>,
 ) {
-  const popoverRef = useRef<HTMLDivElement | null>(null);
+  const internalPopoverRef = useRef<HTMLDivElement | null>(null);
+  const popoverRef = providedPopoverRef ?? internalPopoverRef;
   const [style, setStyle] = useState<CSSProperties | null>(null);
-  const [placement, setPlacement] = useState<DesktopPopoverPlacement>("above");
+  const [placement, setPlacement] = useState<DesktopPopoverPlacement>(
+    placementMode === "below" ? "below" : "above",
+  );
 
   useLayoutEffect(() => {
     if (!isOpen || !launcherRef?.current || typeof window === "undefined") {
@@ -1426,14 +1517,21 @@ function useDesktopPopoverPosition(
       );
       const popoverHeight = popoverRect?.height ?? 420;
       const centeredLeft =
-        launcherRect.left + launcherRect.width / 2 - popoverWidth / 2;
+        alignment === "end"
+          ? launcherRect.right - popoverWidth
+          : launcherRect.left + launcherRect.width / 2 - popoverWidth / 2;
       const left = Math.min(
         Math.max(centeredLeft, desktopPopoverViewportPadding),
         window.innerWidth - popoverWidth - desktopPopoverViewportPadding,
       );
       const spaceBelow =
         window.innerHeight - launcherRect.bottom - desktopPopoverOffset;
+      const availableHeightBelow = Math.max(
+        0,
+        spaceBelow - desktopPopoverViewportPadding,
+      );
       const shouldOpenBelow =
+        placementMode === "below" ||
         spaceBelow >= popoverHeight + desktopPopoverViewportPadding;
       const nextTop = shouldOpenBelow
         ? launcherRect.bottom + desktopPopoverOffset
@@ -1447,6 +1545,17 @@ function useDesktopPopoverPosition(
         left,
         top: nextTop,
         width: popoverWidth,
+        ...(placementMode === "below"
+          ? {
+              maxHeight: Math.max(
+                0,
+                Math.min(
+                  maximumHeight ?? availableHeightBelow,
+                  availableHeightBelow,
+                ),
+              ),
+            }
+          : {}),
       });
     };
 
@@ -1458,9 +1567,141 @@ function useDesktopPopoverPosition(
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
     };
-  }, [isOpen, launcherRef, preferredWidth]);
+  }, [
+    alignment,
+    isOpen,
+    launcherRef,
+    maximumHeight,
+    placementMode,
+    popoverRef,
+    preferredWidth,
+  ]);
 
   return { placement, popoverRef, style };
+}
+
+function DriverAgeDesktopPopover({
+  focusedIndex,
+  isOpen,
+  launcherRef,
+  onFocusedIndexChange,
+  onSelect,
+  optionRefs,
+  popoverRef,
+  selectedAge,
+}: {
+  focusedIndex: number;
+  isOpen: boolean;
+  launcherRef: RefObject<HTMLButtonElement | null>;
+  onFocusedIndexChange: (index: number) => void;
+  onSelect: (age: string) => void;
+  optionRefs: RefObject<Array<HTMLButtonElement | null>>;
+  popoverRef: RefObject<HTMLDivElement | null>;
+  selectedAge: string;
+}) {
+  const { t } = useCarsLandingTranslations();
+  const { popoverRef: positionedPopoverRef, style } = useDesktopPopoverPosition(
+    isOpen,
+    launcherRef,
+    248,
+    "below",
+    "end",
+    360,
+    popoverRef,
+  );
+
+  useLayoutEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => {
+      const focusedOption = optionRefs.current[focusedIndex];
+      focusedOption?.focus({ preventScroll: true });
+      focusedOption?.scrollIntoView({ block: "nearest" });
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [focusedIndex, isOpen, optionRefs]);
+
+  const moveFocus = (nextIndex: number) => {
+    const clampedIndex = Math.min(
+      driverAgeOptions.length - 1,
+      Math.max(0, nextIndex),
+    );
+    onFocusedIndexChange(clampedIndex);
+  };
+
+  if (!isOpen || typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(
+    <div
+      id="cars-desktop-driver-age-listbox"
+      ref={positionedPopoverRef}
+      role="listbox"
+      aria-label={t("carsSearch.driverAgeLabel")}
+      data-cars-desktop-popover="driver-age"
+      data-placement="below"
+      style={style ?? undefined}
+      onKeyDown={(event) => {
+        if (event.key === "ArrowDown") {
+          event.preventDefault();
+          moveFocus(focusedIndex + 1);
+        } else if (event.key === "ArrowUp") {
+          event.preventDefault();
+          moveFocus(focusedIndex - 1);
+        } else if (event.key === "Home") {
+          event.preventDefault();
+          moveFocus(0);
+        } else if (event.key === "End") {
+          event.preventDefault();
+          moveFocus(driverAgeOptions.length - 1);
+        }
+      }}
+      className="fixed z-[1110] hidden w-[248px] max-w-[calc(100vw-2rem)] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/95 bg-white p-1.5 shadow-[0_24px_60px_-24px_rgba(15,23,42,0.42)] ring-1 ring-slate-950/[0.06] sm:block"
+    >
+      {driverAgeOptions.map((age, index) => {
+        const selected = selectedAge === age;
+
+        return (
+          <button
+            key={age}
+            ref={(node) => {
+              optionRefs.current[index] = node;
+            }}
+            type="button"
+            role="option"
+            aria-selected={selected}
+            tabIndex={index === focusedIndex ? 0 : -1}
+            onFocus={() => onFocusedIndexChange(index)}
+            onClick={() => onSelect(age)}
+            className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 text-start text-[15px] font-medium leading-5 transition-colors ${
+              selected
+                ? "bg-[#EAF2FB] font-semibold text-[#142033]"
+                : "text-[#263A55] hover:bg-slate-50 hover:text-slate-950"
+            }`}
+          >
+            <span>
+              {age === defaultDriverAge
+                ? t("carsSearch.driverAgeAnyAgeRange")
+                : getDriverAgeOptionLabel(age)}
+            </span>
+            <span className="flex w-5 shrink-0 justify-center">
+              {selected ? (
+                <CheckCircle2
+                  className="h-[18px] w-[18px] text-[#004BB8]"
+                  aria-hidden="true"
+                />
+              ) : null}
+            </span>
+          </button>
+        );
+      })}
+    </div>,
+    document.body,
+  );
 }
 
 function RentalDatesField({
@@ -1502,10 +1743,11 @@ function RentalDatesField({
       ? `${pickupDisplay} — ${dropoffDisplay}`
       : pickupDisplay
     : t("carsSearch.rentalDatePlaceholder");
-  const { placement, popoverRef, style } = useDesktopPopoverPosition(
+  const { popoverRef, style } = useDesktopPopoverPosition(
     isOpen,
     launcherRef,
     620,
+    "below",
   );
 
   return (
@@ -1516,6 +1758,7 @@ function RentalDatesField({
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
+        aria-controls="cars-desktop-rental-dates-dialog"
         aria-label={t("carsSearch.chooseRentalDatesAria")}
         className="focus-ring flex h-7 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-[15px] lg:h-8"
       >
@@ -1533,13 +1776,14 @@ function RentalDatesField({
       {isOpen && typeof document !== "undefined"
         ? createPortal(
             <div
+              id="cars-desktop-rental-dates-dialog"
               ref={popoverRef}
               role="dialog"
               aria-label={t("carsSearch.rentalDatePickerAria")}
               data-cars-desktop-popover="dates"
-              data-placement={placement}
+              data-placement="below"
               style={style ?? undefined}
-              className="fixed z-[1000] hidden rounded-[1.35rem] border border-slate-200/95 bg-white p-4 shadow-[0_30px_90px_-30px_rgba(15,23,42,0.52),0_16px_36px_-22px_rgba(15,23,42,0.34)] ring-1 ring-slate-950/[0.08] sm:block"
+              className="fixed z-[1100] hidden overflow-y-auto overscroll-contain rounded-[1.35rem] border border-slate-200/95 bg-white p-4 shadow-[0_30px_90px_-30px_rgba(15,23,42,0.52),0_16px_36px_-22px_rgba(15,23,42,0.34)] ring-1 ring-slate-950/[0.08] sm:block"
             >
           <p className="mb-3 text-base font-semibold text-slate-900">
             {t("carsSearch.chooseRentalDates")}
