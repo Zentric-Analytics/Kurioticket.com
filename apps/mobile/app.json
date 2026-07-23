@@ -27,6 +27,19 @@
       "image": "./assets/kurioticket-logo-primary-light-bg.png",
       "resizeMode": "contain",
       "backgroundColor": "#F2F6FA"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "89f6fd88-c0d7-495a-9e2b-8301b09f407d"
+      }
+    },
+    "owner": "zentric-analytics",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/89f6fd88-c0d7-495a-9e2b-8301b09f407d"
     }
   }
 }
