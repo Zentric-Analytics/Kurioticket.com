@@ -87,7 +87,7 @@ export default async function AdminPage() {
         />
       </section>
       <section data-admin-home-section="needs-attention" aria-labelledby="needs-attention-heading" className={adminHomeSectionClass}>
-        <div data-admin-home-attention-outline="true" className="overflow-hidden rounded-none border border-[#7B8794] bg-transparent">
+        <div data-admin-home-attention-outline="true" className="overflow-hidden rounded-none border-0 bg-transparent md:border md:border-[#7B8794]">
           <div data-admin-home-attention-heading="section-header" className="px-5 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8">
             <div className="flex flex-wrap items-center gap-3">
               <SectionHeading id="needs-attention-heading">Needs Attention</SectionHeading>
@@ -120,7 +120,7 @@ export default async function AdminPage() {
       </section>
 
       <section data-admin-home-section="at-a-glance" aria-labelledby="at-a-glance-heading" className={adminHomeSectionClass}>
-        <div data-admin-home-glance-outline="true" className="overflow-hidden rounded-none border border-[#7B8794] bg-transparent">
+        <div data-admin-home-glance-outline="true" className="overflow-hidden rounded-none border-0 bg-transparent md:border md:border-[#7B8794]">
           <div data-admin-home-glance-heading="section-header" className="px-5 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8">
             <SectionHeading id="at-a-glance-heading">At a Glance</SectionHeading>
           </div>
@@ -137,7 +137,7 @@ export default async function AdminPage() {
 
       <section aria-label="Search Activity and Service Status" data-admin-home-section="operations" className={adminHomeSectionClass}>
         <div data-admin-home-operations-layout="shared" className="grid gap-0 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-        <section data-admin-home-surface="search-activity" className="relative min-h-[17rem] overflow-hidden rounded-none border border-[#7B8794] bg-transparent" aria-labelledby="search-activity-heading">
+        <section data-admin-home-surface="search-activity" className="relative min-h-[17rem] overflow-hidden rounded-none border-0 bg-transparent md:border md:border-[#7B8794]" aria-labelledby="search-activity-heading">
           <SearchPanelDecoration />
           <div className="relative z-10">
             <div data-admin-home-search-heading="section-header" className="px-5 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8"><PanelHeading id="search-activity-heading" icon={Activity}>Search Activity</PanelHeading></div>
@@ -148,7 +148,7 @@ export default async function AdminPage() {
                   <PanelMetric icon={SearchX} tone="amber" label="No-result searches" value={searchHealth.noResultSearches} className={searchMetricBorderClass(1)} />
                   <PanelMetric icon={XCircle} tone="rose" label="Failed searches" value={searchHealth.failedSearches} className={searchMetricBorderClass(2)} />
                 </div>
-                <div data-admin-home-search-lower="products-link" className="border-t border-[#7B8794] px-5 py-5 sm:px-6 lg:px-8">
+                <div data-admin-home-search-lower="products-link" className="border-t border-[#E4E9EF] px-5 py-5 sm:px-6 md:border-[#7B8794] lg:px-8">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div className="min-w-0">
                       <p className="text-sm font-bold text-[#021C2B]">Top products searched</p>
@@ -175,7 +175,7 @@ export default async function AdminPage() {
           </div>
         </section>
 
-        <section data-admin-home-surface="service-status" className="relative min-h-[17rem] overflow-hidden" aria-labelledby="service-status-heading">
+        <section data-admin-home-surface="service-status" className="relative min-h-[17rem] overflow-hidden border-t border-[#E4E9EF] md:border-t-0" aria-labelledby="service-status-heading">
           <ServicePanelDecoration />
           <div className="relative z-10">
             <div data-admin-home-service-heading="section-header" className="px-5 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8">
@@ -183,7 +183,7 @@ export default async function AdminPage() {
             </div>
             <div className="mt-6 px-5 pb-6 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
               <div data-admin-home-service-groups="provider-system" className="grid items-start gap-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
-              <div data-admin-home-provider-status-outline="true" className="flex min-w-0 flex-col border border-[#7B8794] bg-transparent p-5 sm:p-6 rounded-none">
+              <div data-admin-home-provider-status-outline="true" className="flex min-w-0 flex-col rounded-none border-0 bg-transparent p-5 sm:p-6 md:border md:border-[#7B8794]">
                 <div data-admin-home-status-group-heading="provider">
                   <h3 className="text-sm font-bold text-[#021C2B]">Provider Readiness</h3>
                   <p className="mt-1 text-xs leading-5 text-slate-500">Search availability by product</p>
@@ -195,7 +195,7 @@ export default async function AdminPage() {
                 </div>
                 <div data-admin-home-provider-footer="actions" className="mt-5 flex justify-end"><AdminHomeActionButton href="/admin/providers" action="view-providers">View Providers</AdminHomeActionButton></div>
               </div>
-              <div data-admin-home-system-status-outline="true" className="flex min-w-0 flex-col border border-[#7B8794] bg-transparent p-5 sm:p-6 rounded-none">
+              <div data-admin-home-system-status-outline="true" className="flex min-w-0 flex-col rounded-none border-x-0 border-b-0 border-t border-[#E4E9EF] bg-transparent p-5 pt-5 sm:p-6 md:border md:border-[#7B8794] md:pt-6">
                 <div data-admin-home-status-group-heading="system">
                   <h3 className="text-sm font-bold text-[#021C2B]">System Configuration</h3>
                   <p className="mt-1 text-xs leading-5 text-slate-500">Core platform services and integrations</p>
@@ -261,8 +261,8 @@ function overviewMetricCellBorderClass(index: number) {
   const isDesktopFirstRow = index < 3;
 
   return [
-    isMobileLeftColumn ? "border-r border-[#7B8794]" : "",
-    !isMobileLastRow ? "border-b border-[#7B8794]" : "",
+    isMobileLeftColumn ? "border-r border-[#E4E9EF]" : "",
+    !isMobileLastRow ? "border-b border-[#E4E9EF]" : "",
     isDesktopLastColumn ? "md:border-r-0" : "md:border-r",
     isDesktopFirstRow ? "md:border-b" : "md:border-b-0",
     "md:border-[#7B8794]",
@@ -283,9 +283,9 @@ function PanelMetric({ label, value, icon: Icon, tone, className = "" }: { label
 
 function searchMetricBorderClass(index: number) {
   return [
-    index < 2 ? "border-b border-[#7B8794]" : "",
-    index < 2 ? "sm:border-r" : "",
-    "sm:border-b-0 sm:border-[#7B8794]",
+    index < 2 ? "border-b border-[#E4E9EF]" : "",
+    index < 2 ? "sm:border-r sm:border-[#E4E9EF] md:border-[#7B8794]" : "",
+    "sm:border-b-0 md:border-[#7B8794]",
   ].filter(Boolean).join(" ");
 }
 
@@ -295,7 +295,7 @@ function attentionCellBorderClass(index: number, total: number) {
   const hasDesktopRowDivider = index < Math.ceil(total / 2) * 2 - 2;
 
   return [
-    hasMobileDivider ? "border-b border-[#7B8794]" : "",
+    hasMobileDivider ? "border-b border-[#E4E9EF]" : "",
     isRightColumn ? "md:border-l" : "",
     hasDesktopRowDivider ? "md:border-b" : "md:border-b-0",
     "md:border-[#7B8794]",

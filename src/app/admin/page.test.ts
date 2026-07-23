@@ -122,7 +122,7 @@ test("needs attention uses one outlined responsive grid without card styling", (
   );
   assert.match(
     attentionBlock,
-    /data-admin-home-attention-outline="true"[\s\S]*?className="overflow-hidden rounded-none border border-\[#7B8794\] bg-transparent"/,
+    /data-admin-home-attention-outline="true"[\s\S]*?className="overflow-hidden rounded-none border-0 bg-transparent md:border md:border-\[#7B8794\]"/,
   );
   assert.match(
     attentionBlock,
@@ -166,7 +166,7 @@ test("needs attention cell borders create vertical and horizontal dividers dynam
   );
   assert.match(
     borderHelperBlock,
-    /hasMobileDivider \? "border-b border-\[#7B8794\]" : ""/,
+    /hasMobileDivider \? "border-b border-\[#E4E9EF\]" : ""/,
   );
   assert.match(borderHelperBlock, /isRightColumn \? "md:border-l" : ""/);
   assert.match(
@@ -223,7 +223,7 @@ test("at a glance uses one outlined metric grid with the heading inside the outl
   );
   assert.match(
     glanceBlock,
-    /data-admin-home-glance-outline="true"[\s\S]*?className="overflow-hidden rounded-none border border-\[#7B8794\] bg-transparent"/,
+    /data-admin-home-glance-outline="true"[\s\S]*?className="overflow-hidden rounded-none border-0 bg-transparent md:border md:border-\[#7B8794\]"/,
   );
   assert.match(
     glanceBlock,
@@ -282,11 +282,11 @@ test("at a glance metric cell borders create responsive vertical and horizontal 
   assert.match(borderHelperBlock, /const isDesktopFirstRow = index < 3/);
   assert.match(
     borderHelperBlock,
-    /isMobileLeftColumn \? "border-r border-\[#7B8794\]" : ""/,
+    /isMobileLeftColumn \? "border-r border-\[#E4E9EF\]" : ""/,
   );
   assert.match(
     borderHelperBlock,
-    /!isMobileLastRow \? "border-b border-\[#7B8794\]" : ""/,
+    /!isMobileLastRow \? "border-b border-\[#E4E9EF\]" : ""/,
   );
   assert.match(
     borderHelperBlock,
@@ -333,7 +333,7 @@ test("search activity uses one complete outlined rectangle with heading and lowe
   );
   assert.match(
     searchBlock,
-    /data-admin-home-surface="search-activity"[\s\S]*?className="relative min-h-\[17rem\] overflow-hidden rounded-none border border-\[#7B8794\] bg-transparent"/,
+    /data-admin-home-surface="search-activity"[\s\S]*?className="relative min-h-\[17rem\] overflow-hidden rounded-none border-0 bg-transparent md:border md:border-\[#7B8794\]"/,
   );
   assert.ok(
     headingIndex > outlineIndex,
@@ -385,13 +385,13 @@ test("search activity metric grid has responsive dividers and preserves metric o
   assert.match(searchBlock, /className=\{searchMetricBorderClass\(2\)\}/);
   assert.match(
     borderHelperBlock,
-    /index < 2 \? "border-b border-\[#7B8794\]" : ""/,
+    /index < 2 \? "border-b border-\[#E4E9EF\]" : ""/,
   );
-  assert.match(borderHelperBlock, /index < 2 \? "sm:border-r" : ""/);
-  assert.match(borderHelperBlock, /"sm:border-b-0 sm:border-\[#7B8794\]"/);
+  assert.match(borderHelperBlock, /index < 2 \? "sm:border-r sm:border-\[#E4E9EF\] md:border-\[#7B8794\]" : ""/);
+  assert.match(borderHelperBlock, /"sm:border-b-0 md:border-\[#7B8794\]"/);
   assert.match(
     searchBlock,
-    /data-admin-home-search-lower="products-link"[\s\S]*?className="border-t border-\[#7B8794\] px-5 py-5 sm:px-6 lg:px-8"/,
+    /data-admin-home-search-lower="products-link"[\s\S]*?className="border-t border-\[#E4E9EF\] px-5 py-5 sm:px-6 md:border-\[#7B8794\] lg:px-8"/,
   );
   assert.doesNotMatch(
     searchBlock,
@@ -437,9 +437,9 @@ test("service status has a borderless parent with two independent outlined group
   );
   assert.match(
     serviceOpening,
-    /className="relative min-h-\[17rem\] overflow-hidden"/,
+    /className="relative min-h-\[17rem\] overflow-hidden border-t border-\[#E4E9EF\] md:border-t-0"/,
   );
-  assert.doesNotMatch(serviceOpening, /border|divide|shadow|bg-white|rounded/);
+  assert.doesNotMatch(serviceOpening, /divide|shadow|bg-white|rounded/);
   assert.match(
     serviceBlock,
     /data-admin-home-service-heading="section-header"[\s\S]*?className="px-5 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8"[\s\S]*?<PanelHeading id="service-status-heading" icon=\{Gauge\}>Service Status<\/PanelHeading>[\s\S]*?data-admin-home-service-groups="provider-system"/,
@@ -450,7 +450,7 @@ test("service status has a borderless parent with two independent outlined group
   );
   assert.match(
     providerBlock,
-    /className="flex min-w-0 flex-col border border-\[#7B8794\] bg-transparent p-5 sm:p-6 rounded-none"/,
+    /className="flex min-w-0 flex-col rounded-none border-0 bg-transparent p-5 sm:p-6 md:border md:border-\[#7B8794\]"/,
   );
   assert.match(providerBlock, /data-admin-home-status-group-heading="provider"/);
   assert.match(providerBlock, /Provider Readiness/);
@@ -463,12 +463,12 @@ test("service status has a borderless parent with two independent outlined group
   assert.match(providerBlock, /<AdminHomeActionButton href="\/admin\/providers" action="view-providers">View Providers<\/AdminHomeActionButton>/);
   assert.match(
     systemBlock,
-    /className="flex min-w-0 flex-col border border-\[#7B8794\] bg-transparent p-5 sm:p-6 rounded-none"/,
+    /className="flex min-w-0 flex-col rounded-none border-x-0 border-b-0 border-t border-\[#E4E9EF\] bg-transparent p-5 pt-5 sm:p-6 md:border md:border-\[#7B8794\] md:pt-6"/,
   );
   assert.match(systemBlock, /data-admin-home-status-group-heading="system"/);
   assert.match(systemBlock, /System Configuration/);
   assert.match(systemBlock, /Core platform services and integrations/);
-  assert.doesNotMatch(systemBlock, /System statuses|h-full|mt-auto|justify-between|border-b/);
+  assert.doesNotMatch(systemBlock, /System statuses|h-full|mt-auto|justify-between/);
   assert.deepEqual(labelsFor("StatusRow", systemBlock), [
     "Database connection",
     "Authentication",
