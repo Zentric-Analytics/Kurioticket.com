@@ -28,19 +28,19 @@ function assertMobileOuterBox(block: string, marker: string) {
   );
 }
 
-test("documents the historical mobile reference commit", () => {
+test("documents the historical desktop and frozen mobile reference commits", () => {
   assert.match(
     adminOverviewPage,
-    /Mobile layout reference: 3006d4ce48b709560aae7ac5728de057aefa4428\n\/\/ \(the src\/app\/admin\/page\.tsx revision immediately before a392740a44882ef439b3f681ed28a470d4b98842\)\./,
+    /Desktop\/tablet layout reference: 387e036a426af75ffaf2220fd7e12d9f9ed60044\n\/\/ Mobile layout reference: 862fa27e580571298107bc291dd8fdcb0806dfb7\n\/\/ \(current HEAD before the desktop\/tablet-only restoration\)\./,
   );
   const fileHistory = execSync(
     `git log --follow --format="%H" -- src/app/admin/page.tsx`,
     { encoding: "utf8" },
   ).trim().split("\n");
-  const currentReferenceIndex = fileHistory.indexOf("a392740a44882ef439b3f681ed28a470d4b98842");
 
-  assert.notEqual(currentReferenceIndex, -1);
-  assert.equal(fileHistory[currentReferenceIndex + 1], "3006d4ce48b709560aae7ac5728de057aefa4428");
+  assert.ok(fileHistory.length > 0);
+  assert.equal(execSync(`git cat-file -t 387e036a426af75ffaf2220fd7e12d9f9ed60044`, { encoding: "utf8" }).trim(), "commit");
+  assert.equal(execSync(`git cat-file -t 862fa27e580571298107bc291dd8fdcb0806dfb7`, { encoding: "utf8" }).trim(), "commit");
 });
 
 test("mobile major sections use full-width square #A7B2BE boxes while the header remains unboxed", () => {
@@ -106,7 +106,7 @@ test("At a Glance preserves mobile cell rules and desktop #7B8794 grid rules", (
 test("Service Status is one mobile box but Provider and System remain separate desktop rectangles", () => {
   const serviceBlock = blockBetween('data-admin-home-surface="service-status"', 'data-admin-home-section="recent-admin-activity"');
 
-  assert.match(serviceBlock, /data-admin-home-surface="service-status" className="[^"]*border border-\[#A7B2BE\][^"]*md:border-0/);
+  assert.match(serviceBlock, /data-admin-home-surface="service-status" className="[^"]*border border-\[#A7B2BE\][^"]*md:overflow-visible[^"]*md:border-0/);
   assert.match(serviceBlock, /data-admin-home-service-groups="provider-system"[\s\S]*?md:grid-cols-\[minmax\(0,0\.9fr\)_minmax\(0,1\.1fr\)\] md:gap-6/);
   assert.match(serviceBlock, /data-admin-home-provider-status-outline="true"[\s\S]*?className="flex min-w-0 flex-col px-5 py-5 md:rounded-none md:border md:border-\[#7B8794\] md:bg-transparent md:p-6"/);
   assert.match(serviceBlock, /data-admin-home-system-status-outline="true"[\s\S]*?className="flex min-w-0 flex-col border-t border-\[#A7B2BE\] px-5 py-5 md:mt-0 md:rounded-none md:border md:border-\[#7B8794\] md:bg-transparent md:p-6"/);
@@ -115,8 +115,21 @@ test("Service Status is one mobile box but Provider and System remain separate d
   assert.match(serviceBlock, /System Configuration/);
 });
 
+
+test("Recent Admin Activity restores the borderless desktop timeline while freezing mobile separators", () => {
+  const activityBlock = blockBetween('data-admin-home-section="recent-admin-activity"', '</div>\n  );');
+
+  assert.match(activityBlock, /data-admin-home-activity-outline="true"[\s\S]*?border border-\[#A7B2BE\][^"]*md:overflow-visible md:border-0/);
+  assert.match(activityBlock, /data-admin-home-activity-heading="section-header"[\s\S]*?className="px-5 py-5 md:px-0 md:py-0"/);
+  assert.match(activityBlock, /className="border-t border-\[#A7B2BE\] md:mt-3 md:border-t-0"/);
+  assert.match(adminOverviewPage, /data-admin-home-timeline="true" className="md:border-y-0"><div className="md:space-y-5">/);
+  assert.match(adminOverviewPage, /border-b border-\[#A7B2BE\] px-5 py-4 text-sm last:border-b-0 md:border-b-0 md:px-0 md:py-0/);
+  assert.match(adminOverviewPage, /bg-\[#004BB8\]\/25 md:hidden/);
+  assert.match(activityBlock, /data-admin-home-activity-footer="actions" className="flex justify-end border-t border-\[#A7B2BE\] px-5 py-5 md:mt-6 md:border-t-0 md:px-0 md:py-0"/);
+});
+
 test("desktop outlined design, actions, and content remain preserved", () => {
-  assert.match(adminOverviewPage, /md:grid-cols-2[^"]*md:gap-0/);
+  assert.match(adminOverviewPage, /md:grid-cols-2[^"]*md:items-stretch[^"]*md:gap-0/);
   assert.match(adminOverviewPage, /md:grid-cols-3 md:gap-0/);
   assert.match(adminOverviewPage, /md:border-t md:border-\[#7B8794\]/);
   assert.match(adminOverviewPage, /md:grid-cols-\[minmax\(0,0\.9fr\)_minmax\(0,1\.1fr\)\] md:gap-6/);

@@ -57,8 +57,9 @@ type MetricIcon = "users" | "active" | "suspended" | "admin" | "search" | "activ
 
 const adminHomeSectionClass = "py-2 md:px-6 md:py-6 lg:px-8 lg:py-8";
 
-// Mobile layout reference: 3006d4ce48b709560aae7ac5728de057aefa4428
-// (the src/app/admin/page.tsx revision immediately before a392740a44882ef439b3f681ed28a470d4b98842).
+// Desktop/tablet layout reference: 387e036a426af75ffaf2220fd7e12d9f9ed60044
+// Mobile layout reference: 862fa27e580571298107bc291dd8fdcb0806dfb7
+// (current HEAD before the desktop/tablet-only restoration).
 
 export default async function AdminPage() {
   const [metrics, providers, system, searchHealth, activity] = await Promise.all([
@@ -100,7 +101,7 @@ export default async function AdminPage() {
             </div>
           </div>
           {attentionIssues.length > 0 ? (
-            <div data-admin-home-attention-rail="outlined-grid" className="grid divide-y divide-[#A7B2BE] border-t border-[#A7B2BE] md:mt-6 md:grid-cols-2 md:divide-y-0 md:border-t-0 md:gap-0">
+            <div data-admin-home-attention-rail="outlined-grid" className="grid divide-y divide-[#A7B2BE] border-t border-[#A7B2BE] md:mt-6 md:grid-cols-2 md:items-stretch md:divide-y-0 md:border-t-0 md:gap-0">
               {attentionIssues.map((issue, index) => (
                 <AttentionRow
                   key={issue.key}
@@ -178,7 +179,7 @@ export default async function AdminPage() {
           </div>
         </section>
 
-        <section data-admin-home-surface="service-status" className="relative min-h-[17rem] w-full overflow-hidden rounded-none border border-[#A7B2BE] bg-transparent md:border-0 md:px-0 md:py-0" aria-labelledby="service-status-heading">
+        <section data-admin-home-surface="service-status" className="relative min-h-[17rem] w-full overflow-hidden rounded-none border border-[#A7B2BE] bg-transparent md:overflow-visible md:border-0 md:px-0 md:py-0" aria-labelledby="service-status-heading">
           <ServicePanelDecoration />
           <div className="relative z-10">
             <div data-admin-home-service-heading="section-header" className="px-5 py-5 md:px-6 md:pb-0 md:pt-6 lg:px-8 lg:pt-8">
@@ -310,7 +311,7 @@ function attentionCellBorderClass(index: number, total: number) {
 function AttentionRow({ issue, className = "" }: { issue: AttentionIssue; className?: string }) {
   const Icon = issue.icon === "alert" ? AlertCircle : AlertTriangle;
   const iconClassName = issue.tone === "bad" ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600";
-  return <div data-admin-home-attention-item="outlined-grid-cell" className={`flex min-w-0 items-start gap-4 px-5 py-5 md:h-full md:flex-col md:gap-0 md:border-b-0 md:p-6 ${className}`}><div className="flex min-w-0 flex-1 items-start gap-4 md:flex-none"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${iconClassName}`}><Icon className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="font-semibold text-slate-950">{issue.message}</p></div></div><div data-admin-home-attention-footer="action" className="ml-auto mt-2 flex justify-end md:ml-0 md:mt-auto md:pt-3"><TextLink href={issue.href}>{issue.linkLabel}</TextLink></div></div>;
+  return <div data-admin-home-attention-item="outlined-grid-cell" className={`flex min-w-0 items-start gap-4 px-5 py-5 md:h-full md:flex-col md:items-stretch md:gap-0 md:border-b-0 md:p-6 ${className}`}><div className="flex min-w-0 flex-1 items-start gap-4 md:flex-none"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${iconClassName}`}><Icon className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="font-semibold text-slate-950">{issue.message}</p></div></div><div data-admin-home-attention-footer="action" className="ml-auto mt-2 flex justify-end md:ml-0 md:mt-auto md:pt-3"><TextLink href={issue.href}>{issue.linkLabel}</TextLink></div></div>;
 }
 
 function AdminHomeActionButton({ href, action, children }: { href: string; action: string; children: React.ReactNode }) {
@@ -326,7 +327,7 @@ const statusIcons: Record<string, LucideIcon> = { Flights: Plane, Hotels: Hotel,
 
 function RecentActivityList({ items }: { items: Array<{ id: string; title: string; detail: string; timestamp: string }> }) {
   if (items.length === 0) return <AdminEmptyState variant="compact" title="No admin activity yet" message="Audit log entries will appear here after admin actions are recorded." />;
-  return <div data-admin-home-timeline="true" className="md:border-y-0"><div>{items.map((item) => <div key={item.id} className="grid grid-cols-[2.25rem_minmax(0,1fr)] gap-x-4 gap-y-2 border-b border-[#A7B2BE] px-5 py-4 text-sm last:border-b-0 md:border-b-0 md:px-0 sm:grid-cols-[2.25rem_minmax(0,1fr)_auto] sm:gap-x-6"><div data-admin-home-timeline-icon-column="fixed" className="relative flex w-9 justify-center"><div aria-hidden="true" className="pointer-events-none absolute bottom-[-1rem] top-0 w-px bg-[#004BB8]/25 md:hidden" /><span className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#004BB8] ring-4 ring-white"><Activity className="h-4 w-4" aria-hidden="true" /></span></div><div className="min-w-0"><p className="font-semibold text-slate-950">{humanizeAuditAction(item.title)}</p><p className="mt-1 break-words text-slate-600">{item.detail}</p></div><p className="col-start-2 text-xs font-semibold text-slate-500 sm:col-start-3 sm:text-right">{item.timestamp}</p></div>)}</div></div>;
+  return <div data-admin-home-timeline="true" className="md:border-y-0"><div className="md:space-y-5">{items.map((item) => <div key={item.id} className="grid grid-cols-[2.25rem_minmax(0,1fr)] gap-x-4 gap-y-2 border-b border-[#A7B2BE] px-5 py-4 text-sm last:border-b-0 md:border-b-0 md:px-0 md:py-0 sm:grid-cols-[2.25rem_minmax(0,1fr)_auto] sm:gap-x-6"><div data-admin-home-timeline-icon-column="fixed" className="relative flex w-9 justify-center"><div aria-hidden="true" className="pointer-events-none absolute bottom-[-1rem] top-0 w-px bg-[#004BB8]/25 md:hidden" /><span className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#004BB8] ring-4 ring-white"><Activity className="h-4 w-4" aria-hidden="true" /></span></div><div className="min-w-0"><p className="font-semibold text-slate-950">{humanizeAuditAction(item.title)}</p><p className="mt-1 break-words text-slate-600">{item.detail}</p></div><p className="col-start-2 text-xs font-semibold text-slate-500 sm:col-start-3 sm:text-right">{item.timestamp}</p></div>)}</div></div>;
 }
 
 function TextLink({ href, className = "", children }: { href: string; className?: string; children: React.ReactNode }) {
