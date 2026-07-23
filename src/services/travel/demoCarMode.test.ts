@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { access, readFile } from "node:fs/promises";
+import path from "node:path";
 import test, { afterEach } from "node:test";
 import { getCarResultsMode } from "@/lib/env";
 import type { CarSearchParams } from "@/lib/cars/types";
@@ -46,6 +48,22 @@ test("default mode returns provider-safe demo inventory", async () => {
   assert.equal(result.status, "available");
   assert.equal(result.results.length, 11);
   assert.ok(result.results.every((car) => car.isDemo));
+
+  const imageUrls = result.results.map((car) => car.imageUrl);
+  assert.ok(imageUrls.every((imageUrl) => imageUrl?.startsWith("/images/cars/results/")));
+  assert.equal(new Set(imageUrls).size, 11);
+  await Promise.all(
+    result.results.map(async (car) => {
+      assert.ok(car.imageUrl);
+      assert.ok(car.imageUrl.endsWith(".svg"));
+      assert.match(car.imageAlt.toLowerCase(), new RegExp(car.modelName.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+      const imagePath = path.join(process.cwd(), "public", car.imageUrl);
+      await access(imagePath);
+      const source = await readFile(imagePath, "utf8");
+      assert.match(source, /^<\?xml[^>]*>\s*<svg\b/);
+      assert.doesNotMatch(source, /(?:data:|<image\b|\b(?:href|src)=["']https?:)/i);
+    }),
+  );
   assert.ok(
     result.results.every((car) =>
       car.offers.every((offer) => !offer.bookingUrl),

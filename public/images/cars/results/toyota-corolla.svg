@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+<title id="title">Toyota Corolla representative rental vehicle</title><desc id="desc">Original stylized three-quarter vector illustration of a Toyota Corolla, with the complete vehicle visible.</desc>
+<defs><linearGradient id="paint" x2="0" y2="1"><stop stop-color="#D9DEE5"/><stop offset=".52" stop-color="#D9DEE5"/><stop offset="1" stop-color="#111827" stop-opacity=".55"/></linearGradient><linearGradient id="glass"><stop stop-color="#b9dfef"/><stop offset="1" stop-color="#263e52"/></linearGradient><filter id="shadow"><feGaussianBlur stdDeviation="18"/></filter></defs>
+<ellipse cx="800" cy="735" rx="590" ry="48" fill="#64748b" opacity=".18" filter="url(#shadow)"/>
+<path d="M220 600 Q270 500 450 480 L625 390 Q810 360 1000 490 L1290 535 Q1350 555 1360 630 L1325 685 L235 685 Q200 650 220 600Z" fill="url(#paint)" stroke="#152333" stroke-width="5"/>
+<path d="M650 405 L800 390 L935 480 L575 465Z" fill="url(#glass)" stroke="#dce7ee" stroke-width="7"/><path d="M830 395 L980 475 L1005 490 L955 480Z" fill="url(#glass)" stroke="#dce7ee" stroke-width="7"/>
+<path d="M240 610Q500 560 1325 570" fill="none" stroke="#fff" opacity=".32" stroke-width="8"/><path d="M710 430l25 235M1030 470l20 205" stroke="#17293a" stroke-width="5" opacity=".55"/>
+<!-- Angled front fascia provides the consistent three-quarter presentation. --><path d="M1260 535l100 34v61l-35 55-66-18z" fill="#D9DEE5" stroke="#152333" stroke-width="5"/><path d="M1318 575l42 12v30l-44-4z" fill="#f7fafc"/><path d="M1280 632l78 8-18 28-62-4z" fill="#233645"/>
+<g><circle cx="430" cy="680" r="112" fill="#131a22"/><circle cx="430" cy="680" r="69" fill="#aab4be"/><circle cx="430" cy="680" r="24" fill="#34495a"/><path d="M375 680h110M430 625v110M391 641l78 78M469 641l-78 78" stroke="#e8edf2" stroke-width="9"/></g><g><circle cx="1160" cy="680" r="112" fill="#131a22"/><circle cx="1160" cy="680" r="69" fill="#aab4be"/><circle cx="1160" cy="680" r="24" fill="#34495a"/><path d="M1105 680h110M1160 625v110M1121 641l78 78M1199 641l-78 78" stroke="#e8edf2" stroke-width="9"/></g><path d="M225 575l80-20-5 55-85 15z" fill="#f7d35a" opacity=".9"/>
+<rect x="690" y="650" width="220" height="45" rx="8" fill="#f8fafc" stroke="#94a3b8"/><text x="800" y="680" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#334155">Toyota Corolla</text>
+</svg>
