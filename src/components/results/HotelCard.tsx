@@ -659,10 +659,12 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
           <div className="flex flex-1 flex-col">
             <div className="min-w-0">
               <div>
-                <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                  <h2 className="min-w-0 text-base font-bold leading-6 text-slate-950 lg:text-[17px]">
-                    {hotel.name}
-                  </h2>
+                <div className="flex min-w-0 items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h2 className="min-w-0 text-base font-bold leading-6 text-slate-950 lg:text-[17px]">
+                      {hotel.name}
+                    </h2>
+                  </div>
 
                   {sortBadgeConfig && SortBadgeIcon ? (
                     <span

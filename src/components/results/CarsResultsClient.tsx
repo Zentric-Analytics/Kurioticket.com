@@ -8,6 +8,7 @@ import {
   useState,
   type RefObject,
 } from "react";
+import Link from "next/link";
 import {
   CalendarDays,
   CheckCircle2,
@@ -26,6 +27,10 @@ import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
+import { CarResultCard } from "@/components/results/CarResultCard";
+import { CarCardSkeleton } from "@/components/ui/Skeleton";
+import { assignCarBadges, buildCarDetailsHref, filterCarResults, sortCarResults, type CarSort, type SelectedCarFilters } from "@/lib/cars/carResults";
+import type { CarInventoryStatus, CarResultsMode, CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 
 function useDesktopFilterShortcut(topOffset = 116) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -130,7 +135,7 @@ function DesktopFilterShortcut({
   );
 }
 
-type CarsResultsValues = {
+type CarsResultsValues = CarSearchParams & {
   pickupLocation: string;
   dropoffLocation: string;
   pickupDate: string;
@@ -150,8 +155,6 @@ type CarFilterGroup = {
   titleKey: string;
   options: CarFilterOption[];
 };
-
-type SelectedCarFilters = Record<string, string[]>;
 
 const defaultDriverAge = "18-70";
 const minimumDriverAge = 18;
@@ -552,20 +555,21 @@ const getDriverAgeOptionLabel = (age: string, t: (key: string) => string) => {
 };
 
 const fieldShellClass =
-  "relative min-h-[50px] rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 shadow-sm shadow-slate-900/[0.025] transition-[min-height,padding,border-color,box-shadow] duration-200 hover:border-slate-300 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[54px] sm:px-3 sm:py-1.5 lg:flex lg:min-h-[54px] lg:flex-col lg:justify-center lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:bg-transparent lg:shadow-none lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0";
+  "relative min-h-[50px] rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 shadow-sm shadow-slate-900/[0.025] transition-[min-height,padding,border-color,box-shadow] duration-200 hover:border-slate-300 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[54px] sm:px-3 sm:py-1.5 lg:flex lg:min-h-[58px] lg:min-w-0 lg:flex-col lg:justify-center lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/80 lg:bg-transparent lg:px-4 lg:py-2.5 lg:shadow-none lg:hover:border-slate-200/80 lg:focus-within:border-slate-200/80 lg:focus-within:ring-0";
 
 const searchFormGridClass =
-  "grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.14fr)_minmax(0,1.04fr)_minmax(0,1.55fr)_minmax(0,1fr)_minmax(6.75rem,0.58fr)_112px] lg:items-stretch lg:gap-0";
+  "grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.18fr)_minmax(0,1.08fr)_minmax(0,1.48fr)_minmax(0,1.06fr)_118px_116px] lg:items-stretch lg:gap-0";
 
-const compactFieldShellClass = "min-h-[46px] py-1 lg:min-h-[54px] lg:py-1.5";
+const compactFieldShellClass =
+  "min-h-[46px] py-1 lg:min-h-[54px] lg:py-1.5";
 
 const fieldLabelClass =
-  "mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600";
+  "mb-1.5 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600 lg:text-[0.66rem] lg:leading-3 lg:tracking-[0.13em] lg:text-slate-500";
 
 const fieldInputClass =
-  "focus-ring h-8 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 md:text-sm";
+  "focus-ring h-8 min-w-0 w-full truncate border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 md:text-sm lg:font-semibold lg:leading-6";
 
-export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
+export function CarsResultsClient({ values, initialResults, inventoryStatus }: { values: CarsResultsValues; initialResults: NormalizedCarResult[]; resultsMode: CarResultsMode; inventoryStatus: CarInventoryStatus }) {
   const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const intlLocale = getCarsResultsIntlLocale(locale);
@@ -573,6 +577,12 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [selectedCarFilters, setSelectedCarFilters] =
     useState<SelectedCarFilters>({});
+  const [sort, setSort] = useState<CarSort>("recommended");
+  const [carsSortOpen, setCarsSortOpen] = useState(false);
+  const [resultsTransitioning, setResultsTransitioning] = useState(false);
+  const resultsTransitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const carsSortRef = useRef<HTMLDivElement | null>(null);
+  const carsSortButtonRef = useRef<HTMLButtonElement | null>(null);
   const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
   const [isSearchExpandedWhileSticky, setIsSearchExpandedWhileSticky] =
     useState(false);
@@ -638,6 +648,17 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   const activeFilterLabel = interpolate(t("carsResults.activeFilterCount"), {
     count: String(activeFilterCount),
   });
+  const carSortOptions: { value: CarSort; label: string }[] = [
+    { value: "recommended", label: t("carsResults.recommended") },
+    { value: "lowestTotal", label: t("carsResults.lowestTotal") },
+    { value: "lowestDaily", label: t("carsResults.lowestDaily") },
+    { value: "topRated", label: t("carsResults.topRated") },
+  ];
+  const selectedCarSortLabel =
+    carSortOptions.find((option) => option.value === sort)?.label ??
+    carSortOptions[0].label;
+  const badges = useMemo(() => assignCarBadges(initialResults), [initialResults]);
+  const visibleResults = useMemo(() => sortCarResults(filterCarResults(initialResults, selectedCarFilters), sort), [initialResults, selectedCarFilters, sort]);
   const {
     containerRef: desktopFilterContainerRef,
     contentRef: desktopFilterContentRef,
@@ -664,10 +685,6 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
         )}`
       : formatCompactDate(pickupDate, intlLocale, t("carsResults.selectDates"))
     : t("carsResults.selectRentalDates");
-  const timeSummary = `${formatTimeLabel(pickupTime, intlLocale)} — ${formatTimeLabel(
-    dropoffTime,
-    intlLocale,
-  )}`;
   const driverAgeSummary = getDriverAgeOptionLabel(driverAge, t);
   const isExpandedStickySearchActive =
     isSearchBarCompact && isSearchExpandedWhileSticky;
@@ -684,6 +701,9 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   }, []);
 
   const toggleCarFilter = (groupId: string, option: string) => {
+    setResultsTransitioning(true);
+    if (resultsTransitionTimerRef.current) clearTimeout(resultsTransitionTimerRef.current);
+    resultsTransitionTimerRef.current = setTimeout(() => setResultsTransitioning(false), 160);
     setSelectedCarFilters((current) => {
       const currentGroupSelections = current[groupId] ?? [];
       const isSelected = currentGroupSelections.includes(option);
@@ -702,7 +722,37 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
     });
   };
 
-  const clearCarFilters = () => setSelectedCarFilters({});
+  const clearCarFilters = () => {
+    setResultsTransitioning(true);
+    setSelectedCarFilters({});
+    if (resultsTransitionTimerRef.current) clearTimeout(resultsTransitionTimerRef.current);
+    resultsTransitionTimerRef.current = setTimeout(() => setResultsTransitioning(false), 160);
+  };
+
+  useEffect(() => {
+    if (!carsSortOpen) return;
+
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (carsSortRef.current?.contains(target)) return;
+      setCarsSortOpen(false);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setCarsSortOpen(false);
+        carsSortButtonRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [carsSortOpen]);
 
   useEffect(() => {
     const releaseExistingLock = () => {
@@ -977,7 +1027,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
         ref={searchFormRef}
         action="/cars/results"
         method="get"
-        className="mx-auto w-full min-w-0 max-w-[72rem] sm:max-w-5xl"
+        className="mx-auto w-full min-w-0 max-w-5xl"
         onFocusCapture={markExpandedSearchInteraction}
         onChangeCapture={markExpandedSearchInteraction}
         onSubmit={() => {
@@ -990,7 +1040,12 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
         <input type="hidden" name="pickupTime" value={pickupTime} />
         <input type="hidden" name="dropoffTime" value={dropoffTime} />
         <input type="hidden" name="driverAge" value={driverAge} />
-        <div className="overflow-visible rounded-[1.35rem] border border-slate-200/90 bg-white p-1 shadow-[0_16px_36px_-24px_rgba(15,23,42,0.32)] ring-1 ring-slate-950/[0.02] transition-[padding,border-color,box-shadow,border-eadius] duration-200">
+        <div
+          className={cn(
+            "overflow-visible rounded-[1.15rem] border border-slate-200/90 bg-white shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-slate-950/[0.025] transition-[padding,border-color,box-shadow,border-radius] duration-200",
+            isCompactSearch ? "p-1" : "p-1.5",
+          )}
+        >
           <div className={searchFormGridClass}>
             <SearchInputCell
               icon={MapPin}
@@ -1116,7 +1171,8 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             <Button
               type="submit"
               className={cn(
-                "mt-2 h-12 w-full rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_12px_24px_rgba(0,75,184,0.18)] transition-[min-height,height,box-shadow,background-color] duration-200 hover:bg-[#021C2B] hover:shadow-[0_14px_28px_rgba(0,75,184,0.24)] sm:mt-3 lg:mt-0 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20",
+                "mt-2 h-12 w-full rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] transition-[min-height,height,box-shadow,background-color] duration-200 hover:bg-[#021C2B] hover:shadow-[0_12px_24px_rgba(2,28,43,0.18)] sm:mt-3 lg:mt-0 lg:h-full lg:self-stretch lg:rounded-[0.8rem] lg:ring-1 lg:ring-[#004BB8]/12",
+                isCompactSearch ? "lg:min-h-[54px]" : "lg:min-h-[58px]",
               )}
             >
               {t("search")}
@@ -1171,47 +1227,93 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
       <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
       <section
         className={cn(
-          "sticky top-0 z-40 hidden border-b border-transparent bg-[#f6f8fb]/95 backdrop-blur transition-[padding,border-color] duration-200 sm:block",
-          showCompactSearchSummary ? "py-1.5" : "py-3",
+          "sticky top-0 z-40 hidden border-b border-transparent transition-[padding,background-color] duration-200 sm:block",
+          showCompactSearchSummary
+            ? "border-transparent bg-white/95 py-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.05)] backdrop-blur"
+            : "border-transparent bg-white pb-0 pt-7",
         )}
         aria-labelledby="cars-results-heading"
       >
         <div className="page-shell">
           <div
             className={cn(
-              "mb-2 flex items-center justify-between gap-3 lg:hidden",
-              showCompactSearchSummary && "hidden",
+              "relative z-10 min-w-0",
+              !showCompactSearchSummary && "translate-y-5",
             )}
           >
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">
-              {t("carsResults.resultsLabel")}
-            </p>
-            <Button
-              type="button"
-              variant="secondary"
-              aria-label={
-                activeFilterCount > 0
-                  ? interpolate(t("carsResults.openFiltersWithCount"), {
-                      count: String(activeFilterCount),
-                    })
-                  : t("carsResults.openFilters")
-              }
-              className="relative h-10 rounded-md border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm"
-              onClick={() => setFiltersOpen(true)}
+            <div
+              className={cn(
+                "mb-2 flex items-center justify-between gap-3 lg:hidden",
+                showCompactSearchSummary && "hidden",
+              )}
             >
-              <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-              {t("filters")}
-              {activeFilterCount > 0 ? (
-                <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] font-bold leading-none text-[#004BB8] ring-1 ring-[#004BB8]/10">
-                  {activeFilterCount}
-                </span>
-              ) : null}
-            </Button>
-          </div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">
+                {t("carsResults.resultsLabel")}
+              </p>
+              <Button
+                type="button"
+                variant="secondary"
+                aria-label={
+                  activeFilterCount > 0
+                    ? interpolate(t("carsResults.openFiltersWithCount"), {
+                        count: String(activeFilterCount),
+                      })
+                    : t("carsResults.openFilters")
+                }
+                className="relative h-10 rounded-md border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm"
+                onClick={() => setFiltersOpen(true)}
+              >
+                <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                {t("filters")}
+                {activeFilterCount > 0 ? (
+                  <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] font-bold leading-none text-[#004BB8] ring-1 ring-[#004BB8]/10">
+                    {activeFilterCount}
+                  </span>
+                ) : null}
+              </Button>
+            </div>
 
-          {!mobileSearchOpen ? renderCarsSearchForm("desktop") : null}
+            {!mobileSearchOpen ? renderCarsSearchForm("desktop") : null}
+          </div>
         </div>
       </section>
+
+      <nav
+        aria-label="Breadcrumb"
+        className="page-shell hidden pt-12 sm:block lg:pt-14"
+      >
+        <ol className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
+          <li>
+            <Link
+              href="/"
+              className="transition-colors hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+            >
+              Home
+            </Link>
+          </li>
+
+          <li className="text-slate-300" aria-hidden="true">
+            &gt;
+          </li>
+
+          <li>
+            <Link
+              href="/cars"
+              className="transition-colors hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+            >
+              Cars
+            </Link>
+          </li>
+
+          <li className="text-slate-300" aria-hidden="true">
+            &gt;
+          </li>
+
+          <li className="text-slate-700" aria-current="page">
+            Car results
+          </li>
+        </ol>
+      </nav>
 
       <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[256px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="hidden lg:sticky lg:top-[7.5rem] lg:block lg:self-start">
@@ -1248,35 +1350,120 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             })}
           </h1>
 
-          <div className="hidden w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <h2 className="truncate text-sm font-bold text-navy">
-                {interpolate(t("carsResults.resultsFor"), {
-                  location: locationSummary,
-                })}
-              </h2>
-              <p className="mt-1 text-xs font-semibold text-slate-500">
-                {rentalDateSummary} · {timeSummary} · {driverAgeSummary}
-              </p>
-            </div>
-
-            <Button
-              type="button"
-              variant="secondary"
-              className="h-10 rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:hidden"
-              onClick={() => setFiltersOpen(true)}
-            >
-              <SlidersHorizontal size={17} aria-hidden="true" />
-              {activeFilterCount > 0
-                ? t("filtersWithCount").replace(
+          {initialResults.length > 0 ? (
+            <>
+              <div className="flex w-full flex-col gap-2 py-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                <p className="whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">
+                  {t(
+                    visibleResults.length === 1
+                      ? "resultFound"
+                      : "resultsFound",
+                  ).replace(
                     "{{count}}",
-                    String(activeFilterCount),
-                  )
-                : t("filters")}
-            </Button>
-          </div>
+                    new Intl.NumberFormat(intlLocale, {
+                      maximumFractionDigits: 0,
+                    }).format(visibleResults.length),
+                  )}
+                </p>
+                <div className="flex min-w-0 shrink-0 flex-nowrap items-center justify-between gap-2 sm:justify-end">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="h-10 rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:hidden"
+                    onClick={() => setFiltersOpen(true)}
+                  >
+                    <SlidersHorizontal size={17} aria-hidden="true" />
+                    {activeFilterCount > 0
+                      ? t("filtersWithCount").replace(
+                          "{{count}}",
+                          String(activeFilterCount),
+                        )
+                      : t("filters")}
+                  </Button>
+                  <div className="flex min-w-0 items-center gap-1 whitespace-nowrap sm:gap-2">
+                    <span className="whitespace-nowrap text-[clamp(0.68rem,3vw,0.875rem)] font-semibold text-slate-700 sm:text-base">
+                      {t("carsResults.sortBy")}:
+                    </span>
+                    <div
+                      ref={carsSortRef}
+                      className="relative inline-flex min-w-0 shrink items-center whitespace-nowrap"
+                    >
+                      <button
+                        ref={carsSortButtonRef}
+                        type="button"
+                        aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
+                        aria-haspopup="menu"
+                        aria-expanded={carsSortOpen}
+                        className="inline-flex h-9 min-w-0 items-center justify-center gap-2 rounded-md bg-transparent px-2 text-[16px] font-semibold text-[#142033] transition hover:bg-[#004BB8]/5 hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                        onClick={() => setCarsSortOpen((open) => !open)}
+                      >
+                        <span className="min-w-0 truncate whitespace-nowrap">
+                          {selectedCarSortLabel}
+                        </span>
+                        <ChevronDown
+                          size={16}
+                          className={cn(
+                            "shrink-0 transition-transform duration-150",
+                            carsSortOpen && "rotate-180",
+                          )}
+                          aria-hidden="true"
+                        />
+                      </button>
+                      <div
+                        role="menu"
+                        aria-hidden={!carsSortOpen}
+                        className={cn(
+                          "absolute end-0 top-11 z-40 w-56 max-w-[calc(100vw-2rem)] origin-top-right rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_14px_32px_-18px_rgba(15,23,42,0.45)] transition duration-150",
+                          carsSortOpen
+                            ? "translate-y-0 scale-100 opacity-100"
+                            : "pointer-events-none -translate-y-1 scale-95 opacity-0",
+                        )}
+                      >
+                        {carSortOptions.map((option) => {
+                          const isSelected = sort === option.value;
 
-          <CarsResultsShell hasSearchContext={hasSearchContext} t={t} />
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              role="menuitemradio"
+                              aria-checked={isSelected}
+                              tabIndex={carsSortOpen ? 0 : -1}
+                              className={cn(
+                                "flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25",
+                                isSelected
+                                  ? "bg-[#004BB8]/[0.06] text-[#004BB8]"
+                                  : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
+                              )}
+                              onClick={() => {
+                                setResultsTransitioning(true);
+                                setSort(option.value);
+                                if (resultsTransitionTimerRef.current)
+                                  clearTimeout(resultsTransitionTimerRef.current);
+                                resultsTransitionTimerRef.current = setTimeout(
+                                  () => setResultsTransitioning(false),
+                                  160,
+                                );
+                                setCarsSortOpen(false);
+                              }}
+                            >
+                              <span className="w-4 shrink-0 text-[#004BB8]">
+                                {isSelected ? "✓" : ""}
+                              </span>
+                              <span className="whitespace-nowrap">
+                                {option.label}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {resultsTransitioning ? <div className="space-y-4">{[0,1,2].map((item) => <CarCardSkeleton key={item} />)}</div> : visibleResults.length ? <div className="space-y-4">{visibleResults.map((car) => <CarResultCard key={car.id} car={car} badge={badges.get(car.id)} detailsHref={buildCarDetailsHref(car.id, values)} />)}</div> : <div role="status" className="rounded-xl border border-slate-200 bg-white p-8 text-center"><p className="font-bold text-slate-950">No cars match these filters.</p><Button type="button" variant="secondary" className="mt-4" onClick={clearCarFilters}>Clear filters</Button></div>}
+            </>
+          ) : <CarsResultsShell hasSearchContext={hasSearchContext} inventoryStatus={inventoryStatus} t={t} />}
         </section>
       </div>
 
@@ -1379,8 +1566,11 @@ function SearchInputCell({
       )}
     >
       <label htmlFor={name} className={fieldLabelClass}>
-        <Icon className="h-3.5 w-3.5 text-[#5CB6B2]" aria-hidden="true" />
-        {label}
+        <Icon
+          className="h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden"
+          aria-hidden="true"
+        />
+        <span className="min-w-0 truncate">{label}</span>
       </label>
       <div className="relative">
         <input
@@ -1468,17 +1658,19 @@ function SearchDateCell({
     >
       <div className={fieldLabelClass}>
         <CalendarDays
-          className="h-3.5 w-3.5 text-[#5CB6B2]"
+          className="h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden"
           aria-hidden="true"
         />
-        {t("carsResults.rentalDatesLabel") || t("carsResults.rentalDates")}
+        <span className="min-w-0 truncate">
+          {t("carsResults.rentalDatesLabel") || t("carsResults.rentalDates")}
+        </span>
       </div>
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
-        className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm"
+        className="focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
       >
         <span className={cn("truncate", !pickupDate && "text-slate-400")}>
           {summary}
@@ -1661,16 +1853,21 @@ function SearchTimeCell({
       className={cn(fieldShellClass, isCompact && compactFieldShellClass)}
     >
       <div className={fieldLabelClass}>
-        <Clock3 className="h-3.5 w-3.5 text-[#5CB6B2]" aria-hidden="true" />
-        {t("carsResults.pickupReturnTimeLabel") ||
-          t("carsResults.pickupReturnTime")}
+        <Clock3
+          className="h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden"
+          aria-hidden="true"
+        />
+        <span className="min-w-0 truncate">
+          {t("carsResults.pickupReturnTimeLabel") ||
+            t("carsResults.pickupReturnTime")}
+        </span>
       </div>
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm"
+        className="focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
       >
         <span className="truncate">
           {formatTimeLabel(pickupTime, intlLocale)} —{" "}
@@ -1756,15 +1953,20 @@ function DriverAgeCell({
       className={cn(fieldShellClass, isCompact && compactFieldShellClass)}
     >
       <div className={fieldLabelClass}>
-        <Users className="h-3.5 w-3.5 text-[#5CB6B2]" aria-hidden="true" />
-        {t("carsResults.driverAgeLabel") || t("carsResults.driverAge")}
+        <Users
+          className="h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden"
+          aria-hidden="true"
+        />
+        <span className="min-w-0 truncate">
+          {t("carsResults.driverAgeLabel") || t("carsResults.driverAge")}
+        </span>
       </div>
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
-        className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm"
+        className="focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
       >
         <span className="truncate">
           {getDriverAgeOptionLabel(driverAge, t)}
@@ -1815,9 +2017,11 @@ function DriverAgeCell({
 
 function CarsResultsShell({
   hasSearchContext,
+  inventoryStatus,
   t,
 }: {
   hasSearchContext: boolean;
+  inventoryStatus: CarInventoryStatus;
   t: (key: string) => string;
 }) {
   return (
@@ -1825,7 +2029,7 @@ function CarsResultsShell({
       className="rounded-xl border border-slate-200 bg-white p-5 text-sm font-semibold text-muted shadow-sm"
       role="status"
     >
-      {hasSearchContext
+      {hasSearchContext && inventoryStatus !== "invalid-search"
         ? t("carsResults.emptyInventory")
         : t("carsResults.enterPickupDetails")}
     </div>

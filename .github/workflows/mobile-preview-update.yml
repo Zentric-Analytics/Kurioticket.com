@@ -1,0 +1,65 @@
+name: Publish mobile preview update
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - "apps/mobile/**"
+      - ".github/workflows/mobile-preview-update.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: mobile-preview-update
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish-preview-update:
+    name: Publish Android preview update
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check for EXPO_TOKEN
+        shell: bash
+        run: |
+          if [ -z "${{ secrets.EXPO_TOKEN }}" ]; then
+            echo "Missing EXPO_TOKEN repository secret."
+            exit 1
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Setup Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install mobile dependencies
+        working-directory: apps/mobile
+        run: npm ci
+
+      - name: Type-check mobile app
+        working-directory: apps/mobile
+        run: npm run typecheck
+
+      - name: Publish update to preview channel
+        working-directory: apps/mobile
+        run: >-
+          eas update
+          --channel preview
+          --environment preview
+          --platform android
+          --non-interactive
+          --message "Automated preview update from dev ${{ github.sha }}"

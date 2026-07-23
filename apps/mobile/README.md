@@ -68,7 +68,7 @@ Requires macOS and Xcode. iOS simulators can usually reach `http://localhost:300
 
 - Production home screen with legacy welcome and connection-status routes redirected back to `/`.
 - Calls only `GET /api/mobile/v1/health` and `GET /api/mobile/v1/config`.
-- Flights shown as available; hotels, cars, push notifications, social authentication, and premium subscriptions shown as disabled or coming later.
+- Flights, hotels, cars, and deals show usable mobile search forms; push notifications, social authentication, and premium subscriptions remain disabled or coming later.
 
 ## Postponed features
 
@@ -83,8 +83,8 @@ Authentication, Prisma/database work, travel search, booking, payments, push not
 5. Open the app on a device or emulator.
 6. Confirm the production Home screen appears.
 7. If a device has a cached deep link to `/welcome` or `/connection-status`, confirm it redirects back to `/`.
-8. Confirm flights are enabled.
-9. Confirm hotels and cars are marked as coming soon.
+8. Confirm Flights, Hotels, Cars, and Deals tabs each render a search form.
+9. Confirm unsupported hotel, car, and deal result integrations show graceful non-blocking messages after valid submission.
 
 ## Assets needing final review
 

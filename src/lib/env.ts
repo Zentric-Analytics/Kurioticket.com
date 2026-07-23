@@ -26,6 +26,7 @@ export function getGoogleClientSecret() {
 export type TravelProviderMode = "local" | "staging" | "production";
 export type FlightProviderPrimary = "duffel" | "none";
 export type HotelResultsMode = "demo" | "live";
+export type CarResultsMode = "live" | "demo";
 export type HotelProviderPrimary =
   | "none"
   | "kayak_sandbox"
@@ -81,6 +82,13 @@ export function getHotelResultsMode(): HotelResultsMode {
   // selected when a verified live provider is ready. This mode is separate
   // from emergency/local development fallbacks.
   return readEnum("HOTEL_RESULTS_MODE", ["demo", "live"] as const, "demo");
+}
+
+export function getCarResultsMode(): CarResultsMode {
+  // No approved live Cars provider exists yet, so the visibly labelled catalogue
+  // (whose offers have no external booking URLs) is the temporary product source.
+  // Production should use exact `live` only after a verified adapter is connected.
+  return process.env.CARS_RESULTS_MODE === "live" ? "live" : "demo";
 }
 
 export function getHotelProviderPrimary(): HotelProviderPrimary {
