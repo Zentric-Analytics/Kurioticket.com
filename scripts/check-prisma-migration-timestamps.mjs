@@ -3,8 +3,33 @@ import path from "node:path";
 import process from "node:process";
 
 const migrationsDirectory = path.join(process.cwd(), "prisma", "migrations");
-const grandfatheredDuplicateTimestamps = new Set(["20260628000000"]);
+const grandfatheredDuplicateMigrations = new Map([
+  [
+    "20260603000000",
+    new Set([
+      "20260603000000_homepage_fare_snapshots",
+      "20260603000000_remove_premium_subscription_systems",
+    ]),
+  ],
+  [
+    "20260628000000",
+    new Set([
+      "20260628000000_add_user_profile",
+      "20260628000000_add_user_profiles",
+    ]),
+  ],
+]);
 const migrationDirectoryPattern = /^(\d{14})_.+$/;
+
+function isGrandfatheredDuplicate(timestamp, migrations) {
+  const expectedMigrations = grandfatheredDuplicateMigrations.get(timestamp);
+
+  if (!expectedMigrations || expectedMigrations.size !== migrations.length) {
+    return false;
+  }
+
+  return migrations.every((migration) => expectedMigrations.has(migration));
+}
 
 async function main() {
   const entries = await fs.readdir(migrationsDirectory, { withFileTypes: true });
@@ -25,7 +50,7 @@ async function main() {
   const unexpectedDuplicates = [...migrationsByTimestamp.entries()]
     .filter(
       ([timestamp, migrations]) =>
-        migrations.length > 1 && !grandfatheredDuplicateTimestamps.has(timestamp),
+        migrations.length > 1 && !isGrandfatheredDuplicate(timestamp, migrations),
     )
     .sort(([left], [right]) => left.localeCompare(right));
 
