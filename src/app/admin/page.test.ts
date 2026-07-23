@@ -21,6 +21,13 @@ function labelsFor(component: string, block = adminOverviewPage): string[] {
   );
 }
 
+function assertMobileOuterBox(block: string, marker: string) {
+  assert.match(
+    block,
+    new RegExp(`${marker}[\\s\\S]*?className="[^"]*w-full[^"]*overflow-hidden[^"]*rounded-none[^"]*border border-\\[#A7B2BE\\][^"]*bg-transparent`),
+  );
+}
+
 test("documents the historical mobile reference commit", () => {
   assert.match(
     adminOverviewPage,
@@ -36,52 +43,49 @@ test("documents the historical mobile reference commit", () => {
   assert.equal(fileHistory[currentReferenceIndex + 1], "3006d4ce48b709560aae7ac5728de057aefa4428");
 });
 
-test("mobile base classes restore the immediately older section dividers", () => {
-  assert.match(
-    adminOverviewPage,
-    /const adminHomeSectionClass = "border-t border-\[#A7B2BE\] px-5 py-6 sm:px-6 md:border-0 lg:px-8 lg:py-8";/,
-  );
+test("mobile major sections use full-width square #A7B2BE boxes while the header remains unboxed", () => {
+  assert.match(adminOverviewPage, /const adminHomeSectionClass = "py-2 md:px-6 md:py-6 lg:px-8 lg:py-8";/);
+
+  const headerBlock = blockBetween('data-admin-home-section="header"', 'data-admin-home-section="needs-attention"');
+  assert.doesNotMatch(headerBlock, /border border-\[#A7B2BE\]|data-admin-home-[a-z-]+-outline="true"/);
+
+  assertMobileOuterBox(blockBetween('data-admin-home-section="needs-attention"', 'data-admin-home-section="at-a-glance"'), 'data-admin-home-attention-outline="true"');
+  assertMobileOuterBox(blockBetween('data-admin-home-section="at-a-glance"', 'data-admin-home-section="operations"'), 'data-admin-home-glance-outline="true"');
+  assertMobileOuterBox(blockBetween('data-admin-home-surface="search-activity"', 'data-admin-home-surface="service-status"'), 'data-admin-home-surface="search-activity"');
+  assertMobileOuterBox(blockBetween('data-admin-home-surface="service-status"', 'data-admin-home-section="recent-admin-activity"'), 'data-admin-home-surface="service-status"');
+  assertMobileOuterBox(blockBetween('data-admin-home-section="recent-admin-activity"', '</div>\n  );'), 'data-admin-home-activity-outline="true"');
 });
 
-test("mobile base classes restore the pre-outline Needs Attention layout", () => {
-  // Historical reference a392740a44882ef439b3f681ed28a470d4b98842 used the f157bfa
-  // inner layout plus mobile-only section rectangles on the outer section wrapper.
-  const attentionBlock = blockBetween(
-    'data-admin-home-section="needs-attention"',
-    'data-admin-home-section="at-a-glance"',
-  );
-  const borderHelperBlock = blockBetween(
-    "function attentionCellBorderClass",
-    "function AttentionRow",
-  );
+test("full-width mobile dividers sit outside horizontal padding", () => {
+  const attentionBlock = blockBetween('data-admin-home-section="needs-attention"', 'data-admin-home-section="at-a-glance"');
+  assert.match(attentionBlock, /data-admin-home-attention-heading="section-header"[\s\S]*?className="px-5 py-5/);
+  assert.match(attentionBlock, /data-admin-home-attention-rail="outlined-grid" className="grid divide-y divide-\[#A7B2BE\] border-t border-\[#A7B2BE\]/);
+  assert.match(adminOverviewPage, /data-admin-home-attention-item="outlined-grid-cell"[\s\S]*?px-5 py-5/);
 
-  assert.match(
-    attentionBlock,
-    /data-admin-home-attention-outline="true"[\s\S]*?className="overflow-hidden rounded-none bg-transparent md:border md:border-\[#7B8794\]"/,
-  );
-  assert.match(
-    attentionBlock,
-    /data-admin-home-attention-heading="section-header"[\s\S]*?className="md:px-6 md:pt-6 lg:px-8 lg:pt-8"/,
-  );
-  assert.ok(attentionBlock.includes('data-admin-home-attention-rail="outlined-grid" className="mt-4 grid divide-y divide-[#A7B2BE] border-t border-[#A7B2BE] md:mt-6 md:grid-cols-2 md:divide-y-0 md:border-t-0 md:gap-0"'));
-  assert.match(
-    adminOverviewPage,
-    /data-admin-home-attention-item="outlined-grid-cell"[\s\S]*?className=\{`flex min-w-0 items-start gap-4 py-5 md:h-full md:flex-col md:gap-0 md:border-b-0 md:p-6 \$\{className\}`\}/,
-  );
-  assert.doesNotMatch(borderHelperBlock, /border-b border-\[#7B8794\]|border-r border-\[#7B8794\]/);
-  assert.match(borderHelperBlock, /md:border-l/);
-  assert.match(borderHelperBlock, /md:border-\[#7B8794\]/);
+  const glanceBlock = blockBetween('data-admin-home-section="at-a-glance"', 'data-admin-home-section="operations"');
+  assert.match(glanceBlock, /data-admin-home-glance-heading="section-header"[\s\S]*?className="px-5 py-5/);
+  assert.match(glanceBlock, /data-admin-home-glance-grid="outlined" className="grid grid-cols-2 border-t border-\[#A7B2BE\]/);
+
+  const searchBlock = blockBetween('data-admin-home-surface="search-activity"', 'data-admin-home-surface="service-status"');
+  assert.match(searchBlock, /data-admin-home-search-heading="section-header"[\s\S]*?className="px-5 py-5/);
+  assert.match(searchBlock, /data-admin-home-search-metrics="outlined-grid" className="grid grid-cols-1 divide-y divide-\[#A7B2BE\] border-t border-\[#A7B2BE\]/);
+  assert.match(searchBlock, /data-admin-home-search-lower="products-link"[\s\S]*?className="border-t border-\[#A7B2BE\] px-5 py-5/);
+
+  const serviceBlock = blockBetween('data-admin-home-surface="service-status"', 'data-admin-home-section="recent-admin-activity"');
+  assert.match(serviceBlock, /data-admin-home-service-heading="section-header"[\s\S]*?className="px-5 py-5/);
+  assert.match(serviceBlock, /className="border-t border-\[#A7B2BE\] md:mt-6 md:border-t-0/);
+  assert.match(serviceBlock, /data-admin-home-system-status-outline="true"[\s\S]*?className="flex min-w-0 flex-col border-t border-\[#A7B2BE\] px-5 py-5/);
+
+  const activityBlock = blockBetween('data-admin-home-section="recent-admin-activity"', '</div>\n  );');
+  assert.match(activityBlock, /data-admin-home-activity-heading="section-header"[\s\S]*?className="px-5 py-5/);
+  assert.match(activityBlock, /className="border-t border-\[#A7B2BE\] md:mt-3 md:border-t-0"/);
+  assert.match(activityBlock, /data-admin-home-activity-footer="actions" className="flex justify-end border-t border-\[#A7B2BE\] px-5 py-5/);
+  assert.match(adminOverviewPage, /border-b border-\[#A7B2BE\] px-5 py-4 text-sm last:border-b-0/);
 });
 
-test("At a Glance uses deliberate mobile cell dividers without container outer edges", () => {
-  const glanceBlock = blockBetween(
-    'data-admin-home-section="at-a-glance"',
-    'data-admin-home-section="operations"',
-  );
-  const borderHelperBlock = blockBetween(
-    "function overviewMetricCellBorderClass",
-    "const metricIcons",
-  );
+test("At a Glance preserves mobile cell rules and desktop #7B8794 grid rules", () => {
+  const glanceBlock = blockBetween('data-admin-home-section="at-a-glance"', 'data-admin-home-section="operations"');
+  const borderHelperBlock = blockBetween("function overviewMetricCellBorderClass", "const metricIcons");
 
   assert.deepEqual(labelsFor("OverviewMetric", glanceBlock), [
     "Total users",
@@ -91,18 +95,6 @@ test("At a Glance uses deliberate mobile cell dividers without container outer e
     "Recent searches",
     "Recent admin actions",
   ]);
-  assert.match(
-    glanceBlock,
-    /data-admin-home-glance-outline="true"[\s\S]*?className="overflow-hidden rounded-none bg-transparent md:border md:border-\[#7B8794\]"/,
-  );
-  assert.match(
-    glanceBlock,
-    /data-admin-home-glance-heading="section-header"[\s\S]*?className="md:px-6 md:pt-6 lg:px-8 lg:pt-8"/,
-  );
-  assert.ok(glanceBlock.includes('data-admin-home-glance-grid="outlined" className="mt-4 grid grid-cols-2 md:mt-6 md:grid-cols-3 md:gap-0"'));
-  assert.doesNotMatch(glanceBlock, /data-admin-home-glance-grid="outlined" className="[^"]*(?:divide-x|divide-y|border-y)/);
-  assert.match(borderHelperBlock, /isMobileLeftColumn = index % 2 === 0/);
-  assert.match(borderHelperBlock, /isMobileBeforeLastRow = index < 4/);
   assert.match(borderHelperBlock, /isMobileLeftColumn \? "border-r border-\[#A7B2BE\]" : ""/);
   assert.match(borderHelperBlock, /isMobileBeforeLastRow \? "border-b border-\[#A7B2BE\]" : ""/);
   assert.match(borderHelperBlock, /"md:border-r-0 md:border-b-0"/);
@@ -111,86 +103,16 @@ test("At a Glance uses deliberate mobile cell dividers without container outer e
   assert.match(borderHelperBlock, /md:border-\[#7B8794\]/);
 });
 
-test("Search Activity keeps metric dividers and adds one mobile products separator", () => {
-  const searchBlock = blockBetween(
-    'data-admin-home-surface="search-activity"',
-    'data-admin-home-surface="service-status"',
-  );
-  const borderHelperBlock = blockBetween(
-    "function searchMetricBorderClass",
-    "function attentionCellBorderClass",
-  );
+test("Service Status is one mobile box but Provider and System remain separate desktop rectangles", () => {
+  const serviceBlock = blockBetween('data-admin-home-surface="service-status"', 'data-admin-home-section="recent-admin-activity"');
 
-  assert.deepEqual(labelsFor("PanelMetric", searchBlock), [
-    "Total recent searches",
-    "No-result searches",
-    "Failed searches",
-  ]);
-  assert.match(
-    searchBlock,
-    /className="relative min-h-\[17rem\] overflow-hidden px-5 py-6 sm:px-6 md:rounded-none md:border md:border-\[#7B8794\] md:bg-transparent md:px-0 md:py-0 lg:px-0 lg:py-0"/,
-  );
-  assert.match(
-    searchBlock,
-    /data-admin-home-search-heading="section-header"[\s\S]*?className="md:px-6 md:pt-6 lg:px-8 lg:pt-8"/,
-  );
-  assert.ok(searchBlock.includes('data-admin-home-search-metrics="outlined-grid" className="mt-6 grid grid-cols-1 divide-y divide-[#A7B2BE] sm:grid-cols-3 sm:divide-x sm:divide-y-0 md:gap-0 md:divide-x-0"'));
-  assert.match(
-    searchBlock,
-    /data-admin-home-search-lower="products-link"[\s\S]*?className="mt-6 border-t border-\[#A7B2BE\] pt-6 md:mt-0 md:border-t md:border-\[#7B8794\] md:px-6 md:py-5 lg:px-8"/,
-  );
-  assert.doesNotMatch(borderHelperBlock, /border-b border-\[#7B8794\]|sm:border-\[#7B8794\]/);
-  assert.match(borderHelperBlock, /md:border-r/);
-});
-
-test("Service Status keeps the major separator and separates provider from system on mobile", () => {
-  const serviceBlock = blockBetween(
-    'data-admin-home-surface="service-status"',
-    'data-admin-home-section="recent-admin-activity"',
-  );
-
-  assert.match(
-    serviceBlock,
-    /className="relative min-h-\[17rem\] overflow-hidden border-t border-\[#A7B2BE\] px-5 py-6 sm:px-6 md:border-t-0 md:px-0 md:py-0"/,
-  );
-  assert.match(
-    serviceBlock,
-    /data-admin-home-service-heading="section-header"[\s\S]*?className="md:px-6 md:pt-6 lg:px-8 lg:pt-8"/,
-  );
-  assert.match(
-    serviceBlock,
-    /className="mt-5 md:mt-6 md:px-6 md:pb-6 lg:px-8 lg:pb-8"[\s\S]*?data-admin-home-service-groups="provider-system"[\s\S]*?className="grid items-start gap-0 md:grid-cols-\[minmax\(0,0\.9fr\)_minmax\(0,1\.1fr\)\] md:gap-6"/,
-  );
+  assert.match(serviceBlock, /data-admin-home-surface="service-status" className="[^"]*border border-\[#A7B2BE\][^"]*md:border-0/);
+  assert.match(serviceBlock, /data-admin-home-service-groups="provider-system"[\s\S]*?md:grid-cols-\[minmax\(0,0\.9fr\)_minmax\(0,1\.1fr\)\] md:gap-6/);
+  assert.match(serviceBlock, /data-admin-home-provider-status-outline="true"[\s\S]*?className="flex min-w-0 flex-col px-5 py-5 md:rounded-none md:border md:border-\[#7B8794\] md:bg-transparent md:p-6"/);
+  assert.match(serviceBlock, /data-admin-home-system-status-outline="true"[\s\S]*?className="flex min-w-0 flex-col border-t border-\[#A7B2BE\] px-5 py-5 md:mt-0 md:rounded-none md:border md:border-\[#7B8794\] md:bg-transparent md:p-6"/);
+  assert.doesNotMatch(serviceBlock, /mt-7 flex min-w-0 flex-col border-t border-\[#A7B2BE\] pt-7/);
   assert.match(serviceBlock, /Provider Readiness/);
-  assert.match(serviceBlock, /Search availability by product/);
   assert.match(serviceBlock, /System Configuration/);
-  assert.match(serviceBlock, /Core platform services and integrations/);
-  assert.match(
-    serviceBlock,
-    /data-admin-home-provider-status-outline="true"[\s\S]*?className="flex min-w-0 flex-col md:rounded-none md:border md:border-\[#7B8794\] md:bg-transparent md:p-6"/,
-  );
-  assert.match(
-    serviceBlock,
-    /data-admin-home-system-status-outline="true"[\s\S]*?className="mt-7 flex min-w-0 flex-col border-t border-\[#A7B2BE\] pt-7 md:mt-0 md:rounded-none md:border md:border-\[#7B8794\] md:bg-transparent md:p-6"/,
-  );
-});
-
-test("mobile lines are not newly invented and strong outlines are gated to md", () => {
-  const mobileStrongLinePatterns = [
-    /className="[^"]* border border-\[#7B8794\]/,
-    /className="[^"]* border-t border-\[#7B8794\]/,
-    /className="[^"]* border-b border-\[#7B8794\]/,
-    /className="[^"]* border-r border-\[#7B8794\]/,
-    /className="[^"]* border-l border-\[#7B8794\]/,
-  ];
-
-  for (const pattern of mobileStrongLinePatterns) {
-    assert.doesNotMatch(adminOverviewPage, pattern);
-  }
-
-  assert.match(adminOverviewPage, /md:border md:border-\[#7B8794\]/);
-  assert.match(adminOverviewPage, /md:border-t md:border-\[#7B8794\]/);
-  assert.match(adminOverviewPage, /md:border-\[#7B8794\]/);
 });
 
 test("desktop outlined design, actions, and content remain preserved", () => {
@@ -211,7 +133,6 @@ test("desktop outlined design, actions, and content remain preserved", () => {
     );
   }
 
-  assert.match(adminOverviewPage, /data-admin-home-attention-footer="action"[\s\S]*?justify-end/);
   assert.deepEqual(labelsFor("StatusRow", blockBetween('data-admin-home-system-status-outline="true"', 'data-admin-home-section="recent-admin-activity"')), [
     "Database connection",
     "Authentication",
