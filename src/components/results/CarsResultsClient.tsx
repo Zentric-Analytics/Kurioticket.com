@@ -567,7 +567,7 @@ const fieldLabelClass =
 const fieldInputClass =
   "focus-ring h-8 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 md:text-sm";
 
-export function CarsResultsClient({ values, initialResults, resultsMode, inventoryStatus }: { values: CarsResultsValues; initialResults: NormalizedCarResult[]; resultsMode: CarResultsMode; inventoryStatus: CarInventoryStatus }) {
+export function CarsResultsClient({ values, initialResults, inventoryStatus }: { values: CarsResultsValues; initialResults: NormalizedCarResult[]; resultsMode: CarResultsMode; inventoryStatus: CarInventoryStatus }) {
   const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const intlLocale = getCarsResultsIntlLocale(locale);
@@ -1259,7 +1259,6 @@ export function CarsResultsClient({ values, initialResults, resultsMode, invento
             })}
           </h1>
 
-          {resultsMode === "demo" && initialResults.length > 0 ? <div className="rounded-lg border border-[#004BB8]/20 bg-[#eaf2fb] px-4 py-3 text-sm font-semibold text-[#021C2B]" role="note">Demo inventory — vehicles and prices are illustrative and are not live availability.</div> : null}
           {initialResults.length > 0 ? (
             <>
               <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
