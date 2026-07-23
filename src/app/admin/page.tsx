@@ -182,22 +182,32 @@ export default async function AdminPage() {
               <PanelHeading id="service-status-heading" icon={Gauge}>Service Status</PanelHeading>
             </div>
             <div className="mt-6 px-5 pb-6 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
-              <div data-admin-home-service-groups="provider-system" className="grid gap-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
-              <div data-admin-home-provider-status-outline="true" className="flex h-full min-w-0 flex-col border border-[#7B8794] bg-transparent p-5 sm:p-6 rounded-none">
-                <p className="mb-3 text-sm font-bold text-[#021C2B]">Provider statuses</p>
-                {providers.map((provider) => (
-                  <StatusRow key={provider.product} icon={provider.product} label={provider.product} status={providerReadinessLabel(provider)} tone={provider.searchEnabled ? "good" : provider.credentialsPresent ? "warn" : "neutral"} />
-                ))}
-                <div data-admin-home-provider-footer="actions" className="mt-auto flex justify-end pt-5"><AdminHomeActionButton href="/admin/providers" action="view-providers">View Providers</AdminHomeActionButton></div>
+              <div data-admin-home-service-groups="provider-system" className="grid items-start gap-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
+              <div data-admin-home-provider-status-outline="true" className="flex min-w-0 flex-col border border-[#7B8794] bg-transparent p-5 sm:p-6 rounded-none">
+                <div data-admin-home-status-group-heading="provider">
+                  <h3 className="text-sm font-bold text-[#021C2B]">Provider Readiness</h3>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">Search availability by product</p>
+                </div>
+                <div data-admin-home-provider-status-rows="aligned" className="mt-4 space-y-1">
+                  {providers.map((provider) => (
+                    <StatusRow key={provider.product} icon={provider.product} label={`${provider.product} search`} status={providerReadinessLabel(provider)} tone={provider.searchEnabled ? "good" : provider.credentialsPresent ? "warn" : "neutral"} />
+                  ))}
+                </div>
+                <div data-admin-home-provider-footer="actions" className="mt-5 flex justify-end"><AdminHomeActionButton href="/admin/providers" action="view-providers">View Providers</AdminHomeActionButton></div>
               </div>
-              <div data-admin-home-system-status-outline="true" className="flex h-full min-w-0 flex-col border border-[#7B8794] bg-transparent p-5 sm:p-6 rounded-none">
-                <p className="mb-3 text-sm font-bold text-[#021C2B]">System statuses</p>
-                <StatusRow icon="Database" label="Database" status={system.databaseConnected ? "Available" : system.databaseConfigured ? "Configured, not connected" : "Not configured"} tone={system.databaseConnected ? "good" : "bad"} />
-                <StatusRow icon="Authentication" label="Authentication" status={system.authConfigured && system.sessionConfigured ? "Available" : "Not fully configured"} tone={system.authConfigured && system.sessionConfigured ? "good" : "warn"} />
-                <StatusRow icon="Email" label="Email" status={system.emailConfigured ? "Available" : "Unavailable"} tone={system.emailConfigured ? "good" : "warn"} />
-                <StatusRow icon="Provider credentials" label="Provider credentials" status={system.providerCredentialsPresent ? "Present" : "Not present"} tone={system.providerCredentialsPresent ? "good" : "warn"} />
-                <StatusRow icon="Webhooks" label="Webhooks" status={system.webhookConfigured ? "Available" : "Unavailable"} tone={system.webhookConfigured ? "good" : "warn"} />
-                <div data-admin-home-system-footer="actions" className="mt-auto flex justify-end pt-5"><AdminHomeActionButton href="/admin/system" action="view-system">View System</AdminHomeActionButton></div>
+              <div data-admin-home-system-status-outline="true" className="flex min-w-0 flex-col border border-[#7B8794] bg-transparent p-5 sm:p-6 rounded-none">
+                <div data-admin-home-status-group-heading="system">
+                  <h3 className="text-sm font-bold text-[#021C2B]">System Configuration</h3>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">Core platform services and integrations</p>
+                </div>
+                <div data-admin-home-system-status-rows="aligned" className="mt-4 space-y-1">
+                  <StatusRow icon="Database" label="Database connection" status={system.databaseConnected ? "Connected" : system.databaseConfigured ? "Configured, not connected" : "Not configured"} tone={system.databaseConnected ? "good" : "bad"} />
+                  <StatusRow icon="Authentication" label="Authentication" status={system.authConfigured && system.sessionConfigured ? "Configured" : "Needs setup"} tone={system.authConfigured && system.sessionConfigured ? "good" : "warn"} />
+                  <StatusRow icon="Email" label="Email service" status={system.emailConfigured ? "Configured" : "Not configured"} tone={system.emailConfigured ? "good" : "warn"} />
+                  <StatusRow icon="Provider credentials" label="Provider credentials" status={system.providerCredentialsPresent ? "Present" : "Missing"} tone={system.providerCredentialsPresent ? "good" : "warn"} />
+                  <StatusRow icon="Webhooks" label="Webhooks" status={system.webhookConfigured ? "Configured" : "Not configured"} tone={system.webhookConfigured ? "good" : "warn"} />
+                </div>
+                <div data-admin-home-system-footer="actions" className="mt-5 flex justify-end"><AdminHomeActionButton href="/admin/system" action="view-system">View System</AdminHomeActionButton></div>
               </div>
             </div>
           </div>
@@ -304,7 +314,7 @@ function AdminHomeActionButton({ href, action, children }: { href: string; actio
 
 function StatusRow({ label, status, tone, icon }: { label: string; status: string; tone: StatusTone; icon: string }) {
   const Icon = statusIcons[icon] ?? CircleDot;
-  return <div data-admin-home-status-row="flat" className="flex items-center justify-between gap-5 py-2.5 text-sm"><span className="flex min-w-0 flex-1 items-center gap-2 font-semibold text-slate-700"><Icon className="h-4 w-4 shrink-0 text-[#315078]" aria-hidden="true" />{label}</span><span className="shrink-0 whitespace-nowrap"><AdminStatusBadge tone={tone}>{status}</AdminStatusBadge></span></div>;
+  return <div data-admin-home-status-row="aligned" className="grid grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-x-3 py-2.5 text-sm"><Icon className="h-4 w-4 text-[#315078]" aria-hidden="true" /><span className="min-w-0 font-medium text-slate-700">{label}</span><span className="justify-self-end whitespace-nowrap"><AdminStatusBadge tone={tone}>{status}</AdminStatusBadge></span></div>;
 }
 
 const statusIcons: Record<string, LucideIcon> = { Flights: Plane, Hotels: Hotel, Cars: Car, Database, Authentication: UserCog, Email: Mail, "Provider credentials": KeyRound, Webhooks: Webhook };
@@ -343,7 +353,7 @@ function getAttentionIssues(providers: ProviderStatus[], system: SystemStatus, s
 }
 
 function providerReadinessLabel(provider: ProviderStatus) {
-  if (provider.searchEnabled) return "Search ready";
+  if (provider.searchEnabled) return "Ready";
   if (provider.providerName === "Not connected") return "Not connected";
   if (!provider.credentialsPresent) return "Credentials missing";
   return "Search unavailable";

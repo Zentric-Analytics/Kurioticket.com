@@ -446,32 +446,69 @@ test("service status has a borderless parent with two independent outlined group
   );
   assert.match(
     serviceBlock,
-    /className="mt-6 px-5 pb-6 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8"[\s\S]*?data-admin-home-service-groups="provider-system"[\s\S]*?className="grid gap-5 md:grid-cols-\[minmax\(0,0\.9fr\)_minmax\(0,1\.1fr\)\] md:gap-6"/,
+    /className="mt-6 px-5 pb-6 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8"[\s\S]*?data-admin-home-service-groups="provider-system"[\s\S]*?className="grid items-start gap-5 md:grid-cols-\[minmax\(0,0\.9fr\)_minmax\(0,1\.1fr\)\] md:gap-6"/,
   );
   assert.match(
     providerBlock,
-    /className="flex h-full min-w-0 flex-col border border-\[#7B8794\] bg-transparent p-5 sm:p-6 rounded-none"/,
+    /className="flex min-w-0 flex-col border border-\[#7B8794\] bg-transparent p-5 sm:p-6 rounded-none"/,
   );
-  assert.match(providerBlock, /Provider statuses/);
+  assert.match(providerBlock, /data-admin-home-status-group-heading="provider"/);
+  assert.match(providerBlock, /Provider Readiness/);
+  assert.match(providerBlock, /Search availability by product/);
+  assert.doesNotMatch(providerBlock, /Provider statuses|h-full|mt-auto|justify-between|border-b/);
   assert.match(providerBlock, /providers\.map\(\(provider\) =>/);
-  assert.match(providerBlock, /data-admin-home-provider-footer="actions"[\s\S]*?className="mt-auto flex justify-end pt-5"/);
+  assert.match(providerBlock, /label=\{`\$\{provider\.product\} search`\}/);
+  assert.match(providerBlock, /data-admin-home-provider-status-rows="aligned"[\s\S]*?className="mt-4 space-y-1"/);
+  assert.match(providerBlock, /data-admin-home-provider-footer="actions"[\s\S]*?className="mt-5 flex justify-end"/);
   assert.match(providerBlock, /<AdminHomeActionButton href="\/admin\/providers" action="view-providers">View Providers<\/AdminHomeActionButton>/);
   assert.match(
     systemBlock,
-    /className="flex h-full min-w-0 flex-col border border-\[#7B8794\] bg-transparent p-5 sm:p-6 rounded-none"/,
+    /className="flex min-w-0 flex-col border border-\[#7B8794\] bg-transparent p-5 sm:p-6 rounded-none"/,
   );
-  assert.match(systemBlock, /System statuses/);
+  assert.match(systemBlock, /data-admin-home-status-group-heading="system"/);
+  assert.match(systemBlock, /System Configuration/);
+  assert.match(systemBlock, /Core platform services and integrations/);
+  assert.doesNotMatch(systemBlock, /System statuses|h-full|mt-auto|justify-between|border-b/);
   assert.deepEqual(labelsFor("StatusRow", systemBlock), [
-    "Database",
+    "Database connection",
     "Authentication",
-    "Email",
+    "Email service",
     "Provider credentials",
     "Webhooks",
   ]);
-  assert.match(systemBlock, /data-admin-home-system-footer="actions"[\s\S]*?className="mt-auto flex justify-end pt-5"/);
+  assert.match(systemBlock, /data-admin-home-system-status-rows="aligned"[\s\S]*?className="mt-4 space-y-1"/);
+  assert.match(systemBlock, /status=\{system\.databaseConnected \? "Connected" : system\.databaseConfigured \? "Configured, not connected" : "Not configured"\}/);
+  assert.match(systemBlock, /status=\{system\.authConfigured && system\.sessionConfigured \? "Configured" : "Needs setup"\}/);
+  assert.match(systemBlock, /status=\{system\.emailConfigured \? "Configured" : "Not configured"\}/);
+  assert.match(systemBlock, /status=\{system\.providerCredentialsPresent \? "Present" : "Missing"\}/);
+  assert.match(systemBlock, /status=\{system\.webhookConfigured \? "Configured" : "Not configured"\}/);
+  assert.match(systemBlock, /data-admin-home-system-footer="actions"[\s\S]*?className="mt-5 flex justify-end"/);
   assert.match(systemBlock, /<AdminHomeActionButton href="\/admin\/system" action="view-system">View System<\/AdminHomeActionButton>/);
   assert.doesNotMatch(serviceBlock, /data-admin-home-service-divider|divide-x|border-l/);
   assert.match(adminOverviewPage, /data-admin-home-decoration="status-routes"/);
+});
+
+test("service status row alignment and wording are presentation-only refinements", () => {
+  const statusRowBlock = blockBetween(
+    "function StatusRow",
+    "const statusIcons",
+  );
+  const providerLabelBlock = blockBetween(
+    "function providerReadinessLabel",
+    "function humanizeAuditAction",
+  );
+
+  assert.match(statusRowBlock, /data-admin-home-status-row="aligned"/);
+  assert.match(statusRowBlock, /grid grid-cols-\[1\.25rem_minmax\(0,1fr\)_auto\] items-center gap-x-3 py-2\.5 text-sm/);
+  assert.match(statusRowBlock, /<Icon className="h-4 w-4 text-\[#315078\]" aria-hidden="true" \/>/);
+  assert.match(statusRowBlock, /<span className="min-w-0 font-medium text-slate-700">\{label\}<\/span>/);
+  assert.match(statusRowBlock, /<span className="justify-self-end whitespace-nowrap">/);
+  assert.doesNotMatch(statusRowBlock, /flex|justify-between|border-b|divide/);
+
+  assert.match(providerLabelBlock, /if \(provider\.searchEnabled\) return "Ready"/);
+  assert.match(providerLabelBlock, /if \(provider\.providerName === "Not connected"\) return "Not connected"/);
+  assert.match(providerLabelBlock, /if \(!provider\.credentialsPresent\) return "Credentials missing"/);
+  assert.match(providerLabelBlock, /return "Search unavailable"/);
 });
 
 test("recent admin activity uses spacing, not row borders or a timeline connecting line", () => {
@@ -585,7 +622,7 @@ test("required data, links, icons, badges, and presentation-only labels are pres
   assert.match(adminOverviewPage, /href="\/admin\/searches"/);
   assert.match(adminOverviewPage, /href="\/admin\/providers"/);
   assert.match(adminOverviewPage, /href="\/admin\/system"/);
-  assert.match(adminOverviewPage, /data-admin-home-status-row="flat"/);
+  assert.match(adminOverviewPage, /data-admin-home-status-row="aligned"/);
   assert.match(
     adminOverviewPage,
     /<AdminStatusBadge tone=\{tone\}>\{status\}<\/AdminStatusBadge>/,
