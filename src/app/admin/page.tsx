@@ -69,7 +69,7 @@ type AdminHomeResources = {
 
 type MetricIcon = "users" | "active" | "suspended" | "admin" | "search" | "activity";
 
-const adminHomeSectionClass = "py-2 md:px-6 md:py-6 lg:px-8 lg:py-8";
+const adminHomeSectionClass = "py-2 md:px-4 md:py-3 lg:px-5 lg:py-4";
 
 // Desktop/tablet layout reference: be5871a2925ff779610bf57c1d3bf245ea38ff09
 // Mobile layout reference: 862fa27e580571298107bc291dd8fdcb0806dfb7
@@ -123,14 +123,14 @@ export default async function AdminPage() {
   return (
     <div
       data-admin-home-workspace="single-card"
-      className="relative isolate md:grid md:gap-6 xl:gap-7"
+      className="relative isolate md:grid md:gap-0"
     >
       <div
         data-admin-home-workspace-background="full-bleed"
         aria-hidden="true"
         className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 w-screen -translate-x-1/2 bg-[#F7F6F2]"
       />
-      <section data-admin-home-section="header" aria-labelledby="admin-home-heading" className="px-5 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <section data-admin-home-section="header" aria-labelledby="admin-home-heading" className="px-5 py-6 sm:px-6 md:px-4 md:py-4 lg:px-5 lg:py-5">
         <AdminPageHeader
           eyebrow=""
           title="Admin Home"
