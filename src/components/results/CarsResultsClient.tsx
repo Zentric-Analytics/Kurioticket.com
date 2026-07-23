@@ -578,8 +578,11 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
   const [selectedCarFilters, setSelectedCarFilters] =
     useState<SelectedCarFilters>({});
   const [sort, setSort] = useState<CarSort>("recommended");
+  const [carsSortOpen, setCarsSortOpen] = useState(false);
   const [resultsTransitioning, setResultsTransitioning] = useState(false);
   const resultsTransitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const carsSortRef = useRef<HTMLDivElement | null>(null);
+  const carsSortButtonRef = useRef<HTMLButtonElement | null>(null);
   const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
   const [isSearchExpandedWhileSticky, setIsSearchExpandedWhileSticky] =
     useState(false);
@@ -645,6 +648,15 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
   const activeFilterLabel = interpolate(t("carsResults.activeFilterCount"), {
     count: String(activeFilterCount),
   });
+  const carSortOptions: { value: CarSort; label: string }[] = [
+    { value: "recommended", label: t("carsResults.recommended") },
+    { value: "lowestTotal", label: t("carsResults.lowestTotal") },
+    { value: "lowestDaily", label: t("carsResults.lowestDaily") },
+    { value: "topRated", label: t("carsResults.topRated") },
+  ];
+  const selectedCarSortLabel =
+    carSortOptions.find((option) => option.value === sort)?.label ??
+    carSortOptions[0].label;
   const badges = useMemo(() => assignCarBadges(initialResults), [initialResults]);
   const visibleResults = useMemo(() => sortCarResults(filterCarResults(initialResults, selectedCarFilters), sort), [initialResults, selectedCarFilters, sort]);
   const {
@@ -716,6 +728,31 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
     if (resultsTransitionTimerRef.current) clearTimeout(resultsTransitionTimerRef.current);
     resultsTransitionTimerRef.current = setTimeout(() => setResultsTransitioning(false), 160);
   };
+
+  useEffect(() => {
+    if (!carsSortOpen) return;
+
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (carsSortRef.current?.contains(target)) return;
+      setCarsSortOpen(false);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setCarsSortOpen(false);
+        carsSortButtonRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [carsSortOpen]);
 
   useEffect(() => {
     const releaseExistingLock = () => {
@@ -1326,36 +1363,85 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
                         )
                       : t("filters")}
                   </Button>
-                  <label className="flex min-w-0 items-center gap-1 whitespace-nowrap sm:gap-2">
+                  <div className="flex min-w-0 items-center gap-1 whitespace-nowrap sm:gap-2">
                     <span className="whitespace-nowrap text-[clamp(0.68rem,3vw,0.875rem)] font-semibold text-slate-700 sm:text-base">
-                      Sort by:
+                      {t("carsResults.sortBy")}:
                     </span>
-                    <span className="relative inline-flex min-w-0 shrink items-center whitespace-nowrap">
-                      <select
-                        value={sort}
-                        onChange={(event) => {
-                          setResultsTransitioning(true);
-                          setSort(event.target.value as CarSort);
-                          if (resultsTransitionTimerRef.current)
-                            clearTimeout(resultsTransitionTimerRef.current);
-                          resultsTransitionTimerRef.current = setTimeout(
-                            () => setResultsTransitioning(false),
-                            160,
-                          );
-                        }}
-                        className="h-10 min-w-0 cursor-pointer appearance-none border-0 bg-transparent py-1 pe-6 ps-1 text-[clamp(0.75rem,3.3vw,1rem)] font-bold text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2 sm:text-lg"
+                    <div
+                      ref={carsSortRef}
+                      className="relative inline-flex min-w-0 shrink items-center whitespace-nowrap"
+                    >
+                      <button
+                        ref={carsSortButtonRef}
+                        type="button"
+                        aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
+                        aria-haspopup="menu"
+                        aria-expanded={carsSortOpen}
+                        className="inline-flex h-9 min-w-0 items-center justify-center gap-2 rounded-md bg-transparent px-2 text-[16px] font-semibold text-[#142033] transition hover:bg-[#004BB8]/5 hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                        onClick={() => setCarsSortOpen((open) => !open)}
                       >
-                        <option value="recommended">Recommended</option>
-                        <option value="lowestTotal">Lowest total price</option>
-                        <option value="lowestDaily">Lowest daily price</option>
-                        <option value="topRated">Top rated</option>
-                      </select>
-                      <ChevronDown
-                        className="pointer-events-none absolute end-1 h-4 w-4 text-slate-700"
-                        aria-hidden="true"
-                      />
-                    </span>
-                  </label>
+                        <span className="min-w-0 truncate whitespace-nowrap">
+                          {selectedCarSortLabel}
+                        </span>
+                        <ChevronDown
+                          size={16}
+                          className={cn(
+                            "shrink-0 transition-transform duration-150",
+                            carsSortOpen && "rotate-180",
+                          )}
+                          aria-hidden="true"
+                        />
+                      </button>
+                      <div
+                        role="menu"
+                        aria-hidden={!carsSortOpen}
+                        className={cn(
+                          "absolute end-0 top-11 z-40 w-56 max-w-[calc(100vw-2rem)] origin-top-right rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_14px_32px_-18px_rgba(15,23,42,0.45)] transition duration-150",
+                          carsSortOpen
+                            ? "translate-y-0 scale-100 opacity-100"
+                            : "pointer-events-none -translate-y-1 scale-95 opacity-0",
+                        )}
+                      >
+                        {carSortOptions.map((option) => {
+                          const isSelected = sort === option.value;
+
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              role="menuitemradio"
+                              aria-checked={isSelected}
+                              tabIndex={carsSortOpen ? 0 : -1}
+                              className={cn(
+                                "flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25",
+                                isSelected
+                                  ? "bg-[#004BB8]/[0.06] text-[#004BB8]"
+                                  : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
+                              )}
+                              onClick={() => {
+                                setResultsTransitioning(true);
+                                setSort(option.value);
+                                if (resultsTransitionTimerRef.current)
+                                  clearTimeout(resultsTransitionTimerRef.current);
+                                resultsTransitionTimerRef.current = setTimeout(
+                                  () => setResultsTransitioning(false),
+                                  160,
+                                );
+                                setCarsSortOpen(false);
+                              }}
+                            >
+                              <span className="w-4 shrink-0 text-[#004BB8]">
+                                {isSelected ? "✓" : ""}
+                              </span>
+                              <span className="whitespace-nowrap">
+                                {option.label}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
               {resultsTransitioning ? <div className="space-y-4">{[0,1,2].map((item) => <CarCardSkeleton key={item} />)}</div> : visibleResults.length ? <div className="space-y-4">{visibleResults.map((car) => <CarResultCard key={car.id} car={car} badge={badges.get(car.id)} detailsHref={buildCarDetailsHref(car.id, values)} />)}</div> : <div role="status" className="rounded-xl border border-slate-200 bg-white p-8 text-center"><p className="font-bold text-slate-950">No cars match these filters.</p><Button type="button" variant="secondary" className="mt-4" onClick={clearCarFilters}>Clear filters</Button></div>}
