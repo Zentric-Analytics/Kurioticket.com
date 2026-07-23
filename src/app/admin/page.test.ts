@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
@@ -23,13 +24,28 @@ function labelsFor(component: string, block = adminOverviewPage): string[] {
 test("documents the historical mobile reference commit", () => {
   assert.match(
     adminOverviewPage,
-    /Mobile layout reference: f157bfa517c159cc5023888e8866bf3949466c39/,
+    /Mobile layout reference: a392740a44882ef439b3f681ed28a470d4b98842\n\/\/ \(the src\/app\/admin\/page\.tsx revision immediately before f157bfa517c159cc5023888e8866bf3949466c39\)\./,
+  );
+  const fileHistory = execSync(
+    `git log --follow --format="%H" -- src/app/admin/page.tsx`,
+    { encoding: "utf8" },
+  ).trim().split("\n");
+  const previousReferenceIndex = fileHistory.indexOf("f157bfa517c159cc5023888e8866bf3949466c39");
+
+  assert.notEqual(previousReferenceIndex, -1);
+  assert.equal(fileHistory[previousReferenceIndex + 1], "a392740a44882ef439b3f681ed28a470d4b98842");
+});
+
+test("mobile base classes restore the immediately older section rectangles", () => {
+  assert.match(
+    adminOverviewPage,
+    /const adminHomeSectionClass = "border-2 border-\[#8F9BA8\] bg-transparent px-5 py-6 sm:px-6 md:border-0 lg:px-8 lg:py-8";/,
   );
 });
 
 test("mobile base classes restore the pre-outline Needs Attention layout", () => {
-  // Historical reference f157bfa517c159cc5023888e8866bf3949466c39 used an open section,
-  // mt-4 rail spacing, grid gap-x-6 gap-y-5, and no mobile rectangle/divider colour.
+  // Historical reference a392740a44882ef439b3f681ed28a470d4b98842 used the f157bfa
+  // inner layout plus mobile-only section rectangles on the outer section wrapper.
   const attentionBlock = blockBetween(
     'data-admin-home-section="needs-attention"',
     'data-admin-home-section="at-a-glance"',
@@ -61,7 +77,7 @@ test("mobile base classes restore the pre-outline Needs Attention layout", () =>
 });
 
 test("mobile base classes restore the pre-outline At a Glance metric layout", () => {
-  // Historical reference f157bfa517c159cc5023888e8866bf3949466c39 used a two-column
+  // Historical reference a392740a44882ef439b3f681ed28a470d4b98842 used a two-column
   // mobile metric rail with gap-x-6 gap-y-5 and no base #7B8794 cell dividers.
   const glanceBlock = blockBetween(
     'data-admin-home-section="at-a-glance"',

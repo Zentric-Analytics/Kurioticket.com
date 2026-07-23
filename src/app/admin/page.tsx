@@ -55,10 +55,10 @@ type SearchHealth = Awaited<ReturnType<typeof getSearchHealth>>;
 
 type MetricIcon = "users" | "active" | "suspended" | "admin" | "search" | "activity";
 
-const adminHomeSectionClass = "bg-transparent px-5 py-6 sm:px-6 lg:px-8 lg:py-8";
+const adminHomeSectionClass = "border-2 border-[#8F9BA8] bg-transparent px-5 py-6 sm:px-6 md:border-0 lg:px-8 lg:py-8";
 
-// Mobile layout reference: f157bfa517c159cc5023888e8866bf3949466c39
-// (last src/app/admin/page.tsx version before the Admin Home rectangular outline/grid redesign).
+// Mobile layout reference: a392740a44882ef439b3f681ed28a470d4b98842
+// (the src/app/admin/page.tsx revision immediately before f157bfa517c159cc5023888e8866bf3949466c39).
 
 export default async function AdminPage() {
   const [metrics, providers, system, searchHealth, activity] = await Promise.all([
