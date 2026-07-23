@@ -22,10 +22,12 @@ export function CarResultCard({ car, badge, detailsHref }: { car: NormalizedCarR
 
   return (
     <article className="relative w-full overflow-hidden rounded-2xl border border-[#D8E1EC] bg-white shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)] transition duration-200 hover:-translate-y-0.5 hover:border-[#CBD6E2] hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.42)]">
-      <div className="grid md:grid-cols-[250px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)_205px]">
-        <div className="relative isolate flex min-h-[220px] items-center justify-center overflow-hidden border-b border-[#E2E8F0] bg-[linear-gradient(145deg,#F8FAFC,#EEF4FA)] md:min-h-full md:border-b-0 md:border-e">
-          <CarResultImage imageUrl={car.imageUrl} imageAlt={car.imageAlt} modelName={car.modelName} category={car.category} />
-          <span className="absolute bottom-3 start-3 rounded-md border border-white/80 bg-white/85 px-2 py-1 text-[10px] font-semibold tracking-wide text-slate-500 backdrop-blur-sm">Representative vehicle</span>
+      <div className="grid md:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_205px]">
+        <div className="flex flex-col justify-center gap-2 border-b border-[#E2E8F0] bg-slate-50 p-3 md:border-b-0 md:border-e">
+          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-slate-100 md:aspect-[4/3]">
+            <CarResultImage imageUrl={car.imageUrl} imageAlt={car.imageAlt} modelName={car.modelName} category={car.category} />
+          </div>
+          <span className="text-[10px] font-semibold tracking-wide text-slate-500">Representative vehicle</span>
         </div>
 
         <div className="flex min-w-0 flex-col p-5">
