@@ -92,7 +92,7 @@ export function CarCardSkeleton() {
       <span className="sr-only">Loading car result</span>
       <div className="grid md:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_205px]">
         <div className="flex flex-col justify-center gap-2 border-b border-[#E2E8F0] bg-slate-50 p-3 md:border-b-0 md:border-e">
-          <Skeleton className="aspect-[16/10] w-full rounded-xl md:aspect-[4/3]" />
+          <Skeleton className="aspect-[4/3] w-full rounded-xl" />
           <Skeleton className="h-3 w-28" />
         </div>
         <div className="space-y-4 p-5"><Skeleton className="h-3 w-24" /><Skeleton className="h-7 w-2/3" /><div className="flex flex-wrap gap-3">{["w-20", "w-16", "w-16", "w-20", "w-24"].map((width, index) => <Skeleton key={index} className={`h-4 ${width}`} />)}</div><div className="flex flex-wrap gap-2"><Skeleton className="h-7 w-28" /><Skeleton className="h-7 w-24" /><Skeleton className="h-7 w-32" /></div><Skeleton className="h-4 w-4/5" /><div className="border-t border-slate-100 pt-4"><Skeleton className="h-4 w-40" /><Skeleton className="mt-2 h-3 w-52" /></div></div>

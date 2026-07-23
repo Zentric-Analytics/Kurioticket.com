@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test, { afterEach } from "node:test";
+import sharp from "sharp";
 import { getCarResultsMode } from "@/lib/env";
 import type { CarSearchParams } from "@/lib/cars/types";
 import { getCarDetails, searchCars } from "@/services/travel/carAggregator";
@@ -62,6 +63,11 @@ test("default mode returns provider-safe demo inventory", async () => {
       const imageBytes = await readFile(imagePath);
       assert.equal(imageBytes.subarray(0, 4).toString("ascii"), "RIFF");
       assert.equal(imageBytes.subarray(8, 12).toString("ascii"), "WEBP");
+      const metadata = await sharp(imageBytes).metadata();
+      assert.equal(metadata.format, "webp");
+      assert.equal(metadata.width, 1200);
+      assert.equal(metadata.height, 900);
+      assert.equal(metadata.width * 3, metadata.height * 4);
     }),
   );
   assert.ok(
