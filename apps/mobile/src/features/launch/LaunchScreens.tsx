@@ -5,12 +5,9 @@ import { Logo } from "../../components/Logo";
 import { Screen } from "../../components/Screen";
 import { colors, spacing } from "../../theme/tokens";
 import { writeOnboardingCompleted } from "../../storage/onboardingStorage";
-import type { ConfigResponse } from "../../api/mobileApi";
-
 const TERMS_URL = "https://kurioticket.com/terms";
 const PRIVACY_URL = "https://kurioticket.com/privacy";
 
-type MobileConfig = ConfigResponse["data"] | undefined;
 
 type ButtonProps = { label: string; onPress: () => void; disabled?: boolean; accessibilityLabel?: string };
 
@@ -59,11 +56,7 @@ function LegalLink({ label, url }: { label: string; url: string }) {
   return <Text accessibilityRole="link" onPress={() => void Linking.openURL(url)} style={styles.link}>{label}</Text>;
 }
 
-export function LoadingScreen() {
-  return <Screen centered><Logo /><Text style={styles.body}>Preparing Kurioticket.</Text></Screen>;
-}
-
-export function OnboardingScreen({ onGuest }: { onGuest: () => void }) {
+export function OnboardingScreen() {
   const [guestPending, setGuestPending] = useState(false);
   const entrance = useRef(new Animated.Value(0)).current;
 
@@ -89,7 +82,7 @@ export function OnboardingScreen({ onGuest }: { onGuest: () => void }) {
     setGuestPending(true);
     try {
       await writeOnboardingCompleted();
-      onGuest();
+      router.replace("/(tabs)");
     } finally {
       setGuestPending(false);
     }
@@ -127,34 +120,14 @@ export function OnboardingScreen({ onGuest }: { onGuest: () => void }) {
   );
 }
 
-export function GuestAppScreen({ config }: { config?: MobileConfig }) {
-  const flightsEnabled = config?.features.flights !== false;
-
-  return (
-    <Screen>
-      <Logo compact />
-      <View style={styles.card}>
-        <Text style={styles.eyebrow}>Kurioticket mobile</Text>
-        <Text style={styles.titleSmall}>Flight search is your starting point.</Text>
-        <Text style={styles.body}>Kurioticket mobile is focused on flight comparison first, with account-backed saved trips, searches, and alerts aligned to the approved launch path.</Text>
-        <View style={styles.panel}>
-          <Text style={styles.panelTitle}>Flight search</Text>
-          <Text style={styles.item}>{flightsEnabled ? "Use this stable app entry while the full repository-grounded mobile flight search is connected in the next flight milestone." : "Flight search is temporarily unavailable. You can still open account access or retry later."}</Text>
-        </View>
-        <PrimaryButton label="Account access" onPress={() => router.push("/email-auth")} />
-      </View>
-    </Screen>
-  );
-}
-
 export function ReservedEmailAuthScreen() {
   return (
     <Screen centered>
       <Logo compact />
       <View style={styles.card}>
         <Text style={styles.titleSmall}>Email account access</Text>
-        <Text style={styles.body}>Native email sign-in is the next approved mobile milestone. For now, you can continue using Kurioticket as a guest.</Text>
-        <SecondaryButton label="Back to Kurioticket" onPress={() => router.replace("/")} />
+        <Text style={styles.body}>Email sign-in is coming soon. Continue as a guest to search flights and explore Kurioticket today.</Text>
+        <SecondaryButton label="Back to Kurioticket" onPress={() => router.replace("/(tabs)")} />
       </View>
     </Screen>
   );
@@ -197,7 +170,4 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.55 },
   legal: { color: colors.muted, fontSize: 12, lineHeight: 18, textAlign: "center" },
   link: { color: colors.blue, fontWeight: "800" },
-  panel: { backgroundColor: colors.background, borderRadius: 18, padding: 16, gap: 8 },
-  panelTitle: { color: colors.navy, fontWeight: "900", fontSize: 16 },
-  item: { color: colors.navy, fontSize: 15, lineHeight: 22 },
 });
