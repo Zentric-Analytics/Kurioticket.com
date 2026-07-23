@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { Car, Truck } from "lucide-react";
 import { useState } from "react";
+import { resolveCarResultImageSource } from "@/lib/cars/carResultImage";
 import type { CarCategory } from "@/lib/cars/types";
 
 type CarResultImageProps = {
@@ -12,16 +13,9 @@ type CarResultImageProps = {
   category: CarCategory;
 };
 
-const CARS_RESULTS_IMAGE_VERSION = "4x3-20260723";
-
-const resolveImageSource = (imageUrl?: string) =>
-  imageUrl?.startsWith("/images/cars/results/")
-    ? `${imageUrl}?v=${CARS_RESULTS_IMAGE_VERSION}`
-    : imageUrl;
-
 export function CarResultImage({ imageUrl, imageAlt, modelName, category }: CarResultImageProps) {
   const [failedUrl, setFailedUrl] = useState<string>();
-  const resolvedImageUrl = resolveImageSource(imageUrl);
+  const resolvedImageUrl = resolveCarResultImageSource(imageUrl);
   const hasImage = Boolean(resolvedImageUrl && failedUrl !== resolvedImageUrl);
   const FallbackIcon = category === "van" ? Truck : Car;
 
