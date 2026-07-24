@@ -46,7 +46,12 @@ export default async function HotelDetailsPage({
 
   return (
     <>
-      <AppHeader />
+      <AppHeader
+        flushDesktopBottom
+        flushMobileBottom
+        hideDesktopTravelNav
+        hideMobileCategoryTabs
+      />
       <HotelDetailsClient
         id={id}
         searchContext={searchContext}
