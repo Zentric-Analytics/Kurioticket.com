@@ -22,7 +22,7 @@ export function CarResultCard({ car, badge, detailsHref }: { car: NormalizedCarR
 
   return (
     <article className="relative w-full overflow-hidden rounded-2xl border border-[#D8E1EC] bg-white shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)] transition duration-200 hover:-translate-y-0.5 hover:border-[#CBD6E2] hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.42)]">
-      <div className="grid md:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_205px]">
+      <div className="grid md:grid-cols-[280px_minmax(0,1fr)] lg:grid-cols-[280px_minmax(0,1fr)_220px] xl:grid-cols-[300px_minmax(0,1fr)_220px]">
         <div className="flex items-center border-b border-[#E2E8F0] bg-slate-50 p-3 md:border-b-0 md:border-e">
           <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-slate-100">
             <CarResultImage imageUrl={car.imageUrl} imageAlt={car.imageAlt} modelName={car.modelName} category={car.category} />
@@ -54,13 +54,13 @@ export function CarResultCard({ car, badge, detailsHref }: { car: NormalizedCarR
           {car.supplierRating !== undefined && <p className="mt-4 flex items-center gap-1 text-xs text-slate-500 sm:justify-end"><Star size={14} className="fill-amber-400 text-amber-400" aria-hidden="true" /><strong className="text-slate-700">{car.supplierRating.toFixed(1)}</strong>{car.supplierReviewCount !== undefined ? ` (${car.supplierReviewCount} reviews)` : ""}</p>}
         </div>
 
-        <div className="col-span-full flex flex-col gap-4 border-t border-[#E2E8F0] bg-slate-50/45 p-5 sm:flex-row sm:items-end sm:justify-between xl:col-span-1 xl:items-stretch xl:justify-end xl:border-s xl:border-t-0 xl:bg-white xl:text-end">
-          <div className="flex flex-wrap items-end gap-x-7 gap-y-2 sm:flex-1 xl:flex-col xl:items-end xl:gap-0">
+        <div className="col-span-full flex min-w-0 flex-col border-t border-[#E2E8F0] bg-slate-50/45 p-5 lg:col-span-1 lg:border-s lg:border-t-0 lg:bg-white lg:text-end">
+          <div className="space-y-4">
             {car.offers.length > 1 && <p className="w-full text-xs font-semibold text-[#004BB8]">{car.offers.length} offers available</p>}
             <div><p className="text-xs font-medium text-slate-500">Price per day</p><p className="mt-0.5 text-lg font-bold text-slate-700">{money(offer.pricePerDay)}</p></div>
-            <div className="xl:mt-4"><p className="text-xs font-medium text-slate-500">Total</p><p className="text-[28px] font-extrabold leading-none text-[#102A43]">{money(offer.totalPrice)}</p>{offer.taxesAndFeesIncluded && <p className="mt-1.5 text-xs text-slate-500">Taxes and fees included</p>}</div>
+            <div><p className="text-xs font-medium text-slate-500">Total</p><p className="break-words text-[28px] font-extrabold leading-none text-[#102A43]">{money(offer.totalPrice)}</p>{offer.taxesAndFeesIncluded && <p className="mt-1.5 text-xs text-slate-500">Taxes and fees included</p>}</div>
           </div>
-          <Link href={detailsHref} className="inline-flex h-11 min-w-40 items-center justify-center rounded-lg bg-[#004BB8] px-5 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 xl:mt-auto xl:w-full">View car</Link>
+          <Link href={detailsHref} className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-lg bg-[#004BB8] px-5 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 lg:mt-auto">View car</Link>
         </div>
       </div>
     </article>
