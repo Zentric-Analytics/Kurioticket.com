@@ -1,4 +1,5 @@
-import { ArrowLeft, Heart, MapPin, Share2 } from "lucide-react";
+import { Heart, MapPin, Share2 } from "lucide-react";
+import { DetailsBackLink } from "@/components/results/DetailsBackLink";
 import { Badge } from "@/components/ui/Badge";
 import { Button, LinkButton } from "@/components/ui/Button";
 
@@ -67,15 +68,9 @@ export function HotelDetailsHeader({
 }: HotelDetailsHeaderProps) {
   return (
     <header className="min-w-0 border-b border-border pb-6 sm:pb-8">
-      <LinkButton
-        href={resultsHref}
-        variant="ghost"
-        size="sm"
-        className="-ms-2 w-fit px-2 text-slate-700 hover:text-navy"
-      >
-        <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-        <span>{backToResultsText}</span>
-      </LinkButton>
+      <DetailsBackLink href={resultsHref}>
+        {backToResultsText}
+      </DetailsBackLink>
       <div className="mt-4 flex flex-wrap items-center gap-2">
         {badges.map((badge) => (
           <Badge key={badge} variant="brand" size="sm">
