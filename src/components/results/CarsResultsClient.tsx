@@ -651,7 +651,6 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
   const carSortOptions: { value: CarSort; label: string }[] = [
     { value: "recommended", label: t("carsResults.recommended") },
     { value: "lowestTotal", label: t("carsResults.lowestTotal") },
-    { value: "lowestDaily", label: t("carsResults.lowestDaily") },
     { value: "topRated", label: t("carsResults.topRated") },
   ];
   const selectedCarSortLabel =

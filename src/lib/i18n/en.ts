@@ -3336,7 +3336,6 @@ export const translations: TranslationDictionary = {
   "carsResults.sortBy": "Sort by",
   "carsResults.recommended": "Recommended",
   "carsResults.lowestTotal": "Lowest total price",
-  "carsResults.lowestDaily": "Lowest daily price",
   "carsResults.topRated": "Top rated",
   "carsResults.bestValue": "Best value",
   "carsResults.cheapest": "Cheapest",
