@@ -90,12 +90,12 @@ export function CarCardSkeleton() {
   return (
     <div role="status" aria-label="Loading car result" className="overflow-hidden rounded-2xl border border-[#D8E1EC] bg-white">
       <span className="sr-only">Loading car result</span>
-      <div className="grid md:grid-cols-[280px_minmax(0,1fr)] lg:grid-cols-[280px_minmax(0,1fr)_220px] xl:grid-cols-[300px_minmax(0,1fr)_220px]">
-        <div className="flex items-center border-b border-[#E2E8F0] bg-slate-50 p-3 md:border-b-0 md:border-e">
+      <div className="grid md:grid-cols-[250px_minmax(0,1fr)] lg:grid-cols-[250px_minmax(0,1fr)_205px] xl:grid-cols-[270px_minmax(0,1fr)_205px]">
+        <div className="flex items-center border-b border-[#E2E8F0] bg-slate-50 p-2.5 md:border-b-0 md:border-e">
           <Skeleton className="aspect-[4/3] w-full rounded-xl" />
         </div>
-        <div className="space-y-4 p-5"><Skeleton className="h-3 w-24" /><Skeleton className="h-7 w-2/3" /><Skeleton className="h-4 w-4/5" /><div className="flex flex-wrap gap-3">{["w-20", "w-16", "w-16", "w-20", "w-24"].map((width, index) => <Skeleton key={index} className={`h-4 ${width}`} />)}</div><div className="flex flex-wrap gap-2"><Skeleton className="h-7 w-28" /><Skeleton className="h-7 w-24" /><Skeleton className="h-7 w-32" /></div><div className="flex sm:justify-end"><Skeleton className="h-4 w-28" /></div></div>
-        <div className="col-span-full flex min-w-0 flex-col border-t border-slate-200 bg-slate-50/45 p-5 lg:col-span-1 lg:border-s lg:border-t-0 lg:bg-white"><div className="space-y-4"><Skeleton className="h-3 w-24" /><div className="space-y-1"><Skeleton className="h-3 w-20" /><Skeleton className="h-6 w-20" /></div><div className="space-y-1"><Skeleton className="h-3 w-12" /><Skeleton className="h-8 w-28" /><Skeleton className="h-3 w-32" /></div></div><Skeleton className="mt-5 h-11 w-full lg:mt-auto" /></div>
+        <div className="space-y-3 p-4"><Skeleton className="h-3 w-24" /><Skeleton className="h-7 w-2/3" /><Skeleton className="h-4 w-4/5" /><div className="flex flex-wrap gap-x-3 gap-y-2">{["w-20", "w-16", "w-16", "w-20", "w-24"].map((width, index) => <Skeleton key={index} className={`h-4 ${width}`} />)}</div><div className="flex flex-wrap gap-1.5"><Skeleton className="h-6 w-28" /><Skeleton className="h-6 w-24" /><Skeleton className="h-6 w-32" /></div><div className="flex sm:justify-end"><Skeleton className="h-4 w-28" /></div></div>
+        <div className="col-span-full flex min-w-0 flex-col border-t border-slate-200 bg-slate-50/45 p-4 lg:col-span-1 lg:border-s lg:border-t-0 lg:bg-white"><div className="space-y-2.5"><Skeleton className="h-3 w-24" /><div className="space-y-1"><Skeleton className="h-3 w-20" /><Skeleton className="h-6 w-20" /></div><div className="space-y-1"><Skeleton className="h-3 w-12" /><Skeleton className="h-8 w-28" /><Skeleton className="h-3 w-32" /></div></div><Skeleton className="mt-4 h-10 w-full lg:mt-auto" /></div>
       </div>
     </div>
   );
