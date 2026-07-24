@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Plus, Search } from "lucide-react";
 import {
   AdminButton,
   AdminFilterBar,
@@ -9,7 +10,6 @@ import {
   AdminDataErrorState,
   AdminEmptyState,
   AdminLinkButton,
-  AdminMetricCard,
   StatusPill,
 } from "@/components/admin/AdminPageShell";
 import { UserStatusActions } from "@/components/admin/UserStatusActions";
@@ -83,26 +83,33 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   return (
     <AdminPageShell title="Users" description="View users, filter account status and role, and safely suspend, reactivate, or soft-delete accounts.">
       {data ? <UsersSummary summary={data.summary} /> : null}
-      <AdminFilterBar action="/admin/users" className="overflow-hidden">
-        <label className="grid gap-1 text-sm font-semibold text-slate-700 md:col-span-2">
-          Search
-          <AdminInput name="q" defaultValue={filters.q} placeholder="Search by name or email" aria-label="Search" />
+      <AdminFilterBar action="/admin/users" className="overflow-visible p-3">
+        <label className="relative md:col-span-2">
+          <span className="sr-only">Search</span>
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+          <AdminInput name="q" defaultValue={filters.q} placeholder="Search users..." aria-label="Search users" className="pl-9" />
         </label>
-        <label className="grid gap-1 text-sm font-semibold text-slate-700">
-          Role
+        <label>
+          <span className="sr-only">Role</span>
           <AdminSelect name="role" defaultValue={filters.role} aria-label="Role">
             <option value="ALL">All roles</option><option value="USER">User</option><option value="SUPPORT">Support</option><option value="ADMIN">Admin</option>
           </AdminSelect>
         </label>
-        <label className="grid gap-1 text-sm font-semibold text-slate-700">
-          Status
+        <label>
+          <span className="sr-only">Status</span>
           <AdminSelect name="status" defaultValue={filters.status} aria-label="Status">
             <option value="ALL">All statuses</option><option value="ACTIVE">Active</option><option value="SUSPENDED">Suspended</option><option value="DELETED">Deleted</option>
           </AdminSelect>
         </label>
-        <div className="flex flex-col gap-2 md:flex-row md:items-end md:self-end">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center">
           <AdminButton type="submit">Filter</AdminButton>
-          <AdminLinkButton href="/admin/users" variant="secondary">Clear filters</AdminLinkButton>
+          <AdminLinkButton href="/admin/users" variant="ghost">Clear filters</AdminLinkButton>
+        </div>
+        <div className="md:ml-auto">
+          <AdminButton type="button" variant="secondary" disabled title="Coming soon" className="w-full md:w-auto">
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Invite User · Coming soon
+          </AdminButton>
         </div>
       </AdminFilterBar>
       {!data ? (
@@ -117,7 +124,33 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
 }
 
 function UsersSummary({ summary }: { summary: UserSummaryCounts }) {
-  return <div className="grid grid-cols-2 gap-3 lg:grid-cols-4"><AdminMetricCard label="Total users" value={summary.totalUsers} /><AdminMetricCard label="Active users" value={summary.activeUsers} tone="good" /><AdminMetricCard label="Suspended users" value={summary.suspendedUsers} tone="warn" /><AdminMetricCard label="Admin & support staff" value={summary.adminSupportStaff} tone="info" /></div>;
+  return (
+    <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+      <CompactUserStat label="Total users" value={summary.totalUsers} />
+      <CompactUserStat label="Active users" value={summary.activeUsers} tone="good" />
+      <CompactUserStat label="Suspended users" value={summary.suspendedUsers} tone="warn" />
+      <CompactUserStat label="Admin & support staff" value={summary.adminSupportStaff} tone="info" />
+    </div>
+  );
+}
+
+function CompactUserStat({ label, value, tone = "neutral" }: { label: string; value: number; tone?: "good" | "warn" | "info" | "neutral" }) {
+  const dotClass = {
+    good: "bg-emerald-500",
+    warn: "bg-amber-500",
+    info: "bg-[#004BB8]",
+    neutral: "bg-slate-300",
+  }[tone];
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
+      <div className="flex items-center justify-between gap-2">
+        <p className="truncate text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</p>
+        <span className={`h-2 w-2 shrink-0 rounded-full ${dotClass}`} />
+      </div>
+      <p className="mt-1 text-xl font-extrabold leading-7 text-slate-950">{value}</p>
+    </div>
+  );
 }
 
 function UsersTable({ data, sessionUserId, filters }: { data: LoadedUsersData; sessionUserId: string; filters: ReturnType<typeof parseUserSearchParams> }) {
@@ -133,21 +166,24 @@ function UsersTable({ data, sessionUserId, filters }: { data: LoadedUsersData; s
   const lastResult = Math.min(data.currentPage * USER_PAGE_SIZE, data.totalMatchingUsers);
 
   return (
-    <div className="mt-4">
+    <div className="mt-3">
       <AdminDataTable
         caption="Admin users"
         minWidth="800px"
         columns={usersTableColumns}
         summary={`Showing ${firstResult}–${lastResult} of ${data.totalMatchingUsers} users`}
-        footer={data.totalPages > 1 ? <Pagination currentPage={data.currentPage} totalPages={data.totalPages} filters={filters} /> : null}
+        footer={<Pagination currentPage={data.currentPage} totalPages={data.totalPages} filters={filters} firstResult={firstResult} lastResult={lastResult} totalMatchingUsers={data.totalMatchingUsers} />}
         rows={sortedUsers.map((user) => {
           const isProtectedAdmin = user.email ? adminEmails.has(user.email.toLowerCase().trim()) : false;
           return {
             id: user.id,
             cells: [
-              <div key="user" className="min-w-0 space-y-1">
-                <p className="truncate font-semibold text-slate-950">{user.name || "Unnamed user"}</p>
-                <p className="truncate text-xs font-medium text-slate-500">{user.email || "—"}</p>
+              <div key="user" className="flex min-w-0 items-center gap-3">
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F3F7FA] text-xs font-black text-[#004BB8] ring-1 ring-[#DDE7F0]">{getUserInitials(user.name, user.email)}</span>
+                <span className="min-w-0">
+                  <span className="block truncate font-semibold text-slate-950">{user.name || "Unnamed user"}</span>
+                  <span className="block truncate text-xs font-medium text-slate-500">{user.email || "—"}</span>
+                </span>
               </div>,
               <StatusPill key="role" tone={user.role === "ADMIN" ? "good" : user.role === "SUPPORT" ? "info" : "neutral"}>{user.role}</StatusPill>,
               <StatusPill key="status" tone={user.status === "ACTIVE" ? "good" : user.status === "SUSPENDED" ? "warn" : "bad"}>{user.status}</StatusPill>,
@@ -161,14 +197,18 @@ function UsersTable({ data, sessionUserId, filters }: { data: LoadedUsersData; s
   );
 }
 
-function Pagination({ currentPage, totalPages, filters }: { currentPage: number; totalPages: number; filters: { q: string; role: UserRoleFilter; status: UserStatusFilter } }) {
+function Pagination({ currentPage, totalPages, filters, firstResult, lastResult, totalMatchingUsers }: { currentPage: number; totalPages: number; filters: { q: string; role: UserRoleFilter; status: UserStatusFilter }; firstResult: number; lastResult: number; totalMatchingUsers: number }) {
   const previous = currentPage > 1 ? buildUsersPaginationHref(currentPage - 1, filters) : null;
   const next = currentPage < totalPages ? buildUsersPaginationHref(currentPage + 1, filters) : null;
+  const pageNumbers = getVisiblePageNumbers(currentPage, totalPages);
   return (
     <nav className="flex flex-col gap-3 text-sm font-semibold text-slate-700 sm:flex-row sm:items-center sm:justify-between" aria-label="Users pagination">
-      <span>Page {currentPage} of {totalPages}</span>
-      <div className="flex gap-2">
+      <span>Showing {firstResult}–{lastResult} of {totalMatchingUsers} users</span>
+      <div className="flex flex-wrap gap-2">
         {previous ? <Link className="focus-ring rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-700" href={previous}>Previous</Link> : <span className="rounded-xl border border-slate-200 bg-slate-100 px-3 py-2 text-slate-400" aria-disabled="true">Previous</span>}
+        {pageNumbers.map((page) => (
+          <Link key={page} className={`focus-ring rounded-xl border px-3 py-2 ${page === currentPage ? "border-indigo-700 bg-indigo-700 text-white" : "border-slate-200 bg-white text-slate-700"}`} href={buildUsersPaginationHref(page, filters)} aria-current={page === currentPage ? "page" : undefined}>{page}</Link>
+        ))}
         {next ? <Link className="focus-ring rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-700" href={next}>Next</Link> : <span className="rounded-xl border border-slate-200 bg-slate-100 px-3 py-2 text-slate-400" aria-disabled="true">Next</span>}
       </div>
     </nav>
@@ -177,4 +217,16 @@ function Pagination({ currentPage, totalPages, filters }: { currentPage: number;
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
+
+function getUserInitials(name: string | null, email: string | null) {
+  const source = (name || email || "User").trim();
+  const parts = source.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  return source.slice(0, 2).toUpperCase();
+}
+
+function getVisiblePageNumbers(currentPage: number, totalPages: number) {
+  const start = Math.max(1, Math.min(currentPage - 1, totalPages - 2));
+  return Array.from({ length: Math.min(3, totalPages) }, (_, index) => start + index);
 }
