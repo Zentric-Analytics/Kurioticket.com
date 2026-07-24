@@ -20,7 +20,12 @@ export default async function FlightDetailsPage({ params }: { params: Promise<{ 
   const { id } = await params;
   return (
     <>
-      <AppHeader />
+      <AppHeader
+        flushDesktopBottom
+        flushMobileBottom
+        hideDesktopTravelNav
+        hideMobileCategoryTabs
+      />
       <FlightDetailsClient id={id} />
       <Footer />
     </>
