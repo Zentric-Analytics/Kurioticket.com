@@ -82,7 +82,6 @@ export function CarResultCard({ car, badge, detailsHref }: { car: NormalizedCarR
 
         <div className="col-span-full flex min-w-0 flex-col border-t border-[#E2E8F0] bg-slate-50/45 p-4 lg:col-span-1 lg:border-s lg:border-t-0 lg:bg-white lg:text-end">
           <div className="space-y-2.5">
-            {car.offers.length > 1 && <p className="w-full text-xs font-semibold text-[#004BB8]">{car.offers.length} offers available</p>}
             <div><p className="text-xs font-medium text-slate-500">Price per day</p><p className="mt-0.5 text-lg font-bold text-slate-700">{money(offer.pricePerDay)}</p></div>
             <div><p className="text-xs font-medium text-slate-500">Total</p><p className="break-words text-[28px] font-extrabold leading-none text-[#102A43]">{money(offer.totalPrice)}</p>{offer.taxesAndFeesIncluded && <p className="mt-1.5 text-xs text-slate-500">Taxes and fees included</p>}</div>
           </div>

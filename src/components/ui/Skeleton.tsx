@@ -95,7 +95,7 @@ export function CarCardSkeleton() {
           <Skeleton className="aspect-[4/3] w-full rounded-xl" />
         </div>
         <div className="space-y-3 p-4"><Skeleton className="h-3 w-24" /><Skeleton className="h-7 w-2/3" /><Skeleton className="h-4 w-4/5" /><div className="flex flex-wrap gap-x-3 gap-y-2">{["w-20", "w-16", "w-16", "w-20", "w-24"].map((width, index) => <Skeleton key={index} className={`h-4 ${width}`} />)}</div><div className="flex flex-wrap gap-1.5"><Skeleton className="h-6 w-28" /><Skeleton className="h-6 w-24" /><Skeleton className="h-6 w-32" /></div></div>
-        <div className="col-span-full flex min-w-0 flex-col border-t border-slate-200 bg-slate-50/45 p-4 lg:col-span-1 lg:border-s lg:border-t-0 lg:bg-white"><div className="space-y-2.5"><Skeleton className="h-3 w-24" /><div className="space-y-1"><Skeleton className="h-3 w-20" /><Skeleton className="h-6 w-20" /></div><div className="space-y-1"><Skeleton className="h-3 w-12" /><Skeleton className="h-8 w-28" /><Skeleton className="h-3 w-32" /></div></div><Skeleton className="mt-4 h-10 w-full lg:mt-auto" /></div>
+        <div className="col-span-full flex min-w-0 flex-col border-t border-slate-200 bg-slate-50/45 p-4 lg:col-span-1 lg:border-s lg:border-t-0 lg:bg-white"><div className="space-y-2.5"><div className="space-y-1"><Skeleton className="h-3 w-20" /><Skeleton className="h-6 w-20" /></div><div className="space-y-1"><Skeleton className="h-3 w-12" /><Skeleton className="h-8 w-28" /><Skeleton className="h-3 w-32" /></div></div><Skeleton className="mt-4 h-10 w-full lg:mt-auto" /></div>
       </div>
     </div>
   );
