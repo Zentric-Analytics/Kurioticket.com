@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AlertTriangle, Building2, Inbox, Loader2, LogOut, Menu, Settings, ShieldCheck, X } from "lucide-react";
-import { useState } from "react";
+import { createPortal } from "react-dom";
+import { AlertTriangle, Building2, ChevronRight, Inbox, Loader2, LogOut, Menu, Settings, ShieldCheck, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { formatAdminBadgeLabel } from "@/components/admin/adminDesignSystem";
 import { getActiveAdminHub, getAdminNavbarHubsForRole, type AdminHubDefinition, type AdminRole } from "@/lib/adminNavigation";
 
 const AdminLogoImage = "img";
+const AdminMobileDrawerPanel = "aside";
 
 type StatusTone = "good" | "bad" | "warn" | "neutral" | "info";
 
@@ -55,43 +57,189 @@ export function AdminNavbar({
   adminName?: string | null;
   adminImage?: string | null;
 }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileAccountOpen, setMobileAccountOpen] = useState(false);
   const displayName = adminName || adminEmail || "Admin";
+  const adminInitials = getAccountInitials(displayName, adminEmail);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const closePanelsOnRouteChange = window.setTimeout(() => {
+      setMobileMenuOpen(false);
+      setMobileAccountOpen(false);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(closePanelsOnRouteChange);
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen && !mobileAccountOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setMobileMenuOpen(false);
+        setMobileAccountOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [mobileAccountOpen, mobileMenuOpen]);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[#DDE7F0] bg-white/95 backdrop-blur">
-      <div className="page-shell flex min-h-16 items-center justify-between gap-3 py-2 md:grid md:min-h-[68px] md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:gap-6">
-        <div className="min-w-0 justify-self-start">
-          <AdminBrandLink onNavigate={() => setMobileOpen(false)} />
-        </div>
-        <nav className="hidden min-w-0 items-center justify-self-center gap-3 md:flex md:translate-y-1.5 lg:gap-4" aria-label="Admin navigation">
-          {hubs.map((hub) => <AdminHubNavLink key={hub.key} hub={hub} />)}
-        </nav>
-        <div className="hidden shrink-0 items-center justify-self-end md:flex">
-          <AdminProfileMenu adminEmail={adminEmail} adminImage={adminImage} displayName={displayName} />
-        </div>
-        <button
-          type="button"
-          className="focus-ring inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border border-[#DDE7F0] bg-white px-3 text-sm font-bold text-[#021C2B] md:hidden"
-          aria-expanded={mobileOpen}
-          aria-controls="admin-mobile-menu"
-          onClick={() => setMobileOpen((open) => !open)}
-        >
-          {mobileOpen ? <X size={16} aria-hidden="true" /> : <Menu size={16} aria-hidden="true" />}
-          Menu
-        </button>
-      </div>
-      {mobileOpen ? (
-        <div id="admin-mobile-menu" className="page-shell mb-3 rounded-2xl border border-[#DDE7F0] bg-white p-2 shadow-lg md:hidden">
-          <nav className="grid gap-1" aria-label="Admin mobile navigation">
-            {hubs.map((hub) => <AdminHubNavLink key={hub.key} hub={hub} onNavigate={() => setMobileOpen(false)} mobile />)}
+    <>
+      <header className="sticky top-0 z-30 border-b border-[#DDE7F0] bg-white/95 backdrop-blur">
+        <div className="page-shell flex min-h-16 items-center justify-between gap-3 py-2 md:grid md:min-h-[68px] md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:gap-6">
+          <div className="min-w-0 justify-self-start">
+            <AdminBrandLink onNavigate={() => setMobileMenuOpen(false)} />
+          </div>
+          <nav className="hidden min-w-0 items-center justify-self-center gap-3 md:flex md:translate-y-1.5 lg:gap-4" aria-label="Admin navigation">
+            {hubs.map((hub) => <AdminHubNavLink key={hub.key} hub={hub} />)}
           </nav>
-          <div className="mt-2 border-t border-slate-100 pt-2">
+          <div className="hidden shrink-0 items-center justify-self-end md:flex">
             <AdminProfileMenu adminEmail={adminEmail} adminImage={adminImage} displayName={displayName} />
           </div>
+          <div className="flex items-center gap-3 md:hidden">
+            <button
+              type="button"
+              aria-label="Open Admin account menu"
+              aria-expanded={mobileAccountOpen}
+              aria-controls="admin-mobile-account-drawer"
+              aria-haspopup="dialog"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setMobileAccountOpen((open) => !open);
+              }}
+              className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#DDE7F0] bg-[#F3F7FA]/70 text-xs font-black text-[#021C2B] transition-colors hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
+            >
+              <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-transparent text-[11px] font-black text-[#004BB8]">
+                {adminImage ? <AdminLogoImage src={adminImage} alt="" className="h-full w-full object-cover" /> : adminInitials}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              aria-label={mobileMenuOpen ? "Close Admin mobile menu" : "Open Admin mobile menu"}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="admin-mobile-menu-drawer"
+              aria-haspopup="dialog"
+              onClick={() => {
+                setMobileAccountOpen(false);
+                setMobileMenuOpen((open) => !open);
+              }}
+              className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#DDE7F0] bg-[#F3F7FA]/70 text-[#021C2B] transition-colors hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
+            >
+              {mobileMenuOpen ? <X size={18} aria-hidden="true" /> : <Menu size={18} aria-hidden="true" />}
+            </button>
+          </div>
         </div>
-      ) : null}
-    </header>
+      </header>
+
+      {mobileMenuOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div className="fixed inset-0 z-[70] md:hidden" role="presentation">
+              <button
+                type="button"
+                className="absolute inset-0 h-full w-full cursor-default bg-slate-950/45"
+                aria-label="Close Admin mobile menu backdrop"
+                onClick={() => setMobileMenuOpen(false)}
+              />
+
+              <AdminMobileDrawerPanel
+                id="admin-mobile-menu-drawer"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Admin menu"
+                className="fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl md:hidden"
+              >
+                <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+                  <h2 className="truncate text-xl font-semibold tracking-[-0.02em] text-slate-950">Menu</h2>
+                  <button
+                    type="button"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                    aria-label="Close Admin mobile menu"
+                  >
+                    <X size={18} aria-hidden="true" />
+                  </button>
+                </div>
+
+                <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]" aria-label="Admin mobile navigation">
+                  <div className="grid gap-1">
+                    {hubs.map((hub) => <AdminHubNavLink key={hub.key} hub={hub} onNavigate={() => setMobileMenuOpen(false)} mobile />)}
+                  </div>
+                </nav>
+              </AdminMobileDrawerPanel>
+            </div>,
+            document.body,
+          )
+        : null}
+
+      {mobileAccountOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div className="fixed inset-0 z-[70] md:hidden" role="presentation">
+              <button
+                type="button"
+                className="absolute inset-0 h-full w-full cursor-default bg-slate-950/45"
+                aria-label="Close Admin account backdrop"
+                onClick={() => setMobileAccountOpen(false)}
+              />
+
+              <AdminMobileDrawerPanel
+                id="admin-mobile-account-drawer"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Admin account menu"
+                className="fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl md:hidden"
+              >
+                <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
+                  <section aria-label="Admin account">
+                    <div className="flex items-center gap-3 px-2.5 pb-5">
+                      <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#004BB8] text-base font-semibold text-white shadow-sm ring-4 ring-[#004BB8]/10">
+                        {adminImage ? <AdminLogoImage src={adminImage} alt="" className="h-full w-full object-cover" /> : adminInitials}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="block truncate text-lg font-semibold text-slate-950">{displayName}</div>
+                        <div className="mt-0.5 block truncate text-sm font-medium text-slate-500">{adminEmail || "No email available"}</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setMobileAccountOpen(false)}
+                        className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                        aria-label="Close Admin account menu"
+                      >
+                        <X size={18} aria-hidden="true" />
+                      </button>
+                    </div>
+
+                    <div className="border-t border-slate-100" />
+
+                    <div className="grid gap-1 py-4">
+                      <AdminAccountDrawerLink href="/admin/system" label="System" icon={Settings} onNavigate={() => setMobileAccountOpen(false)} />
+                      <AdminAccountDrawerLink href="/admin/logs" label="Audit logs" icon={ShieldCheck} onNavigate={() => setMobileAccountOpen(false)} />
+                      <AdminAccountDrawerLink href="/" label="Switch to public site" icon={Building2} onNavigate={() => setMobileAccountOpen(false)} />
+                      <AdminAccountDrawerLink href="/api/auth/signout" label="Logout" icon={LogOut} onNavigate={() => setMobileAccountOpen(false)} />
+                    </div>
+                  </section>
+                </nav>
+              </AdminMobileDrawerPanel>
+            </div>,
+            document.body,
+          )
+        : null}
+    </>
   );
 }
 
@@ -130,7 +278,7 @@ function AdminHubNavLink({ hub, mobile = false, onNavigate }: { hub: AdminHubDef
       className={cn(
         "focus-ring inline-flex items-center border transition-colors",
         mobile
-          ? "min-h-11 rounded-xl px-3 py-2 text-sm font-bold"
+          ? "min-h-12 px-2 py-2.5 text-[15px] font-semibold leading-5"
           : "min-h-[38px] rounded-full px-3.5 py-2 text-[15px] font-semibold leading-none tracking-[-0.005em] lg:px-4",
         active
           ? "border-[#004BB8]/18 bg-[#004BB8]/6 text-[#021C2B]"
@@ -207,6 +355,24 @@ function ProfileLink({ href, label, icon: Icon }: { href: string; label: string;
         <Icon size={17} aria-hidden="true" />
       </span>
       {label}
+    </Link>
+  );
+}
+
+function AdminAccountDrawerLink({ href, label, icon: Icon, onNavigate }: { href: string; label: string; icon: React.ComponentType<{ size?: number; className?: string }>; onNavigate: () => void }) {
+  return (
+    <Link
+      href={href}
+      onClick={onNavigate}
+      className="group inline-flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-base font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+    >
+      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition-colors group-hover:border-[#004BB8]/15 group-hover:bg-[#F2F7FA] group-hover:text-[#004BB8]">
+        <Icon size={18} aria-hidden="true" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block whitespace-normal break-words">{label}</span>
+      </span>
+      <ChevronRight size={18} className="ml-auto shrink-0 text-slate-400 transition-colors group-hover:text-[#004BB8]" aria-hidden="true" />
     </Link>
   );
 }

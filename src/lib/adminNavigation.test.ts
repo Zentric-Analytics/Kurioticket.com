@@ -106,8 +106,8 @@ test("desktop and mobile navigation omit a second row, sidebar and separate visi
   assert.equal(getAdminNavbarHubsForRole("USER").length, 0);
   assert.match(shell, /const hubs = getAdminNavbarHubsForRole\(safeRole\)/);
   assert.match(shell, /hubs\.map\(\(hub\) => <AdminHubNavLink key=\{hub\.key\} hub=\{hub\} \/>\)/);
-  assert.match(shell, /hubs\.map\(\(hub\) => <AdminHubNavLink key=\{hub\.key\} hub=\{hub\} onNavigate=\{\(\) => setMobileOpen\(false\)\} mobile \/>\)/);
-  assert.match(shell, /<AdminBrandLink onNavigate=\{\(\) => setMobileOpen\(false\)\} \/>/);
+  assert.match(shell, /hubs\.map\(\(hub\) => <AdminHubNavLink key=\{hub\.key\} hub=\{hub\} onNavigate=\{\(\) => setMobileMenuOpen\(false\)\} mobile \/>\)/);
+  assert.match(shell, /<AdminBrandLink onNavigate=\{\(\) => setMobileMenuOpen\(false\)\} \/>/);
   assert.match(shell, /<nav className="hidden min-w-0 items-center justify-self-center gap-3 md:flex md:translate-y-1.5 lg:gap-4"/);
   assert.doesNotMatch(shell, /<aside/);
   assert.doesNotMatch(shell, /AdminSidebar/);
@@ -161,17 +161,20 @@ test("direct existing admin routes remain unchanged while hub routes are added",
   assert.ok(adminHubs.some((hub) => hub.href === "/admin/platform"));
 });
 
-test("mobile menu is accessible, keeps logo and Menu, closes on navigation and profile uses System link", () => {
-  assert.match(shell, /<AdminBrandLink onNavigate=\{\(\) => setMobileOpen\(false\)\} \/>/);
+test("mobile menu is accessible, keeps logo, uses separate drawers, and closes on navigation", () => {
+  assert.match(shell, /<AdminBrandLink onNavigate=\{\(\) => setMobileMenuOpen\(false\)\} \/>/);
   assert.match(shell, /src="\/brand\/kurioticket-logo-primary-light-bg\.svg"/);
-  assert.match(shell, /\{mobileOpen \? <X size=\{16\} aria-hidden="true" \/> : <Menu size=\{16\} aria-hidden="true" \/>\}/);
-  assert.match(shell, /Menu\n        <\/button>/);
+  assert.match(shell, /\{mobileMenuOpen \? <X size=\{18\} aria-hidden="true" \/> : <Menu size=\{18\} aria-hidden="true" \/>\}/);
   assert.doesNotMatch(shell, />Admin<\/span>/);
-  assert.match(shell, /aria-expanded=\{mobileOpen\}/);
-  assert.match(shell, /aria-controls="admin-mobile-menu"/);
-  assert.match(shell, /onNavigate=\{\(\) => setMobileOpen\(false\)\}/);
-  assert.match(shell, /min-h-11/);
-  assert.match(shell, /AdminProfileMenu/);
+  assert.doesNotMatch(shell, /aria-controls="admin-mobile-menu"/);
+  assert.match(shell, /aria-expanded=\{mobileMenuOpen\}/);
+  assert.match(shell, /aria-controls="admin-mobile-menu-drawer"/);
+  assert.match(shell, /aria-haspopup="dialog"/);
+  assert.match(shell, /role="dialog"/);
+  assert.match(shell, /aria-modal="true"/);
+  assert.match(shell, /onNavigate=\{\(\) => setMobileMenuOpen\(false\)\}/);
+  assert.match(shell, /min-h-12/);
+  assert.match(shell, /id="admin-mobile-account-drawer"/);
   assert.match(shell, /href="\/admin\/system" label="System"/);
   assert.doesNotMatch(shell, /href="\/admin\/settings"/);
 });
