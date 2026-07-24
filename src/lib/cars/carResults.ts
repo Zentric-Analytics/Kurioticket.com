@@ -1,7 +1,7 @@
 import type { CarOffer, CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 
 export type SelectedCarFilters = Record<string, string[]>;
-export type CarSort = "recommended" | "lowestTotal" | "lowestDaily" | "topRated";
+export type CarSort = "recommended" | "lowestTotal" | "topRated";
 export type CarResultBadge = "Best value" | "Cheapest" | "Top rated";
 
 export const getPrimaryCarOffer = (car: NormalizedCarResult): CarOffer | undefined =>
@@ -51,7 +51,6 @@ export function sortCarResults(results: NormalizedCarResult[], sort: CarSort) {
     const bOffer = getPrimaryCarOffer(b.car);
     const tie = a.car.id.localeCompare(b.car.id) || a.index - b.index;
     if (sort === "lowestTotal") return (aOffer?.totalPrice ?? Infinity) - (bOffer?.totalPrice ?? Infinity) || tie;
-    if (sort === "lowestDaily") return (aOffer?.pricePerDay ?? Infinity) - (bOffer?.pricePerDay ?? Infinity) || tie;
     if (sort === "topRated") return (b.car.supplierRating ?? -Infinity) - (a.car.supplierRating ?? -Infinity) || tie;
     return recommendedScore(b.car) - recommendedScore(a.car) ||
       (aOffer?.totalPrice ?? Infinity) - (bOffer?.totalPrice ?? Infinity) || tie;
