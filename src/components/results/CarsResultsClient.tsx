@@ -1350,9 +1350,10 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
             })}
           </h1>
 
-          {initialResults.length > 0 ? (
-            <>
-              <div className="flex w-full flex-col gap-2 py-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <div className="w-full min-w-0 xl:max-w-[960px] 2xl:max-w-[1000px]">
+            {initialResults.length > 0 ? (
+              <>
+                <div className="flex flex-wrap items-center justify-between gap-3 py-1">
                 <p className="whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">
                   {t(
                     visibleResults.length === 1
@@ -1460,10 +1461,11 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
                     </div>
                   </div>
                 </div>
-              </div>
-              {resultsTransitioning ? <div className="space-y-4">{[0,1,2].map((item) => <CarCardSkeleton key={item} />)}</div> : visibleResults.length ? <div className="space-y-4">{visibleResults.map((car) => <CarResultCard key={car.id} car={car} badge={badges.get(car.id)} detailsHref={buildCarDetailsHref(car.id, values)} />)}</div> : <div role="status" className="rounded-xl border border-slate-200 bg-white p-8 text-center"><p className="font-bold text-slate-950">No cars match these filters.</p><Button type="button" variant="secondary" className="mt-4" onClick={clearCarFilters}>Clear filters</Button></div>}
-            </>
-          ) : <CarsResultsShell hasSearchContext={hasSearchContext} inventoryStatus={inventoryStatus} t={t} />}
+                </div>
+                {resultsTransitioning ? <div className="w-full space-y-4">{[0,1,2].map((item) => <CarCardSkeleton key={item} />)}</div> : visibleResults.length ? <div className="w-full space-y-4">{visibleResults.map((car) => <CarResultCard key={car.id} car={car} badge={badges.get(car.id)} detailsHref={buildCarDetailsHref(car.id, values)} />)}</div> : <div role="status" className="w-full rounded-xl border border-slate-200 bg-white p-8 text-center"><p className="font-bold text-slate-950">No cars match these filters.</p><Button type="button" variant="secondary" className="mt-4" onClick={clearCarFilters}>Clear filters</Button></div>}
+              </>
+            ) : <CarsResultsShell hasSearchContext={hasSearchContext} inventoryStatus={inventoryStatus} t={t} />}
+          </div>
         </section>
       </div>
 
