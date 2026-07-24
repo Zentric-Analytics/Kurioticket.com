@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BriefcaseBusiness, CarFront, Check, DoorOpen, Fuel, Gauge, MapPin, Snowflake, Sparkles, Users } from "lucide-react";
+import { Award, BriefcaseBusiness, CarFront, Check, DoorOpen, Fuel, Gauge, MapPin, Snowflake, Star, Tag, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { CarResultImage } from "@/components/results/CarResultImage";
 import type { CarResultBadge } from "@/lib/cars/carResults";
@@ -8,9 +8,16 @@ import type { NormalizedCarResult } from "@/lib/cars/types";
 
 const title = (value: string) => value.replaceAll("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 
+const carResultBadgeIcons: Record<CarResultBadge, LucideIcon> = {
+  "Best value": Award,
+  Cheapest: Tag,
+  "Top rated": Star,
+};
+
 export function CarResultCard({ car, badge, detailsHref }: { car: NormalizedCarResult; badge?: CarResultBadge; detailsHref: string }) {
   const offer = getPrimaryCarOffer(car);
   if (!offer) return null;
+  const BadgeIcon = badge ? carResultBadgeIcons[badge] : null;
   const money = (value: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: offer.currency, maximumFractionDigits: 0 }).format(value);
   const specifications: Array<[LucideIcon, string]> = [
     [Users, `${car.passengers} passengers`],
@@ -37,7 +44,12 @@ export function CarResultCard({ car, badge, detailsHref }: { car: NormalizedCarR
                 {car.modelName}
               </h2>
             </div>
-            {badge && <span className="inline-flex min-h-6 shrink-0 items-center gap-1 rounded-md bg-[#EAF2FB] px-2 py-0.5 text-xs font-semibold text-[#004BB8]"><Sparkles size={13} aria-hidden="true" />{badge}</span>}
+            {badge && BadgeIcon && (
+              <span className="inline-flex min-h-6 shrink-0 items-center gap-1 rounded-md bg-[#EAF2FB] px-2 py-0.5 text-xs font-semibold text-[#004BB8]">
+                <BadgeIcon size={13} aria-hidden="true" />
+                {badge}
+              </span>
+            )}
           </header>
 
           <p className="mt-1.5 flex min-w-0 items-center gap-2 text-sm text-slate-600">
