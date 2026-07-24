@@ -1350,7 +1350,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
             })}
           </h1>
 
-          <div className="w-full min-w-0 xl:max-w-[960px] 2xl:max-w-[1000px]">
+          <div className="w-full min-w-0 xl:max-w-[840px]">
             {initialResults.length > 0 ? (
               <>
                 <div className="flex flex-wrap items-center justify-between gap-3 py-1">
