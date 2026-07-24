@@ -91,11 +91,10 @@ export function CarCardSkeleton() {
     <div role="status" aria-label="Loading car result" className="overflow-hidden rounded-2xl border border-[#D8E1EC] bg-white">
       <span className="sr-only">Loading car result</span>
       <div className="grid md:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_205px]">
-        <div className="flex flex-col justify-center gap-2 border-b border-[#E2E8F0] bg-slate-50 p-3 md:border-b-0 md:border-e">
+        <div className="flex items-center border-b border-[#E2E8F0] bg-slate-50 p-3 md:border-b-0 md:border-e">
           <Skeleton className="aspect-[4/3] w-full rounded-xl" />
-          <Skeleton className="h-3 w-28" />
         </div>
-        <div className="space-y-4 p-5"><Skeleton className="h-3 w-24" /><Skeleton className="h-7 w-2/3" /><div className="flex flex-wrap gap-3">{["w-20", "w-16", "w-16", "w-20", "w-24"].map((width, index) => <Skeleton key={index} className={`h-4 ${width}`} />)}</div><div className="flex flex-wrap gap-2"><Skeleton className="h-7 w-28" /><Skeleton className="h-7 w-24" /><Skeleton className="h-7 w-32" /></div><Skeleton className="h-4 w-4/5" /><div className="border-t border-slate-100 pt-4"><Skeleton className="h-4 w-40" /><Skeleton className="mt-2 h-3 w-52" /></div></div>
+        <div className="space-y-4 p-5"><Skeleton className="h-3 w-24" /><Skeleton className="h-7 w-2/3" /><div className="flex flex-wrap gap-3">{["w-20", "w-16", "w-16", "w-20", "w-24"].map((width, index) => <Skeleton key={index} className={`h-4 ${width}`} />)}</div><div className="flex flex-wrap gap-2"><Skeleton className="h-7 w-28" /><Skeleton className="h-7 w-24" /><Skeleton className="h-7 w-32" /></div><Skeleton className="h-4 w-4/5" /><div className="flex sm:justify-end"><Skeleton className="h-4 w-28" /></div></div>
         <div className="col-span-full flex flex-col gap-3 border-t border-slate-200 p-5 sm:flex-row sm:items-end sm:justify-between xl:col-span-1 xl:block xl:border-s xl:border-t-0"><div className="space-y-3"><Skeleton className="h-3 w-24" /><Skeleton className="h-6 w-20" /><Skeleton className="h-3 w-12" /><Skeleton className="h-8 w-28" /></div><Skeleton className="h-11 w-full sm:w-40 xl:mt-5 xl:w-full" /></div>
       </div>
     </div>
