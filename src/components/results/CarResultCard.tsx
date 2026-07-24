@@ -31,9 +31,26 @@ export function CarResultCard({ car, badge, detailsHref }: { car: NormalizedCarR
 
         <div className="flex min-w-0 flex-col p-5">
           <header className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#004BB8]">{car.categoryLabel}</p>
-              <h2 className="mt-1 text-[22px] font-extrabold leading-tight text-[#102A43]">{car.modelName}</h2>
+              <h2 className="mt-1 break-words text-[22px] font-extrabold leading-tight text-[#102A43]">
+                {car.modelName}
+              </h2>
+              <p className="mt-2 flex min-w-0 items-start gap-2 text-sm text-slate-600">
+                <MapPin
+                  size={16}
+                  className="mt-0.5 shrink-0 text-[#004BB8]"
+                  aria-hidden="true"
+                />
+                <span className="min-w-0 break-words">
+                  <strong className="font-semibold text-slate-700">
+                    {title(car.pickupType)}
+                  </strong>
+                  {" · "}
+                  {car.pickupLocation}
+                  {car.shuttleRequired ? " · Shuttle required" : ""}
+                </span>
+              </p>
             </div>
             {badge && <span className="inline-flex min-h-7 shrink-0 items-center gap-1.5 rounded-md bg-[#EAF2FB] px-2.5 py-1 text-xs font-semibold text-[#004BB8]"><Sparkles size={13} aria-hidden="true" />{badge}</span>}
           </header>
@@ -49,9 +66,7 @@ export function CarResultCard({ car, badge, detailsHref }: { car: NormalizedCarR
             {offer.payAtPickup && <span className="inline-flex min-h-7 items-center gap-1.5 rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700"><Check size={13} aria-hidden="true" />Pay at pickup</span>}
           </div>
 
-          <p className="mt-4 flex items-start gap-2 text-sm text-slate-600"><MapPin size={16} className="mt-0.5 shrink-0 text-[#004BB8]" aria-hidden="true" /><span><strong className="font-semibold text-slate-700">{title(car.pickupType)}</strong> · {car.pickupLocation}{car.shuttleRequired ? " · Shuttle required" : ""}</span></p>
-
-          {car.supplierRating !== undefined && <p className="mt-4 flex items-center gap-1 text-xs text-slate-500 sm:justify-end"><Star size={14} className="fill-amber-400 text-amber-400" aria-hidden="true" /><strong className="text-slate-700">{car.supplierRating.toFixed(1)}</strong>{car.supplierReviewCount !== undefined ? ` (${car.supplierReviewCount} reviews)` : ""}</p>}
+          {car.supplierRating !== undefined && <p className="mt-4 flex flex-wrap items-center gap-1 text-xs text-slate-500 sm:justify-end"><Star size={14} className="fill-amber-400 text-amber-400" aria-hidden="true" /><strong className="text-slate-700">{car.supplierRating.toFixed(1)}</strong>{car.supplierReviewCount !== undefined ? ` (${car.supplierReviewCount} reviews)` : ""}</p>}
         </div>
 
         <div className="col-span-full flex min-w-0 flex-col border-t border-[#E2E8F0] bg-slate-50/45 p-5 lg:col-span-1 lg:border-s lg:border-t-0 lg:bg-white lg:text-end">
