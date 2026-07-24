@@ -11,9 +11,20 @@ type CarResultImageProps = {
   imageAlt: string;
   modelName: string;
   category: CarCategory;
+  sizes?: string;
+  fit?: "cover" | "contain";
+  priority?: boolean;
 };
 
-export function CarResultImage({ imageUrl, imageAlt, modelName, category }: CarResultImageProps) {
+export function CarResultImage({
+  imageUrl,
+  imageAlt,
+  modelName,
+  category,
+  sizes = "(min-width: 1280px) 276px, (min-width: 768px) 256px, 100vw",
+  fit = "cover",
+  priority = false,
+}: CarResultImageProps) {
   const [failedUrl, setFailedUrl] = useState<string>();
   const resolvedImageUrl = resolveCarResultImageSource(imageUrl);
   const hasImage = Boolean(resolvedImageUrl && failedUrl !== resolvedImageUrl);
@@ -36,11 +47,12 @@ export function CarResultImage({ imageUrl, imageAlt, modelName, category }: CarR
       src={resolvedImageUrl!}
       alt={imageAlt}
       fill
-      sizes="(min-width: 1280px) 276px, (min-width: 768px) 256px, 100vw"
+      sizes={sizes}
+      priority={priority}
       quality={92}
       className="h-full w-full"
       style={{
-        objectFit: "cover",
+        objectFit: fit,
         objectPosition: "center",
       }}
       onLoad={() => setFailedUrl((currentUrl) => currentUrl === resolvedImageUrl ? undefined : currentUrl)}

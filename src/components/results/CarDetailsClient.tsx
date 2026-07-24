@@ -1,5 +1,6 @@
 import { BriefcaseBusiness, Car, Check, Fuel, MapPin, Snowflake, Star, Users } from "lucide-react";
 import { DetailsBackLink } from "@/components/results/DetailsBackLink";
+import { CarResultImage } from "@/components/results/CarResultImage";
 import { calculateRentalDays, getPrimaryCarOffer } from "@/lib/cars/carResults";
 import type { CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 
@@ -14,7 +15,19 @@ export function CarDetailsClient({ car, search, resultsHref }: { car: Normalized
     <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1fr)_330px]">
       <div className="min-w-0 space-y-5">
         <section className="rounded-xl border border-slate-200 bg-white p-5"><header className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.14em] text-[#004BB8]">{car.categoryLabel}</p><h1 className="mt-1 text-3xl font-extrabold text-slate-950">{car.modelName} {car.orSimilar && <span className="text-base font-medium text-slate-500">or similar</span>}</h1>{car.supplierRating !== undefined && <p className="mt-2 flex items-center gap-1 text-sm"><Star size={16} className="fill-amber-400 text-amber-400" aria-hidden="true" /><strong>{car.supplierRating.toFixed(1)}</strong>{car.supplierReviewCount !== undefined ? ` (${car.supplierReviewCount} reviews)` : ""}</p>}</div>{car.isDemo && <span className="rounded-full bg-[#eaf2fb] px-3 py-1 text-xs font-bold text-[#004BB8]">Demo vehicle</span>}</header>
-          <div className="mt-5 flex min-h-64 items-center justify-center rounded-xl bg-gradient-to-br from-slate-100 to-[#eaf2fb]" role="img" aria-label={car.imageAlt}><Car className="h-36 w-36 text-[#004BB8]/70" strokeWidth={1.1} aria-hidden="true" /></div></section>
+          <div className="relative mt-5 min-h-64 overflow-hidden rounded-xl bg-gradient-to-br from-slate-100 to-[#eaf2fb]">
+            <div className="absolute inset-0">
+              <CarResultImage
+                imageUrl={car.imageUrl}
+                imageAlt={car.imageAlt}
+                modelName={car.modelName}
+                category={car.category}
+                sizes="(min-width: 1280px) 700px, (min-width: 1024px) calc(100vw - 430px), 100vw"
+                fit="contain"
+                priority
+              />
+            </div>
+          </div></section>
         <section className="rounded-xl border border-slate-200 bg-white p-5"><h2 className="text-xl font-bold">Vehicle specifications</h2><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{specs.filter(([,label])=>label).map(([Icon,label])=><div key={label} className="flex items-center gap-2 rounded-lg bg-slate-50 p-3 text-sm font-semibold"><Icon size={18} className="text-[#004BB8]" aria-hidden="true" />{label}</div>)}</div></section>
         <section className="rounded-xl border border-slate-200 bg-white p-5"><h2 className="text-xl font-bold">Pickup and return</h2><div className="mt-4 grid gap-4 sm:grid-cols-2"><div><h3 className="font-bold">Pickup</h3><p>{car.pickupLocation}</p><p className="text-sm text-slate-600">{search.pickupDate} at {search.pickupTime}</p></div><div><h3 className="font-bold">Return</h3><p>{car.returnLocation}</p><p className="text-sm text-slate-600">{search.dropoffDate} at {search.dropoffTime}</p></div></div><p className="mt-4 text-sm">{humanize(car.pickupType)}{car.shuttleRequired ? " · Shuttle required" : ""}</p>{car.pickupInstructions && <p className="mt-2 text-sm"><strong>Pickup instructions:</strong> {car.pickupInstructions}</p>}</section>
         <section className="grid gap-5 md:grid-cols-2"><div className="rounded-xl border border-slate-200 bg-white p-5"><h2 className="text-xl font-bold">What is included</h2><ul className="mt-3 space-y-2">{car.includedItems.map(item=><li key={item} className="flex gap-2 text-sm"><Check size={17} className="shrink-0 text-emerald-600" aria-hidden="true" />{item}</li>)}</ul></div><div className="rounded-xl border border-slate-200 bg-white p-5"><h2 className="text-xl font-bold">Rental requirements</h2><ul className="mt-3 list-disc space-y-2 ps-5 text-sm">{car.requiredDocuments.map(item=><li key={item}>{item}</li>)}</ul>{car.minimumDriverAge && <p className="mt-3 text-sm"><strong>Minimum driver age:</strong> {car.minimumDriverAge}</p>}</div></section>
