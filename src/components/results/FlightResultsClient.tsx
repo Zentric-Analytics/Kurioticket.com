@@ -7361,14 +7361,22 @@ export function FlightResultsClient() {
                   <p className="mb-3 text-[16px] font-semibold leading-6 tracking-[-0.01em] text-slate-900 sm:hidden">
                     {formatResultsFound(sortedResults.length, t)}
                   </p>
-                  {sortedResults.map((flight, index) => (
-                    <FlightCard
-                      key={flight.id}
-                      flight={flight}
-                      isAccented={index % 2 === 0}
-                      resultBadge={resultBadgeByFlightId.get(flight.id)}
-                    />
-                  ))}
+                  {sortedResults.map((flight, index) => {
+                    const detailsQuery = params.toString();
+                    const detailsHref =
+                      `/flights/details/${encodeURIComponent(flight.id)}` +
+                      (detailsQuery ? `?${detailsQuery}` : "");
+
+                    return (
+                      <FlightCard
+                        key={flight.id}
+                        flight={flight}
+                        isAccented={index % 2 === 0}
+                        resultBadge={resultBadgeByFlightId.get(flight.id)}
+                        detailsHref={detailsHref}
+                      />
+                    );
+                  })}
                 </>
               ) : (
                 <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm font-semibold text-muted shadow-sm">

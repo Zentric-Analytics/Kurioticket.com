@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { ArrowLeft, BriefcaseBusiness, Car, Check, Fuel, MapPin, Snowflake, Star, Users } from "lucide-react";
+import { BriefcaseBusiness, Car, Check, Fuel, MapPin, Snowflake, Star, Users } from "lucide-react";
+import { DetailsBackLink } from "@/components/results/DetailsBackLink";
 import { calculateRentalDays, getPrimaryCarOffer } from "@/lib/cars/carResults";
 import type { CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 
@@ -10,7 +10,7 @@ export function CarDetailsClient({ car, search, resultsHref }: { car: Normalized
   const money = (value:number, currency=offer.currency) => new Intl.NumberFormat("en-US", { style:"currency", currency, maximumFractionDigits:0 }).format(value);
   const days = calculateRentalDays(search.pickupDate, search.dropoffDate);
   const specs = [[Users, `${car.passengers} passengers`], [BriefcaseBusiness, `${car.bags} bags`], [Car, `${car.doors} doors`], [Car, humanize(car.transmission)], [Snowflake, car.airConditioning ? "Air conditioning" : ""], [Fuel, car.mileagePolicy === "unlimited" ? "Unlimited mileage" : `${car.limitedMileageKm} km included`], [Fuel, humanize(car.fuelPolicy)], [MapPin, humanize(car.pickupType)]] as const;
-  return <main className="flex-1 bg-[#f6f8fb] pb-28 md:pb-12"><div className="page-shell py-6"><Link href={resultsHref} className="inline-flex items-center gap-2 font-bold text-[#004BB8]"><ArrowLeft size={18} aria-hidden="true" />Back to Cars results</Link>
+  return <main className="flex-1 bg-[#f6f8fb] pb-28 md:pb-12"><div className="page-shell py-6"><DetailsBackLink href={resultsHref}>Back to Cars results</DetailsBackLink>
     <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1fr)_330px]">
       <div className="min-w-0 space-y-5">
         <section className="rounded-xl border border-slate-200 bg-white p-5"><header className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.14em] text-[#004BB8]">{car.categoryLabel}</p><h1 className="mt-1 text-3xl font-extrabold text-slate-950">{car.modelName} {car.orSimilar && <span className="text-base font-medium text-slate-500">or similar</span>}</h1>{car.supplierRating !== undefined && <p className="mt-2 flex items-center gap-1 text-sm"><Star size={16} className="fill-amber-400 text-amber-400" aria-hidden="true" /><strong>{car.supplierRating.toFixed(1)}</strong>{car.supplierReviewCount !== undefined ? ` (${car.supplierReviewCount} reviews)` : ""}</p>}</div>{car.isDemo && <span className="rounded-full bg-[#eaf2fb] px-3 py-1 text-xs font-bold text-[#004BB8]">Demo vehicle</span>}</header>

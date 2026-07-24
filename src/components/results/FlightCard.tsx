@@ -33,10 +33,12 @@ export function FlightCard({
   flight,
   isAccented = false,
   resultBadge,
+  detailsHref,
 }: {
   flight: PublicFlightResult;
   isAccented?: boolean;
   resultBadge?: ResultBadge;
+  detailsHref?: string;
 }) {
   const { t: dictionary, locale } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -71,6 +73,8 @@ export function FlightCard({
     ? t("estimatedPrice")
     : t("providerPrice");
   const providerHandoffCopy = t("flightCardProviderHandoff");
+  const resolvedDetailsHref =
+    detailsHref || `/flights/details/${encodeURIComponent(flight.id)}`;
 
   const mobileCard = (
     <div className="p-2.5 sm:p-3 lg:hidden">
@@ -104,7 +108,7 @@ export function FlightCard({
           <div className="mt-2 flex items-start justify-between gap-4 border-t border-slate-100 pt-4">
             <FlightDetailLines details={details} />
             <FlightFareAction
-              flightId={flight.id}
+              detailsHref={resolvedDetailsHref}
               formattedPrice={displayPrice.formatted}
               priceAriaLabel={priceAriaLabel}
               priceTitle={priceTitle}
@@ -170,7 +174,7 @@ export function FlightCard({
             </div>
 
             <FlightFareAction
-              flightId={flight.id}
+              detailsHref={resolvedDetailsHref}
               formattedPrice={displayPrice.formatted}
               priceAriaLabel={priceAriaLabel}
               priceTitle={priceTitle}
@@ -470,7 +474,7 @@ function AirlineLogo({
 
 
 function FlightFareAction({
-  flightId,
+  detailsHref,
   formattedPrice,
   priceAriaLabel,
   priceTitle,
@@ -482,7 +486,7 @@ function FlightFareAction({
   className,
   desktop = false,
 }: {
-  flightId: string;
+  detailsHref: string;
   formattedPrice: string;
   priceAriaLabel: string;
   priceTitle: string | undefined;
@@ -535,7 +539,7 @@ function FlightFareAction({
         ) : null}
       </div>
       <LinkButton
-        href={`/flights/details/${encodeURIComponent(flightId)}`}
+        href={detailsHref}
         variant="primary"
         size="sm"
         className={cn(
