@@ -106,8 +106,8 @@ export function CarResultCard({ car, badge, detailsHref }: { car: NormalizedCarR
 
         <div className="col-span-full flex min-w-0 flex-col border-t border-[#E2E8F0] bg-slate-50/45 p-4 lg:col-span-1 lg:border-s lg:border-t-0 lg:bg-white lg:text-end">
           <div className="space-y-2.5">
-            <div><p className="text-xs font-medium text-slate-500">Price per day</p><p className="mt-0.5 text-lg font-bold text-slate-700" title={dailyDisplayPrice.title} aria-label={dailyDisplayPrice.ariaLabel}>{dailyDisplayPrice.formatted}</p></div>
-            <div><p className="text-xs font-medium text-slate-500">Total</p><p className="break-words text-[28px] font-extrabold leading-none text-[#102A43]" title={totalDisplayPrice.title} aria-label={totalDisplayPrice.ariaLabel}>{totalDisplayPrice.formatted}</p>{offer.taxesAndFeesIncluded && <p className="mt-1.5 text-xs text-slate-500">Taxes and fees included</p>}</div>
+            <div><p className="text-xs font-medium text-slate-500">Price per day</p><p className="mt-0.5 whitespace-nowrap text-sm font-semibold leading-5 text-slate-700 tabular-nums" dir="ltr" title={dailyDisplayPrice.title} aria-label={dailyDisplayPrice.ariaLabel}>{dailyDisplayPrice.formatted}</p></div>
+            <div><p className="text-xs font-medium text-slate-500">Total</p><p className="whitespace-nowrap text-lg font-bold leading-7 tracking-[-0.01em] text-[#102A43] tabular-nums lg:text-xl" dir="ltr" title={totalDisplayPrice.title} aria-label={totalDisplayPrice.ariaLabel}>{totalDisplayPrice.formatted}</p>{offer.taxesAndFeesIncluded && <p className="mt-1.5 text-xs text-slate-500">Taxes and fees included</p>}</div>
           </div>
           <Link href={detailsHref} className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg bg-[#004BB8] px-5 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 lg:mt-auto">View car</Link>
         </div>
