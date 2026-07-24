@@ -1,10 +1,15 @@
+"use client";
+
 import Link from "next/link";
 import { Award, BriefcaseBusiness, CarFront, Check, DoorOpen, Fuel, Gauge, MapPin, Snowflake, Star, Tag, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
+import { useRegion } from "@/components/region/RegionProvider";
 import { CarResultImage } from "@/components/results/CarResultImage";
 import type { CarResultBadge } from "@/lib/cars/carResults";
 import { getPrimaryCarOffer } from "@/lib/cars/carResults";
 import type { NormalizedCarResult } from "@/lib/cars/types";
+import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 
 const title = (value: string) => value.replaceAll("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 
@@ -15,10 +20,29 @@ const carResultBadgeIcons: Record<CarResultBadge, LucideIcon> = {
 };
 
 export function CarResultCard({ car, badge, detailsHref }: { car: NormalizedCarResult; badge?: CarResultBadge; detailsHref: string }) {
+  const { selectedOption } = useRegion();
+  const currencyRates = useCurrencyRates();
   const offer = getPrimaryCarOffer(car);
   if (!offer) return null;
   const BadgeIcon = badge ? carResultBadgeIcons[badge] : null;
-  const money = (value: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: offer.currency, maximumFractionDigits: 0 }).format(value);
+  const dailyDisplayPrice = formatDisplayPrice({
+    amount: offer.pricePerDay,
+    sourceCurrency: offer.currency,
+    displayCurrency: selectedOption.currency,
+    convertSourceEstimate: true,
+    maximumFractionDigits: 0,
+    rates: currencyRates.rates,
+    isFallbackRate: currencyRates.isFallback,
+  });
+  const totalDisplayPrice = formatDisplayPrice({
+    amount: offer.totalPrice,
+    sourceCurrency: offer.currency,
+    displayCurrency: selectedOption.currency,
+    convertSourceEstimate: true,
+    maximumFractionDigits: 0,
+    rates: currencyRates.rates,
+    isFallbackRate: currencyRates.isFallback,
+  });
   const specifications: Array<[LucideIcon, string]> = [
     [Users, `${car.passengers} passengers`],
     [BriefcaseBusiness, `${car.bags} bags`],
@@ -82,8 +106,8 @@ export function CarResultCard({ car, badge, detailsHref }: { car: NormalizedCarR
 
         <div className="col-span-full flex min-w-0 flex-col border-t border-[#E2E8F0] bg-slate-50/45 p-4 lg:col-span-1 lg:border-s lg:border-t-0 lg:bg-white lg:text-end">
           <div className="space-y-2.5">
-            <div><p className="text-xs font-medium text-slate-500">Price per day</p><p className="mt-0.5 text-lg font-bold text-slate-700">{money(offer.pricePerDay)}</p></div>
-            <div><p className="text-xs font-medium text-slate-500">Total</p><p className="break-words text-[28px] font-extrabold leading-none text-[#102A43]">{money(offer.totalPrice)}</p>{offer.taxesAndFeesIncluded && <p className="mt-1.5 text-xs text-slate-500">Taxes and fees included</p>}</div>
+            <div><p className="text-xs font-medium text-slate-500">Price per day</p><p className="mt-0.5 text-lg font-bold text-slate-700" title={dailyDisplayPrice.title} aria-label={dailyDisplayPrice.ariaLabel}>{dailyDisplayPrice.formatted}</p></div>
+            <div><p className="text-xs font-medium text-slate-500">Total</p><p className="break-words text-[28px] font-extrabold leading-none text-[#102A43]" title={totalDisplayPrice.title} aria-label={totalDisplayPrice.ariaLabel}>{totalDisplayPrice.formatted}</p>{offer.taxesAndFeesIncluded && <p className="mt-1.5 text-xs text-slate-500">Taxes and fees included</p>}</div>
           </div>
           <Link href={detailsHref} className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg bg-[#004BB8] px-5 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 lg:mt-auto">View car</Link>
         </div>
