@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BriefcaseBusiness, CarFront, Check, DoorOpen, Fuel, Gauge, MapPin, Snowflake, Sparkles, Star, Users } from "lucide-react";
+import { BriefcaseBusiness, CarFront, Check, DoorOpen, Fuel, Gauge, MapPin, Snowflake, Sparkles, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { CarResultImage } from "@/components/results/CarResultImage";
 import type { CarResultBadge } from "@/lib/cars/carResults";
@@ -65,8 +65,6 @@ export function CarResultCard({ car, badge, detailsHref }: { car: NormalizedCarR
             {offer.freeCancellation && <span className="inline-flex min-h-6 items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700"><Check size={13} aria-hidden="true" />Free cancellation</span>}
             {offer.payAtPickup && <span className="inline-flex min-h-6 items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700"><Check size={13} aria-hidden="true" />Pay at pickup</span>}
           </div>
-
-          {car.supplierRating !== undefined && <p className="mt-3 flex flex-wrap items-center gap-1 text-xs text-slate-500 sm:justify-end"><Star size={14} className="fill-amber-400 text-amber-400" aria-hidden="true" /><strong className="text-slate-700">{car.supplierRating.toFixed(1)}</strong>{car.supplierReviewCount !== undefined ? ` (${car.supplierReviewCount} reviews)` : ""}</p>}
         </div>
 
         <div className="col-span-full flex min-w-0 flex-col border-t border-[#E2E8F0] bg-slate-50/45 p-4 lg:col-span-1 lg:border-s lg:border-t-0 lg:bg-white lg:text-end">
