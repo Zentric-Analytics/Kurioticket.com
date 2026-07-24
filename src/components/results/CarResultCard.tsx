@@ -36,24 +36,25 @@ export function CarResultCard({ car, badge, detailsHref }: { car: NormalizedCarR
               <h2 className="mt-1 break-words text-[22px] font-extrabold leading-tight text-[#102A43]">
                 {car.modelName}
               </h2>
-              <p className="mt-1.5 flex min-w-0 items-start gap-2 text-sm text-slate-600">
-                <MapPin
-                  size={16}
-                  className="mt-0.5 shrink-0 text-[#004BB8]"
-                  aria-hidden="true"
-                />
-                <span className="min-w-0 break-words">
-                  <strong className="font-semibold text-slate-700">
-                    {title(car.pickupType)}
-                  </strong>
-                  {" · "}
-                  {car.pickupLocation}
-                  {car.shuttleRequired ? " · Shuttle required" : ""}
-                </span>
-              </p>
             </div>
             {badge && <span className="inline-flex min-h-6 shrink-0 items-center gap-1 rounded-md bg-[#EAF2FB] px-2 py-0.5 text-xs font-semibold text-[#004BB8]"><Sparkles size={13} aria-hidden="true" />{badge}</span>}
           </header>
+
+          <p className="mt-1.5 flex min-w-0 items-center gap-2 text-sm text-slate-600">
+            <MapPin
+              size={16}
+              className="shrink-0 text-[#004BB8]"
+              aria-hidden="true"
+            />
+            <span className="min-w-0 whitespace-normal md:whitespace-nowrap">
+              <strong className="font-semibold text-slate-700">
+                {title(car.pickupType)}
+              </strong>
+              {" · "}
+              {car.pickupLocation}
+              {car.shuttleRequired ? " · Shuttle required" : ""}
+            </span>
+          </p>
 
           <ul className="mt-3 flex flex-wrap gap-x-3 gap-y-2 text-sm font-medium text-slate-600">
             {specifications.map(([Icon, label]) => <li key={label} className="flex items-center gap-1.5"><Icon size={16} className="shrink-0 text-slate-500" aria-hidden="true" />{label}</li>)}
