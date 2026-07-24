@@ -7,7 +7,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { DealsSearchForm } from "@/components/search/DealsSearchForm";
 import { useLocale } from "@/components/layout/LocaleProvider";
-import { translations as en } from "@/lib/i18n/en";
+import { translations as enTranslations } from "@/lib/i18n/en";
 import { createDefaultDealsSearch, buildDealsModifyUrl } from "@/lib/deals/dealsSearchParams";
 
 const dealsHeroImage = "https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?auto=format&fit=crop&w=1200&q=80";
@@ -22,7 +22,10 @@ const destinationIdeas = [
 
 export default function DealsPage() {
   const { t: dictionary } = useLocale();
-  const t = useCallback((key: string) => dictionary[key] ?? en[key] ?? key, [dictionary]);
+  const t = useCallback(
+  (key: string) => dictionary[key] ?? enTranslations[key] ?? key,
+  [dictionary],
+);
   const dealsPageRef = useRef<HTMLDivElement | null>(null);
   const dealsSearchRef = useRef<HTMLDivElement | null>(null);
 
