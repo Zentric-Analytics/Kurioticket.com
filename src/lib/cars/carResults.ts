@@ -8,6 +8,12 @@ export const getPrimaryCarOffer = (car: NormalizedCarResult): CarOffer | undefin
   [...car.offers].filter((offer) => Number.isFinite(offer.totalPrice) && offer.totalPrice >= 0)
     .sort((a, b) => a.totalPrice - b.totalPrice || a.pricePerDay - b.pricePerDay || a.id.localeCompare(b.id))[0];
 
+/** The details comparison intentionally has a simpler, stable price ordering. */
+export const sortCarOffers = (offers: CarOffer[]) =>
+  [...offers]
+    .filter((offer) => Number.isFinite(offer.totalPrice) && offer.totalPrice >= 0)
+    .sort((a, b) => a.totalPrice - b.totalPrice || a.id.localeCompare(b.id));
+
 const optionMatches: Record<string, (car: NormalizedCarResult) => boolean> = {
   smallCars: (car) => ["mini", "economy", "compact"].includes(car.category),
   mediumCars: (car) => ["intermediate", "full-size"].includes(car.category),
