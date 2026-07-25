@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import {
   AdminButton,
   AdminFilterBar,
@@ -104,12 +104,6 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
         <div className="flex flex-col gap-2 md:flex-row md:items-center">
           <AdminButton type="submit">Filter</AdminButton>
           <AdminLinkButton href="/admin/users" variant="ghost">Clear filters</AdminLinkButton>
-        </div>
-        <div className="md:ml-auto">
-          <AdminButton type="button" variant="secondary" disabled title="Coming soon" className="w-full md:w-auto">
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            Invite User · Coming soon
-          </AdminButton>
         </div>
       </AdminFilterBar>
       {!data ? (
