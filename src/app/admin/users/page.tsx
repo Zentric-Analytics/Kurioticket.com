@@ -1,11 +1,6 @@
 import Link from "next/link";
-import { Search } from "lucide-react";
 import {
-  AdminButton,
-  AdminFilterBar,
-  AdminInput,
   AdminPageShell,
-  AdminSelect,
   AdminDataTable,
   AdminDataErrorState,
   AdminEmptyState,
@@ -28,6 +23,7 @@ import {
   type UserStatusFilter,
   usersTableColumns,
 } from "./page-data";
+import { UsersFilterToolbar } from "./UsersFilterToolbar";
 
 export const metadata = { title: "Admin Users" };
 
@@ -83,29 +79,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   return (
     <AdminPageShell title="Users" description="View users, filter account status and role, and safely suspend, reactivate, or soft-delete accounts.">
       {data ? <UsersSummary summary={data.summary} /> : null}
-      <AdminFilterBar action="/admin/users" className="overflow-visible p-3">
-        <label className="relative md:col-span-2">
-          <span className="sr-only">Search</span>
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-          <AdminInput name="q" defaultValue={filters.q} placeholder="Search users..." aria-label="Search users" className="pl-9" />
-        </label>
-        <label>
-          <span className="sr-only">Role</span>
-          <AdminSelect name="role" defaultValue={filters.role} aria-label="Role">
-            <option value="ALL">All roles</option><option value="USER">User</option><option value="SUPPORT">Support</option><option value="ADMIN">Admin</option>
-          </AdminSelect>
-        </label>
-        <label>
-          <span className="sr-only">Status</span>
-          <AdminSelect name="status" defaultValue={filters.status} aria-label="Status">
-            <option value="ALL">All statuses</option><option value="ACTIVE">Active</option><option value="SUSPENDED">Suspended</option><option value="DELETED">Deleted</option>
-          </AdminSelect>
-        </label>
-        <div className="flex flex-col gap-2 md:flex-row md:items-center">
-          <AdminButton type="submit">Filter</AdminButton>
-          <AdminLinkButton href="/admin/users" variant="ghost">Clear filters</AdminLinkButton>
-        </div>
-      </AdminFilterBar>
+      <UsersFilterToolbar q={filters.q} role={filters.role} status={filters.status} />
       {!data ? (
         <AdminDataErrorState title="Users could not be loaded." message="Refresh the page or check the database connection." />
       ) : data.users.length === 0 ? (

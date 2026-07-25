@@ -510,10 +510,10 @@ export function AdminCheckbox({ className, ...props }: React.InputHTMLAttributes
   return <input type="checkbox" className={cn("focus-ring h-4 w-4 rounded border-slate-300 text-indigo-700", className)} {...props} />;
 }
 
-export function AdminFilterBar({ children, action, className = "" }: { children: React.ReactNode; action?: string; className?: string }) {
+export function AdminFilterBar({ children, action, className = "", onSubmit }: { children: React.ReactNode; action?: string; className?: string; onSubmit?: React.FormEventHandler<HTMLFormElement> }) {
   return (
     <AdminSectionCard className={cn("p-4", className)}>
-      <form className="grid gap-3 md:grid-cols-[repeat(auto-fit,minmax(160px,1fr))] md:items-center" action={action}>
+      <form className="grid gap-3 md:grid-cols-[repeat(auto-fit,minmax(160px,1fr))] md:items-center" action={action} onSubmit={onSubmit}>
         {children}
       </form>
     </AdminSectionCard>
