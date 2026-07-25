@@ -3372,7 +3372,6 @@ export const translations: TranslationDictionary = {
   "carDetails.representativeVehicle": "Representative vehicle",
   "carDetails.demoVehicle": "Demo vehicle",
   "carDetails.reviews": "reviews",
-  "carDetails.demoExplanation": "This illustrative catalogue lets you compare demo offers; live car booking is not available yet.",
   "carDetails.pickup": "Pickup",
   "carDetails.return": "Return",
   "carDetails.locationUnavailable": "Location unavailable",
