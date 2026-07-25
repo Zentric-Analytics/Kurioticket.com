@@ -5,7 +5,7 @@ export default function Loading() {
     <AdminPageShell title="Loading" description="Preparing the latest admin data.">
       <AdminDataTableSkeleton
         caption="Loading admin support table"
-        columns={["Primary", "Status", "Details", "Updated", "Action"]}
+        columns={["Ticket", "User", "Category", "Status", "Created", "Action"]}
       />
     </AdminPageShell>
   );
