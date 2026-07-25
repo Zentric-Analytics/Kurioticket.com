@@ -3375,7 +3375,5 @@ export const translations: TranslationDictionary = {
   "carDetails.payment": "Payment",
   "carDetails.taxesFees": "Taxes and fees",
   "carDetails.notIncluded": "Not included",
-  "carDetails.bookingUnavailable": "Booking unavailable",
-  "carDetails.bookingDisabledExplanation": "Live car booking is unavailable for these illustrative demo offers.",
   "carDetails.unavailable": "Car unavailable",
 };
