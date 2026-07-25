@@ -5,6 +5,7 @@ import test from "node:test";
 import { buildUserWhere, buildUsersPaginationHref, clampUserPage, parseUserSearchParams, USER_PAGE_SIZE, usersTableColumns } from "./page-data";
 
 const page = readFileSync("src/app/admin/users/page.tsx", "utf8");
+const filterToolbar = readFileSync("src/app/admin/users/UsersFilterToolbar.tsx", "utf8");
 
 test("authorization runs before database access", () => {
   assert.ok(page.indexOf('await requireAdminSession("/admin/users")') < page.indexOf("getPrisma()"));
@@ -12,6 +13,20 @@ test("authorization runs before database access", () => {
 
 test("toolbar does not render the placeholder Invite User control", () => {
   assert.doesNotMatch(page, /Invite User|Coming soon/);
+});
+
+test("users filters apply automatically without a visible Filter button", () => {
+  assert.match(page, /<UsersFilterToolbar q=\{filters\.q\} role=\{filters\.role\} status=\{filters\.status\}/);
+  assert.doesNotMatch(filterToolbar, />Filter<|type="submit"/);
+  assert.match(filterToolbar, /USER_SEARCH_DEBOUNCE_MS = 400/);
+  assert.match(filterToolbar, /onSubmit=\{submitSearch\}/);
+});
+
+test("automatic filters preserve companion values and reset pagination", () => {
+  assert.match(filterToolbar, /q: search, role: nextRole, status: selectedStatus/);
+  assert.match(filterToolbar, /q: search, role: selectedRole, status: nextStatus/);
+  assert.doesNotMatch(filterToolbar, /params\.set\("page"/);
+  assert.match(filterToolbar, /href !== currentHref/);
 });
 
 test("invalid role falls back to ALL", () => {
