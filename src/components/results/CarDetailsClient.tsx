@@ -17,7 +17,14 @@ export function CarDetailsClient({ car, search, resultsHref }: { car: Normalized
   const { selectedOption } = useRegion();
   const rates = useCurrencyRates();
   const copy = (key: string) => t[key] || enTranslations[key] || key;
-  const text = { passengers: copy("carsResults.passengers").toLowerCase(), bags: copy("carDetails.bags"), doors: copy("carsResults.doors").toLowerCase(), airConditioning: copy("carsResults.airConditioning"), unlimitedMileage: copy("carDetails.unlimitedMileage"), included: copy("carDetails.includedShort"), representativeVehicle: copy("carDetails.representativeVehicle"), orSimilar: copy("carsResults.orSimilar"), demoVehicle: copy("carDetails.demoVehicle"), reviews: copy("carDetails.reviews") };
+  const text = {
+    passengers: copy("carsResults.passengers").toLowerCase(),
+    bags: copy("carDetails.bags"),
+    doors: copy("carsResults.doors").toLowerCase(),
+    airConditioning: copy("carsResults.airConditioning"),
+    unlimitedMileage: copy("carDetails.unlimitedMileage"),
+    included: copy("carDetails.includedShort"),
+  };
   const primaryOffer = getPrimaryCarOffer(car);
   const days = calculateRentalDays(search.pickupDate, search.dropoffDate);
   const price = (amount: number, currency: string) => formatDisplayPrice({ amount, sourceCurrency: currency, displayCurrency: selectedOption.currency, convertSourceEstimate: true, maximumFractionDigits: 0, rates: rates.rates, isFallbackRate: rates.isFallback });
