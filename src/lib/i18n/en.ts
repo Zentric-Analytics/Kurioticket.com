@@ -3368,7 +3368,7 @@ export const translations: TranslationDictionary = {
   "carDetails.nonRefundable": "Non-refundable",
   "carDetails.payAtPickup": "Pay at pickup",
   "carDetails.prepaid": "Prepaid",
-  "carDetails.bookingSummary": "Booking summary",
+  "carDetails.bookingSummary": "Estimated Rental Total",
   "carDetails.day": "rental day",
   "carDetails.days": "rental days",
   "carDetails.cancellation": "Cancellation",
