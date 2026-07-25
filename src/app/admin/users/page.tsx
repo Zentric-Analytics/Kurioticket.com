@@ -12,7 +12,7 @@ import {
   AdminLinkButton,
   StatusPill,
 } from "@/components/admin/AdminPageShell";
-import { UserStatusActions } from "@/components/admin/UserStatusActions";
+import { UserStatusActions, UsersActionsMenuProvider } from "@/components/admin/UserStatusActions";
 import { getPrisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { getAdminEmails } from "@/lib/env";
@@ -167,32 +167,34 @@ function UsersTable({ data, sessionUserId, filters }: { data: LoadedUsersData; s
 
   return (
     <div className="mt-3">
-      <AdminDataTable
-        caption="Admin users"
-        minWidth="800px"
-        columns={usersTableColumns}
-        summary={`Showing ${firstResult}–${lastResult} of ${data.totalMatchingUsers} users`}
-        footer={<Pagination currentPage={data.currentPage} totalPages={data.totalPages} filters={filters} firstResult={firstResult} lastResult={lastResult} totalMatchingUsers={data.totalMatchingUsers} />}
-        rows={sortedUsers.map((user) => {
-          const isProtectedAdmin = user.email ? adminEmails.has(user.email.toLowerCase().trim()) : false;
-          return {
-            id: user.id,
-            cells: [
-              <div key="user" className="flex min-w-0 items-center gap-3">
-                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F3F7FA] text-xs font-black text-[#004BB8] ring-1 ring-[#DDE7F0]">{getUserInitials(user.name, user.email)}</span>
-                <span className="min-w-0">
-                  <span className="block truncate font-semibold text-slate-950">{user.name || "Unnamed user"}</span>
-                  <span className="block truncate text-xs font-medium text-slate-500">{user.email || "—"}</span>
-                </span>
-              </div>,
-              <StatusPill key="role" tone={user.role === "ADMIN" ? "good" : user.role === "SUPPORT" ? "info" : "neutral"}>{user.role}</StatusPill>,
-              <StatusPill key="status" tone={user.status === "ACTIVE" ? "good" : user.status === "SUSPENDED" ? "warn" : "bad"}>{user.status}</StatusPill>,
-              formatDate(user.createdAt),
-              <UserStatusActions key="actions" userId={user.id} email={user.email} role={user.role} status={user.status} isSelf={user.id === sessionUserId} isProtectedAdmin={isProtectedAdmin} />,
-            ],
-          };
-        })}
-      />
+      <UsersActionsMenuProvider>
+        <AdminDataTable
+          caption="Admin users"
+          minWidth="800px"
+          columns={usersTableColumns}
+          summary={`Showing ${firstResult}–${lastResult} of ${data.totalMatchingUsers} users`}
+          footer={<Pagination currentPage={data.currentPage} totalPages={data.totalPages} filters={filters} firstResult={firstResult} lastResult={lastResult} totalMatchingUsers={data.totalMatchingUsers} />}
+          rows={sortedUsers.map((user) => {
+            const isProtectedAdmin = user.email ? adminEmails.has(user.email.toLowerCase().trim()) : false;
+            return {
+              id: user.id,
+              cells: [
+                <div key="user" className="flex min-w-0 items-center gap-3">
+                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F3F7FA] text-xs font-black text-[#004BB8] ring-1 ring-[#DDE7F0]">{getUserInitials(user.name, user.email)}</span>
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold text-slate-950">{user.name || "Unnamed user"}</span>
+                    <span className="block truncate text-xs font-medium text-slate-500">{user.email || "—"}</span>
+                  </span>
+                </div>,
+                <StatusPill key="role" tone={user.role === "ADMIN" ? "good" : user.role === "SUPPORT" ? "info" : "neutral"}>{user.role}</StatusPill>,
+                <StatusPill key="status" tone={user.status === "ACTIVE" ? "good" : user.status === "SUSPENDED" ? "warn" : "bad"}>{user.status}</StatusPill>,
+                formatDate(user.createdAt),
+                <UserStatusActions key="actions" userId={user.id} email={user.email} role={user.role} status={user.status} isSelf={user.id === sessionUserId} isProtectedAdmin={isProtectedAdmin} />,
+              ],
+            };
+          })}
+        />
+      </UsersActionsMenuProvider>
     </div>
   );
 }
