@@ -15,6 +15,18 @@ test("toolbar does not render the placeholder Invite User control", () => {
   assert.doesNotMatch(page, /Invite User|Coming soon/);
 });
 
+test("page omits the operations eyebrow and summary cards", () => {
+  assert.match(page, /<AdminPageShell eyebrow="" title="Users"/);
+  assert.doesNotMatch(page, /<UsersSummary|function UsersSummary|function CompactUserStat/);
+});
+
+test("filters render directly on the page without a background card", () => {
+  assert.doesNotMatch(filterToolbar, /AdminFilterBar|AdminSectionCard/);
+  assert.match(filterToolbar, /md:grid-cols-\[minmax\(0,2fr\)/);
+  assert.match(filterToolbar, /RotateCcw/);
+  assert.match(filterToolbar, /variant="secondary"/);
+});
+
 test("users filters apply automatically without a visible Filter button", () => {
   assert.match(page, /<UsersFilterToolbar q=\{filters\.q\} role=\{filters\.role\} status=\{filters\.status\}/);
   assert.doesNotMatch(filterToolbar, />Filter<|type="submit"/);

@@ -1,12 +1,11 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { Search } from "lucide-react";
+import { RotateCcw, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import {
   AdminButton,
-  AdminFilterBar,
   AdminInput,
   AdminSelect,
 } from "@/components/admin/AdminPageShell";
@@ -72,11 +71,15 @@ export function UsersFilterToolbar({ q, role, status }: UsersFilterToolbarProps)
   }
 
   return (
-    <AdminFilterBar action="/admin/users" className="overflow-visible p-3" onSubmit={submitSearch}>
-      <label className="relative md:col-span-2">
+    <form
+      action="/admin/users"
+      className="grid gap-3 md:grid-cols-[minmax(0,2fr)_minmax(9rem,1fr)_minmax(9rem,1fr)_auto] md:items-center"
+      onSubmit={submitSearch}
+    >
+      <label className="relative min-w-0">
         <span className="sr-only">Search</span>
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-        <AdminInput name="q" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search users..." aria-label="Search users" className="pl-9" />
+        <AdminInput name="q" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search users..." aria-label="Search users" className="bg-white pl-9" />
       </label>
       <label>
         <span className="sr-only">Role</span>
@@ -84,6 +87,7 @@ export function UsersFilterToolbar({ q, role, status }: UsersFilterToolbarProps)
           name="role"
           value={selectedRole}
           aria-label="Role"
+          className="bg-white"
           onChange={(event) => {
             cancelDebounce();
             const nextRole = event.target.value as UserRoleFilter;
@@ -100,6 +104,7 @@ export function UsersFilterToolbar({ q, role, status }: UsersFilterToolbarProps)
           name="status"
           value={selectedStatus}
           aria-label="Status"
+          className="bg-white"
           onChange={(event) => {
             cancelDebounce();
             const nextStatus = event.target.value as UserStatusFilter;
@@ -112,7 +117,8 @@ export function UsersFilterToolbar({ q, role, status }: UsersFilterToolbarProps)
       </label>
       <AdminButton
         type="button"
-        variant="ghost"
+        variant="secondary"
+        className="w-full md:w-auto"
         onClick={() => {
           cancelDebounce();
           setSearch("");
@@ -121,8 +127,9 @@ export function UsersFilterToolbar({ q, role, status }: UsersFilterToolbarProps)
           applyFilters({ q: "", role: "ALL", status: "ALL" });
         }}
       >
+        <RotateCcw className="h-4 w-4" aria-hidden="true" />
         Clear filters
       </AdminButton>
-    </AdminFilterBar>
+    </form>
   );
 }
