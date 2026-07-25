@@ -10,6 +10,10 @@ test("authorization runs before database access", () => {
   assert.ok(page.indexOf('await requireAdminSession("/admin/users")') < page.indexOf("getPrisma()"));
 });
 
+test("toolbar does not render the placeholder Invite User control", () => {
+  assert.doesNotMatch(page, /Invite User|Coming soon/);
+});
+
 test("invalid role falls back to ALL", () => {
   assert.equal(parseUserSearchParams({ role: "OWNER" }).role, "ALL");
 });
