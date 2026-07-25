@@ -77,8 +77,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   }
 
   return (
-    <AdminPageShell title="Users" description="View users, filter account status and role, and safely suspend, reactivate, or soft-delete accounts.">
-      {data ? <UsersSummary summary={data.summary} /> : null}
+    <AdminPageShell eyebrow="" title="Users" description="View users, filter account status and role, and safely suspend, reactivate, or soft-delete accounts.">
       <UsersFilterToolbar q={filters.q} role={filters.role} status={filters.status} />
       {!data ? (
         <AdminDataErrorState title="Users could not be loaded." message="Refresh the page or check the database connection." />
@@ -88,36 +87,6 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
         </div>
       ) : <UsersTable data={data} sessionUserId={session.user.id} filters={filters} />}
     </AdminPageShell>
-  );
-}
-
-function UsersSummary({ summary }: { summary: UserSummaryCounts }) {
-  return (
-    <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-      <CompactUserStat label="Total users" value={summary.totalUsers} />
-      <CompactUserStat label="Active users" value={summary.activeUsers} tone="good" />
-      <CompactUserStat label="Suspended users" value={summary.suspendedUsers} tone="warn" />
-      <CompactUserStat label="Admin & support staff" value={summary.adminSupportStaff} tone="info" />
-    </div>
-  );
-}
-
-function CompactUserStat({ label, value, tone = "neutral" }: { label: string; value: number; tone?: "good" | "warn" | "info" | "neutral" }) {
-  const dotClass = {
-    good: "bg-emerald-500",
-    warn: "bg-amber-500",
-    info: "bg-[#004BB8]",
-    neutral: "bg-slate-300",
-  }[tone];
-
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-      <div className="flex items-center justify-between gap-2">
-        <p className="truncate text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</p>
-        <span className={`h-2 w-2 shrink-0 rounded-full ${dotClass}`} />
-      </div>
-      <p className="mt-1 text-xl font-extrabold leading-7 text-slate-950">{value}</p>
-    </div>
   );
 }
 
