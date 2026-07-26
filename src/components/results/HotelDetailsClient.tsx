@@ -264,7 +264,7 @@ export function HotelDetailsClient({
 
   const resultsHref = buildHotelDetailsResultsHref(searchContext);
   const backToResultsText =
-    t("hotelResults.backToResults") || t("back") || "Back to results";
+    t("hotelResults.backToResults") || "Back to Hotels results";
 
   function retryHotelLoad() {
     setLoadAttempt((attempt) => attempt + 1);
