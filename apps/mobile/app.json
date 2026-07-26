@@ -2,7 +2,7 @@
   "expo": {
     "name": "Kurioticket",
     "slug": "kurioticket-mobile",
-    "platforms": ["android"],
+    "platforms": ["android", "ios"],
     "version": "0.1.0",
     "orientation": "portrait",
     "scheme": "kurioticket",
@@ -10,7 +10,8 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.kurioticket.mobile"
+      "bundleIdentifier": "com.kurioticket.mobile",
+      "icon": "./assets/kurioticket-icon-blue.png"
     },
     "android": {
       "package": "com.kurioticket.mobile",
