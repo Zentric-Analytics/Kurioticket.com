@@ -146,7 +146,6 @@ export function CarLocationAutocomplete({
         viewportHeight: window.innerHeight,
         viewportPadding: 16,
         gap: 10,
-        panelHeight: panelRef.current?.scrollHeight,
       });
       setPanelStyle({ left: geometry.left, top: geometry.top, width: geometry.width, maxHeight: geometry.maxHeight });
     };
