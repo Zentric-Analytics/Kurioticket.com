@@ -85,6 +85,10 @@ import {
   type TravelPreferencesAirlinePayload,
 } from "@/lib/flights/preferredAirlineFilters";
 import {
+  readFlightResultsSessionSnapshot,
+  writeFlightResultsSessionSnapshot,
+} from "@/lib/flights/flightResultsSessionCache";
+import {
   readSavedTripIds,
   toggleSavedTripId,
   writeSavedTripIds,
@@ -2535,7 +2539,23 @@ export function FlightResultsClient() {
     activeFlightSearchKeyRef.current = searchKey;
 
     const timer = window.setTimeout(() => {
-      if (activeFlightSearchKeyRef.current !== searchKey) return;
+      if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
+
+      const snapshot = readFlightResultsSessionSnapshot(searchKey);
+      if (snapshot) {
+        if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
+        setResults(
+          filterResultsByRequestedOutboundDate(
+            snapshot.results,
+            body.departureDate,
+          ),
+        );
+        setWarnings(snapshot.warnings);
+        setError("");
+        setLoading(false);
+        return;
+      }
+
       setResults([]);
       setLoading(true);
       setError("");
@@ -2563,8 +2583,14 @@ export function FlightResultsClient() {
         .then((data) => {
           if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
 
-          setResults(filterResultsByRequestedOutboundDate(data.results, body.departureDate));
-          setWarnings(Array.isArray(data.warnings) ? data.warnings : []);
+          const filteredResults = filterResultsByRequestedOutboundDate(
+            data.results,
+            body.departureDate,
+          );
+          const warnings = Array.isArray(data.warnings) ? data.warnings : [];
+          writeFlightResultsSessionSnapshot(searchKey, filteredResults, warnings);
+          setResults(filteredResults);
+          setWarnings(warnings);
         })
         .catch((searchError) => {
           if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
