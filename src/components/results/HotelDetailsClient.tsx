@@ -69,12 +69,6 @@ type HotelDetailsClientProps = {
   searchContext?: HotelDetailsSearchContext;
 };
 
-type HotelShareStatus =
-  | "idle"
-  | "shared"
-  | "copied"
-  | "error";
-
 const reviewLabelKeys: Record<HotelReviewBand, string> = {
   exceptional: "hotelResults.review.exceptional",
   veryGood: "hotelResults.review.veryGood",
@@ -106,8 +100,6 @@ export function HotelDetailsClient({
   const [redirecting, setRedirecting] = useState(false);
   const [preferredImageIndex, setPreferredImageIndex] = useState(0);
   const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(() => new Set());
-  const [shareStatus, setShareStatus] =
-    useState<HotelShareStatus>("idle");
   const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
@@ -123,7 +115,6 @@ export function HotelDetailsClient({
       setLoadError("");
       setRedirectError("");
       setRedirecting(false);
-      setShareStatus("idle");
       setPreferredImageIndex(0);
       setFailedImageUrls(new Set());
     });
@@ -271,56 +262,6 @@ export function HotelDetailsClient({
     getSnapshot: getHotelDetailsSnapshot,
   });
 
-  async function shareHotel() {
-    if (!hotel) return;
-
-    setShareStatus("idle");
-
-    const url = window.location.href;
-    const text = hotel.location
-      ? `${hotel.name} — ${hotel.location}`
-      : hotel.name;
-
-    if (typeof navigator.share === "function") {
-      try {
-        await navigator.share({
-          title: hotel.name,
-          text,
-          url,
-        });
-
-        setShareStatus("shared");
-        return;
-      } catch (error) {
-        if (
-          error instanceof DOMException &&
-          error.name === "AbortError"
-        ) {
-          return;
-        }
-
-        // Continue to the clipboard fallback.
-      }
-    }
-
-    try {
-      if (
-        !navigator.clipboard ||
-        typeof navigator.clipboard.writeText !==
-          "function"
-      ) {
-        throw new Error(
-          "Clipboard access is unavailable.",
-        );
-      }
-
-      await navigator.clipboard.writeText(url);
-      setShareStatus("copied");
-    } catch {
-      setShareStatus("error");
-    }
-  }
-
   const resultsHref = buildHotelDetailsResultsHref(searchContext);
   const backToResultsText =
     t("hotelResults.backToResults") || t("back") || "Back to results";
@@ -444,80 +385,12 @@ export function HotelDetailsClient({
     ? t("saved") || "Saved"
     : t("save") || "Save";
 
-  const shareHotelLabel = (
-    t("hotelDetails.shareHotel") ||
-    "Share {{name}}"
-  ).replace("{{name}}", hotel.name);
-
-  const shareActionText =
-    t("share") || "Share";
-
-  const normalizedHotelLocation =
-    normalizeHotelDetailsWhitespace(hotel.location || "");
-
-  const normalizedNeighbourhood =
-    normalizeHotelDetailsWhitespace(
-      hotel.neighbourhood || "",
-    );
-
-  const mapLocation =
-    normalizedHotelLocation &&
-    normalizedHotelLocation.length <= 240
-      ? normalizedHotelLocation
-      : normalizedNeighbourhood &&
-          normalizedNeighbourhood.length <= 240
-        ? normalizedNeighbourhood
-        : "";
-
-  const hasMapLocation =
-    Boolean(mapLocation);
-
-  const mapQuery = hasMapLocation
-    ? normalizeHotelDetailsWhitespace(
-        `${hotel.name}, ${mapLocation}`,
-      )
-    : "";
-
-  const mapSearchParams = hasMapLocation
-    ? new URLSearchParams({
-        api: "1",
-        query: mapQuery,
-      })
-    : null;
-
-  const mapHref = isSafeHotelDetailsHttpUrl(hotel.sourceUrl)
-    ? hotel.sourceUrl || ""
-    : mapSearchParams
-      ? `https://www.google.com/maps/search/?${mapSearchParams.toString()}`
-      : "";
   const sourceAttributions = (hotel.sourceAttributions || [])
     .map((attribution) => ({
       provider: attribution.provider.trim(),
       providerUri: attribution.providerUri?.trim(),
     }))
     .filter((attribution) => attribution.provider);
-
-  const mapActionText =
-    t("hotelDetails.viewMap") ||
-    t("viewMap") ||
-    "View map";
-
-  const mapHotelLabel = (
-    t("hotelDetails.viewHotelOnMap") ||
-    "View {{name}} on map"
-  ).replace("{{name}}", hotel.name);
-
-  const shareFeedbackText =
-    shareStatus === "shared"
-      ? t("hotelDetails.shared") ||
-        "Hotel shared"
-      : shareStatus === "copied"
-        ? t("hotelDetails.linkCopied") ||
-          "Link copied"
-        : shareStatus === "error"
-          ? t("hotelDetails.shareError") ||
-            "Unable to share this hotel"
-          : "";
 
   const staySummary = (() => {
     const checkInDate = parseHotelDetailsSearchDate(searchContext?.checkIn);
@@ -613,14 +486,6 @@ export function HotelDetailsClient({
             saveRequiresLiveRateText={saveRequiresLiveRateText}
             onSave={() => { if (isSaved || hasValidPrice) void toggleSavedHotel(); }}
             saveActionText={saveActionText}
-            shareHotelLabel={shareHotelLabel}
-            onShare={() => { void shareHotel(); }}
-            shareActionText={shareActionText}
-            mapHref={mapHref}
-            mapHotelLabel={mapHotelLabel}
-            mapActionText={mapActionText}
-            shareStatus={shareStatus}
-            shareFeedbackText={shareFeedbackText}
             starRating={starRating}
             starRatingAriaLabel={starRating ? t("hotelResults.starHotelAria").replace("{{rating}}", formatHotelDetailsRating(starRating, locale)) : ""}
             isGoogleMapsProvider={hotel.provider === "Google Maps"}
