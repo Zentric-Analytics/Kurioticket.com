@@ -3068,6 +3068,7 @@ export const translations: TranslationDictionary = {
   "deals.destination.rome.city": "Rome",
   "deals.destination.rome.country": "Italy",
   "deals.destination.rome.imageAlt": "The Colosseum in Rome beneath a clear blue sky",
+  "hotelResults.backToResults": "Back to Hotels results",
   "hotelResults.openFilters": "Open filters",
   "hotelResults.selectDateAriaPrefix": "Select",
   "hotelResults.searchingHotelPartners": "Searching hotel partners...",
