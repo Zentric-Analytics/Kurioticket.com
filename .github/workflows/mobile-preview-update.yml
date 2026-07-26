@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   publish-preview-update:
-    name: Publish Android preview update
+    name: Publish mobile preview update
     runs-on: ubuntu-latest
 
     steps:
@@ -60,6 +60,6 @@ jobs:
           eas update
           --channel preview
           --environment preview
-          --platform android
+          --platform all
           --non-interactive
           --message "Automated preview update from dev ${{ github.sha }}"
