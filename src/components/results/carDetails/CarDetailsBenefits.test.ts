@@ -70,17 +70,42 @@ test("source contract places two separate semantic cards beneath amenities", () 
   assert.doesNotMatch(benefitSource, /h-\[|min-h-|max-h-|overflow-x/);
 });
 
-test("source contract removes benefits but preserves Payment in BookingSummary", () => {
+test("source contract keeps only pricing and the provider CTA in BookingSummary", () => {
   const summary = sourceBetween(
     clientSource,
     "function BookingSummary",
     "function MobileBar",
   );
-  assert.doesNotMatch(summary, /carDetails\.cancellation/);
-  assert.doesNotMatch(summary, /carDetails\.taxesFees/);
-  assert.match(summary, /carDetails\.payment/);
-  assert.match(summary, /carsResults\.rentalCompany/);
-  assert.match(summary, /carsResults\.bookingProvider/);
+  for (const key of [
+    "carDetails.cancellation",
+    "carDetails.taxesFees",
+    "carsResults.rentalCompany",
+    "carsResults.bookingProvider",
+    "carDetails.payment",
+  ]) {
+    assert.doesNotMatch(summary, new RegExp(key.replace(".", "\\.")));
+  }
+  assert.doesNotMatch(summary, /<Term|<dl/);
+  assert.match(summary, /offer\.totalPrice/);
+  assert.match(summary, /offer\.pricePerDay/);
+  assert.match(summary, /carDetails\.bookingSummary/);
+  assert.match(summary, /carDetails\.day/);
+  assert.match(summary, /carsResults\.perDay/);
+  assert.match(
+    summary,
+    /<button disabled className="mt-5 w-full rounded-lg bg-teal-dark px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-60">{copy\("continueToProvider"\)}<\/button>/,
+  );
+  assert.doesNotMatch(clientSource, /function Term|<Term|<dl/);
+});
+
+test("source contract leaves the compact mobile summary unchanged", () => {
+  const mobile = clientSource.slice(clientSource.indexOf("function MobileBar"));
+  assert.match(mobile, /offer\.bookingProviderName/);
+  assert.match(mobile, /offer\.totalPrice/);
+  assert.match(mobile, /carDetails\.day/);
+  assert.match(mobile, /<button disabled/);
+  assert.match(mobile, /bg-teal-dark/);
+  assert.match(mobile, /continueToProvider/);
 });
 
 test("source contract keeps both provider CTAs disabled, inert, teal, and localized", () => {
