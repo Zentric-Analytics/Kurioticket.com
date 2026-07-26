@@ -1,9 +1,11 @@
 "use client";
 
-import { ChangeEvent, KeyboardEvent, RefObject, useEffect, useId, useRef, useState } from "react";
+import { CSSProperties, ChangeEvent, KeyboardEvent, RefObject, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Building2, LocateFixed, MapPin, Plane } from "lucide-react";
 
 import type { CarLocationSuggestion, CarLocationSuggestionKind } from "@/lib/cars/carLocationSuggestions";
+import { calculateDesktopPopoverGeometry } from "./desktopPopoverPosition";
 
 type Strings = {
   locationSuggestions: string;
@@ -34,6 +36,10 @@ type Props = {
   countryHint?: string;
   strings: Strings;
   onRequestClose?: () => void;
+  fieldAnchorRef?: RefObject<HTMLElement | null>;
+  searchCardRef?: RefObject<HTMLElement | null>;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 type ApiResponse = { suggestions?: CarLocationSuggestion[]; source?: "local-fallback" };
@@ -59,15 +65,27 @@ export function CarLocationAutocomplete({
   countryHint,
   strings,
   onRequestClose,
+  fieldAnchorRef,
+  searchCardRef,
+  isOpen,
+  onOpenChange,
 }: Props) {
   const reactId = useId().replace(/:/g, "");
   const listboxId = `${id}-${reactId}-listbox`;
   const fallbackRef = useRef<HTMLInputElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
   const activeInputRef = inputRef ?? fallbackRef;
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const [panelStyle, setPanelStyle] = useState<CSSProperties>();
   const [suggestions, setSuggestions] = useState<CarLocationSuggestion[]>([]);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const open = isOpen ?? internalOpen;
+  const setOpen = useCallback((nextOpen: boolean) => {
+    if (isOpen === undefined) setInternalOpen(nextOpen);
+    onOpenChange?.(nextOpen);
+    if (!nextOpen) setHighlightedIndex(-1);
+  }, [isOpen, onOpenChange]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const requestIdRef = useRef(0);
@@ -110,15 +128,49 @@ export function CarLocationAutocomplete({
   useEffect(() => {
     if (!open || presentation !== "desktop") return;
     const onPointerDown = (event: PointerEvent) => {
-      if (!wrapperRef.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (!wrapperRef.current?.contains(target) && !panelRef.current?.contains(target)) setOpen(false);
     };
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [open, presentation]);
+  }, [open, presentation, setOpen]);
+
+  useLayoutEffect(() => {
+    if (!open || presentation !== "desktop" || !fieldAnchorRef?.current || !searchCardRef?.current) return;
+    const updatePosition = () => {
+      if (!fieldAnchorRef.current || !searchCardRef.current) return;
+      const geometry = calculateDesktopPopoverGeometry({
+        fieldRect: fieldAnchorRef.current.getBoundingClientRect(),
+        boundaryRect: searchCardRef.current.getBoundingClientRect(),
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        viewportPadding: 16,
+        gap: 10,
+        panelHeight: panelRef.current?.scrollHeight,
+      });
+      setPanelStyle({ left: geometry.left, top: geometry.top, width: geometry.width, maxHeight: geometry.maxHeight });
+    };
+    updatePosition();
+    const observer = new ResizeObserver(updatePosition);
+    observer.observe(fieldAnchorRef.current);
+    observer.observe(searchCardRef.current);
+    if (panelRef.current) observer.observe(panelRef.current);
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [fieldAnchorRef, open, presentation, searchCardRef, suggestions.length, loading, error]);
+
+  useEffect(() => {
+    if (!open || highlightedIndex < 0) return;
+    document.getElementById(`${listboxId}-option-${highlightedIndex}`)?.scrollIntoView({ block: "nearest" });
+  }, [highlightedIndex, listboxId, open]);
 
   const close = () => {
     setOpen(false);
-    setHighlightedIndex(-1);
     onRequestClose?.();
   };
 
@@ -140,6 +192,7 @@ export function CarLocationAutocomplete({
       setHighlightedIndex((current) => Math.min(suggestions.length - 1, current + 1));
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
+      setOpen(true);
       setHighlightedIndex((current) => Math.max(0, current === -1 ? suggestions.length - 1 : current - 1));
     } else if (event.key === "Enter" && open && highlightedIndex >= 0 && suggestions[highlightedIndex]) {
       event.preventDefault();
@@ -159,8 +212,47 @@ export function CarLocationAutocomplete({
   const activeId = open && highlightedIndex >= 0 ? `${listboxId}-option-${highlightedIndex}` : undefined;
   const label = value.trim() ? strings.locationSuggestions : strings.popularLocations;
   const panelClass = presentation === "desktop"
-    ? "absolute left-0 right-0 top-full z-[320] mt-2 max-h-80 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-950/12 ring-1 ring-slate-950/5"
+    ? "fixed z-[1110] hidden overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-950/12 ring-1 ring-slate-950/5 sm:block"
     : "mt-4 max-h-[48vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-sm";
+
+  const panelContent = (
+    <>
+      <div className="px-3 pb-2 pt-1 text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{label}</div>
+      {loading ? <p className="px-3 py-3 text-sm font-semibold text-slate-600" aria-live="polite">{strings.loadingSuggestions}</p> : null}
+      {error ? <p className="px-3 py-3 text-sm font-semibold text-slate-600" aria-live="polite">{strings.suggestionsUnavailable} {strings.continueTypingManually}</p> : null}
+      {!loading && !error && suggestions.length === 0 ? <p className="px-3 py-3 text-sm font-semibold text-slate-600" aria-live="polite">{strings.noMatchingLocations} {strings.continueTypingManually}</p> : null}
+      <div role="listbox" id={listboxId} aria-label={label}>
+        {suggestions.map((suggestion, index) => {
+          const Icon = kindIcon[suggestion.kind];
+          const selected = index === highlightedIndex;
+          const typeLabel = suggestion.kind === "airport" ? strings.airport : suggestion.kind === "city" ? strings.city : suggestion.kind === "area" ? strings.area : strings.customLocation;
+          return (
+            <button
+              key={suggestion.id}
+              id={`${listboxId}-option-${index}`}
+              type="button"
+              role="option"
+              aria-selected={selected}
+              onMouseDown={(event) => event.preventDefault()}
+              onMouseEnter={() => setHighlightedIndex(index)}
+              onClick={() => selectSuggestion(suggestion)}
+              className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start transition ${selected ? "bg-[#004BB8]/10 text-slate-950" : "text-slate-900 hover:bg-[#004BB8]/8"}`}
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[#004BB8]">
+                <Icon className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-bold">{suggestion.kind === "custom" ? `${strings.useTypedLocation}: ${suggestion.value}` : suggestion.primaryText}</span>
+                <span className="block truncate text-xs font-semibold text-slate-500">{suggestion.kind === "custom" ? strings.unverifiedTypedLocation : suggestion.secondaryText}</span>
+              </span>
+              {suggestion.airportCode ? <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-black text-slate-700">{suggestion.airportCode}</span> : null}
+              <span className="shrink-0 rounded-full border border-slate-200 px-2 py-1 text-[11px] font-bold text-slate-500">{typeLabel}</span>
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
 
   return (
     <div ref={wrapperRef} className="relative" data-cars-desktop-popover={presentation === "desktop" ? "locations" : undefined}>
@@ -172,6 +264,9 @@ export function CarLocationAutocomplete({
         value={value}
         onChange={onChange}
         onFocus={() => setOpen(true)}
+        onBlur={(event) => {
+          if (presentation === "desktop" && !panelRef.current?.contains(event.relatedTarget as Node | null)) close();
+        }}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         className={inputClassName}
@@ -184,44 +279,14 @@ export function CarLocationAutocomplete({
         aria-activedescendant={activeId}
       />
 
-      {open ? (
-        <div className={panelClass} data-cars-desktop-popover={presentation === "desktop" ? "locations" : undefined}>
-          <div className="px-3 pb-2 pt-1 text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{label}</div>
-          {loading ? <p className="px-3 py-3 text-sm font-semibold text-slate-600" aria-live="polite">{strings.loadingSuggestions}</p> : null}
-          {error ? <p className="px-3 py-3 text-sm font-semibold text-slate-600" aria-live="polite">{strings.suggestionsUnavailable} {strings.continueTypingManually}</p> : null}
-          {!loading && !error && suggestions.length === 0 ? <p className="px-3 py-3 text-sm font-semibold text-slate-600" aria-live="polite">{strings.noMatchingLocations} {strings.continueTypingManually}</p> : null}
-          <div role="listbox" id={listboxId} aria-label={label}>
-            {suggestions.map((suggestion, index) => {
-              const Icon = kindIcon[suggestion.kind];
-              const selected = index === highlightedIndex;
-              const typeLabel = suggestion.kind === "airport" ? strings.airport : suggestion.kind === "city" ? strings.city : suggestion.kind === "area" ? strings.area : strings.customLocation;
-              return (
-                <button
-                  key={suggestion.id}
-                  id={`${listboxId}-option-${index}`}
-                  type="button"
-                  role="option"
-                  aria-selected={selected}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onMouseEnter={() => setHighlightedIndex(index)}
-                  onClick={() => selectSuggestion(suggestion)}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start transition ${selected ? "bg-[#004BB8]/10 text-slate-950" : "text-slate-900 hover:bg-[#004BB8]/8"}`}
-                >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[#004BB8]">
-                    <Icon className="h-4 w-4" aria-hidden="true" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-bold">{suggestion.kind === "custom" ? `${strings.useTypedLocation}: ${suggestion.value}` : suggestion.primaryText}</span>
-                    <span className="block truncate text-xs font-semibold text-slate-500">{suggestion.kind === "custom" ? strings.unverifiedTypedLocation : suggestion.secondaryText}</span>
-                  </span>
-                  {suggestion.airportCode ? <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-black text-slate-700">{suggestion.airportCode}</span> : null}
-                  <span className="shrink-0 rounded-full border border-slate-200 px-2 py-1 text-[11px] font-bold text-slate-500">{typeLabel}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
+      {open ? (presentation === "desktop" && typeof document !== "undefined" ? createPortal(
+        <div ref={panelRef} style={panelStyle} className={panelClass} data-cars-desktop-popover="locations">
+          {panelContent}
+        </div>,
+        document.body,
+      ) : (
+        <div ref={panelRef} className={panelClass}>{panelContent}</div>
+      )) : null}
     </div>
   );
 }
