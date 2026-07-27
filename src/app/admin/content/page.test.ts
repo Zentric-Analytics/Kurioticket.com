@@ -58,56 +58,71 @@ test("Homepage Operations route renders the existing operational dashboard", () 
     homepageOperationsPage,
     /export default function AdminHomepageOperationsPage/,
   );
-  assert.match(homepageOperationsPage, /title="Homepage Operations"/);
+  assert.match(refreshCard, /title="Homepage Operations"/);
   assert.match(
-    homepageOperationsPage,
-    /Monitor homepage fare readiness, refresh activity, market coverage and operational health\./,
+    refreshCard,
+    /Monitor homepage readiness, refresh status and market coverage\./,
   );
   assert.match(homepageOperationsPage, /<HomepageFaresRefreshCard \/>/);
 
   for (const section of [
-    "Homepage health at a glance",
-    "Overall readiness",
+    "Readiness",
     "Last refresh",
-    "Markets covered",
-    "Refresh Operations",
+    "Markets ready",
+    "Refresh and schedule",
     "Refresh homepage fares",
     "Reload status",
     "Cron status",
-    "Operational Health",
+    "Operational health",
     "Provider calls",
-    "Timeout metrics",
+    "Timeouts",
     "Fresh snapshots",
     "Market Coverage",
-    "Public market coverage",
-    "Country coverage",
     "Missing routes",
     "Failed routes",
     "Replacement candidates",
     "Attention Required",
+    "View all diagnostics",
+    "Fallback pools",
+    "Raw debug details",
   ]) {
     assert.match(refreshCard, new RegExp(section, "i"));
   }
 
-  const sectionOrder = [
+  for (const removedPresentation of [
     "Homepage health at a glance",
-    'title="Refresh Operations"',
-    'title="Operational Health"',
-    'title="Market Coverage"',
-    'title="Attention Required"',
+    "Operational overview",
+    "Refresh Operations",
+    "Operational Overview",
+  ]) {
+    assert.doesNotMatch(refreshCard, new RegExp(removedPresentation, "i"));
+  }
+
+  const renderOrder = [
+    "<HomepageOperationsStatusBar",
+    "<RefreshCronPanel",
+    '<section aria-labelledby="market-coverage-heading"',
+    "<AttentionRequiredPanel",
+    '<OperationsDisclosure id="fallback-pools"',
+    '<OperationsDisclosure id="raw-debug-details"',
   ].map((label) => refreshCard.indexOf(label));
-  assert.ok(sectionOrder.every((position) => position >= 0));
+  assert.ok(renderOrder.every((position) => position >= 0));
   assert.deepEqual(
-    sectionOrder,
-    [...sectionOrder].sort((left, right) => left - right),
+    renderOrder,
+    [...renderOrder].sort((left, right) => left - right),
   );
 });
 
 test("Homepage Operations uses responsive grids without changing controls or inspection actions", () => {
-  assert.match(refreshCard, /sm:grid-cols-2 lg:grid-cols-4/);
-  assert.match(refreshCard, /flex flex-col gap-3 sm:flex-row/);
-  assert.match(refreshCard, /Inspect .* routes/);
-  assert.match(refreshCard, /min-w-0/);
+  assert.match(refreshCard, /md:grid-cols-2 2xl:grid-cols-3/);
+  assert.match(refreshCard, /flex flex-col gap-2 sm:flex-row/);
+  assert.match(refreshCard, /Inspect routes/);
+  assert.match(refreshCard, /overflow-x-auto/);
+  assert.match(refreshCard, /if \(!selectedRouteScope \|\| !group\)/);
+  assert.match(
+    refreshCard,
+    /Route rows stay hidden until a market context is selected/,
+  );
 });
 
 test("Homepage Operations keeps the existing admin permission boundary", () => {
