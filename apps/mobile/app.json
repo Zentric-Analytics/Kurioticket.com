@@ -16,6 +16,11 @@
     "android": {
       "package": "com.kurioticket.mobile",
       "icon": "./assets/kurioticket-icon-blue.png",
+      "splash": {
+        "image": "./assets/kurioticket-logo-primary-light-bg.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#F7FAFF"
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/kurioticket-adaptive-foreground.png",
         "backgroundColor": "#F2F6FA"
@@ -28,7 +33,7 @@
     "splash": {
       "image": "./assets/kurioticket-logo-primary-light-bg.png",
       "resizeMode": "contain",
-      "backgroundColor": "#DDEBFA"
+      "backgroundColor": "#F7FAFF"
     },
     "extra": {
       "router": {},
