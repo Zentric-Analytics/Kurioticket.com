@@ -13,10 +13,13 @@ import {
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
+  Calendar,
   Check,
   ChevronDown,
+  MapPin,
   SlidersHorizontal,
   Star,
+  Users,
   X,
 } from "lucide-react";
 
@@ -1281,6 +1284,75 @@ export function HotelResultsClient() {
     };
   }, [hotelSortMenuOpen]);
 
+  function renderDesktopMinimizedHotelSearchBar() {
+    const compactSectionClass =
+      "focus-ring flex h-[56px] min-w-0 items-center gap-2.5 border-r border-slate-200/85 px-3 text-start transition-colors hover:bg-slate-50/80 focus-visible:bg-slate-50/90";
+    const compactValueClass =
+      "min-w-0 truncate whitespace-nowrap text-[0.86rem] font-medium leading-5 text-slate-800";
+    const destination =
+      activeDesktopHotelSearchDraft.destination || body.destination;
+
+    return (
+      <div className="page-shell">
+        <div className="mx-auto grid h-[58px] w-full max-w-[820px] grid-cols-[minmax(220px,1.5fr)_minmax(150px,0.9fr)_minmax(160px,1fr)_92px] items-center overflow-hidden rounded-lg border border-slate-200/95 bg-white shadow-[0_12px_28px_-22px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.025]">
+          <button
+            type="button"
+            aria-label={`${t("editHotelSearch")}: ${destination}`}
+            onClick={scrollToFullHotelSearch}
+            className={compactSectionClass}
+          >
+            <MapPin
+              className="h-4 w-4 shrink-0 text-[#004BB8]"
+              aria-hidden="true"
+            />
+            <span className={compactValueClass}>{destination}</span>
+          </button>
+
+          <button
+            type="button"
+            aria-label={`${t("travelDates")}: ${desktopMinimizedDateSummary}`}
+            onClick={scrollToFullHotelSearch}
+            className={compactSectionClass}
+          >
+            <Calendar
+              className="h-4 w-4 shrink-0 text-[#004BB8]"
+              aria-hidden="true"
+            />
+            <span className={compactValueClass}>
+              {desktopMinimizedDateSummary}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            aria-label={`${t("guestsAndRooms")}: ${desktopMinimizedGuestsSummary}`}
+            onClick={scrollToFullHotelSearch}
+            className={compactSectionClass}
+          >
+            <Users
+              className="h-4 w-4 shrink-0 text-[#004BB8]"
+              aria-hidden="true"
+            />
+            <span className={compactValueClass}>
+              {desktopMinimizedGuestsSummary}
+            </span>
+          </button>
+
+          <div className="flex h-[56px] items-center justify-center px-2">
+            <button
+              type="button"
+              aria-label={t("editHotelSearch")}
+              onClick={scrollToFullHotelSearch}
+              className="h-10 w-[92px] whitespace-nowrap rounded-lg bg-[#004BB8] px-3 text-sm font-semibold text-white shadow-none ring-1 ring-[#004BB8]/10 transition-colors hover:bg-[#021C2B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
+            >
+              {t("search")}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-[radial-gradient(circle_at_top_left,rgba(92,182,178,0.20),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(0,75,184,0.16),transparent_36%),linear-gradient(180deg,#F2F7FA_0%,#FFFFFF_58%,#FFFFFF_100%)]">
@@ -1379,29 +1451,7 @@ export function HotelResultsClient() {
         aria-hidden={!showDesktopMinimizedSearch}
         inert={!showDesktopMinimizedSearch ? true : undefined}
       >
-        <div className="page-shell">
-          <div className="mx-auto w-full max-w-5xl">
-            <div className="group flex min-h-[56px] w-full items-stretch overflow-hidden rounded-xl border border-slate-200/90 bg-white/95 text-start shadow-[0_18px_40px_-26px_rgba(15,23,42,0.68)] ring-1 ring-white/85 backdrop-blur-md transition hover:border-slate-300 hover:bg-white">
-              <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto] items-stretch">
-                <button type="button" aria-label="Edit hotel destination" onClick={scrollToFullHotelSearch} className="focus-ring flex min-h-[44px] min-w-0 flex-col justify-center border-e border-slate-200/80 px-3 py-1.5 text-start transition-colors hover:bg-white/70 focus-visible:bg-white/75">
-                  <span className="whitespace-nowrap text-[0.62rem] font-semibold uppercase leading-3 tracking-[0.12em] text-slate-500">Destination</span>
-                  <span className="mt-0.5 block truncate text-sm font-semibold leading-5 text-slate-950">{activeDesktopHotelSearchDraft.destination || body.destination}</span>
-                </button>
-                <button type="button" aria-label="Edit travel dates" onClick={scrollToFullHotelSearch} className="focus-ring flex min-h-[44px] min-w-0 flex-col justify-center border-e border-slate-200/80 px-3 py-1.5 text-start transition-colors hover:bg-white/70 focus-visible:bg-white/75">
-                  <span className="whitespace-nowrap text-[0.62rem] font-semibold uppercase leading-3 tracking-[0.12em] text-slate-500">Travel dates</span>
-                  <span className="mt-0.5 block truncate text-sm font-semibold leading-5 text-slate-950">{desktopMinimizedDateSummary}</span>
-                </button>
-                <button type="button" aria-label="Edit guests and rooms" onClick={scrollToFullHotelSearch} className="focus-ring flex min-h-[44px] min-w-0 flex-col justify-center border-e border-slate-200/80 px-3 py-1.5 text-start transition-colors hover:bg-white/70 focus-visible:bg-white/75">
-                  <span className="whitespace-nowrap text-[0.62rem] font-semibold uppercase leading-3 tracking-[0.12em] text-slate-500">Guests / rooms</span>
-                  <span className="mt-0.5 block truncate text-sm font-semibold leading-5 text-slate-950">{desktopMinimizedGuestsSummary}</span>
-                </button>
-                <div className="flex min-h-[44px] items-center justify-center px-3 py-1.5">
-                  <button type="button" aria-label="Edit hotel search" onClick={scrollToFullHotelSearch} className="h-9 whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-sm font-bold text-white transition-colors hover:bg-[#021C2B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">Search</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        {renderDesktopMinimizedHotelSearchBar()}
       </div>
 
       <nav
