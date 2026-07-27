@@ -99,35 +99,35 @@ function PersonIcon() {
 }
 
 function SearchIcon({ compact = false }: { compact?: boolean }) {
-  const size = compact ? 35 : 41;
+  const size = compact ? 33 : 37;
   return (
     <Svg width={size} height={size} viewBox="0 0 40 40">
-      <Circle cx="17" cy="17" r="10.7" fill="none" stroke="#1557E8" strokeWidth="3" />
-      <Path d="m24.8 24.8 8.4 8.4" fill="none" stroke="#1557E8" strokeWidth="3.4" strokeLinecap="round" />
-      <Path d="m12.7 20.8 2.7-7.7 5.9 5.9-8.6 1.8Z" fill="none" stroke="#1557E8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx="17" cy="17" r="11" fill="#F8FAFF" stroke="#1557E8" strokeWidth="3.3" />
+      <Path d="m25 25 8.6 8.6" fill="none" stroke="#1557E8" strokeWidth="4" strokeLinecap="round" />
+      <Path d="m12.7 20.8 2.7-7.7 5.9 5.9-8.6 1.8Z" fill="#84A3F2" stroke="#1557E8" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
       <Circle cx="16.3" cy="17.3" r="1.25" fill="#1557E8" />
     </Svg>
   );
 }
 
 function SavedTripIcon({ compact = false }: { compact?: boolean }) {
-  const size = compact ? 35 : 41;
+  const size = compact ? 33 : 37;
   return (
     <Svg width={size} height={size} viewBox="0 0 40 40">
-      <Rect x="7" y="8" width="22" height="25" rx="4" fill="none" stroke="#078475" strokeWidth="2.8" />
-      <Path d="M13 5.5h18a3 3 0 0 1 3 3v21" fill="none" stroke="#078475" strokeWidth="2.8" strokeLinecap="round" />
-      <Path d="M13 15h10M13 21h5.5" fill="none" stroke="#078475" strokeWidth="2.5" strokeLinecap="round" />
-      <Path d="m21.5 26.2 2.5 2.4 5-5.4" fill="none" stroke="#078475" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <Rect x="6" y="8" width="24" height="27" rx="5" fill="#25A28F" />
+      <Rect x="11" y="5" width="23" height="27" rx="4.5" fill="#62C8B5" stroke="#078475" strokeWidth="2.3" />
+      <Path d="M16 14h12M16 19h7" stroke="#F4FFFC" strokeWidth="2.4" strokeLinecap="round" />
+      <Path d="m21.5 25.8 2.7 2.6 5.4-6" fill="none" stroke="#F4FFFC" strokeWidth="2.7" strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }
 
 function PriceAlertIcon({ compact = false }: { compact?: boolean }) {
-  const size = compact ? 35 : 41;
+  const size = compact ? 33 : 37;
   return (
     <Svg width={size} height={size} viewBox="0 0 40 40">
-      <Path d="M8.5 29h23l-3.2-4.7v-7.1a8.3 8.3 0 0 0-16.6 0v7.1L8.5 29Z" fill="none" stroke="#7151C9" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M16.5 33a4 4 0 0 0 7 0M20 8.5V5.8" fill="none" stroke="#7151C9" strokeWidth="2.8" strokeLinecap="round" />
+      <Path d="M8.5 29h23l-3.2-4.7v-7.1a8.3 8.3 0 0 0-16.6 0v7.1L8.5 29Z" fill="#7650D8" stroke="#6240C2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M16.5 32a4 4 0 0 0 7 0M20 8.5V5.8" fill="none" stroke="#6240C2" strokeWidth="2.8" strokeLinecap="round" />
       <Path d="M30.4 10.2 33 7.6M9.6 10.2 7 7.6" fill="none" stroke="#7151C9" strokeWidth="2.4" strokeLinecap="round" />
     </Svg>
   );
@@ -252,7 +252,7 @@ function LegalLink({ label, url }: { label: string; url: string }) {
   };
 
   return (
-    <Pressable accessibilityRole="link" accessibilityLabel={label} accessibilityHint="Opens in your browser" onPress={openLink} style={styles.legalLinkTarget}>
+    <Pressable accessibilityRole="link" accessibilityLabel={label} accessibilityHint="Opens in your browser" hitSlop={10} onPress={openLink}>
       {({ pressed }) => <Text style={[styles.link, pressed && styles.linkPressed]}>{label}</Text>}
     </Pressable>
   );
@@ -286,9 +286,9 @@ export function OnboardingScreen() {
   const entrance = useRef(new Animated.Value(0)).current;
   const { height, width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const compact = height <= 700;
+  const compact = height < 720;
   const narrow = width <= 375;
-  const heroHeight = compact ? Math.min(230, Math.max(205, height * 0.34)) : Math.min(285, Math.max(245, height * 0.31));
+  const heroHeight = compact ? Math.min(205, Math.max(185, height * 0.3)) : Math.min(240, Math.max(210, height * 0.26));
 
   useEffect(() => {
     let mounted = true;
@@ -330,7 +330,7 @@ export function OnboardingScreen() {
       <StatusBar style="light" translucent backgroundColor="transparent" />
       <ScrollView
         bounces={false}
-        contentContainerStyle={[styles.onboardingScroll, { paddingBottom: Math.max(insets.bottom + 24, 34) }]}
+        contentContainerStyle={[styles.onboardingScroll, { paddingBottom: Math.max(insets.bottom + 12, 18) }]}
         showsVerticalScrollIndicator={false}
       >
         <View accessible={false} style={[styles.hero, { height: heroHeight }]}>
@@ -454,29 +454,29 @@ const styles = StyleSheet.create({
     flex: 1,
     width: "100%",
     marginTop: -30,
-    paddingTop: 34,
-    paddingHorizontal: 28,
+    paddingTop: 27,
+    paddingHorizontal: 24,
     borderTopLeftRadius: 34,
     borderTopRightRadius: 34,
     backgroundColor: "white",
   },
-  onboardingPanelCompact: { paddingTop: 29, paddingHorizontal: 21 },
-  onboardingHeadline: { color: "#081C46", fontSize: 30, lineHeight: 35, fontWeight: "800", letterSpacing: -0.65, textAlign: "center" },
-  onboardingHeadlineCompact: { fontSize: 27, lineHeight: 32, letterSpacing: -0.55 },
+  onboardingPanelCompact: { marginTop: -24, paddingTop: 22, paddingHorizontal: 18 },
+  onboardingHeadline: { color: "#081C46", fontSize: 29, lineHeight: 33, fontWeight: "800", letterSpacing: -0.7, textAlign: "center" },
+  onboardingHeadlineCompact: { fontSize: 26, lineHeight: 30, letterSpacing: -0.65 },
   headlineAccent: { color: "#1557E8" },
-  onboardingSupport: { alignSelf: "center", color: "#485973", fontSize: 15, lineHeight: 21, fontWeight: "400", marginTop: 14, maxWidth: 350, textAlign: "center" },
-  benefits: { gap: 12, marginTop: 25 },
-  benefitsCompact: { gap: 9, marginTop: 20 },
+  onboardingSupport: { alignSelf: "center", color: "#485973", fontSize: 14.5, lineHeight: 19, fontWeight: "500", marginTop: 9, maxWidth: 350, textAlign: "center" },
+  benefits: { gap: 9, marginTop: 17 },
+  benefitsCompact: { gap: 8, marginTop: 13 },
   benefitCard: {
-    minHeight: 92,
+    minHeight: 84,
     flexDirection: "row",
     alignItems: "center",
-    gap: 15,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
+    gap: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     borderWidth: 1,
     borderColor: "#E9EDF3",
-    borderRadius: 17,
+    borderRadius: 15,
     backgroundColor: "white",
     shadowColor: "#17335F",
     shadowOffset: { width: 0, height: 4 },
@@ -484,16 +484,16 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 2,
   },
-  benefitCardCompact: { minHeight: 84, gap: 13, paddingHorizontal: 13, paddingVertical: 10 },
-  iconTile: { width: 66, height: 66, borderRadius: 17, alignItems: "center", justifyContent: "center" },
-  iconTileCompact: { width: 56, height: 56, borderRadius: 15 },
+  benefitCardCompact: { minHeight: 78, gap: 12, paddingHorizontal: 12, paddingVertical: 8 },
+  iconTile: { width: 60, height: 60, borderRadius: 15, alignItems: "center", justifyContent: "center" },
+  iconTileCompact: { width: 54, height: 54, borderRadius: 14 },
   blueTile: { backgroundColor: "#E8EFFF" },
   mintTile: { backgroundColor: "#E2F6F0" },
   lavenderTile: { backgroundColor: "#EFE7FF" },
   benefitCopy: { flex: 1 },
-  benefitTitle: { color: "#081C42", fontSize: 16.5, lineHeight: 22, fontWeight: "800", letterSpacing: -0.15 },
-  benefitDescription: { color: "#4D5D75", fontSize: 14, lineHeight: 20, fontWeight: "400", marginTop: 3 },
-  actions: { gap: 11, marginTop: 20 },
+  benefitTitle: { color: "#081C42", fontSize: 16, lineHeight: 21, fontWeight: "800", letterSpacing: -0.15 },
+  benefitDescription: { color: "#4D5D75", fontSize: 13, lineHeight: 17, fontWeight: "500", marginTop: 1 },
+  actions: { gap: 10, marginTop: 16 },
   button: { minHeight: 54, borderRadius: 18, paddingHorizontal: 18, paddingVertical: 15, alignItems: "center", justifyContent: "center" },
   buttonContent: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 14 },
   onboardingButton: { minHeight: 58, borderRadius: 14 },
@@ -502,16 +502,15 @@ const styles = StyleSheet.create({
   primaryPressed: { backgroundColor: "#0E35AF", transform: [{ scale: 0.99 }] },
   primaryText: { color: "white", fontWeight: "900", fontSize: 16 },
   secondary: { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 },
-  onboardingSecondary: { borderColor: "#1764D9", borderWidth: 1.5 },
-  secondaryPressed: { backgroundColor: colors.sky, transform: [{ scale: 0.99 }] },
-  secondaryText: { color: "#1764D9", fontWeight: "900", fontSize: 16 },
+  onboardingSecondary: { backgroundColor: "white", borderColor: "#CBD3E1", borderWidth: 1.5 },
+  secondaryPressed: { backgroundColor: "#F2F5FA", transform: [{ scale: 0.99 }] },
+  secondaryText: { color: "#263B68", fontWeight: "900", fontSize: 16 },
   disabled: { opacity: 0.55 },
-  legalBlock: { alignItems: "center", marginTop: 15 },
-  legalIntro: { color: "#52627B", fontSize: 12.5, lineHeight: 18, textAlign: "center" },
+  legalBlock: { alignItems: "center", marginTop: 9 },
+  legalIntro: { color: "#52627B", fontSize: 12, lineHeight: 17, textAlign: "center" },
   legalLinks: { flexDirection: "row", alignItems: "center", justifyContent: "center", flexWrap: "wrap" },
-  legalLinkTarget: { minHeight: 44, minWidth: 44, paddingHorizontal: 6, alignItems: "center", justifyContent: "center" },
-  legalJoiner: { color: "#52627B", fontSize: 12.5, lineHeight: 22 },
-  link: { color: "#134FC8", fontSize: 12.5, lineHeight: 22, fontWeight: "700", textDecorationLine: "underline" },
+  legalJoiner: { color: "#52627B", fontSize: 12, lineHeight: 18 },
+  link: { color: "#134FC8", fontSize: 12, lineHeight: 18, fontWeight: "700", textDecorationLine: "underline" },
   linkPressed: { color: "#0E35AF", opacity: 0.7 },
   card: { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: spacing.radius, padding: spacing.card, gap: 16 },
   titleSmall: { color: colors.navy, fontSize: 28, lineHeight: 34, fontWeight: "900", letterSpacing: -0.4 },
