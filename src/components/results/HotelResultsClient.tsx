@@ -54,10 +54,12 @@ import {
   calculateCompactFilterPlacement,
   shouldShowDesktopCompactFilter,
 } from "@/lib/flights/desktopCompactFilter";
+import { calculateCompactFilterMaxHeight } from "@/lib/hotels/desktopCompactFilter";
 import { shouldShowDesktopStickySearch } from "@/lib/search/desktopStickySearch";
 
 const hotelResultStackClass = "w-full max-w-[800px]";
 const desktopCompactFilterTopOffset = 116;
+const desktopCompactFilterBottomGap = 16;
 
 type DesktopCompactFilterFrame = {
   left: number;
@@ -774,6 +776,8 @@ export function HotelResultsClient() {
     useState<DesktopCompactFilterFrame | null>(null);
   const [desktopCompactFilterPlacement, setDesktopCompactFilterPlacement] =
     useState<DesktopCompactFilterPlacementState>("hidden");
+  const [desktopCompactFilterMaxHeight, setDesktopCompactFilterMaxHeight] =
+    useState(0);
   const desktopFilterShortcutVisibilityRef = useRef(false);
   const desktopCompactFilterPlacementRef =
     useRef<DesktopCompactFilterPlacementState>("hidden");
@@ -909,6 +913,14 @@ export function HotelResultsClient() {
       const compactPanel = desktopCompactFilterRef.current;
       const resultsBody = resultsGridRef.current;
       const viewportWidth = window.innerWidth;
+      const maxHeight = calculateCompactFilterMaxHeight({
+        viewportHeight: window.innerHeight,
+        topOffset: desktopCompactFilterTopOffset,
+        bottomGap: desktopCompactFilterBottomGap,
+      });
+      setDesktopCompactFilterMaxHeight((current) =>
+        current === maxHeight ? current : maxHeight,
+      );
       const scrollY = window.scrollY;
       const sentinelTop =
         sentinel?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY;
@@ -1467,7 +1479,7 @@ export function HotelResultsClient() {
               <div
                 ref={desktopCompactFilterRef}
                 className={cn(
-                  "z-30 overflow-visible",
+                  "z-30 overflow-hidden",
                   desktopCompactFilterPlacement === "fixed" && "fixed",
                   desktopCompactFilterPlacement === "docked" &&
                     "absolute inset-x-0 bottom-0",
@@ -1478,13 +1490,11 @@ export function HotelResultsClient() {
                         top: desktopCompactFilterTopOffset,
                         left: desktopCompactFilterFrame.left,
                         width: desktopCompactFilterFrame.width,
-                        height: "auto",
-                        overflow: "visible",
+                        maxHeight: desktopCompactFilterMaxHeight,
                       }
                     : {
                         width: "100%",
-                        height: "auto",
-                        overflow: "visible",
+                        maxHeight: desktopCompactFilterMaxHeight,
                       }
                 }
               >
@@ -2021,7 +2031,7 @@ function HotelFilters({
 
   if (layout === "compact") {
     return (
-      <div className="desktop-filter-sidebar flex h-auto flex-col overflow-visible rounded-2xl border border-[#D8E1EC] bg-[#EEF3F8] p-0 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.42)]">
+      <div className="desktop-filter-sidebar flex max-h-full flex-col overflow-hidden rounded-2xl border border-[#D8E1EC] bg-[#EEF3F8] p-0 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.42)]">
         <div className="desktop-filter-sidebar__header shrink-0 border-b border-[#D8E1EC]/80 bg-[#EEF3F8] px-3.5 py-2.5">
           <div className="flex items-center justify-between gap-3">
             <h2 className="desktop-filter-sidebar__title flex min-w-0 items-center gap-2 truncate text-[15px] font-semibold leading-5 tracking-[-0.01em] text-slate-950">
@@ -2052,7 +2062,7 @@ function HotelFilters({
             </div>
           ) : null}
         </div>
-        <div className="h-auto overflow-visible bg-[#EEF3F8] px-2 py-1">
+        <div className="min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain bg-[#EEF3F8] px-2 py-1">
           {compactSections.map((section) => (
             <CompactHotelFilterSection
               key={section.id}
@@ -2445,14 +2455,14 @@ function CompactHotelFilterSection({
           />
         </span>
       </button>
-      {expanded ? (
-        <div
-          id={panelId}
-          className="grid h-auto gap-0.5 overflow-visible bg-transparent px-2.5 pb-3 pt-0.5"
-        >
-          {children}
-        </div>
-      ) : null}
+      <div
+        id={panelId}
+        hidden={!expanded}
+        aria-hidden={!expanded}
+        className="grid h-auto gap-0.5 overflow-visible bg-transparent px-2.5 pb-3 pt-0.5"
+      >
+        {children}
+      </div>
     </section>
   );
 }
