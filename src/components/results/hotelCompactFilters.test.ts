@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
+import { calculateCompactFilterMaxHeight } from "@/lib/hotels/desktopCompactFilter";
+
 const hotelSource = readFileSync(
   new URL("./HotelResultsClient.tsx", import.meta.url),
   "utf8",
@@ -14,13 +16,13 @@ const compactBranch = hotelSource.match(
 assert.ok(compactBranch, "the compact Hotel filter branch should be present");
 
 test("compact Hotel filters use the Flights panel and header contract", () => {
-  assert.match(compactBranch, /desktop-filter-sidebar flex h-auto flex-col overflow-visible rounded-2xl border border-\[#D8E1EC\] bg-\[#EEF3F8\]/);
+  assert.match(compactBranch, /desktop-filter-sidebar flex max-h-full flex-col overflow-hidden rounded-2xl border border-\[#D8E1EC\] bg-\[#EEF3F8\]/);
   assert.match(compactBranch, /desktop-filter-sidebar__header shrink-0 border-b border-\[#D8E1EC\]\/80 bg-\[#EEF3F8\] px-3\.5 py-2\.5/);
   assert.match(compactBranch, /<SlidersHorizontal[\s\S]*?size=\{15\}[\s\S]*?strokeWidth=\{2\.25\}[\s\S]*?aria-hidden="true"/);
   assert.match(compactBranch, /t\("hotelResults\.filterBy"\)/);
   assert.doesNotMatch(compactBranch, /rounded-\[1\.15rem\]/);
   assert.doesNotMatch(compactBranch, /ring-slate-950/);
-  assert.doesNotMatch(compactBranch, /maxHeight|overflowY|overscrollBehavior/);
+  assert.match(compactBranch, /min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain/);
 });
 
 test("compact Hotel active-filter controls retain their behavior", () => {
@@ -63,6 +65,9 @@ test("compact Hotel accordion matches the Flights interaction contract", () => {
   assert.match(hotelSource, /aria-expanded=\{expanded\}/);
   assert.match(hotelSource, /aria-controls=\{panelId\}/);
   assert.match(hotelSource, /id=\{panelId\}/);
+  assert.match(hotelSource, /hidden=\{!expanded\}/);
+  assert.match(hotelSource, /aria-hidden=\{!expanded\}/);
+  assert.doesNotMatch(hotelSource, /\{expanded \? \([\s\S]*?id=\{panelId\}/);
   assert.match(hotelSource, /border-t border-\[#D8E1EC\]\/75 first:border-t-0/);
   assert.match(hotelSource, /group flex min-h-9[\s\S]*?px-2\.5 py-2 text-start text-\[13px\]/);
   assert.match(hotelSource, /h-3\.5 w-3\.5[\s\S]*?expanded && "rotate-180 text-\[#004BB8\]"/);
@@ -73,8 +78,46 @@ test("compact Hotel accordion matches the Flights interaction contract", () => {
 
 test("Hotel sticky compact-filter placement contract remains intact", () => {
   assert.match(hotelSource, /desktopCompactFilterTopOffset = 116/);
+  assert.match(hotelSource, /desktopCompactFilterBottomGap = 16/);
+  assert.match(hotelSource, /viewportHeight: window\.innerHeight/);
+  assert.match(hotelSource, /maxHeight: desktopCompactFilterMaxHeight/g);
+  assert.equal(
+    compactBranch.match(/overflow-y-auto/g)?.length,
+    1,
+    "the compact Hotel accordion body should be the only vertical scroll owner",
+  );
   assert.match(hotelSource, /shouldShowDesktopCompactFilter\(\{/);
   assert.match(hotelSource, /calculateCompactFilterPlacement\(\{/);
   assert.match(hotelSource, /desktopCompactFilterPlacement === "fixed"/);
   assert.match(hotelSource, /desktopCompactFilterPlacement === "docked"/);
+});
+
+test("compact Hotel maximum height reserves its viewport offsets", () => {
+  assert.equal(
+    calculateCompactFilterMaxHeight({
+      viewportHeight: 600,
+      topOffset: 116,
+      bottomGap: 16,
+    }),
+    468,
+  );
+});
+
+test("compact Hotel maximum height is finite and never negative", () => {
+  assert.equal(
+    calculateCompactFilterMaxHeight({
+      viewportHeight: 100,
+      topOffset: 116,
+      bottomGap: 16,
+    }),
+    0,
+  );
+  assert.equal(
+    calculateCompactFilterMaxHeight({
+      viewportHeight: Number.POSITIVE_INFINITY,
+      topOffset: 116,
+      bottomGap: 16,
+    }),
+    0,
+  );
 });
