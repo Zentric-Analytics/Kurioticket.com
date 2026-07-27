@@ -51,6 +51,26 @@ test("Cars summary popup IDs are stable and field-specific", () => {
   assert.equal(source.includes("lg:-translate-y-1/2"), false);
 });
 
+test("homepage Cars picker source contracts use the shared experiences", () => {
+  assert.match(carsBranch, /<CarsRentalDatePickerContent/);
+  assert.match(carsBranch, /desktopWidth=\{620\}/);
+  assert.equal(carsBranch.includes('type="date"'), false);
+
+  assert.match(carsBranch, /<CarsTimeRangePickerContent/);
+  assert.match(carsBranch, /<CarsDriverAgePickerContent/);
+  assert.match(carsBranch, /desktopAlign="right" desktopWidth=\{248\}/);
+  assert.match(carsBranch, /popupRole="listbox"/);
+});
+
+test("homepage Cars calendar preserves range selection and localized controls", () => {
+  assert.match(source, /const selectHomepageRentalDate/);
+  assert.match(source, /selectedIso < carsValues\.pickupDate/);
+  assert.match(source, /setCarsVisibleMonthDate/);
+  for (const key of ["carsSearch.previousMonth", "carsSearch.nextMonth", "carsSearch.selectDateAriaPrefix", "clear", "done"]) {
+    assert.ok(carsBranch.includes(key), key);
+  }
+});
+
 test("homepage Cars submit remains Cars-specific while visible copy is generic and single-line", () => {
   assert.match(carsBranch, /aria-label=\{translate\("searchCars"\) \|\| "Search cars"\}/);
   assert.match(carsBranch, /"whitespace-nowrap"/);

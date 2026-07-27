@@ -39,6 +39,11 @@ import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerS
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
+import {
+  CarsDriverAgePickerContent,
+  CarsRentalDatePickerContent,
+  CarsTimeRangePickerContent,
+} from "@/components/search/CarsPickerContent";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import {
@@ -68,8 +73,10 @@ import {
 } from "@/lib/flights/dateFormatting";
 import {
   defaultDriverAge,
-  driverAgeOptions,
-  timeOptions,
+  addMonths as addCarsMonths,
+  getLocalizedWeekdays,
+  isBeforeToday as isCarsDateBeforeToday,
+  parseIsoDate as parseCarsIsoDate,
   toIsoDate as toCarsIsoDate,
   validateCarsForm,
   type CarsFormErrors,
@@ -367,6 +374,9 @@ function CarsSummaryField({
   className,
   children,
   popupRole = "dialog",
+  desktopAlign = "left",
+  desktopWidth = 448,
+  desktopPanelClassName = "p-3",
 }: {
   id: string;
   label: string;
@@ -376,11 +386,15 @@ function CarsSummaryField({
   className: string;
   children: ReactNode;
   popupRole?: "dialog" | "listbox";
+  desktopAlign?: "left" | "center" | "right";
+  desktopWidth?: number;
+  desktopPanelClassName?: string;
 }) {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const launcherRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const panelId = `${id}-popup`;
+  const wasOpenRef = useRef(open);
   const isSmViewport = useSyncExternalStore(
     (notify) => {
       const query = window.matchMedia("(min-width: 640px)");
@@ -411,6 +425,13 @@ function CarsSummaryField({
     };
   }, [onOpenChange, open]);
 
+  useEffect(() => {
+    if (wasOpenRef.current && !open) {
+      launcherRef.current?.focus({ preventScroll: true });
+    }
+    wasOpenRef.current = open;
+  }, [open]);
+
   const panel = <div id={panelId} ref={panelRef} role={popupRole} aria-label={label} data-cars-popover-content className="w-full rounded-2xl border border-slate-200 bg-white p-3 shadow-xl sm:w-auto">{children}</div>;
 
   return (
@@ -420,7 +441,7 @@ function CarsSummaryField({
         <span className="truncate">{value}</span><ChevronDown aria-hidden="true" className={cn("h-4 w-4 shrink-0 text-slate-500 transition-transform", open && "rotate-180")} />
       </button>
       {open ? (isSmViewport
-        ? <DesktopTopLayerPopover open={open} launcherRef={launcherRef} width={448} panelRef={panelRef} id={panelId} role={popupRole} ariaLabel={label} className="p-3">{children}</DesktopTopLayerPopover>
+        ? <DesktopTopLayerPopover open={open} launcherRef={launcherRef} align={desktopAlign} width={desktopWidth} panelRef={panelRef} id={panelId} role={popupRole} ariaLabel={label} className={desktopPanelClassName}>{children}</DesktopTopLayerPopover>
         : <div className="mt-3">{panel}</div>) : null}
     </div>
   );
@@ -558,6 +579,10 @@ export function SearchTabs({
   const [carsOpenPicker, setCarsOpenPicker] = useState<
     "pickup" | "dropoff" | "dates" | "times" | "age" | null
   >(null);
+  const [carsVisibleMonthDate, setCarsVisibleMonthDate] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
   const carsSearchSurfaceRef = useRef<HTMLDivElement | null>(null);
   const carsPickupFieldRef = useRef<HTMLDivElement | null>(null);
   const carsDropoffFieldRef = useRef<HTMLDivElement | null>(null);
@@ -1959,6 +1984,26 @@ export function SearchTabs({
     }));
   };
 
+  const selectHomepageRentalDate = (date: Date) => {
+    if (isCarsDateBeforeToday(date)) return;
+    const selectedIso = toCarsIsoDate(date);
+    if (!carsValues.pickupDate || carsValues.dropoffDate || selectedIso < carsValues.pickupDate) {
+      updateCarsValue("pickupDate", selectedIso);
+      updateCarsValue("dropoffDate", "");
+      return;
+    }
+    updateCarsValue("dropoffDate", selectedIso);
+  };
+
+  const openHomepageCarsPicker = (picker: "dates" | "times" | "age", open: boolean) => {
+    if (open && picker === "dates") {
+      const selectedPickup = parseCarsIsoDate(carsValues.pickupDate);
+      const startingDate = selectedPickup ?? new Date();
+      setCarsVisibleMonthDate(new Date(startingDate.getFullYear(), startingDate.getMonth(), 1));
+    }
+    setCarsOpenPicker(open ? picker : null);
+  };
+
   const translateCarsFormErrors = (errors: CarsFormErrors): CarsFormErrors =>
     Object.fromEntries(
       Object.entries(errors).map(([field, errorKey]) => [
@@ -2910,9 +2955,10 @@ export function SearchTabs({
 
         <button
           type="button"
-          onClick={() =>
-            setTab("cars")
-          }
+          onClick={() => {
+            setCarsOpenPicker(null);
+            setTab("cars");
+          }}
           className={cn(
             "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
             compactHero && "lg:px-3.5 lg:py-2 lg:text-[15px]",
@@ -4045,20 +4091,27 @@ export function SearchTabs({
                 <CarLocationAutocomplete id="homepage-cars-pickup" name="pickupLocation" value={carsValues.pickupLocation} onValueChange={(value) => updateCarsValue("pickupLocation", value)} placeholder={translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"} presentation="responsive" inputClassName={cn(hotelFieldValueClassName, "h-8 w-full")} strings={carsLocationStrings} fieldAnchorRef={carsPickupFieldRef} searchCardRef={carsSearchSurfaceRef} isOpen={carsOpenPicker === "pickup"} onOpenChange={(open) => setCarsOpenPicker(open ? "pickup" : null)} />
                 {carsErrors.pickupLocation ? <p className="absolute start-3 top-full z-10 mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupLocation}</p> : null}
               </div>
-              <CarsSummaryField id="homepage-cars-rental-dates" label={translate("carsSearch.rentalDatesLabel") || "Rental dates"} value={carsDateSummary} open={carsOpenPicker === "dates"} onOpenChange={(open) => setCarsOpenPicker(open ? "dates" : null)} className={hotelJoinedFieldClassName}>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="grid gap-1 text-xs font-bold text-slate-600">{translate("carsSearch.pickupDateLabel") || "Pickup date"}<input type="date" min={toCarsIsoDate(new Date())} value={carsValues.pickupDate} onChange={(event) => updateCarsValue("pickupDate", event.target.value)} className="focus-ring h-11 rounded-lg border border-slate-300 px-2 text-sm" /></label>
-                  <label className="grid gap-1 text-xs font-bold text-slate-600">{translate("carsSearch.returnDateLabel") || "Return date"}<input type="date" min={carsValues.pickupDate || toCarsIsoDate(new Date())} value={carsValues.dropoffDate} onChange={(event) => updateCarsValue("dropoffDate", event.target.value)} className="focus-ring h-11 rounded-lg border border-slate-300 px-2 text-sm" /></label>
-                </div>
-                <div className="mt-3 flex justify-between"><button type="button" onClick={() => { updateCarsValue("pickupDate", ""); updateCarsValue("dropoffDate", ""); }} className="focus-ring rounded-lg px-3 py-2 text-sm font-bold text-slate-600">{translate("clear") || "Clear"}</button><button type="button" onClick={() => setCarsOpenPicker(null)} className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-bold text-white">{translate("done") || "Done"}</button></div>
+              <CarsSummaryField id="homepage-cars-rental-dates" label={translate("carsSearch.rentalDatesLabel") || "Rental dates"} value={carsDateSummary} open={carsOpenPicker === "dates"} onOpenChange={(open) => openHomepageCarsPicker("dates", open)} className={hotelJoinedFieldClassName} desktopWidth={620} desktopPanelClassName="p-4">
+                <CarsRentalDatePickerContent
+                  dropoffDate={carsValues.dropoffDate}
+                  formatFullDate={(date) => new Intl.DateTimeFormat(calendarLocale, { dateStyle: "full" }).format(date)}
+                  locale={calendarLocale}
+                  onClear={() => { updateCarsValue("pickupDate", ""); updateCarsValue("dropoffDate", ""); }}
+                  onDone={() => setCarsOpenPicker(null)}
+                  onNextMonth={() => setCarsVisibleMonthDate((current) => addCarsMonths(current, 1))}
+                  onPreviousMonth={() => setCarsVisibleMonthDate((current) => addCarsMonths(current, -1))}
+                  onSelectDate={selectHomepageRentalDate}
+                  pickupDate={carsValues.pickupDate}
+                  strings={{ chooseDates: translate("carsSearch.chooseRentalDates") || "Choose rental dates", previousMonth: translate("carsSearch.previousMonth") || "Previous month", previousMonthShort: translate("carsSearch.previousMonthShort") || "Previous", nextMonth: translate("carsSearch.nextMonth") || "Next month", nextMonthShort: translate("carsSearch.nextMonthShort") || "Next", selectDatePrefix: translate("carsSearch.selectDateAriaPrefix") || "Select", startsNewPickupDate: translate("carsSearch.startsNewPickupDate") || "Starts a new pickup date", clear: translate("clear") || "Clear", done: translate("done") || "Done" }}
+                  visibleMonthDate={carsVisibleMonthDate}
+                  weekdays={getLocalizedWeekdays(calendarLocale)}
+                />
               </CarsSummaryField>
-              <CarsSummaryField id="homepage-cars-time-range" label={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} value={carsTimeSummary} open={carsOpenPicker === "times"} onOpenChange={(open) => setCarsOpenPicker(open ? "times" : null)} className={hotelJoinedFieldClassName}>
-                <div className="grid grid-cols-2 gap-3">
-                  {(["pickupTime", "dropoffTime"] as const).map((field) => <div key={field}><p className="mb-2 text-xs font-bold text-slate-600">{field === "pickupTime" ? translate("carsSearch.pickupTimeLabel") || "Pickup time" : translate("carsSearch.returnTimeLabel") || "Return time"}</p><div className="max-h-56 overflow-y-auto">{timeOptions.map((time) => <button key={time} type="button" onClick={() => { updateCarsValue(field, time); if (field === "dropoffTime") setCarsOpenPicker(null); }} className={cn("focus-ring block w-full rounded-lg px-3 py-2 text-start text-sm", carsValues[field] === time ? "bg-[#004BB8] font-bold text-white" : "hover:bg-slate-100")}>{formatCarsTime(time)}</button>)}</div></div>)}
-                </div>
+              <CarsSummaryField id="homepage-cars-time-range" label={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} value={carsTimeSummary} open={carsOpenPicker === "times"} onOpenChange={(open) => openHomepageCarsPicker("times", open)} className={hotelJoinedFieldClassName}>
+                <CarsTimeRangePickerContent formatTime={formatCarsTime} pickupLabel={translate("carsSearch.pickupTimeLabel") || "Pickup time"} pickupTime={carsValues.pickupTime} returnLabel={translate("carsSearch.returnTimeLabel") || "Return time"} returnTime={carsValues.dropoffTime} onPickupTimeChange={(time) => updateCarsValue("pickupTime", time)} onReturnTimeChange={(time) => { updateCarsValue("dropoffTime", time); setCarsOpenPicker(null); }} />
               </CarsSummaryField>
-              <CarsSummaryField id="homepage-cars-driver-age" label={translate("carsSearch.driverAgeLabel") || "Driver age"} value={carsValues.driverAge === defaultDriverAge ? translate("carsSearch.driverAgeAnyAgeRange") || "Any age" : carsValues.driverAge} open={carsOpenPicker === "age"} onOpenChange={(open) => setCarsOpenPicker(open ? "age" : null)} className={hotelJoinedFieldClassName} popupRole="listbox">
-                <div className="max-h-64 overflow-y-auto">{driverAgeOptions.map((age) => <button key={age} role="option" aria-selected={carsValues.driverAge === age} type="button" onClick={() => { updateCarsValue("driverAge", age); setCarsOpenPicker(null); }} className={cn("focus-ring block w-full rounded-lg px-3 py-2 text-start text-sm", carsValues.driverAge === age ? "bg-[#004BB8] font-bold text-white" : "hover:bg-slate-100")}>{age === defaultDriverAge ? translate("carsSearch.driverAgeAnyAgeRange") || "Any age" : age}</button>)}</div>
+              <CarsSummaryField id="homepage-cars-driver-age" label={translate("carsSearch.driverAgeLabel") || "Driver age"} value={carsValues.driverAge === defaultDriverAge ? translate("carsSearch.driverAgeAnyAgeRange") || "Any age" : carsValues.driverAge} open={carsOpenPicker === "age"} onOpenChange={(open) => openHomepageCarsPicker("age", open)} className={hotelJoinedFieldClassName} popupRole="listbox" desktopAlign="right" desktopWidth={248} desktopPanelClassName="p-0">
+                <CarsDriverAgePickerContent anyAgeLabel={translate("carsSearch.driverAgeAnyAgeRange") || "Any age"} selectedAge={carsValues.driverAge} onSelect={(age) => { updateCarsValue("driverAge", age); setCarsOpenPicker(null); }} />
               </CarsSummaryField>
               <div className={hotelSubmitWrapClassName}>
                 <Button type="submit" disabled={isCarsSearchDisabled} aria-busy={isCarsSubmitting} aria-label={translate("searchCars") || "Search cars"} className={cn(hotelSubmitButtonClassName, "whitespace-nowrap")}>
