@@ -8,6 +8,9 @@ export type CarImageCard = {
 
 export type CarPickupCard = Omit<CarImageCard, "vehicleType">;
 
+export const carsHeroImage =
+  "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=2400&q=92";
+
 export const tripStyleCards: CarImageCard[] = [
   {
     translationKey: "carsTripStyle.economy",
