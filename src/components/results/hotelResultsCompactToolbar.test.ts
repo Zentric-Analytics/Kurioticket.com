@@ -11,10 +11,13 @@ function desktopMinimizedHotelSearchBarSource() {
   const start = source.indexOf(
     "function renderDesktopMinimizedHotelSearchBar()",
   );
-  const end = source.indexOf("if (loading)", start);
+  const end = source.indexOf(
+    "function renderDesktopStickyHotelSearchDialog()",
+    start,
+  );
 
   assert.notEqual(start, -1, "Hotel minimized toolbar renderer exists");
-  assert.notEqual(end, -1, "loading branch follows the toolbar renderer");
+  assert.notEqual(end, -1, "sticky dialog renderer follows the toolbar renderer");
 
   return source.slice(start, end);
 }
@@ -33,7 +36,7 @@ test("Hotel desktop minimized search matches the Flights compact geometry", () =
   assert.doesNotMatch(toolbar, /max-w-5xl/);
 });
 
-test("Hotel compact sections retain Hotel summaries and scroll interaction", () => {
+test("Hotel compact sections retain Hotel summaries and open the editor in place", () => {
   const toolbar = desktopMinimizedHotelSearchBarSource();
 
   assert.match(
@@ -42,10 +45,21 @@ test("Hotel compact sections retain Hotel summaries and scroll interaction", () 
   );
   assert.match(toolbar, /desktopMinimizedDateSummary/);
   assert.match(toolbar, /desktopMinimizedGuestsSummary/);
+  assert.doesNotMatch(toolbar, /scrollToFullHotelSearch|scrollIntoView/);
+  assert.match(
+    toolbar,
+    /openDesktopStickyHotelSearch\(event,\s*"destination"\)/,
+  );
+  assert.match(toolbar, /openDesktopStickyHotelSearch\(event, "dates"\)/);
+  assert.match(toolbar, /openDesktopStickyHotelSearch\(event, "guests"\)/);
+  assert.match(toolbar, /openDesktopStickyHotelSearch\(event, null, true\)/);
   assert.equal(
-    toolbar.match(/onClick=\{scrollToFullHotelSearch\}/g)?.length,
-    4,
-    "all three summary sections and Search scroll to the full form",
+    toolbar.match(/aria-expanded=\{desktopStickyHotelSearchOpen\}/g)?.length,
+    3,
+  );
+  assert.equal(
+    toolbar.match(/aria-controls="sticky-hotel-search-dialog"/g)?.length,
+    3,
   );
   assert.equal(
     toolbar.match(/<button/g)?.length,
@@ -74,7 +88,10 @@ test("Hotel compact summaries use decorative icons and no two-line labels", () =
 
 test("Hotel sticky lifecycle and neighboring search/filter contracts remain intact", () => {
   assert.match(source, /showDesktopMinimizedSearch/);
-  assert.match(source, /aria-hidden=\{!showDesktopMinimizedSearch\}/);
+  assert.match(
+    source,
+    /aria-hidden=\{\s*!showDesktopMinimizedSearch \|\| desktopStickyHotelSearchOpen\s*\}/,
+  );
   assert.match(
     source,
     /inert=\{!showDesktopMinimizedSearch \? true : undefined\}/,

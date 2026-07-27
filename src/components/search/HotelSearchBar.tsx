@@ -201,6 +201,11 @@ const destinationKindTranslationKeys: Record<
 };
 
 export type HotelSearchBarProps = {
+  desktopPresentation?: "inline" | "sticky-dialog";
+  initialDesktopSection?: "destination" | "dates" | "guests" | null;
+  submitOnDesktopOpen?: boolean;
+  idPrefix?: string;
+  onSubmitComplete?: () => void;
   initialDestination?: string;
   initialCheckIn?: string;
   initialCheckOut?: string;
@@ -223,6 +228,11 @@ export type HotelSearchBarProps = {
 };
 
 export function HotelSearchBar({
+  desktopPresentation = "inline",
+  initialDesktopSection = null,
+  submitOnDesktopOpen = false,
+  idPrefix = "hotel-search",
+  onSubmitComplete,
   initialDestination = "",
   initialCheckIn = "",
   initialCheckOut = "",
@@ -312,6 +322,7 @@ export function HotelSearchBar({
     null,
   );
   const submittingResetTimeoutRef = useRef<number | null>(null);
+  const initialDesktopActionConsumedRef = useRef(false);
   const mobileSearchOpen =
     mobileLayout === "drawer" ||
     (mobileLayout === "default" && internalMobileSearchOpen);
@@ -425,6 +436,34 @@ export function HotelSearchBar({
     error !== "";
 
   useEffect(() => {
+    if (
+      desktopPresentation !== "sticky-dialog" ||
+      initialDesktopActionConsumedRef.current
+    ) {
+      return;
+    }
+
+    initialDesktopActionConsumedRef.current = true;
+    window.requestAnimationFrame(() => {
+      if (submitOnDesktopOpen) {
+        mobileSearchPanelRef.current?.requestSubmit();
+        return;
+      }
+
+      if (initialDesktopSection === "destination") {
+        destinationInputRef.current?.focus({ preventScroll: true });
+        setDestinationSuggestionsOpen(true);
+      } else if (initialDesktopSection === "dates") {
+        setDatesOpen(true);
+        datesMobileLauncherRef.current?.focus({ preventScroll: true });
+      } else if (initialDesktopSection === "guests") {
+        setGuestsRoomsOpen(true);
+        guestsRoomsMobileLauncherRef.current?.focus({ preventScroll: true });
+      }
+    });
+  }, [desktopPresentation, initialDesktopSection, submitOnDesktopOpen]);
+
+  useEffect(() => {
     if (!compact || mobileLayout === "default") return;
 
     onMobileDraftChange?.({
@@ -519,9 +558,16 @@ export function HotelSearchBar({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
 
-      setDestinationSuggestionsOpen(false);
-      setDatesOpen(false);
-      setGuestsRoomsOpen(false);
+      if (destinationSuggestionsOpen) {
+        event.stopImmediatePropagation();
+        setDestinationSuggestionsOpen(false);
+      } else if (datesOpen) {
+        event.stopImmediatePropagation();
+        setDatesOpen(false);
+      } else if (guestsRoomsOpen) {
+        event.stopImmediatePropagation();
+        setGuestsRoomsOpen(false);
+      }
     };
 
     document.addEventListener("pointerdown", handlePointerDown);
@@ -531,7 +577,7 @@ export function HotelSearchBar({
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [datesOpen, guestsRoomsOpen]);
+  }, [datesOpen, destinationSuggestionsOpen, guestsRoomsOpen]);
 
   useEffect(() => {
     const releaseExistingLock = () => {
@@ -699,7 +745,9 @@ export function HotelSearchBar({
     setDestinationSuggestionsOpen(false);
     setDestinationHighlight(0);
     setError("");
-    window.requestAnimationFrame(() => destinationInputRef.current?.focus());
+    window.requestAnimationFrame(() =>
+      destinationInputRef.current?.focus({ preventScroll: true }),
+    );
   };
 
   const handleDestinationKeyDown = (
@@ -897,6 +945,7 @@ export function HotelSearchBar({
 
     if (!trimmedDestination) {
       setError(t("hotelErrorEnterDestination"));
+      destinationInputRef.current?.focus({ preventScroll: true });
       return;
     }
 
@@ -904,16 +953,22 @@ export function HotelSearchBar({
 
     if (!checkIn) {
       setError(t("hotelErrorSelectCheckIn"));
+      setDatesOpen(true);
+      datesMobileLauncherRef.current?.focus({ preventScroll: true });
       return;
     }
 
     if (!checkOut) {
       setError(t("hotelErrorSelectCheckOut"));
+      setDatesOpen(true);
+      datesMobileLauncherRef.current?.focus({ preventScroll: true });
       return;
     }
 
     if (new Date(checkOut) <= new Date(checkIn)) {
       setError(t("hotelErrorCheckoutAfterCheckin"));
+      setDatesOpen(true);
+      datesMobileLauncherRef.current?.focus({ preventScroll: true });
       return;
     }
 
@@ -981,6 +1036,7 @@ export function HotelSearchBar({
       // best effort only
     }
     router.push(nextUrl);
+    onSubmitComplete?.();
   };
 
   const fieldClassName = cn(
@@ -1222,11 +1278,11 @@ export function HotelSearchBar({
                   role="combobox"
                   aria-autocomplete="list"
                   aria-expanded={shouldShowDestinationSuggestions}
-                  aria-controls="hotel-destination-suggestions"
+                  aria-controls={`${idPrefix}-destination-suggestions`}
                   aria-activedescendant={
                     shouldShowDestinationSuggestions &&
                     visibleDestinationSuggestions[destinationHighlight]
-                      ? `hotel-destination-suggestion-${visibleDestinationSuggestions[destinationHighlight].id}`
+                      ? `${idPrefix}-destination-suggestion-${visibleDestinationSuggestions[destinationHighlight].id}`
                       : undefined
                   }
                   placeholder={t("hotelSearchDestinationPlaceholder")}
@@ -1250,7 +1306,7 @@ export function HotelSearchBar({
               </span>
               {shouldShowDestinationSuggestions ? (
                 <div
-                  id="hotel-destination-suggestions"
+                  id={`${idPrefix}-destination-suggestions`}
                   role="listbox"
                   aria-label={t("hotelDestinationSuggestions")}
                   className={cn(
@@ -1278,7 +1334,7 @@ export function HotelSearchBar({
                       return (
                         <button
                           key={suggestion.id}
-                          id={`hotel-destination-suggestion-${suggestion.id}`}
+                          id={`${idPrefix}-destination-suggestion-${suggestion.id}`}
                           type="button"
                           role="option"
                           aria-selected={isActive}
@@ -1688,8 +1744,8 @@ export function HotelSearchBar({
       <HotelDestinationMobilePicker
         open={destinationMobilePickerOpen}
         value={destination}
-        titleId="hotel-results-mobile-destination-title"
-        inputId="hotel-results-mobile-destination-input"
+        titleId={`${idPrefix}-mobile-destination-title`}
+        inputId={`${idPrefix}-mobile-destination-input`}
         launcherRef={destinationMobileLauncherRef}
         selectedCountryHint={selectedCountryHint}
         detectedCountryHint={detectedCountryHint}
@@ -1704,7 +1760,7 @@ export function HotelSearchBar({
       <HotelMobilePickerShell
         open={datesOpen}
         title={t("chooseTravelDates")}
-        titleId="hotel-results-mobile-dates-title"
+        titleId={`${idPrefix}-mobile-dates-title`}
         launcherRef={datesMobileLauncherRef}
         onClose={() => setDatesOpen(false)}
         contentClassName="px-4 py-4"
@@ -1834,7 +1890,7 @@ export function HotelSearchBar({
       <HotelMobilePickerShell
         open={guestsRoomsOpen}
         title={t("guestsAndRooms")}
-        titleId="hotel-results-mobile-guests-title"
+        titleId={`${idPrefix}-mobile-guests-title`}
         launcherRef={guestsRoomsMobileLauncherRef}
         onClose={() => setGuestsRoomsOpen(false)}
         footer={(requestClose) => (

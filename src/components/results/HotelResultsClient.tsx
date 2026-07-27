@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
   type ReactNode,
 } from "react";
 import Link from "next/link";
@@ -70,6 +71,11 @@ type DesktopCompactFilterFrame = {
 };
 
 type DesktopCompactFilterPlacementState = "hidden" | "fixed" | "docked";
+type DesktopStickyHotelSearchSection =
+  | "destination"
+  | "dates"
+  | "guests"
+  | null;
 
 type CompactHotelFilterSectionId =
   | "price"
@@ -182,7 +188,6 @@ const CANCELLATION_FILTERS = [
     ],
   },
 ];
-
 
 const PROPERTY_TYPE_FILTERS = [
   { value: "hotel", labelKey: "hotelResults.filter.hotel", terms: ["hotel"] },
@@ -312,10 +317,16 @@ const emptySelections: HotelFilterSelections = {
   bedTypes: [],
 };
 
-const getResultMaxPrice = (hotels: PublicHotelResult[], rates?: ExchangeRates) => {
+const getResultMaxPrice = (
+  hotels: PublicHotelResult[],
+  rates?: ExchangeRates,
+) => {
   const pricedTotals = hotels
     .map((hotel) => getComparableHotelTotalUsd(hotel, rates))
-    .filter((total): total is number => total !== null && Number.isFinite(total) && total > 0);
+    .filter(
+      (total): total is number =>
+        total !== null && Number.isFinite(total) && total > 0,
+    );
   const highestTotal = pricedTotals.length ? Math.max(...pricedTotals) : 300;
 
   return Math.max(300, Math.ceil(highestTotal / 100) * 100);
@@ -362,9 +373,23 @@ export function HotelResultsClient() {
   const [mobileHotelSearchOpen, setMobileHotelSearchOpen] = useState(false);
   const [showDesktopMinimizedSearch, setShowDesktopMinimizedSearch] =
     useState(false);
+  const [desktopStickyHotelSearchOpen, setDesktopStickyHotelSearchOpen] =
+    useState(false);
+  const [
+    activeDesktopStickyHotelSearchSection,
+    setActiveDesktopStickyHotelSearchSection,
+  ] = useState<DesktopStickyHotelSearchSection>(null);
+  const [
+    submitDesktopStickyHotelSearchOnOpen,
+    setSubmitDesktopStickyHotelSearchOnOpen,
+  ] = useState(false);
 
   const desktopSearchFrameRef = useRef<HTMLDivElement | null>(null);
   const desktopSearchFormRef = useRef<HTMLFormElement | null>(null);
+  const stickyHotelLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const stickyHotelDialogRef = useRef<HTMLDivElement | null>(null);
+  const stickyHotelCloseButtonRef = useRef<HTMLButtonElement | null>(null);
+  const stickyHotelScrollLockRef = useRef<{ restore: () => void } | null>(null);
   const desktopSearchVisibilityRef = useRef(false);
   const setDesktopSearchFormRef = useCallback(
     (node: HTMLFormElement | null) => {
@@ -412,13 +437,7 @@ export function HotelResultsClient() {
       guests: String(body.guests),
       rooms: String(body.rooms),
     }).toString();
-  }, [
-    body.checkIn,
-    body.checkOut,
-    body.destination,
-    body.guests,
-    body.rooms,
-  ]);
+  }, [body.checkIn, body.checkOut, body.destination, body.guests, body.rooms]);
   const bodySearchKey = [
     body.destination,
     body.checkIn,
@@ -516,37 +535,128 @@ export function HotelResultsClient() {
   );
 
   const desktopMinimizedDateSummary = useMemo(() => {
-    const checkIn = formatCompactHotelDate(activeDesktopHotelSearchDraft.checkIn);
-    const checkOut = formatCompactHotelDate(activeDesktopHotelSearchDraft.checkOut);
+    const checkIn = formatCompactHotelDate(
+      activeDesktopHotelSearchDraft.checkIn,
+    );
+    const checkOut = formatCompactHotelDate(
+      activeDesktopHotelSearchDraft.checkOut,
+    );
 
     if (checkIn && checkOut) return `${checkIn} – ${checkOut}`;
     return checkIn || checkOut || "Travel dates";
-  }, [activeDesktopHotelSearchDraft.checkIn, activeDesktopHotelSearchDraft.checkOut, formatCompactHotelDate]);
+  }, [
+    activeDesktopHotelSearchDraft.checkIn,
+    activeDesktopHotelSearchDraft.checkOut,
+    formatCompactHotelDate,
+  ]);
 
   const desktopMinimizedGuestsSummary = useMemo(() => {
-    const guests = Math.max(1, Math.min(12, activeDesktopHotelSearchDraft.guests));
+    const guests = Math.max(
+      1,
+      Math.min(12, activeDesktopHotelSearchDraft.guests),
+    );
     const rooms = Math.max(1, Math.min(6, activeDesktopHotelSearchDraft.rooms));
-    const guestLabel = guests === 1 ? t("guestSingular") || "guest" : t("guestPlural") || "guests";
-    const roomLabel = rooms === 1 ? t("roomSingular") || "room" : t("roomPlural") || "rooms";
+    const guestLabel =
+      guests === 1
+        ? t("guestSingular") || "guest"
+        : t("guestPlural") || "guests";
+    const roomLabel =
+      rooms === 1 ? t("roomSingular") || "room" : t("roomPlural") || "rooms";
 
     return `${guests} ${guestLabel}, ${rooms} ${roomLabel}`;
-  }, [activeDesktopHotelSearchDraft.guests, activeDesktopHotelSearchDraft.rooms, t]);
+  }, [
+    activeDesktopHotelSearchDraft.guests,
+    activeDesktopHotelSearchDraft.rooms,
+    t,
+  ]);
 
-  const scrollToFullHotelSearch = useCallback(() => {
-    if (typeof window === "undefined") return;
+  const openDesktopStickyHotelSearch = useCallback(
+    (
+      event: ReactMouseEvent<HTMLButtonElement>,
+      section: DesktopStickyHotelSearchSection,
+      submitOnOpen = false,
+    ) => {
+      stickyHotelLauncherRef.current = event.currentTarget;
+      setHotelSortMenuOpen(false);
+      setFiltersOpen(false);
+      setActiveDesktopStickyHotelSearchSection(section);
+      setSubmitDesktopStickyHotelSearchOnOpen(submitOnOpen);
+      setDesktopStickyHotelSearchOpen(true);
+    },
+    [],
+  );
 
-    const target = desktopSearchFrameRef.current;
-    if (!target) return;
+  const closeDesktopStickyHotelSearch = useCallback(() => {
+    setDesktopStickyHotelSearchOpen(false);
+    setActiveDesktopStickyHotelSearchSection(null);
+    setSubmitDesktopStickyHotelSearchOnOpen(false);
 
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-
-    target.scrollIntoView({
-      behavior: prefersReducedMotion ? "auto" : "smooth",
-      block: "start",
+    window.requestAnimationFrame(() => {
+      stickyHotelLauncherRef.current?.focus({ preventScroll: true });
     });
   }, []);
+
+  useEffect(() => {
+    const releaseLock = () => {
+      stickyHotelScrollLockRef.current?.restore();
+      stickyHotelScrollLockRef.current = null;
+    };
+
+    if (!desktopStickyHotelSearchOpen || typeof window === "undefined") {
+      releaseLock();
+      return releaseLock;
+    }
+
+    const desktopQuery = window.matchMedia("(min-width: 1024px)");
+    if (!desktopQuery.matches) {
+      const closeId = window.setTimeout(closeDesktopStickyHotelSearch, 0);
+      return () => {
+        window.clearTimeout(closeId);
+        releaseLock();
+      };
+    }
+
+    stickyHotelScrollLockRef.current = lockBodyScroll();
+    const handleViewportChange = (event: MediaQueryListEvent) => {
+      if (!event.matches) closeDesktopStickyHotelSearch();
+    };
+    desktopQuery.addEventListener("change", handleViewportChange);
+
+    return () => {
+      desktopQuery.removeEventListener("change", handleViewportChange);
+      releaseLock();
+    };
+  }, [closeDesktopStickyHotelSearch, desktopStickyHotelSearchOpen]);
+
+  useEffect(() => {
+    if (!desktopStickyHotelSearchOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeDesktopStickyHotelSearch();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+      const focusable =
+        stickyHotelDialogRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        );
+      if (!focusable?.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus({ preventScroll: true });
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus({ preventScroll: true });
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [closeDesktopStickyHotelSearch, desktopStickyHotelSearchOpen]);
 
   const openMobileHotelSearch = useCallback(() => {
     setFiltersOpen(false);
@@ -695,8 +805,13 @@ export function HotelResultsClient() {
     [results],
   );
   const hasPricedResults = pricedResultCount > 0;
-  const hasGoogleMapsResults = results.some((hotel) => hotel.provider === "Google Maps");
-  const resultMaxPrice = useMemo(() => getResultMaxPrice(results, currencyRates.rates), [currencyRates.rates, results]);
+  const hasGoogleMapsResults = results.some(
+    (hotel) => hotel.provider === "Google Maps",
+  );
+  const resultMaxPrice = useMemo(
+    () => getResultMaxPrice(results, currencyRates.rates),
+    [currencyRates.rates, results],
+  );
   const priceFilterActive = hasPricedResults && maxPrice < resultMaxPrice;
 
   const filtered = useMemo(
@@ -711,7 +826,14 @@ export function HotelResultsClient() {
           currencyRates.rates,
         ),
       ),
-    [currencyRates.rates, maxPrice, priceFilterActive, results, selectedFilters, selectedStarRating],
+    [
+      currencyRates.rates,
+      maxPrice,
+      priceFilterActive,
+      results,
+      selectedFilters,
+      selectedStarRating,
+    ],
   );
   const starRatingCounts = useMemo(
     () => countHotelsByStarRating(results),
@@ -788,13 +910,18 @@ export function HotelResultsClient() {
     null,
   );
   const desktopCompactFilterHeightRef = useRef(1);
-  const scheduleDesktopCompactFilterMeasurementRef = useRef<(() => void) | null>(
-    null,
-  );
+  const scheduleDesktopCompactFilterMeasurementRef = useRef<
+    (() => void) | null
+  >(null);
 
   const visibleFilteredHotels = resultsApplying ? visibleFiltered : filtered;
   const sortedVisibleHotels = useMemo(
-    () => sortHotelSummaryResults(visibleFilteredHotels, hotelSummarySortMode, currencyRates.rates),
+    () =>
+      sortHotelSummaryResults(
+        visibleFilteredHotels,
+        hotelSummarySortMode,
+        currencyRates.rates,
+      ),
     [currencyRates.rates, hotelSummarySortMode, visibleFilteredHotels],
   );
   const hotelSortOptions = useMemo(
@@ -820,7 +947,9 @@ export function HotelResultsClient() {
   );
   const currentSortLabel =
     hotelSortOptions.find((option) => option.value === hotelSummarySortMode)
-      ?.label ?? hotelSortOptions[0]?.label ?? "";
+      ?.label ??
+    hotelSortOptions[0]?.label ??
+    "";
   const formattedDisplayedHotelCount = formatHotelCount(
     visibleFilteredHotels.length,
     locale,
@@ -946,7 +1075,8 @@ export function HotelResultsClient() {
       const sidebarRect = sidebar.getBoundingClientRect();
       const panelRect = compactPanel?.getBoundingClientRect();
       const bodyRect = resultsBody.getBoundingClientRect();
-      const panelHeight = panelRect?.height ?? desktopCompactFilterHeightRef.current;
+      const panelHeight =
+        panelRect?.height ?? desktopCompactFilterHeightRef.current;
 
       if (Number.isFinite(panelHeight) && panelHeight > 0) {
         desktopCompactFilterHeightRef.current = panelHeight;
@@ -1297,8 +1427,12 @@ export function HotelResultsClient() {
         <div className="mx-auto grid h-[58px] w-full max-w-[820px] grid-cols-[minmax(220px,1.5fr)_minmax(150px,0.9fr)_minmax(160px,1fr)_92px] items-center overflow-hidden rounded-lg border border-slate-200/95 bg-white shadow-[0_12px_28px_-22px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.025]">
           <button
             type="button"
+            aria-expanded={desktopStickyHotelSearchOpen}
+            aria-controls="sticky-hotel-search-dialog"
             aria-label={`${t("editHotelSearch")}: ${destination}`}
-            onClick={scrollToFullHotelSearch}
+            onClick={(event) =>
+              openDesktopStickyHotelSearch(event, "destination")
+            }
             className={compactSectionClass}
           >
             <MapPin
@@ -1310,8 +1444,10 @@ export function HotelResultsClient() {
 
           <button
             type="button"
+            aria-expanded={desktopStickyHotelSearchOpen}
+            aria-controls="sticky-hotel-search-dialog"
             aria-label={`${t("travelDates")}: ${desktopMinimizedDateSummary}`}
-            onClick={scrollToFullHotelSearch}
+            onClick={(event) => openDesktopStickyHotelSearch(event, "dates")}
             className={compactSectionClass}
           >
             <Calendar
@@ -1325,8 +1461,10 @@ export function HotelResultsClient() {
 
           <button
             type="button"
+            aria-expanded={desktopStickyHotelSearchOpen}
+            aria-controls="sticky-hotel-search-dialog"
             aria-label={`${t("guestsAndRooms")}: ${desktopMinimizedGuestsSummary}`}
-            onClick={scrollToFullHotelSearch}
+            onClick={(event) => openDesktopStickyHotelSearch(event, "guests")}
             className={compactSectionClass}
           >
             <Users
@@ -1342,11 +1480,76 @@ export function HotelResultsClient() {
             <button
               type="button"
               aria-label={t("editHotelSearch")}
-              onClick={scrollToFullHotelSearch}
+              onClick={(event) =>
+                openDesktopStickyHotelSearch(event, null, true)
+              }
               className="h-10 w-[92px] whitespace-nowrap rounded-lg bg-[#004BB8] px-3 text-sm font-semibold text-white shadow-none ring-1 ring-[#004BB8]/10 transition-colors hover:bg-[#021C2B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
             >
               {t("search")}
             </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function renderDesktopStickyHotelSearchDialog() {
+    if (!desktopStickyHotelSearchOpen) return null;
+
+    return (
+      <div
+        className="fixed inset-0 z-[1100] hidden bg-slate-950/30 backdrop-blur-[2px] lg:block"
+        role="presentation"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget)
+            closeDesktopStickyHotelSearch();
+        }}
+      >
+        <div className="flex min-h-dvh items-start justify-center px-6 pb-10 pt-24 xl:pt-28">
+          <div
+            id="sticky-hotel-search-dialog"
+            ref={stickyHotelDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="sticky-hotel-search-title"
+            onMouseDown={(event) => event.stopPropagation()}
+            className="w-full max-w-4xl rounded-2xl border border-slate-200/90 bg-[#fbfaf7]/95 p-4 text-start shadow-[0_30px_90px_-32px_rgba(15,23,42,0.72)] ring-1 ring-white/80 backdrop-blur-md"
+          >
+            <div className="mb-4 flex items-center justify-between gap-4 border-b border-slate-200/80 pb-3">
+              <h2
+                id="sticky-hotel-search-title"
+                className="text-xl font-bold tracking-tight text-slate-950"
+              >
+                {t("editHotelSearch")}
+              </h2>
+              <button
+                ref={stickyHotelCloseButtonRef}
+                type="button"
+                aria-label={t("closeSearchForm")}
+                onClick={closeDesktopStickyHotelSearch}
+                className="focus-ring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-950"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
+            <HotelSearchBar
+              key={`sticky-hotel-${bodySearchKey}-${activeDesktopStickyHotelSearchSection}-${submitDesktopStickyHotelSearchOnOpen}`}
+              initialDestination={activeDesktopHotelSearchDraft.destination}
+              initialCheckIn={activeDesktopHotelSearchDraft.checkIn}
+              initialCheckOut={activeDesktopHotelSearchDraft.checkOut}
+              initialGuests={activeDesktopHotelSearchDraft.guests}
+              initialRooms={activeDesktopHotelSearchDraft.rooms}
+              initialSort={body.sort}
+              errorRole="alert"
+              compact
+              desktopPresentation="sticky-dialog"
+              initialDesktopSection={activeDesktopStickyHotelSearchSection}
+              submitOnDesktopOpen={submitDesktopStickyHotelSearchOnOpen}
+              idPrefix="sticky-hotel-search"
+              onDesktopDraftChange={updateDesktopHotelSearchDraft}
+              onSubmitStart={triggerSearchApplying}
+              onSubmitComplete={closeDesktopStickyHotelSearch}
+            />
           </div>
         </div>
       </div>
@@ -1378,6 +1581,7 @@ export function HotelResultsClient() {
       >
         <HotelSearchBar
           key={`mobile-controls-${activeMobileHotelSearchKey}`}
+          idPrefix="hotel-results-mobile-controls"
           initialDestination={activeMobileHotelSearchDraft.destination}
           initialCheckIn={activeMobileHotelSearchDraft.checkIn}
           initialCheckOut={activeMobileHotelSearchDraft.checkOut}
@@ -1398,6 +1602,7 @@ export function HotelResultsClient() {
         <div className="fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden bg-slate-50 sm:hidden">
           <HotelSearchBar
             key={`mobile-drawer-${bodySearchKey}-${body.sort}`}
+            idPrefix="hotel-results-mobile-drawer"
             initialDestination={activeMobileHotelSearchDraft.destination}
             initialCheckIn={activeMobileHotelSearchDraft.checkIn}
             initialCheckOut={activeMobileHotelSearchDraft.checkOut}
@@ -1431,6 +1636,7 @@ export function HotelResultsClient() {
                 initialSort={body.sort}
                 errorRole="alert"
                 compact
+                idPrefix="hotel-results-full-search"
                 className="min-w-0"
                 desktopFormRef={setDesktopSearchFormRef}
                 onDesktopDraftChange={updateDesktopHotelSearchDraft}
@@ -1444,15 +1650,23 @@ export function HotelResultsClient() {
       <div
         className={cn(
           "fixed inset-x-0 top-0 z-[1000] hidden border-b border-slate-200/80 bg-gradient-to-b from-[#fbfdff]/96 via-[#f8fbff]/94 to-[#f5f9ff]/92 px-4 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.07)] backdrop-blur-xl transition-all duration-200 lg:block",
-          showDesktopMinimizedSearch
+          showDesktopMinimizedSearch && !desktopStickyHotelSearchOpen
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none -translate-y-3 opacity-0",
         )}
-        aria-hidden={!showDesktopMinimizedSearch}
-        inert={!showDesktopMinimizedSearch ? true : undefined}
+        aria-hidden={
+          !showDesktopMinimizedSearch || desktopStickyHotelSearchOpen
+        }
+        inert={
+          !showDesktopMinimizedSearch || desktopStickyHotelSearchOpen
+            ? true
+            : undefined
+        }
       >
         {renderDesktopMinimizedHotelSearchBar()}
       </div>
+
+      {renderDesktopStickyHotelSearchDialog()}
 
       <nav
         aria-label="Breadcrumb"
@@ -1633,9 +1847,7 @@ export function HotelResultsClient() {
                         className="relative inline-flex shrink-0 items-center whitespace-nowrap"
                         onBlur={(event) => {
                           if (
-                            !event.currentTarget.contains(
-                              event.relatedTarget,
-                            )
+                          !event.currentTarget.contains(event.relatedTarget)
                           ) {
                             setHotelSortMenuOpen(false);
                           }
@@ -1677,8 +1889,7 @@ export function HotelResultsClient() {
                                 <button
                                   key={option.value}
                                   ref={(element) => {
-                                    hotelSortOptionRefs.current[index] =
-                                      element;
+                                  hotelSortOptionRefs.current[index] = element;
                                   }}
                                   type="button"
                                   role="option"
@@ -1723,7 +1934,13 @@ export function HotelResultsClient() {
 
                 {hasGoogleMapsResults ? (
                   <p className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal leading-5 text-[#5E5E5E] shadow-sm">
-                    Hotel discovery data provided by <span translate="no" className="whitespace-nowrap not-italic font-normal text-sm text-[#5E5E5E]">Google Maps</span>
+                    Hotel discovery data provided by{" "}
+                    <span
+                      translate="no"
+                      className="whitespace-nowrap not-italic font-normal text-sm text-[#5E5E5E]"
+                    >
+                      Google Maps
+                    </span>
                   </p>
                 ) : null}
 
@@ -1745,9 +1962,7 @@ export function HotelResultsClient() {
                       key={hotel.id}
                       hotel={hotel}
                       detailsHref={`/hotels/details/${encodeURIComponent(hotel.id)}?${hotelDetailsSearchParams}`}
-                      sortBadge={
-                        index === 0 ? hotelSummarySortMode : undefined
-                      }
+                      sortBadge={index === 0 ? hotelSummarySortMode : undefined}
                     />
                   ))
                 ) : (
@@ -1852,7 +2067,10 @@ function sortHotelSummaryResults(
 
   indexedHotels.sort((first, second) => {
     if (sortMode === "cheapest") {
-      return compareHotelsByAvailablePrice(first.hotel, second.hotel, rates) || first.index - second.index;
+      return (
+        compareHotelsByAvailablePrice(first.hotel, second.hotel, rates) ||
+        first.index - second.index
+      );
     }
 
     if (sortMode === "topRated") {
@@ -1889,12 +2107,18 @@ function sortHotelSummaryResults(
   return indexedHotels.map(({ hotel }) => hotel);
 }
 
-function getHotelSortablePrice(hotel: PublicHotelResult, rates?: ExchangeRates) {
+function getHotelSortablePrice(
+  hotel: PublicHotelResult,
+  rates?: ExchangeRates,
+) {
   const comparableTotalUsd = getComparableHotelTotalUsd(hotel, rates);
   return comparableTotalUsd ?? Number.POSITIVE_INFINITY;
 }
 
-function compareNullableScoresDescending(first: number | null, second: number | null) {
+function compareNullableScoresDescending(
+  first: number | null,
+  second: number | null,
+) {
   if (first === null && second === null) return 0;
   if (first === null) return 1;
   if (second === null) return -1;
@@ -1928,7 +2152,6 @@ function formatHotelRating(
     rating === 1 ? "hotelResults.starSingular" : "hotelResults.starPlural",
   ).replace("{{count}}", formatted);
 }
-
 
 function formatHotelCount(count: number, locale: string) {
   return new Intl.NumberFormat(locale, {
@@ -2030,7 +2253,8 @@ function HotelFilters({
     useState<CompactHotelFilterSectionId>(null);
   const getSelectedCount = (group: keyof HotelFilterSelections) =>
     selectedFilters[group].length;
-  const compactSections = ([
+  const compactSections = (
+    [
     {
       id: "price",
       title: t("hotelResults.budgetPrice"),
@@ -2061,19 +2285,127 @@ function HotelFilters({
         />
       ),
     },
-    { id: "locations", title: t("hotelResults.locationArea"), selectedCount: getSelectedCount("locations"), content: <CheckboxFilterOptions layout="compact" options={options.locations} selected={selectedFilters.locations} onToggle={(value) => toggleFilter("locations", value)} t={t} locale={locale} /> },
-    { id: "propertyTypes", title: t("hotelResults.propertyType"), selectedCount: getSelectedCount("propertyTypes"), content: <CheckboxFilterOptions layout="compact" options={options.propertyTypes} selected={selectedFilters.propertyTypes} onToggle={(value) => toggleFilter("propertyTypes", value)} allOption={{ label: "Any property type", count: options.totalCount, onSelect: () => toggleFilter("propertyTypes") }} t={t} locale={locale} /> },
-    { id: "roomTypes", title: t("hotelResults.roomType"), selectedCount: getSelectedCount("roomTypes"), content: <CheckboxFilterOptions layout="compact" options={options.roomTypes} selected={selectedFilters.roomTypes} onToggle={(value) => toggleFilter("roomTypes", value)} allOption={{ label: "Any room type", count: options.totalCount, onSelect: () => toggleFilter("roomTypes") }} t={t} locale={locale} /> },
-    { id: "bedTypes", title: t("hotelResults.bedType"), selectedCount: getSelectedCount("bedTypes"), content: <CheckboxFilterOptions layout="compact" options={options.bedTypes} selected={selectedFilters.bedTypes} onToggle={(value) => toggleFilter("bedTypes", value)} t={t} locale={locale} /> },
-    { id: "meals", title: t("hotelResults.meals"), selectedCount: getSelectedCount("meals"), content: <CheckboxFilterOptions layout="compact" options={options.meals} selected={selectedFilters.meals} onToggle={(value) => toggleFilter("meals", value)} t={t} locale={locale} /> },
-    { id: "cancellationPolicies", title: t("hotelResults.cancellationPolicy"), selectedCount: getSelectedCount("cancellationPolicies"), content: <CheckboxFilterOptions layout="compact" options={options.cancellationPolicies} selected={selectedFilters.cancellationPolicies} onToggle={(value) => toggleFilter("cancellationPolicies", value)} t={t} locale={locale} /> },
-    { id: "facilities", title: t("hotelResults.facilities"), selectedCount: getSelectedCount("facilities"), content: <CheckboxFilterOptions layout="compact" options={options.facilities} selected={selectedFilters.facilities} onToggle={(value) => toggleFilter("facilities", value)} t={t} locale={locale} /> },
+      {
+        id: "locations",
+        title: t("hotelResults.locationArea"),
+        selectedCount: getSelectedCount("locations"),
+        content: (
+          <CheckboxFilterOptions layout="compact"
+            options={options.locations}
+            selected={selectedFilters.locations}
+            onToggle={(value) => toggleFilter("locations", value)}
+            t={t}
+            locale={locale}
+          />
+        ),
+      },
+      {
+        id: "propertyTypes",
+        title: t("hotelResults.propertyType"),
+        selectedCount: getSelectedCount("propertyTypes"),
+        content: (
+          <CheckboxFilterOptions
+            layout="compact"
+            options={options.propertyTypes}
+            selected={selectedFilters.propertyTypes}
+            onToggle={(value) => toggleFilter("propertyTypes", value)}
+            allOption={{
+              label: "Any property type",
+              count: options.totalCount,
+              onSelect: () => toggleFilter("propertyTypes"),
+            }}
+            t={t}
+            locale={locale}
+          />
+        ),
+      },
+      {
+        id: "roomTypes",
+        title: t("hotelResults.roomType"),
+        selectedCount: getSelectedCount("roomTypes"),
+        content: (
+          <CheckboxFilterOptions
+            layout="compact"
+            options={options.roomTypes}
+            selected={selectedFilters.roomTypes}
+            onToggle={(value) => toggleFilter("roomTypes", value)}
+            allOption={{
+              label: "Any room type",
+              count: options.totalCount,
+              onSelect: () => toggleFilter("roomTypes"),
+            }}
+            t={t}
+            locale={locale}
+          />
+        ),
+      },
+      {
+        id: "bedTypes",
+        title: t("hotelResults.bedType"),
+        selectedCount: getSelectedCount("bedTypes"),
+        content: (
+          <CheckboxFilterOptions
+            layout="compact"
+            options={options.bedTypes}
+            selected={selectedFilters.bedTypes}
+            onToggle={(value) => toggleFilter("bedTypes", value)}
+            t={t}
+            locale={locale}
+          />
+        ),
+      },
+      {
+        id: "meals",
+        title: t("hotelResults.meals"),
+        selectedCount: getSelectedCount("meals"),
+        content: (
+          <CheckboxFilterOptions
+            layout="compact"
+            options={options.meals}
+            selected={selectedFilters.meals}
+            onToggle={(value) => toggleFilter("meals", value)}
+            t={t}
+            locale={locale}
+          />
+        ),
+      },
+      {
+        id: "cancellationPolicies",
+        title: t("hotelResults.cancellationPolicy"),
+        selectedCount: getSelectedCount("cancellationPolicies"),
+        content: (
+          <CheckboxFilterOptions
+            layout="compact"
+            options={options.cancellationPolicies}
+            selected={selectedFilters.cancellationPolicies}
+            onToggle={(value) => toggleFilter("cancellationPolicies", value)}
+            t={t}
+            locale={locale}
+          />
+        ),
+      },
+      {
+        id: "facilities",
+        title: t("hotelResults.facilities"),
+        selectedCount: getSelectedCount("facilities"),
+        content: (
+          <CheckboxFilterOptions
+            layout="compact"
+            options={options.facilities}
+            selected={selectedFilters.facilities}
+            onToggle={(value) => toggleFilter("facilities", value)}
+            t={t}
+            locale={locale}
+          />
+        ),
+      },
   ] satisfies Array<{
     id: Exclude<CompactHotelFilterSectionId, null>;
     title: string;
     selectedCount: number;
     content: ReactNode;
-  }>).filter(
+    }>
+  ).filter(
     (section) =>
       (section.id !== "price" || hasPricedResults) &&
       (section.id !== "meals" || options.meals.length > 0),
@@ -2170,7 +2502,9 @@ function HotelFilters({
 
       <div
         className={cn(
-          layout === "mobile" ? "space-y-0 bg-white" : "space-y-5 bg-transparent",
+          layout === "mobile"
+            ? "space-y-0 bg-white"
+            : "space-y-5 bg-transparent",
         )}
       >
         {hasPricedResults ? (
@@ -2304,7 +2638,6 @@ function HotelFilters({
   );
 }
 
-
 function PriceFilterControl({
   t,
   maxPrice,
@@ -2412,7 +2745,9 @@ function StarRatingFilterControl({
               >
                 {selected ? (
                   <Check
-                    className={cn(layout === "desktop" ? "h-2.5 w-2.5" : "h-3 w-3")}
+                    className={cn(
+                      layout === "desktop" ? "h-2.5 w-2.5" : "h-3 w-3",
+                    )}
                     strokeWidth={3}
                     aria-hidden="true"
                   />
@@ -2627,10 +2962,7 @@ function CheckboxFilterOptions({
           const checked = selected.includes(option.value);
 
           return (
-            <label
-              key={option.value}
-              className={optionRowClass}
-            >
+            <label key={option.value} className={optionRowClass}>
               <span className="flex min-w-0 flex-1 items-start gap-2">
                 <input
                   className="peer sr-only"
@@ -2638,10 +2970,7 @@ function CheckboxFilterOptions({
                   checked={checked}
                   onChange={() => onToggle(option.value)}
                 />
-                <span
-                  aria-hidden="true"
-                  className={controlClass(checked)}
-                >
+                <span aria-hidden="true" className={controlClass(checked)}>
                   {checked ? (
                     <Check
                       className={checkClass}
@@ -2880,7 +3209,6 @@ function buildHotelFilterOptions(
   };
 }
 
-
 function cleanHotelNeighbourhood(value: string | undefined) {
   return value?.trim().replace(/\s+/g, " ") ?? "";
 }
@@ -2982,8 +3310,7 @@ function hotelMatchesNeighbourhoodFilters(
   );
 
   return (
-    neighbourhoodValue.length > 0 &&
-    selectedValues.includes(neighbourhoodValue)
+    neighbourhoodValue.length > 0 && selectedValues.includes(neighbourhoodValue)
   );
 }
 
@@ -2996,7 +3323,9 @@ function hotelMatchesFilters(
   rates?: ExchangeRates,
 ) {
   return (
-    (!priceFilterActive || ((getComparableHotelTotalUsd(hotel, rates) ?? Number.POSITIVE_INFINITY) <= maxPrice)) &&
+    (!priceFilterActive ||
+      (getComparableHotelTotalUsd(hotel, rates) ?? Number.POSITIVE_INFINITY) <=
+        maxPrice) &&
     hotelMatchesStarRating(hotel.classificationStars, selectedStarRating) &&
     matchesTermGroup(
       hotel,
