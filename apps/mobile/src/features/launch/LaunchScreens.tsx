@@ -99,36 +99,61 @@ function PersonIcon() {
 }
 
 function SearchIcon({ compact = false }: { compact?: boolean }) {
-  const size = compact ? 33 : 37;
+  const size = compact ? 38 : 44;
   return (
-    <Svg width={size} height={size} viewBox="0 0 40 40">
-      <Circle cx="17" cy="17" r="11" fill="#F8FAFF" stroke="#1557E8" strokeWidth="3.3" />
-      <Path d="m25 25 8.6 8.6" fill="none" stroke="#1557E8" strokeWidth="4" strokeLinecap="round" />
-      <Path d="m12.7 20.8 2.7-7.7 5.9 5.9-8.6 1.8Z" fill="#84A3F2" stroke="#1557E8" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      <Circle cx="16.3" cy="17.3" r="1.25" fill="#1557E8" />
+    <Svg width={size} height={size} viewBox="0 0 48 48">
+      <Defs>
+        <LinearGradient id="compare-lens" x1="8" y1="7" x2="34" y2="35" gradientUnits="userSpaceOnUse">
+          <Stop stopColor="#FFFFFF" />
+          <Stop offset="1" stopColor="#DCE7FF" />
+        </LinearGradient>
+        <LinearGradient id="compare-detail" x1="15" y1="14" x2="28" y2="29" gradientUnits="userSpaceOnUse">
+          <Stop stopColor="#4E83F4" />
+          <Stop offset="1" stopColor="#164ED6" />
+        </LinearGradient>
+      </Defs>
+      <Circle cx="20.5" cy="20.5" r="14.25" fill="url(#compare-lens)" stroke="#1557E8" strokeWidth="4" />
+      <Path d="m31 31 10 10" fill="none" stroke="#1557E8" strokeWidth="5" strokeLinecap="round" />
+      <Path d="m15 27 2.4-9.3 8.9-3.1-3.1 9-8.2 3.4Z" fill="url(#compare-detail)" stroke="#0E46C7" strokeWidth="1.5" strokeLinejoin="round" />
+      <Circle cx="20.7" cy="21" r="2.15" fill="#FFFFFF" />
     </Svg>
   );
 }
 
 function SavedTripIcon({ compact = false }: { compact?: boolean }) {
-  const size = compact ? 33 : 37;
+  const size = compact ? 38 : 44;
   return (
-    <Svg width={size} height={size} viewBox="0 0 40 40">
-      <Rect x="6" y="8" width="24" height="27" rx="5" fill="#25A28F" />
-      <Rect x="11" y="5" width="23" height="27" rx="4.5" fill="#62C8B5" stroke="#078475" strokeWidth="2.3" />
-      <Path d="M16 14h12M16 19h7" stroke="#F4FFFC" strokeWidth="2.4" strokeLinecap="round" />
-      <Path d="m21.5 25.8 2.7 2.6 5.4-6" fill="none" stroke="#F4FFFC" strokeWidth="2.7" strokeLinecap="round" strokeLinejoin="round" />
+    <Svg width={size} height={size} viewBox="0 0 48 48">
+      <Defs>
+        <LinearGradient id="saved-cover" x1="13" y1="7" x2="39" y2="42" gradientUnits="userSpaceOnUse">
+          <Stop stopColor="#39C7AE" />
+          <Stop offset="1" stopColor="#078678" />
+        </LinearGradient>
+      </Defs>
+      <Rect x="6.5" y="11" width="28" height="31" rx="6" fill="#087F73" opacity="0.32" />
+      <Rect x="10.5" y="7" width="29.5" height="34" rx="6" fill="url(#saved-cover)" stroke="#087F73" strokeWidth="2.5" />
+      <Path d="M16 7v34" fill="none" stroke="#087F73" strokeWidth="2.5" />
+      <Path d="M21.5 15h12M21.5 21h8" fill="none" stroke="#EFFFFB" strokeWidth="2.6" strokeLinecap="round" />
+      <Circle cx="29.5" cy="31" r="7" fill="#F3FFFC" stroke="#087F73" strokeWidth="2" />
+      <Path d="m26.3 31 2.1 2.1 4.4-4.7" fill="none" stroke="#078678" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }
 
 function PriceAlertIcon({ compact = false }: { compact?: boolean }) {
-  const size = compact ? 33 : 37;
+  const size = compact ? 38 : 44;
   return (
-    <Svg width={size} height={size} viewBox="0 0 40 40">
-      <Path d="M8.5 29h23l-3.2-4.7v-7.1a8.3 8.3 0 0 0-16.6 0v7.1L8.5 29Z" fill="#7650D8" stroke="#6240C2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M16.5 32a4 4 0 0 0 7 0M20 8.5V5.8" fill="none" stroke="#6240C2" strokeWidth="2.8" strokeLinecap="round" />
-      <Path d="M30.4 10.2 33 7.6M9.6 10.2 7 7.6" fill="none" stroke="#7151C9" strokeWidth="2.4" strokeLinecap="round" />
+    <Svg width={size} height={size} viewBox="0 0 48 48">
+      <Defs>
+        <LinearGradient id="alert-bell" x1="13" y1="9" x2="35" y2="39" gradientUnits="userSpaceOnUse">
+          <Stop stopColor="#9A72F0" />
+          <Stop offset="1" stopColor="#6841C7" />
+        </LinearGradient>
+      </Defs>
+      <Path d="M11 35.5h26l-3.6-5.2v-8.6c0-6.1-3.8-10.2-9.4-10.2s-9.4 4.1-9.4 10.2v8.6L11 35.5Z" fill="url(#alert-bell)" stroke="#6039BB" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M18.7 38.2c.8 2.4 2.6 3.8 5.3 3.8s4.5-1.4 5.3-3.8" fill="#8B63E3" stroke="#6039BB" strokeWidth="2.5" strokeLinecap="round" />
+      <Path d="M24 11.3V7.5M36.2 14l3-3M11.8 14l-3-3" fill="none" stroke="#7047CE" strokeWidth="3" strokeLinecap="round" />
+      <Path d="M18.2 19.7c.5-2.5 2.2-4.2 4.7-4.7" fill="none" stroke="#C9B4FA" strokeWidth="2.2" strokeLinecap="round" />
     </Svg>
   );
 }
@@ -331,7 +356,7 @@ export function OnboardingScreen() {
       <StatusBar style="light" translucent backgroundColor="transparent" />
       <ScrollView
         bounces={false}
-        contentContainerStyle={[styles.onboardingScroll, { paddingBottom: Math.max(insets.bottom + 8, 14) }]}
+        contentContainerStyle={[styles.onboardingScroll, { paddingBottom: Math.max(insets.bottom + 14, 22) }]}
         showsVerticalScrollIndicator={false}
       >
         <View accessible={false} style={[styles.hero, { height: heroHeight }]}>
@@ -507,7 +532,7 @@ const styles = StyleSheet.create({
   secondaryPressed: { backgroundColor: "#F2F5FA", transform: [{ scale: 0.99 }] },
   secondaryText: { color: "#263B68", fontWeight: "900", fontSize: 16 },
   disabled: { opacity: 0.55 },
-  legalBlock: { alignItems: "center", marginTop: 14 },
+  legalBlock: { alignItems: "center", marginTop: 18 },
   legalIntro: { color: "#52627B", fontSize: 12, lineHeight: 17, textAlign: "center" },
   legalLinks: { flexDirection: "row", alignItems: "center", justifyContent: "center", flexWrap: "wrap" },
   legalJoiner: { color: "#52627B", fontSize: 12, lineHeight: 18 },
