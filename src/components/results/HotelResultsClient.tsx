@@ -1967,7 +1967,7 @@ function HotelFilters({
   );
 
   const [openCompactSection, setOpenCompactSection] =
-    useState<CompactHotelFilterSectionId>("price");
+    useState<CompactHotelFilterSectionId>(null);
   const getSelectedCount = (group: keyof HotelFilterSelections) =>
     selectedFilters[group].length;
   const compactSections = ([
@@ -2021,20 +2021,27 @@ function HotelFilters({
 
   if (layout === "compact") {
     return (
-      <div
-        className="rounded-[1.15rem] border border-slate-200/90 bg-white shadow-[0_14px_34px_-28px_rgba(15,23,42,0.45)] ring-1 ring-slate-950/[0.02]"
-        style={{
-          maxHeight: `calc(100vh - ${desktopCompactFilterTopOffset + 12}px)`,
-          overflowY: "auto",
-          overscrollBehavior: "contain",
-        }}
-      >
-        <div className="border-b border-slate-200/70 px-3 py-3">
+      <div className="desktop-filter-sidebar flex h-auto flex-col overflow-visible rounded-2xl border border-[#D8E1EC] bg-[#EEF3F8] p-0 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.42)]">
+        <div className="desktop-filter-sidebar__header shrink-0 border-b border-[#D8E1EC]/80 bg-[#EEF3F8] px-3.5 py-2.5">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="truncate text-sm font-bold text-slate-950">
-              {t("hotelResults.filterBy")}
+            <h2 className="desktop-filter-sidebar__title flex min-w-0 items-center gap-2 truncate text-[15px] font-semibold leading-5 tracking-[-0.01em] text-slate-950">
+              <SlidersHorizontal
+                className="desktop-filter-sidebar__icon shrink-0 text-[#004BB8]"
+                size={15}
+                strokeWidth={2.25}
+                aria-hidden="true"
+              />
+              <span className="truncate">{t("hotelResults.filterBy")}</span>
             </h2>
-            {activeFilterCount > 0 ? (
+          </div>
+          {activeFilterCount > 0 ? (
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <span className="desktop-filter-sidebar__count rounded-full bg-[#EAF2FB] px-2 py-0.5 text-[11px] font-semibold text-[#235A9F] ring-1 ring-[#004BB8]/8">
+                {t("activeFilterCount").replace(
+                  "{{count}}",
+                  String(activeFilterCount),
+                )}
+              </span>
               <button
                 type="button"
                 className="rounded-full px-1.5 py-0.5 text-[11px] font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-[#235A9F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
@@ -2042,18 +2049,14 @@ function HotelFilters({
               >
                 Clear all
               </button>
-            ) : null}
-          </div>
-          {activeFilterCount > 0 ? (
-            <span className="mt-2 inline-flex rounded-full bg-[#EAF2FB] px-2 py-0.5 text-[11px] font-semibold text-[#235A9F] ring-1 ring-[#004BB8]/8">
-              {t("activeFilterCount").replace("{{count}}", String(activeFilterCount))}
-            </span>
+            </div>
           ) : null}
         </div>
-        <div className="divide-y divide-slate-200/75">
+        <div className="h-auto overflow-visible bg-[#EEF3F8] px-2 py-1">
           {compactSections.map((section) => (
             <CompactHotelFilterSection
               key={section.id}
+              sectionId={section.id}
               title={section.title}
               selectedCount={section.selectedCount}
               expanded={openCompactSection === section.id}
@@ -2397,43 +2400,59 @@ function StarRatingFilterControl({
 }
 
 function CompactHotelFilterSection({
+  sectionId,
   title,
   selectedCount,
   expanded,
   onToggle,
   children,
 }: {
+  sectionId: Exclude<CompactHotelFilterSectionId, null>;
   title: string;
   selectedCount: number;
   expanded: boolean;
   onToggle: () => void;
   children: ReactNode;
 }) {
+  const panelId = `compact-hotel-filter-${sectionId}-panel`;
+
   return (
-    <section>
+    <section className="border-t border-[#D8E1EC]/75 first:border-t-0">
       <button
         type="button"
-        className="flex w-full items-center justify-between gap-2 px-3 py-3 text-left text-sm font-bold text-slate-950 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/25"
+        className={cn(
+          "group flex min-h-9 w-full items-center justify-between gap-3 rounded-md px-2.5 py-2 text-start text-[13px] font-semibold leading-5 tracking-[-0.005em] text-slate-800 transition-colors duration-200 motion-reduce:transition-none hover:bg-[#E5ECF4] hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30",
+          expanded && "text-[#004BB8]",
+        )}
         aria-expanded={expanded}
+        aria-controls={panelId}
         onClick={onToggle}
       >
         <span className="min-w-0 truncate">{title}</span>
         <span className="flex shrink-0 items-center gap-2">
           {selectedCount > 0 ? (
-            <span className="rounded-full bg-[#EAF2FB] px-2 py-0.5 text-[11px] font-semibold text-[#235A9F] ring-1 ring-[#004BB8]/8">
+            <span className="min-w-5 rounded-full bg-[#E2EAF3] px-2 py-0.5 text-center text-[11px] font-semibold normal-case leading-4 tracking-normal text-[#235A9F] ring-1 ring-[#004BB8]/10 group-hover:bg-[#DCE8F6]">
               {selectedCount}
             </span>
           ) : null}
           <ChevronDown
             className={cn(
-              "h-4 w-4 text-slate-500 transition-transform",
-              expanded && "rotate-180",
+              "h-3.5 w-3.5 text-slate-500 transition duration-200 motion-reduce:transition-none group-hover:text-[#004BB8]",
+              expanded && "rotate-180 text-[#004BB8]",
             )}
+            strokeWidth={2.3}
             aria-hidden="true"
           />
         </span>
       </button>
-      {expanded ? <div className="px-3 pb-3">{children}</div> : null}
+      {expanded ? (
+        <div
+          id={panelId}
+          className="grid h-auto gap-0.5 overflow-visible bg-transparent px-2.5 pb-3 pt-0.5"
+        >
+          {children}
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -2472,21 +2491,36 @@ function CheckboxFilterOptions({
     "group flex min-h-9 min-w-0 cursor-pointer items-start justify-between gap-3 transition hover:bg-slate-50 hover:text-slate-950",
     layout === "desktop"
       ? "rounded-md px-0.5 py-1 text-[12px] font-medium leading-5 text-slate-700"
-      : "rounded-lg px-1.5 py-1.5 text-sm font-medium text-slate-600",
+      : layout === "compact"
+        ? "min-h-8 gap-2 rounded-lg px-1.5 py-1 text-[13px] font-medium text-slate-600"
+        : "rounded-lg px-1.5 py-1.5 text-sm font-medium text-slate-600",
   );
   const controlClass = (checked: boolean) =>
     cn(
       "mt-0.5 flex shrink-0 items-center justify-center rounded-[2px] border transition-colors",
-      layout === "desktop" ? "h-[14px] w-[14px]" : "h-4 w-4",
+      layout === "desktop"
+        ? "h-[14px] w-[14px]"
+        : layout === "compact"
+          ? "h-3.5 w-3.5"
+          : "h-4 w-4",
       checked
         ? "border-[#0067DB] bg-[#0067DB] text-white"
         : "border-slate-300 bg-white group-hover:border-slate-400",
       "peer-focus-visible:ring-2 peer-focus-visible:ring-[#004BB8]/30 peer-focus-visible:ring-offset-2",
     );
-  const checkClass = layout === "desktop" ? "h-2.5 w-2.5" : "h-3 w-3";
+  const checkClass =
+    layout === "desktop"
+      ? "h-2.5 w-2.5"
+      : layout === "compact"
+        ? "h-2.5 w-2.5"
+        : "h-3 w-3";
   const countClass = cn(
     "min-w-6 shrink-0 text-right font-medium tabular-nums text-slate-500",
-    layout === "desktop" ? "text-[12px] leading-5" : "text-xs",
+    layout === "desktop"
+      ? "text-[12px] leading-5"
+      : layout === "compact"
+        ? "text-[12px] leading-5"
+        : "text-xs",
   );
 
   return (
