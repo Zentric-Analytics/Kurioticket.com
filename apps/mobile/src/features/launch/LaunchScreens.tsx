@@ -2,7 +2,6 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 import {
   AccessibilityInfo,
   Animated,
-  ImageBackground,
   Linking,
   Pressable,
   ScrollView,
@@ -13,7 +12,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import Svg, { Circle, Path, Rect } from "react-native-svg";
+import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Logo } from "../../components/Logo";
 import { Screen } from "../../components/Screen";
@@ -22,8 +21,6 @@ import { writeOnboardingCompleted } from "../../storage/onboardingStorage";
 
 const TERMS_URL = "https://kurioticket.com/terms";
 const PRIVACY_URL = "https://kurioticket.com/privacy";
-const LAUNCH_BACKGROUND = require("../../../assets/launch/kurioticket-launch-coast-aircraft.png");
-const ONBOARDING_HERO = require("../../../assets/onboarding/kurioticket-greek-island-hero.png");
 
 type ButtonProps = {
   label: string;
@@ -116,33 +113,61 @@ function PersonIcon() {
   );
 }
 
-function SearchFlightIcon() {
+function CompassIcon() {
   return (
-    <Svg width={54} height={54} viewBox="0 0 54 54">
-      <Circle cx="23" cy="22" r="13" fill="none" stroke="#164ED8" strokeWidth="3" />
-      <Path d="m32.5 31.5 10 10" stroke="#164ED8" strokeWidth="4" strokeLinecap="round" />
-      <Path d="m16.5 23.5 13-7-5 11-2.5-3-5.5-1Z" fill="#8FAEF8" />
+    <Svg width={30} height={30} viewBox="0 0 32 32">
+      <Circle cx="16" cy="16" r="11" fill="none" stroke="#174B9B" strokeWidth="1.8" />
+      <Path d="m20.5 11.5-2.8 6.2-6.2 2.8 2.8-6.2 6.2-2.8Z" fill="none" stroke="#174B9B" strokeWidth="1.8" strokeLinejoin="round" />
     </Svg>
   );
 }
 
-function SuitcaseHeartIcon() {
+function SavedTripIcon() {
   return (
-    <Svg width={54} height={54} viewBox="0 0 54 54">
-      <Path d="M18 17v-4c0-2 1.5-3 3.5-3h8c2 0 3.5 1 3.5 3v4" fill="none" stroke="#159B87" strokeWidth="3" />
-      <Rect x="10" y="16" width="33" height="30" rx="6" fill="#18B99F" />
-      <Path d="M38 28c-3.2-3.5-8.5-1.2-8.5 3.2 0 4.3 8.5 9.3 8.5 9.3s8.5-5 8.5-9.3c0-4.4-5.3-6.7-8.5-3.2Z" fill="white" />
+    <Svg width={30} height={30} viewBox="0 0 32 32">
+      <Path d="M8.5 6.5h15v20l-7.5-4.3-7.5 4.3v-20Z" fill="none" stroke="#147568" strokeWidth="1.8" strokeLinejoin="round" />
+      <Path d="M12.5 12h7M12.5 16h5" fill="none" stroke="#147568" strokeWidth="1.8" strokeLinecap="round" />
     </Svg>
   );
 }
 
-function BellAlertIcon() {
+function PriceAlertIcon() {
   return (
-    <Svg width={54} height={54} viewBox="0 0 54 54">
-      <Path d="M13 36h29l-3.5-5.5v-8.2c0-7-4-11.3-10.5-11.3s-10.5 4.3-10.5 11.3v8.2L13 36Z" fill="#7549DC" />
-      <Path d="M23 40c.8 4.5 8.2 4.5 9 0" fill="none" stroke="#7549DC" strokeWidth="3" strokeLinecap="round" />
-      <Circle cx="42" cy="12" r="6" fill="#F43F5E" />
-      <Circle cx="42" cy="12" r="1.8" fill="white" />
+    <Svg width={30} height={30} viewBox="0 0 32 32">
+      <Path d="M8 22.5h16l-2-3.2v-4.8a6 6 0 0 0-12 0v4.8l-2 3.2Z" fill="none" stroke="#6650A4" strokeWidth="1.8" strokeLinejoin="round" />
+      <Path d="M13.5 26a2.8 2.8 0 0 0 5 0M16 5.5V4" fill="none" stroke="#6650A4" strokeWidth="1.8" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function TravelAtmosphere({ variant }: { variant: "launch" | "hero" }) {
+  const launch = variant === "launch";
+  return (
+    <Svg
+      accessible={false}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      pointerEvents="none"
+      preserveAspectRatio="xMidYMid slice"
+      style={StyleSheet.absoluteFill}
+      viewBox="0 0 390 844"
+    >
+      <Defs>
+        <LinearGradient id={`${variant}-sky`} x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0" stopColor={launch ? "#F5FAFF" : "#B9DCFA"} />
+          <Stop offset="0.62" stopColor={launch ? "#DFEEFB" : "#DCECF3"} />
+          <Stop offset="1" stopColor={launch ? "#D4E6F5" : "#F6D7A8"} />
+        </LinearGradient>
+        <LinearGradient id={`${variant}-land`} x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor={launch ? "#9DC7C0" : "#2C7775"} />
+          <Stop offset="1" stopColor={launch ? "#4D8789" : "#164E63"} />
+        </LinearGradient>
+      </Defs>
+      <Rect width="390" height="844" fill={`url(#${variant}-sky)`} />
+      <Circle cx={launch ? 316 : 320} cy={launch ? 176 : 164} r={launch ? 66 : 58} fill="#FFF7DD" opacity="0.82" />
+      <Path d="M-35 600C45 536 98 552 159 496c54-50 105-48 151-10 38 31 73 24 116-8v366H-35V600Z" fill={`url(#${variant}-land)`} opacity={launch ? 0.74 : 0.92} />
+      <Path d="M-28 672c80-48 137-50 196-16 68 39 141 20 250-42v230H-28V672Z" fill={launch ? "#2D6878" : "#123F57"} opacity={launch ? 0.74 : 0.9} />
+      <Path d="M-20 566c84-23 154-17 210 18 69 43 138 38 220-14" fill="none" stroke="#F8FCFF" strokeWidth="5" opacity="0.34" />
     </Svg>
   );
 }
@@ -169,8 +194,13 @@ function BenefitCard({ title, description, tileStyle, icon }: BenefitCardProps) 
 }
 
 function LegalLink({ label, url }: { label: string; url: string }) {
+  const openLink = () => {
+    const parsedUrl = new URL(url);
+    if (parsedUrl.protocol === "https:") void Linking.openURL(parsedUrl.toString()).catch(() => undefined);
+  };
+
   return (
-    <Pressable accessibilityRole="link" accessibilityLabel={label} hitSlop={10} onPress={() => void Linking.openURL(url)}>
+    <Pressable accessibilityRole="link" accessibilityLabel={label} accessibilityHint="Opens in your browser" onPress={openLink} style={styles.legalLinkTarget}>
       {({ pressed }) => <Text style={[styles.link, pressed && styles.linkPressed]}>{label}</Text>}
     </Pressable>
   );
@@ -178,14 +208,8 @@ function LegalLink({ label, url }: { label: string; url: string }) {
 
 export function LaunchLoadingScreen({ onReady }: { onReady?: () => void }) {
   return (
-    <ImageBackground
-      accessibilityIgnoresInvertColors
-      source={LAUNCH_BACKGROUND}
-      resizeMode="cover"
-      style={styles.launch}
-      imageStyle={styles.launchImage}
-      onLayout={onReady}
-    >
+    <View style={styles.launch} onLayout={onReady}>
+      <TravelAtmosphere variant="launch" />
       <StatusBar style="dark" translucent backgroundColor="transparent" />
       <SafeAreaView style={styles.launchSafe}>
         <View accessible accessibilityLabel="Kurioticket. Your journey starts here." style={styles.launchBrand}>
@@ -196,16 +220,16 @@ export function LaunchLoadingScreen({ onReady }: { onReady?: () => void }) {
           </Text>
         </View>
       </SafeAreaView>
-    </ImageBackground>
+    </View>
   );
 }
 
 export function OnboardingScreen() {
-  const [guestPending, setGuestPending] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"email" | "guest" | null>(null);
   const entrance = useRef(new Animated.Value(0)).current;
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const heroHeight = Math.min(320, Math.max(238, height * 0.32));
+  const heroHeight = Math.min(286, Math.max(196, height * 0.29));
 
   useEffect(() => {
     let mounted = true;
@@ -225,14 +249,21 @@ export function OnboardingScreen() {
   }, [entrance]);
 
   async function continueGuest() {
-    if (guestPending) return;
-    setGuestPending(true);
+    if (pendingAction) return;
+    setPendingAction("guest");
     try {
       await writeOnboardingCompleted();
       router.replace("/(tabs)");
     } finally {
-      setGuestPending(false);
+      setPendingAction(null);
     }
+  }
+
+  function continueEmail() {
+    if (pendingAction) return;
+    setPendingAction("email");
+    router.push("/email-auth");
+    requestAnimationFrame(() => setPendingAction(null));
   }
 
   return (
@@ -243,14 +274,9 @@ export function OnboardingScreen() {
         contentContainerStyle={[styles.onboardingScroll, { paddingBottom: Math.max(insets.bottom, 14) }]}
         showsVerticalScrollIndicator={false}
       >
-        <ImageBackground
-          accessibilityIgnoresInvertColors
-          accessible={false}
-          source={ONBOARDING_HERO}
-          resizeMode="cover"
-          style={[styles.hero, { height: heroHeight }]}
-          imageStyle={styles.heroImage}
-        />
+        <View accessible={false} style={[styles.hero, { height: heroHeight }]}>
+          <TravelAtmosphere variant="hero" />
+        </View>
 
         <Animated.View
           style={[
@@ -262,45 +288,45 @@ export function OnboardingScreen() {
           ]}
         >
           <Text accessibilityRole="header" style={styles.onboardingHeadline}>
-            Find the best travel{"\n"}options <Text style={styles.headlineAccent}>in seconds</Text>
+            Find better travel options <Text style={styles.headlineAccent}>in seconds</Text>
           </Text>
           <Text style={styles.onboardingSupport}>
-            Compare flights from trusted providers,{"\n"}save your trips, and never miss a great fare.
+            Compare trusted providers, save your trips, and stay informed when prices change.
           </Text>
 
           <View style={styles.benefits}>
             <BenefitCard
-              title="Compare prices"
-              description={"See the best flight options from\nhundreds of trusted providers."}
+              title="Compare trusted options"
+              description="Compare travel choices from trusted providers."
               tileStyle={styles.blueTile}
-              icon={<SearchFlightIcon />}
+              icon={<CompassIcon />}
             />
             <BenefitCard
               title="Save your trips"
-              description={"Save searches and itineraries\nacross all your devices."}
+              description="Keep searches and travel plans organized."
               tileStyle={styles.mintTile}
-              icon={<SuitcaseHeartIcon />}
+              icon={<SavedTripIcon />}
             />
             <BenefitCard
               title="Price alerts"
-              description={"Get notified when prices drop\nfor your favorite trips."}
+              description="Stay informed when prices change."
               tileStyle={styles.lavenderTile}
-              icon={<BellAlertIcon />}
+              icon={<PriceAlertIcon />}
             />
           </View>
 
           <View style={styles.actions}>
             <PrimaryButton
               label="Continue with Email"
-              onPress={() => router.push("/email-auth")}
-              disabled={guestPending}
+              onPress={continueEmail}
+              disabled={pendingAction !== null}
               onboarding
               icon={<EnvelopeIcon />}
             />
             <SecondaryButton
               label="Continue as Guest"
               onPress={continueGuest}
-              disabled={guestPending}
+              disabled={pendingAction !== null}
               onboarding
               icon={<PersonIcon />}
             />
@@ -348,8 +374,7 @@ export function RecoveryScreen({ type, onRetry }: { type: "offline" | "configura
 }
 
 const styles = StyleSheet.create({
-  launch: { flex: 1, backgroundColor: "#DDEBFA" },
-  launchImage: { top: 0, bottom: 0 },
+  launch: { flex: 1, backgroundColor: "#DDEBFA", overflow: "hidden" },
   launchSafe: { flex: 1, justifyContent: "center" },
   launchBrand: { alignItems: "center", gap: 8, paddingHorizontal: 24, transform: [{ translateY: -48 }] },
   launchWordmark: { color: "#071D45", fontSize: 40, lineHeight: 48, fontWeight: "800", letterSpacing: -1.2, textAlign: "center" },
@@ -357,24 +382,23 @@ const styles = StyleSheet.create({
   launchTaglineAccent: { color: "#1557E8", fontWeight: "800" },
   onboardingScreen: { flex: 1, backgroundColor: "white" },
   onboardingScroll: { flexGrow: 1, backgroundColor: "white" },
-  hero: { width: "100%", backgroundColor: "#C8E4FA" },
-  heroImage: { top: 0 },
+  hero: { width: "100%", overflow: "hidden", backgroundColor: "#C8E4FA" },
   onboardingPanel: {
     flex: 1,
     width: "100%",
     marginTop: -30,
-    paddingTop: 27,
+    paddingTop: 24,
     paddingHorizontal: 24,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     backgroundColor: "white",
   },
-  onboardingHeadline: { color: "#081C46", fontSize: 30, lineHeight: 34, fontWeight: "800", letterSpacing: -0.7, textAlign: "center" },
+  onboardingHeadline: { color: "#081C46", fontSize: 29, lineHeight: 34, fontWeight: "800", letterSpacing: -0.7, textAlign: "center" },
   headlineAccent: { color: "#1557E8" },
   onboardingSupport: { color: "#65718D", fontSize: 15, lineHeight: 20, fontWeight: "600", textAlign: "center", marginTop: 10 },
-  benefits: { gap: 9, marginTop: 20 },
+  benefits: { gap: 9, marginTop: 18 },
   benefitCard: {
-    minHeight: 88,
+    minHeight: 78,
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
@@ -385,7 +409,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: "white",
   },
-  iconTile: { width: 68, height: 68, borderRadius: 15, alignItems: "center", justifyContent: "center" },
+  iconTile: { width: 56, height: 56, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   blueTile: { backgroundColor: "#E8EFFF" },
   mintTile: { backgroundColor: "#E2F6F0" },
   lavenderTile: { backgroundColor: "#EFE7FF" },
@@ -405,11 +429,12 @@ const styles = StyleSheet.create({
   secondaryPressed: { backgroundColor: colors.sky, transform: [{ scale: 0.99 }] },
   secondaryText: { color: colors.navy, fontWeight: "900", fontSize: 16 },
   disabled: { opacity: 0.55 },
-  legalBlock: { alignItems: "center", marginTop: 14 },
-  legalIntro: { color: "#6B7690", fontSize: 11.5, lineHeight: 16, textAlign: "center" },
-  legalLinks: { flexDirection: "row", alignItems: "center", justifyContent: "center", flexWrap: "wrap", columnGap: 8 },
-  legalJoiner: { color: "#6B7690", fontSize: 11.5, lineHeight: 22 },
-  link: { color: "#134FC8", fontSize: 11.5, lineHeight: 22, fontWeight: "600", textDecorationLine: "underline" },
+  legalBlock: { alignItems: "center", marginTop: 10 },
+  legalIntro: { color: "#596780", fontSize: 12, lineHeight: 18, textAlign: "center" },
+  legalLinks: { flexDirection: "row", alignItems: "center", justifyContent: "center", flexWrap: "wrap", columnGap: 2 },
+  legalLinkTarget: { minHeight: 44, minWidth: 44, paddingHorizontal: 6, alignItems: "center", justifyContent: "center" },
+  legalJoiner: { color: "#596780", fontSize: 12, lineHeight: 22 },
+  link: { color: "#134FC8", fontSize: 12, lineHeight: 22, fontWeight: "700", textDecorationLine: "underline" },
   linkPressed: { color: "#0E35AF", opacity: 0.7 },
   card: { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: spacing.radius, padding: spacing.card, gap: 16 },
   titleSmall: { color: colors.navy, fontSize: 28, lineHeight: 34, fontWeight: "900", letterSpacing: -0.4 },
