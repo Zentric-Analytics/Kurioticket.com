@@ -1,0 +1,15 @@
+name: Migration Validation
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+    paths:
+      - "prisma/**"
+      - "scripts/check-conflicts.mjs"
+      - "scripts/check-prisma-migration-timestamps.mjs"
+      - "scripts/deploy-render-migrations.mjs"
+      - "scripts/run-render-migrations.mjs"
+      - "scripts/verify-production-schema.mjs"
+      -
