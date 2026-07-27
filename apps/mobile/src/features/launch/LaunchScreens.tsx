@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 import {
   AccessibilityInfo,
   Animated,
+  Image,
   Linking,
   Pressable,
   ScrollView,
@@ -12,7 +13,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
+import Svg, { Circle, Defs, LinearGradient, Path, RadialGradient, Rect, Stop } from "react-native-svg";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Logo } from "../../components/Logo";
 import { Screen } from "../../components/Screen";
@@ -79,22 +80,6 @@ function SecondaryButton({ label, onPress, disabled = false, accessibilityLabel,
   );
 }
 
-function KurioticketMark({ size = 72 }: { size?: number }) {
-  return (
-    <Svg
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-      width={size}
-      height={size}
-      viewBox="0 0 1200 1200"
-    >
-      <Path fill="#135BE7" d="M422.8 954.8V1132c0 25.6 20.8 46.4 46.4 46.4h254.4c45.4 0 63.8-58.5 26.5-84.5L495.8 916.7c-30.8-21.4-73 0.6-73 38.1Z" />
-      <Path fill="#135BE7" d="M638.6 613c-47.4-30.1-59.9-93.7-27.5-139.5L892.9 94.8c21.7-30.7-.2-73.2-37.9-73.2H469.2c-25.6 0-46.4 20.8-46.4 46.4v548c0 15 7.3 29.1 19.5 37.8l662.8 472.4c30.7 21.9 73.3-.1 73.3-37.8V169.8c0-45.5-58.6-63.8-84.5-26.5l-322 442.8c-30 43.3-88.8 55.1-133.3 26.9Z" />
-      <Rect fill="#135BE7" x="21.6" y="21.6" width="226.6" height="1156.8" rx="30.3" />
-    </Svg>
-  );
-}
-
 function EnvelopeIcon({ color = "white" }: { color?: string }) {
   return (
     <Svg accessibilityElementsHidden importantForAccessibility="no-hide-descendants" width={24} height={24} viewBox="0 0 24 24">
@@ -140,8 +125,7 @@ function PriceAlertIcon() {
   );
 }
 
-function TravelAtmosphere({ variant }: { variant: "launch" | "hero" }) {
-  const launch = variant === "launch";
+function BrandAtmosphere() {
   return (
     <Svg
       accessible={false}
@@ -153,22 +137,71 @@ function TravelAtmosphere({ variant }: { variant: "launch" | "hero" }) {
       viewBox="0 0 390 844"
     >
       <Defs>
-        <LinearGradient id={`${variant}-sky`} x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor={launch ? "#F5FAFF" : "#B9DCFA"} />
-          <Stop offset="0.62" stopColor={launch ? "#DFEEFB" : "#DCECF3"} />
-          <Stop offset="1" stopColor={launch ? "#D4E6F5" : "#F6D7A8"} />
+        <LinearGradient id="brand-base" x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor="#FFFFFF" />
+          <Stop offset="0.48" stopColor="#F7FAFF" />
+          <Stop offset="1" stopColor="#EDF4FF" />
         </LinearGradient>
-        <LinearGradient id={`${variant}-land`} x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor={launch ? "#9DC7C0" : "#2C7775"} />
-          <Stop offset="1" stopColor={launch ? "#4D8789" : "#164E63"} />
-        </LinearGradient>
+        <RadialGradient id="brand-light" cx="50%" cy="50%" rx="50%" ry="50%">
+          <Stop offset="0" stopColor="#FFFFFF" stopOpacity="0.96" />
+          <Stop offset="0.58" stopColor="#F3F8FF" stopOpacity="0.44" />
+          <Stop offset="1" stopColor="#DCEAFF" stopOpacity="0" />
+        </RadialGradient>
+        <RadialGradient id="brand-glow" cx="50%" cy="50%" rx="50%" ry="50%">
+          <Stop offset="0" stopColor="#D8E8FF" stopOpacity="0.5" />
+          <Stop offset="1" stopColor="#EDF4FF" stopOpacity="0" />
+        </RadialGradient>
       </Defs>
-      <Rect width="390" height="844" fill={`url(#${variant}-sky)`} />
-      <Circle cx={launch ? 316 : 320} cy={launch ? 176 : 164} r={launch ? 66 : 58} fill="#FFF7DD" opacity="0.82" />
-      <Path d="M-35 600C45 536 98 552 159 496c54-50 105-48 151-10 38 31 73 24 116-8v366H-35V600Z" fill={`url(#${variant}-land)`} opacity={launch ? 0.74 : 0.92} />
-      <Path d="M-28 672c80-48 137-50 196-16 68 39 141 20 250-42v230H-28V672Z" fill={launch ? "#2D6878" : "#123F57"} opacity={launch ? 0.74 : 0.9} />
-      <Path d="M-20 566c84-23 154-17 210 18 69 43 138 38 220-14" fill="none" stroke="#F8FCFF" strokeWidth="5" opacity="0.34" />
+      <Rect width="390" height="844" fill="url(#brand-base)" />
+      <Circle cx="194" cy="368" r="246" fill="url(#brand-light)" />
+      <Circle cx="386" cy="772" r="238" fill="url(#brand-glow)" />
+      <Circle cx="-18" cy="64" r="184" fill="#FFFFFF" opacity="0.48" />
     </Svg>
+  );
+}
+
+function OnboardingHero() {
+  return (
+    <View style={styles.heroMedia}>
+      {/* This fixed media layer can be replaced with an approved destination image without changing hero spacing. */}
+      <Svg
+        accessible={false}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        pointerEvents="none"
+        preserveAspectRatio="xMidYMid slice"
+        style={StyleSheet.absoluteFill}
+        viewBox="0 0 390 286"
+      >
+        <Defs>
+          <LinearGradient id="hero-sky" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor="#4A91D4" />
+            <Stop offset="0.54" stopColor="#9DD4E3" />
+            <Stop offset="1" stopColor="#F8D8A5" />
+          </LinearGradient>
+          <LinearGradient id="hero-distance" x1="0" y1="0" x2="1" y2="0">
+            <Stop offset="0" stopColor="#527C91" />
+            <Stop offset="0.55" stopColor="#376E7D" />
+            <Stop offset="1" stopColor="#234D65" />
+          </LinearGradient>
+          <LinearGradient id="hero-water" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor="#3F8B9A" />
+            <Stop offset="1" stopColor="#14506B" />
+          </LinearGradient>
+          <RadialGradient id="hero-light" cx="50%" cy="50%" rx="50%" ry="50%">
+            <Stop offset="0" stopColor="#FFF8D8" stopOpacity="0.94" />
+            <Stop offset="1" stopColor="#FFE2AE" stopOpacity="0" />
+          </RadialGradient>
+        </Defs>
+        <Rect width="390" height="286" fill="url(#hero-sky)" />
+        <Circle cx="314" cy="100" r="78" fill="url(#hero-light)" />
+        <Path d="M-24 181c55-22 94-31 132-20 32 10 47 2 73-10 45-21 80-14 112 10 34 26 70 18 121-6v131H-24V181Z" fill="url(#hero-distance)" opacity="0.72" />
+        <Path d="M-10 207c71-14 135-10 193 8 69 21 143 15 217-18v89H-10v-79Z" fill="url(#hero-water)" />
+        <Path d="M-10 220c74-9 131-5 186 10 75 20 148 15 224-15" fill="none" stroke="#D7F2EF" strokeWidth="2" opacity="0.48" />
+        <Path d="M229 86c14-8 28-8 42 0" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" opacity="0.28" />
+      </Svg>
+      <View style={styles.heroVignette} />
+    </View>
   );
 }
 
@@ -209,12 +242,17 @@ function LegalLink({ label, url }: { label: string; url: string }) {
 export function LaunchLoadingScreen({ onReady }: { onReady?: () => void }) {
   return (
     <View style={styles.launch} onLayout={onReady}>
-      <TravelAtmosphere variant="launch" />
+      <BrandAtmosphere />
       <StatusBar style="dark" translucent backgroundColor="transparent" />
       <SafeAreaView style={styles.launchSafe}>
         <View accessible accessibilityLabel="Kurioticket. Your journey starts here." style={styles.launchBrand}>
-          <KurioticketMark />
-          <Text style={styles.launchWordmark}>Kurioticket</Text>
+          <Image
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            resizeMode="contain"
+            source={require("../../../assets/kurioticket-logo-primary-light-bg.png")}
+            style={styles.launchLogo}
+          />
           <Text style={styles.launchTagline}>
             Your <Text style={styles.launchTaglineAccent}>journey</Text> starts here
           </Text>
@@ -275,7 +313,7 @@ export function OnboardingScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View accessible={false} style={[styles.hero, { height: heroHeight }]}>
-          <TravelAtmosphere variant="hero" />
+          <OnboardingHero />
         </View>
 
         <Animated.View
@@ -374,20 +412,22 @@ export function RecoveryScreen({ type, onRetry }: { type: "offline" | "configura
 }
 
 const styles = StyleSheet.create({
-  launch: { flex: 1, backgroundColor: "#DDEBFA", overflow: "hidden" },
+  launch: { flex: 1, backgroundColor: "#F7FAFF", overflow: "hidden" },
   launchSafe: { flex: 1, justifyContent: "center" },
-  launchBrand: { alignItems: "center", gap: 8, paddingHorizontal: 24, transform: [{ translateY: -48 }] },
-  launchWordmark: { color: "#071D45", fontSize: 40, lineHeight: 48, fontWeight: "800", letterSpacing: -1.2, textAlign: "center" },
+  launchBrand: { alignItems: "center", gap: 15, paddingHorizontal: 24, transform: [{ translateY: -28 }] },
+  launchLogo: { width: 306, maxWidth: "88%", height: 72 },
   launchTagline: { color: "#68758F", fontSize: 17, lineHeight: 24, fontWeight: "600", textAlign: "center" },
   launchTaglineAccent: { color: "#1557E8", fontWeight: "800" },
   onboardingScreen: { flex: 1, backgroundColor: "white" },
   onboardingScroll: { flexGrow: 1, backgroundColor: "white" },
-  hero: { width: "100%", overflow: "hidden", backgroundColor: "#C8E4FA" },
+  hero: { width: "100%", overflow: "hidden", backgroundColor: "#83BDD8" },
+  heroMedia: { flex: 1, overflow: "hidden", backgroundColor: "#83BDD8" },
+  heroVignette: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(6, 38, 66, 0.06)" },
   onboardingPanel: {
     flex: 1,
     width: "100%",
     marginTop: -30,
-    paddingTop: 24,
+    paddingTop: 27,
     paddingHorizontal: 24,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
@@ -395,28 +435,33 @@ const styles = StyleSheet.create({
   },
   onboardingHeadline: { color: "#081C46", fontSize: 29, lineHeight: 34, fontWeight: "800", letterSpacing: -0.7, textAlign: "center" },
   headlineAccent: { color: "#1557E8" },
-  onboardingSupport: { color: "#65718D", fontSize: 15, lineHeight: 20, fontWeight: "600", textAlign: "center", marginTop: 10 },
-  benefits: { gap: 9, marginTop: 18 },
+  onboardingSupport: { color: "#6A7690", fontSize: 15, lineHeight: 21, fontWeight: "500", textAlign: "center", marginTop: 11 },
+  benefits: { gap: 11, marginTop: 21 },
   benefitCard: {
-    minHeight: 78,
+    minHeight: 84,
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    paddingHorizontal: 11,
-    paddingVertical: 8,
+    gap: 15,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     borderWidth: 1,
     borderColor: "#E9EDF3",
-    borderRadius: 14,
+    borderRadius: 17,
     backgroundColor: "white",
+    shadowColor: "#17335F",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2,
   },
-  iconTile: { width: 56, height: 56, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+  iconTile: { width: 60, height: 60, borderRadius: 18, alignItems: "center", justifyContent: "center" },
   blueTile: { backgroundColor: "#E8EFFF" },
   mintTile: { backgroundColor: "#E2F6F0" },
   lavenderTile: { backgroundColor: "#EFE7FF" },
   benefitCopy: { flex: 1 },
-  benefitTitle: { color: "#0A1D44", fontSize: 16, lineHeight: 21, fontWeight: "800" },
-  benefitDescription: { color: "#586783", fontSize: 13.5, lineHeight: 18, fontWeight: "500", marginTop: 2 },
-  actions: { gap: 11, marginTop: 16 },
+  benefitTitle: { color: "#081C42", fontSize: 16.5, lineHeight: 22, fontWeight: "800", letterSpacing: -0.15 },
+  benefitDescription: { color: "#6A7690", fontSize: 13.5, lineHeight: 19, fontWeight: "400", marginTop: 3 },
+  actions: { gap: 11, marginTop: 19 },
   button: { minHeight: 54, borderRadius: 18, paddingHorizontal: 18, paddingVertical: 15, alignItems: "center", justifyContent: "center" },
   buttonContent: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 14 },
   onboardingButton: { minHeight: 56, borderRadius: 14 },
