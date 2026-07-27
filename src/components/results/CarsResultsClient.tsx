@@ -31,109 +31,13 @@ import { CarResultCard } from "@/components/results/CarResultCard";
 import { CarCardSkeleton } from "@/components/ui/Skeleton";
 import { assignCarBadges, buildCarDetailsHref, filterCarResults, sortCarResults, type CarSort, type SelectedCarFilters } from "@/lib/cars/carResults";
 import type { CarInventoryStatus, CarResultsMode, CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
-
-function useDesktopFilterShortcut(topOffset = 116) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const contentRef = useRef<HTMLDivElement | null>(null);
-  const [isShortcutVisible, setIsShortcutVisible] = useState(false);
-  const [isManuallyExpanded, setIsManuallyExpanded] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return undefined;
-
-    let animationFrame = 0;
-    let lastFullHeight = 0;
-
-    const updateShortcutState = () => {
-      animationFrame = 0;
-      const container = containerRef.current;
-      if (!container) return;
-
-      const contentHeight = contentRef.current?.offsetHeight || lastFullHeight;
-      if (contentHeight > 0) lastFullHeight = contentHeight;
-
-      const containerTop =
-        container.getBoundingClientRect().top + window.scrollY;
-      const collapseAfter =
-        containerTop + Math.max(contentHeight - 72, 0) - topOffset;
-      const shouldCollapse = window.scrollY > collapseAfter;
-
-      if (!shouldCollapse) {
-        setIsManuallyExpanded(false);
-      }
-
-      setIsShortcutVisible(shouldCollapse && !isManuallyExpanded);
-    };
-
-    const scheduleUpdate = () => {
-      if (animationFrame) return;
-      animationFrame = window.requestAnimationFrame(updateShortcutState);
-    };
-
-    scheduleUpdate();
-    window.addEventListener("scroll", scheduleUpdate, { passive: true });
-    window.addEventListener("resize", scheduleUpdate);
-
-    return () => {
-      if (animationFrame) window.cancelAnimationFrame(animationFrame);
-      window.removeEventListener("scroll", scheduleUpdate);
-      window.removeEventListener("resize", scheduleUpdate);
-    };
-  }, [isManuallyExpanded, topOffset]);
-
-  const showFullFilters = !isShortcutVisible;
-  const expandFilters = () => {
-    setIsManuallyExpanded(true);
-    setIsShortcutVisible(false);
-  };
-
-  return {
-    containerRef,
-    contentRef,
-    showFullFilters,
-    isShortcutVisible,
-    expandFilters,
-  };
-}
-
-function DesktopFilterShortcut({
-  activeFilterCount,
-  activeFilterLabel,
-  filterByLabel,
-  onClick,
-}: {
-  activeFilterCount: number;
-  activeFilterLabel: string;
-  filterByLabel: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      className="group w-full rounded-[1.15rem] border border-slate-200/90 bg-white p-4 text-left shadow-[0_14px_34px_-28px_rgba(15,23,42,0.45)] ring-1 ring-slate-950/[0.02] transition hover:-translate-y-0.5 hover:border-[#004BB8]/30 hover:shadow-[0_18px_38px_-28px_rgba(15,23,42,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-      onClick={onClick}
-    >
-      <span className="flex items-center justify-between gap-3">
-        <span className="min-w-0">
-          <span className="block text-sm font-bold text-slate-950">
-            {filterByLabel}
-          </span>
-          {activeFilterCount > 0 ? (
-            <span className="mt-1 inline-flex rounded-full bg-[#004BB8]/8 px-2.5 py-1 text-xs font-bold text-[#004BB8] ring-1 ring-[#004BB8]/10">
-              {activeFilterLabel}
-            </span>
-          ) : null}
-        </span>
-        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition group-hover:border-[#004BB8]/30 group-hover:text-[#004BB8]">
-          <SquarePen size={17} aria-hidden="true" />
-        </span>
-      </span>
-      <span className="mt-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
-        Edit filters
-      </span>
-    </button>
-  );
-}
+import { shouldShowDesktopStickySearch } from "@/lib/search/desktopStickySearch";
+import { calculateCompactFilterMaxHeight } from "@/lib/hotels/desktopCompactFilter";
+import {
+  calculateCompactFilterPlacement,
+  shouldShowDesktopCompactFilter,
+  type DesktopCompactFilterPlacementState,
+} from "@/lib/flights/desktopCompactFilter";
 
 type CarsResultsValues = CarSearchParams & {
   pickupLocation: string;
@@ -559,6 +463,8 @@ const fieldShellClass =
 
 const searchFormGridClass =
   "grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.18fr)_minmax(0,1.08fr)_minmax(0,1.48fr)_minmax(0,1.06fr)_118px_116px] lg:items-stretch lg:gap-0";
+const desktopCompactFilterTopOffset = 116;
+const desktopCompactFilterBottomGap = 16;
 
 const compactFieldShellClass =
   "min-h-[46px] py-1 lg:min-h-[54px] lg:py-1.5";
@@ -584,8 +490,13 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
   const carsSortRef = useRef<HTMLDivElement | null>(null);
   const carsSortButtonRef = useRef<HTMLButtonElement | null>(null);
   const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
-  const [isSearchExpandedWhileSticky, setIsSearchExpandedWhileSticky] =
-    useState(false);
+  const [desktopStickySearchSection, setDesktopStickySearchSection] = useState<
+    "locations" | "dates" | "times" | "driverAge" | null
+  >(null);
+  const [desktopCompactFilterPlacement, setDesktopCompactFilterPlacement] =
+    useState<DesktopCompactFilterPlacementState>("hidden");
+  const [desktopCompactFilterFrame, setDesktopCompactFilterFrame] = useState({ left: 0, width: 0 });
+  const [desktopCompactFilterMaxHeight, setDesktopCompactFilterMaxHeight] = useState(0);
   const [pickupLocation, setPickupLocation] = useState(values.pickupLocation);
   const [dropoffLocation, setDropoffLocation] = useState(
     values.dropoffLocation || values.pickupLocation,
@@ -603,9 +514,14 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
   const dateWrapRef = useRef<HTMLDivElement | null>(null);
   const timeWrapRef = useRef<HTMLDivElement | null>(null);
   const driverAgeWrapRef = useRef<HTMLDivElement | null>(null);
-  const stickySentinelRef = useRef<HTMLDivElement | null>(null);
   const searchFormRef = useRef<HTMLFormElement | null>(null);
-  const expandedSearchScrollYRef = useRef(0);
+  const desktopFilterSidebarRef = useRef<HTMLDivElement | null>(null);
+  const desktopFilterSentinelRef = useRef<HTMLDivElement | null>(null);
+  const resultsGridRef = useRef<HTMLDivElement | null>(null);
+  const desktopCompactFilterRef = useRef<HTMLDivElement | null>(null);
+  const stickyDialogRef = useRef<HTMLDivElement | null>(null);
+  const stickyLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const stickyScrollLockRef = useRef<{ restore: () => void } | null>(null);
   const pickupInputRef = useRef<HTMLInputElement | null>(null);
   const dropoffInputRef = useRef<HTMLInputElement | null>(null);
   const mobileFiltersScrollLockRef = useRef<{ restore: () => void } | null>(
@@ -658,14 +574,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
     carSortOptions[0].label;
   const badges = useMemo(() => assignCarBadges(initialResults), [initialResults]);
   const visibleResults = useMemo(() => sortCarResults(filterCarResults(initialResults, selectedCarFilters), sort), [initialResults, selectedCarFilters, sort]);
-  const {
-    containerRef: desktopFilterContainerRef,
-    contentRef: desktopFilterContentRef,
-    showFullFilters: showFullDesktopFilters,
-    expandFilters: expandDesktopFilters,
-  } = useDesktopFilterShortcut(120);
-  const showCompactSearchSummary =
-    isSearchBarCompact && !isSearchExpandedWhileSticky;
+  const showCompactSearchSummary = isSearchBarCompact && desktopStickySearchSection === null;
   const pickupSummary = pickupLocationLabel || t("carsResults.pickupLocation");
   const returnSummary =
     dropoffLocationLabel ||
@@ -685,18 +594,14 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
       : formatCompactDate(pickupDate, intlLocale, t("carsResults.selectDates"))
     : t("carsResults.selectRentalDates");
   const driverAgeSummary = getDriverAgeOptionLabel(driverAge, t);
-  const isExpandedStickySearchActive =
-    isSearchBarCompact && isSearchExpandedWhileSticky;
-  const canAutoCollapseExpandedSearch =
-    isExpandedStickySearchActive && !datesOpen && !timesOpen && !driverAgeOpen;
-
-  const markExpandedSearchInteraction = useCallback(() => {}, []);
-
-  const collapseStickySearch = useCallback(() => {
-    setIsSearchExpandedWhileSticky(false);
+  const timeSummary = `${formatTimeLabel(pickupTime, intlLocale)} → ${formatTimeLabel(dropoffTime, intlLocale)}`;
+  const locationPairSummary = `${pickupSummary} → ${returnSummary}`;
+  const closeDesktopStickySearch = useCallback(() => {
+    setDesktopStickySearchSection(null);
     setDatesOpen(false);
     setTimesOpen(false);
     setDriverAgeOpen(false);
+    requestAnimationFrame(() => stickyLauncherRef.current?.focus({ preventScroll: true }));
   }, []);
 
   const toggleCarFilter = (groupId: string, option: string) => {
@@ -787,112 +692,81 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
   }, [filtersOpen]);
 
   useEffect(() => {
-    const sentinel = stickySentinelRef.current;
-
-    if (!sentinel) {
-      return undefined;
-    }
-
-    let animationFrame = 0;
-
-    const applyCompactState = (shouldCompact: boolean) => {
-      setIsSearchBarCompact(shouldCompact);
-
-      if (!shouldCompact) {
-        setIsSearchExpandedWhileSticky(false);
-      }
-    };
-
-    const updateFromSentinelPosition = () => {
-      const sentinelRect = sentinel.getBoundingClientRect();
-      const sentinelScrollTop = sentinelRect.top + window.scrollY;
-      const hasPassedStickyTrigger =
-        window.scrollY > Math.max(16, sentinelScrollTop);
-
-      applyCompactState(hasPassedStickyTrigger);
-    };
-
-    const schedulePositionUpdate = () => {
-      if (animationFrame) return;
-
-      animationFrame = window.requestAnimationFrame(() => {
-        animationFrame = 0;
-        updateFromSentinelPosition();
+    const form = searchFormRef.current;
+    if (!form) return undefined;
+    let frame = 0;
+    let previous: boolean | null = null;
+    const measure = () => {
+      frame = 0;
+      const next = shouldShowDesktopStickySearch({
+        viewportWidth: window.innerWidth,
+        formBottom: form.getBoundingClientRect().bottom,
       });
+      if (next !== previous) { previous = next; setIsSearchBarCompact(next); }
+      if (!next) setDesktopStickySearchSection(null);
     };
-
-    updateFromSentinelPosition();
-
-    if (typeof IntersectionObserver === "undefined") {
-      window.addEventListener("scroll", schedulePositionUpdate, {
-        passive: true,
-      });
-      window.addEventListener("resize", schedulePositionUpdate);
-
-      return () => {
-        window.removeEventListener("scroll", schedulePositionUpdate);
-        window.removeEventListener("resize", schedulePositionUpdate);
-        if (animationFrame) {
-          window.cancelAnimationFrame(animationFrame);
-        }
-      };
-    }
-
-    const observer = new IntersectionObserver(
-      () => {
-        updateFromSentinelPosition();
-      },
-      { threshold: 0 },
-    );
-
-    observer.observe(sentinel);
-    window.addEventListener("scroll", schedulePositionUpdate, {
-      passive: true,
-    });
-    window.addEventListener("resize", schedulePositionUpdate);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", schedulePositionUpdate);
-      window.removeEventListener("resize", schedulePositionUpdate);
-      if (animationFrame) {
-        window.cancelAnimationFrame(animationFrame);
-      }
-    };
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(measure); };
+    const observer = typeof IntersectionObserver === "undefined" ? null : new IntersectionObserver(schedule);
+    observer?.observe(form);
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    schedule();
+    return () => { observer?.disconnect(); window.removeEventListener("scroll", schedule); window.removeEventListener("resize", schedule); if (frame) cancelAnimationFrame(frame); };
   }, []);
 
   useEffect(() => {
-    if (!canAutoCollapseExpandedSearch) {
-      return undefined;
-    }
-
-    let animationFrame = 0;
-
-    const onScroll = () => {
-      if (animationFrame) {
-        return;
+    if (!desktopStickySearchSection) return undefined;
+    stickyScrollLockRef.current = lockBodyScroll();
+    const media = window.matchMedia("(max-width: 1023px)");
+    const closeBelowDesktop = () => { if (media.matches) closeDesktopStickySearch(); };
+    media.addEventListener("change", closeBelowDesktop);
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        if (datesOpen || timesOpen || driverAgeOpen) { setDatesOpen(false); setTimesOpen(false); setDriverAgeOpen(false); }
+        else closeDesktopStickySearch();
       }
-
-      animationFrame = window.requestAnimationFrame(() => {
-        animationFrame = 0;
-        const hasContinuedScrolling =
-          Math.abs(window.scrollY - expandedSearchScrollYRef.current) > 16;
-
-        if (hasContinuedScrolling) {
-          collapseStickySearch();
-        }
-      });
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (animationFrame) {
-        window.cancelAnimationFrame(animationFrame);
+      if (event.key === "Tab" && stickyDialogRef.current) {
+        const focusable = [...stickyDialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter((node) => !node.hidden);
+        if (!focusable.length) return;
+        const first = focusable[0], last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus({ preventScroll: true }); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus({ preventScroll: true }); }
       }
     };
-  }, [canAutoCollapseExpandedSearch, collapseStickySearch]);
+    document.addEventListener("keydown", handleKey);
+    requestAnimationFrame(() => {
+      if (desktopStickySearchSection === "locations") pickupInputRef.current?.focus({ preventScroll: true });
+      else if (desktopStickySearchSection === "dates") setDatesOpen(true);
+      else if (desktopStickySearchSection === "times") setTimesOpen(true);
+      else if (desktopStickySearchSection === "driverAge") setDriverAgeOpen(true);
+    });
+    return () => { document.removeEventListener("keydown", handleKey); media.removeEventListener("change", closeBelowDesktop); stickyScrollLockRef.current?.restore(); stickyScrollLockRef.current = null; };
+  }, [desktopStickySearchSection, closeDesktopStickySearch, datesOpen, timesOpen, driverAgeOpen]);
+
+  useEffect(() => {
+    let frame = 0;
+    const measure = () => {
+      frame = 0;
+      const sentinel = desktopFilterSentinelRef.current;
+      const sidebar = desktopFilterSidebarRef.current;
+      const body = resultsGridRef.current;
+      if (!sentinel || !sidebar || !body) return;
+      const enabled = shouldShowDesktopCompactFilter({ viewportWidth: window.innerWidth, sentinelTop: sentinel.getBoundingClientRect().top, topOffset: desktopCompactFilterTopOffset });
+      const maxHeight = calculateCompactFilterMaxHeight({ viewportHeight: window.innerHeight, topOffset: desktopCompactFilterTopOffset, bottomGap: desktopCompactFilterBottomGap });
+      setDesktopCompactFilterMaxHeight(maxHeight);
+      const sidebarRect = sidebar.getBoundingClientRect();
+      setDesktopCompactFilterFrame({ left: sidebarRect.left, width: sidebarRect.width });
+      const panelHeight = Math.min(desktopCompactFilterRef.current?.scrollHeight ?? maxHeight, maxHeight);
+      const placement = calculateCompactFilterPlacement({ enabled, scrollY: window.scrollY, desiredTop: desktopCompactFilterTopOffset, panelHeight, bodyBottomDocument: body.getBoundingClientRect().bottom + window.scrollY, currentState: desktopCompactFilterPlacement, bottomGap: desktopCompactFilterBottomGap });
+      setDesktopCompactFilterPlacement(placement.state);
+    };
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(measure); };
+    const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
+    if (desktopFilterSidebarRef.current) resizeObserver?.observe(desktopFilterSidebarRef.current);
+    if (resultsGridRef.current) resizeObserver?.observe(resultsGridRef.current);
+    window.addEventListener("scroll", schedule, { passive: true }); window.addEventListener("resize", schedule); schedule();
+    return () => { resizeObserver?.disconnect(); window.removeEventListener("scroll", schedule); window.removeEventListener("resize", schedule); if (frame) cancelAnimationFrame(frame); };
+  }, [desktopCompactFilterPlacement]);
 
   useEffect(() => {
     const onPointerDown = (event: PointerEvent) => {
@@ -934,7 +808,6 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
     }
 
     const selectedIso = toIsoDate(date);
-    markExpandedSearchInteraction();
 
     if (!pickupDate || (pickupDate && dropoffDate)) {
       setPickupDate(selectedIso);
@@ -953,7 +826,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
 
   const openMobileSearchDrawer = useCallback(() => {
     setMobileSearchOpen(true);
-    setIsSearchExpandedWhileSticky(false);
+    setDesktopStickySearchSection(null);
     setDatesOpen(false);
     setTimesOpen(false);
     setDriverAgeOpen(false);
@@ -1015,23 +888,21 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
     </div>
   );
 
-  const renderCarsSearchForm = (placement: "desktop" | "mobile") => {
-    const isCompactSearch =
-      placement === "desktop" &&
-      isSearchBarCompact &&
-      !isSearchExpandedWhileSticky;
+  const renderCarsSearchForm = (placement: "desktop-full" | "desktop-sticky" | "mobile") => {
+    const idPrefix = placement === "desktop-full" ? "cars-results-full-search" : placement === "desktop-sticky" ? "sticky-cars-search" : "cars-results-mobile-search";
+    const surfaceOwnsPopovers = placement === "desktop-sticky" ? Boolean(desktopStickySearchSection) : placement === "mobile" ? mobileSearchOpen : !desktopStickySearchSection && !mobileSearchOpen;
+    const isCompactSearch = placement === "desktop-sticky";
 
     return (
       <form
-        ref={searchFormRef}
+        ref={placement === "desktop-full" ? searchFormRef : undefined}
+        id={`${idPrefix}-form`}
         action="/cars/results"
         method="get"
         className="mx-auto w-full min-w-0 max-w-5xl"
-        onFocusCapture={markExpandedSearchInteraction}
-        onChangeCapture={markExpandedSearchInteraction}
         onSubmit={() => {
           closeMobileSearchDrawer();
-          setIsSearchExpandedWhileSticky(false);
+          setDesktopStickySearchSection(null);
         }}
       >
         <input type="hidden" name="pickupDate" value={pickupDate} />
@@ -1047,6 +918,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
         >
           <div className={searchFormGridClass}>
             <SearchInputCell
+              idPrefix={idPrefix}
               icon={MapPin}
               inputRef={pickupInputRef}
               isCompact={isCompactSearch}
@@ -1056,12 +928,10 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
               }
               name="pickupLocation"
               onChange={(nextValue) => {
-                markExpandedSearchInteraction();
-                setPickupLocation(nextValue);
+                            setPickupLocation(nextValue);
               }}
               onClear={() => {
-                markExpandedSearchInteraction();
-                setPickupLocation("");
+                            setPickupLocation("");
                 pickupInputRef.current?.focus();
               }}
               placeholder={t("carsSearch.pickupLocationPlaceholder")}
@@ -1070,6 +940,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
               className="lg:rounded-s-xl"
             />
             <SearchInputCell
+              idPrefix={idPrefix}
               icon={MapPin}
               inputRef={dropoffInputRef}
               isCompact={isCompactSearch}
@@ -1079,12 +950,10 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
               }
               name="dropoffLocation"
               onChange={(nextValue) => {
-                markExpandedSearchInteraction();
-                setDropoffLocation(nextValue);
+                            setDropoffLocation(nextValue);
               }}
               onClear={() => {
-                markExpandedSearchInteraction();
-                setDropoffLocation("");
+                            setDropoffLocation("");
                 dropoffInputRef.current?.focus();
               }}
               placeholder={t("carsResults.sameAsPickup")}
@@ -1094,29 +963,24 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
             <SearchDateCell
               dropoffDate={dropoffDate}
               isCompact={isCompactSearch}
-              doneButtonVariant={placement === "desktop" ? "brand" : "neutral"}
-              isOpen={datesOpen}
+              doneButtonVariant={placement === "mobile" ? "neutral" : "brand"}
+              isOpen={surfaceOwnsPopovers && datesOpen}
               onClear={() => {
-                markExpandedSearchInteraction();
-                setPickupDate("");
+                            setPickupDate("");
                 setDropoffDate("");
               }}
               onDone={() => {
-                markExpandedSearchInteraction();
-                setDatesOpen(false);
+                            setDatesOpen(false);
               }}
               onNextMonth={() => {
-                markExpandedSearchInteraction();
-                setVisibleMonthDate((current) => addMonths(current, 1));
+                            setVisibleMonthDate((current) => addMonths(current, 1));
               }}
               onPreviousMonth={() => {
-                markExpandedSearchInteraction();
-                setVisibleMonthDate((current) => addMonths(current, -1));
+                            setVisibleMonthDate((current) => addMonths(current, -1));
               }}
               onSelectDate={selectRentalDate}
               onToggle={() => {
-                markExpandedSearchInteraction();
-                setDatesOpen((current) => !current);
+                            setDatesOpen((current) => !current);
                 setTimesOpen(false);
                 setDriverAgeOpen(false);
               }}
@@ -1129,21 +993,18 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
             <SearchTimeCell
               dropoffTime={dropoffTime}
               isCompact={isCompactSearch}
-              isOpen={timesOpen}
+              isOpen={surfaceOwnsPopovers && timesOpen}
               onToggle={() => {
-                markExpandedSearchInteraction();
-                setTimesOpen((current) => !current);
+                            setTimesOpen((current) => !current);
                 setDatesOpen(false);
                 setDriverAgeOpen(false);
               }}
               pickupTime={pickupTime}
               setDropoffTime={(nextTime) => {
-                markExpandedSearchInteraction();
-                setDropoffTime(nextTime);
+                            setDropoffTime(nextTime);
               }}
               setPickupTime={(nextTime) => {
-                markExpandedSearchInteraction();
-                setPickupTime(nextTime);
+                            setPickupTime(nextTime);
               }}
               t={t}
               intlLocale={intlLocale}
@@ -1152,15 +1013,13 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
             <DriverAgeCell
               driverAge={driverAge}
               isCompact={isCompactSearch}
-              isOpen={driverAgeOpen}
+              isOpen={surfaceOwnsPopovers && driverAgeOpen}
               onSelect={(age) => {
-                markExpandedSearchInteraction();
-                setDriverAge(age);
+                            setDriverAge(age);
                 setDriverAgeOpen(false);
               }}
               onToggle={() => {
-                markExpandedSearchInteraction();
-                setDriverAgeOpen((current) => !current);
+                            setDriverAgeOpen((current) => !current);
                 setDatesOpen(false);
                 setTimesOpen(false);
               }}
@@ -1223,58 +1082,46 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
         </div>
       </div>
 
-      <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
-      <section
+      <div
         className={cn(
-          "sticky top-0 z-40 hidden border-b border-transparent transition-[padding,background-color] duration-200 sm:block",
-          showCompactSearchSummary
-            ? "border-transparent bg-white/95 py-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.05)] backdrop-blur"
-            : "border-transparent bg-white pb-0 pt-7",
+          "pointer-events-none fixed inset-x-0 top-3 z-[1000] hidden px-4 transition-all duration-200 lg:block",
+          showCompactSearchSummary ? "translate-y-0 opacity-100" : "-translate-y-3 opacity-0",
         )}
-        aria-labelledby="cars-results-heading"
+        aria-hidden={!showCompactSearchSummary}
+        inert={!showCompactSearchSummary ? true : undefined}
       >
-        <div className="page-shell">
-          <div
-            className={cn(
-              "relative z-10 min-w-0",
-              !showCompactSearchSummary && "translate-y-5",
-            )}
-          >
-            <div
-              className={cn(
-                "mb-2 flex items-center justify-between gap-3 lg:hidden",
-                showCompactSearchSummary && "hidden",
-              )}
-            >
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">
-                {t("carsResults.resultsLabel")}
-              </p>
-              <Button
-                type="button"
-                variant="secondary"
-                aria-label={
-                  activeFilterCount > 0
-                    ? interpolate(t("carsResults.openFiltersWithCount"), {
-                        count: String(activeFilterCount),
-                      })
-                    : t("carsResults.openFilters")
-                }
-                className="relative h-10 rounded-md border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm"
-                onClick={() => setFiltersOpen(true)}
-              >
-                <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-                {t("filters")}
-                {activeFilterCount > 0 ? (
-                  <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] font-bold leading-none text-[#004BB8] ring-1 ring-[#004BB8]/10">
-                    {activeFilterCount}
-                  </span>
-                ) : null}
-              </Button>
-            </div>
-
-            {!mobileSearchOpen ? renderCarsSearchForm("desktop") : null}
+        <div className="mx-auto grid h-[58px] w-full max-w-[980px] grid-cols-[minmax(260px,1.7fr)_minmax(170px,1fr)_minmax(190px,1.1fr)_minmax(145px,0.85fr)_104px] overflow-hidden rounded-lg border border-slate-200/95 bg-white shadow-[0_12px_30px_-18px_rgba(15,23,42,0.38)] ring-1 ring-slate-950/[0.03] pointer-events-auto">
+          {([
+            ["locations", locationPairSummary, MapPin, t("carsResults.pickupLocationLabel")],
+            ["dates", rentalDateSummary, CalendarDays, t("carsResults.rentalDatesLabel")],
+            ["times", timeSummary, Clock3, t("carsResults.pickupReturnTimeLabel")],
+            ["driverAge", driverAgeSummary, Users, t("carsResults.driverAgeLabel")],
+          ] as const).map(([section, summary, Icon, label]) => (
+            <button key={section} ref={(node) => { if (desktopStickySearchSection === section && node) stickyLauncherRef.current = node; }} type="button" aria-label={label} onClick={(event) => { stickyLauncherRef.current = event.currentTarget; setDesktopStickySearchSection(section); }} className="focus-ring flex h-[56px] min-w-0 items-center gap-2.5 border-e border-slate-200/85 px-3 text-start transition-colors hover:bg-slate-50/80 focus-visible:bg-slate-50/90">
+              <Icon className="h-4 w-4 shrink-0 text-[#004BB8]" aria-hidden="true" />
+              <span className="min-w-0 truncate whitespace-nowrap text-[0.86rem] font-medium leading-5 text-slate-800">{summary}</span>
+            </button>
+          ))}
+          <div className="flex items-center justify-center px-1">
+            <button type="button" onClick={(event) => { if (pickupLocation.trim() && pickupDate && dropoffDate) searchFormRef.current?.requestSubmit(); else { stickyLauncherRef.current = event.currentTarget; setDesktopStickySearchSection(!pickupLocation.trim() ? "locations" : "dates"); } }} className="focus-ring h-10 w-24 rounded-lg bg-[#004BB8] text-sm font-semibold text-white transition hover:bg-[#021C2B]">{t("search")}</button>
           </div>
         </div>
+      </div>
+
+      {desktopStickySearchSection ? (
+        <div className="fixed inset-0 z-[1100] hidden bg-slate-950/45 px-6 py-20 lg:block" onMouseDown={(event) => { if (event.target === event.currentTarget) closeDesktopStickySearch(); }}>
+          <div ref={stickyDialogRef} role="dialog" aria-modal="true" aria-labelledby="sticky-cars-search-title" className="mx-auto max-w-6xl rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div className="min-w-0"><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">{t("carsResults.searchCars")}</p><h2 id="sticky-cars-search-title" className="mt-1 truncate text-xl font-bold tracking-tight text-slate-950">{locationPairSummary}</h2><p className="mt-1 truncate text-sm font-medium text-slate-600">{rentalDateSummary} · {timeSummary} · {driverAgeSummary}</p></div>
+              <button type="button" aria-label={t("carsResults.closeEditSearch")} onClick={closeDesktopStickySearch} className="focus-ring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"><X className="h-4 w-4" aria-hidden="true" /></button>
+            </div>
+            {renderCarsSearchForm("desktop-sticky")}
+          </div>
+        </div>
+      ) : null}
+
+      <section className="hidden bg-white pb-0 pt-7 sm:block" aria-labelledby="cars-results-heading">
+        <div className="page-shell"><div className="relative z-10 min-w-0 translate-y-5">{!mobileSearchOpen ? renderCarsSearchForm("desktop-full") : null}</div></div>
       </section>
 
       <nav
@@ -1314,11 +1161,9 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
         </ol>
       </nav>
 
-      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[256px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]">
-        <aside className="hidden lg:sticky lg:top-[7.5rem] lg:block lg:self-start">
-          <div ref={desktopFilterContainerRef}>
-            {showFullDesktopFilters ? (
-              <div ref={desktopFilterContentRef}>
+      <div ref={resultsGridRef} className="page-shell relative grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[256px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]">
+        <aside ref={desktopFilterSidebarRef} className="relative hidden lg:block lg:self-stretch">
+              <div className={desktopCompactFilterPlacement === "hidden" ? "block" : "invisible"}>
                 <CarFilters
                   activeFilterCount={activeFilterCount}
                   layout="desktop"
@@ -1328,15 +1173,12 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
                   t={t}
                 />
               </div>
-            ) : (
-              <DesktopFilterShortcut
-                activeFilterCount={activeFilterCount}
-                activeFilterLabel={activeFilterLabel}
-                filterByLabel={t("carsResults.filterBy")}
-                onClick={expandDesktopFilters}
-              />
-            )}
-          </div>
+              <div ref={desktopFilterSentinelRef} className="h-px" aria-hidden="true" />
+              {desktopCompactFilterPlacement !== "hidden" ? (
+                <div ref={desktopCompactFilterRef} className={cn(desktopCompactFilterPlacement === "fixed" ? "fixed" : "absolute inset-x-0 bottom-0 w-full")} style={desktopCompactFilterPlacement === "fixed" ? { top: desktopCompactFilterTopOffset, left: desktopCompactFilterFrame.left, width: desktopCompactFilterFrame.width, maxHeight: desktopCompactFilterMaxHeight } : { maxHeight: desktopCompactFilterMaxHeight }}>
+                  <CarFilters activeFilterCount={activeFilterCount} layout="compact" onClear={clearCarFilters} onToggle={toggleCarFilter} selectedFilters={selectedCarFilters} t={t} />
+                </div>
+              ) : null}
         </aside>
 
         <section
@@ -1538,6 +1380,7 @@ function SearchInputCell({
   className,
   icon: Icon,
   inputRef,
+  idPrefix,
   isCompact,
   label,
   name,
@@ -1550,6 +1393,7 @@ function SearchInputCell({
   className?: string;
   icon: typeof MapPin;
   inputRef: RefObject<HTMLInputElement | null>;
+  idPrefix: string;
   isCompact: boolean;
   label: string;
   name: keyof Pick<CarsResultsValues, "pickupLocation" | "dropoffLocation">;
@@ -1566,7 +1410,7 @@ function SearchInputCell({
         className,
       )}
     >
-      <label htmlFor={name} className={fieldLabelClass}>
+      <label htmlFor={`${idPrefix}-${name}`} className={fieldLabelClass}>
         <Icon
           className="h-3.5 w-3.5 shrink-0 text-[#5CB6B2] lg:hidden"
           aria-hidden="true"
@@ -1576,7 +1420,7 @@ function SearchInputCell({
       <div className="relative">
         <input
           ref={inputRef}
-          id={name}
+          id={`${idPrefix}-${name}`}
           name={name}
           type="text"
           value={value}
@@ -2037,156 +1881,40 @@ function CarsResultsShell({
   );
 }
 
-function CarFilters({
-  activeFilterCount,
-  layout,
-  onClear,
-  onToggle,
-  selectedFilters,
-  t,
-}: {
+function CarFilters({ activeFilterCount, layout, onClear, onToggle, selectedFilters, t }: {
   activeFilterCount: number;
-  layout: "desktop" | "mobile";
+  layout: "desktop" | "compact" | "mobile";
   onClear: () => void;
   onToggle: (groupId: string, option: string) => void;
   selectedFilters: SelectedCarFilters;
   t: (key: string) => string;
 }) {
-  return (
-    <div
-      className={cn(
-        layout === "desktop"
-          ? "desktop-filter-sidebar border border-slate-200/80 bg-transparent p-0 shadow-none rounded-none"
-          : "overflow-hidden bg-white",
-      )}
-    >
-      {layout === "desktop" ? (
-        <div className="desktop-filter-sidebar__header border-b border-slate-200/70 px-3 py-3">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="desktop-filter-sidebar__title truncate text-base font-bold text-slate-950">
-              {t("carsResults.filterBy")}
-            </h2>
-            <SlidersHorizontal
-              className="desktop-filter-sidebar__icon shrink-0 text-[#004BB8]"
-              size={18}
-              aria-hidden="true"
-            />
-          </div>
-          {activeFilterCount > 0 ? (
-            <div className="mt-2 flex items-center justify-between gap-3">
-              <span className="desktop-filter-sidebar__count rounded-full bg-[#EAF2FB] px-2 py-0.5 text-[11px] font-semibold text-[#235A9F] ring-1 ring-[#004BB8]/8">
-                {interpolate(t("carsResults.activeFilterCount"), {
-                  count: String(activeFilterCount),
-                })}
-              </span>
-              <button
-                type="button"
-                className="focus-ring rounded-full px-1.5 py-0.5 text-[11px] font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-[#235A9F]"
-                onClick={onClear}
-              >
-                Clear all
-              </button>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
-      <div
-        className={cn(
-          layout === "mobile" ? "space-y-0 bg-white" : "space-y-0 bg-transparent px-3 py-1",
-        )}
-      >
-        {layout === "mobile" && activeFilterCount > 0 ? (
-          <div
-            className="flex items-center justify-between gap-3 border-b border-border pb-3"
-          >
-            <span className="text-sm font-extrabold uppercase tracking-[0.14em] text-slate-950">
-              {interpolate(t("carsResults.selectedFilterCount"), {
-                count: String(activeFilterCount),
-              })}
-            </span>
-            <button
-              type="button"
-              className="focus-ring rounded-lg bg-transparent px-2.5 py-1 text-xs font-bold text-blue transition hover:bg-surface-muted"
-              onClick={onClear}
-            >
-              {t("carsResults.reset")}
-            </button>
-          </div>
-        ) : null}
-
-        {carFilterGroups.map((group) => (
-          <FilterSection
-            key={group.id}
-            layout={layout}
-            group={group}
-            onToggle={onToggle}
-            selectedOptions={selectedFilters[group.id] ?? []}
-            t={t}
-          />
-        ))}
-      </div>
+  const [openCompactSection, setOpenCompactSection] = useState<string | null>(null);
+  return <div className={cn(layout === "compact" ? "desktop-filter-sidebar flex max-h-full flex-col overflow-hidden rounded-2xl border border-[#D8E1EC] bg-[#EEF3F8] p-0 shadow-[0_12px_30px_-22px_rgba(15,23,42,0.42)]" : layout === "desktop" ? "desktop-filter-sidebar border border-slate-200/80 bg-transparent p-0 shadow-none rounded-none" : "overflow-hidden bg-white")}>
+    {layout !== "mobile" ? <div className="desktop-filter-sidebar__header shrink-0 border-b border-slate-200/70 px-3 py-3">
+      <div className="flex items-center justify-between gap-3"><h2 className="truncate text-base font-bold text-slate-950">{t("carsResults.filterBy")}{activeFilterCount > 0 ? <span className="ms-2 rounded-full bg-[#004BB8] px-2 py-0.5 text-xs text-white">{activeFilterCount}</span> : null}</h2><SlidersHorizontal className="shrink-0 text-[#004BB8]" size={18} aria-hidden="true" /></div>
+      {activeFilterCount > 0 ? <button type="button" className="focus-ring mt-2 text-xs font-semibold text-[#004BB8]" onClick={onClear}>{t("clearAll")}</button> : null}
+    </div> : null}
+    <div className={cn(layout === "compact" ? "min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain bg-[#EEF3F8] px-3 py-1" : layout === "mobile" ? "space-y-0 bg-white" : "space-y-0 bg-transparent px-3 py-1")}>
+      {carFilterGroups.map((group) => <FilterSection key={group.id} layout={layout} group={group} onToggle={onToggle} selectedOptions={selectedFilters[group.id] ?? []} compactOpen={openCompactSection === group.id} onCompactOpen={() => setOpenCompactSection((current) => current === group.id ? null : group.id)} t={t} />)}
     </div>
-  );
+  </div>;
 }
 
-function FilterSection({
-  layout,
-  group,
-  onToggle,
-  selectedOptions,
-  t,
-}: {
-  layout: "desktop" | "mobile";
+function FilterSection({ layout, group, onToggle, selectedOptions, compactOpen, onCompactOpen, t }: {
+  layout: "desktop" | "compact" | "mobile";
   group: CarFilterGroup;
   onToggle: (groupId: string, option: string) => void;
   selectedOptions: string[];
+  compactOpen: boolean;
+  onCompactOpen: () => void;
   t: (key: string) => string;
 }) {
-  return (
-    <section
-      className={cn(
-        layout === "mobile"
-          ? "border-t border-border py-4 first:border-t-0 first:pt-0"
-          : "border-t border-slate-200/75 py-4 first:border-t-0",
-      )}
-    >
-      <h3 className="text-sm font-extrabold uppercase tracking-[0.14em] text-slate-950">
-        {t(group.titleKey)}
-      </h3>
-      <div className="mt-2 grid gap-0.5">
-        {group.options.map((option) => {
-          const isSelected = selectedOptions.includes(option.id);
-
-          return (
-            <label
-              key={option.id}
-              className={cn(
-                layout === "mobile"
-                  ? "flex min-h-10 cursor-pointer items-center gap-3 py-2 text-sm font-medium text-muted transition hover:text-navy"
-                  : "flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-sm font-medium transition-all",
-                isSelected
-                  ? layout === "mobile"
-                    ? "font-semibold text-navy"
-                    : "font-semibold text-[#021C2B] hover:bg-slate-50"
-                  : layout === "mobile"
-                    ? undefined
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-950",
-              )}
-            >
-              <input
-                type="checkbox"
-                className="h-4 w-4 shrink-0 rounded border-slate-300 accent-blue focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
-                checked={isSelected}
-                onChange={() => onToggle(group.id, option.id)}
-              />
-              <span className="min-w-0 flex-1 truncate">
-                {t(option.labelKey)}
-              </span>
-            </label>
-          );
-        })}
-      </div>
-    </section>
-  );
+  const panelId = `cars-compact-filter-${group.id}`;
+  return <section className={cn(layout === "mobile" ? "border-t border-border py-4 first:border-t-0 first:pt-0" : "border-t border-slate-200/75 py-3 first:border-t-0")}>
+    {layout === "compact" ? <button type="button" aria-expanded={compactOpen} aria-controls={panelId} onClick={onCompactOpen} className="focus-ring flex min-h-10 w-full items-center justify-between gap-2 text-start text-sm font-bold text-slate-900"><span>{t(group.titleKey)}</span><span className="flex items-center gap-2">{selectedOptions.length ? <span className="rounded-full bg-[#004BB8] px-2 py-0.5 text-xs text-white">{selectedOptions.length}</span> : null}<ChevronDown className={cn("h-4 w-4 transition", compactOpen && "rotate-180")} aria-hidden="true" /></span></button> : <h3 className="text-sm font-extrabold uppercase tracking-[0.14em] text-slate-950">{t(group.titleKey)}</h3>}
+    <div id={panelId} hidden={layout === "compact" && !compactOpen} aria-hidden={layout === "compact" && !compactOpen} className="mt-2 grid gap-0.5">
+      {group.options.map((option) => { const selected = selectedOptions.includes(option.id); return <label key={option.id} className={cn("flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-sm font-medium transition-all", selected ? "font-semibold text-[#021C2B]" : "text-slate-600 hover:bg-slate-50")}><input type="checkbox" tabIndex={layout === "compact" && !compactOpen ? -1 : undefined} className="h-4 w-4 rounded border-slate-300 accent-blue" checked={selected} onChange={() => onToggle(group.id, option.id)} /><span className="min-w-0 flex-1 truncate">{t(option.labelKey)}</span></label>; })}
+    </div>
+  </section>;
 }
