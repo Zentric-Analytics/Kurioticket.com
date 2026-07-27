@@ -54,6 +54,7 @@ import {
   calculateCompactFilterPlacement,
   shouldShowDesktopCompactFilter,
 } from "@/lib/flights/desktopCompactFilter";
+import { shouldShowDesktopStickySearch } from "@/lib/search/desktopStickySearch";
 
 const hotelResultStackClass = "w-full max-w-[800px]";
 const desktopCompactFilterTopOffset = 116;
@@ -358,6 +359,14 @@ export function HotelResultsClient() {
     useState(false);
 
   const desktopSearchFrameRef = useRef<HTMLDivElement | null>(null);
+  const desktopSearchFormRef = useRef<HTMLFormElement | null>(null);
+  const desktopSearchVisibilityRef = useRef(false);
+  const setDesktopSearchFormRef = useCallback(
+    (node: HTMLFormElement | null) => {
+      desktopSearchFormRef.current = node;
+    },
+    [],
+  );
   const hotelSortWrapperRef = useRef<HTMLDivElement | null>(null);
   const hotelSortMenuRef = useRef<HTMLDivElement | null>(null);
   const hotelSortTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -823,17 +832,22 @@ export function HotelResultsClient() {
     if (typeof window === "undefined") return undefined;
 
     let animationFrame = 0;
+    const searchForm = desktopSearchFormRef.current;
 
     const updateDesktopSearchState = () => {
       animationFrame = 0;
-      const frame = desktopSearchFrameRef.current;
+      const formBottom =
+        desktopSearchFormRef.current?.getBoundingClientRect().bottom;
+      const shouldShow = shouldShowDesktopStickySearch({
+        viewportWidth: window.innerWidth,
+        formBottom,
+      });
 
-      const shouldShow =
-        window.innerWidth >= 1024 &&
-        Boolean(frame) &&
-        frame!.getBoundingClientRect().bottom <= 16;
+      if (shouldShow === desktopSearchVisibilityRef.current) return;
 
+      desktopSearchVisibilityRef.current = shouldShow;
       setShowDesktopMinimizedSearch(shouldShow);
+      scheduleDesktopCompactFilterMeasurementRef.current?.();
     };
 
     const scheduleUpdate = () => {
@@ -841,12 +855,21 @@ export function HotelResultsClient() {
       animationFrame = window.requestAnimationFrame(updateDesktopSearchState);
     };
 
-    updateDesktopSearchState();
+    scheduleUpdate();
+    const observer =
+      typeof IntersectionObserver === "undefined" || !searchForm
+        ? null
+        : new IntersectionObserver(scheduleUpdate, { threshold: 0 });
+
+    if (observer && searchForm) {
+      observer.observe(searchForm);
+    }
     window.addEventListener("scroll", scheduleUpdate, { passive: true });
     window.addEventListener("resize", scheduleUpdate);
 
     return () => {
       if (animationFrame) window.cancelAnimationFrame(animationFrame);
+      observer?.disconnect();
       window.removeEventListener("scroll", scheduleUpdate);
       window.removeEventListener("resize", scheduleUpdate);
     };
@@ -1325,6 +1348,7 @@ export function HotelResultsClient() {
                 errorRole="alert"
                 compact
                 className="min-w-0"
+                desktopFormRef={setDesktopSearchFormRef}
                 onDesktopDraftChange={updateDesktopHotelSearchDraft}
                 onSubmitStart={triggerSearchApplying}
               />
@@ -1341,6 +1365,7 @@ export function HotelResultsClient() {
             : "pointer-events-none -translate-y-3 opacity-0",
         )}
         aria-hidden={!showDesktopMinimizedSearch}
+        inert={!showDesktopMinimizedSearch ? true : undefined}
       >
         <div className="page-shell">
           <div className="mx-auto w-full max-w-5xl">

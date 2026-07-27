@@ -219,6 +219,7 @@ export type HotelSearchBarProps = {
   onDesktopDraftChange?: (draft: HotelSearchDraft) => void;
   onSubmitStart?: () => void;
   className?: string;
+  desktopFormRef?: (node: HTMLFormElement | null) => void;
 };
 
 export function HotelSearchBar({
@@ -240,6 +241,7 @@ export function HotelSearchBar({
   onDesktopDraftChange,
   onSubmitStart,
   className,
+  desktopFormRef,
 }: HotelSearchBarProps) {
   const { locale, t: dictionary } = useLocale();
   const { status: sessionStatus } = useSession();
@@ -298,6 +300,13 @@ export function HotelSearchBar({
   const datesWrapperRef = useRef<HTMLDivElement>(null);
   const guestsRoomsWrapperRef = useRef<HTMLDivElement>(null);
   const mobileSearchPanelRef = useRef<HTMLFormElement>(null);
+  const setSearchPanelRef = useCallback(
+    (node: HTMLFormElement | null) => {
+      mobileSearchPanelRef.current = node;
+      desktopFormRef?.(node);
+    },
+    [desktopFormRef],
+  );
   const mobileSearchContentRef = useRef<HTMLDivElement>(null);
   const mobileSearchScrollLockRef = useRef<{ restore: () => void } | null>(
     null,
@@ -1074,7 +1083,7 @@ export function HotelSearchBar({
       )}
       <form
         onSubmit={handleSubmit}
-        ref={mobileSearchPanelRef}
+        ref={setSearchPanelRef}
         className={cn(
           compact
             ? mobileSearchOpen
