@@ -61,21 +61,18 @@ test("Homepage Operations renders the compact authorised-admin workspace", () =>
   assert.match(homepageOperationsPage, /AdminHomepageOperationsPage/);
   assert.match(homepageOperationsPage, /<HomepageFaresRefreshCard \/>/);
   assert.match(refreshCard, /title="Homepage Operations"/);
-  assert.match(
-    refreshCard,
-    /Monitor homepage readiness, refresh status and market coverage\./,
-  );
+  assert.doesNotMatch(refreshCard, /Monitor homepage readiness/);
   for (const value of [
-    "Readiness",
+    "Overall status",
     "Last refresh",
     "Markets ready",
     "Missing routes",
     "Failed routes",
-    "Provider calls",
-    "Fresh snapshots",
   ]) {
     assert.match(refreshCard, new RegExp(value, "i"));
   }
+  assert.equal(refreshCard.match(/<HomepageOperationsStatusBar/g)?.length, 1);
+  assert.doesNotMatch(refreshCard, /<OperationalHealthPanel/);
   assert.doesNotMatch(
     refreshCard,
     /Operational overview|Homepage health at a glance|ADMIN OPERATIONS/,
@@ -88,8 +85,8 @@ test("Homepage Operations preserves controls, APIs, filters, and route inspectio
   assert.ok(refreshCard.includes('fetch("/api/admin/homepage-fares/refresh"'));
   assert.match(refreshCard, /method: "POST"/);
   assert.match(refreshCard, /credentials: "include"/);
-  assert.match(refreshCard, /Refresh homepage fares/);
-  assert.match(refreshCard, /Reload status/);
+  assert.match(refreshCard, /Refresh fares/);
+  assert.match(refreshCard, /: "Reload"/);
   for (const filter of [
     "All",
     "Ready",
@@ -109,31 +106,48 @@ test("Homepage Operations preserves controls, APIs, filters, and route inspectio
 });
 
 test("Homepage Operations collapses diagnostics, fallback pools, and raw debug by default", () => {
-  assert.match(refreshCard, /label="View all diagnostics"/);
+  assert.match(refreshCard, /label="Diagnostics"/);
+  assert.match(refreshCard, /label="Additional health details"/);
+  assert.match(refreshCard, /label="Refresh Status"/);
   assert.match(refreshCard, /label="Fallback pools"/);
   assert.match(refreshCard, /label="Raw debug details"/);
   assert.match(operationsPanels, /<details/);
   assert.doesNotMatch(operationsPanels, /<details[^>]*\sopen/);
 });
 
-test("compact market cards retain required coverage and operational metrics", () => {
+test("compact market cards retain essential fields without technical metrics", () => {
+  const card = refreshCard.slice(
+    refreshCard.indexOf("function MarketReadinessCard"),
+    refreshCard.indexOf("function DiagnosticsPanel"),
+  );
   for (const metric of [
-    "Total routes",
-    "Fresh routes",
-    "Last-known-good routes",
-    "Popular",
-    "Discovery",
-    "Backup",
+    "Coverage",
+    "Freshness",
     "Missing",
     "Failed",
-    "Provider calls",
-    "Candidates",
-  ]) {
-    assert.match(refreshCard, new RegExp(metric));
-  }
+    "Inspect",
+  ])
+    assert.match(card, new RegExp(metric));
+  assert.doesNotMatch(
+    card,
+    /Provider calls|Candidates|Popular|Discovery|Backup|Last-known-good|Timeout|Unavailable|Attempts|Replacements|Cooldown/,
+  );
   assert.match(refreshCard, /md:grid-cols-2 2xl:grid-cols-3/);
-  assert.match(refreshCard, /market\.timeoutCount \?/);
-  assert.match(refreshCard, /market\.unavailable \?/);
+});
+
+test("issue summary filters affected markets without a duplicate country list", () => {
+  assert.match(refreshCard, /function IssueSummary/);
+  assert.match(refreshCard, /Show affected markets/);
+  assert.match(
+    refreshCard,
+    /setShowAffectedMarkets\(\(current\) => !current\)/,
+  );
+  assert.match(
+    refreshCard,
+    /showAffectedMarkets \? affectedMarkets : publicMarkets/,
+  );
+  assert.doesNotMatch(refreshCard, /Attention Required/);
+  assert.doesNotMatch(refreshCard, /affectedMarkets\.slice/);
 });
 
 test("Homepage Operations keeps the existing admin permission boundary", () => {
@@ -158,7 +172,7 @@ test("homepage fare refresh component keeps existing client APIs, scopes, and st
   assert.ok(refreshCard.includes('fetch("/api/admin/homepage-fares/refresh"'));
   assert.match(refreshCard, /Loading homepage fare snapshot status/);
   assert.match(refreshCard, /Could not refresh homepage fares/);
-  assert.match(refreshCard, /Refresh homepage fares/);
+  assert.match(refreshCard, /Refresh fares/);
 });
 
 test("homepage fare admin APIs preserve authorization, audit logging, and refresh scope behavior", () => {

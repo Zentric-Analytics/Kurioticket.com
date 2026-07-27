@@ -17,7 +17,6 @@ import {
 } from "@/components/admin/AdminPageShell";
 import {
   HomepageOperationsStatusBar,
-  OperationalHealthPanel,
   OperationsDisclosure,
 } from "@/components/admin/homepage-operations/HomepageOperationsPanels";
 import {
@@ -27,7 +26,6 @@ import {
   normalizeAdminHomepageFareMarketCode,
   paginateAdminHomepageFareRoutes,
   resolveAdminHomepageFareSelectedRouteGroup,
-  splitAdminHomepageFareMarketRouteGroups,
   type AdminHomepageFareRouteGroupFilter,
   type AdminHomepageFareMarketRouteGroup,
 } from "@/lib/admin/homepageFareRouteGrouping";
@@ -448,6 +446,7 @@ export function HomepageFaresRefreshCard() {
   const routeDetailsRef = useRef<HTMLDivElement>(null);
   const [routeFilter, setRouteFilter] =
     useState<AdminHomepageFareRouteGroupFilter>("all");
+  const [showAffectedMarkets, setShowAffectedMarkets] = useState(false);
   const selectRouteScope = useCallback((scope: string) => {
     setRoutePage(1);
     setSelectedRouteScope(
@@ -583,11 +582,6 @@ export function HomepageFaresRefreshCard() {
     marketRouteGroups,
     allRoutesGroup,
   });
-  const {
-    publicGroups: publicRouteGroups,
-    fallbackGroups: fallbackRouteGroups,
-  } = splitAdminHomepageFareMarketRouteGroups(marketRouteGroups);
-
   const publicMarkets = statusPayload.marketReadinessSummary.filter(
     (market) => !isFallbackMarket(market),
   );
@@ -606,12 +600,15 @@ export function HomepageFaresRefreshCard() {
   const marketsNeedingAnotherRun =
     latestCounts?.marketsNeedingAnotherRun ??
     statusPayload.marketsNeedingAnotherRun;
+  const affectedMarkets = publicMarkets.filter(
+    (market) => !market.targetMet || market.status !== "ready",
+  );
+  const visibleMarkets = showAffectedMarkets ? affectedMarkets : publicMarkets;
 
   return (
     <div className="space-y-6 pb-4">
       <AdminPageHeader
         title="Homepage Operations"
-        description="Monitor homepage readiness, refresh status and market coverage."
         actions={
           <div className="flex flex-col gap-2 sm:flex-row">
             <AdminButton
@@ -625,7 +622,7 @@ export function HomepageFaresRefreshCard() {
                 className={refreshing ? "animate-spin" : ""}
                 size={16}
               />
-              {refreshing ? "Refreshing…" : "Refresh homepage fares"}
+              {refreshing ? "Refreshing…" : "Refresh fares"}
             </AdminButton>
             <AdminButton
               type="button"
@@ -638,72 +635,43 @@ export function HomepageFaresRefreshCard() {
                 className={statusState.loading ? "animate-spin" : ""}
                 size={16}
               />
-              {statusState.loading ? "Loading…" : "Reload status"}
+              {statusState.loading ? "Loading…" : "Reload"}
             </AdminButton>
           </div>
         }
       />
 
-      <HomepageOperationsStatusBar
-        items={[
-          {
-            label: "Readiness",
-            value: formatGlobalReadinessStatus(
-              statusPayload.displayReadiness.globalReadinessStatus,
-            ),
-            tone:
-              readinessTone(
-                statusPayload.displayReadiness.globalReadinessStatus,
-              ) === "good"
-                ? "good"
-                : "warning",
-          },
-          {
-            label: "Last refresh",
-            value: formatSnapshotTime(statusPayload.lastRefreshAt),
-          },
-          {
-            label: "Markets ready",
-            value: `${statusPayload.readyMarkets.length} / ${statusPayload.requiredMarkets.length}`,
-          },
-          {
-            label: "Missing routes",
-            value: statusPayload.summary.missing,
-            tone: statusPayload.summary.missing ? "warning" : "neutral",
-          },
-          {
-            label: "Failed routes",
-            value: statusPayload.summary.failed,
-            tone: statusPayload.summary.failed ? "danger" : "neutral",
-          },
-        ]}
-      />
-
-      {statusState.error ? (
-        <p
-          className="rounded-lg bg-rose-50 p-3 text-sm font-semibold text-rose-700"
-          role="alert"
+      <section
+        aria-labelledby="operations-summary-heading"
+        className="space-y-3"
+      >
+        <h2
+          id="operations-summary-heading"
+          className="text-lg font-extrabold text-slate-950"
         >
-          {statusState.error}
-        </p>
-      ) : null}
-
-      <div className="grid gap-5 border-b border-slate-200 pb-6 lg:grid-cols-2">
-        <RefreshCronPanel
-          refreshing={refreshing}
-          loading={statusState.loading}
-          refreshState={refreshState}
-          statusPayload={statusPayload}
-          onRefresh={refreshHomepageFares}
-          onReload={() => void loadStatus()}
-        />
-        <OperationalHealthPanel
-          metrics={[
-            { label: "Provider calls", value: providerCallsUsed },
+          Operations Summary
+        </h2>
+        <HomepageOperationsStatusBar
+          items={[
             {
-              label: "Timeouts",
-              value: timeoutCount,
-              tone: timeoutCount ? "warning" : "neutral",
+              label: "Overall status",
+              value: formatGlobalReadinessStatus(
+                statusPayload.displayReadiness.globalReadinessStatus,
+              ),
+              tone:
+                readinessTone(
+                  statusPayload.displayReadiness.globalReadinessStatus,
+                ) === "good"
+                  ? "good"
+                  : "warning",
+            },
+            {
+              label: "Last refresh",
+              value: formatSnapshotTime(statusPayload.lastRefreshAt),
+            },
+            {
+              label: "Markets ready",
+              value: `${statusPayload.readyMarkets.length} / ${statusPayload.requiredMarkets.length}`,
             },
             {
               label: "Missing routes",
@@ -714,6 +682,67 @@ export function HomepageFaresRefreshCard() {
               label: "Failed routes",
               value: statusPayload.summary.failed,
               tone: statusPayload.summary.failed ? "danger" : "neutral",
+            },
+          ]}
+        />
+      </section>
+
+      {statusState.error ? (
+        <p
+          className="rounded-lg bg-rose-50 p-3 text-sm font-semibold text-rose-700"
+          role="alert"
+        >
+          {statusState.error}
+        </p>
+      ) : null}
+
+      <section aria-labelledby="market-coverage-heading" className="space-y-4">
+        <h2
+          id="market-coverage-heading"
+          className="text-xl font-extrabold tracking-tight text-slate-950"
+        >
+          Market Coverage
+        </h2>
+        <RouteFilterToolbar filter={routeFilter} onChange={selectRouteFilter} />
+        <IssueSummary
+          affectedCount={affectedMarkets.length}
+          missingCount={statusPayload.summary.missing}
+          failedCount={statusPayload.summary.failed}
+          showingAffected={showAffectedMarkets}
+          onToggle={() => setShowAffectedMarkets((current) => !current)}
+        />
+        <MarketReadinessDashboard
+          markets={visibleMarkets}
+          selectedRouteScope={selectedRouteScope}
+          onInspectMarket={selectRouteScope}
+        />
+        <MarketRouteInspector
+          selectedRouteScope={selectedRouteScope}
+          selectedGroup={selectedRouteGroup}
+          loading={statusState.loading}
+          onSelectMarket={selectRouteScope}
+          routePage={routePage}
+          onPreviousPage={() => setRoutePage((page) => Math.max(1, page - 1))}
+          onNextPage={() => setRoutePage((page) => page + 1)}
+          routeDetailsRef={routeDetailsRef}
+        />
+      </section>
+
+      <OperationsDisclosure label="Refresh Status">
+        <RefreshCronPanel
+          refreshState={refreshState}
+          statusPayload={statusPayload}
+        />
+      </OperationsDisclosure>
+
+      <OperationsDisclosure label="Additional health details">
+        <dl className="grid grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-4">
+          {[
+            { label: "Provider calls", value: providerCallsUsed },
+            {
+              label: "Timeouts",
+              value: timeoutCount,
+              tone: timeoutCount ? "warning" : "neutral",
             },
             {
               label: "Unavailable",
@@ -733,57 +762,25 @@ export function HomepageFaresRefreshCard() {
               label: "Replacement candidates",
               value: replacementCandidatesUsed,
             },
-          ]}
-        />
-      </div>
+          ].map((metric) => (
+            <CompactDetail
+              key={metric.label}
+              label={metric.label}
+              value={metric.value}
+            />
+          ))}
+        </dl>
+      </OperationsDisclosure>
 
-      <section aria-labelledby="market-coverage-heading" className="space-y-4">
-        <h2
-          id="market-coverage-heading"
-          className="text-xl font-extrabold tracking-tight text-slate-950"
-        >
-          Market Coverage
-        </h2>
-        <MarketReadinessDashboard
-          markets={publicMarkets}
-          selectedRouteScope={selectedRouteScope}
-          onInspectMarket={selectRouteScope}
-        />
-        <MarketRouteInspector
-          publicGroups={publicRouteGroups}
-          fallbackGroups={fallbackRouteGroups}
-          selectedRouteScope={selectedRouteScope}
-          selectedGroup={selectedRouteGroup}
-          filter={routeFilter}
-          loading={statusState.loading}
-          onSelectMarket={selectRouteScope}
-          routePage={routePage}
-          onPreviousPage={() => setRoutePage((page) => Math.max(1, page - 1))}
-          onNextPage={() => setRoutePage((page) => page + 1)}
-          onFilterChange={selectRouteFilter}
-          routeDetailsRef={routeDetailsRef}
-        />
-      </section>
-
-      <section
-        aria-labelledby="attention-required-heading"
-        className="border-t border-slate-200 pt-5"
-      >
-        <h2
-          id="attention-required-heading"
-          className="text-xl font-extrabold tracking-tight text-slate-950"
-        >
-          Attention Required
-        </h2>
+      <OperationsDisclosure label="Diagnostics">
         <DiagnosticsPanel
           markets={statusPayload.marketReadinessSummary}
           marketsNeedingAnotherRun={marketsNeedingAnotherRun}
           candidatePoolHealth={statusPayload.candidatePoolHealth}
           publicPriceDiagnostics={statusPayload.publicPriceDiagnostics}
           stoppedReason={latestCounts?.stoppedReason}
-          onInspectMarket={selectRouteScope}
         />
-      </section>
+      </OperationsDisclosure>
 
       <OperationsDisclosure label="Fallback pools">
         <FallbackPoolsSection
@@ -964,53 +961,17 @@ function DashboardSection({
 }
 
 function RefreshCronPanel({
-  refreshing,
-  loading,
   refreshState,
   statusPayload,
-  onRefresh,
-  onReload,
 }: {
-  refreshing: boolean;
-  loading: boolean;
   refreshState: RefreshState;
   statusPayload: HomepageFareStatusPayload;
-  onRefresh: () => void;
-  onReload: () => void;
 }) {
   const stoppedReason = refreshState.counts
     ? formatStoppedReason(refreshState.counts.stoppedReason)
     : "No manual refresh result in this session";
   return (
-    <section aria-labelledby="refresh-schedule-heading">
-      <h2
-        id="refresh-schedule-heading"
-        className="text-lg font-extrabold text-slate-950"
-      >
-        Refresh and schedule
-      </h2>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <AdminButton
-          type="button"
-          variant="primary"
-          onClick={onRefresh}
-          disabled={refreshing}
-          aria-busy={refreshing}
-        >
-          <RefreshCcw className={refreshing ? "animate-spin" : ""} size={16} />
-          {refreshing ? "Refreshing…" : "Refresh homepage fares"}
-        </AdminButton>
-        <AdminButton
-          type="button"
-          variant="secondary"
-          onClick={onReload}
-          disabled={loading || refreshing}
-          aria-busy={loading}
-        >
-          <RefreshCcw className={loading ? "animate-spin" : ""} size={16} />
-          {loading ? "Loading…" : "Reload status"}
-        </AdminButton>
-      </div>
+    <section aria-label="Refresh schedule details">
       {refreshState.message ? (
         <div
           className={
@@ -1024,30 +985,24 @@ function RefreshCronPanel({
           {refreshState.message}
         </div>
       ) : null}
-      <dl className="mt-3 grid grid-cols-2 gap-x-5 gap-y-2 text-sm sm:grid-cols-3">
+      <dl className="grid grid-cols-2 gap-x-5 gap-y-2 text-sm sm:grid-cols-3">
         <CompactDetail
-          label="Last refresh time"
-          value={formatSnapshotTime(statusPayload.lastRefreshAt)}
+          label="Cadence"
+          value={
+            statusPayload.cronConfigured
+              ? "Configured externally"
+              : "Not configured"
+          }
         />
         <CompactDetail
-          label="Cron status"
-          value={formatCronStatus(statusPayload)}
-        />
-        <CompactDetail
-          label="Cron cadence"
-          value={statusPayload.nextExpectedCronRefresh ?? "Not configured"}
-        />
-        <CompactDetail
-          label="Next expected refresh"
+          label="Next scheduled refresh"
           value={formatNextExpectedCron(statusPayload)}
         />
+        {refreshState.counts ? (
+          <CompactDetail label="Stopped reason" value={stoppedReason} />
+        ) : null}
         <CompactDetail
-          label="Snapshot status"
-          value={statusPayload.health.label}
-        />
-        <CompactDetail label="Current stopped reason" value={stoppedReason} />
-        <CompactDetail
-          label="Latest manual refresh result"
+          label="Latest result"
           value={
             refreshState.status === "idle"
               ? "No manual run yet"
@@ -1055,12 +1010,70 @@ function RefreshCronPanel({
           }
         />
       </dl>
-      {!statusPayload.cronConfigured ? (
-        <p className="mt-3 text-sm font-semibold text-amber-700">
-          Cron is not configured.
-        </p>
-      ) : null}
     </section>
+  );
+}
+
+function IssueSummary({
+  affectedCount,
+  missingCount,
+  failedCount,
+  showingAffected,
+  onToggle,
+}: {
+  affectedCount: number;
+  missingCount: number;
+  failedCount: number;
+  showingAffected: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2 rounded-lg bg-amber-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-sm font-bold text-slate-950">
+        {affectedCount} markets require attention
+        <span className="font-semibold text-slate-600">
+          {` · ${missingCount} missing routes · ${failedCount} failed routes`}
+        </span>
+      </p>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-pressed={showingAffected}
+        className="min-h-10 self-start rounded-full px-3 text-sm font-extrabold text-indigo-700 hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 sm:self-auto"
+      >
+        {showingAffected ? "Show all markets" : "Show affected markets"}
+      </button>
+    </div>
+  );
+}
+
+function RouteFilterToolbar({
+  filter,
+  onChange,
+}: {
+  filter: AdminHomepageFareRouteGroupFilter;
+  onChange: (filter: AdminHomepageFareRouteGroupFilter) => void;
+}) {
+  return (
+    <div className="overflow-x-auto pb-1" aria-label="Route status filters">
+      <div className="flex min-w-max gap-2">
+        {ROUTE_FILTERS.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => onChange(item.key)}
+            className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold shadow-sm ${
+              filter === item.key
+                ? "border-indigo-700 bg-indigo-700 text-white"
+                : "border-slate-200 bg-white text-slate-950"
+            }`}
+            aria-pressed={filter === item.key}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -1127,48 +1140,17 @@ function MarketReadinessCard({
         </div>
         <MarketStatusBadge status={market.status} />
       </div>
-      <dl className="mt-3 grid grid-cols-3 gap-2">
-        <CoverageMetric
-          label="Popular"
-          current={market.popularVisibleFresh}
-          target={market.popularVisibleTarget}
-        />
-        <CoverageMetric
-          label="Discovery"
-          current={market.discoveryVisibleFresh}
-          target={market.discoveryVisibleTarget}
-        />
-        <CoverageMetric
-          label="Backup"
-          current={market.backupFresh}
-          target={market.backupTarget}
-        />
-      </dl>
-      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
         <MarketMiniMetric
-          label="Total routes"
-          value={
-            (market.freshCount ?? 0) +
-            (market.lastKnownGoodCount ?? 0) +
-            (market.missingCount ?? 0) +
-            market.failed +
-            market.unavailable
-          }
+          label="Coverage"
+          value={`${market.popularVisibleFresh + market.discoveryVisibleFresh} / ${getPublicDisplayTarget(market)}`}
         />
-        <MarketMiniMetric label="Fresh routes" value={market.freshCount ?? 0} />
-        <MarketMiniMetric
-          label="Last-known-good routes"
-          value={market.lastKnownGoodCount ?? 0}
-        />
-        <MarketMiniMetric label="Missing" value={market.missingCount ?? 0} />
-        <MarketMiniMetric label="Failed" value={market.failed} />
-        <MarketMiniMetric label="Provider calls" value={market.providerCalls} />
-        <MarketMiniMetric label="Candidates" value={market.candidatePoolSize} />
-        {market.timeoutCount ? (
-          <MarketMiniMetric label="Timeout" value={market.timeoutCount} />
+        <MarketMiniMetric label="Freshness" value={market.freshCount ?? 0} />
+        {market.missingCount ? (
+          <MarketMiniMetric label="Missing" value={market.missingCount} />
         ) : null}
-        {market.unavailable ? (
-          <MarketMiniMetric label="Unavailable" value={market.unavailable} />
+        {market.failed ? (
+          <MarketMiniMetric label="Failed" value={market.failed} />
         ) : null}
       </dl>
       <span className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-extrabold text-indigo-700 transition group-hover:border-indigo-300 group-hover:bg-indigo-100">
@@ -1178,184 +1160,71 @@ function MarketReadinessCard({
   );
 }
 
-function CoverageMetric({
-  label,
-  current,
-  target,
-}: {
-  label: string;
-  current: number;
-  target: number;
-}) {
-  const met = target === 0 ? current === 0 : current >= target;
-  return (
-    <div className="rounded-lg bg-slate-50 px-2.5 py-2">
-      <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
-        {label}
-      </dt>
-      <dd className="mt-0.5 text-base font-extrabold text-slate-950">
-        {current} / {target}
-      </dd>
-      <p
-        className={
-          met
-            ? "mt-1 text-xs font-bold text-indigo-700"
-            : "mt-1 text-xs font-bold text-amber-700"
-        }
-      >
-        {met ? "Target met" : "Needs coverage"}
-      </p>
-    </div>
-  );
-}
-
 function DiagnosticsPanel({
   markets,
   marketsNeedingAnotherRun,
   candidatePoolHealth,
   publicPriceDiagnostics,
   stoppedReason,
-  onInspectMarket,
 }: {
   markets: MarketReadiness[];
   marketsNeedingAnotherRun: MarketNextRunNeed[];
   candidatePoolHealth: HomepageFareStatusSummary;
   publicPriceDiagnostics: Record<PublicPriceDiagnosis, number>;
   stoppedReason?: RefreshStoppedReason;
-  onInspectMarket: (marketCode: string) => void;
 }) {
   const issues = buildDiagnostics(
     markets,
     marketsNeedingAnotherRun,
     stoppedReason,
   );
-  const affectedMarkets = markets.filter(
-    (market) =>
-      !isFallbackMarket(market) &&
-      (!market.targetMet || market.status !== "ready"),
-  );
-  const unavailable = markets.reduce(
-    (total, market) => total + market.unavailable,
-    0,
-  );
   return (
-    <div className="mt-3">
-      <dl className="grid grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-5">
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="space-y-2">
+        {issues.map((issue) => (
+          <p key={issue} className="text-sm leading-6 text-slate-700">
+            {issue}
+          </p>
+        ))}
+      </div>
+      <dl className="grid gap-2 text-sm">
         <CompactDetail
-          label="Underfilled markets"
-          value={affectedMarkets.length}
+          label="Provider budget exhausted"
+          value={stoppedReason === "provider_budget_exhausted" ? "Yes" : "No"}
         />
         <CompactDetail
-          label="Missing routes"
-          value={markets.reduce(
-            (total, market) => total + (market.missingCount ?? 0),
-            0,
-          )}
+          label="Route budget exhausted"
+          value={stoppedReason === "route_budget_exhausted" ? "Yes" : "No"}
         />
         <CompactDetail
-          label="Failed routes"
-          value={markets.reduce((total, market) => total + market.failed, 0)}
+          label="Candidate pool failed"
+          value={candidatePoolHealth.failed}
         />
-        <CompactDetail label="Provider unavailable" value={unavailable} />
         <CompactDetail
-          label="Budget exhausted"
-          value={
-            stoppedReason === "provider_budget_exhausted" ||
-            stoppedReason === "route_budget_exhausted"
-              ? "Yes"
-              : "No"
-          }
+          label="Candidate pool unavailable"
+          value={candidatePoolHealth.unavailable}
+        />
+        <CompactDetail
+          label="Fresh used publicly"
+          value={publicPriceDiagnostics.fresh_available}
+        />
+        <CompactDetail
+          label="LKG used publicly"
+          value={publicPriceDiagnostics.last_known_good_used}
+        />
+        <CompactDetail
+          label="LKG failed safety"
+          value={publicPriceDiagnostics.last_known_good_failed_safety_check}
+        />
+        <CompactDetail
+          label="Exact route mismatch"
+          value={publicPriceDiagnostics.exact_route_mismatch}
+        />
+        <CompactDetail
+          label="No provider fare ever"
+          value={publicPriceDiagnostics.no_provider_backed_fare_ever}
         />
       </dl>
-      <div className="mt-4 divide-y divide-slate-200 border-y border-slate-200">
-        {affectedMarkets.slice(0, 5).map((market) => {
-          const missing = market.missingCount ?? 0;
-          const count = missing || market.failed || market.unavailable;
-          const summary = missing
-            ? "routes missing"
-            : market.failed
-              ? "routes failed"
-              : market.unavailable
-                ? "routes unavailable"
-                : formatMarketStatus(market.status);
-          return (
-            <div
-              key={market.marketCode}
-              className="flex items-center gap-3 py-2.5"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="font-bold text-slate-950">{market.marketLabel}</p>
-                <p className="text-sm text-slate-500">
-                  {count ? `${count} ${summary}` : summary}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => onInspectMarket(market.marketCode)}
-                className="min-h-10 rounded-full px-3 text-sm font-bold text-indigo-700 hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
-              >
-                Inspect
-              </button>
-            </div>
-          );
-        })}
-        {!affectedMarkets.length ? (
-          <p className="py-3 text-sm font-semibold text-emerald-700">
-            No markets currently require attention.
-          </p>
-        ) : null}
-      </div>
-      <OperationsDisclosure label="View all diagnostics">
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-          <div className="space-y-2">
-            {issues.map((issue) => (
-              <p key={issue} className="text-sm leading-6 text-slate-700">
-                {issue}
-              </p>
-            ))}
-          </div>
-          <dl className="grid gap-2 text-sm">
-            <CompactDetail
-              label="Provider budget exhausted"
-              value={
-                stoppedReason === "provider_budget_exhausted" ? "Yes" : "No"
-              }
-            />
-            <CompactDetail
-              label="Route budget exhausted"
-              value={stoppedReason === "route_budget_exhausted" ? "Yes" : "No"}
-            />
-            <CompactDetail
-              label="Candidate pool failed"
-              value={candidatePoolHealth.failed}
-            />
-            <CompactDetail
-              label="Candidate pool unavailable"
-              value={candidatePoolHealth.unavailable}
-            />
-            <CompactDetail
-              label="Fresh used publicly"
-              value={publicPriceDiagnostics.fresh_available}
-            />
-            <CompactDetail
-              label="LKG used publicly"
-              value={publicPriceDiagnostics.last_known_good_used}
-            />
-            <CompactDetail
-              label="LKG failed safety"
-              value={publicPriceDiagnostics.last_known_good_failed_safety_check}
-            />
-            <CompactDetail
-              label="Exact route mismatch"
-              value={publicPriceDiagnostics.exact_route_mismatch}
-            />
-            <CompactDetail
-              label="No provider fare ever"
-              value={publicPriceDiagnostics.no_provider_backed_fare_ever}
-            />
-          </dl>
-        </div>
-      </OperationsDisclosure>
     </div>
   );
 }
@@ -1500,153 +1369,49 @@ function RawDebugDetails({
 }
 
 function MarketRouteInspector({
-  publicGroups,
-  fallbackGroups,
   selectedRouteScope,
   selectedGroup,
-  filter,
   loading,
   onSelectMarket,
   routePage,
   onPreviousPage,
   onNextPage,
-  onFilterChange,
   routeDetailsRef,
 }: {
-  publicGroups: AdminHomepageFareMarketRouteGroup[];
-  fallbackGroups: AdminHomepageFareMarketRouteGroup[];
   selectedRouteScope: string | null;
   selectedGroup: AdminHomepageFareMarketRouteGroup | null;
-  filter: AdminHomepageFareRouteGroupFilter;
   loading: boolean;
   onSelectMarket: (marketCode: string) => void;
   routePage: number;
   onPreviousPage: () => void;
   onNextPage: () => void;
-  onFilterChange: (filter: AdminHomepageFareRouteGroupFilter) => void;
   routeDetailsRef: RefObject<HTMLDivElement | null>;
 }) {
   const handleSelectMarket = (marketCode: string) => {
     onSelectMarket(marketCode);
   };
-  const handleFilterChange = (
-    nextFilter: AdminHomepageFareRouteGroupFilter,
-  ) => {
-    onFilterChange(nextFilter);
-  };
-
   return (
     <section className="mt-4 border-t border-slate-200 pt-4">
-      <div className="max-w-4xl">
+      <div className="flex items-center justify-between gap-3">
         <h3 className="text-lg font-extrabold text-slate-950">
           Route inspector
         </h3>
-      </div>
-
-      <div
-        className="mt-5 overflow-x-auto pb-1"
-        aria-label="Route status filters"
-      >
-        <div className="flex min-w-max gap-2">
-          {ROUTE_FILTERS.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => handleFilterChange(item.key)}
-              className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
-                filter === item.key
-                  ? "border-indigo-700 bg-indigo-700 text-white shadow-sm"
-                  : "border-slate-200 bg-white/80 text-slate-950 hover:border-indigo-700/40 hover:bg-white"
-              }`}
-              aria-pressed={filter === item.key}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-5 space-y-5">
-        <div>
-          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h5 className="text-sm font-extrabold uppercase tracking-wide text-slate-950">
-                Public market coverage
-              </h5>
-              <p className="mt-1 text-xs font-semibold text-slate-500">
-                Country display targets stay separate from fallback-only pools.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() =>
-                handleSelectMarket(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE)
-              }
-              className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
-                selectedRouteScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
-                  ? "border-indigo-700 bg-indigo-700 text-white ring-2 ring-indigo-700/15"
-                  : "border-slate-200 bg-white/80 text-slate-950 hover:border-indigo-700/40 hover:bg-white hover:shadow-md"
-              }`}
-              aria-pressed={
-                selectedRouteScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
-              }
-            >
-              View All
-            </button>
-          </div>
-
-          {publicGroups.length ? (
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {publicGroups.map((group) => (
-                <MarketRouteGroupCard
-                  key={group.marketCode}
-                  group={group}
-                  selected={
-                    normalizeAdminHomepageFareMarketCode(
-                      selectedRouteScope ?? "",
-                    ) === normalizeAdminHomepageFareMarketCode(group.marketCode)
-                  }
-                  onSelect={handleSelectMarket}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="rounded-2xl border border-dashed border-slate-300 bg-white/50 p-4 text-sm font-semibold text-slate-500">
-              {loading
-                ? "Loading market route groups…"
-                : "No public market route groups match this filter."}
-            </p>
-          )}
-        </div>
-
-        {fallbackGroups.length ? (
-          <div className="rounded-2xl border border-dashed border-slate-300/90 bg-white/45 p-3">
-            <div className="mb-3">
-              <h5 className="text-sm font-extrabold uppercase tracking-wide text-slate-950">
-                Fallback-only debugging pools
-              </h5>
-              <p className="mt-1 text-xs font-semibold text-slate-500">
-                These pools have no public display target and are not counted as
-                normal public market readiness.
-              </p>
-            </div>
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {fallbackGroups.map((group) => (
-                <MarketRouteGroupCard
-                  key={group.marketCode}
-                  group={group}
-                  selected={
-                    normalizeAdminHomepageFareMarketCode(
-                      selectedRouteScope ?? "",
-                    ) === normalizeAdminHomepageFareMarketCode(group.marketCode)
-                  }
-                  onSelect={handleSelectMarket}
-                  fallbackOnly
-                />
-              ))}
-            </div>
-          </div>
-        ) : null}
+        <button
+          type="button"
+          onClick={() =>
+            handleSelectMarket(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE)
+          }
+          className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold ${
+            selectedRouteScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
+              ? "border-indigo-700 bg-indigo-700 text-white"
+              : "border-slate-200 bg-white text-slate-950"
+          }`}
+          aria-pressed={
+            selectedRouteScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
+          }
+        >
+          View All
+        </button>
       </div>
 
       <SelectedRouteDetails
@@ -1659,67 +1424,6 @@ function MarketRouteInspector({
         onNextPage={onNextPage}
       />
     </section>
-  );
-}
-
-function MarketRouteGroupCard({
-  group,
-  selected,
-  onSelect,
-  fallbackOnly = false,
-}: {
-  group: AdminHomepageFareMarketRouteGroup;
-  selected: boolean;
-  onSelect: (marketCode: string) => void;
-  fallbackOnly?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onSelect(group.marketCode)}
-      className={`h-full w-full cursor-pointer rounded-2xl border p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
-        selected
-          ? "border-indigo-700 bg-white shadow-md ring-2 ring-indigo-700/15"
-          : "border-slate-200 bg-white/70 hover:-translate-y-0.5 hover:border-indigo-700/35 hover:bg-white hover:shadow-md"
-      }`}
-      aria-pressed={selected}
-      aria-label={`Inspect ${group.marketCode} routes`}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-base font-extrabold text-slate-950">
-            {group.marketLabel}
-          </p>
-          <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
-            {fallbackOnly
-              ? "Fallback only · No public display target"
-              : group.marketGroup}
-          </p>
-        </div>
-        <MarketGroupStatusBadge status={group.status} />
-      </div>
-      <p className="mt-3 text-sm font-semibold text-slate-500">
-        {group.routes.length} total routes · {group.freshFaresCount} fresh ·{" "}
-        {group.lastKnownGoodFaresCount} last-known-good
-      </p>
-      <dl className="mt-4 grid grid-cols-3 gap-2 text-xs">
-        <MarketMiniMetric label="Popular" value={group.popularCoverageCount} />
-        <MarketMiniMetric
-          label="Discovery"
-          value={group.discoveryCoverageCount}
-        />
-        <MarketMiniMetric label="Backup" value={group.backupCoverageCount} />
-        <MarketMiniMetric label="Fresh" value={group.freshFaresCount} />
-        <MarketMiniMetric label="LKG" value={group.lastKnownGoodFaresCount} />
-        <MarketMiniMetric
-          label="Failed/missing"
-          value={group.failedUnavailableRoutesCount + group.missingRoutesCount}
-        />
-      </dl>
-      <span className="mt-4 inline-flex min-h-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-extrabold text-indigo-700 transition">
-        Inspect {group.marketCode} routes
-      </span>
-    </button>
   );
 }
 
@@ -1809,7 +1513,13 @@ function SelectedRouteDetails({
   );
 }
 
-function MarketMiniMetric({ label, value }: { label: string; value: number }) {
+function MarketMiniMetric({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
   return (
     <div className="rounded-lg bg-white/80 p-2 ring-1 ring-slate-100">
       <dt className="font-bold uppercase tracking-wide text-slate-500">
@@ -2934,16 +2644,4 @@ function formatDateTime(value: string) {
     hour: "numeric",
     minute: "2-digit",
   }).format(date);
-}
-
-function formatCronStatus(
-  status: Pick<
-    HomepageFareStatusPayload,
-    "cronConfigured" | "nextExpectedCronRefresh"
-  >,
-) {
-  if (!status.cronConfigured) return "Not configured";
-  return status.nextExpectedCronRefresh
-    ? "Configured"
-    : "Configured (cadence note missing)";
 }
