@@ -37,16 +37,48 @@ test("action and target values receive safe presentation formatting", () => {
   assert.equal(formatActionLabel("unknown/action.value"), "Unknown Action Value");
   assert.equal(formatTargetType("ACCOUNT_DELETION_REQUEST"), "Account Deletion Request");
   assert.equal(formatTargetType("AccountDeletionRequest"), "Account Deletion Request");
+  assert.equal(formatTargetType("User"), "User");
+  assert.equal(formatTargetType("Provider"), "Provider");
   assert.equal(formatTargetIdentifier("ckabcdefghijklmnopqrstuvwxyz1234"), "ckabcdef…1234");
   assert.equal(formatTargetIdentifier("duffel"), "Duffel");
 });
 
-test("table keeps network addresses intact and constrains expanded metadata", () => {
+test("table keeps network addresses intact and constrains dropdown metadata", () => {
   assert.match(table, /min-w-\[140px\] whitespace-nowrap[^\"]*font-mono/);
-  assert.doesNotMatch(table, /break-all|break-words/);
-  assert.match(table, /max-w-\[600px\]/);
+  assert.doesNotMatch(table, /break-all/);
+  assert.match(table, /POPOVER_WIDTH = 420/);
+  assert.match(table, /POPOVER_MAX_HEIGHT = 420/);
+  assert.match(table, /max-h-\[420px\]/);
+  assert.match(table, /overflow-y-auto/);
   assert.match(table, /whitespace-pre-wrap/);
   assert.match(table, /overflow-x-auto/);
+});
+
+test("details use a body portal instead of an expanded table row", () => {
+  assert.match(table, /createPortal\(<AuditDetailsPopover/);
+  assert.match(table, /document\.body/);
+  assert.match(table, /className="fixed z-\[1000\]/);
+  assert.doesNotMatch(table, /<tr id=\{detailsId\}|colSpan=\{7\}/);
+  assert.doesNotMatch(table, /Hide details/);
+});
+
+test("details coordinate one open dropdown and support dismissal", () => {
+  assert.match(table, /const \[openId, setOpenId\]/);
+  assert.match(table, /setOpenId\(log\.id\)/);
+  assert.match(table, /document\.addEventListener\("pointerdown", handlePointerDown\)/);
+  assert.match(table, /event\.key === "Escape"/);
+  assert.match(table, /closePopover\(true\)/);
+  assert.match(table, /window\.addEventListener\("resize", handleViewportChange\)/);
+  assert.match(table, /window\.addEventListener\("scroll", handleViewportChange, true\)/);
+});
+
+test("details trigger and floating panel expose accessible relationships", () => {
+  assert.match(table, /aria-haspopup="dialog"/);
+  assert.match(table, /aria-expanded=\{open\}/);
+  assert.match(table, /aria-controls=\{detailsId\}/);
+  assert.match(table, /role="dialog"/);
+  assert.match(table, /aria-modal="false"/);
+  assert.match(table, /focus-ring/);
 });
 
 test("metadata is complete, escaped by React, and handles empty and scalar values", () => {
