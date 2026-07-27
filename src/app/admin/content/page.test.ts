@@ -14,6 +14,10 @@ const refreshCard = readFileSync(
   "src/components/admin/HomepageFaresRefreshCard.tsx",
   "utf8",
 );
+const operationsPanels = readFileSync(
+  "src/components/admin/homepage-operations/HomepageOperationsPanels.tsx",
+  "utf8",
+);
 const statusApi = readFileSync(
   "src/app/api/admin/homepage-fares/status/route.ts",
   "utf8",
@@ -53,61 +57,83 @@ test("Content Inventory retains content sections without homepage fare operation
   );
 });
 
-test("Homepage Operations route renders the existing operational dashboard", () => {
-  assert.match(
-    homepageOperationsPage,
-    /export default function AdminHomepageOperationsPage/,
-  );
-  assert.match(homepageOperationsPage, /title="Homepage Operations"/);
-  assert.match(
-    homepageOperationsPage,
-    /Monitor homepage fare readiness, refresh activity, market coverage and operational health\./,
-  );
+test("Homepage Operations renders the compact authorised-admin workspace", () => {
+  assert.match(homepageOperationsPage, /AdminHomepageOperationsPage/);
   assert.match(homepageOperationsPage, /<HomepageFaresRefreshCard \/>/);
-
-  for (const section of [
-    "Homepage health at a glance",
-    "Overall readiness",
+  assert.match(refreshCard, /title="Homepage Operations"/);
+  assert.match(
+    refreshCard,
+    /Monitor homepage readiness, refresh status and market coverage\./,
+  );
+  for (const value of [
+    "Readiness",
     "Last refresh",
-    "Markets covered",
-    "Refresh Operations",
-    "Refresh homepage fares",
-    "Reload status",
-    "Cron status",
-    "Operational Health",
-    "Provider calls",
-    "Timeout metrics",
-    "Fresh snapshots",
-    "Market Coverage",
-    "Public market coverage",
-    "Country coverage",
+    "Markets ready",
     "Missing routes",
     "Failed routes",
-    "Replacement candidates",
-    "Attention Required",
+    "Provider calls",
+    "Fresh snapshots",
   ]) {
-    assert.match(refreshCard, new RegExp(section, "i"));
+    assert.match(refreshCard, new RegExp(value, "i"));
   }
-
-  const sectionOrder = [
-    "Homepage health at a glance",
-    'title="Refresh Operations"',
-    'title="Operational Health"',
-    'title="Market Coverage"',
-    'title="Attention Required"',
-  ].map((label) => refreshCard.indexOf(label));
-  assert.ok(sectionOrder.every((position) => position >= 0));
-  assert.deepEqual(
-    sectionOrder,
-    [...sectionOrder].sort((left, right) => left - right),
+  assert.doesNotMatch(
+    refreshCard,
+    /Operational overview|Homepage health at a glance|ADMIN OPERATIONS/,
   );
+  assert.doesNotMatch(refreshCard, /number="0[1-4]"|bg-slate-950|bg-gradient/);
 });
 
-test("Homepage Operations uses responsive grids without changing controls or inspection actions", () => {
-  assert.match(refreshCard, /sm:grid-cols-2 lg:grid-cols-4/);
-  assert.match(refreshCard, /flex flex-col gap-3 sm:flex-row/);
+test("Homepage Operations preserves controls, APIs, filters, and route inspection", () => {
+  assert.ok(refreshCard.includes('fetch("/api/admin/homepage-fares/status"'));
+  assert.ok(refreshCard.includes('fetch("/api/admin/homepage-fares/refresh"'));
+  assert.match(refreshCard, /method: "POST"/);
+  assert.match(refreshCard, /credentials: "include"/);
+  assert.match(refreshCard, /Refresh homepage fares/);
+  assert.match(refreshCard, /Reload status/);
+  for (const filter of [
+    "All",
+    "Ready",
+    "Underfilled",
+    "Failed",
+    "Missing",
+    "Stale",
+    "Last-known-good",
+    "Fresh",
+    "Unavailable",
+  ]) {
+    assert.match(refreshCard, new RegExp(`label: "${filter}"`));
+  }
   assert.match(refreshCard, /Inspect .* routes/);
-  assert.match(refreshCard, /min-w-0/);
+  assert.match(refreshCard, /View All/);
+  assert.match(refreshCard, /if \(!selectedRouteScope \|\| !group\)/);
+});
+
+test("Homepage Operations collapses diagnostics, fallback pools, and raw debug by default", () => {
+  assert.match(refreshCard, /label="View all diagnostics"/);
+  assert.match(refreshCard, /label="Fallback pools"/);
+  assert.match(refreshCard, /label="Raw debug details"/);
+  assert.match(operationsPanels, /<details/);
+  assert.doesNotMatch(operationsPanels, /<details[^>]*\sopen/);
+});
+
+test("compact market cards retain required coverage and operational metrics", () => {
+  for (const metric of [
+    "Total routes",
+    "Fresh routes",
+    "Last-known-good routes",
+    "Popular",
+    "Discovery",
+    "Backup",
+    "Missing",
+    "Failed",
+    "Provider calls",
+    "Candidates",
+  ]) {
+    assert.match(refreshCard, new RegExp(metric));
+  }
+  assert.match(refreshCard, /md:grid-cols-2 2xl:grid-cols-3/);
+  assert.match(refreshCard, /market\.timeoutCount \?/);
+  assert.match(refreshCard, /market\.unavailable \?/);
 });
 
 test("Homepage Operations keeps the existing admin permission boundary", () => {
