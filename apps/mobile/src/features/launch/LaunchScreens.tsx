@@ -99,31 +99,36 @@ function PersonIcon() {
 }
 
 function SearchIcon({ compact = false }: { compact?: boolean }) {
-  const size = compact ? 32 : 38;
+  const size = compact ? 35 : 41;
   return (
-    <Svg width={size} height={size} viewBox="0 0 32 32">
-      <Circle cx="13.5" cy="13.5" r="8.2" fill="none" stroke="#1764D9" strokeWidth="2.2" />
-      <Path d="m19.7 19.7 6.5 6.5" fill="none" stroke="#1764D9" strokeWidth="2.2" strokeLinecap="round" />
+    <Svg width={size} height={size} viewBox="0 0 40 40">
+      <Circle cx="17" cy="17" r="10.7" fill="none" stroke="#1557E8" strokeWidth="3" />
+      <Path d="m24.8 24.8 8.4 8.4" fill="none" stroke="#1557E8" strokeWidth="3.4" strokeLinecap="round" />
+      <Path d="m12.7 20.8 2.7-7.7 5.9 5.9-8.6 1.8Z" fill="none" stroke="#1557E8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx="16.3" cy="17.3" r="1.25" fill="#1557E8" />
     </Svg>
   );
 }
 
 function SavedTripIcon({ compact = false }: { compact?: boolean }) {
-  const size = compact ? 32 : 38;
+  const size = compact ? 35 : 41;
   return (
-    <Svg width={size} height={size} viewBox="0 0 32 32">
-      <Path d="M8.5 5.5h15v21l-7.5-4.4-7.5 4.4v-21Z" fill="none" stroke="#147568" strokeWidth="2.1" strokeLinejoin="round" />
-      <Path d="M12.5 11.5h7M12.5 16h5" fill="none" stroke="#147568" strokeWidth="2.1" strokeLinecap="round" />
+    <Svg width={size} height={size} viewBox="0 0 40 40">
+      <Rect x="7" y="8" width="22" height="25" rx="4" fill="none" stroke="#078475" strokeWidth="2.8" />
+      <Path d="M13 5.5h18a3 3 0 0 1 3 3v21" fill="none" stroke="#078475" strokeWidth="2.8" strokeLinecap="round" />
+      <Path d="M13 15h10M13 21h5.5" fill="none" stroke="#078475" strokeWidth="2.5" strokeLinecap="round" />
+      <Path d="m21.5 26.2 2.5 2.4 5-5.4" fill="none" stroke="#078475" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }
 
 function PriceAlertIcon({ compact = false }: { compact?: boolean }) {
-  const size = compact ? 32 : 38;
+  const size = compact ? 35 : 41;
   return (
-    <Svg width={size} height={size} viewBox="0 0 32 32">
-      <Path d="M7.5 22.5h17l-2.2-3.4v-4.8a6.3 6.3 0 0 0-12.6 0v4.8l-2.2 3.4Z" fill="none" stroke="#6650A4" strokeWidth="2.1" strokeLinejoin="round" />
-      <Path d="M13.2 26a3 3 0 0 0 5.6 0M16 5.2V3.8" fill="none" stroke="#6650A4" strokeWidth="2.1" strokeLinecap="round" />
+    <Svg width={size} height={size} viewBox="0 0 40 40">
+      <Path d="M8.5 29h23l-3.2-4.7v-7.1a8.3 8.3 0 0 0-16.6 0v7.1L8.5 29Z" fill="none" stroke="#7151C9" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M16.5 33a4 4 0 0 0 7 0M20 8.5V5.8" fill="none" stroke="#7151C9" strokeWidth="2.8" strokeLinecap="round" />
+      <Path d="M30.4 10.2 33 7.6M9.6 10.2 7 7.6" fill="none" stroke="#7151C9" strokeWidth="2.4" strokeLinecap="round" />
     </Svg>
   );
 }
@@ -325,7 +330,7 @@ export function OnboardingScreen() {
       <StatusBar style="light" translucent backgroundColor="transparent" />
       <ScrollView
         bounces={false}
-        contentContainerStyle={[styles.onboardingScroll, { paddingBottom: Math.max(insets.bottom, 14) }]}
+        contentContainerStyle={[styles.onboardingScroll, { paddingBottom: Math.max(insets.bottom + 24, 34) }]}
         showsVerticalScrollIndicator={false}
       >
         <View accessible={false} style={[styles.hero, { height: heroHeight }]}>
@@ -343,16 +348,18 @@ export function OnboardingScreen() {
           ]}
         >
           <Text accessibilityRole="header" style={[styles.onboardingHeadline, compact && styles.onboardingHeadlineCompact]}>
-            Find better travel options{"\n"}<Text style={styles.headlineAccent}>in seconds</Text>
+            Find the best travel{"\n"}options <Text style={styles.headlineAccent}>in seconds</Text>
           </Text>
           <Text style={styles.onboardingSupport}>
-            Compare trusted providers, save your trips, and stay informed when prices change.
+            {narrow
+              ? "Compare trusted providers, save your trips, and stay informed when prices change."
+              : "Compare trusted providers, save your trips,\nand stay informed when prices change."}
           </Text>
 
           <View style={[styles.benefits, compact && styles.benefitsCompact]}>
             <BenefitCard
-              title="Compare trusted options"
-              description="See travel choices from trusted providers in one place."
+              title="Compare prices"
+              description="Compare travel options from trusted providers in one place."
               tileStyle={styles.blueTile}
               icon={<SearchIcon compact={compact} />}
               compact={compact}
@@ -453,20 +460,20 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 34,
     backgroundColor: "white",
   },
-  onboardingPanelCompact: { paddingTop: 28, paddingHorizontal: 21 },
+  onboardingPanelCompact: { paddingTop: 29, paddingHorizontal: 21 },
   onboardingHeadline: { color: "#081C46", fontSize: 30, lineHeight: 35, fontWeight: "800", letterSpacing: -0.65, textAlign: "center" },
-  onboardingHeadlineCompact: { fontSize: 28, lineHeight: 33 },
+  onboardingHeadlineCompact: { fontSize: 27, lineHeight: 32, letterSpacing: -0.55 },
   headlineAccent: { color: "#1557E8" },
-  onboardingSupport: { alignSelf: "center", color: "#53627A", fontSize: 15, lineHeight: 22, fontWeight: "400", marginTop: 11, maxWidth: 360, textAlign: "center" },
-  benefits: { gap: 12, marginTop: 23 },
-  benefitsCompact: { gap: 9, marginTop: 18 },
+  onboardingSupport: { alignSelf: "center", color: "#485973", fontSize: 15, lineHeight: 21, fontWeight: "400", marginTop: 14, maxWidth: 350, textAlign: "center" },
+  benefits: { gap: 12, marginTop: 25 },
+  benefitsCompact: { gap: 9, marginTop: 20 },
   benefitCard: {
     minHeight: 92,
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
+    gap: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
     borderWidth: 1,
     borderColor: "#E9EDF3",
     borderRadius: 17,
@@ -477,7 +484,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 2,
   },
-  benefitCardCompact: { minHeight: 82, gap: 13, paddingHorizontal: 13, paddingVertical: 10 },
+  benefitCardCompact: { minHeight: 84, gap: 13, paddingHorizontal: 13, paddingVertical: 10 },
   iconTile: { width: 66, height: 66, borderRadius: 17, alignItems: "center", justifyContent: "center" },
   iconTileCompact: { width: 56, height: 56, borderRadius: 15 },
   blueTile: { backgroundColor: "#E8EFFF" },
@@ -485,11 +492,11 @@ const styles = StyleSheet.create({
   lavenderTile: { backgroundColor: "#EFE7FF" },
   benefitCopy: { flex: 1 },
   benefitTitle: { color: "#081C42", fontSize: 16.5, lineHeight: 22, fontWeight: "800", letterSpacing: -0.15 },
-  benefitDescription: { color: "#536176", fontSize: 14, lineHeight: 20, fontWeight: "400", marginTop: 3 },
+  benefitDescription: { color: "#4D5D75", fontSize: 14, lineHeight: 20, fontWeight: "400", marginTop: 3 },
   actions: { gap: 11, marginTop: 20 },
   button: { minHeight: 54, borderRadius: 18, paddingHorizontal: 18, paddingVertical: 15, alignItems: "center", justifyContent: "center" },
   buttonContent: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 14 },
-  onboardingButton: { minHeight: 56, borderRadius: 14 },
+  onboardingButton: { minHeight: 58, borderRadius: 14 },
   onboardingButtonText: { fontSize: 17, fontWeight: "700" },
   primary: { backgroundColor: "#1646D8" },
   primaryPressed: { backgroundColor: "#0E35AF", transform: [{ scale: 0.99 }] },
@@ -499,11 +506,11 @@ const styles = StyleSheet.create({
   secondaryPressed: { backgroundColor: colors.sky, transform: [{ scale: 0.99 }] },
   secondaryText: { color: "#1764D9", fontWeight: "900", fontSize: 16 },
   disabled: { opacity: 0.55 },
-  legalBlock: { alignItems: "center", marginTop: 13 },
-  legalIntro: { color: "#596780", fontSize: 12.5, lineHeight: 18, textAlign: "center" },
+  legalBlock: { alignItems: "center", marginTop: 15 },
+  legalIntro: { color: "#52627B", fontSize: 12.5, lineHeight: 18, textAlign: "center" },
   legalLinks: { flexDirection: "row", alignItems: "center", justifyContent: "center", flexWrap: "wrap" },
   legalLinkTarget: { minHeight: 44, minWidth: 44, paddingHorizontal: 6, alignItems: "center", justifyContent: "center" },
-  legalJoiner: { color: "#596780", fontSize: 12.5, lineHeight: 22 },
+  legalJoiner: { color: "#52627B", fontSize: 12.5, lineHeight: 22 },
   link: { color: "#134FC8", fontSize: 12.5, lineHeight: 22, fontWeight: "700", textDecorationLine: "underline" },
   linkPressed: { color: "#0E35AF", opacity: 0.7 },
   card: { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: spacing.radius, padding: spacing.card, gap: 16 },
