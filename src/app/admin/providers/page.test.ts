@@ -46,7 +46,37 @@ test("providers page exposes accessible server-rendered product filter links", (
   assert.match(providerFiltersSource, /href: "\/admin\/providers\?product=hotels"/);
   assert.match(providerFiltersSource, /href: "\/admin\/providers\?product=cars"/);
   assert.match(providersPage, /getProviderStatuses\(\)/);
-  assert.match(providersPage, /<AdminProviderStatusCard \{\.\.\.provider\} \/>/);
+  assert.match(providersPage, /<ProviderReadinessCard provider=\{provider\} \/>/);
+});
+
+test("providers page removes the operations eyebrow and keeps the compact readiness hierarchy", () => {
+  assert.doesNotMatch(providersPage, /Admin Operations/i);
+  assert.match(providersPage, /eyebrow=""/);
+  assert.match(providersPage, /Provider Readiness/);
+  assert.match(providersPage, /provider\.providerName/);
+  assert.match(providersPage, /provider\.product/);
+  assert.match(providersPage, /Provider readiness/);
+  assert.match(providersPage, /Recent health/);
+  assert.match(providersPage, /Last success/);
+  assert.match(providersPage, /Last failure/);
+});
+
+test("provider readiness preserves operational values without logos or secrets", () => {
+  assert.match(providersPage, /Environment/);
+  assert.match(providersPage, /Credentials present/);
+  assert.match(providersPage, /Search enabled/);
+  assert.match(providersPage, /Booking enabled/);
+  assert.match(providersPage, /Not live yet/);
+  assert.match(providersPage, /provider\.lastSuccessfulRequest/);
+  assert.match(providersPage, /provider\.lastFailedRequest/);
+  assert.doesNotMatch(providersPage, /https?:\/\//);
+  assert.doesNotMatch(providersPage, /API_KEY|process\.env/);
+});
+
+test("cars retain a compact and accurate unconfigured state", () => {
+  assert.match(providersPage, /Not configured/);
+  assert.match(providersPage, /No approved \{provider\.product\.toLowerCase\(\)\.replace\(\/s\$\/, ""\)\} provider is connected yet\./);
+  assert.match(providersPage, /Cars pending unless configured/);
 });
 
 test("providers page preserves provider data, product guidance, and Duffel-only retest control", () => {
@@ -83,7 +113,7 @@ test("provider APIs, retest API, and unrelated admin pages are not edited by pro
   assert.match(providersApi, /return NextResponse\.json\(\{ active: \{ duffel: await getDuffelAdminHealth\(\) \}, paused: pausedProviderRows \}\)/);
   assert.match(providerRetestApi, /checkDuffelHealth\(\)/);
   assert.match(providerRetestApi, /writeAdminAuditLog/);
-  assert.match(overviewPage, /Operations Dashboard/);
+  assert.match(overviewPage, /title="Admin Home"/);
   assert.match(systemPage, /Safe operational status only/);
   assert.match(settingsPage, /redirect\("\/admin\/system"\)/);
 });
