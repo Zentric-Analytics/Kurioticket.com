@@ -22,9 +22,22 @@ function desktopMinimizedHotelSearchBarSource() {
   return source.slice(start, end);
 }
 
+function desktopMinimizedHotelSearchWrapperSource() {
+  const toolbarCall = "{renderDesktopMinimizedHotelSearchBar()}";
+  const toolbarCallIndex = source.indexOf(toolbarCall);
+  const start = source.lastIndexOf("<div", toolbarCallIndex);
+  const end = source.indexOf("</div>", toolbarCallIndex) + "</div>".length;
+
+  assert.notEqual(toolbarCallIndex, -1, "Hotel minimized toolbar is rendered");
+  assert.notEqual(start, -1, "Hotel minimized toolbar wrapper exists");
+
+  return source.slice(start, end);
+}
+
 test("Hotel desktop minimized search matches the Flights compact geometry", () => {
   const toolbar = desktopMinimizedHotelSearchBarSource();
 
+  assert.match(toolbar, /pointer-events-auto/);
   assert.match(toolbar, /max-w-\[820px\]/);
   assert.match(toolbar, /h-\[58px\]/);
   assert.match(toolbar, /rounded-lg/);
@@ -34,6 +47,48 @@ test("Hotel desktop minimized search matches the Flights compact geometry", () =
   );
   assert.match(toolbar, /h-10 w-\[92px\] whitespace-nowrap/);
   assert.doesNotMatch(toolbar, /max-w-5xl/);
+});
+
+test("Hotel desktop minimized search uses a transparent positioning wrapper", () => {
+  const wrapper = desktopMinimizedHotelSearchWrapperSource();
+
+  assert.match(
+    wrapper,
+    /pointer-events-none fixed inset-x-0 top-3 z-\[1000\] hidden px-4 transition-all duration-200 lg:block/,
+  );
+  assert.match(wrapper, /\? "translate-y-0 opacity-100"/);
+  assert.match(wrapper, /: "-translate-y-3 opacity-0"/);
+  assert.doesNotMatch(wrapper, /border-b/);
+  assert.doesNotMatch(wrapper, /bg-gradient-to-b/);
+  assert.doesNotMatch(wrapper, /from-\[#fbfdff\]/);
+  assert.doesNotMatch(wrapper, /via-\[#f8fbff\]/);
+  assert.doesNotMatch(wrapper, /to-\[#f5f9ff\]/);
+  assert.doesNotMatch(wrapper, /py-3/);
+  assert.doesNotMatch(wrapper, /shadow-\[0_10px_30px/);
+  assert.doesNotMatch(wrapper, /backdrop-blur-xl/);
+  assert.doesNotMatch(
+    wrapper,
+    /\? "pointer-events-auto translate-y-0 opacity-100"/,
+  );
+  assert.match(
+    wrapper,
+    /showDesktopMinimizedSearch && !desktopStickyHotelSearchOpen/,
+  );
+  assert.match(wrapper, /aria-hidden=/);
+  assert.match(wrapper, /inert=/);
+});
+
+test("Hotel compact toolbar retains its local surface styling", () => {
+  const toolbar = desktopMinimizedHotelSearchBarSource();
+
+  assert.match(
+    toolbar,
+    /pointer-events-auto mx-auto grid h-\[58px\][\s\S]*?max-w-\[820px\]/,
+  );
+  assert.match(toolbar, /border border-slate-200\/95/);
+  assert.match(toolbar, /bg-white/);
+  assert.match(toolbar, /shadow-\[0_12px_28px_-22px_rgba\(15,23,42,0\.55\)\]/);
+  assert.match(toolbar, /ring-1 ring-slate-950\/\[0\.025\]/);
 });
 
 test("Hotel compact sections retain Hotel summaries and open the editor in place", () => {
@@ -94,7 +149,7 @@ test("Hotel sticky lifecycle and neighboring search/filter contracts remain inta
   );
   assert.match(
     source,
-    /inert=\{!showDesktopMinimizedSearch \? true : undefined\}/,
+    /inert=\{\s*!showDesktopMinimizedSearch \|\| desktopStickyHotelSearchOpen\s*\? true\s*: undefined\s*\}/,
   );
   assert.match(source, /desktopSearchFormRef\.current/);
   assert.match(source, /desktopFormRef=\{setDesktopSearchFormRef\}/);
