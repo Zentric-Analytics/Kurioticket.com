@@ -7,6 +7,30 @@ export type DesktopPopoverGeometry = {
   maxHeight: number;
 };
 
+export const MIN_VISIBLE_LOCATION_PANEL_HEIGHT = 160;
+
+export function calculateLocationPanelScrollAdjustment({
+  boundaryRect,
+  viewportHeight,
+  viewportPadding,
+  topViewportPadding = viewportPadding,
+  gap,
+  minimumVisibleHeight = MIN_VISIBLE_LOCATION_PANEL_HEIGHT,
+}: {
+  boundaryRect: PopoverRect;
+  viewportHeight: number;
+  viewportPadding: number;
+  topViewportPadding?: number;
+  gap: number;
+  minimumVisibleHeight?: number;
+}) {
+  const finite = (value: number) => Number.isFinite(value) ? value : 0;
+  const requiredBottom = finite(boundaryRect.bottom) + finite(gap) + Math.max(0, finite(minimumVisibleHeight)) + Math.max(0, finite(viewportPadding));
+  const shortfall = Math.max(0, requiredBottom - Math.max(0, finite(viewportHeight)));
+  const maximumUsefulScroll = Math.max(0, finite(boundaryRect.top) - Math.max(0, finite(topViewportPadding)));
+  return Math.max(0, Math.min(shortfall, maximumUsefulScroll));
+}
+
 export function calculateDesktopPopoverGeometry({
   fieldRect,
   boundaryRect,
