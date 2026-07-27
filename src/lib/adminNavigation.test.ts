@@ -116,7 +116,7 @@ test("desktop and mobile navigation omit a second row, sidebar and separate visi
 test("hub pages contain the correct destination links and flat row affordance", () => {
   assert.deepEqual(labelsForHub("operations", "ADMIN"), ["Users", "Support", "Account Deletions"]);
   assert.deepEqual(labelsForHub("monitoring", "ADMIN"), ["Searches", "Provider Handoffs", "Admin Logs"]);
-  assert.deepEqual(labelsForHub("platform", "ADMIN"), ["Providers", "Content Inventory", "System"]);
+  assert.deepEqual(labelsForHub("platform", "ADMIN"), ["Provider Readiness", "Homepage Operations", "Content Inventory", "System"]);
 
   for (const page of [operationsPage, monitoringPage, platformPage]) {
     assert.match(page, /ArrowRight/);
@@ -137,6 +137,7 @@ test("active top-level navigation works for hub, child and detail routes", () =>
   assert.equal(getActiveAdminHub("/admin/logs"), "monitoring");
   assert.equal(getActiveAdminHub("/admin/platform"), "platform");
   assert.equal(getActiveAdminHub("/admin/providers"), "platform");
+  assert.equal(getActiveAdminHub("/admin/homepage-operations"), "platform");
   assert.equal(getActiveAdminHub("/admin/content"), "platform");
   assert.equal(getActiveAdminHub("/admin/system"), "platform");
   assert.equal(isAdminNavItemActive("/admin/support", "/admin/supportive"), false);
@@ -156,6 +157,7 @@ test("direct existing admin routes remain unchanged while hub routes are added",
   assert.match(usersPage, /export default async function AdminUsersPage/);
   assert.ok(adminNavigation.some((item) => item.href === "/admin" && item.label === "Overview"));
   assert.ok(adminNavigation.some((item) => item.href === "/admin/users"));
+  assert.ok(adminNavigation.some((item) => item.href === "/admin/homepage-operations" && item.roles.join() === "ADMIN"));
   assert.ok(adminHubs.some((hub) => hub.href === "/admin/operations"));
   assert.ok(adminHubs.some((hub) => hub.href === "/admin/monitoring"));
   assert.ok(adminHubs.some((hub) => hub.href === "/admin/platform"));
