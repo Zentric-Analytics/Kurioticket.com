@@ -62,6 +62,7 @@ import {
 } from "@/lib/cars/carsSearchUtils";
 import {
   carsFaqItems,
+  carsHeroImage,
   pickupCards,
   tripStyleCards,
   type CarImageCard,
@@ -138,8 +139,6 @@ const formatCarTimeLabel = (time: string, locale: string) => {
     minute: "2-digit",
   }).format(new Date(2024, 0, 1, hourValue, minuteValue));
 };
-
-const carsHeroImage = tripStyleCards[1].image;
 
 const trustCards = [
   {
@@ -336,12 +335,13 @@ function CarsSearchPage() {
                 fill
                 priority
                 sizes="100vw"
+                quality={92}
                 className="object-cover object-[54%_45%] brightness-[1.03] saturate-[1.08] contrast-[1.03]"
               />
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-950/52 via-slate-950/18 to-slate-950/6" />
-              <div className="absolute inset-y-0 start-0 w-[84%] bg-gradient-to-r from-slate-950/62 via-slate-950/24 to-transparent" />
-              <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-slate-950/36 via-slate-950/10 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/44 via-slate-950/12 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-950/46 via-slate-950/14 to-slate-950/4" />
+              <div className="absolute inset-y-0 start-0 w-[84%] bg-gradient-to-r from-slate-950/58 via-slate-950/20 to-transparent" />
+              <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-slate-950/30 via-slate-950/8 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/38 via-slate-950/10 to-transparent" />
             </div>
 
             <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-8">
@@ -383,12 +383,13 @@ function CarsSearchPage() {
                     fill
                     priority
                     sizes="100vw"
+                    quality={92}
                     className="object-cover object-[56%_45%] brightness-[1.04] saturate-[1.08] contrast-[1.03]"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-br from-slate-950/70 via-slate-950/28 to-slate-950/8" />
-                  <div className="absolute inset-y-0 start-0 w-[78%] bg-gradient-to-r from-slate-950/76 via-slate-950/34 to-transparent" />
-                  <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-slate-950/42 via-slate-950/12 to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-slate-950/72 via-slate-950/24 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-950/62 via-slate-950/22 to-slate-950/6" />
+                  <div className="absolute inset-y-0 start-0 w-[78%] bg-gradient-to-r from-slate-950/70 via-slate-950/28 to-transparent" />
+                  <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-slate-950/36 via-slate-950/10 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-slate-950/62 via-slate-950/18 to-transparent" />
                 </div>
 
                 <div className="page-shell relative z-10 flex min-h-[32rem] flex-col items-start pb-36 pt-10 lg:min-h-[36rem] lg:pb-40 lg:pt-14">
