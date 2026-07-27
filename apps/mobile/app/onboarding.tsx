@@ -1,3 +1,3 @@
-import { ProductionOnboardingScreen } from "../src/features/onboarding/ProductionOnboardingScreen";
+import { OnboardingScreen } from "../src/features/launch/LaunchScreens";
 
-export default ProductionOnboardingScreen;
+export default OnboardingScreen;
