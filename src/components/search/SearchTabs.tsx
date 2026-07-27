@@ -38,6 +38,7 @@ import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
+import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import {
@@ -344,6 +345,57 @@ function DesktopTopLayerPopover({
 }
 
 
+function CarsSummaryField({
+  label,
+  value,
+  open,
+  onToggle,
+  className,
+  children,
+  listbox = false,
+}: {
+  label: string;
+  value: string;
+  open: boolean;
+  onToggle: () => void;
+  className: string;
+  children: ReactNode;
+  listbox?: boolean;
+}) {
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const launcherRef = useRef<HTMLButtonElement | null>(null);
+  const panelId = `cars-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-popover`;
+
+  useEffect(() => {
+    if (!open) return;
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (!wrapperRef.current?.contains(event.target as Node)) onToggle();
+    };
+    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      onToggle();
+      launcherRef.current?.focus({ preventScroll: true });
+    };
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [onToggle, open]);
+
+  return (
+    <div ref={wrapperRef} className={cn(className, "relative rounded-xl border border-slate-300 bg-white")}>
+      <span className="mb-1 block text-[11px] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-500 lg:text-[10px] lg:tracking-[0.10em] lg:text-slate-600">{label}</span>
+      <button ref={launcherRef} type="button" aria-expanded={open} aria-controls={panelId} aria-haspopup={listbox ? "listbox" : "dialog"} onClick={onToggle} className="focus-ring flex h-8 w-full min-w-0 items-center justify-between gap-2 rounded-md text-start text-[16px] font-medium text-slate-900 sm:text-[15px] lg:text-[15px]">
+        <span className="truncate">{value}</span><ChevronDown aria-hidden="true" className={cn("h-4 w-4 shrink-0 text-slate-500 transition-transform", open && "rotate-180")} />
+      </button>
+      {open ? <div id={panelId} role={listbox ? undefined : "dialog"} aria-label={label} data-cars-desktop-popover className="absolute start-0 top-[calc(100%+10px)] z-[1120] w-[min(28rem,calc(100vw-2rem))] rounded-2xl border border-slate-200 bg-white p-3 shadow-xl lg:fixed lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2">{children}</div> : null}
+    </div>
+  );
+}
+
 export function SearchTabs({
   t: translations,
   compactHero = false,
@@ -473,6 +525,12 @@ export function SearchTabs({
     dropoffLocation: "",
   });
   const [carsErrors, setCarsErrors] = useState<CarsFormErrors>({});
+  const [carsOpenPicker, setCarsOpenPicker] = useState<
+    "pickup" | "dropoff" | "dates" | "times" | "age" | null
+  >(null);
+  const carsSearchCardRef = useRef<HTMLDivElement | null>(null);
+  const carsPickupFieldRef = useRef<HTMLDivElement | null>(null);
+  const carsDropoffFieldRef = useRef<HTMLDivElement | null>(null);
 
   const [tripType, setTripType] =
     useState<TripType>(
@@ -666,6 +724,12 @@ export function SearchTabs({
     compactHero
       ? "gap-1 lg:grid-cols-[minmax(0,1.65fr)_minmax(172px,1.28fr)_minmax(158px,1.02fr)_136px]"
       : "gap-1.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_112px]"
+  );
+  const carsGridClassName = cn(
+    "grid grid-cols-1 gap-2 sm:grid-cols-2 lg:gap-0",
+    compactHero
+      ? "lg:grid-cols-[minmax(0,1.65fr)_minmax(170px,1.25fr)_minmax(170px,1.15fr)_minmax(135px,0.85fr)_136px]"
+      : "lg:grid-cols-[minmax(0,1.65fr)_minmax(160px,1.2fr)_minmax(160px,1.1fr)_minmax(125px,0.8fr)_112px]"
   );
   const joinedFieldClassName = cn(
     "transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/30 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
@@ -1912,6 +1976,45 @@ export function SearchTabs({
     !carsValues.pickupTime ||
     !carsValues.dropoffTime ||
     (carsValues.returnToDifferentLocation && !carsValues.dropoffLocation.trim());
+
+  const carsLocationStrings = {
+    locationSuggestions: translate("carsSearch.locationSuggestions") || "Location suggestions",
+    popularLocations: translate("carsSearch.popularLocations") || "Popular locations",
+    loadingSuggestions: translate("carsSearch.loadingSuggestions") || "Loading suggestions",
+    noMatchingLocations: translate("carsSearch.noMatchingLocations") || "No matching locations",
+    suggestionsUnavailable: translate("carsSearch.suggestionsUnavailable") || "Suggestions unavailable.",
+    continueTypingManually: translate("carsSearch.continueTypingManually") || "You can continue typing.",
+    useTypedLocation: translate("carsSearch.useTypedLocation") || "Use this location",
+    unverifiedTypedLocation: translate("carsSearch.unverifiedTypedLocation") || "Custom location",
+    airport: translate("carsSearch.type.airport") || "Airport",
+    city: translate("carsSearch.type.city") || "City",
+    area: translate("carsSearch.type.area") || "Area",
+    customLocation: translate("carsSearch.type.customLocation") || "Custom location",
+  };
+  const carsDateFormatter = new Intl.DateTimeFormat(calendarLocale, {
+    month: "short",
+    day: "numeric",
+  });
+  const formatCarsDate = (value: string) => {
+    if (!value) return "";
+    const [year, month, day] = value.split("-").map(Number);
+    return year && month && day
+      ? carsDateFormatter.format(new Date(year, month - 1, day))
+      : "";
+  };
+  const carsDateSummary =
+    formatCarsDate(carsValues.pickupDate) && formatCarsDate(carsValues.dropoffDate)
+      ? `${formatCarsDate(carsValues.pickupDate)} — ${formatCarsDate(carsValues.dropoffDate)}`
+      : translate("carsSearch.chooseRentalDates") || "Pickup date — Return date";
+  const formatCarsTime = (value: string) => {
+    const [hour, minute] = value.split(":").map(Number);
+    if (!Number.isFinite(hour) || !Number.isFinite(minute)) return value;
+    return new Intl.DateTimeFormat(calendarLocale, {
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(new Date(2024, 0, 1, hour, minute));
+  };
+  const carsTimeSummary = `${formatCarsTime(carsValues.pickupTime)} — ${formatCarsTime(carsValues.dropoffTime)}`;
 
   const hotelDateSummary = useMemo(
     () => {
@@ -3901,45 +4004,39 @@ export function SearchTabs({
         </form>
       ) : (
         <form onSubmit={onCarsSubmit} className={formClassName} noValidate>
-          <div className={fieldCardClassName}>
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_112px]">
-              <div className="relative rounded-xl border border-slate-300 bg-white p-3">
-                <label className={hotelFieldLabelClassName}>{translate("carsSearch.pickupLocationLabel") || "Pickup location"}</label>
-                <input className={cn(hotelFieldValueClassName, "w-full")} value={carsValues.pickupLocation} onChange={(e) => updateCarsValue("pickupLocation", e.target.value)} placeholder={translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"} />
-                {carsErrors.pickupLocation ? <p className="mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupLocation}</p> : null}
+          <div ref={carsSearchCardRef} className={fieldCardClassName} data-testid="cars-joined-search-card">
+            <div className={carsGridClassName} data-testid="cars-primary-row">
+              <div ref={carsPickupFieldRef} className={cn(hotelJoinedFieldClassName, "relative rounded-xl border border-slate-300 bg-white lg:rounded-s-xl")}>
+                <label htmlFor="homepage-cars-pickup" className={hotelFieldLabelClassName}>{translate("carsSearch.pickupLocationLabel") || "Pickup location"}</label>
+                <CarLocationAutocomplete id="homepage-cars-pickup" name="pickupLocation" value={carsValues.pickupLocation} onValueChange={(value) => updateCarsValue("pickupLocation", value)} placeholder={translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"} presentation="desktop" inputClassName={cn(hotelFieldValueClassName, "h-8 w-full")} strings={carsLocationStrings} fieldAnchorRef={carsPickupFieldRef} searchCardRef={carsSearchCardRef} isOpen={carsOpenPicker === "pickup"} onOpenChange={(open) => setCarsOpenPicker(open ? "pickup" : null)} />
+                {carsErrors.pickupLocation ? <p className="absolute start-3 top-full z-10 mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupLocation}</p> : null}
               </div>
-              <div className="relative rounded-xl border border-slate-300 bg-white p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <label className={hotelFieldLabelClassName}>{translate("carsSearch.differentReturnLocation") || "Different return location"}</label>
-                  <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-[#004BB8]" checked={carsValues.returnToDifferentLocation} onChange={(e) => updateCarsValue("returnToDifferentLocation", e.target.checked)} aria-label={translate("carsSearch.differentReturnLocation") || "Different return location"} />
+              <CarsSummaryField label={translate("carsSearch.rentalDatesLabel") || "Rental dates"} value={carsDateSummary} open={carsOpenPicker === "dates"} onToggle={() => setCarsOpenPicker((open) => open === "dates" ? null : "dates")} className={hotelJoinedFieldClassName}>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="grid gap-1 text-xs font-bold text-slate-600">{translate("carsSearch.pickupDateLabel") || "Pickup date"}<input type="date" min={toCarsIsoDate(new Date())} value={carsValues.pickupDate} onChange={(event) => updateCarsValue("pickupDate", event.target.value)} className="focus-ring h-11 rounded-lg border border-slate-300 px-2 text-sm" /></label>
+                  <label className="grid gap-1 text-xs font-bold text-slate-600">{translate("carsSearch.returnDateLabel") || "Return date"}<input type="date" min={carsValues.pickupDate || toCarsIsoDate(new Date())} value={carsValues.dropoffDate} onChange={(event) => updateCarsValue("dropoffDate", event.target.value)} className="focus-ring h-11 rounded-lg border border-slate-300 px-2 text-sm" /></label>
                 </div>
-                <input className={cn(hotelFieldValueClassName, "mt-1 w-full disabled:text-slate-400")} value={carsValues.returnToDifferentLocation ? carsValues.dropoffLocation : carsValues.pickupLocation} onChange={(e) => updateCarsValue("dropoffLocation", e.target.value)} placeholder={translate("carsSearch.returnLocationPlaceholder") || "Return city, airport or address"} disabled={!carsValues.returnToDifferentLocation} />
-                {carsErrors.dropoffLocation ? <p className="mt-1 text-xs font-semibold text-red-600">{carsErrors.dropoffLocation}</p> : null}
-              </div>
-              <div className="relative rounded-xl border border-slate-300 bg-white p-3">
-                <label className={hotelFieldLabelClassName}>{translate("carsSearch.rentalDatesLabel") || "Rental dates"}</label>
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-                  <input type="date" className="focus-ring min-h-11 rounded-lg border border-slate-200 px-2 text-sm font-semibold" value={carsValues.pickupDate} onChange={(e) => updateCarsValue("pickupDate", e.target.value)} aria-label="Pickup date" />
-                  <input type="date" className="focus-ring min-h-11 rounded-lg border border-slate-200 px-2 text-sm font-semibold" value={carsValues.dropoffDate} onChange={(e) => updateCarsValue("dropoffDate", e.target.value)} aria-label="Return date" />
+                <div className="mt-3 flex justify-between"><button type="button" onClick={() => { updateCarsValue("pickupDate", ""); updateCarsValue("dropoffDate", ""); }} className="focus-ring rounded-lg px-3 py-2 text-sm font-bold text-slate-600">{translate("clear") || "Clear"}</button><button type="button" onClick={() => setCarsOpenPicker(null)} className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-bold text-white">{translate("done") || "Done"}</button></div>
+              </CarsSummaryField>
+              <CarsSummaryField label={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} value={carsTimeSummary} open={carsOpenPicker === "times"} onToggle={() => setCarsOpenPicker((open) => open === "times" ? null : "times")} className={hotelJoinedFieldClassName}>
+                <div className="grid grid-cols-2 gap-3">
+                  {(["pickupTime", "dropoffTime"] as const).map((field) => <div key={field}><p className="mb-2 text-xs font-bold text-slate-600">{field === "pickupTime" ? translate("carsSearch.pickupTimeLabel") || "Pickup time" : translate("carsSearch.returnTimeLabel") || "Return time"}</p><div className="max-h-56 overflow-y-auto">{timeOptions.map((time) => <button key={time} type="button" onClick={() => { updateCarsValue(field, time); if (field === "dropoffTime") setCarsOpenPicker(null); }} className={cn("focus-ring block w-full rounded-lg px-3 py-2 text-start text-sm", carsValues[field] === time ? "bg-[#004BB8] font-bold text-white" : "hover:bg-slate-100")}>{formatCarsTime(time)}</button>)}</div></div>)}
                 </div>
-                {carsErrors.pickupDate || carsErrors.dropoffDate || carsErrors.dateRange ? <p className="mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupDate || carsErrors.dropoffDate || carsErrors.dateRange}</p> : null}
-              </div>
-              <div className="relative rounded-xl border border-slate-300 bg-white p-3">
-                <label className={hotelFieldLabelClassName}>{translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"}</label>
-                <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-                  <select className="focus-ring min-h-11 rounded-lg border border-slate-200 px-2 text-sm font-semibold" value={carsValues.pickupTime} onChange={(e) => updateCarsValue("pickupTime", e.target.value)} aria-label={translate("carsSearch.pickupTimeLabel") || "Pickup time"}>{timeOptions.map((time) => <option key={time} value={time}>{time}</option>)}</select>
-                  <select className="focus-ring min-h-11 rounded-lg border border-slate-200 px-2 text-sm font-semibold" value={carsValues.dropoffTime} onChange={(e) => updateCarsValue("dropoffTime", e.target.value)} aria-label={translate("carsSearch.returnTimeLabel") || "Return time"}>{timeOptions.map((time) => <option key={time} value={time}>{time}</option>)}</select>
-                  <select className="focus-ring min-h-11 rounded-lg border border-slate-200 px-2 text-sm font-semibold" value={carsValues.driverAge} onChange={(e) => updateCarsValue("driverAge", e.target.value)} aria-label={translate("carsSearch.driverAgeLabel") || "Driver age"}>{driverAgeOptions.map((age) => <option key={age} value={age}>{age === defaultDriverAge ? translate("carsSearch.driverAgeAnyAgeRange") || age : age}</option>)}</select>
-                </div>
-                {carsErrors.pickupTime || carsErrors.dropoffTime || carsErrors.driverAge ? <p className="mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupTime || carsErrors.dropoffTime || carsErrors.driverAge}</p> : null}
-              </div>
+              </CarsSummaryField>
+              <CarsSummaryField label={translate("carsSearch.driverAgeLabel") || "Driver age"} value={carsValues.driverAge === defaultDriverAge ? translate("carsSearch.driverAgeAnyAgeRange") || "Any age" : carsValues.driverAge} open={carsOpenPicker === "age"} onToggle={() => setCarsOpenPicker((open) => open === "age" ? null : "age")} className={hotelJoinedFieldClassName} listbox>
+                <div role="listbox" aria-label={translate("carsSearch.driverAgeLabel") || "Driver age"} className="max-h-64 overflow-y-auto">{driverAgeOptions.map((age) => <button key={age} role="option" aria-selected={carsValues.driverAge === age} type="button" onClick={() => { updateCarsValue("driverAge", age); setCarsOpenPicker(null); }} className={cn("focus-ring block w-full rounded-lg px-3 py-2 text-start text-sm", carsValues.driverAge === age ? "bg-[#004BB8] font-bold text-white" : "hover:bg-slate-100")}>{age === defaultDriverAge ? translate("carsSearch.driverAgeAnyAgeRange") || "Any age" : age}</button>)}</div>
+              </CarsSummaryField>
               <div className={hotelSubmitWrapClassName}>
-                <Button type="submit" disabled={isCarsSearchDisabled} aria-busy={isCarsSubmitting} aria-label={translate("searchCars") || "Search cars"} className={hotelSubmitButtonClassName}>
-                  {isCarsSubmitting ? translate("carsSearchPreparing") || "Preparing car search..." : translate("searchCars") || "Search cars"}
+                <Button type="submit" disabled={isCarsSearchDisabled} aria-busy={isCarsSubmitting} aria-label={translate("searchCars") || "Search cars"} className={cn(hotelSubmitButtonClassName, "whitespace-nowrap")}>
+                  {isCarsSubmitting ? translate("searching") || "Searching…" : translate("search") || "Search"}
                 </Button>
               </div>
             </div>
           </div>
+          <div className="flex min-h-8 items-center gap-3 px-1 text-sm font-semibold text-slate-600">
+            <label className="focus-within:text-slate-900 flex cursor-pointer items-center gap-2"><input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-[#004BB8]" checked={carsValues.returnToDifferentLocation} onChange={(event) => { updateCarsValue("returnToDifferentLocation", event.target.checked); if (!event.target.checked) setCarsOpenPicker(null); }} />{translate("carsSearch.differentReturnLocation") || "Different return location"}</label>
+          </div>
+          {carsValues.returnToDifferentLocation ? <div ref={carsDropoffFieldRef} className="relative rounded-xl border border-slate-300 bg-white px-4 py-2 sm:max-w-[50%]" data-testid="cars-return-location-field"><label htmlFor="homepage-cars-dropoff" className={hotelFieldLabelClassName}>{translate("carsSearch.returnLocationLabel") || "Return location"}</label><CarLocationAutocomplete id="homepage-cars-dropoff" name="dropoffLocation" value={carsValues.dropoffLocation} onValueChange={(value) => updateCarsValue("dropoffLocation", value)} placeholder={translate("carsSearch.returnLocationPlaceholder") || "Return city, airport or address"} presentation="desktop" inputClassName={cn(hotelFieldValueClassName, "h-8 w-full")} strings={carsLocationStrings} fieldAnchorRef={carsDropoffFieldRef} searchCardRef={carsSearchCardRef} isOpen={carsOpenPicker === "dropoff"} onOpenChange={(open) => setCarsOpenPicker(open ? "dropoff" : null)} />{carsErrors.dropoffLocation ? <p className="mt-1 text-xs font-semibold text-red-600">{carsErrors.dropoffLocation}</p> : null}</div> : null}
         </form>
       )}
       </section>

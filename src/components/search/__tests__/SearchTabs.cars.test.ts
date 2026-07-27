@@ -1,0 +1,51 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+
+const source = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
+const carsBranch = source.slice(source.lastIndexOf("<form onSubmit={onCarsSubmit}"));
+
+test("homepage Cars search uses one responsive joined primary row", () => {
+  assert.match(source, /data-testid="cars-joined-search-card"/);
+  assert.match(source, /data-testid="cars-primary-row"/);
+  assert.match(source, /lg:grid-cols-\[minmax\(0,1\.65fr\)_minmax\(170px,1\.25fr\)_minmax\(170px,1\.15fr\)_minmax\(135px,0\.85fr\)_136px\]/);
+  assert.match(source, /"grid grid-cols-1 gap-2 sm:grid-cols-2 lg:gap-0"/);
+  assert.equal(carsBranch.includes("lg:grid-cols-[minmax(0,1.2fr)"), false);
+});
+
+test("homepage Cars primary fields use summaries and the location autocomplete", () => {
+  for (const label of [
+    "carsSearch.pickupLocationLabel",
+    "carsSearch.rentalDatesLabel",
+    "carsSearch.pickupReturnTimeLabel",
+    "carsSearch.driverAgeLabel",
+  ]) assert.ok(carsBranch.includes(label), label);
+  assert.match(carsBranch, /<CarLocationAutocomplete id="homepage-cars-pickup"/);
+  assert.match(carsBranch, /value=\{carsDateSummary\}/);
+  assert.match(carsBranch, /value=\{carsTimeSummary\}/);
+  assert.equal(carsBranch.includes("<select"), false);
+});
+
+test("homepage Cars return location is conditional and outside the primary row", () => {
+  const primaryRowEnd = carsBranch.indexOf("</div>\n          </div>\n          <div className=\"flex min-h-8");
+  const primaryRow = carsBranch.slice(0, primaryRowEnd);
+  assert.equal(primaryRow.includes("homepage-cars-dropoff"), false);
+  assert.match(carsBranch, /carsValues\.returnToDifferentLocation \? <div ref=\{carsDropoffFieldRef\}/);
+  assert.match(source, /if \(key === "returnToDifferentLocation" && value === false\) \{\s*next\.dropoffLocation = "";/);
+});
+
+test("homepage Cars submit remains Cars-specific while visible copy is generic and single-line", () => {
+  assert.match(carsBranch, /aria-label=\{translate\("searchCars"\) \|\| "Search cars"\}/);
+  assert.match(carsBranch, /"whitespace-nowrap"/);
+  assert.match(carsBranch, /translate\("search"\) \|\| "Search"/);
+  assert.equal(carsBranch.includes(': translate("searchCars") || "Search cars"'), false);
+});
+
+test("Cars results URL retains every required parameter and validation", () => {
+  const submit = source.slice(source.indexOf("const onCarsSubmit"), source.indexOf("const isCarsSearchDisabled"));
+  assert.match(submit, /validateCarsForm\(carsValues/);
+  for (const parameter of ["pickupLocation", "pickupDate", "pickupTime", "dropoffDate", "dropoffTime", "driverAge", "dropoffLocation"]) {
+    assert.ok(submit.includes(parameter), parameter);
+  }
+  assert.match(submit, /router\.push\(`\/cars\/results\?\$\{params\.toString\(\)\}`\)/);
+});
