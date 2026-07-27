@@ -1942,12 +1942,27 @@ function CarFilters({ activeFilterCount, layout, onClear, onToggle, selectedFilt
   t: (key: string) => string;
 }) {
   const [openCompactSection, setOpenCompactSection] = useState<string | null>(null);
-  return <div className={cn(layout === "compact" ? "desktop-filter-sidebar flex max-h-full flex-col overflow-hidden rounded-2xl border border-[#D8E1EC] bg-[#EEF3F8] p-0 shadow-[0_12px_30px_-22px_rgba(15,23,42,0.42)]" : layout === "desktop" ? "desktop-filter-sidebar border border-slate-200/80 bg-transparent p-0 shadow-none rounded-none" : "overflow-hidden bg-white")}>
-    {layout !== "mobile" ? <div className="desktop-filter-sidebar__header shrink-0 border-b border-slate-200/70 px-3 py-3">
+  const activeFilterLabel = interpolate(t("carsResults.activeFilterCount"), {
+    count: String(activeFilterCount),
+  });
+
+  return <div className={cn(layout === "compact" ? "desktop-filter-sidebar flex max-h-full flex-col overflow-hidden rounded-2xl border border-[#D8E1EC] bg-[#EEF3F8] p-0 shadow-[0_14px_30px_-26px_rgba(15,23,42,0.42)]" : layout === "desktop" ? "desktop-filter-sidebar border border-slate-200/80 bg-transparent p-0 shadow-none rounded-none" : "overflow-hidden bg-white")}>
+    {layout === "compact" ? <div className="desktop-filter-sidebar__header shrink-0 border-b border-[#D8E1EC]/80 bg-[#EEF3F8] px-3.5 py-2.5">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="desktop-filter-sidebar__title flex min-w-0 items-center gap-2 truncate text-[15px] font-semibold leading-5 tracking-[-0.01em] text-slate-950">
+          <SlidersHorizontal className="desktop-filter-sidebar__icon shrink-0 text-[#004BB8]" size={15} strokeWidth={2.25} aria-hidden="true" />
+          <span className="truncate">{t("carsResults.filterBy")}</span>
+        </h2>
+      </div>
+      {activeFilterCount > 0 ? <div className="mt-2 flex items-center justify-between gap-3">
+        <span className="desktop-filter-sidebar__count rounded-full bg-[#EAF2FB] px-2 py-0.5 text-[11px] font-semibold text-[#235A9F] ring-1 ring-[#004BB8]/8">{activeFilterLabel}</span>
+        <button type="button" className="rounded-full px-1.5 py-0.5 text-[11px] font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-[#235A9F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25" onClick={onClear}>{t("clearAll")}</button>
+      </div> : null}
+    </div> : layout === "desktop" ? <div className="desktop-filter-sidebar__header shrink-0 border-b border-slate-200/70 px-3 py-3">
       <div className="flex items-center justify-between gap-3"><h2 className="truncate text-base font-bold text-slate-950">{t("carsResults.filterBy")}{activeFilterCount > 0 ? <span className="ms-2 rounded-full bg-[#004BB8] px-2 py-0.5 text-xs text-white">{activeFilterCount}</span> : null}</h2><SlidersHorizontal className="shrink-0 text-[#004BB8]" size={18} aria-hidden="true" /></div>
       {activeFilterCount > 0 ? <button type="button" className="focus-ring mt-2 text-xs font-semibold text-[#004BB8]" onClick={onClear}>{t("clearAll")}</button> : null}
     </div> : null}
-    <div className={cn(layout === "compact" ? "min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain bg-[#EEF3F8] px-3 py-1" : layout === "mobile" ? "space-y-0 bg-white" : "space-y-0 bg-transparent px-3 py-1")}>
+    <div className={cn(layout === "compact" ? "min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-[#EEF3F8] px-2 py-1" : layout === "mobile" ? "space-y-0 bg-white" : "space-y-0 bg-transparent px-3 py-1")}>
       {carFilterGroups.map((group) => <FilterSection key={group.id} layout={layout} group={group} onToggle={onToggle} selectedOptions={selectedFilters[group.id] ?? []} compactOpen={openCompactSection === group.id} onCompactOpen={() => setOpenCompactSection((current) => current === group.id ? null : group.id)} t={t} />)}
     </div>
   </div>;
@@ -1963,10 +1978,10 @@ function FilterSection({ layout, group, onToggle, selectedOptions, compactOpen, 
   t: (key: string) => string;
 }) {
   const panelId = `cars-compact-filter-${group.id}`;
-  return <section className={cn(layout === "mobile" ? "border-t border-border py-4 first:border-t-0 first:pt-0" : "border-t border-slate-200/75 py-3 first:border-t-0")}>
-    {layout === "compact" ? <button type="button" aria-expanded={compactOpen} aria-controls={panelId} onClick={onCompactOpen} className="focus-ring flex min-h-10 w-full items-center justify-between gap-2 text-start text-sm font-bold text-slate-900"><span>{t(group.titleKey)}</span><span className="flex items-center gap-2">{selectedOptions.length ? <span className="rounded-full bg-[#004BB8] px-2 py-0.5 text-xs text-white">{selectedOptions.length}</span> : null}<ChevronDown className={cn("h-4 w-4 transition", compactOpen && "rotate-180")} aria-hidden="true" /></span></button> : <h3 className="text-sm font-extrabold uppercase tracking-[0.14em] text-slate-950">{t(group.titleKey)}</h3>}
-    <div id={panelId} hidden={layout === "compact" && !compactOpen} aria-hidden={layout === "compact" && !compactOpen} className="mt-2 grid gap-0.5">
-      {group.options.map((option) => { const selected = selectedOptions.includes(option.id); return <label key={option.id} className={cn("flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-sm font-medium transition-all", selected ? "font-semibold text-[#021C2B]" : "text-slate-600 hover:bg-slate-50")}><input type="checkbox" tabIndex={layout === "compact" && !compactOpen ? -1 : undefined} className="h-4 w-4 rounded border-slate-300 accent-blue" checked={selected} onChange={() => onToggle(group.id, option.id)} /><span className="min-w-0 flex-1 truncate">{t(option.labelKey)}</span></label>; })}
+  return <section className={cn(layout === "compact" ? "border-t border-[#D8E1EC]/75 first:border-t-0" : layout === "mobile" ? "border-t border-border py-4 first:border-t-0 first:pt-0" : "border-t border-slate-200/75 py-3 first:border-t-0")}>
+    {layout === "compact" ? <button type="button" aria-expanded={compactOpen} aria-controls={panelId} onClick={onCompactOpen} className={cn("group flex min-h-9 w-full items-center justify-between gap-3 rounded-md px-2.5 py-2 text-start text-[13px] font-semibold leading-5 tracking-[-0.005em] text-slate-800 transition-colors duration-200 motion-reduce:transition-none hover:bg-[#E5ECF4] hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30", compactOpen && "text-[#004BB8]")}><span className="min-w-0 truncate">{t(group.titleKey)}</span><span className="flex shrink-0 items-center gap-2">{selectedOptions.length ? <span className="min-w-5 rounded-full bg-[#E2EAF3] px-2 py-0.5 text-center text-[11px] font-semibold normal-case leading-4 tracking-normal text-[#235A9F] ring-1 ring-[#004BB8]/10 group-hover:bg-[#DCE8F6]">{selectedOptions.length}</span> : null}<ChevronDown className={cn("h-3.5 w-3.5 text-slate-500 transition duration-200 motion-reduce:transition-none group-hover:text-[#004BB8]", compactOpen && "rotate-180 text-[#004BB8]")} strokeWidth={2.3} aria-hidden="true" /></span></button> : <h3 className="text-sm font-extrabold uppercase tracking-[0.14em] text-slate-950">{t(group.titleKey)}</h3>}
+    <div id={panelId} hidden={layout === "compact" && !compactOpen} aria-hidden={layout === "compact" && !compactOpen} className={cn(layout === "compact" ? "grid h-auto gap-0.5 overflow-visible bg-transparent px-2.5 pb-3 pt-0.5" : "mt-2 grid gap-0.5")}>
+      {group.options.map((option) => { const selected = selectedOptions.includes(option.id); const input = <input type="checkbox" tabIndex={layout === "compact" && !compactOpen ? -1 : undefined} className={layout === "compact" ? "mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-slate-300 accent-blue focus-visible:ring-2 focus-visible:ring-[#004BB8]/25" : "h-4 w-4 rounded border-slate-300 accent-blue"} checked={selected} onChange={() => onToggle(group.id, option.id)} />; const label = <span className="min-w-0 flex-1 truncate">{t(option.labelKey)}</span>; return <label key={option.id} className={cn(layout === "compact" ? "flex min-h-8 cursor-pointer items-start justify-between gap-2 rounded-lg px-1.5 py-1 text-[13px] font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950" : "flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-sm font-medium transition-all", selected ? "font-semibold text-[#021C2B]" : layout === "compact" ? null : "text-slate-600 hover:bg-slate-50")}>{layout === "compact" ? <span className="flex min-w-0 items-start gap-1.5">{input}{label}</span> : <>{input}{label}</>}</label>; })}
     </div>
   </section>;
 }
