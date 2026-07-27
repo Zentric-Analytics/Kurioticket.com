@@ -7,9 +7,80 @@ on:
       - main
     paths:
       - "prisma/**"
-      - "scripts/check-conflicts.mjs"
-      - "scripts/check-prisma-migration-timestamps.mjs"
-      - "scripts/deploy-render-migrations.mjs"
-      - "scripts/run-render-migrations.mjs"
-      - "scripts/verify-production-schema.mjs"
-      -
+      - "scripts/**"
+      - "package.json"
+      - "package-lock.json"
+      - "prisma.config.ts"
+      - ".github/workflows/migration-validation.yml"
+  push:
+    branches:
+      - dev
+      - main
+    paths:
+      - "prisma/**"
+      - "scripts/**"
+      - "package.json"
+      - "package-lock.json"
+      - "prisma.config.ts"
+      - ".github/workflows/migration-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: migration-validation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-migrations:
+    name: Validate Prisma migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: kurioticket_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d kurioticket_ci"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/kurioticket_ci?schema=public
+      CI: "true"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check unresolved conflict markers
+        run: npm run check:conflicts
+
+      - name: Check migration timestamps
+        run: npm run check:migration-timestamps
+
+      - name: Validate Prisma schema
+        run: npx prisma validate
+
+      - name: Apply migrations and verify schema
+        run: npm run db:deploy:render
+
+      - name: Confirm migration status
+        run: npx prisma migrate status
