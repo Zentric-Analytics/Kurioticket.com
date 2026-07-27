@@ -377,10 +377,13 @@ function CarsSummaryField({
   desktopAlign = "left",
   desktopWidth = 448,
   desktopPanelClassName = "p-3",
+  leadingIcon,
+  showChevron = true,
+  valueClassName,
 }: {
   id: string;
   label: string;
-  value: string;
+  value: ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   className: string;
@@ -389,6 +392,9 @@ function CarsSummaryField({
   desktopAlign?: "left" | "center" | "right";
   desktopWidth?: number;
   desktopPanelClassName?: string;
+  leadingIcon?: ReactNode;
+  showChevron?: boolean;
+  valueClassName?: string;
 }) {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const launcherRef = useRef<HTMLButtonElement | null>(null);
@@ -438,7 +444,11 @@ function CarsSummaryField({
     <div ref={wrapperRef} className={cn(className, "relative rounded-xl border border-slate-300 bg-white")}>
       <span className="mb-1 block text-[11px] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-500 lg:text-[10px] lg:tracking-[0.10em] lg:text-slate-600">{label}</span>
       <button ref={launcherRef} type="button" aria-expanded={open} aria-controls={panelId} aria-haspopup={popupRole} onClick={() => onOpenChange(!open)} className="focus-ring flex h-8 w-full min-w-0 items-center justify-between gap-2 rounded-md text-start text-[16px] font-medium text-slate-900 sm:text-[15px] lg:text-[15px]">
-        <span className="truncate">{value}</span><ChevronDown aria-hidden="true" className={cn("h-4 w-4 shrink-0 text-slate-500 transition-transform", open && "rotate-180")} />
+        <span className={cn("flex min-w-0 items-center gap-2 truncate", valueClassName)}>
+          {leadingIcon}
+          <span className="truncate">{value}</span>
+        </span>
+        {showChevron ? <ChevronDown aria-hidden="true" className={cn("h-4 w-4 shrink-0 text-slate-500 transition-transform", open && "rotate-180")} /> : null}
       </button>
       {open ? (isSmViewport
         ? <DesktopTopLayerPopover open={open} launcherRef={launcherRef} align={desktopAlign} width={desktopWidth} panelRef={panelRef} id={panelId} role={popupRole} ariaLabel={label} className={desktopPanelClassName}>{children}</DesktopTopLayerPopover>
@@ -2078,10 +2088,21 @@ export function SearchTabs({
       ? carsDateFormatter.format(new Date(year, month - 1, day))
       : "";
   };
-  const carsDateSummary =
-    formatCarsDate(carsValues.pickupDate) && formatCarsDate(carsValues.dropoffDate)
-      ? `${formatCarsDate(carsValues.pickupDate)} — ${formatCarsDate(carsValues.dropoffDate)}`
-      : translate("carsSearch.chooseRentalDates") || "Pickup date — Return date";
+  const carsPickupDateDisplay =
+    formatCarsDate(carsValues.pickupDate) ||
+    translate("carsSearch.pickupDateLabel") ||
+    "Pickup date";
+  const carsReturnDateDisplay =
+    formatCarsDate(carsValues.dropoffDate) ||
+    translate("carsSearch.returnDateLabel") ||
+    "Return date";
+  const carsDateSummary = (
+    <>
+      <span className={carsValues.pickupDate ? "text-slate-900" : "text-slate-500"}>{carsPickupDateDisplay}</span>
+      <span className="text-slate-400"> — </span>
+      <span className={carsValues.dropoffDate ? "text-slate-900" : "text-slate-500"}>{carsReturnDateDisplay}</span>
+    </>
+  );
   const formatCarsTime = (value: string) => {
     const [hour, minute] = value.split(":").map(Number);
     if (!Number.isFinite(hour) || !Number.isFinite(minute)) return value;
@@ -4091,7 +4112,7 @@ export function SearchTabs({
                 <CarLocationAutocomplete id="homepage-cars-pickup" name="pickupLocation" value={carsValues.pickupLocation} onValueChange={(value) => updateCarsValue("pickupLocation", value)} placeholder={translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"} presentation="responsive" inputClassName={cn(hotelFieldValueClassName, "h-8 w-full")} strings={carsLocationStrings} fieldAnchorRef={carsPickupFieldRef} searchCardRef={carsSearchSurfaceRef} isOpen={carsOpenPicker === "pickup"} onOpenChange={(open) => setCarsOpenPicker(open ? "pickup" : null)} />
                 {carsErrors.pickupLocation ? <p className="absolute start-3 top-full z-10 mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupLocation}</p> : null}
               </div>
-              <CarsSummaryField id="homepage-cars-rental-dates" label={translate("carsSearch.rentalDatesLabel") || "Rental dates"} value={carsDateSummary} open={carsOpenPicker === "dates"} onOpenChange={(open) => openHomepageCarsPicker("dates", open)} className={hotelJoinedFieldClassName} desktopWidth={620} desktopPanelClassName="p-4">
+              <CarsSummaryField id="homepage-cars-rental-dates" label={translate("carsSearch.rentalDatesLabel") || "Rental dates"} value={carsDateSummary} open={carsOpenPicker === "dates"} onOpenChange={(open) => openHomepageCarsPicker("dates", open)} className={hotelJoinedFieldClassName} desktopWidth={620} desktopPanelClassName="p-4" leadingIcon={<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />} showChevron={false}>
                 <CarsRentalDatePickerContent
                   dropoffDate={carsValues.dropoffDate}
                   formatFullDate={(date) => new Intl.DateTimeFormat(calendarLocale, { dateStyle: "full" }).format(date)}
