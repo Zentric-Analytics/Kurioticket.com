@@ -36,8 +36,17 @@ test("action and target values receive safe presentation formatting", () => {
   assert.equal(formatActionLabel("account_deletion.save_notes"), "Account Deletion Notes Saved");
   assert.equal(formatActionLabel("unknown/action.value"), "Unknown Action Value");
   assert.equal(formatTargetType("ACCOUNT_DELETION_REQUEST"), "Account Deletion Request");
+  assert.equal(formatTargetType("AccountDeletionRequest"), "Account Deletion Request");
   assert.equal(formatTargetIdentifier("ckabcdefghijklmnopqrstuvwxyz1234"), "ckabcdef…1234");
   assert.equal(formatTargetIdentifier("duffel"), "Duffel");
+});
+
+test("table keeps network addresses intact and constrains expanded metadata", () => {
+  assert.match(table, /min-w-\[140px\] whitespace-nowrap[^\"]*font-mono/);
+  assert.doesNotMatch(table, /break-all|break-words/);
+  assert.match(table, /max-w-\[600px\]/);
+  assert.match(table, /whitespace-pre-wrap/);
+  assert.match(table, /overflow-x-auto/);
 });
 
 test("metadata is complete, escaped by React, and handles empty and scalar values", () => {

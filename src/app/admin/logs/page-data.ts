@@ -77,5 +77,11 @@ export function formatMetadata(metadata: unknown) {
 }
 
 function titleCase(value: string) {
-  return value.trim().replace(/[._:/-]+/g, " ").replace(/\s+/g, " ").toLowerCase().replace(/\b\p{L}/gu, (letter) => letter.toUpperCase());
+  return value
+    .trim()
+    .replace(/([\p{Ll}\d])(\p{Lu})/gu, "$1 $2")
+    .replace(/[._:/-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .toLowerCase()
+    .replace(/\b\p{L}/gu, (letter) => letter.toUpperCase());
 }
