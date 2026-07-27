@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { RecoveryScreen } from "../src/features/launch/LaunchScreens";
+import { LaunchLoadingScreen, RecoveryScreen } from "../src/features/launch/LaunchScreens";
 import { runBootstrap, type BootstrapState } from "../src/launch/bootstrap";
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
@@ -44,5 +44,5 @@ export default function Index() {
 
   if (state.status === "configuration-error") return <RecoveryScreen type="configuration" onRetry={bootstrap} />;
   if (state.status === "offline") return <RecoveryScreen type="offline" onRetry={bootstrap} />;
-  return null;
+  return <LaunchLoadingScreen onReady={() => void SplashScreen.hideAsync().catch(() => undefined)} />;
 }
