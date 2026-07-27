@@ -26,6 +26,39 @@ test("homepage Cars primary fields use summaries and the location autocomplete",
   assert.equal(carsBranch.includes("<select"), false);
 });
 
+test("source contract: homepage Rental Dates renders localized two-slot summary states", () => {
+  assert.match(source, /const carsPickupDateDisplay =\s*formatCarsDate\(carsValues\.pickupDate\) \|\|\s*translate\("carsSearch\.pickupDateLabel"\) \|\|\s*"Pickup date";/);
+  assert.match(source, /const carsReturnDateDisplay =\s*formatCarsDate\(carsValues\.dropoffDate\) \|\|\s*translate\("carsSearch\.returnDateLabel"\) \|\|\s*"Return date";/);
+  assert.match(source, /\{carsPickupDateDisplay\}<\/span>\s*<span className="text-slate-400"> — <\/span>\s*<span className=\{carsValues\.dropoffDate \? "text-slate-900" : "text-slate-500"\}>\{carsReturnDateDisplay\}/);
+  assert.equal(source.slice(source.indexOf("const carsDateSummary"), source.indexOf("const formatCarsTime")).includes("chooseRentalDates"), false);
+});
+
+test("source contract: homepage Rental Dates alone uses a decorative Calendar and hides its chevron", () => {
+  const rentalDatesLauncher = carsBranch.slice(
+    carsBranch.indexOf('<CarsSummaryField id="homepage-cars-rental-dates"'),
+    carsBranch.indexOf("<CarsRentalDatePickerContent"),
+  );
+  assert.match(rentalDatesLauncher, /leadingIcon=\{<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" \/>\}/);
+  assert.match(rentalDatesLauncher, /showChevron=\{false\}/);
+  assert.match(source, /showChevron = true/);
+  assert.match(source, /\{showChevron \? <ChevronDown aria-hidden="true"/);
+});
+
+test("source contract: Rental Dates launcher stays one accessible button with the existing dialog", () => {
+  const summaryField = source.slice(source.indexOf("function CarsSummaryField"), source.indexOf("export function SearchTabs"));
+  assert.match(summaryField, /<button ref=\{launcherRef\} type="button" aria-expanded=\{open\} aria-controls=\{panelId\} aria-haspopup=\{popupRole\}/);
+  assert.match(carsBranch, /id="homepage-cars-rental-dates"[\s\S]*desktopWidth=\{620\}[\s\S]*<CarsRentalDatePickerContent/);
+  assert.equal((summaryField.match(/<button/g) ?? []).length, 1);
+});
+
+test("source contract: Time and Driver Age retain the default summary-field chevron", () => {
+  for (const id of ["homepage-cars-time-range", "homepage-cars-driver-age"]) {
+    const start = carsBranch.indexOf(`<CarsSummaryField id="${id}"`);
+    const invocation = carsBranch.slice(start, carsBranch.indexOf(">", start) + 1);
+    assert.equal(invocation.includes("showChevron"), false, id);
+  }
+});
+
 test("homepage Cars return location is conditional and outside the primary row", () => {
   const primaryRowEnd = carsBranch.indexOf("</div>\n          </div>\n          <div className=\"flex min-h-8");
   const primaryRow = carsBranch.slice(0, primaryRowEnd);
