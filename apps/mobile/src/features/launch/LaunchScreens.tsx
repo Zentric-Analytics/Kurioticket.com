@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, Animated, Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { AccessibilityInfo, Animated, Linking, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { router } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Logo } from "../../components/Logo";
 import { Screen } from "../../components/Screen";
 import { colors, spacing } from "../../theme/tokens";
@@ -9,9 +10,9 @@ const TERMS_URL = "https://kurioticket.com/terms";
 const PRIVACY_URL = "https://kurioticket.com/privacy";
 
 
-type ButtonProps = { label: string; onPress: () => void; disabled?: boolean; accessibilityLabel?: string };
+type ButtonProps = { label: string; onPress: () => void; disabled?: boolean; accessibilityLabel?: string; onboarding?: boolean };
 
-function PrimaryButton({ label, onPress, disabled = false, accessibilityLabel }: ButtonProps) {
+function PrimaryButton({ label, onPress, disabled = false, accessibilityLabel, onboarding = false }: ButtonProps) {
   return (
     <Pressable
       accessibilityLabel={accessibilityLabel ?? label}
@@ -19,14 +20,14 @@ function PrimaryButton({ label, onPress, disabled = false, accessibilityLabel }:
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [styles.button, styles.primary, pressed && !disabled && styles.primaryPressed, disabled && styles.disabled]}
+      style={({ pressed }) => [styles.button, styles.primary, onboarding && styles.onboardingButton, pressed && !disabled && styles.primaryPressed, disabled && styles.disabled]}
     >
-      <Text style={styles.primaryText}>{label}</Text>
+      <Text style={[styles.primaryText, onboarding && styles.onboardingButtonText]}>{label}</Text>
     </Pressable>
   );
 }
 
-function SecondaryButton({ label, onPress, disabled = false, accessibilityLabel }: ButtonProps) {
+function SecondaryButton({ label, onPress, disabled = false, accessibilityLabel, onboarding = false }: ButtonProps) {
   return (
     <Pressable
       accessibilityLabel={accessibilityLabel ?? label}
@@ -34,9 +35,9 @@ function SecondaryButton({ label, onPress, disabled = false, accessibilityLabel 
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [styles.button, styles.secondary, pressed && !disabled && styles.secondaryPressed, disabled && styles.disabled]}
+      style={({ pressed }) => [styles.button, styles.secondary, onboarding && styles.onboardingSecondary, pressed && !disabled && styles.secondaryPressed, disabled && styles.disabled]}
     >
-      <Text style={styles.secondaryText}>{label}</Text>
+      <Text style={[styles.secondaryText, onboarding && styles.onboardingButtonText]}>{label}</Text>
     </Pressable>
   );
 }
@@ -59,6 +60,8 @@ function LegalLink({ label, url }: { label: string; url: string }) {
 export function OnboardingScreen() {
   const [guestPending, setGuestPending] = useState(false);
   const entrance = useRef(new Animated.Value(0)).current;
+  const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     let mounted = true;
@@ -89,6 +92,7 @@ export function OnboardingScreen() {
   }
 
   const animatedStyle = {
+    minHeight: Math.max(0, height - insets.top - insets.bottom - spacing.screen * 2),
     opacity: entrance,
     transform: [{ translateY: entrance.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }],
   };
@@ -96,22 +100,21 @@ export function OnboardingScreen() {
   return (
     <Screen>
       <Animated.View style={[styles.onboarding, animatedStyle]}>
-        <View style={styles.heroHeader}>
-          <Logo />
-          <Text style={styles.eyebrow}>Flights first</Text>
-          <Text style={styles.title}>Find better flights. Travel with confidence.</Text>
-          <Text style={styles.body}>Compare fares clearly, save the trips that matter, and keep an eye on price changes as Kurioticket grows.</Text>
+        <View style={styles.brandArea}>
+          <Text accessibilityRole="header" style={styles.wordmark}>Kurioticket</Text>
         </View>
 
-        <View style={styles.benefits}>
-          <BenefitRow>Compare flight options clearly</BenefitRow>
-          <BenefitRow>Save trips and searches</BenefitRow>
-          <BenefitRow>Track fares with price alerts</BenefitRow>
-        </View>
+        <View style={styles.mainContent}>
+          <View style={styles.benefits}>
+            <BenefitRow>Compare flight options clearly</BenefitRow>
+            <BenefitRow>Save trips and searches</BenefitRow>
+            <BenefitRow>Track fares with price alerts</BenefitRow>
+          </View>
 
-        <View style={styles.actions}>
-          <PrimaryButton label="Continue with email" onPress={() => router.push("/email-auth")} disabled={guestPending} />
-          <SecondaryButton label="Continue as guest" onPress={continueGuest} disabled={guestPending} />
+          <View style={styles.actions}>
+            <PrimaryButton label="Continue with email" onPress={() => router.push("/email-auth")} disabled={guestPending} onboarding />
+            <SecondaryButton label="Continue as guest" onPress={continueGuest} disabled={guestPending} onboarding />
+          </View>
         </View>
 
         <Text style={styles.legal}>By continuing, you agree to Kurioticket’s <LegalLink label="Terms of Service" url={TERMS_URL} /> and <LegalLink label="Privacy Policy" url={PRIVACY_URL} />.</Text>
@@ -147,27 +150,30 @@ export function RecoveryScreen({ type, onRetry }: { type: "offline" | "configura
 }
 
 const styles = StyleSheet.create({
-  onboarding: { flex: 1, justifyContent: "space-between", gap: 28, paddingVertical: 6 },
-  heroHeader: { alignItems: "center", gap: 14 },
+  onboarding: { width: "100%", paddingTop: 12, paddingBottom: 4 },
+  brandArea: { alignItems: "center", paddingVertical: 20 },
+  wordmark: { color: colors.navy, fontSize: 30, lineHeight: 38, fontWeight: "700", letterSpacing: -0.4, textAlign: "center" },
+  mainContent: { marginTop: 38, gap: 34 },
   card: { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: spacing.radius, padding: spacing.card, gap: 16 },
-  eyebrow: { color: colors.teal, fontWeight: "800", textTransform: "uppercase", letterSpacing: 1, fontSize: 12 },
-  title: { color: colors.navy, fontSize: 34, lineHeight: 40, fontWeight: "900", letterSpacing: -0.6, textAlign: "center" },
   titleSmall: { color: colors.navy, fontSize: 28, lineHeight: 34, fontWeight: "900", letterSpacing: -0.4 },
   body: { color: colors.slate, fontSize: 16, lineHeight: 24, textAlign: "center" },
-  benefits: { gap: 12, backgroundColor: colors.surface, borderRadius: 24, padding: 16 },
-  benefitRow: { minHeight: 44, flexDirection: "row", alignItems: "center", gap: 12 },
-  benefitIcon: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: colors.sky },
-  benefitDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.blue },
-  benefitText: { flex: 1, color: colors.navy, fontSize: 16, lineHeight: 22, fontWeight: "700" },
-  actions: { gap: 12 },
+  benefits: { gap: 14, paddingHorizontal: 6 },
+  benefitRow: { minHeight: 42, flexDirection: "row", alignItems: "center", gap: 12 },
+  benefitIcon: { width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center", backgroundColor: colors.sky },
+  benefitDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.blue },
+  benefitText: { flex: 1, color: colors.navy, fontSize: 16, lineHeight: 23, fontWeight: "600" },
+  actions: { gap: 8 },
   button: { minHeight: 54, borderRadius: 18, paddingHorizontal: 18, paddingVertical: 16, alignItems: "center", justifyContent: "center" },
+  onboardingButton: { borderRadius: 14 },
+  onboardingButtonText: { fontWeight: "600" },
   primary: { backgroundColor: colors.blue },
   primaryPressed: { backgroundColor: colors.navy, transform: [{ scale: 0.99 }] },
   primaryText: { color: "white", fontWeight: "900", fontSize: 16 },
   secondary: { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 },
+  onboardingSecondary: { backgroundColor: "transparent", borderColor: "transparent" },
   secondaryPressed: { backgroundColor: colors.sky, transform: [{ scale: 0.99 }] },
   secondaryText: { color: colors.navy, fontWeight: "900", fontSize: 16 },
   disabled: { opacity: 0.55 },
-  legal: { color: colors.muted, fontSize: 12, lineHeight: 18, textAlign: "center" },
-  link: { color: colors.blue, fontWeight: "800" },
+  legal: { color: colors.muted, fontSize: 12, lineHeight: 18, textAlign: "center", marginTop: "auto", paddingTop: 32 },
+  link: { color: colors.blue, fontWeight: "600" },
 });
