@@ -1,11 +1,11 @@
 "use client";
 
-import { CSSProperties, ChangeEvent, KeyboardEvent, RefObject, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { CSSProperties, ChangeEvent, KeyboardEvent, RefObject, useCallback, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { Building2, LocateFixed, MapPin, Plane } from "lucide-react";
 
 import type { CarLocationSuggestion, CarLocationSuggestionKind } from "@/lib/cars/carLocationSuggestions";
-import { calculateDesktopPopoverGeometry } from "./desktopPopoverPosition";
+import { calculateDesktopPopoverGeometry, calculateLocationPanelScrollAdjustment } from "./desktopPopoverPosition";
 
 type Strings = {
   locationSuggestions: string;
@@ -32,7 +32,7 @@ type Props = {
   disabled?: boolean;
   inputRef?: RefObject<HTMLInputElement | null>;
   inputClassName?: string;
-  presentation: "desktop" | "mobile";
+  presentation: "desktop" | "mobile" | "responsive";
   countryHint?: string;
   strings: Strings;
   onRequestClose?: () => void;
@@ -81,6 +81,16 @@ export function CarLocationAutocomplete({
   const [suggestions, setSuggestions] = useState<CarLocationSuggestion[]>([]);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const open = isOpen ?? internalOpen;
+  const isSmViewport = useSyncExternalStore(
+    (notify) => {
+      const query = window.matchMedia("(min-width: 640px)");
+      query.addEventListener("change", notify);
+      return () => query.removeEventListener("change", notify);
+    },
+    () => window.matchMedia("(min-width: 640px)").matches,
+    () => false,
+  );
+  const usesDesktopPanel = presentation === "desktop" || (presentation === "responsive" && isSmViewport);
   const setOpen = useCallback((nextOpen: boolean) => {
     if (isOpen === undefined) setInternalOpen(nextOpen);
     onOpenChange?.(nextOpen);
@@ -90,6 +100,27 @@ export function CarLocationAutocomplete({
   const [error, setError] = useState(false);
   const requestIdRef = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
+  const previouslyOpenRef = useRef(false);
+
+  useEffect(() => {
+    if (open) return;
+    const frame = window.requestAnimationFrame(() => setHighlightedIndex(-1));
+    return () => window.cancelAnimationFrame(frame);
+  }, [open]);
+
+  useLayoutEffect(() => {
+    const opening = open && !previouslyOpenRef.current;
+    previouslyOpenRef.current = open;
+    if (!opening || !usesDesktopPanel || !searchCardRef?.current) return;
+    const adjustment = calculateLocationPanelScrollAdjustment({
+      boundaryRect: searchCardRef.current.getBoundingClientRect(),
+      viewportHeight: window.innerHeight,
+      viewportPadding: 16,
+      topViewportPadding: 16,
+      gap: 10,
+    });
+    if (adjustment > 0) window.scrollBy({ top: adjustment, behavior: "auto" });
+  }, [open, searchCardRef, usesDesktopPanel]);
 
   useEffect(() => {
     if (!open || disabled) return;
@@ -126,17 +157,17 @@ export function CarLocationAutocomplete({
   }, [countryHint, disabled, open, value]);
 
   useEffect(() => {
-    if (!open || presentation !== "desktop") return;
+    if (!open || !usesDesktopPanel) return;
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
       if (!wrapperRef.current?.contains(target) && !panelRef.current?.contains(target)) setOpen(false);
     };
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [open, presentation, setOpen]);
+  }, [open, setOpen, usesDesktopPanel]);
 
   useLayoutEffect(() => {
-    if (!open || presentation !== "desktop" || !fieldAnchorRef?.current || !searchCardRef?.current) return;
+    if (!open || !usesDesktopPanel || !fieldAnchorRef?.current || !searchCardRef?.current) return;
     const updatePosition = () => {
       if (!fieldAnchorRef.current || !searchCardRef.current) return;
       const geometry = calculateDesktopPopoverGeometry({
@@ -161,7 +192,7 @@ export function CarLocationAutocomplete({
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
     };
-  }, [fieldAnchorRef, open, presentation, searchCardRef, suggestions.length, loading, error]);
+  }, [fieldAnchorRef, open, searchCardRef, suggestions.length, loading, error, usesDesktopPanel]);
 
   useEffect(() => {
     if (!open || highlightedIndex < 0) return;
@@ -210,8 +241,8 @@ export function CarLocationAutocomplete({
 
   const activeId = open && highlightedIndex >= 0 ? `${listboxId}-option-${highlightedIndex}` : undefined;
   const label = value.trim() ? strings.locationSuggestions : strings.popularLocations;
-  const panelClass = presentation === "desktop"
-    ? "fixed z-[1110] hidden overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-950/12 ring-1 ring-slate-950/5 sm:block"
+  const panelClass = usesDesktopPanel
+    ? "fixed z-[1110] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-950/12 ring-1 ring-slate-950/5"
     : "mt-4 max-h-[48vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-sm";
 
   const panelContent = (
@@ -254,7 +285,7 @@ export function CarLocationAutocomplete({
   );
 
   return (
-    <div ref={wrapperRef} className="relative" data-cars-desktop-popover={presentation === "desktop" ? "locations" : undefined}>
+    <div ref={wrapperRef} className="relative" data-cars-desktop-popover={usesDesktopPanel ? "locations" : undefined}>
       <input
         ref={activeInputRef}
         id={id}
@@ -264,7 +295,7 @@ export function CarLocationAutocomplete({
         onChange={onChange}
         onFocus={() => setOpen(true)}
         onBlur={(event) => {
-          if (presentation === "desktop" && !panelRef.current?.contains(event.relatedTarget as Node | null)) close();
+          if (usesDesktopPanel && !panelRef.current?.contains(event.relatedTarget as Node | null)) close();
         }}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
@@ -278,7 +309,7 @@ export function CarLocationAutocomplete({
         aria-activedescendant={activeId}
       />
 
-      {open ? (presentation === "desktop" && typeof document !== "undefined" ? createPortal(
+      {open ? (usesDesktopPanel && typeof document !== "undefined" ? createPortal(
         <div ref={panelRef} style={panelStyle} className={panelClass} data-cars-desktop-popover="locations">
           {panelContent}
         </div>,

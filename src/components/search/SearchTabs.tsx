@@ -241,6 +241,10 @@ type DesktopTopLayerPopoverProps = {
   maxViewportGutter?: number;
   offset?: number;
   className?: string;
+  panelRef?: RefObject<HTMLDivElement | null>;
+  id?: string;
+  role?: "dialog" | "listbox";
+  ariaLabel?: string;
   children: ReactNode;
 };
 
@@ -266,6 +270,10 @@ function DesktopTopLayerPopover({
   maxViewportGutter = 16,
   offset = 12,
   className,
+  panelRef,
+  id,
+  role,
+  ariaLabel,
   children,
 }: DesktopTopLayerPopoverProps) {
   const [anchorRect, setAnchorRect] = useState<{
@@ -323,6 +331,10 @@ function DesktopTopLayerPopover({
 
   return createPortal(
     <div
+      ref={panelRef}
+      id={id}
+      role={role}
+      aria-label={ariaLabel}
       data-desktop-search-popover="true"
       data-viewport-snapshot={viewportSnapshot}
       style={{
@@ -330,9 +342,10 @@ function DesktopTopLayerPopover({
         top: anchorRect.bottom + offset,
         width: panelWidth,
         maxWidth,
+        maxHeight: Math.max(0, window.innerHeight - anchorRect.bottom - offset - maxViewportGutter),
       }}
       className={cn(
-        "fixed hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_28px_70px_rgba(15,23,42,0.22)] ring-1 ring-slate-950/10 sm:block",
+        "fixed hidden overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white shadow-[0_28px_70px_rgba(15,23,42,0.22)] ring-1 ring-slate-950/10 sm:block",
         desktopPopoverPanelClassName,
         className
       )}
@@ -346,35 +359,48 @@ function DesktopTopLayerPopover({
 
 
 function CarsSummaryField({
+  id,
   label,
   value,
   open,
-  onToggle,
+  onOpenChange,
   className,
   children,
-  listbox = false,
+  popupRole = "dialog",
 }: {
+  id: string;
   label: string;
   value: string;
   open: boolean;
-  onToggle: () => void;
+  onOpenChange: (open: boolean) => void;
   className: string;
   children: ReactNode;
-  listbox?: boolean;
+  popupRole?: "dialog" | "listbox";
 }) {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const launcherRef = useRef<HTMLButtonElement | null>(null);
-  const panelId = `cars-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-popover`;
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const panelId = `${id}-popup`;
+  const isSmViewport = useSyncExternalStore(
+    (notify) => {
+      const query = window.matchMedia("(min-width: 640px)");
+      query.addEventListener("change", notify);
+      return () => query.removeEventListener("change", notify);
+    },
+    () => window.matchMedia("(min-width: 640px)").matches,
+    () => false,
+  );
 
   useEffect(() => {
     if (!open) return;
     const closeOnOutsideClick = (event: PointerEvent) => {
-      if (!wrapperRef.current?.contains(event.target as Node)) onToggle();
+      const target = event.target as Node;
+      if (!wrapperRef.current?.contains(target) && !panelRef.current?.contains(target)) onOpenChange(false);
     };
     const closeOnEscape = (event: globalThis.KeyboardEvent) => {
       if (event.key !== "Escape") return;
       event.preventDefault();
-      onToggle();
+      onOpenChange(false);
       launcherRef.current?.focus({ preventScroll: true });
     };
     document.addEventListener("pointerdown", closeOnOutsideClick);
@@ -383,15 +409,19 @@ function CarsSummaryField({
       document.removeEventListener("pointerdown", closeOnOutsideClick);
       document.removeEventListener("keydown", closeOnEscape);
     };
-  }, [onToggle, open]);
+  }, [onOpenChange, open]);
+
+  const panel = <div id={panelId} ref={panelRef} role={popupRole} aria-label={label} data-cars-popover-content className="w-full rounded-2xl border border-slate-200 bg-white p-3 shadow-xl sm:w-auto">{children}</div>;
 
   return (
     <div ref={wrapperRef} className={cn(className, "relative rounded-xl border border-slate-300 bg-white")}>
       <span className="mb-1 block text-[11px] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-500 lg:text-[10px] lg:tracking-[0.10em] lg:text-slate-600">{label}</span>
-      <button ref={launcherRef} type="button" aria-expanded={open} aria-controls={panelId} aria-haspopup={listbox ? "listbox" : "dialog"} onClick={onToggle} className="focus-ring flex h-8 w-full min-w-0 items-center justify-between gap-2 rounded-md text-start text-[16px] font-medium text-slate-900 sm:text-[15px] lg:text-[15px]">
+      <button ref={launcherRef} type="button" aria-expanded={open} aria-controls={panelId} aria-haspopup={popupRole} onClick={() => onOpenChange(!open)} className="focus-ring flex h-8 w-full min-w-0 items-center justify-between gap-2 rounded-md text-start text-[16px] font-medium text-slate-900 sm:text-[15px] lg:text-[15px]">
         <span className="truncate">{value}</span><ChevronDown aria-hidden="true" className={cn("h-4 w-4 shrink-0 text-slate-500 transition-transform", open && "rotate-180")} />
       </button>
-      {open ? <div id={panelId} role={listbox ? undefined : "dialog"} aria-label={label} data-cars-desktop-popover className="absolute start-0 top-[calc(100%+10px)] z-[1120] w-[min(28rem,calc(100vw-2rem))] rounded-2xl border border-slate-200 bg-white p-3 shadow-xl lg:fixed lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2">{children}</div> : null}
+      {open ? (isSmViewport
+        ? <DesktopTopLayerPopover open={open} launcherRef={launcherRef} width={448} panelRef={panelRef} id={panelId} role={popupRole} ariaLabel={label} className="p-3">{children}</DesktopTopLayerPopover>
+        : <div className="mt-3">{panel}</div>) : null}
     </div>
   );
 }
@@ -528,7 +558,7 @@ export function SearchTabs({
   const [carsOpenPicker, setCarsOpenPicker] = useState<
     "pickup" | "dropoff" | "dates" | "times" | "age" | null
   >(null);
-  const carsSearchCardRef = useRef<HTMLDivElement | null>(null);
+  const carsSearchSurfaceRef = useRef<HTMLDivElement | null>(null);
   const carsPickupFieldRef = useRef<HTMLDivElement | null>(null);
   const carsDropoffFieldRef = useRef<HTMLDivElement | null>(null);
 
@@ -1939,6 +1969,7 @@ export function SearchTabs({
 
   const onCarsSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setCarsOpenPicker(null);
 
     if (isCarsSubmitting) return;
 
@@ -2841,9 +2872,10 @@ export function SearchTabs({
       <div className={tabsClassName}>
         <button
           type="button"
-          onClick={() =>
-            setTab("flights")
-          }
+          onClick={() => {
+            setCarsOpenPicker(null);
+            setTab("flights");
+          }}
           className={cn(
             "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
             compactHero && "lg:px-3.5 lg:py-2 lg:text-[15px]",
@@ -2859,9 +2891,10 @@ export function SearchTabs({
 
         <button
           type="button"
-          onClick={() =>
-            setTab("hotels")
-          }
+          onClick={() => {
+            setCarsOpenPicker(null);
+            setTab("hotels");
+          }}
           className={cn(
             "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
             compactHero && "lg:px-3.5 lg:py-2 lg:text-[15px]",
@@ -4004,27 +4037,28 @@ export function SearchTabs({
         </form>
       ) : (
         <form onSubmit={onCarsSubmit} className={formClassName} noValidate>
-          <div ref={carsSearchCardRef} className={fieldCardClassName} data-testid="cars-joined-search-card">
+          <div ref={carsSearchSurfaceRef} data-testid="cars-search-surface">
+          <div className={fieldCardClassName} data-testid="cars-joined-search-card">
             <div className={carsGridClassName} data-testid="cars-primary-row">
               <div ref={carsPickupFieldRef} className={cn(hotelJoinedFieldClassName, "relative rounded-xl border border-slate-300 bg-white lg:rounded-s-xl")}>
                 <label htmlFor="homepage-cars-pickup" className={hotelFieldLabelClassName}>{translate("carsSearch.pickupLocationLabel") || "Pickup location"}</label>
-                <CarLocationAutocomplete id="homepage-cars-pickup" name="pickupLocation" value={carsValues.pickupLocation} onValueChange={(value) => updateCarsValue("pickupLocation", value)} placeholder={translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"} presentation="desktop" inputClassName={cn(hotelFieldValueClassName, "h-8 w-full")} strings={carsLocationStrings} fieldAnchorRef={carsPickupFieldRef} searchCardRef={carsSearchCardRef} isOpen={carsOpenPicker === "pickup"} onOpenChange={(open) => setCarsOpenPicker(open ? "pickup" : null)} />
+                <CarLocationAutocomplete id="homepage-cars-pickup" name="pickupLocation" value={carsValues.pickupLocation} onValueChange={(value) => updateCarsValue("pickupLocation", value)} placeholder={translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"} presentation="responsive" inputClassName={cn(hotelFieldValueClassName, "h-8 w-full")} strings={carsLocationStrings} fieldAnchorRef={carsPickupFieldRef} searchCardRef={carsSearchSurfaceRef} isOpen={carsOpenPicker === "pickup"} onOpenChange={(open) => setCarsOpenPicker(open ? "pickup" : null)} />
                 {carsErrors.pickupLocation ? <p className="absolute start-3 top-full z-10 mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupLocation}</p> : null}
               </div>
-              <CarsSummaryField label={translate("carsSearch.rentalDatesLabel") || "Rental dates"} value={carsDateSummary} open={carsOpenPicker === "dates"} onToggle={() => setCarsOpenPicker((open) => open === "dates" ? null : "dates")} className={hotelJoinedFieldClassName}>
+              <CarsSummaryField id="homepage-cars-rental-dates" label={translate("carsSearch.rentalDatesLabel") || "Rental dates"} value={carsDateSummary} open={carsOpenPicker === "dates"} onOpenChange={(open) => setCarsOpenPicker(open ? "dates" : null)} className={hotelJoinedFieldClassName}>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="grid gap-1 text-xs font-bold text-slate-600">{translate("carsSearch.pickupDateLabel") || "Pickup date"}<input type="date" min={toCarsIsoDate(new Date())} value={carsValues.pickupDate} onChange={(event) => updateCarsValue("pickupDate", event.target.value)} className="focus-ring h-11 rounded-lg border border-slate-300 px-2 text-sm" /></label>
                   <label className="grid gap-1 text-xs font-bold text-slate-600">{translate("carsSearch.returnDateLabel") || "Return date"}<input type="date" min={carsValues.pickupDate || toCarsIsoDate(new Date())} value={carsValues.dropoffDate} onChange={(event) => updateCarsValue("dropoffDate", event.target.value)} className="focus-ring h-11 rounded-lg border border-slate-300 px-2 text-sm" /></label>
                 </div>
                 <div className="mt-3 flex justify-between"><button type="button" onClick={() => { updateCarsValue("pickupDate", ""); updateCarsValue("dropoffDate", ""); }} className="focus-ring rounded-lg px-3 py-2 text-sm font-bold text-slate-600">{translate("clear") || "Clear"}</button><button type="button" onClick={() => setCarsOpenPicker(null)} className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-bold text-white">{translate("done") || "Done"}</button></div>
               </CarsSummaryField>
-              <CarsSummaryField label={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} value={carsTimeSummary} open={carsOpenPicker === "times"} onToggle={() => setCarsOpenPicker((open) => open === "times" ? null : "times")} className={hotelJoinedFieldClassName}>
+              <CarsSummaryField id="homepage-cars-time-range" label={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} value={carsTimeSummary} open={carsOpenPicker === "times"} onOpenChange={(open) => setCarsOpenPicker(open ? "times" : null)} className={hotelJoinedFieldClassName}>
                 <div className="grid grid-cols-2 gap-3">
                   {(["pickupTime", "dropoffTime"] as const).map((field) => <div key={field}><p className="mb-2 text-xs font-bold text-slate-600">{field === "pickupTime" ? translate("carsSearch.pickupTimeLabel") || "Pickup time" : translate("carsSearch.returnTimeLabel") || "Return time"}</p><div className="max-h-56 overflow-y-auto">{timeOptions.map((time) => <button key={time} type="button" onClick={() => { updateCarsValue(field, time); if (field === "dropoffTime") setCarsOpenPicker(null); }} className={cn("focus-ring block w-full rounded-lg px-3 py-2 text-start text-sm", carsValues[field] === time ? "bg-[#004BB8] font-bold text-white" : "hover:bg-slate-100")}>{formatCarsTime(time)}</button>)}</div></div>)}
                 </div>
               </CarsSummaryField>
-              <CarsSummaryField label={translate("carsSearch.driverAgeLabel") || "Driver age"} value={carsValues.driverAge === defaultDriverAge ? translate("carsSearch.driverAgeAnyAgeRange") || "Any age" : carsValues.driverAge} open={carsOpenPicker === "age"} onToggle={() => setCarsOpenPicker((open) => open === "age" ? null : "age")} className={hotelJoinedFieldClassName} listbox>
-                <div role="listbox" aria-label={translate("carsSearch.driverAgeLabel") || "Driver age"} className="max-h-64 overflow-y-auto">{driverAgeOptions.map((age) => <button key={age} role="option" aria-selected={carsValues.driverAge === age} type="button" onClick={() => { updateCarsValue("driverAge", age); setCarsOpenPicker(null); }} className={cn("focus-ring block w-full rounded-lg px-3 py-2 text-start text-sm", carsValues.driverAge === age ? "bg-[#004BB8] font-bold text-white" : "hover:bg-slate-100")}>{age === defaultDriverAge ? translate("carsSearch.driverAgeAnyAgeRange") || "Any age" : age}</button>)}</div>
+              <CarsSummaryField id="homepage-cars-driver-age" label={translate("carsSearch.driverAgeLabel") || "Driver age"} value={carsValues.driverAge === defaultDriverAge ? translate("carsSearch.driverAgeAnyAgeRange") || "Any age" : carsValues.driverAge} open={carsOpenPicker === "age"} onOpenChange={(open) => setCarsOpenPicker(open ? "age" : null)} className={hotelJoinedFieldClassName} popupRole="listbox">
+                <div className="max-h-64 overflow-y-auto">{driverAgeOptions.map((age) => <button key={age} role="option" aria-selected={carsValues.driverAge === age} type="button" onClick={() => { updateCarsValue("driverAge", age); setCarsOpenPicker(null); }} className={cn("focus-ring block w-full rounded-lg px-3 py-2 text-start text-sm", carsValues.driverAge === age ? "bg-[#004BB8] font-bold text-white" : "hover:bg-slate-100")}>{age === defaultDriverAge ? translate("carsSearch.driverAgeAnyAgeRange") || "Any age" : age}</button>)}</div>
               </CarsSummaryField>
               <div className={hotelSubmitWrapClassName}>
                 <Button type="submit" disabled={isCarsSearchDisabled} aria-busy={isCarsSubmitting} aria-label={translate("searchCars") || "Search cars"} className={cn(hotelSubmitButtonClassName, "whitespace-nowrap")}>
@@ -4036,7 +4070,8 @@ export function SearchTabs({
           <div className="flex min-h-8 items-center gap-3 px-1 text-sm font-semibold text-slate-600">
             <label className="focus-within:text-slate-900 flex cursor-pointer items-center gap-2"><input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-[#004BB8]" checked={carsValues.returnToDifferentLocation} onChange={(event) => { updateCarsValue("returnToDifferentLocation", event.target.checked); if (!event.target.checked) setCarsOpenPicker(null); }} />{translate("carsSearch.differentReturnLocation") || "Different return location"}</label>
           </div>
-          {carsValues.returnToDifferentLocation ? <div ref={carsDropoffFieldRef} className="relative rounded-xl border border-slate-300 bg-white px-4 py-2 sm:max-w-[50%]" data-testid="cars-return-location-field"><label htmlFor="homepage-cars-dropoff" className={hotelFieldLabelClassName}>{translate("carsSearch.returnLocationLabel") || "Return location"}</label><CarLocationAutocomplete id="homepage-cars-dropoff" name="dropoffLocation" value={carsValues.dropoffLocation} onValueChange={(value) => updateCarsValue("dropoffLocation", value)} placeholder={translate("carsSearch.returnLocationPlaceholder") || "Return city, airport or address"} presentation="desktop" inputClassName={cn(hotelFieldValueClassName, "h-8 w-full")} strings={carsLocationStrings} fieldAnchorRef={carsDropoffFieldRef} searchCardRef={carsSearchCardRef} isOpen={carsOpenPicker === "dropoff"} onOpenChange={(open) => setCarsOpenPicker(open ? "dropoff" : null)} />{carsErrors.dropoffLocation ? <p className="mt-1 text-xs font-semibold text-red-600">{carsErrors.dropoffLocation}</p> : null}</div> : null}
+          {carsValues.returnToDifferentLocation ? <div ref={carsDropoffFieldRef} className="relative rounded-xl border border-slate-300 bg-white px-4 py-2 sm:max-w-[50%]" data-testid="cars-return-location-field"><label htmlFor="homepage-cars-dropoff" className={hotelFieldLabelClassName}>{translate("carsSearch.returnLocationLabel") || "Return location"}</label><CarLocationAutocomplete id="homepage-cars-dropoff" name="dropoffLocation" value={carsValues.dropoffLocation} onValueChange={(value) => updateCarsValue("dropoffLocation", value)} placeholder={translate("carsSearch.returnLocationPlaceholder") || "Return city, airport or address"} presentation="responsive" inputClassName={cn(hotelFieldValueClassName, "h-8 w-full")} strings={carsLocationStrings} fieldAnchorRef={carsDropoffFieldRef} searchCardRef={carsSearchSurfaceRef} isOpen={carsOpenPicker === "dropoff"} onOpenChange={(open) => setCarsOpenPicker(open ? "dropoff" : null)} />{carsErrors.dropoffLocation ? <p className="mt-1 text-xs font-semibold text-red-600">{carsErrors.dropoffLocation}</p> : null}</div> : null}
+          </div>
         </form>
       )}
       </section>

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { calculateDesktopPopoverGeometry } from "./desktopPopoverPosition";
+import { calculateDesktopPopoverGeometry, calculateLocationPanelScrollAdjustment } from "./desktopPopoverPosition";
 
 const rect = (left: number, top: number, width: number, height: number) => ({
   left, right: left + width, top, bottom: top + height, width, height,
@@ -74,4 +74,32 @@ test("does not need a measured panel height for below-only placement", () => {
 
 test("never returns an above placement", () => {
   assert.equal("placement" in geometry({ boundaryRect: rect(0, 700, 900, 100) }), false);
+});
+
+test("scrolls only enough to expose the minimum location panel height", () => {
+  assert.equal(calculateLocationPanelScrollAdjustment({
+    boundaryRect: rect(20, 500, 900, 180), viewportHeight: 720, viewportPadding: 16, gap: 10,
+  }), 146);
+});
+
+test("does not scroll when the minimum panel height already fits", () => {
+  assert.equal(calculateLocationPanelScrollAdjustment({
+    boundaryRect: rect(20, 200, 900, 180), viewportHeight: 720, viewportPadding: 16, gap: 10,
+  }), 0);
+});
+
+test("limits corrective scrolling to the boundary's useful top space", () => {
+  assert.equal(calculateLocationPanelScrollAdjustment({
+    boundaryRect: rect(20, 30, 900, 700), viewportHeight: 400, viewportPadding: 16, gap: 10,
+  }), 14);
+});
+
+test("corrective scrolling is always finite and nonnegative", () => {
+  for (const value of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+    const adjustment = calculateLocationPanelScrollAdjustment({
+      boundaryRect: { ...rect(0, 0, 0, 0), top: value, bottom: value }, viewportHeight: value, viewportPadding: value, gap: value,
+    });
+    assert.ok(Number.isFinite(adjustment));
+    assert.ok(adjustment >= 0);
+  }
 });

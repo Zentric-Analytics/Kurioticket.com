@@ -34,6 +34,23 @@ test("homepage Cars return location is conditional and outside the primary row",
   assert.match(source, /if \(key === "returnToDifferentLocation" && value === false\) \{\s*next\.dropoffLocation = "";/);
 });
 
+test("Cars autocomplete uses responsive presentation and the complete surface boundary", () => {
+  assert.match(carsBranch, /ref=\{carsSearchSurfaceRef\} data-testid="cars-search-surface"/);
+  assert.equal((carsBranch.match(/presentation="responsive"/g) ?? []).length, 2);
+  assert.equal((carsBranch.match(/searchCardRef=\{carsSearchSurfaceRef\}/g) ?? []).length, 2);
+  assert.match(carsBranch, /fieldAnchorRef=\{carsPickupFieldRef\}/);
+  assert.match(carsBranch, /fieldAnchorRef=\{carsDropoffFieldRef\}/);
+});
+
+test("Cars summary popup IDs are stable and field-specific", () => {
+  for (const id of ["homepage-cars-rental-dates", "homepage-cars-time-range", "homepage-cars-driver-age"]) {
+    assert.ok(carsBranch.includes(`id="${id}"`), id);
+  }
+  assert.equal(source.includes("label.toLowerCase"), false);
+  assert.equal(source.includes("lg:top-1/2"), false);
+  assert.equal(source.includes("lg:-translate-y-1/2"), false);
+});
+
 test("homepage Cars submit remains Cars-specific while visible copy is generic and single-line", () => {
   assert.match(carsBranch, /aria-label=\{translate\("searchCars"\) \|\| "Search cars"\}/);
   assert.match(carsBranch, /"whitespace-nowrap"/);
