@@ -1,9 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+  type ReactNode,
+} from "react";
 import { RefreshCcw } from "lucide-react";
 
-import { AdminButton, AdminSectionCard } from "@/components/admin/AdminPageShell";
+import { AdminButton } from "@/components/admin/AdminPageShell";
 import {
   ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE,
   buildAdminHomepageFareAllRoutesGroup,
@@ -102,7 +110,6 @@ const DEFAULT_DISPLAY_READINESS: DisplayReadiness = {
   discoverBackupFresh: 0,
   publicFreshTarget: 24,
 };
-
 
 const DEFAULT_MARKET_STATUS_FIELDS = {
   globalReadinessStatus: "not_ready" as const,
@@ -426,7 +433,9 @@ export function HomepageFaresRefreshCard() {
     loading: true,
     error: "",
   });
-  const [selectedRouteScope, setSelectedRouteScope] = useState<string | null>(null);
+  const [selectedRouteScope, setSelectedRouteScope] = useState<string | null>(
+    null,
+  );
   const [routePage, setRoutePage] = useState(1);
   const routeDetailsRef = useRef<HTMLDivElement>(null);
   const [routeFilter, setRouteFilter] =
@@ -439,16 +448,22 @@ export function HomepageFaresRefreshCard() {
         : normalizeAdminHomepageFareMarketCode(scope),
     );
   }, []);
-  const selectRouteFilter = useCallback((filter: AdminHomepageFareRouteGroupFilter) => {
-    setRoutePage(1);
-    setRouteFilter(filter);
-  }, []);
+  const selectRouteFilter = useCallback(
+    (filter: AdminHomepageFareRouteGroupFilter) => {
+      setRoutePage(1);
+      setRouteFilter(filter);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!selectedRouteScope) return;
 
     const animationFrame = window.requestAnimationFrame(() => {
-      routeDetailsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      routeDetailsRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     });
 
     return () => window.cancelAnimationFrame(animationFrame);
@@ -551,7 +566,8 @@ export function HomepageFaresRefreshCard() {
     [routeFilter, statusPayload.marketReadinessSummary, statusPayload.routes],
   );
   const allRoutesGroup = useMemo(
-    () => buildAdminHomepageFareAllRoutesGroup(statusPayload.routes, routeFilter),
+    () =>
+      buildAdminHomepageFareAllRoutesGroup(statusPayload.routes, routeFilter),
     [routeFilter, statusPayload.routes],
   );
   const selectedRouteGroup = resolveAdminHomepageFareSelectedRouteGroup({
@@ -559,89 +575,170 @@ export function HomepageFaresRefreshCard() {
     marketRouteGroups,
     allRoutesGroup,
   });
-  const { publicGroups: publicRouteGroups, fallbackGroups: fallbackRouteGroups } =
-    splitAdminHomepageFareMarketRouteGroups(marketRouteGroups);
+  const {
+    publicGroups: publicRouteGroups,
+    fallbackGroups: fallbackRouteGroups,
+  } = splitAdminHomepageFareMarketRouteGroups(marketRouteGroups);
 
   const publicMarkets = statusPayload.marketReadinessSummary.filter(
     (market) => !isFallbackMarket(market),
   );
-  const fallbackPools = statusPayload.marketReadinessSummary.filter(isFallbackMarket);
+  const fallbackPools =
+    statusPayload.marketReadinessSummary.filter(isFallbackMarket);
   const latestCounts = refreshState.counts;
-  const providerCallsUsed = latestCounts?.providerCalls ?? sumCountRecord(statusPayload.providerCallsByMarket);
+  const providerCallsUsed =
+    latestCounts?.providerCalls ??
+    sumCountRecord(statusPayload.providerCallsByMarket);
   const replacementCandidatesUsed = latestCounts
     ? sumCountRecord(latestCounts.replacementCandidatesUsedByMarket)
     : sumCountRecord(statusPayload.replacementCandidatesUsedByMarket);
   const timeoutCount = latestCounts
     ? sumCountRecord(latestCounts.timeoutByMarket)
     : sumCountRecord(statusPayload.timeoutByMarket);
-  const marketsNeedingAnotherRun = latestCounts?.marketsNeedingAnotherRun ?? statusPayload.marketsNeedingAnotherRun;
+  const marketsNeedingAnotherRun =
+    latestCounts?.marketsNeedingAnotherRun ??
+    statusPayload.marketsNeedingAnotherRun;
 
   return (
-    <section className="space-y-5">
-      <AdminSectionCard className="overflow-hidden p-0">
-        <div className="border-b border-slate-200 bg-gradient-to-br from-white via-slate-50 to-sky-50/60 p-5">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-indigo-700">
-                Homepage fare operations
-              </p>
-              <h2 className="mt-2 text-2xl font-extrabold text-slate-950">
-                Production readiness dashboard
-              </h2>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-                Monitor provider-backed homepage fare coverage by public market, fallback pool,
-                route health, refresh state, and underfill cause without changing pricing logic.
-              </p>
-            </div>
-            <GlobalReadinessBadge status={statusPayload.displayReadiness.globalReadinessStatus} />
-          </div>
-        </div>
-
-        <div className="space-y-5 p-5">
-          {statusState.error ? (
-            <p className="rounded-xl bg-rose-50 p-3 text-sm font-semibold text-rose-700">
-              {statusState.error}
+    <div className="space-y-10 pb-4">
+      <section
+        aria-labelledby="homepage-summary-heading"
+        className="overflow-hidden rounded-2xl bg-slate-950 text-white shadow-sm"
+      >
+        <div className="flex flex-col gap-4 px-5 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-sky-300">
+              Operational overview
             </p>
-          ) : null}
-
-          <DashboardSection
-            eyebrow="Homepage fare status summary"
-            title="Global readiness at a glance"
-            description="Public readiness excludes fallback-only regional and global pools, so internal 0/0 coverage rows do not make the homepage look ready."
-          >
-            <DisplayReadinessSummary readiness={statusPayload.displayReadiness} />
-            <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-              <SummaryMetricCard label="Global homepage readiness" value={formatGlobalReadinessStatus(statusPayload.displayReadiness.globalReadinessStatus)} tone={readinessTone(statusPayload.displayReadiness.globalReadinessStatus)} />
-              <SummaryMetricCard label="Fresh provider-backed fares" value={statusPayload.summary.fresh} tone="good" />
-              <SummaryMetricCard label="Last-known-good fares" value={statusPayload.summary.last_known_good} tone="info" />
-              <SummaryMetricCard label="Missing routes" value={statusPayload.summary.missing} tone={statusPayload.summary.missing ? "warning" : "neutral"} />
-              <SummaryMetricCard label="Failed routes" value={statusPayload.summary.failed} tone={statusPayload.summary.failed ? "danger" : "neutral"} />
-              <SummaryMetricCard label="Unavailable routes" value={statusPayload.summary.unavailable} tone={statusPayload.summary.unavailable ? "warning" : "neutral"} />
-              <SummaryMetricCard label="Timeout count" value={timeoutCount} tone={timeoutCount ? "warning" : "neutral"} />
-              <SummaryMetricCard label="Provider calls used" value={providerCallsUsed} />
-              <SummaryMetricCard label="Stopped reason" value={latestCounts ? formatStoppedReason(latestCounts.stoppedReason) : "No manual run yet"} />
-              <SummaryMetricCard label="Replacement candidates used" value={replacementCandidatesUsed} />
-              <SummaryMetricCard label="Markets needing another run" value={marketsNeedingAnotherRun.filter((market) => market.needed).length} tone={marketsNeedingAnotherRun.some((market) => market.needed) ? "warning" : "good"} />
-              <SummaryMetricCard label="Last refresh time" value={formatSnapshotTime(statusPayload.lastRefreshAt)} />
-              <SummaryMetricCard label="Cron status" value={formatCronStatus(statusPayload)} tone={statusPayload.cronConfigured ? "good" : "warning"} />
-            </dl>
-          </DashboardSection>
-
-          <RefreshCronPanel
-            refreshing={refreshing}
-            loading={statusState.loading}
-            refreshState={refreshState}
-            statusPayload={statusPayload}
-            onRefresh={refreshHomepageFares}
-            onReload={() => void loadStatus()}
+            <h2
+              id="homepage-summary-heading"
+              className="mt-1 text-xl font-extrabold"
+            >
+              Homepage health at a glance
+            </h2>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-300">
+              Current production readiness, refresh recency, and public market
+              coverage.
+            </p>
+          </div>
+          <GlobalReadinessBadge
+            status={statusPayload.displayReadiness.globalReadinessStatus}
           />
+        </div>
+        <dl className="grid border-t border-white/10 sm:grid-cols-2 lg:grid-cols-4">
+          <OperationalSummaryItem
+            label="Overall readiness"
+            value={formatGlobalReadinessStatus(
+              statusPayload.displayReadiness.globalReadinessStatus,
+            )}
+          />
+          <OperationalSummaryItem
+            label="Last refresh"
+            value={formatSnapshotTime(statusPayload.lastRefreshAt)}
+          />
+          <OperationalSummaryItem
+            label="Markets covered"
+            value={`${statusPayload.readyMarkets.length} / ${statusPayload.requiredMarkets.length}`}
+          />
+          <OperationalSummaryItem
+            label="Fresh routes"
+            value={`${statusPayload.summary.fresh} / ${statusPayload.summary.total}`}
+          />
+        </dl>
+      </section>
 
+      {statusState.error ? (
+        <p
+          className="rounded-xl bg-rose-50 p-3 text-sm font-semibold text-rose-700"
+          role="alert"
+        >
+          {statusState.error}
+        </p>
+      ) : null}
+
+      <OperationsSection
+        number="01"
+        title="Refresh Operations"
+        description="Run homepage fare refreshes and review refresh, reload, snapshot, and cron status in one workspace."
+      >
+        <RefreshCronPanel
+          refreshing={refreshing}
+          loading={statusState.loading}
+          refreshState={refreshState}
+          statusPayload={statusPayload}
+          onRefresh={refreshHomepageFares}
+          onReload={() => void loadStatus()}
+        />
+      </OperationsSection>
+
+      <OperationsSection
+        number="02"
+        title="Operational Health"
+        description="Monitor provider activity, timeouts, snapshot health, and the current refresh outcome."
+      >
+        <DisplayReadinessSummary readiness={statusPayload.displayReadiness} />
+        <dl className="mt-4 grid gap-px overflow-hidden rounded-xl bg-slate-200 sm:grid-cols-2 lg:grid-cols-4">
+          <SummaryMetricCard label="Provider calls" value={providerCallsUsed} />
+          <SummaryMetricCard
+            label="Timeout metrics"
+            value={timeoutCount}
+            tone={timeoutCount ? "warning" : "neutral"}
+          />
+          <SummaryMetricCard
+            label="Fresh snapshots"
+            value={statusPayload.summary.fresh}
+            tone="good"
+          />
+          <SummaryMetricCard
+            label="Last-known-good"
+            value={statusPayload.summary.last_known_good}
+            tone="info"
+          />
+          <SummaryMetricCard
+            label="Missing routes"
+            value={statusPayload.summary.missing}
+            tone={statusPayload.summary.missing ? "warning" : "neutral"}
+          />
+          <SummaryMetricCard
+            label="Failed routes"
+            value={statusPayload.summary.failed}
+            tone={statusPayload.summary.failed ? "danger" : "neutral"}
+          />
+          <SummaryMetricCard
+            label="Unavailable routes"
+            value={statusPayload.summary.unavailable}
+            tone={statusPayload.summary.unavailable ? "warning" : "neutral"}
+          />
+          <SummaryMetricCard
+            label="Refresh health"
+            value={
+              latestCounts
+                ? formatStoppedReason(latestCounts.stoppedReason)
+                : "No manual run yet"
+            }
+          />
+          <SummaryMetricCard
+            label="Replacement candidates"
+            value={replacementCandidatesUsed}
+          />
+        </dl>
+        <RawDebugDetails
+          statusPayload={statusPayload}
+          refreshCounts={latestCounts}
+        />
+      </OperationsSection>
+
+      <OperationsSection
+        number="03"
+        title="Market Coverage"
+        description="Inspect country coverage and readiness, route gaps, failed fares, and fallback replacement pools."
+      >
+        <div className="space-y-6">
           <MarketReadinessDashboard
             markets={publicMarkets}
             selectedRouteScope={selectedRouteScope}
             onInspectMarket={selectRouteScope}
           />
-
           <MarketRouteInspector
             publicGroups={publicRouteGroups}
             fallbackGroups={fallbackRouteGroups}
@@ -656,25 +753,29 @@ export function HomepageFaresRefreshCard() {
             onFilterChange={selectRouteFilter}
             routeDetailsRef={routeDetailsRef}
           />
-
-          <DiagnosticsPanel
-            markets={statusPayload.marketReadinessSummary}
-            marketsNeedingAnotherRun={marketsNeedingAnotherRun}
-            candidatePoolHealth={statusPayload.candidatePoolHealth}
-            publicPriceDiagnostics={statusPayload.publicPriceDiagnostics}
-            stoppedReason={latestCounts?.stoppedReason}
-          />
-
           <FallbackPoolsSection
             pools={fallbackPools}
             selectedRouteScope={selectedRouteScope}
             onInspectMarket={selectRouteScope}
           />
-
-          <RawDebugDetails statusPayload={statusPayload} refreshCounts={latestCounts} />
         </div>
-      </AdminSectionCard>
-    </section>
+      </OperationsSection>
+
+      <OperationsSection
+        number="04"
+        title="Attention Required"
+        description="Review only the operational warnings and coverage issues already reported by the refresh executor."
+        tone="attention"
+      >
+        <DiagnosticsPanel
+          markets={statusPayload.marketReadinessSummary}
+          marketsNeedingAnotherRun={marketsNeedingAnotherRun}
+          candidatePoolHealth={statusPayload.candidatePoolHealth}
+          publicPriceDiagnostics={statusPayload.publicPriceDiagnostics}
+          stoppedReason={latestCounts?.stoppedReason}
+        />
+      </OperationsSection>
+    </div>
   );
 }
 type RefreshCountMetricKey =
@@ -707,7 +808,6 @@ const HEALTH_SUMMARY_STYLES: Record<HomepageFareHealthStatus, string> = {
   attention: "border-red-100 bg-rose-50 text-rose-700",
 };
 
-
 const ROUTE_FILTERS: Array<{
   key: AdminHomepageFareRouteGroupFilter;
   label: string;
@@ -723,11 +823,83 @@ const ROUTE_FILTERS: Array<{
   { key: "unavailable", label: "Unavailable" },
 ];
 
+function OperationalSummaryItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div className="min-w-0 border-white/10 px-5 py-4 sm:border-e sm:last:border-e-0">
+      <dt className="text-xs font-bold uppercase tracking-wide text-slate-400">
+        {label}
+      </dt>
+      <dd
+        className="mt-1 truncate text-lg font-extrabold text-white"
+        title={String(value)}
+      >
+        {value}
+      </dd>
+    </div>
+  );
+}
 
+function OperationsSection({
+  number,
+  title,
+  description,
+  tone = "default",
+  children,
+}: {
+  number: string;
+  title: string;
+  description: string;
+  tone?: "default" | "attention";
+  children: ReactNode;
+}) {
+  return (
+    <section
+      aria-labelledby={`operations-section-${number}`}
+      className="space-y-5"
+    >
+      <div className="flex items-start gap-3">
+        <span
+          aria-hidden="true"
+          className={`mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-extrabold ${tone === "attention" ? "bg-amber-100 text-amber-800" : "bg-indigo-100 text-indigo-700"}`}
+        >
+          {number}
+        </span>
+        <div>
+          <h2
+            id={`operations-section-${number}`}
+            className="text-xl font-extrabold tracking-tight text-slate-950"
+          >
+            {title}
+          </h2>
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
+            {description}
+          </p>
+        </div>
+      </div>
+      <div
+        className={
+          tone === "attention"
+            ? "rounded-2xl bg-amber-50/50 p-3 sm:p-5"
+            : "rounded-2xl bg-white p-3 shadow-sm sm:p-5"
+        }
+      >
+        {children}
+      </div>
+    </section>
+  );
+}
 
 function GlobalReadinessBadge({ status }: { status: GlobalReadinessStatus }) {
   return (
-    <span className={`inline-flex w-fit rounded-full px-3 py-2 text-sm font-extrabold ${summaryToneClass(readinessTone(status))}`}>
+    <span
+      className={`inline-flex w-fit rounded-full px-3 py-2 text-sm font-extrabold ${summaryToneClass(readinessTone(status))}`}
+    >
       {formatGlobalReadinessStatus(status)}
     </span>
   );
@@ -743,9 +915,13 @@ function SummaryMetricCard({
   tone?: SummaryTone;
 }) {
   return (
-    <div className={`rounded-xl border p-3 ${summaryToneClass(tone)}`}>
-      <dt className="text-xs font-extrabold uppercase tracking-wide opacity-80">{label}</dt>
-      <dd className="mt-1 text-2xl font-extrabold leading-tight">{value}</dd>
+    <div className={`min-w-0 p-3 ${summaryToneClass(tone)}`}>
+      <dt className="text-xs font-extrabold uppercase tracking-wide opacity-80">
+        {label}
+      </dt>
+      <dd className="mt-1 break-words text-lg font-extrabold leading-tight">
+        {value}
+      </dd>
     </div>
   );
 }
@@ -767,17 +943,28 @@ function summaryToneClass(tone: SummaryTone) {
   }
 }
 
-function CompactDetail({ label, value }: { label: string; value: string | number }) {
+function CompactDetail({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
   return (
     <div>
-      <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500">{label}</dt>
+      <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
+        {label}
+      </dt>
       <dd className="mt-1 text-sm font-bold text-slate-950">{value}</dd>
     </div>
   );
 }
 
 function isFallbackMarket(market: MarketReadiness) {
-  return market.marketVisibility !== "country" || getPublicDisplayTarget(market) === 0;
+  return (
+    market.marketVisibility !== "country" ||
+    getPublicDisplayTarget(market) === 0
+  );
 }
 
 function getPublicDisplayTarget(market: MarketReadiness) {
@@ -801,9 +988,16 @@ function formatGlobalReadinessStatus(status: GlobalReadinessStatus) {
   }
 }
 
-function formatNextExpectedCron(status: Pick<HomepageFareStatusPayload, "cronConfigured" | "nextExpectedCronRefresh">) {
+function formatNextExpectedCron(
+  status: Pick<
+    HomepageFareStatusPayload,
+    "cronConfigured" | "nextExpectedCronRefresh"
+  >,
+) {
   if (status.nextExpectedCronRefresh) return status.nextExpectedCronRefresh;
-  return status.cronConfigured ? "Configured externally; cadence note not provided" : "Cron is not configured";
+  return status.cronConfigured
+    ? "Configured externally; cadence note not provided"
+    : "Cron is not configured";
 }
 
 function buildDiagnostics(
@@ -814,7 +1008,12 @@ function buildDiagnostics(
   const diagnostics: string[] = [];
 
   for (const market of markets) {
-    if (market.targetMet && market.status === "ready" && !isFallbackMarket(market)) continue;
+    if (
+      market.targetMet &&
+      market.status === "ready" &&
+      !isFallbackMarket(market)
+    )
+      continue;
 
     const subject = isFallbackMarket(market)
       ? `${market.marketLabel} fallback`
@@ -822,17 +1021,32 @@ function buildDiagnostics(
     const targetText = isFallbackMarket(market)
       ? "but has no public display target"
       : `before coverage reached ${market.popularVisibleFresh}/${market.popularVisibleTarget} popular, ${market.discoveryVisibleFresh}/${market.discoveryVisibleTarget} discovery, and ${market.backupFresh}/${market.backupTarget} backup`;
-    const reason = market.underfillReason ?? formatMarketStatus(market.status).toLowerCase();
-    diagnostics.push(`${subject} is ${formatMarketStatus(market.status).toLowerCase()} because ${reason} ${targetText}.`);
+    const reason =
+      market.underfillReason ?? formatMarketStatus(market.status).toLowerCase();
+    diagnostics.push(
+      `${subject} is ${formatMarketStatus(market.status).toLowerCase()} because ${reason} ${targetText}.`,
+    );
   }
 
   for (const need of marketsNeedingAnotherRun) {
-    if (!need.needed || diagnostics.some((item) => item.startsWith(need.market))) continue;
-    diagnostics.push(`${need.market} needs another run because ${formatUnderfillCause(need.reason)}.`);
+    if (
+      !need.needed ||
+      diagnostics.some((item) => item.startsWith(need.market))
+    )
+      continue;
+    diagnostics.push(
+      `${need.market} needs another run because ${formatUnderfillCause(need.reason)}.`,
+    );
   }
 
-  if (stoppedReason && stoppedReason !== "completed" && stoppedReason !== "target_met") {
-    diagnostics.unshift(`The last executor run stopped because ${formatStoppedReason(stoppedReason).toLowerCase()}.`);
+  if (
+    stoppedReason &&
+    stoppedReason !== "completed" &&
+    stoppedReason !== "target_met"
+  ) {
+    diagnostics.unshift(
+      `The last executor run stopped because ${formatStoppedReason(stoppedReason).toLowerCase()}.`,
+    );
   }
 
   return diagnostics.slice(0, 12);
@@ -850,14 +1064,18 @@ function DashboardSection({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div>
       <div>
-        <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-500">{eyebrow}</p>
+        <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-500">
+          {eyebrow}
+        </p>
         <h3 className="mt-1 text-lg font-extrabold text-slate-950">{title}</h3>
-        <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-500">{description}</p>
+        <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-500">
+          {description}
+        </p>
       </div>
       {children}
-    </section>
+    </div>
   );
 }
 
@@ -897,7 +1115,10 @@ function RefreshCronPanel({
               aria-busy={refreshing}
               className="w-full sm:w-auto"
             >
-              <RefreshCcw className={refreshing ? "animate-spin" : ""} size={16} />
+              <RefreshCcw
+                className={refreshing ? "animate-spin" : ""}
+                size={16}
+              />
               {refreshing ? "Refreshing…" : "Refresh homepage fares"}
             </AdminButton>
             <AdminButton
@@ -930,23 +1151,41 @@ function RefreshCronPanel({
           {refreshState.counts ? (
             <dl className="mt-4 grid gap-2 sm:grid-cols-5">
               {COUNT_LABELS.map(({ key, label }) => (
-                <MetricCard key={key} label={label} value={refreshState.counts?.[key] ?? 0} />
+                <MetricCard
+                  key={key}
+                  label={label}
+                  value={refreshState.counts?.[key] ?? 0}
+                />
               ))}
             </dl>
           ) : null}
         </div>
 
         <dl className="grid gap-2 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-1">
-          <CompactDetail label="Last refresh time" value={formatSnapshotTime(statusPayload.lastRefreshAt)} />
-          <CompactDetail label="Cron status" value={formatCronStatus(statusPayload)} />
-          <CompactDetail label="Cron cadence note" value={statusPayload.nextExpectedCronRefresh ?? "Not configured"} />
-          <CompactDetail label="Next expected refresh" value={formatNextExpectedCron(statusPayload)} />
+          <CompactDetail
+            label="Last refresh time"
+            value={formatSnapshotTime(statusPayload.lastRefreshAt)}
+          />
+          <CompactDetail
+            label="Cron status"
+            value={formatCronStatus(statusPayload)}
+          />
+          <CompactDetail
+            label="Cron cadence note"
+            value={statusPayload.nextExpectedCronRefresh ?? "Not configured"}
+          />
+          <CompactDetail
+            label="Next expected refresh"
+            value={formatNextExpectedCron(statusPayload)}
+          />
           <CompactDetail label="Current stopped reason" value={stoppedReason} />
         </dl>
       </div>
       {!statusPayload.cronConfigured ? (
         <p className="mt-3 rounded-xl border border-amber/20 bg-amber-50 p-3 text-sm font-semibold text-amber-700">
-          Cron is not configured. Set HOMEPAGE_FARES_CRON_SECRET and schedule POST /api/internal/homepage-fares/refresh before relying on unattended production refreshes.
+          Cron is not configured. Set HOMEPAGE_FARES_CRON_SECRET and schedule
+          POST /api/internal/homepage-fares/refresh before relying on unattended
+          production refreshes.
         </p>
       ) : null}
     </DashboardSection>
@@ -974,7 +1213,11 @@ function MarketReadinessDashboard({
             <MarketReadinessCard
               key={market.marketCode}
               market={market}
-              selected={normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(market.marketCode)}
+              selected={
+                normalizeAdminHomepageFareMarketCode(
+                  selectedRouteScope ?? "",
+                ) === normalizeAdminHomepageFareMarketCode(market.marketCode)
+              }
               onInspectMarket={onInspectMarket}
             />
           ))
@@ -1010,7 +1253,9 @@ function MarketReadinessCard({
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h4 className="text-lg font-extrabold text-slate-950">{market.marketLabel}</h4>
+          <h4 className="text-lg font-extrabold text-slate-950">
+            {market.marketLabel}
+          </h4>
           <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
             {market.marketCode} · {market.marketGroup}
           </p>
@@ -1018,9 +1263,21 @@ function MarketReadinessCard({
         <MarketStatusBadge status={market.status} />
       </div>
       <dl className="mt-4 grid gap-2 sm:grid-cols-3">
-        <CoverageMetric label="Popular coverage" current={market.popularVisibleFresh} target={market.popularVisibleTarget} />
-        <CoverageMetric label="Discovery coverage" current={market.discoveryVisibleFresh} target={market.discoveryVisibleTarget} />
-        <CoverageMetric label="Backup coverage" current={market.backupFresh} target={market.backupTarget} />
+        <CoverageMetric
+          label="Popular coverage"
+          current={market.popularVisibleFresh}
+          target={market.popularVisibleTarget}
+        />
+        <CoverageMetric
+          label="Discovery coverage"
+          current={market.discoveryVisibleFresh}
+          target={market.discoveryVisibleTarget}
+        />
+        <CoverageMetric
+          label="Backup coverage"
+          current={market.backupFresh}
+          target={market.backupTarget}
+        />
       </dl>
       <dl className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
         <MarketMiniMetric label="Fresh" value={market.freshCount ?? 0} />
@@ -1029,7 +1286,10 @@ function MarketReadinessCard({
         <MarketMiniMetric label="Failed" value={market.failed} />
         <MarketMiniMetric label="Unavailable" value={market.unavailable} />
         <MarketMiniMetric label="Timeout" value={market.timeoutCount ?? 0} />
-        <MarketMiniMetric label="Replacements" value={market.replacementCandidatesUsed ?? 0} />
+        <MarketMiniMetric
+          label="Replacements"
+          value={market.replacementCandidatesUsed ?? 0}
+        />
         <MarketMiniMetric label="Provider calls" value={market.providerCalls} />
         <MarketMiniMetric label="Attempts" value={market.routeAttempts} />
         <MarketMiniMetric label="Cooldown" value={market.skippedCooldown} />
@@ -1037,7 +1297,10 @@ function MarketReadinessCard({
       </dl>
       <div className="mt-3 rounded-xl bg-slate-50 p-3 text-sm leading-6 text-slate-500">
         <strong className="text-slate-950">Underfill reason:</strong>{" "}
-        {market.underfillReason ?? (market.targetMet ? "Coverage target met." : "No executor reason returned.")}
+        {market.underfillReason ??
+          (market.targetMet
+            ? "Coverage target met."
+            : "No executor reason returned.")}
       </div>
       <span className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-extrabold text-indigo-700 transition group-hover:border-indigo-300 group-hover:bg-indigo-100">
         Inspect {market.marketCode} routes
@@ -1046,13 +1309,31 @@ function MarketReadinessCard({
   );
 }
 
-function CoverageMetric({ label, current, target }: { label: string; current: number; target: number }) {
+function CoverageMetric({
+  label,
+  current,
+  target,
+}: {
+  label: string;
+  current: number;
+  target: number;
+}) {
   const met = target === 0 ? current === 0 : current >= target;
   return (
     <div className="rounded-xl bg-slate-50 p-3">
-      <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500">{label}</dt>
-      <dd className="mt-1 text-xl font-extrabold text-slate-950">{current} / {target}</dd>
-      <p className={met ? "mt-1 text-xs font-bold text-indigo-700" : "mt-1 text-xs font-bold text-amber-700"}>
+      <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
+        {label}
+      </dt>
+      <dd className="mt-1 text-xl font-extrabold text-slate-950">
+        {current} / {target}
+      </dd>
+      <p
+        className={
+          met
+            ? "mt-1 text-xs font-bold text-indigo-700"
+            : "mt-1 text-xs font-bold text-amber-700"
+        }
+      >
         {met ? "Target met" : "Needs coverage"}
       </p>
     </div>
@@ -1072,7 +1353,11 @@ function DiagnosticsPanel({
   publicPriceDiagnostics: Record<PublicPriceDiagnosis, number>;
   stoppedReason?: RefreshStoppedReason;
 }) {
-  const issues = buildDiagnostics(markets, marketsNeedingAnotherRun, stoppedReason);
+  const issues = buildDiagnostics(
+    markets,
+    marketsNeedingAnotherRun,
+    stoppedReason,
+  );
 
   return (
     <DashboardSection
@@ -1084,28 +1369,67 @@ function DiagnosticsPanel({
         <div className="space-y-2">
           {issues.length ? (
             issues.map((issue) => (
-              <p key={issue} className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-semibold leading-6 text-slate-950">
+              <p
+                key={issue}
+                className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-semibold leading-6 text-slate-950"
+              >
                 {issue}
               </p>
             ))
           ) : (
             <p className="rounded-xl border border-slate-200 bg-indigo-50 p-3 text-sm font-semibold text-indigo-700">
-              No underfill diagnostics are currently reported for public markets.
+              No underfill diagnostics are currently reported for public
+              markets.
             </p>
           )}
         </div>
         <dl className="grid gap-2 rounded-xl border border-slate-200 bg-white p-4 text-sm">
-          <CompactDetail label="Provider budget exhausted" value={stoppedReason === "provider_budget_exhausted" ? "Yes" : "No"} />
-          <CompactDetail label="Route budget exhausted" value={stoppedReason === "route_budget_exhausted" ? "Yes" : "No"} />
-          <CompactDetail label="Candidate pool exhausted" value={stoppedReason === "candidate_pool_exhausted" ? "Yes" : "No"} />
-          <CompactDetail label="Provider unavailable/no offers" value={stoppedReason === "provider_unavailable_no_offers" ? "Yes" : "No"} />
-          <CompactDetail label="Candidate pool failed" value={candidatePoolHealth.failed} />
-          <CompactDetail label="Candidate pool unavailable" value={candidatePoolHealth.unavailable} />
-          <CompactDetail label="Fresh used publicly" value={publicPriceDiagnostics.fresh_available} />
-          <CompactDetail label="LKG used publicly" value={publicPriceDiagnostics.last_known_good_used} />
-          <CompactDetail label="LKG failed safety" value={publicPriceDiagnostics.last_known_good_failed_safety_check} />
-          <CompactDetail label="Exact route mismatch" value={publicPriceDiagnostics.exact_route_mismatch} />
-          <CompactDetail label="No provider fare ever" value={publicPriceDiagnostics.no_provider_backed_fare_ever} />
+          <CompactDetail
+            label="Provider budget exhausted"
+            value={stoppedReason === "provider_budget_exhausted" ? "Yes" : "No"}
+          />
+          <CompactDetail
+            label="Route budget exhausted"
+            value={stoppedReason === "route_budget_exhausted" ? "Yes" : "No"}
+          />
+          <CompactDetail
+            label="Candidate pool exhausted"
+            value={stoppedReason === "candidate_pool_exhausted" ? "Yes" : "No"}
+          />
+          <CompactDetail
+            label="Provider unavailable/no offers"
+            value={
+              stoppedReason === "provider_unavailable_no_offers" ? "Yes" : "No"
+            }
+          />
+          <CompactDetail
+            label="Candidate pool failed"
+            value={candidatePoolHealth.failed}
+          />
+          <CompactDetail
+            label="Candidate pool unavailable"
+            value={candidatePoolHealth.unavailable}
+          />
+          <CompactDetail
+            label="Fresh used publicly"
+            value={publicPriceDiagnostics.fresh_available}
+          />
+          <CompactDetail
+            label="LKG used publicly"
+            value={publicPriceDiagnostics.last_known_good_used}
+          />
+          <CompactDetail
+            label="LKG failed safety"
+            value={publicPriceDiagnostics.last_known_good_failed_safety_check}
+          />
+          <CompactDetail
+            label="Exact route mismatch"
+            value={publicPriceDiagnostics.exact_route_mismatch}
+          />
+          <CompactDetail
+            label="No provider fare ever"
+            value={publicPriceDiagnostics.no_provider_backed_fare_ever}
+          />
         </dl>
       </div>
     </DashboardSection>
@@ -1130,7 +1454,9 @@ function FallbackPoolsSection({
       <div className="mt-4 grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
         {pools.length ? (
           pools.map((pool) => {
-            const selected = normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(pool.marketCode);
+            const selected =
+              normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") ===
+              normalizeAdminHomepageFareMarketCode(pool.marketCode);
 
             return (
               <button
@@ -1146,7 +1472,9 @@ function FallbackPoolsSection({
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h4 className="font-extrabold text-slate-950">{pool.marketLabel}</h4>
+                    <h4 className="font-extrabold text-slate-950">
+                      {pool.marketLabel}
+                    </h4>
                     <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
                       {pool.marketCode} · {pool.marketGroup}
                     </p>
@@ -1156,15 +1484,31 @@ function FallbackPoolsSection({
                   </span>
                 </div>
                 <p className="mt-3 text-sm font-semibold leading-6 text-slate-500">
-                  No public display target. Coverage is retained for internal routing, replacement, and regional debugging.
+                  No public display target. Coverage is retained for internal
+                  routing, replacement, and regional debugging.
                 </p>
                 <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
-                  <MarketMiniMetric label="Fresh" value={pool.freshCount ?? 0} />
-                  <MarketMiniMetric label="Missing" value={pool.missingCount ?? 0} />
+                  <MarketMiniMetric
+                    label="Fresh"
+                    value={pool.freshCount ?? 0}
+                  />
+                  <MarketMiniMetric
+                    label="Missing"
+                    value={pool.missingCount ?? 0}
+                  />
                   <MarketMiniMetric label="Failed" value={pool.failed} />
-                  <MarketMiniMetric label="Provider" value={pool.providerCalls} />
-                  <MarketMiniMetric label="Attempts" value={pool.routeAttempts} />
-                  <MarketMiniMetric label="Timeout" value={pool.timeoutCount ?? 0} />
+                  <MarketMiniMetric
+                    label="Provider"
+                    value={pool.providerCalls}
+                  />
+                  <MarketMiniMetric
+                    label="Attempts"
+                    value={pool.routeAttempts}
+                  />
+                  <MarketMiniMetric
+                    label="Timeout"
+                    value={pool.timeoutCount ?? 0}
+                  />
                 </dl>
                 <span className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-extrabold text-indigo-700">
                   Inspect fallback routes
@@ -1195,13 +1539,42 @@ function RawDebugDetails({
         Raw debug / View All details
       </summary>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Configured routes" value={statusPayload.summary.total} />
-        <MetricCard label="Candidate pool failed" value={statusPayload.candidatePoolHealth.failed} />
-        <MetricCard label="Candidate pool unavailable" value={statusPayload.candidatePoolHealth.unavailable} />
-        <MetricCard label="Visible gaps attempted" value={refreshCounts?.visibleGapsAttempted.length ?? 0} />
-        <MetricCard label="Immediate replacements attempted" value={refreshCounts?.replacementsUsed.length ?? 0} />
-        <MetricCard label="Executor targets" value={refreshCounts ? formatStringList(refreshCounts.targetedMarkets, "none") : "No manual run yet"} />
-        <MetricCard label="Markets needing another run" value={refreshCounts ? formatMarketsNeedingRun(refreshCounts.marketsNeedingAnotherRun) : formatMarketsNeedingRun(statusPayload.marketsNeedingAnotherRun)} />
+        <MetricCard
+          label="Configured routes"
+          value={statusPayload.summary.total}
+        />
+        <MetricCard
+          label="Candidate pool failed"
+          value={statusPayload.candidatePoolHealth.failed}
+        />
+        <MetricCard
+          label="Candidate pool unavailable"
+          value={statusPayload.candidatePoolHealth.unavailable}
+        />
+        <MetricCard
+          label="Visible gaps attempted"
+          value={refreshCounts?.visibleGapsAttempted.length ?? 0}
+        />
+        <MetricCard
+          label="Immediate replacements attempted"
+          value={refreshCounts?.replacementsUsed.length ?? 0}
+        />
+        <MetricCard
+          label="Executor targets"
+          value={
+            refreshCounts
+              ? formatStringList(refreshCounts.targetedMarkets, "none")
+              : "No manual run yet"
+          }
+        />
+        <MetricCard
+          label="Markets needing another run"
+          value={
+            refreshCounts
+              ? formatMarketsNeedingRun(refreshCounts.marketsNeedingAnotherRun)
+              : formatMarketsNeedingRun(statusPayload.marketsNeedingAnotherRun)
+          }
+        />
       </div>
     </details>
   );
@@ -1237,7 +1610,9 @@ function MarketRouteInspector({
   const handleSelectMarket = (marketCode: string) => {
     onSelectMarket(marketCode);
   };
-  const handleFilterChange = (nextFilter: AdminHomepageFareRouteGroupFilter) => {
+  const handleFilterChange = (
+    nextFilter: AdminHomepageFareRouteGroupFilter,
+  ) => {
     onFilterChange(nextFilter);
   };
 
@@ -1251,11 +1626,15 @@ function MarketRouteInspector({
           Grouped Market Route Inspector
         </h4>
         <p className="mt-2 text-sm leading-6 text-slate-500">
-          Inspect homepage fare routes by market, status, and coverage. Select a market below to view route details.
+          Inspect homepage fare routes by market, status, and coverage. Select a
+          market below to view route details.
         </p>
       </div>
 
-      <div className="mt-5 overflow-x-auto pb-1" aria-label="Route status filters">
+      <div
+        className="mt-5 overflow-x-auto pb-1"
+        aria-label="Route status filters"
+      >
         <div className="flex min-w-max gap-2">
           {ROUTE_FILTERS.map((item) => (
             <button
@@ -1288,13 +1667,17 @@ function MarketRouteInspector({
             </div>
             <button
               type="button"
-              onClick={() => handleSelectMarket(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE)}
+              onClick={() =>
+                handleSelectMarket(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE)
+              }
               className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
                 selectedRouteScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
                   ? "border-indigo-700 bg-indigo-700 text-white ring-2 ring-indigo-700/15"
                   : "border-slate-200 bg-white/80 text-slate-950 hover:border-indigo-700/40 hover:bg-white hover:shadow-md"
               }`}
-              aria-pressed={selectedRouteScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE}
+              aria-pressed={
+                selectedRouteScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
+              }
             >
               View All
             </button>
@@ -1306,14 +1689,20 @@ function MarketRouteInspector({
                 <MarketRouteGroupCard
                   key={group.marketCode}
                   group={group}
-                  selected={normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(group.marketCode)}
+                  selected={
+                    normalizeAdminHomepageFareMarketCode(
+                      selectedRouteScope ?? "",
+                    ) === normalizeAdminHomepageFareMarketCode(group.marketCode)
+                  }
                   onSelect={handleSelectMarket}
                 />
               ))}
             </div>
           ) : (
             <p className="rounded-2xl border border-dashed border-slate-300 bg-white/50 p-4 text-sm font-semibold text-slate-500">
-              {loading ? "Loading market route groups…" : "No public market route groups match this filter."}
+              {loading
+                ? "Loading market route groups…"
+                : "No public market route groups match this filter."}
             </p>
           )}
         </div>
@@ -1325,7 +1714,8 @@ function MarketRouteInspector({
                 Fallback-only debugging pools
               </h5>
               <p className="mt-1 text-xs font-semibold text-slate-500">
-                These pools have no public display target and are not counted as normal public market readiness.
+                These pools have no public display target and are not counted as
+                normal public market readiness.
               </p>
             </div>
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -1333,7 +1723,11 @@ function MarketRouteInspector({
                 <MarketRouteGroupCard
                   key={group.marketCode}
                   group={group}
-                  selected={normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(group.marketCode)}
+                  selected={
+                    normalizeAdminHomepageFareMarketCode(
+                      selectedRouteScope ?? "",
+                    ) === normalizeAdminHomepageFareMarketCode(group.marketCode)
+                  }
                   onSelect={handleSelectMarket}
                   fallbackOnly
                 />
@@ -1381,23 +1775,34 @@ function MarketRouteGroupCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-base font-extrabold text-slate-950">{group.marketLabel}</p>
+          <p className="text-base font-extrabold text-slate-950">
+            {group.marketLabel}
+          </p>
           <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
-            {fallbackOnly ? "Fallback only · No public display target" : group.marketGroup}
+            {fallbackOnly
+              ? "Fallback only · No public display target"
+              : group.marketGroup}
           </p>
         </div>
         <MarketGroupStatusBadge status={group.status} />
       </div>
       <p className="mt-3 text-sm font-semibold text-slate-500">
-        {group.routes.length} total routes · {group.freshFaresCount} fresh · {group.lastKnownGoodFaresCount} last-known-good
+        {group.routes.length} total routes · {group.freshFaresCount} fresh ·{" "}
+        {group.lastKnownGoodFaresCount} last-known-good
       </p>
       <dl className="mt-4 grid grid-cols-3 gap-2 text-xs">
         <MarketMiniMetric label="Popular" value={group.popularCoverageCount} />
-        <MarketMiniMetric label="Discovery" value={group.discoveryCoverageCount} />
+        <MarketMiniMetric
+          label="Discovery"
+          value={group.discoveryCoverageCount}
+        />
         <MarketMiniMetric label="Backup" value={group.backupCoverageCount} />
         <MarketMiniMetric label="Fresh" value={group.freshFaresCount} />
         <MarketMiniMetric label="LKG" value={group.lastKnownGoodFaresCount} />
-        <MarketMiniMetric label="Failed/missing" value={group.failedUnavailableRoutesCount + group.missingRoutesCount} />
+        <MarketMiniMetric
+          label="Failed/missing"
+          value={group.failedUnavailableRoutesCount + group.missingRoutesCount}
+        />
       </dl>
       <span className="mt-4 inline-flex min-h-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-extrabold text-indigo-700 transition">
         Inspect {group.marketCode} routes
@@ -1425,7 +1830,10 @@ function SelectedRouteDetails({
 }) {
   if (!selectedRouteScope || !group) {
     return (
-      <div ref={routeDetailsRef} className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-white/55 p-6 text-center">
+      <div
+        ref={routeDetailsRef}
+        className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-white/55 p-6 text-center"
+      >
         <p className="text-sm font-extrabold text-slate-950">
           Select a market to inspect its routes, or choose View All.
         </p>
@@ -1440,16 +1848,22 @@ function SelectedRouteDetails({
   const isViewAll = group.marketCode === "ALL";
 
   return (
-    <div ref={routeDetailsRef} className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white/80 shadow-sm">
+    <div
+      ref={routeDetailsRef}
+      className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white/80 shadow-sm"
+    >
       <div className="border-b border-slate-200 bg-slate-50/90 px-4 py-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h5 className="text-base font-extrabold text-slate-950">
-              {isViewAll ? "All routes" : group.displayName} — {page.totalRoutes} total routes
+              {isViewAll ? "All routes" : group.displayName} —{" "}
+              {page.totalRoutes} total routes
             </h5>
             <p className="mt-1 text-sm font-semibold text-slate-500">
               Showing {page.start}–{page.end} of {page.totalRoutes}
-              {isViewAll ? " · Debug view across all markets" : ` · ${group.marketCode}`}
+              {isViewAll
+                ? " · Debug view across all markets"
+                : ` · ${group.marketCode}`}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -1486,7 +1900,9 @@ function SelectedRouteDetails({
 function MarketMiniMetric({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-lg bg-white/80 p-2 ring-1 ring-slate-100">
-      <dt className="font-bold uppercase tracking-wide text-slate-500">{label}</dt>
+      <dt className="font-bold uppercase tracking-wide text-slate-500">
+        {label}
+      </dt>
       <dd className="mt-0.5 font-extrabold text-slate-950">{value}</dd>
     </div>
   );
@@ -1504,7 +1920,9 @@ function RouteDetailsTable({
   if (!routes.length) {
     return (
       <p className="p-4 text-sm font-semibold text-slate-500">
-        {loading ? "Loading homepage fare snapshot status…" : "No routes to display for this market/filter."}
+        {loading
+          ? "Loading homepage fare snapshot status…"
+          : "No routes to display for this market/filter."}
       </p>
     );
   }
@@ -1530,31 +1948,57 @@ function RouteDetailsTable({
         <tbody className="divide-y divide-border">
           {routes.map((route) => (
             <tr key={`${group.marketCode}-${route.id}`} className="align-top">
-              <td className="px-3 py-3 font-bold text-slate-950">{route.market}</td>
-              <td className="px-3 py-3 font-bold text-slate-950">{route.label}</td>
+              <td className="px-3 py-3 font-bold text-slate-950">
+                {route.market}
+              </td>
+              <td className="px-3 py-3 font-bold text-slate-950">
+                {route.label}
+              </td>
               <td className="px-3 py-3 font-semibold text-slate-950">
                 {route.origin}
-                {route.originCity ? <span className="block text-xs font-medium text-slate-500">{route.originCity}</span> : null}
+                {route.originCity ? (
+                  <span className="block text-xs font-medium text-slate-500">
+                    {route.originCity}
+                  </span>
+                ) : null}
               </td>
               <td className="px-3 py-3 font-semibold text-slate-950">
                 {route.destination}
-                {route.destinationCity ? <span className="block text-xs font-medium text-slate-500">{route.destinationCity}</span> : null}
+                {route.destinationCity ? (
+                  <span className="block text-xs font-medium text-slate-500">
+                    {route.destinationCity}
+                  </span>
+                ) : null}
               </td>
-              <td className="px-3 py-3 capitalize text-slate-950">{route.section}</td>
+              <td className="px-3 py-3 capitalize text-slate-950">
+                {route.section}
+              </td>
               <td className="px-3 py-3">
                 <StatusBadge status={route.status} />
               </td>
-              <td className="px-3 py-3 font-semibold text-slate-950">{formatRoutePrice(route)}</td>
-              <td className="px-3 py-3 font-semibold text-slate-950">{formatProviderNativePrice(route)}</td>
-              <td className="px-3 py-3 text-slate-950">{route.provider ?? "—"}</td>
+              <td className="px-3 py-3 font-semibold text-slate-950">
+                {formatRoutePrice(route)}
+              </td>
+              <td className="px-3 py-3 font-semibold text-slate-950">
+                {formatProviderNativePrice(route)}
+              </td>
+              <td className="px-3 py-3 text-slate-950">
+                {route.provider ?? "—"}
+              </td>
               <td className="px-3 py-3 text-xs font-semibold text-slate-500">
                 {formatSnapshotTime(route.searchedAt)}
-                {route.expiresAt ? <span className="block">Expires {formatDateTime(route.expiresAt)}</span> : null}
+                {route.expiresAt ? (
+                  <span className="block">
+                    Expires {formatDateTime(route.expiresAt)}
+                  </span>
+                ) : null}
               </td>
               <td className="max-w-xs px-3 py-3 text-xs font-semibold text-slate-500">
                 <SafeFailureReason route={route} />
                 {route.replacementCandidateUsed ? (
-                  <span className="block">Replacement: {route.replacementCandidateUsed}</span>
+                  <span className="block">
+                    Replacement: {route.replacementCandidateUsed}
+                  </span>
                 ) : !route.errorReason ? (
                   "—"
                 ) : null}
@@ -1577,20 +2021,26 @@ function MarketGroupStatusBadge({
       ? "bg-indigo-50 text-indigo-700"
       : status === "Fallback only"
         ? "bg-slate-100 text-slate-500"
-      : status === "Failed"
-        ? "bg-rose-50 text-rose-700"
-        : status === "Partially ready"
-          ? "bg-sky-50 text-sky-700"
-          : "bg-amber-50 text-amber-700";
+        : status === "Failed"
+          ? "bg-rose-50 text-rose-700"
+          : status === "Partially ready"
+            ? "bg-sky-50 text-sky-700"
+            : "bg-amber-50 text-amber-700";
 
   return (
-    <span className={`inline-flex shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${styles}`}>
+    <span
+      className={`inline-flex shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${styles}`}
+    >
       {status}
     </span>
   );
 }
 
-function DisplayReadinessSummary({ readiness }: { readiness: DisplayReadiness }) {
+function DisplayReadinessSummary({
+  readiness,
+}: {
+  readiness: DisplayReadiness;
+}) {
   return (
     <div
       className={`mt-4 rounded-xl border p-4 ${HEALTH_SUMMARY_STYLES[readiness.status]}`}
@@ -1659,9 +2109,13 @@ async function buildSafeRefreshFailureMessage(response: Response) {
       safeReason?: unknown;
     };
     const details = [
-      typeof payload.error === "string" ? payload.error : "Homepage fare refresh failed.",
+      typeof payload.error === "string"
+        ? payload.error
+        : "Homepage fare refresh failed.",
       typeof payload.safeReason === "string" ? payload.safeReason : undefined,
-      typeof payload.errorCode === "string" ? `Code: ${payload.errorCode}.` : undefined,
+      typeof payload.errorCode === "string"
+        ? `Code: ${payload.errorCode}.`
+        : undefined,
       `Status: ${response.status}.`,
     ].filter(Boolean);
 
@@ -1697,30 +2151,48 @@ function normalizeRefreshCounts(payload: unknown): RefreshCounts {
     routeAttempts: readCount(counts.routeAttempts),
     providerCalls: readCount(counts.providerCalls),
     stoppedReason: readStoppedReason(counts.stoppedReason),
-    globalReadinessStatus: readGlobalReadinessStatus(counts.globalReadinessStatus),
+    globalReadinessStatus: readGlobalReadinessStatus(
+      counts.globalReadinessStatus,
+    ),
     requiredMarkets: readStringArray(counts.requiredMarkets),
     readyMarkets: readStringArray(counts.readyMarkets),
-    underfilledMarkets: normalizeMarketReadinessArray(counts.underfilledMarkets),
-    marketReadinessSummary: normalizeMarketReadinessArray(counts.marketReadinessSummary),
+    underfilledMarkets: normalizeMarketReadinessArray(
+      counts.underfilledMarkets,
+    ),
+    marketReadinessSummary: normalizeMarketReadinessArray(
+      counts.marketReadinessSummary,
+    ),
     marketTargets: normalizeMarketReadinessRecord(counts.marketTargets),
     marketTargetMet: normalizeBooleanRecord(counts.marketTargetMet),
     popularFreshByMarket: normalizeCountRecord(counts.popularFreshByMarket),
     discoveryFreshByMarket: normalizeCountRecord(counts.discoveryFreshByMarket),
     backupFreshByMarket: normalizeCountRecord(counts.backupFreshByMarket),
-    candidatePoolSizeByMarket: normalizeCountRecord(counts.candidatePoolSizeByMarket),
+    candidatePoolSizeByMarket: normalizeCountRecord(
+      counts.candidatePoolSizeByMarket,
+    ),
     routeAttemptsByMarket: normalizeCountRecord(counts.routeAttemptsByMarket),
     providerCallsByMarket: normalizeCountRecord(counts.providerCallsByMarket),
     failedByMarket: normalizeCountRecord(counts.failedByMarket),
     unavailableByMarket: normalizeCountRecord(counts.unavailableByMarket),
-    skippedCooldownByMarket: normalizeCountRecord(counts.skippedCooldownByMarket),
-    replacementCandidatesUsedByMarket: normalizeCountRecord(counts.replacementCandidatesUsedByMarket),
+    skippedCooldownByMarket: normalizeCountRecord(
+      counts.skippedCooldownByMarket,
+    ),
+    replacementCandidatesUsedByMarket: normalizeCountRecord(
+      counts.replacementCandidatesUsedByMarket,
+    ),
     timeoutByMarket: normalizeCountRecord(counts.timeoutByMarket),
     lastKnownGoodByMarket: normalizeCountRecord(counts.lastKnownGoodByMarket),
     targetedMarkets: readStringArray(counts.targetedMarkets),
-    visibleGapsAttempted: normalizeVisibleGapAttempts(counts.visibleGapsAttempted),
+    visibleGapsAttempted: normalizeVisibleGapAttempts(
+      counts.visibleGapsAttempted,
+    ),
     replacementsUsed: normalizeReplacementUsages(counts.replacementsUsed),
-    marketsNeedingAnotherRun: normalizeMarketsNeedingAnotherRun(counts.marketsNeedingAnotherRun),
-    underfillCauseByMarket: normalizeUnderfillCauseRecord(counts.underfillCauseByMarket),
+    marketsNeedingAnotherRun: normalizeMarketsNeedingAnotherRun(
+      counts.marketsNeedingAnotherRun,
+    ),
+    underfillCauseByMarket: normalizeUnderfillCauseRecord(
+      counts.underfillCauseByMarket,
+    ),
     readinessBefore: normalizeRefreshReadiness(counts.readinessBefore),
     readinessAfter: normalizeRefreshReadiness(counts.readinessAfter),
     refreshBudget: normalizeRefreshBudget(counts.refreshBudget),
@@ -1795,32 +2267,63 @@ function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
       summary.total,
     ),
     refreshBudget: normalizeRefreshBudget(candidate.refreshBudget),
-    globalReadinessStatus: readGlobalReadinessStatus(candidate.globalReadinessStatus),
+    globalReadinessStatus: readGlobalReadinessStatus(
+      candidate.globalReadinessStatus,
+    ),
     requiredMarkets: readStringArray(candidate.requiredMarkets),
     marketTargets: normalizeMarketReadinessRecord(candidate.marketTargets),
     marketTargetMet: normalizeBooleanRecord(candidate.marketTargetMet),
-    underfilledMarkets: normalizeMarketReadinessArray(candidate.underfilledMarkets),
+    underfilledMarkets: normalizeMarketReadinessArray(
+      candidate.underfilledMarkets,
+    ),
     readyMarkets: readStringArray(candidate.readyMarkets),
-    marketReadinessSummary: normalizeMarketReadinessArray(candidate.marketReadinessSummary),
+    marketReadinessSummary: normalizeMarketReadinessArray(
+      candidate.marketReadinessSummary,
+    ),
     popularFreshByMarket: normalizeCountRecord(candidate.popularFreshByMarket),
-    discoveryFreshByMarket: normalizeCountRecord(candidate.discoveryFreshByMarket),
+    discoveryFreshByMarket: normalizeCountRecord(
+      candidate.discoveryFreshByMarket,
+    ),
     backupFreshByMarket: normalizeCountRecord(candidate.backupFreshByMarket),
-    candidatePoolSizeByMarket: normalizeCountRecord(candidate.candidatePoolSizeByMarket),
-    routeAttemptsByMarket: normalizeCountRecord(candidate.routeAttemptsByMarket),
-    providerCallsByMarket: normalizeCountRecord(candidate.providerCallsByMarket),
+    candidatePoolSizeByMarket: normalizeCountRecord(
+      candidate.candidatePoolSizeByMarket,
+    ),
+    routeAttemptsByMarket: normalizeCountRecord(
+      candidate.routeAttemptsByMarket,
+    ),
+    providerCallsByMarket: normalizeCountRecord(
+      candidate.providerCallsByMarket,
+    ),
     failedByMarket: normalizeCountRecord(candidate.failedByMarket),
     unavailableByMarket: normalizeCountRecord(candidate.unavailableByMarket),
-    skippedCooldownByMarket: normalizeCountRecord(candidate.skippedCooldownByMarket),
-    replacementCandidatesUsedByMarket: normalizeCountRecord(candidate.replacementCandidatesUsedByMarket),
+    skippedCooldownByMarket: normalizeCountRecord(
+      candidate.skippedCooldownByMarket,
+    ),
+    replacementCandidatesUsedByMarket: normalizeCountRecord(
+      candidate.replacementCandidatesUsedByMarket,
+    ),
     timeoutByMarket: normalizeCountRecord(candidate.timeoutByMarket),
-    lastKnownGoodByMarket: normalizeCountRecord(candidate.lastKnownGoodByMarket),
-    publicPriceDiagnostics: normalizePublicPriceDiagnostics(candidate.publicPriceDiagnostics),
+    lastKnownGoodByMarket: normalizeCountRecord(
+      candidate.lastKnownGoodByMarket,
+    ),
+    publicPriceDiagnostics: normalizePublicPriceDiagnostics(
+      candidate.publicPriceDiagnostics,
+    ),
     targetedMarkets: readStringArray(candidate.targetedMarkets),
-    visibleGapsAttempted: normalizeVisibleGapAttempts(candidate.visibleGapsAttempted),
+    visibleGapsAttempted: normalizeVisibleGapAttempts(
+      candidate.visibleGapsAttempted,
+    ),
     replacementsUsed: normalizeReplacementUsages(candidate.replacementsUsed),
-    marketsNeedingAnotherRun: normalizeMarketsNeedingAnotherRun(candidate.marketsNeedingAnotherRun),
-    underfillCauseByMarket: normalizeUnderfillCauseRecord(candidate.underfillCauseByMarket),
-    lastRefreshAt: typeof candidate.lastRefreshAt === "string" ? candidate.lastRefreshAt : undefined,
+    marketsNeedingAnotherRun: normalizeMarketsNeedingAnotherRun(
+      candidate.marketsNeedingAnotherRun,
+    ),
+    underfillCauseByMarket: normalizeUnderfillCauseRecord(
+      candidate.underfillCauseByMarket,
+    ),
+    lastRefreshAt:
+      typeof candidate.lastRefreshAt === "string"
+        ? candidate.lastRefreshAt
+        : undefined,
     cronConfigured: candidate.cronConfigured === true,
     nextExpectedCronRefresh:
       typeof candidate.nextExpectedCronRefresh === "string"
@@ -1837,9 +2340,13 @@ function normalizeDisplayReadiness(value: unknown): DisplayReadiness {
 
   return {
     ...health,
-    globalReadinessStatus: readGlobalReadinessStatus(readiness.globalReadinessStatus),
+    globalReadinessStatus: readGlobalReadinessStatus(
+      readiness.globalReadinessStatus,
+    ),
     popularFresh: readCount(readiness.popularFresh),
-    popularTarget: readCount(readiness.popularTarget) || DEFAULT_DISPLAY_READINESS.popularTarget,
+    popularTarget:
+      readCount(readiness.popularTarget) ||
+      DEFAULT_DISPLAY_READINESS.popularTarget,
     discoverFresh: readCount(readiness.discoverFresh),
     discoverVisibleTarget:
       readCount(readiness.discoverVisibleTarget) ||
@@ -1855,7 +2362,9 @@ function normalizeDisplayReadiness(value: unknown): DisplayReadiness {
 function normalizeRefreshReadiness(value: unknown): RefreshReadinessCounts {
   if (!value || typeof value !== "object") return DEFAULT_READINESS_COUNTS;
 
-  const readiness = value as Partial<Record<keyof RefreshReadinessCounts, unknown>>;
+  const readiness = value as Partial<
+    Record<keyof RefreshReadinessCounts, unknown>
+  >;
 
   return {
     freshPopular: readCount(readiness.freshPopular),
@@ -1918,7 +2427,9 @@ function normalizeHealth(value: unknown): HomepageFareHealth {
   return { status, label, message };
 }
 
-function readHealthStatus(value: unknown): HomepageFareHealthStatus | undefined {
+function readHealthStatus(
+  value: unknown,
+): HomepageFareHealthStatus | undefined {
   return value === "healthy" || value === "warning" || value === "attention"
     ? value
     : undefined;
@@ -1929,7 +2440,9 @@ function normalizeStatusRoute(
 ): HomepageFareStatusRoute | undefined {
   if (!value || typeof value !== "object") return undefined;
 
-  const route = value as Partial<Record<keyof HomepageFareStatusRoute, unknown>>;
+  const route = value as Partial<
+    Record<keyof HomepageFareStatusRoute, unknown>
+  >;
   const status = readSnapshotStatus(route.status);
   const origin = readCode(route.origin);
   const destination = readCode(route.destination);
@@ -1941,14 +2454,23 @@ function normalizeStatusRoute(
   return {
     id: route.id,
     market: typeof route.market === "string" ? route.market : "GLOBAL",
-    label: typeof route.label === "string" ? route.label : `${origin} → ${destination}`,
+    label:
+      typeof route.label === "string"
+        ? route.label
+        : `${origin} → ${destination}`,
     origin,
     destination,
-    originCity: typeof route.originCity === "string" ? route.originCity : undefined,
+    originCity:
+      typeof route.originCity === "string" ? route.originCity : undefined,
     destinationCity:
-      typeof route.destinationCity === "string" ? route.destinationCity : undefined,
+      typeof route.destinationCity === "string"
+        ? route.destinationCity
+        : undefined,
     section: readRouteSection(route.section),
-    price: typeof route.price === "number" && Number.isFinite(route.price) ? route.price : undefined,
+    price:
+      typeof route.price === "number" && Number.isFinite(route.price)
+        ? route.price
+        : undefined,
     currency: readCode(route.currency),
     providerNativePrice:
       typeof route.providerNativePrice === "number" &&
@@ -1960,8 +2482,10 @@ function normalizeStatusRoute(
     status,
     providerBacked: route.providerBacked === true,
     cachedProviderBacked: route.cachedProviderBacked === true,
-    searchedAt: typeof route.searchedAt === "string" ? route.searchedAt : undefined,
-    expiresAt: typeof route.expiresAt === "string" ? route.expiresAt : undefined,
+    searchedAt:
+      typeof route.searchedAt === "string" ? route.searchedAt : undefined,
+    expiresAt:
+      typeof route.expiresAt === "string" ? route.expiresAt : undefined,
     replacementCandidateUsed:
       typeof route.replacementCandidateUsed === "string"
         ? route.replacementCandidateUsed
@@ -1974,7 +2498,15 @@ function normalizeStatusRoute(
   };
 }
 
-function SafeFailureReason({ route }: { route: { status: HomepageFareSnapshotStatus; errorReason?: string; errorCategory?: string } }) {
+function SafeFailureReason({
+  route,
+}: {
+  route: {
+    status: HomepageFareSnapshotStatus;
+    errorReason?: string;
+    errorCategory?: string;
+  };
+}) {
   if (
     (route.status !== "failed" && route.status !== "unavailable") ||
     !route.errorReason ||
@@ -2030,12 +2562,14 @@ function isSafeHomepageFareErrorReason(
   value: unknown,
 ): value is SafeHomepageFareErrorReason {
   return (
-    typeof value === "string" &&
-    value in SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES
+    typeof value === "string" && value in SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES
   );
 }
 
-function createEmptyPublicPriceDiagnostics(): Record<PublicPriceDiagnosis, number> {
+function createEmptyPublicPriceDiagnostics(): Record<
+  PublicPriceDiagnosis,
+  number
+> {
   return {
     fresh_available: 0,
     last_known_good_used: 0,
@@ -2072,7 +2606,9 @@ function normalizeStatusSummary(
     return { ...DEFAULT_STATUS_SUMMARY, total: fallbackTotal };
   }
 
-  const summary = value as Partial<Record<keyof HomepageFareStatusSummary, unknown>>;
+  const summary = value as Partial<
+    Record<keyof HomepageFareStatusSummary, unknown>
+  >;
 
   return {
     fresh: readCount(summary.fresh),
@@ -2096,7 +2632,6 @@ function readStoppedReason(value: unknown): RefreshStoppedReason {
     ? value
     : "completed";
 }
-
 
 function formatMarketStatus(status: MarketReadinessStatus) {
   switch (status) {
@@ -2136,8 +2671,6 @@ function formatStoppedReason(reason: RefreshStoppedReason) {
   }
 }
 
-
-
 function formatStringList(values: string[], emptyLabel: string) {
   return values.length ? values.join(", ") : emptyLabel;
 }
@@ -2146,7 +2679,12 @@ function formatMarketsNeedingRun(markets: MarketNextRunNeed[]) {
   const needed = markets.filter((market) => market.needed);
 
   return needed.length
-    ? needed.map((market) => `${market.market} (${formatUnderfillCause(market.reason)})`).join(", ")
+    ? needed
+        .map(
+          (market) =>
+            `${market.market} (${formatUnderfillCause(market.reason)})`,
+        )
+        .join(", ")
     : "none";
 }
 
@@ -2193,7 +2731,6 @@ function readStringArray(value: unknown): string[] {
     : [];
 }
 
-
 function readUnderfillCause(value: unknown): UnderfillCause {
   return value === "none" ||
     value === "budget_exhausted" ||
@@ -2206,11 +2743,16 @@ function readUnderfillCause(value: unknown): UnderfillCause {
     : "underfilled";
 }
 
-function normalizeUnderfillCauseRecord(value: unknown): Record<string, UnderfillCause> {
+function normalizeUnderfillCauseRecord(
+  value: unknown,
+): Record<string, UnderfillCause> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
 
   return Object.fromEntries(
-    Object.entries(value).map(([key, cause]) => [key, readUnderfillCause(cause)]),
+    Object.entries(value).map(([key, cause]) => [
+      key,
+      readUnderfillCause(cause),
+    ]),
   );
 }
 
@@ -2221,26 +2763,35 @@ function normalizeVisibleGapAttempts(value: unknown): VisibleGapAttempt[] {
     if (!item || typeof item !== "object" || Array.isArray(item)) return [];
     const candidate = item as Record<string, unknown>;
     const market = typeof candidate.market === "string" ? candidate.market : "";
-    const routeId = typeof candidate.routeId === "string" ? candidate.routeId : "";
+    const routeId =
+      typeof candidate.routeId === "string" ? candidate.routeId : "";
     const origin = typeof candidate.origin === "string" ? candidate.origin : "";
-    const destination = typeof candidate.destination === "string" ? candidate.destination : "";
-    const section = candidate.section === "popular" || candidate.section === "discovery" || candidate.section === "backup" || candidate.section === "fallback"
-      ? candidate.section
-      : "fallback";
+    const destination =
+      typeof candidate.destination === "string" ? candidate.destination : "";
+    const section =
+      candidate.section === "popular" ||
+      candidate.section === "discovery" ||
+      candidate.section === "backup" ||
+      candidate.section === "fallback"
+        ? candidate.section
+        : "fallback";
 
     if (!market || !routeId || !origin || !destination) return [];
 
-    return [{
-      market,
-      routeId,
-      origin,
-      destination,
-      section,
-      result: typeof candidate.result === "string" ? candidate.result : "skipped",
-      ...(typeof candidate.replacementForRouteId === "string"
-        ? { replacementForRouteId: candidate.replacementForRouteId }
-        : {}),
-    }];
+    return [
+      {
+        market,
+        routeId,
+        origin,
+        destination,
+        section,
+        result:
+          typeof candidate.result === "string" ? candidate.result : "skipped",
+        ...(typeof candidate.replacementForRouteId === "string"
+          ? { replacementForRouteId: candidate.replacementForRouteId }
+          : {}),
+      },
+    ];
   });
 }
 
@@ -2251,25 +2802,44 @@ function normalizeReplacementUsages(value: unknown): ReplacementUsage[] {
     if (!item || typeof item !== "object" || Array.isArray(item)) return [];
     const candidate = item as Record<string, unknown>;
     const market = typeof candidate.market === "string" ? candidate.market : "";
-    const failedRouteId = typeof candidate.failedRouteId === "string" ? candidate.failedRouteId : "";
-    const replacementRouteId = typeof candidate.replacementRouteId === "string" ? candidate.replacementRouteId : "";
+    const failedRouteId =
+      typeof candidate.failedRouteId === "string"
+        ? candidate.failedRouteId
+        : "";
+    const replacementRouteId =
+      typeof candidate.replacementRouteId === "string"
+        ? candidate.replacementRouteId
+        : "";
     const origin = typeof candidate.origin === "string" ? candidate.origin : "";
-    const destination = typeof candidate.destination === "string" ? candidate.destination : "";
+    const destination =
+      typeof candidate.destination === "string" ? candidate.destination : "";
 
-    if (!market || !failedRouteId || !replacementRouteId || !origin || !destination) return [];
+    if (
+      !market ||
+      !failedRouteId ||
+      !replacementRouteId ||
+      !origin ||
+      !destination
+    )
+      return [];
 
-    return [{
-      market,
-      failedRouteId,
-      replacementRouteId,
-      origin,
-      destination,
-      result: typeof candidate.result === "string" ? candidate.result : "skipped",
-    }];
+    return [
+      {
+        market,
+        failedRouteId,
+        replacementRouteId,
+        origin,
+        destination,
+        result:
+          typeof candidate.result === "string" ? candidate.result : "skipped",
+      },
+    ];
   });
 }
 
-function normalizeMarketsNeedingAnotherRun(value: unknown): MarketNextRunNeed[] {
+function normalizeMarketsNeedingAnotherRun(
+  value: unknown,
+): MarketNextRunNeed[] {
   if (!Array.isArray(value)) return [];
 
   return value.flatMap((item) => {
@@ -2278,11 +2848,13 @@ function normalizeMarketsNeedingAnotherRun(value: unknown): MarketNextRunNeed[] 
     const market = typeof candidate.market === "string" ? candidate.market : "";
     if (!market) return [];
 
-    return [{
-      market,
-      needed: candidate.needed === true,
-      reason: readUnderfillCause(candidate.reason),
-    }];
+    return [
+      {
+        market,
+        needed: candidate.needed === true,
+        reason: readUnderfillCause(candidate.reason),
+      },
+    ];
   });
 }
 
@@ -2317,27 +2889,36 @@ function normalizeMarketReadinessRecord(
 
   return Object.fromEntries(
     Object.entries(value)
-      .map(([key, market]) => [
-        key,
-        normalizeMarketReadiness(
-          market && typeof market === "object" && !Array.isArray(market)
-            ? { market: key, ...market }
-            : market,
-        ),
-      ] as const)
-      .filter((entry): entry is readonly [string, MarketReadiness] => Boolean(entry[1])),
+      .map(
+        ([key, market]) =>
+          [
+            key,
+            normalizeMarketReadiness(
+              market && typeof market === "object" && !Array.isArray(market)
+                ? { market: key, ...market }
+                : market,
+            ),
+          ] as const,
+      )
+      .filter((entry): entry is readonly [string, MarketReadiness] =>
+        Boolean(entry[1]),
+      ),
   );
 }
 
 function normalizeMarketReadiness(value: unknown): MarketReadiness | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    return undefined;
 
   const market = value as Partial<Record<keyof MarketReadiness, unknown>>;
-  const marketCode = typeof market.marketCode === "string" ? market.marketCode : undefined;
+  const marketCode =
+    typeof market.marketCode === "string" ? market.marketCode : undefined;
   if (!marketCode) return undefined;
 
   const underfillReason =
-    typeof market.underfillReason === "string" ? market.underfillReason : undefined;
+    typeof market.underfillReason === "string"
+      ? market.underfillReason
+      : undefined;
 
   return {
     market: typeof market.market === "string" ? market.market : marketCode,
@@ -2375,7 +2956,6 @@ function normalizeMarketReadiness(value: unknown): MarketReadiness | undefined {
   };
 }
 
-
 function readRouteSection(value: unknown): HomepageFareRouteSection {
   return value === "popular" ||
     value === "discovery" ||
@@ -2399,7 +2979,9 @@ function readSnapshotStatus(
 }
 
 function readCode(value: unknown) {
-  return typeof value === "string" && /^[A-Z]{3}$/.test(value) ? value : undefined;
+  return typeof value === "string" && /^[A-Z]{3}$/.test(value)
+    ? value
+    : undefined;
 }
 
 function sumCountRecord(record: Record<string, number>) {
@@ -2412,7 +2994,11 @@ function readCount(value: unknown) {
     : 0;
 }
 
-function formatRoutePrice(route: { status: HomepageFareSnapshotStatus; price?: number; currency?: string }) {
+function formatRoutePrice(route: {
+  status: HomepageFareSnapshotStatus;
+  price?: number;
+  currency?: string;
+}) {
   if (
     (route.status !== "fresh" && route.status !== "last_known_good") ||
     !route.price ||
@@ -2428,7 +3014,10 @@ function formatRoutePrice(route: { status: HomepageFareSnapshotStatus; price?: n
   }).format(route.price);
 }
 
-function formatProviderNativePrice(route: { providerNativePrice?: number; providerNativeCurrency?: string }) {
+function formatProviderNativePrice(route: {
+  providerNativePrice?: number;
+  providerNativeCurrency?: string;
+}) {
   if (!route.providerNativePrice || !route.providerNativeCurrency) return "—";
 
   return new Intl.NumberFormat("en-US", {
@@ -2457,7 +3046,14 @@ function formatDateTime(value: string) {
   }).format(date);
 }
 
-function formatCronStatus(status: Pick<HomepageFareStatusPayload, "cronConfigured" | "nextExpectedCronRefresh">) {
+function formatCronStatus(
+  status: Pick<
+    HomepageFareStatusPayload,
+    "cronConfigured" | "nextExpectedCronRefresh"
+  >,
+) {
   if (!status.cronConfigured) return "Not configured";
-  return status.nextExpectedCronRefresh ? "Configured" : "Configured (cadence note missing)";
+  return status.nextExpectedCronRefresh
+    ? "Configured"
+    : "Configured (cadence note missing)";
 }
