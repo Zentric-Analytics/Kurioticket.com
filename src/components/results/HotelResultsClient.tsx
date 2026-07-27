@@ -1515,13 +1515,22 @@ export function HotelResultsClient() {
             onMouseDown={(event) => event.stopPropagation()}
             className="w-full max-w-4xl rounded-2xl border border-slate-200/90 bg-[#fbfaf7]/95 p-4 text-start shadow-[0_30px_90px_-32px_rgba(15,23,42,0.72)] ring-1 ring-white/80 backdrop-blur-md"
           >
-            <div className="mb-4 flex items-center justify-between gap-4 border-b border-slate-200/80 pb-3">
-              <h2
-                id="sticky-hotel-search-title"
-                className="text-xl font-bold tracking-tight text-slate-950"
-              >
-                {t("editHotelSearch")}
-              </h2>
+            <div className="mb-4 flex items-start justify-between gap-4 border-b border-slate-200/80 pb-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">
+                  {t("searchHotels")}
+                </p>
+                <h2
+                  id="sticky-hotel-search-title"
+                  className="mt-1 text-xl font-bold tracking-tight text-slate-950"
+                >
+                  {(activeDesktopHotelSearchDraft.destination || body.destination).trim() ||
+                    t("destination")}
+                </h2>
+                <p className="mt-1 text-sm font-medium text-slate-600">
+                  {desktopMinimizedDateSummary} · {desktopMinimizedGuestsSummary}
+                </p>
+              </div>
               <button
                 ref={stickyHotelCloseButtonRef}
                 type="button"
