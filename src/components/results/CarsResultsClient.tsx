@@ -60,6 +60,24 @@ type CarFilterGroup = {
   options: CarFilterOption[];
 };
 
+type SearchSurfaceRefs = {
+  pickupInputRef: RefObject<HTMLInputElement | null>;
+  dropoffInputRef: RefObject<HTMLInputElement | null>;
+  dateWrapRef: RefObject<HTMLDivElement | null>;
+  timeWrapRef: RefObject<HTMLDivElement | null>;
+  driverAgeWrapRef: RefObject<HTMLDivElement | null>;
+};
+
+function useSearchSurfaceRefs(): SearchSurfaceRefs {
+  return {
+    pickupInputRef: useRef<HTMLInputElement | null>(null),
+    dropoffInputRef: useRef<HTMLInputElement | null>(null),
+    dateWrapRef: useRef<HTMLDivElement | null>(null),
+    timeWrapRef: useRef<HTMLDivElement | null>(null),
+    driverAgeWrapRef: useRef<HTMLDivElement | null>(null),
+  };
+}
+
 const defaultDriverAge = "18-70";
 const minimumDriverAge = 18;
 const maximumDriverAge = 70;
@@ -511,9 +529,9 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
   const [datesOpen, setDatesOpen] = useState(false);
   const [timesOpen, setTimesOpen] = useState(false);
   const [driverAgeOpen, setDriverAgeOpen] = useState(false);
-  const dateWrapRef = useRef<HTMLDivElement | null>(null);
-  const timeWrapRef = useRef<HTMLDivElement | null>(null);
-  const driverAgeWrapRef = useRef<HTMLDivElement | null>(null);
+  const desktopFullSearchRefs = useSearchSurfaceRefs();
+  const desktopStickySearchRefs = useSearchSurfaceRefs();
+  const mobileSearchRefs = useSearchSurfaceRefs();
   const searchFormRef = useRef<HTMLFormElement | null>(null);
   const desktopFilterSidebarRef = useRef<HTMLDivElement | null>(null);
   const desktopFilterSentinelRef = useRef<HTMLDivElement | null>(null);
@@ -522,8 +540,6 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
   const stickyDialogRef = useRef<HTMLDivElement | null>(null);
   const stickyLauncherRef = useRef<HTMLButtonElement | null>(null);
   const stickyScrollLockRef = useRef<{ restore: () => void } | null>(null);
-  const pickupInputRef = useRef<HTMLInputElement | null>(null);
-  const dropoffInputRef = useRef<HTMLInputElement | null>(null);
   const mobileFiltersScrollLockRef = useRef<{ restore: () => void } | null>(
     null,
   );
@@ -575,6 +591,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
   const badges = useMemo(() => assignCarBadges(initialResults), [initialResults]);
   const visibleResults = useMemo(() => sortCarResults(filterCarResults(initialResults, selectedCarFilters), sort), [initialResults, selectedCarFilters, sort]);
   const showCompactSearchSummary = isSearchBarCompact && desktopStickySearchSection === null;
+  const desktopStickySearchOpen = desktopStickySearchSection !== null;
   const pickupSummary = pickupLocationLabel || t("carsResults.pickupLocation");
   const returnSummary =
     dropoffLocationLabel ||
@@ -703,7 +720,6 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
         formBottom: form.getBoundingClientRect().bottom,
       });
       if (next !== previous) { previous = next; setIsSearchBarCompact(next); }
-      if (!next) setDesktopStickySearchSection(null);
     };
     const schedule = () => { if (!frame) frame = requestAnimationFrame(measure); };
     const observer = typeof IntersectionObserver === "undefined" ? null : new IntersectionObserver(schedule);
@@ -715,15 +731,46 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
   }, []);
 
   useEffect(() => {
-    if (!desktopStickySearchSection) return undefined;
-    stickyScrollLockRef.current = lockBodyScroll();
+    if (!desktopStickySearchOpen) return undefined;
+    const scrollLock = lockBodyScroll();
+    stickyScrollLockRef.current = scrollLock;
+    return () => {
+      scrollLock.restore();
+      if (stickyScrollLockRef.current === scrollLock) {
+        stickyScrollLockRef.current = null;
+      }
+    };
+  }, [desktopStickySearchOpen]);
+
+  useEffect(() => {
+    if (!desktopStickySearchOpen) return undefined;
     const media = window.matchMedia("(max-width: 1023px)");
     const closeBelowDesktop = () => { if (media.matches) closeDesktopStickySearch(); };
     media.addEventListener("change", closeBelowDesktop);
+    return () => media.removeEventListener("change", closeBelowDesktop);
+  }, [desktopStickySearchOpen, closeDesktopStickySearch]);
+
+  useEffect(() => {
+    if (!desktopStickySearchSection) return undefined;
+    const frame = requestAnimationFrame(() => {
+      if (desktopStickySearchSection === "locations") desktopStickySearchRefs.pickupInputRef.current?.focus({ preventScroll: true });
+      else if (desktopStickySearchSection === "dates") setDatesOpen(true);
+      else if (desktopStickySearchSection === "times") setTimesOpen(true);
+      else if (desktopStickySearchSection === "driverAge") setDriverAgeOpen(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [desktopStickySearchSection, desktopStickySearchRefs.pickupInputRef]);
+
+  useEffect(() => {
+    if (!desktopStickySearchOpen) return undefined;
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (datesOpen || timesOpen || driverAgeOpen) { setDatesOpen(false); setTimesOpen(false); setDriverAgeOpen(false); }
-        else closeDesktopStickySearch();
+        event.preventDefault();
+        event.stopPropagation();
+        if (datesOpen || timesOpen || driverAgeOpen) {
+          setDatesOpen(false); setTimesOpen(false); setDriverAgeOpen(false);
+        } else closeDesktopStickySearch();
+        return;
       }
       if (event.key === "Tab" && stickyDialogRef.current) {
         const focusable = [...stickyDialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter((node) => !node.hidden);
@@ -734,14 +781,8 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
       }
     };
     document.addEventListener("keydown", handleKey);
-    requestAnimationFrame(() => {
-      if (desktopStickySearchSection === "locations") pickupInputRef.current?.focus({ preventScroll: true });
-      else if (desktopStickySearchSection === "dates") setDatesOpen(true);
-      else if (desktopStickySearchSection === "times") setTimesOpen(true);
-      else if (desktopStickySearchSection === "driverAge") setDriverAgeOpen(true);
-    });
-    return () => { document.removeEventListener("keydown", handleKey); media.removeEventListener("change", closeBelowDesktop); stickyScrollLockRef.current?.restore(); stickyScrollLockRef.current = null; };
-  }, [desktopStickySearchSection, closeDesktopStickySearch, datesOpen, timesOpen, driverAgeOpen]);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [desktopStickySearchOpen, closeDesktopStickySearch, datesOpen, timesOpen, driverAgeOpen]);
 
   useEffect(() => {
     let frame = 0;
@@ -769,23 +810,29 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
   }, [desktopCompactFilterPlacement]);
 
   useEffect(() => {
+    const activeSearchRefs = desktopStickySearchOpen
+      ? desktopStickySearchRefs
+      : mobileSearchOpen
+        ? mobileSearchRefs
+        : desktopFullSearchRefs;
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
 
-      if (datesOpen && !dateWrapRef.current?.contains(target)) {
+      if (datesOpen && !activeSearchRefs.dateWrapRef.current?.contains(target)) {
         setDatesOpen(false);
       }
 
-      if (timesOpen && !timeWrapRef.current?.contains(target)) {
+      if (timesOpen && !activeSearchRefs.timeWrapRef.current?.contains(target)) {
         setTimesOpen(false);
       }
 
-      if (driverAgeOpen && !driverAgeWrapRef.current?.contains(target)) {
+      if (driverAgeOpen && !activeSearchRefs.driverAgeWrapRef.current?.contains(target)) {
         setDriverAgeOpen(false);
       }
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
+      if (desktopStickySearchOpen) return;
       if (event.key === "Escape") {
         setDatesOpen(false);
         setTimesOpen(false);
@@ -800,7 +847,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [datesOpen, driverAgeOpen, timesOpen]);
+  }, [datesOpen, desktopStickySearchOpen, driverAgeOpen, mobileSearchOpen, timesOpen, desktopFullSearchRefs, desktopStickySearchRefs, mobileSearchRefs]);
 
   const selectRentalDate = (date: Date) => {
     if (isBeforeToday(date)) {
@@ -892,6 +939,11 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
     const idPrefix = placement === "desktop-full" ? "cars-results-full-search" : placement === "desktop-sticky" ? "sticky-cars-search" : "cars-results-mobile-search";
     const surfaceOwnsPopovers = placement === "desktop-sticky" ? Boolean(desktopStickySearchSection) : placement === "mobile" ? mobileSearchOpen : !desktopStickySearchSection && !mobileSearchOpen;
     const isCompactSearch = placement === "desktop-sticky";
+    const searchSurfaceRefs = placement === "desktop-sticky"
+      ? desktopStickySearchRefs
+      : placement === "mobile"
+        ? mobileSearchRefs
+        : desktopFullSearchRefs;
 
     return (
       <form
@@ -920,7 +972,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
             <SearchInputCell
               idPrefix={idPrefix}
               icon={MapPin}
-              inputRef={pickupInputRef}
+              inputRef={searchSurfaceRefs.pickupInputRef}
               isCompact={isCompactSearch}
               label={
                 t("carsResults.pickupLocationLabel") ||
@@ -932,7 +984,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
               }}
               onClear={() => {
                             setPickupLocation("");
-                pickupInputRef.current?.focus();
+                searchSurfaceRefs.pickupInputRef.current?.focus();
               }}
               placeholder={t("carsSearch.pickupLocationPlaceholder")}
               value={pickupLocation}
@@ -942,7 +994,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
             <SearchInputCell
               idPrefix={idPrefix}
               icon={MapPin}
-              inputRef={dropoffInputRef}
+              inputRef={searchSurfaceRefs.dropoffInputRef}
               isCompact={isCompactSearch}
               label={
                 t("carsResults.returnLocationLabel") ||
@@ -954,7 +1006,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
               }}
               onClear={() => {
                             setDropoffLocation("");
-                dropoffInputRef.current?.focus();
+                searchSurfaceRefs.dropoffInputRef.current?.focus();
               }}
               placeholder={t("carsResults.sameAsPickup")}
               value={dropoffLocation}
@@ -988,7 +1040,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
               visibleMonthDate={visibleMonthDate}
               t={t}
               intlLocale={intlLocale}
-              wrapRef={dateWrapRef}
+              wrapRef={searchSurfaceRefs.dateWrapRef}
             />
             <SearchTimeCell
               dropoffTime={dropoffTime}
@@ -1008,7 +1060,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
               }}
               t={t}
               intlLocale={intlLocale}
-              wrapRef={timeWrapRef}
+              wrapRef={searchSurfaceRefs.timeWrapRef}
             />
             <DriverAgeCell
               driverAge={driverAge}
@@ -1024,7 +1076,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
                 setTimesOpen(false);
               }}
               t={t}
-              wrapRef={driverAgeWrapRef}
+              wrapRef={searchSurfaceRefs.driverAgeWrapRef}
             />
             <Button
               type="submit"
@@ -1163,6 +1215,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
 
       <div ref={resultsGridRef} className="page-shell relative grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[256px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]">
         <aside ref={desktopFilterSidebarRef} className="relative hidden lg:block lg:self-stretch">
+              <div ref={desktopFilterSentinelRef} className="h-px" aria-hidden="true" />
               <div className={desktopCompactFilterPlacement === "hidden" ? "block" : "invisible"}>
                 <CarFilters
                   activeFilterCount={activeFilterCount}
@@ -1173,7 +1226,6 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
                   t={t}
                 />
               </div>
-              <div ref={desktopFilterSentinelRef} className="h-px" aria-hidden="true" />
               {desktopCompactFilterPlacement !== "hidden" ? (
                 <div ref={desktopCompactFilterRef} className={cn(desktopCompactFilterPlacement === "fixed" ? "fixed" : "absolute inset-x-0 bottom-0 w-full")} style={desktopCompactFilterPlacement === "fixed" ? { top: desktopCompactFilterTopOffset, left: desktopCompactFilterFrame.left, width: desktopCompactFilterFrame.width, maxHeight: desktopCompactFilterMaxHeight } : { maxHeight: desktopCompactFilterMaxHeight }}>
                   <CarFilters activeFilterCount={activeFilterCount} layout="compact" onClear={clearCarFilters} onToggle={toggleCarFilter} selectedFilters={selectedCarFilters} t={t} />

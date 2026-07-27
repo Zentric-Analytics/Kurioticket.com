@@ -15,3 +15,11 @@ test("source-contract: Cars compact filters use shared fixed and docked lifecycl
   assert.match(source, /hidden=\{layout === "compact" && !compactOpen\}/);
   assert.equal((source.match(/id: "(?:vehicleType|transmission|seats|bags|fuelPolicy|mileagePolicy|cancellation|pickupLocationType)"/g) ?? []).length, 8);
 });
+
+test("source-contract: compact filter handoff starts at the top of the sidebar", () => {
+  const aside = source.slice(source.indexOf('<aside ref={desktopFilterSidebarRef}'), source.indexOf("</aside>"));
+  assert.ok(aside.indexOf("desktopFilterSentinelRef") < aside.indexOf("<CarFilters"));
+  assert.match(aside, /desktopCompactFilterPlacement === "hidden" \? "block" : "invisible"/);
+  assert.match(aside, /desktopCompactFilterPlacement !== "hidden"/);
+  assert.match(aside, /desktopCompactFilterPlacement === "fixed" \? "fixed" : "absolute inset-x-0 bottom-0 w-full"/);
+});
