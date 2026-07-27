@@ -8,6 +8,7 @@ import {
   Headphones,
   LayoutDashboard,
   LockKeyhole,
+  RefreshCw,
   Search,
   Trash2,
   Users,
@@ -41,7 +42,8 @@ export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin/searches", label: "Searches", icon: Search, roles: ["ADMIN", "SUPPORT"], hub: "monitoring" },
   { href: "/admin/redirects", label: "Provider Handoffs", icon: ExternalLink, roles: ["ADMIN"], hub: "monitoring" },
   { href: "/admin/logs", label: "Admin Logs", icon: BookOpen, roles: ["ADMIN"], hub: "monitoring" },
-  { href: "/admin/providers", label: "Providers", icon: Activity, roles: ["ADMIN"], hub: "platform" },
+  { href: "/admin/providers", label: "Provider Readiness", icon: Activity, roles: ["ADMIN"], hub: "platform" },
+  { href: "/admin/homepage-operations", label: "Homepage Operations", icon: RefreshCw, roles: ["ADMIN"], hub: "platform" },
   { href: "/admin/content", label: "Content Inventory", icon: FileText, roles: ["ADMIN"], hub: "platform" },
   { href: "/admin/system", label: "System", icon: LockKeyhole, roles: ["ADMIN"], hub: "platform" },
 ];
@@ -50,7 +52,7 @@ export const adminHubs: AdminHubDefinition[] = [
   { key: "overview", href: "/admin", label: "Overview", description: "Review the admin overview.", destinationHrefs: ["/admin"], showInNavbar: false },
   { key: "operations", href: "/admin/operations", label: "Operations", description: "Manage customer and support operations.", destinationHrefs: ["/admin/users", "/admin/support", "/admin/account-deletions"] },
   { key: "monitoring", href: "/admin/monitoring", label: "Monitoring", description: "Review search activity, provider handoffs and admin audit trails.", destinationHrefs: ["/admin/searches", "/admin/redirects", "/admin/logs"] },
-  { key: "platform", href: "/admin/platform", label: "Platform", description: "Manage provider readiness, content inventory and system controls.", destinationHrefs: ["/admin/providers", "/admin/content", "/admin/system"] },
+  { key: "platform", href: "/admin/platform", label: "Platform", description: "Manage provider readiness, homepage operations, content inventory and system controls.", destinationHrefs: ["/admin/providers", "/admin/homepage-operations", "/admin/content", "/admin/system"] },
 ];
 
 const destinationDescriptions: Record<string, string> = {
@@ -61,7 +63,8 @@ const destinationDescriptions: Record<string, string> = {
   "/admin/redirects": "Review outbound provider handoffs from Kurioticket.",
   "/admin/logs": "Review administrative and security-sensitive actions.",
   "/admin/providers": "Monitor provider configuration and health.",
-  "/admin/content": "Review homepage fare and content inventory.",
+  "/admin/homepage-operations": "Monitor homepage fare readiness, refresh activity, market coverage and operational health.",
+  "/admin/content": "Review public content inventory.",
   "/admin/system": "Manage system-level administrative controls.",
 };
 
