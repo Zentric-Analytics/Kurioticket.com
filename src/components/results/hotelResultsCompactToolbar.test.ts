@@ -94,7 +94,7 @@ test("Hotel sticky lifecycle and neighboring search/filter contracts remain inta
   );
   assert.match(
     source,
-    /inert=\{!showDesktopMinimizedSearch \? true : undefined\}/,
+    /inert=\{\s*!showDesktopMinimizedSearch \|\| desktopStickyHotelSearchOpen\s*\? true\s*: undefined\s*\}/,
   );
   assert.match(source, /desktopSearchFormRef\.current/);
   assert.match(source, /desktopFormRef=\{setDesktopSearchFormRef\}/);

@@ -1039,36 +1039,43 @@ export function HotelSearchBar({
     onSubmitComplete?.();
   };
 
+  const isStickyDialog = desktopPresentation === "sticky-dialog";
   const fieldClassName = cn(
     "relative rounded-xl border border-slate-300 bg-white transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25",
-    compact
-      ? cn(
-          "min-h-[56px] px-3 py-2 sm:min-h-[54px] sm:px-3 sm:py-1.5 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
-          mobileSearchOpen &&
-            "min-h-[74px] rounded-3xl border-slate-200 px-4 py-3.5 shadow-sm shadow-slate-900/[0.03] sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:px-3 sm:py-1.5 sm:shadow-none lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200",
-        )
-      : "min-h-[54px] px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
+    isStickyDialog
+      ? "min-h-[58px] rounded-none border-0 border-e border-slate-200/80 bg-white/90 px-3 py-1.5 flex flex-col justify-center hover:border-slate-200/80 focus-within:z-10 focus-within:border-slate-200/80 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/20"
+      : compact
+        ? cn(
+            "min-h-[56px] px-3 py-2 sm:min-h-[54px] sm:px-3 sm:py-1.5 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
+            mobileSearchOpen &&
+              "min-h-[74px] rounded-3xl border-slate-200 px-4 py-3.5 shadow-sm shadow-slate-900/[0.03] sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:px-3 sm:py-1.5 sm:shadow-none lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200",
+          )
+        : "min-h-[54px] px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
   );
   const valueControlClassName = cn(
     "focus-ring w-full rounded-md border-0 bg-transparent px-0 outline-none transition-colors",
-    compact
-      ? cn(
-          "h-7 text-[15px] font-bold text-slate-950 placeholder:text-slate-500 sm:h-8 sm:text-[16px] sm:font-semibold md:text-sm",
-          mobileSearchOpen && "h-9 text-[16px] sm:h-8",
-        )
-      : "h-8 text-[16px] text-slate-900 md:text-sm",
+    isStickyDialog
+      ? "mt-0.5 h-5 min-w-0 text-sm font-medium leading-5 text-slate-950 placeholder:text-slate-400"
+      : compact
+        ? cn(
+            "h-7 text-[15px] font-bold text-slate-950 placeholder:text-slate-500 sm:h-8 sm:text-[16px] sm:font-semibold md:text-sm",
+            mobileSearchOpen && "h-9 text-[16px] sm:h-8",
+          )
+        : "h-8 text-[16px] text-slate-900 md:text-sm",
   );
   const desktopPopoverClassName =
     "absolute top-[calc(100%+10px)] z-[1000] hidden border border-slate-200 bg-white shadow-[0_24px_56px_rgba(15,23,42,0.20)] ring-1 ring-slate-950/[0.04] sm:block";
   const fieldLabelClassName = cn(
     "block font-semibold uppercase",
-    compact
-      ? cn(
-          "text-[10px] leading-4 tracking-[0.08em] text-slate-600 sm:mb-1 sm:text-xs sm:tracking-wide sm:text-slate-600",
-          mobileSearchOpen &&
-            "mb-1.5 text-[0.68rem] font-black tracking-[0.16em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600",
-        )
-      : "mb-1 text-xs leading-4 tracking-wide text-slate-600",
+    isStickyDialog
+      ? "text-[0.62rem] leading-3 tracking-[0.12em] text-slate-500"
+      : compact
+        ? cn(
+            "text-[10px] leading-4 tracking-[0.08em] text-slate-600 sm:mb-1 sm:text-xs sm:tracking-wide sm:text-slate-600",
+            mobileSearchOpen &&
+              "mb-1.5 text-[0.68rem] font-black tracking-[0.16em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600",
+          )
+        : "mb-1 text-xs leading-4 tracking-wide text-slate-600",
   );
 
   return (
@@ -1172,13 +1179,15 @@ export function HotelSearchBar({
           ref={mobileSearchContentRef}
           className={cn(
             "overflow-visible",
-            compact
-              ? cn(
-                  "rounded-xl border border-slate-300 bg-slate-50 p-2 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:rounded-[1.35rem] sm:border-slate-200/90 sm:bg-white sm:p-1.5 sm:shadow-[0_16px_36px_-24px_rgba(15,23,42,0.32)] sm:ring-1 sm:ring-slate-950/[0.02] lg:p-1",
-                  mobileSearchOpen &&
-                    "min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-none border-0 bg-slate-50 px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-none",
-                )
-              : "rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
+            isStickyDialog
+              ? "p-0 shadow-none"
+              : compact
+                ? cn(
+                    "rounded-xl border border-slate-300 bg-slate-50 p-2 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:rounded-[1.35rem] sm:border-slate-200/90 sm:bg-white sm:p-1.5 sm:shadow-[0_16px_36px_-24px_rgba(15,23,42,0.32)] sm:ring-1 sm:ring-slate-950/[0.02] lg:p-1",
+                    mobileSearchOpen &&
+                      "min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-none border-0 bg-slate-50 px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-none",
+                  )
+                : "rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
           )}
         >
           {!compact && desktopIdentityLabel ? (
@@ -1207,14 +1216,18 @@ export function HotelSearchBar({
           ) : null}
           <div
             className={cn(
-              "grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:gap-0",
-              compact
+              isStickyDialog
+                ? "grid min-h-[58px] grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] items-stretch gap-0 overflow-visible rounded-xl border border-slate-200/85 bg-white/90 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]"
+                : "grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:gap-0",
+              !isStickyDialog && compact
                 ? cn(
                     "lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px]",
                     mobileSearchOpen &&
                       "mx-auto flex w-full max-w-xl flex-col gap-3 sm:grid sm:max-w-none sm:gap-1.5 lg:gap-0",
                   )
-                : "lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_104px]",
+                : !isStickyDialog
+                  ? "lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_104px]"
+                  : undefined,
             )}
           >
             <label
@@ -1697,16 +1710,20 @@ export function HotelSearchBar({
               <button
                 type="submit"
                 className={cn(
-                  compact
-                    ? "w-full rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_12px_24px_rgba(0,75,184,0.18)] transition hover:bg-[#021C2B] hover:shadow-[0_14px_28px_rgba(0,75,184,0.24)] disabled:cursor-not-allowed disabled:opacity-75 lg:h-full lg:self-stretch lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20"
-                    : "h-12 w-full whitespace-nowrap rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 enabled:hover:bg-[#021C2B] enabled:active:bg-[#021C2B] disabled:bg-[#004BB8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#004BB8]/20 lg:h-full lg:self-stretch lg:min-h-[58px] lg:rounded-none lg:rounded-e-2xl lg:border lg:border-s-0 lg:border-[#004BB8]/20 lg:px-5 lg:text-[15px] lg:font-bold lg:shadow-[0_10px_22px_rgba(0,75,184,0.22)] lg:disabled:shadow-[0_10px_22px_rgba(0,75,184,0.22)]",
-                  compact
+                  isStickyDialog
+                    ? "h-full min-h-[58px] w-full rounded-none rounded-e-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-none transition-colors hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-75"
+                    : compact
+                      ? "w-full rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_12px_24px_rgba(0,75,184,0.18)] transition hover:bg-[#021C2B] hover:shadow-[0_14px_28px_rgba(0,75,184,0.24)] disabled:cursor-not-allowed disabled:opacity-75 lg:h-full lg:self-stretch lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20"
+                      : "h-12 w-full whitespace-nowrap rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 enabled:hover:bg-[#021C2B] enabled:active:bg-[#021C2B] disabled:bg-[#004BB8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#004BB8]/20 lg:h-full lg:self-stretch lg:min-h-[58px] lg:rounded-none lg:rounded-e-2xl lg:border lg:border-s-0 lg:border-[#004BB8]/20 lg:px-5 lg:text-[15px] lg:font-bold lg:shadow-[0_10px_22px_rgba(0,75,184,0.22)] lg:disabled:shadow-[0_10px_22px_rgba(0,75,184,0.22)]",
+                  !isStickyDialog && compact
                     ? cn(
                         "h-[54px] shadow-lg sm:min-h-[54px] lg:min-w-[112px] lg:rounded-s-none",
                         mobileSearchOpen &&
                           "mt-1 h-[52px] rounded-2xl text-base sm:mt-0 sm:h-[54px] sm:rounded-xl lg:rounded-s-none",
                       )
-                    : "h-12 lg:min-h-[54px] lg:rounded-none",
+                    : !isStickyDialog
+                      ? "h-12 lg:min-h-[54px] lg:rounded-none"
+                      : undefined,
                 )}
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}

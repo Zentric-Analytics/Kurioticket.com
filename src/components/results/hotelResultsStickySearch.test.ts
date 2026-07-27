@@ -11,6 +11,17 @@ const searchBarSource = readFileSync(
   "utf8",
 );
 
+function stickyHotelDialogSource() {
+  const start = resultsSource.indexOf(
+    "function renderDesktopStickyHotelSearchDialog()",
+  );
+  const end = resultsSource.indexOf("if (loading)", start);
+
+  assert.notEqual(start, -1, "sticky Hotel dialog renderer exists");
+  assert.notEqual(end, -1, "loading branch follows the sticky dialog renderer");
+  return resultsSource.slice(start, end);
+}
+
 test("Hotel Results connects its measurement ref to the visible search form", () => {
   assert.match(resultsSource, /desktopFormRef={setDesktopSearchFormRef}/);
   assert.match(searchBarSource, /<form[\s\S]*?ref={setSearchPanelRef}/);
@@ -103,4 +114,64 @@ test("HotelSearchBar sticky opt-in activates nested controls and namespaces IDs"
     /aria-controls=\{`\$\{idPrefix\}-destination-suggestions`\}/,
   );
   assert.match(searchBarSource, /event\.stopImmediatePropagation\(\)/);
+});
+
+test("Hotel sticky dialog source contract matches the Flights summary hierarchy", () => {
+  const dialog = stickyHotelDialogSource();
+
+  assert.match(dialog, /\{t\("searchHotels"\)\}/);
+  assert.match(
+    dialog,
+    /className="text-xs font-bold uppercase tracking-\[0\.16em\] text-\[#004BB8\]"/,
+  );
+  assert.doesNotMatch(
+    dialog,
+    /<p className="[^"]*(?:text-navy|text-blue-|text-\[#004BB8\]\/)[^"]*">\s*\{t\("searchHotels"\)\}/,
+  );
+  assert.match(
+    dialog,
+    /activeDesktopHotelSearchDraft\.destination \|\| body\.destination/,
+  );
+  assert.match(
+    dialog,
+    /desktopMinimizedDateSummary\} · \{desktopMinimizedGuestsSummary/,
+  );
+  assert.match(
+    dialog,
+    /<h2\s+id="sticky-hotel-search-title"\s+className="mt-1 text-xl font-bold tracking-tight text-slate-950"/,
+  );
+  assert.match(dialog, /aria-labelledby="sticky-hotel-search-title"/);
+  assert.match(dialog, /h-9 w-9/);
+  assert.doesNotMatch(
+    dialog,
+    /<h2[\s\S]*?\{t\("editHotelSearch"\)\}[\s\S]*?<\/h2>/,
+  );
+});
+
+test("HotelSearchBar sticky-dialog source contract renders a direct compact row", () => {
+  assert.match(
+    searchBarSource,
+    /const isStickyDialog = desktopPresentation === "sticky-dialog"/,
+  );
+  assert.match(
+    searchBarSource,
+    /grid min-h-\[58px\] grid-cols-\[minmax\(0,2\.5fr\)_minmax\(0,1\.45fr\)_minmax\(0,1\.2fr\)_112px\] items-stretch gap-0 overflow-visible rounded-xl border border-slate-200\/85 bg-white\/90/,
+  );
+  assert.match(searchBarSource, /isStickyDialog\s*\? "p-0 shadow-none"/);
+  assert.match(
+    searchBarSource,
+    /text-\[0\.62rem\] leading-3 tracking-\[0\.12em\] text-slate-500/,
+  );
+  assert.match(
+    searchBarSource,
+    /mt-0\.5 h-5 min-w-0 text-sm font-medium leading-5 text-slate-950/,
+  );
+  assert.match(
+    searchBarSource,
+    /h-full min-h-\[58px\] w-full rounded-none rounded-e-xl bg-\[#004BB8\]/,
+  );
+  assert.match(searchBarSource, /role="combobox"/);
+  assert.match(searchBarSource, /handleToggleDates/);
+  assert.match(searchBarSource, /handleToggleGuestsRooms/);
+  assert.match(searchBarSource, /\$\{idPrefix\}-destination-suggestions/);
 });
