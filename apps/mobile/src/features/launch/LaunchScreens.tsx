@@ -286,9 +286,10 @@ export function OnboardingScreen() {
   const entrance = useRef(new Animated.Value(0)).current;
   const { height, width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const compact = height < 720;
+  const compact = height < 780;
+  const tall = height >= 900;
   const narrow = width <= 375;
-  const heroHeight = compact ? Math.min(205, Math.max(185, height * 0.3)) : Math.min(240, Math.max(210, height * 0.26));
+  const heroHeight = compact ? Math.min(205, Math.max(185, height * 0.27)) : tall ? 235 : 225;
 
   useEffect(() => {
     let mounted = true;
@@ -330,7 +331,7 @@ export function OnboardingScreen() {
       <StatusBar style="light" translucent backgroundColor="transparent" />
       <ScrollView
         bounces={false}
-        contentContainerStyle={[styles.onboardingScroll, { paddingBottom: Math.max(insets.bottom + 12, 18) }]}
+        contentContainerStyle={[styles.onboardingScroll, { paddingBottom: Math.max(insets.bottom + 8, 14) }]}
         showsVerticalScrollIndicator={false}
       >
         <View accessible={false} style={[styles.hero, { height: heroHeight }]}>
@@ -340,7 +341,7 @@ export function OnboardingScreen() {
         <Animated.View
           style={[
             styles.onboardingPanel,
-            (compact || narrow) && styles.onboardingPanelCompact,
+            compact && styles.onboardingPanelCompact,
             {
               opacity: entrance,
               transform: [{ translateY: entrance.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
@@ -453,27 +454,27 @@ const styles = StyleSheet.create({
   onboardingPanel: {
     flex: 1,
     width: "100%",
-    marginTop: -30,
-    paddingTop: 27,
-    paddingHorizontal: 24,
+    marginTop: -28,
+    paddingTop: 28,
+    paddingHorizontal: 22,
     borderTopLeftRadius: 34,
     borderTopRightRadius: 34,
     backgroundColor: "white",
   },
-  onboardingPanelCompact: { marginTop: -24, paddingTop: 22, paddingHorizontal: 18 },
-  onboardingHeadline: { color: "#081C46", fontSize: 29, lineHeight: 33, fontWeight: "800", letterSpacing: -0.7, textAlign: "center" },
+  onboardingPanelCompact: { marginTop: -24, paddingTop: 24, paddingHorizontal: 18 },
+  onboardingHeadline: { color: "#081C46", fontSize: 30, lineHeight: 34, fontWeight: "800", letterSpacing: -0.7, textAlign: "center" },
   onboardingHeadlineCompact: { fontSize: 26, lineHeight: 30, letterSpacing: -0.65 },
   headlineAccent: { color: "#1557E8" },
-  onboardingSupport: { alignSelf: "center", color: "#485973", fontSize: 14.5, lineHeight: 19, fontWeight: "500", marginTop: 9, maxWidth: 350, textAlign: "center" },
-  benefits: { gap: 9, marginTop: 17 },
-  benefitsCompact: { gap: 8, marginTop: 13 },
+  onboardingSupport: { alignSelf: "center", color: "#485973", fontSize: 15, lineHeight: 19, fontWeight: "500", marginTop: 10, maxWidth: 350, textAlign: "center" },
+  benefits: { gap: 10, marginTop: 18 },
+  benefitsCompact: { gap: 8, marginTop: 14 },
   benefitCard: {
-    minHeight: 84,
+    minHeight: 88,
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
     paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingVertical: 10,
     borderWidth: 1,
     borderColor: "#E9EDF3",
     borderRadius: 15,
@@ -484,16 +485,16 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 2,
   },
-  benefitCardCompact: { minHeight: 78, gap: 12, paddingHorizontal: 12, paddingVertical: 8 },
-  iconTile: { width: 60, height: 60, borderRadius: 15, alignItems: "center", justifyContent: "center" },
-  iconTileCompact: { width: 54, height: 54, borderRadius: 14 },
+  benefitCardCompact: { minHeight: 82, gap: 12, paddingHorizontal: 12, paddingVertical: 8 },
+  iconTile: { width: 62, height: 62, borderRadius: 15, alignItems: "center", justifyContent: "center" },
+  iconTileCompact: { width: 56, height: 56, borderRadius: 14 },
   blueTile: { backgroundColor: "#E8EFFF" },
   mintTile: { backgroundColor: "#E2F6F0" },
   lavenderTile: { backgroundColor: "#EFE7FF" },
   benefitCopy: { flex: 1 },
   benefitTitle: { color: "#081C42", fontSize: 16, lineHeight: 21, fontWeight: "800", letterSpacing: -0.15 },
   benefitDescription: { color: "#4D5D75", fontSize: 13, lineHeight: 17, fontWeight: "500", marginTop: 1 },
-  actions: { gap: 10, marginTop: 16 },
+  actions: { gap: 11, marginTop: 18 },
   button: { minHeight: 54, borderRadius: 18, paddingHorizontal: 18, paddingVertical: 15, alignItems: "center", justifyContent: "center" },
   buttonContent: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 14 },
   onboardingButton: { minHeight: 58, borderRadius: 14 },
@@ -506,7 +507,7 @@ const styles = StyleSheet.create({
   secondaryPressed: { backgroundColor: "#F2F5FA", transform: [{ scale: 0.99 }] },
   secondaryText: { color: "#263B68", fontWeight: "900", fontSize: 16 },
   disabled: { opacity: 0.55 },
-  legalBlock: { alignItems: "center", marginTop: 9 },
+  legalBlock: { alignItems: "center", marginTop: 14 },
   legalIntro: { color: "#52627B", fontSize: 12, lineHeight: 17, textAlign: "center" },
   legalLinks: { flexDirection: "row", alignItems: "center", justifyContent: "center", flexWrap: "wrap" },
   legalJoiner: { color: "#52627B", fontSize: 12, lineHeight: 18 },
