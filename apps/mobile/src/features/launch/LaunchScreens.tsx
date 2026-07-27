@@ -98,11 +98,11 @@ function PersonIcon() {
   );
 }
 
-function CompassIcon() {
+function SearchIcon() {
   return (
     <Svg width={30} height={30} viewBox="0 0 32 32">
-      <Circle cx="16" cy="16" r="11" fill="none" stroke="#174B9B" strokeWidth="1.8" />
-      <Path d="m20.5 11.5-2.8 6.2-6.2 2.8 2.8-6.2 6.2-2.8Z" fill="none" stroke="#174B9B" strokeWidth="1.8" strokeLinejoin="round" />
+      <Circle cx="14" cy="14" r="8.5" fill="none" stroke="#1764D9" strokeWidth="1.9" />
+      <Path d="m20.4 20.4 6.1 6.1" fill="none" stroke="#1764D9" strokeWidth="1.9" strokeLinecap="round" />
     </Svg>
   );
 }
@@ -163,7 +163,6 @@ function BrandAtmosphere() {
 function OnboardingHero() {
   return (
     <View style={styles.heroMedia}>
-      {/* This fixed media layer can be replaced with an approved destination image without changing hero spacing. */}
       <Svg
         accessible={false}
         accessibilityElementsHidden
@@ -171,34 +170,42 @@ function OnboardingHero() {
         pointerEvents="none"
         preserveAspectRatio="xMidYMid slice"
         style={StyleSheet.absoluteFill}
-        viewBox="0 0 390 286"
+        viewBox="0 0 390 300"
       >
         <Defs>
           <LinearGradient id="hero-sky" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor="#4A91D4" />
-            <Stop offset="0.54" stopColor="#9DD4E3" />
-            <Stop offset="1" stopColor="#F8D8A5" />
-          </LinearGradient>
-          <LinearGradient id="hero-distance" x1="0" y1="0" x2="1" y2="0">
-            <Stop offset="0" stopColor="#527C91" />
-            <Stop offset="0.55" stopColor="#376E7D" />
-            <Stop offset="1" stopColor="#234D65" />
+            <Stop offset="0" stopColor="#4897D5" />
+            <Stop offset="0.55" stopColor="#A9D9E8" />
+            <Stop offset="1" stopColor="#F1E4C9" />
           </LinearGradient>
           <LinearGradient id="hero-water" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor="#3F8B9A" />
-            <Stop offset="1" stopColor="#14506B" />
+            <Stop offset="0" stopColor="#68B7CB" />
+            <Stop offset="0.55" stopColor="#3189A6" />
+            <Stop offset="1" stopColor="#17627E" />
+          </LinearGradient>
+          <LinearGradient id="hero-cliff" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0" stopColor="#748F78" />
+            <Stop offset="0.52" stopColor="#486D67" />
+            <Stop offset="1" stopColor="#234E59" />
           </LinearGradient>
           <RadialGradient id="hero-light" cx="50%" cy="50%" rx="50%" ry="50%">
-            <Stop offset="0" stopColor="#FFF8D8" stopOpacity="0.94" />
-            <Stop offset="1" stopColor="#FFE2AE" stopOpacity="0" />
+            <Stop offset="0" stopColor="#FFF9DE" stopOpacity="0.88" />
+            <Stop offset="0.46" stopColor="#FFF0C4" stopOpacity="0.4" />
+            <Stop offset="1" stopColor="#FFF0C4" stopOpacity="0" />
           </RadialGradient>
         </Defs>
-        <Rect width="390" height="286" fill="url(#hero-sky)" />
-        <Circle cx="314" cy="100" r="78" fill="url(#hero-light)" />
-        <Path d="M-24 181c55-22 94-31 132-20 32 10 47 2 73-10 45-21 80-14 112 10 34 26 70 18 121-6v131H-24V181Z" fill="url(#hero-distance)" opacity="0.72" />
-        <Path d="M-10 207c71-14 135-10 193 8 69 21 143 15 217-18v89H-10v-79Z" fill="url(#hero-water)" />
-        <Path d="M-10 220c74-9 131-5 186 10 75 20 148 15 224-15" fill="none" stroke="#D7F2EF" strokeWidth="2" opacity="0.48" />
-        <Path d="M229 86c14-8 28-8 42 0" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" opacity="0.28" />
+        <Rect width="390" height="300" fill="url(#hero-sky)" />
+        <Circle cx="318" cy="76" r="82" fill="url(#hero-light)" />
+        <Path d="M-18 169 38 137l35 13 53-39 45 32 55-45 49 51 43-22 70 43v42H-18Z" fill="#C1D2CF" opacity="0.52" />
+        <Path d="M-12 184c45-28 84-38 117-27 26 9 43 7 66-7 42-25 76-18 111 6 30 20 67 22 120-3v57H-12Z" fill="#75999B" opacity="0.7" />
+        <Rect y="185" width="390" height="115" fill="url(#hero-water)" />
+        <Path d="M-15 196c61-5 111 2 151 8 66 10 147 2 268-19" fill="none" stroke="#D9F1EF" strokeWidth="2" opacity="0.52" />
+        <Path d="M190 224c53-3 111-12 174-27M225 242c43-3 84-10 126-20" fill="none" stroke="#D7F2F2" strokeWidth="1.5" opacity="0.35" />
+        <Path d="M-16 172c34-11 60-8 82 8 20 14 26 33 55 44 25 9 56 9 87 28l-7 48H-16Z" fill="url(#hero-cliff)" />
+        <Path d="M-9 174c38-10 64-4 84 16-24-4-43 2-65 15Z" fill="#9DAE78" opacity="0.75" />
+        <Path d="M-5 232c39-5 77 5 113 31 18 13 37 21 59 26H-5Z" fill="#173F4E" opacity="0.52" />
+        <Path d="M87 224c11 4 21 10 31 18" fill="none" stroke="#D9C995" strokeWidth="2" opacity="0.45" />
+        <Rect y="151" width="390" height="61" fill="#EAF1E8" opacity="0.1" />
       </Svg>
       <View style={styles.heroVignette} />
     </View>
@@ -265,9 +272,11 @@ export function LaunchLoadingScreen({ onReady }: { onReady?: () => void }) {
 export function OnboardingScreen() {
   const [pendingAction, setPendingAction] = useState<"email" | "guest" | null>(null);
   const entrance = useRef(new Animated.Value(0)).current;
-  const { height } = useWindowDimensions();
+  const { height, width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const heroHeight = Math.min(286, Math.max(196, height * 0.29));
+  const compact = height <= 700;
+  const narrow = width <= 375;
+  const heroHeight = compact ? Math.max(190, height * 0.31) : Math.min(300, Math.max(238, height * 0.31));
 
   useEffect(() => {
     let mounted = true;
@@ -319,35 +328,36 @@ export function OnboardingScreen() {
         <Animated.View
           style={[
             styles.onboardingPanel,
+            (compact || narrow) && styles.onboardingPanelCompact,
             {
               opacity: entrance,
               transform: [{ translateY: entrance.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
             },
           ]}
         >
-          <Text accessibilityRole="header" style={styles.onboardingHeadline}>
-            Find better travel options <Text style={styles.headlineAccent}>in seconds</Text>
+          <Text accessibilityRole="header" style={[styles.onboardingHeadline, compact && styles.onboardingHeadlineCompact]}>
+            Find better travel{"\n"}options <Text style={styles.headlineAccent}>in seconds</Text>
           </Text>
           <Text style={styles.onboardingSupport}>
             Compare trusted providers, save your trips, and stay informed when prices change.
           </Text>
 
-          <View style={styles.benefits}>
+          <View style={[styles.benefits, compact && styles.benefitsCompact]}>
             <BenefitCard
               title="Compare trusted options"
-              description="Compare travel choices from trusted providers."
+              description="See travel choices from trusted providers in one place."
               tileStyle={styles.blueTile}
-              icon={<CompassIcon />}
+              icon={<SearchIcon />}
             />
             <BenefitCard
               title="Save your trips"
-              description="Keep searches and travel plans organized."
+              description="Keep searches and travel plans organized across devices."
               tileStyle={styles.mintTile}
               icon={<SavedTripIcon />}
             />
             <BenefitCard
               title="Price alerts"
-              description="Stay informed when prices change."
+              description="Stay informed when prices change for trips you care about."
               tileStyle={styles.lavenderTile}
               icon={<PriceAlertIcon />}
             />
@@ -371,10 +381,10 @@ export function OnboardingScreen() {
           </View>
 
           <View style={styles.legalBlock}>
-            <Text style={styles.legalIntro}>{"By continuing, you agree to Kurioticket\u2019s"}</Text>
             <View style={styles.legalLinks}>
+              <Text style={styles.legalIntro}>By continuing, you agree to our </Text>
               <LegalLink label="Terms of Service" url={TERMS_URL} />
-              <Text style={styles.legalJoiner}>and</Text>
+              <Text style={styles.legalJoiner}> and </Text>
               <LegalLink label="Privacy Policy" url={PRIVACY_URL} />
               <Text style={styles.legalJoiner}>.</Text>
             </View>
@@ -427,23 +437,26 @@ const styles = StyleSheet.create({
     flex: 1,
     width: "100%",
     marginTop: -30,
-    paddingTop: 27,
-    paddingHorizontal: 24,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    paddingTop: 35,
+    paddingHorizontal: 28,
+    borderTopLeftRadius: 34,
+    borderTopRightRadius: 34,
     backgroundColor: "white",
   },
-  onboardingHeadline: { color: "#081C46", fontSize: 29, lineHeight: 34, fontWeight: "800", letterSpacing: -0.7, textAlign: "center" },
+  onboardingPanelCompact: { paddingTop: 27, paddingHorizontal: 20 },
+  onboardingHeadline: { color: "#081C46", fontSize: 31, lineHeight: 37, fontWeight: "800", letterSpacing: -0.7, textAlign: "left" },
+  onboardingHeadlineCompact: { fontSize: 28, lineHeight: 33 },
   headlineAccent: { color: "#1557E8" },
-  onboardingSupport: { color: "#6A7690", fontSize: 15, lineHeight: 21, fontWeight: "500", textAlign: "center", marginTop: 11 },
-  benefits: { gap: 11, marginTop: 21 },
+  onboardingSupport: { color: "#667085", fontSize: 15.5, lineHeight: 23, fontWeight: "400", marginTop: 12, maxWidth: 470 },
+  benefits: { gap: 12, marginTop: 23 },
+  benefitsCompact: { gap: 9, marginTop: 18 },
   benefitCard: {
-    minHeight: 84,
+    minHeight: 92,
     flexDirection: "row",
     alignItems: "center",
-    gap: 15,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    gap: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
     borderWidth: 1,
     borderColor: "#E9EDF3",
     borderRadius: 17,
@@ -454,13 +467,13 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 2,
   },
-  iconTile: { width: 60, height: 60, borderRadius: 18, alignItems: "center", justifyContent: "center" },
+  iconTile: { width: 66, height: 66, borderRadius: 17, alignItems: "center", justifyContent: "center" },
   blueTile: { backgroundColor: "#E8EFFF" },
   mintTile: { backgroundColor: "#E2F6F0" },
   lavenderTile: { backgroundColor: "#EFE7FF" },
   benefitCopy: { flex: 1 },
   benefitTitle: { color: "#081C42", fontSize: 16.5, lineHeight: 22, fontWeight: "800", letterSpacing: -0.15 },
-  benefitDescription: { color: "#6A7690", fontSize: 13.5, lineHeight: 19, fontWeight: "400", marginTop: 3 },
+  benefitDescription: { color: "#667085", fontSize: 13.5, lineHeight: 19, fontWeight: "400", marginTop: 3 },
   actions: { gap: 11, marginTop: 19 },
   button: { minHeight: 54, borderRadius: 18, paddingHorizontal: 18, paddingVertical: 15, alignItems: "center", justifyContent: "center" },
   buttonContent: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 14 },
@@ -470,11 +483,11 @@ const styles = StyleSheet.create({
   primaryPressed: { backgroundColor: "#0E35AF", transform: [{ scale: 0.99 }] },
   primaryText: { color: "white", fontWeight: "900", fontSize: 16 },
   secondary: { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 },
-  onboardingSecondary: { borderColor: "#D3D9E4", borderWidth: 1.5 },
+  onboardingSecondary: { borderColor: "#1764D9", borderWidth: 1.5 },
   secondaryPressed: { backgroundColor: colors.sky, transform: [{ scale: 0.99 }] },
-  secondaryText: { color: colors.navy, fontWeight: "900", fontSize: 16 },
+  secondaryText: { color: "#1764D9", fontWeight: "900", fontSize: 16 },
   disabled: { opacity: 0.55 },
-  legalBlock: { alignItems: "center", marginTop: 10 },
+  legalBlock: { alignItems: "center", marginTop: 12 },
   legalIntro: { color: "#596780", fontSize: 12, lineHeight: 18, textAlign: "center" },
   legalLinks: { flexDirection: "row", alignItems: "center", justifyContent: "center", flexWrap: "wrap", columnGap: 2 },
   legalLinkTarget: { minHeight: 44, minWidth: 44, paddingHorizontal: 6, alignItems: "center", justifyContent: "center" },

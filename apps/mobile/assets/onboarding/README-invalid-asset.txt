@@ -1,1 +1,0 @@
-The generated Mediterranean onboarding JPEG currently committed on dev is invalid because it was stored as base64 text instead of binary image bytes. The onboarding route is temporarily restored to the prior buildable screen until the approved JPEG is re-uploaded through a binary-safe workflow.
