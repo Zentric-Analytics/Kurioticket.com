@@ -110,6 +110,19 @@ test("Homepage Operations preserves controls, APIs, filters, and route inspectio
   assert.doesNotMatch(refreshCard, /label: "Ready"|label: "Underfilled"|label: "Stale"/);
 });
 
+test("Homepage Operations presents route filters as a local responsive workspace", () => {
+  assert.match(refreshCard, />\s*Filter routes\s*</);
+  assert.match(refreshCard, /label: "Coverage issues"/);
+  assert.match(refreshCard, /label: "Route availability"/);
+  assert.match(refreshCard, /aria-label="Route status filters"/);
+  assert.match(refreshCard, /aria-pressed=\{selected\}/);
+  assert.match(refreshCard, /md:sticky md:top-24/);
+  assert.match(refreshCard, /md:grid-cols-\[13\.5rem_minmax\(0,1fr\)\]/);
+  assert.match(refreshCard, /<details className="group rounded-xl[^>]+md:hidden/);
+  assert.match(refreshCard, /<RouteFilterControls[\s\S]+counts=\{routeFilterCounts\}/);
+  assert.match(refreshCard, /filterAdminHomepageFareMarketsByRouteGroups\([\s\S]+\)\.length/);
+});
+
 test("Homepage Operations sequences status loads and presents unavailable or stale data safely", () => {
   assert.match(refreshCard, /createHomepageFareStatusRequestCoordinator/);
   assert.match(refreshCard, /request: fetchHomepageFareStatus/);
@@ -204,7 +217,9 @@ test("compact market cards retain essential fields without technical metrics", (
     card,
     /Provider calls|Candidates|Popular|Discovery|Backup|Last-known-good|Timeout|Unavailable|Attempts|Replacements|Cooldown/,
   );
-  assert.match(refreshCard, /md:grid-cols-2 2xl:grid-cols-3/);
+  assert.match(refreshCard, /grid gap-4 lg:grid-cols-2/);
+  assert.match(card, /aria-pressed=\{selected\}/);
+  assert.match(card, /border-\[#004BB8\][^\n]+ring-2/);
 });
 
 test("issue summary filters affected markets without a duplicate country list", () => {
