@@ -10,7 +10,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { readSession } from "../../storage/sessionStorage";
-import { destinationImages, seededTrips } from "./flowData";
+import { travelApi, type MobileTrip } from "../../api/travelApi";
+import { destinationImages } from "./flowData";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { ScreenHeader, Segments } from "./FlowPrimitives";
 import { flowColors, flowStyles } from "./flowStyles";
@@ -18,8 +19,21 @@ import { flowColors, flowStyles } from "./flowStyles";
 type TripTab = "upcoming" | "past";
 export function TripsFlowScreen() {
   const [tab, setTab] = useState<TripTab>("upcoming");
-  const trips =
-    tab === "upcoming" ? seededTrips.slice(0, 1) : seededTrips.slice(1);
+  const [trips, setTrips] = useState<MobileTrip[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let active = true;
+    setLoading(true); setError("");
+    void travelApi.trips(tab).then((data) => { if (active) setTrips(data.trips); }).catch(() => {
+      if (!active) return;
+      void readSession().then((session) => {
+        if (!session) router.replace("/email-auth");
+        else setError("Unable to load trips. Check your connection and try again.");
+      });
+    }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [tab]);
   return (
     <SafeAreaView style={flowStyles.safe} edges={["top"]}>
       <ScrollView contentContainerStyle={flowStyles.scroll}>
@@ -34,20 +48,11 @@ export function TripsFlowScreen() {
             ]}
           />
         </View>
-        <Text style={flowStyles.sectionTitle}>
-          {tab === "upcoming" ? "Next trip" : "Past trips"}
-        </Text>
-        {trips.map((trip) => (
-          <TripCard key={trip.id} trip={trip} />
-        ))}
-        {tab === "upcoming" ? (
-          <>
-            <Text style={flowStyles.sectionTitle}>All trips</Text>
-            {seededTrips.slice(1).map((trip) => (
-              <TripCard key={trip.id} trip={trip} />
-            ))}
-          </>
-        ) : null}
+        <Text style={flowStyles.sectionTitle}>{tab === "upcoming" ? "Upcoming trips" : "Past trips"}</Text>
+        {loading ? <Text style={flowStyles.meta}>Loading trips…</Text> : null}
+        {error ? <Text accessibilityRole="alert" style={flowStyles.meta}>{error}</Text> : null}
+        {!loading && !error && !trips.length ? <View style={styles.empty}><FlowIcon name="calendar" color={flowColors.blue} size={36} /><Text style={flowStyles.value}>No {tab} trips</Text><Text style={flowStyles.meta}>Your provider-backed bookings will appear here.</Text></View> : null}
+        {trips.map((trip) => <TripCard key={trip.id} trip={trip} />)}
       </ScrollView>
       <Pressable
         accessibilityRole="button"
@@ -60,11 +65,11 @@ export function TripsFlowScreen() {
     </SafeAreaView>
   );
 }
-function TripCard({ trip }: { trip: (typeof seededTrips)[number] }) {
+function TripCard({ trip }: { trip: MobileTrip }) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Open trip ${trip.route}`}
+      accessibilityLabel={`Open trip ${trip.origin ? `${trip.origin} to ` : ""}${trip.destination}`}
       onPress={() =>
         router.push({ pathname: "/trips/[id]", params: { id: trip.id } })
       }
@@ -74,17 +79,17 @@ function TripCard({ trip }: { trip: (typeof seededTrips)[number] }) {
         pressed && flowStyles.pressed,
       ]}
     >
-      <Image source={trip.image} style={styles.tripImage} />
+      <Image source={destinationImages[trip.destination as keyof typeof destinationImages] || destinationImages["New York"]} style={styles.tripImage} />
       <View style={styles.grow}>
-        <Text style={flowStyles.value}>{trip.route}</Text>
-        <Text style={flowStyles.meta}>{trip.dates}</Text>
+        <Text style={flowStyles.value}>{trip.origin ? `${trip.origin} → ` : ""}{trip.destination}</Text>
+        <Text style={flowStyles.meta}>{new Date(trip.departureDate).toLocaleDateString()} {trip.returnDate ? `– ${new Date(trip.returnDate).toLocaleDateString()}` : ""}</Text>
         <View
           style={[
             styles.status,
-            trip.status === "Confirmed" && styles.confirmed,
+            trip.status === "upcoming" && styles.confirmed,
           ]}
         >
-          <Text style={styles.statusText}>{trip.status}</Text>
+          <Text style={styles.statusText}>{trip.status[0].toUpperCase() + trip.status.slice(1)}</Text>
         </View>
       </View>
       <FlowIcon name="chevron" size={18} />
@@ -96,9 +101,9 @@ type ExploreTab = "destinations" | "inspiration" | "deals";
 export function ExploreFlowScreen() {
   const [tab, setTab] = useState<ExploreTab>("destinations");
   const destinations = [
-    { name: "Paris", price: "from $420", image: destinationImages.Paris },
-    { name: "Tokyo", price: "from $680", image: destinationImages["New York"] },
-    { name: "Bali", price: "from $499", image: destinationImages.Bali },
+    { name: "Paris", image: destinationImages.Paris },
+    { name: "Tokyo", image: destinationImages["New York"] },
+    { name: "Bali", image: destinationImages.Bali },
   ];
   return (
     <SafeAreaView style={flowStyles.safe} edges={["top"]}>
@@ -119,7 +124,6 @@ export function ExploreFlowScreen() {
           <>
             <View style={flowStyles.sectionHeader}>
               <Text style={flowStyles.sectionTitle}>Popular destinations</Text>
-              <Text style={flowStyles.viewAll}>View all</Text>
             </View>
             <View style={styles.destinations}>
               {destinations.map((destination) => (
@@ -144,9 +148,6 @@ export function ExploreFlowScreen() {
                   />
                   <View style={styles.scrim} />
                   <Text style={styles.destinationName}>{destination.name}</Text>
-                  <Text style={styles.destinationPrice}>
-                    {destination.price}
-                  </Text>
                 </Pressable>
               ))}
             </View>
@@ -177,7 +178,6 @@ export function ExploreFlowScreen() {
             </View>
             <View style={flowStyles.sectionHeader}>
               <Text style={flowStyles.sectionTitle}>Deals for you</Text>
-              <Text style={flowStyles.viewAll}>View all</Text>
             </View>
             <Pressable
               accessibilityRole="button"
@@ -190,7 +190,7 @@ export function ExploreFlowScreen() {
               />
               <View style={styles.scrim} />
               <Text style={styles.featureTitle}>Miami</Text>
-              <Text style={styles.featureMeta}>from $210{"\n"}Round trip</Text>
+              <Text style={styles.featureMeta}>Search live prices</Text>
             </Pressable>
           </>
         ) : (
@@ -203,7 +203,7 @@ export function ExploreFlowScreen() {
             <Text style={flowStyles.value}>
               {tab === "deals"
                 ? "Explore today’s travel deals"
-                : "Travel inspiration is coming soon"}
+                : "Find inspiration from live destinations"}
             </Text>
             <Pressable
               onPress={() =>
@@ -225,10 +225,7 @@ const rows: {
   label: string;
   route:
     | "/personal-information"
-    | "/payment-methods"
-    | "/saved-travelers"
     | "/price-alerts"
-    | "/notifications"
     | "/currency";
   icon: FlowIconName;
   trailing?: string;
@@ -238,10 +235,7 @@ const rows: {
     route: "/personal-information",
     icon: "person",
   },
-  { label: "Payment methods", route: "/payment-methods", icon: "card" },
-  { label: "Saved travelers", route: "/saved-travelers", icon: "person" },
   { label: "Price alerts", route: "/price-alerts", icon: "bell" },
-  { label: "Notifications", route: "/notifications", icon: "bell" },
   { label: "Currency", route: "/currency", icon: "compass", trailing: "USD" },
 ];
 export function ProfileFlowScreen() {
@@ -270,13 +264,13 @@ export function ProfileFlowScreen() {
         </View>
         <Text style={flowStyles.sectionTitle}>Account</Text>
         <View style={[flowStyles.card, flowStyles.shadow]}>
-          {rows.slice(0, 4).map((row) => (
+          {rows.slice(0, 2).map((row) => (
             <ProfileRow key={row.label} {...row} />
           ))}
         </View>
         <Text style={flowStyles.sectionTitle}>Settings</Text>
         <View style={[flowStyles.card, flowStyles.shadow]}>
-          {rows.slice(4).map((row) => (
+          {rows.slice(2).map((row) => (
             <ProfileRow key={row.label} {...row} />
           ))}
         </View>

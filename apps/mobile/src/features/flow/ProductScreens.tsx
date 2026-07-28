@@ -24,6 +24,13 @@ import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles } from "./flowStyles";
 import { ResponsiveHero } from "./ResponsiveHero";
 
+const futureIso = (days: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+};
+const displayDate = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric", weekday: "short" });
+
 function Page({
   title,
   children,
@@ -141,7 +148,8 @@ export function FlightsScreen() {
 
 export function HotelsScreen() {
   const [destination, setDestination] = useState("");
-  const [notice, setNotice] = useState("");
+  const checkIn = futureIso(14);
+  const checkOut = futureIso(17);
   return (
     <Page
       title="Hotels"
@@ -167,10 +175,10 @@ export function HotelsScreen() {
         </View>
         <View style={styles.row}>
           <View style={styles.half}>
-            <Field label="Check-in" value="May 20, Tue" />
+            <Field label="Check-in" value={displayDate(checkIn)} />
           </View>
           <View style={styles.half}>
-            <Field label="Check-out" value="May 27, Tue" />
+            <Field label="Check-out" value={displayDate(checkOut)} />
           </View>
         </View>
         <Field
@@ -178,17 +186,10 @@ export function HotelsScreen() {
           value="1 Room, 2 Guests"
           trailing={<FlowIcon name="chevron" size={18} />}
         />
-        {notice ? <UnavailableNotice text={notice} /> : null}
         <View style={styles.pad}>
           <PrimaryButton
             label="Search hotels"
-            onPress={() =>
-              setNotice(
-                destination.trim()
-                  ? "Hotel results are not available in this mobile build yet."
-                  : "Enter a destination.",
-              )
-            }
+            onPress={() => destination.trim() ? router.push({ pathname: "/hotel-results", params: { destination: destination.trim(), checkIn, checkOut, rooms: "1", guests: "2" } }) : undefined}
           />
         </View>
       </View>
@@ -211,7 +212,8 @@ export function HotelsScreen() {
 export function CarsScreen() {
   const [location, setLocation] = useState("");
   const [different, setDifferent] = useState(false);
-  const [notice, setNotice] = useState("");
+  const pickupDate = futureIso(14);
+  const dropoffDate = futureIso(17);
   return (
     <Page
       title="Cars"
@@ -250,7 +252,7 @@ export function CarsScreen() {
         </Pressable>
         <View style={styles.row}>
           <View style={styles.half}>
-            <Field label="Pick-up date" value="May 20, Tue" />
+            <Field label="Pick-up date" value={displayDate(pickupDate)} />
           </View>
           <View style={styles.half}>
             <Field label="Time" value="10:00 AM" />
@@ -258,7 +260,7 @@ export function CarsScreen() {
         </View>
         <View style={styles.row}>
           <View style={styles.half}>
-            <Field label="Return date" value="May 27, Tue" />
+            <Field label="Return date" value={displayDate(dropoffDate)} />
           </View>
           <View style={styles.half}>
             <Field label="Time" value="10:00 AM" />
@@ -269,17 +271,10 @@ export function CarsScreen() {
           value="30 – 65 years"
           trailing={<FlowIcon name="chevron" size={18} />}
         />
-        {notice ? <UnavailableNotice text={notice} /> : null}
         <View style={styles.pad}>
           <PrimaryButton
             label="Search cars"
-            onPress={() =>
-              setNotice(
-                location.trim()
-                  ? "Car results are not available in this mobile build yet."
-                  : "Enter a pick-up location.",
-              )
-            }
+            onPress={() => location.trim() ? router.push({ pathname: "/car-results", params: { pickupLocation: location.trim(), dropoffLocation: location.trim(), pickupDate, dropoffDate, pickupTime: "10:00", dropoffTime: "10:00", driverAge: "30" } }) : undefined}
           />
         </View>
       </View>
