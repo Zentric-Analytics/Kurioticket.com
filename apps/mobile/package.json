@@ -9,7 +9,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --import ../../node_modules/jiti/lib/jiti-register.mjs \"src/**/*.test.ts\"",
+    "test": "node --test --import jiti/register \"src/**/*.test.ts\"",
     "expo:doctor": "expo-doctor"
   },
   "dependencies": {
@@ -34,6 +34,7 @@
   "devDependencies": {
     "@types/react": "~19.1.10",
     "expo-doctor": "^1.20.1",
+    "jiti": "^2.7.0",
     "typescript": "~5.9.2"
   },
   "expo": {
