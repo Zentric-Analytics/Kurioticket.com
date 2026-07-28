@@ -40,6 +40,30 @@ test("the first included product owns the sole primary heading contract", () => 
   assert.match(results, /id="stay-options" headingLevel=\{included\.flight \? 2 : 1\}/);
 });
 
+test("product sections are semantic and do not recreate an outer card shell", () => {
+  const sectionOpening = productSection.match(/<section\b[^>]*>/)?.[0];
+  assert.ok(sectionOpening);
+  assert.match(sectionOpening, /aria-labelledby=\{id\}/);
+  assert.match(sectionOpening, /aria-busy=\{status === "loading"\}/);
+  assert.match(sectionOpening, /className="min-w-0"/);
+  assert.doesNotMatch(sectionOpening, /rounded-3xl|border(?:\s|")|border-\[#D8E1EC\]|bg-white|p-5|sm:p-6|shadow-sm/);
+
+  assert.match(productSection, /const Heading = headingLevel === 1 \? "h1" : "h2"/);
+  assert.match(productSection, /<Heading id=\{id\} tabIndex=\{-1\}/);
+  assert.match(productSection, /<div className="flex flex-col items-start justify-between gap-4 sm:flex-row">/);
+  assert.match(productSection, /<Link href=\{href\}/);
+  assert.match(productSection, /status === "loading"/);
+  assert.match(productSection, /status === "empty"/);
+  assert.match(productSection, /status === "error"/);
+  assert.match(productSection, /status === "success" && <>\{children\}/);
+  assert.match(productSection, /className="mt-4 text-xs text-slate-500">\{priceNotice\}/);
+
+  assert.match(productSection, /rounded-xl bg-amber-50/);
+  assert.match(productSection, /rounded-2xl bg-slate-50/);
+  assert.match(productSection, /rounded-2xl bg-rose-50/);
+  assert.match(productSection, /rounded-xl border border-rose-300 bg-white/);
+});
+
 test("section notices disclose fallback inventory without presenting partial-provider warnings", () => {
   const noticeHelper = results.slice(results.indexOf("const notice"), results.indexOf("const flightPreviews"));
   assert.doesNotMatch(results, /deals\.results\.partialResults/);

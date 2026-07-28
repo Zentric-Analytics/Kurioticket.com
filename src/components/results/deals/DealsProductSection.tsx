@@ -5,7 +5,7 @@ import { DealsPreviewSkeleton } from "./DealsPreviewSkeleton";
 
 export function DealsProductSection({ id, headingLevel = 2, title, summary, icon, href, viewAll, priceNotice, status, loadingLabel, emptyLabel, errorLabel, retryLabel, onRetry, notice, children }: { id: string; headingLevel?: 1 | 2; title: string; summary: string; icon: ReactNode; href: string; viewAll: string; priceNotice: string; status: string; loadingLabel: string; emptyLabel: string; errorLabel?: string; retryLabel: string; onRetry: () => void; notice?: string; children?: ReactNode }) {
   const Heading = headingLevel === 1 ? "h1" : "h2";
-  return <section aria-labelledby={id} aria-busy={status === "loading"} className="rounded-3xl border border-[#D8E1EC] bg-white p-5 shadow-sm sm:p-6">
+  return <section aria-labelledby={id} aria-busy={status === "loading"} className="min-w-0">
     <div className="flex flex-col items-start justify-between gap-4 sm:flex-row"><div><Heading id={id} tabIndex={-1} className="flex items-center gap-2 rounded-sm text-xl font-extrabold text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40">{icon}{title}</Heading><p className="mt-1 text-sm text-slate-600">{summary}</p></div><Link href={href} className="inline-flex min-h-11 shrink-0 items-center rounded-xl bg-[#004BB8] px-5 py-2 text-center font-bold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">{viewAll}</Link></div>
     {notice && <p role="status" className="mt-4 flex gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-950"><CircleAlert aria-hidden className="h-5 w-5 shrink-0" />{notice}</p>}
     {status === "loading" && <><span className="sr-only" aria-live="polite">{loadingLabel}</span><DealsPreviewSkeleton /></>}
