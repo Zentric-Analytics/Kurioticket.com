@@ -1,0 +1,35 @@
+import type { ReactNode } from "react";
+import Svg, { Circle, Path, Rect } from "react-native-svg";
+
+export type FlowIconName =
+  | "back" | "bell" | "calendar" | "car" | "card" | "check" | "chevron"
+  | "compass" | "deal" | "flight" | "home" | "hotel" | "location" | "more"
+  | "person" | "plus" | "search" | "settings" | "share" | "swap" | "trip";
+
+export function FlowIcon({ name, size = 24, color = "#071A48" }: { name: FlowIconName; size?: number; color?: string }) {
+  const line = { fill: "none", stroke: color, strokeWidth: 2.1, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  const icons: Record<FlowIconName, ReactNode> = {
+    back: <Path {...line} d="m15 5-7 7 7 7M8 12h12" />,
+    bell: <><Path {...line} d="M6.5 17.5h11l-1.5-2.3v-4.1a4 4 0 0 0-8 0v4.1l-1.5 2.3Z" /><Path {...line} d="M10 20h4" /></>,
+    calendar: <><Rect {...line} x="4" y="5" width="16" height="15" rx="2" /><Path {...line} d="M8 3v5M16 3v5M4 10h16" /></>,
+    car: <><Path {...line} d="m5 15 1.6-5h10.8l1.6 5M4 15h16v4H4zM7 19v2M17 19v2" /><Circle {...line} cx="7" cy="16.8" r=".8" /><Circle {...line} cx="17" cy="16.8" r=".8" /></>,
+    card: <><Rect {...line} x="3" y="6" width="18" height="13" rx="2" /><Path {...line} d="M3 10h18M7 15h4" /></>,
+    check: <Path {...line} d="m5 12 4 4L19 6" />,
+    chevron: <Path {...line} d="m9 6 6 6-6 6" />,
+    compass: <><Circle {...line} cx="12" cy="12" r="9" /><Path {...line} d="m15.5 8.5-2 5-5 2 2-5 5-2Z" /></>,
+    deal: <><Path {...line} d="M4 11V5h6l10 10-6 6L4 11Z" /><Circle {...line} cx="8" cy="8.5" r="1" /></>,
+    flight: <Path {...line} d="m3 13 7.5-2.5L8 4l2-1 5 6 5-1.5c1.5-.4 2.4.2 2.6 1 .2.9-.6 1.7-1.8 2.2L15 13l-2 7-2 .7.2-6L5 17l-2-4Z" />,
+    home: <><Path {...line} d="m3.5 11 8.5-7 8.5 7" /><Path {...line} d="M5.5 10v10h13V10M9.5 20v-6h5v6" /></>,
+    hotel: <><Path {...line} d="M4 21V5h11v16M15 10h5v11M8 9h3M8 13h3M8 17h3" /></>,
+    location: <><Path {...line} d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" /><Circle {...line} cx="12" cy="10" r="2.3" /></>,
+    more: <><Circle fill={color} cx="5" cy="12" r="1.5" /><Circle fill={color} cx="12" cy="12" r="1.5" /><Circle fill={color} cx="19" cy="12" r="1.5" /></>,
+    person: <><Circle {...line} cx="12" cy="8" r="4" /><Path {...line} d="M4.5 21c.8-4.2 3.3-6 7.5-6s6.7 1.8 7.5 6" /></>,
+    plus: <Path {...line} d="M12 5v14M5 12h14" />,
+    search: <><Circle {...line} cx="10.5" cy="10.5" r="6.5" /><Path {...line} d="m15.5 15.5 5 5" /></>,
+    settings: <><Circle {...line} cx="12" cy="12" r="3" /><Path {...line} d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4" /></>,
+    share: <><Circle {...line} cx="18" cy="5" r="2.5" /><Circle {...line} cx="6" cy="12" r="2.5" /><Circle {...line} cx="18" cy="19" r="2.5" /><Path {...line} d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5" /></>,
+    swap: <><Path {...line} d="M8 4v16M5 17l3 3 3-3M16 20V4M13 7l3-3 3 3" /></>,
+    trip: <><Rect {...line} x="5" y="7" width="14" height="13" rx="2" /><Path {...line} d="M9 7V5h6v2M9 12h6" /></>,
+  };
+  return <Svg width={size} height={size} viewBox="0 0 24 24" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">{icons[name]}</Svg>;
+}

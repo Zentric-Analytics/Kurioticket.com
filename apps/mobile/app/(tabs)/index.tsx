@@ -1,3 +1,3 @@
-import { HomeScreen } from "../../src/features/home/HomeScreen";
+import { HomeFlowScreen } from "../../src/features/flow/HomeFlowScreen";
 
-export default HomeScreen;
+export default HomeFlowScreen;
