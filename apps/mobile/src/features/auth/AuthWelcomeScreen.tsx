@@ -26,7 +26,7 @@ export function AuthWelcomeScreen({ onEmail, onGoogle, onGuest, busy, error }: {
   </SafeAreaView></ImageBackground>;
 }
 const styles = StyleSheet.create({
-  background: { flex: 1 }, image: { resizeMode: "cover", transform: [{ scale: 1.06 }, { translateY: -18 }] }, overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(255,255,255,.06)" }, safe: { flex: 1, justifyContent: "space-between" },
+  background: { flex: 1 }, image: { resizeMode: "cover", transform: [{ scale: 1.06 }, { translateY: -34 }] }, overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(255,255,255,.06)" }, safe: { flex: 1, justifyContent: "space-between" },
   brand: { marginTop: 12, marginLeft: 26, alignItems: "flex-start" }, logo: { width: 208, height: 58 }, tagline: { color: authColors.navy, fontSize: 15, marginLeft: 8, marginTop: -5, fontWeight: "500" },
   panel: { backgroundColor: "white", marginHorizontal: 14, borderTopLeftRadius: 27, borderTopRightRadius: 27, paddingHorizontal: 20, paddingTop: 17, paddingBottom: 10, alignItems: "stretch" },
   title: { color: authColors.navy, fontSize: 20, lineHeight: 25, fontWeight: "800", textAlign: "center" }, body: { color: authColors.text, fontSize: 13, lineHeight: 18, textAlign: "center", marginTop: 4 },
