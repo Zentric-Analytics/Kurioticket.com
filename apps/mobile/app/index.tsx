@@ -4,6 +4,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { RecoveryScreen } from "../src/features/launch/LaunchScreens";
 import { runBootstrap, type BootstrapState } from "../src/launch/bootstrap";
 import { restoreAuthenticatedSession } from "../src/features/auth/authApi";
+import { getStartupRoute } from "../src/launch/startupRoute";
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -30,13 +31,9 @@ export default function Index() {
   }, [bootstrap]);
 
   useEffect(() => {
-    if (state.status === "ready-first-run") {
-      router.replace("/onboarding");
-      requestAnimationFrame(() => void SplashScreen.hideAsync().catch(() => undefined));
-      return;
-    }
-    if (state.status === "ready-guest" || state.status === "ready-authenticated-reserved") {
-      router.replace("/(tabs)");
+    const route = getStartupRoute(state.status);
+    if (route) {
+      router.replace(route);
       requestAnimationFrame(() => void SplashScreen.hideAsync().catch(() => undefined));
       return;
     }

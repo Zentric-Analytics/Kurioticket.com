@@ -20,13 +20,13 @@ export async function runBootstrap(deps: BootstrapDependencies = {}): Promise<Bo
     if (!config.ok) { devLog("config load failed", config.error); return failedState(config.error); }
     if (config.data.data.maintenanceMode) { devLog("maintenance mode enabled"); return { status: "offline", config: config.data.data }; }
 
-    let onboardingCompleted = false;
-    try { onboardingCompleted = await (deps.readOnboardingCompleted ?? readOnboardingCompleted)(); }
-    catch (error) { devLog("onboarding storage read failed", error); }
-    if (!onboardingCompleted) return { status: "ready-first-run", config: config.data.data };
-
     const hasSession = deps.restoreAuthenticatedSession ? await deps.restoreAuthenticatedSession().catch((error) => { devLog("session restore failed", error); return false; }) : false;
-    return { status: hasSession ? "ready-authenticated-reserved" : "ready-guest", config: config.data.data };
+    if (hasSession) return { status: "ready-authenticated-reserved", config: config.data.data };
+
+    let guestPersisted = false;
+    try { guestPersisted = await (deps.readOnboardingCompleted ?? readOnboardingCompleted)(); }
+    catch (error) { devLog("guest storage read failed", error); }
+    return { status: guestPersisted ? "ready-guest" : "ready-first-run", config: config.data.data };
   } catch (error) {
     devLog("unexpected bootstrap failure", error);
     return { status: "offline" };
