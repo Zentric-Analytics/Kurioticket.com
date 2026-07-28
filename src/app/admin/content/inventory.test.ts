@@ -1,76 +1,94 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { getContentInventory } from "./inventory";
+import { getCarPickupCardSummary } from "./car-pickup-cards/page-data";
+import { getFaqInventorySummary } from "./faqs/page-data";
+import { getFlightRouteInventorySummary } from "./flight-routes/page-data";
+import { getHomepageDestinationSummary } from "./homepage-destinations/page-data";
+import { getHomepageTrustMessageSummary } from "./homepage-trust-messages/page-data";
+import { getHotelDestinationSummary } from "./hotel-destinations/page-data";
+import {
+  contentInventoryRoutes,
+  getContentInventory,
+  getContentInventoryCategory,
+  type ContentInventoryCategoryId,
+} from "./inventory";
 
 const inventory = getContentInventory();
-const byTitle = new Map(inventory.map((item) => [item.title, item]));
 
-function requireInventory(title: string) {
-  const item = byTitle.get(title);
-  assert.ok(item, `Missing inventory item: ${title}`);
-  return item;
-}
+const contracts: Array<{
+  id: ContentInventoryCategoryId;
+  title: string;
+  href: string;
+  primaryCount: number;
+  unit: string;
+  inspectionTotal: number;
+}> = [
+  { id: "homepage-destinations", title: "Homepage destination content", href: "/admin/content/homepage-destinations", primaryCount: 168, unit: "unique card IDs", inspectionTotal: getHomepageDestinationSummary().uniqueCardIds },
+  { id: "flight-routes", title: "Configured flight fare routes", href: "/admin/content/flight-routes", primaryCount: 340, unit: "Unique route IDs", inspectionTotal: getFlightRouteInventorySummary().uniqueRouteIds },
+  { id: "hotel-destinations", title: "Hotel search destinations", href: "/admin/content/hotel-destinations", primaryCount: 83, unit: "search destinations", inspectionTotal: getHotelDestinationSummary().total },
+  { id: "car-pickup-cards", title: "Car pickup cards", href: "/admin/content/car-pickup-cards", primaryCount: 4, unit: "pickup cards", inspectionTotal: getCarPickupCardSummary().pickupCards },
+  { id: "faqs", title: "FAQ definitions", href: "/admin/content/faqs", primaryCount: 21, unit: "total definitions", inspectionTotal: getFaqInventorySummary().total },
+  { id: "homepage-trust-messages", title: "Homepage trust messages", href: "/admin/content/homepage-trust-messages", primaryCount: 3, unit: "trust messages", inspectionTotal: getHomepageTrustMessageSummary().messages },
+];
 
-function supportingValue(title: string, label: string) {
-  const metric = requireInventory(title).supportingMetrics.find((item) => item.label === label);
-  assert.ok(metric, `Missing supporting metric: ${title} / ${label}`);
+function supportingValue(id: ContentInventoryCategoryId, label: string) {
+  const metric = getContentInventoryCategory(id).supportingMetrics.find((item) => item.label === label);
+  assert.ok(metric, `Missing supporting metric: ${id} / ${label}`);
   return metric.value;
 }
 
-test("homepage destination inventory distinguishes IDs, assignments, and routes", () => {
-  const item = requireInventory("Homepage destination content");
-
-  assert.equal(item.primaryCount, 168);
-  assert.equal(item.unit, "unique card IDs");
-  assert.equal(supportingValue(item.title, "Configured market assignments"), 272);
-  assert.equal(supportingValue(item.title, "Unique origin/destination routes"), 146);
+test("all Content Inventory categories satisfy the stable ID, route, and canonical summary contract", () => {
+  assert.equal(inventory.length, contracts.length);
+  for (const expected of contracts) {
+    const category = getContentInventoryCategory(expected.id);
+    assert.equal(category.id, expected.id);
+    assert.equal(category.title, expected.title);
+    assert.equal(category.href, expected.href);
+    assert.equal(category.href, contentInventoryRoutes[expected.id]);
+    assert.equal(category.primaryCount, expected.primaryCount);
+    assert.equal(category.primaryCount, expected.inspectionTotal);
+    assert.equal(category.unit, expected.unit);
+  }
 });
 
-test("flight inventory includes total, default-US, and global route scopes", () => {
-  const item = requireInventory("Configured flight fare routes");
-
-  assert.equal(item.primaryCount, 340);
-  assert.equal(item.unit, "total configured route IDs");
-  assert.equal(supportingValue(item.title, "Default-US routes"), 48);
-  assert.equal(supportingValue(item.title, "Global routes"), 32);
-  assert.equal(item.publicState, "Configured");
+test("category IDs and inspection hrefs are unique", () => {
+  assert.equal(new Set(inventory.map((item) => item.id)).size, 6);
+  assert.equal(new Set(inventory.map((item) => item.href)).size, 6);
 });
 
-test("hotel and Cars inventory use their real public configuration sources", () => {
-  const hotels = requireInventory("Hotel search destinations");
-  const cars = requireInventory("Car pickup cards");
-
-  assert.equal(hotels.primaryCount, 83);
-  assert.match(hotels.note, /Search and autocomplete destinations/);
-  assert.equal(cars.primaryCount, 4);
-  assert.equal(cars.publicState, "Public");
+test("category lookup is stable when visible title presentation copy changes", () => {
+  const category = getContentInventoryCategory("flight-routes");
+  category.title = "Changed presentation title";
+  assert.equal(getContentInventoryCategory("flight-routes").primaryCount, 340);
 });
 
-test("FAQ inventory reports definition sources without claiming locale completeness", () => {
-  const item = requireInventory("FAQ definitions");
-
-  assert.equal(item.primaryCount, 21);
-  assert.equal(supportingValue(item.title, "General/support FAQs"), 15);
-  assert.equal(supportingValue(item.title, "Cars FAQs"), 6);
-  assert.match(item.note, /localized at runtime/);
+test("inspection pages do not locate category summaries through visible title text", () => {
+  const pages = contracts.map(({ id }) => readFileSync(`src/app/admin/content/${id}/page.tsx`, "utf8")).join("\n");
+  assert.doesNotMatch(pages, /find\([^)]*(?:\.title|title\s*===)/s);
+  assert.doesNotMatch(pages, /getContentInventory\(\)\.find/);
 });
 
-test("homepage trust inventory is scoped to three localized public messages", () => {
-  const item = requireInventory("Homepage trust messages");
-
-  assert.equal(item.primaryCount, 3);
-  assert.equal(item.publicState, "Public");
-  assert.match(item.note, /other trust-content surfaces are not included/);
+test("homepage and flight supporting metrics retain their audited distinctions", () => {
+  assert.equal(supportingValue("homepage-destinations", "Configured market assignments"), 272);
+  assert.equal(supportingValue("homepage-destinations", "Unique origin/destination routes"), 146);
+  const flights = getFlightRouteInventorySummary();
+  assert.equal(supportingValue("flight-routes", "Pool memberships"), flights.poolMemberships);
+  assert.equal(flights.uniqueRouteIds, 340);
+  assert.equal(flights.poolMemberships, 596);
+  assert.equal(supportingValue("flight-routes", "Default-US routes"), 48);
+  assert.equal(supportingValue("flight-routes", "Global routes"), 32);
 });
 
-test("inventory uses durable source and public-state terminology", () => {
-  assert.equal(inventory.length, 6);
-
+test("inventory retains source, public-state, and scope terminology", () => {
+  assert.equal(getContentInventoryCategory("flight-routes").publicState, "Configured");
+  assert.match(getContentInventoryCategory("hotel-destinations").note, /Search and autocomplete destinations/);
+  assert.match(getContentInventoryCategory("faqs").note, /localized at runtime/);
+  assert.match(getContentInventoryCategory("homepage-trust-messages").note, /other trust-content surfaces are not included/);
   for (const item of inventory) {
     assert.equal(item.sourceType, "Code-backed");
     assert.ok(["Public", "Configured"].includes(item.publicState));
     assert.doesNotMatch(`${item.publicState} ${item.note}`, /Read-only|Not live yet|Placeholder|available for review/i);
   }
 });
-

@@ -91,6 +91,14 @@ export function getHomepageDestinationInventoryRows(): HomepageDestinationInvent
   });
 }
 
+export function getHomepageDestinationSummary(rows = getHomepageDestinationInventoryRows()) {
+  return {
+    uniqueCardIds: new Set(rows.map((row) => row.recordId)).size,
+    marketAssignments: rows.length,
+    uniqueRoutes: new Set(rows.map((row) => row.route)).size,
+  };
+}
+
 export function getHomepageDestinationMarkets() {
   return Object.keys(popularDestinationsByMarket).sort((a, b) => a.localeCompare(b));
 }

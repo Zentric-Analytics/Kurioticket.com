@@ -9,7 +9,7 @@ const toolbar = readFileSync("src/app/admin/content/hotel-destinations/HotelDest
 const pageData = readFileSync("src/app/admin/content/hotel-destinations/page-data.ts", "utf8");
 
 test("Hotel search destinations card links to the read-only inspection page", () => {
-  assert.match(inventory, /href: "\/admin\/content\/hotel-destinations"/);
+  assert.match(inventory, /"hotel-destinations": "\/admin\/content\/hotel-destinations"/);
 });
 
 test("page renders metrics, requested columns, usage, and anomaly flags", () => {

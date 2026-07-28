@@ -8,7 +8,6 @@ import {
   AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
 
-import { getContentInventory } from "../inventory";
 import { FlightRouteFilterToolbar } from "./FlightRouteFilterToolbar";
 import {
   buildFlightRouteHref,
@@ -17,6 +16,7 @@ import {
   formatFlightRoutePoolType,
   formatFlightRouteVisibility,
   getFlightRouteInventoryRows,
+  getFlightRouteInventorySummary,
   getFlightRouteRegions,
   isAliasFlightRouteRegion,
   paginateFlightRouteRows,
@@ -31,15 +31,13 @@ type PageProps = { searchParams?: Promise<FlightRouteSearchParams> };
 export default async function FlightRouteInventoryPage({ searchParams }: PageProps) {
   const filters = parseFlightRouteSearchParams(await searchParams);
   const allRows = getFlightRouteInventoryRows();
+  const routeSummary = getFlightRouteInventorySummary(allRows);
   const matchingRows = filterFlightRouteRows(allRows, filters);
   const page = paginateFlightRouteRows(matchingRows, filters.page);
-  const summary = getContentInventory().find((item) => item.title === "Configured flight fare routes");
   const firstResult = matchingRows.length
     ? (page.currentPage - 1) * FLIGHT_ROUTE_PAGE_SIZE + 1
     : 0;
   const lastResult = Math.min(page.currentPage * FLIGHT_ROUTE_PAGE_SIZE, matchingRows.length);
-
-  if (!summary) throw new Error("Configured flight fare route summary is unavailable");
 
   return (
     <AdminPageShell
@@ -48,11 +46,13 @@ export default async function FlightRouteInventoryPage({ searchParams }: PagePro
       description="Inspect every configured route-pool membership without removing regional aliases, fallback records or duplicate route pairs."
       actions={<AdminLinkButton href="/admin/content">Back to Content Inventory</AdminLinkButton>}
     >
-      <div className="grid gap-4 sm:grid-cols-3">
-        <AdminMetricCard label="Total configured route IDs" value={summary.primaryCount} />
-        <AdminMetricCard label="Default-US routes" value={summary.supportingMetrics[0].value} />
-        <AdminMetricCard label="Global routes" value={summary.supportingMetrics[1].value} />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <AdminMetricCard label="Unique route IDs" value={routeSummary.uniqueRouteIds} />
+        <AdminMetricCard label="Pool memberships" value={routeSummary.poolMemberships} />
+        <AdminMetricCard label="Default-US routes" value={routeSummary.defaultUsRoutes} />
+        <AdminMetricCard label="Global routes" value={routeSummary.globalRoutes} />
       </div>
+      <p className="text-sm text-slate-600">One route ID can appear in more than one regional, global, backup or fallback pool.</p>
 
       <FlightRouteFilterToolbar
         q={filters.q}
@@ -67,7 +67,7 @@ export default async function FlightRouteInventoryPage({ searchParams }: PagePro
         density="compact"
         minWidth="1120px"
         columns={["Route ID", "Market or region", "Origin", "Destination", "Route", "Pool type", "Visibility", "Status"]}
-        summary={`Showing ${firstResult}–${lastResult} of ${matchingRows.length} configured memberships`}
+        summary={`Showing ${firstResult}–${lastResult} of ${matchingRows.length} pool memberships`}
         footer={page.totalPages > 1 ? (
           <Pagination currentPage={page.currentPage} totalPages={page.totalPages} filters={filters} />
         ) : undefined}
