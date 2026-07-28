@@ -14,6 +14,13 @@ test("results hierarchy uses one summary, breadcrumbs, intro, and unchanged prod
   assert.match(results, /included\.hotel && <DealsProductSection/);
   assert.match(results, /included\.car && <section/);
   assert.match(results, /<DealsTripPlanBar/);
+  assert.match(results, /id="flight-options"/);
+  assert.match(results, /id="stay-options"/);
+  assert.match(results, /deals.results.viewFlightsCount/);
+  assert.match(results, /deals.results.viewHotelsCount/);
+  assert.match(results, /overview.flight.title/);
+  assert.match(results, /overview.hotel.dates/);
+  assert.doesNotMatch(results, /countLabel|supportingText|formatDealsOptionCount/);
 });
 
 test("legacy dark overview is removed and the existing modal remains", () => {
