@@ -35,7 +35,7 @@ test("Content Inventory retains content sections without homepage fare operation
   assert.match(contentPage, /title="Content Inventory"/);
   assert.match(
     contentPage,
-    /Review the public content currently available across Kurioticket\./,
+    /Review selected code-backed public content sources used across Kurioticket\./,
   );
   assert.doesNotMatch(
     contentPage,
@@ -43,12 +43,7 @@ test("Content Inventory retains content sections without homepage fare operation
   );
 
   for (const section of [
-    "Homepage destination cards",
-    "Flight route cards",
-    "Hotel destination cards",
-    "Car pickup cards",
-    "FAQs",
-    "Trust messages",
+    "getContentInventory",
   ]) {
     assert.match(contentPage, new RegExp(section));
   }
@@ -59,6 +54,7 @@ test("Content Inventory retains content sections without homepage fare operation
     contentPage,
     /Create content|Edit content|Delete content|Upload image|Approve content/i,
   );
+  assert.doesNotMatch(contentPage, /Read-only|Not live yet|Placeholder/);
 });
 
 test("Homepage Operations uses the shared admin shell, cards, and typography", () => {
