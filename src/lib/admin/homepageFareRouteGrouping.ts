@@ -70,12 +70,7 @@ export type AdminHomepageFareRouteGroupFilter =
   | "unavailable";
 
 export const ADMIN_HOMEPAGE_FARE_ROUTE_PAGE_SIZE = 10;
-export const ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE = "__all_homepage_fare_routes__";
-
-export type AdminHomepageFareRouteScope =
-  | typeof ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
-  | string
-  | null;
+export type AdminHomepageFareRouteScope = string | null;
 
 export type AdminHomepageFareMarketRouteGroup = {
   marketCode: string;
@@ -132,33 +127,6 @@ export function buildAdminHomepageFareRouteGroups({
     .sort(compareGroups);
 }
 
-export function buildAdminHomepageFareAllRoutesGroup(
-  routes?: AdminHomepageFareRoute[] | null,
-  filter: AdminHomepageFareRouteGroupFilter = "all",
-): AdminHomepageFareMarketRouteGroup {
-  const safeRoutes = Array.isArray(routes) ? routes.filter(isAdminHomepageFareRoute) : [];
-  const filteredRoutes = safeRoutes.filter((route) => routeMatchesFilter(route, filter));
-
-  return createGroup("ALL", filteredRoutes, {
-    market: "ALL",
-    marketCode: "ALL",
-    marketLabel: "All routes",
-    marketGroup: "Debug",
-    popularVisibleFresh: filteredRoutes.filter((route) => route.section === "popular" && isUsableFare(route.status)).length,
-    discoveryVisibleFresh: filteredRoutes.filter((route) => route.section === "discovery" && isUsableFare(route.status)).length,
-    backupFresh: filteredRoutes.filter((route) => route.section === "backup" && isUsableFare(route.status)).length,
-    targetMet: filteredRoutes.length > 0 && filteredRoutes.every((route) => route.status === "fresh" || route.status === "last_known_good"),
-    status: filteredRoutes.some((route) => route.status === "failed") ? "provider_exhausted" : "underfilled",
-    failed: filteredRoutes.filter((route) => route.status === "failed").length,
-    unavailable: filteredRoutes.filter((route) => route.status === "unavailable").length,
-    candidatePoolSize: filteredRoutes.length,
-    marketVisibility: "global",
-    popularVisibleTarget: 0,
-    discoveryVisibleTarget: 0,
-    backupTarget: 0,
-  });
-}
-
 export function splitAdminHomepageFareMarketRouteGroups(
   groups?: AdminHomepageFareMarketRouteGroup[] | null,
 ) {
@@ -203,10 +171,7 @@ export function resolveAdminHomepageFareActiveRouteScope<
   markets: TMarket[];
   visibleMarkets: TMarket[];
 }): AdminHomepageFareRouteScope {
-  if (
-    !selectedScope ||
-    selectedScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
-  ) {
+  if (!selectedScope) {
     return selectedScope;
   }
 
@@ -230,17 +195,11 @@ export function resolveAdminHomepageFareActiveRouteScope<
 export function resolveAdminHomepageFareSelectedRouteGroup({
   selectedScope,
   marketRouteGroups,
-  allRoutesGroup,
 }: {
   selectedScope: AdminHomepageFareRouteScope;
   marketRouteGroups: AdminHomepageFareMarketRouteGroup[];
-  allRoutesGroup: AdminHomepageFareMarketRouteGroup;
 }) {
   if (!selectedScope) return null;
-
-  if (selectedScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE) {
-    return allRoutesGroup;
-  }
 
   const selectedMarketCode = normalizeAdminHomepageFareMarketCode(selectedScope);
 

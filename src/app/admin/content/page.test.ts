@@ -134,16 +134,13 @@ test("Homepage Operations renders markets as responsive flat rows", () => {
   assert.match(refreshCard, /Inspect routes/);
 });
 
-test("Homepage Operations preserves affected markets and Route Inspector behavior", () => {
-  assert.match(refreshCard, /Show affected markets/);
+test("Homepage Operations omits the market toolbar and preserves Route Inspector behavior", () => {
+  assert.doesNotMatch(refreshCard, /Show affected markets/);
+  assert.doesNotMatch(refreshCard, /Show all markets/);
   assert.doesNotMatch(refreshCard, /markets require attention/);
   assert.doesNotMatch(refreshCard, /missing routes ·/);
   assert.doesNotMatch(refreshCard, /failed routes`/);
-  assert.match(
-    refreshCard,
-    /setShowAffectedMarkets\(\(current\) => !current\)/,
-  );
-  assert.match(refreshCard, /View all filtered routes/);
+  assert.doesNotMatch(refreshCard, /View all filtered routes/);
   assert.match(refreshCard, /Route Inspector/);
   assert.match(refreshCard, /Close inspector/);
   assert.match(
