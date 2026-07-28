@@ -15,17 +15,16 @@ test("the compact Car preview omits promotional and provider clutter", () => {
   ]) assert.ok(!card.includes(forbidden), `unexpected ${forbidden}`);
 });
 
-test("the compact Car preview retains its content and selection contracts", () => {
+test("the Car preview uses the shared badge and disabled provider action", () => {
+  const badge = card.indexOf("{t(badgeKey)}");
+  assert.ok(badge >= 0 && badge < card.indexOf("<CarResultImage"));
+  assert.equal(card.match(/\{t\(badgeKey\)\}/g)?.length, 1);
   for (const contract of [
-    "<article", "CarResultImage", "car.categoryLabel", "car.modelName",
-    "car.pickupLocation", "car.pickupType", "car.passengers", "car.bags",
-    "car.doors", "car.transmission", "car.airConditioning", "car.mileagePolicy",
-    "car.fuelPolicy", "offer.freeCancellation", "offer.payAtPickup",
-    "offer.totalPrice", "offer.pricePerDay", "offer.taxesAndFeesIncluded",
-    "<button", "aria-pressed={selected}", "disabled={!selectable}",
-    "onClick={onSelect}", "deals.results.car.chooseAccessible",
-    "deals.results.car.selectedAccessible", "deals.results.car.unsafeSelection",
+    "<article", "p-5 pb-4", "inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-extrabold text-[#004BB8]", "CarResultImage", "car.categoryLabel", "car.modelName",
+    "car.pickupLocation", "car.pickupType", "car.passengers", "car.bags", "car.doors", "car.transmission", "car.airConditioning", "car.mileagePolicy", "car.fuelPolicy", "offer.freeCancellation", "offer.payAtPickup", "offer.totalPrice", "offer.pricePerDay", "offer.taxesAndFeesIncluded",
+    "mt-5 border-t border-slate-200 pt-4", "Button", 'variant="accent"', 'size="lg"', 'className="w-full"', "disabled", "continueToProvider", "ArrowRight", "aria-describedby", "useId", "deals.results.providerHandoff.unavailable",
   ]) assert.ok(card.includes(contract), `missing ${contract}`);
+  for (const forbidden of ["aria-pressed", "onClick={onSelect}", "selected: boolean", "selectable", "buildCarDetailsHref", "validateDealsCarDetailsPath", "bookingUrl", "/api/redirect", 'target="_blank"', "Choose car"]) assert.ok(!card.includes(forbidden), `unexpected ${forbidden}`);
 });
 
 test("the compact Car preview does not introduce direct booking links", () => {
