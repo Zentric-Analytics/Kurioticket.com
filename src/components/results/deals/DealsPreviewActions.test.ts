@@ -9,6 +9,10 @@ const section = readFileSync(new URL("./DealsProductSection.tsx", import.meta.ur
 
 test("preview articles use selection buttons without direct provider handoffs", () => {
   for (const card of [flightCard, hotelCard]) {
+    assert.match(card, /reasonKey\?: string/);
+    assert.match(card, /\{reasonKey && <p[^>]*>\{t\(reasonKey\)\}<\/p>\}/);
+    assert.doesNotMatch(card, /deals\.results\.providedBy/);
+    assert.doesNotMatch(card, /provider\?\.trim\(\)/);
     assert.doesNotMatch(card, /href=\{handoff\.href\}/);
     assert.match(card, /<button type="button" aria-pressed=\{selected\}/);
     assert.doesNotMatch(card, /href=\{(?:flight|hotel)\.(?:bookingUrl|partnerRedirectUrl)\}/);
@@ -27,6 +31,6 @@ test("the product section retains one canonical results link contract", () => {
 });
 
 test("Deals metadata and selection copy are non-empty in the fallback locale", () => {
-  const keys = ["deals.results.previewCount", "deals.results.returnedOptions", "deals.results.viewFlightsCount", "deals.results.viewHotelsCount", "deals.results.priceResponsibility", "deals.results.flight.recommended.badge", "deals.results.hotel.rating.reason", "deals.results.providerHandoff.continue", "deals.results.providerHandoff.unavailable", "deals.results.providerHandoff.hotel.discoveryUnavailable", "deals.results.providerHandoff.hotel.demoUnavailable", "deals.results.providerHandoff.flight.accessible", "deals.results.providerHandoff.hotel.accessible"] as const;
+  const keys = ["deals.results.previewCount", "deals.results.returnedOptions", "deals.results.viewFlightsCount", "deals.results.viewHotelsCount", "deals.results.priceResponsibility", "deals.results.flight.recommended.badge", "deals.results.flight.lowest.reason", "deals.results.hotel.lowest.reason", "deals.results.hotel.rating.reason", "deals.results.providerHandoff.continue", "deals.results.providerHandoff.unavailable", "deals.results.providerHandoff.hotel.discoveryUnavailable", "deals.results.providerHandoff.hotel.demoUnavailable", "deals.results.providerHandoff.flight.accessible", "deals.results.providerHandoff.hotel.accessible"] as const;
   for (const key of keys) assert.ok(translations[key]?.trim(), key);
 });
