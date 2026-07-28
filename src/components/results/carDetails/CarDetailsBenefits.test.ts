@@ -71,11 +71,7 @@ test("source contract places two separate semantic cards beneath amenities", () 
 });
 
 test("source contract keeps only pricing and the provider CTA in BookingSummary", () => {
-  const summary = sourceBetween(
-    clientSource,
-    "function BookingSummary",
-    "function MobileBar",
-  );
+  const summary = clientSource.slice(clientSource.indexOf("function BookingSummary"));
   for (const key of [
     "carDetails.cancellation",
     "carDetails.taxesFees",
@@ -98,19 +94,38 @@ test("source contract keeps only pricing and the provider CTA in BookingSummary"
   assert.doesNotMatch(clientSource, /function Term|<Term|<dl/);
 });
 
-test("source contract leaves the compact mobile summary unchanged", () => {
-  const mobile = clientSource.slice(clientSource.indexOf("function MobileBar"));
-  assert.match(mobile, /offer\.bookingProviderName/);
-  assert.match(mobile, /offer\.totalPrice/);
-  assert.match(mobile, /carDetails\.day/);
-  assert.match(mobile, /<button disabled/);
-  assert.match(mobile, /bg-teal-dark/);
-  assert.match(mobile, /continueToProvider/);
+test("source contract uses one in-flow responsive booking summary", () => {
+  assert.doesNotMatch(clientSource, /function MobileBar|<MobileBar/);
+  assert.doesNotMatch(clientSource, /fixed inset-x-0 bottom-0|z-30|safe-area-inset-bottom|pb-32/);
+  assert.match(clientSource, /<main className="flex-1 bg-\[#f6f8fb\] lg:pb-14">/);
+
+  const summaryRenders = clientSource.match(/<BookingSummary\b/g) ?? [];
+  assert.equal(summaryRenders.length, 1);
+  assert.match(
+    clientSource,
+    /{primaryOffer && <aside className="self-start lg:sticky lg:top-24"><BookingSummary offer={primaryOffer}/,
+  );
+  assert.doesNotMatch(clientSource, /<aside className="[^"]*(?:hidden lg:block|\bfixed\b|(?<!lg:)sticky)/);
+  assert.match(
+    clientSource,
+    /grid items-start gap-6 lg:grid-cols-\[minmax\(0,1fr\)_320px\] xl:grid-cols-\[minmax\(0,1fr\)_340px\]/,
+  );
+
+  const summary = clientSource.slice(clientSource.indexOf("function BookingSummary"));
+  const summaryCard = summary.match(/return <div className="([^"]+)"/)?.[1];
+  assert.ok(summaryCard, "BookingSummary card classes exist");
+  assert.match(summaryCard, /\bw-full\b/);
+  assert.doesNotMatch(summaryCard, /\bsticky\b|\btop-24\b|\bfixed\b|\bbottom-0\b/);
+
+  const hero = clientSource.indexOf("<CarDetailsHero");
+  const pickupReturn = clientSource.indexOf('copy("carDetails.pickupReturn")');
+  const responsiveSummary = clientSource.indexOf("<BookingSummary");
+  assert.ok(hero >= 0 && pickupReturn > hero && responsiveSummary > pickupReturn);
 });
 
-test("source contract keeps both provider CTAs disabled, inert, teal, and localized", () => {
+test("source contract keeps the single provider CTA disabled, inert, teal, and localized", () => {
   const buttons = clientSource.match(/<button disabled className="[^"]+">{copy\("continueToProvider"\)}<\/button>/g) ?? [];
-  assert.equal(buttons.length, 2);
+  assert.equal(buttons.length, 1);
   for (const button of buttons) {
     assert.match(button, /bg-teal-dark/);
     assert.match(button, /text-white/);
