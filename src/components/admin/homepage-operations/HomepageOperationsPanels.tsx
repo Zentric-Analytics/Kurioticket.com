@@ -19,11 +19,11 @@ export function HomepageOperationsStatusBar({
       {items.map((item) => (
         <div
           key={item.label}
-          className="min-w-0 border-b border-black py-3 sm:px-4 sm:first:ps-0 lg:border-b-0 lg:border-e lg:last:border-e-0"
+          className="min-w-0 border-b border-slate-200 py-3 sm:px-5 lg:border-b-0 lg:border-e lg:last:border-e-0 lg:first:ps-0"
         >
-          <dt className="text-xs font-semibold text-black">{item.label}</dt>
+          <dt className="text-xs font-medium text-slate-600">{item.label}</dt>
           <dd
-            className="mt-1 truncate text-lg font-extrabold tracking-tight text-black"
+            className="mt-1 truncate text-lg font-bold tracking-tight text-slate-950"
             title={typeof item.value === "string" ? item.value : undefined}
           >
             {item.value}
@@ -61,14 +61,14 @@ export function OperationsDisclosure({
   className?: string;
 }) {
   return (
-    <details className={`group border-b border-black py-2 ${className}`}>
+    <details className={`group py-1 ${className}`}>
       <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 text-sm font-extrabold text-black focus-visible:outline focus-visible:outline-2 [&::-webkit-details-marker]:hidden">
         {label}
         <span
           aria-hidden="true"
-          className="text-lg text-black transition-transform group-open:rotate-45"
+          className="text-lg text-slate-600 transition-transform group-open:rotate-180"
         >
-          +
+          ⌄
         </span>
       </summary>
       <div className="pb-3 pt-2 text-black">{children}</div>
