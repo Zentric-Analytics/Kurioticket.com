@@ -56,8 +56,10 @@ test("product sections are semantic and do not recreate an outer card shell", ()
   assert.match(productSection, /status === "loading"/);
   assert.match(productSection, /status === "empty"/);
   assert.match(productSection, /status === "error"/);
-  assert.match(productSection, /status === "success" && <>\{children\}/);
-  assert.match(productSection, /className="mt-4 text-xs text-slate-500">\{priceNotice\}/);
+  assert.ok(productSection.includes('status === "success" && <>{children}</>'));
+  assert.doesNotMatch(productSection, /priceNotice/);
+  assert.doesNotMatch(results, /priceNotice=/);
+  assert.doesNotMatch(results, /deals\.results\.priceResponsibility/);
 
   assert.match(productSection, /rounded-xl bg-amber-50/);
   assert.match(productSection, /rounded-2xl bg-slate-50/);

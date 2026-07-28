@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { countHotelNights, dealsPreviewLimit, getFlightLegLabelKey, getHotelPreviewPrice, getOverviewData, normalizeFlightLegs, normalizeMetadata, safeDateTime, selectDealsFlightPreviews, selectDealsHotelPreviews } from "./dealsResultsPresentation";
+import { countHotelNights, dealsPreviewLimit, getFlightLegLabelKey, getHotelPreviewPrice, getOverviewData, normalizeFlightLegs, normalizeMetadata, safeDateTime, selectDealsCarPreviews, selectDealsFlightPreviews, selectDealsHotelPreviews } from "./dealsResultsPresentation";
 import { createDefaultDealsSearch } from "./dealsSearchParams";
 import type { PublicFlightResult, PublicHotelResult } from "@/lib/types";
+import type { NormalizedCarResult } from "@/lib/cars/types";
 
 const search = { ...createDefaultDealsSearch(), flightOriginCode: "LOS", flightDestinationCode: "LAX", flightDepartureDate: "2026-07-27", flightReturnDate: "2026-07-29", hotelDestination: "Los Angeles", hotelCheckIn: "2026-03-07", hotelCheckOut: "2026-03-09", carPickupLocation: "LAX", carReturnToDifferentLocation: true, carReturnLocation: "SFO" };
 test("flight overview supports round trip and one way", () => { assert.match(getOverviewData(search, "en-US").flight.dates, /Jul 27.*Jul 29/); assert.doesNotMatch(getOverviewData({ ...search, flightTripType: "one-way" }, "en-US").flight.dates, /Jul 29/); });
@@ -41,6 +42,38 @@ test("preview contract and metadata normalization", () => { assert.equal(dealsPr
 
 const makeFlight = (id: string, values: Partial<PublicFlightResult> = {}) => ({ ...flight, id, valueScore: 50, price: 500, durationMinutes: 300, ...values } as PublicFlightResult);
 const makeHotel = (id: string, values: Record<string, unknown> = {}) => ({ id, provider: "provider", name: id, rating: 4, location: "City", amenities: [], roomType: "Room", cancellationInfo: "", valueScore: 50, travelConfidenceScore: 0, arrivalSuitabilityScore: 0, recommendationReasons: [], badges: [], totalPrice: 500, pricePerNight: 250, currency: "USD", bookingUrl: "#", partnerRedirectUrl: "#", ...values } as unknown as PublicHotelResult);
+const makeCar = (id: string, values: Partial<NormalizedCarResult> = {}): NormalizedCarResult => ({
+  id, category: "compact", categoryLabel: "Compact", modelName: id, orSimilar: true,
+  imageAlt: id, passengers: 5, bags: 2, doors: 4, transmission: "automatic",
+  airConditioning: true, fuelPolicy: "full-to-full", mileagePolicy: "unlimited",
+  pickupType: "airport-counter", pickupLocation: "LAX", returnLocation: "LAX",
+  shuttleRequired: false, rentalCompanyName: "Rental Co", supplierRating: 8,
+  supplierReviewCount: 10, recommendationScore: 50, requiredDocuments: [],
+  includedItems: [], importantInformation: [], isDemo: true,
+  offers: [{ id: `${id}-offer`, bookingProviderName: "Provider", rentalCompanyName: "Rental Co", currency: "USD", pricePerDay: 50, totalPrice: 150, taxesAndFeesIncluded: true, payAtPickup: true, freeCancellation: true }],
+  ...values,
+});
+
+test("Car previews retain badge categories without reasons and do not mutate inventory", () => {
+  const cars = [
+    makeCar("recommended", { recommendationScore: 100 }),
+    makeCar("lowest", { recommendationScore: 20, offers: [{ ...makeCar("offer").offers[0], id: "lowest-offer", totalPrice: 90 }] }),
+    makeCar("rated", { recommendationScore: 10, supplierRating: 9.8 }),
+    makeCar("fourth", { recommendationScore: 1, supplierRating: 7 }),
+  ];
+  const snapshot = structuredClone(cars);
+  const previews = selectDealsCarPreviews(cars);
+
+  assert.equal(previews.length, dealsPreviewLimit);
+  assert.deepEqual(previews.map(({ result, badgeKey }) => [result.id, badgeKey]), [
+    ["recommended", "deals.results.car.recommended.badge"],
+    ["lowest", "deals.results.car.lowest.badge"],
+    ["rated", "deals.results.car.rating.badge"],
+  ]);
+  assert.ok(previews.every(({ reasonKey }) => reasonKey === undefined));
+  assert.deepEqual(selectDealsCarPreviews(cars).map(({ result }) => result.id), previews.map(({ result }) => result.id));
+  assert.deepEqual(cars, snapshot);
+});
 
 test("flight previews assign recommended, lowest-price, and shortest categories distinctly", () => {
   const previews = selectDealsFlightPreviews([makeFlight("recommended", { valueScore: 99 }), makeFlight("lowest", { price: 100 }), makeFlight("shortest", { durationMinutes: 60 })]);
