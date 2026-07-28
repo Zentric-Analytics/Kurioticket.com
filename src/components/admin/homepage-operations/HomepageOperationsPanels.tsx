@@ -13,7 +13,7 @@ export function HomepageOperationsStatusBar({
 }) {
   return (
     <dl
-      className="grid gap-y-0 sm:grid-cols-2 lg:grid-cols-5"
+      className="grid gap-y-0 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(10rem,1.35fr)_repeat(3,minmax(0,1fr))]"
       data-layout="flat-summary"
     >
       {items.map((item) => (
@@ -23,7 +23,7 @@ export function HomepageOperationsStatusBar({
         >
           <dt className="text-xs font-medium text-slate-600">{item.label}</dt>
           <dd
-            className="mt-1 truncate text-lg font-bold tracking-tight text-slate-950"
+            className="mt-1 whitespace-normal text-lg font-bold tracking-tight text-slate-950"
             title={typeof item.value === "string" ? item.value : undefined}
           >
             {item.value}

@@ -136,6 +136,9 @@ test("Homepage Operations renders markets as responsive flat rows", () => {
 
 test("Homepage Operations preserves affected markets and Route Inspector behavior", () => {
   assert.match(refreshCard, /Show affected markets/);
+  assert.doesNotMatch(refreshCard, /markets require attention/);
+  assert.doesNotMatch(refreshCard, /missing routes ·/);
+  assert.doesNotMatch(refreshCard, /failed routes`/);
   assert.match(
     refreshCard,
     /setShowAffectedMarkets\(\(current\) => !current\)/,
@@ -149,6 +152,14 @@ test("Homepage Operations preserves affected markets and Route Inspector behavio
   );
   assert.match(refreshCard, /paginateAdminHomepageFareRoutes/);
   assert.match(refreshCard, /overflow-x-auto overscroll-x-contain/);
+});
+
+test("Homepage Operations shows the full Last refresh date without a search prefix", () => {
+  assert.match(refreshCard, /return formatDateTime\(value\)/);
+  assert.doesNotMatch(refreshCard, /`Searched \$\{formatDateTime\(value\)\}`/);
+  assert.match(operationsPanels, /minmax\(10rem,1\.35fr\)/);
+  assert.match(operationsPanels, /whitespace-normal text-lg/);
+  assert.doesNotMatch(operationsPanels, /truncate text-lg/);
 });
 
 test("Homepage Operations keeps plain secondary disclosures collapsed", () => {
