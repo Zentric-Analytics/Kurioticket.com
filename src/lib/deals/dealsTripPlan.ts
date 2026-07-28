@@ -1,4 +1,5 @@
 import type { DealsPackageMode, DealsSearch } from "./dealsSearchParams";
+import { buildDealsInternalRedirectHref } from "./dealsProviderHandoff";
 
 export const DEALS_TRIP_PLAN_VERSION = 1 as const;
 export const DEALS_TRIP_PLAN_TTL_MS = 25 * 60 * 1000;
@@ -11,10 +12,21 @@ export function createDealsTripPlan(input: Pick<DealsTripPlan, "mode" | "searchF
   return { version: 1, ...input, createdAt: now, updatedAt: now, expiresAt: now + DEALS_TRIP_PLAN_TTL_MS, opened: {} };
 }
 export function updateDealsTripPlan(plan: DealsTripPlan, patch: Partial<Pick<DealsTripPlan, "flight" | "hotel">>, now = Date.now()): DealsTripPlan { return { ...plan, ...patch, updatedAt: now, expiresAt: Math.min(plan.createdAt + DEALS_TRIP_PLAN_TTL_MS, now + DEALS_TRIP_PLAN_TTL_MS) }; }
-export function clearDealsTripPlan(plan: DealsTripPlan, now = Date.now()): DealsTripPlan { const { flight: _f, hotel: _h, ...rest } = plan; return { ...rest, opened: {}, updatedAt: now }; }
+export function clearDealsTripPlan(plan: DealsTripPlan, now = Date.now()): DealsTripPlan { const rest = { ...plan }; delete rest.flight; delete rest.hotel; return { ...rest, opened: {}, updatedAt: now }; }
 export function markDealsProviderOpened(plan: DealsTripPlan, product: DealsTripPlanProduct, now = Date.now()): DealsTripPlan { return { ...plan, updatedAt: now, opened: { ...plan.opened, [product]: now } }; }
 export const isDealsTripPlanExpired = (plan: DealsTripPlan, now = Date.now()) => plan.expiresAt <= now;
 export const isDealsTripPlanProductExpired = (receivedAt: number, now = Date.now()) => now - receivedAt >= DEALS_TRIP_PLAN_TTL_MS;
+
+export type DealsNextProviderStep = { product: DealsTripPlanProduct | null; href: string | null; allOpened: boolean };
+
+export function getNextDealsProviderStep(plan: DealsTripPlan, now = Date.now()): DealsNextProviderStep {
+  const candidates = (["flight", "hotel"] as const).filter(product => {
+    const selection = plan[product];
+    return selection && !isDealsTripPlanProductExpired(selection.resultReceivedAt, now);
+  });
+  const product = candidates.find(candidate => !plan.opened[candidate]) ?? null;
+  return { product, href: product ? buildDealsInternalRedirectHref(plan[product]!.id, product) : null, allOpened: candidates.length > 0 && product === null };
+}
 
 export function getDealsTripPlanReadiness(mode: DealsPackageMode, plan: Pick<DealsTripPlan, "flight" | "hotel">) {
   const missing: DealsTripPlanProduct[] = [];
