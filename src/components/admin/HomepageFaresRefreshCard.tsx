@@ -9,12 +9,7 @@ import {
   type RefObject,
   type ReactNode,
 } from "react";
-import { RefreshCcw } from "lucide-react";
-
-import {
-  AdminButton,
-  AdminPageHeader,
-} from "@/components/admin/AdminPageShell";
+import { AdminPageHeader } from "@/components/admin/AdminPageShell";
 import {
   HomepageOperationsStatusBar,
   OperationsDisclosure,
@@ -31,12 +26,6 @@ import {
   type AdminHomepageFareRouteGroupFilter,
   type AdminHomepageFareMarketRouteGroup,
 } from "@/lib/admin/homepageFareRouteGrouping";
-import {
-  HOMEPAGE_FARE_REFRESH_OUTCOME_PRESENTATION,
-  classifyHomepageFareRefreshOutcome,
-  createHomepageFareRefreshFailureOutcome,
-  type HomepageFareRefreshOutcome,
-} from "@/lib/admin/homepageFareRefreshOutcome";
 import {
   createHomepageFareStatusRequestCoordinator,
   markHomepageFareStatusRequestFailed,
@@ -56,53 +45,6 @@ const DEFAULT_REFRESH_BUDGET: RefreshBudget = {
   lastKnownGoodTtlHours: 168,
 };
 
-const DEFAULT_READINESS_COUNTS: RefreshReadinessCounts = {
-  freshPopular: 0,
-  freshDiscover: 0,
-  freshDiscoverDisplayed: 0,
-  freshDiscoverBackup: 0,
-  publicFreshTarget: 24,
-  operationalFreshTarget: 27,
-};
-
-const DEFAULT_COUNTS: RefreshCounts = {
-  refreshed: 0,
-  unavailable: 0,
-  failed: 0,
-  skipped: 0,
-  retained: 0,
-  routeAttempts: 0,
-  providerCalls: 0,
-  stoppedReason: "completed",
-  globalReadinessStatus: "not_ready",
-  requiredMarkets: [],
-  readyMarkets: [],
-  underfilledMarkets: [],
-  marketReadinessSummary: [],
-  marketTargets: {},
-  marketTargetMet: {},
-  popularFreshByMarket: {},
-  discoveryFreshByMarket: {},
-  backupFreshByMarket: {},
-  candidatePoolSizeByMarket: {},
-  routeAttemptsByMarket: {},
-  providerCallsByMarket: {},
-  failedByMarket: {},
-  unavailableByMarket: {},
-  skippedCooldownByMarket: {},
-  replacementCandidatesUsedByMarket: {},
-  timeoutByMarket: {},
-  lastKnownGoodByMarket: {},
-  targetedMarkets: [],
-  visibleGapsAttempted: [],
-  replacementsUsed: [],
-  marketsNeedingAnotherRun: [],
-  underfillCauseByMarket: {},
-  readinessBefore: DEFAULT_READINESS_COUNTS,
-  readinessAfter: DEFAULT_READINESS_COUNTS,
-  refreshBudget: DEFAULT_REFRESH_BUDGET,
-};
-
 const DEFAULT_STATUS_SUMMARY: HomepageFareStatusSummary = {
   fresh: 0,
   last_known_good: 0,
@@ -116,8 +58,7 @@ const DEFAULT_STATUS_SUMMARY: HomepageFareStatusSummary = {
 const DEFAULT_HEALTH: HomepageFareHealth = {
   status: "attention",
   label: "Needs attention",
-  message:
-    "Homepage fares are missing or expired. Refresh fares before relying on homepage prices.",
+  message: "Homepage fares are missing or expired.",
 };
 
 const DEFAULT_DISPLAY_READINESS: DisplayReadiness = {
@@ -323,11 +264,6 @@ type RefreshCounts = {
   underfillCauseByMarket: Record<string, UnderfillCause>;
 };
 
-type RefreshState = {
-  counts: RefreshCounts | null;
-  outcome: HomepageFareRefreshOutcome | null;
-};
-
 type HomepageFareSnapshotStatus =
   | "fresh"
   | "last_known_good"
@@ -435,13 +371,22 @@ type HomepageFareStatusPayload = {
   nextExpectedCronRefresh?: string;
 };
 
+const ROUTE_FILTERS: Array<{
+  key: AdminHomepageFareRouteGroupFilter;
+  label: string;
+}> = [
+  { key: "all", label: "All" },
+  { key: "ready", label: "Usable" },
+  { key: "underfilled", label: "Needs coverage" },
+  { key: "failed", label: "Failed" },
+  { key: "missing", label: "Missing" },
+  { key: "stale", label: "Expired" },
+  { key: "last_known_good", label: "Last-known-good" },
+  { key: "fresh", label: "Fresh" },
+  { key: "unavailable", label: "Unavailable" },
+];
+
 export function HomepageFaresRefreshCard() {
-  const [refreshing, setRefreshing] = useState(false);
-  const refreshingRef = useRef(false);
-  const [refreshState, setRefreshState] = useState<RefreshState>({
-    counts: null,
-    outcome: null,
-  });
   const [statusState, setStatusState] = useState<
     HomepageFareStatusLoadState<HomepageFareStatusPayload>
   >({
@@ -502,11 +447,6 @@ export function HomepageFaresRefreshCard() {
     });
   }, []);
 
-  const reloadStatus = useCallback(() => {
-    if (refreshingRef.current) return;
-    void loadStatus();
-  }, [loadStatus]);
-
   useEffect(() => {
     const statusRequestCoordinator = statusRequestCoordinatorRef.current;
     statusRequestCoordinator.activate();
@@ -516,51 +456,6 @@ export function HomepageFaresRefreshCard() {
       statusRequestCoordinator.dispose();
     };
   }, [loadStatus]);
-
-  async function refreshHomepageFares() {
-    if (
-      refreshingRef.current ||
-      statusRequestCoordinatorRef.current.isRequestActive()
-    ) {
-      return;
-    }
-
-    refreshingRef.current = true;
-    setRefreshing(true);
-    setRefreshState({ counts: null, outcome: null });
-
-    try {
-      const response = await fetch("/api/admin/homepage-fares/refresh", {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new SafeHomepageFareRefreshError(
-          await buildSafeRefreshFailureMessage(response),
-        );
-      }
-
-      const payload = await response.json();
-      const counts = normalizeRefreshCounts(payload);
-
-      const outcome = classifyHomepageFareRefreshOutcome(counts);
-      setRefreshState({ counts, outcome });
-      await loadStatus();
-    } catch (error) {
-      setRefreshState({
-        counts: null,
-        outcome: createHomepageFareRefreshFailureOutcome(
-          error instanceof SafeHomepageFareRefreshError
-            ? error.message
-            : "Could not refresh homepage fares. Please try again or check provider status.",
-        ),
-      });
-    } finally {
-      refreshingRef.current = false;
-      setRefreshing(false);
-    }
-  }
 
   const statusPayload = statusState.data ?? {
     routes: [],
@@ -598,16 +493,11 @@ export function HomepageFaresRefreshCard() {
     () => statusPayload.marketReadinessSummary.filter(isFallbackMarket),
     [statusPayload.marketReadinessSummary],
   );
-  const latestCounts = refreshState.counts;
-  const replacementCandidatesUsed = latestCounts
-    ? sumCountRecord(latestCounts.replacementCandidatesUsedByMarket)
-    : sumCountRecord(statusPayload.replacementCandidatesUsedByMarket);
-  const timeoutCount = latestCounts
-    ? sumCountRecord(latestCounts.timeoutByMarket)
-    : sumCountRecord(statusPayload.timeoutByMarket);
-  const marketsNeedingAnotherRun =
-    latestCounts?.marketsNeedingAnotherRun ??
-    statusPayload.marketsNeedingAnotherRun;
+  const replacementCandidatesUsed = sumCountRecord(
+    statusPayload.replacementCandidatesUsedByMarket,
+  );
+  const timeoutCount = sumCountRecord(statusPayload.timeoutByMarket);
+  const marketsNeedingAnotherRun = statusPayload.marketsNeedingAnotherRun;
   const affectedMarkets = useMemo(
     () =>
       publicMarkets.filter(
@@ -682,40 +572,8 @@ export function HomepageFaresRefreshCard() {
   }, [activeSelectedRouteScope, routeFilter]);
 
   return (
-    <div className="space-y-6 pb-4">
-      <AdminPageHeader
-        title="Homepage Operations"
-        actions={
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <AdminButton
-              type="button"
-              variant="primary"
-              onClick={refreshHomepageFares}
-              disabled={refreshing || statusState.loading}
-              aria-busy={refreshing}
-            >
-              <RefreshCcw
-                className={refreshing ? "animate-spin" : ""}
-                size={16}
-              />
-              {refreshing ? "Refreshing…" : "Refresh fares"}
-            </AdminButton>
-            <AdminButton
-              type="button"
-              variant="secondary"
-              onClick={reloadStatus}
-              disabled={statusState.loading || refreshing}
-              aria-busy={statusState.loading}
-            >
-              <RefreshCcw
-                className={statusState.loading ? "animate-spin" : ""}
-                size={16}
-              />
-              {statusState.loading ? "Loading…" : "Reload"}
-            </AdminButton>
-          </div>
-        }
-      />
+    <div className="space-y-6 pb-4 text-black [&_*]:!bg-transparent [&_*]:!text-black [&_*]:!rounded-none [&_*]:shadow-none">
+      <AdminPageHeader title="Homepage Operations" />
 
       <section
         aria-labelledby="operations-summary-heading"
@@ -782,7 +640,7 @@ export function HomepageFaresRefreshCard() {
 
       {statusState.error ? (
         <p
-          className="rounded-lg bg-rose-50 p-3 text-sm font-semibold text-rose-700"
+          className="border-y border-black py-3 text-sm font-semibold text-black"
           role="alert"
         >
           {statusState.error}
@@ -812,17 +670,17 @@ export function HomepageFaresRefreshCard() {
                 onChange={selectRouteFilter}
               />
             </div>
-            <details className="group rounded-xl border border-[#DDE7F0] bg-white md:hidden">
-              <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 text-sm font-extrabold text-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8] [&::-webkit-details-marker]:hidden">
+            <details className="group border-y border-black md:hidden">
+              <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between text-sm font-extrabold text-black focus-visible:outline focus-visible:outline-2 [&::-webkit-details-marker]:hidden">
                 Filter routes
                 <span
                   aria-hidden="true"
-                  className="text-lg text-[#004BB8] group-open:rotate-45"
+                  className="text-lg text-black group-open:rotate-45"
                 >
                   +
                 </span>
               </summary>
-              <div className="border-t border-[#DDE7F0] p-3">
+              <div className="border-t border-black py-3">
                 <RouteFilterControls
                   filter={routeFilter}
                   counts={routeFilterCounts}
@@ -832,7 +690,7 @@ export function HomepageFaresRefreshCard() {
             </details>
           </div>
           <div className="min-w-0 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#DDE7F0] bg-white px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-black py-3">
               {statusState.data ? (
                 <IssueSummary
                   affectedCount={affectedMarkets.length}
@@ -851,7 +709,7 @@ export function HomepageFaresRefreshCard() {
                 onClick={() =>
                   selectRouteScope(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE)
                 }
-                className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[#DDE7F0] bg-white px-4 py-2 text-sm font-extrabold text-[#004BB8] transition hover:bg-[#F3F7FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+                className="min-h-10 text-sm font-extrabold text-black underline underline-offset-4 focus-visible:outline focus-visible:outline-2"
                 aria-pressed={
                   activeSelectedRouteScope ===
                   ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
@@ -888,25 +746,10 @@ export function HomepageFaresRefreshCard() {
         ) : null}
       </section>
 
-      <div className="overflow-hidden rounded-xl border border-[#DDE7F0] bg-white shadow-sm">
-        <OperationsDisclosure label="Refresh Status">
-          <RefreshCronPanel
-            refreshState={refreshState}
-            statusPayload={statusPayload}
-          />
-        </OperationsDisclosure>
-
+      <div className="border-t border-black">
         <OperationsDisclosure label="Additional health details">
           <dl className="grid grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-4">
             {[
-              ...(latestCounts
-                ? [
-                    {
-                      label: "Provider calls in latest manual refresh",
-                      value: latestCounts.providerCalls,
-                    },
-                  ]
-                : []),
               {
                 label: "Timeouts",
                 value: timeoutCount,
@@ -946,7 +789,7 @@ export function HomepageFaresRefreshCard() {
             marketsNeedingAnotherRun={marketsNeedingAnotherRun}
             candidatePoolHealth={statusPayload.candidatePoolHealth}
             publicPriceDiagnostics={statusPayload.publicPriceDiagnostics}
-            stoppedReason={latestCounts?.stoppedReason}
+            stoppedReason={undefined}
           />
           <div className="mt-5 border-t border-slate-200 pt-5">
             <FallbackPoolsSection
@@ -961,7 +804,7 @@ export function HomepageFaresRefreshCard() {
             </h3>
             <RawDebugDetails
               statusPayload={statusPayload}
-              refreshCounts={latestCounts}
+              refreshCounts={null}
             />
           </div>
         </OperationsDisclosure>
@@ -970,28 +813,13 @@ export function HomepageFaresRefreshCard() {
   );
 }
 const STATUS_BADGE_STYLES: Record<HomepageFareSnapshotStatus, string> = {
-  fresh: "bg-emerald-50 text-emerald-700",
-  last_known_good: "bg-sky-50 text-sky-700",
-  expired: "bg-amber-50 text-amber-700",
-  unavailable: "bg-slate-100 text-slate-500",
-  failed: "bg-rose-50 text-rose-700",
-  missing: "bg-slate-100 text-slate-500",
+  fresh: "text-black",
+  last_known_good: "text-black",
+  expired: "text-black",
+  unavailable: "text-black",
+  failed: "text-black",
+  missing: "text-black",
 };
-
-const ROUTE_FILTERS: Array<{
-  key: AdminHomepageFareRouteGroupFilter;
-  label: string;
-}> = [
-  { key: "all", label: "All" },
-  { key: "ready", label: "Usable" },
-  { key: "underfilled", label: "Needs coverage" },
-  { key: "failed", label: "Failed" },
-  { key: "missing", label: "Missing" },
-  { key: "stale", label: "Expired" },
-  { key: "last_known_good", label: "Last-known-good" },
-  { key: "fresh", label: "Fresh" },
-  { key: "unavailable", label: "Unavailable" },
-];
 
 function CompactDetail({
   label,
@@ -1038,18 +866,6 @@ function formatGlobalReadinessStatus(status: GlobalReadinessStatus) {
     case "not_ready":
       return "Not ready";
   }
-}
-
-function formatNextExpectedCron(
-  status: Pick<
-    HomepageFareStatusPayload,
-    "cronConfigured" | "nextExpectedCronRefresh"
-  >,
-) {
-  if (status.nextExpectedCronRefresh) return status.nextExpectedCronRefresh;
-  return status.cronConfigured
-    ? "Configured externally; cadence note not provided"
-    : "Cron is not configured";
 }
 
 function buildDiagnostics(
@@ -1131,55 +947,6 @@ function DashboardSection({
   );
 }
 
-function RefreshCronPanel({
-  refreshState,
-  statusPayload,
-}: {
-  refreshState: RefreshState;
-  statusPayload: HomepageFareStatusPayload;
-}) {
-  const outcome = refreshState.outcome;
-  const stoppedReason = refreshState.counts
-    ? formatStoppedReason(refreshState.counts.stoppedReason)
-    : "No manual refresh result in this session";
-  return (
-    <section aria-label="Refresh schedule details">
-      {outcome ? (
-        <div
-          className={`mt-3 rounded-lg p-3 text-sm font-semibold ${HOMEPAGE_FARE_REFRESH_OUTCOME_PRESENTATION[outcome.kind].className}`}
-          role={HOMEPAGE_FARE_REFRESH_OUTCOME_PRESENTATION[outcome.kind].role}
-          aria-live="polite"
-        >
-          <p className="font-extrabold">{outcome.primaryMessage}</p>
-          <p>{outcome.details.join(" · ")}</p>
-          {outcome.explanation ? <p>{outcome.explanation}</p> : null}
-        </div>
-      ) : null}
-      <dl className="grid grid-cols-2 gap-x-5 gap-y-2 text-sm sm:grid-cols-3">
-        <CompactDetail
-          label="Cadence"
-          value={
-            statusPayload.cronConfigured
-              ? "Configured externally"
-              : "Not configured"
-          }
-        />
-        <CompactDetail
-          label="Next scheduled refresh"
-          value={formatNextExpectedCron(statusPayload)}
-        />
-        {refreshState.counts ? (
-          <CompactDetail label="Stopped reason" value={stoppedReason} />
-        ) : null}
-        <CompactDetail
-          label="Latest result"
-          value={!outcome ? "No manual run yet" : outcome.primaryMessage}
-        />
-      </dl>
-    </section>
-  );
-}
-
 function IssueSummary({
   affectedCount,
   missingCount,
@@ -1213,7 +980,7 @@ function IssueSummary({
         type="button"
         onClick={onToggle}
         aria-pressed={showingAffected}
-        className="min-h-10 rounded-lg px-3 text-sm font-extrabold text-[#004BB8] hover:bg-[#F3F7FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+        className="min-h-10 text-sm font-extrabold text-black underline underline-offset-4 focus-visible:outline focus-visible:outline-2"
       >
         {showingAffected ? "Show all markets" : "Show affected markets"}
       </button>
@@ -1232,12 +999,12 @@ function RouteFilterPanel({
 }) {
   return (
     <aside
-      className="rounded-xl border border-[#DDE7F0] bg-white p-4 shadow-sm"
+      className="border-e border-black pe-4"
       aria-labelledby="route-filter-heading"
     >
       <h3
         id="route-filter-heading"
-        className="text-base font-extrabold text-[#021C2B]"
+        className="text-base font-extrabold text-black"
       >
         Filter routes
       </h3>
@@ -1279,7 +1046,7 @@ function RouteFilterControls({
     <div className="space-y-5" aria-label="Route status filters">
       {groups.map((group) => (
         <div key={group.label} role="group" aria-label={group.label}>
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
+          <p className="mb-3 text-[12px] font-extrabold uppercase leading-4 tracking-[0.12em] text-black">
             {group.label}
           </p>
           <div className="grid gap-1.5">
@@ -1293,17 +1060,15 @@ function RouteFilterControls({
                   key={item.key}
                   type="button"
                   onClick={() => onChange(item.key)}
-                  className={`flex min-h-10 w-full items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-1 ${
+                  className={`flex min-h-9 w-full items-center justify-between gap-3 border-s-2 px-2 py-1 text-left text-[12px] text-black transition focus-visible:outline focus-visible:outline-2 ${
                     selected
-                      ? "border-[#004BB8] bg-[#004BB8] text-white"
-                      : "border-transparent bg-[#F3F7FA] text-[#021C2B] hover:border-[#DDE7F0] hover:bg-[#EEF6FC]"
+                      ? "border-black font-extrabold"
+                      : "border-transparent font-medium hover:font-bold"
                   }`}
                   aria-pressed={selected}
                 >
                   <span>{item.label}</span>
-                  <span
-                    className={`tabular-nums ${selected ? "text-white/85" : "text-slate-500"}`}
-                  >
+                  <span className="tabular-nums text-black">
                     {counts[item.key]}
                   </span>
                 </button>
@@ -1345,30 +1110,49 @@ function MarketReadinessDashboard({
   onInspectMarket: (marketCode: string) => void;
   emptyMessage?: string;
 }) {
+  if (!markets.length)
+    return (
+      <p className="border-b border-black py-4 text-sm font-semibold text-black">
+        {emptyMessage}
+      </p>
+    );
+
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      {markets.length ? (
-        markets.map((market) => (
-          <MarketReadinessCard
+    <div
+      role="table"
+      aria-label="Market coverage"
+      className="border-t border-black text-sm"
+    >
+      <div
+        role="row"
+        className="hidden grid-cols-[minmax(10rem,2fr)_1fr_1fr_1fr_1.4fr_auto] gap-3 border-b border-black py-2 text-xs font-extrabold uppercase tracking-wide md:grid"
+      >
+        {["Market", "Coverage", "Freshness", "Missing", "Status", "Action"].map(
+          (heading) => (
+            <span role="columnheader" key={heading}>
+              {heading}
+            </span>
+          ),
+        )}
+      </div>
+      {markets.map((market) => {
+        const selected =
+          normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") ===
+          normalizeAdminHomepageFareMarketCode(market.marketCode);
+        return (
+          <MarketReadinessRow
             key={market.marketCode}
             market={market}
-            selected={
-              normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") ===
-              normalizeAdminHomepageFareMarketCode(market.marketCode)
-            }
+            selected={selected}
             onInspectMarket={onInspectMarket}
           />
-        ))
-      ) : (
-        <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-500">
-          {emptyMessage}
-        </p>
-      )}
+        );
+      })}
     </div>
   );
 }
 
-function MarketReadinessCard({
+function MarketReadinessRow({
   market,
   selected,
   onInspectMarket,
@@ -1378,44 +1162,46 @@ function MarketReadinessCard({
   onInspectMarket: (marketCode: string) => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={() => onInspectMarket(market.marketCode)}
-      aria-pressed={selected}
-      className={`group flex h-full w-full cursor-pointer flex-col rounded-xl border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2 ${
-        selected
-          ? "border-[#004BB8] bg-[#F8FBFF] shadow-sm ring-2 ring-[#004BB8]/15"
-          : "border-[#DDE7F0] bg-white shadow-sm hover:border-[#004BB8]/40 hover:shadow-md"
-      }`}
+    <div
+      role="row"
+      data-market-row
+      className={`grid gap-2 border-b border-black py-4 text-black md:grid-cols-[minmax(10rem,2fr)_1fr_1fr_1fr_1.4fr_auto] md:items-center md:gap-3 ${selected ? "border-s-4 ps-3 font-bold" : "border-s-4 border-s-transparent ps-3"}`}
     >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h4 className="text-lg font-extrabold text-slate-950">
-            {market.marketLabel}
-          </h4>
-          <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
-            {market.marketCode} · {market.marketGroup}
-          </p>
-        </div>
-        <MarketStatusBadge status={market.status} />
+      <div role="cell">
+        <h4 className="text-base font-extrabold text-black">
+          {market.marketLabel}
+        </h4>
+        <p className="text-xs font-medium text-black">
+          {market.marketCode} · {market.marketGroup}
+          {selected ? " · Selected" : ""}
+        </p>
       </div>
-      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
-        <MarketMiniMetric
-          label="Coverage"
-          value={`${market.popularVisibleFresh + market.discoveryVisibleFresh} / ${getPublicDisplayTarget(market)}`}
-        />
-        <MarketMiniMetric label="Freshness" value={market.freshCount ?? 0} />
-        {market.missingCount ? (
-          <MarketMiniMetric label="Missing" value={market.missingCount} />
-        ) : null}
-        {market.failed ? (
-          <MarketMiniMetric label="Failed" value={market.failed} />
-        ) : null}
-      </dl>
-      <span className="mt-auto inline-flex min-h-10 items-center justify-center self-start rounded-lg border border-[#C9D8EA] bg-[#F3F7FA] px-4 py-2 text-sm font-extrabold text-[#004BB8] transition group-hover:border-[#004BB8]/30 group-hover:bg-[#EEF6FC]">
-        Inspect {market.marketCode} routes
-      </span>
-    </button>
+      <div role="cell">
+        <span className="font-bold md:hidden">Coverage: </span>
+        {market.popularVisibleFresh + market.discoveryVisibleFresh} /{" "}
+        {getPublicDisplayTarget(market)}
+      </div>
+      <div role="cell">
+        <span className="font-bold md:hidden">Freshness: </span>
+        {market.freshCount ?? 0}
+      </div>
+      <div role="cell">
+        <span className="font-bold md:hidden">Missing: </span>
+        {market.missingCount ?? 0}
+      </div>
+      <div role="cell">
+        <span className="font-bold md:hidden">Status: </span>
+        {formatMarketStatus(market.status)}
+      </div>
+      <button
+        type="button"
+        onClick={() => onInspectMarket(market.marketCode)}
+        aria-pressed={selected}
+        className="min-h-10 justify-self-start text-sm font-extrabold text-black underline underline-offset-4 focus-visible:outline focus-visible:outline-2"
+      >
+        Inspect routes<span className="sr-only"> for {market.marketLabel}</span>
+      </button>
+    </div>
   );
 }
 
@@ -1647,15 +1433,15 @@ function MarketRouteInspector({
   routeDetailsRef: RefObject<HTMLDivElement | null>;
 }) {
   return (
-    <section className="mt-5 rounded-xl border border-[#DDE7F0] bg-white p-4 shadow-sm">
+    <section className="mt-8 border-t border-black pt-5">
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-lg font-extrabold text-slate-950">
-          Route inspector
+          Route Inspector
         </h3>
         <button
           type="button"
           onClick={onClose}
-          className="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#DDE7F0] bg-white px-4 py-2 text-sm font-extrabold text-[#021C2B] hover:bg-[#F3F7FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+          className="min-h-10 text-sm font-extrabold text-black underline underline-offset-4 focus-visible:outline focus-visible:outline-2"
         >
           Close inspector
         </button>
@@ -1695,7 +1481,7 @@ function SelectedRouteDetails({
     return (
       <div
         ref={routeDetailsRef}
-        className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-white/55 p-6 text-center"
+        className="mt-5 border-t border-black py-6 text-center"
       >
         <p className="text-sm font-extrabold text-slate-950">
           Select a market to inspect its routes, or choose View all filtered
@@ -1714,9 +1500,9 @@ function SelectedRouteDetails({
   return (
     <div
       ref={routeDetailsRef}
-      className="mt-4 min-w-0 overflow-hidden rounded-xl border border-[#DDE7F0] bg-white"
+      className="mt-4 min-w-0 overflow-hidden border-t border-black"
     >
-      <div className="border-b border-[#DDE7F0] bg-[#F3F7FA] px-4 py-4">
+      <div className="border-b border-black py-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h5 className="text-base font-extrabold text-slate-950">
@@ -1737,7 +1523,7 @@ function SelectedRouteDetails({
                 type="button"
                 onClick={onPreviousPage}
                 disabled={!page.hasPreviousPage}
-                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-950 transition disabled:cursor-not-allowed disabled:opacity-40"
+                className="px-2 py-1.5 text-black underline underline-offset-4 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Previous
               </button>
@@ -1748,7 +1534,7 @@ function SelectedRouteDetails({
                 type="button"
                 onClick={onNextPage}
                 disabled={!page.hasNextPage}
-                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-950 transition disabled:cursor-not-allowed disabled:opacity-40"
+                className="px-2 py-1.5 text-black underline underline-offset-4 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Next
               </button>
@@ -1798,9 +1584,9 @@ function RouteDetailsTable({
   }
 
   return (
-    <div className="max-w-full overflow-x-auto overscroll-x-contain">
+    <div className="max-w-full overflow-x-auto overscroll-x-contain border-t border-black">
       <table className="min-w-[1120px] divide-y divide-border text-left text-sm">
-        <thead className="bg-[#EEF6FC] text-xs font-extrabold uppercase tracking-wide text-[#021C2B]">
+        <thead className="text-xs font-extrabold uppercase tracking-wide text-black">
           <tr>
             <th className="px-3 py-3">Market</th>
             <th className="px-3 py-3">Route</th>
@@ -1817,10 +1603,7 @@ function RouteDetailsTable({
         </thead>
         <tbody className="divide-y divide-border">
           {routes.map((route) => (
-            <tr
-              key={`${group.marketCode}-${route.id}`}
-              className="align-top odd:bg-white even:bg-slate-50/60 hover:bg-[#F3F7FA]"
-            >
+            <tr key={`${group.marketCode}-${route.id}`} className="align-top">
               <td className="px-3 py-3 font-bold text-slate-950">
                 {route.market}
               </td>
@@ -1889,38 +1672,7 @@ function MarketGroupStatusBadge({
 }: {
   status: AdminHomepageFareMarketRouteGroup["status"];
 }) {
-  const styles =
-    status === "Ready"
-      ? "bg-indigo-50 text-indigo-700"
-      : status === "Fallback only"
-        ? "bg-slate-100 text-slate-500"
-        : status === "Failed"
-          ? "bg-rose-50 text-rose-700"
-          : status === "Partially ready"
-            ? "bg-sky-50 text-sky-700"
-            : "bg-amber-50 text-amber-700";
-
-  return (
-    <span
-      className={`inline-flex shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${styles}`}
-    >
-      {status}
-    </span>
-  );
-}
-
-function MarketStatusBadge({ status }: { status: MarketReadinessStatus }) {
-  const ready = status === "ready";
-
-  return (
-    <span
-      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${
-        ready ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
-      }`}
-    >
-      {formatMarketStatus(status)}
-    </span>
-  );
+  return <span className="text-xs font-bold text-black">{status}</span>;
 }
 
 function MetricCard({
@@ -1931,7 +1683,7 @@ function MetricCard({
   value: string | number;
 }) {
   return (
-    <div className="rounded-lg bg-slate-50 p-3">
+    <div className="py-2">
       <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">
         {label}
       </dt>
@@ -1943,39 +1695,11 @@ function MetricCard({
 function StatusBadge({ status }: { status: HomepageFareSnapshotStatus }) {
   return (
     <span
-      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold capitalize ${STATUS_BADGE_STYLES[status]}`}
+      className={`text-xs font-bold capitalize ${STATUS_BADGE_STYLES[status]}`}
     >
       {status}
     </span>
   );
-}
-
-class SafeHomepageFareRefreshError extends Error {}
-
-async function buildSafeRefreshFailureMessage(response: Response) {
-  const fallback = `Could not refresh homepage fares. Status ${response.status}.`;
-
-  try {
-    const payload = (await response.json()) as {
-      error?: unknown;
-      errorCode?: unknown;
-      safeReason?: unknown;
-    };
-    const details = [
-      typeof payload.error === "string"
-        ? payload.error
-        : "Homepage fare refresh failed.",
-      typeof payload.safeReason === "string" ? payload.safeReason : undefined,
-      typeof payload.errorCode === "string"
-        ? `Code: ${payload.errorCode}.`
-        : undefined,
-      `Status: ${response.status}.`,
-    ].filter(Boolean);
-
-    return details.join(" ");
-  } catch {
-    return fallback;
-  }
 }
 
 async function fetchHomepageFareStatus(signal: AbortSignal) {
@@ -1983,74 +1707,8 @@ async function fetchHomepageFareStatus(signal: AbortSignal) {
     credentials: "include",
     signal,
   });
-
-  if (!response.ok) {
-    throw new Error("Homepage fare status unavailable.");
-  }
-
+  if (!response.ok) throw new Error("Homepage fare status unavailable.");
   return normalizeStatusPayload(await response.json());
-}
-
-function normalizeRefreshCounts(payload: unknown): RefreshCounts {
-  if (!payload || typeof payload !== "object") return DEFAULT_COUNTS;
-
-  const counts = payload as Partial<Record<keyof RefreshCounts, unknown>>;
-
-  return {
-    refreshed: readCount(counts.refreshed),
-    unavailable: readCount(counts.unavailable),
-    failed: readCount(counts.failed),
-    skipped: readCount(counts.skipped),
-    retained: readCount(counts.retained),
-    routeAttempts: readCount(counts.routeAttempts),
-    providerCalls: readCount(counts.providerCalls),
-    stoppedReason: readStoppedReason(counts.stoppedReason),
-    globalReadinessStatus: readGlobalReadinessStatus(
-      counts.globalReadinessStatus,
-    ),
-    requiredMarkets: readStringArray(counts.requiredMarkets),
-    readyMarkets: readStringArray(counts.readyMarkets),
-    underfilledMarkets: normalizeMarketReadinessArray(
-      counts.underfilledMarkets,
-    ),
-    marketReadinessSummary: normalizeMarketReadinessArray(
-      counts.marketReadinessSummary,
-    ),
-    marketTargets: normalizeMarketReadinessRecord(counts.marketTargets),
-    marketTargetMet: normalizeBooleanRecord(counts.marketTargetMet),
-    popularFreshByMarket: normalizeCountRecord(counts.popularFreshByMarket),
-    discoveryFreshByMarket: normalizeCountRecord(counts.discoveryFreshByMarket),
-    backupFreshByMarket: normalizeCountRecord(counts.backupFreshByMarket),
-    candidatePoolSizeByMarket: normalizeCountRecord(
-      counts.candidatePoolSizeByMarket,
-    ),
-    routeAttemptsByMarket: normalizeCountRecord(counts.routeAttemptsByMarket),
-    providerCallsByMarket: normalizeCountRecord(counts.providerCallsByMarket),
-    failedByMarket: normalizeCountRecord(counts.failedByMarket),
-    unavailableByMarket: normalizeCountRecord(counts.unavailableByMarket),
-    skippedCooldownByMarket: normalizeCountRecord(
-      counts.skippedCooldownByMarket,
-    ),
-    replacementCandidatesUsedByMarket: normalizeCountRecord(
-      counts.replacementCandidatesUsedByMarket,
-    ),
-    timeoutByMarket: normalizeCountRecord(counts.timeoutByMarket),
-    lastKnownGoodByMarket: normalizeCountRecord(counts.lastKnownGoodByMarket),
-    targetedMarkets: readStringArray(counts.targetedMarkets),
-    visibleGapsAttempted: normalizeVisibleGapAttempts(
-      counts.visibleGapsAttempted,
-    ),
-    replacementsUsed: normalizeReplacementUsages(counts.replacementsUsed),
-    marketsNeedingAnotherRun: normalizeMarketsNeedingAnotherRun(
-      counts.marketsNeedingAnotherRun,
-    ),
-    underfillCauseByMarket: normalizeUnderfillCauseRecord(
-      counts.underfillCauseByMarket,
-    ),
-    readinessBefore: normalizeRefreshReadiness(counts.readinessBefore),
-    readinessAfter: normalizeRefreshReadiness(counts.readinessAfter),
-    refreshBudget: normalizeRefreshBudget(counts.refreshBudget),
-  };
 }
 
 function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
@@ -2210,27 +1868,6 @@ function normalizeDisplayReadiness(value: unknown): DisplayReadiness {
     publicFreshTarget:
       readCount(readiness.publicFreshTarget) ||
       DEFAULT_DISPLAY_READINESS.publicFreshTarget,
-  };
-}
-
-function normalizeRefreshReadiness(value: unknown): RefreshReadinessCounts {
-  if (!value || typeof value !== "object") return DEFAULT_READINESS_COUNTS;
-
-  const readiness = value as Partial<
-    Record<keyof RefreshReadinessCounts, unknown>
-  >;
-
-  return {
-    freshPopular: readCount(readiness.freshPopular),
-    freshDiscover: readCount(readiness.freshDiscover),
-    freshDiscoverDisplayed: readCount(readiness.freshDiscoverDisplayed),
-    freshDiscoverBackup: readCount(readiness.freshDiscoverBackup),
-    publicFreshTarget:
-      readCount(readiness.publicFreshTarget) ||
-      DEFAULT_READINESS_COUNTS.publicFreshTarget,
-    operationalFreshTarget:
-      readCount(readiness.operationalFreshTarget) ||
-      DEFAULT_READINESS_COUNTS.operationalFreshTarget,
   };
 }
 
@@ -2473,18 +2110,6 @@ function normalizeStatusSummary(
     missing: readCount(summary.missing),
     total: readCount(summary.total) || fallbackTotal,
   };
-}
-
-function readStoppedReason(value: unknown): RefreshStoppedReason {
-  return value === "target_met" ||
-    value === "route_budget_exhausted" ||
-    value === "provider_budget_exhausted" ||
-    value === "candidate_pool_exhausted" ||
-    value === "provider_unavailable_no_offers" ||
-    value === "all_remaining_cooldown_or_unavailable" ||
-    value === "completed"
-    ? value
-    : "completed";
 }
 
 function formatMarketStatus(status: MarketReadinessStatus) {
