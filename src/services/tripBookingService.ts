@@ -137,6 +137,14 @@ export async function findUserTripBookingByReference(userId: string, bookingRefe
   return trip ? serializeTripBooking(trip) : null;
 }
 
+export async function findUserTripBookingById(userId: string, id: string) {
+  const trip = await getTripBookingPrisma().tripBooking.findFirst({
+    where: { userId, id },
+    select: tripBookingSelect,
+  });
+  return trip ? serializeTripBooking(trip) : null;
+}
+
 function getTripBookingPrisma(): TripBookingPrismaClient {
   return prismaClientForTesting ?? (getPrisma() as unknown as TripBookingPrismaClient);
 }

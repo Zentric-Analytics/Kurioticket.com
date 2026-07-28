@@ -36,11 +36,13 @@ test("deals, trips, explore, and trip details expose real selected-state control
   assert.match(tabs, /useState<TripTab>\("upcoming"\)/);
   assert.match(tabs, /pathname: "\/trips\/\[id\]"/);
   assert.match(tabs, /useState<ExploreTab>\("destinations"\)/);
-  assert.match(details, /useState<DetailTab>\("itinerary"\)/);
+  assert.match(details, /travelApi\.trip\(id\)/);
+  assert.match(details, /bookingReference/);
 });
 
-test("every profile row has a concrete route rather than an alert placeholder", () => {
+test("profile exposes only account capabilities backed by production data", () => {
   const tabs = source("src/features/flow/TabScreens.tsx");
-  for (const route of ["/personal-information", "/payment-methods", "/saved-travelers", "/price-alerts", "/notifications", "/currency"]) assert.match(tabs, new RegExp(route));
+  for (const route of ["/personal-information", "/price-alerts", "/currency"]) assert.match(tabs, new RegExp(route));
+  for (const unsupported of ["/payment-methods", "/saved-travelers"]) assert.doesNotMatch(tabs, new RegExp(unsupported));
   assert.doesNotMatch(tabs, /Alert\.alert/);
 });

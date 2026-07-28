@@ -1,2 +1,2 @@
-import { PlaceholderScreen } from "../src/features/flow/PlaceholderScreen";
-export default function FlightResults() { return <PlaceholderScreen title="Flight results" body="Live flight results are unavailable" />; }
+import { TravelResultsScreen } from "../src/features/flow/TravelResultsScreen";
+export default function FlightResults() { return <TravelResultsScreen product="flight" />; }

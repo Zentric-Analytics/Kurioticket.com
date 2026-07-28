@@ -1,2 +1,2 @@
-import { PlaceholderScreen } from "../src/features/flow/PlaceholderScreen";
-export default function SavedTravelers() { return <PlaceholderScreen title="Saved travelers" body="No saved travelers are available" />; }
+import { Redirect } from "expo-router";
+export default function SavedTravelers() { return <Redirect href="/(tabs)/profile" />; }
