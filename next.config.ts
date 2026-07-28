@@ -1,44 +1,11 @@
 import type { NextConfig } from "next";
+import { imageLocalPatterns, imageRemotePatterns } from "./src/config/imagePatterns";
 
 const nextConfig: NextConfig = {
   images: {
     qualities: [75, 92],
-    localPatterns: [
-      {
-        pathname: "/images/cars/results/**",
-        search: "?v=4x3-20260723",
-      },
-      {
-        pathname: "/**",
-        search: "",
-      },
-    ],
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "images.unsplash.com",
-        port: "",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "images.kiwi.com",
-        port: "",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "images.pexels.com",
-        port: "",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "photos.hotelbeds.com",
-        port: "",
-        pathname: "/giata/**",
-      },
-    ],
+    localPatterns: imageLocalPatterns,
+    remotePatterns: imageRemotePatterns,
   },
 };
 

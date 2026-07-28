@@ -9,6 +9,7 @@ import {
   hasCarPickupCardIssues,
   isValidCarPickupImage,
   selectCarPickupCardRows,
+  validateCarPickupImage,
 } from "./page-data";
 
 test("selector preserves every source record and derives the requested summary", () => {
@@ -53,8 +54,16 @@ test("selector distinguishes missing translation and image values from invalid i
   assert.equal(rows[1].invalidImage, true);
 });
 
-test("image validation accepts configured web URLs and local paths only", () => {
-  assert.equal(isValidCarPickupImage("https://images.example.com/card.jpg"), true);
+test("image validation matches the configured protocol, host, and pathname patterns", () => {
+  assert.equal(validateCarPickupImage("https://images.unsplash.com/card.jpg"), "permitted-external-image");
+  assert.equal(validateCarPickupImage("/images/cars/card.jpg"), "valid-local-image");
+  assert.equal(validateCarPickupImage("not a URL"), "malformed-image-value");
+  assert.equal(validateCarPickupImage("ftp://images.unsplash.com/card.jpg"), "unsupported-image-protocol");
+  assert.equal(validateCarPickupImage("http://images.unsplash.com/card.jpg"), "unsupported-image-protocol");
+  assert.equal(validateCarPickupImage("https://images.example.com/card.jpg"), "external-image-host-not-permitted");
+  assert.equal(validateCarPickupImage("https://photos.hotelbeds.com/outside/card.jpg"), "external-image-pathname-not-permitted");
+  assert.equal(validateCarPickupImage("https://photos.hotelbeds.com/giata/card.jpg"), "permitted-external-image");
+  assert.equal(isValidCarPickupImage("https://images.example.com/card.jpg"), false);
   assert.equal(isValidCarPickupImage("/images/cars/card.jpg"), true);
   assert.equal(isValidCarPickupImage("//images.example.com/card.jpg"), false);
   assert.equal(isValidCarPickupImage("not a URL"), false);

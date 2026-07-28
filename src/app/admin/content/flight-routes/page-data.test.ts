@@ -5,6 +5,7 @@ import {
   buildFlightRouteHref,
   filterFlightRouteRows,
   getFlightRouteInventoryRows,
+  getFlightRouteInventorySummary,
   paginateFlightRouteRows,
   parseFlightRouteSearchParams,
 } from "./page-data";
@@ -14,6 +15,15 @@ const rows = getFlightRouteInventoryRows();
 test("selector preserves every configured pool membership and all route IDs", () => {
   assert.equal(rows.length, 596);
   assert.equal(new Set(rows.map((row) => row.routeId)).size, 340);
+});
+
+test("summary distinguishes unique route IDs from pool memberships", () => {
+  assert.deepEqual(getFlightRouteInventorySummary(rows), {
+    uniqueRouteIds: 340,
+    poolMemberships: 596,
+    defaultUsRoutes: 48,
+    globalRoutes: 32,
+  });
 });
 
 test("selector distinguishes default-US, regional, global, and fallback pools", () => {
@@ -67,4 +77,3 @@ test("pagination href preserves all active filters", () => {
     "/admin/content/flight-routes?q=LHR&region=EUROPE&poolType=REGIONAL&visibility=VISIBLE&page=3",
   );
 });
-

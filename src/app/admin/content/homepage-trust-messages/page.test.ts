@@ -7,7 +7,7 @@ const inventory = readFileSync("src/app/admin/content/inventory.ts", "utf8");
 const page = readFileSync("src/app/admin/content/homepage-trust-messages/page.tsx", "utf8");
 
 test("Homepage trust messages card links to its inspection page", () => {
-  assert.match(inventory, /href: "\/admin\/content\/homepage-trust-messages"/);
+  assert.match(inventory, /"homepage-trust-messages": "\/admin\/content\/homepage-trust-messages"/);
 });
 
 test("page renders source-derived metrics and the requested table contract", () => {

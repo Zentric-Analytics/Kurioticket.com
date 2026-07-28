@@ -9,13 +9,14 @@ const page = readFileSync("src/app/admin/content/flight-routes/page.tsx", "utf8"
 const toolbar = readFileSync("src/app/admin/content/flight-routes/FlightRouteFilterToolbar.tsx", "utf8");
 
 test("Configured flight fare routes card links to its inspection page", () => {
-  assert.match(inventory, /href: "\/admin\/content\/flight-routes"/);
+  assert.match(inventory, /"flight-routes": "\/admin\/content\/flight-routes"/);
   assert.match(contentPage, /View inventory/);
 });
 
 test("inspection page renders requested summary and table structure", () => {
   for (const text of [
-    "Total configured route IDs",
+    "Unique route IDs",
+    "Pool memberships",
     "Default-US routes",
     "Global routes",
     "Route ID",
@@ -26,6 +27,9 @@ test("inspection page renders requested summary and table structure", () => {
     "Duplicate route pair",
   ]) assert.match(page, new RegExp(text));
   assert.match(page, /matchingRows\.length/);
+  assert.match(page, /One route ID can appear in more than one regional, global, backup or fallback pool\./);
+  assert.match(page, /of \$\{matchingRows\.length\} pool memberships/);
+  assert.doesNotMatch(page, /configured memberships|Total configured route IDs/);
 });
 
 test("toolbar renders all requested read-only filters", () => {

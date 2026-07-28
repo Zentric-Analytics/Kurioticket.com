@@ -8,7 +8,7 @@ const page = readFileSync("src/app/admin/content/faqs/page.tsx", "utf8");
 const toolbar = readFileSync("src/app/admin/content/faqs/FaqInventoryFilterToolbar.tsx", "utf8");
 
 test("FAQ definitions card links to its inspection page", () => {
-  assert.match(inventory, /href: "\/admin\/content\/faqs"/);
+  assert.match(inventory, /"faqs": "\/admin\/content\/faqs"/);
 });
 
 test("page renders derived metrics, requested columns, and result count", () => {

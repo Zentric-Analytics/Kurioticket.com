@@ -75,7 +75,15 @@ export default function CarPickupCardInventoryPage() {
 
 function ImagePreview({ row }: { row: CarPickupCardInventoryRow }) {
   if (row.missingImage || row.invalidImage) {
-    return <div className="flex h-16 w-24 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-2 text-center text-xs font-semibold text-slate-500">No valid image</div>;
+    const warning = {
+      "valid-local-image": "",
+      "permitted-external-image": "",
+      "malformed-image-value": "Image value malformed",
+      "unsupported-image-protocol": "Unsupported image protocol",
+      "external-image-host-not-permitted": "Image host not permitted",
+      "external-image-pathname-not-permitted": "Image path not permitted",
+    }[row.imageValidation];
+    return <div className="flex h-16 w-24 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-2 text-center text-xs font-semibold text-slate-500">{row.missingImage ? "No image configured" : warning}</div>;
   }
 
   return (
