@@ -3,7 +3,7 @@
     "name": "Kurioticket",
     "slug": "kurioticket-mobile",
     "platforms": ["android", "ios"],
-    "version": "0.1.0",
+    "version": "0.2.0",
     "orientation": "portrait",
     "scheme": "kurioticket",
     "userInterfaceStyle": "light",
@@ -46,7 +46,9 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/89f6fd88-c0d7-495a-9e2b-8301b09f407d"
+      "url": "https://u.expo.dev/89f6fd88-c0d7-495a-9e2b-8301b09f407d",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 10000
     }
   }
 }

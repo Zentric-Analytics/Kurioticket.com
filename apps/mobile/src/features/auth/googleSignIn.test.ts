@@ -20,3 +20,12 @@ test("authentication startup does not eagerly initialize the Google native modul
   assert.doesNotMatch(flowSource, /^import .*\.\/googleSignIn/m);
   assert.match(flowSource, /await import\("\.\/googleSignIn"\)/);
 });
+
+test("Google configuration is validated before loading the native module", () => {
+  const flowSource = readFileSync(join(process.cwd(), "src/features/auth/AuthFlow.tsx"), "utf8");
+  const guardIndex = flowSource.indexOf("requireGoogleWebClientId();");
+  const importIndex = flowSource.indexOf('await import("./googleSignIn")');
+  assert.notEqual(guardIndex, -1);
+  assert.notEqual(importIndex, -1);
+  assert.ok(guardIndex < importIndex);
+});

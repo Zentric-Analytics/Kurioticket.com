@@ -7,6 +7,7 @@ import {
   statusCodes,
   type OneTapResponse,
 } from "react-native-nitro-google-signin";
+import { requireGoogleWebClientId } from "./googleConfig";
 
 export type NativeGoogleResult =
   | { status: "cancelled" }
@@ -17,10 +18,6 @@ export class NativeGoogleSignInError extends Error {
     super(message);
     this.name = "NativeGoogleSignInError";
   }
-}
-
-function getClientId() {
-  return process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?.trim() || "";
 }
 
 async function createNonce() {
@@ -36,13 +33,7 @@ async function resolveInteractiveResponse(response: OneTapResponse) {
 }
 
 export async function startNativeGoogleSignIn(): Promise<NativeGoogleResult> {
-  const webClientId = getClientId();
-  if (!webClientId) {
-    throw new NativeGoogleSignInError(
-      "Google sign-in is not configured for this build. Please use email sign-in.",
-      "configuration",
-    );
-  }
+  const webClientId = requireGoogleWebClientId();
 
   const nonce = await createNonce();
   GoogleOneTapSignIn.configure({
