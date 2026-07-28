@@ -29,12 +29,23 @@ test("hotel and car summary prioritizes destination and excludes flight informat
   assert.equal(summary.primary, "Los Angeles"); assert.equal(summary.hasFlight, false); assert.equal(summary.travelers, undefined); assert.equal(summary.carIncluded, true);
 });
 
+test("the travel party summary localizes singular and plural guest counts", () => {
+  assert.match(summarySource, /summary\.guests === 1 \? "deals\.results\.guest" : "deals\.results\.guests"/);
+  assert.equal(translations["deals.results.guest"], "guest");
+  assert.equal(translations["deals.results.guests"], "guests");
+});
+
 test("modify search retains its accessible button contract without navigation", () => {
   assert.match(summarySource, /<button ref=\{modifyButtonRef\} type="button"/);
   assert.match(summarySource, /aria-expanded=\{modifyExpanded\}/);
   assert.match(summarySource, /aria-controls="deals-modify-search-dialog"/);
   assert.doesNotMatch(summarySource, /href=/);
   assert.match(summarySource, /min-h-11/);
+});
+
+test("the single responsive search surface is genuinely sticky on mobile", () => {
+  assert.equal((summarySource.match(/<button/g) ?? []).length, 1);
+  assert.match(summarySource, /<section[^>]+className="sticky top-0 z-50[^"\n]+sm:static/);
 });
 
 test("breadcrumbs use localized semantic hierarchy", () => {

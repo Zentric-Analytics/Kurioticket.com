@@ -3399,6 +3399,7 @@ export const translations: TranslationDictionary = {
   "deals.results.travelers": "travelers",
   "deals.results.night": "night",
   "deals.results.nights": "nights",
+  "deals.results.guest": "guest",
   "deals.results.guests": "guests",
   "deals.results.rooms": "rooms",
   "deals.results.room": "room",
