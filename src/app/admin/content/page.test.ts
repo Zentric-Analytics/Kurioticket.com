@@ -125,14 +125,15 @@ test("Homepage Operations retains every route filter with shared admin control s
 
 test("Homepage Operations renders markets with shared responsive table styling", () => {
   assert.match(refreshCard, /data-market-row/);
-  assert.match(
-    refreshCard,
-    /role="table"[\s\S]{0,80}aria-label="Market coverage"/,
-  );
+  assert.match(refreshCard, /<table[\s\S]{0,180}aria-label="Market coverage"/);
+  assert.match(refreshCard, /<caption className="sr-only">Market coverage<\/caption>/);
+  assert.match(refreshCard, /<th[\s\S]{0,100}scope="col"/);
+  assert.match(refreshCard, /<tbody[\s\S]{0,500}<MarketReadinessRow/);
   assert.match(refreshCard, /MarketReadinessRow/);
   assert.doesNotMatch(refreshCard, /MarketReadinessCard/);
-  assert.match(refreshCard, /bg-slate-50\/95[^\n]+uppercase tracking-wide text-slate-500/);
-  assert.match(refreshCard, /grid-cols-\[minmax\(10rem,2fr\)/);
+  assert.match(refreshCard, /bg-slate-50\/95 text-xs text-slate-500/);
+  assert.doesNotMatch(refreshCard, /grid-cols-\[minmax\(10rem,2fr\)/);
+  assert.match(refreshCard, /overflow-x-auto overscroll-x-contain/);
   assert.match(refreshCard, /<AdminButton[\s\S]{0,180}variant="secondary"[\s\S]{0,80}size="sm"[\s\S]{0,80}Inspect routes/);
 });
 
@@ -155,9 +156,16 @@ test("Homepage Operations omits the market toolbar and preserves Route Inspector
   assert.match(refreshCard, /overflow-x-auto overscroll-x-contain/);
 });
 
-test("Homepage Operations shows the full Last refresh date without a search prefix", () => {
-  assert.match(refreshCard, /return formatDateTime\(value\)/);
-  assert.doesNotMatch(refreshCard, /`Searched \$\{formatDateTime\(value\)\}`/);
+test("Homepage Operations shows when status was last loaded successfully", () => {
+  assert.match(refreshCard, /label: "Status last updated"/);
+  assert.doesNotMatch(refreshCard, /label: "Fare data last refreshed"/);
+  assert.match(
+    refreshCard,
+    /statusState\.lastSuccessfulLoadAt[\s\S]{0,100}formatDateTime\(statusState\.lastSuccessfulLoadAt\)/,
+  );
+  assert.doesNotMatch(refreshCard, /formatSnapshotTime\(statusPayload\.lastRefreshAt\)/);
+  assert.match(refreshCard, /statusState\.loading[\s\S]{0,30}"Loading…"/);
+  assert.match(refreshCard, /"Loading…"[\s\S]{0,30}"Unavailable"/);
   assert.match(operationsPanels, /minmax\(10rem,1\.35fr\)/);
   assert.match(operationsPanels, /whitespace-normal text-lg/);
   assert.doesNotMatch(operationsPanels, /truncate text-lg/);

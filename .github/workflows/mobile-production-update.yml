@@ -32,6 +32,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -54,7 +56,28 @@ jobs:
         working-directory: apps/mobile
         run: npm run typecheck
 
+      - name: Test mobile app
+        working-directory: apps/mobile
+        run: npm test
+
+      - name: Validate Expo project
+        working-directory: apps/mobile
+        run: npm run expo:doctor
+
+      - name: Select safe delivery method
+        id: delivery
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" > /tmp/mobile-changes.txt
+          if grep -Eq '^apps/mobile/(app\.json|eas\.json|package\.json|package-lock\.json)$' /tmp/mobile-changes.txt; then
+            echo "native_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "native_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish update to production channel
+        if: github.event_name == 'workflow_dispatch' || steps.delivery.outputs.native_changed != 'true'
         working-directory: apps/mobile
         run: >-
           eas update
@@ -63,3 +86,8 @@ jobs:
           --platform all
           --non-interactive
           --message "Automated production update from main ${{ github.sha }}"
+
+      - name: Build native production app
+        if: steps.delivery.outputs.native_changed == 'true'
+        working-directory: apps/mobile
+        run: eas build --platform android --profile production --non-interactive --no-wait

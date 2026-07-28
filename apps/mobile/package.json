@@ -35,5 +35,14 @@
     "@types/react": "~19.1.10",
     "expo-doctor": "^1.20.1",
     "typescript": "~5.9.2"
+  },
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "react-native-nitro-google-signin"
+        ]
+      }
+    }
   }
 }

@@ -519,9 +519,9 @@ export function HomepageFaresRefreshCard() {
                 : "neutral",
             },
             {
-              label: "Last refresh",
-              value: statusState.data
-                ? formatSnapshotTime(statusPayload.lastRefreshAt)
+              label: "Status last updated",
+              value: statusState.lastSuccessfulLoadAt
+                ? formatDateTime(statusState.lastSuccessfulLoadAt)
                 : statusState.loading
                   ? "Loading…"
                   : "Unavailable",
@@ -781,32 +781,43 @@ function MarketReadinessDashboard({
     );
 
   return (
-    <div role="table" aria-label="Market coverage" className="overflow-x-auto text-sm">
-      <div
-        role="row"
-        className="grid min-w-[760px] grid-cols-[minmax(10rem,2fr)_1fr_1fr_1fr_1.4fr_auto] gap-3 border-b border-slate-200 bg-slate-50/95 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500"
+    <div className="overflow-x-auto overscroll-x-contain bg-[linear-gradient(to_right,white,white),linear-gradient(to_right,white,white),linear-gradient(to_right,rgba(15,23,42,0.08),rgba(255,255,255,0)),linear-gradient(to_left,rgba(15,23,42,0.08),rgba(255,255,255,0))] bg-[length:24px_100%,24px_100%,12px_100%,12px_100%] bg-[position:left_center,right_center,left_center,right_center] bg-no-repeat [background-attachment:local,local,scroll,scroll]">
+      <table
+        className="w-full min-w-[760px] border-separate border-spacing-0 text-left text-sm"
+        aria-label="Market coverage"
       >
-        {["Market", "Coverage", "Freshness", "Missing", "Status", "Action"].map(
-          (heading) => (
-            <span role="columnheader" key={heading}>
-              {heading}
-            </span>
-          ),
-        )}
-      </div>
-      {markets.map((market) => {
-        const selected =
-          normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") ===
-          normalizeAdminHomepageFareMarketCode(market.marketCode);
-        return (
-          <MarketReadinessRow
-            key={market.marketCode}
-            market={market}
-            selected={selected}
-            onInspectMarket={onInspectMarket}
-          />
-        );
-      })}
+        <caption className="sr-only">Market coverage</caption>
+        <thead className="sticky top-0 z-10 bg-slate-50/95 text-xs text-slate-500 backdrop-blur supports-[backdrop-filter]:bg-slate-50/80">
+          <tr>
+            {["Market", "Coverage", "Freshness", "Missing", "Status", "Action"].map(
+              (heading) => (
+                <th
+                  scope="col"
+                  key={heading}
+                  className={`border-b border-slate-200 px-5 py-4 font-semibold uppercase tracking-wide ${heading === "Action" ? "text-right" : "text-left"}`}
+                >
+                  {heading}
+                </th>
+              ),
+            )}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100 bg-white">
+          {markets.map((market) => {
+            const selected =
+              normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") ===
+              normalizeAdminHomepageFareMarketCode(market.marketCode);
+            return (
+              <MarketReadinessRow
+                key={market.marketCode}
+                market={market}
+                selected={selected}
+                onInspectMarket={onInspectMarket}
+              />
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -821,12 +832,11 @@ function MarketReadinessRow({
   onInspectMarket: (marketCode: string) => void;
 }) {
   return (
-    <div
-      role="row"
+    <tr
       data-market-row
-      className={`grid min-w-[760px] grid-cols-[minmax(10rem,2fr)_1fr_1fr_1fr_1.4fr_auto] items-center gap-3 border-b border-slate-100 px-5 py-4 text-slate-700 last:border-b-0 hover:bg-slate-50/80 ${selected ? "bg-indigo-50/50 font-semibold" : ""}`}
+      className={`group align-top text-slate-700 transition-colors hover:bg-slate-50/80 focus-within:bg-slate-50/80 ${selected ? "bg-indigo-50/50 font-semibold" : ""}`}
     >
-      <div role="cell">
+      <td className="max-w-[22rem] px-5 py-4 font-medium text-slate-950">
         <h4 className="font-semibold text-slate-950">
           {market.marketLabel}
         </h4>
@@ -834,30 +844,32 @@ function MarketReadinessRow({
           {market.marketCode} · {market.marketGroup}
           {selected ? " · Selected" : ""}
         </p>
-      </div>
-      <div role="cell">
+      </td>
+      <td className="max-w-[22rem] px-5 py-4">
         {market.popularVisibleFresh + market.discoveryVisibleFresh} /{" "}
         {getPublicDisplayTarget(market)}
-      </div>
-      <div role="cell">
+      </td>
+      <td className="max-w-[22rem] px-5 py-4">
         {market.freshCount ?? 0}
-      </div>
-      <div role="cell">
+      </td>
+      <td className="max-w-[22rem] px-5 py-4">
         {market.missingCount ?? 0}
-      </div>
-      <div role="cell">
+      </td>
+      <td className="max-w-[22rem] px-5 py-4">
         <MarketStatusBadge status={market.status} />
-      </div>
-      <AdminButton
-        type="button"
-        onClick={() => onInspectMarket(market.marketCode)}
-        aria-pressed={selected}
-        variant="secondary"
-        size="sm"
-      >
-        Inspect routes<span className="sr-only"> for {market.marketLabel}</span>
-      </AdminButton>
-    </div>
+      </td>
+      <td className="max-w-[22rem] whitespace-nowrap px-5 py-4 text-right">
+        <AdminButton
+          type="button"
+          onClick={() => onInspectMarket(market.marketCode)}
+          aria-pressed={selected}
+          variant="secondary"
+          size="sm"
+        >
+          Inspect routes<span className="sr-only"> for {market.marketLabel}</span>
+        </AdminButton>
+      </td>
+    </tr>
   );
 }
 
