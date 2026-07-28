@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import * as SplashScreen from "expo-splash-screen";
 import { runBootstrap, type BootstrapState } from "../src/launch/bootstrap";
 import { GuestAppScreen, LoadingScreen, OnboardingScreen, RecoveryScreen } from "../src/features/launch/LaunchScreens";
+import { restoreAuthenticatedSession } from "../src/features/auth/authApi";
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -10,7 +11,7 @@ export default function Index() {
 
   const bootstrap = useCallback(() => {
     setState({ status: "initializing" });
-    void runBootstrap()
+    void runBootstrap({ restoreAuthenticatedSession })
       .then(setState)
       .catch((error) => {
         if (process.env.NODE_ENV !== "production") console.warn("[mobile-bootstrap] unexpected bootstrap failure", error);
