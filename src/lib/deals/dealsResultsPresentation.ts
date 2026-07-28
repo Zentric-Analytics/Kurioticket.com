@@ -3,6 +3,8 @@ import { formatItineraryShortDate, formatItineraryTime, isValidItineraryDateTime
 import type { DealsSearch } from "./dealsSearchParams";
 import { getIncludedProducts } from "./dealsSearchParams";
 import { getHotelComparableReviewScore, normalizeHotelReviewCount } from "@/lib/hotels/hotelRatingSemantics";
+import type { NormalizedCarResult } from "@/lib/cars/types";
+import { getPrimaryCarOffer, sortCarResults } from "@/lib/cars/carResults";
 
 export const dealsPreviewLimit = 3;
 
@@ -37,6 +39,20 @@ export const selectDealsHotelPreviews = (results: PublicHotelResult[]) => select
   { badgeKey: "deals.results.hotel.lowest.badge", eligible: (item) => getHotelPreviewPrice(item) !== null, compare: (a, b) => compareOptionalAscending(getHotelPreviewPrice(a)?.amount, getHotelPreviewPrice(b)?.amount) || stableId(a).localeCompare(stableId(b)) },
   { badgeKey: "deals.results.hotel.rating.badge", reasonKey: "deals.results.hotel.rating.reason", eligible: (item) => getHotelComparableReviewScore(item) !== null, compare: (a, b) => compareOptionalDescending(getHotelComparableReviewScore(a) ?? undefined, getHotelComparableReviewScore(b) ?? undefined) || compareOptionalDescending(normalizeHotelReviewCount(a.reviewCount), normalizeHotelReviewCount(b.reviewCount)) || compareOptionalAscending(getHotelPreviewPrice(a)?.amount, getHotelPreviewPrice(b)?.amount) || stableId(a).localeCompare(stableId(b)) },
 ]);
+
+export function selectDealsCarPreviews(results: NormalizedCarResult[]): DealsPreview<NormalizedCarResult>[] {
+  const valid = results.filter(car => car.id.trim() && getPrimaryCarOffer(car));
+  const orders = [sortCarResults(valid, "recommended"), sortCarResults(valid, "lowestTotal"), sortCarResults(valid, "topRated")];
+  const categories = [
+    { badgeKey: "deals.results.car.recommended.badge", reasonKey: "deals.results.car.recommended.reason" },
+    { badgeKey: "deals.results.car.lowest.badge", reasonKey: "deals.results.car.lowest.reason" },
+    { badgeKey: "deals.results.car.rating.badge", reasonKey: "deals.results.car.rating.reason" },
+  ];
+  const selected: DealsPreview<NormalizedCarResult>[] = []; const used = new Set<string>();
+  orders.forEach((order, index) => { const winner = order.find(car => !used.has(car.id) && (index !== 2 || car.supplierRating !== undefined)); if (winner) { used.add(winner.id); selected.push({ result: winner, ...categories[index] }); } });
+  for (const car of orders[0]) { if (selected.length >= dealsPreviewLimit) break; if (!used.has(car.id)) { used.add(car.id); selected.push({ result: car, badgeKey: "deals.results.preview.more.badge" }); } }
+  return selected.slice(0, dealsPreviewLimit);
+}
 
 const dateOnly = (value: string) => {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);

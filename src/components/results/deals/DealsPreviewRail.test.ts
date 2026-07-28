@@ -89,12 +89,12 @@ test("the rail contains no scripted carousel behavior or keyboard stop", () => {
   ]) assert.ok(!rail.includes(forbidden), `unexpected ${forbidden}`);
 });
 
-test("Flight and Stay use exactly two separate localized rails before Cars", () => {
+test("Flight, Stay and Car use exactly three separate localized rails", () => {
   const visibleRails = results.match(/<DealsPreviewRail ariaLabel=/g) ?? [];
-  assert.equal(visibleRails.length, 2);
+  assert.equal(visibleRails.length, 3);
   const flight = results.indexOf('<DealsPreviewRail ariaLabel={t("deals.results.flightOptions")}');
   const stay = results.indexOf('<DealsPreviewRail ariaLabel={t("deals.results.stayOptions")}');
-  const cars = results.indexOf("included.car && <section", stay);
+  const cars = results.indexOf('<DealsPreviewRail ariaLabel={t("deals.results.carOptions")}', stay);
   assert.ok(flight >= 0 && flight < stay && stay < cars);
 });
 
