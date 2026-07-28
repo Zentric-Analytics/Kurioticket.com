@@ -1,28 +1,109 @@
 import { dealsPackageModes } from "./dealsSearchParams";
-import { isDealsTripPlanExpired, validateDealsInternalPath, type DealsTripPlan } from "./dealsTripPlan";
+import {
+  DEALS_TRIP_PLAN_TTL_MS,
+  isDealsTripPlanExpired,
+  validateDealsInternalPath,
+  type DealsTripPlan,
+  type DealsTripPlanFlight,
+  type DealsTripPlanHotel,
+} from "./dealsTripPlan";
 
 export const DEALS_TRIP_PLAN_STORAGE_KEY = "kurioticket_deals_trip_plan_v1";
-const record = (v: unknown): v is Record<string, unknown> => Boolean(v && typeof v === "object" && !Array.isArray(v));
-const text = (v: unknown) => typeof v === "string" && Boolean(v.trim());
-const time = (v: unknown) => typeof v === "number" && Number.isFinite(v) && v >= 0;
-const product = (v: unknown, kind: "flight" | "hotel") => {
-  if (!record(v) || !text(v.id) || !text(v.provider) || !time(v.resultReceivedAt) || !time(v.sourcePrice) || !text(v.sourceCurrency)) return false;
-  return kind === "flight" ? text(v.airline) && text(v.origin) && text(v.destination) && text(v.departure) && text(v.arrival) && text(v.duration) : text(v.name) && text(v.location) && text(v.checkIn) && text(v.checkOut);
-};
-export function parseDealsTripPlan(raw: string | null): DealsTripPlan | null {
-  try {
-    const v: unknown = raw ? JSON.parse(raw) : null;
-    if (!record(v) || v.version !== 1 || !dealsPackageModes.includes(v.mode as never) || !text(v.searchFingerprint) || !validateDealsInternalPath(v.resultsPath) || !time(v.createdAt) || !time(v.updatedAt) || !time(v.expiresAt) || !record(v.opened)) return null;
-    if ((v.expiresAt as number) <= (v.createdAt as number)) return null;
-    if (v.carsResultsPath !== undefined && !validateDealsInternalPath(v.carsResultsPath, "/cars/results")) return null;
-    if (v.flight !== undefined && !product(v.flight, "flight")) return null;
-    if (v.hotel !== undefined && !product(v.hotel, "hotel")) return null;
-    if ([v.opened.flight, v.opened.hotel, v.opened.car].some(x => x !== undefined && !time(x))) return null;
-    return v as DealsTripPlan;
-  } catch { return null; }
+
+export type DealsTripPlanReadResult =
+  | { status: "valid"; plan: DealsTripPlan }
+  | { status: "expired"; plan: DealsTripPlan }
+  | { status: "missing" }
+  | { status: "invalid" }
+  | { status: "fingerprint_mismatch" }
+  | { status: "storage_unavailable" };
+
+type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
+const record = (value: unknown): value is Record<string, unknown> => Boolean(value && typeof value === "object" && !Array.isArray(value));
+const requiredText = (value: unknown): string | null => typeof value === "string" && value.trim() ? value.trim() : null;
+const optionalText = (value: unknown): string | undefined | null => value === undefined ? undefined : requiredText(value);
+const timestamp = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0;
+const finitePrice = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value) && value > 0;
+
+function canonicalFlight(value: unknown, updatedAt: number): DealsTripPlanFlight | null {
+  if (!record(value) || !timestamp(value.resultReceivedAt) || value.resultReceivedAt > updatedAt || !finitePrice(value.sourcePrice)) return null;
+  const id = requiredText(value.id), provider = requiredText(value.provider), airline = requiredText(value.airline);
+  const origin = requiredText(value.origin), destination = requiredText(value.destination), departure = requiredText(value.departure);
+  const arrival = requiredText(value.arrival), duration = requiredText(value.duration), sourceCurrency = requiredText(value.sourceCurrency);
+  const flightNumber = optionalText(value.flightNumber);
+  if (!id || !provider || !airline || !origin || !destination || !departure || !arrival || !duration || !sourceCurrency || flightNumber === null) return null;
+  return { id, provider, airline, ...(flightNumber ? { flightNumber } : {}), origin, destination, departure, arrival, duration, sourcePrice: value.sourcePrice, sourceCurrency, resultReceivedAt: value.resultReceivedAt };
 }
-export const serializeDealsTripPlan = (plan: DealsTripPlan) => JSON.stringify(plan);
-const storage = (): Storage | null => { try { return typeof window !== "undefined" && window.localStorage ? window.localStorage : null; } catch { return null; } };
-export function readDealsTripPlan(fingerprint?: string, now = Date.now()): DealsTripPlan | null { const s = storage(); if (!s) return null; try { const plan = parseDealsTripPlan(s.getItem(DEALS_TRIP_PLAN_STORAGE_KEY)); if (!plan || isDealsTripPlanExpired(plan, now) || (fingerprint && plan.searchFingerprint !== fingerprint)) { s.removeItem(DEALS_TRIP_PLAN_STORAGE_KEY); return null; } return plan; } catch { return null; } }
-export function writeDealsTripPlan(plan: DealsTripPlan): boolean { const s = storage(); if (!s) return false; try { s.setItem(DEALS_TRIP_PLAN_STORAGE_KEY, serializeDealsTripPlan(plan)); return true; } catch { return false; } }
-export function removeDealsTripPlan(): void { try { storage()?.removeItem(DEALS_TRIP_PLAN_STORAGE_KEY); } catch { /* unavailable storage is non-fatal */ } }
+
+function canonicalHotel(value: unknown, updatedAt: number): DealsTripPlanHotel | null {
+  if (!record(value) || !timestamp(value.resultReceivedAt) || value.resultReceivedAt > updatedAt || !finitePrice(value.sourcePrice)) return null;
+  const id = requiredText(value.id), provider = requiredText(value.provider), name = requiredText(value.name), location = requiredText(value.location);
+  const checkIn = requiredText(value.checkIn), checkOut = requiredText(value.checkOut), sourceCurrency = requiredText(value.sourceCurrency);
+  const roomType = optionalText(value.roomType);
+  if (!id || !provider || !name || !location || !checkIn || !checkOut || !sourceCurrency || roomType === null) return null;
+  return { id, provider, name, location, checkIn, checkOut, ...(roomType ? { roomType } : {}), sourcePrice: value.sourcePrice, sourceCurrency, resultReceivedAt: value.resultReceivedAt };
+}
+
+export function canonicalizeDealsTripPlan(value: unknown): DealsTripPlan | null {
+  if (!record(value) || value.version !== 1 || !dealsPackageModes.includes(value.mode as never)) return null;
+  const searchFingerprint = requiredText(value.searchFingerprint);
+  const resultsPath = validateDealsInternalPath(value.resultsPath);
+  if (!searchFingerprint || !resultsPath || !timestamp(value.createdAt) || !timestamp(value.updatedAt) || !timestamp(value.expiresAt) || !record(value.opened)) return null;
+  const { createdAt, updatedAt, expiresAt } = value;
+  if (updatedAt < createdAt || expiresAt <= createdAt || expiresAt > createdAt + DEALS_TRIP_PLAN_TTL_MS) return null;
+  const carsResultsPath = value.carsResultsPath === undefined ? undefined : validateDealsInternalPath(value.carsResultsPath, "/cars/results");
+  if (value.carsResultsPath !== undefined && !carsResultsPath) return null;
+  const flight = value.flight === undefined ? undefined : canonicalFlight(value.flight, updatedAt);
+  const hotel = value.hotel === undefined ? undefined : canonicalHotel(value.hotel, updatedAt);
+  if (flight === null || hotel === null) return null;
+  const opened: DealsTripPlan["opened"] = {};
+  for (const product of ["flight", "hotel", "car"] as const) {
+    const openedAt = value.opened[product];
+    if (openedAt !== undefined && (!timestamp(openedAt) || openedAt < createdAt || openedAt > updatedAt)) return null;
+    if (openedAt !== undefined) opened[product] = openedAt;
+  }
+  return { version: 1, mode: value.mode as DealsTripPlan["mode"], searchFingerprint, resultsPath, ...(carsResultsPath ? { carsResultsPath } : {}), createdAt, updatedAt, expiresAt, ...(flight ? { flight } : {}), ...(hotel ? { hotel } : {}), opened };
+}
+
+export function parseDealsTripPlan(raw: string | null): DealsTripPlan | null {
+  if (raw === null) return null;
+  try { return canonicalizeDealsTripPlan(JSON.parse(raw)); } catch { return null; }
+}
+
+export function serializeDealsTripPlan(plan: DealsTripPlan): string {
+  const canonical = canonicalizeDealsTripPlan(plan);
+  if (!canonical) throw new TypeError("Invalid Deals trip plan");
+  return JSON.stringify(canonical);
+}
+
+function browserStorage(): StorageLike | null {
+  try { return typeof window === "undefined" ? null : window.localStorage; } catch { return null; }
+}
+
+function safelyRemove(storage: StorageLike): boolean {
+  try { storage.removeItem(DEALS_TRIP_PLAN_STORAGE_KEY); return true; } catch { return false; }
+}
+
+export function readDealsTripPlan(fingerprint?: string, now = Date.now(), providedStorage?: StorageLike | null): DealsTripPlanReadResult {
+  const storage = providedStorage === undefined ? browserStorage() : providedStorage;
+  if (!storage) return { status: "storage_unavailable" };
+  let raw: string | null;
+  try { raw = storage.getItem(DEALS_TRIP_PLAN_STORAGE_KEY); } catch { return { status: "storage_unavailable" }; }
+  if (raw === null) return { status: "missing" };
+  const plan = parseDealsTripPlan(raw);
+  if (!plan) { safelyRemove(storage); return { status: "invalid" }; }
+  if (isDealsTripPlanExpired(plan, now)) { safelyRemove(storage); return { status: "expired", plan }; }
+  if (fingerprint && plan.searchFingerprint !== fingerprint) { safelyRemove(storage); return { status: "fingerprint_mismatch" }; }
+  return { status: "valid", plan };
+}
+
+export function writeDealsTripPlan(plan: DealsTripPlan, providedStorage?: StorageLike | null): boolean {
+  const storage = providedStorage === undefined ? browserStorage() : providedStorage;
+  if (!storage) return false;
+  try { storage.setItem(DEALS_TRIP_PLAN_STORAGE_KEY, serializeDealsTripPlan(plan)); return true; } catch { return false; }
+}
+
+export function removeDealsTripPlan(providedStorage?: StorageLike | null): boolean {
+  const storage = providedStorage === undefined ? browserStorage() : providedStorage;
+  return storage ? safelyRemove(storage) : false;
+}
