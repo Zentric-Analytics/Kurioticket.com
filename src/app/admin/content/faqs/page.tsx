@@ -1,5 +1,6 @@
 import {
   AdminDataTable,
+  AdminEmptyState,
   AdminLinkButton,
   AdminMetricCard,
   AdminPageShell,
@@ -7,6 +8,7 @@ import {
 } from "@/components/admin/AdminPageShell";
 
 import { FaqInventoryFilterToolbar } from "./FaqInventoryFilterToolbar";
+import { getInventoryEmptyState } from "../inventory-empty-state";
 import {
   filterFaqInventoryRows,
   formatFaqCollection,
@@ -26,6 +28,13 @@ export default async function FaqInventoryPage({ searchParams }: PageProps) {
   const allRows = selectFaqInventoryRows();
   const rows = filterFaqInventoryRows(allRows, filters);
   const summary = getFaqInventorySummary(allRows);
+  const hasActiveFilters = Boolean(filters.q || filters.collection !== "ALL");
+  const emptyState = getInventoryEmptyState(allRows.length, rows.length, hasActiveFilters, {
+    filteredTitle: "No FAQ definitions match",
+    filteredMessage: "Adjust the search or classification filter to view configured FAQ definitions.",
+    sourceTitle: "No FAQ definitions are configured",
+    sourceMessage: "No FAQ definition records are configured.",
+  });
 
   return (
     <AdminPageShell
@@ -43,7 +52,13 @@ export default async function FaqInventoryPage({ searchParams }: PageProps) {
 
       <FaqInventoryFilterToolbar q={filters.q} collection={filters.collection} />
 
-      <AdminDataTable
+      {emptyState ? (
+        <AdminEmptyState
+          title={emptyState.title}
+          message={emptyState.message}
+          action={emptyState.showClearFilters ? <AdminLinkButton href="/admin/content/faqs">Clear filters</AdminLinkButton> : undefined}
+        />
+      ) : <AdminDataTable
         caption="Code-backed FAQ definition inventory"
         density="compact"
         minWidth="1480px"
@@ -70,7 +85,7 @@ export default async function FaqInventoryPage({ searchParams }: PageProps) {
             <AdminStatusBadge key="status" tone={hasFaqInventoryIssues(row) ? "warn" : "good"}>{hasFaqInventoryIssues(row) ? "Needs attention" : "Configured"}</AdminStatusBadge>,
           ],
         }))}
-      />
+      />}
     </AdminPageShell>
   );
 }
