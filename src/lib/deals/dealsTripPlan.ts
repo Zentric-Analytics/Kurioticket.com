@@ -21,20 +21,19 @@ export const isDealsTripPlanProductExpired = (receivedAt: number, now = Date.now
 export type DealsNextProviderStep = { product: DealsTripPlanProduct | null; href: string | null; allOpened: boolean };
 
 export function getNextDealsProviderStep(plan: DealsTripPlan, now = Date.now()): DealsNextProviderStep {
-  const candidates = (["flight", "hotel", "car"] as const).filter(product => {
+  const candidates = (["flight", "hotel"] as const).filter(product => {
     const selection = plan[product];
     return selection && !isDealsTripPlanProductExpired(selection.resultReceivedAt, now);
   });
   const product = candidates.find(candidate => !plan.opened[candidate]) ?? null;
-  return { product, href: product ? product === "car" ? plan.car!.detailsPath : buildDealsInternalRedirectHref(plan[product]!.id, product) : null, allOpened: candidates.length > 0 && product === null };
+  return { product, href: product ? buildDealsInternalRedirectHref(plan[product]!.id, product) : null, allOpened: candidates.length > 0 && product === null };
 }
 
 export function getDealsTripPlanReadiness(mode: DealsPackageMode, plan: Pick<DealsTripPlan, "flight" | "hotel" | "car">) {
   const missing: DealsTripPlanProduct[] = [];
   if (mode !== "hotel-car" && !plan.flight) missing.push("flight");
   if (mode !== "flight-car" && !plan.hotel) missing.push("hotel");
-  if (mode !== "hotel-flight" && !plan.car) missing.push("car");
-  return { ready: missing.length === 0, missing, guidanceKey: missing.length > 1 ? "deals.tripPlan.chooseMultiple" : missing[0] === "flight" ? "deals.tripPlan.chooseFlight" : missing[0] === "hotel" ? "deals.tripPlan.chooseStay" : missing[0] === "car" ? "deals.tripPlan.chooseCar" : "deals.tripPlan.continue" };
+  return { ready: missing.length === 0, missing, guidanceKey: missing.length > 1 ? "deals.tripPlan.chooseMultiple" : missing[0] === "flight" ? "deals.tripPlan.chooseFlight" : missing[0] === "hotel" ? "deals.tripPlan.chooseStay" : "deals.tripPlan.continue" };
 }
 
 export function buildDealsSearchFingerprint(search: DealsSearch): string {

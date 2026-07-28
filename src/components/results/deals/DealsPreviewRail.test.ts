@@ -123,17 +123,15 @@ test("the Flight and Hotel rail mappings preserve every card prop", () => {
   ]) assert.ok(stay.includes(prop), `missing Hotel prop ${prop}`);
 });
 
-test("the Car rail mapping preserves selection props without a recommendation reason", () => {
+test("the Car rail mapping preserves display props without selection behavior", () => {
   const carsStart = results.indexOf('<DealsPreviewRail ariaLabel={t("deals.results.carOptions")}');
   const cars = results.slice(carsStart, results.indexOf("</DealsPreviewRail>", carsStart));
 
   for (const prop of [
     "key={result.id}", "car={result}", "badgeKey={badgeKey}",
     "locale={locale}", "search={carSearch}", "t={t}",
-    "selected={plan?.car?.id === result.id}",
-    "onSelect={() => selectCar(result)}",
   ]) assert.ok(cars.includes(prop), `missing Car prop ${prop}`);
-  assert.doesNotMatch(cars, /reasonKey/);
+  assert.doesNotMatch(cars, /reasonKey|selected=|onSelect=|selectCar\(/);
 });
 
 test("loading skeletons share the hidden rail and retain their visual contract", () => {
