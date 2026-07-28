@@ -15,8 +15,6 @@ import {
   OperationsDisclosure,
 } from "@/components/admin/homepage-operations/HomepageOperationsPanels";
 import {
-  ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE,
-  buildAdminHomepageFareAllRoutesGroup,
   buildAdminHomepageFareRouteGroups,
   filterAdminHomepageFareMarketsByRouteGroups,
   normalizeAdminHomepageFareMarketCode,
@@ -406,14 +404,9 @@ export function HomepageFaresRefreshCard() {
   const routeDetailsRef = useRef<HTMLDivElement>(null);
   const [routeFilter, setRouteFilter] =
     useState<AdminHomepageFareRouteGroupFilter>("all");
-  const [showAffectedMarkets, setShowAffectedMarkets] = useState(false);
   const selectRouteScope = useCallback((scope: string) => {
     setRoutePage(1);
-    setSelectedRouteScope(
-      scope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
-        ? ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
-        : normalizeAdminHomepageFareMarketCode(scope),
-    );
+    setSelectedRouteScope(normalizeAdminHomepageFareMarketCode(scope));
   }, []);
   const selectRouteFilter = useCallback(
     (filter: AdminHomepageFareRouteGroupFilter) => {
@@ -477,11 +470,6 @@ export function HomepageFaresRefreshCard() {
       }),
     [routeFilter, statusPayload.marketReadinessSummary, statusPayload.routes],
   );
-  const allRoutesGroup = useMemo(
-    () =>
-      buildAdminHomepageFareAllRoutesGroup(statusPayload.routes, routeFilter),
-    [routeFilter, statusPayload.routes],
-  );
   const publicMarkets = useMemo(
     () =>
       statusPayload.marketReadinessSummary.filter(
@@ -498,13 +486,6 @@ export function HomepageFaresRefreshCard() {
   );
   const timeoutCount = sumCountRecord(statusPayload.timeoutByMarket);
   const marketsNeedingAnotherRun = statusPayload.marketsNeedingAnotherRun;
-  const affectedMarkets = useMemo(
-    () =>
-      publicMarkets.filter(
-        (market) => !market.targetMet || market.status !== "ready",
-      ),
-    [publicMarkets],
-  );
   const routeFilteredMarkets = useMemo(
     () =>
       filterAdminHomepageFareMarketsByRouteGroups(
@@ -537,16 +518,6 @@ export function HomepageFaresRefreshCard() {
       ) as Record<AdminHomepageFareRouteGroupFilter, number>,
     [publicMarkets, statusPayload.marketReadinessSummary, statusPayload.routes],
   );
-  const affectedMarketCodes = useMemo(
-    () => new Set(affectedMarkets.map((market) => market.marketCode)),
-    [affectedMarkets],
-  );
-  const visibleMarkets = showAffectedMarkets
-    ? routeFilteredMarkets.filter((market) =>
-        affectedMarketCodes.has(market.marketCode),
-      )
-    : routeFilteredMarkets;
-
   const activeSelectedRouteScope = resolveAdminHomepageFareActiveRouteScope({
     selectedScope: selectedRouteScope,
     markets: publicMarkets,
@@ -555,7 +526,6 @@ export function HomepageFaresRefreshCard() {
   const selectedRouteGroup = resolveAdminHomepageFareSelectedRouteGroup({
     selectedScope: activeSelectedRouteScope,
     marketRouteGroups,
-    allRoutesGroup,
   });
 
   useEffect(() => {
@@ -671,35 +641,8 @@ export function HomepageFaresRefreshCard() {
               <h2 id="market-coverage-heading" className="sr-only">
                 Market Coverage
               </h2>
-              <div className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2 border-b border-slate-200 pb-3">
-                {statusState.data ? (
-                  <IssueSummary
-                    showingAffected={showAffectedMarkets}
-                    onToggle={() =>
-                      setShowAffectedMarkets((current) => !current)
-                    }
-                  />
-                ) : (
-                  <p className="text-sm font-semibold text-slate-600">
-                    Loading market coverage…
-                  </p>
-                )}
-                <button
-                  type="button"
-                  onClick={() =>
-                    selectRouteScope(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE)
-                  }
-                  className="min-h-10 text-sm font-semibold text-blue-700 focus-visible:outline focus-visible:outline-2"
-                  aria-pressed={
-                    activeSelectedRouteScope ===
-                    ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
-                  }
-                >
-                  View all filtered routes
-                </button>
-              </div>
               <MarketReadinessDashboard
-                markets={visibleMarkets}
+                markets={routeFilteredMarkets}
                 selectedRouteScope={activeSelectedRouteScope}
                 onInspectMarket={selectRouteScope}
                 emptyMessage={
@@ -927,25 +870,6 @@ function DashboardSection({
       </div>
       {children}
     </div>
-  );
-}
-
-function IssueSummary({
-  showingAffected,
-  onToggle,
-}: {
-  showingAffected: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-pressed={showingAffected}
-      className="min-h-10 text-sm font-semibold text-blue-700 focus-visible:outline focus-visible:outline-2"
-    >
-      {showingAffected ? "Show all markets" : "Show affected markets"}
-    </button>
   );
 }
 
@@ -1443,8 +1367,7 @@ function SelectedRouteDetails({
         className="mt-5 border-t border-black py-6 text-center"
       >
         <p className="text-sm font-extrabold text-slate-950">
-          Select a market to inspect its routes, or choose View all filtered
-          routes.
+          Select a market to inspect its routes.
         </p>
         <p className="mt-2 text-xs font-semibold text-slate-500">
           Route rows stay hidden until a market context is selected.
@@ -1454,22 +1377,17 @@ function SelectedRouteDetails({
   }
 
   const page = paginateAdminHomepageFareRoutes(group.routes, routePage);
-  const isViewAll = group.marketCode === "ALL";
-
   return (
     <div ref={routeDetailsRef} className="mt-2 min-w-0 overflow-hidden">
       <div className="border-b border-slate-200 py-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h5 className="text-base font-extrabold text-slate-950">
-              {isViewAll ? "All routes" : group.displayName} —{" "}
-              {page.totalRoutes} total routes
+              {group.displayName} — {page.totalRoutes} total routes
             </h5>
             <p className="mt-1 text-sm font-semibold text-slate-500">
               Showing {page.start}–{page.end} of {page.totalRoutes}
-              {isViewAll
-                ? " · Debug view across all markets"
-                : ` · ${group.marketCode}`}
+              {` · ${group.marketCode}`}
             </p>
           </div>
           <div className="flex items-center gap-3">
