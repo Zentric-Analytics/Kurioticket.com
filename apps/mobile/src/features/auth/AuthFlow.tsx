@@ -6,16 +6,18 @@ import { authApi, AuthApiError } from "./authApi";
 import { normalizeEmail } from "./authUtils";
 import { AuthWelcomeScreen } from "./AuthWelcomeScreen";
 import { CreateAccountScreen, EmailScreen, PasswordScreen, SuccessScreen, VerificationScreen } from "./AuthFormScreens";
-import { NativeGoogleSignInError, startNativeGoogleSignIn } from "./googleSignIn";
 
 type Step = "welcome" | "email" | "verify" | "password" | "create" | "success";
 export function AuthFlow() {
   const [step, setStep] = useState<Step>("welcome"); const [email, setEmail] = useState(""); const [proof, setProof] = useState(""); const [loading, setLoading] = useState(false); const [error, setError] = useState(""); const [cooldown, setCooldown] = useState(28);
-  const run = async (task: () => Promise<void>) => { if (loading) return; setLoading(true); setError(""); try { await task(); } catch (e) { setError(e instanceof AuthApiError || e instanceof NativeGoogleSignInError ? e.message : "Something went wrong. Please try again."); } finally { setLoading(false); } };
+  const run = async (task: () => Promise<void>) => { if (loading) return; setLoading(true); setError(""); try { await task(); } catch (e) { setError(e instanceof AuthApiError || (e instanceof Error && e.name === "NativeGoogleSignInError") ? e.message : "Something went wrong. Please try again."); } finally { setLoading(false); } };
   const requestCode = (value: string) => void run(async () => { const normalized = normalizeEmail(value); const result = await authApi.requestCode(normalized); setEmail(normalized); setCooldown(result.cooldownSeconds || 28); setStep("verify"); });
   const verify = useCallback((code: string) => { void run(async () => { const result = await authApi.verifyCode(email, code); setProof(result.verificationToken); setStep(result.accountType === "existing" ? "password" : "create"); }); }, [email, loading]);
   const done = () => { void writeOnboardingCompleted().finally(() => router.replace("/")); };
   const continueGoogle = () => void run(async () => {
+    // Loading the Nitro module eagerly crashes older OTA-compatible binaries that
+    // do not contain its native object. Only resolve it when Google is requested.
+    const { startNativeGoogleSignIn } = await import("./googleSignIn");
     const result = await startNativeGoogleSignIn();
     if (result.status === "cancelled") return;
     await authApi.google(result.idToken, result.nonce);
