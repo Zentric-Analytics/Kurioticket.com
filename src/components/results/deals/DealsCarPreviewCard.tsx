@@ -93,7 +93,6 @@ export function DealsCarPreviewCard({
           </p>
           <h3 className="break-words text-lg font-extrabold text-slate-950">
             {car.modelName}
-            {car.orSimilar ? ` ${t("deals.results.car.orSimilar")}` : ""}
           </h3>
         </div>
         <p className="mt-2 flex items-start gap-2 text-sm text-slate-700">

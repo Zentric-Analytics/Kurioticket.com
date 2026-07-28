@@ -16,6 +16,21 @@ test("the compact Car preview omits promotional and provider clutter", () => {
   ]) assert.ok(!card.includes(forbidden), `unexpected ${forbidden}`);
 });
 
+test("the compact Car preview renders only the model name", () => {
+  assert.ok(card.includes("car.modelName"));
+  for (const forbidden of [
+    "car.orSimilar",
+    "deals.results.car.orSimilar",
+    "or similar",
+  ]) assert.ok(!card.includes(forbidden), `unexpected ${forbidden}`);
+  for (const headingClass of [
+    "break-words",
+    "text-lg",
+    "font-extrabold",
+    "text-slate-950",
+  ]) assert.ok(card.includes(headingClass), `missing ${headingClass}`);
+});
+
 test("the Car preview uses the shared badge and disabled provider action", () => {
   const badge = card.indexOf("{t(badgeKey)}");
   assert.ok(badge >= 0 && badge < card.indexOf("<CarResultImage"));
