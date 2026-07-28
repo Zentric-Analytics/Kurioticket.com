@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import * as Updates from "expo-updates";
 import { RecoveryScreen } from "../src/features/launch/LaunchScreens";
 import { runBootstrap, type BootstrapState } from "../src/launch/bootstrap";
 import { restoreAuthenticatedSession } from "../src/features/auth/authApi";
 import { getStartupRoute } from "../src/launch/startupRoute";
+import { ensureLatestUpdate } from "../src/updates/ensureLatestUpdate";
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -16,7 +18,8 @@ export default function Index() {
     const runId = ++bootstrapId.current;
     if (!isRetry) setState({ status: "initializing" });
 
-    void runBootstrap({ restoreAuthenticatedSession })
+    void (isRetry ? Promise.resolve() : ensureLatestUpdate(Updates))
+      .then(() => runBootstrap({ restoreAuthenticatedSession }))
       .then((nextState) => {
         if (runId === bootstrapId.current) setState(nextState);
       })
