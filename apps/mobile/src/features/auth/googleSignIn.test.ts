@@ -14,3 +14,9 @@ test("Google sign-in uses native Credential Manager with nonce and server exchan
   assert.match(apiSource, /"google"/);
   assert.doesNotMatch(flowSource, /Google sign-in unavailable/);
 });
+
+test("authentication startup does not eagerly initialize the Google native module", () => {
+  const flowSource = readFileSync(join(process.cwd(), "src/features/auth/AuthFlow.tsx"), "utf8");
+  assert.doesNotMatch(flowSource, /^import .*\.\/googleSignIn/m);
+  assert.match(flowSource, /await import\("\.\/googleSignIn"\)/);
+});
