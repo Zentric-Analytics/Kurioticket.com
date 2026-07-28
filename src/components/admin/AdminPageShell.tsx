@@ -436,8 +436,8 @@ export function AdminStatusBadge({ children, tone = "neutral" }: { children: Rea
   return <span className={`inline-flex min-h-6 items-center rounded-full px-2.5 py-1 text-xs font-semibold leading-none ring-1 ${classes}`}>{formatAdminBadgeLabel(children)}</span>;
 }
 
-export function AdminSectionCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <section className={cn("rounded-2xl border border-slate-200 bg-white shadow-sm", className)}>{children}</section>;
+export function AdminSectionCard({ children, className = "", ...props }: React.HTMLAttributes<HTMLElement>) {
+  return <section className={cn("rounded-2xl border border-slate-200 bg-white shadow-sm", className)} {...props}>{children}</section>;
 }
 
 const adminButtonVariants = {

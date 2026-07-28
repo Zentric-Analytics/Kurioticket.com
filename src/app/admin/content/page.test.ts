@@ -61,16 +61,17 @@ test("Content Inventory retains content sections without homepage fare operation
   );
 });
 
-test("Homepage Operations uses product typography and restrained card styling", () => {
+test("Homepage Operations uses the shared admin shell, cards, and typography", () => {
   assert.match(homepageOperationsPage, /<HomepageFaresRefreshCard \/>/);
   assert.match(refreshCard, /title="Homepage Operations"/);
   assert.match(
     refreshCard,
-    /space-y-5 pb-4 text-slate-950/,
+    /<AdminPageShell eyebrow="" title="Homepage Operations">/,
   );
   assert.doesNotMatch(refreshCard, /font-family|fontFamily/);
   assert.match(operationsPanels, /data-layout="flat-summary"/);
-  assert.match(refreshCard, /rounded-lg border border-slate-200 bg-white/);
+  assert.ok((refreshCard.match(/<AdminSectionCard/g) ?? []).length >= 4);
+  assert.doesNotMatch(refreshCard, /rounded-lg|shadow-sm|text-black|border-black|text-blue-700/);
 });
 
 test("Homepage Operations removes all page-level manual refresh UI", () => {
@@ -95,7 +96,7 @@ test("Homepage Operations automatically loads status with stale request protecti
   assert.match(refreshCard, /lastSuccessfulLoadAt/);
 });
 
-test("Homepage Operations retains every route filter and results-style radio treatment", () => {
+test("Homepage Operations retains every route filter with shared admin control styling", () => {
   for (const filter of [
     "All",
     "Usable",
@@ -112,16 +113,17 @@ test("Homepage Operations retains every route filter and results-style radio tre
   assert.match(refreshCard, /label: "Route availability"/);
   assert.match(
     refreshCard,
-    /text-\[12px\] font-extrabold uppercase[^\n]+tracking-\[0\.12em\]/,
+    /text-xs font-semibold uppercase tracking-wide text-slate-500/,
   );
   assert.match(refreshCard, /rounded-full border/);
   assert.match(refreshCard, /aria-pressed=\{selected\}/);
   assert.match(refreshCard, /md:sticky md:top-24/);
-  assert.match(refreshCard, /rounded-lg border border-slate-200 bg-white p-5 shadow-sm/);
+  assert.match(refreshCard, /<AdminSectionCard[\s\S]{0,80}className="p-5"/);
+  assert.match(refreshCard, /border-\[5px\] border-indigo-600/);
   assert.match(refreshCard, /filterAdminHomepageFareMarketsByRouteGroups/);
 });
 
-test("Homepage Operations renders markets as responsive flat rows", () => {
+test("Homepage Operations renders markets with shared responsive table styling", () => {
   assert.match(refreshCard, /data-market-row/);
   assert.match(
     refreshCard,
@@ -129,9 +131,9 @@ test("Homepage Operations renders markets as responsive flat rows", () => {
   );
   assert.match(refreshCard, /MarketReadinessRow/);
   assert.doesNotMatch(refreshCard, /MarketReadinessCard/);
-  assert.match(refreshCard, /border-b border-black py-4/);
-  assert.match(refreshCard, /md:grid-cols-\[minmax\(10rem,2fr\)/);
-  assert.match(refreshCard, /Inspect routes/);
+  assert.match(refreshCard, /bg-slate-50\/95[^\n]+uppercase tracking-wide text-slate-500/);
+  assert.match(refreshCard, /grid-cols-\[minmax\(10rem,2fr\)/);
+  assert.match(refreshCard, /<AdminButton[\s\S]{0,180}variant="secondary"[\s\S]{0,80}size="sm"[\s\S]{0,80}Inspect routes/);
 });
 
 test("Homepage Operations omits the market toolbar and preserves Route Inspector behavior", () => {
@@ -143,6 +145,8 @@ test("Homepage Operations omits the market toolbar and preserves Route Inspector
   assert.doesNotMatch(refreshCard, /View all filtered routes/);
   assert.match(refreshCard, /Route Inspector/);
   assert.match(refreshCard, /Close inspector/);
+  assert.match(refreshCard, /<AdminStatusBadge/);
+  assert.doesNotMatch(refreshCard, /STATUS_BADGE_STYLES/);
   assert.match(
     refreshCard,
     /onClose=\{\(\) => setSelectedRouteScope\(null\)\}/,

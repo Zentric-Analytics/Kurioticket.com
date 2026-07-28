@@ -8,7 +8,12 @@ import {
   useState,
   type RefObject,
 } from "react";
-import { AdminPageHeader } from "@/components/admin/AdminPageShell";
+import {
+  AdminButton,
+  AdminPageShell,
+  AdminSectionCard,
+  AdminStatusBadge,
+} from "@/components/admin/AdminPageShell";
 import { HomepageOperationsStatusBar } from "@/components/admin/homepage-operations/HomepageOperationsPanels";
 import {
   buildAdminHomepageFareRouteGroups,
@@ -483,12 +488,10 @@ export function HomepageFaresRefreshCard() {
   }, [activeSelectedRouteScope, routeFilter]);
 
   return (
-    <div className="space-y-5 pb-4 text-slate-950">
-      <AdminPageHeader title="Homepage Operations" />
-
-      <section
+    <AdminPageShell eyebrow="" title="Homepage Operations">
+      <AdminSectionCard
         aria-labelledby="operations-summary-heading"
-        className="rounded-lg border border-slate-200 bg-white px-5 py-4 shadow-sm"
+        className="px-5 py-4"
       >
         <h2
           id="operations-summary-heading"
@@ -547,11 +550,11 @@ export function HomepageFaresRefreshCard() {
             },
           ]}
         />
-      </section>
+      </AdminSectionCard>
 
       {statusState.error ? (
         <p
-          className="border-y border-black py-3 text-sm font-semibold text-black"
+          className="border-y border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700"
           role="alert"
         >
           {statusState.error}
@@ -575,11 +578,11 @@ export function HomepageFaresRefreshCard() {
             />
           </div>
           <div className="min-w-0 space-y-5">
-            <section
+            <AdminSectionCard
               aria-labelledby="market-coverage-heading"
-              className="rounded-lg border border-slate-200 bg-white px-5 py-3 shadow-sm"
+              className="overflow-hidden p-0"
             >
-              <h2 id="market-coverage-heading" className="sr-only">
+              <h2 id="market-coverage-heading" className="border-b border-slate-200 px-5 py-4 text-base font-semibold text-slate-950">
                 Market Coverage
               </h2>
               <MarketReadinessDashboard
@@ -594,7 +597,7 @@ export function HomepageFaresRefreshCard() {
                       : "Homepage fare status is unavailable."
                 }
               />
-            </section>
+            </AdminSectionCard>
             {activeSelectedRouteScope ? (
               <MarketRouteInspector
                 selectedRouteScope={activeSelectedRouteScope}
@@ -612,17 +615,9 @@ export function HomepageFaresRefreshCard() {
           </div>
         </div>
       </section>
-    </div>
+    </AdminPageShell>
   );
 }
-const STATUS_BADGE_STYLES: Record<HomepageFareSnapshotStatus, string> = {
-  fresh: "text-black",
-  last_known_good: "text-black",
-  expired: "text-black",
-  unavailable: "text-black",
-  failed: "text-black",
-  missing: "text-black",
-};
 
 function isFallbackMarket(market: MarketReadiness) {
   return (
@@ -664,13 +659,13 @@ function RouteFilterPanel({
   onChange: (filter: AdminHomepageFareRouteGroupFilter) => void;
 }) {
   return (
-    <aside
-      className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+    <AdminSectionCard
+      className="p-5"
       aria-labelledby="route-filter-heading"
     >
       <h3
         id="route-filter-heading"
-        className="text-base font-extrabold text-black"
+        className="text-base font-semibold text-slate-950"
       >
         Filter routes
       </h3>
@@ -681,7 +676,7 @@ function RouteFilterPanel({
           onChange={onChange}
         />
       </div>
-    </aside>
+    </AdminSectionCard>
   );
 }
 
@@ -712,7 +707,7 @@ function RouteFilterControls({
     <div className="space-y-5" aria-label="Route status filters">
       {groups.map((group) => (
         <div key={group.label} role="group" aria-label={group.label}>
-          <p className="mb-3 text-[12px] font-extrabold uppercase leading-4 tracking-[0.12em] text-black">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
             {group.label}
           </p>
           <div className="grid gap-1">
@@ -726,17 +721,17 @@ function RouteFilterControls({
                   key={item.key}
                   type="button"
                   onClick={() => onChange(item.key)}
-                  className={`flex min-h-9 w-full items-center justify-between gap-3 py-1 text-left text-[12px] text-slate-950 transition focus-visible:outline focus-visible:outline-2 ${selected ? "font-semibold" : "font-normal"}`}
+                  className={`focus-ring flex min-h-10 w-full items-center justify-between gap-3 rounded-xl px-2 py-1 text-left text-sm transition ${selected ? "bg-indigo-50 font-semibold text-indigo-700" : "font-medium text-slate-700 hover:bg-slate-50"}`}
                   aria-pressed={selected}
                 >
                   <span className="flex items-center gap-2.5">
                     <span
-                      className={`h-4 w-4 rounded-full border ${selected ? "border-[5px] border-blue-600" : "border-slate-300"}`}
+                      className={`h-4 w-4 rounded-full border ${selected ? "border-[5px] border-indigo-600" : "border-slate-300"}`}
                       aria-hidden="true"
                     />
                     {item.label}
                   </span>
-                  <span className="tabular-nums text-slate-700">
+                  <span className="tabular-nums text-slate-500">
                     {counts[item.key]}
                   </span>
                 </button>
@@ -780,16 +775,16 @@ function MarketReadinessDashboard({
 }) {
   if (!markets.length)
     return (
-      <p className="border-b border-black py-4 text-sm font-semibold text-black">
+      <p className="px-5 py-6 text-sm font-medium text-slate-600">
         {emptyMessage}
       </p>
     );
 
   return (
-    <div role="table" aria-label="Market coverage" className="text-sm">
+    <div role="table" aria-label="Market coverage" className="overflow-x-auto text-sm">
       <div
         role="row"
-        className="hidden grid-cols-[minmax(10rem,2fr)_1fr_1fr_1fr_1.4fr_auto] gap-3 border-b border-slate-200 py-2 text-xs font-semibold md:grid"
+        className="grid min-w-[760px] grid-cols-[minmax(10rem,2fr)_1fr_1fr_1fr_1.4fr_auto] gap-3 border-b border-slate-200 bg-slate-50/95 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500"
       >
         {["Market", "Coverage", "Freshness", "Missing", "Status", "Action"].map(
           (heading) => (
@@ -829,42 +824,39 @@ function MarketReadinessRow({
     <div
       role="row"
       data-market-row
-      className={`grid gap-2 border-b border-slate-200 py-3 text-slate-950 last:border-b-0 md:grid-cols-[minmax(10rem,2fr)_1fr_1fr_1fr_1.4fr_auto] md:items-center md:gap-3 ${selected ? "font-semibold" : ""}`}
+      className={`grid min-w-[760px] grid-cols-[minmax(10rem,2fr)_1fr_1fr_1fr_1.4fr_auto] items-center gap-3 border-b border-slate-100 px-5 py-4 text-slate-700 last:border-b-0 hover:bg-slate-50/80 ${selected ? "bg-indigo-50/50 font-semibold" : ""}`}
     >
       <div role="cell">
-        <h4 className="text-base font-extrabold text-black">
+        <h4 className="font-semibold text-slate-950">
           {market.marketLabel}
         </h4>
-        <p className="text-xs font-medium text-black">
+        <p className="mt-1 text-xs font-medium text-slate-500">
           {market.marketCode} · {market.marketGroup}
           {selected ? " · Selected" : ""}
         </p>
       </div>
       <div role="cell">
-        <span className="font-bold md:hidden">Coverage: </span>
         {market.popularVisibleFresh + market.discoveryVisibleFresh} /{" "}
         {getPublicDisplayTarget(market)}
       </div>
       <div role="cell">
-        <span className="font-bold md:hidden">Freshness: </span>
         {market.freshCount ?? 0}
       </div>
       <div role="cell">
-        <span className="font-bold md:hidden">Missing: </span>
         {market.missingCount ?? 0}
       </div>
       <div role="cell">
-        <span className="font-bold md:hidden">Status: </span>
-        {formatMarketStatus(market.status)}
+        <MarketStatusBadge status={market.status} />
       </div>
-      <button
+      <AdminButton
         type="button"
         onClick={() => onInspectMarket(market.marketCode)}
         aria-pressed={selected}
-        className="min-h-10 justify-self-start text-sm font-semibold text-blue-700 focus-visible:outline focus-visible:outline-2"
+        variant="secondary"
+        size="sm"
       >
         Inspect routes<span className="sr-only"> for {market.marketLabel}</span>
-      </button>
+      </AdminButton>
     </div>
   );
 }
@@ -889,18 +881,20 @@ function MarketRouteInspector({
   routeDetailsRef: RefObject<HTMLDivElement | null>;
 }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white px-5 py-3 shadow-sm">
+    <AdminSectionCard className="overflow-hidden p-0">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-lg font-extrabold text-slate-950">
+        <h3 className="px-5 py-4 text-base font-semibold text-slate-950">
           Route Inspector
         </h3>
-        <button
+        <AdminButton
           type="button"
           onClick={onClose}
-          className="min-h-10 text-sm font-semibold text-blue-700 focus-visible:outline focus-visible:outline-2"
+          variant="secondary"
+          size="sm"
+          className="me-5"
         >
           Close inspector
-        </button>
+        </AdminButton>
       </div>
 
       <SelectedRouteDetails
@@ -912,7 +906,7 @@ function MarketRouteInspector({
         onPreviousPage={onPreviousPage}
         onNextPage={onNextPage}
       />
-    </section>
+    </AdminSectionCard>
   );
 }
 
@@ -937,9 +931,9 @@ function SelectedRouteDetails({
     return (
       <div
         ref={routeDetailsRef}
-        className="mt-5 border-t border-black py-6 text-center"
+        className="border-t border-slate-200 px-5 py-6 text-center"
       >
-        <p className="text-sm font-extrabold text-slate-950">
+        <p className="text-sm font-semibold text-slate-950">
           Select a market to inspect its routes.
         </p>
         <p className="mt-2 text-xs font-semibold text-slate-500">
@@ -951,11 +945,11 @@ function SelectedRouteDetails({
 
   const page = paginateAdminHomepageFareRoutes(group.routes, routePage);
   return (
-    <div ref={routeDetailsRef} className="mt-2 min-w-0 overflow-hidden">
-      <div className="border-b border-slate-200 py-3">
+    <div ref={routeDetailsRef} className="min-w-0 overflow-hidden border-t border-slate-200">
+      <div className="border-b border-slate-200 px-5 py-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h5 className="text-base font-extrabold text-slate-950">
+            <h5 className="text-base font-semibold text-slate-950">
               {group.displayName} — {page.totalRoutes} total routes
             </h5>
             <p className="mt-1 text-sm font-semibold text-slate-500">
@@ -965,26 +959,28 @@ function SelectedRouteDetails({
           </div>
           <div className="flex items-center gap-3">
             <MarketGroupStatusBadge status={group.status} />
-            <div className="flex items-center gap-2 text-sm font-bold text-slate-500">
-              <button
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-600">
+              <AdminButton
                 type="button"
                 onClick={onPreviousPage}
                 disabled={!page.hasPreviousPage}
-                className="px-2 py-1.5 text-black underline underline-offset-4 disabled:cursor-not-allowed disabled:opacity-40"
+                variant="secondary"
+                size="sm"
               >
                 Previous
-              </button>
+              </AdminButton>
               <span className="min-w-16 text-center">
                 Page {page.currentPage} of {page.totalPages}
               </span>
-              <button
+              <AdminButton
                 type="button"
                 onClick={onNextPage}
                 disabled={!page.hasNextPage}
-                className="px-2 py-1.5 text-black underline underline-offset-4 disabled:cursor-not-allowed disabled:opacity-40"
+                variant="secondary"
+                size="sm"
               >
                 Next
-              </button>
+              </AdminButton>
             </div>
           </div>
         </div>
@@ -1015,32 +1011,32 @@ function RouteDetailsTable({
 
   return (
     <div className="max-w-full overflow-x-auto overscroll-x-contain">
-      <table className="min-w-[1120px] divide-y divide-border text-left text-sm">
-        <thead className="text-xs font-extrabold uppercase tracking-wide text-black">
+      <table className="min-w-[1120px] text-left text-sm">
+        <thead className="bg-slate-50/95 text-xs font-semibold uppercase tracking-wide text-slate-500">
           <tr>
-            <th className="px-3 py-3">Market</th>
-            <th className="px-3 py-3">Route</th>
-            <th className="px-3 py-3">Origin</th>
-            <th className="px-3 py-3">Destination</th>
-            <th className="px-3 py-3">Section</th>
-            <th className="px-3 py-3">Status</th>
-            <th className="px-3 py-3">Display price</th>
-            <th className="px-3 py-3">Provider native</th>
-            <th className="px-3 py-3">Provider</th>
-            <th className="px-3 py-3">Last refreshed</th>
-            <th className="px-3 py-3">Reason / replacement</th>
+            <th className="border-b border-slate-200 px-4 py-3">Market</th>
+            <th className="border-b border-slate-200 px-4 py-3">Route</th>
+            <th className="border-b border-slate-200 px-4 py-3">Origin</th>
+            <th className="border-b border-slate-200 px-4 py-3">Destination</th>
+            <th className="border-b border-slate-200 px-4 py-3">Section</th>
+            <th className="border-b border-slate-200 px-4 py-3">Status</th>
+            <th className="border-b border-slate-200 px-4 py-3">Display price</th>
+            <th className="border-b border-slate-200 px-4 py-3">Provider native</th>
+            <th className="border-b border-slate-200 px-4 py-3">Provider</th>
+            <th className="border-b border-slate-200 px-4 py-3">Last refreshed</th>
+            <th className="border-b border-slate-200 px-4 py-3">Reason / replacement</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-border">
+        <tbody className="divide-y divide-slate-100 bg-white">
           {routes.map((route) => (
-            <tr key={`${group.marketCode}-${route.id}`} className="align-top">
-              <td className="px-3 py-3 font-bold text-slate-950">
+            <tr key={`${group.marketCode}-${route.id}`} className="align-top transition-colors hover:bg-slate-50/80">
+              <td className="px-4 py-3 font-bold text-slate-950">
                 {route.market}
               </td>
-              <td className="px-3 py-3 font-bold text-slate-950">
+              <td className="px-4 py-3 font-bold text-slate-950">
                 {route.label}
               </td>
-              <td className="px-3 py-3 font-semibold text-slate-950">
+              <td className="px-4 py-3 font-semibold text-slate-950">
                 {route.origin}
                 {route.originCity ? (
                   <span className="block text-xs font-medium text-slate-500">
@@ -1048,7 +1044,7 @@ function RouteDetailsTable({
                   </span>
                 ) : null}
               </td>
-              <td className="px-3 py-3 font-semibold text-slate-950">
+              <td className="px-4 py-3 font-semibold text-slate-950">
                 {route.destination}
                 {route.destinationCity ? (
                   <span className="block text-xs font-medium text-slate-500">
@@ -1056,22 +1052,22 @@ function RouteDetailsTable({
                   </span>
                 ) : null}
               </td>
-              <td className="px-3 py-3 capitalize text-slate-950">
+              <td className="px-4 py-3 capitalize text-slate-950">
                 {route.section}
               </td>
-              <td className="px-3 py-3">
+              <td className="px-4 py-3">
                 <StatusBadge status={route.status} />
               </td>
-              <td className="px-3 py-3 font-semibold text-slate-950">
+              <td className="px-4 py-3 font-semibold text-slate-950">
                 {formatRoutePrice(route)}
               </td>
-              <td className="px-3 py-3 font-semibold text-slate-950">
+              <td className="px-4 py-3 font-semibold text-slate-950">
                 {formatProviderNativePrice(route)}
               </td>
-              <td className="px-3 py-3 text-slate-950">
+              <td className="px-4 py-3 text-slate-950">
                 {route.provider ?? "—"}
               </td>
-              <td className="px-3 py-3 text-xs font-semibold text-slate-500">
+              <td className="px-4 py-3 text-xs font-semibold text-slate-500">
                 {formatSnapshotTime(route.searchedAt)}
                 {route.expiresAt ? (
                   <span className="block">
@@ -1079,7 +1075,7 @@ function RouteDetailsTable({
                   </span>
                 ) : null}
               </td>
-              <td className="max-w-xs px-3 py-3 text-xs font-semibold text-slate-500">
+              <td className="max-w-xs px-4 py-3 text-xs font-semibold text-slate-500">
                 <SafeFailureReason route={route} />
                 {route.replacementCandidateUsed ? (
                   <span className="block">
@@ -1102,17 +1098,36 @@ function MarketGroupStatusBadge({
 }: {
   status: AdminHomepageFareMarketRouteGroup["status"];
 }) {
-  return <span className="text-xs font-bold text-black">{status}</span>;
+  const tone = status === "Ready"
+    ? "good"
+    : status === "Failed"
+      ? "bad"
+      : status === "Partially ready" || status === "Needs coverage"
+        ? "warn"
+        : "neutral";
+  return <AdminStatusBadge tone={tone}>{status}</AdminStatusBadge>;
 }
 
 function StatusBadge({ status }: { status: HomepageFareSnapshotStatus }) {
-  return (
-    <span
-      className={`text-xs font-bold capitalize ${STATUS_BADGE_STYLES[status]}`}
-    >
-      {status}
-    </span>
-  );
+  const tone = status === "fresh"
+    ? "good"
+    : status === "last_known_good" || status === "expired"
+      ? "warn"
+      : status === "failed"
+        ? "bad"
+        : "neutral";
+  return <AdminStatusBadge tone={tone}>{status}</AdminStatusBadge>;
+}
+
+function MarketStatusBadge({ status }: { status: MarketReadinessStatus }) {
+  return <AdminStatusBadge tone={marketStatusTone(status)}>{formatMarketStatus(status)}</AdminStatusBadge>;
+}
+
+function marketStatusTone(status: MarketReadinessStatus): "good" | "bad" | "warn" | "neutral" {
+  if (status === "ready") return "good";
+  if (status === "failed") return "bad";
+  if (status === "underfilled" || status === "budget_exhausted" || status === "candidate_exhausted") return "warn";
+  return "neutral";
 }
 
 async function fetchHomepageFareStatus(signal: AbortSignal) {
