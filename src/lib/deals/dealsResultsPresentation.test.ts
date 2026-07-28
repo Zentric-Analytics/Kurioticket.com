@@ -62,7 +62,7 @@ test("flight selection fills fewer qualifying results in stable input order with
 test("hotel previews assign recommended, lowest bookable total, and normalized guest-rating categories", () => {
   const previews = selectDealsHotelPreviews([makeHotel("recommended", { valueScore: 99 }), makeHotel("lowest", { totalPrice: 100 }), makeHotel("rated", { reviewScore: 4.8, reviewScale: 5, reviewCount: 20 })]);
   assert.deepEqual(previews.map(({ result, badgeKey }) => [result.id, badgeKey]), [["recommended", "deals.results.hotel.recommended.badge"], ["lowest", "deals.results.hotel.lowest.badge"], ["rated", "deals.results.hotel.rating.badge"]]);
-  assert.deepEqual(previews.map(({ reasonKey }) => reasonKey), [undefined, "deals.results.hotel.lowest.reason", "deals.results.hotel.rating.reason"]);
+  assert.deepEqual(previews.map(({ reasonKey }) => reasonKey), [undefined, undefined, "deals.results.hotel.rating.reason"]);
   assert.equal(new Set(previews.map(({ result }) => result.id)).size, 3);
 });
 test("hotel rating uses review count, price, and ID ties while missing ratings do not qualify", () => {

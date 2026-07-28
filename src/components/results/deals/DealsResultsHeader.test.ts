@@ -58,7 +58,8 @@ test("breadcrumbs use localized semantic hierarchy", () => {
 test("intro retains the sole stable focusable results heading", () => {
   assert.match(introSource, /<h1 id="deals-trip-overview-heading" tabIndex=\{-1\}/);
   assert.equal((introSource.match(/<h1/g) ?? []).length, 1);
-  assert.match(introSource, /deals\.results\.tripOptionsTitle/);
+  assert.match(introSource, /deals\.results\.breadcrumb\.current/);
+  assert.doesNotMatch(introSource, /deals\.results\.tripOptionsTitle/);
   assert.doesNotMatch(introSource, /deals\.results\.tripOptionsExplanation/);
   assert.doesNotMatch(introSource, /deals\.results\.trustSearch/);
   assert.doesNotMatch(introSource, /deals\.results\.trustProvider/);
