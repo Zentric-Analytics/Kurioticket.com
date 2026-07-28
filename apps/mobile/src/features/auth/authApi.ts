@@ -32,6 +32,10 @@ export const authApi = {
     const result = await request<{ session: { token: string; expires: string }; user: { id: string; email: string; name?: string | null } }>("register", { method: "POST", body: JSON.stringify(input) });
     await writeSession({ ...result.session, user: result.user }); return result;
   },
+  google: async (idToken: string, nonce: string) => {
+    const result = await request<{ session: { token: string; expires: string }; user: { id: string; email: string; name?: string | null } }>("google", { method: "POST", body: JSON.stringify({ idToken, nonce }) });
+    await writeSession({ ...result.session, user: result.user }); return result;
+  },
   forgotPassword: (email: string) => request<{ ok: true }>("forgot-password", { method: "POST", body: JSON.stringify({ email }) }),
 };
 export async function restoreAuthenticatedSession() {
