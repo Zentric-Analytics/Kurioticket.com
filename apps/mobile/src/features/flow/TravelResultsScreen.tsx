@@ -21,7 +21,7 @@ export function TravelResultsScreen({ product }: { product: Product }) {
       if (product === "flight") {
         const response = await travelApi.searchFlights({
           tripType: one(params.tripType) || "round-trip", origin: one(params.from), destination: one(params.to),
-          departureDate: one(params.departureDate), returnDate: one(params.tripType) === "one-way" ? undefined : one(params.returnDate),
+          departureDate: one(params.departureDate), returnDate: one(params.tripType) === "round-trip" ? one(params.returnDate) : undefined,
           adults: Number(one(params.travelers) || 1), children: 0, infants: 0, travelers: Number(one(params.travelers) || 1),
           cabinClass: (one(params.cabin) || "economy").toLowerCase().replace("premium economy", "economy"),
         });

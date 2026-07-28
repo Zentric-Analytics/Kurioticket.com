@@ -37,7 +37,6 @@ export function FlightSearchPanel({ compact = false }: { compact?: boolean }) {
     setPicker(null); setNotice("");
   };
   const submit = () => {
-    if (tripType === "multi-city") { setNotice("Multi-city results are not available in this mobile build yet."); return; }
     if (from.code === to.code) { setNotice("Origin and destination must be different."); return; }
     router.push({ pathname: "/flight-results", params: { from: from.code, to: to.code, tripType, departureDate: depart.iso, returnDate: returnDate.iso, travelers: String(travelers), cabin } });
   };
