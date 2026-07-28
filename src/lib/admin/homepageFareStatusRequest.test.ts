@@ -157,4 +157,18 @@ test("status state distinguishes unavailable, stale, and current data", () => {
   assert.equal(refreshed.stale, false);
   assert.equal(refreshed.error, "");
   assert.deepEqual(refreshed.data, { value: 8 });
+  assert.equal(
+    refreshed.lastSuccessfulLoadAt,
+    "2026-07-28T14:33:00.000Z",
+  );
+
+  const failedRefresh = markHomepageFareStatusRequestFailed(
+    markHomepageFareStatusRequestStarted(refreshed),
+    "later reload failed",
+  );
+  assert.equal(failedRefresh.stale, true);
+  assert.equal(
+    failedRefresh.lastSuccessfulLoadAt,
+    "2026-07-28T14:33:00.000Z",
+  );
 });

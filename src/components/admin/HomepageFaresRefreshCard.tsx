@@ -519,9 +519,9 @@ export function HomepageFaresRefreshCard() {
                 : "neutral",
             },
             {
-              label: "Fare data last refreshed",
-              value: statusState.data
-                ? formatSnapshotTime(statusPayload.lastRefreshAt)
+              label: "Status last updated",
+              value: statusState.lastSuccessfulLoadAt
+                ? formatDateTime(statusState.lastSuccessfulLoadAt)
                 : statusState.loading
                   ? "Loading…"
                   : "Unavailable",
