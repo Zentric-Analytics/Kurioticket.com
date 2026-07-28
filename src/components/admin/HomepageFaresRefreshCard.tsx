@@ -7,13 +7,9 @@ import {
   useRef,
   useState,
   type RefObject,
-  type ReactNode,
 } from "react";
 import { AdminPageHeader } from "@/components/admin/AdminPageShell";
-import {
-  HomepageOperationsStatusBar,
-  OperationsDisclosure,
-} from "@/components/admin/homepage-operations/HomepageOperationsPanels";
+import { HomepageOperationsStatusBar } from "@/components/admin/homepage-operations/HomepageOperationsPanels";
 import {
   buildAdminHomepageFareRouteGroups,
   filterAdminHomepageFareMarketsByRouteGroups,
@@ -141,15 +137,6 @@ type MarketReadinessStatus =
   | "failed"
   | "cooldown";
 
-type RefreshReadinessCounts = {
-  freshPopular: number;
-  freshDiscover: number;
-  freshDiscoverDisplayed: number;
-  freshDiscoverBackup: number;
-  publicFreshTarget: number;
-  operationalFreshTarget: number;
-};
-
 type RefreshBudget = {
   popularVisibleTarget: number;
   discoverVisibleTarget: number;
@@ -224,43 +211,6 @@ type MarketNextRunNeed = {
   reason: UnderfillCause;
 };
 
-type RefreshCounts = {
-  refreshed: number;
-  unavailable: number;
-  failed: number;
-  skipped: number;
-  retained: number;
-  routeAttempts: number;
-  providerCalls: number;
-  stoppedReason: RefreshStoppedReason;
-  globalReadinessStatus: GlobalReadinessStatus;
-  requiredMarkets: string[];
-  readyMarkets: string[];
-  underfilledMarkets: MarketReadiness[];
-  marketReadinessSummary: MarketReadiness[];
-  readinessBefore: RefreshReadinessCounts;
-  readinessAfter: RefreshReadinessCounts;
-  refreshBudget: RefreshBudget;
-  marketTargets: Record<string, MarketReadiness>;
-  marketTargetMet: Record<string, boolean>;
-  popularFreshByMarket: Record<string, number>;
-  discoveryFreshByMarket: Record<string, number>;
-  backupFreshByMarket: Record<string, number>;
-  candidatePoolSizeByMarket: Record<string, number>;
-  routeAttemptsByMarket: Record<string, number>;
-  providerCallsByMarket: Record<string, number>;
-  failedByMarket: Record<string, number>;
-  unavailableByMarket: Record<string, number>;
-  skippedCooldownByMarket: Record<string, number>;
-  replacementCandidatesUsedByMarket: Record<string, number>;
-  timeoutByMarket: Record<string, number>;
-  lastKnownGoodByMarket: Record<string, number>;
-  targetedMarkets: string[];
-  visibleGapsAttempted: VisibleGapAttempt[];
-  replacementsUsed: ReplacementUsage[];
-  marketsNeedingAnotherRun: MarketNextRunNeed[];
-  underfillCauseByMarket: Record<string, UnderfillCause>;
-};
 
 type HomepageFareSnapshotStatus =
   | "fresh"
@@ -477,15 +427,6 @@ export function HomepageFaresRefreshCard() {
       ),
     [statusPayload.marketReadinessSummary],
   );
-  const fallbackPools = useMemo(
-    () => statusPayload.marketReadinessSummary.filter(isFallbackMarket),
-    [statusPayload.marketReadinessSummary],
-  );
-  const replacementCandidatesUsed = sumCountRecord(
-    statusPayload.replacementCandidatesUsedByMarket,
-  );
-  const timeoutCount = sumCountRecord(statusPayload.timeoutByMarket);
-  const marketsNeedingAnotherRun = statusPayload.marketsNeedingAnotherRun;
   const routeFilteredMarkets = useMemo(
     () =>
       filterAdminHomepageFareMarketsByRouteGroups(
@@ -671,70 +612,6 @@ export function HomepageFaresRefreshCard() {
           </div>
         </div>
       </section>
-
-      <div className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white px-4 shadow-sm">
-        <OperationsDisclosure label="Additional health details">
-          <dl className="grid grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-4">
-            {[
-              {
-                label: "Timeouts",
-                value: timeoutCount,
-                tone: timeoutCount ? "warning" : "neutral",
-              },
-              {
-                label: "Unavailable",
-                value: statusPayload.summary.unavailable,
-                tone: statusPayload.summary.unavailable ? "warning" : "neutral",
-              },
-              {
-                label: "Fresh snapshots",
-                value: statusPayload.summary.fresh,
-                tone: "good",
-              },
-              {
-                label: "Last-known-good",
-                value: statusPayload.summary.last_known_good,
-              },
-              {
-                label: "Replacement candidates",
-                value: replacementCandidatesUsed,
-              },
-            ].map((metric) => (
-              <CompactDetail
-                key={metric.label}
-                label={metric.label}
-                value={metric.value}
-              />
-            ))}
-          </dl>
-        </OperationsDisclosure>
-
-        <OperationsDisclosure label="Developer diagnostics">
-          <DiagnosticsPanel
-            markets={statusPayload.marketReadinessSummary}
-            marketsNeedingAnotherRun={marketsNeedingAnotherRun}
-            candidatePoolHealth={statusPayload.candidatePoolHealth}
-            publicPriceDiagnostics={statusPayload.publicPriceDiagnostics}
-            stoppedReason={undefined}
-          />
-          <div className="mt-5 border-t border-slate-200 pt-5">
-            <FallbackPoolsSection
-              pools={fallbackPools}
-              selectedRouteScope={activeSelectedRouteScope}
-              onInspectMarket={selectRouteScope}
-            />
-          </div>
-          <div className="mt-5 border-t border-slate-200 pt-5">
-            <h3 className="mb-3 text-sm font-extrabold text-slate-950">
-              Raw debug details
-            </h3>
-            <RawDebugDetails
-              statusPayload={statusPayload}
-              refreshCounts={null}
-            />
-          </div>
-        </OperationsDisclosure>
-      </div>
     </div>
   );
 }
@@ -746,23 +623,6 @@ const STATUS_BADGE_STYLES: Record<HomepageFareSnapshotStatus, string> = {
   failed: "text-black",
   missing: "text-black",
 };
-
-function CompactDetail({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) {
-  return (
-    <div>
-      <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
-        {label}
-      </dt>
-      <dd className="mt-1 text-sm font-bold text-slate-950">{value}</dd>
-    </div>
-  );
-}
 
 function isFallbackMarket(market: MarketReadiness) {
   return (
@@ -792,85 +652,6 @@ function formatGlobalReadinessStatus(status: GlobalReadinessStatus) {
     case "not_ready":
       return "Not ready";
   }
-}
-
-function buildDiagnostics(
-  markets: MarketReadiness[],
-  marketsNeedingAnotherRun: MarketNextRunNeed[],
-  stoppedReason?: RefreshStoppedReason,
-) {
-  const diagnostics: string[] = [];
-
-  for (const market of markets) {
-    if (
-      market.targetMet &&
-      market.status === "ready" &&
-      !isFallbackMarket(market)
-    )
-      continue;
-
-    const subject = isFallbackMarket(market)
-      ? `${market.marketLabel} fallback`
-      : market.marketLabel;
-    const targetText = isFallbackMarket(market)
-      ? "but has no public display target"
-      : `before coverage reached ${market.popularVisibleFresh}/${market.popularVisibleTarget} popular, ${market.discoveryVisibleFresh}/${market.discoveryVisibleTarget} discovery, and ${market.backupFresh}/${market.backupTarget} backup`;
-    const reason =
-      market.underfillReason ?? formatMarketStatus(market.status).toLowerCase();
-    diagnostics.push(
-      `${subject} is ${formatMarketStatus(market.status).toLowerCase()} because ${reason} ${targetText}.`,
-    );
-  }
-
-  for (const need of marketsNeedingAnotherRun) {
-    if (
-      !need.needed ||
-      diagnostics.some((item) => item.startsWith(need.market))
-    )
-      continue;
-    diagnostics.push(
-      `${need.market} needs another run because ${formatUnderfillCause(need.reason)}.`,
-    );
-  }
-
-  if (
-    stoppedReason &&
-    stoppedReason !== "completed" &&
-    stoppedReason !== "target_met"
-  ) {
-    diagnostics.unshift(
-      `The last executor run stopped because ${formatStoppedReason(stoppedReason).toLowerCase()}.`,
-    );
-  }
-
-  return diagnostics.slice(0, 12);
-}
-
-function DashboardSection({
-  eyebrow,
-  title,
-  description,
-  children,
-}: {
-  eyebrow: string;
-  title: string;
-  description: string;
-  children: ReactNode;
-}) {
-  return (
-    <div>
-      <div>
-        <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-500">
-          {eyebrow}
-        </p>
-        <h3 className="mt-1 text-lg font-extrabold text-slate-950">{title}</h3>
-        <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-500">
-          {description}
-        </p>
-      </div>
-      {children}
-    </div>
-  );
 }
 
 function RouteFilterPanel({
@@ -1088,214 +869,6 @@ function MarketReadinessRow({
   );
 }
 
-function DiagnosticsPanel({
-  markets,
-  marketsNeedingAnotherRun,
-  candidatePoolHealth,
-  publicPriceDiagnostics,
-  stoppedReason,
-}: {
-  markets: MarketReadiness[];
-  marketsNeedingAnotherRun: MarketNextRunNeed[];
-  candidatePoolHealth: HomepageFareStatusSummary;
-  publicPriceDiagnostics: Record<PublicPriceDiagnosis, number>;
-  stoppedReason?: RefreshStoppedReason;
-}) {
-  const issues = buildDiagnostics(
-    markets,
-    marketsNeedingAnotherRun,
-    stoppedReason,
-  );
-  return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <div className="space-y-2">
-        {issues.map((issue) => (
-          <p key={issue} className="text-sm leading-6 text-slate-700">
-            {issue}
-          </p>
-        ))}
-      </div>
-      <dl className="grid gap-2 text-sm">
-        <CompactDetail
-          label="Provider budget exhausted"
-          value={stoppedReason === "provider_budget_exhausted" ? "Yes" : "No"}
-        />
-        <CompactDetail
-          label="Route budget exhausted"
-          value={stoppedReason === "route_budget_exhausted" ? "Yes" : "No"}
-        />
-        <CompactDetail
-          label="Candidate pool failed"
-          value={candidatePoolHealth.failed}
-        />
-        <CompactDetail
-          label="Candidate pool unavailable"
-          value={candidatePoolHealth.unavailable}
-        />
-        <CompactDetail
-          label="Fresh used publicly"
-          value={publicPriceDiagnostics.fresh_available}
-        />
-        <CompactDetail
-          label="LKG used publicly"
-          value={publicPriceDiagnostics.last_known_good_used}
-        />
-        <CompactDetail
-          label="LKG failed safety"
-          value={publicPriceDiagnostics.last_known_good_failed_safety_check}
-        />
-        <CompactDetail
-          label="Exact route mismatch"
-          value={publicPriceDiagnostics.exact_route_mismatch}
-        />
-        <CompactDetail
-          label="No provider fare ever"
-          value={publicPriceDiagnostics.no_provider_backed_fare_ever}
-        />
-      </dl>
-    </div>
-  );
-}
-
-function FallbackPoolsSection({
-  pools,
-  selectedRouteScope,
-  onInspectMarket,
-}: {
-  pools: MarketReadiness[];
-  selectedRouteScope: string | null;
-  onInspectMarket: (marketCode: string) => void;
-}) {
-  return (
-    <DashboardSection
-      eyebrow="Fallback pools / internal regional pools"
-      title="Fallback-only coverage pools"
-      description="Regional and global pools remain available for debugging but are not counted as public homepage-ready markets."
-    >
-      <div className="mt-4 grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
-        {pools.length ? (
-          pools.map((pool) => {
-            const selected =
-              normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") ===
-              normalizeAdminHomepageFareMarketCode(pool.marketCode);
-
-            return (
-              <button
-                key={pool.marketCode}
-                type="button"
-                onClick={() => onInspectMarket(pool.marketCode)}
-                aria-pressed={selected}
-                className={`w-full cursor-pointer rounded-xl border border-dashed p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
-                  selected
-                    ? "border-indigo-700 bg-white shadow-md ring-2 ring-indigo-700/15"
-                    : "border-slate-200 bg-slate-50 hover:border-indigo-700/35 hover:bg-white hover:shadow-sm"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h4 className="font-extrabold text-slate-950">
-                      {pool.marketLabel}
-                    </h4>
-                    <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
-                      {pool.marketCode} · {pool.marketGroup}
-                    </p>
-                  </div>
-                  <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-extrabold text-slate-500">
-                    Fallback only
-                  </span>
-                </div>
-                <p className="mt-3 text-sm font-semibold leading-6 text-slate-500">
-                  No public display target. Coverage is retained for internal
-                  routing, replacement, and regional debugging.
-                </p>
-                <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
-                  <MarketMiniMetric
-                    label="Fresh"
-                    value={pool.freshCount ?? 0}
-                  />
-                  <MarketMiniMetric
-                    label="Missing"
-                    value={pool.missingCount ?? 0}
-                  />
-                  <MarketMiniMetric label="Failed" value={pool.failed} />
-                  <MarketMiniMetric
-                    label="Provider"
-                    value={pool.providerCalls}
-                  />
-                  <MarketMiniMetric
-                    label="Attempts"
-                    value={pool.routeAttempts}
-                  />
-                  <MarketMiniMetric
-                    label="Timeout"
-                    value={pool.timeoutCount ?? 0}
-                  />
-                </dl>
-                <span className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-extrabold text-indigo-700">
-                  Inspect fallback routes
-                </span>
-              </button>
-            );
-          })
-        ) : (
-          <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-500">
-            No fallback-only pools were returned.
-          </p>
-        )}
-      </div>
-    </DashboardSection>
-  );
-}
-
-function RawDebugDetails({
-  statusPayload,
-  refreshCounts,
-}: {
-  statusPayload: HomepageFareStatusPayload;
-  refreshCounts: RefreshCounts | null;
-}) {
-  return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      <MetricCard
-        label="Configured routes"
-        value={statusPayload.summary.total}
-      />
-      <MetricCard
-        label="Candidate pool failed"
-        value={statusPayload.candidatePoolHealth.failed}
-      />
-      <MetricCard
-        label="Candidate pool unavailable"
-        value={statusPayload.candidatePoolHealth.unavailable}
-      />
-      <MetricCard
-        label="Visible gaps attempted"
-        value={refreshCounts?.visibleGapsAttempted.length ?? 0}
-      />
-      <MetricCard
-        label="Immediate replacements attempted"
-        value={refreshCounts?.replacementsUsed.length ?? 0}
-      />
-      <MetricCard
-        label="Executor targets"
-        value={
-          refreshCounts
-            ? formatStringList(refreshCounts.targetedMarkets, "none")
-            : "No manual run yet"
-        }
-      />
-      <MetricCard
-        label="Markets needing another run"
-        value={
-          refreshCounts
-            ? formatMarketsNeedingRun(refreshCounts.marketsNeedingAnotherRun)
-            : formatMarketsNeedingRun(statusPayload.marketsNeedingAnotherRun)
-        }
-      />
-    </div>
-  );
-}
-
 function MarketRouteInspector({
   selectedRouteScope,
   selectedGroup,
@@ -1421,23 +994,6 @@ function SelectedRouteDetails({
   );
 }
 
-function MarketMiniMetric({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) {
-  return (
-    <div className="rounded-lg bg-white/80 p-2 ring-1 ring-slate-100">
-      <dt className="font-bold uppercase tracking-wide text-slate-500">
-        {label}
-      </dt>
-      <dd className="mt-0.5 font-extrabold text-slate-950">{value}</dd>
-    </div>
-  );
-}
-
 function RouteDetailsTable({
   group,
   routes,
@@ -1547,23 +1103,6 @@ function MarketGroupStatusBadge({
   status: AdminHomepageFareMarketRouteGroup["status"];
 }) {
   return <span className="text-xs font-bold text-black">{status}</span>;
-}
-
-function MetricCard({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) {
-  return (
-    <div className="py-2">
-      <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">
-        {label}
-      </dt>
-      <dd className="mt-1 text-xl font-extrabold text-slate-950">{value}</dd>
-    </div>
-  );
 }
 
 function StatusBadge({ status }: { status: HomepageFareSnapshotStatus }) {
@@ -2005,61 +1544,6 @@ function formatMarketStatus(status: MarketReadinessStatus) {
   }
 }
 
-function formatStoppedReason(reason: RefreshStoppedReason) {
-  switch (reason) {
-    case "target_met":
-      return "Target met";
-    case "route_budget_exhausted":
-      return "Route budget exhausted";
-    case "provider_budget_exhausted":
-      return "Provider budget exhausted";
-    case "candidate_pool_exhausted":
-      return "Candidate pool exhausted";
-    case "provider_unavailable_no_offers":
-      return "Provider unavailable / no offers";
-    case "all_remaining_cooldown_or_unavailable":
-      return "Cooldown / unavailable";
-    case "completed":
-      return "Completed";
-  }
-}
-
-function formatStringList(values: string[], emptyLabel: string) {
-  return values.length ? values.join(", ") : emptyLabel;
-}
-
-function formatMarketsNeedingRun(markets: MarketNextRunNeed[]) {
-  const needed = markets.filter((market) => market.needed);
-
-  return needed.length
-    ? needed
-        .map(
-          (market) =>
-            `${market.market} (${formatUnderfillCause(market.reason)})`,
-        )
-        .join(", ")
-    : "none";
-}
-
-function formatUnderfillCause(cause: UnderfillCause) {
-  switch (cause) {
-    case "none":
-      return "none";
-    case "budget_exhausted":
-      return "budget exhausted";
-    case "candidate_pool_exhausted":
-      return "candidate pool exhausted";
-    case "provider_unavailable_no_offers":
-      return "provider unavailable/no offers";
-    case "provider_failure":
-      return "provider failure";
-    case "cooldown":
-      return "cooldown";
-    case "underfilled":
-      return "insufficient coverage";
-  }
-}
-
 function readGlobalReadinessStatus(value: unknown): GlobalReadinessStatus {
   return value === "ready" || value === "partial" || value === "not_ready"
     ? value
@@ -2335,10 +1819,6 @@ function readCode(value: unknown) {
   return typeof value === "string" && /^[A-Z]{3}$/.test(value)
     ? value
     : undefined;
-}
-
-function sumCountRecord(record: Record<string, number>) {
-  return Object.values(record).reduce((total, value) => total + value, 0);
 }
 
 function readCount(value: unknown) {
