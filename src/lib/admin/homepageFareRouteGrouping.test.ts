@@ -6,8 +6,10 @@ import {
   ADMIN_HOMEPAGE_FARE_ROUTE_PAGE_SIZE,
   buildAdminHomepageFareAllRoutesGroup,
   buildAdminHomepageFareRouteGroups,
+  filterAdminHomepageFareMarketsByRouteGroups,
   normalizeAdminHomepageFareMarketCode,
   paginateAdminHomepageFareRoutes,
+  resolveAdminHomepageFareActiveRouteScope,
   resolveAdminHomepageFareSelectedRouteGroup,
   splitAdminHomepageFareMarketRouteGroups,
   type AdminHomepageFareMarket,
@@ -184,6 +186,119 @@ test("market filters include fresh, last-known-good, unavailable, and do not mix
 
   const unavailableGroups = buildAdminHomepageFareRouteGroups({ routes, markets, filter: "unavailable" });
   assert.deepEqual(unavailableGroups.map((group) => group.marketCode), ["GLOBAL"]);
+});
+
+test("every route status filter limits market coverage to groups with matching routes", () => {
+  const expectations = {
+    all: ["US", "NG", "GLOBAL"],
+    ready: ["US", "NG"],
+    underfilled: ["US"],
+    failed: [],
+    missing: ["US"],
+    stale: [],
+    last_known_good: ["NG"],
+    fresh: ["US", "NG"],
+    unavailable: ["GLOBAL"],
+  } as const;
+
+  for (const [filter, expectedMarketCodes] of Object.entries(expectations)) {
+    const groups = buildAdminHomepageFareRouteGroups({
+      routes,
+      markets,
+      filter: filter as keyof typeof expectations,
+      includeEmptyGroups: true,
+    });
+    const visibleMarkets = filterAdminHomepageFareMarketsByRouteGroups(
+      markets,
+      groups,
+      filter as keyof typeof expectations,
+    );
+
+    assert.deepEqual(
+      visibleMarkets.map((market) => market.marketCode),
+      expectedMarketCodes,
+      filter,
+    );
+  }
+});
+
+test("affected-market selection composes with route status filtering", () => {
+  const affectedMarkets = markets.filter(
+    (market) => !market.targetMet || market.status !== "ready",
+  );
+  const failedRoutes: AdminHomepageFareRoute[] = [
+    ...routes,
+    {
+      id: "failed-us-route",
+      market: "US",
+      label: "Failed US route",
+      origin: "JFK",
+      destination: "BOS",
+      status: "failed",
+    },
+    {
+      id: "failed-ng-route",
+      market: "NG",
+      label: "Failed NG route",
+      origin: "LOS",
+      destination: "ACC",
+      status: "failed",
+    },
+  ];
+  const failedGroups = buildAdminHomepageFareRouteGroups({
+    routes: failedRoutes,
+    markets,
+    filter: "failed",
+    includeEmptyGroups: true,
+  });
+
+  assert.deepEqual(
+    filterAdminHomepageFareMarketsByRouteGroups(
+      affectedMarkets,
+      failedGroups,
+      "failed",
+    ).map((market) => market.marketCode),
+    ["US"],
+  );
+});
+
+test("a selected market clears while its active filter hides it", () => {
+  const missingGroups = buildAdminHomepageFareRouteGroups({
+    routes,
+    markets,
+    filter: "missing",
+    includeEmptyGroups: true,
+  });
+  const visibleMarkets = filterAdminHomepageFareMarketsByRouteGroups(
+    markets,
+    missingGroups,
+    "missing",
+  );
+
+  assert.equal(
+    resolveAdminHomepageFareActiveRouteScope({
+      selectedScope: "NG",
+      markets,
+      visibleMarkets,
+    }),
+    null,
+  );
+  assert.equal(
+    resolveAdminHomepageFareActiveRouteScope({
+      selectedScope: "US",
+      markets,
+      visibleMarkets,
+    }),
+    "US",
+  );
+  assert.equal(
+    resolveAdminHomepageFareActiveRouteScope({
+      selectedScope: ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE,
+      markets,
+      visibleMarkets,
+    }),
+    ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE,
+  );
 });
 
 test("readiness labels distinguish underfilled, exhausted, ready, and fallback-only groups", () => {
