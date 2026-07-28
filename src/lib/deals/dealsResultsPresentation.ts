@@ -1,4 +1,5 @@
 import type { PublicFlightResult, PublicHotelResult } from "@/lib/types";
+import { formatItineraryShortDate, formatItineraryTime, isValidItineraryDateTime } from "@/lib/utils";
 import type { DealsSearch } from "./dealsSearchParams";
 
 export const dealsPreviewLimit = 3;
@@ -34,16 +35,17 @@ export const getOverviewData = (search: DealsSearch, locale: string) => {
   };
 };
 
-export type FlightPreviewLeg = { origin: string; destination: string; departureTime: string; arrivalTime: string; duration: string; stops: number };
+export type FlightPreviewLeg = { direction: "outbound" | "return" | "leg"; origin: string; destination: string; departureTime: string; arrivalTime: string; duration: string; stops: number };
 export const normalizeFlightLegs = (flight: PublicFlightResult): FlightPreviewLeg[] => {
   const source = flight.legs?.length ? flight.legs : [flight];
-  return source.map((leg) => ({ origin: "originAirport" in leg ? leg.originAirport : "", destination: "destinationAirport" in leg ? leg.destinationAirport : "", departureTime: leg.departureTime, arrivalTime: leg.arrivalTime, duration: leg.duration, stops: Number.isFinite(leg.stops) && leg.stops >= 0 ? leg.stops : 0 }));
+  return source.map((leg) => ({ direction: "direction" in leg ? leg.direction : "outbound", origin: "originAirport" in leg ? leg.originAirport : "", destination: "destinationAirport" in leg ? leg.destinationAirport : "", departureTime: leg.departureTime, arrivalTime: leg.arrivalTime, duration: leg.duration, stops: Number.isFinite(leg.stops) && leg.stops >= 0 ? leg.stops : 0 }));
 };
 
+export const getFlightLegLabelKey = (direction: FlightPreviewLeg["direction"]) => direction === "outbound" ? "deals.results.outbound" : direction === "return" ? "deals.results.return" : "flightLeg";
+
 export const safeDateTime = (value: string, locale: string) => {
-  if (!value || !Number.isFinite(new Date(value).getTime())) return { date: "", time: "" };
-  const date = new Date(value);
-  return { date: new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", timeZone: "UTC" }).format(date), time: new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit", timeZone: "UTC" }).format(date) };
+  if (!value || !isValidItineraryDateTime(value)) return { date: "", time: "" };
+  return { date: formatItineraryShortDate({ value, locale }), time: formatItineraryTime({ value, locale }) };
 };
 
 export const getHotelPreviewPrice = (hotel: PublicHotelResult) => hotel.inventoryKind === "discovery" || !Number.isFinite(hotel.totalPrice) || hotel.totalPrice <= 0 ? null : { amount: hotel.totalPrice, currency: hotel.currency };
