@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { RecoveryScreen } from "../src/features/launch/LaunchScreens";
 import { runBootstrap, type BootstrapState } from "../src/launch/bootstrap";
+import { restoreAuthenticatedSession } from "../src/features/auth/authApi";
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -14,7 +15,7 @@ export default function Index() {
     const runId = ++bootstrapId.current;
     if (!isRetry) setState({ status: "initializing" });
 
-    void runBootstrap()
+    void runBootstrap({ restoreAuthenticatedSession })
       .then((nextState) => {
         if (runId === bootstrapId.current) setState(nextState);
       })

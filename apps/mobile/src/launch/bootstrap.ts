@@ -25,7 +25,7 @@ export async function runBootstrap(deps: BootstrapDependencies = {}): Promise<Bo
     catch (error) { devLog("onboarding storage read failed", error); }
     if (!onboardingCompleted) return { status: "ready-first-run", config: config.data.data };
 
-    const hasSession = deps.restoreAuthenticatedSession ? await deps.restoreAuthenticatedSession().catch((error) => { devLog("session restore reserved path failed", error); return false; }) : false;
+    const hasSession = deps.restoreAuthenticatedSession ? await deps.restoreAuthenticatedSession().catch((error) => { devLog("session restore failed", error); return false; }) : false;
     return { status: hasSession ? "ready-authenticated-reserved" : "ready-guest", config: config.data.data };
   } catch (error) {
     devLog("unexpected bootstrap failure", error);

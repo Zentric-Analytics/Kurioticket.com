@@ -1,6 +1,3 @@
-import { Platform } from "react-native";
-import * as SecureStore from "expo-secure-store";
-
 export const ONBOARDING_COMPLETED_KEY = "kurioticket.onboarding.completed.v1";
 const COMPLETED_VALUE = "completed";
 
@@ -12,20 +9,22 @@ function getWebStorage(): WebStorageLike | null {
 }
 
 export async function readOnboardingCompleted(): Promise<boolean> {
-  if (Platform.OS === "web") {
+  if (typeof document !== "undefined") {
     return getWebStorage()?.getItem(ONBOARDING_COMPLETED_KEY) === COMPLETED_VALUE;
   }
 
+  const SecureStore = await import("expo-secure-store");
   const stored = await SecureStore.getItemAsync(ONBOARDING_COMPLETED_KEY);
   return stored === COMPLETED_VALUE;
 }
 
 export async function writeOnboardingCompleted(): Promise<void> {
-  if (Platform.OS === "web") {
+  if (typeof document !== "undefined") {
     getWebStorage()?.setItem(ONBOARDING_COMPLETED_KEY, COMPLETED_VALUE);
     return;
   }
 
+  const SecureStore = await import("expo-secure-store");
   await SecureStore.setItemAsync(ONBOARDING_COMPLETED_KEY, COMPLETED_VALUE);
 }
 
