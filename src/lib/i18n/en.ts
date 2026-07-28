@@ -3369,8 +3369,6 @@ export const translations: TranslationDictionary = {
   "deals.results.separateBooking": "Coordinated results, separate selections.",
   "deals.results.tripOptionsTitle": "Your trip options",
   "deals.results.tripOptionsExplanation": "Compare the included products and choose the options you want to continue with. Prices and bookings remain separate with each provider.",
-  "deals.results.trustSearch": "Search and compare on Kurioticket.",
-  "deals.results.trustProvider": "Continue with the provider for final pricing and booking.",
   "deals.results.tripOverview": "Trip overview",
   "deals.results.flightOptions": "Flight options",
   "deals.results.stayOptions": "Stay options",

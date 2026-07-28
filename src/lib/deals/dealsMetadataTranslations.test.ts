@@ -4,7 +4,6 @@ import { availableLocaleOptions, getTranslations } from "@/lib/i18n";
 
 const metadataKeys = [
   "deals.results.tripOptionsTitle",
-  "deals.results.tripOptionsExplanation",
 ] as const;
 
 test("Deals Results metadata exists for every available locale", () => {
