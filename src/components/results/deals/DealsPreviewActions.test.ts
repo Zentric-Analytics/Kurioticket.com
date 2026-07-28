@@ -19,11 +19,21 @@ test("preview articles use selection buttons without direct provider handoffs", 
     assert.doesNotMatch(card, /href=\{(?:flight|hotel)\.(?:bookingUrl|partnerRedirectUrl)\}/);
     assert.doesNotMatch(card, /target="_blank"/);
     assert.match(card, /onClick=\{onSelect\}/);
+    assert.match(card, /import \{ Button \} from "@\/components\/ui\/Button"/);
+    assert.match(card, /ArrowRight/);
+    assert.match(card, /handoff\.available \?/);
+    assert.match(card, /<span id=\{unavailableDescriptionId\} className="sr-only">/);
+    assert.match(card, /<Button type="button" variant="accent" size="lg" className="w-full" disabled aria-describedby=\{unavailableDescriptionId\}>/);
+    assert.match(card, /\{t\("continueToProvider"\)\}<ArrowRight size=\{16\} aria-hidden \/>/);
+    assert.doesNotMatch(card, /<Button[^>]*onClick=/);
+    assert.doesNotMatch(card, /<p role="status"/);
   }
   assert.match(flightCard, /getDealsProviderHandoff\(flight, "flight"\)/);
   assert.match(hotelCard, /getDealsProviderHandoff\(hotel, "hotel"\)/);
   assert.match(hotelCard, /discoveryUnavailable/);
   assert.match(hotelCard, /demoUnavailable/);
+  assert.match(flightCard, /className="sr-only">\{t\("deals\.results\.providerHandoff\.unavailable"\)\}/);
+  assert.match(hotelCard, /className="sr-only">\{t\(unavailableReasonKey\)\}/);
 });
 
 test("the product section retains one canonical results link contract", () => {
