@@ -1,0 +1,8 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { createDealsTripPlan, updateDealsTripPlan } from "./dealsTripPlan";
+import { parseDealsTripPlan, serializeDealsTripPlan } from "./dealsTripPlanStorage";
+
+test("storage serialization accepts the complete safe schema", () => { const plan = updateDealsTripPlan(createDealsTripPlan({ mode: "flight-car", searchFingerprint: "safe", resultsPath: "/deals/results?q=x", carsResultsPath: "/cars/results?q=x" }, 100), { flight: { id: "f", provider: "P", airline: "A", origin: "LOS", destination: "LAX", departure: "d", arrival: "a", duration: "1h", sourcePrice: 1, sourceCurrency: "USD", resultReceivedAt: 100 } }, 101); const raw = serializeDealsTripPlan(plan); assert.deepEqual(parseDealsTripPlan(raw), plan); for (const forbidden of ["bookingUrl", "partnerRedirectUrl", "http://", "https://", "payment", "token"]) assert.doesNotMatch(raw, new RegExp(forbidden, "i")); });
+test("storage parser rejects malformed and invalid top-level values", () => { for (const raw of [null, "{", "null", "[]", "1", '"x"', "{}", '{"version":2}']) assert.equal(parseDealsTripPlan(raw), null); });
+test("storage parser validates nested values and timestamps", () => { const base = createDealsTripPlan({ mode: "hotel-flight", searchFingerprint: "x", resultsPath: "/deals/results?q=x" }, 100); assert.equal(parseDealsTripPlan(JSON.stringify({ ...base, expiresAt: 99 })), null); assert.equal(parseDealsTripPlan(JSON.stringify({ ...base, flight: { id: "x" } })), null); assert.equal(parseDealsTripPlan(JSON.stringify({ ...base, opened: { flight: "now" } })), null); });

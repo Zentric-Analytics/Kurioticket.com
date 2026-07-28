@@ -16,6 +16,11 @@ type HandoffResult = Pick<PublicFlightResult, "id" | "provider" | "partnerRedire
   inventoryKind?: "bookable" | "discovery";
 };
 
+export function buildDealsInternalRedirectHref(id: string, type: "flight" | "hotel"): string | null {
+  if (typeof id !== "string" || !id.trim()) return null;
+  return `/redirect?${new URLSearchParams({ id: id.trim(), type }).toString()}`;
+}
+
 const isSafeExternalTarget = (target: string) => {
   try {
     const url = new URL(target);
@@ -44,6 +49,6 @@ export function getDealsProviderHandoff(
   if (!target) return { available: false, reason: "missing_target" };
   if (!isSafeExternalTarget(target)) return { available: false, reason: "unsafe_target" };
 
-  const params = new URLSearchParams({ id: candidate.id, type });
-  return { available: true, href: `/redirect?${params.toString()}`, provider: candidate.provider?.trim() ?? "" };
+  const href = buildDealsInternalRedirectHref(candidate.id, type);
+  return { available: true, href: href!, provider: candidate.provider?.trim() ?? "" };
 }
