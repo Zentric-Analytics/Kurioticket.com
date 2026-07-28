@@ -44,9 +44,9 @@ export function selectDealsCarPreviews(results: NormalizedCarResult[]): DealsPre
   const valid = results.filter(car => car.id.trim() && getPrimaryCarOffer(car));
   const orders = [sortCarResults(valid, "recommended"), sortCarResults(valid, "lowestTotal"), sortCarResults(valid, "topRated")];
   const categories = [
-    { badgeKey: "deals.results.car.recommended.badge", reasonKey: "deals.results.car.recommended.reason" },
-    { badgeKey: "deals.results.car.lowest.badge", reasonKey: "deals.results.car.lowest.reason" },
-    { badgeKey: "deals.results.car.rating.badge", reasonKey: "deals.results.car.rating.reason" },
+    { badgeKey: "deals.results.car.recommended.badge" },
+    { badgeKey: "deals.results.car.lowest.badge" },
+    { badgeKey: "deals.results.car.rating.badge" },
   ];
   const selected: DealsPreview<NormalizedCarResult>[] = []; const used = new Set<string>();
   orders.forEach((order, index) => { const winner = order.find(car => !used.has(car.id) && (index !== 2 || car.supplierRating !== undefined)); if (winner) { used.add(winner.id); selected.push({ result: winner, ...categories[index] }); } });
