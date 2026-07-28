@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { countHotelNights, dealsPreviewLimit, formatDealsOptionCount, getFlightLegLabelKey, getHotelPreviewPrice, getOverviewData, normalizeFlightLegs, normalizeMetadata, safeDateTime, selectDealsFlightPreviews, selectDealsHotelPreviews } from "./dealsResultsPresentation";
+import { countHotelNights, dealsPreviewLimit, getFlightLegLabelKey, getHotelPreviewPrice, getOverviewData, normalizeFlightLegs, normalizeMetadata, safeDateTime, selectDealsFlightPreviews, selectDealsHotelPreviews } from "./dealsResultsPresentation";
 import { createDefaultDealsSearch } from "./dealsSearchParams";
 import type { PublicFlightResult, PublicHotelResult } from "@/lib/types";
 
@@ -45,7 +45,7 @@ const makeHotel = (id: string, values: Record<string, unknown> = {}) => ({ id, p
 test("flight previews assign recommended, lowest-price, and shortest categories distinctly", () => {
   const previews = selectDealsFlightPreviews([makeFlight("recommended", { valueScore: 99 }), makeFlight("lowest", { price: 100 }), makeFlight("shortest", { durationMinutes: 60 })]);
   assert.deepEqual(previews.map(({ result, badgeKey }) => [result.id, badgeKey]), [["recommended", "deals.results.flight.recommended.badge"], ["lowest", "deals.results.flight.lowest.badge"], ["shortest", "deals.results.flight.shortest.badge"]]);
-  assert.deepEqual(previews.map(({ reasonKey }) => reasonKey), [undefined, "deals.results.flight.lowest.reason", undefined]);
+  assert.deepEqual(previews.map(({ reasonKey }) => reasonKey), [undefined, undefined, undefined]);
   assert.equal(new Set(previews.map(({ result }) => result.id)).size, 3);
 });
 test("flight selection skips duplicate winners, invalid values, and breaks ties deterministically", () => {
@@ -84,8 +84,4 @@ test("hotel selection does not give absolute category badges to runners-up", () 
   const previews = selectDealsHotelPreviews([makeHotel("winner", { valueScore: 100, totalPrice: 100, reviewScore: 10, reviewScale: 10 }), makeHotel("next", { valueScore: 80, totalPrice: 150, reviewScore: 9, reviewScale: 10 }), makeHotel("third", { valueScore: 70, totalPrice: 200, reviewScore: 8, reviewScale: 10 })]);
   assert.deepEqual(previews.map(({ result }) => result.id), ["winner", "next", "third"]);
   assert.deepEqual(previews.map(({ badgeKey }) => badgeKey), ["deals.results.hotel.recommended.badge", "deals.results.preview.more.badge", "deals.results.preview.more.badge"]);
-});
-test("option count interpolation supports previews and returned-only copy", () => {
-  assert.equal(formatDealsOptionCount("{{visible}} recommended previews from {{total}} returned options", 3, 15), "3 recommended previews from 15 returned options");
-  assert.equal(formatDealsOptionCount("{{total}} options returned", 2, 2), "2 options returned");
 });

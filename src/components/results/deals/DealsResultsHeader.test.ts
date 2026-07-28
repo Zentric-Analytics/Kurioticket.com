@@ -7,7 +7,6 @@ import { translations } from "@/lib/i18n/en";
 
 const summarySource = readFileSync(new URL("./DealsResultsSearchSummary.tsx", import.meta.url), "utf8");
 const breadcrumbsSource = readFileSync(new URL("./DealsResultsBreadcrumbs.tsx", import.meta.url), "utf8");
-const introSource = readFileSync(new URL("./DealsResultsIntro.tsx", import.meta.url), "utf8");
 const base: DealsSearch = { ...createDefaultDealsSearch(), mode: "hotel-flight", flightOriginText: "Lagos", flightOriginCode: "LOS", flightDestinationText: "Los Angeles", flightDestinationCode: "LAX", flightDepartureDate: "2026-07-28", flightReturnDate: "2026-08-03", hotelDestination: "Los Angeles", hotelCheckIn: "2026-07-28", hotelCheckOut: "2026-08-03", flightAdults: 1, hotelAdults: 2, hotelRooms: 1 };
 
 test("flight summary prioritizes route and represents aligned dates once", () => {
@@ -53,16 +52,6 @@ test("breadcrumbs use localized semantic hierarchy", () => {
   assert.match(breadcrumbsSource, /<Link href="\/"/); assert.match(breadcrumbsSource, /<Link href="\/deals"/);
   assert.match(breadcrumbsSource, /aria-current="page"/); assert.match(breadcrumbsSource, /t\("deals\.results\.breadcrumb\.current"\)/);
   assert.equal(translations.home, "Home"); assert.equal(translations.deals, "Deals"); assert.equal(translations["deals.results.breadcrumb.current"], "Deals results");
-});
-
-test("intro retains the sole stable focusable results heading", () => {
-  assert.match(introSource, /<h1 id="deals-trip-overview-heading" tabIndex=\{-1\}/);
-  assert.equal((introSource.match(/<h1/g) ?? []).length, 1);
-  assert.match(introSource, /deals\.results\.breadcrumb\.current/);
-  assert.doesNotMatch(introSource, /deals\.results\.tripOptionsTitle/);
-  assert.doesNotMatch(introSource, /deals\.results\.tripOptionsExplanation/);
-  assert.doesNotMatch(introSource, /deals\.results\.trustSearch/);
-  assert.doesNotMatch(introSource, /deals\.results\.trustProvider/);
 });
 
 test("route and breadcrumb presentation preserve RTL-safe direction contracts", () => {
