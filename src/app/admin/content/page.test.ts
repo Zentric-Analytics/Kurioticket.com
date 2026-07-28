@@ -93,11 +93,11 @@ test("Homepage Operations preserves controls, APIs, filters, and route inspectio
   assert.match(refreshCard, /: "Reload"/);
   for (const filter of [
     "All",
-    "Ready",
-    "Underfilled",
+    "Usable",
+    "Needs coverage",
     "Failed",
     "Missing",
-    "Stale",
+    "Expired",
     "Last-known-good",
     "Fresh",
     "Unavailable",
@@ -105,8 +105,9 @@ test("Homepage Operations preserves controls, APIs, filters, and route inspectio
     assert.match(refreshCard, new RegExp(`label: "${filter}"`));
   }
   assert.match(refreshCard, /Inspect .* routes/);
-  assert.match(refreshCard, /View All/);
-  assert.match(refreshCard, /if \(!selectedRouteScope \|\| !group\)/);
+  assert.match(refreshCard, /View all filtered routes/);
+  assert.match(refreshCard, /Usable includes fresh and last-known-good routes/);
+  assert.doesNotMatch(refreshCard, /label: "Ready"|label: "Underfilled"|label: "Stale"/);
 });
 
 test("Homepage Operations sequences status loads and presents unavailable or stale data safely", () => {
@@ -139,14 +140,51 @@ test("Homepage Operations classifies and announces each manual refresh outcome",
   assert.match(refreshOutcome, /bg-rose-50 text-rose-700/);
 });
 
-test("Homepage Operations collapses diagnostics, fallback pools, and raw debug by default", () => {
-  assert.match(refreshCard, /label="Diagnostics"/);
+test("Homepage Operations collapses developer diagnostics, fallback pools, and raw debug by default", () => {
+  assert.match(refreshCard, /label="Developer diagnostics"/);
   assert.match(refreshCard, /label="Additional health details"/);
   assert.match(refreshCard, /label="Refresh Status"/);
-  assert.match(refreshCard, /label="Fallback pools"/);
-  assert.match(refreshCard, /label="Raw debug details"/);
+  assert.match(refreshCard, /<FallbackPoolsSection/);
+  assert.match(refreshCard, />\s*Raw debug details\s*</);
+  const developerDiagnostics = refreshCard.slice(
+    refreshCard.indexOf('<OperationsDisclosure label="Developer diagnostics">'),
+    refreshCard.indexOf("const STATUS_BADGE_STYLES"),
+  );
+  assert.match(developerDiagnostics, /<DiagnosticsPanel/);
+  assert.match(developerDiagnostics, /<FallbackPoolsSection/);
+  assert.match(developerDiagnostics, /<RawDebugDetails/);
   assert.match(operationsPanels, /<details/);
   assert.doesNotMatch(operationsPanels, /<details[^>]*\sopen/);
+});
+
+test("Homepage Operations keeps route expiry distinct from stale retained page data", () => {
+  assert.match(refreshCard, /\{ key: "stale", label: "Expired" \}/);
+  assert.match(refreshCard, /Status data is stale/);
+  assert.doesNotMatch(refreshCard, /Status data is expired/);
+});
+
+test("Homepage Operations presents accurate attention and manual provider-call states", () => {
+  assert.match(refreshCard, /All markets are currently covered/);
+  assert.match(refreshCard, /if \(affectedCount === 0\)/);
+  assert.match(refreshCard, /\{affectedCount\} markets require attention/);
+  assert.match(refreshCard, /Provider calls in latest manual refresh/);
+  assert.match(refreshCard, /latestCounts\.providerCalls/);
+  assert.doesNotMatch(refreshCard, /label: "Provider calls"/);
+});
+
+test("Homepage Operations closes and reopens the route inspector without resetting filters", () => {
+  assert.match(refreshCard, /Close inspector/);
+  assert.match(refreshCard, /onClose=\{\(\) => setSelectedRouteScope\(null\)\}/);
+  assert.match(refreshCard, /\{activeSelectedRouteScope \? \(/);
+  assert.match(refreshCard, /onClick=\{\(\) =>\s*selectRouteScope\(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE\)/);
+  assert.match(refreshCard, /onClick=\{\(\) => onInspectMarket\(market\.marketCode\)\}/);
+  assert.doesNotMatch(refreshCard, /onClose[\s\S]{0,120}setRouteFilter|onClose[\s\S]{0,120}setShowAffectedMarkets/);
+});
+
+test("Homepage Operations uses operator-facing filter empty states", () => {
+  assert.match(refreshCard, /No markets currently have usable routes/);
+  assert.match(refreshCard, /No markets have missing or expired routes/);
+  assert.match(refreshCard, /No markets contain expired routes/);
 });
 
 test("compact market cards retain essential fields without technical metrics", () => {

@@ -128,7 +128,7 @@ test("admin grouping groups routes under correct market labels", () => {
   ]);
 });
 
-test("View All includes all routes", () => {
+test("View all filtered routes includes all routes", () => {
   const allRoutes = buildAdminHomepageFareAllRoutesGroup(routes);
   assert.equal(allRoutes.marketCode, "ALL");
   assert.equal(allRoutes.routes.length, routes.length);
@@ -468,7 +468,7 @@ test("selected market scope resolves only that market's paginated routes", () =>
   assert.deepEqual([...new Set((selectedUs?.routes ?? []).map((route) => route.market.toUpperCase()))], ["US"]);
 });
 
-test("View All scope is separate from the All status filter and paginates all filtered routes", () => {
+test("View all filtered routes scope is separate from the All status filter and paginates all filtered routes", () => {
   const manyRoutes = Array.from({ length: 15 }, (_, index): AdminHomepageFareRoute => ({
     id: `mixed-route-${index + 1}`,
     market: index % 2 === 0 ? "US" : "NG",

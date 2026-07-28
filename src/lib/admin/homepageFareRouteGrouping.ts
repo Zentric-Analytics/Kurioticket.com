@@ -91,7 +91,7 @@ export type AdminHomepageFareMarketRouteGroup = {
   missingRoutesCount: number;
   failedUnavailableRoutesCount: number;
   staleRoutesCount: number;
-  status: "Ready" | "Partially ready" | "Underfilled" | "Failed" | "Fallback only";
+  status: "Ready" | "Partially ready" | "Needs coverage" | "Failed" | "Fallback only";
   marketVisibility: "country" | "regional" | "global";
   isFallbackPool: boolean;
   publicDisplayTarget: number;
@@ -363,8 +363,8 @@ function classifyGroupStatus({
   if (targetMet || marketStatus === "ready") return "Ready";
   if (failedUnavailableRoutesCount > 0 && freshFaresCount + lastKnownGoodFaresCount === 0) return "Failed";
   if (freshFaresCount + lastKnownGoodFaresCount > 0) return "Partially ready";
-  if (missingRoutesCount > 0 || staleRoutesCount > 0) return "Underfilled";
-  return marketStatus === "provider_exhausted" ? "Failed" : "Underfilled";
+  if (missingRoutesCount > 0 || staleRoutesCount > 0) return "Needs coverage";
+  return marketStatus === "provider_exhausted" ? "Failed" : "Needs coverage";
 }
 
 function routeMatchesFilter(
