@@ -28,7 +28,7 @@ function selectDistinct<T extends { id: string }>(results: T[], categories: { ba
 
 export const selectDealsFlightPreviews = (results: PublicFlightResult[]) => selectDistinct(results, [
   { badgeKey: "deals.results.flight.recommended.badge", eligible: (item) => positive(item.valueScore) !== undefined, compare: (a, b) => compareOptionalDescending(positive(a.valueScore), positive(b.valueScore)) || compareOptionalAscending(positive(a.price), positive(b.price)) || compareOptionalAscending(positive(a.durationMinutes), positive(b.durationMinutes)) || stableId(a).localeCompare(stableId(b)) },
-  { badgeKey: "deals.results.flight.lowest.badge", reasonKey: "deals.results.flight.lowest.reason", eligible: (item) => positive(item.price) !== undefined, compare: (a, b) => compareOptionalAscending(positive(a.price), positive(b.price)) || stableId(a).localeCompare(stableId(b)) },
+  { badgeKey: "deals.results.flight.lowest.badge", eligible: (item) => positive(item.price) !== undefined, compare: (a, b) => compareOptionalAscending(positive(a.price), positive(b.price)) || stableId(a).localeCompare(stableId(b)) },
   { badgeKey: "deals.results.flight.shortest.badge", eligible: (item) => positive(item.durationMinutes) !== undefined, compare: (a, b) => compareOptionalAscending(positive(a.durationMinutes), positive(b.durationMinutes)) || compareOptionalAscending(positive(a.price), positive(b.price)) || stableId(a).localeCompare(stableId(b)) },
 ]);
 
@@ -37,8 +37,6 @@ export const selectDealsHotelPreviews = (results: PublicHotelResult[]) => select
   { badgeKey: "deals.results.hotel.lowest.badge", eligible: (item) => getHotelPreviewPrice(item) !== null, compare: (a, b) => compareOptionalAscending(getHotelPreviewPrice(a)?.amount, getHotelPreviewPrice(b)?.amount) || stableId(a).localeCompare(stableId(b)) },
   { badgeKey: "deals.results.hotel.rating.badge", reasonKey: "deals.results.hotel.rating.reason", eligible: (item) => getHotelComparableReviewScore(item) !== null, compare: (a, b) => compareOptionalDescending(getHotelComparableReviewScore(a) ?? undefined, getHotelComparableReviewScore(b) ?? undefined) || compareOptionalDescending(normalizeHotelReviewCount(a.reviewCount), normalizeHotelReviewCount(b.reviewCount)) || compareOptionalAscending(getHotelPreviewPrice(a)?.amount, getHotelPreviewPrice(b)?.amount) || stableId(a).localeCompare(stableId(b)) },
 ]);
-
-export const formatDealsOptionCount = (template: string, visible: number, total: number) => template.replace("{{visible}}", String(visible)).replace("{{total}}", String(total));
 
 const dateOnly = (value: string) => {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);

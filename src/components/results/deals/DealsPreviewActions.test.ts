@@ -6,6 +6,7 @@ import { translations } from "@/lib/i18n/en";
 const flightCard = readFileSync(new URL("./DealsFlightPreviewCard.tsx", import.meta.url), "utf8");
 const hotelCard = readFileSync(new URL("./DealsHotelPreviewCard.tsx", import.meta.url), "utf8");
 const section = readFileSync(new URL("./DealsProductSection.tsx", import.meta.url), "utf8");
+const results = readFileSync(new URL("../DealsResultsClient.tsx", import.meta.url), "utf8");
 
 test("preview articles use selection buttons without direct provider handoffs", () => {
   for (const card of [flightCard, hotelCard]) {
@@ -28,9 +29,11 @@ test("preview articles use selection buttons without direct provider handoffs", 
 test("the product section retains one canonical results link contract", () => {
   assert.match(section, /<Link href=\{href\}/);
   assert.equal((section.match(/<Link\b/g) ?? []).length, 1);
+  for (const removed of ["countLabel", "supportingText"]) assert.doesNotMatch(section, new RegExp(removed));
+  for (const removed of ["formatDealsOptionCount", "countLabel", "supportingText", "deals.results.previewCount", "deals.results.returnedOptions", "deals.results.openCompleteResults"]) assert.doesNotMatch(results, new RegExp(removed.replaceAll(".", "\\.")));
 });
 
 test("Deals metadata and selection copy are non-empty in the fallback locale", () => {
-  const keys = ["deals.results.previewCount", "deals.results.returnedOptions", "deals.results.viewFlightsCount", "deals.results.viewHotelsCount", "deals.results.priceResponsibility", "deals.results.flight.recommended.badge", "deals.results.flight.lowest.reason", "deals.results.hotel.lowest.badge", "deals.results.hotel.rating.reason", "deals.results.providerHandoff.continue", "deals.results.providerHandoff.unavailable", "deals.results.providerHandoff.hotel.discoveryUnavailable", "deals.results.providerHandoff.hotel.demoUnavailable", "deals.results.providerHandoff.flight.accessible", "deals.results.providerHandoff.hotel.accessible"] as const;
+  const keys = ["deals.results.viewFlightsCount", "deals.results.viewHotelsCount", "deals.results.priceResponsibility", "deals.results.flight.recommended.badge", "deals.results.flight.lowest.badge", "deals.results.hotel.lowest.badge", "deals.results.hotel.rating.reason", "deals.results.providerHandoff.continue", "deals.results.providerHandoff.unavailable", "deals.results.providerHandoff.hotel.discoveryUnavailable", "deals.results.providerHandoff.hotel.demoUnavailable", "deals.results.providerHandoff.flight.accessible", "deals.results.providerHandoff.hotel.accessible"] as const;
   for (const key of keys) assert.ok(translations[key]?.trim(), key);
 });
