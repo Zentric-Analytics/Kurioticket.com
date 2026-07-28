@@ -8,6 +8,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 import { readSession } from "../../storage/sessionStorage";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
@@ -35,6 +37,7 @@ function greeting(hour: number) {
 
 export function HomeFlowScreen() {
   const [name, setName] = useState("Traveler");
+  const insets = useSafeAreaInsets();
   useEffect(() => {
     void readSession()
       .then((session) => {
@@ -44,42 +47,48 @@ export function HomeFlowScreen() {
       .catch(() => undefined);
   }, []);
   return (
-    <SafeAreaView style={flowStyles.safe} edges={["top"]}>
+    <SafeAreaView style={flowStyles.safe} edges={[]}>
+      <StatusBar style="dark" translucent backgroundColor="transparent" />
       <ScrollView
-        contentContainerStyle={flowStyles.scroll}
+        contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.brandRow}>
-          <Image
-            accessibilityLabel="Kurioticket"
-            resizeMode="contain"
-            source={require("../../../assets/kurioticket-logo-primary-light-bg.png")}
-            style={styles.logo}
+        <View style={styles.heroShell}>
+          <ResponsiveHero
+            source={require("../../../assets/heroes/home-santorini.png")}
+            sourceWidth={307}
+            sourceHeight={596}
+            height={342}
+            focalY={0.45}
+            accessibilityLabel="Santorini coastline"
           />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Notifications"
-            onPress={() => router.push("/notifications")}
-            style={flowStyles.iconButton}
-          >
-            <FlowIcon name="bell" />
-          </Pressable>
+          <View style={[styles.heroOverlay, { paddingTop: insets.top + 6 }]}>
+            <View style={styles.brandRow}>
+              <Image
+                accessibilityLabel="Kurioticket"
+                resizeMode="contain"
+                source={require("../../../assets/kurioticket-logo-primary-light-bg.png")}
+                style={styles.logo}
+              />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Notifications"
+                onPress={() => router.push("/notifications")}
+                style={flowStyles.iconButton}
+              >
+                <FlowIcon name="bell" />
+              </Pressable>
+            </View>
+            <View style={styles.greetingBlock}>
+              <Text style={styles.greeting}>
+                {greeting(new Date().getHours())}
+              </Text>
+              <Text accessibilityRole="header" style={styles.name}>
+                {name}
+              </Text>
+            </View>
+          </View>
         </View>
-        <View>
-          <Text style={styles.greeting}>{greeting(new Date().getHours())}</Text>
-          <Text accessibilityRole="header" style={styles.name}>
-            {name}
-          </Text>
-        </View>
-        <ResponsiveHero
-          source={require("../../../assets/heroes/home-santorini.png")}
-          sourceWidth={307}
-          sourceHeight={596}
-          height={258}
-          focalY={0.62}
-          accessibilityLabel="Santorini coastline"
-          rounded
-        />
         <View style={[styles.products, flowStyles.shadow]}>
           {products.map((product, index) => (
             <Pressable
@@ -136,6 +145,9 @@ export function HomeFlowScreen() {
 }
 
 const styles = StyleSheet.create({
+  content: { paddingHorizontal: 14, paddingBottom: 26, gap: 14 },
+  heroShell: { height: 342, marginHorizontal: -14, overflow: "hidden" },
+  heroOverlay: { ...StyleSheet.absoluteFillObject, paddingHorizontal: 14 },
   brandRow: {
     minHeight: 54,
     flexDirection: "row",
@@ -143,6 +155,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   logo: { width: 130, height: 36 },
+  greetingBlock: { marginTop: 36 },
   greeting: { color: flowColors.muted, fontSize: 13, fontWeight: "600" },
   name: {
     color: flowColors.navy,
@@ -151,6 +164,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   products: {
+    marginTop: -34,
     minHeight: 78,
     flexDirection: "row",
     backgroundColor: "white",

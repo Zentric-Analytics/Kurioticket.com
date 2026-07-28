@@ -9,13 +9,14 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 import { destinationImages } from "./flowData";
 import { FlightSearchPanel } from "./FlightSearchPanel";
 import {
   Field,
   PrimaryButton,
-  ScreenHeader,
   Segments,
   UnavailableNotice,
 } from "./FlowPrimitives";
@@ -38,24 +39,48 @@ function Page({
   heroHeight: number;
   focalY: number;
 }) {
+  const insets = useSafeAreaInsets();
   return (
-    <SafeAreaView style={flowStyles.safe} edges={["top"]}>
+    <SafeAreaView style={flowStyles.safe} edges={[]}>
+      <StatusBar style="dark" translucent backgroundColor="transparent" />
       <ScrollView
         contentContainerStyle={styles.page}
         keyboardShouldPersistTaps="handled"
       >
-        <ScreenHeader title={title} back />
-        <View style={styles.fullBleedHero}>
+        <View style={styles.heroShell}>
           <ResponsiveHero
             source={hero}
             sourceWidth={heroWidth}
             sourceHeight={heroHeight}
-            height={220}
+            height={290}
             focalY={focalY}
             accessibilityLabel={`${title} hero image`}
           />
+          <View style={[styles.heroHeader, { paddingTop: insets.top + 4 }]}>
+            <View style={styles.heroActions}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Go back"
+                onPress={() => router.back()}
+                style={flowStyles.iconButton}
+              >
+                <FlowIcon name="back" />
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Notifications"
+                onPress={() => router.push("/notifications")}
+                style={flowStyles.iconButton}
+              >
+                <FlowIcon name="bell" />
+              </Pressable>
+            </View>
+            <Text accessibilityRole="header" style={styles.heroTitle}>
+              {title}
+            </Text>
+          </View>
         </View>
-        {children}
+        <View style={styles.body}>{children}</View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -376,8 +401,19 @@ export function DealsScreen() {
 }
 
 const styles = StyleSheet.create({
-  page: { paddingHorizontal: 9, paddingBottom: 28, gap: 12 },
-  fullBleedHero: { marginHorizontal: -9 },
+  page: { paddingHorizontal: 9, paddingBottom: 28 },
+  heroShell: { height: 290, marginHorizontal: -9, overflow: "hidden" },
+  heroHeader: { ...StyleSheet.absoluteFillObject, paddingHorizontal: 5 },
+  heroActions: { flexDirection: "row", justifyContent: "space-between" },
+  heroTitle: {
+    color: flowColors.navy,
+    fontSize: 23,
+    lineHeight: 30,
+    fontWeight: "800",
+    marginHorizontal: 9,
+    marginTop: 2,
+  },
+  body: { marginTop: -22, gap: 12 },
   row: { flexDirection: "row" },
   half: { flex: 1 },
   pad: { padding: 8 },
