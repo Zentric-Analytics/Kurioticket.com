@@ -70,12 +70,7 @@ export type AdminHomepageFareRouteGroupFilter =
   | "unavailable";
 
 export const ADMIN_HOMEPAGE_FARE_ROUTE_PAGE_SIZE = 10;
-export const ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE = "__all_homepage_fare_routes__";
-
-export type AdminHomepageFareRouteScope =
-  | typeof ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
-  | string
-  | null;
+export type AdminHomepageFareRouteScope = string | null;
 
 export type AdminHomepageFareMarketRouteGroup = {
   marketCode: string;
@@ -91,7 +86,7 @@ export type AdminHomepageFareMarketRouteGroup = {
   missingRoutesCount: number;
   failedUnavailableRoutesCount: number;
   staleRoutesCount: number;
-  status: "Ready" | "Partially ready" | "Underfilled" | "Failed" | "Fallback only";
+  status: "Ready" | "Partially ready" | "Needs coverage" | "Failed" | "Fallback only";
   marketVisibility: "country" | "regional" | "global";
   isFallbackPool: boolean;
   publicDisplayTarget: number;
@@ -132,33 +127,6 @@ export function buildAdminHomepageFareRouteGroups({
     .sort(compareGroups);
 }
 
-export function buildAdminHomepageFareAllRoutesGroup(
-  routes?: AdminHomepageFareRoute[] | null,
-  filter: AdminHomepageFareRouteGroupFilter = "all",
-): AdminHomepageFareMarketRouteGroup {
-  const safeRoutes = Array.isArray(routes) ? routes.filter(isAdminHomepageFareRoute) : [];
-  const filteredRoutes = safeRoutes.filter((route) => routeMatchesFilter(route, filter));
-
-  return createGroup("ALL", filteredRoutes, {
-    market: "ALL",
-    marketCode: "ALL",
-    marketLabel: "All routes",
-    marketGroup: "Debug",
-    popularVisibleFresh: filteredRoutes.filter((route) => route.section === "popular" && isUsableFare(route.status)).length,
-    discoveryVisibleFresh: filteredRoutes.filter((route) => route.section === "discovery" && isUsableFare(route.status)).length,
-    backupFresh: filteredRoutes.filter((route) => route.section === "backup" && isUsableFare(route.status)).length,
-    targetMet: filteredRoutes.length > 0 && filteredRoutes.every((route) => route.status === "fresh" || route.status === "last_known_good"),
-    status: filteredRoutes.some((route) => route.status === "failed") ? "provider_exhausted" : "underfilled",
-    failed: filteredRoutes.filter((route) => route.status === "failed").length,
-    unavailable: filteredRoutes.filter((route) => route.status === "unavailable").length,
-    candidatePoolSize: filteredRoutes.length,
-    marketVisibility: "global",
-    popularVisibleTarget: 0,
-    discoveryVisibleTarget: 0,
-    backupTarget: 0,
-  });
-}
-
 export function splitAdminHomepageFareMarketRouteGroups(
   groups?: AdminHomepageFareMarketRouteGroup[] | null,
 ) {
@@ -170,20 +138,68 @@ export function splitAdminHomepageFareMarketRouteGroups(
   };
 }
 
+export function filterAdminHomepageFareMarketsByRouteGroups<
+  TMarket extends { marketCode: string },
+>(
+  markets: TMarket[],
+  groups: AdminHomepageFareMarketRouteGroup[],
+  filter: AdminHomepageFareRouteGroupFilter,
+) {
+  if (filter === "all") return markets;
+
+  const matchingMarketCodes = new Set(
+    groups
+      .filter((group) => group.routes.length > 0)
+      .map((group) => normalizeAdminHomepageFareMarketCode(group.marketCode)),
+  );
+
+  return markets.filter((market) =>
+    matchingMarketCodes.has(
+      normalizeAdminHomepageFareMarketCode(market.marketCode),
+    ),
+  );
+}
+
+export function resolveAdminHomepageFareActiveRouteScope<
+  TMarket extends { marketCode: string },
+>({
+  selectedScope,
+  markets,
+  visibleMarkets,
+}: {
+  selectedScope: AdminHomepageFareRouteScope;
+  markets: TMarket[];
+  visibleMarkets: TMarket[];
+}): AdminHomepageFareRouteScope {
+  if (!selectedScope) {
+    return selectedScope;
+  }
+
+  const selectedMarketCode = normalizeAdminHomepageFareMarketCode(selectedScope);
+  const selectedMarketExists = markets.some(
+    (market) =>
+      normalizeAdminHomepageFareMarketCode(market.marketCode) ===
+      selectedMarketCode,
+  );
+  const selectedMarketIsVisible = visibleMarkets.some(
+    (market) =>
+      normalizeAdminHomepageFareMarketCode(market.marketCode) ===
+      selectedMarketCode,
+  );
+
+  return selectedMarketExists && !selectedMarketIsVisible
+    ? null
+    : selectedScope;
+}
+
 export function resolveAdminHomepageFareSelectedRouteGroup({
   selectedScope,
   marketRouteGroups,
-  allRoutesGroup,
 }: {
   selectedScope: AdminHomepageFareRouteScope;
   marketRouteGroups: AdminHomepageFareMarketRouteGroup[];
-  allRoutesGroup: AdminHomepageFareMarketRouteGroup;
 }) {
   if (!selectedScope) return null;
-
-  if (selectedScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE) {
-    return allRoutesGroup;
-  }
 
   const selectedMarketCode = normalizeAdminHomepageFareMarketCode(selectedScope);
 
@@ -306,8 +322,8 @@ function classifyGroupStatus({
   if (targetMet || marketStatus === "ready") return "Ready";
   if (failedUnavailableRoutesCount > 0 && freshFaresCount + lastKnownGoodFaresCount === 0) return "Failed";
   if (freshFaresCount + lastKnownGoodFaresCount > 0) return "Partially ready";
-  if (missingRoutesCount > 0 || staleRoutesCount > 0) return "Underfilled";
-  return marketStatus === "provider_exhausted" ? "Failed" : "Underfilled";
+  if (missingRoutesCount > 0 || staleRoutesCount > 0) return "Needs coverage";
+  return marketStatus === "provider_exhausted" ? "Failed" : "Needs coverage";
 }
 
 function routeMatchesFilter(

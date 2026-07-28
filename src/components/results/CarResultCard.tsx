@@ -1,17 +1,48 @@
+"use client";
+
 import Link from "next/link";
-import { BriefcaseBusiness, CarFront, Check, DoorOpen, Fuel, Gauge, MapPin, Snowflake, Sparkles, Star, Users } from "lucide-react";
+import { Award, BriefcaseBusiness, CarFront, Check, DoorOpen, Fuel, Gauge, MapPin, Snowflake, Star, Tag, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
+import { useRegion } from "@/components/region/RegionProvider";
 import { CarResultImage } from "@/components/results/CarResultImage";
 import type { CarResultBadge } from "@/lib/cars/carResults";
 import { getPrimaryCarOffer } from "@/lib/cars/carResults";
 import type { NormalizedCarResult } from "@/lib/cars/types";
+import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 
 const title = (value: string) => value.replaceAll("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 
+const carResultBadgeIcons: Record<CarResultBadge, LucideIcon> = {
+  "Best value": Award,
+  Cheapest: Tag,
+  "Top rated": Star,
+};
+
 export function CarResultCard({ car, badge, detailsHref }: { car: NormalizedCarResult; badge?: CarResultBadge; detailsHref: string }) {
+  const { selectedOption } = useRegion();
+  const currencyRates = useCurrencyRates();
   const offer = getPrimaryCarOffer(car);
   if (!offer) return null;
-  const money = (value: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: offer.currency, maximumFractionDigits: 0 }).format(value);
+  const BadgeIcon = badge ? carResultBadgeIcons[badge] : null;
+  const dailyDisplayPrice = formatDisplayPrice({
+    amount: offer.pricePerDay,
+    sourceCurrency: offer.currency,
+    displayCurrency: selectedOption.currency,
+    convertSourceEstimate: true,
+    maximumFractionDigits: 0,
+    rates: currencyRates.rates,
+    isFallbackRate: currencyRates.isFallback,
+  });
+  const totalDisplayPrice = formatDisplayPrice({
+    amount: offer.totalPrice,
+    sourceCurrency: offer.currency,
+    displayCurrency: selectedOption.currency,
+    convertSourceEstimate: true,
+    maximumFractionDigits: 0,
+    rates: currencyRates.rates,
+    isFallbackRate: currencyRates.isFallback,
+  });
   const specifications: Array<[LucideIcon, string]> = [
     [Users, `${car.passengers} passengers`],
     [BriefcaseBusiness, `${car.bags} bags`],
@@ -22,49 +53,65 @@ export function CarResultCard({ car, badge, detailsHref }: { car: NormalizedCarR
 
   return (
     <article className="relative w-full overflow-hidden rounded-2xl border border-[#D8E1EC] bg-white shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)] transition duration-200 hover:-translate-y-0.5 hover:border-[#CBD6E2] hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.42)]">
-      <div className="grid md:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_205px]">
-        <div className="flex flex-col justify-center gap-2 border-b border-[#E2E8F0] bg-slate-50 p-3 md:border-b-0 md:border-e">
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-slate-100">
+      <div className="grid grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:grid-cols-[250px_minmax(0,1fr)] lg:grid-cols-[250px_minmax(0,1fr)_205px] xl:grid-cols-[270px_minmax(0,1fr)_205px]">
+        <div data-region="image" className="col-span-2 row-start-1 flex items-center border-b border-[#E2E8F0] bg-slate-50 md:col-span-1 md:col-start-1 md:row-span-2 md:row-start-1 md:border-b-0 md:border-e md:p-2.5">
+          <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100 md:rounded-xl">
             <CarResultImage imageUrl={car.imageUrl} imageAlt={car.imageAlt} modelName={car.modelName} category={car.category} />
           </div>
-          <span className="text-[10px] font-semibold tracking-wide text-slate-500">Representative vehicle</span>
         </div>
 
-        <div className="flex min-w-0 flex-col p-5">
-          <header className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0">
+        <div data-region="heading" className="col-span-2 row-start-2 min-w-0 px-3.5 py-2.5 md:col-span-1 md:col-start-2 md:row-start-1 md:px-4 md:pb-1 md:pt-3">
+          <header className="flex flex-wrap items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#004BB8]">{car.categoryLabel}</p>
-              <h2 className="mt-1 text-[22px] font-extrabold leading-tight text-[#102A43]">{car.modelName} {car.orSimilar && <span className="whitespace-nowrap text-sm font-medium text-slate-500">or similar</span>}</h2>
+              <h2 className="mt-0.5 break-words text-[22px] font-extrabold leading-tight text-[#102A43]">
+                {car.modelName}
+              </h2>
             </div>
-            {badge && <span className="inline-flex min-h-7 shrink-0 items-center gap-1.5 rounded-md bg-[#EAF2FB] px-2.5 py-1 text-xs font-semibold text-[#004BB8]"><Sparkles size={13} aria-hidden="true" />{badge}</span>}
+            {badge && BadgeIcon && (
+              <span className="inline-flex min-h-6 shrink-0 items-center gap-1 rounded-md bg-[#EAF2FB] px-2 py-0.5 text-xs font-semibold text-[#004BB8]">
+                <BadgeIcon size={13} aria-hidden="true" />
+                {badge}
+              </span>
+            )}
           </header>
 
-          <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-2.5 text-sm font-medium text-slate-600">
-            {specifications.map(([Icon, label]) => <li key={label} className="flex items-center gap-1.5"><Icon size={16} className="shrink-0 text-slate-500" aria-hidden="true" />{label}</li>)}
+          <p className="mt-1 flex min-w-0 items-center gap-2 text-sm text-slate-600">
+            <MapPin
+              size={16}
+              className="shrink-0 text-[#004BB8]"
+              aria-hidden="true"
+            />
+            <span className="min-w-0 whitespace-normal md:whitespace-nowrap">
+              <strong className="font-semibold text-slate-700">
+                {title(car.pickupType)}
+              </strong>
+              {" · "}
+              {car.pickupLocation}
+              {car.shuttleRequired ? " · Shuttle required" : ""}
+            </span>
+          </p>
+        </div>
+
+        <div data-region="details" className="col-start-1 row-start-3 min-w-0 border-t border-[#E2E8F0] px-3 py-3 md:col-start-2 md:row-start-2 md:border-t-0 md:px-4 md:pb-3 md:pt-1">
+          <ul className="grid grid-cols-1 gap-y-1.5 text-[12px] font-medium leading-4 text-slate-600 md:flex md:flex-wrap md:gap-x-3 md:gap-y-1.5 md:text-sm">
+            {specifications.map(([Icon, label]) => <li key={label} className="flex min-w-0 items-center gap-1.5"><Icon size={16} className="shrink-0 text-slate-500" aria-hidden="true" /><span className="min-w-0">{label}</span></li>)}
           </ul>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            <span className="inline-flex min-h-7 items-center gap-1.5 rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700"><Gauge size={13} aria-hidden="true" />{car.mileagePolicy === "unlimited" ? "Unlimited mileage" : `${car.limitedMileageKm} km included`}</span>
-            <span className="inline-flex min-h-7 items-center gap-1.5 rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700"><Fuel size={13} aria-hidden="true" />{title(car.fuelPolicy)}</span>
-            {offer.freeCancellation && <span className="inline-flex min-h-7 items-center gap-1.5 rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700"><Check size={13} aria-hidden="true" />Free cancellation</span>}
-            {offer.payAtPickup && <span className="inline-flex min-h-7 items-center gap-1.5 rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700"><Check size={13} aria-hidden="true" />Pay at pickup</span>}
-          </div>
-
-          <p className="mt-4 flex items-start gap-2 text-sm text-slate-600"><MapPin size={16} className="mt-0.5 shrink-0 text-[#004BB8]" aria-hidden="true" /><span><strong className="font-semibold text-slate-700">{title(car.pickupType)}</strong> · {car.pickupLocation}{car.shuttleRequired ? " · Shuttle required" : ""}</span></p>
-
-          <div className="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-4 text-xs text-slate-500 sm:flex-row sm:items-end sm:justify-between">
-            <div><p className="font-semibold text-slate-700">{car.rentalCompanyName}</p><p className="mt-0.5">Booked through {offer.bookingProviderName}</p></div>
-            {car.supplierRating !== undefined && <p className="flex shrink-0 items-center gap-1"><Star size={14} className="fill-amber-400 text-amber-400" aria-hidden="true" /><strong className="text-slate-700">{car.supplierRating.toFixed(1)}</strong>{car.supplierReviewCount !== undefined ? ` (${car.supplierReviewCount} reviews)` : ""}</p>}
+          <div className="mt-2 flex min-w-0 flex-col items-start gap-1.5 md:flex-row md:flex-wrap">
+            <span className="inline-flex min-h-6 max-w-full items-start gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-slate-700 md:items-center md:px-2 md:text-xs"><Gauge size={13} className="mt-0.5 shrink-0 md:mt-0" aria-hidden="true" /><span className="min-w-0">{car.mileagePolicy === "unlimited" ? "Unlimited mileage" : `${car.limitedMileageKm} km included`}</span></span>
+            <span className="inline-flex min-h-6 max-w-full items-start gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-slate-700 md:items-center md:px-2 md:text-xs"><Fuel size={13} className="mt-0.5 shrink-0 md:mt-0" aria-hidden="true" /><span className="min-w-0">{title(car.fuelPolicy)}</span></span>
+            {offer.freeCancellation && <span className="inline-flex min-h-6 max-w-full items-start gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-emerald-700 md:items-center md:px-2 md:text-xs"><Check size={13} className="mt-0.5 shrink-0 md:mt-0" aria-hidden="true" /><span className="min-w-0">Free cancellation</span></span>}
+            {offer.payAtPickup && <span className="inline-flex min-h-6 max-w-full items-start gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-emerald-700 md:items-center md:px-2 md:text-xs"><Check size={13} className="mt-0.5 shrink-0 md:mt-0" aria-hidden="true" /><span className="min-w-0">Pay at pickup</span></span>}
           </div>
         </div>
 
-        <div className="col-span-full flex flex-col gap-4 border-t border-[#E2E8F0] bg-slate-50/45 p-5 sm:flex-row sm:items-end sm:justify-between xl:col-span-1 xl:items-stretch xl:justify-end xl:border-s xl:border-t-0 xl:bg-white xl:text-end">
-          <div className="flex flex-wrap items-end gap-x-7 gap-y-2 sm:flex-1 xl:flex-col xl:items-end xl:gap-0">
-            {car.offers.length > 1 && <p className="w-full text-xs font-semibold text-[#004BB8]">{car.offers.length} offers available</p>}
-            <div><p className="text-xs font-medium text-slate-500">Price per day</p><p className="mt-0.5 text-lg font-bold text-slate-700">{money(offer.pricePerDay)}</p></div>
-            <div className="xl:mt-4"><p className="text-xs font-medium text-slate-500">Total</p><p className="text-[28px] font-extrabold leading-none text-[#102A43]">{money(offer.totalPrice)}</p>{offer.taxesAndFeesIncluded && <p className="mt-1.5 text-xs text-slate-500">Taxes and fees included</p>}</div>
+        <div data-region="pricing" className="col-start-2 row-start-3 flex min-w-0 flex-col border-s border-t border-[#E2E8F0] bg-slate-50/45 px-3 py-3 text-end md:col-span-2 md:col-start-1 md:row-start-3 md:border-s-0 md:px-4 lg:col-span-1 lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:border-s lg:border-t-0 lg:bg-white lg:text-end">
+          <div className="flex flex-col gap-2">
+            <div className="order-1 md:order-2"><p className="break-words text-lg font-bold leading-7 tracking-[-0.01em] text-[#102A43] tabular-nums min-[380px]:whitespace-nowrap lg:text-xl" dir="ltr" title={totalDisplayPrice.title} aria-label={totalDisplayPrice.ariaLabel}>{totalDisplayPrice.formatted}</p><p className="text-xs font-medium text-slate-500">Total</p>{offer.taxesAndFeesIncluded && <p className="mt-1 text-xs leading-4 text-slate-500">Taxes and fees included</p>}</div>
+            <div className="order-2 md:order-1"><p className="text-xs font-medium text-slate-500">Price per day</p><p className="mt-0.5 break-words text-sm font-semibold leading-5 text-slate-700 tabular-nums min-[380px]:whitespace-nowrap" dir="ltr" title={dailyDisplayPrice.title} aria-label={dailyDisplayPrice.ariaLabel}>{dailyDisplayPrice.formatted}</p></div>
           </div>
-          <Link href={detailsHref} className="inline-flex h-11 min-w-40 items-center justify-center rounded-lg bg-[#004BB8] px-5 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 xl:mt-auto xl:w-full">View car</Link>
+          <Link href={detailsHref} className="mt-3 inline-flex min-h-10 w-full items-center justify-center rounded-lg bg-[#004BB8] px-2 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 md:px-5 lg:mt-auto">View car</Link>
         </div>
       </div>
     </article>

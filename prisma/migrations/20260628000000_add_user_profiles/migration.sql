@@ -1,19 +1,8 @@
-CREATE TABLE "UserProfile" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "fullName" TEXT,
-    "phoneNumber" TEXT,
-    "dateOfBirth" TEXT,
-    "gender" TEXT,
-    "nationality" TEXT,
-    "address" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+ALTER TABLE "UserProfile"
+RENAME COLUMN "phone" TO "phoneNumber";
 
-    CONSTRAINT "UserProfile_pkey" PRIMARY KEY ("id")
-);
+ALTER TABLE "UserProfile"
+ADD COLUMN "fullName" TEXT;
 
-CREATE UNIQUE INDEX "UserProfile_userId_key" ON "UserProfile"("userId");
-CREATE INDEX "UserProfile_createdAt_idx" ON "UserProfile"("createdAt");
-
-ALTER TABLE "UserProfile" ADD CONSTRAINT "UserProfile_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+CREATE INDEX "UserProfile_createdAt_idx"
+ON "UserProfile"("createdAt");

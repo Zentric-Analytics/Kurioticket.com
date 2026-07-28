@@ -1,6 +1,7 @@
-import { ArrowLeft, Heart, MapPin, Share2 } from "lucide-react";
+import { Heart, MapPin } from "lucide-react";
+import { DetailsBackLink } from "@/components/results/DetailsBackLink";
 import { Badge } from "@/components/ui/Badge";
-import { Button, LinkButton } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 
 type SourceAttribution = { provider: string; providerUri?: string };
 
@@ -15,14 +16,6 @@ type HotelDetailsHeaderProps = {
   saveRequiresLiveRateText: string;
   onSave: () => void;
   saveActionText: string;
-  shareHotelLabel: string;
-  onShare: () => void;
-  shareActionText: string;
-  mapHref: string;
-  mapHotelLabel: string;
-  mapActionText: string;
-  shareStatus: "idle" | "shared" | "copied" | "error";
-  shareFeedbackText: string;
   starRating: number | null;
   starRatingAriaLabel: string;
   isGoogleMapsProvider: boolean;
@@ -46,14 +39,6 @@ export function HotelDetailsHeader({
   saveRequiresLiveRateText,
   onSave,
   saveActionText,
-  shareHotelLabel,
-  onShare,
-  shareActionText,
-  mapHref,
-  mapHotelLabel,
-  mapActionText,
-  shareStatus,
-  shareFeedbackText,
   starRating,
   starRatingAriaLabel,
   isGoogleMapsProvider,
@@ -67,15 +52,9 @@ export function HotelDetailsHeader({
 }: HotelDetailsHeaderProps) {
   return (
     <header className="min-w-0 border-b border-border pb-6 sm:pb-8">
-      <LinkButton
-        href={resultsHref}
-        variant="ghost"
-        size="sm"
-        className="-ms-2 w-fit px-2 text-slate-700 hover:text-navy"
-      >
-        <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-        <span>{backToResultsText}</span>
-      </LinkButton>
+      <DetailsBackLink href={resultsHref}>
+        {backToResultsText}
+      </DetailsBackLink>
       <div className="mt-4 flex flex-wrap items-center gap-2">
         {badges.map((badge) => (
           <Badge key={badge} variant="brand" size="sm">
@@ -87,68 +66,28 @@ export function HotelDetailsHeader({
         <h1 className="min-w-0 max-w-4xl break-words text-3xl font-bold leading-tight tracking-tight text-slate-950 sm:text-4xl lg:text-[2.625rem]">
           {name}
         </h1>
-        <div className="min-w-0 shrink-0 md:max-w-[360px]">
-          <div className="flex flex-wrap items-center gap-2 md:justify-end">
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              aria-label={savedHotelLabel}
-              aria-pressed={isSaved}
-              title={
-                isSaved || hasValidPrice
-                  ? savedHotelLabel
-                  : saveRequiresLiveRateText
-              }
-              disabled={!isSaved && !hasValidPrice}
-              onClick={onSave}
-            >
-              <Heart
-                className="h-4 w-4"
-                aria-hidden="true"
-                fill={isSaved ? "currentColor" : "none"}
-              />
-              <span>{saveActionText}</span>
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              aria-label={shareHotelLabel}
-              title={shareHotelLabel}
-              onClick={onShare}
-            >
-              <Share2 className="h-4 w-4" aria-hidden="true" />
-              <span>{shareActionText}</span>
-            </Button>
-            {mapHref ? (
-              <LinkButton
-                href={mapHref}
-                variant="secondary"
-                size="sm"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={mapHotelLabel}
-                title={mapHotelLabel}
-              >
-                <MapPin className="h-4 w-4" aria-hidden="true" />
-                <span>{mapActionText}</span>
-              </LinkButton>
-            ) : null}
-          </div>
-          {shareStatus !== "idle" ? (
-            <p
-              role={shareStatus === "error" ? "alert" : "status"}
-              className={
-                shareStatus === "error"
-                  ? "mt-2 text-xs font-medium text-red-700 md:text-end"
-                  : "mt-2 text-xs font-medium text-slate-600 md:text-end"
-              }
-            >
-              {shareFeedbackText}
-            </p>
-          ) : null}
-        </div>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="shrink-0"
+          aria-label={savedHotelLabel}
+          aria-pressed={isSaved}
+          title={
+            isSaved || hasValidPrice
+              ? savedHotelLabel
+              : saveRequiresLiveRateText
+          }
+          disabled={!isSaved && !hasValidPrice}
+          onClick={onSave}
+        >
+          <Heart
+            className="h-4 w-4"
+            aria-hidden="true"
+            fill={isSaved ? "currentColor" : "none"}
+          />
+          <span>{saveActionText}</span>
+        </Button>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
         {starRating ? (

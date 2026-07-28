@@ -1,2 +1,2 @@
-import { ReservedEmailAuthScreen } from "../src/features/launch/LaunchScreens";
-export default ReservedEmailAuthScreen;
+import { AuthFlow } from "../src/features/auth/AuthFlow";
+export default AuthFlow;

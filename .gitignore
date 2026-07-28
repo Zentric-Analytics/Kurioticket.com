@@ -19,10 +19,13 @@ node_modules/
 
 # production
 /build
+apps/mobile/dist/
 
 # misc
 .DS_Store
 *.pem
+*.jks
+*.keystore
 
 # debug
 npm-debug.log*

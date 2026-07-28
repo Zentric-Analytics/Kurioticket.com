@@ -2,19 +2,25 @@
   "expo": {
     "name": "Kurioticket",
     "slug": "kurioticket-mobile",
-    "platforms": ["android"],
-    "version": "0.1.0",
+    "platforms": ["android", "ios"],
+    "version": "0.2.0",
     "orientation": "portrait",
     "scheme": "kurioticket",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.kurioticket.mobile"
+      "bundleIdentifier": "com.kurioticket.mobile",
+      "icon": "./assets/kurioticket-icon-blue.png"
     },
     "android": {
       "package": "com.kurioticket.mobile",
       "icon": "./assets/kurioticket-icon-blue.png",
+      "splash": {
+        "image": "./assets/kurioticket-logo-primary-light-bg.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#F7FAFF"
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/kurioticket-adaptive-foreground.png",
         "backgroundColor": "#F2F6FA"
@@ -27,7 +33,7 @@
     "splash": {
       "image": "./assets/kurioticket-logo-primary-light-bg.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F2F6FA"
+      "backgroundColor": "#F7FAFF"
     },
     "extra": {
       "router": {},
@@ -40,7 +46,9 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/89f6fd88-c0d7-495a-9e2b-8301b09f407d"
+      "url": "https://u.expo.dev/89f6fd88-c0d7-495a-9e2b-8301b09f407d",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 10000
     }
   }
 }

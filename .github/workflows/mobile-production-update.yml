@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   publish-production-update:
-    name: Publish Android production update
+    name: Publish mobile production update
     runs-on: ubuntu-latest
 
     steps:
@@ -60,6 +60,6 @@ jobs:
           eas update
           --channel production
           --environment production
-          --platform android
+          --platform all
           --non-interactive
           --message "Automated production update from main ${{ github.sha }}"

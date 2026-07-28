@@ -32,6 +32,11 @@ import {
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
+import {
+  CarsDriverAgePickerContent,
+  CarsRentalDatePickerContent,
+  CarsTimeRangePickerContent,
+} from "@/components/search/CarsPickerContent";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { Footer } from "@/components/layout/Footer";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -57,6 +62,7 @@ import {
 } from "@/lib/cars/carsSearchUtils";
 import {
   carsFaqItems,
+  carsHeroImage,
   pickupCards,
   tripStyleCards,
   type CarImageCard,
@@ -133,8 +139,6 @@ const formatCarTimeLabel = (time: string, locale: string) => {
     minute: "2-digit",
   }).format(new Date(2024, 0, 1, hourValue, minuteValue));
 };
-
-const carsHeroImage = tripStyleCards[1].image;
 
 const trustCards = [
   {
@@ -331,12 +335,13 @@ function CarsSearchPage() {
                 fill
                 priority
                 sizes="100vw"
+                quality={92}
                 className="object-cover object-[54%_45%] brightness-[1.03] saturate-[1.08] contrast-[1.03]"
               />
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-950/52 via-slate-950/18 to-slate-950/6" />
-              <div className="absolute inset-y-0 start-0 w-[84%] bg-gradient-to-r from-slate-950/62 via-slate-950/24 to-transparent" />
-              <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-slate-950/36 via-slate-950/10 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/44 via-slate-950/12 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-950/46 via-slate-950/14 to-slate-950/4" />
+              <div className="absolute inset-y-0 start-0 w-[84%] bg-gradient-to-r from-slate-950/58 via-slate-950/20 to-transparent" />
+              <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-slate-950/30 via-slate-950/8 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/38 via-slate-950/10 to-transparent" />
             </div>
 
             <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-8">
@@ -378,12 +383,13 @@ function CarsSearchPage() {
                     fill
                     priority
                     sizes="100vw"
+                    quality={92}
                     className="object-cover object-[56%_45%] brightness-[1.04] saturate-[1.08] contrast-[1.03]"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-br from-slate-950/70 via-slate-950/28 to-slate-950/8" />
-                  <div className="absolute inset-y-0 start-0 w-[78%] bg-gradient-to-r from-slate-950/76 via-slate-950/34 to-transparent" />
-                  <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-slate-950/42 via-slate-950/12 to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-slate-950/72 via-slate-950/24 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-950/62 via-slate-950/22 to-slate-950/6" />
+                  <div className="absolute inset-y-0 start-0 w-[78%] bg-gradient-to-r from-slate-950/70 via-slate-950/28 to-transparent" />
+                  <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-slate-950/36 via-slate-950/10 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-slate-950/62 via-slate-950/18 to-transparent" />
                 </div>
 
                 <div className="page-shell relative z-10 flex min-h-[32rem] flex-col items-start pb-36 pt-10 lg:min-h-[36rem] lg:pb-40 lg:pt-14">
@@ -620,9 +626,12 @@ function CarsSearchBar({
   const timeWrapRef = useRef<HTMLDivElement | null>(null);
   const driverAgeWrapRef = useRef<HTMLDivElement | null>(null);
   const driverAgePopoverRef = useRef<HTMLDivElement | null>(null);
+  const searchCardRef = useRef<HTMLElement | null>(null);
+  const pickupFieldRef = useRef<HTMLDivElement | null>(null);
   const [datesOpen, setDatesOpen] = useState(false);
   const [timesOpen, setTimesOpen] = useState(false);
   const [driverAgeOpen, setDriverAgeOpen] = useState(false);
+  const [openDesktopLocation, setOpenDesktopLocation] = useState<"pickup" | "dropoff" | null>(null);
   const [focusedDriverAgeIndex, setFocusedDriverAgeIndex] = useState(0);
   const driverAgeOptionRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [activeMobilePicker, setActiveMobilePicker] =
@@ -671,6 +680,8 @@ function CarsSearchBar({
       if (event.key === "Escape") {
         if (datesOpen) {
           datesLauncherRef.current?.focus({ preventScroll: true });
+        } else if (timesOpen) {
+          timesLauncherRef.current?.focus({ preventScroll: true });
         } else if (driverAgeOpen) {
           desktopDriverAgeLauncherRef.current?.focus({ preventScroll: true });
         }
@@ -695,6 +706,7 @@ function CarsSearchBar({
     window.matchMedia("(max-width: 639px)").matches;
 
   const openMobilePicker = (picker: Exclude<CarsMobilePicker, null>) => {
+    setOpenDesktopLocation(null);
     setDatesOpen(false);
     setTimesOpen(false);
     setDriverAgeOpen(false);
@@ -752,6 +764,7 @@ function CarsSearchBar({
       const nextOpen = !current;
 
       if (nextOpen) {
+        setOpenDesktopLocation(null);
         setTimesOpen(false);
         setDriverAgeOpen(false);
       }
@@ -770,6 +783,7 @@ function CarsSearchBar({
       const nextOpen = !current;
 
       if (nextOpen) {
+        setOpenDesktopLocation(null);
         setDatesOpen(false);
         setDriverAgeOpen(false);
       }
@@ -788,6 +802,7 @@ function CarsSearchBar({
       const nextOpen = !current;
 
       if (nextOpen) {
+        setOpenDesktopLocation(null);
         setDatesOpen(false);
         setTimesOpen(false);
         setFocusedDriverAgeIndex(selectedIndex);
@@ -827,9 +842,25 @@ function CarsSearchBar({
   const dateError = errors.pickupDate || errors.dropoffDate || errors.dateRange;
   const timeError = errors.pickupTime || errors.dropoffTime;
   const locationAutocompleteStrings = getCarLocationAutocompleteStrings(t);
+  const setLocationPopoverOpen = (
+    location: "pickup" | "dropoff",
+    nextOpen: boolean,
+  ) => {
+    setOpenDesktopLocation((current) =>
+      nextOpen ? location : current === location ? null : current,
+    );
+    if (nextOpen) {
+      setDatesOpen(false);
+      setTimesOpen(false);
+      setDriverAgeOpen(false);
+    }
+  };
 
   return (
-    <section className="overflow-visible rounded-[1.5rem] border border-white/80 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.04] sm:rounded-[1.35rem] sm:border-slate-200/80 sm:bg-white sm:p-4 sm:shadow-[0_18px_42px_-28px_rgba(15,23,42,0.42)] sm:ring-1 sm:ring-white/70">
+    <section
+      ref={searchCardRef}
+      className="overflow-visible rounded-[1.5rem] border border-white/80 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.04] sm:rounded-[1.35rem] sm:border-slate-200/80 sm:bg-white sm:p-4 sm:shadow-[0_18px_42px_-28px_rgba(15,23,42,0.42)] sm:ring-1 sm:ring-white/70"
+    >
       <form
         onSubmit={onSubmit}
         className="relative flex flex-col gap-3 overflow-visible"
@@ -854,6 +885,7 @@ function CarsSearchBar({
         <div className="relative z-20 overflow-visible rounded-none border-0 bg-transparent p-0 shadow-none sm:rounded-[1.35rem] sm:bg-white">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-0 sm:rounded-2xl sm:border sm:border-slate-200/85 sm:bg-white lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1.45fr)_minmax(0,1.1fr)_minmax(6.8rem,0.62fr)_118px] lg:gap-0">
             <SearchCell
+              divRef={pickupFieldRef}
               label={t("carsSearch.pickupLocationLabel")}
               error={errors.pickupLocation || errors.dropoffLocation}
               className="sm:border-e sm:border-b sm:border-slate-200/80 lg:border-b-0"
@@ -884,6 +916,12 @@ function CarsSearchBar({
                     inputRef={pickupLocationRef}
                     inputClassName="hidden h-7 w-full border-none bg-transparent py-0 ps-0 pe-9 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-8"
                     presentation="desktop"
+                    fieldAnchorRef={pickupFieldRef}
+                    searchCardRef={searchCardRef}
+                    isOpen={openDesktopLocation === "pickup"}
+                    onOpenChange={(nextOpen) =>
+                      setLocationPopoverOpen("pickup", nextOpen)
+                    }
                     strings={locationAutocompleteStrings}
                   />
 
@@ -930,6 +968,12 @@ function CarsSearchBar({
                       inputRef={dropoffLocationRef}
                       inputClassName="hidden h-7 w-full border-t border-slate-100 bg-transparent py-0 ps-0 pe-9 pt-1.5 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-8 lg:pt-1.5"
                       presentation="desktop"
+                      fieldAnchorRef={pickupFieldRef}
+                      searchCardRef={searchCardRef}
+                      isOpen={openDesktopLocation === "dropoff"}
+                      onOpenChange={(nextOpen) =>
+                        setLocationPopoverOpen("dropoff", nextOpen)
+                      }
                       strings={locationAutocompleteStrings}
                     />
 
@@ -990,6 +1034,10 @@ function CarsSearchBar({
                 onToggle={toggleTimes}
                 pickupTime={values.pickupTime}
                 returnTime={values.dropoffTime}
+                onDone={() => {
+                  setTimesOpen(false);
+                  requestAnimationFrame(() => timesLauncherRef.current?.focus({ preventScroll: true }));
+                }}
                 updateValue={updateValue}
                 launcherRef={timesLauncherRef}
                 wrapRef={timeWrapRef}
@@ -1581,12 +1629,9 @@ function useDesktopPopoverPosition(
 }
 
 function DriverAgeDesktopPopover({
-  focusedIndex,
   isOpen,
   launcherRef,
-  onFocusedIndexChange,
   onSelect,
-  optionRefs,
   popoverRef,
   selectedAge,
 }: {
@@ -1601,40 +1646,10 @@ function DriverAgeDesktopPopover({
 }) {
   const { t } = useCarsLandingTranslations();
   const { popoverRef: positionedPopoverRef, style } = useDesktopPopoverPosition(
-    isOpen,
-    launcherRef,
-    248,
-    "below",
-    "end",
-    360,
-    popoverRef,
+    isOpen, launcherRef, 248, "below", "end", 360, popoverRef,
   );
 
-  useLayoutEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    const frame = requestAnimationFrame(() => {
-      const focusedOption = optionRefs.current[focusedIndex];
-      focusedOption?.focus({ preventScroll: true });
-      focusedOption?.scrollIntoView({ block: "nearest" });
-    });
-
-    return () => cancelAnimationFrame(frame);
-  }, [focusedIndex, isOpen, optionRefs]);
-
-  const moveFocus = (nextIndex: number) => {
-    const clampedIndex = Math.min(
-      driverAgeOptions.length - 1,
-      Math.max(0, nextIndex),
-    );
-    onFocusedIndexChange(clampedIndex);
-  };
-
-  if (!isOpen || typeof document === "undefined") {
-    return null;
-  }
+  if (!isOpen || typeof document === "undefined") return null;
 
   return createPortal(
     <div
@@ -1645,60 +1660,14 @@ function DriverAgeDesktopPopover({
       data-cars-desktop-popover="driver-age"
       data-placement="below"
       style={style ?? undefined}
-      onKeyDown={(event) => {
-        if (event.key === "ArrowDown") {
-          event.preventDefault();
-          moveFocus(focusedIndex + 1);
-        } else if (event.key === "ArrowUp") {
-          event.preventDefault();
-          moveFocus(focusedIndex - 1);
-        } else if (event.key === "Home") {
-          event.preventDefault();
-          moveFocus(0);
-        } else if (event.key === "End") {
-          event.preventDefault();
-          moveFocus(driverAgeOptions.length - 1);
-        }
-      }}
-      className="fixed z-[1110] hidden w-[248px] max-w-[calc(100vw-2rem)] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/95 bg-white p-1.5 shadow-[0_24px_60px_-24px_rgba(15,23,42,0.42)] ring-1 ring-slate-950/[0.06] sm:block"
+      className="fixed z-[1110] hidden w-[248px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200/95 bg-white shadow-[0_24px_60px_-24px_rgba(15,23,42,0.42)] ring-1 ring-slate-950/[0.06] sm:block"
     >
-      {driverAgeOptions.map((age, index) => {
-        const selected = selectedAge === age;
-
-        return (
-          <button
-            key={age}
-            ref={(node) => {
-              optionRefs.current[index] = node;
-            }}
-            type="button"
-            role="option"
-            aria-selected={selected}
-            tabIndex={index === focusedIndex ? 0 : -1}
-            onFocus={() => onFocusedIndexChange(index)}
-            onClick={() => onSelect(age)}
-            className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 text-start text-[15px] font-medium leading-5 transition-colors ${
-              selected
-                ? "bg-[#EAF2FB] font-semibold text-[#142033]"
-                : "text-[#263A55] hover:bg-slate-50 hover:text-slate-950"
-            }`}
-          >
-            <span>
-              {age === defaultDriverAge
-                ? t("carsSearch.driverAgeAnyAgeRange")
-                : getDriverAgeOptionLabel(age)}
-            </span>
-            <span className="flex w-5 shrink-0 justify-center">
-              {selected ? (
-                <CheckCircle2
-                  className="h-[18px] w-[18px] text-[#004BB8]"
-                  aria-hidden="true"
-                />
-              ) : null}
-            </span>
-          </button>
-        );
-      })}
+      <CarsDriverAgePickerContent
+        anyAgeLabel={t("carsSearch.driverAgeAnyAgeRange")}
+        formatAge={getDriverAgeOptionLabel}
+        onSelect={onSelect}
+        selectedAge={selectedAge}
+      />
     </div>,
     document.body,
   );
@@ -1736,8 +1705,6 @@ function RentalDatesField({
   const weekdays = useMemo(() => formatCarWeekdays(intlLocale), [intlLocale]);
   const pickupDisplay = formatCarDisplayDate(pickupDate, intlLocale);
   const dropoffDisplay = formatCarDisplayDate(dropoffDate, intlLocale);
-  const pickupParsed = parseIsoDate(pickupDate);
-  const dropoffParsed = parseIsoDate(dropoffDate);
   const dateSummary = pickupDisplay
     ? dropoffDisplay
       ? `${pickupDisplay} — ${dropoffDisplay}`
@@ -1785,125 +1752,30 @@ function RentalDatesField({
               style={style ?? undefined}
               className="fixed z-[1100] hidden overflow-y-auto overscroll-contain rounded-[1.35rem] border border-slate-200/95 bg-white p-4 shadow-[0_30px_90px_-30px_rgba(15,23,42,0.52),0_16px_36px_-22px_rgba(15,23,42,0.34)] ring-1 ring-slate-950/[0.08] sm:block"
             >
-          <p className="mb-3 text-base font-semibold text-slate-900">
-            {t("carsSearch.chooseRentalDates")}
-          </p>
-          <div className="mb-3 flex items-center justify-between">
-            <button
-              type="button"
-              aria-label={t("carsSearch.previousMonth")}
-              onClick={onPreviousMonth}
-              className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-            >
-              {t("carsSearch.previousMonthShort")}
-            </button>
-            <button
-              type="button"
-              aria-label={t("carsSearch.nextMonth")}
-              onClick={onNextMonth}
-              className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-            >
-              {t("carsSearch.nextMonthShort")}
-            </button>
-          </div>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-            {[0, 1].map((monthOffset) => {
-              const monthDate = addMonths(visibleMonthDate, monthOffset);
-              const cells = buildMonthCells(monthDate);
-
-              return (
-                <div key={monthOffset}>
-                  <p className="mb-1.5 text-center text-sm font-semibold text-slate-800">
-                    {monthDate.toLocaleDateString(intlLocale, {
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </p>
-                  <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-600">
-                    {weekdays.map((weekday) => (
-                      <span key={weekday}>{weekday}</span>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-7 gap-1">
-                    {cells.map((cell) => {
-                      const day = cell.date;
-                      const iso = toIsoDate(day);
-                      const isPickup = iso === pickupDate;
-                      const isDropoff = iso === dropoffDate;
-                      const isPastDate = isBeforeToday(day);
-                      const isBeforePickup = Boolean(
-                        pickupDate && !dropoffDate && iso < pickupDate,
-                      );
-                      const isInRange = Boolean(
-                        pickupParsed &&
-                        dropoffParsed &&
-                        !isPastDate &&
-                        day > pickupParsed &&
-                        day < dropoffParsed,
-                      );
-
-                      if (!cell.isCurrentMonth) {
-                        return (
-                          <span
-                            key={`placeholder-${iso}`}
-                            aria-hidden="true"
-                            className="h-8 w-8 justify-self-center"
-                          />
-                        );
-                      }
-
-                      return (
-                        <button
-                          key={iso}
-                          type="button"
-                          aria-label={`${t("carsSearch.selectDateAriaPrefix")} ${formatCarFullDate(day, intlLocale)}${
-                            isBeforePickup
-                              ? `; ${t("carsSearch.startsNewPickupDate")}`
-                              : ""
-                          }`}
-                          onClick={() => onSelectDate(day)}
-                          disabled={isPastDate}
-                          className={`focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed ${
-                            isPastDate
-                              ? "text-slate-300 hover:bg-transparent"
-                              : isBeforePickup
-                                ? "text-slate-500 hover:bg-[#004BB8]/8"
-                                : "text-slate-900 hover:bg-[#004BB8]/8"
-                          } ${
-                            isInRange
-                              ? "rounded-md bg-[#004BB8]/10 text-[#021C2B] hover:bg-[#004BB8]/10"
-                              : ""
-                          } ${
-                            isPickup || isDropoff
-                              ? "bg-[#004BB8] text-white hover:bg-[#004BB8]"
-                              : ""
-                          }`}
-                        >
-                          {day.getDate()}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
-            <button
-              type="button"
-              onClick={onClear}
-              className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-            >
-              {t("clear")}
-            </button>
-            <button
-              type="button"
-              onClick={onDone}
-              className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
-            >
-              {t("done")}
-            </button>
-          </div>
+          <CarsRentalDatePickerContent
+            dropoffDate={dropoffDate}
+            formatFullDate={(date) => formatCarFullDate(date, intlLocale)}
+            locale={intlLocale}
+            onClear={onClear}
+            onDone={onDone}
+            onNextMonth={onNextMonth}
+            onPreviousMonth={onPreviousMonth}
+            onSelectDate={onSelectDate}
+            pickupDate={pickupDate}
+            strings={{
+              chooseDates: t("carsSearch.chooseRentalDates"),
+              previousMonth: t("carsSearch.previousMonth"),
+              previousMonthShort: t("carsSearch.previousMonthShort"),
+              nextMonth: t("carsSearch.nextMonth"),
+              nextMonthShort: t("carsSearch.nextMonthShort"),
+              selectDatePrefix: t("carsSearch.selectDateAriaPrefix"),
+              startsNewPickupDate: t("carsSearch.startsNewPickupDate"),
+              clear: t("clear"),
+              done: t("done"),
+            }}
+            visibleMonthDate={visibleMonthDate}
+            weekdays={weekdays}
+          />
             </div>,
             document.body,
           )
@@ -1914,6 +1786,7 @@ function RentalDatesField({
 
 function TimeRangeField({
   isOpen,
+  onDone,
   onToggle,
   pickupTime,
   returnTime,
@@ -1922,14 +1795,12 @@ function TimeRangeField({
   wrapRef,
 }: {
   isOpen: boolean;
+  onDone: () => void;
   onToggle: () => void;
   pickupTime: string;
   returnTime: string;
   launcherRef?: RefObject<HTMLButtonElement | null>;
-  updateValue: <Key extends keyof CarsFormValues>(
-    key: Key,
-    value: CarsFormValues[Key],
-  ) => void;
+  updateValue: <Key extends keyof CarsFormValues>(key: Key, value: CarsFormValues[Key]) => void;
   wrapRef: RefObject<HTMLDivElement | null>;
 }) {
   const { locale, t } = useCarsLandingTranslations();
@@ -1939,11 +1810,7 @@ function TimeRangeField({
     formatCarTimeLabel(pickupTime, intlLocale),
     formatCarTimeLabel(returnTime, intlLocale),
   );
-  const { placement, popoverRef, style } = useDesktopPopoverPosition(
-    isOpen,
-    launcherRef,
-    320,
-  );
+  const { popoverRef, style } = useDesktopPopoverPosition(isOpen, launcherRef, 448, "below");
 
   return (
     <div ref={wrapRef} className="relative overflow-visible">
@@ -1952,73 +1819,36 @@ function TimeRangeField({
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
-        aria-haspopup="menu"
+        aria-haspopup="dialog"
+        aria-controls="cars-desktop-time-range-dialog"
         aria-label={t("carsSearch.choosePickupReturnTimesAria")}
         className="focus-ring flex h-7 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-[15px] lg:h-8"
       >
         <span className="truncate">{timeSummary}</span>
-        <ChevronDown
-          className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-180" : ""}`}
-          aria-hidden="true"
-        />
+        <ChevronDown className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-180" : ""}`} aria-hidden="true" />
       </button>
-
-      {isOpen && typeof document !== "undefined"
-        ? createPortal(
-            <div
-              ref={popoverRef}
-              role="menu"
-              aria-label={t("carsSearch.pickupReturnTimeSelectorAria")}
-              data-cars-desktop-popover="times"
-              data-placement={placement}
-              style={style ?? undefined}
-              className="fixed z-[990] hidden rounded-2xl border border-slate-200/95 bg-white p-3 shadow-[0_26px_70px_-28px_rgba(15,23,42,0.48),0_12px_28px_-20px_rgba(15,23,42,0.32)] ring-1 ring-slate-950/[0.08] sm:block"
-            >
-          <div className="grid gap-3">
-            <label className="block">
-              <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                {t("carsSearch.pickupTimeLabel")}
-              </span>
-              <select
-                id="pickupTime"
-                value={pickupTime}
-                onChange={(event) =>
-                  updateValue("pickupTime", event.target.value)
-                }
-                className="focus-ring h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-950 outline-none transition focus:border-[#004BB8] md:text-sm"
-              >
-                {timeOptions.map((time) => (
-                  <option key={`pickup-${time}`} value={time}>
-                    {formatCarTimeLabel(time, intlLocale)}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="block">
-              <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                {t("carsSearch.returnTimeLabel")}
-              </span>
-              <select
-                id="dropoffTime"
-                value={returnTime}
-                onChange={(event) =>
-                  updateValue("dropoffTime", event.target.value)
-                }
-                className="focus-ring h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-950 outline-none transition focus:border-[#004BB8] md:text-sm"
-              >
-                {timeOptions.map((time) => (
-                  <option key={`return-${time}`} value={time}>
-                    {formatCarTimeLabel(time, intlLocale)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-            </div>,
-            document.body,
-          )
-        : null}
+      {isOpen && typeof document !== "undefined" ? createPortal(
+        <div
+          id="cars-desktop-time-range-dialog"
+          ref={popoverRef}
+          role="dialog"
+          aria-label={t("carsSearch.pickupReturnTimeSelectorAria")}
+          data-cars-desktop-popover="times"
+          data-placement="below"
+          style={style ?? undefined}
+          className="fixed z-[990] hidden overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/95 bg-white p-3 shadow-[0_26px_70px_-28px_rgba(15,23,42,0.48),0_12px_28px_-20px_rgba(15,23,42,0.32)] ring-1 ring-slate-950/[0.08] sm:block"
+        >
+          <CarsTimeRangePickerContent
+            formatTime={(time) => formatCarTimeLabel(time, intlLocale)}
+            pickupLabel={t("carsSearch.pickupTimeLabel")}
+            pickupTime={pickupTime}
+            returnLabel={t("carsSearch.returnTimeLabel")}
+            returnTime={returnTime}
+            onPickupTimeChange={(time) => updateValue("pickupTime", time)}
+            onReturnTimeChange={(time) => { updateValue("dropoffTime", time); onDone(); }}
+          />
+        </div>, document.body,
+      ) : null}
     </div>
   );
 }
@@ -2026,16 +1856,19 @@ function TimeRangeField({
 function SearchCell({
   children,
   className = "",
+  divRef,
   error,
   label,
 }: {
   children: ReactNode;
   className?: string;
+  divRef?: RefObject<HTMLDivElement | null>;
   error?: string;
   label: string;
 }) {
   return (
     <div
+      ref={divRef}
       className={`min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-slate-400 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:bg-transparent sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-slate-200/80 sm:focus-within:bg-white sm:focus-within:ring-0 lg:px-4 lg:py-2 ${className}`}
     >
       <label className="mb-1 block text-xs font-bold uppercase leading-4 tracking-[0.12em] text-slate-600 sm:mb-0.5 sm:text-[0.66rem] sm:text-slate-500 lg:mb-0.5">

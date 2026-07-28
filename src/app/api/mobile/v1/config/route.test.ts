@@ -14,7 +14,7 @@ const expectedConfig = {
       hotels: false,
       cars: false,
       pushNotifications: false,
-      socialAuthentication: false,
+      socialAuthentication: true,
       premiumSubscriptions: false,
     },
   },
@@ -36,7 +36,7 @@ test("mobile config exposes explicit safe feature defaults", async () => {
   assert.equal(payload.data.features.hotels, false);
   assert.equal(payload.data.features.cars, false);
   assert.equal(payload.data.features.pushNotifications, false);
-  assert.equal(payload.data.features.socialAuthentication, false);
+  assert.equal(payload.data.features.socialAuthentication, true);
   assert.equal(payload.data.features.premiumSubscriptions, false);
 });
 

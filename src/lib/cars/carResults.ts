@@ -1,12 +1,18 @@
 import type { CarOffer, CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 
 export type SelectedCarFilters = Record<string, string[]>;
-export type CarSort = "recommended" | "lowestTotal" | "lowestDaily" | "topRated";
+export type CarSort = "recommended" | "lowestTotal" | "topRated";
 export type CarResultBadge = "Best value" | "Cheapest" | "Top rated";
 
 export const getPrimaryCarOffer = (car: NormalizedCarResult): CarOffer | undefined =>
   [...car.offers].filter((offer) => Number.isFinite(offer.totalPrice) && offer.totalPrice >= 0)
     .sort((a, b) => a.totalPrice - b.totalPrice || a.pricePerDay - b.pricePerDay || a.id.localeCompare(b.id))[0];
+
+/** The details comparison intentionally has a simpler, stable price ordering. */
+export const sortCarOffers = (offers: CarOffer[]) =>
+  [...offers]
+    .filter((offer) => Number.isFinite(offer.totalPrice) && offer.totalPrice >= 0)
+    .sort((a, b) => a.totalPrice - b.totalPrice || a.id.localeCompare(b.id));
 
 const optionMatches: Record<string, (car: NormalizedCarResult) => boolean> = {
   smallCars: (car) => ["mini", "economy", "compact"].includes(car.category),
@@ -51,7 +57,6 @@ export function sortCarResults(results: NormalizedCarResult[], sort: CarSort) {
     const bOffer = getPrimaryCarOffer(b.car);
     const tie = a.car.id.localeCompare(b.car.id) || a.index - b.index;
     if (sort === "lowestTotal") return (aOffer?.totalPrice ?? Infinity) - (bOffer?.totalPrice ?? Infinity) || tie;
-    if (sort === "lowestDaily") return (aOffer?.pricePerDay ?? Infinity) - (bOffer?.pricePerDay ?? Infinity) || tie;
     if (sort === "topRated") return (b.car.supplierRating ?? -Infinity) - (a.car.supplierRating ?? -Infinity) || tie;
     return recommendedScore(b.car) - recommendedScore(a.car) ||
       (aOffer?.totalPrice ?? Infinity) - (bOffer?.totalPrice ?? Infinity) || tie;
