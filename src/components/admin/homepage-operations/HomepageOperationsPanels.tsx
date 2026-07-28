@@ -12,15 +12,15 @@ export function HomepageOperationsStatusBar({
   items: OperationsMetric[];
 }) {
   return (
-    <dl className="grid overflow-hidden rounded-xl border border-slate-200 bg-white sm:grid-cols-2 lg:grid-cols-5">
+    <dl className="grid overflow-hidden rounded-xl border border-[#DDE7F0] bg-white shadow-sm sm:grid-cols-2 lg:grid-cols-5">
       {items.map((item) => (
         <div
           key={item.label}
-          className="min-w-0 border-b border-slate-200 px-4 py-3 last:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0 lg:border-b-0 lg:border-e lg:last:border-e-0"
+          className="min-w-0 border-b border-[#DDE7F0] px-4 py-4 first:bg-[#F3F7FA] last:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0 lg:border-b-0 lg:border-e lg:last:border-e-0"
         >
           <dt className="text-xs font-semibold text-slate-500">{item.label}</dt>
           <dd
-            className={`mt-1 truncate text-base font-extrabold ${metricTone(item.tone)}`}
+            className={`mt-1 truncate text-lg font-extrabold tracking-tight ${metricTone(item.tone)}`}
             title={typeof item.value === "string" ? item.value : undefined}
           >
             {item.value}
@@ -82,7 +82,9 @@ export function OperationsDisclosure({
   className?: string;
 }) {
   return (
-    <details className={`group border-t border-slate-200 py-4 ${className}`}>
+    <details
+      className={`group border-b border-[#DDE7F0] bg-white px-4 py-2 first:rounded-t-xl last:rounded-b-xl last:border-b-0 ${className}`}
+    >
       <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 text-sm font-extrabold text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 [&::-webkit-details-marker]:hidden">
         {label}
         <span
