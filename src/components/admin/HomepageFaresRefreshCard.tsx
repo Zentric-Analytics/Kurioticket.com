@@ -572,16 +572,16 @@ export function HomepageFaresRefreshCard() {
   }, [activeSelectedRouteScope, routeFilter]);
 
   return (
-    <div className="space-y-6 pb-4 text-black [&_*]:!bg-transparent [&_*]:!text-black [&_*]:!rounded-none [&_*]:shadow-none">
+    <div className="space-y-5 pb-4 text-slate-950">
       <AdminPageHeader title="Homepage Operations" />
 
       <section
         aria-labelledby="operations-summary-heading"
-        className="space-y-3"
+        className="rounded-lg border border-slate-200 bg-white px-5 py-4 shadow-sm"
       >
         <h2
           id="operations-summary-heading"
-          className="text-lg font-extrabold text-slate-950"
+          className="mb-2 text-sm font-bold text-slate-950"
         >
           Operations Summary
         </h2>
@@ -654,99 +654,85 @@ export function HomepageFaresRefreshCard() {
         </p>
       ) : null}
 
-      <section aria-labelledby="market-coverage-heading" className="space-y-4">
-        <h2
-          id="market-coverage-heading"
-          className="text-xl font-extrabold tracking-tight text-slate-950"
-        >
-          Market Coverage
-        </h2>
-        <div className="grid items-start gap-4 md:grid-cols-[13.5rem_minmax(0,1fr)] lg:grid-cols-[15rem_minmax(0,1fr)]">
+      <section aria-label="Homepage operations workspace">
+        <div className="grid items-start gap-5 md:grid-cols-[16.5rem_minmax(0,1fr)]">
           <div className="md:sticky md:top-24">
-            <div className="hidden md:block">
-              <RouteFilterPanel
-                filter={routeFilter}
-                counts={routeFilterCounts}
-                onChange={selectRouteFilter}
-              />
-            </div>
-            <details className="group border-y border-black md:hidden">
-              <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between text-sm font-extrabold text-black focus-visible:outline focus-visible:outline-2 [&::-webkit-details-marker]:hidden">
-                Filter routes
-                <span
-                  aria-hidden="true"
-                  className="text-lg text-black group-open:rotate-45"
-                >
-                  +
-                </span>
-              </summary>
-              <div className="border-t border-black py-3">
-                <RouteFilterControls
-                  filter={routeFilter}
-                  counts={routeFilterCounts}
-                  onChange={selectRouteFilter}
-                />
-              </div>
-            </details>
-          </div>
-          <div className="min-w-0 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-black py-3">
-              {statusState.data ? (
-                <IssueSummary
-                  affectedCount={affectedMarkets.length}
-                  missingCount={statusPayload.summary.missing}
-                  failedCount={statusPayload.summary.failed}
-                  showingAffected={showAffectedMarkets}
-                  onToggle={() => setShowAffectedMarkets((current) => !current)}
-                />
-              ) : (
-                <p className="text-sm font-semibold text-slate-600">
-                  Loading market coverage…
-                </p>
-              )}
-              <button
-                type="button"
-                onClick={() =>
-                  selectRouteScope(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE)
-                }
-                className="min-h-10 text-sm font-extrabold text-black underline underline-offset-4 focus-visible:outline focus-visible:outline-2"
-                aria-pressed={
-                  activeSelectedRouteScope ===
-                  ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
-                }
-              >
-                View all filtered routes
-              </button>
-            </div>
-            <MarketReadinessDashboard
-              markets={visibleMarkets}
-              selectedRouteScope={activeSelectedRouteScope}
-              onInspectMarket={selectRouteScope}
-              emptyMessage={
-                statusState.data
-                  ? getRouteFilterEmptyMessage(routeFilter)
-                  : statusState.loading
-                    ? "Loading homepage fare status…"
-                    : "Homepage fare status is unavailable."
-              }
+            <RouteFilterPanel
+              filter={routeFilter}
+              counts={routeFilterCounts}
+              onChange={selectRouteFilter}
             />
           </div>
+          <div className="min-w-0 space-y-5">
+            <section
+              aria-labelledby="market-coverage-heading"
+              className="rounded-lg border border-slate-200 bg-white px-5 py-3 shadow-sm"
+            >
+              <h2 id="market-coverage-heading" className="sr-only">
+                Market Coverage
+              </h2>
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+                {statusState.data ? (
+                  <IssueSummary
+                    affectedCount={affectedMarkets.length}
+                    missingCount={statusPayload.summary.missing}
+                    failedCount={statusPayload.summary.failed}
+                    showingAffected={showAffectedMarkets}
+                    onToggle={() =>
+                      setShowAffectedMarkets((current) => !current)
+                    }
+                  />
+                ) : (
+                  <p className="text-sm font-semibold text-slate-600">
+                    Loading market coverage…
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={() =>
+                    selectRouteScope(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE)
+                  }
+                  className="min-h-10 text-sm font-semibold text-blue-700 focus-visible:outline focus-visible:outline-2"
+                  aria-pressed={
+                    activeSelectedRouteScope ===
+                    ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
+                  }
+                >
+                  View all filtered routes
+                </button>
+              </div>
+              <MarketReadinessDashboard
+                markets={visibleMarkets}
+                selectedRouteScope={activeSelectedRouteScope}
+                onInspectMarket={selectRouteScope}
+                emptyMessage={
+                  statusState.data
+                    ? getRouteFilterEmptyMessage(routeFilter)
+                    : statusState.loading
+                      ? "Loading homepage fare status…"
+                      : "Homepage fare status is unavailable."
+                }
+              />
+            </section>
+            {activeSelectedRouteScope ? (
+              <MarketRouteInspector
+                selectedRouteScope={activeSelectedRouteScope}
+                selectedGroup={selectedRouteGroup}
+                loading={statusState.loading}
+                onClose={() => setSelectedRouteScope(null)}
+                routePage={routePage}
+                onPreviousPage={() =>
+                  setRoutePage((page) => Math.max(1, page - 1))
+                }
+                onNextPage={() => setRoutePage((page) => page + 1)}
+                routeDetailsRef={routeDetailsRef}
+              />
+            ) : null}
+          </div>
         </div>
-        {activeSelectedRouteScope ? (
-          <MarketRouteInspector
-            selectedRouteScope={activeSelectedRouteScope}
-            selectedGroup={selectedRouteGroup}
-            loading={statusState.loading}
-            onClose={() => setSelectedRouteScope(null)}
-            routePage={routePage}
-            onPreviousPage={() => setRoutePage((page) => Math.max(1, page - 1))}
-            onNextPage={() => setRoutePage((page) => page + 1)}
-            routeDetailsRef={routeDetailsRef}
-          />
-        ) : null}
       </section>
 
-      <div className="border-t border-black">
+      <div className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white px-4 shadow-sm">
         <OperationsDisclosure label="Additional health details">
           <dl className="grid grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-4">
             {[
@@ -980,7 +966,7 @@ function IssueSummary({
         type="button"
         onClick={onToggle}
         aria-pressed={showingAffected}
-        className="min-h-10 text-sm font-extrabold text-black underline underline-offset-4 focus-visible:outline focus-visible:outline-2"
+        className="min-h-10 text-sm font-semibold text-blue-700 focus-visible:outline focus-visible:outline-2"
       >
         {showingAffected ? "Show all markets" : "Show affected markets"}
       </button>
@@ -999,7 +985,7 @@ function RouteFilterPanel({
 }) {
   return (
     <aside
-      className="border-e border-black pe-4"
+      className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
       aria-labelledby="route-filter-heading"
     >
       <h3
@@ -1049,7 +1035,7 @@ function RouteFilterControls({
           <p className="mb-3 text-[12px] font-extrabold uppercase leading-4 tracking-[0.12em] text-black">
             {group.label}
           </p>
-          <div className="grid gap-1.5">
+          <div className="grid gap-1">
             {group.keys.map((key) => {
               const item = ROUTE_FILTERS.find(
                 (candidate) => candidate.key === key,
@@ -1060,15 +1046,17 @@ function RouteFilterControls({
                   key={item.key}
                   type="button"
                   onClick={() => onChange(item.key)}
-                  className={`flex min-h-9 w-full items-center justify-between gap-3 border-s-2 px-2 py-1 text-left text-[12px] text-black transition focus-visible:outline focus-visible:outline-2 ${
-                    selected
-                      ? "border-black font-extrabold"
-                      : "border-transparent font-medium hover:font-bold"
-                  }`}
+                  className={`flex min-h-9 w-full items-center justify-between gap-3 py-1 text-left text-[12px] text-slate-950 transition focus-visible:outline focus-visible:outline-2 ${selected ? "font-semibold" : "font-normal"}`}
                   aria-pressed={selected}
                 >
-                  <span>{item.label}</span>
-                  <span className="tabular-nums text-black">
+                  <span className="flex items-center gap-2.5">
+                    <span
+                      className={`h-4 w-4 rounded-full border ${selected ? "border-[5px] border-blue-600" : "border-slate-300"}`}
+                      aria-hidden="true"
+                    />
+                    {item.label}
+                  </span>
+                  <span className="tabular-nums text-slate-700">
                     {counts[item.key]}
                   </span>
                 </button>
@@ -1118,14 +1106,10 @@ function MarketReadinessDashboard({
     );
 
   return (
-    <div
-      role="table"
-      aria-label="Market coverage"
-      className="border-t border-black text-sm"
-    >
+    <div role="table" aria-label="Market coverage" className="text-sm">
       <div
         role="row"
-        className="hidden grid-cols-[minmax(10rem,2fr)_1fr_1fr_1fr_1.4fr_auto] gap-3 border-b border-black py-2 text-xs font-extrabold uppercase tracking-wide md:grid"
+        className="hidden grid-cols-[minmax(10rem,2fr)_1fr_1fr_1fr_1.4fr_auto] gap-3 border-b border-slate-200 py-2 text-xs font-semibold md:grid"
       >
         {["Market", "Coverage", "Freshness", "Missing", "Status", "Action"].map(
           (heading) => (
@@ -1165,7 +1149,7 @@ function MarketReadinessRow({
     <div
       role="row"
       data-market-row
-      className={`grid gap-2 border-b border-black py-4 text-black md:grid-cols-[minmax(10rem,2fr)_1fr_1fr_1fr_1.4fr_auto] md:items-center md:gap-3 ${selected ? "border-s-4 ps-3 font-bold" : "border-s-4 border-s-transparent ps-3"}`}
+      className={`grid gap-2 border-b border-slate-200 py-3 text-slate-950 last:border-b-0 md:grid-cols-[minmax(10rem,2fr)_1fr_1fr_1fr_1.4fr_auto] md:items-center md:gap-3 ${selected ? "font-semibold" : ""}`}
     >
       <div role="cell">
         <h4 className="text-base font-extrabold text-black">
@@ -1197,7 +1181,7 @@ function MarketReadinessRow({
         type="button"
         onClick={() => onInspectMarket(market.marketCode)}
         aria-pressed={selected}
-        className="min-h-10 justify-self-start text-sm font-extrabold text-black underline underline-offset-4 focus-visible:outline focus-visible:outline-2"
+        className="min-h-10 justify-self-start text-sm font-semibold text-blue-700 focus-visible:outline focus-visible:outline-2"
       >
         Inspect routes<span className="sr-only"> for {market.marketLabel}</span>
       </button>
@@ -1433,7 +1417,7 @@ function MarketRouteInspector({
   routeDetailsRef: RefObject<HTMLDivElement | null>;
 }) {
   return (
-    <section className="mt-8 border-t border-black pt-5">
+    <section className="rounded-lg border border-slate-200 bg-white px-5 py-3 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-lg font-extrabold text-slate-950">
           Route Inspector
@@ -1441,7 +1425,7 @@ function MarketRouteInspector({
         <button
           type="button"
           onClick={onClose}
-          className="min-h-10 text-sm font-extrabold text-black underline underline-offset-4 focus-visible:outline focus-visible:outline-2"
+          className="min-h-10 text-sm font-semibold text-blue-700 focus-visible:outline focus-visible:outline-2"
         >
           Close inspector
         </button>
@@ -1498,11 +1482,8 @@ function SelectedRouteDetails({
   const isViewAll = group.marketCode === "ALL";
 
   return (
-    <div
-      ref={routeDetailsRef}
-      className="mt-4 min-w-0 overflow-hidden border-t border-black"
-    >
-      <div className="border-b border-black py-4">
+    <div ref={routeDetailsRef} className="mt-2 min-w-0 overflow-hidden">
+      <div className="border-b border-slate-200 py-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h5 className="text-base font-extrabold text-slate-950">
@@ -1584,7 +1565,7 @@ function RouteDetailsTable({
   }
 
   return (
-    <div className="max-w-full overflow-x-auto overscroll-x-contain border-t border-black">
+    <div className="max-w-full overflow-x-auto overscroll-x-contain">
       <table className="min-w-[1120px] divide-y divide-border text-left text-sm">
         <thead className="text-xs font-extrabold uppercase tracking-wide text-black">
           <tr>

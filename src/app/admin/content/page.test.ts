@@ -61,16 +61,16 @@ test("Content Inventory retains content sections without homepage fare operation
   );
 });
 
-test("Homepage Operations uses the product typography and a flat black layout", () => {
+test("Homepage Operations uses product typography and restrained card styling", () => {
   assert.match(homepageOperationsPage, /<HomepageFaresRefreshCard \/>/);
   assert.match(refreshCard, /title="Homepage Operations"/);
   assert.match(
     refreshCard,
-    /text-black \[&_\*\]:!bg-transparent \[&_\*\]:!text-black/,
+    /space-y-5 pb-4 text-slate-950/,
   );
   assert.doesNotMatch(refreshCard, /font-family|fontFamily/);
   assert.match(operationsPanels, /data-layout="flat-summary"/);
-  assert.doesNotMatch(operationsPanels, /shadow|rounded-xl|metricTone/);
+  assert.match(refreshCard, /rounded-lg border border-slate-200 bg-white/);
 });
 
 test("Homepage Operations removes all page-level manual refresh UI", () => {
@@ -95,7 +95,7 @@ test("Homepage Operations automatically loads status with stale request protecti
   assert.match(refreshCard, /lastSuccessfulLoadAt/);
 });
 
-test("Homepage Operations retains every route filter and flight-style facet treatment", () => {
+test("Homepage Operations retains every route filter and results-style radio treatment", () => {
   for (const filter of [
     "All",
     "Usable",
@@ -114,10 +114,10 @@ test("Homepage Operations retains every route filter and flight-style facet trea
     refreshCard,
     /text-\[12px\] font-extrabold uppercase[^\n]+tracking-\[0\.12em\]/,
   );
-  assert.match(refreshCard, /border-s-2/);
+  assert.match(refreshCard, /rounded-full border/);
   assert.match(refreshCard, /aria-pressed=\{selected\}/);
   assert.match(refreshCard, /md:sticky md:top-24/);
-  assert.match(refreshCard, /md:hidden/);
+  assert.match(refreshCard, /rounded-lg border border-slate-200 bg-white p-5 shadow-sm/);
   assert.match(refreshCard, /filterAdminHomepageFareMarketsByRouteGroups/);
 });
 
