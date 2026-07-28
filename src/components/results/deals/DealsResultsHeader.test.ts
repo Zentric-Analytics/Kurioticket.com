@@ -34,17 +34,64 @@ test("the travel party summary localizes singular and plural guest counts", () =
   assert.equal(translations["deals.results.guests"], "guests");
 });
 
-test("modify search retains its accessible button contract without navigation", () => {
+test("both modify search launchers retain their accessible button contract without navigation", () => {
   assert.match(summarySource, /<button ref=\{modifyButtonRef\} type="button"/);
-  assert.match(summarySource, /aria-expanded=\{modifyExpanded\}/);
-  assert.match(summarySource, /aria-controls="deals-modify-search-dialog"/);
+  assert.equal((summarySource.match(/type="button"/g) ?? []).length, 2);
+  assert.equal((summarySource.match(/aria-expanded=\{modifyExpanded\}/g) ?? []).length, 2);
+  assert.equal((summarySource.match(/aria-controls="deals-modify-search-dialog"/g) ?? []).length, 2);
   assert.doesNotMatch(summarySource, /href=/);
-  assert.match(summarySource, /min-h-11/);
+  assert.equal((summarySource.match(/min-h-11/g) ?? []).length, 2);
+  assert.match(summarySource, /modifyButtonRef\.current = event\.currentTarget;\s*onModify\(\)/);
 });
 
-test("the single responsive search surface is genuinely sticky on mobile", () => {
-  assert.equal((summarySource.match(/<button/g) ?? []).length, 1);
+test("the inline responsive search surface remains sticky on mobile and static above mobile", () => {
+  assert.equal((summarySource.match(/<button/g) ?? []).length, 2);
   assert.match(summarySource, /<section[^>]+className="sticky top-0 z-50[^"\n]+sm:static/);
+  assert.match(summarySource, /sm:hidden/);
+  assert.match(summarySource, /\{dates\} · \{modeLabel\}/);
+});
+
+test("desktop sticky visibility measures the translated inline summary surface", () => {
+  assert.match(summarySource, /shouldShowDesktopStickySearch/);
+  assert.match(summarySource, /<div ref=\{visibleSummaryRef\} className="grid[^"\n]+sm:translate-y-5/);
+  assert.match(summarySource, /surface\.getBoundingClientRect\(\)\.bottom/);
+  assert.match(summarySource, /viewportWidth: window\.innerWidth/);
+  assert.match(summarySource, /formBottom: visibleSummaryBottom/);
+});
+
+test("desktop sticky measurement coordinates and cleans up browser observers and listeners", () => {
+  assert.match(summarySource, /new IntersectionObserver\(schedule\)/);
+  assert.match(summarySource, /window\.requestAnimationFrame\(measure\)/);
+  assert.match(summarySource, /addEventListener\("scroll", schedule, \{ passive: true \}\)/);
+  assert.match(summarySource, /addEventListener\("resize", schedule\)/);
+  assert.match(summarySource, /observer\?\.disconnect\(\)/);
+  assert.match(summarySource, /removeEventListener\("scroll", schedule\)/);
+  assert.match(summarySource, /removeEventListener\("resize", schedule\)/);
+  assert.match(summarySource, /window\.cancelAnimationFrame\(animationFrame\)/);
+  assert.match(summarySource, /next !== previous/);
+});
+
+test("a separate compact toolbar is fixed, desktop-only, transitioned, and inert while hidden", () => {
+  assert.match(summarySource, /pointer-events-none fixed inset-x-0 top-3/);
+  assert.match(summarySource, /hidden px-4 transition-all duration-200 motion-reduce:transition-none lg:block/);
+  assert.match(summarySource, /desktopStickyVisible \? "translate-y-0 opacity-100" : "-translate-y-3 opacity-0"/);
+  assert.match(summarySource, /aria-hidden=\{!desktopStickyVisible\}/);
+  assert.match(summarySource, /inert=\{!desktopStickyVisible \? true : undefined\}/);
+  assert.match(summarySource, /desktopStickyVisible \? "pointer-events-auto" : "pointer-events-none"/);
+  assert.match(summarySource, /h-\[58px\]/);
+  assert.match(summarySource, /max-w-\[980px\]/);
+});
+
+test("the desktop toolbar retains every Deals summary value and localized label", () => {
+  const fixedToolbar = summarySource.slice(summarySource.indexOf("aria-hidden={!desktopStickyVisible}"));
+  assert.match(fixedToolbar, /deals\.results\.summary\.package/);
+  assert.match(fixedToolbar, /value=\{modeLabel\}/);
+  assert.match(fixedToolbar, /summary\.routeLabelKey/);
+  assert.match(fixedToolbar, /value=\{summary\.primary\}/);
+  assert.match(fixedToolbar, /deals\.results\.summary\.travelDates/);
+  assert.match(fixedToolbar, /value=\{dates\}/);
+  assert.match(fixedToolbar, /deals\.results\.summary\.travelParty/);
+  assert.match(fixedToolbar, /value=\{context\}/);
 });
 
 test("breadcrumbs use localized semantic hierarchy", () => {
