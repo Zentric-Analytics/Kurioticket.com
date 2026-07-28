@@ -62,7 +62,7 @@ export function OperationsDisclosure({
 }) {
   return (
     <details className={`group py-1 ${className}`}>
-      <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 text-sm font-extrabold text-black focus-visible:outline focus-visible:outline-2 [&::-webkit-details-marker]:hidden">
+      <summary className="focus-ring flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-slate-950 [&::-webkit-details-marker]:hidden">
         {label}
         <span
           aria-hidden="true"
@@ -71,7 +71,7 @@ export function OperationsDisclosure({
           ⌄
         </span>
       </summary>
-      <div className="pb-3 pt-2 text-black">{children}</div>
+      <div className="pb-3 pt-2 text-slate-700">{children}</div>
     </details>
   );
 }
