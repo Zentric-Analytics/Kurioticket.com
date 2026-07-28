@@ -295,24 +295,21 @@ export function DealsScreen() {
   const [tab, setTab] = useState<DealTab>("all");
   const deals = [
     {
-      name: "New York to London",
-      detail: "Round trip",
-      price: "$450",
-      discount: "31% off",
+      name: "Compare flights",
+      detail: "Search live provider fares",
+      route: "/flights" as const,
       image: destinationImages.London,
     },
     {
-      name: "Bali Hotels",
-      detail: "3 nights",
-      price: "$120",
-      discount: "40% off",
+      name: "Compare hotels",
+      detail: "Search live rooms and availability",
+      route: "/hotels" as const,
       image: destinationImages.Bali,
     },
     {
-      name: "Economy Cars",
-      detail: "from $25/day",
-      price: "",
-      discount: "20% off",
+      name: "Compare rental cars",
+      detail: "Search live rental offers",
+      route: "/cars" as const,
       image: destinationImages["New York"],
     },
   ];
@@ -349,7 +346,7 @@ export function DealsScreen() {
           <Pressable
             key={deal.name}
             accessibilityRole="button"
-            onPress={() => router.push("/flight-results")}
+            onPress={() => router.push(deal.route)}
             style={({ pressed }) => [
               styles.deal,
               flowStyles.shadow,
@@ -360,16 +357,8 @@ export function DealsScreen() {
             <View style={styles.grow}>
               <Text style={flowStyles.value}>{deal.name}</Text>
               <Text style={flowStyles.meta}>{deal.detail}</Text>
-              <Text style={styles.price}>{deal.price}</Text>
             </View>
-            <Text
-              style={[
-                styles.discount,
-                deal.discount === "20% off" && styles.green,
-              ]}
-            >
-              {deal.discount}
-            </Text>
+            <FlowIcon name="chevron" size={18} />
           </Pressable>
         ))}
       <Text style={[flowStyles.sectionTitle, styles.why]}>
