@@ -49,7 +49,8 @@ test("flight previews assign recommended, lowest-price, and shortest categories 
 });
 test("flight selection skips duplicate winners, invalid values, and breaks ties deterministically", () => {
   const previews = selectDealsFlightPreviews([makeFlight("winner", { valueScore: 100, price: 90, durationMinutes: 50 }), makeFlight("b", { valueScore: Number.NaN, price: 100, durationMinutes: 80 }), makeFlight("a", { valueScore: 0, price: 100, durationMinutes: 80 }), makeFlight("invalid", { price: -1, durationMinutes: Number.NaN })]);
-  assert.deepEqual(previews.map(({ result }) => result.id), ["winner", "a", "b"]);
+  assert.deepEqual(previews.map(({ result }) => result.id), ["winner", "b", "a"]);
+  assert.deepEqual(previews.map(({ badgeKey }) => badgeKey), ["deals.results.flight.recommended.badge", "deals.results.preview.more.badge", "deals.results.preview.more.badge"]);
   assert.deepEqual(selectDealsFlightPreviews([]), []);
 });
 test("flight selection fills fewer qualifying results in stable input order without duplicates", () => {
@@ -74,6 +75,11 @@ test("hotel selection fills fewer results without duplication", () => {
   const previews = selectDealsHotelPreviews([makeHotel("only", { valueScore: 0, totalPrice: 0, reviewScore: undefined })]);
   assert.deepEqual(previews.map(({ result }) => result.id), ["only"]);
   assert.equal(previews[0]?.badgeKey, "deals.results.preview.more.badge");
+});
+test("hotel selection does not give absolute category badges to runners-up", () => {
+  const previews = selectDealsHotelPreviews([makeHotel("winner", { valueScore: 100, totalPrice: 100, reviewScore: 10, reviewScale: 10 }), makeHotel("next", { valueScore: 80, totalPrice: 150, reviewScore: 9, reviewScale: 10 }), makeHotel("third", { valueScore: 70, totalPrice: 200, reviewScore: 8, reviewScale: 10 })]);
+  assert.deepEqual(previews.map(({ result }) => result.id), ["winner", "next", "third"]);
+  assert.deepEqual(previews.map(({ badgeKey }) => badgeKey), ["deals.results.hotel.recommended.badge", "deals.results.preview.more.badge", "deals.results.preview.more.badge"]);
 });
 test("option count interpolation supports previews and returned-only copy", () => {
   assert.equal(formatDealsOptionCount("{{visible}} recommended previews from {{total}} returned options", 3, 15), "3 recommended previews from 15 returned options");

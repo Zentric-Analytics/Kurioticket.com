@@ -15,8 +15,8 @@ const compareOptionalDescending = (a: number | undefined, b: number | undefined)
 function selectDistinct<T extends { id: string }>(results: T[], categories: { badgeKey: string; reasonKey: string; eligible: (item: T) => boolean; compare: (a: T, b: T) => number }[]): DealsPreview<T>[] {
   const selected: DealsPreview<T>[] = []; const used = new Set<string>();
   for (const category of categories) {
-    const result = results.filter((item) => !used.has(stableId(item)) && category.eligible(item)).sort(category.compare)[0];
-    if (result) { used.add(stableId(result)); selected.push({ result, badgeKey: category.badgeKey, reasonKey: category.reasonKey }); }
+    const winner = results.filter(category.eligible).sort(category.compare)[0];
+    if (winner && !used.has(stableId(winner))) { used.add(stableId(winner)); selected.push({ result: winner, badgeKey: category.badgeKey, reasonKey: category.reasonKey }); }
   }
   for (const result of results) {
     if (selected.length >= dealsPreviewLimit) break;
