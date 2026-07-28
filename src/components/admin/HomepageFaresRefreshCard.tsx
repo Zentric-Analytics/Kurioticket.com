@@ -671,12 +671,9 @@ export function HomepageFaresRefreshCard() {
               <h2 id="market-coverage-heading" className="sr-only">
                 Market Coverage
               </h2>
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+              <div className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2 border-b border-slate-200 pb-3">
                 {statusState.data ? (
                   <IssueSummary
-                    affectedCount={affectedMarkets.length}
-                    missingCount={statusPayload.summary.missing}
-                    failedCount={statusPayload.summary.failed}
                     showingAffected={showAffectedMarkets}
                     onToggle={() =>
                       setShowAffectedMarkets((current) => !current)
@@ -934,43 +931,21 @@ function DashboardSection({
 }
 
 function IssueSummary({
-  affectedCount,
-  missingCount,
-  failedCount,
   showingAffected,
   onToggle,
 }: {
-  affectedCount: number;
-  missingCount: number;
-  failedCount: number;
   showingAffected: boolean;
   onToggle: () => void;
 }) {
-  if (affectedCount === 0) {
-    return (
-      <p className="text-sm font-bold text-emerald-700">
-        All markets are currently covered
-      </p>
-    );
-  }
-
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-      <p className="text-sm font-bold text-slate-950">
-        {affectedCount} markets require attention
-        <span className="font-semibold text-slate-600">
-          {` · ${missingCount} missing routes · ${failedCount} failed routes`}
-        </span>
-      </p>
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-pressed={showingAffected}
-        className="min-h-10 text-sm font-semibold text-blue-700 focus-visible:outline focus-visible:outline-2"
-      >
-        {showingAffected ? "Show all markets" : "Show affected markets"}
-      </button>
-    </div>
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={showingAffected}
+      className="min-h-10 text-sm font-semibold text-blue-700 focus-visible:outline focus-visible:outline-2"
+    >
+      {showingAffected ? "Show all markets" : "Show affected markets"}
+    </button>
   );
 }
 
@@ -2490,7 +2465,7 @@ function formatProviderNativePrice(route: {
 function formatSnapshotTime(value?: string) {
   if (!value) return "No snapshot yet";
 
-  return `Searched ${formatDateTime(value)}`;
+  return formatDateTime(value);
 }
 
 function formatDateTime(value: string) {
