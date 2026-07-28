@@ -68,7 +68,7 @@ export function ProductTabs({
     <View style={styles.products} accessibilityLabel="Travel products">
       {products.map((product) => {
         const selected = selectedProduct === product.id;
-        const foreground = selected ? "white" : colors.navy;
+        const foreground = selected ? "#0754F7" : "#56658E";
 
         return (
           <Pressable
@@ -98,21 +98,38 @@ export function ProductTabs({
 }
 
 const styles = StyleSheet.create({
-  products: { flexDirection: "row", gap: 8 },
+  products: {
+    height: 56,
+    flexDirection: "row",
+    backgroundColor: "white",
+    borderRadius: 16,
+    padding: 4,
+    shadowColor: "#19335B",
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 3,
+  },
   product: {
     flex: 1,
-    minHeight: 46,
+    minHeight: 48,
     paddingHorizontal: 6,
-    borderRadius: 16,
+    borderRadius: 12,
     backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderWidth: 1,
+    borderRightColor: colors.border,
+    borderRightWidth: 1,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 4,
   },
-  productActive: { backgroundColor: colors.blue, borderColor: colors.blue },
+  productActive: {
+    backgroundColor: "#F2F6FF",
+    borderRightColor: "transparent",
+    borderBottomColor: "#0754F7",
+    borderBottomWidth: 2,
+  },
   productPressed: { opacity: 0.7 },
-  productText: { color: colors.navy, fontSize: 12, fontWeight: "900" },
-  productActiveText: { color: "white" },
+  productText: { color: "#56658E", fontSize: 14, fontWeight: "700" },
+  productActiveText: { color: "#0754F7" },
 });
