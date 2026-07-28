@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import {
   AdminDataTable,
+  AdminEmptyState,
   AdminLinkButton,
   AdminMetricCard,
   AdminPageShell,
@@ -10,6 +11,7 @@ import {
 import { activeHotelDestinationDisplayLocales } from "@/data/hotelDestinations";
 
 import { HotelDestinationFilterToolbar } from "./HotelDestinationFilterToolbar";
+import { getInventoryEmptyState } from "../inventory-empty-state";
 import {
   buildHotelDestinationHref,
   filterHotelDestinationRows,
@@ -35,6 +37,13 @@ export default async function HotelDestinationInventoryPage({ searchParams }: Pa
   const page = paginateHotelDestinationRows(matchingRows, filters.page);
   const firstResult = matchingRows.length ? (page.currentPage - 1) * HOTEL_DESTINATION_PAGE_SIZE + 1 : 0;
   const lastResult = Math.min(page.currentPage * HOTEL_DESTINATION_PAGE_SIZE, matchingRows.length);
+  const hasActiveFilters = Boolean(filters.q || filters.country !== "ALL" || filters.kind !== "ALL");
+  const emptyState = getInventoryEmptyState(allRows.length, matchingRows.length, hasActiveFilters, {
+    filteredTitle: "No hotel destinations match",
+    filteredMessage: "Adjust the search or filters to view configured hotel search destinations.",
+    sourceTitle: "No hotel destinations are configured",
+    sourceMessage: "No hotel search destination records are configured.",
+  });
 
   return (
     <AdminPageShell
@@ -58,7 +67,13 @@ export default async function HotelDestinationInventoryPage({ searchParams }: Pa
         countries={getHotelDestinationCountries()}
       />
 
-      <AdminDataTable
+      {emptyState ? (
+        <AdminEmptyState
+          title={emptyState.title}
+          message={emptyState.message}
+          action={emptyState.showClearFilters ? <AdminLinkButton href="/admin/content/hotel-destinations">Clear filters</AdminLinkButton> : undefined}
+        />
+      ) : <AdminDataTable
         caption="Hotel search and autocomplete destinations"
         density="compact"
         minWidth="1540px"
@@ -89,7 +104,7 @@ export default async function HotelDestinationInventoryPage({ searchParams }: Pa
             <AdminStatusBadge key="usage" tone="good">Search &amp; autocomplete</AdminStatusBadge>,
           ],
         }))}
-      />
+      />}
     </AdminPageShell>
   );
 }

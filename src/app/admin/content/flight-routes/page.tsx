@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import {
   AdminDataTable,
+  AdminEmptyState,
   AdminLinkButton,
   AdminMetricCard,
   AdminPageShell,
@@ -9,6 +10,7 @@ import {
 } from "@/components/admin/AdminPageShell";
 
 import { FlightRouteFilterToolbar } from "./FlightRouteFilterToolbar";
+import { getInventoryEmptyState } from "../inventory-empty-state";
 import {
   buildFlightRouteHref,
   filterFlightRouteRows,
@@ -38,6 +40,13 @@ export default async function FlightRouteInventoryPage({ searchParams }: PagePro
     ? (page.currentPage - 1) * FLIGHT_ROUTE_PAGE_SIZE + 1
     : 0;
   const lastResult = Math.min(page.currentPage * FLIGHT_ROUTE_PAGE_SIZE, matchingRows.length);
+  const hasActiveFilters = Boolean(filters.q || filters.region !== "ALL" || filters.poolType !== "ALL" || filters.visibility !== "ALL");
+  const emptyState = getInventoryEmptyState(allRows.length, matchingRows.length, hasActiveFilters, {
+    filteredTitle: "No pool memberships match",
+    filteredMessage: "Adjust the search or filters to view configured flight-route pool memberships.",
+    sourceTitle: "No pool memberships are configured",
+    sourceMessage: "No flight-route pool membership records are configured.",
+  });
 
   return (
     <AdminPageShell
@@ -62,7 +71,13 @@ export default async function FlightRouteInventoryPage({ searchParams }: PagePro
         regions={getFlightRouteRegions()}
       />
 
-      <AdminDataTable
+      {emptyState ? (
+        <AdminEmptyState
+          title={emptyState.title}
+          message={emptyState.message}
+          action={emptyState.showClearFilters ? <AdminLinkButton href="/admin/content/flight-routes">Clear filters</AdminLinkButton> : undefined}
+        />
+      ) : <AdminDataTable
         caption="Configured flight fare route memberships"
         density="compact"
         minWidth="1120px"
@@ -94,7 +109,7 @@ export default async function FlightRouteInventoryPage({ searchParams }: PagePro
             </div>,
           ],
         }))}
-      />
+      />}
     </AdminPageShell>
   );
 }

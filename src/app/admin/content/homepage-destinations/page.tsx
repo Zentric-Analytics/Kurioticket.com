@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import {
   AdminDataTable,
+  AdminEmptyState,
   AdminLinkButton,
   AdminMetricCard,
   AdminPageShell,
@@ -9,6 +10,7 @@ import {
 } from "@/components/admin/AdminPageShell";
 
 import { HomepageDestinationFilterToolbar } from "./HomepageDestinationFilterToolbar";
+import { getInventoryEmptyState } from "../inventory-empty-state";
 import {
   buildHomepageDestinationHref,
   filterHomepageDestinationRows,
@@ -36,6 +38,13 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
     ? (page.currentPage - 1) * HOMEPAGE_DESTINATION_PAGE_SIZE + 1
     : 0;
   const lastResult = Math.min(page.currentPage * HOMEPAGE_DESTINATION_PAGE_SIZE, matchingRows.length);
+  const hasActiveFilters = Boolean(filters.q || filters.market !== "ALL" || filters.assignmentType !== "ALL");
+  const emptyState = getInventoryEmptyState(allRows.length, matchingRows.length, hasActiveFilters, {
+    filteredTitle: "No destination assignments match",
+    filteredMessage: "Adjust the search or filters to view configured homepage destination assignments.",
+    sourceTitle: "No destination assignments are configured",
+    sourceMessage: "No homepage destination assignment records are configured.",
+  });
 
   return (
     <AdminPageShell
@@ -57,7 +66,13 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
         markets={getHomepageDestinationMarkets()}
       />
 
-      <AdminDataTable
+      {emptyState ? (
+        <AdminEmptyState
+          title={emptyState.title}
+          message={emptyState.message}
+          action={emptyState.showClearFilters ? <AdminLinkButton href="/admin/content/homepage-destinations">Clear filters</AdminLinkButton> : undefined}
+        />
+      ) : <AdminDataTable
         caption="Homepage destination assignments"
         density="compact"
         minWidth="1180px"
@@ -89,7 +104,7 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
             </div>,
           ],
         }))}
-      />
+      />}
     </AdminPageShell>
   );
 }
