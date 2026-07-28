@@ -117,7 +117,7 @@ const DEFAULT_HEALTH: HomepageFareHealth = {
   status: "attention",
   label: "Needs attention",
   message:
-    "Homepage fares are missing or stale. Refresh fares before relying on homepage prices.",
+    "Homepage fares are missing or expired. Refresh fares before relying on homepage prices.",
 };
 
 const DEFAULT_DISPLAY_READINESS: DisplayReadiness = {
@@ -598,9 +598,6 @@ export function HomepageFaresRefreshCard() {
     [statusPayload.marketReadinessSummary],
   );
   const latestCounts = refreshState.counts;
-  const providerCallsUsed =
-    latestCounts?.providerCalls ??
-    sumCountRecord(statusPayload.providerCallsByMarket);
   const replacementCandidatesUsed = latestCounts
     ? sumCountRecord(latestCounts.replacementCandidatesUsedByMarket)
     : sumCountRecord(statusPayload.replacementCandidatesUsedByMarket);
@@ -783,6 +780,24 @@ export function HomepageFaresRefreshCard() {
           Market Coverage
         </h2>
         <RouteFilterToolbar filter={routeFilter} onChange={selectRouteFilter} />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs font-semibold text-slate-500">
+            Usable includes fresh and last-known-good routes.
+          </p>
+          <button
+            type="button"
+            onClick={() =>
+              selectRouteScope(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE)
+            }
+            className="inline-flex min-h-10 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-extrabold text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
+            aria-pressed={
+              activeSelectedRouteScope ===
+              ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
+            }
+          >
+            View all filtered routes
+          </button>
+        </div>
         {statusState.data ? (
           <IssueSummary
             affectedCount={affectedMarkets.length}
@@ -798,22 +813,26 @@ export function HomepageFaresRefreshCard() {
           onInspectMarket={selectRouteScope}
           emptyMessage={
             statusState.data
-              ? "No markets match the current filters."
+              ? getRouteFilterEmptyMessage(routeFilter)
               : statusState.loading
                 ? "Loading homepage fare status…"
                 : "Homepage fare status is unavailable."
           }
         />
-        <MarketRouteInspector
-          selectedRouteScope={activeSelectedRouteScope}
-          selectedGroup={selectedRouteGroup}
-          loading={statusState.loading}
-          onSelectMarket={selectRouteScope}
-          routePage={routePage}
-          onPreviousPage={() => setRoutePage((page) => Math.max(1, page - 1))}
-          onNextPage={() => setRoutePage((page) => page + 1)}
-          routeDetailsRef={routeDetailsRef}
-        />
+        {activeSelectedRouteScope ? (
+          <MarketRouteInspector
+            selectedRouteScope={activeSelectedRouteScope}
+            selectedGroup={selectedRouteGroup}
+            loading={statusState.loading}
+            onClose={() => setSelectedRouteScope(null)}
+            routePage={routePage}
+            onPreviousPage={() =>
+              setRoutePage((page) => Math.max(1, page - 1))
+            }
+            onNextPage={() => setRoutePage((page) => page + 1)}
+            routeDetailsRef={routeDetailsRef}
+          />
+        ) : null}
       </section>
 
       <OperationsDisclosure label="Refresh Status">
@@ -826,7 +845,14 @@ export function HomepageFaresRefreshCard() {
       <OperationsDisclosure label="Additional health details">
         <dl className="grid grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-4">
           {[
-            { label: "Provider calls", value: providerCallsUsed },
+            ...(latestCounts
+              ? [
+                  {
+                    label: "Provider calls in latest manual refresh",
+                    value: latestCounts.providerCalls,
+                  },
+                ]
+              : []),
             {
               label: "Timeouts",
               value: timeoutCount,
@@ -860,7 +886,7 @@ export function HomepageFaresRefreshCard() {
         </dl>
       </OperationsDisclosure>
 
-      <OperationsDisclosure label="Diagnostics">
+      <OperationsDisclosure label="Developer diagnostics">
         <DiagnosticsPanel
           markets={statusPayload.marketReadinessSummary}
           marketsNeedingAnotherRun={marketsNeedingAnotherRun}
@@ -868,20 +894,22 @@ export function HomepageFaresRefreshCard() {
           publicPriceDiagnostics={statusPayload.publicPriceDiagnostics}
           stoppedReason={latestCounts?.stoppedReason}
         />
-      </OperationsDisclosure>
-
-      <OperationsDisclosure label="Fallback pools">
-        <FallbackPoolsSection
-          pools={fallbackPools}
-          selectedRouteScope={activeSelectedRouteScope}
-          onInspectMarket={selectRouteScope}
-        />
-      </OperationsDisclosure>
-      <OperationsDisclosure label="Raw debug details">
-        <RawDebugDetails
-          statusPayload={statusPayload}
-          refreshCounts={latestCounts}
-        />
+        <div className="mt-5 border-t border-slate-200 pt-5">
+          <FallbackPoolsSection
+            pools={fallbackPools}
+            selectedRouteScope={activeSelectedRouteScope}
+            onInspectMarket={selectRouteScope}
+          />
+        </div>
+        <div className="mt-5 border-t border-slate-200 pt-5">
+          <h3 className="mb-3 text-sm font-extrabold text-slate-950">
+            Raw debug details
+          </h3>
+          <RawDebugDetails
+            statusPayload={statusPayload}
+            refreshCounts={latestCounts}
+          />
+        </div>
       </OperationsDisclosure>
     </div>
   );
@@ -900,11 +928,11 @@ const ROUTE_FILTERS: Array<{
   label: string;
 }> = [
   { key: "all", label: "All" },
-  { key: "ready", label: "Ready" },
-  { key: "underfilled", label: "Underfilled" },
+  { key: "ready", label: "Usable" },
+  { key: "underfilled", label: "Needs coverage" },
   { key: "failed", label: "Failed" },
   { key: "missing", label: "Missing" },
-  { key: "stale", label: "Stale" },
+  { key: "stale", label: "Expired" },
   { key: "last_known_good", label: "Last-known-good" },
   { key: "fresh", label: "Fresh" },
   { key: "unavailable", label: "Unavailable" },
@@ -1114,6 +1142,14 @@ function IssueSummary({
   showingAffected: boolean;
   onToggle: () => void;
 }) {
+  if (affectedCount === 0) {
+    return (
+      <p className="rounded-lg bg-slate-50 px-4 py-3 text-sm font-bold text-slate-950">
+        All markets are currently covered
+      </p>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-2 rounded-lg bg-amber-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm font-bold text-slate-950">
@@ -1162,6 +1198,21 @@ function RouteFilterToolbar({
       </div>
     </div>
   );
+}
+
+function getRouteFilterEmptyMessage(
+  filter: AdminHomepageFareRouteGroupFilter,
+) {
+  switch (filter) {
+    case "ready":
+      return "No markets currently have usable routes.";
+    case "underfilled":
+      return "No markets have missing or expired routes.";
+    case "stale":
+      return "No markets contain expired routes.";
+    default:
+      return "No markets match the current filters.";
+  }
 }
 
 function MarketReadinessDashboard({
@@ -1461,7 +1512,7 @@ function MarketRouteInspector({
   selectedRouteScope,
   selectedGroup,
   loading,
-  onSelectMarket,
+  onClose,
   routePage,
   onPreviousPage,
   onNextPage,
@@ -1470,15 +1521,12 @@ function MarketRouteInspector({
   selectedRouteScope: string | null;
   selectedGroup: AdminHomepageFareMarketRouteGroup | null;
   loading: boolean;
-  onSelectMarket: (marketCode: string) => void;
+  onClose: () => void;
   routePage: number;
   onPreviousPage: () => void;
   onNextPage: () => void;
   routeDetailsRef: RefObject<HTMLDivElement | null>;
 }) {
-  const handleSelectMarket = (marketCode: string) => {
-    onSelectMarket(marketCode);
-  };
   return (
     <section className="mt-4 border-t border-slate-200 pt-4">
       <div className="flex items-center justify-between gap-3">
@@ -1487,19 +1535,10 @@ function MarketRouteInspector({
         </h3>
         <button
           type="button"
-          onClick={() =>
-            handleSelectMarket(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE)
-          }
-          className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold ${
-            selectedRouteScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
-              ? "border-indigo-700 bg-indigo-700 text-white"
-              : "border-slate-200 bg-white text-slate-950"
-          }`}
-          aria-pressed={
-            selectedRouteScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
-          }
+          onClick={onClose}
+          className="inline-flex min-h-10 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-extrabold text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
         >
-          View All
+          Close inspector
         </button>
       </div>
 
@@ -1540,7 +1579,8 @@ function SelectedRouteDetails({
         className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-white/55 p-6 text-center"
       >
         <p className="text-sm font-extrabold text-slate-950">
-          Select a market to inspect its routes, or choose View All.
+          Select a market to inspect its routes, or choose View all filtered
+          routes.
         </p>
         <p className="mt-2 text-xs font-semibold text-slate-500">
           Route rows stay hidden until a market context is selected.
@@ -2340,7 +2380,7 @@ function formatMarketStatus(status: MarketReadinessStatus) {
     case "cooldown":
       return "Cooldown";
     case "underfilled":
-      return "Underfilled";
+      return "Needs coverage";
   }
 }
 
@@ -2395,7 +2435,7 @@ function formatUnderfillCause(cause: UnderfillCause) {
     case "cooldown":
       return "cooldown";
     case "underfilled":
-      return "underfilled";
+      return "insufficient coverage";
   }
 }
 
