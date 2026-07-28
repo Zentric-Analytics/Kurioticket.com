@@ -47,8 +47,42 @@ test("both modify search launchers retain their accessible button contract witho
 test("the inline responsive search surface remains sticky on mobile and static above mobile", () => {
   assert.equal((summarySource.match(/<button/g) ?? []).length, 2);
   assert.match(summarySource, /<section[^>]+className="sticky top-0 z-50[^"\n]+sm:static/);
-  assert.match(summarySource, /sm:hidden/);
-  assert.match(summarySource, /\{dates\} · \{modeLabel\}/);
+  assert.match(summarySource, /const mobileDetails = \[dates, modeLabel, context\]\.filter\(Boolean\)\.join\(" · "\)/);
+  assert.doesNotMatch(summarySource, /col-span-2[^"\n]+border-t[^"\n]+sm:hidden/);
+});
+
+test("the phone summary is one compact, overflow-safe row with an adaptive Modify action", () => {
+  assert.match(summarySource, /grid-cols-\[minmax\(0,1fr\)_auto\]/);
+  assert.match(summarySource, /flex min-w-0 items-center gap-2\.5 px-3 py-2 sm:hidden/);
+  assert.equal((summarySource.match(/title=\{mobileDetails\}/g) ?? []).length, 1);
+  assert.match(summarySource, /title=\{summary\.primary\}[^>]+min-w-0 truncate/);
+  assert.match(summarySource, /title=\{mobileDetails\}[^>]+min-w-0 truncate/);
+  assert.match(summarySource, /import \{ CalendarDays, MapPin, PencilLine, Users \} from "lucide-react"/);
+  assert.match(summarySource, /<PencilLine aria-hidden="true" className="h-5 w-5 sm:hidden"/);
+  assert.match(summarySource, /aria-label=\{t\("deals\.results\.modify"\)\}/);
+  assert.match(summarySource, /min-h-11 min-w-11/);
+  assert.match(summarySource, /<span className="hidden sm:inline">\{t\("deals\.results\.modify"\)\}<\/span>/);
+});
+
+test("tablet and desktop use distinct flexible information layouts", () => {
+  assert.match(summarySource, /sm:grid-cols-\[minmax\(0,1\.35fr\)_minmax\(0,1fr\)_minmax\(0,1\.15fr\)_auto\]/);
+  assert.match(summarySource, /lg:grid-cols-\[minmax\(0,0\.7fr\)_minmax\(0,1\.4fr\)_minmax\(0,1\.1fr\)_minmax\(0,1\.15fr\)_auto\]/);
+  assert.doesNotMatch(summarySource, /sm:grid-cols-\[[^\]]+minmax\(\d+px/);
+  assert.match(summarySource, /const packageAndParty = \[modeLabel, context\]\.filter\(Boolean\)\.join\(" · "\)/);
+  assert.match(summarySource, /value=\{packageAndParty\}[^\n]+className="hidden sm:flex lg:hidden"/);
+  assert.match(summarySource, /value=\{modeLabel\} className="hidden lg:flex"/);
+  assert.match(summarySource, /value=\{context\}[^\n]+className="hidden lg:flex"/);
+  assert.doesNotMatch(summarySource, /min-h-\[68px\]/);
+});
+
+test("summary cells protect icons and truncate compact labels and values", () => {
+  const summaryCell = summarySource.slice(summarySource.indexOf("function SummaryCell"));
+  assert.match(summaryCell, /min-w-0 items-center/);
+  assert.match(summaryCell, /border-e border-slate/);
+  assert.match(summaryCell, /px-3 py-2/);
+  assert.match(summaryCell, /className="shrink-0/);
+  assert.match(summaryCell, /title=\{label\}[^>]+truncate text-\[10px\][^>]+leading-tight/);
+  assert.match(summaryCell, /title=\{value\}[^>]+truncate text-sm[^>]+leading-tight/);
 });
 
 test("desktop sticky visibility measures the translated inline summary surface", () => {
