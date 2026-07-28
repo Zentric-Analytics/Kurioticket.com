@@ -159,11 +159,16 @@ test("Homepage Operations shows the full Last refresh date without a search pref
   assert.doesNotMatch(operationsPanels, /truncate text-lg/);
 });
 
-test("Homepage Operations keeps plain secondary disclosures collapsed", () => {
-  assert.match(refreshCard, /label="Additional health details"/);
-  assert.match(refreshCard, /label="Developer diagnostics"/);
-  assert.match(operationsPanels, /<details/);
-  assert.doesNotMatch(operationsPanels, /<details[^>]*\sopen/);
+test("Homepage Operations ends after market coverage and the optional route inspector", () => {
+  assert.doesNotMatch(refreshCard, /Additional health details/);
+  assert.doesNotMatch(refreshCard, /Developer diagnostics/);
+  assert.doesNotMatch(refreshCard, /Fallback-only coverage pools/);
+  assert.doesNotMatch(refreshCard, /Inspect fallback routes/);
+  assert.doesNotMatch(refreshCard, /Raw debug details/);
+  assert.doesNotMatch(
+    refreshCard,
+    /DiagnosticsPanel|FallbackPoolsSection|RawDebugDetails/,
+  );
   assert.doesNotMatch(refreshCard, /label="Refresh Status"/);
 });
 
