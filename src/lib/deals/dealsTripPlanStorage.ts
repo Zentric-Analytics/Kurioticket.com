@@ -6,6 +6,8 @@ import {
   type DealsTripPlan,
   type DealsTripPlanFlight,
   type DealsTripPlanHotel,
+  type DealsTripPlanCar,
+  validateDealsCarDetailsPath,
 } from "./dealsTripPlan";
 
 export const DEALS_TRIP_PLAN_STORAGE_KEY = "kurioticket_deals_trip_plan_v1";
@@ -44,6 +46,15 @@ function canonicalHotel(value: unknown, updatedAt: number): DealsTripPlanHotel |
   return { id, provider, name, location, checkIn, checkOut, ...(roomType ? { roomType } : {}), sourcePrice: value.sourcePrice, sourceCurrency, resultReceivedAt: value.resultReceivedAt };
 }
 
+function canonicalCar(value: unknown, updatedAt: number): DealsTripPlanCar | null {
+  if (!record(value) || !timestamp(value.resultReceivedAt) || value.resultReceivedAt > updatedAt || !finitePrice(value.sourcePrice)) return null;
+  const keys = ["id", "provider", "rentalCompany", "modelName", "categoryLabel", "pickupLocation", "returnLocation", "pickupDate", "pickupTime", "dropoffDate", "dropoffTime", "sourceCurrency"] as const;
+  const values = Object.fromEntries(keys.map(key => [key, requiredText(value[key])]));
+  const detailsPath = validateDealsCarDetailsPath(value.detailsPath);
+  if (Object.values(values).some(item => !item) || !detailsPath) return null;
+  return { ...(values as Record<typeof keys[number], string>), sourcePrice: value.sourcePrice, sourceCurrency: values.sourceCurrency!, resultReceivedAt: value.resultReceivedAt, detailsPath };
+}
+
 export function canonicalizeDealsTripPlan(value: unknown): DealsTripPlan | null {
   if (!record(value) || value.version !== 1 || !dealsPackageModes.includes(value.mode as never)) return null;
   const searchFingerprint = requiredText(value.searchFingerprint);
@@ -55,14 +66,15 @@ export function canonicalizeDealsTripPlan(value: unknown): DealsTripPlan | null 
   if (value.carsResultsPath !== undefined && !carsResultsPath) return null;
   const flight = value.flight === undefined ? undefined : canonicalFlight(value.flight, updatedAt);
   const hotel = value.hotel === undefined ? undefined : canonicalHotel(value.hotel, updatedAt);
-  if (flight === null || hotel === null) return null;
+  const car = value.car === undefined ? undefined : canonicalCar(value.car, updatedAt);
+  if (flight === null || hotel === null || car === null) return null;
   const opened: DealsTripPlan["opened"] = {};
   for (const product of ["flight", "hotel", "car"] as const) {
     const openedAt = value.opened[product];
     if (openedAt !== undefined && (!timestamp(openedAt) || openedAt < createdAt || openedAt > updatedAt)) return null;
     if (openedAt !== undefined) opened[product] = openedAt;
   }
-  return { version: 1, mode: value.mode as DealsTripPlan["mode"], searchFingerprint, resultsPath, ...(carsResultsPath ? { carsResultsPath } : {}), createdAt, updatedAt, expiresAt, ...(flight ? { flight } : {}), ...(hotel ? { hotel } : {}), opened };
+  return { version: 1, mode: value.mode as DealsTripPlan["mode"], searchFingerprint, resultsPath, ...(carsResultsPath ? { carsResultsPath } : {}), createdAt, updatedAt, expiresAt, ...(flight ? { flight } : {}), ...(hotel ? { hotel } : {}), ...(car ? { car } : {}), opened };
 }
 
 export function parseDealsTripPlan(raw: string | null): DealsTripPlan | null {

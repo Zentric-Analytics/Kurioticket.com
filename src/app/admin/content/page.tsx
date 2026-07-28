@@ -9,17 +9,20 @@ export default function AdminContentPage() {
 
   return (
     <AdminPageShell
+      eyebrow=""
       title="Content Inventory"
       description="Review selected code-backed public content sources used across Kurioticket."
     >
-      <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
         {contentAreas.map((area) => (
-          <AdminSectionCard key={area.title} className="p-5">
-            <div className="flex items-start justify-between gap-3">
+          <AdminSectionCard key={area.id} className="flex h-full flex-col p-5">
+            <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
               <h2 className="font-semibold text-slate-950">{area.title}</h2>
-              <AdminStatusBadge tone={area.publicState === "Public" ? "info" : "neutral"}>
-                {area.publicState} · {area.sourceType}
-              </AdminStatusBadge>
+              <span className="shrink-0">
+                <AdminStatusBadge tone={area.publicState === "Public" ? "info" : "neutral"}>
+                  {area.publicState} · {area.sourceType}
+                </AdminStatusBadge>
+              </span>
             </div>
             <p className="mt-4 text-3xl font-semibold text-slate-950">
               {area.primaryCount} <span className="text-sm font-semibold text-slate-600">{area.unit}</span>
@@ -35,11 +38,11 @@ export default function AdminContentPage() {
               </dl>
             ) : null}
             <p className="mt-2 text-sm leading-6 text-slate-600">{area.note}</p>
-            {area.href ? (
-              <AdminLinkButton className="mt-4" href={area.href} size="sm">
+            <div className="mt-auto pt-4">
+              <AdminLinkButton href={area.href} size="sm">
                 View inventory
               </AdminLinkButton>
-            ) : null}
+            </div>
           </AdminSectionCard>
         ))}
       </div>

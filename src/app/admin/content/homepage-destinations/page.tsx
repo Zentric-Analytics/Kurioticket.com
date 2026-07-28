@@ -2,20 +2,22 @@ import Link from "next/link";
 
 import {
   AdminDataTable,
+  AdminEmptyState,
   AdminLinkButton,
   AdminMetricCard,
   AdminPageShell,
   AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
 
-import { getContentInventory } from "../inventory";
 import { HomepageDestinationFilterToolbar } from "./HomepageDestinationFilterToolbar";
+import { getInventoryEmptyState } from "../inventory-empty-state";
 import {
   buildHomepageDestinationHref,
   filterHomepageDestinationRows,
   formatAssignmentType,
   getHomepageDestinationInventoryRows,
   getHomepageDestinationMarkets,
+  getHomepageDestinationSummary,
   HOMEPAGE_DESTINATION_PAGE_SIZE,
   paginateHomepageDestinationRows,
   parseHomepageDestinationSearchParams,
@@ -29,15 +31,20 @@ type PageProps = { searchParams?: Promise<HomepageDestinationSearchParams> };
 export default async function HomepageDestinationInventoryPage({ searchParams }: PageProps) {
   const filters = parseHomepageDestinationSearchParams(await searchParams);
   const allRows = getHomepageDestinationInventoryRows();
+  const summary = getHomepageDestinationSummary(allRows);
   const matchingRows = filterHomepageDestinationRows(allRows, filters);
   const page = paginateHomepageDestinationRows(matchingRows, filters.page);
-  const summary = getContentInventory().find((item) => item.title === "Homepage destination content");
   const firstResult = matchingRows.length
     ? (page.currentPage - 1) * HOMEPAGE_DESTINATION_PAGE_SIZE + 1
     : 0;
   const lastResult = Math.min(page.currentPage * HOMEPAGE_DESTINATION_PAGE_SIZE, matchingRows.length);
-
-  if (!summary) throw new Error("Homepage destination inventory summary is unavailable");
+  const hasActiveFilters = Boolean(filters.q || filters.market !== "ALL" || filters.assignmentType !== "ALL");
+  const emptyState = getInventoryEmptyState(allRows.length, matchingRows.length, hasActiveFilters, {
+    filteredTitle: "No destination assignments match",
+    filteredMessage: "Adjust the search or filters to view configured homepage destination assignments.",
+    sourceTitle: "No destination assignments are configured",
+    sourceMessage: "No homepage destination assignment records are configured.",
+  });
 
   return (
     <AdminPageShell
@@ -47,9 +54,9 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
       actions={<AdminLinkButton href="/admin/content">Back to Content Inventory</AdminLinkButton>}
     >
       <div className="grid gap-4 sm:grid-cols-3">
-        <AdminMetricCard label="Unique card IDs" value={summary.primaryCount} />
-        <AdminMetricCard label="Market assignments" value={summary.supportingMetrics[0].value} />
-        <AdminMetricCard label="Unique routes" value={summary.supportingMetrics[1].value} />
+        <AdminMetricCard label="Unique card IDs" value={summary.uniqueCardIds} />
+        <AdminMetricCard label="Market assignments" value={summary.marketAssignments} />
+        <AdminMetricCard label="Unique routes" value={summary.uniqueRoutes} />
       </div>
 
       <HomepageDestinationFilterToolbar
@@ -59,7 +66,13 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
         markets={getHomepageDestinationMarkets()}
       />
 
-      <AdminDataTable
+      {emptyState ? (
+        <AdminEmptyState
+          title={emptyState.title}
+          message={emptyState.message}
+          action={emptyState.showClearFilters ? <AdminLinkButton href="/admin/content/homepage-destinations">Clear filters</AdminLinkButton> : undefined}
+        />
+      ) : <AdminDataTable
         caption="Homepage destination assignments"
         density="compact"
         minWidth="1180px"
@@ -91,7 +104,7 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
             </div>,
           ],
         }))}
-      />
+      />}
     </AdminPageShell>
   );
 }

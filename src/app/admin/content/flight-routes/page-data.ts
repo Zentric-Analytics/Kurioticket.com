@@ -99,6 +99,15 @@ export function getFlightRouteInventoryRows(): FlightRouteInventoryRow[] {
   }));
 }
 
+export function getFlightRouteInventorySummary(rows = getFlightRouteInventoryRows()) {
+  return {
+    uniqueRouteIds: new Set(rows.map((row) => row.routeId)).size,
+    poolMemberships: rows.length,
+    defaultUsRoutes: rows.filter((row) => row.poolType === "DEFAULT_US").length,
+    globalRoutes: rows.filter((row) => row.poolType === "GLOBAL").length,
+  };
+}
+
 export function getFlightRouteRegions() {
   return Object.keys(homeDiscoveryByRegion).sort((a, b) => a.localeCompare(b));
 }

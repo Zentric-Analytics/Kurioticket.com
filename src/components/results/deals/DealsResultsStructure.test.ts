@@ -6,7 +6,7 @@ const results = readFileSync(new URL("../DealsResultsClient.tsx", import.meta.ur
 const productSection = readFileSync(new URL("./DealsProductSection.tsx", import.meta.url), "utf8");
 const english = readFileSync(new URL("../../../lib/i18n/en.ts", import.meta.url), "utf8");
 
-test("results hierarchy uses one summary, breadcrumbs, and unchanged product continuations", () => {
+test("results hierarchy uses one summary, breadcrumbs, and product sections", () => {
   const summary = results.indexOf("<DealsResultsSearchSummary");
   const breadcrumbs = results.indexOf("<DealsResultsBreadcrumbs", summary);
   const products = results.indexOf("<DealsProductSection", breadcrumbs);
@@ -15,7 +15,8 @@ test("results hierarchy uses one summary, breadcrumbs, and unchanged product con
   assert.equal(existsSync(new URL("./DealsResultsIntro.tsx", import.meta.url)), false);
   assert.match(results, /included\.flight && <DealsProductSection/);
   assert.match(results, /included\.hotel && <DealsProductSection/);
-  assert.match(results, /included\.car && <section/);
+  assert.ok(results.includes('included.car && <DealsProductSection id="car-options" headingLevel={2}'));
+  assert.doesNotMatch(results, /car-continuation|carContinuationTitle/);
   assert.match(results, /<DealsTripPlanBar/);
 });
 
@@ -55,8 +56,10 @@ test("product sections are semantic and do not recreate an outer card shell", ()
   assert.match(productSection, /status === "loading"/);
   assert.match(productSection, /status === "empty"/);
   assert.match(productSection, /status === "error"/);
-  assert.match(productSection, /status === "success" && <>\{children\}/);
-  assert.match(productSection, /className="mt-4 text-xs text-slate-500">\{priceNotice\}/);
+  assert.ok(productSection.includes('status === "success" && <>{children}</>'));
+  assert.doesNotMatch(productSection, /priceNotice/);
+  assert.doesNotMatch(results, /priceNotice=/);
+  assert.doesNotMatch(results, /deals\.results\.priceResponsibility/);
 
   assert.match(productSection, /rounded-xl bg-amber-50/);
   assert.match(productSection, /rounded-2xl bg-slate-50/);
