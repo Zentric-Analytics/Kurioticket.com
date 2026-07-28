@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   type LucideIcon,
@@ -21,17 +22,23 @@ import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { ExchangeRates } from "@/lib/currency/exchangeRates";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
+import { DetailsBackLink } from "@/components/results/DetailsBackLink";
 
 const FLIGHT_QUOTE_UNAVAILABLE_MESSAGE =
   enTranslations.flightSearchAgainCurrentPrices;
 
 export function FlightDetailsClient({ id }: { id: string }) {
+  const searchParams = useSearchParams();
   const { selectedOption } = useRegion();
   const { locale, t } = useLocale();
   const currencyRates = useCurrencyRates();
   const [flight, setFlight] = useState<PublicFlightResult | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const resultsQuery = searchParams.toString();
+  const resultsHref = resultsQuery
+    ? `/flights/results?${resultsQuery}`
+    : "/flights";
 
   useEffect(() => {
     fetch(`/api/flights/details?id=${encodeURIComponent(id)}`)
@@ -89,6 +96,11 @@ export function FlightDetailsClient({ id }: { id: string }) {
   if (loading) {
     return (
       <main className="page-shell flex-1 py-10">
+        <div className="mb-4">
+          <DetailsBackLink href={resultsHref}>
+            Back to Flights results
+          </DetailsBackLink>
+        </div>
         <Card className="p-6 text-muted">
           {t.flightDetailsLoading || enTranslations.flightDetailsLoading}
         </Card>
@@ -104,6 +116,11 @@ export function FlightDetailsClient({ id }: { id: string }) {
   if (error || !flight) {
     return (
       <main className="page-shell flex-1 py-10">
+        <div className="mb-4">
+          <DetailsBackLink href={resultsHref}>
+            Back to Flights results
+          </DetailsBackLink>
+        </div>
         <Card className="p-6">
           <h1 className="text-xl font-bold text-navy">
             {t.flightQuoteUnavailable || enTranslations.flightQuoteUnavailable}
@@ -141,7 +158,11 @@ export function FlightDetailsClient({ id }: { id: string }) {
       <section className="border-b border-border bg-white">
         <div className="page-shell py-3 sm:py-4">
           <div className="mx-auto w-full max-w-5xl">
-            <div className="grid w-full grid-cols-1 items-start gap-5 lg:grid-cols-[58%_minmax(0,1fr)] lg:gap-x-6 lg:gap-y-5">
+            <DetailsBackLink href={resultsHref}>
+              Back to Flights results
+            </DetailsBackLink>
+
+            <div className="mt-4 grid w-full grid-cols-1 items-start gap-5 lg:grid-cols-[58%_minmax(0,1fr)] lg:gap-x-6 lg:gap-y-5">
               <div className="min-w-0 lg:col-start-1 lg:row-start-1">
                 <Card className="min-w-0 rounded-2xl border-slate-200/80 bg-white p-4 shadow-none sm:p-5 lg:p-6">
                   <SelectedFlightSummary

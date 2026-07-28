@@ -1,5 +1,4 @@
 import { AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
-import { HomepageFaresRefreshCard } from "@/components/admin/HomepageFaresRefreshCard";
 import { generalFaqs } from "@/content/faqs";
 import { getDefaultHomeDiscoveryPriceRoutes } from "@/data/homeDiscovery";
 import { hotelDestinations } from "@/data/hotelDestinations";
@@ -23,9 +22,8 @@ export default function AdminContentPage() {
   return (
     <AdminPageShell
       title="Content Inventory"
-      description="Review the public content currently available across Kurioticket and manage homepage fare freshness."
+      description="Review the public content currently available across Kurioticket."
     >
-      <HomepageFaresRefreshCard />
       <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {contentAreas.map((area) => (
           <AdminSectionCard key={area.title} className="p-5">

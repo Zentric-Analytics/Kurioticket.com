@@ -13,7 +13,7 @@ export default async function AdminPlatformPage() {
   const destinations = getAdminHubDestinations("platform", role);
 
   return (
-    <AdminPageShell title="Platform" description="Manage provider readiness, content inventory and system controls." eyebrow="Admin navigation">
+    <AdminPageShell title="Platform" description="Manage provider readiness, homepage operations, content inventory and system controls." eyebrow="Admin navigation">
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         {destinations.map((destination) => {
           const Icon = destination.icon;

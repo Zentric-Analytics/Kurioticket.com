@@ -1,0 +1,18 @@
+import { Modal, Pressable, Text, TextInput, View } from "react-native";
+import { searchFormStyles as styles } from "./searchFormStyles";
+
+export function FormTextField({ label, value, onChangeText, placeholder, error, keyboardType = "default", compact = false }: { label: string; value: string; onChangeText: (value: string) => void; placeholder: string; error?: string; keyboardType?: "default" | "number-pad"; compact?: boolean }) {
+  return <View style={[styles.field, compact && styles.compactField]}><Text style={styles.fieldLabel}>{label}</Text><TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor="#64748B" keyboardType={keyboardType} autoCapitalize="words" style={styles.input} />{error ? <Text style={styles.error}>{error}</Text> : null}</View>;
+}
+export function ReadonlyField({ label, value, meta, onPress, error }: { label: string; value: string; meta?: string; onPress: () => void; error?: string }) {
+  return <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.field, styles.compactField, pressed && styles.fieldPressed]}><Text style={styles.fieldLabel}>{label}</Text><Text style={styles.fieldValue}>{value}</Text>{meta ? <Text numberOfLines={1} style={styles.fieldMeta}>{meta}</Text> : null}{error ? <Text style={styles.error}>{error}</Text> : null}</Pressable>;
+}
+export function SearchSubmitButton({ label, submitting, onPress }: { label: string; submitting: boolean; onPress: () => void }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} disabled={submitting} onPress={onPress} style={({ pressed }) => [styles.searchButton, submitting && styles.searchButtonDisabled, pressed && styles.searchButtonPressed]}><Text style={styles.searchButtonText}>{submitting ? "Searching..." : label}</Text></Pressable>;
+}
+export function OptionSegment<T extends string>({ value, options, onChange }: { value: T; options: readonly { value: T; label: string }[]; onChange: (value: T) => void }) {
+  return <View style={styles.segment}>{options.map((option) => <Pressable key={option.value} accessibilityRole="button" accessibilityState={{ selected: value === option.value }} onPress={() => onChange(option.value)} style={({ pressed }) => [styles.segmentItem, value === option.value && styles.segmentItemActive, pressed && styles.pressed]}><Text style={[styles.segmentText, value === option.value && styles.segmentTextActive]}>{option.label}</Text></Pressable>)}</View>;
+}
+export function CounterSheet({ visible, title, counters, onClose }: { visible: boolean; title: string; counters: { label: string; value: number; min: number; max: number; onChange: (value: number) => void }[]; onClose: () => void }) {
+  return <Modal transparent animationType="slide" visible={visible} onRequestClose={onClose}><Pressable style={styles.modalOverlay} onPress={onClose}><Pressable style={styles.sheet}><Text style={styles.sheetTitle}>{title}</Text>{counters.map((counter) => <View key={counter.label} style={styles.counterRow}><Text style={styles.counterLabel}>{counter.label}</Text><View style={styles.counterControls}><Pressable accessibilityRole="button" onPress={() => counter.onChange(Math.max(counter.min, counter.value - 1))} style={styles.counterButton}><Text style={styles.counterButtonText}>−</Text></Pressable><Text style={styles.fieldValue}>{counter.value}</Text><Pressable accessibilityRole="button" onPress={() => counter.onChange(Math.min(counter.max, counter.value + 1))} style={styles.counterButton}><Text style={styles.counterButtonText}>+</Text></Pressable></View></View>)}<SearchSubmitButton label="Done" submitting={false} onPress={onClose} /></Pressable></Pressable></Modal>;
+}

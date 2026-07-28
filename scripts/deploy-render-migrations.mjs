@@ -4,22 +4,30 @@ import pg from "pg";
 
 const { Client } = pg;
 
-const databaseUrlEnvNames = ["DATABASE_URL", "POSTGRES_URL", "POSTGRES_PRISMA_URL", "POSTGRES_URL_NON_POOLING"];
+const databaseUrlEnvNames = [
+  "DATABASE_URL",
+  "POSTGRES_URL",
+  "POSTGRES_PRISMA_URL",
+  "POSTGRES_URL_NON_POOLING",
+];
 const initialMigrationName = "20260517000000_initial_auth_foundation";
 const adminMigrationName = "20260518000000_admin_users_audit";
-const userProfileMigrationName = "20260628000000_add_user_profile";
-const renderStagingDatabaseName = "curioticket_web_staging_2489";
-const expectedUserProfileColumns = [
+const legacyUserProfileMigrationName = "20260628000000_add_user_profile";
+const canonicalUserProfileMigrationName = "20260628000000_add_user_profiles";
+const sharedUserProfileColumns = [
   "id",
   "userId",
-  "fullName",
-  "phoneNumber",
   "dateOfBirth",
   "gender",
   "nationality",
   "address",
   "createdAt",
   "updatedAt",
+];
+const canonicalUserProfileColumns = [
+  ...sharedUserProfileColumns,
+  "fullName",
+  "phoneNumber",
 ];
 
 function getDatabaseUrl() {
@@ -55,17 +63,9 @@ function isMigrationFailed(migration) {
   return Boolean(migration && !migration.finished_at && !migration.rolled_back_at);
 }
 
-function getDatabaseName(connectionString) {
-  try {
-    return new URL(connectionString).pathname.replace(/^\//, "");
-  } catch {
-    return "";
-  }
-}
-
-function hasExpectedUserProfileColumns(columns) {
+function hasColumns(columns, requiredColumns) {
   const presentColumns = new Set(columns);
-  return expectedUserProfileColumns.every((column) => presentColumns.has(column));
+  return requiredColumns.every((column) => presentColumns.has(column));
 }
 
 async function getMigrationRecord(client, migrationName) {
@@ -138,26 +138,109 @@ async function getDatabaseState(connectionString) {
       ORDER BY ordinal_position
     `);
 
-    const initialMigration = hasMigrationTable ? await getMigrationRecord(client, initialMigrationName) : null;
-    const adminMigration = hasMigrationTable ? await getMigrationRecord(client, adminMigrationName) : null;
-    const userProfileMigration = hasMigrationTable ? await getMigrationRecord(client, userProfileMigrationName) : null;
-    const userProfileColumns = userProfileColumnResult.rows.map((row) => row.column_name);
+    const initialMigration = hasMigrationTable
+      ? await getMigrationRecord(client, initialMigrationName)
+      : null;
+    const adminMigration = hasMigrationTable
+      ? await getMigrationRecord(client, adminMigrationName)
+      : null;
+    const legacyUserProfileMigration = hasMigrationTable
+      ? await getMigrationRecord(client, legacyUserProfileMigrationName)
+      : null;
+    const canonicalUserProfileMigration = hasMigrationTable
+      ? await getMigrationRecord(client, canonicalUserProfileMigrationName)
+      : null;
+    const userProfileColumns = userProfileColumnResult.rows.map(
+      (row) => row.column_name,
+    );
 
     return {
       adminMigrationApplied: isMigrationApplied(adminMigration),
       adminMigrationFailed: isMigrationFailed(adminMigration),
-      adminSchemaPresent: Boolean(userStatusColumnResult.rows[0]?.exists && adminAuditTableResult.rows[0]?.exists),
+      adminSchemaPresent: Boolean(
+        userStatusColumnResult.rows[0]?.exists &&
+          adminAuditTableResult.rows[0]?.exists,
+      ),
       appTableCount: Number(appTableResult.rows[0]?.count ?? 0),
+      canonicalUserProfileMigrationApplied: isMigrationApplied(
+        canonicalUserProfileMigration,
+      ),
+      canonicalUserProfileMigrationFailed: isMigrationFailed(
+        canonicalUserProfileMigration,
+      ),
       initialMigrationApplied: isMigrationApplied(initialMigration),
       initialMigrationFailed: isMigrationFailed(initialMigration),
+      legacyUserProfileMigrationApplied: isMigrationApplied(
+        legacyUserProfileMigration,
+      ),
       userProfileColumns,
-      userProfileMigrationApplied: isMigrationApplied(userProfileMigration),
-      userProfileMigrationFailed: isMigrationFailed(userProfileMigration),
-      userProfileSchemaMatches: Boolean(
-        userProfileTableResult.rows[0]?.exists && hasExpectedUserProfileColumns(userProfileColumns),
+      userProfileHasCanonicalColumns: hasColumns(
+        userProfileColumns,
+        canonicalUserProfileColumns,
+      ),
+      userProfileHasLegacySignature: Boolean(
+        hasColumns(userProfileColumns, sharedUserProfileColumns) &&
+          userProfileColumns.includes("phone"),
       ),
       userProfileTableExists: Boolean(userProfileTableResult.rows[0]?.exists),
     };
+  } finally {
+    await client.end();
+  }
+}
+
+async function repairCanonicalUserProfileSchema(connectionString) {
+  const client = new Client({ connectionString });
+  await client.connect();
+
+  try {
+    await client.query("BEGIN");
+    await client.query(`
+      ALTER TABLE "UserProfile"
+        ADD COLUMN IF NOT EXISTS "fullName" TEXT,
+        ADD COLUMN IF NOT EXISTS "phoneNumber" TEXT
+    `);
+    await client.query(`
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'UserProfile'
+            AND column_name = 'phone'
+        ) THEN
+          UPDATE "UserProfile"
+          SET "phoneNumber" = COALESCE("phoneNumber", "phone")
+          WHERE "phoneNumber" IS NULL
+            AND "phone" IS NOT NULL;
+        END IF;
+      END
+      $$
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS "UserProfile_createdAt_idx"
+      ON "UserProfile" ("createdAt")
+    `);
+
+    const verificationResult = await client.query(`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'UserProfile'
+    `);
+    const columns = verificationResult.rows.map((row) => row.column_name);
+
+    if (!hasColumns(columns, canonicalUserProfileColumns)) {
+      throw new Error(
+        "UserProfile repair did not produce the expected canonical columns.",
+      );
+    }
+
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    throw error;
   } finally {
     await client.end();
   }
@@ -172,33 +255,28 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`[render-migrate] Checking Prisma migration state using ${databaseUrl.name}.`);
+  console.log(
+    `[render-migrate] Checking Prisma migration state using ${databaseUrl.name}.`,
+  );
   runPrisma(["generate"]);
 
-  const databaseName = getDatabaseName(databaseUrl.value);
-  const isRenderStagingDatabase = databaseName === renderStagingDatabaseName;
-  const state = await getDatabaseState(databaseUrl.value);
-  const shouldBaselineInitialMigration = state.appTableCount > 0 && !state.initialMigrationApplied;
-  const shouldBaselineAdminMigration = state.adminSchemaPresent && !state.adminMigrationApplied;
-  const shouldResolveUserProfileMigration =
-    isRenderStagingDatabase &&
-    state.userProfileMigrationFailed &&
-    state.userProfileTableExists &&
-    state.userProfileSchemaMatches;
-
-  if (isRenderStagingDatabase) {
-    console.log(`[render-migrate] Confirmed target database: ${renderStagingDatabaseName}.`);
-    console.log(`[render-migrate] UserProfile table exists: ${state.userProfileTableExists ? "yes" : "no"}.`);
-    console.log(`[render-migrate] UserProfile columns: ${state.userProfileColumns.join(", ") || "none"}.`);
-  }
+  let state = await getDatabaseState(databaseUrl.value);
+  const shouldBaselineInitialMigration =
+    state.appTableCount > 0 && !state.initialMigrationApplied;
+  const shouldBaselineAdminMigration =
+    state.adminSchemaPresent && !state.adminMigrationApplied;
 
   if (state.initialMigrationFailed) {
-    console.log(`[render-migrate] Marking failed baseline migration ${initialMigrationName} as rolled back.`);
+    console.log(
+      `[render-migrate] Marking failed baseline migration ${initialMigrationName} as rolled back.`,
+    );
     runPrisma(["migrate", "resolve", "--rolled-back", initialMigrationName]);
   }
 
   if (state.adminMigrationFailed) {
-    console.log(`[render-migrate] Marking failed admin migration ${adminMigrationName} as rolled back.`);
+    console.log(
+      `[render-migrate] Marking failed admin migration ${adminMigrationName} as rolled back.`,
+    );
     runPrisma(["migrate", "resolve", "--rolled-back", adminMigrationName]);
   }
 
@@ -216,18 +294,52 @@ async function main() {
     runPrisma(["migrate", "resolve", "--applied", adminMigrationName]);
   }
 
-  if (state.userProfileMigrationFailed && isRenderStagingDatabase && !state.userProfileSchemaMatches) {
-    console.error(
-      `[render-migrate] ${userProfileMigrationName} failed on staging, but UserProfile does not match the current schema. Manual review required; refusing to drop or alter staging data automatically.`,
-    );
-    process.exit(1);
-  }
-
-  if (shouldResolveUserProfileMigration) {
+  if (state.canonicalUserProfileMigrationFailed) {
     console.log(
-      `[render-migrate] Existing UserProfile schema matches Prisma on staging; marking failed migration ${userProfileMigrationName} as applied.`,
+      `[render-migrate] Found failed migration ${canonicalUserProfileMigrationName}.`,
     );
-    runPrisma(["migrate", "resolve", "--applied", userProfileMigrationName]);
+    console.log(
+      `[render-migrate] UserProfile columns: ${state.userProfileColumns.join(", ") || "none"}.`,
+    );
+
+    const canSafelyReconcile = Boolean(
+      state.userProfileTableExists &&
+        state.legacyUserProfileMigrationApplied &&
+        (state.userProfileHasLegacySignature ||
+          state.userProfileHasCanonicalColumns),
+    );
+
+    if (!canSafelyReconcile) {
+      console.error(
+        `[render-migrate] Refusing automatic repair because the database does not match the known duplicate UserProfile migration state. Manual review required.`,
+      );
+      process.exit(1);
+    }
+
+    if (!state.userProfileHasCanonicalColumns) {
+      console.log(
+        "[render-migrate] Reconciling the legacy UserProfile table with the canonical schema.",
+      );
+      await repairCanonicalUserProfileSchema(databaseUrl.value);
+    }
+
+    state = await getDatabaseState(databaseUrl.value);
+    if (!state.userProfileHasCanonicalColumns) {
+      console.error(
+        "[render-migrate] UserProfile schema verification failed after repair.",
+      );
+      process.exit(1);
+    }
+
+    console.log(
+      `[render-migrate] Marking reconciled migration ${canonicalUserProfileMigrationName} as applied.`,
+    );
+    runPrisma([
+      "migrate",
+      "resolve",
+      "--applied",
+      canonicalUserProfileMigrationName,
+    ]);
   }
 
   console.log("[render-migrate] Applying pending Prisma migrations.");

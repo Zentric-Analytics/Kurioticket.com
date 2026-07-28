@@ -85,6 +85,10 @@ import {
   type TravelPreferencesAirlinePayload,
 } from "@/lib/flights/preferredAirlineFilters";
 import {
+  readFlightResultsSessionSnapshot,
+  writeFlightResultsSessionSnapshot,
+} from "@/lib/flights/flightResultsSessionCache";
+import {
   readSavedTripIds,
   toggleSavedTripId,
   writeSavedTripIds,
@@ -2535,7 +2539,23 @@ export function FlightResultsClient() {
     activeFlightSearchKeyRef.current = searchKey;
 
     const timer = window.setTimeout(() => {
-      if (activeFlightSearchKeyRef.current !== searchKey) return;
+      if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
+
+      const snapshot = readFlightResultsSessionSnapshot(searchKey);
+      if (snapshot) {
+        if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
+        setResults(
+          filterResultsByRequestedOutboundDate(
+            snapshot.results,
+            body.departureDate,
+          ),
+        );
+        setWarnings(snapshot.warnings);
+        setError("");
+        setLoading(false);
+        return;
+      }
+
       setResults([]);
       setLoading(true);
       setError("");
@@ -2563,8 +2583,14 @@ export function FlightResultsClient() {
         .then((data) => {
           if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
 
-          setResults(filterResultsByRequestedOutboundDate(data.results, body.departureDate));
-          setWarnings(Array.isArray(data.warnings) ? data.warnings : []);
+          const filteredResults = filterResultsByRequestedOutboundDate(
+            data.results,
+            body.departureDate,
+          );
+          const warnings = Array.isArray(data.warnings) ? data.warnings : [];
+          writeFlightResultsSessionSnapshot(searchKey, filteredResults, warnings);
+          setResults(filteredResults);
+          setWarnings(warnings);
         })
         .catch((searchError) => {
           if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
@@ -7153,7 +7179,7 @@ export function FlightResultsClient() {
                   <div
                     ref={nearbyFareStripScrollRef}
                     onScroll={updateNearbyFareScrollState}
-                    className="fare-strip-scroll grid auto-cols-[minmax(128px,144px)] grid-flow-col items-center gap-3 overflow-x-auto scroll-smooth px-0 py-1 sm:auto-cols-[minmax(136px,144px)]"
+                    className="fare-strip-scroll grid auto-cols-[188px] grid-flow-col items-center gap-2 overflow-x-auto scroll-smooth px-0 py-1 sm:auto-cols-[192px]"
                     role="list"
                   >
                     {nearbyFares.length
@@ -7165,7 +7191,7 @@ export function FlightResultsClient() {
                               type="button"
                               data-fare-date-cell
                               className={cn(
-                                "flex min-h-[104px] w-[128px] min-w-0 max-w-[144px] flex-col items-center justify-center bg-transparent px-2.5 py-3 text-center text-[#24324A] transition hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 sm:w-[136px]",
+                                "flex min-h-[112px] w-[188px] min-w-0 flex-col items-center justify-center bg-transparent px-3 py-3 text-center text-[#24324A] transition hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 sm:w-[192px]",
                                 selected ? "text-[#0057FF]" : "text-[#24324A]",
                               )}
                               aria-current={selected ? "date" : undefined}
@@ -7179,9 +7205,9 @@ export function FlightResultsClient() {
                               <span className={cn("text-[13px] font-semibold uppercase leading-5", selected ? "text-[#0057FF]" : "text-[#24324A]")}>
                                 {formatFareStripWeekdayLabel(fare.date, calendarLocale).toUpperCase()}
                               </span>
-                              <span className={cn("mt-1 min-w-0 max-w-full text-[15px] font-semibold leading-5", selected ? "text-[#0057FF]" : "text-slate-950")} aria-live={fare.status === "loading" ? "polite" : undefined}>
+                              <span className={cn("mt-1 flex min-w-0 max-w-full justify-center text-[14px] font-semibold leading-5", selected ? "text-[#0057FF]" : "text-slate-950")} aria-live={fare.status === "loading" ? "polite" : undefined}>
                                 {fare.status === "loading" ? (
-                                  <span className="block h-5 w-20 animate-pulse rounded-full bg-slate-200" aria-label="Loading fare" />
+                                  <span className="block h-5 w-32 animate-pulse rounded-full bg-slate-200" aria-label="Loading fare" />
                                 ) : fare.status === "success" ? (() => {
                                   const nearbyDisplayPrice = formatDisplayPrice({
                                     amount: fare.amount,
@@ -7212,11 +7238,11 @@ export function FlightResultsClient() {
                       : Array.from({ length: nearbyFareRangeSize }).map((_, index) => (
                           <div
                             key={index}
-                            className="flex min-h-[104px] w-[128px] min-w-0 max-w-[144px] flex-col items-center justify-center px-2.5 py-3 sm:w-[136px]"
+                            className="flex min-h-[112px] w-[188px] min-w-0 flex-col items-center justify-center px-3 py-3 sm:w-[192px]"
                           >
                             <div className="h-3 w-14 animate-pulse rounded-full bg-slate-200" />
                             <div className="mt-2 h-3 w-8 animate-pulse rounded-full bg-slate-200" />
-                            <div className="mt-2 h-5 w-20 animate-pulse rounded-full bg-slate-200" />
+                            <div className="mt-2 h-5 w-32 animate-pulse rounded-full bg-slate-200" />
                           </div>
                         ))}
                   </div>
@@ -7361,14 +7387,22 @@ export function FlightResultsClient() {
                   <p className="mb-3 text-[16px] font-semibold leading-6 tracking-[-0.01em] text-slate-900 sm:hidden">
                     {formatResultsFound(sortedResults.length, t)}
                   </p>
-                  {sortedResults.map((flight, index) => (
-                    <FlightCard
-                      key={flight.id}
-                      flight={flight}
-                      isAccented={index % 2 === 0}
-                      resultBadge={resultBadgeByFlightId.get(flight.id)}
-                    />
-                  ))}
+                  {sortedResults.map((flight, index) => {
+                    const detailsQuery = params.toString();
+                    const detailsHref =
+                      `/flights/details/${encodeURIComponent(flight.id)}` +
+                      (detailsQuery ? `?${detailsQuery}` : "");
+
+                    return (
+                      <FlightCard
+                        key={flight.id}
+                        flight={flight}
+                        isAccented={index % 2 === 0}
+                        resultBadge={resultBadgeByFlightId.get(flight.id)}
+                        detailsHref={detailsHref}
+                      />
+                    );
+                  })}
                 </>
               ) : (
                 <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm font-semibold text-muted shadow-sm">

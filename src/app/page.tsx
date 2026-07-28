@@ -1064,11 +1064,12 @@ export default function Home() {
               fill
               priority
               sizes="100vw"
+              quality={92}
               className="object-cover object-[62%_center] sm:object-[60%_center] lg:object-[58%_48%]"
             />
           </div>
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-[88%] bg-gradient-to-r from-slate-950/68 via-slate-950/28 to-transparent rtl:left-auto rtl:right-0 rtl:bg-gradient-to-l sm:w-[72%] lg:w-[62%]" />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/22 via-transparent to-slate-950/30" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-[88%] bg-gradient-to-r from-slate-950/62 via-slate-950/22 to-transparent rtl:left-auto rtl:right-0 rtl:bg-gradient-to-l sm:w-[72%] lg:w-[62%]" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/18 via-transparent to-slate-950/24" />
 
           <div className="page-shell relative z-10 pb-0 pt-8 sm:pb-44 sm:pt-10 lg:pb-48 lg:pt-12">
             <div className="grid content-start gap-5 pb-0 sm:gap-4 sm:pb-4 lg:max-w-[1200px]">

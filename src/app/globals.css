@@ -710,9 +710,10 @@ textarea {
   min-width: 0;
   text-align: center;
   line-height: 1.15;
-  overflow-wrap: anywhere;
-  word-break: normal;
-  font-size: clamp(0.8125rem, 1.8vw, 0.9375rem);
+  overflow-wrap: normal;
+  word-break: keep-all;
+  white-space: nowrap;
+  font-size: clamp(0.8125rem, 1.2vw, 0.875rem);
   font-variant-numeric: tabular-nums;
   unicode-bidi: isolate;
 }
@@ -734,6 +735,13 @@ textarea {
   font-size: clamp(1rem, 5vw, 1.25rem);
   font-variant-numeric: tabular-nums;
   unicode-bidi: isolate;
+}
+
+.flight-card-price-value.flight-card-price {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  font-size: clamp(0.8125rem, 2.05cqi, 1.125rem);
 }
 
 .flight-card-provider-price {
