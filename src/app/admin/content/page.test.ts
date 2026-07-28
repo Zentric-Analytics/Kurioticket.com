@@ -156,12 +156,16 @@ test("Homepage Operations omits the market toolbar and preserves Route Inspector
   assert.match(refreshCard, /overflow-x-auto overscroll-x-contain/);
 });
 
-test("Homepage Operations labels the saved fare snapshot refresh time clearly", () => {
-  assert.match(refreshCard, /label: "Fare data last refreshed"/);
-  assert.doesNotMatch(refreshCard, /label: "Last refresh"/);
-  assert.match(refreshCard, /formatSnapshotTime\(statusPayload\.lastRefreshAt\)/);
-  assert.match(refreshCard, /return formatDateTime\(value\)/);
-  assert.doesNotMatch(refreshCard, /`Searched \$\{formatDateTime\(value\)\}`/);
+test("Homepage Operations shows when status was last loaded successfully", () => {
+  assert.match(refreshCard, /label: "Status last updated"/);
+  assert.doesNotMatch(refreshCard, /label: "Fare data last refreshed"/);
+  assert.match(
+    refreshCard,
+    /statusState\.lastSuccessfulLoadAt[\s\S]{0,100}formatDateTime\(statusState\.lastSuccessfulLoadAt\)/,
+  );
+  assert.doesNotMatch(refreshCard, /formatSnapshotTime\(statusPayload\.lastRefreshAt\)/);
+  assert.match(refreshCard, /statusState\.loading[\s\S]{0,30}"Loading…"/);
+  assert.match(refreshCard, /"Loading…"[\s\S]{0,30}"Unavailable"/);
   assert.match(operationsPanels, /minmax\(10rem,1\.35fr\)/);
   assert.match(operationsPanels, /whitespace-normal text-lg/);
   assert.doesNotMatch(operationsPanels, /truncate text-lg/);
