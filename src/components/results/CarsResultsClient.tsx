@@ -1246,8 +1246,8 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
           <div className="w-full min-w-0 xl:max-w-[840px]">
             {initialResults.length > 0 ? (
               <>
-                <div className="flex flex-wrap items-center justify-between gap-3 py-1">
-                <p className="whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">
+                <div className="flex w-full min-w-0 flex-nowrap items-center justify-between gap-2 py-1 sm:flex-wrap sm:gap-3">
+                <p className="min-w-0 flex-1 truncate whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">
                   {t(
                     visibleResults.length === 1
                       ? "resultFound"
@@ -1259,11 +1259,11 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
                     }).format(visibleResults.length),
                   )}
                 </p>
-                <div className="flex min-w-0 shrink-0 flex-nowrap items-center justify-between gap-2 sm:justify-end">
+                <div className="flex min-w-0 max-w-[68%] flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:max-w-none sm:shrink-0 sm:gap-2">
                   <Button
                     type="button"
                     variant="secondary"
-                    className="h-10 rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:hidden"
+                    className="hidden h-10 rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 sm:inline-flex lg:hidden"
                     onClick={() => setFiltersOpen(true)}
                   >
                     <SlidersHorizontal size={17} aria-hidden="true" />
@@ -1274,13 +1274,13 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
                         )
                       : t("filters")}
                   </Button>
-                  <div className="flex min-w-0 items-center gap-1 whitespace-nowrap sm:gap-2">
-                    <span className="whitespace-nowrap text-[clamp(0.68rem,3vw,0.875rem)] font-semibold text-slate-700 sm:text-base">
+                  <div className="flex min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2">
+                    <span className="shrink-0 whitespace-nowrap text-[clamp(0.68rem,3vw,0.875rem)] font-semibold text-slate-700 sm:text-base">
                       {t("carsResults.sortBy")}:
                     </span>
                     <div
                       ref={carsSortRef}
-                      className="relative inline-flex min-w-0 shrink items-center whitespace-nowrap"
+                      className="relative inline-flex min-w-0 max-w-full shrink items-center whitespace-nowrap"
                     >
                       <button
                         ref={carsSortButtonRef}
@@ -1288,7 +1288,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
                         aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
                         aria-haspopup="menu"
                         aria-expanded={carsSortOpen}
-                        className="inline-flex h-9 min-w-0 items-center justify-center gap-2 rounded-md bg-transparent px-2 text-[16px] font-semibold text-[#142033] transition hover:bg-[#004BB8]/5 hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                        className="inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-2 rounded-md bg-transparent px-2 text-[16px] font-semibold text-[#142033] transition hover:bg-[#004BB8]/5 hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
                         onClick={() => setCarsSortOpen((open) => !open)}
                       >
                         <span className="min-w-0 truncate whitespace-nowrap">
