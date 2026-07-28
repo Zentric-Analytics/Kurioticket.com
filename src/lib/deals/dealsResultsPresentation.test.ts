@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { countHotelNights, dealsPreviewLimit, getFlightLegLabelKey, getHotelPreviewPrice, getOverviewData, normalizeFlightLegs, normalizeMetadata, safeDateTime } from "./dealsResultsPresentation";
+import { countHotelNights, dealsPreviewLimit, formatDealsOptionCount, getFlightLegLabelKey, getHotelPreviewPrice, getOverviewData, normalizeFlightLegs, normalizeMetadata, safeDateTime, selectDealsFlightPreviews, selectDealsHotelPreviews } from "./dealsResultsPresentation";
 import { createDefaultDealsSearch } from "./dealsSearchParams";
 import type { PublicFlightResult, PublicHotelResult } from "@/lib/types";
 
@@ -38,3 +38,44 @@ test("invalid and empty timestamps return empty presentation values", () => {
 test("stops preserve direct, singular, and plural inputs", () => { assert.equal(normalizeFlightLegs({ ...flight, stops: 0 }).at(0)?.stops, 0); assert.equal(normalizeFlightLegs({ ...flight, stops: 1 }).at(0)?.stops, 1); assert.equal(normalizeFlightLegs({ ...flight, stops: 2 }).at(0)?.stops, 2); });
 test("hotel price distinguishes bookable and discovery", () => { const hotel = { totalPrice: 200, currency: "USD" } as PublicHotelResult; assert.deepEqual(getHotelPreviewPrice(hotel), { amount: 200, currency: "USD" }); assert.equal(getHotelPreviewPrice({ inventoryKind: "discovery" } as PublicHotelResult), null); });
 test("preview contract and metadata normalization", () => { assert.equal(dealsPreviewLimit, 3); assert.deepEqual(normalizeMetadata({ warnings: ["safe", 2], servedFromFallback: "yes", latencyMs: Infinity, warningCategory: "secret" }), { warnings: ["safe"], servedFromFallback: false, latencyMs: undefined, warningCategory: undefined }); assert.deepEqual(normalizeMetadata({ warnings: null }).warnings, []); });
+
+const makeFlight = (id: string, values: Partial<PublicFlightResult> = {}) => ({ ...flight, id, valueScore: 50, price: 500, durationMinutes: 300, ...values } as PublicFlightResult);
+const makeHotel = (id: string, values: Record<string, unknown> = {}) => ({ id, provider: "provider", name: id, rating: 4, location: "City", amenities: [], roomType: "Room", cancellationInfo: "", valueScore: 50, travelConfidenceScore: 0, arrivalSuitabilityScore: 0, recommendationReasons: [], badges: [], totalPrice: 500, pricePerNight: 250, currency: "USD", bookingUrl: "#", partnerRedirectUrl: "#", ...values } as unknown as PublicHotelResult);
+
+test("flight previews assign recommended, lowest-price, and shortest categories distinctly", () => {
+  const previews = selectDealsFlightPreviews([makeFlight("recommended", { valueScore: 99 }), makeFlight("lowest", { price: 100 }), makeFlight("shortest", { durationMinutes: 60 })]);
+  assert.deepEqual(previews.map(({ result, badgeKey }) => [result.id, badgeKey]), [["recommended", "deals.results.flight.recommended.badge"], ["lowest", "deals.results.flight.lowest.badge"], ["shortest", "deals.results.flight.shortest.badge"]]);
+  assert.equal(new Set(previews.map(({ result }) => result.id)).size, 3);
+});
+test("flight selection skips duplicate winners, invalid values, and breaks ties deterministically", () => {
+  const previews = selectDealsFlightPreviews([makeFlight("winner", { valueScore: 100, price: 90, durationMinutes: 50 }), makeFlight("b", { valueScore: Number.NaN, price: 100, durationMinutes: 80 }), makeFlight("a", { valueScore: 0, price: 100, durationMinutes: 80 }), makeFlight("invalid", { price: -1, durationMinutes: Number.NaN })]);
+  assert.deepEqual(previews.map(({ result }) => result.id), ["winner", "a", "b"]);
+  assert.deepEqual(selectDealsFlightPreviews([]), []);
+});
+test("flight selection fills fewer qualifying results in stable input order without duplicates", () => {
+  const previews = selectDealsFlightPreviews([makeFlight("first", { valueScore: 0, price: 0, durationMinutes: 0 }), makeFlight("second", { valueScore: Number.NaN, price: -1, durationMinutes: -1 })]);
+  assert.deepEqual(previews.map(({ result }) => result.id), ["first", "second"]);
+  assert.ok(previews.every(({ badgeKey, reasonKey }) => badgeKey.includes("preview.more") && reasonKey.includes("preview.more")));
+});
+test("hotel previews assign recommended, lowest bookable total, and normalized guest-rating categories", () => {
+  const previews = selectDealsHotelPreviews([makeHotel("recommended", { valueScore: 99 }), makeHotel("lowest", { totalPrice: 100 }), makeHotel("rated", { reviewScore: 4.8, reviewScale: 5, reviewCount: 20 })]);
+  assert.deepEqual(previews.map(({ result, badgeKey }) => [result.id, badgeKey]), [["recommended", "deals.results.hotel.recommended.badge"], ["lowest", "deals.results.hotel.lowest.badge"], ["rated", "deals.results.hotel.rating.badge"]]);
+});
+test("hotel rating uses review count, price, and ID ties while missing ratings do not qualify", () => {
+  const previews = selectDealsHotelPreviews([makeHotel("recommended", { valueScore: 90 }), makeHotel("lowest", { valueScore: 0, totalPrice: 100 }), makeHotel("b", { valueScore: 0, reviewScore: 9, reviewScale: 10, reviewCount: 20, totalPrice: 300 }), makeHotel("a", { valueScore: 0, reviewScore: 4.5, reviewScale: 5, reviewCount: 20, totalPrice: 300 }), makeHotel("missing", { valueScore: 0, reviewScore: undefined })]);
+  assert.equal(previews[2]?.result.id, "a");
+});
+test("hotel discovery and invalid prices never qualify for lowest total", () => {
+  const previews = selectDealsHotelPreviews([makeHotel("recommended", { valueScore: 99 }), makeHotel("discovery", { valueScore: 0, inventoryKind: "discovery", totalPrice: undefined, pricePerNight: undefined, currency: undefined }), makeHotel("zero", { valueScore: 0, totalPrice: 0 }), makeHotel("bookable", { valueScore: 0, totalPrice: 250 })]);
+  assert.equal(previews[1]?.result.id, "bookable");
+  assert.deepEqual(selectDealsHotelPreviews([]), []);
+});
+test("hotel selection fills fewer results without duplication", () => {
+  const previews = selectDealsHotelPreviews([makeHotel("only", { valueScore: 0, totalPrice: 0, reviewScore: undefined })]);
+  assert.deepEqual(previews.map(({ result }) => result.id), ["only"]);
+  assert.equal(previews[0]?.badgeKey, "deals.results.preview.more.badge");
+});
+test("option count interpolation supports previews and returned-only copy", () => {
+  assert.equal(formatDealsOptionCount("{{visible}} recommended previews from {{total}} returned options", 3, 15), "3 recommended previews from 15 returned options");
+  assert.equal(formatDealsOptionCount("{{total}} options returned", 2, 2), "2 options returned");
+});
