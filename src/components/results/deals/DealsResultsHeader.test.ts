@@ -7,6 +7,11 @@ import { translations } from "@/lib/i18n/en";
 
 const summarySource = readFileSync(new URL("./DealsResultsSearchSummary.tsx", import.meta.url), "utf8");
 const breadcrumbsSource = readFileSync(new URL("./DealsResultsBreadcrumbs.tsx", import.meta.url), "utf8");
+const inlineRoot = summarySource.slice(summarySource.indexOf("<div ref={visibleSummaryRef}"), summarySource.indexOf("</section>"));
+const fixedRoot = summarySource.slice(summarySource.indexOf("aria-hidden={!desktopStickyVisible}"), summarySource.indexOf("type SummaryCellVariant"));
+const summaryCell = summarySource.slice(summarySource.indexOf("type SummaryCellVariant"));
+const inlineAction = inlineRoot.slice(inlineRoot.indexOf("<div className=\"flex shrink-0"));
+const fixedAction = fixedRoot.slice(fixedRoot.indexOf("<div className=\"flex items-center px-3\""));
 const base: DealsSearch = { ...createDefaultDealsSearch(), mode: "hotel-flight", flightOriginText: "Lagos", flightOriginCode: "LOS", flightDestinationText: "Los Angeles", flightDestinationCode: "LAX", flightDepartureDate: "2026-07-28", flightReturnDate: "2026-08-03", hotelDestination: "Los Angeles", hotelCheckIn: "2026-07-28", hotelCheckOut: "2026-08-03", flightAdults: 1, hotelAdults: 2, hotelRooms: 1 };
 
 test("flight summary prioritizes route and represents aligned dates once", () => {
@@ -75,14 +80,50 @@ test("tablet and desktop use distinct flexible information layouts", () => {
   assert.doesNotMatch(summarySource, /min-h-\[68px\]/);
 });
 
-test("summary cells protect icons and truncate compact labels and values", () => {
-  const summaryCell = summarySource.slice(summarySource.indexOf("function SummaryCell"));
+test("inline desktop surface is full-width, enlarged, and content-safe without compact toolbar constraints", () => {
+  assert.match(inlineRoot, /lg:min-h-\[80px\]/);
+  assert.match(inlineRoot, /lg:grid-cols-\[minmax\(0,0\.7fr\)_minmax\(0,1\.4fr\)_minmax\(0,1\.1fr\)_minmax\(0,1\.15fr\)_auto\]/);
+  assert.match(inlineRoot, /overflow-hidden/);
+  assert.match(inlineRoot, /border border-slate/);
+  assert.match(inlineRoot, /bg-white/);
+  assert.match(inlineRoot, /rounded-xl/);
+  assert.match(inlineRoot, /lg:rounded-2xl/);
+  assert.match(inlineRoot, /lg:shadow-/);
+  assert.doesNotMatch(inlineRoot, /(?:sm|md):min-h-\[80px\]/);
+  assert.doesNotMatch(inlineRoot, /h-\[58px\]|max-w-\[980px\]/);
+  assert.match(summarySource.slice(0, summarySource.indexOf("<div ref={visibleSummaryRef}")), /page-shell/);
+});
+
+test("summary cells use explicit densities and enlarge only the inline desktop presentation", () => {
+  assert.match(summaryCell, /type SummaryCellVariant = "inline" \| "compact"/);
+  assert.match(summaryCell, /variant: SummaryCellVariant/);
+  assert.match(summaryCell, /variant === "inline"/);
   assert.match(summaryCell, /min-w-0 items-center/);
   assert.match(summaryCell, /border-e border-slate/);
   assert.match(summaryCell, /px-3 py-2/);
-  assert.match(summaryCell, /className="shrink-0/);
-  assert.match(summaryCell, /title=\{label\}[^>]+truncate text-\[10px\][^>]+leading-tight/);
-  assert.match(summaryCell, /title=\{value\}[^>]+truncate text-sm[^>]+leading-tight/);
+  assert.match(summaryCell, /lg:gap-3 lg:px-5 lg:py-3\.5/);
+  assert.match(summaryCell, /\[&>svg\]:h-4 \[&>svg\]:w-4/);
+  assert.match(summaryCell, /lg:\[&>svg\]:h-5 lg:\[&>svg\]:w-5/);
+  assert.match(summaryCell, /text-\[10px\][^\n]+tracking-\[0\.1em\]/);
+  assert.match(summaryCell, /lg:text-\[11px\] lg:tracking-\[0\.11em\]/);
+  assert.match(summaryCell, /text-sm font-semibold leading-tight/);
+  assert.match(summaryCell, /lg:mt-1 lg:text-base lg:leading-6/);
+  assert.match(summaryCell, /title=\{label\}/);
+  assert.match(summaryCell, /title=\{value\}/);
+  assert.equal((inlineRoot.match(/<SummaryCell variant="inline"/g) ?? []).length, 5);
+  assert.equal((fixedRoot.match(/<SummaryCell variant="compact"/g) ?? []).length, 4);
+});
+
+test("only the inline desktop Modify action gains larger spacing and typography", () => {
+  assert.match(inlineAction, /lg:px-4/);
+  assert.match(inlineAction, /lg:min-h-\[52px\]/);
+  assert.match(inlineAction, /lg:px-6/);
+  assert.match(inlineAction, /lg:text-base/);
+  assert.match(inlineAction, /lg:rounded-xl/);
+  assert.match(fixedAction, /px-3/);
+  assert.match(fixedAction, /min-h-11[^\n]+px-4 text-sm/);
+  assert.doesNotMatch(fixedAction, /lg:min-h-\[52px\]|lg:px-6|lg:text-base|lg:rounded-xl/);
+  assert.equal((summarySource.match(/onClick=\{handleModify\}/g) ?? []).length, 2);
 });
 
 test("desktop sticky visibility measures the translated inline summary surface", () => {
@@ -112,20 +153,19 @@ test("a separate compact toolbar is fixed, desktop-only, transitioned, and inert
   assert.match(summarySource, /aria-hidden=\{!desktopStickyVisible\}/);
   assert.match(summarySource, /inert=\{!desktopStickyVisible \? true : undefined\}/);
   assert.match(summarySource, /desktopStickyVisible \? "pointer-events-auto" : "pointer-events-none"/);
-  assert.match(summarySource, /h-\[58px\]/);
-  assert.match(summarySource, /max-w-\[980px\]/);
+  assert.match(fixedRoot, /h-\[58px\]/);
+  assert.match(fixedRoot, /max-w-\[980px\]/);
 });
 
 test("the desktop toolbar retains every Deals summary value and localized label", () => {
-  const fixedToolbar = summarySource.slice(summarySource.indexOf("aria-hidden={!desktopStickyVisible}"));
-  assert.match(fixedToolbar, /deals\.results\.summary\.package/);
-  assert.match(fixedToolbar, /value=\{modeLabel\}/);
-  assert.match(fixedToolbar, /summary\.routeLabelKey/);
-  assert.match(fixedToolbar, /value=\{summary\.primary\}/);
-  assert.match(fixedToolbar, /deals\.results\.summary\.travelDates/);
-  assert.match(fixedToolbar, /value=\{dates\}/);
-  assert.match(fixedToolbar, /deals\.results\.summary\.travelParty/);
-  assert.match(fixedToolbar, /value=\{context\}/);
+  assert.match(fixedRoot, /deals\.results\.summary\.package/);
+  assert.match(fixedRoot, /value=\{modeLabel\}/);
+  assert.match(fixedRoot, /summary\.routeLabelKey/);
+  assert.match(fixedRoot, /value=\{summary\.primary\}/);
+  assert.match(fixedRoot, /deals\.results\.summary\.travelDates/);
+  assert.match(fixedRoot, /value=\{dates\}/);
+  assert.match(fixedRoot, /deals\.results\.summary\.travelParty/);
+  assert.match(fixedRoot, /value=\{context\}/);
 });
 
 test("breadcrumbs use localized semantic hierarchy", () => {
