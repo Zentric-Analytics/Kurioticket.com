@@ -12,6 +12,7 @@ import { router } from "expo-router";
 import { readSession } from "../../storage/sessionStorage";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { FlightSearchPanel } from "./FlightSearchPanel";
+import { ResponsiveHero } from "./ResponsiveHero";
 import { flowColors, flowStyles } from "./flowStyles";
 
 const products: {
@@ -64,19 +65,21 @@ export function HomeFlowScreen() {
             <FlowIcon name="bell" />
           </Pressable>
         </View>
-      <View>
-        <Text style={styles.greeting}>{greeting(new Date().getHours())}</Text>
-        <Text accessibilityRole="header" style={styles.name}>
-          {name}
-        </Text>
-      </View>
-      <Image
-        accessibilityIgnoresInvertColors
-        accessibilityLabel="Santorini coastline"
-        source={require("../../../assets/heroes/home-santorini.png")}
-        resizeMode="cover"
-        style={styles.hero}
-      />
+        <View>
+          <Text style={styles.greeting}>{greeting(new Date().getHours())}</Text>
+          <Text accessibilityRole="header" style={styles.name}>
+            {name}
+          </Text>
+        </View>
+        <ResponsiveHero
+          source={require("../../../assets/heroes/home-santorini.png")}
+          sourceWidth={307}
+          sourceHeight={596}
+          height={258}
+          focalY={0.62}
+          accessibilityLabel="Santorini coastline"
+          rounded
+        />
         <View style={[styles.products, flowStyles.shadow]}>
           {products.map((product, index) => (
             <Pressable
@@ -146,11 +149,6 @@ const styles = StyleSheet.create({
     fontSize: 25,
     lineHeight: 31,
     fontWeight: "800",
-  },
-  hero: {
-    height: 196,
-    borderRadius: 14,
-    backgroundColor: "#EAF3FF",
   },
   products: {
     minHeight: 78,
