@@ -30,6 +30,7 @@ import {
   getHomeDiscoveryImageCardsByRegion,
   getHomepageRegionalRouteCards,
 } from "@/data/homeDiscovery";
+import { homepageTrustMessages } from "@/data/homepageTrustMessages";
 import { getHomepageHeroImageForMarket } from "@/data/images/homepageHeroImage";
 import {
   distributeCountryDirectoryColumns,
@@ -1311,10 +1312,10 @@ export default function Home() {
                     </div>
                     <div>
                       <h3 className="text-base font-bold leading-6 text-slate-900">
-                        {t("homeTrustCompareTitle")}
+                        {t(homepageTrustMessages[0].titleKey)}
                       </h3>
                       <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
-                        {t("homeTrustCompareBody")}
+                        {t(homepageTrustMessages[0].bodyKey)}
                       </p>
                     </div>
                   </article>
@@ -1325,10 +1326,10 @@ export default function Home() {
                     </div>
                     <div>
                       <h3 className="text-base font-bold leading-6 text-slate-900">
-                        {t("homeTrustPricingTitle")}
+                        {t(homepageTrustMessages[1].titleKey)}
                       </h3>
                       <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
-                        {t("homeTrustPricingBody")}
+                        {t(homepageTrustMessages[1].bodyKey)}
                       </p>
                     </div>
                   </article>
@@ -1339,10 +1340,10 @@ export default function Home() {
                     </div>
                     <div>
                       <h3 className="text-base font-bold leading-6 text-slate-900">
-                        {t("homeTrustHandoffTitle")}
+                        {t(homepageTrustMessages[2].titleKey)}
                       </h3>
                       <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
-                        {t("homeTrustHandoffBody")}
+                        {t(homepageTrustMessages[2].bodyKey)}
                       </p>
                     </div>
                   </article>
