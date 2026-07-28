@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { PublicFlightResult, PublicHotelResult } from "@/lib/types";
-import { getDealsProviderHandoff } from "./dealsProviderHandoff";
+import { buildDealsInternalRedirectHref, getDealsProviderHandoff } from "./dealsProviderHandoff";
 
 const flight = (values: Record<string, unknown> = {}) => ({ id: "flight-1", provider: "Sky Provider", partnerRedirectUrl: "https://provider.test/flight/secret", bookingUrl: "", ...values } as unknown as PublicFlightResult);
 const hotel = (values: Record<string, unknown> = {}) => ({ id: "hotel-1", provider: "Stay Provider", inventoryKind: "bookable", partnerRedirectUrl: "https://provider.test/hotel/secret", bookingUrl: "", ...values } as unknown as PublicHotelResult);
@@ -17,6 +17,7 @@ test("flight IDs are encoded deterministically and raw targets are never exposed
   assert.deepEqual(handoff, { available: true, href: "/redirect?id=fare+%2F%3F%26%3D%E2%9C%93&type=flight", provider: "Sky Provider" });
   assert.doesNotMatch(JSON.stringify(handoff), /affiliate|provider\.test|secret/);
 });
+test("ID-only redirect builder creates only internal product URLs", () => { assert.equal(buildDealsInternalRedirectHref(" fare /? ", "flight"), "/redirect?id=fare+%2F%3F&type=flight"); assert.equal(buildDealsInternalRedirectHref("hotel&1", "hotel"), "/redirect?id=hotel%261&type=hotel"); assert.equal(buildDealsInternalRedirectHref(" ", "flight"), null); });
 
 test("flight handoffs reject missing IDs and missing or unsafe targets", () => {
   for (const id of ["", "   "]) assert.deepEqual(getDealsProviderHandoff(flight({ id }), "flight"), { available: false, reason: "missing_id" });

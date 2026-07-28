@@ -7,12 +7,13 @@ const flightCard = readFileSync(new URL("./DealsFlightPreviewCard.tsx", import.m
 const hotelCard = readFileSync(new URL("./DealsHotelPreviewCard.tsx", import.meta.url), "utf8");
 const section = readFileSync(new URL("./DealsProductSection.tsx", import.meta.url), "utf8");
 
-test("preview articles use exact internal provider handoffs without raw target hrefs", () => {
+test("preview articles use selection buttons without direct provider handoffs", () => {
   for (const card of [flightCard, hotelCard]) {
-    assert.match(card, /href=\{handoff\.href\}/);
+    assert.doesNotMatch(card, /href=\{handoff\.href\}/);
+    assert.match(card, /<button type="button" aria-pressed=\{selected\}/);
     assert.doesNotMatch(card, /href=\{(?:flight|hotel)\.(?:bookingUrl|partnerRedirectUrl)\}/);
     assert.doesNotMatch(card, /target="_blank"/);
-    assert.match(card, /min-h-11 w-full/);
+    assert.match(card, /onClick=\{onSelect\}/);
   }
   assert.match(flightCard, /getDealsProviderHandoff\(flight, "flight"\)/);
   assert.match(hotelCard, /getDealsProviderHandoff\(hotel, "hotel"\)/);
