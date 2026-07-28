@@ -6,7 +6,7 @@ const results = readFileSync(new URL("../DealsResultsClient.tsx", import.meta.ur
 const productSection = readFileSync(new URL("./DealsProductSection.tsx", import.meta.url), "utf8");
 const english = readFileSync(new URL("../../../lib/i18n/en.ts", import.meta.url), "utf8");
 
-test("results hierarchy uses one summary, breadcrumbs, and unchanged product continuations", () => {
+test("results hierarchy uses one summary, breadcrumbs, and product sections", () => {
   const summary = results.indexOf("<DealsResultsSearchSummary");
   const breadcrumbs = results.indexOf("<DealsResultsBreadcrumbs", summary);
   const products = results.indexOf("<DealsProductSection", breadcrumbs);
@@ -15,7 +15,8 @@ test("results hierarchy uses one summary, breadcrumbs, and unchanged product con
   assert.equal(existsSync(new URL("./DealsResultsIntro.tsx", import.meta.url)), false);
   assert.match(results, /included\.flight && <DealsProductSection/);
   assert.match(results, /included\.hotel && <DealsProductSection/);
-  assert.match(results, /included\.car && <section/);
+  assert.ok(results.includes('included.car && <DealsProductSection id="car-options" headingLevel={2}'));
+  assert.doesNotMatch(results, /car-continuation|carContinuationTitle/);
   assert.match(results, /<DealsTripPlanBar/);
 });
 
