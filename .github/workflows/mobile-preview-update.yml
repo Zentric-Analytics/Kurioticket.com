@@ -70,7 +70,9 @@ jobs:
         shell: bash
         run: |
           git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" > /tmp/mobile-changes.txt
-          if grep -Eq '^apps/mobile/(app\.json|eas\.json|package\.json|package-lock\.json)$' /tmp/mobile-changes.txt; then
+          git show "${{ github.event.before }}:apps/mobile/package.json" > /tmp/mobile-package-before.json
+          if grep -Eq '^apps/mobile/(app\.json|eas\.json|android/|ios/)' /tmp/mobile-changes.txt || \
+             ! node -e "const fs=require('fs'); const normalize=(value)=>Object.entries(value ?? {}).sort(([a],[b])=>a.localeCompare(b)); const before=JSON.parse(fs.readFileSync('/tmp/mobile-package-before.json')); const after=require('./apps/mobile/package.json'); process.exit(JSON.stringify(normalize(before.dependencies)) === JSON.stringify(normalize(after.dependencies)) ? 0 : 1)"; then
             echo "native_changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "native_changed=false" >> "$GITHUB_OUTPUT"
@@ -90,4 +92,4 @@ jobs:
       - name: Build native preview app
         if: steps.delivery.outputs.native_changed == 'true'
         working-directory: apps/mobile
-        run: eas build --platform android --profile preview --non-interactive --no-wait
+        run: eas build --platform android --profile preview --non-interactive
