@@ -18,6 +18,10 @@ const operationsPanels = readFileSync(
   "src/components/admin/homepage-operations/HomepageOperationsPanels.tsx",
   "utf8",
 );
+const refreshOutcome = readFileSync(
+  "src/lib/admin/homepageFareRefreshOutcome.ts",
+  "utf8",
+);
 const statusApi = readFileSync(
   "src/app/api/admin/homepage-fares/status/route.ts",
   "utf8",
@@ -105,6 +109,36 @@ test("Homepage Operations preserves controls, APIs, filters, and route inspectio
   assert.match(refreshCard, /if \(!selectedRouteScope \|\| !group\)/);
 });
 
+test("Homepage Operations sequences status loads and presents unavailable or stale data safely", () => {
+  assert.match(refreshCard, /createHomepageFareStatusRequestCoordinator/);
+  assert.match(refreshCard, /request: fetchHomepageFareStatus/);
+  assert.match(refreshCard, /signal,/);
+  assert.match(refreshCard, /disabled=\{refreshing \|\| statusState\.loading\}/);
+  assert.match(refreshCard, /if \(refreshingRef\.current\) return/);
+  assert.match(refreshCard, /Status data is stale/);
+  assert.match(refreshCard, /lastSuccessfulLoadAt/);
+  assert.match(refreshCard, /statusState\.data \? statusPayload\.summary\.missing : "—"/);
+  assert.match(refreshCard, /statusState\.data \? statusPayload\.summary\.failed : "—"/);
+  assert.match(refreshCard, /await loadStatus\(\)/);
+  assert.ok(refreshCard.indexOf("setRefreshState({") < refreshCard.indexOf("await loadStatus()"));
+});
+
+test("Homepage Operations classifies and announces each manual refresh outcome", () => {
+  assert.match(refreshCard, /classifyHomepageFareRefreshOutcome\(counts\)/);
+  assert.match(refreshCard, /setRefreshState\(\{ counts: null, outcome: null \}\)/);
+  assert.match(refreshCard, /createHomepageFareRefreshFailureOutcome/);
+  assert.match(refreshCard, /SafeHomepageFareRefreshError/);
+  assert.match(refreshCard, /outcome\.primaryMessage/);
+  assert.match(refreshCard, /outcome\.details\.join/);
+  assert.match(refreshCard, /outcome\.explanation/);
+  assert.match(refreshOutcome, /Refresh completed successfully/);
+  assert.match(refreshOutcome, /Refresh completed with issues/);
+  assert.match(refreshOutcome, /Refresh failed/);
+  assert.match(refreshOutcome, /bg-amber-50 text-amber-700/);
+  assert.match(refreshOutcome, /bg-emerald-50 text-emerald-700/);
+  assert.match(refreshOutcome, /bg-rose-50 text-rose-700/);
+});
+
 test("Homepage Operations collapses diagnostics, fallback pools, and raw debug by default", () => {
   assert.match(refreshCard, /label="Diagnostics"/);
   assert.match(refreshCard, /label="Additional health details"/);
@@ -144,7 +178,15 @@ test("issue summary filters affected markets without a duplicate country list", 
   );
   assert.match(
     refreshCard,
-    /showAffectedMarkets \? affectedMarkets : publicMarkets/,
+    /showAffectedMarkets[\s\S]*?routeFilteredMarkets\.filter/,
+  );
+  assert.match(
+    refreshCard,
+    /filterAdminHomepageFareMarketsByRouteGroups\([\s\S]*?publicMarkets,[\s\S]*?marketRouteGroups,[\s\S]*?routeFilter/,
+  );
+  assert.match(
+    refreshCard,
+    /resolveAdminHomepageFareActiveRouteScope\([\s\S]*?selectedScope: selectedRouteScope,[\s\S]*?visibleMarkets: routeFilteredMarkets/,
   );
   assert.doesNotMatch(refreshCard, /Attention Required/);
   assert.doesNotMatch(refreshCard, /affectedMarkets\.slice/);

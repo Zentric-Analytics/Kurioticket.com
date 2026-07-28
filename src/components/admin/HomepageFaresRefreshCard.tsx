@@ -23,12 +23,27 @@ import {
   ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE,
   buildAdminHomepageFareAllRoutesGroup,
   buildAdminHomepageFareRouteGroups,
+  filterAdminHomepageFareMarketsByRouteGroups,
   normalizeAdminHomepageFareMarketCode,
   paginateAdminHomepageFareRoutes,
+  resolveAdminHomepageFareActiveRouteScope,
   resolveAdminHomepageFareSelectedRouteGroup,
   type AdminHomepageFareRouteGroupFilter,
   type AdminHomepageFareMarketRouteGroup,
 } from "@/lib/admin/homepageFareRouteGrouping";
+import {
+  HOMEPAGE_FARE_REFRESH_OUTCOME_PRESENTATION,
+  classifyHomepageFareRefreshOutcome,
+  createHomepageFareRefreshFailureOutcome,
+  type HomepageFareRefreshOutcome,
+} from "@/lib/admin/homepageFareRefreshOutcome";
+import {
+  createHomepageFareStatusRequestCoordinator,
+  markHomepageFareStatusRequestFailed,
+  markHomepageFareStatusRequestStarted,
+  markHomepageFareStatusRequestSucceeded,
+  type HomepageFareStatusLoadState,
+} from "@/lib/admin/homepageFareStatusRequest";
 
 const DEFAULT_REFRESH_BUDGET: RefreshBudget = {
   popularVisibleTarget: 8,
@@ -310,8 +325,7 @@ type RefreshCounts = {
 
 type RefreshState = {
   counts: RefreshCounts | null;
-  message: string;
-  status: "idle" | "success" | "error";
+  outcome: HomepageFareRefreshOutcome | null;
 };
 
 type HomepageFareSnapshotStatus =
@@ -421,24 +435,25 @@ type HomepageFareStatusPayload = {
   nextExpectedCronRefresh?: string;
 };
 
-type StatusLoadState = {
-  data: HomepageFareStatusPayload | null;
-  loading: boolean;
-  error: string;
-};
-
 export function HomepageFaresRefreshCard() {
   const [refreshing, setRefreshing] = useState(false);
+  const refreshingRef = useRef(false);
   const [refreshState, setRefreshState] = useState<RefreshState>({
     counts: null,
-    message: "",
-    status: "idle",
+    outcome: null,
   });
-  const [statusState, setStatusState] = useState<StatusLoadState>({
+  const [statusState, setStatusState] = useState<
+    HomepageFareStatusLoadState<HomepageFareStatusPayload>
+  >({
     data: null,
     loading: true,
     error: "",
+    stale: false,
+    lastSuccessfulLoadAt: null,
   });
+  const statusRequestCoordinatorRef = useRef(
+    createHomepageFareStatusRequestCoordinator(),
+  );
   const [selectedRouteScope, setSelectedRouteScope] = useState<string | null>(
     null,
   );
@@ -463,61 +478,56 @@ export function HomepageFaresRefreshCard() {
     [],
   );
 
-  useEffect(() => {
-    if (!selectedRouteScope) return;
-
-    const animationFrame = window.requestAnimationFrame(() => {
-      routeDetailsRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    });
-
-    return () => window.cancelAnimationFrame(animationFrame);
-  }, [selectedRouteScope, routeFilter]);
-
   const loadStatus = useCallback(async () => {
-    setStatusState((current) => ({ ...current, loading: true, error: "" }));
-
-    try {
-      const payload = await fetchHomepageFareStatus();
-      setStatusState({ data: payload, loading: false, error: "" });
-    } catch {
-      setStatusState((current) => ({
-        data: current.data,
-        loading: false,
-        error: "Could not load homepage fare snapshot status.",
-      }));
-    }
+    await statusRequestCoordinatorRef.current.run({
+      request: fetchHomepageFareStatus,
+      onStart: () =>
+        setStatusState((current) =>
+          markHomepageFareStatusRequestStarted(current),
+        ),
+      onSuccess: (payload) =>
+        setStatusState(
+          markHomepageFareStatusRequestSucceeded(
+            payload,
+            new Date().toISOString(),
+          ),
+        ),
+      onError: () =>
+        setStatusState((current) =>
+          markHomepageFareStatusRequestFailed(
+            current,
+            "Could not load homepage fare snapshot status.",
+          ),
+        ),
+    });
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
+  const reloadStatus = useCallback(() => {
+    if (refreshingRef.current) return;
+    void loadStatus();
+  }, [loadStatus]);
 
-    fetchHomepageFareStatus()
-      .then((payload) => {
-        if (cancelled) return;
-        setStatusState({ data: payload, loading: false, error: "" });
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setStatusState({
-          data: null,
-          loading: false,
-          error: "Could not load homepage fare snapshot status.",
-        });
-      });
+  useEffect(() => {
+    const statusRequestCoordinator = statusRequestCoordinatorRef.current;
+    statusRequestCoordinator.activate();
+    void loadStatus();
 
     return () => {
-      cancelled = true;
+      statusRequestCoordinator.dispose();
     };
-  }, []);
+  }, [loadStatus]);
 
   async function refreshHomepageFares() {
-    if (refreshing) return;
+    if (
+      refreshingRef.current ||
+      statusRequestCoordinatorRef.current.isRequestActive()
+    ) {
+      return;
+    }
 
+    refreshingRef.current = true;
     setRefreshing(true);
-    setRefreshState({ counts: null, message: "", status: "idle" });
+    setRefreshState({ counts: null, outcome: null });
 
     try {
       const response = await fetch("/api/admin/homepage-fares/refresh", {
@@ -526,28 +536,28 @@ export function HomepageFaresRefreshCard() {
       });
 
       if (!response.ok) {
-        throw new Error(await buildSafeRefreshFailureMessage(response));
+        throw new SafeHomepageFareRefreshError(
+          await buildSafeRefreshFailureMessage(response),
+        );
       }
 
       const payload = await response.json();
       const counts = normalizeRefreshCounts(payload);
 
-      setRefreshState({
-        counts,
-        message: `Homepage fares refreshed. ${counts.refreshed} refreshed, ${counts.unavailable} unavailable, ${counts.failed} failed, ${counts.retained} retained, ${counts.skipped} skipped. Provider calls used: ${counts.providerCalls}. Stopped: ${formatStoppedReason(counts.stoppedReason)}.`,
-        status: "success",
-      });
+      const outcome = classifyHomepageFareRefreshOutcome(counts);
+      setRefreshState({ counts, outcome });
       await loadStatus();
     } catch (error) {
       setRefreshState({
         counts: null,
-        message:
-          error instanceof Error
+        outcome: createHomepageFareRefreshFailureOutcome(
+          error instanceof SafeHomepageFareRefreshError
             ? error.message
             : "Could not refresh homepage fares. Please try again or check provider status.",
-        status: "error",
+        ),
       });
     } finally {
+      refreshingRef.current = false;
       setRefreshing(false);
     }
   }
@@ -577,16 +587,16 @@ export function HomepageFaresRefreshCard() {
       buildAdminHomepageFareAllRoutesGroup(statusPayload.routes, routeFilter),
     [routeFilter, statusPayload.routes],
   );
-  const selectedRouteGroup = resolveAdminHomepageFareSelectedRouteGroup({
-    selectedScope: selectedRouteScope,
-    marketRouteGroups,
-    allRoutesGroup,
-  });
-  const publicMarkets = statusPayload.marketReadinessSummary.filter(
-    (market) => !isFallbackMarket(market),
+  const publicMarkets = useMemo(
+    () => statusPayload.marketReadinessSummary.filter(
+      (market) => !isFallbackMarket(market),
+    ),
+    [statusPayload.marketReadinessSummary],
   );
-  const fallbackPools =
-    statusPayload.marketReadinessSummary.filter(isFallbackMarket);
+  const fallbackPools = useMemo(
+    () => statusPayload.marketReadinessSummary.filter(isFallbackMarket),
+    [statusPayload.marketReadinessSummary],
+  );
   const latestCounts = refreshState.counts;
   const providerCallsUsed =
     latestCounts?.providerCalls ??
@@ -600,10 +610,55 @@ export function HomepageFaresRefreshCard() {
   const marketsNeedingAnotherRun =
     latestCounts?.marketsNeedingAnotherRun ??
     statusPayload.marketsNeedingAnotherRun;
-  const affectedMarkets = publicMarkets.filter(
-    (market) => !market.targetMet || market.status !== "ready",
+  const affectedMarkets = useMemo(
+    () =>
+      publicMarkets.filter(
+        (market) => !market.targetMet || market.status !== "ready",
+      ),
+    [publicMarkets],
   );
-  const visibleMarkets = showAffectedMarkets ? affectedMarkets : publicMarkets;
+  const routeFilteredMarkets = useMemo(
+    () =>
+      filterAdminHomepageFareMarketsByRouteGroups(
+        publicMarkets,
+        marketRouteGroups,
+        routeFilter,
+      ),
+    [marketRouteGroups, publicMarkets, routeFilter],
+  );
+  const affectedMarketCodes = useMemo(
+    () => new Set(affectedMarkets.map((market) => market.marketCode)),
+    [affectedMarkets],
+  );
+  const visibleMarkets = showAffectedMarkets
+    ? routeFilteredMarkets.filter((market) =>
+        affectedMarketCodes.has(market.marketCode),
+      )
+    : routeFilteredMarkets;
+
+  const activeSelectedRouteScope = resolveAdminHomepageFareActiveRouteScope({
+    selectedScope: selectedRouteScope,
+    markets: publicMarkets,
+    visibleMarkets: routeFilteredMarkets,
+  });
+  const selectedRouteGroup = resolveAdminHomepageFareSelectedRouteGroup({
+    selectedScope: activeSelectedRouteScope,
+    marketRouteGroups,
+    allRoutesGroup,
+  });
+
+  useEffect(() => {
+    if (!activeSelectedRouteScope) return;
+
+    const animationFrame = window.requestAnimationFrame(() => {
+      routeDetailsRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [activeSelectedRouteScope, routeFilter]);
 
   return (
     <div className="space-y-6 pb-4">
@@ -615,7 +670,7 @@ export function HomepageFaresRefreshCard() {
               type="button"
               variant="primary"
               onClick={refreshHomepageFares}
-              disabled={refreshing}
+              disabled={refreshing || statusState.loading}
               aria-busy={refreshing}
             >
               <RefreshCcw
@@ -627,7 +682,7 @@ export function HomepageFaresRefreshCard() {
             <AdminButton
               type="button"
               variant="secondary"
-              onClick={() => void loadStatus()}
+              onClick={reloadStatus}
               disabled={statusState.loading || refreshing}
               aria-busy={statusState.loading}
             >
@@ -655,33 +710,50 @@ export function HomepageFaresRefreshCard() {
           items={[
             {
               label: "Overall status",
-              value: formatGlobalReadinessStatus(
-                statusPayload.displayReadiness.globalReadinessStatus,
-              ),
-              tone:
-                readinessTone(
-                  statusPayload.displayReadiness.globalReadinessStatus,
-                ) === "good"
+              value: statusState.data
+                ? formatGlobalReadinessStatus(
+                    statusPayload.displayReadiness.globalReadinessStatus,
+                  )
+                : statusState.loading
+                  ? "Loading…"
+                  : "Unavailable",
+              tone: statusState.data
+                ? readinessTone(
+                      statusPayload.displayReadiness.globalReadinessStatus,
+                    ) === "good"
                   ? "good"
-                  : "warning",
+                  : "warning"
+                : "neutral",
             },
             {
               label: "Last refresh",
-              value: formatSnapshotTime(statusPayload.lastRefreshAt),
+              value: statusState.data
+                ? formatSnapshotTime(statusPayload.lastRefreshAt)
+                : statusState.loading
+                  ? "Loading…"
+                  : "Unavailable",
             },
             {
               label: "Markets ready",
-              value: `${statusPayload.readyMarkets.length} / ${statusPayload.requiredMarkets.length}`,
+              value: statusState.data
+                ? `${statusPayload.readyMarkets.length} / ${statusPayload.requiredMarkets.length}`
+                : "—",
             },
             {
               label: "Missing routes",
-              value: statusPayload.summary.missing,
-              tone: statusPayload.summary.missing ? "warning" : "neutral",
+              value: statusState.data ? statusPayload.summary.missing : "—",
+              tone:
+                statusState.data && statusPayload.summary.missing
+                  ? "warning"
+                  : "neutral",
             },
             {
               label: "Failed routes",
-              value: statusPayload.summary.failed,
-              tone: statusPayload.summary.failed ? "danger" : "neutral",
+              value: statusState.data ? statusPayload.summary.failed : "—",
+              tone:
+                statusState.data && statusPayload.summary.failed
+                  ? "danger"
+                  : "neutral",
             },
           ]}
         />
@@ -693,6 +765,13 @@ export function HomepageFaresRefreshCard() {
           role="alert"
         >
           {statusState.error}
+          {statusState.stale && statusState.lastSuccessfulLoadAt ? (
+            <span className="block">
+              Status data is stale · Last updated{" "}
+              {formatDateTime(statusState.lastSuccessfulLoadAt)} · Latest reload
+              failed.
+            </span>
+          ) : null}
         </p>
       ) : null}
 
@@ -704,20 +783,29 @@ export function HomepageFaresRefreshCard() {
           Market Coverage
         </h2>
         <RouteFilterToolbar filter={routeFilter} onChange={selectRouteFilter} />
-        <IssueSummary
-          affectedCount={affectedMarkets.length}
-          missingCount={statusPayload.summary.missing}
-          failedCount={statusPayload.summary.failed}
-          showingAffected={showAffectedMarkets}
-          onToggle={() => setShowAffectedMarkets((current) => !current)}
-        />
+        {statusState.data ? (
+          <IssueSummary
+            affectedCount={affectedMarkets.length}
+            missingCount={statusPayload.summary.missing}
+            failedCount={statusPayload.summary.failed}
+            showingAffected={showAffectedMarkets}
+            onToggle={() => setShowAffectedMarkets((current) => !current)}
+          />
+        ) : null}
         <MarketReadinessDashboard
           markets={visibleMarkets}
-          selectedRouteScope={selectedRouteScope}
+          selectedRouteScope={activeSelectedRouteScope}
           onInspectMarket={selectRouteScope}
+          emptyMessage={
+            statusState.data
+              ? "No markets match the current filters."
+              : statusState.loading
+                ? "Loading homepage fare status…"
+                : "Homepage fare status is unavailable."
+          }
         />
         <MarketRouteInspector
-          selectedRouteScope={selectedRouteScope}
+          selectedRouteScope={activeSelectedRouteScope}
           selectedGroup={selectedRouteGroup}
           loading={statusState.loading}
           onSelectMarket={selectRouteScope}
@@ -785,7 +873,7 @@ export function HomepageFaresRefreshCard() {
       <OperationsDisclosure label="Fallback pools">
         <FallbackPoolsSection
           pools={fallbackPools}
-          selectedRouteScope={selectedRouteScope}
+          selectedRouteScope={activeSelectedRouteScope}
           onInspectMarket={selectRouteScope}
         />
       </OperationsDisclosure>
@@ -967,22 +1055,21 @@ function RefreshCronPanel({
   refreshState: RefreshState;
   statusPayload: HomepageFareStatusPayload;
 }) {
+  const outcome = refreshState.outcome;
   const stoppedReason = refreshState.counts
     ? formatStoppedReason(refreshState.counts.stoppedReason)
     : "No manual refresh result in this session";
   return (
     <section aria-label="Refresh schedule details">
-      {refreshState.message ? (
+      {outcome ? (
         <div
-          className={
-            refreshState.status === "error"
-              ? "mt-3 rounded-lg bg-rose-50 p-3 text-sm font-semibold text-rose-700"
-              : "mt-3 rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-700"
-          }
-          role={refreshState.status === "error" ? "alert" : "status"}
+          className={`mt-3 rounded-lg p-3 text-sm font-semibold ${HOMEPAGE_FARE_REFRESH_OUTCOME_PRESENTATION[outcome.kind].className}`}
+          role={HOMEPAGE_FARE_REFRESH_OUTCOME_PRESENTATION[outcome.kind].role}
           aria-live="polite"
         >
-          {refreshState.message}
+          <p className="font-extrabold">{outcome.primaryMessage}</p>
+          <p>{outcome.details.join(" · ")}</p>
+          {outcome.explanation ? <p>{outcome.explanation}</p> : null}
         </div>
       ) : null}
       <dl className="grid grid-cols-2 gap-x-5 gap-y-2 text-sm sm:grid-cols-3">
@@ -1004,9 +1091,9 @@ function RefreshCronPanel({
         <CompactDetail
           label="Latest result"
           value={
-            refreshState.status === "idle"
+            !outcome
               ? "No manual run yet"
-              : refreshState.status
+              : outcome.primaryMessage
           }
         />
       </dl>
@@ -1081,10 +1168,12 @@ function MarketReadinessDashboard({
   markets,
   selectedRouteScope,
   onInspectMarket,
+  emptyMessage = "No public market readiness metadata was returned.",
 }: {
   markets: MarketReadiness[];
   selectedRouteScope: string | null;
   onInspectMarket: (marketCode: string) => void;
+  emptyMessage?: string;
 }) {
   return (
     <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
@@ -1102,7 +1191,7 @@ function MarketReadinessDashboard({
         ))
       ) : (
         <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-500">
-          No public market readiness metadata was returned.
+          {emptyMessage}
         </p>
       )}
     </div>
@@ -1699,6 +1788,8 @@ function StatusBadge({ status }: { status: HomepageFareSnapshotStatus }) {
   );
 }
 
+class SafeHomepageFareRefreshError extends Error {}
+
 async function buildSafeRefreshFailureMessage(response: Response) {
   const fallback = `Could not refresh homepage fares. Status ${response.status}.`;
 
@@ -1725,9 +1816,10 @@ async function buildSafeRefreshFailureMessage(response: Response) {
   }
 }
 
-async function fetchHomepageFareStatus() {
+async function fetchHomepageFareStatus(signal: AbortSignal) {
   const response = await fetch("/api/admin/homepage-fares/status", {
     credentials: "include",
+    signal,
   });
 
   if (!response.ok) {

@@ -170,6 +170,63 @@ export function splitAdminHomepageFareMarketRouteGroups(
   };
 }
 
+export function filterAdminHomepageFareMarketsByRouteGroups<
+  TMarket extends { marketCode: string },
+>(
+  markets: TMarket[],
+  groups: AdminHomepageFareMarketRouteGroup[],
+  filter: AdminHomepageFareRouteGroupFilter,
+) {
+  if (filter === "all") return markets;
+
+  const matchingMarketCodes = new Set(
+    groups
+      .filter((group) => group.routes.length > 0)
+      .map((group) => normalizeAdminHomepageFareMarketCode(group.marketCode)),
+  );
+
+  return markets.filter((market) =>
+    matchingMarketCodes.has(
+      normalizeAdminHomepageFareMarketCode(market.marketCode),
+    ),
+  );
+}
+
+export function resolveAdminHomepageFareActiveRouteScope<
+  TMarket extends { marketCode: string },
+>({
+  selectedScope,
+  markets,
+  visibleMarkets,
+}: {
+  selectedScope: AdminHomepageFareRouteScope;
+  markets: TMarket[];
+  visibleMarkets: TMarket[];
+}): AdminHomepageFareRouteScope {
+  if (
+    !selectedScope ||
+    selectedScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
+  ) {
+    return selectedScope;
+  }
+
+  const selectedMarketCode = normalizeAdminHomepageFareMarketCode(selectedScope);
+  const selectedMarketExists = markets.some(
+    (market) =>
+      normalizeAdminHomepageFareMarketCode(market.marketCode) ===
+      selectedMarketCode,
+  );
+  const selectedMarketIsVisible = visibleMarkets.some(
+    (market) =>
+      normalizeAdminHomepageFareMarketCode(market.marketCode) ===
+      selectedMarketCode,
+  );
+
+  return selectedMarketExists && !selectedMarketIsVisible
+    ? null
+    : selectedScope;
+}
+
 export function resolveAdminHomepageFareSelectedRouteGroup({
   selectedScope,
   marketRouteGroups,
