@@ -6,15 +6,22 @@ import { authApi, AuthApiError } from "./authApi";
 import { normalizeEmail } from "./authUtils";
 import { AuthWelcomeScreen } from "./AuthWelcomeScreen";
 import { CreateAccountScreen, EmailScreen, PasswordScreen, SuccessScreen, VerificationScreen } from "./AuthFormScreens";
+import { NativeGoogleSignInError, startNativeGoogleSignIn } from "./googleSignIn";
 
 type Step = "welcome" | "email" | "verify" | "password" | "create" | "success";
 export function AuthFlow() {
   const [step, setStep] = useState<Step>("welcome"); const [email, setEmail] = useState(""); const [proof, setProof] = useState(""); const [loading, setLoading] = useState(false); const [error, setError] = useState(""); const [cooldown, setCooldown] = useState(28);
-  const run = async (task: () => Promise<void>) => { if (loading) return; setLoading(true); setError(""); try { await task(); } catch (e) { setError(e instanceof AuthApiError ? e.message : "Something went wrong. Please try again."); } finally { setLoading(false); } };
+  const run = async (task: () => Promise<void>) => { if (loading) return; setLoading(true); setError(""); try { await task(); } catch (e) { setError(e instanceof AuthApiError || e instanceof NativeGoogleSignInError ? e.message : "Something went wrong. Please try again."); } finally { setLoading(false); } };
   const requestCode = (value: string) => void run(async () => { const normalized = normalizeEmail(value); const result = await authApi.requestCode(normalized); setEmail(normalized); setCooldown(result.cooldownSeconds || 28); setStep("verify"); });
   const verify = useCallback((code: string) => { void run(async () => { const result = await authApi.verifyCode(email, code); setProof(result.verificationToken); setStep(result.accountType === "existing" ? "password" : "create"); }); }, [email, loading]);
   const done = () => { void writeOnboardingCompleted().finally(() => router.replace("/")); };
-  if (step === "welcome") return <AuthWelcomeScreen busy={loading} onEmail={() => setStep("email")} onGoogle={() => Alert.alert("Google sign-in unavailable", "Native Google OAuth client configuration is required before secure sign-in can begin.")} onGuest={() => void writeOnboardingCompleted().then(() => router.replace("/"))} />;
+  const continueGoogle = () => void run(async () => {
+    const result = await startNativeGoogleSignIn();
+    if (result.status === "cancelled") return;
+    await authApi.google(result.idToken, result.nonce);
+    setStep("success");
+  });
+  if (step === "welcome") return <AuthWelcomeScreen busy={loading} error={error} onEmail={() => setStep("email")} onGoogle={continueGoogle} onGuest={() => void writeOnboardingCompleted().then(() => router.replace("/"))} />;
   if (step === "email") return <EmailScreen initialEmail={email} onBack={() => setStep("welcome")} onContinue={requestCode} loading={loading} error={error} />;
   if (step === "verify") return <VerificationScreen email={email} onBack={() => setStep("email")} onDifferentEmail={() => setStep("email")} onVerify={verify} onResend={() => requestCode(email)} loading={loading} error={error} initialCooldown={cooldown} />;
   if (step === "password") return <PasswordScreen onBack={() => { setProof(""); setStep("verify"); }} onSubmit={(password) => void run(async () => { await authApi.password(email, password); setStep("success"); })} onForgot={() => void run(async () => { await authApi.forgotPassword(email); Alert.alert("Check your email", "If an account exists, we sent password reset instructions."); })} loading={loading} error={error} />;
