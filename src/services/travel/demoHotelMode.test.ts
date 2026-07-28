@@ -113,6 +113,24 @@ test("demo hotel catalogue is unique, fictional, deterministic, and internally r
   assert.equal(JSON.stringify(demoHotelCatalog), snapshot);
 });
 
+test("demo hotel cancellation copy remains meaningful without the removed demo fragments", () => {
+  const cancellationById = new Map(
+    demoHotelCatalog.map(({ id, cancellationInfo }) => [id, cancellationInfo]),
+  );
+
+  for (const hotel of demoHotelCatalog) {
+    assert.doesNotMatch(hotel.cancellationInfo, /before the demo cutoff window/);
+    assert.doesNotMatch(hotel.cancellationInfo, /demo rate with policy reviewed at checkout/);
+    assert.doesNotMatch(hotel.cancellationInfo, /demo option available/);
+  }
+
+  assert.equal(cancellationById.get("harborline-city"), "Free cancellation");
+  assert.equal(cancellationById.get("gallery-court"), "Free cancellation");
+  assert.equal(cancellationById.get("linen-house"), "Refundable");
+  assert.equal(cancellationById.get("wayfarer-yard"), "Refundable");
+  assert.equal(cancellationById.get("station-inn"), "Pay later");
+});
+
 test("hotel gallery URL normalization keeps only unique safe HTTPS strings in order", () => {
   const urls = normalizeHotelImageUrls([
     " https://example.com/a.jpg ",
@@ -139,6 +157,7 @@ test("demo results map catalogue fields into normalized results and vary only to
     assert.equal(result.reviewScore, catalogue.reviewScore);
     assert.equal(result.reviewCount, catalogue.reviewCount);
     assert.equal(result.neighbourhood, catalogue.areaLabel);
+    assert.equal(result.cancellationInfo, catalogue.cancellationInfo);
     assert.equal(result.taxesAndFeesIncluded, catalogue.taxesAndFeesIncluded);
     assert.deepEqual(result.similarHotelIds, catalogue.relatedIds.map(getDemoHotelResultId));
     assert.equal(result.pricePerNight, catalogue.nightlyPrice);
