@@ -14,6 +14,7 @@ export function ResponsiveHero({
   focalY,
   accessibilityLabel,
   rounded = false,
+  overscan = 7,
 }: {
   source: ImageSourcePropType;
   sourceWidth: number;
@@ -22,9 +23,11 @@ export function ResponsiveHero({
   focalY: number;
   accessibilityLabel: string;
   rounded?: boolean;
+  overscan?: number;
 }) {
   const { width } = useWindowDimensions();
-  const renderedHeight = width * (sourceHeight / sourceWidth);
+  const renderedWidth = width + overscan * 2;
+  const renderedHeight = renderedWidth * (sourceHeight / sourceWidth);
   const overflow = Math.max(0, renderedHeight - height);
   const translateY = -overflow * Math.max(0, Math.min(1, focalY));
 
@@ -38,8 +41,8 @@ export function ResponsiveHero({
         style={{
           position: "absolute",
           top: 0,
-          left: 0,
-          width,
+          left: -overscan,
+          width: renderedWidth,
           height: renderedHeight,
           transform: [{ translateY }],
         }}
