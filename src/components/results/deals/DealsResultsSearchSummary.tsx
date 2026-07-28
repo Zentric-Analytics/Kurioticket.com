@@ -17,15 +17,15 @@ export function DealsResultsSearchSummary({ search, locale, t, modeLabel, onModi
   const summary = getDealsResultsSummary(search, locale);
   const context = [
     summary.travelers !== undefined ? `${summary.travelers} ${t(summary.travelers === 1 ? "deals.results.traveler" : "deals.results.travelers")}` : null,
-    summary.guests !== undefined ? `${summary.guests} ${t("deals.results.guests")}` : null,
+    summary.guests !== undefined ? `${summary.guests} ${t(summary.guests === 1 ? "deals.results.guest" : "deals.results.guests")}` : null,
     summary.rooms !== undefined ? `${summary.rooms} ${t(summary.rooms === 1 ? "deals.results.room" : "deals.results.rooms")}` : null,
     summary.cabin ? t(`deals.cabin.${summary.cabin}`) : null,
     summary.carIncluded ? t("deals.results.summary.carIncluded") : null,
   ].filter(Boolean).join(" · ");
   const dates = summary.dates.map((item) => `${item.labelKey ? `${t(item.labelKey)}: ` : ""}${item.value}`).join(" · ");
 
-  return <section aria-label={t("deals.results.summary.currentSearch")} className="border-b border-slate-200/70 bg-white sm:pt-7">
-    <div className="sticky top-0 z-50 bg-white px-4 py-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.06)] sm:static sm:px-0 sm:py-0 sm:shadow-none">
+  return <section aria-label={t("deals.results.summary.currentSearch")} className="sticky top-0 z-50 border-b border-slate-200/70 bg-white sm:static sm:z-auto sm:pt-7">
+    <div className="bg-white px-4 py-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.06)] sm:px-0 sm:py-0 sm:shadow-none">
       <div className="page-shell px-0 sm:px-4">
         <div className="grid min-h-[68px] min-w-0 grid-cols-[minmax(0,1fr)_auto] overflow-hidden rounded-xl border border-slate-200/95 bg-white shadow-[0_12px_30px_-22px_rgba(15,23,42,0.45)] sm:relative sm:z-10 sm:translate-y-5 sm:grid-cols-[minmax(120px,0.7fr)_minmax(190px,1.4fr)_minmax(180px,1.1fr)_minmax(180px,1.15fr)_auto] sm:rounded-lg">
           <SummaryCell label={t("deals.results.summary.package")} value={modeLabel} className="hidden sm:flex" />
