@@ -21,15 +21,22 @@ import {
 } from "./FlowPrimitives";
 import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles } from "./flowStyles";
+import { ResponsiveHero } from "./ResponsiveHero";
 
 function Page({
   title,
   children,
   hero,
+  heroWidth,
+  heroHeight,
+  focalY,
 }: {
   title: string;
   children: React.ReactNode;
   hero: number;
+  heroWidth: number;
+  heroHeight: number;
+  focalY: number;
 }) {
   return (
     <SafeAreaView style={flowStyles.safe} edges={["top"]}>
@@ -38,7 +45,16 @@ function Page({
         keyboardShouldPersistTaps="handled"
       >
         <ScreenHeader title={title} back />
-        <Image source={hero} resizeMode="cover" style={styles.hero} />
+        <View style={styles.fullBleedHero}>
+          <ResponsiveHero
+            source={hero}
+            sourceWidth={heroWidth}
+            sourceHeight={heroHeight}
+            height={220}
+            focalY={focalY}
+            accessibilityLabel={`${title} hero image`}
+          />
+        </View>
         {children}
       </ScrollView>
     </SafeAreaView>
@@ -82,6 +98,9 @@ export function FlightsScreen() {
     <Page
       title="Flights"
       hero={require("../../../assets/heroes/flights-aircraft.png")}
+      heroWidth={307}
+      heroHeight={596}
+      focalY={0.49}
     >
       <FlightSearchPanel />
       <Cards
@@ -102,6 +121,9 @@ export function HotelsScreen() {
     <Page
       title="Hotels"
       hero={require("../../../assets/heroes/hotels-room.png")}
+      heroWidth={306}
+      heroHeight={596}
+      focalY={0.63}
     >
       <View style={[flowStyles.card, flowStyles.shadow]}>
         <View style={styles.inputField}>
@@ -166,7 +188,13 @@ export function CarsScreen() {
   const [different, setDifferent] = useState(false);
   const [notice, setNotice] = useState("");
   return (
-    <Page title="Cars" hero={require("../../../assets/heroes/cars-suv.png")}>
+    <Page
+      title="Cars"
+      hero={require("../../../assets/heroes/cars-suv.png")}
+      heroWidth={308}
+      heroHeight={596}
+      focalY={0.66}
+    >
       <View style={[flowStyles.card, flowStyles.shadow]}>
         <View style={styles.inputField}>
           <Text style={flowStyles.label}>Pick-up location</Text>
@@ -272,6 +300,9 @@ export function DealsScreen() {
     <Page
       title="Deals"
       hero={require("../../../assets/heroes/deals-balloons.png")}
+      heroWidth={308}
+      heroHeight={596}
+      focalY={0.58}
     >
       <View style={[flowStyles.card, flowStyles.shadow]}>
         <Segments
@@ -346,7 +377,7 @@ export function DealsScreen() {
 
 const styles = StyleSheet.create({
   page: { paddingHorizontal: 9, paddingBottom: 28, gap: 12 },
-  hero: { height: 178, borderRadius: 2, backgroundColor: "#EAF3FF" },
+  fullBleedHero: { marginHorizontal: -9 },
   row: { flexDirection: "row" },
   half: { flex: 1 },
   pad: { padding: 8 },
