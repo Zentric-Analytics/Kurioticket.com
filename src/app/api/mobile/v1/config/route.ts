@@ -13,7 +13,7 @@ export const mobileApiV1Config = {
     hotels: false,
     cars: false,
     pushNotifications: false,
-    socialAuthentication: false,
+    socialAuthentication: true,
     premiumSubscriptions: false,
   },
 } as const;

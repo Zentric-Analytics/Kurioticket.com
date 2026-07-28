@@ -6,6 +6,7 @@ import { authApi, AuthApiError } from "./authApi";
 import { normalizeEmail } from "./authUtils";
 import { AuthWelcomeScreen } from "./AuthWelcomeScreen";
 import { CreateAccountScreen, EmailScreen, PasswordScreen, SuccessScreen, VerificationScreen } from "./AuthFormScreens";
+import { requireGoogleWebClientId } from "./googleConfig";
 
 type Step = "welcome" | "email" | "verify" | "password" | "create" | "success";
 export function AuthFlow() {
@@ -15,6 +16,10 @@ export function AuthFlow() {
   const verify = useCallback((code: string) => { void run(async () => { const result = await authApi.verifyCode(email, code); setProof(result.verificationToken); setStep(result.accountType === "existing" ? "password" : "create"); }); }, [email, loading]);
   const done = () => { void writeOnboardingCompleted().finally(() => router.replace("/")); };
   const continueGoogle = () => void run(async () => {
+    // Validate configuration in plain JavaScript before resolving the native
+    // module. This keeps incompatible legacy binaries from terminating if they
+    // ever receive an authentication UI update without the native dependency.
+    requireGoogleWebClientId();
     // Loading the Nitro module eagerly crashes older OTA-compatible binaries that
     // do not contain its native object. Only resolve it when Google is requested.
     const { startNativeGoogleSignIn } = await import("./googleSignIn");
