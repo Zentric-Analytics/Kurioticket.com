@@ -1,0 +1,15 @@
+import type { ReactNode } from "react";
+import Link from "next/link";
+import { CircleAlert, RefreshCw } from "lucide-react";
+import { DealsPreviewSkeleton } from "./DealsPreviewSkeleton";
+
+export function DealsProductSection({ id, title, summary, icon, href, viewAll, status, loadingLabel, emptyLabel, errorLabel, retryLabel, onRetry, notice, countLabel, children }: { id: string; title: string; summary: string; icon: ReactNode; href: string; viewAll: string; status: string; loadingLabel: string; emptyLabel: string; errorLabel?: string; retryLabel: string; onRetry: () => void; notice?: string; countLabel?: string; children?: ReactNode }) {
+  return <section aria-labelledby={id} aria-busy={status === "loading"} className="rounded-3xl border border-[#D8E1EC] bg-white p-5 shadow-sm sm:p-6">
+    <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 id={id} className="flex items-center gap-2 text-xl font-extrabold text-slate-950">{icon}{title}</h2><p className="mt-1 text-sm text-slate-600">{summary}</p>{countLabel && <p className="mt-2 text-xs font-semibold text-slate-500">{countLabel}</p>}</div><Link href={href} className="font-bold text-[#004BB8] underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">{viewAll}</Link></div>
+    {notice && <p role="status" className="mt-4 flex gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-950"><CircleAlert aria-hidden className="h-5 w-5 shrink-0" />{notice}</p>}
+    {status === "loading" && <><span className="sr-only" aria-live="polite">{loadingLabel}</span><DealsPreviewSkeleton /></>}
+    {status === "empty" && <div className="mt-5 rounded-2xl bg-slate-50 p-6 text-center text-slate-700">{emptyLabel}</div>}
+    {status === "error" && <div className="mt-5 rounded-2xl bg-rose-50 p-6 text-center"><p role="alert" className="text-rose-800">{errorLabel}</p><button type="button" onClick={onRetry} className="mt-3 inline-flex items-center gap-2 rounded-xl border border-rose-300 bg-white px-4 py-2 font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"><RefreshCw aria-hidden className="h-4 w-4" />{retryLabel}</button></div>}
+    {status === "success" && children}
+  </section>;
+}
