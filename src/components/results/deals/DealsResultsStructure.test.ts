@@ -3,6 +3,8 @@ import test from "node:test";
 import { readFileSync, existsSync } from "node:fs";
 
 const results = readFileSync(new URL("../DealsResultsClient.tsx", import.meta.url), "utf8");
+const productSection = readFileSync(new URL("./DealsProductSection.tsx", import.meta.url), "utf8");
+const english = readFileSync(new URL("../../../lib/i18n/en.ts", import.meta.url), "utf8");
 
 test("results hierarchy uses one summary, breadcrumbs, and unchanged product continuations", () => {
   const summary = results.indexOf("<DealsResultsSearchSummary");
@@ -29,14 +31,36 @@ test("legacy dark overview is removed and the existing modal remains", () => {
 });
 
 test("the first included product owns the sole primary heading contract", () => {
-  const section = readFileSync(new URL("./DealsProductSection.tsx", import.meta.url), "utf8");
-  assert.match(section, /headingLevel\?: 1 \| 2/);
-  assert.match(section, /headingLevel === 1 \? "h1" : "h2"/);
-  assert.match(section, /<Heading id=\{id\} tabIndex=\{-1\}/);
-  assert.match(section, /focus-visible:ring-2/);
-  assert.match(section, /<section aria-labelledby=\{id\}/);
+  assert.match(productSection, /headingLevel\?: 1 \| 2/);
+  assert.match(productSection, /headingLevel === 1 \? "h1" : "h2"/);
+  assert.match(productSection, /<Heading id=\{id\} tabIndex=\{-1\}/);
+  assert.match(productSection, /focus-visible:ring-2/);
+  assert.match(productSection, /<section aria-labelledby=\{id\}/);
   assert.match(results, /id="flight-options" headingLevel=\{1\}/);
   assert.match(results, /id="stay-options" headingLevel=\{included\.flight \? 2 : 1\}/);
+});
+
+test("section notices disclose fallback inventory without presenting partial-provider warnings", () => {
+  const noticeHelper = results.slice(results.indexOf("const notice"), results.indexOf("const flightPreviews"));
+  assert.doesNotMatch(results, /deals\.results\.partialResults/);
+  assert.doesNotMatch(noticeHelper, /item\.warnings\.length/);
+  assert.doesNotMatch(noticeHelper, /item\.warningCategory === "partial_results"/);
+  assert.match(noticeHelper, /item\.servedFromFallback/);
+  assert.match(noticeHelper, /deals\.results\.fallbackNotice/);
+  assert.match(results, /notice=\{notice\(state\.flight\)\}/);
+  assert.match(results, /notice=\{notice\(state\.hotel\)\}/);
+});
+
+test("the English dictionary retains only the fallback section notice", () => {
+  assert.doesNotMatch(english, /deals\.results\.partialResults/);
+  assert.match(english, /deals\.results\.fallbackNotice/);
+});
+
+test("product sections still support and render their generic notice", () => {
+  assert.match(productSection, /notice\?: string/);
+  assert.match(productSection, /notice &&/);
+  assert.match(productSection, /role="status"/);
+  assert.match(productSection, /\{notice\}/);
 });
 
 test("invalid results include breadcrumbs without a valid-search summary", () => {

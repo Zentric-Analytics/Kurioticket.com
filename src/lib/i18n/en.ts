@@ -3375,7 +3375,6 @@ export const translations: TranslationDictionary = {
   "deals.results.priceResponsibility": "Prices can change. Confirm the final amount, availability and terms with the provider.",
   "deals.results.flightEmpty": "No flight options matched this search.",
   "deals.results.hotelEmpty": "No stay options matched these dates.",
-  "deals.results.partialResults": "Some providers are unavailable, but you can still review these options.",
   "deals.results.fallbackNotice": "Fallback options are shown while live provider results are unavailable.",
   "deals.results.carContinuationTitle": "Continue with car rental",
   "deals.results.carContinuationDescription": "Your car search details are ready. Open Cars results to compare available vehicles.",
