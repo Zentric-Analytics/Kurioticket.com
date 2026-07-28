@@ -22,6 +22,22 @@ type ItineraryDateTimeOptions = {
 const ISO_LOCAL_DATE_TIME_PATTERN =
   /^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:?\d{2})?$/;
 
+export function isValidItineraryDateTime(value: string) {
+  const match = value.match(ISO_LOCAL_DATE_TIME_PATTERN);
+  if (!match || !Number.isFinite(new Date(value).getTime())) return false;
+
+  const [, year, month, day, hour, minute, second = "0"] = match;
+  const written = [year, month, day, hour, minute, second].map(Number);
+  const normalized = new Date(Date.UTC(written[0], written[1] - 1, written[2], written[3], written[4], written[5]));
+
+  return normalized.getUTCFullYear() === written[0]
+    && normalized.getUTCMonth() === written[1] - 1
+    && normalized.getUTCDate() === written[2]
+    && normalized.getUTCHours() === written[3]
+    && normalized.getUTCMinutes() === written[4]
+    && normalized.getUTCSeconds() === written[5];
+}
+
 function getItineraryDate(value: string | Date) {
   if (value instanceof Date) return value;
 
