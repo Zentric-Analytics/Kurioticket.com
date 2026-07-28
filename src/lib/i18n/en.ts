@@ -3333,7 +3333,6 @@ export const translations: TranslationDictionary = {
   "deals.results.editor.close": "Close search editor",
   "deals.results.editor.update": "Update results",
   "deals.results.editor.updating": "Updating results…",
-  "deals.results.editor.cancel": "Cancel changes",
   "deals.results.editor.unchanged": "No search changes were made.",
   "deals.results.editor.updatedAnnouncement": "Search updated. Refreshing your trip options.",
   "deals.results.editor.updatingAnnouncement": "Updating your search results.",

@@ -37,7 +37,7 @@ export function DealsModifySearchDialog({ search, locale, t, onSubmit, onClose, 
         <div className="min-w-0"><p className="text-xs font-black uppercase tracking-[0.14em] text-[#004BB8]">{t("deals.results.editor.eyebrow")}</p><h2 id="deals-modify-search-dialog-title" className="mt-1 truncate text-xl font-extrabold text-slate-950 sm:text-2xl" dir={included.flight ? "ltr" : undefined}>{title}</h2><p className="mt-1 truncate text-sm font-medium text-slate-600">{details}</p></div>
         <button ref={closeRef} type="button" onClick={onClose} aria-label={t("deals.results.editor.close")} className="focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"><X aria-hidden className="h-5 w-5" /></button>
       </header>
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-0 pb-[max(1rem,env(safe-area-inset-bottom))] pt-1 sm:px-2"><DealsSearchForm initialSearch={search} variant="results" onSubmitSearch={onSubmit} onCancel={onClose} onDraftChange={onDraftChange} warning={warning} pending={pending} /></div>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-0 pb-[max(1rem,env(safe-area-inset-bottom))] pt-1 sm:px-2"><DealsSearchForm initialSearch={search} variant="results" onSubmitSearch={onSubmit} onDraftChange={onDraftChange} warning={warning} pending={pending} /></div>
     </div>
   </div>;
 }
