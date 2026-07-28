@@ -75,6 +75,7 @@ export function getContentInventory(): ContentInventoryResult[] {
       sourceType: "Code-backed",
       publicState: "Public",
       note: "Search and autocomplete destinations; these are not homepage destination cards.",
+      href: "/admin/content/hotel-destinations",
     },
     {
       title: "Car pickup cards",
@@ -84,6 +85,7 @@ export function getContentInventory(): ContentInventoryResult[] {
       sourceType: "Code-backed",
       publicState: "Public",
       note: "Public pickup-location cards on the Cars landing page.",
+      href: "/admin/content/car-pickup-cards",
     },
     {
       title: "FAQ definitions",
@@ -96,6 +98,7 @@ export function getContentInventory(): ContentInventoryResult[] {
       sourceType: "Code-backed",
       publicState: "Public",
       note: "Definition counts only; public FAQ output is localized at runtime.",
+      href: "/admin/content/faqs",
     },
     {
       title: "Homepage trust messages",
@@ -105,6 +108,7 @@ export function getContentInventory(): ContentInventoryResult[] {
       sourceType: "Code-backed",
       publicState: "Public",
       note: "Localized, code-backed messages on the public homepage; other trust-content surfaces are not included.",
+      href: "/admin/content/homepage-trust-messages",
     },
   ];
 }
