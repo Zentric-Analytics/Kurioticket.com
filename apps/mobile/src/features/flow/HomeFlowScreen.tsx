@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import {
   Image,
   Pressable,
@@ -11,7 +10,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
-import { readSession } from "../../storage/sessionStorage";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { FlightSearchPanel } from "./FlightSearchPanel";
 import { ResponsiveHero } from "./ResponsiveHero";
@@ -27,25 +25,8 @@ const products: {
   { label: "Cars", route: "/cars", icon: "car" },
   { label: "Deals", route: "/deals", icon: "deal" },
 ];
-function greeting(hour: number) {
-  return hour < 12
-    ? "Good morning,"
-    : hour < 18
-      ? "Good afternoon,"
-      : "Good evening,";
-}
-
 export function HomeFlowScreen() {
-  const [name, setName] = useState("Traveler");
   const insets = useSafeAreaInsets();
-  useEffect(() => {
-    void readSession()
-      .then((session) => {
-        const first = session?.user.name?.trim().split(/\s+/)[0];
-        if (first) setName(first);
-      })
-      .catch(() => undefined);
-  }, []);
   return (
     <SafeAreaView style={flowStyles.safe} edges={[]}>
       <StatusBar style="dark" translucent backgroundColor="transparent" />
@@ -78,14 +59,6 @@ export function HomeFlowScreen() {
               >
                 <FlowIcon name="bell" />
               </Pressable>
-            </View>
-            <View style={styles.greetingBlock}>
-              <Text style={styles.greeting}>
-                {greeting(new Date().getHours())}
-              </Text>
-              <Text accessibilityRole="header" style={styles.name}>
-                {name}
-              </Text>
             </View>
           </View>
         </View>
@@ -155,22 +128,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   logo: { width: 130, height: 36 },
-  greetingBlock: { marginTop: 36 },
-  greeting: { color: flowColors.muted, fontSize: 13, fontWeight: "600" },
-  name: {
-    color: flowColors.navy,
-    fontSize: 25,
-    lineHeight: 31,
-    fontWeight: "800",
-  },
   products: {
     marginTop: -34,
     minHeight: 78,
     flexDirection: "row",
     backgroundColor: "white",
     borderRadius: 14,
-    borderColor: flowColors.border,
-    borderWidth: 1,
+    overflow: "hidden",
   },
   product: {
     flex: 1,
@@ -178,8 +142,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    borderRightColor: flowColors.border,
-    borderRightWidth: 1,
   },
   productActive: {
     backgroundColor: "#F3F7FF",
