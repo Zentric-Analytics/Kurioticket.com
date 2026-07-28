@@ -1,6 +1,7 @@
 import type { PublicFlightResult, PublicHotelResult } from "@/lib/types";
 import { formatItineraryShortDate, formatItineraryTime, isValidItineraryDateTime } from "@/lib/utils";
 import type { DealsSearch } from "./dealsSearchParams";
+import { getIncludedProducts } from "./dealsSearchParams";
 import { getHotelComparableReviewScore, normalizeHotelReviewCount } from "@/lib/hotels/hotelRatingSemantics";
 
 export const dealsPreviewLimit = 3;
@@ -67,6 +68,44 @@ export const getOverviewData = (search: DealsSearch, locale: string) => {
     flight: { title: `${search.flightOriginCode} → ${search.flightDestinationCode}`, dates: flightDates, travelers: search.flightAdults + search.flightChildren + search.flightInfants, cabin: search.flightCabinClass },
     hotel: { title: search.hotelDestination, dates: hotelDates, nights: countHotelNights(search.hotelCheckIn, search.hotelCheckOut), guests: search.hotelAdults + search.hotelChildren, rooms: search.hotelRooms, petFriendly: search.hotelPetFriendly },
     car: { title: `${search.carPickupLocation} → ${search.carReturnToDifferentLocation ? search.carReturnLocation : search.carPickupLocation}`, dates: carDates, pickupTime: search.carPickupTime, returnTime: search.carReturnTime, driverAge: search.carDriverAge },
+  };
+};
+
+export type DealsResultsSummary = {
+  primary: string;
+  routeLabelKey: string;
+  hasFlight: boolean;
+  dates: { labelKey?: string; value: string }[];
+  travelers?: number;
+  guests?: number;
+  rooms?: number;
+  cabin?: string;
+  carIncluded: boolean;
+};
+
+export const getDealsResultsSummary = (search: DealsSearch, locale: string): DealsResultsSummary => {
+  const included = getIncludedProducts(search.mode);
+  const overview = getOverviewData(search, locale);
+  const flightTitle = [search.flightOriginText || search.flightOriginCode, search.flightDestinationText || search.flightDestinationCode]
+    .map((name, index) => name && !name.toUpperCase().includes(index === 0 ? search.flightOriginCode : search.flightDestinationCode) ? `${name} (${index === 0 ? search.flightOriginCode : search.flightDestinationCode})` : name)
+    .join(" → ");
+  const dates: DealsResultsSummary["dates"] = [];
+  if (included.flight && included.hotel && overview.flight.dates === overview.hotel.dates) dates.push({ value: overview.flight.dates });
+  else {
+    if (included.flight) dates.push({ labelKey: included.hotel ? "deals.results.summary.flightDates" : undefined, value: overview.flight.dates });
+    if (included.hotel) dates.push({ labelKey: included.flight ? "deals.results.summary.stayDates" : undefined, value: overview.hotel.dates });
+  }
+  if (included.car && overview.car.dates && !dates.some(({ value }) => value === overview.car.dates)) dates.push({ labelKey: "deals.results.summary.carDates", value: overview.car.dates });
+  return {
+    primary: included.flight ? flightTitle : overview.hotel.title,
+    routeLabelKey: included.flight ? "deals.results.summary.route" : "deals.results.summary.destination",
+    hasFlight: included.flight,
+    dates,
+    travelers: included.flight ? overview.flight.travelers : undefined,
+    guests: included.hotel ? overview.hotel.guests : undefined,
+    rooms: included.hotel ? overview.hotel.rooms : undefined,
+    cabin: included.flight && !included.hotel ? search.flightCabinClass : undefined,
+    carIncluded: included.car,
   };
 };
 

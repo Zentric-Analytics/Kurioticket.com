@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 
 const dialog = readFileSync(new URL("./DealsModifySearchDialog.tsx", import.meta.url), "utf8");
 const results = readFileSync(new URL("../DealsResultsClient.tsx", import.meta.url), "utf8");
-const overview = readFileSync(new URL("./DealsTripOverview.tsx", import.meta.url), "utf8");
+const overview = readFileSync(new URL("./DealsResultsSearchSummary.tsx", import.meta.url), "utf8");
 
 test("modify search uses a labelled modal while preserving the results page", () => {
   assert.match(dialog, /role="dialog"/);
