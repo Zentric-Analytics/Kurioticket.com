@@ -6,7 +6,9 @@ export type FlowIconName =
   | "compass" | "deal" | "flight" | "home" | "hotel" | "location" | "more"
   | "person" | "plus" | "search" | "settings" | "share" | "swap" | "trip"
   | "people" | "sliders" | "help" | "headset" | "document" | "shield"
-  | "globe" | "currency" | "moon" | "logout";
+  | "globe" | "currency" | "moon" | "logout"
+  | "heart" | "trending" | "map" | "beach" | "city" | "adventure"
+  | "nature" | "culture" | "family";
 
 export function FlowIcon({ name, size = 24, color = "#071A48" }: { name: FlowIconName; size?: number; color?: string }) {
   const line = { fill: "none", stroke: color, strokeWidth: 2.1, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
@@ -42,6 +44,15 @@ export function FlowIcon({ name, size = 24, color = "#071A48" }: { name: FlowIco
     currency: <><Circle {...line} cx="12" cy="12" r="9" /><Path {...line} d="M15 8.5c-.7-.7-1.7-1-3-1-1.7 0-3 .8-3 2s1 1.8 3 2.3 3 1.1 3 2.4-1.3 2.3-3 2.3c-1.3 0-2.5-.4-3.2-1.2M12 5.5v13" /></>,
     moon: <Path {...line} d="M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z" />,
     logout: <><Path {...line} d="M10 5H5v14h5M13 8l4 4-4 4M8 12h9" /></>,
+    heart: <Path {...line} d="M20.5 9c0 5-8.5 10-8.5 10S3.5 14 3.5 9A4.5 4.5 0 0 1 12 6.8 4.5 4.5 0 0 1 20.5 9Z" />,
+    trending: <Path {...line} d="m4 17 5-5 4 4 7-8M15 8h5v5" />,
+    map: <Path {...line} d="m4 6 5-2 6 2 5-2v14l-5 2-6-2-5 2V6Zm5-2v14M15 6v14" />,
+    beach: <><Path {...line} d="M4 13c3-6 8-8 15-4M12 8l-2 12M5 20h14" /><Path {...line} d="M8 10c0-3-2-4-4-4M12 8c1-3 4-4 6-2" /></>,
+    city: <><Path {...line} d="M5 21V9h6v12M11 21V4h8v17M8 12h.01M8 16h.01M14 8h2M14 12h2M14 16h2" /></>,
+    adventure: <><Path {...line} d="m3 20 7-13 4 7 2-4 5 10H3Z" /><Path {...line} d="m8.5 10 2 2 2-2" /></>,
+    nature: <><Path {...line} d="M19 4C9 5 5 10 6 18c8 1 13-4 13-14Z" /><Path {...line} d="M5 20c3-5 6-8 11-11" /></>,
+    culture: <><Path {...line} d="m3 9 9-5 9 5M5 10h14M6 10v8M10 10v8M14 10v8M18 10v8M4 19h16M3 21h18" /></>,
+    family: <><Circle {...line} cx="8" cy="8" r="2.5" /><Circle {...line} cx="16" cy="7" r="2.5" /><Circle {...line} cx="12" cy="13" r="2" /><Path {...line} d="M3 20c.5-4 2-6 5-6 1.2 0 2.2.3 3 .9M21 20c-.5-4-2-6-5-6-1.2 0-2.2.3-3 .9M8 21c.3-3 1.5-4.5 4-4.5s3.7 1.5 4 4.5" /></>,
   };
   return <Svg width={size} height={size} viewBox="0 0 24 24" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">{icons[name]}</Svg>;
 }
