@@ -20,6 +20,37 @@ test("results hierarchy uses one summary, breadcrumbs, and product sections", ()
   assert.match(results, /<DealsTripPlanBar/);
 });
 
+test("product sections share a desktop-only responsive divider wrapper", () => {
+  const wrapperStart = results.indexOf('<div className="space-y-6');
+  const wrapperEnd = results.indexOf("\n  </div>", wrapperStart);
+  assert.ok(wrapperStart >= 0 && wrapperEnd > wrapperStart);
+
+  const wrapper = results.slice(wrapperStart, wrapperEnd);
+  const className = wrapper.match(/<div className="([^"]+)">/)?.[1];
+  assert.ok(className);
+  const classes = className.split(/\s+/);
+  for (const expected of [
+    "space-y-6",
+    "lg:space-y-0",
+    "lg:divide-y",
+    "lg:divide-slate-200",
+    "lg:[&>section]:py-8",
+    "lg:[&>section:first-child]:pt-0",
+    "lg:[&>section:last-child]:pb-0",
+  ]) assert.ok(classes.includes(expected), `missing wrapper class: ${expected}`);
+
+  assert.equal(classes.includes("divide-y"), false);
+  assert.equal(classes.includes("sm:divide-y"), false);
+  assert.equal(classes.includes("md:divide-y"), false);
+
+  const branches = wrapper.match(/^\s*\{included\.(flight|hotel|car) && <DealsProductSection\b/gm) ?? [];
+  assert.deepEqual(branches.map((branch) => branch.match(/included\.(flight|hotel|car)/)?.[1]), ["flight", "hotel", "car"]);
+  assert.equal((wrapper.match(/<DealsProductSection\b/g) ?? []).length, 3);
+  assert.doesNotMatch(wrapper, /<hr\b|role=["']separator["']/);
+  assert.doesNotMatch(wrapper, /<(?:Deals)?(?:Divider|Separator)\b/);
+  assert.doesNotMatch(wrapper, /<DealsProductSection\b[^>]*\b(?:desktopDivider|showDivider|isFirst|isLast)=/);
+});
+
 test("legacy dark overview is removed and the existing modal remains", () => {
   assert.equal(existsSync(new URL("./DealsTripOverview.tsx", import.meta.url)), false);
   assert.doesNotMatch(results, /DealsTripOverview|bg-\[#021C2B\]/);
