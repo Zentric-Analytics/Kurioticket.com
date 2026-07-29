@@ -574,7 +574,14 @@ export function AdminDataErrorState({
   );
 }
 
-type AdminDataColumn = string | { key: string; label: React.ReactNode; align?: "left" | "right" | "center"; className?: string };
+type AdminDataColumn = string | {
+  key: string;
+  label: React.ReactNode;
+  align?: "left" | "right" | "center";
+  width?: string;
+  className?: string;
+  cellClassName?: string;
+};
 
 type AdminDataRow = { id: string; cells: React.ReactNode[] };
 
@@ -597,6 +604,18 @@ function columnCustomClass(column: AdminDataColumn) {
   return typeof column === "string" ? "" : column.className || "";
 }
 
+function columnCellClass(column: AdminDataColumn) {
+  return typeof column === "string" ? "" : column.cellClassName || "";
+}
+
+function columnWidth(column: AdminDataColumn) {
+  return typeof column === "string" ? undefined : column.width;
+}
+
+function usesDefaultFinalCellAlignment(column: AdminDataColumn) {
+  return typeof column === "string" || column.align === undefined;
+}
+
 export function AdminDataTable({
   columns,
   rows,
@@ -605,6 +624,7 @@ export function AdminDataTable({
   footer,
   density = "comfortable",
   minWidth = "900px",
+  fixedLayout = false,
 }: {
   columns: AdminDataColumn[];
   rows: AdminDataRow[];
@@ -613,6 +633,7 @@ export function AdminDataTable({
   footer?: React.ReactNode;
   density?: "compact" | "comfortable";
   minWidth?: string;
+  fixedLayout?: boolean;
 }) {
   const cellPadding = density === "compact" ? "px-4 py-3" : "px-5 py-4";
 
@@ -620,12 +641,12 @@ export function AdminDataTable({
     <AdminSectionCard className="overflow-hidden p-0 shadow-sm">
       {summary ? <div className="border-b border-slate-200 px-5 py-4 text-sm text-slate-600">{summary}</div> : null}
       <div className="overflow-x-auto bg-[linear-gradient(to_right,white,white),linear-gradient(to_right,white,white),linear-gradient(to_right,rgba(15,23,42,0.08),rgba(255,255,255,0)),linear-gradient(to_left,rgba(15,23,42,0.08),rgba(255,255,255,0))] bg-[length:24px_100%,24px_100%,12px_100%,12px_100%] bg-[position:left_center,right_center,left_center,right_center] bg-no-repeat [background-attachment:local,local,scroll,scroll]">
-        <table className="w-full border-separate border-spacing-0 text-left text-sm" style={{ minWidth }} aria-label={caption}>
+        <table className={cn("w-full border-separate border-spacing-0 text-left text-sm", fixedLayout && "table-fixed")} style={{ minWidth }} aria-label={caption}>
           {caption ? <caption className="sr-only">{caption}</caption> : null}
           <thead className="sticky top-0 z-10 bg-slate-50/95 text-xs text-slate-500 backdrop-blur supports-[backdrop-filter]:bg-slate-50/80">
             <tr>
               {columns.map((column) => (
-                <th key={columnKey(column)} scope="col" className={cn(cellPadding, "border-b border-slate-200 font-semibold uppercase tracking-wide", columnAlignClass(column), columnCustomClass(column))}>
+                <th key={columnKey(column)} scope="col" style={{ width: columnWidth(column) }} className={cn(cellPadding, "border-b border-slate-200 font-semibold uppercase tracking-wide", columnAlignClass(column), columnCustomClass(column))}>
                   {columnLabel(column)}
                 </th>
               ))}
@@ -634,7 +655,10 @@ export function AdminDataTable({
           <tbody className="divide-y divide-slate-100 bg-white">
             {rows.map((row) => (
               <tr key={row.id} className="group align-top transition-colors hover:bg-slate-50/80 focus-within:bg-slate-50/80">
-                {row.cells.map((cell, index) => <td key={`${row.id}-${index}`} className={cn(cellPadding, "max-w-[22rem] text-slate-700 first:font-medium first:text-slate-950 [&_a]:focus-ring [&_button]:focus-ring", index === row.cells.length - 1 && "whitespace-nowrap text-right")}>{cell}</td>)}
+                {row.cells.map((cell, index) => {
+                  const column = columns[index];
+                  return <td key={`${row.id}-${index}`} style={{ width: columnWidth(column) }} className={cn(cellPadding, "max-w-[22rem] text-slate-700 first:font-medium first:text-slate-950 [&_a]:focus-ring [&_button]:focus-ring", columnAlignClass(column), index === row.cells.length - 1 && usesDefaultFinalCellAlignment(column) && "whitespace-nowrap text-right", columnCellClass(column))}>{cell}</td>;
+                })}
               </tr>
             ))}
           </tbody>

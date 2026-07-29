@@ -76,7 +76,17 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
         caption="Homepage destination assignments"
         density="compact"
         minWidth="1180px"
-        columns={["Market", "Record ID", "Origin", "Destination", "Destination city", "Route", "Assignment type", "Public role"]}
+        fixedLayout
+        columns={[
+          { key: "market", label: "Market", align: "left", width: "7%" },
+          { key: "record-id", label: "Record ID", align: "left", width: "15%" },
+          { key: "origin", label: "Origin", align: "left", width: "8%" },
+          { key: "destination", label: "Destination", align: "left", width: "10%" },
+          { key: "destination-city", label: "Destination city", align: "left", width: "15%" },
+          { key: "route", label: "Route", align: "left", width: "10%" },
+          { key: "assignment-type", label: "Assignment type", align: "left", width: "17%" },
+          { key: "public-role", label: "Public role", align: "left", width: "18%", cellClassName: "whitespace-normal" },
+        ]}
         summary={`Showing ${firstResult}–${lastResult} of ${matchingRows.length} assignments`}
         footer={page.totalPages > 1 ? (
           <Pagination
@@ -97,7 +107,7 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
             <AdminStatusBadge key="type" tone={row.assignmentType === "DIRECT_MARKET" ? "info" : "neutral"}>
               {formatAssignmentType(row.assignmentType)}
             </AdminStatusBadge>,
-            <div key="role" className="flex flex-wrap justify-end gap-1.5">
+            <div key="role" className="flex flex-wrap gap-1.5">
               <span>{row.publicRole}</span>
               {row.repeatedId ? <AdminStatusBadge tone="warn">Repeated ID</AdminStatusBadge> : null}
               {row.repeatedRoute ? <AdminStatusBadge tone="warn">Repeated route</AdminStatusBadge> : null}
