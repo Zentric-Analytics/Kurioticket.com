@@ -129,15 +129,13 @@ export function HotelDetailsSections({
 
   const content = (
     <div
-      className={`grid min-w-0 border-t border-border bg-surface ${gridColumns}`}
+      className={`grid min-w-0 gap-3 border-t border-border bg-slate-50/70 p-3 sm:gap-4 sm:p-4 ${gridColumns}`}
     >
-      {sections.map((section, index) => (
+      {sections.map((section) => (
         <section
           key={section.key}
           aria-labelledby={`hotel-details-${section.key}-heading`}
-          className={`min-w-0 p-5 sm:p-6 ${
-            index > 0 ? "border-t border-border lg:border-t-0 lg:border-s" : ""
-          }`}
+          className="min-w-0 rounded-xl border border-border bg-surface p-4 shadow-[0_8px_24px_-20px_rgba(2,28,43,0.32)] sm:p-5"
         >
           <h2 id={`hotel-details-${section.key}-heading`} className="sr-only">
             {section.title}
@@ -145,27 +143,30 @@ export function HotelDetailsSections({
           {section.kind === "text" ? (
             <div className="flex min-w-0 items-start gap-3">
               {section.key === "room" ? (
-                <BedDouble
-                  className="mt-0.5 h-5 w-5 shrink-0 text-blue"
-                  aria-hidden="true"
-                />
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-subtle shadow-sm">
+                  <BedDouble
+                    className="h-5 w-5 text-blue"
+                    aria-hidden="true"
+                  />
+                </div>
               ) : (
-                <FileText
-                  className="mt-0.5 h-5 w-5 shrink-0 text-blue"
-                  aria-hidden="true"
-                />
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-subtle shadow-sm">
+                  <FileText
+                    className="h-5 w-5 text-blue"
+                    aria-hidden="true"
+                  />
+                </div>
               )}
-              <ul
-                className="min-w-0 space-y-1.5 text-sm font-medium leading-6 text-slate-700"
-                role="list"
-              >
+              <ul className="min-w-0 space-y-1.5" role="list">
                 {section.items.map((item) => (
                   <li
                     key={item}
                     className={
-                      section.key === "room" && item === section.items[0]
-                        ? "font-semibold text-slate-900"
-                        : undefined
+                      section.key === "room"
+                        ? item === section.items[0]
+                          ? "break-words text-sm font-semibold leading-5 text-slate-950"
+                          : "break-words text-sm font-medium leading-5 text-slate-600"
+                        : "break-words text-sm font-semibold leading-5 text-slate-900"
                     }
                   >
                     {item}
@@ -175,7 +176,7 @@ export function HotelDetailsSections({
             </div>
           ) : (
             <ul
-              className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2"
+              className="grid grid-cols-1 gap-x-3 gap-y-2.5 sm:grid-cols-2"
               role="list"
             >
               {section.items.map((item) => {
@@ -183,7 +184,7 @@ export function HotelDetailsSections({
                 return (
                   <li
                     key={item.key}
-                    className="flex min-w-0 items-start gap-2.5 text-sm font-medium leading-5 text-slate-700"
+                    className="flex min-w-0 items-start gap-2.5 rounded-lg bg-surface-subtle/70 px-3 py-2.5 text-sm font-medium leading-5 text-slate-700"
                   >
                     <Icon
                       className="mt-0.5 h-4 w-4 shrink-0 text-blue"

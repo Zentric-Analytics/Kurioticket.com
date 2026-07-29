@@ -12,7 +12,21 @@ test("supports embedded and standalone presentations without nested cards", () =
   assert.match(source, /embedded = false/);
   assert.match(source, /if \(embedded\) return content/);
   assert.equal(source.match(/<Card\b/g)?.length, 1);
-  assert.match(source, /grid min-w-0 border-t border-border bg-surface/);
+  for (const token of [
+    "gap-3",
+    "sm:gap-4",
+    "border-t",
+    "border-border",
+    "bg-slate-50/70",
+    "p-3",
+    "sm:p-4",
+  ]) {
+    assert.ok(source.includes(token));
+  }
+  assert.doesNotMatch(
+    source,
+    /grid min-w-0 border-t border-border bg-surface/,
+  );
   assert.match(source, /variant="flat"/);
 });
 
@@ -47,14 +61,43 @@ test("uses hidden semantic headings and icon-led semantic lists", () => {
   assert.doesNotMatch(source, /text-lg font-bold text-slate-950/);
   assert.match(source, /BedDouble/);
   assert.match(source, /FileText/);
-  assert.match(source, /min-w-0 space-y-1\.5 text-sm font-medium leading-6/);
+  assert.match(source, /<ul className="min-w-0 space-y-1\.5" role="list">/);
   assert.equal(source.match(/role="list"/g)?.length, 2);
   assert.doesNotMatch(source, /key={index}|<hr|role="separator"/);
 });
 
-test("retains responsive logical dividers and all amenity icon meanings", () => {
-  assert.match(source, /min-w-0 p-5 sm:p-6/);
-  assert.match(source, /border-t border-border lg:border-t-0 lg:border-s/);
+test("uses coordinated inner panels without shared responsive dividers", () => {
+  const sectionClass = source.match(
+    /<section[\s\S]*?className="([^"]+)"[\s\S]*?<h2/,
+  )?.[1];
+  assert.ok(sectionClass);
+  for (const token of [
+    "min-w-0",
+    "rounded-xl",
+    "border",
+    "border-border",
+    "bg-surface",
+    "p-4",
+    "sm:p-5",
+    "shadow-[0_8px_24px_-20px_rgba(2,28,43,0.32)]",
+  ]) {
+    assert.ok(sectionClass.split(/\s+/).includes(token));
+  }
+  assert.doesNotMatch(sectionClass, /lg:border-s|lg:border-t-0/);
+});
+
+test("uses matching decorative icon tiles and clear text hierarchy", () => {
+  const iconTile =
+    "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-subtle shadow-sm";
+  assert.equal(source.split(iconTile).length - 1, 2);
+  assert.match(source, /<BedDouble[\s\S]*?aria-hidden="true"/);
+  assert.match(source, /<FileText[\s\S]*?aria-hidden="true"/);
+  assert.match(source, /font-semibold leading-5 text-slate-950/);
+  assert.match(source, /font-medium leading-5 text-slate-600/);
+  assert.match(source, /font-semibold leading-5 text-slate-900/);
+});
+
+test("retains all amenity icon meanings in refined amenity rows", () => {
   const mappings = {
     wifi: "Wifi",
     breakfast: "Coffee",
@@ -78,7 +121,30 @@ test("retains responsive logical dividers and all amenity icon meanings", () => 
   for (const [key, icon] of Object.entries(mappings)) {
     assert.match(source, new RegExp(`${key}: ${icon},`));
   }
-  assert.match(source, /grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2/);
+  assert.match(source, /grid grid-cols-1 gap-x-3 gap-y-2\.5 sm:grid-cols-2/);
+  for (const token of [
+    "rounded-lg",
+    "bg-surface-subtle/70",
+    "px-3",
+    "py-2.5",
+    "gap-2.5",
+  ]) {
+    assert.ok(source.includes(token));
+  }
   assert.match(source, /mt-0\.5 h-4 w-4 shrink-0 text-blue/);
   assert.match(source, /<span className="min-w-0 break-words">/);
+});
+
+test("does not introduce flight timeline semantics or a visible amenities heading", () => {
+  for (const forbidden of [
+    /timeline/i,
+    /\bOutbound\b/,
+    /\bReturn\b/,
+    /\blayover\b/i,
+    /airport code/i,
+    /vertical guide/i,
+  ]) {
+    assert.doesNotMatch(source, forbidden);
+  }
+  assert.doesNotMatch(source, />Amenities</);
 });
