@@ -32,6 +32,25 @@ test("inspection page renders summary, filters, seven table columns, and result 
   assert.doesNotMatch(inspectionPage, /Public role|publicRole/);
 });
 
+test("filter toolbar uses native GET submission and automatically applies dropdown changes", () => {
+  assert.match(filterToolbar, /^"use client";/);
+  assert.match(filterToolbar, /action="\/admin\/content\/homepage-destinations"/);
+  assert.match(filterToolbar, /method="get"/);
+  assert.match(filterToolbar, /role="search"/);
+  assert.match(filterToolbar, /name="q"/);
+  assert.match(filterToolbar, /name="market"[^>]+onChange=\{submitHomepageDestinationFilters\}/);
+  assert.match(filterToolbar, /name="assignmentType"[^>]+onChange=\{submitHomepageDestinationFilters\}/);
+  assert.match(filterToolbar, /<button type="submit" className="sr-only">Submit filters<\/button>/);
+  assert.doesNotMatch(filterToolbar, /Apply filters|name="page"|window\.location/);
+});
+
+test("filter toolbar conditionally clears active filters to the bare inventory route", () => {
+  assert.match(filterToolbar, /hasActiveHomepageDestinationFilters\(q, market, assignmentType\)/);
+  assert.match(filterToolbar, /\{hasActiveFilters \? \(/);
+  assert.match(filterToolbar, /href="\/admin\/content\/homepage-destinations"/);
+  assert.match(filterToolbar, />\s*Clear filters\s*</);
+});
+
 test("inspection page renders exactly three metrics derived from the existing inventory summary", () => {
   const metricCards = inspectionPage.match(/<AdminMetricCard\b/g) ?? [];
   assert.equal(metricCards.length, 3);
