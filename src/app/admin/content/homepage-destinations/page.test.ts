@@ -11,7 +11,7 @@ test("Content Inventory links only the homepage destination card to its inspecti
   assert.match(contentPage, /View inventory/);
 });
 
-test("inspection page renders summary, filters, seven table columns, flags, and result count", () => {
+test("inspection page renders summary, filters, seven table columns, and result count", () => {
   for (const text of [
     "Unique card IDs",
     "Market assignments",
@@ -19,8 +19,6 @@ test("inspection page renders summary, filters, seven table columns, flags, and 
     "Record ID",
     "Destination city",
     "Homepage usage",
-    "Repeated ID",
-    "Repeated route",
   ]) assert.match(inspectionPage, new RegExp(text));
   assert.match(inspectionPage, /matchingRows\.length/);
   assert.match(filterToolbar, /Search by ID, city, origin or destination code/);
@@ -51,12 +49,20 @@ test("inspection table fixes and left-aligns all seven columns with stable width
   assert.equal(configuredColumns.reduce((total, column) => total + Number.parseInt(column[2], 10), 0), 100);
 });
 
-test("repeated warnings sit below their related values and not in homepage usage", () => {
-  assert.match(inspectionPage, /key="id" className="flex flex-col items-start"[\s\S]*row\.recordId[\s\S]*row\.repeatedId[\s\S]*Repeated ID/);
-  assert.match(inspectionPage, /key="route" className="flex flex-col items-start"[\s\S]*row\.route[\s\S]*row\.repeatedRoute[\s\S]*Repeated route/);
+test("reuse counts render as plain secondary text below their related values", () => {
+  const idCell = inspectionPage.match(/<div key="id"[\s\S]*?<\/div>/)?.[0] ?? "";
+  const routeCell = inspectionPage.match(/<div key="route"[\s\S]*?<\/div>/)?.[0] ?? "";
+
+  assert.match(idCell, /row\.recordId[\s\S]*row\.recordIdAssignmentCount > 1[\s\S]*Used in \{row\.recordIdAssignmentCount\} assignments/);
+  assert.match(routeCell, /row\.route[\s\S]*row\.routeAssignmentCount > 1[\s\S]*Used in \{row\.routeAssignmentCount\} assignments/);
+  for (const cell of [idCell, routeCell]) {
+    assert.match(cell, /className="cursor-text text-xs text-slate-500"/);
+    assert.doesNotMatch(cell, /AdminStatusBadge|bg-|border|ring-|rounded|hover:|active:/);
+  }
   const usageCell = inspectionPage.match(/<AdminStatusBadge key="type"[\s\S]*?<\/AdminStatusBadge>/)?.[0] ?? "";
   assert.match(usageCell, /formatAssignmentType\(row\.assignmentType\)/);
-  assert.doesNotMatch(usageCell, /Repeated ID|Repeated route/);
+  assert.doesNotMatch(usageCell, /Used in|recordIdAssignmentCount|routeAssignmentCount/);
+  assert.doesNotMatch(inspectionPage, /Repeated ID|Repeated route|Duplicate|Warning/);
   assert.doesNotMatch(inspectionPage, /justify-end/);
 });
 

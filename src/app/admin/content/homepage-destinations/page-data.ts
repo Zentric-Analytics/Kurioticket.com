@@ -25,6 +25,8 @@ export type HomepageDestinationInventoryRow = {
   destinationCity: string;
   route: string;
   assignmentType: HomepageDestinationAssignmentType;
+  recordIdAssignmentCount: number;
+  routeAssignmentCount: number;
   repeatedId: boolean;
   repeatedRoute: boolean;
 };
@@ -77,6 +79,8 @@ export function getHomepageDestinationInventoryRows(): HomepageDestinationInvent
       destinationCity: item.city,
       route,
       assignmentType,
+      recordIdAssignmentCount: idCounts.get(item.id) ?? 0,
+      routeAssignmentCount: routeCounts.get(route) ?? 0,
       repeatedId: (idCounts.get(item.id) ?? 0) > 1,
       repeatedRoute: (routeCounts.get(route) ?? 0) > 1,
     };

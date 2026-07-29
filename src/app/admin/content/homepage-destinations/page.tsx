@@ -98,16 +98,24 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
           id: row.rowId,
           cells: [
             <span key="market" className="font-semibold text-slate-950">{row.market}</span>,
-            <div key="id" className="flex flex-col items-start">
+            <div key="id" className="space-y-1 text-left">
               <code className="text-xs text-slate-700">{row.recordId}</code>
-              {row.repeatedId ? <span className="mt-1.5"><AdminStatusBadge tone="warn">Repeated ID</AdminStatusBadge></span> : null}
+              {row.recordIdAssignmentCount > 1 ? (
+                <p className="cursor-text text-xs text-slate-500">
+                  Used in {row.recordIdAssignmentCount} assignments
+                </p>
+              ) : null}
             </div>,
             row.originCode,
             row.destinationCode,
             row.destinationCity,
-            <div key="route" className="flex flex-col items-start">
+            <div key="route" className="space-y-1 text-left">
               <code className="text-xs text-slate-700">{row.route}</code>
-              {row.repeatedRoute ? <span className="mt-1.5"><AdminStatusBadge tone="warn">Repeated route</AdminStatusBadge></span> : null}
+              {row.routeAssignmentCount > 1 ? (
+                <p className="cursor-text text-xs text-slate-500">
+                  Used in {row.routeAssignmentCount} assignments
+                </p>
+              ) : null}
             </div>,
             <AdminStatusBadge key="type" tone={row.assignmentType === "DIRECT_MARKET" ? "info" : "neutral"}>
               {formatAssignmentType(row.assignmentType)}

@@ -31,14 +31,30 @@ test("selector classifies direct, regional, and neutral/global assignments", () 
   assert.equal("publicRole" in rows[0], false);
 });
 
-test("selector flags repeated IDs and routes without removing their rows", () => {
+test("selector derives ID and route assignment counts from the complete source inventory", () => {
   const repeatedIdRows = rows.filter((row) => row.repeatedId);
   const repeatedRouteRows = rows.filter((row) => row.repeatedRoute);
+  const uniqueIdRow = rows.find((row) => rows.filter((candidate) => candidate.recordId === row.recordId).length === 1);
+  const uniqueRouteRow = rows.find((row) => rows.filter((candidate) => candidate.route === row.route).length === 1);
 
   assert.ok(repeatedIdRows.length > 0);
   assert.ok(repeatedRouteRows.length > 0);
-  assert.equal(rows.filter((row) => row.recordId === repeatedIdRows[0].recordId).length > 1, true);
-  assert.equal(rows.filter((row) => row.route === repeatedRouteRows[0].route).length > 1, true);
+  assert.ok(uniqueIdRow);
+  assert.ok(uniqueRouteRow);
+
+  for (const row of rows) {
+    const expectedIdCount = rows.filter((candidate) => candidate.recordId === row.recordId).length;
+    const expectedRouteCount = rows.filter((candidate) => candidate.route === row.route).length;
+    assert.equal(row.recordIdAssignmentCount, expectedIdCount);
+    assert.equal(row.routeAssignmentCount, expectedRouteCount);
+    assert.equal(row.repeatedId, expectedIdCount > 1);
+    assert.equal(row.repeatedRoute, expectedRouteCount > 1);
+  }
+
+  assert.ok(repeatedIdRows[0].recordIdAssignmentCount > 1);
+  assert.ok(repeatedRouteRows[0].routeAssignmentCount > 1);
+  assert.equal(uniqueIdRow.recordIdAssignmentCount, 1);
+  assert.equal(uniqueRouteRow.routeAssignmentCount, 1);
 });
 
 test("search matches ID, city, origin, and destination code", () => {
