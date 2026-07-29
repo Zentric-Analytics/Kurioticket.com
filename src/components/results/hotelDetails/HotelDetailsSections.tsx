@@ -1,6 +1,7 @@
 import {
   AirVent,
   Armchair,
+  BedDouble,
   Bike,
   BusFront,
   CircleDot,
@@ -11,6 +12,7 @@ import {
   CookingPot,
   Dumbbell,
   Flower2,
+  FileText,
   Laptop,
   Trees,
   UtensilsCrossed,
@@ -61,6 +63,7 @@ type DetailsSection =
     };
 
 export function HotelDetailsSections({
+  embedded = false,
   roomTitle,
   roomItems,
   cancellationTitle,
@@ -68,6 +71,7 @@ export function HotelDetailsSections({
   amenitiesTitle,
   amenityItems,
 }: {
+  embedded?: boolean;
   roomTitle: string;
   roomItems: string[];
   cancellationTitle: string;
@@ -123,58 +127,87 @@ export function HotelDetailsSections({
           ? "lg:grid-cols-2"
           : "lg:grid-cols-1";
 
+  const content = (
+    <div
+      className={`grid min-w-0 border-t border-border bg-surface ${gridColumns}`}
+    >
+      {sections.map((section, index) => (
+        <section
+          key={section.key}
+          aria-labelledby={`hotel-details-${section.key}-heading`}
+          className={`min-w-0 p-5 sm:p-6 ${
+            index > 0 ? "border-t border-border lg:border-t-0 lg:border-s" : ""
+          }`}
+        >
+          <h2 id={`hotel-details-${section.key}-heading`} className="sr-only">
+            {section.title}
+          </h2>
+          {section.kind === "text" ? (
+            <div className="flex min-w-0 items-start gap-3">
+              {section.key === "room" ? (
+                <BedDouble
+                  className="mt-0.5 h-5 w-5 shrink-0 text-blue"
+                  aria-hidden="true"
+                />
+              ) : (
+                <FileText
+                  className="mt-0.5 h-5 w-5 shrink-0 text-blue"
+                  aria-hidden="true"
+                />
+              )}
+              <ul
+                className="min-w-0 space-y-1.5 text-sm font-medium leading-6 text-slate-700"
+                role="list"
+              >
+                {section.items.map((item) => (
+                  <li
+                    key={item}
+                    className={
+                      section.key === "room" && item === section.items[0]
+                        ? "font-semibold text-slate-900"
+                        : undefined
+                    }
+                  >
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <ul
+              className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2"
+              role="list"
+            >
+              {section.items.map((item) => {
+                const Icon = amenityIcons[item.iconKey];
+                return (
+                  <li
+                    key={item.key}
+                    className="flex min-w-0 items-start gap-2.5 text-sm font-medium leading-5 text-slate-700"
+                  >
+                    <Icon
+                      className="mt-0.5 h-4 w-4 shrink-0 text-blue"
+                      aria-hidden="true"
+                    />
+                    <span className="min-w-0 break-words">{item.label}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      ))}
+    </div>
+  );
+
+  if (embedded) return content;
+
   return (
     <Card
       variant="flat"
       className="overflow-hidden p-0 shadow-[0_12px_32px_-26px_rgba(2,28,43,0.28)]"
     >
-      <div className={`grid min-w-0 ${gridColumns}`}>
-        {sections.map((section, index) => (
-          <section
-            key={section.key}
-            className={`min-w-0 p-5 sm:p-6 ${
-              index > 0
-                ? "border-t border-border lg:border-t-0 lg:border-s"
-                : ""
-            }`}
-          >
-            <h2 className="text-lg font-bold text-slate-950">
-              {section.title}
-            </h2>
-            {section.kind === "text" ? (
-              <ul
-                className="mt-3 space-y-2 text-sm font-medium leading-6 text-slate-700"
-                role="list"
-              >
-                {section.items.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            ) : (
-              <ul
-                className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2"
-                role="list"
-              >
-                {section.items.map((item) => {
-                  const Icon = amenityIcons[item.iconKey];
-                  return (
-                    <li
-                      key={item.key}
-                      className="flex min-w-0 items-start gap-2.5 text-sm font-medium leading-5 text-slate-700"
-                    >
-                      <Icon
-                        className="mt-0.5 h-4 w-4 shrink-0 text-blue"
-                        aria-hidden="true"
-                      />
-                      <span className="min-w-0 break-words">{item.label}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
-        ))}
-      </div>
+      {content}
     </Card>
   );
 }

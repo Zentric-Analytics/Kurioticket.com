@@ -16,6 +16,7 @@ import { getHotelGallerySwipeDirection } from "@/components/results/hotelGallery
 import { HotelDetailsGalleryDialog } from "@/components/results/hotelDetails/HotelDetailsGalleryDialog";
 
 type HotelDetailsGalleryProps = {
+  embedded?: boolean;
   activeUrl: string;
   imageAlt: string;
   hotelName: string;
@@ -49,6 +50,7 @@ function isEditableTarget(target: EventTarget | null) {
 }
 
 export function HotelDetailsGallery({
+  embedded = false,
   activeUrl,
   imageAlt,
   hotelName,
@@ -143,12 +145,8 @@ export function HotelDetailsGallery({
     .replace("{{total}}", String(usableIndices.length))
     .replace("{{hotelName}}", hotelName);
 
-  return (
-    <Card
-      variant="flat"
-      className="min-w-0 overflow-hidden p-0 shadow-[0_12px_32px_-26px_rgba(2,28,43,0.32)]"
-      onKeyDown={handleGalleryKeyDown}
-    >
+  const content = (
+    <>
       <div
         className="relative aspect-[4/3] min-h-[240px] max-h-[420px] w-full overflow-hidden bg-slate-100 sm:aspect-[16/10] sm:min-h-0"
         style={{ touchAction: "pan-y" }}
@@ -284,6 +282,24 @@ export function HotelDetailsGallery({
           }}
         />
       ) : null}
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div className="min-w-0" onKeyDown={handleGalleryKeyDown}>
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <Card
+      variant="flat"
+      className="min-w-0 overflow-hidden p-0 shadow-[0_12px_32px_-26px_rgba(2,28,43,0.32)]"
+      onKeyDown={handleGalleryKeyDown}
+    >
+      {content}
     </Card>
   );
 }
