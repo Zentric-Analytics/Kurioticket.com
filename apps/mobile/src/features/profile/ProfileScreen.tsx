@@ -9,6 +9,7 @@ import { clearSession, readSession } from "../../storage/sessionStorage";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import { membershipLabel, profileIdentity } from "./profileModel";
+import { useAppTheme } from "../../theme/AppTheme";
 
 type Route = "/personal-information" | "/saved-travelers" | "/price-alerts" | "/settings" | "/currency";
 type Row = { title: string; description?: string; icon: FlowIconName; route?: Route; value?: string; action?: () => void };
@@ -30,14 +31,15 @@ async function openApprovedUrl(url: string, label: string) {
 }
 
 function Header() {
+  const { theme } = useAppTheme();
   return <View style={styles.header}>
-    <Text accessibilityRole="header" style={styles.title}>Profile</Text>
+    <Text accessibilityRole="header" style={[styles.title, { color: theme.text }]}>Profile</Text>
     <View style={styles.headerActions}>
       <Pressable accessibilityRole="button" accessibilityLabel="Notifications" accessibilityHint="Opens notifications" onPress={() => router.push("/notifications")} style={styles.iconButton}>
-        <FlowIcon name="bell" size={29} />
+        <FlowIcon name="bell" size={29} color={theme.icon} />
       </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="Settings" accessibilityHint="Opens app settings" onPress={() => router.push("/settings")} style={styles.iconButton}>
-        <FlowIcon name="settings" size={30} />
+        <FlowIcon name="settings" size={30} color={theme.icon} />
       </Pressable>
     </View>
   </View>;
@@ -45,38 +47,42 @@ function Header() {
 
 function ProfileSummary({ name, email }: { name: string; email: string }) {
   const identity = profileIdentity({ name, email });
+  const { theme } = useAppTheme();
   return <Pressable accessibilityRole="button" accessibilityLabel={`Personal information, ${identity.name}`} accessibilityHint="Opens your account details" onPress={() => router.push("/personal-information")} style={({ pressed }) => [styles.summary, pressed && styles.pressed]}>
     <View style={styles.avatar}><Text style={styles.avatarText}>{identity.initial}</Text></View>
     <View style={styles.summaryText}>
-      <Text numberOfLines={1} style={styles.userName}>{identity.name}</Text>
-      {identity.email ? <Text numberOfLines={1} style={styles.email}>{identity.email}</Text> : <Text style={styles.email}>Guest traveler</Text>}
-      {identity.email ? <View style={styles.badge}><Text style={styles.badgeText}>{membershipLabel()}</Text></View> : null}
+      <Text numberOfLines={1} style={[styles.userName, { color: theme.text }]}>{identity.name}</Text>
+      {identity.email ? <Text numberOfLines={1} style={[styles.email, { color: theme.muted }]}>{identity.email}</Text> : <Text style={[styles.email, { color: theme.muted }]}>Guest traveler</Text>}
+      {identity.email ? <View style={[styles.badge, theme.dark && { backgroundColor: theme.surface, borderColor: "#395DA8" }]}><Text style={styles.badgeText}>{membershipLabel()}</Text></View> : null}
     </View>
-    <FlowIcon name="chevron" size={22} />
+    <FlowIcon name="chevron" size={22} color={theme.icon} />
   </Pressable>;
 }
 
 function ProfileRow({ row, last = false }: { row: Row; last?: boolean }) {
+  const { theme } = useAppTheme();
   const content = <>
     <View style={styles.rowIcon}><FlowIcon name={row.icon} color={flowColors.blue} size={26} /></View>
     <View style={styles.rowText}>
-      <Text style={styles.rowTitle}>{row.title}</Text>
-      {row.description ? <Text style={styles.rowDescription}>{row.description}</Text> : null}
+      <Text style={[styles.rowTitle, { color: theme.text }]}>{row.title}</Text>
+      {row.description ? <Text style={[styles.rowDescription, { color: theme.muted }]}>{row.description}</Text> : null}
     </View>
-    {row.value ? <Text style={styles.rowValue}>{row.value}</Text> : null}
-    <FlowIcon name="chevron" size={20} />
+    {row.value ? <Text style={[styles.rowValue, { color: theme.muted }]}>{row.value}</Text> : null}
+    <FlowIcon name="chevron" size={20} color={theme.icon} />
   </>;
-  return <Pressable accessibilityRole="button" accessibilityLabel={`${row.title}${row.value ? `, ${row.value}` : ""}`} onPress={row.action || (() => row.route && router.push(row.route))} style={({ pressed }) => [styles.row, !last && styles.divider, pressed && styles.pressed]}>{content}</Pressable>;
+  return <Pressable accessibilityRole="button" accessibilityLabel={`${row.title}${row.value ? `, ${row.value}` : ""}`} onPress={row.action || (() => row.route && router.push(row.route))} style={({ pressed }) => [styles.row, !last && styles.divider, !last && { borderBottomColor: theme.border }, pressed && styles.pressed]}>{content}</Pressable>;
 }
 
 function Section({ title, rows }: { title: string; rows: Row[] }) {
+  const { theme } = useAppTheme();
   return <View style={styles.section}>
-    <Text accessibilityRole="header" style={styles.sectionTitle}>{title}</Text>
-    <View style={styles.card}>{rows.map((row, index) => <ProfileRow key={row.title} row={row} last={index === rows.length - 1} />)}</View>
+    <Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.text }]}>{title}</Text>
+    <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>{rows.map((row, index) => <ProfileRow key={row.title} row={row} last={index === rows.length - 1} />)}</View>
   </View>;
 }
 
 export function ProfileScreen() {
+  const { theme, darkMode, setDarkMode } = useAppTheme();
   const [identity, setIdentity] = useState(profileIdentity(null));
   const [currency, setCurrency] = useState("USD");
   const load = useCallback(() => {
@@ -108,27 +114,31 @@ export function ProfileScreen() {
     { text: "Log out", style: "destructive", onPress: () => void clearSession().then(() => router.replace("/email-auth")).catch(() => Alert.alert("Unable to log out", "Please try again.")) },
   ]);
 
-  return <SafeAreaView style={styles.safe} edges={["top"]}>
+  const toggleDarkMode = (enabled: boolean) => {
+    void setDarkMode(enabled).catch(() => Alert.alert("Unable to update dark mode", "Your previous appearance setting was restored. Please try again."));
+  };
+
+  return <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top"]}>
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
       <Header />
       <ProfileSummary name={identity.name} email={identity.email} />
       <Section title="Account" rows={account} />
       <Section title="Support" rows={support} />
       <View style={styles.section}>
-        <Text accessibilityRole="header" style={styles.sectionTitle}>App settings</Text>
-        <View style={styles.card}>
+        <Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.text }]}>App settings</Text>
+        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           {settings.map((row) => <ProfileRow key={row.title} row={row} />)}
-          <View accessibilityRole="switch" accessibilityState={{ checked: false, disabled: true }} accessibilityLabel="Dark mode, unavailable" style={styles.row}>
+          <View style={styles.row}>
             <View style={styles.rowIcon}><FlowIcon name="moon" color={flowColors.blue} size={27} /></View>
-            <Text style={[styles.rowTitle, styles.rowText]}>Dark mode</Text>
-            <Switch disabled value={false} trackColor={{ false: "#DDE2EE", true: flowColors.blue }} thumbColor="#FFFFFF" />
+            <Text style={[styles.rowTitle, styles.rowText, { color: theme.text }]}>Dark mode</Text>
+            <Switch accessibilityLabel="Dark mode" accessibilityRole="switch" accessibilityState={{ checked: darkMode }} value={darkMode} onValueChange={toggleDarkMode} trackColor={{ false: "#DDE2EE", true: flowColors.blue }} thumbColor="#FFFFFF" />
           </View>
         </View>
       </View>
-      {identity.email ? <Pressable accessibilityRole="button" accessibilityLabel="Log out" accessibilityHint="Opens a sign out confirmation" onPress={logout} style={({ pressed }) => [styles.logout, pressed && styles.pressed]}>
+      {identity.email ? <Pressable accessibilityRole="button" accessibilityLabel="Log out" accessibilityHint="Opens a sign out confirmation" onPress={logout} style={({ pressed }) => [styles.logout, { backgroundColor: theme.surface, borderColor: theme.border }, pressed && styles.pressed]}>
         <FlowIcon name="logout" color={flowColors.red} size={27} /><Text style={styles.logoutText}>Log out</Text>
       </Pressable> : null}
-      {identity.email ? <Text style={styles.logoutHelp}>You will be signed out of your account</Text> : null}
+      {identity.email ? <Text style={[styles.logoutHelp, { color: theme.muted }]}>You will be signed out of your account</Text> : null}
     </ScrollView>
   </SafeAreaView>;
 }
