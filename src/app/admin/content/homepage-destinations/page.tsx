@@ -54,9 +54,21 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
       actions={<AdminLinkButton href="/admin/content">Back to Content Inventory</AdminLinkButton>}
     >
       <div className="grid gap-4 sm:grid-cols-3">
-        <AdminMetricCard label="Unique card IDs" value={summary.uniqueCardIds} />
-        <AdminMetricCard label="Market assignments" value={summary.marketAssignments} />
-        <AdminMetricCard label="Unique routes" value={summary.uniqueRoutes} />
+        <AdminMetricCard
+          label="Destination cards"
+          value={summary.uniqueCardIds}
+          hint="Distinct configured card records"
+        />
+        <AdminMetricCard
+          label="Homepage placements"
+          value={summary.marketAssignments}
+          hint="Total appearances across markets and fallback groups"
+        />
+        <AdminMetricCard
+          label="Routes covered"
+          value={summary.uniqueRoutes}
+          hint="Distinct origin-to-destination routes"
+        />
       </div>
 
       <HomepageDestinationFilterToolbar
