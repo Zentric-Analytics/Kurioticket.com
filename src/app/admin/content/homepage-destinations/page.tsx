@@ -75,16 +75,17 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
       ) : <AdminDataTable
         caption="Homepage destination assignments"
         density="compact"
-        minWidth="1180px"
+        minWidth={null}
         fixedLayout
+        tableClassName="min-w-[900px] lg:min-w-full"
         columns={[
-          { key: "market", label: "Market", align: "left", width: "8%" },
-          { key: "record-id", label: "Record ID", align: "left", width: "17%" },
-          { key: "origin", label: "Origin", align: "left", width: "9%" },
-          { key: "destination", label: "Destination", align: "left", width: "11%" },
-          { key: "destination-city", label: "Destination city", align: "left", width: "18%" },
-          { key: "route", label: "Route", align: "left", width: "15%" },
-          { key: "homepage-usage", label: "Homepage usage", align: "left", width: "22%" },
+          { key: "market", label: "Market", align: "left", width: "7%", cellClassName: "whitespace-nowrap" },
+          { key: "record-id", label: "Record ID", align: "left", width: "19%", cellClassName: "whitespace-normal break-words" },
+          { key: "origin", label: "Origin", align: "left", width: "8%", cellClassName: "whitespace-nowrap" },
+          { key: "destination", label: "Destination", align: "left", width: "9%", cellClassName: "whitespace-nowrap" },
+          { key: "destination-city", label: "Destination city", align: "left", width: "20%", cellClassName: "whitespace-normal break-words" },
+          { key: "route", label: "Route", align: "left", width: "14%", cellClassName: "whitespace-normal break-words" },
+          { key: "homepage-usage", label: "Homepage usage", align: "left", width: "23%", cellClassName: "whitespace-normal break-words" },
         ]}
         summary={`Showing ${firstResult}–${lastResult} of ${matchingRows.length} assignments`}
         footer={page.totalPages > 1 ? (
@@ -99,7 +100,7 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
           cells: [
             <span key="market" className="font-semibold text-slate-950">{row.market}</span>,
             <div key="id" className="space-y-1 text-left">
-              <code className="text-xs text-slate-700">{row.recordId}</code>
+              <code className="break-all text-xs text-slate-700">{row.recordId}</code>
               {row.recordIdAssignmentCount > 1 ? (
                 <p className="cursor-text text-xs text-slate-500">
                   Used in {row.recordIdAssignmentCount} assignments
@@ -110,7 +111,7 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
             row.destinationCode,
             row.destinationCity,
             <div key="route" className="space-y-1 text-left">
-              <code className="text-xs text-slate-700">{row.route}</code>
+              <code className="break-all text-xs text-slate-700">{row.route}</code>
               {row.routeAssignmentCount > 1 ? (
                 <p className="cursor-text text-xs text-slate-500">
                   Used in {row.routeAssignmentCount} assignments
