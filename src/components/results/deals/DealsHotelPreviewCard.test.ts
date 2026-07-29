@@ -64,7 +64,12 @@ test("the Hotel details preserve review and stay contracts and avoid empty group
     "deals.results.reviews",
     "hotel.roomType",
     "hotel.cancellationInfo",
-    "hotel.amenities?.slice(0, 2)",
+    "buildHotelAmenityPresentation",
+    "hotel.amenities ?? []",
+    "amenities.length",
+    "HotelAmenityList",
+    "items={amenities}",
+    "t={t}",
     "hasReviewDetails",
     "hasStayDetails",
     "hasDetails &&",
@@ -78,6 +83,27 @@ test("the Hotel details preserve review and stay contracts and avoid empty group
   assert.ok(
     !staySection.includes("border-") && !staySection.includes("divide-"),
   );
+
+  const room = staySection.indexOf("hotel.roomType");
+  const cancellation = staySection.indexOf("hotel.cancellationInfo");
+  const amenities = staySection.indexOf("<HotelAmenityList");
+  assert.ok(room < cancellation && cancellation < amenities);
+});
+
+test("the Hotel preview uses at most two canonical amenity items", () => {
+  assert.ok(
+    card.includes(
+      "buildHotelAmenityPresentation(hotel.amenities ?? [], 2)",
+    ),
+  );
+
+  for (const forbidden of [
+    "amenities.join",
+    'join(" · ")',
+    "hotel.amenities?.slice(0, 2)",
+    "hotel.amenities.slice(0, 2)",
+  ])
+    assert.ok(!card.includes(forbidden), `unexpected ${forbidden}`);
 });
 
 test("the Hotel selection and unavailable provider actions remain intact", () => {
