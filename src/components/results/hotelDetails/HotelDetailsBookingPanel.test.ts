@@ -1,0 +1,147 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+
+const bookingSource = readFileSync(
+  new URL("./HotelDetailsBookingPanel.tsx", import.meta.url),
+  "utf8",
+);
+const clientSource = readFileSync(
+  new URL("../HotelDetailsClient.tsx", import.meta.url),
+  "utf8",
+);
+
+test("renders the booking summary directly against the page background", () => {
+  assert.doesNotMatch(bookingSource, /import { Card }/);
+  assert.doesNotMatch(bookingSource, /<Card\b/);
+  assert.match(bookingSource, /<aside className="min-w-0">/);
+  assert.match(bookingSource, /className="lg:sticky lg:top-24"/);
+
+  const rootClass = bookingSource.match(
+    /<div className="lg:sticky lg:top-24">\s*<div className="([^"]+)"/,
+  )?.[1];
+  assert.ok(rootClass);
+  assert.match(rootClass, /(?:^|\s)min-w-0(?:\s|$)/);
+  assert.match(rootClass, /(?:^|\s)space-y-6(?:\s|$)/);
+  assert.doesNotMatch(
+    rootClass,
+    /(?:^|\s)(?:border(?:-[^\s]+)?|divide-y|rounded(?:-[^\s]+)?|shadow(?:-[^\s]+)?|bg-white|bg-surface|bg-slate-50|p-5|p-6)(?:\s|$)/,
+  );
+  assert.doesNotMatch(
+    bookingSource,
+    /shadow-\[0_12px_32px_-26px_rgba\(2,28,43,0\.32\)\]/,
+  );
+});
+
+test("preserves the complete price presentation contract without a price bar", () => {
+  for (const contract of [
+    "priceDetailsAvailable",
+    "totalDisplayPrice.formatted",
+    "totalDisplayPrice.title",
+    "totalDisplayPrice.ariaLabel",
+    "nightlyDisplayPrice.formatted",
+    "nightlyDisplayPrice.title",
+    "nightlyDisplayPrice.ariaLabel",
+    "pricePerNightText.replace",
+    "taxesText",
+    "totalDisplayPrice.isConvertedEstimate",
+    "totalDisplayPrice.providerFormatted",
+    "providerPriceLabel",
+    "providerText",
+    'dir="ltr"',
+  ])
+    assert.ok(bookingSource.includes(contract), contract);
+
+  for (const removedToken of ["border-s-2", "border-blue", "ps-3"])
+    assert.ok(!bookingSource.includes(removedToken), removedToken);
+});
+
+test("uses unboxed icon and text rows for the stay summary", () => {
+  for (const contract of [
+    "staySummary.dateText",
+    "staySummary.nightText",
+    "staySummary.occupancyText",
+    "CalendarDays",
+    "Moon",
+    "Users",
+    'aria-hidden="true"',
+    "flex min-w-0 items-start gap-2.5 text-sm",
+    "leading-5",
+    "break-words",
+  ])
+    assert.ok(bookingSource.includes(contract), contract);
+
+  assert.ok(
+    !bookingSource.includes(
+      "rounded-xl border border-border bg-surface-subtle p-4",
+    ),
+  );
+});
+
+test("preserves both actions while removing the action divider", () => {
+  for (const contract of [
+    "LinkButton",
+    "href={changeSearchHref}",
+    'variant="secondary"',
+    "changeSearchText",
+    "Button",
+    'variant="accent"',
+    'size="lg"',
+    "disabled={!providerEnabled || redirecting}",
+    "aria-describedby",
+    "onClick={onContinue}",
+    "providerDisclaimerText",
+  ])
+    assert.ok(bookingSource.includes(contract), contract);
+
+  assert.ok(!bookingSource.includes("space-y-4 border-t border-border pt-5"));
+});
+
+test("keeps accessible status text without boxed treatments", () => {
+  for (const contract of [
+    'id="hotel-provider-unavailable-message"',
+    "providerUnavailableText",
+    'role="alert"',
+    "redirectError",
+  ])
+    assert.ok(bookingSource.includes(contract), contract);
+
+  assert.ok(!bookingSource.includes("rounded-lg bg-slate-50 p-3"));
+  assert.ok(
+    !bookingSource.includes("rounded-lg border border-red-200 bg-red-50 p-3"),
+  );
+});
+
+test("retains every booking prop at the Hotel Details integration boundary", () => {
+  const bookingCall = clientSource.slice(
+    clientSource.indexOf("<HotelDetailsBookingPanel"),
+    clientSource.indexOf(
+      "/>",
+      clientSource.indexOf("<HotelDetailsBookingPanel"),
+    ) + 2,
+  );
+
+  for (const contract of [
+    "priceDetailsAvailable=",
+    "totalDisplayPrice=",
+    "nightlyDisplayPrice=",
+    "estimatedStayTotalText=",
+    "pricePerNightText=",
+    "taxesText=",
+    "priceUnavailableText=",
+    "liveRateUnavailableText=",
+    "staySummary=",
+    "changeSearchHref=",
+    "changeSearchText=",
+    "providerPriceLabel=",
+    "providerText=",
+    "providerUnavailableText=",
+    "redirectError=",
+    "providerEnabled=",
+    "redirecting=",
+    "continueToProviderText=",
+    "onContinue=",
+    "providerDisclaimerText=",
+  ])
+    assert.ok(bookingCall.includes(contract), contract);
+});
