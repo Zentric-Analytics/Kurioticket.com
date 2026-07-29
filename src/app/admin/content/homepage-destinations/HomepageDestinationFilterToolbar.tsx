@@ -29,9 +29,9 @@ export function HomepageDestinationFilterToolbar({
       action="/admin/content/homepage-destinations"
       role="search"
       aria-label="Filter homepage destination inventory"
-      className="grid gap-3 md:grid-cols-2 md:items-center xl:grid-cols-[minmax(0,2fr)_minmax(9rem,1fr)_minmax(12rem,1fr)_auto]"
+      className="grid gap-3 md:grid-cols-[minmax(0,2fr)_minmax(9rem,1fr)_minmax(12rem,1fr)_auto_auto] md:items-center"
     >
-      <label className="relative min-w-0 md:col-span-2 xl:col-span-1">
+      <label className="relative min-w-0">
         <span className="sr-only">Search inventory</span>
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
         <AdminInput
@@ -58,10 +58,9 @@ export function HomepageDestinationFilterToolbar({
           )}
         </AdminSelect>
       </label>
-      <div className="flex items-center gap-3 md:col-span-2 xl:col-span-1">
-        <AdminButton type="submit" variant="secondary">Apply filters</AdminButton>
-        <AdminLinkButton href="/admin/content/homepage-destinations">Clear</AdminLinkButton>
-      </div>
+      <AdminButton type="submit" variant="secondary">Apply filters</AdminButton>
+      <AdminLinkButton href="/admin/content/homepage-destinations">Clear</AdminLinkButton>
     </form>
   );
 }
+
