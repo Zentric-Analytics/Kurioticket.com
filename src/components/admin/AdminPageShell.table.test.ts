@@ -12,7 +12,8 @@ test("admin data table renders semantic sticky table structure", () => {
   assert.match(shell, /<table className="w-full border-separate border-spacing-0 text-left text-sm"/);
   assert.match(shell, /<caption className="sr-only">/);
   assert.match(shell, /<th key=\{columnKey\(column\)\} scope="col"/);
-  assert.match(shell, /<thead className="sticky top-0 z-10/);
+  assert.match(shell, /stickyHeaderClassName = "top-0"/);
+  assert.match(shell, /<thead className=\{cn\("sticky z-10/);
 });
 
 test("admin data table standardizes row hover, focus, overflow, and action alignment", () => {
@@ -41,10 +42,9 @@ test("users page uses the shared admin data table system", () => {
 
 test("support and account deletion actions use shared link button primitives", () => {
   assert.match(supportPage, /AdminLinkButton/);
-  assert.match(supportPage, /aria-label=\{`View support ticket/);
+  assert.match(supportPage, /aria-label=\{`\$\{requestId \? "View account deletion request" : "Open support ticket"\}/);
   assert.match(accountDeletionPage, /AdminLinkButton/);
-  assert.match(accountDeletionPage, /aria-label=\{`Manage deletion request/);
-  assert.match(accountDeletionPage, /Action needed/);
+  assert.match(accountDeletionPage, /aria-label=\{`Review deletion request/);
 });
 
 test("status badges use human-readable label formatter", () => {

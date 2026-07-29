@@ -5,6 +5,7 @@ import {
   buildHomepageDestinationHref,
   filterHomepageDestinationRows,
   getHomepageDestinationInventoryRows,
+  getHomepageDestinationReuseStatuses,
   paginateHomepageDestinationRows,
   parseHomepageDestinationSearchParams,
 } from "./page-data";
@@ -21,17 +22,26 @@ test("selector classifies direct, regional, and neutral/global assignments", () 
   assert.equal(rows.find((row) => row.market === "US")?.assignmentType, "DIRECT_MARKET");
   assert.equal(rows.find((row) => row.market === "AFRICA")?.assignmentType, "REGIONAL_ALIAS");
   assert.equal(rows.find((row) => row.market === "GLOBAL")?.assignmentType, "NEUTRAL_GLOBAL_ALIAS");
-  assert.equal(rows.find((row) => row.market === "NEUTRAL")?.publicRole, "Global fallback");
 });
 
-test("selector flags repeated IDs and routes without removing their rows", () => {
-  const repeatedIdRows = rows.filter((row) => row.repeatedId);
-  const repeatedRouteRows = rows.filter((row) => row.repeatedRoute);
+test("reuse counts are source-derived without removing assignments", () => {
+  for (const row of rows) {
+    assert.equal(row.recordIdAssignmentCount, rows.filter((candidate) => candidate.recordId === row.recordId).length);
+    assert.equal(row.routeAssignmentCount, rows.filter((candidate) => candidate.route === row.route).length);
+    assert.equal(row.recordIdCountWithinMarket, rows.filter((candidate) => candidate.market === row.market && candidate.recordId === row.recordId).length);
+    assert.equal(row.routeCountWithinMarket, rows.filter((candidate) => candidate.market === row.market && candidate.route === row.route).length);
+  }
+  assert.equal(rows.length, 272);
+});
 
-  assert.ok(repeatedIdRows.length > 0);
-  assert.ok(repeatedRouteRows.length > 0);
-  assert.equal(rows.filter((row) => row.recordId === repeatedIdRows[0].recordId).length > 1, true);
-  assert.equal(rows.filter((row) => row.route === repeatedRouteRows[0].route).length > 1, true);
+test("reuse classification distinguishes shared assignments from same-market duplicates", () => {
+  assert.deepEqual(getHomepageDestinationReuseStatuses({ recordIdAssignmentCount: 2, routeAssignmentCount: 1, recordIdCountWithinMarket: 1, routeCountWithinMarket: 1 }), [
+    { kind: "shared", subject: "ID", assignmentCount: 2 },
+  ]);
+  assert.deepEqual(getHomepageDestinationReuseStatuses({ recordIdAssignmentCount: 2, routeAssignmentCount: 3, recordIdCountWithinMarket: 2, routeCountWithinMarket: 2 }), [
+    { kind: "duplicate", subject: "ID", assignmentCount: 2 },
+    { kind: "duplicate", subject: "route", assignmentCount: 3 },
+  ]);
 });
 
 test("search matches ID, city, origin, and destination code", () => {
@@ -73,4 +83,3 @@ test("pagination links preserve active filters", () => {
     "/admin/content/homepage-destinations?q=LHR&market=EUROPE&assignmentType=REGIONAL_ALIAS&page=2",
   );
 });
-

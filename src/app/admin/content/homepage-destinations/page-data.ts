@@ -25,9 +25,10 @@ export type HomepageDestinationInventoryRow = {
   destinationCity: string;
   route: string;
   assignmentType: HomepageDestinationAssignmentType;
-  publicRole: "Market homepage" | "Regional fallback" | "Global fallback";
-  repeatedId: boolean;
-  repeatedRoute: boolean;
+  recordIdAssignmentCount: number;
+  routeAssignmentCount: number;
+  recordIdCountWithinMarket: number;
+  routeCountWithinMarket: number;
 };
 
 export type HomepageDestinationSearchParams = {
@@ -52,23 +53,23 @@ function assignmentTypeForMarket(market: string): HomepageDestinationAssignmentT
   return "DIRECT_MARKET";
 }
 
-function publicRoleForType(type: HomepageDestinationAssignmentType) {
-  if (type === "REGIONAL_ALIAS") return "Regional fallback" as const;
-  if (type === "NEUTRAL_GLOBAL_ALIAS") return "Global fallback" as const;
-  return "Market homepage" as const;
-}
-
 export function getHomepageDestinationInventoryRows(): HomepageDestinationInventoryRow[] {
   const assignments = Object.entries(popularDestinationsByMarket).flatMap(
     ([market, items]) => items.map((item, index) => ({ market, item, index })),
   );
   const idCounts = new Map<string, number>();
   const routeCounts = new Map<string, number>();
+  const marketIdCounts = new Map<string, number>();
+  const marketRouteCounts = new Map<string, number>();
 
-  for (const { item } of assignments) {
+  for (const { market, item } of assignments) {
     const route = `${item.originCode}-${item.code}`;
     idCounts.set(item.id, (idCounts.get(item.id) ?? 0) + 1);
     routeCounts.set(route, (routeCounts.get(route) ?? 0) + 1);
+    const marketId = `${market}:${item.id}`;
+    const marketRoute = `${market}:${route}`;
+    marketIdCounts.set(marketId, (marketIdCounts.get(marketId) ?? 0) + 1);
+    marketRouteCounts.set(marketRoute, (marketRouteCounts.get(marketRoute) ?? 0) + 1);
   }
 
   return assignments.map(({ market, item, index }) => {
@@ -84,9 +85,10 @@ export function getHomepageDestinationInventoryRows(): HomepageDestinationInvent
       destinationCity: item.city,
       route,
       assignmentType,
-      publicRole: publicRoleForType(assignmentType),
-      repeatedId: (idCounts.get(item.id) ?? 0) > 1,
-      repeatedRoute: (routeCounts.get(route) ?? 0) > 1,
+      recordIdAssignmentCount: idCounts.get(item.id) ?? 1,
+      routeAssignmentCount: routeCounts.get(route) ?? 1,
+      recordIdCountWithinMarket: marketIdCounts.get(`${market}:${item.id}`) ?? 1,
+      routeCountWithinMarket: marketRouteCounts.get(`${market}:${route}`) ?? 1,
     };
   });
 }
@@ -170,4 +172,33 @@ export function formatAssignmentType(type: HomepageDestinationAssignmentType) {
   if (type === "DIRECT_MARKET") return "Direct market";
   if (type === "REGIONAL_ALIAS") return "Regional alias";
   return "Neutral/global alias";
+}
+
+export function describeAssignmentType(type: HomepageDestinationAssignmentType) {
+  if (type === "DIRECT_MARKET") return "Shown on the selected market homepage";
+  if (type === "REGIONAL_ALIAS") return "Used as a regional fallback";
+  return "Used as a global fallback";
+}
+
+export type HomepageDestinationReuseStatus = {
+  kind: "shared" | "duplicate";
+  subject: "ID" | "route";
+  assignmentCount: number;
+};
+
+export function getHomepageDestinationReuseStatuses(
+  row: Pick<HomepageDestinationInventoryRow, "recordIdAssignmentCount" | "routeAssignmentCount" | "recordIdCountWithinMarket" | "routeCountWithinMarket">,
+): HomepageDestinationReuseStatus[] {
+  return [
+    row.recordIdCountWithinMarket > 1
+      ? { kind: "duplicate", subject: "ID", assignmentCount: row.recordIdAssignmentCount }
+      : row.recordIdAssignmentCount > 1
+        ? { kind: "shared", subject: "ID", assignmentCount: row.recordIdAssignmentCount }
+        : null,
+    row.routeCountWithinMarket > 1
+      ? { kind: "duplicate", subject: "route", assignmentCount: row.routeAssignmentCount }
+      : row.routeAssignmentCount > 1
+        ? { kind: "shared", subject: "route", assignmentCount: row.routeAssignmentCount }
+        : null,
+  ].filter((status): status is HomepageDestinationReuseStatus => status !== null);
 }
