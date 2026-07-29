@@ -29,6 +29,35 @@ test("inspection page renders summary, filters, table columns, flags, and result
   assert.match(filterToolbar, /All assignment types/);
 });
 
+test("inspection table fixes and left-aligns all eight columns with stable widths", () => {
+  assert.match(inspectionPage, /fixedLayout/);
+
+  const configuredColumns = [
+    ["market", "Market", "7%"],
+    ["record-id", "Record ID", "15%"],
+    ["origin", "Origin", "8%"],
+    ["destination", "Destination", "10%"],
+    ["destination-city", "Destination city", "15%"],
+    ["route", "Route", "10%"],
+    ["assignment-type", "Assignment type", "17%"],
+    ["public-role", "Public role", "18%"],
+  ];
+
+  for (const [key, label, width] of configuredColumns) {
+    assert.match(
+      inspectionPage,
+      new RegExp(`key: "${key}", label: "${label}", align: "left", width: "${width}"`),
+    );
+  }
+  assert.equal(configuredColumns.reduce((total, column) => total + Number.parseInt(column[2], 10), 0), 100);
+});
+
+test("Public role opts out of final-column right alignment and wrapping constraint", () => {
+  assert.match(inspectionPage, /label: "Public role", align: "left"/);
+  assert.match(inspectionPage, /cellClassName: "whitespace-normal"/);
+  assert.doesNotMatch(inspectionPage, /justify-end/);
+});
+
 test("inspection page preserves read-only scope", () => {
   assert.doesNotMatch(`${inspectionPage}${filterToolbar}`, /Create|Edit|Delete|Approve|Upload/);
 });
