@@ -13,12 +13,10 @@ import { HomepageDestinationFilterToolbar } from "./HomepageDestinationFilterToo
 import { getInventoryEmptyState } from "../inventory-empty-state";
 import {
   buildHomepageDestinationHref,
-  describeAssignmentType,
   filterHomepageDestinationRows,
   formatAssignmentType,
   getHomepageDestinationInventoryRows,
   getHomepageDestinationMarkets,
-  getHomepageDestinationReuseStatuses,
   getHomepageDestinationSummary,
   HOMEPAGE_DESTINATION_PAGE_SIZE,
   paginateHomepageDestinationRows,
@@ -68,10 +66,6 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
         markets={getHomepageDestinationMarkets()}
       />
 
-      <p className="text-sm text-slate-600">
-        Shared records can intentionally appear in more than one market or fallback group. Warnings identify duplicates within the same market.
-      </p>
-
       {emptyState ? (
         <AdminEmptyState
           title={emptyState.title}
@@ -81,9 +75,8 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
       ) : <AdminDataTable
         caption="Homepage destination assignments"
         density="compact"
-        minWidth="940px"
-        stickyHeaderClassName="top-16 md:top-[68px]"
-        columns={["Market", "Record", "Route", "Homepage usage", "Reuse"]}
+        minWidth="1180px"
+        columns={["Market", "Record ID", "Origin", "Destination", "Destination city", "Route", "Assignment type", "Public role"]}
         summary={`Showing ${firstResult}–${lastResult} of ${matchingRows.length} assignments`}
         footer={page.totalPages > 1 ? (
           <Pagination
@@ -96,25 +89,24 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
           id: row.rowId,
           cells: [
             <span key="market" className="font-semibold text-slate-950">{row.market}</span>,
-            <div key="record" className="max-w-56"><code className="break-words text-xs text-slate-700">{row.recordId}</code><span className="mt-1 block text-xs font-normal text-slate-500">{row.destinationCity}</span></div>,
-            <span key="route" aria-label={`Airport codes ${row.originCode} to ${row.destinationCode}`} className="whitespace-nowrap font-mono text-xs text-slate-700">{row.originCode} → {row.destinationCode}</span>,
-            <div key="usage"><AdminStatusBadge tone={row.assignmentType === "DIRECT_MARKET" ? "info" : "neutral"}>{formatAssignmentType(row.assignmentType)}</AdminStatusBadge><span className="mt-1.5 block text-xs text-slate-500">{describeAssignmentType(row.assignmentType)}</span></div>,
-            <ReuseStatus key="reuse" row={row} />,
+            <code key="id" className="text-xs text-slate-700">{row.recordId}</code>,
+            row.originCode,
+            row.destinationCode,
+            row.destinationCity,
+            <code key="route" className="text-xs text-slate-700">{row.route}</code>,
+            <AdminStatusBadge key="type" tone={row.assignmentType === "DIRECT_MARKET" ? "info" : "neutral"}>
+              {formatAssignmentType(row.assignmentType)}
+            </AdminStatusBadge>,
+            <div key="role" className="flex flex-wrap justify-end gap-1.5">
+              <span>{row.publicRole}</span>
+              {row.repeatedId ? <AdminStatusBadge tone="warn">Repeated ID</AdminStatusBadge> : null}
+              {row.repeatedRoute ? <AdminStatusBadge tone="warn">Repeated route</AdminStatusBadge> : null}
+            </div>,
           ],
         }))}
       />}
     </AdminPageShell>
   );
-}
-
-function ReuseStatus({ row }: { row: ReturnType<typeof getHomepageDestinationInventoryRows>[number] }) {
-  const statuses = getHomepageDestinationReuseStatuses(row);
-
-  return statuses.length ? <div className="flex max-w-64 flex-wrap justify-end gap-1.5">{statuses.map((status) => (
-    <AdminStatusBadge key={status.subject} tone={status.kind === "duplicate" ? "warn" : "neutral"}>
-      {status.kind === "duplicate" ? `Duplicate ${status.subject} in market` : `Shared ${status.subject} · ${status.assignmentCount} assignments`}
-    </AdminStatusBadge>
-  ))}</div> : <span className="text-slate-400">Unique</span>;
 }
 
 function Pagination({
