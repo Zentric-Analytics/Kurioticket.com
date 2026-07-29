@@ -54,13 +54,13 @@ test("inspection table fixes and left-aligns all seven columns with stable width
   assert.doesNotMatch(inspectionPage, /minWidth="1180px"/);
 
   const configuredColumns = [
-    ["market", "Market", "7%"],
+    ["market", "Market", "11%"],
     ["record-id", "Record ID", "19%"],
     ["origin", "Origin", "8%"],
     ["destination", "Destination", "9%"],
     ["destination-city", "Destination city", "20%"],
     ["route", "Route", "14%"],
-    ["homepage-usage", "Homepage usage", "23%"],
+    ["homepage-usage", "Homepage usage", "19%"],
   ];
 
   for (const [key, label, width] of configuredColumns) {
@@ -70,6 +70,15 @@ test("inspection table fixes and left-aligns all seven columns with stable width
     );
   }
   assert.equal(configuredColumns.reduce((total, column) => total + Number.parseInt(column[2], 10), 0), 100);
+});
+
+test("market presentation formats labels without changing filter values and wraps inside its column", () => {
+  assert.match(inspectionPage, /formatMarketLabel\(row\.market\)/);
+  assert.match(filterToolbar, /value=\{option\}>\{formatMarketLabel\(option\)\}/);
+  assert.match(inspectionPage, /key: "market"[^\n]+width: "11%"[^\n]+whitespace-normal leading-snug/);
+  assert.match(inspectionPage, /key="market" className="block w-full whitespace-normal text-left[^\"]*leading-snug/);
+  assert.doesNotMatch(inspectionPage.match(/key: "market"[^\n]+/)?.[0] ?? "", /break-all|overflow-hidden|whitespace-nowrap/);
+  assert.match(inspectionPage, /key: "record-id", label: "Record ID", align: "left", width: "19%"/);
 });
 
 test("inspection table contains narrow-screen overflow without clipping or hiding its scrollbar", () => {

@@ -5,12 +5,22 @@ import {
   buildHomepageDestinationHref,
   filterHomepageDestinationRows,
   formatAssignmentType,
+  formatMarketLabel,
   getHomepageDestinationInventoryRows,
   paginateHomepageDestinationRows,
   parseHomepageDestinationSearchParams,
 } from "./page-data";
 
 const rows = getHomepageDestinationInventoryRows();
+
+test("market labels are readable while short country codes remain uppercase", () => {
+  assert.equal(formatMarketLabel("MIDDLE_EAST"), "Middle East");
+  assert.equal(formatMarketLabel("LATIN_AMERICA"), "Latin America");
+  assert.equal(formatMarketLabel("US"), "US");
+  assert.equal(formatMarketLabel("NG"), "NG");
+  assert.equal(formatMarketLabel("CANADA"), "Canada");
+  assert.doesNotMatch(formatMarketLabel("MIDDLE_EAST"), /_/);
+});
 
 test("selector retains all assignments and exposes audited unique counts", () => {
   assert.equal(rows.length, 272);
@@ -79,6 +89,17 @@ test("market and assignment type filters compose with search", () => {
 
   assert.ok(filtered.length > 0);
   assert.ok(filtered.every((row) => row.market === "AFRICA" && row.assignmentType === "REGIONAL_ALIAS"));
+});
+
+test("market filters retain and compare raw identifier values", () => {
+  for (const market of ["MIDDLE_EAST", "LATIN_AMERICA"]) {
+    const filters = parseHomepageDestinationSearchParams({ market });
+    const filtered = filterHomepageDestinationRows(rows, filters);
+
+    assert.equal(filters.market, market);
+    assert.ok(filtered.length > 0);
+    assert.ok(filtered.every((row) => row.market === market));
+  }
 });
 
 test("assignment type query parameter values remain unchanged", () => {

@@ -9,6 +9,7 @@ import {
 
 import {
   formatAssignmentType,
+  formatMarketLabel,
   type HomepageDestinationAssignmentType,
   type HomepageDestinationAssignmentTypeFilter,
 } from "./page-data";
@@ -46,7 +47,7 @@ export function HomepageDestinationFilterToolbar({
         <span className="sr-only">Market</span>
         <AdminSelect name="market" defaultValue={market} aria-label="Market" className="bg-white">
           <option value="ALL">All markets</option>
-          {markets.map((option) => <option key={option} value={option}>{option}</option>)}
+          {markets.map((option) => <option key={option} value={option}>{formatMarketLabel(option)}</option>)}
         </AdminSelect>
       </label>
       <label>
@@ -63,4 +64,3 @@ export function HomepageDestinationFilterToolbar({
     </form>
   );
 }
-

@@ -167,3 +167,10 @@ export function formatAssignmentType(type: HomepageDestinationAssignmentType) {
   if (type === "REGIONAL_ALIAS") return "Regional fallback";
   return "Global fallback";
 }
+
+export function formatMarketLabel(market: string) {
+  return market
+    .split("_")
+    .map((word) => (/^[A-Z]{2}$/.test(word) ? word : `${word.charAt(0)}${word.slice(1).toLocaleLowerCase()}`))
+    .join(" ");
+}
