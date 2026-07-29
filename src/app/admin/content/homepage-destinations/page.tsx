@@ -78,14 +78,13 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
         minWidth="1180px"
         fixedLayout
         columns={[
-          { key: "market", label: "Market", align: "left", width: "7%" },
-          { key: "record-id", label: "Record ID", align: "left", width: "15%" },
-          { key: "origin", label: "Origin", align: "left", width: "8%" },
-          { key: "destination", label: "Destination", align: "left", width: "10%" },
-          { key: "destination-city", label: "Destination city", align: "left", width: "15%" },
-          { key: "route", label: "Route", align: "left", width: "10%" },
-          { key: "assignment-type", label: "Assignment type", align: "left", width: "17%" },
-          { key: "public-role", label: "Public role", align: "left", width: "18%", cellClassName: "whitespace-normal" },
+          { key: "market", label: "Market", align: "left", width: "8%" },
+          { key: "record-id", label: "Record ID", align: "left", width: "17%" },
+          { key: "origin", label: "Origin", align: "left", width: "9%" },
+          { key: "destination", label: "Destination", align: "left", width: "11%" },
+          { key: "destination-city", label: "Destination city", align: "left", width: "18%" },
+          { key: "route", label: "Route", align: "left", width: "15%" },
+          { key: "homepage-usage", label: "Homepage usage", align: "left", width: "22%" },
         ]}
         summary={`Showing ${firstResult}–${lastResult} of ${matchingRows.length} assignments`}
         footer={page.totalPages > 1 ? (
@@ -99,19 +98,20 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
           id: row.rowId,
           cells: [
             <span key="market" className="font-semibold text-slate-950">{row.market}</span>,
-            <code key="id" className="text-xs text-slate-700">{row.recordId}</code>,
+            <div key="id" className="flex flex-col items-start">
+              <code className="text-xs text-slate-700">{row.recordId}</code>
+              {row.repeatedId ? <span className="mt-1.5"><AdminStatusBadge tone="warn">Repeated ID</AdminStatusBadge></span> : null}
+            </div>,
             row.originCode,
             row.destinationCode,
             row.destinationCity,
-            <code key="route" className="text-xs text-slate-700">{row.route}</code>,
+            <div key="route" className="flex flex-col items-start">
+              <code className="text-xs text-slate-700">{row.route}</code>
+              {row.repeatedRoute ? <span className="mt-1.5"><AdminStatusBadge tone="warn">Repeated route</AdminStatusBadge></span> : null}
+            </div>,
             <AdminStatusBadge key="type" tone={row.assignmentType === "DIRECT_MARKET" ? "info" : "neutral"}>
               {formatAssignmentType(row.assignmentType)}
             </AdminStatusBadge>,
-            <div key="role" className="flex flex-wrap gap-1.5">
-              <span>{row.publicRole}</span>
-              {row.repeatedId ? <AdminStatusBadge tone="warn">Repeated ID</AdminStatusBadge> : null}
-              {row.repeatedRoute ? <AdminStatusBadge tone="warn">Repeated route</AdminStatusBadge> : null}
-            </div>,
           ],
         }))}
       />}

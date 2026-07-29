@@ -25,7 +25,6 @@ export type HomepageDestinationInventoryRow = {
   destinationCity: string;
   route: string;
   assignmentType: HomepageDestinationAssignmentType;
-  publicRole: "Market homepage" | "Regional fallback" | "Global fallback";
   repeatedId: boolean;
   repeatedRoute: boolean;
 };
@@ -50,12 +49,6 @@ function assignmentTypeForMarket(market: string): HomepageDestinationAssignmentT
   if (regionalAliasMarkets.has(market)) return "REGIONAL_ALIAS";
   if (neutralGlobalAliasMarkets.has(market)) return "NEUTRAL_GLOBAL_ALIAS";
   return "DIRECT_MARKET";
-}
-
-function publicRoleForType(type: HomepageDestinationAssignmentType) {
-  if (type === "REGIONAL_ALIAS") return "Regional fallback" as const;
-  if (type === "NEUTRAL_GLOBAL_ALIAS") return "Global fallback" as const;
-  return "Market homepage" as const;
 }
 
 export function getHomepageDestinationInventoryRows(): HomepageDestinationInventoryRow[] {
@@ -84,7 +77,6 @@ export function getHomepageDestinationInventoryRows(): HomepageDestinationInvent
       destinationCity: item.city,
       route,
       assignmentType,
-      publicRole: publicRoleForType(assignmentType),
       repeatedId: (idCounts.get(item.id) ?? 0) > 1,
       repeatedRoute: (routeCounts.get(route) ?? 0) > 1,
     };
@@ -168,6 +160,6 @@ export function buildHomepageDestinationHref(
 
 export function formatAssignmentType(type: HomepageDestinationAssignmentType) {
   if (type === "DIRECT_MARKET") return "Direct market";
-  if (type === "REGIONAL_ALIAS") return "Regional alias";
-  return "Neutral/global alias";
+  if (type === "REGIONAL_ALIAS") return "Regional fallback";
+  return "Global fallback";
 }
