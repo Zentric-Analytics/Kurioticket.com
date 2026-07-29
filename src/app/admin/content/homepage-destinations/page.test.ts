@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { getHomepageDestinationSummary } from "./page-data";
+
 const adminLayout = readFileSync("src/app/admin/layout.tsx", "utf8");
 const contentPage = readFileSync("src/app/admin/content/page.tsx", "utf8");
 const inspectionPage = readFileSync("src/app/admin/content/homepage-destinations/page.tsx", "utf8");
@@ -13,9 +15,12 @@ test("Content Inventory links only the homepage destination card to its inspecti
 
 test("inspection page renders summary, filters, seven table columns, and result count", () => {
   for (const text of [
-    "Unique card IDs",
-    "Market assignments",
-    "Unique routes",
+    "Destination cards",
+    "Distinct configured card records",
+    "Homepage placements",
+    "Total appearances across markets and fallback groups",
+    "Routes covered",
+    "Distinct origin-to-destination routes",
     "Record ID",
     "Destination city",
     "Homepage usage",
@@ -25,6 +30,21 @@ test("inspection page renders summary, filters, seven table columns, and result 
   assert.match(filterToolbar, /All markets/);
   assert.match(filterToolbar, /All assignment types/);
   assert.doesNotMatch(inspectionPage, /Public role|publicRole/);
+});
+
+test("inspection page renders exactly three metrics derived from the existing inventory summary", () => {
+  const metricCards = inspectionPage.match(/<AdminMetricCard\b/g) ?? [];
+  assert.equal(metricCards.length, 3);
+
+  assert.match(inspectionPage, /label="Destination cards"[\s\S]*?value=\{summary\.uniqueCardIds\}/);
+  assert.match(inspectionPage, /label="Homepage placements"[\s\S]*?value=\{summary\.marketAssignments\}/);
+  assert.match(inspectionPage, /label="Routes covered"[\s\S]*?value=\{summary\.uniqueRoutes\}/);
+
+  assert.deepEqual(getHomepageDestinationSummary(), {
+    uniqueCardIds: 168,
+    marketAssignments: 272,
+    uniqueRoutes: 146,
+  });
 });
 
 test("inspection table fixes and left-aligns all seven columns with stable widths", () => {
