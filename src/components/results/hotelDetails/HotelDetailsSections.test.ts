@@ -16,7 +16,10 @@ test("supports embedded and standalone presentations with a flat root", () => {
     /<div\s+className={`([^`]+\$\{gridColumns\})`}/,
   )?.[1];
   assert.ok(rootClass);
-  assert.match(rootClass, /grid min-w-0 border-t border-border bg-surface/);
+  assert.match(
+    rootClass,
+    /grid min-w-0 border-t-0 bg-surface sm:border-t sm:border-border/,
+  );
   for (const token of [
     "gap-3",
     "sm:gap-4",
@@ -56,7 +59,7 @@ test("uses hidden semantic headings and icon-led semantic lists", () => {
   );
   assert.match(
     source,
-    /id={`hotel-details-\$\{section\.key\}-heading`} className="sr-only"/,
+    /id={`hotel-details-\$\{section\.key\}-heading`}[\s\S]*?className="sr-only"/,
   );
   assert.doesNotMatch(source, /text-lg font-bold text-slate-950/);
   assert.match(source, /<ul className="min-w-0 space-y-1\.5" role="list">/);
@@ -66,7 +69,7 @@ test("uses hidden semantic headings and icon-led semantic lists", () => {
 
 test("uses flat sections with responsive structural dividers", () => {
   assert.match(source, /sections\.map\(\(section, index\) =>/);
-  assert.match(source, /className={`min-w-0 p-5 sm:p-6/);
+  assert.match(source, /<div className="p-5 sm:p-6">/);
   for (const token of [
     "border-t",
     "border-border",
@@ -82,6 +85,74 @@ test("uses flat sections with responsive structural dividers", () => {
     assert.ok(!source.includes(token));
   }
   assert.doesNotMatch(source, /(?:border-l|border-r)(?:\s|"|$)/);
+});
+
+test("draws neutral mobile-only open lines with logical corners", () => {
+  assert.match(source, /type MobileOpenLineSide = "left" \| "right"/);
+  assert.match(source, /type MobileOpenLineTurn = "top" \| "bottom"/);
+  assert.match(source, /function MobileOpenSectionLine/);
+  for (const classes of [
+    "start-0 top-0 border-s border-t rounded-ss-2xl",
+    "end-0 bottom-0 border-e border-b rounded-ee-2xl",
+    "start-0 bottom-0 border-s border-b rounded-es-2xl",
+    "end-0 top-0 border-e border-t rounded-se-2xl",
+  ]) {
+    assert.ok(source.includes(classes));
+  }
+  assert.match(source, /aria-hidden="true"/);
+  assert.match(
+    source,
+    /pointer-events-none relative my-0\.5 h-2 select-none sm:hidden/,
+  );
+  assert.match(source, /w-\[calc\(100%-2rem\)\] border-slate-300\/80/);
+  assert.doesNotMatch(source, /[╭╮╰╯─]/);
+});
+
+test("selects the complete and missing-section mobile line sequences", () => {
+  const lineSelection = source.slice(
+    source.indexOf("function getMobileOpenLinesBeforeSection"),
+    source.indexOf("export function HotelDetailsSections"),
+  );
+  const orderedFullSequence = [
+    '{ side: "left", turn: "top" }',
+    '{ side: "right", turn: "bottom" }',
+    '{ side: "left", turn: "bottom" }',
+    '{ side: "right", turn: "top" }',
+  ];
+  let offset = 0;
+  for (const line of orderedFullSequence) {
+    offset = lineSelection.indexOf(line, offset);
+    assert.ok(offset >= 0, `missing ordered line ${line}`);
+    offset += line.length;
+  }
+
+  assert.match(
+    lineSelection,
+    /current === "amenities"[\s\S]*side: "right", turn: "top"/,
+  );
+  assert.match(
+    lineSelection,
+    /previous === "room" && current === "cancellation"/,
+  );
+  assert.match(lineSelection, /previous === "room" && current === "amenities"/);
+  assert.match(
+    lineSelection,
+    /previous === "cancellation" && current === "amenities"/,
+  );
+  assert.match(lineSelection, /return \[\];/);
+});
+
+test("keeps custom lines mobile-only and restores standard responsive dividers", () => {
+  assert.match(source, /border-t-0 bg-surface sm:border-t sm:border-border/);
+  assert.match(
+    source,
+    /border-t-0 sm:border-t sm:border-border xl:border-t-0 xl:border-s/,
+  );
+  assert.equal(source.match(/sm:hidden/g)?.length, 1);
+  assert.doesNotMatch(
+    source,
+    /<hr|role="separator"|border-2|gradient|shadow-lg/,
+  );
 });
 
 test("renders decorative room and policy icons directly with clear text hierarchy", () => {
