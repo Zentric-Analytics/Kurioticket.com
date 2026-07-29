@@ -14,14 +14,15 @@ function SkeletonBlock({ className }: { className: string }) {
 export function HotelDetailsLoadingState({ loadingText }: { loadingText: string }) {
   return (
     <main className="flex-1 bg-surface-muted/40" aria-busy="true">
-      <section className="page-shell py-6 sm:py-8 lg:py-10">
-        <div
+      <section className="border-b border-border bg-white">
+        <div className="page-shell py-6 sm:py-8 lg:py-10">
+          <div
           role="status"
           aria-live="polite"
           className="sr-only"
         >
           {loadingText}
-        </div>
+          </div>
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8">
           <Card className="min-w-0 space-y-4 p-4 sm:p-6 lg:col-span-2 lg:col-start-1 lg:row-start-1">
             <SkeletonBlock className="h-9 w-36" />
@@ -62,6 +63,7 @@ export function HotelDetailsLoadingState({ loadingText }: { loadingText: string 
               </Card>
             ))}
           </div>
+          </div>
         </div>
       </section>
     </main>
@@ -87,8 +89,9 @@ export function HotelDetailsUnavailableState({
 }: HotelDetailsUnavailableStateProps) {
   return (
     <main className="flex-1 bg-surface-muted/40">
-      <section className="page-shell py-6 sm:py-8 lg:py-10">
-        <div className="mx-auto max-w-3xl">
+      <section className="border-b border-border bg-white">
+        <div className="page-shell py-6 sm:py-8 lg:py-10">
+          <div className="mx-auto max-w-3xl">
           <Card variant="elevated" className="p-6 sm:p-8">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
               <AlertTriangle
@@ -109,6 +112,7 @@ export function HotelDetailsUnavailableState({
               </div>
             </div>
           </Card>
+          </div>
         </div>
       </section>
     </main>

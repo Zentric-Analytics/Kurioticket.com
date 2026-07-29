@@ -474,8 +474,9 @@ export function HotelDetailsClient({
 
   return (
     <main className="flex-1 bg-surface-muted/40">
-      <section className="page-shell py-6 sm:py-8 lg:py-10">
-        <div className="space-y-6 sm:space-y-8 lg:space-y-10">
+      <section className="border-b border-border bg-white">
+        <div className="page-shell py-6 sm:py-8 lg:py-10">
+          <div className="space-y-6 sm:space-y-8 lg:space-y-10">
           <HotelDetailsHeader
             resultsHref={resultsHref}
             backToResultsText={backToResultsText}
@@ -570,6 +571,7 @@ export function HotelDetailsClient({
             />
           </div>
 
+          </div>
         </div>
       </section>
     </main>
