@@ -3,14 +3,16 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "../../theme/tokens";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
+import { useAppTheme } from "../../theme/AppTheme";
 
 const labels: Record<string, string> = { index: "Home", explore: "Explore", trips: "Trips", profile: "Profile" };
 const icons: Record<string, FlowIconName> = { index: "home", trips: "trip", explore: "compass", profile: "person" };
 
 export function KurioticketTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { theme } = useAppTheme();
   return (
-    <View style={[styles.shell, { paddingBottom: Math.max(insets.bottom, 10) }]} accessibilityRole="tablist">
+    <View style={[styles.shell, { paddingBottom: Math.max(insets.bottom, 10), backgroundColor: theme.surface, borderTopColor: theme.border }]} accessibilityRole="tablist">
       {state.routes.map((route, index) => {
         const focused = state.index === index;
         const options = descriptors[route.key]?.options;
@@ -28,8 +30,8 @@ export function KurioticketTabBar({ state, descriptors, navigation }: BottomTabB
             onLongPress={() => navigation.emit({ type: "tabLongPress", target: route.key })}
             style={({ pressed }) => [styles.item, focused && styles.itemSelected, pressed && styles.itemPressed]}
           >
-            <FlowIcon name={icons[route.name] ?? "home"} size={23} color={focused ? "#0754F7" : "#475569"} />
-            <Text numberOfLines={1} style={[styles.label, focused && styles.labelSelected]}>{label}</Text>
+            <FlowIcon name={icons[route.name] ?? "home"} size={23} color={focused ? "#0754F7" : theme.muted} />
+            <Text numberOfLines={1} style={[styles.label, { color: theme.muted }, focused && styles.labelSelected]}>{label}</Text>
           </Pressable>
         );
       })}

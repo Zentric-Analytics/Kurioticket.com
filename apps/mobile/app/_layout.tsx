@@ -1,15 +1,20 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { colors } from "../src/theme/tokens";
+import { AppThemeProvider, useAppTheme } from "../src/theme/AppTheme";
 
 export default function RootLayout() {
+  return <AppThemeProvider><ThemedRootLayout /></AppThemeProvider>;
+}
+
+function ThemedRootLayout() {
+  const { theme } = useAppTheme();
   return (
     <>
-      <StatusBar style="dark" backgroundColor={colors.background} />
+      <StatusBar style={theme.dark ? "light" : "dark"} backgroundColor={theme.background} />
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: colors.background },
+          contentStyle: { backgroundColor: theme.background },
         }}
       >
         <Stack.Screen name="index" />
