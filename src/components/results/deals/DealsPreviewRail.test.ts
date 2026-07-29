@@ -7,6 +7,7 @@ const results = readFileSync(new URL("../DealsResultsClient.tsx", import.meta.ur
 const skeleton = readFileSync(new URL("./DealsPreviewSkeleton.tsx", import.meta.url), "utf8");
 const flightCard = readFileSync(new URL("./DealsFlightPreviewCard.tsx", import.meta.url), "utf8");
 const hotelCard = readFileSync(new URL("./DealsHotelPreviewCard.tsx", import.meta.url), "utf8");
+const carCard = readFileSync(new URL("./DealsCarPreviewCard.tsx", import.meta.url), "utf8");
 
 test("the shared rail uses native horizontal scrolling and child-aware geometry", () => {
   for (const contract of [
@@ -28,6 +29,20 @@ test("the shared rail uses native horizontal scrolling and child-aware geometry"
   assert.doesNotMatch(rail, /hasMultipleChildren[\s\S]*\? "auto-cols-\[minmax\(0,100%\)\]"/);
   assert.match(rail, /px-1/);
   assert.match(rail, /gap-4/);
+});
+
+test("mobile rail items use natural heights before restoring stretch at sm", () => {
+  for (const contract of [
+    "items-start",
+    "sm:items-stretch",
+    "h-auto",
+    "self-start",
+    "sm:h-full",
+    "sm:self-stretch",
+    "min-w-0",
+  ]) assert.ok(rail.includes(contract), `missing ${contract}`);
+
+  assert.doesNotMatch(rail, /className="h-full min-w-0 snap-start/);
 });
 
 test("the rail snaps each card and hides native scrollbars", () => {
@@ -70,7 +85,12 @@ test("the rail contains no scripted carousel behavior or keyboard stop", () => {
   for (const forbidden of [
     "useState",
     "useEffect",
+    "useRef",
+    "ResizeObserver",
+    "IntersectionObserver",
     "addEventListener",
+    "scrollLeft",
+    "requestAnimationFrame",
     "onScroll",
     "onTouchStart",
     "onTouchMove",
@@ -87,6 +107,15 @@ test("the rail contains no scripted carousel behavior or keyboard stop", () => {
     "Keen",
     "pagination",
   ]) assert.ok(!rail.includes(forbidden), `unexpected ${forbidden}`);
+});
+
+test("preview cards retain full-height columns and price anchors", () => {
+  for (const card of [flightCard, hotelCard, carCard]) {
+    assert.match(card, /h-full/);
+    assert.match(card, /flex-col/);
+    assert.match(card, /mt-auto pt-5/);
+  }
+  assert.doesNotMatch(carCard, /car\.orSimilar|deals\.results\.car\.orSimilar/);
 });
 
 test("Flight, Stay and Car use exactly three separate localized rails", () => {
