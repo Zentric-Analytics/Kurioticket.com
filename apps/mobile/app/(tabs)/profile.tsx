@@ -1,3 +1,3 @@
-import { ProfileFlowScreen } from "../../src/features/flow/TabScreens";
+import { ProfileScreen } from "../../src/features/profile/ProfileScreen";
 
-export default ProfileFlowScreen;
+export default ProfileScreen;
