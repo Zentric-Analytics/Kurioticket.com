@@ -29,15 +29,18 @@ test("inspection page renders summary, filters, seven table columns, and result 
 
 test("inspection table fixes and left-aligns all seven columns with stable widths", () => {
   assert.match(inspectionPage, /fixedLayout/);
+  assert.match(inspectionPage, /minWidth=\{null\}/);
+  assert.match(inspectionPage, /tableClassName="min-w-\[900px\] lg:min-w-full"/);
+  assert.doesNotMatch(inspectionPage, /minWidth="1180px"/);
 
   const configuredColumns = [
-    ["market", "Market", "8%"],
-    ["record-id", "Record ID", "17%"],
-    ["origin", "Origin", "9%"],
-    ["destination", "Destination", "11%"],
-    ["destination-city", "Destination city", "18%"],
-    ["route", "Route", "15%"],
-    ["homepage-usage", "Homepage usage", "22%"],
+    ["market", "Market", "7%"],
+    ["record-id", "Record ID", "19%"],
+    ["origin", "Origin", "8%"],
+    ["destination", "Destination", "9%"],
+    ["destination-city", "Destination city", "20%"],
+    ["route", "Route", "14%"],
+    ["homepage-usage", "Homepage usage", "23%"],
   ];
 
   for (const [key, label, width] of configuredColumns) {
@@ -47,6 +50,15 @@ test("inspection table fixes and left-aligns all seven columns with stable width
     );
   }
   assert.equal(configuredColumns.reduce((total, column) => total + Number.parseInt(column[2], 10), 0), 100);
+});
+
+test("inspection table contains narrow-screen overflow without clipping or hiding its scrollbar", () => {
+  assert.match(inspectionPage, /tableClassName="min-w-\[900px\] lg:min-w-full"/);
+  assert.doesNotMatch(inspectionPage, /overflow-x-hidden|scrollbar-hide|clip|negative|translate-/);
+
+  for (const key of ["record-id", "destination-city", "route", "homepage-usage"]) {
+    assert.match(inspectionPage, new RegExp(`key: "${key}"[^\n]+cellClassName: "whitespace-normal break-words"`));
+  }
 });
 
 test("reuse counts render as plain secondary text below their related values", () => {

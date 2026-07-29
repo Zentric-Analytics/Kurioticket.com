@@ -9,7 +9,7 @@ const accountDeletionPage = readFileSync("src/app/admin/account-deletions/page.t
 
 test("admin data table renders semantic sticky table structure", () => {
   assert.match(shell, /export function AdminDataTable/);
-  assert.match(shell, /<table className=\{cn\("w-full border-separate border-spacing-0 text-left text-sm", fixedLayout && "table-fixed"\)\}/);
+  assert.match(shell, /<table className=\{cn\("w-full border-separate border-spacing-0 text-left text-sm", fixedLayout && "table-fixed", tableClassName\)\}/);
   assert.match(shell, /<caption className="sr-only">/);
   assert.match(shell, /<th key=\{columnKey\(column\)\} scope="col"/);
   assert.match(shell, /<thead className="sticky top-0 z-10/);
@@ -24,8 +24,12 @@ test("admin data table standardizes row hover, focus, overflow, and action align
 });
 
 test("admin data table keeps automatic layout and final-cell styling as backwards-compatible defaults", () => {
+  assert.match(shell, /minWidth = "900px"/);
   assert.match(shell, /fixedLayout = false/);
   assert.match(shell, /fixedLayout && "table-fixed"/);
+  assert.match(shell, /tableClassName\?: string/);
+  assert.match(shell, /minWidth: minWidth \?\? undefined/);
+  assert.match(shell, /fixedLayout && "table-fixed", tableClassName/);
   assert.match(shell, /usesDefaultFinalCellAlignment\(column\)/);
   assert.match(shell, /typeof column === "string" \|\| column\.align === undefined/);
 });
