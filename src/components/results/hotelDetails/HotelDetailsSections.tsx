@@ -120,22 +120,24 @@ export function HotelDetailsSections({
 
   const gridColumns =
     sections.length === 3
-      ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2fr)]"
+      ? "xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2fr)]"
       : sections.length === 2 && hasAmenities
-        ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]"
+        ? "xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]"
         : sections.length === 2
-          ? "lg:grid-cols-2"
-          : "lg:grid-cols-1";
+          ? "xl:grid-cols-2"
+          : "xl:grid-cols-1";
 
   const content = (
     <div
-      className={`grid min-w-0 gap-3 border-t border-border bg-slate-50/70 p-3 sm:gap-4 sm:p-4 ${gridColumns}`}
+      className={`grid min-w-0 border-t border-border bg-surface ${gridColumns}`}
     >
-      {sections.map((section) => (
+      {sections.map((section, index) => (
         <section
           key={section.key}
           aria-labelledby={`hotel-details-${section.key}-heading`}
-          className="min-w-0 rounded-xl border border-border bg-surface p-4 shadow-[0_8px_24px_-20px_rgba(2,28,43,0.32)] sm:p-5"
+          className={`min-w-0 p-5 sm:p-6 ${
+            index > 0 ? "border-t border-border xl:border-t-0 xl:border-s" : ""
+          }`}
         >
           <h2 id={`hotel-details-${section.key}-heading`} className="sr-only">
             {section.title}
@@ -143,19 +145,15 @@ export function HotelDetailsSections({
           {section.kind === "text" ? (
             <div className="flex min-w-0 items-start gap-3">
               {section.key === "room" ? (
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-subtle shadow-sm">
-                  <BedDouble
-                    className="h-5 w-5 text-blue"
-                    aria-hidden="true"
-                  />
-                </div>
+                <BedDouble
+                  className="mt-0.5 h-5 w-5 shrink-0 text-blue"
+                  aria-hidden="true"
+                />
               ) : (
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-subtle shadow-sm">
-                  <FileText
-                    className="h-5 w-5 text-blue"
-                    aria-hidden="true"
-                  />
-                </div>
+                <FileText
+                  className="mt-0.5 h-5 w-5 shrink-0 text-blue"
+                  aria-hidden="true"
+                />
               )}
               <ul className="min-w-0 space-y-1.5" role="list">
                 {section.items.map((item) => (
@@ -176,7 +174,7 @@ export function HotelDetailsSections({
             </div>
           ) : (
             <ul
-              className="grid grid-cols-1 gap-x-3 gap-y-2.5 sm:grid-cols-2"
+              className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2"
               role="list"
             >
               {section.items.map((item) => {
@@ -184,7 +182,7 @@ export function HotelDetailsSections({
                 return (
                   <li
                     key={item.key}
-                    className="flex min-w-0 items-start gap-2.5 rounded-lg bg-surface-subtle/70 px-3 py-2.5 text-sm font-medium leading-5 text-slate-700"
+                    className="flex min-w-0 items-start gap-2.5 text-sm font-medium leading-5 text-slate-700"
                   >
                     <Icon
                       className="mt-0.5 h-4 w-4 shrink-0 text-blue"
