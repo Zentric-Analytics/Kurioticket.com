@@ -15,6 +15,7 @@ import {
   buildHomepageDestinationHref,
   filterHomepageDestinationRows,
   formatAssignmentType,
+  formatMarketLabel,
   getHomepageDestinationInventoryRows,
   getHomepageDestinationMarkets,
   getHomepageDestinationSummary,
@@ -91,13 +92,13 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
         fixedLayout
         tableClassName="min-w-[900px] lg:min-w-full"
         columns={[
-          { key: "market", label: "Market", align: "left", width: "7%", cellClassName: "whitespace-nowrap" },
+          { key: "market", label: "Market", align: "left", width: "11%", cellClassName: "whitespace-normal leading-snug" },
           { key: "record-id", label: "Record ID", align: "left", width: "19%", cellClassName: "whitespace-normal break-words" },
           { key: "origin", label: "Origin", align: "left", width: "8%", cellClassName: "whitespace-nowrap" },
           { key: "destination", label: "Destination", align: "left", width: "9%", cellClassName: "whitespace-nowrap" },
           { key: "destination-city", label: "Destination city", align: "left", width: "20%", cellClassName: "whitespace-normal break-words" },
           { key: "route", label: "Route", align: "left", width: "14%", cellClassName: "whitespace-normal break-words" },
-          { key: "homepage-usage", label: "Homepage usage", align: "left", width: "23%", cellClassName: "whitespace-normal break-words" },
+          { key: "homepage-usage", label: "Homepage usage", align: "left", width: "19%", cellClassName: "whitespace-normal break-words" },
         ]}
         summary={`Showing ${firstResult}–${lastResult} of ${matchingRows.length} assignments`}
         footer={page.totalPages > 1 ? (
@@ -110,7 +111,9 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
         rows={page.rows.map((row) => ({
           id: row.rowId,
           cells: [
-            <span key="market" className="font-semibold text-slate-950">{row.market}</span>,
+            <span key="market" className="block w-full whitespace-normal text-left font-semibold leading-snug text-slate-950">
+              {formatMarketLabel(row.market)}
+            </span>,
             <div key="id" className="space-y-1 text-left">
               <code className="break-all text-xs text-slate-700">{row.recordId}</code>
               {row.recordIdAssignmentCount > 1 ? (
