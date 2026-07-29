@@ -36,15 +36,29 @@ test("renders one restrained flight-style outer booking card", () => {
       new RegExp(`(?:^|\\s)${token.replace("/", "\\/")}(?:\\s|$)`),
     );
 
-  assert.match(bookingSource, /className="divide-y divide-slate-200\/80"/);
+  assert.doesNotMatch(bookingSource, /divide-y/);
   assert.doesNotMatch(
     bookingSource,
     /shadow-\[0_12px_32px_-26px_rgba\(2,28,43,0\.32\)\]/,
   );
 });
 
-test("uses divider-owned sections without nested decorative containers", () => {
-  assert.match(bookingSource, /<div className="p-5 sm:p-6">/);
+test("uses alternating open side-origin lines without nested containers", () => {
+  assert.match(bookingSource, /type OpenLineSide = "left" \| "right";/);
+  assert.match(bookingSource, /function OpenSectionLine/);
+  assert.match(bookingSource, /aria-hidden="true"/);
+  assert.match(bookingSource, /start-0 top-0 border-s/);
+  assert.match(bookingSource, /end-0 bottom-0 border-e/);
+  assert.match(bookingSource, /rounded-ss-2xl/);
+  assert.match(bookingSource, /rounded-ee-2xl/);
+  assert.match(bookingSource, /w-\[calc\(100%-2rem\)\]/);
+  assert.match(bookingSource, /border-slate-300\/80/);
+  assert.equal(bookingSource.match(/<OpenSectionLine side="left"/g)?.length, 2);
+  assert.equal(
+    bookingSource.match(/<OpenSectionLine side="right"/g)?.length,
+    1,
+  );
+
   assert.match(bookingSource, /<div className="space-y-3 p-5 sm:p-6">/);
   assert.match(bookingSource, /<div className="space-y-4 p-5 sm:p-6">/);
 
@@ -53,7 +67,6 @@ test("uses divider-owned sections without nested decorative containers", () => {
     "border-s-2 border-blue ps-3",
     "rounded-lg bg-slate-50 p-3",
     "rounded-lg border border-red-200 bg-red-50 p-3",
-    "border-t",
   ])
     assert.ok(!bookingSource.includes(removedTreatment), removedTreatment);
 
@@ -61,7 +74,7 @@ test("uses divider-owned sections without nested decorative containers", () => {
   assert.doesNotMatch(bookingSource, /role="separator"/);
 });
 
-test("preserves the complete price presentation contract without a price bar", () => {
+test("preserves the complete price presentation contract and its grouping order", () => {
   for (const contract of [
     "priceDetailsAvailable",
     "totalDisplayPrice.formatted",
@@ -82,6 +95,21 @@ test("preserves the complete price presentation contract without a price bar", (
 
   for (const removedToken of ["border-s-2", "border-blue", "ps-3"])
     assert.ok(!bookingSource.includes(removedToken), removedToken);
+
+  const estimatedTotalIndex = bookingSource.indexOf("{estimatedStayTotalText}");
+  const totalIndex = bookingSource.indexOf("{totalDisplayPrice.formatted}");
+  const firstBoundaryIndex = bookingSource.indexOf(
+    '<OpenSectionLine side="right" turn="bottom" />',
+  );
+  const nightlyIndex = bookingSource.indexOf("{pricePerNightText.replace(");
+  const taxesIndex = bookingSource.indexOf("{taxesText}");
+  const providerIndex = bookingSource.indexOf("{providerText}");
+
+  assert.ok(estimatedTotalIndex < totalIndex);
+  assert.ok(totalIndex < firstBoundaryIndex);
+  assert.ok(firstBoundaryIndex < nightlyIndex);
+  assert.ok(nightlyIndex < taxesIndex);
+  assert.ok(taxesIndex < providerIndex);
 });
 
 test("uses unboxed icon and text rows for the stay summary", () => {
@@ -104,9 +132,14 @@ test("uses unboxed icon and text rows for the stay summary", () => {
       "rounded-xl border border-border bg-surface-subtle p-4",
     ),
   );
+
+  const priceToStayLine = bookingSource.indexOf(
+    '<OpenSectionLine side="left" turn="bottom" />',
+  );
+  assert.ok(priceToStayLine < bookingSource.indexOf("staySummary.dateText"));
 });
 
-test("preserves both actions inside the divided action section", () => {
+test("preserves both actions after the open-line transition", () => {
   for (const contract of [
     "LinkButton",
     "href={changeSearchHref}",
@@ -123,6 +156,38 @@ test("preserves both actions inside the divided action section", () => {
     assert.ok(bookingSource.includes(contract), contract);
 
   assert.ok(!bookingSource.includes("space-y-4 border-t border-border pt-5"));
+  const actionLine = bookingSource.indexOf(
+    '<OpenSectionLine side="left" turn="top" />',
+  );
+  assert.ok(actionLine < bookingSource.indexOf("<LinkButton"));
+});
+
+test("keeps the unavailable price branch free of the total-to-nightly line", () => {
+  const unavailableBranch = bookingSource.match(
+    /\) : \(\s*(<div className="space-y-2 p-5 sm:p-6">[\s\S]*?liveRateUnavailableText[\s\S]*?<\/div>)\s*\)}/,
+  )?.[1];
+
+  assert.ok(unavailableBranch);
+  assert.match(unavailableBranch, /priceUnavailableText/);
+  assert.match(unavailableBranch, /liveRateUnavailableText/);
+  assert.doesNotMatch(unavailableBranch, /OpenSectionLine/);
+});
+
+test("does not introduce forbidden divider, box, or flourish treatments", () => {
+  assert.equal(bookingSource.match(/<Card\b/g)?.length, 1);
+  for (const forbidden of [
+    "divide-y",
+    "<hr",
+    'role="separator"',
+    "border-2",
+    "gradient",
+    "shadow-lg",
+    "shadow-xl",
+    "rounded-xl border border-border bg-surface-subtle",
+  ])
+    assert.ok(!bookingSource.includes(forbidden), forbidden);
+
+  assert.doesNotMatch(bookingSource, /[╭╮╰╯─]/u);
 });
 
 test("keeps accessible status text without boxed treatments", () => {
