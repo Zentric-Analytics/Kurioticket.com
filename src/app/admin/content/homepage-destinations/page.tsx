@@ -51,7 +51,7 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
       eyebrow=""
       title="Homepage destination content"
       description="Inspect every configured homepage destination assignment without removing aliases or repeated records."
-      actions={<AdminLinkButton href="/admin/content">Back to Content Inventory</AdminLinkButton>}
+      actions={<AdminLinkButton href="/admin/content" size="sm">Back to Content Inventory</AdminLinkButton>}
     >
       <div className="grid gap-4 sm:grid-cols-3">
         <AdminMetricCard label="Unique card IDs" value={summary.uniqueCardIds} />
@@ -75,8 +75,18 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
       ) : <AdminDataTable
         caption="Homepage destination assignments"
         density="compact"
-        minWidth="1180px"
-        columns={["Market", "Record ID", "Origin", "Destination", "Destination city", "Route", "Assignment type", "Public role"]}
+        minWidth="1080px"
+        stickyHeaderClassName="top-16 md:top-[68px]"
+        columns={[
+          { key: "market", label: "Market", className: "w-[8%]" },
+          { key: "record-id", label: "Record ID", className: "w-[16%]", bodyClassName: "w-[16%]" },
+          { key: "origin", label: "Origin", className: "w-[8%]" },
+          { key: "destination", label: "Destination", className: "w-[10%]" },
+          { key: "destination-city", label: "Destination city", className: "w-[15%]", bodyClassName: "whitespace-normal" },
+          { key: "route", label: "Route", className: "w-[12%]", bodyClassName: "w-[12%]" },
+          { key: "assignment-type", label: "Assignment type", className: "w-[15%]" },
+          { key: "public-role", label: "Public role", className: "w-[16%]", bodyClassName: "whitespace-normal text-left" },
+        ]}
         summary={`Showing ${firstResult}–${lastResult} of ${matchingRows.length} assignments`}
         footer={page.totalPages > 1 ? (
           <Pagination
@@ -89,19 +99,21 @@ export default async function HomepageDestinationInventoryPage({ searchParams }:
           id: row.rowId,
           cells: [
             <span key="market" className="font-semibold text-slate-950">{row.market}</span>,
-            <code key="id" className="text-xs text-slate-700">{row.recordId}</code>,
+            <div key="id" className="flex flex-col items-start gap-1.5">
+              <code className="text-xs text-slate-700">{row.recordId}</code>
+              {row.repeatedId ? <AdminStatusBadge tone="warn">Repeated ID</AdminStatusBadge> : null}
+            </div>,
             row.originCode,
             row.destinationCode,
             row.destinationCity,
-            <code key="route" className="text-xs text-slate-700">{row.route}</code>,
+            <div key="route" className="flex flex-col items-start gap-1.5">
+              <code className="text-xs text-slate-700">{row.route}</code>
+              {row.repeatedRoute ? <AdminStatusBadge tone="warn">Repeated route</AdminStatusBadge> : null}
+            </div>,
             <AdminStatusBadge key="type" tone={row.assignmentType === "DIRECT_MARKET" ? "info" : "neutral"}>
               {formatAssignmentType(row.assignmentType)}
             </AdminStatusBadge>,
-            <div key="role" className="flex flex-wrap justify-end gap-1.5">
-              <span>{row.publicRole}</span>
-              {row.repeatedId ? <AdminStatusBadge tone="warn">Repeated ID</AdminStatusBadge> : null}
-              {row.repeatedRoute ? <AdminStatusBadge tone="warn">Repeated route</AdminStatusBadge> : null}
-            </div>,
+            <span key="role">{row.publicRole}</span>,
           ],
         }))}
       />}
