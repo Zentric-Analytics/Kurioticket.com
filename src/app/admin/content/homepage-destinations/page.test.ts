@@ -11,15 +11,14 @@ test("Content Inventory links only the homepage destination card to its inspecti
   assert.match(contentPage, /View inventory/);
 });
 
-test("inspection page renders summary, filters, table columns, flags, and result count", () => {
+test("inspection page renders summary, filters, seven table columns, flags, and result count", () => {
   for (const text of [
     "Unique card IDs",
     "Market assignments",
     "Unique routes",
     "Record ID",
     "Destination city",
-    "Assignment type",
-    "Public role",
+    "Homepage usage",
     "Repeated ID",
     "Repeated route",
   ]) assert.match(inspectionPage, new RegExp(text));
@@ -27,20 +26,20 @@ test("inspection page renders summary, filters, table columns, flags, and result
   assert.match(filterToolbar, /Search by ID, city, origin or destination code/);
   assert.match(filterToolbar, /All markets/);
   assert.match(filterToolbar, /All assignment types/);
+  assert.doesNotMatch(inspectionPage, /Public role|publicRole/);
 });
 
-test("inspection table fixes and left-aligns all eight columns with stable widths", () => {
+test("inspection table fixes and left-aligns all seven columns with stable widths", () => {
   assert.match(inspectionPage, /fixedLayout/);
 
   const configuredColumns = [
-    ["market", "Market", "7%"],
-    ["record-id", "Record ID", "15%"],
-    ["origin", "Origin", "8%"],
-    ["destination", "Destination", "10%"],
-    ["destination-city", "Destination city", "15%"],
-    ["route", "Route", "10%"],
-    ["assignment-type", "Assignment type", "17%"],
-    ["public-role", "Public role", "18%"],
+    ["market", "Market", "8%"],
+    ["record-id", "Record ID", "17%"],
+    ["origin", "Origin", "9%"],
+    ["destination", "Destination", "11%"],
+    ["destination-city", "Destination city", "18%"],
+    ["route", "Route", "15%"],
+    ["homepage-usage", "Homepage usage", "22%"],
   ];
 
   for (const [key, label, width] of configuredColumns) {
@@ -52,9 +51,12 @@ test("inspection table fixes and left-aligns all eight columns with stable width
   assert.equal(configuredColumns.reduce((total, column) => total + Number.parseInt(column[2], 10), 0), 100);
 });
 
-test("Public role opts out of final-column right alignment and wrapping constraint", () => {
-  assert.match(inspectionPage, /label: "Public role", align: "left"/);
-  assert.match(inspectionPage, /cellClassName: "whitespace-normal"/);
+test("repeated warnings sit below their related values and not in homepage usage", () => {
+  assert.match(inspectionPage, /key="id" className="flex flex-col items-start"[\s\S]*row\.recordId[\s\S]*row\.repeatedId[\s\S]*Repeated ID/);
+  assert.match(inspectionPage, /key="route" className="flex flex-col items-start"[\s\S]*row\.route[\s\S]*row\.repeatedRoute[\s\S]*Repeated route/);
+  const usageCell = inspectionPage.match(/<AdminStatusBadge key="type"[\s\S]*?<\/AdminStatusBadge>/)?.[0] ?? "";
+  assert.match(usageCell, /formatAssignmentType\(row\.assignmentType\)/);
+  assert.doesNotMatch(usageCell, /Repeated ID|Repeated route/);
   assert.doesNotMatch(inspectionPage, /justify-end/);
 });
 

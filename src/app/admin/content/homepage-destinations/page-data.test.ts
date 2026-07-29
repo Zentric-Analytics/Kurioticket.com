@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   buildHomepageDestinationHref,
   filterHomepageDestinationRows,
+  formatAssignmentType,
   getHomepageDestinationInventoryRows,
   paginateHomepageDestinationRows,
   parseHomepageDestinationSearchParams,
@@ -21,7 +22,13 @@ test("selector classifies direct, regional, and neutral/global assignments", () 
   assert.equal(rows.find((row) => row.market === "US")?.assignmentType, "DIRECT_MARKET");
   assert.equal(rows.find((row) => row.market === "AFRICA")?.assignmentType, "REGIONAL_ALIAS");
   assert.equal(rows.find((row) => row.market === "GLOBAL")?.assignmentType, "NEUTRAL_GLOBAL_ALIAS");
-  assert.equal(rows.find((row) => row.market === "NEUTRAL")?.publicRole, "Global fallback");
+  assert.deepEqual(
+    ["DIRECT_MARKET", "REGIONAL_ALIAS", "NEUTRAL_GLOBAL_ALIAS"].map((type) =>
+      formatAssignmentType(type as Parameters<typeof formatAssignmentType>[0]),
+    ),
+    ["Direct market", "Regional fallback", "Global fallback"],
+  );
+  assert.equal("publicRole" in rows[0], false);
 });
 
 test("selector flags repeated IDs and routes without removing their rows", () => {
@@ -58,6 +65,12 @@ test("market and assignment type filters compose with search", () => {
   assert.ok(filtered.every((row) => row.market === "AFRICA" && row.assignmentType === "REGIONAL_ALIAS"));
 });
 
+test("assignment type query parameter values remain unchanged", () => {
+  for (const assignmentType of ["DIRECT_MARKET", "REGIONAL_ALIAS", "NEUTRAL_GLOBAL_ALIAS"] as const) {
+    assert.equal(parseHomepageDestinationSearchParams({ assignmentType }).assignmentType, assignmentType);
+  }
+});
+
 test("invalid filters are normalized and pagination retains every result", () => {
   const filters = parseHomepageDestinationSearchParams({ market: "UNKNOWN", assignmentType: "OTHER", page: "0" });
   assert.deepEqual(filters, { q: "", market: "ALL", assignmentType: "ALL", page: 1 });
@@ -73,4 +86,3 @@ test("pagination links preserve active filters", () => {
     "/admin/content/homepage-destinations?q=LHR&market=EUROPE&assignmentType=REGIONAL_ALIAS&page=2",
   );
 });
-
