@@ -81,7 +81,7 @@ function Section({ title, rows }: { title: string; rows: Row[] }) {
   </View>;
 }
 
-export function ProfileScreen() {
+export function AuthenticatedProfileScreen() {
   const { theme, darkMode, setDarkMode } = useAppTheme();
   const [identity, setIdentity] = useState(profileIdentity(null));
   const [currency, setCurrency] = useState("USD");
