@@ -1,3 +1,3 @@
-import { ExploreFlowScreen } from "../../src/features/flow/TabScreens";
+import { ExploreScreen } from "../../src/features/explore/ExploreScreen";
 
-export default ExploreFlowScreen;
+export default ExploreScreen;
