@@ -11,26 +11,54 @@ const clientSource = readFileSync(
   "utf8",
 );
 
-test("renders the booking summary directly against the page background", () => {
-  assert.doesNotMatch(bookingSource, /import { Card }/);
-  assert.doesNotMatch(bookingSource, /<Card\b/);
+test("renders one restrained flight-style outer booking card", () => {
+  assert.match(
+    bookingSource,
+    /import { Card } from "@\/components\/ui\/Card";/,
+  );
+  assert.equal(bookingSource.match(/<Card\b/g)?.length, 1);
   assert.match(bookingSource, /<aside className="min-w-0">/);
   assert.match(bookingSource, /className="lg:sticky lg:top-24"/);
 
-  const rootClass = bookingSource.match(
-    /<div className="lg:sticky lg:top-24">\s*<div className="([^"]+)"/,
-  )?.[1];
-  assert.ok(rootClass);
-  assert.match(rootClass, /(?:^|\s)min-w-0(?:\s|$)/);
-  assert.match(rootClass, /(?:^|\s)space-y-6(?:\s|$)/);
-  assert.doesNotMatch(
-    rootClass,
-    /(?:^|\s)(?:border(?:-[^\s]+)?|divide-y|rounded(?:-[^\s]+)?|shadow(?:-[^\s]+)?|bg-white|bg-surface|bg-slate-50|p-5|p-6)(?:\s|$)/,
-  );
+  const cardClass = bookingSource.match(/<Card className="([^"]+)"/)?.[1];
+  assert.ok(cardClass);
+  for (const token of [
+    "min-w-0",
+    "overflow-hidden",
+    "rounded-2xl",
+    "border-slate-200/80",
+    "bg-white",
+    "p-0",
+    "shadow-none",
+  ])
+    assert.match(
+      cardClass,
+      new RegExp(`(?:^|\\s)${token.replace("/", "\\/")}(?:\\s|$)`),
+    );
+
+  assert.match(bookingSource, /className="divide-y divide-slate-200\/80"/);
   assert.doesNotMatch(
     bookingSource,
     /shadow-\[0_12px_32px_-26px_rgba\(2,28,43,0\.32\)\]/,
   );
+});
+
+test("uses divider-owned sections without nested decorative containers", () => {
+  assert.match(bookingSource, /<div className="p-5 sm:p-6">/);
+  assert.match(bookingSource, /<div className="space-y-3 p-5 sm:p-6">/);
+  assert.match(bookingSource, /<div className="space-y-4 p-5 sm:p-6">/);
+
+  for (const removedTreatment of [
+    "rounded-xl border border-border bg-surface-subtle p-4",
+    "border-s-2 border-blue ps-3",
+    "rounded-lg bg-slate-50 p-3",
+    "rounded-lg border border-red-200 bg-red-50 p-3",
+    "border-t",
+  ])
+    assert.ok(!bookingSource.includes(removedTreatment), removedTreatment);
+
+  assert.doesNotMatch(bookingSource, /<hr\b/);
+  assert.doesNotMatch(bookingSource, /role="separator"/);
 });
 
 test("preserves the complete price presentation contract without a price bar", () => {
@@ -78,7 +106,7 @@ test("uses unboxed icon and text rows for the stay summary", () => {
   );
 });
 
-test("preserves both actions while removing the action divider", () => {
+test("preserves both actions inside the divided action section", () => {
   for (const contract of [
     "LinkButton",
     "href={changeSearchHref}",
