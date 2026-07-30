@@ -10,10 +10,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
+import { useEffect, useState } from "react";
+import { readSession } from "../../storage/sessionStorage";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { FlightSearchPanel } from "./FlightSearchPanel";
 import { ResponsiveHero } from "./ResponsiveHero";
 import { flowColors, flowStyles } from "./flowStyles";
+
+const guestHeroImage = require("../../../assets/heroes/home-santorini.png");
+const loggedInHeroUrl =
+  "https://kurioticket.com/images/premium/homepage/kurioticket-homepage-hero-businesswoman-modern-city-luggage-001.jpg";
 
 const products: {
   label: string;
@@ -27,6 +33,16 @@ const products: {
 ];
 export function HomeFlowScreen() {
   const insets = useSafeAreaInsets();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    void readSession()
+      .then((session) => setIsAuthenticated(session !== null))
+      .catch(() => setIsAuthenticated(false));
+  }, []);
+
+  const heroImage = isAuthenticated ? { uri: loggedInHeroUrl } : guestHeroImage;
+
   return (
     <SafeAreaView style={flowStyles.safe} edges={[]}>
       <StatusBar style="dark" translucent backgroundColor="transparent" />
@@ -36,7 +52,7 @@ export function HomeFlowScreen() {
       >
         <View style={styles.heroShell}>
           <ResponsiveHero
-            source={require("../../../assets/heroes/home-santorini.png")}
+            source={heroImage}
             sourceWidth={307}
             sourceHeight={596}
             height={342}
