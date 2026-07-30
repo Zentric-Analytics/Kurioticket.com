@@ -1,31 +1,17 @@
 import { getApiBaseUrl } from "../config/apiUrl";
 import { readSession } from "../storage/sessionStorage";
 import { Platform } from "react-native";
+import type { NormalizedCarResult } from "../../../../src/lib/cars/types";
+import type { PublicFlightResult, PublicHotelResult } from "../../../../src/lib/types";
+import type { ContractResult, TravelSearchResponse } from "../../../../src/lib/travel/searchContract";
 
 export class TravelApiError extends Error {
   constructor(message: string, public status = 0, public code: "cancelled" | "timeout" | "configuration" | "validation" | "rate-limit" | "unavailable" | "server" | "network" | "invalid-response" = "network") { super(message); }
 }
 
-export type FlightResult = {
-  id: string; provider: string; airlineName: string; flightNumber?: string;
-  originAirport: string; destinationAirport: string; departureTime: string; arrivalTime: string;
-  duration: string; stops: number; cabinClass: string; baggageInfo: string;
-  price: number; currency: string; bookingUrl: string; partnerRedirectUrl: string;
-  badges: string[]; recommendationReasons: string[];
-};
-export type HotelResult = {
-  id: string; provider: string; name: string; imageUrl?: string; rating: number;
-  reviewScore?: number; reviewScale?: 5 | 10; location: string; neighbourhood?: string;
-  amenities: string[]; roomType: string; cancellationInfo: string; inventoryKind?: "bookable" | "discovery";
-  pricePerNight?: number; totalPrice?: number; currency?: string; bookingUrl?: string; partnerRedirectUrl?: string;
-  badges: string[];
-};
-export type CarOffer = { id: string; bookingProviderName: string; rentalCompanyName: string; currency: string; pricePerDay: number; totalPrice: number; bookingUrl?: string; freeCancellation: boolean };
-export type CarResult = {
-  id: string; categoryLabel: string; modelName: string; imageUrl?: string; passengers: number;
-  bags: number; transmission: string; airConditioning: boolean; pickupLocation: string;
-  rentalCompanyName: string; offers: CarOffer[]; isDemo: boolean;
-};
+export type FlightResult = ContractResult<PublicFlightResult>;
+export type HotelResult = ContractResult<PublicHotelResult>;
+export type CarResult = ContractResult<NormalizedCarResult>;
 export type MobileTrip = { id: string; bookingReference: string; provider: string; tripType: string; status: "upcoming" | "past" | "cancelled"; origin: string | null; destination: string; departureDate: string; returnDate: string | null; passengerCount: number; currency: string; totalAmount: number | null };
 export type MobileProfile = { fullName?: string | null; phoneNumber?: string | null; phoneCountryCode?: string | null; dateOfBirth?: string | null; gender?: string | null; nationality?: string | null; address?: string | null };
 export type MobilePriceAlert = { id: string; type: "FLIGHT" | "HOTEL"; origin: string | null; destination: string; targetPrice: string | null; currency: string | null; status: string; updatedAt: string };
@@ -70,9 +56,9 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
 }
 
 export const travelApi = {
-  searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<{ results: FlightResult[]; warnings?: string[] }>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, options),
-  searchHotels: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<{ results: HotelResult[]; warnings?: string[] }>("/api/hotels/search", { method: "POST", body: JSON.stringify(body) }, options),
-  searchCars: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<{ results: CarResult[]; mode: string; status: string }>("/api/cars/search", { method: "POST", body: JSON.stringify(body) }, options),
+  searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<PublicFlightResult>>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, options),
+  searchHotels: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<PublicHotelResult>>("/api/hotels/search", { method: "POST", body: JSON.stringify(body) }, options),
+  searchCars: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<NormalizedCarResult>>("/api/cars/search", { method: "POST", body: JSON.stringify(body) }, options),
   trips: (status?: "upcoming" | "past" | "cancelled") => request<{ trips: MobileTrip[]; summary: Record<string, number> }>(`/api/mobile/v1/trips${status ? `?status=${status}` : ""}`),
   trip: (id: string) => request<{ trip: MobileTrip }>(`/api/mobile/v1/trips/${encodeURIComponent(id)}`),
   profile: () => request<{ profile: MobileProfile | null; user: { id: string; email: string; name?: string | null } }>("/api/mobile/v1/profile"),

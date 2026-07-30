@@ -84,10 +84,9 @@ export function getHotelResultsMode(): HotelResultsMode {
 }
 
 export function getCarResultsMode(): CarResultsMode {
-  // Demo inventory is permitted only in development/test. Production fails
-  // closed until a verified live Cars adapter is connected.
-  if (process.env.CARS_RESULTS_MODE === "live") return "live";
-  return isProductionRuntime() ? "live" : "demo";
+  // The approved catalogue remains the explicit product mode until a verified
+  // live adapter is connected. Exact `live` fails closed when no adapter exists.
+  return process.env.CARS_RESULTS_MODE === "live" ? "live" : "demo";
 }
 
 export function getHotelProviderPrimary(): HotelProviderPrimary {

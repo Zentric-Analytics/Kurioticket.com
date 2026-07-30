@@ -4,10 +4,12 @@ import { authOptions } from "@/lib/auth";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicFlight } from "@/lib/searchCache";
 import { flightSearchSchema } from "@/lib/validation";
+import { classifyFlights } from "@/lib/travel/searchContract";
 import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
 import { searchFlights } from "@/services/travel/flightAggregator";
 
 export async function POST(request: Request) {
+  const requestId = request.headers.get("x-search-request-id")?.trim() || crypto.randomUUID();
   const ip = getClientIp(request);
   const rate = checkRateLimit(`flight-search:${ip}`, 35, 60_000);
   if (!rate.allowed) {
@@ -39,6 +41,13 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: aggregate.unavailableMessage,
+        results: [],
+        mode: "live",
+        status: "unavailable",
+        sourceLabel: "",
+        warnings: aggregate.warnings,
+        partial: false,
+        requestId,
       },
       { status: 503 },
     );
@@ -86,8 +95,7 @@ export async function POST(request: Request) {
   ]);
 
   return NextResponse.json({
-    results: publicResults,
-    warnings: aggregate.servedFromFallback ? aggregate.warnings : [],
+    ...classifyFlights(publicResults, aggregate.servedFromFallback, aggregate.warnings, requestId),
     servedFromFallback: aggregate.servedFromFallback,
     latencyMs: aggregate.latencyMs,
   });
