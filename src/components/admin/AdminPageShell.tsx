@@ -2,16 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { createPortal } from "react-dom";
-import { AlertTriangle, Building2, ChevronRight, Inbox, Loader2, LogOut, Menu, Settings, ShieldCheck, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { AlertTriangle, Building2, Inbox, Loader2, LogOut, Menu, Settings, ShieldCheck, X } from "lucide-react";
+import { useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { formatAdminBadgeLabel } from "@/components/admin/adminDesignSystem";
 import { getActiveAdminHub, getAdminNavbarHubsForRole, type AdminHubDefinition, type AdminRole } from "@/lib/adminNavigation";
 
 const AdminLogoImage = "img";
-const AdminMobileDrawerPanel = "aside";
 
 type StatusTone = "good" | "bad" | "warn" | "neutral" | "info";
 
@@ -31,17 +29,10 @@ export function AdminShell({
   const safeRole: AdminRole = adminRole === "SUPPORT" || adminRole === "USER" ? adminRole : "ADMIN";
   const hubs = getAdminNavbarHubsForRole(safeRole);
 
-  const pathname = usePathname();
-  const isAdminHome = pathname === "/admin";
-
   return (
     <div className="min-h-screen bg-slate-100 text-slate-950">
       <AdminNavbar hubs={hubs} adminEmail={adminEmail} adminName={adminName} adminImage={adminImage} />
-      <div className={cn(isAdminHome && "min-h-[calc(100vh-4rem)] bg-[#F7F6F2] sm:min-h-[calc(100vh-68px)]")}>
-        <main className="page-shell py-5 sm:py-6">
-          {children}
-        </main>
-      </div>
+      <main className="page-shell py-5 sm:py-6">{children}</main>
     </div>
   );
 }
@@ -57,189 +48,43 @@ export function AdminNavbar({
   adminName?: string | null;
   adminImage?: string | null;
 }) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mobileAccountOpen, setMobileAccountOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const displayName = adminName || adminEmail || "Admin";
-  const adminInitials = getAccountInitials(displayName, adminEmail);
-  const pathname = usePathname();
-
-  useEffect(() => {
-    const closePanelsOnRouteChange = window.setTimeout(() => {
-      setMobileMenuOpen(false);
-      setMobileAccountOpen(false);
-    }, 0);
-
-    return () => {
-      window.clearTimeout(closePanelsOnRouteChange);
-    };
-  }, [pathname]);
-
-  useEffect(() => {
-    if (!mobileMenuOpen && !mobileAccountOpen) {
-      return;
-    }
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setMobileMenuOpen(false);
-        setMobileAccountOpen(false);
-      }
-    };
-
-    document.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [mobileAccountOpen, mobileMenuOpen]);
 
   return (
-    <>
-      <header className="sticky top-0 z-30 border-b border-[#DDE7F0] bg-white/95 backdrop-blur">
-        <div className="page-shell flex min-h-16 items-center justify-between gap-3 py-2 md:grid md:min-h-[68px] md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:gap-6">
-          <div className="min-w-0 justify-self-start">
-            <AdminBrandLink onNavigate={() => setMobileMenuOpen(false)} />
-          </div>
-          <nav className="hidden min-w-0 items-center justify-self-center gap-3 md:flex md:translate-y-1.5 lg:gap-4" aria-label="Admin navigation">
-            {hubs.map((hub) => <AdminHubNavLink key={hub.key} hub={hub} />)}
+    <header className="sticky top-0 z-30 border-b border-[#DDE7F0] bg-white/95 backdrop-blur">
+      <div className="page-shell flex min-h-16 items-center justify-between gap-3 py-2 md:grid md:min-h-[68px] md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:gap-6">
+        <div className="min-w-0 justify-self-start">
+          <AdminBrandLink onNavigate={() => setMobileOpen(false)} />
+        </div>
+        <nav className="hidden min-w-0 items-center justify-self-center gap-3 md:flex md:translate-y-1.5 lg:gap-4" aria-label="Admin navigation">
+          {hubs.map((hub) => <AdminHubNavLink key={hub.key} hub={hub} />)}
+        </nav>
+        <div className="hidden shrink-0 items-center justify-self-end md:flex">
+          <AdminProfileMenu adminEmail={adminEmail} adminImage={adminImage} displayName={displayName} />
+        </div>
+        <button
+          type="button"
+          className="focus-ring inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border border-[#DDE7F0] bg-white px-3 text-sm font-bold text-[#021C2B] md:hidden"
+          aria-expanded={mobileOpen}
+          aria-controls="admin-mobile-menu"
+          onClick={() => setMobileOpen((open) => !open)}
+        >
+          {mobileOpen ? <X size={16} aria-hidden="true" /> : <Menu size={16} aria-hidden="true" />}
+          Menu
+        </button>
+      </div>
+      {mobileOpen ? (
+        <div id="admin-mobile-menu" className="page-shell mb-3 rounded-2xl border border-[#DDE7F0] bg-white p-2 shadow-lg md:hidden">
+          <nav className="grid gap-1" aria-label="Admin mobile navigation">
+            {hubs.map((hub) => <AdminHubNavLink key={hub.key} hub={hub} onNavigate={() => setMobileOpen(false)} mobile />)}
           </nav>
-          <div className="hidden shrink-0 items-center justify-self-end md:flex">
+          <div className="mt-2 border-t border-slate-100 pt-2">
             <AdminProfileMenu adminEmail={adminEmail} adminImage={adminImage} displayName={displayName} />
           </div>
-          <div className="flex items-center gap-3 md:hidden">
-            <button
-              type="button"
-              aria-label="Open Admin account menu"
-              aria-expanded={mobileAccountOpen}
-              aria-controls="admin-mobile-account-drawer"
-              aria-haspopup="dialog"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                setMobileAccountOpen((open) => !open);
-              }}
-              className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#DDE7F0] bg-[#F3F7FA]/70 text-xs font-black text-[#021C2B] transition-colors hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
-            >
-              <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-transparent text-[11px] font-black text-[#004BB8]">
-                {adminImage ? <AdminLogoImage src={adminImage} alt="" className="h-full w-full object-cover" /> : adminInitials}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              aria-label={mobileMenuOpen ? "Close Admin mobile menu" : "Open Admin mobile menu"}
-              aria-expanded={mobileMenuOpen}
-              aria-controls="admin-mobile-menu-drawer"
-              aria-haspopup="dialog"
-              onClick={() => {
-                setMobileAccountOpen(false);
-                setMobileMenuOpen((open) => !open);
-              }}
-              className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#DDE7F0] bg-[#F3F7FA]/70 text-[#021C2B] transition-colors hover:border-[#004BB8]/30 hover:bg-[#EEF6FC] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
-            >
-              {mobileMenuOpen ? <X size={18} aria-hidden="true" /> : <Menu size={18} aria-hidden="true" />}
-            </button>
-          </div>
         </div>
-      </header>
-
-      {mobileMenuOpen && typeof document !== "undefined"
-        ? createPortal(
-            <div className="fixed inset-0 z-[70] md:hidden" role="presentation">
-              <button
-                type="button"
-                className="absolute inset-0 h-full w-full cursor-default bg-slate-950/45"
-                aria-label="Close Admin mobile menu backdrop"
-                onClick={() => setMobileMenuOpen(false)}
-              />
-
-              <AdminMobileDrawerPanel
-                id="admin-mobile-menu-drawer"
-                role="dialog"
-                aria-modal="true"
-                aria-label="Admin menu"
-                className="fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl md:hidden"
-              >
-                <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
-                  <h2 className="truncate text-xl font-semibold tracking-[-0.02em] text-slate-950">Menu</h2>
-                  <button
-                    type="button"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
-                    aria-label="Close Admin mobile menu"
-                  >
-                    <X size={18} aria-hidden="true" />
-                  </button>
-                </div>
-
-                <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]" aria-label="Admin mobile navigation">
-                  <div className="grid gap-1">
-                    {hubs.map((hub) => <AdminHubNavLink key={hub.key} hub={hub} onNavigate={() => setMobileMenuOpen(false)} mobile />)}
-                  </div>
-                </nav>
-              </AdminMobileDrawerPanel>
-            </div>,
-            document.body,
-          )
-        : null}
-
-      {mobileAccountOpen && typeof document !== "undefined"
-        ? createPortal(
-            <div className="fixed inset-0 z-[70] md:hidden" role="presentation">
-              <button
-                type="button"
-                className="absolute inset-0 h-full w-full cursor-default bg-slate-950/45"
-                aria-label="Close Admin account backdrop"
-                onClick={() => setMobileAccountOpen(false)}
-              />
-
-              <AdminMobileDrawerPanel
-                id="admin-mobile-account-drawer"
-                role="dialog"
-                aria-modal="true"
-                aria-label="Admin account menu"
-                className="fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl md:hidden"
-              >
-                <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
-                  <section aria-label="Admin account">
-                    <div className="flex items-center gap-3 px-2.5 pb-5">
-                      <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#004BB8] text-base font-semibold text-white shadow-sm ring-4 ring-[#004BB8]/10">
-                        {adminImage ? <AdminLogoImage src={adminImage} alt="" className="h-full w-full object-cover" /> : adminInitials}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="block truncate text-lg font-semibold text-slate-950">{displayName}</div>
-                        <div className="mt-0.5 block truncate text-sm font-medium text-slate-500">{adminEmail || "No email available"}</div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setMobileAccountOpen(false)}
-                        className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
-                        aria-label="Close Admin account menu"
-                      >
-                        <X size={18} aria-hidden="true" />
-                      </button>
-                    </div>
-
-                    <div className="border-t border-slate-100" />
-
-                    <div className="grid gap-1 py-4">
-                      <AdminAccountDrawerLink href="/admin/system" label="System" icon={Settings} onNavigate={() => setMobileAccountOpen(false)} />
-                      <AdminAccountDrawerLink href="/admin/logs" label="Audit logs" icon={ShieldCheck} onNavigate={() => setMobileAccountOpen(false)} />
-                      <AdminAccountDrawerLink href="/" label="Switch to public site" icon={Building2} onNavigate={() => setMobileAccountOpen(false)} />
-                      <AdminAccountDrawerLink href="/api/auth/signout" label="Logout" icon={LogOut} onNavigate={() => setMobileAccountOpen(false)} />
-                    </div>
-                  </section>
-                </nav>
-              </AdminMobileDrawerPanel>
-            </div>,
-            document.body,
-          )
-        : null}
-    </>
+      ) : null}
+    </header>
   );
 }
 
@@ -278,7 +123,7 @@ function AdminHubNavLink({ hub, mobile = false, onNavigate }: { hub: AdminHubDef
       className={cn(
         "focus-ring inline-flex items-center border transition-colors",
         mobile
-          ? "min-h-12 px-2 py-2.5 text-[15px] font-semibold leading-5"
+          ? "min-h-11 rounded-xl px-3 py-2 text-sm font-bold"
           : "min-h-[38px] rounded-full px-3.5 py-2 text-[15px] font-semibold leading-none tracking-[-0.005em] lg:px-4",
         active
           ? "border-[#004BB8]/18 bg-[#004BB8]/6 text-[#021C2B]"
@@ -359,24 +204,6 @@ function ProfileLink({ href, label, icon: Icon }: { href: string; label: string;
   );
 }
 
-function AdminAccountDrawerLink({ href, label, icon: Icon, onNavigate }: { href: string; label: string; icon: React.ComponentType<{ size?: number; className?: string }>; onNavigate: () => void }) {
-  return (
-    <Link
-      href={href}
-      onClick={onNavigate}
-      className="group inline-flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-base font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
-    >
-      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition-colors group-hover:border-[#004BB8]/15 group-hover:bg-[#F2F7FA] group-hover:text-[#004BB8]">
-        <Icon size={18} aria-hidden="true" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block whitespace-normal break-words">{label}</span>
-      </span>
-      <ChevronRight size={18} className="ml-auto shrink-0 text-slate-400 transition-colors group-hover:text-[#004BB8]" aria-hidden="true" />
-    </Link>
-  );
-}
-
 export function AdminPageShell({
   title,
   eyebrow = "Admin operations",
@@ -398,12 +225,12 @@ export function AdminPageShell({
   );
 }
 
-export function AdminPageHeader({ eyebrow, title, titleId, description, actions }: { eyebrow?: string; title: string; titleId?: string; description?: string; actions?: React.ReactNode }) {
+export function AdminPageHeader({ eyebrow, title, description, actions }: { eyebrow?: string; title: string; description?: string; actions?: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
       <div>
         {eyebrow ? <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">{eyebrow}</p> : null}
-        <h1 id={titleId} className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">{title}</h1>
+        <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">{title}</h1>
         {description ? <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{description}</p> : null}
       </div>
       {actions ? <div className="shrink-0">{actions}</div> : null}
@@ -436,8 +263,8 @@ export function AdminStatusBadge({ children, tone = "neutral" }: { children: Rea
   return <span className={`inline-flex min-h-6 items-center rounded-full px-2.5 py-1 text-xs font-semibold leading-none ring-1 ${classes}`}>{formatAdminBadgeLabel(children)}</span>;
 }
 
-export function AdminSectionCard({ children, className = "", ...props }: React.HTMLAttributes<HTMLElement>) {
-  return <section className={cn("rounded-2xl border border-slate-200 bg-white shadow-sm", className)} {...props}>{children}</section>;
+export function AdminSectionCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <section className={cn("rounded-2xl border border-slate-200 bg-white shadow-sm", className)}>{children}</section>;
 }
 
 const adminButtonVariants = {
@@ -510,10 +337,10 @@ export function AdminCheckbox({ className, ...props }: React.InputHTMLAttributes
   return <input type="checkbox" className={cn("focus-ring h-4 w-4 rounded border-slate-300 text-indigo-700", className)} {...props} />;
 }
 
-export function AdminFilterBar({ children, action, className = "", onSubmit }: { children: React.ReactNode; action?: string; className?: string; onSubmit?: React.FormEventHandler<HTMLFormElement> }) {
+export function AdminFilterBar({ children, action, className = "" }: { children: React.ReactNode; action?: string; className?: string }) {
   return (
     <AdminSectionCard className={cn("p-4", className)}>
-      <form className="grid gap-3 md:grid-cols-[repeat(auto-fit,minmax(160px,1fr))] md:items-center" action={action} onSubmit={onSubmit}>
+      <form className="grid gap-3 md:grid-cols-[repeat(auto-fit,minmax(160px,1fr))] md:items-center" action={action}>
         {children}
       </form>
     </AdminSectionCard>
@@ -574,14 +401,7 @@ export function AdminDataErrorState({
   );
 }
 
-type AdminDataColumn = string | {
-  key: string;
-  label: React.ReactNode;
-  align?: "left" | "right" | "center";
-  width?: string;
-  className?: string;
-  cellClassName?: string;
-};
+type AdminDataColumn = string | { key: string; label: React.ReactNode; align?: "left" | "right" | "center"; className?: string };
 
 type AdminDataRow = { id: string; cells: React.ReactNode[] };
 
@@ -604,18 +424,6 @@ function columnCustomClass(column: AdminDataColumn) {
   return typeof column === "string" ? "" : column.className || "";
 }
 
-function columnCellClass(column: AdminDataColumn) {
-  return typeof column === "string" ? "" : column.cellClassName || "";
-}
-
-function columnWidth(column: AdminDataColumn) {
-  return typeof column === "string" ? undefined : column.width;
-}
-
-function usesDefaultFinalCellAlignment(column: AdminDataColumn) {
-  return typeof column === "string" || column.align === undefined;
-}
-
 export function AdminDataTable({
   columns,
   rows,
@@ -624,8 +432,6 @@ export function AdminDataTable({
   footer,
   density = "comfortable",
   minWidth = "900px",
-  fixedLayout = false,
-  tableClassName,
 }: {
   columns: AdminDataColumn[];
   rows: AdminDataRow[];
@@ -633,9 +439,7 @@ export function AdminDataTable({
   summary?: React.ReactNode;
   footer?: React.ReactNode;
   density?: "compact" | "comfortable";
-  minWidth?: string | null;
-  fixedLayout?: boolean;
-  tableClassName?: string;
+  minWidth?: string;
 }) {
   const cellPadding = density === "compact" ? "px-4 py-3" : "px-5 py-4";
 
@@ -643,12 +447,12 @@ export function AdminDataTable({
     <AdminSectionCard className="overflow-hidden p-0 shadow-sm">
       {summary ? <div className="border-b border-slate-200 px-5 py-4 text-sm text-slate-600">{summary}</div> : null}
       <div className="overflow-x-auto bg-[linear-gradient(to_right,white,white),linear-gradient(to_right,white,white),linear-gradient(to_right,rgba(15,23,42,0.08),rgba(255,255,255,0)),linear-gradient(to_left,rgba(15,23,42,0.08),rgba(255,255,255,0))] bg-[length:24px_100%,24px_100%,12px_100%,12px_100%] bg-[position:left_center,right_center,left_center,right_center] bg-no-repeat [background-attachment:local,local,scroll,scroll]">
-        <table className={cn("w-full border-separate border-spacing-0 text-left text-sm", fixedLayout && "table-fixed", tableClassName)} style={{ minWidth: minWidth ?? undefined }} aria-label={caption}>
+        <table className="w-full border-separate border-spacing-0 text-left text-sm" style={{ minWidth }} aria-label={caption}>
           {caption ? <caption className="sr-only">{caption}</caption> : null}
           <thead className="sticky top-0 z-10 bg-slate-50/95 text-xs text-slate-500 backdrop-blur supports-[backdrop-filter]:bg-slate-50/80">
             <tr>
               {columns.map((column) => (
-                <th key={columnKey(column)} scope="col" style={{ width: columnWidth(column) }} className={cn(cellPadding, "border-b border-slate-200 font-semibold uppercase tracking-wide", columnAlignClass(column), columnCustomClass(column))}>
+                <th key={columnKey(column)} scope="col" className={cn(cellPadding, "border-b border-slate-200 font-semibold uppercase tracking-wide", columnAlignClass(column), columnCustomClass(column))}>
                   {columnLabel(column)}
                 </th>
               ))}
@@ -657,10 +461,7 @@ export function AdminDataTable({
           <tbody className="divide-y divide-slate-100 bg-white">
             {rows.map((row) => (
               <tr key={row.id} className="group align-top transition-colors hover:bg-slate-50/80 focus-within:bg-slate-50/80">
-                {row.cells.map((cell, index) => {
-                  const column = columns[index];
-                  return <td key={`${row.id}-${index}`} style={{ width: columnWidth(column) }} className={cn(cellPadding, "max-w-[22rem] text-slate-700 first:font-medium first:text-slate-950 [&_a]:focus-ring [&_button]:focus-ring", columnAlignClass(column), index === row.cells.length - 1 && usesDefaultFinalCellAlignment(column) && "whitespace-nowrap text-right", columnCellClass(column))}>{cell}</td>;
-                })}
+                {row.cells.map((cell, index) => <td key={`${row.id}-${index}`} className={cn(cellPadding, "max-w-[22rem] text-slate-700 first:font-medium first:text-slate-950 [&_a]:focus-ring [&_button]:focus-ring", index === row.cells.length - 1 && "whitespace-nowrap text-right")}>{cell}</td>)}
               </tr>
             ))}
           </tbody>
