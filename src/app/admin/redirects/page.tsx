@@ -13,9 +13,6 @@ export default async function AdminRedirectsPage() {
         <AdminEmptyState title="No redirect logs" message="Redirect logging is not active yet or no outbound handoffs have been recorded." />
       ) : (
         <AdminDataTable
-          caption="Redirect logs"
-          density="compact"
-          minWidth="960px"
           columns={["Route", "Provider", "Source page", "Destination domain", "Status", "Created"]}
           rows={redirects.map((redirect) => ({
             id: redirect.id,

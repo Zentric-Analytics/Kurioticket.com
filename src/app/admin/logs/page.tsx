@@ -34,9 +34,6 @@ export default async function AdminLogsPage({ searchParams }: PageProps) {
           <AdminEmptyState title="No admin audit logs found" message="Audit logs will appear after sensitive admin actions are recorded." />
         ) : (
           <AdminDataTable
-            caption="Admin audit logs"
-            density="compact"
-            minWidth="1120px"
             columns={["Created", "Admin", "Action", "Target", "Target email", "IP", "Metadata"]}
             rows={logs.map((log) => ({
               id: log.id,
