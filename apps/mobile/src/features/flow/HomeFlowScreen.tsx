@@ -17,8 +17,8 @@ import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { FlightSearchPanel } from "./FlightSearchPanel";
 import { flowColors, flowStyles } from "./flowStyles";
 
-const guestHeroImage = require("../../../assets/heroes/home-santorini.png");
-const loggedInHeroImage = {
+const guestHeroSource = require("../../../assets/heroes/home-santorini.png");
+const loggedInHeroSource = {
   uri: "https://kurioticket.com/images/premium/homepage/kurioticket-homepage-hero-businesswoman-modern-city-luggage-001.jpg",
 };
 
@@ -42,7 +42,9 @@ export function HomeFlowScreen() {
       .catch(() => setIsAuthenticated(false));
   }, []);
 
-  const heroSource = isAuthenticated ? loggedInHeroImage : guestHeroImage;
+  const heroSource = isAuthenticated
+    ? loggedInHeroSource
+    : guestHeroSource;
 
   return (
     <SafeAreaView style={flowStyles.safe} edges={[]}>
