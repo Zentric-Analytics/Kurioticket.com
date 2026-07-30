@@ -70,7 +70,7 @@ export default async function AdminAccountDeletionDetailPage({ params }: PagePro
           </AdminSectionCard>
 
           <AdminSectionCard className="p-5">
-            <h2 className="text-lg font-semibold text-slate-950">Request details</h2>
+            <h2 className="text-lg font-black text-slate-950">Request details</h2>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               <Detail label="User email" value={request.email || request.user.email} />
               <Detail label="User id" value={request.userId} />
@@ -88,7 +88,7 @@ export default async function AdminAccountDeletionDetailPage({ params }: PagePro
           </AdminSectionCard>
 
           <AdminSectionCard className="p-5">
-            <h2 className="text-lg font-semibold text-slate-950">Review notes</h2>
+            <h2 className="text-lg font-black text-slate-950">Review notes</h2>
             <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">{request.reviewNotes || "No review notes yet."}</p>
           </AdminSectionCard>
         </div>

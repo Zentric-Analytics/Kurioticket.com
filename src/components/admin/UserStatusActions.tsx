@@ -114,12 +114,12 @@ export function UserStatusActions({
 
   if (isSelf)
     return (
-      <span className="text-xs font-semibold text-slate-500">Current admin</span>
+      <span className="text-xs font-black text-slate-500">Current admin</span>
     );
 
   if (isProtectedAdmin) {
     return (
-      <span className="text-xs font-semibold text-slate-500">Protected admin</span>
+      <span className="text-xs font-black text-slate-500">Protected admin</span>
     );
   }
 
@@ -174,7 +174,7 @@ export function UserStatusActions({
           </AdminButton>
         ) : null}
         {role === "ADMIN" ? (
-          <span className="text-xs font-semibold text-slate-500">
+          <span className="text-xs font-black text-slate-500">
             Demote before status changes or permanent deletion.
           </span>
         ) : null}
@@ -194,7 +194,7 @@ export function UserStatusActions({
       </div>
       {showPermanentDelete && canHardDelete ? (
         <div className="grid gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-950">
-          <p className="font-semibold">
+          <p className="font-black">
             This permanently removes the user record and cannot be undone.
           </p>
           <label className="grid gap-1">
@@ -234,7 +234,7 @@ export function UserStatusActions({
         </div>
       ) : null}
       {message ? (
-        <p className="text-xs font-semibold text-slate-500">{message}</p>
+        <p className="text-xs font-black text-slate-500">{message}</p>
       ) : null}
     </div>
   );

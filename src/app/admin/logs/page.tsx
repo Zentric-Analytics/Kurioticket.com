@@ -40,7 +40,7 @@ export default async function AdminLogsPage({ searchParams }: PageProps) {
               cells: [
                 formatDateTime(log.createdAt),
                 log.adminEmail,
-                <span key="action" className="font-semibold text-slate-950">{log.action}</span>,
+                <span key="action" className="font-black text-slate-950">{log.action}</span>,
                 `${log.targetType}${log.targetId ? ` / ${log.targetId}` : ""}`,
                 log.targetEmail || "—",
                 log.ipAddress || "—",

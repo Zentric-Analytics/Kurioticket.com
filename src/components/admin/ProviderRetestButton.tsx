@@ -24,7 +24,7 @@ export function ProviderRetestButton() {
   return (
     <div className="grid gap-2">
       <AdminButton type="button" onClick={retest} disabled={loading}>{loading ? "Retesting..." : "Retest Duffel"}</AdminButton>
-      {message ? <p className="text-sm font-semibold text-slate-500">{message}</p> : null}
+      {message ? <p className="text-sm font-black text-slate-500">{message}</p> : null}
     </div>
   );
 }

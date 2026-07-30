@@ -28,7 +28,7 @@ export default async function AdminSupportPage() {
           rows={tickets.map((ticket) => ({
             id: ticket.id,
             cells: [
-              <div key="ticket" className="min-w-0 space-y-1"><p className="truncate font-semibold text-slate-950">{ticket.subject}</p><p className="truncate text-xs text-slate-500">{ticket.id}</p></div>,
+              <div key="ticket" className="min-w-0 space-y-1"><p className="truncate font-black text-slate-950">{ticket.subject}</p><p className="truncate text-xs text-slate-500">{ticket.id}</p></div>,
               <div key="user" className="min-w-0 space-y-1"><p className="truncate font-medium text-slate-800">{ticket.user?.name || "Guest"}</p><p className="truncate text-xs text-slate-500">{ticket.user?.email || ticket.email}</p></div>,
               ticket.category,
               <AdminStatusBadge key="status" tone={ticket.status === "OPEN" ? "warn" : ticket.status === "RESOLVED" || ticket.status === "CLOSED" ? "good" : "info"}>{ticket.status}</AdminStatusBadge>,

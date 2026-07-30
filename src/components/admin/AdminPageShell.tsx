@@ -2,12 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, Loader2, LogOut, Menu, Settings, ShieldCheck, X } from "lucide-react";
-import { useState } from "react";
+import { Bell, Building2, Loader2, LogOut, Search, Settings, ShieldCheck } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { formatAdminBadgeLabel } from "@/components/admin/adminDesignSystem";
-import { getActiveAdminHub, getAdminNavbarHubsForRole, type AdminHubDefinition, type AdminRole } from "@/lib/adminNavigation";
+import { adminNavigationGroups, getAdminNavForRole, isAdminNavItemActive, type AdminNavDefinition, type AdminRole } from "@/lib/adminNavigation";
 
 const AdminLogoImage = "img";
 
@@ -27,150 +25,94 @@ export function AdminShell({
   adminRole: string;
 }) {
   const safeRole: AdminRole = adminRole === "SUPPORT" || adminRole === "USER" ? adminRole : "ADMIN";
-  const hubs = getAdminNavbarHubsForRole(safeRole);
+  const navigation = getAdminNavForRole(safeRole);
+  const displayName = adminName || adminEmail || "Admin";
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-950">
-      <AdminNavbar hubs={hubs} adminEmail={adminEmail} adminName={adminName} adminImage={adminImage} />
-      <main className="page-shell py-5 sm:py-6">{children}</main>
+    <div className="min-h-screen bg-slate-100 text-slate-950 lg:flex">
+      <AdminSidebar navigation={navigation} />
+      <div className="min-w-0 flex-1">
+        <AdminTopbar adminEmail={adminEmail} adminImage={adminImage} displayName={displayName} adminRole={safeRole} />
+        <main className="px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+      </div>
     </div>
   );
 }
 
-export function AdminNavbar({
-  hubs,
-  adminEmail,
-  adminName,
-  adminImage,
-}: {
-  hubs: AdminHubDefinition[];
-  adminEmail?: string | null;
-  adminName?: string | null;
-  adminImage?: string | null;
-}) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const displayName = adminName || adminEmail || "Admin";
+function AdminSidebar({ navigation }: { navigation: AdminNavDefinition[] }) {
+  const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[#DDE7F0] bg-white/95 backdrop-blur">
-      <div className="page-shell flex min-h-16 items-center justify-between gap-3 py-2 md:grid md:min-h-[68px] md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:gap-6">
-        <div className="min-w-0 justify-self-start">
-          <AdminBrandLink onNavigate={() => setMobileOpen(false)} />
+    <aside className="sticky top-0 z-30 w-full shrink-0 border-b border-slate-800 bg-slate-950 text-white lg:h-screen lg:w-[280px] lg:border-b-0 lg:border-r">
+      <div className="flex items-center gap-3 px-4 py-4 lg:px-6 lg:py-6">
+        <AdminLogoImage src="/brand/kurioticket-logo-primary-dark-header.svg" alt="Kurioticket" className="h-8 w-auto" />
+        <div className="border-l border-white/20 pl-3">
+          <p className="text-sm font-black">Admin</p>
+          <p className="text-xs text-slate-400">Internal operations</p>
         </div>
-        <nav className="hidden min-w-0 items-center justify-self-center gap-3 md:flex md:translate-y-1.5 lg:gap-4" aria-label="Admin navigation">
-          {hubs.map((hub) => <AdminHubNavLink key={hub.key} hub={hub} />)}
-        </nav>
-        <div className="hidden shrink-0 items-center justify-self-end md:flex">
-          <AdminProfileMenu adminEmail={adminEmail} adminImage={adminImage} displayName={displayName} />
-        </div>
-        <button
-          type="button"
-          className="focus-ring inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border border-[#DDE7F0] bg-white px-3 text-sm font-bold text-[#021C2B] md:hidden"
-          aria-expanded={mobileOpen}
-          aria-controls="admin-mobile-menu"
-          onClick={() => setMobileOpen((open) => !open)}
-        >
-          {mobileOpen ? <X size={16} aria-hidden="true" /> : <Menu size={16} aria-hidden="true" />}
-          Menu
-        </button>
       </div>
-      {mobileOpen ? (
-        <div id="admin-mobile-menu" className="page-shell mb-3 rounded-2xl border border-[#DDE7F0] bg-white p-2 shadow-lg md:hidden">
-          <nav className="grid gap-1" aria-label="Admin mobile navigation">
-            {hubs.map((hub) => <AdminHubNavLink key={hub.key} hub={hub} onNavigate={() => setMobileOpen(false)} mobile />)}
-          </nav>
-          <div className="mt-2 border-t border-slate-100 pt-2">
-            <AdminProfileMenu adminEmail={adminEmail} adminImage={adminImage} displayName={displayName} />
-          </div>
+      <nav className="flex gap-2 overflow-x-auto px-4 pb-4 lg:block lg:h-[calc(100vh-96px)] lg:space-y-6 lg:overflow-y-auto lg:px-4" aria-label="Admin navigation">
+        {adminNavigationGroups.map((group) => {
+          const items = navigation.filter((item) => group.hrefs.some((href) => href === item.href));
+          if (items.length === 0) return null;
+          return (
+            <div key={group.label} className="contents lg:block">
+              <p className="hidden px-3 pb-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-500 lg:block">{group.label}</p>
+              {items.map((item) => {
+                const active = isAdminNavItemActive(item.href, pathname);
+                const Icon = item.icon;
+                return (
+                  <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={cn(
+                    "focus-ring flex shrink-0 items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-bold transition lg:mb-1 lg:w-full lg:gap-3",
+                    active ? "bg-white text-slate-950" : "text-slate-300 hover:bg-white/10 hover:text-white",
+                  )}>
+                    <Icon size={17} aria-hidden="true" />{item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          );
+        })}
+      </nav>
+    </aside>
+  );
+}
+
+function AdminTopbar({ adminEmail, adminImage, displayName, adminRole }: { adminEmail?: string | null; adminImage?: string | null; displayName: string; adminRole: AdminRole }) {
+  return (
+    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <div className="flex min-h-16 items-center gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="hidden min-w-0 md:block">
+          <p className="truncate text-sm font-black text-slate-950">Kurioticket Admin</p>
+          <p className="truncate text-xs text-slate-500">Secure internal workspace</p>
         </div>
-      ) : null}
+        <label className="relative min-w-0 flex-1 md:ml-4 md:max-w-xl">
+          <span className="sr-only">Search admin</span>
+          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={17} aria-hidden="true" />
+          <input type="search" placeholder="Search users, searches, providers..." className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm outline-none placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100" />
+        </label>
+        <button type="button" disabled aria-label="Notifications unavailable" title="Notifications unavailable" className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 disabled:cursor-not-allowed">
+          <Bell size={18} aria-hidden="true" />
+        </button>
+        <span className="hidden rounded-full bg-blue-50 px-2.5 py-1 text-xs font-black uppercase tracking-wide text-blue-700 sm:inline">{adminRole}</span>
+        <AdminProfileMenu adminEmail={adminEmail} adminImage={adminImage} displayName={displayName} />
+      </div>
     </header>
   );
 }
 
-function AdminBrandLink({ onNavigate }: { onNavigate?: () => void }) {
-  const pathname = usePathname();
-  const active = pathname === "/admin";
-
-  return (
-    <Link
-      href="/admin"
-      aria-label="Go to Admin Overview"
-      aria-current={active ? "page" : undefined}
-      onClick={onNavigate}
-      className={cn(
-        "focus-ring inline-flex shrink-0 items-center py-1 text-[#021C2B] opacity-95 transition hover:opacity-100",
-        active && "opacity-100",
-      )}
-    >
-      <AdminLogoImage
-        src="/brand/kurioticket-logo-primary-light-bg.svg"
-        alt="Kurioticket"
-        className="h-8 w-auto md:h-9"
-      />
-    </Link>
-  );
-}
-
-function AdminHubNavLink({ hub, mobile = false, onNavigate }: { hub: AdminHubDefinition; mobile?: boolean; onNavigate?: () => void }) {
-  const pathname = usePathname();
-  const active = getActiveAdminHub(pathname) === hub.key;
-
-  return (
-    <Link
-      href={hub.href}
-      onClick={onNavigate}
-      className={cn(
-        "focus-ring inline-flex items-center border transition-colors",
-        mobile
-          ? "min-h-11 rounded-xl px-3 py-2 text-sm font-bold"
-          : "min-h-[38px] rounded-full px-3.5 py-2 text-[15px] font-semibold leading-none tracking-[-0.005em] lg:px-4",
-        active
-          ? "border-[#004BB8]/18 bg-[#004BB8]/6 text-[#021C2B]"
-          : "border-[#DDE7F0] bg-[#F3F7FA]/70 text-[#021C2B]/85 hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B]",
-      )}
-      aria-current={active ? "page" : undefined}
-    >
-      {hub.label}
-    </Link>
-  );
-}
-
-function AdminProfileMenu({
-  adminEmail,
-  adminImage,
-  className = "",
-  displayName,
-}: {
-  adminEmail?: string | null;
-  adminImage?: string | null;
-  className?: string;
-  displayName: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const profileLabel = "Open Admin profile menu";
+function AdminProfileMenu({ adminEmail, adminImage, displayName }: { adminEmail?: string | null; adminImage?: string | null; displayName: string }) {
   const adminInitials = getAccountInitials(displayName, adminEmail);
-
   return (
-    <details className={`relative ${className}`} onToggle={(event) => setOpen(event.currentTarget.open)}>
-      <summary
-        aria-label={profileLabel}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        title={profileLabel}
-        className="inline-flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-md border border-transparent bg-transparent text-[#021C2B] marker:hidden transition-colors hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2"
-      >
-        <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-[#F2F7FA] text-[11px] font-black text-[#004BB8] shadow-sm">
-          {adminImage ? <AdminLogoImage src={adminImage} alt="" className="h-full w-full object-cover" /> : adminInitials}
-        </span>
+    <details className="relative">
+      <summary aria-label="Open administrator profile menu" className="focus-ring flex cursor-pointer list-none items-center gap-3 rounded-lg px-1 py-1 marker:hidden hover:bg-slate-50">
+        <span className="hidden min-w-0 text-right xl:block"><span className="block truncate text-sm font-black text-slate-900">{displayName}</span><span className="block truncate text-xs text-slate-500">Administrator</span></span>
+        <span className="inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-slate-900 text-xs font-black text-white">{adminImage ? <AdminLogoImage src={adminImage} alt="" className="h-full w-full object-cover" /> : adminInitials}</span>
       </summary>
-      <div role="menu" aria-label={profileLabel} className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl ring-1 ring-slate-950/5">
-        <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-3">
-          <p className="truncate text-sm font-semibold text-slate-900">{displayName}</p>
-          <p className="truncate text-xs font-normal text-slate-500">{adminEmail || "No email available"}</p>
-        </div>
+      <div className="absolute right-0 z-50 mt-2 w-72 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+        <div className="border-b border-slate-100 px-4 py-3"><p className="truncate text-sm font-black text-slate-900">{displayName}</p><p className="truncate text-xs text-slate-500">{adminEmail || "No email available"}</p></div>
         <div className="grid gap-1 p-2">
-          <ProfileLink href="/admin/system" label="System" icon={Settings} />
+          <ProfileLink href="/admin/settings" label="Admin settings" icon={Settings} />
           <ProfileLink href="/admin/logs" label="Audit logs" icon={ShieldCheck} />
           <ProfileLink href="/" label="Switch to public site" icon={Building2} />
           <ProfileLink href="/api/auth/signout" label="Logout" icon={LogOut} />
@@ -180,29 +122,8 @@ function AdminProfileMenu({
   );
 }
 
-function getAccountInitials(name?: string | null, email?: string | null) {
-  const source = name?.trim() || email?.trim() || "Admin";
-
-  return (
-    source
-      .split(/[\s@._-]+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part.charAt(0).toUpperCase())
-      .join("") || "A"
-  );
-}
-
-function ProfileLink({ href, label, icon: Icon }: { href: string; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }) {
-  return (
-    <Link href={href} role="menuitem" className="group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-[#F2F7FA] hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25">
-      <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#F2F7FA] text-[#004BB8] group-hover:bg-white">
-        <Icon size={17} aria-hidden="true" />
-      </span>
-      {label}
-    </Link>
-  );
-}
+function getAccountInitials(name?: string | null, email?: string | null) { const source = name?.trim() || email?.trim() || "Admin"; return source.split(/[\s@._-]+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join("") || "A"; }
+function ProfileLink({ href, label, icon: Icon }: { href: string; label: string; icon: React.ComponentType<{ size?: number }> }) { return <Link href={href} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 hover:text-slate-950"><Icon size={17} aria-hidden="true" />{label}</Link>; }
 
 export function AdminPageShell({
   title,
@@ -230,7 +151,7 @@ export function AdminPageHeader({ eyebrow, title, description, actions }: { eyeb
     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
       <div>
         {eyebrow ? <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">{eyebrow}</p> : null}
-        <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">{title}</h1>
+        <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">{title}</h1>
         {description ? <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{description}</p> : null}
       </div>
       {actions ? <div className="shrink-0">{actions}</div> : null}
@@ -245,7 +166,7 @@ export function AdminMetricCard({ label, value, hint, tone = "neutral" }: { labe
         <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{label}</p>
         <span className={`h-2.5 w-2.5 rounded-full ${dotClass(tone)}`} />
       </div>
-      <p className="mt-3 text-2xl font-extrabold text-slate-950">{value}</p>
+      <p className="mt-3 text-2xl font-black text-slate-950">{value}</p>
       {hint ? <p className="mt-1 text-xs font-semibold text-slate-500">{hint}</p> : null}
     </AdminSectionCard>
   );
@@ -260,15 +181,15 @@ export function AdminStatusBadge({ children, tone = "neutral" }: { children: Rea
     info: "bg-[#F3F7FA] text-[#004BB8] ring-[#DDE7F0]",
   }[tone];
 
-  return <span className={`inline-flex min-h-6 items-center rounded-full px-2.5 py-1 text-xs font-semibold leading-none ring-1 ${classes}`}>{formatAdminBadgeLabel(children)}</span>;
+  return <span className={`inline-flex min-h-6 items-center rounded-full px-2.5 py-1 text-xs font-black leading-none ring-1 ${classes}`}>{children}</span>;
 }
 
 export function AdminSectionCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <section className={cn("rounded-2xl border border-slate-200 bg-white shadow-sm", className)}>{children}</section>;
+  return <section className={cn("rounded-xl border border-slate-200 bg-white shadow-sm", className)}>{children}</section>;
 }
 
 const adminButtonVariants = {
-  primary: "border border-indigo-700 bg-indigo-700 text-white shadow-sm hover:border-indigo-800 hover:bg-indigo-800",
+  primary: "border border-[#004BB8] bg-[#004BB8] text-white shadow-sm hover:border-[#003D96] hover:bg-[#003D96]",
   secondary: "border border-slate-200 bg-white text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950",
   ghost: "border border-transparent bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-950",
   destructive: "border border-rose-600 bg-rose-600 text-white shadow-sm hover:border-rose-700 hover:bg-rose-700",
@@ -289,7 +210,7 @@ export function AdminButton({ className, variant = "primary", size = "md", loadi
   return (
     <button
       className={cn(
-        "focus-ring inline-flex min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl font-semibold transition disabled:cursor-not-allowed disabled:opacity-55",
+        "focus-ring inline-flex min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg font-black transition disabled:cursor-not-allowed disabled:opacity-55",
         adminButtonVariants[variant],
         adminButtonSizes[size],
         className,
@@ -307,7 +228,7 @@ export function AdminLinkButton({ className, variant = "secondary", size = "md",
   return (
     <Link
       className={cn(
-        "focus-ring inline-flex min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl font-semibold transition",
+        "focus-ring inline-flex min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg font-black transition",
         adminButtonVariants[variant],
         adminButtonSizes[size],
         className,
@@ -319,7 +240,7 @@ export function AdminLinkButton({ className, variant = "secondary", size = "md",
   );
 }
 
-const adminControlClass = "focus-ring h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-indigo-300 focus:bg-white focus:ring-4 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400";
+const adminControlClass = "focus-ring h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-[#004BB8] focus:bg-white focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400";
 
 export function AdminInput({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cn(adminControlClass, className)} {...props} />;

@@ -58,13 +58,11 @@ test("providers page preserves provider data, product guidance, and Duffel-only 
   assert.match(providersPage, /No fake car provider inventory/);
 });
 
-test("admin navigation keeps Providers and removes duplicate product destinations only", () => {
-  const labels = adminNavigation.map((item) => item.label);
-  assert.ok(labels.includes("Providers"));
-  assert.equal(labels.includes("Flights"), false);
-  assert.equal(labels.includes("Hotels"), false);
-  assert.equal(labels.includes("Cars"), false);
-  assert.deepEqual(labels, ["Overview", "Users", "Support", "Account Deletions", "Searches", "Provider Handoffs", "Admin Logs", "Providers", "Content Inventory", "System"]);
+test("admin navigation restores Providers and the original product destinations", () => {
+  assert.equal(adminNavigation.some((item) => item.href === "/admin/providers" && item.label === "Providers"), true);
+  assert.equal(adminNavigation.some((item) => item.href === "/admin/flights" && item.label === "Flights"), true);
+  assert.equal(adminNavigation.some((item) => item.href === "/admin/hotels" && item.label === "Hotels"), true);
+  assert.equal(adminNavigation.some((item) => item.href === "/admin/cars" && item.label === "Cars"), true);
 });
 
 test("legacy admin product pages are server redirects and no longer render duplicate provider cards", () => {

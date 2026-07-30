@@ -17,7 +17,7 @@ export default async function AdminRedirectsPage() {
           rows={redirects.map((redirect) => ({
             id: redirect.id,
             cells: [
-              <span key="route" className="font-semibold text-slate-950">{redirect.route || "—"}</span>,
+              <span key="route" className="font-black text-slate-950">{redirect.route || "—"}</span>,
               redirect.provider,
               redirect.sourcePage,
               <span key="domain" className="block max-w-72 truncate" title={safeDomain(redirect.destinationUrl)}>{safeDomain(redirect.destinationUrl)}</span>,
