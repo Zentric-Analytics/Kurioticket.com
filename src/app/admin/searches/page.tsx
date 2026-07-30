@@ -22,9 +22,6 @@ export default async function AdminSearchesPage() {
         />
       ) : (
         <AdminDataTable
-          caption="Search operations"
-          density="compact"
-          minWidth="1040px"
           columns={["Created", "Type", "Route / stay", "Market", "Results", "Provider", "Status", "Latency"]}
           rows={searches.map((search) => {
             const query = normalizeQuery(search.query);

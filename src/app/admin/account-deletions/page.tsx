@@ -107,10 +107,7 @@ export default async function AdminAccountDeletionsPage({
             <AdminEmptyState title="No requests in this view" message="Try another status filter to review other deletion request lifecycle states." />
           ) : (
             <AdminDataTable
-              caption="Account deletion requests"
-              density="compact"
-              minWidth="1320px"
-              columns={["Request", "User status", "Request status", "Requested", "Scheduled", "Cancelled / reactivated", "Completed", "Support / admin refs", "Notes", { key: "action", label: "Action", align: "right" }]}
+              columns={["Request", "User status", "Request status", "Requested", "Scheduled", "Cancelled / reactivated", "Completed", "Support / admin refs", "Notes", "Action"]}
               rows={visibleRequests.map((request) => {
                 const cancellationDetail = getCancellationDetail(request.cancellationMetadata);
                 return {

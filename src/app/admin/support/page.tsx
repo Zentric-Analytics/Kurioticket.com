@@ -24,9 +24,7 @@ export default async function AdminSupportPage() {
         <AdminEmptyState title="No support tickets" message="Support tickets will appear here when real users or guests submit support requests." />
       ) : (
         <AdminDataTable
-          caption="Support tickets"
-          minWidth="1040px"
-          columns={["Ticket", "User / email", "Category", "Status", "Priority", "Created", "Updated", { key: "action", label: "Action", align: "right" }]}
+          columns={["Ticket", "User / email", "Category", "Status", "Priority", "Created", "Updated", "Action"]}
           rows={tickets.map((ticket) => ({
             id: ticket.id,
             cells: [
