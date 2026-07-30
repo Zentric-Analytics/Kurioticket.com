@@ -42,9 +42,7 @@ export function HomeFlowScreen() {
       .catch(() => setIsAuthenticated(false));
   }, []);
 
-  const heroSource = isAuthenticated
-    ? loggedInHeroSource
-    : guestHeroSource;
+  const heroSource = isAuthenticated ? loggedInHeroSource : guestHeroSource;
 
   return (
     <SafeAreaView style={flowStyles.safe} edges={[]}>
