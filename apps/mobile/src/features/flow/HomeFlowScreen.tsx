@@ -18,8 +18,9 @@ import { ResponsiveHero } from "./ResponsiveHero";
 import { flowColors, flowStyles } from "./flowStyles";
 
 const guestHeroImage = require("../../../assets/heroes/home-santorini.png");
-const loggedInHeroUrl =
-  "https://kurioticket.com/images/premium/homepage/kurioticket-homepage-hero-businesswoman-modern-city-luggage-001.jpg";
+const loggedInHeroImage = {
+  uri: "https://kurioticket.com/images/premium/homepage/kurioticket-homepage-hero-businesswoman-modern-city-luggage-001.jpg",
+};
 
 const products: {
   label: string;
@@ -41,7 +42,7 @@ export function HomeFlowScreen() {
       .catch(() => setIsAuthenticated(false));
   }, []);
 
-  const heroImage = isAuthenticated ? { uri: loggedInHeroUrl } : guestHeroImage;
+  const heroImage = isAuthenticated ? loggedInHeroImage : guestHeroImage;
 
   return (
     <SafeAreaView style={flowStyles.safe} edges={[]}>
