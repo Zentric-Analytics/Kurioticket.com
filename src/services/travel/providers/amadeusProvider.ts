@@ -6,6 +6,7 @@ import { fetchJson, runProvider, skippedProvider } from "@/services/travel/provi
 
 const travelClassMap: Record<FlightSearchParams["cabinClass"], string> = {
   economy: "ECONOMY",
+  "premium-economy": "PREMIUM_ECONOMY",
   business: "BUSINESS",
   first: "FIRST",
 };
