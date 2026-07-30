@@ -17,17 +17,86 @@ function desktopMinimizedHotelSearchBarSource() {
   );
 
   assert.notEqual(start, -1, "Hotel minimized toolbar renderer exists");
-  assert.notEqual(end, -1, "sticky dialog renderer follows the toolbar renderer");
+  assert.notEqual(
+    end,
+    -1,
+    "sticky dialog renderer follows the toolbar renderer",
+  );
 
   return source.slice(start, end);
 }
 
+function desktopCompactStickyWrapperSource() {
+  const start = source.indexOf(
+    '"pointer-events-none fixed inset-x-0 top-0 z-[1000]',
+  );
+  const end = source.indexOf("{renderDesktopStickyHotelSearchDialog()}", start);
+
+  assert.notEqual(start, -1, "desktop compact sticky wrapper exists");
+  assert.notEqual(end, -1, "sticky dialog follows the compact wrapper");
+
+  return source.slice(start, end);
+}
+
+test("Hotel desktop compact sticky wrapper is a transparent positioning layer", () => {
+  const wrapper = desktopCompactStickyWrapperSource();
+
+  for (const className of [
+    "pointer-events-none",
+    "fixed",
+    "inset-x-0",
+    "top-0",
+    "z-[1000]",
+    "hidden",
+    "px-4",
+    "transition-all",
+    "duration-200",
+    "lg:block",
+    "translate-y-0",
+    "opacity-100",
+    "-translate-y-3",
+    "opacity-0",
+  ]) {
+    assert.match(
+      wrapper,
+      new RegExp(className.replaceAll("[", "\\[").replaceAll("]", "\\]")),
+    );
+  }
+
+  assert.match(wrapper, /showDesktopMinimizedSearch/);
+  assert.match(wrapper, /desktopStickyHotelSearchOpen/);
+  assert.match(wrapper, /aria-hidden/);
+  assert.match(wrapper, /inert/);
+  assert.match(wrapper, /renderDesktopMinimizedHotelSearchBar\(\)/);
+
+  for (const forbiddenChrome of [
+    "border-b",
+    "bg-gradient-to-b",
+    "from-[#fbfdff]",
+    "via-[#f8fbff]",
+    "to-[#f5f9ff]",
+    "py-3",
+    "backdrop-blur-xl",
+    "shadow-[0_10px_30px",
+  ]) {
+    assert.doesNotMatch(
+      wrapper,
+      new RegExp(forbiddenChrome.replaceAll("[", "\\[").replaceAll("]", "\\]")),
+    );
+  }
+});
+
 test("Hotel desktop minimized search matches the Flights compact geometry", () => {
   const toolbar = desktopMinimizedHotelSearchBarSource();
 
+  assert.match(toolbar, /pointer-events-auto/);
   assert.match(toolbar, /max-w-\[820px\]/);
   assert.match(toolbar, /h-\[58px\]/);
   assert.match(toolbar, /rounded-lg/);
+  assert.match(toolbar, /border border-slate-200\/95/);
+  assert.match(toolbar, /bg-white/);
+  assert.match(toolbar, /shadow-\[0_12px_28px/);
+  assert.match(toolbar, /ring-1/);
   assert.match(
     toolbar,
     /grid-cols-\[minmax\(220px,1\.5fr\)_minmax\(150px,0\.9fr\)_minmax\(160px,1fr\)_92px\]/,

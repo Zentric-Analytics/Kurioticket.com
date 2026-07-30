@@ -1424,7 +1424,7 @@ export function HotelResultsClient() {
 
     return (
       <div className="page-shell">
-        <div className="mx-auto grid h-[58px] w-full max-w-[820px] grid-cols-[minmax(220px,1.5fr)_minmax(150px,0.9fr)_minmax(160px,1fr)_92px] items-center overflow-hidden rounded-lg border border-slate-200/95 bg-white shadow-[0_12px_28px_-22px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.025]">
+        <div className="pointer-events-auto mx-auto grid h-[58px] w-full max-w-[820px] grid-cols-[minmax(220px,1.5fr)_minmax(150px,0.9fr)_minmax(160px,1fr)_92px] items-center overflow-hidden rounded-lg border border-slate-200/95 bg-white shadow-[0_12px_28px_-22px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/[0.025]">
           <button
             type="button"
             aria-expanded={desktopStickyHotelSearchOpen}
@@ -1658,10 +1658,10 @@ export function HotelResultsClient() {
 
       <div
         className={cn(
-          "fixed inset-x-0 top-0 z-[1000] hidden border-b border-slate-200/80 bg-gradient-to-b from-[#fbfdff]/96 via-[#f8fbff]/94 to-[#f5f9ff]/92 px-4 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.07)] backdrop-blur-xl transition-all duration-200 lg:block",
+          "pointer-events-none fixed inset-x-0 top-0 z-[1000] hidden px-4 transition-all duration-200 lg:block",
           showDesktopMinimizedSearch && !desktopStickyHotelSearchOpen
-            ? "pointer-events-auto translate-y-0 opacity-100"
-            : "pointer-events-none -translate-y-3 opacity-0",
+            ? "translate-y-0 opacity-100"
+            : "-translate-y-3 opacity-0",
         )}
         aria-hidden={
           !showDesktopMinimizedSearch || desktopStickyHotelSearchOpen
