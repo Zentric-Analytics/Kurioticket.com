@@ -16,14 +16,31 @@ function canonicalSearch(value: unknown): CarSearchParams | null {
 }
 
 export async function POST(request: Request) {
+  const requestId = text(request.headers.get("x-search-request-id")) || crypto.randomUUID();
   let body: unknown;
-  try { body = await request.json(); } catch { return Response.json({ error: "Invalid JSON request body." }, { status: 400, headers: noStore }); }
+  try { body = await request.json(); } catch { return Response.json({ error: "Invalid JSON request body.", requestId }, { status: 400, headers: noStore }); }
   const search = canonicalSearch(body);
-  if (!search) return Response.json({ error: "Invalid car search parameters." }, { status: 400, headers: noStore });
+  if (!search) return Response.json({ error: "Invalid car search parameters.", requestId }, { status: 400, headers: noStore });
   try {
     const { results, mode, status } = await searchCars(search);
-    return Response.json({ results, mode, status }, { headers: noStore });
+    const liveInventory = mode === "live" && status === "available";
+    const response = {
+      results,
+      mode,
+      status,
+      searchStatus: status === "available" ? "success" : status,
+      requestId,
+      providersAttempted: mode === "live" ? ["car-live-provider"] : [],
+      providersSucceeded: liveInventory ? ["car-live-provider"] : [],
+      liveInventory,
+      partial: false,
+      generatedAt: new Date().toISOString(),
+    };
+    if (status === "unavailable") {
+      return Response.json({ ...response, error: "Live car inventory is temporarily unavailable." }, { status: 503, headers: noStore });
+    }
+    return Response.json(response, { headers: noStore });
   } catch {
-    return Response.json({ error: "Car search is temporarily unavailable." }, { status: 500, headers: noStore });
+    return Response.json({ error: "Car search is temporarily unavailable.", requestId }, { status: 500, headers: noStore });
   }
 }
