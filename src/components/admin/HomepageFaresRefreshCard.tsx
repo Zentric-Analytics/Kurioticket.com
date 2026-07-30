@@ -1,37 +1,20 @@
 "use client";
 
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject, type ReactNode } from "react";
+import { RefreshCcw } from "lucide-react";
+
+import { AdminButton, AdminSectionCard } from "@/components/admin/AdminPageShell";
 import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type RefObject,
-} from "react";
-import {
-  AdminButton,
-  AdminPageShell,
-  AdminSectionCard,
-  AdminStatusBadge,
-} from "@/components/admin/AdminPageShell";
-import { HomepageOperationsStatusBar } from "@/components/admin/homepage-operations/HomepageOperationsPanels";
-import {
+  ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE,
+  buildAdminHomepageFareAllRoutesGroup,
   buildAdminHomepageFareRouteGroups,
-  filterAdminHomepageFareMarketsByRouteGroups,
   normalizeAdminHomepageFareMarketCode,
   paginateAdminHomepageFareRoutes,
-  resolveAdminHomepageFareActiveRouteScope,
   resolveAdminHomepageFareSelectedRouteGroup,
+  splitAdminHomepageFareMarketRouteGroups,
   type AdminHomepageFareRouteGroupFilter,
   type AdminHomepageFareMarketRouteGroup,
 } from "@/lib/admin/homepageFareRouteGrouping";
-import {
-  createHomepageFareStatusRequestCoordinator,
-  markHomepageFareStatusRequestFailed,
-  markHomepageFareStatusRequestStarted,
-  markHomepageFareStatusRequestSucceeded,
-  type HomepageFareStatusLoadState,
-} from "@/lib/admin/homepageFareStatusRequest";
 
 const DEFAULT_REFRESH_BUDGET: RefreshBudget = {
   popularVisibleTarget: 8,
@@ -42,6 +25,53 @@ const DEFAULT_REFRESH_BUDGET: RefreshBudget = {
   maxRouteAttemptsPerMarket: 36,
   maxDateCandidatesPerRoute: 3,
   lastKnownGoodTtlHours: 168,
+};
+
+const DEFAULT_READINESS_COUNTS: RefreshReadinessCounts = {
+  freshPopular: 0,
+  freshDiscover: 0,
+  freshDiscoverDisplayed: 0,
+  freshDiscoverBackup: 0,
+  publicFreshTarget: 24,
+  operationalFreshTarget: 27,
+};
+
+const DEFAULT_COUNTS: RefreshCounts = {
+  refreshed: 0,
+  unavailable: 0,
+  failed: 0,
+  skipped: 0,
+  retained: 0,
+  routeAttempts: 0,
+  providerCalls: 0,
+  stoppedReason: "completed",
+  globalReadinessStatus: "not_ready",
+  requiredMarkets: [],
+  readyMarkets: [],
+  underfilledMarkets: [],
+  marketReadinessSummary: [],
+  marketTargets: {},
+  marketTargetMet: {},
+  popularFreshByMarket: {},
+  discoveryFreshByMarket: {},
+  backupFreshByMarket: {},
+  candidatePoolSizeByMarket: {},
+  routeAttemptsByMarket: {},
+  providerCallsByMarket: {},
+  failedByMarket: {},
+  unavailableByMarket: {},
+  skippedCooldownByMarket: {},
+  replacementCandidatesUsedByMarket: {},
+  timeoutByMarket: {},
+  lastKnownGoodByMarket: {},
+  targetedMarkets: [],
+  visibleGapsAttempted: [],
+  replacementsUsed: [],
+  marketsNeedingAnotherRun: [],
+  underfillCauseByMarket: {},
+  readinessBefore: DEFAULT_READINESS_COUNTS,
+  readinessAfter: DEFAULT_READINESS_COUNTS,
+  refreshBudget: DEFAULT_REFRESH_BUDGET,
 };
 
 const DEFAULT_STATUS_SUMMARY: HomepageFareStatusSummary = {
@@ -57,7 +87,8 @@ const DEFAULT_STATUS_SUMMARY: HomepageFareStatusSummary = {
 const DEFAULT_HEALTH: HomepageFareHealth = {
   status: "attention",
   label: "Needs attention",
-  message: "Homepage fares are missing or expired.",
+  message:
+    "Homepage fares are missing or stale. Refresh fares before relying on homepage prices.",
 };
 
 const DEFAULT_DISPLAY_READINESS: DisplayReadiness = {
@@ -71,6 +102,7 @@ const DEFAULT_DISPLAY_READINESS: DisplayReadiness = {
   discoverBackupFresh: 0,
   publicFreshTarget: 24,
 };
+
 
 const DEFAULT_MARKET_STATUS_FIELDS = {
   globalReadinessStatus: "not_ready" as const,
@@ -141,6 +173,15 @@ type MarketReadinessStatus =
   | "candidate_exhausted"
   | "failed"
   | "cooldown";
+
+type RefreshReadinessCounts = {
+  freshPopular: number;
+  freshDiscover: number;
+  freshDiscoverDisplayed: number;
+  freshDiscoverBackup: number;
+  publicFreshTarget: number;
+  operationalFreshTarget: number;
+};
 
 type RefreshBudget = {
   popularVisibleTarget: number;
@@ -216,6 +257,49 @@ type MarketNextRunNeed = {
   reason: UnderfillCause;
 };
 
+type RefreshCounts = {
+  refreshed: number;
+  unavailable: number;
+  failed: number;
+  skipped: number;
+  retained: number;
+  routeAttempts: number;
+  providerCalls: number;
+  stoppedReason: RefreshStoppedReason;
+  globalReadinessStatus: GlobalReadinessStatus;
+  requiredMarkets: string[];
+  readyMarkets: string[];
+  underfilledMarkets: MarketReadiness[];
+  marketReadinessSummary: MarketReadiness[];
+  readinessBefore: RefreshReadinessCounts;
+  readinessAfter: RefreshReadinessCounts;
+  refreshBudget: RefreshBudget;
+  marketTargets: Record<string, MarketReadiness>;
+  marketTargetMet: Record<string, boolean>;
+  popularFreshByMarket: Record<string, number>;
+  discoveryFreshByMarket: Record<string, number>;
+  backupFreshByMarket: Record<string, number>;
+  candidatePoolSizeByMarket: Record<string, number>;
+  routeAttemptsByMarket: Record<string, number>;
+  providerCallsByMarket: Record<string, number>;
+  failedByMarket: Record<string, number>;
+  unavailableByMarket: Record<string, number>;
+  skippedCooldownByMarket: Record<string, number>;
+  replacementCandidatesUsedByMarket: Record<string, number>;
+  timeoutByMarket: Record<string, number>;
+  lastKnownGoodByMarket: Record<string, number>;
+  targetedMarkets: string[];
+  visibleGapsAttempted: VisibleGapAttempt[];
+  replacementsUsed: ReplacementUsage[];
+  marketsNeedingAnotherRun: MarketNextRunNeed[];
+  underfillCauseByMarket: Record<string, UnderfillCause>;
+};
+
+type RefreshState = {
+  counts: RefreshCounts | null;
+  message: string;
+  status: "idle" | "success" | "error";
+};
 
 type HomepageFareSnapshotStatus =
   | "fresh"
@@ -324,86 +408,127 @@ type HomepageFareStatusPayload = {
   nextExpectedCronRefresh?: string;
 };
 
-const ROUTE_FILTERS: Array<{
-  key: AdminHomepageFareRouteGroupFilter;
-  label: string;
-}> = [
-  { key: "all", label: "All" },
-  { key: "ready", label: "Usable" },
-  { key: "underfilled", label: "Needs coverage" },
-  { key: "failed", label: "Failed" },
-  { key: "missing", label: "Missing" },
-  { key: "stale", label: "Expired" },
-  { key: "last_known_good", label: "Last-known-good" },
-  { key: "fresh", label: "Fresh" },
-  { key: "unavailable", label: "Unavailable" },
-];
+type StatusLoadState = {
+  data: HomepageFareStatusPayload | null;
+  loading: boolean;
+  error: string;
+};
 
 export function HomepageFaresRefreshCard() {
-  const [statusState, setStatusState] = useState<
-    HomepageFareStatusLoadState<HomepageFareStatusPayload>
-  >({
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshState, setRefreshState] = useState<RefreshState>({
+    counts: null,
+    message: "",
+    status: "idle",
+  });
+  const [statusState, setStatusState] = useState<StatusLoadState>({
     data: null,
     loading: true,
     error: "",
-    stale: false,
-    lastSuccessfulLoadAt: null,
   });
-  const statusRequestCoordinatorRef = useRef(
-    createHomepageFareStatusRequestCoordinator(),
-  );
-  const [selectedRouteScope, setSelectedRouteScope] = useState<string | null>(
-    null,
-  );
+  const [selectedRouteScope, setSelectedRouteScope] = useState<string | null>(null);
   const [routePage, setRoutePage] = useState(1);
   const routeDetailsRef = useRef<HTMLDivElement>(null);
   const [routeFilter, setRouteFilter] =
     useState<AdminHomepageFareRouteGroupFilter>("all");
   const selectRouteScope = useCallback((scope: string) => {
     setRoutePage(1);
-    setSelectedRouteScope(normalizeAdminHomepageFareMarketCode(scope));
+    setSelectedRouteScope(
+      scope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
+        ? ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
+        : normalizeAdminHomepageFareMarketCode(scope),
+    );
   }, []);
-  const selectRouteFilter = useCallback(
-    (filter: AdminHomepageFareRouteGroupFilter) => {
-      setRoutePage(1);
-      setRouteFilter(filter);
-    },
-    [],
-  );
-
-  const loadStatus = useCallback(async () => {
-    await statusRequestCoordinatorRef.current.run({
-      request: fetchHomepageFareStatus,
-      onStart: () =>
-        setStatusState((current) =>
-          markHomepageFareStatusRequestStarted(current),
-        ),
-      onSuccess: (payload) =>
-        setStatusState(
-          markHomepageFareStatusRequestSucceeded(
-            payload,
-            new Date().toISOString(),
-          ),
-        ),
-      onError: () =>
-        setStatusState((current) =>
-          markHomepageFareStatusRequestFailed(
-            current,
-            "Could not load homepage fare snapshot status.",
-          ),
-        ),
-    });
+  const selectRouteFilter = useCallback((filter: AdminHomepageFareRouteGroupFilter) => {
+    setRoutePage(1);
+    setRouteFilter(filter);
   }, []);
 
   useEffect(() => {
-    const statusRequestCoordinator = statusRequestCoordinatorRef.current;
-    statusRequestCoordinator.activate();
-    void loadStatus();
+    if (!selectedRouteScope) return;
+
+    const animationFrame = window.requestAnimationFrame(() => {
+      routeDetailsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [selectedRouteScope, routeFilter]);
+
+  const loadStatus = useCallback(async () => {
+    setStatusState((current) => ({ ...current, loading: true, error: "" }));
+
+    try {
+      const payload = await fetchHomepageFareStatus();
+      setStatusState({ data: payload, loading: false, error: "" });
+    } catch {
+      setStatusState((current) => ({
+        data: current.data,
+        loading: false,
+        error: "Could not load homepage fare snapshot status.",
+      }));
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchHomepageFareStatus()
+      .then((payload) => {
+        if (cancelled) return;
+        setStatusState({ data: payload, loading: false, error: "" });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setStatusState({
+          data: null,
+          loading: false,
+          error: "Could not load homepage fare snapshot status.",
+        });
+      });
 
     return () => {
-      statusRequestCoordinator.dispose();
+      cancelled = true;
     };
-  }, [loadStatus]);
+  }, []);
+
+  async function refreshHomepageFares() {
+    if (refreshing) return;
+
+    setRefreshing(true);
+    setRefreshState({ counts: null, message: "", status: "idle" });
+
+    try {
+      const response = await fetch("/api/admin/homepage-fares/refresh", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error(await buildSafeRefreshFailureMessage(response));
+      }
+
+      const payload = await response.json();
+      const counts = normalizeRefreshCounts(payload);
+
+      setRefreshState({
+        counts,
+        message: `Homepage fares refreshed. ${counts.refreshed} refreshed, ${counts.unavailable} unavailable, ${counts.failed} failed, ${counts.retained} retained, ${counts.skipped} skipped. Provider calls used: ${counts.providerCalls}. Stopped: ${formatStoppedReason(counts.stoppedReason)}.`,
+        status: "success",
+      });
+      await loadStatus();
+    } catch (error) {
+      setRefreshState({
+        counts: null,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Could not refresh homepage fares. Please try again or check provider status.",
+        status: "error",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   const statusPayload = statusState.data ?? {
     routes: [],
@@ -425,214 +550,241 @@ export function HomepageFaresRefreshCard() {
       }),
     [routeFilter, statusPayload.marketReadinessSummary, statusPayload.routes],
   );
-  const publicMarkets = useMemo(
-    () =>
-      statusPayload.marketReadinessSummary.filter(
-        (market) => !isFallbackMarket(market),
-      ),
-    [statusPayload.marketReadinessSummary],
+  const allRoutesGroup = useMemo(
+    () => buildAdminHomepageFareAllRoutesGroup(statusPayload.routes, routeFilter),
+    [routeFilter, statusPayload.routes],
   );
-  const routeFilteredMarkets = useMemo(
-    () =>
-      filterAdminHomepageFareMarketsByRouteGroups(
-        publicMarkets,
-        marketRouteGroups,
-        routeFilter,
-      ),
-    [marketRouteGroups, publicMarkets, routeFilter],
-  );
-  const routeFilterCounts = useMemo(
-    () =>
-      Object.fromEntries(
-        ROUTE_FILTERS.map(({ key }) => {
-          const groups = buildAdminHomepageFareRouteGroups({
-            routes: statusPayload.routes,
-            markets: statusPayload.marketReadinessSummary,
-            filter: key,
-            includeEmptyGroups: true,
-          });
-
-          return [
-            key,
-            filterAdminHomepageFareMarketsByRouteGroups(
-              publicMarkets,
-              groups,
-              key,
-            ).length,
-          ];
-        }),
-      ) as Record<AdminHomepageFareRouteGroupFilter, number>,
-    [publicMarkets, statusPayload.marketReadinessSummary, statusPayload.routes],
-  );
-  const activeSelectedRouteScope = resolveAdminHomepageFareActiveRouteScope({
-    selectedScope: selectedRouteScope,
-    markets: publicMarkets,
-    visibleMarkets: routeFilteredMarkets,
-  });
   const selectedRouteGroup = resolveAdminHomepageFareSelectedRouteGroup({
-    selectedScope: activeSelectedRouteScope,
+    selectedScope: selectedRouteScope,
     marketRouteGroups,
+    allRoutesGroup,
   });
+  const { publicGroups: publicRouteGroups, fallbackGroups: fallbackRouteGroups } =
+    splitAdminHomepageFareMarketRouteGroups(marketRouteGroups);
 
-  useEffect(() => {
-    if (!activeSelectedRouteScope) return;
-
-    const animationFrame = window.requestAnimationFrame(() => {
-      routeDetailsRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    });
-
-    return () => window.cancelAnimationFrame(animationFrame);
-  }, [activeSelectedRouteScope, routeFilter]);
+  const publicMarkets = statusPayload.marketReadinessSummary.filter(
+    (market) => !isFallbackMarket(market),
+  );
+  const fallbackPools = statusPayload.marketReadinessSummary.filter(isFallbackMarket);
+  const latestCounts = refreshState.counts;
+  const providerCallsUsed = latestCounts?.providerCalls ?? sumCountRecord(statusPayload.providerCallsByMarket);
+  const replacementCandidatesUsed = latestCounts
+    ? sumCountRecord(latestCounts.replacementCandidatesUsedByMarket)
+    : sumCountRecord(statusPayload.replacementCandidatesUsedByMarket);
+  const timeoutCount = latestCounts
+    ? sumCountRecord(latestCounts.timeoutByMarket)
+    : sumCountRecord(statusPayload.timeoutByMarket);
+  const marketsNeedingAnotherRun = latestCounts?.marketsNeedingAnotherRun ?? statusPayload.marketsNeedingAnotherRun;
 
   return (
-    <AdminPageShell eyebrow="" title="Homepage Operations">
-      <AdminSectionCard
-        aria-labelledby="operations-summary-heading"
-        className="px-5 py-4"
-      >
-        <h2
-          id="operations-summary-heading"
-          className="mb-2 text-sm font-bold text-slate-950"
-        >
-          Operations Summary
-        </h2>
-        <HomepageOperationsStatusBar
-          items={[
-            {
-              label: "Overall status",
-              value: statusState.data
-                ? formatGlobalReadinessStatus(
-                    statusPayload.displayReadiness.globalReadinessStatus,
-                  )
-                : statusState.loading
-                  ? "Loading…"
-                  : "Unavailable",
-              tone: statusState.data
-                ? readinessTone(
-                    statusPayload.displayReadiness.globalReadinessStatus,
-                  ) === "good"
-                  ? "good"
-                  : "warning"
-                : "neutral",
-            },
-            {
-              label: "Status last updated",
-              value: statusState.lastSuccessfulLoadAt
-                ? formatDateTime(statusState.lastSuccessfulLoadAt)
-                : statusState.loading
-                  ? "Loading…"
-                  : "Unavailable",
-            },
-            {
-              label: "Markets ready",
-              value: statusState.data
-                ? `${statusPayload.readyMarkets.length} / ${statusPayload.requiredMarkets.length}`
-                : "—",
-            },
-            {
-              label: "Missing routes",
-              value: statusState.data ? statusPayload.summary.missing : "—",
-              tone:
-                statusState.data && statusPayload.summary.missing
-                  ? "warning"
-                  : "neutral",
-            },
-            {
-              label: "Failed routes",
-              value: statusState.data ? statusPayload.summary.failed : "—",
-              tone:
-                statusState.data && statusPayload.summary.failed
-                  ? "danger"
-                  : "neutral",
-            },
-          ]}
-        />
-      </AdminSectionCard>
-
-      {statusState.error ? (
-        <p
-          className="border-y border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700"
-          role="alert"
-        >
-          {statusState.error}
-          {statusState.stale && statusState.lastSuccessfulLoadAt ? (
-            <span className="block">
-              Status data is stale · Last updated{" "}
-              {formatDateTime(statusState.lastSuccessfulLoadAt)} · Latest reload
-              failed.
-            </span>
-          ) : null}
-        </p>
-      ) : null}
-
-      <section aria-label="Homepage operations workspace">
-        <div className="grid items-start gap-5 md:grid-cols-[16.5rem_minmax(0,1fr)]">
-          <div className="md:sticky md:top-24">
-            <RouteFilterPanel
-              filter={routeFilter}
-              counts={routeFilterCounts}
-              onChange={selectRouteFilter}
-            />
-          </div>
-          <div className="min-w-0 space-y-5">
-            <AdminSectionCard
-              aria-labelledby="market-coverage-heading"
-              className="overflow-hidden p-0"
-            >
-              <h2 id="market-coverage-heading" className="border-b border-slate-200 px-5 py-4 text-base font-semibold text-slate-950">
-                Market Coverage
+    <section className="space-y-5">
+      <AdminSectionCard className="overflow-hidden p-0">
+        <div className="border-b border-slate-200 bg-gradient-to-br from-white via-slate-50 to-sky-50/60 p-5">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-indigo-700">
+                Homepage fare operations
+              </p>
+              <h2 className="mt-2 text-2xl font-extrabold text-slate-950">
+                Production readiness dashboard
               </h2>
-              <MarketReadinessDashboard
-                markets={routeFilteredMarkets}
-                selectedRouteScope={activeSelectedRouteScope}
-                onInspectMarket={selectRouteScope}
-                emptyMessage={
-                  statusState.data
-                    ? getRouteFilterEmptyMessage(routeFilter)
-                    : statusState.loading
-                      ? "Loading homepage fare status…"
-                      : "Homepage fare status is unavailable."
-                }
-              />
-            </AdminSectionCard>
-            {activeSelectedRouteScope ? (
-              <MarketRouteInspector
-                selectedRouteScope={activeSelectedRouteScope}
-                selectedGroup={selectedRouteGroup}
-                loading={statusState.loading}
-                onClose={() => setSelectedRouteScope(null)}
-                routePage={routePage}
-                onPreviousPage={() =>
-                  setRoutePage((page) => Math.max(1, page - 1))
-                }
-                onNextPage={() => setRoutePage((page) => page + 1)}
-                routeDetailsRef={routeDetailsRef}
-              />
-            ) : null}
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
+                Monitor provider-backed homepage fare coverage by public market, fallback pool,
+                route health, refresh state, and underfill cause without changing pricing logic.
+              </p>
+            </div>
+            <GlobalReadinessBadge status={statusPayload.displayReadiness.globalReadinessStatus} />
           </div>
         </div>
-      </section>
-    </AdminPageShell>
+
+        <div className="space-y-5 p-5">
+          {statusState.error ? (
+            <p className="rounded-xl bg-rose-50 p-3 text-sm font-semibold text-rose-700">
+              {statusState.error}
+            </p>
+          ) : null}
+
+          <DashboardSection
+            eyebrow="Homepage fare status summary"
+            title="Global readiness at a glance"
+            description="Public readiness excludes fallback-only regional and global pools, so internal 0/0 coverage rows do not make the homepage look ready."
+          >
+            <DisplayReadinessSummary readiness={statusPayload.displayReadiness} />
+            <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+              <SummaryMetricCard label="Global homepage readiness" value={formatGlobalReadinessStatus(statusPayload.displayReadiness.globalReadinessStatus)} tone={readinessTone(statusPayload.displayReadiness.globalReadinessStatus)} />
+              <SummaryMetricCard label="Fresh provider-backed fares" value={statusPayload.summary.fresh} tone="good" />
+              <SummaryMetricCard label="Last-known-good fares" value={statusPayload.summary.last_known_good} tone="info" />
+              <SummaryMetricCard label="Missing routes" value={statusPayload.summary.missing} tone={statusPayload.summary.missing ? "warning" : "neutral"} />
+              <SummaryMetricCard label="Failed routes" value={statusPayload.summary.failed} tone={statusPayload.summary.failed ? "danger" : "neutral"} />
+              <SummaryMetricCard label="Unavailable routes" value={statusPayload.summary.unavailable} tone={statusPayload.summary.unavailable ? "warning" : "neutral"} />
+              <SummaryMetricCard label="Timeout count" value={timeoutCount} tone={timeoutCount ? "warning" : "neutral"} />
+              <SummaryMetricCard label="Provider calls used" value={providerCallsUsed} />
+              <SummaryMetricCard label="Stopped reason" value={latestCounts ? formatStoppedReason(latestCounts.stoppedReason) : "No manual run yet"} />
+              <SummaryMetricCard label="Replacement candidates used" value={replacementCandidatesUsed} />
+              <SummaryMetricCard label="Markets needing another run" value={marketsNeedingAnotherRun.filter((market) => market.needed).length} tone={marketsNeedingAnotherRun.some((market) => market.needed) ? "warning" : "good"} />
+              <SummaryMetricCard label="Last refresh time" value={formatSnapshotTime(statusPayload.lastRefreshAt)} />
+              <SummaryMetricCard label="Cron status" value={formatCronStatus(statusPayload)} tone={statusPayload.cronConfigured ? "good" : "warning"} />
+            </dl>
+          </DashboardSection>
+
+          <RefreshCronPanel
+            refreshing={refreshing}
+            loading={statusState.loading}
+            refreshState={refreshState}
+            statusPayload={statusPayload}
+            onRefresh={refreshHomepageFares}
+            onReload={() => void loadStatus()}
+          />
+
+          <MarketReadinessDashboard
+            markets={publicMarkets}
+            selectedRouteScope={selectedRouteScope}
+            onInspectMarket={selectRouteScope}
+          />
+
+          <MarketRouteInspector
+            publicGroups={publicRouteGroups}
+            fallbackGroups={fallbackRouteGroups}
+            selectedRouteScope={selectedRouteScope}
+            selectedGroup={selectedRouteGroup}
+            filter={routeFilter}
+            loading={statusState.loading}
+            onSelectMarket={selectRouteScope}
+            routePage={routePage}
+            onPreviousPage={() => setRoutePage((page) => Math.max(1, page - 1))}
+            onNextPage={() => setRoutePage((page) => page + 1)}
+            onFilterChange={selectRouteFilter}
+            routeDetailsRef={routeDetailsRef}
+          />
+
+          <DiagnosticsPanel
+            markets={statusPayload.marketReadinessSummary}
+            marketsNeedingAnotherRun={marketsNeedingAnotherRun}
+            candidatePoolHealth={statusPayload.candidatePoolHealth}
+            publicPriceDiagnostics={statusPayload.publicPriceDiagnostics}
+            stoppedReason={latestCounts?.stoppedReason}
+          />
+
+          <FallbackPoolsSection
+            pools={fallbackPools}
+            selectedRouteScope={selectedRouteScope}
+            onInspectMarket={selectRouteScope}
+          />
+
+          <RawDebugDetails statusPayload={statusPayload} refreshCounts={latestCounts} />
+        </div>
+      </AdminSectionCard>
+    </section>
+  );
+}
+type RefreshCountMetricKey =
+  | "refreshed"
+  | "unavailable"
+  | "failed"
+  | "retained"
+  | "skipped";
+
+const COUNT_LABELS: Array<{ key: RefreshCountMetricKey; label: string }> = [
+  { key: "refreshed", label: "Refreshed" },
+  { key: "unavailable", label: "Unavailable" },
+  { key: "failed", label: "Failed" },
+  { key: "retained", label: "Retained" },
+  { key: "skipped", label: "Skipped" },
+];
+
+const STATUS_BADGE_STYLES: Record<HomepageFareSnapshotStatus, string> = {
+  fresh: "bg-emerald-50 text-emerald-700",
+  last_known_good: "bg-sky-50 text-sky-700",
+  expired: "bg-amber-50 text-amber-700",
+  unavailable: "bg-slate-100 text-slate-500",
+  failed: "bg-rose-50 text-rose-700",
+  missing: "bg-slate-100 text-slate-500",
+};
+
+const HEALTH_SUMMARY_STYLES: Record<HomepageFareHealthStatus, string> = {
+  healthy: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  warning: "border-amber/20 bg-amber-50 text-amber-700",
+  attention: "border-red-100 bg-rose-50 text-rose-700",
+};
+
+
+const ROUTE_FILTERS: Array<{
+  key: AdminHomepageFareRouteGroupFilter;
+  label: string;
+}> = [
+  { key: "all", label: "All" },
+  { key: "ready", label: "Ready" },
+  { key: "underfilled", label: "Underfilled" },
+  { key: "failed", label: "Failed" },
+  { key: "missing", label: "Missing" },
+  { key: "stale", label: "Stale" },
+  { key: "last_known_good", label: "Last-known-good" },
+  { key: "fresh", label: "Fresh" },
+  { key: "unavailable", label: "Unavailable" },
+];
+
+
+
+function GlobalReadinessBadge({ status }: { status: GlobalReadinessStatus }) {
+  return (
+    <span className={`inline-flex w-fit rounded-full px-3 py-2 text-sm font-extrabold ${summaryToneClass(readinessTone(status))}`}>
+      {formatGlobalReadinessStatus(status)}
+    </span>
+  );
+}
+
+function SummaryMetricCard({
+  label,
+  value,
+  tone = "neutral",
+}: {
+  label: string;
+  value: string | number;
+  tone?: SummaryTone;
+}) {
+  return (
+    <div className={`rounded-xl border p-3 ${summaryToneClass(tone)}`}>
+      <dt className="text-xs font-extrabold uppercase tracking-wide opacity-80">{label}</dt>
+      <dd className="mt-1 text-2xl font-extrabold leading-tight">{value}</dd>
+    </div>
+  );
+}
+
+type SummaryTone = "good" | "info" | "warning" | "danger" | "neutral";
+
+function summaryToneClass(tone: SummaryTone) {
+  switch (tone) {
+    case "good":
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    case "info":
+      return "border-sky-100 bg-sky-50 text-sky-700";
+    case "warning":
+      return "border-amber/20 bg-amber-50 text-amber-700";
+    case "danger":
+      return "border-red-100 bg-rose-50 text-rose-700";
+    case "neutral":
+      return "border-slate-200 bg-slate-50 text-slate-950";
+  }
+}
+
+function CompactDetail({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div>
+      <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500">{label}</dt>
+      <dd className="mt-1 text-sm font-bold text-slate-950">{value}</dd>
+    </div>
   );
 }
 
 function isFallbackMarket(market: MarketReadiness) {
-  return (
-    market.marketVisibility !== "country" ||
-    getPublicDisplayTarget(market) === 0
-  );
+  return market.marketVisibility !== "country" || getPublicDisplayTarget(market) === 0;
 }
 
 function getPublicDisplayTarget(market: MarketReadiness) {
   return market.popularVisibleTarget + market.discoveryVisibleTarget;
 }
 
-function readinessTone(
-  status: GlobalReadinessStatus,
-): "good" | "warning" | "danger" {
+function readinessTone(status: GlobalReadinessStatus): SummaryTone {
   if (status === "ready") return "good";
   if (status === "partial") return "warning";
   return "danger";
@@ -649,180 +801,194 @@ function formatGlobalReadinessStatus(status: GlobalReadinessStatus) {
   }
 }
 
-function RouteFilterPanel({
-  filter,
-  counts,
-  onChange,
+function formatNextExpectedCron(status: Pick<HomepageFareStatusPayload, "cronConfigured" | "nextExpectedCronRefresh">) {
+  if (status.nextExpectedCronRefresh) return status.nextExpectedCronRefresh;
+  return status.cronConfigured ? "Configured externally; cadence note not provided" : "Cron is not configured";
+}
+
+function buildDiagnostics(
+  markets: MarketReadiness[],
+  marketsNeedingAnotherRun: MarketNextRunNeed[],
+  stoppedReason?: RefreshStoppedReason,
+) {
+  const diagnostics: string[] = [];
+
+  for (const market of markets) {
+    if (market.targetMet && market.status === "ready" && !isFallbackMarket(market)) continue;
+
+    const subject = isFallbackMarket(market)
+      ? `${market.marketLabel} fallback`
+      : market.marketLabel;
+    const targetText = isFallbackMarket(market)
+      ? "but has no public display target"
+      : `before coverage reached ${market.popularVisibleFresh}/${market.popularVisibleTarget} popular, ${market.discoveryVisibleFresh}/${market.discoveryVisibleTarget} discovery, and ${market.backupFresh}/${market.backupTarget} backup`;
+    const reason = market.underfillReason ?? formatMarketStatus(market.status).toLowerCase();
+    diagnostics.push(`${subject} is ${formatMarketStatus(market.status).toLowerCase()} because ${reason} ${targetText}.`);
+  }
+
+  for (const need of marketsNeedingAnotherRun) {
+    if (!need.needed || diagnostics.some((item) => item.startsWith(need.market))) continue;
+    diagnostics.push(`${need.market} needs another run because ${formatUnderfillCause(need.reason)}.`);
+  }
+
+  if (stoppedReason && stoppedReason !== "completed" && stoppedReason !== "target_met") {
+    diagnostics.unshift(`The last executor run stopped because ${formatStoppedReason(stoppedReason).toLowerCase()}.`);
+  }
+
+  return diagnostics.slice(0, 12);
+}
+
+function DashboardSection({
+  eyebrow,
+  title,
+  description,
+  children,
 }: {
-  filter: AdminHomepageFareRouteGroupFilter;
-  counts: Record<AdminHomepageFareRouteGroupFilter, number>;
-  onChange: (filter: AdminHomepageFareRouteGroupFilter) => void;
+  eyebrow: string;
+  title: string;
+  description: string;
+  children: ReactNode;
 }) {
   return (
-    <AdminSectionCard
-      className="p-5"
-      aria-labelledby="route-filter-heading"
-    >
-      <h3
-        id="route-filter-heading"
-        className="text-base font-semibold text-slate-950"
-      >
-        Filter routes
-      </h3>
-      <div className="mt-4">
-        <RouteFilterControls
-          filter={filter}
-          counts={counts}
-          onChange={onChange}
-        />
+    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div>
+        <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-500">{eyebrow}</p>
+        <h3 className="mt-1 text-lg font-extrabold text-slate-950">{title}</h3>
+        <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-500">{description}</p>
       </div>
-    </AdminSectionCard>
+      {children}
+    </section>
   );
 }
 
-function RouteFilterControls({
-  filter,
-  counts,
-  onChange,
+function RefreshCronPanel({
+  refreshing,
+  loading,
+  refreshState,
+  statusPayload,
+  onRefresh,
+  onReload,
 }: {
-  filter: AdminHomepageFareRouteGroupFilter;
-  counts: Record<AdminHomepageFareRouteGroupFilter, number>;
-  onChange: (filter: AdminHomepageFareRouteGroupFilter) => void;
+  refreshing: boolean;
+  loading: boolean;
+  refreshState: RefreshState;
+  statusPayload: HomepageFareStatusPayload;
+  onRefresh: () => void;
+  onReload: () => void;
 }) {
-  const groups = [
-    {
-      label: "Coverage issues",
-      keys: ["all", "underfilled", "missing", "failed", "stale"],
-    },
-    {
-      label: "Route availability",
-      keys: ["ready", "fresh", "last_known_good", "unavailable"],
-    },
-  ] satisfies Array<{
-    label: string;
-    keys: AdminHomepageFareRouteGroupFilter[];
-  }>;
+  const stoppedReason = refreshState.counts
+    ? formatStoppedReason(refreshState.counts.stoppedReason)
+    : "No manual refresh result in this session";
 
   return (
-    <div className="space-y-5" aria-label="Route status filters">
-      {groups.map((group) => (
-        <div key={group.label} role="group" aria-label={group.label}>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            {group.label}
-          </p>
-          <div className="grid gap-1">
-            {group.keys.map((key) => {
-              const item = ROUTE_FILTERS.find(
-                (candidate) => candidate.key === key,
-              )!;
-              const selected = filter === item.key;
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() => onChange(item.key)}
-                  className={`focus-ring flex min-h-10 w-full items-center justify-between gap-3 rounded-xl px-2 py-1 text-left text-sm transition ${selected ? "bg-indigo-50 font-semibold text-indigo-700" : "font-medium text-slate-700 hover:bg-slate-50"}`}
-                  aria-pressed={selected}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <span
-                      className={`h-4 w-4 rounded-full border ${selected ? "border-[5px] border-indigo-600" : "border-slate-300"}`}
-                      aria-hidden="true"
-                    />
-                    {item.label}
-                  </span>
-                  <span className="tabular-nums text-slate-500">
-                    {counts[item.key]}
-                  </span>
-                </button>
-              );
-            })}
+    <DashboardSection
+      eyebrow="Refresh and cron controls"
+      title="Refresh controls"
+      description="Run the existing homepage fare coverage executor and reload the current status snapshot from one dedicated operations panel."
+    >
+      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <AdminButton
+              type="button"
+              variant="primary"
+              onClick={onRefresh}
+              disabled={refreshing}
+              aria-busy={refreshing}
+              className="w-full sm:w-auto"
+            >
+              <RefreshCcw className={refreshing ? "animate-spin" : ""} size={16} />
+              {refreshing ? "Refreshing…" : "Refresh homepage fares"}
+            </AdminButton>
+            <AdminButton
+              type="button"
+              variant="secondary"
+              onClick={onReload}
+              disabled={loading || refreshing}
+              aria-busy={loading}
+              className="w-full sm:w-auto"
+            >
+              <RefreshCcw className={loading ? "animate-spin" : ""} size={16} />
+              {loading ? "Loading…" : "Reload status"}
+            </AdminButton>
           </div>
-          {group.label === "Route availability" && filter === "ready" ? (
-            <p className="mt-2 px-1 text-xs font-semibold leading-5 text-slate-600">
-              Usable includes fresh and last-known-good routes.
-            </p>
+
+          {refreshState.message ? (
+            <div
+              className={
+                refreshState.status === "error"
+                  ? "mt-4 rounded-lg bg-rose-50 p-3 text-sm font-semibold text-rose-700"
+                  : "mt-4 rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-700"
+              }
+              role="status"
+              aria-live="polite"
+            >
+              {refreshState.message}
+            </div>
+          ) : null}
+
+          {refreshState.counts ? (
+            <dl className="mt-4 grid gap-2 sm:grid-cols-5">
+              {COUNT_LABELS.map(({ key, label }) => (
+                <MetricCard key={key} label={label} value={refreshState.counts?.[key] ?? 0} />
+              ))}
+            </dl>
           ) : null}
         </div>
-      ))}
-    </div>
-  );
-}
 
-function getRouteFilterEmptyMessage(filter: AdminHomepageFareRouteGroupFilter) {
-  switch (filter) {
-    case "ready":
-      return "No markets currently have usable routes.";
-    case "underfilled":
-      return "No markets have missing or expired routes.";
-    case "stale":
-      return "No markets contain expired routes.";
-    default:
-      return "No markets match the current filters.";
-  }
+        <dl className="grid gap-2 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-1">
+          <CompactDetail label="Last refresh time" value={formatSnapshotTime(statusPayload.lastRefreshAt)} />
+          <CompactDetail label="Cron status" value={formatCronStatus(statusPayload)} />
+          <CompactDetail label="Cron cadence note" value={statusPayload.nextExpectedCronRefresh ?? "Not configured"} />
+          <CompactDetail label="Next expected refresh" value={formatNextExpectedCron(statusPayload)} />
+          <CompactDetail label="Current stopped reason" value={stoppedReason} />
+        </dl>
+      </div>
+      {!statusPayload.cronConfigured ? (
+        <p className="mt-3 rounded-xl border border-amber/20 bg-amber-50 p-3 text-sm font-semibold text-amber-700">
+          Cron is not configured. Set HOMEPAGE_FARES_CRON_SECRET and schedule POST /api/internal/homepage-fares/refresh before relying on unattended production refreshes.
+        </p>
+      ) : null}
+    </DashboardSection>
+  );
 }
 
 function MarketReadinessDashboard({
   markets,
   selectedRouteScope,
   onInspectMarket,
-  emptyMessage = "No public market readiness metadata was returned.",
 }: {
   markets: MarketReadiness[];
   selectedRouteScope: string | null;
   onInspectMarket: (marketCode: string) => void;
-  emptyMessage?: string;
 }) {
-  if (!markets.length)
-    return (
-      <p className="px-5 py-6 text-sm font-medium text-slate-600">
-        {emptyMessage}
-      </p>
-    );
-
   return (
-    <div className="overflow-x-auto overscroll-x-contain bg-[linear-gradient(to_right,white,white),linear-gradient(to_right,white,white),linear-gradient(to_right,rgba(15,23,42,0.08),rgba(255,255,255,0)),linear-gradient(to_left,rgba(15,23,42,0.08),rgba(255,255,255,0))] bg-[length:24px_100%,24px_100%,12px_100%,12px_100%] bg-[position:left_center,right_center,left_center,right_center] bg-no-repeat [background-attachment:local,local,scroll,scroll]">
-      <table
-        className="w-full min-w-[760px] border-separate border-spacing-0 text-left text-sm"
-        aria-label="Market coverage"
-      >
-        <caption className="sr-only">Market coverage</caption>
-        <thead className="sticky top-0 z-10 bg-slate-50/95 text-xs text-slate-500 backdrop-blur supports-[backdrop-filter]:bg-slate-50/80">
-          <tr>
-            {["Market", "Coverage", "Freshness", "Missing", "Status", "Action"].map(
-              (heading) => (
-                <th
-                  scope="col"
-                  key={heading}
-                  className={`border-b border-slate-200 px-5 py-4 font-semibold uppercase tracking-wide ${heading === "Action" ? "text-right" : "text-left"}`}
-                >
-                  {heading}
-                </th>
-              ),
-            )}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100 bg-white">
-          {markets.map((market) => {
-            const selected =
-              normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") ===
-              normalizeAdminHomepageFareMarketCode(market.marketCode);
-            return (
-              <MarketReadinessRow
-                key={market.marketCode}
-                market={market}
-                selected={selected}
-                onInspectMarket={onInspectMarket}
-              />
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+    <DashboardSection
+      eyebrow="Market readiness"
+      title="Public market coverage"
+      description="Only public country markets with homepage display targets are shown here. Regional and global fallback pools are separated below."
+    >
+      <div className="mt-4 grid gap-3 xl:grid-cols-2">
+        {markets.length ? (
+          markets.map((market) => (
+            <MarketReadinessCard
+              key={market.marketCode}
+              market={market}
+              selected={normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(market.marketCode)}
+              onInspectMarket={onInspectMarket}
+            />
+          ))
+        ) : (
+          <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-500">
+            No public market readiness metadata was returned.
+          </p>
+        )}
+      </div>
+    </DashboardSection>
   );
 }
 
-function MarketReadinessRow({
+function MarketReadinessCard({
   market,
   selected,
   onInspectMarket,
@@ -832,81 +998,349 @@ function MarketReadinessRow({
   onInspectMarket: (marketCode: string) => void;
 }) {
   return (
-    <tr
-      data-market-row
-      className={`group align-top text-slate-700 transition-colors hover:bg-slate-50/80 focus-within:bg-slate-50/80 ${selected ? "bg-indigo-50/50 font-semibold" : ""}`}
+    <button
+      type="button"
+      onClick={() => onInspectMarket(market.marketCode)}
+      aria-pressed={selected}
+      className={`group w-full cursor-pointer rounded-2xl border p-4 text-left shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
+        selected
+          ? "border-indigo-700 bg-white shadow-md ring-2 ring-indigo-700/15"
+          : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-indigo-700/35 hover:shadow-md"
+      }`}
     >
-      <td className="max-w-[22rem] px-5 py-4 font-medium text-slate-950">
-        <h4 className="font-semibold text-slate-950">
-          {market.marketLabel}
-        </h4>
-        <p className="mt-1 text-xs font-medium text-slate-500">
-          {market.marketCode} · {market.marketGroup}
-          {selected ? " · Selected" : ""}
-        </p>
-      </td>
-      <td className="max-w-[22rem] px-5 py-4">
-        {market.popularVisibleFresh + market.discoveryVisibleFresh} /{" "}
-        {getPublicDisplayTarget(market)}
-      </td>
-      <td className="max-w-[22rem] px-5 py-4">
-        {market.freshCount ?? 0}
-      </td>
-      <td className="max-w-[22rem] px-5 py-4">
-        {market.missingCount ?? 0}
-      </td>
-      <td className="max-w-[22rem] px-5 py-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h4 className="text-lg font-extrabold text-slate-950">{market.marketLabel}</h4>
+          <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
+            {market.marketCode} · {market.marketGroup}
+          </p>
+        </div>
         <MarketStatusBadge status={market.status} />
-      </td>
-      <td className="max-w-[22rem] whitespace-nowrap px-5 py-4 text-right">
-        <AdminButton
-          type="button"
-          onClick={() => onInspectMarket(market.marketCode)}
-          aria-pressed={selected}
-          variant="secondary"
-          size="sm"
-        >
-          Inspect routes<span className="sr-only"> for {market.marketLabel}</span>
-        </AdminButton>
-      </td>
-    </tr>
+      </div>
+      <dl className="mt-4 grid gap-2 sm:grid-cols-3">
+        <CoverageMetric label="Popular coverage" current={market.popularVisibleFresh} target={market.popularVisibleTarget} />
+        <CoverageMetric label="Discovery coverage" current={market.discoveryVisibleFresh} target={market.discoveryVisibleTarget} />
+        <CoverageMetric label="Backup coverage" current={market.backupFresh} target={market.backupTarget} />
+      </dl>
+      <dl className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+        <MarketMiniMetric label="Fresh" value={market.freshCount ?? 0} />
+        <MarketMiniMetric label="LKG" value={market.lastKnownGoodCount ?? 0} />
+        <MarketMiniMetric label="Missing" value={market.missingCount ?? 0} />
+        <MarketMiniMetric label="Failed" value={market.failed} />
+        <MarketMiniMetric label="Unavailable" value={market.unavailable} />
+        <MarketMiniMetric label="Timeout" value={market.timeoutCount ?? 0} />
+        <MarketMiniMetric label="Replacements" value={market.replacementCandidatesUsed ?? 0} />
+        <MarketMiniMetric label="Provider calls" value={market.providerCalls} />
+        <MarketMiniMetric label="Attempts" value={market.routeAttempts} />
+        <MarketMiniMetric label="Cooldown" value={market.skippedCooldown} />
+        <MarketMiniMetric label="Candidates" value={market.candidatePoolSize} />
+      </dl>
+      <div className="mt-3 rounded-xl bg-slate-50 p-3 text-sm leading-6 text-slate-500">
+        <strong className="text-slate-950">Underfill reason:</strong>{" "}
+        {market.underfillReason ?? (market.targetMet ? "Coverage target met." : "No executor reason returned.")}
+      </div>
+      <span className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-extrabold text-indigo-700 transition group-hover:border-indigo-300 group-hover:bg-indigo-100">
+        Inspect {market.marketCode} routes
+      </span>
+    </button>
+  );
+}
+
+function CoverageMetric({ label, current, target }: { label: string; current: number; target: number }) {
+  const met = target === 0 ? current === 0 : current >= target;
+  return (
+    <div className="rounded-xl bg-slate-50 p-3">
+      <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500">{label}</dt>
+      <dd className="mt-1 text-xl font-extrabold text-slate-950">{current} / {target}</dd>
+      <p className={met ? "mt-1 text-xs font-bold text-indigo-700" : "mt-1 text-xs font-bold text-amber-700"}>
+        {met ? "Target met" : "Needs coverage"}
+      </p>
+    </div>
+  );
+}
+
+function DiagnosticsPanel({
+  markets,
+  marketsNeedingAnotherRun,
+  candidatePoolHealth,
+  publicPriceDiagnostics,
+  stoppedReason,
+}: {
+  markets: MarketReadiness[];
+  marketsNeedingAnotherRun: MarketNextRunNeed[];
+  candidatePoolHealth: HomepageFareStatusSummary;
+  publicPriceDiagnostics: Record<PublicPriceDiagnosis, number>;
+  stoppedReason?: RefreshStoppedReason;
+}) {
+  const issues = buildDiagnostics(markets, marketsNeedingAnotherRun, stoppedReason);
+
+  return (
+    <DashboardSection
+      eyebrow="Provider failure / underfill diagnostics"
+      title="Why markets are not ready"
+      description="Plain-language operational diagnostics from existing executor metadata."
+    >
+      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="space-y-2">
+          {issues.length ? (
+            issues.map((issue) => (
+              <p key={issue} className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-semibold leading-6 text-slate-950">
+                {issue}
+              </p>
+            ))
+          ) : (
+            <p className="rounded-xl border border-slate-200 bg-indigo-50 p-3 text-sm font-semibold text-indigo-700">
+              No underfill diagnostics are currently reported for public markets.
+            </p>
+          )}
+        </div>
+        <dl className="grid gap-2 rounded-xl border border-slate-200 bg-white p-4 text-sm">
+          <CompactDetail label="Provider budget exhausted" value={stoppedReason === "provider_budget_exhausted" ? "Yes" : "No"} />
+          <CompactDetail label="Route budget exhausted" value={stoppedReason === "route_budget_exhausted" ? "Yes" : "No"} />
+          <CompactDetail label="Candidate pool exhausted" value={stoppedReason === "candidate_pool_exhausted" ? "Yes" : "No"} />
+          <CompactDetail label="Provider unavailable/no offers" value={stoppedReason === "provider_unavailable_no_offers" ? "Yes" : "No"} />
+          <CompactDetail label="Candidate pool failed" value={candidatePoolHealth.failed} />
+          <CompactDetail label="Candidate pool unavailable" value={candidatePoolHealth.unavailable} />
+          <CompactDetail label="Fresh used publicly" value={publicPriceDiagnostics.fresh_available} />
+          <CompactDetail label="LKG used publicly" value={publicPriceDiagnostics.last_known_good_used} />
+          <CompactDetail label="LKG failed safety" value={publicPriceDiagnostics.last_known_good_failed_safety_check} />
+          <CompactDetail label="Exact route mismatch" value={publicPriceDiagnostics.exact_route_mismatch} />
+          <CompactDetail label="No provider fare ever" value={publicPriceDiagnostics.no_provider_backed_fare_ever} />
+        </dl>
+      </div>
+    </DashboardSection>
+  );
+}
+
+function FallbackPoolsSection({
+  pools,
+  selectedRouteScope,
+  onInspectMarket,
+}: {
+  pools: MarketReadiness[];
+  selectedRouteScope: string | null;
+  onInspectMarket: (marketCode: string) => void;
+}) {
+  return (
+    <DashboardSection
+      eyebrow="Fallback pools / internal regional pools"
+      title="Fallback-only coverage pools"
+      description="Regional and global pools remain available for debugging but are not counted as public homepage-ready markets."
+    >
+      <div className="mt-4 grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+        {pools.length ? (
+          pools.map((pool) => {
+            const selected = normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(pool.marketCode);
+
+            return (
+              <button
+                key={pool.marketCode}
+                type="button"
+                onClick={() => onInspectMarket(pool.marketCode)}
+                aria-pressed={selected}
+                className={`w-full cursor-pointer rounded-xl border border-dashed p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
+                  selected
+                    ? "border-indigo-700 bg-white shadow-md ring-2 ring-indigo-700/15"
+                    : "border-slate-200 bg-slate-50 hover:border-indigo-700/35 hover:bg-white hover:shadow-sm"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h4 className="font-extrabold text-slate-950">{pool.marketLabel}</h4>
+                    <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
+                      {pool.marketCode} · {pool.marketGroup}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-extrabold text-slate-500">
+                    Fallback only
+                  </span>
+                </div>
+                <p className="mt-3 text-sm font-semibold leading-6 text-slate-500">
+                  No public display target. Coverage is retained for internal routing, replacement, and regional debugging.
+                </p>
+                <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
+                  <MarketMiniMetric label="Fresh" value={pool.freshCount ?? 0} />
+                  <MarketMiniMetric label="Missing" value={pool.missingCount ?? 0} />
+                  <MarketMiniMetric label="Failed" value={pool.failed} />
+                  <MarketMiniMetric label="Provider" value={pool.providerCalls} />
+                  <MarketMiniMetric label="Attempts" value={pool.routeAttempts} />
+                  <MarketMiniMetric label="Timeout" value={pool.timeoutCount ?? 0} />
+                </dl>
+                <span className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-extrabold text-indigo-700">
+                  Inspect fallback routes
+                </span>
+              </button>
+            );
+          })
+        ) : (
+          <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-500">
+            No fallback-only pools were returned.
+          </p>
+        )}
+      </div>
+    </DashboardSection>
+  );
+}
+
+function RawDebugDetails({
+  statusPayload,
+  refreshCounts,
+}: {
+  statusPayload: HomepageFareStatusPayload;
+  refreshCounts: RefreshCounts | null;
+}) {
+  return (
+    <details className="rounded-2xl border border-slate-200 bg-white p-4">
+      <summary className="cursor-pointer text-sm font-extrabold uppercase tracking-wide text-slate-950">
+        Raw debug / View All details
+      </summary>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard label="Configured routes" value={statusPayload.summary.total} />
+        <MetricCard label="Candidate pool failed" value={statusPayload.candidatePoolHealth.failed} />
+        <MetricCard label="Candidate pool unavailable" value={statusPayload.candidatePoolHealth.unavailable} />
+        <MetricCard label="Visible gaps attempted" value={refreshCounts?.visibleGapsAttempted.length ?? 0} />
+        <MetricCard label="Immediate replacements attempted" value={refreshCounts?.replacementsUsed.length ?? 0} />
+        <MetricCard label="Executor targets" value={refreshCounts ? formatStringList(refreshCounts.targetedMarkets, "none") : "No manual run yet"} />
+        <MetricCard label="Markets needing another run" value={refreshCounts ? formatMarketsNeedingRun(refreshCounts.marketsNeedingAnotherRun) : formatMarketsNeedingRun(statusPayload.marketsNeedingAnotherRun)} />
+      </div>
+    </details>
   );
 }
 
 function MarketRouteInspector({
+  publicGroups,
+  fallbackGroups,
   selectedRouteScope,
   selectedGroup,
+  filter,
   loading,
-  onClose,
+  onSelectMarket,
   routePage,
   onPreviousPage,
   onNextPage,
+  onFilterChange,
   routeDetailsRef,
 }: {
+  publicGroups: AdminHomepageFareMarketRouteGroup[];
+  fallbackGroups: AdminHomepageFareMarketRouteGroup[];
   selectedRouteScope: string | null;
   selectedGroup: AdminHomepageFareMarketRouteGroup | null;
+  filter: AdminHomepageFareRouteGroupFilter;
   loading: boolean;
-  onClose: () => void;
+  onSelectMarket: (marketCode: string) => void;
   routePage: number;
   onPreviousPage: () => void;
   onNextPage: () => void;
+  onFilterChange: (filter: AdminHomepageFareRouteGroupFilter) => void;
   routeDetailsRef: RefObject<HTMLDivElement | null>;
 }) {
+  const handleSelectMarket = (marketCode: string) => {
+    onSelectMarket(marketCode);
+  };
+  const handleFilterChange = (nextFilter: AdminHomepageFareRouteGroupFilter) => {
+    onFilterChange(nextFilter);
+  };
+
   return (
-    <AdminSectionCard className="overflow-hidden p-0">
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="px-5 py-4 text-base font-semibold text-slate-950">
-          Route Inspector
-        </h3>
-        <AdminButton
-          type="button"
-          onClick={onClose}
-          variant="secondary"
-          size="sm"
-          className="me-5"
-        >
-          Close inspector
-        </AdminButton>
+    <section className="mt-6 rounded-3xl border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-sky-50/40 p-4 shadow-sm sm:p-5">
+      <div className="max-w-4xl">
+        <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-indigo-700">
+          Route coverage
+        </p>
+        <h4 className="mt-2 text-xl font-extrabold text-slate-950">
+          Grouped Market Route Inspector
+        </h4>
+        <p className="mt-2 text-sm leading-6 text-slate-500">
+          Inspect homepage fare routes by market, status, and coverage. Select a market below to view route details.
+        </p>
+      </div>
+
+      <div className="mt-5 overflow-x-auto pb-1" aria-label="Route status filters">
+        <div className="flex min-w-max gap-2">
+          {ROUTE_FILTERS.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => handleFilterChange(item.key)}
+              className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
+                filter === item.key
+                  ? "border-indigo-700 bg-indigo-700 text-white shadow-sm"
+                  : "border-slate-200 bg-white/80 text-slate-950 hover:border-indigo-700/40 hover:bg-white"
+              }`}
+              aria-pressed={filter === item.key}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-5 space-y-5">
+        <div>
+          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h5 className="text-sm font-extrabold uppercase tracking-wide text-slate-950">
+                Public market coverage
+              </h5>
+              <p className="mt-1 text-xs font-semibold text-slate-500">
+                Country display targets stay separate from fallback-only pools.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleSelectMarket(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE)}
+              className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
+                selectedRouteScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
+                  ? "border-indigo-700 bg-indigo-700 text-white ring-2 ring-indigo-700/15"
+                  : "border-slate-200 bg-white/80 text-slate-950 hover:border-indigo-700/40 hover:bg-white hover:shadow-md"
+              }`}
+              aria-pressed={selectedRouteScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE}
+            >
+              View All
+            </button>
+          </div>
+
+          {publicGroups.length ? (
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {publicGroups.map((group) => (
+                <MarketRouteGroupCard
+                  key={group.marketCode}
+                  group={group}
+                  selected={normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(group.marketCode)}
+                  onSelect={handleSelectMarket}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-2xl border border-dashed border-slate-300 bg-white/50 p-4 text-sm font-semibold text-slate-500">
+              {loading ? "Loading market route groups…" : "No public market route groups match this filter."}
+            </p>
+          )}
+        </div>
+
+        {fallbackGroups.length ? (
+          <div className="rounded-2xl border border-dashed border-slate-300/90 bg-white/45 p-3">
+            <div className="mb-3">
+              <h5 className="text-sm font-extrabold uppercase tracking-wide text-slate-950">
+                Fallback-only debugging pools
+              </h5>
+              <p className="mt-1 text-xs font-semibold text-slate-500">
+                These pools have no public display target and are not counted as normal public market readiness.
+              </p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {fallbackGroups.map((group) => (
+                <MarketRouteGroupCard
+                  key={group.marketCode}
+                  group={group}
+                  selected={normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(group.marketCode)}
+                  onSelect={handleSelectMarket}
+                  fallbackOnly
+                />
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <SelectedRouteDetails
@@ -918,7 +1352,57 @@ function MarketRouteInspector({
         onPreviousPage={onPreviousPage}
         onNextPage={onNextPage}
       />
-    </AdminSectionCard>
+    </section>
+  );
+}
+
+function MarketRouteGroupCard({
+  group,
+  selected,
+  onSelect,
+  fallbackOnly = false,
+}: {
+  group: AdminHomepageFareMarketRouteGroup;
+  selected: boolean;
+  onSelect: (marketCode: string) => void;
+  fallbackOnly?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(group.marketCode)}
+      className={`h-full w-full cursor-pointer rounded-2xl border p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
+        selected
+          ? "border-indigo-700 bg-white shadow-md ring-2 ring-indigo-700/15"
+          : "border-slate-200 bg-white/70 hover:-translate-y-0.5 hover:border-indigo-700/35 hover:bg-white hover:shadow-md"
+      }`}
+      aria-pressed={selected}
+      aria-label={`Inspect ${group.marketCode} routes`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-base font-extrabold text-slate-950">{group.marketLabel}</p>
+          <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
+            {fallbackOnly ? "Fallback only · No public display target" : group.marketGroup}
+          </p>
+        </div>
+        <MarketGroupStatusBadge status={group.status} />
+      </div>
+      <p className="mt-3 text-sm font-semibold text-slate-500">
+        {group.routes.length} total routes · {group.freshFaresCount} fresh · {group.lastKnownGoodFaresCount} last-known-good
+      </p>
+      <dl className="mt-4 grid grid-cols-3 gap-2 text-xs">
+        <MarketMiniMetric label="Popular" value={group.popularCoverageCount} />
+        <MarketMiniMetric label="Discovery" value={group.discoveryCoverageCount} />
+        <MarketMiniMetric label="Backup" value={group.backupCoverageCount} />
+        <MarketMiniMetric label="Fresh" value={group.freshFaresCount} />
+        <MarketMiniMetric label="LKG" value={group.lastKnownGoodFaresCount} />
+        <MarketMiniMetric label="Failed/missing" value={group.failedUnavailableRoutesCount + group.missingRoutesCount} />
+      </dl>
+      <span className="mt-4 inline-flex min-h-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-extrabold text-indigo-700 transition">
+        Inspect {group.marketCode} routes
+      </span>
+    </button>
   );
 }
 
@@ -941,12 +1425,9 @@ function SelectedRouteDetails({
 }) {
   if (!selectedRouteScope || !group) {
     return (
-      <div
-        ref={routeDetailsRef}
-        className="border-t border-slate-200 px-5 py-6 text-center"
-      >
-        <p className="text-sm font-semibold text-slate-950">
-          Select a market to inspect its routes.
+      <div ref={routeDetailsRef} className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-white/55 p-6 text-center">
+        <p className="text-sm font-extrabold text-slate-950">
+          Select a market to inspect its routes, or choose View All.
         </p>
         <p className="mt-2 text-xs font-semibold text-slate-500">
           Route rows stay hidden until a market context is selected.
@@ -956,48 +1437,57 @@ function SelectedRouteDetails({
   }
 
   const page = paginateAdminHomepageFareRoutes(group.routes, routePage);
+  const isViewAll = group.marketCode === "ALL";
+
   return (
-    <div ref={routeDetailsRef} className="min-w-0 overflow-hidden border-t border-slate-200">
-      <div className="border-b border-slate-200 px-5 py-4">
+    <div ref={routeDetailsRef} className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white/80 shadow-sm">
+      <div className="border-b border-slate-200 bg-slate-50/90 px-4 py-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h5 className="text-base font-semibold text-slate-950">
-              {group.displayName} — {page.totalRoutes} total routes
+            <h5 className="text-base font-extrabold text-slate-950">
+              {isViewAll ? "All routes" : group.displayName} — {page.totalRoutes} total routes
             </h5>
             <p className="mt-1 text-sm font-semibold text-slate-500">
               Showing {page.start}–{page.end} of {page.totalRoutes}
-              {` · ${group.marketCode}`}
+              {isViewAll ? " · Debug view across all markets" : ` · ${group.marketCode}`}
             </p>
           </div>
           <div className="flex items-center gap-3">
             <MarketGroupStatusBadge status={group.status} />
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-600">
-              <AdminButton
+            <div className="flex items-center gap-2 text-sm font-bold text-slate-500">
+              <button
                 type="button"
                 onClick={onPreviousPage}
                 disabled={!page.hasPreviousPage}
-                variant="secondary"
-                size="sm"
+                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-950 transition disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Previous
-              </AdminButton>
+              </button>
               <span className="min-w-16 text-center">
                 Page {page.currentPage} of {page.totalPages}
               </span>
-              <AdminButton
+              <button
                 type="button"
                 onClick={onNextPage}
                 disabled={!page.hasNextPage}
-                variant="secondary"
-                size="sm"
+                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-950 transition disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Next
-              </AdminButton>
+              </button>
             </div>
           </div>
         </div>
       </div>
       <RouteDetailsTable group={group} routes={page.routes} loading={loading} />
+    </div>
+  );
+}
+
+function MarketMiniMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-lg bg-white/80 p-2 ring-1 ring-slate-100">
+      <dt className="font-bold uppercase tracking-wide text-slate-500">{label}</dt>
+      <dd className="mt-0.5 font-extrabold text-slate-950">{value}</dd>
     </div>
   );
 }
@@ -1014,85 +1504,57 @@ function RouteDetailsTable({
   if (!routes.length) {
     return (
       <p className="p-4 text-sm font-semibold text-slate-500">
-        {loading
-          ? "Loading homepage fare snapshot status…"
-          : "No routes to display for this market/filter."}
+        {loading ? "Loading homepage fare snapshot status…" : "No routes to display for this market/filter."}
       </p>
     );
   }
 
   return (
-    <div className="max-w-full overflow-x-auto overscroll-x-contain">
-      <table className="min-w-[1120px] text-left text-sm">
-        <thead className="bg-slate-50/95 text-xs font-semibold uppercase tracking-wide text-slate-500">
+    <div className="overflow-x-auto">
+      <table className="min-w-[1120px] divide-y divide-border text-left text-sm">
+        <thead className="bg-white text-xs font-extrabold uppercase tracking-wide text-slate-500">
           <tr>
-            <th className="border-b border-slate-200 px-4 py-3">Market</th>
-            <th className="border-b border-slate-200 px-4 py-3">Route</th>
-            <th className="border-b border-slate-200 px-4 py-3">Origin</th>
-            <th className="border-b border-slate-200 px-4 py-3">Destination</th>
-            <th className="border-b border-slate-200 px-4 py-3">Section</th>
-            <th className="border-b border-slate-200 px-4 py-3">Status</th>
-            <th className="border-b border-slate-200 px-4 py-3">Display price</th>
-            <th className="border-b border-slate-200 px-4 py-3">Provider native</th>
-            <th className="border-b border-slate-200 px-4 py-3">Provider</th>
-            <th className="border-b border-slate-200 px-4 py-3">Last refreshed</th>
-            <th className="border-b border-slate-200 px-4 py-3">Reason / replacement</th>
+            <th className="px-3 py-3">Market</th>
+            <th className="px-3 py-3">Route</th>
+            <th className="px-3 py-3">Origin</th>
+            <th className="px-3 py-3">Destination</th>
+            <th className="px-3 py-3">Section</th>
+            <th className="px-3 py-3">Status</th>
+            <th className="px-3 py-3">Display price</th>
+            <th className="px-3 py-3">Provider native</th>
+            <th className="px-3 py-3">Provider</th>
+            <th className="px-3 py-3">Last refreshed</th>
+            <th className="px-3 py-3">Reason / replacement</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 bg-white">
+        <tbody className="divide-y divide-border">
           {routes.map((route) => (
-            <tr key={`${group.marketCode}-${route.id}`} className="align-top transition-colors hover:bg-slate-50/80">
-              <td className="px-4 py-3 font-bold text-slate-950">
-                {route.market}
-              </td>
-              <td className="px-4 py-3 font-bold text-slate-950">
-                {route.label}
-              </td>
-              <td className="px-4 py-3 font-semibold text-slate-950">
+            <tr key={`${group.marketCode}-${route.id}`} className="align-top">
+              <td className="px-3 py-3 font-bold text-slate-950">{route.market}</td>
+              <td className="px-3 py-3 font-bold text-slate-950">{route.label}</td>
+              <td className="px-3 py-3 font-semibold text-slate-950">
                 {route.origin}
-                {route.originCity ? (
-                  <span className="block text-xs font-medium text-slate-500">
-                    {route.originCity}
-                  </span>
-                ) : null}
+                {route.originCity ? <span className="block text-xs font-medium text-slate-500">{route.originCity}</span> : null}
               </td>
-              <td className="px-4 py-3 font-semibold text-slate-950">
+              <td className="px-3 py-3 font-semibold text-slate-950">
                 {route.destination}
-                {route.destinationCity ? (
-                  <span className="block text-xs font-medium text-slate-500">
-                    {route.destinationCity}
-                  </span>
-                ) : null}
+                {route.destinationCity ? <span className="block text-xs font-medium text-slate-500">{route.destinationCity}</span> : null}
               </td>
-              <td className="px-4 py-3 capitalize text-slate-950">
-                {route.section}
-              </td>
-              <td className="px-4 py-3">
+              <td className="px-3 py-3 capitalize text-slate-950">{route.section}</td>
+              <td className="px-3 py-3">
                 <StatusBadge status={route.status} />
               </td>
-              <td className="px-4 py-3 font-semibold text-slate-950">
-                {formatRoutePrice(route)}
-              </td>
-              <td className="px-4 py-3 font-semibold text-slate-950">
-                {formatProviderNativePrice(route)}
-              </td>
-              <td className="px-4 py-3 text-slate-950">
-                {route.provider ?? "—"}
-              </td>
-              <td className="px-4 py-3 text-xs font-semibold text-slate-500">
+              <td className="px-3 py-3 font-semibold text-slate-950">{formatRoutePrice(route)}</td>
+              <td className="px-3 py-3 font-semibold text-slate-950">{formatProviderNativePrice(route)}</td>
+              <td className="px-3 py-3 text-slate-950">{route.provider ?? "—"}</td>
+              <td className="px-3 py-3 text-xs font-semibold text-slate-500">
                 {formatSnapshotTime(route.searchedAt)}
-                {route.expiresAt ? (
-                  <span className="block">
-                    Expires {formatDateTime(route.expiresAt)}
-                  </span>
-                ) : null}
+                {route.expiresAt ? <span className="block">Expires {formatDateTime(route.expiresAt)}</span> : null}
               </td>
-              <td className="max-w-xs px-4 py-3 text-xs font-semibold text-slate-500">
+              <td className="max-w-xs px-3 py-3 text-xs font-semibold text-slate-500">
                 <SafeFailureReason route={route} />
                 {route.replacementCandidateUsed ? (
-                  <span className="block">
-                    Replacement: {route.replacementCandidateUsed}
-                  </span>
+                  <span className="block">Replacement: {route.replacementCandidateUsed}</span>
                 ) : !route.errorReason ? (
                   "—"
                 ) : null}
@@ -1110,45 +1572,159 @@ function MarketGroupStatusBadge({
 }: {
   status: AdminHomepageFareMarketRouteGroup["status"];
 }) {
-  const tone = status === "Ready"
-    ? "good"
-    : status === "Failed"
-      ? "bad"
-      : status === "Partially ready" || status === "Needs coverage"
-        ? "warn"
-        : "neutral";
-  return <AdminStatusBadge tone={tone}>{status}</AdminStatusBadge>;
+  const styles =
+    status === "Ready"
+      ? "bg-indigo-50 text-indigo-700"
+      : status === "Fallback only"
+        ? "bg-slate-100 text-slate-500"
+      : status === "Failed"
+        ? "bg-rose-50 text-rose-700"
+        : status === "Partially ready"
+          ? "bg-sky-50 text-sky-700"
+          : "bg-amber-50 text-amber-700";
+
+  return (
+    <span className={`inline-flex shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${styles}`}>
+      {status}
+    </span>
+  );
 }
 
-function StatusBadge({ status }: { status: HomepageFareSnapshotStatus }) {
-  const tone = status === "fresh"
-    ? "good"
-    : status === "last_known_good" || status === "expired"
-      ? "warn"
-      : status === "failed"
-        ? "bad"
-        : "neutral";
-  return <AdminStatusBadge tone={tone}>{status}</AdminStatusBadge>;
+function DisplayReadinessSummary({ readiness }: { readiness: DisplayReadiness }) {
+  return (
+    <div
+      className={`mt-4 rounded-xl border p-4 ${HEALTH_SUMMARY_STYLES[readiness.status]}`}
+      role="status"
+      aria-live="polite"
+    >
+      <p className="text-xs font-extrabold uppercase tracking-wide opacity-80">
+        Public homepage display readiness
+      </p>
+      <p className="mt-1 text-2xl font-extrabold">{readiness.label}</p>
+      <p className="mt-2 text-sm font-semibold leading-6">
+        {readiness.message}
+      </p>
+    </div>
+  );
 }
 
 function MarketStatusBadge({ status }: { status: MarketReadinessStatus }) {
-  return <AdminStatusBadge tone={marketStatusTone(status)}>{formatMarketStatus(status)}</AdminStatusBadge>;
+  const ready = status === "ready";
+
+  return (
+    <span
+      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${
+        ready ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+      }`}
+    >
+      {formatMarketStatus(status)}
+    </span>
+  );
 }
 
-function marketStatusTone(status: MarketReadinessStatus): "good" | "bad" | "warn" | "neutral" {
-  if (status === "ready") return "good";
-  if (status === "failed") return "bad";
-  if (status === "underfilled" || status === "budget_exhausted" || status === "candidate_exhausted") return "warn";
-  return "neutral";
+function MetricCard({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div className="rounded-lg bg-slate-50 p-3">
+      <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">
+        {label}
+      </dt>
+      <dd className="mt-1 text-xl font-extrabold text-slate-950">{value}</dd>
+    </div>
+  );
 }
 
-async function fetchHomepageFareStatus(signal: AbortSignal) {
+function StatusBadge({ status }: { status: HomepageFareSnapshotStatus }) {
+  return (
+    <span
+      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold capitalize ${STATUS_BADGE_STYLES[status]}`}
+    >
+      {status}
+    </span>
+  );
+}
+
+async function buildSafeRefreshFailureMessage(response: Response) {
+  const fallback = `Could not refresh homepage fares. Status ${response.status}.`;
+
+  try {
+    const payload = (await response.json()) as {
+      error?: unknown;
+      errorCode?: unknown;
+      safeReason?: unknown;
+    };
+    const details = [
+      typeof payload.error === "string" ? payload.error : "Homepage fare refresh failed.",
+      typeof payload.safeReason === "string" ? payload.safeReason : undefined,
+      typeof payload.errorCode === "string" ? `Code: ${payload.errorCode}.` : undefined,
+      `Status: ${response.status}.`,
+    ].filter(Boolean);
+
+    return details.join(" ");
+  } catch {
+    return fallback;
+  }
+}
+
+async function fetchHomepageFareStatus() {
   const response = await fetch("/api/admin/homepage-fares/status", {
     credentials: "include",
-    signal,
   });
-  if (!response.ok) throw new Error("Homepage fare status unavailable.");
+
+  if (!response.ok) {
+    throw new Error("Homepage fare status unavailable.");
+  }
+
   return normalizeStatusPayload(await response.json());
+}
+
+function normalizeRefreshCounts(payload: unknown): RefreshCounts {
+  if (!payload || typeof payload !== "object") return DEFAULT_COUNTS;
+
+  const counts = payload as Partial<Record<keyof RefreshCounts, unknown>>;
+
+  return {
+    refreshed: readCount(counts.refreshed),
+    unavailable: readCount(counts.unavailable),
+    failed: readCount(counts.failed),
+    skipped: readCount(counts.skipped),
+    retained: readCount(counts.retained),
+    routeAttempts: readCount(counts.routeAttempts),
+    providerCalls: readCount(counts.providerCalls),
+    stoppedReason: readStoppedReason(counts.stoppedReason),
+    globalReadinessStatus: readGlobalReadinessStatus(counts.globalReadinessStatus),
+    requiredMarkets: readStringArray(counts.requiredMarkets),
+    readyMarkets: readStringArray(counts.readyMarkets),
+    underfilledMarkets: normalizeMarketReadinessArray(counts.underfilledMarkets),
+    marketReadinessSummary: normalizeMarketReadinessArray(counts.marketReadinessSummary),
+    marketTargets: normalizeMarketReadinessRecord(counts.marketTargets),
+    marketTargetMet: normalizeBooleanRecord(counts.marketTargetMet),
+    popularFreshByMarket: normalizeCountRecord(counts.popularFreshByMarket),
+    discoveryFreshByMarket: normalizeCountRecord(counts.discoveryFreshByMarket),
+    backupFreshByMarket: normalizeCountRecord(counts.backupFreshByMarket),
+    candidatePoolSizeByMarket: normalizeCountRecord(counts.candidatePoolSizeByMarket),
+    routeAttemptsByMarket: normalizeCountRecord(counts.routeAttemptsByMarket),
+    providerCallsByMarket: normalizeCountRecord(counts.providerCallsByMarket),
+    failedByMarket: normalizeCountRecord(counts.failedByMarket),
+    unavailableByMarket: normalizeCountRecord(counts.unavailableByMarket),
+    skippedCooldownByMarket: normalizeCountRecord(counts.skippedCooldownByMarket),
+    replacementCandidatesUsedByMarket: normalizeCountRecord(counts.replacementCandidatesUsedByMarket),
+    timeoutByMarket: normalizeCountRecord(counts.timeoutByMarket),
+    lastKnownGoodByMarket: normalizeCountRecord(counts.lastKnownGoodByMarket),
+    targetedMarkets: readStringArray(counts.targetedMarkets),
+    visibleGapsAttempted: normalizeVisibleGapAttempts(counts.visibleGapsAttempted),
+    replacementsUsed: normalizeReplacementUsages(counts.replacementsUsed),
+    marketsNeedingAnotherRun: normalizeMarketsNeedingAnotherRun(counts.marketsNeedingAnotherRun),
+    underfillCauseByMarket: normalizeUnderfillCauseRecord(counts.underfillCauseByMarket),
+    readinessBefore: normalizeRefreshReadiness(counts.readinessBefore),
+    readinessAfter: normalizeRefreshReadiness(counts.readinessAfter),
+    refreshBudget: normalizeRefreshBudget(counts.refreshBudget),
+  };
 }
 
 function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
@@ -1219,63 +1795,32 @@ function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
       summary.total,
     ),
     refreshBudget: normalizeRefreshBudget(candidate.refreshBudget),
-    globalReadinessStatus: readGlobalReadinessStatus(
-      candidate.globalReadinessStatus,
-    ),
+    globalReadinessStatus: readGlobalReadinessStatus(candidate.globalReadinessStatus),
     requiredMarkets: readStringArray(candidate.requiredMarkets),
     marketTargets: normalizeMarketReadinessRecord(candidate.marketTargets),
     marketTargetMet: normalizeBooleanRecord(candidate.marketTargetMet),
-    underfilledMarkets: normalizeMarketReadinessArray(
-      candidate.underfilledMarkets,
-    ),
+    underfilledMarkets: normalizeMarketReadinessArray(candidate.underfilledMarkets),
     readyMarkets: readStringArray(candidate.readyMarkets),
-    marketReadinessSummary: normalizeMarketReadinessArray(
-      candidate.marketReadinessSummary,
-    ),
+    marketReadinessSummary: normalizeMarketReadinessArray(candidate.marketReadinessSummary),
     popularFreshByMarket: normalizeCountRecord(candidate.popularFreshByMarket),
-    discoveryFreshByMarket: normalizeCountRecord(
-      candidate.discoveryFreshByMarket,
-    ),
+    discoveryFreshByMarket: normalizeCountRecord(candidate.discoveryFreshByMarket),
     backupFreshByMarket: normalizeCountRecord(candidate.backupFreshByMarket),
-    candidatePoolSizeByMarket: normalizeCountRecord(
-      candidate.candidatePoolSizeByMarket,
-    ),
-    routeAttemptsByMarket: normalizeCountRecord(
-      candidate.routeAttemptsByMarket,
-    ),
-    providerCallsByMarket: normalizeCountRecord(
-      candidate.providerCallsByMarket,
-    ),
+    candidatePoolSizeByMarket: normalizeCountRecord(candidate.candidatePoolSizeByMarket),
+    routeAttemptsByMarket: normalizeCountRecord(candidate.routeAttemptsByMarket),
+    providerCallsByMarket: normalizeCountRecord(candidate.providerCallsByMarket),
     failedByMarket: normalizeCountRecord(candidate.failedByMarket),
     unavailableByMarket: normalizeCountRecord(candidate.unavailableByMarket),
-    skippedCooldownByMarket: normalizeCountRecord(
-      candidate.skippedCooldownByMarket,
-    ),
-    replacementCandidatesUsedByMarket: normalizeCountRecord(
-      candidate.replacementCandidatesUsedByMarket,
-    ),
+    skippedCooldownByMarket: normalizeCountRecord(candidate.skippedCooldownByMarket),
+    replacementCandidatesUsedByMarket: normalizeCountRecord(candidate.replacementCandidatesUsedByMarket),
     timeoutByMarket: normalizeCountRecord(candidate.timeoutByMarket),
-    lastKnownGoodByMarket: normalizeCountRecord(
-      candidate.lastKnownGoodByMarket,
-    ),
-    publicPriceDiagnostics: normalizePublicPriceDiagnostics(
-      candidate.publicPriceDiagnostics,
-    ),
+    lastKnownGoodByMarket: normalizeCountRecord(candidate.lastKnownGoodByMarket),
+    publicPriceDiagnostics: normalizePublicPriceDiagnostics(candidate.publicPriceDiagnostics),
     targetedMarkets: readStringArray(candidate.targetedMarkets),
-    visibleGapsAttempted: normalizeVisibleGapAttempts(
-      candidate.visibleGapsAttempted,
-    ),
+    visibleGapsAttempted: normalizeVisibleGapAttempts(candidate.visibleGapsAttempted),
     replacementsUsed: normalizeReplacementUsages(candidate.replacementsUsed),
-    marketsNeedingAnotherRun: normalizeMarketsNeedingAnotherRun(
-      candidate.marketsNeedingAnotherRun,
-    ),
-    underfillCauseByMarket: normalizeUnderfillCauseRecord(
-      candidate.underfillCauseByMarket,
-    ),
-    lastRefreshAt:
-      typeof candidate.lastRefreshAt === "string"
-        ? candidate.lastRefreshAt
-        : undefined,
+    marketsNeedingAnotherRun: normalizeMarketsNeedingAnotherRun(candidate.marketsNeedingAnotherRun),
+    underfillCauseByMarket: normalizeUnderfillCauseRecord(candidate.underfillCauseByMarket),
+    lastRefreshAt: typeof candidate.lastRefreshAt === "string" ? candidate.lastRefreshAt : undefined,
     cronConfigured: candidate.cronConfigured === true,
     nextExpectedCronRefresh:
       typeof candidate.nextExpectedCronRefresh === "string"
@@ -1292,13 +1837,9 @@ function normalizeDisplayReadiness(value: unknown): DisplayReadiness {
 
   return {
     ...health,
-    globalReadinessStatus: readGlobalReadinessStatus(
-      readiness.globalReadinessStatus,
-    ),
+    globalReadinessStatus: readGlobalReadinessStatus(readiness.globalReadinessStatus),
     popularFresh: readCount(readiness.popularFresh),
-    popularTarget:
-      readCount(readiness.popularTarget) ||
-      DEFAULT_DISPLAY_READINESS.popularTarget,
+    popularTarget: readCount(readiness.popularTarget) || DEFAULT_DISPLAY_READINESS.popularTarget,
     discoverFresh: readCount(readiness.discoverFresh),
     discoverVisibleTarget:
       readCount(readiness.discoverVisibleTarget) ||
@@ -1308,6 +1849,25 @@ function normalizeDisplayReadiness(value: unknown): DisplayReadiness {
     publicFreshTarget:
       readCount(readiness.publicFreshTarget) ||
       DEFAULT_DISPLAY_READINESS.publicFreshTarget,
+  };
+}
+
+function normalizeRefreshReadiness(value: unknown): RefreshReadinessCounts {
+  if (!value || typeof value !== "object") return DEFAULT_READINESS_COUNTS;
+
+  const readiness = value as Partial<Record<keyof RefreshReadinessCounts, unknown>>;
+
+  return {
+    freshPopular: readCount(readiness.freshPopular),
+    freshDiscover: readCount(readiness.freshDiscover),
+    freshDiscoverDisplayed: readCount(readiness.freshDiscoverDisplayed),
+    freshDiscoverBackup: readCount(readiness.freshDiscoverBackup),
+    publicFreshTarget:
+      readCount(readiness.publicFreshTarget) ||
+      DEFAULT_READINESS_COUNTS.publicFreshTarget,
+    operationalFreshTarget:
+      readCount(readiness.operationalFreshTarget) ||
+      DEFAULT_READINESS_COUNTS.operationalFreshTarget,
   };
 }
 
@@ -1358,9 +1918,7 @@ function normalizeHealth(value: unknown): HomepageFareHealth {
   return { status, label, message };
 }
 
-function readHealthStatus(
-  value: unknown,
-): HomepageFareHealthStatus | undefined {
+function readHealthStatus(value: unknown): HomepageFareHealthStatus | undefined {
   return value === "healthy" || value === "warning" || value === "attention"
     ? value
     : undefined;
@@ -1371,9 +1929,7 @@ function normalizeStatusRoute(
 ): HomepageFareStatusRoute | undefined {
   if (!value || typeof value !== "object") return undefined;
 
-  const route = value as Partial<
-    Record<keyof HomepageFareStatusRoute, unknown>
-  >;
+  const route = value as Partial<Record<keyof HomepageFareStatusRoute, unknown>>;
   const status = readSnapshotStatus(route.status);
   const origin = readCode(route.origin);
   const destination = readCode(route.destination);
@@ -1385,23 +1941,14 @@ function normalizeStatusRoute(
   return {
     id: route.id,
     market: typeof route.market === "string" ? route.market : "GLOBAL",
-    label:
-      typeof route.label === "string"
-        ? route.label
-        : `${origin} → ${destination}`,
+    label: typeof route.label === "string" ? route.label : `${origin} → ${destination}`,
     origin,
     destination,
-    originCity:
-      typeof route.originCity === "string" ? route.originCity : undefined,
+    originCity: typeof route.originCity === "string" ? route.originCity : undefined,
     destinationCity:
-      typeof route.destinationCity === "string"
-        ? route.destinationCity
-        : undefined,
+      typeof route.destinationCity === "string" ? route.destinationCity : undefined,
     section: readRouteSection(route.section),
-    price:
-      typeof route.price === "number" && Number.isFinite(route.price)
-        ? route.price
-        : undefined,
+    price: typeof route.price === "number" && Number.isFinite(route.price) ? route.price : undefined,
     currency: readCode(route.currency),
     providerNativePrice:
       typeof route.providerNativePrice === "number" &&
@@ -1413,10 +1960,8 @@ function normalizeStatusRoute(
     status,
     providerBacked: route.providerBacked === true,
     cachedProviderBacked: route.cachedProviderBacked === true,
-    searchedAt:
-      typeof route.searchedAt === "string" ? route.searchedAt : undefined,
-    expiresAt:
-      typeof route.expiresAt === "string" ? route.expiresAt : undefined,
+    searchedAt: typeof route.searchedAt === "string" ? route.searchedAt : undefined,
+    expiresAt: typeof route.expiresAt === "string" ? route.expiresAt : undefined,
     replacementCandidateUsed:
       typeof route.replacementCandidateUsed === "string"
         ? route.replacementCandidateUsed
@@ -1429,15 +1974,7 @@ function normalizeStatusRoute(
   };
 }
 
-function SafeFailureReason({
-  route,
-}: {
-  route: {
-    status: HomepageFareSnapshotStatus;
-    errorReason?: string;
-    errorCategory?: string;
-  };
-}) {
+function SafeFailureReason({ route }: { route: { status: HomepageFareSnapshotStatus; errorReason?: string; errorCategory?: string } }) {
   if (
     (route.status !== "failed" && route.status !== "unavailable") ||
     !route.errorReason ||
@@ -1493,14 +2030,12 @@ function isSafeHomepageFareErrorReason(
   value: unknown,
 ): value is SafeHomepageFareErrorReason {
   return (
-    typeof value === "string" && value in SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES
+    typeof value === "string" &&
+    value in SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES
   );
 }
 
-function createEmptyPublicPriceDiagnostics(): Record<
-  PublicPriceDiagnosis,
-  number
-> {
+function createEmptyPublicPriceDiagnostics(): Record<PublicPriceDiagnosis, number> {
   return {
     fresh_available: 0,
     last_known_good_used: 0,
@@ -1537,9 +2072,7 @@ function normalizeStatusSummary(
     return { ...DEFAULT_STATUS_SUMMARY, total: fallbackTotal };
   }
 
-  const summary = value as Partial<
-    Record<keyof HomepageFareStatusSummary, unknown>
-  >;
+  const summary = value as Partial<Record<keyof HomepageFareStatusSummary, unknown>>;
 
   return {
     fresh: readCount(summary.fresh),
@@ -1551,6 +2084,19 @@ function normalizeStatusSummary(
     total: readCount(summary.total) || fallbackTotal,
   };
 }
+
+function readStoppedReason(value: unknown): RefreshStoppedReason {
+  return value === "target_met" ||
+    value === "route_budget_exhausted" ||
+    value === "provider_budget_exhausted" ||
+    value === "candidate_pool_exhausted" ||
+    value === "provider_unavailable_no_offers" ||
+    value === "all_remaining_cooldown_or_unavailable" ||
+    value === "completed"
+    ? value
+    : "completed";
+}
+
 
 function formatMarketStatus(status: MarketReadinessStatus) {
   switch (status) {
@@ -1567,7 +2113,59 @@ function formatMarketStatus(status: MarketReadinessStatus) {
     case "cooldown":
       return "Cooldown";
     case "underfilled":
-      return "Needs coverage";
+      return "Underfilled";
+  }
+}
+
+function formatStoppedReason(reason: RefreshStoppedReason) {
+  switch (reason) {
+    case "target_met":
+      return "Target met";
+    case "route_budget_exhausted":
+      return "Route budget exhausted";
+    case "provider_budget_exhausted":
+      return "Provider budget exhausted";
+    case "candidate_pool_exhausted":
+      return "Candidate pool exhausted";
+    case "provider_unavailable_no_offers":
+      return "Provider unavailable / no offers";
+    case "all_remaining_cooldown_or_unavailable":
+      return "Cooldown / unavailable";
+    case "completed":
+      return "Completed";
+  }
+}
+
+
+
+function formatStringList(values: string[], emptyLabel: string) {
+  return values.length ? values.join(", ") : emptyLabel;
+}
+
+function formatMarketsNeedingRun(markets: MarketNextRunNeed[]) {
+  const needed = markets.filter((market) => market.needed);
+
+  return needed.length
+    ? needed.map((market) => `${market.market} (${formatUnderfillCause(market.reason)})`).join(", ")
+    : "none";
+}
+
+function formatUnderfillCause(cause: UnderfillCause) {
+  switch (cause) {
+    case "none":
+      return "none";
+    case "budget_exhausted":
+      return "budget exhausted";
+    case "candidate_pool_exhausted":
+      return "candidate pool exhausted";
+    case "provider_unavailable_no_offers":
+      return "provider unavailable/no offers";
+    case "provider_failure":
+      return "provider failure";
+    case "cooldown":
+      return "cooldown";
+    case "underfilled":
+      return "underfilled";
   }
 }
 
@@ -1595,6 +2193,7 @@ function readStringArray(value: unknown): string[] {
     : [];
 }
 
+
 function readUnderfillCause(value: unknown): UnderfillCause {
   return value === "none" ||
     value === "budget_exhausted" ||
@@ -1607,16 +2206,11 @@ function readUnderfillCause(value: unknown): UnderfillCause {
     : "underfilled";
 }
 
-function normalizeUnderfillCauseRecord(
-  value: unknown,
-): Record<string, UnderfillCause> {
+function normalizeUnderfillCauseRecord(value: unknown): Record<string, UnderfillCause> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
 
   return Object.fromEntries(
-    Object.entries(value).map(([key, cause]) => [
-      key,
-      readUnderfillCause(cause),
-    ]),
+    Object.entries(value).map(([key, cause]) => [key, readUnderfillCause(cause)]),
   );
 }
 
@@ -1627,35 +2221,26 @@ function normalizeVisibleGapAttempts(value: unknown): VisibleGapAttempt[] {
     if (!item || typeof item !== "object" || Array.isArray(item)) return [];
     const candidate = item as Record<string, unknown>;
     const market = typeof candidate.market === "string" ? candidate.market : "";
-    const routeId =
-      typeof candidate.routeId === "string" ? candidate.routeId : "";
+    const routeId = typeof candidate.routeId === "string" ? candidate.routeId : "";
     const origin = typeof candidate.origin === "string" ? candidate.origin : "";
-    const destination =
-      typeof candidate.destination === "string" ? candidate.destination : "";
-    const section =
-      candidate.section === "popular" ||
-      candidate.section === "discovery" ||
-      candidate.section === "backup" ||
-      candidate.section === "fallback"
-        ? candidate.section
-        : "fallback";
+    const destination = typeof candidate.destination === "string" ? candidate.destination : "";
+    const section = candidate.section === "popular" || candidate.section === "discovery" || candidate.section === "backup" || candidate.section === "fallback"
+      ? candidate.section
+      : "fallback";
 
     if (!market || !routeId || !origin || !destination) return [];
 
-    return [
-      {
-        market,
-        routeId,
-        origin,
-        destination,
-        section,
-        result:
-          typeof candidate.result === "string" ? candidate.result : "skipped",
-        ...(typeof candidate.replacementForRouteId === "string"
-          ? { replacementForRouteId: candidate.replacementForRouteId }
-          : {}),
-      },
-    ];
+    return [{
+      market,
+      routeId,
+      origin,
+      destination,
+      section,
+      result: typeof candidate.result === "string" ? candidate.result : "skipped",
+      ...(typeof candidate.replacementForRouteId === "string"
+        ? { replacementForRouteId: candidate.replacementForRouteId }
+        : {}),
+    }];
   });
 }
 
@@ -1666,44 +2251,25 @@ function normalizeReplacementUsages(value: unknown): ReplacementUsage[] {
     if (!item || typeof item !== "object" || Array.isArray(item)) return [];
     const candidate = item as Record<string, unknown>;
     const market = typeof candidate.market === "string" ? candidate.market : "";
-    const failedRouteId =
-      typeof candidate.failedRouteId === "string"
-        ? candidate.failedRouteId
-        : "";
-    const replacementRouteId =
-      typeof candidate.replacementRouteId === "string"
-        ? candidate.replacementRouteId
-        : "";
+    const failedRouteId = typeof candidate.failedRouteId === "string" ? candidate.failedRouteId : "";
+    const replacementRouteId = typeof candidate.replacementRouteId === "string" ? candidate.replacementRouteId : "";
     const origin = typeof candidate.origin === "string" ? candidate.origin : "";
-    const destination =
-      typeof candidate.destination === "string" ? candidate.destination : "";
+    const destination = typeof candidate.destination === "string" ? candidate.destination : "";
 
-    if (
-      !market ||
-      !failedRouteId ||
-      !replacementRouteId ||
-      !origin ||
-      !destination
-    )
-      return [];
+    if (!market || !failedRouteId || !replacementRouteId || !origin || !destination) return [];
 
-    return [
-      {
-        market,
-        failedRouteId,
-        replacementRouteId,
-        origin,
-        destination,
-        result:
-          typeof candidate.result === "string" ? candidate.result : "skipped",
-      },
-    ];
+    return [{
+      market,
+      failedRouteId,
+      replacementRouteId,
+      origin,
+      destination,
+      result: typeof candidate.result === "string" ? candidate.result : "skipped",
+    }];
   });
 }
 
-function normalizeMarketsNeedingAnotherRun(
-  value: unknown,
-): MarketNextRunNeed[] {
+function normalizeMarketsNeedingAnotherRun(value: unknown): MarketNextRunNeed[] {
   if (!Array.isArray(value)) return [];
 
   return value.flatMap((item) => {
@@ -1712,13 +2278,11 @@ function normalizeMarketsNeedingAnotherRun(
     const market = typeof candidate.market === "string" ? candidate.market : "";
     if (!market) return [];
 
-    return [
-      {
-        market,
-        needed: candidate.needed === true,
-        reason: readUnderfillCause(candidate.reason),
-      },
-    ];
+    return [{
+      market,
+      needed: candidate.needed === true,
+      reason: readUnderfillCause(candidate.reason),
+    }];
   });
 }
 
@@ -1753,36 +2317,27 @@ function normalizeMarketReadinessRecord(
 
   return Object.fromEntries(
     Object.entries(value)
-      .map(
-        ([key, market]) =>
-          [
-            key,
-            normalizeMarketReadiness(
-              market && typeof market === "object" && !Array.isArray(market)
-                ? { market: key, ...market }
-                : market,
-            ),
-          ] as const,
-      )
-      .filter((entry): entry is readonly [string, MarketReadiness] =>
-        Boolean(entry[1]),
-      ),
+      .map(([key, market]) => [
+        key,
+        normalizeMarketReadiness(
+          market && typeof market === "object" && !Array.isArray(market)
+            ? { market: key, ...market }
+            : market,
+        ),
+      ] as const)
+      .filter((entry): entry is readonly [string, MarketReadiness] => Boolean(entry[1])),
   );
 }
 
 function normalizeMarketReadiness(value: unknown): MarketReadiness | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value))
-    return undefined;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
 
   const market = value as Partial<Record<keyof MarketReadiness, unknown>>;
-  const marketCode =
-    typeof market.marketCode === "string" ? market.marketCode : undefined;
+  const marketCode = typeof market.marketCode === "string" ? market.marketCode : undefined;
   if (!marketCode) return undefined;
 
   const underfillReason =
-    typeof market.underfillReason === "string"
-      ? market.underfillReason
-      : undefined;
+    typeof market.underfillReason === "string" ? market.underfillReason : undefined;
 
   return {
     market: typeof market.market === "string" ? market.market : marketCode,
@@ -1820,6 +2375,7 @@ function normalizeMarketReadiness(value: unknown): MarketReadiness | undefined {
   };
 }
 
+
 function readRouteSection(value: unknown): HomepageFareRouteSection {
   return value === "popular" ||
     value === "discovery" ||
@@ -1843,9 +2399,11 @@ function readSnapshotStatus(
 }
 
 function readCode(value: unknown) {
-  return typeof value === "string" && /^[A-Z]{3}$/.test(value)
-    ? value
-    : undefined;
+  return typeof value === "string" && /^[A-Z]{3}$/.test(value) ? value : undefined;
+}
+
+function sumCountRecord(record: Record<string, number>) {
+  return Object.values(record).reduce((total, value) => total + value, 0);
 }
 
 function readCount(value: unknown) {
@@ -1854,11 +2412,7 @@ function readCount(value: unknown) {
     : 0;
 }
 
-function formatRoutePrice(route: {
-  status: HomepageFareSnapshotStatus;
-  price?: number;
-  currency?: string;
-}) {
+function formatRoutePrice(route: { status: HomepageFareSnapshotStatus; price?: number; currency?: string }) {
   if (
     (route.status !== "fresh" && route.status !== "last_known_good") ||
     !route.price ||
@@ -1874,10 +2428,7 @@ function formatRoutePrice(route: {
   }).format(route.price);
 }
 
-function formatProviderNativePrice(route: {
-  providerNativePrice?: number;
-  providerNativeCurrency?: string;
-}) {
+function formatProviderNativePrice(route: { providerNativePrice?: number; providerNativeCurrency?: string }) {
   if (!route.providerNativePrice || !route.providerNativeCurrency) return "—";
 
   return new Intl.NumberFormat("en-US", {
@@ -1890,7 +2441,7 @@ function formatProviderNativePrice(route: {
 function formatSnapshotTime(value?: string) {
   if (!value) return "No snapshot yet";
 
-  return formatDateTime(value);
+  return `Searched ${formatDateTime(value)}`;
 }
 
 function formatDateTime(value: string) {
@@ -1904,4 +2455,9 @@ function formatDateTime(value: string) {
     hour: "numeric",
     minute: "2-digit",
   }).format(date);
+}
+
+function formatCronStatus(status: Pick<HomepageFareStatusPayload, "cronConfigured" | "nextExpectedCronRefresh">) {
+  if (!status.cronConfigured) return "Not configured";
+  return status.nextExpectedCronRefresh ? "Configured" : "Configured (cadence note missing)";
 }

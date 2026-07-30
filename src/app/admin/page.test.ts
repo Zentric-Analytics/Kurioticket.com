@@ -1,135 +1,56 @@
 import assert from "node:assert/strict";
-import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const adminOverviewPage = readFileSync("src/app/admin/page.tsx", "utf8");
-const adminShell = readFileSync("src/components/admin/AdminPageShell.tsx", "utf8");
 
 
+function sectionClassNameBefore(heading: string): string {
+  const headingIndex = adminOverviewPage.indexOf(heading);
+  assert.notEqual(headingIndex, -1, `${heading} heading should exist`);
 
-test("Admin Home distinguishes explicit helper failures from legitimate empty states", () => {
-  assert.match(adminOverviewPage, /User and activity metrics could not be loaded\./);
-  assert.match(adminOverviewPage, /Search analytics could not be loaded\./);
-  assert.match(adminOverviewPage, /Search analytics unavailable/);
-  assert.match(adminOverviewPage, /Provider readiness could not be checked\./);
-  assert.match(adminOverviewPage, /System configuration status could not be checked\./);
-  assert.match(adminOverviewPage, /Recent admin activity could not be loaded\./);
-  assert.match(adminOverviewPage, /No admin activity yet/);
-  assert.notEqual(
-    adminOverviewPage.indexOf("Search analytics could not be loaded."),
-    adminOverviewPage.indexOf("Search analytics unavailable"),
-  );
-  assert.notEqual(
-    adminOverviewPage.indexOf("Recent admin activity could not be loaded."),
-    adminOverviewPage.indexOf("No admin activity yet"),
-  );
-});
+  const prefix = adminOverviewPage.slice(0, headingIndex);
+  const sectionMatches = Array.from(prefix.matchAll(/<section className="([^"]+)"/g));
+  assert.ok(sectionMatches.length > 0, `${heading} wrapper section className should exist`);
+
+  return sectionMatches.at(-1)![1];
+}
 
 function blockBetween(start: string, end: string): string {
   const startIndex = adminOverviewPage.indexOf(start);
   assert.notEqual(startIndex, -1, `${start} should exist`);
   const endIndex = adminOverviewPage.indexOf(end, startIndex);
   assert.notEqual(endIndex, -1, `${end} should exist after ${start}`);
+
   return adminOverviewPage.slice(startIndex, endIndex);
 }
 
-function labelsFor(component: string, block = adminOverviewPage): string[] {
-  return Array.from(
-    block.matchAll(new RegExp(`<${component}[^>]* label="([^"]+)"`, "g")),
+function classNameAfter(heading: string): string {
+  const headingIndex = adminOverviewPage.indexOf(heading);
+  assert.notEqual(headingIndex, -1, `${heading} heading should exist`);
+
+  const classNameMatch = adminOverviewPage.slice(headingIndex).match(/<div className="([^"]+)"/);
+  assert.ok(classNameMatch, `${heading} grid className should exist`);
+
+  return classNameMatch[1];
+}
+
+test("admin overview operations snapshot keeps a stable one, two, then three column grid", () => {
+  const operationsGrid = classNameAfter("Operations Snapshot");
+
+  assert.match(operationsGrid, /\bgrid-cols-1\b/);
+  assert.match(operationsGrid, /\bsm:grid-cols-2\b/);
+  assert.match(operationsGrid, /\blg:grid-cols-3\b/);
+  assert.doesNotMatch(operationsGrid, /\bxl:grid-cols-6\b/);
+});
+
+test("admin overview operations snapshot preserves the six metric cards in order", () => {
+  const metricLabels = Array.from(
+    adminOverviewPage.matchAll(/<AdminMetricCard label="([^"]+)" value=\{metrics\.[^}]+\}/g),
     (match) => match[1],
   );
-}
 
-function assertMobileOuterBox(block: string, marker: string) {
-  assert.match(
-    block,
-    new RegExp(`${marker}[\\s\\S]*?className="[^"]*w-full[^"]*overflow-hidden[^"]*rounded-none[^"]*border border-\\[#A7B2BE\\][^"]*bg-transparent`),
-  );
-}
-
-test("documents the historical desktop and frozen mobile reference commits", () => {
-  assert.match(
-    adminOverviewPage,
-    /Desktop\/tablet layout reference: be5871a2925ff779610bf57c1d3bf245ea38ff09\n\/\/ Mobile layout reference: 862fa27e580571298107bc291dd8fdcb0806dfb7\n\/\/ Desktop restoration must not alter rendering below the md breakpoint\./,
-  );
-  const fileHistory = execSync(
-    `git log --follow --format="%H" -- src/app/admin/page.tsx`,
-    { encoding: "utf8" },
-  ).trim().split("\n");
-
-  assert.ok(fileHistory.length > 0);
-  assert.equal(execSync(`git cat-file -t be5871a2925ff779610bf57c1d3bf245ea38ff09`, { encoding: "utf8" }).trim(), "commit");
-  assert.equal(execSync(`git cat-file -t 862fa27e580571298107bc291dd8fdcb0806dfb7`, { encoding: "utf8" }).trim(), "commit");
-});
-
-test("mobile major sections use full-width square #A7B2BE boxes while the header remains unboxed", () => {
-  assert.match(adminOverviewPage, /const adminHomeSectionClass = "py-2 md:px-4 md:py-3 lg:px-5 lg:py-4";/);
-  assert.doesNotMatch(adminOverviewPage, /const adminHomeSectionClass = "[^"]* md:px-6 md:py-6 lg:px-8 lg:py-8";/);
-  assert.doesNotMatch(adminOverviewPage, /const adminHomeSectionClass = "[^"]*(?:^| )px-[^m][^ ]*/);
-
-  const headerBlock = blockBetween('data-admin-home-section="header"', 'data-admin-home-section="needs-attention"');
-  assert.doesNotMatch(headerBlock, /border border-\[#A7B2BE\]|data-admin-home-[a-z-]+-outline="true"/);
-
-  assertMobileOuterBox(blockBetween('data-admin-home-section="needs-attention"', 'data-admin-home-section="at-a-glance"'), 'data-admin-home-attention-outline="true"');
-  assertMobileOuterBox(blockBetween('data-admin-home-section="at-a-glance"', 'data-admin-home-section="operations"'), 'data-admin-home-glance-outline="true"');
-  assertMobileOuterBox(blockBetween('data-admin-home-surface="search-activity"', 'data-admin-home-surface="service-status"'), 'data-admin-home-surface="search-activity"');
-  assertMobileOuterBox(blockBetween('data-admin-home-surface="service-status"', 'data-admin-home-section="recent-admin-activity"'), 'data-admin-home-surface="service-status"');
-  assertMobileOuterBox(blockBetween('data-admin-home-section="recent-admin-activity"', '</div>\n  );'), 'data-admin-home-activity-outline="true"');
-});
-
-test("full-width mobile dividers sit outside horizontal padding", () => {
-  const attentionBlock = blockBetween('data-admin-home-section="needs-attention"', 'data-admin-home-section="at-a-glance"');
-  assert.match(attentionBlock, /data-admin-home-attention-heading="section-header"[\s\S]*?className="px-5 py-5/);
-  assert.match(attentionBlock, /data-admin-home-attention-rail="outlined-grid" className="grid divide-y divide-\[#A7B2BE\] border-t border-\[#A7B2BE\]/);
-  assert.match(adminOverviewPage, /data-admin-home-attention-item="outlined-grid-cell"[\s\S]*?px-5 py-5/);
-
-  const glanceBlock = blockBetween('data-admin-home-section="at-a-glance"', 'data-admin-home-section="operations"');
-  assert.match(glanceBlock, /data-admin-home-glance-heading="section-header"[\s\S]*?className="px-5 py-5/);
-  assert.match(glanceBlock, /data-admin-home-glance-grid="outlined" className="grid grid-cols-2 border-t border-\[#A7B2BE\]/);
-
-  const searchBlock = blockBetween('data-admin-home-surface="search-activity"', 'data-admin-home-surface="service-status"');
-  assert.match(searchBlock, /data-admin-home-search-heading="section-header"[\s\S]*?className="px-5 py-5/);
-  assert.match(searchBlock, /data-admin-home-search-metrics="outlined-grid" className="grid grid-cols-1 divide-y divide-\[#A7B2BE\] border-t border-\[#A7B2BE\]/);
-  assert.match(searchBlock, /data-admin-home-search-lower="products-link"[\s\S]*?className="border-t border-\[#A7B2BE\] px-5 py-5/);
-
-  const serviceBlock = blockBetween('data-admin-home-surface="service-status"', 'data-admin-home-section="recent-admin-activity"');
-  assert.match(serviceBlock, /data-admin-home-service-heading="section-header"[\s\S]*?className="px-5 py-5/);
-  assert.match(serviceBlock, /className="border-t border-\[#A7B2BE\] md:mt-6 md:border-t-0/);
-  assert.match(serviceBlock, /data-admin-home-system-status-outline="true"[\s\S]*?className="flex min-w-0 flex-col border-t border-\[#A7B2BE\] px-5 py-5/);
-
-  const activityBlock = blockBetween('data-admin-home-section="recent-admin-activity"', '</div>\n  );');
-  assert.match(activityBlock, /data-admin-home-activity-heading="section-header"[\s\S]*?className="px-5 py-5/);
-  assert.match(activityBlock, /className="border-t border-\[#A7B2BE\] md:mt-3 md:border-t-0"/);
-  assert.match(activityBlock, /data-admin-home-activity-footer="actions" className="flex justify-end border-t border-\[#A7B2BE\] px-5 py-5/);
-  assert.match(adminOverviewPage, /border-b border-\[#A7B2BE\] px-5 py-4 text-sm last:border-b-0/);
-});
-
-
-test("Admin Home desktop shell spacing is tightened without changing mobile spacing", () => {
-  assert.match(adminOverviewPage, /className="relative isolate md:grid md:gap-0"/);
-  assert.doesNotMatch(adminOverviewPage, /className="relative isolate md:grid md:gap-6 xl:gap-7"/);
-  assert.doesNotMatch(adminOverviewPage, /md:gap-6 xl:gap-7/);
-
-  assert.match(adminOverviewPage, /const adminHomeSectionClass = "py-2 md:px-4 md:py-3 lg:px-5 lg:py-4";/);
-  assert.match(adminOverviewPage, /const adminHomeSectionClass = "py-2 [^"]*md:px-4[^"]*md:py-3[^"]*lg:px-5[^"]*lg:py-4";/);
-  assert.doesNotMatch(adminOverviewPage, /const adminHomeSectionClass = "[^"]*md:px-6|const adminHomeSectionClass = "[^"]*lg:px-8/);
-  assert.doesNotMatch(adminOverviewPage, /const adminHomeSectionClass = "[^"]*md:py-6|const adminHomeSectionClass = "[^"]*lg:py-8/);
-
-  const sectionClass = adminOverviewPage.match(/const adminHomeSectionClass = "([^"]+)";/)?.[1];
-  assert.equal(sectionClass?.split(" ")[0], "py-2");
-  assert.equal(sectionClass?.split(" ").some((className) => /^px-/.test(className)), false);
-
-  const headerBlock = blockBetween('data-admin-home-section="header"', 'data-admin-home-section="needs-attention"');
-  assert.match(headerBlock, /className="px-5 py-6 sm:px-6 md:px-4 md:py-4 lg:px-5 lg:py-5"/);
-  assert.doesNotMatch(headerBlock, /lg:px-8|lg:py-8/);
-});
-
-test("At a Glance preserves mobile cell rules and desktop #7B8794 grid rules", () => {
-  const glanceBlock = blockBetween('data-admin-home-section="at-a-glance"', 'data-admin-home-section="operations"');
-  const borderHelperBlock = blockBetween("function overviewMetricCellBorderClass", "const metricIcons");
-
-  assert.deepEqual(labelsFor("OverviewMetric", glanceBlock), [
+  assert.deepEqual(metricLabels, [
     "Total users",
     "Active users",
     "Suspended users",
@@ -137,77 +58,61 @@ test("At a Glance preserves mobile cell rules and desktop #7B8794 grid rules", (
     "Recent searches",
     "Recent admin actions",
   ]);
-  assert.match(borderHelperBlock, /isMobileLeftColumn \? "border-r border-\[#A7B2BE\]" : ""/);
-  assert.match(borderHelperBlock, /isMobileBeforeLastRow \? "border-b border-\[#A7B2BE\]" : ""/);
-  assert.match(borderHelperBlock, /"md:border-r-0 md:border-b-0"/);
-  assert.match(borderHelperBlock, /isDesktopLastColumn \? "md:border-r-0" : "md:border-r"/);
-  assert.match(borderHelperBlock, /isDesktopFirstRow \? "md:border-b" : "md:border-b-0"/);
-  assert.match(borderHelperBlock, /md:border-\[#7B8794\]/);
 });
 
-test("Service Status is one mobile box but Provider and System restore separate desktop outlines", () => {
-  const serviceBlock = blockBetween('data-admin-home-surface="service-status"', 'data-admin-home-section="recent-admin-activity"');
+test("admin overview provider readiness uses one column until the laptop three column breakpoint", () => {
+  const providerGrid = classNameAfter("Provider Readiness");
 
-  assert.match(serviceBlock, /data-admin-home-surface="service-status" className="[^"]*border border-\[#A7B2BE\][^"]*md:border-0/);
-  assert.match(serviceBlock, /data-admin-home-service-groups="provider-system"[\s\S]*?md:grid-cols-\[minmax\(0,0\.9fr\)_minmax\(0,1\.1fr\)\] md:gap-6/);
-  assert.match(serviceBlock, /data-admin-home-provider-status-outline="true"[\s\S]*?className="flex min-w-0 flex-col px-5 py-5 md:rounded-none md:border md:border-\[#7B8794\] md:bg-transparent md:p-6"/);
-  assert.match(serviceBlock, /data-admin-home-system-status-outline="true"[\s\S]*?className="flex min-w-0 flex-col border-t border-\[#A7B2BE\] px-5 py-5 md:mt-0 md:rounded-none md:border md:border-\[#7B8794\] md:bg-transparent md:p-6"/);
-  assert.doesNotMatch(serviceBlock, /mt-7 flex min-w-0 flex-col border-t border-\[#A7B2BE\] pt-7/);
-  assert.match(serviceBlock, /Provider Readiness/);
-  assert.match(serviceBlock, /System Configuration/);
+  assert.match(providerGrid, /\bgrid-cols-1\b/);
+  assert.match(providerGrid, /\blg:grid-cols-3\b/);
+  assert.doesNotMatch(providerGrid, /\bxl:grid-cols-3\b/);
+  assert.match(adminOverviewPage, /providers\.map\(\(provider\) => <AdminProviderStatusCard key=\{provider\.product\} \{\.\.\.provider\} \/>\)/);
 });
 
+test("admin overview search and platform health use a laptop-safe two column wrapper", () => {
+  const healthWrapper = sectionClassNameBefore("Search Health");
 
-test("Recent Admin Activity restores the borderless desktop timeline while freezing mobile separators", () => {
-  const activityBlock = blockBetween('data-admin-home-section="recent-admin-activity"', '</div>\n  );');
-
-  assert.match(activityBlock, /data-admin-home-activity-outline="true"[\s\S]*?border border-\[#A7B2BE\][^"]*md:overflow-visible md:border-0/);
-  assert.match(activityBlock, /data-admin-home-activity-heading="section-header"[\s\S]*?className="px-5 py-5 md:px-0 md:py-0"/);
-  assert.match(activityBlock, /className="border-t border-\[#A7B2BE\] md:mt-3 md:border-t-0"/);
-  assert.match(adminOverviewPage, /data-admin-home-timeline="true" className="md:border-y-0"><div className="md:space-y-5">/);
-  assert.match(adminOverviewPage, /border-b border-\[#A7B2BE\] px-5 py-4 text-sm last:border-b-0 md:border-b-0 md:px-0 md:py-0/);
-  assert.match(adminOverviewPage, /bg-\[#004BB8\]\/25 md:hidden/);
-  assert.match(activityBlock, /data-admin-home-activity-footer="actions" className="flex justify-end border-t border-\[#A7B2BE\] px-5 py-5 md:mt-6 md:border-t-0 md:px-0 md:py-0"/);
+  assert.match(healthWrapper, /\bmt-8\b/);
+  assert.match(healthWrapper, /\bgrid\b/);
+  assert.match(healthWrapper, /\bgap-4\b/);
+  assert.match(healthWrapper, /\blg:grid-cols-\[minmax\(0,1\.2fr\)_minmax\(280px,0\.8fr\)\]/);
+  assert.doesNotMatch(healthWrapper, /\bxl:grid-cols-\[1\.2fr_0\.8fr\]/);
+  assert.doesNotMatch(adminOverviewPage, /xl:grid-cols-\[1\.2fr_0\.8fr\]/);
 });
 
-test("desktop flat pre-mobile design, actions, and content remain preserved", () => {
-  assert.match(adminOverviewPage, /md:mt-6 md:grid-cols-2 md:gap-0 md:divide-y-0 md:border-t-0/);
-  assert.doesNotMatch(adminOverviewPage, /xl:grid-cols-4|xl:grid-cols-6|md:gap-x-6 md:gap-y-5/);
-  assert.match(adminOverviewPage, /md:border-t md:border-\[#7B8794\]/);
-  assert.match(adminOverviewPage, /md:grid-cols-\[minmax\(0,0\.9fr\)_minmax\(0,1\.1fr\)\] md:gap-6/);
-
-  for (const [action, href, label] of [
-    ["view-searches", "/admin/searches", "View Searches"],
-    ["view-providers", "/admin/providers", "View Providers"],
-    ["view-system", "/admin/system", "View System"],
-    ["view-admin-logs", "/admin/logs", "View Admin Logs"],
-  ]) {
-    assert.match(
-      adminOverviewPage,
-      new RegExp(`<AdminHomeActionButton href="${href}" action="${action}">${label}<\/AdminHomeActionButton>`),
-    );
-  }
-
-  assert.deepEqual(labelsFor("StatusRow", blockBetween('data-admin-home-system-status-outline="true"', 'data-admin-home-section="recent-admin-activity"')), [
-    "Database connection",
-    "Authentication",
-    "Email service",
-    "Provider credentials",
-    "Webhooks",
-  ]);
+test("admin overview health columns can shrink without horizontal overflow", () => {
+  assert.match(adminOverviewPage, /<div className="min-w-0">\n          <h2 className="text-lg font-semibold text-slate-950">Search Health<\/h2>/);
+  assert.match(adminOverviewPage, /<div className="min-w-0">\n          <h2 className="text-lg font-semibold text-slate-950">Platform Health<\/h2>/);
 });
 
-test("header, background, data loading, status row order, and navbar remain unchanged", () => {
-  assert.match(adminOverviewPage, /title="Admin Home"/);
-  assert.match(adminOverviewPage, /bg-\[#F7F6F2\]/);
-  assert.match(adminShell, /isAdminHome && "min-h-\[calc\(100vh-4rem\)\] bg-\[#F7F6F2\] sm:min-h-\[calc\(100vh-68px\)\]"/);
-  assert.match(adminOverviewPage, /getMetrics: getAdminMetrics/);
-  assert.match(adminOverviewPage, /getProviders: getProviderStatuses/);
-  assert.match(adminOverviewPage, /getSystem: getSafeSystemStatus/);
-  assert.match(adminOverviewPage, /getSearch: getSearchHealth/);
-  assert.match(adminOverviewPage, /getActivity: getRecentAdminActivity/);
-  assert.match(
-    adminOverviewPage,
-    /data-admin-home-status-row="aligned"[\s\S]*?<Icon[\s\S]*?<span className="min-w-0 font-medium text-slate-700">\{label\}<\/span>[\s\S]*?<span className="justify-self-end whitespace-nowrap">/,
-  );
+test("admin overview search health content remains unchanged", () => {
+  const searchHealthBlock = blockBetween("Search Health", "Platform Health");
+
+  assert.match(searchHealthBlock, /<AdminMetricCard label="Total recent searches" value=\{searchHealth\.totalRecentSearches\} \/>/);
+  assert.match(searchHealthBlock, /<AdminMetricCard label="No-result searches" value=\{searchHealth\.noResultSearches\} tone="warn" \/>/);
+  assert.match(searchHealthBlock, /<AdminMetricCard label="Failed searches" value=\{searchHealth\.failedSearches\} tone="bad" \/>/);
+  assert.match(searchHealthBlock, /<div className="grid gap-4 sm:grid-cols-3">/);
+  assert.match(searchHealthBlock, /Top products searched/);
+  assert.match(searchHealthBlock, /AdminEmptyState title="Search analytics unavailable" message="Search analytics will appear after search logging records real user searches\. No search counts are mocked\."/);
+});
+
+test("admin overview platform health content remains unchanged", () => {
+  const platformHealthBlock = blockBetween("Platform Health", "Admin Activity");
+
+  assert.match(platformHealthBlock, /<HealthRow label="Database" ok=\{system\.databaseConnected\} fallback=\{system\.databaseConfigured \? "Configured, not connected" : "Not configured"\} \/>/);
+  assert.match(platformHealthBlock, /<HealthRow label="Auth\/session" ok=\{system\.authConfigured && system\.sessionConfigured\} fallback="Not fully configured" \/>/);
+  assert.match(platformHealthBlock, /<HealthRow label="Email \/ Resend" ok=\{system\.emailConfigured\} fallback="Unavailable" \/>/);
+  assert.match(platformHealthBlock, /<HealthRow label="Provider credentials" ok=\{system\.providerCredentialsPresent\} fallback="Not present" \/>/);
+  assert.match(platformHealthBlock, /<HealthRow label="Webhooks" ok=\{system\.webhookConfigured\} fallback="Unavailable" \/>/);
+});
+
+test("admin overview data helpers, queries, and other sections remain unchanged", () => {
+  assert.match(adminOverviewPage, /getAdminMetrics\(\)/);
+  assert.match(adminOverviewPage, /getProviderStatuses\(\)/);
+  assert.match(adminOverviewPage, /getSafeSystemStatus\(\)/);
+  assert.match(adminOverviewPage, /getSearchHealth\(\)/);
+  assert.match(adminOverviewPage, /getRecentAdminActivity\(\)/);
+  assert.match(adminOverviewPage, /<h2 className="text-lg font-semibold text-slate-950">Search Health<\/h2>/);
+  assert.match(adminOverviewPage, /<h2 className="text-lg font-semibold text-slate-950">Platform Health<\/h2>/);
+  assert.match(adminOverviewPage, /<h2 className="text-lg font-semibold text-slate-950">Admin Activity<\/h2>/);
 });
