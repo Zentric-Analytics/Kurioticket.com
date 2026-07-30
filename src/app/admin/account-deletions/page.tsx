@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { AdminDataTable, AdminEmptyState, AdminLinkButton, AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { AdminDataTable, AdminEmptyState, AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
 import { withOptionalDb } from "@/lib/prisma";
 
@@ -80,7 +80,7 @@ export default async function AdminAccountDeletionsPage({
   }, { open: 0, pending: 0, cancelled: 0, ready: 0, completed: 0, all: 0 });
 
   return (
-    <AdminPageShell title="Account Deletions" description="Manage account deletion requests and review lifecycle status.">
+    <AdminPageShell title="Account deletion requests" description="Review the full account deletion lifecycle, including pending, cancelled/reactivated, ready-for-review, and completed requests.">
       {requests.length === 0 ? <AdminEmptyState title="No deletion requests" message="Account deletion requests will appear here after users submit them." /> : (
         <div className="space-y-4">
           <AdminSectionCard className="p-3">
@@ -107,27 +107,26 @@ export default async function AdminAccountDeletionsPage({
             <AdminEmptyState title="No requests in this view" message="Try another status filter to review other deletion request lifecycle states." />
           ) : (
             <AdminDataTable
-              columns={["Request", "User status", "Request status", "Requested", "Scheduled", "Cancelled / reactivated", "Completed", "Support / admin refs", "Notes", "Action"]}
+              columns={["Email", "User status", "Request status", "Requested", "Scheduled", "Cancelled / reactivated", "Completed", "Support / admin refs", "Notes", "Action"]}
               rows={visibleRequests.map((request) => {
                 const cancellationDetail = getCancellationDetail(request.cancellationMetadata);
                 return {
                   id: request.id,
                   cells: [
-                    <div key="request" className="min-w-0 space-y-1"><p className="truncate font-black text-slate-950">{request.email || request.user.email}</p><p className="truncate font-mono text-xs text-slate-500">{request.id}</p></div>,
+                    <span key="email" className="font-black text-slate-950">{request.email || request.user.email}</span>,
                     <div key="user-status" className="space-y-1">
                       <AdminStatusBadge tone={request.user.status === "ACTIVE" ? "good" : request.user.status === "PENDING_DELETION" ? "warn" : "neutral"}>{request.user.status}</AdminStatusBadge>
-                      <p className="text-xs font-black text-slate-500">Role: {request.user.role}</p>
+                      <p className="text-xs font-semibold text-slate-500">Role: {request.user.role}</p>
                     </div>,
                     <div key="request-status" className="space-y-1">
                       <AdminStatusBadge tone={getStatusTone(request.status)}>{getStatusLabel(request.status, request.user.status)}</AdminStatusBadge>
-                      {request.status === "READY_FOR_REVIEW" ? <p className="text-xs font-black text-amber-700">Action needed</p> : null}
-                      {request.status === "CANCELLED" ? <p className="text-xs font-black text-emerald-700">Deletion request is no longer pending.</p> : null}
+                      {request.status === "CANCELLED" ? <p className="text-xs font-semibold text-emerald-700">Deletion request is no longer pending.</p> : null}
                     </div>,
                     formatDateTime(request.requestedAt),
                     formatDateTime(request.deletionScheduledAt),
                     request.cancelledAt ? formatDateTime(request.cancelledAt) : "—",
                     request.completedAt ? formatDateTime(request.completedAt) : "—",
-                    <div key="refs" className="space-y-1 text-xs font-black text-slate-600">
+                    <div key="refs" className="space-y-1 text-xs font-semibold text-slate-600">
                       <p>Ticket: {request.supportTicketId || "—"}</p>
                       <p>Admin ref: {request.adminNotificationId || "—"}</p>
                     </div>,
@@ -136,9 +135,9 @@ export default async function AdminAccountDeletionsPage({
                       {cancellationDetail ? <p>{cancellationDetail}</p> : null}
                       {!request.reviewNotes && !cancellationDetail ? "—" : null}
                     </div>,
-                    <AdminLinkButton key="action" href={`/admin/account-deletions/${request.id}`} size="sm" variant="primary" aria-label={`Manage deletion request for ${request.email || request.user.email}`}>
+                    <Link key="action" href={`/admin/account-deletions/${request.id}`} className="inline-flex rounded-xl bg-indigo-700 px-3 py-2 text-xs font-black text-white transition hover:bg-indigo-800">
                       Manage
-                    </AdminLinkButton>,
+                    </Link>,
                   ],
                 };
               })}
