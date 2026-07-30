@@ -1,5 +1,6 @@
 import {
   Image,
+  ImageBackground,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,7 +15,6 @@ import { useEffect, useState } from "react";
 import { readSession } from "../../storage/sessionStorage";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { FlightSearchPanel } from "./FlightSearchPanel";
-import { ResponsiveHero } from "./ResponsiveHero";
 import { flowColors, flowStyles } from "./flowStyles";
 
 const guestHeroImage = require("../../../assets/heroes/home-santorini.png");
@@ -42,7 +42,7 @@ export function HomeFlowScreen() {
       .catch(() => setIsAuthenticated(false));
   }, []);
 
-  const heroImage = isAuthenticated ? loggedInHeroImage : guestHeroImage;
+  const heroSource = isAuthenticated ? loggedInHeroImage : guestHeroImage;
 
   return (
     <SafeAreaView style={flowStyles.safe} edges={[]}>
@@ -51,15 +51,17 @@ export function HomeFlowScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.heroShell}>
-          <ResponsiveHero
-            source={heroImage}
-            sourceWidth={307}
-            sourceHeight={596}
-            height={342}
-            focalY={0.45}
-            accessibilityLabel="Santorini coastline"
-          />
+        <ImageBackground
+          accessibilityLabel={
+            isAuthenticated
+              ? "Traveler with luggage in a modern city"
+              : "Santorini coastline"
+          }
+          imageStyle={styles.heroImage}
+          resizeMode="cover"
+          source={heroSource}
+          style={styles.hero}
+        >
           <View style={[styles.heroOverlay, { paddingTop: insets.top + 6 }]}>
             <View style={styles.brandRow}>
               <Image
@@ -77,8 +79,16 @@ export function HomeFlowScreen() {
                 <FlowIcon name="bell" />
               </Pressable>
             </View>
+            <View style={styles.heroCopy}>
+              <Text style={styles.heroHeading}>
+                Explore the world with Kurioticket
+              </Text>
+              <Text style={styles.heroSupportingText}>
+                Compare flights, hotels and cars in one place.
+              </Text>
+            </View>
           </View>
-        </View>
+        </ImageBackground>
         <View style={[styles.products, flowStyles.shadow]}>
           {products.map((product, index) => (
             <Pressable
@@ -136,8 +146,32 @@ export function HomeFlowScreen() {
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: 14, paddingBottom: 26, gap: 14 },
-  heroShell: { height: 342, marginHorizontal: -14, overflow: "hidden" },
-  heroOverlay: { ...StyleSheet.absoluteFillObject, paddingHorizontal: 14 },
+  hero: {
+    width: "100%",
+    height: 200,
+    borderRadius: 20,
+    overflow: "hidden",
+  },
+  heroImage: { borderRadius: 20 },
+  heroOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(3, 15, 34, 0.42)",
+    paddingHorizontal: 18,
+    paddingBottom: 18,
+  },
+  heroCopy: { maxWidth: 290, gap: 6, marginTop: "auto" },
+  heroHeading: {
+    color: "white",
+    fontSize: 22,
+    fontWeight: "800",
+    lineHeight: 27,
+  },
+  heroSupportingText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "500",
+    lineHeight: 20,
+  },
   brandRow: {
     minHeight: 54,
     flexDirection: "row",
