@@ -113,7 +113,7 @@ export function DealsResultsSearchSummary({ search, locale, t, modeLabel, onModi
       inert={!desktopStickyVisible ? true : undefined}
     >
       <div className={cn(
-        "mx-auto grid h-[58px] w-full max-w-[980px] grid-cols-[minmax(120px,0.7fr)_minmax(190px,1.4fr)_minmax(180px,1.1fr)_minmax(180px,1.15fr)_auto] overflow-hidden rounded-lg border border-slate-200/95 bg-white shadow-[0_12px_30px_-18px_rgba(15,23,42,0.38)] ring-1 ring-slate-950/[0.03]",
+        "mx-auto grid h-[58px] w-full max-w-[920px] grid-cols-[minmax(110px,0.7fr)_minmax(220px,1.5fr)_minmax(150px,1fr)_minmax(190px,1.25fr)_auto] overflow-hidden rounded-lg border border-slate-200/95 bg-white shadow-[0_12px_30px_-18px_rgba(15,23,42,0.38)] ring-1 ring-slate-950/[0.03]",
         desktopStickyVisible ? "pointer-events-auto" : "pointer-events-none",
       )}>
         <SummaryCell variant="compact" label={t("deals.results.summary.package")} value={modeLabel} className="flex" />
@@ -133,8 +133,12 @@ type SummaryCellVariant = "inline" | "compact";
 function SummaryCell({ label, value, icon, dir, className = "", variant }: { label: string; value: string; icon?: React.ReactNode; dir?: "ltr"; className?: string; variant: SummaryCellVariant }) {
   const isInline = variant === "inline";
 
-  return <div className={cn("min-w-0 items-center gap-2 border-e border-slate-200/85 px-3 py-2", isInline && "lg:gap-3 lg:px-5 lg:py-3.5", className)}>
+  return <div className={cn("min-w-0 items-center gap-2 border-e border-slate-200/85 px-3", isInline ? "py-2 lg:gap-3 lg:px-5 lg:py-3.5" : "h-[56px]", className)}>
     {icon ? <span className={cn("shrink-0 text-[#004BB8] [&>svg]:h-4 [&>svg]:w-4", isInline && "lg:[&>svg]:h-5 lg:[&>svg]:w-5")}>{icon}</span> : null}
-    <span className="min-w-0"><span title={label} className={cn("block truncate text-[10px] font-bold uppercase leading-tight tracking-[0.1em] text-slate-500", isInline && "lg:text-[11px] lg:tracking-[0.11em]")}>{label}</span><span title={value} dir={dir} className={cn("block truncate text-sm font-semibold leading-tight text-slate-900", isInline && "lg:mt-1 lg:text-base lg:leading-6")}>{value}</span></span>
+    {isInline ? (
+      <span className="min-w-0"><span title={label} className="block truncate text-[10px] font-bold uppercase leading-tight tracking-[0.1em] text-slate-500 lg:text-[11px] lg:tracking-[0.11em]">{label}</span><span title={value} dir={dir} className="block truncate text-sm font-semibold leading-tight text-slate-900 lg:mt-1 lg:text-base lg:leading-6">{value}</span></span>
+    ) : (
+      <span className="min-w-0"><span className="sr-only">{label}: </span><span title={value} dir={dir} className="block min-w-0 truncate whitespace-nowrap text-[0.86rem] font-medium leading-5 text-slate-800">{value}</span></span>
+    )}
   </div>;
 }
