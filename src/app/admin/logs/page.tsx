@@ -1,4 +1,5 @@
-import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminPageShell } from "@/components/admin/AdminPageShell";
+import { AdminDataTable, AdminEmptyState, AdminPageShell } from "@/components/admin/AdminPageShell";
+import { Button } from "@/components/ui/Button";
 import { formatDateTime } from "@/lib/admin-data";
 import { withOptionalDb } from "@/lib/prisma";
 
@@ -22,16 +23,18 @@ export default async function AdminLogsPage({ searchParams }: PageProps) {
   }), []);
 
   return (
-    <AdminPageShell title="Admin Logs" description="Review administrative and security-sensitive actions.">
-      <AdminFilterBar action="/admin/logs">
-        <AdminInput name="action" defaultValue={action} placeholder="Action" />
-        <AdminInput name="adminEmail" defaultValue={adminEmail} placeholder="Admin email" />
-        <AdminInput name="targetEmail" defaultValue={targetEmail} placeholder="Target email" />
-        <AdminButton type="submit">Filter</AdminButton>
-      </AdminFilterBar>
+    <AdminPageShell title="Audit Logs" description="Security audit trail for sensitive admin actions and platform operations.">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <form className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_auto]" action="/admin/logs">
+          <input name="action" defaultValue={action} placeholder="Action" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm" />
+          <input name="adminEmail" defaultValue={adminEmail} placeholder="Admin email" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm" />
+          <input name="targetEmail" defaultValue={targetEmail} placeholder="Target email" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm" />
+          <Button type="submit">Filter</Button>
+        </form>
+      </div>
       <div className="mt-4">
         {logs.length === 0 ? (
-          <AdminEmptyState title="No admin audit logs found" message="Audit logs will appear after sensitive admin actions are recorded." />
+          <AdminEmptyState title="No admin audit logs found" message="Audit logs will appear after sensitive admin actions are recorded. TODO: expand this view when additional audit event types are added." />
         ) : (
           <AdminDataTable
             columns={["Created", "Admin", "Action", "Target", "Target email", "IP", "Metadata"]}
@@ -44,7 +47,7 @@ export default async function AdminLogsPage({ searchParams }: PageProps) {
                 `${log.targetType}${log.targetId ? ` / ${log.targetId}` : ""}`,
                 log.targetEmail || "—",
                 log.ipAddress || "—",
-                <span key="metadata" className="block max-w-xs truncate font-mono text-xs text-slate-500" title={JSON.stringify(log.metadata || {})}>{JSON.stringify(log.metadata || {})}</span>,
+                <span key="metadata" className="font-mono text-xs text-slate-500">{JSON.stringify(log.metadata || {})}</span>,
               ],
             }))}
           />

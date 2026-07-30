@@ -139,7 +139,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
                     <td className="p-3 font-mono text-xs text-muted">
                       {user.id}
                     </td>
-                    <td className="p-3 font-black text-navy">
+                    <td className="p-3 font-semibold text-navy">
                       {user.name || "—"}
                     </td>
                     <td className="p-3">{user.email || "—"}</td>
@@ -151,7 +151,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
                           {user.role}
                         </StatusPill>
                         {isProtectedAdmin ? (
-                          <span className="text-xs font-black text-muted">
+                          <span className="text-xs font-semibold text-muted">
                             Protected admin
                           </span>
                         ) : null}
