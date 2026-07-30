@@ -1136,7 +1136,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
 
       <div
         className={cn(
-          "pointer-events-none fixed inset-x-0 top-3 z-[1000] hidden px-4 transition-all duration-200 lg:block",
+          "pointer-events-none fixed inset-x-0 top-0 z-[1000] hidden px-4 transition-all duration-200 lg:block",
           showCompactSearchSummary ? "translate-y-0 opacity-100" : "-translate-y-3 opacity-0",
         )}
         aria-hidden={!showCompactSearchSummary}

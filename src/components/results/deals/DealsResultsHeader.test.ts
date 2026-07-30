@@ -147,7 +147,8 @@ test("desktop sticky measurement coordinates and cleans up browser observers and
 });
 
 test("a separate compact toolbar is fixed, desktop-only, transitioned, and inert while hidden", () => {
-  assert.match(summarySource, /pointer-events-none fixed inset-x-0 top-3/);
+  assert.match(summarySource, /pointer-events-none fixed inset-x-0 top-0/);
+  assert.doesNotMatch(summarySource, /pointer-events-none fixed inset-x-0 top-3/);
   assert.match(summarySource, /hidden px-4 transition-all duration-200 motion-reduce:transition-none lg:block/);
   assert.match(summarySource, /desktopStickyVisible \? "translate-y-0 opacity-100" : "-translate-y-3 opacity-0"/);
   assert.match(summarySource, /aria-hidden=\{!desktopStickyVisible\}/);
