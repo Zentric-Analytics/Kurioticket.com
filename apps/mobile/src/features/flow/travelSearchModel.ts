@@ -7,6 +7,11 @@ const integer = (value: string, fallback: number) => value === "" ? fallback : /
 const isoDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T12:00:00Z`));
 const clockTime = (value: string) => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value);
 const httpsUrl = (value?: string | null) => Boolean(value && /^https:\/\/[^/\s]+(?:\/|$)/i.test(value));
+const safeImage = (value?: string | null) => !value || httpsUrl(value) || /^\/(?!\/)[^\s]+/.test(value);
+const safeAction = (result: FlightResult | HotelResult | CarResult) => {
+  const action = result.searchPolicy?.action;
+  return Boolean(action && (!action.enabled || (action.kind === "internal-detail" ? /^\/(?:flights|hotels|cars)\/details\/[^/]/.test(action.href) : httpsUrl(action.href))));
+};
 const future = (value: string, now = new Date()) => isoDate(value) && value >= now.toISOString().slice(0, 10);
 
 export function buildSearchPlan(product: Product, params: Record<string, string | string[] | undefined>, now = new Date()): { plan?: SearchPlan; error?: string } {
@@ -52,12 +57,16 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
 
 export function validFlight(result: FlightResult, plan: SearchPlan) {
   const payload = plan.payload;
-  return Boolean(result.id && result.provider && result.airlineName && result.originAirport === payload.origin && result.destinationAirport === payload.destination && Number.isFinite(result.price) && result.price >= 0 && /^[A-Z]{3}$/.test(result.currency) && !Number.isNaN(Date.parse(result.departureTime)) && !Number.isNaN(Date.parse(result.arrivalTime)) && httpsUrl(result.partnerRedirectUrl || result.bookingUrl));
+  return Boolean(result.id && result.provider && result.airlineName && result.originAirport === payload.origin && result.destinationAirport === payload.destination && Number.isFinite(result.price) && result.price >= 0 && /^[A-Z]{3}$/.test(result.currency) && !Number.isNaN(Date.parse(result.departureTime)) && !Number.isNaN(Date.parse(result.arrivalTime)) && safeImage(result.airlineLogo) && safeAction(result));
 }
 export function validBookableHotel(result: HotelResult) {
-  return result.inventoryKind !== "discovery" && Boolean(result.id && result.provider && result.name && Number.isFinite(result.totalPrice) && (result.totalPrice ?? -1) >= 0 && result.currency && /^[A-Z]{3}$/.test(result.currency) && httpsUrl(result.partnerRedirectUrl || result.bookingUrl));
+  if (result.inventoryKind === "discovery" || result.searchPolicy?.mode === "discovery") return false;
+  return Boolean(result.id && result.provider && result.name && Number.isFinite(result.totalPrice) && (result.totalPrice ?? -1) >= 0 && result.currency && /^[A-Z]{3}$/.test(result.currency) && safeImage(result.imageUrl) && safeAction(result));
+}
+export function validDiscoveryHotel(result: HotelResult) {
+  return Boolean(result.id && result.provider && result.name && result.inventoryKind === "discovery" && result.searchPolicy?.mode === "discovery" && !result.searchPolicy.bookable && safeImage(result.imageUrl) && safeAction(result));
 }
 export function validBookableCar(result: CarResult) {
-  return !result.isDemo && Boolean(result.id && result.rentalCompanyName && result.offers?.some((offer) => offer.bookingProviderName && Number.isFinite(offer.totalPrice) && offer.totalPrice >= 0 && /^[A-Z]{3}$/.test(offer.currency) && httpsUrl(offer.bookingUrl)));
+  return Boolean(result.id && result.rentalCompanyName && Array.isArray(result.offers) && result.offers.length && result.offers.every((offer) => Number.isFinite(offer.totalPrice) && offer.totalPrice >= 0 && /^[A-Z]{3}$/.test(offer.currency)) && safeImage(result.imageUrl) && safeAction(result) && (result.isDemo ? result.searchPolicy.mode === "demo" && !result.searchPolicy.bookable : true));
 }
 export { httpsUrl };

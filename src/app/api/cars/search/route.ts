@@ -1,6 +1,7 @@
 import { validateCarsForm, type CarsFormValues } from "@/lib/cars/carsSearchUtils";
 import type { CarSearchParams } from "@/lib/cars/types";
 import { searchCars } from "@/services/travel/carAggregator";
+import { classifyCars } from "@/lib/travel/searchContract";
 
 const noStore = { "Cache-Control": "no-store" };
 const text = (value: unknown) => typeof value === "string" ? value.trim() : "";
@@ -23,19 +24,7 @@ export async function POST(request: Request) {
   if (!search) return Response.json({ error: "Invalid car search parameters.", requestId }, { status: 400, headers: noStore });
   try {
     const { results, mode, status } = await searchCars(search);
-    const liveInventory = mode === "live" && status === "available";
-    const response = {
-      results,
-      mode,
-      status,
-      searchStatus: status === "available" ? "success" : status,
-      requestId,
-      providersAttempted: mode === "live" ? ["car-live-provider"] : [],
-      providersSucceeded: liveInventory ? ["car-live-provider"] : [],
-      liveInventory,
-      partial: false,
-      generatedAt: new Date().toISOString(),
-    };
+    const response = classifyCars(results, mode, status, mode === "demo" ? "Kurioticket Demo Catalogue" : "", search, requestId);
     if (status === "unavailable") {
       return Response.json({ ...response, error: "Live car inventory is temporarily unavailable." }, { status: 503, headers: noStore });
     }

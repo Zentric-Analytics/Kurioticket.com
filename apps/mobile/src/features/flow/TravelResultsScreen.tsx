@@ -3,16 +3,27 @@ import { ActivityIndicator, Alert, Image, Linking, Pressable, ScrollView, StyleS
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import { travelApi, TravelApiError, type CarResult, type FlightResult, type HotelResult } from "../../api/travelApi";
-import { buildSearchPlan, httpsUrl, type Product, validBookableCar, validBookableHotel, validFlight } from "./travelSearchModel";
+import { getApiBaseUrl } from "../../config/apiUrl";
+import { buildSearchPlan, type Product, validBookableCar, validBookableHotel, validDiscoveryHotel, validFlight } from "./travelSearchModel";
 import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles } from "./flowStyles";
 
 type Result = FlightResult | HotelResult | CarResult;
 type Status = "validating" | "loading" | "partial" | "ready" | "empty" | "unavailable" | "error";
 const one = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
-async function openProvider(url?: string) {
-  if (!httpsUrl(url) || !url || !await Linking.canOpenURL(url)) throw new Error("invalid-provider-url");
+async function openAction(result: Result) {
+  const action = result.searchPolicy.action;
+  if (!action.enabled) throw new Error("disabled-action");
+  const base = getApiBaseUrl();
+  const url = action.kind === "internal-detail" && base.ok ? new URL(action.href, `${base.baseUrl}/`).toString() : action.href;
+  if (!/^https:\/\/[^/\s]+(?:\/|$)/i.test(url) || !await Linking.canOpenURL(url)) throw new Error("invalid-action-url");
   await Linking.openURL(url);
+}
+function imageUri(value?: string) {
+  if (!value) return undefined;
+  if (/^https:\/\//i.test(value)) return value;
+  const base = getApiBaseUrl();
+  return base.ok && /^\/(?!\/)/.test(value) ? new URL(value, `${base.baseUrl}/`).toString() : undefined;
 }
 
 export function TravelResultsScreen({ product }: { product: Product }) {
@@ -52,17 +63,17 @@ export function TravelResultsScreen({ product }: { product: Product }) {
       let discovery: HotelResult[] = [];
       if (product === "flight") valid = (raw as FlightResult[]).filter((result) => validFlight(result, planResult.plan!));
       if (product === "hotel") {
-        discovery = (raw as HotelResult[]).filter((result) => result.inventoryKind === "discovery");
+        discovery = (raw as HotelResult[]).filter(validDiscoveryHotel);
         valid = (raw as HotelResult[]).filter(validBookableHotel);
       }
       if (product === "car") valid = (raw as CarResult[]).filter(validBookableCar);
+      const rejected = raw.filter((result) => !valid.includes(result as Result) && !discovery.includes(result as HotelResult));
+      if (rejected.length) console.warn("[travel-search] response contract validation rejected results", { requestId, product, rejectedIds: rejected.map((result) => typeof result === "object" && result && "id" in result ? String(result.id) : "missing-id") });
       setResults(valid); setDiscoveryHotels(discovery);
-      const warning = "warnings" in response && Array.isArray(response.warnings) ? response.warnings[0] || "" : "";
-      const unavailable = product === "car" && "status" in response && response.status === "unavailable";
-      if (unavailable) { setMessage("Live car inventory is temporarily unavailable."); setStatus("unavailable"); }
-      else if (valid.length) { setMessage(warning); setStatus(warning || valid.length !== raw.length ? "partial" : "ready"); }
-      else if (discovery.length) { setMessage("Live rates are unavailable. These properties are shown for discovery only."); setStatus("partial"); }
-      else if (raw.length && !valid.length) { setMessage("The provider response did not contain safe, bookable inventory."); setStatus("unavailable"); }
+      const warning = Array.isArray(response.warnings) ? response.warnings[0] || "" : "";
+      if (response.status === "unavailable") { setMessage(warning || `Live ${product} inventory is temporarily unavailable.`); setStatus("unavailable"); }
+      else if (rejected.length && !valid.length && !discovery.length) { setMessage("The search service returned malformed inventory."); setStatus("error"); }
+      else if (valid.length || discovery.length) { setMessage(warning); setStatus(response.status === "partial" || discovery.length > 0 || rejected.length > 0 ? "partial" : "ready"); }
       else setStatus("empty");
     }).catch((error) => {
       if (signal.aborted || runId !== sequence.current || (error instanceof TravelApiError && error.code === "cancelled")) return;
@@ -112,7 +123,7 @@ export function TravelResultsScreen({ product }: { product: Product }) {
       {status === "unavailable" ? <State title="Live inventory is unavailable" body="No demo or fallback inventory will be shown." retry={retrySearch} edit /> : null}
       {status === "error" ? <State title="Search could not be completed" body="Check your connection and try again." retry={retrySearch} edit /> : null}
       {results.map((result) => product === "flight" ? <FlightCard key={result.id} result={result as FlightResult} /> : product === "hotel" ? <HotelCard key={result.id} result={result as HotelResult} /> : <CarCard key={result.id} result={result as CarResult} />)}
-      {discoveryHotels.length ? <View style={styles.discovery}><Text style={flowStyles.sectionTitle}>Places to consider — live rates unavailable</Text>{discoveryHotels.map((hotel) => <View key={hotel.id} style={[styles.card, flowStyles.shadow]}><Text style={flowStyles.value}>{hotel.name}</Text><Text style={flowStyles.meta}>{hotel.neighbourhood || hotel.location}</Text><Text style={styles.discoveryLabel}>Discovery only</Text></View>)}</View> : null}
+      {discoveryHotels.length ? <View style={styles.discovery}><Text style={flowStyles.sectionTitle}>Places to consider — live rates unavailable</Text>{discoveryHotels.map((hotel) => <SafeProviderCard key={hotel.id} label={`View ${hotel.name} details`} result={hotel}><Text style={flowStyles.value}>{hotel.name}</Text><Text style={flowStyles.meta}>{hotel.neighbourhood || hotel.location}</Text><Text style={styles.discoveryLabel}>Discovery only — no live rate</Text></SafeProviderCard>)}</View> : null}
     </ScrollView>
   </SafeAreaView>;
 }
@@ -120,25 +131,26 @@ export function TravelResultsScreen({ product }: { product: Product }) {
 function State({ title, body, retry, edit }: { title: string; body: string; retry?: () => void; edit?: boolean }) {
   return <View style={styles.center}><FlowIcon name="search" color={flowColors.blue} size={38} /><Text style={flowStyles.value}>{title}</Text><Text style={flowStyles.meta}>{body}</Text><View style={styles.actions}>{retry ? <Pressable accessibilityRole="button" onPress={retry} style={flowStyles.primary}><Text style={flowStyles.primaryText}>Try again</Text></Pressable> : null}{edit ? <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.edit}><Text style={styles.editText}>Edit search</Text></Pressable> : null}</View></View>;
 }
-function SafeProviderCard({ label, url, children }: { label: string; url?: string; children: React.ReactNode }) {
-  const actionable = httpsUrl(url);
-  const open = () => void openProvider(url).catch(() => alertProviderFailure());
-  return <Pressable accessibilityRole={actionable ? "button" : undefined} accessibilityLabel={label} disabled={!actionable} onPress={open} style={[styles.card, flowStyles.shadow]}>{children}{actionable ? <Text style={styles.action}>Continue with provider</Text> : null}</Pressable>;
+function SafeProviderCard({ label, result, children }: { label: string; result: Result; children: React.ReactNode }) {
+  const actionable = result.searchPolicy.action.enabled;
+  const open = () => void openAction(result).catch(() => alertProviderFailure());
+  const actionLabel = result.searchPolicy.action.kind === "internal-detail" ? "View details" : "Continue with provider";
+  return <Pressable accessibilityRole={actionable ? "button" : undefined} accessibilityLabel={label} disabled={!actionable} onPress={open} style={[styles.card, flowStyles.shadow]}>{children}{actionable ? <Text style={styles.action}>{actionLabel}</Text> : null}</Pressable>;
 }
 function alertProviderFailure() {
   Alert.alert("Unable to open provider", "The booking link is unavailable. Please try another result.");
 }
 function FlightCard({ result }: { result: FlightResult }) {
-  const url = result.partnerRedirectUrl || result.bookingUrl;
-  return <SafeProviderCard label={`View ${result.airlineName} flight`} url={url}><View style={styles.between}><Text style={flowStyles.value}>{result.airlineName}</Text><Text style={styles.price}>{result.currency} {result.price.toFixed(0)}</Text></View><Text style={styles.route}>{result.originAirport} → {result.destinationAirport}</Text><View style={styles.between}><Text style={flowStyles.meta}>{new Date(result.departureTime).toLocaleString()}</Text><Text style={flowStyles.meta}>{result.duration} · {result.stops ? `${result.stops} stop${result.stops > 1 ? "s" : ""}` : "Direct"}</Text></View></SafeProviderCard>;
+  return <SafeProviderCard label={`View ${result.airlineName} flight`} result={result}><View style={styles.between}><Text style={flowStyles.value}>{result.airlineName}</Text><Text style={styles.price}>{result.currency} {result.price.toFixed(0)}</Text></View><Text style={styles.route}>{result.originAirport} → {result.destinationAirport}</Text><View style={styles.between}><Text style={flowStyles.meta}>{new Date(result.departureTime).toLocaleString()}</Text><Text style={flowStyles.meta}>{result.duration} · {result.stops ? `${result.stops} stop${result.stops > 1 ? "s" : ""}` : "Direct"}</Text></View></SafeProviderCard>;
 }
 function HotelCard({ result }: { result: HotelResult }) {
-  const url = result.partnerRedirectUrl || result.bookingUrl;
-  return <SafeProviderCard label={`View ${result.name}`} url={url}>{result.imageUrl ? <Image source={{ uri: result.imageUrl }} style={styles.image} /> : null}<Text style={flowStyles.value}>{result.name}</Text><Text style={flowStyles.meta}>{result.neighbourhood || result.location}</Text><View style={styles.between}><Text style={flowStyles.meta}>★ {result.reviewScore || result.rating}</Text><Text style={styles.price}>{result.totalPrice && result.currency ? `${result.currency} ${result.totalPrice.toFixed(0)}` : ""}</Text></View></SafeProviderCard>;
+  const image = imageUri(result.imageUrl);
+  return <SafeProviderCard label={`View ${result.name}`} result={result}>{image ? <Image source={{ uri: image }} style={styles.image} /> : null}<Text style={flowStyles.value}>{result.name}</Text><Text style={flowStyles.meta}>{result.neighbourhood || result.location}</Text><View style={styles.between}><Text style={flowStyles.meta}>★ {result.reviewScore || result.rating}</Text><Text style={styles.price}>{result.totalPrice && result.currency ? `${result.currency} ${result.totalPrice.toFixed(0)}` : ""}</Text></View></SafeProviderCard>;
 }
 function CarCard({ result }: { result: CarResult }) {
-  const offer = result.offers.find((item) => httpsUrl(item.bookingUrl));
-  return <SafeProviderCard label={`View ${result.modelName}`} url={offer?.bookingUrl}>{result.imageUrl ? <Image source={{ uri: result.imageUrl }} style={styles.image} /> : null}<Text style={flowStyles.value}>{result.modelName}</Text><Text style={flowStyles.meta}>{result.categoryLabel} · {result.transmission} · {result.passengers} seats</Text><View style={styles.between}><Text style={flowStyles.meta}>{offer?.rentalCompanyName || result.rentalCompanyName}</Text><Text style={styles.price}>{offer ? `${offer.currency} ${offer.totalPrice.toFixed(0)}` : ""}</Text></View></SafeProviderCard>;
+  const offer = result.offers[0];
+  const image = imageUri(result.imageUrl);
+  return <SafeProviderCard label={`View ${result.modelName}`} result={result}>{image ? <Image source={{ uri: image }} style={styles.image} /> : null}<Text style={flowStyles.value}>{result.modelName}</Text><Text style={flowStyles.meta}>{result.categoryLabel} · {result.transmission} · {result.passengers} seats</Text><View style={styles.between}><Text style={flowStyles.meta}>{offer?.rentalCompanyName || result.rentalCompanyName}</Text><Text style={styles.price}>{result.searchPolicy.mode === "demo" ? "Sample listing" : offer ? `${offer.currency} ${offer.totalPrice.toFixed(0)}` : ""}</Text></View></SafeProviderCard>;
 }
 const styles = StyleSheet.create({
   header: { minHeight: 68, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 8, borderBottomColor: flowColors.border, borderBottomWidth: 1 },
