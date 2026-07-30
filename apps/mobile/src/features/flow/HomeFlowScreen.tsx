@@ -1,5 +1,6 @@
 import {
   Image,
+  ImageBackground,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,6 +15,10 @@ import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { FlightSearchPanel } from "./FlightSearchPanel";
 import { ResponsiveHero } from "./ResponsiveHero";
 import { flowColors, flowStyles } from "./flowStyles";
+
+const homepageHeroImage = require(
+  "../../../../../public/images/premium/homepage/kurioticket-homepage-hero-businesswoman-modern-city-luggage-001.jpg"
+);
 
 const products: {
   label: string;
@@ -62,6 +67,24 @@ export function HomeFlowScreen() {
             </View>
           </View>
         </View>
+        <ImageBackground
+          accessibilityLabel="Traveler with luggage in a modern city"
+          imageStyle={styles.bannerImage}
+          resizeMode="cover"
+          source={homepageHeroImage}
+          style={styles.banner}
+        >
+          <View style={styles.bannerOverlay}>
+            <View style={styles.bannerCopy}>
+              <Text style={styles.bannerHeading}>
+                Explore the world with Kurioticket
+              </Text>
+              <Text style={styles.bannerSupportingText}>
+                Compare flights, hotels and cars in one place.
+              </Text>
+            </View>
+          </View>
+        </ImageBackground>
         <View style={[styles.products, flowStyles.shadow]}>
           {products.map((product, index) => (
             <Pressable
@@ -121,6 +144,32 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: 14, paddingBottom: 26, gap: 14 },
   heroShell: { height: 342, marginHorizontal: -14, overflow: "hidden" },
   heroOverlay: { ...StyleSheet.absoluteFillObject, paddingHorizontal: 14 },
+  banner: {
+    width: "100%",
+    height: 200,
+    borderRadius: 20,
+    overflow: "hidden",
+  },
+  bannerImage: { borderRadius: 20 },
+  bannerOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(3, 15, 34, 0.42)",
+    padding: 18,
+  },
+  bannerCopy: { maxWidth: 290, gap: 6 },
+  bannerHeading: {
+    color: "white",
+    fontSize: 22,
+    fontWeight: "800",
+    lineHeight: 27,
+  },
+  bannerSupportingText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "500",
+    lineHeight: 20,
+  },
   brandRow: {
     minHeight: 54,
     flexDirection: "row",
@@ -129,7 +178,6 @@ const styles = StyleSheet.create({
   },
   logo: { width: 130, height: 36 },
   products: {
-    marginTop: -34,
     minHeight: 78,
     flexDirection: "row",
     backgroundColor: "white",
