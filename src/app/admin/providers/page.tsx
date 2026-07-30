@@ -47,7 +47,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                 key={filter.key}
                 href={filter.href}
                 aria-current={active ? "page" : undefined}
-                className={`focus-ring inline-flex min-h-10 items-center rounded-full px-4 py-2 text-sm font-semibold transition ${
+                className={`focus-ring inline-flex min-h-10 items-center rounded-full px-4 py-2 text-sm font-black transition ${
                   active ? "bg-slate-950 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-950"
                 }`}
               >
@@ -65,7 +65,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
       <AdminSectionCard className="mt-4 p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="font-semibold text-slate-950">Provider health retest</h2>
+            <h2 className="font-black text-slate-950">Provider health retest</h2>
             <p className="mt-1 text-sm leading-6 text-slate-600">Retesting records real provider health when the backing endpoint and credentials are available.</p>
           </div>
           <ProviderRetestButton />
@@ -88,7 +88,7 @@ function ProviderReadinessSection({ provider }: { provider: AdminProviderStatus 
     <section className="grid gap-4" aria-labelledby={`provider-${provider.product.toLowerCase()}-heading`}>
       <AdminProviderStatusCard {...provider} />
       <AdminSectionCard className="p-5">
-        <h2 id={`provider-${provider.product.toLowerCase()}-heading`} className="font-semibold text-slate-950">{guidance.title}</h2>
+        <h2 id={`provider-${provider.product.toLowerCase()}-heading`} className="font-black text-slate-950">{guidance.title}</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">{guidance.note}</p>
         <div className="mt-4 flex flex-wrap gap-2">
           {guidance.badges.map((badge) => <AdminStatusBadge key={badge.label} tone={badge.tone}>{badge.label}</AdminStatusBadge>)}

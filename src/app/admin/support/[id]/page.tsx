@@ -29,7 +29,7 @@ export default async function AdminSupportTicketPage({ params }: PageProps) {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{ticket.category}</p>
-              <h2 className="mt-1 text-xl font-semibold text-slate-950">{ticket.subject}</h2>
+              <h2 className="mt-1 text-xl font-black text-slate-950">{ticket.subject}</h2>
               <p className="mt-2 text-sm text-slate-600">Ticket ID: {ticket.id}</p>
             </div>
             <AdminStatusBadge tone={ticket.status === "OPEN" ? "warn" : ticket.status === "RESOLVED" || ticket.status === "CLOSED" ? "good" : "info"}>{ticket.status}</AdminStatusBadge>

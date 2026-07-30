@@ -44,7 +44,7 @@ export function AccountDeletionManageForm({ requestId, status, reviewNotes, admi
   return (
     <AdminSectionCard className="space-y-4 p-5">
       <div>
-        <h2 className="text-lg font-semibold text-slate-950">Safe admin actions</h2>
+        <h2 className="text-lg font-black text-slate-950">Safe admin actions</h2>
         <p className="mt-1 text-sm leading-6 text-slate-600">
           These controls update lifecycle tracking only. They do not hard-delete users or automatically anonymize data.
         </p>

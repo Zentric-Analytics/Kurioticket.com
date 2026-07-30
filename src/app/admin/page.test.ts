@@ -81,8 +81,8 @@ test("admin overview search and platform health use a laptop-safe two column wra
 });
 
 test("admin overview health columns can shrink without horizontal overflow", () => {
-  assert.match(adminOverviewPage, /<div className="min-w-0">\n          <h2 className="text-lg font-semibold text-slate-950">Search Health<\/h2>/);
-  assert.match(adminOverviewPage, /<div className="min-w-0">\n          <h2 className="text-lg font-semibold text-slate-950">Platform Health<\/h2>/);
+  assert.match(adminOverviewPage, /<div className="min-w-0">\n          <h2 className="text-lg font-black text-slate-950">Search Health<\/h2>/);
+  assert.match(adminOverviewPage, /<div className="min-w-0">\n          <h2 className="text-lg font-black text-slate-950">Platform Health<\/h2>/);
 });
 
 test("admin overview search health content remains unchanged", () => {
@@ -112,7 +112,7 @@ test("admin overview data helpers, queries, and other sections remain unchanged"
   assert.match(adminOverviewPage, /getSafeSystemStatus\(\)/);
   assert.match(adminOverviewPage, /getSearchHealth\(\)/);
   assert.match(adminOverviewPage, /getRecentAdminActivity\(\)/);
-  assert.match(adminOverviewPage, /<h2 className="text-lg font-semibold text-slate-950">Search Health<\/h2>/);
-  assert.match(adminOverviewPage, /<h2 className="text-lg font-semibold text-slate-950">Platform Health<\/h2>/);
-  assert.match(adminOverviewPage, /<h2 className="text-lg font-semibold text-slate-950">Admin Activity<\/h2>/);
+  assert.match(adminOverviewPage, /<h2 className="text-lg font-black text-slate-950">Search Health<\/h2>/);
+  assert.match(adminOverviewPage, /<h2 className="text-lg font-black text-slate-950">Platform Health<\/h2>/);
+  assert.match(adminOverviewPage, /<h2 className="text-lg font-black text-slate-950">Admin Activity<\/h2>/);
 });

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import {
   AdminActivityList,
   AdminEmptyState,
@@ -7,6 +9,7 @@ import {
   AdminSectionCard,
   AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
+import { adminNavigation } from "@/lib/adminNavigation";
 import {
   getAdminMetrics,
   getProviderStatuses,
@@ -32,7 +35,7 @@ export default async function AdminPage() {
       description="Manage Kurioticket operations, users, provider health, searches, support, and audit logs."
     >
       <section>
-        <h2 className="text-lg font-semibold text-slate-950">Operations Snapshot</h2>
+        <h2 className="text-lg font-black text-slate-950">Operations Snapshot</h2>
         <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <AdminMetricCard label="Total users" value={metrics.totalUsers} />
           <AdminMetricCard label="Active users" value={metrics.activeUsers} tone="good" />
@@ -44,7 +47,26 @@ export default async function AdminPage() {
       </section>
 
       <section className="mt-8">
-        <h2 className="text-lg font-semibold text-slate-950">Provider Readiness</h2>
+        <h2 className="text-lg font-black text-slate-950">Admin Modules</h2>
+        <p className="mt-1 text-sm text-slate-600">Open a Kurioticket administration area.</p>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {adminNavigation.filter((item) => item.href !== "/admin").map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link key={item.href} href={item.href} className="focus-ring group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 group-hover:bg-indigo-700 group-hover:text-white">
+                  <Icon size={19} aria-hidden="true" />
+                </span>
+                <h3 className="mt-4 font-bold text-slate-950">{item.label}</h3>
+                <p className="mt-1 text-sm leading-6 text-slate-600">{item.description}</p>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="mt-8">
+        <h2 className="text-lg font-black text-slate-950">Provider Readiness</h2>
         <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-3">
           {providers.map((provider) => <AdminProviderStatusCard key={provider.product} {...provider} />)}
         </div>
@@ -52,7 +74,7 @@ export default async function AdminPage() {
 
       <section className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
         <div className="min-w-0">
-          <h2 className="text-lg font-semibold text-slate-950">Search Health</h2>
+          <h2 className="text-lg font-black text-slate-950">Search Health</h2>
           <div className="mt-3">
             {searchHealth.hasLogs ? (
               <AdminSectionCard className="p-5">
@@ -62,7 +84,7 @@ export default async function AdminPage() {
                   <AdminMetricCard label="Failed searches" value={searchHealth.failedSearches} tone="bad" />
                 </div>
                 <div className="mt-5">
-                  <p className="text-sm font-semibold text-slate-950">Top products searched</p>
+                  <p className="text-sm font-black text-slate-950">Top products searched</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {searchHealth.topProducts.map((product) => (
                       <AdminStatusBadge key={product.label} tone="info">{product.label}: {product.count}</AdminStatusBadge>
@@ -77,7 +99,7 @@ export default async function AdminPage() {
         </div>
 
         <div className="min-w-0">
-          <h2 className="text-lg font-semibold text-slate-950">Platform Health</h2>
+          <h2 className="text-lg font-black text-slate-950">Platform Health</h2>
           <AdminSectionCard className="mt-3 p-5">
             <div className="grid gap-3">
               <HealthRow label="Database" ok={system.databaseConnected} fallback={system.databaseConfigured ? "Configured, not connected" : "Not configured"} />
@@ -91,7 +113,7 @@ export default async function AdminPage() {
       </section>
 
       <section className="mt-8">
-        <h2 className="text-lg font-semibold text-slate-950">Admin Activity</h2>
+        <h2 className="text-lg font-black text-slate-950">Admin Activity</h2>
         <div className="mt-3"><AdminActivityList items={activity} /></div>
       </section>
     </AdminPageShell>
@@ -101,7 +123,7 @@ export default async function AdminPage() {
 function HealthRow({ label, ok, fallback }: { label: string; ok: boolean; fallback: string }) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3 text-sm">
-      <span className="font-semibold text-slate-600">{label}</span>
+      <span className="font-black text-slate-600">{label}</span>
       <AdminStatusBadge tone={ok ? "good" : "neutral"}>{ok ? "Available" : fallback}</AdminStatusBadge>
     </div>
   );

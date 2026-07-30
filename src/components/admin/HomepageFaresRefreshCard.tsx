@@ -582,10 +582,10 @@ export function HomepageFaresRefreshCard() {
         <div className="border-b border-slate-200 bg-gradient-to-br from-white via-slate-50 to-sky-50/60 p-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-indigo-700">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-indigo-700">
                 Homepage fare operations
               </p>
-              <h2 className="mt-2 text-2xl font-extrabold text-slate-950">
+              <h2 className="mt-2 text-2xl font-black text-slate-950">
                 Production readiness dashboard
               </h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
@@ -599,7 +599,7 @@ export function HomepageFaresRefreshCard() {
 
         <div className="space-y-5 p-5">
           {statusState.error ? (
-            <p className="rounded-xl bg-rose-50 p-3 text-sm font-semibold text-rose-700">
+            <p className="rounded-xl bg-rose-50 p-3 text-sm font-black text-rose-700">
               {statusState.error}
             </p>
           ) : null}
@@ -727,7 +727,7 @@ const ROUTE_FILTERS: Array<{
 
 function GlobalReadinessBadge({ status }: { status: GlobalReadinessStatus }) {
   return (
-    <span className={`inline-flex w-fit rounded-full px-3 py-2 text-sm font-extrabold ${summaryToneClass(readinessTone(status))}`}>
+    <span className={`inline-flex w-fit rounded-full px-3 py-2 text-sm font-black ${summaryToneClass(readinessTone(status))}`}>
       {formatGlobalReadinessStatus(status)}
     </span>
   );
@@ -744,8 +744,8 @@ function SummaryMetricCard({
 }) {
   return (
     <div className={`rounded-xl border p-3 ${summaryToneClass(tone)}`}>
-      <dt className="text-xs font-extrabold uppercase tracking-wide opacity-80">{label}</dt>
-      <dd className="mt-1 text-2xl font-extrabold leading-tight">{value}</dd>
+      <dt className="text-xs font-black uppercase tracking-wide opacity-80">{label}</dt>
+      <dd className="mt-1 text-2xl font-black leading-tight">{value}</dd>
     </div>
   );
 }
@@ -770,7 +770,7 @@ function summaryToneClass(tone: SummaryTone) {
 function CompactDetail({ label, value }: { label: string; value: string | number }) {
   return (
     <div>
-      <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500">{label}</dt>
+      <dt className="text-xs font-black uppercase tracking-wide text-slate-500">{label}</dt>
       <dd className="mt-1 text-sm font-bold text-slate-950">{value}</dd>
     </div>
   );
@@ -852,8 +852,8 @@ function DashboardSection({
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div>
-        <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-500">{eyebrow}</p>
-        <h3 className="mt-1 text-lg font-extrabold text-slate-950">{title}</h3>
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">{eyebrow}</p>
+        <h3 className="mt-1 text-lg font-black text-slate-950">{title}</h3>
         <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-500">{description}</p>
       </div>
       {children}
@@ -917,8 +917,8 @@ function RefreshCronPanel({
             <div
               className={
                 refreshState.status === "error"
-                  ? "mt-4 rounded-lg bg-rose-50 p-3 text-sm font-semibold text-rose-700"
-                  : "mt-4 rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-700"
+                  ? "mt-4 rounded-lg bg-rose-50 p-3 text-sm font-black text-rose-700"
+                  : "mt-4 rounded-lg bg-emerald-50 p-3 text-sm font-black text-emerald-700"
               }
               role="status"
               aria-live="polite"
@@ -945,7 +945,7 @@ function RefreshCronPanel({
         </dl>
       </div>
       {!statusPayload.cronConfigured ? (
-        <p className="mt-3 rounded-xl border border-amber/20 bg-amber-50 p-3 text-sm font-semibold text-amber-700">
+        <p className="mt-3 rounded-xl border border-amber/20 bg-amber-50 p-3 text-sm font-black text-amber-700">
           Cron is not configured. Set HOMEPAGE_FARES_CRON_SECRET and schedule POST /api/internal/homepage-fares/refresh before relying on unattended production refreshes.
         </p>
       ) : null}
@@ -979,7 +979,7 @@ function MarketReadinessDashboard({
             />
           ))
         ) : (
-          <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-500">
+          <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-black text-slate-500">
             No public market readiness metadata was returned.
           </p>
         )}
@@ -1010,7 +1010,7 @@ function MarketReadinessCard({
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h4 className="text-lg font-extrabold text-slate-950">{market.marketLabel}</h4>
+          <h4 className="text-lg font-black text-slate-950">{market.marketLabel}</h4>
           <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
             {market.marketCode} · {market.marketGroup}
           </p>
@@ -1039,7 +1039,7 @@ function MarketReadinessCard({
         <strong className="text-slate-950">Underfill reason:</strong>{" "}
         {market.underfillReason ?? (market.targetMet ? "Coverage target met." : "No executor reason returned.")}
       </div>
-      <span className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-extrabold text-indigo-700 transition group-hover:border-indigo-300 group-hover:bg-indigo-100">
+      <span className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-black text-indigo-700 transition group-hover:border-indigo-300 group-hover:bg-indigo-100">
         Inspect {market.marketCode} routes
       </span>
     </button>
@@ -1050,8 +1050,8 @@ function CoverageMetric({ label, current, target }: { label: string; current: nu
   const met = target === 0 ? current === 0 : current >= target;
   return (
     <div className="rounded-xl bg-slate-50 p-3">
-      <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500">{label}</dt>
-      <dd className="mt-1 text-xl font-extrabold text-slate-950">{current} / {target}</dd>
+      <dt className="text-xs font-black uppercase tracking-wide text-slate-500">{label}</dt>
+      <dd className="mt-1 text-xl font-black text-slate-950">{current} / {target}</dd>
       <p className={met ? "mt-1 text-xs font-bold text-indigo-700" : "mt-1 text-xs font-bold text-amber-700"}>
         {met ? "Target met" : "Needs coverage"}
       </p>
@@ -1084,12 +1084,12 @@ function DiagnosticsPanel({
         <div className="space-y-2">
           {issues.length ? (
             issues.map((issue) => (
-              <p key={issue} className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-semibold leading-6 text-slate-950">
+              <p key={issue} className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-black leading-6 text-slate-950">
                 {issue}
               </p>
             ))
           ) : (
-            <p className="rounded-xl border border-slate-200 bg-indigo-50 p-3 text-sm font-semibold text-indigo-700">
+            <p className="rounded-xl border border-slate-200 bg-indigo-50 p-3 text-sm font-black text-indigo-700">
               No underfill diagnostics are currently reported for public markets.
             </p>
           )}
@@ -1146,16 +1146,16 @@ function FallbackPoolsSection({
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h4 className="font-extrabold text-slate-950">{pool.marketLabel}</h4>
+                    <h4 className="font-black text-slate-950">{pool.marketLabel}</h4>
                     <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
                       {pool.marketCode} · {pool.marketGroup}
                     </p>
                   </div>
-                  <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-extrabold text-slate-500">
+                  <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-black text-slate-500">
                     Fallback only
                   </span>
                 </div>
-                <p className="mt-3 text-sm font-semibold leading-6 text-slate-500">
+                <p className="mt-3 text-sm font-black leading-6 text-slate-500">
                   No public display target. Coverage is retained for internal routing, replacement, and regional debugging.
                 </p>
                 <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
@@ -1166,14 +1166,14 @@ function FallbackPoolsSection({
                   <MarketMiniMetric label="Attempts" value={pool.routeAttempts} />
                   <MarketMiniMetric label="Timeout" value={pool.timeoutCount ?? 0} />
                 </dl>
-                <span className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-extrabold text-indigo-700">
+                <span className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-black text-indigo-700">
                   Inspect fallback routes
                 </span>
               </button>
             );
           })
         ) : (
-          <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-500">
+          <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-black text-slate-500">
             No fallback-only pools were returned.
           </p>
         )}
@@ -1191,7 +1191,7 @@ function RawDebugDetails({
 }) {
   return (
     <details className="rounded-2xl border border-slate-200 bg-white p-4">
-      <summary className="cursor-pointer text-sm font-extrabold uppercase tracking-wide text-slate-950">
+      <summary className="cursor-pointer text-sm font-black uppercase tracking-wide text-slate-950">
         Raw debug / View All details
       </summary>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -1244,10 +1244,10 @@ function MarketRouteInspector({
   return (
     <section className="mt-6 rounded-3xl border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-sky-50/40 p-4 shadow-sm sm:p-5">
       <div className="max-w-4xl">
-        <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-indigo-700">
+        <p className="text-xs font-black uppercase tracking-[0.22em] text-indigo-700">
           Route coverage
         </p>
-        <h4 className="mt-2 text-xl font-extrabold text-slate-950">
+        <h4 className="mt-2 text-xl font-black text-slate-950">
           Grouped Market Route Inspector
         </h4>
         <p className="mt-2 text-sm leading-6 text-slate-500">
@@ -1262,7 +1262,7 @@ function MarketRouteInspector({
               key={item.key}
               type="button"
               onClick={() => handleFilterChange(item.key)}
-              className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
+              className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-black shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
                 filter === item.key
                   ? "border-indigo-700 bg-indigo-700 text-white shadow-sm"
                   : "border-slate-200 bg-white/80 text-slate-950 hover:border-indigo-700/40 hover:bg-white"
@@ -1279,17 +1279,17 @@ function MarketRouteInspector({
         <div>
           <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h5 className="text-sm font-extrabold uppercase tracking-wide text-slate-950">
+              <h5 className="text-sm font-black uppercase tracking-wide text-slate-950">
                 Public market coverage
               </h5>
-              <p className="mt-1 text-xs font-semibold text-slate-500">
+              <p className="mt-1 text-xs font-black text-slate-500">
                 Country display targets stay separate from fallback-only pools.
               </p>
             </div>
             <button
               type="button"
               onClick={() => handleSelectMarket(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE)}
-              className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
+              className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-black shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
                 selectedRouteScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
                   ? "border-indigo-700 bg-indigo-700 text-white ring-2 ring-indigo-700/15"
                   : "border-slate-200 bg-white/80 text-slate-950 hover:border-indigo-700/40 hover:bg-white hover:shadow-md"
@@ -1312,7 +1312,7 @@ function MarketRouteInspector({
               ))}
             </div>
           ) : (
-            <p className="rounded-2xl border border-dashed border-slate-300 bg-white/50 p-4 text-sm font-semibold text-slate-500">
+            <p className="rounded-2xl border border-dashed border-slate-300 bg-white/50 p-4 text-sm font-black text-slate-500">
               {loading ? "Loading market route groups…" : "No public market route groups match this filter."}
             </p>
           )}
@@ -1321,10 +1321,10 @@ function MarketRouteInspector({
         {fallbackGroups.length ? (
           <div className="rounded-2xl border border-dashed border-slate-300/90 bg-white/45 p-3">
             <div className="mb-3">
-              <h5 className="text-sm font-extrabold uppercase tracking-wide text-slate-950">
+              <h5 className="text-sm font-black uppercase tracking-wide text-slate-950">
                 Fallback-only debugging pools
               </h5>
-              <p className="mt-1 text-xs font-semibold text-slate-500">
+              <p className="mt-1 text-xs font-black text-slate-500">
                 These pools have no public display target and are not counted as normal public market readiness.
               </p>
             </div>
@@ -1381,14 +1381,14 @@ function MarketRouteGroupCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-base font-extrabold text-slate-950">{group.marketLabel}</p>
+          <p className="text-base font-black text-slate-950">{group.marketLabel}</p>
           <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
             {fallbackOnly ? "Fallback only · No public display target" : group.marketGroup}
           </p>
         </div>
         <MarketGroupStatusBadge status={group.status} />
       </div>
-      <p className="mt-3 text-sm font-semibold text-slate-500">
+      <p className="mt-3 text-sm font-black text-slate-500">
         {group.routes.length} total routes · {group.freshFaresCount} fresh · {group.lastKnownGoodFaresCount} last-known-good
       </p>
       <dl className="mt-4 grid grid-cols-3 gap-2 text-xs">
@@ -1399,7 +1399,7 @@ function MarketRouteGroupCard({
         <MarketMiniMetric label="LKG" value={group.lastKnownGoodFaresCount} />
         <MarketMiniMetric label="Failed/missing" value={group.failedUnavailableRoutesCount + group.missingRoutesCount} />
       </dl>
-      <span className="mt-4 inline-flex min-h-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-extrabold text-indigo-700 transition">
+      <span className="mt-4 inline-flex min-h-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-black text-indigo-700 transition">
         Inspect {group.marketCode} routes
       </span>
     </button>
@@ -1426,10 +1426,10 @@ function SelectedRouteDetails({
   if (!selectedRouteScope || !group) {
     return (
       <div ref={routeDetailsRef} className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-white/55 p-6 text-center">
-        <p className="text-sm font-extrabold text-slate-950">
+        <p className="text-sm font-black text-slate-950">
           Select a market to inspect its routes, or choose View All.
         </p>
-        <p className="mt-2 text-xs font-semibold text-slate-500">
+        <p className="mt-2 text-xs font-black text-slate-500">
           Route rows stay hidden until a market context is selected.
         </p>
       </div>
@@ -1444,10 +1444,10 @@ function SelectedRouteDetails({
       <div className="border-b border-slate-200 bg-slate-50/90 px-4 py-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h5 className="text-base font-extrabold text-slate-950">
+            <h5 className="text-base font-black text-slate-950">
               {isViewAll ? "All routes" : group.displayName} — {page.totalRoutes} total routes
             </h5>
-            <p className="mt-1 text-sm font-semibold text-slate-500">
+            <p className="mt-1 text-sm font-black text-slate-500">
               Showing {page.start}–{page.end} of {page.totalRoutes}
               {isViewAll ? " · Debug view across all markets" : ` · ${group.marketCode}`}
             </p>
@@ -1487,7 +1487,7 @@ function MarketMiniMetric({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-lg bg-white/80 p-2 ring-1 ring-slate-100">
       <dt className="font-bold uppercase tracking-wide text-slate-500">{label}</dt>
-      <dd className="mt-0.5 font-extrabold text-slate-950">{value}</dd>
+      <dd className="mt-0.5 font-black text-slate-950">{value}</dd>
     </div>
   );
 }
@@ -1503,7 +1503,7 @@ function RouteDetailsTable({
 }) {
   if (!routes.length) {
     return (
-      <p className="p-4 text-sm font-semibold text-slate-500">
+      <p className="p-4 text-sm font-black text-slate-500">
         {loading ? "Loading homepage fare snapshot status…" : "No routes to display for this market/filter."}
       </p>
     );
@@ -1512,7 +1512,7 @@ function RouteDetailsTable({
   return (
     <div className="overflow-x-auto">
       <table className="min-w-[1120px] divide-y divide-border text-left text-sm">
-        <thead className="bg-white text-xs font-extrabold uppercase tracking-wide text-slate-500">
+        <thead className="bg-white text-xs font-black uppercase tracking-wide text-slate-500">
           <tr>
             <th className="px-3 py-3">Market</th>
             <th className="px-3 py-3">Route</th>
@@ -1532,11 +1532,11 @@ function RouteDetailsTable({
             <tr key={`${group.marketCode}-${route.id}`} className="align-top">
               <td className="px-3 py-3 font-bold text-slate-950">{route.market}</td>
               <td className="px-3 py-3 font-bold text-slate-950">{route.label}</td>
-              <td className="px-3 py-3 font-semibold text-slate-950">
+              <td className="px-3 py-3 font-black text-slate-950">
                 {route.origin}
                 {route.originCity ? <span className="block text-xs font-medium text-slate-500">{route.originCity}</span> : null}
               </td>
-              <td className="px-3 py-3 font-semibold text-slate-950">
+              <td className="px-3 py-3 font-black text-slate-950">
                 {route.destination}
                 {route.destinationCity ? <span className="block text-xs font-medium text-slate-500">{route.destinationCity}</span> : null}
               </td>
@@ -1544,14 +1544,14 @@ function RouteDetailsTable({
               <td className="px-3 py-3">
                 <StatusBadge status={route.status} />
               </td>
-              <td className="px-3 py-3 font-semibold text-slate-950">{formatRoutePrice(route)}</td>
-              <td className="px-3 py-3 font-semibold text-slate-950">{formatProviderNativePrice(route)}</td>
+              <td className="px-3 py-3 font-black text-slate-950">{formatRoutePrice(route)}</td>
+              <td className="px-3 py-3 font-black text-slate-950">{formatProviderNativePrice(route)}</td>
               <td className="px-3 py-3 text-slate-950">{route.provider ?? "—"}</td>
-              <td className="px-3 py-3 text-xs font-semibold text-slate-500">
+              <td className="px-3 py-3 text-xs font-black text-slate-500">
                 {formatSnapshotTime(route.searchedAt)}
                 {route.expiresAt ? <span className="block">Expires {formatDateTime(route.expiresAt)}</span> : null}
               </td>
-              <td className="max-w-xs px-3 py-3 text-xs font-semibold text-slate-500">
+              <td className="max-w-xs px-3 py-3 text-xs font-black text-slate-500">
                 <SafeFailureReason route={route} />
                 {route.replacementCandidateUsed ? (
                   <span className="block">Replacement: {route.replacementCandidateUsed}</span>
@@ -1597,11 +1597,11 @@ function DisplayReadinessSummary({ readiness }: { readiness: DisplayReadiness })
       role="status"
       aria-live="polite"
     >
-      <p className="text-xs font-extrabold uppercase tracking-wide opacity-80">
+      <p className="text-xs font-black uppercase tracking-wide opacity-80">
         Public homepage display readiness
       </p>
-      <p className="mt-1 text-2xl font-extrabold">{readiness.label}</p>
-      <p className="mt-2 text-sm font-semibold leading-6">
+      <p className="mt-1 text-2xl font-black">{readiness.label}</p>
+      <p className="mt-2 text-sm font-black leading-6">
         {readiness.message}
       </p>
     </div>
@@ -1634,7 +1634,7 @@ function MetricCard({
       <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">
         {label}
       </dt>
-      <dd className="mt-1 text-xl font-extrabold text-slate-950">{value}</dd>
+      <dd className="mt-1 text-xl font-black text-slate-950">{value}</dd>
     </div>
   );
 }
@@ -1984,7 +1984,7 @@ function SafeFailureReason({ route }: { route: { status: HomepageFareSnapshotSta
   }
 
   return (
-    <p className="mt-1 text-xs font-semibold text-slate-500">
+    <p className="mt-1 text-xs font-black text-slate-500">
       Reason: {route.errorReason} · Category: {route.errorCategory}
     </p>
   );
