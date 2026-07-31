@@ -19,6 +19,7 @@ import { CarSearchForm } from "./CarSearchForm";
 import { DealsSearchForm } from "./DealsSearchForm";
 import { airports, type Airport } from "../flow/airportData";
 import { featuredLocations } from "../flow/locationCatalogue";
+import { useSavedDestinations } from "../../storage/useSavedDestinations";
 
 export type TripType = "round-trip" | "one-way" | "multi-city";
 export type Cabin = "Economy" | "Premium Economy" | "Business" | "First";
@@ -142,8 +143,8 @@ function PriceAlertCard() {
 }
 
 function FeaturedDestinations() {
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  return <View><View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Featured destinations</Text><Pressable accessibilityRole="button" onPress={() => router.push("/(tabs)/explore")}><Text style={styles.viewAll}>Explore</Text></Pressable></View><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.destinationRow}>{featuredLocations.map(({ airport, image }) => { const saved = favorites.has(airport.city); return <Pressable key={airport.code} accessibilityRole="button" accessibilityLabel={`Explore ${airport.city}`} onPress={() => router.push("/(tabs)/explore")} style={styles.destinationCard}><View>{image ? <Image source={image} resizeMode="cover" style={styles.destinationImage} /> : <View style={[styles.destinationImage, styles.destinationImageNeutral]} />}<Pressable accessibilityRole="button" accessibilityLabel={`${saved ? "Remove" : "Add"} ${airport.city} ${saved ? "from" : "to"} favorites`} accessibilityState={{ selected: saved }} hitSlop={8} onPress={(event) => { event.stopPropagation(); setFavorites((current) => { const next = new Set(current); if (saved) next.delete(airport.city); else next.add(airport.city); return next; }); }} style={styles.heart}><Icon name="heart" color="white" size={24} /></Pressable></View><Text style={styles.destinationName}>{airport.city}</Text></Pressable>; })}</ScrollView></View>;
+  const { savedIds, toggle } = useSavedDestinations();
+  return <View><View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Featured destinations</Text><Pressable accessibilityRole="button" onPress={() => router.push("/(tabs)/explore")}><Text style={styles.viewAll}>Explore</Text></Pressable></View><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.destinationRow}>{featuredLocations.map(({ airport, image }) => { const saved = savedIds.has(airport.code); return <Pressable key={airport.code} accessibilityRole="button" accessibilityLabel={`Explore ${airport.city}`} onPress={() => router.push("/(tabs)/explore")} style={styles.destinationCard}><View>{image ? <Image source={image} resizeMode="cover" style={styles.destinationImage} /> : <View style={[styles.destinationImage, styles.destinationImageNeutral]} />}<Pressable accessibilityRole="button" accessibilityLabel={`${saved ? "Remove" : "Add"} ${airport.city} ${saved ? "from" : "to"} favorites`} accessibilityState={{ selected: saved }} hitSlop={8} onPress={(event) => { event.stopPropagation(); toggle(airport.code); }} style={styles.heart}><Icon name="heart" color="white" size={24} /></Pressable></View><Text style={styles.destinationName}>{airport.city}</Text></Pressable>; })}</ScrollView></View>;
 }
 
 export function HomeScreen() {
