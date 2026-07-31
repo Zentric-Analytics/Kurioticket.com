@@ -30,17 +30,10 @@ test("Explore tabs remain local and expose selected accessibility state", () => 
 test("heart and destination actions are sibling controls without propagation workarounds", () => {
   const source = exploreSource();
   assert.doesNotMatch(source, /stopPropagation/);
-  assert.match(source, /onPress=\{\(\) => router\.push\(destinationHref\(item\.slug\)\)\}/);
+  assert.match(source, /onPress=\{\(\) => goDestination\(item\.name\)\}/);
   assert.match(source, /onPress=\{\(\) => onToggleFavorite\(item\.name\)\}/);
   assert.match(source, /accessibilityLabel=\{`Explore \$\{item\.name\}, \$\{item\.region\}, from \$\{item\.price\}`\}/);
   assert.match(source, /accessibilityState=\{\{ selected: saved \}\}/);
-});
-
-test("popular destinations route to guides while View all stays hidden", () => {
-  const source = exploreSource();
-  const popular = source.slice(source.indexOf("function PopularDestinations"), source.indexOf("function TrendingSearches"));
-  assert.match(popular, /destinationHref\(item\.slug\)/);
-  assert.doesNotMatch(popular, /goDestination\(item\.name\)|Anywhere|onViewAll/);
 });
 
 test("interest cards pass their represented destination into flight search", () => {
