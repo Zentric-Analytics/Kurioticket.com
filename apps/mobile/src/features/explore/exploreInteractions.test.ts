@@ -32,6 +32,8 @@ test("heart and destination actions are sibling controls without propagation wor
   assert.doesNotMatch(source, /stopPropagation/);
   assert.match(source, /onPress=\{\(\) => goDestination\(item\.name\)\}/);
   assert.match(source, /onPress=\{\(\) => onToggleFavorite\(item\.name\)\}/);
+  assert.match(source, /accessibilityLabel=\{`Explore \$\{item\.name\}, \$\{item\.region\}, from \$\{item\.price\}`\}/);
+  assert.match(source, /accessibilityState=\{\{ selected: saved \}\}/);
 });
 
 test("interest cards pass their represented destination into flight search", () => {

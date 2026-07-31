@@ -8,10 +8,10 @@ export const HERO_SLIDES = [
 ] as const;
 
 export const POPULAR_DESTINATIONS = [
-  { name: "Paris", price: "$420", image: require("../../../assets/destinations/paris.jpg") },
-  { name: "Tokyo", price: "$680", image: require("../../../assets/destinations/bali.jpg") },
-  { name: "Santorini", price: "$350", image: require("../../../assets/heroes/home-santorini.png") },
-  { name: "Dubai", price: "$540", image: require("../../../assets/destinations/new-york.jpg") },
+  { name: "Paris", region: "France", price: "$420", image: require("../../../assets/destinations/paris.jpg") },
+  { name: "Bali", region: "Indonesia", price: "$680", image: require("../../../assets/destinations/bali.jpg") },
+  { name: "Santorini", region: "Greece", price: "$350", image: require("../../../assets/heroes/home-santorini.png") },
+  { name: "New York", region: "United States", price: "$540", image: require("../../../assets/destinations/new-york.jpg") },
 ] as const;
 
 export const TRENDING = [
