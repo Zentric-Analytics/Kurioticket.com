@@ -144,7 +144,9 @@ export function FlightsScreen() {
 }
 
 export function HotelsScreen() {
-  const [destination, setDestination] = useState("");
+  const params = useLocalSearchParams<{ destination?: string | string[] }>();
+  const initialDestination = Array.isArray(params.destination) ? params.destination[0] : params.destination;
+  const [destination, setDestination] = useState(initialDestination ?? "");
   const checkIn = futureIso(14);
   const checkOut = futureIso(17);
   return (
