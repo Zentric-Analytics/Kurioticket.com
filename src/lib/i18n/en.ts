@@ -3592,8 +3592,6 @@ export const translations: TranslationDictionary = {
   "deals.results.car.selectedAccessible": "Selected car",
   "deals.results.car.unsafeSelection": "This car cannot be safely selected",
   "deals.handoff.openCar": "Open car provider",
-  "deals.handoff.carPrice": "Car price",
-  "deals.handoff.carExpired": "This car result has expired.",
   "deals.tripPlan.car": "Car",
   "deals.tripPlan.changeCar": "Change car",
   "deals.tripPlan.chooseCar": "Choose a car",
