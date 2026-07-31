@@ -28,13 +28,13 @@ function selectDistinct<T extends { id: string }>(results: T[], categories: { ba
   return selected.slice(0, dealsPreviewLimit);
 }
 
-export const selectDealsFlightPreviews = (results: PublicFlightResult[]) => selectDistinct(results, [
+export const selectDealsFlightPreviews = <T extends PublicFlightResult>(results: T[]) => selectDistinct(results, [
   { badgeKey: "deals.results.flight.recommended.badge", eligible: (item) => positive(item.valueScore) !== undefined, compare: (a, b) => compareOptionalDescending(positive(a.valueScore), positive(b.valueScore)) || compareOptionalAscending(positive(a.price), positive(b.price)) || compareOptionalAscending(positive(a.durationMinutes), positive(b.durationMinutes)) || stableId(a).localeCompare(stableId(b)) },
   { badgeKey: "deals.results.flight.lowest.badge", eligible: (item) => positive(item.price) !== undefined, compare: (a, b) => compareOptionalAscending(positive(a.price), positive(b.price)) || stableId(a).localeCompare(stableId(b)) },
   { badgeKey: "deals.results.flight.shortest.badge", eligible: (item) => positive(item.durationMinutes) !== undefined, compare: (a, b) => compareOptionalAscending(positive(a.durationMinutes), positive(b.durationMinutes)) || compareOptionalAscending(positive(a.price), positive(b.price)) || stableId(a).localeCompare(stableId(b)) },
 ]);
 
-export const selectDealsHotelPreviews = (results: PublicHotelResult[]) => selectDistinct(results, [
+export const selectDealsHotelPreviews = <T extends PublicHotelResult>(results: T[]) => selectDistinct(results, [
   { badgeKey: "deals.results.hotel.recommended.badge", eligible: (item) => positive(item.valueScore) !== undefined, compare: (a, b) => compareOptionalDescending(positive(a.valueScore), positive(b.valueScore)) || compareOptionalAscending(getHotelPreviewPrice(a)?.amount, getHotelPreviewPrice(b)?.amount) || stableId(a).localeCompare(stableId(b)) },
   { badgeKey: "deals.results.hotel.lowest.badge", eligible: (item) => getHotelPreviewPrice(item) !== null, compare: (a, b) => compareOptionalAscending(getHotelPreviewPrice(a)?.amount, getHotelPreviewPrice(b)?.amount) || stableId(a).localeCompare(stableId(b)) },
   { badgeKey: "deals.results.hotel.rating.badge", reasonKey: "deals.results.hotel.rating.reason", eligible: (item) => getHotelComparableReviewScore(item) !== null, compare: (a, b) => compareOptionalDescending(getHotelComparableReviewScore(a) ?? undefined, getHotelComparableReviewScore(b) ?? undefined) || compareOptionalDescending(normalizeHotelReviewCount(a.reviewCount), normalizeHotelReviewCount(b.reviewCount)) || compareOptionalAscending(getHotelPreviewPrice(a)?.amount, getHotelPreviewPrice(b)?.amount) || stableId(a).localeCompare(stableId(b)) },

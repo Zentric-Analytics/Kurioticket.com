@@ -4,8 +4,8 @@ import { buildDealsInternalRedirectHref } from "./dealsProviderHandoff";
 export const DEALS_TRIP_PLAN_VERSION = 1 as const;
 export const DEALS_TRIP_PLAN_TTL_MS = 25 * 60 * 1000;
 export type DealsTripPlanProduct = "flight" | "hotel" | "car";
-export type DealsTripPlanFlight = { id: string; provider: string; airline: string; flightNumber?: string; origin: string; destination: string; departure: string; arrival: string; duration: string; sourcePrice: number; sourceCurrency: string; resultReceivedAt: number };
-export type DealsTripPlanHotel = { id: string; provider: string; name: string; location: string; checkIn: string; checkOut: string; roomType?: string; sourcePrice: number; sourceCurrency: string; resultReceivedAt: number };
+export type DealsTripPlanFlight = { id: string; provider: string; airline: string; flightNumber?: string; origin: string; destination: string; departure: string; arrival: string; duration: string; sourcePrice: number; sourceCurrency: string; resultReceivedAt: number; detailsPath?: string };
+export type DealsTripPlanHotel = { id: string; provider: string; name: string; location: string; checkIn: string; checkOut: string; roomType?: string; sourcePrice: number; sourceCurrency: string; resultReceivedAt: number; detailsPath?: string };
 export type DealsTripPlanCar = { id: string; provider: string; rentalCompany: string; modelName: string; categoryLabel: string; pickupLocation: string; returnLocation: string; pickupDate: string; pickupTime: string; dropoffDate: string; dropoffTime: string; sourcePrice: number; sourceCurrency: string; resultReceivedAt: number; detailsPath: string };
 export type DealsTripPlan = { version: 1; mode: DealsPackageMode; searchFingerprint: string; resultsPath: string; carsResultsPath?: string; createdAt: number; updatedAt: number; expiresAt: number; flight?: DealsTripPlanFlight; hotel?: DealsTripPlanHotel; car?: DealsTripPlanCar; opened: { flight?: number; hotel?: number; car?: number } };
 
@@ -26,7 +26,7 @@ export function getNextDealsProviderStep(plan: DealsTripPlan, now = Date.now()):
     return selection && !isDealsTripPlanProductExpired(selection.resultReceivedAt, now);
   });
   const product = candidates.find(candidate => !plan.opened[candidate]) ?? null;
-  return { product, href: product ? product === "car" ? plan.car!.detailsPath : buildDealsInternalRedirectHref(plan[product]!.id, product) : null, allOpened: candidates.length > 0 && product === null };
+  return { product, href: product ? plan[product]!.detailsPath ?? (product === "car" ? null : buildDealsInternalRedirectHref(plan[product]!.id, product)) : null, allOpened: candidates.length > 0 && product === null };
 }
 
 export function getDealsTripPlanReadiness(mode: DealsPackageMode, plan: Pick<DealsTripPlan, "flight" | "hotel" | "car">) {
@@ -61,6 +61,19 @@ export function validateDealsCarDetailsPath(value: unknown): string | null {
     if (!match || !decodeURIComponent(match[1]).trim() || [".", ".."].includes(decodeURIComponent(match[1]))) return null;
     const expected = ["pickupLocation", "dropoffLocation", "pickupDate", "pickupTime", "dropoffDate", "dropoffTime", "driverAge"];
     if ([...url.searchParams.keys()].some(key => !expected.includes(key)) || expected.some(key => !url.searchParams.get(key)?.trim())) return null;
+    return `${url.pathname}${url.search}`;
+  } catch { return null; }
+}
+
+export function validateDealsProductDetailsPath(value: unknown, product: "flight" | "hotel", id?: string): string | null {
+  const plural = product === "flight" ? "flights" : "hotels";
+  if (typeof value !== "string" || !value.startsWith(`/${plural}/details/`) || value.startsWith("//") || value.includes("\\") || value.includes("#")) return null;
+  try {
+    decodeURIComponent(value);
+    const url = new URL(value, "https://kurioticket.invalid");
+    const match = new RegExp(`^/${plural}/details/([^/]+)$`).exec(url.pathname);
+    const pathId = match ? decodeURIComponent(match[1]) : "";
+    if (url.origin !== "https://kurioticket.invalid" || !pathId.trim() || [".", ".."].includes(pathId) || (id !== undefined && pathId !== id.trim())) return null;
     return `${url.pathname}${url.search}`;
   } catch { return null; }
 }

@@ -33,7 +33,7 @@ export function classifyFlights(results: PublicFlightResult[], fallback: boolean
     ...result,
     searchPolicy: {
       mode,
-      bookable: true,
+      bookable: mode === "live",
       sourceLabel: result.provider,
       action: { kind: "internal-detail", href: `/flights/details/${encodeURIComponent(result.id)}`, enabled: true } as const,
     },
@@ -43,21 +43,23 @@ export function classifyFlights(results: PublicFlightResult[], fallback: boolean
 }
 
 export function classifyHotels(results: PublicHotelResult[], fallback: boolean, warnings: string[], requestId: string): TravelSearchResponse<PublicHotelResult> {
-  const hasBookable = results.some((result) => result.inventoryKind !== "discovery");
-  const mode: TravelSearchMode = fallback ? "demo" : hasBookable ? "live" : "discovery";
+  const hasLive = results.some((result) => result.inventoryKind !== "discovery" && result.dataSource !== "demo" && !fallback);
+  const hasDemo = results.some((result) => result.dataSource === "demo" || (fallback && result.inventoryKind !== "discovery"));
+  const mode: TravelSearchMode = hasLive ? "live" : hasDemo || fallback ? "demo" : "discovery";
   const classified = results.map((result) => {
     const discovery = result.inventoryKind === "discovery";
+    const demo = !discovery && (result.dataSource === "demo" || fallback);
     return {
       ...result,
       searchPolicy: {
-        mode: discovery ? "discovery" as const : mode,
-        bookable: !discovery,
+        mode: discovery ? "discovery" as const : demo ? "demo" as const : "live" as const,
+        bookable: !discovery && !demo,
         sourceLabel: result.provider,
         action: { kind: "internal-detail", href: `/hotels/details/${encodeURIComponent(result.id)}`, enabled: true } as const,
       },
     };
   });
-  const partial = Boolean(warnings.length || (hasBookable && classified.some((result) => result.searchPolicy.mode === "discovery")));
+  const partial = Boolean(warnings.length || (hasLive && classified.some((result) => result.searchPolicy.mode !== "live")));
   return { results: classified, mode, status: classified.length ? partial ? "partial" : "available" : "empty", sourceLabel: uniqueProviders(results), warnings, partial, requestId };
 }
 
