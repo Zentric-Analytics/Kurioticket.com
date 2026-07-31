@@ -1,5 +1,6 @@
 import type { DealsPackageMode, DealsSearch } from "./dealsSearchParams";
 import { buildDealsInternalRedirectHref } from "./dealsProviderHandoff";
+import { convertCurrencyAmount, type ExchangeRates } from "@/lib/currency/exchangeRates";
 
 export const DEALS_TRIP_PLAN_VERSION = 1 as const;
 export const DEALS_TRIP_PLAN_TTL_MS = 25 * 60 * 1000;
@@ -35,6 +36,12 @@ export function getDealsTripPlanReadiness(mode: DealsPackageMode, plan: Pick<Dea
   if (mode !== "flight-car" && !plan.hotel) missing.push("hotel");
   if (mode !== "hotel-flight" && !plan.car) missing.push("car");
   return { ready: missing.length === 0, missing, guidanceKey: missing.length > 1 ? "deals.tripPlan.chooseMultiple" : missing[0] === "flight" ? "deals.tripPlan.chooseFlight" : missing[0] === "hotel" ? "deals.tripPlan.chooseStay" : missing[0] === "car" ? "deals.tripPlan.chooseCar" : "deals.tripPlan.continue" };
+}
+
+export function getDealsTripPlanEstimatedTotal(plan: Pick<DealsTripPlan,"flight"|"hotel"|"car">, displayCurrency:string, rates:ExchangeRates){
+  const components=[plan.flight,plan.hotel,plan.car].filter(Boolean) as Array<{sourcePrice:number;sourceCurrency:string}>;
+  const converted=components.map(item=>convertCurrencyAmount(item.sourcePrice,item.sourceCurrency,displayCurrency,rates));
+  return converted.every((amount):amount is number=>amount!==null)?converted.reduce((sum,amount)=>sum+amount,0):null;
 }
 
 export function buildDealsSearchFingerprint(search: DealsSearch): string {

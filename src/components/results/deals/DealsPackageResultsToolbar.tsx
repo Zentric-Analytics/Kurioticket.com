@@ -1,0 +1,6 @@
+"use client";
+import type { DealsPackageMode } from "@/lib/deals/dealsSearchParams";
+export type DealsPackageSort="recommended"|"lowest-total"|"shortest-flight"|"highest-hotel"|"highest-car";
+export function DealsPackageResultsToolbar({count,mode,value,onChange}:{count:number;mode:DealsPackageMode;value:DealsPackageSort;onChange:(value:DealsPackageSort)=>void}){
+ return <div className="mt-5 flex flex-col gap-3 border-y border-slate-200 py-3 sm:flex-row sm:items-center sm:justify-between"><p className="text-sm font-bold text-slate-700">{count} complete trip {count===1?"option":"options"}</p><label className="flex items-center gap-2 text-sm font-bold text-slate-700">Sort <select value={value} onChange={event=>onChange(event.target.value as DealsPackageSort)} className="min-h-10 rounded-lg border border-slate-300 bg-white px-3 font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#004BB8]"><option value="recommended">Recommended</option><option value="lowest-total">Lowest combined total</option>{mode!=="hotel-car"&&<option value="shortest-flight">Shortest flight</option>}{mode!=="flight-car"&&<option value="highest-hotel">Highest-rated hotel</option>}{mode!=="hotel-flight"&&<option value="highest-car">Highest-rated car supplier</option>}</select></label></div>;
+}
