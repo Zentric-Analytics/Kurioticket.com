@@ -33,5 +33,9 @@ test("combined cards disclose estimated totals and separate provider booking", (
   assert.match(card, /view\.hotel/);
   assert.match(card, /view\.car/);
   assert.match(card, /priceBreakdown/);
+  assert.match(card, /candidate\.badgeKey/);
+  assert.match(card, /deals\.results\.package\.providerPrice/);
+  assert.match(card, /deals\.results\.package\.providerCount/);
+  assert.doesNotMatch(card, /candidate\.reasonKey|deals\.results\.package\.providedBy|provider\(view\./);
   assert.doesNotMatch(card, /discount|saving|one checkout|one reservation/i);
 });
