@@ -8,12 +8,14 @@ const card = readFileSync(new URL("./DealsPackageCard.tsx", import.meta.url), "u
 test("results render one combined package list after the shared search header", () => {
   const summary = results.indexOf("<DealsResultsSearchSummary");
   const breadcrumbs = results.indexOf("<DealsResultsBreadcrumbs", summary);
-  const packages = results.indexOf('aria-labelledby="package-options"', breadcrumbs);
+  const packages = results.indexOf('id="package-options"', breadcrumbs);
   assert.ok(summary >= 0 && summary < breadcrumbs && breadcrumbs < packages);
   assert.match(results, /buildDealsPackageCandidates/);
   assert.match(results, /<DealsPackageResultsToolbar/);
   assert.match(results, /<ol aria-label=/);
   assert.match(results, /sortedCandidates\.map\(candidate/);
+  assert.doesNotMatch(results, /t\("deals\.results\.package\.intro"\)/);
+  assert.doesNotMatch(results, /<h1 id="package-options"/);
   assert.doesNotMatch(results, /<DealsProductSection|<DealsPreviewRail/);
 });
 
