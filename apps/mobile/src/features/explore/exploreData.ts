@@ -1,4 +1,5 @@
 import type { FlowIconName } from "../flow/FlowIcon";
+import { featuredLocations } from "../flow/locationCatalogue";
 
 export const HERO_SLIDES = [
   { id: "coast", label: "Coastal adventure", image: require("../../../assets/heroes/explore-tropical-beach.png"), destination: "Bali" },
@@ -7,20 +8,15 @@ export const HERO_SLIDES = [
   { id: "balloons", label: "Balloon adventure", image: require("../../../assets/heroes/deals-balloons.png"), destination: "Cappadocia" },
 ] as const;
 
-export const POPULAR_DESTINATIONS = [
-  { name: "Paris", region: "France", price: "$420", image: require("../../../assets/destinations/paris.jpg") },
-  { name: "Bali", region: "Indonesia", price: "$680", image: require("../../../assets/destinations/bali.jpg") },
-  { name: "Santorini", region: "Greece", price: "$350", image: require("../../../assets/heroes/home-santorini.png") },
-  { name: "New York", region: "United States", price: "$540", image: require("../../../assets/destinations/new-york.jpg") },
-] as const;
+export const FEATURED_DESTINATIONS = featuredLocations;
 
-export const TRENDING = [
-  ["New York", "trending"], ["London", "search"], ["Dubai", "trending"],
-  ["Rome", "search"], ["Barcelona", "trending"], ["Bangkok", "search"],
+export const QUICK_DESTINATIONS = [
+  ["New York", "search"], ["London", "search"], ["Dubai", "search"],
+  ["Rome", "search"], ["Barcelona", "search"], ["Bangkok", "search"],
 ] as const satisfies readonly (readonly [string, FlowIconName])[];
 
 export const INTERESTS = [
-  { name: "Beaches", destination: "Bali", icon: "beach", image: require("../../../assets/destinations/bali.jpg") },
+  { name: "Beaches", destination: "Bali", icon: "beach", image: require("../../../assets/heroes/explore-tropical-beach.png") },
   { name: "Cities", destination: "New York", icon: "city", image: require("../../../assets/destinations/new-york.jpg") },
   { name: "Adventure", destination: "London", icon: "adventure", image: require("../../../assets/destinations/london.jpg") },
   { name: "Nature", destination: "Bali", icon: "nature", image: require("../../../assets/heroes/explore-tropical-beach.png") },

@@ -12,7 +12,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router, useLocalSearchParams } from "expo-router";
-import { destinationImages } from "./flowData";
 import { FlightSearchPanel } from "./FlightSearchPanel";
 import {
   Field,
@@ -97,15 +96,12 @@ function Cards({
   items,
 }: {
   title: string;
-  items: { name: string; price: string; image?: number }[];
+  items: { name: string; detail?: string; image?: number }[];
 }) {
   return (
     <>
       <View style={flowStyles.sectionHeader}>
         <Text style={flowStyles.sectionTitle}>{title}</Text>
-        <Pressable accessibilityRole="button" onPress={() => undefined}>
-          <Text style={flowStyles.viewAll}>View all</Text>
-        </Pressable>
       </View>
       <ScrollView
         horizontal
@@ -118,7 +114,7 @@ function Cards({
               <Image source={item.image} style={styles.smallImage} />
             ) : null}
             <Text style={flowStyles.value}>{item.name}</Text>
-            <Text style={flowStyles.meta}>{item.price}</Text>
+            {item.detail ? <Text style={flowStyles.meta}>{item.detail}</Text> : null}
           </View>
         ))}
       </ScrollView>
@@ -138,10 +134,9 @@ export function FlightsScreen() {
     >
       <FlightSearchPanel initialDestination={destination} />
       <Cards
-        title="Popular routes"
+        title="Routes"
         items={[
-          { name: "JFK → LAX", price: "from $320" },
-          { name: "JFK → MIA", price: "from $210" },
+          { name: "JFK → LAX" },
         ]}
       />
     </Page>
@@ -196,15 +191,14 @@ export function HotelsScreen() {
         </View>
       </View>
       <Cards
-        title="Popular destinations"
+        title="Featured destinations"
         items={[
           {
             name: "New York",
-            price: "from $120",
-            image: destinationImages["New York"],
+            image: require("../../../assets/destinations/new-york.jpg"),
           },
-          { name: "Paris", price: "from $140", image: destinationImages.Paris },
-          { name: "Bali", price: "from $90", image: destinationImages.Bali },
+          { name: "Paris", image: require("../../../assets/destinations/paris.jpg") },
+          { name: "Bali" },
         ]}
       />
     </Page>
@@ -281,11 +275,11 @@ export function CarsScreen() {
         </View>
       </View>
       <Cards
-        title="Top car categories"
+        title="Car categories"
         items={[
-          { name: "Economy", price: "from $25/day" },
-          { name: "SUV", price: "from $45/day" },
-          { name: "Luxury", price: "from $85/day" },
+          { name: "Economy" },
+          { name: "SUV" },
+          { name: "Luxury" },
         ]}
       />
     </Page>
@@ -300,19 +294,19 @@ export function DealsScreen() {
       name: "Compare flights",
       detail: "Search live provider fares",
       route: "/flights" as const,
-      image: destinationImages.London,
+      image: require("../../../assets/heroes/flights-aircraft.png"),
     },
     {
       name: "Compare hotels",
       detail: "Search live rooms and availability",
       route: "/hotels" as const,
-      image: destinationImages.Bali,
+      image: require("../../../assets/heroes/hotels-room.png"),
     },
     {
       name: "Compare rental cars",
       detail: "Search live rental offers",
       route: "/cars" as const,
-      image: destinationImages["New York"],
+      image: require("../../../assets/heroes/cars-suv.png"),
     },
   ];
   return (
@@ -336,8 +330,7 @@ export function DealsScreen() {
         />
       </View>
       <View style={flowStyles.sectionHeader}>
-        <Text style={flowStyles.sectionTitle}>Today’s top deals</Text>
-        <Text style={flowStyles.viewAll}>View all</Text>
+        <Text style={flowStyles.sectionTitle}>Compare travel options</Text>
       </View>
       {deals
         .filter(
@@ -363,25 +356,6 @@ export function DealsScreen() {
             <FlowIcon name="chevron" size={18} />
           </Pressable>
         ))}
-      <Text style={[flowStyles.sectionTitle, styles.why]}>
-        Why book with us?
-      </Text>
-      <View style={styles.benefit}>
-        <FlowIcon name="check" color={flowColors.blue} />
-        <View>
-          <Text style={flowStyles.value}>Best Price Guarantee</Text>
-          <Text style={flowStyles.meta}>We match any lower price</Text>
-        </View>
-      </View>
-      <View style={styles.benefit}>
-        <FlowIcon name="card" color={flowColors.blue} />
-        <View>
-          <Text style={flowStyles.value}>Free Cancellation</Text>
-          <Text style={flowStyles.meta}>
-            Plans change, book with confidence
-          </Text>
-        </View>
-      </View>
     </Page>
   );
 }

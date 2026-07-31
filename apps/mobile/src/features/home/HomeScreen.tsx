@@ -17,27 +17,16 @@ import { ProductTabs, type SearchProduct } from "./ProductTabs";
 import { HotelSearchForm } from "./HotelSearchForm";
 import { CarSearchForm } from "./CarSearchForm";
 import { DealsSearchForm } from "./DealsSearchForm";
+import { airports, type Airport } from "../flow/airportData";
+import { featuredLocations } from "../flow/locationCatalogue";
 
 export type TripType = "round-trip" | "one-way" | "multi-city";
-export type Airport = { code: string; city: string; country: string };
 export type Cabin = "Economy" | "Premium Economy" | "Business" | "First";
 
 const BLUE = "#0754F7";
 const NAVY = "#061747";
 const MUTED = "#56658E";
 const BORDER = "#E9EDF6";
-const AIRPORTS: Airport[] = [
-  { code: "JFK", city: "New York", country: "USA" },
-  { code: "LAX", city: "Los Angeles", country: "USA" },
-  { code: "LHR", city: "London", country: "United Kingdom" },
-  { code: "CDG", city: "Paris", country: "France" },
-];
-const DESTINATIONS = [
-  { name: "New York", code: "JFK", price: "$132", image: require("../../../assets/destinations/new-york.jpg") },
-  { name: "London", code: "LHR", price: "$612", image: require("../../../assets/destinations/london.jpg") },
-  { name: "Paris", code: "CDG", price: "$432", image: require("../../../assets/destinations/paris.jpg") },
-  { name: "Bali", code: "DPS", price: "$612", image: require("../../../assets/destinations/bali.jpg") },
-] as const;
 
 function Icon({ name, size = 25, color = MUTED }: { name: string; size?: number; color?: string }) {
   const common = { stroke: color, strokeWidth: 1.9, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, fill: "none" };
@@ -116,8 +105,8 @@ function TwoColumnField({ left, right }: { left: ReactNode; right: ReactNode }) 
 
 function FlightSearchCard() {
   const [tripType, setTripType] = useState<TripType>("round-trip");
-  const [from, setFrom] = useState(AIRPORTS[0]);
-  const [to, setTo] = useState(AIRPORTS[1]);
+  const [from, setFrom] = useState<Airport>(airports[0]);
+  const [to, setTo] = useState<Airport>(airports[1]);
   const [picker, setPicker] = useState<null | "from" | "to" | "depart" | "return" | "travelers" | "cabin">(null);
   const [travelers, setTravelers] = useState(1);
   const [cabin, setCabin] = useState<Cabin>("Economy");
@@ -140,7 +129,7 @@ function FlightSearchCard() {
         {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
         <Pressable accessibilityRole="button" accessibilityLabel="Search flights" onPress={search} style={({ pressed }) => [styles.searchButton, pressed && styles.pressed]}><Icon name="search" color="white" size={29} /><Text style={styles.searchButtonText}>Search flights</Text></Pressable>
       </View>
-      <PickerModal title={picker === "from" ? "Choose origin" : "Choose destination"} visible={picker === "from" || picker === "to"} onClose={() => setPicker(null)}>{AIRPORTS.map((airport) => <Pressable key={airport.code} accessibilityRole="button" onPress={() => pickAirport(airport)} style={styles.choice}><Text style={styles.choiceCode}>{airport.code}</Text><Text style={styles.choiceText}>{airport.city}, {airport.country}</Text></Pressable>)}</PickerModal>
+      <PickerModal title={picker === "from" ? "Choose origin" : "Choose destination"} visible={picker === "from" || picker === "to"} onClose={() => setPicker(null)}>{airports.map((airport) => <Pressable key={airport.code} accessibilityRole="button" onPress={() => pickAirport(airport)} style={styles.choice}><Text style={styles.choiceCode}>{airport.code}</Text><Text style={styles.choiceText}>{airport.city}, {airport.country}</Text></Pressable>)}</PickerModal>
       <PickerModal title={picker === "depart" ? "Departure date" : "Return date"} visible={picker === "depart" || picker === "return"} onClose={() => setPicker(null)}>{["May 20, Tue", "May 21, Wed", "May 27, Tue", "May 28, Wed"].map((date) => <Pressable key={date} accessibilityRole="button" onPress={() => { if (picker === "depart") setDepart(date); else setReturnDate(date); setPicker(null); }} style={styles.choice}><Icon name="calendar" /><Text style={styles.choiceText}>{date}</Text></Pressable>)}</PickerModal>
       <PickerModal title="Travelers" visible={picker === "travelers"} onClose={() => setPicker(null)}><View style={styles.counter}><Text style={styles.choiceText}>Travelers</Text><Pressable accessibilityRole="button" accessibilityLabel="Remove traveler" onPress={() => setTravelers(Math.max(1, travelers - 1))} style={styles.counterButton}><Text style={styles.counterText}>−</Text></Pressable><Text style={styles.count}>{travelers}</Text><Pressable accessibilityRole="button" accessibilityLabel="Add traveler" onPress={() => setTravelers(Math.min(9, travelers + 1))} style={styles.counterButton}><Text style={styles.counterText}>+</Text></Pressable></View></PickerModal>
       <PickerModal title="Cabin class" visible={picker === "cabin"} onClose={() => setPicker(null)}>{(["Economy", "Premium Economy", "Business", "First"] as Cabin[]).map((item) => <Pressable key={item} accessibilityRole="radio" accessibilityState={{ checked: cabin === item }} onPress={() => { setCabin(item); setPicker(null); }} style={styles.choice}><Text style={styles.choiceText}>{item}</Text></Pressable>)}</PickerModal>
@@ -152,9 +141,9 @@ function PriceAlertCard() {
   return <Pressable accessibilityRole="button" accessibilityLabel="Track prices and save" onPress={async () => { const session = await readSession().catch(() => null); router.push(session ? "/(tabs)/trips" : "/email-auth"); }} style={({ pressed }) => [styles.alertCard, pressed && styles.pressed]}><View style={styles.alertIcon}><Icon name="bell" color={BLUE} size={34} /></View><View style={styles.grow}><Text style={styles.alertTitle}>Track prices & save</Text><Text style={styles.alertBody}>Get alerts when prices drop{"\n"}for your favorite trips.</Text></View><Icon name="right" size={28} /></Pressable>;
 }
 
-function PopularDestinations() {
+function FeaturedDestinations() {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  return <View><View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Popular destinations</Text><Pressable accessibilityRole="button" onPress={() => router.push("/(tabs)/explore")}><Text style={styles.viewAll}>View all</Text></Pressable></View><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.destinationRow}>{DESTINATIONS.map((destination) => { const saved = favorites.has(destination.name); return <Pressable key={destination.name} accessibilityRole="button" accessibilityLabel={`Explore ${destination.name}`} onPress={() => router.push("/(tabs)/explore")} style={styles.destinationCard}><View><Image source={destination.image} resizeMode="cover" style={styles.destinationImage} /><Pressable accessibilityRole="button" accessibilityLabel={`${saved ? "Remove" : "Add"} ${destination.name} ${saved ? "from" : "to"} favorites`} accessibilityState={{ selected: saved }} hitSlop={8} onPress={(event) => { event.stopPropagation(); setFavorites((current) => { const next = new Set(current); if (saved) next.delete(destination.name); else next.add(destination.name); return next; }); }} style={styles.heart}><Icon name="heart" color="white" size={24} /></Pressable></View><Text style={styles.destinationName}>{destination.name}</Text><Text style={styles.price}>from {destination.price}</Text></Pressable>; })}</ScrollView></View>;
+  return <View><View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Featured destinations</Text><Pressable accessibilityRole="button" onPress={() => router.push("/(tabs)/explore")}><Text style={styles.viewAll}>Explore</Text></Pressable></View><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.destinationRow}>{featuredLocations.map(({ airport, image }) => { const saved = favorites.has(airport.city); return <Pressable key={airport.code} accessibilityRole="button" accessibilityLabel={`Explore ${airport.city}`} onPress={() => router.push("/(tabs)/explore")} style={styles.destinationCard}><View>{image ? <Image source={image} resizeMode="cover" style={styles.destinationImage} /> : <View style={[styles.destinationImage, styles.destinationImageNeutral]} />}<Pressable accessibilityRole="button" accessibilityLabel={`${saved ? "Remove" : "Add"} ${airport.city} ${saved ? "from" : "to"} favorites`} accessibilityState={{ selected: saved }} hitSlop={8} onPress={(event) => { event.stopPropagation(); setFavorites((current) => { const next = new Set(current); if (saved) next.delete(airport.city); else next.add(airport.city); return next; }); }} style={styles.heart}><Icon name="heart" color="white" size={24} /></Pressable></View><Text style={styles.destinationName}>{airport.city}</Text></Pressable>; })}</ScrollView></View>;
 }
 
 export function HomeScreen() {
@@ -163,7 +152,7 @@ export function HomeScreen() {
     if (selectedProduct === "hotels") return <HotelSearchForm />;
     if (selectedProduct === "cars") return <CarSearchForm />;
     if (selectedProduct === "deals") return <DealsSearchForm />;
-    return <><FlightSearchCard /><PriceAlertCard /><PopularDestinations /></>;
+    return <><FlightSearchCard /><PriceAlertCard /><FeaturedDestinations /></>;
   }, [selectedProduct]);
   return <SafeAreaView style={styles.safe} edges={["top"]}><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}><AppHeader /><ProductTabs selectedProduct={selectedProduct} onSelectProduct={setSelectedProduct} />{content}</ScrollView></SafeAreaView>;
 }
@@ -217,6 +206,7 @@ const styles = StyleSheet.create({
   viewAll: { color: BLUE, fontSize: 14, fontWeight: "700" },
   destinationRow: { gap: 10, paddingBottom: 8 },
   destinationCard: { width: 112, borderRadius: 12, backgroundColor: "white", overflow: "hidden", paddingBottom: 10, ...shadow },
+  destinationImageNeutral: { backgroundColor: "#DCE5F3" },
   destinationImage: { width: 112, height: 104 },
   heart: { position: "absolute", right: 7, top: 7, width: 30, height: 30, alignItems: "center", justifyContent: "center" },
   destinationName: { color: NAVY, fontSize: 14, lineHeight: 20, fontWeight: "800", paddingHorizontal: 8, paddingTop: 8 },

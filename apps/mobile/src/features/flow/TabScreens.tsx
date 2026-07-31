@@ -11,7 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { readSession } from "../../storage/sessionStorage";
 import { travelApi, type MobileTrip } from "../../api/travelApi";
-import { destinationImages } from "./flowData";
+import { locationImageByCity } from "./locationCatalogue";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { ScreenHeader, Segments } from "./FlowPrimitives";
 import { flowColors, flowStyles } from "./flowStyles";
@@ -66,6 +66,7 @@ export function TripsFlowScreen() {
   );
 }
 function TripCard({ trip }: { trip: MobileTrip }) {
+  const image = locationImageByCity(trip.destination);
   return (
     <Pressable
       accessibilityRole="button"
@@ -79,7 +80,7 @@ function TripCard({ trip }: { trip: MobileTrip }) {
         pressed && flowStyles.pressed,
       ]}
     >
-      <Image source={destinationImages[trip.destination as keyof typeof destinationImages] || destinationImages["New York"]} style={styles.tripImage} />
+      {image ? <Image source={image} style={styles.tripImage} /> : <View style={[styles.tripImage, styles.neutralImage]} />}
       <View style={styles.grow}>
         <Text style={flowStyles.value}>{trip.origin ? `${trip.origin} → ` : ""}{trip.destination}</Text>
         <Text style={flowStyles.meta}>{new Date(trip.departureDate).toLocaleDateString()} {trip.returnDate ? `– ${new Date(trip.returnDate).toLocaleDateString()}` : ""}</Text>
@@ -97,144 +98,13 @@ function TripCard({ trip }: { trip: MobileTrip }) {
   );
 }
 
-type ExploreTab = "destinations" | "inspiration" | "deals";
-export function ExploreFlowScreen() {
-  const [tab, setTab] = useState<ExploreTab>("destinations");
-  const destinations = [
-    { name: "Paris", image: destinationImages.Paris },
-    { name: "Tokyo", image: destinationImages["New York"] },
-    { name: "Bali", image: destinationImages.Bali },
-  ];
-  return (
-    <SafeAreaView style={flowStyles.safe} edges={["top"]}>
-      <ScrollView contentContainerStyle={flowStyles.scroll}>
-        <ScreenHeader title="Explore" />
-        <View style={[flowStyles.card, flowStyles.shadow]}>
-          <Segments
-            value={tab}
-            onChange={setTab}
-            options={[
-              { value: "destinations", label: "Destinations" },
-              { value: "inspiration", label: "Inspiration" },
-              { value: "deals", label: "Deals" },
-            ]}
-          />
-        </View>
-        {tab === "destinations" ? (
-          <>
-            <View style={flowStyles.sectionHeader}>
-              <Text style={flowStyles.sectionTitle}>Popular destinations</Text>
-            </View>
-            <View style={styles.destinations}>
-              {destinations.map((destination) => (
-                <Pressable
-                  key={destination.name}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Search trips to ${destination.name}`}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/flights",
-                      params: { destination: destination.name },
-                    })
-                  }
-                  style={({ pressed }) => [
-                    styles.destination,
-                    pressed && flowStyles.pressed,
-                  ]}
-                >
-                  <Image
-                    source={destination.image}
-                    style={StyleSheet.absoluteFillObject}
-                  />
-                  <View style={styles.scrim} />
-                  <Text style={styles.destinationName}>{destination.name}</Text>
-                </Pressable>
-              ))}
-            </View>
-            <Text style={flowStyles.sectionTitle}>Trending searches</Text>
-            <View style={styles.chips}>
-              {[
-                "New York",
-                "Rome",
-                "London",
-                "Dubai",
-                "Barcelona",
-                "Bangkok",
-              ].map((name) => (
-                <Pressable
-                  key={name}
-                  accessibilityRole="button"
-                  onPress={() =>
-                    router.push({
-                      pathname: "/flights",
-                      params: { destination: name },
-                    })
-                  }
-                  style={styles.chip}
-                >
-                  <Text style={styles.chipText}>{name}</Text>
-                </Pressable>
-              ))}
-            </View>
-            <View style={flowStyles.sectionHeader}>
-              <Text style={flowStyles.sectionTitle}>Deals for you</Text>
-            </View>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => router.push("/deals")}
-              style={styles.feature}
-            >
-              <Image
-                source={require("../../../assets/heroes/explore-tropical-beach.png")}
-                style={StyleSheet.absoluteFillObject}
-              />
-              <View style={styles.scrim} />
-              <Text style={styles.featureTitle}>Miami</Text>
-              <Text style={styles.featureMeta}>Search live prices</Text>
-            </Pressable>
-          </>
-        ) : (
-          <View style={styles.empty}>
-            <FlowIcon
-              name={tab === "deals" ? "deal" : "compass"}
-              color={flowColors.blue}
-              size={36}
-            />
-            <Text style={flowStyles.value}>
-              {tab === "deals"
-                ? "Explore today’s travel deals"
-                : "Find inspiration from live destinations"}
-            </Text>
-            <Pressable
-              onPress={() =>
-                router.push(tab === "deals" ? "/deals" : "/flights")
-              }
-            >
-              <Text style={flowStyles.viewAll}>
-                {tab === "deals" ? "View deals" : "Search flights"}
-              </Text>
-            </Pressable>
-          </View>
-        )}
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
-
 const rows: {
   label: string;
-  route:
-    | "/personal-information"
-    | "/price-alerts"
-    | "/currency";
+  route: "/personal-information" | "/price-alerts" | "/currency";
   icon: FlowIconName;
   trailing?: string;
 }[] = [
-  {
-    label: "Personal information",
-    route: "/personal-information",
-    icon: "person",
-  },
+  { label: "Personal information", route: "/personal-information", icon: "person" },
   { label: "Price alerts", route: "/price-alerts", icon: "bell" },
   { label: "Currency", route: "/currency", icon: "compass", trailing: "USD" },
 ];
@@ -310,6 +180,7 @@ const styles = StyleSheet.create({
     borderColor: flowColors.border,
     borderWidth: 1,
   },
+  neutralImage: { backgroundColor: "#DCE5F3" },
   tripImage: { width: 74, height: 68, borderRadius: 9 },
   status: {
     alignSelf: "flex-start",

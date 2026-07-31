@@ -7,7 +7,7 @@ import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
-import { HERO_SLIDES, INTERESTS, POPULAR_DESTINATIONS, TRENDING } from "./exploreData";
+import { FEATURED_DESTINATIONS, HERO_SLIDES, INTERESTS, QUICK_DESTINATIONS } from "./exploreData";
 import { readSavedDestinationIds, writeSavedDestinationIds } from "../../storage/savedDestinationsStorage";
 
 const NAVY = "#071A48";
@@ -48,7 +48,7 @@ function ExploreHeroCarousel() {
         <ImageBackground source={slide.image} resizeMode="cover" style={[styles.hero, { width: cardWidth }]} imageStyle={styles.heroImage}>
           <View style={styles.heroOverlay} />
           <Text style={styles.heroTitle}>Find your{"\n"}next adventure</Text>
-          <Text style={styles.heroBody}>Explore top destinations and{"\n"}amazing places around the world</Text>
+          <Text style={styles.heroBody}>Explore destinations and{"\n"}places around the world</Text>
           <View style={styles.heroCta}><Text style={styles.heroCtaText}>Explore now</Text><FlowIcon name="chevron" size={18} /></View>
         </ImageBackground>
       </Pressable>)}
@@ -57,35 +57,33 @@ function ExploreHeroCarousel() {
   </View>;
 }
 
-function PopularDestinations({ favorites, onToggleFavorite }: { favorites: ReadonlySet<string>; onToggleFavorite: (id: string) => void }) {
+function FeaturedDestinations({ favorites, onToggleFavorite }: { favorites: ReadonlySet<string>; onToggleFavorite: (id: string) => void }) {
   const { width } = useWindowDimensions();
   const cardWidth = Math.min(230, Math.max(210, width * .62));
-  return <View><SectionHeader title="Popular destinations" onViewAll={() => goDestination("Anywhere")} /><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.destinationRow}>{POPULAR_DESTINATIONS.map((item) => {
-    const saved = favorites.has(item.name);
-    return <View key={item.name} style={[styles.destinationCard, { width: cardWidth }]}>
-      <Pressable accessibilityRole="button" accessibilityLabel={`Explore ${item.name}, ${item.region}, from ${item.price}`} onPress={() => goDestination(item.name)} style={styles.destinationCardAction}>
-      <ImageBackground source={item.image} resizeMode="cover" style={styles.destinationCardImage} imageStyle={styles.destinationImage}>
-        <View style={styles.destinationLowerOverlay} />
-        <View style={styles.destinationCopy}><Text style={styles.destinationName}>{item.name}</Text><Text style={styles.destinationRegion}>{item.region}</Text><Text style={styles.destinationPrice}>from {item.price}</Text></View>
-      </ImageBackground>
+  return <View><SectionHeader title="Featured destinations" /><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.destinationRow}>{FEATURED_DESTINATIONS.map(({ airport, image }) => {
+    const saved = favorites.has(airport.city);
+    const copy = <><View style={styles.destinationLowerOverlay} /><View style={styles.destinationCopy}><Text style={styles.destinationName}>{airport.city}</Text><Text style={styles.destinationRegion}>{airport.country}</Text></View></>;
+    return <View key={airport.code} style={[styles.destinationCard, { width: cardWidth }]}>
+      <Pressable accessibilityRole="button" accessibilityLabel={`Explore ${airport.city}, ${airport.country}`} onPress={() => goDestination(airport.city)} style={styles.destinationCardAction}>
+        {image ? <ImageBackground source={image} resizeMode="cover" style={styles.destinationCardImage} imageStyle={styles.destinationImage}>{copy}</ImageBackground> : <View style={[styles.destinationCardImage, styles.destinationCardNeutral]}>{copy}</View>}
       </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel={`${saved ? "Remove" : "Add"} ${item.name} ${saved ? "from" : "to"} favorites`} accessibilityState={{ selected: saved }} hitSlop={4} onPress={() => onToggleFavorite(item.name)} style={[styles.heart, saved ? styles.heartSaved : styles.heartUnsaved]}><FlowIcon name="heart" color={saved ? "#E92D55" : "white"} size={24} /></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel={`${saved ? "Remove" : "Add"} ${airport.city} ${saved ? "from" : "to"} favorites`} accessibilityState={{ selected: saved }} hitSlop={4} onPress={() => onToggleFavorite(airport.city)} style={[styles.heart, saved ? styles.heartSaved : styles.heartUnsaved]}><FlowIcon name="heart" color={saved ? "#E92D55" : "white"} size={24} /></Pressable>
     </View>;
   })}</ScrollView></View>;
 }
 
 function TrendingSearches() {
-  return <View><SectionHeader title="Trending searches" /><View style={styles.chipGrid}>{TRENDING.map(([name, icon]) => <Pressable key={name} accessibilityRole="button" accessibilityLabel={`Search flights to ${name}`} android_ripple={{ color: "#E5ECFF" }} onPress={() => goDestination(name)} style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]}><FlowIcon name={icon} color={BLUE} size={19} /><Text numberOfLines={1} style={styles.chipText}>{name}</Text></Pressable>)}</View></View>;
+  return <View><SectionHeader title="Quick destinations" /><View style={styles.chipGrid}>{QUICK_DESTINATIONS.map(([name, icon]) => <Pressable key={name} accessibilityRole="button" accessibilityLabel={`Search flights to ${name}`} android_ripple={{ color: "#E5ECFF" }} onPress={() => goDestination(name)} style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]}><FlowIcon name={icon} color={BLUE} size={19} /><Text numberOfLines={1} style={styles.chipText}>{name}</Text></Pressable>)}</View></View>;
 }
 
 function DealBanner() {
-  return <View><SectionHeader title="Deals for you" onViewAll={() => router.push("/deals")} /><Pressable accessibilityRole="button" accessibilityLabel="See Miami round trip deals" onPress={() => router.push("/deals")}>
-    <ImageBackground source={require("../../../assets/destinations/new-york.jpg")} style={styles.deal} imageStyle={styles.imageRadius}><View style={styles.dealOverlay} /><View style={styles.dealCopy}><Text style={styles.dealCity}>Miami</Text><Text style={styles.dealMeta}>Round trip</Text><Text style={styles.dealFrom}>from <Text style={styles.dealPrice}>$210</Text></Text></View><View style={styles.dealCta}><Text style={styles.dealCtaText}>See deals</Text><FlowIcon name="chevron" color="white" size={18} /></View></ImageBackground>
+  return <View><SectionHeader title="Compare travel options" /><Pressable accessibilityRole="button" accessibilityLabel="Compare flights, hotels and rental cars" onPress={() => router.push("/deals")}>
+    <View style={[styles.deal, styles.dealNeutral]}><View style={styles.dealCopy}><Text style={styles.dealCity}>Plan your next trip</Text><Text style={styles.dealMeta}>Compare flights, hotels and rental cars</Text></View><View style={styles.dealCta}><Text style={styles.dealCtaText}>Compare</Text><FlowIcon name="chevron" color="white" size={18} /></View></View>
   </Pressable></View>;
 }
 
 function InterestDestinations() {
-  return <View><SectionHeader title="Top destinations by interest" /><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.interestRow}>{INTERESTS.map((item) => <Pressable key={item.name} accessibilityRole="button" accessibilityLabel={`Explore ${item.name} in ${item.destination}`} onPress={() => goDestination(item.destination)}>
+  return <View><SectionHeader title="Explore by interest" /><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.interestRow}>{INTERESTS.map((item) => <Pressable key={item.name} accessibilityRole="button" accessibilityLabel={`Explore ${item.name} in ${item.destination}`} onPress={() => goDestination(item.destination)}>
     <ImageBackground source={item.image} style={styles.interest} imageStyle={styles.interestImage}><View style={styles.cardOverlay} /><FlowIcon name={item.icon} color="white" size={24} /><Text style={styles.interestText}>{item.name}</Text></ImageBackground>
   </Pressable>)}</ScrollView></View>;
 }
@@ -125,7 +123,7 @@ export function ExploreScreen() {
 
   return <SafeAreaView style={styles.safe} edges={["top"]}><ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={styles.page}>
     <ExploreHeader /><ExploreSearch /><ExploreTabs tab={tab} onChange={setTab} />
-    {tab === "Destinations" ? <><PopularDestinations favorites={favorites} onToggleFavorite={toggleFavorite} /><TrendingSearches /><ExploreMoreGrid /></> : null}
+    {tab === "Destinations" ? <><FeaturedDestinations favorites={favorites} onToggleFavorite={toggleFavorite} /><TrendingSearches /><ExploreMoreGrid /></> : null}
     {tab === "Inspiration" ? <><ExploreHeroCarousel /><InterestDestinations /><TrendingSearches /></> : null}
     {tab === "Deals" ? <DealBanner /> : null}
   </ScrollView></SafeAreaView>;
@@ -139,9 +137,9 @@ const styles = StyleSheet.create({
   tabs: { height: 48, flexDirection: "row", borderBottomWidth: 1, borderBottomColor: BORDER }, tab: { flex: 1, alignItems: "center", justifyContent: "center", borderBottomWidth: 2, borderBottomColor: "transparent" }, tabActive: { borderBottomColor: BLUE }, tabText: { color: NAVY, fontSize: 14, fontWeight: "700" }, tabTextActive: { color: BLUE },
   heroShell: { height: 290, borderRadius: 14, overflow: "hidden" }, hero: { height: 290, justifyContent: "center", paddingHorizontal: 28 }, heroImage: { borderRadius: 14 }, heroOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(1,21,49,.35)", borderRadius: 14 }, heroTitle: { color: "white", fontSize: 27, lineHeight: 31, fontWeight: "800" }, heroBody: { color: "white", fontSize: 13, lineHeight: 18, marginTop: 9 }, heroCta: { marginTop: 17, width: 126, height: 42, borderRadius: 8, backgroundColor: "white", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7 }, heroCtaText: { color: NAVY, fontSize: 13, fontWeight: "700" }, dots: { position: "absolute", bottom: 12, alignSelf: "center", flexDirection: "row", gap: 9 }, dot: { width: 8, height: 8, borderRadius: 4, borderWidth: 1, borderColor: "white" }, dotActive: { backgroundColor: "white" },
   sectionHeader: { minHeight: 27, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }, sectionTitle: { color: NAVY, fontSize: 17, lineHeight: 23, fontWeight: "800" }, viewAll: { minHeight: 44, flexDirection: "row", alignItems: "center", gap: 2 }, viewAllText: { color: BLUE, fontSize: 13, fontWeight: "700" },
-  destinationRow: { gap: 14, paddingRight: 18 }, destinationCard: { height: 268, borderRadius: 14, overflow: "hidden" }, destinationCardAction: { flex: 1 }, destinationCardImage: { flex: 1, padding: 16, justifyContent: "flex-end" }, destinationImage: { borderRadius: 14 }, imageRadius: { borderRadius: 12 }, cardOverlay: { ...StyleSheet.absoluteFillObject, borderRadius: 12, backgroundColor: "rgba(2,15,42,.24)" }, destinationLowerOverlay: { position: "absolute", left: 0, right: 0, bottom: 0, height: 132, borderBottomLeftRadius: 14, borderBottomRightRadius: 14, backgroundColor: "rgba(2,15,42,.48)" }, heart: { position: "absolute", right: 8, top: 8, width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", borderWidth: 1 }, heartUnsaved: { backgroundColor: "rgba(2,15,42,.42)", borderColor: "rgba(255,255,255,.55)" }, heartSaved: { backgroundColor: "white", borderColor: "rgba(255,255,255,.9)" }, destinationCopy: { zIndex: 1 }, destinationName: { color: "white", fontSize: 21, lineHeight: 26, fontWeight: "800" }, destinationRegion: { color: "rgba(255,255,255,.92)", fontSize: 14, lineHeight: 20, fontWeight: "600", marginTop: 1 }, destinationPrice: { color: "white", fontSize: 14, lineHeight: 20, fontWeight: "700", marginTop: 5 },
+  destinationRow: { gap: 14, paddingRight: 18 }, destinationCard: { height: 268, borderRadius: 14, overflow: "hidden" }, destinationCardAction: { flex: 1 }, destinationCardImage: { flex: 1, padding: 16, justifyContent: "flex-end" }, destinationCardNeutral: { backgroundColor: "#24436E" }, destinationImage: { borderRadius: 14 }, cardOverlay: { ...StyleSheet.absoluteFillObject, borderRadius: 12, backgroundColor: "rgba(2,15,42,.24)" }, destinationLowerOverlay: { position: "absolute", left: 0, right: 0, bottom: 0, height: 132, borderBottomLeftRadius: 14, borderBottomRightRadius: 14, backgroundColor: "rgba(2,15,42,.48)" }, heart: { position: "absolute", right: 8, top: 8, width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", borderWidth: 1 }, heartUnsaved: { backgroundColor: "rgba(2,15,42,.42)", borderColor: "rgba(255,255,255,.55)" }, heartSaved: { backgroundColor: "white", borderColor: "rgba(255,255,255,.9)" }, destinationCopy: { zIndex: 1 }, destinationName: { color: "white", fontSize: 21, lineHeight: 26, fontWeight: "800" }, destinationRegion: { color: "rgba(255,255,255,.92)", fontSize: 14, lineHeight: 20, fontWeight: "600", marginTop: 1 },
   chipGrid: { flexDirection: "row", flexWrap: "wrap", columnGap: 8, rowGap: 10 }, chip: { minHeight: 46, borderRadius: 23, borderWidth: 1, borderColor: BORDER, backgroundColor: "white", paddingHorizontal: 11, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, overflow: "hidden", ...shadow }, chipPressed: { backgroundColor: "#F3F6FF", borderColor: "#C9D7FA", transform: [{ scale: .98 }] }, chipText: { color: NAVY, fontSize: 12, lineHeight: 17, fontWeight: "700" },
-  deal: { height: 137, borderRadius: 12, padding: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }, dealOverlay: { ...StyleSheet.absoluteFillObject, borderRadius: 12, backgroundColor: "rgba(10,14,50,.28)" }, dealCopy: { zIndex: 1 }, dealCity: { color: "white", fontSize: 26, fontWeight: "800" }, dealMeta: { color: "white", fontSize: 13, marginTop: 2 }, dealFrom: { color: "white", fontSize: 13, marginTop: 9 }, dealPrice: { fontSize: 25, fontWeight: "800" }, dealCta: { zIndex: 1, height: 48, borderRadius: 10, paddingHorizontal: 17, backgroundColor: NAVY, flexDirection: "row", alignItems: "center", gap: 8 }, dealCtaText: { color: "white", fontSize: 13, fontWeight: "700" },
+  deal: { height: 137, borderRadius: 12, padding: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }, dealNeutral: { backgroundColor: "#24436E" }, dealCopy: { zIndex: 1 }, dealCity: { color: "white", fontSize: 26, fontWeight: "800" }, dealMeta: { color: "white", fontSize: 13, marginTop: 2 }, dealCta: { zIndex: 1, height: 48, borderRadius: 10, paddingHorizontal: 17, backgroundColor: NAVY, flexDirection: "row", alignItems: "center", gap: 8 }, dealCtaText: { color: "white", fontSize: 13, fontWeight: "700" },
   interestRow: { gap: 9 }, interest: { width: 97, height: 108, borderRadius: 10, alignItems: "center", justifyContent: "center", gap: 8 }, interestImage: { borderRadius: 10 }, interestText: { color: "white", fontSize: 12, fontWeight: "700", zIndex: 1 },
   moreGrid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 10 }, moreCard: { width: "49%", minHeight: 92, borderRadius: 11, borderWidth: 1, borderColor: BORDER, backgroundColor: "white", paddingHorizontal: 10, paddingVertical: 12, flexDirection: "row", alignItems: "center", gap: 7, overflow: "hidden", ...shadow }, moreCardPressed: { backgroundColor: "#F4F7FD", borderColor: "#CCD8F0", transform: [{ scale: .985 }] }, moreCardDisabled: { backgroundColor: "#F8F9FC", borderColor: "#D9DFEA", elevation: 0, shadowOpacity: 0 }, moreIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: "#EEF3FF", alignItems: "center", justifyContent: "center" }, moreIconDisabled: { backgroundColor: "#E9EDF4" }, moreCopy: { flex: 1, minWidth: 0 }, moreTitle: { color: NAVY, fontSize: 13, lineHeight: 18, fontWeight: "700" }, moreTitleDisabled: { color: "#485674" }, moreDescription: { color: MUTED, fontSize: 10, lineHeight: 14, marginTop: 3 }, moreDescriptionDisabled: { color: "#64708A", fontWeight: "600" },
 });
