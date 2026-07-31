@@ -57,10 +57,10 @@ export function HomeFlowScreen() {
               ? "Traveler with luggage in a modern city"
               : "Santorini coastline"
           }
-          imageStyle={styles.heroImage}
+          imageStyle={isAuthenticated ? undefined : styles.heroImage}
           resizeMode="cover"
           source={heroSource}
-          style={styles.hero}
+          style={isAuthenticated ? styles.loggedInHero : styles.hero}
         >
           <View style={[styles.heroOverlay, { paddingTop: insets.top + 6 }]}>
             <View style={styles.brandRow}>
@@ -79,14 +79,16 @@ export function HomeFlowScreen() {
                 <FlowIcon name="bell" />
               </Pressable>
             </View>
-            <View style={styles.heroCopy}>
-              <Text style={styles.heroHeading}>
-                Explore the world with Kurioticket
-              </Text>
-              <Text style={styles.heroSupportingText}>
-                Compare flights, hotels and cars in one place.
-              </Text>
-            </View>
+            {!isAuthenticated ? (
+              <View style={styles.heroCopy}>
+                <Text style={styles.heroHeading}>
+                  Explore the world with Kurioticket
+                </Text>
+                <Text style={styles.heroSupportingText}>
+                  Compare flights, hotels and cars in one place.
+                </Text>
+              </View>
+            ) : null}
           </View>
         </ImageBackground>
         <View style={[styles.products, flowStyles.shadow]}>
@@ -151,6 +153,10 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 20,
     overflow: "hidden",
+  },
+  loggedInHero: {
+    height: 200,
+    marginHorizontal: -14,
   },
   heroImage: { borderRadius: 20 },
   heroOverlay: {
