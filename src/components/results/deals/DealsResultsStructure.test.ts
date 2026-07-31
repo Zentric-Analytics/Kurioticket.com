@@ -11,7 +11,9 @@ test("results render one combined package list after the shared search header", 
   const packages = results.indexOf('aria-labelledby="package-options"', breadcrumbs);
   assert.ok(summary >= 0 && summary < breadcrumbs && breadcrumbs < packages);
   assert.match(results, /buildDealsPackageCandidates/);
-  assert.match(results, /candidates\.map\(candidate/);
+  assert.match(results, /<DealsPackageResultsToolbar/);
+  assert.match(results, /<ol aria-label=/);
+  assert.match(results, /sortedCandidates\.map\(candidate/);
   assert.doesNotMatch(results, /<DealsProductSection|<DealsPreviewRail/);
 });
 
@@ -25,8 +27,9 @@ test("a package is selected atomically with every included product", () => {
 test("combined cards disclose estimated totals and separate provider booking", () => {
   assert.match(card, /deals\.results\.package\.estimatedTotal/);
   assert.match(card, /deals\.results\.package\.disclosure/);
-  assert.match(card, /candidate\.flight/);
-  assert.match(card, /candidate\.hotel/);
-  assert.match(card, /candidate\.car/);
+  assert.match(card, /view\.flight/);
+  assert.match(card, /view\.hotel/);
+  assert.match(card, /view\.car/);
+  assert.match(card, /priceBreakdown/);
   assert.doesNotMatch(card, /discount|saving|one checkout|one reservation/i);
 });
