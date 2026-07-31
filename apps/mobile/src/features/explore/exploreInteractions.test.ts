@@ -48,3 +48,33 @@ test("disabled discovery cards and the Price Alerts route are explicit", () => {
   assert.match(source, /title: "Regions", description: "Coming soon"/);
   assert.doesNotMatch(source, /missing\("(?:Countries|Regions)"\)/);
 });
+
+test("Trending searches keep natural-width accessible destination actions", () => {
+  const source = exploreSource();
+  const trending = source.slice(source.indexOf("function TrendingSearches"), source.indexOf("function DealBanner"));
+  const chipStyle = source.match(/chip: \{([^}]+)\}/)?.[1] ?? "";
+
+  for (const destination of ["New York", "London", "Dubai", "Rome", "Barcelona", "Bangkok"]) {
+    assert.match(readFileSync("src/features/explore/exploreData.ts", "utf8"), new RegExp(destination));
+  }
+  assert.match(trending, /accessibilityLabel=\{`Search flights to \$\{name\}`\}/);
+  assert.match(trending, /onPress=\{\(\) => goDestination\(name\)\}/);
+  assert.match(trending, /numberOfLines=\{1\}/);
+  assert.match(chipStyle, /minHeight: 46/);
+  assert.match(source, /chipGrid: \{[^}]*flexWrap: "wrap"/);
+  assert.doesNotMatch(chipStyle, /width:/);
+  assert.doesNotMatch(chipStyle, /%/);
+});
+
+test("Explore more distinguishes routed cards from non-actionable disabled cards", () => {
+  const source = exploreSource();
+  const grid = source.slice(source.indexOf("function ExploreMoreGrid"), source.indexOf("export function ExploreScreen"));
+
+  assert.match(source, /title: "Flights", description: "Search flights to anywhere"[\s\S]*router\.push\("\/flights"\)/);
+  assert.match(source, /title: "Hotels", description: "Find the perfect stay"[\s\S]*router\.push\("\/hotels"\)/);
+  assert.match(grid, /item\.action \? <FlowIcon name="chevron"/);
+  assert.match(grid, /<View key=\{item\.title\} accessible accessibilityLabel=.*accessibilityState=\{\{ disabled: true \}\}/);
+  assert.doesNotMatch(grid, /numberOfLines=\{1\}/);
+  assert.doesNotMatch(grid, /Alert|alert\s*\(/);
+  assert.doesNotMatch(source, /moreCardDisabled: \{[^}]*opacity/);
+});
