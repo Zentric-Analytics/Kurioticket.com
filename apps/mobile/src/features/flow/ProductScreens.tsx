@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { destinationImages } from "./flowData";
 import { FlightSearchPanel } from "./FlightSearchPanel";
 import {
@@ -126,6 +126,8 @@ function Cards({
   );
 }
 export function FlightsScreen() {
+  const params = useLocalSearchParams<{ destination?: string | string[] }>();
+  const destination = Array.isArray(params.destination) ? params.destination[0] : params.destination;
   return (
     <Page
       title="Flights"
@@ -134,7 +136,7 @@ export function FlightsScreen() {
       heroHeight={596}
       focalY={0.49}
     >
-      <FlightSearchPanel />
+      <FlightSearchPanel initialDestination={destination} />
       <Cards
         title="Popular routes"
         items={[

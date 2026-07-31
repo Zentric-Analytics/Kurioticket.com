@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { airports, type Airport, type Cabin, type TripType } from "./flowData";
 import { ChoiceSheet, Field, PrimaryButton, Segments, UnavailableNotice } from "./FlowPrimitives";
 import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles } from "./flowStyles";
+import { findAirportByDestination } from "./airportMatching";
 
 const addDays = (days: number) => {
   const date = new Date();
@@ -19,16 +20,25 @@ const dates = [addDays(14), addDays(15), addDays(21), addDays(22)];
 const cabins: Cabin[] = ["Economy", "Premium Economy", "Business", "First"];
 type Picker = "from" | "to" | "depart" | "return" | "travelers" | "cabin" | null;
 
-export function FlightSearchPanel({ compact = false }: { compact?: boolean }) {
+export function FlightSearchPanel({ compact = false, initialDestination }: { compact?: boolean; initialDestination?: string }) {
+  const initialAirport = initialDestination ? findAirportByDestination(initialDestination) : airports[1];
   const [tripType, setTripType] = useState<TripType>("round-trip");
-  const [from, setFrom] = useState<Airport>(airports[0]);
-  const [to, setTo] = useState<Airport>(airports[1]);
+  const [from, setFrom] = useState<Airport>(initialAirport?.code === airports[0].code ? airports[1] : airports[0]);
+  const [to, setTo] = useState<Airport | undefined>(initialAirport);
   const [depart, setDepart] = useState(dates[0]);
   const [returnDate, setReturnDate] = useState(dates[2]);
   const [travelers, setTravelers] = useState(1);
   const [cabin, setCabin] = useState<Cabin>("Economy");
   const [picker, setPicker] = useState<Picker>(null);
-  const [notice, setNotice] = useState("");
+  const [notice, setNotice] = useState(initialDestination && !initialAirport ? `We couldn't match “${initialDestination}” to an airport. Choose a destination airport to continue.` : "");
+
+  useEffect(() => {
+    if (!initialDestination) return;
+    const match = findAirportByDestination(initialDestination);
+    setTo(match);
+    if (match?.code === from.code) setFrom(airports.find((airport) => airport.code !== match.code) ?? airports[0]);
+    setNotice(match ? "" : `We couldn't match “${initialDestination}” to an airport. Choose a destination airport to continue.`);
+  }, [initialDestination]);
 
   const chooseAirport = (code: string) => {
     const airport = airports.find((item) => item.code === code);
@@ -37,6 +47,7 @@ export function FlightSearchPanel({ compact = false }: { compact?: boolean }) {
     setPicker(null); setNotice("");
   };
   const submit = () => {
+    if (!to) { setNotice("Choose a destination airport to continue."); setPicker("to"); return; }
     if (from.code === to.code) { setNotice("Origin and destination must be different."); return; }
     router.push({ pathname: "/flight-results", params: { from: from.code, to: to.code, tripType, departureDate: depart.iso, returnDate: returnDate.iso, travelers: String(travelers), cabin } });
   };
@@ -44,8 +55,8 @@ export function FlightSearchPanel({ compact = false }: { compact?: boolean }) {
     <Segments value={tripType} onChange={(value) => { setTripType(value); setNotice(""); }} options={[{ value: "round-trip", label: "Round trip" }, { value: "one-way", label: "One way" }, { value: "multi-city", label: "Multi-city" }]} />
     <View>
       <Field label="From" value={from.code} meta={`${from.city}, ${from.country}`} onPress={() => setPicker("from")} />
-      <Field label="To" value={to.code} meta={`${to.city}, ${to.country}`} onPress={() => setPicker("to")} />
-      <Pressable accessibilityRole="button" accessibilityLabel="Swap origin and destination" onPress={() => { const previous = from; setFrom(to); setTo(previous); setNotice(""); }} style={styles.swap}><FlowIcon name="swap" color={flowColors.blue} /></Pressable>
+      <Field label="To" value={to?.code ?? "Choose airport"} meta={to ? `${to.city}, ${to.country}` : "No airport selected"} onPress={() => setPicker("to")} />
+      <Pressable accessibilityRole="button" accessibilityLabel="Swap origin and destination" accessibilityState={{ disabled: !to }} disabled={!to} onPress={() => { if (!to) return; const previous = from; setFrom(to); setTo(previous); setNotice(""); }} style={styles.swap}><FlowIcon name="swap" color={flowColors.blue} /></Pressable>
     </View>
     <View style={styles.row}><View style={styles.half}><Field label="Depart" value={depart.label} icon="calendar" onPress={() => setPicker("depart")} /></View>{tripType === "round-trip" ? <View style={styles.half}><Field label="Return" value={returnDate.label} icon="calendar" onPress={() => setPicker("return")} /></View> : null}</View>
     <View style={styles.row}><View style={styles.half}><Field label="Travelers" value={`${travelers} Traveler${travelers === 1 ? "" : "s"}`} icon="person" onPress={() => setPicker("travelers")} /></View><View style={styles.half}><Field label="Cabin" value={cabin} onPress={() => setPicker("cabin")} trailing={<FlowIcon name="chevron" size={18} />} /></View></View>

@@ -1,11 +1,4 @@
-export const airports = [
-  { code: "JFK", city: "New York", country: "USA" },
-  { code: "LAX", city: "Los Angeles", country: "USA" },
-  { code: "LHR", city: "London", country: "United Kingdom" },
-  { code: "CDG", city: "Paris", country: "France" },
-] as const;
-
-export type Airport = (typeof airports)[number];
+export { airports, type Airport } from "./airportData";
 export type TripType = "round-trip" | "one-way" | "multi-city";
 export type Cabin = "Economy" | "Premium Economy" | "Business" | "First";
 
