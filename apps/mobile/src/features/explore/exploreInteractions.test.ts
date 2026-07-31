@@ -30,9 +30,9 @@ test("Explore tabs remain local and expose selected accessibility state", () => 
 test("heart and destination actions are sibling controls without propagation workarounds", () => {
   const source = exploreSource();
   assert.doesNotMatch(source, /stopPropagation/);
-  assert.match(source, /onPress=\{\(\) => goDestination\(item\.name\)\}/);
-  assert.match(source, /onPress=\{\(\) => onToggleFavorite\(item\.name\)\}/);
-  assert.match(source, /accessibilityLabel=\{`Explore \$\{item\.name\}, \$\{item\.region\}, from \$\{item\.price\}`\}/);
+  assert.match(source, /onPress=\{\(\) => goDestination\(airport\.city\)\}/);
+  assert.match(source, /onPress=\{\(\) => onToggleFavorite\(airport\.city\)\}/);
+  assert.match(source, /accessibilityLabel=\{`Explore \$\{airport\.city\}, \$\{airport\.country\}`\}/);
   assert.match(source, /accessibilityState=\{\{ selected: saved \}\}/);
 });
 
@@ -49,7 +49,7 @@ test("disabled discovery cards and the Price Alerts route are explicit", () => {
   assert.doesNotMatch(source, /missing\("(?:Countries|Regions)"\)/);
 });
 
-test("Trending searches keep natural-width accessible destination actions", () => {
+test("Quick destinations keep natural-width accessible destination actions", () => {
   const source = exploreSource();
   const trending = source.slice(source.indexOf("function TrendingSearches"), source.indexOf("function DealBanner"));
   const chipStyle = source.match(/chip: \{([^}]+)\}/)?.[1] ?? "";
