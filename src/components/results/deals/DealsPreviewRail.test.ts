@@ -118,49 +118,10 @@ test("preview cards retain full-height columns and price anchors", () => {
   assert.doesNotMatch(carCard, /car\.orSimilar|deals\.results\.car\.orSimilar/);
 });
 
-test("Flight, Stay and Car use exactly three separate localized rails", () => {
-  const visibleRails = results.match(/<DealsPreviewRail ariaLabel=/g) ?? [];
-  assert.equal(visibleRails.length, 3);
-  const flight = results.indexOf('<DealsPreviewRail ariaLabel={t("deals.results.flightOptions")}');
-  const stay = results.indexOf('<DealsPreviewRail ariaLabel={t("deals.results.stayOptions")}');
-  const cars = results.indexOf('<DealsPreviewRail ariaLabel={t("deals.results.carOptions")}', stay);
-  assert.ok(flight >= 0 && flight < stay && stay < cars);
-});
-
-test("the Flight and Hotel rail mappings preserve every card prop", () => {
-  const flight = results.slice(
-    results.indexOf('<DealsPreviewRail ariaLabel={t("deals.results.flightOptions")}'),
-    results.indexOf("</DealsPreviewRail>"),
-  );
-  const stayStart = results.indexOf('<DealsPreviewRail ariaLabel={t("deals.results.stayOptions")}');
-  const stay = results.slice(stayStart, results.indexOf("</DealsPreviewRail>", stayStart));
-
-  for (const prop of [
-    "key={result.id}", "flight={result}", "badgeKey={badgeKey}",
-    "reasonKey={reasonKey}", "locale={locale}", "t={t}",
-    "selected={plan?.flight?.id === result.id}",
-    "onSelect={() => selectFlight(result)}",
-  ]) assert.ok(flight.includes(prop), `missing Flight prop ${prop}`);
-
-  for (const prop of [
-    "key={result.id}", "hotel={result}", "badgeKey={badgeKey}",
-    "reasonKey={reasonKey}", "locale={locale}",
-    "nights={countHotelNights(search.hotelCheckIn, search.hotelCheckOut)}",
-    "rooms={search.hotelRooms}", "t={t}",
-    "selected={plan?.hotel?.id === result.id}",
-    "onSelect={() => selectHotel(result)}",
-  ]) assert.ok(stay.includes(prop), `missing Hotel prop ${prop}`);
-});
-
-test("the Car rail mapping preserves display props without selection behavior", () => {
-  const carsStart = results.indexOf('<DealsPreviewRail ariaLabel={t("deals.results.carOptions")}');
-  const cars = results.slice(carsStart, results.indexOf("</DealsPreviewRail>", carsStart));
-
-  for (const prop of [
-    "key={result.id}", "car={result}", "badgeKey={badgeKey}",
-    "locale={locale}", "search={carSearch}", "t={t}",
-  ]) assert.ok(cars.includes(prop), `missing Car prop ${prop}`);
-  assert.doesNotMatch(cars, /reasonKey|selected=|onSelect=|selectCar\(/);
+test("Deals results replace separate product rails with one combined package list", () => {
+  assert.doesNotMatch(results, /<DealsPreviewRail ariaLabel=/);
+  assert.match(results, /<DealsPackageCard candidate=\{candidate\}/);
+  assert.match(results, /role="list" aria-label=\{t\("deals.results.package.title"\)\}/);
 });
 
 test("loading skeletons share the hidden rail and retain their visual contract", () => {
