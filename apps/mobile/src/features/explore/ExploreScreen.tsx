@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   ImageBackground, NativeScrollEvent, NativeSyntheticEvent, Pressable,
   ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import { HERO_SLIDES, INTERESTS, POPULAR_DESTINATIONS, TRENDING } from "./exploreData";
 import { readSavedDestinationIds, writeSavedDestinationIds } from "../../storage/savedDestinationsStorage";
+import { destinationHref } from "../destination/destinationNavigation";
 
 const NAVY = "#071A48";
 const BLUE = "#0754F7";
@@ -60,10 +61,10 @@ function ExploreHeroCarousel() {
 function PopularDestinations({ favorites, onToggleFavorite }: { favorites: ReadonlySet<string>; onToggleFavorite: (id: string) => void }) {
   const { width } = useWindowDimensions();
   const cardWidth = Math.min(230, Math.max(210, width * .62));
-  return <View><SectionHeader title="Popular destinations" onViewAll={() => goDestination("Anywhere")} /><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.destinationRow}>{POPULAR_DESTINATIONS.map((item) => {
+  return <View><SectionHeader title="Popular destinations" /><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.destinationRow}>{POPULAR_DESTINATIONS.map((item) => {
     const saved = favorites.has(item.name);
     return <View key={item.name} style={[styles.destinationCard, { width: cardWidth }]}>
-      <Pressable accessibilityRole="button" accessibilityLabel={`Explore ${item.name}, ${item.region}, from ${item.price}`} onPress={() => goDestination(item.name)} style={styles.destinationCardAction}>
+      <Pressable accessibilityRole="button" accessibilityLabel={`Explore ${item.name}, ${item.region}, from ${item.price}`} onPress={() => router.push(destinationHref(item.slug))} style={styles.destinationCardAction}>
       <ImageBackground source={item.image} resizeMode="cover" style={styles.destinationCardImage} imageStyle={styles.destinationImage}>
         <View style={styles.destinationLowerOverlay} />
         <View style={styles.destinationCopy}><Text style={styles.destinationName}>{item.name}</Text><Text style={styles.destinationRegion}>{item.region}</Text><Text style={styles.destinationPrice}>from {item.price}</Text></View>
@@ -108,11 +109,11 @@ export function ExploreScreen() {
   const [tab, setTab] = useState<ExploreTab>("Destinations");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     let active = true;
     readSavedDestinationIds().then((ids) => { if (active) setFavorites(new Set(ids)); }).catch(() => undefined);
     return () => { active = false; };
-  }, []);
+  }, []));
 
   const toggleFavorite = (id: string) => {
     setFavorites((current) => {
