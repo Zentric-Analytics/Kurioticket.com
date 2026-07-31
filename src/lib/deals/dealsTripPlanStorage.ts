@@ -8,6 +8,7 @@ import {
   type DealsTripPlanHotel,
   type DealsTripPlanCar,
   validateDealsCarDetailsPath,
+  validateDealsProductDetailsPath,
 } from "./dealsTripPlan";
 
 export const DEALS_TRIP_PLAN_STORAGE_KEY = "kurioticket_deals_trip_plan_v1";
@@ -34,7 +35,9 @@ function canonicalFlight(value: unknown, updatedAt: number): DealsTripPlanFlight
   const arrival = requiredText(value.arrival), duration = requiredText(value.duration), sourceCurrency = requiredText(value.sourceCurrency);
   const flightNumber = optionalText(value.flightNumber);
   if (!id || !provider || !airline || !origin || !destination || !departure || !arrival || !duration || !sourceCurrency || flightNumber === null) return null;
-  return { id, provider, airline, ...(flightNumber ? { flightNumber } : {}), origin, destination, departure, arrival, duration, sourcePrice: value.sourcePrice, sourceCurrency, resultReceivedAt: value.resultReceivedAt };
+  const detailsPath = value.detailsPath === undefined ? undefined : validateDealsProductDetailsPath(value.detailsPath, "flight", id);
+  if (value.detailsPath !== undefined && !detailsPath) return null;
+  return { id, provider, airline, ...(flightNumber ? { flightNumber } : {}), origin, destination, departure, arrival, duration, sourcePrice: value.sourcePrice, sourceCurrency, resultReceivedAt: value.resultReceivedAt, ...(detailsPath ? { detailsPath } : {}) };
 }
 
 function canonicalHotel(value: unknown, updatedAt: number): DealsTripPlanHotel | null {
@@ -43,7 +46,9 @@ function canonicalHotel(value: unknown, updatedAt: number): DealsTripPlanHotel |
   const checkIn = requiredText(value.checkIn), checkOut = requiredText(value.checkOut), sourceCurrency = requiredText(value.sourceCurrency);
   const roomType = optionalText(value.roomType);
   if (!id || !provider || !name || !location || !checkIn || !checkOut || !sourceCurrency || roomType === null) return null;
-  return { id, provider, name, location, checkIn, checkOut, ...(roomType ? { roomType } : {}), sourcePrice: value.sourcePrice, sourceCurrency, resultReceivedAt: value.resultReceivedAt };
+  const detailsPath = value.detailsPath === undefined ? undefined : validateDealsProductDetailsPath(value.detailsPath, "hotel", id);
+  if (value.detailsPath !== undefined && !detailsPath) return null;
+  return { id, provider, name, location, checkIn, checkOut, ...(roomType ? { roomType } : {}), sourcePrice: value.sourcePrice, sourceCurrency, resultReceivedAt: value.resultReceivedAt, ...(detailsPath ? { detailsPath } : {}) };
 }
 
 function canonicalCar(value: unknown, updatedAt: number): DealsTripPlanCar | null {

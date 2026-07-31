@@ -2,7 +2,7 @@ import { getPrimaryCarOffer, sortCarResults } from "@/lib/cars/carResults";
 import type { NormalizedCarResult } from "@/lib/cars/types";
 import { convertCurrencyAmount, type ExchangeRates } from "@/lib/currency/exchangeRates";
 import type { PublicFlightResult, PublicHotelResult } from "@/lib/types";
-import { getDealsProviderHandoff } from "./dealsProviderHandoff";
+import type { ContractResult, TravelResultAction } from "@/lib/travel/searchContract";
 import { selectDealsFlightPreviews, selectDealsHotelPreviews } from "./dealsResultsPresentation";
 import type { DealsPackageMode } from "./dealsSearchParams";
 
@@ -13,9 +13,9 @@ export type DealsPackageCandidate = {
   strategy: DealsPackageStrategy;
   badgeKey: string;
   reasonKey?: string;
-  flight?: PublicFlightResult;
-  hotel?: PublicHotelResult;
-  car?: NormalizedCarResult;
+  flight?: ContractResult<PublicFlightResult>;
+  hotel?: ContractResult<PublicHotelResult>;
+  car?: ContractResult<NormalizedCarResult>;
   estimatedTotal: number | null;
   displayCurrency: string;
   providerCount: number;
@@ -23,24 +23,34 @@ export type DealsPackageCandidate = {
 
 type Input = {
   mode: DealsPackageMode;
-  flights: PublicFlightResult[];
-  hotels: PublicHotelResult[];
-  cars: NormalizedCarResult[];
+  flights: ContractResult<PublicFlightResult>[];
+  hotels: ContractResult<PublicHotelResult>[];
+  cars: ContractResult<NormalizedCarResult>[];
   displayCurrency: string;
   rates: ExchangeRates;
 };
 
 const included = (mode: DealsPackageMode) => ({ flight: mode !== "hotel-car", hotel: mode !== "flight-car", car: mode !== "hotel-flight" });
-const validFlight = (item: PublicFlightResult) => Number.isFinite(item.price) && item.price > 0 && Boolean(item.currency?.trim()) && getDealsProviderHandoff(item, "flight").available;
-const validHotel = (item: PublicHotelResult) => item.inventoryKind !== "discovery" && Number.isFinite(item.totalPrice) && item.totalPrice > 0 && Boolean(item.currency?.trim()) && getDealsProviderHandoff(item, "hotel").available;
-const validCar = (item: NormalizedCarResult) => { const offer = getPrimaryCarOffer(item); return Boolean(item.id.trim() && offer && Number.isFinite(offer.totalPrice) && offer.totalPrice > 0 && offer.currency.trim()); };
+function safeInternalDetail(action: TravelResultAction, product: "flights" | "hotels" | "cars", id: string) {
+  if (!id.trim() || !action.enabled || action.kind !== "internal-detail") return false;
+  try {
+    const url = new URL(action.href, "https://kurioticket.invalid");
+    const prefix = `/${product}/details/${encodeURIComponent(id.trim())}`;
+    return url.origin === "https://kurioticket.invalid" && url.pathname === prefix && !action.href.startsWith("//") && !action.href.includes("\\") && !action.href.includes("#");
+  } catch { return false; }
+}
+
+const liveBookable = (item: { searchPolicy: ContractResult<object>["searchPolicy"] }) => item.searchPolicy.mode === "live" && item.searchPolicy.bookable && item.searchPolicy.action.enabled;
+export const isDealsFlightEligible = (item: ContractResult<PublicFlightResult>) => Boolean(item.id.trim() && Number.isFinite(item.price) && item.price > 0 && item.currency?.trim() && liveBookable(item) && safeInternalDetail(item.searchPolicy.action, "flights", item.id));
+export const isDealsHotelEligible = (item: ContractResult<PublicHotelResult>) => Boolean(item.id.trim() && Number.isFinite(item.totalPrice) && item.totalPrice! > 0 && item.currency?.trim() && liveBookable(item) && safeInternalDetail(item.searchPolicy.action, "hotels", item.id));
+export const isDealsCarEligible = (item: ContractResult<NormalizedCarResult>) => { const offer = getPrimaryCarOffer(item); return Boolean(item.id.trim() && offer && Number.isFinite(offer.totalPrice) && offer.totalPrice > 0 && offer.currency.trim() && liveBookable(item) && (item.searchPolicy.action.kind === "provider" || safeInternalDetail(item.searchPolicy.action, "cars", item.id))); };
 
 /** Builds a small, deterministic set of complete combinations from independently fetched inventory. */
 export function buildDealsPackageCandidates({ mode, flights, hotels, cars, displayCurrency, rates }: Input): DealsPackageCandidate[] {
   const needs = included(mode);
-  const flightOptions = selectDealsFlightPreviews(flights.filter(validFlight)).map(item => item.result);
-  const hotelOptions = selectDealsHotelPreviews(hotels.filter(validHotel)).map(item => item.result);
-  const carOptions = sortCarResults(cars.filter(validCar), "recommended").slice(0, 4);
+  const flightOptions = selectDealsFlightPreviews(flights.filter(isDealsFlightEligible)).map(item => item.result);
+  const hotelOptions = selectDealsHotelPreviews(hotels.filter(isDealsHotelEligible)).map(item => item.result);
+  const carOptions = sortCarResults(cars.filter(isDealsCarEligible), "recommended").slice(0, 4) as ContractResult<NormalizedCarResult>[];
   if ((needs.flight && !flightOptions.length) || (needs.hotel && !hotelOptions.length) || (needs.car && !carOptions.length)) return [];
 
   const strategies: DealsPackageStrategy[] = ["recommended", "lowest-total", "comfort", "alternative"];

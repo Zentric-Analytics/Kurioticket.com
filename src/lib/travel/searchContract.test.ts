@@ -36,3 +36,13 @@ test("live Cars mode without an adapter remains unavailable", () => {
   const search = { pickupLocation: "LAX", dropoffLocation: "LAX", pickupDate: "2026-08-10", pickupTime: "10:00", dropoffDate: "2026-08-12", dropoffTime: "10:00", driverAge: "30" };
   assert.equal(classifyCars([], "live", "unavailable", "", search, "request-4").status, "unavailable");
 });
+
+
+test("demo hotel catalogue remains previewable but is not bookable", () => {
+  const demo = { id: "demo", provider: "Catalogue", inventoryKind: "bookable", dataSource: "demo" } as PublicHotelResult;
+  const response = classifyHotels([demo], true, [], "request-demo");
+  assert.equal(response.mode, "demo");
+  assert.equal(response.results[0].searchPolicy.mode, "demo");
+  assert.equal(response.results[0].searchPolicy.bookable, false);
+  assert.deepEqual(response.results[0].searchPolicy.action, { kind: "internal-detail", href: "/hotels/details/demo", enabled: true });
+});
