@@ -7,6 +7,8 @@ const toolbar = readFileSync(new URL("./DealsPackageResultsToolbar.tsx", import.
 const card = readFileSync(new URL("./DealsPackageCard.tsx", import.meta.url), "utf8");
 const pricePanel = readFileSync(new URL("./DealsPackagePricePanel.tsx", import.meta.url), "utf8");
 const flightSummary = readFileSync(new URL("./DealsPackageFlightSummary.tsx", import.meta.url), "utf8");
+const hotelSummary = readFileSync(new URL("./DealsPackageHotelSummary.tsx", import.meta.url), "utf8");
+const carSummary = readFileSync(new URL("./DealsPackageCarSummary.tsx", import.meta.url), "utf8");
 const skeleton = readFileSync(new URL("./DealsPreviewSkeleton.tsx", import.meta.url), "utf8");
 const presentation = readFileSync(new URL("../../../lib/deals/dealsPackageCardPresentation.ts", import.meta.url), "utf8");
 
@@ -104,6 +106,51 @@ test("the loading card mirrors the compact responsive pricing layout", () => {
   assert.match(skeleton, /md:grid-cols-\[minmax\(0,0\.8fr\)_minmax\(0,1\.2fr\)\]/);
   assert.match(skeleton, /lg:grid-cols-\[minmax\(180px,0\.75fr\)_minmax\(300px,1\.15fr\)_minmax\(220px,0\.85fr\)\]/);
   assert.doesNotMatch(skeleton, /lg:grid-cols-\[minmax\(0,1fr\)_260px\]/);
+});
+
+test("package imagery and typography use the readable card hierarchy", () => {
+  assert.match(hotelSummary, /grid-cols-\[96px_minmax\(0,1fr\)\]/);
+  assert.match(hotelSummary, /sm:grid-cols-\[120px_minmax\(0,1fr\)\]/);
+  assert.match(hotelSummary, /lg:grid-cols-\[136px_minmax\(0,1fr\)\]/);
+  assert.match(hotelSummary, /aspect-square/);
+  assert.match(hotelSummary, /className="object-cover"/);
+  assert.match(hotelSummary, /sizes="\(min-width: 1024px\) 136px, \(min-width: 640px\) 120px, 96px"/);
+  assert.doesNotMatch(hotelSummary, /\b(?:w-full|h-screen)\b/);
+
+  const productionCard = card + flightSummary + hotelSummary + carSummary + pricePanel;
+  assert.doesNotMatch(productionCard, /text-\[11px\]/);
+  assert.doesNotMatch(productionCard, /font-extrabold/);
+  for (const summary of [flightSummary, hotelSummary, carSummary]) {
+    assert.match(summary, /text-base font-semibold leading-6 text-slate-950/);
+    assert.match(summary, /text-base font-semibold leading-[56] text-slate-950/);
+    assert.match(summary, /text-sm font-medium text-\[#004BB8\]/);
+  }
+  assert.match(flightSummary + hotelSummary, /text-\[13px\] leading-5 text-slate-600/);
+  assert.match(pricePanel, /text-\[13px\] leading-5 text-slate-600/);
+});
+
+test("pricing is plain, semantic, and lets long currency values wrap", () => {
+  const aside = pricePanel.slice(pricePanel.indexOf("<aside"), pricePanel.indexOf(">", pricePanel.indexOf("<aside")) + 1);
+  assert.doesNotMatch(aside, /bg-slate-50|xl:rounded-xl|(?:^|\s)xl:border(?:\s|")/);
+  assert.match(aside, /xl:self-start/);
+  assert.match(aside, /xl:border-s/);
+  assert.match(aside, /xl:border-t-0/);
+  assert.match(pricePanel, /<dl className=/);
+  assert.match(pricePanel, /aria-pressed=\{selected\}/);
+  assert.match(pricePanel, /selected && <Check aria-hidden/);
+  assert.match(pricePanel, /aria-labelledby=\{`\$\{headingId\}-total-label`\}/);
+  assert.doesNotMatch(pricePanel, /whitespace-nowrap|overflow-hidden|truncate|ellipsis/);
+  assert.match(pricePanel, /grid-cols-\[minmax\(0,0\.9fr\)_minmax\(0,1\.1fr\)\]/);
+  assert.match(pricePanel, /min-w-0 break-words text-end tabular-nums/);
+});
+
+test("the skeleton mirrors the enlarged image and unboxed price area", () => {
+  assert.match(skeleton, /grid-cols-\[96px_minmax\(0,1fr\)\]/);
+  assert.match(skeleton, /sm:grid-cols-\[120px_minmax\(0,1fr\)\]/);
+  assert.match(skeleton, /lg:grid-cols-\[136px_minmax\(0,1fr\)\]/);
+  assert.match(skeleton, /aspect-square/);
+  assert.doesNotMatch(skeleton, /bg-slate-50|xl:rounded-xl|xl:border xl:border-slate-200/);
+  assert.match(skeleton, /xl:border-s xl:border-t-0/);
 });
 
 test("package cards remove the visible destination heading without losing header semantics or content", () => {
