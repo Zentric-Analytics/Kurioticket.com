@@ -18,13 +18,47 @@ test("homepage navigation is the first item in scrolling content and is not pinn
   assert.doesNotMatch(home, /homeTopNavigation:\s*\{[^}]*top:/s);
 });
 
+test("homepage uses one continuous header surface and applies its safe area once", () => {
+  const home = source("src/features/flow/HomeFlowScreen.tsx");
+
+  assert.equal(home.match(/<HomeTopNavigation safeAreaTop=\{insets\.top\} \/>/g)?.length, 1);
+  assert.equal(home.match(/<View style=\{\{ height: safeAreaTop \}\} \/>/g)?.length, 1);
+  assert.doesNotMatch(home, /SafeAreaView/);
+  assert.doesNotMatch(home, /paddingTop:\s*safeAreaTop/);
+  assert.match(home, /homeTopNavigation:\s*\{\s*backgroundColor: "white",\s*marginHorizontal: -14,/);
+  assert.doesNotMatch(
+    home,
+    /homeTopNavigation:\s*\{[^}]*(?:elevation|shadowColor|shadowOffset|shadowOpacity|shadowRadius)/s,
+  );
+  assert.match(
+    home,
+    /homeTopNavigation:\s*\{[^}]*borderBottomWidth: StyleSheet\.hairlineWidth,/s,
+  );
+});
+
 test("homepage header assets and notification action render once", () => {
   const home = source("src/features/flow/HomeFlowScreen.tsx");
   assert.equal(home.match(/kurioticket-logo-primary-light-bg\.png/g)?.length, 1);
   assert.equal(home.match(/accessibilityLabel="Notifications"/g)?.length, 1);
   assert.equal(home.match(/router\.push\("\/notifications"\)/g)?.length, 1);
-  assert.match(home, /homeTopNavigation:\s*\{\s*backgroundColor: "white"/);
   assert.match(home, /homeTopNavigationContent:\s*\{\s*height: 60/);
+});
+
+test("hero directly follows the complete header for guests and signed-in users", () => {
+  const home = source("src/features/flow/HomeFlowScreen.tsx");
+  assert.match(
+    home,
+    /<View>\s*<HomeTopNavigation safeAreaTop=\{insets\.top\} \/>\s*<HomeHero \/>\s*<\/View>/,
+  );
+  assert.doesNotMatch(home, /isAuthenticated\s*\?[^:]*HomeTopNavigation/s);
+  assert.doesNotMatch(home, /isAuthenticated\s*\?[^:]*HomeHero/s);
+});
+
+test("non-homepage route files do not own the homepage header", () => {
+  const routeFiles = ["app/(tabs)/explore.tsx", "app/(tabs)/trips.tsx"];
+  for (const routeFile of routeFiles) {
+    assert.doesNotMatch(source(routeFile), /HomeTopNavigation|homeTopNavigation/);
+  }
 });
 
 test("bottom navigation remains owned by the fixed tabs layout", () => {

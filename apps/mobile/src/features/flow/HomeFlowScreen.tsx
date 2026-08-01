@@ -7,7 +7,6 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
@@ -79,10 +78,8 @@ function HomeHero() {
 
 function HomeTopNavigation({ safeAreaTop }: { safeAreaTop: number }) {
   return (
-    <View
-      pointerEvents="box-none"
-      style={[styles.homeTopNavigation, { paddingTop: safeAreaTop }]}
-    >
+    <View pointerEvents="box-none" style={styles.homeTopNavigation}>
+      <View style={{ height: safeAreaTop }} />
       <View
         pointerEvents="box-none"
         style={styles.homeTopNavigationContent}
@@ -127,15 +124,17 @@ export function SharedHomePage() {
   }, []);
 
   return (
-    <SafeAreaView style={flowStyles.safe} edges={[]}>
+    <View style={flowStyles.safe}>
       <StatusBar style="dark" translucent backgroundColor="white" />
       <ScrollView
         style={styles.homeScroll}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        <HomeTopNavigation safeAreaTop={insets.top} />
-        <HomeHero />
+        <View>
+          <HomeTopNavigation safeAreaTop={insets.top} />
+          <HomeHero />
+        </View>
         <View style={[styles.products, flowStyles.shadow]}>
           {products.map((product, index) => (
             <Pressable
@@ -189,7 +188,7 @@ export function SharedHomePage() {
         <PopularDestinationStays />
         <DiscoverNextAdventure />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -209,11 +208,6 @@ const styles = StyleSheet.create({
     marginHorizontal: -14,
     borderBottomColor: flowColors.border,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    elevation: 2,
-    shadowColor: "#18305B",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
   },
   homeTopNavigationContent: {
     height: 60,
