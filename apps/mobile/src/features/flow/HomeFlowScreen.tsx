@@ -190,6 +190,7 @@ export function HomeFlowScreen() {
           ))}
         </View>
         <FlightSearchPanel compact />
+        <PopularDestinationStays />
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Track prices and save"
@@ -211,14 +212,13 @@ export function HomeFlowScreen() {
           </View>
           <FlowIcon name="chevron" />
         </Pressable>
-        <PopularDestinationStays />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { paddingHorizontal: 14, paddingBottom: 26, gap: 14 },
+  content: { paddingHorizontal: 14, paddingBottom: 120, gap: 14 },
   hero: {
     width: "100%",
     height: 200,
