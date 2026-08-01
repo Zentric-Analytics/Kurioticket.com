@@ -7,7 +7,7 @@ const supported = new Set(supportedCurrencies.map(({ code }) => code));
 export type CanonicalCabin = "economy" | "premium-economy" | "business" | "first";
 
 export function flightAlertPresentation(product: "flight" | "hotel" | "car", hasPlan: boolean, results: FlightResult[]) {
-  const liveResults = product === "flight" ? results.filter((result) => result.searchPolicy.mode === "live") : [];
+  const liveResults = product === "flight" ? results.filter((result) => result.searchPolicy.source === "duffel" && result.searchPolicy.bookable) : [];
   const currencies = availableFlightAlertCurrencies(liveResults);
   return { visible: product === "flight" && hasPlan, liveResults, currencies, enabled: currencies.length > 0 };
 }

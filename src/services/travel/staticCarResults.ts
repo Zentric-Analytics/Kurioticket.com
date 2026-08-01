@@ -1,20 +1,20 @@
 import type { CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import { calculateRentalDays } from "@/lib/cars/carResults";
-import { demoCarCatalog, getDemoCarId } from "@/services/travel/demoCarCatalog";
+import { staticCarCatalogue, getStaticCarId } from "@/services/travel/staticCarCatalogue";
 
-export function buildDemoCarResults(search: CarSearchParams): NormalizedCarResult[] {
+export function buildStaticCarResults(search: CarSearchParams): NormalizedCarResult[] {
   const days = calculateRentalDays(search.pickupDate, search.dropoffDate);
-  return demoCarCatalog.map(({ dailyPrices, ...car }) => ({
+  return staticCarCatalogue.map(({ dailyPrices, ...car }) => ({
     ...car,
-    id: getDemoCarId(car.id),
+    id: getStaticCarId(car.id),
     pickupLocation: search.pickupLocation,
     returnLocation: search.dropoffLocation || search.pickupLocation,
     requiredDocuments: [...car.requiredDocuments],
     includedItems: [...car.includedItems],
     importantInformation: [...car.importantInformation],
     offers: dailyPrices.map((pricePerDay, index) => ({
-      id: `${getDemoCarId(car.id)}-offer-${index + 1}`,
-      bookingProviderName: index ? "Sample Journey Desk" : "Kurioticket Demo Desk",
+      id: `${getStaticCarId(car.id)}-offer-${index + 1}`,
+      bookingProviderName: index ? "Journey Desk" : "Kurioticket Desk",
       rentalCompanyName: car.rentalCompanyName,
       currency: "USD",
       pricePerDay,

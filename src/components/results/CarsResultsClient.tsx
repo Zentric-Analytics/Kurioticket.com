@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils";
 import { CarResultCard } from "@/components/results/CarResultCard";
 import { CarCardSkeleton } from "@/components/ui/Skeleton";
 import { assignCarBadges, buildCarDetailsHref, filterCarResults, sortCarResults, type CarSort, type SelectedCarFilters } from "@/lib/cars/carResults";
-import type { CarInventoryStatus, CarResultsMode, CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
+import type { CarInventoryStatus, CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import { shouldShowDesktopStickySearch } from "@/lib/search/desktopStickySearch";
 import { calculateCompactFilterMaxHeight } from "@/lib/hotels/desktopCompactFilter";
 import {
@@ -493,7 +493,7 @@ const fieldLabelClass =
 const fieldInputClass =
   "focus-ring h-8 min-w-0 w-full truncate border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 md:text-sm lg:font-semibold lg:leading-6";
 
-export function CarsResultsClient({ values, initialResults, inventoryStatus }: { values: CarsResultsValues; initialResults: NormalizedCarResult[]; resultsMode: CarResultsMode; inventoryStatus: CarInventoryStatus }) {
+export function CarsResultsClient({ values, initialResults, inventoryStatus }: { values: CarsResultsValues; initialResults: NormalizedCarResult[]; inventoryStatus: CarInventoryStatus }) {
   const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const intlLocale = getCarsResultsIntlLocale(locale);

@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import { travelApi, TravelApiError, type CarResult, type FlightResult, type HotelResult } from "../../api/travelApi";
 import { getApiBaseUrl } from "../../config/apiUrl";
-import { buildSearchPlan, type Product, validBookableCar, validBookableHotel, validDiscoveryHotel, validFlight } from "./travelSearchModel";
+import { buildSearchPlan, type Product, validBookableCar, validBookableHotel, validFlight } from "./travelSearchModel";
 import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles } from "./flowStyles";
 import { buildFlightPriceAlertPayload, flightAlertPresentation, parseTargetPrice } from "./flightPriceAlertModel";
@@ -39,7 +39,6 @@ export function TravelResultsScreen({ product }: { product: Product }) {
   const key = planResult.plan?.key || `invalid:${product}:${planResult.error}`;
   const payloadJson = JSON.stringify(planResult.plan?.payload || {});
   const [results, setResults] = useState<Result[]>([]);
-  const [discoveryHotels, setDiscoveryHotels] = useState<HotelResult[]>([]);
   const [status, setStatus] = useState<Status>(planResult.error ? "validating" : "loading");
   const [message, setMessage] = useState(planResult.error || "");
   const [retry, setRetry] = useState(0);
@@ -55,29 +54,25 @@ export function TravelResultsScreen({ product }: { product: Product }) {
 
   const load = useCallback((signal: AbortSignal) => {
     const runId = ++sequence.current;
-    if (planResult.error) { setResults([]); setDiscoveryHotels([]); setMessage(planResult.error); setStatus("validating"); return Promise.resolve(); }
+    if (planResult.error) { setResults([]); setMessage(planResult.error); setStatus("validating"); return Promise.resolve(); }
     const payload = JSON.parse(payloadJson) as Record<string, unknown>;
     const requestId = `mobile-${Date.now().toString(36)}-${runId}`;
-    setResults([]); setDiscoveryHotels([]); setMessage(""); setStatus("loading");
+    setResults([]); setMessage(""); setStatus("loading");
     const request = product === "flight" ? travelApi.searchFlights(payload, { signal, requestId }) : product === "hotel" ? travelApi.searchHotels(payload, { signal, requestId }) : travelApi.searchCars(payload, { signal, requestId });
     return request.then((response) => {
       if (signal.aborted || runId !== sequence.current) return;
       const raw = Array.isArray(response.results) ? response.results : [];
       let valid: Result[] = [];
-      let discovery: HotelResult[] = [];
       if (product === "flight") valid = (raw as FlightResult[]).filter((result) => validFlight(result, planResult.plan!));
-      if (product === "hotel") {
-        discovery = (raw as HotelResult[]).filter(validDiscoveryHotel);
-        valid = (raw as HotelResult[]).filter(validBookableHotel);
-      }
+      if (product === "hotel") valid = (raw as HotelResult[]).filter(validBookableHotel);
       if (product === "car") valid = (raw as CarResult[]).filter(validBookableCar);
-      const rejected = raw.filter((result) => !valid.includes(result as Result) && !discovery.includes(result as HotelResult));
+      const rejected = raw.filter((result) => !valid.includes(result as Result));
       if (rejected.length) console.warn("[travel-search] response contract validation rejected results", { requestId, product, rejectedIds: rejected.map((result) => typeof result === "object" && result && "id" in result ? String(result.id) : "missing-id") });
-      setResults(valid); setDiscoveryHotels(discovery);
+      setResults(valid);
       const warning = Array.isArray(response.warnings) ? response.warnings[0] || "" : "";
       if (response.status === "unavailable") { setMessage(warning || `Live ${product} inventory is temporarily unavailable.`); setStatus("unavailable"); }
-      else if (rejected.length && !valid.length && !discovery.length) { setMessage("The search service returned malformed inventory."); setStatus("error"); }
-      else if (valid.length || discovery.length) { setMessage(warning); setStatus(response.status === "partial" || discovery.length > 0 || rejected.length > 0 ? "partial" : "ready"); }
+      else if (rejected.length && !valid.length) { setMessage("The search service returned malformed inventory."); setStatus("error"); }
+      else if (valid.length) { setMessage(warning); setStatus(response.status === "partial" || rejected.length > 0 ? "partial" : "ready"); }
       else setStatus("empty");
     }).catch((error) => {
       if (signal.aborted || runId !== sequence.current || (error instanceof TravelApiError && error.code === "cancelled")) return;
@@ -153,10 +148,9 @@ export function TravelResultsScreen({ product }: { product: Product }) {
       {flightAlert.visible ? <View style={[styles.track, flowStyles.shadow]}><Text style={flowStyles.sectionTitle}>Track this search</Text><Text style={flowStyles.meta}>Get notified when this flight search reaches your target price.</Text>{alertCurrencies.length > 1 ? <View accessibilityLabel="Choose alert currency" style={styles.currencyRow}>{alertCurrencies.map((currency) => <Pressable key={currency} accessibilityRole="button" accessibilityState={{ selected: alertCurrency === currency }} onPress={() => setSelectedCurrency(currency)} style={[styles.currency, alertCurrency === currency && styles.currencySelected]}><Text>{currency}</Text></Pressable>)}</View> : null}<Pressable accessibilityRole="button" accessibilityLabel="Create price alert" accessibilityState={{ disabled: !alertCurrency }} disabled={!alertCurrency} onPress={() => { if (!alertOpen) { setTargetError(""); setAlertOpen(true); } }} style={[flowStyles.primary, !alertCurrency && styles.disabled]}><Text style={flowStyles.primaryText}>Create price alert</Text></Pressable>{!alertCurrency ? <Text accessibilityRole="alert" style={flowStyles.meta}>{flightResults.length ? "A supported result currency was not available for this search." : "Price alerts require a valid live flight result."}</Text> : null}</View> : null}
       {status === "validating" ? <State title="Search details need attention" body="Edit the search and keep your entered values." onEdit={editSearch} /> : null}
       {status === "empty" ? <State title="No results for this search" body="Try different dates or adjust the destination." retry={retrySearch} onEdit={editSearch} /> : null}
-      {status === "unavailable" ? <State title="Live inventory is unavailable" body="No demo or fallback inventory will be shown." retry={retrySearch} onEdit={editSearch} /> : null}
+      {status === "unavailable" ? <State title="Results are temporarily unavailable" body="Please try again." retry={retrySearch} onEdit={editSearch} /> : null}
       {status === "error" ? <State title="Search could not be completed" body="Check your connection and try again." retry={retrySearch} onEdit={editSearch} /> : null}
       {results.map((result) => product === "flight" ? <FlightCard key={result.id} result={result as FlightResult} /> : product === "hotel" ? <HotelCard key={result.id} result={result as HotelResult} /> : <CarCard key={result.id} result={result as CarResult} />)}
-      {discoveryHotels.length ? <View style={styles.discovery}><Text style={flowStyles.sectionTitle}>Places to consider — live rates unavailable</Text>{discoveryHotels.map((hotel) => <SafeProviderCard key={hotel.id} label={`View ${hotel.name} details`} result={hotel}><Text style={flowStyles.value}>{hotel.name}</Text><Text style={flowStyles.meta}>{hotel.neighbourhood || hotel.location}</Text><Text style={styles.discoveryLabel}>Discovery only — no live rate</Text></SafeProviderCard>)}</View> : null}
     </ScrollView>
     <Modal visible={alertOpen} transparent animationType="slide" onRequestClose={() => !creating && setAlertOpen(false)} accessibilityViewIsModal>
       <KeyboardAvoidingView style={styles.modalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={styles.sheet} accessibilityLabel="Create flight price alert"><Text accessibilityRole="header" style={flowStyles.sectionTitle}>Create price alert</Text><Text style={flowStyles.value}>{planResult.plan?.summary}</Text><Text style={flowStyles.meta}>{String(planResult.plan?.payload.tripType)} · {String(planResult.plan?.payload.travelers)} travelers · {String(planResult.plan?.payload.cabinClass)} · {alertCurrency}</Text><Text style={flowStyles.label}>Target price ({alertCurrency})</Text><TextInput autoFocus accessibilityLabel={`Target price in ${alertCurrency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!creating} style={styles.input} />{targetError ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.error}>{targetError}</Text> : null}<Pressable accessibilityRole="button" accessibilityState={{ busy: creating, disabled: creating }} disabled={creating} onPress={() => void createAlert()} style={flowStyles.primary}><Text style={flowStyles.primaryText}>{creating ? "Creating…" : "Create price alert"}</Text></Pressable><Pressable accessibilityRole="button" disabled={creating} onPress={() => setAlertOpen(false)} style={styles.edit}><Text style={styles.editText}>Cancel</Text></Pressable></View></KeyboardAvoidingView>
@@ -186,7 +180,7 @@ function HotelCard({ result }: { result: HotelResult }) {
 function CarCard({ result }: { result: CarResult }) {
   const offer = result.offers[0];
   const image = imageUri(result.imageUrl);
-  return <SafeProviderCard label={`View ${result.modelName}`} result={result}>{image ? <Image source={{ uri: image }} style={styles.image} /> : null}<Text style={flowStyles.value}>{result.modelName}</Text><Text style={flowStyles.meta}>{result.categoryLabel} · {result.transmission} · {result.passengers} seats</Text><View style={styles.between}><Text style={flowStyles.meta}>{offer?.rentalCompanyName || result.rentalCompanyName}</Text><Text style={styles.price}>{result.searchPolicy.mode === "demo" ? "Sample listing" : offer ? `${offer.currency} ${offer.totalPrice.toFixed(0)}` : ""}</Text></View></SafeProviderCard>;
+  return <SafeProviderCard label={`View ${result.modelName}`} result={result}>{image ? <Image source={{ uri: image }} style={styles.image} /> : null}<Text style={flowStyles.value}>{result.modelName}</Text><Text style={flowStyles.meta}>{result.categoryLabel} · {result.transmission} · {result.passengers} seats</Text><View style={styles.between}><Text style={flowStyles.meta}>{offer?.rentalCompanyName || result.rentalCompanyName}</Text><Text style={styles.price}>{offer ? `${offer.currency} ${offer.totalPrice.toFixed(0)}` : ""}</Text></View></SafeProviderCard>;
 }
 const styles = StyleSheet.create({
   header: { minHeight: 68, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 8, borderBottomColor: flowColors.border, borderBottomWidth: 1 },

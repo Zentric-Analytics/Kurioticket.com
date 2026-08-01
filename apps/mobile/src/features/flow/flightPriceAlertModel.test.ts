@@ -23,14 +23,14 @@ test("extracts only returned supported currencies", () => {
   assert.deepEqual(availableFlightAlertCurrencies([]), []);
 });
 test("flight alert stays visible while unsupported currency only disables its action", () => {
-  const result = (currency: string, mode = "live") => ({ currency, searchPolicy: { mode } }) as never;
+  const result = (currency: string) => ({ currency, searchPolicy: { source: "duffel", bookable: true } }) as never;
   const unavailable = flightAlertPresentation("flight", true, [result("ZZZ")]);
   assert.equal(unavailable.visible, true); assert.equal(unavailable.enabled, false);
   const available = flightAlertPresentation("flight", true, [result("USD")]);
   assert.equal(available.visible, true); assert.equal(available.enabled, true);
 });
 test("hotel and car products never expose the flight alert", () => {
-  const live = [{ currency: "USD", searchPolicy: { mode: "live" } }] as never;
+  const live = [{ currency: "USD", searchPolicy: { source: "duffel", bookable: true } }] as never;
   assert.equal(flightAlertPresentation("hotel", true, live).visible, false);
   assert.equal(flightAlertPresentation("car", true, live).visible, false);
 });

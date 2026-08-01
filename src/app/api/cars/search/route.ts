@@ -23,10 +23,10 @@ export async function POST(request: Request) {
   const search = canonicalSearch(body);
   if (!search) return Response.json({ error: "Invalid car search parameters.", requestId }, { status: 400, headers: noStore });
   try {
-    const { results, mode, status } = await searchCars(search);
-    const response = classifyCars(results, mode, status, mode === "demo" ? "Kurioticket Demo Catalogue" : "", search, requestId);
+    const { results, status } = await searchCars(search);
+    const response = classifyCars(results, search, requestId);
     if (status === "unavailable") {
-      return Response.json({ ...response, error: "Live car inventory is temporarily unavailable." }, { status: 503, headers: noStore });
+      return Response.json({ ...response, error: "Car search is temporarily unavailable." }, { status: 503, headers: noStore });
     }
     return Response.json(response, { headers: noStore });
   } catch {
