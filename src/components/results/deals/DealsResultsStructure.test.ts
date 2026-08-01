@@ -4,6 +4,8 @@ import { readFileSync } from "node:fs";
 
 const results = readFileSync(new URL("../DealsResultsClient.tsx", import.meta.url), "utf8");
 const card = readFileSync(new URL("./DealsPackageCard.tsx", import.meta.url), "utf8");
+const pricePanel = readFileSync(new URL("./DealsPackagePricePanel.tsx", import.meta.url), "utf8");
+const flightSummary = readFileSync(new URL("./DealsPackageFlightSummary.tsx", import.meta.url), "utf8");
 
 test("results render one combined package list after the shared search header", () => {
   const summary = results.indexOf("<DealsResultsSearchSummary");
@@ -27,15 +29,16 @@ test("a package is selected atomically with every included product", () => {
 });
 
 test("combined cards disclose estimated totals and separate provider booking", () => {
-  assert.match(card, /deals\.results\.package\.estimatedTotal/);
-  assert.match(card, /deals\.results\.package\.disclosure/);
+  assert.match(pricePanel, /deals\.results\.package\.estimatedTotal/);
+  assert.match(pricePanel, /deals\.results\.package\.disclosure/);
   assert.match(card, /view\.flight/);
   assert.match(card, /view\.hotel/);
   assert.match(card, /view\.car/);
-  assert.match(card, /priceBreakdown/);
+  assert.match(pricePanel, /priceBreakdown/);
   assert.match(card, /candidate\.badgeKey/);
-  assert.match(card, /deals\.results\.package\.providerPrice/);
-  assert.match(card, /deals\.results\.package\.providerCount/);
-  assert.doesNotMatch(card, /candidate\.reasonKey|deals\.results\.package\.providedBy|provider\(view\./);
-  assert.doesNotMatch(card, /discount|saving|one checkout|one reservation/i);
+  assert.match(pricePanel, /deals\.results\.package\.providerPrice/);
+  assert.match(pricePanel, /deals\.results\.package\.providerCount/);
+  assert.doesNotMatch(card + pricePanel, /candidate\.reasonKey|deals\.results\.package\.providedBy|provider\(view\./);
+  assert.doesNotMatch(card + pricePanel, /discount|saving|one checkout|one reservation/i);
+  assert.doesNotMatch(flightSummary, /segments/);
 });
