@@ -7,7 +7,7 @@ const source = (path: string) => readFileSync(join(process.cwd(), path), "utf8")
 
 test("homepage date defaults apply equally before and after authentication resolves", () => {
   const home = source("src/features/flow/HomeFlowScreen.tsx");
-  assert.match(home, /<FlightSearchPanel compact homepageAirportPicker initializeHomepageDates \/>/);
+  assert.match(home, /<FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker initializeHomepageDates \/>/);
   assert.equal(home.match(/initializeHomepageDates/g)?.length, 1);
   assert.doesNotMatch(home, /isAuthenticated\s*\?[^:]*initializeHomepageDates/s);
 });
