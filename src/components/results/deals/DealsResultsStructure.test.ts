@@ -127,6 +127,30 @@ test("the loading card mirrors the compact responsive pricing layout", () => {
   assert.doesNotMatch(skeleton, /lg:grid-cols-\[minmax\(0,1fr\)_260px\]/);
 });
 
+test("package cards use compact, content-driven vertical spacing", () => {
+  assert.match(card, /gap-1\.5 border-b border-slate-100 px-4 py-2\.5/);
+  assert.match(card, /xl:gap-4 xl:px-4 xl:py-3/);
+  assert.doesNotMatch(card, /\bxl:p-4\b/);
+  assert.match(flightSummary, /className="py-4 xl:py-3"/);
+  assert.match(flightSummary, /mt-2 grid gap-x-6 gap-y-2/);
+  assert.match(flightSummary, /cabinAndBaggageLabel && <p className="mt-2/);
+  assert.match(hotelSummary, /className="py-4 xl:py-3"/);
+  assert.match(carSummary, /className="py-4 xl:py-3"/);
+  assert.match(pricePanel, /xl:self-start[^"]*xl:py-3/);
+  assert.match(pricePanel, /\bmin-h-11\b/);
+  assert.match(pricePanel, /deals\.results\.package\.disclosure/);
+
+  assert.match(skeleton, /gap-1\.5 border-b px-4 py-2\.5/);
+  assert.match(skeleton, /xl:gap-4 xl:px-4 xl:py-3/);
+  assert.match(skeleton, /xl:self-start[^"]*xl:py-3/);
+
+  const productionCard = card + flightSummary + hotelSummary + carSummary + pricePanel;
+  assert.doesNotMatch(productionCard, /h-\[[^\]]+\]|max-h-|line-clamp-|truncate|overflow-clip|(?:^|\s)-m[trblxy]?-[^\s"']+|translate-|scale-/);
+  assert.doesNotMatch(flightSummary + carSummary + pricePanel, /overflow-hidden/);
+  assert.match(hotelSummary, /relative aspect-square overflow-hidden rounded-xl/);
+  assert.doesNotMatch(pricePanel, /bg-slate-50|xl:rounded-xl|whitespace-nowrap/);
+});
+
 test("package imagery and typography use the readable card hierarchy", () => {
   assert.match(hotelSummary, /grid-cols-\[96px_minmax\(0,1fr\)\]/);
   assert.match(hotelSummary, /sm:grid-cols-\[120px_minmax\(0,1fr\)\]/);
