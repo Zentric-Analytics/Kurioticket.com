@@ -180,7 +180,7 @@ export function DealsPackageResultsToolbar({
   }, [sortMenuOpen]);
 
   return (
-    <div className="mt-5 flex flex-col gap-3 border-y border-slate-200 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mt-5 flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm font-bold text-slate-700">
         {count} complete trip {count === 1 ? "option" : "options"}
       </p>
