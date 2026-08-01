@@ -1,4 +1,5 @@
 import type { ImageSourcePropType } from "react-native";
+import { curatedDestinationImage } from "../../../../../src/data/destinationImages";
 import { destinationById } from "./destinationCatalogue";
 
 export type DestinationMedia = {
@@ -6,7 +7,7 @@ export type DestinationMedia = {
   source: ImageSourcePropType;
   accessibilityLabel: string;
   focalPoint?: "center" | "top" | "bottom";
-  provenance: "verified-local" | "generated-original" | "fallback";
+  provenance: "verified-local" | "generated-original" | "website-curated" | "fallback";
 };
 
 /** Approved local assets for the featured Explore destinations. */
@@ -38,23 +39,35 @@ export const EXPLICIT_DESTINATION_MEDIA: readonly DestinationMedia[] = [
   { destinationId: "br-rio-de-janeiro", source: require("../../../assets/destinations/rio-de-janeiro.jpg"), accessibilityLabel: "Rio de Janeiro coastline and mountains", focalPoint: "center", provenance: "generated-original" },
 ] as const;
 
-const FALLBACK_SOURCE = require("../../../assets/heroes/explore-tropical-beach.png") as ImageSourcePropType;
+export const FALLBACK_SOURCE = require("../../../assets/heroes/explore-tropical-beach.png") as ImageSourcePropType;
 const explicitMediaById = new Map(EXPLICIT_DESTINATION_MEDIA.map((media) => [media.destinationId, media]));
 
-/** Complete presentation manifest: every catalogue destination resolves to an image source. */
-export const DESTINATION_MEDIA: readonly DestinationMedia[] = [...destinationById.keys()].map((destinationId) =>
-  explicitMediaById.get(destinationId) ?? {
+/** Complete presentation manifest in local, website-curated, fallback order. */
+export const DESTINATION_MEDIA: readonly DestinationMedia[] = [...destinationById.entries()].map(([destinationId, destination]) => {
+  const local = explicitMediaById.get(destinationId);
+  if (local) return local;
+  const curated = curatedDestinationImage(destinationId);
+  if (curated) return {
+    destinationId,
+    source: { uri: curated.imageUrl },
+    accessibilityLabel: `${destination.name}, ${destination.country} destination photo`,
+    focalPoint: "center",
+    provenance: "website-curated",
+  };
+  return {
     destinationId,
     source: FALLBACK_SOURCE,
-    accessibilityLabel: "Representative travel landscape",
+    accessibilityLabel: `${destination.name}, ${destination.country} travel landscape`,
     focalPoint: "center",
     provenance: "fallback",
-  },
-);
+  };
+});
 
 export const destinationMediaById = new Map(DESTINATION_MEDIA.map((media) => [media.destinationId, media]));
-export function destinationImage(destinationId: string) { return destinationMediaById.get(destinationId)?.source; }
+export function destinationMedia(destinationId: string) { return destinationMediaById.get(destinationId); }
+export function destinationImage(destinationId: string) { return destinationMedia(destinationId)?.source; }
 export function assertDestinationMediaIsValid() {
+  if (explicitMediaById.size !== EXPLICIT_DESTINATION_MEDIA.length) throw new Error("Duplicate local destination media ID");
   for (const media of DESTINATION_MEDIA) if (!destinationById.has(media.destinationId)) throw new Error(`Unknown media destination: ${media.destinationId}`);
   for (const destinationId of destinationById.keys()) if (!destinationMediaById.has(destinationId)) throw new Error(`Missing destination media: ${destinationId}`);
 }

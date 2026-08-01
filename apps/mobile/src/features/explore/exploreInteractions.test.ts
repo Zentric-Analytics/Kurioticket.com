@@ -5,7 +5,8 @@ import { airports } from "../flow/airportData";
 import { destinations, destinationByAirportCode, deriveDestinations } from "./destinationCatalogue";
 import { ALL_DESTINATIONS, destinationCardLayout, exactExploreResult, EXPLORE_TABS, exploreBottomPadding, searchExplore } from "./exploreModels";
 import { FEATURED_DESTINATIONS } from "./exploreData";
-import { DESTINATION_MEDIA, EXPLICIT_DESTINATION_MEDIA, assertDestinationMediaIsValid } from "./destinationMedia";
+import { DESTINATION_MEDIA, EXPLICIT_DESTINATION_MEDIA, assertDestinationMediaIsValid, destinationMedia } from "./destinationMedia";
+import { CURATED_DESTINATION_IMAGES, createDestinationImageRegistry, curatedDestinationImage, requireCuratedDestinationImage } from "../../../../../src/data/destinationImages";
 import { navigateFromDestination, selectFromBrowser } from "./exploreInteractionModels";
 import { parseSavedDestinationIds, resolveSavedDestinationIds } from "../../storage/savedDestinationsModel";
 import { SavedDestinationsStore } from "../../storage/savedDestinationsStore";
@@ -90,7 +91,20 @@ test("featured IDs and media manifest are explicit and valid", () => {
   assert.equal(DESTINATION_MEDIA.length, destinations.length);
   assert.equal(EXPLICIT_DESTINATION_MEDIA.length, APPROVED_FEATURED_IDS.length);
   assert.ok(DESTINATION_MEDIA.every((media) => media.source));
-  assert.equal(DESTINATION_MEDIA.filter((media) => media.provenance === "fallback").length, destinations.length - EXPLICIT_DESTINATION_MEDIA.length);
+  assert.ok(EXPLICIT_DESTINATION_MEDIA.every((local) => destinationMedia(local.destinationId) === local));
+  const curatedMobileIds = destinations.filter((destination) => curatedDestinationImage(destination.id)).map((destination) => destination.id);
+  for (const destinationId of curatedMobileIds) assert.notEqual(destinationMedia(destinationId)?.provenance, "fallback");
+  assert.equal(DESTINATION_MEDIA.filter((media) => media.provenance === "website-curated").length, 20);
+  assert.equal(DESTINATION_MEDIA.filter((media) => media.provenance === "fallback").length, 190);
+  assert.ok(DESTINATION_MEDIA.filter((media) => media.provenance === "website-curated").every((media) => typeof media.source === "object" && "uri" in media.source && media.source.uri?.startsWith("https://")));
+});
+
+test("curated registry rejects duplicates and reports unknown mappings", () => {
+  assert.equal(CURATED_DESTINATION_IMAGES.length, 44);
+  assert.throws(() => createDestinationImageRegistry([CURATED_DESTINATION_IMAGES[0]!, CURATED_DESTINATION_IMAGES[0]!]), /Duplicate destination image ID: gb-london/);
+  assert.throws(() => requireCuratedDestinationImage("Atlantis", "Unknown"), /Unknown destination image mapping: Atlantis, Unknown/);
+  assert.equal(requireCuratedDestinationImage("Marrakesh", "Morocco").destinationId, "ma-marrakesh");
+  assert.equal(requireCuratedDestinationImage("Istanbul", "Türkiye").destinationId, "tr-istanbul");
 });
 
 test("saved values resolve to stable destination IDs safely and idempotently", () => {
@@ -130,6 +144,10 @@ test("browse all is virtualized and retains action selection", () => {
   assert.match(source, /data=\{browser\?\.destinations/);
   assert.match(source, /selectFromBrowser/);
   assert.match(source, /Browse all destinations/);
+  assert.match(source, /<DestinationThumbnail key=\{destination.id\} destination=\{destination\}/);
+  assert.match(source, /savedDestinations\.map\(a=><Row/);
+  assert.match(source, /results\.map\(r=><View/);
+  assert.match(source, /renderItem=\{\(\{item\}\)=><Row/);
 });
 
 test("handoff closes first and blocks duplicate navigation", () => {
