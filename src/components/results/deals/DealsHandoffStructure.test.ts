@@ -36,16 +36,21 @@ test("loading and exceptional states use dedicated accessible presentations", ()
   assert.match(client, /DealsHandoffSkeleton/); assert.match(client, /<StatePanel/); assert.match(client, /progressUnsaved/); assert.match(client, /getDealsTripPlanEstimatedTotal/); assert.match(client, /deals\.handoff\.returnSearch/); assert.doesNotMatch(client + card, /line-clamp-|truncate|h-\[[^\]]+\]/);
 });
 
-test("handoff uses the details-page back link before its single page heading", () => {
+test("handoff removes its visible introduction while preserving navigation and its accessible heading", () => {
   assert.match(client, /import \{ DetailsBackLink \} from "@\/components\/results\/DetailsBackLink"/);
   assert.match(client, /<DetailsBackLink href=\{plan\.resultsPath\}>\{t\("deals\.handoff\.returnResults"\)\}<\/DetailsBackLink>/);
+  assert.doesNotMatch(client, /deals\.handoff\.(?:eyebrow|explanation)/);
+  assert.doesNotMatch(client, /text-3xl|sm:text-4xl|tracking-\[0\.16em\]/);
+  assert.doesNotMatch(client, /className=\{plan \? "mt-4" : ""\}|<\/?header>/);
+  assert.equal(client.match(/<h1/g)?.length, 1);
+  assert.match(client, /<h1 className="sr-only">\{t\("deals\.handoff\.title"\)\}<\/h1>/);
   const backLink = client.indexOf("<DetailsBackLink");
-  const eyebrow = client.indexOf('t("deals.handoff.eyebrow")');
   const heading = client.indexOf("<h1");
-  const explanation = client.indexOf('t("deals.handoff.explanation")');
-  assert.ok(backLink < eyebrow && eyebrow < heading && heading < explanation);
-  assert.match(client, /className=\{plan \? "mt-4" : ""\}/);
+  const content = client.indexOf("{content}");
+  assert.ok(backLink < heading && heading < content);
   assert.equal((page + client).match(/<h1/g)?.length, 1);
+  assert.match(client, /return <div className="mt-7 grid gap-6 xl:grid-cols-\[minmax\(0,1fr\)_300px\] xl:items-start">/);
+  assert.doesNotMatch(client, /(?:-m[trblxy]?|translate-[xy]|transform|absolute)\b|aria-hidden="true"\s*><\/|<div\s*><\/div>/);
 });
 
 test("trip summary keeps its content without owning results navigation", () => {
