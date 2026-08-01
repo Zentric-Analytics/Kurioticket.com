@@ -34,7 +34,7 @@ const airportScore = (airport: AirportOption, location: OriginSuggestionLocation
   return cityBoost + countryBoost + (airport.priority ?? 50) * 4 - distancePenalty;
 };
 
-const sortForLocation = (candidates: readonly AirportOption[], location: OriginSuggestionLocation) =>
+const sortForLocation = (candidates: AirportOption[], location: OriginSuggestionLocation) =>
   [...candidates].sort((a, b) => airportScore(b, location) - airportScore(a, location));
 
 export const getCityAwareOriginAirports = (location: OriginSuggestionLocation | null | undefined, limit = 8) => {
