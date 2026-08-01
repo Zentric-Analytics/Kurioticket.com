@@ -51,14 +51,8 @@ export function DealsHandoffClient() {
   }
 
   return <>
-    <header>
-      {plan ? <DetailsBackLink href={plan.resultsPath}>{t("deals.handoff.returnResults")}</DetailsBackLink> : null}
-      <div className={plan ? "mt-4" : ""}>
-        <p className="text-sm font-bold uppercase tracking-[0.16em] text-[#004BB8]">{t("deals.handoff.eyebrow")}</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">{t("deals.handoff.title")}</h1>
-        <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">{t("deals.handoff.explanation")}</p>
-      </div>
-    </header>
+    {plan ? <DetailsBackLink href={plan.resultsPath}>{t("deals.handoff.returnResults")}</DetailsBackLink> : null}
+    <h1 className="sr-only">{t("deals.handoff.title")}</h1>
     {content}
   </>;
 }
