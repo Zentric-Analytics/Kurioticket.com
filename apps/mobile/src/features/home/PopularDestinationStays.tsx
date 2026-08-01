@@ -217,6 +217,11 @@ const styles = StyleSheet.create({
   heartPressed: { opacity: 0.76, transform: [{ scale: 0.94 }] },
   copy: {
     zIndex: 1,
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(2, 15, 42, 0.55)",
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   city: {
     color: "white",
