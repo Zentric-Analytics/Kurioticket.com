@@ -9,7 +9,7 @@ const home = source("src/features/flow/HomeFlowScreen.tsx");
 const products = source("src/features/flow/ProductScreens.tsx");
 
 test("the homepage enables its local airport picker for guest and authenticated renders", () => {
-  assert.match(home, /<FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker initializeHomepageDates \/>/);
+  assert.match(home, /<FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker \/>/);
   assert.equal(home.match(/homepageAirportPicker/g)?.length, 1);
   assert.doesNotMatch(home, /isAuthenticated\s*\?[^:]*homepageAirportPicker/s);
 });
