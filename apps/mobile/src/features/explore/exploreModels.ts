@@ -2,12 +2,11 @@ import { airports, type Airport } from "../flow/airportData";
 import { INTEREST_DESTINATIONS } from "./interestMappings";
 
 const normalize = (value: string) => value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
-const countryAlias = (value: string) => value === "united states" ? "usa" : value;
 const score = (value: string, query: string) => value === query ? 0 : value.startsWith(query) ? 1 : value.includes(query) ? 2 : 99;
 export type ExploreSearchResult = { airport: Airport; match: "destination" | "interest"; interest?: string; rank: number };
 
 export function searchExplore(queryValue: string): ExploreSearchResult[] {
-  const query = countryAlias(normalize(queryValue));
+  const query = normalize(queryValue);
   if (!query) return [];
   const interest = INTEREST_DESTINATIONS.find(([name]) => normalize(name) === query);
   if (interest) {
@@ -15,10 +14,14 @@ export function searchExplore(queryValue: string): ExploreSearchResult[] {
     return airport ? [{ airport, match: "interest", interest: interest[0], rank: 0 }] : [];
   }
   return airports.flatMap((airport) => {
-    const values = [airport.city, airport.code, countryAlias(normalize(airport.country))].map(normalize);
+    const values = [airport.city, airport.code, ...searchableCountryValues(airport)].map(normalize);
     const rank = Math.min(...values.map((value) => score(value, query)));
     return rank < 99 ? [{ airport, match: "destination" as const, rank }] : [];
   }).sort((a, b) => a.rank - b.rank || a.airport.city.localeCompare(b.airport.city) || a.airport.code.localeCompare(b.airport.code));
+}
+
+export function searchableCountryValues(airport: Airport): string[] {
+  return airport.country === "USA" ? ["USA", "United States"] : [airport.country];
 }
 
 export const REGION_BY_AIRPORT = {
