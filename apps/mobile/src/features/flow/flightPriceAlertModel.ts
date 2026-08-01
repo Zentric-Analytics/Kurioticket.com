@@ -6,6 +6,12 @@ export const MAX_PRICE_ALERT_TARGET = 9999999999.99;
 const supported = new Set(supportedCurrencies.map(({ code }) => code));
 export type CanonicalCabin = "economy" | "premium-economy" | "business" | "first";
 
+export function flightAlertPresentation(product: "flight" | "hotel" | "car", hasPlan: boolean, results: FlightResult[]) {
+  const liveResults = product === "flight" ? results.filter((result) => result.searchPolicy.mode === "live") : [];
+  const currencies = availableFlightAlertCurrencies(liveResults);
+  return { visible: product === "flight" && hasPlan, liveResults, currencies, enabled: currencies.length > 0 };
+}
+
 export function availableFlightAlertCurrencies(results: FlightResult[]) {
   return [...new Set(results.map(({ currency }) => currency.trim().toUpperCase()).filter((code) => /^[A-Z]{3}$/.test(code) && supported.has(code)))];
 }
