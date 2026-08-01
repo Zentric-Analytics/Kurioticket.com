@@ -45,10 +45,15 @@ const search = {
 };
 
 test("uses the actual itinerary destination and complete arrival range", () => {
+  const candidateBefore = structuredClone(candidate);
+  const searchBefore = structuredClone(search);
   const view = getDealsPackageCardPresentation(candidate, search, "en-US");
-  assert.equal(view.header.title, "Trip to SNA");
+  assert.equal("title" in view.header, false);
+  assert.doesNotMatch(JSON.stringify(view.header), /Trip to|Complete trip/);
   assert.match(view.header.dateRangeLabel, /Aug 1, 2026.*Aug 5, 2026/);
   assert.deepEqual(view.routeNotice, { label: "Your selected destination is LAX; this flight arrives at SNA." });
+  assert.deepEqual(candidate, candidateBefore);
+  assert.deepEqual(search, searchBefore);
 });
 
 test("normalizes provider room and cabin labels and omits segment counts", () => {

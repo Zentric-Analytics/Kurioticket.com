@@ -8,6 +8,7 @@ const card = readFileSync(new URL("./DealsPackageCard.tsx", import.meta.url), "u
 const pricePanel = readFileSync(new URL("./DealsPackagePricePanel.tsx", import.meta.url), "utf8");
 const flightSummary = readFileSync(new URL("./DealsPackageFlightSummary.tsx", import.meta.url), "utf8");
 const skeleton = readFileSync(new URL("./DealsPreviewSkeleton.tsx", import.meta.url), "utf8");
+const presentation = readFileSync(new URL("../../../lib/deals/dealsPackageCardPresentation.ts", import.meta.url), "utf8");
 
 test("results render one combined package list after the shared search header", () => {
   const summary = results.indexOf("<DealsResultsSearchSummary");
@@ -103,4 +104,28 @@ test("the loading card mirrors the compact responsive pricing layout", () => {
   assert.match(skeleton, /md:grid-cols-\[minmax\(0,0\.8fr\)_minmax\(0,1\.2fr\)\]/);
   assert.match(skeleton, /lg:grid-cols-\[minmax\(180px,0\.75fr\)_minmax\(300px,1\.15fr\)_minmax\(220px,0\.85fr\)\]/);
   assert.doesNotMatch(skeleton, /lg:grid-cols-\[minmax\(0,1fr\)_260px\]/);
+});
+
+test("package cards remove the visible destination heading without losing header semantics or content", () => {
+  assert.match(card, /<article aria-labelledby=\{view\.headingId\}/);
+  assert.match(card, /<h2 id=\{view\.headingId\} className="sr-only">\{accessibleHeading\}<\/h2>/);
+  assert.equal(card.match(/id=\{view\.headingId\}/g)?.length, 1);
+  assert.doesNotMatch(card, /\{view\.header\.title\}/);
+  assert.doesNotMatch(card, /text-lg font-extrabold text-slate-950/);
+  assert.doesNotMatch(card + presentation, /Trip to|Complete trip/);
+  assert.match(card, /candidate\.badgeKey/);
+  assert.match(card, /view\.header\.modeLabel/);
+  assert.match(card, /<CalendarDays aria-hidden/);
+  assert.match(card, /view\.header\.dateRangeLabel/);
+  assert.match(card, /view\.header\.stayDurationLabel &&/);
+  for (const component of ["DealsPackageFlightSummary", "DealsPackageHotelSummary", "DealsPackageCarSummary", "DealsPackagePricePanel"]) {
+    assert.match(card, new RegExp(`<${component}`));
+  }
+  assert.doesNotMatch(card, /<h2[^>]*>\s*<\/h2>|opacity-0|invisible/);
+  assert.doesNotMatch(card, /<div className="[^"]*\b(?:min-)?h-\d+/);
+  assert.match(card, /xl:grid-cols-\[minmax\(0,1fr\)_288px\]/);
+  assert.match(card, /xl:items-start/);
+  assert.match(skeleton, /xl:self-start/);
+  assert.match(skeleton, /md:grid-cols-\[minmax\(0,0\.8fr\)_minmax\(0,1\.2fr\)\]/);
+  assert.match(skeleton, /lg:grid-cols-\[minmax\(180px,0\.75fr\)_minmax\(300px,1\.15fr\)_minmax\(220px,0\.85fr\)\]/);
 });
