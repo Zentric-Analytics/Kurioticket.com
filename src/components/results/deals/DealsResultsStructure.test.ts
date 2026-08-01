@@ -74,3 +74,16 @@ test("combined cards disclose estimated totals and separate provider booking", (
   assert.doesNotMatch(card + pricePanel, /discount|saving|one checkout|one reservation/i);
   assert.doesNotMatch(flightSummary, /segments/);
 });
+
+test("package cards use a compact visible header and a distinct accessible heading", () => {
+  assert.match(card, /<article aria-labelledby=\{view\.headingId\} aria-describedby=/);
+  assert.match(card, /<h2 id=\{view\.headingId\} className="sr-only">\{accessibleHeading\}<\/h2>/);
+  assert.match(card, /t\(candidate\.badgeKey\)/);
+  assert.match(card, /view\.header\.modeLabel/);
+  assert.match(card, /CalendarDays aria-hidden/);
+  assert.match(card, /view\.header\.dateRangeLabel/);
+  assert.match(card, /view\.header\.stayDurationLabel &&/);
+  assert.match(card, /flex flex-col gap-2[^\n]+sm:flex-row sm:items-center sm:justify-between/);
+  assert.doesNotMatch(card, /view\.header\.title|text-lg font-extrabold|Trip to|Complete trip/);
+  assert.doesNotMatch(card, /visibility:\s*hidden|opacity-0|fixed-height/);
+});

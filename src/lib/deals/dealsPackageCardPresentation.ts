@@ -21,7 +21,6 @@ export type DealsPackageFlightLegView = {
 export type DealsPackageCardView = {
   headingId: string;
   header: {
-    title: string;
     modeLabel: string;
     dateRangeLabel: string;
     stayDurationLabel?: string;
@@ -139,8 +138,6 @@ export function getDealsPackageCardPresentation(
     : [];
   const outbound = legs.find(leg => leg.direction === "outbound") ?? legs[0];
   const actualDestination = outbound?.destinationAirport;
-  const destinationName = actualDestination || hotel?.location || search.carPickupLocation;
-  const title = destinationName ? `Trip to ${destinationName}` : "Complete trip";
 
   const bounds = [
     ...legs.flatMap(leg => [leg.departureTime, leg.arrivalTime]),
@@ -164,11 +161,10 @@ export function getDealsPackageCardPresentation(
   return {
     headingId: `package-${candidate.id.replace(/[^a-zA-Z0-9_-]/g, "-")}`,
     header: {
-      title,
       modeLabel,
       dateRangeLabel,
       stayDurationLabel: nights === null ? undefined : `${nights} ${nights === 1 ? "night" : "nights"}`,
-      accessibleSummary: `${modeLabel} package. ${title}. ${dateRangeLabel}.`,
+      accessibleSummary: `${dateRangeLabel}.${nights === null ? "" : ` ${nights} ${nights === 1 ? "night" : "nights"}.`}`,
     },
     flight: flight ? {
       airlineLabel: `${flight.airlineName}${flight.flightNumber ? ` · ${flight.flightNumber}` : ""}`,
