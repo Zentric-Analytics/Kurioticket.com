@@ -34,6 +34,18 @@ export class PriceAlertUnavailableError extends Error {
   }
 }
 
+export class PriceAlertNotFoundError extends Error {
+  constructor() { super("Price alert not found."); this.name = "PriceAlertNotFoundError"; }
+}
+
+export class InvalidPriceAlertTransitionError extends Error {
+  constructor() { super("This price alert cannot be changed to that status."); this.name = "InvalidPriceAlertTransitionError"; }
+}
+
+export function nextPriceAlertCheck(now = new Date()) {
+  return new Date(now.getTime() + 1000 * 60 * 60 * 24);
+}
+
 function serializePriceAlert(alert: {
   id: string;
   type: "FLIGHT" | "HOTEL";
@@ -153,7 +165,7 @@ export async function createPriceAlert(input: {
         targetPrice: input.targetPrice,
         currency: input.currency,
         query: input.query as never,
-        nextCheckAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+        nextCheckAt: nextPriceAlertCheck(),
       },
       select: {
         id: true,
@@ -183,6 +195,49 @@ export async function createPriceAlert(input: {
     if (error instanceof DuplicatePriceAlertError) throw error;
     console.error("[price-alerts:create-failed]", error);
     throw new PriceAlertUnavailableError("Unable to create price alert.");
+  }
+}
+
+const alertSelect = {
+  id: true, type: true, origin: true, destination: true, targetPrice: true, currency: true,
+  status: true, createdAt: true, updatedAt: true, lastSeenPrice: true, lastCheckedAt: true, query: true,
+} as const;
+
+export async function updateUserPriceAlertStatus(input: { id: string; userId: string; status: "ACTIVE" | "PAUSED" }) {
+  try {
+    const db = getPrisma();
+    const current = input.status === "PAUSED" ? "ACTIVE" : "PAUSED";
+    const result = await db.priceAlert.updateMany({
+      where: { id: input.id, userId: input.userId, status: current },
+      data: { status: input.status, nextCheckAt: input.status === "ACTIVE" ? nextPriceAlertCheck() : null },
+    });
+    if (!result.count) {
+      const exists = await db.priceAlert.findFirst({ where: { id: input.id, userId: input.userId, status: { not: "DELETED" } }, select: { id: true } });
+      if (!exists) throw new PriceAlertNotFoundError();
+      throw new InvalidPriceAlertTransitionError();
+    }
+    const alert = await db.priceAlert.findFirst({ where: { id: input.id, userId: input.userId }, select: alertSelect });
+    if (!alert) throw new PriceAlertNotFoundError();
+    return serializePriceAlert(alert);
+  } catch (error) {
+    if (error instanceof PriceAlertNotFoundError || error instanceof InvalidPriceAlertTransitionError) throw error;
+    console.error("[price-alerts:update-failed]", error);
+    throw new PriceAlertUnavailableError("Unable to update price alert.");
+  }
+}
+
+export async function deleteUserPriceAlert(input: { id: string; userId: string }) {
+  try {
+    const result = await getPrisma().priceAlert.updateMany({
+      where: { id: input.id, userId: input.userId, status: { not: "DELETED" } },
+      data: { status: "DELETED", nextCheckAt: null },
+    });
+    if (!result.count) throw new PriceAlertNotFoundError();
+    return { deleted: true as const, id: input.id };
+  } catch (error) {
+    if (error instanceof PriceAlertNotFoundError) throw error;
+    console.error("[price-alerts:delete-failed]", error);
+    throw new PriceAlertUnavailableError("Unable to delete price alert.");
   }
 }
 

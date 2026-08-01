@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import { travelApi, TravelApiError, type CarResult, type FlightResult, type HotelResult } from "../../api/travelApi";
@@ -7,6 +7,7 @@ import { getApiBaseUrl } from "../../config/apiUrl";
 import { buildSearchPlan, type Product, validBookableCar, validBookableHotel, validDiscoveryHotel, validFlight } from "./travelSearchModel";
 import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles } from "./flowStyles";
+import { availableFlightAlertCurrencies, buildFlightPriceAlertPayload, parseTargetPrice } from "./flightPriceAlertModel";
 
 type Result = FlightResult | HotelResult | CarResult;
 type Status = "validating" | "loading" | "partial" | "ready" | "empty" | "unavailable" | "error";
@@ -41,6 +42,8 @@ export function TravelResultsScreen({ product }: { product: Product }) {
   const [status, setStatus] = useState<Status>(planResult.error ? "validating" : "loading");
   const [message, setMessage] = useState(planResult.error || "");
   const [retry, setRetry] = useState(0);
+  const [alertOpen, setAlertOpen] = useState(false); const [targetDraft, setTargetDraft] = useState(""); const [targetError, setTargetError] = useState(""); const [creating, setCreating] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState("");
   const sequence = useRef(0);
   const activeRequest = useRef<{
     key: string;
@@ -111,6 +114,23 @@ export function TravelResultsScreen({ product }: { product: Product }) {
   }, [key, load, retry]);
 
   const title = `${product[0].toUpperCase()}${product.slice(1)} results`;
+  const flightResults = product === "flight" ? results.filter((result) => result.searchPolicy.mode === "live") as FlightResult[] : [];
+  const alertCurrencies = availableFlightAlertCurrencies(flightResults);
+  const alertCurrency = alertCurrencies.includes(selectedCurrency) ? selectedCurrency : alertCurrencies.length === 1 ? alertCurrencies[0] : "";
+  const createAlert = async () => {
+    if (creating || !planResult.plan || !alertCurrency) return;
+    const parsed = parseTargetPrice(targetDraft); if (parsed.error || parsed.value === undefined) { setTargetError(parsed.error || "Enter a target price."); return; }
+    setCreating(true); setTargetError("");
+    try {
+      await travelApi.createPriceAlert(buildFlightPriceAlertPayload(planResult.plan, parsed.value, alertCurrency));
+      setAlertOpen(false); setTargetDraft("");
+      Alert.alert("Price alert created", "We’ll track this flight search against your target price.", [{ text: "View price alerts", onPress: () => router.push("/price-alerts") }, { text: "Stay here" }]);
+    } catch (error) {
+      if (error instanceof TravelApiError && error.status === 401) { setAlertOpen(false); Alert.alert("Sign in required", "Sign in to create a price alert.", [{ text: "Sign in", onPress: () => router.push("/email-auth") }, { text: "Cancel" }]); }
+      else if (error instanceof TravelApiError && error.status === 409 && error.details?.duplicate === true) setTargetError("This alert already exists. Open Price alerts to manage it.");
+      else setTargetError(error instanceof TravelApiError ? error.message : "Unable to create price alert. Try again.");
+    } finally { setCreating(false); }
+  };
   const loadingCopy = product === "flight" ? "Searching available flights" : product === "hotel" ? "Checking available stays" : "Checking available cars";
   const retrySearch = () => setRetry((value) => value + 1);
   const editSearch = () => {
@@ -123,6 +143,7 @@ export function TravelResultsScreen({ product }: { product: Product }) {
     <ScrollView contentContainerStyle={flowStyles.scroll}>
       {status === "loading" ? <View style={styles.loading}><ActivityIndicator color={flowColors.blue} size="large" /><Text style={flowStyles.value}>{loadingCopy}</Text><Text style={flowStyles.meta}>This search will stop automatically if providers do not respond.</Text></View> : null}
       {message ? <Text accessibilityRole="alert" style={styles.notice}>{message}</Text> : null}
+      {product === "flight" && planResult.plan ? <View style={[styles.track, flowStyles.shadow]}><Text style={flowStyles.sectionTitle}>Track this search</Text><Text style={flowStyles.meta}>Get notified when this flight search reaches your target price.</Text>{alertCurrencies.length > 1 ? <View accessibilityLabel="Choose alert currency" style={styles.currencyRow}>{alertCurrencies.map((currency) => <Pressable key={currency} accessibilityRole="button" accessibilityState={{ selected: alertCurrency === currency }} onPress={() => setSelectedCurrency(currency)} style={[styles.currency, alertCurrency === currency && styles.currencySelected]}><Text>{currency}</Text></Pressable>)}</View> : null}<Pressable accessibilityRole="button" accessibilityLabel="Create price alert" accessibilityState={{ disabled: !alertCurrency }} disabled={!alertCurrency} onPress={() => { if (!alertOpen) { setTargetError(""); setAlertOpen(true); } }} style={[flowStyles.primary, !alertCurrency && styles.disabled]}><Text style={flowStyles.primaryText}>Create price alert</Text></Pressable>{!alertCurrency ? <Text accessibilityRole="alert" style={flowStyles.meta}>{flightResults.length ? "A supported result currency was not available for this search." : "Price alerts require a valid live flight result."}</Text> : null}</View> : null}
       {status === "validating" ? <State title="Search details need attention" body="Edit the search and keep your entered values." onEdit={editSearch} /> : null}
       {status === "empty" ? <State title="No results for this search" body="Try different dates or adjust the destination." retry={retrySearch} onEdit={editSearch} /> : null}
       {status === "unavailable" ? <State title="Live inventory is unavailable" body="No demo or fallback inventory will be shown." retry={retrySearch} onEdit={editSearch} /> : null}
@@ -130,6 +151,9 @@ export function TravelResultsScreen({ product }: { product: Product }) {
       {results.map((result) => product === "flight" ? <FlightCard key={result.id} result={result as FlightResult} /> : product === "hotel" ? <HotelCard key={result.id} result={result as HotelResult} /> : <CarCard key={result.id} result={result as CarResult} />)}
       {discoveryHotels.length ? <View style={styles.discovery}><Text style={flowStyles.sectionTitle}>Places to consider — live rates unavailable</Text>{discoveryHotels.map((hotel) => <SafeProviderCard key={hotel.id} label={`View ${hotel.name} details`} result={hotel}><Text style={flowStyles.value}>{hotel.name}</Text><Text style={flowStyles.meta}>{hotel.neighbourhood || hotel.location}</Text><Text style={styles.discoveryLabel}>Discovery only — no live rate</Text></SafeProviderCard>)}</View> : null}
     </ScrollView>
+    <Modal visible={alertOpen} transparent animationType="slide" onRequestClose={() => !creating && setAlertOpen(false)} accessibilityViewIsModal>
+      <KeyboardAvoidingView style={styles.modalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={styles.sheet} accessibilityLabel="Create flight price alert"><Text accessibilityRole="header" style={flowStyles.sectionTitle}>Create price alert</Text><Text style={flowStyles.value}>{planResult.plan?.summary}</Text><Text style={flowStyles.meta}>{String(planResult.plan?.payload.tripType)} · {String(planResult.plan?.payload.travelers)} travelers · {String(planResult.plan?.payload.cabinClass)} · {alertCurrency}</Text><Text style={flowStyles.label}>Target price ({alertCurrency})</Text><TextInput autoFocus accessibilityLabel={`Target price in ${alertCurrency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!creating} style={styles.input} />{targetError ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.error}>{targetError}</Text> : null}<Pressable accessibilityRole="button" accessibilityState={{ busy: creating, disabled: creating }} disabled={creating} onPress={() => void createAlert()} style={flowStyles.primary}><Text style={flowStyles.primaryText}>{creating ? "Creating…" : "Create price alert"}</Text></Pressable><Pressable accessibilityRole="button" disabled={creating} onPress={() => setAlertOpen(false)} style={styles.edit}><Text style={styles.editText}>Cancel</Text></Pressable></View></KeyboardAvoidingView>
+    </Modal>
   </SafeAreaView>;
 }
 
@@ -164,6 +188,9 @@ const styles = StyleSheet.create({
   notice: { color: flowColors.navy, backgroundColor: "#F2F6FF", borderRadius: 10, padding: 12 },
   actions: { alignSelf: "stretch", gap: 10 }, edit: { minHeight: 52, borderWidth: 1, borderColor: flowColors.blue, borderRadius: 9, alignItems: "center", justifyContent: "center" }, editText: { color: flowColors.blue, fontWeight: "800" },
   card: { backgroundColor: "white", borderColor: flowColors.border, borderWidth: 1, borderRadius: 14, padding: 13, gap: 8 },
+  track: { backgroundColor: "white", borderColor: flowColors.border, borderWidth: 1, borderRadius: 14, padding: 14, gap: 10 },
+  currencyRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 }, currency: { borderWidth: 1, borderColor: flowColors.border, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8 }, currencySelected: { borderColor: flowColors.blue, backgroundColor: "#EAF1FF" }, disabled: { opacity: 0.45 },
+  modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" }, sheet: { backgroundColor: "white", borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 32, gap: 12, maxHeight: "90%" }, input: { minHeight: 52, borderWidth: 1, borderColor: flowColors.border, borderRadius: 9, paddingHorizontal: 12, fontSize: 18 }, error: { color: "#A4262C" },
   between: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }, route: { color: flowColors.navy, fontSize: 19, fontWeight: "800" }, price: { color: flowColors.blue, fontSize: 16, fontWeight: "800" }, action: { color: flowColors.blue, fontSize: 12, fontWeight: "800", textAlign: "right" },
   image: { height: 150, borderRadius: 10, backgroundColor: "#EEF2F8" }, discovery: { gap: 10 }, discoveryLabel: { color: flowColors.muted, fontSize: 12, fontWeight: "700" },
 });
