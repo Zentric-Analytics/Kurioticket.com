@@ -4,8 +4,6 @@ import { INTEREST_DESTINATIONS } from "./interestMappings";
 const normalize = (value: string) => value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
 const score = (value: string, query: string) => value === query ? 0 : value.startsWith(query) ? 1 : value.includes(query) ? 2 : 99;
 export type ExploreSearchResult = { airport: Airport; match: "destination" | "interest"; interest?: string; rank: number };
-export type DestinationGroup = { name: string; destinations: Airport[] };
-export type DestinationSection = DestinationGroup & { lead: Airport };
 
 export function searchExplore(queryValue: string): ExploreSearchResult[] {
   const query = normalize(queryValue);
@@ -38,34 +36,12 @@ export const REGION_BY_AIRPORT = {
   BKK: "Southeast Asia", IST: "Türkiye (catalogue grouping)",
 } as const satisfies Record<Airport["code"], string>;
 
-export function countries(): DestinationGroup[] {
-  return groupBy((airport) => airport.country === "USA" ? "United States" : airport.country);
-}
-
-export function regions(): DestinationGroup[] {
-  return groupBy((airport) => REGION_BY_AIRPORT[airport.code]);
-}
-
-function groupBy(label: (airport: Airport) => string): DestinationGroup[] {
+export function countries() { return groupBy((airport) => airport.country === "USA" ? "United States" : airport.country); }
+export function regions() { return groupBy((airport) => REGION_BY_AIRPORT[airport.code]); }
+function groupBy(label: (airport: Airport) => string) {
   const groups = new Map<string, Airport[]>();
   for (const airport of airports) groups.set(label(airport), [...(groups.get(label(airport)) ?? []), airport]);
   return [...groups].map(([name, destinations]) => ({ name, destinations })).sort((a, b) => a.name.localeCompare(b.name));
-}
-
-const SECTION_LEADS = [
-  ["Europe", "CDG"],
-  ["Southeast Asia", "DPS"],
-  ["North America", "JFK"],
-] as const;
-
-/** Product-maintained, neutral Explore sections derived entirely from the current catalogue. */
-export function destinationSections(): DestinationSection[] {
-  const grouped = new Map(regions().map((group) => [group.name, group]));
-  return SECTION_LEADS.flatMap(([name, code]) => {
-    const group = grouped.get(name);
-    const lead = group?.destinations.find((airport) => airport.code === code) ?? group?.destinations[0];
-    return group && lead ? [{ ...group, lead }] : [];
-  });
 }
 
 export function destinationCardLayout(screenWidth: number) {
@@ -75,24 +51,4 @@ export function destinationCardLayout(screenWidth: number) {
   const cardWidth = viewport - preview;
   return { cardWidth, gap, snapInterval: cardWidth + gap };
 }
-
-export function exploreActionCardLayout(screenWidth: number) {
-  const contentWidth = Math.max(240, screenWidth - 36);
-  const gap = 12;
-  const columns = contentWidth < 300 ? 1 : 2;
-  const cardWidth = columns === 1 ? contentWidth : (contentWidth - gap) / 2;
-  return { columns, cardWidth, gap };
-}
-
-export function shouldShowExploreFloatingAction(input: {
-  tab: "Destinations" | "Inspiration" | "Compare";
-  queryActive: boolean;
-  keyboardVisible: boolean;
-  modalOpen: boolean;
-}) {
-  return input.tab === "Destinations" && !input.queryActive && !input.keyboardVisible && !input.modalOpen;
-}
-
-export function exploreBottomPadding(tabBarHeight: number, safeBottom: number) {
-  return tabBarHeight + Math.max(safeBottom, 10) + 18;
-}
+export function exploreBottomPadding(tabBarHeight: number, safeBottom: number) { return tabBarHeight + Math.max(safeBottom, 10) + 18; }
