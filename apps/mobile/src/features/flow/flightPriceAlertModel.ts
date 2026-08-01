@@ -1,6 +1,6 @@
 import type { FlightResult } from "../../api/travelApi";
+import { supportedCurrencies } from "../../config/supportedCurrencies";
 import type { SearchPlan } from "./travelSearchModel";
-import { supportedCurrencies } from "../../../../../src/lib/region/supportedRegions";
 
 export const MAX_PRICE_ALERT_TARGET = 9999999999.99;
 const supported = new Set(supportedCurrencies.map(({ code }) => code));
