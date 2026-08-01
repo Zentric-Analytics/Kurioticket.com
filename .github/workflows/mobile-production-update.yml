@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "apps/mobile/**"
+      - "shared/travel/**"
       - ".github/workflows/mobile-production-update.yml"
   workflow_dispatch:
 
@@ -63,6 +64,12 @@ jobs:
       - name: Validate Expo project
         working-directory: apps/mobile
         run: npm run expo:doctor
+
+      - name: Validate Metro export
+        working-directory: apps/mobile
+        env:
+          CI: "1"
+        run: npx expo export --platform all --output-dir /tmp/kurioticket-mobile-export --clear
 
       - name: Select safe delivery method
         id: delivery

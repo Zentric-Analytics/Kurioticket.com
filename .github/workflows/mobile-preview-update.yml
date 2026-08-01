@@ -6,12 +6,14 @@ on:
       - dev
     paths:
       - "apps/mobile/**"
+      - "shared/travel/**"
       - ".github/workflows/mobile-preview-update.yml"
   push:
     branches:
       - dev
     paths:
       - "apps/mobile/**"
+      - "shared/travel/**"
       - ".github/workflows/mobile-preview-update.yml"
   workflow_dispatch:
 

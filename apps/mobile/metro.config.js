@@ -7,7 +7,7 @@ const repositoryRoot = path.resolve(projectRoot, "../..");
 /** @type {import("expo/metro-config").MetroConfig} */
 const config = getDefaultConfig(projectRoot);
 
-// Explore consumes the canonical airport catalogue from the repository-level src/
+// Explore consumes platform-neutral plain data from the repository-level shared/
 // directory. The repository is not declared as an npm workspace, so Expo cannot
 // infer this extra source root automatically.
 config.watchFolders = Array.from(new Set([

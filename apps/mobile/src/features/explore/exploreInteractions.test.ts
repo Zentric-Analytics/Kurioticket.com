@@ -19,9 +19,16 @@ const deferred = <T>() => {
   return { promise, resolve, reject };
 };
 
-test("emergency mobile catalogue derives a stable destination catalogue", () => {
-  assert.equal(airports.length, 12);
-  assert.equal(destinations.length, 12);
+test("global mobile catalogue derives complete stable destinations", () => {
+  assert.equal(airports.length, 248);
+  assert.equal(destinations.length, 234);
+  assert.equal(new Set(airports.map((airport) => airport.countryCode)).size, 162);
+  const multiAirport = destinations.filter((destination) => destination.airportCodes.length > 1);
+  assert.equal(multiAirport.length, 11);
+  assert.deepEqual(multiAirport.map((destination) => destination.name).sort(), [
+    "Bangkok", "Beijing", "Buenos Aires", "Dubai", "Houston", "Istanbul",
+    "London", "Paris", "Seoul", "Tokyo", "Toronto",
+  ]);
   assert.equal(ALL_DESTINATIONS, destinations);
   assert.equal(new Set(destinations.map((item) => item.id)).size, destinations.length);
   const codes = destinations.flatMap((item) => item.airportCodes);
@@ -35,7 +42,7 @@ test("emergency mobile catalogue derives a stable destination catalogue", () => 
   assert.deepEqual(deriveDestinations([...airports].reverse()), destinations);
 });
 
-test("maintained naming is correct in the emergency catalogue", () => {
+test("maintained destination overrides and grouping are correct", () => {
   assert.equal(destinationByAirportCode.get("DPS")?.name, "Bali");
   assert.ok(result("Denpasar").some((item) => item.id === "id-bali"));
   assert.ok(result("Ngurah Rai").some((item) => item.id === "id-bali"));
@@ -44,9 +51,12 @@ test("maintained naming is correct in the emergency catalogue", () => {
 });
 
 test("search covers names, countries, ISO codes, airport codes, airport names, aliases and interests", () => {
-  for (const [query, id] of [["London", "gb-london"], ["LHR", "gb-london"], ["Paris", "fr-paris"], ["CDG", "fr-paris"], ["Bali", "id-bali"], ["DPS", "id-bali"], ["IST", "tr-istanbul"], ["Beach escapes", "id-bali"], ["City skylines", "us-new-york"]]) {
+  for (const [query, id] of [["London", "gb-london"], ["LHR", "gb-london"], ["Paris", "fr-paris"], ["ORY", "fr-paris"], ["Gatwick", "gb-london"], ["Bali", "id-bali"], ["DPS", "id-bali"], ["IST", "tr-istanbul"], ["Beach escapes", "id-bali"], ["City skylines", "us-new-york"]]) {
     assert.equal(result(query)[0]?.id, id);
   }
+  assert.ok(result("Nigeria").length >= 4);
+  assert.ok(result("Nigeria").every((item) => item.countryCode === "NG"));
+  assert.ok(result("NG").every((item) => item.countryCode === "NG"));
   assert.ok(result("United Kingdom").every((item) => item.countryCode === "GB"));
   assert.ok(result("GB").every((item) => item.countryCode === "GB"));
   assert.deepEqual(searchExplore("sao"), searchExplore("São"));
@@ -68,7 +78,8 @@ test("saved values resolve to stable destination IDs safely and idempotently", (
   const migrated = resolveSavedDestinationIds(["LHR", "London", "bad", "", "gb-london"]);
   assert.deepEqual(migrated, ["gb-london"]);
   assert.deepEqual(resolveSavedDestinationIds(migrated), migrated);
-  assert.equal(resolveSavedDestinationIds(["CDG"])[0], "fr-paris");
+  assert.deepEqual(resolveSavedDestinationIds(["LHR", "LGW", "London", "gb-london"]), ["gb-london"]);
+  assert.deepEqual(resolveSavedDestinationIds(["CDG", "ORY", "Paris", "fr-paris"]), ["fr-paris"]);
 });
 
 test("responsive calculations support narrow phones and tab clearance", () => {
