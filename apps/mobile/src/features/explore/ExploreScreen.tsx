@@ -10,7 +10,6 @@ import {
   Pressable,
   ScrollView,
   FlatList,
-  SectionList,
   StyleSheet,
   Text,
   TextInput,
@@ -25,10 +24,8 @@ import {
 } from "react-native-safe-area-context";
 import { destinations, type Destination } from "./destinationCatalogue";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
-import { HERO_SLIDES, INTERESTS } from "./exploreData";
+import { HERO_SLIDES, INTERESTS, POPULAR_DESTINATIONS } from "./exploreData";
 import {
-  COUNTRY_DESTINATION_GROUPS,
-  destinationCardLayout,
   exactExploreResult,
   EXPLORE_TABS,
   exploreBottomPadding,
@@ -37,7 +34,6 @@ import {
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import {
   navigateFromDestination,
-  selectFromBrowser,
   type DestinationProduct,
 } from "./exploreInteractionModels";
 import { destinationMedia, FALLBACK_SOURCE } from "./destinationMedia";
@@ -46,11 +42,6 @@ const NAVY = "#071A48",
   MUTED = "#56658E",
   BORDER = "#E7ECF5";
 type Tab = (typeof EXPLORE_TABS)[number];
-type Browser = {
-  title: string;
-  subtitle: string;
-  destinations: readonly Destination[];
-} | null;
 const destinationFor = (name: string) =>
   destinations.find((destination) => destination.name === name);
 
@@ -336,8 +327,7 @@ function ExploreHeader({
 export function ExploreScreen() {
   const [tab, setTab] = useState<Tab>("Destinations"),
     [query, setQuery] = useState(""),
-    [selected, setSelected] = useState<Destination | null>(null),
-    [browser, setBrowser] = useState<Browser>(null);
+    [selected, setSelected] = useState<Destination | null>(null);
   const { savedIds, toggle } = useSavedDestinations();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -371,13 +361,6 @@ export function ExploreScreen() {
   );
   const overlays = (
     <>
-      <BrowserModal
-        browser={browser}
-        saved={savedIds}
-        close={() => setBrowser(null)}
-        select={select}
-        toggle={toggle}
-      />
       <DestinationAction
         destination={selected}
         saved={!!selected && savedIds.has(selected.id)}
@@ -391,13 +374,11 @@ export function ExploreScreen() {
       <SafeAreaView style={s.safe} edges={["top"]}>
         <Destinations
           header={header}
-          width={width}
           bottomPadding={exploreBottomPadding(65, insets.bottom)}
           saved={savedIds}
           savedDestinations={saved}
           select={select}
           toggle={toggle}
-          browse={setBrowser}
         />
         {overlays}
       </SafeAreaView>
@@ -452,15 +433,13 @@ export function ExploreScreen() {
   );
 }
 
-function CountryCard({
+function PopularDestinationCard({
   destination,
-  width,
   saved,
   onSelect,
   onToggle,
 }: {
   destination: Destination;
-  width: number;
   saved: boolean;
   onSelect: () => void;
   onToggle: () => void;
@@ -485,7 +464,7 @@ function CountryCard({
       { current: false },
     );
   return (
-    <View style={[s.countryCard, { width }]}>
+    <View style={s.popularCard}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Open actions for ${destination.name}, ${destination.country}`}
@@ -499,7 +478,7 @@ function CountryCard({
             `${destination.name}, ${destination.country} travel landscape`
           }
           resizeMode="cover"
-          style={s.countryImage}
+          style={s.popularImage}
         />
       </Pressable>
       <Pressable
@@ -510,8 +489,8 @@ function CountryCard({
       >
         <FlowIcon name="heart" color={saved ? "#E92D55" : "white"} />
       </Pressable>
-      <View style={s.countryCopy}>
-        <Text style={s.countryCardTitle}>{destination.name}</Text>
+      <View style={s.popularCopy}>
+        <Text style={s.popularCardTitle}>{destination.name}</Text>
         <Text style={s.countryName}>{destination.country}</Text>
         <Text style={s.airportMeta}>
           {destination.primaryAirportCode} · {destination.airportNames[0]}
@@ -535,87 +514,40 @@ function CountryCard({
 
 function Destinations({
   header,
-  width,
   bottomPadding,
   saved,
   savedDestinations,
   select,
   toggle,
-  browse,
 }: {
   header: React.ReactElement;
-  width: number;
   bottomPadding: number;
   saved: ReadonlySet<string>;
   savedDestinations: Destination[];
   select: (a: Destination) => void;
   toggle: (id: string) => void;
-  browse: (b: Browser) => void;
 }) {
-  const layout = destinationCardLayout(width);
-  const sections = COUNTRY_DESTINATION_GROUPS.map((group) => ({
-    ...group,
-    data: [group],
-  }));
   return (
-    <SectionList
-      sections={sections}
-      keyExtractor={(item) => item.countryCode}
-      stickySectionHeadersEnabled={false}
-      initialNumToRender={3}
-      maxToRenderPerBatch={3}
+    <FlatList
+      data={POPULAR_DESTINATIONS}
+      keyExtractor={(item) => item.destination.id}
+      initialNumToRender={4}
+      maxToRenderPerBatch={4}
       windowSize={5}
       contentContainerStyle={[s.page, { paddingBottom: bottomPadding }]}
-      ListHeaderComponent={header}
-      renderSectionHeader={({ section }) => (
-        <View style={s.countryHeader}>
-          <View>
-            <Text accessibilityRole="header" style={s.countryTitle}>
-              {section.country}
-            </Text>
-            <Text style={s.countryCount}>
-              {section.destinations.length}{" "}
-              {section.destinations.length === 1
-                ? "destination"
-                : "destinations"}
-            </Text>
-          </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`See all destinations in ${section.country}`}
-            onPress={() =>
-              browse({
-                title: section.country,
-                subtitle: `${section.destinations.length} ${section.destinations.length === 1 ? "destination" : "destinations"}`,
-                destinations: section.destinations,
-              })
-            }
-            style={s.link}
-          >
-            <Text style={s.linkText}>See all</Text>
-            <FlowIcon name="chevron" color={BLUE} size={16} />
-          </Pressable>
+      ListHeaderComponent={
+        <View>
+          {header}
+          <Section title="Popular destinations" />
         </View>
-      )}
+      }
+      ItemSeparatorComponent={() => <View style={s.popularSeparator} />}
       renderItem={({ item }) => (
-        <FlatList
-          horizontal
-          data={item.destinations}
-          keyExtractor={(destination) => destination.id}
-          showsHorizontalScrollIndicator={false}
-          initialNumToRender={2}
-          maxToRenderPerBatch={3}
-          windowSize={3}
-          contentContainerStyle={s.destinationRow}
-          renderItem={({ item: destination }) => (
-            <CountryCard
-              destination={destination}
-              width={layout.cardWidth}
-              saved={saved.has(destination.id)}
-              onSelect={() => select(destination)}
-              onToggle={() => toggle(destination.id)}
-            />
-          )}
+        <PopularDestinationCard
+          destination={item.destination}
+          saved={saved.has(item.destination.id)}
+          onSelect={() => select(item.destination)}
+          onToggle={() => toggle(item.destination.id)}
         />
       )}
       ListFooterComponent={
@@ -725,70 +657,6 @@ function Inspiration({
     </>
   );
 }
-function BrowserModal({
-  browser,
-  saved,
-  close,
-  select,
-  toggle,
-}: {
-  browser: Browser;
-  saved: ReadonlySet<string>;
-  close: () => void;
-  select: (a: Destination) => void;
-  toggle: (id: string) => void;
-}) {
-  const dismiss = close;
-  const choose = (a: Destination) =>
-    selectFromBrowser(a, dismiss, select, (open) =>
-      requestAnimationFrame(open),
-    );
-  return (
-    <Modal
-      visible={!!browser}
-      animationType="slide"
-      onRequestClose={dismiss}
-      accessibilityViewIsModal
-    >
-      <SafeAreaView style={s.browser}>
-        <View style={s.browserHeader}>
-          <View style={s.browserHeading}>
-            <Text
-              accessibilityRole="header"
-              numberOfLines={2}
-              style={s.sheetTitle}
-            >
-              {browser?.title}
-            </Text>
-            <Text style={s.resultMeta}>{browser?.subtitle}</Text>
-          </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Close browser"
-            onPress={dismiss}
-            style={s.iconButton}
-          >
-            <Text style={s.closeText}>Close</Text>
-          </Pressable>
-        </View>
-        <FlatList
-          data={browser?.destinations ?? []}
-          keyExtractor={(item) => item.id}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={s.browserList}
-          renderItem={({ item }) => (
-            <Row
-              destination={item}
-              saved={saved.has(item.id)}
-              onSelect={() => choose(item)}
-              onToggle={() => toggle(item.id)}
-            />
-          )}
-        />
-      </SafeAreaView>
-    </Modal>
-  );
-}
 const shadow = {
   shadowColor: "#18305B",
   shadowOpacity: 0.06,
@@ -852,7 +720,7 @@ const s = StyleSheet.create({
   },
   link: { minHeight: 44, flexDirection: "row", alignItems: "center" },
   linkText: { color: BLUE, fontSize: 13, fontWeight: "700" },
-  destinationRow: { gap: 14, paddingRight: 18 },
+  popularSeparator: { height: 15 },
   cardRadius: { borderRadius: 16 },
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -1017,21 +885,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     gap: 13,
   },
-  countryHeader: {
-    minHeight: 62,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 4,
-  },
-  countryTitle: {
-    color: NAVY,
-    fontSize: 21,
-    lineHeight: 27,
-    fontWeight: "800",
-  },
-  countryCount: { color: MUTED, fontSize: 13, marginTop: 2 },
-  countryCard: {
+  popularCard: {
     borderRadius: 16,
     backgroundColor: "white",
     borderWidth: 1,
@@ -1039,9 +893,9 @@ const s = StyleSheet.create({
     overflow: "hidden",
     ...shadow,
   },
-  countryImage: { width: "100%", height: 190, backgroundColor: "#E7ECF5" },
-  countryCopy: { padding: 14, gap: 3 },
-  countryCardTitle: {
+  popularImage: { width: "100%", height: 190, backgroundColor: "#E7ECF5" },
+  popularCopy: { padding: 14, gap: 3 },
+  popularCardTitle: {
     color: NAVY,
     fontSize: 21,
     lineHeight: 27,
@@ -1060,14 +914,4 @@ const s = StyleSheet.create({
     gap: 8,
   },
   flightButtonText: { color: "white", fontSize: 14, fontWeight: "800" },
-  browser: { flex: 1, backgroundColor: "#FAFBFF" },
-  browserHeader: {
-    padding: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: BORDER,
-  },
-  browserHeading: { flex: 1, minWidth: 0 },
-  browserList: { padding: 18, paddingBottom: 40 },
 });

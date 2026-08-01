@@ -17,7 +17,8 @@ import {
   groupDestinationsByCountry,
   searchExplore,
 } from "./exploreModels";
-import { FEATURED_DESTINATIONS } from "./exploreData";
+import { POPULAR_DESTINATIONS } from "./exploreData";
+import { CURATED_POPULAR_DESTINATION_IDS } from "../flow/locationCatalogue";
 import {
   DESTINATION_MEDIA,
   EXPLICIT_DESTINATION_MEDIA,
@@ -196,9 +197,28 @@ test("search covers names, countries, ISO codes, airport codes, airport names, a
   assert.equal(exactExploreResult(searchExplore("LHR"))?.id, "gb-london");
 });
 
+test("destinations outside the popular list remain searchable and saveable", async () => {
+  const outsidePopular = destinations.find(
+    (destination) => !CURATED_POPULAR_DESTINATION_IDS.includes(
+      destination.id as (typeof CURATED_POPULAR_DESTINATION_IDS)[number],
+    ),
+  )!;
+  assert.ok(result(outsidePopular.name).some((item) => item.id === outsidePopular.id));
+  assert.ok(result(outsidePopular.country).some((item) => item.id === outsidePopular.id));
+  assert.ok(result(outsidePopular.primaryAirportCode).some((item) => item.id === outsidePopular.id));
+
+  let stored: string[] = [];
+  const store = new SavedDestinationsStore(
+    async () => stored,
+    async (ids) => { stored = [...ids]; },
+  );
+  await store.toggle(outsidePopular.id);
+  assert.deepEqual(stored, [outsidePopular.id]);
+});
+
 test("former featured destinations remain in their correct country groups", () => {
   assert.deepEqual(
-    FEATURED_DESTINATIONS.map((item) => item.destination.id),
+    POPULAR_DESTINATIONS.map((item) => item.destination.id),
     APPROVED_FEATURED_IDS,
   );
   const groupedCountryById = new Map(
@@ -212,7 +232,7 @@ test("former featured destinations remain in their correct country groups", () =
   for (const destinationId of APPROVED_FEATURED_IDS) {
     assert.equal(
       groupedCountryById.get(destinationId),
-      FEATURED_DESTINATIONS.find(
+      POPULAR_DESTINATIONS.find(
         (item) => item.destination.id === destinationId,
       )?.destination.countryCode,
     );
@@ -335,25 +355,35 @@ test("Explore keeps only the focused tabs and supported actions", () => {
   );
 });
 
-test("country browsing is virtualized and retains action selection", () => {
+test("popular destinations are one vertical virtualized stack", () => {
   const source = screen();
   assert.match(source, /FlatList/);
-  assert.match(source, /data=\{browser\?\.destinations/);
-  assert.match(source, /selectFromBrowser/);
-  assert.match(source, /<SectionList/);
-  assert.match(source, /COUNTRY_DESTINATION_GROUPS/);
+  assert.match(source, /data=\{POPULAR_DESTINATIONS\}/);
+  assert.match(source, /Popular destinations/);
+  assert.doesNotMatch(source, /<SectionList|COUNTRY_DESTINATION_GROUPS/);
+  const destinationsView = source.slice(
+    source.indexOf("function Destinations"),
+    source.indexOf("function Inspiration"),
+  );
+  assert.doesNotMatch(destinationsView, /horizontal/);
+  assert.doesNotMatch(source, /See all destinations in|countryCount|countryHeader/);
   assert.match(source, /destinationMedia\(destination.id\)/);
   assert.match(source, /savedDestinations\.map\(\(a\) =>/);
   assert.match(source, /results\.map\(\(r\) =>/);
-  assert.match(source, /renderItem=\{\(\{ item \}\) =>/);
+  assert.match(source, /Search flights to/);
 });
 
-test("Destinations renders country groups directly without a featured carousel", () => {
+test("default destinations use only the curated list without a featured carousel", () => {
   const source = screen();
+  assert.deepEqual(
+    POPULAR_DESTINATIONS.map((item) => item.destination.id),
+    CURATED_POPULAR_DESTINATION_IDS,
+  );
+  assert.equal(new Set(CURATED_POPULAR_DESTINATION_IDS).size, 25);
   assert.doesNotMatch(source, /Featured destinations/);
   assert.doesNotMatch(source, /Browse all destinations/);
   assert.doesNotMatch(source, /FEATURED_DESTINATIONS/);
-  assert.match(source, /ListHeaderComponent=\{header\}/);
+  assert.match(source, /ListHeaderComponent=\{[\s\S]*?\{header\}[\s\S]*?Popular destinations/);
 });
 
 test("handoff closes first and blocks duplicate navigation", () => {

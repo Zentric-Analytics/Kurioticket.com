@@ -1,5 +1,5 @@
 import type { FlowIconName } from "../flow/FlowIcon";
-import { featuredLocations } from "../flow/locationCatalogue";
+import { curatedPopularLocations } from "../flow/locationCatalogue";
 
 export const HERO_SLIDES = [
   { id: "coast", label: "Beach escapes", image: require("../../../assets/heroes/explore-tropical-beach.png"), destination: "Bali" },
@@ -8,7 +8,7 @@ export const HERO_SLIDES = [
   { id: "new-york", label: "City skylines", image: require("../../../assets/destinations/new-york.jpg"), destination: "New York" },
 ] as const;
 
-export const FEATURED_DESTINATIONS = featuredLocations;
+export const POPULAR_DESTINATIONS = curatedPopularLocations;
 
 export const INTERESTS = [
   { name: "Beach escapes", destination: "Bali", icon: "beach", image: require("../../../assets/heroes/explore-tropical-beach.png") },

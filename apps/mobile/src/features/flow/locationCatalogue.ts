@@ -3,7 +3,7 @@ import { destinationById, destinations, type Destination } from "../explore/dest
 import { destinationImage } from "../explore/destinationMedia";
 
 export type LocationPresentation = { destination: Destination; airport: Airport; image?: number };
-const FEATURED_DESTINATION_IDS = [
+export const CURATED_POPULAR_DESTINATION_IDS = [
   "fr-paris",
   "gb-london",
   "us-new-york",
@@ -33,13 +33,13 @@ const FEATURED_DESTINATION_IDS = [
 
 function locationById(id: string): LocationPresentation {
   const destination = destinationById.get(id);
-  if (!destination) throw new Error(`Missing featured destination: ${id}`);
+  if (!destination) throw new Error(`Missing curated popular destination: ${id}`);
   const airport = airports.find((item) => item.code === destination.primaryAirportCode);
   if (!airport) throw new Error(`Missing primary airport for: ${id}`);
   return { destination, airport, image: destinationImage(id) as number | undefined };
 }
 
-export const featuredLocations = FEATURED_DESTINATION_IDS.map(locationById);
+export const curatedPopularLocations = CURATED_POPULAR_DESTINATION_IDS.map(locationById);
 export const locationImages = Object.fromEntries(destinations.flatMap((destination) => {
   const image = destinationImage(destination.id) as number | undefined;
   return image ? destination.airportCodes.map((code) => [code, image]) : [];
