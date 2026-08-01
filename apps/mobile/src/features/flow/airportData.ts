@@ -1,20 +1,18 @@
-import { SHARED_AIRPORTS } from "../../../../../shared/travel/airports";
+import {
+  AIRPORT_RESULT_LIMIT,
+  airports as sharedAirports,
+  searchAirports as searchSharedAirports,
+  type AirportOption,
+} from "../../../../../src/shared/airports";
 
-export type Airport = {
-  code: string;
-  city: string;
-  country: string;
-  countryCode: string;
-  airport: string;
-  priority: number;
-};
+/** Native-safe view of the repository's platform-neutral airport record. */
+export type Airport = AirportOption & Required<Pick<AirportOption,
+  "country" | "countryCode" | "latitude" | "longitude" | "priority"
+>>;
 
-/** Mobile-only shape adapter over the platform-neutral canonical records. */
-export const airports: readonly Airport[] = SHARED_AIRPORTS.map((airport) => ({
-  code: airport.code,
-  city: airport.city,
-  country: airport.country,
-  countryCode: airport.countryCode,
-  airport: airport.airport,
-  priority: airport.priority,
-}));
+// Every shared seed supplies these fields; the narrower type keeps existing
+// mobile form code honest without copying or transforming the catalogue.
+export const airports = sharedAirports as readonly Airport[];
+export const AIRPORT_SEARCH_RESULT_LIMIT = AIRPORT_RESULT_LIMIT;
+export const searchAirports = (query: string, limit = AIRPORT_SEARCH_RESULT_LIMIT): Airport[] =>
+  searchSharedAirports(query, limit) as Airport[];

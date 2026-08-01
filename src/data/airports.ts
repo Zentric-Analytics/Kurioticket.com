@@ -1,28 +1,10 @@
-import { SHARED_AIRPORTS } from "../../shared/travel/airports";
-import { countryCodeToCountryName, countryMatchesCode, normalizeCountryCode } from "../lib/geo/context";
+import { countryMatchesCode, normalizeCountryCode } from "../lib/geo/context";
 import { getCountryDisplayNameForLocale } from "../lib/region/countryDisplayNames";
 import { distanceKm } from "../lib/geo/distance";
+import { airports, type AirportOption } from "../shared/airports";
 
-export type AirportOption = {
-  code: string;
-  name?: string;
-  city: string;
-  airport: string;
-  country?: string;
-  countryCode?: string;
-  latitude?: number;
-  longitude?: number;
-  lat?: number;
-  lon?: number;
-  priority?: number;
-};
-
-export const airports: AirportOption[] = SHARED_AIRPORTS.map((airport) => ({
-  ...airport,
-  name: airport.airport,
-  lat: airport.latitude,
-  lon: airport.longitude,
-}));
+export { airports, searchAirports } from "../shared/airports";
+export type { AirportOption } from "../shared/airports";
 
 export const destinationDefaults = ["LHR", "CDG", "DXB", "JFK", "LAX", "AMS", "MAD", "FCO", "SIN", "HND", "DOH"];
 
