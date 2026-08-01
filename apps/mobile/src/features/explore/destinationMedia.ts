@@ -14,7 +14,6 @@ export const DESTINATION_MEDIA: readonly DestinationMedia[] = [
   { destinationId: "us-new-york", localImage: require("../../../assets/destinations/new-york.jpg"), accessibilityLabel: "New York skyline", focalPoint: "center" },
   { destinationId: "gb-london", localImage: require("../../../assets/destinations/london.jpg"), accessibilityLabel: "London city view", focalPoint: "center" },
   { destinationId: "fr-paris", localImage: require("../../../assets/destinations/paris.jpg"), accessibilityLabel: "Paris city view", focalPoint: "center" },
-  { destinationId: "id-bali", localImage: require("../../../assets/destinations/bali.jpg"), accessibilityLabel: "Bali landscape", focalPoint: "center" },
 ] as const;
 
 export const destinationMediaById = new Map(DESTINATION_MEDIA.map((media) => [media.destinationId, media]));
