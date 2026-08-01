@@ -137,9 +137,6 @@ export function PopularDestinationStays() {
                   style={styles.image}
                   imageStyle={styles.imageCorners}
                 >
-                  <View pointerEvents="none" style={styles.badge}>
-                    <Text style={styles.badgeText}>Popular</Text>
-                  </View>
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
@@ -200,29 +197,6 @@ const styles = StyleSheet.create({
   },
   image: { flex: 1, justifyContent: "flex-end", padding: 16 },
   imageCorners: { borderRadius: 20 },
-  badge: {
-    position: "absolute",
-    top: 14,
-    left: 14,
-    minHeight: 28,
-    paddingHorizontal: 14,
-    alignSelf: "flex-start",
-    flexDirection: "row",
-    borderRadius: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.8)",
-    backgroundColor: "white",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  badgeText: {
-    flexShrink: 0,
-    color: flowColors.navy,
-    fontSize: 11,
-    lineHeight: 15,
-    fontWeight: "800",
-    letterSpacing: 0.5,
-  },
   heart: {
     position: "absolute",
     top: 14,
