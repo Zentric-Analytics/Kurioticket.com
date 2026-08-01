@@ -1,16 +1,25 @@
-export const airports = [
-  { code: "JFK", city: "New York", country: "USA" },
-  { code: "LAX", city: "Los Angeles", country: "USA" },
-  { code: "LHR", city: "London", country: "United Kingdom" },
-  { code: "CDG", city: "Paris", country: "France" },
-  { code: "DXB", city: "Dubai", country: "United Arab Emirates" },
-  { code: "DPS", city: "Bali", country: "Indonesia" },
-  { code: "JTR", city: "Santorini", country: "Greece" },
-  { code: "NRT", city: "Tokyo", country: "Japan" },
-  { code: "FCO", city: "Rome", country: "Italy" },
-  { code: "BCN", city: "Barcelona", country: "Spain" },
-  { code: "BKK", city: "Bangkok", country: "Thailand" },
-  { code: "IST", city: "Cappadocia", country: "Turkey" },
-] as const;
+import { airports as globalAirports } from "../../../../../src/data/airports";
 
-export type Airport = (typeof airports)[number];
+/**
+ * Mobile compatibility view of the canonical repository airport catalogue.
+ * A relative workspace import works in Metro and in the Node test runner;
+ * TypeScript's `@/*` alias alone was not sufficient at runtime. This keeps one
+ * airport seed source. New destination behavior belongs in destinationCatalogue.
+ */
+export type Airport = {
+  code: string;
+  city: string;
+  country: string;
+  countryCode: string;
+  airport: string;
+  priority: number;
+};
+
+export const airports: readonly Airport[] = globalAirports.map((airport) => ({
+  code: airport.code,
+  city: airport.city,
+  country: airport.country ?? airport.countryCode ?? "Unknown",
+  countryCode: airport.countryCode ?? "",
+  airport: airport.airport,
+  priority: airport.priority ?? 0,
+}));

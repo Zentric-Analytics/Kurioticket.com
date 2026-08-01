@@ -1,57 +1,47 @@
-import { airports, type Airport } from "../flow/airportData";
+import { destinations, normalizeDestinationText, type Destination } from "./destinationCatalogue";
 import { INTEREST_DESTINATIONS } from "./interestMappings";
 
 export const EXPLORE_TABS = ["Destinations", "Inspiration"] as const;
-export const ALL_DESTINATIONS = airports;
+export const ALL_DESTINATIONS = destinations;
+export type ExploreSearchResult = { destination: Destination; match: "destination" | "interest"; interest?: string; rank: number };
 
-const normalize = (value: string) => value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
-const score = (value: string, query: string) => value === query ? 0 : value.startsWith(query) ? 1 : value.includes(query) ? 2 : 99;
-export type ExploreSearchResult = { airport: Airport; match: "destination" | "interest"; interest?: string; rank: number };
+const exact = (values: readonly string[], query: string) => values.some((value) => normalizeDestinationText(value) === query);
+const includes = (values: readonly string[], query: string) => values.some((value) => normalizeDestinationText(value).includes(query));
 
+/** Deterministic factual ranking: name, code, alias/city, name prefix, country, general, interest. */
 export function searchExplore(queryValue: string): ExploreSearchResult[] {
-  const query = normalize(queryValue);
+  const query = normalizeDestinationText(queryValue);
   if (!query) return [];
-  const interest = INTEREST_DESTINATIONS.find(([name]) => normalize(name) === query);
-  if (interest) {
-    const airport = airports.find((item) => item.city === interest[1]);
-    return airport ? [{ airport, match: "interest", interest: interest[0], rank: 0 }] : [];
+  const exactCountryMatches = destinations.filter((destination) =>
+    [destination.country, destination.countryCode].some((value) => normalizeDestinationText(value) === query),
+  );
+  if (exactCountryMatches.length) {
+    return exactCountryMatches.map((destination) => ({ destination, match: "destination", rank: 4 }));
   }
-  return airports.flatMap((airport) => {
-    const values = [airport.city, airport.code, ...searchableCountryValues(airport)].map(normalize);
-    const rank = Math.min(...values.map((value) => score(value, query)));
-    return rank < 99 ? [{ airport, match: "destination" as const, rank }] : [];
-  }).sort((a, b) => a.rank - b.rank || a.airport.city.localeCompare(b.airport.city) || a.airport.code.localeCompare(b.airport.code));
+  return destinations.flatMap((destination) => {
+    const names = [destination.name];
+    const codes = destination.airportCodes;
+    const aliases = destination.searchAliases;
+    const countries = [destination.country, destination.countryCode];
+    const general = [...destination.airportNames, ...names, ...codes, ...aliases, ...countries];
+    const interests = INTEREST_DESTINATIONS.filter(([, id]) => id === destination.id).map(([name]) => name);
+    let rank = 99;
+    let interest: string | undefined;
+    if (exact(names, query)) rank = 0;
+    else if (exact(codes, query)) rank = 1;
+    else if (exact(aliases, query)) rank = 2;
+    else if (names.some((name) => normalizeDestinationText(name).startsWith(query))) rank = 3;
+    else if (includes(countries, query)) rank = 4;
+    else if (includes(general, query)) rank = 5;
+    else if (includes(interests, query)) { rank = 6; interest = interests.find((name) => normalizeDestinationText(name).includes(query)); }
+    return rank < 99 ? [{ destination, match: interest ? "interest" as const : "destination" as const, interest, rank }] : [];
+  }).sort((a, b) => a.rank - b.rank || a.destination.name.localeCompare(b.destination.name) || a.destination.countryCode.localeCompare(b.destination.countryCode) || a.destination.id.localeCompare(b.destination.id));
 }
 
-/** Returns the only exact catalogue or maintained-interest match, if one exists. */
-export function exactExploreResult(results: readonly ExploreSearchResult[]): Airport | undefined {
-  const exact = results.filter((result) => result.rank === 0);
-  return exact.length === 1 ? exact[0]?.airport : undefined;
+export function exactExploreResult(results: readonly ExploreSearchResult[]): Destination | undefined {
+  const exactResults = results.filter((result) => result.rank <= 2);
+  return exactResults.length === 1 ? exactResults[0]?.destination : undefined;
 }
 
-export function searchableCountryValues(airport: Airport): string[] {
-  return airport.country === "USA" ? ["USA", "United States"] : [airport.country];
-}
-
-export const REGION_BY_AIRPORT = {
-  JFK: "North America", LAX: "North America", LHR: "Europe", CDG: "Europe", DXB: "Middle East",
-  DPS: "Southeast Asia", JTR: "Europe", NRT: "East Asia", FCO: "Europe", BCN: "Europe",
-  BKK: "Southeast Asia", IST: "Türkiye (catalogue grouping)",
-} as const satisfies Record<Airport["code"], string>;
-
-export function countries() { return groupBy((airport) => airport.country === "USA" ? "United States" : airport.country); }
-export function regions() { return groupBy((airport) => REGION_BY_AIRPORT[airport.code]); }
-function groupBy(label: (airport: Airport) => string) {
-  const groups = new Map<string, Airport[]>();
-  for (const airport of airports) groups.set(label(airport), [...(groups.get(label(airport)) ?? []), airport]);
-  return [...groups].map(([name, destinations]) => ({ name, destinations })).sort((a, b) => a.name.localeCompare(b.name));
-}
-
-export function destinationCardLayout(screenWidth: number) {
-  const viewport = Math.max(240, screenWidth - 36);
-  const gap = 14;
-  const preview = Math.min(42, Math.max(24, viewport * .1));
-  const cardWidth = viewport - preview;
-  return { cardWidth, gap, snapInterval: cardWidth + gap };
-}
-export function exploreBottomPadding(tabBarHeight: number, safeBottom: number) { return tabBarHeight + Math.max(safeBottom, 10) + 18; }
+export function destinationCardLayout(screenWidth: number) { const viewport=Math.max(240,screenWidth-36),gap=14,preview=Math.min(42,Math.max(24,viewport*.1)),cardWidth=viewport-preview;return {cardWidth,gap,snapInterval:cardWidth+gap}; }
+export function exploreBottomPadding(tabBarHeight:number,safeBottom:number){return tabBarHeight+Math.max(safeBottom,10)+18;}
