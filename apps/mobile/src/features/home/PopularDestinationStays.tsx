@@ -9,7 +9,6 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
@@ -138,29 +137,6 @@ export function PopularDestinationStays() {
                   style={styles.image}
                   imageStyle={styles.imageCorners}
                 >
-                  <Svg pointerEvents="none" style={StyleSheet.absoluteFill}>
-                    <Defs>
-                      <LinearGradient
-                        id={`card-overlay-${destination.id}`}
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <Stop offset="0" stopColor="#020617" stopOpacity={0} />
-                        <Stop offset="0.72" stopColor="#020617" stopOpacity={0} />
-                        <Stop offset="0.82" stopColor="#020617" stopOpacity={0.08} />
-                        <Stop offset="0.92" stopColor="#020617" stopOpacity={0.38} />
-                        <Stop offset="1" stopColor="#020617" stopOpacity={0.82} />
-                      </LinearGradient>
-                    </Defs>
-                    <Rect
-                      width="100%"
-                      height="100%"
-                      rx={20}
-                      fill={`url(#card-overlay-${destination.id})`}
-                    />
-                  </Svg>
                   <View pointerEvents="none" style={styles.badge}>
                     <Text style={styles.badgeText}>Popular</Text>
                   </View>
@@ -215,7 +191,6 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   cardPressed: {
-    opacity: 0.96,
     transform: [{ scale: 0.985 }],
   },
   cardSurface: {
@@ -235,14 +210,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderRadius: 14,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.38)",
-    backgroundColor: "rgba(10,24,51,0.44)",
+    borderColor: "rgba(255,255,255,0.8)",
+    backgroundColor: "white",
     alignItems: "center",
     justifyContent: "center",
   },
   badgeText: {
     flexShrink: 0,
-    color: "white",
+    color: flowColors.navy,
     fontSize: 11,
     lineHeight: 15,
     fontWeight: "800",
@@ -257,7 +232,7 @@ const styles = StyleSheet.create({
     borderRadius: 21,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "rgba(255,255,255,0.46)",
-    backgroundColor: "rgba(10,24,51,0.46)",
+    backgroundColor: "rgba(255,255,255,0.24)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -275,12 +250,18 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     fontWeight: "900",
     letterSpacing: -0.35,
+    textShadowColor: "rgba(0,0,0,0.75)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   country: {
-    color: "rgba(255,255,255,0.82)",
+    color: "white",
     fontSize: 13,
     lineHeight: 19,
     fontWeight: "600",
     letterSpacing: 0.15,
+    textShadowColor: "rgba(0,0,0,0.75)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
 });
