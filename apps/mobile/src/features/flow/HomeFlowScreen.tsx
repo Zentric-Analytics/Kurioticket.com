@@ -155,7 +155,7 @@ export function SharedHomePage() {
             </Pressable>
           ))}
         </View>
-        <FlightSearchPanel compact />
+        <FlightSearchPanel compact useWebsitePlacesApi defaultAirportResultLimit={20} searchAirportResultLimit={20} />
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Track prices and save"
