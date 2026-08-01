@@ -41,12 +41,12 @@ export function DealsPackageCard({ candidate, search, locale, selected, t, onSel
       <header className="flex flex-col gap-2 border-b border-slate-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-x-5 sm:px-5">
         <h2 id={view.headingId} className="sr-only">{accessibleHeading}</h2>
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-extrabold ${badgeStyle[candidate.strategy]}`}>{t(candidate.badgeKey)}</span>
-          <span className="text-xs font-semibold text-slate-500">{view.header.modeLabel}</span>
+          <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${badgeStyle[candidate.strategy]}`}>{t(candidate.badgeKey)}</span>
+          <span className="text-sm font-medium text-slate-600">{view.header.modeLabel}</span>
         </div>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-700 sm:justify-end">
-          <p className="flex items-center gap-2 font-semibold"><CalendarDays aria-hidden className="h-4 w-4 text-[#004BB8]" />{view.header.dateRangeLabel}</p>
-          {view.header.stayDurationLabel && <p className="text-xs text-slate-500">·&nbsp; {view.header.stayDurationLabel}</p>}
+          <p className="flex items-center gap-2 font-medium text-slate-800"><CalendarDays aria-hidden className="h-4 w-4 text-[#004BB8]" />{view.header.dateRangeLabel}</p>
+          {view.header.stayDurationLabel && <p className="text-[13px] leading-5 text-slate-600 sm:border-s sm:border-slate-300 sm:ps-3">{view.header.stayDurationLabel}</p>}
         </div>
       </header>
       {view.routeNotice && <p className="flex items-start gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-900 sm:px-5"><AlertCircle aria-hidden className="mt-0.5 h-3.5 w-3.5 shrink-0" />{view.routeNotice.label}</p>}
