@@ -19,6 +19,9 @@ for (const [query, expected] of Object.entries(expectations)) test(`${query} ret
 
 test("city name returns the metro before New York airports", () => assert.deepEqual(codes("New York").slice(0, 5), expectations.NYC));
 test("an exact airport ranks before its broader metro context", () => assert.equal(codes("JFK")[0], "JFK"));
+test("direct airport code searches remain available", () => {
+  for (const code of ["JFK", "LHR", "LOS"]) assert.equal(codes(code)[0], code);
+});
 test("results are capped and deduplicated", () => { const results = searchHomepageAirports("a"); assert.ok(results.length <= HOMEPAGE_AIRPORT_RESULT_LIMIT); assert.equal(new Set(results.map(({ code }) => code)).size, results.length); });
 test("empty search preserves the original twenty defaults", () => assert.deepEqual(searchHomepageAirports(""), homepageAirports.slice(0, 20)));
 test("direct airport name search remains available", () => assert.equal(codes("Heathrow")[0], "LHR"));
