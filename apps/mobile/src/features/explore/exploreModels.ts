@@ -1,6 +1,9 @@
 import { airports, type Airport } from "../flow/airportData";
 import { INTEREST_DESTINATIONS } from "./interestMappings";
 
+export const EXPLORE_TABS = ["Destinations", "Inspiration"] as const;
+export const ALL_DESTINATIONS = airports;
+
 const normalize = (value: string) => value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
 const score = (value: string, query: string) => value === query ? 0 : value.startsWith(query) ? 1 : value.includes(query) ? 2 : 99;
 export type ExploreSearchResult = { airport: Airport; match: "destination" | "interest"; interest?: string; rank: number };

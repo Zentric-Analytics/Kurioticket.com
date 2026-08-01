@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { airports } from "../flow/airportData";
-import { countries, destinationCardLayout, exactExploreResult, exploreBottomPadding, REGION_BY_AIRPORT, regions, searchExplore } from "./exploreModels";
+import { ALL_DESTINATIONS, countries, destinationCardLayout, exactExploreResult, EXPLORE_TABS, exploreBottomPadding, REGION_BY_AIRPORT, regions, searchExplore } from "./exploreModels";
+import { INTEREST_DESTINATIONS } from "./interestMappings";
 import { parseSavedDestinationIds, resolveSavedDestinationIds } from "../../storage/savedDestinationsModel";
 import { SavedDestinationsStore } from "../../storage/savedDestinationsStore";
 import { navigateFromDestination, selectFromBrowser } from "./exploreInteractionModels";
@@ -16,14 +17,14 @@ test("Explore search handles empty, exact, partial, code, countries, aliases, in
  assert.deepEqual(searchExplore("United   States").map(x=>x.airport.code),["LAX","JFK"]);
  for(const query of ["United","United St","States"]){const codes=searchExplore(query).map(x=>x.airport.code);assert.ok(codes.includes("LAX"));assert.ok(codes.includes("JFK"));}
  {const codes=searchExplore("United").map(x=>x.airport.code);assert.equal(new Set(codes).size,codes.length);}
- assert.equal(searchExplore("Beaches")[0]?.match,"interest"); assert.deepEqual(searchExplore("unknown"),[]);
+ assert.equal(searchExplore("Beach escapes")[0]?.match,"interest"); assert.deepEqual(searchExplore("unknown"),[]);
 });
 test("ranking is exact, prefix, contains and deterministic",()=>{const r=searchExplore("on");assert.ok(r.every((x,i)=>i===0||r[i-1]!.rank<=x.rank));assert.deepEqual(searchExplore("usa"),searchExplore("USA"));});
 test("exact search submission only resolves one exact result",()=>{assert.equal(exactExploreResult(searchExplore("Paris"))?.code,"CDG");assert.equal(exactExploreResult(searchExplore("Par")),undefined);assert.equal(exactExploreResult([]),undefined);});
 test("country, code, and interest searches remain supported",()=>{
  assert.deepEqual(searchExplore("United Kingdom").map(x=>x.airport.code),["LHR"]);
  assert.deepEqual(searchExplore("Dubai").map(x=>x.airport.code),["DXB"]);
- assert.equal(searchExplore("Beaches")[0]?.match,"interest");
+ assert.equal(searchExplore("Beach escapes")[0]?.match,"interest");
 });
 test("saved identifiers migrate legacy cities and discard malformed or unknown data",()=>{
  assert.deepEqual(resolveSavedDestinationIds(parseSavedDestinationIds('["Paris","DXB","unknown",42]')),["CDG","DXB"]);
@@ -34,8 +35,11 @@ test("countries and maintained regions cover the current catalogue",()=>{
  assert.equal(countries().find(x=>x.name==="United States")?.destinations.length,2); assert.equal(REGION_BY_AIRPORT.IST,"Türkiye (catalogue grouping)");
 });
 test("responsive calculations support narrow phones and tab clearance",()=>{for(const w of [320,360,400]){const x=destinationCardLayout(w);assert.ok(x.cardWidth<w-36);assert.equal(x.snapInterval,x.cardWidth+x.gap);}assert.equal(exploreBottomPadding(65,24),107);});
-test("destination actions and discovery surfaces use supported routes",()=>{const x=screen();for(const route of ["/flights","/hotels","/cars","/price-alerts"])assert.match(x,new RegExp(route));assert.match(x,/Destination actions/);assert.match(x,/Browse countries/);assert.match(x,/Browse regions/);assert.match(x,/Saved destinations/);assert.match(x,/Compare/);assert.doesNotMatch(x,/destination-detail|Coming soon|onPress=\{\(\) => undefined\}/);});
-test("catalogue and inspiration remain truthful",()=>{const x=screen();assert.match(x,/destinations:airports/);assert.match(x,/Interest match/);assert.match(x,/Explore \{slide.destination\}/);assert.equal((x.match(/Quick destinations/g)||[]).length,1);assert.doesNotMatch(x,/destination.*Anywhere|Best Price|Trending|Top destinations/i);});
+test("Explore exposes only the focused tabs",()=>{assert.deepEqual(EXPLORE_TABS,["Destinations","Inspiration"]);});
+test("removed discovery and header actions are absent",()=>{const x=screen();for(const copy of ["Compare","Price alerts","Quick destinations","Explore more","Browse countries","Browse regions","Track prices","Explore destinations using the maintained interests above."])assert.doesNotMatch(x,new RegExp(copy,"i"));});
+test("destination actions retain only supported planning routes",()=>{const x=screen();assert.match(x,/Destination actions/);assert.match(x,/label="Search flights"/);assert.match(x,/label="Search hotels"/);assert.match(x,/Save destination/);assert.match(x,/Remove from saved destinations/);assert.doesNotMatch(x,/destination-detail|Coming soon|onPress=\{\(\) => undefined\}|\/cars|\/price-alerts/);});
+test("Browse all uses the complete current catalogue",()=>{assert.equal(ALL_DESTINATIONS,airports);assert.equal(ALL_DESTINATIONS.length,airports.length);const x=screen();assert.match(x,/Browse all destinations/);assert.match(x,/destinations:ALL_DESTINATIONS/);});
+test("catalogue and inspiration remain truthful",()=>{const x=screen();assert.match(x,/Interest match/);assert.match(x,/Explore \{slide.destination\}/);for(const [interest,city] of INTEREST_DESTINATIONS){assert.equal(searchExplore(interest)[0]?.airport.city,city);assert.ok(airports.some(airport=>airport.city===city));}assert.doesNotMatch(x,/destination.*Anywhere|Best Price|Trending|Top destinations|Popular|deal|ranking|price/i);});
 test("Hotels delegates complete route state and featured selections to its focused panel",()=>{const x=readFileSync("src/features/flow/ProductScreens.tsx","utf8");assert.match(x,/checkIn\?: string \| string\[\]/);assert.match(x,/<HotelSearchPanel ref=\{panel\} params=\{params\}/);assert.match(x,/panel\.current\?\.useDestination\(destination\)/);});
 
 const deferred=<T>()=>{let resolve!:(value:T)=>void,reject!:(error:Error)=>void;const promise=new Promise<T>((ok,no)=>{resolve=ok;reject=no});return {promise,resolve,reject}};
