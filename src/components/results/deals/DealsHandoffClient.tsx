@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRegion } from "@/components/region/RegionProvider";
+import { DetailsBackLink } from "@/components/results/DetailsBackLink";
 import { DealsHandoffSkeleton } from "./DealsHandoffSkeleton";
 import { DealsHandoffStepCard } from "./DealsHandoffStepCard";
 import { DealsHandoffSummary } from "./DealsHandoffSummary";
@@ -37,14 +38,29 @@ export function DealsHandoffClient() {
     return () => window.clearTimeout(timer);
   }, []);
 
-  if (!readResult) return <DealsHandoffSkeleton label={t("deals.handoff.loading")} />;
-  if (readResult.status === "storage_unavailable") return <StatePanel kind="storage" title={t("deals.handoff.storageTitle")} body={t("deals.handoff.storageUnavailable")} action={t("deals.handoff.returnSearch")} href="/deals" />;
-  if (readResult.status === "missing" || readResult.status === "invalid" || readResult.status === "fingerprint_mismatch" || !plan || now === null) return <StatePanel kind="missing" title={t("deals.handoff.missingTitle")} body={t("deals.handoff.missingBody")} action={t("deals.handoff.returnSearch")} href="/deals" />;
-  if (readResult.status === "expired") return <StatePanel kind="warning" title={t("deals.handoff.expiredTitle")} body={t("deals.handoff.expiredBody")} action={t("deals.handoff.refresh")} href={plan.resultsPath} />;
-  const readiness = getDealsTripPlanReadiness(plan.mode, plan);
-  if (!readiness.ready) return <StatePanel kind="warning" title={t("deals.handoff.incompleteTitle")} body={t("deals.handoff.incompleteBody")} action={t("deals.handoff.returnResults")} href={plan.resultsPath} missing={readiness.missing.map(product => t(`deals.tripPlan.${product === "hotel" ? "stay" : product}`))} />;
+  let content;
+  if (!readResult) content = <DealsHandoffSkeleton label={t("deals.handoff.loading")} />;
+  else if (readResult.status === "storage_unavailable") content = <StatePanel kind="storage" title={t("deals.handoff.storageTitle")} body={t("deals.handoff.storageUnavailable")} action={t("deals.handoff.returnSearch")} href="/deals" />;
+  else if (readResult.status === "missing" || readResult.status === "invalid" || readResult.status === "fingerprint_mismatch" || !plan || now === null) content = <StatePanel kind="missing" title={t("deals.handoff.missingTitle")} body={t("deals.handoff.missingBody")} action={t("deals.handoff.returnSearch")} href="/deals" />;
+  else if (readResult.status === "expired") content = <StatePanel kind="warning" title={t("deals.handoff.expiredTitle")} body={t("deals.handoff.expiredBody")} action={t("deals.handoff.refresh")} href={plan.resultsPath} />;
+  else {
+    const readiness = getDealsTripPlanReadiness(plan.mode, plan);
+    content = readiness.ready
+      ? <ReadyPlan plan={plan} now={now} locale={locale} selectedCurrency={selectedCurrency} rates={rates} t={t} progressUnsaved={progressUnsaved} announcement={announcement} onOpen={(product) => setPlan(current => { if (!current) return current; const updated = markDealsProviderOpened(current, product); setProgressUnsaved(!writeDealsTripPlan(updated)); const count = Object.keys(updated.opened).length; setAnnouncement(t("deals.handoff.openedAnnouncement").replace("{{product}}", t(`deals.tripPlan.${product === "hotel" ? "stay" : product}`)).replace("{{opened}}", String(count)).replace("{{total}}", String(getDealsHandoffSteps(updated, now, locale).length))); return updated; })} />
+      : <StatePanel kind="warning" title={t("deals.handoff.incompleteTitle")} body={t("deals.handoff.incompleteBody")} action={t("deals.handoff.returnResults")} href={plan.resultsPath} missing={readiness.missing.map(product => t(`deals.tripPlan.${product === "hotel" ? "stay" : product}`))} />;
+  }
 
-  return <ReadyPlan plan={plan} now={now} locale={locale} selectedCurrency={selectedCurrency} rates={rates} t={t} progressUnsaved={progressUnsaved} announcement={announcement} onOpen={(product) => setPlan(current => { if (!current) return current; const updated = markDealsProviderOpened(current, product); setProgressUnsaved(!writeDealsTripPlan(updated)); const count = Object.keys(updated.opened).length; setAnnouncement(t("deals.handoff.openedAnnouncement").replace("{{product}}", t(`deals.tripPlan.${product === "hotel" ? "stay" : product}`)).replace("{{opened}}", String(count)).replace("{{total}}", String(getDealsHandoffSteps(updated, now, locale).length))); return updated; })} />;
+  return <>
+    <header>
+      {plan ? <DetailsBackLink href={plan.resultsPath}>{t("deals.handoff.returnResults")}</DetailsBackLink> : null}
+      <div className={plan ? "mt-4" : ""}>
+        <p className="text-sm font-bold uppercase tracking-[0.16em] text-[#004BB8]">{t("deals.handoff.eyebrow")}</p>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">{t("deals.handoff.title")}</h1>
+        <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">{t("deals.handoff.explanation")}</p>
+      </div>
+    </header>
+    {content}
+  </>;
 }
 
 function ReadyPlan({ plan, now, locale, selectedCurrency, rates, t, progressUnsaved, announcement, onOpen }: { plan: DealsTripPlan; now: number; locale: string; selectedCurrency: string; rates: ReturnType<typeof useCurrencyRates>; t: (key: string) => string; progressUnsaved: boolean; announcement: string; onOpen: (product: DealsTripPlanProduct) => void }) {
@@ -55,7 +71,7 @@ function ReadyPlan({ plan, now, locale, selectedCurrency, rates, t, progressUnsa
   const combined = getDealsTripPlanEstimatedTotal(plan, selectedCurrency, rates.rates);
   const progress = t("deals.handoff.progress").replace("{{opened}}", String(opened)).replace("{{total}}", String(actionable.length));
   return <div className="mt-7 grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
-    <DealsHandoffSummary modeLabel={t(modeKeys[plan.mode])} opened={opened} total={actionable.length} totalLabel={combined === null ? null : formatCurrency(combined, selectedCurrency)} progressLabel={progress} allOpened={next.allOpened} hasExpired={steps.some(step => step.status === "expired")} nextId={next.product ? `provider-step-${next.product}` : null} resultsPath={plan.resultsPath} t={t} />
+    <DealsHandoffSummary modeLabel={t(modeKeys[plan.mode])} opened={opened} total={actionable.length} totalLabel={combined === null ? null : formatCurrency(combined, selectedCurrency)} progressLabel={progress} allOpened={next.allOpened} hasExpired={steps.some(step => step.status === "expired")} nextId={next.product ? `provider-step-${next.product}` : null} t={t} />
     <div className="order-2 min-w-0 xl:order-1">
       <p className="sr-only" aria-live="polite">{announcement}</p>
       {progressUnsaved && <p role="status" className="mb-4 rounded-xl bg-amber-50 p-4 text-sm font-semibold text-amber-900">{t("deals.handoff.progressUnsaved")}</p>}

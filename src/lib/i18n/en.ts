@@ -3454,7 +3454,7 @@ export const translations: TranslationDictionary = {
   "deals.handoff.expired": "Your selected options may have expired.",
   "deals.handoff.refresh": "Refresh results",
   "deals.handoff.incomplete": "Your trip plan is incomplete. Choose:",
-  "deals.handoff.returnResults": "Return to results",
+  "deals.handoff.returnResults": "Back to Deals results",
   "deals.handoff.provider": "Provided by {{provider}}",
   "deals.handoff.opened": "Details opened",
   "deals.handoff.notOpened": "Provider not yet opened",
