@@ -148,8 +148,8 @@ export function PopularDestinationStays() {
                         y2="1"
                       >
                         <Stop offset="0" stopColor="#020617" stopOpacity={0} />
-                        <Stop offset="0.43" stopColor="#020617" stopOpacity={0.02} />
-                        <Stop offset="0.7" stopColor="#020617" stopOpacity={0.28} />
+                        <Stop offset="0.55" stopColor="#020617" stopOpacity={0} />
+                        <Stop offset="0.75" stopColor="#020617" stopOpacity={0.28} />
                         <Stop offset="1" stopColor="#020617" stopOpacity={0.9} />
                       </LinearGradient>
                     </Defs>
@@ -180,7 +180,7 @@ export function PopularDestinationStays() {
                   >
                     <FlowIcon name="heart" color="white" size={22} />
                   </Pressable>
-                  <View pointerEvents="none" style={styles.copyPanel}>
+                  <View pointerEvents="none" style={styles.copy}>
                     <Text style={styles.city}>{destination.city}</Text>
                     <Text style={styles.country}>{destination.country}</Text>
                   </View>
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     top: 14,
     left: 14,
     minHeight: 28,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     borderRadius: 14,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "rgba(255,255,255,0.38)",
@@ -238,6 +238,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   badgeText: {
+    flexShrink: 0,
     color: "white",
     fontSize: 11,
     lineHeight: 15,
@@ -262,16 +263,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(6,76,247,0.92)",
   },
   heartPressed: { opacity: 0.76, transform: [{ scale: 0.94 }] },
-  copyPanel: {
+  copy: {
     zIndex: 1,
-    marginHorizontal: -4,
-    marginBottom: -4,
-    paddingHorizontal: 13,
-    paddingVertical: 12,
-    borderRadius: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.18)",
-    backgroundColor: "rgba(4,16,39,0.2)",
   },
   city: {
     color: "white",
