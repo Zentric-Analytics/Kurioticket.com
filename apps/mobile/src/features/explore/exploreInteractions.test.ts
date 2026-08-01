@@ -19,9 +19,9 @@ const deferred = <T>() => {
   return { promise, resolve, reject };
 };
 
-test("emergency mobile catalogue derives a stable destination catalogue", () => {
-  assert.equal(airports.length, 12);
-  assert.equal(destinations.length, 12);
+test("shared airport catalogue derives a stable destination catalogue", () => {
+  assert.ok(airports.length > 12);
+  assert.ok(destinations.length > 12);
   assert.equal(ALL_DESTINATIONS, destinations);
   assert.equal(new Set(destinations.map((item) => item.id)).size, destinations.length);
   const codes = destinations.flatMap((item) => item.airportCodes);
@@ -35,7 +35,7 @@ test("emergency mobile catalogue derives a stable destination catalogue", () => 
   assert.deepEqual(deriveDestinations([...airports].reverse()), destinations);
 });
 
-test("maintained naming is correct in the emergency catalogue", () => {
+test("maintained naming is correct in the shared catalogue", () => {
   assert.equal(destinationByAirportCode.get("DPS")?.name, "Bali");
   assert.ok(result("Denpasar").some((item) => item.id === "id-bali"));
   assert.ok(result("Ngurah Rai").some((item) => item.id === "id-bali"));
